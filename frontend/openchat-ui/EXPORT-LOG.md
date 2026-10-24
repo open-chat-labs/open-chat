@@ -260,3 +260,8 @@
 - A community's permissions all default to admin (`communityDef` on the shared rows), as the backend's `CommunityPermissions::default()` has them. "Reset to defaults" set Remove members to moderator, a role a community can't hold, and let every member invite and create private channels. A fresh community also showed four permissions "changed from the defaults".
 - Save waits for a name check that's still running (400ms after typing) instead of ignoring the click. Saving straight after renaming did nothing until a second click.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-24 — InviteDialog: the host searches, by hand
+- `onSearch?: (query, tab: 'add' | 'invite') => Promise<InvitePerson[]>`. As the Add or Invite query changes, the host searches (250ms debounce, latest query wins), and its results stand in for filtering `communityMembers` / `people`; a failed search falls back to that filter. A picked person found by a search stays shown in the chips. The dialog could only filter the lists it was given, so it couldn't find anyone the app hadn't loaded.
+- The footer (Send / Add) is shown on the Add tab with `canAdd` and on the others with `canInvite`; it followed `canInvite` alone, so someone who could add but not invite couldn't send. "Frequently contacted" isn't shown over an empty list.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

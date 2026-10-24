@@ -28,6 +28,7 @@ import {
     type MemberRole,
     type MessageFormatter,
     type MultiUserChat,
+    type Level,
     type OpenChat,
     type ReadonlyMap,
     type ReadonlySet,
@@ -54,6 +55,25 @@ function outcome(success: boolean, succeededKey: string, failedKey: string): Mem
     return success
         ? { kind: "success", message: i18nKey(succeededKey) }
         : { kind: "failed", message: i18nKey(failedKey) };
+}
+
+/**
+ * People to invite to a group, channel or community at `level`, as both old invite pages searched:
+ * the community's members, then everyone else when the viewer may invite to the community.
+ */
+export function searchToInvite(
+    client: OpenChat,
+    level: Level,
+    term: string,
+): Promise<[UserSummary[], UserSummary[]]> {
+    const community = selectedCommunitySummaryStore.value;
+    return client.searchUsersForInvite(
+        term,
+        20,
+        level,
+        false,
+        community !== undefined && client.canInviteUsers(community.id),
+    );
 }
 
 export class MemberManagement {
@@ -254,7 +274,10 @@ export class MemberManagement {
         return () => clearTimeout(timer);
     }
 
-    async addUsers(): Promise<MemberActionOutcome> {
+    /** Adds `userIds` (by default the users picked here) to the channel. */
+    async addUsers(
+        userIds: string[] = this.#usersToAddOrInvite.map((u) => u.userId),
+    ): Promise<MemberActionOutcome> {
         const failed: MemberActionOutcome = {
             kind: "failed",
             message: i18nKey("group.addMembersFailed"),
@@ -262,7 +285,6 @@ export class MemberManagement {
         if (this.collection.kind !== "channel") return failed;
 
         this.#inviting = true;
-        const userIds = this.#usersToAddOrInvite.map((u) => u.userId);
         try {
             const resp = await this.client.addMembersToChannel(
                 this.collection.id as ChannelIdentifier,
@@ -283,8 +305,11 @@ export class MemberManagement {
         }
     }
 
-    async inviteUsers(): Promise<MemberActionOutcome> {
-        if (this.#usersToAddOrInvite.length === 0) return succeeded;
+    /** Invites `userIds` (by default the users picked here). */
+    async inviteUsers(
+        userIds: string[] = this.#usersToAddOrInvite.map((u) => u.userId),
+    ): Promise<MemberActionOutcome> {
+        if (userIds.length === 0) return succeeded;
 
         const failed: MemberActionOutcome = {
             kind: "failed",
@@ -292,10 +317,7 @@ export class MemberManagement {
         };
         this.#inviting = true;
         try {
-            const resp = await this.client.inviteUsers(
-                this.collection.id,
-                this.#usersToAddOrInvite.map((u) => u.userId),
-            );
+            const resp = await this.client.inviteUsers(this.collection.id, userIds);
             if (!resp) return failed;
             this.#usersToAddOrInvite = [];
             return this.collection.public
@@ -360,16 +382,17 @@ export class MemberManagement {
         return this.#applyInviteLink(await this.client.getInviteLink(this.collection));
     }
 
-    async toggleInviteLink(): Promise<MemberActionOutcome> {
+    /** Switches the link on or off: to `enabled` when given, else the other way. */
+    async toggleInviteLink(enabled?: boolean): Promise<MemberActionOutcome> {
         const link = this.#inviteLink;
         if (this.#togglingSharingLink || (link?.kind !== "enabled" && link?.kind !== "disabled")) {
             return succeeded;
         }
+        const on = enabled ?? link.kind === "disabled";
+        if (on === (link.kind === "enabled")) return succeeded;
         this.#togglingSharingLink = true;
         try {
-            return this.#applyInviteLink(
-                await this.client.setInviteLinkEnabled(this.collection, link.kind === "disabled"),
-            );
+            return this.#applyInviteLink(await this.client.setInviteLinkEnabled(this.collection, on));
         } finally {
             this.#togglingSharingLink = false;
         }

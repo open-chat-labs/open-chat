@@ -14,6 +14,7 @@ import {
     type UserSummary,
 } from "@client";
 import type { MemberRole as PanelRole } from "@openchat/ui/src/features/components/GroupPanel.svelte";
+import type { InvitePerson } from "@openchat/ui/src/features/components/InviteDialog.svelte";
 import { pickById } from "../../pickById";
 
 // GroupPanel's people, pins and user groups from the app's members, pinned messages and user
@@ -126,5 +127,15 @@ export function panelHeader(
         isPublic: summary.public,
         memberTotal: summary.memberCount,
         viewerRole: panelRole(summary.membership.role),
+    };
+}
+
+/** Someone InviteDialog can add or invite. */
+export function invitePerson(user: UserSummary): InvitePerson {
+    return {
+        id: user.userId,
+        name: user.displayName ?? user.username,
+        handle: user.username,
+        color: pickById(user.userId, COLORS),
     };
 }

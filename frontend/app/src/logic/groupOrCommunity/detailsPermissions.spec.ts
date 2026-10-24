@@ -26,13 +26,14 @@ function client(frozen: { chat?: boolean; community?: boolean }, privateChat = f
         canEditGroupDetails: () => true,
         canDeleteGroup: () => true,
         canInviteUsers: () => true,
+        canAddMembers: () => true,
         canEditCommunity: () => true,
         canDeleteCommunity: () => true,
     } as never as OpenChat;
 }
 
-const all = { canEdit: true, canDelete: true, canInvite: true };
-const none = { canEdit: false, canDelete: false, canInvite: false };
+const all = { canEdit: true, canDelete: true, canInvite: true, canOpenInvite: true };
+const none = { canEdit: false, canDelete: false, canInvite: false, canOpenInvite: false };
 
 describe("details permissions", () => {
     // #10112 "Desktop vs mobile": a frozen chat or community, and a guest, get no edit, delete or invite
@@ -55,6 +56,27 @@ describe("details permissions", () => {
         expect(chatDetailsPermissions(client({}, true), channel, community, false).canInvite).toBe(
             false,
         );
+    });
+
+    // 4b: the invite dialog is still offered for a private channel (its Add tab), and to any
+    // member of a public chat (to share its link), as the old menus did
+    test("the invite dialog opens for a private channel's inviter and a public chat's member", () => {
+        expect(
+            chatDetailsPermissions(client({}, true), channel, community, false).canOpenInvite,
+        ).toBe(true);
+        const member = {
+            ...client({}),
+            canInviteUsers: () => false,
+            canAddMembers: () => false,
+        } as never as OpenChat;
+        const open = (isPublic: boolean) =>
+            chatDetailsPermissions(member, { ...channel, public: isPublic }, community, false)
+                .canOpenInvite;
+        expect(open(true)).toBe(true);
+        expect(open(false)).toBe(false);
+        // someone who may add members but not invite still gets the dialog's Add tab
+        const adder = { ...member, canAddMembers: () => true } as never as OpenChat;
+        expect(chatDetailsPermissions(adder, channel, community, false).canOpenInvite).toBe(true);
     });
 });
 
