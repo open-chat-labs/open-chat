@@ -5,6 +5,7 @@
 <script lang="ts">
     import { showInRightColumn } from "../app/rightPanel";
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
+    import { chatDetailsPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
     import { muteChat } from "@src/logic/chats/muteChat";
     import {
         allUsersStore,
@@ -177,6 +178,14 @@
                       isBot: them?.kind === "bot",
                   }),
                   unblockLabel: $_("unblockUser"),
+                  canInvite:
+                      chat.kind !== "direct_chat" &&
+                      chatDetailsPermissions(
+                          client,
+                          chat,
+                          $selectedCommunitySummaryStore,
+                          $anonUserStore,
+                      ).canInvite,
               }),
     );
 
@@ -184,8 +193,8 @@
         toastStore.showOutcome(await client.setBlockedInDirectChat(userId, blocked));
     }
 
-    // TODO(4b): invite (part 3), convert, import and the webhook (parts 4 and 5); the search
-    // action; calls are phase 7
+    // TODO(4b): convert, import and the webhook (parts 4 and 5); the search action; calls are
+    // phase 7
     function onMenu(id: string) {
         if (chat === undefined) return;
         switch (id) {
@@ -205,6 +214,11 @@
                         action: { kind: "delete_direct_chat", chatId: chat.id, blockUser: false },
                         name: title,
                     });
+                }
+                break;
+            case "invite":
+                if (chat.kind !== "direct_chat") {
+                    screen.dialogs.open({ kind: "invite", target: chat.id, tab: "people" });
                 }
                 break;
             case "block":

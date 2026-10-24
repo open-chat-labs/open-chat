@@ -1,8 +1,8 @@
 <!-- The right column's panel for a group, channel or community: its details, members (with what the
      viewer may do to each), pinned messages, rules, access gates and user groups. Members views
      (?everyone, ?usergroup=) and the pinned list open as GroupPanel's own views. Leave and delete
-     open the confirm dialogs, and settings open GroupSettingsDialog; invite, user groups … are off
-     until 4b's later parts (TODO(4b)). -->
+     open the confirm dialogs, settings open GroupSettingsDialog and invite InviteDialog; user groups,
+     bots … are off until 4b's later parts (TODO(4b)). -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -307,9 +307,19 @@
 
     // GroupPanel offers Leave to everyone, so the rules are checked here (GAPS.md). Settings open
     // as the editor or, for someone who can't edit, the About page (GroupSettingsDialogScreen).
-    // TODO(4b): invite, user groups, bots, webhooks, convert, import and new channels (parts 3-5)
+    // TODO(4b): user groups, bots, webhooks, convert, import and new channels (parts 3b-5)
     function onDialog(kind: string, _payload?: unknown, tab?: string) {
         if (collection === undefined) return;
+        if (kind === "invite") {
+            if (permissions?.canInvite) {
+                context.dialogs.open({
+                    kind: "invite",
+                    target: collection.id,
+                    tab: tab === "share" ? "share" : "people",
+                });
+            }
+            return;
+        }
         if (kind === "settings") {
             context.dialogs.open({
                 kind: "group_settings",
@@ -410,7 +420,7 @@
         coverUrl={collection.kind === "community" ? collection.banner.blobUrl : undefined}
         onToggleFavourite={collection.kind === "community" ? undefined : toggleFavourite}
         {onDialog}
-        canInvite={false}
+        canInvite={permissions?.canInvite ?? false}
         canPin={collection.kind !== "community" && client.canPinMessages(collection.id)}
         userGroups={collection.kind === "community" ? userGroups : undefined}
         gateState={gates}

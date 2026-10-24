@@ -254,7 +254,10 @@ export class MemberManagement {
         return () => clearTimeout(timer);
     }
 
-    async addUsers(): Promise<MemberActionOutcome> {
+    /** Adds `userIds` (by default the users picked here) to the channel. */
+    async addUsers(
+        userIds: string[] = this.#usersToAddOrInvite.map((u) => u.userId),
+    ): Promise<MemberActionOutcome> {
         const failed: MemberActionOutcome = {
             kind: "failed",
             message: i18nKey("group.addMembersFailed"),
@@ -262,7 +265,6 @@ export class MemberManagement {
         if (this.collection.kind !== "channel") return failed;
 
         this.#inviting = true;
-        const userIds = this.#usersToAddOrInvite.map((u) => u.userId);
         try {
             const resp = await this.client.addMembersToChannel(
                 this.collection.id as ChannelIdentifier,
@@ -283,8 +285,11 @@ export class MemberManagement {
         }
     }
 
-    async inviteUsers(): Promise<MemberActionOutcome> {
-        if (this.#usersToAddOrInvite.length === 0) return succeeded;
+    /** Invites `userIds` (by default the users picked here). */
+    async inviteUsers(
+        userIds: string[] = this.#usersToAddOrInvite.map((u) => u.userId),
+    ): Promise<MemberActionOutcome> {
+        if (userIds.length === 0) return succeeded;
 
         const failed: MemberActionOutcome = {
             kind: "failed",
@@ -292,10 +297,7 @@ export class MemberManagement {
         };
         this.#inviting = true;
         try {
-            const resp = await this.client.inviteUsers(
-                this.collection.id,
-                this.#usersToAddOrInvite.map((u) => u.userId),
-            );
+            const resp = await this.client.inviteUsers(this.collection.id, userIds);
             if (!resp) return failed;
             this.#usersToAddOrInvite = [];
             return this.collection.public

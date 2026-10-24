@@ -8,7 +8,6 @@
         anonUserStore,
         candidateGroupFromChat,
         chatSummariesListStore,
-        chatIdentifiersEqual,
         cryptoLookup,
         defaultChatRules,
         favouritesStore,
@@ -59,6 +58,7 @@
     import { _ } from "svelte-i18n";
     import { gateAssets, type GateLookups } from "../access/gates.adapter";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
+    import { dialogTarget } from "./dialogTarget";
     import {
         candidateCommunityFromSettings,
         candidateFromSettings,
@@ -73,18 +73,9 @@
 
     // what it was opened for; another chat or community being opened closes the dialog (a
     // navigation does)
-    const target = $derived.by((): MultiUserChat | CommunitySummary | undefined => {
-        const id = dialog.target;
-        if (id.kind === "community") {
-            const community = $selectedCommunitySummaryStore;
-            return community?.id.communityId === id.communityId ? community : undefined;
-        }
-        const chat = $selectedChatSummaryStore;
-        return (chat?.kind === "group_chat" || chat?.kind === "channel") &&
-            chatIdentifiersEqual(chat.id, id)
-            ? chat
-            : undefined;
-    });
+    const target = $derived(
+        dialogTarget(dialog.target, $selectedChatSummaryStore, $selectedCommunitySummaryStore),
+    );
 
     const lookups = $derived({ tokens: $cryptoLookup, nervousSystems: $nervousSystemLookup });
     const assets = $derived(gateAssets(lookups));

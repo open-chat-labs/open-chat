@@ -134,6 +134,8 @@ export type HeaderMenuState = {
     actions: ChatMenuAction[];
     /** "Unblock user", which the library has no words for. */
     unblockLabel: string;
+    /** A group or channel the viewer may invite people to. */
+    canInvite: boolean;
 };
 
 /**
@@ -142,6 +144,9 @@ export type HeaderMenuState = {
  */
 export function headerMenuItems(state: HeaderMenuState): HeaderMenuItem[] {
     const items: HeaderMenuItem[] = [
+        ...(state.canInvite && state.kind !== "user"
+            ? [{ id: "invite", label: K + "invite", mask: icon("invite") }]
+            : []),
         state.favourite
             ? { id: "unfavourite", label: K + "removeFromFavourites", mask: icon("heart") }
             : { id: "favourite", label: K + "addToFavourites", mask: icon("heart") },
