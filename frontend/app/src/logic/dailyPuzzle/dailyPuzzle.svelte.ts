@@ -481,12 +481,14 @@ export class DailyPuzzleGame {
 
     /**
      * Opens the session on how to play: the tutorial over a game under way, kept for a puzzle the
-     * poll swaps in under way. Before Start, and for a replacement not yet started, the demo
-     * already stands in for the board; a solved puzzle shows its result, never the tutorial.
+     * poll swaps in under way. Before Start the demo already stands in for the board, and that
+     * view ends with Start, so nothing is kept; a solved puzzle shows its result, never the
+     * tutorial.
      */
     openTutorial(): void {
+        if (!this.canToggleTutorial) return;
         this.#tutorialPinned = true;
-        this.#tutorialRequested = this.canToggleTutorial;
+        this.#tutorialRequested = true;
     }
 
     tap(key: number): void {

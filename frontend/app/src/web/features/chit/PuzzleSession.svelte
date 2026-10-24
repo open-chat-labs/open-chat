@@ -6,7 +6,12 @@
      before it starts, and a solved puzzle shows its result, never the tutorial). Sharing a result
      waits on the chat picker (4d). -->
 <script lang="ts">
-    import { currentUserIdStore, type OpenChat, type ResourceKey } from "@client";
+    import {
+        currentUserIdStore,
+        type OpenChat,
+        type PublicDailyPuzzle,
+        type ResourceKey,
+    } from "@client";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import GameDemo from "@src/core/dailyPuzzle/GameDemo.svelte";
@@ -23,10 +28,12 @@
         gameId: string | undefined;
         // opened on how to play
         how: boolean;
+        // the puzzle it plays, for the frame's title
+        puzzle?: PublicDailyPuzzle;
         onClose: () => void;
     };
 
-    let { gameId, how, onClose }: Props = $props();
+    let { gameId, how, puzzle = $bindable(), onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
     const tr = (key: ResourceKey) => interpolate($_, key);
@@ -45,8 +52,11 @@
     );
     const { def, game } = opened;
     if (untrack(() => how)) game?.openTutorial();
-    // the session's puzzle, which the poll may have replaced since this opened
-    const puzzle = $derived(game?.puzzle ?? opened.puzzle);
+    // the session's puzzle, which the poll may have replaced since this opened, told to the frame
+    const current = $derived(game?.puzzle ?? opened.puzzle);
+    $effect.pre(() => {
+        puzzle = current;
+    });
     onDestroy(() => game?.dispose());
 
     const hintLabel = $derived(
@@ -55,7 +65,7 @@
 </script>
 
 <div class="puzzle">
-    {#if puzzle === undefined}
+    {#if current === undefined}
         <p class="text">{$_("dailyPuzzle.unavailable")}</p>
     {:else if game === undefined}
         <p class="text">{$_("dailyPuzzle.needsNewerApp")}</p>

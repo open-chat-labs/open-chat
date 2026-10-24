@@ -1225,6 +1225,18 @@ describe("a session opened on how to play", () => {
         expect(g.showsDemo).toBe(true);
     });
 
+    test("opened before Start, asks for nothing once the player is under way", () => {
+        const g = build(undefined, fakeClient(), true);
+        g.openTutorial();
+        expect(g.showsDemo).toBe(true);
+        // started, then the poll swaps in a replacement under way
+        const next = { ...puzzle, number: NUMBER + 1 };
+        dailyPuzzleStore.set({ puzzles: [next], states: [userState({ number: NUMBER + 1 })] });
+        flushSync();
+        expect(g.started).toBe(true);
+        expect(g.tutorialOpen).toBe(false);
+    });
+
     test("stops asking once the player closes the tutorial", () => {
         const g = build(userState(), fakeClient(), true);
         g.openTutorial();
