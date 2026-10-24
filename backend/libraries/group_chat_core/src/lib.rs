@@ -1034,12 +1034,11 @@ impl GroupChatCore {
                 linked_user
             }
             // No one could ever claim the tips of an account which can't be linked
-            (Some(bridged_from), Some(AccountLink::Unlinked)) => {
-                return if bridged_from.can_be_linked() {
-                    Ok(TipRecipient::UnlinkedAccount(bridged_from))
-                } else {
-                    Err(OCErrorCode::TargetUserNotFound.into())
-                };
+            (Some(bridged_from), Some(AccountLink::Unlinked)) if bridged_from.can_be_linked() => {
+                return Ok(TipRecipient::UnlinkedAccount(bridged_from));
+            }
+            (Some(_), Some(AccountLink::Unlinked | AccountLink::CantBeLinked)) => {
+                return Err(OCErrorCode::TargetUserNotFound.into());
             }
             (None, _) => message.sender,
         };
@@ -2371,6 +2370,8 @@ pub enum TipRecipient {
 pub enum AccountLink {
     Linked(UserId),
     Unlinked,
+    // No one can link it, eg. as it's a Discord bot or webhook
+    CantBeLinked,
 }
 
 // A tip held for an account no one has linked is paid out of the UserIndex less the fee, in one
