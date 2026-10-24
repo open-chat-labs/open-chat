@@ -1008,6 +1008,285 @@
     "group": "library"
   },
   {
+    "name": "ClaimCalendar",
+    "source": "by hand (8e, 2026-10-24)",
+    "hash": "",
+    "description": "The CHIT claim calendar: a month of daily claims, always six weeks (42 cells, neighbouring months dimmed), Local / UTC claim times, a popover per claimed day, and Claim on today while it's open.",
+    "preview": {
+      "width": 560,
+      "height": 460
+    },
+    "props": [
+      {
+        "name": "claimHistory",
+        "type": "ClaimDay[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Claim history (any order)."
+      },
+      {
+        "name": "today",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "\"Today\", ms epoch; defaults to now."
+      },
+      {
+        "name": "joined",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "When the account was created, ms epoch: the calendar doesn't page back before it, nor count days before it as missed. Defaults to `today`."
+      },
+      {
+        "name": "claimable",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Whether today's claim is open: today offers Claim."
+      },
+      {
+        "name": "utc",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Claim times in UTC instead of local time."
+      },
+      {
+        "name": "utcOffsetMinutes",
+        "type": "number",
+        "default": null,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Local time offset for the claim times; defaults to this browser's."
+      },
+      {
+        "name": "onClaim",
+        "type": "() => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Claim today's CHIT: today says it's claiming until this settles. Without it, today offers no Claim."
+      },
+      {
+        "name": "onUtcChange",
+        "type": "(utc: boolean) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "features"
+  },
+  {
+    "name": "ClaimHistoryDialog",
+    "source": "by hand (8e, 2026-10-24)",
+    "hash": "",
+    "description": "\"Claim history\": the claim calendar in a dialog of its own, with the streak insurance under it.",
+    "preview": {
+      "width": 600,
+      "height": 640
+    },
+    "props": [
+      {
+        "name": "streak",
+        "type": "number",
+        "default": 57,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "claimHistory",
+        "type": "ClaimDay[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Claim history for the calendar (any order)."
+      },
+      {
+        "name": "today",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "\"Today\" for the calendar, ms epoch; defaults to now."
+      },
+      {
+        "name": "joined",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "When the account was created, ms epoch: the calendar doesn't page back before it."
+      },
+      {
+        "name": "claimable",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Whether today's claim is open: the calendar's today offers Claim."
+      },
+      {
+        "name": "insured",
+        "type": "number",
+        "default": 3,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "Days of streak insurance bought."
+      },
+      {
+        "name": "used",
+        "type": "number",
+        "default": 1,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "Of the days bought, those used."
+      },
+      {
+        "name": "utc",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Claim times in UTC instead of local time."
+      },
+      {
+        "name": "utcOffsetMinutes",
+        "type": "number",
+        "default": null,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Local time offset for the claim times; defaults to this browser's."
+      },
+      {
+        "name": "backLabel",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.claimHistoryDialog.backToChit'",
+        "doc": "Resource key (or literal text): the back arrow's label."
+      },
+      {
+        "name": "onUtcChange",
+        "type": "(utc: boolean) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onClaim",
+        "type": "() => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Claim today's CHIT from the calendar: today says it's claiming until this settles."
+      },
+      {
+        "name": "onInsurance",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Open streak insurance, in this dialog's place."
+      },
+      {
+        "name": "onBack",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Opened from another dialog: a back arrow, back to it in this one's place."
+      },
+      {
+        "name": "onClose",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "features"
+  },
+  {
     "name": "ComposerBar",
     "source": "lib/ComposerBar.dc.html",
     "hash": "6f9180bd",
@@ -13459,17 +13738,6 @@
         "doc": ""
       },
       {
-        "name": "claimable",
-        "type": "boolean",
-        "default": true,
-        "editor": "boolean",
-        "options": null,
-        "section": "CHIT",
-        "required": false,
-        "componentDefault": "false",
-        "doc": "Today's CHIT can still be claimed."
-      },
-      {
         "name": "section",
         "type": "ProfileSection",
         "default": "profile",
@@ -13565,28 +13833,6 @@
         "required": false,
         "componentDefault": "true",
         "doc": "Offer the daily puzzle setting; false for a host that has none. Defaults to true."
-      },
-      {
-        "name": "chitUtc",
-        "type": "boolean",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": "false",
-        "doc": "Calendar shows claim times in UTC instead of local time."
-      },
-      {
-        "name": "utcOffsetMinutes",
-        "type": "number",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": "-new Date().getTimezoneOffset()",
-        "doc": "Your UTC offset in minutes; defaults to the browser's."
       },
       {
         "name": "achievementsLeft",
@@ -13765,28 +14011,6 @@
         "doc": ""
       },
       {
-        "name": "claimHistory",
-        "type": "ClaimDay[]",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": "[]",
-        "doc": "Claim history for the CHIT calendar: { day: \"YYYY-MM-DD\", streakDay, amount?, minute?, insured? }."
-      },
-      {
-        "name": "today",
-        "type": "number",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": null,
-        "doc": "\"Today\" for the calendar, ms epoch; defaults to now."
-      },
-      {
         "name": "joined",
         "type": "number",
         "default": null,
@@ -13795,7 +14019,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "When the account was created, ms epoch; the calendar doesn’t page back before it."
+        "doc": "When the account was created, ms epoch (\"member since\")."
       },
       {
         "name": "storageLimitMB",
@@ -14040,28 +14264,6 @@
         "doc": "The section shown, as it opens and each time the user moves to another (for a host that loads a section's data only when it's seen)."
       },
       {
-        "name": "onChit",
-        "type": "() => void",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": null,
-        "doc": ""
-      },
-      {
-        "name": "onClaim",
-        "type": "() => Promise<unknown>",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": null,
-        "doc": "Claim today's CHIT from the calendar, here (as ChitDialog's onClaim): the day says it's claiming until this settles. Takes the place of onChit for the calendar's Claim."
-      },
-      {
         "name": "onEarn",
         "type": "() => void",
         "default": null,
@@ -14148,6 +14350,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "onChitHistory",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Open the claim calendar from the CHIT section (\"Claim history\"): it replaces this one, over the same backdrop (no exit plays). Without it, the row isn't offered."
       },
       {
         "name": "onChitSettings",

@@ -13,9 +13,9 @@ import {
     type StorageStatus,
     type UserSummary,
 } from "@client";
+import type { ClaimDay } from "@openchat/ui/src/features/components/ClaimCalendar.svelte";
 import type {
     ChatSettings,
-    ClaimDay,
     ProfileCommunity,
     SigninMethod,
 } from "@openchat/ui/src/features/components/ProfileDialog.svelte";

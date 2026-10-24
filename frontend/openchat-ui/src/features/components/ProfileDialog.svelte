@@ -3,7 +3,7 @@
      in place; delete account runs a four-step "are you sure" flow; log out confirms first. Esc closes the innermost layer.
      Everything that changes the account goes through the host and waits on its promise (profile save, sign-in methods,
      community names, clear cache, log out, delete account); a rejection keeps the user's input with an error. Actions
-     whose callback is absent are hidden. The CHIT calendar draws `claimHistory`. -->
+     whose callback is absent are hidden. The CHIT section's "Claim history" opens the claim calendar (onChitHistory). -->
 <script lang="ts" module>
   export type ProfileSection =
     | 'profile'
@@ -46,20 +46,6 @@
     adult: boolean;
     underReview: boolean;
     ringtone: 'boring' | 'pleasant' | 'boomboom' | 'twostep' | 'siren';
-  }
-
-  /** One day of the CHIT claim history (UTC calendar days). */
-  export interface ClaimDay {
-    /** YYYY-MM-DD (UTC). */
-    day: string;
-    /** Streak day this claim counted as. */
-    streakDay: number;
-    /** CHIT claimed (absent for insured days). */
-    amount?: number;
-    /** Minute of the UTC day the claim was made. */
-    minute?: number;
-    /** Covered by streak insurance instead of a claim. */
-    insured?: boolean;
   }
 
   export interface ProfileCommunity {
@@ -177,10 +163,6 @@
   };
   const RINGTONES: [ChatSettings['ringtone'], string][] = [['boring', 'ui.profileDialog.ringtones.boring'], ['pleasant', 'ui.profileDialog.ringtones.pleasant'], ['boomboom', 'ui.profileDialog.ringtones.boomboom'], ['twostep', 'ui.profileDialog.ringtones.twostep'], ['siren', 'ui.profileDialog.ringtones.siren']];
 
-  const DAY = 864e5;
-  const dayKey = (t: number) => new Date(t).toISOString().slice(0, 10);
-  const dayStart = (t: number) => Math.floor(t / DAY) * DAY;
-
   const SI_TYPES = {
     passkey: { label: 'ui.profileDialog.signin.passkeys', icon: 'passkey', noun: 'ui.profileDialog.signin.passkey', addLabel: 'ui.profileDialog.signin.addPasskey', addTitle: 'ui.profileDialog.signin.addPasskey', empty: 'ui.profileDialog.signin.noPasskeys' },
     ii: { label: 'ui.profileDialog.signin.iiCaps', icon: 'ii', noun: 'ui.profileDialog.signin.ii', addLabel: 'ui.profileDialog.signin.linkIi', addTitle: 'ui.profileDialog.signin.linkIi', empty: 'ui.profileDialog.signin.noIi' },
@@ -242,8 +224,6 @@
     cover?: string;
     isDiamond?: boolean;
     isVerified?: boolean;
-    /** Today's CHIT can still be claimed. */
-    claimable?: boolean;
     /** Section to open on. */
     section?: ProfileSection;
     /** The sections offered in the nav, for a host that has built only some; defaults to all. */
@@ -257,15 +237,7 @@
     puzzleRemind?: boolean;
     /** Offer the daily puzzle setting; false for a host that has none. Defaults to true. */
     puzzleSetting?: boolean;
-    /** Calendar shows claim times in UTC instead of local time. */
-    chitUtc?: boolean;
-    /** Local time offset used for the calendar's claim times; defaults to this browser's. */
-    utcOffsetMinutes?: number;
-    /** Claim history for the calendar (any order). */
-    claimHistory?: ClaimDay[];
-    /** "Today" for the calendar, ms epoch; defaults to now. */
-    today?: number;
-    /** When the account was created, ms epoch: the calendar doesn't page back before it. Defaults to `today`. */
+    /** When the account was created, ms epoch ("member since"). */
     joined?: number;
     achievementsLeft?: number;
     /** All-time CHIT earned, shown in the delete flow. */
@@ -322,11 +294,9 @@
     /** The section shown, as it opens and each time the user moves to another (for a host that loads a section's data
      *  only when it's seen). */
     onSectionChange?: (section: ProfileSection) => void;
-    /** Open the CHIT dialog: it replaces this one, over the same backdrop (no exit plays). */
-    onChit?: () => void;
-    /** Claim today's CHIT from the calendar, here (as ChitDialog's onClaim): the day says it's claiming until this
-     *  settles. Takes the place of onChit for the calendar's Claim. */
-    onClaim?: () => Promise<unknown>;
+    /** Open the claim calendar from the CHIT section ("Claim history"): it replaces this one, over the same backdrop
+     *  (no exit plays). Without it, the row isn't offered. */
+    onChitHistory?: () => void;
     onEarn?: () => void;
     /** Open the Diamond dialog: it replaces this one, over the same backdrop (no exit plays). */
     onDiamond?: () => void;
@@ -376,7 +346,6 @@
     cover = 'var(--cover-pattern)',
     isDiamond = false,
     isVerified = false,
-    claimable = false,
     section: initialSection = 'profile',
     sections,
     chitEnabled = true,
@@ -385,10 +354,6 @@
     puzzleShown = true,
     puzzleRemind = false,
     puzzleSetting = true,
-    chitUtc = false,
-    utcOffsetMinutes = -new Date().getTimezoneOffset(),
-    claimHistory = [],
-    today: todayProp,
     joined: joinedProp,
     achievementsLeft = 0,
     chitEarned = 0,
@@ -422,8 +387,7 @@
     onClose,
     onBack,
     onSectionChange,
-    onChit,
-    onClaim,
+    onChitHistory,
     onEarn,
     onDiamond,
     onSave,
@@ -451,7 +415,6 @@
   // numbers in the host's locale
   const fmt = (n: number) => Number(n).toLocaleString(i18n.locale ?? 'en');
   // month / weekday names come from Intl in the host's locale
-  const dateFmt = (opts: Intl.DateTimeFormatOptions, t: number) => new Intl.DateTimeFormat(i18n.locale ?? 'en', { timeZone: 'UTC', ...opts }).format(t);
   /** A message as [text, strong] runs: the `bold` placeholders come back as their values, marked strong. */
   type Run = [string, boolean?];
   const rich = (key: string, bold: Record<string, string>, params: I18nParams = {}): Run[] =>
@@ -599,98 +562,8 @@
   const reportTone = $derived(reported >= 25 ? 'var(--status-danger)' : reported >= 10 ? 'var(--status-warning)' : null);
 
   // ---- CHIT ----
-  let monthOffset = $state(0);
-  let hoverDay = $state<number | null>(null);
   const setChit = (patch: ChitSettingsPatch) => onChitSettings?.(patch);
-
-  // the calendar's Claim: claimed here with onClaim (waiting until it settles), or the CHIT dialog
-  let claiming = $state(false);
-  async function claimToday() {
-    if (!onClaim) return handOff(onChit);
-    if (claiming) return;
-    claiming = true;
-    try {
-      await onClaim();
-    } catch {
-      // the host says why
-    } finally {
-      claiming = false;
-    }
-  }
   const puzzleMode = $derived(!puzzleShown ? 'off' : puzzleRemind ? 'remind' : 'show');
-
-  const TODAY = $derived(dayStart(todayProp ?? Date.now()));
-  const JOINED_DAY = $derived(joinedProp === undefined ? 0 : dayStart(joinedProp));
-  const hist = $derived(Object.fromEntries(claimHistory.map((c) => [c.day, c])) as Record<string, ClaimDay>);
-
-  const calendar = $derived.by(() => {
-    const now = new Date(TODAY);
-    const total = now.getUTCFullYear() * 12 + now.getUTCMonth();
-    const joinedAt = new Date(joinedProp ?? TODAY);
-    const minTotal = Math.min(total, joinedAt.getUTCFullYear() * 12 + joinedAt.getUTCMonth());
-    const view = Math.max(minTotal, total - monthOffset);
-    const y = Math.floor(view / 12), mo = view % 12;
-    const lead = new Date(Date.UTC(y, mo, 1)).getUTCDay();
-    const dim = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate();
-    const hhmm = (m: number) => {
-      m = ((m % 1440) + 1440) % 1440;
-      return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-    };
-    type Cell = {
-      day?: number;
-      kind: 'blank' | 'claim' | 'future' | 'insured' | 'claimed' | 'missed';
-      amount?: number;
-      col: number;
-      head?: string;
-      lines?: { text: string; tone: 'ink' | 'chit' | 'online' | 'muted' }[];
-      title?: string;
-    };
-    const cells: Cell[] = [];
-    let chit = 0, claimed = 0, insured = 0;
-    for (let i = 0; i < lead; i++) cells.push({ kind: 'blank', col: i });
-    for (let d = 1; d <= dim; d++) {
-      const ts = Date.UTC(y, mo, d), rec = hist[dayKey(ts)], col = (lead + d - 1) % 7;
-      const head = t('ui.profileDialog.calendar.dayHead', { weekday: dateFmt({ weekday: 'short' }, ts), day: d, month: dateFmt({ month: 'long' }, ts) });
-      if (ts === TODAY && claimable) cells.push({ day: d, kind: 'claim', col, title: t('ui.profileDialog.calendar.claimToday') });
-      // after today, or before the account was made: nothing to claim, nothing missed
-      else if (ts > TODAY || ts < JOINED_DAY) cells.push({ day: d, kind: 'future', col });
-      else if (rec?.insured) {
-        insured++;
-        cells.push({
-          day: d,
-          kind: 'insured',
-          col,
-          head,
-          lines: [
-            { text: t('ui.profileDialog.calendar.insured'), tone: 'online' },
-            { text: t('ui.profileDialog.calendar.streakKept', { day: rec.streakDay }), tone: 'muted' },
-          ],
-        });
-      } else if (rec && rec.amount != null) {
-        chit += rec.amount;
-        claimed++;
-        const time =
-          rec.minute == null
-            ? null
-            : chitUtc
-              ? t('ui.profileDialog.calendar.timeUtc', { time: hhmm(rec.minute) })
-              : t('ui.profileDialog.calendar.timeLocal', { time: hhmm(rec.minute + utcOffsetMinutes) });
-        cells.push({
-          day: d,
-          kind: 'claimed',
-          amount: rec.amount,
-          col,
-          head,
-          lines: [
-            ...(time ? [{ text: t('ui.profileDialog.calendar.claimedAt', { time }), tone: 'ink' as const }] : []),
-            { text: t('ui.profileDialog.calendar.claimedAmount', { amount: rec.amount, day: rec.streakDay }), tone: 'chit' },
-          ],
-        });
-      } else cells.push({ day: d, kind: 'missed', col, title: t('ui.profileDialog.calendar.notClaimed', { day: d, month: dateFmt({ month: 'short' }, ts) }) });
-    }
-    while (cells.length % 7) cells.push({ kind: 'blank', col: cells.length % 7 });
-    return { cells, label: dateFmt({ month: 'long', year: 'numeric' }, Date.UTC(y, mo, 1)), chit, claimed, insured, canPrev: view > minTotal, canNext: view < total, maxOffset: total - minTotal };
-  });
 
   // ---- chats & calls ----
   let chatOverrides = $state<Partial<ChatSettings>>({});
@@ -1440,70 +1313,13 @@
               {@render glyph('chevron-right', 'earn-chevron')}
             </div>
             {/if}
-            <div class="month-bar">
-              <span
-                class="month-step"
-                class:disabled={!calendar.canPrev}
-                onclick={() => (monthOffset = Math.min(calendar.maxOffset, monthOffset + 1))}
-                aria-label={t('ui.profileDialog.calendar.prevMonth')}
-                role="button"
-                tabindex="0"
-                title={t('ui.profileDialog.calendar.prevMonth')}>{@render glyph('back', 'month-glyph')}</span
-              >
-              <div class="month-text">
-                <span class="month-label">{calendar.label}</span>
-                <span class="month-sum"
-                  ><Translate key="ui.profileDialog.calendar.summary" params={{ claimed: calendar.claimed }}
-                    >{#snippet chit()}<span class="chit-ink">{t('ui.profileDialog.delete.chitAmount', { amount: fmt(calendar.chit) })}</span>{/snippet}{#snippet insured()}<span
-                        class:online-ink={calendar.insured > 0}>{t('ui.profileDialog.calendar.insuredCount', { count: calendar.insured })}</span
-                      >{/snippet}</Translate
-                  ></span
-                >
-              </div>
-              <span
-                class="month-step"
-                class:disabled={!calendar.canNext}
-                onclick={() => (monthOffset = Math.max(0, monthOffset - 1))}
-                aria-label={t('ui.profileDialog.calendar.nextMonth')}
-                role="button"
-                tabindex="0"
-                title={t('ui.profileDialog.calendar.nextMonth')}>{@render glyph('chevron-right', 'month-glyph')}</span
-              >
-              <span class="grow"></span>
-              <div class="segments tz">
-                {#each [['ui.profileDialog.calendar.local', false], ['UTC', true]] as [label, utc]}
-                  <span class="tz-option" class:on={chitUtc === utc} onclick={() => setChit({ utc: utc as boolean })} role="button" tabindex="0">{t(label as string)}</span>
-                {/each}
-              </div>
+            {#if onChitHistory}
+            <div class="earn history" onclick={() => handOff(onChitHistory)} role="button" tabindex="0">
+              {@render glyph('calendar', 'earn-glyph')}
+              <div class="earn-text"><span class="earn-title">{t('ui.profileDialog.chit.history')}</span><span class="earn-left">{t('ui.profileDialog.chit.historyHint')}</span></div>
+              {@render glyph('chevron-right', 'earn-chevron')}
             </div>
-            <div class="calendar">
-              {#each [0, 1, 2, 3, 4, 5, 6] as d}<span class="weekday">{dateFmt({ weekday: 'short' }, Date.UTC(2023, 0, 1 + d)).slice(0, 2)}</span>{/each}
-              {#each calendar.cells as cell}
-                <div
-                  class="day {cell.kind}"
-                  class:inert={cell.kind === 'claim' && !onChit && !onClaim}
-                  class:claiming={cell.kind === 'claim' && claiming}
-                  onclick={cell.kind === 'claim' && (onChit || onClaim) ? claimToday : undefined}
-                  aria-label={cell.title ?? ''}
-                  role="button"
-                  tabindex="0"
-                  onmouseenter={cell.lines ? () => (hoverDay = cell.day!) : undefined}
-                  onmouseleave={cell.lines ? () => hoverDay === cell.day && (hoverDay = null) : undefined}
-                  title={cell.title ?? ''}
-                >
-                  <span class="day-num">{cell.day ?? ''}</span>
-                  <span class="day-amount"
-                    >{#if cell.kind === 'insured'}<span class="day-shield"></span>{/if}{cell.kind === 'claim' ? t(claiming ? 'ui.profileDialog.calendar.claiming' : 'ui.profileDialog.calendar.claim') : cell.kind === 'claimed' ? cell.amount : ''}</span
-                  >
-                  {#if cell.lines && hoverDay === cell.day}
-                    <div class="pop" class:start={cell.col === 0} class:end={cell.col === 6}>
-                      <span class="pop-head">{cell.head}</span>
-                      {#each cell.lines as line}<span class="pop-line {line.tone}">{line.text}</span>{/each}
-                    </div>
-                  {/if}
-                </div>
-              {/each}
-            </div>
+            {/if}
           {/if}
         </div>
       {/if}
@@ -3093,226 +2909,6 @@
     width: 14px;
     height: 14px;
     background: var(--status-chit);
-  }
-
-  .month-bar {
-    flex: none;
-    margin-top: 4px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .month-step {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: var(--radius-sm);
-    background: var(--overlay-1);
-    cursor: pointer;
-  }
-
-  .month-step:hover {
-    background: var(--overlay-2);
-  }
-
-  .month-step.disabled {
-    opacity: 0.35;
-    pointer-events: none;
-  }
-
-  .month-glyph {
-    width: 14px;
-    height: 14px;
-    background: var(--ink-2);
-  }
-
-  .month-text {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    min-width: 0;
-    padding-inline: 4px;
-  }
-
-  .month-label {
-    font: var(--weight-bold) 15px/1 var(--font-sans);
-    color: var(--ink);
-  }
-
-  .month-sum {
-    font: var(--weight-medium) 11px/1 var(--font-mono);
-    color: var(--ink-3);
-    white-space: nowrap;
-  }
-
-  .chit-ink {
-    color: var(--status-chit);
-  }
-
-  .online-ink {
-    color: var(--status-online);
-  }
-
-  .tz-option {
-    display: flex;
-    align-items: center;
-    height: 24px;
-    padding: 0 10px;
-    border-radius: 6px;
-    background: transparent;
-    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-3);
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .tz-option.on {
-    background: var(--overlay-2);
-    color: var(--ink);
-  }
-
-  .calendar {
-    flex: none;
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 4px;
-  }
-
-  .weekday {
-    padding: 4px 0;
-    text-align: center;
-    font: var(--weight-medium) 10.5px/1 var(--font-sans);
-    color: var(--ink-4);
-  }
-
-  .day {
-    --day-ink: var(--ink-4);
-    --day-amount: var(--status-chit);
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    height: 48px;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    cursor: default;
-    user-select: none;
-  }
-
-  .day.claim {
-    --day-ink: var(--ink);
-    box-shadow: inset 0 0 0 1.5px var(--status-chit);
-    cursor: pointer;
-  }
-
-  /* nothing to open without onChit (or onClaim), nor while claiming */
-  .day.claim.inert,
-  .day.claim.claiming {
-    cursor: default;
-  }
-
-  .day.future {
-    --day-ink: var(--ink-3);
-    opacity: 0.5;
-  }
-
-  .day.missed {
-    --day-ink: var(--ink-3);
-  }
-
-  .day.insured {
-    --day-ink: var(--ink);
-    --day-amount: var(--status-online);
-    background: color-mix(in srgb, var(--status-online) 12%, transparent);
-  }
-
-  .day.claimed {
-    --day-ink: var(--ink);
-    background: var(--status-chit-soft);
-  }
-
-  .day-num {
-    font: var(--weight-semibold) 12px/1 var(--font-sans);
-    color: var(--day-ink);
-  }
-
-  .day-amount {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    height: 10px;
-    font: var(--weight-semibold) 10px/1 var(--font-mono);
-    color: var(--day-amount);
-  }
-
-  .day-shield {
-    width: 10px;
-    height: 10px;
-    background: var(--day-amount);
-    mask: var(--icon-shield) center/contain no-repeat;
-  }
-
-  .pop {
-    position: absolute;
-    z-index: 5;
-    bottom: calc(100% + 6px);
-    inset-inline-start: 50%;
-    transform: translateX(-50%);
-    width: max-content;
-    max-width: 240px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 10px 12px;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    box-shadow:
-      inset 0 0 0 1px var(--line-2),
-      0 12px 32px rgba(0, 0, 0, 0.5);
-    pointer-events: none;
-    text-align: start;
-  }
-
-  .pop.start {
-    inset-inline-start: 0;
-    transform: none;
-  }
-
-  .pop.end {
-    inset-inline-start: auto;
-    inset-inline-end: 0;
-    transform: none;
-  }
-
-  .pop-head {
-    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink);
-  }
-
-  .pop-line {
-    font: var(--weight-medium) 11.5px/1.2 var(--font-sans);
-    white-space: nowrap;
-  }
-
-  .pop-line.ink {
-    color: var(--ink);
-  }
-
-  .pop-line.chit {
-    color: var(--status-chit);
-  }
-
-  .pop-line.online {
-    color: var(--status-online);
-  }
-
-  .pop-line.muted {
-    color: var(--ink-3);
   }
 
   /* ---- chats & calls ---- */

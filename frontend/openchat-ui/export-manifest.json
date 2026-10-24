@@ -9,7 +9,7 @@
   },
   "icons": {
     "source": "lib/icons.js",
-    "count": 150
+    "count": 152
   },
   "components": {
     "ActivityRow": {

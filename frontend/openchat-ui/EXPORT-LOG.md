@@ -282,3 +282,13 @@
 - `onSearch?: (query, tab: 'add' | 'invite') => Promise<InvitePerson[]>`. As the Add or Invite query changes, the host searches (250ms debounce, latest query wins), and its results stand in for filtering `communityMembers` / `people`; a failed search falls back to that filter. A picked person found by a search stays shown in the chips. The dialog could only filter the lists it was given, so it couldn't find anyone the app hadn't loaded.
 - The footer (Send / Add) is shown on the Add tab with `canAdd` and on the others with `canInvite`; it followed `canInvite` alone, so someone who could add but not invite couldn't send. "Frequently contacted" isn't shown over an empty list.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-24 — The claim calendar in a dialog of its own (the design's changes of 2026-10-22), by hand
+- Built from the design's brief (no export of the changes yet): the claim calendar moves out of Profile → CHIT into `ClaimHistoryDialog`, opened from the CHIT dialog.
+- `ClaimCalendar` (new): the calendar `ProfileDialog` drew, taken out of it. Always six weeks (42 cells), so its height doesn't change between months; the months either side show dimmed (40%), inert, with no claims. Cells 58px, `--radius-md`, the day 13.5px semibold, the amount mono 11px, weekday initials 11.5px; a claimed day is accent-tinted, today ringed. A claimed or insured day's popover shows on hover, and on a tap (touch has no hover). Props: `claimHistory`, `today`, `joined`, `claimable`, `utc`, `utcOffsetMinutes`, `onClaim`, `onUtcChange` (the brief's `streak` / `claimMinute` are its demo data). `ClaimDay` moves here from `ProfileDialog`.
+- `ClaimHistoryDialog` (new): max width 600px, padding 20px, 28px between blocks; title bar with a back arrow (`onBack`, `backLabel`), the calendar icon, "Claim history" and the streak, close; `ClaimCalendar`; a streak insurance row (`insured` / `used`, `onInsurance`). Back and the insurance hand off with no exit.
+- `ChitDialog`: under the Claim button, "View claim calendar" (after claiming, "Claimed · view calendar") with a CHIT-coloured calendar icon → `onAction('calendar')`.
+- `ProfileDialog`: the CHIT section's calendar is gone, and with it `claimHistory`, `today`, `claimable`, `chitUtc`, `utcOffsetMinutes`, `onChit` and `onClaim`; a "Claim history" row (`onChitHistory`) takes its place.
+- Icons: `calendar` and `minus` (icons.js, icons.css, the manifest's count).
+- `meta.json`, the docs' samples and the Rewards section updated.
+- Not in the design export: to go back to it when the export has these (the app's `GAPS.md` lists it).

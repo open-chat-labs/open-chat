@@ -590,7 +590,7 @@
     </div>
     <Button variant="secondary" label={toast ? 'docs.features.achievements.playAgain' : 'docs.features.achievements.unlock'} onClick={() => (toast = toastRuns += 1)} />
   </Frame>
-  {@render openers(['AchievementsDialog', 'ChitDialog', 'StreakInsuranceDialog', 'LeaderboardDialog', 'MemeFighterDialog'])}
+  {@render openers(['AchievementsDialog', 'ChitDialog', 'ClaimHistoryDialog', 'StreakInsuranceDialog', 'LeaderboardDialog', 'MemeFighterDialog'])}
 </Section>
 
 <Section {...sec(features, 'pages-landing')}>

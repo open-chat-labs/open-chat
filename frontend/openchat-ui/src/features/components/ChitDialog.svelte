@@ -1,12 +1,12 @@
 <!-- Daily CHIT: streak ring (fills toward the next milestone), collected balance, milestone bar, claim button,
      the daily puzzle card, streak insurance and "ways to earn". Claiming goes to the host (onClaim): the button waits
      on its promise, shows the claim only once it resolves and an error if it rejects; the host then passes the new
-     streak / balance. Without onClaim there is no claim button. onAction: settings | leaderboard | insurance | earn |
+     streak / balance. Without onClaim there is no claim button. onAction: settings | leaderboard | insurance | earn | calendar |
      puzzle… (see DailyPuzzleCard). -->
 <script lang="ts" module>
   import type { PuzzleAction } from './DailyPuzzleCard.svelte';
 
-  export type ChitAction = 'settings' | 'leaderboard' | 'insurance' | 'earn' | PuzzleAction;
+  export type ChitAction = 'settings' | 'leaderboard' | 'insurance' | 'earn' | 'calendar' | PuzzleAction;
 </script>
 
 <script lang="ts">
@@ -166,6 +166,10 @@
   const back = () => !flow.locked && onBack?.();
 </script>
 
+{#snippet calendarLink(label: string)}
+  <span class="calendar-link" onclick={() => act('calendar')} role="button" tabindex="0"><span class="calendar-glyph"></span>{t(label)}</span>
+{/snippet}
+
 <div class="layer oc-dialog-layer" class:closing={flow.closing} data-screen-label="CHIT" role="dialog" aria-modal="true" use:modal={flow.escape(onClose)}>
   <div class="oc-veil" onclick={close} aria-hidden="true"></div>
 
@@ -231,12 +235,14 @@
               <span class="claim-label">{t(flow.busy ? 'ui.chitDialog.claiming' : 'ui.chitDialog.claim', { amount: fmt(daily) })}</span>
             </div>
           {/if}
+          {@render calendarLink('ui.chitDialog.viewCalendar')}
           <span class="note" class:error={flow.failed} role={flow.failed ? 'alert' : undefined}>{t(flow.failed ? 'ui.chitDialog.claimFailed' : 'ui.chitDialog.claimNote')}</span>
         {:else}
           <div class="claimed">
             <span class="check"></span>
             <span class="claimed-label">{t('ui.chitDialog.comeBackIn', { countdown })}</span>
           </div>
+          {@render calendarLink('ui.chitDialog.claimedViewCalendar')}
           <span class="note strong">{t('ui.chitDialog.comeBackTomorrow')}</span>
         {/if}
         <div class="burst" aria-hidden="true"><Confetti fire={claimBurst} /></div>
@@ -594,6 +600,30 @@
     color: var(--ink-4);
     text-align: center;
     text-wrap: pretty;
+  }
+
+  .calendar-link {
+    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font: var(--weight-semibold) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+
+  .calendar-link:hover {
+    color: var(--ink);
+    background: var(--overlay-1);
+  }
+
+  .calendar-glyph {
+    width: 14px;
+    height: 14px;
+    background: var(--status-chit);
+    mask: var(--icon-calendar) center/contain no-repeat;
   }
 
   .note.error {
