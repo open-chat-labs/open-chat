@@ -2409,9 +2409,42 @@ pub enum AccountLink {
     Unlinked,
 }
 
+// A tip held for an account no one has linked is paid out of the UserIndex less the fee, in one
+// payment, so it must be more than the fee, and fit in the payment
+pub fn check_tip_can_be_held(transfer: &types::PendingCryptoTransaction) -> OCResult {
+    let amount = transfer.units();
+    if amount <= transfer.fee() {
+        Err(OCErrorCode::InvalidRequest.with_message("A tip for an account no one has linked must be more than the fee"))
+    } else if amount > u64::MAX as u128 {
+        Err(OCErrorCode::InvalidRequest.with_message("A tip for an account no one has linked is too large"))
+    } else {
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_tip_held_for_an_unlinked_account_must_be_more_than_the_fee_and_fit_in_a_payment() {
+        let transfer = |amount| {
+            types::PendingCryptoTransaction::ICRC2(types::icrc2::PendingCryptoTransaction {
+                ledger: candid::Principal::anonymous(),
+                token_symbol: "ICP".to_string(),
+                amount,
+                from: candid::Principal::anonymous().into(),
+                to: candid::Principal::anonymous().into(),
+                fee: 10_000,
+                memo: None,
+                created: 0,
+            })
+        };
+        assert!(check_tip_can_be_held(&transfer(10_000)).is_err());
+        assert!(check_tip_can_be_held(&transfer(10_001)).is_ok());
+        assert!(check_tip_can_be_held(&transfer(u64::MAX as u128)).is_ok());
+        assert!(check_tip_can_be_held(&transfer(u64::MAX as u128 + 1)).is_err());
+    }
     use chat_events::TextContentInternal;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};

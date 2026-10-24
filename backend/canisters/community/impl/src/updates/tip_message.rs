@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use community_canister::tip_message::*;
 use constants::MEMO_TIP;
-use group_chat_core::{AccountLink, TipRecipient};
+use group_chat_core::{AccountLink, TipRecipient, check_tip_can_be_held};
 use ledger_utils::{TransferRecipient, UserTransfer, format_crypto_amount_with_symbol};
 use local_user_index_canister::{BridgedUserTipped, CommunityEvent};
 use multi_user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
@@ -106,7 +106,7 @@ fn prepare(
             return Ok(PrepareResult::LookUpLinkedUser(user, state.data.local_user_index_canister_id));
         }
         TipRecipient::UnlinkedAccount(account) => {
-            check_can_hold(&args.transfer)?;
+            check_tip_can_be_held(&args.transfer)?;
             Payee::UnlinkedAccount(account)
         }
     };
@@ -144,6 +144,11 @@ fn prepare(
         this_canister_id,
     )? {
         UserTransfer::Icrc2(transfer) => Ok(PrepareResult::Icrc2(Box::new(TipToMake { c2c_args, transfer }))),
+        // A certified transfer has been made already, so one into an account's tips subaccount
+        // would be stranded there if the tip were then refused, eg. as someone had linked it since
+        UserTransfer::Certified(_) if matches!(payee, Payee::UnlinkedAccount(_)) => {
+            Err(OCErrorCode::InvalidRequest.with_message("A tip for an account no one has linked must be an ICRC2 transfer"))
+        }
         UserTransfer::Certified(transfer) => {
             let now = state.env.now();
             let completed = state.data.certified_transfers.verify(
@@ -172,17 +177,6 @@ enum Payee {
     UnlinkedAccount(BridgedUserId),
 }
 
-// A tip held for an account is paid out of it less a fee, in one payment, so must be more than the
-// fee, and fit in the payment
-fn check_can_hold(transfer: &types::PendingCryptoTransaction) -> OCResult {
-    let amount = transfer.units();
-    if amount <= transfer.fee() || amount > u64::MAX as u128 {
-        Err(OCErrorCode::InvalidRequest.with_message("A tip for an account no one has linked must be more than the fee"))
-    } else {
-        Ok(())
-    }
-}
-
 // What is recorded of a tip once its transfer has been made
 struct TipToRecord {
     channel_id: ChannelId,
@@ -205,6 +199,25 @@ fn tip_message_with_completed_transfer(
     args: TipToRecord,
     state: &mut RuntimeState,
 ) -> OCResult {
+    // The UserIndex holds a tip for an account no one has linked. It's told first, as the funds are
+    // there already, so even if the tip can't be recorded on the message, eg. as the channel has
+    // been deleted since, it's still claimed or refunded.
+    if let Payee::UnlinkedAccount(account) = args.payee {
+        state.push_event_to_local_user_index(CommunityEvent::BridgedUserTipped(Box::new(BridgedUserTipped {
+            channel_id: Some(args.channel_id),
+            thread_root_message_index: args.thread_root_message_index,
+            message_id: args.message_id,
+            account,
+            tipper: user_id,
+            refund_to: from,
+            ledger: args.ledger,
+            token_symbol: args.token_symbol.clone(),
+            amount: args.amount,
+            fee: args.fee,
+            decimals: args.decimals,
+        })));
+    }
+
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
 
@@ -276,23 +289,6 @@ fn tip_message_with_completed_transfer(
         state.push_notification(Some(user_id), vec![recipient_id], notification);
         state.push_event_to_user(recipient_id, event, now);
         state.notify_user_of_achievement(recipient_id, Achievement::HadMessageTipped, now);
-    }
-
-    // The UserIndex holds a tip for an account no one has linked
-    if let Payee::UnlinkedAccount(account) = args.payee {
-        state.push_event_to_local_user_index(CommunityEvent::BridgedUserTipped(Box::new(BridgedUserTipped {
-            channel_id: Some(args.channel_id),
-            thread_root_message_index: args.thread_root_message_index,
-            message_id: args.message_id,
-            account,
-            tipper: user_id,
-            refund_to: from,
-            ledger: args.ledger,
-            token_symbol: args.token_symbol,
-            amount: args.amount,
-            fee: args.fee,
-            decimals: args.decimals,
-        })));
     }
 
     state.push_bot_notification(result.bot_notification);
