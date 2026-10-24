@@ -2338,24 +2338,6 @@
         "publicKey": "OpenChat public key",
         "storage": "OpenStorage index canister"
       },
-      "calendar": {
-        "claim": "Claim",
-        "claiming": "Claiming…",
-        "claimedAmount": "+{amount} CHIT · day {day} of streak",
-        "claimedAt": "Claimed at {time}",
-        "claimToday": "Claim today’s CHIT",
-        "dayHead": "{weekday} {day} {month}",
-        "insured": "Missed · covered by insurance",
-        "insuredCount": "{count} insured",
-        "local": "Local",
-        "nextMonth": "Next month",
-        "notClaimed": "{day} {month} · not claimed",
-        "prevMonth": "Previous month",
-        "streakKept": "Streak kept at day {day}",
-        "summary": "{chit} · {claimed} claimed · {insured}",
-        "timeLocal": "{time} local time",
-        "timeUtc": "{time} UTC"
-      },
       "chats": {
         "activeSpeaker": "Start in speaker view",
         "activeSpeakerHint": "Calls open with whoever is talking shown large, instead of a grid.",
