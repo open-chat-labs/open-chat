@@ -1,5 +1,5 @@
 import { navigate } from "@src/utils/navigation";
-import { linkedDialog, openLinkedDialog, type LinkedDialog } from "./dialogs";
+import { linkedDialog, openLinkedDialog, shownLinkedDialog, type LinkedDialog } from "./dialogs";
 
 // Linked dialogs opened one from another (the CHIT dialog's leaderboard, the profile on its CHIT
 // section from the CHIT dialog …) make a chain. Each takes the last one's place over the same
@@ -13,7 +13,17 @@ import { linkedDialog, openLinkedDialog, type LinkedDialog } from "./dialogs";
  */
 export type Chain = { behind: string[]; at: string; reached: boolean };
 
-const state = $state<{ chain: Chain | undefined }>({ chain: undefined });
+// `chitOff`: whether the CHIT dialogs are hidden (DialogHost follows the setting), as a dialog behind
+// may be one of them
+const state = $state<{ chain: Chain | undefined; chitOff: boolean }>({
+    chain: undefined,
+    chitOff: false,
+});
+
+/** CHIT has been turned on or off (DialogHost follows the setting). */
+export function chitTurnedOff(off: boolean): void {
+    state.chitOff = off;
+}
 
 /**
  * The chain once the dialog at `from` opens the one at `to` in its place: one more behind, or,
@@ -34,6 +44,16 @@ export function chainBack(
     const to = chain.behind[chain.behind.length - 1];
     const behind = chain.behind.slice(0, -1);
     return { to, chain: behind.length === 0 ? undefined : { behind, at: to, reached: false } };
+}
+
+/**
+ * Whether the dialog at `url` would show if gone back to: not a CHIT dialog once CHIT is turned off
+ * (in the profile opened from the CHIT dialog's settings), which would leave no dialog over the
+ * backdrop handed to it.
+ */
+export function shows(url: string, chitOff: boolean): boolean {
+    const query = new URLSearchParams(url.split("?", 2)[1] ?? "");
+    return shownLinkedDialog(linkedDialog(query), chitOff) !== undefined;
 }
 
 /**
@@ -79,10 +99,18 @@ export function openFromDialog(dialog: LinkedDialog): void {
     navigate(to, "auto");
 }
 
-/** Whether the dialog showing was opened from another, which its back arrow returns to. */
+/**
+ * Whether the dialog showing was opened from another, which its back arrow returns to: not when
+ * that one wouldn't show now (shows), so × closes them all.
+ */
 export function canGoBack(): boolean {
     const chain = state.chain;
-    return chain !== undefined && chain.behind.length > 0 && sameUrl(chain.at, currentUrl());
+    return (
+        chain !== undefined &&
+        chain.behind.length > 0 &&
+        sameUrl(chain.at, currentUrl()) &&
+        shows(chain.behind[chain.behind.length - 1], state.chitOff)
+    );
 }
 
 /** Back to the dialog the one showing was opened from, in its place over the same backdrop. */

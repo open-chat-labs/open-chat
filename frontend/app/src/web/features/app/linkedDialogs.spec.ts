@@ -1,4 +1,11 @@
-import { chainAt, chainBack, chainOpened, sameUrl, type Chain } from "./linkedDialogs.svelte";
+import {
+    chainAt,
+    chainBack,
+    chainOpened,
+    sameUrl,
+    shows,
+    type Chain,
+} from "./linkedDialogs.svelte";
 
 const CHIT = "/chats?chit";
 const HOF = "/chats?hof";
@@ -62,5 +69,16 @@ describe("the same URL", () => {
     test("so another flag in the URL still finds the dialog behind", () => {
         const b = chainOpened(undefined, "/chats?threads&chit", "/chats?threads&hof");
         expect(chainAt(b, "/chats?threads=&hof")?.reached).toBe(true);
+    });
+});
+
+describe("the dialog a back arrow returns to", () => {
+    test("shows unless it's a CHIT dialog and CHIT has been turned off, so no arrow goes to nothing", () => {
+        expect(shows(CHIT, false)).toBe(true);
+        // turned off in the profile the CHIT dialog's settings opened
+        expect(shows(CHIT, true)).toBe(false);
+        expect(shows("/chats?chit=earn", true)).toBe(false);
+        expect(shows(PROFILE, true)).toBe(true);
+        expect(shows("/chats", false)).toBe(false);
     });
 });
