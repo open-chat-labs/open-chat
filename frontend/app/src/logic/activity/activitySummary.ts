@@ -1,4 +1,4 @@
-import type { Message, MessageActivityEvent, ResourceKey } from "@client";
+import { bridgedFrom, type Message, type MessageActivityEvent, type ResourceKey } from "@client";
 import { i18nKey } from "@src/i18n/i18n";
 import { totalVotes } from "@src/utils/polls";
 
@@ -42,6 +42,29 @@ export function activitySummary(
         case "p2p_swap_accepted":
             return i18nKey("activity.p2pSwapAccepted", { username });
     }
+}
+
+/** The activities whose message is the one the event's user sent, eg. a reply. */
+const SENT_BY_ACTOR: ReadonlySet<MessageActivityEvent["activity"]> = new Set<
+    MessageActivityEvent["activity"]
+>(["mention", "quote_reply", "crypto"]);
+
+/**
+ * Whether the event's user is a bridge bot which relayed the event's message from another
+ * platform, so whoever did it is the message's relayed author, and is named as the message's
+ * author is (see `messageAuthorName`), not as the bot. Only for an activity whose message is the
+ * one its user sent: a reaction's or a tip's message is the reader's own.
+ */
+export function isByRelayedAuthor(
+    event: Omit<MessageActivityEvent, "message">,
+    message: Message | undefined,
+): message is Message {
+    return (
+        message !== undefined &&
+        SENT_BY_ACTOR.has(event.activity) &&
+        event.userId === message.sender &&
+        bridgedFrom(message.senderContext) !== undefined
+    );
 }
 
 function withOthers(

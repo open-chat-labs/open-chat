@@ -10,7 +10,7 @@ import {
     type ResourceKey,
 } from "@client";
 import type { ActivityItem } from "@openchat/ui/src/features/components/ActivityPanel.svelte";
-import { activitySummary } from "@src/logic/activity/activitySummary";
+import { activitySummary, isByRelayedAuthor } from "@src/logic/activity/activitySummary";
 import { pickById } from "../../pickById";
 
 // The activity feed's events to ActivityPanel's items (DATA.md, ActivityPanel), in the old feed's
@@ -73,9 +73,13 @@ export function activityItem(event: MessageActivityEvent, ctx: ActivityContext):
         id,
         day: ctx.day(event.timestamp),
         title: ctx.text(
-            activitySummary(event, event.message, {
+            activitySummary(event, message, {
                 me: ctx.me,
-                username: event.userId === undefined ? ctx.anon : name(event.userId, ctx),
+                username: isByRelayedAuthor(event, message)
+                    ? ctx.author(message)
+                    : event.userId === undefined
+                      ? ctx.anon
+                      : name(event.userId, ctx),
                 displayName: (userId) => name(userId, ctx),
             }),
         ),
