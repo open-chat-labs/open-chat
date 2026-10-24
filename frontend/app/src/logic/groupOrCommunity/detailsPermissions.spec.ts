@@ -74,6 +74,9 @@ describe("details permissions", () => {
                 .canOpenInvite;
         expect(open(true)).toBe(true);
         expect(open(false)).toBe(false);
+        // someone who may add members but not invite still gets the dialog's Add tab
+        const adder = { ...member, canAddMembers: () => true } as never as OpenChat;
+        expect(chatDetailsPermissions(adder, channel, community, false).canOpenInvite).toBe(true);
     });
 });
 
