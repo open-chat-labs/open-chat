@@ -12,11 +12,12 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use testing::rng::random_string;
+use testing::rng::{random_from_u128, random_string};
 use types::{
     BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, BridgePlatform, BridgedUser, CanisterId, Chat,
-    ChatEvent, DiscordUser, Empty, EventsResponse, MessageContent, MessageId, MessageIndex, MessagePermission,
-    PendingCryptoTransaction, SenderContext, TelegramUser, TextContent, TwitchUser, UnitResult, UserId, icrc1, icrc2,
+    ChatEvent, DiscordUser, Empty, EventIndex, EventsResponse, GroupReplyContext, MessageContent, MessageContentInitial,
+    MessageId, MessageIndex, MessagePermission, PendingCryptoTransaction, SenderContext, TelegramUser, TextContent, TwitchUser,
+    UnitResult, UserId, icrc1, icrc2,
 };
 use user_index_canister::link_bridged_user::Response as LinkResponse;
 use user_index_canister::start_bridged_user_link::Response as StartLinkResponse;
@@ -690,6 +691,248 @@ fn tips_on_relayed_messages_go_to_whoever_linked_the_account(in_community: bool)
     wait_for_bridge_bot_everywhere(env, canister_ids, BridgePlatform::Telegram, None);
 }
 
+// Reactions and replies to a relayed message are for the OpenChat user who linked the account it came
+// from, as they are for a message's sender, and only if they're in the chat
+#[test_case(true; "in a channel")]
+#[test_case(false; "in a group")]
+fn reactions_and_replies_on_relayed_messages_go_to_whoever_linked_the_account(in_community: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let member = client::register_user(env, canister_ids);
+    let outsider = client::register_user(env, canister_ids);
+    let (chat, location, chat_canister): (Chat, BotInstallationLocation, CanisterId) = if in_community {
+        let community_id =
+            client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+        let channel_id =
+            client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+        client::community::happy_path::join_channel(env, member.principal, community_id, channel_id);
+        // In the community but not the channel, so only the channel's membership keeps activity
+        // from them, as their MultiUser canister takes it from any community they're in. Joining
+        // the community joins its public channels, so they leave this one.
+        client::community::happy_path::join_community(env, outsider.principal, community_id);
+        client::community::happy_path::leave_channel(env, outsider.principal, community_id, channel_id);
+        (
+            Chat::Channel(community_id, channel_id),
+            BotInstallationLocation::Community(community_id),
+            community_id.into(),
+        )
+    } else {
+        let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+        client::group::happy_path::join_group(env, member.principal, group_id);
+        (
+            Chat::Group(group_id),
+            BotInstallationLocation::Group(group_id),
+            group_id.into(),
+        )
+    };
+    let local_user_index = canister_ids.local_user_index(env, chat_canister);
+    let user_index = canister_ids.user_index;
+
+    let (bot_id, bot_principal) = register_bot(env, &owner, user_index, random_string(), random_string());
+    let permissions = BotPermissions::default().with_message(&HashSet::from_iter([MessagePermission::Text]));
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        location,
+        bot_id,
+        permissions.clone(),
+        Some(permissions),
+    );
+    let operator = client::register_user(env, canister_ids);
+    client::user_index::happy_path::add_platform_operator(env, *controller, user_index, operator.user_id);
+    tick_many(env, 3);
+    let response = set_bridge_bot(env, operator.principal, user_index, BridgePlatform::Telegram, Some(bot_id));
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    wait_for_bridge_bot_everywhere(env, canister_ids, BridgePlatform::Telegram, Some(bot_id));
+
+    let telegram_account = |id| {
+        BridgedUser::Telegram(TelegramUser {
+            id,
+            username: None,
+            display_name: random_string(),
+            photo_id: None,
+        })
+    };
+    let owners_account = telegram_account(445566778);
+    let outsiders_account = telegram_account(556677889);
+    // No one links this one
+    let strangers_account = telegram_account(667788990);
+    let relay = |env: &mut PocketIc, from: &BridgedUser, replies_to: Option<EventIndex>| {
+        let response = send_reply_in_thread(env, bot_principal, local_user_index, chat, None, replies_to, from.clone());
+        match response {
+            SendResponse::Success(result) => (result.message_id, result.event_index),
+            response => panic!("{response:?}"),
+        }
+    };
+    let react = |env: &mut PocketIc, user: &User, message_id: MessageId| match chat {
+        Chat::Channel(community_id, channel_id) => {
+            client::community::happy_path::add_reaction(env, user, community_id, channel_id, "👍", message_id)
+        }
+        Chat::Group(group_id) => client::group::happy_path::add_reaction(env, user, group_id, "👍", message_id),
+        Chat::Direct(_) => unreachable!(),
+    };
+    // Sends a text message, replying to the message at `replies_to` if given
+    let send_text = |env: &mut PocketIc, user: &User, replies_to: Option<EventIndex>| {
+        let message_id: MessageId = random_from_u128();
+        let content = MessageContentInitial::Text(TextContent { text: random_string() });
+        let replies_to = replies_to.map(|event_index| GroupReplyContext { event_index });
+        let event_index = match chat {
+            Chat::Channel(community_id, channel_id) => {
+                client::community::happy_path::send_message(
+                    env,
+                    user,
+                    community_id,
+                    channel_id,
+                    None,
+                    content,
+                    replies_to,
+                    Some(message_id),
+                )
+                .event_index
+            }
+            Chat::Group(group_id) => {
+                client::group::happy_path::send_message(env, user, group_id, None, content, replies_to, Some(message_id))
+                    .event_index
+            }
+            Chat::Direct(_) => unreachable!(),
+        };
+        (message_id, event_index)
+    };
+    let has_activity = |env: &PocketIc, user: &User, activity: MessageActivity, message_id: MessageId, by: UserId| {
+        client::user::happy_path::message_activity_feed(env, user, 0)
+            .events
+            .iter()
+            .any(|e| e.activity == activity && e.message_id == message_id && e.user_id == Some(by))
+    };
+    let wait_for_activity = |env: &mut PocketIc, user: &User, activity: MessageActivity, message_id: MessageId, by: UserId| {
+        for _ in 0..20 {
+            if has_activity(env, user, activity, message_id, by) {
+                return;
+            }
+            env.tick();
+        }
+        panic!(
+            "{activity:?} activity on {message_id:?} by {by} never reached {}",
+            user.user_id
+        );
+    };
+
+    // No one has linked the account, so there's no one to tell of a reaction
+    let (unlinked_message_id, _) = relay(env, &owners_account, None);
+    react(env, &member, unlinked_message_id);
+
+    let links_before = bridged_user_links(env, canister_ids);
+    let code = start_link(env, owner.principal, user_index, BridgePlatform::Telegram);
+    let response = link(env, bot_principal, user_index, owners_account.clone(), &code);
+    assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
+    wait_for_bridged_user_links(env, canister_ids, &links_before, 1);
+
+    // Once it's linked, whoever linked it is told of reactions to its messages
+    let (message_id, event_index) = relay(env, &owners_account, None);
+    react(env, &member, message_id);
+    wait_for_activity(env, &owner, MessageActivity::Reaction, message_id, member.user_id);
+
+    // And of replies to them, in which they're mentioned
+    let (reply_id, _) = send_text(env, &member, Some(event_index));
+    wait_for_activity(env, &owner, MessageActivity::QuoteReply, reply_id, member.user_id);
+    let mentions = match chat {
+        Chat::Channel(community_id, channel_id) => {
+            client::community::happy_path::channel_summary(env, &owner, community_id, channel_id)
+                .membership
+                .unwrap()
+                .mentions
+        }
+        Chat::Group(group_id) => {
+            client::group::happy_path::summary(env, owner.principal, group_id)
+                .membership
+                .unwrap()
+                .mentions
+        }
+        Chat::Direct(_) => unreachable!(),
+    };
+    assert!(mentions.iter().any(|m| m.message_id == reply_id), "{mentions:?}");
+
+    // Including replies relayed from the other platform, which before reached no one, even when they
+    // replied to an OpenChat user's message
+    let (relayed_reply_id, _) = relay(env, &strangers_account, Some(event_index));
+    wait_for_activity(env, &owner, MessageActivity::QuoteReply, relayed_reply_id, bot_id);
+    let (_, members_event_index) = send_text(env, &member, None);
+    let (relayed_reply_to_member_id, _) = relay(env, &strangers_account, Some(members_event_index));
+    wait_for_activity(env, &member, MessageActivity::QuoteReply, relayed_reply_to_member_id, bot_id);
+
+    // Whoever linked an account isn't told of activity on its messages if they aren't in the chat
+    let code = start_link(env, outsider.principal, user_index, BridgePlatform::Telegram);
+    let response = link(env, bot_principal, user_index, outsiders_account.clone(), &code);
+    assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
+    wait_for_bridged_user_links(env, canister_ids, &links_before, 2);
+    let (outsiders_message_id, _) = relay(env, &outsiders_account, None);
+    react(env, &member, outsiders_message_id);
+
+    // Nor of their own reactions or replies, nor of replies relayed from the same account
+    react(env, &owner, message_id);
+    let (own_reply_id, _) = send_text(env, &owner, Some(event_index));
+    let (own_relayed_reply_id, _) = relay(env, &owners_account, Some(event_index));
+
+    // Activity for the owner is sent in order, so once this arrives, none of the above is still to come
+    let (last_message_id, _) = relay(env, &owners_account, None);
+    react(env, &member, last_message_id);
+    wait_for_activity(env, &owner, MessageActivity::Reaction, last_message_id, member.user_id);
+    tick_many(env, 5);
+
+    assert!(!has_activity(
+        env,
+        &owner,
+        MessageActivity::Reaction,
+        unlinked_message_id,
+        member.user_id
+    ));
+    assert!(!has_activity(
+        env,
+        &owner,
+        MessageActivity::Reaction,
+        message_id,
+        owner.user_id
+    ));
+    assert!(!has_activity(
+        env,
+        &owner,
+        MessageActivity::QuoteReply,
+        own_reply_id,
+        owner.user_id
+    ));
+    assert!(!has_activity(
+        env,
+        &owner,
+        MessageActivity::QuoteReply,
+        own_relayed_reply_id,
+        bot_id
+    ));
+    assert!(
+        client::user::happy_path::message_activity_feed(env, &outsider, 0)
+            .events
+            .iter()
+            .all(|e| e.message_id != outsiders_message_id)
+    );
+
+    // Leaves the pooled env as it was
+    for account in [&owners_account, &outsiders_account] {
+        let response = unlink(env, bot_principal, user_index, account);
+        assert!(matches!(response, UnitResult::Success), "{response:?}");
+    }
+    let response = set_bridge_bot(env, operator.principal, user_index, BridgePlatform::Telegram, None);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    wait_for_bridge_bot_everywhere(env, canister_ids, BridgePlatform::Telegram, None);
+}
+
 // Tips a group or channel message, addressing the transfer to `recipient`, without approving it
 // first, so a tip refused before its transfer needs no funds
 fn tip(
@@ -969,6 +1212,18 @@ fn send_in_thread(
     thread: Option<MessageIndex>,
     bridged_from: BridgedUser,
 ) -> SendResponse {
+    send_reply_in_thread(env, bot_principal, local_user_index, chat, thread, None, bridged_from)
+}
+
+fn send_reply_in_thread(
+    env: &mut PocketIc,
+    bot_principal: Principal,
+    local_user_index: CanisterId,
+    chat: Chat,
+    thread: Option<MessageIndex>,
+    replies_to: Option<EventIndex>,
+    bridged_from: BridgedUser,
+) -> SendResponse {
     client::local_user_index::bot_send_message(
         env,
         bot_principal,
@@ -977,7 +1232,7 @@ fn send_in_thread(
             chat_context: BotChatContext::Autonomous(chat),
             thread,
             message_id: None,
-            replies_to: None,
+            replies_to,
             content: BotMessageContent::Text(TextContent {
                 text: "Hello from the other side".to_string(),
             }),

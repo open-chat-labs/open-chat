@@ -103,4 +103,8 @@ impl Mentions {
     pub fn is_empty(&self) -> bool {
         self.by_timestamp.is_empty()
     }
+
+    pub fn last_updated(&self) -> Option<TimestampMillis> {
+        self.by_timestamp.keys().next_back().copied()
+    }
 }
