@@ -259,4 +259,9 @@
 - Those are now left out for a community. The `GENERAL` rows carry `only: 'group'` the way the channel rows carry `only: 'community'`. The role picker offers member, admin and owner, and the "changed" count counts only general permissions.
 - A community's permissions all default to admin (`communityDef` on the shared rows), as the backend's `CommunityPermissions::default()` has them. "Reset to defaults" set Remove members to moderator, a role a community can't hold, and let every member invite and create private channels. A fresh community also showed four permissions "changed from the defaults".
 - Save waits for a name check that's still running (400ms after typing) instead of ignoring the click. Saving straight after renaming did nothing until a second click.
+
+## 2026-10-24 — DailyPuzzleCard: a host's title and menu, and ChitDialog passing them on, by hand
+- `title` (resource key or literal text) is the new / progress title, which was always "Today's puzzle · Bridges" (`ui.dailyPuzzleCard.title`, still the default), for a host whose puzzle is another game.
+- `menu` lists the "⋯" menu's items by their action (`puzzleRemindOn` stands for the reminder either way); left out, all three show, as before. With none, there's no "⋯".
+- `ChitDialog` passes them on as `puzzleTitle` and `puzzleMenu`. `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).

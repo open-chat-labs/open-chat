@@ -1,10 +1,14 @@
 import { describe, expect, test } from "vitest";
 import {
+    dailyPuzzleRows,
+    dailyPuzzleStatusKey,
     parseDailyPuzzleChitKey,
     puzzleFingerprint,
     puzzleReplaced,
     rolloverDelay,
     ROLLOVER_GRACE_MS,
+    type DailyPuzzleSolved,
+    type DailyPuzzleUserState,
     type PublicDailyPuzzle,
 } from "./dailyPuzzle";
 
@@ -125,5 +129,62 @@ describe("puzzle replacement (#9334 invariant 58)", () => {
         expect(puzzleReplaced(publicPuzzle(), publicPuzzle({ entryFee: 0, enabled: false }))).toBe(
             false,
         );
+    });
+});
+
+describe("today's puzzle rows", () => {
+    const pub = (gameId: string, enabled = true): PublicDailyPuzzle => ({
+        gameId,
+        number: 1,
+        tier: 0,
+        description: new Uint8Array(),
+        startsAt: 0n,
+        expiresAt: 0n,
+        enabled,
+        entryFee: 0,
+        firstPlayFree: false,
+        hintPrices: [],
+        maxHints: 0,
+        maxFreeChecks: 0,
+        minCardedSolveMs: 0n,
+    });
+    const solved = (): DailyPuzzleSolved => ({
+        solvedAt: 1n,
+        solveTimeMs: 1n,
+        reward: 0,
+        hintsUsed: 0,
+        streak: 1,
+    });
+    const user = (gameId: string, extra: Partial<DailyPuzzleUserState>): DailyPuzzleUserState => ({
+        gameId,
+        number: 1,
+        hints: [],
+        grid: new Uint8Array(),
+        submits: 0,
+        freeChecks: 0,
+        streak: 0,
+        hasSolvedBefore: false,
+        entryFee: 0,
+        ...extra,
+    });
+
+    test("are the enabled puzzles, each with the user's state and where they are with it", () => {
+        const rows = dailyPuzzleRows({
+            puzzles: [pub("bridges"), pub("tents", false), pub("slant"), pub("loopy")],
+            states: [
+                user("slant", { startedAt: 5n }),
+                user("loopy", { startedAt: 5n, solved: solved() }),
+            ],
+        });
+        expect(rows.map((r) => [r.puzzle.gameId, r.status])).toEqual([
+            ["bridges", "play"],
+            ["slant", "continue"],
+            ["loopy", "solved"],
+        ]);
+        expect(rows.map((r) => dailyPuzzleStatusKey(r.status))).toEqual([
+            "dailyPuzzle.play",
+            "dailyPuzzle.continue",
+            "dailyPuzzle.solved",
+        ]);
     });
 });

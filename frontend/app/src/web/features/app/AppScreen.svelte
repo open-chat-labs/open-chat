@@ -5,6 +5,8 @@
         anonUserStore,
         chitStateStore,
         currentUserStore,
+        dailyPuzzleRows,
+        dailyPuzzleStore,
         favouritesStore,
         latestSuccessfulUpdatesLoop,
         OpenChat,
@@ -206,6 +208,8 @@
             chitShown={!$anonUserStore && chit.chitShown}
             chitStreak={chit.chitStreak}
             chitClaimable={chit.chitClaimable}
+            puzzleDue={!$disableChit &&
+                dailyPuzzleRows($dailyPuzzleStore).some((r) => r.status === "play")}
             onChit={() => openLinked({ kind: "chit" })}
             onSignIn={() => client.updateIdentityState({ kind: "logging_in" })} />
     {/snippet}

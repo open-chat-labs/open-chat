@@ -118,6 +118,12 @@
     });
     $effect(() => subscribe("profile", () => openLinked({ kind: "profile" })));
     $effect(() => subscribe("upgrade", () => openLinked({ kind: "diamond" })));
+    // the old UI's way to a daily puzzle (a daily result message's Play …)
+    $effect(() =>
+        subscribe("dailyPuzzle", ({ gameId }) => {
+            if (!disableChit.value) openLinked({ kind: "puzzle", gameId });
+        }),
+    );
     // the old UI's way to the daily claim (the prize message's CHIT link …)
     $effect(() =>
         subscribe("claimDailyChit", () => {

@@ -16,27 +16,31 @@
     countdown?: string;
     /** Daily reminder is on: bell badge on the tile, checked menu item. */
     remind?: boolean;
+    /** Resource key (or literal text). New / progress: the title; defaults to "Today's puzzle · Bridges". */
+    title?: string;
+    /** The "⋯" menu's items, by their action; defaults to all three. With none, there's no menu. */
+    menu?: PuzzleAction[];
     onAction?: (key: PuzzleAction) => void;
   }
 
-  let { state: status = 'new', sub, countdown = '', remind = false, onAction }: Props = $props();
+  let { state: status = 'new', sub, countdown = '', remind = false, title, menu, onAction }: Props = $props();
   const t = useT();
 
   let menuOpen = $state(false);
 
   const card = $derived(
     status === 'progress'
-      ? { title: t('ui.dailyPuzzleCard.title'), sub: t(sub ?? 'ui.dailyPuzzleCard.inProgress'), btn: t('ui.common.continue'), icon: 'joystick' }
+      ? { title: t(title ?? 'ui.dailyPuzzleCard.title'), sub: t(sub ?? 'ui.dailyPuzzleCard.inProgress'), btn: t('ui.common.continue'), icon: 'joystick' }
       : status === 'solved'
         ? { title: t(sub ?? 'ui.dailyPuzzleCard.solved'), sub: t('ui.dailyPuzzleCard.nextIn', { countdown }), btn: t('ui.dailyPuzzleCard.view'), icon: 'circle-check' }
-        : { title: t('ui.dailyPuzzleCard.title'), sub: t('ui.dailyPuzzleCard.teaser'), btn: t('ui.dailyPuzzleCard.tryIt'), icon: 'joystick' },
+        : { title: t(title ?? 'ui.dailyPuzzleCard.title'), sub: t('ui.dailyPuzzleCard.teaser'), btn: t('ui.dailyPuzzleCard.tryIt'), icon: 'joystick' },
   );
 
   const items = $derived([
     { label: 'ui.dailyPuzzleCard.remind', icon: 'bell', on: remind, key: (remind ? 'puzzleRemindOff' : 'puzzleRemindOn') as PuzzleAction },
     { label: 'ui.dailyPuzzleCard.howToPlay', icon: 'info', on: false, key: 'puzzleHow' as PuzzleAction },
     { label: 'ui.dailyPuzzleCard.hide', icon: 'eye-off', on: false, key: 'puzzleHide' as PuzzleAction },
-  ]);
+  ].filter((item) => menu === undefined || menu.includes(item.key === 'puzzleRemindOff' ? 'puzzleRemindOn' : item.key)));
 </script>
 
 <div class="wrap">
@@ -52,10 +56,10 @@
         <span class="sub">{card.sub}</span>
       </div>
       <span class="go" onclick={() => onAction?.('puzzle')} role="button" tabindex="0">{card.btn}</span>
-      <span class="more" class:open={menuOpen} onclick={() => (menuOpen = !menuOpen)} role="button" tabindex="0" title={t('ui.dailyPuzzleCard.options')} aria-label={t('ui.dailyPuzzleCard.options')} aria-expanded={menuOpen}
+      {#if items.length > 0}<span class="more" class:open={menuOpen} onclick={() => (menuOpen = !menuOpen)} role="button" tabindex="0" title={t('ui.dailyPuzzleCard.options')} aria-label={t('ui.dailyPuzzleCard.options')} aria-expanded={menuOpen}
         ><span class="more-icon"></span></span
-      >
-      {#if menuOpen}
+      >{/if}
+      {#if menuOpen && items.length > 0}
         <div class="menu" role="menu">
           {#each items as item}<span
               class="item"

@@ -9,8 +9,9 @@ import type { Component } from "svelte";
 // Two kinds:
 // - linked: a query param over whatever page is open, which people link to and Back closes
 //   (ROUTES.md, decision 6): ?profile, ?chit, ?hof, ?diamond. The CHIT dialog's own views, the
-//   ways to earn (?chit=earn) and buying streak insurance (?chit=insurance), are linked dialogs
-//   too, so one takes the CHIT dialog's place over the same backdrop, and Back returns to it;
+//   ways to earn (?chit=earn), buying streak insurance (?chit=insurance) and today's puzzle
+//   (?chit=puzzle), are linked dialogs too, so one takes the CHIT dialog's place over the same
+//   backdrop, and Back returns to it;
 // - local: opened by the app itself (a name clicked in a message …), kept in a DialogStack, and
 //   closed before any navigation (closeModalStack) and on Back.
 //
@@ -26,6 +27,9 @@ export type LinkedDialog =
     // partner's achievement's name: ?chit=earn:<highlight>)
     | { kind: "achievements"; highlight?: string }
     | { kind: "streak_insurance" }
+    // today's puzzle (with no `gameId`, the first on the rota: ?chit=puzzle), or that game's
+    // (?chit=puzzle:<gameId>)
+    | { kind: "puzzle"; gameId?: string }
     | { kind: "leaderboard" };
 
 // someone's profile card, for a name clicked in a message; confirming leaving or deleting a chat or
@@ -92,6 +96,9 @@ export const dialogs: Dialogs = {
 
     // buying streak insurance (8d)
     streak_insurance: () => import("../chit/StreakInsuranceDialogScreen.svelte"),
+
+    // today's daily puzzle (8d)
+    puzzle: () => import("../chit/PuzzleDialogScreen.svelte"),
 };
 
 // each linked dialog's query param; the CHIT dialog's views share its param, told apart by its value
@@ -101,6 +108,7 @@ const PARAMS: Record<LinkedDialog["kind"], string> = {
     chit: "chit",
     achievements: "chit",
     streak_insurance: "chit",
+    puzzle: "chit",
     leaderboard: "hof",
 };
 
@@ -110,6 +118,7 @@ const PARAM_ORDER = ["profile", "diamond", "chit", "hof"];
 // the CHIT dialog's views' values
 const EARN = "earn";
 const INSURANCE = "insurance";
+const PUZZLE = "puzzle";
 
 /** The linked dialog the URL's query opens, if any: one at a time. */
 export function linkedDialog(query: URLSearchParams): LinkedDialog | undefined {
@@ -128,6 +137,10 @@ export function linkedDialog(query: URLSearchParams): LinkedDialog | undefined {
             return { kind: "leaderboard" };
         default:
             if (value === INSURANCE) return { kind: "streak_insurance" };
+            if (value === PUZZLE) return { kind: "puzzle" };
+            if (value.startsWith(`${PUZZLE}:`)) {
+                return { kind: "puzzle", gameId: value.slice(PUZZLE.length + 1) };
+            }
             if (value === EARN) return { kind: "achievements" };
             if (value.startsWith(`${EARN}:`)) {
                 return { kind: "achievements", highlight: value.slice(EARN.length + 1) };
@@ -149,6 +162,8 @@ function valueOf(dialog: LinkedDialog): string | undefined {
             return dialog.highlight === undefined ? EARN : `${EARN}:${dialog.highlight}`;
         case "streak_insurance":
             return INSURANCE;
+        case "puzzle":
+            return dialog.gameId === undefined ? PUZZLE : `${PUZZLE}:${dialog.gameId}`;
         default:
             return undefined;
     }
@@ -165,7 +180,8 @@ export function shownLinkedDialog(
     const chit =
         dialog?.kind === "chit" ||
         dialog?.kind === "achievements" ||
-        dialog?.kind === "streak_insurance";
+        dialog?.kind === "streak_insurance" ||
+        dialog?.kind === "puzzle";
     return chit && chitOff ? undefined : dialog;
 }
 

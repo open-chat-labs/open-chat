@@ -3,11 +3,11 @@
         chitStateStore,
         dailyChitClaimable,
         currentStreak,
+        dailyPuzzleRows,
+        dailyPuzzleStatusKey,
         dailyPuzzleStore,
         iconSize,
         publish,
-        stateFor,
-        type DailyPuzzleUserState,
         type OpenChat,
     } from "@client";
     import InfoIcon from "@src/components/InfoIcon.svelte";
@@ -114,19 +114,7 @@
     }
 
     // one row per puzzle on today's rota (one with the weekday rotation)
-    let puzzles = $derived(
-        $dailyPuzzleStore.puzzles
-            .filter((p) => p.enabled)
-            .map((p) => ({ puzzle: p, state: stateFor($dailyPuzzleStore, p.gameId) })),
-    );
-
-    function puzzleStatusKey(state: DailyPuzzleUserState | undefined): string {
-        return state?.solved !== undefined
-            ? "dailyPuzzle.solved"
-            : state?.startedAt !== undefined
-              ? "dailyPuzzle.continue"
-              : "dailyPuzzle.play";
-    }
+    let puzzles = $derived(dailyPuzzleRows($dailyPuzzleStore));
 
     function earnMore(e: Event) {
         e.preventDefault();
@@ -229,7 +217,7 @@
                     </div>
                 </Link>
             {/if}
-            {#each puzzles as { puzzle, state } (puzzle.gameId)}
+            {#each puzzles as { puzzle, state, status } (puzzle.gameId)}
                 <div class="puzzle">
                     <PuzzleOutline size={$iconSize} color={"var(--icon-txt)"} />
                     <div class="puzzle-text">
@@ -245,7 +233,7 @@
                         </div>
                     </div>
                     <Button onClick={() => openPuzzle(puzzle.gameId)}>
-                        <Translatable resourceKey={i18nKey(puzzleStatusKey(state))} />
+                        <Translatable resourceKey={i18nKey(dailyPuzzleStatusKey(status))} />
                     </Button>
                 </div>
             {/each}

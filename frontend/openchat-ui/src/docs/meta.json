@@ -7296,6 +7296,28 @@
         "doc": ""
       },
       {
+        "name": "puzzleTitle",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "DailyPuzzleCard's title (see there)."
+      },
+      {
+        "name": "puzzleMenu",
+        "type": "PuzzleAction[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "DailyPuzzleCard's \"⋯\" menu (see there)."
+      },
+      {
         "name": "onBack",
         "type": "() => void",
         "default": null,
@@ -8174,6 +8196,28 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Daily reminder is on: bell badge on the tile, checked menu item."
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text). New / progress: the title; defaults to \"Today's puzzle · Bridges\"."
+      },
+      {
+        "name": "menu",
+        "type": "PuzzleAction[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The \"⋯\" menu's items, by their action; defaults to all three. With none, there's no menu."
       },
       {
         "name": "onAction",

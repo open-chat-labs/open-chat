@@ -170,7 +170,7 @@ until there's a setting (`GAPS.md`). Signed-in users on `/` go to the app as tod
 | `?threads` **(new)** | `ThreadList` (All / Unread) in the left column, in place of the chat list; the middle is unchanged (the list's default chat when nothing is selected, decision 7) |
 | `?profile` **(new)** | `ProfileDialog`, over the current page |
 | `?diamond` | `DiamondDialog` |
-| `?chit` **(new)** | `ChitDialog`; `?chit=earn` (`AchievementsDialog`, `?chit=earn:<id>` with that achievement picked out) and `?chit=insurance` (`StreakInsuranceDialog`) in its place, over the same backdrop, Back returning to it |
+| `?chit` **(new)** | `ChitDialog`; `?chit=earn` (`AchievementsDialog`, `?chit=earn:<id>` with that achievement picked out) `?chit=insurance` (`StreakInsuranceDialog`) and `?chit=puzzle` (today's puzzle, `?chit=puzzle:<gameId>` for that game's) in its place, over the same backdrop, Back returning to it |
 | `?profile=chit` **(new)** | `ProfileDialog` on its CHIT section (the CHIT dialog's settings) |
 | `?hof` | `LeaderboardDialog` |
 | `?faq=<topic>` | navigates to `/faq?q=<topic>` |

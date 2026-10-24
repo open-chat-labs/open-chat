@@ -32,6 +32,11 @@ describe("the dialog a URL's query opens", () => {
         expect(linkedDialog(new URLSearchParams("chit=insurance"))).toEqual({
             kind: "streak_insurance",
         });
+        expect(linkedDialog(new URLSearchParams("chit=puzzle"))).toEqual({ kind: "puzzle" });
+        expect(linkedDialog(new URLSearchParams("chit=puzzle%3Abridges"))).toEqual({
+            kind: "puzzle",
+            gameId: "bridges",
+        });
         expect(linkedDialog(new URLSearchParams("chit=nope"))).toEqual({ kind: "chit" });
     });
 
@@ -56,6 +61,7 @@ describe("the linked dialog shown", () => {
         expect(shownLinkedDialog({ kind: "profile" }, true)).toEqual({ kind: "profile" });
         expect(shownLinkedDialog({ kind: "achievements" }, true)).toBeUndefined();
         expect(shownLinkedDialog({ kind: "streak_insurance" }, true)).toBeUndefined();
+        expect(shownLinkedDialog({ kind: "puzzle" }, true)).toBeUndefined();
         expect(shownLinkedDialog(undefined, false)).toBeUndefined();
     });
 });

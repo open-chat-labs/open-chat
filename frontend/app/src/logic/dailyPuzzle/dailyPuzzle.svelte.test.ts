@@ -1128,3 +1128,49 @@ describe("DailyPuzzleGame is the one source of truth for a play session (#9824)"
         }
     });
 });
+
+describe("what a hint shows and when a result is shared (8d, #10130)", () => {
+    test("a hint draws the step's outline and sentence, never its answer: the board's marks don't change", async () => {
+        // bought at level 3, with the answer in its conclusions: they are ignored
+        const hint: ServedHint = {
+            hint: {
+                technique: 1,
+                focus: [0, 1, 2],
+                target: [0],
+                conclusions: [
+                    [0, 1],
+                    [4, 1],
+                    [8, 1],
+                ],
+            },
+            level: 3,
+            mistake: false,
+        };
+        const g = build(userState(), hintClient(hint));
+        await g.hint();
+        expect([...g.focus].sort()).toEqual([0, 1, 2]);
+        expect(g.board.filled()).toEqual([]);
+        expect(g.board.solved).toBe(false);
+    });
+
+    test("a result can be shared only once solveTimeMs >= minCardedSolveMs", () => {
+        const solvedIn = (solveTimeMs: bigint, minCardedSolveMs: bigint): boolean => {
+            const carded = { ...puzzle, minCardedSolveMs };
+            dailyPuzzleStore.set({
+                puzzles: [carded],
+                states: [
+                    userState({
+                        solved: { solvedAt: 2n, solveTimeMs, reward: 250, hintsUsed: 0, streak: 1 },
+                    }),
+                ],
+            });
+            return new DailyPuzzleGame(fakeClient(), carded, USER, lightUpDef, false, host)
+                .canShare;
+        };
+        expect(solvedIn(30_000n, 30_000n)).toBe(true);
+        expect(solvedIn(29_999n, 30_000n)).toBe(false);
+        expect(solvedIn(1n, 0n)).toBe(true);
+        // not solved: nothing to share
+        expect(build(userState()).canShare).toBe(false);
+    });
+});

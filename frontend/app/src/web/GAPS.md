@@ -401,18 +401,32 @@ design export needs. Each entry says where it came up.
 - **`ChitDialog`, by hand** (8d): the default milestone tiers keep their hand-spaced positions
   when a host passes them; a claim made in the dialog clears once the next claim opens; `onClaim`
   resolving `false` is nothing claimed (claimed already), and plays no claim.
+- **`DailyPuzzleCard` and `ChitDialog`, by hand** (8d): the card takes a `title` (it always said
+  "Today's puzzle · Bridges") and the items of its "⋯" menu (`menu`, no "⋯" with none), and
+  `ChitDialog` passes them on (`puzzleTitle`, `puzzleMenu`).
 - **CHIT dialog** (`features/chit`, 8d): the streak, today's claim, the balance, the insurance
   summary, the settings (the profile's CHIT section), the leaderboard (`?hof`) and the ways to
   earn (`?chit=earn`, `AchievementsDialog`) and buying streak insurance (`?chit=insurance`,
   `StreakInsuranceDialog`), each in the CHIT dialog's place over the same backdrop, Back
-  returning to it. Not yet: the daily puzzle (the card is left out),
-  the rest of 8d. A claim that fails shows the dialog's own error, where the old modal toasted and
+  returning to it, as is today's puzzle (below). A claim that fails shows the dialog's own error, where the old modal toasted and
   closed; an already claimed day just moves the countdown on, as the old desktop modal does.
 - **Streak insurance** (`StreakInsuranceDialog`): paid in CHAT as the old dialog pays it (the
   PIN first, if set, through the PIN prompt), what's sent worked out from the cover bought. The
   dialog prices a day by the cover held and the backend by the days bought, so the app offsets
   its prices by the days used (and passes `cap`, so "cover caps at" says 30). The PIN prompt given
   up leaves the dialog open with nothing said.
+- **Daily puzzle** (`?chit=puzzle`, `?chit=puzzle:<gameId>`, `PuzzleDialogScreen`): the design's
+  `PuzzleDialog` plays Bridges only, so it isn't used: the puzzle is a plain `DialogShell` frame
+  (`TODO(design)`) around the app's own boards (`core/dailyPuzzle`), driven by the old screens'
+  flow (`DailyPuzzleGame`), in the CHIT dialog's place over the same backdrop (`DialogScreen`
+  gives the frame's lighter scrim the dialogs' veil while it takes over). The CHIT dialog's card
+  shows the first puzzle not yet solved (the old modal listed every game's row), and the rail's
+  puzzle dot shows while one is still to play. Not yet:
+  - sharing a result (the old "Share" button), which waits on the chat picker (4d), and the
+    result card in a chat (`DailyResultContent`), which waits on the message kinds;
+  - the card's reminder and hide (its "⋯" menu has only "How to play"): the old UI has neither;
+  - a solved card counts down with `ChitDialog`'s claim countdown (the next claim, not the next
+    puzzle), and with nothing while today's claim is due.
 - **Leaderboard** (`?hof`): this month's, last month's and all time's top 10, as the old hall of
   fame shows them, without its Invaders game.
 - **Ways to earn** (`AchievementsDialog`): the old "Learn to earn" list (`achievementList`). The

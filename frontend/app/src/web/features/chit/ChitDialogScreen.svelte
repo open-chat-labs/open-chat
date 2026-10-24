@@ -10,10 +10,13 @@
         achievements,
         achievementsStore,
         chitStateStore,
+        dailyPuzzleRows,
+        dailyPuzzleStore,
         latestSuccessfulUpdatesLoop,
         streakInsuranceStore,
         type ExternalAchievement,
         type OpenChat,
+        type ResourceKey,
     } from "@client";
     import ChitDialog, {
         type ChitAction,
@@ -26,6 +29,9 @@
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { openLinked } from "../app/linkedDialogs";
     import { achievementsCount, chitDialogProps } from "./chit.adapter";
+    import { puzzleCardProps } from "./puzzle.adapter";
+    import { interpolate } from "@src/i18n/i18n";
+    import { _ } from "svelte-i18n";
     import { loadExternalAchievements, type Loaded } from "./externalAchievements";
 
     let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "chit" }>> = $props();
@@ -70,6 +76,13 @@
         return resp.kind === "success";
     }
 
+    // today's puzzle card: the first not solved, or the last solved once all are
+    const puzzle = $derived(
+        puzzleCardProps(dailyPuzzleRows($dailyPuzzleStore), (key: ResourceKey) =>
+            interpolate($_, key),
+        ),
+    );
+
     function act(action: ChitAction) {
         switch (action) {
             case "settings":
@@ -84,7 +97,11 @@
             case "insurance":
                 openLinked({ kind: "streak_insurance" });
                 return;
-            // TODO(8d): the daily puzzle; GAPS.md
+            case "puzzle":
+            case "puzzleHow":
+                openLinked({ kind: "puzzle", gameId: puzzle.gameId });
+                return;
+            // a reminder and hiding the puzzle: not offered (puzzleMenu), the app has neither
         }
     }
 </script>
@@ -101,7 +118,10 @@
         insured={chit.insured}
         used={chit.used}
         achievements={earn}
-        puzzleState="off"
+        puzzleState={puzzle.puzzleState}
+        puzzleSub={puzzle.puzzleSub}
+        puzzleTitle={puzzle.puzzleTitle}
+        puzzleMenu={["puzzleHow"]}
         onClaim={claim}
         onAction={act}
         {onClose} />

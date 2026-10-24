@@ -56,6 +56,18 @@ export function backToLinked(dialog: LinkedDialog): void {
 }
 
 /**
+ * Whether the linked dialog showing was opened in `dialog`'s place, so closing it can hand back to
+ * `dialog` (a dialog with no exit of its own, as the puzzle's frame, keeps the backdrop that way).
+ */
+export function openedFrom(dialog: LinkedDialog): boolean {
+    const query = openLinkedDialog(new URLSearchParams(window.location.search), dialog);
+    if (query === undefined) return false;
+    return (
+        backIntent(lastHandOff, currentUrl(), `${window.location.pathname}${query}`) === "dismiss"
+    );
+}
+
+/**
  * How to go back to the linked dialog at `to` from the one at `current`: back in history ("dismiss")
  * only when `current` was opened from it (the last hand-off), else in place ("auto", a replace).
  */

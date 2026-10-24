@@ -2,12 +2,12 @@
     import {
         chitStateStore,
         dailyChitClaimable,
+        dailyPuzzleRows,
+        dailyPuzzleStatusKey,
         dailyPuzzleStore,
         i18nKey,
         OpenChat,
         publish,
-        stateFor,
-        type DailyPuzzleUserState,
     } from "@client";
     import SparkleBoxOutline from "@src/components_mobile/SparkleBoxOutline.svelte";
     import { now500 } from "@src/stores/time";
@@ -87,19 +87,7 @@
     );
     let busy = $state(false);
     // one row per puzzle on today's rota (one with the weekday rotation)
-    let puzzles = $derived(
-        $dailyPuzzleStore.puzzles
-            .filter((p) => p.enabled)
-            .map((p) => ({ puzzle: p, state: stateFor($dailyPuzzleStore, p.gameId) })),
-    );
-
-    function puzzleStatusKey(state: DailyPuzzleUserState | undefined): string {
-        return state?.solved !== undefined
-            ? "dailyPuzzle.solved"
-            : state?.startedAt !== undefined
-              ? "dailyPuzzle.continue"
-              : "dailyPuzzle.play";
-    }
+    let puzzles = $derived(dailyPuzzleRows($dailyPuzzleStore));
 
     function claim(e?: MouseEvent) {
         e?.stopPropagation();
@@ -207,7 +195,7 @@
                     <Translatable resourceKey={i18nKey("Earn more")}></Translatable>
                 </CommonButton2>
             {/if}
-            {#each puzzles as { puzzle, state } (puzzle.gameId)}
+            {#each puzzles as { puzzle, state, status } (puzzle.gameId)}
                 <Button
                     onClick={(e) => {
                         e.preventDefault();
@@ -228,7 +216,7 @@
                         </Row>
                         <Row width="hug" gap="sm">
                             <Body width="hug">
-                                <Translatable resourceKey={i18nKey(puzzleStatusKey(state))}
+                                <Translatable resourceKey={i18nKey(dailyPuzzleStatusKey(status))}
                                 ></Translatable>
                                 {#if (state?.streak ?? 0) > 0}
                                     {" . "}

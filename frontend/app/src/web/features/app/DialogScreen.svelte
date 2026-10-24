@@ -82,6 +82,14 @@
         animation: none;
     }
 
+    /* a frame's lighter scrim (DialogShell) taking over the dialogs' backdrop wears the dialogs' veil,
+       so the backdrop doesn't change as it does */
+    .keep-backdrop > :global(:first-child > .scrim) {
+        background: var(--oc-veil, rgba(3, 3, 6, 0.72));
+        backdrop-filter: var(--oc-veil-blur, blur(4px));
+        -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
+    }
+
     .pending {
         position: fixed;
         inset: 0;
