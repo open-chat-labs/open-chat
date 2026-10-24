@@ -411,8 +411,8 @@ design export needs. Each entry says where it came up.
   `StreakInsuranceDialog`), each in the CHIT dialog's place over the same backdrop, Back
   returning to it, as is today's puzzle (below). A claim that fails shows the dialog's own error, where the old modal toasted and
   closed; an already claimed day just moves the countdown on, as the old desktop modal does. A
-  claim made rains CHIT coins as the old modal's did (`svelte-confetti`, from the app's screen,
-  since the library can't use it).
+  claim made bursts confetti from the claim area (`ChitDialog`'s, by hand, with the library's
+  `Confetti`), where the old modal rained CHIT coins.
 - **Streak insurance** (`StreakInsuranceDialog`): paid in CHAT as the old dialog pays it (the
   PIN first, if set, through the PIN prompt), what's sent worked out from the cover bought. The
   dialog prices a day by the cover held and the backend by the days bought, so the app offsets

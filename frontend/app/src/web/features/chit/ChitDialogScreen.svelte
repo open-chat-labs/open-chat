@@ -3,7 +3,7 @@
      (?hof), the ways to earn (?chit=earn) and buying streak insurance (?chit=insurance), each
      opened in its place over the same backdrop, as is today's puzzle (?chit=puzzle). Claiming is
      as the old CHIT modal's: an already claimed day just moves the countdown on (the client does
-     it), and a claim made rains CHIT coins (svelte-confetti, which the library can't use). -->
+     it); a claim made bursts confetti (ChitDialog's own). -->
 <script lang="ts">
     import {
         achievementList,
@@ -24,8 +24,7 @@
     import { now500 } from "@src/stores/time";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
-    import { getContext, onDestroy, onMount } from "svelte";
-    import { Confetti } from "svelte-confetti";
+    import { getContext, onMount } from "svelte";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { openLinked } from "../app/linkedDialogs";
     import { achievementsCount, chitDialogProps } from "./chit.adapter";
@@ -74,20 +73,8 @@
     // client moves the countdown on
     async function claim(): Promise<boolean> {
         const resp = await client.claimDailyChit();
-        if (resp.kind === "success") celebrate();
         return resp.kind === "success";
     }
-
-    // the coins a claim rains, as the old CHIT modal's, gone once they've fallen
-    const CONFETTI_MS = 4000;
-    let confetti = $state(false);
-    let confettiTimer: number | undefined;
-    function celebrate() {
-        confetti = true;
-        window.clearTimeout(confettiTimer);
-        confettiTimer = window.setTimeout(() => (confetti = false), CONFETTI_MS);
-    }
-    onDestroy(() => window.clearTimeout(confettiTimer));
 
     // today's puzzle card: the first not solved, or the last solved once all are (which opens the
     // leaderboard), or that there's none today
@@ -142,16 +129,6 @@
         onClaim={claim}
         onAction={act}
         {onClose} />
-    {#if confetti}
-        <div class="confetti">
-            <Confetti
-                amount={100}
-                x={[-1.5, 1.5]}
-                y={[-1.5, 1.5]}
-                size={20}
-                colorArray={["url(/assets/chit.svg)"]} />
-        </div>
-    {/if}
 {:else}
     <!-- till the first sync: the user's CHIT isn't known yet -->
     <DialogShell title="ui.chitDialog.title" {onClose}>
@@ -160,15 +137,6 @@
 {/if}
 
 <style>
-    /* over the dialog's ring, which pops as they fly: above ChitDialog's layer (z-index 72) */
-    .confetti {
-        position: fixed;
-        z-index: 73;
-        top: 40%;
-        left: 50%;
-        pointer-events: none;
-    }
-
     .loading {
         display: grid;
         place-items: center;

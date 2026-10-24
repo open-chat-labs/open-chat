@@ -266,3 +266,7 @@
 - `state: 'unavailable'`: no puzzle today. The card says so (`title`, default `ui.dailyPuzzleCard.titleToday`; `sub`, default `ui.dailyPuzzleCard.unavailable`) with no button and no "⋯", so there's nothing to press.
 - `ChitDialog` passes them on as `puzzleTitle` and `puzzleMenu`, and takes the new state as `puzzleState`. Its `puzzleCountdown` is the solved card's "Next puzzle in" (it was `countdown`, the next claim, which is empty while a claim is due); left out, still `countdown`. `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-24 — ChitDialog: a claim bursts confetti, by hand
+- A claim made in the dialog (`onClaim` resolving with anything but `false`) bursts the library's `Confetti` from the claim area as the ring pops, as `AchievementToast` and `PrizeMessage` do theirs. The old CHIT modal rained coins on a claim; the design had nothing.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

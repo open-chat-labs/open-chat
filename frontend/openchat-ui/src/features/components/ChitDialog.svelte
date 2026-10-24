@@ -12,6 +12,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte';
   import DailyPuzzleCard from './DailyPuzzleCard.svelte';
+  import Confetti from '../../lib/components/Confetti.svelte';
   import { modal } from '../../lib/behaviours/modal';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { getI18n, useT } from '../../lib/i18n';
@@ -151,8 +152,13 @@
   async function claim() {
     if (!onClaim || claimedHere) return;
     const result = await flow.run(() => onClaim({ amount: daily }));
-    if (result.ok && result.value !== false) claimedHere = true;
+    if (result.ok && result.value !== false) {
+      claimedHere = true;
+      claimBurst++;
+    }
   }
+  // a claim made here bursts confetti from the claim area, as the ring pops
+  let claimBurst = $state(0);
 
   const close = () => flow.dismiss(onClose);
   // other dialogs open from here: not while a claim is pending or the dialog is leaving
@@ -233,6 +239,7 @@
           </div>
           <span class="note strong">{t('ui.chitDialog.comeBackTomorrow')}</span>
         {/if}
+        <div class="burst" aria-hidden="true"><Confetti fire={claimBurst} /></div>
       </div>
 
       <div class="extras">
@@ -519,10 +526,18 @@
   }
 
   .claim-area {
+    position: relative;
     flex: none;
     display: flex;
     flex-direction: column;
     gap: var(--space-8);
+  }
+
+  /* the confetti's box: the claim area's, out of its flow */
+  .burst {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
   }
 
   .claim,
