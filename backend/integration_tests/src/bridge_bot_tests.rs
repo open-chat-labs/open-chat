@@ -666,9 +666,23 @@ fn tips_for_unlinked_accounts_are_held_for_whoever_links_them(in_community: bool
     assert_eq!(balance(env, held_for(&nellys_account)), 0);
     assert_eq!(bridged_user_tips_held(env, user_index), held_before);
 
-    // A tip no one claims is refunded to the account it came from, after 30 days
+    // A tip no one claims is refunded to the account it came from, after 30 days. One which isn't
+    // more than the fee can't be held, as it couldn't be paid out.
     let bobs_account = telegram_account(random_telegram_id());
     let (message_id, _) = relay(env, &bridged, &bobs_account);
+    let response = tip_to(
+        env,
+        &tipper,
+        chat,
+        message_id,
+        held_for(&bobs_account),
+        ledger,
+        ICP_TRANSFER_FEE,
+    );
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{response:?}"
+    );
     client::approve_spender(env, &tipper, ledger, spender, tip_amount + ICP_TRANSFER_FEE);
     let response = tip_to(env, &tipper, chat, message_id, held_for(&bobs_account), ledger, tip_amount);
     assert!(matches!(response, UnitResult::Success), "{response:?}");
@@ -677,7 +691,8 @@ fn tips_for_unlinked_accounts_are_held_for_whoever_links_them(in_community: bool
         bridged_user_tips_held(env, user_index) == held_before + 1
     });
     env.advance_time(Duration::from_millis(29 * DAY_IN_MS));
-    tick_many(env, 3);
+    // Enough for a refund which was due to be paid: its timer job, the payment's, and the transfer
+    tick_many(env, 10);
     assert_eq!(balance(env, tipper.principal.into()), tippers_balance);
     env.advance_time(Duration::from_millis(DAY_IN_MS));
     wait_until(env, "the tip to be refunded", |env| {

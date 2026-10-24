@@ -273,21 +273,21 @@ impl RuntimeState {
     }
 
     // A tip on a message relayed from an account which, as the group or community found, no one had
-    // linked. It's paid on to whoever has linked the account since, if anyone has, else held for
-    // whoever does, and refunded if no one has within `TIP_HOLD_DURATION`.
+    // linked. It's held for whoever links the account, and refunded if no one has within
+    // `TIP_HOLD_DURATION`, or paid on at once if someone has linked it since. (The refund does
+    // nothing once the tip has been paid.)
     pub fn receive_bridged_user_tip(&mut self, tip: HeldTip) {
         let account = tip.account;
         let refund_due = tip.timestamp + TIP_HOLD_DURATION;
         let tip_id = self.data.bridged_user_tips.hold(tip);
+        let now = self.env.now();
+        self.data.timer_jobs.enqueue_job(
+            TimerJob::RefundBridgedUserTip(RefundBridgedUserTip { tip_id }),
+            refund_due,
+            now,
+        );
         if let Some(user_id) = self.data.bridged_users.linked_user_id(&account) {
             self.claim_bridged_user_tips(&account, user_id);
-        } else {
-            let now = self.env.now();
-            self.data.timer_jobs.enqueue_job(
-                TimerJob::RefundBridgedUserTip(RefundBridgedUserTip { tip_id }),
-                refund_due,
-                now,
-            );
         }
     }
 
