@@ -62,6 +62,8 @@
                     end = i + 1;
                     await tick(); // render the newly visible row
                     row = rows[i - start] as HTMLElement;
+                    // items can shrink while we wait (e.g. a filter narrowing), so the row may never render
+                    if (!row) break;
                 }
 
                 const row_height = (height_map[i] = itemHeight || row.offsetHeight);
