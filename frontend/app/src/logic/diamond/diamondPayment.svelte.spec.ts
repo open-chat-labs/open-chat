@@ -5,6 +5,7 @@ import {
 } from "@client";
 import { describe, expect, test, vi } from "vitest";
 import {
+    approvalFeeE8s,
     DiamondPayment,
     diamondPriceE8s,
     insufficientFunds,
@@ -118,8 +119,7 @@ describe("paying for Diamond", () => {
             duration: "one_month",
             autoRenew: true,
         });
-        expect(outcome.kind).toBe("failed");
-        expect(outcome.kind === "failed" && outcome.message.key).not.toBe("upgrade.paymentFailed");
+        expect(outcome).toEqual({ kind: "pin_failed" });
     });
 
     test("any other failure says the payment failed", async () => {
@@ -162,5 +162,60 @@ describe("a membership's end", () => {
 
     test("never comes for lifetime", () => {
         expect(membershipEnd("lifetime", now)).toBeUndefined();
+    });
+});
+
+describe("the Diamond payment's edges", () => {
+    test("a second payment while one is under way is ignored, not a failure", async () => {
+        let finish!: (r: PayForDiamondMembershipResponse) => void;
+        const { client, payment } = await loaded(
+            () => new Promise((resolve) => (finish = resolve)),
+        );
+        const first = payment.pay({
+            ledger: "l",
+            token: "CHAT",
+            duration: "one_month",
+            autoRenew: true,
+        });
+        expect(
+            await payment.pay({
+                ledger: "l",
+                token: "CHAT",
+                duration: "one_month",
+                autoRenew: true,
+            }),
+        ).toEqual({ kind: "already_paying" });
+        finish({ kind: "success", status: { kind: "lifetime" }, proof: "p" });
+        expect(await first).toEqual({ kind: "success", proof: "p" });
+        expect(client.payForDiamondMembership).toHaveBeenCalledTimes(1);
+    });
+
+    test("a payment that throws fails with its cause, for the view to pass on", async () => {
+        const cause = new Error("agent down");
+        const { payment } = await loaded(() => Promise.reject(cause));
+        const outcome = await payment.pay({
+            ledger: "l",
+            token: "CHAT",
+            duration: "one_month",
+            autoRenew: true,
+        });
+        expect(outcome).toMatchObject({ kind: "failed", cause });
+    });
+
+    test("fees that fail to load are the state's to show, never a rejection", async () => {
+        const client = fakeClient(success);
+        client.diamondMembershipFees.mockRejectedValueOnce(new Error("offline"));
+        vi.spyOn(console, "warn").mockImplementation(() => {});
+        const payment = new DiamondPayment(client);
+        await expect(payment.loadFees()).resolves.toBeUndefined();
+        expect(payment.feesState).toEqual({ kind: "failed" });
+        expect(payment.fees).toBeUndefined();
+        await payment.loadFees();
+        expect(payment.feesState.kind).toBe("loaded");
+    });
+
+    test("the approval fee is the wallet's approval, part of what the wallet pays", () => {
+        expect(approvalFeeE8s(100_000n)).toBe(100_000n);
+        expect(walletCostE8s(E8S, 100_000n)).toBe(E8S + approvalFeeE8s(100_000n));
     });
 });

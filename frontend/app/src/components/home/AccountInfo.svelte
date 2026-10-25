@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { userWalletAddress } from "@src/logic/wallet/receiveAddress";
     import {
         BTC_SYMBOL,
         CKBTC_SYMBOL,
@@ -6,7 +7,6 @@
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
-        encodeIcrcAccount,
         ICP_SYMBOL,
         Lazy,
         LEDGER_CANISTER_CKSOL,
@@ -15,7 +15,6 @@
         FIRST_SOL_DEPOSIT_FEE,
         SOL_DEPOSIT_FEE,
         SOL_SYMBOL,
-        userWalletAccount,
     } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import { _ } from "svelte-i18n";
@@ -50,7 +49,9 @@
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
     let isSol = $derived(tokenDetails.ledger === LEDGER_CANISTER_CKSOL);
     let isSolNetwork = $derived(selectedNetwork === SOL_SYMBOL);
-    let oneSecEnabled = $derived(tokenDetails.oneSecEnabled && tokenDetails.evmContractAddresses.length > 0);
+    let oneSecEnabled = $derived(
+        tokenDetails.oneSecEnabled && tokenDetails.evmContractAddresses.length > 0,
+    );
     let isOneSecNetwork = $derived(oneSecEnabled && selectedNetwork !== ICP_SYMBOL);
     let networks = $derived.by(() => {
         if (isBtc) {
@@ -83,9 +84,7 @@
             return solAddress;
         } else {
             // The user's wallet, which is their principal's account
-            return encodeIcrcAccount(
-                userWalletAccount($currentUserIdStore, () => client.OcIdentityPrincipal),
-            );
+            return userWalletAddress($currentUserIdStore, () => client.OcIdentityPrincipal);
         }
     });
 
@@ -93,11 +92,20 @@
     $effect(() => {
         if (account === undefined) {
             if (isBtcNetwork) {
-                client.getBtcAddress().then((addr) => btcAddress = addr).catch((e) => error = e);
+                client
+                    .getBtcAddress()
+                    .then((addr) => (btcAddress = addr))
+                    .catch((e) => (error = e));
             } else if (isOneSecNetwork) {
-                client.getOneSecAddress().then((addr) => oneSecAddress = addr).catch(e => error = e);
+                client
+                    .getOneSecAddress()
+                    .then((addr) => (oneSecAddress = addr))
+                    .catch((e) => (error = e));
             } else if (isSolNetwork) {
-                client.getSolAddress().then((addr) => solAddress = addr).catch((e) => error = e);
+                client
+                    .getSolAddress()
+                    .then((addr) => (solAddress = addr))
+                    .catch((e) => (error = e));
             }
         }
     });
@@ -112,8 +120,11 @@
         return tokenDetails.symbol;
     });
 
-    const btcDepositFeePromise = new Lazy(() => client.getCkbtcMinterDepositInfo()
-        .then((depositInfo) => `~${client.formatTokens(depositInfo.depositFee, 8)}`));
+    const btcDepositFeePromise = new Lazy(() =>
+        client
+            .getCkbtcMinterDepositInfo()
+            .then((depositInfo) => `~${client.formatTokens(depositInfo.depositFee, 8)}`),
+    );
 
     let solDepositFees = $derived({
         first: client.formatTokens(FIRST_SOL_DEPOSIT_FEE, tokenDetails.decimals),
@@ -122,12 +133,22 @@
     });
 
     // SOL sent to the deposit address is only credited once the address holds the minter's minimum
-    const solMinimumDepositPromise = new Lazy(() => client.getCksolMinterDepositInfo()
-        .then((depositInfo) => client.formatTokens(depositInfo.minimumDepositAmount, tokenDetails.decimals)));
+    const solMinimumDepositPromise = new Lazy(() =>
+        client
+            .getCksolMinterDepositInfo()
+            .then((depositInfo) =>
+                client.formatTokens(depositInfo.minimumDepositAmount, tokenDetails.decimals),
+            ),
+    );
 
-    const oneSecFeesPromise = new Lazy(() => client.oneSecGetTransferFees()
-        // Filter to where source token equals destination token since we're dealing with cross-chain deposits
-        .then((fees) => oneSecFees = fees.filter((f) => f.sourceToken === f.destinationToken)));
+    const oneSecFeesPromise = new Lazy(() =>
+        client
+            .oneSecGetTransferFees()
+            // Filter to where source token equals destination token since we're dealing with cross-chain deposits
+            .then(
+                (fees) => (oneSecFees = fees.filter((f) => f.sourceToken === f.destinationToken)),
+            ),
+    );
 
     let oneSecFees = $state<OneSecTransferFees[]>();
     let oneSecFeesForToken = $derived.by(() => {
@@ -136,11 +157,15 @@
     });
     let oneSecProtocolFee = $derived.by(() => {
         if (oneSecFeesForToken === undefined) return undefined;
-        return oneSecFeesForToken.find((f) => f.sourceChain === selectedNetwork && f.destinationChain === ICP_SYMBOL)?.protocolFeePercent;
+        return oneSecFeesForToken.find(
+            (f) => f.sourceChain === selectedNetwork && f.destinationChain === ICP_SYMBOL,
+        )?.protocolFeePercent;
     });
     let oneSecTransferFee = $derived.by(() => {
         if (oneSecFeesForToken === undefined) return undefined;
-        return oneSecFeesForToken.find((f) => f.sourceChain === ICP_SYMBOL && f.destinationChain === selectedNetwork)?.latestTransferFee;
+        return oneSecFeesForToken.find(
+            (f) => f.sourceChain === ICP_SYMBOL && f.destinationChain === selectedNetwork,
+        )?.latestTransferFee;
     });
     let oneSecTotalFee = $derived.by(() => {
         if (oneSecProtocolFee === undefined || oneSecTransferFee === undefined) return undefined;
@@ -150,7 +175,7 @@
 
 <div class="account-info">
     {#if networks.length > 0 && selectedNetwork !== undefined}
-        <NetworkSelector {networks} bind:selectedNetwork={selectedNetwork} />
+        <NetworkSelector {networks} bind:selectedNetwork />
     {/if}
 
     {#if account === undefined}
@@ -162,7 +187,12 @@
             {/if}
         </div>
     {:else}
-        <QRCode {fullWidthOnMobile} text={account} size={qrSize} logo={tokenDetails.logo} {border} />
+        <QRCode
+            {fullWidthOnMobile}
+            text={account}
+            size={qrSize}
+            logo={tokenDetails.logo}
+            {border} />
     {/if}
     <p class="your-account" class:centered>
         <Translatable resourceKey={i18nKey("tokenTransfer.yourAccount", { token: tokenName })} />
@@ -181,13 +211,19 @@
         {#await btcDepositFeePromise.get()}
             <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>
         {:then amount}
-            <span class="label">{$_("cryptoAccount.networkFee", { values: { amount, token: tokenDetails.symbol }})}</span>
+            <span class="label"
+                >{$_("cryptoAccount.networkFee", {
+                    values: { amount, token: tokenDetails.symbol },
+                })}</span>
         {:catch}
             <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
         {/await}
     {:else if isSolNetwork}
         {#await solMinimumDepositPromise.get() then amount}
-            <span class="label">{$_("cryptoAccount.minimumDeposit", { values: { amount, token: tokenDetails.symbol }})}</span>
+            <span class="label"
+                >{$_("cryptoAccount.minimumDeposit", {
+                    values: { amount, token: tokenDetails.symbol },
+                })}</span>
         {:catch}
             <!-- The minimum is only informational, so a failure to fetch it shows nothing -->
         {/await}
@@ -197,7 +233,10 @@
             <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>
         {:then}
             {#if oneSecTotalFee !== undefined}
-                <span class="label">{$_("cryptoAccount.networkFee", { values: { amount: oneSecTotalFee, token: tokenDetails.symbol }})}</span>
+                <span class="label"
+                    >{$_("cryptoAccount.networkFee", {
+                        values: { amount: oneSecTotalFee, token: tokenDetails.symbol },
+                    })}</span>
             {:else}
                 <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
             {/if}

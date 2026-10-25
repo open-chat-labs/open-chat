@@ -30,7 +30,6 @@
         type OpenChat,
         type ResourceKey,
         type SignerWallet,
-        walletApprovalFee,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
@@ -41,6 +40,7 @@
     import QrCode from "svelte-material-icons/Qrcode.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
+    import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { toastStore } from "../../../stores/toast";
     import Setting from "../../Setting.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -50,6 +50,7 @@
     import SourceWalletSelector from "../SourceWalletSelector.svelte";
     import { TokenState } from "@src/logic/wallet/walletState.svelte";
     import {
+        approvalFeeE8s,
         DiamondPayment,
         insufficientFunds,
         membershipEnd,
@@ -179,10 +180,13 @@
             if (outcome.kind === "success") {
                 refreshBalanceOrToast(tokenState, client);
                 onSuccess?.(outcome.proof);
+            } else if (outcome.kind === "pin_failed") {
+                // the PIN's own message, counting down a lockout
+                toastStore.showFailureToast(pinNumberErrorMessageStore);
             } else if (outcome.kind === "failed") {
-                toastStore.showFailureToast(outcome.message);
+                toastStore.showFailureToast(outcome.message, outcome.cause);
             }
-            // dismissing the PIN prompt cancels the payment, which isn't a failure
+            // the PIN prompt dismissed, or a payment already under way: nothing to say
         } finally {
             confirming = false;
         }
@@ -197,7 +201,7 @@
     let toPay = $derived(amount(toPayE8s));
     // The price includes the transfer's fee, but the wallet also pays for the approval it makes
     // before the price is pulled from it
-    let approvalFee = $derived(walletApprovalFee(tokenDetails.transferFee));
+    let approvalFee = $derived(approvalFeeE8s(tokenDetails.transferFee));
     let toPayWithFees = $derived(amount(walletCostE8s(toPayE8s, tokenDetails.transferFee)));
     let insufficientFundsForSelectedSub = $derived(insufficientFundsForSub(selectedOption.index));
     let insufficientFundsForAnySub = $derived(insufficientFundsForSub(0));
@@ -214,7 +218,7 @@
             amountInE8s(options[index]),
             tokenDetails.transferFee,
             tokenState.remainingBalance,
-            false,
+            sourceWallet !== undefined,
         );
     }
 
@@ -340,7 +344,7 @@
                 </Body>
             {/if}
 
-            {#if insufficientFundsForAnySub && sourceWallet === undefined}
+            {#if insufficientFundsForAnySub}
                 {@render insufficientWarning()}
             {/if}
             {@render cryptoSelector()}
@@ -383,7 +387,7 @@
                 disabled={confirming ||
                     approving ||
                     toPayE8s === 0n ||
-                    (sourceWallet === undefined && insufficientFundsForSelectedSub)}
+                    insufficientFundsForSelectedSub}
                 loading={confirming || approving}>
                 {#snippet icon(color)}
                     {#if selectedDuration === "lifetime"}
@@ -409,7 +413,7 @@
                 {:else if insufficientFundsForSelectedSub}
                     {@render refreshBalance()}
                 {/if}
-                {#if sourceWallet !== undefined || !insufficientFundsForSelectedSub}
+                {#if !insufficientFundsForSelectedSub}
                     <CommonButton
                         width={"fill"}
                         size={"small_text"}
@@ -510,7 +514,7 @@
                 hideBalance={sourceWallet !== undefined}
                 filter={(t) => ["chat", "icp"].includes(t.symbol.toLowerCase())} />
 
-            {#if insufficientFundsForAllSubs && sourceWallet === undefined}
+            {#if insufficientFundsForAllSubs}
                 <Column
                     onClick={() => (topup = true)}
                     mainAxisAlignment={"center"}

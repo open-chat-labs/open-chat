@@ -15,6 +15,7 @@
     } from "@src/logic/diamond/diamondPayment.svelte";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { toastStore } from "../../../stores/toast";
     import Button from "../../Button.svelte";
     import Checkbox from "../../Checkbox.svelte";
@@ -153,12 +154,14 @@
             if (outcome.kind === "success") {
                 confirmed = true;
                 onSuccess?.(outcome.proof);
+            } else if (outcome.kind === "pin_failed") {
+                // the PIN's own message, counting down a lockout
+                toastStore.showFailureToast(pinNumberErrorMessageStore);
             } else if (outcome.kind === "failed") {
-                // a PIN failure says why; any other failure is shown here too
-                if (outcome.message.key === "upgrade.paymentFailed") error = outcome.message.key;
-                toastStore.showFailureToast(outcome.message);
+                error = outcome.message.key;
+                toastStore.showFailureToast(outcome.message, outcome.cause);
             }
-            // dismissing the PIN prompt cancels the payment, which isn't a failure
+            // the PIN prompt dismissed, or a payment already under way: nothing to say
         } finally {
             confirming = false;
         }

@@ -7,11 +7,9 @@
         currentUserIdStore,
         currentUserStore,
         diamondStatusStore,
-        encodeIcrcAccount,
         enhancedCryptoLookup,
         LEDGER_CANISTER_CHAT,
         LEDGER_CANISTER_ICP,
-        userWalletAccount,
         type EnhancedTokenDetails,
         type OpenChat,
     } from "@client";
@@ -19,12 +17,15 @@
         type DiamondPurchase,
     } from "@openchat/ui/src/features/components/DiamondDialog.svelte";
     import { DiamondPayment } from "@src/logic/diamond/diamondPayment.svelte";
+    import { userWalletAddress } from "@src/logic/wallet/receiveAddress";
+    import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import { toastStore } from "@src/stores/toast";
     import { diamondPaysInChat, disableDiamondPaymentFeature } from "@src/utils/features";
     import { getContext, onMount } from "svelte";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { canGoBack, goBack } from "../app/linkedDialogs.svelte";
     import {
+        diamondAffordable,
         diamondApprovalFees,
         diamondMembershipProps,
         diamondTokenPrices,
@@ -37,15 +38,13 @@
 
     const client = getContext<OpenChat>("client");
 
-    // the backend's fees and the payment
+    // the backend's fees (loading, or failed: the plans step says so, offering to try again) and the
+    // payment
     const payment = new DiamondPayment(client);
-    onMount(async () => {
-        try {
-            await payment.loadFees();
-        } catch (err) {
-            console.warn("Unable to load the Diamond fees", err);
-        }
-    });
+    onMount(() => payment.loadFees());
+    const pricing = $derived(
+        payment.feesState.kind === "loaded" ? undefined : payment.feesState.kind,
+    );
 
     // the tokens Diamond can be paid in, with the user's balances
     const LEDGERS = [LEDGER_CANISTER_CHAT, LEDGER_CANISTER_ICP];
@@ -63,9 +62,7 @@
     // where each token can be topped up: the user's ICP account, and their wallet's ICRC account
     const depositAddresses = $derived({
         ICP: $currentUserStore.cryptoAccount,
-        CHAT: encodeIcrcAccount(
-            userWalletAccount($currentUserIdStore, () => client.OcIdentityPrincipal),
-        ),
+        CHAT: userWalletAddress($currentUserIdStore, () => client.OcIdentityPrincipal),
     });
 
     function refreshBalances(): Promise<unknown> {
@@ -73,8 +70,9 @@
     }
 
     // pays at the backend's price for the token and plan (never the dialog's amount); a failed
-    // payment stays on confirm with the dialog's error, a PIN failure is toasted with its own
-    // message, and the PIN prompt dismissed is nothing bought
+    // payment stays on confirm with the dialog's error (its cause logged: the user may have been
+    // charged), a PIN failure is toasted with the PIN's own message (counting down a lockout), and
+    // the PIN prompt dismissed, or a payment already under way, is nothing bought
     async function upgrade(purchase: DiamondPurchase): Promise<{ until: string | null } | false> {
         const token = tokens.find((t) => t.symbol === purchase.token);
         if (token === undefined) throw new Error(`Diamond can't be paid in ${purchase.token}`);
@@ -84,11 +82,15 @@
             duration: planDuration(purchase.plan),
             autoRenew: purchase.autoRenew,
         });
-        if (outcome.kind === "cancelled") return false;
-        if (outcome.kind === "failed") {
-            if (outcome.message.key === "upgrade.paymentFailed") throw new Error("payment failed");
-            toastStore.showFailureToast(outcome.message);
+        if (outcome.kind === "cancelled" || outcome.kind === "already_paying") return false;
+        if (outcome.kind === "pin_failed") {
+            toastStore.showFailureToast(pinNumberErrorMessageStore);
             return false;
+        }
+        if (outcome.kind === "failed") {
+            if (outcome.cause !== undefined)
+                client.logError("Diamond payment failed", outcome.cause);
+            throw new Error("payment failed");
         }
         void refreshBalances();
         const status = diamondStatusStore.value;
@@ -105,6 +107,9 @@
     prices={{}}
     tokenPrices={payment.fees === undefined ? {} : diamondTokenPrices(payment.fees)}
     approvalFees={diamondApprovalFees(tokens)}
+    affordable={payment.fees === undefined ? undefined : diamondAffordable(payment.fees, tokens)}
+    {pricing}
+    onRetryPricing={() => payment.loadFees()}
     defaultToken={diamondPaysInChat ? "CHAT" : "ICP"}
     autoRenewDefault
     {plan}

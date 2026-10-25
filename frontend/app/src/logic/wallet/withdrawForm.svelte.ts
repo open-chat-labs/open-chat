@@ -16,7 +16,7 @@ import {
     type WithdrawalRoute,
     type WithdrawOutcome,
 } from "@client";
-import { encodeIcrcAccount, userWalletAccount } from "@shared";
+import { userWalletAddress } from "./receiveAddress";
 import { CkbtcWithdrawalInfoRequests } from "@src/utils/ckbtcWithdrawalInfo";
 import { addressNetwork, type AddressNetwork } from "@src/utils/cryptoAddress";
 import type { TokenState } from "./walletState.svelte";
@@ -135,9 +135,7 @@ export class WithdrawForm {
         this.#ownAccount =
             tokenState.symbol === ICP_SYMBOL
                 ? currentUserStore.value.cryptoAccount
-                : encodeIcrcAccount(
-                      userWalletAccount(currentUserIdStore.value, () => client.OcIdentityPrincipal),
-                  );
+                : userWalletAddress(currentUserIdStore.value, () => client.OcIdentityPrincipal);
         this.#ckbtcInfoRequests = new CkbtcWithdrawalInfoRequests(
             (amount) => client.getCkbtcMinterWithdrawalInfo(amount),
             (info) => (this.#ckbtcInfo = info),

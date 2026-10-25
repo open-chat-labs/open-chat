@@ -1,5 +1,6 @@
 import type { DiamondMembershipFees, EnhancedTokenDetails } from "@client";
 import {
+    diamondAffordable,
     diamondApprovalFees,
     diamondMembershipProps,
     diamondTokenPrices,
@@ -105,5 +106,32 @@ describe("the Diamond dialog's props", () => {
             CHAT: 0.001,
             ICP: 0.001,
         });
+    });
+});
+
+describe("which plans a token can pay", () => {
+    test("is worked out in e8s with the approval fee, so exactly the price and fee can pay", () => {
+        const fees: DiamondMembershipFees[] = [
+            {
+                token: "ICP",
+                oneMonth: E8S / 10n,
+                threeMonths: E8S,
+                oneYear: 2n * E8S,
+                lifetime: 9n * E8S,
+            },
+        ];
+        // 0.1 ICP and the 0.0001 approval fee, exactly: 0.1 + 0.0002 style float sums would say no
+        const exact = token("ICP", E8S / 10n + 100_000n);
+        expect(diamondAffordable(fees, [exact]).ICP).toEqual({
+            "1m": true,
+            "3m": false,
+            "1y": false,
+            life: false,
+        });
+        expect(diamondAffordable(fees, [token("ICP", E8S / 10n + 99_999n)]).ICP?.["1m"]).toBe(
+            false,
+        );
+        // a token the backend doesn't price has no plans
+        expect(diamondAffordable(fees, [token("CHAT", 1000n * E8S)]).CHAT).toEqual({});
     });
 });

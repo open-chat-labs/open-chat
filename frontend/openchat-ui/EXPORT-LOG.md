@@ -305,6 +305,8 @@
 - `tokenPrices`: each plan's price per token, the backend's own. Only those tokens are offered, at those prices, with no USD conversion (the backend checks the price and rejects any other). `prices` / `chatUsd` stay for a host without it.
 - `approvalFees`: the approval a wallet payment makes on top of the price, per token. It counts towards what a token can afford ("Need … more", insufficient funds) and shows on confirm ("Approval fee", and in the balance after payment).
 - `depositAddresses`: the top-up address per token, as each token has its own.
+- `affordable`: whether each token can pay each plan, as the host works it out exactly (in the ledger's units), in place of comparing a floating point sum of price and fee with the balance here (0.1 + 0.0002 isn't 0.1002).
+- `pricing` (`'loading' | 'failed'`) and `onRetryPricing`: while the prices load, the plans step says so; if they failed, it says that and offers to try again. Upgrade is offered meanwhile.
 - `defaultToken`: the token chosen at first.
 - `onUpgrade` may resolve `false`: nothing bought and nothing to say (the user backed out, or the host said why); it stays on confirm with no error.
 - The first step's Back (`onBack`) hands off with no exit (`DialogFlow.handOff`), so the dialog it goes back to keeps the backdrop.

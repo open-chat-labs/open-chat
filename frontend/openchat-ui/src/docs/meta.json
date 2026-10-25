@@ -8828,6 +8828,39 @@
         "doc": "The approval fee a payment from the wallet costs on top of the price, per token symbol (token units)."
       },
       {
+        "name": "affordable",
+        "type": "Record<string, Partial<Record<PlanKey, boolean>>>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Whether each token can pay each plan, as the host works it out (exactly, in the ledger's units): takes the place of comparing the balance with the price and fee here, in floating point."
+      },
+      {
+        "name": "pricing",
+        "type": "'loading' | 'failed'",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The prices are still loading, or failed to (the plans step says so, offering `onRetryPricing`)."
+      },
+      {
+        "name": "onRetryPricing",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
         "name": "defaultToken",
         "type": "string",
         "default": null,

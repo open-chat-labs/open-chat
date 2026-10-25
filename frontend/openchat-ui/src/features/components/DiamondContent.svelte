@@ -144,6 +144,12 @@
     depositAddresses?: Record<string, string>;
     /** The approval fee a payment from the wallet costs on top of the price, per token symbol (token units). */
     approvalFees?: Record<string, number>;
+    /** Whether each token can pay each plan, as the host works it out (exactly, in the ledger's units): takes the place
+     *  of comparing the balance with the price and fee here, in floating point. */
+    affordable?: Record<string, Partial<Record<PlanKey, boolean>>>;
+    /** The prices are still loading, or failed to (the plans step says so, offering `onRetryPricing`). */
+    pricing?: 'loading' | 'failed';
+    onRetryPricing?: () => void;
     /** The token chosen to pay with at first (CHAT, or ICP outside production), when it can pay. */
     defaultToken?: string;
     /** The dialog's flow (its exit, Esc), which paying and closing go through; a page leaves it out. */
@@ -172,6 +178,9 @@
     tokenPrices,
     depositAddresses,
     approvalFees = {},
+    affordable,
+    pricing,
+    onRetryPricing,
     defaultToken = 'CHAT',
     flow: flowProp,
   }: Props = $props();
@@ -232,6 +241,8 @@
   // where the token chosen can be topped up
   const depositAddress = $derived(depositAddresses?.[tok.symbol] ?? depositAddressProp);
   const total = (pl: Plan) => cost(pl) + fee;
+  // whether the chosen token can pay a plan: the host's answer when it gives one, else the balance against price and fee
+  const affords = (pl: Plan) => affordable?.[tok.symbol]?.[pl.key] ?? balance >= total(pl);
   const fmtToken = (n: number) => `${fmtAmt(n)} ${sym}`;
 
   const member = $derived(isDiamond || !!bought);
@@ -245,8 +256,8 @@
   const until = (pl: Plan) => addMonths(extend ? expiry : new Date(), pl.months);
   const plan = $derived(PLANS.find((x) => x.key === planKey) ?? PLANS[0]);
   const cheapest = $derived(PLANS.length ? Math.min(...PLANS.map(total)) : 0);
-  const dearest = $derived(PLANS.length ? Math.max(...PLANS.map(total)) : 0);
-  const canUpgrade = $derived(!!onUpgrade && PLANS.length > 0);
+  // offered while the prices load (or failed to), the plans step saying so
+  const canUpgrade = $derived(!!onUpgrade && (PLANS.length > 0 || pricing !== undefined));
 
   const groups = $derived(
     groupsFor(limits).map((g) => ({ label: g.label, rows: g.rows.filter((r) => !onlyDiff || r[2] !== r[3]) })).filter((g) => g.rows.length),
@@ -254,7 +265,7 @@
 
   const plans = $derived(
     PLANS.map((pl) => {
-      const c = cost(pl), ok = balance >= total(pl);
+      const c = cost(pl), ok = affords(pl);
       return {
         key: pl.key,
         label: t(extend ? 'ui.diamondDialog.planExtension' : 'ui.diamondDialog.planLabel', { plan: pl.key }),
@@ -269,7 +280,7 @@
       };
     }),
   );
-  const isShort = $derived(balance < dearest);
+  const isShort = $derived(PLANS.some((pl) => !affords(pl)));
   const price = $derived(plan ? cost(plan) : 0);
   const timed = $derived(!!plan?.months);
   const daysLeft = $derived(Math.max(0, Math.ceil((expiry.getTime() - Date.now()) / DAY)));
@@ -488,13 +499,19 @@
             </div>
           </div>
         {/if}
-        {#if PLANS.length && balance < cheapest}
+        {#if PLANS.length && !PLANS.some(affords)}
           {@render warn(t('ui.diamondDialog.insufficientTitle'), t('ui.diamondDialog.insufficientBody', { amount: fmtToken(cheapest) }))}
         {/if}
       </div>
 
       <div class="stack">
         <span class="eyebrow inset">{t(extend ? 'ui.diamondDialog.availableOptions' : 'ui.diamondDialog.membershipDuration')}</span>
+        {#if !PLANS.length && pricing === 'loading'}
+          <span class="pricing-note">{@render icon('spin', 'pricing-spin spinning')}{t('ui.diamondDialog.pricesLoading')}</span>
+        {:else if !PLANS.length && pricing === 'failed'}
+          {@render warn(t('ui.diamondDialog.pricesFailedTitle'), t('ui.diamondDialog.pricesFailedBody'))}
+          {#if onRetryPricing}<span class="refresh" onclick={() => onRetryPricing?.()} role="button" tabindex="0">{@render icon('refresh', 'refresh-icon')}{t('ui.diamondDialog.retryPrices')}</span>{/if}
+        {/if}
         <div class="plans">
           {#each plans as o}
             <div class="plan" class:life={o.life} class:short={!o.ok} onclick={() => choose(o.key, o.ok)} role="button" tabindex={o.ok ? 0 : -1}>
@@ -577,6 +594,22 @@
 </div>
 
 <style>
+
+  .pricing-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: var(--space-14);
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-3);
+  }
+
+  :global(.pricing-spin) {
+    width: 14px;
+    height: 14px;
+    background: var(--ink-3);
+  }
 
   /* fills what holds it: the dialog's card, or a page's column */
   .diamond {
@@ -1287,6 +1320,7 @@
   }
 
   :global(.refresh-icon.spinning),
+  :global(.pricing-spin.spinning),
   :global(.cta-icon.spinning) {
     animation: oc-spin 0.8s linear infinite;
   }
