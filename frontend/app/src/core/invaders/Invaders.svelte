@@ -3,7 +3,6 @@
      a keyboard, and from the host's start button (`start`) on touch and after a game ends. The best score is kept in
      this browser. `fill`: as tall as the host makes it, else 500px. -->
 <script lang="ts">
-    import { mobileWidth } from "@client";
     import { isTouchDevice } from "@src/utils/devices";
     import { onMount, tick, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
@@ -27,7 +26,11 @@
     let containerWidth = $state(0);
     let containerHeight = $state(0);
     const height = $derived(fill ? containerHeight : HEIGHT);
-    let game: InvadersGame | undefined;
+    // state, so the field follows the canvas once the game is made (the game itself is mutated in
+    // place each frame, not tracked)
+    let game = $state.raw<InvadersGame>();
+    // a start under way (iOS asks to read the tilt first): a second press doesn't start a second loop
+    let starting = false;
     let phase = $state<InvadersState>("not_started");
     let destroyed = false;
     let tilt: number | null = null;
@@ -48,7 +51,6 @@
             game = new InvadersGame(
                 canvas.width,
                 canvas.height,
-                $mobileWidth ? 5 : 8,
                 Number(localStorage.getItem(HIGH_SCORE_KEY) || "0"),
                 (score) => localStorage.setItem(HIGH_SCORE_KEY, score.toString()),
             );
@@ -63,13 +65,18 @@
         };
     });
 
-    // the field follows the canvas, as the dialog resizes
+    // the field follows the canvas, as the dialog resizes or the device turns: a game not yet started
+    // is laid out again for it; the canvas is cleared as it resizes, so it's drawn again
     $effect(() => {
+        const width = containerWidth;
+        const h = height;
+        const current = phase;
         if (game === undefined) return;
-        game.width = containerWidth;
-        game.height = height;
-        game.ship.y = height - game.ship.height;
-        if (phase !== "playing") tick().then(draw);
+        game.width = width;
+        game.height = h;
+        if (current === "not_started") game.reset();
+        else game.ship.y = h - game.ship.height;
+        if (current !== "playing") tick().then(draw);
     });
 
     function keydown(event: KeyboardEvent) {
@@ -108,12 +115,17 @@
     }
 
     async function play() {
-        if (game === undefined) return;
-        if (game.state === "game_over") game.reset();
-        if (isTouchDevice) await setUpTilt();
-        game.start();
-        phase = game.state;
-        requestAnimationFrame(loop);
+        if (game === undefined || starting || game.state === "playing") return;
+        starting = true;
+        try {
+            if (game.state === "game_over") game.reset();
+            if (isTouchDevice) await setUpTilt();
+            game.start();
+            phase = game.state;
+            requestAnimationFrame(loop);
+        } finally {
+            starting = false;
+        }
     }
 
     function loop() {

@@ -485,7 +485,8 @@ design export needs. Each entry says where it came up.
 - **Leaderboard** (`?hof`): this month's, last month's and all time's top 10, as the old hall of
   fame shows them, with its Invaders game behind the joystick (8f: the old game, now
   `core/invaders`, for both trees), where the device can play it (a keyboard, or iOS, which steers
-  by tilting); it now starts again after a game ends, and keeps the final score on screen.
+  by tilting); it now starts again after a game ends, keeps the final score on screen, and fits
+  its waves to the field (fewer rows on a short one, a phone on its side).
 - **Ways to earn** (`AchievementsDialog`): the old "Learn to earn" list (`achievementList`). The
   dialog's groups and its "next up" bands are the app's (`chit.adapter.ts`: each achievement
   given a group; quick up to 1,000 CHIT, middling up to 3,000, big above), not anything the old

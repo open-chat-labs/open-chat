@@ -14,7 +14,8 @@ const SHIP_SIZE = 30;
 const SHIP_SPEED = 5;
 const INVADER_SIZE = 30;
 const INVADER_SPACING = 30;
-const INVADER_ROWS = 5;
+const MAX_ROWS = 5;
+const MAX_COLUMNS = 8;
 const INVADER_DROP = 8;
 const SHOT_SPEED = 10;
 const POINTS = 10;
@@ -22,6 +23,23 @@ const TILT_SPEED = 0.2;
 // the invaders speed up a little every frame of a game, and start again from 1
 const START_SPEED = 1;
 const SPEED_UP = 0.01;
+
+/**
+ * How many rows and columns of invaders a wave has on a `width` × `height` field: as many as fit, up
+ * to five rows of eight (a desktop's field), leaving the wave room to march down before it reaches
+ * the ship's row, so a short field (a phone on its side) gets fewer rows rather than a game over at
+ * once.
+ */
+export function waveSize(width: number, height: number): { rows: number; columns: number } {
+    const step = INVADER_SIZE + INVADER_SPACING;
+    // a row's top is at spacing + row × step, and the game ends once one is a ship's height above
+    // the ship's row: keep the last row two steps above that
+    const room = height - SHIP_SIZE * 2 - INVADER_SPACING - 2 * step;
+    return {
+        rows: Math.max(1, Math.min(MAX_ROWS, Math.floor(room / step) + 1)),
+        columns: Math.max(1, Math.min(MAX_COLUMNS, Math.floor((width - INVADER_SPACING) / step))),
+    };
+}
 
 /** Whether two objects overlap. */
 export function collides(a: GameObject, b: GameObject): boolean {
@@ -31,10 +49,10 @@ export function collides(a: GameObject, b: GameObject): boolean {
 }
 
 /**
- * One game of Invaders on a `width` × `height` field: `columns` invaders a row, five rows, which
- * march side to side, dropping a step at each edge, faster all the time; a new wave once one is
- * cleared; 10 points an invader; over once one reaches the ship's row. A score above `highScore`
- * is the new one (`onHighScore`, to keep it).
+ * One game of Invaders on a `width` × `height` field (which can change as it's played): waves of
+ * invaders (waveSize) that march side to side, dropping a step at each edge, faster all the time; a
+ * new wave once one is cleared; 10 points an invader; over once one reaches the ship's row. A score
+ * above `highScore` is the new one (`onHighScore`, to keep it).
  */
 export class InvadersGame {
     state: InvadersState = "not_started";
@@ -42,7 +60,6 @@ export class InvadersGame {
     shots: Shot[] = [];
     invaders: Invader[] = [];
     score = 0;
-    newHighScore = false;
     #speed = START_SPEED;
     #direction: "right" | "left" | "down" = "right";
     #next: "right" | "left" = "left";
@@ -50,7 +67,6 @@ export class InvadersGame {
     constructor(
         public width: number,
         public height: number,
-        private columns: number,
         public highScore = 0,
         private onHighScore: (score: number) => void = () => {},
     ) {
@@ -69,7 +85,6 @@ export class InvadersGame {
         this.shots = [];
         this.invaders = [];
         this.score = 0;
-        this.newHighScore = false;
         this.#speed = START_SPEED;
         this.#direction = "right";
         this.#next = "left";
@@ -98,12 +113,12 @@ export class InvadersGame {
     update({ left, right, tilt }: Steering): void {
         if (this.state !== "playing") return;
         const ship = this.ship;
-        if (left && ship.x > 0) ship.x -= ship.speed;
-        if (right && ship.x < this.width - ship.width) ship.x += ship.speed;
+        if (left) ship.x -= ship.speed;
+        if (right) ship.x += ship.speed;
         const angle = tilt ?? 0;
-        if ((angle < 0 && ship.x > 0) || (angle > 0 && ship.x < this.width - ship.width)) {
-            ship.x += angle * TILT_SPEED;
-        }
+        ship.x += angle * TILT_SPEED;
+        // on the field, whatever the step
+        ship.x = Math.max(0, Math.min(this.width - ship.width, ship.x));
 
         this.#moveInvaders();
 
@@ -133,8 +148,7 @@ export class InvadersGame {
 
     #over(): void {
         this.state = "game_over";
-        this.newHighScore = this.score > this.highScore;
-        if (this.newHighScore) {
+        if (this.score > this.highScore) {
             this.highScore = this.score;
             this.onHighScore(this.score);
         }
@@ -160,8 +174,9 @@ export class InvadersGame {
     }
 
     #addWave(): void {
-        for (let row = 0; row < INVADER_ROWS; row++) {
-            for (let column = 0; column < this.columns; column++) {
+        const { rows, columns } = waveSize(this.width, this.height);
+        for (let row = 0; row < rows; row++) {
+            for (let column = 0; column < columns; column++) {
                 this.invaders.push({
                     x: column * (INVADER_SPACING + INVADER_SIZE) + INVADER_SPACING,
                     y: row * (INVADER_SPACING + INVADER_SIZE) + INVADER_SPACING,

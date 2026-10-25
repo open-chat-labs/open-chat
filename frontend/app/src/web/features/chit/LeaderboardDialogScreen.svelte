@@ -56,7 +56,7 @@
 {#snippet invaders()}
     <Invaders fill>
         {#snippet start(play)}
-            <Button label={$_("halloffame.start")} onClick={play} />
+            <Button label="halloffame.start" onClick={play} />
         {/snippet}
     </Invaders>
 {/snippet}

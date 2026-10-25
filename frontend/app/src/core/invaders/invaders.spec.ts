@@ -1,25 +1,25 @@
 import { describe, expect, test, vi } from "vitest";
-import { collides, InvadersGame, type Steering } from "./invaders";
+import { collides, InvadersGame, waveSize, type Steering } from "./invaders";
 
 const still: Steering = { left: false, right: false, tilt: null };
 
-function playing(width = 600, height = 500, columns = 8) {
-    const game = new InvadersGame(width, height, columns);
+function playing(width = 600, height = 500) {
+    const game = new InvadersGame(width, height);
     game.start();
     return game;
 }
 
 describe("a game of Invaders", () => {
     test("starts with the ship in the middle of the bottom row and a wave of five rows", () => {
-        const game = new InvadersGame(600, 500, 8);
+        const game = new InvadersGame(600, 500);
         expect(game.state).toBe("not_started");
         expect([game.ship.x, game.ship.y]).toEqual([285, 470]);
         expect(game.invaders).toHaveLength(40);
-        expect(new InvadersGame(300, 500, 5).invaders).toHaveLength(25);
+        expect(new InvadersGame(360, 500).invaders).toHaveLength(25);
     });
 
     test("fires only while playing", () => {
-        const game = new InvadersGame(600, 500, 8);
+        const game = new InvadersGame(600, 500);
         expect(game.fire()).toBe(false);
         game.start();
         expect(game.fire()).toBe(true);
@@ -37,8 +37,20 @@ describe("a game of Invaders", () => {
         expect(game.ship.x).toBe(0);
     });
 
+    test("the ship never leaves the field, whatever the step", () => {
+        const game = playing();
+        game.ship.x = 3;
+        game.update({ ...still, tilt: -45 });
+        expect(game.ship.x).toBe(0);
+        game.ship.x = 568;
+        game.update({ ...still, right: true });
+        expect(game.ship.x).toBe(570);
+        game.update({ ...still, tilt: 45 });
+        expect(game.ship.x).toBe(570);
+    });
+
     test("the invaders march to the edge, drop a step and turn back", () => {
-        const game = playing(200, 500, 2);
+        const game = playing(200, 500);
         const first = game.invaders[0];
         const startY = first.y;
         // the right-hand column reaches the edge, then the wave drops and heads left
@@ -67,24 +79,24 @@ describe("a game of Invaders", () => {
 
     test("ends once an invader reaches the ship's row, a better score being the new high score", () => {
         const onHighScore = vi.fn();
-        const game = new InvadersGame(600, 500, 8, 20, onHighScore);
+        const game = new InvadersGame(600, 500, 20, onHighScore);
         game.start();
         game.score = 30;
         game.invaders[0].y = game.ship.y;
         game.update(still);
         expect(game.state).toBe("game_over");
-        expect([game.newHighScore, game.highScore]).toEqual([true, 30]);
+        expect(game.highScore).toBe(30);
         expect(onHighScore).toHaveBeenCalledWith(30);
     });
 
     test("a score that doesn't beat the high score leaves it", () => {
         const onHighScore = vi.fn();
-        const game = new InvadersGame(600, 500, 8, 50, onHighScore);
+        const game = new InvadersGame(600, 500, 50, onHighScore);
         game.start();
         game.score = 30;
         game.invaders[0].y = game.ship.y;
         game.update(still);
-        expect([game.newHighScore, game.highScore]).toEqual([false, 50]);
+        expect(game.highScore).toBe(50);
         expect(onHighScore).not.toHaveBeenCalled();
     });
 
@@ -103,5 +115,20 @@ describe("a collision", () => {
         const a = { x: 0, y: 0, width: 10, height: 10 };
         expect(collides(a, { x: 5, y: 5, width: 10, height: 10 })).toBe(true);
         expect(collides(a, { x: 10, y: 0, width: 10, height: 10 })).toBe(false);
+    });
+});
+
+describe("a wave", () => {
+    test("is five rows of eight on a desktop's field, as many as fit on a smaller one", () => {
+        expect(waveSize(600, 500)).toEqual({ rows: 5, columns: 8 });
+        expect(waveSize(360, 500)).toEqual({ rows: 5, columns: 5 });
+        expect(waveSize(556, 360)).toEqual({ rows: 3, columns: 8 });
+    });
+
+    test("on a short field (a phone on its side) is one row, with room to come down, not a game over at once", () => {
+        expect(waveSize(800, 230).rows).toBe(1);
+        const game = playing(800, 230);
+        game.update(still);
+        expect(game.state).toBe("playing");
     });
 });
