@@ -174,10 +174,11 @@
   });
 
   // a tap shows a day's popover, or hides it again (a mouse shows it on hover, so its click leaves it be). The pointer
-  // is told by its pointerdown: some browsers' click isn't a PointerEvent
+  // is told by its pointerdown: some browsers' click isn't a PointerEvent.
   let lastPointer = '';
-  function tapped(key: string) {
-    if (lastPointer === 'mouse') return;
+  // From the keyboard (Enter / Space, a click with no detail) it toggles too.
+  function tapped(e: MouseEvent, key: string) {
+    if (e.detail !== 0 && lastPointer === 'mouse') return;
     openDay = openDay === key ? null : key;
   }
 
@@ -187,16 +188,32 @@
   }
 </script>
 
+{#snippet dayInner(cell: Cell)}
+  <span class="day-num">{cell.day}</span>
+  <span class="day-amount"
+    >{#if cell.kind === 'insured'}<span class="day-shield"></span>{/if}{cell.kind === 'claim'
+      ? t(claiming ? 'ui.claimCalendar.claiming' : 'ui.claimCalendar.claim')
+      : cell.kind === 'claimed'
+        ? fmt(cell.amount ?? 0)
+        : ''}</span
+  >
+  {#if cell.lines && openDay === cell.key}
+    <div class="pop" class:start={cell.col === 0} class:end={cell.col === 6} role="tooltip">
+      <span class="pop-head">{cell.head}</span>
+      {#each cell.lines as line}<span class="pop-line {line.tone}">{line.text}</span>{/each}
+    </div>
+  {/if}
+{/snippet}
+
 <div class="claim-calendar">
   <div class="month-bar">
-    <span
+    <button
+      type="button"
       class="month-step"
-      class:disabled={!calendar.canPrev}
+      disabled={!calendar.canPrev}
       onclick={() => page(-1)}
       aria-label={t('ui.claimCalendar.prevMonth')}
-      role="button"
-      tabindex="0"
-      title={t('ui.claimCalendar.prevMonth')}><span class="month-glyph back"></span></span
+      title={t('ui.claimCalendar.prevMonth')}><span class="month-glyph back"></span></button
     >
     <div class="month-text">
       <span class="month-label">{calendar.label}</span>
@@ -208,20 +225,19 @@
         ></span
       >
     </div>
-    <span
+    <button
+      type="button"
       class="month-step"
-      class:disabled={!calendar.canNext}
+      disabled={!calendar.canNext}
       onclick={() => page(1)}
       aria-label={t('ui.claimCalendar.nextMonth')}
-      role="button"
-      tabindex="0"
-      title={t('ui.claimCalendar.nextMonth')}><span class="month-glyph next"></span></span
+      title={t('ui.claimCalendar.nextMonth')}><span class="month-glyph next"></span></button
     >
     <span class="grow"></span>
     <div class="segments" role="radiogroup" aria-label={t('ui.claimCalendar.timeZone')}>
       {#each [['ui.claimCalendar.local', false], ['UTC', true]] as [label, isUtc]}
-        <span class="tz-option" class:on={utc === isUtc} onclick={() => onUtcChange?.(isUtc as boolean)} role="radio" aria-checked={utc === isUtc} tabindex="0"
-          >{t(label as string)}</span
+        <button type="button" class="tz-option" class:on={utc === isUtc} onclick={() => onUtcChange?.(isUtc as boolean)} role="radio" aria-checked={utc === isUtc}
+          >{t(label as string)}</button
         >
       {/each}
     </div>
@@ -233,35 +249,25 @@
       {#if cell.kind === 'outside'}
         <div class="day outside" aria-hidden="true"><span class="day-num">{cell.day}</span><span class="day-amount"></span></div>
       {:else}
-        <div
-          class="day {cell.kind}"
-          class:today={cell.today}
-          class:inert={cell.kind === 'claim' && !onClaim}
-          class:claiming={cell.kind === 'claim' && claiming}
-          onpointerdown={(e) => (lastPointer = e.pointerType)}
-          onclick={cell.kind === 'claim' ? claim : cell.lines ? () => tapped(cell.key) : undefined}
-          onpointerenter={cell.lines ? (e) => e.pointerType === 'mouse' && (openDay = cell.key) : undefined}
-          onpointerleave={cell.lines ? (e) => e.pointerType === 'mouse' && openDay === cell.key && (openDay = null) : undefined}
-          aria-label={cell.title ?? cell.head ?? ''}
-          role="button"
-          tabindex="0"
-          title={cell.title ?? ''}
-        >
-          <span class="day-num">{cell.day}</span>
-          <span class="day-amount"
-            >{#if cell.kind === 'insured'}<span class="day-shield"></span>{/if}{cell.kind === 'claim'
-              ? t(claiming ? 'ui.claimCalendar.claiming' : 'ui.claimCalendar.claim')
-              : cell.kind === 'claimed'
-                ? fmt(cell.amount ?? 0)
-                : ''}</span
+        {#if (cell.kind === 'claim' && onClaim) || cell.lines}
+          <button
+            type="button"
+            class="day {cell.kind}"
+            class:today={cell.today}
+            class:claiming={cell.kind === 'claim' && claiming}
+            onpointerdown={(e) => (lastPointer = e.pointerType)}
+            onclick={cell.kind === 'claim' ? claim : (e) => tapped(e, cell.key)}
+            onpointerenter={cell.lines ? (e) => e.pointerType === 'mouse' && (openDay = cell.key) : undefined}
+            onpointerleave={cell.lines ? (e) => e.pointerType === 'mouse' && openDay === cell.key && (openDay = null) : undefined}
+            onblur={cell.lines ? () => openDay === cell.key && (openDay = null) : undefined}
+            aria-label={cell.title ?? cell.head}
+            aria-expanded={cell.lines ? openDay === cell.key : undefined}
+            aria-disabled={cell.kind === 'claim' && claiming ? true : undefined}
+            title={cell.title}>{@render dayInner(cell)}</button
           >
-          {#if cell.lines && openDay === cell.key}
-            <div class="pop" class:start={cell.col === 0} class:end={cell.col === 6} role="tooltip">
-              <span class="pop-head">{cell.head}</span>
-              {#each cell.lines as line}<span class="pop-line {line.tone}">{line.text}</span>{/each}
-            </div>
-          {/if}
-        </div>
+        {:else}
+          <div class="day {cell.kind}" class:today={cell.today} class:inert={cell.kind === 'claim'} title={cell.title}>{@render dayInner(cell)}</div>
+        {/if}
       {/if}
     {/each}
   </div>
@@ -282,6 +288,9 @@
 
   .month-step {
     flex: none;
+    margin: 0;
+    padding: 0;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -296,7 +305,7 @@
     background: var(--overlay-2);
   }
 
-  .month-step.disabled {
+  .month-step:disabled {
     opacity: 0.35;
     pointer-events: none;
   }
@@ -357,6 +366,9 @@
   }
 
   .tz-option {
+    margin: 0;
+    border: none;
+    background: none;
     display: flex;
     align-items: center;
     height: 24px;
@@ -386,10 +398,18 @@
     color: var(--ink-4);
   }
 
+  /* a day with something to do is a button (claim, or its popover): it draws as the rest do */
   .day {
     --day-ink: var(--ink-4);
     --day-amount: var(--status-chit);
     position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    font: inherit;
+    color: inherit;
     display: flex;
     flex-direction: column;
     align-items: center;
