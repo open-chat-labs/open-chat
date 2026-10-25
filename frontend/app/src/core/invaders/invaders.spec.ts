@@ -132,3 +132,32 @@ describe("a wave", () => {
         expect(game.state).toBe("playing");
     });
 });
+
+describe("a field that changes size", () => {
+    test("lays a game not yet started out again for it", () => {
+        const game = new InvadersGame(600, 500);
+        game.resize(800, 230);
+        expect(game.invaders).toHaveLength(waveSize(800, 230).rows * waveSize(800, 230).columns);
+        expect(game.ship.y).toBe(200);
+    });
+
+    test("mid-game, keeps the invaders as far along their way down, so a shorter field doesn't end it", () => {
+        const game = playing(600, 500);
+        const lowest = () => Math.max(...game.invaders.map((i) => i.y));
+        // the last row at 270, of the way from 30 to the landing line at 440
+        expect(lowest()).toBe(270);
+        game.resize(600, 266);
+        expect(game.ship.y).toBe(236);
+        // the same share of the way from 30 to the new landing line at 206
+        expect(lowest()).toBeCloseTo(30 + (240 / 410) * 176);
+        game.update(still);
+        expect(game.state).toBe("playing");
+    });
+
+    test("mid-game, keeps the ship within a narrower field", () => {
+        const game = playing(600, 500);
+        game.ship.x = 560;
+        game.resize(400, 500);
+        expect(game.ship.x).toBe(370);
+    });
+});

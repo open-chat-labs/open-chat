@@ -65,17 +65,14 @@
         };
     });
 
-    // the field follows the canvas, as the dialog resizes or the device turns: a game not yet started
-    // is laid out again for it; the canvas is cleared as it resizes, so it's drawn again
+    // the field follows the canvas, as the dialog resizes or the device turns (InvadersGame.resize);
+    // the canvas is cleared as it resizes, so it's drawn again
     $effect(() => {
         const width = containerWidth;
         const h = height;
         const current = phase;
         if (game === undefined) return;
-        game.width = width;
-        game.height = h;
-        if (current === "not_started") game.reset();
-        else game.ship.y = h - game.ship.height;
+        game.resize(width, h);
         if (current !== "playing") tick().then(draw);
     });
 

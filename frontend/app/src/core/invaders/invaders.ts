@@ -96,6 +96,31 @@ export class InvadersGame {
         this.state = "playing";
     }
 
+    /**
+     * The field changes size (the window resized, the device turned): a game not yet started is laid
+     * out again for it; one under way keeps going, the ship on the new bottom row and within the new
+     * width, and the invaders as far along their way down as they were, so a shorter field doesn't put
+     * them on the ship's row at once.
+     */
+    resize(width: number, height: number): void {
+        const was = this.height;
+        this.width = width;
+        this.height = height;
+        if (this.state === "not_started") {
+            this.reset();
+            return;
+        }
+        this.ship.y = height - this.ship.height;
+        this.ship.x = Math.max(0, Math.min(width - this.ship.width, this.ship.x));
+        // an invader lands once its top is a ship's height above the ship's row: how far it has come
+        // towards that, from the wave's first row, stays the same share of the way
+        const start = INVADER_SPACING;
+        const end = (h: number) => h - 2 * SHIP_SIZE;
+        if (was === height || end(was) <= start) return;
+        const scale = Math.max(0, end(height) - start) / (end(was) - start);
+        this.invaders.forEach((i) => (i.y = start + (i.y - start) * scale));
+    }
+
     /** Fires a shot from the ship, while playing: whether it did (for its sound). */
     fire(): boolean {
         if (this.state !== "playing") return false;
