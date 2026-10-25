@@ -1,7 +1,7 @@
 import type { DiamondMembershipFees, EnhancedTokenDetails } from "@client";
 import {
-    diamondAffordable,
     diamondApprovalFees,
+    diamondShortfall,
     diamondMembershipProps,
     diamondTokenPrices,
     diamondWalletTokens,
@@ -109,8 +109,8 @@ describe("the Diamond dialog's props", () => {
     });
 });
 
-describe("which plans a token can pay", () => {
-    test("is worked out in e8s with the approval fee, so exactly the price and fee can pay", () => {
+describe("how much a token is short of each plan", () => {
+    test("is worked out in e8s with the approval fee: exactly the price and fee can pay, 1 e8 less is short by 1 e8", () => {
         const fees: DiamondMembershipFees[] = [
             {
                 token: "ICP",
@@ -120,18 +120,17 @@ describe("which plans a token can pay", () => {
                 lifetime: 9n * E8S,
             },
         ];
-        // 0.1 ICP and the 0.0001 approval fee, exactly: 0.1 + 0.0002 style float sums would say no
+        // 0.1 ICP and the 0.0001 approval fee, exactly: a 0.1 + 0.0001 float sum would say otherwise
         const exact = token("ICP", E8S / 10n + 100_000n);
-        expect(diamondAffordable(fees, [exact]).ICP).toEqual({
-            "1m": true,
-            "3m": false,
-            "1y": false,
-            life: false,
+        expect(diamondShortfall(fees, [exact]).ICP).toEqual({
+            "1m": 0,
+            "3m": 0.9,
+            "1y": 1.9,
+            life: 8.9,
         });
-        expect(diamondAffordable(fees, [token("ICP", E8S / 10n + 99_999n)]).ICP?.["1m"]).toBe(
-            false,
-        );
+        // never "Need 0 more" for a plan it can't pay: 1 e8 short is 0.00000001
+        expect(diamondShortfall(fees, [token("ICP", E8S / 10n + 99_999n)]).ICP?.["1m"]).toBe(1e-8);
         // a token the backend doesn't price has no plans
-        expect(diamondAffordable(fees, [token("CHAT", 1000n * E8S)]).CHAT).toEqual({});
+        expect(diamondShortfall(fees, [token("CHAT", 1000n * E8S)]).CHAT).toEqual({});
     });
 });

@@ -25,8 +25,8 @@
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { canGoBack, goBack } from "../app/linkedDialogs.svelte";
     import {
-        diamondAffordable,
         diamondApprovalFees,
+        diamondShortfall,
         diamondMembershipProps,
         diamondTokenPrices,
         diamondWalletTokens,
@@ -107,7 +107,7 @@
     prices={{}}
     tokenPrices={payment.fees === undefined ? {} : diamondTokenPrices(payment.fees)}
     approvalFees={diamondApprovalFees(tokens)}
-    affordable={payment.fees === undefined ? undefined : diamondAffordable(payment.fees, tokens)}
+    shortfall={payment.fees === undefined ? undefined : diamondShortfall(payment.fees, tokens)}
     {pricing}
     onRetryPricing={() => payment.loadFees()}
     defaultToken={diamondPaysInChat ? "CHAT" : "ICP"}

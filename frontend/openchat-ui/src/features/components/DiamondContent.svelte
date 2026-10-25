@@ -144,9 +144,10 @@
     depositAddresses?: Record<string, string>;
     /** The approval fee a payment from the wallet costs on top of the price, per token symbol (token units). */
     approvalFees?: Record<string, number>;
-    /** Whether each token can pay each plan, as the host works it out (exactly, in the ledger's units): takes the place
-     *  of comparing the balance with the price and fee here, in floating point. */
-    affordable?: Record<string, Partial<Record<PlanKey, boolean>>>;
+    /** How much each token's balance is short of each plan's price and fee (token units, 0 when it can pay), as the host
+     *  works it out exactly in the ledger's units: whether a plan can be paid, and the "Need … more", come from it rather
+     *  than from a floating point sum here. */
+    shortfall?: Record<string, Partial<Record<PlanKey, number>>>;
     /** The prices are still loading, or failed to (the plans step says so, offering `onRetryPricing`). */
     pricing?: 'loading' | 'failed';
     onRetryPricing?: () => void;
@@ -178,7 +179,7 @@
     tokenPrices,
     depositAddresses,
     approvalFees = {},
-    affordable,
+    shortfall,
     pricing,
     onRetryPricing,
     defaultToken = 'CHAT',
@@ -242,8 +243,13 @@
   const depositAddress = $derived(depositAddresses?.[tok.symbol] ?? depositAddressProp);
   const total = (pl: Plan) => cost(pl) + fee;
   // whether the chosen token can pay a plan: the host's answer when it gives one, else the balance against price and fee
-  const affords = (pl: Plan) => affordable?.[tok.symbol]?.[pl.key] ?? balance >= total(pl);
+  // how much the chosen token is short of a plan: the host's exact figure when it gives one, else the balance against
+  // price and fee
+  const short = (pl: Plan) => shortfall?.[tok.symbol]?.[pl.key] ?? Math.max(0, +(total(pl) - balance).toPrecision(4));
+  const affords = (pl: Plan) => short(pl) <= 0;
   const fmtToken = (n: number) => `${fmtAmt(n)} ${sym}`;
+  // an amount as it is, to the 8 places a ledger keeps (what's short of a plan: 1.0001, not 1.00)
+  const fmtExact = (n: number) => n.toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: 8 });
 
   const member = $derived(isDiamond || !!bought);
   const lifetime = $derived(bought ? bought.lifetime : lifetimeProp);
@@ -273,7 +279,7 @@
         life: !pl.months,
         ok,
         sub: !ok
-          ? t('ui.diamondDialog.needMore', { amount: fmtToken(+(total(pl) - balance).toPrecision(4)) })
+          ? t('ui.diamondDialog.needMore', { amount: `${fmtExact(short(pl))} ${sym}` })
           : !pl.months
             ? t(extend ? 'ui.diamondDialog.upgradeLifetime' : 'ui.diamondDialog.neverExpires')
             : t(extend ? 'ui.diamondDialog.extendTo' : 'ui.diamondDialog.until', { date: fmtDate(until(pl)) }),

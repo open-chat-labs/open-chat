@@ -6,7 +6,7 @@ import {
     type EnhancedTokenDetails,
 } from "@client";
 import type { PlanKey } from "@openchat/ui/src/features/components/DiamondContent.svelte";
-import { diamondPriceE8s, insufficientFunds } from "@src/logic/diamond/diamondPayment.svelte";
+import { diamondPriceE8s, walletCostE8s } from "@src/logic/diamond/diamondPayment.svelte";
 import type { WalletToken } from "@openchat/ui/src/lib/types";
 
 // DiamondDialog's props from the backend's fees, the user's membership and their CHAT and ICP.
@@ -96,14 +96,15 @@ export function diamondApprovalFees(tokens: EnhancedTokenDetails[]): Record<stri
 }
 
 /**
- * Whether each token can pay each plan from the user's OpenChat wallet, worked out in e8s with the
- * approval fee (logic/diamond), so the dialog doesn't compare floating point sums: a balance of
- * exactly the price and fee can pay.
+ * How much each token's balance is short of each plan's price and the approval fee (whole tokens,
+ * 0 when it can pay), worked out in e8s (logic/diamond), so the dialog neither compares floating
+ * point sums nor shows "Need 0 … more" for a plan it can't pay: a balance of exactly the price and
+ * fee can pay.
  */
-export function diamondAffordable(
+export function diamondShortfall(
     fees: DiamondMembershipFees[],
     tokens: EnhancedTokenDetails[],
-): Record<string, Partial<Record<PlanKey, boolean>>> {
+): Record<string, Partial<Record<PlanKey, number>>> {
     const plans = Object.keys(PLAN_DURATIONS) as PlanKey[];
     return Object.fromEntries(
         tokens.map((t) => [
@@ -111,9 +112,9 @@ export function diamondAffordable(
             Object.fromEntries(
                 plans.flatMap((plan) => {
                     const price = diamondPriceE8s(fees, t.symbol, PLAN_DURATIONS[plan]);
-                    return price === undefined
-                        ? []
-                        : [[plan, !insufficientFunds(price, t.transferFee, t.balance, false)]];
+                    if (price === undefined) return [];
+                    const short = walletCostE8s(price, t.transferFee) - t.balance;
+                    return [[plan, short > 0n ? units(short, t.decimals) : 0]];
                 }),
             ),
         ]),

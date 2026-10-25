@@ -8828,15 +8828,15 @@
         "doc": "The approval fee a payment from the wallet costs on top of the price, per token symbol (token units)."
       },
       {
-        "name": "affordable",
-        "type": "Record<string, Partial<Record<PlanKey, boolean>>>",
+        "name": "shortfall",
+        "type": "Record<string, Partial<Record<PlanKey, number>>>",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Whether each token can pay each plan, as the host works it out (exactly, in the ledger's units): takes the place of comparing the balance with the price and fee here, in floating point."
+        "doc": "How much each token's balance is short of each plan's price and fee (token units, 0 when it can pay), as the host works it out exactly in the ledger's units: whether a plan can be paid, and the \"Need … more\", come from it rather than from a floating point sum here."
       },
       {
         "name": "pricing",
