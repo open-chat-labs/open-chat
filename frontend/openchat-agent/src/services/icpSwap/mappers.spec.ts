@@ -60,11 +60,20 @@ describe("ICPSwap exchange rates", () => {
         expect(rates).toEqual({ [ICP_LEDGER]: { toUSD: 3.4856 } });
     });
 
-    test("are empty when the response can't be parsed", () => {
+    test("leave out the tokens ICPSwap has no price for, so their prices are unknown", () => {
+        const rates = getAllTokensResponse(
+            supportedTokens,
+            response(["ICP", ICP_LEDGER, "0"], ["TENDY", TENDY_LEDGER, "0.081200000000000000"]),
+        );
+
+        expect(rates).toEqual({ [TENDY_LEDGER]: { toUSD: 0.0812 } });
+    });
+
+    test("are undefined when the response can't be parsed", () => {
         const spy = vi.spyOn(console, "error").mockImplementation(() => {});
         const rates = getAllTokensResponse(supportedTokens, {});
         spy.mockRestore();
 
-        expect(rates).toEqual({});
+        expect(rates).toBeUndefined();
     });
 });
