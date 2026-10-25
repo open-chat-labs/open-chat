@@ -167,7 +167,7 @@
 </script>
 
 {#snippet calendarLink(label: string)}
-  <span class="calendar-link" onclick={() => act('calendar')} role="button" tabindex="0"><span class="calendar-glyph"></span>{t(label)}</span>
+  <button type="button" class="calendar-link" onclick={() => act('calendar')}><span class="calendar-glyph" aria-hidden="true"></span>{t(label)}</button>
 {/snippet}
 
 <div class="layer oc-dialog-layer" class:closing={flow.closing} data-screen-label="CHIT" role="dialog" aria-modal="true" use:modal={flow.escape(onClose)}>
@@ -602,16 +602,23 @@
     text-wrap: pretty;
   }
 
+  /* a real button (Enter / Space, the shared focus ring), sized to its content */
   .calendar-link {
+    position: relative;
     align-self: center;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 2px 6px;
+    gap: 7px;
+    height: 32px;
+    padding: 0 10px;
+    margin: 0;
+    border: none;
     border-radius: var(--radius-sm);
-    font: var(--weight-semibold) var(--text-sm) / 1.4 var(--font-sans);
+    background: none;
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
     color: var(--ink-2);
     cursor: pointer;
+    user-select: none;
   }
 
   .calendar-link:hover {
@@ -619,7 +626,17 @@
     background: var(--overlay-1);
   }
 
+  /* on touch, a 44px hit area round the 32px link */
+  @media (pointer: coarse) {
+    .calendar-link::before {
+      content: '';
+      position: absolute;
+      inset: -6px 0;
+    }
+  }
+
   .calendar-glyph {
+    flex: none;
     width: 14px;
     height: 14px;
     background: var(--status-chit);
