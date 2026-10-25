@@ -113,6 +113,14 @@ export function canGoBack(): boolean {
     );
 }
 
+/** The dialog the back arrow returns to (canGoBack), for its label: "Back to CHIT" … */
+export function behindDialog(): LinkedDialog | undefined {
+    const chain = state.chain;
+    if (!canGoBack() || chain === undefined) return undefined;
+    const url = chain.behind[chain.behind.length - 1];
+    return linkedDialog(new URLSearchParams(url.split("?", 2)[1] ?? ""));
+}
+
 /** Back to the dialog the one showing was opened from, in its place over the same backdrop. */
 export function goBack(): void {
     const back = chainBack(state.chain);

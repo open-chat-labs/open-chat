@@ -13,10 +13,6 @@
         buildUserBackgroundUrl,
         chitStateStore,
         currentStreak,
-        dailyChitClaimable,
-        latestSuccessfulUpdatesLoop,
-        mergeChitEvents,
-        ONE_DAY,
         currentUserIdStore,
         currentUserProfileStore,
         fontScaleStore,
@@ -45,12 +41,10 @@
         sortedCommunitiesStore,
         storageStore,
         type BotClientConfigData,
-        type ChitEvent,
     } from "@client";
     import ProfileDialog, {
         type ChatSettings,
         type ChitSettingsPatch,
-        type ClaimDay,
         type ProfileSection,
         type SigninMethod,
     } from "@openchat/ui/src/features/components/ProfileDialog.svelte";
@@ -63,7 +57,6 @@
         enterSend,
         hideChitIcon,
         lowBandwidth,
-        utcMode,
         videoCameraOn,
         videoMicOn,
         videoSpeakerView,
@@ -78,11 +71,10 @@
     import { accentOf, accentStore } from "../../accent";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { canGoBack, goBack, openFromDialog } from "../app/linkedDialogs.svelte";
+    import { calendarDay } from "@src/logic/chit/claimDays";
     import {
         changedChatSettings,
-        calendarDay,
         chatSettingsProps,
-        claimDays,
         profileProps,
         ringtoneKeyOf,
         statsProps,
@@ -341,7 +333,6 @@
 
     async function sectionShown(section: ProfileSection) {
         if (section === "signin") refreshSigninMethods();
-        if (section === "chit") loadClaimHistory();
         if (section !== "bots" || botConfig !== undefined || loadingBotConfig) return;
         loadingBotConfig = true;
         try {
@@ -367,53 +358,11 @@
         }).format(header.joined),
     );
 
-    // ---- CHIT: its settings (the old UI's, in this browser) and the claim calendar ----
+    // ---- CHIT: its settings (the old UI's, in this browser) ----
     function changeChit(patch: ChitSettingsPatch) {
         if (patch.enabled !== undefined) disableChit.set(!patch.enabled);
-        // the calendar shows once CHIT is on
-        if (patch.enabled) loadClaimHistory();
         if (patch.notify !== undefined) chitPopup.set(patch.notify);
         if (patch.hideAfterClaim !== undefined) hideChitIcon.set(patch.hideAfterClaim);
-        if (patch.utc !== undefined) utcMode.set(patch.utc);
-    }
-
-    // today's claim, as the old desktop rail offers it (only while the last sync is recent); the
-    // calendar's Claim opens the CHIT dialog, where it's claimed
-    const claimable = $derived(
-        dailyChitClaimable(
-            $chitStateStore.nextDailyChitClaim,
-            $now500,
-            $latestSuccessfulUpdatesLoop,
-        ),
-    );
-
-    // every claim since the account was made: the calendar pages through the months itself, and a
-    // claim's streak day follows from the ones before it. Loaded once CHIT's section shows (not
-    // while CHIT is off), then each time it shows again from two days before the newest event it
-    // has: an insured day is marked after midnight, and a claim reinstated, at the end of its
-    // (past) day, so either can come in older than what's loaded. A load that fails leaves the
-    // calendar as it was
-    const RELOAD_MARGIN_DAYS = 2;
-    let chitEvents: ChitEvent[] = [];
-    let claimHistory = $state<ClaimDay[]>([]);
-    let claimHistoryRun = 0;
-
-    async function loadClaimHistory() {
-        if ($disableChit) return;
-        const run = ++claimHistoryRun;
-        const newest = chitEvents.at(-1)?.timestamp;
-        try {
-            const events = await client.chitHistory(
-                newest === undefined
-                    ? BigInt(header.joined)
-                    : newest - BigInt(RELOAD_MARGIN_DAYS * ONE_DAY),
-            );
-            if (run !== claimHistoryRun) return;
-            chitEvents = mergeChitEvents(chitEvents, events);
-            claimHistory = claimDays(chitEvents);
-        } catch (err) {
-            console.warn("Unable to load the CHIT claim history", err);
-        }
     }
 
     // ---- sign-in methods, linking a device, deleting the account ----
@@ -690,11 +639,9 @@
     chitEnabled={!$disableChit}
     chitNotify={$chitPopup}
     chitHideAfterClaim={$hideChitIcon}
-    chitUtc={$utcMode}
-    {claimHistory}
-    {claimable}
-    today={calendarDay($now500)}
-    onChit={readOnly ? undefined : () => openFromDialog({ kind: "chit" })}
+    onChitHistory={readOnly || $disableChit
+        ? undefined
+        : () => openFromDialog({ kind: "claim_history" })}
     puzzleSetting={false}
     onChitSettings={changeChit}
     onlineMinutes={stats.onlineMinutes}

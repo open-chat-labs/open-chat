@@ -898,6 +898,9 @@ impl GroupMemberInternal {
             self.rules_accepted.as_ref().map(|r| r.timestamp).unwrap_or_default(),
             self.lapsed.timestamp,
             self.proposal_votes.last().map(|(ts, _)| *ts).unwrap_or_default(),
+            // Mentions usually come with the message mentioning them, but not always (see
+            // `GroupChatCore::mention_linked_user_replied_to`)
+            self.mentions.last_updated().unwrap_or_default(),
         ]
         .into_iter()
         .max()

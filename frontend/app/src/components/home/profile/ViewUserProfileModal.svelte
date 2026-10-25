@@ -68,16 +68,18 @@
 
     async function blockUser(block: ProfileBlock) {
         if (block.kind === "none") return;
+        // Read userId before onClose: the parent clears the config the userId prop reads from
+        const targetUserId = userId;
         onClose();
         if (block.kind === "block") {
             afterBlock(
-                await client.blockUserInContext(block.context, userId),
+                await client.blockUserInContext(block.context, targetUserId),
                 i18nKey("blockUserSucceeded"),
                 i18nKey("blockUserFailed"),
             );
         } else {
             afterBlock(
-                await client.unblockUserInContext(block.context, userId),
+                await client.unblockUserInContext(block.context, targetUserId),
                 i18nKey("unblockUserSucceeded"),
                 i18nKey("unblockUserFailed"),
             );

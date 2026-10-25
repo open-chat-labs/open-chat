@@ -10,5 +10,12 @@ fn c2c_bridged_user_link(args: Args) -> Response {
 }
 
 fn c2c_bridged_user_link_impl(args: Args, state: &RuntimeState) -> Response {
-    Success(state.data.bridged_user_links.get(&args.user).copied())
+    // A link proves the account can be linked, whatever its profile has said
+    if let Some(linked_user) = state.data.bridged_user_links.get(&args.user) {
+        Success(Some(*linked_user))
+    } else if !args.user.can_be_linked() || state.data.unlinkable_bridged_users.contains(&args.user) {
+        CantBeLinked
+    } else {
+        Success(None)
+    }
 }

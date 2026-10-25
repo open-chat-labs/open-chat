@@ -1,9 +1,10 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    BlobReference, BotInstallationLocation, BotPermissions, BridgedUser, CanisterId, ChannelLatestMessageIndex, Chat, ChatId,
-    CommunityId, FileId, Hash, MediaScanMatch, MessageContentInitial, MessageId, MessageIndex, Milliseconds, NotifyChit,
-    PremiumItemPurchase, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UniquePersonProof, User, UserId,
+    BlobReference, BotInstallationLocation, BotPermissions, BridgedUser, BridgedUserId, CanisterId, ChannelLatestMessageIndex,
+    Chat, ChatId, CommunityId, FileId, Hash, MediaScanMatch, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
+    NotifyChit, PremiumItemPurchase, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UniquePersonProof, User,
+    UserId, icrc1,
 };
 
 mod lifecycle;
@@ -40,6 +41,30 @@ pub enum LocalUserIndexEvent {
     ModerationReferral(Box<ModerationReferral>),
     // The profile a bridge bot relayed a message with, for the registry of bridged accounts
     BridgedUserUpdated(Box<BridgedUser>),
+    BridgedUserDeposit(Box<BridgedUserDeposit>),
+}
+
+// Funds sent to an account on another platform which no one had linked, eg. a tip on a message
+// relayed from it, paid into the account's subaccount of the UserIndex (see
+// `BridgedUserId::subaccount`), which holds them for whoever links the account, or else refunds them
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BridgedUserDeposit {
+    pub chat: Chat,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+    pub account: BridgedUserId,
+    // Who sent the funds
+    pub sender: UserId,
+    // The account the funds came from, where they're refunded to if no one claims them
+    pub refund_to: icrc1::Account,
+    pub ledger: CanisterId,
+    pub token_symbol: String,
+    // What arrived in the account's subaccount. The sender paid the fee on top.
+    pub amount: u128,
+    // The ledger's fee when the funds were sent, which a payout of them is less
+    pub fee: u128,
+    // The token's, so a payout's amount can be shown
+    pub decimals: u8,
 }
 
 // A message a chat's classifier or media scan found to be CSAM: the auto-sanction is applied

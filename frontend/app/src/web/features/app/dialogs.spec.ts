@@ -46,6 +46,9 @@ describe("the dialog a URL's query opens", () => {
             kind: "puzzle",
             how: true,
         });
+        expect(linkedDialog(new URLSearchParams("chit=calendar"))).toEqual({
+            kind: "claim_history",
+        });
         expect(linkedDialog(new URLSearchParams("chit=nope"))).toEqual({ kind: "chit" });
     });
 
@@ -71,6 +74,7 @@ describe("the linked dialog shown", () => {
         expect(shownLinkedDialog({ kind: "achievements" }, true)).toBeUndefined();
         expect(shownLinkedDialog({ kind: "streak_insurance" }, true)).toBeUndefined();
         expect(shownLinkedDialog({ kind: "puzzle" }, true)).toBeUndefined();
+        expect(shownLinkedDialog({ kind: "claim_history" }, true)).toBeUndefined();
         expect(shownLinkedDialog(undefined, false)).toBeUndefined();
     });
 });
@@ -128,6 +132,9 @@ describe("opening a linked dialog", () => {
                 how: true,
             }),
         ).toBe("?chit=howto%3Atents");
+        expect(openLinkedDialog(new URLSearchParams("chit"), { kind: "claim_history" })).toBe(
+            "?chit=calendar",
+        );
         // how to play is another view of the same puzzle
         expect(
             openLinkedDialog(new URLSearchParams("chit=puzzle%3Atents"), {

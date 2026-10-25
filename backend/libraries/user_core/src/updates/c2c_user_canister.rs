@@ -339,7 +339,7 @@ pub fn tip_message(
     chat.tip_message::<NullEventPusher>(
         TipMessageArgs {
             user_id: sender,
-            recipient: my_user_id,
+            recipient: Some(my_user_id),
             thread_root_message_index,
             message_id: args.message_id,
             ledger: args.ledger,

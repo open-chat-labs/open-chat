@@ -101,6 +101,9 @@
             case "insurance":
                 openFromDialog({ kind: "streak_insurance" });
                 return;
+            case "calendar":
+                openFromDialog({ kind: "claim_history" });
+                return;
             case "puzzle":
                 if (puzzle.opens !== undefined) openFromDialog(puzzle.opens);
                 return;

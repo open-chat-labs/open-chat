@@ -71,6 +71,7 @@ mod activity_notifications;
 mod guards;
 mod jobs;
 mod lifecycle;
+mod linked_users;
 mod memory;
 mod model;
 mod queries;

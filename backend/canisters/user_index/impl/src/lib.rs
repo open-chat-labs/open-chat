@@ -1,3 +1,4 @@
+use crate::model::bridged_user_deposits::{BridgedUserDeposits, DEPOSIT_HOLD_DURATION, HeldDeposit};
 use crate::model::bridged_users::BridgedUsers;
 use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
@@ -8,14 +9,15 @@ use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::online_users_event_batch::OnlineUsersEventBatch;
 use crate::model::premium_items::{PremiumItemMetrics, PremiumItems};
 use crate::model::protected_actions::{ProtectedActionMetrics, ProtectedActions};
+use crate::model::registry_tokens::RegistryTokens;
 use crate::model::storage_index_event_batch::StorageIndexEventBatch;
 use crate::model::streak_insurance_logs::StreakInsuranceLogs;
 use crate::model::user_map::UserMap;
-use crate::timer_job_types::TimerJob;
+use crate::timer_job_types::{SettleBridgedUserDeposit, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use constants::DAY_IN_MS;
+use constants::{DAY_IN_MS, MEMO_BRIDGED_CLAIM, MEMO_BRIDGED_REFUND};
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
@@ -28,7 +30,7 @@ use model::chit_leaderboard::ChitLeaderboard;
 use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
 use model::local_user_index_map::LocalUserIndexMap;
 use model::multi_user_canister_map::{MultiUserCanister, MultiUserCanisterMap};
-use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
+use model::pending_payments_queue::{PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
 use oc_error_codes::OCErrorCode;
@@ -46,7 +48,7 @@ use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BotInstallationLocation, BridgePlatform, BridgedUserId, BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms,
     CommunityId, Cycles, DiamondMembershipFees, IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig,
-    OCResult, TimestampMillis, Timestamped, UserId, UserType,
+    OCResult, TimestampMillis, Timestamped, UserId, UserType, icrc1,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
@@ -271,6 +273,134 @@ impl RuntimeState {
         jobs::make_pending_payments::start_job_if_required(self);
     }
 
+    // Funds sent to an account on another platform which, as the group or community found, no one had
+    // linked, eg. a tip on a message relayed from it. They're held for whoever links the account, or
+    // paid on at once if someone has linked it since, and settled `DEPOSIT_HOLD_DURATION` after they
+    // were sent if they're still held then. Whatever ledger they're in is accepted, but only those
+    // the UserIndex knows are paid out of.
+    pub fn receive_bridged_user_deposit(&mut self, deposit: HeldDeposit) {
+        let account = deposit.account;
+        let settle_due = deposit.timestamp + DEPOSIT_HOLD_DURATION;
+        let deposit_id = self.data.bridged_user_deposits.hold(deposit);
+        let now = self.env.now();
+        self.data.timer_jobs.enqueue_job(
+            TimerJob::SettleBridgedUserDeposit(SettleBridgedUserDeposit { deposit_id }),
+            settle_due,
+            now,
+        );
+        if let Some(user_id) = self.data.bridged_users.linked_user_id(&account) {
+            self.claim_bridged_user_deposits(&account, user_id);
+        }
+    }
+
+    // Pays whoever has just linked the account the funds held for it. A deposit in a ledger the
+    // UserIndex doesn't know yet, eg. a token listed since the tokens were last refreshed, is left to
+    // be settled.
+    pub fn claim_bridged_user_deposits(&mut self, account: &BridgedUserId, user_id: UserId) {
+        let Some(wallet) = self.wallet_of(user_id) else {
+            return;
+        };
+        let tokens = &self.data.registry_tokens;
+        let claimable = self
+            .data
+            .bridged_user_deposits
+            .take_for(account, |deposit| tokens.payout_fees(&deposit.ledger, deposit.fee).is_some());
+        for (deposit_id, deposit) in claimable {
+            self.pay_out_held_deposit(
+                deposit_id,
+                deposit,
+                wallet,
+                MEMO_BRIDGED_CLAIM,
+                PendingPaymentReason::BridgedUserDepositClaim,
+            );
+        }
+    }
+
+    // Settles a deposit still held `DEPOSIT_HOLD_DURATION` after it was made, by when the tokens have
+    // been refreshed from the Registry since. It's paid to whoever has linked its account, if anyone
+    // has, eg. as its token wasn't known yet when they did, or else refunded to its sender. A deposit
+    // in a ledger the Registry still doesn't know can't be paid out, so is dropped.
+    pub fn settle_bridged_user_deposit(&mut self, deposit_id: u64) {
+        let Some(deposit) = self.data.bridged_user_deposits.take(deposit_id) else {
+            return;
+        };
+        let linked_user_wallet = self
+            .data
+            .bridged_users
+            .linked_user_id(&deposit.account)
+            .and_then(|user_id| self.wallet_of(user_id));
+        match linked_user_wallet {
+            Some(wallet) => self.pay_out_held_deposit(
+                deposit_id,
+                deposit,
+                wallet,
+                MEMO_BRIDGED_CLAIM,
+                PendingPaymentReason::BridgedUserDepositClaim,
+            ),
+            None => {
+                let refund_to = deposit.refund_to;
+                self.pay_out_held_deposit(
+                    deposit_id,
+                    deposit,
+                    refund_to,
+                    MEMO_BRIDGED_REFUND,
+                    PendingPaymentReason::BridgedUserDepositRefund,
+                )
+            }
+        }
+    }
+
+    // The wallet a user holds their funds in, that of the principal they sign in with
+    fn wallet_of(&self, user_id: UserId) -> Option<icrc1::Account> {
+        self.data.users.get_by_user_id(&user_id).map(|user| user.principal.into())
+    }
+
+    // Pays the deposit out of its account's subaccount, less the ledger's fees, if it's a ledger the
+    // UserIndex knows. The memo carries the deposit's id, so the ledger doesn't take two equal
+    // deposits paid out at once to be the same transfer.
+    fn pay_out_held_deposit(
+        &mut self,
+        deposit_id: u64,
+        deposit: HeldDeposit,
+        to: icrc1::Account,
+        memo_prefix: [u8; 8],
+        reason: PendingPaymentReason,
+    ) {
+        let Some(fees) = self.data.registry_tokens.payout_fees(&deposit.ledger, deposit.fee) else {
+            tracing::error!(
+                deposit_id,
+                ?deposit,
+                "Dropped a held deposit in a ledger the Registry doesn't know"
+            );
+            return;
+        };
+        // The group or community only sends funds which are more than the fee, and fit, but the
+        // ledger may burn a fee too, or have raised its fee since
+        let Some(amount) = deposit
+            .amount
+            .checked_sub(fees.fee + fees.burn_fee)
+            .filter(|amount| *amount > 0)
+            .and_then(|amount| u64::try_from(amount).ok())
+        else {
+            tracing::error!(deposit_id, ?deposit, ?fees, "Held deposit can't be paid out");
+            return;
+        };
+        let mut memo = [0; 32];
+        memo[..8].copy_from_slice(&memo_prefix);
+        memo[8..16].copy_from_slice(&deposit_id.to_be_bytes());
+        self.queue_payment(PendingPayment {
+            amount,
+            token_symbol: deposit.token_symbol,
+            ledger: deposit.ledger,
+            fee: fees.fee,
+            timestamp: self.env.now_nanos(),
+            recipient_account: to.into(),
+            memo,
+            reason,
+            from_subaccount: Some(deposit.account.subaccount()),
+        });
+    }
+
     pub fn delete_user(&mut self, user_id: UserId, triggered_by_user: bool) -> bool {
         let now = self.env.now();
         if let Some(user) = self.data.users.delete_user(user_id, now) {
@@ -377,6 +507,8 @@ impl RuntimeState {
             migrated_user_ids: self.data.migrated_user_ids.len(),
             call_push_enabled: self.data.call_push_enabled,
             bridged_users: self.data.bridged_users.len(),
+            bridged_user_deposits_held: self.data.bridged_user_deposits.len(),
+            registry_tokens: self.data.registry_tokens.len(),
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
             event_store_client_info,
@@ -576,6 +708,13 @@ struct Data {
     // The latest profile of each account a bridge bot has relayed a message from
     #[serde(default)]
     pub bridged_users: BridgedUsers,
+    // The funds sent to accounts on other platforms which no one had linked, eg. tips on their
+    // relayed messages, held for whoever links them
+    #[serde(default)]
+    pub bridged_user_deposits: BridgedUserDeposits,
+    // The tokens known to the Registry, the only ones held deposits are paid out of
+    #[serde(default)]
+    pub registry_tokens: RegistryTokens,
     // The old id -> the new id of each user migrated to a MultiUser canister. Fanned out to the
     // LocalUserIndexes, including any added later
     #[serde(default)]
@@ -691,6 +830,8 @@ impl Data {
             daily_puzzle_canister_id: None,
             bridge_bots: BTreeMap::new(),
             bridged_users: BridgedUsers::default(),
+            bridged_user_deposits: BridgedUserDeposits::default(),
+            registry_tokens: RegistryTokens::default(),
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
         };
@@ -807,6 +948,8 @@ impl Default for Data {
             daily_puzzle_canister_id: None,
             bridge_bots: BTreeMap::new(),
             bridged_users: BridgedUsers::default(),
+            bridged_user_deposits: BridgedUserDeposits::default(),
+            registry_tokens: RegistryTokens::default(),
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
         }
@@ -841,6 +984,8 @@ pub struct Metrics {
     pub migrated_user_ids: usize,
     pub call_push_enabled: bool,
     pub bridged_users: usize,
+    pub bridged_user_deposits_held: usize,
+    pub registry_tokens: usize,
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub event_store_client_info: EventStoreClientInfo,

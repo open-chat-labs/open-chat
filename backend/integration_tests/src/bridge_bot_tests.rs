@@ -1,9 +1,10 @@
 use crate::bot_tests::register_bot;
 use crate::env::ENV;
-use crate::utils::{tick_many, try_metrics};
+use crate::setup::install_icrc_ledger;
+use crate::utils::{now_millis, tick_many, try_metrics};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
-use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE};
+use constants::{DAY_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE};
 use local_user_index_canister::bot_send_message::Response as SendResponse;
 use multi_user_canister::MessageActivity;
 use oc_error_codes::OCErrorCode;
@@ -12,11 +13,12 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use testing::rng::random_string;
+use testing::rng::{random_from_u32, random_from_u128, random_string};
 use types::{
     BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, BridgePlatform, BridgedUser, CanisterId, Chat,
-    ChatEvent, DiscordUser, Empty, EventsResponse, MessageContent, MessageId, MessageIndex, MessagePermission,
-    PendingCryptoTransaction, SenderContext, TelegramUser, TextContent, TwitchUser, UnitResult, UserId, icrc1, icrc2,
+    ChatEvent, DiscordUser, Empty, EventIndex, EventsResponse, GroupReplyContext, IdempotentEnvelope, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, MessagePermission, PendingCryptoTransaction, SenderContext, SuccessOnly,
+    TelegramUser, TextContent, TwitchUser, UnitResult, UserId, icrc1, icrc2,
 };
 use user_index_canister::link_bridged_user::Response as LinkResponse;
 use user_index_canister::start_bridged_user_link::Response as StartLinkResponse;
@@ -108,6 +110,7 @@ fn bridge_bots_relay_messages_as_their_authors() {
         username: "nelly".to_string(),
         display_name: Some("Nelly".to_string()),
         avatar: Some("8342729096ea3675442027381ff50dfe".to_string()),
+        bot: false,
     };
     let from_discord = BridgedUser::Discord(discord_author.clone());
     let from_telegram = BridgedUser::Telegram(TelegramUser {
@@ -322,6 +325,7 @@ fn bridge_bots_relay_messages_as_their_authors() {
         channel,
         BridgedUser::Discord(DiscordUser {
             avatar: Some("https://example.com/avatar.png".to_string()),
+            bot: false,
             ..discord_author.clone()
         }),
     );
@@ -508,16 +512,488 @@ fn tips_on_relayed_messages_go_to_whoever_linked_the_account(in_community: bool)
     } = wrapper.env();
 
     env.advance_time(Duration::from_millis(1));
-    let owner = client::register_diamond_user(env, canister_ids, *controller);
     let tipper = client::register_user(env, canister_ids);
     let outsider = client::register_user(env, canister_ids);
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &tipper, 10_000_000_000);
+    let bridged = set_up_bridged_chat(
+        env,
+        canister_ids,
+        *controller,
+        BridgePlatform::Telegram,
+        in_community,
+        &[&tipper],
+    );
+    let owner = &bridged.owner;
+    let (chat, spender) = (bridged.chat, bridged.spender);
+    let user_index = canister_ids.user_index;
+
+    let owners_account = telegram_account(random_telegram_id());
+    let outsiders_account = telegram_account(random_telegram_id());
+    let tip_amount = 1_0000_0000;
+
+    let links_before = bridged_user_links(env, canister_ids);
+    let code = start_link(env, owner.principal, user_index, BridgePlatform::Telegram);
+    let response = link(env, bridged.bot_principal, user_index, owners_account.clone(), &code);
+    assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
+    wait_for_bridged_user_links(env, canister_ids, &links_before, 1);
+
+    // A linked account's tips go to whoever linked it
+    let (message_id, event_index) = relay(env, &bridged, &owners_account);
+    let owners_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner);
+    client::approve_spender(env, &tipper, canister_ids.icp_ledger, spender, tip_amount + ICP_TRANSFER_FEE);
+    let response = tip(
+        env,
+        &tipper,
+        chat,
+        message_id,
+        owner.user_id,
+        canister_ids.icp_ledger,
+        tip_amount,
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner),
+        owners_balance + tip_amount
+    );
+    assert_tipped(
+        env,
+        owner,
+        chat,
+        event_index,
+        tipper.user_id,
+        canister_ids.icp_ledger,
+        tip_amount,
+    );
+
+    // And so does the activity, which before went nowhere, as the message's sender is a bot
+    let tipped = |env: &PocketIc| {
+        client::user::happy_path::message_activity_feed(env, owner, 0)
+            .events
+            .iter()
+            .any(|e| e.activity == MessageActivity::Tip && e.message_id == message_id && e.user_id == Some(tipper.user_id))
+    };
+    for _ in 0..20 {
+        if tipped(env) {
+            break;
+        }
+        env.tick();
+    }
+    assert!(
+        tipped(env),
+        "the tip never reached the activity feed of whoever linked the account"
+    );
+
+    // Who linked it can't tip it, as it's shown as theirs
+    let response = tip(
+        env,
+        owner,
+        chat,
+        message_id,
+        owner.user_id,
+        canister_ids.icp_ledger,
+        tip_amount,
+    );
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::CannotTipSelf)),
+        "{response:?}"
+    );
+
+    // Nor can a message be tipped if whoever linked its account isn't in the chat
+    let code = start_link(env, outsider.principal, user_index, BridgePlatform::Telegram);
+    let response = link(env, bridged.bot_principal, user_index, outsiders_account.clone(), &code);
+    assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
+    wait_for_bridged_user_links(env, canister_ids, &links_before, 2);
+    let (message_id, _) = relay(env, &bridged, &outsiders_account);
+    let response = tip(
+        env,
+        &tipper,
+        chat,
+        message_id,
+        outsider.user_id,
+        canister_ids.icp_ledger,
+        tip_amount,
+    );
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::TargetUserNotInChat)),
+        "{response:?}"
+    );
+
+    // Leaves the pooled env as it was
+    for account in [&owners_account, &outsiders_account] {
+        let response = unlink(env, bridged.bot_principal, user_index, account);
+        assert!(matches!(response, UnitResult::Success), "{response:?}");
+    }
+    clear_bridge_bot(env, canister_ids, &bridged);
+}
+
+// A tip on a message from an account no one has linked is held for it by the UserIndex, then paid
+// to whoever links the account, or else refunded after 30 days, less the fee each time
+#[test_case(true; "in a channel")]
+#[test_case(false; "in a group")]
+fn tips_for_unlinked_accounts_are_held_for_whoever_links_them(in_community: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let tipper = client::register_user(env, canister_ids);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &tipper, 10_000_000_000);
+    let bridged = set_up_bridged_chat(
+        env,
+        canister_ids,
+        *controller,
+        BridgePlatform::Telegram,
+        in_community,
+        &[&tipper],
+    );
+    let (chat, spender) = (bridged.chat, bridged.spender);
+    let (user_index, ledger) = (canister_ids.user_index, canister_ids.icp_ledger);
+    let tip_amount = 1_0000_0000;
+    let balance = |env: &PocketIc, account: icrc1::Account| client::ledger::happy_path::balance_of(env, ledger, account);
+    let held_for = |account: &BridgedUser| icrc1::Account {
+        owner: user_index,
+        subaccount: Some(account.id().subaccount()),
+    };
+
+    // The tip is paid into the UserIndex, and recorded on the message
+    let nellys_account = telegram_account(random_telegram_id());
+    let (message_id, event_index) = relay(env, &bridged, &nellys_account);
+    let held_before = bridged_user_deposits_held(env, user_index);
+    client::approve_spender(env, &tipper, ledger, spender, tip_amount + ICP_TRANSFER_FEE);
+    let response = tip_to(env, &tipper, chat, message_id, held_for(&nellys_account), ledger, tip_amount);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    assert_eq!(balance(env, held_for(&nellys_account)), tip_amount);
+    assert_tipped(env, &bridged.owner, chat, event_index, tipper.user_id, ledger, tip_amount);
+    wait_until(env, "the tip to be held", |env| {
+        bridged_user_deposits_held(env, user_index) == held_before + 1
+    });
+
+    // Whoever links the account is paid it
+    let nelly = client::register_user(env, canister_ids);
+    let code = start_link(env, nelly.principal, user_index, BridgePlatform::Telegram);
+    let response = link(env, bridged.bot_principal, user_index, nellys_account.clone(), &code);
+    assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
+    wait_until(env, "the tip to be paid", |env| {
+        balance(env, nelly.principal.into()) == tip_amount - ICP_TRANSFER_FEE
+    });
+    assert_eq!(balance(env, held_for(&nellys_account)), 0);
+    assert_eq!(bridged_user_deposits_held(env, user_index), held_before);
+
+    // A tip no one claims is refunded to the account it came from, after 30 days. One which isn't
+    // more than the fee can't be held, as it couldn't be paid out.
+    let bobs_account = telegram_account(random_telegram_id());
+    let (message_id, _) = relay(env, &bridged, &bobs_account);
+    let response = tip_to(
+        env,
+        &tipper,
+        chat,
+        message_id,
+        held_for(&bobs_account),
+        ledger,
+        ICP_TRANSFER_FEE,
+    );
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{response:?}"
+    );
+    client::approve_spender(env, &tipper, ledger, spender, tip_amount + ICP_TRANSFER_FEE);
+    let response = tip_to(env, &tipper, chat, message_id, held_for(&bobs_account), ledger, tip_amount);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    let tippers_balance = balance(env, tipper.principal.into());
+    wait_until(env, "the tip to be held", |env| {
+        bridged_user_deposits_held(env, user_index) == held_before + 1
+    });
+    env.advance_time(Duration::from_millis(29 * DAY_IN_MS));
+    // Enough for a refund which was due to be paid: its timer job, the payment's, and the transfer
+    tick_many(env, 10);
+    assert_eq!(balance(env, tipper.principal.into()), tippers_balance);
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    wait_until(env, "the tip to be refunded", |env| {
+        balance(env, tipper.principal.into()) == tippers_balance + tip_amount - ICP_TRANSFER_FEE
+    });
+    assert_eq!(balance(env, held_for(&bobs_account)), 0);
+
+    // No one can link a Telegram chat, so its messages can't be tipped
+    let channels_account = telegram_account(-1001234567890);
+    let (message_id, _) = relay(env, &bridged, &channels_account);
+    let response = tip_to(
+        env,
+        &tipper,
+        chat,
+        message_id,
+        held_for(&channels_account),
+        ledger,
+        tip_amount,
+    );
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
+        "{response:?}"
+    );
+
+    // Leaves the pooled env as it was
+    let response = unlink(env, bridged.bot_principal, user_index, &nellys_account);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    clear_bridge_bot(env, canister_ids, &bridged);
+}
+
+// A tip which reaches the UserIndex after someone has linked its account, eg. as the group's
+// LocalUserIndex hadn't heard of the link yet, is paid on to them at once
+#[test]
+fn a_tip_held_for_an_account_linked_since_is_paid_on_at_once() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let tipper = client::register_user(env, canister_ids);
+    let bridged = set_up_bridged_chat(env, canister_ids, *controller, BridgePlatform::Telegram, false, &[&tipper]);
+    let Chat::Group(group_id) = bridged.chat else { unreachable!() };
+    let (user_index, ledger) = (canister_ids.user_index, canister_ids.icp_ledger);
+    let tip_amount = 1_0000_0000;
+
+    let nelly = client::register_user(env, canister_ids);
+    let nellys_account = telegram_account(random_telegram_id());
+    let code = start_link(env, nelly.principal, user_index, BridgePlatform::Telegram);
+    let response = link(env, bridged.bot_principal, user_index, nellys_account.clone(), &code);
+    assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
+
+    // The group pays the tip into the UserIndex, then tells it, as if it hadn't heard of the link
+    let held_for = icrc1::Account {
+        owner: user_index,
+        subaccount: Some(nellys_account.id().subaccount()),
+    };
+    client::ledger::happy_path::transfer(env, *controller, ledger, held_for, tip_amount);
+    let response = client::local_user_index::c2c_group(
+        env,
+        group_id.into(),
+        bridged.local_user_index,
+        &local_user_index_canister::c2c_group::Args {
+            events: vec![IdempotentEnvelope {
+                created_at: now_millis(env),
+                idempotency_id: random_from_u128::<u128>() as u64,
+                value: local_user_index_canister::GroupOrCommunityEvent::BridgedUserDeposit(Box::new(
+                    local_user_index_canister::BridgedUserDeposit {
+                        channel_id: None,
+                        thread_root_message_index: None,
+                        message_id: random_from_u128(),
+                        account: nellys_account.id(),
+                        sender: tipper.user_id,
+                        refund_to: tipper.principal.into(),
+                        ledger,
+                        token_symbol: ICP_SYMBOL.to_string(),
+                        amount: tip_amount,
+                        fee: ICP_TRANSFER_FEE,
+                        decimals: 8,
+                    },
+                )),
+            }],
+        },
+    );
+    assert!(matches!(response, SuccessOnly::Success), "{response:?}");
+
+    wait_until(env, "the tip to be paid on", |env| {
+        client::ledger::happy_path::balance_of(env, ledger, &nelly) == tip_amount - ICP_TRANSFER_FEE
+    });
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, held_for), 0);
+
+    // Leaves the pooled env as it was
+    let response = unlink(env, bridged.bot_principal, user_index, &nellys_account);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    clear_bridge_bot(env, canister_ids, &bridged);
+}
+
+// Only tips in tokens the UserIndex knows, from the Registry, are paid out, as a "ledger" which a
+// tipper names could be a canister which never replies. Such a tip is held, but neither claimed nor
+// refunded.
+#[test]
+fn tips_held_in_ledgers_the_registry_doesnt_know_arent_paid_out() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let tipper = client::register_user(env, canister_ids);
+    let bridged = set_up_bridged_chat(env, canister_ids, *controller, BridgePlatform::Telegram, false, &[&tipper]);
+    let user_index = canister_ids.user_index;
+    let tip_amount = 1_0000_0000;
+    let ledger = install_icrc_ledger(
+        env,
+        *controller,
+        random_string(),
+        random_string(),
+        ICP_TRANSFER_FEE as u64,
+        None,
+        vec![(tipper.principal.into(), 10_000_000_000)],
+    );
+    let balance = |env: &PocketIc, account: icrc1::Account| client::ledger::happy_path::balance_of(env, ledger, account);
+
+    let nellys_account = telegram_account(random_telegram_id());
+    let held_for = icrc1::Account {
+        owner: user_index,
+        subaccount: Some(nellys_account.id().subaccount()),
+    };
+    let (message_id, _) = relay(env, &bridged, &nellys_account);
+    let held_before = bridged_user_deposits_held(env, user_index);
+    client::approve_spender(env, &tipper, ledger, bridged.spender, tip_amount + ICP_TRANSFER_FEE);
+    let response = tip_to(env, &tipper, bridged.chat, message_id, held_for, ledger, tip_amount);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    wait_until(env, "the tip to be held", |env| {
+        bridged_user_deposits_held(env, user_index) == held_before + 1
+    });
+    let tippers_balance = balance(env, tipper.principal.into());
+
+    // Whoever links the account isn't paid it
+    let nelly = client::register_user(env, canister_ids);
+    let code = start_link(env, nelly.principal, user_index, BridgePlatform::Telegram);
+    let response = link(env, bridged.bot_principal, user_index, nellys_account.clone(), &code);
+    assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
+    tick_many(env, 10);
+    assert_eq!(balance(env, nelly.principal.into()), 0);
+
+    // Nor is it refunded
+    env.advance_time(Duration::from_millis(30 * DAY_IN_MS));
+    tick_many(env, 10);
+    assert_eq!(balance(env, nelly.principal.into()), 0);
+    assert_eq!(balance(env, tipper.principal.into()), tippers_balance);
+    assert_eq!(balance(env, held_for), tip_amount);
+
+    // Leaves the pooled env as it was
+    let response = unlink(env, bridged.bot_principal, user_index, &nellys_account);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    clear_bridge_bot(env, canister_ids, &bridged);
+}
+
+// No one can link a Discord bot or webhook, so a tip on one of their messages is refused, rather
+// than held for 30 days and then refunded
+#[test_case(true; "in a channel")]
+#[test_case(false; "in a group")]
+fn messages_from_discord_bots_cant_be_tipped(in_community: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let tipper = client::register_user(env, canister_ids);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &tipper, 10_000_000_000);
+    let bridged = set_up_bridged_chat(
+        env,
+        canister_ids,
+        *controller,
+        BridgePlatform::Discord,
+        in_community,
+        &[&tipper],
+    );
+    let ledger = canister_ids.icp_ledger;
+    let tip_amount = 1_0000_0000;
+    let discord_account = |bot| {
+        BridgedUser::Discord(DiscordUser {
+            id: random_from_u128::<u128>() as u64,
+            username: random_string(),
+            display_name: None,
+            avatar: None,
+            bot,
+        })
+    };
+    let held_for = |account: &BridgedUser| icrc1::Account {
+        owner: canister_ids.user_index,
+        subaccount: Some(account.id().subaccount()),
+    };
+
+    let bots_account = discord_account(true);
+    let (message_id, _) = relay(env, &bridged, &bots_account);
+    let response = tip_to(
+        env,
+        &tipper,
+        bridged.chat,
+        message_id,
+        held_for(&bots_account),
+        ledger,
+        tip_amount,
+    );
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
+        "{response:?}"
+    );
+
+    // A Discord user's message can still be tipped, the tip being held for whoever links them
+    let users_account = discord_account(false);
+    let (message_id, _) = relay(env, &bridged, &users_account);
+    client::approve_spender(env, &tipper, ledger, bridged.spender, tip_amount + ICP_TRANSFER_FEE);
+    let response = tip_to(
+        env,
+        &tipper,
+        bridged.chat,
+        message_id,
+        held_for(&users_account),
+        ledger,
+        tip_amount,
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    // Leaves the pooled env as it was
+    clear_bridge_bot(env, canister_ids, &bridged);
+}
+
+// The UserIndex refreshes the tokens it pays held tips out of from the Registry daily
+#[test]
+fn user_index_refreshes_the_registrys_tokens_daily() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    wait_until(env, "the tokens to be refreshed", |env| {
+        try_metrics(env, canister_ids.user_index)
+            .and_then(|metrics| metrics["registry_tokens"].as_u64())
+            .is_some_and(|tokens| tokens > 0)
+    });
+}
+
+// A group, or a channel in a community, with a bridge bot for `platform` installed, and `members` in it
+struct BridgedChat {
+    owner: User,
+    chat: Chat,
+    // The group or community, which pulls the tips given in the chat
+    spender: CanisterId,
+    local_user_index: CanisterId,
+    bot_principal: Principal,
+    // The platform operator who set the bridge bot
+    operator: User,
+    platform: BridgePlatform,
+}
+
+fn set_up_bridged_chat(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    platform: BridgePlatform,
+    in_community: bool,
+    members: &[&User],
+) -> BridgedChat {
+    let owner = client::register_diamond_user(env, canister_ids, controller);
     let (chat, location, spender): (Chat, BotInstallationLocation, CanisterId) = if in_community {
         let community_id =
             client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
         let channel_id =
             client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
-        client::community::happy_path::join_channel(env, tipper.principal, community_id, channel_id);
+        for member in members {
+            client::community::happy_path::join_channel(env, member.principal, community_id, channel_id);
+        }
         (
             Chat::Channel(community_id, channel_id),
             BotInstallationLocation::Community(community_id),
@@ -525,7 +1001,9 @@ fn tips_on_relayed_messages_go_to_whoever_linked_the_account(in_community: bool)
         )
     } else {
         let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
-        client::group::happy_path::join_group(env, tipper.principal, group_id);
+        for member in members {
+            client::group::happy_path::join_group(env, member.principal, group_id);
+        }
         (
             Chat::Group(group_id),
             BotInstallationLocation::Group(group_id),
@@ -533,6 +1011,164 @@ fn tips_on_relayed_messages_go_to_whoever_linked_the_account(in_community: bool)
         )
     };
     let local_user_index = canister_ids.local_user_index(env, spender);
+    let user_index = canister_ids.user_index;
+
+    let (bot_id, bot_principal) = register_bot(env, &owner, user_index, random_string(), random_string());
+    let permissions = BotPermissions::default().with_message(&HashSet::from_iter([MessagePermission::Text]));
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        location,
+        bot_id,
+        permissions.clone(),
+        Some(permissions),
+    );
+    let operator = client::register_user(env, canister_ids);
+    client::user_index::happy_path::add_platform_operator(env, controller, user_index, operator.user_id);
+    tick_many(env, 3);
+    let response = set_bridge_bot(env, operator.principal, user_index, platform, Some(bot_id));
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    wait_for_bridge_bot_everywhere(env, canister_ids, platform, Some(bot_id));
+
+    BridgedChat {
+        owner,
+        chat,
+        spender,
+        local_user_index,
+        bot_principal,
+        operator,
+        platform,
+    }
+}
+
+// Leaves the pooled env without a bridge bot for the platform, as it was
+fn clear_bridge_bot(env: &mut PocketIc, canister_ids: &CanisterIds, bridged: &BridgedChat) {
+    let response = set_bridge_bot(
+        env,
+        bridged.operator.principal,
+        canister_ids.user_index,
+        bridged.platform,
+        None,
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    wait_for_bridge_bot_everywhere(env, canister_ids, bridged.platform, None);
+}
+
+fn telegram_account(id: i64) -> BridgedUser {
+    BridgedUser::Telegram(TelegramUser {
+        id,
+        username: None,
+        display_name: random_string(),
+        photo_id: None,
+    })
+}
+
+// So that tests sharing a pooled env don't find each other's links
+fn random_telegram_id() -> i64 {
+    random_from_u32::<u32>() as i64 + 1
+}
+
+// Relays a message from the account into the chat, returning its id and event index
+fn relay(env: &mut PocketIc, bridged: &BridgedChat, from: &BridgedUser) -> (MessageId, EventIndex) {
+    match send(
+        env,
+        bridged.bot_principal,
+        bridged.local_user_index,
+        bridged.chat,
+        from.clone(),
+    ) {
+        SendResponse::Success(result) => (result.message_id, result.event_index),
+        response => panic!("{response:?}"),
+    }
+}
+
+// Asserts the message has just the one tip
+fn assert_tipped(
+    env: &PocketIc,
+    reader: &User,
+    chat: Chat,
+    event_index: EventIndex,
+    tipper: UserId,
+    ledger: CanisterId,
+    amount: u128,
+) {
+    let events = match chat {
+        Chat::Channel(community_id, channel_id) => {
+            client::community::happy_path::events_by_index(env, reader, community_id, channel_id, vec![event_index])
+        }
+        Chat::Group(group_id) => client::group::happy_path::events_by_index(env, reader, group_id, vec![event_index]),
+        Chat::Direct(_) => unreachable!(),
+    };
+    let message = events
+        .events
+        .into_iter()
+        .next()
+        .map(|e| if let ChatEvent::Message(m) = e.event { *m } else { panic!() })
+        .unwrap();
+    assert_eq!(message.tips.len(), 1);
+    assert_eq!(*message.tips.first().unwrap(), (ledger, vec![(tipper, amount)]));
+}
+
+fn bridged_user_deposits_held(env: &PocketIc, user_index: CanisterId) -> u64 {
+    try_metrics(env, user_index)
+        .and_then(|metrics| metrics["bridged_user_deposits_held"].as_u64())
+        .unwrap()
+}
+
+fn wait_until(env: &mut PocketIc, what: &str, condition: impl Fn(&PocketIc) -> bool) {
+    for _ in 0..30 {
+        if condition(env) {
+            return;
+        }
+        env.tick();
+    }
+    assert!(condition(env), "timed out waiting for {what}");
+}
+
+// Reactions and replies to a relayed message are for the OpenChat user who linked the account it came
+// from, as they are for a message's sender, and only if they're in the chat
+#[test_case(true; "in a channel")]
+#[test_case(false; "in a group")]
+fn reactions_and_replies_on_relayed_messages_go_to_whoever_linked_the_account(in_community: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let member = client::register_user(env, canister_ids);
+    let outsider = client::register_user(env, canister_ids);
+    let (chat, location, chat_canister): (Chat, BotInstallationLocation, CanisterId) = if in_community {
+        let community_id =
+            client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+        let channel_id =
+            client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+        client::community::happy_path::join_channel(env, member.principal, community_id, channel_id);
+        // In the community but not the channel, so only the channel's membership keeps activity
+        // from them, as their MultiUser canister takes it from any community they're in. Joining
+        // the community joins its public channels, so they leave this one.
+        client::community::happy_path::join_community(env, outsider.principal, community_id);
+        client::community::happy_path::leave_channel(env, outsider.principal, community_id, channel_id);
+        (
+            Chat::Channel(community_id, channel_id),
+            BotInstallationLocation::Community(community_id),
+            community_id.into(),
+        )
+    } else {
+        let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+        client::group::happy_path::join_group(env, member.principal, group_id);
+        (
+            Chat::Group(group_id),
+            BotInstallationLocation::Group(group_id),
+            group_id.into(),
+        )
+    };
+    let local_user_index = canister_ids.local_user_index(env, chat_canister);
     let user_index = canister_ids.user_index;
 
     let (bot_id, bot_principal) = register_bot(env, &owner, user_index, random_string(), random_string());
@@ -561,29 +1197,73 @@ fn tips_on_relayed_messages_go_to_whoever_linked_the_account(in_community: bool)
             photo_id: None,
         })
     };
-    let owners_account = telegram_account(223344556);
-    let outsiders_account = telegram_account(334455667);
-    let relay = |env: &mut PocketIc, from: &BridgedUser| match send(env, bot_principal, local_user_index, chat, from.clone()) {
-        SendResponse::Success(result) => (result.message_id, result.event_index),
-        response => panic!("{response:?}"),
+    let owners_account = telegram_account(445566778);
+    let outsiders_account = telegram_account(556677889);
+    // No one links this one
+    let strangers_account = telegram_account(667788990);
+    let relay = |env: &mut PocketIc, from: &BridgedUser, replies_to: Option<EventIndex>| {
+        let response = send_reply_in_thread(env, bot_principal, local_user_index, chat, None, replies_to, from.clone());
+        match response {
+            SendResponse::Success(result) => (result.message_id, result.event_index),
+            response => panic!("{response:?}"),
+        }
     };
-    let tip_amount = 1_0000_0000;
+    let react = |env: &mut PocketIc, user: &User, message_id: MessageId| match chat {
+        Chat::Channel(community_id, channel_id) => {
+            client::community::happy_path::add_reaction(env, user, community_id, channel_id, "👍", message_id)
+        }
+        Chat::Group(group_id) => client::group::happy_path::add_reaction(env, user, group_id, "👍", message_id),
+        Chat::Direct(_) => unreachable!(),
+    };
+    // Sends a text message, replying to the message at `replies_to` if given
+    let send_text = |env: &mut PocketIc, user: &User, replies_to: Option<EventIndex>| {
+        let message_id: MessageId = random_from_u128();
+        let content = MessageContentInitial::Text(TextContent { text: random_string() });
+        let replies_to = replies_to.map(|event_index| GroupReplyContext { event_index });
+        let event_index = match chat {
+            Chat::Channel(community_id, channel_id) => {
+                client::community::happy_path::send_message(
+                    env,
+                    user,
+                    community_id,
+                    channel_id,
+                    None,
+                    content,
+                    replies_to,
+                    Some(message_id),
+                )
+                .event_index
+            }
+            Chat::Group(group_id) => {
+                client::group::happy_path::send_message(env, user, group_id, None, content, replies_to, Some(message_id))
+                    .event_index
+            }
+            Chat::Direct(_) => unreachable!(),
+        };
+        (message_id, event_index)
+    };
+    let has_activity = |env: &PocketIc, user: &User, activity: MessageActivity, message_id: MessageId, by: UserId| {
+        client::user::happy_path::message_activity_feed(env, user, 0)
+            .events
+            .iter()
+            .any(|e| e.activity == activity && e.message_id == message_id && e.user_id == Some(by))
+    };
+    let wait_for_activity = |env: &mut PocketIc, user: &User, activity: MessageActivity, message_id: MessageId, by: UserId| {
+        for _ in 0..20 {
+            if has_activity(env, user, activity, message_id, by) {
+                return;
+            }
+            env.tick();
+        }
+        panic!(
+            "{activity:?} activity on {message_id:?} by {by} never reached {}",
+            user.user_id
+        );
+    };
 
-    // No one has linked the account, so there's no one to tip
-    let (message_id, event_index) = relay(env, &owners_account);
-    let response = tip(
-        env,
-        &tipper,
-        chat,
-        message_id,
-        owner.user_id,
-        canister_ids.icp_ledger,
-        tip_amount,
-    );
-    assert!(
-        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
-        "{response:?}"
-    );
+    // No one has linked the account, so there's no one to tell of a reaction
+    let (unlinked_message_id, _) = relay(env, &owners_account, None);
+    react(env, &member, unlinked_message_id);
 
     let links_before = bridged_user_links(env, canister_ids);
     let code = start_link(env, owner.principal, user_index, BridgePlatform::Telegram);
@@ -591,93 +1271,91 @@ fn tips_on_relayed_messages_go_to_whoever_linked_the_account(in_community: bool)
     assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
     wait_for_bridged_user_links(env, canister_ids, &links_before, 1);
 
-    // Once it's linked, its tips go to whoever linked it
-    let owners_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &owner);
-    client::approve_spender(env, &tipper, canister_ids.icp_ledger, spender, tip_amount + ICP_TRANSFER_FEE);
-    let response = tip(
-        env,
-        &tipper,
-        chat,
-        message_id,
-        owner.user_id,
-        canister_ids.icp_ledger,
-        tip_amount,
-    );
-    assert!(matches!(response, UnitResult::Success), "{response:?}");
-    assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &owner),
-        owners_balance + tip_amount
-    );
-    let events = match chat {
+    // Once it's linked, whoever linked it is told of reactions to its messages
+    let (message_id, event_index) = relay(env, &owners_account, None);
+    react(env, &member, message_id);
+    wait_for_activity(env, &owner, MessageActivity::Reaction, message_id, member.user_id);
+
+    // And of replies to them, in which they're mentioned
+    let (reply_id, _) = send_text(env, &member, Some(event_index));
+    wait_for_activity(env, &owner, MessageActivity::QuoteReply, reply_id, member.user_id);
+    let mentions = match chat {
         Chat::Channel(community_id, channel_id) => {
-            client::community::happy_path::events_by_index(env, &owner, community_id, channel_id, vec![event_index])
+            client::community::happy_path::channel_summary(env, &owner, community_id, channel_id)
+                .membership
+                .unwrap()
+                .mentions
         }
-        Chat::Group(group_id) => client::group::happy_path::events_by_index(env, &owner, group_id, vec![event_index]),
+        Chat::Group(group_id) => {
+            client::group::happy_path::summary(env, owner.principal, group_id)
+                .membership
+                .unwrap()
+                .mentions
+        }
         Chat::Direct(_) => unreachable!(),
     };
-    let message = events
-        .events
-        .into_iter()
-        .next()
-        .map(|e| if let ChatEvent::Message(m) = e.event { *m } else { panic!() })
-        .unwrap();
-    assert_eq!(message.tips.len(), 1);
-    assert_eq!(
-        *message.tips.first().unwrap(),
-        (canister_ids.icp_ledger, vec![(tipper.user_id, tip_amount)])
-    );
+    assert!(mentions.iter().any(|m| m.message_id == reply_id), "{mentions:?}");
 
-    // And so does the activity, which before went nowhere, as the message's sender is a bot
-    let tipped = |env: &PocketIc| {
-        client::user::happy_path::message_activity_feed(env, &owner, 0)
-            .events
-            .iter()
-            .any(|e| e.activity == MessageActivity::Tip && e.message_id == message_id && e.user_id == Some(tipper.user_id))
-    };
-    for _ in 0..20 {
-        if tipped(env) {
-            break;
-        }
-        env.tick();
-    }
-    assert!(
-        tipped(env),
-        "the tip never reached the activity feed of whoever linked the account"
-    );
+    // Including replies relayed from the other platform, which before reached no one, even when they
+    // replied to an OpenChat user's message
+    let (relayed_reply_id, _) = relay(env, &strangers_account, Some(event_index));
+    wait_for_activity(env, &owner, MessageActivity::QuoteReply, relayed_reply_id, bot_id);
+    let (_, members_event_index) = send_text(env, &member, None);
+    let (relayed_reply_to_member_id, _) = relay(env, &strangers_account, Some(members_event_index));
+    wait_for_activity(env, &member, MessageActivity::QuoteReply, relayed_reply_to_member_id, bot_id);
 
-    // Who linked it can't tip it, as it's shown as theirs
-    let response = tip(
-        env,
-        &owner,
-        chat,
-        message_id,
-        owner.user_id,
-        canister_ids.icp_ledger,
-        tip_amount,
-    );
-    assert!(
-        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::CannotTipSelf)),
-        "{response:?}"
-    );
-
-    // Nor can a message be tipped if whoever linked its account isn't in the chat
+    // Whoever linked an account isn't told of activity on its messages if they aren't in the chat
     let code = start_link(env, outsider.principal, user_index, BridgePlatform::Telegram);
     let response = link(env, bot_principal, user_index, outsiders_account.clone(), &code);
     assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
     wait_for_bridged_user_links(env, canister_ids, &links_before, 2);
-    let (message_id, _) = relay(env, &outsiders_account);
-    let response = tip(
+    let (outsiders_message_id, _) = relay(env, &outsiders_account, None);
+    react(env, &member, outsiders_message_id);
+
+    // Nor of their own reactions or replies, nor of replies relayed from the same account
+    react(env, &owner, message_id);
+    let (own_reply_id, _) = send_text(env, &owner, Some(event_index));
+    let (own_relayed_reply_id, _) = relay(env, &owners_account, Some(event_index));
+
+    // Activity for the owner is sent in order, so once this arrives, none of the above is still to come
+    let (last_message_id, _) = relay(env, &owners_account, None);
+    react(env, &member, last_message_id);
+    wait_for_activity(env, &owner, MessageActivity::Reaction, last_message_id, member.user_id);
+    tick_many(env, 5);
+
+    assert!(!has_activity(
         env,
-        &tipper,
-        chat,
+        &owner,
+        MessageActivity::Reaction,
+        unlinked_message_id,
+        member.user_id
+    ));
+    assert!(!has_activity(
+        env,
+        &owner,
+        MessageActivity::Reaction,
         message_id,
-        outsider.user_id,
-        canister_ids.icp_ledger,
-        tip_amount,
-    );
+        owner.user_id
+    ));
+    assert!(!has_activity(
+        env,
+        &owner,
+        MessageActivity::QuoteReply,
+        own_reply_id,
+        owner.user_id
+    ));
+    assert!(!has_activity(
+        env,
+        &owner,
+        MessageActivity::QuoteReply,
+        own_relayed_reply_id,
+        bot_id
+    ));
     assert!(
-        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::TargetUserNotInChat)),
-        "{response:?}"
+        client::user::happy_path::message_activity_feed(env, &outsider, 0)
+            .events
+            .iter()
+            .all(|e| e.message_id != outsiders_message_id)
     );
 
     // Leaves the pooled env as it was
@@ -701,12 +1379,33 @@ fn tip(
     ledger: CanisterId,
     amount: u128,
 ) -> UnitResult {
+    tip_to(
+        env,
+        tipper,
+        chat,
+        message_id,
+        icrc1::Account::legacy_for_user(recipient),
+        ledger,
+        amount,
+    )
+}
+
+// Tips a group or channel message, addressing the transfer to the account `to`
+fn tip_to(
+    env: &mut PocketIc,
+    tipper: &User,
+    chat: Chat,
+    message_id: MessageId,
+    to: icrc1::Account,
+    ledger: CanisterId,
+    amount: u128,
+) -> UnitResult {
     let transfer = PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
         ledger,
         token_symbol: ICP_SYMBOL.to_string(),
         amount,
         from: tipper.principal.into(),
-        to: icrc1::Account::legacy_for_user(recipient),
+        to,
         fee: ICP_TRANSFER_FEE,
         memo: None,
         created: env.get_time().as_nanos_since_unix_epoch(),
@@ -969,6 +1668,18 @@ fn send_in_thread(
     thread: Option<MessageIndex>,
     bridged_from: BridgedUser,
 ) -> SendResponse {
+    send_reply_in_thread(env, bot_principal, local_user_index, chat, thread, None, bridged_from)
+}
+
+fn send_reply_in_thread(
+    env: &mut PocketIc,
+    bot_principal: Principal,
+    local_user_index: CanisterId,
+    chat: Chat,
+    thread: Option<MessageIndex>,
+    replies_to: Option<EventIndex>,
+    bridged_from: BridgedUser,
+) -> SendResponse {
     client::local_user_index::bot_send_message(
         env,
         bot_principal,
@@ -977,7 +1688,7 @@ fn send_in_thread(
             chat_context: BotChatContext::Autonomous(chat),
             thread,
             message_id: None,
-            replies_to: None,
+            replies_to,
             content: BotMessageContent::Text(TextContent {
                 text: "Hello from the other side".to_string(),
             }),

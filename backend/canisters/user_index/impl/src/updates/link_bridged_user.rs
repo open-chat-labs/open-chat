@@ -28,6 +28,8 @@ fn link_bridged_user_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
         .link(args.user, &args.code, now)
         .ok_or_else(|| OCErrorCode::InvalidRequest.with_message("The code is unknown or has expired"))?;
     state.push_bridged_user_link(id, Some(user_id));
+    // Whoever links an account is paid the funds held for it
+    state.claim_bridged_user_deposits(&id, user_id);
 
     let username = state
         .data

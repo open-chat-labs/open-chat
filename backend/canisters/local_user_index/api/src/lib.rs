@@ -12,7 +12,7 @@ use types::{
     DiamondMembershipPlanDuration, GroupChatUserNotificationPayload, MediaScanMatch, MessageContentInitial, MessageId,
     MessageIndex, Milliseconds, Notification, NotifyChit, PhoneNumber, PublicCommunityActivity, PublicGroupActivity,
     ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId, UserNotificationPayload, UserType, is_default,
+    UserCanisterStreakInsurancePayment, UserId, UserNotificationPayload, UserType, icrc1, is_default,
 };
 
 mod lifecycle;
@@ -100,6 +100,8 @@ pub enum GroupOrCommunityEvent<T = UserNotificationPayload> {
     ModerationReferral(Box<ModerationReferral>),
     // The sender is queued to be upgraded to the latest wasm
     TriggerUpgrade,
+    // Relayed to the UserIndex with the sender's id
+    BridgedUserDeposit(Box<BridgedUserDeposit>),
 }
 
 pub type GroupEvent = GroupOrCommunityEvent<GroupChatUserNotificationPayload>;
@@ -127,6 +129,30 @@ pub struct GroupImportComplete {
     pub other_public_channels: Vec<ChannelLatestMessageIndex>,
     pub mark_active_duration: Milliseconds,
     pub public_community_activity: Option<PublicCommunityActivity>,
+}
+
+// Funds sent to an account on another platform which no one had linked, eg. a tip on a message
+// relayed from it, which the group or community paid into the account's subaccount of the
+// UserIndex (see `BridgedUserId::subaccount`)
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BridgedUserDeposit {
+    // Set by a community canister, identifying the channel within it
+    pub channel_id: Option<ChannelId>,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+    pub account: BridgedUserId,
+    // Who sent the funds
+    pub sender: UserId,
+    // The account the funds came from, where they're refunded to if no one claims them
+    pub refund_to: icrc1::Account,
+    pub ledger: CanisterId,
+    pub token_symbol: String,
+    // What arrived in the account's subaccount. The sender paid the fee on top.
+    pub amount: u128,
+    // The ledger's fee when the funds were sent, which a payout of them is less
+    pub fee: u128,
+    // The token's, so a payout's amount can be shown
+    pub decimals: u8,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

@@ -1,5 +1,6 @@
 pub mod account_billing;
 pub mod authority_reports;
+pub mod bridged_user_deposits;
 pub mod bridged_users;
 pub mod chit_leaderboard;
 pub mod community_event_batch;
@@ -16,6 +17,7 @@ pub mod online_users_event_batch;
 pub mod pending_payments_queue;
 pub mod premium_items;
 pub mod protected_actions;
+pub mod registry_tokens;
 pub mod reported_messages;
 pub mod storage_index_event_batch;
 pub mod streak_insurance_logs;

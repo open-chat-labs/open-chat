@@ -1,4 +1,4 @@
-use crate::{TimestampMillis, UserId};
+use crate::{TimestampMillis, UserId, is_default};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -59,6 +59,10 @@ pub struct DiscordUser {
     // The hash of the user's global avatar, not their server one, which the CDN url is built from.
     // "a_" followed by 32 hex chars if animated
     pub avatar: Option<String>,
+    // A bot or a webhook, which no one can link, so whose messages can't be tipped
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
+    pub bot: bool,
 }
 
 #[ts_export]
@@ -108,7 +112,28 @@ const MAX_TWITCH_DISPLAY_NAME_LENGTH: usize = 64;
 // Twitch's profile image paths are short, eg. "jtv_user_pictures/" and a uuid
 const MAX_TWITCH_PROFILE_IMAGE_LENGTH: usize = 128;
 
+// The start of each subaccount of the UserIndex which holds the funds for an account no one has
+// linked
+const SUBACCOUNT_PREFIX: &[u8; 7] = b"BRIDGED";
+
 impl BridgedUserId {
+    // The account's subaccount of the UserIndex, which holds any funds sent to the account, eg. tips
+    // on its relayed messages, until someone links it, when they're paid to them, or else refunded.
+    // It's "BRIDGED", then the platform, then zeros, then the id (big-endian), so the website can
+    // build it too. It must never change, or funds held under the old one would be lost.
+    pub fn subaccount(&self) -> [u8; 32] {
+        let (platform, id) = match self {
+            BridgedUserId::Discord(id) => (1, id.to_be_bytes()),
+            BridgedUserId::Telegram(id) => (2, id.to_be_bytes()),
+            BridgedUserId::Twitch(id) => (3, id.to_be_bytes()),
+        };
+        let mut subaccount = [0; 32];
+        subaccount[..7].copy_from_slice(SUBACCOUNT_PREFIX);
+        subaccount[7] = platform;
+        subaccount[24..].copy_from_slice(&id);
+        subaccount
+    }
+
     pub fn platform(&self) -> BridgePlatform {
         match self {
             BridgedUserId::Discord(_) => BridgePlatform::Discord,
@@ -116,9 +141,24 @@ impl BridgedUserId {
             BridgedUserId::Twitch(_) => BridgePlatform::Twitch,
         }
     }
+
+    // Whether anyone could link the account. A Telegram chat which sends messages as itself, eg. a
+    // channel, has a negative id, and can't be linked.
+    pub fn can_be_linked(&self) -> bool {
+        match self {
+            BridgedUserId::Discord(_) | BridgedUserId::Twitch(_) => true,
+            BridgedUserId::Telegram(id) => *id > 0,
+        }
+    }
 }
 
 impl BridgedUser {
+    // Whether anyone could link the account. No one can link a Discord bot or webhook, nor a
+    // Telegram chat which sends messages as itself.
+    pub fn can_be_linked(&self) -> bool {
+        self.id().can_be_linked() && !matches!(self, BridgedUser::Discord(user) if user.bot)
+    }
+
     pub fn id(&self) -> BridgedUserId {
         match self {
             BridgedUser::Discord(u) => BridgedUserId::Discord(u.id),
@@ -243,12 +283,60 @@ fn validate_name(field: &str, name: &str, max_length: usize) -> Result<(), Strin
 mod tests {
     use super::*;
 
+    #[test]
+    fn subaccounts_are_the_same_as_ever() {
+        let mut expected = [0; 32];
+        expected[..8].copy_from_slice(b"BRIDGED\x02");
+        expected[24..].copy_from_slice(&123456789i64.to_be_bytes());
+        assert_eq!(BridgedUserId::Telegram(123456789).subaccount(), expected);
+    }
+
+    #[test]
+    fn subaccounts_differ_by_platform_and_id() {
+        let discord = BridgedUserId::Discord(80351110224678912).subaccount();
+        let telegram = BridgedUserId::Telegram(80351110224678912).subaccount();
+        let twitch = BridgedUserId::Twitch(80351110224678912).subaccount();
+        let another = BridgedUserId::Discord(80351110224678913).subaccount();
+        assert_ne!(discord, telegram);
+        assert_ne!(discord, twitch);
+        assert_ne!(telegram, twitch);
+        assert_ne!(discord, another);
+    }
+
+    #[test]
+    fn discord_bots_and_webhooks_cant_be_linked() {
+        assert!(BridgedUser::Discord(discord_user()).can_be_linked());
+        assert!(
+            !BridgedUser::Discord(DiscordUser {
+                bot: true,
+                ..discord_user()
+            })
+            .can_be_linked()
+        );
+        assert!(
+            !BridgedUser::Telegram(TelegramUser {
+                id: -1001234567890,
+                ..telegram_user()
+            })
+            .can_be_linked()
+        );
+    }
+
+    #[test]
+    fn telegram_chats_cant_be_linked() {
+        assert!(BridgedUserId::Telegram(123456789).can_be_linked());
+        assert!(!BridgedUserId::Telegram(-1001234567890).can_be_linked());
+        assert!(BridgedUserId::Discord(80351110224678912).can_be_linked());
+        assert!(BridgedUserId::Twitch(80351110224678912).can_be_linked());
+    }
+
     fn discord_user() -> DiscordUser {
         DiscordUser {
             id: 80351110224678912,
             username: "nelly".to_string(),
             display_name: Some("Nelly".to_string()),
             avatar: Some("8342729096ea3675442027381ff50dfe".to_string()),
+            bot: false,
         }
     }
 
@@ -277,6 +365,7 @@ mod tests {
             DiscordUser {
                 display_name: None,
                 avatar: None,
+                bot: false,
                 ..discord_user()
             }
             .validate()
@@ -285,6 +374,7 @@ mod tests {
         assert!(
             DiscordUser {
                 avatar: Some("a_8342729096ea3675442027381ff50dfe".to_string()),
+                bot: false,
                 ..discord_user()
             }
             .validate()
@@ -323,6 +413,7 @@ mod tests {
             assert!(
                 DiscordUser {
                     avatar: Some(avatar.to_string()),
+                    bot: false,
                     ..discord_user()
                 }
                 .validate()

@@ -160,6 +160,10 @@ impl BridgedUsers {
         self.users.get(id).map(|record| record.summary())
     }
 
+    pub fn linked_user_id(&self, id: &BridgedUserId) -> Option<UserId> {
+        self.users.get(id).and_then(|record| record.linked_user_id)
+    }
+
     // The registry is small enough to scan, rather than keep an index of who linked what
     pub fn linked_to(&self, user_id: UserId) -> Vec<BridgedUserSummary> {
         self.users
@@ -196,6 +200,7 @@ mod tests {
             username: "nelly".to_string(),
             display_name: Some(display_name.to_string()),
             avatar: None,
+            bot: false,
         })
     }
 
