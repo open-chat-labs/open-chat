@@ -55,9 +55,9 @@
 
 {#snippet invaders()}
     <Invaders fill>
-        {#snippet start(play, again)}
-            <!-- the library translates only its own ui.* keys and shows anything else as given -->
-            <Button label={$_(again ? "halloffame.tryAgain" : "halloffame.start")} onClick={play} />
+        {#snippet start(play, label)}
+            <!-- translated by the game: the library shows text outside its own ui.* keys as given -->
+            <Button {label} onClick={play} />
         {/snippet}
     </Invaders>
 {/snippet}
