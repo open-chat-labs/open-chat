@@ -203,7 +203,8 @@
         "chartLabel": "המחיר של {symbol} ב-7 הימים האחרונים",
         "change7d": "{change} ב-7 ימים",
         "noHistory": "אין עסקאות ב-7 הימים האחרונים",
-        "noPrice": "אין מחיר זמין"
+        "noPrice": "אין מחיר זמין",
+        "priceDataBy": "נתוני מחירים מאת {source}"
     },
     "bridgedUserUnknown": "משתמש {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",

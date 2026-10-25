@@ -203,7 +203,8 @@
         "chartLabel": "Цена {symbol} за последние 7 дней",
         "change7d": "{change} за 7 дней",
         "noHistory": "Нет сделок за последние 7 дней",
-        "noPrice": "Цена недоступна"
+        "noPrice": "Цена недоступна",
+        "priceDataBy": "Данные о ценах: {source}"
     },
     "bridgedUserUnknown": "Пользователь {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",

@@ -1,14 +1,22 @@
-<!-- A token's price card, opened by a cashtag tapped in a message (`<cash-tag>`): its logo, name,
-     price now, and a chart of its price over the last 7 days (logic/cashtag). -->
+<!-- A token's or coin's price card, opened by a cashtag tapped in a message (`<cash-tag>`): its
+     logo, name, price now, and a chart of its price over the last 7 days, crediting where the prices
+     are from where that's required (logic/cashtag). -->
 <script lang="ts">
     import {
+        cashtagCoinsStore,
         cryptoLookup,
         exchangeRatesLookupStore,
         formatPercentChange,
         formatUsdPrice,
+        priceCredits,
+        priceSourcesStore,
         type OpenChat,
+        type PriceSubject,
     } from "@client";
-    import { TokenPriceHistory } from "@src/logic/cashtag/tokenPriceCard.svelte";
+    import {
+        cashtagCardDetails,
+        TokenPriceHistory,
+    } from "@src/logic/cashtag/tokenPriceCard.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import {
         Avatar,
@@ -26,30 +34,35 @@
     import { i18nKey } from "../../i18n/i18n";
 
     interface Props {
-        ledger: string;
+        subject: PriceSubject;
         onClose: () => void;
     }
 
-    let { ledger, onClose }: Props = $props();
+    let { subject, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    // the card's token is fixed for its life: another cashtag opens another card
-    const history = new TokenPriceHistory(client, ledger);
+    // the card's token or coin is fixed for its life: another cashtag opens another card
+    const history = new TokenPriceHistory(client, subject);
 
     const CHART_WIDTH = 300;
     const CHART_HEIGHT = 100;
 
-    let token = $derived($cryptoLookup.get(ledger));
-    let price = $derived($exchangeRatesLookupStore.get(ledger)?.toUSD);
+    let token = $derived(
+        cashtagCardDetails(subject, $cryptoLookup, $exchangeRatesLookupStore, $cashtagCoinsStore),
+    );
+    let price = $derived(token?.usd);
     let chart = $derived(history.chart(CHART_WIDTH, CHART_HEIGHT));
     let change = $derived(history.change);
+    let credits = $derived(priceCredits($priceSourcesStore, [token?.source, history.source]));
 </script>
 
 {#if token !== undefined}
     <Sheet onDismiss={onClose}>
         <Container direction={"vertical"} gap={"md"} padding={["lg", "lg", "xl", "lg"]}>
             <Container gap={"md"} crossAxisAlignment={"center"}>
-                <Avatar url={token.logo}></Avatar>
+                {#if token.logo !== undefined}
+                    <Avatar url={token.logo}></Avatar>
+                {/if}
                 <Container direction={"vertical"}>
                     <Body width={"hug"} fontWeight={"bold"}>{token.name}</Body>
                     <Caption width={"hug"} colour={"textSecondary"} fontWeight={"bold"}
@@ -100,11 +113,25 @@
                     {/if}
                 </div>
             {/if}
+            {#each credits as credit}
+                <a
+                    class="credit"
+                    style:color={ColourVars.textSecondary}
+                    href={credit.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >{$_("cashtag.priceDataBy", { values: { source: credit.name } })}</a>
+            {/each}
         </Container>
     </Sheet>
 {/if}
 
 <style lang="scss">
+    .credit {
+        font-size: 0.75rem;
+        text-decoration: underline;
+    }
+
     .chart {
         display: flex;
         align-items: center;

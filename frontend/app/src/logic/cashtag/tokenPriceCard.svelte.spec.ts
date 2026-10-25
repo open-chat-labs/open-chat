@@ -1,5 +1,16 @@
-import type { OpenChat, TokenPricePoint } from "@client";
-import { priceChange, priceChart, TokenPriceHistory } from "./tokenPriceCard.svelte";
+import type {
+    CashtagCoin,
+    CryptocurrencyDetails,
+    OpenChat,
+    PriceSubject,
+    TokenPricePoint,
+} from "@client";
+import {
+    cashtagCardDetails,
+    priceChange,
+    priceChart,
+    TokenPriceHistory,
+} from "./tokenPriceCard.svelte";
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -9,10 +20,12 @@ function point(ago: number, usd: number): TokenPricePoint {
     return { timestamp: NOW - ago, usd };
 }
 
-function client(history: TokenPricePoint[] | undefined) {
+const LEDGER: PriceSubject = { kind: "token", ledger: "ledger-1" };
+
+function client(points: TokenPricePoint[] | undefined, source?: string) {
     return {
-        getTokenPriceHistory: vi.fn(async () => history),
-    } as never as OpenChat & { getTokenPriceHistory: ReturnType<typeof vi.fn> };
+        getPriceHistory: vi.fn(async () => (points !== undefined ? { points, source } : undefined)),
+    } as never as OpenChat & { getPriceHistory: ReturnType<typeof vi.fn> };
 }
 
 async function settle() {
@@ -74,8 +87,8 @@ describe("priceChart", () => {
 
 describe("a token price card's history", () => {
     test("loads the token's history as the card opens", async () => {
-        const c = client([point(DAY, 2), point(0, 3)]);
-        const history = new TokenPriceHistory(c, "ledger-1");
+        const c = client([point(DAY, 2), point(0, 3)], "icpswap");
+        const history = new TokenPriceHistory(c, LEDGER);
 
         expect(history.history.kind).toBe("loading");
         expect(history.change).toBeUndefined();
@@ -83,15 +96,16 @@ describe("a token price card's history", () => {
 
         await settle();
 
-        expect(c.getTokenPriceHistory).toHaveBeenCalledWith("ledger-1");
+        expect(c.getPriceHistory).toHaveBeenCalledWith(LEDGER);
         expect(history.history.kind).toBe("success");
+        expect(history.source).toBe("icpswap");
         expect(history.change).toBeCloseTo(50);
         expect(history.chart(700, 100)?.rising).toBe(true);
     });
 
     test("runs its chart to the last price when the device's clock is behind it", async () => {
         const now = vi.spyOn(Date, "now").mockReturnValue(NOW - 2 * HOUR);
-        const history = new TokenPriceHistory(client([point(DAY, 2), point(0, 3)]), "ledger-1");
+        const history = new TokenPriceHistory(client([point(DAY, 2), point(0, 3)]), LEDGER);
         await settle();
         now.mockRestore();
 
@@ -100,10 +114,53 @@ describe("a token price card's history", () => {
     });
 
     test("is unavailable when it can't be loaded", async () => {
-        const history = new TokenPriceHistory(client(undefined), "ledger-1");
+        const history = new TokenPriceHistory(client(undefined), LEDGER);
         await settle();
 
         expect(history.history).toEqual({ kind: "error", error: "unavailable" });
         expect(history.chart(700, 100)).toBeUndefined();
+    });
+});
+
+describe("a price card's token or coin", () => {
+    const chat = { name: "OpenChat", symbol: "CHAT", logo: "chat.svg" } as CryptocurrencyDetails;
+    const ada: CashtagCoin = {
+        id: "cardano",
+        symbol: "ADA",
+        name: "Cardano",
+        usd: 0.205,
+        source: "coingecko",
+    };
+    const tokens = new Map([["chat-ledger", chat]]);
+    const rates = new Map([["chat-ledger", { toUSD: 0.0281, source: "icpswap" }]]);
+    const coins = new Map([["ada", ada]]);
+
+    test("is a token OpenChat lists, with its logo and price", () => {
+        expect(
+            cashtagCardDetails({ kind: "token", ledger: "chat-ledger" }, tokens, rates, coins),
+        ).toEqual({
+            name: "OpenChat",
+            symbol: "CHAT",
+            logo: "chat.svg",
+            usd: 0.0281,
+            source: "icpswap",
+        });
+    });
+
+    test("is a coin it doesn't, by its id, with no logo", () => {
+        expect(cashtagCardDetails({ kind: "coin", id: "cardano" }, tokens, rates, coins)).toEqual({
+            name: "Cardano",
+            symbol: "ADA",
+            logo: undefined,
+            usd: 0.205,
+            source: "coingecko",
+        });
+    });
+
+    test("is undefined once its token or coin is gone", () => {
+        expect(cashtagCardDetails({ kind: "coin", id: "dud" }, tokens, rates, coins)).toBeUndefined();
+        expect(
+            cashtagCardDetails({ kind: "token", ledger: "gone" }, tokens, rates, coins),
+        ).toBeUndefined();
     });
 });

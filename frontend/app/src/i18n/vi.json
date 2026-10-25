@@ -203,7 +203,8 @@
         "chartLabel": "Giá {symbol} trong 7 ngày qua",
         "change7d": "{change} trong 7 ngày",
         "noHistory": "Không có giao dịch nào trong 7 ngày qua",
-        "noPrice": "Không có giá"
+        "noPrice": "Không có giá",
+        "priceDataBy": "Dữ liệu giá từ {source}"
     },
     "bridgedUserUnknown": "Người dùng {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",

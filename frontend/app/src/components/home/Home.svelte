@@ -24,6 +24,7 @@
         MultiUserChatIdentifier,
         NervousSystemDetails,
         OpenChat,
+        PriceSubject,
         ResourceKey,
         RouteParams,
         Rules,
@@ -132,8 +133,9 @@
 
     let convertGroup: GroupChatSummary | undefined = $state(undefined);
     let showProfileCard: ViewProfileConfig | undefined = $state(undefined);
-    // a token's price card, anchored to the cashtag clicked
-    let showTokenCard: { ledger: string; alignTo?: HTMLElement } | undefined = $state(undefined);
+    // a token's or coin's price card, anchored to the cashtag clicked
+    let showTokenCard: { subject: PriceSubject; alignTo?: HTMLElement } | undefined =
+        $state(undefined);
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -297,7 +299,7 @@
     function cashtagClicked(event: Event) {
         const ev = event as CustomEvent<CashtagClickedEvent>;
         showTokenCard = {
-            ledger: ev.detail.ledger,
+            subject: ev.detail,
             alignTo: ev.target ? (ev.target as HTMLElement) : undefined,
         };
     }
@@ -823,7 +825,7 @@
     <!-- another cashtag is another card -->
     {#key showTokenCard}
         <TokenPriceCard
-            ledger={showTokenCard.ledger}
+            subject={showTokenCard.subject}
             alignTo={showTokenCard.alignTo}
             onClose={() => (showTokenCard = undefined)} />
     {/key}

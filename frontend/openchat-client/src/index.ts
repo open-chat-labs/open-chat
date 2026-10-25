@@ -46,6 +46,7 @@ export {
     unsuspendUserMessage,
 } from "./utils/user";
 export * from "./utils/cryptoFormatter";
+export * from "./utils/priceSources";
 export {
     candidateGroupFromChat,
     groupChanges,

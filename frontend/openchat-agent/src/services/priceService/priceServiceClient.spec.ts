@@ -16,18 +16,20 @@ describe("the price service client", () => {
         vi.unstubAllGlobals();
     });
 
-    test("asks for the prices and a 7-day history at the service's URL, less any trailing slash", async () => {
+    test("asks for the prices and 7-day histories at the service's URL, less any trailing slash", async () => {
         const fetch = respond(200, { timestamp: 0, prices: { [ICP_LEDGER]: { usd: 2.58 } } });
         const client = new PriceServiceClient("https://prices.example.com/");
 
-        expect(await client.exchangeRates(supportedTokens)).toEqual({
+        expect((await client.exchangeRates(supportedTokens))?.exchangeRates).toEqual({
             [ICP_LEDGER]: { toUSD: 2.58 },
         });
-        await client.priceHistory(ICP_LEDGER);
+        await client.priceHistory({ kind: "token", ledger: ICP_LEDGER });
+        await client.priceHistory({ kind: "coin", id: "cardano" });
 
         expect(fetch.mock.calls.map((c) => (c as unknown[])[0])).toEqual([
             "https://prices.example.com/v1/prices",
             `https://prices.example.com/v1/prices/${ICP_LEDGER}/history?range=7d`,
+            "https://prices.example.com/v1/coins/cardano/history?range=7d",
         ]);
     });
 
@@ -37,7 +39,7 @@ describe("the price service client", () => {
         const client = new PriceServiceClient("https://prices.example.com");
 
         expect(await client.exchangeRates(supportedTokens)).toBeUndefined();
-        expect(await client.priceHistory(ICP_LEDGER)).toBeUndefined();
+        expect(await client.priceHistory({ kind: "token", ledger: ICP_LEDGER })).toBeUndefined();
         log.mockRestore();
     });
 });

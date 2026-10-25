@@ -2,8 +2,8 @@
      ?diamond), which closing drops from the URL, and the ones the app opened itself, newest on top,
      which a navigation closes first (closeModalStack), as does Back. It also opens them as the old
      Home did: a name clicked in a message (`<profile-link>`) opens that user's card in place of
-     the one open (none for a bot), a cashtag (`<cash-tag>`) its token's price card in place of
-     the one open, and the `profile` and `upgrade` events open the profile and
+     the one open (none for a bot), a cashtag (`<cash-tag>`) its token's or coin's price card in
+     place of the one open, and the `profile` and `upgrade` events open the profile and
      Diamond. And it shows the chat's rules when sending needs them accepted first, and what the
      client's app events ask to show (not found, no access …). -->
 <script lang="ts">
@@ -148,8 +148,8 @@
 
     $effect(() => {
         const opened = (e: Event) => {
-            const { ledger } = (e as CustomEvent<CashtagClickedEvent>).detail;
-            stack.replace({ kind: "token", ledger }, (open) => open.kind === "token");
+            const subject = (e as CustomEvent<CashtagClickedEvent>).detail;
+            stack.replace({ kind: "cashtag", subject }, (open) => open.kind === "cashtag");
         };
         document.body.addEventListener("cashtag-clicked", opened);
         return () => document.body.removeEventListener("cashtag-clicked", opened);

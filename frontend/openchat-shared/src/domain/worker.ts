@@ -156,8 +156,9 @@ import type {
     AccountTransactionResult,
     CryptocurrencyDetails,
     EvmChain,
-    TokenExchangeRates,
-    TokenPricePoint,
+    PriceHistory,
+    PriceSubject,
+    TokenPrices,
     WalletConfig,
 } from "./crypto";
 import type { ModerationConfig } from "./user/user";
@@ -474,7 +475,7 @@ export type WorkerRequest = Cloneable<
     | GetDiamondMembershipFees
     | GetReportedMessages
     | GetExchangeRates
-    | GetTokenPriceHistory
+    | GetPriceHistory
     | AcceptP2PSwap
     | CancelP2PSwap
     | ProposeTranslation
@@ -2286,8 +2287,8 @@ export type WorkerResponseInner =
     | TranslationCorrections
     | AcceptP2PSwapResponse
     | CancelP2PSwapResponse
-    | Record<string, TokenExchangeRates>
-    | TokenPricePoint[]
+    | TokenPrices
+    | PriceHistory
     | ProposeResponse
     | ApproveResponse
     | RejectResponse
@@ -2565,9 +2566,9 @@ type GetExchangeRates = {
     kind: "exchangeRates";
 };
 
-type GetTokenPriceHistory = {
-    kind: "tokenPriceHistory";
-    ledger: string;
+type GetPriceHistory = {
+    kind: "priceHistory";
+    subject: PriceSubject;
 };
 
 type GetReportedMessages = {
@@ -2821,8 +2822,8 @@ export type WorkerResults = ResultsByKind<{
     deleteDirectChat: boolean;
     diamondMembershipFees: DiamondMembershipFees[];
     reportedMessages: string;
-    exchangeRates: Record<string, TokenExchangeRates> | undefined;
-    tokenPriceHistory: TokenPricePoint[] | undefined;
+    exchangeRates: TokenPrices | undefined;
+    priceHistory: PriceHistory | undefined;
     proposeTranslation: ProposeResponse;
     approveTranslation: ApproveResponse;
     rejectTranslation: RejectResponse;

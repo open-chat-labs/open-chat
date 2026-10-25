@@ -1,4 +1,4 @@
-import type { CryptocurrencyDetails, TokenExchangeRates, TokenPricePoint } from "@shared";
+import type { CryptocurrencyDetails, PriceHistory, PriceSubject, TokenPrices } from "@shared";
 import type { ExchangeRateClient } from "../openchatAgent";
 import { priceHistoryResponse, pricesResponse } from "./mappers";
 
@@ -12,15 +12,17 @@ export class PriceServiceClient implements ExchangeRateClient {
         this.#baseUrl = baseUrl.replace(/\/+$/, "");
     }
 
-    async exchangeRates(
-        supportedTokens: CryptocurrencyDetails[],
-    ): Promise<Record<string, TokenExchangeRates> | undefined> {
+    async exchangeRates(supportedTokens: CryptocurrencyDetails[]): Promise<TokenPrices | undefined> {
         const json = await this.#get("/v1/prices");
         return json !== undefined ? pricesResponse(json, supportedTokens) : undefined;
     }
 
-    async priceHistory(ledger: string): Promise<TokenPricePoint[] | undefined> {
-        const json = await this.#get(`/v1/prices/${encodeURIComponent(ledger)}/history?range=7d`);
+    async priceHistory(subject: PriceSubject): Promise<PriceHistory | undefined> {
+        const path =
+            subject.kind === "token"
+                ? `/v1/prices/${encodeURIComponent(subject.ledger)}/history`
+                : `/v1/coins/${encodeURIComponent(subject.id)}/history`;
+        const json = await this.#get(`${path}?range=7d`);
         return json !== undefined ? priceHistoryResponse(json) : undefined;
     }
 

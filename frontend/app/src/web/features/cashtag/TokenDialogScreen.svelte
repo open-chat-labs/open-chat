@@ -1,42 +1,53 @@
-<!-- A token's price card, opened by a cashtag clicked in a message (`<cash-tag>`): its logo, name,
-     price now, and a chart of its price over the last 7 days, as the old UI's card shows them
-     (logic/cashtag). -->
+<!-- A token's or coin's price card, opened by a cashtag clicked in a message (`<cash-tag>`): its
+     logo, name, price now, and a chart of its price over the last 7 days, crediting where the prices
+     are from where that's required, as the old UI's card shows them (logic/cashtag). -->
 <script lang="ts">
     import {
+        cashtagCoinsStore,
         cryptoLookup,
         exchangeRatesLookupStore,
         formatPercentChange,
         formatUsdPrice,
         OpenChat,
+        priceCredits,
+        priceSourcesStore,
     } from "@client";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
-    import { TokenPriceHistory } from "@src/logic/cashtag/tokenPriceCard.svelte";
+    import {
+        cashtagCardDetails,
+        TokenPriceHistory,
+    } from "@src/logic/cashtag/tokenPriceCard.svelte";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
 
-    let { dialog, onClose }: DialogProps<Extract<LocalDialog, { kind: "token" }>> = $props();
+    let { dialog, onClose }: DialogProps<Extract<LocalDialog, { kind: "cashtag" }>> = $props();
 
     const client = getContext<OpenChat>("client");
-    // the card's token is fixed for its life: another cashtag opens another card
-    const ledger = dialog.ledger;
-    const history = new TokenPriceHistory(client, ledger);
+    // the card's token or coin is fixed for its life: another cashtag opens another card
+    const subject = dialog.subject;
+    const history = new TokenPriceHistory(client, subject);
 
     const CHART_WIDTH = 400;
     const CHART_HEIGHT = 120;
 
-    const token = $derived($cryptoLookup.get(ledger));
-    const price = $derived($exchangeRatesLookupStore.get(ledger)?.toUSD);
+    const token = $derived(
+        cashtagCardDetails(subject, $cryptoLookup, $exchangeRatesLookupStore, $cashtagCoinsStore),
+    );
+    const price = $derived(token?.usd);
     const chart = $derived(history.chart(CHART_WIDTH, CHART_HEIGHT));
     const change = $derived(history.change);
+    const credits = $derived(priceCredits($priceSourcesStore, [token?.source, history.source]));
 </script>
 
 {#if token !== undefined}
     <!-- TODO(design): no token price card in the design (GAPS.md) -->
     <DialogShell title={token.name} width={400} height="auto" {onClose}>
         <div class="token">
-            <img class="logo" src={token.logo} alt="" />
+            {#if token.logo !== undefined}
+                <img class="logo" src={token.logo} alt="" />
+            {/if}
             <span class="symbol">${token.symbol}</span>
         </div>
         {#if price !== undefined}
@@ -69,6 +80,10 @@
                 {/if}
             </div>
         {/if}
+        {#each credits as credit}
+            <a class="credit" href={credit.url} target="_blank" rel="noopener noreferrer"
+                >{$_("cashtag.priceDataBy", { values: { source: credit.name } })}</a>
+        {/each}
     </DialogShell>
 {/if}
 
@@ -113,6 +128,14 @@
     .none {
         font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
         color: var(--ink-3);
+    }
+
+    .credit {
+        display: block;
+        margin-block-start: var(--space-8);
+        font: var(--weight-regular) var(--text-xs) / 1.4 var(--font-sans);
+        color: var(--ink-3);
+        text-decoration: underline;
     }
 
     .chart {

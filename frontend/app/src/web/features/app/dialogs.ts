@@ -1,4 +1,9 @@
-import type { CommunityIdentifier, LeaveOrDelete, MultiUserChatIdentifier } from "@client";
+import type {
+    CommunityIdentifier,
+    LeaveOrDelete,
+    MultiUserChatIdentifier,
+    PriceSubject,
+} from "@client";
 import type { DialogStack } from "../../shell/dialogStack.svelte";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
 import type { Component } from "svelte";
@@ -35,14 +40,14 @@ export type LinkedDialog =
     | { kind: "claim_history" }
     | { kind: "leaderboard" };
 
-// someone's profile card, for a name clicked in a message; a token's price card, for a cashtag
-// clicked in one; confirming leaving or deleting a chat or
+// someone's profile card, for a name clicked in a message; a token's or coin's price card, for a
+// cashtag clicked in one; confirming leaving or deleting a chat or
 // community, called `name`; a group's, channel's or community's settings (its About page for
 // someone who can't edit it); inviting people to one, or sharing its link; or creating, editing or
 // deleting one of a community's user groups
 export type LocalDialog =
     | ({ kind: "user" } & ProfileCard)
-    | { kind: "token"; ledger: string }
+    | { kind: "cashtag"; subject: PriceSubject }
     | { kind: "leave_or_delete"; action: LeaveOrDelete; name: string }
     | {
           kind: "group_settings";
@@ -102,8 +107,8 @@ export const dialogs: Dialogs = {
     // someone's profile card. A dialog, not anchored to the name clicked as the old desktop card was
     user: () => import("../user/UserDialogScreen.svelte"),
 
-    // a token's price card, with its last 7 days' prices
-    token: () => import("../cashtag/TokenDialogScreen.svelte"),
+    // a token's or coin's price card, with its last 7 days' prices
+    cashtag: () => import("../cashtag/TokenDialogScreen.svelte"),
 
     // confirming leaving or deleting a group, channel, DM or community (4b)
     leave_or_delete: () => import("../chats/LeaveOrDeleteDialogScreen.svelte"),

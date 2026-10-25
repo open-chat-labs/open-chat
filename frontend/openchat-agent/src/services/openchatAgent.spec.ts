@@ -2031,18 +2031,22 @@ describe("OpenChatAgent loading exchange rates", () => {
             // The prices on ICPSwap of stablecoins in pools with next to no liquidity
             exchangeRates: () =>
                 Promise.resolve({
-                    [ICP_LEDGER]: { toUSD: 6 },
-                    [CKUSDC_LEDGER]: { toUSD: 445 },
-                    [USDC_LEDGER]: { toUSD: 0.55 },
-                    [USDT_LEDGER]: { toUSD: 0.00018 },
-                    [TENDY_LEDGER]: { toUSD: 0.08 },
-                    [OTHER_TENDY_LEDGER]: { toUSD: 0.3 },
+                    exchangeRates: {
+                        [ICP_LEDGER]: { toUSD: 6 },
+                        [CKUSDC_LEDGER]: { toUSD: 445 },
+                        [USDC_LEDGER]: { toUSD: 0.55 },
+                        [USDT_LEDGER]: { toUSD: 0.00018 },
+                        [TENDY_LEDGER]: { toUSD: 0.08 },
+                        [OTHER_TENDY_LEDGER]: { toUSD: 0.3 },
+                    },
+                    coins: {},
+                    sources: {},
                 }),
         };
     });
 
     test("pins stablecoins to $1", async () => {
-        const rates = await agent.exchangeRates();
+        const rates = (await agent.exchangeRates()).exchangeRates;
 
         expect(rates[CKUSDC_LEDGER]).toEqual({ toUSD: 1 });
         expect(rates[CKUSDT_LEDGER]).toEqual({ toUSD: 1 });
@@ -2051,7 +2055,7 @@ describe("OpenChatAgent loading exchange rates", () => {
     });
 
     test("uses ICPSwap's rate for every other ledger", async () => {
-        const rates = await agent.exchangeRates();
+        const rates = (await agent.exchangeRates()).exchangeRates;
 
         expect(rates[ICP_LEDGER]).toEqual({ toUSD: 6 });
         expect(rates[TENDY_LEDGER]).toEqual({ toUSD: 0.08 });

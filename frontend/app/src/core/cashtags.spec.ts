@@ -14,31 +14,43 @@ const noop = () => {};
 const CHAT: MentionedToken = {
     symbol: "chat",
     tokenSymbol: "CHAT",
-    ledger: "2ouva-viaaa-aaaaq-aaamq-cai",
+    subject: { kind: "token", ledger: "2ouva-viaaa-aaaaq-aaamq-cai" },
     price: "$0.0281",
+    credit: undefined,
 };
 const ICP: MentionedToken = {
     symbol: "icp",
     tokenSymbol: "ICP",
-    ledger: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+    subject: { kind: "token", ledger: "ryjl3-tyaaa-aaaaa-aaaba-cai" },
     price: "$2.58",
+    credit: undefined,
 };
 const CKBTC: MentionedToken = {
     symbol: "ckbtc",
     tokenSymbol: "ckBTC",
-    ledger: "mxzaz-hqaaa-aaaar-qaada-cai",
+    subject: { kind: "token", ledger: "mxzaz-hqaaa-aaaar-qaada-cai" },
     price: undefined,
+    credit: undefined,
 };
 const RICH: MentionedToken = {
     symbol: "rich.ot",
     tokenSymbol: "RICH.OT",
-    ledger: "rich-ledger",
+    subject: { kind: "token", ledger: "rich-ledger" },
     price: "$1.50",
+    credit: undefined,
 };
-const tokens = [CHAT, ICP, CKBTC, RICH];
+// a coin OpenChat doesn't list, whose price must be credited
+const ADA: MentionedToken = {
+    symbol: "ada",
+    tokenSymbol: "ADA",
+    subject: { kind: "coin", id: "cardano" },
+    price: "$0.205",
+    credit: "Price data by CoinGecko",
+};
+const tokens = [CHAT, ICP, CKBTC, RICH, ADA];
 
-const chat = `<cash-tag data-ledger="${CHAT.ledger}" data-price="$0.0281" suppress-links="false">$CHAT</cash-tag>`;
-const icp = `<cash-tag data-ledger="${ICP.ledger}" data-price="$2.58" suppress-links="false">$ICP</cash-tag>`;
+const chat = `<cash-tag data-ledger="2ouva-viaaa-aaaaq-aaamq-cai" data-price="$0.0281" suppress-links="false">$CHAT</cash-tag>`;
+const icp = `<cash-tag data-ledger="ryjl3-tyaaa-aaaaa-aaaba-cai" data-price="$2.58" suppress-links="false">$ICP</cash-tag>`;
 
 function render(text: string, inline = true, suppressLinks = false): string {
     return renderMarkdown(
@@ -100,9 +112,15 @@ describe("cashtags in rendered messages", () => {
         expect(render("$CKBTC")).toContain(">$ckBTC</cash-tag>");
     });
 
+    test("are coins OpenChat doesn't list, with the credit their price needs", () => {
+        expect(render("$ADA")).toBe(
+            `<cash-tag data-coin="cardano" data-price="$0.205" data-credit="Price data by CoinGecko" suppress-links="false">$ADA</cash-tag>`,
+        );
+    });
+
     test("show no price when the token's price isn't known", () => {
         expect(render("$ckBTC")).toBe(
-            `<cash-tag data-ledger="${CKBTC.ledger}" suppress-links="false">$ckBTC</cash-tag>`,
+            `<cash-tag data-ledger="mxzaz-hqaaa-aaaar-qaada-cai" suppress-links="false">$ckBTC</cash-tag>`,
         );
     });
 
@@ -131,12 +149,12 @@ describe("cashtags in rendered messages", () => {
     test("leave code spans and code blocks alone", () => {
         expect(render("`$CHAT` and $CHAT")).toBe(`<code>$CHAT</code> and ${chat}`);
         const block = render("```\nbuy $CHAT\n```\n$ICP", false);
-        expect(block).not.toContain("<cash-tag data-ledger=\"" + CHAT.ledger);
+        expect(block).not.toContain("<cash-tag data-ledger=\"2ouva-viaaa-aaaaq-aaamq-cai");
         expect(block).toContain(icp);
     });
 
     test("leave links alone", () => {
-        expect(render("[buy $CHAT](https://example.com) $ICP")).not.toContain(CHAT.ledger);
+        expect(render("[buy $CHAT](https://example.com) $ICP")).not.toContain("2ouva-viaaa-aaaaq-aaamq-cai");
         expect(render("[buy $CHAT](https://example.com) $ICP")).toContain(icp);
         expect(render("https://example.com/$CHAT")).not.toContain("cash-tag");
     });
@@ -168,6 +186,13 @@ describe("cashtags in rendered messages", () => {
 describe("sameMentionedTokens", () => {
     test("is equal by value", () => {
         expect(sameMentionedTokens(tokens, tokens.map((t) => ({ ...t })))).toBe(true);
+    });
+
+    test("differs on what it is, or the credit", () => {
+        expect(
+            sameMentionedTokens([CHAT], [{ ...CHAT, subject: { kind: "coin", id: "chat" } }]),
+        ).toBe(false);
+        expect(sameMentionedTokens([ADA], [{ ...ADA, credit: undefined }])).toBe(false);
     });
 
     test("differs on the price shown, not on the number behind it", () => {

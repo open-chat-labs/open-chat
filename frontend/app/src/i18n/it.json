@@ -203,7 +203,8 @@
         "chartLabel": "Prezzo di {symbol} negli ultimi 7 giorni",
         "change7d": "{change} in 7 giorni",
         "noHistory": "Nessuno scambio negli ultimi 7 giorni",
-        "noPrice": "Nessun prezzo disponibile"
+        "noPrice": "Nessun prezzo disponibile",
+        "priceDataBy": "Dati sui prezzi forniti da {source}"
     },
     "bridgedUserUnknown": "Utente {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",

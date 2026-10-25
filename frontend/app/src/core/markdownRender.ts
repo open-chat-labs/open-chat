@@ -1,17 +1,19 @@
-import { userGroupMentionRegex, userIdMentionRegex } from "@client";
+import { userGroupMentionRegex, userIdMentionRegex, type PriceSubject } from "@client";
 import { marked } from "marked";
 import { DOMPurifyDefault, sanitizeOneLine } from "@src/utils/domPurify";
 
 export type MentionedUser = { id: string; userId: string; username: string };
 export type MentionedUserGroup = { id: number; groupId: number; name: string };
-// The token a cashtag stands for: `symbol` as found in the text, in lower case, and the token's own
-// symbol, ledger and price as shown (eg. "$0.0281"), if it's known. The price as shown, not as a
-// number, so a message re-renders only when the price it shows changes, not with every poll
+// The token or coin a cashtag stands for: `symbol` as found in the text, in lower case; the token's
+// own symbol; what it is; its price as shown (eg. "$0.0281"), if it's known; and the credit that
+// price needs, if any (eg. "Price data by CoinGecko"). The price as shown, not as a number, so a
+// message re-renders only when the price it shows changes, not with every poll
 export type MentionedToken = {
     symbol: string;
     tokenSymbol: string;
-    ledger: string;
+    subject: PriceSubject;
     price: string | undefined;
+    credit: string | undefined;
 };
 
 export type RenderMarkdownInput = {
@@ -92,8 +94,9 @@ export function sameMentionedTokens(a: MentionedToken[], b: MentionedToken[]): b
             (t, i) =>
                 t.symbol === b[i].symbol &&
                 t.tokenSymbol === b[i].tokenSymbol &&
-                t.ledger === b[i].ledger &&
-                t.price === b[i].price,
+                subjectKey(t.subject) === subjectKey(b[i].subject) &&
+                t.price === b[i].price &&
+                t.credit === b[i].credit,
         )
     );
 }
@@ -132,9 +135,18 @@ export function replaceCashtags(
     });
 }
 
+function subjectKey(subject: PriceSubject): string {
+    return subject.kind === "token" ? `token:${subject.ledger}` : `coin:${subject.id}`;
+}
+
 function cashtagElement(token: MentionedToken, suppressLinks: boolean): string {
+    const subject =
+        token.subject.kind === "token"
+            ? `data-ledger="${escapeHtml(token.subject.ledger)}"`
+            : `data-coin="${escapeHtml(token.subject.id)}"`;
     const price = token.price !== undefined ? ` data-price="${escapeHtml(token.price)}"` : "";
-    return `<cash-tag data-ledger="${escapeHtml(token.ledger)}"${price} suppress-links="${suppressLinks}">$${escapeHtml(
+    const credit = token.credit !== undefined ? ` data-credit="${escapeHtml(token.credit)}"` : "";
+    return `<cash-tag ${subject}${price}${credit} suppress-links="${suppressLinks}">$${escapeHtml(
         token.tokenSymbol,
     )}</cash-tag>`;
 }

@@ -203,7 +203,8 @@
         "chartLabel": "سعر {symbol} خلال آخر 7 أيام",
         "change7d": "{change} خلال 7 أيام",
         "noHistory": "لا توجد صفقات خلال آخر 7 أيام",
-        "noPrice": "لا يتوفر سعر"
+        "noPrice": "لا يتوفر سعر",
+        "priceDataBy": "بيانات الأسعار من {source}"
     },
     "bridgedUserUnknown": "مستخدم {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",

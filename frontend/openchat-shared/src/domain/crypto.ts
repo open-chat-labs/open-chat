@@ -162,12 +162,48 @@ export type AccountTransactionResult = Failure | (Success & AccountTransactions)
 
 export type TokenExchangeRates = {
     toUSD: number | undefined;
+    // where the price is from (a key of `TokenPrices.sources`), if the price service says
+    source?: string;
 };
 
 // A token's USD price at a point in time (ms since the epoch)
 export type TokenPricePoint = {
     timestamp: number;
     usd: number;
+};
+
+// What a price is of: a token OpenChat lists, by its ledger, or a coin it doesn't (eg. ADA), by its
+// CoinGecko id
+export type PriceSubject = { kind: "token"; ledger: string } | { kind: "coin"; id: string };
+
+// A coin OpenChat doesn't list (eg. ADA), priced so that a cashtag for it shows its price
+export type CashtagCoin = {
+    id: string;
+    symbol: string;
+    name: string;
+    usd: number;
+    source: string | undefined;
+};
+
+// Somewhere prices come from, and whether they must be credited to it wherever they're shown
+export type PriceSource = {
+    name: string;
+    url: string;
+    attributionRequired: boolean;
+};
+
+// The prices of the tokens OpenChat lists, keyed by ledger; of the coins it doesn't, keyed by
+// symbol in lower case; and where they come from, keyed by source
+export type TokenPrices = {
+    exchangeRates: Record<string, TokenExchangeRates>;
+    coins: Record<string, CashtagCoin>;
+    sources: Record<string, PriceSource>;
+};
+
+// A token's or coin's prices over a recent range, oldest first, and where they're from
+export type PriceHistory = {
+    points: TokenPricePoint[];
+    source: string | undefined;
 };
 
 export type WalletConfig = AutoWallet | ManualWallet;

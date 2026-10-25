@@ -62,6 +62,8 @@ import {
     type ThreadIdentifier,
     type ThreadSyncDetails,
     type TokenExchangeRates,
+    type CashtagCoin,
+    type PriceSource,
     type UserGroupDetails,
     type UserGroupSummary,
     type VideoCallCounts,
@@ -141,6 +143,18 @@ export const nervousSystemLookup = writable<ReadonlyMap<GovernanceCanister, Nerv
     notEq,
 );
 export const exchangeRatesLookupStore = writable<ReadonlyMap<LedgerCanister, TokenExchangeRates>>(
+    new SafeMap(),
+    undefined,
+    notEq,
+);
+// The largest coins OpenChat doesn't list (eg. ADA), keyed by symbol in lower case, for cashtags
+export const cashtagCoinsStore = writable<ReadonlyMap<string, CashtagCoin>>(
+    new SafeMap(),
+    undefined,
+    notEq,
+);
+// Where prices come from, keyed as the prices' `source`s
+export const priceSourcesStore = writable<ReadonlyMap<string, PriceSource>>(
     new SafeMap(),
     undefined,
     notEq,

@@ -28,7 +28,7 @@ describe("cash-tag", () => {
         el.click();
         el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
         expect(handler).toHaveBeenCalledTimes(2);
-        expect(handler.mock.calls[0][0].detail).toEqual({ ledger: "l-1" });
+        expect(handler.mock.calls[0][0].detail).toEqual({ kind: "token", ledger: "l-1" });
         expect(el.getAttribute("role")).toBe("button");
 
         const suppressed = connect(
@@ -47,6 +47,17 @@ describe("cash-tag", () => {
         document.body.addEventListener("cashtag-clicked", handler);
         el.click();
         document.body.removeEventListener("cashtag-clicked", handler);
-        expect(handler.mock.calls[0][0].detail).toEqual({ ledger: "l-2" });
+        expect(handler.mock.calls[0][0].detail).toEqual({ kind: "token", ledger: "l-2" });
+    });
+
+    test("a coin's raises its id, and shows its price's credit as a tooltip", () => {
+        const el = connect(
+            `<cash-tag data-coin="cardano" data-price="$0.205" data-credit="Price data by CoinGecko" suppress-links="false">$ADA</cash-tag>`,
+        );
+        const handler = vi.fn();
+        el.addEventListener("cashtag-clicked", handler);
+        el.click();
+        expect(handler.mock.calls[0][0].detail).toEqual({ kind: "coin", id: "cardano" });
+        expect(el.title).toBe("Price data by CoinGecko");
     });
 });

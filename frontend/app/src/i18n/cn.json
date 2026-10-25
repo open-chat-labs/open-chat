@@ -203,7 +203,8 @@
         "chartLabel": "{symbol} 过去 7 天的价格",
         "change7d": "7 天内 {change}",
         "noHistory": "过去 7 天没有交易",
-        "noPrice": "暂无价格"
+        "noPrice": "暂无价格",
+        "priceDataBy": "价格数据来自 {source}"
     },
     "bridgedUserUnknown": "{platform} 用户",
     "bridgedUserWithPlatform": "{name}（{platform}）",

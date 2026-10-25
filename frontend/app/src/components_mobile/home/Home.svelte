@@ -17,6 +17,7 @@
         MultiUserChatIdentifier,
         NervousSystemDetails,
         OpenChat,
+        PriceSubject,
         ResourceKey,
         RouteParams,
     } from "@client";
@@ -87,7 +88,7 @@
     const client = getContext<OpenChat>("client");
 
     let showProfileCard = $state<ProfileCard>();
-    let showTokenCard = $state<{ ledger: string }>();
+    let showTokenCard = $state<{ subject: PriceSubject }>();
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -187,7 +188,7 @@
     }
 
     function cashtagClicked(event: Event) {
-        showTokenCard = { ledger: (event as CustomEvent<CashtagClickedEvent>).detail.ledger };
+        showTokenCard = { subject: (event as CustomEvent<CashtagClickedEvent>).detail };
     }
 
     function sendMessageFailed(alert: boolean) {
@@ -467,7 +468,9 @@
 {#if showTokenCard !== undefined}
     <!-- another cashtag is another card -->
     {#key showTokenCard}
-        <TokenPriceCard ledger={showTokenCard.ledger} onClose={() => (showTokenCard = undefined)} />
+        <TokenPriceCard
+            subject={showTokenCard.subject}
+            onClose={() => (showTokenCard = undefined)} />
     {/key}
 {/if}
 

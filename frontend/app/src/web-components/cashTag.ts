@@ -1,11 +1,12 @@
-export type CashtagClickedEvent = {
-    ledger: string;
-};
+import type { PriceSubject } from "@client";
 
-/** The event that opens a token's price card, from a cashtag clicked in a message. */
-export function cashtagClickedEvent(ledger: string): CustomEvent<CashtagClickedEvent> {
+/** What a clicked cashtag stands for: a token OpenChat lists, or a coin it doesn't. */
+export type CashtagClickedEvent = PriceSubject;
+
+/** The event that opens a token's or coin's price card, from a cashtag clicked in a message. */
+export function cashtagClickedEvent(subject: PriceSubject): CustomEvent<CashtagClickedEvent> {
     return new CustomEvent<CashtagClickedEvent>("cashtag-clicked", {
-        detail: { ledger },
+        detail: subject,
         bubbles: true,
     });
 }
@@ -46,8 +47,11 @@ class CashTag extends HTMLElement {
         this.handleKeyDown = this.handleKeyDown.bind(this);
     }
 
-    get ledger(): string {
-        return this.dataset.ledger ?? "";
+    get subject(): PriceSubject {
+        const coin = this.dataset.coin;
+        return coin !== undefined
+            ? { kind: "coin", id: coin }
+            : { kind: "token", ledger: this.dataset.ledger ?? "" };
     }
 
     get suppressLinks(): boolean {
@@ -55,7 +59,7 @@ class CashTag extends HTMLElement {
     }
 
     handleClick() {
-        this.dispatchEvent(cashtagClickedEvent(this.ledger));
+        this.dispatchEvent(cashtagClickedEvent(this.subject));
     }
 
     handleKeyDown(e: KeyboardEvent) {
@@ -66,6 +70,11 @@ class CashTag extends HTMLElement {
     }
 
     connectedCallback() {
+        // the credit its price needs, eg. "Price data by CoinGecko", as a tooltip: the card it opens
+        // shows the credit too
+        if (this.dataset.credit !== undefined) {
+            this.title = this.dataset.credit;
+        }
         if (!this.suppressLinks) {
             this.setAttribute("role", "button");
             this.tabIndex = 0;

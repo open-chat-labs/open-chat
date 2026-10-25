@@ -203,7 +203,8 @@
         "chartLabel": "Ціна {symbol} за останні 7 днів",
         "change7d": "{change} за 7 днів",
         "noHistory": "Немає угод за останні 7 днів",
-        "noPrice": "Ціна недоступна"
+        "noPrice": "Ціна недоступна",
+        "priceDataBy": "Дані про ціни: {source}"
     },
     "bridgedUserUnknown": "Користувач {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",

@@ -203,7 +203,8 @@
         "chartLabel": "{symbol}-Preis in den letzten 7 Tagen",
         "change7d": "{change} in 7 Tagen",
         "noHistory": "Keine Trades in den letzten 7 Tagen",
-        "noPrice": "Kein Preis verfügbar"
+        "noPrice": "Kein Preis verfügbar",
+        "priceDataBy": "Preisdaten von {source}"
     },
     "bridgedUserUnknown": "{platform}-Nutzer",
     "bridgedUserWithPlatform": "{name} ({platform})",

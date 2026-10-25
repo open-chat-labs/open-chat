@@ -1,14 +1,22 @@
-<!-- A token's price card, opened by a cashtag clicked in a message (`<cash-tag>`): its logo, name,
-     price now, and a chart of its price over the last 7 days (logic/cashtag). -->
+<!-- A token's or coin's price card, opened by a cashtag clicked in a message (`<cash-tag>`): its
+     logo, name, price now, and a chart of its price over the last 7 days, crediting where the prices
+     are from where that's required (logic/cashtag). -->
 <script lang="ts">
     import {
+        cashtagCoinsStore,
         cryptoLookup,
         exchangeRatesLookupStore,
         formatPercentChange,
         formatUsdPrice,
+        priceCredits,
+        priceSourcesStore,
         type OpenChat,
+        type PriceSubject,
     } from "@client";
-    import { TokenPriceHistory } from "@src/logic/cashtag/tokenPriceCard.svelte";
+    import {
+        cashtagCardDetails,
+        TokenPriceHistory,
+    } from "@src/logic/cashtag/tokenPriceCard.svelte";
     import Loading from "@shared_components/Loading.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import { getContext } from "svelte";
@@ -18,24 +26,27 @@
     import Overlay from "../Overlay.svelte";
 
     interface Props {
-        ledger: string;
+        subject: PriceSubject;
         alignTo?: HTMLElement;
         onClose: () => void;
     }
 
-    let { ledger, alignTo, onClose }: Props = $props();
+    let { subject, alignTo, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    // the card's token is fixed for its life: another cashtag opens another card
-    const history = new TokenPriceHistory(client, ledger);
+    // the card's token or coin is fixed for its life: another cashtag opens another card
+    const history = new TokenPriceHistory(client, subject);
 
     const CHART_WIDTH = 300;
     const CHART_HEIGHT = 100;
 
-    let token = $derived($cryptoLookup.get(ledger));
-    let price = $derived($exchangeRatesLookupStore.get(ledger)?.toUSD);
+    let token = $derived(
+        cashtagCardDetails(subject, $cryptoLookup, $exchangeRatesLookupStore, $cashtagCoinsStore),
+    );
+    let price = $derived(token?.usd);
     let chart = $derived(history.chart(CHART_WIDTH, CHART_HEIGHT));
     let change = $derived(history.change);
+    let credits = $derived(priceCredits($priceSourcesStore, [token?.source, history.source]));
 </script>
 
 {#if token !== undefined}
@@ -44,7 +55,9 @@
             {#snippet body()}
                 <div class="card">
                     <div class="token">
-                        <img class="logo" src={token.logo} alt="" />
+                        {#if token.logo !== undefined}
+                            <img class="logo" src={token.logo} alt="" />
+                        {/if}
                         <div class="names">
                             <div class="name">{token.name}</div>
                             <div class="symbol">${token.symbol}</div>
@@ -93,6 +106,10 @@
                             {/if}
                         </div>
                     {/if}
+                    {#each credits as credit}
+                        <a class="credit" href={credit.url} target="_blank" rel="noopener noreferrer"
+                            >{$_("cashtag.priceDataBy", { values: { source: credit.name } })}</a>
+                    {/each}
                 </div>
             {/snippet}
         </ModalContent>
@@ -147,6 +164,12 @@
         &.falling {
             color: var(--error);
         }
+    }
+
+    .credit {
+        @include font(book, normal, fs-70);
+        color: var(--txt-light);
+        text-decoration: underline;
     }
 
     .chart {

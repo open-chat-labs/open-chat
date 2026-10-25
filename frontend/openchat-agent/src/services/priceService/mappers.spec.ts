@@ -18,35 +18,41 @@ const supportedTokens = [
     token("ckSOL", CKSOL_LEDGER),
 ];
 
+const sources = {
+    coingecko: { name: "CoinGecko", url: "https://www.coingecko.com", attribution_required: true },
+    icpswap: { name: "ICPSwap", url: "https://www.icpswap.com", attribution_required: false },
+};
+
 function quietly<T>(fn: () => T): T {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
-    const log = vi.spyOn(console, "log").mockImplementation(() => {});
     try {
         return fn();
     } finally {
         error.mockRestore();
-        log.mockRestore();
     }
 }
 
 describe("the price service's prices", () => {
-    test("are keyed by ledger", () => {
-        const rates = pricesResponse(
+    test("are keyed by ledger, with where each is from", () => {
+        const prices = pricesResponse(
             {
                 timestamp: NOW - MINUTE,
-                prices: { [ICP_LEDGER]: { usd: 2.58132 }, [CHAT_LEDGER]: { usd: 0.0281335 } },
+                prices: {
+                    [ICP_LEDGER]: { usd: 2.58132, source: "icpswap" },
+                    [CHAT_LEDGER]: { usd: 0.0281335 },
+                },
             },
             supportedTokens,
         );
 
-        expect(rates).toEqual({
-            [ICP_LEDGER]: { toUSD: 2.58132 },
+        expect(prices?.exchangeRates).toEqual({
+            [ICP_LEDGER]: { toUSD: 2.58132, source: "icpswap" },
             [CHAT_LEDGER]: { toUSD: 0.0281335 },
         });
     });
 
     test("ignore ledgers we don't support, fields we don't know, and prices that aren't", () => {
-        const rates = pricesResponse(
+        const prices = pricesResponse(
             {
                 timestamp: NOW - MINUTE,
                 prices: {
@@ -58,56 +64,115 @@ describe("the price service's prices", () => {
             supportedTokens,
         );
 
-        expect(rates).toEqual({ [ICP_LEDGER]: { toUSD: 2.58 } });
+        expect(prices?.exchangeRates).toEqual({ [ICP_LEDGER]: { toUSD: 2.58 } });
     });
 
     test("don't judge how old they are by the device's clock, which can be hours out", () => {
-        const rates = pricesResponse(
+        const prices = pricesResponse(
             { timestamp: NOW - 24 * 60 * MINUTE, prices: { [ICP_LEDGER]: { usd: 2.58 } } },
             supportedTokens,
         );
 
-        expect(rates).toEqual({ [ICP_LEDGER]: { toUSD: 2.58 } });
+        expect(prices?.exchangeRates).toEqual({ [ICP_LEDGER]: { toUSD: 2.58 } });
     });
 
-    test("are undefined when the response can't be parsed", () => {
+    test("include the coins OpenChat doesn't list, keyed by symbol in lower case", () => {
+        const prices = pricesResponse(
+            {
+                prices: {},
+                coins: {
+                    ADA: { id: "cardano", name: "Cardano", usd: 0.204927, source: "coingecko" },
+                    DUD: { id: "dud", name: "Dud", usd: 0, source: "coingecko" },
+                },
+                sources,
+            },
+            supportedTokens,
+        );
+
+        expect(prices?.coins).toEqual({
+            ada: { id: "cardano", symbol: "ADA", name: "Cardano", usd: 0.204927, source: "coingecko" },
+        });
+    });
+
+    test("include where prices come from, and which must be credited", () => {
+        const prices = pricesResponse(
+            {
+                prices: {},
+                sources: {
+                    ...sources,
+                    shady: { name: "Shady", url: "javascript:alert(1)", attribution_required: true },
+                },
+            },
+            supportedTokens,
+        );
+
+        expect(prices?.sources).toEqual({
+            coingecko: { name: "CoinGecko", url: "https://www.coingecko.com", attributionRequired: true },
+            icpswap: { name: "ICPSwap", url: "https://www.icpswap.com", attributionRequired: false },
+        });
+    });
+
+    test("keep the tokens' prices when the coins or sources can't be parsed", () => {
+        const prices = quietly(() =>
+            pricesResponse(
+                {
+                    prices: { [ICP_LEDGER]: { usd: 2.58 } },
+                    coins: { ADA: { usd: "lots" } },
+                    sources: [],
+                },
+                supportedTokens,
+            ),
+        );
+
+        expect(prices).toEqual({
+            exchangeRates: { [ICP_LEDGER]: { toUSD: 2.58 } },
+            coins: {},
+            sources: {},
+        });
+    });
+
+    test("are undefined when the tokens' prices can't be parsed", () => {
         expect(quietly(() => pricesResponse({ error: "oops" }, supportedTokens))).toBeUndefined();
     });
 });
 
 describe("a price history from the price service", () => {
-    test("is its points, oldest first", () => {
-        const points = priceHistoryResponse({
-            ledger: CHAT_LEDGER,
+    test("is its points, oldest first, and where they're from", () => {
+        const history = priceHistoryResponse({
+            id: "cardano",
             range: "7d",
             interval: "1h",
+            source: "coingecko",
             points: [
-                [NOW - 2 * 60 * MINUTE, 0.0351],
-                [NOW - 60 * MINUTE, 0.0349],
-                [NOW, 0.0281335],
+                [NOW - 2 * 60 * MINUTE, 0.2131],
+                [NOW, 0.204927],
+                [NOW - 60 * MINUTE, 0.2101],
             ],
         });
 
-        expect(points).toEqual([
-            { timestamp: NOW - 2 * 60 * MINUTE, usd: 0.0351 },
-            { timestamp: NOW - 60 * MINUTE, usd: 0.0349 },
-            { timestamp: NOW, usd: 0.0281335 },
-        ]);
+        expect(history).toEqual({
+            points: [
+                { timestamp: NOW - 2 * 60 * MINUTE, usd: 0.2131 },
+                { timestamp: NOW - 60 * MINUTE, usd: 0.2101 },
+                { timestamp: NOW, usd: 0.204927 },
+            ],
+            source: "coingecko",
+        });
     });
 
     test("leaves out points that aren't prices", () => {
-        const points = priceHistoryResponse({
+        const history = priceHistoryResponse({
             points: [
                 [NOW - 60 * MINUTE, 0],
                 [NOW, 0.0281335],
             ],
         });
 
-        expect(points).toEqual([{ timestamp: NOW, usd: 0.0281335 }]);
+        expect(history).toEqual({ points: [{ timestamp: NOW, usd: 0.0281335 }], source: undefined });
     });
 
-    test("is empty for a token with no trades in the range", () => {
-        expect(priceHistoryResponse({ ledger: CHAT_LEDGER, points: [] })).toEqual([]);
+    test("is empty for a token that has never traded", () => {
+        expect(priceHistoryResponse({ ledger: CHAT_LEDGER, points: [] })?.points).toEqual([]);
     });
 
     test("is undefined when the response can't be parsed", () => {

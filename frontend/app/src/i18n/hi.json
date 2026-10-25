@@ -203,7 +203,8 @@
         "chartLabel": "पिछले 7 दिनों में {symbol} की कीमत",
         "change7d": "7 दिनों में {change}",
         "noHistory": "पिछले 7 दिनों में कोई ट्रेड नहीं हुआ",
-        "noPrice": "कोई कीमत उपलब्ध नहीं है"
+        "noPrice": "कोई कीमत उपलब्ध नहीं है",
+        "priceDataBy": "मूल्य डेटा {source} द्वारा"
     },
     "bridgedUserUnknown": "{platform} उपयोगकर्ता",
     "bridgedUserWithPlatform": "{name} ({platform})",

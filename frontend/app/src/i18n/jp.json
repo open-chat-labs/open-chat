@@ -203,7 +203,8 @@
         "chartLabel": "過去7日間の{symbol}の価格",
         "change7d": "7日間で{change}",
         "noHistory": "過去7日間の取引はありません",
-        "noPrice": "価格情報がありません"
+        "noPrice": "価格情報がありません",
+        "priceDataBy": "価格データ提供：{source}"
     },
     "bridgedUserUnknown": "{platform} ユーザー",
     "bridgedUserWithPlatform": "{name}（{platform}）",
