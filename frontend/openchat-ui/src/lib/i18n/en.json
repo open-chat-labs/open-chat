@@ -1047,6 +1047,7 @@
       "summary": {
         "after": "Balance after payment",
         "amount": "Payment amount",
+        "approvalFee": "Approval fee",
         "treasury": "OC SNS treasury receives (100%)"
       },
       "title": "Diamond membership",
