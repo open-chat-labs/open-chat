@@ -1906,6 +1906,8 @@
     },
     "leaderboardDialog": {
       "backToChit": "Back to CHIT",
+      "backToScores": "Back to the high scores",
+      "play": "Play Invaders",
       "playSoon": "Play (coming soon)",
       "title": "HIGH SCORES",
       "username": "USERNAME",

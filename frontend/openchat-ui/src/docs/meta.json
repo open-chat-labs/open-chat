@@ -11720,6 +11720,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "game",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A game the joystick plays, in the boards' place (the host's: it fills the space it's given)."
       }
     ],
     "group": "features"
