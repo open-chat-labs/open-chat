@@ -16,6 +16,8 @@ export { default as CallPanel } from './components/CallPanel.svelte';
 export { default as ChatListHeader } from './components/ChatListHeader.svelte';
 export { default as ChatListPanel } from './components/ChatListPanel.svelte';
 export { default as ChitDialog } from './components/ChitDialog.svelte';
+export { default as ClaimCalendar } from './components/ClaimCalendar.svelte';
+export { default as ClaimHistoryDialog } from './components/ClaimHistoryDialog.svelte';
 export { default as ConversationHeader } from './components/ConversationHeader.svelte';
 export { default as ConvertToCommunityDialog } from './components/ConvertToCommunityDialog.svelte';
 export { default as CreateGroupDialog } from './components/CreateGroupDialog.svelte';

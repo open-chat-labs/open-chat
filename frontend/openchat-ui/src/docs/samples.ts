@@ -756,12 +756,7 @@ export const samples: Record<string, Record<string, unknown>> = {
   // the export's built-in demo data, now passed in
   ProfileDialog: {
     onRequestLinkCode: demoLinkCode,
-    // streak 57, today still claimable: the run ends yesterday
-    claimable: true,
-    claimHistory: demoClaimHistory(56, ['2026-09-07']),
-    today: demoToday,
     joined: demoJoined,
-    utcOffsetMinutes: 120,
     icHost: 'https://icp-api.io',
     storageIndex: 'rturd-qaaaa-aaaaf-aabaq-cai',
     publicKey: '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEquEHzJr9605Oy796e4z7LKow46DVNUnDOQWavi86vEhRAAfdbVh/Lgmxfi44LPb6S0wnCRm9kI/XdK1DYw2Eaw==\n-----END PUBLIC KEY-----',
@@ -1215,6 +1210,26 @@ export const puzzleDemo = {
 Object.assign(samples, {
   AchievementsDialog: { achievements: demoAchievements },
   ChitDialog: { claimable: true, achievements: { total: 51, left: 13 }, onClaim: () => wait(500) },
+  // streak 57, today still claimable: the run ends yesterday
+  ClaimHistoryDialog: {
+    streak: 57,
+    claimable: true,
+    claimHistory: demoClaimHistory(56, ['2026-09-07']),
+    today: demoToday,
+    joined: demoJoined,
+    utcOffsetMinutes: 120,
+    insured: 3,
+    used: 1,
+    onClaim: () => wait(500),
+    onInsurance: () => {},
+  },
+  ClaimCalendar: {
+    claimable: true,
+    claimHistory: demoClaimHistory(56, ['2026-09-07']),
+    today: demoToday,
+    joined: demoJoined,
+    utcOffsetMinutes: 120,
+  },
   StreakInsuranceDialog: { prices: [1, 2, 4, 12, 28, 60, 124], onBuy: () => wait(600) },
   PuzzleDialog: puzzleDemo,
 });
