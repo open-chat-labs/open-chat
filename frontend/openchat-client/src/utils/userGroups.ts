@@ -18,8 +18,8 @@ export function userGroupMemberChanges(
 ): { toAdd: Set<string>; toRemove: Set<string> } {
     const picked = new Set(memberIds);
     return {
-        toAdd: picked.difference(members),
-        toRemove: new Set(members).difference(picked),
+        toAdd: new Set([...picked].filter((id) => !members.has(id))),
+        toRemove: new Set([...members].filter((id) => !picked.has(id))),
     };
 }
 
