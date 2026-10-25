@@ -10285,9 +10285,12 @@ export class OpenChat {
     #updateExchangeRates(): Promise<void> {
         return this.#worker
             .send({ kind: "exchangeRates" })
-            .then((exchangeRates) =>
-                exchangeRatesLookupStore.set(new Map(Object.entries(exchangeRates))),
-            )
+            .then((exchangeRates) => {
+                // undefined if ICPSwap failed, in which case the last rates are kept
+                if (exchangeRates !== undefined) {
+                    exchangeRatesLookupStore.set(new Map(Object.entries(exchangeRates)));
+                }
+            })
             .catch(() => undefined);
     }
 

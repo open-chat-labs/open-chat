@@ -5,7 +5,7 @@ import { getAllTokensResponse } from "./mappers";
 export class IcpSwapClient implements ExchangeRateClient {
     exchangeRates(
         supportedTokens: CryptocurrencyDetails[],
-    ): Promise<Record<string, TokenExchangeRates>> {
+    ): Promise<Record<string, TokenExchangeRates> | undefined> {
         return fetch("https://api.icpswap.com/info/token/all")
             .then((res) => {
                 if (res.ok) {
@@ -16,9 +16,13 @@ export class IcpSwapClient implements ExchangeRateClient {
                         res.status,
                         res.statusText,
                     );
-                    return {};
+                    return undefined;
                 }
             })
-            .then((res) => getAllTokensResponse(supportedTokens, res as ResponseType));
+            .then((res) =>
+                res !== undefined
+                    ? getAllTokensResponse(supportedTokens, res as ResponseType)
+                    : undefined,
+            );
     }
 }

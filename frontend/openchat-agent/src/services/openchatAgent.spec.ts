@@ -2057,4 +2057,10 @@ describe("OpenChatAgent loading exchange rates", () => {
         expect(rates[TENDY_LEDGER]).toEqual({ toUSD: 0.08 });
         expect(rates[OTHER_TENDY_LEDGER]).toEqual({ toUSD: 0.3 });
     });
+
+    test("gives no rates when ICPSwap fails, so the client keeps the ones it has", async () => {
+        agent._exchangeRateClient.exchangeRates = () => Promise.resolve(undefined);
+
+        expect(await agent.exchangeRates()).toBeUndefined();
+    });
 });

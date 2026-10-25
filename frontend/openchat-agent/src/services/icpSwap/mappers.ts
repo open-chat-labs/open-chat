@@ -16,27 +16,29 @@ export const ICSwapResponse = Type.Object({
     data: Type.Array(TokenDetails),
 });
 
-// Keyed by ledger, since several of our tokens share a symbol
+// Keyed by ledger, since several of our tokens share a symbol. Undefined if the response can't be
+// parsed. ICPSwap gives a price of 0 for a token it has no price for, which is left out, so its
+// price is unknown rather than $0
 export function getAllTokensResponse(
     supportedTokens: CryptocurrencyDetails[],
     json: unknown,
-): Record<string, TokenExchangeRates> {
-    const exchangeRates: Record<string, TokenExchangeRates> = {};
+): Record<string, TokenExchangeRates> | undefined {
     try {
         const value = typeboxValidate(json, ICSwapResponse);
         const supportedLedgers = new Set<string>(supportedTokens.map((t) => t.ledger));
+        const exchangeRates: Record<string, TokenExchangeRates> = {};
 
         for (const token of value.data) {
-            if (supportedLedgers.has(token.tokenLedgerId)) {
-                exchangeRates[token.tokenLedgerId] = {
-                    toUSD: Number(token.price),
-                };
+            const price = Number(token.price);
+            if (supportedLedgers.has(token.tokenLedgerId) && Number.isFinite(price) && price > 0) {
+                exchangeRates[token.tokenLedgerId] = { toUSD: price };
             }
         }
+        return exchangeRates;
     } catch (err) {
         console.error("Error parsing response from ICSwap/token/all", formatError(err));
+        return undefined;
     }
-    return exchangeRates;
 }
 
 function formatError(err: unknown) {

@@ -5097,7 +5097,8 @@ export class OpenChatAgent extends EventTarget {
         return this._registryClient.setTokenEnabled(ledger, enabled);
     }
 
-    async exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
+    // Undefined if ICPSwap fails, so the caller can keep the rates it has
+    async exchangeRates(): Promise<Record<string, TokenExchangeRates> | undefined> {
         const supportedTokens = this._registryValue?.tokenDetails;
 
         // if (supportedTokens === undefined || !isMainnet(this.config.icUrl)) {
@@ -5109,6 +5110,9 @@ export class OpenChatAgent extends EventTarget {
         }
 
         const exchangeRates = await this._exchangeRateClient.exchangeRates(supportedTokens);
+        if (exchangeRates === undefined) {
+            return undefined;
+        }
 
         // The prices of these stablecoins on ICPSwap can be way off, since some of their pools have
         // next to no liquidity (OneSec's USDC and USDT have a few dollars), so we pin them
@@ -6103,8 +6107,8 @@ export class OpenChatAgent extends EventTarget {
 }
 
 export interface ExchangeRateClient {
-    // Keyed by ledger
+    // Keyed by ledger. Undefined if the rates couldn't be loaded
     exchangeRates(
         supportedTokens: CryptocurrencyDetails[],
-    ): Promise<Record<string, TokenExchangeRates>>;
+    ): Promise<Record<string, TokenExchangeRates> | undefined>;
 }
