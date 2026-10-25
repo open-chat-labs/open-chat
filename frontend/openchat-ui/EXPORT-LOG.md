@@ -295,4 +295,7 @@
 
 ## 2026-10-24 — MemberRow: its buttons don't also click the row, by hand
 - The ⋮ menu, the action button and the trailing icon sit inside the row, so a click on one bubbled to the row's `onClick` as well. In GroupPanel the user group row's ⋮ opened the group instead of its Edit / Delete menu, a member's ⋮ also opened their profile, and the trailing icon ran `onClick` twice. Each now stops the click reaching the row.
+
+## 2026-10-25 — LeaderboardDialog: the joystick plays the host's game, by hand
+- `game` (a snippet): the joystick, until now a "coming soon" placeholder, becomes a button ("Play Invaders") that shows the host's game in the boards' place, and a trophy in its place ("Back to the high scores") brings the boards back, as the old hall of fame's 🕹️ / 🏆 did. Focus moves to the game as it opens (its keys are the game's, and a focused button would wear its ring the whole game) and back to the joystick after. Without `game`, the joystick is the placeholder it was. `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).

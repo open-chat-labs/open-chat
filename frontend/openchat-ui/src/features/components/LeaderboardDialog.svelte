@@ -1,6 +1,9 @@
 <!-- CHIT high scores: one board per period (tabs), top rows with the podium in green, and your own row pinned below.
-     Your row comes from `you` (per period or one value) or the board, exactly as the host ranks it; hidden without one. -->
+     Your row comes from `you` (per period or one value) or the board, exactly as the host ranks it; hidden without one.
+     With a `game` (the host's), the joystick plays it in the boards' place, and the trophy that takes its place goes
+     back to them; without one, the joystick only says it's coming. -->
 <script lang="ts">
+  import { tick, type Snippet } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
   import { useT } from '../../lib/i18n';
 
@@ -26,9 +29,21 @@
     /** Opened from another dialog: a back arrow, back to it (none without). */
     onBack?: () => void;
     onClose?: () => void;
+    /** A game the joystick plays, in the boards' place (the host's: it fills the space it's given). */
+    game?: Snippet;
   }
 
-  let { boards, initialPeriod, handle, you = null, onBack, onClose }: Props = $props();
+  let { boards, initialPeriod, handle, you = null, onBack, onClose, game }: Props = $props();
+  // the game showing in the boards' place; focus goes to it (its keys are the game's, and a focused button would wear
+  // its ring the whole game), and back to the joystick after
+  let playing = $state(false);
+  let gameArea = $state<HTMLDivElement>();
+  let joystick = $state<HTMLButtonElement>();
+  async function toggleGame() {
+    playing = !playing;
+    await tick();
+    (playing ? gameArea : joystick)?.focus();
+  }
   const t = useT();
 
   const keys = $derived(Object.keys(boards));
@@ -50,41 +65,52 @@
       {#if onBack}<span class="icon-button back" onclick={() => onBack?.()} role="button" tabindex="0" aria-label={t('ui.leaderboardDialog.backToChit')} title={t('ui.leaderboardDialog.backToChit')}><span class="back-icon"></span></span
         >{:else}<span class="icon-button back spacer" aria-hidden="true"></span>{/if}
       <span class="title">{t('ui.leaderboardDialog.title')}</span>
-      <span class="icon-button" title={t('ui.leaderboardDialog.playSoon')}><span class="joystick"></span></span>
+      {#if game}<button
+          type="button"
+          class="icon-button"
+          bind:this={joystick}
+          onclick={toggleGame}
+          aria-label={t(playing ? 'ui.leaderboardDialog.backToScores' : 'ui.leaderboardDialog.play')}
+          title={t(playing ? 'ui.leaderboardDialog.backToScores' : 'ui.leaderboardDialog.play')}><span class={playing ? 'trophy' : 'joystick'}></span></button
+        >{:else}<span class="icon-button" title={t('ui.leaderboardDialog.playSoon')}><span class="joystick"></span></span>{/if}
       <span class="icon-button" onclick={() => onClose?.()} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
-    <div class="periods">
-      {#each keys as key}
-        <span class="period" class:on={key === period} onclick={() => (chosen = key)} role="button" tabindex="0">{t(boards[key].label)}</span>
-      {/each}
-    </div>
-
-    <div class="columns">
-      <div class="column-row">
-        <span class="rank-col">#</span>
-        <span class="name-col">{t('ui.leaderboardDialog.username')}</span>
-        <span class="score-col">CHIT</span>
+    {#if playing && game}
+      <div class="game" bind:this={gameArea} tabindex="-1">{@render game()}</div>
+    {:else}
+      <div class="periods">
+        {#each keys as key}
+          <span class="period" class:on={key === period} onclick={() => (chosen = key)} role="button" tabindex="0">{t(boards[key].label)}</span>
+        {/each}
       </div>
-    </div>
 
-    <div class="rows">
-      {#each board.rows as [name, score], i}
-        <!-- the podium lights up green, the chasing pack stays white -->
-        <div class="row" class:podium={i < 3}>
-          <span class="rank">{i + 1}</span>
-          <span class="name">{name}</span>
-          <span class="score">{score}</span>
+      <div class="columns">
+        <div class="column-row">
+          <span class="rank-col">#</span>
+          <span class="name-col">{t('ui.leaderboardDialog.username')}</span>
+          <span class="score-col">CHIT</span>
         </div>
-      {/each}
-    </div>
-
-    {#if mine}
-      <div class="row you">
-        <span class="rank">{mine.rank}</span>
-        <span class="name">{t('ui.leaderboardDialog.you', { handle })}</span>
-        <span class="score">{mine.score}</span>
       </div>
+
+      <div class="rows">
+        {#each board.rows as [name, score], i}
+          <!-- the podium lights up green, the chasing pack stays white -->
+          <div class="row" class:podium={i < 3}>
+            <span class="rank">{i + 1}</span>
+            <span class="name">{name}</span>
+            <span class="score">{score}</span>
+          </div>
+        {/each}
+      </div>
+
+      {#if mine}
+        <div class="row you">
+          <span class="rank">{mine.rank}</span>
+          <span class="name">{t('ui.leaderboardDialog.you', { handle })}</span>
+          <span class="score">{mine.score}</span>
+        </div>
+      {/if}
     {/if}
   </div>
 </div>
@@ -122,6 +148,10 @@
 
   .icon-button {
     flex: none;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -158,6 +188,23 @@
     height: 17px;
     background: var(--status-chit);
     mask: var(--icon-joystick) center/contain no-repeat;
+  }
+
+  .trophy {
+    width: 17px;
+    height: 17px;
+    background: var(--status-chit);
+    mask: var(--icon-trophy) center/contain no-repeat;
+  }
+
+  /* the host's game, in the boards' place */
+  .game {
+    outline: none;
+    flex: 1;
+    min-height: 0;
+    margin: var(--space-8) var(--space-32) var(--space-32);
+    border-radius: var(--radius-md);
+    overflow: hidden;
   }
 
   .close-icon {

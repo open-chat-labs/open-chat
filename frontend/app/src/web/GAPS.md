@@ -483,7 +483,9 @@ design export needs. Each entry says where it came up.
   - the card's reminder and hide (its "⋯" menu has only "How to play", `?chit=howto`): the old UI
     has neither.
 - **Leaderboard** (`?hof`): this month's, last month's and all time's top 10, as the old hall of
-  fame shows them, without its Invaders game.
+  fame shows them, with its Invaders game behind the joystick (8f: the old game, now
+  `core/invaders`, for both trees), where the device can play it (a keyboard, or iOS, which steers
+  by tilting); it now starts again after a game ends, and keeps the final score on screen.
 - **Ways to earn** (`AchievementsDialog`): the old "Learn to earn" list (`achievementList`). The
   dialog's groups and its "next up" bands are the app's (`chit.adapter.ts`: each achievement
   given a group; quick up to 1,000 CHIT, middling up to 3,000, big above), not anything the old
