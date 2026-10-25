@@ -15,25 +15,25 @@ const CHAT: MentionedToken = {
     symbol: "chat",
     tokenSymbol: "CHAT",
     ledger: "2ouva-viaaa-aaaaq-aaamq-cai",
-    usd: 0.0281,
+    price: "$0.0281",
 };
 const ICP: MentionedToken = {
     symbol: "icp",
     tokenSymbol: "ICP",
     ledger: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-    usd: 2.58,
+    price: "$2.58",
 };
 const CKBTC: MentionedToken = {
     symbol: "ckbtc",
     tokenSymbol: "ckBTC",
     ledger: "mxzaz-hqaaa-aaaar-qaada-cai",
-    usd: undefined,
+    price: undefined,
 };
 const RICH: MentionedToken = {
     symbol: "rich.ot",
     tokenSymbol: "RICH.OT",
     ledger: "rich-ledger",
-    usd: 1.5,
+    price: "$1.50",
 };
 const tokens = [CHAT, ICP, CKBTC, RICH];
 
@@ -60,8 +60,8 @@ describe("extractCashtagSymbols", () => {
         expect(extractCashtagSymbols("$5, $5.20, $5k and $1B")).toEqual([]);
     });
 
-    test("needs the cashtag to stand alone", () => {
-        expect(extractCashtagSymbols("US$CHAT a$ICP $$CHAT $CHAT_x $ICP$")).toEqual([]);
+    test("finds candidates whatever is around them, as markdown can change that", () => {
+        expect(extractCashtagSymbols("_$CHAT_ and US$ICP")).toEqual(["chat", "icp"]);
     });
 
     test("allows punctuation around it", () => {
@@ -116,6 +116,14 @@ describe("cashtags in rendered messages", () => {
         expect(render("$5 or $5.20 for $CHAT")).toBe(`$5 or $5.20 for ${chat}`);
     });
 
+    test("need to stand alone", () => {
+        expect(render("US$CHAT a$ICP $$CHAT $CHAT_x $ICP$")).not.toContain("cash-tag");
+    });
+
+    test("work in emphasis made with underscores", () => {
+        expect(render("_$CHAT_ and __$ICP__")).toBe(`<em>${chat}</em> and <strong>${icp}</strong>`);
+    });
+
     test("leave unknown symbols as text", () => {
         expect(render("$FOO and $CHATTY")).toBe("$FOO and $CHATTY");
     });
@@ -131,6 +139,12 @@ describe("cashtags in rendered messages", () => {
         expect(render("[buy $CHAT](https://example.com) $ICP")).not.toContain(CHAT.ledger);
         expect(render("[buy $CHAT](https://example.com) $ICP")).toContain(icp);
         expect(render("https://example.com/$CHAT")).not.toContain("cash-tag");
+    });
+
+    test("leave spoilers alone, which render out of reach of the chip's styles", () => {
+        expect(render("||$CHAT is up|| $ICP")).toBe(
+            `<spoiler-span>$CHAT is up</spoiler-span> ${icp}`,
+        );
     });
 
     test("work inside emphasis", () => {
@@ -156,7 +170,7 @@ describe("sameMentionedTokens", () => {
         expect(sameMentionedTokens(tokens, tokens.map((t) => ({ ...t })))).toBe(true);
     });
 
-    test("differs on a price", () => {
-        expect(sameMentionedTokens([CHAT], [{ ...CHAT, usd: 0.03 }])).toBe(false);
+    test("differs on the price shown, not on the number behind it", () => {
+        expect(sameMentionedTokens([CHAT], [{ ...CHAT, price: "$0.0282" }])).toBe(false);
     });
 });

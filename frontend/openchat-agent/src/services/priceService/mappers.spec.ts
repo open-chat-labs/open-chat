@@ -37,7 +37,6 @@ describe("the price service's prices", () => {
                 prices: { [ICP_LEDGER]: { usd: 2.58132 }, [CHAT_LEDGER]: { usd: 0.0281335 } },
             },
             supportedTokens,
-            NOW,
         );
 
         expect(rates).toEqual({
@@ -57,26 +56,22 @@ describe("the price service's prices", () => {
                 },
             },
             supportedTokens,
-            NOW,
         );
 
         expect(rates).toEqual({ [ICP_LEDGER]: { toUSD: 2.58 } });
     });
 
-    test("are undefined when over an hour old, so the ones already loaded are kept", () => {
-        const rates = quietly(() =>
-            pricesResponse(
-                { timestamp: NOW - 61 * MINUTE, prices: { [ICP_LEDGER]: { usd: 2.58 } } },
-                supportedTokens,
-                NOW,
-            ),
+    test("don't judge how old they are by the device's clock, which can be hours out", () => {
+        const rates = pricesResponse(
+            { timestamp: NOW - 24 * 60 * MINUTE, prices: { [ICP_LEDGER]: { usd: 2.58 } } },
+            supportedTokens,
         );
 
-        expect(rates).toBeUndefined();
+        expect(rates).toEqual({ [ICP_LEDGER]: { toUSD: 2.58 } });
     });
 
     test("are undefined when the response can't be parsed", () => {
-        expect(quietly(() => pricesResponse({ error: "oops" }, supportedTokens, NOW))).toBeUndefined();
+        expect(quietly(() => pricesResponse({ error: "oops" }, supportedTokens))).toBeUndefined();
     });
 });
 

@@ -61,8 +61,14 @@ describe("priceChart", () => {
         expect(chart?.rising).toBe(true);
     });
 
-    test("needs two prices", () => {
-        expect(priceChart([point(0, 2)], NOW, 700, 100)).toBeUndefined();
+    test("is a flat line from a lone price to now", () => {
+        const chart = priceChart([point(3.5 * DAY, 2)], NOW, 700, 100);
+
+        expect(chart?.line).toBe("M350,50L700,50");
+    });
+
+    test("needs a price", () => {
+        expect(priceChart([], NOW, 700, 100)).toBeUndefined();
     });
 });
 
@@ -81,6 +87,16 @@ describe("a token price card's history", () => {
         expect(history.history.kind).toBe("success");
         expect(history.change).toBeCloseTo(50);
         expect(history.chart(700, 100)?.rising).toBe(true);
+    });
+
+    test("runs its chart to the last price when the device's clock is behind it", async () => {
+        const now = vi.spyOn(Date, "now").mockReturnValue(NOW - 2 * HOUR);
+        const history = new TokenPriceHistory(client([point(DAY, 2), point(0, 3)]), "ledger-1");
+        await settle();
+        now.mockRestore();
+
+        // the last price at the right edge, not squashed onto it from two hours on
+        expect(history.chart(700, 100)?.line).toBe("M600,95L700,5L700,5");
     });
 
     test("is unavailable when it can't be loaded", async () => {

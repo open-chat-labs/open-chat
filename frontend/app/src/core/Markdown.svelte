@@ -4,6 +4,7 @@
     import {
         allUsersStore,
         exchangeRatesLookupStore,
+        formatUsdPrice,
         tokensBySymbolStore,
         userGroupSummariesStore,
     } from "@client";
@@ -88,11 +89,12 @@
         for (const symbol of cashtagSymbols) {
             const t = $tokensBySymbolStore.get(symbol);
             if (t !== undefined) {
+                const usd = $exchangeRatesLookupStore.get(t.ledger)?.toUSD;
                 next.push({
                     symbol,
                     tokenSymbol: t.symbol,
                     ledger: t.ledger,
-                    usd: $exchangeRatesLookupStore.get(t.ledger)?.toUSD,
+                    price: usd !== undefined ? formatUsdPrice(usd) : undefined,
                 });
             }
         }

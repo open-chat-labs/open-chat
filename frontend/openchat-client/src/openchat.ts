@@ -10287,7 +10287,7 @@ export class OpenChat {
         return this.#worker
             .send({ kind: "exchangeRates" })
             .then((exchangeRates) => {
-                // undefined if ICPSwap failed, in which case the last rates are kept
+                // undefined if the rates couldn't be loaded, in which case the last ones are kept
                 if (exchangeRates !== undefined) {
                     exchangeRatesLookupStore.set(new Map(Object.entries(exchangeRates)));
                 }

@@ -112,10 +112,16 @@ describe("crypto formatter", () => {
 });
 
 describe("formatUsdPrice", () => {
-    test("is to 3 significant figures below $1", () => {
+    test("is to 2 or 3 significant figures below $1", () => {
         expect(formatUsdPrice(0.028133492)).toBe("$0.0281");
         expect(formatUsdPrice(0.999)).toBe("$0.999");
+        expect(formatUsdPrice(0.5)).toBe("$0.50");
         expect(formatUsdPrice(5.662481998699757e-9)).toBe("$0.00000000566");
+    });
+
+    test("shows a price that rounds to $1 as $1.00, on either side of it", () => {
+        expect(formatUsdPrice(0.9996)).toBe("$1.00");
+        expect(formatUsdPrice(1.0003)).toBe("$1.00");
     });
 
     test("is to the cent from $1 up to $1,000", () => {

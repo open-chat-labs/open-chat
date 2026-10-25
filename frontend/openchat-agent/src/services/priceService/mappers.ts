@@ -3,11 +3,7 @@ import { AssertError } from "@sinclair/typebox/value";
 import type { CryptocurrencyDetails, TokenExchangeRates, TokenPricePoint } from "@shared";
 import { typeboxValidate } from "../../utils/typebox";
 
-// Prices this old mean the service has stopped refreshing them
-const STALE_AFTER_MILLIS = 60 * 60 * 1000;
-
 const PricesResponse = Type.Object({
-    timestamp: Type.Number(),
     prices: Type.Record(Type.String(), Type.Object({ usd: Type.Number() })),
 });
 
@@ -15,19 +11,15 @@ const PriceHistoryResponse = Type.Object({
     points: Type.Array(Type.Tuple([Type.Number(), Type.Number()])),
 });
 
-// Keyed by ledger, for the tokens we support. Undefined if the response can't be parsed or its
-// prices are stale, so the prices already loaded are kept
+// Keyed by ledger, for the tokens we support. Undefined if the response can't be parsed, so the
+// prices already loaded are kept. Whether the prices are fresh is the service's call (it answers 503
+// when they aren't): the device's clock can be hours out
 export function pricesResponse(
     json: unknown,
     supportedTokens: CryptocurrencyDetails[],
-    now: number,
 ): Record<string, TokenExchangeRates> | undefined {
     try {
         const value = typeboxValidate(json, PricesResponse);
-        if (now - value.timestamp > STALE_AFTER_MILLIS) {
-            console.log("The price service's prices are stale", value.timestamp);
-            return undefined;
-        }
         const supportedLedgers = new Set<string>(supportedTokens.map((t) => t.ledger));
         const exchangeRates: Record<string, TokenExchangeRates> = {};
         for (const [ledger, { usd }] of Object.entries(value.prices)) {

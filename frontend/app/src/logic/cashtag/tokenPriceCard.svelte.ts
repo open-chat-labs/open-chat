@@ -22,8 +22,8 @@ export function priceChange(points: TokenPricePoint[]): number | undefined {
 
 /**
  * A chart `width` by `height` of the prices over the 7 days up to `now`. The line runs on flat from
- * the last price to `now`, since the price is the last trade's until there's another. Undefined with
- * fewer than two prices.
+ * the last price to `now`, since the price is the last trade's until there's another, so a lone price
+ * is a flat line. Undefined with no prices.
  */
 export function priceChart(
     points: TokenPricePoint[],
@@ -31,7 +31,7 @@ export function priceChart(
     width: number,
     height: number,
 ): PriceChart | undefined {
-    if (points.length < 2) return undefined;
+    if (points.length === 0) return undefined;
 
     const start = now - SEVEN_DAYS_MILLIS;
     const prices = points.map((p) => p.usd);
@@ -89,7 +89,8 @@ export class TokenPriceHistory {
 
     async #load(client: OpenChat, ledger: string): Promise<void> {
         const points = await client.getTokenPriceHistory(ledger);
-        this.#loadedAt = Date.now();
+        // not before the last price, so a device whose clock is slow doesn't squash the last hours
+        this.#loadedAt = Math.max(Date.now(), points?.at(-1)?.timestamp ?? 0);
         this.#history =
             points !== undefined
                 ? { kind: "success", data: points }

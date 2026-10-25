@@ -9,14 +9,14 @@ export class PriceServiceClient implements ExchangeRateClient {
     #baseUrl: string;
 
     constructor(baseUrl: string) {
-        this.#baseUrl = baseUrl;
+        this.#baseUrl = baseUrl.replace(/\/+$/, "");
     }
 
     async exchangeRates(
         supportedTokens: CryptocurrencyDetails[],
     ): Promise<Record<string, TokenExchangeRates> | undefined> {
         const json = await this.#get("/v1/prices");
-        return json !== undefined ? pricesResponse(json, supportedTokens, Date.now()) : undefined;
+        return json !== undefined ? pricesResponse(json, supportedTokens) : undefined;
     }
 
     async priceHistory(ledger: string): Promise<TokenPricePoint[] | undefined> {
