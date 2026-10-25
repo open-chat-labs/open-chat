@@ -28,6 +28,8 @@ export OC_NFID_URL=http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:$OC_REPLICA_PORT
 export OC_NODE_ENV=$NODE_ENV
 export OC_PREVIEW_PROXY_URL=${OC_PREVIEW_PROXY_URL:-https://dy7sqxe9if6te.cloudfront.net}
 export OC_TRANSLATE_PROXY_URL=${OC_TRANSLATE_PROXY_URL:-https://5rabdwftr36yvlgf5xmr34swb40nxsgs.lambda-url.eu-west-2.on.aws}
+# The pricing service; empty takes prices from ICPSwap, with no price charts
+export OC_PRICE_SERVICE_URL=${OC_PRICE_SERVICE_URL:-}
 # For local development preview proxy, set OC_PREVIEW_PROXY_URL=http://localhost:5070
 export OC_VAPID_PUBLIC_KEY=BOzPIB0gN10bFIjMs10jrxzWNlZrVnZmrpK2SLEDd3uAQi0YHQ_n8zx_2zGDLpE3VHvIjels4BFIqiFWmvvAGz4
 export OC_VIDEO_BRIDGE_URL=http://localhost:5050

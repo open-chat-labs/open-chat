@@ -191,6 +191,7 @@ import type {
     ToggleMuteNotificationResponse,
     TokenExchangeRates,
     TokenInfo,
+    TokenPricePoint,
     TokenSwapPool,
     TopUpNeuronResponse,
     UnblockUserResponse,
@@ -338,6 +339,7 @@ import { GroupClient } from "./group/group.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { IcpLedgerIndexClient } from "./icpLedgerIndex/icpLedgerIndex.client";
 import { IcpSwapClient } from "./icpSwap/icpSwapClient";
+import { PriceServiceClient } from "./priceService/priceServiceClient";
 import { IdentityClient } from "./identity/identity.client";
 import { LedgerClient } from "./ledger/ledger.client";
 import { LedgerIndexClient } from "./ledgerIndex/ledgerIndex.client";
@@ -496,7 +498,10 @@ export class OpenChatAgent extends EventTarget {
         );
         this._identityClient = new IdentityClient(identity, this._agent, config.identityCanister);
         this._dataClient = new DataClient(identity, this._agent, config);
-        this._exchangeRateClient = new IcpSwapClient();
+        this._exchangeRateClient =
+            config.priceServiceUrl !== ""
+                ? new PriceServiceClient(config.priceServiceUrl)
+                : new IcpSwapClient();
         this._localUserIndexClient = new LocalUserIndexClient(identity, this._agent, this._chatsDb);
         this._ledgerClient = new LedgerClient(identity, this._agent);
         this._ledgerIndexClient = new LedgerIndexClient(identity, this._agent);
@@ -5097,7 +5102,7 @@ export class OpenChatAgent extends EventTarget {
         return this._registryClient.setTokenEnabled(ledger, enabled);
     }
 
-    // Undefined if ICPSwap fails, so the caller can keep the rates it has
+    // Undefined if the rates can't be loaded, so the caller can keep the ones it has
     async exchangeRates(): Promise<Record<string, TokenExchangeRates> | undefined> {
         const supportedTokens = this._registryValue?.tokenDetails;
 
@@ -5115,12 +5120,17 @@ export class OpenChatAgent extends EventTarget {
         }
 
         // The prices of these stablecoins on ICPSwap can be way off, since some of their pools have
-        // next to no liquidity (OneSec's USDC and USDT have a few dollars), so we pin them
+        // next to no liquidity (OneSec's USDC and USDT have a few dollars), so we pin them, as the
+        // price service should too
         for (const ledger of PINNED_STABLECOIN_LEDGERS) {
             exchangeRates[ledger] = { toUSD: 1 };
         }
 
         return exchangeRates;
+    }
+
+    tokenPriceHistory(ledger: string): Promise<TokenPricePoint[] | undefined> {
+        return this._exchangeRateClient.priceHistory(ledger);
     }
 
     reportedMessages(userId: string | undefined): Promise<string> {
@@ -6111,4 +6121,6 @@ export interface ExchangeRateClient {
     exchangeRates(
         supportedTokens: CryptocurrencyDetails[],
     ): Promise<Record<string, TokenExchangeRates> | undefined>;
+    // The token's prices over the last 7 days, oldest first. Undefined if they couldn't be loaded
+    priceHistory(ledger: string): Promise<TokenPricePoint[] | undefined>;
 }

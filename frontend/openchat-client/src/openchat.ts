@@ -385,6 +385,7 @@ import {
     type BridgedUserLinkCode,
     type BridgedUserSummary,
     type BridgePlatform,
+    type TokenPricePoint,
     bridgedUserId,
     bridgedUserIdsFromEvents,
     bridgedUserIdsFromLatestMessages,
@@ -10292,6 +10293,16 @@ export class OpenChat {
                 }
             })
             .catch(() => undefined);
+    }
+
+    // A token's prices over the last 7 days, oldest first, for its price chart. Undefined if they
+    // couldn't be loaded
+    async getTokenPriceHistory(ledger: string): Promise<TokenPricePoint[] | undefined> {
+        try {
+            return await this.#worker.send({ kind: "tokenPriceHistory", ledger });
+        } catch {
+            return undefined;
+        }
     }
 
     async refreshBalancesInSeries() {

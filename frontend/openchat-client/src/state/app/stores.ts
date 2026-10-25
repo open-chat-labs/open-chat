@@ -264,12 +264,23 @@ export const cryptoTokensSorted = derived(enhancedCryptoLookup, ($lookup) => {
     return [...$lookup.values()].filter((t) => t.enabled || !t.zero).sort(compareTokens);
 });
 
-// Several ledgers can share a symbol, so prefer an enabled one, then the first in the wallet's
-// order, which puts the tokens the user holds first
+// The token each symbol stands for when someone types one (a cashtag, a bot command's token), keyed
+// by the symbol in lower case. Several ledgers can share a symbol, so prefer an enabled one, then the
+// first in the wallet's order, which puts the tokens the user holds first
+export const tokensBySymbolStore = derived(cryptoTokensSorted, ($tokens) => {
+    const bySymbol = new Map<string, EnhancedTokenDetails>();
+    for (const t of $tokens) {
+        const symbol = t.symbol.toLowerCase();
+        const current = bySymbol.get(symbol);
+        if (current === undefined || (!current.enabled && t.enabled)) {
+            bySymbol.set(symbol, t);
+        }
+    }
+    return bySymbol;
+});
+
 export function walletTokenBySymbol(symbol: string): EnhancedTokenDetails | undefined {
-    const lower = symbol.toLowerCase();
-    const matches = cryptoTokensSorted.value.filter((t) => t.symbol.toLowerCase() === lower);
-    return matches.find((t) => t.enabled) ?? matches[0];
+    return tokensBySymbolStore.value.get(symbol.toLowerCase());
 }
 
 function meetsAutoWalletCriteria(config: WalletConfig, token: EnhancedTokenDetails): boolean {

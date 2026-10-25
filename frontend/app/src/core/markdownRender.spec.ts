@@ -32,6 +32,7 @@ function input(text: string, extra: Partial<RenderMarkdownInput> = {}): RenderMa
         suppressLinks: false,
         users,
         userGroups: groups,
+        tokens: [],
         ...extra,
     };
 }

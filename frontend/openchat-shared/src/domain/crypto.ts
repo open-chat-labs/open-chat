@@ -164,6 +164,12 @@ export type TokenExchangeRates = {
     toUSD: number | undefined;
 };
 
+// A token's USD price at a point in time (ms since the epoch)
+export type TokenPricePoint = {
+    timestamp: number;
+    usd: number;
+};
+
 export type WalletConfig = AutoWallet | ManualWallet;
 
 export type AutoWallet = {

@@ -199,6 +199,12 @@
         "unlink": "Dissocier",
         "unlinkFailed": "Impossible de dissocier le compte"
     },
+    "cashtag": {
+        "chartLabel": "Prix de {symbol} sur les 7 derniers jours",
+        "change7d": "{change} sur 7 jours",
+        "noHistory": "Aucune transaction sur les 7 derniers jours",
+        "noPrice": "Aucun prix disponible"
+    },
     "bridgedUserUnknown": "Utilisateur {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {

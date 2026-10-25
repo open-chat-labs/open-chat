@@ -466,6 +466,12 @@
         "unlink": "Unlink",
         "unlinkFailed": "Couldn't unlink the account"
     },
+    "cashtag": {
+        "chartLabel": "{symbol} price over the last 7 days",
+        "change7d": "{change} over 7 days",
+        "noHistory": "No trades in the last 7 days",
+        "noPrice": "No price available"
+    },
     "bridgedUserUnknown": "{platform} user",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "cancel": "Cancel",

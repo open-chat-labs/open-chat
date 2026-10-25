@@ -199,6 +199,12 @@
         "unlink": "Hủy liên kết",
         "unlinkFailed": "Không thể hủy liên kết tài khoản"
     },
+    "cashtag": {
+        "chartLabel": "Giá {symbol} trong 7 ngày qua",
+        "change7d": "{change} trong 7 ngày",
+        "noHistory": "Không có giao dịch nào trong 7 ngày qua",
+        "noPrice": "Không có giá"
+    },
     "bridgedUserUnknown": "Người dùng {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { muteChat } from "@src/logic/chats/muteChat";
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import type { CashtagClickedEvent } from "@webcomponents/cashTag";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import { Container, Sheet } from "component-lib";
     import type {
@@ -77,6 +78,7 @@
     import PinNumberModal from "./PinNumberModal.svelte";
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
     import ViewUserProfile from "./profile/ViewUserProfileModal.svelte";
+    import TokenPriceCard from "./TokenPriceCard.svelte";
     import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
     import SlidingModals from "./SlidingModals.svelte";
     import SuspendModal from "./SuspendModal.svelte";
@@ -85,6 +87,7 @@
     const client = getContext<OpenChat>("client");
 
     let showProfileCard = $state<ProfileCard>();
+    let showTokenCard = $state<{ ledger: string }>();
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -166,6 +169,7 @@
         ];
         client.initialiseNotifications();
         document.body.addEventListener("profile-clicked", profileClicked);
+        document.body.addEventListener("cashtag-clicked", cashtagClicked);
 
         if ($suspendedUserStore) {
             modal = { kind: "suspended" };
@@ -174,11 +178,16 @@
         return () => {
             unsubEvents.forEach((u) => u());
             document.body.removeEventListener("profile-clicked", profileClicked);
+            document.body.removeEventListener("cashtag-clicked", cashtagClicked);
         };
     });
 
     function profileClicked(event: Event) {
         profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
+    }
+
+    function cashtagClicked(event: Event) {
+        showTokenCard = { ledger: (event as CustomEvent<CashtagClickedEvent>).detail.ledger };
     }
 
     function sendMessageFailed(alert: boolean) {
@@ -453,6 +462,13 @@
             onClose={() => (showProfileCard = undefined)}
         />
     {/if}
+{/if}
+
+{#if showTokenCard !== undefined}
+    <!-- another cashtag is another card -->
+    {#key showTokenCard}
+        <TokenPriceCard ledger={showTokenCard.ledger} onClose={() => (showTokenCard = undefined)} />
+    {/key}
 {/if}
 
 <SlidingModals />

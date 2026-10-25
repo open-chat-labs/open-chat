@@ -199,6 +199,12 @@
         "unlink": "ביטול קישור",
         "unlinkFailed": "לא ניתן לבטל את קישור החשבון"
     },
+    "cashtag": {
+        "chartLabel": "המחיר של {symbol} ב-7 הימים האחרונים",
+        "change7d": "{change} ב-7 ימים",
+        "noHistory": "אין עסקאות ב-7 הימים האחרונים",
+        "noPrice": "אין מחיר זמין"
+    },
     "bridgedUserUnknown": "משתמש {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {

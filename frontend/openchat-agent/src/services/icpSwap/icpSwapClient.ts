@@ -1,4 +1,4 @@
-import type { CryptocurrencyDetails, TokenExchangeRates } from "@shared";
+import type { CryptocurrencyDetails, TokenExchangeRates, TokenPricePoint } from "@shared";
 import type { ExchangeRateClient } from "../openchatAgent";
 import { getAllTokensResponse } from "./mappers";
 
@@ -24,5 +24,10 @@ export class IcpSwapClient implements ExchangeRateClient {
                     ? getAllTokensResponse(supportedTokens, res as ResponseType)
                     : undefined,
             );
+    }
+
+    // ICPSwap is only used where there's no price service, and the price charts come from that
+    priceHistory(_ledger: string): Promise<TokenPricePoint[] | undefined> {
+        return Promise.resolve(undefined);
     }
 }

@@ -199,6 +199,12 @@
         "unlink": "連携を解除",
         "unlinkFailed": "アカウントの連携を解除できませんでした"
     },
+    "cashtag": {
+        "chartLabel": "過去7日間の{symbol}の価格",
+        "change7d": "7日間で{change}",
+        "noHistory": "過去7日間の取引はありません",
+        "noPrice": "価格情報がありません"
+    },
     "bridgedUserUnknown": "{platform} ユーザー",
     "bridgedUserWithPlatform": "{name}（{platform}）",
     "nativeUpdate": {

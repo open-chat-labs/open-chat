@@ -970,6 +970,7 @@ const handlers: Handlers = {
     diamondMembershipFees: (_payload, agent) => agent.diamondMembershipFees(),
     reportedMessages: (payload, agent) => agent.reportedMessages(payload.userId),
     exchangeRates: (_payload, agent) => agent.exchangeRates(),
+    tokenPriceHistory: ({ ledger }, agent) => agent.tokenPriceHistory(ledger),
     proposeTranslation: (payload, agent) =>
         agent.translationsClient().propose(payload.locale, payload.key, payload.value),
     approveTranslation: (payload, agent) => agent.translationsClient().approve(payload.id),

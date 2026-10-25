@@ -1,15 +1,23 @@
 <script lang="ts">
     import "highlight.js/styles/base16/helios.css";
     import type { OpenChat } from "@client";
-    import { allUsersStore, userGroupSummariesStore } from "@client";
+    import {
+        allUsersStore,
+        exchangeRatesLookupStore,
+        tokensBySymbolStore,
+        userGroupSummariesStore,
+    } from "@client";
     import { getContext } from "svelte";
     import { isSingleEmoji } from "@src/utils/emojis";
     import {
+        extractCashtagSymbols,
         extractMentionedUserGroupIds,
         extractMentionedUserIds,
         renderMarkdown,
+        sameMentionedTokens,
         sameMentionedUserGroups,
         sameMentionedUsers,
+        type MentionedToken,
         type MentionedUser,
         type MentionedUserGroup,
     } from "./markdownRender";
@@ -36,6 +44,7 @@
 
     const noUsers: MentionedUser[] = [];
     const noUserGroups: MentionedUserGroup[] = [];
+    const noTokens: MentionedToken[] = [];
 
     let singleEmoji = $derived(isSingleEmoji(text));
 
@@ -45,6 +54,8 @@
     // stops Svelte propagating to the parse+sanitise derived below.
     let mentionedUserIds = $derived(extractMentionedUserIds(text));
     let mentionedUserGroupIds = $derived(extractMentionedUserGroupIds(text));
+    // and likewise the tokens and prices of cashtags, whose prices change every few minutes
+    let cashtagSymbols = $derived(extractCashtagSymbols(text));
 
     let lastUsers = noUsers;
     let users = $derived.by(() => {
@@ -70,6 +81,24 @@
             : (lastUserGroups = next);
     });
 
+    let lastTokens = noTokens;
+    let tokens = $derived.by(() => {
+        if (cashtagSymbols.length === 0) return noTokens;
+        const next: MentionedToken[] = [];
+        for (const symbol of cashtagSymbols) {
+            const t = $tokensBySymbolStore.get(symbol);
+            if (t !== undefined) {
+                next.push({
+                    symbol,
+                    tokenSymbol: t.symbol,
+                    ledger: t.ledger,
+                    usd: $exchangeRatesLookupStore.get(t.ledger)?.toUSD,
+                });
+            }
+        }
+        return sameMentionedTokens(next, lastTokens) ? lastTokens : (lastTokens = next);
+    });
+
     let sanitized = $derived(
         renderMarkdown(
             {
@@ -79,6 +108,7 @@
                 suppressLinks,
                 users,
                 userGroups,
+                tokens,
             },
             (msg, err) => client.logError(msg, err),
         ),

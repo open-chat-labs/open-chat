@@ -199,6 +199,12 @@
         "unlink": "Desvincular",
         "unlinkFailed": "No se pudo desvincular la cuenta"
     },
+    "cashtag": {
+        "chartLabel": "Precio de {symbol} en los últimos 7 días",
+        "change7d": "{change} en 7 días",
+        "noHistory": "No hay operaciones en los últimos 7 días",
+        "noPrice": "Precio no disponible"
+    },
     "bridgedUserUnknown": "Usuario de {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {

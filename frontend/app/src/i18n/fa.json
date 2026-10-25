@@ -199,6 +199,12 @@
         "unlink": "لغو پیوند",
         "unlinkFailed": "لغو پیوند حساب ممکن نشد"
     },
+    "cashtag": {
+        "chartLabel": "قیمت {symbol} در ۷ روز گذشته",
+        "change7d": "{change} در ۷ روز",
+        "noHistory": "در ۷ روز گذشته معامله‌ای انجام نشده است",
+        "noPrice": "قیمتی در دسترس نیست"
+    },
     "bridgedUserUnknown": "کاربر {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {

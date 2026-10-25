@@ -199,6 +199,12 @@
         "unlink": "Verknüpfung aufheben",
         "unlinkFailed": "Die Verknüpfung des Kontos konnte nicht aufgehoben werden"
     },
+    "cashtag": {
+        "chartLabel": "{symbol}-Preis in den letzten 7 Tagen",
+        "change7d": "{change} in 7 Tagen",
+        "noHistory": "Keine Trades in den letzten 7 Tagen",
+        "noPrice": "Kein Preis verfügbar"
+    },
     "bridgedUserUnknown": "{platform}-Nutzer",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
