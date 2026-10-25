@@ -248,8 +248,11 @@
   const short = (pl: Plan) => shortfall?.[tok.symbol]?.[pl.key] ?? Math.max(0, +(total(pl) - balance).toPrecision(4));
   const affords = (pl: Plan) => short(pl) <= 0;
   const fmtToken = (n: number) => `${fmtAmt(n)} ${sym}`;
-  // an amount as it is, to the 8 places a ledger keeps (what's short of a plan: 1.0001, not 1.00)
+  // an amount as it is, to the 8 places a ledger keeps (what's short of a plan, the least one costs: 1.0001, not 1.00;
+  // a float sum's noise past them drops away)
   const fmtExact = (n: number) => n.toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: 8 });
+  // what's charged (a price, the approval fee), exactly: a rounded price wouldn't be what's paid
+  const fmtCharge = (n: number) => `${fmtExact(n)} ${sym}`;
 
   const member = $derived(isDiamond || !!bought);
   const lifetime = $derived(bought ? bought.lifetime : lifetimeProp);
@@ -275,11 +278,11 @@
       return {
         key: pl.key,
         label: t(extend ? 'ui.diamondDialog.planExtension' : 'ui.diamondDialog.planLabel', { plan: pl.key }),
-        price: fmtToken(c),
+        price: fmtCharge(c),
         life: !pl.months,
         ok,
         sub: !ok
-          ? t('ui.diamondDialog.needMore', { amount: `${fmtExact(short(pl))} ${sym}` })
+          ? t('ui.diamondDialog.needMore', { amount: fmtCharge(short(pl)) })
           : !pl.months
             ? t(extend ? 'ui.diamondDialog.upgradeLifetime' : 'ui.diamondDialog.neverExpires')
             : t(extend ? 'ui.diamondDialog.extendTo' : 'ui.diamondDialog.until', { date: fmtDate(until(pl)) }),
@@ -506,7 +509,7 @@
           </div>
         {/if}
         {#if PLANS.length && !PLANS.some(affords)}
-          {@render warn(t('ui.diamondDialog.insufficientTitle'), t('ui.diamondDialog.insufficientBody', { amount: fmtToken(cheapest) }))}
+          {@render warn(t('ui.diamondDialog.insufficientTitle'), t('ui.diamondDialog.insufficientBody', { amount: fmtCharge(cheapest) }))}
         {/if}
       </div>
 
@@ -563,7 +566,7 @@
       {/if}
 
       <div class="summary">
-        {#each [{ label: 'ui.diamondDialog.summary.amount', value: fmtToken(price), accent: true }, { label: 'ui.diamondDialog.summary.treasury', value: fmtToken(price), accent: false }, ...(fee > 0 ? [{ label: 'ui.diamondDialog.summary.approvalFee', value: fmtToken(fee), accent: false }] : []), { label: 'ui.diamondDialog.summary.after', value: fmtToken(+(balance - price - fee).toFixed(dp(balance))), accent: false }] as s}
+        {#each [{ label: 'ui.diamondDialog.summary.amount', value: fmtCharge(price), accent: true }, { label: 'ui.diamondDialog.summary.treasury', value: fmtCharge(price), accent: false }, ...(fee > 0 ? [{ label: 'ui.diamondDialog.summary.approvalFee', value: fmtCharge(fee), accent: false }] : []), { label: 'ui.diamondDialog.summary.after', value: fmtToken(+(balance - price - fee).toFixed(dp(balance))), accent: false }] as s}
           <div class="summary-row">
             <span class="summary-label">{t(s.label)}</span>
             <span class="summary-value" class:accent={s.accent}>{s.value}</span>
