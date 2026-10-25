@@ -55,9 +55,9 @@
 
 {#snippet invaders()}
     <Invaders fill>
-        {#snippet start(play)}
+        {#snippet start(play, again)}
             <!-- the library translates only its own ui.* keys and shows anything else as given -->
-            <Button label={$_("halloffame.start")} onClick={play} />
+            <Button label={$_(again ? "halloffame.tryAgain" : "halloffame.start")} onClick={play} />
         {/snippet}
     </Invaders>
 {/snippet}

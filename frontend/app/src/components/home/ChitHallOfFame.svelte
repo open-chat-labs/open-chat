@@ -113,9 +113,10 @@
         <div bind:this={bodyElement} class="body">
             {#if showGame}
                 <Invaders>
-                    {#snippet start(play)}
+                    {#snippet start(play, again)}
                         <div class="game-start">
-                            <Button onClick={play}>{$_("halloffame.start")}</Button>
+                            <Button onClick={play}
+                                >{$_(again ? "halloffame.tryAgain" : "halloffame.start")}</Button>
                         </div>
                     {/snippet}
                 </Invaders>

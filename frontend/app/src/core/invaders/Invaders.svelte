@@ -10,8 +10,8 @@
     import { tiltNeedsPermission } from "./support";
 
     interface Props {
-        /** The host's start button, given what starts a game. */
-        start: Snippet<[() => void]>;
+        /** The host's start button, given what starts a game and whether one has just ended (for "Try again"). */
+        start: Snippet<[() => void, boolean]>;
         /** As tall as the host makes it. */
         fill?: boolean;
     }
@@ -177,7 +177,7 @@
     onclick={() => isTouchDevice && fire()}>
     <canvas {height} width={containerWidth} bind:this={canvas}></canvas>
     {#if phase !== "playing"}
-        <div class="start">{@render start(play)}</div>
+        <div class="start">{@render start(play, phase === "game_over")}</div>
     {/if}
 </div>
 
