@@ -8604,10 +8604,10 @@
     "group": "features"
   },
   {
-    "name": "DiamondDialog",
-    "source": "lib/DiamondDialog.dc.html",
-    "hash": "39751360",
-    "description": "[label, icon, free (true | false | text), diamond (true | text)]",
+    "name": "DiamondContent",
+    "source": "by hand (8e, 2026-10-25): DiamondDialog's body",
+    "hash": "",
+    "description": "Diamond membership, the body of DiamondDialog and of a page: compare → plans → confirm → pay, or a member's benefits. Per-token prices (`tokenPrices`) offer only those tokens; `approvalFees` count towards what a token can afford.",
     "preview": {
       "width": 640,
       "height": 800
@@ -8785,16 +8785,116 @@
       },
       {
         "name": "onUpgrade",
-        "type": "(p: DiamondPurchase) => Promise<{ until?: string | null } | void> | void",
+        "type": "(p: DiamondPurchase) => Promise<{ until?: string | null } | void | false> | void | false",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Charge and activate. Resolve with the membership end the backend set; reject to stay on the confirm step with an error. Without it the upgrade buttons are hidden."
+        "doc": "Charge and activate. Resolve with the membership end the backend set (or nothing to keep `until`); reject to stay on the confirm step with an error; resolve `false` when nothing was bought and there's nothing to say here (the user backed out, or the host said why), staying on confirm. Without it the upgrade buttons are hidden."
+      },
+      {
+        "name": "tokenPrices",
+        "type": "Record<string, Partial<Record<PlanKey, number>>>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Plan prices per token symbol, the backend's own: only these tokens are offered, at these prices (no conversion). Takes the place of `prices` / `chatUsd`."
+      },
+      {
+        "name": "depositAddresses",
+        "type": "Record<string, string>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The user's own deposit address per token symbol, for topping up the token chosen; takes the place of `depositAddress`."
+      },
+      {
+        "name": "approvalFees",
+        "type": "Record<string, number>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The approval fee a payment from the wallet costs on top of the price, per token symbol (token units)."
+      },
+      {
+        "name": "shortfall",
+        "type": "Record<string, Partial<Record<PlanKey, number>>>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "How much each token's balance is short of each plan's price and fee (token units, 0 when it can pay), as the host works it out exactly in the ledger's units: whether a plan can be paid, and the \"Need … more\", come from it rather than from a floating point sum here."
+      },
+      {
+        "name": "pricing",
+        "type": "'loading' | 'failed'",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The prices are still loading, or failed to (the plans step says so, offering `onRetryPricing`)."
+      },
+      {
+        "name": "onRetryPricing",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "defaultToken",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The token chosen to pay with at first (CHAT, or ICP outside production), when it can pay."
+      },
+      {
+        "name": "flow",
+        "type": "DialogFlow",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The dialog's flow (its exit, Esc), which paying and closing go through; a page leaves it out."
       }
     ],
+    "group": "features"
+  },
+  {
+    "name": "DiamondDialog",
+    "source": "lib/DiamondDialog.dc.html",
+    "hash": "39751360",
+    "description": "Diamond membership in a dialog: DiamondContent on the shared dialog layer and card. Takes DiamondContent's props (see there); its flow is the dialog's.",
+    "preview": {
+      "width": 640,
+      "height": 800
+    },
+    "props": [],
     "group": "features"
   },
   {
