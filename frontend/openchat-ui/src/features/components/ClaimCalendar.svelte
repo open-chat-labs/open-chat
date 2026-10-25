@@ -210,7 +210,7 @@
     <button
       type="button"
       class="month-step"
-      disabled={!calendar.canPrev}
+      aria-disabled={!calendar.canPrev}
       onclick={() => page(-1)}
       aria-label={t('ui.claimCalendar.prevMonth')}
       title={t('ui.claimCalendar.prevMonth')}><span class="month-glyph back"></span></button
@@ -228,7 +228,7 @@
     <button
       type="button"
       class="month-step"
-      disabled={!calendar.canNext}
+      aria-disabled={!calendar.canNext}
       onclick={() => page(1)}
       aria-label={t('ui.claimCalendar.nextMonth')}
       title={t('ui.claimCalendar.nextMonth')}><span class="month-glyph next"></span></button
@@ -305,7 +305,9 @@
     background: var(--overlay-2);
   }
 
-  .month-step:disabled {
+  /* at the end of the range: still focusable (a disabled button would drop the focus it has), its press does nothing
+     (page clamps) */
+  .month-step[aria-disabled='true'] {
     opacity: 0.35;
     pointer-events: none;
   }
