@@ -235,15 +235,15 @@
               <span class="claim-label">{t(flow.busy ? 'ui.chitDialog.claiming' : 'ui.chitDialog.claim', { amount: fmt(daily) })}</span>
             </div>
           {/if}
-          {@render calendarLink('ui.chitDialog.viewCalendar')}
           <span class="note" class:error={flow.failed} role={flow.failed ? 'alert' : undefined}>{t(flow.failed ? 'ui.chitDialog.claimFailed' : 'ui.chitDialog.claimNote')}</span>
+          {@render calendarLink('ui.chitDialog.viewCalendar')}
         {:else}
           <div class="claimed">
             <span class="check"></span>
             <span class="claimed-label">{t('ui.chitDialog.comeBackIn', { countdown })}</span>
           </div>
-          {@render calendarLink('ui.chitDialog.claimedViewCalendar')}
           <span class="note strong">{t('ui.chitDialog.comeBackTomorrow')}</span>
+          {@render calendarLink('ui.chitDialog.claimedViewCalendar')}
         {/if}
         <div class="burst" aria-hidden="true"><Confetti fire={claimBurst} /></div>
       </div>
