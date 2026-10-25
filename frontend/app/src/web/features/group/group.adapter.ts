@@ -15,6 +15,7 @@ import {
 } from "@client";
 import type { MemberRole as PanelRole } from "@openchat/ui/src/features/components/GroupPanel.svelte";
 import type { InvitePerson } from "@openchat/ui/src/features/components/InviteDialog.svelte";
+import type { UserGroupPerson } from "@openchat/ui/src/features/components/UserGroupDialog.svelte";
 import { pickById } from "../../pickById";
 
 // GroupPanel's people, pins and user groups from the app's members, pinned messages and user
@@ -108,6 +109,29 @@ export function userGroupRow(group: UserGroupDetails, users: UserLookup) {
                       },
                   ];
         }),
+    };
+}
+
+/** A user group member, or someone to add, as UserGroupDialog shows them. */
+export function userGroupPerson(userId: string, user: UserSummary | undefined): UserGroupPerson {
+    return {
+        userId,
+        name: user === undefined ? userId : (user.displayName ?? user.username),
+        handle: user?.username ?? "",
+        color: pickById(userId, COLORS),
+    };
+}
+
+/**
+ * The group UserGroupDialog edits: every member, including those whose users aren't held yet, as
+ * the dialog saves the members it shows and a member left out would be removed (4b invariant 5).
+ */
+export function userGroupDialogGroup(group: UserGroupDetails, users: UserLookup) {
+    return {
+        key: String(group.id),
+        title: group.name,
+        mention: `@${group.name}`,
+        members: [...group.members].map((userId) => userGroupPerson(userId, users.get(userId))),
     };
 }
 

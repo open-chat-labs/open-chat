@@ -101,6 +101,7 @@ export {
     type LeaveOrDelete,
     type LeaveOrDeleteOutcome,
 } from "./utils/leaveOrDelete";
+export { type UserGroupSaveOutcome } from "./utils/userGroups";
 export {
     memberDisplayNameResult,
     profileChanges,

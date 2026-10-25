@@ -292,3 +292,7 @@
 - Icons: `calendar` (icons.js, icons.css, the manifest's count). The brief's `minus` is left out until something uses it.
 - `meta.json`, the docs' samples and the Rewards section updated.
 - Not in the design export: to go back to it when the export has these (the app's `GAPS.md` lists it).
+
+## 2026-10-24 — MemberRow: its buttons don't also click the row, by hand
+- The ⋮ menu, the action button and the trailing icon sit inside the row, so a click on one bubbled to the row's `onClick` as well. In GroupPanel the user group row's ⋮ opened the group instead of its Edit / Delete menu, a member's ⋮ also opened their profile, and the trailing icon ran `onClick` twice. Each now stops the click reaching the row.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

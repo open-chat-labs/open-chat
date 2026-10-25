@@ -349,6 +349,20 @@ design export needs. Each entry says where it came up.
   - a public chat's link shows a switch locked on, and the warning that access gates are skipped
     for people joining by link. Switching a private link on takes a few seconds with nothing
     shown meanwhile.
+- **User groups** (4b part 3b): `UserGroupDialog` creates, edits and deletes a community's user
+  groups from GroupPanel's user group views, for someone who may manage them
+  (`canManageUserGroups`). The client sends an edit's members added and removed
+  (`saveUserGroup`), as both old editors did.
+  - the dialog lets a name be 1 to 40 characters, but the backend takes 3 to 25 (the old editors
+    stopped you). A name outside that fails with "unable to create/update the user group".
+  - spaces in the name are saved as underscores, as the old editors did, but the dialog shows
+    the spaces until it's saved.
+  - a failed save shows the dialog's "Couldn't save the user group" and the app's reason (name
+    taken, the member limit) as a toast.
+  - a member whose user hasn't loaded shows their id until it does.
+  - `?usergroup=` still opens the list of user groups, not the one group.
+  - by hand: `MemberRow` stops a click on its ⋮, action button or icon reaching the row. The
+    user group row's ⋮ opened the group instead of its Edit / Delete menu.
 
 ## App
 

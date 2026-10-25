@@ -5,9 +5,11 @@ import {
     type FullMember,
     type MemberActions,
     type MultiUserChat,
+    type UserLookup,
+    type UserSummary,
 } from "@client";
 import { describe, expect, test } from "vitest";
-import { memberPerson, panelHeader } from "./group.adapter";
+import { memberPerson, panelHeader, userGroupDialogGroup } from "./group.adapter";
 
 const noActions: MemberActions = {
     canPromoteToOwner: false,
@@ -63,5 +65,21 @@ describe("the group panel adapter", () => {
                 noActions,
             ).tag,
         ).toBe("YOU");
+    });
+});
+
+describe("the user group dialog adapter", () => {
+    // 4b invariant 5: the dialog saves the members it shows, so one whose user isn't held yet must
+    // still be among them or the save would remove them
+    test("the dialog's group has every member, held user or not", () => {
+        const users: UserLookup = new Map([
+            ["a", { userId: "a", username: "alice" } as UserSummary],
+        ]);
+        const group = userGroupDialogGroup(
+            { kind: "user_group", id: 3, name: "devs", members: new Set(["a", "b"]) },
+            users,
+        );
+
+        expect(group.members.map((m) => m.userId)).toEqual(["a", "b"]);
     });
 });

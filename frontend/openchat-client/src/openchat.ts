@@ -580,6 +580,11 @@ import {
     type LeaveOrDeleteResult,
 } from "./utils/leaveOrDelete";
 import {
+    userGroupMemberChanges,
+    userGroupSaveOutcome,
+    type UserGroupSaveOutcome,
+} from "./utils/userGroups";
+import {
     defaultChat,
     navigationAfterArchivingOpenChat,
     activeUserIdFromEvent,
@@ -12546,7 +12551,34 @@ export class OpenChat {
             });
     }
 
-    createUserGroup(
+    /**
+     * Creates a user group (no `original`) or renames and edits the members of `original`, from the
+     * name and members the user picked. An update sends only the members added and removed, and the
+     * original's member set (the store's) is never changed.
+     */
+    async saveUserGroup(
+        id: CommunityIdentifier,
+        original: UserGroupDetails | undefined,
+        name: string,
+        memberIds: string[],
+    ): Promise<UserGroupSaveOutcome> {
+        const userGroup: UserGroupDetails = {
+            kind: "user_group",
+            id: original?.id ?? -1,
+            name,
+            members: new Set(memberIds),
+        };
+        if (original === undefined) {
+            return userGroupSaveOutcome(await this.#createUserGroup(id, userGroup), true);
+        }
+        const { toAdd, toRemove } = userGroupMemberChanges(original.members, memberIds);
+        return userGroupSaveOutcome(
+            await this.#updateUserGroup(id, userGroup, toAdd, toRemove),
+            false,
+        );
+    }
+
+    #createUserGroup(
         id: CommunityIdentifier,
         userGroup: UserGroupDetails,
     ): Promise<CreateUserGroupResponse> {
@@ -12575,7 +12607,7 @@ export class OpenChat {
         });
     }
 
-    updateUserGroup(
+    #updateUserGroup(
         id: CommunityIdentifier,
         userGroup: UserGroupDetails,
         toAdd: Set<string>,

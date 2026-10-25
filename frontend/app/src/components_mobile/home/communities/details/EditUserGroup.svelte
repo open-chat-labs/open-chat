@@ -12,7 +12,6 @@
     } from "component-lib";
     import {
         allUsersStore,
-        ErrorCode,
         FIND_MEMBERS_DELAY_MS,
         publish,
         selectedCommunityMembersStore,
@@ -144,35 +143,18 @@
 
     function saveUserGroup() {
         saving = true;
-        const creating = userGroup.id === -1;
-        (creating
-            ? client.createUserGroup(community.id, userGroup)
-            : client.updateUserGroup(community.id, userGroup, added, removed)
-        )
-            .then((resp) => {
-                if (resp.kind === "success") {
+        client
+            .saveUserGroup(
+                community.id,
+                userGroup.id === -1 ? undefined : original,
+                userGroup.name,
+                [...userGroup.members],
+            )
+            .then((outcome) => {
+                if (outcome.kind === "success") {
                     publish("closeModalPage");
                 } else {
-                    if (resp.kind === "error" && resp.code === ErrorCode.NameTaken) {
-                        toastStore.showFailureToast(
-                            i18nKey("communities.errors.userGroupNameTaken"),
-                        );
-                    } else if (resp.kind === "error" && resp.code === ErrorCode.TooManyUsers) {
-                        // The canister sends the limit as the error's message
-                        toastStore.showFailureToast(
-                            i18nKey("communities.errors.userGroupTooManyMembers", {
-                                max: resp.message,
-                            }),
-                        );
-                    } else {
-                        toastStore.showFailureToast(
-                            i18nKey(
-                                `communities.errors.${
-                                    creating ? "createGroupFailed" : "updateGroupFailed"
-                                }`,
-                            ),
-                        );
-                    }
+                    toastStore.showFailureToast(outcome.message);
                 }
             })
             .finally(() => (saving = false));

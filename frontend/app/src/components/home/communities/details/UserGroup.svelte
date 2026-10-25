@@ -7,7 +7,6 @@
         type UserGroupDetails,
         type UserSummary,
     } from "@client";
-    import { ErrorCode } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
@@ -46,8 +45,6 @@
     }: Props = $props();
 
     let userGroup = $state(workingCopy());
-    let added: Set<string> = new Set();
-    let removed: Set<string> = new Set();
     let searchVirtualList = $state<VirtualList<UserSummary> | undefined>();
     let searchTermEntered = $state("");
     let usersDirty = $state(false);
@@ -61,35 +58,18 @@
     // local updates since this is probably not a very common operation and it's much simpler this way
     function save() {
         saving = true;
-        const creating = userGroup.id === -1;
-        (creating
-            ? client.createUserGroup(community.id, userGroup)
-            : client.updateUserGroup(community.id, userGroup, added, removed)
-        )
-            .then((resp) => {
-                if (resp.kind === "success") {
+        client
+            .saveUserGroup(
+                community.id,
+                userGroup.id === -1 ? undefined : original,
+                userGroup.name,
+                [...userGroup.members],
+            )
+            .then((outcome) => {
+                if (outcome.kind === "success") {
                     cancel();
                 } else {
-                    if (resp.kind === "error" && resp.code === ErrorCode.NameTaken) {
-                        toastStore.showFailureToast(
-                            i18nKey("communities.errors.userGroupNameTaken"),
-                        );
-                    } else if (resp.kind === "error" && resp.code === ErrorCode.TooManyUsers) {
-                        // The canister sends the limit as the error's message
-                        toastStore.showFailureToast(
-                            i18nKey("communities.errors.userGroupTooManyMembers", {
-                                max: resp.message,
-                            }),
-                        );
-                    } else {
-                        toastStore.showFailureToast(
-                            i18nKey(
-                                `communities.errors.${
-                                    creating ? "createGroupFailed" : "updateGroupFailed"
-                                }`,
-                            ),
-                        );
-                    }
+                    toastStore.showFailureToast(outcome.message);
                 }
             })
             .finally(() => (saving = false));
@@ -115,8 +95,6 @@
 
     function reset() {
         userGroup = workingCopy();
-        added = new Set();
-        removed = new Set();
         usersDirty = false;
     }
 
@@ -132,15 +110,11 @@
 
     function addUserToGroup(userId: string) {
         searchTermEntered = "";
-        added.add(userId);
-        removed.delete(userId);
         userGroup.members.add(userId);
         usersDirty = true;
     }
 
     function removeUserFromGroup(userId: string) {
-        removed.add(userId);
-        added.delete(userId);
         userGroup.members.delete(userId);
         usersDirty = true;
     }
