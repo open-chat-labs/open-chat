@@ -56,6 +56,7 @@ describe("Manage's pages", () => {
             sections({
                 access: { kind: "about" },
                 canOpenInvite: false,
+                community: false,
                 canManageUserGroups: false,
             }),
         ).toEqual(["main:about", "members:members", "rules:rules", "gates:gates"]);
@@ -63,12 +64,14 @@ describe("Manage's pages", () => {
             sections({
                 access: { kind: "edit", readOnly: [] },
                 canOpenInvite: true,
+                community: true,
                 canManageUserGroups: true,
             }),
         ).toEqual([
             "main:overview",
             "members:members",
             "invite:invite",
+            "channels:channels",
             "usergroups:userGroups",
             "rules:rules",
             "permissions:permissions",

@@ -38,8 +38,8 @@ export type LinkedDialog =
 
 // someone's profile card, for a name clicked in a message; confirming leaving or deleting a chat or
 // community, called `name`; Manage for a group, channel or community (its settings, or its About
-// page for someone who can't edit it, and inviting people or sharing its link); or creating,
-// editing or deleting one of a community's user groups
+// page for someone who can't edit it, and inviting people or sharing its link); a new channel; or
+// creating, editing or deleting one of a community's user groups
 export type LocalDialog =
     | ({
           kind: "user";
@@ -53,6 +53,12 @@ export type LocalDialog =
           section: ManageSection;
           /** Invite & share's tab, when it opens there. */
           inviteTab?: "people" | "share";
+      }
+    | {
+          kind: "new_channel";
+          communityId: CommunityIdentifier;
+          /** A channel that shows a web app in place of messages. */
+          embedded: boolean;
       }
     | {
           kind: "user_group";
@@ -107,6 +113,9 @@ export const dialogs: Dialogs = {
 
     // Manage for a group, channel or community: its settings (or About page) and Invite & share (4b)
     manage: () => import("../group/ManageDialogScreen.svelte"),
+
+    // a new channel in a community, or an embedded one (4b)
+    new_channel: () => import("../group/CreateChannelDialogScreen.svelte"),
 
     // creating, editing or deleting a community's user group (4b)
     user_group: () => import("../group/UserGroupDialogScreen.svelte"),

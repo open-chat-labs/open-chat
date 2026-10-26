@@ -760,7 +760,7 @@
       },
       "nameChecking": "Checking the name…",
       "nameHint": {
-        "channel": "Lowercase, no spaces. Spaces become dashes.",
+        "channel": "The name members see in the channel list",
         "channelRequired": "#channel name is required *",
         "community": "Shown in the nav rail and in Explore",
         "communityRequired": "Community name is required *",
@@ -1999,6 +1999,13 @@
       "discardBody": "You have unsaved changes in this section. They'll be lost if you leave.",
       "keepEditing": "Keep editing",
       "discard": "Discard"
+    },
+    "manageChannels": {
+      "title": "Channels",
+      "newChannel": "New channel",
+      "youreHere": "You're here",
+      "noDescription": "No description",
+      "embeddedApp": "Embedded app"
     },
     "mediaMessage": {
       "cancelUpload": "Cancel upload",

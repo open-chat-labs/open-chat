@@ -154,7 +154,6 @@
     return o;
   }
 
-  const slug = (v: string, max = Infinity) => v.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-_]/g, '').slice(0, max);
   const mask = (icon: string) => `var(--icon-${icon}) center/contain no-repeat`;
   const ring = (on: boolean) => (on ? '0 0 0 2px var(--surface-1), 0 0 0 4px var(--accent)' : 'inset 0 0 0 1px var(--line-2)');
 
@@ -415,21 +414,21 @@
   }
 
   // channels tab
-  const draftDup = $derived(!!chanDraft && channels.includes(chanDraft));
-  const draftOk = $derived(!!chanDraft && !draftDup);
-  const editDup = $derived(chanEdit != null && channels.some((c, i) => i !== chanEdit && c === chanEditValue));
+  const draftDup = $derived(!!chanDraft.trim() && channels.includes(chanDraft.trim()));
+  const draftOk = $derived(!!chanDraft.trim() && !draftDup);
+  const editDup = $derived(chanEdit != null && channels.some((c, i) => i !== chanEdit && c === chanEditValue.trim()));
 
   function addChannel() {
     if (draftOk) {
-      channels = [...channels, chanDraft];
+      channels = [...channels, chanDraft.trim()];
       chanDraft = '';
       chanTried = false;
     } else chanTried = true;
   }
 
   function saveChannelEdit() {
-    if (!chanEditValue || editDup) return;
-    channels = channels.map((c, i) => (i === chanEdit ? chanEditValue : c));
+    if (!chanEditValue.trim() || editDup) return;
+    channels = channels.map((c, i) => (i === chanEdit ? chanEditValue.trim() : c));
     chanEdit = null;
   }
 
@@ -803,7 +802,7 @@
                   <input
                     value={name}
                     oninput={(e) => {
-                      name = isChan ? slug(e.currentTarget.value) : e.currentTarget.value;
+                      name = e.currentTarget.value;
                       nameTouched = true;
                       checkNameSoon(name);
                     }}
@@ -1068,7 +1067,7 @@
                     <input
                       class="channel-input"
                       value={chanEditValue}
-                      oninput={(e) => (chanEditValue = slug(e.currentTarget.value, CHAN_MAX))}
+                      oninput={(e) => (chanEditValue = e.currentTarget.value.slice(0, CHAN_MAX))}
                       onkeydown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -1109,7 +1108,7 @@
                   <input
                     value={chanDraft}
                     oninput={(e) => {
-                      chanDraft = slug(e.currentTarget.value, CHAN_MAX);
+                      chanDraft = e.currentTarget.value.slice(0, CHAN_MAX);
                       chanTried = false;
                     }}
                     onkeydown={(e) => {

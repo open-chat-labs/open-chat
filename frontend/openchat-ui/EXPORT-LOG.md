@@ -320,3 +320,11 @@
 
 ## 2026-10-26 — ConversationHeader menu strings, by hand
 - `ui.conversationHeader.menu` gains `manageGroup`, `manageChannel`, `groupDetails`, `channelDetails`, `markAsRead` and `chatSettings`, for the design's chat menu (the App prototype's `_chatMenu`) with the Manage item the app adds.
+
+## 2026-10-26 — ManageChannels: new, by hand
+- Manage's Channels page for a community, from the App prototype's Manage dialog (its Channels section, `isManageChannels`); the design export has no component for it. A title bar (Channels, New channel with `onNew`, close) over channel cards: a round `#` avatar, the name with a "You're here" chip on the open one, its description, members and visibility, and a chevron. Strings under `ui.manageChannels`; `meta.json` and the docs updated.
+- Not in the design export: to go back to it when the export has one (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — CreateGroupDialog: channel names as typed, by hand
+- A channel's name (and a new community's channel list) was slugged as you typed: lowercased, spaces to hyphens, anything else dropped. Nothing requires that, so names are now kept as typed (trimmed; the channel list still caps each at its length and rejects duplicates), and the channel name's hint no longer says "Lowercase, no spaces".
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

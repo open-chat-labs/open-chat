@@ -204,7 +204,7 @@
               }),
     );
 
-    // TODO: the thread count (L1). TODO(4b): the community's new channel items (part 4)
+    // TODO: the thread count (L1). TODO(4b): the community's stats and bot items
     function onHeaderMenu(item: string) {
         if (item === "markAllRead") {
             client.markAllReadForCurrentScope();
@@ -214,6 +214,14 @@
         switch (item) {
             case "members":
                 screen.dialogs.open({ kind: "manage", target: community.id, section: "members" });
+                break;
+            case "newChannel":
+            case "embedChannel":
+                screen.dialogs.open({
+                    kind: "new_channel",
+                    communityId: community.id,
+                    embedded: item === "embedChannel",
+                });
                 break;
             case "newUserGroup":
                 screen.dialogs.open({

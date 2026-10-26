@@ -8516,10 +8516,12 @@ export class OpenChat {
         );
     }
 
-    // Creates a group, then invites `invitees` to it
+    // Creates a group, then invites `invitees` to it, and adds the community's members `toAdd` to a
+    // new channel
     async createGroup(
         candidate: CandidateGroupChat,
         invitees: string[],
+        toAdd: string[] = [],
     ): Promise<CreateGroupOutcome> {
         let resp: CreateGroupResponse;
         try {
@@ -8551,6 +8553,21 @@ export class OpenChat {
                     kind: "created_without_invites",
                     chatId,
                     message: i18nKey("group.inviteUsersFailed", undefined, candidate.level, true),
+                };
+            }
+        }
+        if (chatId.kind === "channel" && toAdd.length > 0) {
+            const added = await this.addMembersToChannel(chatId, toAdd);
+            if (added.kind !== "success") {
+                this.logMessage("Unable to add members to a new channel", added);
+                return {
+                    kind: "created_without_invites",
+                    chatId,
+                    message: i18nKey(
+                        added.kind === "add_to_channel_partial_success"
+                            ? "group.addMembersPartialSuccess"
+                            : "group.addMembersFailed",
+                    ),
                 };
             }
         }
