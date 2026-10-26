@@ -81,6 +81,8 @@ describe("editing and creating a group", () => {
                     return Promise.resolve({ kind: "success", canisterId: original.id });
                 case "inviteUsers":
                     return Promise.resolve(invited);
+                case "addMembersToChannel":
+                    return Promise.resolve({ kind: "success" });
                 default:
                     return new Promise(() => {});
             }
@@ -169,6 +171,40 @@ describe("editing and creating a group", () => {
         if (outcome.kind === "created_without_invites") {
             expect(english(outcome.message.key)).toEqual(expect.any(String));
         }
+    });
+
+    // 4b: a new channel's community members picked to join are added, not invited, and people
+    // from outside the community are invited
+    test("a new channel adds the members picked and invites the others", async () => {
+        const channel = {
+            ...original,
+            id: { kind: "channel" as const, communityId: "c", channelId: 7 },
+            level: "channel" as const,
+        };
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) => {
+            sent.push(req);
+            switch (req.kind) {
+                case "createGroupChat":
+                    return Promise.resolve({ kind: "success", canisterId: channel.id });
+                case "inviteUsers":
+                    return Promise.resolve(true);
+                case "addMembersToChannel":
+                    return Promise.resolve({ kind: "success" });
+                default:
+                    return new Promise(() => {});
+            }
+        }) as never);
+
+        expect(await client.createGroup(channel, ["outsider"], ["member"])).toEqual({
+            kind: "created",
+            chatId: channel.id,
+        });
+        expect(sent).toContainEqual(
+            expect.objectContaining({ kind: "addMembersToChannel", userIds: ["member"] }),
+        );
+        expect(sent).toContainEqual(
+            expect.objectContaining({ kind: "inviteUsers", userIds: ["outsider"] }),
+        );
     });
 
     // a failed save showed the bare key "failure", which has no words

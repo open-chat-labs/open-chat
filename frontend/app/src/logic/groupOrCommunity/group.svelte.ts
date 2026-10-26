@@ -28,6 +28,8 @@ export const MAX_DESC_LENGTH = 1024;
 
 export class UpdateGroupState extends UpdateGroupOrCommunityState {
     #embedded = $state(false);
+    /** A new channel's community members to add to it (the members to invite are candidateMembers). */
+    membersToAdd = $state<string[]>([]);
     #candidateGroup = $state<CandidateGroupChat>();
     #originalGroup: CandidateGroupChat | undefined;
     #nameValid = $derived(
@@ -176,6 +178,7 @@ export class UpdateGroupState extends UpdateGroupOrCommunityState {
         const outcome = await client.createGroup(
             $state.snapshot(this.candidateGroup),
             this.hideInviteUsers ? [] : this.candidateMembers.map(({ user }) => user.userId),
+            this.membersToAdd,
         );
         this.busy = false;
         return outcome;

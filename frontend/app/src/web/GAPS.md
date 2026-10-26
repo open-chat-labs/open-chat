@@ -299,8 +299,10 @@ design export needs. Each entry says where it came up.
     `CreateGroupDialog` in channel mode, not the design's bare `NewChannelDialog`, by Julian's
     choice: it has what editing a channel has (photo, switches, members, gates, rules,
     permissions). The result becomes the channel the same way an edit does (`candidateFromCreate`
-    → `candidateFromSettings`), and the new channel opens. People picked are invited, as the old
-    flows did, not added.
+    → `candidateFromSettings`), and the new channel opens. Community members picked are added to
+    it (`createGroup`'s `toAdd`), and people from outside the community invited.
+  - an embedded channel starts public (the dialog's default) while its hint says channels are
+    private by default.
   - by hand: channel names aren't slugged (the design lowercased them and turned spaces into
     hyphens; the backend has no such rule). A name is 3 to 40 characters.
   - choosing public or private isn't checked against what the community lets you create; the

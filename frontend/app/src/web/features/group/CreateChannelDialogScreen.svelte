@@ -1,11 +1,12 @@
 <!-- A new channel in the selected community, or an embedded one (CreateGroupDialog, channel mode):
      the client's blank channel with everything the dialog sets (candidateFromCreate, as an edit is
-     made), created through UpdateGroupState as the old flows did, then opened. People picked are
-     invited, as the old flows did. -->
+     made), created through UpdateGroupState as the old flows did, then opened. Community members
+     picked are added, and people from outside it invited. -->
 <script lang="ts">
     import {
         allUsersStore,
         chatListScopeStore,
+        currentUserIdStore,
         cryptoLookup,
         isDiamondStore,
         nervousSystemLookup,
@@ -55,11 +56,12 @@
         return { userId: p.id, name: p.name, handle: p.handle, color: p.color };
     };
 
-    // the community's members held, to add; anyone on OpenChat can be searched for to invite
+    // the community's members held, other than you, to add; anyone on OpenChat can be searched
+    // for to invite
     const people = $derived(
         [...$selectedCommunityMembersStore.keys()].flatMap((id) => {
             const user = $allUsersStore.get(id);
-            return user === undefined ? [] : [person(user)];
+            return user === undefined || id === $currentUserIdStore ? [] : [person(user)];
         }),
     );
 
@@ -93,7 +95,9 @@
             lookups,
             avatar && { blobUrl: avatar.url, blobData: avatar.data, blobReference: undefined },
         );
-        editor.candidateMembers = [...result.members, ...result.invites].flatMap((id) => {
+        // community members picked join straight away; people from outside it are invited
+        editor.membersToAdd = result.members;
+        editor.candidateMembers = result.invites.flatMap((id) => {
             const user = $allUsersStore.get(id);
             return user === undefined ? [] : [{ role: ROLE_MEMBER, user }];
         });
