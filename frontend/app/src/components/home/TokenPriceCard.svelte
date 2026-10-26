@@ -1,6 +1,6 @@
 <!-- A token's or coin's price card, opened by a cashtag clicked in a message (`<cash-tag>`): its
-     logo, name, price now, and a chart of its price over the last 7 days, crediting where the prices
-     are from where that's required (logic/cashtag). -->
+     logo, name, price now, and a chart of its price over the last 7 days, and where the prices are
+     from (logic/cashtag). -->
 <script lang="ts">
     import {
         cashtagCoinsStore,
@@ -8,7 +8,7 @@
         exchangeRatesLookupStore,
         formatPercentChange,
         formatUsdPrice,
-        priceCredits,
+        priceSourcesFor,
         priceSourcesStore,
         type OpenChat,
         type PriceSubject,
@@ -55,7 +55,8 @@
     let price = $derived(token?.usd);
     let chart = $derived(history.chart(CHART_WIDTH, CHART_HEIGHT));
     let change = $derived(history.change);
-    let credits = $derived(priceCredits($priceSourcesStore, [token?.source, history.source]));
+    // where its price and chart are from, always named, and linked
+    let credits = $derived(priceSourcesFor($priceSourcesStore, [token?.source, history.source]));
 </script>
 
 {#if token !== undefined}

@@ -1,5 +1,5 @@
 import type { PriceSource } from "@shared";
-import { priceCredits } from "./priceSources";
+import { priceCredits, priceSourcesFor } from "./priceSources";
 
 const coingecko: PriceSource = {
     name: "CoinGecko",
@@ -23,5 +23,18 @@ describe("priceCredits", () => {
 
     test("credits nothing for prices with no source, or one it doesn't know", () => {
         expect(priceCredits(sources, [undefined, "elsewhere", "icpswap"])).toEqual([]);
+    });
+});
+
+describe("priceSourcesFor", () => {
+    test("names every source the prices come from, each once, whether or not it asks for credit", () => {
+        expect(priceSourcesFor(sources, ["icpswap", "coingecko", "icpswap"])).toEqual([
+            icpswap,
+            coingecko,
+        ]);
+    });
+
+    test("names nothing for prices with no source, or one it doesn't know", () => {
+        expect(priceSourcesFor(sources, [undefined, "elsewhere"])).toEqual([]);
     });
 });

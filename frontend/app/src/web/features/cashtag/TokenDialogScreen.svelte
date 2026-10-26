@@ -1,6 +1,6 @@
 <!-- A token's or coin's price card, opened by a cashtag clicked in a message (`<cash-tag>`): its
-     logo, name, price now, and a chart of its price over the last 7 days, crediting where the prices
-     are from where that's required, as the old UI's card shows them (logic/cashtag). -->
+     logo, name, price now, and a chart of its price over the last 7 days, and where the prices are
+     from, as the old UI's card shows them (logic/cashtag). -->
 <script lang="ts">
     import {
         cashtagCoinsStore,
@@ -9,7 +9,7 @@
         formatPercentChange,
         formatUsdPrice,
         OpenChat,
-        priceCredits,
+        priceSourcesFor,
         priceSourcesStore,
     } from "@client";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
@@ -47,7 +47,8 @@
     const price = $derived(token?.usd);
     const chart = $derived(history.chart(CHART_WIDTH, CHART_HEIGHT));
     const change = $derived(history.change);
-    const credits = $derived(priceCredits($priceSourcesStore, [token?.source, history.source]));
+    // where its price and chart are from, always named, and linked
+    const credits = $derived(priceSourcesFor($priceSourcesStore, [token?.source, history.source]));
 </script>
 
 {#if token !== undefined}
