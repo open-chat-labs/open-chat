@@ -5,7 +5,6 @@
         allUsersStore,
         cashtagCoinsStore,
         exchangeRatesLookupStore,
-        formatUsdPrice,
         priceCredits,
         priceSourcesStore,
         tokensBySymbolStore,
@@ -18,6 +17,7 @@
         extractCashtagSymbols,
         extractMentionedUserGroupIds,
         extractMentionedUserIds,
+        mentionedTokens,
         renderMarkdown,
         sameMentionedTokens,
         sameMentionedUserGroups,
@@ -86,42 +86,25 @@
             : (lastUserGroups = next);
     });
 
-    // a token OpenChat lists first, else one of the largest coins it doesn't (eg. $ADA)
     let lastTokens = noTokens;
     let tokens = $derived.by(() => {
         if (cashtagSymbols.length === 0) return noTokens;
-        const next: MentionedToken[] = [];
-        for (const symbol of cashtagSymbols) {
-            const t = $tokensBySymbolStore.get(symbol);
-            if (t !== undefined) {
-                const rate = $exchangeRatesLookupStore.get(t.ledger);
-                next.push({
-                    symbol,
-                    tokenSymbol: t.symbol,
-                    subject: { kind: "token", ledger: t.ledger },
-                    price: rate?.toUSD !== undefined ? formatUsdPrice(rate.toUSD) : undefined,
-                    credit: credit(rate?.source),
-                });
-                continue;
-            }
-            const coin = $cashtagCoinsStore.get(symbol);
-            if (coin !== undefined) {
-                next.push({
-                    symbol,
-                    tokenSymbol: coin.symbol,
-                    subject: { kind: "coin", id: coin.id },
-                    price: formatUsdPrice(coin.usd),
-                    credit: credit(coin.source),
-                });
-            }
-        }
+        const next = mentionedTokens(
+            cashtagSymbols,
+            $tokensBySymbolStore,
+            $exchangeRatesLookupStore,
+            $cashtagCoinsStore,
+            credit,
+        );
         return sameMentionedTokens(next, lastTokens) ? lastTokens : (lastTokens = next);
     });
 
     // the chip's tooltip, for a price that must be credited (the card it opens shows the credit too)
     function credit(source: string | undefined): string | undefined {
         const [s] = priceCredits($priceSourcesStore, [source]);
-        return s !== undefined ? $_("cashtag.priceDataBy", { values: { source: s.name } }) : undefined;
+        return s !== undefined
+            ? $_("cashtag.priceDataBy", { values: { source: s.name } })
+            : undefined;
     }
 
     let sanitized = $derived(

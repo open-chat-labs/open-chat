@@ -16,6 +16,7 @@
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import {
         cashtagCardDetails,
+        lastCardDetails,
         TokenPriceHistory,
     } from "@src/logic/cashtag/tokenPriceCard.svelte";
     import { getContext } from "svelte";
@@ -32,8 +33,16 @@
     const CHART_WIDTH = 400;
     const CHART_HEIGHT = 120;
 
+    const known = lastCardDetails();
     const token = $derived(
-        cashtagCardDetails(subject, $cryptoLookup, $exchangeRatesLookupStore, $cashtagCoinsStore),
+        known(
+            cashtagCardDetails(
+                subject,
+                $cryptoLookup,
+                $exchangeRatesLookupStore,
+                $cashtagCoinsStore,
+            ),
+        ),
     );
     const price = $derived(token?.usd);
     const chart = $derived(history.chart(CHART_WIDTH, CHART_HEIGHT));

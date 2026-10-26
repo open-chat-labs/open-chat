@@ -7,6 +7,7 @@ import type {
 } from "@client";
 import {
     cashtagCardDetails,
+    lastCardDetails,
     priceChange,
     priceChart,
     TokenPriceHistory,
@@ -158,9 +159,29 @@ describe("a price card's token or coin", () => {
     });
 
     test("is undefined once its token or coin is gone", () => {
-        expect(cashtagCardDetails({ kind: "coin", id: "dud" }, tokens, rates, coins)).toBeUndefined();
+        expect(
+            cashtagCardDetails({ kind: "coin", id: "dud" }, tokens, rates, coins),
+        ).toBeUndefined();
         expect(
             cashtagCardDetails({ kind: "token", ledger: "gone" }, tokens, rates, coins),
         ).toBeUndefined();
+    });
+});
+
+describe("a price card's last details", () => {
+    test("stay as they were when the token or coin drops out of the prices", () => {
+        const known = lastCardDetails();
+        const ada = {
+            name: "Cardano",
+            symbol: "ADA",
+            logo: undefined,
+            usd: 0.2,
+            source: "coingecko",
+        };
+
+        expect(known(undefined)).toBeUndefined();
+        expect(known(ada)).toBe(ada);
+        expect(known(undefined)).toBe(ada);
+        expect(known({ ...ada, usd: 0.21 })?.usd).toBe(0.21);
     });
 });

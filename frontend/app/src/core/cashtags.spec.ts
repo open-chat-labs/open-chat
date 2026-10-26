@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import "@src/utils/markdown";
 import {
     extractCashtagSymbols,
+    mentionedTokens,
     renderMarkdown,
     replaceCashtags,
     sameMentionedTokens,
@@ -77,7 +78,7 @@ describe("extractCashtagSymbols", () => {
     });
 
     test("allows punctuation around it", () => {
-        expect(extractCashtagSymbols("($CHAT), $ICP! $ckBTC's \"$CHAT\"")).toEqual([
+        expect(extractCashtagSymbols('($CHAT), $ICP! $ckBTC\'s "$CHAT"')).toEqual([
             "chat",
             "icp",
             "ckbtc",
@@ -125,9 +126,7 @@ describe("cashtags in rendered messages", () => {
     });
 
     test("keep the punctuation around them", () => {
-        expect(render("($CHAT), $ICP! $CHAT's $ICP.")).toBe(
-            `(${chat}), ${icp}! ${chat}'s ${icp}.`,
-        );
+        expect(render("($CHAT), $ICP! $CHAT's $ICP.")).toBe(`(${chat}), ${icp}! ${chat}'s ${icp}.`);
     });
 
     test("leave amounts alone", () => {
@@ -149,12 +148,14 @@ describe("cashtags in rendered messages", () => {
     test("leave code spans and code blocks alone", () => {
         expect(render("`$CHAT` and $CHAT")).toBe(`<code>$CHAT</code> and ${chat}`);
         const block = render("```\nbuy $CHAT\n```\n$ICP", false);
-        expect(block).not.toContain("<cash-tag data-ledger=\"2ouva-viaaa-aaaaq-aaamq-cai");
+        expect(block).not.toContain('<cash-tag data-ledger="2ouva-viaaa-aaaaq-aaamq-cai');
         expect(block).toContain(icp);
     });
 
     test("leave links alone", () => {
-        expect(render("[buy $CHAT](https://example.com) $ICP")).not.toContain("2ouva-viaaa-aaaaq-aaamq-cai");
+        expect(render("[buy $CHAT](https://example.com) $ICP")).not.toContain(
+            "2ouva-viaaa-aaaaq-aaamq-cai",
+        );
         expect(render("[buy $CHAT](https://example.com) $ICP")).toContain(icp);
         expect(render("https://example.com/$CHAT")).not.toContain("cash-tag");
     });
@@ -185,7 +186,12 @@ describe("cashtags in rendered messages", () => {
 
 describe("sameMentionedTokens", () => {
     test("is equal by value", () => {
-        expect(sameMentionedTokens(tokens, tokens.map((t) => ({ ...t })))).toBe(true);
+        expect(
+            sameMentionedTokens(
+                tokens,
+                tokens.map((t) => ({ ...t })),
+            ),
+        ).toBe(true);
     });
 
     test("differs on what it is, or the credit", () => {
@@ -197,5 +203,51 @@ describe("sameMentionedTokens", () => {
 
     test("differs on the price shown, not on the number behind it", () => {
         expect(sameMentionedTokens([CHAT], [{ ...CHAT, price: "$0.0282" }])).toBe(false);
+    });
+});
+
+describe("mentionedTokens", () => {
+    const tokensBySymbol = new Map([["chat", { symbol: "CHAT", ledger: "chat-ledger" }]]);
+    const rates = new Map([["chat-ledger", { toUSD: 0.0281, source: "icpswap" }]]);
+    const coins = new Map([
+        ["ada", { id: "cardano", symbol: "ADA", name: "Cardano", usd: 0.205, source: "coingecko" }],
+        // a coin with a listed token's symbol, as on a test env whose Registry isn't prod's
+        ["chat", { id: "solchat", symbol: "CHAT", name: "SolChat", usd: 0.5, source: "coingecko" }],
+    ]);
+    const credit = (source: string | undefined) =>
+        source === "coingecko" ? "Price data by CoinGecko" : undefined;
+
+    test("takes a token OpenChat lists over a coin with its symbol", () => {
+        expect(mentionedTokens(["chat"], tokensBySymbol, rates, coins, credit)).toEqual([
+            {
+                symbol: "chat",
+                tokenSymbol: "CHAT",
+                subject: { kind: "token", ledger: "chat-ledger" },
+                price: "$0.0281",
+                credit: undefined,
+            },
+        ]);
+    });
+
+    test("takes one of the largest coins for any other symbol, with its price's credit", () => {
+        expect(mentionedTokens(["ada"], tokensBySymbol, rates, coins, credit)).toEqual([
+            {
+                symbol: "ada",
+                tokenSymbol: "ADA",
+                subject: { kind: "coin", id: "cardano" },
+                price: "$0.205",
+                credit: "Price data by CoinGecko",
+            },
+        ]);
+    });
+
+    test("leaves out symbols that are neither", () => {
+        expect(mentionedTokens(["foo"], tokensBySymbol, rates, coins, credit)).toEqual([]);
+    });
+
+    test("gives a token with no price no price", () => {
+        expect(
+            mentionedTokens(["chat"], tokensBySymbol, new Map(), coins, credit)[0].price,
+        ).toBeUndefined();
     });
 });

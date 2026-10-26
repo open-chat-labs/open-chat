@@ -114,12 +114,14 @@ design export needs. Each entry says where it came up.
     the balance is too low (today: "Keep collecting!" with Pay disabled), e.g. how to earn more.
     The new UI shows it as a `DialogShell` with the old UI's words for now
     (`features/profile/PremiumItemDialog.svelte`, `TODO(design)`).
-  - **Token price card**: the card a cashtag in a message opens (`$CHAT`, `<cash-tag>`): the
-    token's logo, name, price now, its change over 7 days and a chart of its last 7 days' prices
-    (from the price service, `getTokenPriceHistory`), with loading and no-history states. The new
-    UI shows it as a `DialogShell` laid out like the old UI's card
-    (`features/cashtag/TokenDialogScreen.svelte`, `TODO(design)`). The chip itself is the shared
-    `<cash-tag>` web component, coloured from the text it's in.
+  - **Token price card**: the card a cashtag in a message opens (`$CHAT`, or a coin OpenChat
+    doesn't list such as `$ADA`, `<cash-tag>`): the token's logo (coins have none), name, price now,
+    its change over 7 days and a chart of its last 7 days' prices (from the price service,
+    `getPriceHistory`), with loading and no-history states, and the credit a source asks for
+    ("Price data by CoinGecko", linked). The new UI shows it as a `DialogShell` laid out like the
+    old UI's card (`features/cashtag/TokenDialogScreen.svelte`, `TODO(design)`). The chip itself is
+    the shared `<cash-tag>` web component, coloured from the text it's in, with a coin's credit as
+    its tooltip.
 - **`ProfileDialog`, by hand** (8c, to go back to the design export): `sections`, the sections
   its nav offers (a host that has built only some); the cover and photo edit buttons only with
   `onCoverEdit` / `onPhotoEdit`; `engagement` counts as numbers; `memberSince` from `joined` in the
@@ -376,7 +378,7 @@ design export needs. Each entry says where it came up.
 
 - **Wallet**:
   - no 24h price change. A 7-day price history comes from the price service
-    (`getTokenPriceHistory`, hourly) where there is one (`OC_PRICE_SERVICE_URL`);
+    (`getPriceHistory`, hourly) where there is one (`OC_PRICE_SERVICE_URL`);
   - transaction history only for tokens with an index canister, one token at a time. There's no
     all-tokens activity, swaps aren't told apart from transfers, there's no chat context, and
     BTC/EVM/SOL-side transfers aren't shown;

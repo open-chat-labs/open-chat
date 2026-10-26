@@ -1,4 +1,13 @@
-import { userGroupMentionRegex, userIdMentionRegex, type PriceSubject } from "@client";
+import {
+    formatUsdPrice,
+    userGroupMentionRegex,
+    userIdMentionRegex,
+    type CashtagCoin,
+    type CryptocurrencyDetails,
+    type PriceSubject,
+    type ReadonlyMap,
+    type TokenExchangeRates,
+} from "@client";
 import { marked } from "marked";
 import { DOMPurifyDefault, sanitizeOneLine } from "@src/utils/domPurify";
 
@@ -59,7 +68,8 @@ export function extractMentionedUserGroupIds(text: string): number[] {
 // may have dots in it (RICH.OT). Not inside a word or straight after another $, nor followed by more
 // of a word. The character before it is captured rather than looked behind at, which older Safaris
 // can't parse
-const cashtagRegex = /(^|[^\p{L}\p{N}_$])\$([A-Za-z][A-Za-z0-9]*(?:\.[A-Za-z0-9]+)*)(?![\p{L}\p{N}_$])/gu;
+const cashtagRegex =
+    /(^|[^\p{L}\p{N}_$])\$([A-Za-z][A-Za-z0-9]*(?:\.[A-Za-z0-9]+)*)(?![\p{L}\p{N}_$])/gu;
 
 // Anything that could be a cashtag in the raw text, before markdown: the text around it isn't
 // checked here, since markdown can change it (`_$CHAT_` is <em>$CHAT</em>). replaceCashtags checks
@@ -85,6 +95,46 @@ function cashtagSymbols(symbol: string): string[] {
         symbols.push(symbol.slice(0, dot));
     }
     return symbols;
+}
+
+/**
+ * What the text's cashtag symbols stand for: a token OpenChat lists first (`tokensBySymbol`, keyed by
+ * symbol in lower case), else one of the largest coins it doesn't (eg. $ADA), else nothing. `credit`
+ * gives the credit a price from the given source needs, if any.
+ */
+export function mentionedTokens(
+    symbols: string[],
+    tokensBySymbol: ReadonlyMap<string, Pick<CryptocurrencyDetails, "symbol" | "ledger">>,
+    exchangeRates: ReadonlyMap<string, TokenExchangeRates>,
+    coins: ReadonlyMap<string, CashtagCoin>,
+    credit: (source: string | undefined) => string | undefined,
+): MentionedToken[] {
+    const tokens: MentionedToken[] = [];
+    for (const symbol of symbols) {
+        const token = tokensBySymbol.get(symbol);
+        if (token !== undefined) {
+            const rate = exchangeRates.get(token.ledger);
+            tokens.push({
+                symbol,
+                tokenSymbol: token.symbol,
+                subject: { kind: "token", ledger: token.ledger },
+                price: rate?.toUSD !== undefined ? formatUsdPrice(rate.toUSD) : undefined,
+                credit: credit(rate?.source),
+            });
+            continue;
+        }
+        const coin = coins.get(symbol);
+        if (coin !== undefined) {
+            tokens.push({
+                symbol,
+                tokenSymbol: coin.symbol,
+                subject: { kind: "coin", id: coin.id },
+                price: formatUsdPrice(coin.usd),
+                credit: credit(coin.source),
+            });
+        }
+    }
+    return tokens;
 }
 
 export function sameMentionedTokens(a: MentionedToken[], b: MentionedToken[]): boolean {

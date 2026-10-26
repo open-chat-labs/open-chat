@@ -15,6 +15,7 @@
     } from "@client";
     import {
         cashtagCardDetails,
+        lastCardDetails,
         TokenPriceHistory,
     } from "@src/logic/cashtag/tokenPriceCard.svelte";
     import Loading from "@shared_components/Loading.svelte";
@@ -40,8 +41,16 @@
     const CHART_WIDTH = 300;
     const CHART_HEIGHT = 100;
 
+    const known = lastCardDetails();
     let token = $derived(
-        cashtagCardDetails(subject, $cryptoLookup, $exchangeRatesLookupStore, $cashtagCoinsStore),
+        known(
+            cashtagCardDetails(
+                subject,
+                $cryptoLookup,
+                $exchangeRatesLookupStore,
+                $cashtagCoinsStore,
+            ),
+        ),
     );
     let price = $derived(token?.usd);
     let chart = $derived(history.chart(CHART_WIDTH, CHART_HEIGHT));
@@ -107,8 +116,15 @@
                         </div>
                     {/if}
                     {#each credits as credit}
-                        <a class="credit" href={credit.url} target="_blank" rel="noopener noreferrer"
-                            >{$_("cashtag.priceDataBy", { values: { source: credit.name } })}</a>
+                        <a
+                            class="credit"
+                            href={credit.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            ><Translatable
+                                resourceKey={i18nKey("cashtag.priceDataBy", {
+                                    source: credit.name,
+                                })} /></a>
                     {/each}
                 </div>
             {/snippet}

@@ -81,7 +81,13 @@ describe("the price service's prices", () => {
             {
                 prices: {},
                 coins: {
-                    ADA: { id: "cardano", name: "Cardano", usd: 0.204927, source: "coingecko" },
+                    ADA: {
+                        id: "cardano",
+                        name: "Cardano",
+                        usd: 0.204927,
+                        source: "coingecko",
+                        change24h: -1.2,
+                    },
                     DUD: { id: "dud", name: "Dud", usd: 0, source: "coingecko" },
                 },
                 sources,
@@ -90,7 +96,13 @@ describe("the price service's prices", () => {
         );
 
         expect(prices?.coins).toEqual({
-            ada: { id: "cardano", symbol: "ADA", name: "Cardano", usd: 0.204927, source: "coingecko" },
+            ada: {
+                id: "cardano",
+                symbol: "ADA",
+                name: "Cardano",
+                usd: 0.204927,
+                source: "coingecko",
+            },
         });
     });
 
@@ -100,16 +112,59 @@ describe("the price service's prices", () => {
                 prices: {},
                 sources: {
                     ...sources,
-                    shady: { name: "Shady", url: "javascript:alert(1)", attribution_required: true },
+                    shady: {
+                        name: "Shady",
+                        url: "javascript:alert(1)",
+                        attribution_required: true,
+                    },
                 },
             },
             supportedTokens,
         );
 
         expect(prices?.sources).toEqual({
-            coingecko: { name: "CoinGecko", url: "https://www.coingecko.com", attributionRequired: true },
-            icpswap: { name: "ICPSwap", url: "https://www.icpswap.com", attributionRequired: false },
+            coingecko: {
+                name: "CoinGecko",
+                url: "https://www.coingecko.com",
+                attributionRequired: true,
+            },
+            icpswap: {
+                name: "ICPSwap",
+                url: "https://www.icpswap.com",
+                attributionRequired: false,
+            },
         });
+    });
+
+    test("leave out a coin whose source isn't described, as it couldn't be credited", () => {
+        const prices = pricesResponse(
+            {
+                prices: {},
+                coins: { ADA: { id: "cardano", name: "Cardano", usd: 0.2, source: "coingecko" } },
+                sources: { icpswap: sources.icpswap },
+            },
+            supportedTokens,
+        );
+
+        expect(prices?.coins).toEqual({});
+    });
+
+    test("parse each source on its own, so a bad one doesn't drop the rest", () => {
+        const prices = quietly(() =>
+            pricesResponse(
+                {
+                    prices: {},
+                    coins: {
+                        ADA: { id: "cardano", name: "Cardano", usd: 0.2, source: "coingecko" },
+                    },
+                    sources: { ...sources, newcomer: { name: "Newcomer" } },
+                },
+                supportedTokens,
+            ),
+        );
+
+        expect(Object.keys(prices?.sources ?? {})).toEqual(["coingecko", "icpswap"]);
+        expect(prices?.coins.ada?.id).toBe("cardano");
     });
 
     test("keep the tokens' prices when the coins or sources can't be parsed", () => {
@@ -168,7 +223,10 @@ describe("a price history from the price service", () => {
             ],
         });
 
-        expect(history).toEqual({ points: [{ timestamp: NOW, usd: 0.0281335 }], source: undefined });
+        expect(history).toEqual({
+            points: [{ timestamp: NOW, usd: 0.0281335 }],
+            source: undefined,
+        });
     });
 
     test("is empty for a token that has never traded", () => {

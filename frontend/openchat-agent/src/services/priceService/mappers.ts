@@ -17,20 +17,18 @@ const Prices = Type.Object({
     ),
 });
 
-const Coins = Type.Record(
-    Type.String(),
-    Type.Object({
-        id: Type.String(),
-        name: Type.String(),
-        usd: Type.Number(),
-        source: Type.Optional(Type.String()),
-    }),
-);
+const Coin = Type.Object({
+    id: Type.String(),
+    name: Type.String(),
+    usd: Type.Number(),
+    source: Type.Optional(Type.String()),
+});
 
-const Sources = Type.Record(
-    Type.String(),
-    Type.Object({ name: Type.String(), url: Type.String(), attribution_required: Type.Boolean() }),
-);
+const Source = Type.Object({
+    name: Type.String(),
+    url: Type.String(),
+    attribution_required: Type.Boolean(),
+});
 
 const PriceHistoryResponse = Type.Object({
     points: Type.Array(Type.Tuple([Type.Number(), Type.Number()])),
@@ -39,9 +37,10 @@ const PriceHistoryResponse = Type.Object({
 
 // The prices of the tokens we support, keyed by ledger, and of the coins OpenChat doesn't list,
 // keyed by symbol in lower case. Undefined if the tokens' prices can't be parsed, so the prices
-// already loaded are kept; coins or sources that can't be parsed are left out. Whether the prices
-// are fresh is the service's call (it answers 503 when they aren't): the device's clock can be hours
-// out
+// already loaded are kept; coins or sources that can't be parsed are left out, each on its own. A
+// coin whose source can't be credited is left out too, as its price mustn't be shown uncredited.
+// Whether the prices are fresh is the service's call (it answers 503 when they aren't): the device's
+// clock can be hours out
 export function pricesResponse(
     json: unknown,
     supportedTokens: CryptocurrencyDetails[],
@@ -57,18 +56,31 @@ export function pricesResponse(
         }
     }
 
-    const coins: Record<string, CashtagCoin> = {};
-    for (const [symbol, coin] of Object.entries(field(json, "coins", Coins) ?? {})) {
-        if (isPrice(coin.usd)) {
-            coins[symbol.toLowerCase()] = { ...coin, symbol, source: coin.source };
+    const sources: Record<string, PriceSource> = {};
+    for (const [key, entry] of Object.entries(entries(json, "sources"))) {
+        const s = parse(entry, Source, `source ${key}`);
+        // it becomes a link
+        if (s !== undefined && s.url.startsWith("https://")) {
+            sources[key] = {
+                name: s.name,
+                url: s.url,
+                attributionRequired: s.attribution_required,
+            };
         }
     }
 
-    const sources: Record<string, PriceSource> = {};
-    for (const [key, s] of Object.entries(field(json, "sources", Sources) ?? {})) {
-        // it becomes a link
-        if (s.url.startsWith("https://")) {
-            sources[key] = { name: s.name, url: s.url, attributionRequired: s.attribution_required };
+    const coins: Record<string, CashtagCoin> = {};
+    for (const [symbol, entry] of Object.entries(entries(json, "coins"))) {
+        const coin = parse(entry, Coin, `coin ${symbol}`);
+        const creditable = coin?.source === undefined || sources[coin.source] !== undefined;
+        if (coin !== undefined && isPrice(coin.usd) && creditable) {
+            coins[symbol.toLowerCase()] = {
+                id: coin.id,
+                symbol,
+                name: coin.name,
+                usd: coin.usd,
+                source: coin.source,
+            };
         }
     }
 
@@ -88,10 +100,15 @@ export function priceHistoryResponse(json: unknown): PriceHistory | undefined {
     };
 }
 
-// one field of the response, on its own, so a bad one doesn't spoil the rest
-function field<T extends TSchema>(json: unknown, name: string, schema: T): Static<T> | undefined {
-    if (typeof json !== "object" || json === null || !(name in json)) return undefined;
-    return parse((json as Record<string, unknown>)[name], schema, name);
+// the entries of an object in the response, to parse each on its own so a bad one doesn't spoil the
+// rest; none if it isn't an object
+function entries(json: unknown, name: string): Record<string, unknown> {
+    const value = isObject(json) ? json[name] : undefined;
+    return isObject(value) ? value : {};
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function parse<T extends TSchema>(json: unknown, schema: T, what: string): Static<T> | undefined {

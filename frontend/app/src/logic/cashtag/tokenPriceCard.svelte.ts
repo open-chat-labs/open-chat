@@ -57,7 +57,25 @@ export function cashtagCardDetails(
     const coin = [...coins.values()].find((c) => c.id === subject.id);
     return coin === undefined
         ? undefined
-        : { name: coin.name, symbol: coin.symbol, logo: undefined, usd: coin.usd, source: coin.source };
+        : {
+              name: coin.name,
+              symbol: coin.symbol,
+              logo: undefined,
+              usd: coin.usd,
+              source: coin.source,
+          };
+}
+
+/**
+ * Remembers the last details a card had, for when its token or coin drops out of the prices (the
+ * price service leaves out coins it hasn't refreshed for an hour): the card stays as it was, rather
+ * than vanishing and coming back unasked once the coin returns.
+ */
+export function lastCardDetails(): (
+    details: CashtagCardDetails | undefined,
+) => CashtagCardDetails | undefined {
+    let last: CashtagCardDetails | undefined;
+    return (details) => (last = details ?? last);
 }
 
 /** The change in percent from the first price to the last, with at least two. */
