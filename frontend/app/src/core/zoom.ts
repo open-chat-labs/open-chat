@@ -79,6 +79,10 @@ export function zoomImage(
         }
     };
     container.addEventListener("panzoomend", onPanzoomEnd);
+    // Panzoom handles pinch itself; the wheel is wired up by hand, on the parent so the image
+    // keeps zooming while the pointer is beside it
+    const wheelTarget = container.parentElement;
+    wheelTarget?.addEventListener("wheel", panzoom.zoomWithWheel);
 
     return {
         toggle() {
@@ -93,6 +97,7 @@ export function zoomImage(
         },
         destroy() {
             container.removeEventListener("panzoomend", onPanzoomEnd);
+            wheelTarget?.removeEventListener("wheel", panzoom.zoomWithWheel);
             panzoom.destroy();
         },
     };
