@@ -23,6 +23,7 @@ export { default as ConvertToCommunityDialog } from './components/ConvertToCommu
 export { default as CreateGroupDialog } from './components/CreateGroupDialog.svelte';
 export { default as DailyPuzzleCard } from './components/DailyPuzzleCard.svelte';
 export { default as DeleteGroupDialog } from './components/DeleteGroupDialog.svelte';
+export { default as DiamondContent } from './components/DiamondContent.svelte';
 export { default as DiamondDialog } from './components/DiamondDialog.svelte';
 export { default as DmChatSettings } from './components/DmChatSettings.svelte';
 export { default as DmPanel } from './components/DmPanel.svelte';
@@ -67,7 +68,7 @@ export type { NetworkId } from './components/WalletReceive.svelte';
 export type { SendContact, WalletSendRequest } from './components/WalletSend.svelte';
 export type { MemberRole } from './components/GroupPanel.svelte';
 export type { CryptoToken, CryptoMember } from './components/SendCryptoDialog.svelte';
-export type { DiamondPurchase, DiamondLimits, PlanKey } from './components/DiamondDialog.svelte';
+export type { DiamondPurchase, DiamondLimits, PlanKey } from './components/DiamondContent.svelte';
 export type { UserGroupPerson } from './components/UserGroupDialog.svelte';
 export type { CreateGroupPerson, NameCheck } from './components/CreateGroupDialog.svelte';
 export type { ImportCommunity } from './components/ImportToCommunityDialog.svelte';

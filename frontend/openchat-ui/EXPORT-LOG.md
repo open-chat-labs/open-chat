@@ -295,6 +295,22 @@
 
 ## 2026-10-24 — MemberRow: its buttons don't also click the row, by hand
 - The ⋮ menu, the action button and the trailing icon sit inside the row, so a click on one bubbled to the row's `onClick` as well. In GroupPanel the user group row's ⋮ opened the group instead of its Edit / Delete menu, a member's ⋮ also opened their profile, and the trailing icon ran `onClick` twice. Each now stops the click reaching the row.
+
+## 2026-10-25 — LeaderboardDialog: the joystick plays the host's game, by hand
+- `game` (a snippet): the joystick, until now a "coming soon" placeholder, becomes a button ("Play Invaders") that shows the host's game in the boards' place, and a trophy in its place ("Back to the high scores") brings the boards back, as the old hall of fame's 🕹️ / 🏆 did. Focus moves to the game as it opens (its keys are the game's, and a focused button would wear its ring the whole game) and back to the joystick after. Without `game`, the joystick is the placeholder it was. `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-25 — DiamondDialog: its body as DiamondContent, prices per token, the approval fee, by hand
+- `DiamondContent` (new): everything `DiamondDialog` drew inside its card (compare, plans, confirm, the member view, header and footer) and all its logic, for a page to render too (the `/diamond` page). It takes an optional `flow` (`DialogFlow`), the dialog's, which its paying and closing go through. `DiamondDialog` is now the dialog layer, veil and card around it, taking `DiamondContent`'s props; its types (`PlanKey`, `DiamondPurchase`, `DiamondLimits`) come from there and are re-exported.
+- `tokenPrices`: each plan's price per token, the backend's own. Only those tokens are offered, at those prices, with no USD conversion (the backend checks the price and rejects any other). `prices` / `chatUsd` stay for a host without it.
+- `approvalFees`: the approval a wallet payment makes on top of the price, per token. It counts towards what a token can afford ("Need … more", insufficient funds) and shows on confirm ("Approval fee", and in the balance after payment).
+- `depositAddresses`: the top-up address per token, as each token has its own.
+- `shortfall`: how much each token is short of each plan (0 when it can pay), as the host works it out exactly in the ledger's units. Whether a plan can be paid and its "Need … more" both come from it, and "You need at least …" shows the cheapest plan's price and fee as exactly, in place of a floating point sum of price and fee against the balance here (0.1 + 0.0002 isn't 0.1002, and a plan the exact check refuses could read "Need 0 … more"). Prices, the approval fee, the shortfall, the least a plan costs and the balance after payment are shown exactly, to the 8 places CHAT's and ICP's ledgers keep ("15.001 CHAT", not the "15.00 CHAT" two places gave).
+- `pricing` (`'loading' | 'failed'`) and `onRetryPricing`: while the prices load, the plans step says so; if they failed, it says that and offers to try again. Upgrade is offered meanwhile.
+- `defaultToken`: the token chosen at first.
+- `onUpgrade` may resolve `false`: nothing bought and nothing to say (the user backed out, or the host said why); it stays on confirm with no error.
+- The first step's Back (`onBack`) hands off with no exit (`DialogFlow.handOff`), so the dialog it goes back to keeps the backdrop.
+- `meta.json` updated (`DiamondDialog`'s props are `DiamondContent`'s, so its own list is empty; the docs sample gives its defaults).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
 ## 2026-10-26 — ManageDialog: new, by hand

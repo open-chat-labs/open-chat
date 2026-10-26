@@ -457,6 +457,23 @@ design export needs. Each entry says where it came up.
 
 ### Wiring
 
+- **Diamond** (`?diamond`, `features/diamond`, 8e #10131): paid through the shared payment
+  (`logic/diamond`, which both legacy `Payment.svelte`s use too), in CHAT or ICP at the backend's
+  own prices (CHAT in production, ICP elsewhere, by default), auto-renew on, a timed member opening
+  on the plans. By hand in the library: `DiamondContent` (the dialog's body, for the `/diamond`
+  page in 9a), per-token prices (`tokenPrices`: only the backend's tokens, never USD-converted), the
+  approval fee (`approvalFees`, counted in what a token can afford and shown on confirm), a top-up
+  address per token (`depositAddresses`), `onUpgrade` resolving `false` (nothing bought, nothing to
+  say: the PIN prompt dismissed, or a PIN failure, which is toasted with its own message), and Back
+  handing off to the dialog it came from. Not yet:
+  - paying from an external wallet (the old source wallet selector and its approval popup): only
+    the OpenChat wallet pays (`DiamondPayment.pay` takes a `fromAccount` for when it can);
+  - the join gate's "Get Diamond" (8b's `JoinGateDialog` `onGetDiamond`): publish `upgrade` once
+    8b lands; group settings already does;
+  - the limits and the feature table are the library's own (`DEFAULT_LIMITS`), as the old
+    `Features.svelte`'s were written into it;
+  - app store builds hide paying (`disableDiamondPaymentFeature`: no `onUpgrade`), with no
+    "Explore Diamond" copy as the old mobile tree had.
 - **The claim calendar, by hand** (8e, the design's changes of 2026-10-22, from its brief: no export
   of them yet): `ClaimCalendar` (the profile's calendar taken out of it, always six weeks with the
   months either side dimmed, a popover on tap as well as hover) in `ClaimHistoryDialog`, with the
@@ -509,7 +526,10 @@ design export needs. Each entry says where it came up.
   - the card's reminder and hide (its "⋯" menu has only "How to play", `?chit=howto`): the old UI
     has neither.
 - **Leaderboard** (`?hof`): this month's, last month's and all time's top 10, as the old hall of
-  fame shows them, without its Invaders game.
+  fame shows them, with its Invaders game behind the joystick (8f: the old game, now
+  `core/invaders`, for both trees), where the device can play it (a keyboard, or iOS, which steers
+  by tilting); it now starts again after a game ends, keeps the final score on screen, and fits
+  its waves to the field (fewer rows on a short one, a phone on its side).
 - **Ways to earn** (`AchievementsDialog`): the old "Learn to earn" list (`achievementList`). The
   dialog's groups and its "next up" bands are the app's (`chit.adapter.ts`: each achievement
   given a group; quick up to 1,000 CHIT, middling up to 3,000, big above), not anything the old

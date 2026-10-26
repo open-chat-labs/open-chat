@@ -87,7 +87,7 @@ export const dialogs: Dialogs = {
     profile: () => import("../profile/ProfileDialogScreen.svelte"),
 
     // Diamond membership (8e)
-    diamond: undefined,
+    diamond: () => import("../diamond/DiamondDialogScreen.svelte"),
 
     // the daily CHIT: the streak, today's claim, streak insurance (8d)
     chit: () => import("../chit/ChitDialogScreen.svelte"),

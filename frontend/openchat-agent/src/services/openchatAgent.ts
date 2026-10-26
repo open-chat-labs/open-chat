@@ -310,7 +310,6 @@ import {
     type VotingNeuron,
 } from "./common/neurons";
 import { mergeAccountTransactions } from "../utils/accountTransactions";
-import { mean } from "../utils/maths";
 import { extractMessagePreviews } from "@shared";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 // import { isMainnet } from "../utils/network";
@@ -339,7 +338,6 @@ import { GroupClient } from "./group/group.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { IcpLedgerIndexClient } from "./icpLedgerIndex/icpLedgerIndex.client";
 import { IcpSwapClient } from "./icpSwap/icpSwapClient";
-import { IcpCoinsClient } from "./icpcoins/icpCoinsClient";
 import { IdentityClient } from "./identity/identity.client";
 import { LedgerClient } from "./ledger/ledger.client";
 import { LedgerIndexClient } from "./ledgerIndex/ledgerIndex.client";
@@ -432,7 +430,7 @@ export class OpenChatAgent extends EventTarget {
     private _ledgerIndexClient: LedgerIndexClient;
     private _groupClient: GroupClient;
     private _communityClient: CommunityClient;
-    private _exchangeRateClients: ExchangeRateClient[];
+    private _exchangeRateClient: ExchangeRateClient;
     private _groupInvite: GroupInvite | undefined;
     private _registryValue: RegistryValue | undefined;
     private _logger: Logger;
@@ -498,10 +496,7 @@ export class OpenChatAgent extends EventTarget {
         );
         this._identityClient = new IdentityClient(identity, this._agent, config.identityCanister);
         this._dataClient = new DataClient(identity, this._agent, config);
-        this._exchangeRateClients = [
-            new IcpCoinsClient(identity, this._agent),
-            new IcpSwapClient(),
-        ];
+        this._exchangeRateClient = new IcpSwapClient();
         this._localUserIndexClient = new LocalUserIndexClient(identity, this._agent, this._chatsDb);
         this._ledgerClient = new LedgerClient(identity, this._agent);
         this._ledgerIndexClient = new LedgerIndexClient(identity, this._agent);
@@ -5102,7 +5097,8 @@ export class OpenChatAgent extends EventTarget {
         return this._registryClient.setTokenEnabled(ledger, enabled);
     }
 
-    async exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
+    // Undefined if ICPSwap fails, so the caller can keep the rates it has
+    async exchangeRates(): Promise<Record<string, TokenExchangeRates> | undefined> {
         const supportedTokens = this._registryValue?.tokenDetails;
 
         // if (supportedTokens === undefined || !isMainnet(this.config.icUrl)) {
@@ -5113,35 +5109,18 @@ export class OpenChatAgent extends EventTarget {
             return Promise.resolve({});
         }
 
-        const exchangeRatesFromAllProviders = await Promise.allSettled(
-            this._exchangeRateClients.map((c) => c.exchangeRates(supportedTokens)),
-        );
-
-        const grouped: Record<string, TokenExchangeRates[]> = {};
-        for (const response of exchangeRatesFromAllProviders) {
-            if (response.status === "fulfilled") {
-                for (const [ledger, exchangeRates] of Object.entries(response.value)) {
-                    if (grouped[ledger] === undefined) {
-                        grouped[ledger] = [];
-                    }
-                    grouped[ledger].push(exchangeRates);
-                }
-            }
+        const exchangeRates = await this._exchangeRateClient.exchangeRates(supportedTokens);
+        if (exchangeRates === undefined) {
+            return undefined;
         }
 
         // The prices of these stablecoins on ICPSwap can be way off, since some of their pools have
         // next to no liquidity (OneSec's USDC and USDT have a few dollars), so we pin them
         for (const ledger of PINNED_STABLECOIN_LEDGERS) {
-            grouped[ledger] = [{ toUSD: 1 }];
+            exchangeRates[ledger] = { toUSD: 1 };
         }
 
-        return toRecord2(
-            Object.entries(grouped),
-            ([ledger, _]) => ledger,
-            ([_, group]) => ({
-                toUSD: mean(group.map((e) => e.toUSD)),
-            }),
-        );
+        return exchangeRates;
     }
 
     reportedMessages(userId: string | undefined): Promise<string> {
@@ -6128,8 +6107,8 @@ export class OpenChatAgent extends EventTarget {
 }
 
 export interface ExchangeRateClient {
-    // Keyed by ledger
+    // Keyed by ledger. Undefined if the rates couldn't be loaded
     exchangeRates(
         supportedTokens: CryptocurrencyDetails[],
-    ): Promise<Record<string, TokenExchangeRates>>;
+    ): Promise<Record<string, TokenExchangeRates> | undefined>;
 }

@@ -24,6 +24,9 @@ export const disableSwapFeature = disableCryptoPaymentsFeature;
 
 export const disableDiamondPaymentFeature = disableCryptoPaymentsFeature;
 
+/** Diamond is paid in CHAT in production, and ICP elsewhere (test ledgers), unless the user picks the other. */
+export const diamondPaysInChat = import.meta.env.OC_NODE_ENV === "production";
+
 export const disableMakeProposalFeature = disableCryptoPaymentsFeature;
 
 export const disableRestrictedContent = appStoreBuild;

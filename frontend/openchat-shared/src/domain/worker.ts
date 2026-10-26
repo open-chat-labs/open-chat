@@ -2813,7 +2813,7 @@ export type WorkerResults = ResultsByKind<{
     deleteDirectChat: boolean;
     diamondMembershipFees: DiamondMembershipFees[];
     reportedMessages: string;
-    exchangeRates: Record<string, TokenExchangeRates>;
+    exchangeRates: Record<string, TokenExchangeRates> | undefined;
     proposeTranslation: ProposeResponse;
     approveTranslation: ApproveResponse;
     rejectTranslation: RejectResponse;
