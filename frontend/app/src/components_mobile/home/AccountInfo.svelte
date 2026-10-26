@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { userWalletAddress } from "@src/logic/wallet/receiveAddress";
     import { BodySmall, ColourVars, Container, Row, type Padding } from "component-lib";
     import {
         BTC_SYMBOL,
@@ -7,7 +8,6 @@
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
-        encodeIcrcAccount,
         ICP_SYMBOL,
         Lazy,
         LEDGER_CANISTER_CKSOL,
@@ -16,7 +16,6 @@
         FIRST_SOL_DEPOSIT_FEE,
         SOL_DEPOSIT_FEE,
         SOL_SYMBOL,
-        userWalletAccount,
     } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -81,9 +80,7 @@
             return solAddress;
         } else {
             // The user's wallet, which is their principal's account
-            return encodeIcrcAccount(
-                userWalletAccount($currentUserIdStore, () => client.OcIdentityPrincipal),
-            );
+            return userWalletAddress($currentUserIdStore, () => client.OcIdentityPrincipal);
         }
     });
 

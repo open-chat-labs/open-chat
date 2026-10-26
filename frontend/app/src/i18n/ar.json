@@ -1297,6 +1297,7 @@
         "menu": "كبار المرجعين",
         "start": "يبدأ",
         "thisMonth": "هذا الشهر",
+        "tryAgain": "حاول مرة أخرى",
         "username": "اسم المستخدم",
         "users": "المستخدمون",
         "value": "قيمة"
@@ -2716,7 +2717,10 @@
         "updateTitle": "تحديث {name}",
         "urlLabel": "عنوان URL لـ Webhook",
         "username": "خطاف الويب",
-        "viewEditAction": "عرض/تحرير تفاصيل خطاف الويب"
+        "viewEditAction": "عرض/تحرير تفاصيل خطاف الويب",
+        "registerFailed": "عذرًا، لم نتمكن من تسجيل الويب هوك",
+        "updateFailed": "عذرًا، لم نتمكن من تحديث الويب هوك",
+        "regenerateFailed": "عذرًا، لم نتمكن من إعادة إنشاء رابط الويب هوك"
     },
     "websiteVersion": "من الموقع",
     "weeks": "اسابيع",

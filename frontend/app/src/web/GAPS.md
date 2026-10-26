@@ -58,6 +58,10 @@ design export needs. Each entry says where it came up.
 - **Proposals**: `ProposalMessage` isn't in the `GroupMessage` union, so `MessageGroup` can't
   render proposal chats. When it can, a vote that comes back `neuron_votes_failed` should list each
   neuron with its reason, as the old UI does.
+- **Prizes**: the conversation adapter doesn't map `prize_content` onto `PrizeMessage` yet (5a).
+  `PrizeMessage` has no disabled state, and without `onClaim` it marks itself claimed, so it needs
+  one: the old UI disables Claim while the user is previewing the chat or their membership has
+  lapsed (`isPreviewingOrLapsed`).
 - **Thread replies**: `ThreadPanel` renders replies with no react / menu / reply / edit handlers.
 - **Composer banner**: `ComposerBar` takes `bannerAction` as a label but doesn't pass a handler
   through to `Banner`.
@@ -284,12 +288,110 @@ design export needs. Each entry says where it came up.
     leave, so for anyone else the item does nothing.
   - not offered: freeze and unfreeze (platform moderators, no dialog), suspend, report, and the
     desktop row's swipe-to-remove (Remove chat is a row menu item instead).
+  - the row menus offer every item with a dialog (pin, archive, leave or delete, remove) on every
+    kind of row, by Julian's choice; the design gives DM and group rows only favourite, mute and
+    mark read.
   - the community header's Invite and new channel items, and the conversation header's Invite,
     Convert, Import and webhook items, come with 4b's later parts.
 
-- **Group and channel settings** (4b part 2a): GroupPanel's Settings opens `GroupSettingsDialog`
-  on `UpdateGroupState` (`features/group/GroupSettingsDialogScreen.svelte`, through
-  `settings.adapter.ts`). Someone who can't edit the chat gets its About page instead
+- **Manage** (4b rework 1, the design's Modal model): `ManageDialog`, one dialog per group,
+  channel or community with a nav down the side (`features/group/ManageDialogScreen.svelte`,
+  `logic/groupOrCommunity/manage.svelte.ts`). It holds Overview (or About), Members, Invite &
+  share, User groups, Rules, Permissions and Access gates. Members and User groups are
+  GroupPanel's own views, embedded (`GroupPanelView`). Overview, Rules, Permissions and Gates are one settings
+  form, so moving between them keeps the draft; leaving the form or closing with unsaved edits
+  asks "Discard changes?".
+  - by hand: `ManageDialog` is new in the library. The design has it only in the App prototype
+    (`_manageVals`), with no exported component.
+  - Bots: GroupPanel's bots view, its bots part: the installed bots (a group's, or a channel's
+    community's) and, for someone who may manage them (`canManageBots`), up to 20 to add
+    (`exploreBots`). Either opens `BotDialog` (`BotDialogScreen`): details, install, change
+    permissions or remove, saved through `BotInstall` as the old installer did.
+  - by hand: `BotDialog` takes the host's permission list (`permissions`): the bot's own
+    permissions with the app's words, under "Command permissions" / "Autonomous permissions" ·
+    Chat / Community / Message. What's granted is exactly what's toggled on (`grantedFromDialog`);
+    nothing is mapped onto the dialog's built-in eleven. Its summary sentence lists the app's
+    labels.
+  - a new install starts with every permission off, as the design has it (the old installer
+    started with everything the bot asked for on), so Install straight away grants nothing.
+  - the new UI has no way to register a bot (the old mobile UI's Explore → Register a bot does),
+    and no command picker in the composer to run one.
+  - the bots to add are the first 20 the directory offers (GroupPanel's search filters those);
+    with none installed and none to add, the page has no empty-state text for the owner.
+  - Webhooks (a group's or channel's owner, `canManageWebhooks`): GroupPanel's bots view, its
+    webhooks part, lists them; Register and a webhook's row open `WebhookDialog`
+    (`WebhookDialogScreen`), saving through `saveWebhook` (only the name or avatar that changed,
+    `webhookChanges`). A new webhook opens straight away in edit mode to show its URL, which holds
+    its secret.
+  - by hand: `WebhookDialog` has Delete webhook in edit mode, with a confirm step, as the old
+    pages had remove; the design has no way to remove one.
+  - a webhook's colour isn't stored: without a photo it gets its id's colour.
+  - no Stats page: the design's `GroupStats` shows the last 30 days, a 12-week series and the top
+    senders, and the backend keeps only all-time counters (`metrics`). Showing those as the last
+    30 days would mislead, so it waits on the data (see Community stats).
+  - Convert to community and Import into community (a group's owner, under Advanced) open
+    `ConvertToCommunityDialog` / `ImportToCommunityDialog` over Manage, then the community, as the
+    old pages did. Import lists the communities you own; with none it says so and doesn't open.
+  - a community's Channels page lists the channels you're in (the community's summary holds
+    no others), each opening that channel's Manage with a back arrow to Channels. Manage reads the
+    open chat, so a channel that isn't open is opened first.
+  - New channel (Channels, and the community menu's New channel / Add embedded channel) opens
+    `CreateGroupDialog` in channel mode, not the design's bare `NewChannelDialog`, by Julian's
+    choice: it has what editing a channel has (photo, switches, members, gates, rules,
+    permissions). The result becomes the channel the same way an edit does (`candidateFromCreate`
+    → `candidateFromSettings`), and the new channel opens. Community members picked are added to
+    it (`createGroup`'s `toAdd`), and people from outside the community invited.
+  - an embedded channel starts public (the dialog's default) while its hint says channels are
+    private by default.
+  - by hand: channel names aren't slugged (the design lowercased them and turned spaces into
+    hyphens; the backend has no such rule). A name is 3 to 40 characters.
+  - choosing public or private isn't checked against what the community lets you create; the
+    backend refuses one you can't, with the generic "couldn't create" message.
+  - the right column shows GroupPanel's quick panel for a group or channel (cog for someone who
+    can edit, info otherwise); its views open Manage, except pinned messages. A community has no
+    panel: its header, its menu's Members / Invite / Edit community, and a channel's community
+    link open Manage. A panel asked for members (?everyone, ?usergroup=) or a community's details
+    opens Manage instead.
+  - the quick panel's "Online now" has no presence data yet (see Presence).
+  - a DM's name, the header menu's Chat settings and DmPanel's View profile open the other
+    person's card with the design's Profile / This chat tabs (`dmTab`): This chat has the DM's
+    mute, favourite and disappearing messages (no read receipts, see above).
+  - which pages show follows the app's permission rules (`detailsPermissions`), not the
+    prototype's roles: someone who can't edit gets About and read-only Rules and Gates, and no
+    Permissions; Invite & share shows with `canOpenInvite`, and User groups with
+    `canManageUserGroups` (as the design, which offers them to managers only).
+  - Manage opens from a group's or channel's name (with the design's chevron and hint), the
+    header menu's first item ("Manage group", or "Group details" without edit rights), the quick
+    panel's cog, and the community header and its menu.
+  - the header menu follows the design's (`_chatMenu`) but has no Share to chat (the chat picker
+    is 4d) and no Report (no report flow yet); a DM keeps Delete chat, which the design leaves out.
+    The community menu has no Stats or Add a bot until those pages land, and no longer mutes every channel (the community's About page does).
+  - a channel's Manage has no back arrow to its community yet (the community has no Channels
+    page).
+  - the frame below 768px is the desktop frame at full screen with a narrower nav; the design has
+    no narrow layout for it.
+  - the nav's subtitle and the About page say "1 members": the app's `memberCount` has no plural.
+  - a member's read-only Rules page still shows the editor's character counter and hint.
+  - Invite & share's page title says "Invite and share" (InviteDialog's own string).
+
+- **Create a group or community** (4b): `CreateGroupDialog` (`features/group/CreateGroupDialogScreen.svelte`)
+  from the chat list header's Create new group and the rail's Create community. The result is read
+  as an edit is (`candidateFromCreate`, `candidateCommunityFromCreate`), created through
+  `UpdateGroupState` / `UpdateCommunityState`, and then opened.
+  - a community needs Diamond: without it the rail opens the Diamond dialog. A guest is sent to
+    sign in, but the community isn't started after signing in (the old Home did that; 10a).
+  - by hand: `CreateGroupDialog`'s community defaults are all admin (the app's and the backend's),
+    and a community shows no message permissions or Messages / Threads tabs.
+  - by hand: the form is locked (inert, dimmed) while the create is in flight.
+  - the invite list starts empty: people are found by searching (no frequent contacts).
+  - Explore's create (8a) isn't wired.
+  - a failed community create (e.g. the 10-community limit) says only "Sorry we were unable to
+    create your community", and that toast showed twice in one headless run though the app shows
+    it once.
+
+- **Group and channel settings** (4b part 2a): GroupPanel's Settings opens Manage on its settings
+  pages: `GroupSettingsDialog`, embedded, on `UpdateGroupState` (`features/group/ManageSettings.svelte`,
+  through `settings.adapter.ts`). Someone who can't edit the chat gets its About page instead
   (`chatManageAccess`), from the same menu item, which reads "About the group" for them.
   - by hand: `GroupSettingsDialog` takes `readOnlySections`. Permissions, disappearing messages
     and Public are read-only to a non-owner, as in the old editors (`canChangeVisibility`).
@@ -307,8 +409,7 @@ design export needs. Each entry says where it came up.
     couldn't save.
   - a picked avatar is cropped to its middle at 150×150, because the dialog has no crop step.
     The colour and cover swatches aren't stored, so they come back to their defaults.
-  - the About page opens on its own until the Manage frame lands in part 3. Its rules link does
-    nothing.
+  - the About page's rules link opens Manage's Rules page.
   - with edit rights, GroupPanel's menu also shows Convert, Import and the new channel items.
     They do nothing until parts 4 and 5.
 
@@ -324,8 +425,6 @@ design export needs. Each entry says where it came up.
   - the community About page's Mute mutes every channel and can't unmute (as in the old menus).
     Tapping it while muted says "That didn't go through" when it can't, not why. It has no
     Favourite, because a community can't be a favourite.
-  - `CreateGroupDialog` still has the old community defaults (invite and private channels for
-    everyone, roles and user groups for owners). Part 4 brings them in line.
   - the primary language isn't in the dialog, and is kept as it was.
   - removing an avatar or banner in the dialog saves nothing. `groupChanges` and
     `communityChanges` turn a removed image into "no change", because the client has no way to
@@ -335,10 +434,12 @@ design export needs. Each entry says where it came up.
     permissions.
   - GroupPanel's community Permissions summary counts changes against the group defaults,
     message permissions included, so it reads far more than the dialog's badge.
-  - Esc while the dialog's role picker is open closes the whole dialog, and drops unsaved edits.
+  - Esc while the dialog's role picker is open closes Manage, not the picker (with unsaved edits,
+    it asks first).
 
-- **Invite** (4b part 3a): `InviteDialog`, on `MemberManagement`, opens from GroupPanel's invite
-  and share buttons, the conversation header's Invite and the community header's Invite.
+- **Invite** (4b part 3a): Manage's Invite & share page (`InviteDialog`, embedded, on
+  `MemberManagement`, `features/group/ManageInvite.svelte`) opens from GroupPanel's invite and
+  share buttons, the conversation header's Invite and the community header's Invite.
   - by hand: `InviteDialog` takes `onSearch`. Invite searches the community's members and then
     everyone (`searchUsersForInvite`), and Add searches the community (`searchCommunityMembersToAdd`),
     as both old trees did.
@@ -440,6 +541,23 @@ design export needs. Each entry says where it came up.
 
 ### Wiring
 
+- **Diamond** (`?diamond`, `features/diamond`, 8e #10131): paid through the shared payment
+  (`logic/diamond`, which both legacy `Payment.svelte`s use too), in CHAT or ICP at the backend's
+  own prices (CHAT in production, ICP elsewhere, by default), auto-renew on, a timed member opening
+  on the plans. By hand in the library: `DiamondContent` (the dialog's body, for the `/diamond`
+  page in 9a), per-token prices (`tokenPrices`: only the backend's tokens, never USD-converted), the
+  approval fee (`approvalFees`, counted in what a token can afford and shown on confirm), a top-up
+  address per token (`depositAddresses`), `onUpgrade` resolving `false` (nothing bought, nothing to
+  say: the PIN prompt dismissed, or a PIN failure, which is toasted with its own message), and Back
+  handing off to the dialog it came from. Not yet:
+  - paying from an external wallet (the old source wallet selector and its approval popup): only
+    the OpenChat wallet pays (`DiamondPayment.pay` takes a `fromAccount` for when it can);
+  - the join gate's "Get Diamond" (8b's `JoinGateDialog` `onGetDiamond`): publish `upgrade` once
+    8b lands; group settings already does;
+  - the limits and the feature table are the library's own (`DEFAULT_LIMITS`), as the old
+    `Features.svelte`'s were written into it;
+  - app store builds hide paying (`disableDiamondPaymentFeature`: no `onUpgrade`), with no
+    "Explore Diamond" copy as the old mobile tree had.
 - **The claim calendar, by hand** (8e, the design's changes of 2026-10-22, from its brief: no export
   of them yet): `ClaimCalendar` (the profile's calendar taken out of it, always six weeks with the
   months either side dimmed, a popover on tap as well as hover) in `ClaimHistoryDialog`, with the
@@ -492,7 +610,10 @@ design export needs. Each entry says where it came up.
   - the card's reminder and hide (its "⋯" menu has only "How to play", `?chit=howto`): the old UI
     has neither.
 - **Leaderboard** (`?hof`): this month's, last month's and all time's top 10, as the old hall of
-  fame shows them, without its Invaders game.
+  fame shows them, with its Invaders game behind the joystick (8f: the old game, now
+  `core/invaders`, for both trees), where the device can play it (a keyboard, or iOS, which steers
+  by tilting); it now starts again after a game ends, keeps the final score on screen, and fits
+  its waves to the field (fewer rows on a short one, a phone on its side).
 - **Ways to earn** (`AchievementsDialog`): the old "Learn to earn" list (`achievementList`). The
   dialog's groups and its "next up" bands are the app's (`chit.adapter.ts`: each achievement
   given a group; quick up to 1,000 CHIT, middling up to 3,000, big above), not anything the old

@@ -1,11 +1,11 @@
-<!-- A group's, channel's or community's settings (GroupSettingsDialog) on UpdateGroupState or
-     UpdateCommunityState, as the old editors were: the parts the viewer's role can't change are
-     read-only, and someone who can't edit it gets its About page (chatManageAccess,
-     communityManageAccess). A change that has to be confirmed (renaming a verified group, changing
-     who can see it) asks first; declining keeps the edits to change. -->
+<!-- Manage's settings pages (Overview or About, Gates, Rules, Permissions): one GroupSettingsDialog,
+     embedded, on UpdateGroupState or UpdateCommunityState, as the old editors were. It stays
+     mounted while the user moves between those pages, so they share one draft. The parts the
+     viewer's role can't change are read-only, and someone who can't edit it gets its About page
+     (`access`). A change that has to be confirmed (renaming a
+     verified group, changing who can see it) asks first; declining keeps the edits to change. -->
 <script lang="ts">
     import {
-        anonUserStore,
         candidateGroupFromChat,
         chatSummariesListStore,
         cryptoLookup,
@@ -16,9 +16,7 @@
         publish,
         roleAsText,
         selectedChatRulesStore,
-        selectedChatSummaryStore,
         selectedCommunityRulesStore,
-        selectedCommunitySummaryStore,
         type CommunitySummary,
         type GroupChangeConfirmation,
         type Level,
@@ -31,7 +29,6 @@
     } from "@openchat/ui/src/features/components/GroupSettingsDialog.svelte";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
-    import { modal } from "@openchat/ui/src/lib/behaviours/modal";
     import type { GroupSettings } from "@openchat/ui/src/lib/types";
     import { i18nKey, interpolate } from "@i18n/i18n";
     import { muteChat } from "@src/logic/chats/muteChat";
@@ -41,11 +38,7 @@
         UpdateCommunityState,
         type SaveCommunityOutcome,
     } from "@src/logic/groupOrCommunity/community.svelte";
-    import {
-        chatManageAccess,
-        communityManageAccess,
-        type ManageAccess,
-    } from "@src/logic/groupOrCommunity/detailsPermissions";
+    import { type ManageAccess } from "@src/logic/groupOrCommunity/detailsPermissions";
     import {
         MAX_NAME_LENGTH,
         MIN_NAME_LENGTH,
@@ -57,8 +50,7 @@
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { gateAssets, type GateLookups } from "../access/gates.adapter";
-    import type { DialogProps, LocalDialog } from "../app/dialogs";
-    import { dialogTarget } from "./dialogTarget";
+    import type { GroupSettingsTab } from "../app/dialogs";
     import {
         candidateCommunityFromSettings,
         candidateFromSettings,
@@ -66,16 +58,18 @@
         groupSettings,
     } from "./settings.adapter";
 
-    let { dialog, onClose }: DialogProps<Extract<LocalDialog, { kind: "group_settings" }>> =
-        $props();
+    interface Props {
+        target: MultiUserChat | CommunitySummary;
+        section: GroupSettingsTab;
+        access: ManageAccess;
+        onDirtyChange: (dirty: boolean) => void;
+        onOpenRules: () => void;
+        onClose: () => void;
+    }
+
+    let { target, section, access, onDirtyChange, onOpenRules, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-
-    // what it was opened for; another chat or community being opened closes the dialog (a
-    // navigation does)
-    const target = $derived(
-        dialogTarget(dialog.target, $selectedChatSummaryStore, $selectedCommunitySummaryStore),
-    );
 
     const lookups = $derived({ tokens: $cryptoLookup, nervousSystems: $nervousSystemLookup });
     const assets = $derived(gateAssets(lookups));
@@ -144,23 +138,16 @@
         };
     }
 
-    const editor: Editor | undefined = untrack(() => {
-        if (target === undefined) return undefined;
-        return target.kind === "community"
+    // the chat or community as it was when Manage opened
+    const editor: Editor = untrack(() =>
+        target.kind === "community"
             ? communityEditor(target, lookups)
-            : chatEditor(target, lookups);
-    });
-
-    const access = $derived.by((): ManageAccess | undefined => {
-        if (target === undefined) return undefined;
-        return target.kind === "community"
-            ? communityManageAccess(client, target, $anonUserStore)
-            : chatManageAccess(client, target, $selectedCommunitySummaryStore, $anonUserStore);
-    });
+            : chatEditor(target, lookups),
+    );
     // who can see a group's history from before they joined is set when it's made (groupChanges
     // has no field for it)
     const readOnlySections = $derived(
-        access?.kind === "edit" ? [...access.readOnly, "history" as const] : [],
+        access.kind === "edit" ? [...access.readOnly, "history" as const] : [],
     );
 
     // ── confirming a change ──
@@ -182,7 +169,7 @@
     }
 
     const confirmText = $derived.by((): ResourceKey | undefined => {
-        if (confirming === undefined || editor === undefined) return undefined;
+        if (confirming === undefined) return undefined;
         return confirming.confirmation === "verified_name"
             ? i18nKey("verified.nameChangeWarning", undefined, editor.level, true)
             : i18nKey(
@@ -197,13 +184,12 @@
 
     // the editor's limits, which the dialog shows as an invalid name
     function checkName(name: string): Promise<NameCheck> {
-        const [min, max] = editor?.nameLength ?? [0, 0];
+        const [min, max] = editor.nameLength;
         return Promise.resolve(name.length >= min && name.length <= max ? "ok" : "invalid");
     }
 
     // The dialog keeps the edits and says it couldn't save when this rejects
     async function save(all: GroupSettings) {
-        if (editor === undefined) return;
         const [avatar, banner] = await Promise.all([
             all.info.avatarFile ? cropCentred(all.info.avatarFile, AVATAR_SIZE) : undefined,
             all.info.coverFile ? cropCentred(all.info.coverFile, BANNER_SIZE) : undefined,
@@ -230,29 +216,24 @@
 
     // rules switched off aren't in force, so the About page doesn't count them
     const aboutValue = $derived(
-        editor === undefined || editor.value.rules.enabled
-            ? editor?.value
+        editor.value.rules.enabled
+            ? editor.value
             : { ...editor.value, rules: { enabled: false, text: "" } },
     );
 
     // a community is muted when every one of its channels is (as the old community menu had it)
     const muted = $derived(
-        target === undefined
-            ? false
-            : target.kind === "community"
-              ? $chatSummariesListStore.every((c) => c.membership.notificationsMuted)
-              : target.membership.notificationsMuted,
+        target.kind === "community"
+            ? $chatSummariesListStore.every((c) => c.membership.notificationsMuted)
+            : target.membership.notificationsMuted,
     );
 
     const aboutMeta = $derived(
-        target === undefined
-            ? ""
-            : `${$_(target.public ? "access.public" : "access.private")} · ${$_("memberCount", { values: { count: target.memberCount } })}`,
+        `${$_(target.public ? "access.public" : "access.private")} · ${$_("memberCount", { values: { count: target.memberCount } })}`,
     );
 
     // a community mutes all its channels, which can't be undone from here (as in the old menus)
     async function mute(mute: "forever" | null) {
-        if (target === undefined) return;
         if (target.kind === "community") {
             if (mute === null || !(await client.muteAllChannels(target.id, false))) {
                 throw new Error("can't unmute every channel");
@@ -264,7 +245,7 @@
     }
 
     async function favourite(on: boolean) {
-        if (target === undefined || target.kind === "community") return;
+        if (target.kind === "community") return;
         const done = await (on
             ? client.addToFavourites(target.id)
             : client.removeFromFavourites(target.id));
@@ -272,44 +253,38 @@
     }
 </script>
 
-{#if target !== undefined && editor !== undefined && access !== undefined}
-    {#if access.kind === "edit"}
-        <GroupSettingsDialog
-            value={editor.value}
-            noun={target.kind === "community" ? "community" : "group"}
-            initialTab={dialog.tab}
-            isDiamond={$isDiamondStore}
-            onUpgrade={() => publish("upgrade")}
-            gateTokens={assets.tokens}
-            gateSystems={assets.nervousSystems}
-            {readOnlySections}
-            {checkName}
-            onSave={save}
-            onCancel={onClose}
-        />
-    {:else}
-        <!-- TODO(design): the About page is the read-only Overview of the Manage dialog (part 3); until
-             that frame lands it opens on its own -->
-        <div class="layer oc-dialog-layer" role="dialog" aria-modal="true" use:modal={onClose}>
-            <div class="oc-veil" onclick={onClose} aria-hidden="true"></div>
-            <div class="card">
-                <GroupSettingsDialog
-                    value={aboutValue}
-                    noun={target.kind === "community" ? "community" : "group"}
-                    embedded
-                    readOnly
-                    section="group"
-                    {aboutMeta}
-                    roleLabel={$_(roleAsText(target.membership.role))}
-                    isMuted={muted}
-                    isFavourite={target.kind !== "community" && $favouritesStore.has(target.id)}
-                    onMuteChange={mute}
-                    onFavouriteChange={target.kind === "community" ? undefined : favourite}
-                    {onClose}
-                />
-            </div>
-        </div>
-    {/if}
+{#if access.kind === "edit"}
+    <GroupSettingsDialog
+        value={editor.value}
+        noun={target.kind === "community" ? "community" : "group"}
+        embedded
+        {section}
+        isDiamond={$isDiamondStore}
+        onUpgrade={() => publish("upgrade")}
+        gateTokens={assets.tokens}
+        gateSystems={assets.nervousSystems}
+        {readOnlySections}
+        {checkName}
+        onSave={save}
+        {onDirtyChange}
+        {onClose}
+    />
+{:else}
+    <GroupSettingsDialog
+        value={aboutValue}
+        noun={target.kind === "community" ? "community" : "group"}
+        embedded
+        readOnly
+        {section}
+        {aboutMeta}
+        roleLabel={$_(roleAsText(target.membership.role))}
+        isMuted={muted}
+        isFavourite={target.kind !== "community" && $favouritesStore.has(target.id)}
+        onMuteChange={mute}
+        onFavouriteChange={target.kind === "community" ? undefined : favourite}
+        {onOpenRules}
+        {onClose}
+    />
 {/if}
 
 {#if confirming !== undefined && confirmText !== undefined}
@@ -326,21 +301,6 @@
 {/if}
 
 <style>
-    .card {
-        position: relative;
-        width: 100%;
-        max-width: 560px;
-        height: min(720px, 100%);
-        display: flex;
-        flex-direction: column;
-        border-radius: var(--radius-xl);
-        background: var(--surface-1);
-        box-shadow:
-            inset 0 0 0 1px var(--line-2),
-            var(--shadow-modal);
-        overflow: hidden;
-    }
-
     .confirm-text {
         margin: 0;
         font: var(--weight-regular) var(--text-base) / 1.5 var(--font-sans);

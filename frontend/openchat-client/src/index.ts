@@ -32,6 +32,7 @@ export {
     disappearingMessagesUpdate,
     eventsTTLUpdate,
     getMembersString,
+    isPreviewingOrLapsed,
     subrangesCover,
     TimelineGrouper,
 } from "./utils/chat";
@@ -103,6 +104,7 @@ export {
     type LeaveOrDeleteOutcome,
 } from "./utils/leaveOrDelete";
 export { type UserGroupSaveOutcome } from "./utils/userGroups";
+export { webhookFailure, type WebhookSaveOutcome } from "./utils/webhook";
 export {
     memberDisplayNameResult,
     profileChanges,

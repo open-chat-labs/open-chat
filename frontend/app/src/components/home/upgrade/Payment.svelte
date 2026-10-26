@@ -1,21 +1,22 @@
 <script lang="ts">
     import {
         type DiamondMembershipDuration,
-        type DiamondMembershipFees,
         type OpenChat,
         type ResourceKey,
         type SignerWallet,
         cryptoLookup,
         E8S_PER_TOKEN,
         mobileWidth,
-        pinNumberFailureFromError,
-        walletApprovalFee,
     } from "@client";
+    import {
+        DiamondPayment,
+        insufficientFunds as cannotPay,
+        walletCostE8s,
+    } from "@src/logic/diamond/diamondPayment.svelte";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { toastStore } from "../../../stores/toast";
-    import type { RemoteData } from "../../../utils/remoteData";
     import Button from "../../Button.svelte";
     import Checkbox from "../../Checkbox.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
@@ -64,34 +65,29 @@
         onSuccess,
     }: Props = $props();
 
-    type FeeKey = keyof Omit<DiamondMembershipFees, "token">;
-    type FeeData = RemoteData<Record<"ICP" | "CHAT", DiamondMembershipFees>, string>;
-
     const client = getContext<OpenChat>("client");
+    // the backend's fees and the payment (logic/diamond)
+    const payment = new DiamondPayment(client);
 
     const options: Option[] = [
         {
             index: 0,
             duration: i18nKey("upgrade.oneMonth"),
-            fee: "oneMonth",
             enabled: !lifetime,
         },
         {
             index: 1,
             duration: i18nKey("upgrade.threeMonths"),
-            fee: "threeMonths",
             enabled: !lifetime,
         },
         {
             index: 2,
             duration: i18nKey("upgrade.oneYear"),
-            fee: "oneYear",
             enabled: !lifetime,
         },
         {
             index: 3,
             duration: i18nKey("upgrade.lifetime"),
-            fee: "lifetime",
             enabled: true,
         },
     ];
@@ -104,13 +100,8 @@
     type Option = {
         index: number;
         duration: ResourceKey;
-        fee: FeeKey;
         enabled: boolean;
     };
-
-    let diamondFees: FeeData = $state({
-        kind: "idle",
-    });
 
     const indexToDuration: Record<number, DiamondMembershipDuration> = {
         0: "one_month",
@@ -123,11 +114,10 @@
         return Number(e8s) / E8S_PER_TOKEN;
     }
 
-    function amountInE8s(symbol: string, fees: FeeData, option: Option | undefined): bigint {
-        if (fees.kind !== "success" || option === undefined) {
-            return 0n;
-        }
-        return fees.data[symbol as "ICP" | "CHAT"][option.fee] ?? 0n;
+    // the backend's price for the option in this token, 0 till the fees have loaded
+    function amountInE8s(option: Option | undefined): bigint {
+        if (option === undefined) return 0n;
+        return payment.price(tokenDetails.symbol, indexToDuration[option.index]) ?? 0n;
     }
 
     function confirm() {
@@ -151,64 +141,51 @@
 
     // `fromAccount` is an external wallet which has just approved us taking the payment. Without it
     // the payment comes from the user's own OpenChat account, as it always has.
-    function pay(fromAccount?: string) {
+    async function pay(fromAccount?: string) {
         confirming = true;
-        client
-            .payForDiamondMembership(
-                tokenDetails.ledger,
-                selectedDuration,
-                autoRenew && selectedDuration !== "lifetime",
-                toPayE8s,
+        try {
+            const outcome = await payment.pay({
+                ledger: tokenDetails.ledger,
+                token: tokenDetails.symbol,
+                duration: selectedDuration,
+                autoRenew,
                 fromAccount,
-            )
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    confirmed = true;
-                    onSuccess?.(resp.proof);
-                } else if (resp.kind === "error" && pinNumberFailureFromError(resp) !== undefined) {
-                    toastStore.showFailureToast(pinNumberErrorMessageStore);
-                } else {
-                    paymentFailed();
-                }
-            })
-            // Dismissing the PIN prompt cancels the payment, which isn't a failure
-            .catch((err) => {
-                if (err !== "cancelled") {
-                    paymentFailed(err);
-                }
-            })
-            .finally(() => (confirming = false));
-    }
-
-    function paymentFailed(err?: unknown) {
-        const errorKey = "upgrade.paymentFailed";
-        error = errorKey;
-        toastStore.showFailureToast(i18nKey(errorKey), err);
+            });
+            if (outcome.kind === "success") {
+                confirmed = true;
+                onSuccess?.(outcome.proof);
+            } else if (outcome.kind === "pin_failed") {
+                // the PIN's own message, counting down a lockout
+                toastStore.showFailureToast(pinNumberErrorMessageStore);
+            } else if (outcome.kind === "failed") {
+                error = outcome.message.key;
+                toastStore.showFailureToast(outcome.message, outcome.cause);
+            }
+            // the PIN prompt dismissed, or a payment already under way: nothing to say
+        } finally {
+            confirming = false;
+        }
     }
 
     onMount(() => {
-        diamondFees = { kind: "loading" };
-        client
-            .diamondMembershipFees()
-            .then((fees) => {
-                diamondFees = {
-                    kind: "success",
-                    data: client.toRecord(fees, (f) => f.token),
-                };
-            })
-            .catch((err) => {
-                diamondFees = { kind: "error", error: err };
-            });
+        payment.loadFees();
     });
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
-    let toPayE8s = $derived(amountInE8s(tokenDetails.symbol, diamondFees, selectedOption));
+    let toPayE8s = $derived(amountInE8s(selectedOption));
     // What the payment takes from the user's OpenChat wallet, which is all that is checked here:
     // the price, which includes the transfer's fee, and the approval the user makes before the
     // price is pulled from it
-    let toPayWithFeesE8s = $derived(toPayE8s + walletApprovalFee(tokenDetails.transferFee));
+    let toPayWithFeesE8s = $derived(walletCostE8s(toPayE8s, tokenDetails.transferFee));
     let toPay = $derived(amount(toPayWithFeesE8s));
     // Compared in e8s, since any tolerance for floating point error would be enough to hide an ICP fee
-    let insufficientFunds = $derived(toPayWithFeesE8s > BigInt(accountBalance));
+    let insufficientFunds = $derived(
+        cannotPay(
+            toPayE8s,
+            tokenDetails.transferFee,
+            BigInt(accountBalance),
+            sourceWallet !== undefined,
+        ),
+    );
     let selectedDuration = $derived(indexToDuration[selectedOption?.index ?? 0] ?? "one_month");
 </script>
 
@@ -239,9 +216,7 @@
                         <div class="option-details">
                             <p class="duration"><Translatable resourceKey={option.duration} /></p>
                             <p class="price">
-                                {`${amount(
-                                    amountInE8s(tokenDetails.symbol, diamondFees, option),
-                                )} ${tokenDetails.symbol}`}
+                                {`${amount(amountInE8s(option))} ${tokenDetails.symbol}`}
                             </p>
                         </div>
                         {#if option.index === 3}

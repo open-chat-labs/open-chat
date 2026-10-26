@@ -176,6 +176,7 @@ import {
     type CreateCommunityOutcome,
     type CreateCommunityResponse,
     type CreateGroupOutcome,
+    type GroupMoveOutcome,
     type CreateGroupResponse,
     type CreateMultiUserCanisterResponse,
     type FinaliseAccountLinkingResponse,
@@ -588,6 +589,7 @@ import {
     userGroupSaveOutcome,
     type UserGroupSaveOutcome,
 } from "./utils/userGroups";
+import { webhookChanges, webhookFailure, type WebhookSaveOutcome } from "./utils/webhook";
 import {
     defaultChat,
     navigationAfterArchivingOpenChat,
@@ -8520,10 +8522,12 @@ export class OpenChat {
         );
     }
 
-    // Creates a group, then invites `invitees` to it
+    // Creates a group, then invites `invitees` to it, and adds the community's members `toAdd` to a
+    // new channel
     async createGroup(
         candidate: CandidateGroupChat,
         invitees: string[],
+        toAdd: string[] = [],
     ): Promise<CreateGroupOutcome> {
         let resp: CreateGroupResponse;
         try {
@@ -8555,6 +8559,21 @@ export class OpenChat {
                     kind: "created_without_invites",
                     chatId,
                     message: i18nKey("group.inviteUsersFailed", undefined, candidate.level, true),
+                };
+            }
+        }
+        if (chatId.kind === "channel" && toAdd.length > 0) {
+            const added = await this.addMembersToChannel(chatId, toAdd);
+            if (added.kind !== "success") {
+                this.logMessage("Unable to add members to a new channel", added);
+                return {
+                    kind: "created_without_invites",
+                    chatId,
+                    message: i18nKey(
+                        added.kind === "add_to_channel_partial_success"
+                            ? "group.addMembersPartialSuccess"
+                            : "group.addMembersFailed",
+                    ),
                 };
             }
         }
@@ -12219,7 +12238,11 @@ export class OpenChat {
     importToCommunity(
         groupId: GroupChatIdentifier,
         communityId: CommunityIdentifier,
-    ): Promise<ChannelIdentifier | undefined> {
+    ): Promise<GroupMoveOutcome> {
+        const failed: GroupMoveOutcome = {
+            kind: "failed",
+            message: i18nKey("communities.errors.importFailed"),
+        };
         const group = chatSummariesStore.value.get(groupId);
         return this.#worker
             .send({
@@ -12234,13 +12257,14 @@ export class OpenChat {
                             ...group,
                             id: resp.channelId,
                             kind: "channel",
+                            level: "channel",
                         } as ChannelSummary);
                     }
-                    return resp.channelId;
+                    return { kind: "success", channelId: resp.channelId } as const;
                 }
-                return undefined;
+                return failed;
             })
-            .catch(() => undefined);
+            .catch(() => failed);
     }
 
     submitProofOfUniquePersonhood(
@@ -12535,10 +12559,11 @@ export class OpenChat {
         return communityUpdateResult(resp);
     }
 
-    convertGroupToCommunity(
-        group: GroupChatSummary,
-        rules: Rules,
-    ): Promise<ChannelIdentifier | undefined> {
+    convertGroupToCommunity(group: GroupChatSummary, rules: Rules): Promise<GroupMoveOutcome> {
+        const failed: GroupMoveOutcome = {
+            kind: "failed",
+            message: i18nKey("communities.errors.convertFailed"),
+        };
         return this.#worker
             .send({
                 kind: "convertGroupToCommunity",
@@ -12546,8 +12571,12 @@ export class OpenChat {
                 historyVisible: group.historyVisible,
                 rules,
             })
-            .then((resp) => (resp.kind === "success" ? resp.id : undefined))
-            .catch(() => undefined);
+            .then((resp) =>
+                resp.kind === "success"
+                    ? ({ kind: "success", channelId: resp.id } as const)
+                    : failed,
+            )
+            .catch(() => failed);
     }
 
     deleteUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): Promise<boolean> {
@@ -12858,6 +12887,30 @@ export class OpenChat {
                 undo();
                 return false;
             });
+    }
+
+    /**
+     * Registers a webhook (no `original`), or sends the name and avatar changes to `original`;
+     * nothing when there are none.
+     */
+    async saveWebhook(
+        chatId: MultiUserChatIdentifier,
+        original: WebhookDetails | undefined,
+        name: string,
+        avatarUrl: string | undefined,
+    ): Promise<WebhookSaveOutcome> {
+        if (original === undefined) {
+            const webhook = await this.registerWebhook(chatId, name, avatarUrl);
+            return webhook === undefined
+                ? { kind: "failed", message: webhookFailure("register") }
+                : { kind: "registered", webhook };
+        }
+        const changes = webhookChanges(original, name, avatarUrl);
+        if (changes === undefined) return { kind: "unchanged" };
+        const updated = await this.updateWebhook(chatId, original, changes.name, changes.avatar);
+        return updated
+            ? { kind: "updated" }
+            : { kind: "failed", message: webhookFailure("update") };
     }
 
     regenerateWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<string | undefined> {

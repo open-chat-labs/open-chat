@@ -182,7 +182,12 @@ describe("withdrawing SOL", () => {
 
         form.selectedNetwork = CKSOL_SYMBOL;
         expect(form.acceptsAddress(IC_ACCOUNT)).toBe(true);
-        for (const other of [SOLANA_ADDRESS, BITCOIN_ADDRESS, EVM_ADDRESS, ICP_ACCOUNT_IDENTIFIER]) {
+        for (const other of [
+            SOLANA_ADDRESS,
+            BITCOIN_ADDRESS,
+            EVM_ADDRESS,
+            ICP_ACCOUNT_IDENTIFIER,
+        ]) {
             expect(form.acceptsAddress(other), other).toBe(false);
         }
     });

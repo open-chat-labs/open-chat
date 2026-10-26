@@ -3,7 +3,10 @@
 <script lang="ts">
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
     import { muteChat } from "@src/logic/chats/muteChat";
-    import { communityMenuPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
+    import {
+        communityDetailsPermissions,
+        communityMenuPermissions,
+    } from "@src/logic/groupOrCommunity/detailsPermissions";
     import {
         allUsersStore,
         bridgedUsersStore,
@@ -24,6 +27,7 @@
         selectedCommunitySummaryStore,
         type ChatSummary,
         type OpenChat,
+        anonUserStore,
     } from "@client";
     import ChatListPanel from "@openchat/ui/src/features/components/ChatListPanel.svelte";
     import type { MenuItem } from "@openchat/ui/src/lib/types";
@@ -34,7 +38,6 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import type { LeftRegion, ScreenProps } from "../app/screens";
-    import { showInRightColumn } from "../app/rightPanel";
     import {
         chatRow,
         communityHeaderMenu,
@@ -45,8 +48,7 @@
     import { latestMessagePreview } from "@src/logic/chats/latestMessagePreview";
     import { buildDisplayName } from "@src/utils/user";
 
-    let { region, context: screen }: ScreenProps<Extract<LeftRegion, { kind: "chats" }>> =
-        $props();
+    let { region, context: screen }: ScreenProps<Extract<LeftRegion, { kind: "chats" }>> = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -193,13 +195,16 @@
             ? undefined
             : communityHeaderMenu({
                   ...communityMenu,
-                  allMuted: chats.every((c) => c.membership.notificationsMuted),
-                  everyoneMuted: chats.every((c) => c.membership.atEveryoneMuted),
+                  canManageUserGroups: communityDetailsPermissions(
+                      client,
+                      community,
+                      $anonUserStore,
+                  ).canManageUserGroups,
                   label: $_,
               }),
     );
 
-    // TODO: the thread count (L1). TODO(4b): the community's new channel items (part 4)
+    // TODO: the thread count (L1). TODO(4b): the community's stats and bot items
     function onHeaderMenu(item: string) {
         if (item === "markAllRead") {
             client.markAllReadForCurrentScope();
@@ -207,21 +212,29 @@
         }
         if (community === undefined) return;
         switch (item) {
-            case "details":
-                showInRightColumn(screen.rightColumn, { kind: "community_details" });
-                break;
             case "members":
-                showInRightColumn(screen.rightColumn, { kind: "show_community_members" });
+                screen.dialogs.open({ kind: "manage", target: community.id, section: "members" });
+                break;
+            case "newChannel":
+            case "embedChannel":
+                screen.dialogs.open({
+                    kind: "new_channel",
+                    communityId: community.id,
+                    embedded: item === "embedChannel",
+                });
+                break;
+            case "newUserGroup":
+                screen.dialogs.open({
+                    kind: "user_group",
+                    communityId: community.id,
+                    mode: "create",
+                });
                 break;
             case "invite":
-                screen.dialogs.open({ kind: "invite", target: community.id, tab: "people" });
+                screen.dialogs.open({ kind: "manage", target: community.id, section: "invite" });
                 break;
             case "editCommunity":
-                screen.dialogs.open({ kind: "group_settings", target: community.id, tab: "group" });
-                break;
-            case "muteAll":
-            case "muteAllEveryone":
-                client.muteAllChannels(community.id, item === "muteAllEveryone");
+                screen.dialogs.open({ kind: "manage", target: community.id, section: "main" });
                 break;
             case "delete":
             case "leave":
@@ -246,9 +259,13 @@
         (scope.kind === "favourite" ? $_("communities.favourites") : undefined)}
     headerVisibility={community?.public === false ? "Private" : "Public"}
     headerMembers={community?.memberCount ?? 0}
-    headerMenuItems={headerMenuItems}
+    {headerMenuItems}
     {onHeaderMenu}
+    onCreateGroup={() => screen.dialogs.open({ kind: "create_group", level: "group" })}
+    onHeaderDetails={community &&
+        (() => screen.dialogs.open({ kind: "manage", target: community.id, section: "main" }))}
     searchable
     onSearch={(q) => (query = q)}
     threadsAction={() => navigate(withQueryStringFlag("threads"), "overlay")}
-    loading={!$chatsInitialisedStore} />
+    loading={!$chatsInitialisedStore}
+/>

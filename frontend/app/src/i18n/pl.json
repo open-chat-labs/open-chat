@@ -1297,6 +1297,7 @@
         "menu": "Najlepsi polecający",
         "start": "Początek",
         "thisMonth": "Ten miesiąc",
+        "tryAgain": "Spróbuj ponownie",
         "username": "Nazwa użytkownika",
         "users": "Użytkownicy",
         "value": "Wartość"
@@ -2716,7 +2717,10 @@
         "updateTitle": "Aktualizacja {name}",
         "urlLabel": "Adres URL webhooka",
         "username": "hak internetowy",
-        "viewEditAction": "Wyświetl/edytuj szczegóły webhooka"
+        "viewEditAction": "Wyświetl/edytuj szczegóły webhooka",
+        "registerFailed": "Niestety nie udało się zarejestrować webhooka",
+        "updateFailed": "Niestety nie udało się zaktualizować webhooka",
+        "regenerateFailed": "Niestety nie udało się wygenerować nowego adresu URL webhooka"
     },
     "websiteVersion": "strony internetowej",
     "weeks": "Tygodnie",

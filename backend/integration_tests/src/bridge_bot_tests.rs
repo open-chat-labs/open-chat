@@ -950,18 +950,76 @@ fn messages_from_discord_bots_cant_be_tipped(in_community: bool) {
     clear_bridge_bot(env, canister_ids, &bridged);
 }
 
-// The UserIndex refreshes the tokens it pays held tips out of from the Registry daily
+// The UserIndex refreshes the tokens it pays held tips out of from the Registry daily, so it knows of
+// a newly listed token within a day
 #[test]
 fn user_index_refreshes_the_registrys_tokens_daily() {
     let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+    let (user_index, registry) = (canister_ids.user_index, canister_ids.registry);
 
+    // Brings the UserIndex up to date first. In a new env it knows a token the Registry doesn't list,
+    // ICP, as it took the tokens before the Registry found that the ICP ledger, which is installed
+    // after it, had no code.
     env.advance_time(Duration::from_millis(DAY_IN_MS));
     wait_until(env, "the tokens to be refreshed", |env| {
-        try_metrics(env, canister_ids.user_index)
-            .and_then(|metrics| metrics["registry_tokens"].as_u64())
-            .is_some_and(|tokens| tokens > 0)
+        registry_tokens_known(env, user_index) == Some(registry_tokens_listed(env, registry))
     });
+    let listed_before = registry_tokens_listed(env, registry);
+
+    let ledger = install_icrc_ledger(
+        env,
+        *controller,
+        random_string(),
+        random_string(),
+        ICP_TRANSFER_FEE as u64,
+        None,
+        Vec::new(),
+    );
+    let response = client::registry::add_token(
+        env,
+        *controller,
+        registry,
+        &registry_canister::add_token::Args {
+            ledger_canister_id: ledger,
+            payer: None,
+            info_url: random_string(),
+            transaction_url_format: random_string(),
+            one_sec_enabled: None,
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    let listed = registry_tokens_listed(env, registry);
+    // Else the UserIndex could already know as many tokens as the Registry now lists
+    assert_eq!(listed, listed_before + 1);
+
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    wait_until(env, "the token listed to be refreshed", |env| {
+        registry_tokens_known(env, user_index) == Some(listed)
+    });
+}
+
+// How many tokens the UserIndex knows from the Registry, or None if it can't currently be queried
+fn registry_tokens_known(env: &PocketIc, user_index: CanisterId) -> Option<u64> {
+    try_metrics(env, user_index).and_then(|metrics| metrics["registry_tokens"].as_u64())
+}
+
+// How many tokens the Registry lists which it hasn't marked uninstalled, which are those it gives the UserIndex
+fn registry_tokens_listed(env: &PocketIc, registry: CanisterId) -> u64 {
+    match client::registry::updates(
+        env,
+        Principal::anonymous(),
+        registry,
+        &registry_canister::updates::Args { since: None },
+    ) {
+        registry_canister::updates::Response::Success(result) => result.token_details.map_or(0, |tokens| tokens.len() as u64),
+        response => panic!("{response:?}"),
+    }
 }
 
 // A group, or a channel in a community, with a bridge bot for `platform` installed, and `members` in it

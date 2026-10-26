@@ -12,11 +12,15 @@ import {
     type CommunitySummary,
 } from "@client";
 import { durationMs } from "@openchat/ui/src/features/components/GroupSettingsDialog.svelte";
-import type { GroupSettings } from "@openchat/ui/src/lib/types";
+import type { CreateGroupResult, GroupSettings } from "@openchat/ui/src/lib/types";
 import { describe, expect, test } from "vitest";
 import type { GateLookups } from "../access/gates.adapter";
+import { newCommunity } from "@src/logic/groupOrCommunity/community.svelte";
 import {
+    candidateCommunityFromCreate,
+    communityPermissionsValue,
     candidateCommunityFromSettings,
+    candidateFromCreate,
     candidateFromSettings,
     communitySettings,
     groupSettings,
@@ -179,4 +183,153 @@ describe("community settings adapter", () => {
         expect(changes.permissions?.inviteUsers).toBe(ROLE_ADMIN);
         expect(Object.keys(changes).sort()).toEqual(["description", "permissions"]);
     });
+});
+
+describe("a channel created from CreateGroupDialog", () => {
+    const blank = group({
+        id: { kind: "channel", communityId: "c", channelId: 0 },
+        name: "",
+        description: "",
+        public: false,
+        eventsTTL: undefined,
+        avatar: undefined,
+        permissions: defaultChatPermissions(),
+        rules: { ...defaultChatRules("channel"), newVersion: false },
+        level: "channel",
+    } as Partial<CandidateGroupChat>);
+
+    const result = (overrides: Partial<CreateGroupResult> = {}): CreateGroupResult => ({
+        name: "Weekend walks",
+        about: "Where we meet",
+        color: "teal",
+        coverKey: "plum",
+        avatarFile: null,
+        kind: "channel",
+        embedded: false,
+        language: null,
+        coverFile: null,
+        channels: [],
+        url: "",
+        previewForNonMembers: false,
+        isPublic: true,
+        visibleHistory: true,
+        disappearAfter: "1 week",
+        disappearAfterMs: 604_800_000,
+        members: [],
+        invites: [],
+        gates: { count: 0 },
+        rules: { enabled: true, text: "Be kind" },
+        permissions: {
+            ...groupSettings(blank, lookups).permissions,
+            general: { ...groupSettings(blank, lookups).permissions.general, pin: "member" },
+        },
+        ...overrides,
+    });
+
+    // what's sent for a new channel: everything the dialog set, the name as typed
+    test("sends the dialog's settings, with the name as typed", () => {
+        const channel = candidateFromCreate(result(), blank, lookups);
+
+        expect(channel).toMatchObject({
+            id: blank.id,
+            name: "Weekend walks",
+            description: "Where we meet",
+            public: true,
+            historyVisible: true,
+            eventsTTL: 604_800_000n,
+            rules: { enabled: true, text: "Be kind" },
+            gateConfig: blank.gateConfig,
+        });
+        expect(channel.permissions.pinMessages).toBe(ROLE_MEMBER);
+        expect(channel.externalUrl).toBeUndefined();
+    });
+
+    test("an embedded channel keeps its URL", () => {
+        const channel = candidateFromCreate(
+            result({ kind: "embedded", embedded: true, url: "https://example.com" }),
+            blank,
+            lookups,
+        );
+        expect(channel.externalUrl).toBe("https://example.com");
+    });
+
+    // who can read the channel: a public embedded channel can show its messages to non-members
+    test("lets non-members see its messages only when the dialog says so", () => {
+        const preview = (on: boolean) =>
+            candidateFromCreate(
+                result({
+                    kind: "embedded",
+                    embedded: true,
+                    url: "https://a.b",
+                    previewForNonMembers: on,
+                }),
+                blank,
+                lookups,
+            ).messagesVisibleToNonMembers;
+        expect(preview(true)).toBe(true);
+        expect(preview(false)).toBe(false);
+    });
+});
+
+describe("a community created from CreateGroupDialog", () => {
+    // what's sent for a new community: the dialog's settings and language, read as an edit is
+    test("sends the dialog's settings and language", () => {
+        const blank = community({
+            name: "",
+            description: "",
+            public: false,
+            avatar: {},
+            banner: {},
+        });
+        const general: GroupSettings["permissions"]["general"] = {
+            ...communitySettings(blank, lookups).permissions.general,
+            invite: "member",
+        };
+        const created = candidateCommunityFromCreate(
+            {
+                name: "Walkers",
+                about: "All the walks",
+                color: "teal",
+                coverKey: "plum",
+                avatarFile: null,
+                kind: "community",
+                embedded: false,
+                language: "fr",
+                coverFile: null,
+                channels: ["General", "Walks"],
+                url: "",
+                previewForNonMembers: false,
+                isPublic: true,
+                visibleHistory: true,
+                disappearAfter: null,
+                disappearAfterMs: null,
+                members: [],
+                invites: [],
+                gates: { count: 0 },
+                rules: { enabled: true, text: "Be kind" },
+                permissions: { general, messages: { default: "member" }, threads: null },
+            },
+            blank,
+            lookups,
+        );
+
+        expect(created.community).toMatchObject({
+            name: "Walkers",
+            description: "All the walks",
+            public: true,
+            primaryLanguage: "fr",
+        });
+        expect(created.community.permissions.inviteUsers).toBe(ROLE_MEMBER);
+        expect(created.rules).toMatchObject({ enabled: true, text: "Be kind" });
+    });
+});
+
+// who can run a new community: CreateGroupDialog starts from the app's community permissions, all
+// admin as the backend's are (the dialog's own defaults let every member invite)
+test("a new community's permissions start as the app's: all admin", () => {
+    const general = communityPermissionsValue(newCommunity().permissions).general;
+    expect(Object.values(general).every((role) => role === "admin")).toBe(true);
+    expect(Object.keys(general).sort()).toEqual(
+        ["edit", "invite", "privChannels", "pubChannels", "remove", "roles", "userGroups"].sort(),
+    );
 });

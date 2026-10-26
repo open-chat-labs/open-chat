@@ -1297,6 +1297,7 @@
         "menu": "Người giới thiệu hàng đầu",
         "start": "Bắt đầu",
         "thisMonth": "Tháng này",
+        "tryAgain": "Thử lại",
         "username": "tên tài khoản",
         "users": "người dùng",
         "value": "Giá trị"
@@ -2716,7 +2717,10 @@
         "updateTitle": "Cập nhật {name}",
         "urlLabel": "URL Webhook",
         "username": "móc treo",
-        "viewEditAction": "Xem/chỉnh sửa chi tiết webhook"
+        "viewEditAction": "Xem/chỉnh sửa chi tiết webhook",
+        "registerFailed": "Rất tiếc, chúng tôi không thể đăng ký webhook",
+        "updateFailed": "Rất tiếc, chúng tôi không thể cập nhật webhook",
+        "regenerateFailed": "Rất tiếc, chúng tôi không thể tạo lại URL của webhook"
     },
     "websiteVersion": "của trang web",
     "weeks": "Tuần",

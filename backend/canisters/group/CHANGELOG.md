@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2191](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2191-group)] - 2026-10-26
+
 ### Added
 
 - Route tips on messages relayed from Discord/Telegram to the OpenChat user who linked the account ([#10211](https://github.com/open-chat-labs/open-chat/pull/10211))
@@ -14,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Show replies relayed from Discord/Telegram/Twitch in the activity feed of whoever they reply to ([#10219](https://github.com/open-chat-labs/open-chat/pull/10219))
 - Let messages from unlinked Discord/Telegram/Twitch accounts be tipped, holding the tips for whoever links the account ([#10220](https://github.com/open-chat-labs/open-chat/pull/10220))
 - Refuse tips on messages from Discord bots and webhooks, which no one can link ([#10225](https://github.com/open-chat-labs/open-chat/pull/10225))
+
+### Changed
+
+- Support tipping messages from users who have since left the group ([#10239](https://github.com/open-chat-labs/open-chat/pull/10239))
 
 ### Removed
 

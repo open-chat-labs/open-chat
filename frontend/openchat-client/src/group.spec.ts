@@ -24,7 +24,10 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
 
 import {
     anonymousUser,
+    defaultChatRules,
     type CandidateGroupChat,
+    type GroupChatIdentifier,
+    type GroupChatSummary,
     type UpdateGroupResponse,
     type WorkerRequest,
 } from "@shared";
@@ -81,6 +84,8 @@ describe("editing and creating a group", () => {
                     return Promise.resolve({ kind: "success", canisterId: original.id });
                 case "inviteUsers":
                     return Promise.resolve(invited);
+                case "addMembersToChannel":
+                    return Promise.resolve({ kind: "success" });
                 default:
                     return new Promise(() => {});
             }
@@ -169,6 +174,107 @@ describe("editing and creating a group", () => {
         if (outcome.kind === "created_without_invites") {
             expect(english(outcome.message.key)).toEqual(expect.any(String));
         }
+    });
+
+    // 4b: a new channel's community members picked to join are added, not invited, and people
+    // from outside the community are invited
+    test("a new channel adds the members picked and invites the others", async () => {
+        const channel = {
+            ...original,
+            id: { kind: "channel" as const, communityId: "c", channelId: 7 },
+            level: "channel" as const,
+        };
+        let added: unknown = { kind: "success" };
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) => {
+            sent.push(req);
+            switch (req.kind) {
+                case "createGroupChat":
+                    return Promise.resolve({ kind: "success", canisterId: channel.id });
+                case "inviteUsers":
+                    return Promise.resolve(true);
+                case "addMembersToChannel":
+                    return Promise.resolve(added);
+                default:
+                    return new Promise(() => {});
+            }
+        }) as never);
+
+        expect(await client.createGroup(channel, ["outsider"], ["member"])).toEqual({
+            kind: "created",
+            chatId: channel.id,
+        });
+        expect(sent).toContainEqual(
+            expect.objectContaining({ kind: "addMembersToChannel", userIds: ["member"] }),
+        );
+        expect(sent).toContainEqual(
+            expect.objectContaining({ kind: "inviteUsers", userIds: ["outsider"] }),
+        );
+
+        // created all the same, and says the members weren't added
+        added = { kind: "add_to_channel_failed" };
+        expect(await client.createGroup(channel, [], ["member"])).toEqual({
+            kind: "created_without_invites",
+            chatId: channel.id,
+            message: expect.anything(),
+        });
+    });
+
+    // 4b invariant 3: a failed convert or import maps to a message, and a success to its channel
+    test("a convert or import says what became of the group", async () => {
+        const group = { ...original, kind: "group_chat" } as unknown as GroupChatSummary;
+        const community = { kind: "community" as const, communityId: "c" };
+        const channelId = { kind: "channel" as const, communityId: "c", channelId: 3 };
+        let ok = false;
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) =>
+            req.kind === "convertGroupToCommunity"
+                ? Promise.resolve(ok ? { kind: "success", id: channelId } : { kind: "error" })
+                : req.kind === "importGroupToCommunity"
+                  ? ok
+                      ? Promise.resolve({ kind: "success", channelId })
+                      : Promise.reject(new Error("offline"))
+                  : new Promise(() => {})) as never);
+
+        for (const outcome of [
+            await client.convertGroupToCommunity(group, defaultChatRules("community")),
+            await client.importToCommunity(group.id as GroupChatIdentifier, community),
+        ]) {
+            expect(outcome.kind).toBe("failed");
+            if (outcome.kind === "failed") {
+                expect(english(outcome.message.key)).toEqual(expect.any(String));
+            }
+        }
+
+        ok = true;
+        expect(await client.convertGroupToCommunity(group, defaultChatRules("community"))).toEqual({
+            kind: "success",
+            channelId,
+        });
+        expect(await client.importToCommunity(group.id as GroupChatIdentifier, community)).toEqual({
+            kind: "success",
+            channelId,
+        });
+    });
+
+    // 4b invariant 3: a webhook that can't be registered or updated says so in words
+    test("a failed webhook save says so", async () => {
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) =>
+            req.kind === "registerWebhook" || req.kind === "updateWebhook"
+                ? Promise.reject(new Error("offline"))
+                : new Promise(() => {})) as never);
+        const webhook = { id: "w", name: "alerts" };
+
+        for (const outcome of [
+            await client.saveWebhook(original.id, undefined, "alerts", undefined),
+            await client.saveWebhook(original.id, webhook, "pings", undefined),
+        ]) {
+            expect(outcome.kind).toBe("failed");
+            if (outcome.kind === "failed") {
+                expect(english(outcome.message.key)).toEqual(expect.any(String));
+            }
+        }
+        expect(await client.saveWebhook(original.id, webhook, "alerts", undefined)).toEqual({
+            kind: "unchanged",
+        });
     });
 
     // a failed save showed the bare key "failure", which has no words

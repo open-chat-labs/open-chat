@@ -197,9 +197,12 @@ const cryptoMembers = [
   { id: 'u-lucy', name: 'Lucy Linden', handle: '@lucy_linden', grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
   { id: 'u-ryan', name: 'Ryan Rogers', handle: '@ryan_rogers', grad: 'linear-gradient(140deg,#ffb03d,#ff4d4d)' },
 ];
-// DiamondDialog: backend prices in CHAT, and a purchase that resolves with the new membership end
+// DiamondDialog: the backend's own prices in CHAT and ICP (only those offered), each token's approval fee, and a
+// purchase that resolves with the new membership end
 const diamondDemo = {
   prices: { '1m': 2, '3m': 5, '1y': 15, life: 60 },
+  tokenPrices: { CHAT: { '1m': 2, '3m': 5, '1y': 15, life: 60 }, ICP: { '1m': 0.15, '3m': 0.35, '1y': 1, life: 4 } },
+  approvalFees: { CHAT: 0.001, ICP: 0.0001 },
   onUpgrade: async (p: { lifetime: boolean; until: string | null }) => {
     await wait(1200);
     return { until: p.lifetime ? null : p.until };
@@ -539,6 +542,43 @@ export const samples: Record<string, Record<string, unknown>> = {
   },
   GroupPanel: groupPanel,
   DeleteGroupDialog: { onConfirm: () => wait(500) },
+  ManageDialog: {
+    title: 'Hikers',
+    subtitle: 'Public group · 1,204 members',
+    color: 'teal',
+    nav: [
+      {
+        label: 'ui.manageDialog.general',
+        items: [
+          { key: 'main', label: 'ui.manageDialog.overview', icon: 'main' },
+          { key: 'members', label: 'ui.manageDialog.members', icon: 'members' },
+          { key: 'invite', label: 'ui.manageDialog.invite', icon: 'invite' },
+          { key: 'rules', label: 'ui.manageDialog.rules', icon: 'rules' },
+        ],
+      },
+      {
+        label: 'ui.manageDialog.advanced',
+        items: [
+          { key: 'permissions', label: 'ui.manageDialog.permissions', icon: 'permissions' },
+          { key: 'gates', label: 'ui.manageDialog.gates', icon: 'gates' },
+        ],
+      },
+    ],
+    current: 'main',
+    onSelect: () => {},
+    danger: { kind: 'delete', noun: 'group', onPress: () => {} },
+    onClose: () => {},
+  },
+  ManageChannels: {
+    channels: [
+      { key: 'general', title: 'general', sub: 'Everything else', meta: '1,204 · Public', color: 'teal', current: true },
+      { key: 'hikes', title: 'hikes', sub: 'Weekend walks', meta: '312 · Public', color: 'amber' },
+      { key: 'board', title: 'board', sub: 'No description', meta: '9 · Private', color: 'violet' },
+    ],
+    onSelect: () => {},
+    onNew: () => {},
+    onClose: () => {},
+  },
   UserGroupDialog: {
     people: [
       { userId: 'u-alice', name: 'Alice Anderson', handle: '@alice_anderson', color: 'rose' },
@@ -578,7 +618,8 @@ export const samples: Record<string, Record<string, unknown>> = {
   WalletSwap: { tokens: walletTokens, ...swapDemo },
   WalletRecipients: { tokens: walletTokens, recipients: walletRecipients, ...recipientsDemo },
   // review2-rollback: a timed member always has a future end date
-  DiamondDialog: { tokens: walletTokens, depositAddress: depositAddress, memberUntil: new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10), ...diamondDemo },
+  // DiamondDialog takes DiamondContent's props, so its defaults are given here rather than by its meta entry
+  DiamondDialog: { tokens: walletTokens, balance: 60501, depositAddress: depositAddress, memberUntil: new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10), ...diamondDemo },
   SendCryptoDialog: { tokens: cryptoTokens.slice(0, 4), members: cryptoMembers },
   SwapOfferDialog: { tokens: cryptoTokens },
   BotDialog: { bot: botCatalog.ReminderBot, canManage: true, onInstall: () => wait(500), onRemove: () => wait(500) },

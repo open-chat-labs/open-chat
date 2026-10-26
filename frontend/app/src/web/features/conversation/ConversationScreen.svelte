@@ -4,9 +4,6 @@
      of its own that keeps its place in the sender's run (DATA.md, Conversation). -->
 <script lang="ts">
     import { showInRightColumn } from "../app/rightPanel";
-    import { chatMenuActions } from "@src/logic/chats/chatMenu";
-    import { chatDetailsPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
-    import { muteChat } from "@src/logic/chats/muteChat";
     import {
         allUsersStore,
         anonUserStore,
@@ -29,6 +26,7 @@
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
         selectedChatPinnedMessagesStore,
+        selectedChatWebhooksStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
         suspendedUserStore,
@@ -62,12 +60,10 @@
     } from "@src/logic/composer/composer";
     import { enterSend } from "@src/stores/settings";
     import { now500 } from "@src/stores/time";
-    import { toastStore } from "@src/stores/toast";
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { isTouchOnlyDevice } from "@src/utils/devices";
-    import { copyPageUrl } from "@src/utils/urls";
     import { isSingleEmoji } from "@src/utils/emojis";
-    import { buildDisplayName } from "@src/utils/user";
+    import { buildDisplayName, findUser } from "@src/utils/user";
     import {
         aggregateEventText,
         isTextEvent,
@@ -77,6 +73,7 @@
     import { getContext, untrack, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
+    import { chatMenuState, runChatMenuItem } from "./chatMenu";
     import Composer from "./Composer.svelte";
     import {
         headerMenuItems,
@@ -112,10 +109,12 @@
     const ctx = $derived.by((): ConversationContext => {
         void day;
         const users = $allUsersStore;
+        const webhooks = $selectedChatWebhooksStore;
         return {
             me,
             you: $_("you"),
-            userName: (userId) => client.displayName(users.get(userId)),
+            // a webhook's messages are sent as it, named as the old timeline names them (findUser)
+            userName: (userId) => client.displayName(findUser(userId, users, webhooks)),
             contentText: (content) => client.getContentAsText($_, content),
             time: (timestamp) => client.toShortTimeString(new Date(Number(timestamp))),
             date: (timestamp) =>
@@ -148,100 +147,44 @@
     );
     const favourite = $derived(chat !== undefined && $favouritesStore.has(chat.id));
 
-    async function toggleMute(
-        chatId: ChatIdentifier,
-        mute: boolean | undefined,
-        muteAtEveryone: boolean | undefined,
-    ) {
-        const failed = await muteChat(client, chatId, mute, muteAtEveryone, $_);
-        if (failed !== undefined) toastStore.showFailureToast(failed);
-    }
-
     const headerKind = $derived(
         chat?.kind === "direct_chat" ? "user" : chat?.kind === "group_chat" ? "group" : "channel",
     );
-    const them = $derived(
-        chat?.kind === "direct_chat" ? $allUsersStore.get(chat.them.userId) : undefined,
-    );
-    const menuItems = $derived(
+    const menuState = $derived(
         chat === undefined
-            ? []
-            : headerMenuItems({
-                  kind: headerKind,
+            ? undefined
+            : chatMenuState(client, chat, {
                   favourite,
-                  muted: chat.membership.notificationsMuted,
-                  everyoneMuted: chat.membership.atEveryoneMuted,
-                  isBot: them?.kind === "bot",
-                  actions: chatMenuActions(chat, {
-                      canLeave: chat.kind !== "direct_chat" && client.canLeaveGroup(chat.id),
-                      blocked: chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId),
-                      isBot: them?.kind === "bot",
-                  }),
+                  blocked: $blockedUsersStore,
+                  users: $allUsersStore,
+                  community: $selectedCommunitySummaryStore,
+                  anon: $anonUserStore,
                   unblockLabel: $_("unblockUser"),
-                  canInvite:
-                      chat.kind !== "direct_chat" &&
-                      chatDetailsPermissions(
-                          client,
-                          chat,
-                          $selectedCommunitySummaryStore,
-                          $anonUserStore,
-                      ).canOpenInvite,
               }),
     );
-
-    async function setBlocked(userId: string, blocked: boolean) {
-        toastStore.showOutcome(await client.setBlockedInDirectChat(userId, blocked));
-    }
+    const menuItems = $derived(menuState === undefined ? [] : headerMenuItems(menuState));
 
     // TODO(4b): convert, import and the webhook (parts 4 and 5); the search action; calls are
     // phase 7
     function onMenu(id: string) {
         if (chat === undefined) return;
-        switch (id) {
-            case "leave":
-                if (chat.kind !== "direct_chat") {
-                    screen.dialogs.open({
-                        kind: "leave_or_delete",
-                        action: { kind: "leave", chatId: chat.id },
-                        name: title,
-                    });
-                }
-                break;
-            case "delete":
-                if (chat.kind === "direct_chat") {
-                    screen.dialogs.open({
-                        kind: "leave_or_delete",
-                        action: { kind: "delete_direct_chat", chatId: chat.id, blockUser: false },
-                        name: title,
-                    });
-                }
-                break;
-            case "invite":
-                if (chat.kind !== "direct_chat") {
-                    screen.dialogs.open({ kind: "invite", target: chat.id, tab: "people" });
-                }
-                break;
-            case "block":
-            case "unblock":
-                if (chat.kind === "direct_chat") setBlocked(chat.them.userId, id === "block");
-                break;
-            case "favourite":
-                client.addToFavourites(chat.id);
-                break;
-            case "unfavourite":
-                client.removeFromFavourites(chat.id);
-                break;
-            case "mute":
-            case "unmute":
-                toggleMute(chat.id, id === "mute", undefined);
-                break;
-            case "muteEveryone":
-            case "unmuteEveryone":
-                toggleMute(chat.id, undefined, id === "muteEveryone");
-                break;
-            case "copyUrl":
-                copyPageUrl(client);
-                break;
+        runChatMenuItem(id, { client, chat, title, dialogs: screen.dialogs, formatter: $_ });
+    }
+
+    // a group's or channel's name opens Manage (the About page for someone who can't edit it), a
+    // DM's the other person's profile, with the DM's own settings on its This chat tab
+    function openDetails() {
+        if (chat === undefined) return;
+        if (chat.kind === "direct_chat") {
+            screen.dialogs.open({
+                kind: "user",
+                userId: chat.them.userId,
+                chatButton: false,
+                inGlobalContext: true,
+                dmTab: "profile",
+            });
+        } else {
+            screen.dialogs.open({ kind: "manage", target: chat.id, section: "main" });
         }
     }
 
@@ -500,9 +443,16 @@
             {menuItems}
             {onMenu}
             onLeave={() => onMenu("leave")}
-            openDetails={() => showInRightColumn(screen.rightColumn, { kind: "group_details" })}
+            {openDetails}
+            titleChevron={chat.kind !== "direct_chat"}
+            titleHint={chat.kind === "direct_chat"
+                ? "ui.dmPanel.viewProfile"
+                : menuState?.canEdit
+                  ? `ui.conversationHeader.menu.manage${chat.kind === "channel" ? "Channel" : "Group"}`
+                  : `ui.conversationHeader.menu.${chat.kind === "channel" ? "channel" : "group"}Details`}
             onTogglePanel={() => screen.rightColumn.toggle()}
-            panelOpen={screen.rightColumn.open} />
+            panelOpen={screen.rightColumn.open}
+        />
 
         {#if privatePreview}
             <div class="state">
@@ -510,7 +460,8 @@
                     preset="no-conversations"
                     title={$_("group.privateGroup", { values: { level: levelText } })}
                     body={$_("group.privateGroupInfo", { values: { level: levelText } })}
-                    actionLabel="" />
+                    actionLabel=""
+                />
             </div>
         {:else}
             <div class="messages">
@@ -524,7 +475,8 @@
                     maintainScroll
                     visible
                     bind:initialised
-                    viewportClass="conversation-list">
+                    viewportClass="conversation-list"
+                >
                     {#snippet row(item, args)}
                         {#if item.kind === "timeline_date"}
                             <div class="date">
@@ -548,7 +500,8 @@
                                     {#if content.kind === "text_content"}
                                         <Markdown
                                             text={content.text}
-                                            inline={!msg.blockLevelMarkdown} />
+                                            inline={!msg.blockLevelMarkdown}
+                                        />
                                     {/if}
                                 {/snippet}
                                 <div
@@ -559,7 +512,8 @@
                                     use:observeRead={{
                                         observer: args.messageObserver,
                                         read: args.isReadByMe($messagesRead, evt),
-                                    }}>
+                                    }}
+                                >
                                     {#if firstUnread === msg.messageIndex && msg.sender !== me}
                                         <div class="unread"><UnreadDivider /></div>
                                     {/if}
@@ -583,7 +537,8 @@
                                             body,
                                             content.kind === "text_content" &&
                                                 withMarkdown(content.text),
-                                        )} />
+                                        )}
+                                    />
                                 </div>
                             {:else if evt.event.kind === "aggregate_common_events"}
                                 {@const text = aggregateEventText(evt.event, eventCtx)}
@@ -600,13 +555,15 @@
                                             read:
                                                 deleted.length === 0 ||
                                                 args.isReadByMe($messagesRead, evt),
-                                        }}>
+                                        }}
+                                    >
                                         {#if text.joined !== undefined}
                                             <p class="event-line">
                                                 <Markdown
                                                     oneLine
                                                     suppressLinks
-                                                    text={text.joined} />
+                                                    text={text.joined}
+                                                />
                                             </p>
                                         {/if}
                                         {#if text.deleted !== undefined}
@@ -617,7 +574,8 @@
                                                     onclick={() =>
                                                         client.expandDeletedMessages(
                                                             new Set(deleted),
-                                                        )}>
+                                                        )}
+                                                >
                                                     {text.deleted}
                                                 </button>
                                             </p>
@@ -647,7 +605,8 @@
                                 <IconButton
                                     icon="arrow-down"
                                     label={$_("goToLatestMessage")}
-                                    onClick={scrollToLast} />
+                                    onClick={scrollToLast}
+                                />
                             </div>
                         {/if}
                     {/snippet}
@@ -668,7 +627,8 @@
                     localUpdates.draftMessages.setTextContent({ chatId: chat.id }, text)}
                 onStartTyping={() => client.startTyping(chat.id, me)}
                 onStopTyping={() => client.stopTyping(chat.id, me)}
-                onSend={(text) => send(chat, text)} />
+                onSend={(text) => send(chat, text)}
+            />
         {/key}
     </div>
 {/if}

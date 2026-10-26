@@ -1,10 +1,14 @@
 import type {
+    BotInstallationLocation,
     CommunityIdentifier,
+    ExternalBotLike,
+    GroupChatIdentifier,
     LeaveOrDelete,
     MultiUserChatIdentifier,
     PriceSubject,
 } from "@client";
 import type { DialogStack } from "../../shell/dialogStack.svelte";
+import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
 import type { Component } from "svelte";
 
@@ -41,23 +45,45 @@ export type LinkedDialog =
     | { kind: "leaderboard" };
 
 // someone's profile card, for a name clicked in a message; a token's or coin's price card, for a
-// cashtag clicked in one; confirming leaving or deleting a chat or
-// community, called `name`; a group's, channel's or community's settings (its About page for
-// someone who can't edit it); inviting people to one, or sharing its link; or creating, editing or
-// deleting one of a community's user groups
+// cashtag clicked in one; confirming leaving or deleting a chat or community, called `name`; Manage
+// for a group, channel or community (its settings, or its About page for someone who can't edit it,
+// and inviting people or sharing its link); a new channel; or creating, editing or deleting one of a
+// community's user groups
 export type LocalDialog =
-    | ({ kind: "user" } & ProfileCard)
+    | ({
+          kind: "user";
+          /** Your DM with them: the Profile / This chat tabs, opened on this one. */
+          dmTab?: "profile" | "chat";
+      } & ProfileCard)
     | { kind: "cashtag"; subject: PriceSubject }
     | { kind: "leave_or_delete"; action: LeaveOrDelete; name: string }
     | {
-          kind: "group_settings";
+          kind: "manage";
           target: MultiUserChatIdentifier | CommunityIdentifier;
-          tab: GroupSettingsTab;
+          section: ManageSection;
+          /** Invite & share's tab, when it opens there. */
+          inviteTab?: "people" | "share";
+      }
+    | { kind: "create_group"; level: "group" | "community" }
+    | { kind: "convert_group"; chatId: GroupChatIdentifier }
+    | {
+          kind: "bot";
+          /** Where it is, or would be, installed: a group, or a community (a channel's bots are its community's). */
+          location: BotInstallationLocation;
+          bot: ExternalBotLike;
       }
     | {
-          kind: "invite";
-          target: MultiUserChatIdentifier | CommunityIdentifier;
-          tab: "people" | "share";
+          kind: "webhook";
+          chatId: MultiUserChatIdentifier;
+          /** The webhook to edit; none registers one. */
+          webhookId?: string;
+      }
+    | { kind: "import_group"; chatId: GroupChatIdentifier }
+    | {
+          kind: "new_channel";
+          communityId: CommunityIdentifier;
+          /** A channel that shows a web app in place of messages. */
+          embedded: boolean;
       }
     | {
           kind: "user_group";
@@ -96,7 +122,7 @@ export const dialogs: Dialogs = {
     profile: () => import("../profile/ProfileDialogScreen.svelte"),
 
     // Diamond membership (8e)
-    diamond: undefined,
+    diamond: () => import("../diamond/DiamondDialogScreen.svelte"),
 
     // the daily CHIT: the streak, today's claim, streak insurance (8d)
     chit: () => import("../chit/ChitDialogScreen.svelte"),
@@ -113,12 +139,24 @@ export const dialogs: Dialogs = {
     // confirming leaving or deleting a group, channel, DM or community (4b)
     leave_or_delete: () => import("../chats/LeaveOrDeleteDialogScreen.svelte"),
 
-    // a group's, channel's or community's settings, or its About page (4b)
-    group_settings: () => import("../group/GroupSettingsDialogScreen.svelte"),
+    // Manage for a group, channel or community: its settings (or About page) and Invite & share (4b)
+    manage: () => import("../group/ManageDialogScreen.svelte"),
 
-    // inviting people to a group, channel or community, or adding community members to a
-    // channel, and its invite link (4b)
-    invite: () => import("../group/InviteDialogScreen.svelte"),
+    // converting a group to a community, or importing it into one you own (4b)
+    convert_group: () => import("../group/ConvertGroupDialogScreen.svelte"),
+    import_group: () => import("../group/ImportGroupDialogScreen.svelte"),
+
+    // a bot's details, installing it, changing its permissions or removing it (4b)
+    bot: () => import("../group/BotDialogScreen.svelte"),
+
+    // registering or editing a group's or channel's webhook (4b)
+    webhook: () => import("../group/WebhookDialogScreen.svelte"),
+
+    // a new group or community (4b)
+    create_group: () => import("../group/CreateGroupDialogScreen.svelte"),
+
+    // a new channel in a community, or an embedded one (4b)
+    new_channel: () => import("../group/CreateChannelDialogScreen.svelte"),
 
     // creating, editing or deleting a community's user group (4b)
     user_group: () => import("../group/UserGroupDialogScreen.svelte"),

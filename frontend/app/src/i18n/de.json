@@ -1297,6 +1297,7 @@
         "menu": "Top-Empfehlungen",
         "start": "Start",
         "thisMonth": "Diesen Monat",
+        "tryAgain": "Nochmal versuchen",
         "username": "Nutzername",
         "users": "Benutzer",
         "value": "Wert"
@@ -2716,7 +2717,10 @@
         "updateTitle": "Aktualisieren Sie {name}",
         "urlLabel": "Webhook-URL",
         "username": "Webhook",
-        "viewEditAction": "Webhook-Details anzeigen/bearbeiten"
+        "viewEditAction": "Webhook-Details anzeigen/bearbeiten",
+        "registerFailed": "Leider konnten wir den Webhook nicht registrieren",
+        "updateFailed": "Leider konnten wir den Webhook nicht aktualisieren",
+        "regenerateFailed": "Leider konnten wir die URL des Webhooks nicht neu erzeugen"
     },
     "websiteVersion": "der Webseite",
     "weeks": "Wochen",

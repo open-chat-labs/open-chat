@@ -1297,6 +1297,7 @@
         "menu": "热门推荐人",
         "start": "开始",
         "thisMonth": "这个月",
+        "tryAgain": "再试一次",
         "username": "用户名",
         "users": "用户",
         "value": "价值"
@@ -2716,7 +2717,10 @@
         "updateTitle": "更新 {name}",
         "urlLabel": "Webhook URL",
         "username": "网络钩子",
-        "viewEditAction": "查看/编辑 webhook 详细信息"
+        "viewEditAction": "查看/编辑 webhook 详细信息",
+        "registerFailed": "抱歉，我们无法注册该 Webhook",
+        "updateFailed": "抱歉，我们无法更新该 Webhook",
+        "regenerateFailed": "抱歉，我们无法重新生成该 Webhook 的 URL"
     },
     "websiteVersion": "网站的",
     "weeks": "周数",

@@ -70,9 +70,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             }
         }
         GroupOrCommunityEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
-        // No longer sent, but still read until every group and community is on a version which
-        // doesn't send it
-        GroupOrCommunityEvent::UserIdMigrationComplete(_) => {}
         GroupOrCommunityEvent::GroupActive(ev) => {
             if is_group {
                 state.push_event_to_group_index(

@@ -16,18 +16,27 @@
     /** Resource key (or literal text). */
     description?: string;
     color?: BotColor;
-    /** Permissions the bot asks for. */
-    perms: BotPerm[];
+    /** Permissions the bot asks for: BotPerm keys, or the host's own keys with `permissions`. */
+    perms: string[];
     /** `about` is a resource key (or literal text); `needs` lists the permissions each command requires. */
-    commands: { name: string; about: string; needs: BotPerm[] }[];
+    commands: { name: string; about: string; needs: string[] }[];
     /** Installed bots: what is granted now. Missing = not granted. */
-    granted?: Partial<Record<BotPerm, boolean>>;
+    granted?: Partial<Record<string, boolean>>;
   }
 
   export interface BotInstall {
     botId: string;
     /** Every requested permission with its final on/off state. */
-    granted: Record<BotPerm, boolean>;
+    granted: Record<string, boolean>;
+  }
+
+  /** A permission as the host describes it (with `permissions`): its label and the heading it's listed under are
+   *  resource keys (or literal text); `risky` ones are called out in the summary. */
+  export interface BotPermissionInfo {
+    key: string;
+    label: string;
+    group: string;
+    risky?: boolean;
   }
 </script>
 
@@ -95,10 +104,13 @@
     onRemove?: (b: { botId: string }) => Promise<unknown> | void;
     /** Install a new bot, or save an installed bot's permissions. */
     onInstall?: (bot: BotInstall) => Promise<unknown> | void;
+    /** The host's permissions, in place of the built-in vocabulary (BotPerm): every key in `bot.perms` and the
+     *  commands' `needs`, with its label and heading, in the order to list them. */
+    permissions?: BotPermissionInfo[];
     onCancel?: () => void;
   }
 
-  let { bot, groupName = 'ui.botDialog.thisGroup', installed = false, canManage = false, initialStep = 'details', onRemove, onInstall, onCancel }: Props = $props();
+  let { bot, groupName = 'ui.botDialog.thisGroup', installed = false, canManage = false, initialStep = 'details', onRemove, onInstall, permissions, onCancel }: Props = $props();
 
   const t = useT();
   // "a", "a and b", "a, b and c" — separator and final conjunction are translatable
@@ -107,7 +119,7 @@
   const group = $derived(t(groupName));
 
   let stepOverride = $state<'details' | 'configure' | 'remove' | null>(null);
-  let grantedOverride = $state<Partial<Record<PermKey, boolean>> | null>(null);
+  let grantedOverride = $state<Partial<Record<string, boolean>> | null>(null);
   // busy / leaving / the exit: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
   const flow = new DialogFlow();
   onDestroy(() => flow.destroy());
@@ -124,13 +136,24 @@
   const isRemove = $derived(step === 'remove');
 
   // nothing is granted until the owner switches it on; an installed bot starts from what it has now
-  const granted = $derived<Partial<Record<PermKey, boolean>>>(grantedOverride ?? (installed ? { ...(bot.granted ?? {}) } : {}));
-  const asked = $derived(spec.perms.map((k) => ({ key: k, ...PERMS[k] })));
+  const granted = $derived<Partial<Record<string, boolean>>>(grantedOverride ?? (installed ? { ...(bot.granted ?? {}) } : {}));
+  const asked = $derived(
+    permissions
+      ? permissions.filter((p) => spec.perms.includes(p.key))
+      : spec.perms.filter((k): k is PermKey => k in PERMS).map((k) => ({ key: k as string, ...PERMS[k] })),
+  );
+  // the host's permissions are listed under their own headings, in their order
   const groups = $derived(
-    [
-      { label: 'ui.botDialog.inThisChat', icon: 'chat', items: asked.filter((p) => p.scope === 'chat') },
-      { label: 'ui.botDialog.forMessages', icon: 'message', items: asked.filter((p) => p.scope === 'message') },
-    ].filter((g) => g.items.length > 0),
+    permissions
+      ? [...new Set(asked.map((p) => (p as BotPermissionInfo).group))].map((label) => ({
+          label,
+          icon: 'chat',
+          items: asked.filter((p) => (p as BotPermissionInfo).group === label),
+        }))
+      : [
+          { label: 'ui.botDialog.inThisChat', icon: 'chat', items: asked.filter((p) => 'scope' in p && p.scope === 'chat') },
+          { label: 'ui.botDialog.forMessages', icon: 'message', items: asked.filter((p) => 'scope' in p && p.scope === 'message') },
+        ].filter((g) => g.items.length > 0),
   );
 
   // view-only: commands the bot can't run here are simply left out
@@ -143,12 +166,27 @@
   const blocked = $derived(commands.filter((c) => c.blocked));
 
   // one plain-language sentence for everyone; the parts that act on people's messages are highlighted
+  // the host's labels in a sentence: "Pin messages" reads as "pin messages"
+  const phrase = (label: string) => {
+    const text = t(label);
+    return text.charAt(0).toLowerCase() + text.slice(1);
+  };
   const summary = $derived.by(() => {
     // installed: what it can do now; not installed: everything it asks for
-    const on = CAN_DO_ORDER.filter((k) => spec.perms.includes(k) && (!installed || granted[k]));
     const form = installed ? 'can' : 'ask';
-    const plain = list(on.filter((k) => !CAN_DO[k]!.risky).map((k) => t(`ui.botDialog.${form}.${CAN_DO[k]!.text}`)));
-    const risky = list(on.filter((k) => CAN_DO[k]!.risky).map((k) => t(`ui.botDialog.ask.${CAN_DO[k]!.text}`)));
+    let plain: string;
+    let risky: string;
+    if (permissions) {
+      const on = asked.filter((p) => !installed || granted[p.key]) as BotPermissionInfo[];
+      // a permission asked for under two headings (commands and autonomous use) is said once
+      const said = (ps: BotPermissionInfo[]) => [...new Set(ps.map((p) => phrase(p.label)))];
+      plain = list(said(on.filter((p) => !p.risky)));
+      risky = list(said(on.filter((p) => p.risky)));
+    } else {
+      const on = CAN_DO_ORDER.filter((k) => spec.perms.includes(k) && (!installed || granted[k]));
+      plain = list(on.filter((k) => !CAN_DO[k]!.risky).map((k) => t(`ui.botDialog.${form}.${CAN_DO[k]!.text}`)));
+      risky = list(on.filter((k) => CAN_DO[k]!.risky).map((k) => t(`ui.botDialog.ask.${CAN_DO[k]!.text}`)));
+    }
     // the risky phrase is highlighted inside the sentence: one message, with {risky} rendered as markup
     // nothing granted (or nothing it asks for has a description): its own sentence instead of an empty list
     const key =
@@ -192,7 +230,7 @@
       if (onRemove) run(() => onRemove({ botId: bot.id }));
     } else if (isConfigure) {
       if (!onInstall) return;
-      const all = Object.fromEntries(spec.perms.map((k) => [k, !!granted[k]])) as Record<PermKey, boolean>;
+      const all = Object.fromEntries(spec.perms.map((k) => [k, !!granted[k]])) as Record<string, boolean>;
       run(() => onInstall({ botId: bot.id, granted: all }));
     } else stepOverride = 'configure';
   }

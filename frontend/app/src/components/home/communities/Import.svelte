@@ -38,12 +38,12 @@
         importing = true;
         client
             .importToCommunity(groupId, selected.id)
-            .then((channelId) => {
-                if (channelId === undefined) {
-                    toastStore.showFailureToast(i18nKey("communities.errors.importFailed"));
+            .then((outcome) => {
+                if (outcome.kind === "failed") {
+                    toastStore.showFailureToast(outcome.message);
                 } else {
                     onCancel();
-                    publish("successfulImport", channelId);
+                    publish("successfulImport", outcome.channelId);
                 }
             })
             .finally(() => (importing = false));

@@ -2,12 +2,12 @@
     import { type ChitUserBalance, mobileWidth, type OpenChat } from "@client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
-    import { isTouchDevice } from "../../utils/devices";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import Invaders from "./Invaders.svelte";
+    import Invaders from "@src/core/invaders/Invaders.svelte";
+    import { invadersSupported } from "@src/core/invaders/support";
     import LighteningBolt from "./nav/LighteningBolt.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -91,11 +91,7 @@
         onClose();
         tick().then(onStreak);
     }
-    let supportsGame = $derived(
-        !isTouchDevice ||
-            // @ts-expect-error iOS-only DeviceOrientationEvent.requestPermission is not in the DOM types
-            (window.DeviceOrientationEvent && window.DeviceOrientationEvent.requestPermission),
-    );
+    const supportsGame = invadersSupported();
     let thisMonthText = $derived(buildMonthText(thisMonth));
     let lastMonthText = $derived(buildMonthText(lastMonth));
 </script>
@@ -116,7 +112,13 @@
     {#snippet body()}
         <div bind:this={bodyElement} class="body">
             {#if showGame}
-                <Invaders />
+                <Invaders>
+                    {#snippet start(play, label)}
+                        <div class="game-start">
+                            <Button onClick={play}>{label}</Button>
+                        </div>
+                    {/snippet}
+                </Invaders>
             {:else}
                 <div class="settings">
                     <div
@@ -188,6 +190,11 @@
 </ModalContent>
 
 <style lang="scss">
+    // the game's start button, in the arcade font the game had
+    .game-start :global(button) {
+        font-family: "Press Start 2P", cursive;
+    }
+
     :global(.hof-footer .button-group) {
         justify-content: space-between !important;
         width: 100%;

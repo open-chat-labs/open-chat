@@ -29,6 +29,7 @@ export OC_VAPID_PUBLIC_KEY=BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33
 export OC_VIDEO_BRIDGE_URL=https://d7ufu5rwdb6eb.cloudfront.net
 export OC_DISCORD_BRIDGE_LINK_URL=https://d2l0wgzap76484.cloudfront.net/link?code={code}
 export OC_TELEGRAM_BRIDGE_LINK_URL=https://t.me/OpenChatBridgeBot?start={code}
+export OC_TWITCH_BRIDGE_LINK_URL=https://d3k84enwyokagr.cloudfront.net/link?code={code}
 export OC_BRIDGE_AVATARS_URL=https://d31v79nf0k3ss4.cloudfront.net
 export OC_WALLET_CONNECT_PROJECT_ID=adf8b4a7c5514a8229981aabdee2e246
 

@@ -1,6 +1,6 @@
 use constants::MINUTE_IN_MS;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{BridgePlatform, BridgedUser, BridgedUserId, BridgedUserSummary, Milliseconds, TimestampMillis, UserId};
 
 pub const LINK_CODE_EXPIRY: Milliseconds = 10 * MINUTE_IN_MS;
@@ -176,6 +176,22 @@ impl BridgedUsers {
     pub fn len(&self) -> usize {
         self.users.len()
     }
+
+    // The registry is small enough to scan for these, rather than keep counts
+    pub fn metrics(&self) -> BridgedUserMetrics {
+        let mut metrics = BridgedUserMetrics::default();
+        let mut linked_users = HashSet::new();
+        for (id, record) in self.users.iter() {
+            let platform = metrics.platforms.entry(id.platform()).or_default();
+            platform.accounts += 1;
+            if let Some(user_id) = record.linked_user_id {
+                platform.linked_accounts += 1;
+                linked_users.insert(user_id);
+            }
+        }
+        metrics.linked_users = linked_users.len();
+        metrics
+    }
 }
 
 impl BridgedUserRecord {
@@ -186,6 +202,22 @@ impl BridgedUserRecord {
             updated: self.updated,
         }
     }
+}
+
+#[derive(Serialize, Debug, Default, PartialEq, Eq)]
+pub struct BridgedUserMetrics {
+    // Only the platforms with an account in the registry
+    pub platforms: BTreeMap<BridgePlatform, BridgedPlatformMetrics>,
+    // The users who have linked an account on any platform, which is lower than the total of the
+    // links where a user has linked more than one
+    pub linked_users: usize,
+}
+
+#[derive(Serialize, Debug, Default, PartialEq, Eq)]
+pub struct BridgedPlatformMetrics {
+    // Including those no one can link, eg. Discord webhooks
+    pub accounts: usize,
+    pub linked_accounts: usize,
 }
 
 #[cfg(test)]
@@ -388,6 +420,60 @@ mod tests {
         assert_eq!(
             users.links().collect::<Vec<_>>(),
             [(BridgedUserId::Discord(80351110224678912), alice)]
+        );
+    }
+
+    #[test]
+    fn metrics_count_the_accounts_and_links_on_each_platform() {
+        let mut users = BridgedUsers::default();
+        let alice: UserId = Principal::from_slice(&[1]).into();
+        let bob: UserId = Principal::from_slice(&[2]).into();
+        let carol: UserId = Principal::from_slice(&[3]).into();
+        let telegram_user_with_id = |id: i64| {
+            BridgedUser::Telegram(TelegramUser {
+                id,
+                username: None,
+                display_name: "Sam".to_string(),
+                photo_id: None,
+            })
+        };
+        assert_eq!(users.metrics(), BridgedUserMetrics::default());
+
+        // Alice links an account on both Discord and Telegram
+        users.start_link(alice, BridgePlatform::Discord, "discord".to_string(), 1);
+        users.link(discord_user("Nelly"), "discord", 1);
+        users.start_link(alice, BridgePlatform::Telegram, "telegram".to_string(), 1);
+        users.link(telegram_user(), "telegram", 1);
+        users.start_link(bob, BridgePlatform::Telegram, "bob".to_string(), 1);
+        users.link(telegram_user_with_id(987654321), "bob", 1);
+        // Known, but not linked
+        users.update(telegram_user_with_id(555555555), 1);
+        // Carol unlinks hers, so she's no longer counted
+        users.start_link(carol, BridgePlatform::Telegram, "carol".to_string(), 1);
+        users.link(telegram_user_with_id(444444444), "carol", 1);
+        users.unlink(&BridgedUserId::Telegram(444444444), None, 2);
+
+        assert_eq!(
+            users.metrics(),
+            BridgedUserMetrics {
+                platforms: BTreeMap::from([
+                    (
+                        BridgePlatform::Discord,
+                        BridgedPlatformMetrics {
+                            accounts: 1,
+                            linked_accounts: 1
+                        }
+                    ),
+                    (
+                        BridgePlatform::Telegram,
+                        BridgedPlatformMetrics {
+                            accounts: 4,
+                            linked_accounts: 2
+                        }
+                    ),
+                ]),
+                linked_users: 2,
+            }
         );
     }
 
