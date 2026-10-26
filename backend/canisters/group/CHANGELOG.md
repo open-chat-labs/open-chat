@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Let the user who used a bot command delete the bot's response ([#10261](https://github.com/open-chat-labs/open-chat/pull/10261))
+- Let the user who issued a bot command delete the bot's response ([#10261](https://github.com/open-chat-labs/open-chat/pull/10261))
 
 ## [[2.0.2191](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2191-group)] - 2026-10-26
 
