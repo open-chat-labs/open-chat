@@ -179,21 +179,18 @@ impl BridgedUsers {
 
     // The registry is small enough to scan for these, rather than keep counts
     pub fn metrics(&self) -> BridgedUserMetrics {
-        let mut platforms: BTreeMap<BridgePlatform, BridgedPlatformMetrics> = BTreeMap::new();
-        let mut links = HashSet::new();
+        let mut metrics = BridgedUserMetrics::default();
+        let mut linked_users = HashSet::new();
         for (id, record) in self.users.iter() {
-            let platform = id.platform();
-            let metrics = platforms.entry(platform).or_default();
-            metrics.accounts += 1;
+            let platform = metrics.platforms.entry(id.platform()).or_default();
+            platform.accounts += 1;
             if let Some(user_id) = record.linked_user_id {
-                metrics.linked_accounts += 1;
-                if links.insert((platform, user_id)) {
-                    metrics.linked_users += 1;
-                }
+                platform.linked_accounts += 1;
+                linked_users.insert(user_id);
             }
         }
-        let linked_users = links.into_iter().map(|(_, user_id)| user_id).collect::<HashSet<_>>().len();
-        BridgedUserMetrics { platforms, linked_users }
+        metrics.linked_users = linked_users.len();
+        metrics
     }
 }
 
@@ -211,17 +208,16 @@ impl BridgedUserRecord {
 pub struct BridgedUserMetrics {
     // Only the platforms with an account in the registry
     pub platforms: BTreeMap<BridgePlatform, BridgedPlatformMetrics>,
-    // The users who have linked an account on any platform
+    // The users who have linked an account on any platform, which is lower than the total of the
+    // links where a user has linked more than one
     pub linked_users: usize,
 }
 
 #[derive(Serialize, Debug, Default, PartialEq, Eq)]
 pub struct BridgedPlatformMetrics {
+    // Including those no one can link, eg. Discord webhooks
     pub accounts: usize,
     pub linked_accounts: usize,
-    // Lower than `linked_accounts` where a user linked more than one account on the platform, which
-    // they could before the website offered only one
-    pub linked_users: usize,
 }
 
 #[cfg(test)]
@@ -432,6 +428,7 @@ mod tests {
         let mut users = BridgedUsers::default();
         let alice: UserId = Principal::from_slice(&[1]).into();
         let bob: UserId = Principal::from_slice(&[2]).into();
+        let carol: UserId = Principal::from_slice(&[3]).into();
         let telegram_user_with_id = |id: i64| {
             BridgedUser::Telegram(TelegramUser {
                 id,
@@ -442,31 +439,18 @@ mod tests {
         };
         assert_eq!(users.metrics(), BridgedUserMetrics::default());
 
-        // Alice links an account on each platform, and a second on Discord, which she could before
-        // the website offered only one
+        // Alice links an account on both Discord and Telegram
         users.start_link(alice, BridgePlatform::Discord, "discord".to_string(), 1);
         users.link(discord_user("Nelly"), "discord", 1);
-        users.start_link(alice, BridgePlatform::Discord, "second".to_string(), 1);
-        users.link(
-            BridgedUser::Discord(DiscordUser {
-                id: 175928847299117063,
-                username: "nelly2".to_string(),
-                display_name: None,
-                avatar: None,
-                bot: false,
-            }),
-            "second",
-            1,
-        );
         users.start_link(alice, BridgePlatform::Telegram, "telegram".to_string(), 1);
         users.link(telegram_user(), "telegram", 1);
         users.start_link(bob, BridgePlatform::Telegram, "bob".to_string(), 1);
         users.link(telegram_user_with_id(987654321), "bob", 1);
         // Known, but not linked
         users.update(telegram_user_with_id(555555555), 1);
-        // Unlinked
-        users.start_link(bob, BridgePlatform::Telegram, "unlinked".to_string(), 1);
-        users.link(telegram_user_with_id(444444444), "unlinked", 1);
+        // Carol unlinks hers, so she's no longer counted
+        users.start_link(carol, BridgePlatform::Telegram, "carol".to_string(), 1);
+        users.link(telegram_user_with_id(444444444), "carol", 1);
         users.unlink(&BridgedUserId::Telegram(444444444), None, 2);
 
         assert_eq!(
@@ -476,17 +460,15 @@ mod tests {
                     (
                         BridgePlatform::Discord,
                         BridgedPlatformMetrics {
-                            accounts: 2,
-                            linked_accounts: 2,
-                            linked_users: 1
+                            accounts: 1,
+                            linked_accounts: 1
                         }
                     ),
                     (
                         BridgePlatform::Telegram,
                         BridgedPlatformMetrics {
                             accounts: 4,
-                            linked_accounts: 2,
-                            linked_users: 2
+                            linked_accounts: 2
                         }
                     ),
                 ]),
