@@ -24,7 +24,10 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
 
 import {
     anonymousUser,
+    defaultChatRules,
     type CandidateGroupChat,
+    type GroupChatIdentifier,
+    type GroupChatSummary,
     type UpdateGroupResponse,
     type WorkerRequest,
 } from "@shared";
@@ -213,6 +216,42 @@ describe("editing and creating a group", () => {
             kind: "created_without_invites",
             chatId: channel.id,
             message: expect.anything(),
+        });
+    });
+
+    // 4b invariant 3: a failed convert or import maps to a message, and a success to its channel
+    test("a convert or import says what became of the group", async () => {
+        const group = { ...original, kind: "group_chat" } as unknown as GroupChatSummary;
+        const community = { kind: "community" as const, communityId: "c" };
+        const channelId = { kind: "channel" as const, communityId: "c", channelId: 3 };
+        let ok = false;
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) =>
+            req.kind === "convertGroupToCommunity"
+                ? Promise.resolve(ok ? { kind: "success", id: channelId } : { kind: "error" })
+                : req.kind === "importGroupToCommunity"
+                  ? ok
+                      ? Promise.resolve({ kind: "success", channelId })
+                      : Promise.reject(new Error("offline"))
+                  : new Promise(() => {})) as never);
+
+        for (const outcome of [
+            await client.convertGroupToCommunity(group, defaultChatRules("community")),
+            await client.importToCommunity(group.id as GroupChatIdentifier, community),
+        ]) {
+            expect(outcome.kind).toBe("failed");
+            if (outcome.kind === "failed") {
+                expect(english(outcome.message.key)).toEqual(expect.any(String));
+            }
+        }
+
+        ok = true;
+        expect(await client.convertGroupToCommunity(group, defaultChatRules("community"))).toEqual({
+            kind: "success",
+            channelId,
+        });
+        expect(await client.importToCommunity(group.id as GroupChatIdentifier, community)).toEqual({
+            kind: "success",
+            channelId,
         });
     });
 

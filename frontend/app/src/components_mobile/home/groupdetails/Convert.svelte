@@ -38,9 +38,12 @@
 
     function convert() {
         state = "converting";
-        client.convertGroupToCommunity(chat, defaultChatRules("community")).then((id) => {
-            if (id !== undefined) {
-                publish("convertedGroupToCommunity", { name: chat.name, channelId: id });
+        client.convertGroupToCommunity(chat, defaultChatRules("community")).then((outcome) => {
+            if (outcome.kind === "success") {
+                publish("convertedGroupToCommunity", {
+                    name: chat.name,
+                    channelId: outcome.channelId,
+                });
             } else {
                 state = "error";
             }

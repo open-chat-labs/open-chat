@@ -2446,6 +2446,11 @@ export type UpdateGroupOutcome =
     | { kind: "failed"; message: ResourceKey };
 
 /** `created_without_invites` means the group was created but inviting the chosen users failed */
+/** Converting a group to a community, or importing it into one: the channel it became. */
+export type GroupMoveOutcome =
+    | { kind: "success"; channelId: ChannelIdentifier }
+    | { kind: "failed"; message: ResourceKey };
+
 export type CreateGroupOutcome =
     | { kind: "created"; chatId: MultiUserChatIdentifier }
     | { kind: "created_without_invites"; chatId: MultiUserChatIdentifier; message: ResourceKey }

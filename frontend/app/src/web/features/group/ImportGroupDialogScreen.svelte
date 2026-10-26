@@ -53,15 +53,15 @@
     // the dialog stays open and says it failed when this rejects
     async function importGroup(community: ImportCommunity) {
         if (group === undefined) throw new Error("no group");
-        const channelId = await client.importToCommunity(group.id, {
+        const outcome = await client.importToCommunity(group.id, {
             kind: "community",
             communityId: community.id,
         });
-        if (channelId === undefined) {
-            toastStore.showFailureToast(i18nKey("communities.errors.importFailed"));
+        if (outcome.kind === "failed") {
+            toastStore.showFailureToast(outcome.message);
             throw new Error("not imported");
         }
-        navigate(`/community/${channelId.communityId}`);
+        navigate(`/community/${outcome.channelId.communityId}`);
     }
 </script>
 

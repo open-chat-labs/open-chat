@@ -8,6 +8,7 @@
         type OpenChat,
     } from "@client";
     import ConvertToCommunityDialog from "@openchat/ui/src/features/components/ConvertToCommunityDialog.svelte";
+    import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { getContext } from "svelte";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
@@ -27,12 +28,12 @@
     // the dialog stays on its confirm step and says it failed when this rejects
     async function convert() {
         if (group === undefined) throw new Error("no group");
-        const channelId = await client.convertGroupToCommunity(
-            group,
-            defaultChatRules("community"),
-        );
-        if (channelId === undefined) throw new Error("not converted");
-        return { communityId: channelId.communityId };
+        const outcome = await client.convertGroupToCommunity(group, defaultChatRules("community"));
+        if (outcome.kind === "failed") {
+            toastStore.showFailureToast(outcome.message);
+            throw new Error("not converted");
+        }
+        return { communityId: outcome.channelId.communityId };
     }
 </script>
 
