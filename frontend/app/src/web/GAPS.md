@@ -291,7 +291,13 @@ design export needs. Each entry says where it came up.
   asks "Discard changes?".
   - by hand: `ManageDialog` is new in the library. The design has it only in the App prototype
     (`_manageVals`), with no exported component.
-  - pages still to come: Bots, Webhooks, Stats, Convert and Import.
+  - pages still to come: Bots and Webhooks.
+  - no Stats page: the design's `GroupStats` shows the last 30 days, a 12-week series and the top
+    senders, and the backend keeps only all-time counters (`metrics`). Showing those as the last
+    30 days would mislead, so it waits on the data (see Community stats).
+  - Convert to community and Import into community (a group's owner, under Advanced) open
+    `ConvertToCommunityDialog` / `ImportToCommunityDialog` over Manage, then the community, as the
+    old pages did. Import lists the communities you own; with none it says so and doesn't open.
   - a community's Channels page lists the channels you're in (the community's summary holds
     no others), each opening that channel's Manage with a back arrow to Channels. Manage reads the
     open chat, so a channel that isn't open is opened first.

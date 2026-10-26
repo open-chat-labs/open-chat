@@ -1,4 +1,9 @@
-import type { CommunityIdentifier, LeaveOrDelete, MultiUserChatIdentifier } from "@client";
+import type {
+    CommunityIdentifier,
+    GroupChatIdentifier,
+    LeaveOrDelete,
+    MultiUserChatIdentifier,
+} from "@client";
 import type { DialogStack } from "../../shell/dialogStack.svelte";
 import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
@@ -55,6 +60,8 @@ export type LocalDialog =
           inviteTab?: "people" | "share";
       }
     | { kind: "create_group"; level: "group" | "community" }
+    | { kind: "convert_group"; chatId: GroupChatIdentifier }
+    | { kind: "import_group"; chatId: GroupChatIdentifier }
     | {
           kind: "new_channel";
           communityId: CommunityIdentifier;
@@ -114,6 +121,10 @@ export const dialogs: Dialogs = {
 
     // Manage for a group, channel or community: its settings (or About page) and Invite & share (4b)
     manage: () => import("../group/ManageDialogScreen.svelte"),
+
+    // converting a group to a community, or importing it into one you own (4b)
+    convert_group: () => import("../group/ConvertGroupDialogScreen.svelte"),
+    import_group: () => import("../group/ImportGroupDialogScreen.svelte"),
 
     // a new group or community (4b)
     create_group: () => import("../group/CreateGroupDialogScreen.svelte"),
