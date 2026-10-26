@@ -130,28 +130,38 @@ export type HeaderMenuState = {
     everyoneMuted: boolean;
     /** A DM with a bot can't be muted. */
     isBot: boolean;
+    /** There are unread messages to mark as read. */
+    unread: boolean;
     /** Leave, delete, block and unblock, as logic/chats/chatMenu offers them. */
     actions: ChatMenuAction[];
     /** "Unblock user", which the library has no words for. */
     unblockLabel: string;
-    /** A group or channel the viewer may invite people to. */
-    canInvite: boolean;
+    /** Someone who can edit the group or channel: "Manage", else its details. */
+    canEdit: boolean;
 };
 
 /**
- * ConversationHeader's menu, its default items in its order and words, with leave, delete, block
- * and unblock only where the app allows them. Picking one reports its id (`onMenu`, or `onLeave`).
+ * ConversationHeader's menu, as the design's (`_chatMenu`): for a group or channel, Manage (or its
+ * details), favourite, mute, @everyone, mark as read and copy link, then leave; for a DM,
+ * favourite, mute, then block and delete. Leave, delete, block and unblock show only where the
+ * app allows them. Picking one reports its id (`onMenu`, or `onLeave`).
  */
 export function headerMenuItems(state: HeaderMenuState): HeaderMenuItem[] {
-    const items: HeaderMenuItem[] = [
-        ...(state.canInvite && state.kind !== "user"
-            ? [{ id: "invite", label: K + "invite", mask: icon("invite") }]
-            : []),
+    const group = state.kind !== "user";
+    const noun = state.kind === "channel" ? "Channel" : "Group";
+    const items: HeaderMenuItem[] = [];
+    if (group) {
+        items.push({
+            id: "manage",
+            label: K + (state.canEdit ? `manage${noun}` : `${noun.toLowerCase()}Details`),
+            mask: icon(state.canEdit ? "gear" : "info"),
+        });
+    }
+    items.push(
         state.favourite
             ? { id: "unfavourite", label: K + "removeFromFavourites", mask: icon("heart") }
             : { id: "favourite", label: K + "addToFavourites", mask: icon("heart") },
-        { id: "copyUrl", label: K + "copyUrl", mask: icon("link") },
-    ];
+    );
     if (!state.isBot) {
         items.push(
             state.muted
@@ -159,17 +169,36 @@ export function headerMenuItems(state: HeaderMenuState): HeaderMenuItem[] {
                 : { id: "mute", label: K + "muteNotifications", mask: icon("bell-off") },
         );
     }
-    if (state.kind !== "user") {
+    if (group) {
         items.push(
             state.everyoneMuted
                 ? { id: "unmuteEveryone", label: K + "unmuteEveryone", mask: icon("at") }
                 : { id: "muteEveryone", label: K + "muteEveryone", mask: icon("at") },
         );
+        if (state.unread) {
+            items.push({ id: "markRead", label: K + "markAsRead", mask: icon("check") });
+        }
+        items.push({ id: "copyUrl", label: K + "copyUrl", mask: icon("link") });
     }
     for (const action of state.actions) {
         items.push(actionItem(action, state));
     }
     return items;
+}
+
+/** The quick panel's menu: the header's without what the panel shows as buttons (favourite,
+ *  mute, @everyone) or its own cog (Manage), as the design's `_panelMenu`. */
+export function panelMenuItems(state: HeaderMenuState): HeaderMenuItem[] {
+    const shown = new Set([
+        "manage",
+        "favourite",
+        "unfavourite",
+        "mute",
+        "unmute",
+        "muteEveryone",
+        "unmuteEveryone",
+    ]);
+    return headerMenuItems(state).filter((item) => !shown.has(item.id));
 }
 
 function actionItem(action: ChatMenuAction, state: HeaderMenuState): HeaderMenuItem {

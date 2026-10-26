@@ -288,15 +288,24 @@ design export needs. Each entry says where it came up.
   asks "Discard changes?".
   - by hand: `ManageDialog` is new in the library. The design has it only in the App prototype
     (`_manageVals`), with no exported component.
-  - pages still to come: Channels, Bots, Webhooks, Stats, Convert and Import. The right column
-    still shows the full GroupPanel, not the design's quick panel.
+  - pages still to come: Channels, Bots, Webhooks, Stats, Convert and Import.
+  - the right column shows GroupPanel's quick panel for a group or channel (cog for someone who
+    can edit, info otherwise); its views open Manage, except pinned messages. A community has no
+    panel: its header, its menu's Members / Invite / Edit community, and a channel's community
+    link open Manage. A panel asked for members (?everyone, ?usergroup=) or a community's details
+    opens Manage instead.
+  - the quick panel's "Online now" has no presence data yet (see Presence).
   - which pages show follows the app's permission rules (`detailsPermissions`), not the
     prototype's roles: someone who can't edit gets About and read-only Rules and Gates, and no
     Permissions; Invite & share shows with `canOpenInvite`, and User groups with
     `canManageUserGroups` (as the design, which offers them to managers only).
-  - the chat name and the header kebab don't open Manage yet; GroupPanel's Settings, invite and
-    share buttons, the conversation header's Invite and the community header's Invite and Edit
-    community do.
+  - Manage opens from a group's or channel's name (with the design's chevron and hint), the
+    header menu's first item ("Manage group", or "Group details" without edit rights), the quick
+    panel's cog, and the community header and its menu.
+  - the header menu follows the design's (`_chatMenu`) but has no Share to chat (the chat picker
+    is 4d) and no Report (no report flow yet); a DM keeps Delete chat, which the design leaves out.
+    The community menu has no Stats, New channel, Add embedded channel or Add a bot until those
+    pages land, and no longer mutes every channel (the community's About page does).
   - a channel's Manage has no back arrow to its community yet (the community has no Channels
     page).
   - the frame below 768px is the desktop frame at full screen with a narrower nav; the design has

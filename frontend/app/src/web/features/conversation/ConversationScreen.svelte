@@ -4,9 +4,6 @@
      of its own that keeps its place in the sender's run (DATA.md, Conversation). -->
 <script lang="ts">
     import { showInRightColumn } from "../app/rightPanel";
-    import { chatMenuActions } from "@src/logic/chats/chatMenu";
-    import { chatDetailsPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
-    import { muteChat } from "@src/logic/chats/muteChat";
     import {
         allUsersStore,
         anonUserStore,
@@ -62,10 +59,8 @@
     } from "@src/logic/composer/composer";
     import { enterSend } from "@src/stores/settings";
     import { now500 } from "@src/stores/time";
-    import { toastStore } from "@src/stores/toast";
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { isTouchOnlyDevice } from "@src/utils/devices";
-    import { copyPageUrl } from "@src/utils/urls";
     import { isSingleEmoji } from "@src/utils/emojis";
     import { buildDisplayName } from "@src/utils/user";
     import {
@@ -77,6 +72,7 @@
     import { getContext, untrack, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
+    import { chatMenuState, runChatMenuItem } from "./chatMenu";
     import Composer from "./Composer.svelte";
     import {
         headerMenuItems,
@@ -148,101 +144,37 @@
     );
     const favourite = $derived(chat !== undefined && $favouritesStore.has(chat.id));
 
-    async function toggleMute(
-        chatId: ChatIdentifier,
-        mute: boolean | undefined,
-        muteAtEveryone: boolean | undefined,
-    ) {
-        const failed = await muteChat(client, chatId, mute, muteAtEveryone, $_);
-        if (failed !== undefined) toastStore.showFailureToast(failed);
-    }
-
     const headerKind = $derived(
         chat?.kind === "direct_chat" ? "user" : chat?.kind === "group_chat" ? "group" : "channel",
     );
-    const them = $derived(
-        chat?.kind === "direct_chat" ? $allUsersStore.get(chat.them.userId) : undefined,
-    );
-    const menuItems = $derived(
+    const menuState = $derived(
         chat === undefined
-            ? []
-            : headerMenuItems({
-                  kind: headerKind,
+            ? undefined
+            : chatMenuState(client, chat, {
                   favourite,
-                  muted: chat.membership.notificationsMuted,
-                  everyoneMuted: chat.membership.atEveryoneMuted,
-                  isBot: them?.kind === "bot",
-                  actions: chatMenuActions(chat, {
-                      canLeave: chat.kind !== "direct_chat" && client.canLeaveGroup(chat.id),
-                      blocked:
-                          chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId),
-                      isBot: them?.kind === "bot",
-                  }),
+                  blocked: $blockedUsersStore,
+                  users: $allUsersStore,
+                  community: $selectedCommunitySummaryStore,
+                  anon: $anonUserStore,
                   unblockLabel: $_("unblockUser"),
-                  canInvite:
-                      chat.kind !== "direct_chat" &&
-                      chatDetailsPermissions(
-                          client,
-                          chat,
-                          $selectedCommunitySummaryStore,
-                          $anonUserStore,
-                      ).canOpenInvite,
               }),
     );
-
-    async function setBlocked(userId: string, blocked: boolean) {
-        toastStore.showOutcome(await client.setBlockedInDirectChat(userId, blocked));
-    }
+    const menuItems = $derived(menuState === undefined ? [] : headerMenuItems(menuState));
 
     // TODO(4b): convert, import and the webhook (parts 4 and 5); the search action; calls are
     // phase 7
     function onMenu(id: string) {
         if (chat === undefined) return;
-        switch (id) {
-            case "leave":
-                if (chat.kind !== "direct_chat") {
-                    screen.dialogs.open({
-                        kind: "leave_or_delete",
-                        action: { kind: "leave", chatId: chat.id },
-                        name: title,
-                    });
-                }
-                break;
-            case "delete":
-                if (chat.kind === "direct_chat") {
-                    screen.dialogs.open({
-                        kind: "leave_or_delete",
-                        action: { kind: "delete_direct_chat", chatId: chat.id, blockUser: false },
-                        name: title,
-                    });
-                }
-                break;
-            case "invite":
-                if (chat.kind !== "direct_chat") {
-                    screen.dialogs.open({ kind: "manage", target: chat.id, section: "invite" });
-                }
-                break;
-            case "block":
-            case "unblock":
-                if (chat.kind === "direct_chat") setBlocked(chat.them.userId, id === "block");
-                break;
-            case "favourite":
-                client.addToFavourites(chat.id);
-                break;
-            case "unfavourite":
-                client.removeFromFavourites(chat.id);
-                break;
-            case "mute":
-            case "unmute":
-                toggleMute(chat.id, id === "mute", undefined);
-                break;
-            case "muteEveryone":
-            case "unmuteEveryone":
-                toggleMute(chat.id, undefined, id === "muteEveryone");
-                break;
-            case "copyUrl":
-                copyPageUrl(client);
-                break;
+        runChatMenuItem(id, { client, chat, title, dialogs: screen.dialogs, formatter: $_ });
+    }
+
+    // a group's or channel's name opens Manage (the About page for someone who can't edit it)
+    function openDetails() {
+        if (chat === undefined) return;
+        if (chat.kind === "direct_chat") {
+            showInRightColumn(screen.rightColumn, { kind: "group_details" });
+        } else {
+            screen.dialogs.open({ kind: "manage", target: chat.id, section: "main" });
         }
     }
 
@@ -501,7 +433,13 @@
             {menuItems}
             {onMenu}
             onLeave={() => onMenu("leave")}
-            openDetails={() => showInRightColumn(screen.rightColumn, { kind: "group_details" })}
+            {openDetails}
+            titleChevron={chat.kind !== "direct_chat"}
+            titleHint={chat.kind === "direct_chat"
+                ? undefined
+                : menuState?.canEdit
+                  ? `ui.conversationHeader.menu.manage${chat.kind === "channel" ? "Channel" : "Group"}`
+                  : `ui.conversationHeader.menu.${chat.kind === "channel" ? "channel" : "group"}Details`}
             onTogglePanel={() => screen.rightColumn.toggle()}
             panelOpen={screen.rightColumn.open}
         />

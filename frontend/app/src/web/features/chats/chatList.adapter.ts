@@ -82,53 +82,51 @@ export function listed(chat: ChatSummary, query: string, users: UserLookup): boo
 const icon = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
 
 export type CommunityHeaderMenuState = CommunityMenuPermissions & {
-    /** Every channel in the list is muted, or has @everyone muted. */
-    allMuted: boolean;
-    everyoneMuted: boolean;
+    canManageUserGroups: boolean;
     /** The app's words for a key. */
     label: (key: string) => string;
 };
 
 /**
- * ChatListHeader's community menu as the old one was: details, members, edit, invite, mark all read, muting
- * every channel, then delete and leave where the app's rules allow them. Picking one reports its
- * id (`onMenu`).
+ * ChatListHeader's community menu, as the design's (`_commMenuAll`): members, invite, edit, new
+ * user group, mark all read, then leave and delete, where the app's rules allow them. Members,
+ * invite and edit open Manage. Picking one reports its id (`onMenu`).
  */
 export function communityHeaderMenu(
     state: CommunityHeaderMenuState,
 ): (MenuItem & { id: string })[] {
     const { label } = state;
     const items: (MenuItem & { id: string })[] = [
-        { id: "details", label: label("communities.details"), mask: icon("info") },
         { id: "members", label: "ui.chatListHeader.members", mask: icon("users") },
-        { id: "markAllRead", label: "ui.chatListHeader.markAllRead", mask: icon("check-double") },
     ];
     if (state.canInvite) {
-        items.splice(2, 0, {
-            id: "invite",
-            label: "ui.chatListHeader.invite",
-            mask: icon("invite"),
-        });
+        items.push({ id: "invite", label: "ui.chatListHeader.invite", mask: icon("invite") });
     }
     if (state.canEdit) {
-        items.splice(2, 0, {
+        items.push({
             id: "editCommunity",
             label: "ui.chatListHeader.editCommunity",
             mask: icon("edit"),
         });
     }
-    if (!state.allMuted) {
+    if (state.canManageUserGroups) {
         items.push({
-            id: "muteAll",
-            label: label("communities.muteAllChannels"),
-            mask: icon("bell-off"),
+            id: "newUserGroup",
+            label: "ui.groupPanel.menu.newUserGroup",
+            mask: icon("at"),
         });
     }
-    if (!state.everyoneMuted) {
+    items.push({
+        id: "markAllRead",
+        label: "ui.chatListHeader.markAllRead",
+        mask: icon("check-double"),
+    });
+    if (state.canLeave) {
         items.push({
-            id: "muteAllEveryone",
-            label: label("communities.muteAllChannelsAtEveryone"),
-            mask: icon("at"),
+            id: "leave",
+            label: "ui.chatListHeader.leaveCommunity",
+            mask: icon("exit"),
+            variant: "danger",
         });
     }
     if (state.canDelete) {
@@ -136,14 +134,6 @@ export function communityHeaderMenu(
             id: "delete",
             label: label("communities.delete"),
             mask: icon("trash"),
-            variant: "danger",
-        });
-    }
-    if (state.canLeave) {
-        items.push({
-            id: "leave",
-            label: "ui.chatListHeader.leaveCommunity",
-            mask: icon("exit"),
             variant: "danger",
         });
     }

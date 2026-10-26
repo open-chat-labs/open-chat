@@ -55,6 +55,7 @@
     import { communityPermissionsValue, permissionsValue } from "./settings.adapter";
     import type { DialogStack } from "../../shell/dialogStack.svelte";
     import type { LocalDialog } from "../app/dialogs";
+    import type { MenuItem } from "@openchat/ui/src/lib/types";
     import { gateAssets, gatesState } from "../access/gates.adapter";
     import { pickById } from "../../pickById";
     import {
@@ -78,6 +79,10 @@
         dialogs: DialogStack<LocalDialog>;
         /** One of Manage's pages: GroupPanel's views without its main page. */
         embedded?: boolean;
+        /** The right column's compact panel: its views open Manage, except pinned messages. */
+        quick?: boolean;
+        /** The quick panel's ⋯ menu, in place of GroupPanel's own. */
+        menuOverride?: MenuItem[];
         /** Shows a back arrow, for a panel opened over another. */
         back?: boolean;
         /** Opens Manage on a page; inside Manage, moves to that page instead. */
@@ -93,6 +98,8 @@
         viewRequest,
         dialogs,
         embedded = false,
+        quick = false,
+        menuOverride,
         back = false,
         onManage,
         onOpenCommunity,
@@ -332,7 +339,7 @@
             return;
         }
         if (kind === "settings") {
-            manage(manageSection(tab));
+            manage(panelViewSection(tab ?? "main"));
             return;
         }
         const allowed =
@@ -360,9 +367,20 @@
         }
     }
 
-    // GroupPanel's view the settings were opened from, as Manage's page
-    function manageSection(view: string | undefined): ManageSection {
-        return view === "gates" || view === "rules" || view === "permissions" ? view : "main";
+    // GroupPanel's views (the quick panel's, or the one settings were opened from) as Manage's pages
+    function panelViewSection(view: string): ManageSection {
+        switch (view) {
+            case "members":
+            case "rules":
+            case "gates":
+            case "permissions":
+                return view;
+            case "usergroups":
+            case "usergroup":
+                return "usergroups";
+            default:
+                return "main";
+        }
     }
 
     function manage(section: ManageSection, inviteTab?: "people" | "share") {
@@ -444,6 +462,10 @@
         onOpenPinned={openPinned}
         onUnpin={unpin}
         {embedded}
+        {quick}
+        manageIcon={permissions?.canEdit ? "manage" : "info"}
+        {menuOverride}
+        onManage={(v) => manage(panelViewSection(v))}
         {back}
         {onClose}
     />
