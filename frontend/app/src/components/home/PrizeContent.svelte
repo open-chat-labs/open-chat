@@ -1,12 +1,14 @@
 <script lang="ts">
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import {
+        allChatsStore,
         AuthProvider,
         chitBands,
         chitStateStore,
         cryptoLookup,
         isDiamondStore,
         isLifetimeDiamondStore,
+        isPreviewing,
         mobileWidth,
         publish,
         type ChatIdentifier,
@@ -43,10 +45,9 @@
         messageId: bigint;
         me: boolean;
         intersecting: boolean;
-        readonly: boolean;
     }
 
-    let { content, chatId, messageId, me, intersecting, readonly }: Props = $props();
+    let { content, chatId, messageId, me, intersecting }: Props = $props();
 
     let progressWidth = $state(0);
     let mouseEvent = $state<MouseEvent>();
@@ -101,7 +102,14 @@
             content.streakOnly <= $chitStateStore.streak &&
             content.minChitEarned <= $chitStateStore.totalChitEarned,
     );
-    let disabled = $derived(readonly || finished || claimedByYou || allClaimed || !userEligible);
+    // Read from the store so the button enables as soon as the user joins
+    let previewingChat = $derived.by(() => {
+        const chat = $allChatsStore.get(chatId);
+        return chat !== undefined && isPreviewing(chat);
+    });
+    let disabled = $derived(
+        previewingChat || finished || claimedByYou || allClaimed || !userEligible,
+    );
     let timeRemaining = $derived(
         finished
             ? $_("prizes.finished")
@@ -235,7 +243,7 @@
                 </div>
             {/if}
 
-            {#if userEligible}
+            {#if userEligible && !previewingChat}
                 <div class="click"><Translatable resourceKey={i18nKey("prizes.click")} /></div>
             {/if}
         {:else if finished}

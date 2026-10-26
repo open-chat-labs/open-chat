@@ -58,9 +58,9 @@ design export needs. Each entry says where it came up.
 - **Proposals**: `ProposalMessage` isn't in the `GroupMessage` union, so `MessageGroup` can't
   render proposal chats. When it can, a vote that comes back `neuron_votes_failed` should list each
   neuron with its reason, as the old UI does.
-- **Prizes**: `GroupMessage` has no prize kind yet (5a). When it does, its claim button is disabled
-  while the chat is read-only (`isChatReadOnly`: previewing, or the user is suspended), as in the
-  old UI.
+- **Prizes**: the conversation adapter doesn't map `prize_content` onto `PrizeMessage` yet (5a).
+  `PrizeMessage` has no disabled state, and without `onClaim` it marks itself claimed, so it needs
+  one: the old UI disables Claim while the user is previewing the chat (`isPreviewing`).
 - **Thread replies**: `ThreadPanel` renders replies with no react / menu / reply / edit handlers.
 - **Composer banner**: `ComposerBar` takes `bannerAction` as a label but doesn't pass a handler
   through to `Banner`.

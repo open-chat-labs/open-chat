@@ -15,6 +15,7 @@
         Subtitle,
     } from "component-lib";
     import {
+        allChatsStore,
         AuthProvider,
         chitBands,
         chitStateStore,
@@ -22,6 +23,7 @@
         enhancedCryptoLookup,
         isDiamondStore,
         isLifetimeDiamondStore,
+        isPreviewing,
         type ChatIdentifier,
         type DiamondMembershipStatus,
         type OpenChat,
@@ -67,7 +69,6 @@
         edited?: boolean;
         isPreview?: boolean;
         blockLevelMarkdown?: boolean;
-        readonly?: boolean;
         onRemove?: () => void;
     }
 
@@ -83,7 +84,6 @@
         edited = false,
         isPreview = false,
         blockLevelMarkdown = false,
-        readonly = false,
         onRemove,
     }: Props = $props();
 
@@ -159,7 +159,14 @@
             content.streakOnly <= $chitStateStore.streak &&
             content.minChitEarned <= $chitStateStore.totalChitEarned,
     );
-    let disabled = $derived(readonly || finished || claimedByYou || allClaimed || !userEligible);
+    // Read from the store so the button enables as soon as the user joins
+    let previewingChat = $derived.by(() => {
+        const chat = chatId !== undefined ? $allChatsStore.get(chatId) : undefined;
+        return chat !== undefined && isPreviewing(chat);
+    });
+    let disabled = $derived(
+        previewingChat || finished || claimedByYou || allClaimed || !userEligible,
+    );
     let timeRemaining = $derived(
         finished
             ? $_("prizes.finished")

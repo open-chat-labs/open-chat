@@ -32,6 +32,7 @@ export {
     disappearingMessagesUpdate,
     eventsTTLUpdate,
     getMembersString,
+    isPreviewing,
     subrangesCover,
     TimelineGrouper,
 } from "./utils/chat";
