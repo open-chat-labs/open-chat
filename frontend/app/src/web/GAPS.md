@@ -276,6 +276,9 @@ design export needs. Each entry says where it came up.
     leave, so for anyone else the item does nothing.
   - not offered: freeze and unfreeze (platform moderators, no dialog), suspend, report, and the
     desktop row's swipe-to-remove (Remove chat is a row menu item instead).
+  - the row menus offer every item with a dialog (pin, archive, leave or delete, remove) on every
+    kind of row, by Julian's choice; the design gives DM and group rows only favourite, mute and
+    mark read.
   - the community header's Invite and new channel items, and the conversation header's Invite,
     Convert, Import and webhook items, come with 4b's later parts.
 
