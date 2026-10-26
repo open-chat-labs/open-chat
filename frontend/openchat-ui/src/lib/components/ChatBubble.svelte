@@ -1,5 +1,6 @@
 <!-- Text message bubble: optional reply quote, forwarded tag, code block, text with an inline time/status stamp,
-     link preview cards (LinkCard) under the text,
+     link preview cards (LinkCard) under the text: with any, the bubble takes LinkPreview's shape (its 320px width,
+     cards flush to a 4px inset, the stamp in a footer under them),
      failed + Retry line, thread link and reaction chips. Emoji-only messages of one or two emoji render large.
      Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
 <script lang="ts">
@@ -87,6 +88,7 @@
   const t = useT();
 
   const sent = $derived(side === 'sent');
+  const carded = $derived(previews.length > 0);
   const emojiCount = $derived(emojiOnlyCount(text));
   const scale = $derived(
     emojiCount === 1 ? { size: '42px', leading: '1.15' } : emojiCount === 2 ? { size: '32px', leading: '1.2' } : { size: 'var(--text-base)', leading: '1.5' },
@@ -145,7 +147,7 @@
     </div>
   {:else}
     <div class="column" class:sent>
-      <div class="bubble" class:last={lastInGroup} bind:this={bubble} data-oc-bubble>
+      <div class="bubble" class:last={lastInGroup} class:carded bind:this={bubble} data-oc-bubble>
         {#if quoteName}
           <div class="quote">
             <span class="quote-bar"></span>
@@ -162,16 +164,17 @@
           <pre class="code">{code}</pre>
         {/if}
         {#if body}
-          <div class="text body" style:font-size={scale.size} style:line-height={scale.leading} style:--oc-stamp-room="{stampWidth + 9}px">{@render body()}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner" bind:offsetWidth={stampWidth}>{@render stamp()}</span></div>
+          <div class="text body" style:font-size={scale.size} style:line-height={scale.leading} style:--oc-stamp-room="{stampWidth + 9}px">{@render body()}{#if !carded}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner" bind:offsetWidth={stampWidth}>{@render stamp()}</span>{/if}</div>
         {:else}
-          <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></p>
+          <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}{#if !carded}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span>{/if}</p>
         {/if}
-        {#if previews.length > 0}
+        {#if carded}
           <div class="previews">
             {#each previews as p}
               <LinkCard {...p} {side} />
             {/each}
           </div>
+          <div class="meta"><span class="stamp">{@render stamp()}</span></div>
         {/if}
       </div>
       {#if status === 'failed'}
@@ -437,13 +440,40 @@
     width: var(--oc-stamp-room, 0);
   }
 
+  /* with link previews: LinkPreview's shell, the cards flush to its inset and the rest padded as its text */
+  .bubble.carded {
+    width: 320px;
+    padding: var(--space-4);
+  }
+
+  .carded > .quote {
+    margin: 0 0 var(--space-8);
+  }
+
+  .carded > .forwarded,
+  .carded > .code,
+  .carded > .text {
+    margin-inline: var(--space-10);
+  }
+
+  .carded > :is(.forwarded, .code, .text):first-child {
+    margin-top: var(--space-8);
+  }
+
+  .carded > .text {
+    padding-bottom: var(--space-10);
+  }
+
   .previews {
     display: flex;
     flex-direction: column;
-    gap: var(--space-8);
-    width: 320px;
-    max-width: 100%;
-    margin-top: var(--space-10);
+    gap: var(--space-4);
+  }
+
+  .meta {
+    display: flex;
+    justify-content: flex-end;
+    padding: var(--space-6) var(--space-10) var(--space-4);
   }
 
   .stamp {

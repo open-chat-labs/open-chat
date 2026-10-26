@@ -658,8 +658,8 @@ design export needs. Each entry says where it came up.
 - **Link previews** (`features/conversation`, 5a): a text message's previews show as cards under
   its text (`ChatBubble` takes `previews` by hand, a `LinkCard` each, the card the design's
   `LinkPreview` has). The design's `LinkPreview` is a message kind of its own, with plain text and
-  no edit, quote, thread or reactions, so it isn't used. The time stamp stays at the end of the
-  text, above the cards, not under them as in `LinkPreview`. A card links only to an http(s) URL
+  no edit, quote, thread or reactions, so it isn't used; with previews the bubble takes its shape
+  instead (320px, cards flush, the time under them). A card links only to an http(s) URL
   (`ogPreviewCard` in `@client`, shared with the old trees). The sender can't remove a preview yet
   (the message menu is 5b), and a link to another OpenChat message (`messagePreviews`) shows no
   preview: nothing in the library renders a quoted message.
