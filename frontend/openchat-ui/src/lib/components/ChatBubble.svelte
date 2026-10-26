@@ -1,6 +1,6 @@
 <!-- Text message bubble: optional reply quote, forwarded tag, code block, text with an inline time/status stamp,
      link preview cards (LinkCard) under the text: with any, the bubble takes LinkPreview's shape (its 320px width,
-     cards flush to a 4px inset, the stamp in a footer under them),
+     cards flush to a 4px inset, the stamp in a footer under them), and an X on each card for the sender with onRemovePreview,
      failed + Retry line, thread link and reaction chips. Emoji-only messages of one or two emoji render large.
      Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
 <script lang="ts">
@@ -58,6 +58,8 @@
     onOpenThread?: () => void;
     /** Previews of the links in the text, a card each under it. */
     previews?: Omit<ComponentProps<typeof LinkCard>, 'side'>[];
+    /** The sender removes a preview (by its index in `previews`): an X on each card. None without it. */
+    onRemovePreview?: (index: number) => void;
   }
 
   let {
@@ -84,6 +86,7 @@
     threadLastAt = '',
     onOpenThread,
     previews = [],
+    onRemovePreview,
   }: Props = $props();
   const t = useT();
 
@@ -170,8 +173,13 @@
         {/if}
         {#if carded}
           <div class="previews">
-            {#each previews as p}
-              <LinkCard {...p} {side} />
+            {#each previews as p, i}
+              <div class="preview">
+                <LinkCard {...p} {side} />
+                {#if onRemovePreview}
+                  <button class="remove" type="button" aria-label={t('ui.chatBubble.removePreview')} title={t('ui.chatBubble.removePreview')} onclick={() => onRemovePreview(i)}></button>
+                {/if}
+              </div>
             {/each}
           </div>
           <div class="meta"><span class="stamp">{@render stamp()}</span></div>
@@ -468,6 +476,50 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+  }
+
+  .preview {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* on the bubble's own colour, so it reads over a card's image too; shown on hover or focus where there's a pointer */
+  .remove {
+    position: absolute;
+    top: var(--space-6);
+    inset-inline-end: var(--space-6);
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--bubble-recv-bg);
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  .remove::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    background: var(--msg-ink);
+    mask: var(--icon-close) center/contain no-repeat;
+  }
+
+  .sent .remove {
+    background: var(--bubble-send-bg);
+  }
+
+  .preview:hover .remove,
+  .remove:focus-visible {
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    .remove {
+      opacity: 1;
+    }
   }
 
   .meta {

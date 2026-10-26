@@ -2200,6 +2200,7 @@
     "removedBy": "{changedBy} {changed} را از {level} حذف کرد",
     "removeMemberFailed": "امکان حذف عضو وجود ندارد",
     "removePreviewQuestion": "پیش نمایش حذف شود؟",
+    "errorRemovingLinkPreview": "حذف پیش‌نمایش ممکن نشد",
     "renderPreviews": "رندر خودکار پیش نمایش پیوندها",
     "reply": "پاسخ",
     "replyPrivately": "به صورت خصوصی پاسخ دهید",

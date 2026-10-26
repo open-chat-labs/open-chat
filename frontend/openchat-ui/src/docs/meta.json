@@ -822,6 +822,17 @@
         "required": false,
         "componentDefault": "[]",
         "doc": "Previews of the links in the text, a card each under it."
+      },
+      {
+        "name": "onRemovePreview",
+        "type": "(index: number) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The sender removes a preview (by its index in `previews`): an X on each card. None without it."
       }
     ],
     "group": "library"

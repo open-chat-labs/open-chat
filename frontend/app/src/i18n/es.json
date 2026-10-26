@@ -2200,6 +2200,7 @@
     "removedBy": "{changedBy} eliminó {changed} de {level}",
     "removeMemberFailed": "No se puede eliminar el miembro",
     "removePreviewQuestion": "¿Eliminar vista previa?",
+    "errorRemovingLinkPreview": "No se pudo quitar la vista previa",
     "renderPreviews": "Renderizado automático de vistas previas de enlaces",
     "reply": "Responder",
     "replyPrivately": "Responder mensaje",

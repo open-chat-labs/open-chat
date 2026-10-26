@@ -2200,6 +2200,7 @@
     "removedBy": "{changedBy} ha rimosso {changed} da {level}",
     "removeMemberFailed": "Impossibile rimuovere il membro",
     "removePreviewQuestion": "Rimuovere l'anteprima?",
+    "errorRemovingLinkPreview": "Impossibile rimuovere l'anteprima",
     "renderPreviews": "Anteprime dei collegamenti con rendering automatico",
     "reply": "Rispondi",
     "replyPrivately": "Rispondi in privato",

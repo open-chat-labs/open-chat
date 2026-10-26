@@ -660,9 +660,10 @@ design export needs. Each entry says where it came up.
   `LinkPreview` has). The design's `LinkPreview` is a message kind of its own, with plain text and
   no edit, quote, thread or reactions, so it isn't used; with previews the bubble takes its shape
   instead (320px, cards flush, the time under them). A card links only to an http(s) URL
-  (`ogPreviewCard` in `@client`, shared with the old trees). The sender can't remove a preview yet
-  (the message menu is 5b), and a link to another OpenChat message (`messagePreviews`) shows no
-  preview: nothing in the library renders a quoted message.
+  (`ogPreviewCard` in `@client`, shared with the old trees). The sender removes one with the X on
+  its card, after a confirm (`RemovePreviewDialog`, no design for it: `TODO(design)`). A link to
+  another OpenChat message (`messagePreviews`) shows no preview: nothing in the library renders a
+  quoted message.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked
