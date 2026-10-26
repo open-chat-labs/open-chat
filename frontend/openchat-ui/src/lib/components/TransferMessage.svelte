@@ -1,5 +1,6 @@
-<!-- Crypto transfer: the sign says the direction (+ received, green; − sent), USD inline, "View transaction" opens details.
-     side follows the bubble (sent = you sent it). Optional caption sits under the card. -->
+<!-- Crypto transfer: the sign says the direction (+ received, green; − sent; none between two others), USD inline,
+     then who it went to if given, "View transaction" opens details. side follows the bubble; direction defaults by it
+     (sent = you sent it). Optional caption sits under the card. -->
 <script lang="ts">
   import { useT } from '../i18n';
   import TokenAvatar from './TokenAvatar.svelte';
@@ -12,6 +13,10 @@
     mark?: string;
     gradient?: string;
     usd: string;
+    /** Which way it went for the reader: in (+, green), out (−), or other, between two other people (no sign). Defaults by side. */
+    direction?: 'in' | 'out' | 'other';
+    /** Who it went to, shown after the USD value ("to Bob"). */
+    recipient?: string;
     caption?: string;
     time: string;
     lastInGroup?: boolean;
@@ -25,6 +30,8 @@
     mark = symbol[0],
     gradient = 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
     usd,
+    direction,
+    recipient = '',
     caption = '',
     time,
     lastInGroup = true,
@@ -33,13 +40,19 @@
   const t = useT();
 
   const sent = $derived(side === 'sent');
+  const way = $derived(direction ?? (sent ? 'out' : 'in'));
+  const sign = $derived(way === 'in' ? '+' : way === 'out' ? '−' : '');
 </script>
 
 <div class="shell" class:sent class:last={lastInGroup}>
   <div class="card">
     <div class="head">
-      <TokenAvatar {symbol} {mark} {gradient} badge={sent ? 'send' : 'receive'} size={40} />
-      <span class="figures"><span class="amount">{sent ? '−' : '+'}{amount} {symbol}</span><span class="usd">{usd}</span></span>
+      <TokenAvatar {symbol} {mark} {gradient} badge={way === 'in' ? 'receive' : 'send'} size={40} />
+      <span class="figures"
+        ><span class="amount" class:in={way === 'in'}>{sign}{amount} {symbol}</span><span class="usd"
+          >{usd}{#if recipient}{usd ? ' · ' : ''}{t('ui.transferMessage.to', { name: recipient })}{/if}</span
+        ></span
+      >
     </div>
     <span class="open" onclick={onOpen} role="button" tabindex="0">{t('ui.transferMessage.viewTransaction')}<span class="chevron"></span></span>
   </div>
@@ -107,6 +120,10 @@
   .amount {
     font: 700 19px/1 var(--font-sans);
     letter-spacing: -0.01em;
+    color: var(--msg-ink);
+  }
+
+  .amount.in {
     color: var(--status-online);
   }
 

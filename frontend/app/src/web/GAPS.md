@@ -664,6 +664,15 @@ design export needs. Each entry says where it came up.
   its card, after a confirm (`RemovePreviewDialog`, no design for it: `TODO(design)`). A link to
   another OpenChat message (`messagePreviews`) shows no preview: nothing in the library renders a
   quoted message.
+- **Transfers** (`features/conversation`, 5a): a transfer shows as `TransferMessage`, with the
+  token's logo as its mark. `TransferMessage` takes `direction` and `recipient` by hand: the design
+  signs it by the bubble's side, which shows a transfer between two other people in a group as the
+  reader's own receipt. Outside a DM it says who got it ("to Bob") unless that's the reader. "View
+  transaction" opens the ledger's explorer. The caption is plain text (no markdown), the card
+  shows no sent or delivered tick (`TransferMessage` takes no status), and it has no reactions,
+  quote or thread yet. A failed transfer, or one in a ledger the registry
+  doesn't carry, stays a text bubble. The dollar value is worked out when the row is made and
+  doesn't follow later rate changes.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked
