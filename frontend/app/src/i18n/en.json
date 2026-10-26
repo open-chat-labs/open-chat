@@ -2267,6 +2267,7 @@
     "removedBy": "{changedBy} removed {changed} from the {level}",
     "removeMemberFailed": "Unable to remove member",
     "removePreviewQuestion": "Remove preview?",
+    "errorRemovingLinkPreview": "Couldn't remove the preview",
     "renderPreviews": "Auto-render link previews",
     "reply": "Reply",
     "replyPrivately": "Reply privately",

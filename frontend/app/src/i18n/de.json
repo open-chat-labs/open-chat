@@ -2207,6 +2207,7 @@
     "removedBy": "{changedBy} hat {changed} aus {level} entfernt",
     "removeMemberFailed": "Mitglied kann nicht entfernt werden",
     "removePreviewQuestion": "Vorschau entfernen?",
+    "errorRemovingLinkPreview": "Vorschau konnte nicht entfernt werden",
     "renderPreviews": "Linkvorschauen automatisch rendern",
     "reply": "Antwort",
     "replyPrivately": "Privat antworten",

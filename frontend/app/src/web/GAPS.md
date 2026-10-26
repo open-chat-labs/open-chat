@@ -647,6 +647,32 @@ design export needs. Each entry says where it came up.
   favourite, mute and copy link only: the rest open dialogs (phase 4), and calls are phase 7. The
   old list's go-to-mention button and sticky date aren't carried over; it keeps go-to-latest.
   Own messages show no name (the design's "You" would be the lower-case app string).
+- **Media messages** (`features/conversation`, 5a): images, memes, GIFs and videos show as
+  `MediaMessage` tiles. They have no reactions, quote, thread or edited mark yet (`MediaMessage`
+  takes none). In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
+  first click, which loads it in the bubble; the old trees put a "load image" button on it, which
+  `MediaMessage` hasn't got. Unlike the old trees, the reader's own image is held too while it's
+  still sending. A click on a shown one opens `MediaViewer`, the mobile app's full-screen
+  viewer (pan and zoom from `core/zoom`, shared with `ZoomedImage`; no design for it:
+  `TODO(design)`). It has none of the old desktop viewer's arrows between a chat's images. A
+  failed send shows the tile's own failed state, with no retry yet.
+- **Voice and file messages** (`features/conversation`, 5a): a voice message plays through the
+  screen's `VoicePlayer` (one audio element, so one at a time), with the recording's waveform
+  (`VoiceMessage` takes `levels` by hand: the design's bars are made up). Unlike the mobile app,
+  the next voice message doesn't play when one ends, and the speed is one for the whole chat. A
+  voice message's caption isn't shown and a failed one shows no failed state (`VoiceMessage` has
+  neither). Neither shows a sent or delivered tick (`VoiceMessage` and `FileMessage` take no
+  status). A file shows its name, size and type and downloads under its own name. Neither has
+  reactions, a quote, a thread or an edited mark yet.
+- **Link previews** (`features/conversation`, 5a): a text message's previews show as cards under
+  its text (`ChatBubble` takes `previews` by hand, a `LinkCard` each, the card the design's
+  `LinkPreview` has). The design's `LinkPreview` is a message kind of its own, with plain text and
+  no edit, quote, thread or reactions, so it isn't used; with previews the bubble takes its shape
+  instead (320px, cards flush, the time under them). A card links only to an http(s) URL
+  (`ogPreviewCard` in `@client`, shared with the old trees). The sender removes one with the X on
+  its card, after a confirm (`RemovePreviewDialog`, no design for it: `TODO(design)`). A link to
+  another OpenChat message (`messagePreviews`) shows no preview: nothing in the library renders a
+  quoted message.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked

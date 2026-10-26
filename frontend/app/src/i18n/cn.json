@@ -2207,6 +2207,7 @@
     "removedBy": "{changedBy} 从 {changed} 中删除了 {level}",
     "removeMemberFailed": "无法删除成员",
     "removePreviewQuestion": "删除预览？",
+    "errorRemovingLinkPreview": "无法移除预览",
     "renderPreviews": "自动渲染链接预览",
     "reply": "回复",
     "replyPrivately": "在私聊中回复",

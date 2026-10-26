@@ -2207,6 +2207,7 @@
     "removedBy": "{changedBy} видалив {changed} із {level}",
     "removeMemberFailed": "Не вдалося видалити учасника",
     "removePreviewQuestion": "Вилучити попередній перегляд?",
+    "errorRemovingLinkPreview": "Не вдалося видалити попередній перегляд",
     "renderPreviews": "Автоматичний попередній перегляд посилань",
     "reply": "Відповісти",
     "replyPrivately": "Відповісти приватно",

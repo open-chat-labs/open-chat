@@ -55,6 +55,12 @@ function pad(num: number): string {
     return num.toString().padStart(2, "0");
 }
 
+/** A playing position or length as a clock, m:ss (rounded to the second). */
+export function formatClock(seconds: number): string {
+    const whole = Math.round(seconds);
+    return `${Math.floor(whole / 60)}:${pad(whole % 60)}`;
+}
+
 export function formatDuration(ms: number): string {
     const { days, hours, minutes, seconds } = durationFromMilliseconds(ms);
     let result = "";

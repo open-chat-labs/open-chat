@@ -2207,6 +2207,7 @@
     "removedBy": "{changedBy} usunął {changed} z {level}",
     "removeMemberFailed": "Nie można usunąć członka",
     "removePreviewQuestion": "Usunąć podgląd?",
+    "errorRemovingLinkPreview": "Nie udało się usunąć podglądu",
     "renderPreviews": "Automatyczne renderowanie podglądów linków",
     "reply": "Odpowiedź",
     "replyPrivately": "Odpowiedz prywatnie",

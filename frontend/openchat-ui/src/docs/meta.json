@@ -811,6 +811,28 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "previews",
+        "type": "Omit<ComponentProps<typeof LinkCard>, 'side'>[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Previews of the links in the text, a card each under it."
+      },
+      {
+        "name": "onRemovePreview",
+        "type": "(index: number) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The sender removes a preview (by its index in `previews`): an X on each card. None without it."
       }
     ],
     "group": "library"
@@ -5239,6 +5261,17 @@
         "required": false,
         "componentDefault": "0",
         "doc": "0–1"
+      },
+      {
+        "name": "levels",
+        "type": "number[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The recording's waveform, 0–1 per bar; placeholder bars without it."
       },
       {
         "name": "elapsed",
@@ -12170,6 +12203,113 @@
         "doc": ""
       }
     ]
+  },
+  {
+    "name": "LinkCard",
+    "source": "by hand (5a, 2026-10-26)",
+    "hash": "",
+    "description": "A link's preview card, as LinkPreview shows it under its text and ChatBubble under a message's. Taken out of LinkPreview so both share it.",
+    "preview": {
+      "width": 340,
+      "height": 260
+    },
+    "props": [
+      {
+        "name": "url",
+        "type": "string",
+        "default": "https://oc.app/blog/sns-treasury-2026",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "domain",
+        "type": "string",
+        "default": "oc.app",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "default": "How SNS treasuries are changing in 2026",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "default": "Proposal flow, spending limits and what this means for community-owned apps.",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "image",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Image URL for the card."
+      },
+      {
+        "name": "imageBg",
+        "type": "string | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'linear-gradient(170deg,#2b1055,#7597de 55%,#ffb36b)'",
+        "doc": "CSS background used when there is no image; null hides the image area."
+      },
+      {
+        "name": "size",
+        "type": "'large' | 'compact'",
+        "default": "large",
+        "editor": "enum",
+        "options": [
+          "large",
+          "compact"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'large'",
+        "doc": ""
+      },
+      {
+        "name": "side",
+        "type": "'received' | 'sent'",
+        "default": "received",
+        "editor": "enum",
+        "options": [
+          "received",
+          "sent"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'received'",
+        "doc": ""
+      }
+    ],
+    "group": "library"
   },
   {
     "name": "LinkPreview",

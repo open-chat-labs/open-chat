@@ -2207,6 +2207,7 @@
     "removedBy": "{changedBy} が {changed} を {level} から削除しました",
     "removeMemberFailed": "メンバーを削除できません",
     "removePreviewQuestion": "プレビューを削除しますか?",
+    "errorRemovingLinkPreview": "プレビューを削除できませんでした",
     "renderPreviews": "自動レンダリングリンクプレビュー",
     "reply": "返信",
     "replyPrivately": "プライベートで返信",

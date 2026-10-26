@@ -476,6 +476,7 @@
       "forwarded": "Forwarded",
       "lastReply": "Last reply {when}",
       "notDelivered": "Not delivered",
+      "removePreview": "Remove preview",
       "removeReaction": "Remove your {emoji} · {count}",
       "replies": "{count, plural, one {# reply} other {# replies}}"
     },
