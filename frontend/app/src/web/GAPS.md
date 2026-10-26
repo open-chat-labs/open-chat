@@ -344,6 +344,9 @@ design export needs. Each entry says where it came up.
     and a community shows no message permissions or Messages / Threads tabs.
   - the invite list starts empty: people are found by searching (no frequent contacts).
   - Explore's create (8a) isn't wired.
+  - a failed community create (e.g. the 10-community limit) says only "Sorry we were unable to
+    create your community", and that toast showed twice in one headless run though the app shows
+    it once.
 
 - **Group and channel settings** (4b part 2a): GroupPanel's Settings opens Manage on its settings
   pages: `GroupSettingsDialog`, embedded, on `UpdateGroupState` (`features/group/ManageSettings.svelte`,

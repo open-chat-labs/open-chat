@@ -695,7 +695,7 @@
         "add": "Add a channel",
         "duplicate": "#{name} is already in the list.",
         "empty": "No public channels. Newcomers will only see private channels they're added to, so add at least one to give them somewhere to start.",
-        "hint": "Lowercase, no spaces. Press Enter to add.",
+        "hint": "Press Enter to add.",
         "lead": "Everyone who joins the community is added to these channels automatically. You can add private channels, and edit these, once the community exists.",
         "needsName": "Your channel needs a name.",
         "removeAll": "Remove all",

@@ -256,7 +256,7 @@
   let picked = $state<string[]>(untrack(() => [...preselected]));
   let invited = $state<string[]>([]);
   let memberMode = $state(0);
-  let channels = $state(['general']);
+  let channels = $state(['General']);
   let chanDraft = $state('');
   let chanEdit = $state<number | null>(null);
   let chanEditValue = $state('');
@@ -1019,7 +1019,9 @@
             <div class="divider"></div>
 
             <div class="list-block small-gap">
-              <span class="small-label padded">{needle ? t(CG + 'searchResults') : isChan && !inviting ? t(CG + 'membersOf', { community: community.toUpperCase() }) : t(CG + 'frequent')}</span>
+              {#if needle || listed.length > 0}
+                <span class="small-label padded">{needle ? t(CG + 'searchResults') : isChan && !inviting ? t(CG + 'membersOf', { community: community.toUpperCase() }) : t(CG + 'frequent')}</span>
+              {/if}
               <div class="people">
                 {#each listed as u (u.userId)}
                   {@const sel = active.includes(u.userId)}

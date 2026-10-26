@@ -326,7 +326,7 @@
 - Not in the design export: to go back to it when the export has one (the app's `GAPS.md` lists it).
 
 ## 2026-10-26 — CreateGroupDialog: channel names as typed, by hand
-- A channel's name (and a new community's channel list) was slugged as you typed: lowercased, spaces to hyphens, anything else dropped. Nothing requires that, so names are now kept as typed (trimmed; the channel list still caps each at its length and rejects duplicates), and the channel name's hint no longer says "Lowercase, no spaces".
+- A channel's name (and a new community's channel list) was slugged as you typed: lowercased, spaces to hyphens, anything else dropped. Nothing requires that, so names are now kept as typed (trimmed; the channel list still caps each at its length and rejects duplicates), and the channel name's and the channel list's hints no longer say "Lowercase, no spaces"; a new community's first channel is "General". The people list's heading is hidden over an empty list (as InviteDialog's).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
 ## 2026-10-26 — CreateGroupDialog: a community's permissions, by hand

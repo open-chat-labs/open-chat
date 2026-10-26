@@ -156,7 +156,7 @@
     onUpgrade={() => publish("upgrade")}
     gateTokens={assets.tokens}
     gateSystems={assets.nervousSystems}
-    defaultLanguage={$locale ?? "en"}
+    defaultLanguage={($locale ?? "en").split("-")[0]}
     communityDefaults={communityPermissionsValue(newCommunity().permissions).general}
     {checkName}
     onCreate={create}
