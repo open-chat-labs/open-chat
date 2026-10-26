@@ -14,6 +14,11 @@ export type ImageZoom = {
 
 const DEFAULT_SCALE = 1;
 const SCALE_EPSILON = 0.02;
+// the wheel zooms by its delta: a trackpad pinch sends many small deltas, a mouse notch one big
+// one (capped, so a notch is about Panzoom's own step)
+const WHEEL_SPEED = 0.01;
+const MAX_WHEEL_DELTA = 10;
+const LINE_HEIGHT = 16;
 
 /** `size` is the image's rendered size. */
 export function zoomImage(
@@ -79,10 +84,27 @@ export function zoomImage(
         }
     };
     container.addEventListener("panzoomend", onPanzoomEnd);
-    // Panzoom handles pinch itself; the wheel is wired up by hand, on the parent so the image
-    // keeps zooming while the pointer is beside it
+    // Panzoom handles touch pinch itself; the wheel (and a trackpad pinch) is handled here.
+    // Panzoom's zoomWithWheel zooms a fixed step per event, far too fast for a trackpad, and its
+    // focal point assumes the image sits at its parent's top left, so a centred image drifts.
+    // The pointer is moved by the image's offset in its parent to make up for that.
+    const onWheel = (e: WheelEvent) => {
+        e.preventDefault();
+        const raw = e.deltaY === 0 ? e.deltaX : e.deltaY;
+        const delta = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? raw * LINE_HEIGHT : raw;
+        const capped = Math.max(-MAX_WHEEL_DELTA, Math.min(MAX_WHEEL_DELTA, delta));
+        const toScale = panzoom.getScale() * Math.exp(-capped * WHEEL_SPEED);
+        if (toScale <= DEFAULT_SCALE + SCALE_EPSILON) {
+            panzoom.reset({ animate: false });
+            return;
+        }
+        panzoom.zoomToPoint(toScale, {
+            clientX: e.clientX - container.offsetLeft,
+            clientY: e.clientY - container.offsetTop,
+        });
+    };
     const wheelTarget = container.parentElement;
-    wheelTarget?.addEventListener("wheel", panzoom.zoomWithWheel);
+    wheelTarget?.addEventListener("wheel", onWheel, { passive: false });
 
     return {
         toggle() {
@@ -97,7 +119,7 @@ export function zoomImage(
         },
         destroy() {
             container.removeEventListener("panzoomend", onPanzoomEnd);
-            wheelTarget?.removeEventListener("wheel", panzoom.zoomWithWheel);
+            wheelTarget?.removeEventListener("wheel", onWheel);
             panzoom.destroy();
         },
     };
