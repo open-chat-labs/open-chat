@@ -26,6 +26,7 @@
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
         selectedChatPinnedMessagesStore,
+        selectedChatWebhooksStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
         suspendedUserStore,
@@ -62,7 +63,7 @@
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { isTouchOnlyDevice } from "@src/utils/devices";
     import { isSingleEmoji } from "@src/utils/emojis";
-    import { buildDisplayName } from "@src/utils/user";
+    import { buildDisplayName, findUser } from "@src/utils/user";
     import {
         aggregateEventText,
         isTextEvent,
@@ -108,10 +109,12 @@
     const ctx = $derived.by((): ConversationContext => {
         void day;
         const users = $allUsersStore;
+        const webhooks = $selectedChatWebhooksStore;
         return {
             me,
             you: $_("you"),
-            userName: (userId) => client.displayName(users.get(userId)),
+            // a webhook's messages are sent as it, named as the old timeline names them (findUser)
+            userName: (userId) => client.displayName(findUser(userId, users, webhooks)),
             contentText: (content) => client.getContentAsText($_, content),
             time: (timestamp) => client.toShortTimeString(new Date(Number(timestamp))),
             date: (timestamp) =>
