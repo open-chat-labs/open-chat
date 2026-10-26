@@ -79,6 +79,7 @@
     import {
         headerMenuItems,
         isMedia,
+        mediaHeld,
         messageStatus,
         senderColor,
         untilNextDay,
@@ -142,11 +143,7 @@
 
     function openMedia(msg: Message) {
         if (!isMedia(msg.content)) return;
-        const held =
-            $lowBandwidth &&
-            !revealed.has(msg.messageId) &&
-            (msg.content.kind === "image_content" || msg.content.kind === "giphy_content");
-        if (held) {
+        if (mediaHeld(msg.content, msg.messageId, ctx.media)) {
             // the first click shows it in the bubble; the next opens it
             revealed.add(msg.messageId);
             rows.clear();
@@ -397,6 +394,7 @@
         void chatKey;
         void $_;
         void day;
+        // rows don't key on the media view, so a low-bandwidth change starts them again
         void $lowBandwidth;
         rows.clear();
     });

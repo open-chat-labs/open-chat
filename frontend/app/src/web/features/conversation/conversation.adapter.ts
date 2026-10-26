@@ -84,6 +84,19 @@ export function isMedia(content: MessageContent): content is MediaContent {
     );
 }
 
+/**
+ * Whether an image's or GIF's full size is held back (low bandwidth, not yet revealed): its tile
+ * doesn't get the full-size URL, and a click reveals it rather than opening the viewer (5a
+ * invariant 1). Memes and videos aren't held, as in the old trees.
+ */
+export function mediaHeld(content: MediaContent, messageId: bigint, media: MediaView): boolean {
+    return (
+        (content.kind === "image_content" || content.kind === "giphy_content") &&
+        media.lowBandwidth &&
+        !media.revealed(messageId)
+    );
+}
+
 const MEME_FALLBACK = "/assets/memefighter.svg";
 
 /**
@@ -166,7 +179,7 @@ export function messageRow(
     const quoted = reply?.kind === "rehydrated_reply_context" ? reply : undefined;
     const thread = msg.thread;
     if (isMedia(msg.content)) {
-        const hidden = ctx.media.lowBandwidth && !ctx.media.revealed(msg.messageId);
+        const hidden = mediaHeld(msg.content, msg.messageId, ctx.media);
         const tile = mediaTile(msg.content, hidden, ctx.media.url);
         return {
             side: mine ? "sent" : "received",

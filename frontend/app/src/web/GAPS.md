@@ -638,7 +638,8 @@ design export needs. Each entry says where it came up.
   `MediaMessage` tiles. They have no reactions, quote, thread or edited mark yet (`MediaMessage`
   takes none). In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
   first click, which loads it in the bubble; the old trees put a "load image" button on it, which
-  `MediaMessage` hasn't got. A click on a shown one opens `MediaViewer`, the mobile app's full-screen
+  `MediaMessage` hasn't got. Unlike the old trees, the reader's own image is held too while it's
+  still sending. A click on a shown one opens `MediaViewer`, the mobile app's full-screen
   viewer (pan and zoom from `core/zoom`, shared with `ZoomedImage`; no design for it:
   `TODO(design)`). It has none of the old desktop viewer's arrows between a chat's images. A
   failed send shows the tile's own failed state, with no retry yet.

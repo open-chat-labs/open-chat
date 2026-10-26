@@ -1,5 +1,6 @@
 import type { EventWrapper, Message } from "@client";
 import {
+    mediaHeld,
     messageRow,
     messageStatus,
     senderColor,
@@ -172,5 +173,18 @@ describe("media", () => {
         expect(urls(true, false, gif)).not.toContain("https://g/full");
         expect(urls(true, true, image)).toContain("https://blob/full.jpg");
         expect(urls(false, false, gif)).toContain("https://g/full.gif");
+    });
+
+    // 5a invariant 1: a click on a held tile reveals it rather than opening the full-size viewer
+    test("an image or GIF is held in low bandwidth until revealed", () => {
+        const media = (lowBandwidth: boolean, revealed: boolean) => ({
+            lowBandwidth,
+            revealed: () => revealed,
+            url: (u: string | undefined) => u,
+        });
+        expect(mediaHeld(image, 42n, media(true, false))).toBe(true);
+        expect(mediaHeld(gif, 42n, media(true, false))).toBe(true);
+        expect(mediaHeld(gif, 42n, media(true, true))).toBe(false);
+        expect(mediaHeld(image, 42n, media(false, false))).toBe(false);
     });
 });
