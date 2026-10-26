@@ -5,10 +5,11 @@
         AuthProvider,
         chitBands,
         chitStateStore,
+        communitiesStore,
         cryptoLookup,
         isDiamondStore,
         isLifetimeDiamondStore,
-        isPreviewing,
+        isPreviewingOrLapsed,
         mobileWidth,
         publish,
         type ChatIdentifier,
@@ -102,13 +103,13 @@
             content.streakOnly <= $chitStateStore.streak &&
             content.minChitEarned <= $chitStateStore.totalChitEarned,
     );
-    // Read from the store so the button enables as soon as the user joins
-    let previewingChat = $derived.by(() => {
+    // Read from the stores so the button enables as soon as the user joins or rejoins
+    let previewingOrLapsed = $derived.by(() => {
         const chat = $allChatsStore.get(chatId);
-        return chat !== undefined && isPreviewing(chat);
+        return chat !== undefined && isPreviewingOrLapsed(chat, $communitiesStore);
     });
     let disabled = $derived(
-        previewingChat || finished || claimedByYou || allClaimed || !userEligible,
+        previewingOrLapsed || finished || claimedByYou || allClaimed || !userEligible,
     );
     let timeRemaining = $derived(
         finished
@@ -243,7 +244,7 @@
                 </div>
             {/if}
 
-            {#if userEligible && !previewingChat}
+            {#if userEligible && !previewingOrLapsed}
                 <div class="click"><Translatable resourceKey={i18nKey("prizes.click")} /></div>
             {/if}
         {:else if finished}

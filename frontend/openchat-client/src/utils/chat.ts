@@ -14,6 +14,8 @@ import type {
     ChatListScope,
     ChatPermissions,
     ChatSummary,
+    CommunityMap,
+    CommunitySummary,
     CreatedUser,
     CryptocurrencyContent,
     CryptocurrencyDetails,
@@ -133,6 +135,20 @@ export function isPreviewing(chat: ChatSummary): boolean {
 
 export function isLapsed(chat: ChatSummary): boolean {
     return chat.membership.lapsed;
+}
+
+/**
+ * Whether the user is previewing the chat, or their membership of it or of its community (for a
+ * channel) has lapsed. Either way they can't act as a member, e.g. to claim a prize.
+ */
+export function isPreviewingOrLapsed(
+    chat: ChatSummary,
+    communities: CommunityMap<CommunitySummary>,
+): boolean {
+    if (isPreviewing(chat) || isLapsed(chat)) return true;
+    if (chat.kind !== "channel") return false;
+    const community = communities.get({ kind: "community", communityId: chat.id.communityId });
+    return community?.membership.lapsed ?? false;
 }
 
 export function isFrozen(thing: AccessControlled): boolean {

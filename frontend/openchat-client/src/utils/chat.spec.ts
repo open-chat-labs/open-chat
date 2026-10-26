@@ -1,17 +1,21 @@
 import {
+    CommunityMap,
     defaultChatPermissions,
     defaultChatRules,
     emptyChatMetrics,
     ROLE_ADMIN,
     ROLE_MEMBER,
     ROLE_MODERATOR,
+    ROLE_NONE,
     ROLE_OWNER,
     type AccessGate,
     type BridgedUserId,
     type BridgedUserSummary,
     type CandidateGroupChat,
+    type ChannelSummary,
     type ChatEvent,
     type ChatIdentifier,
+    type CommunitySummary,
     type EventWrapper,
     type GroupChatSummary,
     type MultiUserChatIdentifier,
@@ -31,6 +35,7 @@ import {
     eventsTTLUpdate,
     getMembersString,
     groupChatFromCandidate,
+    isPreviewingOrLapsed,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
     navigationAfterArchivingOpenChat,
@@ -688,5 +693,95 @@ describe("disappearingMessagesUpdate", () => {
             value: 86_400_000n,
         });
         expect(disappearingMessagesUpdate(false, 3_600_000, 3_600_000n)).toBe("set_to_none");
+    });
+});
+
+describe("previewing or lapsed", () => {
+    const channel: ChannelSummary = {
+        ...defaultGroupChat,
+        kind: "channel",
+        id: { kind: "channel", communityId: "c", channelId: 1 },
+        level: "channel",
+        isInvited: false,
+        messagesVisibleToNonMembers: false,
+    };
+
+    function communities(lapsed: boolean): CommunityMap<CommunitySummary> {
+        const community: CommunitySummary = {
+            kind: "community",
+            id: { kind: "community", communityId: "c" },
+            name: "",
+            description: "",
+            memberCount: 0,
+            avatar: {},
+            banner: {},
+            gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
+            public: true,
+            permissions: {
+                changeRoles: ROLE_ADMIN,
+                updateDetails: ROLE_ADMIN,
+                inviteUsers: ROLE_ADMIN,
+                removeMembers: ROLE_ADMIN,
+                createPublicChannel: ROLE_ADMIN,
+                createPrivateChannel: ROLE_ADMIN,
+                manageUserGroups: ROLE_ADMIN,
+            },
+            historyVisible: true,
+            frozen: false,
+            level: "community",
+            lastUpdated: BigInt(0),
+            latestEventIndex: 0,
+            channels: [channel],
+            membership: {
+                role: ROLE_MEMBER,
+                joined: BigInt(0),
+                archived: false,
+                pinned: [],
+                index: 0,
+                displayName: undefined,
+                rulesAccepted: false,
+                lapsed,
+            },
+            primaryLanguage: "en",
+            metrics: emptyChatMetrics(),
+            userGroups: new Map(),
+            localUserIndex: "",
+            isInvited: false,
+            verified: false,
+            moderationFlags: 0,
+        };
+        return CommunityMap.fromList([community]);
+    }
+
+    test("a member of the chat and its community is neither", () => {
+        expect(isPreviewingOrLapsed(defaultGroupChat, new CommunityMap())).toBe(false);
+        expect(isPreviewingOrLapsed(channel, communities(false))).toBe(false);
+    });
+
+    test("previewing the chat", () => {
+        const group: GroupChatSummary = {
+            ...defaultGroupChat,
+            membership: { ...defaultGroupChat.membership, role: ROLE_NONE },
+        };
+        expect(isPreviewingOrLapsed(group, new CommunityMap())).toBe(true);
+        const previewed: ChannelSummary = {
+            ...channel,
+            membership: { ...channel.membership, role: ROLE_NONE },
+        };
+        expect(isPreviewingOrLapsed(previewed, communities(false))).toBe(true);
+    });
+
+    test("lapsed from the chat", () => {
+        const group = {
+            ...defaultGroupChat,
+            membership: { ...defaultGroupChat.membership, lapsed: true },
+        };
+        expect(isPreviewingOrLapsed(group, new CommunityMap())).toBe(true);
+        const lapsed = { ...channel, membership: { ...channel.membership, lapsed: true } };
+        expect(isPreviewingOrLapsed(lapsed, communities(false))).toBe(true);
+    });
+
+    test("lapsed from the channel's community", () => {
+        expect(isPreviewingOrLapsed(channel, communities(true))).toBe(true);
     });
 });
