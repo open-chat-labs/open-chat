@@ -19,8 +19,8 @@ const supportedTokens = [
 ];
 
 const sources = {
-    coingecko: { name: "CoinGecko", url: "https://www.coingecko.com", attribution_required: true },
-    icpswap: { name: "ICPSwap", url: "https://www.icpswap.com", attribution_required: false },
+    coingecko: { name: "CoinGecko", url: "https://www.coingecko.com" },
+    icpswap: { name: "ICPSwap", url: "https://www.icpswap.com" },
 };
 
 function quietly<T>(fn: () => T): T {
@@ -106,33 +106,21 @@ describe("the price service's prices", () => {
         });
     });
 
-    test("include where prices come from, and which must be credited", () => {
+    test("include where prices come from", () => {
         const prices = pricesResponse(
             {
                 prices: {},
                 sources: {
                     ...sources,
-                    shady: {
-                        name: "Shady",
-                        url: "javascript:alert(1)",
-                        attribution_required: true,
-                    },
+                    shady: { name: "Shady", url: "javascript:alert(1)" },
                 },
             },
             supportedTokens,
         );
 
         expect(prices?.sources).toEqual({
-            coingecko: {
-                name: "CoinGecko",
-                url: "https://www.coingecko.com",
-                attributionRequired: true,
-            },
-            icpswap: {
-                name: "ICPSwap",
-                url: "https://www.icpswap.com",
-                attributionRequired: false,
-            },
+            coingecko: { name: "CoinGecko", url: "https://www.coingecko.com" },
+            icpswap: { name: "ICPSwap", url: "https://www.icpswap.com" },
         });
     });
 

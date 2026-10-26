@@ -5,7 +5,7 @@
         allUsersStore,
         cashtagCoinsStore,
         exchangeRatesLookupStore,
-        priceCredits,
+        priceSourcesFor,
         priceSourcesStore,
         tokensBySymbolStore,
         userGroupSummariesStore,
@@ -99,9 +99,9 @@
         return sameMentionedTokens(next, lastTokens) ? lastTokens : (lastTokens = next);
     });
 
-    // the chip's tooltip, for a price that must be credited (the card it opens shows the credit too)
+    // the chip's tooltip, crediting where its price is from (as the card it opens does)
     function credit(source: string | undefined): string | undefined {
-        const [s] = priceCredits($priceSourcesStore, [source]);
+        const [s] = priceSourcesFor($priceSourcesStore, [source]);
         return s !== undefined
             ? $_("cashtag.priceDataBy", { values: { source: s.name } })
             : undefined;

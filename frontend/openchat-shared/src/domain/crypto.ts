@@ -185,11 +185,10 @@ export type CashtagCoin = {
     source: string | undefined;
 };
 
-// Somewhere prices come from, and whether they must be credited to it wherever they're shown
+// Somewhere prices come from, credited to it wherever they're shown
 export type PriceSource = {
     name: string;
     url: string;
-    attributionRequired: boolean;
 };
 
 // The prices of the tokens OpenChat lists, keyed by ledger; of the coins it doesn't, keyed by
