@@ -22,7 +22,8 @@ function generateCspHashValue(text) {
 // frame-src is scheme-only rather than an origin list because external content channels
 // (ExternalContent.svelte) frame whatever https url a community owner sets. Known framed
 // origins: openchat.daily.co (video calls), maker.memefighter.app (MemeBuilder),
-// www.youtube.com and docs.google.com (blog/whitepaper embeds), www.googletagmanager.com
+// www.youtube.com and docs.google.com (blog/whitepaper embeds), player.twitch.tv and
+// clips.twitch.tv (TwitchPlayer, a Twitch link's player in a message), www.googletagmanager.com
 // (noscript GTM). `https:` still blocks javascript:, data:, blob: and http frames. `'self'` is
 // for the Architecture page, which frames the canister map served beside the app at /canisters
 // (CanisterMapFrame.svelte), on local http builds too.

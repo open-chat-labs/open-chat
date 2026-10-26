@@ -1,7 +1,9 @@
 <script lang="ts">
     import {
         OpenChat,
+        runningInIframe,
         TWITCH_PLAYER_MIN_WIDTH,
+        twitchPlayerParent,
         twitchPlayerUrl,
         twitchPoster,
         twitchWatchUrl,
@@ -24,24 +26,26 @@
 
     const client = getContext<OpenChat>("client");
 
-    // Twitch lets only https://<parent> (or localhost) frame the player, and the native apps'
-    // pages are http://tauri.localhost or tauri://localhost, so there the link opens Twitch
-    const native = client.isNativeApp();
-
+    // Where Twitch won't play (the native apps, a page another site frames) the link opens Twitch
+    let parent = $derived(
+        twitchPlayerParent({
+            hostname: window.location.hostname,
+            native: client.isNativeApp(),
+            framed: $runningInIframe,
+        }),
+    );
     let width = $state<number>();
     let playing = $state(false);
-    let playerUrl = $derived(native ? undefined : twitchPlayerUrl(embed, window.location.hostname));
+    let playerUrl = $derived(parent !== undefined ? twitchPlayerUrl(embed, parent) : undefined);
     // Twitch won't play in less than 400px, so a narrower bubble links to Twitch instead
     let fits = $derived(width !== undefined && width >= TWITCH_PLAYER_MIN_WIDTH);
     let { title, image } = $derived(twitchPoster(embed, ogPreview));
 </script>
 
 <div class="twitch" bind:clientWidth={width}>
-    {#if !native}
-        <!-- Asks for the player's width but gives way, so a narrower bubble keeps its own
-             width, which is then what's measured -->
-        <canvas class="sizer" aria-hidden="true"></canvas>
-    {/if}
+    <!-- Asks for the player's width but gives way, so a narrower bubble keeps its own width,
+         which is then what's measured -->
+    <canvas class="sizer" aria-hidden="true"></canvas>
     {#if playerUrl !== undefined && fits}
         {#if playing}
             <iframe class="player" src={playerUrl} {title} allow="fullscreen" allowfullscreen>
@@ -63,7 +67,7 @@
                 </span>
             </button>
         {/if}
-    {:else if width !== undefined || native}
+    {:else if width !== undefined || parent === undefined}
         <a class="watch" href={twitchWatchUrl(embed)} target="_blank" rel="noopener noreferrer">
             <img class="logo" src="/assets/twitch.svg" alt="" />
             <span class="text">

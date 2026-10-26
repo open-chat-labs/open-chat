@@ -5,7 +5,6 @@ import type { OgPreview, TwitchEmbed } from "../domain";
 const PLAYER_URL = "https://player.twitch.tv/";
 const CLIP_PLAYER_URL = "https://clips.twitch.tv/embed";
 export const TWITCH_PLAYER_MIN_WIDTH = 400;
-export const TWITCH_PLAYER_MIN_HEIGHT = 300;
 
 const TWITCH_HOSTS = new Set(["twitch.tv", "www.twitch.tv", "m.twitch.tv"]);
 const CLIPS_HOST = "clips.twitch.tv";
@@ -21,7 +20,10 @@ const GENERIC_TITLE = "Twitch";
 
 // twitch.tv/<name> pages that aren't channels
 const NOT_CHANNELS = new Set([
+    "activate",
+    "bits",
     "broadcast",
+    "clip",
     "directory",
     "downloads",
     "drops",
@@ -36,6 +38,7 @@ const NOT_CHANNELS = new Set([
     "p",
     "popout",
     "prime",
+    "redeem",
     "search",
     "settings",
     "signup",
@@ -49,8 +52,8 @@ const NOT_CHANNELS = new Set([
 
 /**
  * The Twitch channel, video or clip a link is to, if it's to one: twitch.tv/<login>,
- * twitch.tv/videos/<id>, clips.twitch.tv/<slug> or twitch.tv/<login>/clip/<slug>, with or without
- * www. or m. on twitch.tv.
+ * twitch.tv/videos/<id>, clips.twitch.tv/<slug>, twitch.tv/<login>/clip/<slug> or
+ * twitch.tv/clip/<slug> (the mobile site's), with or without www. or m. on twitch.tv.
  */
 export function parseTwitchUrl(url: string): TwitchEmbed | undefined {
     let parsed: URL;
@@ -80,6 +83,10 @@ export function parseTwitchUrl(url: string): TwitchEmbed | undefined {
             : undefined;
     }
 
+    if (path.length === 2 && path[0].toLowerCase() === "clip" && CLIP_SLUG.test(path[1])) {
+        return { kind: "twitch_clip", url, slug: path[1] };
+    }
+
     if (path.length === 2 && path[0].toLowerCase() === "videos" && VIDEO_ID.test(path[1])) {
         const t = parsed.searchParams.get("t");
         const time = t !== null && VIDEO_TIME.test(t) ? t : undefined;
@@ -98,14 +105,24 @@ export function parseTwitchUrl(url: string): TwitchEmbed | undefined {
     return undefined;
 }
 
-/**
- * The player's address on a page served from `parent`, the page's host name, or undefined if that
- * isn't a host name. Twitch only plays in a page whose host the player's `parent` names. The
- * player waits to be clicked: a phone won't start one without a tap, so none autoplays.
- */
-export function twitchPlayerUrl(embed: TwitchEmbed, parent: string): string | undefined {
-    if (!HOSTNAME.test(parent)) return undefined;
+export type TwitchHost = { hostname: string; native: boolean; framed: boolean };
 
+/**
+ * The `parent` a player names on this page, its host name, if Twitch will play there. Twitch
+ * answers with `frame-ancestors https://<parent>` (any port and either scheme for localhost), which
+ * every page around the player has to match. So a page another site frames gets no player, and
+ * nor do the native apps, whose pages are http://tauri.localhost (Android) and tauri://localhost
+ * (iOS).
+ */
+export function twitchPlayerParent({ hostname, native, framed }: TwitchHost): string | undefined {
+    return !native && !framed && HOSTNAME.test(hostname) ? hostname : undefined;
+}
+
+/**
+ * The player's address, for a `parent` from twitchPlayerParent. The player waits to be clicked: a
+ * phone won't start one without a tap, so none autoplays.
+ */
+export function twitchPlayerUrl(embed: TwitchEmbed, parent: string): string {
     const params = new URLSearchParams();
     switch (embed.kind) {
         case "twitch_channel":
@@ -138,6 +155,35 @@ export function twitchWatchUrl(embed: TwitchEmbed): string {
 }
 
 export type TwitchPoster = { title: string; image: string | undefined };
+
+export type TwitchPlayerPreview = { embed: TwitchEmbed; ogPreview: OgPreview | undefined };
+
+/**
+ * A message's link previews as shown: a player for each Twitch link, with its link's preview for
+ * the poster, and a card for each other preview. A preview goes with a player by where it goes,
+ * not how it's written, so twitch.tv/nelly's preview is www.twitch.tv/nelly's player's too.
+ */
+export function twitchPlayersAndCards(
+    twitchEmbeds: TwitchEmbed[],
+    ogPreviews: OgPreview[],
+): { players: TwitchPlayerPreview[]; cards: OgPreview[] } {
+    const players: TwitchPlayerPreview[] = twitchEmbeds.map((embed) => ({
+        embed,
+        ogPreview: undefined,
+    }));
+    const byTarget = new Map(players.map((p) => [twitchWatchUrl(p.embed), p]));
+    const cards: OgPreview[] = [];
+    for (const preview of ogPreviews) {
+        const embed = parseTwitchUrl(preview.url);
+        const player = embed !== undefined ? byTarget.get(twitchWatchUrl(embed)) : undefined;
+        if (player === undefined) {
+            cards.push(preview);
+        } else if (player.ogPreview === undefined) {
+            player.ogPreview = preview;
+        }
+    }
+    return { players, cards };
+}
 
 // What the player shows before it's clicked: the link's preview, if the sender fetched one that
 // says what it is, else where it's to. Twitch only describes a channel to a preview fetch; a video or

@@ -1,6 +1,13 @@
 import { extractTwitchEmbeds, MAX_LINK_PREVIEWS } from "./linkPreviews";
 import type { OgPreview } from "../domain";
-import { parseTwitchUrl, twitchPlayerUrl, twitchPoster, twitchWatchUrl } from "./twitch";
+import {
+    parseTwitchUrl,
+    twitchPlayerParent,
+    twitchPlayersAndCards,
+    twitchPlayerUrl,
+    twitchPoster,
+    twitchWatchUrl,
+} from "./twitch";
 
 describe("parseTwitchUrl", () => {
     test.each([
@@ -39,6 +46,7 @@ describe("parseTwitchUrl", () => {
         "https://clips.twitch.tv/AwkwardHelplessSalamanderSwiftRage",
         "https://www.twitch.tv/nelly/clip/AwkwardHelplessSalamanderSwiftRage?filter=clips",
         "https://m.twitch.tv/nelly/clip/AwkwardHelplessSalamanderSwiftRage",
+        "https://m.twitch.tv/clip/AwkwardHelplessSalamanderSwiftRage",
     ])("a clip: %s", (url) => {
         expect(parseTwitchUrl(url)).toEqual({
             kind: "twitch_clip",
@@ -67,6 +75,8 @@ describe("parseTwitchUrl", () => {
         "https://www.twitch.tv",
         "https://www.twitch.tv/directory",
         "https://www.twitch.tv/settings",
+        "https://www.twitch.tv/activate",
+        "https://m.twitch.tv/clip",
         "https://www.twitch.tv/videos",
         "https://www.twitch.tv/nelly/videos",
         "https://www.twitch.tv/nelly/about",
@@ -132,6 +142,20 @@ describe("extractTwitchEmbeds", () => {
         expect(extractTwitchEmbeds(text)).toHaveLength(MAX_LINK_PREVIEWS);
     });
 
+    test("only links among those that get previews, which other links count towards", () => {
+        const others = Array.from({ length: MAX_LINK_PREVIEWS }, (_, i) => {
+            return `https://example${i}.com`;
+        }).join(" ");
+        expect(extractTwitchEmbeds(`${others} https://twitch.tv/nelly`)).toEqual([]);
+    });
+
+    test("a link to an OpenChat message doesn't count towards them", () => {
+        const messages = Array.from({ length: MAX_LINK_PREVIEWS }, (_, i) => {
+            return `https://oc.app/group/abc/${i}`;
+        }).join(" ");
+        expect(extractTwitchEmbeds(`${messages} https://twitch.tv/nelly`)).toHaveLength(1);
+    });
+
     test("nothing in text without a Twitch link", () => {
         expect(extractTwitchEmbeds("")).toEqual([]);
         expect(extractTwitchEmbeds("twitch.tv/nelly has no scheme")).toEqual([]);
@@ -160,20 +184,72 @@ describe("twitchPlayerUrl", () => {
         );
     });
 
-    test("an IC domain is a parent", () => {
-        const embed = parseTwitchUrl("https://www.twitch.tv/nelly")!;
-        expect(twitchPlayerUrl(embed, "6hsbt-vqaaa-aaaaf-aaafq-cai.icp0.io")).toContain(
-            "parent=6hsbt-vqaaa-aaaaf-aaafq-cai.icp0.io&",
+});
+
+describe("twitchPlayerParent", () => {
+    const page = { native: false, framed: false };
+
+    test.each(["oc.app", "webtest.oc.app", "6hsbt-vqaaa-aaaaf-aaafq-cai.icp0.io", "localhost"])(
+        "the page's host name: %s",
+        (hostname) => {
+            expect(twitchPlayerParent({ ...page, hostname })).toBe(hostname);
+        },
+    );
+
+    test.each(["", "oc.app&parent=evil.com", "oc.app/x", "[::1]"])(
+        "none for a host name that isn't one: %s",
+        (hostname) => {
+            expect(twitchPlayerParent({ ...page, hostname })).toBeUndefined();
+        },
+    );
+
+    test("none in the native apps", () => {
+        expect(twitchPlayerParent({ ...page, hostname: "tauri.localhost", native: true })).toBe(
+            undefined,
         );
     });
 
-    test.each(["", "oc.app&parent=evil.com", "oc.app/x", "[::1]"])(
-        "no player for a parent that isn't a host name: %s",
-        (parent) => {
-            const embed = parseTwitchUrl("https://www.twitch.tv/nelly")!;
-            expect(twitchPlayerUrl(embed, parent)).toBeUndefined();
-        },
-    );
+    test("none in a page another site frames", () => {
+        expect(twitchPlayerParent({ ...page, hostname: "oc.app", framed: true })).toBe(undefined);
+    });
+});
+
+describe("twitchPlayersAndCards", () => {
+    const preview = (url: string, title = url): OgPreview => ({
+        kind: "opengraph",
+        url,
+        title,
+        description: "",
+    });
+
+    test("a Twitch link's preview goes with its player, and other previews are cards", () => {
+        const twitch = preview("https://www.twitch.tv/nelly", "Nelly - Live on Twitch");
+        const github = preview("https://github.com");
+        const embeds = extractTwitchEmbeds("https://www.twitch.tv/nelly https://github.com");
+        expect(twitchPlayersAndCards(embeds, [twitch, github])).toEqual({
+            players: [{ embed: embeds[0], ogPreview: twitch }],
+            cards: [github],
+        });
+    });
+
+    test("a preview goes with the player for where it goes, however its link is written", () => {
+        const embeds = extractTwitchEmbeds("https://twitch.tv/nelly https://www.twitch.tv/Nelly");
+        const first = preview("https://twitch.tv/nelly");
+        const second = preview("https://www.twitch.tv/Nelly");
+        expect(twitchPlayersAndCards(embeds, [first, second])).toEqual({
+            players: [{ embed: embeds[0], ogPreview: first }],
+            cards: [],
+        });
+    });
+
+    test("a player without a preview, and a Twitch preview without a player stays a card", () => {
+        const embeds = extractTwitchEmbeds("https://www.twitch.tv/nelly");
+        const other = preview("https://www.twitch.tv/someoneelse");
+        expect(twitchPlayersAndCards(embeds, [other])).toEqual({
+            players: [{ embed: embeds[0], ogPreview: undefined }],
+            cards: [other],
+        });
+    });
 });
 
 describe("twitchWatchUrl", () => {
