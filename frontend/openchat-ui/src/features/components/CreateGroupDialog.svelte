@@ -92,20 +92,23 @@
     { key: 'nobody', label: CG + 'roles.nobody' },
   ];
   const VALUE_LABEL: Record<GroupRole, string> = { member: CG + 'values.member', moderator: CG + 'values.moderator', admin: CG + 'values.admin', owner: CG + 'values.owner', nobody: CG + 'values.nobody' };
-  const PERMS: { key: string; label: string; group: string; def: GroupRole; only?: Kind }[] = [
-    { key: 'roles', label: CG + 'perms.roles', group: 'Members', def: 'owner' },
+  // communityDef: a community's default where it differs (a community's are all admin, as the backend's and
+  // GroupSettingsDialog's); notCommunity: message permissions, which a community doesn't have
+  const PERMS: { key: string; label: string; group: string; def: GroupRole; communityDef?: GroupRole; only?: Kind; notCommunity?: boolean }[] = [
+    { key: 'roles', label: CG + 'perms.roles', group: 'Members', def: 'owner', communityDef: 'admin' },
     { key: 'edit', label: CG + 'perms.edit', group: 'Members', def: 'admin' },
-    { key: 'invite', label: CG + 'perms.invite', group: 'Members', def: 'member' },
-    { key: 'remove', label: CG + 'perms.remove', group: 'Members', def: 'moderator' },
-    { key: 'delete', label: CG + 'perms.delete', group: 'Moderation', def: 'moderator' },
-    { key: 'pin', label: CG + 'perms.pin', group: 'Moderation', def: 'moderator' },
-    { key: 'react', label: CG + 'perms.react', group: 'Moderation', def: 'member' },
-    { key: 'everyone', label: CG + 'perms.everyone', group: 'Moderation', def: 'admin' },
-    { key: 'calls', label: CG + 'perms.calls', group: 'Moderation', def: 'member' },
+    { key: 'invite', label: CG + 'perms.invite', group: 'Members', def: 'member', communityDef: 'admin' },
+    { key: 'remove', label: CG + 'perms.remove', group: 'Members', def: 'moderator', communityDef: 'admin' },
+    { key: 'delete', label: CG + 'perms.delete', group: 'Moderation', def: 'moderator', notCommunity: true },
+    { key: 'pin', label: CG + 'perms.pin', group: 'Moderation', def: 'moderator', notCommunity: true },
+    { key: 'react', label: CG + 'perms.react', group: 'Moderation', def: 'member', notCommunity: true },
+    { key: 'everyone', label: CG + 'perms.everyone', group: 'Moderation', def: 'admin', notCommunity: true },
+    { key: 'calls', label: CG + 'perms.calls', group: 'Moderation', def: 'member', notCommunity: true },
     { key: 'pubChannels', label: CG + 'perms.pubChannels', group: 'Channels', def: 'admin', only: 'community' },
-    { key: 'privChannels', label: CG + 'perms.privChannels', group: 'Channels', def: 'member', only: 'community' },
-    { key: 'userGroups', label: CG + 'perms.userGroups', group: 'Channels', def: 'owner', only: 'community' },
+    { key: 'privChannels', label: CG + 'perms.privChannels', group: 'Channels', def: 'admin', only: 'community' },
+    { key: 'userGroups', label: CG + 'perms.userGroups', group: 'Channels', def: 'admin', only: 'community' },
   ];
+  const permDef = (p: (typeof PERMS)[number], community: boolean) => (community && p.communityDef) || p.def;
   const PERM_GROUPS = ['Members', 'Moderation', 'Channels'];
   const PERM_GROUP_KEYS: Record<string, string> = { Members: CG + 'permGroups.members', Moderation: CG + 'permGroups.moderation', Channels: CG + 'permGroups.channels' };
   // fallback list when the host doesn't pass `languages`; codes are what reach the host
@@ -144,9 +147,9 @@
   ];
   const INHERIT = 'inherit';
 
-  function defaultPerms(): Perms {
+  function defaultPerms(community: boolean): Perms {
     const o: Perms = { general: {}, messages: { default: 'member' }, threads: { default: 'member' } };
-    PERMS.forEach((p) => (o.general[p.key] = p.def));
+    PERMS.forEach((p) => (o.general[p.key] = permDef(p, community)));
     CONTENT.forEach((c) => {
       o.messages[c.key] = INHERIT;
       o.threads[c.key] = INHERIT;
@@ -274,7 +277,7 @@
   let rulesText = $state('');
   let rulesPreset = $state<string | null>(null);
   let submitted = $state(false);
-  let perms = $state<Perms>(defaultPerms());
+  let perms = $state<Perms>(defaultPerms(untrack(() => kindProp === 'community')));
   let permSub = $state(0);
   let threadsOverride = $state(false);
   let permMenu = $state<{ scope: Scope; key: string; allowInherit: boolean; anchorTop: number; anchorBottom: number; top: string; left: string; measured: boolean } | null>(null);
@@ -354,8 +357,8 @@
   // same for a gate still missing its token or amount (the host would get a malformed gate)
   const gatesOk = $derived(gates?.complete !== false);
   const gatesBad = $derived(!gatesOk && submitted);
-  const permList = $derived(PERMS.filter((x) => !x.only || x.only === kind));
-  const generalChanged = $derived(PERMS.filter((p) => perms.general[p.key] !== p.def).length);
+  const permList = $derived(PERMS.filter((x) => (!x.only || x.only === kind) && !(isComm && x.notCommunity)));
+  const generalChanged = $derived(permList.filter((p) => perms.general[p.key] !== permDef(p, isComm)).length);
   const msgExceptions = $derived(CONTENT.filter((c) => perms.messages[c.key] !== INHERIT).length);
   const thrExceptions = $derived(CONTENT.filter((c) => perms.threads[c.key] !== INHERIT).length);
   const msgChanged = $derived(generalChanged + msgExceptions + (perms.messages.default !== 'member' ? 1 : 0));
@@ -1226,7 +1229,8 @@
               <span class="switch-hint">{t(CG + 'permissions.hint')}</span>
             </div>
 
-            <div class="cell">
+            <!-- a community has no message permissions: General only -->
+            <div class="cell" class:hidden={isComm}>
               <SegmentedTabs
                 labels={[CG + 'permissions.general', CG + 'permissions.messages', CG + 'permissions.threads']}
                 counts={[generalChanged || null, msgExceptions || null, threadsOverride ? thrExceptions || null : null]}
@@ -1245,7 +1249,7 @@
                 <span
                   class="text-action"
                   onclick={() => {
-                    perms = defaultPerms();
+                    perms = defaultPerms(isComm);
                     threadsOverride = false;
                     permMenu = null;
                   }}
@@ -1572,6 +1576,10 @@
     display: flex;
     justify-content: flex-end;
     gap: var(--space-8);
+  }
+
+  .cell.hidden {
+    display: none;
   }
 
   .hidden-input {

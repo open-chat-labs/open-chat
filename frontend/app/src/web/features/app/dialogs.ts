@@ -54,6 +54,7 @@ export type LocalDialog =
           /** Invite & share's tab, when it opens there. */
           inviteTab?: "people" | "share";
       }
+    | { kind: "create_group"; level: "group" | "community" }
     | {
           kind: "new_channel";
           communityId: CommunityIdentifier;
@@ -113,6 +114,9 @@ export const dialogs: Dialogs = {
 
     // Manage for a group, channel or community: its settings (or About page) and Invite & share (4b)
     manage: () => import("../group/ManageDialogScreen.svelte"),
+
+    // a new group or community (4b)
+    create_group: () => import("../group/CreateGroupDialogScreen.svelte"),
 
     // a new channel in a community, or an embedded one (4b)
     new_channel: () => import("../group/CreateChannelDialogScreen.svelte"),

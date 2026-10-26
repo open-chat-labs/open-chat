@@ -16,6 +16,7 @@ import type { CreateGroupResult, GroupSettings } from "@openchat/ui/src/lib/type
 import { describe, expect, test } from "vitest";
 import type { GateLookups } from "../access/gates.adapter";
 import {
+    candidateCommunityFromCreate,
     candidateCommunityFromSettings,
     candidateFromCreate,
     candidateFromSettings,
@@ -265,5 +266,58 @@ describe("a channel created from CreateGroupDialog", () => {
             ).messagesVisibleToNonMembers;
         expect(preview(true)).toBe(true);
         expect(preview(false)).toBe(false);
+    });
+});
+
+describe("a community created from CreateGroupDialog", () => {
+    // what's sent for a new community: the dialog's settings and language, read as an edit is
+    test("sends the dialog's settings and language", () => {
+        const blank = community({
+            name: "",
+            description: "",
+            public: false,
+            avatar: {},
+            banner: {},
+        });
+        const general: GroupSettings["permissions"]["general"] = {
+            ...communitySettings(blank, lookups).permissions.general,
+            invite: "member",
+        };
+        const created = candidateCommunityFromCreate(
+            {
+                name: "Walkers",
+                about: "All the walks",
+                color: "teal",
+                coverKey: "plum",
+                avatarFile: null,
+                kind: "community",
+                embedded: false,
+                language: "fr",
+                coverFile: null,
+                channels: ["General", "Walks"],
+                url: "",
+                previewForNonMembers: false,
+                isPublic: true,
+                visibleHistory: true,
+                disappearAfter: null,
+                disappearAfterMs: null,
+                members: [],
+                invites: [],
+                gates: { count: 0 },
+                rules: { enabled: true, text: "Be kind" },
+                permissions: { general, messages: { default: "member" }, threads: null },
+            },
+            blank,
+            lookups,
+        );
+
+        expect(created.community).toMatchObject({
+            name: "Walkers",
+            description: "All the walks",
+            public: true,
+            primaryLanguage: "fr",
+        });
+        expect(created.community.permissions.inviteUsers).toBe(ROLE_MEMBER);
+        expect(created.rules).toMatchObject({ enabled: true, text: "Be kind" });
     });
 });

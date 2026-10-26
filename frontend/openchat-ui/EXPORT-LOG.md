@@ -328,3 +328,7 @@
 ## 2026-10-26 — CreateGroupDialog: channel names as typed, by hand
 - A channel's name (and a new community's channel list) was slugged as you typed: lowercased, spaces to hyphens, anything else dropped. Nothing requires that, so names are now kept as typed (trimmed; the channel list still caps each at its length and rejects duplicates), and the channel name's hint no longer says "Lowercase, no spaces".
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — CreateGroupDialog: a community's permissions, by hand
+- A community's permissions default to admin (`communityDef`, and private channels and user groups), as the backend's and GroupSettingsDialog's do; the dialog offered invite and private channels to every member and roles and user groups to the owner only. A community shows no message permissions (delete, pin, react, @everyone, calls) and no Messages / Threads tabs, which a community doesn't have.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

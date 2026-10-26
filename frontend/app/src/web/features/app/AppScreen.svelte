@@ -32,6 +32,7 @@
         type Regions,
     } from "../../router/regions";
     import { DialogStack } from "../../shell/dialogStack.svelte";
+    import { startCommunityCreation } from "@src/logic/groupOrCommunity/community.svelte";
     import { RailState } from "../../shell/railState.svelte";
     import { RightColumnState } from "../../shell/rightColumn.svelte";
     import Shell from "../../shell/Shell.svelte";
@@ -68,6 +69,18 @@
     const railState = new RailState(() => railMode);
     // the dialogs the app opens itself, shown by DialogHost with the ones the URL opens
     const dialogStack = new DialogStack<LocalDialog>();
+
+    // a guest signs in first and creates it after; only Diamond members can create one
+    function createCommunity() {
+        switch (startCommunityCreation(client)) {
+            case "ready":
+                dialogStack.open({ kind: "create_group", level: "community" });
+                break;
+            case "needs_diamond":
+                publish("upgrade");
+                break;
+        }
+    }
 
     // the activity feed opened over a page is Notifications' too
     const selection = $derived<RailSelection>(
@@ -185,7 +198,8 @@
     narrowView={regions.narrowView}
     rightOpen={rightColumn.open}
     onCloseRight={() => closeRightColumn(rightColumn)}
-    rightLabel="ui.panelCover.info">
+    rightLabel="ui.panelCover.info"
+>
     {#snippet rail()}
         <NavRail
             expanded={railState.expanded}
@@ -211,7 +225,9 @@
             puzzleDue={!$disableChit &&
                 (playableDailyPuzzleRows($dailyPuzzleStore) ?? []).some((r) => r.status === "play")}
             onChit={() => openLinked({ kind: "chit" })}
-            onSignIn={() => client.updateIdentityState({ kind: "logging_in" })} />
+            onCreateCommunity={createCommunity}
+            onSignIn={() => client.updateIdentityState({ kind: "logging_in" })}
+        />
     {/snippet}
     {#snippet middle()}
         <RegionScreen
@@ -219,7 +235,8 @@
             screens={middleScreens}
             {context}
             column="middle"
-            toolbar={middleToolbar} />
+            toolbar={middleToolbar}
+        />
     {/snippet}
 </Shell>
 
@@ -232,7 +249,8 @@
                 icon="back"
                 variant="ghost"
                 label="ui.common.back"
-                onClick={() => navigate(back)} />
+                onClick={() => navigate(back)}
+            />
         {/if}
         <span class="gap"></span>
         {#if regions.rightColumn !== false}
@@ -243,7 +261,8 @@
                 label={rightColumn.open
                     ? "ui.conversationHeader.hidePanel"
                     : "ui.conversationHeader.showPanel"}
-                onClick={() => rightColumn.toggle()} />
+                onClick={() => rightColumn.toggle()}
+            />
         {/if}
     </div>
 {/snippet}

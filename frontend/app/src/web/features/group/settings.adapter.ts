@@ -203,20 +203,10 @@ export function candidateFromSettings(
     };
 }
 
-/**
- * The group or channel CreateGroupDialog's create makes, from the client's blank one
- * (`createCandidateGroup`): the dialog's result read as the settings dialog's value, so a new group
- * and an edited one are made the same way (`candidateFromSettings`), plus what only creating has:
- * an embedded channel's URL and whether non-members can see its messages. `avatar` is the picked
- * photo, read by the caller.
- */
-export function candidateFromCreate(
-    result: CreateGroupResult,
-    blank: CandidateGroupChat,
-    lookups: GateLookups,
-    avatar?: DataContent,
-): CandidateGroupChat {
-    const settings: GroupSettings = {
+// CreateGroupDialog's result as the settings dialog's value, so a new group, channel or community
+// is read the same way as an edit
+function settingsFromCreate(result: CreateGroupResult): GroupSettings {
+    return {
         info: {
             name: result.name,
             about: result.about,
@@ -236,8 +226,23 @@ export function candidateFromCreate(
         rules: { ...result.rules, newVersion: false },
         permissions: result.permissions,
     };
+}
+
+/**
+ * The group or channel CreateGroupDialog's create makes, from the client's blank one
+ * (`createCandidateGroup`): the dialog's result read as the settings dialog's value, so a new group
+ * and an edited one are made the same way (`candidateFromSettings`), plus what only creating has:
+ * an embedded channel's URL and whether non-members can see its messages. `avatar` is the picked
+ * photo, read by the caller.
+ */
+export function candidateFromCreate(
+    result: CreateGroupResult,
+    blank: CandidateGroupChat,
+    lookups: GateLookups,
+    avatar?: DataContent,
+): CandidateGroupChat {
     return {
-        ...candidateFromSettings(settings, blank, lookups, avatar),
+        ...candidateFromSettings(settingsFromCreate(result), blank, lookups, avatar),
         externalUrl: result.embedded ? result.url : undefined,
         messagesVisibleToNonMembers: result.previewForNonMembers,
     };
@@ -335,5 +340,28 @@ export function candidateCommunityFromSettings(
             text: rulesText(all.rules, original.rules.text),
             newVersion: all.rules.newVersion ?? false,
         },
+    };
+}
+
+/**
+ * The community CreateGroupDialog's create makes, from a blank one (`newCommunity`): read as an
+ * edit is (`candidateCommunityFromSettings`), with its primary language. `images` are the picked
+ * photo and banner, read by the caller. Its channels and invites go to `createCommunity` apart.
+ */
+export function candidateCommunityFromCreate(
+    result: CreateGroupResult,
+    blank: CommunityAndRules,
+    lookups: GateLookups,
+    images: { avatar?: DataContent; banner?: DataContent } = {},
+): CommunityAndRules {
+    const { community, rules } = candidateCommunityFromSettings(
+        settingsFromCreate(result),
+        blank,
+        lookups,
+        images,
+    );
+    return {
+        community: { ...community, primaryLanguage: result.language ?? community.primaryLanguage },
+        rules,
     };
 }
