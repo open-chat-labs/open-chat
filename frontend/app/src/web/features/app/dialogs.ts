@@ -115,7 +115,7 @@ export const dialogs: Dialogs = {
     manage: () => import("../group/ManageDialogScreen.svelte"),
 
     // a new channel in a community, or an embedded one (4b)
-    new_channel: () => import("../group/NewChannelDialogScreen.svelte"),
+    new_channel: () => import("../group/CreateChannelDialogScreen.svelte"),
 
     // creating, editing or deleting a community's user group (4b)
     user_group: () => import("../group/UserGroupDialogScreen.svelte"),

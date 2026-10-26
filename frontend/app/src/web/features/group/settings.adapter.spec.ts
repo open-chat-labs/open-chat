@@ -12,11 +12,12 @@ import {
     type CommunitySummary,
 } from "@client";
 import { durationMs } from "@openchat/ui/src/features/components/GroupSettingsDialog.svelte";
-import type { GroupSettings } from "@openchat/ui/src/lib/types";
+import type { CreateGroupResult, GroupSettings } from "@openchat/ui/src/lib/types";
 import { describe, expect, test } from "vitest";
 import type { GateLookups } from "../access/gates.adapter";
 import {
     candidateCommunityFromSettings,
+    candidateFromCreate,
     candidateFromSettings,
     communitySettings,
     groupSettings,
@@ -178,5 +179,74 @@ describe("community settings adapter", () => {
         expect(changes.description).toBe("Walking, mostly");
         expect(changes.permissions?.inviteUsers).toBe(ROLE_ADMIN);
         expect(Object.keys(changes).sort()).toEqual(["description", "permissions"]);
+    });
+});
+
+describe("a channel created from CreateGroupDialog", () => {
+    const blank = group({
+        id: { kind: "channel", communityId: "c", channelId: 0 },
+        name: "",
+        description: "",
+        public: false,
+        eventsTTL: undefined,
+        avatar: undefined,
+        permissions: defaultChatPermissions(),
+        rules: { ...defaultChatRules("channel"), newVersion: false },
+        level: "channel",
+    } as Partial<CandidateGroupChat>);
+
+    const result = (overrides: Partial<CreateGroupResult> = {}): CreateGroupResult => ({
+        name: "Weekend walks",
+        about: "Where we meet",
+        color: "teal",
+        coverKey: "plum",
+        avatarFile: null,
+        kind: "channel",
+        embedded: false,
+        language: null,
+        coverFile: null,
+        channels: [],
+        url: "",
+        previewForNonMembers: false,
+        isPublic: true,
+        visibleHistory: true,
+        disappearAfter: "1 week",
+        disappearAfterMs: 604_800_000,
+        members: [],
+        invites: [],
+        gates: { count: 0 },
+        rules: { enabled: true, text: "Be kind" },
+        permissions: {
+            ...groupSettings(blank, lookups).permissions,
+            general: { ...groupSettings(blank, lookups).permissions.general, pin: "member" },
+        },
+        ...overrides,
+    });
+
+    // what's sent for a new channel: everything the dialog set, the name as typed
+    test("sends the dialog's settings, with the name as typed", () => {
+        const channel = candidateFromCreate(result(), blank, lookups);
+
+        expect(channel).toMatchObject({
+            id: blank.id,
+            name: "Weekend walks",
+            description: "Where we meet",
+            public: true,
+            historyVisible: true,
+            eventsTTL: 604_800_000n,
+            rules: { enabled: true, text: "Be kind" },
+            gateConfig: blank.gateConfig,
+        });
+        expect(channel.permissions.pinMessages).toBe(ROLE_MEMBER);
+        expect(channel.externalUrl).toBeUndefined();
+    });
+
+    test("an embedded channel keeps its URL", () => {
+        const channel = candidateFromCreate(
+            result({ kind: "embedded", embedded: true, url: "https://example.com" }),
+            blank,
+            lookups,
+        );
+        expect(channel.externalUrl).toBe("https://example.com");
     });
 });

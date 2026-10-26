@@ -13,7 +13,12 @@ import {
     type MessagePermissions,
 } from "@client";
 import { durationMs } from "@openchat/ui/src/features/components/GroupSettingsDialog.svelte";
-import type { GroupRole, GroupSettings } from "@openchat/ui/src/lib/types";
+import type {
+    AccessGatesState,
+    CreateGroupResult,
+    GroupRole,
+    GroupSettings,
+} from "@openchat/ui/src/lib/types";
 import { gateConfig, gatesState, type GateLookups } from "../access/gates.adapter";
 
 // A group or channel being edited (UpdateGroupState's candidate), or a community (UpdateCommunityState's),
@@ -195,6 +200,46 @@ export function candidateFromSettings(
             newVersion: all.rules.newVersion ?? false,
         },
         permissions,
+    };
+}
+
+/**
+ * The group or channel CreateGroupDialog's create makes, from the client's blank one
+ * (`createCandidateGroup`): the dialog's result read as the settings dialog's value, so a new group
+ * and an edited one are made the same way (`candidateFromSettings`), plus what only creating has:
+ * an embedded channel's URL and whether non-members can see its messages. `avatar` is the picked
+ * photo, read by the caller.
+ */
+export function candidateFromCreate(
+    result: CreateGroupResult,
+    blank: CandidateGroupChat,
+    lookups: GateLookups,
+    avatar?: DataContent,
+): CandidateGroupChat {
+    const settings: GroupSettings = {
+        info: {
+            name: result.name,
+            about: result.about,
+            color: result.color,
+            coverKey: result.coverKey,
+            coverUrl: null,
+            avatar: "",
+        },
+        settings: {
+            isPublic: result.isPublic,
+            history: result.visibleHistory,
+            disappearOn: result.disappearAfterMs !== null,
+            after: result.disappearAfter ?? "12 hours",
+            afterMs: result.disappearAfterMs,
+        },
+        gates: result.gates.count === 0 ? null : (result.gates as AccessGatesState),
+        rules: { ...result.rules, newVersion: false },
+        permissions: result.permissions,
+    };
+    return {
+        ...candidateFromSettings(settings, blank, lookups, avatar),
+        externalUrl: result.embedded ? result.url : undefined,
+        messagesVisibleToNonMembers: result.previewForNonMembers,
     };
 }
 

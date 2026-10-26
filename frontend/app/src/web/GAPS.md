@@ -296,9 +296,14 @@ design export needs. Each entry says where it came up.
     no others), each opening that channel's Manage with a back arrow to Channels. Manage reads the
     open chat, so a channel that isn't open is opened first.
   - New channel (Channels, and the community menu's New channel / Add embedded channel) opens
-    `NewChannelDialog` and then the channel (`NewChannelDialogScreen`, `newChannelCandidate`).
-    The dialog slugs the name as you type and arms at 2 characters; the app takes 3 to 40.
-    Choosing public or private isn't checked against what the community lets you create; the
+    `CreateGroupDialog` in channel mode, not the design's bare `NewChannelDialog`, by Julian's
+    choice: it has what editing a channel has (photo, switches, members, gates, rules,
+    permissions). The result becomes the channel the same way an edit does (`candidateFromCreate`
+    → `candidateFromSettings`), and the new channel opens. People picked are invited, as the old
+    flows did, not added.
+  - by hand: channel names aren't slugged (the design lowercased them and turned spaces into
+    hyphens; the backend has no such rule). A name is 3 to 40 characters.
+  - choosing public or private isn't checked against what the community lets you create; the
     backend refuses one you can't, with the generic "couldn't create" message.
   - the right column shows GroupPanel's quick panel for a group or channel (cog for someone who
     can edit, info otherwise); its views open Manage, except pinned messages. A community has no
