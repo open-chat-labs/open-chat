@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ChatCaption, Column, Label } from "component-lib";
-    import { type OgPreview } from "@client";
+    import { ogPreviewCard, type OgPreview } from "@client";
     // import PreviewPlaceholder from "../PreviewPlaceholder.svelte";
 
     interface Props {
@@ -10,30 +10,11 @@
 
     let { me, ogPreview }: Props = $props();
 
-    let img = $derived(
-        ogPreview.image && ogPreview.image.width > 0 && ogPreview.image.height > 0
-            ? ogPreview.image
-            : undefined,
-    );
+    let shown = $derived(ogPreviewCard(ogPreview));
+    let img = $derived(shown.image);
 
-    let hostname = $derived.by(() => {
-        try {
-            return new URL(ogPreview.url).hostname.replace(/^www\./, "");
-        } catch {
-            return ogPreview.url;
-        }
-    });
-
-    let safeUrl = $derived(isSafeUrl(ogPreview.url) ? ogPreview.url : undefined);
-
-    function isSafeUrl(url: string): boolean {
-        try {
-            const parsed = new URL(url);
-            return parsed.protocol === "http:" || parsed.protocol === "https:";
-        } catch {
-            return false;
-        }
-    }
+    let hostname = $derived(shown.hostname);
+    let safeUrl = $derived(shown.href);
 
     const textColour = $derived(me ? "primaryAccent" : "textSecondary");
     const urlColour = $derived(me ? "textPrimary" : "secondary");

@@ -1,4 +1,4 @@
-import type { LinkPreview, Message, MessagePreview, OgPreview } from "../domain";
+import type { LinkPreview, Message, MessagePreview, OgPreview, OgPreviewImage } from "../domain";
 
 // Originally taken from here - https://stackoverflow.com/a/6041965
 const URL_REGEX = new RegExp(
@@ -52,6 +52,36 @@ export function removeOpenGraphPreviews(msg: Message, urls: string[]): Message {
     return {
         ...msg,
         ogPreviews: msg.ogPreviews.filter((p) => !urls.find((u) => p.url === u)),
+    };
+}
+
+/** What a preview card shows of an OG preview. */
+export type OgPreviewCard = {
+    /** The preview's URL if it's http(s), the only kind a card links to: it comes from message content. */
+    href: string | undefined;
+    hostname: string;
+    /** The image, only when it has a size (one without can't be laid out). */
+    image: OgPreviewImage | undefined;
+    /** A square or tall image goes beside the text: a banner would crop it badly. */
+    sideBySide: boolean;
+};
+
+export function ogPreviewCard(preview: OgPreview): OgPreviewCard {
+    let url: URL | undefined;
+    try {
+        url = new URL(preview.url);
+    } catch {
+        url = undefined;
+    }
+    const image =
+        preview.image !== undefined && preview.image.width > 0 && preview.image.height > 0
+            ? preview.image
+            : undefined;
+    return {
+        href: url?.protocol === "http:" || url?.protocol === "https:" ? preview.url : undefined,
+        hostname: url?.hostname.replace(/^www\./, "") ?? preview.url,
+        image,
+        sideBySide: image !== undefined && image.width <= image.height * 1.2,
     };
 }
 

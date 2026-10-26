@@ -2200,6 +2200,7 @@
     "removedBy": "{changedBy} удалил {changed} из {level}",
     "removeMemberFailed": "Не удалось удалить участника",
     "removePreviewQuestion": "Удалить предварительный просмотр?",
+    "errorRemovingLinkPreview": "Не удалось удалить предпросмотр",
     "renderPreviews": "Автоматический предварительный просмотр ссылок",
     "reply": "Ответить",
     "replyPrivately": "Ответить лично",

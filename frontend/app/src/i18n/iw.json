@@ -2200,6 +2200,7 @@
     "removedBy": "{changedBy} הסיר את {changed} מה-{level}",
     "removeMemberFailed": "לא ניתן להסיר חבר",
     "removePreviewQuestion": "להסיר את התצוגה המקדימה?",
+    "errorRemovingLinkPreview": "לא ניתן להסיר את התצוגה המקדימה",
     "renderPreviews": "תצוגה מקדימה של קישורים לעיבוד אוטומטי",
     "reply": "תשובה",
     "replyPrivately": "השב בפרטי",

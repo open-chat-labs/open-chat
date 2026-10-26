@@ -2200,6 +2200,7 @@
     "removedBy": "{changedBy} a supprimé {changed} du {level}",
     "removeMemberFailed": "Impossible de supprimer le membre",
     "removePreviewQuestion": "Supprimer l'aperçu ?",
+    "errorRemovingLinkPreview": "Impossible de supprimer l'aperçu",
     "renderPreviews": "Aperçus des liens avec rendu automatique",
     "reply": "Répondre",
     "replyPrivately": "Répondre en privé",

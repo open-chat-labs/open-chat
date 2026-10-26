@@ -18,6 +18,7 @@
         eventsStore,
         failedMessagesStore,
         favouritesStore,
+        i18nKey,
         isPrivateCommunityPreview,
         localUpdates,
         messageIndexStore,
@@ -63,6 +64,7 @@
     import { enterSend, lowBandwidth } from "@src/stores/settings";
     import { getProxyAdjustedBlobUrl } from "@src/utils/media";
     import { now500 } from "@src/stores/time";
+    import { toastStore } from "@src/stores/toast";
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { isTouchOnlyDevice } from "@src/utils/devices";
     import { isSingleEmoji } from "@src/utils/emojis";
@@ -90,6 +92,7 @@
         type MessageRow,
     } from "./conversation.adapter";
     import MediaViewer from "./MediaViewer.svelte";
+    import RemovePreviewDialog from "./RemovePreviewDialog.svelte";
     import { VoicePlayer, type VoiceSpeed } from "./voicePlayer.svelte";
     import { RowCache } from "./rowCache";
     import { profileClickedEvent } from "@src/web-components/profileLink";
@@ -412,16 +415,47 @@
         row: MessageRow,
         body: Snippet,
         withBody: boolean,
-        msg: Message,
+        evt: EventWrapper<Message>,
     ): GroupMessage[] {
         let messages = groupMessages.get(row);
         if (messages === undefined) {
-            messages = [
-                withBody ? ({ ...row.message, body } as GroupMessage) : withActions(row, msg),
-            ];
+            const message = withBody
+                ? ({ ...row.message, body } as GroupMessage)
+                : withActions(row, evt.event);
+            messages = [{ ...message, ...previewRemoval(evt) } as GroupMessage];
             groupMessages.set(row, messages);
         }
         return messages;
+    }
+
+    // ── link previews ──
+
+    // the sender can remove a preview from their own text message, once they've confirmed it, as
+    // in the old trees
+    let removingPreview = $state<{ evt: EventWrapper<Message>; url: string }>();
+
+    function previewRemoval(evt: EventWrapper<Message>) {
+        const msg = evt.event;
+        if (msg.sender !== me || msg.content.kind !== "text_content" || msg.ogPreviews.length === 0)
+            return {};
+        return {
+            onRemovePreview: (index: number) => {
+                const url = msg.ogPreviews[index]?.url;
+                if (url !== undefined) removingPreview = { evt, url };
+            },
+        };
+    }
+
+    async function removePreview() {
+        const removing = removingPreview;
+        removingPreview = undefined;
+        if (chat === undefined || removing === undefined) return;
+        const removed = await client.hideLinkPreview(
+            { chatId: chat.id },
+            removing.evt,
+            removing.url,
+        );
+        if (!removed) toastStore.showFailureToast(i18nKey("errorRemovingLinkPreview"));
     }
 
     // a rich kind's handlers, and a voice message's playing state (read as it renders, so playing
@@ -647,7 +681,7 @@
                                             body,
                                             content.kind === "text_content" &&
                                                 withMarkdown(content.text),
-                                            msg,
+                                            evt,
                                         )}
                                     />
                                 </div>
@@ -744,6 +778,9 @@
     </div>
 {/if}
 
+{#if removingPreview !== undefined}
+    <RemovePreviewDialog onConfirm={removePreview} onClose={() => (removingPreview = undefined)} />
+{/if}
 {#if viewing !== undefined}
     <MediaViewer content={viewing} onClose={() => (viewing = undefined)} />
 {/if}
