@@ -10,6 +10,8 @@ const ctx: ConversationContext = {
     time: (timestamp) => `t${timestamp}`,
     date: (timestamp) => `d${timestamp}`,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
+    direct: false,
+    token: () => undefined,
 };
 
 function message(): EventWrapper<Message> {

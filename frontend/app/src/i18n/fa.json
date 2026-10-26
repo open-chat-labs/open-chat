@@ -199,6 +199,13 @@
         "unlink": "لغو پیوند",
         "unlinkFailed": "لغو پیوند حساب ممکن نشد"
     },
+    "cashtag": {
+        "chartLabel": "قیمت {symbol} در ۷ روز گذشته",
+        "change7d": "{change} در ۷ روز",
+        "noHistory": "در ۷ روز گذشته معامله‌ای انجام نشده است",
+        "noPrice": "قیمتی در دسترس نیست",
+        "priceDataBy": "داده‌های قیمت از {source}"
+    },
     "bridgedUserUnknown": "کاربر {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
@@ -2200,6 +2207,7 @@
     "removedBy": "{changedBy} {changed} را از {level} حذف کرد",
     "removeMemberFailed": "امکان حذف عضو وجود ندارد",
     "removePreviewQuestion": "پیش نمایش حذف شود؟",
+    "errorRemovingLinkPreview": "حذف پیش‌نمایش ممکن نشد",
     "renderPreviews": "رندر خودکار پیش نمایش پیوندها",
     "reply": "پاسخ",
     "replyPrivately": "به صورت خصوصی پاسخ دهید",

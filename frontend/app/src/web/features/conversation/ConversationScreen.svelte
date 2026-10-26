@@ -6,17 +6,24 @@
     import { showInRightColumn } from "../app/rightPanel";
     import {
         allUsersStore,
+        formatClock,
         anonUserStore,
         blockedUsersStore,
         botState,
+        buildTransactionUrl,
         byContext as typersByContext,
         chatIdentifiersEqual,
         chatIdentifierToString,
         chatsInitialisedStore,
+        cryptoLookup,
         currentUserIdStore,
         eventsStore,
+        exchangeRatesLookupStore,
         failedMessagesStore,
         favouritesStore,
+        formatTokens,
+        getConvertedBalances,
+        i18nKey,
         isPrivateCommunityPreview,
         localUpdates,
         messageIndexStore,
@@ -39,6 +46,7 @@
         type ChatIdentifier,
         type ChatSummary,
         type EventWrapper,
+        type FileContent,
         type Message,
         type OpenChat,
     } from "@client";
@@ -61,6 +69,8 @@
     import { enterSend, lowBandwidth } from "@src/stores/settings";
     import { getProxyAdjustedBlobUrl } from "@src/utils/media";
     import { now500 } from "@src/stores/time";
+    import { toastStore } from "@src/stores/toast";
+    import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { isTouchOnlyDevice } from "@src/utils/devices";
     import { isSingleEmoji } from "@src/utils/emojis";
@@ -88,6 +98,8 @@
         type MessageRow,
     } from "./conversation.adapter";
     import MediaViewer from "./MediaViewer.svelte";
+    import RemovePreviewDialog from "./RemovePreviewDialog.svelte";
+    import { VoicePlayer, type VoiceSpeed } from "./voicePlayer.svelte";
     import { RowCache } from "./rowCache";
     import { profileClickedEvent } from "@src/web-components/profileLink";
 
@@ -130,6 +142,27 @@
                 lowBandwidth: $lowBandwidth,
                 revealed: (messageId) => revealed.has(messageId),
                 url: getProxyAdjustedBlobUrl,
+            },
+            direct: chat?.kind === "direct_chat",
+            token: (ledger) => {
+                const token = $cryptoLookup.get(ledger);
+                if (token === undefined) return undefined;
+                return {
+                    symbol: token.symbol,
+                    logo: token.logo,
+                    amount: (e8s) => formatTokens(e8s, token.decimals),
+                    usd: (e8s) => {
+                        const { dollarBalance } = getConvertedBalances(
+                            exchangeRatesLookupStore.value,
+                            e8s,
+                            token.decimals,
+                            ledger,
+                        );
+                        return dollarBalance === undefined
+                            ? ""
+                            : formatConvertedValue("usd", dollarBalance);
+                    },
+                };
             },
         };
     });
@@ -394,8 +427,10 @@
         void chatKey;
         void $_;
         void day;
-        // rows don't key on the media view, so a low-bandwidth change starts them again
+        // rows don't key on the media view or the token registry (a transfer shows as text until
+        // its ledger is known), so a change to either starts them again
         void $lowBandwidth;
+        void $cryptoLookup;
         rows.clear();
     });
 
@@ -409,21 +444,122 @@
         row: MessageRow,
         body: Snippet,
         withBody: boolean,
-        msg: Message,
+        evt: EventWrapper<Message>,
     ): GroupMessage[] {
         let messages = groupMessages.get(row);
         if (messages === undefined) {
-            messages = [
-                withBody
-                    ? ({ ...row.message, body } as GroupMessage)
-                    : isMedia(msg.content)
-                      ? ({ ...row.message, onOpen: () => openMedia(msg) } as GroupMessage)
-                      : row.message,
-            ];
+            const message = withBody
+                ? ({ ...row.message, body } as GroupMessage)
+                : withActions(row, evt.event);
+            messages = [{ ...message, ...previewRemoval(evt) } as GroupMessage];
             groupMessages.set(row, messages);
         }
         return messages;
     }
+
+    // ── link previews ──
+
+    // the sender can remove a preview from their own text message, once they've confirmed it, as
+    // in the old trees
+    let removingPreview = $state<{ evt: EventWrapper<Message>; url: string }>();
+
+    function previewRemoval(evt: EventWrapper<Message>) {
+        const msg = evt.event;
+        if (msg.sender !== me || msg.content.kind !== "text_content" || msg.ogPreviews.length === 0)
+            return {};
+        return {
+            onRemovePreview: (index: number) => {
+                const url = msg.ogPreviews[index]?.url;
+                if (url !== undefined) removingPreview = { evt, url };
+            },
+        };
+    }
+
+    async function removePreview() {
+        const removing = removingPreview;
+        removingPreview = undefined;
+        if (chat === undefined || removing === undefined) return;
+        const removed = await client.hideLinkPreview(
+            { chatId: chat.id },
+            removing.evt,
+            removing.url,
+        );
+        if (!removed) toastStore.showFailureToast(i18nKey("errorRemovingLinkPreview"));
+    }
+
+    // a rich kind's handlers, and a voice message's playing state (read as it renders, so playing
+    // doesn't redo the row)
+    function withActions(row: MessageRow, msg: Message): GroupMessage {
+        const content = msg.content;
+        if (isMedia(content)) {
+            return { ...row.message, onOpen: () => openMedia(msg) } as GroupMessage;
+        }
+        if (content.kind === "crypto_content") {
+            const url = buildTransactionUrl(content.transfer, $cryptoLookup);
+            return url === undefined
+                ? row.message
+                : ({
+                      ...row.message,
+                      onOpen: () => window.open(url, "_blank", "noopener"),
+                  } as GroupMessage);
+        }
+        if (content.kind === "file_content") {
+            return { ...row.message, onDownload: () => download(content) } as GroupMessage;
+        }
+        if (content.kind === "audio_content") {
+            const key = row.message.id ?? "";
+            const url = getProxyAdjustedBlobUrl(content.blobUrl);
+            const length = Number(content.durationMs) / 1000;
+            return {
+                ...row.message,
+                get playing() {
+                    return voice.playing(key);
+                },
+                get progress() {
+                    return length > 0 ? voice.time(key) / length : 0;
+                },
+                get elapsed() {
+                    return formatClock(voice.time(key));
+                },
+                get speed() {
+                    return voice.speed;
+                },
+                onPlay: () => voice.play(key, url),
+                onPause: () => voice.pause(key),
+                onSeek: (fraction: number) => voice.seek(key, url, fraction * length),
+                onSpeedChange: (speed: VoiceSpeed) => voice.setSpeed(speed),
+            } as GroupMessage;
+        }
+        return row.message;
+    }
+
+    // a file is saved under its own name. The blob is on the canister's own origin, where a
+    // link's download attribute is ignored (the tab would go to the file), so it's fetched and
+    // saved from here; if that fails it opens in a new tab, as the old trees do
+    async function download(content: FileContent) {
+        const url = getProxyAdjustedBlobUrl(content.blobUrl);
+        if (url === undefined) return;
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`status ${resp.status}`);
+            const local = URL.createObjectURL(await resp.blob());
+            const link = document.createElement("a");
+            link.href = local;
+            link.download = content.name;
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(local), 60_000);
+        } catch (err) {
+            console.warn("Couldn't download a file, opening it instead", err);
+            window.open(url, "_blank", "noopener");
+        }
+    }
+
+    // one voice message plays at a time, and none once the chat is left
+    const voice = new VoicePlayer();
+    $effect(() => {
+        void chatKey;
+        return () => voice.stop();
+    });
 
     // a lone native emoji shows as the bubble's own, large; anything else (a custom emoji too)
     // goes through the markdown
@@ -583,7 +719,7 @@
                                             body,
                                             content.kind === "text_content" &&
                                                 withMarkdown(content.text),
-                                            msg,
+                                            evt,
                                         )}
                                     />
                                 </div>
@@ -680,6 +816,9 @@
     </div>
 {/if}
 
+{#if removingPreview !== undefined}
+    <RemovePreviewDialog onConfirm={removePreview} onClose={() => (removingPreview = undefined)} />
+{/if}
 {#if viewing !== undefined}
     <MediaViewer content={viewing} onClose={() => (viewing = undefined)} />
 {/if}

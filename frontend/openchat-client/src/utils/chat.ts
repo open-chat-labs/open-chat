@@ -1487,6 +1487,11 @@ export function canSendDirectMessage(
         return false;
     }
 
+    // A bot has no wallet: its id isn't an account anyone controls, so tokens sent to it would be lost
+    if (recipient.kind === "bot" && (permission === "crypto" || permission === "p2pSwap")) {
+        return false;
+    }
+
     return permission !== "poll" && permission !== "prize";
 }
 

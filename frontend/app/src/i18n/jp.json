@@ -199,6 +199,13 @@
         "unlink": "連携を解除",
         "unlinkFailed": "アカウントの連携を解除できませんでした"
     },
+    "cashtag": {
+        "chartLabel": "過去7日間の{symbol}の価格",
+        "change7d": "7日間で{change}",
+        "noHistory": "過去7日間の取引はありません",
+        "noPrice": "価格情報がありません",
+        "priceDataBy": "価格データ提供：{source}"
+    },
     "bridgedUserUnknown": "{platform} ユーザー",
     "bridgedUserWithPlatform": "{name}（{platform}）",
     "nativeUpdate": {
@@ -2200,6 +2207,7 @@
     "removedBy": "{changedBy} が {changed} を {level} から削除しました",
     "removeMemberFailed": "メンバーを削除できません",
     "removePreviewQuestion": "プレビューを削除しますか?",
+    "errorRemovingLinkPreview": "プレビューを削除できませんでした",
     "renderPreviews": "自動レンダリングリンクプレビュー",
     "reply": "返信",
     "replyPrivately": "プライベートで返信",

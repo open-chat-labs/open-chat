@@ -466,6 +466,13 @@
         "unlink": "Unlink",
         "unlinkFailed": "Couldn't unlink the account"
     },
+    "cashtag": {
+        "chartLabel": "{symbol} price over the last 7 days",
+        "change7d": "{change} over 7 days",
+        "noHistory": "No trades in the last 7 days",
+        "noPrice": "No price available",
+        "priceDataBy": "Price data by {source}"
+    },
     "bridgedUserUnknown": "{platform} user",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "cancel": "Cancel",
@@ -2260,6 +2267,7 @@
     "removedBy": "{changedBy} removed {changed} from the {level}",
     "removeMemberFailed": "Unable to remove member",
     "removePreviewQuestion": "Remove preview?",
+    "errorRemovingLinkPreview": "Couldn't remove the preview",
     "renderPreviews": "Auto-render link previews",
     "reply": "Reply",
     "replyPrivately": "Reply privately",

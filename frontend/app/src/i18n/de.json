@@ -199,6 +199,13 @@
         "unlink": "Verknüpfung aufheben",
         "unlinkFailed": "Die Verknüpfung des Kontos konnte nicht aufgehoben werden"
     },
+    "cashtag": {
+        "chartLabel": "{symbol}-Preis in den letzten 7 Tagen",
+        "change7d": "{change} in 7 Tagen",
+        "noHistory": "Keine Trades in den letzten 7 Tagen",
+        "noPrice": "Kein Preis verfügbar",
+        "priceDataBy": "Preisdaten von {source}"
+    },
     "bridgedUserUnknown": "{platform}-Nutzer",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
@@ -2200,6 +2207,7 @@
     "removedBy": "{changedBy} hat {changed} aus {level} entfernt",
     "removeMemberFailed": "Mitglied kann nicht entfernt werden",
     "removePreviewQuestion": "Vorschau entfernen?",
+    "errorRemovingLinkPreview": "Vorschau konnte nicht entfernt werden",
     "renderPreviews": "Linkvorschauen automatisch rendern",
     "reply": "Antwort",
     "replyPrivately": "Privat antworten",

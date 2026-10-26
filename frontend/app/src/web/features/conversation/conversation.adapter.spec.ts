@@ -16,6 +16,16 @@ const ctx: ConversationContext = {
     time: (timestamp) => `t${timestamp}`,
     date: (timestamp) => `d${timestamp}`,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
+    direct: false,
+    token: (ledger) =>
+        ledger === "icp"
+            ? {
+                  symbol: "ICP",
+                  logo: "icp.svg",
+                  amount: (e8s) => String(Number(e8s) / 1e8),
+                  usd: () => "$1",
+              }
+            : undefined,
 };
 
 function message(fields: Partial<Message> = {}): EventWrapper<Message> {
@@ -132,6 +142,76 @@ describe("a message row", () => {
             ).edited;
         expect(edited()).toBe(true);
         expect(edited({ kind: "bot", finalised: true } as Message["senderContext"])).toBe(false);
+    });
+});
+
+describe("link previews", () => {
+    const preview = (url: string) => ({
+        kind: "opengraph" as const,
+        url,
+        title: "T",
+        description: "",
+    });
+    const cards = (...urls: string[]) => {
+        const row = messageRow(message({ ogPreviews: urls.map(preview) }), "sent", ctx).message;
+        return (row as { previews: { url: string }[] }).previews.map((c) => c.url);
+    };
+
+    // invariant 6
+    test("a link preview whose URL isn't http(s) is never rendered as a link", () => {
+        expect(cards("javascript:alert(1)", "data:text/html,x", "https://a.com/x")).toEqual([
+            "",
+            "",
+            "https://a.com/x",
+        ]);
+    });
+});
+
+describe("transfers", () => {
+    const transfer = (sender: string, recipient: string, ledger = "icp") =>
+        message({
+            sender,
+            content: {
+                kind: "crypto_content",
+                transfer: {
+                    kind: "completed",
+                    ledger,
+                    recipient,
+                    sender,
+                    amountE8s: 500_000_000n,
+                    feeE8s: 10_000n,
+                    memo: 0n,
+                    blockIndex: 1n,
+                },
+            },
+        } as Partial<Message>);
+
+    test("go the reader's way: in for theirs, out for their own, other between two others, naming who got it", () => {
+        expect(messageRow(transfer("bob", "me"), "sent", ctx).message).toMatchObject({
+            kind: "transfer",
+            amount: "5",
+            symbol: "ICP",
+            direction: "in",
+            recipient: undefined,
+        });
+        expect(messageRow(transfer("me", "bob"), "sent", ctx).message).toMatchObject({
+            direction: "out",
+            recipient: "Bob",
+        });
+        expect(messageRow(transfer("alice", "bob"), "sent", ctx).message).toMatchObject({
+            direction: "other",
+            recipient: "Bob",
+        });
+        expect(
+            messageRow(transfer("me", "bob"), "sent", { ...ctx, direct: true }).message,
+        ).toMatchObject({ direction: "out", recipient: undefined });
+    });
+
+    test("in a ledger the registry doesn't carry, show as text", () => {
+        expect(messageRow(transfer("bob", "me", "unknown"), "sent", ctx).message).toMatchObject({
+            kind: "text",
+            text: "[crypto_content]",
+        });
     });
 });
 

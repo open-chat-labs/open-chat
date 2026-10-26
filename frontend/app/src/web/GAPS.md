@@ -121,6 +121,14 @@ design export needs. Each entry says where it came up.
     the balance is too low (today: "Keep collecting!" with Pay disabled), e.g. how to earn more.
     The new UI shows it as a `DialogShell` with the old UI's words for now
     (`features/profile/PremiumItemDialog.svelte`, `TODO(design)`).
+  - **Token price card**: the card a cashtag in a message opens (`$CHAT`, or a coin OpenChat
+    doesn't list such as `$ADA`, `<cash-tag>`): the token's logo (coins have none), name, price now,
+    its change over 7 days and a chart of its last 7 days' prices (from the price service,
+    `getPriceHistory`), with loading and no-history states, and where the prices are from
+    ("Price data by ICPSwap" or "by CoinGecko", linked). The new UI shows it as a `DialogShell` laid out like the
+    old UI's card (`features/cashtag/TokenDialogScreen.svelte`, `TODO(design)`). The chip itself is
+    the shared `<cash-tag>` web component, coloured from the text it's in, with a coin's credit as
+    its tooltip.
 - **`ProfileDialog`, by hand** (8c, to go back to the design export): `sections`, the sections
   its nav offers (a host that has built only some); the cover and photo edit buttons only with
   `onCoverEdit` / `onPhotoEdit`; `engagement` counts as numbers; `memberSince` from `joined` in the
@@ -473,7 +481,8 @@ design export needs. Each entry says where it came up.
 ### Data the design shows that the backend doesn't have
 
 - **Wallet**:
-  - no 24h price change and no price history (only the current USD rate);
+  - no 24h price change. A 7-day price history comes from the price service
+    (`getPriceHistory`, hourly) where there is one (`OC_PRICE_SERVICE_URL`);
   - transaction history only for tokens with an index canister, one token at a time. There's no
     all-tokens activity, swaps aren't told apart from transfers, there's no chat context, and
     BTC/EVM/SOL-side transfers aren't shown;
@@ -650,6 +659,32 @@ design export needs. Each entry says where it came up.
   viewer (pan and zoom from `core/zoom`, shared with `ZoomedImage`; no design for it:
   `TODO(design)`). It has none of the old desktop viewer's arrows between a chat's images. A
   failed send shows the tile's own failed state, with no retry yet.
+- **Voice and file messages** (`features/conversation`, 5a): a voice message plays through the
+  screen's `VoicePlayer` (one audio element, so one at a time), with the recording's waveform
+  (`VoiceMessage` takes `levels` by hand: the design's bars are made up). Unlike the mobile app,
+  the next voice message doesn't play when one ends, and the speed is one for the whole chat. A
+  voice message's caption isn't shown and a failed one shows no failed state (`VoiceMessage` has
+  neither). Neither shows a sent or delivered tick (`VoiceMessage` and `FileMessage` take no
+  status). A file shows its name, size and type and downloads under its own name. Neither has
+  reactions, a quote, a thread or an edited mark yet.
+- **Link previews** (`features/conversation`, 5a): a text message's previews show as cards under
+  its text (`ChatBubble` takes `previews` by hand, a `LinkCard` each, the card the design's
+  `LinkPreview` has). The design's `LinkPreview` is a message kind of its own, with plain text and
+  no edit, quote, thread or reactions, so it isn't used; with previews the bubble takes its shape
+  instead (320px, cards flush, the time under them). A card links only to an http(s) URL
+  (`ogPreviewCard` in `@client`, shared with the old trees). The sender removes one with the X on
+  its card, after a confirm (`RemovePreviewDialog`, no design for it: `TODO(design)`). A link to
+  another OpenChat message (`messagePreviews`) shows no preview: nothing in the library renders a
+  quoted message.
+- **Transfers** (`features/conversation`, 5a): a transfer shows as `TransferMessage`, with the
+  token's logo as its mark. `TransferMessage` takes `direction` and `recipient` by hand: the design
+  signs it by the bubble's side, which shows a transfer between two other people in a group as the
+  reader's own receipt. Outside a DM it says who got it ("to Bob") unless that's the reader. "View
+  transaction" opens the ledger's explorer. The caption is plain text (no markdown), the card
+  shows no sent or delivered tick (`TransferMessage` takes no status), and it has no reactions,
+  quote or thread yet. A failed transfer, or one in a ledger the registry
+  doesn't carry, stays a text bubble. The dollar value is worked out when the row is made and
+  doesn't follow later rate changes.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked

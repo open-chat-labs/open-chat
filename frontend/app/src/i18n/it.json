@@ -199,6 +199,13 @@
         "unlink": "Scollega",
         "unlinkFailed": "Impossibile scollegare l'account"
     },
+    "cashtag": {
+        "chartLabel": "Prezzo di {symbol} negli ultimi 7 giorni",
+        "change7d": "{change} in 7 giorni",
+        "noHistory": "Nessuno scambio negli ultimi 7 giorni",
+        "noPrice": "Nessun prezzo disponibile",
+        "priceDataBy": "Dati sui prezzi forniti da {source}"
+    },
     "bridgedUserUnknown": "Utente {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
@@ -2200,6 +2207,7 @@
     "removedBy": "{changedBy} ha rimosso {changed} da {level}",
     "removeMemberFailed": "Impossibile rimuovere il membro",
     "removePreviewQuestion": "Rimuovere l'anteprima?",
+    "errorRemovingLinkPreview": "Impossibile rimuovere l'anteprima",
     "renderPreviews": "Anteprime dei collegamenti con rendering automatico",
     "reply": "Rispondi",
     "replyPrivately": "Rispondi in privato",

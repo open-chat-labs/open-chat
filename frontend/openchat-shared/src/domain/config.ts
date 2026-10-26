@@ -17,6 +17,7 @@ export type AgentConfig = {
     userGeekApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;
+    priceServiceUrl: string;
     canisterUrlPath: string;
     proposalBotCanister: string;
     signInWithEmailCanister: string;

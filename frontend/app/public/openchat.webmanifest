@@ -3,6 +3,7 @@
     "theme_color": "#000000",
     "description": "Chat application running end-to-end on the Internet Computer",
     "display": "standalone",
+    "orientation": "portrait",
     "icons": [
         {
             "src": "apple-touch-icon.png",

@@ -155,13 +155,12 @@ impl RuntimeState {
         Ok(self.member_user(user_id))
     }
 
-    // The member's wallet, for paying them. A user holds their funds under the principal held for them,
-    // and anyone else whose id carries no index, eg. a bot, under their user id, other than a User
-    // canister (see `verify_not_old_user_id`).
+    // The member's wallet, for paying them: the account of the principal held for them. Only users
+    // have one, and only a user's id carries an index. A bot's or a webhook's id isn't an account
+    // anyone controls, so anything paid to it would be lost, and a User canister's names nobody.
     pub fn member_wallet(&self, user_id: UserId) -> OCResult<icrc1::Account> {
         if !user_id.is_indexed() {
-            self.data.verify_not_old_user_id(user_id)?;
-            return Ok(user_id.as_principal().into());
+            return Err(OCErrorCode::InvalidRequest.with_message("Only users can be paid"));
         }
         let user = self.member_user(user_id);
         if user.principal == Principal::anonymous() {

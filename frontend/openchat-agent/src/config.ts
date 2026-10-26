@@ -18,6 +18,8 @@ export type AgentConfig = {
     userGeekApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;
+    // empty where there's no price service: the prices then come from ICPSwap
+    priceServiceUrl: string;
     canisterUrlPath: string;
     proposalBotCanister: string;
     signInWithEmailCanister: string;
