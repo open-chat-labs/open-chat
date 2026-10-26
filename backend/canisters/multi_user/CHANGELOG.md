@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Refuse tips to bots in direct chats, which can't receive funds ([#10262](https://github.com/open-chat-labs/open-chat/pull/10262))
+- Reject tips to bots ([#10262](https://github.com/open-chat-labs/open-chat/pull/10262))
 
 ## [[2.0.2184](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2184-multi_user)] - 2026-10-22
 
