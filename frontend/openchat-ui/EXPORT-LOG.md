@@ -326,5 +326,13 @@
 - Not in the design export: to go back to it when the export has one (the app's `GAPS.md` lists it).
 
 ## 2026-10-26 — CreateGroupDialog: channel names as typed, by hand
-- A channel's name (and a new community's channel list) was slugged as you typed: lowercased, spaces to hyphens, anything else dropped. Nothing requires that, so names are now kept as typed (trimmed; the channel list still caps each at its length and rejects duplicates), and the channel name's hint no longer says "Lowercase, no spaces".
+- A channel's name (and a new community's channel list) was slugged as you typed: lowercased, spaces to hyphens, anything else dropped. Nothing requires that, so names are now kept as typed (trimmed; the channel list still caps each at its length and rejects duplicates), and the channel name's and the channel list's hints no longer say "Lowercase, no spaces"; a new community's first channel is "General". The people list's heading is hidden over an empty list (as InviteDialog's).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — CreateGroupDialog: a community's permissions, by hand
+- A community's permissions default to admin (`communityDef`, and private channels and user groups), as the backend's and GroupSettingsDialog's do; the dialog offered invite and private channels to every member and roles and user groups to the owner only. A community shows no message permissions (delete, pin, react, @everyone, calls) and no Messages / Threads tabs, which a community doesn't have. `communityDefaults` lets the host pass its own community defaults (the app passes its own), so a re-export that loses the built-in ones can't change who runs a new community.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — CreateGroupDialog: locked while creating, by hand
+- While the host's create is in flight the tabs and the form are `inert` and dimmed, so nothing can be changed or switched until it resolves or fails; Cancel and close were already held. The form used to stay editable while creating.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).

@@ -334,6 +334,21 @@ design export needs. Each entry says where it came up.
   - a member's read-only Rules page still shows the editor's character counter and hint.
   - Invite & share's page title says "Invite and share" (InviteDialog's own string).
 
+- **Create a group or community** (4b): `CreateGroupDialog` (`features/group/CreateGroupDialogScreen.svelte`)
+  from the chat list header's Create new group and the rail's Create community. The result is read
+  as an edit is (`candidateFromCreate`, `candidateCommunityFromCreate`), created through
+  `UpdateGroupState` / `UpdateCommunityState`, and then opened.
+  - a community needs Diamond: without it the rail opens the Diamond dialog. A guest is sent to
+    sign in, but the community isn't started after signing in (the old Home did that; 10a).
+  - by hand: `CreateGroupDialog`'s community defaults are all admin (the app's and the backend's),
+    and a community shows no message permissions or Messages / Threads tabs.
+  - by hand: the form is locked (inert, dimmed) while the create is in flight.
+  - the invite list starts empty: people are found by searching (no frequent contacts).
+  - Explore's create (8a) isn't wired.
+  - a failed community create (e.g. the 10-community limit) says only "Sorry we were unable to
+    create your community", and that toast showed twice in one headless run though the app shows
+    it once.
+
 - **Group and channel settings** (4b part 2a): GroupPanel's Settings opens Manage on its settings
   pages: `GroupSettingsDialog`, embedded, on `UpdateGroupState` (`features/group/ManageSettings.svelte`,
   through `settings.adapter.ts`). Someone who can't edit the chat gets its About page instead
@@ -370,8 +385,6 @@ design export needs. Each entry says where it came up.
   - the community About page's Mute mutes every channel and can't unmute (as in the old menus).
     Tapping it while muted says "That didn't go through" when it can't, not why. It has no
     Favourite, because a community can't be a favourite.
-  - `CreateGroupDialog` still has the old community defaults (invite and private channels for
-    everyone, roles and user groups for owners). Part 4 brings them in line.
   - the primary language isn't in the dialog, and is kept as it was.
   - removing an avatar or banner in the dialog saves nothing. `groupChanges` and
     `communityChanges` turn a removed image into "no change", because the client has no way to

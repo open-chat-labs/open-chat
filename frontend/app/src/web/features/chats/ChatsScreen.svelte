@@ -261,6 +261,7 @@
     headerMembers={community?.memberCount ?? 0}
     {headerMenuItems}
     {onHeaderMenu}
+    onCreateGroup={() => screen.dialogs.open({ kind: "create_group", level: "group" })}
     onHeaderDetails={community &&
         (() => screen.dialogs.open({ kind: "manage", target: community.id, section: "main" }))}
     searchable
