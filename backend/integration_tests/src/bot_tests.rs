@@ -7,6 +7,7 @@ use community_canister::c2c_bot_community_events::{
     EventsByIndexArgs as CommunityEventsByIndexArgs, EventsSelectionCriteria as CommunityEventsSelectionCriteria,
 };
 use community_canister::community_events::EventsPageArgs;
+use constants::MINUTE_IN_MS;
 use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs, BotCommandInitial};
 use local_user_index_canister::chat_events::{EventsByIndexArgs, EventsSelectionCriteria};
 use oc_error_codes::OCErrorCode;
@@ -311,8 +312,7 @@ fn user_who_used_command_can_delete_bots_response() {
         panic!("'bot_send_message' error: {response:?}");
     };
 
-    let delete = |env: &mut PocketIc, user: &User| {
-        client::group::happy_path::delete_messages(env, user.principal, group_id, None, vec![message_id]);
+    let content = |env: &PocketIc| {
         let response = client::group::happy_path::events_by_index(env, &owner, group_id, vec![result.event_index]);
         let Some(ChatEvent::Message(message)) = response.events.first().map(|e| &e.event) else {
             panic!("Unexpected response from `events_by_index`: {response:?}");
@@ -321,13 +321,20 @@ fn user_who_used_command_can_delete_bots_response() {
     };
 
     // Another member can't delete it
-    assert!(matches!(delete(env, &other_member), MessageContent::Text(_)));
+    client::group::happy_path::delete_messages(env, other_member.principal, group_id, None, vec![message_id]);
+    assert!(matches!(content(env), MessageContent::Text(_)));
 
-    // The member who used the command can, and can see what they deleted
+    // The member who used the command can
+    client::group::happy_path::delete_messages(env, initiator.principal, group_id, None, vec![message_id]);
     assert!(matches!(
-        delete(env, &initiator),
+        content(env),
         MessageContent::Deleted(d) if d.deleted_by == initiator.user_id
     ));
+
+    // As when an admin deletes someone else's message, its content is kept after the 5 minutes in which
+    // a sender's own deleted message can be undeleted. They can see it and undelete it.
+    env.advance_time(Duration::from_millis(6 * MINUTE_IN_MS));
+    tick_many(env, 3);
     let response = client::group::deleted_message(
         env,
         initiator.principal,
@@ -341,6 +348,20 @@ fn user_who_used_command_can_delete_bots_response() {
         matches!(response, group_canister::deleted_message::Response::Success(_)),
         "{response:?}"
     );
+    let response = client::group::undelete_messages(
+        env,
+        initiator.principal,
+        group_id.into(),
+        &group_canister::undelete_messages::Args {
+            thread_root_message_index: None,
+            message_ids: vec![message_id],
+        },
+    );
+    assert!(
+        matches!(&response, group_canister::undelete_messages::Response::Success(r) if r.messages.len() == 1),
+        "{response:?}"
+    );
+    assert!(matches!(content(env), MessageContent::Text(_)));
 }
 
 #[test]

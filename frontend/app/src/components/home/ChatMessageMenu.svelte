@@ -167,7 +167,7 @@
         msg.content.kind === "message_reminder_created_content" && msg.content.remindAt > $now,
     );
     let canDeleteMessage = $derived(
-        userCanDeleteMessage(msg, $currentUserIdStore, canDelete) && !inert,
+        userCanDeleteMessage(msg, confirmed, $currentUserIdStore, canDelete) && !inert,
     );
     let inThread = $derived(threadRootMessage !== undefined);
     let threadRootMessageIndex = $derived(

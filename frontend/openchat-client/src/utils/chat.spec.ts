@@ -803,18 +803,25 @@ describe("who can delete a message", () => {
     });
 
     test("its sender", () => {
-        expect(userCanDeleteMessage(message("me"), "me", false)).toBe(true);
-        expect(userCanDeleteMessage(message("them"), "me", false)).toBe(false);
+        expect(userCanDeleteMessage(message("me"), true, "me", false)).toBe(true);
+        expect(userCanDeleteMessage(message("them"), true, "me", false)).toBe(false);
     });
 
     test("the user who used the command a bot responded to", () => {
-        expect(userCanDeleteMessage(botResponse("me"), "me", false)).toBe(true);
-        expect(userCanDeleteMessage(botResponse("them"), "me", false)).toBe(false);
+        expect(userCanDeleteMessage(botResponse("me"), true, "me", false)).toBe(true);
+        expect(userCanDeleteMessage(botResponse("them"), true, "me", false)).toBe(false);
+    });
+
+    test("not the user who used the command while the response is a local placeholder", () => {
+        expect(userCanDeleteMessage(botResponse("me"), false, "me", false)).toBe(false);
+        // Unchanged for a user's own unconfirmed messages and for those who can delete anyone's
+        expect(userCanDeleteMessage(message("me"), false, "me", false)).toBe(true);
+        expect(userCanDeleteMessage(botResponse("me"), false, "me", true)).toBe(true);
     });
 
     test("anyone who can delete other users' messages", () => {
-        expect(userCanDeleteMessage(message("them"), "me", true)).toBe(true);
-        expect(userCanDeleteMessage(botResponse("them"), "me", true)).toBe(true);
+        expect(userCanDeleteMessage(message("them"), true, "me", true)).toBe(true);
+        expect(userCanDeleteMessage(botResponse("them"), true, "me", true)).toBe(true);
     });
 
     test("no one while a call is in progress", () => {
@@ -822,7 +829,7 @@ describe("who can delete a message", () => {
             sender: "me",
             content: { kind: "video_call_content", participants: [], ended, callType: "default" },
         });
-        expect(userCanDeleteMessage(call(), "me", true)).toBe(false);
-        expect(userCanDeleteMessage(call(1n), "me", false)).toBe(true);
+        expect(userCanDeleteMessage(call(), true, "me", true)).toBe(false);
+        expect(userCanDeleteMessage(call(1n), true, "me", false)).toBe(true);
     });
 });

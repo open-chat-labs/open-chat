@@ -316,9 +316,14 @@ impl MessageInternal {
         self.sender_context.as_ref()?.bot_context()?.bridged_from
     }
 
-    // The user whose command a bot sent the message in response to, if a bot sent it in response to one
-    pub fn command_initiator(&self) -> Option<UserId> {
-        self.bot_context()?.command.as_ref().map(|command| command.initiator)
+    // Whether the user can delete the message as their own: they sent it, or a bot sent it in response
+    // to a command they used
+    pub fn deletable_as_own_by(&self, user_id: UserId) -> bool {
+        self.sender == user_id
+            || self
+                .bot_context()
+                .and_then(|b| b.command.as_ref())
+                .is_some_and(|c| c.initiator == user_id)
     }
 
     pub fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Message {

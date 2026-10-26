@@ -591,9 +591,9 @@ impl ChatEvents {
             |message, _| Self::delete_message_inner(message, &args),
         ) {
             Ok(result) => {
-                let (sender, message_index, document) = result.value;
+                let (sender, message_index, document, reported) = result.value;
 
-                if sender != args.caller {
+                if reported {
                     add_to_metrics(
                         &mut self.metrics,
                         &mut self.per_user_metrics,
@@ -629,12 +629,14 @@ impl ChatEvents {
         }
     }
 
+    // The bool returned is whether the deletion counts as reporting the message, which it doesn't when
+    // the caller is its sender or, for a bot's response to a command, the user who used the command
     fn delete_message_inner(
         message: &mut MessageInternal,
         args: &DeleteUndeleteMessageArgs,
-    ) -> Result<(UserId, MessageIndex, Document), UpdateEventError<OCErrorCode>> {
-        // A bot's response to a command can be deleted by the user who used the command
-        if message.sender == args.caller || message.command_initiator() == Some(args.caller) || args.is_admin {
+    ) -> Result<(UserId, MessageIndex, Document, bool), UpdateEventError<OCErrorCode>> {
+        let own_message = message.deletable_as_own_by(args.caller);
+        if own_message || args.is_admin {
             if message.deleted_by.is_some() || matches!(message.content, MessageContentInternal::Deleted(_)) {
                 Err(UpdateEventError::NoChange(OCErrorCode::NoChange))
             } else if matches!(message.content, MessageContentInternal::VideoCall(ref c) if c.ended.is_none()) {
@@ -645,7 +647,7 @@ impl ChatEvents {
                     deleted_by: args.caller,
                     timestamp: args.now,
                 });
-                Ok((sender, message.message_index, Document::from(&message.content)))
+                Ok((sender, message.message_index, Document::from(&message.content), !own_message))
             }
         } else {
             Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized))
@@ -698,8 +700,8 @@ impl ChatEvents {
             |message, _| Self::undelete_message_inner(message, &args),
         ) {
             Ok(result) => {
-                let (sender, message_index, document) = result.value;
-                if sender != args.caller {
+                let (sender, message_index, document, reported) = result.value;
+                if reported {
                     add_to_metrics(
                         &mut self.metrics,
                         &mut self.per_user_metrics,
@@ -732,10 +734,11 @@ impl ChatEvents {
         }
     }
 
+    // The bool returned is whether the deletion being undone counted as reporting the message
     fn undelete_message_inner(
         message: &mut MessageInternal,
         args: &DeleteUndeleteMessageArgs,
-    ) -> Result<(UserId, MessageIndex, Document), UpdateEventError<OCErrorCode>> {
+    ) -> Result<(UserId, MessageIndex, Document, bool), UpdateEventError<OCErrorCode>> {
         let Some(deleted_by) = message.deleted_by.as_ref().map(|db| db.deleted_by) else {
             return Err(UpdateEventError::NoChange(OCErrorCode::NoChange));
         };
@@ -753,8 +756,9 @@ impl ChatEvents {
                 MessageContentInternal::Crypto(_) => Err(UpdateEventError::NoChange(OCErrorCode::InvalidMessageType)),
                 _ => {
                     let sender = message.sender;
+                    let reported = !message.deletable_as_own_by(deleted_by);
                     message.deleted_by = None;
-                    Ok((sender, message.message_index, Document::from(&message.content)))
+                    Ok((sender, message.message_index, Document::from(&message.content), reported))
                 }
             }
         } else {

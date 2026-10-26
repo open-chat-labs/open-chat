@@ -464,7 +464,7 @@
     let canForward = $derived(client.canForward(msg.content));
     let canTranslate = $derived((client.getMessageText(msg.content) ?? "").length > 0);
     let canDeleteMessage = $derived(
-        userCanDeleteMessage(msg, $currentUserIdStore, canDelete) && !inert,
+        userCanDeleteMessage(msg, confirmed, $currentUserIdStore, canDelete) && !inert,
     );
     let showConfirmDelete = $state(false);
 
