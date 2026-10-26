@@ -35,6 +35,7 @@ export {
     isPreviewingOrLapsed,
     subrangesCover,
     TimelineGrouper,
+    userCanDeleteMessage,
 } from "./utils/chat";
 export { formatClock, formatDuration } from "./utils/time";
 export { default as formatFileSize } from "./utils/fileSize";

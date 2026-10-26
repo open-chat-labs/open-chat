@@ -500,6 +500,7 @@ impl GroupChatCore {
                         // one here - designated reviewers access it via the evidence vault
                         Err(OCErrorCode::MessageHardDeleted.into())
                     } else if user_id == message.sender
+                        || user_id == deleted_by.deleted_by
                         || (deleted_by.deleted_by != message.sender && member.role().can_delete_messages(&self.permissions))
                     {
                         Ok(message.content.hydrate(Some(user)))
@@ -765,7 +766,8 @@ impl GroupChatCore {
         let agent = UserIdAndPrincipal::new(caller.agent(), caller.agent().as_principal());
         let message_event = reader.message_event(message_id.into(), Some(agent)).unwrap();
 
-        let users_to_notify = if finalise {
+        // No one is notified of a response deleted while the bot was still sending it
+        let users_to_notify = if finalise && !matches!(message_event.event.content, MessageContent::Deleted(_)) {
             self.build_users_to_notify(
                 thread_root_message_index,
                 min_visible_event_index,

@@ -18,6 +18,7 @@ import {
     type CommunitySummary,
     type EventWrapper,
     type GroupChatSummary,
+    type Message,
     type MultiUserChatIdentifier,
     type PollConfig,
     type PollContent,
@@ -44,6 +45,7 @@ import {
     sortByTimestampThenEventIndex,
     startTyping,
     stopTyping,
+    userCanDeleteMessage,
 } from "./chat";
 import { rtcConnectionsManager } from "./rtcConnectionsManager";
 
@@ -784,6 +786,52 @@ describe("previewing or lapsed", () => {
 
     test("lapsed from the channel's community", () => {
         expect(isPreviewingOrLapsed(channel, communities(true))).toBe(true);
+    });
+});
+
+describe("who can delete a message", () => {
+    type Deletable = Pick<Message, "sender" | "senderContext" | "content">;
+    const text: Message["content"] = { kind: "text_content", text: "hi" };
+    const message = (sender: string): Deletable => ({ sender, content: text });
+    const botResponse = (initiator: string): Deletable => ({
+        sender: "bot",
+        senderContext: {
+            kind: "bot",
+            finalised: true,
+            command: { name: "joke", args: [], initiator },
+        },
+        content: text,
+    });
+
+    test("its sender", () => {
+        expect(userCanDeleteMessage(message("me"), true, "me", false)).toBe(true);
+        expect(userCanDeleteMessage(message("them"), true, "me", false)).toBe(false);
+    });
+
+    test("the user who used the command a bot responded to", () => {
+        expect(userCanDeleteMessage(botResponse("me"), true, "me", false)).toBe(true);
+        expect(userCanDeleteMessage(botResponse("them"), true, "me", false)).toBe(false);
+    });
+
+    test("not the user who used the command while the response is a local placeholder", () => {
+        expect(userCanDeleteMessage(botResponse("me"), false, "me", false)).toBe(false);
+        // Unchanged for a user's own unconfirmed messages and for those who can delete anyone's
+        expect(userCanDeleteMessage(message("me"), false, "me", false)).toBe(true);
+        expect(userCanDeleteMessage(botResponse("me"), false, "me", true)).toBe(true);
+    });
+
+    test("anyone who can delete other users' messages", () => {
+        expect(userCanDeleteMessage(message("them"), true, "me", true)).toBe(true);
+        expect(userCanDeleteMessage(botResponse("them"), true, "me", true)).toBe(true);
+    });
+
+    test("no one while a call is in progress", () => {
+        const call = (ended?: bigint): Deletable => ({
+            sender: "me",
+            content: { kind: "video_call_content", participants: [], ended, callType: "default" },
+        });
+        expect(userCanDeleteMessage(call(), true, "me", true)).toBe(false);
+        expect(userCanDeleteMessage(call(1n), true, "me", false)).toBe(true);
     });
 });
 

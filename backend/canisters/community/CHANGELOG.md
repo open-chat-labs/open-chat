@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Let the user who issued a bot command delete the bot's response ([#10261](https://github.com/open-chat-labs/open-chat/pull/10261))
+
 ### Fixed
 
 - Reject tips and transfers to bots and webhooks ([#10262](https://github.com/open-chat-labs/open-chat/pull/10262))
