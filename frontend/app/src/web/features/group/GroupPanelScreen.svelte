@@ -1,8 +1,8 @@
 <!-- The right column's panel for a group, channel or community: its details, members (with what the
      viewer may do to each), pinned messages, rules, access gates and user groups. Members views
      (?everyone, ?usergroup=) and the pinned list open as GroupPanel's own views. Leave and delete
-     open the confirm dialogs, settings open GroupSettingsDialog and invite InviteDialog; user groups,
-     bots … are off until 4b's later parts (TODO(4b)). -->
+     open the confirm dialogs, settings and invite open Manage on that page, and user groups
+     UserGroupDialog; bots … are off until 4b's later parts (TODO(4b)). -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -51,7 +51,7 @@
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { closeRightColumn, openPanelOver } from "../app/rightPanel";
-    import type { GroupSettingsTab } from "../app/dialogs";
+    import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
     import { communityPermissionsValue, permissionsValue } from "./settings.adapter";
     import type { RightRegion, ScreenProps } from "../app/screens";
     import { gateAssets, gatesState } from "../access/gates.adapter";
@@ -64,6 +64,7 @@
         userGroupRow,
         userPerson,
     } from "./group.adapter";
+    import { leaveOrDeleteFor } from "./manage.adapter";
 
     type GroupRegion = Extract<
         RightRegion,
@@ -312,8 +313,8 @@
               : chatDetailsPermissions(client, collection, community, $anonUserStore),
     );
 
-    // GroupPanel offers Leave to everyone, so the rules are checked here (GAPS.md). Settings open
-    // as the editor or, for someone who can't edit, the About page (GroupSettingsDialogScreen).
+    // GroupPanel offers Leave to everyone, so the rules are checked here (GAPS.md). Settings and
+    // invite open Manage: the editor or, for someone who can't edit, the About page.
     // TODO(4b): bots, webhooks, convert, import and new channels (parts 4-5)
     function onDialog(kind: string, payload?: unknown, tab?: string) {
         if (collection === undefined) return;
@@ -332,47 +333,34 @@
         if (kind === "invite") {
             if (permissions?.canOpenInvite) {
                 context.dialogs.open({
-                    kind: "invite",
+                    kind: "manage",
                     target: collection.id,
-                    tab: tab === "share" ? "share" : "people",
+                    section: "invite",
+                    inviteTab: tab === "share" ? "share" : "people",
                 });
             }
             return;
         }
         if (kind === "settings") {
             context.dialogs.open({
-                kind: "group_settings",
+                kind: "manage",
                 target: collection.id,
-                tab: settingsTab(tab),
+                section: manageSection(tab),
             });
             return;
         }
-        const name = collection.name;
-        if (collection.kind === "community") {
-            if (kind === "leave" && communityMenuPermissions(client, collection).canLeave) {
-                context.dialogs.open({
-                    kind: "leave_or_delete",
-                    action: { kind: "leave_community", id: collection.id },
-                    name,
-                });
-            } else if (kind === "delete" && permissions?.canDelete) {
-                context.dialogs.open({
-                    kind: "leave_or_delete",
-                    action: { kind: "delete_community", id: collection.id },
-                    name,
-                });
-            }
-        } else if (kind === "leave" && client.canLeaveGroup(collection.id)) {
+        const allowed =
+            kind === "delete"
+                ? permissions?.canDelete
+                : kind === "leave" &&
+                  (collection.kind === "community"
+                      ? communityMenuPermissions(client, collection).canLeave
+                      : client.canLeaveGroup(collection.id));
+        if (allowed) {
             context.dialogs.open({
                 kind: "leave_or_delete",
-                action: { kind: "leave", chatId: collection.id },
-                name,
-            });
-        } else if (kind === "delete" && permissions?.canDelete) {
-            context.dialogs.open({
-                kind: "leave_or_delete",
-                action: { kind: "delete", chatId: collection.id },
-                name,
+                action: leaveOrDeleteFor(collection, kind as "leave" | "delete"),
+                name: collection.name,
             });
         }
     }
@@ -386,9 +374,9 @@
         }
     }
 
-    // GroupPanel's view the settings were opened from, as the dialog's page
-    function settingsTab(view: string | undefined): GroupSettingsTab {
-        return view === "gates" || view === "rules" || view === "permissions" ? view : "group";
+    // GroupPanel's view the settings were opened from, as Manage's page
+    function manageSection(view: string | undefined): ManageSection {
+        return view === "gates" || view === "rules" || view === "permissions" ? view : "main";
     }
 
     function close() {

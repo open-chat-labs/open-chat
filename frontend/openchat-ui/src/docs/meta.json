@@ -11793,6 +11793,195 @@
     "group": "features"
   },
   {
+    "name": "ManageDialog",
+    "source": "by hand (4b, 2026-10-26)",
+    "hash": "",
+    "description": "Manage: a group's, channel's or community's settings and running in one dialog, with a nav down the side and the host's page beside it. From the App prototype's Manage dialog.",
+    "preview": {
+      "width": 1040,
+      "height": 760
+    },
+    "group": "features",
+    "props": [
+      {
+        "name": "title",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The chat's or community's name."
+      },
+      {
+        "name": "subtitle",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text) under the name, e.g. \"Public group · 1,204 members\"."
+      },
+      {
+        "name": "color",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'teal'",
+        "doc": "Avatar gradient (violet | rose | blue | amber | teal | plum | slate) when there's no image."
+      },
+      {
+        "name": "avatarUrl",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "round",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A channel's avatar is round."
+      },
+      {
+        "name": "backLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text) for the back arrow's title."
+      },
+      {
+        "name": "onBack",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Shows a back arrow in the nav's head (a channel back to its community)."
+      },
+      {
+        "name": "nav",
+        "type": "ManageNavGroup[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "current",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The open page's key."
+      },
+      {
+        "name": "onSelect",
+        "type": "(key: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "danger",
+        "type": "{ kind: 'delete' | 'leave'; noun: 'group' | 'channel' | 'community'; onPress: () => void }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The footer's danger action: \"Delete <noun>\" for the owner, \"Leave <noun>\" for anyone else."
+      },
+      {
+        "name": "confirming",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Shows \"Discard changes?\" over the page."
+      },
+      {
+        "name": "onKeepEditing",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onDiscard",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onClose",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "children",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ]
+  },
+  {
     "name": "LinkPreview",
     "source": "lib/LinkPreview.dc.html",
     "hash": "ebdc8a5b",

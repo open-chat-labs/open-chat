@@ -279,9 +279,31 @@ design export needs. Each entry says where it came up.
   - the community header's Invite and new channel items, and the conversation header's Invite,
     Convert, Import and webhook items, come with 4b's later parts.
 
-- **Group and channel settings** (4b part 2a): GroupPanel's Settings opens `GroupSettingsDialog`
-  on `UpdateGroupState` (`features/group/GroupSettingsDialogScreen.svelte`, through
-  `settings.adapter.ts`). Someone who can't edit the chat gets its About page instead
+- **Manage** (4b rework 1, the design's Modal model): `ManageDialog`, one dialog per group,
+  channel or community with a nav down the side (`features/group/ManageDialogScreen.svelte`,
+  `logic/groupOrCommunity/manage.svelte.ts`). It holds Overview (or About), Invite & share,
+  Rules, Permissions and Access gates. Overview, Rules, Permissions and Gates are one settings
+  form, so moving between them keeps the draft; leaving the form or closing with unsaved edits
+  asks "Discard changes?".
+  - by hand: `ManageDialog` is new in the library. The design has it only in the App prototype
+    (`_manageVals`), with no exported component.
+  - pages still to come: Members, User groups, Channels, Bots, Webhooks, Stats, Convert and
+    Import. Until then members and user groups stay in GroupPanel's own views, and the
+    right column still shows the full GroupPanel, not the design's quick panel.
+  - which pages show follows the app's permission rules (`detailsPermissions`), not the
+    prototype's roles: someone who can't edit gets About and read-only Rules and Gates, and no
+    Permissions; Invite & share shows with `canOpenInvite`.
+  - the chat name and the header kebab don't open Manage yet; GroupPanel's Settings, invite and
+    share buttons, the conversation header's Invite and the community header's Invite and Edit
+    community do.
+  - a channel's Manage has no back arrow to its community yet (the community has no Channels
+    page).
+  - the frame below 768px is the desktop frame at full screen with a narrower nav; the design has
+    no narrow layout for it.
+
+- **Group and channel settings** (4b part 2a): GroupPanel's Settings opens Manage on its settings
+  pages: `GroupSettingsDialog`, embedded, on `UpdateGroupState` (`features/group/ManageSettings.svelte`,
+  through `settings.adapter.ts`). Someone who can't edit the chat gets its About page instead
   (`chatManageAccess`), from the same menu item, which reads "About the group" for them.
   - by hand: `GroupSettingsDialog` takes `readOnlySections`. Permissions, disappearing messages
     and Public are read-only to a non-owner, as in the old editors (`canChangeVisibility`).
@@ -299,8 +321,7 @@ design export needs. Each entry says where it came up.
     couldn't save.
   - a picked avatar is cropped to its middle at 150×150, because the dialog has no crop step.
     The colour and cover swatches aren't stored, so they come back to their defaults.
-  - the About page opens on its own until the Manage frame lands in part 3. Its rules link does
-    nothing.
+  - the About page's rules link opens Manage's Rules page.
   - with edit rights, GroupPanel's menu also shows Convert, Import and the new channel items.
     They do nothing until parts 4 and 5.
 
@@ -327,10 +348,12 @@ design export needs. Each entry says where it came up.
     permissions.
   - GroupPanel's community Permissions summary counts changes against the group defaults,
     message permissions included, so it reads far more than the dialog's badge.
-  - Esc while the dialog's role picker is open closes the whole dialog, and drops unsaved edits.
+  - Esc while the dialog's role picker is open closes Manage, not the picker (with unsaved edits,
+    it asks first).
 
-- **Invite** (4b part 3a): `InviteDialog`, on `MemberManagement`, opens from GroupPanel's invite
-  and share buttons, the conversation header's Invite and the community header's Invite.
+- **Invite** (4b part 3a): Manage's Invite & share page (`InviteDialog`, embedded, on
+  `MemberManagement`, `features/group/ManageInvite.svelte`) opens from GroupPanel's invite and
+  share buttons, the conversation header's Invite and the community header's Invite.
   - by hand: `InviteDialog` takes `onSearch`. Invite searches the community's members and then
     everyone (`searchUsersForInvite`), and Add searches the community (`searchCommunityMembersToAdd`),
     as both old trees did.

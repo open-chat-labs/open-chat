@@ -296,3 +296,8 @@
 ## 2026-10-24 — MemberRow: its buttons don't also click the row, by hand
 - The ⋮ menu, the action button and the trailing icon sit inside the row, so a click on one bubbled to the row's `onClick` as well. In GroupPanel the user group row's ⋮ opened the group instead of its Edit / Delete menu, a member's ⋮ also opened their profile, and the trailing icon ran `onClick` twice. Each now stops the click reaching the row.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — ManageDialog: new, by hand
+- Manage for a group, channel or community, built from the App prototype's Manage dialog (`_manageVals` and its template in `OpenChat App.dc.html`, 2026-10-21); the design export has no component for it. A 1040×760 card: a 250px nav (the chat's avatar, name and subtitle, an optional back arrow, groups of items with the design's icons, one danger action in the footer: Delete for the owner, Leave otherwise) and the host's page beside it as `children` (GroupSettingsDialog / InviteDialog / GroupPanel, each `embedded`, with their own title bar and close). `confirming` shows the design's "Discard changes?" over it (Keep editing / Discard); the host decides when. The veil and Esc call `onClose`; Esc keeps editing while confirming. Below 768px it fills the screen with a 200px nav (not designed).
+- `meta.json`, the docs' samples and the group dialogs section updated; strings under `ui.manageDialog`.
+- Not in the design export: to go back to it when the export has one (the app's `GAPS.md` lists it).
