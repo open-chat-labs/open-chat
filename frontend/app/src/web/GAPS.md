@@ -62,6 +62,9 @@ design export needs. Each entry says where it came up.
   `PrizeMessage` has no disabled state, and without `onClaim` it marks itself claimed, so it needs
   one: the old UI disables Claim while the user is previewing the chat or their membership has
   lapsed (`isPreviewingOrLapsed`).
+- **Deleting messages**: the message menu isn't wired yet (phase 5). Its Delete should go by
+  `userCanDeleteMessage`, as the old menus do: the user's own messages, a bot's response to a
+  command they used, and anyone's where they can delete other users' messages.
 - **Thread replies**: `ThreadPanel` renders replies with no react / menu / reply / edit handlers.
 - **Composer banner**: `ComposerBar` takes `bannerAction` as a label but doesn't pass a handler
   through to `Banner`.

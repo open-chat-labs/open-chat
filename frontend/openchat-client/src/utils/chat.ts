@@ -1291,6 +1291,22 @@ export function canDeleteOtherUsersMessages(chat: ChatSummary): boolean {
     }
 }
 
+// Whether the user can delete the message: one they sent, a bot's response to a command they used,
+// or anyone's where they can delete other users' messages. A call can't be deleted until it ends.
+export function userCanDeleteMessage(
+    msg: Pick<Message, "sender" | "senderContext" | "content">,
+    userId: string,
+    canDeleteOthers: boolean,
+): boolean {
+    const mine =
+        msg.sender === userId ||
+        (msg.senderContext?.kind === "bot" && msg.senderContext.command?.initiator === userId);
+    return (
+        (canDeleteOthers || mine) &&
+        !(msg.content.kind === "video_call_content" && msg.content.ended === undefined)
+    );
+}
+
 export function canEditGroupDetails(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat" && !chat.frozen) {
         return isPermitted(chat.membership.role, chat.permissions.updateGroup);

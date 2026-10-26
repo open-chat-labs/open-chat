@@ -633,7 +633,8 @@ impl ChatEvents {
         message: &mut MessageInternal,
         args: &DeleteUndeleteMessageArgs,
     ) -> Result<(UserId, MessageIndex, Document), UpdateEventError<OCErrorCode>> {
-        if message.sender == args.caller || args.is_admin {
+        // A bot's response to a command can be deleted by the user who used the command
+        if message.sender == args.caller || message.command_initiator() == Some(args.caller) || args.is_admin {
             if message.deleted_by.is_some() || matches!(message.content, MessageContentInternal::Deleted(_)) {
                 Err(UpdateEventError::NoChange(OCErrorCode::NoChange))
             } else if matches!(message.content, MessageContentInternal::VideoCall(ref c) if c.ended.is_none()) {

@@ -236,6 +236,114 @@ fn e2e_command_bot_test() {
 }
 
 #[test]
+fn user_who_used_command_can_delete_bots_response() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let initiator = client::register_user(env, canister_ids);
+    let other_member = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    client::group::happy_path::join_group(env, initiator.principal, group_id);
+    client::group::happy_path::join_group(env, other_member.principal, group_id);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+
+    let command_name = random_string();
+    let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, random_string(), command_name.clone());
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Group(group_id),
+        bot_id,
+        BotPermissions::text_only(),
+        None,
+    );
+
+    // The bot responds to a command used by a member who can't delete other users' messages
+    let message_id = random_from_u128();
+    let access_token = match client::local_user_index::access_token_v2(
+        env,
+        initiator.principal,
+        local_user_index,
+        &access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
+            bot_id,
+            command: BotCommandInitial {
+                name: command_name,
+                args: Vec::new(),
+                meta: None,
+            },
+            scope: BotActionScope::Chat(BotActionChatDetails {
+                chat: Chat::Group(group_id),
+                thread: None,
+                message_id,
+                user_message_id: None,
+            }),
+        }),
+    ) {
+        access_token_v2::Response::Success(access_token) => access_token,
+        response => panic!("'access_token' error: {response:?}"),
+    };
+    let response = client::local_user_index::bot_send_message(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_send_message::Args {
+            chat_context: BotChatContext::Command(access_token),
+            thread: None,
+            message_id: None,
+            replies_to: None,
+            content: BotMessageContent::Text(TextContent {
+                text: "Hello".to_string(),
+            }),
+            block_level_markdown: false,
+            finalised: true,
+            og_previews: None,
+            bridged_from: None,
+        },
+    );
+    let local_user_index_canister::bot_send_message::Response::Success(result) = response else {
+        panic!("'bot_send_message' error: {response:?}");
+    };
+
+    let delete = |env: &mut PocketIc, user: &User| {
+        client::group::happy_path::delete_messages(env, user.principal, group_id, None, vec![message_id]);
+        let response = client::group::happy_path::events_by_index(env, &owner, group_id, vec![result.event_index]);
+        let Some(ChatEvent::Message(message)) = response.events.first().map(|e| &e.event) else {
+            panic!("Unexpected response from `events_by_index`: {response:?}");
+        };
+        message.content.clone()
+    };
+
+    // Another member can't delete it
+    assert!(matches!(delete(env, &other_member), MessageContent::Text(_)));
+
+    // The member who used the command can, and can see what they deleted
+    assert!(matches!(
+        delete(env, &initiator),
+        MessageContent::Deleted(d) if d.deleted_by == initiator.user_id
+    ));
+    let response = client::group::deleted_message(
+        env,
+        initiator.principal,
+        group_id.into(),
+        &group_canister::deleted_message::Args {
+            thread_root_message_index: None,
+            message_id,
+        },
+    );
+    assert!(
+        matches!(response, group_canister::deleted_message::Response::Success(_)),
+        "{response:?}"
+    );
+}
+
+#[test]
 fn remove_bot_test() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {

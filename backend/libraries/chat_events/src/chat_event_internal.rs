@@ -316,6 +316,11 @@ impl MessageInternal {
         self.sender_context.as_ref()?.bot_context()?.bridged_from
     }
 
+    // The user whose command a bot sent the message in response to, if a bot sent it in response to one
+    pub fn command_initiator(&self) -> Option<UserId> {
+        self.bot_context()?.command.as_ref().map(|command| command.initiator)
+    }
+
     pub fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Message {
         Message {
             message_index: self.message_index,

@@ -500,6 +500,7 @@ impl GroupChatCore {
                         // one here - designated reviewers access it via the evidence vault
                         Err(OCErrorCode::MessageHardDeleted.into())
                     } else if user_id == message.sender
+                        || user_id == deleted_by.deleted_by
                         || (deleted_by.deleted_by != message.sender && member.role().can_delete_messages(&self.permissions))
                     {
                         Ok(message.content.hydrate(Some(user)))

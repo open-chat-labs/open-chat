@@ -15,6 +15,7 @@
         publish,
         routeForMessage,
         threadsFollowedByMeStore,
+        userCanDeleteMessage,
         type ChatIdentifier,
         type Message,
         type MessageReminderCreatedContent,
@@ -163,9 +164,7 @@
         msg.content.kind === "message_reminder_created_content" && msg.content.remindAt > $now,
     );
     let canDeleteMessage = $derived(
-        (canDelete || me) &&
-            !inert &&
-            !(msg.content.kind === "video_call_content" && msg.content.ended === undefined),
+        userCanDeleteMessage(msg, $currentUserIdStore, canDelete) && !inert,
     );
     let inThread = $derived(threadRootMessage !== undefined);
     let threadRootMessageIndex = $derived(

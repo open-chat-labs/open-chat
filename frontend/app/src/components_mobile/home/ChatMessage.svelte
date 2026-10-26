@@ -46,6 +46,7 @@
         translationsStore,
         unconfirmedReadByThem,
         undeletingMessagesStore,
+        userCanDeleteMessage,
         type UserSummary,
     } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
@@ -463,9 +464,7 @@
     let canForward = $derived(client.canForward(msg.content));
     let canTranslate = $derived((client.getMessageText(msg.content) ?? "").length > 0);
     let canDeleteMessage = $derived(
-        (canDelete || me) &&
-            !inert &&
-            !(msg.content.kind === "video_call_content" && msg.content.ended === undefined),
+        userCanDeleteMessage(msg, $currentUserIdStore, canDelete) && !inert,
     );
     let showConfirmDelete = $state(false);
 
