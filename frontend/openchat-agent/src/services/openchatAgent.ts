@@ -136,6 +136,8 @@ import type {
     PinNumberSettings,
     PremiumItem,
     PrepareDelegationResponse,
+    PriceHistory,
+    PriceSubject,
     ProposalVoteDetails,
     PublicGroupSummaryResponse,
     PublicProfile,
@@ -189,8 +191,8 @@ import type {
     ThreadSyncDetails,
     TipMessageResponse,
     ToggleMuteNotificationResponse,
-    TokenExchangeRates,
     TokenInfo,
+    TokenPrices,
     TokenSwapPool,
     TopUpNeuronResponse,
     UnblockUserResponse,
@@ -338,6 +340,7 @@ import { GroupClient } from "./group/group.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { IcpLedgerIndexClient } from "./icpLedgerIndex/icpLedgerIndex.client";
 import { IcpSwapClient } from "./icpSwap/icpSwapClient";
+import { PriceServiceClient } from "./priceService/priceServiceClient";
 import { IdentityClient } from "./identity/identity.client";
 import { LedgerClient } from "./ledger/ledger.client";
 import { LedgerIndexClient } from "./ledgerIndex/ledgerIndex.client";
@@ -496,7 +499,10 @@ export class OpenChatAgent extends EventTarget {
         );
         this._identityClient = new IdentityClient(identity, this._agent, config.identityCanister);
         this._dataClient = new DataClient(identity, this._agent, config);
-        this._exchangeRateClient = new IcpSwapClient();
+        this._exchangeRateClient =
+            config.priceServiceUrl !== ""
+                ? new PriceServiceClient(config.priceServiceUrl)
+                : new IcpSwapClient();
         this._localUserIndexClient = new LocalUserIndexClient(identity, this._agent, this._chatsDb);
         this._ledgerClient = new LedgerClient(identity, this._agent);
         this._ledgerIndexClient = new LedgerIndexClient(identity, this._agent);
@@ -5097,8 +5103,8 @@ export class OpenChatAgent extends EventTarget {
         return this._registryClient.setTokenEnabled(ledger, enabled);
     }
 
-    // Undefined if ICPSwap fails, so the caller can keep the rates it has
-    async exchangeRates(): Promise<Record<string, TokenExchangeRates> | undefined> {
+    // Undefined if the prices can't be loaded, so the caller can keep the ones it has
+    async exchangeRates(): Promise<TokenPrices | undefined> {
         const supportedTokens = this._registryValue?.tokenDetails;
 
         // if (supportedTokens === undefined || !isMainnet(this.config.icUrl)) {
@@ -5106,21 +5112,26 @@ export class OpenChatAgent extends EventTarget {
         // }
 
         if (supportedTokens === undefined) {
-            return Promise.resolve({});
+            return { exchangeRates: {}, coins: {}, sources: {} };
         }
 
-        const exchangeRates = await this._exchangeRateClient.exchangeRates(supportedTokens);
-        if (exchangeRates === undefined) {
+        const prices = await this._exchangeRateClient.exchangeRates(supportedTokens);
+        if (prices === undefined) {
             return undefined;
         }
 
         // The prices of these stablecoins on ICPSwap can be way off, since some of their pools have
-        // next to no liquidity (OneSec's USDC and USDT have a few dollars), so we pin them
+        // next to no liquidity (OneSec's USDC and USDT have a few dollars), so we pin them, as the
+        // price service should too
         for (const ledger of PINNED_STABLECOIN_LEDGERS) {
-            exchangeRates[ledger] = { toUSD: 1 };
+            prices.exchangeRates[ledger] = { toUSD: 1 };
         }
 
-        return exchangeRates;
+        return prices;
+    }
+
+    priceHistory(subject: PriceSubject): Promise<PriceHistory | undefined> {
+        return this._exchangeRateClient.priceHistory(subject);
     }
 
     reportedMessages(userId: string | undefined): Promise<string> {
@@ -6107,8 +6118,9 @@ export class OpenChatAgent extends EventTarget {
 }
 
 export interface ExchangeRateClient {
-    // Keyed by ledger. Undefined if the rates couldn't be loaded
-    exchangeRates(
-        supportedTokens: CryptocurrencyDetails[],
-    ): Promise<Record<string, TokenExchangeRates> | undefined>;
+    // Undefined if the prices couldn't be loaded
+    exchangeRates(supportedTokens: CryptocurrencyDetails[]): Promise<TokenPrices | undefined>;
+    // The token's or coin's prices over the last 7 days, oldest first. Undefined if they couldn't be
+    // loaded
+    priceHistory(subject: PriceSubject): Promise<PriceHistory | undefined>;
 }

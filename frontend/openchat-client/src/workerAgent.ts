@@ -116,6 +116,7 @@ export class WorkerAgent {
             userGeekApiKey: config.userGeekApiKey,
             enableMultiCrypto: config.enableMultiCrypto,
             blobUrlPattern: config.blobUrlPattern,
+            priceServiceUrl: config.priceServiceUrl,
             canisterUrlPath: config.canisterUrlPath,
             proposalBotCanister: config.proposalBotCanister,
             signInWithEmailCanister: config.signInWithEmailCanister,

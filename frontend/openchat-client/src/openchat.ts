@@ -386,6 +386,8 @@ import {
     type BridgedUserLinkCode,
     type BridgedUserSummary,
     type BridgePlatform,
+    type PriceHistory,
+    type PriceSubject,
     bridgedUserId,
     bridgedUserIdsFromEvents,
     bridgedUserIdsFromLatestMessages,
@@ -435,6 +437,8 @@ import {
     eventListScrollTop,
     eventsStore,
     exchangeRatesLookupStore,
+    cashtagCoinsStore,
+    priceSourcesStore,
     expiredServerEventRanges,
     favouritesStore,
     hasFlag,
@@ -10304,13 +10308,25 @@ export class OpenChat {
     #updateExchangeRates(): Promise<void> {
         return this.#worker
             .send({ kind: "exchangeRates" })
-            .then((exchangeRates) => {
-                // undefined if ICPSwap failed, in which case the last rates are kept
-                if (exchangeRates !== undefined) {
-                    exchangeRatesLookupStore.set(new Map(Object.entries(exchangeRates)));
+            .then((prices) => {
+                // undefined if the prices couldn't be loaded, in which case the last ones are kept
+                if (prices !== undefined) {
+                    exchangeRatesLookupStore.set(new Map(Object.entries(prices.exchangeRates)));
+                    cashtagCoinsStore.set(new Map(Object.entries(prices.coins)));
+                    priceSourcesStore.set(new Map(Object.entries(prices.sources)));
                 }
             })
             .catch(() => undefined);
+    }
+
+    // A token's or coin's prices over the last 7 days, for its price chart. Undefined if they couldn't
+    // be loaded
+    async getPriceHistory(subject: PriceSubject): Promise<PriceHistory | undefined> {
+        try {
+            return await this.#worker.send({ kind: "priceHistory", subject });
+        } catch {
+            return undefined;
+        }
     }
 
     async refreshBalancesInSeries() {

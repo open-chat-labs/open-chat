@@ -144,3 +144,26 @@ export function calculateDollarAmount(
     const dollar = tokens * exchangeRate;
     return dollar.toFixed(2);
 }
+
+// A token's price in dollars: to 2 or 3 significant figures below $1, since small tokens' prices run
+// to many decimal places, to the cent up to $1,000, and to the dollar above that. A price that rounds
+// to $1 shows as $1.00, as a dollar stablecoin's does on either side of it
+export function formatUsdPrice(usd: number): string {
+    const digits: Intl.NumberFormatOptions =
+        usd < 0.9995
+            ? { minimumSignificantDigits: 2, maximumSignificantDigits: 3 }
+            : usd < 1000
+              ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+              : { maximumFractionDigits: 0 };
+    return usd.toLocaleString("en-US", { style: "currency", currency: "USD", ...digits });
+}
+
+// A change in a price, in percent, signed and to 1 decimal place, eg. "+2.9%" or "-12.0%"
+export function formatPercentChange(percent: number): string {
+    return (percent / 100).toLocaleString("en-US", {
+        style: "percent",
+        signDisplay: "exceptZero",
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+    });
+}

@@ -2,6 +2,7 @@
     import { muteChat } from "@src/logic/chats/muteChat";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { flushPendingNavigation } from "@src/utils/navigation";
+    import type { CashtagClickedEvent } from "@webcomponents/cashTag";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import { portalState } from "component-lib";
     import type {
@@ -23,6 +24,7 @@
         MultiUserChatIdentifier,
         NervousSystemDetails,
         OpenChat,
+        PriceSubject,
         ResourceKey,
         RouteParams,
         Rules,
@@ -121,6 +123,7 @@
     import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
     import RightPanel from "./RightPanelWrapper.svelte";
     import SuspendModal from "./SuspendModal.svelte";
+    import TokenPriceCard from "./TokenPriceCard.svelte";
     import Upgrade from "./upgrade/Upgrade.svelte";
 
     // desktop anchors the card to the name clicked
@@ -130,6 +133,9 @@
 
     let convertGroup: GroupChatSummary | undefined = $state(undefined);
     let showProfileCard: ViewProfileConfig | undefined = $state(undefined);
+    // a token's or coin's price card, anchored to the cashtag clicked
+    let showTokenCard: { subject: PriceSubject; alignTo?: HTMLElement } | undefined =
+        $state(undefined);
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -273,6 +279,7 @@
         ];
         client.initialiseNotifications();
         document.body.addEventListener("profile-clicked", profileClicked);
+        document.body.addEventListener("cashtag-clicked", cashtagClicked);
 
         if ($suspendedUserStore) {
             modal = { kind: "suspended" };
@@ -281,11 +288,20 @@
         return () => {
             unsubEvents.forEach((u) => u());
             document.body.removeEventListener("profile-clicked", profileClicked);
+            document.body.removeEventListener("cashtag-clicked", cashtagClicked);
         };
     });
 
     function profileClicked(event: Event) {
         profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
+    }
+
+    function cashtagClicked(event: Event) {
+        const ev = event as CustomEvent<CashtagClickedEvent>;
+        showTokenCard = {
+            subject: ev.detail,
+            alignTo: ev.target ? (ev.target as HTMLElement) : undefined,
+        };
     }
 
     function sendMessageFailed(alert: boolean) {
@@ -803,6 +819,16 @@
             onClose={() => (showProfileCard = undefined)}
         />
     {/if}
+{/if}
+
+{#if showTokenCard !== undefined}
+    <!-- another cashtag is another card -->
+    {#key showTokenCard}
+        <TokenPriceCard
+            subject={showTokenCard.subject}
+            alignTo={showTokenCard.alignTo}
+            onClose={() => (showTokenCard = undefined)} />
+    {/key}
 {/if}
 
 <main class:anon={$anonUserStore} class:offline={$offlineStore}>

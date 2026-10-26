@@ -199,6 +199,13 @@
         "unlink": "Rozłącz",
         "unlinkFailed": "Nie udało się rozłączyć konta"
     },
+    "cashtag": {
+        "chartLabel": "Cena {symbol} w ciągu ostatnich 7 dni",
+        "change7d": "{change} w ciągu 7 dni",
+        "noHistory": "Brak transakcji w ciągu ostatnich 7 dni",
+        "noPrice": "Brak dostępnej ceny",
+        "priceDataBy": "Dane o cenach: {source}"
+    },
     "bridgedUserUnknown": "Użytkownik {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
