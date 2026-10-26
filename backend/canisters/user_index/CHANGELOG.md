@@ -8,12 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Show how many accounts are bridged and linked on each platform in the metrics ([#10243](https://github.com/open-chat-labs/open-chat/pull/10243))
+
+### Removed
+
+- Remove the one-off which synced linked accounts to the LocalUserIndexes, now that it has run ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+
+## [[2.0.2190](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2190-user_index)] - 2026-10-26
+
+### Added
+
 - Sync linked Discord/Telegram accounts to the LocalUserIndexes ([#10210](https://github.com/open-chat-labs/open-chat/pull/10210))
 - Add Twitch as a bridged platform, so users can link their Twitch accounts ([#10214](https://github.com/open-chat-labs/open-chat/pull/10214))
 - Hold funds sent to unlinked Discord/Telegram/Twitch accounts, eg. tips, for whoever links them, refund if not linked within 30 days ([#10218](https://github.com/open-chat-labs/open-chat/pull/10218))
 - Pay held funds to whoever links the account, or refund them after 30 days ([#10220](https://github.com/open-chat-labs/open-chat/pull/10220))
 - Keep whether a Discord account is a bot or webhook on its profile ([#10225](https://github.com/open-chat-labs/open-chat/pull/10225))
-- Show how many accounts are bridged and linked on each platform in the metrics ([#10243](https://github.com/open-chat-labs/open-chat/pull/10243))
 
 ## [[2.0.2186](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2186-user_index)] - 2026-10-23
 
