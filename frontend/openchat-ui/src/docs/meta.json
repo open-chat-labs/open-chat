@@ -6508,6 +6508,17 @@
         "doc": "Install a new bot, or save an installed bot's permissions ({ botId, granted }). Closes on resolve, error on reject."
       },
       {
+        "name": "permissions",
+        "type": "BotPermissionInfo[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's permissions, in place of the built-in vocabulary (BotPerm): every key in `bot.perms` and the commands' `needs`, with its label and heading, in the order to list them."
+      },
+      {
         "name": "onCancel",
         "type": "() => void",
         "default": null,

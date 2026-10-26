@@ -236,6 +236,17 @@
                     })}
                 onClose={close}
             />
+        {:else if manage.section === "bots"}
+            <!-- GroupPanel's bots view, its bots part: installed bots and ones to add -->
+            <GroupPanelView
+                communityScope={target.kind === "community"}
+                viewRequest="bots"
+                botsPart="bots"
+                {dialogs}
+                embedded
+                onManage={(section) => manage.go(section)}
+                onClose={close}
+            />
         {:else if manage.section === "webhooks"}
             <!-- GroupPanel's bots view, its webhooks part, as the design's Webhooks page -->
             <GroupPanelView
