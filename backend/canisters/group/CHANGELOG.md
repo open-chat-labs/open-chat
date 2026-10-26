@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Refuse tips and transfers to bots and webhooks, which can't receive funds ([#10262](https://github.com/open-chat-labs/open-chat/pull/10262))
+- Reject tips and transfers to bots and webhooks ([#10262](https://github.com/open-chat-labs/open-chat/pull/10262))
 
 ## [[2.0.2191](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2191-group)] - 2026-10-26
 
