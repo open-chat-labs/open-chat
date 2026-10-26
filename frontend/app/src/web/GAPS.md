@@ -291,7 +291,21 @@ design export needs. Each entry says where it came up.
   asks "Discard changes?".
   - by hand: `ManageDialog` is new in the library. The design has it only in the App prototype
     (`_manageVals`), with no exported component.
-  - pages still to come: Bots.
+  - Bots: GroupPanel's bots view, its bots part: the installed bots (a group's, or a channel's
+    community's) and, for someone who may manage them (`canManageBots`), up to 20 to add
+    (`exploreBots`). Either opens `BotDialog` (`BotDialogScreen`): details, install, change
+    permissions or remove, saved through `BotInstall` as the old installer did.
+  - by hand: `BotDialog` takes the host's permission list (`permissions`): the bot's own
+    permissions with the app's words, under "Command permissions" / "Autonomous permissions" ·
+    Chat / Community / Message. What's granted is exactly what's toggled on (`grantedFromDialog`);
+    nothing is mapped onto the dialog's built-in eleven. Its summary sentence lists the app's
+    labels.
+  - a new install starts with every permission off, as the design has it (the old installer
+    started with everything the bot asked for on), so Install straight away grants nothing.
+  - the new UI has no way to register a bot (the old mobile UI's Explore → Register a bot does),
+    and no command picker in the composer to run one.
+  - the bots to add are the first 20 the directory offers (GroupPanel's search filters those);
+    with none installed and none to add, the page has no empty-state text for the owner.
   - Webhooks (a group's or channel's owner, `canManageWebhooks`): GroupPanel's bots view, its
     webhooks part, lists them; Register and a webhook's row open `WebhookDialog`
     (`WebhookDialogScreen`), saving through `saveWebhook` (only the name or avatar that changed,

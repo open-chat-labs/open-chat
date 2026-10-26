@@ -340,3 +340,7 @@
 ## 2026-10-26 — WebhookDialog: delete, by hand
 - `onDelete` adds "Delete webhook" to edit mode (beside Cancel). It swaps the body for a confirm step (the name, the URL struck through, "anything posting to its URL will stop working"), as Regenerate's does, and closes once the host's promise resolves; a rejection keeps it open with "Couldn't delete the webhook". The design has no way to remove a webhook; the old pages did. Strings under `ui.webhookDialog.delete*`, `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — BotDialog: the host's permissions, by hand
+- `permissions` (`BotPermissionInfo[]`: key, label, group, risky) replaces the built-in eleven-permission vocabulary: the bot's `perms`, its commands' `needs` and `granted` use the host's keys, the toggles are listed under the host's headings in its order, and the summary sentence lists the host's labels (risky ones highlighted). The app's bots ask for some thirty permissions, for commands and for acting on their own apart, which the built-in set can't express without granting by guesswork. Without `permissions` the dialog behaves as before. `BotDefinition.perms` / `needs` / `granted` and `BotInstall.granted` are keyed by string; `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

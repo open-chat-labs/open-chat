@@ -13,6 +13,7 @@ import {
     type UserLookup,
     type UserSummary,
     type WebhookDetails,
+    type ExternalBotLike,
 } from "@client";
 import type { MemberRole as PanelRole } from "@openchat/ui/src/features/components/GroupPanel.svelte";
 import type { InvitePerson } from "@openchat/ui/src/features/components/InviteDialog.svelte";
@@ -110,6 +111,18 @@ export function userGroupRow(group: UserGroupDetails, users: UserLookup) {
                       },
                   ];
         }),
+    };
+}
+
+/** A bot as GroupPanel lists it, installed or one to add. */
+export function botRow(bot: ExternalBotLike) {
+    return {
+        id: bot.id,
+        variant: "bot" as const,
+        title: bot.name,
+        subtitle: bot.definition.description,
+        color: pickById(bot.id, COLORS),
+        image: bot.avatarUrl,
     };
 }
 

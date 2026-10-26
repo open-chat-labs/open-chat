@@ -33,6 +33,7 @@ function client(frozen: { chat?: boolean; community?: boolean }, privateChat = f
         canConvertGroupToCommunity: () => true,
         canImportToCommunity: () => true,
         canRegisterWebhook: () => true,
+        canManageBots: () => true,
     } as never as OpenChat;
 }
 
@@ -46,6 +47,7 @@ const all = {
     canConvert: false,
     canImport: false,
     canManageWebhooks: true,
+    canManageBots: true,
 };
 const none = {
     ...all,
@@ -54,6 +56,7 @@ const none = {
     canInvite: false,
     canOpenInvite: false,
     canManageWebhooks: false,
+    canManageBots: false,
 };
 
 describe("details permissions", () => {
@@ -137,6 +140,21 @@ test("webhooks are offered to the owner only", () => {
     expect(chatDetailsPermissions(client({}), channel, community, false).canManageWebhooks).toBe(
         true,
     );
+});
+
+// 4b invariant 7: a channel's bots are its community's, so managing them is the community's right,
+// not the channel's
+test("a channel's bots are managed by whoever may manage its community's", () => {
+    const byCommunity = {
+        ...client({}),
+        canManageBots: (id: { kind: string }) => id.kind === "community",
+    } as never as OpenChat;
+    expect(chatDetailsPermissions(byCommunity, channel, community, false).canManageBots).toBe(true);
+    const byChannel = {
+        ...client({}),
+        canManageBots: (id: { kind: string }) => id.kind !== "community",
+    } as never as OpenChat;
+    expect(chatDetailsPermissions(byChannel, channel, community, false).canManageBots).toBe(false);
 });
 
 describe("chat rules text", () => {

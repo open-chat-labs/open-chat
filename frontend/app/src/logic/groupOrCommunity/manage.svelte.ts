@@ -13,6 +13,7 @@ export type ManageSection =
     | "members"
     | "channels"
     | "usergroups"
+    | "bots"
     | "webhooks";
 
 const FORM: readonly ManageSection[] = ["main", "gates", "rules", "permissions"];
@@ -37,6 +38,7 @@ export type ManageNavLabel =
     | "rules"
     | "permissions"
     | "gates"
+    | "bots"
     | "webhooks";
 export type ManageNavGroup = { label: "general" | "advanced"; items: ManageNavItem[] };
 
@@ -82,6 +84,7 @@ export function manageNav({
     const advanced: ManageNavItem[] = [
         ...(edit ? [{ section: "permissions" as const, label: "permissions" as const }] : []),
         { section: "gates", label: "gates" },
+        { section: "bots", label: "bots" },
         ...(canManageWebhooks
             ? [{ section: "webhooks" as const, label: "webhooks" as const }]
             : []),
