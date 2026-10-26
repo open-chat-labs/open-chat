@@ -300,6 +300,9 @@ design export needs. Each entry says where it came up.
     page).
   - the frame below 768px is the desktop frame at full screen with a narrower nav; the design has
     no narrow layout for it.
+  - the nav's subtitle and the About page say "1 members": the app's `memberCount` has no plural.
+  - a member's read-only Rules page still shows the editor's character counter and hint.
+  - Invite & share's page title says "Invite and share" (InviteDialog's own string).
 
 - **Group and channel settings** (4b part 2a): GroupPanel's Settings opens Manage on its settings
   pages: `GroupSettingsDialog`, embedded, on `UpdateGroupState` (`features/group/ManageSettings.svelte`,
