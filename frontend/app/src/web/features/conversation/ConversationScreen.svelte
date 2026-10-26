@@ -461,14 +461,25 @@
         return row.message;
     }
 
-    // a file is saved under its own name
-    function download(content: FileContent) {
+    // a file is saved under its own name. The blob is on the canister's own origin, where a
+    // link's download attribute is ignored (the tab would go to the file), so it's fetched and
+    // saved from here; if that fails it opens in a new tab, as the old trees do
+    async function download(content: FileContent) {
         const url = getProxyAdjustedBlobUrl(content.blobUrl);
         if (url === undefined) return;
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = content.name;
-        link.click();
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`status ${resp.status}`);
+            const local = URL.createObjectURL(await resp.blob());
+            const link = document.createElement("a");
+            link.href = local;
+            link.download = content.name;
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(local), 60_000);
+        } catch (err) {
+            console.warn("Couldn't download a file, opening it instead", err);
+            window.open(url, "_blank", "noopener");
+        }
     }
 
     // one voice message plays at a time, and none once the chat is left
