@@ -3,6 +3,7 @@ import {
     formatFileSize,
     ogPreviewCard,
     waveformLevels,
+    type CryptocurrencyContent,
     type EventWrapper,
     type GiphyContent,
     type ImageContent,
@@ -46,6 +47,19 @@ export type ConversationContext = {
     date: (timestamp: bigint) => string;
     /** How media shows: low bandwidth, and the media URL as this device fetches it. */
     media: MediaView;
+    /** Whether the conversation is a DM. */
+    direct: boolean;
+    /** A ledger's token as transfers show it; undefined for one the registry doesn't carry. */
+    token: (ledger: string) => TransferToken | undefined;
+};
+
+export type TransferToken = {
+    symbol: string;
+    logo: string;
+    /** An amount (e8s) in whole tokens. */
+    amount: (e8s: bigint) => string;
+    /** An amount (e8s) in dollars, or empty without a rate. */
+    usd: (e8s: bigint) => string;
 };
 
 export type MediaView = {
@@ -293,6 +307,8 @@ function kindMessage(
                 elapsed: formatClock(0),
                 total: formatClock(Number(content.durationMs) / 1000),
             };
+        case "crypto_content":
+            return transferMessage(msg.sender, content, ctx, base);
         case "file_content":
             return {
                 ...base,
@@ -304,6 +320,36 @@ function kindMessage(
             };
     }
     return undefined;
+}
+
+/**
+ * A transfer's card: + for the reader's own receipt, − for their own send, no sign between two
+ * others; outside a DM it says who got it unless that's the reader. A failed transfer, or one in a
+ * ledger the registry doesn't carry, shows as text (nothing about its amount can be trusted).
+ */
+function transferMessage(
+    sender: string,
+    content: CryptocurrencyContent,
+    ctx: ConversationContext,
+    base: KindBase,
+): GroupMessage | undefined {
+    const transfer = content.transfer;
+    if (transfer.kind === "failed") return undefined;
+    const token = ctx.token(transfer.ledger);
+    if (token === undefined) return undefined;
+    const direction = transfer.recipient === ctx.me ? "in" : sender === ctx.me ? "out" : "other";
+    return {
+        ...base,
+        kind: "transfer",
+        amount: token.amount(transfer.amountE8s),
+        symbol: token.symbol,
+        mark: "",
+        gradient: `url("${token.logo}") center / cover`,
+        usd: token.usd(transfer.amountE8s),
+        direction,
+        recipient: ctx.direct || direction === "in" ? undefined : ctx.userName(transfer.recipient),
+        caption: content.caption ?? "",
+    };
 }
 
 /** How long until the next local day starts, so labels like "Today" can be redone then. */

@@ -353,3 +353,7 @@
 - `LinkCard` is `LinkPreview`'s card, taken out unchanged (large or compact, links only to http(s)) so `LinkPreview` and `ChatBubble` share it; `LinkPreview` renders one.
 - `ChatBubble` takes `previews`, a `LinkCard` each under the text. With any, the bubble takes `LinkPreview`'s shell: 320px wide, a 4px inset the cards sit flush to, the text, quote and forwarded tag padded as `LinkPreview`'s text, and the time and tick in a footer under the cards rather than at the end of the text. A message with link previews keeps its markdown, edit, quote, thread and reactions; `LinkPreview` as a message kind of its own has none of them. `onRemovePreview` puts an X on each card (shown on hover or focus, always on touch), for the sender to remove it, as the old trees allow. `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-27 — TransferMessage: direction and recipient, by hand
+- `direction` (`in` / `out` / `other`) replaces the side as what sets the sign: a transfer between two other people in a group has no sign and no green, where the side alone would show it as received by the reader. `recipient` adds "to Bob" after the USD value. Without either it behaves as before. String `ui.transferMessage.to`; `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

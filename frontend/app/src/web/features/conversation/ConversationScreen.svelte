@@ -10,14 +10,19 @@
         anonUserStore,
         blockedUsersStore,
         botState,
+        buildTransactionUrl,
         byContext as typersByContext,
         chatIdentifiersEqual,
         chatIdentifierToString,
         chatsInitialisedStore,
+        cryptoLookup,
         currentUserIdStore,
         eventsStore,
+        exchangeRatesLookupStore,
         failedMessagesStore,
         favouritesStore,
+        formatTokens,
+        getConvertedBalances,
         i18nKey,
         isPrivateCommunityPreview,
         localUpdates,
@@ -65,6 +70,7 @@
     import { getProxyAdjustedBlobUrl } from "@src/utils/media";
     import { now500 } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
+    import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { isTouchOnlyDevice } from "@src/utils/devices";
     import { isSingleEmoji } from "@src/utils/emojis";
@@ -136,6 +142,27 @@
                 lowBandwidth: $lowBandwidth,
                 revealed: (messageId) => revealed.has(messageId),
                 url: getProxyAdjustedBlobUrl,
+            },
+            direct: chat?.kind === "direct_chat",
+            token: (ledger) => {
+                const token = $cryptoLookup.get(ledger);
+                if (token === undefined) return undefined;
+                return {
+                    symbol: token.symbol,
+                    logo: token.logo,
+                    amount: (e8s) => formatTokens(e8s, token.decimals),
+                    usd: (e8s) => {
+                        const { dollarBalance } = getConvertedBalances(
+                            exchangeRatesLookupStore.value,
+                            e8s,
+                            token.decimals,
+                            ledger,
+                        );
+                        return dollarBalance === undefined
+                            ? ""
+                            : formatConvertedValue("usd", dollarBalance);
+                    },
+                };
             },
         };
     });
@@ -400,8 +427,10 @@
         void chatKey;
         void $_;
         void day;
-        // rows don't key on the media view, so a low-bandwidth change starts them again
+        // rows don't key on the media view or the token registry (a transfer shows as text until
+        // its ledger is known), so a change to either starts them again
         void $lowBandwidth;
+        void $cryptoLookup;
         rows.clear();
     });
 
@@ -464,6 +493,15 @@
         const content = msg.content;
         if (isMedia(content)) {
             return { ...row.message, onOpen: () => openMedia(msg) } as GroupMessage;
+        }
+        if (content.kind === "crypto_content") {
+            const url = buildTransactionUrl(content.transfer, $cryptoLookup);
+            return url === undefined
+                ? row.message
+                : ({
+                      ...row.message,
+                      onOpen: () => window.open(url, "_blank", "noopener"),
+                  } as GroupMessage);
         }
         if (content.kind === "file_content") {
             return { ...row.message, onDownload: () => download(content) } as GroupMessage;

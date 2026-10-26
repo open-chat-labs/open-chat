@@ -2957,6 +2957,7 @@
       "amountHidden": "Amount hidden"
     },
     "transferMessage": {
+      "to": "to {name}",
       "viewTransaction": "View transaction"
     },
     "typingIndicator": {

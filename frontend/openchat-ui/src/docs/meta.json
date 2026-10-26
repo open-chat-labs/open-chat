@@ -16686,6 +16686,32 @@
         "doc": ""
       },
       {
+        "name": "direction",
+        "type": "'in' | 'out' | 'other'",
+        "default": null,
+        "editor": "enum",
+        "options": [
+          "in",
+          "out",
+          "other"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Which way it went for the reader: in (+, green), out (−), or other, between two other people (no sign). Defaults by side."
+      },
+      {
+        "name": "recipient",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Who it went to, shown after the USD value (\"to Bob\")."
+      },
+      {
         "name": "caption",
         "type": "string",
         "default": "For the design sprint, thanks!",
