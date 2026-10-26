@@ -178,8 +178,10 @@
     let risky: string;
     if (permissions) {
       const on = asked.filter((p) => !installed || granted[p.key]) as BotPermissionInfo[];
-      plain = list(on.filter((p) => !p.risky).map((p) => phrase(p.label)));
-      risky = list(on.filter((p) => p.risky).map((p) => phrase(p.label)));
+      // a permission asked for under two headings (commands and autonomous use) is said once
+      const said = (ps: BotPermissionInfo[]) => [...new Set(ps.map((p) => phrase(p.label)))];
+      plain = list(said(on.filter((p) => !p.risky)));
+      risky = list(said(on.filter((p) => p.risky)));
     } else {
       const on = CAN_DO_ORDER.filter((k) => spec.perms.includes(k) && (!installed || granted[k]));
       plain = list(on.filter((k) => !CAN_DO[k]!.risky).map((k) => t(`ui.botDialog.${form}.${CAN_DO[k]!.text}`)));

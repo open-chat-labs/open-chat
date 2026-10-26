@@ -300,6 +300,10 @@ design export needs. Each entry says where it came up.
     Chat / Community / Message. What's granted is exactly what's toggled on (`grantedFromDialog`);
     nothing is mapped onto the dialog's built-in eleven. Its summary sentence lists the app's
     labels.
+  - a new install starts with every permission off, as the design has it (the old installer
+    started with everything the bot asked for on), so Install straight away grants nothing.
+  - the new UI has no way to register a bot (the old mobile UI's Explore → Register a bot does),
+    and no command picker in the composer to run one.
   - the bots to add are the first 20 the directory offers (GroupPanel's search filters those);
     with none installed and none to add, the page has no empty-state text for the owner.
   - Webhooks (a group's or channel's owner, `canManageWebhooks`): GroupPanel's bots view, its
