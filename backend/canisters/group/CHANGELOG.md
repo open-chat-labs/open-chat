@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Support tipping messages from people who have since left the group ([#10239](https://github.com/open-chat-labs/open-chat/pull/10239))
+- Support tipping messages from users who have since left the group ([#10239](https://github.com/open-chat-labs/open-chat/pull/10239))
 
 ### Removed
 
