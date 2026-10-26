@@ -21,11 +21,11 @@ use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::ops::DerefMut;
 use tracing::error;
 use types::{
-    AuthorityReportState, BlobReference, BotChatEvent, BotNotification, CallKind, CallParticipant, CanisterId, Chat, ChatEvent,
-    ChatEventCategory, ChatEventType, ChatType, CompletedCryptoTransaction, DiamondMembershipStatus, DirectChatCreated,
-    EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
-    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message,
-    MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
+    AuthorityReportState, BlobReference, BotChatEvent, BotMessageTip, BotNotification, BridgedUserId, CallKind,
+    CallParticipant, CanisterId, Chat, ChatEvent, ChatEventCategory, ChatEventType, ChatType, CompletedCryptoTransaction,
+    DiamondMembershipStatus, DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal,
+    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention,
+    Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
     MessageTippedEventPayload, Milliseconds, ModerationCategories, ModerationReportStatus, MultiUserChat, OCResult, OgPreview,
     OptionUpdate, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus,
     PendingCryptoTransaction, PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload,
@@ -1286,7 +1286,7 @@ impl ChatEvents {
             ChatEventType::MessageTipped,
             |message, _| Self::tip_message_inner(message, &args, chat, anonymized_id, event_pusher),
         ) {
-            Ok(result) => {
+            Ok(mut result) => {
                 add_to_metrics(
                     &mut self.metrics,
                     &mut self.per_user_metrics,
@@ -1297,20 +1297,37 @@ impl ChatEvents {
                     |m| m.incr(MetricKey::Tips, 1),
                     args.now,
                 );
-                Ok(result)
+                // Bots are told what was tipped, as the message only has each tipper's totals
+                if let Some(BotNotification {
+                    event: types::BotEvent::Chat(event),
+                    ..
+                }) = result.bot_notification.as_mut()
+                {
+                    event.tip = Some(Box::new(BotMessageTip {
+                        tipped_by: args.user_id,
+                        ledger: args.ledger,
+                        token_symbol: args.token_symbol,
+                        amount: args.amount,
+                        decimals: args.decimals,
+                        held_for: result.value,
+                    }));
+                }
+                Ok(result.drop_value())
             }
             Err(UpdateEventError::NoChange(result)) => Err(result),
             Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
         }
     }
 
+    // Returns the account the message was relayed from if the tip is held for it, as no one had
+    // linked it
     fn tip_message_inner<P: EventPusher>(
         message: &mut MessageInternal,
         args: &TipMessageArgs,
         chat: Chat,
         anonymized_id: String,
         mut event_pusher: Option<P>,
-    ) -> Result<(), UpdateEventError<OCError>> {
+    ) -> Result<Option<BridgedUserId>, UpdateEventError<OCError>> {
         if message.sender == args.user_id || args.recipient == Some(args.user_id) {
             return Err(UpdateEventError::NoChange(OCErrorCode::CannotTipSelf.into()));
         }
@@ -1349,7 +1366,7 @@ impl ChatEvents {
             );
         }
 
-        Ok(())
+        Ok(if args.recipient.is_none() { message.bridged_from() } else { None })
     }
 
     #[expect(clippy::too_many_arguments)]
@@ -2099,6 +2116,7 @@ impl ChatEvents {
                     thread: thread_root_message_index,
                     event_index,
                     latest_event_index: event_index,
+                    tip: None,
                 }),
                 recipients: bots_to_notify,
                 timestamp: now,
@@ -2918,6 +2936,7 @@ impl ChatEvents {
                         thread: thread_root_message_index,
                         event_index: r.event_index,
                         latest_event_index: r.latest_event_index,
+                        tip: None,
                     }),
                     recipients: bots_to_notify,
                     timestamp: now,
@@ -3088,6 +3107,7 @@ pub struct TipMessageArgs {
     pub ledger: CanisterId,
     pub token_symbol: String,
     pub amount: u128,
+    pub decimals: u8,
     pub now: TimestampMillis,
 }
 

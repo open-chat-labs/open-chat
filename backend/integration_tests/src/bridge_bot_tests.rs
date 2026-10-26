@@ -1,10 +1,10 @@
-use crate::bot_tests::register_bot;
+use crate::bot_tests::{default_bot_definition, register_bot};
 use crate::env::ENV;
 use crate::setup::install_icrc_ledger;
 use crate::utils::{now_millis, tick_many, try_metrics};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
-use constants::{DAY_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE};
+use constants::{DAY_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID};
 use local_user_index_canister::bot_send_message::Response as SendResponse;
 use multi_user_canister::MessageActivity;
 use oc_error_codes::OCErrorCode;
@@ -15,10 +15,11 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u32, random_from_u128, random_string};
 use types::{
-    BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, BridgePlatform, BridgedUser, CanisterId, Chat,
-    ChatEvent, DiscordUser, Empty, EventIndex, EventsResponse, GroupReplyContext, IdempotentEnvelope, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, MessagePermission, PendingCryptoTransaction, SenderContext, SuccessOnly,
-    TelegramUser, TextContent, TwitchUser, UnitResult, UserId, icrc1, icrc2,
+    BotChatContext, BotChatEvent, BotDataEncoding, BotEvent, BotEventWrapper, BotInstallationLocation, BotMessageContent,
+    BotMessageTip, BotPermissions, BotSubscriptions, BridgePlatform, BridgedUser, CanisterId, Chat, ChatEvent, ChatEventType,
+    ChatPermission, DiscordUser, Empty, EventIndex, EventsResponse, GroupReplyContext, IdempotentEnvelope, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, MessagePermission, NotificationEnvelope, PendingCryptoTransaction,
+    SenderContext, SuccessOnly, TelegramUser, TextContent, TwitchUser, UnitResult, UserId, icrc1, icrc2,
 };
 use user_index_canister::link_bridged_user::Response as LinkResponse;
 use user_index_canister::start_bridged_user_link::Response as StartLinkResponse;
@@ -540,6 +541,7 @@ fn tips_on_relayed_messages_go_to_whoever_linked_the_account(in_community: bool)
     // A linked account's tips go to whoever linked it
     let (message_id, event_index) = relay(env, &bridged, &owners_account);
     let owners_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner);
+    let notifications_from = next_notification_index(env, *controller, &bridged);
     client::approve_spender(env, &tipper, canister_ids.icp_ledger, spender, tip_amount + ICP_TRANSFER_FEE);
     let response = tip(
         env,
@@ -564,6 +566,9 @@ fn tips_on_relayed_messages_go_to_whoever_linked_the_account(in_community: bool)
         canister_ids.icp_ledger,
         tip_amount,
     );
+    // The bridge bot is told of the tip, but that it isn't held, so it doesn't tell the account
+    let notified = wait_for_tip_notified(env, *controller, &bridged, notifications_from, message_id);
+    assert_eq!(notified.held_for, None);
 
     // And so does the activity, which before went nowhere, as the message's sender is a bot
     let tipped = |env: &PocketIc| {
@@ -663,6 +668,7 @@ fn tips_for_unlinked_accounts_are_held_for_whoever_links_them(in_community: bool
     let nellys_account = telegram_account(random_telegram_id());
     let (message_id, event_index) = relay(env, &bridged, &nellys_account);
     let held_before = bridged_user_deposits_held(env, user_index);
+    let notifications_from = next_notification_index(env, *controller, &bridged);
     client::approve_spender(env, &tipper, ledger, spender, tip_amount + ICP_TRANSFER_FEE);
     let response = tip_to(env, &tipper, chat, message_id, held_for(&nellys_account), ledger, tip_amount);
     assert!(matches!(response, UnitResult::Success), "{response:?}");
@@ -672,7 +678,21 @@ fn tips_for_unlinked_accounts_are_held_for_whoever_links_them(in_community: bool
         bridged_user_deposits_held(env, user_index) == held_before + 1
     });
 
-    // Whoever links the account is paid it
+    // The bridge bot is told of the tip, and that it's held for the account, so it can tell the
+    // account's owner how to claim it
+    assert_eq!(
+        wait_for_tip_notified(env, *controller, &bridged, notifications_from, message_id),
+        BotMessageTip {
+            tipped_by: tipper.user_id,
+            ledger,
+            token_symbol: ICP_SYMBOL.to_string(),
+            amount: tip_amount,
+            decimals: 8,
+            held_for: Some(nellys_account.id()),
+        }
+    );
+
+    // Whoever links the account is paid it, and told so by the OpenChat bot
     let nelly = client::register_user(env, canister_ids);
     let code = start_link(env, nelly.principal, user_index, BridgePlatform::Telegram);
     let response = link(env, bridged.bot_principal, user_index, nellys_account.clone(), &code);
@@ -682,6 +702,11 @@ fn tips_for_unlinked_accounts_are_held_for_whoever_links_them(in_community: bool
     });
     assert_eq!(balance(env, held_for(&nellys_account)), 0);
     assert_eq!(bridged_user_deposits_held(env, user_index), held_before);
+    wait_until(env, "the OpenChat bot to say what was paid", |env| {
+        openchat_bot_texts(env, &nelly)
+            .iter()
+            .any(|text| text == "Tips held for your Telegram account have been sent to your wallet:\n- 0.9999 ICP")
+    });
 
     // A tip no one claims is refunded to the account it came from, after 30 days. One which isn't
     // more than the fee can't be held, as it couldn't be paid out.
@@ -803,6 +828,11 @@ fn a_tip_held_for_an_account_linked_since_is_paid_on_at_once() {
         client::ledger::happy_path::balance_of(env, ledger, &nelly) == tip_amount - ICP_TRANSFER_FEE
     });
     assert_eq!(client::ledger::happy_path::balance_of(env, ledger, held_for), 0);
+    wait_until(env, "the OpenChat bot to say what was paid", |env| {
+        openchat_bot_texts(env, &nelly)
+            .iter()
+            .any(|text| text == "Tips held for your Telegram account have been sent to your wallet:\n- 0.9999 ICP")
+    });
 
     // Leaves the pooled env as it was
     let response = unlink(env, bridged.bot_principal, user_index, &nellys_account);
@@ -861,6 +891,11 @@ fn tips_held_in_ledgers_the_registry_doesnt_know_arent_paid_out() {
     assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
     tick_many(env, 10);
     assert_eq!(balance(env, nelly.principal.into()), 0);
+    assert!(
+        !openchat_bot_texts(env, &nelly)
+            .iter()
+            .any(|text| text.starts_with("Tips held for"))
+    );
 
     // Nor is it refunded
     env.advance_time(Duration::from_millis(30 * DAY_IN_MS));
@@ -971,6 +1006,7 @@ struct BridgedChat {
     // The group or community, which pulls the tips given in the chat
     spender: CanisterId,
     local_user_index: CanisterId,
+    bot_id: UserId,
     bot_principal: Principal,
     // The platform operator who set the bridge bot
     operator: User,
@@ -1013,16 +1049,37 @@ fn set_up_bridged_chat(
     let local_user_index = canister_ids.local_user_index(env, spender);
     let user_index = canister_ids.user_index;
 
-    let (bot_id, bot_principal) = register_bot(env, &owner, user_index, random_string(), random_string());
+    // Subscribed to what the bridges are, eg. tips, so a tip's author can be told of it
+    let mut definition = default_bot_definition(random_string());
+    definition.default_subscriptions = Some(BotSubscriptions {
+        community: HashSet::new(),
+        chat: HashSet::from_iter([
+            ChatEventType::Message,
+            ChatEventType::MessageEdited,
+            ChatEventType::MessageDeleted,
+            ChatEventType::MessageTipped,
+        ]),
+    });
+    let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(
+        env,
+        owner.principal,
+        user_index,
+        random_string(),
+        "https://my.bot.xyz/".to_string(),
+        definition,
+    );
     let permissions = BotPermissions::default().with_message(&HashSet::from_iter([MessagePermission::Text]));
+    let autonomous_permissions = permissions
+        .clone()
+        .with_chat(&HashSet::from_iter([ChatPermission::ReadMessages]));
     client::local_user_index::happy_path::install_bot(
         env,
         owner.principal,
         local_user_index,
         location,
         bot_id,
-        permissions.clone(),
-        Some(permissions),
+        permissions,
+        Some(autonomous_permissions),
     );
     let operator = client::register_user(env, canister_ids);
     client::user_index::happy_path::add_platform_operator(env, controller, user_index, operator.user_id);
@@ -1036,6 +1093,7 @@ fn set_up_bridged_chat(
         chat,
         spender,
         local_user_index,
+        bot_id,
         bot_principal,
         operator,
         platform,
@@ -1108,6 +1166,95 @@ fn assert_tipped(
         .unwrap();
     assert_eq!(message.tips.len(), 1);
     assert_eq!(*message.tips.first().unwrap(), (ledger, vec![(tipper, amount)]));
+}
+
+// The tips the bridge bot has been told of, with the messages tipped, from the LocalUserIndex's
+// notification `from_index` on
+fn tips_notified(
+    env: &PocketIc,
+    controller: Principal,
+    bridged: &BridgedChat,
+    from_index: u64,
+) -> Vec<(MessageId, BotMessageTip)> {
+    client::local_user_index::happy_path::notifications(env, controller, bridged.local_user_index, from_index)
+        .notifications
+        .into_iter()
+        .filter_map(|n| {
+            let NotificationEnvelope::Bot(n) = n.value else {
+                return None;
+            };
+            let encoding = *n.recipients.get(&bridged.bot_id)?;
+            let payload = &n.event_map.get(&encoding)?.data;
+            let wrapper: BotEventWrapper = match encoding {
+                BotDataEncoding::Candid => candid::decode_one(payload).unwrap(),
+                _ => msgpack::deserialize_then_unwrap(payload),
+            };
+            let BotEvent::Chat(BotChatEvent {
+                event: ChatEvent::Message(message),
+                tip: Some(tip),
+                ..
+            }) = wrapper.event
+            else {
+                return None;
+            };
+            Some((message.message_id, *tip))
+        })
+        .collect()
+}
+
+fn next_notification_index(env: &PocketIc, controller: Principal, bridged: &BridgedChat) -> u64 {
+    client::local_user_index::happy_path::latest_notification_index(env, controller, bridged.local_user_index) + 1
+}
+
+// Waits for the bridge bot to be told of a tip on the message, then returns it
+fn wait_for_tip_notified(
+    env: &mut PocketIc,
+    controller: Principal,
+    bridged: &BridgedChat,
+    from_index: u64,
+    message_id: MessageId,
+) -> BotMessageTip {
+    let find = |env: &PocketIc| {
+        tips_notified(env, controller, bridged, from_index)
+            .into_iter()
+            .find(|(m, _)| *m == message_id)
+            .map(|(_, tip)| tip)
+    };
+    wait_until(env, "the bridge bot to be told of the tip", |env| find(env).is_some());
+    find(env).unwrap()
+}
+
+// The texts of the messages the OpenChat bot has sent the user
+fn openchat_bot_texts(env: &PocketIc, user: &User) -> Vec<String> {
+    let response = client::user::events(
+        env,
+        user.principal,
+        user.canister(),
+        &multi_user_canister::events::Args {
+            user_id: user.user_id,
+            them: OPENCHAT_BOT_USER_ID,
+            thread_root_message_index: None,
+            start_index: EventIndex::default(),
+            ascending: true,
+            max_messages: 100,
+            max_events: 100,
+            latest_known_update: None,
+        },
+    );
+    let multi_user_canister::events::Response::Success(result) = response else {
+        return Vec::new();
+    };
+    result
+        .events
+        .into_iter()
+        .filter_map(|e| match e.event {
+            ChatEvent::Message(m) => match m.content {
+                MessageContent::Text(t) => Some(t.text),
+                _ => None,
+            },
+            _ => None,
+        })
+        .collect()
 }
 
 fn bridged_user_deposits_held(env: &PocketIc, user_index: CanisterId) -> u64 {

@@ -260,6 +260,7 @@ fn tip_message_with_completed_transfer(
         ledger: args.ledger,
         token_symbol: args.token_symbol.clone(),
         amount: args.amount,
+        decimals: args.decimals,
         now,
     };
 

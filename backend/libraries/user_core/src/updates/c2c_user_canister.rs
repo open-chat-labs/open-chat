@@ -345,6 +345,7 @@ pub fn tip_message(
             ledger: args.ledger,
             token_symbol: args.token_symbol.clone(),
             amount: args.amount,
+            decimals: args.decimals,
             now,
         },
         None,

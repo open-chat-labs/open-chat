@@ -1,7 +1,7 @@
 use crate::{
-    BotDataEncoding, BotEventPayload, BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatEvent, ChatId,
-    CommunityEvent, CommunityId, EventIndex, FcmData, MessageId, MessageIndex, Reaction, TimestampMillis, UserId,
-    VideoCallType,
+    BotDataEncoding, BotEventPayload, BotInstallationLocation, BotPermissions, BridgedUserId, CanisterId, ChannelId, Chat,
+    ChatEvent, ChatId, CommunityEvent, CommunityId, EventIndex, FcmData, MessageId, MessageIndex, Reaction, TimestampMillis,
+    UserId, VideoCallType,
 };
 use candid::{CandidType, Principal};
 use serde::de::DeserializeOwned;
@@ -125,6 +125,22 @@ pub struct BotChatEvent {
     pub event_index: EventIndex,
     #[serde(alias = "l")]
     pub latest_event_index: EventIndex,
+    // Set when the event is a tip on the message, as the message's tips are each tipper's totals
+    pub tip: Option<Box<BotMessageTip>>,
+}
+
+// A tip on a message, which a bot is told of along with the message
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct BotMessageTip {
+    pub tipped_by: UserId,
+    pub ledger: CanisterId,
+    pub token_symbol: String,
+    pub amount: u128,
+    pub decimals: u8,
+    // The account the message was relayed from, if no one had linked it, so the UserIndex holds the
+    // tip for whoever links it, and refunds it if no one does within 30 days
+    pub held_for: Option<BridgedUserId>,
 }
 
 #[ts_export]

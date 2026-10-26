@@ -1,7 +1,10 @@
 use constants::DAY_IN_MS;
+use ledger_utils::format_crypto_amount_with_symbol;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{BridgedUserId, CanisterId, Chat, MessageId, MessageIndex, Milliseconds, TimestampMillis, UserId, icrc1};
+use types::{
+    BridgePlatform, BridgedUserId, CanisterId, Chat, MessageId, MessageIndex, Milliseconds, TimestampMillis, UserId, icrc1,
+};
 
 // How long funds are held for whoever links their account, before they're settled (see
 // `RuntimeState::settle_bridged_user_deposit`)
@@ -36,6 +39,43 @@ pub struct HeldDeposit {
     // The token's, so a payout's amount can be shown
     pub decimals: u8,
     pub timestamp: TimestampMillis,
+}
+
+// A held deposit paid to whoever linked its account, less the ledger's fees
+#[derive(Debug)]
+pub struct Payout {
+    pub ledger: CanisterId,
+    pub token_symbol: String,
+    pub decimals: u8,
+    pub amount: u128,
+}
+
+// What whoever linked an account on the platform is told once funds held for it are paid to them,
+// with each token's total, or None if nothing was paid
+pub fn payouts_message(platform: BridgePlatform, payouts: &[Payout]) -> Option<String> {
+    let mut totals: Vec<&Payout> = Vec::new();
+    let mut amounts: Vec<u128> = Vec::new();
+    for payout in payouts {
+        match totals.iter().position(|p| p.ledger == payout.ledger) {
+            Some(i) => amounts[i] += payout.amount,
+            None => {
+                totals.push(payout);
+                amounts.push(payout.amount);
+            }
+        }
+    }
+    if totals.is_empty() {
+        return None;
+    }
+    let lines: Vec<String> = totals
+        .iter()
+        .zip(amounts)
+        .map(|(p, amount)| format!("- {}", format_crypto_amount_with_symbol(amount, p.decimals, &p.token_symbol)))
+        .collect();
+    Some(format!(
+        "Tips held for your {platform} account have been sent to your wallet:\n{}",
+        lines.join("\n")
+    ))
 }
 
 impl BridgedUserDeposits {
@@ -129,6 +169,47 @@ mod tests {
 
         assert_eq!(taken.len(), 1);
         assert_eq!(deposits.take(unknown).map(|d| d.amount), Some(2_000_000));
+    }
+
+    fn payout(ledger: u8, token_symbol: &str, decimals: u8, amount: u128) -> Payout {
+        Payout {
+            ledger: Principal::from_slice(&[ledger; 10]),
+            token_symbol: token_symbol.to_string(),
+            decimals,
+            amount,
+        }
+    }
+
+    #[test]
+    fn whoever_links_an_account_is_told_each_tokens_total() {
+        let message = payouts_message(
+            BridgePlatform::Discord,
+            &[
+                payout(1, "CHAT", 8, 5_0000_0000),
+                payout(2, "ckBTC", 8, 1_000),
+                payout(1, "CHAT", 8, 2_5000_0000),
+            ],
+        );
+
+        assert_eq!(
+            message.as_deref(),
+            Some("Tips held for your Discord account have been sent to your wallet:\n- 7.5 CHAT\n- 0.00001 ckBTC")
+        );
+    }
+
+    #[test]
+    fn amounts_are_shown_with_their_tokens_decimals() {
+        let message = payouts_message(BridgePlatform::Telegram, &[payout(1, "USDC", 6, 1_500_000)]);
+
+        assert_eq!(
+            message.as_deref(),
+            Some("Tips held for your Telegram account have been sent to your wallet:\n- 1.5 USDC")
+        );
+    }
+
+    #[test]
+    fn no_one_is_told_of_nothing() {
+        assert!(payouts_message(BridgePlatform::Twitch, &[]).is_none());
     }
 
     #[test]
