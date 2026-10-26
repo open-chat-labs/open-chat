@@ -18503,6 +18503,17 @@
         "doc": "Replace the secret; resolve with the new URL (issued by the host). Hidden without it."
       },
       {
+        "name": "onDelete",
+        "type": "(hook: { id: string }) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Remove the webhook, after the user confirms; the dialog closes when this resolves. Hidden without it."
+      },
+      {
         "name": "onCancel",
         "type": "() => void",
         "default": null,

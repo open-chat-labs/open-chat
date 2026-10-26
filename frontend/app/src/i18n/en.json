@@ -2731,7 +2731,10 @@
         "updateTitle": "Update {name}",
         "urlLabel": "Webhook URL",
         "username": "webhook",
-        "viewEditAction": "View/edit webhook details"
+        "viewEditAction": "View/edit webhook details",
+        "registerFailed": "Sorry, we couldn't register the webhook",
+        "updateFailed": "Sorry, we couldn't update the webhook",
+        "regenerateFailed": "Sorry, we couldn't regenerate the webhook's URL"
     },
     "websiteVersion": "of the website",
     "weeks": "Weeks",

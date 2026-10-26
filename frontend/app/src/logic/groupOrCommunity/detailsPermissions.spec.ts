@@ -32,6 +32,7 @@ function client(frozen: { chat?: boolean; community?: boolean }, privateChat = f
         canManageUserGroups: () => true,
         canConvertGroupToCommunity: () => true,
         canImportToCommunity: () => true,
+        canRegisterWebhook: () => true,
     } as never as OpenChat;
 }
 
@@ -44,8 +45,16 @@ const all = {
     canManageUserGroups: false,
     canConvert: false,
     canImport: false,
+    canManageWebhooks: true,
 };
-const none = { ...all, canEdit: false, canDelete: false, canInvite: false, canOpenInvite: false };
+const none = {
+    ...all,
+    canEdit: false,
+    canDelete: false,
+    canInvite: false,
+    canOpenInvite: false,
+    canManageWebhooks: false,
+};
 
 describe("details permissions", () => {
     // #10112 "Desktop vs mobile": a frozen chat or community, and a guest, get no edit, delete or invite
@@ -61,6 +70,7 @@ describe("details permissions", () => {
         expect(communityDetailsPermissions(client({}), community, false)).toEqual({
             ...all,
             canManageUserGroups: true,
+            canManageWebhooks: false,
         });
         expect(communityDetailsPermissions(client({ community: true }), community, false)).toEqual(
             none,
@@ -114,6 +124,19 @@ test("convert and import are offered for an owner's group only", () => {
     expect(offered(owner(false), group)).toEqual([false, false]);
     expect(offered(owner(true), channel)).toEqual([false, false]);
     expect(offered(owner(true), group, true)).toEqual([false, false]);
+});
+
+// 4b invariant 7: a group's or channel's webhooks are its owner's (the client's predicate), not an
+// admin's who may edit the group
+test("webhooks are offered to the owner only", () => {
+    const admin = {
+        ...client({}),
+        canRegisterWebhook: () => false,
+    } as never as OpenChat;
+    expect(chatDetailsPermissions(admin, channel, community, false).canManageWebhooks).toBe(false);
+    expect(chatDetailsPermissions(client({}), channel, community, false).canManageWebhooks).toBe(
+        true,
+    );
 });
 
 describe("chat rules text", () => {

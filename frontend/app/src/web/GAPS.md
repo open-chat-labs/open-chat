@@ -291,7 +291,15 @@ design export needs. Each entry says where it came up.
   asks "Discard changes?".
   - by hand: `ManageDialog` is new in the library. The design has it only in the App prototype
     (`_manageVals`), with no exported component.
-  - pages still to come: Bots and Webhooks.
+  - pages still to come: Bots.
+  - Webhooks (a group's or channel's owner, `canManageWebhooks`): GroupPanel's bots view, its
+    webhooks part, lists them; Register and a webhook's row open `WebhookDialog`
+    (`WebhookDialogScreen`), saving through `saveWebhook` (only the name or avatar that changed,
+    `webhookChanges`). A new webhook opens straight away in edit mode to show its URL, which holds
+    its secret.
+  - by hand: `WebhookDialog` has Delete webhook in edit mode, with a confirm step, as the old
+    pages had remove; the design has no way to remove one.
+  - a webhook's colour isn't stored: without a photo it gets its id's colour.
   - no Stats page: the design's `GroupStats` shows the last 30 days, a 12-week series and the top
     senders, and the backend keeps only all-time counters (`metrics`). Showing those as the last
     30 days would mislead, so it waits on the data (see Community stats).

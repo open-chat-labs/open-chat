@@ -28,6 +28,7 @@
         selectedCommunityRulesStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
+        selectedChatWebhooksStore,
         usersFromIds,
         type MultiUserChat,
     } from "@client";
@@ -64,6 +65,7 @@
         panelHeader,
         pinRow,
         userGroupRow,
+        webhookRow,
         userPerson,
     } from "./group.adapter";
     import { leaveOrDeleteFor } from "./manage.adapter";
@@ -81,6 +83,8 @@
         embedded?: boolean;
         /** The right column's compact panel: its views open Manage, except pinned messages. */
         quick?: boolean;
+        /** Embedded: GroupPanel's bots view shows only the bots or only the webhooks. */
+        botsPart?: "" | "bots" | "webhooks";
         /** The quick panel's ⋯ menu, in place of GroupPanel's own. */
         menuOverride?: MenuItem[];
         /** Shows a back arrow, for a panel opened over another. */
@@ -99,6 +103,7 @@
         dialogs,
         embedded = false,
         quick = false,
+        botsPart = "",
         menuOverride,
         back = false,
         onManage,
@@ -320,6 +325,13 @@
     // TODO(4b): bots, webhooks, convert, import and new channels (parts 4-5)
     function onDialog(kind: string, payload?: unknown, tab?: string) {
         if (collection === undefined) return;
+        if (kind === "webhook") {
+            if (collection.kind !== "community" && permissions?.canManageWebhooks) {
+                const { id } = (payload ?? {}) as { id?: string };
+                dialogs.open({ kind: "webhook", chatId: collection.id, webhookId: id });
+            }
+            return;
+        }
         if (kind === "usergroup") {
             if (collection.kind === "community" && permissions?.canManageUserGroups) {
                 const { dialogMode, key } = payload as UserGroupDialogRequest;
@@ -463,6 +475,11 @@
         onUnpin={unpin}
         {embedded}
         {quick}
+        {botsPart}
+        webhooks={collection.kind === "community"
+            ? []
+            : [...$selectedChatWebhooksStore.values()].map(webhookRow)}
+        canManageBots={botsPart === "webhooks" && (permissions?.canManageWebhooks ?? false)}
         manageIcon={permissions?.canEdit ? "manage" : "info"}
         {menuOverride}
         onManage={(v) => manage(panelViewSection(v))}

@@ -336,3 +336,7 @@
 ## 2026-10-26 — CreateGroupDialog: locked while creating, by hand
 - While the host's create is in flight the tabs and the form are `inert` and dimmed, so nothing can be changed or switched until it resolves or fails; Cancel and close were already held. The form used to stay editable while creating.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — WebhookDialog: delete, by hand
+- `onDelete` adds "Delete webhook" to edit mode (beside Cancel). It swaps the body for a confirm step (the name, the URL struck through, "anything posting to its URL will stop working"), as Regenerate's does, and closes once the host's promise resolves; a rejection keeps it open with "Couldn't delete the webhook". The design has no way to remove a webhook; the old pages did. Strings under `ui.webhookDialog.delete*`, `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

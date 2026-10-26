@@ -83,6 +83,7 @@
                       canManageUserGroups: permissions.canManageUserGroups,
                       canConvert: permissions.canConvert,
                       canImport: permissions.canImport,
+                      canManageWebhooks: permissions.canManageWebhooks,
                   }),
               ),
     );
@@ -233,6 +234,17 @@
                         target: community.id,
                         section: view === "members" ? "members" : "main",
                     })}
+                onClose={close}
+            />
+        {:else if manage.section === "webhooks"}
+            <!-- GroupPanel's bots view, its webhooks part, as the design's Webhooks page -->
+            <GroupPanelView
+                communityScope={false}
+                viewRequest="bots"
+                botsPart="webhooks"
+                {dialogs}
+                embedded
+                onManage={(section) => manage.go(section)}
                 onClose={close}
             />
         {:else if manage.section === "channels" && target.kind === "community"}

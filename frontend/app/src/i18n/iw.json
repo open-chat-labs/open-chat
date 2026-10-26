@@ -2710,7 +2710,10 @@
         "updateTitle": "עדכון {name}",
         "urlLabel": "כתובת אתר של Webhook",
         "username": "וובהוק",
-        "viewEditAction": "הצג/ערוך פרטי webhook"
+        "viewEditAction": "הצג/ערוך פרטי webhook",
+        "registerFailed": "מצטערים, לא הצלחנו לרשום את ה-webhook",
+        "updateFailed": "מצטערים, לא הצלחנו לעדכן את ה-webhook",
+        "regenerateFailed": "מצטערים, לא הצלחנו ליצור מחדש את כתובת ה-webhook"
     },
     "websiteVersion": "של האתר",
     "weeks": "שבועות",

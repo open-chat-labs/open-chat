@@ -2710,7 +2710,10 @@
         "updateTitle": "{name} अपडेट करें",
         "urlLabel": "वेबहुक यूआरएल",
         "username": "WEbhook",
-        "viewEditAction": "वेबहुक विवरण देखें/संपादित करें"
+        "viewEditAction": "वेबहुक विवरण देखें/संपादित करें",
+        "registerFailed": "क्षमा करें, हम वेबहुक पंजीकृत नहीं कर सके",
+        "updateFailed": "क्षमा करें, हम वेबहुक अपडेट नहीं कर सके",
+        "regenerateFailed": "क्षमा करें, हम वेबहुक का URL फिर से नहीं बना सके"
     },
     "websiteVersion": "वेबसाइट का",
     "weeks": "हफ्तों",

@@ -102,6 +102,7 @@ export {
     type LeaveOrDeleteOutcome,
 } from "./utils/leaveOrDelete";
 export { type UserGroupSaveOutcome } from "./utils/userGroups";
+export { webhookFailure, type WebhookSaveOutcome } from "./utils/webhook";
 export {
     memberDisplayNameResult,
     profileChanges,
