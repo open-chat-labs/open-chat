@@ -672,7 +672,8 @@
         </div>
         <span class="icon-button" onclick={dismiss} role="button" tabindex="0" aria-label={t('ui.common.close')} title={t('ui.common.close')}><span class="icon-15" style:mask={mask('close')}></span></span>
       </div>
-      <div class="tabs-row">
+      <!-- nothing can be changed while the create is in flight -->
+      <div class="tabs-row" class:busy={flow.busy} inert={flow.busy || undefined}>
         <div class="cell grow">
           <SegmentedTabs
             labels={K.labels.slice(0, visibleKeys.length)}
@@ -719,7 +720,7 @@
       </div>
     </div>
 
-    <div class="body">
+    <div class="body" class:busy={flow.busy} inert={flow.busy || undefined}>
       {#if current === 'Group'}
         <div class="details">
           {#if !isChan}
@@ -1461,6 +1462,12 @@
 
   .icon-15.ink {
     background: var(--ink);
+  }
+
+  .tabs-row.busy,
+  .body.busy {
+    opacity: 0.6;
+    transition: opacity var(--duration-base) var(--ease-out);
   }
 
   .tabs-row {
