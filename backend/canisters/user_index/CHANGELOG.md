@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove the one-off which synced linked accounts to the LocalUserIndexes, now that it has run ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Remove `c2c_set_avatar`, as MultiUser canisters now send avatar changes through their LocalUserIndex ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
 
 ## [[2.0.2190](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2190-user_index)] - 2026-10-26
 
