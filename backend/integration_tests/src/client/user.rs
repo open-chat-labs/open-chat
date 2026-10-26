@@ -88,6 +88,102 @@ generate_msgpack_update_call!(unmute_notifications);
 generate_msgpack_update_call!(unpin_chat_v2);
 generate_msgpack_update_call!(update_chat_settings);
 
+// Tips the message from the sender's wallet, as the website does: the tip is given via the sender's
+// canister in a direct chat, or else via the group or community, having approved it to pull the tip
+#[expect(clippy::too_many_arguments)]
+pub fn tip_message_in_chat(
+    env: &mut pocket_ic::PocketIc,
+    sender: &crate::User,
+    recipient: types::UserId,
+    chat: types::Chat,
+    message_id: types::MessageId,
+    ledger: types::CanisterId,
+    token_symbol: String,
+    amount: u128,
+    fee: u128,
+) -> tip_message::Response {
+    let spender = match chat {
+        types::Chat::Direct(_) => sender.canister(),
+        types::Chat::Group(chat_id) => chat_id.into(),
+        types::Chat::Channel(community_id, _) => community_id.into(),
+    };
+    crate::client::approve_spender(env, sender, ledger, spender, amount + fee);
+
+    let transfer = || {
+        types::PendingCryptoTransaction::ICRC2(types::icrc2::PendingCryptoTransaction {
+            ledger,
+            token_symbol: token_symbol.clone(),
+            amount,
+            from: sender.principal.into(),
+            to: types::icrc1::Account::legacy_for_user(recipient),
+            fee,
+            memo: None,
+            created: env.get_time().as_nanos_since_unix_epoch(),
+        })
+    };
+    match chat {
+        types::Chat::Direct(_) => tip_message(
+            env,
+            sender.principal,
+            sender.canister(),
+            &multi_user_canister::tip_message::Args {
+                chat,
+                recipient,
+                thread_root_message_index: None,
+                message_id,
+                ledger,
+                amount,
+                fee,
+                decimals: 8,
+                token_symbol: token_symbol.clone(),
+                from_account: None,
+                pin: None,
+            },
+        ),
+        types::Chat::Group(chat_id) => {
+            let transfer = transfer();
+            match crate::client::group::tip_message(
+                env,
+                sender.principal,
+                chat_id.into(),
+                &group_canister::tip_message::Args {
+                    thread_root_message_index: None,
+                    message_id,
+                    transfer,
+                    decimals: 8,
+                    username: sender.username(),
+                    display_name: None,
+                    new_achievement: false,
+                },
+            ) {
+                types::UnitResult::Success => multi_user_canister::tip_message::Response::Success,
+                types::UnitResult::Error(error) => multi_user_canister::tip_message::Response::Error(error),
+            }
+        }
+        types::Chat::Channel(community_id, channel_id) => {
+            let transfer = transfer();
+            match crate::client::community::tip_message(
+                env,
+                sender.principal,
+                community_id.into(),
+                &community_canister::tip_message::Args {
+                    channel_id,
+                    thread_root_message_index: None,
+                    message_id,
+                    transfer,
+                    decimals: 8,
+                    username: sender.username(),
+                    display_name: None,
+                    new_achievement: false,
+                },
+            ) {
+                types::UnitResult::Success => multi_user_canister::tip_message::Response::Success,
+                types::UnitResult::Error(error) => multi_user_canister::tip_message::Response::Error(error),
+            }
+        }
+    }
+}
+
 pub mod happy_path {
     use crate::User;
     use crate::env::VIDEO_CALL_OPERATOR;
@@ -98,8 +194,8 @@ pub mod happy_path {
     use testing::rng::random_from_u128;
     use types::{
         CanisterId, Chat, ChatEvent, ChatId, CommunityId, Empty, EventIndex, EventsResponse, Message, MessageContentInitial,
-        MessageId, MessageIndex, Milliseconds, PendingCryptoTransaction, Reaction, ReplyContext, Rules, TextContent,
-        TimestampMillis, UnitResult, UserId, VideoCallType, icrc1, icrc2,
+        MessageId, MessageIndex, Milliseconds, Reaction, ReplyContext, Rules, TextContent, TimestampMillis, UserId,
+        VideoCallType,
     };
 
     pub fn send_text_message(
@@ -480,8 +576,6 @@ pub mod happy_path {
         }
     }
 
-    // Tips the message from the sender's wallet, as the website does: the tip is given via the sender's
-    // canister in a direct chat, or else via the group or community, having approved it to pull the tip
     #[expect(clippy::too_many_arguments)]
     pub fn tip_message(
         env: &mut PocketIc,
@@ -494,86 +588,7 @@ pub mod happy_path {
         amount: u128,
         fee: u128,
     ) {
-        let spender = match chat {
-            Chat::Direct(_) => sender.canister(),
-            Chat::Group(chat_id) => chat_id.into(),
-            Chat::Channel(community_id, _) => community_id.into(),
-        };
-        crate::client::approve_spender(env, sender, ledger, spender, amount + fee);
-
-        let transfer = || {
-            PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
-                ledger,
-                token_symbol: token_symbol.clone(),
-                amount,
-                from: sender.principal.into(),
-                to: icrc1::Account::legacy_for_user(recipient),
-                fee,
-                memo: None,
-                created: env.get_time().as_nanos_since_unix_epoch(),
-            })
-        };
-        let response = match chat {
-            Chat::Direct(_) => super::tip_message(
-                env,
-                sender.principal,
-                sender.canister(),
-                &multi_user_canister::tip_message::Args {
-                    chat,
-                    recipient,
-                    thread_root_message_index: None,
-                    message_id,
-                    ledger,
-                    amount,
-                    fee,
-                    decimals: 8,
-                    token_symbol: token_symbol.clone(),
-                    from_account: None,
-                    pin: None,
-                },
-            ),
-            Chat::Group(chat_id) => {
-                let transfer = transfer();
-                match crate::client::group::tip_message(
-                    env,
-                    sender.principal,
-                    chat_id.into(),
-                    &group_canister::tip_message::Args {
-                        thread_root_message_index: None,
-                        message_id,
-                        transfer,
-                        decimals: 8,
-                        username: sender.username(),
-                        display_name: None,
-                        new_achievement: false,
-                    },
-                ) {
-                    UnitResult::Success => multi_user_canister::tip_message::Response::Success,
-                    UnitResult::Error(error) => multi_user_canister::tip_message::Response::Error(error),
-                }
-            }
-            Chat::Channel(community_id, channel_id) => {
-                let transfer = transfer();
-                match crate::client::community::tip_message(
-                    env,
-                    sender.principal,
-                    community_id.into(),
-                    &community_canister::tip_message::Args {
-                        channel_id,
-                        thread_root_message_index: None,
-                        message_id,
-                        transfer,
-                        decimals: 8,
-                        username: sender.username(),
-                        display_name: None,
-                        new_achievement: false,
-                    },
-                ) {
-                    UnitResult::Success => multi_user_canister::tip_message::Response::Success,
-                    UnitResult::Error(error) => multi_user_canister::tip_message::Response::Error(error),
-                }
-            }
-        };
+        let response = super::tip_message_in_chat(env, sender, recipient, chat, message_id, ledger, token_symbol, amount, fee);
 
         match response {
             multi_user_canister::tip_message::Response::Success => (),
