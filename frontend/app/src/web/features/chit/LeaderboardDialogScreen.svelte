@@ -55,8 +55,9 @@
 
 {#snippet invaders()}
     <Invaders fill>
-        {#snippet start(play)}
-            <Button label="halloffame.start" onClick={play} />
+        {#snippet start(play, label)}
+            <!-- translated by the game: the library shows text outside its own ui.* keys as given -->
+            <Button {label} onClick={play} />
         {/snippet}
     </Invaders>
 {/snippet}

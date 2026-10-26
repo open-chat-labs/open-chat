@@ -10,8 +10,9 @@
     import { tiltNeedsPermission } from "./support";
 
     interface Props {
-        /** The host's start button, given what starts a game. */
-        start: Snippet<[() => void]>;
+        /** The host's start button, given what starts a game and its label, translated: "Start", or "Try again" once a
+         *  game has ended. */
+        start: Snippet<[() => void, string]>;
         /** As tall as the host makes it. */
         fill?: boolean;
     }
@@ -116,7 +117,14 @@
         starting = true;
         try {
             if (game.state === "game_over") game.reset();
-            if (isTouchDevice) await setUpTilt();
+            // tilt steers once the user allows it; if asking fails, the game starts without it
+            if (isTouchDevice) {
+                try {
+                    await setUpTilt();
+                } catch (err) {
+                    console.warn("Unable to read the tilt", err);
+                }
+            }
             game.start();
             phase = game.state;
             requestAnimationFrame(loop);
@@ -177,7 +185,12 @@
     onclick={() => isTouchDevice && fire()}>
     <canvas {height} width={containerWidth} bind:this={canvas}></canvas>
     {#if phase !== "playing"}
-        <div class="start">{@render start(play)}</div>
+        <div class="start">
+            {@render start(
+                play,
+                $_(phase === "game_over" ? "halloffame.tryAgain" : "halloffame.start"),
+            )}
+        </div>
     {/if}
 </div>
 
