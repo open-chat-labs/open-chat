@@ -1,5 +1,5 @@
 use crate::model::bridged_user_deposits::{BridgedUserDeposits, DEPOSIT_HOLD_DURATION, HeldDeposit};
-use crate::model::bridged_users::BridgedUsers;
+use crate::model::bridged_users::{BridgedUserMetrics, BridgedUsers};
 use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
@@ -507,6 +507,7 @@ impl RuntimeState {
             migrated_user_ids: self.data.migrated_user_ids.len(),
             call_push_enabled: self.data.call_push_enabled,
             bridged_users: self.data.bridged_users.len(),
+            bridged_user_metrics: self.data.bridged_users.metrics(),
             bridged_user_deposits_held: self.data.bridged_user_deposits.len(),
             registry_tokens: self.data.registry_tokens.len(),
             platform_moderators_group: self.data.platform_moderators_group,
@@ -984,6 +985,7 @@ pub struct Metrics {
     pub migrated_user_ids: usize,
     pub call_push_enabled: bool,
     pub bridged_users: usize,
+    pub bridged_user_metrics: BridgedUserMetrics,
     pub bridged_user_deposits_held: usize,
     pub registry_tokens: usize,
     pub platform_moderators_group: Option<ChatId>,
