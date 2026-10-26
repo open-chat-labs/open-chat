@@ -196,8 +196,10 @@
         height: toRem(100);
         margin-top: $sp3;
 
+        // grown by flex rather than a percentage width, which older WebKit can leave unresolved
         svg {
-            width: 100%;
+            flex: 1 1 0;
+            min-width: 0;
             height: 100%;
             color: var(--success);
 

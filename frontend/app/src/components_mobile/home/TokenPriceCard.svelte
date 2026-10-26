@@ -143,15 +143,19 @@
         text-decoration: underline;
     }
 
+    // Its width comes from stretching and flex, not percentages: older WebKit doesn't resolve a
+    // percentage width inside a stretched flex item (the sheet's Container), which left the chart at
+    // an svg's default 300px on iOS. The height is a percentage of a fixed one, which it resolves
     .chart {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 100%;
+        align-self: stretch;
         height: 7rem;
 
         svg {
-            width: 100%;
+            flex: 1 1 0;
+            min-width: 0;
             height: 100%;
             color: var(--up);
 
