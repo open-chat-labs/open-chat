@@ -81,14 +81,8 @@
                       canOpenInvite: permissions.canOpenInvite,
                       community: target?.kind === "community",
                       canManageUserGroups: permissions.canManageUserGroups,
-                      canConvert:
-                          target?.kind === "group_chat" &&
-                          permissions.canEdit &&
-                          client.canConvertGroupToCommunity(target.id),
-                      canImport:
-                          target?.kind === "group_chat" &&
-                          permissions.canEdit &&
-                          client.canImportToCommunity(target.id),
+                      canConvert: permissions.canConvert,
+                      canImport: permissions.canImport,
                   }),
               ),
     );

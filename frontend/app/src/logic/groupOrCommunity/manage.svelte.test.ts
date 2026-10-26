@@ -87,6 +87,24 @@ describe("Manage's pages", () => {
         ]);
     });
 
+    test("convert and import each follow their own permission", () => {
+        const base = {
+            access: { kind: "edit" as const, readOnly: [] },
+            canOpenInvite: false,
+            community: false,
+            canManageUserGroups: false,
+        };
+        expect(sections({ ...base, canConvert: true, canImport: false })).toContain(
+            "action:convert",
+        );
+        expect(sections({ ...base, canConvert: true, canImport: false })).not.toContain(
+            "action:import",
+        );
+        expect(sections({ ...base, canConvert: false, canImport: true })).toEqual(
+            expect.arrayContaining(["action:import"]),
+        );
+    });
+
     test("the owner deletes, anyone else who can leaves", () => {
         expect(manageDanger(true, false)).toBe("delete");
         expect(manageDanger(false, true)).toBe("leave");

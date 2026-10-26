@@ -18,6 +18,9 @@ export type DetailsPermissions = {
     canInvite: boolean;
     canOpenInvite: boolean;
     canManageUserGroups: boolean;
+    /** A group's owner can convert it to a community, or import it into one they own. */
+    canConvert: boolean;
+    canImport: boolean;
 };
 
 const nothing: DetailsPermissions = {
@@ -26,6 +29,8 @@ const nothing: DetailsPermissions = {
     canInvite: false,
     canOpenInvite: false,
     canManageUserGroups: false,
+    canConvert: false,
+    canImport: false,
 };
 
 /**
@@ -50,6 +55,8 @@ export function chatDetailsPermissions(
         // as the old header menu offered it (`public || canInviteUsers`), and adding members
         canOpenInvite: chat.public || canInviteUsers || client.canAddMembers(chat.id),
         canManageUserGroups: false,
+        canConvert: chat.kind === "group_chat" && client.canConvertGroupToCommunity(chat.id),
+        canImport: chat.kind === "group_chat" && client.canImportToCommunity(chat.id),
     };
 }
 
@@ -66,6 +73,8 @@ export function communityDetailsPermissions(
         canInvite: client.canInviteUsers(community.id),
         canOpenInvite: client.canInviteUsers(community.id),
         canManageUserGroups: client.canManageUserGroups(community.id),
+        canConvert: false,
+        canImport: false,
     };
 }
 
