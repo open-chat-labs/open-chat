@@ -1,12 +1,20 @@
+use crate::bot_tests::register_bot;
 use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE};
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
+use std::collections::HashSet;
 use std::ops::Deref;
+use std::time::Duration;
+use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
-use types::{Chat, ChatEvent};
+use types::{
+    BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent, ChatType,
+    MessagePermission, TextContent,
+};
 
 #[test]
 fn tip_direct_message_succeeds() {
@@ -306,6 +314,105 @@ fn tip_from_own_account_is_rejected() {
     assert!(
         matches!(response, multi_user_canister::tip_message::Response::Error(_)),
         "{response:?}"
+    );
+}
+
+#[test_case(ChatType::Group)]
+#[test_case(ChatType::Channel)]
+fn tipping_a_bots_message_is_refused(chat_type: ChatType) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { user1, .. } = init_test_data(env, canister_ids, *controller);
+
+    let (chat, location, canister_id): (Chat, BotInstallationLocation, CanisterId) = match chat_type {
+        ChatType::Group => {
+            let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
+            (
+                Chat::Group(group_id),
+                BotInstallationLocation::Group(group_id),
+                group_id.into(),
+            )
+        }
+        ChatType::Channel => {
+            let community_id =
+                client::user::happy_path::create_community(env, &user1, &random_string(), true, vec!["General".to_string()]);
+            let channel_id =
+                client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
+            (
+                Chat::Channel(community_id, channel_id),
+                BotInstallationLocation::Community(community_id),
+                community_id.into(),
+            )
+        }
+        ChatType::Direct => unreachable!(),
+    };
+    let local_user_index = canister_ids.local_user_index(env, canister_id);
+
+    let (bot_id, bot_principal) = register_bot(env, &user1, canister_ids.user_index, random_string(), random_string());
+    let permissions = BotPermissions::default().with_message(&HashSet::from_iter([MessagePermission::Text]));
+    client::local_user_index::happy_path::install_bot(
+        env,
+        user1.principal,
+        local_user_index,
+        location,
+        bot_id,
+        permissions.clone(),
+        Some(permissions),
+    );
+
+    env.advance_time(Duration::from_millis(1000));
+    env.tick();
+
+    let message_id = random_from_u128();
+    let response = client::local_user_index::bot_send_message(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_send_message::Args {
+            chat_context: BotChatContext::Autonomous(chat),
+            thread: None,
+            message_id: Some(message_id),
+            replies_to: None,
+            content: BotMessageContent::Text(TextContent { text: random_string() }),
+            block_level_markdown: false,
+            finalised: true,
+            og_previews: None,
+            bridged_from: None,
+        },
+    );
+    assert!(
+        matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)),
+        "{response:?}"
+    );
+
+    tick_many(env, 3);
+
+    // A bot's id isn't an account anyone controls, so a tip paid to it would be lost
+    let response = client::user::tip_message_in_chat(
+        env,
+        &user1,
+        bot_id,
+        chat,
+        message_id,
+        canister_ids.icp_ledger,
+        ICP_SYMBOL.to_string(),
+        1_0000_0000,
+        ICP_TRANSFER_FEE,
+    );
+
+    assert!(
+        matches!(&response, multi_user_canister::tip_message::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{response:?}"
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, bot_id.as_principal()),
+        0
     );
 }
 

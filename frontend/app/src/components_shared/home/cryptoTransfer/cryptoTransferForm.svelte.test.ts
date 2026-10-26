@@ -32,6 +32,7 @@ const client = {
 
 const them = { userId: "them", username: "them" } as UserSummary;
 const me = { userId: "me", username: "me" } as UserSummary;
+const bot = { kind: "bot", userId: "bot", username: "bot" } as UserSummary;
 
 const group = {
     kind: "group_chat",
@@ -54,6 +55,7 @@ describe("sending tokens to a user", () => {
             new Map([
                 ["them", them],
                 ["me", me],
+                ["bot", bot],
             ]),
         );
         cryptoBalanceStore.setBalance(icp.ledger, 100_000_000n);
@@ -77,6 +79,29 @@ describe("sending tokens to a user", () => {
         expect(recipient(direct, undefined)).toBe("them");
         expect(recipient(group, "them")).toBe("them");
         expect(recipient(group, "me")).toBe(undefined);
+    });
+
+    // Invariant: tokens are never sent to a bot. Its id isn't an account anyone controls, so they
+    // would be lost.
+    test("a bot is never the recipient", async () => {
+        const botChat = {
+            ...direct,
+            id: { kind: "direct_chat", userId: "bot" },
+            them: { kind: "direct_chat", userId: "bot" },
+        } as unknown as ChatSummary;
+        expect(new CryptoTransferForm(client, icp.ledger, botChat, undefined, 0n).receiver).toBe(
+            undefined,
+        );
+        expect(new CryptoTransferForm(client, icp.ledger, group, "bot", 0n).receiver).toBe(
+            undefined,
+        );
+
+        // nor can one be chosen
+        const form = new CryptoTransferForm(client, icp.ledger, group, "them", 5_000_000n);
+        await vi.waitFor(() => expect(form.tokenChanging).toBe(false));
+        expect(form.valid).toBe(true);
+        form.receiver = bot;
+        expect(form.valid).toBe(false);
     });
 
     // Invariant: an amount from a /crypto command is the one offered. Mobile dropped it.

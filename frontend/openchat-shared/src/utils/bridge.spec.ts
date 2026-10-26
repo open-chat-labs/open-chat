@@ -180,17 +180,43 @@ describe("bridge", () => {
         ]);
         const members = new Set(["alice", "bob"]);
         const isMember = (userId: string) => members.has(userId);
+        const bridgeBot = { kind: "bot" } as const;
 
         // An ordinary message's tips go to its sender
-        expect(tipRecipient({ sender: "bob", senderContext: undefined }, linked, isMember)).toBe(
-            "bob",
-        );
-        expect(tipRecipient(relayed(telegramId), linked, isMember)).toBe("alice");
+        expect(
+            tipRecipient(
+                { sender: "bob", senderContext: undefined },
+                { kind: "user" },
+                linked,
+                isMember,
+            ),
+        ).toBe("bob");
+        expect(tipRecipient(relayed(telegramId), bridgeBot, linked, isMember)).toBe("alice");
         // No one has linked the account
-        expect(tipRecipient(relayed(discordId), linked, isMember)).toBeUndefined();
-        expect(tipRecipient(relayed(telegramId), new Map(), isMember)).toBeUndefined();
+        expect(tipRecipient(relayed(discordId), bridgeBot, linked, isMember)).toBeUndefined();
+        expect(tipRecipient(relayed(telegramId), bridgeBot, new Map(), isMember)).toBeUndefined();
         // Whoever linked it isn't in the chat
-        expect(tipRecipient(relayed(telegramId), linked, () => false)).toBeUndefined();
+        expect(tipRecipient(relayed(telegramId), bridgeBot, linked, () => false)).toBeUndefined();
+    });
+
+    // Invariant: only a user is tipped. A bot's or webhook's id isn't an account anyone controls.
+    test("doesn't tip a message a bot or a webhook sent", () => {
+        const isMember = () => true;
+        const botMessage = {
+            sender: "chart-bot",
+            senderContext: { kind: "bot", finalised: true } as SenderContext,
+        };
+        const webhookMessage = {
+            sender: "webhook",
+            senderContext: { kind: "webhook" } as SenderContext,
+        };
+        // A bot that sends without a context, eg. the OpenChat bot
+        const plainBotMessage = { sender: "openchat-bot", senderContext: undefined };
+
+        expect(tipRecipient(botMessage, { kind: "bot" }, new Map(), isMember)).toBeUndefined();
+        expect(tipRecipient(botMessage, undefined, new Map(), isMember)).toBeUndefined();
+        expect(tipRecipient(webhookMessage, { kind: "bot" }, new Map(), isMember)).toBeUndefined();
+        expect(tipRecipient(plainBotMessage, { kind: "bot" }, new Map(), isMember)).toBeUndefined();
     });
 
     test("shows the user who linked the account as its author, unless they've gone", () => {

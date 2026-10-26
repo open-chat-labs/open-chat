@@ -16,18 +16,25 @@ import {
 import { TransferForm, type TransferFormOptions } from "../wallet/transferForm.svelte";
 
 // Who the tokens go to unless the user picks someone else: the other user in a direct chat, or
-// the user being replied to, but never the user themselves
+// the user being replied to, but never the user themselves, nor a bot (see `canBePaid`)
 function defaultRecipient(
     chat: ChatSummary,
     defaultReceiver: string | undefined,
 ): UserSummary | undefined {
-    if (chat.kind === "direct_chat") {
-        return allUsersStore.value.get(chat.them.userId);
-    }
-    if (defaultReceiver !== undefined && defaultReceiver !== currentUserIdStore.value) {
-        return allUsersStore.value.get(defaultReceiver);
-    }
-    return undefined;
+    const userId =
+        chat.kind === "direct_chat"
+            ? chat.them.userId
+            : defaultReceiver !== currentUserIdStore.value
+              ? defaultReceiver
+              : undefined;
+    const user = userId === undefined ? undefined : allUsersStore.value.get(userId);
+    return user !== undefined && canBePaid(user) ? user : undefined;
+}
+
+// A bot, or a webhook, has no wallet: its id isn't an account anyone controls, so tokens sent to
+// it would be lost
+function canBePaid(user: UserSummary): boolean {
+    return user.kind !== "bot";
 }
 
 export class CryptoTransferForm extends TransferForm {
@@ -69,7 +76,12 @@ export class CryptoTransferForm extends TransferForm {
     }
 
     get valid(): boolean {
-        return this.validAmount && this.receiver !== undefined && !this.tokenChanging;
+        return (
+            this.validAmount &&
+            this.receiver !== undefined &&
+            canBePaid(this.receiver) &&
+            !this.tokenChanging
+        );
     }
 
     /**
