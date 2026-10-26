@@ -1,5 +1,6 @@
 import type { EventWrapper, Message } from "@client";
 import {
+    mediaHeld,
     messageRow,
     messageStatus,
     senderColor,
@@ -14,6 +15,7 @@ const ctx: ConversationContext = {
     contentText: (content) => `[${content.kind}]`,
     time: (timestamp) => `t${timestamp}`,
     date: (timestamp) => `d${timestamp}`,
+    media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
 };
 
 function message(fields: Partial<Message> = {}): EventWrapper<Message> {
@@ -75,8 +77,9 @@ describe("a message row", () => {
     });
 
     test("shows other kinds as their text, and a deleted message as deleted", () => {
-        const image = message({ content: { kind: "image_content" } as Message["content"] });
-        expect(messageRow(image, "sent", ctx).message.text).toBe("[image_content]");
+        // a kind not built yet
+        const poll = message({ content: { kind: "poll_content" } as Message["content"] });
+        expect(messageRow(poll, "sent", ctx).message).toMatchObject({ text: "[poll_content]" });
         const deleted = message({ content: { kind: "deleted_content" } as Message["content"] });
         expect(messageRow(deleted, "sent", ctx).message.deleted).toBe(true);
     });
@@ -107,7 +110,7 @@ describe("a message row", () => {
             quoteName: "Bob",
             quoteText: "earlier",
         });
-        expect(messageRow(reply("me"), "sent", ctx).message.quoteName).toBe("You");
+        expect(messageRow(reply("me"), "sent", ctx).message).toMatchObject({ quoteName: "You" });
     });
 
     test("has its thread's reply count and last reply", () => {
@@ -122,9 +125,35 @@ describe("a message row", () => {
 
     test("isn't edited when a bot finalises its message", () => {
         const edited = (senderContext?: Message["senderContext"]) =>
-            messageRow(message({ edited: true, senderContext }), "sent", ctx).message.edited;
+            (
+                messageRow(message({ edited: true, senderContext }), "sent", ctx).message as {
+                    edited?: boolean;
+                }
+            ).edited;
         expect(edited()).toBe(true);
         expect(edited({ kind: "bot", finalised: true } as Message["senderContext"])).toBe(false);
+    });
+});
+
+describe("link previews", () => {
+    const preview = (url: string) => ({
+        kind: "opengraph" as const,
+        url,
+        title: "T",
+        description: "",
+    });
+    const cards = (...urls: string[]) => {
+        const row = messageRow(message({ ogPreviews: urls.map(preview) }), "sent", ctx).message;
+        return (row as { previews: { url: string }[] }).previews.map((c) => c.url);
+    };
+
+    // invariant 6
+    test("a link preview whose URL isn't http(s) is never rendered as a link", () => {
+        expect(cards("javascript:alert(1)", "data:text/html,x", "https://a.com/x")).toEqual([
+            "",
+            "",
+            "https://a.com/x",
+        ]);
     });
 });
 
@@ -132,5 +161,52 @@ describe("the time until the next day", () => {
     test("runs to the coming local midnight", () => {
         expect(untilNextDay(new Date(2026, 9, 20, 23, 59, 30))).toBe(30_000);
         expect(untilNextDay(new Date(2026, 9, 20, 0, 0, 0))).toBe(24 * 60 * 60 * 1000);
+    });
+});
+
+describe("media", () => {
+    const image = {
+        kind: "image_content",
+        width: 400,
+        height: 300,
+        thumbnailData: "data:image/jpeg;base64,THUMB",
+        blobUrl: "https://blob/full.jpg",
+        mimeType: "image/jpeg",
+    } as const;
+    const gif = {
+        kind: "giphy_content",
+        title: "cat",
+        desktop: { url: "https://g/full.mp4", width: 480, height: 270, mimeType: "video/mp4" },
+        mobile: { url: "https://g/full.gif", width: 240, height: 135, mimeType: "image/gif" },
+    } as const;
+    const urls = (lowBandwidth: boolean, revealed: boolean, content: unknown) => {
+        const row = messageRow(message({ content: content as Message["content"] }), "sent", {
+            ...ctx,
+            media: { lowBandwidth, revealed: () => revealed, url: (u) => u },
+        });
+        return JSON.stringify(row.message);
+    };
+
+    // 5a invariant 1: in low bandwidth a full-size image or GIF isn't handed to the view until the
+    // reader asks for it
+    test("in low bandwidth the full-size image or GIF is held back until revealed", () => {
+        expect(urls(true, false, image)).not.toContain("https://blob/full.jpg");
+        expect(urls(true, false, image)).toContain("THUMB");
+        expect(urls(true, false, gif)).not.toContain("https://g/full");
+        expect(urls(true, true, image)).toContain("https://blob/full.jpg");
+        expect(urls(false, false, gif)).toContain("https://g/full.gif");
+    });
+
+    // 5a invariant 1: a click on a held tile reveals it rather than opening the full-size viewer
+    test("an image or GIF is held in low bandwidth until revealed", () => {
+        const media = (lowBandwidth: boolean, revealed: boolean) => ({
+            lowBandwidth,
+            revealed: () => revealed,
+            url: (u: string | undefined) => u,
+        });
+        expect(mediaHeld(image, 42n, media(true, false))).toBe(true);
+        expect(mediaHeld(gif, 42n, media(true, false))).toBe(true);
+        expect(mediaHeld(gif, 42n, media(true, true))).toBe(false);
+        expect(mediaHeld(image, 42n, media(false, false))).toBe(false);
     });
 });

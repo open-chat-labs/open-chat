@@ -64,14 +64,20 @@ export function isOwnMessage(
 
 // Who a tip on the message goes to: its sender, or for one a bridge bot relayed, the OpenChat user who
 // linked the account it came from, as OpenChat pays them. They must be in the chat, so a relayed
-// message from an account no one has linked, or whose user isn't in the chat, can't be tipped.
+// message from an account no one has linked, or whose user isn't in the chat, can't be tipped. Only
+// users have wallets, so nor can a message a bot or a webhook sent: its id isn't an account anyone
+// controls, so the tip would be lost.
 export function tipRecipient(
     message: Pick<Message, "sender" | "senderContext">,
+    sender: Pick<UserSummary, "kind"> | undefined,
     bridgedUsers: ReadonlyMap<string, BridgedUserSummary>,
     isMember: (userId: string) => boolean,
 ): string | undefined {
     const from = bridgedFrom(message.senderContext);
-    if (from === undefined) return message.sender;
+    if (from === undefined) {
+        const sentByBot = message.senderContext !== undefined || sender?.kind === "bot";
+        return sentByBot ? undefined : message.sender;
+    }
     const linkedUserId = bridgedUsers.get(bridgedUserKey(from)!)?.linkedUserId;
     return linkedUserId !== undefined && isMember(linkedUserId) ? linkedUserId : undefined;
 }

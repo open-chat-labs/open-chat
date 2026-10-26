@@ -31,6 +31,7 @@ import {
     addVoteToPoll,
     buildBridgedUserAvatarUrl,
     buildIdenticonUrl,
+    canSendDirectMessage,
     disappearingMessagesUpdate,
     eventsTTLUpdate,
     getMembersString,
@@ -783,5 +784,20 @@ describe("previewing or lapsed", () => {
 
     test("lapsed from the channel's community", () => {
         expect(isPreviewingOrLapsed(channel, communities(true))).toBe(true);
+    });
+});
+
+describe("what can be sent in a direct chat", () => {
+    const user = { kind: "user", userId: "them" } as UserSummary;
+    const bot = { kind: "bot", userId: "chart-bot" } as UserSummary;
+
+    // Invariant: a bot is never sent tokens. Its id isn't an account anyone controls, so they
+    // would be lost.
+    test("tokens and swaps go to users, not bots", () => {
+        for (const permission of ["crypto", "p2pSwap"] as const) {
+            expect(canSendDirectMessage(user, "message", "proposals-bot", permission)).toBe(true);
+            expect(canSendDirectMessage(bot, "message", "proposals-bot", permission)).toBe(false);
+        }
+        expect(canSendDirectMessage(bot, "message", "proposals-bot", "text")).toBe(true);
     });
 });

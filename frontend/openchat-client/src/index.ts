@@ -36,7 +36,8 @@ export {
     subrangesCover,
     TimelineGrouper,
 } from "./utils/chat";
-export { formatDuration } from "./utils/time";
+export { formatClock, formatDuration } from "./utils/time";
+export { default as formatFileSize } from "./utils/fileSize";
 export {
     botOwnerCandidates,
     compareIsNotYouThenUsername,
@@ -123,7 +124,7 @@ export {
 export { cloneWalletConfig, walletConfigForMode } from "./utils/walletConfig";
 export type { TrackingCategory } from "./utils/ga";
 export { toRecord } from "./utils/list";
-export { quantiseWaveform, type Dimensions } from "./utils/media";
+export { quantiseWaveform, waveformLevels, type Dimensions } from "./utils/media";
 export * from "./utils/permissions";
 export { Poller } from "./utils/poller";
 export * from "./utils/routes";

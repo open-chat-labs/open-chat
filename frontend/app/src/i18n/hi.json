@@ -2207,6 +2207,7 @@
     "removedBy": "{changedBy} ने {changed} को {level} से हटा दिया",
     "removeMemberFailed": "सदस्य को हटाने में असमर्थ",
     "removePreviewQuestion": "पूर्वावलोकन हटाएँ?",
+    "errorRemovingLinkPreview": "पूर्वावलोकन हटाया नहीं जा सका",
     "renderPreviews": "लिंक पूर्वावलोकन स्वतः प्रस्तुत करें",
     "reply": "जवाब",
     "replyPrivately": "निजी तौर पर उत्तर दें",

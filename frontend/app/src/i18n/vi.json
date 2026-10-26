@@ -2207,6 +2207,7 @@
     "removedBy": "{changedBy} đã xóa {changed} khỏi {level}",
     "removeMemberFailed": "Không thể xóa thành viên",
     "removePreviewQuestion": "Xóa bản xem trước?",
+    "errorRemovingLinkPreview": "Không thể xóa bản xem trước",
     "renderPreviews": "Tự động hiển thị bản xem trước liên kết",
     "reply": "Phản hồi",
     "replyPrivately": "Phản hồi kín",

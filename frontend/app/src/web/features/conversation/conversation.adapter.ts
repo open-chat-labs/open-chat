@@ -1,5 +1,20 @@
-import type { EventWrapper, Message, MessageContent } from "@client";
+import {
+    formatClock,
+    formatFileSize,
+    ogPreviewCard,
+    waveformLevels,
+    type EventWrapper,
+    type GiphyContent,
+    type ImageContent,
+    type MemeFighterContent,
+    type Message,
+    type MessageContent,
+    type OgPreview,
+    type VideoContent,
+} from "@client";
+import type ChatBubble from "@openchat/ui/src/lib/components/ChatBubble.svelte";
 import type { GroupMessage, MenuItem } from "@openchat/ui/src/lib/types";
+import type { ComponentProps } from "svelte";
 import type { ChatMenuAction } from "@src/logic/chats/chatMenu";
 import { pickById } from "../../pickById";
 
@@ -29,6 +44,15 @@ export type ConversationContext = {
     time: (timestamp: bigint) => string;
     /** A date as the list shows it (a time today, else a short date). */
     date: (timestamp: bigint) => string;
+    /** How media shows: low bandwidth, and the media URL as this device fetches it. */
+    media: MediaView;
+};
+
+export type MediaView = {
+    lowBandwidth: boolean;
+    /** Whether the reader asked to see this message's full-size media (low bandwidth). */
+    revealed: (messageId: bigint) => boolean;
+    url: (blobUrl: string | undefined) => string | undefined;
 };
 
 export type MessageStatus = "sending" | "sent" | "delivered" | "failed";
@@ -52,8 +76,114 @@ export type MessageRow = {
     side: "sent" | "received";
     senderName: string;
     color: SenderColor;
-    message: Extract<GroupMessage, { kind?: "text" }>;
+    message: GroupMessage;
 };
+
+type MediaKind = "image" | "video" | "gif";
+export type MediaContent = ImageContent | VideoContent | GiphyContent | MemeFighterContent;
+
+export function isMedia(content: MessageContent): content is MediaContent {
+    return (
+        content.kind === "image_content" ||
+        content.kind === "video_content" ||
+        content.kind === "giphy_content" ||
+        content.kind === "meme_fighter_content"
+    );
+}
+
+/**
+ * Whether an image's or GIF's full size is held back (low bandwidth, not yet revealed): its tile
+ * doesn't get the full-size URL, and a click reveals it rather than opening the viewer (5a
+ * invariant 1). Memes and videos aren't held, as in the old trees.
+ */
+export function mediaHeld(content: MediaContent, messageId: bigint, media: MediaView): boolean {
+    return (
+        (content.kind === "image_content" || content.kind === "giphy_content") &&
+        media.lowBandwidth &&
+        !media.revealed(messageId)
+    );
+}
+
+const MEME_FALLBACK = "/assets/memefighter.svg";
+
+/**
+ * An image, video, GIF or meme as MediaMessage's tile. In low bandwidth an image's or GIF's
+ * full-size URL isn't handed over until the reader asks for it (5a invariant 1): an image shows
+ * its thumbnail, a GIF nothing, until it's revealed.
+ */
+export function mediaTile(
+    content: MediaContent,
+    hidden: boolean,
+    url: MediaView["url"],
+): { kind: MediaKind; items: { src?: string; w?: number; h?: number }[]; caption: string } {
+    switch (content.kind) {
+        case "image_content":
+            return {
+                kind: "image",
+                items: [
+                    {
+                        src: hidden ? content.thumbnailData : url(content.blobUrl),
+                        w: content.width,
+                        h: content.height,
+                    },
+                ],
+                caption: content.caption ?? "",
+            };
+        case "meme_fighter_content":
+            return {
+                kind: "image",
+                items: [{ src: content.url || MEME_FALLBACK, w: content.width, h: content.height }],
+                caption: "",
+            };
+        case "giphy_content":
+            // the desktop rendition is a video; the tile is the GIF image
+            return {
+                kind: "gif",
+                items: [
+                    {
+                        src: hidden ? undefined : content.mobile.url,
+                        w: content.mobile.width,
+                        h: content.mobile.height,
+                    },
+                ],
+                caption: content.caption ?? "",
+            };
+        case "video_content":
+            return {
+                kind: "video",
+                items: [
+                    {
+                        src: url(content.imageData.blobUrl) ?? content.thumbnailData,
+                        w: content.width,
+                        h: content.height,
+                    },
+                ],
+                caption: content.caption ?? "",
+            };
+    }
+}
+
+export type PreviewCard = NonNullable<ComponentProps<typeof ChatBubble>["previews"]>[number];
+
+/**
+ * A text message's link previews as cards: a landscape image on top, a square or tall one as a
+ * thumbnail, as the old desktop lays them out. A card links only to an http(s) URL.
+ */
+export function previewCards(previews: OgPreview[]): PreviewCard[] {
+    return previews.map((p) => {
+        const card = ogPreviewCard(p);
+        const image = card.image;
+        return {
+            url: card.href ?? "",
+            domain: card.hostname,
+            title: p.title,
+            description: p.description,
+            image: image?.url,
+            imageBg: image === undefined ? null : undefined,
+            size: card.sideBySide ? "compact" : "large",
+        };
+    });
+}
 
 /** A message's text: a text message's own, and for other kinds (until they're built) their text. */
 export function messageText(
@@ -77,6 +207,24 @@ export function messageRow(
     const reply = msg.repliesTo;
     const quoted = reply?.kind === "rehydrated_reply_context" ? reply : undefined;
     const thread = msg.thread;
+    const kind = kindMessage(msg, status, ctx, {
+        id: String(msg.messageId),
+        time: ctx.time(evt.timestamp),
+        deleted: false,
+        reactions: msg.reactions.map((r) => ({
+            emoji: r.reaction,
+            count: r.userIds.size,
+            mine: r.userIds.has(ctx.me),
+        })),
+    });
+    if (kind !== undefined) {
+        return {
+            side: mine ? "sent" : "received",
+            senderName: mine ? ctx.you : ctx.userName(msg.sender),
+            color: senderColor(msg.sender),
+            message: kind,
+        };
+    }
     return {
         side: mine ? "sent" : "received",
         senderName: mine ? ctx.you : ctx.userName(msg.sender),
@@ -106,8 +254,56 @@ export function messageRow(
             quoteText: quoted === undefined ? undefined : messageText(quoted.content, ctx),
             threadCount: thread?.numberOfReplies ?? 0,
             threadLastAt: thread === undefined ? undefined : ctx.date(thread.latestEventTimestamp),
+            previews: msg.content.kind === "text_content" ? previewCards(msg.ogPreviews) : [],
         },
     };
+}
+
+type KindBase = { id: string; time: string; deleted: false; reactions: GroupMessage["reactions"] };
+
+/**
+ * A message of a kind with its own bubble (media, voice, file); undefined for one shown as text.
+ * A voice message's playing state is the screen's, so it starts here at rest.
+ */
+function kindMessage(
+    msg: Message,
+    status: MessageStatus,
+    ctx: ConversationContext,
+    base: KindBase,
+): GroupMessage | undefined {
+    const content = msg.content;
+    // the bubble shows a failed send itself
+    const upload = status === "failed" ? { state: "failed" as const } : null;
+    if (isMedia(content)) {
+        const hidden = mediaHeld(content, msg.messageId, ctx.media);
+        return {
+            ...base,
+            ...mediaTile(content, hidden, ctx.media.url),
+            status: status === "failed" ? null : status,
+            upload,
+        };
+    }
+    switch (content.kind) {
+        case "audio_content":
+            return {
+                ...base,
+                kind: "voice",
+                levels: waveformLevels(content.samples),
+                progress: 0,
+                elapsed: formatClock(0),
+                total: formatClock(Number(content.durationMs) / 1000),
+            };
+        case "file_content":
+            return {
+                ...base,
+                kind: "file",
+                fileName: content.name,
+                size: formatFileSize(content.fileSize),
+                caption: content.caption ?? "",
+                upload,
+            };
+    }
+    return undefined;
 }
 
 /** How long until the next local day starts, so labels like "Today" can be redone then. */

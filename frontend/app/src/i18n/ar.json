@@ -2207,6 +2207,7 @@
     "removedBy": "قام {changedBy} بإزالة {changed} من {level}",
     "removeMemberFailed": "غير قادر على إزالة العضو",
     "removePreviewQuestion": "إزالة المعاينة؟",
+    "errorRemovingLinkPreview": "تعذّرت إزالة المعاينة",
     "renderPreviews": "معاينات الروابط التي يتم عرضها تلقائيًا",
     "reply": "رد",
     "replyPrivately": "الرد بشكل خاص",
