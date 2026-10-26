@@ -297,8 +297,9 @@ design export needs. Each entry says where it came up.
     (`WebhookDialogScreen`), saving through `saveWebhook` (only the name or avatar that changed,
     `webhookChanges`). A new webhook opens straight away in edit mode to show its URL, which holds
     its secret.
-  - a webhook can't be removed: neither `WebhookDialog` nor GroupPanel's row has a way to (the
-    old pages did). Its colour isn't stored: without a photo it gets its id's colour.
+  - by hand: `WebhookDialog` has Delete webhook in edit mode, with a confirm step, as the old
+    pages had remove; the design has no way to remove one.
+  - a webhook's colour isn't stored: without a photo it gets its id's colour.
   - no Stats page: the design's `GroupStats` shows the last 30 days, a 12-week series and the top
     senders, and the backend keeps only all-time counters (`metrics`). Showing those as the last
     30 days would mislead, so it waits on the data (see Community stats).

@@ -1,6 +1,6 @@
 <!-- Registering or editing a group's or channel's webhook (WebhookDialog): its name and avatar sent
      through saveWebhook (only what changed), and in edit mode its URL, which needs the secret
-     (getWebhook) and can be regenerated. A new webhook opens straight away in edit mode, to show
+     (getWebhook) and can be regenerated, or the webhook deleted. A new webhook opens straight away in edit mode, to show
      its URL. -->
 <script lang="ts">
     import {
@@ -13,6 +13,7 @@
     import WebhookDialog, {
         type WebhookSave,
     } from "@openchat/ui/src/features/components/WebhookDialog.svelte";
+    import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { AVATAR_SIZE, cropCentred } from "@src/utils/imageCrop";
     import { getContext, onMount, untrack } from "svelte";
@@ -46,7 +47,13 @@
         url = client.webhookUrl({ id: original.id, secret }, dialog.chatId) ?? "";
     });
 
-    const takenNames = $derived([...$selectedChatWebhooksStore.values()].map((w) => w.name));
+    // the others' names: the one being edited is left out by id, as a save renames it locally at
+    // once and the new name would read as taken while the save is in flight
+    const takenNames = $derived(
+        [...$selectedChatWebhooksStore.values()]
+            .filter((w) => w.id !== original?.id)
+            .map((w) => w.name),
+    );
 
     // the dialog keeps the form and says it couldn't save when these reject
     async function save(hook: WebhookSave) {
@@ -63,6 +70,13 @@
         // a new webhook's URL holds its secret: show it, as the old page did
         if (outcome.kind === "registered") {
             dialogs.open({ kind: "webhook", chatId: dialog.chatId, webhookId: outcome.webhook.id });
+        }
+    }
+
+    async function remove(hook: { id: string }) {
+        if (!(await client.deleteWebhook(dialog.chatId, hook.id))) {
+            toastStore.showFailureToast(i18nKey("webhook.removeFailed"));
+            throw new Error("not deleted");
         }
     }
 
@@ -88,6 +102,7 @@
         {takenNames}
         onSave={save}
         onRegenerate={original === undefined ? undefined : regenerate}
+        onDelete={original === undefined ? undefined : remove}
         onCancel={onClose}
     />
 {/if}
