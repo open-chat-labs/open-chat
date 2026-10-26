@@ -575,7 +575,7 @@
 </Section>
 
 <Section {...sec(features, 'features-group-dialogs')}>
-  {@render openers(['CreateGroupDialog', 'GroupSettingsDialog', 'NewChannelDialog', 'ConvertToCommunityDialog', 'ImportToCommunityDialog', 'UserGroupDialog', 'InviteDialog', 'WebhookDialog', 'BotDialog', 'LeaveGroupDialog', 'DeleteGroupDialog'])}
+  {@render openers(['CreateGroupDialog', 'GroupSettingsDialog', 'NewChannelDialog', 'ConvertToCommunityDialog', 'ImportToCommunityDialog', 'ManageDialog', 'UserGroupDialog', 'InviteDialog', 'WebhookDialog', 'BotDialog', 'LeaveGroupDialog', 'DeleteGroupDialog'])}
 </Section>
 
 <Section {...sec(features, 'features-rewards')}>

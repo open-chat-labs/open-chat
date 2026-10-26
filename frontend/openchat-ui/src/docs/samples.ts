@@ -542,6 +542,33 @@ export const samples: Record<string, Record<string, unknown>> = {
   },
   GroupPanel: groupPanel,
   DeleteGroupDialog: { onConfirm: () => wait(500) },
+  ManageDialog: {
+    title: 'Hikers',
+    subtitle: 'Public group · 1,204 members',
+    color: 'teal',
+    nav: [
+      {
+        label: 'ui.manageDialog.general',
+        items: [
+          { key: 'main', label: 'ui.manageDialog.overview', icon: 'main' },
+          { key: 'members', label: 'ui.manageDialog.members', icon: 'members' },
+          { key: 'invite', label: 'ui.manageDialog.invite', icon: 'invite' },
+          { key: 'rules', label: 'ui.manageDialog.rules', icon: 'rules' },
+        ],
+      },
+      {
+        label: 'ui.manageDialog.advanced',
+        items: [
+          { key: 'permissions', label: 'ui.manageDialog.permissions', icon: 'permissions' },
+          { key: 'gates', label: 'ui.manageDialog.gates', icon: 'gates' },
+        ],
+      },
+    ],
+    current: 'main',
+    onSelect: () => {},
+    danger: { kind: 'delete', noun: 'group', onPress: () => {} },
+    onClose: () => {},
+  },
   UserGroupDialog: {
     people: [
       { userId: 'u-alice', name: 'Alice Anderson', handle: '@alice_anderson', color: 'rose' },

@@ -174,7 +174,8 @@
                   isBot: them?.kind === "bot",
                   actions: chatMenuActions(chat, {
                       canLeave: chat.kind !== "direct_chat" && client.canLeaveGroup(chat.id),
-                      blocked: chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId),
+                      blocked:
+                          chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId),
                       isBot: them?.kind === "bot",
                   }),
                   unblockLabel: $_("unblockUser"),
@@ -218,7 +219,7 @@
                 break;
             case "invite":
                 if (chat.kind !== "direct_chat") {
-                    screen.dialogs.open({ kind: "invite", target: chat.id, tab: "people" });
+                    screen.dialogs.open({ kind: "manage", target: chat.id, section: "invite" });
                 }
                 break;
             case "block":
@@ -502,7 +503,8 @@
             onLeave={() => onMenu("leave")}
             openDetails={() => showInRightColumn(screen.rightColumn, { kind: "group_details" })}
             onTogglePanel={() => screen.rightColumn.toggle()}
-            panelOpen={screen.rightColumn.open} />
+            panelOpen={screen.rightColumn.open}
+        />
 
         {#if privatePreview}
             <div class="state">
@@ -510,7 +512,8 @@
                     preset="no-conversations"
                     title={$_("group.privateGroup", { values: { level: levelText } })}
                     body={$_("group.privateGroupInfo", { values: { level: levelText } })}
-                    actionLabel="" />
+                    actionLabel=""
+                />
             </div>
         {:else}
             <div class="messages">
@@ -524,7 +527,8 @@
                     maintainScroll
                     visible
                     bind:initialised
-                    viewportClass="conversation-list">
+                    viewportClass="conversation-list"
+                >
                     {#snippet row(item, args)}
                         {#if item.kind === "timeline_date"}
                             <div class="date">
@@ -548,7 +552,8 @@
                                     {#if content.kind === "text_content"}
                                         <Markdown
                                             text={content.text}
-                                            inline={!msg.blockLevelMarkdown} />
+                                            inline={!msg.blockLevelMarkdown}
+                                        />
                                     {/if}
                                 {/snippet}
                                 <div
@@ -559,7 +564,8 @@
                                     use:observeRead={{
                                         observer: args.messageObserver,
                                         read: args.isReadByMe($messagesRead, evt),
-                                    }}>
+                                    }}
+                                >
                                     {#if firstUnread === msg.messageIndex && msg.sender !== me}
                                         <div class="unread"><UnreadDivider /></div>
                                     {/if}
@@ -583,7 +589,8 @@
                                             body,
                                             content.kind === "text_content" &&
                                                 withMarkdown(content.text),
-                                        )} />
+                                        )}
+                                    />
                                 </div>
                             {:else if evt.event.kind === "aggregate_common_events"}
                                 {@const text = aggregateEventText(evt.event, eventCtx)}
@@ -600,13 +607,15 @@
                                             read:
                                                 deleted.length === 0 ||
                                                 args.isReadByMe($messagesRead, evt),
-                                        }}>
+                                        }}
+                                    >
                                         {#if text.joined !== undefined}
                                             <p class="event-line">
                                                 <Markdown
                                                     oneLine
                                                     suppressLinks
-                                                    text={text.joined} />
+                                                    text={text.joined}
+                                                />
                                             </p>
                                         {/if}
                                         {#if text.deleted !== undefined}
@@ -617,7 +626,8 @@
                                                     onclick={() =>
                                                         client.expandDeletedMessages(
                                                             new Set(deleted),
-                                                        )}>
+                                                        )}
+                                                >
                                                     {text.deleted}
                                                 </button>
                                             </p>
@@ -647,7 +657,8 @@
                                 <IconButton
                                     icon="arrow-down"
                                     label={$_("goToLatestMessage")}
-                                    onClick={scrollToLast} />
+                                    onClick={scrollToLast}
+                                />
                             </div>
                         {/if}
                     {/snippet}
@@ -668,7 +679,8 @@
                     localUpdates.draftMessages.setTextContent({ chatId: chat.id }, text)}
                 onStartTyping={() => client.startTyping(chat.id, me)}
                 onStopTyping={() => client.stopTyping(chat.id, me)}
-                onSend={(text) => send(chat, text)} />
+                onSend={(text) => send(chat, text)}
+            />
         {/key}
     </div>
 {/if}

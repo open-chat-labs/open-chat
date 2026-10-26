@@ -1,5 +1,6 @@
 import type { CommunityIdentifier, LeaveOrDelete, MultiUserChatIdentifier } from "@client";
 import type { DialogStack } from "../../shell/dialogStack.svelte";
+import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
 import type { Component } from "svelte";
 
@@ -36,21 +37,18 @@ export type LinkedDialog =
     | { kind: "leaderboard" };
 
 // someone's profile card, for a name clicked in a message; confirming leaving or deleting a chat or
-// community, called `name`; a group's, channel's or community's settings (its About page for
-// someone who can't edit it); inviting people to one, or sharing its link; or creating, editing or
-// deleting one of a community's user groups
+// community, called `name`; Manage for a group, channel or community (its settings, or its About
+// page for someone who can't edit it, and inviting people or sharing its link); or creating,
+// editing or deleting one of a community's user groups
 export type LocalDialog =
     | ({ kind: "user" } & ProfileCard)
     | { kind: "leave_or_delete"; action: LeaveOrDelete; name: string }
     | {
-          kind: "group_settings";
+          kind: "manage";
           target: MultiUserChatIdentifier | CommunityIdentifier;
-          tab: GroupSettingsTab;
-      }
-    | {
-          kind: "invite";
-          target: MultiUserChatIdentifier | CommunityIdentifier;
-          tab: "people" | "share";
+          section: ManageSection;
+          /** Invite & share's tab, when it opens there. */
+          inviteTab?: "people" | "share";
       }
     | {
           kind: "user_group";
@@ -103,12 +101,8 @@ export const dialogs: Dialogs = {
     // confirming leaving or deleting a group, channel, DM or community (4b)
     leave_or_delete: () => import("../chats/LeaveOrDeleteDialogScreen.svelte"),
 
-    // a group's, channel's or community's settings, or its About page (4b)
-    group_settings: () => import("../group/GroupSettingsDialogScreen.svelte"),
-
-    // inviting people to a group, channel or community, or adding community members to a
-    // channel, and its invite link (4b)
-    invite: () => import("../group/InviteDialogScreen.svelte"),
+    // Manage for a group, channel or community: its settings (or About page) and Invite & share (4b)
+    manage: () => import("../group/ManageDialogScreen.svelte"),
 
     // creating, editing or deleting a community's user group (4b)
     user_group: () => import("../group/UserGroupDialogScreen.svelte"),

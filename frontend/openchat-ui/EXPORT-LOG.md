@@ -312,3 +312,8 @@
 - The first step's Back (`onBack`) hands off with no exit (`DialogFlow.handOff`), so the dialog it goes back to keeps the backdrop.
 - `meta.json` updated (`DiamondDialog`'s props are `DiamondContent`'s, so its own list is empty; the docs sample gives its defaults).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — ManageDialog: new, by hand
+- Manage for a group, channel or community, built from the App prototype's Manage dialog (`_manageVals` and its template in `OpenChat App.dc.html`, 2026-10-21); the design export has no component for it. A 1040×760 card: a 250px nav (the chat's avatar, name and subtitle, an optional back arrow, groups of items with the design's icons, one danger action in the footer: Delete for the owner, Leave otherwise) and the host's page beside it as `children` (GroupSettingsDialog / InviteDialog / GroupPanel, each `embedded`, with their own title bar and close). `confirming` shows the design's "Discard changes?" over it (Keep editing / Discard); the host decides when. The veil and Esc call `onClose`; Esc keeps editing while confirming. Below 768px it fills the screen with a 200px nav (not designed).
+- `meta.json`, the docs' samples and the group dialogs section updated; strings under `ui.manageDialog`.
+- Not in the design export: to go back to it when the export has one (the app's `GAPS.md` lists it).

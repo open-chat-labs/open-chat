@@ -45,8 +45,7 @@
     import { latestMessagePreview } from "@src/logic/chats/latestMessagePreview";
     import { buildDisplayName } from "@src/utils/user";
 
-    let { region, context: screen }: ScreenProps<Extract<LeftRegion, { kind: "chats" }>> =
-        $props();
+    let { region, context: screen }: ScreenProps<Extract<LeftRegion, { kind: "chats" }>> = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -214,10 +213,10 @@
                 showInRightColumn(screen.rightColumn, { kind: "show_community_members" });
                 break;
             case "invite":
-                screen.dialogs.open({ kind: "invite", target: community.id, tab: "people" });
+                screen.dialogs.open({ kind: "manage", target: community.id, section: "invite" });
                 break;
             case "editCommunity":
-                screen.dialogs.open({ kind: "group_settings", target: community.id, tab: "group" });
+                screen.dialogs.open({ kind: "manage", target: community.id, section: "main" });
                 break;
             case "muteAll":
             case "muteAllEveryone":
@@ -246,9 +245,10 @@
         (scope.kind === "favourite" ? $_("communities.favourites") : undefined)}
     headerVisibility={community?.public === false ? "Private" : "Public"}
     headerMembers={community?.memberCount ?? 0}
-    headerMenuItems={headerMenuItems}
+    {headerMenuItems}
     {onHeaderMenu}
     searchable
     onSearch={(q) => (query = q)}
     threadsAction={() => navigate(withQueryStringFlag("threads"), "overlay")}
-    loading={!$chatsInitialisedStore} />
+    loading={!$chatsInitialisedStore}
+/>
