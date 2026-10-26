@@ -1,6 +1,7 @@
 <!-- Manage's Invite & share page: inviting people to a group, channel or community, adding
      community members to a private community's channel, and its invite link (InviteDialog,
-     embedded), on MemberManagement as the old invite pages were. People picked and not yet sent
+     embedded), on MemberManagement as the old invite pages were, and sharing the link to a chat
+     (SharePicker). People picked and not yet sent
      count as unsaved, so leaving the page asks first. The dialog says when invites went or failed; the app adds its own message when there
      is one to add (only some were added). -->
 <script lang="ts">
@@ -18,7 +19,10 @@
     import { MemberManagement, searchToInvite } from "@src/logic/members/memberManagement.svelte";
     import { toastStore } from "@src/stores/toast";
     import { getContext, onMount, untrack } from "svelte";
+    import { _ } from "svelte-i18n";
     import { invitePerson } from "./group.adapter";
+    import { sharedLinkText } from "../share/share.adapter";
+    import { SharePicker } from "../share/sharePicker.svelte";
 
     interface Props {
         target: MultiUserChat | CommunitySummary;
@@ -30,6 +34,36 @@
     let { target, tab, onDirtyChange, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
+
+    // the chats the invite link can be shared to (4d): sent there at once, the dialog staying open,
+    // as the picker has already shown the link and the message
+    // svelte-ignore state_referenced_locally
+    const sharePicker = new SharePicker(client, $_);
+    onMount(() => sharePicker.loadLastSeen());
+
+    async function shareToChat({
+        chatId,
+        message,
+        link,
+    }: {
+        chatId: string;
+        message: string;
+        link: string;
+    }): Promise<boolean> {
+        const id = sharePicker.chatId(chatId);
+        if (id === undefined) throw new Error("not a chat to share to");
+        const outcome = await client.sendMessage(
+            { chatId: id },
+            sharedLinkText(message, link),
+            false,
+            undefined,
+        );
+        // the user backing out of the rules or the PIN is nothing sent, with nothing to say; anything
+        // else not sent is a failure
+        if (outcome.kind === "posted") return true;
+        if (outcome.kind === "rules_declined" || outcome.kind === "pin_cancelled") return false;
+        throw new Error(`invite link not sent: ${outcome.kind}`);
+    }
 
     const community = $derived($selectedCommunitySummaryStore);
 
@@ -116,6 +150,8 @@
     shareLink={members.sharingLink}
     onShareToggle={switchable ? toggleLink : undefined}
     onResetLink={link?.kind === "enabled" ? resetLink : undefined}
+    chats={sharePicker.chats()}
+    filterChats={(query) => sharePicker.chats(query)}
+    onShareToChat={shareToChat}
     {onDirtyChange}
-    {onClose}
-/>
+    {onClose} />

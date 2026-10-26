@@ -383,8 +383,8 @@ design export needs. Each entry says where it came up.
   - Manage opens from a group's or channel's name (with the design's chevron and hint), the
     header menu's first item ("Manage group", or "Group details" without edit rights), the quick
     panel's cog, and the community header and its menu.
-  - the header menu follows the design's (`_chatMenu`) but has no Share to chat (the chat picker
-    is 4d) and no Report (no report flow yet); a DM keeps Delete chat, which the design leaves out.
+  - the header menu follows the design's (`_chatMenu`) but has no Share to chat (the picker is
+    built, 4d, but this item isn't wired to it yet) and no Report (no report flow yet); a DM keeps Delete chat, which the design leaves out.
     The community menu has no Stats or Add a bot until those pages land, and no longer mutes every channel (the community's About page does).
   - a channel's Manage has no back arrow to its community yet (the community has no Channels
     page).
@@ -467,8 +467,7 @@ design export needs. Each entry says where it came up.
     partial add ("group.addMembersPartialSuccess") and a failure's reason.
   - nobody is listed before you search; the old pages listed nobody either.
   - resetting the link doesn't ask first; the old pages did ("invite.confirmReset").
-  - no QR code, no "share to a chat" (the chat picker is 4d), and invited-but-not-joined people
-    aren't listed.
+  - no QR code, and invited-but-not-joined people aren't listed.
   - it opens for a private channel too (its Add tab) and for any member of a public chat (to
     share its link), as the old header menu did (`canOpenInvite`).
   - a failed invite or add shows two toasts: the dialog's "That didn't go through" and the app's
@@ -478,6 +477,23 @@ design export needs. Each entry says where it came up.
   - a public chat's link shows a switch locked on, and the warning that access gates are skipped
     for people joining by link. Switching a private link on takes a few seconds with nothing
     shown meanwhile.
+- **Chat picker** (4d #10115, `features/share`): `ChatPicker`, listing the chats the user can send
+  text in (`shareTargets` in `@client`, which both old pickers now use too), in the old pickers'
+  sections (favourites, direct chats, groups, each community's channels), searched by name or
+  @username, the open chat left out. A DM's line is its last seen, a group's its description or
+  size. Faces are the chat list's swatches (`swatchFor`), not uploaded avatars (see Swatches).
+  - `/share?title&text&url` opens it over the default page (`?share`): picking a chat opens it with
+    the shared text, after the user's message, in its draft, as the old trees do. Nothing is sent.
+  - Invite & share's "Share to chat" (in Manage) sends the link (and the message) to the chosen
+    chat at once and stays on the page. Backing out of the chat's rules or the PIN sends nothing
+    and says nothing; the picker stays open.
+  - by hand: `ChatPicker` takes `filter` (the host's search), `emptyLabel`, and each chat's `sub`
+    and `group` (the sections); `InviteDialog` takes `filterChats`, and its `onShareToChat` may
+    resolve `false`; `Avatar` exports `AVATAR_GRADIENTS` for the picker's faces.
+  - not yet: Receive's "Share to chat" (6b, with `SharePicker`), forward (5b), a daily puzzle
+    result (#10236). The picker has no recent chats order (the design's "Recent chats"): sections
+    are sorted by name, as the old pickers did.
+
 - **User groups** (4b part 3b): `UserGroupDialog` creates, edits and deletes a community's user
   groups from GroupPanel's user group views, for someone who may manage them
   (`canManageUserGroups`). The client sends an edit's members added and removed
@@ -625,8 +641,8 @@ design export needs. Each entry says where it came up.
   old modal showed no row (and none while they're still loading). A game this build can't draw
   is left out, and a link to a game that's off today opens no puzzle. The rail's puzzle dot shows
   while one is still to play. Not yet:
-  - sharing a result (the old "Share" button), which waits on the chat picker (4d), and the
-    result card in a chat (`DailyResultContent`), which waits on the message kinds;
+  - sharing a result (the old "Share" button) and the result card in a chat
+    (`DailyResultContent`), which wait on the message kinds (#10236);
   - the card's reminder and hide (its "⋯" menu has only "How to play", `?chit=howto`): the old UI
     has neither.
 - **Leaderboard** (`?hof`): this month's, last month's and all time's top 10, as the old hall of
