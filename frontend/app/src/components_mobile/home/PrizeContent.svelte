@@ -67,6 +67,7 @@
         edited?: boolean;
         isPreview?: boolean;
         blockLevelMarkdown?: boolean;
+        readonly?: boolean;
         onRemove?: () => void;
     }
 
@@ -82,6 +83,7 @@
         edited = false,
         isPreview = false,
         blockLevelMarkdown = false,
+        readonly = false,
         onRemove,
     }: Props = $props();
 
@@ -157,7 +159,7 @@
             content.streakOnly <= $chitStateStore.streak &&
             content.minChitEarned <= $chitStateStore.totalChitEarned,
     );
-    let disabled = $derived(finished || claimedByYou || allClaimed || !userEligible);
+    let disabled = $derived(readonly || finished || claimedByYou || allClaimed || !userEligible);
     let timeRemaining = $derived(
         finished
             ? $_("prizes.finished")

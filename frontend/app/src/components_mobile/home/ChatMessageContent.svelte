@@ -152,7 +152,13 @@
         text={i18nKey(failed ? "p2pSwap.failedToCreateMessage" : "p2pSwap.creatingYourMessage")}
         {failed} />
 {:else if content.kind === "prize_content"}
-    <PrizeContent chatId={messageContext.chatId} {messageId} {content} {me} {intersecting} />
+    <PrizeContent
+        chatId={messageContext.chatId}
+        {messageId}
+        {content}
+        {me}
+        {intersecting}
+        {readonly} />
 {:else if content.kind === "p2p_swap_content"}
     <P2PSwapContent
         {senderId}
