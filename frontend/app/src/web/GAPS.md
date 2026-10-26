@@ -300,7 +300,8 @@ design export needs. Each entry says where it came up.
     Chat / Community / Message. What's granted is exactly what's toggled on (`grantedFromDialog`);
     nothing is mapped onto the dialog's built-in eleven. Its summary sentence lists the app's
     labels.
-  - the bots to add are the first 20 the directory offers; there's no search in the page yet.
+  - the bots to add are the first 20 the directory offers (GroupPanel's search filters those);
+    with none installed and none to add, the page has no empty-state text for the owner.
   - Webhooks (a group's or channel's owner, `canManageWebhooks`): GroupPanel's bots view, its
     webhooks part, lists them; Register and a webhook's row open `WebhookDialog`
     (`WebhookDialogScreen`), saving through `saveWebhook` (only the name or avatar that changed,
