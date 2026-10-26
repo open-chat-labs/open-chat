@@ -652,7 +652,8 @@ design export needs. Each entry says where it came up.
   (`VoiceMessage` takes `levels` by hand: the design's bars are made up). Unlike the mobile app,
   the next voice message doesn't play when one ends, and the speed is one for the whole chat. A
   voice message's caption isn't shown and a failed one shows no failed state (`VoiceMessage` has
-  neither). A file shows its name, size and type and downloads under its own name. Neither has
+  neither). Neither shows a sent or delivered tick (`VoiceMessage` and `FileMessage` take no
+  status). A file shows its name, size and type and downloads under its own name. Neither has
   reactions, a quote, a thread or an edited mark yet.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so

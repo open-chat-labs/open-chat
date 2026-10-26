@@ -1,6 +1,7 @@
 import {
     formatClock,
     formatFileSize,
+    waveformLevels,
     type EventWrapper,
     type GiphyContent,
     type ImageContent,
@@ -260,7 +261,7 @@ function kindMessage(
             return {
                 ...base,
                 kind: "voice",
-                levels: Array.from(content.samples, (s) => s / 255),
+                levels: waveformLevels(content.samples),
                 progress: 0,
                 elapsed: formatClock(0),
                 total: formatClock(Number(content.durationMs) / 1000),

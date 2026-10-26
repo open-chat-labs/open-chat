@@ -28,7 +28,12 @@
         Row,
         type ColourVarKeys,
     } from "component-lib";
-    import { formatClock, type AudioContent, type TextContent as TextContentType } from "@client";
+    import {
+        formatClock,
+        waveformLevels,
+        type AudioContent,
+        type TextContent as TextContentType,
+    } from "@client";
     import { onMount, type Snippet } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import MicrophoneOutline from "svelte-material-icons/MicrophoneOutline.svelte";
@@ -82,7 +87,7 @@
         playing = wavesurfer?.isPlaying() ?? false;
     }
 
-    const precomputed = $derived(Array.from(content.samples, (s: number) => s / 255));
+    const precomputed = $derived(waveformLevels(content.samples));
 
     let wavesurfer = $state<WaveSurfer>();
 
