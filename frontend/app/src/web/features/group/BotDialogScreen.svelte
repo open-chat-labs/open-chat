@@ -6,7 +6,7 @@
     import {
         allUsersStore,
         anonUserStore,
-        definitionToPermissions,
+        permissionsToGrant,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
         selectedChatBotsStore,
@@ -70,7 +70,7 @@
         commands: bot.definition.commands.map((c) => ({
             name: `/${c.name}`,
             about: c.description ?? "",
-            needs: commandNeeds(c.permissions),
+            needs: commandNeeds(c.permissions, location),
         })),
         granted: installed === undefined ? undefined : grantedKeys(installed),
     });
@@ -89,7 +89,8 @@
 
     // the dialog stays open and says it failed when these reject
     async function save(choice: DialogInstall) {
-        const requested = definitionToPermissions(bot.definition);
+        // what it may ask for here: no community permissions outside a community
+        const requested = permissionsToGrant(bot.definition, location);
         const flow = new BotInstall(client, bot, location, installed);
         flow.grantedPermissions = grantedFromDialog(choice.granted, requested);
         const outcome = await flow.save();

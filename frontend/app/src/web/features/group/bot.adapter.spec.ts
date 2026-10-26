@@ -1,6 +1,6 @@
-import type { BotDefinition, GrantedBotPermissions } from "@client";
+import { definitionToPermissions, type BotDefinition, type GrantedBotPermissions } from "@client";
 import { describe, expect, test } from "vitest";
-import { botPermissions, grantedFromDialog, grantedKeys } from "./bot.adapter";
+import { botPermissions, commandNeeds, grantedFromDialog, grantedKeys } from "./bot.adapter";
 
 const definition = {
     kind: "bot_definition",
@@ -70,6 +70,23 @@ describe("a bot's permissions in BotDialog", () => {
             "command:chat:pinMessages": true,
             "autonomous:message:image": true,
         });
+    });
+
+    // a bot installed in a group gets no community permissions, whatever it asks for, even with
+    // every toggle the dialog shows switched on
+    test("grants no community permissions in a group", () => {
+        const { perms } = botPermissions(definition, group, labels);
+        const allOn = Object.fromEntries(perms.map((k) => [k, true]));
+
+        const granted = grantedFromDialog(allOn, definitionToPermissions(definition));
+
+        expect(granted.command.communityPermissions).toEqual([]);
+        expect(granted.autonomous?.communityPermissions).toEqual([]);
+        expect(granted.command.chatPermissions).toEqual(["pinMessages"]);
+        // nor does a community permission block a command there
+        expect(commandNeeds(definition.commands[0].permissions, group)).not.toContain(
+            "command:community:createPublicChannel",
+        );
     });
 
     test("asks for community permissions only in a community", () => {

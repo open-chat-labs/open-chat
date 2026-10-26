@@ -80,11 +80,15 @@ export function botPermissions(
     return { perms: permissions.map((p) => p.key), permissions };
 }
 
-/** A command's permissions, as the keys BotDialog greys it out by. */
-export function commandNeeds(permissions: ExternalBotPermissions): string[] {
-    return [...entries({ command: permissions, autonomous: undefined })].map(([u, s, n]) =>
-        key(u, s, n),
-    );
+/** A command's permissions here, as the keys BotDialog greys it out by: a group has no community
+ *  permissions to grant, so they don't block a command there. */
+export function commandNeeds(
+    permissions: ExternalBotPermissions,
+    location: BotInstallationLocation,
+): string[] {
+    return [...entries({ command: permissions, autonomous: undefined })]
+        .filter(([, scope]) => scope !== "community" || location.kind === "community")
+        .map(([u, s, n]) => key(u, s, n));
 }
 
 /**
