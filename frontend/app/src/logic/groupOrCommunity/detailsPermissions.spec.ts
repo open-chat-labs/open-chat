@@ -126,6 +126,19 @@ test("convert and import are offered for an owner's group only", () => {
     expect(offered(owner(true), group, true)).toEqual([false, false]);
 });
 
+// 4b invariant 7: a group's or channel's webhooks are its owner's (the client's predicate), not an
+// admin's who may edit the group
+test("webhooks are offered to the owner only", () => {
+    const admin = {
+        ...client({}),
+        canRegisterWebhook: () => false,
+    } as never as OpenChat;
+    expect(chatDetailsPermissions(admin, channel, community, false).canManageWebhooks).toBe(false);
+    expect(chatDetailsPermissions(client({}), channel, community, false).canManageWebhooks).toBe(
+        true,
+    );
+});
+
 describe("chat rules text", () => {
     // #10112 "Behaviours to keep": rules show only to someone who can send, combined with the community's
     test("shows the combined rules to someone who can send, and nothing to anyone else", () => {

@@ -255,6 +255,28 @@ describe("editing and creating a group", () => {
         });
     });
 
+    // 4b invariant 3: a webhook that can't be registered or updated says so in words
+    test("a failed webhook save says so", async () => {
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) =>
+            req.kind === "registerWebhook" || req.kind === "updateWebhook"
+                ? Promise.reject(new Error("offline"))
+                : new Promise(() => {})) as never);
+        const webhook = { id: "w", name: "alerts" };
+
+        for (const outcome of [
+            await client.saveWebhook(original.id, undefined, "alerts", undefined),
+            await client.saveWebhook(original.id, webhook, "pings", undefined),
+        ]) {
+            expect(outcome.kind).toBe("failed");
+            if (outcome.kind === "failed") {
+                expect(english(outcome.message.key)).toEqual(expect.any(String));
+            }
+        }
+        expect(await client.saveWebhook(original.id, webhook, "alerts", undefined)).toEqual({
+            kind: "unchanged",
+        });
+    });
+
     // a failed save showed the bare key "failure", which has no words
     test("a failed update says so in words", () => {
         for (const kind of ["failure", "error"] as const) {
