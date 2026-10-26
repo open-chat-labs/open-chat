@@ -1,6 +1,6 @@
 use crate::bot_tests::register_bot;
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::{now_nanos, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE};
@@ -13,7 +13,7 @@ use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent, ChatType,
-    MessagePermission, TextContent,
+    CryptoContent, CryptoTransaction, MessageContentInitial, MessagePermission, PendingCryptoTransaction, TextContent,
 };
 
 #[test]
@@ -319,7 +319,7 @@ fn tip_from_own_account_is_rejected() {
 
 #[test_case(ChatType::Group)]
 #[test_case(ChatType::Channel)]
-fn tipping_a_bots_message_is_refused(chat_type: ChatType) {
+fn a_bot_cant_be_tipped_or_sent_crypto(chat_type: ChatType) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -410,6 +410,74 @@ fn tipping_a_bots_message_is_refused(chat_type: ChatType) {
         matches!(&response, multi_user_canister::tip_message::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "{response:?}"
     );
+
+    // Nor can it be sent crypto
+    let content = MessageContentInitial::Crypto(CryptoContent {
+        recipient: bot_id,
+        transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
+            ledger: canister_ids.icp_ledger,
+            fee: ICP_TRANSFER_FEE,
+            token_symbol: ICP_SYMBOL.to_string(),
+            amount: 1_0000_0000,
+            to: bot_id.as_principal().into(),
+            memo: None,
+            created: now_nanos(env),
+        })),
+        caption: None,
+    });
+    let error = match chat {
+        Chat::Group(group_id) => match client::group::send_message_with_transfer(
+            env,
+            &user1,
+            group_id,
+            group_canister::send_message_v2::Args {
+                thread_root_message_index: None,
+                message_id: random_from_u128(),
+                content,
+                sender_name: user1.username(),
+                sender_display_name: None,
+                replies_to: None,
+                mentioned: Vec::new(),
+                forwarding: false,
+                block_level_markdown: false,
+                rules_accepted: None,
+                message_filter_failed: None,
+                new_achievement: false,
+                og_previews: Vec::new(),
+            },
+        ) {
+            group_canister::send_message_v2::Response::Error(error) => error,
+            response => panic!("{response:?}"),
+        },
+        Chat::Channel(community_id, channel_id) => match client::community::send_message_with_transfer(
+            env,
+            &user1,
+            community_id,
+            community_canister::send_message::Args {
+                channel_id,
+                thread_root_message_index: None,
+                message_id: random_from_u128(),
+                content,
+                sender_name: user1.username(),
+                sender_display_name: None,
+                replies_to: None,
+                mentioned: Vec::new(),
+                forwarding: false,
+                block_level_markdown: false,
+                community_rules_accepted: None,
+                channel_rules_accepted: None,
+                message_filter_failed: None,
+                new_achievement: false,
+                og_previews: Vec::new(),
+            },
+        ) {
+            community_canister::send_message::Response::Error(error) => error,
+            response => panic!("{response:?}"),
+        },
+        Chat::Direct(_) => unreachable!(),
+    };
+    assert!(error.matches_code(OCErrorCode::InvalidRequest), "{error:?}");
+
     assert_eq!(
         client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, bot_id.as_principal()),
         0
