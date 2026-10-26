@@ -1,11 +1,11 @@
 <script lang="ts">
-    import Panzoom from "@panzoom/panzoom";
     import { IconButton, doubleTap } from "component-lib";
     import type { ImageContent, MemeFighterContent } from "@client";
     import { onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { popHistoryStateWithAction, pushDummyHistoryState } from "../../utils/history";
     import { getProxyAdjustedBlobUrl } from "../../utils/media";
+    import { zoomImage, type ImageZoom } from "@src/core/zoom";
 
     // TODO add reactions, forward, reply and other menu and conversation options to this screen!
 
@@ -24,38 +24,14 @@
     let container: HTMLDivElement;
     let imageWidth = $state(0);
     let imageHeight = $state(0);
-    let panzoomInstance: ReturnType<typeof Panzoom>;
-
-    const DEFAULT_SCALE = 1;
-    const SCALE_EPSILON = 0.02;
+    let zoom: ImageZoom;
 
     onMount(() => {
-        panzoomInstance = Panzoom(container, {
-            minScale: 1,
-            maxScale: 5,
-            animate: true,
-            duration: 200,
-            easing: "cubic-bezier(0.25, 0.1, 0.25, 1)",
-            zoomOnPointer: true, // zoom toward cursor/fingers
-            touchAction: "none",
-            pinchAndPan: true,
-            smooth: true,
-        });
-
-        const onPanzoomEnd = () => {
-            const currentScale = panzoomInstance.getScale();
-            if (currentScale <= DEFAULT_SCALE + SCALE_EPSILON && imageHeight <= window.innerHeight) {
-                panzoomInstance.reset({ animate: true });
-            } else {
-                snapToClosestEdge(currentScale);
-            }
-        };
-        container.addEventListener("panzoomend", onPanzoomEnd);
+        zoom = zoomImage(container, () => ({ width: imageWidth, height: imageHeight }));
 
         pushDummyHistoryState("zoomed_image_state");
         return () => {
-            container.removeEventListener("panzoomend", onPanzoomEnd);
-            panzoomInstance.destroy();
+            zoom.destroy();
             // This will try and pop the history state, if it's still there!
             popHistoryStateWithAction("zoomed_image_state");
         };
@@ -63,7 +39,7 @@
 
     $effect(() => {
         if (imageHeight > 0 && imageHeight < window.innerHeight) {
-            panzoomInstance.setOptions({ panOnlyWhenZoomed: true });
+            zoom.panOnlyWhenZoomed();
         }
     });
 
@@ -86,58 +62,8 @@
         }
     }
 
-    // Finds the closest edge to snap to, if there is space on any side of the
-    // image we're paning/zooming!
-    function snapToClosestEdge(scale: number) {
-        const rect = container.getBoundingClientRect();
-
-        const spaceLeft = rect.x;
-        const spaceRight = imageWidth - rect.x - rect.width;
-
-        const spaceTop = rect.y;
-        const spaceBottom = window.innerHeight - rect.y - rect.height;
-
-        let snapXBy = 0;
-        let snapYBy = 0;
-
-        // Snap to left
-        if (spaceLeft > 0 && spaceRight < 0) {
-            snapXBy = -spaceLeft;
-        }
-        // Snap to right
-        else if (spaceLeft < 0 && spaceRight > 0) {
-            snapXBy = spaceRight;
-        }
-
-        // Snap to top or bottom depending on how much the image is paned outside
-        // the viewport, compared to how much space there is to the edge on the
-        // oposite side. Abs values for spaces are also taken into account since
-        // their relationship determines how the image must pan.
-        if (spaceTop > 0 && spaceBottom < 0) {
-            snapYBy = spaceTop > Math.abs(spaceBottom) ? spaceBottom : -spaceTop;
-        }
-        // Snap to bottom
-        else if (spaceTop < 0 && spaceBottom > 0) {
-            // Is there more space to bottom than the image overflows above tells
-            // us to move to the top, otherwise move to the bottom.
-            snapYBy = Math.abs(spaceTop) < spaceBottom ? Math.abs(spaceTop) : spaceBottom;
-        }
-
-        if (snapXBy || snapYBy) {
-            panzoomInstance.pan(snapXBy / scale, snapYBy / scale, {
-                animate: true,
-                relative: true,
-            });
-        }
-    }
-
     function onDoubleTap() {
-        const currentScale = panzoomInstance.getScale();
-        if (currentScale <= DEFAULT_SCALE + SCALE_EPSILON) {
-            panzoomInstance.zoom(2.5, { animate: true });
-        } else {
-            panzoomInstance.reset({ animate: true });
-        }
+        zoom.toggle();
     }
 </script>
 
