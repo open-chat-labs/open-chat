@@ -181,6 +181,9 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     // The ledger refusing an external wallet's approval because the account the user picked
     // doesn't hold enough (#32090). The payment form shows the failure; any other refusal reports.
     /^approval failed: insufficientfunds\b/i,
+    // ICRC-25's "Action aborted" (code 3001): the user turned the request down in their wallet
+    // (#32125). The payment form shows the failure; other signer errors still report.
+    /^action aborted$/i,
 ];
 
 function errorName(error: unknown): string {

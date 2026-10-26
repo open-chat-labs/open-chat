@@ -308,6 +308,17 @@ describe("shouldReportError", () => {
         expect(shouldReportError(new Error("Approval failed: TemporarilyUnavailable"))).toBe(true);
     });
 
+    test("silences a user turning down an external wallet request (#32125)", () => {
+        expect(shouldReportError({ name: "SignerError", message: "Action aborted" })).toBe(false);
+    });
+
+    test("still reports any other signer error (#32125)", () => {
+        expect(
+            shouldReportError({ name: "SignerError", message: "Permission not granted" }),
+        ).toBe(true);
+        expect(shouldReportError(new Error("Action aborted: wallet unreachable"))).toBe(true);
+    });
+
     // Rollbar files it under the message after "because of: ", so both forms
     test("silences Chrome's IndexedDB closing as site data is cleared (#29538)", () => {
         const message = "Connection is closing because of: Force close delete origin";
