@@ -342,6 +342,7 @@ design export needs. Each entry says where it came up.
     sign in, but the community isn't started after signing in (the old Home did that; 10a).
   - by hand: `CreateGroupDialog`'s community defaults are all admin (the app's and the backend's),
     and a community shows no message permissions or Messages / Threads tabs.
+  - by hand: the form is locked (inert, dimmed) while the create is in flight.
   - the invite list starts empty: people are found by searching (no frequent contacts).
   - Explore's create (8a) isn't wired.
   - a failed community create (e.g. the 10-community limit) says only "Sorry we were unable to
