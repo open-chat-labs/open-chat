@@ -149,7 +149,7 @@
 
   function defaultPerms(community: boolean): Perms {
     const o: Perms = { general: {}, messages: { default: 'member' }, threads: { default: 'member' } };
-    PERMS.forEach((p) => (o.general[p.key] = permDef(p, community)));
+    PERMS.forEach((p) => (o.general[p.key] = (community && communityDefaults?.[p.key]) || permDef(p, community)));
     CONTENT.forEach((c) => {
       o.messages[c.key] = INHERIT;
       o.threads[c.key] = INHERIT;
@@ -189,6 +189,8 @@
     /** Communities: the language picked at first, e.g. the user's locale. */
     defaultLanguage?: string;
     /** Create it. The dialog closes when this resolves; a rejection keeps it open with an error. */
+    /** Communities: the host's default general permissions, in place of the built-in ones (which are all admin). */
+    communityDefaults?: Record<string, GroupRole>;
     onCreate?: (group: CreateGroupResult) => Promise<unknown> | void;
     onCancel?: () => void;
   }
@@ -208,6 +210,7 @@
     checkName,
     languages: languagesProp,
     defaultLanguage = 'en',
+    communityDefaults,
     onCreate,
     onCancel,
   }: Props = $props();
@@ -358,7 +361,7 @@
   const gatesOk = $derived(gates?.complete !== false);
   const gatesBad = $derived(!gatesOk && submitted);
   const permList = $derived(PERMS.filter((x) => (!x.only || x.only === kind) && !(isComm && x.notCommunity)));
-  const generalChanged = $derived(permList.filter((p) => perms.general[p.key] !== permDef(p, isComm)).length);
+  const generalChanged = $derived(permList.filter((p) => perms.general[p.key] !== ((isComm && communityDefaults?.[p.key]) || permDef(p, isComm))).length);
   const msgExceptions = $derived(CONTENT.filter((c) => perms.messages[c.key] !== INHERIT).length);
   const thrExceptions = $derived(CONTENT.filter((c) => perms.threads[c.key] !== INHERIT).length);
   const msgChanged = $derived(generalChanged + msgExceptions + (perms.messages.default !== 'member' ? 1 : 0));

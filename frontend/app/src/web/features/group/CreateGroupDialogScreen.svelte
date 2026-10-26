@@ -23,6 +23,7 @@
     import {
         MAX_NAME_LENGTH as MAX_COMMUNITY_NAME,
         MIN_NAME_LENGTH as MIN_COMMUNITY_NAME,
+        newCommunity,
         UpdateCommunityState,
     } from "@src/logic/groupOrCommunity/community.svelte";
     import {
@@ -38,7 +39,11 @@
     import { gateAssets } from "../access/gates.adapter";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
     import { invitePerson } from "./group.adapter";
-    import { candidateCommunityFromCreate, candidateFromCreate } from "./settings.adapter";
+    import {
+        candidateCommunityFromCreate,
+        candidateFromCreate,
+        communityPermissionsValue,
+    } from "./settings.adapter";
 
     let { dialog, onClose }: DialogProps<Extract<LocalDialog, { kind: "create_group" }>> = $props();
 
@@ -152,6 +157,7 @@
     gateTokens={assets.tokens}
     gateSystems={assets.nervousSystems}
     defaultLanguage={$locale ?? "en"}
+    communityDefaults={communityPermissionsValue(newCommunity().permissions).general}
     {checkName}
     onCreate={create}
     onCancel={onClose}

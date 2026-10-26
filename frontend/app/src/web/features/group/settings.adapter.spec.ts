@@ -15,8 +15,10 @@ import { durationMs } from "@openchat/ui/src/features/components/GroupSettingsDi
 import type { CreateGroupResult, GroupSettings } from "@openchat/ui/src/lib/types";
 import { describe, expect, test } from "vitest";
 import type { GateLookups } from "../access/gates.adapter";
+import { newCommunity } from "@src/logic/groupOrCommunity/community.svelte";
 import {
     candidateCommunityFromCreate,
+    communityPermissionsValue,
     candidateCommunityFromSettings,
     candidateFromCreate,
     candidateFromSettings,
@@ -320,4 +322,14 @@ describe("a community created from CreateGroupDialog", () => {
         expect(created.community.permissions.inviteUsers).toBe(ROLE_MEMBER);
         expect(created.rules).toMatchObject({ enabled: true, text: "Be kind" });
     });
+});
+
+// who can run a new community: CreateGroupDialog starts from the app's community permissions, all
+// admin as the backend's are (the dialog's own defaults let every member invite)
+test("a new community's permissions start as the app's: all admin", () => {
+    const general = communityPermissionsValue(newCommunity().permissions).general;
+    expect(Object.values(general).every((role) => role === "admin")).toBe(true);
+    expect(Object.keys(general).sort()).toEqual(
+        ["edit", "invite", "privChannels", "pubChannels", "remove", "roles", "userGroups"].sort(),
+    );
 });

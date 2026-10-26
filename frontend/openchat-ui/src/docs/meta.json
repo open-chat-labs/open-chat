@@ -8434,6 +8434,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "communityDefaults",
+        "type": "Record<string, GroupRole>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Communities: the host's default general permissions, in place of the built-in ones (which are all admin)."
       }
     ],
     "group": "features"

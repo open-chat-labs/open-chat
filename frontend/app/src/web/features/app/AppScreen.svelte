@@ -70,7 +70,8 @@
     // the dialogs the app opens itself, shown by DialogHost with the ones the URL opens
     const dialogStack = new DialogStack<LocalDialog>();
 
-    // a guest signs in first and creates it after; only Diamond members can create one
+    // only Diamond members can create one; a guest is sent to sign in (the community isn't started
+    // after, GAPS.md)
     function createCommunity() {
         switch (startCommunityCreation(client)) {
             case "ready":
