@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Stop reading the user id migration events, which no canister sends any more ([#10257](https://github.com/open-chat-labs/open-chat/pull/10257))
+
+## [[2.0.2189](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2189-local_user_index)] - 2026-10-26
+
 ### Added
 
 - Store map of linked Discord/Telegram accounts, so tips on them can be routed to the linked OpenChat user's account ([#10210](https://github.com/open-chat-labs/open-chat/pull/10210))
