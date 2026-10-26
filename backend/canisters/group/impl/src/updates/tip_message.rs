@@ -49,11 +49,12 @@ async fn tip_message_impl(args: Args) -> OCResult {
         // A sender who has left is no longer held among the members, so the wallet to pay them in
         // is looked up from the LocalUserIndex, then everything is checked again
         PrepareResult::LookUpWallet(recipient, local_user_index) => {
-            let wallet = local_user_index_canister_c2c_client::lookup_user(recipient.as_principal(), local_user_index)
-                .await?
-                .ok_or(OCErrorCode::TargetUserNotFound)?
-                .principal
-                .into();
+            let wallet =
+                match local_user_index_canister_c2c_client::lookup_user(recipient.as_principal(), local_user_index).await? {
+                    // The lookup also resolves the principal a user signs in with, which isn't their user id
+                    Some(found) if found.user_id == recipient => found.principal.into(),
+                    _ => return Err(OCErrorCode::TargetUserNotFound.into()),
+                };
             mutate_state(|state| prepare(&args, user.user_id, caller, None, Some((recipient, wallet)), state))?
         }
         prepared => prepared,
