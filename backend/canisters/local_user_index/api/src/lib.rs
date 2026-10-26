@@ -88,9 +88,6 @@ pub enum GroupOrCommunityEvent<T = UserNotificationPayload> {
     Notification(Box<Notification<T>>),
     MessageClassifyRequest(Box<ClassifyMessageRequest>),
     MediaScanRequest(Box<types::MediaScanRequest>),
-    // Whether the canister has finished replacing the ids users had before being migrated to
-    // MultiUser canisters with their latest ids, sent each time that changes
-    UserIdMigrationComplete(bool),
     // Relayed to the GroupIndex with the sender's id
     GroupActive(GroupActive),
     CommunityActive(CommunityActive),
@@ -445,17 +442,6 @@ pub enum UserEvent<T = UserNotificationPayload> {
     SetMaxStreak(u16),
     EventStoreEvent(Event),
     Notification(Box<Notification<T>>),
-    // Whether the MultiUser canister has finished replacing the ids users had before being migrated
-    // with their latest ids, sent each time that changes. This is about the canister rather than one
-    // of its users, so is sent naming the canister's own id.
-    UserIdMigrationComplete(bool),
-}
-
-impl<T> UserEvent<T> {
-    // Whether the event is about the MultiUser canister itself rather than one of its users
-    pub fn is_about_canister(&self) -> bool {
-        matches!(self, UserEvent::UserIdMigrationComplete(_))
-    }
 }
 
 // An event along with the user it is from, as taken by `c2c_user`. A MultiUser canister

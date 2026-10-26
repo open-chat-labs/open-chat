@@ -8,14 +8,6 @@ pub fn caller_is_openchat_user() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_multi_user_canister() -> Result<(), String> {
-    if read_state(|state| state.is_caller_multi_user_canister()) {
-        Ok(())
-    } else {
-        Err("Caller is not a MultiUser canister".to_string())
-    }
-}
-
 pub fn caller_is_governance_principal() -> Result<(), String> {
     if read_state(|state| state.is_caller_governance_principal()) {
         Ok(())
