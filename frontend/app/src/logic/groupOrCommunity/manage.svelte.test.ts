@@ -62,6 +62,7 @@ describe("Manage's pages", () => {
                 canManageUserGroups: false,
                 canConvert: false,
                 canImport: false,
+                canManageWebhooks: false,
             }),
         ).toEqual(["main:about", "members:members", "rules:rules", "gates:gates"]);
         expect(
@@ -72,6 +73,7 @@ describe("Manage's pages", () => {
                 canManageUserGroups: true,
                 canConvert: true,
                 canImport: true,
+                canManageWebhooks: true,
             }),
         ).toEqual([
             "main:overview",
@@ -82,6 +84,7 @@ describe("Manage's pages", () => {
             "rules:rules",
             "permissions:permissions",
             "gates:gates",
+            "webhooks:webhooks",
             "action:convert",
             "action:import",
         ]);
@@ -93,6 +96,7 @@ describe("Manage's pages", () => {
             canOpenInvite: false,
             community: false,
             canManageUserGroups: false,
+            canManageWebhooks: false,
         };
         expect(sections({ ...base, canConvert: true, canImport: false })).toContain(
             "action:convert",

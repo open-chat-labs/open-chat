@@ -2710,7 +2710,10 @@
         "updateTitle": "Aktualizacja {name}",
         "urlLabel": "Adres URL webhooka",
         "username": "hak internetowy",
-        "viewEditAction": "Wyświetl/edytuj szczegóły webhooka"
+        "viewEditAction": "Wyświetl/edytuj szczegóły webhooka",
+        "registerFailed": "Niestety nie udało się zarejestrować webhooka",
+        "updateFailed": "Niestety nie udało się zaktualizować webhooka",
+        "regenerateFailed": "Niestety nie udało się wygenerować nowego adresu URL webhooka"
     },
     "websiteVersion": "strony internetowej",
     "weeks": "Tygodnie",

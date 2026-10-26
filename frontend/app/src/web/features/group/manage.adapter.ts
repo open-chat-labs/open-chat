@@ -12,6 +12,7 @@ const LABEL: Record<ManageNavLabel, string> = {
     invite: "ui.manageDialog.invite",
     channels: "ui.manageDialog.channels",
     userGroups: "ui.manageDialog.userGroups",
+    webhooks: "ui.manageDialog.webhooks",
     rules: "ui.manageDialog.rules",
     permissions: "ui.manageDialog.permissions",
     gates: "ui.manageDialog.gates",

@@ -21,6 +21,8 @@ export type DetailsPermissions = {
     /** A group's owner can convert it to a community, or import it into one they own. */
     canConvert: boolean;
     canImport: boolean;
+    /** A group's or channel's webhooks, for its owner. */
+    canManageWebhooks: boolean;
 };
 
 const nothing: DetailsPermissions = {
@@ -31,6 +33,7 @@ const nothing: DetailsPermissions = {
     canManageUserGroups: false,
     canConvert: false,
     canImport: false,
+    canManageWebhooks: false,
 };
 
 /**
@@ -57,6 +60,7 @@ export function chatDetailsPermissions(
         canManageUserGroups: false,
         canConvert: chat.kind === "group_chat" && client.canConvertGroupToCommunity(chat.id),
         canImport: chat.kind === "group_chat" && client.canImportToCommunity(chat.id),
+        canManageWebhooks: client.canRegisterWebhook(chat.id),
     };
 }
 
@@ -75,6 +79,7 @@ export function communityDetailsPermissions(
         canManageUserGroups: client.canManageUserGroups(community.id),
         canConvert: false,
         canImport: false,
+        canManageWebhooks: false,
     };
 }
 

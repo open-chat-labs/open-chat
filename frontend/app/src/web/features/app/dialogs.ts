@@ -61,6 +61,12 @@ export type LocalDialog =
       }
     | { kind: "create_group"; level: "group" | "community" }
     | { kind: "convert_group"; chatId: GroupChatIdentifier }
+    | {
+          kind: "webhook";
+          chatId: MultiUserChatIdentifier;
+          /** The webhook to edit; none registers one. */
+          webhookId?: string;
+      }
     | { kind: "import_group"; chatId: GroupChatIdentifier }
     | {
           kind: "new_channel";
@@ -125,6 +131,9 @@ export const dialogs: Dialogs = {
     // converting a group to a community, or importing it into one you own (4b)
     convert_group: () => import("../group/ConvertGroupDialogScreen.svelte"),
     import_group: () => import("../group/ImportGroupDialogScreen.svelte"),
+
+    // registering or editing a group's or channel's webhook (4b)
+    webhook: () => import("../group/WebhookDialogScreen.svelte"),
 
     // a new group or community (4b)
     create_group: () => import("../group/CreateGroupDialogScreen.svelte"),

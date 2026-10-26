@@ -12,7 +12,8 @@ export type ManageSection =
     | "invite"
     | "members"
     | "channels"
-    | "usergroups";
+    | "usergroups"
+    | "webhooks";
 
 const FORM: readonly ManageSection[] = ["main", "gates", "rules", "permissions"];
 
@@ -35,7 +36,8 @@ export type ManageNavLabel =
     | "userGroups"
     | "rules"
     | "permissions"
-    | "gates";
+    | "gates"
+    | "webhooks";
 export type ManageNavGroup = { label: "general" | "advanced"; items: ManageNavItem[] };
 
 export type ManageNavInput = {
@@ -48,6 +50,8 @@ export type ManageNavInput = {
     /** A group's owner can convert it to a community, or import it into one they own. */
     canConvert: boolean;
     canImport: boolean;
+    /** A group's or channel's webhooks, for its owner. */
+    canManageWebhooks: boolean;
 };
 
 /**
@@ -62,6 +66,7 @@ export function manageNav({
     canManageUserGroups,
     canConvert,
     canImport,
+    canManageWebhooks,
 }: ManageNavInput): ManageNavGroup[] {
     const edit = access.kind === "edit";
     const general: ManageNavItem[] = [
@@ -77,6 +82,9 @@ export function manageNav({
     const advanced: ManageNavItem[] = [
         ...(edit ? [{ section: "permissions" as const, label: "permissions" as const }] : []),
         { section: "gates", label: "gates" },
+        ...(canManageWebhooks
+            ? [{ section: "webhooks" as const, label: "webhooks" as const }]
+            : []),
         ...(canConvert ? [{ action: "convert" as const, label: "convert" as const }] : []),
         ...(canImport ? [{ action: "import" as const, label: "import" as const }] : []),
     ];

@@ -32,6 +32,7 @@ function client(frozen: { chat?: boolean; community?: boolean }, privateChat = f
         canManageUserGroups: () => true,
         canConvertGroupToCommunity: () => true,
         canImportToCommunity: () => true,
+        canRegisterWebhook: () => true,
     } as never as OpenChat;
 }
 
@@ -44,8 +45,16 @@ const all = {
     canManageUserGroups: false,
     canConvert: false,
     canImport: false,
+    canManageWebhooks: true,
 };
-const none = { ...all, canEdit: false, canDelete: false, canInvite: false, canOpenInvite: false };
+const none = {
+    ...all,
+    canEdit: false,
+    canDelete: false,
+    canInvite: false,
+    canOpenInvite: false,
+    canManageWebhooks: false,
+};
 
 describe("details permissions", () => {
     // #10112 "Desktop vs mobile": a frozen chat or community, and a guest, get no edit, delete or invite
@@ -61,6 +70,7 @@ describe("details permissions", () => {
         expect(communityDetailsPermissions(client({}), community, false)).toEqual({
             ...all,
             canManageUserGroups: true,
+            canManageWebhooks: false,
         });
         expect(communityDetailsPermissions(client({ community: true }), community, false)).toEqual(
             none,
