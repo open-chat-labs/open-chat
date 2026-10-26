@@ -21,7 +21,7 @@ fn c2c_user_impl(args: ArgsInternal, state: &mut RuntimeState) -> Response {
     let now = LazyCell::new(now_millis);
     for event in args.events {
         let user_id = event.value.user_id;
-        if !is_valid_event_for_caller(user_id, &event.value.event, caller) {
+        if !is_valid_user_for_caller(user_id, caller) {
             continue;
         }
         if state
@@ -33,16 +33,6 @@ fn c2c_user_impl(args: ArgsInternal, state: &mut RuntimeState) -> Response {
         }
     }
     Response::Success
-}
-
-// An event about the calling MultiUser canister itself must name the canister, and any other must
-// name one of the users it hosts
-fn is_valid_event_for_caller<T>(user_id: UserId, event: &UserEvent<T>, caller: candid::Principal) -> bool {
-    if event.is_about_canister() {
-        user_id == UserId::from(caller)
-    } else {
-        is_valid_user_for_caller(user_id, caller)
-    }
 }
 
 // A user hosted by the calling MultiUser canister carries a non-zero index, which rules out the
@@ -112,9 +102,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);
         }
         UserEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
-        // No longer sent, but still read until every MultiUser canister is on a version which doesn't
-        // send it
-        UserEvent::UserIdMigrationComplete(_) => {}
         UserEvent::Notification(mut notification) => {
             if let Notification::Bot(bot_notification) = &mut *notification
                 && let BotEvent::Lifecycle(BotLifecycleEvent::Installed(event)) = &bot_notification.event
@@ -150,23 +137,12 @@ mod tests {
     use candid::Principal;
 
     #[test]
-    fn events_about_the_canister_must_name_it_and_others_one_of_its_users() {
+    fn events_must_name_one_of_the_callers_users() {
         let canister = Principal::from_text("yaxqu-oqaaa-aaaaf-br7ya-cai").unwrap();
         let other_canister = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
-        let its_user = UserId::new_indexed(canister, 1);
-        let about_canister = UserEvent::<()>::UserIdMigrationComplete(true);
-        let about_user = UserEvent::<()>::SetMaxStreak(1);
 
-        assert!(is_valid_event_for_caller(canister.into(), &about_canister, canister));
-        assert!(!is_valid_event_for_caller(its_user, &about_canister, canister));
-        assert!(!is_valid_event_for_caller(other_canister.into(), &about_canister, canister));
-
-        assert!(is_valid_event_for_caller(its_user, &about_user, canister));
-        assert!(!is_valid_event_for_caller(canister.into(), &about_user, canister));
-        assert!(!is_valid_event_for_caller(
-            UserId::new_indexed(other_canister, 1),
-            &about_user,
-            canister
-        ));
+        assert!(is_valid_user_for_caller(UserId::new_indexed(canister, 1), canister));
+        assert!(!is_valid_user_for_caller(canister.into(), canister));
+        assert!(!is_valid_user_for_caller(UserId::new_indexed(other_canister, 1), canister));
     }
 }

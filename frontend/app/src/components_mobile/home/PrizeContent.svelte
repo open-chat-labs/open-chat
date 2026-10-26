@@ -15,13 +15,16 @@
         Subtitle,
     } from "component-lib";
     import {
+        allChatsStore,
         AuthProvider,
         chitBands,
         chitStateStore,
+        communitiesStore,
         cryptoLookup,
         enhancedCryptoLookup,
         isDiamondStore,
         isLifetimeDiamondStore,
+        isPreviewingOrLapsed,
         type ChatIdentifier,
         type DiamondMembershipStatus,
         type OpenChat,
@@ -157,7 +160,14 @@
             content.streakOnly <= $chitStateStore.streak &&
             content.minChitEarned <= $chitStateStore.totalChitEarned,
     );
-    let disabled = $derived(finished || claimedByYou || allClaimed || !userEligible);
+    // Read from the stores so the button enables as soon as the user joins or rejoins
+    let previewingOrLapsed = $derived.by(() => {
+        const chat = chatId !== undefined ? $allChatsStore.get(chatId) : undefined;
+        return chat !== undefined && isPreviewingOrLapsed(chat, $communitiesStore);
+    });
+    let disabled = $derived(
+        previewingOrLapsed || finished || claimedByYou || allClaimed || !userEligible,
+    );
     let timeRemaining = $derived(
         finished
             ? $_("prizes.finished")

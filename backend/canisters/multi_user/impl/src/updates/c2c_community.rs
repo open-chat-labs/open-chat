@@ -19,7 +19,7 @@ fn c2c_community_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     let mut awarded_achievement = BTreeSet::new();
 
-    for event in args.into_events() {
+    for event in args.events {
         if !state
             .data
             .idempotency_checker
