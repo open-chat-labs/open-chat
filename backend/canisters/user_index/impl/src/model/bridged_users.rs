@@ -1,6 +1,6 @@
 use constants::MINUTE_IN_MS;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{BridgePlatform, BridgedUser, BridgedUserId, BridgedUserSummary, Milliseconds, TimestampMillis, UserId};
 
 pub const LINK_CODE_EXPIRY: Milliseconds = 10 * MINUTE_IN_MS;
@@ -176,6 +176,25 @@ impl BridgedUsers {
     pub fn len(&self) -> usize {
         self.users.len()
     }
+
+    // The registry is small enough to scan for these, rather than keep counts
+    pub fn metrics(&self) -> BridgedUserMetrics {
+        let mut platforms: BTreeMap<BridgePlatform, BridgedPlatformMetrics> = BTreeMap::new();
+        let mut links = HashSet::new();
+        for (id, record) in self.users.iter() {
+            let platform = id.platform();
+            let metrics = platforms.entry(platform).or_default();
+            metrics.accounts += 1;
+            if let Some(user_id) = record.linked_user_id {
+                metrics.linked_accounts += 1;
+                if links.insert((platform, user_id)) {
+                    metrics.linked_users += 1;
+                }
+            }
+        }
+        let linked_users = links.into_iter().map(|(_, user_id)| user_id).collect::<HashSet<_>>().len();
+        BridgedUserMetrics { platforms, linked_users }
+    }
 }
 
 impl BridgedUserRecord {
@@ -186,6 +205,23 @@ impl BridgedUserRecord {
             updated: self.updated,
         }
     }
+}
+
+#[derive(Serialize, Debug, Default, PartialEq, Eq)]
+pub struct BridgedUserMetrics {
+    // Only the platforms with an account in the registry
+    pub platforms: BTreeMap<BridgePlatform, BridgedPlatformMetrics>,
+    // The users who have linked an account on any platform
+    pub linked_users: usize,
+}
+
+#[derive(Serialize, Debug, Default, PartialEq, Eq)]
+pub struct BridgedPlatformMetrics {
+    pub accounts: usize,
+    pub linked_accounts: usize,
+    // Lower than `linked_accounts` where a user linked more than one account on the platform, which
+    // they could before the website offered only one
+    pub linked_users: usize,
 }
 
 #[cfg(test)]
@@ -388,6 +424,74 @@ mod tests {
         assert_eq!(
             users.links().collect::<Vec<_>>(),
             [(BridgedUserId::Discord(80351110224678912), alice)]
+        );
+    }
+
+    #[test]
+    fn metrics_count_the_accounts_and_links_on_each_platform() {
+        let mut users = BridgedUsers::default();
+        let alice: UserId = Principal::from_slice(&[1]).into();
+        let bob: UserId = Principal::from_slice(&[2]).into();
+        let telegram_user_with_id = |id: i64| {
+            BridgedUser::Telegram(TelegramUser {
+                id,
+                username: None,
+                display_name: "Sam".to_string(),
+                photo_id: None,
+            })
+        };
+        assert_eq!(users.metrics(), BridgedUserMetrics::default());
+
+        // Alice links an account on each platform, and a second on Discord, which she could before
+        // the website offered only one
+        users.start_link(alice, BridgePlatform::Discord, "discord".to_string(), 1);
+        users.link(discord_user("Nelly"), "discord", 1);
+        users.start_link(alice, BridgePlatform::Discord, "second".to_string(), 1);
+        users.link(
+            BridgedUser::Discord(DiscordUser {
+                id: 175928847299117063,
+                username: "nelly2".to_string(),
+                display_name: None,
+                avatar: None,
+                bot: false,
+            }),
+            "second",
+            1,
+        );
+        users.start_link(alice, BridgePlatform::Telegram, "telegram".to_string(), 1);
+        users.link(telegram_user(), "telegram", 1);
+        users.start_link(bob, BridgePlatform::Telegram, "bob".to_string(), 1);
+        users.link(telegram_user_with_id(987654321), "bob", 1);
+        // Known, but not linked
+        users.update(telegram_user_with_id(555555555), 1);
+        // Unlinked
+        users.start_link(bob, BridgePlatform::Telegram, "unlinked".to_string(), 1);
+        users.link(telegram_user_with_id(444444444), "unlinked", 1);
+        users.unlink(&BridgedUserId::Telegram(444444444), None, 2);
+
+        assert_eq!(
+            users.metrics(),
+            BridgedUserMetrics {
+                platforms: BTreeMap::from([
+                    (
+                        BridgePlatform::Discord,
+                        BridgedPlatformMetrics {
+                            accounts: 2,
+                            linked_accounts: 2,
+                            linked_users: 1
+                        }
+                    ),
+                    (
+                        BridgePlatform::Telegram,
+                        BridgedPlatformMetrics {
+                            accounts: 4,
+                            linked_accounts: 2,
+                            linked_users: 2
+                        }
+                    ),
+                ]),
+                linked_users: 2,
+            }
         );
     }
 
