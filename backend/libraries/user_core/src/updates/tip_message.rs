@@ -51,7 +51,6 @@ pub fn direct_tip_args(user: &User, my_user_id: UserId, args: &Args, now: Timest
         ledger: args.ledger,
         token_symbol: args.token_symbol.clone(),
         amount: args.amount,
-        decimals: args.decimals,
         now,
     })
 }

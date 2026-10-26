@@ -137,7 +137,6 @@ pub struct BotMessageTip {
     pub ledger: CanisterId,
     pub token_symbol: String,
     pub amount: u128,
-    pub decimals: u8,
     // The account the message was relayed from, if no one had linked it, so the UserIndex holds the
     // tip for whoever links it, and refunds it if no one does within 30 days
     pub held_for: Option<BridgedUserId>,

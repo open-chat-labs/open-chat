@@ -687,7 +687,6 @@ fn tips_for_unlinked_accounts_are_held_for_whoever_links_them(in_community: bool
             ledger,
             token_symbol: ICP_SYMBOL.to_string(),
             amount: tip_amount,
-            decimals: 8,
             held_for: Some(nellys_account.id()),
         }
     );
@@ -889,7 +888,8 @@ fn tips_held_in_ledgers_the_registry_doesnt_know_arent_paid_out() {
     let code = start_link(env, nelly.principal, user_index, BridgePlatform::Telegram);
     let response = link(env, bridged.bot_principal, user_index, nellys_account.clone(), &code);
     assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
-    tick_many(env, 10);
+    // As long as the OpenChat bot's message is waited for where it's sent
+    tick_many(env, 30);
     assert_eq!(balance(env, nelly.principal.into()), 0);
     assert!(
         !openchat_bot_texts(env, &nelly)

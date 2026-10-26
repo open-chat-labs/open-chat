@@ -5510,7 +5510,6 @@ export const BotMessageTip = /* @__PURE__ */ Type.Object({
     ledger: TSPrincipal,
     token_symbol: Type.String(),
     amount: Type.BigInt(),
-    decimals: Type.Number(),
     held_for: Type.Optional(BridgedUserId),
 });
 

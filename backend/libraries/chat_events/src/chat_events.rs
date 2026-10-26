@@ -1308,7 +1308,6 @@ impl ChatEvents {
                         ledger: args.ledger,
                         token_symbol: args.token_symbol,
                         amount: args.amount,
-                        decimals: args.decimals,
                         held_for: result.value,
                     }));
                 }
@@ -3107,7 +3106,6 @@ pub struct TipMessageArgs {
     pub ledger: CanisterId,
     pub token_symbol: String,
     pub amount: u128,
-    pub decimals: u8,
     pub now: TimestampMillis,
 }
 

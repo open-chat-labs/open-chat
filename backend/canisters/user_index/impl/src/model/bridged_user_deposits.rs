@@ -53,15 +53,11 @@ pub struct Payout {
 // What whoever linked an account on the platform is told once funds held for it are paid to them,
 // with each token's total, or None if nothing was paid
 pub fn payouts_message(platform: BridgePlatform, payouts: &[Payout]) -> Option<String> {
-    let mut totals: Vec<&Payout> = Vec::new();
-    let mut amounts: Vec<u128> = Vec::new();
+    let mut totals: Vec<(&Payout, u128)> = Vec::new();
     for payout in payouts {
-        match totals.iter().position(|p| p.ledger == payout.ledger) {
-            Some(i) => amounts[i] += payout.amount,
-            None => {
-                totals.push(payout);
-                amounts.push(payout.amount);
-            }
+        match totals.iter_mut().find(|(p, _)| p.ledger == payout.ledger) {
+            Some((_, total)) => *total += payout.amount,
+            None => totals.push((payout, payout.amount)),
         }
     }
     if totals.is_empty() {
@@ -69,8 +65,7 @@ pub fn payouts_message(platform: BridgePlatform, payouts: &[Payout]) -> Option<S
     }
     let lines: Vec<String> = totals
         .iter()
-        .zip(amounts)
-        .map(|(p, amount)| format!("- {}", format_crypto_amount_with_symbol(amount, p.decimals, &p.token_symbol)))
+        .map(|(p, total)| format!("- {}", format_crypto_amount_with_symbol(*total, p.decimals, &p.token_symbol)))
         .collect();
     Some(format!(
         "Tips held for your {platform} account have been sent to your wallet:\n{}",
