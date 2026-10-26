@@ -143,7 +143,7 @@ export type HeaderMenuState = {
 /**
  * ConversationHeader's menu, as the design's (`_chatMenu`): for a group or channel, Manage (or its
  * details), favourite, mute, @everyone, mark as read and copy link, then leave; for a DM,
- * favourite, mute, then block and delete. Leave, delete, block and unblock show only where the
+ * favourite, mute, chat settings, then block and delete. Leave, delete, block and unblock show only where the
  * app allows them. Picking one reports its id (`onMenu`, or `onLeave`).
  */
 export function headerMenuItems(state: HeaderMenuState): HeaderMenuItem[] {
@@ -168,6 +168,9 @@ export function headerMenuItems(state: HeaderMenuState): HeaderMenuItem[] {
                 ? { id: "unmute", label: K + "unmuteNotifications", mask: icon("bell") }
                 : { id: "mute", label: K + "muteNotifications", mask: icon("bell-off") },
         );
+    }
+    if (!group) {
+        items.push({ id: "chatSettings", label: K + "chatSettings", mask: icon("gear") });
     }
     if (group) {
         items.push(

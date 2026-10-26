@@ -6,7 +6,6 @@
         allUsersStore,
         blockedUsersStore,
         buildUserAvatarUrl,
-        disappearingMessagesUpdate,
         favouritesStore,
         lastOnlineStatus,
         OpenChat,
@@ -14,24 +13,20 @@
         userBadges,
         type DirectChatSummary,
     } from "@client";
-    import type { DisappearSetting } from "@openchat/ui/src/features/components/DmChatSettings.svelte";
     import DmPanel from "@openchat/ui/src/features/components/DmPanel.svelte";
     import Markdown from "@src/core/Markdown.svelte";
-    import { muteChat } from "@src/logic/chats/muteChat";
     import { ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
     import { disableChit } from "@src/stores/settings";
     import { blobUrlPattern } from "@src/utils/openchatClient";
-    import { profileClickedEvent } from "@src/web-components/profileLink";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { closeRightColumn } from "../app/rightPanel";
     import type { RightRegion, ScreenProps } from "../app/screens";
     import { dmPanelProps } from "./dm.adapter";
+    import { favouriteDm, muteDm, setDmDisappearing } from "./dmSettings";
 
-    let {
-        region,
-        context,
-    }: ScreenProps<Extract<RightRegion, { kind: "direct_chat_details" }>> = $props();
+    let { region, context }: ScreenProps<Extract<RightRegion, { kind: "direct_chat_details" }>> =
+        $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -79,29 +74,6 @@
         if (!success) throw new Error("not saved");
     }
 
-    async function mute(key: string | null) {
-        if (chat === undefined) return;
-        const failed = await muteChat(client, chat.id, key !== null, undefined, $_);
-        succeeded(failed === undefined);
-    }
-
-    async function favourite(fav: boolean) {
-        if (chat === undefined) return;
-        succeeded(
-            await (fav ? client.addToFavourites(chat.id) : client.removeFromFavourites(chat.id)),
-        );
-    }
-
-    async function disappear(setting: DisappearSetting) {
-        if (chat === undefined) return;
-        succeeded(
-            await client.updateDirectChatSettings(
-                chat,
-                disappearingMessagesUpdate(setting.on, setting.afterMs, chat.eventsTTL),
-            ),
-        );
-    }
-
     async function block(blocking: boolean) {
         if (userId === undefined) return;
         succeeded(
@@ -125,12 +97,20 @@
     <DmPanel
         {...panel}
         coverHandlers={{ close }}
-        onMuteChange={mute}
-        onToggleFavourite={favourite}
-        onDisappearChange={disappear}
-        onOpenProfile={() => document.body.dispatchEvent(profileClickedEvent(userId))}
+        onMuteChange={(key) => chat && muteDm(client, chat, key !== null, $_)}
+        onToggleFavourite={(fav) => chat && favouriteDm(client, chat, fav)}
+        onDisappearChange={(setting) => chat && setDmDisappearing(client, chat, setting)}
+        onOpenProfile={() =>
+            context.dialogs.open({
+                kind: "user",
+                userId,
+                chatButton: false,
+                inGlobalContext: true,
+                dmTab: "profile",
+            })}
         onBlock={() => block(true)}
-        onUnblock={() => block(false)}>
+        onUnblock={() => block(false)}
+    >
         {#snippet aboutContent()}
             <Markdown inline={false} text={panel.about} />
         {/snippet}

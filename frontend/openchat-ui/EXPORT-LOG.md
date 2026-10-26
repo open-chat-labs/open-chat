@@ -319,4 +319,4 @@
 - Not in the design export: to go back to it when the export has one (the app's `GAPS.md` lists it).
 
 ## 2026-10-26 — ConversationHeader menu strings, by hand
-- `ui.conversationHeader.menu` gains `manageGroup`, `manageChannel`, `groupDetails`, `channelDetails` and `markAsRead`, for the design's chat menu (the App prototype's `_chatMenu`) with the Manage item the app adds.
+- `ui.conversationHeader.menu` gains `manageGroup`, `manageChannel`, `groupDetails`, `channelDetails`, `markAsRead` and `chatSettings`, for the design's chat menu (the App prototype's `_chatMenu`) with the Manage item the app adds.

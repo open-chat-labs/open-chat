@@ -78,6 +78,17 @@ export function runChatMenuItem(
                 dialogs.open({ kind: "manage", target: chat.id, section: "main" });
             }
             break;
+        case "chatSettings":
+            if (chat.kind === "direct_chat") {
+                dialogs.open({
+                    kind: "user",
+                    userId: chat.them.userId,
+                    chatButton: false,
+                    inGlobalContext: true,
+                    dmTab: "chat",
+                });
+            }
+            break;
         case "leave":
             if (chat.kind !== "direct_chat") {
                 dialogs.open({

@@ -295,6 +295,9 @@ design export needs. Each entry says where it came up.
     link open Manage. A panel asked for members (?everyone, ?usergroup=) or a community's details
     opens Manage instead.
   - the quick panel's "Online now" has no presence data yet (see Presence).
+  - a DM's name, the header menu's Chat settings and DmPanel's View profile open the other
+    person's card with the design's Profile / This chat tabs (`dmTab`): This chat has the DM's
+    mute, favourite and disappearing messages (no read receipts, see above).
   - which pages show follows the app's permission rules (`detailsPermissions`), not the
     prototype's roles: someone who can't edit gets About and read-only Rules and Gates, and no
     Permissions; Invite & share shows with `canOpenInvite`, and User groups with

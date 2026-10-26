@@ -168,11 +168,18 @@
         runChatMenuItem(id, { client, chat, title, dialogs: screen.dialogs, formatter: $_ });
     }
 
-    // a group's or channel's name opens Manage (the About page for someone who can't edit it)
+    // a group's or channel's name opens Manage (the About page for someone who can't edit it), a
+    // DM's the other person's profile, with the DM's own settings on its This chat tab
     function openDetails() {
         if (chat === undefined) return;
         if (chat.kind === "direct_chat") {
-            showInRightColumn(screen.rightColumn, { kind: "group_details" });
+            screen.dialogs.open({
+                kind: "user",
+                userId: chat.them.userId,
+                chatButton: false,
+                inGlobalContext: true,
+                dmTab: "profile",
+            });
         } else {
             screen.dialogs.open({ kind: "manage", target: chat.id, section: "main" });
         }
@@ -436,7 +443,7 @@
             {openDetails}
             titleChevron={chat.kind !== "direct_chat"}
             titleHint={chat.kind === "direct_chat"
-                ? undefined
+                ? "ui.dmPanel.viewProfile"
                 : menuState?.canEdit
                   ? `ui.conversationHeader.menu.manage${chat.kind === "channel" ? "Channel" : "Group"}`
                   : `ui.conversationHeader.menu.${chat.kind === "channel" ? "channel" : "group"}Details`}

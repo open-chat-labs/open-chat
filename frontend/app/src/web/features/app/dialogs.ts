@@ -41,7 +41,11 @@ export type LinkedDialog =
 // page for someone who can't edit it, and inviting people or sharing its link); or creating,
 // editing or deleting one of a community's user groups
 export type LocalDialog =
-    | ({ kind: "user" } & ProfileCard)
+    | ({
+          kind: "user";
+          /** Your DM with them: the Profile / This chat tabs, opened on this one. */
+          dmTab?: "profile" | "chat";
+      } & ProfileCard)
     | { kind: "leave_or_delete"; action: LeaveOrDelete; name: string }
     | {
           kind: "manage";
