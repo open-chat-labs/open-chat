@@ -181,6 +181,7 @@ describe("editing and creating a group", () => {
             id: { kind: "channel" as const, communityId: "c", channelId: 7 },
             level: "channel" as const,
         };
+        let added: unknown = { kind: "success" };
         vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) => {
             sent.push(req);
             switch (req.kind) {
@@ -189,7 +190,7 @@ describe("editing and creating a group", () => {
                 case "inviteUsers":
                     return Promise.resolve(true);
                 case "addMembersToChannel":
-                    return Promise.resolve({ kind: "success" });
+                    return Promise.resolve(added);
                 default:
                     return new Promise(() => {});
             }
@@ -205,6 +206,14 @@ describe("editing and creating a group", () => {
         expect(sent).toContainEqual(
             expect.objectContaining({ kind: "inviteUsers", userIds: ["outsider"] }),
         );
+
+        // created all the same, and says the members weren't added
+        added = { kind: "add_to_channel_failed" };
+        expect(await client.createGroup(channel, [], ["member"])).toEqual({
+            kind: "created_without_invites",
+            chatId: channel.id,
+            message: expect.anything(),
+        });
     });
 
     // a failed save showed the bare key "failure", which has no words

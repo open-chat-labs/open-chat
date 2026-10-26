@@ -249,4 +249,21 @@ describe("a channel created from CreateGroupDialog", () => {
         );
         expect(channel.externalUrl).toBe("https://example.com");
     });
+
+    // who can read the channel: a public embedded channel can show its messages to non-members
+    test("lets non-members see its messages only when the dialog says so", () => {
+        const preview = (on: boolean) =>
+            candidateFromCreate(
+                result({
+                    kind: "embedded",
+                    embedded: true,
+                    url: "https://a.b",
+                    previewForNonMembers: on,
+                }),
+                blank,
+                lookups,
+            ).messagesVisibleToNonMembers;
+        expect(preview(true)).toBe(true);
+        expect(preview(false)).toBe(false);
+    });
 });
