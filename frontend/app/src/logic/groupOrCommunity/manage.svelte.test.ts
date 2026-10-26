@@ -48,7 +48,9 @@ describe("moving around Manage", () => {
 
 describe("Manage's pages", () => {
     const sections = (input: Parameters<typeof manageNav>[0]) =>
-        manageNav(input).flatMap((g) => g.items.map((i) => `${i.section}:${i.label}`));
+        manageNav(input).flatMap((g) =>
+            g.items.map((i) => ("section" in i ? `${i.section}:${i.label}` : `action:${i.action}`)),
+        );
 
     // 4b invariant 7 in the nav: someone who can't edit gets About, and no Permissions
     test("someone who can't edit gets About and no Permissions", () => {
@@ -58,6 +60,8 @@ describe("Manage's pages", () => {
                 canOpenInvite: false,
                 community: false,
                 canManageUserGroups: false,
+                canConvert: false,
+                canImport: false,
             }),
         ).toEqual(["main:about", "members:members", "rules:rules", "gates:gates"]);
         expect(
@@ -66,6 +70,8 @@ describe("Manage's pages", () => {
                 canOpenInvite: true,
                 community: true,
                 canManageUserGroups: true,
+                canConvert: true,
+                canImport: true,
             }),
         ).toEqual([
             "main:overview",
@@ -76,7 +82,27 @@ describe("Manage's pages", () => {
             "rules:rules",
             "permissions:permissions",
             "gates:gates",
+            "action:convert",
+            "action:import",
         ]);
+    });
+
+    test("convert and import each follow their own permission", () => {
+        const base = {
+            access: { kind: "edit" as const, readOnly: [] },
+            canOpenInvite: false,
+            community: false,
+            canManageUserGroups: false,
+        };
+        expect(sections({ ...base, canConvert: true, canImport: false })).toContain(
+            "action:convert",
+        );
+        expect(sections({ ...base, canConvert: true, canImport: false })).not.toContain(
+            "action:import",
+        );
+        expect(sections({ ...base, canConvert: false, canImport: true })).toEqual(
+            expect.arrayContaining(["action:import"]),
+        );
     });
 
     test("the owner deletes, anyone else who can leaves", () => {

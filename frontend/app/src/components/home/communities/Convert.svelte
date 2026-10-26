@@ -39,9 +39,9 @@
 
         scope = $chatListScopeStore.kind;
         state = "converting";
-        client.convertGroupToCommunity(group, defaultChatRules("community")).then((id) => {
-            state = id ? "converted" : "error";
-            channelId = id;
+        client.convertGroupToCommunity(group, defaultChatRules("community")).then((outcome) => {
+            state = outcome.kind === "success" ? "converted" : "error";
+            channelId = outcome.kind === "success" ? outcome.channelId : undefined;
         });
     }
 

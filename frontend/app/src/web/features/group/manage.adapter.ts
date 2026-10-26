@@ -22,7 +22,11 @@ export function manageNavGroups(groups: ManageNavGroup[]): LibraryNavGroup[] {
         .filter((g) => g.items.length > 0)
         .map((g) => ({
             label: `ui.manageDialog.${g.label}`,
-            items: g.items.map((i) => ({ key: i.section, label: LABEL[i.label], icon: i.section })),
+            items: g.items.map((i) =>
+                "section" in i
+                    ? { key: i.section, label: LABEL[i.label], icon: i.section }
+                    : { key: i.action, label: `ui.manageDialog.${i.action}`, icon: i.action },
+            ),
         }));
 }
 

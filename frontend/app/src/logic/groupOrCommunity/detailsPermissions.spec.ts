@@ -30,6 +30,8 @@ function client(frozen: { chat?: boolean; community?: boolean }, privateChat = f
         canEditCommunity: () => true,
         canDeleteCommunity: () => true,
         canManageUserGroups: () => true,
+        canConvertGroupToCommunity: () => true,
+        canImportToCommunity: () => true,
     } as never as OpenChat;
 }
 
@@ -40,6 +42,8 @@ const all = {
     canInvite: true,
     canOpenInvite: true,
     canManageUserGroups: false,
+    canConvert: false,
+    canImport: false,
 };
 const none = { ...all, canEdit: false, canDelete: false, canInvite: false, canOpenInvite: false };
 
@@ -90,6 +94,26 @@ describe("details permissions", () => {
         const adder = { ...member, canAddMembers: () => true } as never as OpenChat;
         expect(chatDetailsPermissions(adder, channel, community, false).canOpenInvite).toBe(true);
     });
+});
+
+// 4b invariant 7: converting or importing is for a group's owner (the client's predicates), never a
+// channel's, and nothing in a frozen group or for a guest
+test("convert and import are offered for an owner's group only", () => {
+    const group = { kind: "group_chat", id: { kind: "group_chat", groupId: "g" } } as MultiUserChat;
+    const owner = (yes: boolean) =>
+        ({
+            ...client({}),
+            canConvertGroupToCommunity: () => yes,
+            canImportToCommunity: () => yes,
+        }) as never as OpenChat;
+    const offered = (c: OpenChat, chat: MultiUserChat, anon = false) => {
+        const p = chatDetailsPermissions(c, chat, undefined, anon);
+        return [p.canConvert, p.canImport];
+    };
+    expect(offered(owner(true), group)).toEqual([true, true]);
+    expect(offered(owner(false), group)).toEqual([false, false]);
+    expect(offered(owner(true), channel)).toEqual([false, false]);
+    expect(offered(owner(true), group, true)).toEqual([false, false]);
 });
 
 describe("chat rules text", () => {

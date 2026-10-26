@@ -81,6 +81,8 @@
                       canOpenInvite: permissions.canOpenInvite,
                       community: target?.kind === "community",
                       canManageUserGroups: permissions.canManageUserGroups,
+                      canConvert: permissions.canConvert,
+                      canImport: permissions.canImport,
                   }),
               ),
     );
@@ -120,6 +122,18 @@
     );
 
     const close = () => manage.close(onClose);
+
+    // convert and import open their own dialog over Manage; the rest are its pages
+    function select(key: string) {
+        if (target?.kind === "group_chat" && (key === "convert" || key === "import")) {
+            dialogs.open({
+                kind: key === "convert" ? "convert_group" : "import_group",
+                chatId: target.id,
+            });
+        } else {
+            manage.go(key as ManageSection);
+        }
+    }
 
     // ── a community's channels ──
 
@@ -189,7 +203,7 @@
             : undefined}
         {nav}
         current={manage.section}
-        onSelect={(key) => manage.go(key as ManageSection)}
+        onSelect={select}
         {danger}
         confirming={manage.confirming}
         onKeepEditing={() => manage.keepEditing()}

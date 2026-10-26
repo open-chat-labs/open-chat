@@ -20,7 +20,12 @@ export function isFormSection(section: ManageSection): boolean {
     return FORM.includes(section);
 }
 
-export type ManageNavItem = { section: ManageSection; label: ManageNavLabel };
+/** Owner-only actions in the nav, which open their own dialog over Manage. */
+export type ManageAction = "convert" | "import";
+
+export type ManageNavItem =
+    | { section: ManageSection; label: ManageNavLabel }
+    | { action: ManageAction; label: ManageAction };
 export type ManageNavLabel =
     | "overview"
     | "about"
@@ -40,6 +45,9 @@ export type ManageNavInput = {
     community: boolean;
     /** User groups are a community's, for someone who may manage them. */
     canManageUserGroups: boolean;
+    /** A group's owner can convert it to a community, or import it into one they own. */
+    canConvert: boolean;
+    canImport: boolean;
 };
 
 /**
@@ -52,6 +60,8 @@ export function manageNav({
     canOpenInvite,
     community,
     canManageUserGroups,
+    canConvert,
+    canImport,
 }: ManageNavInput): ManageNavGroup[] {
     const edit = access.kind === "edit";
     const general: ManageNavItem[] = [
@@ -67,6 +77,8 @@ export function manageNav({
     const advanced: ManageNavItem[] = [
         ...(edit ? [{ section: "permissions" as const, label: "permissions" as const }] : []),
         { section: "gates", label: "gates" },
+        ...(canConvert ? [{ action: "convert" as const, label: "convert" as const }] : []),
+        ...(canImport ? [{ action: "import" as const, label: "import" as const }] : []),
     ];
     return [
         { label: "general", items: general },

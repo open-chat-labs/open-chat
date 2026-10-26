@@ -176,6 +176,7 @@ import {
     type CreateCommunityOutcome,
     type CreateCommunityResponse,
     type CreateGroupOutcome,
+    type GroupMoveOutcome,
     type CreateGroupResponse,
     type CreateMultiUserCanisterResponse,
     type FinaliseAccountLinkingResponse,
@@ -12220,7 +12221,11 @@ export class OpenChat {
     importToCommunity(
         groupId: GroupChatIdentifier,
         communityId: CommunityIdentifier,
-    ): Promise<ChannelIdentifier | undefined> {
+    ): Promise<GroupMoveOutcome> {
+        const failed: GroupMoveOutcome = {
+            kind: "failed",
+            message: i18nKey("communities.errors.importFailed"),
+        };
         const group = chatSummariesStore.value.get(groupId);
         return this.#worker
             .send({
@@ -12235,13 +12240,14 @@ export class OpenChat {
                             ...group,
                             id: resp.channelId,
                             kind: "channel",
+                            level: "channel",
                         } as ChannelSummary);
                     }
-                    return resp.channelId;
+                    return { kind: "success", channelId: resp.channelId } as const;
                 }
-                return undefined;
+                return failed;
             })
-            .catch(() => undefined);
+            .catch(() => failed);
     }
 
     submitProofOfUniquePersonhood(
@@ -12536,10 +12542,11 @@ export class OpenChat {
         return communityUpdateResult(resp);
     }
 
-    convertGroupToCommunity(
-        group: GroupChatSummary,
-        rules: Rules,
-    ): Promise<ChannelIdentifier | undefined> {
+    convertGroupToCommunity(group: GroupChatSummary, rules: Rules): Promise<GroupMoveOutcome> {
+        const failed: GroupMoveOutcome = {
+            kind: "failed",
+            message: i18nKey("communities.errors.convertFailed"),
+        };
         return this.#worker
             .send({
                 kind: "convertGroupToCommunity",
@@ -12547,8 +12554,12 @@ export class OpenChat {
                 historyVisible: group.historyVisible,
                 rules,
             })
-            .then((resp) => (resp.kind === "success" ? resp.id : undefined))
-            .catch(() => undefined);
+            .then((resp) =>
+                resp.kind === "success"
+                    ? ({ kind: "success", channelId: resp.id } as const)
+                    : failed,
+            )
+            .catch(() => failed);
     }
 
     deleteUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): Promise<boolean> {
