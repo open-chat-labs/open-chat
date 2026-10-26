@@ -151,6 +151,13 @@
                 {dialogs}
                 embedded
                 onManage={(section) => manage.go(section)}
+                onOpenCommunity={(view) =>
+                    community &&
+                    dialogs.open({
+                        kind: "manage",
+                        target: community.id,
+                        section: view === "members" ? "members" : "main",
+                    })}
                 onClose={close}
             />
         {:else if manage.section === "invite"}
