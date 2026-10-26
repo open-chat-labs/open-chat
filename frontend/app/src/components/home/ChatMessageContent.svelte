@@ -1,5 +1,11 @@
 <script lang="ts">
-    import type { MessageContent, MessageContext, OgPreview, RehydratedMessagePreview } from "@client";
+    import type {
+        MessageContent,
+        MessageContext,
+        OgPreview,
+        RehydratedMessagePreview,
+        TwitchEmbed,
+    } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import AudioContent from "./AudioContent.svelte";
     import BlockedContent from "@shared_components/home/BlockedContent.svelte";
@@ -52,6 +58,7 @@
         onRegisterVote?: (vote: { type: "delete" | "register"; answerIndex: number }) => void;
         ogPreviews?: OgPreview[];
         messagePreviews?: RehydratedMessagePreview[];
+        twitchEmbeds?: TwitchEmbed[];
     }
 
     let {
@@ -79,6 +86,7 @@
         onRegisterVote,
         ogPreviews = [],
         messagePreviews = [],
+        twitchEmbeds = [],
     }: Props = $props();
 </script>
 
@@ -93,7 +101,8 @@
         {blockLevelMarkdown}
         {onRemovePreview}
         {ogPreviews}
-        {messagePreviews} />
+        {messagePreviews}
+        {twitchEmbeds} />
 {:else if content.kind === "image_content"}
     <ImageContent
         {edited}

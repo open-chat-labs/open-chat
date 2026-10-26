@@ -1,6 +1,6 @@
 <script lang="ts">
     import Markdown from "@src/core/Markdown.svelte";
-    import type { OgPreview, RehydratedMessagePreview, TextContent } from "@client";
+    import type { OgPreview, RehydratedMessagePreview, TextContent, TwitchEmbed } from "@client";
     import { _ } from "svelte-i18n";
     import IntersectionObserver from "./IntersectionObserver.svelte";
     import LinkPreviews from "./LinkPreviews.svelte";
@@ -18,6 +18,7 @@
         onRemovePreview?: (url: string) => void;
         ogPreviews?: OgPreview[];
         messagePreviews?: RehydratedMessagePreview[];
+        twitchEmbeds?: TwitchEmbed[];
     }
 
     let {
@@ -31,6 +32,7 @@
         onRemovePreview,
         ogPreviews = [],
         messagePreviews = [],
+        twitchEmbeds = [],
     }: Props = $props();
 
     function truncateText(text: string): string {
@@ -45,7 +47,7 @@
     let text = $derived(truncateText(content.text));
 </script>
 
-{#if ogPreviews.length > 0 || messagePreviews.length > 0}
+{#if ogPreviews.length > 0 || messagePreviews.length > 0 || twitchEmbeds.length > 0}
     <IntersectionObserver unobserveOnIntersect={false}>
         {#snippet children(intersecting)}
             <LinkPreviews
@@ -54,6 +56,7 @@
                 {fill}
                 {ogPreviews}
                 {messagePreviews}
+                {twitchEmbeds}
                 {intersecting}
                 onRemove={onRemovePreview} />
         {/snippet}

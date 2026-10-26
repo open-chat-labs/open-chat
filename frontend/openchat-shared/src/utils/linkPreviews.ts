@@ -1,4 +1,5 @@
-import type { LinkPreview, Message, MessagePreview, OgPreview } from "../domain";
+import type { LinkPreview, Message, MessagePreview, OgPreview, TwitchEmbed } from "../domain";
+import { parseTwitchUrl, twitchWatchUrl } from "./twitch";
 
 // Originally taken from here - https://stackoverflow.com/a/6041965
 const URL_REGEX = new RegExp(
@@ -129,6 +130,20 @@ export function extractMessagePreviews(text: string): MessagePreview[] {
             if (preview) previews.push(preview);
             return previews;
         }, []);
+}
+
+// The Twitch links in a message's text that play in it, one per channel, video or clip, and no more
+// than a message has link previews. The sender still fetches their OG previews, for the posters.
+export function extractTwitchEmbeds(text: string): TwitchEmbed[] {
+    const embeds = new Map<string, TwitchEmbed>();
+    for (const url of extractRawUrls(text)) {
+        if (url.endsWith(LINK_REMOVED)) continue;
+        const embed = parseTwitchUrl(url);
+        if (embed === undefined) continue;
+        const key = twitchWatchUrl(embed);
+        if (!embeds.has(key)) embeds.set(key, embed);
+    }
+    return [...embeds.values()].slice(0, MAX_LINK_PREVIEWS);
 }
 
 // Used by the client layer to get URLs to fetch OG previews for.

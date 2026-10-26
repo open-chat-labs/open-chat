@@ -2989,3 +2989,14 @@ export type RehydratedMessagePreview = {
 export type GenericPreview = LinkPreviewBase & {
     kind: "generic";
 };
+
+// A link to a Twitch channel, video or clip, which plays in the message. It comes from the
+// message's text (utils/twitch.ts), not from the sender, so it works for bridged messages too.
+// `url` is the link as written in the text, which an OgPreview of it shares.
+export type TwitchEmbed = LinkPreviewBase &
+    (
+        | { kind: "twitch_channel"; login: string }
+        // `time` is where the video starts, as Twitch writes it, eg. 1h2m3s
+        | { kind: "twitch_video"; videoId: string; time: string | undefined }
+        | { kind: "twitch_clip"; slug: string }
+    );

@@ -1,10 +1,11 @@
 <script lang="ts">
     import { rtlStore } from "@src/stores/rtl";
     import { ColourVars } from "component-lib";
-    import type { OgPreview, RehydratedMessagePreview } from "@shared";
+    import type { OgPreview, RehydratedMessagePreview, TwitchEmbed } from "@shared";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import GenericPreviewComponent from "./GenericPreview.svelte";
     import MessagePreviewComponent from "./MessagePreview.svelte";
+    import TwitchPlayer from "./TwitchPlayer.svelte";
 
     interface Props {
         messagePreviews: RehydratedMessagePreview[];
@@ -12,9 +13,14 @@
         me: boolean;
         onRemove?: (url: string) => void;
         ogPreviews: OgPreview[];
+        twitchEmbeds: TwitchEmbed[];
     }
 
-    let { messagePreviews, intersecting, me, onRemove, ogPreviews = [] }: Props = $props();
+    let { messagePreviews, intersecting, me, onRemove, ogPreviews = [], twitchEmbeds }: Props =
+        $props();
+
+    // A Twitch link's player takes the place of its preview, which it shows on its poster
+    let playerUrls = $derived(new Set(twitchEmbeds.map((e) => e.url)));
 
     const rtl = $rtlStore;
 
@@ -42,7 +48,14 @@
         </div>
     </div>
 {/each}
-{#each ogPreviews as p (p.url)}
+{#each twitchEmbeds as e (e.url)}
+    <div class="preview" class:me>
+        <div class="inner" class:me>
+            <TwitchPlayer {me} embed={e} ogPreview={ogPreviews.find((p) => p.url === e.url)} />
+        </div>
+    </div>
+{/each}
+{#each ogPreviews.filter((p) => !playerUrls.has(p.url)) as p (p.url)}
     <div class="preview" class:me>
         {@render remove(p.url)}
         <div class="inner" class:me>

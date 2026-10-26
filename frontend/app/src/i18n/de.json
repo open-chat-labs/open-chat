@@ -1520,6 +1520,10 @@
     "maxImageSize": "Maximale Bildgröße von 1 MB überschritten",
     "maxStorage": "Sie können auf maximal 1 GB Speicherplatz aufrüsten",
     "maxVideoSize": "Maximale Videogröße von 5 MB überschritten",
+    "twitch": {
+        "play": "{title} abspielen",
+        "watchOnTwitch": "Auf Twitch ansehen"
+    },
     "videoProcessing": "Video wird optimiert…",
     "member": "Mitglied",
     "memberCount": "{count} Mitglied(er)",
