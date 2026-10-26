@@ -140,6 +140,11 @@
         gap: $sp2;
         width: toRem(300);
         max-width: 100%;
+
+        // on a phone the modal is a sheet across the screen, which the card (and its chart) fills
+        @include mobile() {
+            width: auto;
+        }
     }
 
     .token {
@@ -196,10 +201,8 @@
         height: toRem(100);
         margin-top: $sp3;
 
-        // grown by flex rather than a percentage width, which older WebKit can leave unresolved
         svg {
-            flex: 1 1 0;
-            min-width: 0;
+            width: 100%;
             height: 100%;
             color: var(--success);
 
