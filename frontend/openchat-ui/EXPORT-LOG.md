@@ -348,3 +348,8 @@
 ## 2026-10-26 — VoiceMessage: the recording's waveform, by hand
 - `levels` (0–1 per bar) draws the recording's own waveform; without it the placeholder bars show as before. The design's bars are made up. `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — LinkCard and ChatBubble previews, by hand
+- `LinkCard` is `LinkPreview`'s card, taken out unchanged (large or compact, links only to http(s)) so `LinkPreview` and `ChatBubble` share it; `LinkPreview` renders one.
+- `ChatBubble` takes `previews`, a `LinkCard` each under the text, 320px wide at most. A message with link previews keeps its markdown, edit, quote, thread and reactions; `LinkPreview` as a message kind of its own has none of them. `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

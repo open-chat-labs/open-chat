@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type OgPreview } from "@client";
+    import { ogPreviewCard, type OgPreview } from "@client";
 
     interface Props {
         ogPreview: OgPreview;
@@ -10,35 +10,14 @@
 
     let cardHeight = $state(0);
 
-    let img = $derived(
-        ogPreview.image && ogPreview.image.width > 0 && ogPreview.image.height > 0
-            ? ogPreview.image
-            : undefined,
-    );
+    let shown = $derived(ogPreviewCard(ogPreview));
+    let img = $derived(shown.image);
 
-    // Twitter-style: square-ish or portrait image → side-by-side layout; the
-    // full-width banner only suits landscape images (anything taller gets
-    // badly cropped by the banner's max-height)
-    let sideBySide = $derived(img !== undefined && img.width <= img.height * 1.2);
+    // Twitter-style: square-ish or portrait image → side-by-side layout
+    let sideBySide = $derived(shown.sideBySide);
 
-    let hostname = $derived.by(() => {
-        try {
-            return new URL(ogPreview.url).hostname.replace(/^www\./, "");
-        } catch {
-            return ogPreview.url;
-        }
-    });
-
-    let safeUrl = $derived(isSafeUrl(ogPreview.url) ? ogPreview.url : undefined);
-
-    function isSafeUrl(url: string): boolean {
-        try {
-            const parsed = new URL(url);
-            return parsed.protocol === "http:" || parsed.protocol === "https:";
-        } catch {
-            return false;
-        }
-    }
+    let hostname = $derived(shown.hostname);
+    let safeUrl = $derived(shown.href);
 </script>
 
 {#snippet card()}

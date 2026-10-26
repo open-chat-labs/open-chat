@@ -135,6 +135,28 @@ describe("a message row", () => {
     });
 });
 
+describe("link previews", () => {
+    const preview = (url: string) => ({
+        kind: "opengraph" as const,
+        url,
+        title: "T",
+        description: "",
+    });
+    const cards = (...urls: string[]) => {
+        const row = messageRow(message({ ogPreviews: urls.map(preview) }), "sent", ctx).message;
+        return (row as { previews: { url: string }[] }).previews.map((c) => c.url);
+    };
+
+    // invariant 6
+    test("a link preview whose URL isn't http(s) is never rendered as a link", () => {
+        expect(cards("javascript:alert(1)", "data:text/html,x", "https://a.com/x")).toEqual([
+            "",
+            "",
+            "https://a.com/x",
+        ]);
+    });
+});
+
 describe("the time until the next day", () => {
     test("runs to the coming local midnight", () => {
         expect(untilNextDay(new Date(2026, 9, 20, 23, 59, 30))).toBe(30_000);

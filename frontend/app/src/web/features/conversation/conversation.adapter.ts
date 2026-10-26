@@ -1,6 +1,7 @@
 import {
     formatClock,
     formatFileSize,
+    ogPreviewCard,
     waveformLevels,
     type EventWrapper,
     type GiphyContent,
@@ -8,9 +9,12 @@ import {
     type MemeFighterContent,
     type Message,
     type MessageContent,
+    type OgPreview,
     type VideoContent,
 } from "@client";
+import type ChatBubble from "@openchat/ui/src/lib/components/ChatBubble.svelte";
 import type { GroupMessage, MenuItem } from "@openchat/ui/src/lib/types";
+import type { ComponentProps } from "svelte";
 import type { ChatMenuAction } from "@src/logic/chats/chatMenu";
 import { pickById } from "../../pickById";
 
@@ -159,6 +163,28 @@ export function mediaTile(
     }
 }
 
+export type PreviewCard = NonNullable<ComponentProps<typeof ChatBubble>["previews"]>[number];
+
+/**
+ * A text message's link previews as cards: a landscape image on top, a square or tall one as a
+ * thumbnail, as the old desktop lays them out. A card links only to an http(s) URL.
+ */
+export function previewCards(previews: OgPreview[]): PreviewCard[] {
+    return previews.map((p) => {
+        const card = ogPreviewCard(p);
+        const image = card.image;
+        return {
+            url: card.href ?? "",
+            domain: card.hostname,
+            title: p.title,
+            description: p.description,
+            image: image?.url,
+            imageBg: image === undefined ? null : undefined,
+            size: card.sideBySide ? "compact" : "large",
+        };
+    });
+}
+
 /** A message's text: a text message's own, and for other kinds (until they're built) their text. */
 export function messageText(
     content: MessageContent,
@@ -228,6 +254,7 @@ export function messageRow(
             quoteText: quoted === undefined ? undefined : messageText(quoted.content, ctx),
             threadCount: thread?.numberOfReplies ?? 0,
             threadLastAt: thread === undefined ? undefined : ctx.date(thread.latestEventTimestamp),
+            previews: msg.content.kind === "text_content" ? previewCards(msg.ogPreviews) : [],
         },
     };
 }

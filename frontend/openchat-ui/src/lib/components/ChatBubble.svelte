@@ -1,9 +1,11 @@
 <!-- Text message bubble: optional reply quote, forwarded tag, code block, text with an inline time/status stamp,
+     link preview cards (LinkCard) under the text,
      failed + Retry line, thread link and reaction chips. Emoji-only messages of one or two emoji render large.
      Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
 <script lang="ts">
   import { useT } from '../i18n';
-  import { untrack, type Snippet } from 'svelte';
+  import { untrack, type ComponentProps, type Snippet } from 'svelte';
+  import LinkCard from './LinkCard.svelte';
 
   // count grapheme clusters so flags, skin tones and ZWJ families read as one emoji
   const SEG = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
@@ -53,6 +55,8 @@
     threadCount?: number;
     threadLastAt?: string;
     onOpenThread?: () => void;
+    /** Previews of the links in the text, a card each under it. */
+    previews?: Omit<ComponentProps<typeof LinkCard>, 'side'>[];
   }
 
   let {
@@ -78,6 +82,7 @@
     threadCount = 0,
     threadLastAt = '',
     onOpenThread,
+    previews = [],
   }: Props = $props();
   const t = useT();
 
@@ -160,6 +165,13 @@
           <div class="text body" style:font-size={scale.size} style:line-height={scale.leading} style:--oc-stamp-room="{stampWidth + 9}px">{@render body()}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner" bind:offsetWidth={stampWidth}>{@render stamp()}</span></div>
         {:else}
           <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></p>
+        {/if}
+        {#if previews.length > 0}
+          <div class="previews">
+            {#each previews as p}
+              <LinkCard {...p} {side} />
+            {/each}
+          </div>
         {/if}
       </div>
       {#if status === 'failed'}
@@ -423,6 +435,15 @@
     content: '';
     display: inline-block;
     width: var(--oc-stamp-room, 0);
+  }
+
+  .previews {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    width: 320px;
+    max-width: 100%;
+    margin-top: var(--space-10);
   }
 
   .stamp {

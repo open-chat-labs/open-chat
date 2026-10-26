@@ -655,6 +655,14 @@ design export needs. Each entry says where it came up.
   neither). Neither shows a sent or delivered tick (`VoiceMessage` and `FileMessage` take no
   status). A file shows its name, size and type and downloads under its own name. Neither has
   reactions, a quote, a thread or an edited mark yet.
+- **Link previews** (`features/conversation`, 5a): a text message's previews show as cards under
+  its text (`ChatBubble` takes `previews` by hand, a `LinkCard` each, the card the design's
+  `LinkPreview` has). The design's `LinkPreview` is a message kind of its own, with plain text and
+  no edit, quote, thread or reactions, so it isn't used. The time stamp stays at the end of the
+  text, above the cards, not under them as in `LinkPreview`. A card links only to an http(s) URL
+  (`ogPreviewCard` in `@client`, shared with the old trees). The sender can't remove a preview yet
+  (the message menu is 5b), and a link to another OpenChat message (`messagePreviews`) shows no
+  preview: nothing in the library renders a quoted message.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked
