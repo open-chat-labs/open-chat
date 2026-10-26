@@ -11,6 +11,7 @@ export type ManageSection =
     | "permissions"
     | "invite"
     | "members"
+    | "channels"
     | "usergroups";
 
 const FORM: readonly ManageSection[] = ["main", "gates", "rules", "permissions"];
@@ -25,6 +26,7 @@ export type ManageNavLabel =
     | "about"
     | "members"
     | "invite"
+    | "channels"
     | "userGroups"
     | "rules"
     | "permissions"
@@ -34,6 +36,8 @@ export type ManageNavGroup = { label: "general" | "advanced"; items: ManageNavIt
 export type ManageNavInput = {
     access: ManageAccess;
     canOpenInvite: boolean;
+    /** A community lists its channels. */
+    community: boolean;
     /** User groups are a community's, for someone who may manage them. */
     canManageUserGroups: boolean;
 };
@@ -46,6 +50,7 @@ export type ManageNavInput = {
 export function manageNav({
     access,
     canOpenInvite,
+    community,
     canManageUserGroups,
 }: ManageNavInput): ManageNavGroup[] {
     const edit = access.kind === "edit";
@@ -53,6 +58,7 @@ export function manageNav({
         { section: "main", label: edit ? "overview" : "about" },
         { section: "members", label: "members" },
         ...(canOpenInvite ? [{ section: "invite" as const, label: "invite" as const }] : []),
+        ...(community ? [{ section: "channels" as const, label: "channels" as const }] : []),
         ...(canManageUserGroups
             ? [{ section: "usergroups" as const, label: "userGroups" as const }]
             : []),

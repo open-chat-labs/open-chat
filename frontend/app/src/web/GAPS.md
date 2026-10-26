@@ -291,7 +291,15 @@ design export needs. Each entry says where it came up.
   asks "Discard changes?".
   - by hand: `ManageDialog` is new in the library. The design has it only in the App prototype
     (`_manageVals`), with no exported component.
-  - pages still to come: Channels, Bots, Webhooks, Stats, Convert and Import.
+  - pages still to come: Bots, Webhooks, Stats, Convert and Import.
+  - a community's Channels page lists the channels you're in (the community's summary holds
+    no others), each opening that channel's Manage with a back arrow to Channels. Manage reads the
+    open chat, so a channel that isn't open is opened first.
+  - New channel (Channels, and the community menu's New channel / Add embedded channel) opens
+    `NewChannelDialog` and then the channel (`NewChannelDialogScreen`, `newChannelCandidate`).
+    The dialog slugs the name as you type and arms at 2 characters; the app takes 3 to 40.
+    Choosing public or private isn't checked against what the community lets you create; the
+    backend refuses one you can't, with the generic "couldn't create" message.
   - the right column shows GroupPanel's quick panel for a group or channel (cog for someone who
     can edit, info otherwise); its views open Manage, except pinned messages. A community has no
     panel: its header, its menu's Members / Invite / Edit community, and a channel's community
@@ -310,8 +318,7 @@ design export needs. Each entry says where it came up.
     panel's cog, and the community header and its menu.
   - the header menu follows the design's (`_chatMenu`) but has no Share to chat (the chat picker
     is 4d) and no Report (no report flow yet); a DM keeps Delete chat, which the design leaves out.
-    The community menu has no Stats, New channel, Add embedded channel or Add a bot until those
-    pages land, and no longer mutes every channel (the community's About page does).
+    The community menu has no Stats or Add a bot until those pages land, and no longer mutes every channel (the community's About page does).
   - a channel's Manage has no back arrow to its community yet (the community has no Channels
     page).
   - the frame below 768px is the desktop frame at full screen with a narrower nav; the design has

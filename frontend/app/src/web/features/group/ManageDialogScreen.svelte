@@ -6,9 +6,13 @@
 <script lang="ts">
     import {
         anonUserStore,
+        chatIdentifiersEqual,
         chatIdentifierToString,
+        routeForChatIdentifier,
+        selectedChatIdStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
+        type CommunityIdentifier,
         type OpenChat,
     } from "@client";
     import ManageDialog from "@openchat/ui/src/features/components/ManageDialog.svelte";
@@ -35,6 +39,8 @@
     import GroupPanelView from "./GroupPanelView.svelte";
     import ManageInvite from "./ManageInvite.svelte";
     import ManageSettings from "./ManageSettings.svelte";
+    import ManageChannels from "@openchat/ui/src/features/components/ManageChannels.svelte";
+    import { navigate } from "@src/utils/navigation";
 
     let { dialog, onClose, dialogs }: DialogProps<Extract<LocalDialog, { kind: "manage" }>> =
         $props();
@@ -73,6 +79,7 @@
                   manageNav({
                       access,
                       canOpenInvite: permissions.canOpenInvite,
+                      community: target?.kind === "community",
                       canManageUserGroups: permissions.canManageUserGroups,
                   }),
               ),
@@ -113,6 +120,54 @@
     );
 
     const close = () => manage.close(onClose);
+
+    // ── a community's channels ──
+
+    const channels = $derived(
+        target?.kind === "community"
+            ? target.channels.map((c) => ({
+                  key: chatIdentifierToString(c.id),
+                  title: c.name,
+                  sub:
+                      c.description ||
+                      (c.externalUrl !== undefined
+                          ? "ui.manageChannels.embeddedApp"
+                          : "ui.manageChannels.noDescription"),
+                  meta: `${c.memberCount.toLocaleString()} · ${$_(c.public ? "access.public" : "access.private")}`,
+                  color: pickById(chatIdentifierToString(c.id), COLORS),
+                  current: chatIdentifiersEqual(c.id, $selectedChatIdStore),
+              }))
+            : [],
+    );
+    const canCreateChannel = $derived(
+        target?.kind === "community" && communityMenuPermissions(client, target).canCreateChannel,
+    );
+
+    // Manage for another of the community's pages, in this one's place (asking first if there are
+    // unsaved edits)
+    function openCommunityPage(communityId: CommunityIdentifier, section: ManageSection) {
+        manage.close(() =>
+            dialogs.replace(
+                { kind: "manage", target: communityId, section },
+                (open) => open === dialog,
+            ),
+        );
+    }
+
+    // A channel's Manage. It reads the open chat, so a channel that isn't open is opened first
+    // (which closes this Manage, as any navigation does)
+    function openChannel(key: string) {
+        if (target?.kind !== "community") return;
+        const channel = target.channels.find((c) => chatIdentifierToString(c.id) === key);
+        if (channel === undefined) return;
+        if (!chatIdentifiersEqual(channel.id, $selectedChatIdStore)) {
+            navigate(routeForChatIdentifier("community", channel.id));
+        }
+        dialogs.replace(
+            { kind: "manage", target: channel.id, section: "main" },
+            (open) => open === dialog,
+        );
+    }
     const dirty = (d: boolean) => manage.setDirty(d);
 </script>
 
@@ -126,6 +181,12 @@
         )}
         {avatarUrl}
         round={target.kind === "channel"}
+        backLabel={community
+            ? $_("ui.manageDialog.backTo", { values: { name: community.name } })
+            : ""}
+        onBack={target.kind === "channel" && community !== undefined
+            ? () => community && openCommunityPage(community.id, "channels")
+            : undefined}
         {nav}
         current={manage.section}
         onSelect={(key) => manage.go(key as ManageSection)}
@@ -158,6 +219,20 @@
                         target: community.id,
                         section: view === "members" ? "members" : "main",
                     })}
+                onClose={close}
+            />
+        {:else if manage.section === "channels" && target.kind === "community"}
+            <ManageChannels
+                {channels}
+                onSelect={openChannel}
+                onNew={canCreateChannel
+                    ? () =>
+                          dialogs.open({
+                              kind: "new_channel",
+                              communityId: target.id,
+                              embedded: false,
+                          })
+                    : undefined}
                 onClose={close}
             />
         {:else if manage.section === "invite"}

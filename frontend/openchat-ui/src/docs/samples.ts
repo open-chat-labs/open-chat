@@ -569,6 +569,16 @@ export const samples: Record<string, Record<string, unknown>> = {
     danger: { kind: 'delete', noun: 'group', onPress: () => {} },
     onClose: () => {},
   },
+  ManageChannels: {
+    channels: [
+      { key: 'general', title: 'general', sub: 'Everything else', meta: '1,204 · Public', color: 'teal', current: true },
+      { key: 'hikes', title: 'hikes', sub: 'Weekend walks', meta: '312 · Public', color: 'amber' },
+      { key: 'board', title: 'board', sub: 'No description', meta: '9 · Private', color: 'violet' },
+    ],
+    onSelect: () => {},
+    onNew: () => {},
+    onClose: () => {},
+  },
   UserGroupDialog: {
     people: [
       { userId: 'u-alice', name: 'Alice Anderson', handle: '@alice_anderson', color: 'rose' },

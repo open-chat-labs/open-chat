@@ -111,7 +111,7 @@ export const features: SectionMeta[] = [
   { id: 'features-access-gates', title: 'Access gates', meta: 'AccessGates · AccessGatesCards · UpgradeBanner' },
   { id: 'features-explore', title: 'Explore & sign-in', meta: 'ExploreCommunities · AuthDialog' },
   { id: 'features-people', title: 'People & profile', meta: 'DmChatSettings · ProfileDialog · UserDialog' },
-  { id: 'features-group-dialogs', title: 'Group & community dialogs', meta: 'CreateGroupDialog · GroupSettingsDialog · NewChannelDialog · ConvertToCommunityDialog · ImportToCommunityDialog · ManageDialog · UserGroupDialog · InviteDialog · WebhookDialog · BotDialog · LeaveGroupDialog · DeleteGroupDialog' },
+  { id: 'features-group-dialogs', title: 'Group & community dialogs', meta: 'CreateGroupDialog · GroupSettingsDialog · NewChannelDialog · ConvertToCommunityDialog · ImportToCommunityDialog · ManageDialog · ManageChannels · UserGroupDialog · InviteDialog · WebhookDialog · BotDialog · LeaveGroupDialog · DeleteGroupDialog' },
   { id: 'features-rewards', title: 'Rewards & games', meta: 'AchievementToast · AchievementsDialog · ChitDialog · ClaimHistoryDialog · ClaimCalendar · StreakInsuranceDialog · LeaderboardDialog · MemeFighterDialog' },
   { id: 'pages-landing', title: 'Page · Landing', meta: 'Landing · src/pages' },
   { id: 'pages-learn', title: 'Page · Learn', meta: 'Learn · src/pages · learnContent.ts' },

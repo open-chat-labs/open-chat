@@ -89,7 +89,7 @@ export type CommunityHeaderMenuState = CommunityMenuPermissions & {
 
 /**
  * ChatListHeader's community menu, as the design's (`_commMenuAll`): members, invite, edit, new
- * user group, mark all read, then leave and delete, where the app's rules allow them. Members,
+ * channel, embedded channel, new user group, mark all read, then leave and delete, where the app's rules allow them. Members,
  * invite and edit open Manage. Picking one reports its id (`onMenu`).
  */
 export function communityHeaderMenu(
@@ -108,6 +108,16 @@ export function communityHeaderMenu(
             label: "ui.chatListHeader.editCommunity",
             mask: icon("edit"),
         });
+    }
+    if (state.canCreateChannel) {
+        items.push(
+            { id: "newChannel", label: "ui.chatListHeader.newChannel", mask: icon("plus") },
+            {
+                id: "embedChannel",
+                label: "ui.chatListHeader.addEmbeddedChannel",
+                mask: icon("embed"),
+            },
+        );
     }
     if (state.canManageUserGroups) {
         items.push({

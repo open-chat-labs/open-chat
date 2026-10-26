@@ -2000,6 +2000,13 @@
       "keepEditing": "Keep editing",
       "discard": "Discard"
     },
+    "manageChannels": {
+      "title": "Channels",
+      "newChannel": "New channel",
+      "youreHere": "You're here",
+      "noDescription": "No description",
+      "embeddedApp": "Embedded app"
+    },
     "mediaMessage": {
       "cancelUpload": "Cancel upload",
       "couldNotSend": "Couldn't send",
