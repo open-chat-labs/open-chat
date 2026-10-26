@@ -36,7 +36,8 @@ export {
     subrangesCover,
     TimelineGrouper,
 } from "./utils/chat";
-export { formatDuration } from "./utils/time";
+export { formatClock, formatDuration } from "./utils/time";
+export { default as formatFileSize } from "./utils/fileSize";
 export {
     botOwnerCandidates,
     compareIsNotYouThenUsername,

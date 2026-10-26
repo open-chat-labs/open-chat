@@ -28,7 +28,7 @@
         Row,
         type ColourVarKeys,
     } from "component-lib";
-    import type { AudioContent, TextContent as TextContentType } from "@client";
+    import { formatClock, type AudioContent, type TextContent as TextContentType } from "@client";
     import { onMount, type Snippet } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import MicrophoneOutline from "svelte-material-icons/MicrophoneOutline.svelte";
@@ -85,13 +85,6 @@
     const precomputed = $derived(Array.from(content.samples, (s: number) => s / 255));
 
     let wavesurfer = $state<WaveSurfer>();
-
-    function formatTime(seconds: number) {
-        const minutes = Math.floor(seconds / 60);
-        const secondsRemainder = Math.round(seconds) % 60;
-        const paddedSeconds = `0${secondsRemainder}`.slice(-2);
-        return `${minutes}:${paddedSeconds}`;
-    }
 
     $effect(() => {
         wavesurfer?.setPlaybackRate(speed, true);
@@ -160,7 +153,7 @@
                 }
             });
 
-            wavesurfer.on("timeupdate", (t) => (currentTime = formatTime(t)));
+            wavesurfer.on("timeupdate", (t) => (currentTime = formatClock(t)));
 
             wavesurfer.on("play", () => {
                 if (wavesurfer !== current) {
@@ -203,7 +196,7 @@
         </ChatFootnote>
         <ChatFootnote colour={durationColor} width={"hug"}>/</ChatFootnote>
         <ChatFootnote colour={durationColor} width={"hug"}>
-            {formatTime(duration)}
+            {formatClock(duration)}
         </ChatFootnote>
     </Container>
 {/snippet}
@@ -281,7 +274,7 @@
                 color={me ? ColourVars.secondaryAccent : ColourVars.primaryAccent} />
             <BodySmall colour={textHighlightColour}>
                 <!-- TODO i18n -->
-                <Translatable resourceKey={i18nKey("Audio message")} /> ({formatTime(duration)})
+                <Translatable resourceKey={i18nKey("Audio message")} /> ({formatClock(duration)})
             </BodySmall>
         </Row>
     </Column>

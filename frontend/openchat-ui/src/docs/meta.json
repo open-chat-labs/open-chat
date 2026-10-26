@@ -5241,6 +5241,17 @@
         "doc": "0–1"
       },
       {
+        "name": "levels",
+        "type": "number[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The recording's waveform, 0–1 per bar; placeholder bars without it."
+      },
+      {
         "name": "elapsed",
         "type": "string",
         "default": "0:12",
