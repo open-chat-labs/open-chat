@@ -58,7 +58,8 @@
         focusEntryOnOpen,
         throttleCountdown,
     } from "@src/logic/composer/composer";
-    import { enterSend } from "@src/stores/settings";
+    import { enterSend, lowBandwidth } from "@src/stores/settings";
+    import { getProxyAdjustedBlobUrl } from "@src/utils/media";
     import { now500 } from "@src/stores/time";
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { isTouchOnlyDevice } from "@src/utils/devices";
@@ -77,12 +78,16 @@
     import Composer from "./Composer.svelte";
     import {
         headerMenuItems,
+        isMedia,
+        mediaHeld,
         messageStatus,
         senderColor,
         untilNextDay,
         type ConversationContext,
+        type MediaContent,
         type MessageRow,
     } from "./conversation.adapter";
+    import MediaViewer from "./MediaViewer.svelte";
     import { RowCache } from "./rowCache";
     import { profileClickedEvent } from "@src/web-components/profileLink";
 
@@ -108,6 +113,8 @@
 
     const ctx = $derived.by((): ConversationContext => {
         void day;
+        // a revealed image redoes its row (the cache is cleared with it)
+        void rowsVersion;
         const users = $allUsersStore;
         const webhooks = $selectedChatWebhooksStore;
         return {
@@ -119,8 +126,32 @@
             time: (timestamp) => client.toShortTimeString(new Date(Number(timestamp))),
             date: (timestamp) =>
                 client.formatMessageDate(timestamp, $_("today"), $_("yesterday"), true, true),
+            media: {
+                lowBandwidth: $lowBandwidth,
+                revealed: (messageId) => revealed.has(messageId),
+                url: getProxyAdjustedBlobUrl,
+            },
         };
     });
+
+    // ── media ──
+
+    // what the reader asked to see full size in low bandwidth (5a invariant 1), and what's open
+    // in the viewer
+    const revealed = new Set<bigint>();
+    let viewing = $state<MediaContent>();
+
+    function openMedia(msg: Message) {
+        if (!isMedia(msg.content)) return;
+        if (mediaHeld(msg.content, msg.messageId, ctx.media)) {
+            // the first click shows it in the bubble; the next opens it
+            revealed.add(msg.messageId);
+            rows.clear();
+            rowsVersion += 1;
+        } else {
+            viewing = msg.content;
+        }
+    }
 
     const level = $derived(chat?.kind === "channel" ? "channel" : "group");
     const eventCtx = $derived.by((): EventTextContext => {
@@ -357,10 +388,14 @@
     // updates don't redo every bubble; started again for a new chat, wording or day
     const rows = new RowCache();
     const groupMessages = new WeakMap<MessageRow, GroupMessage[]>();
+    // bumped when a revealed image needs its row redone
+    let rowsVersion = $state(0);
     $effect.pre(() => {
         void chatKey;
         void $_;
         void day;
+        // rows don't key on the media view, so a low-bandwidth change starts them again
+        void $lowBandwidth;
         rows.clear();
     });
 
@@ -370,10 +405,21 @@
         return client.formatMessageDate(timestamp, $_("today"), $_("yesterday"));
     }
 
-    function messagesFor(row: MessageRow, body: Snippet, withBody: boolean): GroupMessage[] {
+    function messagesFor(
+        row: MessageRow,
+        body: Snippet,
+        withBody: boolean,
+        msg: Message,
+    ): GroupMessage[] {
         let messages = groupMessages.get(row);
         if (messages === undefined) {
-            messages = [withBody ? { ...row.message, body } : row.message];
+            messages = [
+                withBody
+                    ? ({ ...row.message, body } as GroupMessage)
+                    : isMedia(msg.content)
+                      ? ({ ...row.message, onOpen: () => openMedia(msg) } as GroupMessage)
+                      : row.message,
+            ];
             groupMessages.set(row, messages);
         }
         return messages;
@@ -537,6 +583,7 @@
                                             body,
                                             content.kind === "text_content" &&
                                                 withMarkdown(content.text),
+                                            msg,
                                         )}
                                     />
                                 </div>
@@ -631,6 +678,10 @@
             />
         {/key}
     </div>
+{/if}
+
+{#if viewing !== undefined}
+    <MediaViewer content={viewing} onClose={() => (viewing = undefined)} />
 {/if}
 
 <style>

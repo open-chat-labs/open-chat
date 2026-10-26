@@ -1,4 +1,12 @@
-import type { EventWrapper, Message, MessageContent } from "@client";
+import type {
+    EventWrapper,
+    GiphyContent,
+    ImageContent,
+    MemeFighterContent,
+    Message,
+    MessageContent,
+    VideoContent,
+} from "@client";
 import type { GroupMessage, MenuItem } from "@openchat/ui/src/lib/types";
 import type { ChatMenuAction } from "@src/logic/chats/chatMenu";
 import { pickById } from "../../pickById";
@@ -29,6 +37,15 @@ export type ConversationContext = {
     time: (timestamp: bigint) => string;
     /** A date as the list shows it (a time today, else a short date). */
     date: (timestamp: bigint) => string;
+    /** How media shows: low bandwidth, and the media URL as this device fetches it. */
+    media: MediaView;
+};
+
+export type MediaView = {
+    lowBandwidth: boolean;
+    /** Whether the reader asked to see this message's full-size media (low bandwidth). */
+    revealed: (messageId: bigint) => boolean;
+    url: (blobUrl: string | undefined) => string | undefined;
 };
 
 export type MessageStatus = "sending" | "sent" | "delivered" | "failed";
@@ -52,8 +69,92 @@ export type MessageRow = {
     side: "sent" | "received";
     senderName: string;
     color: SenderColor;
-    message: Extract<GroupMessage, { kind?: "text" }>;
+    message: GroupMessage;
 };
+
+type MediaKind = "image" | "video" | "gif";
+export type MediaContent = ImageContent | VideoContent | GiphyContent | MemeFighterContent;
+
+export function isMedia(content: MessageContent): content is MediaContent {
+    return (
+        content.kind === "image_content" ||
+        content.kind === "video_content" ||
+        content.kind === "giphy_content" ||
+        content.kind === "meme_fighter_content"
+    );
+}
+
+/**
+ * Whether an image's or GIF's full size is held back (low bandwidth, not yet revealed): its tile
+ * doesn't get the full-size URL, and a click reveals it rather than opening the viewer (5a
+ * invariant 1). Memes and videos aren't held, as in the old trees.
+ */
+export function mediaHeld(content: MediaContent, messageId: bigint, media: MediaView): boolean {
+    return (
+        (content.kind === "image_content" || content.kind === "giphy_content") &&
+        media.lowBandwidth &&
+        !media.revealed(messageId)
+    );
+}
+
+const MEME_FALLBACK = "/assets/memefighter.svg";
+
+/**
+ * An image, video, GIF or meme as MediaMessage's tile. In low bandwidth an image's or GIF's
+ * full-size URL isn't handed over until the reader asks for it (5a invariant 1): an image shows
+ * its thumbnail, a GIF nothing, until it's revealed.
+ */
+export function mediaTile(
+    content: MediaContent,
+    hidden: boolean,
+    url: MediaView["url"],
+): { kind: MediaKind; items: { src?: string; w?: number; h?: number }[]; caption: string } {
+    switch (content.kind) {
+        case "image_content":
+            return {
+                kind: "image",
+                items: [
+                    {
+                        src: hidden ? content.thumbnailData : url(content.blobUrl),
+                        w: content.width,
+                        h: content.height,
+                    },
+                ],
+                caption: content.caption ?? "",
+            };
+        case "meme_fighter_content":
+            return {
+                kind: "image",
+                items: [{ src: content.url || MEME_FALLBACK, w: content.width, h: content.height }],
+                caption: "",
+            };
+        case "giphy_content":
+            // the desktop rendition is a video; the tile is the GIF image
+            return {
+                kind: "gif",
+                items: [
+                    {
+                        src: hidden ? undefined : content.mobile.url,
+                        w: content.mobile.width,
+                        h: content.mobile.height,
+                    },
+                ],
+                caption: content.caption ?? "",
+            };
+        case "video_content":
+            return {
+                kind: "video",
+                items: [
+                    {
+                        src: url(content.imageData.blobUrl) ?? content.thumbnailData,
+                        w: content.width,
+                        h: content.height,
+                    },
+                ],
+                caption: content.caption ?? "",
+            };
+    }
+}
 
 /** A message's text: a text message's own, and for other kinds (until they're built) their text. */
 export function messageText(
@@ -77,6 +178,29 @@ export function messageRow(
     const reply = msg.repliesTo;
     const quoted = reply?.kind === "rehydrated_reply_context" ? reply : undefined;
     const thread = msg.thread;
+    if (isMedia(msg.content)) {
+        const hidden = mediaHeld(msg.content, msg.messageId, ctx.media);
+        const tile = mediaTile(msg.content, hidden, ctx.media.url);
+        return {
+            side: mine ? "sent" : "received",
+            senderName: mine ? ctx.you : ctx.userName(msg.sender),
+            color: senderColor(msg.sender),
+            message: {
+                id: String(msg.messageId),
+                ...tile,
+                time: ctx.time(evt.timestamp),
+                // the tile shows a failed send itself
+                status: status === "failed" ? null : status,
+                upload: status === "failed" ? { state: "failed" as const } : null,
+                deleted: false,
+                reactions: msg.reactions.map((r) => ({
+                    emoji: r.reaction,
+                    count: r.userIds.size,
+                    mine: r.userIds.has(ctx.me),
+                })),
+            },
+        };
+    }
     return {
         side: mine ? "sent" : "received",
         senderName: mine ? ctx.you : ctx.userName(msg.sender),

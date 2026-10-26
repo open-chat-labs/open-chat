@@ -638,6 +638,15 @@ design export needs. Each entry says where it came up.
   favourite, mute and copy link only: the rest open dialogs (phase 4), and calls are phase 7. The
   old list's go-to-mention button and sticky date aren't carried over; it keeps go-to-latest.
   Own messages show no name (the design's "You" would be the lower-case app string).
+- **Media messages** (`features/conversation`, 5a): images, memes, GIFs and videos show as
+  `MediaMessage` tiles. They have no reactions, quote, thread or edited mark yet (`MediaMessage`
+  takes none). In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
+  first click, which loads it in the bubble; the old trees put a "load image" button on it, which
+  `MediaMessage` hasn't got. Unlike the old trees, the reader's own image is held too while it's
+  still sending. A click on a shown one opens `MediaViewer`, the mobile app's full-screen
+  viewer (pan and zoom from `core/zoom`, shared with `ZoomedImage`; no design for it:
+  `TODO(design)`). It has none of the old desktop viewer's arrows between a chat's images. A
+  failed send shows the tile's own failed state, with no retry yet.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked
