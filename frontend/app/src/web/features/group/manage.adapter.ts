@@ -8,7 +8,9 @@ import type { GroupSettingsTab } from "../app/dialogs";
 const LABEL: Record<ManageNavLabel, string> = {
     overview: "ui.manageDialog.overview",
     about: "ui.manageDialog.about",
+    members: "ui.manageDialog.members",
     invite: "ui.manageDialog.invite",
+    userGroups: "ui.manageDialog.userGroups",
     rules: "ui.manageDialog.rules",
     permissions: "ui.manageDialog.permissions",
     gates: "ui.manageDialog.gates",

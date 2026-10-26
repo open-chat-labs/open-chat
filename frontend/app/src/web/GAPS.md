@@ -281,18 +281,19 @@ design export needs. Each entry says where it came up.
 
 - **Manage** (4b rework 1, the design's Modal model): `ManageDialog`, one dialog per group,
   channel or community with a nav down the side (`features/group/ManageDialogScreen.svelte`,
-  `logic/groupOrCommunity/manage.svelte.ts`). It holds Overview (or About), Invite & share,
-  Rules, Permissions and Access gates. Overview, Rules, Permissions and Gates are one settings
+  `logic/groupOrCommunity/manage.svelte.ts`). It holds Overview (or About), Members, Invite &
+  share, User groups, Rules, Permissions and Access gates. Members and User groups are
+  GroupPanel's own views, embedded (`GroupPanelView`). Overview, Rules, Permissions and Gates are one settings
   form, so moving between them keeps the draft; leaving the form or closing with unsaved edits
   asks "Discard changes?".
   - by hand: `ManageDialog` is new in the library. The design has it only in the App prototype
     (`_manageVals`), with no exported component.
-  - pages still to come: Members, User groups, Channels, Bots, Webhooks, Stats, Convert and
-    Import. Until then members and user groups stay in GroupPanel's own views, and the
-    right column still shows the full GroupPanel, not the design's quick panel.
+  - pages still to come: Channels, Bots, Webhooks, Stats, Convert and Import. The right column
+    still shows the full GroupPanel, not the design's quick panel.
   - which pages show follows the app's permission rules (`detailsPermissions`), not the
     prototype's roles: someone who can't edit gets About and read-only Rules and Gates, and no
-    Permissions; Invite & share shows with `canOpenInvite`.
+    Permissions; Invite & share shows with `canOpenInvite`, and User groups with
+    `canManageUserGroups` (as the design, which offers them to managers only).
   - the chat name and the header kebab don't open Manage yet; GroupPanel's Settings, invite and
     share buttons, the conversation header's Invite and the community header's Invite and Edit
     community do.

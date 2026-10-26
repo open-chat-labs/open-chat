@@ -1,5 +1,6 @@
 <!-- Manage for a group, channel or community (ManageDialog): its settings pages, or its About page
-     for someone who can't edit it (ManageSettings), and Invite & share (ManageInvite). Moving
+     for someone who can't edit it (ManageSettings), Invite & share (ManageInvite), and Members and
+     User groups (GroupPanelView, embedded). Moving
      between the settings pages keeps the one draft; leaving them, or closing, with unsaved edits
      asks first (ManageState). Leave or Delete opens its confirm dialog over Manage. -->
 <script lang="ts">
@@ -31,6 +32,7 @@
     import type { DialogProps, LocalDialog } from "../app/dialogs";
     import { dialogTarget } from "./dialogTarget";
     import { leaveOrDeleteFor, manageNavGroups, settingsPage } from "./manage.adapter";
+    import GroupPanelView from "./GroupPanelView.svelte";
     import ManageInvite from "./ManageInvite.svelte";
     import ManageSettings from "./ManageSettings.svelte";
 
@@ -67,7 +69,13 @@
     const nav = $derived(
         access === undefined || permissions === undefined
             ? []
-            : manageNavGroups(manageNav({ access, canOpenInvite: permissions.canOpenInvite })),
+            : manageNavGroups(
+                  manageNav({
+                      access,
+                      canOpenInvite: permissions.canOpenInvite,
+                      canManageUserGroups: permissions.canManageUserGroups,
+                  }),
+              ),
     );
 
     const canLeave = $derived(
@@ -134,6 +142,15 @@
                 {access}
                 onDirtyChange={dirty}
                 onOpenRules={() => manage.go("rules")}
+                onClose={close}
+            />
+        {:else if manage.section === "members" || manage.section === "usergroups"}
+            <GroupPanelView
+                communityScope={target.kind === "community"}
+                viewRequest={manage.section}
+                {dialogs}
+                embedded
+                onManage={(section) => manage.go(section)}
                 onClose={close}
             />
         {:else if manage.section === "invite"}
