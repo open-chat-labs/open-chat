@@ -1,5 +1,7 @@
 import type {
+    BotInstallationLocation,
     CommunityIdentifier,
+    ExternalBotLike,
     GroupChatIdentifier,
     LeaveOrDelete,
     MultiUserChatIdentifier,
@@ -61,6 +63,12 @@ export type LocalDialog =
       }
     | { kind: "create_group"; level: "group" | "community" }
     | { kind: "convert_group"; chatId: GroupChatIdentifier }
+    | {
+          kind: "bot";
+          /** Where it is, or would be, installed: a group, or a community (a channel's bots are its community's). */
+          location: BotInstallationLocation;
+          bot: ExternalBotLike;
+      }
     | {
           kind: "webhook";
           chatId: MultiUserChatIdentifier;
@@ -131,6 +139,9 @@ export const dialogs: Dialogs = {
     // converting a group to a community, or importing it into one you own (4b)
     convert_group: () => import("../group/ConvertGroupDialogScreen.svelte"),
     import_group: () => import("../group/ImportGroupDialogScreen.svelte"),
+
+    // a bot's details, installing it, changing its permissions or removing it (4b)
+    bot: () => import("../group/BotDialogScreen.svelte"),
 
     // registering or editing a group's or channel's webhook (4b)
     webhook: () => import("../group/WebhookDialogScreen.svelte"),

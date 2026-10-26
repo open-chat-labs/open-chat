@@ -64,7 +64,7 @@ describe("Manage's pages", () => {
                 canImport: false,
                 canManageWebhooks: false,
             }),
-        ).toEqual(["main:about", "members:members", "rules:rules", "gates:gates"]);
+        ).toEqual(["main:about", "members:members", "rules:rules", "gates:gates", "bots:bots"]);
         expect(
             sections({
                 access: { kind: "edit", readOnly: [] },
@@ -84,6 +84,7 @@ describe("Manage's pages", () => {
             "rules:rules",
             "permissions:permissions",
             "gates:gates",
+            "bots:bots",
             "webhooks:webhooks",
             "action:convert",
             "action:import",

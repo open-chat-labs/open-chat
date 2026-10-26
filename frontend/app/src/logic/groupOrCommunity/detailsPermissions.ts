@@ -23,6 +23,9 @@ export type DetailsPermissions = {
     canImport: boolean;
     /** A group's or channel's webhooks, for its owner. */
     canManageWebhooks: boolean;
+    /** Installing, changing and removing bots: a group's, or a channel's community's (bots are a
+     *  community's, not a channel's). */
+    canManageBots: boolean;
 };
 
 const nothing: DetailsPermissions = {
@@ -34,6 +37,7 @@ const nothing: DetailsPermissions = {
     canConvert: false,
     canImport: false,
     canManageWebhooks: false,
+    canManageBots: false,
 };
 
 /**
@@ -61,6 +65,10 @@ export function chatDetailsPermissions(
         canConvert: chat.kind === "group_chat" && client.canConvertGroupToCommunity(chat.id),
         canImport: chat.kind === "group_chat" && client.canImportToCommunity(chat.id),
         canManageWebhooks: client.canRegisterWebhook(chat.id),
+        canManageBots:
+            chat.kind === "channel"
+                ? community !== undefined && client.canManageBots(community.id)
+                : client.canManageBots(chat.id),
     };
 }
 
@@ -80,6 +88,7 @@ export function communityDetailsPermissions(
         canConvert: false,
         canImport: false,
         canManageWebhooks: false,
+        canManageBots: client.canManageBots(community.id),
     };
 }
 
