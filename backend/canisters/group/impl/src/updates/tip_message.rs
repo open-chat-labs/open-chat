@@ -34,7 +34,7 @@ async fn tip_message_impl(args: Args) -> OCResult {
         }
     })?;
 
-    let prepared = match mutate_state(|state| prepare(&args, user.user_id, caller, None, state))? {
+    let prepared = match mutate_state(|state| prepare(&args, user.user_id, caller, None, None, state))? {
         // Tips on a message a bridge bot relayed go to whoever linked the account it came from,
         // which the LocalUserIndex knows. Everything is checked again once they're found, as
         // anything may have changed while they were looked up.
@@ -44,7 +44,17 @@ async fn tip_message_impl(args: Args) -> OCResult {
                 c2c_bridged_user_link::Response::Success(None) => AccountLink::Unlinked,
                 c2c_bridged_user_link::Response::CantBeLinked => AccountLink::CantBeLinked,
             };
-            mutate_state(|state| prepare(&args, user.user_id, caller, Some(link), state))?
+            mutate_state(|state| prepare(&args, user.user_id, caller, Some(link), None, state))?
+        }
+        // A sender who has left is no longer held among the members, so the wallet to pay them in
+        // is looked up from the LocalUserIndex, then everything is checked again
+        PrepareResult::LookUpWallet(recipient, local_user_index) => {
+            let wallet = local_user_index_canister_c2c_client::lookup_user(recipient.as_principal(), local_user_index)
+                .await?
+                .ok_or(OCErrorCode::TargetUserNotFound)?
+                .principal
+                .into();
+            mutate_state(|state| prepare(&args, user.user_id, caller, None, Some((recipient, wallet)), state))?
         }
         prepared => prepared,
     };
@@ -66,8 +76,10 @@ async fn tip_message_impl(args: Args) -> OCResult {
 
             mutate_state(|state| tip_message_with_completed_transfer(user.user_id, from, c2c_args, state))?;
         }
-        // Only asked for when no link was given
-        PrepareResult::LookUpLinkedUser(..) => return Err(OCErrorCode::TargetUserNotFound.into()),
+        // Only asked for before anything has been looked up, as a linked user must be a member
+        PrepareResult::LookUpLinkedUser(..) | PrepareResult::LookUpWallet(..) => {
+            return Err(OCErrorCode::TargetUserNotFound.into());
+        }
     }
 
     if new_achievement {
@@ -82,6 +94,9 @@ enum PrepareResult {
     // The message was relayed by a bridge bot from this account, so who linked it is to be looked
     // up from this LocalUserIndex, then the tip prepared again with them
     LookUpLinkedUser(BridgedUserId, CanisterId),
+    // The message's sender has left, so their wallet is to be looked up from this LocalUserIndex,
+    // then the tip prepared again with it
+    LookUpWallet(UserId, CanisterId),
 }
 
 struct TipToMake {
@@ -94,6 +109,8 @@ fn prepare(
     user_id: UserId,
     caller: Principal,
     link: Option<AccountLink>,
+    // The wallet of a user who isn't a member, as looked up
+    non_member_wallet: Option<(UserId, icrc1::Account)>,
     state: &mut RuntimeState,
 ) -> OCResult<PrepareResult> {
     let payee = match state
@@ -128,7 +145,20 @@ fn prepare(
     let transfer_recipient = match payee {
         Payee::User(recipient) => TransferRecipient::User {
             user_id: recipient,
-            wallet: state.member_wallet(recipient)?,
+            // A member's wallet is held for them, and a bot's comes from its id. A user who has
+            // left is paid in the wallet looked up for them.
+            wallet: if !recipient.is_indexed() || state.data.chat.members.get(&recipient).is_some() {
+                state.member_wallet(recipient)?
+            } else if let Some((non_member, wallet)) = non_member_wallet
+                && non_member == recipient
+            {
+                wallet
+            } else {
+                return Ok(PrepareResult::LookUpWallet(
+                    recipient,
+                    state.data.local_user_index_canister_id,
+                ));
+            },
         },
         Payee::UnlinkedAccount(account) => TransferRecipient::Account(icrc1::Account {
             owner: state.data.user_index_canister_id,

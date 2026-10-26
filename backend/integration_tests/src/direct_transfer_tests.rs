@@ -162,6 +162,50 @@ fn tip_message_directly_succeeds(in_channel: bool) {
     );
 }
 
+// The chat no longer holds the wallet of a sender who has left the group, or the community, so it
+// looks it up to pay them
+#[test_case(false; "group")]
+#[test_case(true; "community")]
+fn tip_message_from_someone_who_has_left_succeeds(in_channel: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { user1, user2, chat } = init_test_data(env, canister_ids, *controller, in_channel);
+
+    let message_id = random_from_u128();
+    let event_index = chat.send_text_message(env, &user2, message_id);
+    chat.leave(env, &user2);
+
+    approve_chat(
+        env,
+        canister_ids,
+        *controller,
+        &user1,
+        chat,
+        user1.principal,
+        AMOUNT + ICP_TRANSFER_FEE,
+    );
+
+    let transfer = icrc2_transfer(env, user1.principal, icrc1::Account::legacy_for_user(user2.user_id));
+    let response = chat.tip_message(env, &user1, message_id, transfer);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user2),
+        AMOUNT
+    );
+    let message = chat.message(env, &user1, event_index);
+    assert_eq!(
+        *message.tips.first().unwrap(),
+        (ICP_LEDGER_CANISTER_ID, vec![(user1.user_id, AMOUNT)])
+    );
+}
+
 // Tipping has its own permission, so members can be stopped from tipping while still being able to react
 #[test_case(false; "group")]
 #[test_case(true; "channel")]
@@ -690,6 +734,14 @@ impl DirectChat {
                     external_url: OptionUpdate::NoChange,
                 },
             ),
+        }
+    }
+
+    // Leaves the group, or the whole community
+    fn leave(&self, env: &mut PocketIc, user: &User) {
+        match self {
+            DirectChat::Group(group_id) => client::user::happy_path::leave_group(env, user, *group_id),
+            DirectChat::Channel(community_id, _) => client::user::happy_path::leave_community(env, user, *community_id),
         }
     }
 
