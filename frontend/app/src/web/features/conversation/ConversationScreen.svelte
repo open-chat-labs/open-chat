@@ -6,6 +6,7 @@
     import { showInRightColumn } from "../app/rightPanel";
     import {
         allUsersStore,
+        formatClock,
         anonUserStore,
         blockedUsersStore,
         botState,
@@ -39,6 +40,7 @@
         type ChatIdentifier,
         type ChatSummary,
         type EventWrapper,
+        type FileContent,
         type Message,
         type OpenChat,
     } from "@client";
@@ -88,6 +90,7 @@
         type MessageRow,
     } from "./conversation.adapter";
     import MediaViewer from "./MediaViewer.svelte";
+    import { VoicePlayer, type VoiceSpeed } from "./voicePlayer.svelte";
     import { RowCache } from "./rowCache";
     import { profileClickedEvent } from "@src/web-components/profileLink";
 
@@ -414,16 +417,77 @@
         let messages = groupMessages.get(row);
         if (messages === undefined) {
             messages = [
-                withBody
-                    ? ({ ...row.message, body } as GroupMessage)
-                    : isMedia(msg.content)
-                      ? ({ ...row.message, onOpen: () => openMedia(msg) } as GroupMessage)
-                      : row.message,
+                withBody ? ({ ...row.message, body } as GroupMessage) : withActions(row, msg),
             ];
             groupMessages.set(row, messages);
         }
         return messages;
     }
+
+    // a rich kind's handlers, and a voice message's playing state (read as it renders, so playing
+    // doesn't redo the row)
+    function withActions(row: MessageRow, msg: Message): GroupMessage {
+        const content = msg.content;
+        if (isMedia(content)) {
+            return { ...row.message, onOpen: () => openMedia(msg) } as GroupMessage;
+        }
+        if (content.kind === "file_content") {
+            return { ...row.message, onDownload: () => download(content) } as GroupMessage;
+        }
+        if (content.kind === "audio_content") {
+            const key = row.message.id ?? "";
+            const url = getProxyAdjustedBlobUrl(content.blobUrl);
+            const length = Number(content.durationMs) / 1000;
+            return {
+                ...row.message,
+                get playing() {
+                    return voice.playing(key);
+                },
+                get progress() {
+                    return length > 0 ? voice.time(key) / length : 0;
+                },
+                get elapsed() {
+                    return formatClock(voice.time(key));
+                },
+                get speed() {
+                    return voice.speed;
+                },
+                onPlay: () => voice.play(key, url),
+                onPause: () => voice.pause(key),
+                onSeek: (fraction: number) => voice.seek(key, url, fraction * length),
+                onSpeedChange: (speed: VoiceSpeed) => voice.setSpeed(speed),
+            } as GroupMessage;
+        }
+        return row.message;
+    }
+
+    // a file is saved under its own name. The blob is on the canister's own origin, where a
+    // link's download attribute is ignored (the tab would go to the file), so it's fetched and
+    // saved from here; if that fails it opens in a new tab, as the old trees do
+    async function download(content: FileContent) {
+        const url = getProxyAdjustedBlobUrl(content.blobUrl);
+        if (url === undefined) return;
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`status ${resp.status}`);
+            const local = URL.createObjectURL(await resp.blob());
+            const link = document.createElement("a");
+            link.href = local;
+            link.download = content.name;
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(local), 60_000);
+        } catch (err) {
+            console.warn("Couldn't download a file, opening it instead", err);
+            window.open(url, "_blank", "noopener");
+        }
+    }
+
+    // one voice message plays at a time, and none once the chat is left
+    const voice = new VoicePlayer();
+    $effect(() => {
+        void chatKey;
+        return () => voice.stop();
+    });
 
     // a lone native emoji shows as the bubble's own, large; anything else (a custom emoji too)
     // goes through the markdown

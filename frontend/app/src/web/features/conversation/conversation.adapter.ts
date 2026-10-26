@@ -1,11 +1,14 @@
-import type {
-    EventWrapper,
-    GiphyContent,
-    ImageContent,
-    MemeFighterContent,
-    Message,
-    MessageContent,
-    VideoContent,
+import {
+    formatClock,
+    formatFileSize,
+    waveformLevels,
+    type EventWrapper,
+    type GiphyContent,
+    type ImageContent,
+    type MemeFighterContent,
+    type Message,
+    type MessageContent,
+    type VideoContent,
 } from "@client";
 import type { GroupMessage, MenuItem } from "@openchat/ui/src/lib/types";
 import type { ChatMenuAction } from "@src/logic/chats/chatMenu";
@@ -178,27 +181,22 @@ export function messageRow(
     const reply = msg.repliesTo;
     const quoted = reply?.kind === "rehydrated_reply_context" ? reply : undefined;
     const thread = msg.thread;
-    if (isMedia(msg.content)) {
-        const hidden = mediaHeld(msg.content, msg.messageId, ctx.media);
-        const tile = mediaTile(msg.content, hidden, ctx.media.url);
+    const kind = kindMessage(msg, status, ctx, {
+        id: String(msg.messageId),
+        time: ctx.time(evt.timestamp),
+        deleted: false,
+        reactions: msg.reactions.map((r) => ({
+            emoji: r.reaction,
+            count: r.userIds.size,
+            mine: r.userIds.has(ctx.me),
+        })),
+    });
+    if (kind !== undefined) {
         return {
             side: mine ? "sent" : "received",
             senderName: mine ? ctx.you : ctx.userName(msg.sender),
             color: senderColor(msg.sender),
-            message: {
-                id: String(msg.messageId),
-                ...tile,
-                time: ctx.time(evt.timestamp),
-                // the tile shows a failed send itself
-                status: status === "failed" ? null : status,
-                upload: status === "failed" ? { state: "failed" as const } : null,
-                deleted: false,
-                reactions: msg.reactions.map((r) => ({
-                    emoji: r.reaction,
-                    count: r.userIds.size,
-                    mine: r.userIds.has(ctx.me),
-                })),
-            },
+            message: kind,
         };
     }
     return {
@@ -232,6 +230,53 @@ export function messageRow(
             threadLastAt: thread === undefined ? undefined : ctx.date(thread.latestEventTimestamp),
         },
     };
+}
+
+type KindBase = { id: string; time: string; deleted: false; reactions: GroupMessage["reactions"] };
+
+/**
+ * A message of a kind with its own bubble (media, voice, file); undefined for one shown as text.
+ * A voice message's playing state is the screen's, so it starts here at rest.
+ */
+function kindMessage(
+    msg: Message,
+    status: MessageStatus,
+    ctx: ConversationContext,
+    base: KindBase,
+): GroupMessage | undefined {
+    const content = msg.content;
+    // the bubble shows a failed send itself
+    const upload = status === "failed" ? { state: "failed" as const } : null;
+    if (isMedia(content)) {
+        const hidden = mediaHeld(content, msg.messageId, ctx.media);
+        return {
+            ...base,
+            ...mediaTile(content, hidden, ctx.media.url),
+            status: status === "failed" ? null : status,
+            upload,
+        };
+    }
+    switch (content.kind) {
+        case "audio_content":
+            return {
+                ...base,
+                kind: "voice",
+                levels: waveformLevels(content.samples),
+                progress: 0,
+                elapsed: formatClock(0),
+                total: formatClock(Number(content.durationMs) / 1000),
+            };
+        case "file_content":
+            return {
+                ...base,
+                kind: "file",
+                fileName: content.name,
+                size: formatFileSize(content.fileSize),
+                caption: content.caption ?? "",
+                upload,
+            };
+    }
+    return undefined;
 }
 
 /** How long until the next local day starts, so labels like "Today" can be redone then. */

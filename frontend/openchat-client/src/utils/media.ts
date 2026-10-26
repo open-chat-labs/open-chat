@@ -264,6 +264,11 @@ function reduceWaveform(channels: Float32Array[]): Uint8Array {
     return samples;
 }
 
+/** A voice message's stored waveform (a byte per bar) as levels from 0 to 1. */
+export function waveformLevels(samples: Uint8Array): number[] {
+    return Array.from(samples, (s) => s / 255);
+}
+
 export async function quantiseWaveform(
     bytes: ArrayBuffer,
 ): Promise<{ durationMs: bigint; samples: Uint8Array }> {

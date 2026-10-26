@@ -344,3 +344,7 @@
 ## 2026-10-26 — BotDialog: the host's permissions, by hand
 - `permissions` (`BotPermissionInfo[]`: key, label, group, risky) replaces the built-in eleven-permission vocabulary: the bot's `perms`, its commands' `needs` and `granted` use the host's keys, the toggles are listed under the host's headings in its order, and the summary sentence lists the host's labels (risky ones highlighted). The app's bots ask for some thirty permissions, for commands and for acting on their own apart, which the built-in set can't express without granting by guesswork. Without `permissions` the dialog behaves as before. `BotDefinition.perms` / `needs` / `granted` and `BotInstall.granted` are keyed by string; `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — VoiceMessage: the recording's waveform, by hand
+- `levels` (0–1 per bar) draws the recording's own waveform; without it the placeholder bars show as before. The design's bars are made up. `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

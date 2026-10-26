@@ -647,6 +647,14 @@ design export needs. Each entry says where it came up.
   viewer (pan and zoom from `core/zoom`, shared with `ZoomedImage`; no design for it:
   `TODO(design)`). It has none of the old desktop viewer's arrows between a chat's images. A
   failed send shows the tile's own failed state, with no retry yet.
+- **Voice and file messages** (`features/conversation`, 5a): a voice message plays through the
+  screen's `VoicePlayer` (one audio element, so one at a time), with the recording's waveform
+  (`VoiceMessage` takes `levels` by hand: the design's bars are made up). Unlike the mobile app,
+  the next voice message doesn't play when one ends, and the speed is one for the whole chat. A
+  voice message's caption isn't shown and a failed one shows no failed state (`VoiceMessage` has
+  neither). Neither shows a sent or delivered tick (`VoiceMessage` and `FileMessage` take no
+  status). A file shows its name, size and type and downloads under its own name. Neither has
+  reactions, a quote, a thread or an edited mark yet.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked
