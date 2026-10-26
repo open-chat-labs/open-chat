@@ -52,14 +52,24 @@ describe("Manage's pages", () => {
 
     // 4b invariant 7 in the nav: someone who can't edit gets About, and no Permissions
     test("someone who can't edit gets About and no Permissions", () => {
-        expect(sections({ access: { kind: "about" }, canOpenInvite: false })).toEqual([
-            "main:about",
-            "rules:rules",
-            "gates:gates",
-        ]);
-        expect(sections({ access: { kind: "edit", readOnly: [] }, canOpenInvite: true })).toEqual([
+        expect(
+            sections({
+                access: { kind: "about" },
+                canOpenInvite: false,
+                canManageUserGroups: false,
+            }),
+        ).toEqual(["main:about", "members:members", "rules:rules", "gates:gates"]);
+        expect(
+            sections({
+                access: { kind: "edit", readOnly: [] },
+                canOpenInvite: true,
+                canManageUserGroups: true,
+            }),
+        ).toEqual([
             "main:overview",
+            "members:members",
             "invite:invite",
+            "usergroups:userGroups",
             "rules:rules",
             "permissions:permissions",
             "gates:gates",

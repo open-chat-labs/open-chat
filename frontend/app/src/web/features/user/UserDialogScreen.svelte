@@ -1,13 +1,17 @@
 <!-- Someone's profile card, opened by a name clicked in a message (`<profile-link>`): their name,
      avatar, cover, bio, when they joined and their CHIT, with Block / Unblock where the card was
-     opened, the Chat button, and suspend / unsuspend for platform moderators. -->
+     opened, the Chat button, and suspend / unsuspend for platform moderators. Opened from your DM
+     with them (`dmTab`), it has Profile / This chat tabs with the DM's mute, favourite and
+     disappearing messages, as the design's DM profile. -->
 <script lang="ts">
     import {
         buildUserAvatarUrl,
         buildUserBackgroundUrl,
         lastOnlineStatus,
         currentUserIdStore,
+        favouritesStore,
         OpenChat,
+        selectedChatSummaryStore,
         platformModeratorStore,
         publish,
         selectedChatWebhooksStore,
@@ -25,6 +29,8 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
+    import { ttlDurationId } from "@src/logic/chats/disappearingMessages";
+    import { favouriteDm, muteDm, setDmDisappearing } from "../dm/dmSettings";
     import { userDialogProps } from "./user.adapter";
 
     let { dialog, onClose }: DialogProps<Extract<LocalDialog, { kind: "user" }>> = $props();
@@ -68,6 +74,15 @@
             chit: badges.chit,
         });
     });
+
+    // the DM it was opened from, while it's still the open chat
+    const dm = $derived(
+        dialog.dmTab !== undefined &&
+            $selectedChatSummaryStore?.kind === "direct_chat" &&
+            $selectedChatSummaryStore.them.userId === userId
+            ? $selectedChatSummaryStore
+            : undefined,
+    );
 
     const cardBlock = new ProfileCardBlock(client, userId, dialog.inGlobalContext);
     const block = $derived(cardBlock.current);
@@ -122,7 +137,17 @@
         onUnblock={block.kind === "unblock" ? unblockUser : undefined}
         onMessage={dialog.chatButton && !isMe ? chat : undefined}
         {moderatorAction}
-        onCancel={onClose}>
+        dmTabs={dm !== undefined}
+        initialTab={dialog.dmTab}
+        muted={dm?.membership.notificationsMuted ? "always" : null}
+        fav={dm !== undefined && $favouritesStore.has(dm.id)}
+        disappearOn={dm?.eventsTTL !== undefined}
+        disappearAfter={ttlDurationId(dm?.eventsTTL)}
+        onMuteChange={dm && ((key) => dm && muteDm(client, dm, key !== null, $_))}
+        onToggleFavourite={dm && ((fav) => dm && favouriteDm(client, dm, fav))}
+        onDisappearChange={dm && ((setting) => dm && setDmDisappearing(client, dm, setting))}
+        onCancel={onClose}
+    >
         {#snippet aboutContent()}
             <Markdown inline={false} text={userProps.about} />
         {/snippet}

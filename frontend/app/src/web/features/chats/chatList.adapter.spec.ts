@@ -1,5 +1,11 @@
 import type { ChatSummary } from "@client";
-import { chatRow, listed, swatchFor, type RowContext } from "./chatList.adapter";
+import {
+    chatRow,
+    communityHeaderMenu,
+    listed,
+    swatchFor,
+    type RowContext,
+} from "./chatList.adapter";
 
 const membership = { notificationsMuted: false, archived: false, joined: 0n };
 
@@ -139,5 +145,23 @@ describe("whether a chat is in the list", () => {
         expect(listed(dm("alice"), "alice_", users)).toBe(true);
         expect(listed(dm("alice"), "wan", users)).toBe(true);
         expect(listed(withDescription, "closed", users)).toBe(false);
+    });
+});
+
+describe("a community's header menu", () => {
+    // 4b invariant 7: New user group only for someone who may manage user groups
+    test("offers New user group only to someone who may manage them", () => {
+        const ids = (canManageUserGroups: boolean) =>
+            communityHeaderMenu({
+                canLeave: true,
+                canDelete: false,
+                canEdit: true,
+                canInvite: true,
+                canCreateChannel: true,
+                canManageUserGroups,
+                label: (key) => key,
+            }).map((item) => item.id);
+        expect(ids(false)).not.toContain("newUserGroup");
+        expect(ids(true)).toContain("newUserGroup");
     });
 });

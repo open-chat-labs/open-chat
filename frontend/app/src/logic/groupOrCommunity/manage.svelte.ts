@@ -4,7 +4,14 @@ import type { ManageAccess } from "./detailsPermissions";
 // nav down the side. Overview (or About), Gates, Rules and Permissions are one settings form, so
 // moving between them keeps its draft; any other move with unsaved edits asks first.
 
-export type ManageSection = "main" | "gates" | "rules" | "permissions" | "invite";
+export type ManageSection =
+    | "main"
+    | "gates"
+    | "rules"
+    | "permissions"
+    | "invite"
+    | "members"
+    | "usergroups";
 
 const FORM: readonly ManageSection[] = ["main", "gates", "rules", "permissions"];
 
@@ -13,12 +20,22 @@ export function isFormSection(section: ManageSection): boolean {
 }
 
 export type ManageNavItem = { section: ManageSection; label: ManageNavLabel };
-export type ManageNavLabel = "overview" | "about" | "invite" | "rules" | "permissions" | "gates";
+export type ManageNavLabel =
+    | "overview"
+    | "about"
+    | "members"
+    | "invite"
+    | "userGroups"
+    | "rules"
+    | "permissions"
+    | "gates";
 export type ManageNavGroup = { label: "general" | "advanced"; items: ManageNavItem[] };
 
 export type ManageNavInput = {
     access: ManageAccess;
     canOpenInvite: boolean;
+    /** User groups are a community's, for someone who may manage them. */
+    canManageUserGroups: boolean;
 };
 
 /**
@@ -26,11 +43,19 @@ export type ManageNavInput = {
  * people rarely touch (Advanced). Someone who can't edit gets the About page, and the rules and
  * gates read-only; permissions are only for someone who can edit.
  */
-export function manageNav({ access, canOpenInvite }: ManageNavInput): ManageNavGroup[] {
+export function manageNav({
+    access,
+    canOpenInvite,
+    canManageUserGroups,
+}: ManageNavInput): ManageNavGroup[] {
     const edit = access.kind === "edit";
     const general: ManageNavItem[] = [
         { section: "main", label: edit ? "overview" : "about" },
+        { section: "members", label: "members" },
         ...(canOpenInvite ? [{ section: "invite" as const, label: "invite" as const }] : []),
+        ...(canManageUserGroups
+            ? [{ section: "usergroups" as const, label: "userGroups" as const }]
+            : []),
         { section: "rules", label: "rules" },
     ];
     const advanced: ManageNavItem[] = [

@@ -276,26 +276,42 @@ design export needs. Each entry says where it came up.
     leave, so for anyone else the item does nothing.
   - not offered: freeze and unfreeze (platform moderators, no dialog), suspend, report, and the
     desktop row's swipe-to-remove (Remove chat is a row menu item instead).
+  - the row menus offer every item with a dialog (pin, archive, leave or delete, remove) on every
+    kind of row, by Julian's choice; the design gives DM and group rows only favourite, mute and
+    mark read.
   - the community header's Invite and new channel items, and the conversation header's Invite,
     Convert, Import and webhook items, come with 4b's later parts.
 
 - **Manage** (4b rework 1, the design's Modal model): `ManageDialog`, one dialog per group,
   channel or community with a nav down the side (`features/group/ManageDialogScreen.svelte`,
-  `logic/groupOrCommunity/manage.svelte.ts`). It holds Overview (or About), Invite & share,
-  Rules, Permissions and Access gates. Overview, Rules, Permissions and Gates are one settings
+  `logic/groupOrCommunity/manage.svelte.ts`). It holds Overview (or About), Members, Invite &
+  share, User groups, Rules, Permissions and Access gates. Members and User groups are
+  GroupPanel's own views, embedded (`GroupPanelView`). Overview, Rules, Permissions and Gates are one settings
   form, so moving between them keeps the draft; leaving the form or closing with unsaved edits
   asks "Discard changes?".
   - by hand: `ManageDialog` is new in the library. The design has it only in the App prototype
     (`_manageVals`), with no exported component.
-  - pages still to come: Members, User groups, Channels, Bots, Webhooks, Stats, Convert and
-    Import. Until then members and user groups stay in GroupPanel's own views, and the
-    right column still shows the full GroupPanel, not the design's quick panel.
+  - pages still to come: Channels, Bots, Webhooks, Stats, Convert and Import.
+  - the right column shows GroupPanel's quick panel for a group or channel (cog for someone who
+    can edit, info otherwise); its views open Manage, except pinned messages. A community has no
+    panel: its header, its menu's Members / Invite / Edit community, and a channel's community
+    link open Manage. A panel asked for members (?everyone, ?usergroup=) or a community's details
+    opens Manage instead.
+  - the quick panel's "Online now" has no presence data yet (see Presence).
+  - a DM's name, the header menu's Chat settings and DmPanel's View profile open the other
+    person's card with the design's Profile / This chat tabs (`dmTab`): This chat has the DM's
+    mute, favourite and disappearing messages (no read receipts, see above).
   - which pages show follows the app's permission rules (`detailsPermissions`), not the
     prototype's roles: someone who can't edit gets About and read-only Rules and Gates, and no
-    Permissions; Invite & share shows with `canOpenInvite`.
-  - the chat name and the header kebab don't open Manage yet; GroupPanel's Settings, invite and
-    share buttons, the conversation header's Invite and the community header's Invite and Edit
-    community do.
+    Permissions; Invite & share shows with `canOpenInvite`, and User groups with
+    `canManageUserGroups` (as the design, which offers them to managers only).
+  - Manage opens from a group's or channel's name (with the design's chevron and hint), the
+    header menu's first item ("Manage group", or "Group details" without edit rights), the quick
+    panel's cog, and the community header and its menu.
+  - the header menu follows the design's (`_chatMenu`) but has no Share to chat (the chat picker
+    is 4d) and no Report (no report flow yet); a DM keeps Delete chat, which the design leaves out.
+    The community menu has no Stats, New channel, Add embedded channel or Add a bot until those
+    pages land, and no longer mutes every channel (the community's About page does).
   - a channel's Manage has no back arrow to its community yet (the community has no Channels
     page).
   - the frame below 768px is the desktop frame at full screen with a narrower nav; the design has
