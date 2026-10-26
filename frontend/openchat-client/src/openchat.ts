@@ -12240,6 +12240,7 @@ export class OpenChat {
                             ...group,
                             id: resp.channelId,
                             kind: "channel",
+                            level: "channel",
                         } as ChannelSummary);
                     }
                     return { kind: "success", channelId: resp.channelId } as const;
