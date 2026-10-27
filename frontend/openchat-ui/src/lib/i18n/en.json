@@ -2346,7 +2346,8 @@
       "requirementsNotMet": "Requirements not met",
       "toClaim": "TO CLAIM",
       "winners": "{count, plural, one {# winner} other {# winners}}",
-      "youWon": "You won {amount}"
+      "youWon": "You won {amount}",
+      "youWonIt": "You won"
     },
     "profileDialog": {
       "about": {

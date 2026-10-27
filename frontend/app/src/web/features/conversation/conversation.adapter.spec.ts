@@ -19,6 +19,14 @@ const ctx: ConversationContext = {
     direct: false,
     readonly: false,
     now: 0,
+    claimant: {
+        previewingOrLapsed: false,
+        diamond: false,
+        lifetimeDiamond: false,
+        streak: 0,
+        chitEarned: 0,
+    },
+    text: (key) => key.key,
     token: (ledger) =>
         ledger === "icp"
             ? {
@@ -215,6 +223,33 @@ describe("transfers", () => {
         expect(messageRow(transfer("bob", "me", "unknown"), "sent", ctx).message).toMatchObject({
             kind: "text",
             text: "[crypto_content]",
+        });
+    });
+});
+
+describe("prizes", () => {
+    test("in a ledger the registry doesn't carry, show as text", () => {
+        const prize = message({
+            content: {
+                kind: "prize_content",
+                prizesRemaining: 1,
+                prizesPending: 0,
+                diamondOnly: false,
+                lifetimeDiamondOnly: false,
+                uniquePersonOnly: false,
+                streakOnly: 0,
+                winnerCount: 0,
+                userIsWinner: false,
+                token: "ICP",
+                ledger: "unknown",
+                endDate: 1n,
+                requiresCaptcha: false,
+                minChitEarned: 0,
+            },
+        } as Partial<Message>);
+        expect(messageRow(prize, "sent", ctx).message).toMatchObject({
+            kind: "text",
+            text: "[prize_content]",
         });
     });
 });

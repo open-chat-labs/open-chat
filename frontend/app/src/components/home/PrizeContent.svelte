@@ -10,7 +10,9 @@
         isDiamondStore,
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
+        isTrustedClick,
         mobileWidth,
+        prizeView,
         publish,
         type ChatIdentifier,
         type DiamondMembershipStatus,
@@ -28,7 +30,7 @@
     import { now500 } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { prizeClaimStep } from "@shared_components/home/prize/prizeClaim";
+    import { prizeClaimStep } from "@src/logic/prize/prizeClaim";
     import Diamond from "../icons/Diamond.svelte";
     import SpinningToken from "@shared_components/icons/SpinningToken.svelte";
     import SecureButton from "../SecureButton.svelte";
@@ -70,7 +72,7 @@
             return;
         }
 
-        if (e.isTrusted && chatId.kind !== "direct_chat" && !me && userEligible) {
+        if (isTrustedClick(e) && chatId.kind !== "direct_chat" && view.canClaim) {
             claimsStore.add(messageId);
             client
                 .claimPrize(chatId, messageId, e, step.signInProof)
@@ -93,21 +95,27 @@
     let logo = $derived($cryptoLookup.get(content.ledger)?.logo ?? "");
     let total = $derived(content.prizesRemaining + content.prizesPending + content.winnerCount);
     let percentage = $derived((content.winnerCount / total) * 100);
-    let claimedByYou = $derived(content.userIsWinner);
-    let finished = $derived($now500 >= Number(content.endDate));
-    let allClaimed = $derived(content.prizesRemaining <= 0);
-    let userEligible = $derived(
-        (!content.diamondOnly || $isDiamondStore) &&
-            (!content.lifetimeDiamondOnly || $isLifetimeDiamondStore) &&
-            // Unique person ("verified user") gating is suspended - always eligible
-            content.streakOnly <= $chitStateStore.streak &&
-            content.minChitEarned <= $chitStateStore.totalChitEarned,
-    );
     // Read from the stores so the button enables as soon as the user joins or rejoins
     let previewingOrLapsed = $derived.by(() => {
         const chat = $allChatsStore.get(chatId);
         return chat !== undefined && isPreviewingOrLapsed(chat, $communitiesStore);
     });
+    let view = $derived(
+        prizeView(content, {
+            mine: me,
+            direct: chatId.kind === "direct_chat",
+            previewingOrLapsed,
+            now: $now500,
+            diamond: $isDiamondStore,
+            lifetimeDiamond: $isLifetimeDiamondStore,
+            streak: $chitStateStore.streak,
+            chitEarned: $chitStateStore.totalChitEarned,
+        }),
+    );
+    let claimedByYou = $derived(view.claimedByYou);
+    let finished = $derived(view.finished);
+    let allClaimed = $derived(view.allClaimed);
+    let userEligible = $derived(view.eligible);
     let disabled = $derived(
         previewingOrLapsed || finished || claimedByYou || allClaimed || !userEligible,
     );

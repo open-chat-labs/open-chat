@@ -3,6 +3,7 @@ import {
     formatFileSize,
     ogPreviewCard,
     pollView,
+    prizeView,
     votesForAnswer,
     waveformLevels,
     type CryptocurrencyContent,
@@ -14,6 +15,9 @@ import {
     type MessageContent,
     type OgPreview,
     type PollContent,
+    type PrizeContent,
+    type PrizeReader,
+    type ResourceKey,
     type VideoContent,
 } from "@client";
 import type ChatBubble from "@openchat/ui/src/lib/components/ChatBubble.svelte";
@@ -54,8 +58,12 @@ export type ConversationContext = {
     direct: boolean;
     /** Whether the reader can only read it (suspended, previewing). */
     readonly: boolean;
-    /** When the rows are made (ms), for how long a poll has left. */
+    /** When the rows are made (ms), for how long a poll or prize has left. */
     now: number;
+    /** What the reader holds that a prize's requirements ask about, and whether they're only previewing. */
+    claimant: Omit<PrizeReader, "mine" | "direct" | "now">;
+    /** A resource key in the app's language. */
+    text: (key: ResourceKey) => string;
     /** A ledger's token as transfers show it; undefined for one the registry doesn't carry. */
     token: (ledger: string) => TransferToken | undefined;
 };
@@ -318,6 +326,8 @@ function kindMessage(
             return transferMessage(msg.sender, content, ctx, base);
         case "poll_content":
             return pollMessage(msg.sender, content, ctx, base);
+        case "prize_content":
+            return prizeMessage(msg.sender, content, ctx, base);
         case "file_content":
             return {
                 ...base,
@@ -394,6 +404,41 @@ function pollMessage(
         myVotes: content.votes.user,
         readonly: view.cannotVote,
         showResults: view.showVotes,
+    };
+}
+
+/**
+ * A prize's card: Claim only where `prizeView` offers it (not the sender's, not in a DM, not once
+ * claimed, ended or all taken, not to a reader who misses a requirement). One in a ledger the
+ * registry doesn't carry shows as text.
+ */
+function prizeMessage(
+    sender: string,
+    content: PrizeContent,
+    ctx: ConversationContext,
+    base: KindBase,
+): GroupMessage | undefined {
+    const token = ctx.token(content.ledger);
+    if (token === undefined) return undefined;
+    const view = prizeView(content, {
+        ...ctx.claimant,
+        mine: sender === ctx.me,
+        direct: ctx.direct,
+        now: ctx.now,
+    });
+    const left = Number(content.endDate) - ctx.now;
+    return {
+        ...base,
+        kind: "prize",
+        token: { symbol: token.symbol, mark: "", gradient: `url("${token.logo}") center / cover` },
+        winners: content.prizesRemaining + content.prizesPending + content.winnerCount,
+        claimed: content.winnerCount,
+        endsIn: view.finished ? "" : timeLeft(left),
+        endingSoon: left < 3_600_000,
+        gates: view.gates.map((g) => ({ label: ctx.text(g.label), met: g.met })),
+        state: view.claimedByYou ? "claimed" : view.finished ? "ended" : "open",
+        canClaim: view.canClaim,
+        note: content.caption ?? "",
     };
 }
 
