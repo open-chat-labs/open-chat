@@ -1,12 +1,8 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import {
-        disableReceiveCryptoFeature,
-        disableSendCryptoFeature,
-        disableSwapFeature,
-    } from "@src/utils/features";
+    import { walletActionsDisabled } from "@src/utils/features";
     import { ColourVars, CommonButton, Container, MenuItem } from "component-lib";
-    import { publish, swappableTokensStore } from "@client";
+    import { publish, swappableTokensStore, walletConfigStore } from "@client";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
     import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
@@ -18,39 +14,51 @@
     import TokenCard from "./TokenCard.svelte";
     import Transactions from "./Transactions.svelte";
     import { TokenState } from "@src/logic/wallet/walletState.svelte";
+    import { tokenActions } from "@src/logic/wallet/tokenActions";
 
     interface Props {
         tokenState: TokenState;
     }
 
     let { tokenState }: Props = $props();
+
+    // what the token offers: the same rules in every tree (tokenActions)
+    let actions = $derived(
+        tokenActions(tokenState, {
+            swappable: $swappableTokensStore,
+            manualWallet: $walletConfigStore.kind === "manual_wallet",
+            disabled: walletActionsDisabled,
+        }),
+    );
 </script>
 
 <SlidingPageContent
     title={i18nKey(tokenState.symbol)}
     subtitle={i18nKey(`${tokenState.formattedUnitValue} per ${tokenState.symbol}`)}>
     {#snippet menu()}
-        <MenuItem onclick={() => publish("sendToken", tokenState)}>
-            {#snippet icon(color)}
-                <ArrowRightBoldCircle {color} />
-            {/snippet}
-            <Translatable resourceKey={i18nKey("cryptoAccount.send")} />
-        </MenuItem>
-        {#if tokenState.enabled}
+        {#if actions.includes("send")}
+            <MenuItem onclick={() => publish("sendToken", tokenState)}>
+                {#snippet icon(color)}
+                    <ArrowRightBoldCircle {color} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("cryptoAccount.send")} />
+            </MenuItem>
+        {/if}
+        {#if actions.includes("receive")}
             <MenuItem onclick={() => publish("receiveToken", tokenState)}>
                 {#snippet icon(color)}
                     <ArrowLeftBoldCircle {color} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("cryptoAccount.receive")} />
             </MenuItem>
-            {#if $swappableTokensStore.has(tokenState.ledger)}
-                <MenuItem onclick={() => publish("swapToken", tokenState)}>
-                    {#snippet icon(color)}
-                        <SwapIcon {color} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("cryptoAccount.swap")} />
-                </MenuItem>
-            {/if}
+        {/if}
+        {#if actions.includes("swap")}
+            <MenuItem onclick={() => publish("swapToken", tokenState)}>
+                {#snippet icon(color)}
+                    <SwapIcon {color} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("cryptoAccount.swap")} />
+            </MenuItem>
         {/if}
     {/snippet}
     <Container height={"fill"} padding={"lg"} gap={"lg"} direction={"vertical"}>
@@ -63,12 +71,10 @@
             mainAxisAlignment={"spaceAround"}
             borderWidth={"thick"}
             borderColour={ColourVars.primary}>
-            {@const swapDisabled =
-                !$swappableTokensStore.has(tokenState.ledger) || disableSwapFeature}
             <CommonButton
                 onClick={() => publish("receiveToken", tokenState)}
                 mode={"active"}
-                disabled={disableReceiveCryptoFeature}
+                disabled={!actions.includes("receive")}
                 size={"small_text"}>
                 {#snippet icon(color, size)}
                     <TrayArrowDown {color} {size} />
@@ -78,7 +84,7 @@
             /
             <CommonButton
                 onClick={() => publish("sendToken", tokenState)}
-                disabled={disableSendCryptoFeature}
+                disabled={!actions.includes("send")}
                 mode={"active"}
                 size={"small_text"}>
                 {#snippet icon(color, size)}
@@ -88,7 +94,7 @@
             </CommonButton>
             /
             <CommonButton
-                disabled={swapDisabled}
+                disabled={!actions.includes("swap")}
                 onClick={() => publish("swapToken", tokenState)}
                 mode={"active"}
                 size={"small_text"}>

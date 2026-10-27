@@ -1,17 +1,17 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { hideTokenBalances } from "@src/stores/settings";
-    import { sum } from "@src/utils/math";
     import { ColourVars, Container, H1, IconButton, Subtitle, Row, Spinner } from "component-lib";
-    import {
-        type EnhancedTokenDetails,
-        walletTokensSorted as accountsSorted,
-    } from "@client";
+    import { walletTokensSorted as accountsSorted } from "@client";
     import EyeOff from "svelte-material-icons/EyeOffOutline.svelte";
     import Eye from "svelte-material-icons/EyeOutline.svelte";
     import Reload from "svelte-material-icons/Reload.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import type { ConversionToken } from "@src/logic/wallet/walletState.svelte";
+    import {
+        formatWalletTotal,
+        walletTotal,
+        type ConversionToken,
+    } from "@src/logic/wallet/walletState.svelte";
     import BalanceActions from "./BalanceActions.svelte";
 
     interface Props {
@@ -22,23 +22,9 @@
 
     let { selectedConversion, refreshingWallet, onRefreshWallet }: Props = $props();
 
-    function calculateTotal(
-        accounts: EnhancedTokenDetails[],
-        conversion: "usd" | "icp" | "btc" | "eth",
-    ): string {
-        switch (conversion) {
-            case "usd":
-                return sum(accounts.map((c) => c.dollarBalance ?? 0)).toFixed(2);
-            case "icp":
-                return sum(accounts.map((c) => c.icpBalance ?? 0)).toFixed(3);
-            case "btc":
-                return sum(accounts.map((c) => c.btcBalance ?? 0)).toFixed(6);
-            case "eth":
-                return sum(accounts.map((c) => c.ethBalance ?? 0)).toFixed(6);
-        }
-    }
-
-    let total = $derived(calculateTotal($accountsSorted, selectedConversion));
+    let total = $derived(
+        formatWalletTotal(selectedConversion, walletTotal(selectedConversion, $accountsSorted)),
+    );
 </script>
 
 <Container padding={["md", "lg"]} crossAxisAlignment={"center"} direction={"vertical"} gap={"xl"}>

@@ -456,6 +456,7 @@ import {
     messageFiltersStore,
     mobileWidth,
     moderationFlagsEnabledStore,
+    namedAccountsStore,
     navOpen,
     nervousSystemLookup,
     nextCommunityIndexStore,
@@ -10200,12 +10201,15 @@ export class OpenChat {
         return cryptoTransferResult(resp);
     }
 
-    loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
-        return this.#worker
-            .send({
-                kind: "loadSavedCryptoAccounts",
-            })
-            .catch(() => []);
+    /** Loads the user's saved accounts into `namedAccountsStore` (kept as it was if they fail to load). */
+    async loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
+        try {
+            const accounts = await this.#worker.send({ kind: "loadSavedCryptoAccounts" });
+            namedAccountsStore.set(accounts);
+            return accounts;
+        } catch {
+            return namedAccountsStore.value;
+        }
     }
 
     saveCryptoAccount(namedAccount: NamedAccount): Promise<SaveCryptoAccountResponse> {

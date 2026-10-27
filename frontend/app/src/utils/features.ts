@@ -22,6 +22,13 @@ export const disableP2PSwapFeature = disableCryptoPaymentsFeature;
 
 export const disableSwapFeature = disableCryptoPaymentsFeature;
 
+/** The wallet's token actions this build turns off (`tokenActions`' `disabled`). */
+export const walletActionsDisabled = {
+    send: disableSendCryptoFeature,
+    receive: disableReceiveCryptoFeature,
+    swap: disableSwapFeature,
+};
+
 export const disableDiamondPaymentFeature = disableCryptoPaymentsFeature;
 
 /** Diamond is paid in CHAT in production, and ICP elsewhere (test ledgers), unless the user picks the other. */

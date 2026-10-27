@@ -5,12 +5,17 @@
         type OpenChat,
         allUsersStore,
         cryptoLookup,
-        currentUserIdStore,
         currentUserStore,
         namedAccountsStore,
-        toRecord,
     } from "@client";
-    import { getContext, onMount } from "svelte";
+    import {
+        accountTransactionUrl,
+        counterpartyName,
+        transactionCounterparty,
+        transactionDirection,
+    } from "@src/logic/wallet/accountTransactions";
+    import { TransactionHistoryState } from "@src/logic/wallet/transactionHistoryState.svelte";
+    import { getContext, onMount, untrack } from "svelte";
     import Chat from "svelte-material-icons/ChatOutline.svelte";
     import LoadMore from "svelte-material-icons/CloudDownloadOutline.svelte";
     import Cash from "svelte-material-icons/CurrencyUsd.svelte";
@@ -20,12 +25,6 @@
     import Robot from "svelte-material-icons/RobotConfusedOutline.svelte";
     import TrayArrowUp from "svelte-material-icons/TrayArrowUp.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import type { RemoteData as RD } from "../../../utils/remoteData";
-    import {
-        type TransactionHistory,
-        addTransactionsPage,
-        nextPageStart,
-    } from "../../../utils/transactionHistory";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
 
@@ -38,112 +37,33 @@
 
     let { ledger, urlFormat }: Props = $props();
 
-    type LoadingMore<T> = { kind: "loading_more"; data: T };
-    type RemoteData = RD<TransactionHistory, string> | LoadingMore<TransactionHistory>;
+    // the token's history, a page at a time (TransactionHistoryState, shared with every tree)
+    const history = untrack(
+        () => new TransactionHistoryState(client, $cryptoLookup.get(ledger)?.index),
+    );
+    onMount(() => history.load());
 
-    let transactionData = $state<RemoteData>({ kind: "loading" });
-    let accountLookup = $derived(toRecord($namedAccountsStore, (a) => a.account));
-
-    function moreTransactionsAvailable(trans: RemoteData): boolean {
-        return trans.kind === "success" && nextPageStart(trans.data) !== undefined;
-    }
-
-    function isMe(address: string | undefined): boolean {
-        return address === $currentUserIdStore || address === $currentUserStore.cryptoAccount;
-    }
-
-    function fromMe({ from }: AccountTransaction): boolean {
-        return isMe(from);
-    }
-
-    // A transfer between two of the user's own wallets, such as that of their funds when they were
-    // migrated to a MultiUser canister, neither adds to nor takes from what they hold
-    function betweenMyWallets({ from, to }: AccountTransaction): boolean {
-        return isMe(from) && isMe(to);
-    }
-
-    function accountName(transaction: AccountTransaction) {
-        const out = fromMe(transaction);
-        const address = out ? transaction.to : transaction.from;
-        return addressName(address);
-    }
-
-    function addressName(address?: string) {
-        if (address === undefined) return "unknown";
-        const user = $allUsersStore.get(address);
-        if (user !== undefined) return `@${user.username}`;
-        return accountLookup[address]?.name ?? collapseAccount(address);
-    }
-
-    function collapseAccount(account: string) {
-        if (account.length > 23) {
-            return account.slice(0, 10) + "..." + account.slice(account.length - 10);
-        }
-        return account;
-    }
-
-    onMount(async () => {
-        loadTransactions();
+    let me = $derived({
+        userId: $currentUserStore.userId,
+        cryptoAccount: $currentUserStore.cryptoAccount,
     });
 
-    function url(id: bigint): string {
-        return urlFormat
-            .replace("{block_index}", id.toString())
-            .replace("{transaction_index}", id.toString())
-            .replace("{transaction_hash}", "");
+    function accountName(transaction: AccountTransaction): string {
+        return (
+            counterpartyName(
+                transactionCounterparty(transaction, me, $allUsersStore, $namedAccountsStore),
+            ) ?? "unknown"
+        );
     }
 
     function openDashboard(id: bigint) {
-        window.open(url(id), "_blank");
+        window.open(accountTransactionUrl(urlFormat, id), "_blank");
     }
 
-    function loadTransactions() {
-        const ledgerIndex = $cryptoLookup.get(ledger)?.index;
-        if (ledgerIndex !== undefined) {
-            let start = undefined;
-            if (transactionData.kind === "success") {
-                start = nextPageStart(transactionData.data);
-                if (start === undefined) return;
-                transactionData = { kind: "loading_more", data: transactionData.data };
-            } else {
-                transactionData = { kind: "loading" };
-            }
-            client
-                .getAccountTransactions(ledgerIndex, start)
-                .then((result) => {
-                    if (result.kind === "failure") {
-                        transactionData = { kind: "idle" };
-                        console.warn("Error loading transactions: ", result);
-                        // toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
-                    } else {
-                        if (transactionData.kind === "loading") {
-                            transactionData = {
-                                kind: "success",
-                                data: addTransactionsPage(undefined, result),
-                            };
-                        } else if (transactionData.kind === "loading_more") {
-                            transactionData = {
-                                kind: "success",
-                                data: addTransactionsPage(transactionData.data, result),
-                            };
-                        }
-                    }
-                })
-                .catch((err) => {
-                    console.warn("Error loading transactions: ", err);
-                    transactionData = { kind: "idle" };
-                    // toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
-                });
-        } else {
-            //toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
-            transactionData = { kind: "idle" };
-            console.warn("Could not find ledger index for ledger", ledger);
-        }
-    }
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
-    let moreAvailable = $derived(moreTransactionsAvailable(transactionData));
+    let shown = $derived(history.state);
     let loading = $derived(
-        transactionData.kind === "loading" || transactionData.kind === "loading_more",
+        shown.kind === "loading" || (shown.kind === "loaded" && shown.loadingMore),
     );
 </script>
 
@@ -173,7 +93,7 @@
             <Translatable resourceKey={i18nKey("cryptoAccount.transactions")} />
         </BodySmall>
     </Container>
-    {#if transactionData.kind === "idle"}
+    {#if shown.kind === "failed"}
         <Container
             gap={"lg"}
             padding={["zero", "xxl"]}
@@ -191,10 +111,11 @@
                     )} />
             </BodySmall>
         </Container>
-    {:else if transactionData.kind === "success" || transactionData.kind === "loading_more"}
-        {#each transactionData.data.transactions as transaction (transaction.id)}
-            {@const own = betweenMyWallets(transaction)}
-            {@const negative = !own && fromMe(transaction)}
+    {:else if shown.kind === "loaded"}
+        {#each shown.history.transactions as transaction (transaction.id)}
+            {@const direction = transactionDirection(transaction, me)}
+            {@const own = direction === "own"}
+            {@const negative = direction === "out"}
             {@const colour = own ? "textSecondary" : negative ? "secondary" : "primary"}
             <Container onClick={() => openDashboard(transaction.id)} crossAxisAlignment={"end"}>
                 <Container gap={"xxs"} direction={"vertical"}>
@@ -231,17 +152,17 @@
                 </Container>
             </Container>
         {/each}
-    {:else if transactionData.kind === "loading"}
+    {:else if shown.kind === "loading"}
         <div class="loading">
             <FancyLoader />
         </div>
     {/if}
-    {#if transactionData.kind !== "idle"}
-        {#if moreAvailable}
+    {#if shown.kind !== "failed"}
+        {#if history.moreAvailable}
             <Container mainAxisAlignment={"center"}>
                 <CommonButton
                     size={"small_text"}
-                    onClick={loadTransactions}
+                    onClick={() => history.loadMore()}
                     disabled={loading}
                     {loading}>
                     {#snippet icon(color, size)}

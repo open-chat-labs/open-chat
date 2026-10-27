@@ -1,10 +1,7 @@
 <script lang="ts">
     import {
         walletTokensSorted as accountsSorted,
-        type EnhancedTokenDetails,
         iconSize,
-        ICP_SYMBOL,
-        nervousSystemLookup,
         type OpenChat,
         swappableTokensStore,
         walletConfigStore,
@@ -17,7 +14,9 @@
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
     import ViewList from "svelte-material-icons/ViewList.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { sum } from "../../../utils/math";
+    import { walletActionsDisabled } from "@src/utils/features";
+    import { hasTransactionHistory, tokenActions } from "@src/logic/wallet/tokenActions";
+    import { formatWalletTotal, walletTotal } from "@src/logic/wallet/walletState.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Menu from "../../Menu.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
@@ -53,22 +52,6 @@
     let transactionsFormat: string = $state("");
 
     onMount(() => client.refreshSwappableTokens());
-
-    function calculateTotal(
-        accounts: EnhancedTokenDetails[],
-        conversion: "usd" | "icp" | "btc" | "eth",
-    ): string {
-        switch (conversion) {
-            case "usd":
-                return sum(accounts.map((c) => c.dollarBalance ?? 0)).toFixed(2);
-            case "icp":
-                return sum(accounts.map((c) => c.icpBalance ?? 0)).toFixed(3);
-            case "btc":
-                return sum(accounts.map((c) => c.btcBalance ?? 0)).toFixed(6);
-            case "eth":
-                return sum(accounts.map((c) => c.ethBalance ?? 0)).toFixed(6);
-        }
-    }
 
     function onBalanceRefreshed() {
         balanceError = undefined;
@@ -112,16 +95,19 @@
     function removeFromWallet(ledger: string) {
         client.removeTokenFromWallet(ledger);
     }
-    let manualWalletConfig = $derived($walletConfigStore.kind === "manual_wallet");
-    let snsLedgers = $derived(
-        new Set<string>(
-            [...$nervousSystemLookup.values()]
-                .filter((ns) => !ns.isNns)
-                .map((ns) => ns.ledgerCanisterId),
-        ),
-    );
+    // what each token's menu offers: the same rules in every tree (tokenActions)
+    let actionContext = $derived({
+        swappable: $swappableTokensStore,
+        manualWallet: $walletConfigStore.kind === "manual_wallet",
+        disabled: walletActionsDisabled,
+    });
     let total = $derived(
-        selectedConversion === "none" ? "" : calculateTotal($accountsSorted, selectedConversion),
+        selectedConversion === "none"
+            ? ""
+            : formatWalletTotal(
+                  selectedConversion,
+                  walletTotal(selectedConversion, $accountsSorted),
+              ),
     );
 </script>
 
@@ -192,21 +178,24 @@
                             </span>
                         {/snippet}
                         {#snippet menuItems()}
+                            {@const actions = tokenActions(token, actionContext)}
                             <Menu>
-                                <MenuItem onclick={() => showSend(token.ledger)}>
-                                    {#snippet icon()}
-                                        <ArrowRightBoldCircle
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"} />
-                                    {/snippet}
-                                    {#snippet text()}
-                                        <div>
-                                            <Translatable
-                                                resourceKey={i18nKey("cryptoAccount.send")} />
-                                        </div>
-                                    {/snippet}
-                                </MenuItem>
-                                {#if token.enabled}
+                                {#if actions.includes("send")}
+                                    <MenuItem onclick={() => showSend(token.ledger)}>
+                                        {#snippet icon()}
+                                            <ArrowRightBoldCircle
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"} />
+                                        {/snippet}
+                                        {#snippet text()}
+                                            <div>
+                                                <Translatable
+                                                    resourceKey={i18nKey("cryptoAccount.send")} />
+                                            </div>
+                                        {/snippet}
+                                    </MenuItem>
+                                {/if}
+                                {#if actions.includes("receive")}
                                     <MenuItem onclick={() => showReceive(token.ledger)}>
                                         {#snippet icon()}
                                             <ArrowLeftBoldCircle
@@ -222,25 +211,23 @@
                                             </div>
                                         {/snippet}
                                     </MenuItem>
-                                    {#if $swappableTokensStore.has(token.ledger)}
-                                        <MenuItem onclick={() => showSwap(token.ledger)}>
-                                            {#snippet icon()}
-                                                <SwapIcon
-                                                    size={$iconSize}
-                                                    color={"var(--icon-inverted-txt)"} />
-                                            {/snippet}
-                                            {#snippet text()}
-                                                <div>
-                                                    <Translatable
-                                                        resourceKey={i18nKey(
-                                                            "cryptoAccount.swap",
-                                                        )} />
-                                                </div>
-                                            {/snippet}
-                                        </MenuItem>
-                                    {/if}
                                 {/if}
-                                {#if token.symbol === ICP_SYMBOL || snsLedgers.has(token.ledger)}
+                                {#if actions.includes("swap")}
+                                    <MenuItem onclick={() => showSwap(token.ledger)}>
+                                        {#snippet icon()}
+                                            <SwapIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"} />
+                                        {/snippet}
+                                        {#snippet text()}
+                                            <div>
+                                                <Translatable
+                                                    resourceKey={i18nKey("cryptoAccount.swap")} />
+                                            </div>
+                                        {/snippet}
+                                    </MenuItem>
+                                {/if}
+                                {#if hasTransactionHistory(token)}
                                     <MenuItem onclick={() => showTransactions(token)}>
                                         {#snippet icon()}
                                             <ViewList
@@ -257,7 +244,7 @@
                                         {/snippet}
                                     </MenuItem>
                                 {/if}
-                                {#if manualWalletConfig}
+                                {#if actions.includes("remove")}
                                     <MenuItem onclick={() => removeFromWallet(token.ledger)}>
                                         {#snippet icon()}
                                             <HeartRemoveOutline

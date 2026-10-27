@@ -47,8 +47,7 @@
         );
 
         if (res.kind === "success") {
-            const accounts = await client.loadSavedCryptoAccounts();
-            namedAccountsStore.set(accounts);
+            await client.loadSavedCryptoAccounts();
             loading = false;
 
             // TODO - we really need to know where we came from

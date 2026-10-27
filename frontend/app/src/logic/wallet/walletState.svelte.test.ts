@@ -8,7 +8,7 @@ import {
 } from "@client";
 import { flushSync } from "svelte";
 import { afterEach, describe, expect, test } from "vitest";
-import { TokenState } from "./walletState.svelte";
+import { formatWalletTotal, TokenState, walletTotal } from "./walletState.svelte";
 
 const icp: EnhancedTokenDetails = {
     name: "Internet Computer",
@@ -166,5 +166,21 @@ describe("TokenState balance", () => {
         expect(state.maxAmount).toBe(490_000n);
         expect(state.remainingBalance).toBe(500_000n);
         stop();
+    });
+});
+
+describe("the wallet's total", () => {
+    test("invariant 3: the sum of every listed token's converted balance, a token without a rate counting as nothing", () => {
+        const tokens = [
+            { ...icp, dollarBalance: 10.5, icpBalance: 2 },
+            { ...icp, ledger: "other", dollarBalance: undefined, icpBalance: 0.25 },
+            { ...icp, ledger: "third", dollarBalance: 1.25, icpBalance: undefined },
+        ];
+        expect(walletTotal("usd", tokens)).toBe(11.75);
+        expect(walletTotal("icp", tokens)).toBe(2.25);
+        expect(walletTotal("btc", tokens)).toBe(0);
+        expect(formatWalletTotal("usd", 11.75)).toBe("11.75");
+        expect(formatWalletTotal("icp", 2.25)).toBe("2.250");
+        expect(formatWalletTotal("eth", 0)).toBe("0.000000");
     });
 });

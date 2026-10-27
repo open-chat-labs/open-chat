@@ -11,7 +11,14 @@
         MenuTrigger,
         Subtitle,
     } from "component-lib";
-    import { OpenChat, walletConfigStore, type EnhancedTokenDetails } from "@client";
+    import {
+        OpenChat,
+        swappableTokensStore,
+        walletConfigStore,
+        type EnhancedTokenDetails,
+    } from "@client";
+    import { tokenActions } from "@src/logic/wallet/tokenActions";
+    import { walletActionsDisabled } from "@src/utils/features";
     import { getContext } from "svelte";
     import HeartRemoveOutline from "svelte-material-icons/HeartRemoveOutline.svelte";
     import MenuRight from "svelte-material-icons/MenuRight.svelte";
@@ -42,7 +49,15 @@
         client.refreshAccountBalance(token.ledger, true);
         return ts;
     });
-    let manualWalletConfig = $derived($walletConfigStore.kind === "manual_wallet");
+    // what the token's menu offers: the same rules in every tree (tokenActions); this menu has
+    // Refresh and Remove, the token page the rest
+    let actions = $derived(
+        tokenActions(token, {
+            swappable: $swappableTokensStore,
+            manualWallet: $walletConfigStore.kind === "manual_wallet",
+            disabled: walletActionsDisabled,
+        }),
+    );
 </script>
 
 {#snippet content()}
@@ -94,13 +109,15 @@
         align={"end"}
         withBgEffect={true}>
         {#snippet menuItems()}
-            <MenuItem onclick={() => refreshBalanceOrToast(tokenState, client)}>
-                {#snippet icon(color)}
-                    <Reload {color} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("Refresh balance")} />
-            </MenuItem>
-            {#if manualWalletConfig && onRemoveFromWallet}
+            {#if actions.includes("refresh")}
+                <MenuItem onclick={() => refreshBalanceOrToast(tokenState, client)}>
+                    {#snippet icon(color)}
+                        <Reload {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Refresh balance")} />
+                </MenuItem>
+            {/if}
+            {#if actions.includes("remove") && onRemoveFromWallet}
                 <MenuItem onclick={() => onRemoveFromWallet(token.ledger)}>
                     {#snippet icon(color)}
                         <HeartRemoveOutline {color} />
