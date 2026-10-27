@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Pass on to bots what was tipped, and whether it's held for an unlinked account ([#10249](https://github.com/open-chat-labs/open-chat/pull/10249))
 - Let bots post price charts, with the Image permission, and read them in chat events ([#10267](https://github.com/open-chat-labs/open-chat/pull/10267))
 
 ### Removed
@@ -23,7 +24,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Let the Twitch bridge bot relay messages from Twitch ([#10214](https://github.com/open-chat-labs/open-chat/pull/10214))
 - Pass funds sent to unlinked Discord/Telegram/Twitch accounts, eg. tips, on to the UserIndex, which holds them until linked or refunded after 30 days ([#10218](https://github.com/open-chat-labs/open-chat/pull/10218))
 - Tell groups and communities which accounts no one can link, eg. Discord bots and webhooks ([#10225](https://github.com/open-chat-labs/open-chat/pull/10225))
-- Pass on to bots what was tipped, and whether it's held for an unlinked account ([#10249](https://github.com/open-chat-labs/open-chat/pull/10249))
 
 ## [[2.0.2185](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2185-local_user_index)] - 2026-10-23
 

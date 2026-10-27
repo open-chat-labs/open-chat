@@ -8,8 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Tell a bot when its own message is deleted or restored, whatever it's subscribed to, without what others added to it ([#10275](https://github.com/open-chat-labs/open-chat/pull/10275))
+- Tell bots what was tipped, and whether it's held for an unlinked account, so a bridge can tell the author ([#10249](https://github.com/open-chat-labs/open-chat/pull/10249))
 - Price charts, a message type only bots post, needing the Image permission, which anyone can forward ([#10267](https://github.com/open-chat-labs/open-chat/pull/10267))
+- Tell a bot when its own message is deleted or restored, whatever it's subscribed to, without what others added to it ([#10275](https://github.com/open-chat-labs/open-chat/pull/10275))
 
 ### Changed
 
@@ -32,7 +33,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Show replies relayed from Discord/Telegram/Twitch in the activity feed of whoever they reply to ([#10219](https://github.com/open-chat-labs/open-chat/pull/10219))
 - Let messages from unlinked Discord/Telegram/Twitch accounts be tipped, holding the tips for whoever links the account ([#10220](https://github.com/open-chat-labs/open-chat/pull/10220))
 - Refuse tips on messages from Discord bots and webhooks, which no one can link ([#10225](https://github.com/open-chat-labs/open-chat/pull/10225))
-- Tell bots what was tipped, and whether it's held for an unlinked account, so a bridge can tell the author ([#10249](https://github.com/open-chat-labs/open-chat/pull/10249))
 
 ### Changed
 
