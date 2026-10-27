@@ -16123,6 +16123,28 @@
         "doc": ""
       },
       {
+        "name": "caption",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "The offer's message, under the card."
+      },
+      {
+        "name": "canAct",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Whether an open offer offers its action (Accept / Cancel offer) to this reader."
+      },
+      {
         "name": "time",
         "type": "string",
         "default": "11:15",

@@ -11,12 +11,22 @@
         title: string;
         message?: string;
         confirmLabel: string;
+        /** The dismiss button; Cancel by default (name it when the action is itself a cancel). */
+        cancelLabel?: string;
         disabled?: boolean;
         onConfirm: () => void;
         onClose: () => void;
     }
 
-    let { title, message, confirmLabel, disabled = false, onConfirm, onClose }: Props = $props();
+    let {
+        title,
+        message,
+        confirmLabel,
+        cancelLabel,
+        disabled = false,
+        onConfirm,
+        onClose,
+    }: Props = $props();
 </script>
 
 <DialogShell {title} width={400} height="auto" {onClose}>
@@ -24,7 +34,7 @@
         <p class="message">{message}</p>
     {/if}
     <div class="actions">
-        <Button label={$_("cancel")} variant="secondary" onClick={onClose} />
+        <Button label={cancelLabel ?? $_("cancel")} variant="secondary" onClick={onClose} />
         <Button label={confirmLabel} variant="danger" {disabled} onClick={onConfirm} />
     </div>
 </DialogShell>

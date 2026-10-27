@@ -367,5 +367,5 @@
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
 ## 2026-10-27 — SwapOffer: pending and cancelled, by hand
-- `state` gains `pending` (taken, not yet settled: `doneText` says how, in a quiet segment with no check) and `cancelled` (dimmed like `expired`, headed "Cancelled"); the design had only open, done and expired, so a cancelled offer would have read "Expired" and one being settled had nothing to show. Strings `ui.swapOffer.cancelled` and `ui.swapOffer.inProgress`; `meta.json` updated.
+- `state` gains `pending` (taken, not yet settled: `doneText` says how, in a quiet segment with no check) and `cancelled` (dimmed like `expired`, headed "Cancelled"); the design had only open, done and expired, so a cancelled offer would have read "Expired" and one being settled had nothing to show. Strings `ui.swapOffer.cancelled` and `ui.swapOffer.inProgress`. `caption` shows the offer's message under the card, as `TransferMessage` does; the design had none. `canAct` (default true) leaves the action out for a reader who can't take it (previewing the chat). `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).

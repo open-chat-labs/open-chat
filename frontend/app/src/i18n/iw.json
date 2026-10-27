@@ -1684,6 +1684,9 @@
     "owner": "בעלים",
     "ownerCantLeave": "עליך להוסיף בעלים נוסף לפני שתוכל לעזוב את {level}",
     "p2pSwap": {
+        "cancelOffer": "ביטול ההצעה",
+        "cancelOfferQuestion": "לבטל את הצעת ההחלפה הזו?",
+        "keepOffer": "השארת ההצעה",
         "accept": "לְקַבֵּל",
         "accepted": "מְקוּבָּל",
         "acceptedBy": "הצעה זו התקבלה על ידי {user} והיא ממתינה להשלמתה.",

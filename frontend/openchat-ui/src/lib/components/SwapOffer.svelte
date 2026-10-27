@@ -25,13 +25,17 @@
     expiresIn?: string;
     /** Resource key (or literal text). */
     doneText?: string;
+    /** The offer's message, under the card. */
+    caption?: string;
+    /** Whether an open offer offers its action (Accept / Cancel offer) to this reader. */
+    canAct?: boolean;
     time: string;
     lastInGroup?: boolean;
     onAccept?: () => void;
     onCancel?: () => void;
   }
 
-  let { side = 'received', state = 'open', give, get, expiresIn = '', doneText = 'ui.swapOffer.swapped', time, lastInGroup = true, onAccept, onCancel }: Props = $props();
+  let { side = 'received', state = 'open', give, get, expiresIn = '', doneText = 'ui.swapOffer.swapped', caption = '', canAct = true, time, lastInGroup = true, onAccept, onCancel }: Props = $props();
   const t = useT();
 
   const sent = $derived(side === 'sent');
@@ -55,7 +59,7 @@
       {/each}
       <span class="arrow" aria-hidden="true"><span class="arrow-icon"></span></span>
     </div>
-    {#if state === 'open'}
+    {#if state === 'open' && canAct}
       <span class="action" onclick={sent ? onCancel : onAccept} role="button" tabindex="0">{t(sent ? 'ui.swapOffer.cancelOffer' : 'ui.swapOffer.acceptSwap')}</span>
     {:else if state === 'done'}
       <span class="done"><span class="check"></span>{t(doneText)}</span>
@@ -63,6 +67,7 @@
       <span class="done pending">{t(doneText)}</span>
     {/if}
   </div>
+  {#if caption}<p class="caption">{caption}</p>{/if}
   <div class="time">{time}</div>
 </div>
 
@@ -234,6 +239,15 @@
     height: 13px;
     background: currentColor;
     mask: var(--icon-check) center/contain no-repeat;
+  }
+
+  .caption {
+    margin: 0;
+    padding: 10px 10px 0;
+    font: var(--weight-regular) var(--text-base) / 1.45 var(--font-sans);
+    color: var(--msg-ink);
+    text-wrap: pretty;
+    overflow-wrap: anywhere;
   }
 
   .time {

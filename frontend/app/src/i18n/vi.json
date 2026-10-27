@@ -1684,6 +1684,9 @@
     "owner": "Chủ",
     "ownerCantLeave": "Bạn phải thêm chủ sở hữu khác trước khi có thể rời khỏi {level}",
     "p2pSwap": {
+        "cancelOffer": "Hủy đề nghị",
+        "cancelOfferQuestion": "Hủy đề nghị hoán đổi này?",
+        "keepOffer": "Giữ đề nghị",
         "accept": "Chấp nhận",
         "accepted": "Đã được chấp nhận",
         "acceptedBy": "Ưu đãi này đã được {user} chấp nhận và đang chờ hoàn thành.",

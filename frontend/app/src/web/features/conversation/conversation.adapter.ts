@@ -454,8 +454,8 @@ function prizeMessage(
 /**
  * A swap offer's card, read from the reader's side: what they'd pay on top (the sender pays token0,
  * anyone else token1), what they'd get below. Cancel for its sender and Accept for anyone else only
- * while it's open (`swapActions`); once taken it says how far it got (`swapLabels`). One with a
- * token the registry doesn't carry shows as text.
+ * while it's open and the chat isn't read-only (`swapActions`); once taken it says how far it got
+ * (`swapLabels`). One with a token the registry doesn't carry shows as text.
  */
 function swapMessage(
     sender: string,
@@ -468,7 +468,11 @@ function swapMessage(
     if (token0 === undefined || token1 === undefined) return undefined;
     const mine = sender === ctx.me;
     const labels = swapLabels(content, { me: ctx.me, mine });
-    const { canAccept, canCancel } = swapActions(content, { mine, now: ctx.now });
+    const { canAccept, canCancel } = swapActions(content, {
+        mine,
+        now: ctx.now,
+        readonly: ctx.readonly,
+    });
     // amounts in the message's own token info, which is what the swap settles in
     const leg = (token: TransferToken, info: TokenInfo, amount: bigint) => ({
         amount: formatTokens(amount, info.decimals),
@@ -482,7 +486,7 @@ function swapMessage(
     const status = content.status.kind;
     const state =
         status === "p2p_swap_open"
-            ? canAccept || canCancel
+            ? ctx.now < Number(content.expiresAt)
                 ? "open"
                 : "expired"
             : status === "p2p_swap_cancelled"
@@ -504,6 +508,8 @@ function swapMessage(
         state,
         expiresIn: state === "open" ? timeLeft(Number(content.expiresAt) - ctx.now) : "",
         doneText: ctx.text(i18nKey(doneKey)),
+        caption: content.caption ?? "",
+        canAct: canAccept || canCancel,
     };
 }
 

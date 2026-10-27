@@ -1684,6 +1684,9 @@
     "owner": "proprietario",
     "ownerCantLeave": "Devi aggiungere un altro proprietario prima di poter lasciare {level}",
     "p2pSwap": {
+        "cancelOffer": "Annulla offerta",
+        "cancelOfferQuestion": "Annullare questa offerta di scambio?",
+        "keepOffer": "Mantieni offerta",
         "accept": "Accettare",
         "accepted": "Accettato",
         "acceptedBy": "Questa offerta è stata accettata da {user} ed è in attesa di completamento.",

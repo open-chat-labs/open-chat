@@ -295,6 +295,13 @@ describe("swap offers", () => {
         });
     });
 
+    test("stay open to a reader previewing the chat, with nothing to do", () => {
+        expect(messageRow(swap("bob"), "sent", { ...ctx, readonly: true }).message).toMatchObject({
+            state: "open",
+            canAct: false,
+        });
+    });
+
     test("with a token the registry doesn't carry, show as text", () => {
         expect(messageRow(swap("bob", "unknown"), "sent", ctx).message).toMatchObject({
             kind: "text",

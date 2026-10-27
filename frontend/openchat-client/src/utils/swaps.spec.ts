@@ -23,21 +23,27 @@ function swap(status: P2PSwapContent["status"] = { kind: "p2p_swap_open" }): P2P
 }
 
 describe("a swap offer", () => {
-    test("can be cancelled by its sender and accepted by anyone else, only while open", () => {
-        expect(swapActions(swap(), { mine: true, now: 0 })).toEqual({
+    test("can be cancelled by its sender and accepted by anyone else, only while open and not read-only", () => {
+        expect(swapActions(swap(), { mine: true, now: 0, readonly: false })).toEqual({
             canAccept: false,
             canCancel: true,
         });
-        expect(swapActions(swap(), { mine: false, now: 0 })).toEqual({
+        expect(swapActions(swap(), { mine: false, now: 0, readonly: false })).toEqual({
             canAccept: true,
             canCancel: false,
         });
-        expect(swapActions(swap(), { mine: false, now: 1000 }).canAccept).toBe(false);
-        expect(swapActions(swap(), { mine: true, now: 1000 }).canCancel).toBe(false);
+        expect(swapActions(swap(), { mine: false, now: 1000, readonly: false }).canAccept).toBe(
+            false,
+        );
+        expect(swapActions(swap(), { mine: true, now: 1000, readonly: false }).canCancel).toBe(
+            false,
+        );
+        expect(swapActions(swap(), { mine: false, now: 0, readonly: true }).canAccept).toBe(false);
         expect(
             swapActions(swap({ kind: "p2p_swap_reserved", reservedBy: "bob" }), {
                 mine: false,
                 now: 0,
+                readonly: false,
             }).canAccept,
         ).toBe(false);
     });

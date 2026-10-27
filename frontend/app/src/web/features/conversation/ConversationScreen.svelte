@@ -452,6 +452,7 @@
 
     // rows kept per event (RowCache), and their messages with them, so user and other chat
     // updates don't redo every bubble; started again for a new chat, wording or day
+    const ratesLoaded = $derived($exchangeRatesLookupStore.size > 0);
     const rows = new RowCache();
     const groupMessages = new WeakMap<MessageRow, GroupMessage[]>();
     // bumped when a revealed image needs its row redone
@@ -464,6 +465,9 @@
         // its ledger is known), so a change to either starts them again
         void $lowBandwidth;
         void $cryptoLookup;
+        // nor the exchange rates: they're redone once the rates first load (a dollar value would be
+        // missing), not at every five-minute refresh
+        void ratesLoaded;
         void claimant;
         rows.clear();
     });
@@ -683,9 +687,11 @@
     let swapping = $state<{ msg: Message; content: P2PSwapContent; action: "accept" | "cancel" }>();
 
     function startSwap(msg: Message, content: P2PSwapContent, action: "accept" | "cancel") {
+        if (chat === undefined) return;
         const { canAccept, canCancel } = swapActions(content, {
             mine: msg.sender === me,
             now: Date.now(),
+            readonly: client.isChatReadOnly(chat.id),
         });
         if (action === "accept" ? !canAccept : !canCancel) return;
         if (action === "accept" && !$isDiamondStore) {
@@ -1031,14 +1037,15 @@
         />
     {:else}
         <ConfirmDialog
-            title={$_("p2pSwap.cancel")}
+            title={$_("p2pSwap.cancelOfferQuestion")}
             message={$_("p2pSwap.confirmCancel", {
                 values: {
                     amount: client.formatTokens(content.token0Amount, content.token0.decimals),
                     token: content.token0.symbol,
                 },
             })}
-            confirmLabel={$_("p2pSwap.cancel")}
+            confirmLabel={$_("p2pSwap.cancelOffer")}
+            cancelLabel={$_("p2pSwap.keepOffer")}
             onConfirm={settleSwap}
             onClose={() => (swapping = undefined)}
         />

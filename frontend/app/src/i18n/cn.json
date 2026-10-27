@@ -1684,6 +1684,9 @@
     "owner": "群主",
     "ownerCantLeave": "您必须先添加另一个所有者，然后才能离开 {level}",
     "p2pSwap": {
+        "cancelOffer": "取消报价",
+        "cancelOfferQuestion": "取消此兑换报价？",
+        "keepOffer": "保留报价",
         "accept": "接受",
         "accepted": "公认",
         "acceptedBy": "此要约已被 {user} 接受并等待完成。",

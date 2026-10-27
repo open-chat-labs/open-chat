@@ -86,13 +86,17 @@ export function swapLabels(
 
 /**
  * What the reader may do with a swap offer: its sender may cancel it, anyone else may accept it,
- * and only while it's open and hasn't run out (`now` in ms).
+ * and only while it's open and hasn't run out (`now` in ms), and not from a chat they can only
+ * read (previewing, suspended).
  */
 export function swapActions(
     content: P2PSwapContent,
-    reader: { mine: boolean; now: number },
+    reader: { mine: boolean; now: number; readonly: boolean },
 ): { canAccept: boolean; canCancel: boolean } {
-    const open = content.status.kind === "p2p_swap_open" && reader.now < Number(content.expiresAt);
+    const open =
+        !reader.readonly &&
+        content.status.kind === "p2p_swap_open" &&
+        reader.now < Number(content.expiresAt);
     return { canAccept: open && !reader.mine, canCancel: open && reader.mine };
 }
 

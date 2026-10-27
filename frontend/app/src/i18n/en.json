@@ -1739,6 +1739,9 @@
     "owner": "owner",
     "ownerCantLeave": "You must add another owner before you can leave the {level}",
     "p2pSwap": {
+        "cancelOffer": "Cancel offer",
+        "cancelOfferQuestion": "Cancel this swap offer?",
+        "keepOffer": "Keep offer",
         "accept": "Accept",
         "accepted": "Accepted",
         "acceptedBy": "This offer has been accepted by {user} and is pending completion.",
