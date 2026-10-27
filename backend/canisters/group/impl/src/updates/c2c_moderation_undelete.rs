@@ -15,11 +15,11 @@ pub(crate) fn c2c_moderation_undelete_impl(args: Args, state: &mut RuntimeState)
             // 5-minute hard delete: the user is unsuspended but the message cannot come back
             tracing::error!(?error, message_id = %args.message_id, "Moderation restore failed");
         })
-        .inspect(|_| {
+        .map(|bot_notifications| {
+            state.push_bot_notifications(bot_notifications);
             // Without this, clients never learn the message changed and their cached copy
             // keeps showing the deleted placeholder until local state is cleared
             handle_activity_notification(state);
         })
-        .map(|_| ())
         .into()
 }

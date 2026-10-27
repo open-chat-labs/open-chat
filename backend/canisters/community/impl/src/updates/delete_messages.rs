@@ -140,7 +140,7 @@ fn commit(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> O
     }
 
     for result in results.into_iter().filter_map(|(_, result)| result.ok()) {
-        state.push_bot_notification(result.bot_notification);
+        state.push_bot_notifications(result.bot_notifications);
     }
 
     handle_activity_notification(state);

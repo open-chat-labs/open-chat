@@ -223,11 +223,7 @@ impl RuntimeState {
     }
 
     pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {
-        if let Some(notification) = notification
-            && !notification.recipients.is_empty()
-        {
-            self.push_notification_inner(Notification::Bot(notification));
-        }
+        self.push_bot_notifications(notification);
     }
 
     pub fn push_event_to_local_user_index(&mut self, event: local_user_index_canister::CommunityEvent) {
@@ -238,9 +234,16 @@ impl RuntimeState {
         });
     }
 
-    pub fn push_bot_notifications(&mut self, notifications: Vec<Option<BotNotification>>) {
-        for notification in notifications {
-            self.push_bot_notification(notification);
+    // A chat event only goes to bots still installed, eg. not to one whose message is deleted after
+    // it's uninstalled
+    pub fn push_bot_notifications(&mut self, notifications: impl IntoIterator<Item = BotNotification>) {
+        for mut notification in notifications {
+            if matches!(notification.event, types::BotEvent::Chat(_)) {
+                notification.recipients.retain(|bot| self.data.bots.get(bot).is_some());
+            }
+            if !notification.recipients.is_empty() {
+                self.push_notification_inner(Notification::Bot(notification));
+            }
         }
     }
 
