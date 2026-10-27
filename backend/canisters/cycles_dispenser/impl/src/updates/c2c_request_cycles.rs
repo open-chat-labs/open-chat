@@ -46,6 +46,7 @@ fn prepare(args: Args, state: &mut State) -> Result<PrepareResult, Response> {
             Err(CyclesBalanceTooLow)
         } else {
             canister.set_top_up_in_progress(true);
+            state.record_cycles_balance();
             Ok(PrepareResult { canister_id, amount })
         }
     } else {
@@ -55,6 +56,7 @@ fn prepare(args: Args, state: &mut State) -> Result<PrepareResult, Response> {
 }
 
 fn commit(canister_id: &CanisterId, top_up_amount: Option<Cycles>, state: &mut State) {
+    state.record_cycles_balance();
     if let Some(canister) = state.data.canisters.get_mut(canister_id) {
         canister.set_top_up_in_progress(false);
         if let Some(amount) = top_up_amount {

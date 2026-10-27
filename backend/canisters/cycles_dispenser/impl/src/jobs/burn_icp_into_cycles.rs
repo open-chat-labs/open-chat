@@ -102,7 +102,11 @@ async fn burn_icp(burn_details: BurnIcpDetails) {
     }
 }
 
+// The CMC deposits the cycles the ICP was burned for while handling this, so the balance is recorded
+// either side of it
 async fn notify_cmc(notify_details: NotifyTopUpDetails) {
+    mutate_state(|state| state.record_cycles_balance());
+
     let response = cycles_minting_canister_c2c_client::notify_top_up(
         notify_details.cmc,
         &cycles_minting_canister::notify_top_up::Args {
@@ -111,6 +115,8 @@ async fn notify_cmc(notify_details: NotifyTopUpDetails) {
         },
     )
     .await;
+
+    mutate_state(|state| state.record_cycles_balance());
 
     match response {
         Ok(Ok(cycles)) => {

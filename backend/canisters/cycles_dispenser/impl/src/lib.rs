@@ -41,6 +41,11 @@ impl State {
         self.env.caller() == self.data.registry_canister_id
     }
 
+    pub fn record_cycles_balance(&mut self) {
+        let sample = Timestamped::new(self.env.cycles_balance(), self.env.now());
+        self.data.cycles_balance_samples.push(sample);
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -83,6 +88,10 @@ struct Data {
     pub cycles_top_up_pending_notification: Option<BlockIndex>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+    // The cycles balance on the hour (at midnight UTC in test mode), and just before and after each
+    // top up, each ICP burn and each upgrade, from which the balance over time can be charted
+    #[serde(default)]
+    pub cycles_balance_samples: Vec<Timestamped<Cycles>>,
 }
 
 impl Data {
@@ -114,6 +123,7 @@ impl Data {
             cycles_top_up_pending_notification: None,
             rng_seed: [0; 32],
             test_mode,
+            cycles_balance_samples: Vec::new(),
         }
     }
 }
