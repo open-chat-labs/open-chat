@@ -65,7 +65,9 @@ design export needs. Each entry says where it came up.
   not once claimed, ended or all taken, not to a reader who misses a requirement. A captcha prize
   asks the reader to sign in again (`SignInAgainDialog`) and claims with its proof. A prize
   carries no amount, so a win says "You won". There's no spinner while a claim is on its way
-  (the old trees' `claimsStore`). How long it has left is worked out when the row is made and
+  (the old trees' `claimsStore`), and `PrizeMessage`'s confetti fires on the click, before the claim
+  lands (behind the sign-in dialog for a captcha prize). A captcha prize shows no requirement chip
+  for it; it's asked for only on Claim. How long it has left is worked out when the row is made and
   doesn't count down. A prize still being sent (`prize_content_initial`), and one in a ledger the
   registry doesn't carry, stay text bubbles. No reactions, quote or thread yet.
 - **Deleting messages**: the message menu isn't wired yet (phase 5). Its Delete should go by
