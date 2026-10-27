@@ -514,34 +514,37 @@
         {/each}
       {/if}
       {#if !loading && small.length > 0}
-        <div class="folded" onclick={() => (smallOpen = !smallOpen)} role="button" tabindex="0" aria-expanded={smallOpen}>
-          <span class="folded-badge"><span class="folded-icon small-icon"></span></span>
-          <span class="folded-text">
-            <span class="folded-title">{t('ui.walletPanel.smallBalances', { count: small.length })}</span>
-            <span class="folded-sub">{t('ui.walletPanel.smallBalancesSub', { floor: money(floor), total: veiled ? DOTS : money(smallTotal) })}</span>
+        <div class="fold" onclick={() => (smallOpen = !smallOpen)} role="button" tabindex="0" aria-expanded={smallOpen}>
+          <span class="fold-badge"><span class="fold-icon" style:mask={mask('coins')}></span></span>
+          <span class="fold-text">
+            <span class="fold-title">{t('ui.walletPanel.smallBalances', { count: small.length })}</span>
+            <span class="fold-sub">{t('ui.walletPanel.smallBalancesSub', { floor: money(floor) })}</span>
           </span>
-          <span class="folded-chevron" class:open={smallOpen}></span>
+          <span class="fold-sum">{veiled ? DOTS : money(smallTotal)}</span>
+          <span class="fold-chevron-box"><span class="fold-chevron" class:open={smallOpen}></span></span>
         </div>
         {#if smallOpen}
-          {#each small as tk (idOf(tk))}
-            <div class="token" onclick={() => onToken?.(idOf(tk))} role="button" tabindex="0">
-              <TokenAvatar size={40} symbol={tk.symbol} mark={tk.mark} gradient={tk.grad} logo={tk.logo} />
-              <div class="token-body">
-                <div class="token-line"><span class="symbol">{tk.symbol}</span><span class="small-holdings">{veiled ? DOTS : num(tk.held, tk.held < 1 ? 4 : 2)}</span></div>
-                <div class="token-line"><span class="name">{tk.name}</span><span class="small-value">{veiled ? DOTS : money(tk.value)}</span></div>
+          <div class="small-list">
+            {#each small as tk (idOf(tk))}
+              <div class="small-row" onclick={() => onToken?.(idOf(tk))} role="button" tabindex="0">
+                <TokenAvatar size={24} symbol={tk.symbol} mark={tk.mark} gradient={tk.grad} logo={tk.logo} />
+                <span class="small-symbol">{tk.symbol}</span>
+                <span class="small-holdings">{veiled ? DOTS : num(tk.held, tk.held < 1 ? 4 : 2)}</span>
+                <span class="small-value">{veiled ? DOTS : money(tk.value)}</span>
               </div>
-            </div>
-          {/each}
+            {/each}
+          </div>
         {/if}
+        <div class="divider"></div>
       {/if}
       {#if !loading && !empty}
-        <div class="folded" onclick={() => onAction?.('browse')} role="button" tabindex="0">
-          <span class="folded-badge"><span class="folded-icon search-icon"></span></span>
-          <span class="folded-text">
-            <span class="folded-title">{t('ui.walletPanel.supportedTokensRow')}</span>
-            <span class="folded-sub">{t('ui.walletPanel.canReceive', { count: supportedTotal })}</span>
+        <div class="fold" onclick={() => onAction?.('browse')} role="button" tabindex="0">
+          <span class="fold-badge"><span class="fold-icon" style:mask={mask('search')}></span></span>
+          <span class="fold-text">
+            <span class="fold-title">{t('ui.walletPanel.supportedTokensRow')}</span>
+            <span class="fold-sub">{t('ui.walletPanel.canReceive', { count: supportedTotal })}</span>
           </span>
-          <span class="folded-chevron forward"></span>
+          <span class="fold-chevron-box"><span class="fold-chevron forward"></span></span>
         </div>
       {/if}
     </div>
@@ -805,80 +808,74 @@
     color: var(--ink-3);
   }
 
-  .small-holdings {
-    flex: none;
-    font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-mono);
-    color: var(--ink-2);
-  }
-
-  .small-value {
-    flex: none;
-    font: var(--weight-regular) var(--text-sm) / 1 var(--font-mono);
-    color: var(--ink-4);
-  }
-
-  .folded {
+  .fold {
     outline-offset: -2px;
     display: flex;
     align-items: center;
     gap: var(--space-14);
-    margin-block-start: var(--space-6);
-    padding: var(--space-12) var(--space-10);
+    min-width: 0;
+    padding: var(--space-14) var(--space-10);
     border-radius: var(--radius-md);
-    background: var(--overlay-1);
     cursor: pointer;
   }
 
-  .folded:hover {
-    background: var(--overlay-2);
+  .fold:hover,
+  .small-row:hover {
+    background: var(--overlay-1);
   }
 
-  .folded-badge {
+  .fold-badge {
     flex: none;
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: var(--overlay-2);
+    background: var(--overlay-1);
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  .folded-icon {
-    width: 16px;
-    height: 16px;
+  .fold-icon {
+    width: 18px;
+    height: 18px;
     background: var(--ink-3);
   }
 
-  .small-icon {
-    mask: var(--icon-kebab) center/contain no-repeat;
-    transform: rotate(90deg);
-  }
-
-  .search-icon {
-    mask: var(--icon-search) center/contain no-repeat;
-  }
-
-  .folded-text {
+  .fold-text {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
   }
 
-  .folded-title {
-    font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
+  .fold-title {
+    font: var(--weight-bold) var(--text-md) / 1.2 var(--font-sans);
     color: var(--ink);
   }
 
-  .folded-sub {
+  .fold-sub {
     font: var(--weight-regular) var(--text-sm) / 1.2 var(--font-sans);
     color: var(--ink-4);
   }
 
-  .folded-chevron {
+  .fold-sum {
     flex: none;
+    font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-mono);
+    color: var(--ink-2);
+  }
+
+  /* the chevrons sit in the token kebabs' 24px column */
+  .fold-chevron-box {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fold-chevron {
     width: 12px;
     height: 12px;
     background: var(--ink-4);
@@ -886,16 +883,61 @@
     transition: transform 0.2s;
   }
 
-  .folded-chevron.open {
+  .fold-chevron.open {
     transform: rotate(180deg);
   }
 
-  .folded-chevron.forward {
+  .fold-chevron.forward {
     transform: rotate(-90deg);
   }
 
-  :global([dir='rtl']) .folded-chevron.forward {
+  :global([dir='rtl']) .fold-chevron.forward {
     transform: rotate(90deg);
+  }
+
+  /* the expanded small balances, indented to the rows' text column */
+  .small-list {
+    display: flex;
+    flex-direction: column;
+    padding-inline-start: 64px;
+  }
+
+  .small-row {
+    outline-offset: -2px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    min-height: 40px;
+    padding: 0 var(--space-10);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .small-symbol {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-semibold) var(--text-sm) / 1.2 var(--font-sans);
+    color: var(--ink);
+  }
+
+  .small-holdings {
+    flex: none;
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
+    color: var(--ink-2);
+  }
+
+  .small-value {
+    flex: none;
+    width: 60px;
+    text-align: end;
+    font: var(--weight-regular) var(--text-xs) / 1 var(--font-mono);
+    color: var(--ink-4);
+  }
+
+  .divider {
+    height: 1px;
+    margin: 2px var(--space-10);
+    background: var(--line-1);
   }
 
   .token:hover {

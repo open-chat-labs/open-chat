@@ -3109,7 +3109,7 @@
     "walletPanel": {
       "allActivity": "All activity",
       "aToZ": "A to Z",
-      "canReceive": "{count, plural, one {# token you can receive} other {# tokens you can receive}}",
+      "canReceive": "{count} you can receive",
       "copyLedgerId": "Copy ledger ID",
       "displayCurrency": "Display currency",
       "hidden": "{symbol} hidden from your list",
@@ -3122,7 +3122,7 @@
       "refresh": "Refresh balance",
       "send": "Send {symbol}",
       "smallBalances": "{count, plural, one {# small balance} other {# small balances}}",
-      "smallBalancesSub": "Under {floor} · {total} total",
+      "smallBalancesSub": "Under {floor} each",
       "smallerHoldings": "{count, plural, one {# smaller holding} other {# smaller holdings}}",
       "smallestFirst": "Smallest first",
       "sortedByName": "Sorted by name",
