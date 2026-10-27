@@ -1,9 +1,15 @@
-import type { FundsInPreviousWallet, MoveFundsOutcome, MoveFundsResult } from "@shared";
+import {
+    ErrorCode,
+    type FundsInPreviousWallet,
+    type MoveFundsOutcome,
+    type MoveFundsResult,
+} from "@shared";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
     movePreviousWalletFunds,
     PREVIOUS_WALLETS_CHECK_INTERVAL,
     PREVIOUS_WALLETS_RETRY_INTERVAL,
+    PREVIOUS_WALLETS_STUCK_RETRY_INTERVAL,
 } from "./previousWalletFunds";
 
 const USER = { userId: "current", previousUserIds: ["previous"] };
@@ -14,6 +20,15 @@ const FAILED: MoveFundsResult = {
     kind: "failed",
     error: { kind: "error", code: 258, message: "Old canister not yet uninstalled" },
 };
+// Eg. BIL, whose ledger refuses every transfer
+const STUCK: MoveFundsResult = {
+    kind: "failed",
+    error: { kind: "error", code: ErrorCode.TransferFailed, message: "TemporarilyUnavailable" },
+};
+const failedWith = (code: number): MoveFundsResult => ({
+    kind: "failed",
+    error: { kind: "error", code, message: "" },
+});
 
 describe("movePreviousWalletFunds", () => {
     let result: MoveFundsResult;
@@ -86,6 +101,108 @@ describe("movePreviousWalletFunds", () => {
 
         expect(await run(NOW + PREVIOUS_WALLETS_RETRY_INTERVAL - 1)).toBeUndefined();
         expect(await run(NOW + PREVIOUS_WALLETS_RETRY_INTERVAL)).toBeDefined();
+    });
+
+    test("a balance whose move failed with an error from the LocalUserIndex isn't tried again while it stays the same", async () => {
+        result = STUCK;
+        await run(NOW);
+
+        // Checked again a day later rather than an hour, passing over the stuck balance
+        expect(await run(NOW + PREVIOUS_WALLETS_RETRY_INTERVAL)).toBeUndefined();
+        expect(await run(NOW + PREVIOUS_WALLETS_CHECK_INTERVAL)).toEqual([]);
+        expect(move).toHaveBeenLastCalledWith([]);
+        expect(await run(NOW + 2 * PREVIOUS_WALLETS_CHECK_INTERVAL)).toEqual([]);
+        expect(move).toHaveBeenLastCalledWith([]);
+    });
+
+    test("a stuck balance which changes is tried again", async () => {
+        result = STUCK;
+        await run(NOW);
+
+        const changed = [{ ...FUNDS[0], balance: 6n }];
+        find = vi.fn(() => Promise.resolve(changed));
+        result = MOVED;
+        expect(await run(NOW + PREVIOUS_WALLETS_CHECK_INTERVAL)).toEqual([
+            { previousUserId: "previous", ledger: "icp", result: MOVED },
+        ]);
+        expect(move).toHaveBeenLastCalledWith(changed);
+    });
+
+    test("a stuck balance is tried again a week after it failed", async () => {
+        result = STUCK;
+        await run(NOW);
+        await run(NOW + PREVIOUS_WALLETS_CHECK_INTERVAL);
+        expect(move).toHaveBeenLastCalledWith([]);
+
+        await run(NOW + PREVIOUS_WALLETS_STUCK_RETRY_INTERVAL);
+        expect(move).toHaveBeenLastCalledWith(FUNDS);
+
+        // Failing again, it's stuck for another week
+        await run(NOW + PREVIOUS_WALLETS_STUCK_RETRY_INTERVAL + PREVIOUS_WALLETS_CHECK_INTERVAL);
+        expect(move).toHaveBeenLastCalledWith([]);
+    });
+
+    test("other balances are still moved while one is stuck", async () => {
+        move = vi.fn((funds: FundsInPreviousWallet[]) =>
+            Promise.resolve(
+                funds.map(({ previousUserId, ledger }) => ({
+                    previousUserId,
+                    ledger,
+                    result: ledger === "icp" ? STUCK : MOVED,
+                })),
+            ),
+        );
+        await run(NOW);
+
+        const chat = { previousUserId: "previous", ledger: "chat", balance: 7n };
+        find = vi.fn(() => Promise.resolve([...FUNDS, chat]));
+        expect(await run(NOW + PREVIOUS_WALLETS_CHECK_INTERVAL)).toEqual([
+            { previousUserId: "previous", ledger: "chat", result: MOVED },
+        ]);
+        expect(move).toHaveBeenLastCalledWith([chat]);
+    });
+
+    test("a stuck balance which has gone is forgotten", async () => {
+        result = STUCK;
+        await run(NOW);
+
+        find = vi.fn(() => Promise.resolve([]));
+        await run(NOW + PREVIOUS_WALLETS_CHECK_INTERVAL);
+        expect(localStorage.getItem("openchat_previous_wallets_stuck_current")).toBeNull();
+
+        // So the same balance arriving again is tried
+        find = vi.fn(() => Promise.resolve(FUNDS));
+        await run(NOW + 2 * PREVIOUS_WALLETS_CHECK_INTERVAL);
+        expect(move).toHaveBeenLastCalledWith(FUNDS);
+    });
+
+    test.each([
+        ["the old canister was busy", ErrorCode.AlreadyInProgress],
+        ["the LocalUserIndex was short of cycles", ErrorCode.CyclesBalanceTooLow],
+        ["the LocalUserIndex hadn't loaded the tokens", ErrorCode.NotInitialized],
+        ["the call failed on the client", ErrorCode.Unknown],
+        ["the worker failed", -1],
+    ])("a move which failed because %s is tried again an hour later", async (_, code) => {
+        result = failedWith(code);
+        await run(NOW);
+
+        expect(await run(NOW + PREVIOUS_WALLETS_RETRY_INTERVAL)).toBeDefined();
+        expect(move).toHaveBeenLastCalledWith(FUNDS);
+    });
+
+    test("a balance stuck by a clock which was ahead is tried again once the clock is right", async () => {
+        result = STUCK;
+        await run(NOW + 365 * PREVIOUS_WALLETS_CHECK_INTERVAL);
+
+        await run(NOW);
+        expect(move).toHaveBeenLastCalledWith(FUNDS);
+    });
+
+    test("stuck balances which can't be read are tried again", async () => {
+        localStorage.setItem("openchat_previous_wallets_stuck_current", "not json");
+
+        await run(NOW);
+        expect(move).toHaveBeenLastCalledWith(FUNDS);
     });
 
     // Eg. while offline, rather than counting it as a check which found nothing
