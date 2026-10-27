@@ -132,6 +132,7 @@ export * from "./utils/routes";
 export { dexName } from "./utils/swap";
 export { formatTimeRemaining } from "./utils/time";
 export {
+    allowsVoteChange,
     getVotersForAnswer,
     percentageOfVote,
     pollVoteChange,

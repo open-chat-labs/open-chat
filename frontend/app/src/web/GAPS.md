@@ -709,6 +709,9 @@ design export needs. Each entry says where it came up.
   public poll shows no voters' avatars and has no "View votes" list yet (the old mobile
   `PollPublicVotes`). How long it has left is worked out when the row is made (3d, 5h, 12m), and
   doesn't count down. No tick, reactions, quote or thread yet, and polls in threads aren't wired.
+  The library's `PollBuilderDialog` (5b's composer) still offers "lock votes" with multiple
+  choice, which the backend ignores; when it's wired, send `allowsVoteChange` as the old builders
+  do.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked

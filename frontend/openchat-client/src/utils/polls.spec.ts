@@ -1,7 +1,9 @@
 import type { PollContent } from "@shared";
 import { percentageOfVote, pollVoteChange, type PollReader } from "./polls";
 
-function poll(fields: { user?: number[]; ended?: boolean; canChange?: boolean } = {}): PollContent {
+function poll(
+    fields: { user?: number[]; ended?: boolean; canChange?: boolean; multiple?: boolean } = {},
+): PollContent {
     return {
         kind: "poll_content",
         votes: {
@@ -9,7 +11,7 @@ function poll(fields: { user?: number[]; ended?: boolean; canChange?: boolean } 
             user: fields.user ?? [],
         },
         config: {
-            allowMultipleVotesPerUser: false,
+            allowMultipleVotesPerUser: fields.multiple ?? false,
             allowUserToChangeVote: fields.canChange ?? true,
             showVotesBeforeEndDate: true,
             anonymous: true,
@@ -44,6 +46,13 @@ describe("a poll vote", () => {
             type: "delete",
             answerIndex: 0,
         });
+    });
+
+    // the backend ignores "change vote" on a multiple-choice poll
+    test("a multiple-choice poll takes more votes whatever its change vote flag", () => {
+        expect(
+            pollVoteChange(poll({ user: [0], canChange: false, multiple: true }), reader, [0, 1]),
+        ).toEqual({ type: "register", answerIndex: 1 });
     });
 
     test("a poll with no votes shows 0%, not NaN", () => {

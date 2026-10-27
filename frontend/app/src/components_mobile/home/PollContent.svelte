@@ -9,6 +9,7 @@
         Row,
     } from "component-lib";
     import {
+        allowsVoteChange,
         currentUserIdStore,
         percentageOfVote,
         pollView,
@@ -103,7 +104,7 @@
             voteType: content.config.allowMultipleVotesPerUser
                 ? "poll.app.multiVote"
                 : "poll.app.singleVote",
-            voteEdit: content.config.allowUserToChangeVote
+            voteEdit: allowsVoteChange(content.config)
                 ? "poll.app.canChangeVote"
                 : "poll.app.cantChangeVote",
             viewResults: content.config.showVotesBeforeEndDate
