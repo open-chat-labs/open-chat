@@ -17,6 +17,7 @@
     import {
         cashtagCardDetails,
         lastCardDetails,
+        showsSymbol,
         TokenPriceHistory,
     } from "@src/logic/cashtag/tokenPriceCard.svelte";
     import { getContext } from "svelte";
@@ -56,7 +57,9 @@
             {#if token.logo !== undefined}
                 <img class="logo" src={token.logo} alt="" />
             {/if}
-            <span class="symbol">${token.symbol}</span>
+            {#if showsSymbol(token)}
+                <span class="symbol">{token.symbol}</span>
+            {/if}
         </div>
         {#if price !== undefined}
             <p class="price">{formatUsdPrice(price)}</p>

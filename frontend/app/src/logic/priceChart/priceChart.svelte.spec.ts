@@ -3,6 +3,7 @@ import {
     extremes,
     priceChange,
     PriceChartReader,
+    priceChartCredit,
     priceChartLayout,
     priceChartTokens,
     readingAt,
@@ -41,30 +42,33 @@ describe("a price chart's layout", () => {
     test("runs across the time, highest price at the top, then on flat to the end", () => {
         const chart = layout(week([point(7 * DAY, 1), point(3.5 * DAY, 3), point(DAY, 2)]));
 
-        // 20% of the height is left above and below the line, for the high's and low's labels
+        // 20% of the height is left above and below the line, for the high's and low's labels, and
+        // the plot starts right of the gridlines' labels, "$1.00" and so on: 5 characters of 6
+        // pixels and a gap of 6
         expect(chart.kind).toBe("usd");
-        expect(chart.lines[0].path).toBe("M0,80L350,20L600,50L700,50");
-        expect(chart.lines[0].area).toBe("M0,80L350,20L600,50L700,50L700,100L0,100Z");
+        expect(chart.left).toBe(36);
+        expect(chart.lines[0].path).toBe("M36,80L368,20L605.1,50L700,50");
+        expect(chart.lines[0].area).toBe("M36,80L368,20L605.1,50L700,50L700,100L36,100Z");
         expect(chart.lines[0].end).toEqual({ x: 700, y: 50 });
         expect(chart.lines[0].rising).toBe(true);
         expect(chart.marks).toEqual([
-            { kind: "high", usd: 3, x: 350, y: 20 },
-            { kind: "low", usd: 1, x: 0, y: 80 },
+            { kind: "high", usd: 3, x: 368, y: 20 },
+            { kind: "low", usd: 1, x: 36, y: 80 },
         ]);
     });
 
     test("starts where the first price in its time is", () => {
         const chart = layout(week([point(3.5 * DAY, 3), point(0, 1)]));
 
-        expect(chart.lines[0].path).toBe("M350,20L700,80L700,80");
-        expect(chart.lines[0].area).toBe("M350,20L700,80L700,80L700,100L350,100Z");
+        expect(chart.lines[0].path).toBe("M368,20L700,80L700,80");
+        expect(chart.lines[0].area).toBe("M368,20L700,80L700,80L700,100L368,100Z");
         expect(chart.lines[0].rising).toBe(false);
     });
 
     test("leaves out prices from outside its time", () => {
         const chart = layout(week([point(8 * DAY, 9), point(3.5 * DAY, 3), point(0, 1)]));
 
-        expect(chart.lines[0].path).toBe("M350,20L700,80L700,80");
+        expect(chart.lines[0].path).toBe("M368,20L700,80L700,80");
     });
 
     test("is a flat line across the middle, unmarked, when the price didn't move", () => {
@@ -89,12 +93,44 @@ describe("a price chart's layout", () => {
 
         expect(chart.kind).toBe("change");
         expect(chart.lines.map((l) => l.path)).toEqual([
-            "M0,65L700,5L700,5",
-            "M0,65L700,95L700,95",
+            "M36,65L700,5L700,5",
+            "M36,65L700,95L700,95",
         ]);
         expect(chart.lines.map((l) => l.area)).toEqual([undefined, undefined]);
         expect(chart.lines.map((l) => l.rising)).toEqual([true, false]);
         expect(chart.marks).toEqual([]);
+    });
+
+    test("has gridlines at round prices, each labelled, at least 28 pixels apart", () => {
+        const chart = layout(week([point(7 * DAY, 1), point(3.5 * DAY, 3), point(DAY, 2)]));
+
+        // $1 to $3 over 60 pixels between the 20 left above and below
+        expect(chart.gridlines).toEqual([
+            { y: 80, label: "$1.00" },
+            { y: 50, label: "$2.00" },
+            { y: 20, label: "$3.00" },
+        ]);
+    });
+
+    test("has gridlines at round changes for several tokens", () => {
+        const chart = layout(
+            week([point(7 * DAY, 1), point(0, 2)], [point(7 * DAY, 4), point(0, 2)]),
+        );
+
+        expect(chart.gridlines).toEqual([
+            { y: 95, label: "-50%" },
+            { y: 65, label: "0%" },
+            { y: 35, label: "+50%" },
+            { y: 5, label: "+100%" },
+        ]);
+    });
+
+    test("has no column for labels without gridlines", () => {
+        expect(layout(week([point(7 * DAY, 2), point(0, 2)])).left).toBe(0);
+    });
+
+    test("has no gridlines when the price didn't move", () => {
+        expect(layout(week([point(7 * DAY, 2), point(0, 2)])).gridlines).toEqual([]);
     });
 
     test("needs a price and a size", () => {
@@ -132,10 +168,10 @@ describe("a price chart's reading", () => {
     test("snaps to the nearest time with a price", () => {
         const data = week([point(7 * DAY, 1), point(3.5 * DAY, 3), point(DAY, 2)]);
 
-        // 3 days in, nearest the price 3.5 days in
+        // nearly 3 days in, right of the labels' 36 pixels, nearest the price 3.5 days in
         expect(readingNear(data, layout(data), 300)).toEqual({
             timestamp: NOW - 3.5 * DAY,
-            x: 350,
+            x: 368,
             values: [{ symbol: "T0", usd: 3, change: 200, y: 20 }],
         });
     });
@@ -242,5 +278,34 @@ describe("a price chart's tokens", () => {
             { series: data.series[0], usd: 3, change: 50 },
             { series: data.series[2], usd: 4, change: undefined },
         ]);
+    });
+});
+
+describe("a price chart's credit", () => {
+    const icpswap = { name: "ICPSwap", url: "https://www.icpswap.com" };
+    const coingecko = { name: "CoinGecko", url: "https://www.coingecko.com" };
+
+    test("lists its sources in one sentence, each its own part", () => {
+        expect(priceChartCredit("Price data by @@", "@@", [icpswap, coingecko], "en")).toEqual([
+            { kind: "text", text: "Price data by " },
+            { kind: "source", source: icpswap },
+            { kind: "text", text: " and " },
+            { kind: "source", source: coingecko },
+        ]);
+    });
+
+    test("keeps the words on either side of its sources, in the reader's language", () => {
+        expect(priceChartCredit("Von @@ geliefert", "@@", [icpswap, coingecko], "de")).toEqual([
+            { kind: "text", text: "Von " },
+            { kind: "source", source: icpswap },
+            { kind: "text", text: " und " },
+            { kind: "source", source: coingecko },
+            { kind: "text", text: " geliefert" },
+        ]);
+    });
+
+    test("is nothing without sources, or a sentence to put them in", () => {
+        expect(priceChartCredit("Price data by @@", "@@", [], "en")).toEqual([]);
+        expect(priceChartCredit("Price data", "@@", [icpswap], "en")).toEqual([]);
     });
 });

@@ -171,5 +171,5 @@
 {:else if content.kind === "daily_result"}
     <DailyResultContent {content} {intersecting} {edited} {blockLevelMarkdown} />
 {:else if content.kind === "price_chart_content"}
-    <PriceChartContent {content} {reply} />
+    <PriceChartContent {content} {reply} {me} />
 {/if}

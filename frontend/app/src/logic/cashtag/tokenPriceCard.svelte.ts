@@ -58,6 +58,11 @@ export function cashtagCardDetails(
           };
 }
 
+/** Whether a card shows its token's symbol under its name, which it doesn't if they're the same. */
+export function showsSymbol(details: CashtagCardDetails): boolean {
+    return details.symbol.toLowerCase() !== details.name.toLowerCase();
+}
+
 /**
  * Remembers the last details a card had, for when its token or coin drops out of the prices (the
  * price service leaves out coins it hasn't refreshed for an hour): the card stays as it was, rather

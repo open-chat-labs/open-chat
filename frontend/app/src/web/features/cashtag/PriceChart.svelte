@@ -79,6 +79,14 @@
     onkeydown={onKeyDown}>
     {#if layout !== undefined}
         <svg width={layout.width} height={layout.height} aria-hidden="true">
+            {#each layout.gridlines as gridline}
+                <line
+                    class="gridline"
+                    x1={layout.left}
+                    x2={layout.width}
+                    y1={gridline.y}
+                    y2={gridline.y} />
+            {/each}
             {#each layout.lines as line}
                 {#if line.area !== undefined}
                     <path class="area" class:falling={!line.rising} d={line.area} />
@@ -110,6 +118,12 @@
                     r="4" />
             {/each}
         </svg>
+        {#each layout.gridlines as gridline}
+            <span
+                class="gridline-label"
+                style:top={`${gridline.y}px`}
+                style:width={`${layout.left}px`}>{gridline.label}</span>
+        {/each}
         {#if reading === undefined}
             {#each layout.marks as mark}
                 <span
@@ -186,6 +200,24 @@
 
     .dot.single.falling {
         fill: var(--status-danger);
+    }
+
+    .gridline {
+        stroke: var(--line-2);
+        stroke-width: 1;
+    }
+
+    .gridline-label {
+        position: absolute;
+        left: 0;
+        transform: translateY(-50%);
+        box-sizing: border-box;
+        padding-right: 6px;
+        text-align: right;
+        font: var(--weight-regular) var(--text-2xs) / 1.2 var(--font-sans);
+        color: var(--ink-4);
+        white-space: nowrap;
+        pointer-events: none;
     }
 
     .mark {

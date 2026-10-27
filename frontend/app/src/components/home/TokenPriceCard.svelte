@@ -16,6 +16,7 @@
     import {
         cashtagCardDetails,
         lastCardDetails,
+        showsSymbol,
         TokenPriceHistory,
     } from "@src/logic/cashtag/tokenPriceCard.svelte";
     import Loading from "@shared_components/Loading.svelte";
@@ -68,7 +69,9 @@
                         {/if}
                         <div class="names">
                             <div class="name">{token.name}</div>
-                            <div class="symbol">${token.symbol}</div>
+                            {#if showsSymbol(token)}
+                                <div class="symbol">{token.symbol}</div>
+                            {/if}
                         </div>
                     </div>
                     <div class="price">

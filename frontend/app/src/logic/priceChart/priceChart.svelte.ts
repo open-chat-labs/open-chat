@@ -17,6 +17,12 @@ const LONGEST_WITH_TIMES = 90 * DAY;
 // Room above and below the line, for the high's and low's labels, as a share of the height
 const MARKED_PAD = 0.2;
 const PAD = 0.05;
+// The least room between gridlines, in pixels, so their labels don't crowd
+const GRIDLINE_SPACING = 28;
+// The gridlines' labels are in a column left of the plot: about this wide for each character,
+// with this gap between them and the plot, in pixels
+const LABEL_CHAR_WIDTH = 6;
+const LABEL_GAP = 6;
 
 /**
  * The colours of several tokens' lines, in order: ChartBot's, so a chart message looks as its
@@ -46,9 +52,19 @@ export type PriceChartLayout = {
     kind: "usd" | "change";
     width: number;
     height: number;
+    // where the plot starts, right of the gridlines' labels
+    left: number;
     lines: PriceChartLine[];
     // the high and low of one token's prices, unless one is its latest price
     marks: PriceChartMark[];
+    // across the chart at round prices, or changes, each labelled with its value
+    gridlines: PriceChartGridline[];
+};
+
+export type PriceChartGridline = {
+    y: number;
+    // eg. "$0.03", or "+10%"
+    label: string;
 };
 
 export type PriceChartLine = {
@@ -126,7 +142,12 @@ export function priceChartLayout(
     if (series.length === 0 || width <= 0 || height <= 0) return undefined;
 
     const kind = series.length === 1 ? "usd" : "change";
-    const x = xScale(data, width);
+    const grid = gridlines(series, kind, height);
+    const left =
+        grid.length === 0
+            ? 0
+            : Math.max(...grid.map((g) => g.label.length)) * LABEL_CHAR_WIDTH + LABEL_GAP;
+    const x = xScale(data, left, width);
     const y = yScale(series, kind, height);
 
     const lines = series.map((s): PriceChartLine => {
@@ -161,7 +182,7 @@ export function priceChartLayout(
               )
             : [];
 
-    return { kind, width, height, lines, marks };
+    return { kind, width, height, left, lines, marks, gridlines: grid };
 }
 
 /**
@@ -195,7 +216,8 @@ export function readingNear(
     layout: PriceChartLayout,
     x: number,
 ): PriceChartReading | undefined {
-    const time = data.start + (x / layout.width) * (data.end - data.start);
+    const time =
+        data.start + ((x - layout.left) / (layout.width - layout.left)) * (data.end - data.start);
     const times = priceTimes(data);
     if (times.length === 0) return undefined;
     const nearest = times.reduce((best, t) =>
@@ -214,7 +236,7 @@ export function readingAt(
     const y = yScale(series, layout.kind, layout.height);
     return {
         timestamp,
-        x: round(xScale(data, layout.width)(timestamp)),
+        x: round(xScale(data, layout.left, layout.width)(timestamp)),
         values: series.flatMap((s): PriceChartValue[] => {
             const point = s.points.findLast((p) => p.timestamp <= timestamp);
             if (point === undefined) return [];
@@ -278,6 +300,42 @@ export function readingText(
 ): string {
     const values = reading.values.map((v) => readingValue(layout, v)).join(", ");
     return `${readingTime(data, reading.timestamp, locale)}: ${values}`;
+}
+
+/** Part of a chart's credit: its words, or one of its sources, which is drawn as a link. */
+export type PriceChartCreditPart<S> =
+    | { kind: "text"; text: string }
+    | { kind: "source"; source: S };
+
+/**
+ * A chart's credit, eg. "Price data by ICPSwap and CoinGecko", in parts, so that each source's name
+ * can link to it. `sentence` is the translated credit with `marker` where the sources go, and they
+ * are listed as the reader's language lists things.
+ */
+export function priceChartCredit<S extends { name: string }>(
+    sentence: string,
+    marker: string,
+    sources: S[],
+    locale: string,
+): PriceChartCreditPart<S>[] {
+    const at = sentence.indexOf(marker);
+    if (at === -1 || sources.length === 0) return [];
+    let next = 0;
+    const listed = new Intl.ListFormat(locale, { style: "long", type: "conjunction" })
+        .formatToParts(sources.map((s) => s.name))
+        .map(
+            (part): PriceChartCreditPart<S> =>
+                part.type === "element"
+                    ? { kind: "source", source: sources[next++] }
+                    : { kind: "text", text: part.value },
+        );
+    const before = sentence.slice(0, at);
+    const after = sentence.slice(at + marker.length);
+    return [
+        ...(before === "" ? [] : [{ kind: "text" as const, text: before }]),
+        ...listed,
+        ...(after === "" ? [] : [{ kind: "text" as const, text: after }]),
+    ];
 }
 
 // How far each key moves the reading, in prices
@@ -346,12 +404,15 @@ function value(kind: PriceChartLayout["kind"], series: PriceSeries, usd: number)
     return kind === "usd" ? usd : (usd / series.points[0].usd - 1) * 100;
 }
 
-function xScale(data: PriceChartData, width: number): (timestamp: number) => number {
+// From the chart's start at `left` to its end at `width`
+function xScale(data: PriceChartData, left: number, width: number): (timestamp: number) => number {
     const span = data.end - data.start;
     return (timestamp) =>
         span <= 0
             ? width
-            : ((Math.min(Math.max(timestamp, data.start), data.end) - data.start) / span) * width;
+            : left +
+              ((Math.min(Math.max(timestamp, data.start), data.end) - data.start) / span) *
+                  (width - left);
 }
 
 // The scale of every series' values, from the highest at the top to the lowest at the bottom
@@ -365,6 +426,46 @@ function yScale(
     const max = Math.max(...values);
     const pad = height * (kind === "usd" && max > min ? MARKED_PAD : PAD);
     return (v) => (max === min ? height / 2 : pad + ((max - v) / (max - min)) * (height - 2 * pad));
+}
+
+// Lines at round values across the prices' range, as many as fit at least GRIDLINE_SPACING pixels
+// apart, none if the prices never moved
+function gridlines(
+    series: PriceSeries[],
+    kind: PriceChartLayout["kind"],
+    height: number,
+): PriceChartGridline[] {
+    const values = series.flatMap((s) => s.points.map((p) => value(kind, s, p.usd)));
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    if (max === min) return [];
+
+    const y = yScale(series, kind, height);
+    // the pixels the prices' range spans
+    const span = y(min) - y(max);
+    const step = roundStep((max - min) / Math.max(1, Math.floor(span / GRIDLINE_SPACING)));
+    const lines: PriceChartGridline[] = [];
+    for (let i = Math.ceil(min / step); i <= Math.floor(max / step); i++) {
+        // without the float error of eg. 3 * 0.1
+        const v = Number((i * step).toPrecision(12));
+        lines.push({ y: round(y(v)), label: gridlineLabel(kind, v, step) });
+    }
+    return lines;
+}
+
+// The smallest round step, 1, 2, 2.5 or 5 times a power of ten, of at least `rough`
+function roundStep(rough: number): number {
+    const power = 10 ** Math.floor(Math.log10(rough));
+    return [1, 2, 2.5, 5].map((m) => m * power).find((s) => s >= rough * (1 - 1e-9)) ?? 10 * power;
+}
+
+function gridlineLabel(kind: PriceChartLayout["kind"], v: number, step: number): string {
+    if (kind === "usd") return formatUsdPrice(v);
+    return (v / 100).toLocaleString("en-US", {
+        style: "percent",
+        signDisplay: "exceptZero",
+        maximumFractionDigits: step < 1 ? 1 : 0,
+    });
 }
 
 // Every time any token has a price, oldest first

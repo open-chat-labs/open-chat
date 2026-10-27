@@ -5,7 +5,12 @@ import type {
     PriceSubject,
     TokenPricePoint,
 } from "@client";
-import { cashtagCardDetails, lastCardDetails, TokenPriceHistory } from "./tokenPriceCard.svelte";
+import {
+    cashtagCardDetails,
+    lastCardDetails,
+    showsSymbol,
+    TokenPriceHistory,
+} from "./tokenPriceCard.svelte";
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -126,5 +131,24 @@ describe("a price card's last details", () => {
         expect(known(ada)).toBe(ada);
         expect(known(undefined)).toBe(ada);
         expect(known({ ...ada, usd: 0.21 })?.usd).toBe(0.21);
+    });
+});
+
+describe("a price card's symbol", () => {
+    const details = (name: string, symbol: string) => ({
+        name,
+        symbol,
+        logo: undefined,
+        usd: 1,
+        source: undefined,
+    });
+
+    test("is shown under a name that differs from it", () => {
+        expect(showsSymbol(details("Internet Computer", "ICP"))).toBe(true);
+    });
+
+    test("isn't shown when it's the name again", () => {
+        expect(showsSymbol(details("CHAT", "CHAT"))).toBe(false);
+        expect(showsSymbol(details("ckBTC", "CKBTC"))).toBe(false);
     });
 });
