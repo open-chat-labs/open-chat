@@ -16063,18 +16063,20 @@
       },
       {
         "name": "state",
-        "type": "'open' | 'done' | 'expired'",
+        "type": "'open' | 'pending' | 'done' | 'cancelled' | 'expired'",
         "default": "open",
         "editor": "enum",
         "options": [
           "open",
+          "pending",
           "done",
+          "cancelled",
           "expired"
         ],
         "section": null,
         "required": false,
         "componentDefault": "'open'",
-        "doc": ""
+        "doc": "pending: taken and on its way, doneText says how; cancelled reads like expired."
       },
       {
         "name": "give",
