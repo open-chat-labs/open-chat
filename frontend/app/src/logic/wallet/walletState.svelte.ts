@@ -92,6 +92,27 @@ export function convertAndFormat(c: ConversionToken, t: EnhancedTokenDetails): s
     return formatConvertedValue(c, getConvertedTokenValue(c, t));
 }
 
+/**
+ * The wallet's total in a currency: every listed token's converted balance summed, a token with no
+ * rate counting as nothing (invariant 3: the same figure in every tree).
+ */
+export function walletTotal(c: ConversionToken, tokens: ConvertedBalances[]): number {
+    return tokens.reduce((total, t) => total + (getConvertedTokenValue(c, t) ?? 0), 0);
+}
+
+/** The total as the wallet shows it: dollars to the cent, ICP to 3 places, BTC and ETH to 6. */
+export function formatWalletTotal(c: ConversionToken, total: number): string {
+    switch (c) {
+        case "usd":
+            return total.toFixed(2);
+        case "icp":
+            return total.toFixed(3);
+        case "btc":
+        case "eth":
+            return total.toFixed(6);
+    }
+}
+
 const balances = reactiveValue(cryptoBalanceStore);
 const rates = reactiveValue(exchangeRatesLookupStore);
 

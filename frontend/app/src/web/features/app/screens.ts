@@ -53,8 +53,8 @@ export const leftScreens: Screens<LeftRegion> = {
     // notifications (phase 3d, ROUTES.md decision 7)
     activity: () => import("../activity/ActivityScreen.svelte"),
 
-    // the wallet's tokens
-    wallet: undefined,
+    // the wallet's tokens (6a)
+    wallet: () => import("../wallet/WalletPanelScreen.svelte"),
 };
 
 export const middleScreens: Screens<MiddleRegion> = {
@@ -67,8 +67,8 @@ export const middleScreens: Screens<MiddleRegion> = {
     // explore communities
     explore: undefined,
 
-    // the wallet's page
-    wallet: undefined,
+    // the wallet's page: All activity, a token's page (6a)
+    wallet: () => import("../wallet/WalletMainScreen.svelte"),
 
     // the platform operator console
     admin: undefined,

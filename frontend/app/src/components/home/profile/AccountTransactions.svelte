@@ -1,23 +1,13 @@
 <script lang="ts">
+    import { type OpenChat, cryptoLookup, currentUserStore, mobileWidth } from "@client";
     import {
-        type AccountTransaction,
-        type NamedAccount,
-        type OpenChat,
-        type ResourceKey,
-        cryptoLookup,
-        currentUserStore,
-        mobileWidth,
-        toRecord,
-    } from "@client";
-    import { getContext, onMount } from "svelte";
+        accountTransactionUrl,
+        transactionMemoKey,
+    } from "@src/logic/wallet/accountTransactions";
+    import { TransactionHistoryState } from "@src/logic/wallet/transactionHistoryState.svelte";
+    import { getContext, onMount, untrack } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import type { RemoteData as RD } from "../../../utils/remoteData";
-    import {
-        type TransactionHistory,
-        addTransactionsPage,
-        nextPageStart,
-    } from "../../../utils/transactionHistory";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
@@ -36,118 +26,53 @@
 
     let { ledger = $bindable(), urlFormat = $bindable(), onClose }: Props = $props();
 
-    type LoadingMore<T> = { kind: "loading_more"; data: T };
-    type RemoteData = RD<TransactionHistory, string> | LoadingMore<TransactionHistory>;
+    // the token's history, a page at a time (TransactionHistoryState, shared with every tree)
+    let history = $state(untrack(() => historyFor(ledger)));
 
-    let transactionData = $state<RemoteData>({ kind: "loading" });
-    let accounts: NamedAccount[] = $state([]);
-
-    function moreTransactionsAvailable(trans: RemoteData): boolean {
-        return trans.kind === "success" && nextPageStart(trans.data) !== undefined;
+    function historyFor(l: string): TransactionHistoryState {
+        return new TransactionHistoryState(client, $cryptoLookup.get(l)?.index);
     }
 
-    onMount(async () => {
-        accounts = await client.loadSavedCryptoAccounts();
-        loadTransactions();
+    onMount(() => {
+        // the saved account names the from / to cells show (namedAccountsStore)
+        client.loadSavedCryptoAccounts();
+        load();
     });
 
-    function url(id: bigint): string {
-        return urlFormat
-            .replace("{block_index}", id.toString())
-            .replace("{transaction_index}", id.toString())
-            .replace("{transaction_hash}", "");
+    async function load() {
+        const loading = history;
+        await loading.load();
+        if (loading === history && loading.state.kind === "failed") {
+            toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
+        }
+    }
+
+    async function loadMore() {
+        if ((await history.loadMore()) === "failed") {
+            toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
+        }
     }
 
     function openDashboard(id: bigint) {
-        window.open(url(id), "_blank");
+        window.open(accountTransactionUrl(urlFormat, id), "_blank");
     }
 
     function ledgerSelected(l: string, u: string): void {
-        transactionData = { kind: "idle" };
         ledger = l;
         urlFormat = u;
-        loadTransactions();
+        history = historyFor(l);
+        load();
     }
 
-    function translateMemo(trans: AccountTransaction): ResourceKey {
-        switch (trans.memo) {
-            case "OC_MSG":
-                return i18nKey("MESSAGE");
-            case "OC_SEND":
-                return i18nKey("TRANSFER");
-            case "OC_TIP":
-                return i18nKey("TIP");
-            case "OC_PRZ":
-                return i18nKey("PRIZE");
-            case "OC_PRZCL":
-                return i18nKey("PRIZE CLAIM");
-            case "OC_PRZRF":
-                return i18nKey("PRIZE REFUND");
-            case "OC_INS":
-                return i18nKey("STREAK INSURANCE");
-
-            default:
-                return i18nKey("cryptoAccount.unknownTransactionType");
-        }
-    }
-
-    function loadTransactions() {
-        // The "load more" button can still be clicked while it shows the next page loading
-        if (transactionData.kind === "loading_more") return;
-
-        const ledgerIndex = $cryptoLookup.get(ledger)?.index;
-        if (ledgerIndex !== undefined) {
-            let start = undefined;
-            if (transactionData.kind === "success") {
-                start = nextPageStart(transactionData.data);
-                if (start === undefined) return;
-                transactionData = { kind: "loading_more", data: transactionData.data };
-            } else {
-                transactionData = { kind: "loading" };
-            }
-            client
-                .getAccountTransactions(ledgerIndex, start)
-                .then((result) => {
-                    if (result.kind === "failure") {
-                        transactionData = { kind: "idle" };
-                        toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
-                    } else {
-                        if (transactionData.kind === "loading") {
-                            transactionData = {
-                                kind: "success",
-                                data: addTransactionsPage(undefined, result),
-                            };
-                        } else if (transactionData.kind === "loading_more") {
-                            transactionData = {
-                                kind: "success",
-                                data: addTransactionsPage(transactionData.data, result),
-                            };
-                        }
-                    }
-                })
-                .catch((err) => {
-                    console.warn("Error loading transactions: ", err);
-                    transactionData = { kind: "idle" };
-                    toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
-                });
-        } else {
-            toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
-            transactionData = { kind: "idle" };
-            console.warn("Could not find ledger index for ledger", ledger);
-        }
-    }
-    let accountLookup = $derived(toRecord(accounts, (a) => a.account));
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let tokensWithIndexes = $derived(
         new Set<string>(
-            [...$cryptoLookup.values()]
-                .filter((t) => t.index !== undefined)
-                .map((t) => t.ledger),
+            [...$cryptoLookup.values()].filter((t) => t.index !== undefined).map((t) => t.ledger),
         ),
     );
-    let moreAvailable = $derived(moreTransactionsAvailable(transactionData));
+    let shown = $derived(history.state);
     let loading = $derived(
-        transactionData.kind === "loading" || transactionData.kind === "loading_more",
+        shown.kind === "loading" || (shown.kind === "loaded" && shown.loadingMore),
     );
 </script>
 
@@ -204,8 +129,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {#if transactionData.kind === "success" || transactionData.kind === "loading_more"}
-                            {#each transactionData.data.transactions as transaction (transaction.id)}
+                        {#if shown.kind === "loaded"}
+                            {#each shown.history.transactions as transaction (transaction.id)}
                                 <tr onclick={() => openDashboard(transaction.id)}>
                                     <td>{transaction.id}</td>
                                     <td
@@ -215,23 +140,23 @@
                                         )}</td>
                                     <td class="truncate"
                                         ><Translatable
-                                            resourceKey={translateMemo(transaction)} /></td>
+                                            resourceKey={transactionMemoKey(
+                                                transaction.memo,
+                                            )} /></td>
                                     <td>{client.toDatetimeString(transaction.timestamp)}</td>
                                     <td class="truncate">
                                         <TransactionEndpoint
-                                            accounts={accountLookup}
                                             address={transaction.from}
                                             currentUser={$currentUserStore} />
                                     </td>
                                     <td class="truncate">
                                         <TransactionEndpoint
-                                            accounts={accountLookup}
                                             address={transaction.to}
                                             currentUser={$currentUserStore} />
                                     </td>
                                 </tr>
                             {/each}
-                        {:else if transactionData.kind === "loading"}
+                        {:else if shown.kind === "loading"}
                             <div class="loading">
                                 <FancyLoader />
                             </div>
@@ -247,8 +172,8 @@
                 <ButtonGroup>
                     <Button
                         secondary
-                        onClick={() => loadTransactions()}
-                        disabled={!moreAvailable && !loading}
+                        onClick={loadMore}
+                        disabled={!history.moreAvailable && !loading}
                         {loading}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}>

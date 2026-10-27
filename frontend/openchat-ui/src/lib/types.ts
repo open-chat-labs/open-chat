@@ -65,6 +65,8 @@ export interface MessageGroupItem {
 
 /** One row offered by TokenPicker. */
 export interface TokenOption {
+  /** Reported by onSelect when several options share a symbol (e.g. a ledger); defaults to the symbol. */
+  id?: string;
   symbol: string;
   name?: string;
   /** Shown instead of name, e.g. why the token is unavailable. */
@@ -261,13 +263,21 @@ export interface ComposerContext {
   text?: string;
 }
 
+/** Something a wallet token's menu or page offers. */
+export type WalletTokenAction = 'send' | 'receive' | 'swap' | 'refresh' | 'hide';
+
 /** One token in the user's wallet, as the wallet screens (WalletMain, WalletPanel, WalletSend …) take it. */
 export interface WalletToken {
+  /** Identifies the token in callbacks, requests and activity when several share a symbol (e.g. its ledger);
+   *  defaults to the symbol. */
+  id?: string;
   symbol: string;
   name: string;
   mark: string;
-  /** Brand gradient (CSS background). */
+  /** Brand gradient (CSS background); also its colour in the allocation and share bars. */
   grad: string;
+  /** Logo image URL, shown in place of the mark. */
+  logo?: string;
   /** Balance, in whole tokens. */
   held: number;
   /** USD per token. */
@@ -288,6 +298,8 @@ export interface WalletToken {
   ledger?: string;
   /** Token standard, e.g. "ICRC-1" (token page; hidden without it). */
   standard?: string;
+  /** What its menu and page offer; all of them without it (Hide in a manual wallet only). */
+  actions?: WalletTokenAction[];
 }
 
 /** One configured access gate (AccessGates rules, AccessGatesCards gates). `a` / `b` are the type's numeric fields as decimal strings with a "." mark ("1.5", also when typed "1,5"). */

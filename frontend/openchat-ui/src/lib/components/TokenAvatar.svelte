@@ -1,11 +1,14 @@
-<!-- Token mark on its brand gradient. Sizes in use: 28 (headers, pills), 40 (rows), 52 (hero). Optional activity badge. -->
+<!-- Token mark on its brand gradient, or its logo when given. Sizes in use: 28 (headers, pills), 40 (rows), 52 (hero).
+     Optional activity badge. -->
 <script lang="ts">
   interface Props {
     symbol?: string;
     mark?: string;
     gradient?: string;
     size?: number;
-    badge?: 'none' | 'send' | 'receive' | 'swap';
+    badge?: 'none' | 'send' | 'receive' | 'swap' | 'own';
+    /** The token's logo (an image URL), shown in place of the mark. */
+    logo?: string;
   }
 
   let {
@@ -14,7 +17,12 @@
     gradient = 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
     size = 40,
     badge = 'none',
+    logo,
   }: Props = $props();
+
+  // a logo that fails to load falls back to the mark on its gradient
+  let failedLogo = $state<string>();
+  const showLogo = $derived(!!logo && failedLogo !== logo);
 </script>
 
 <span
@@ -22,12 +30,12 @@
   class:small={size < 36}
   style:--size="{size}px"
   style:font-size="{Math.round(size * 0.38)}px"
-  style:background={gradient}
+  style:background={showLogo ? 'transparent' : gradient}
   title={symbol}
 >
-  {mark}
+  {#if showLogo}<img class="logo" src={logo} alt="" onerror={() => (failedLogo = logo)} />{:else}{mark}{/if}
   {#if badge !== 'none'}
-    <span class="badge"><span class="badge-icon" style:mask="var(--icon-{badge}) center/contain no-repeat"></span></span>
+    <span class="badge"><span class="badge-icon" style:mask="var(--icon-{badge === 'own' ? 'refresh' : badge}) center/contain no-repeat"></span></span>
   {/if}
 </span>
 
@@ -47,6 +55,13 @@
     line-height: 1;
     font-family: var(--font-sans);
     color: #0b0b10;
+  }
+
+  .logo {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
   }
 
   .small {

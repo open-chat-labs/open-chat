@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Container, Logo, MenuItem, SectionHeader } from "component-lib";
-    import { namedAccountsStore, OpenChat, publish } from "@client";
+    import { OpenChat, publish } from "@client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -27,10 +27,8 @@
         });
     }
 
-    onMount(async () => {
-        const accounts = await client.loadSavedCryptoAccounts();
-        namedAccountsStore.set(accounts);
-    });
+    // the client keeps namedAccountsStore
+    onMount(() => client.loadSavedCryptoAccounts());
 </script>
 
 <SectionHeader>

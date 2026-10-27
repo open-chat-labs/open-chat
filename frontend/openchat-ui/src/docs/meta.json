@@ -3406,6 +3406,28 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "avatarLogo",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The avatar's logo image, in place of the mark."
+      },
+      {
+        "name": "titleTag",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): a pill right after the title (e.g. a token's price)."
       }
     ],
     "group": "library"
@@ -4651,7 +4673,7 @@
       },
       {
         "name": "badge",
-        "type": "'none' | 'send' | 'receive' | 'swap'",
+        "type": "'none' | 'send' | 'receive' | 'swap' | 'own'",
         "default": "none",
         "editor": "enum",
         "options": [
@@ -4664,6 +4686,17 @@
         "required": false,
         "componentDefault": "'none'",
         "doc": ""
+      },
+      {
+        "name": "logo",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The token's logo (an image URL), shown in place of the mark."
       }
     ],
     "group": "library"
@@ -4746,14 +4779,14 @@
       },
       {
         "name": "onSelect",
-        "type": "(symbol: string) => void",
+        "type": "(id: string) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The picked option's `id`, else its symbol."
       }
     ],
     "group": "library"
@@ -4814,7 +4847,7 @@
       },
       {
         "name": "kind",
-        "type": "Kind",
+        "type": "'send' | 'receive' | 'swap' | 'own'",
         "default": "receive",
         "editor": "enum",
         "options": [
@@ -6548,6 +6581,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "empty",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Nothing owned yet: a plain track for the bar, Receive first, Send and Swap disabled."
       }
     ],
     "group": "features"
@@ -17602,7 +17646,7 @@
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The catalogue, held or not: a token you don't hold still gets its page, at zero."
       },
       {
         "name": "request",
@@ -17867,6 +17911,94 @@
         "required": false,
         "componentDefault": null,
         "doc": "See WalletReceive.qr."
+      },
+      {
+        "name": "history",
+        "type": "{ state: 'loading' | 'failed' | 'loaded' | 'unavailable'; more?: boolean; loadingMore?: boolean }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The token page's history as the host loads it: the first page loading or failed (with `onRetryHistory`), or loaded, with older entries to load (`more`, `onMoreHistory`) or loading; `unavailable` for a token whose transactions can't be listed. Without it, `activity` is all there is."
+      },
+      {
+        "name": "onMoreHistory",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onRetryHistory",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onActivity",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "An activity row clicked (its id), e.g. to open it on the token's explorer; on All activity a row opens its token."
+      },
+      {
+        "name": "allActivityNote",
+        "type": "{ title: string; body: string }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "In place of All activity's list, when the host can't list activity across tokens: resource keys (or text)."
+      },
+      {
+        "name": "onBalanceHiddenChange",
+        "type": "(hidden: boolean) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The token page's eye: the shared wallet veil. Without it there's no eye."
+      },
+      {
+        "name": "flows",
+        "type": "('send' | 'receive' | 'swap')[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "['send', 'receive', 'swap']",
+        "doc": "The flows the host offers: requests, picks and menu items for the others are left out, and their buttons (the token page's, the welcome's Receive card) do nothing. All three without it."
+      },
+      {
+        "name": "tokensLoading",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The host is still loading `tokens`: a token's page waits (neither the page nor \"Token not found\" yet)."
       }
     ],
     "group": "features"
@@ -17927,14 +18059,14 @@
       },
       {
         "name": "onRefresh",
-        "type": "(symbol?: string) => Promise<unknown> | void",
+        "type": "(id?: string) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Reload balances (one token, or all). The spinner runs until it settles; Refresh is hidden without it."
+        "doc": "Reload balances (one token by its id, or all when none). The spinner runs until it settles; Refresh is hidden without it."
       },
       {
         "name": "hidden",
@@ -17945,7 +18077,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Hidden token symbols when a host owns the list."
+        "doc": "Hidden tokens (their ids: `id`, else the symbol) when a host owns the list."
       },
       {
         "name": "onHiddenChange",
@@ -17960,7 +18092,7 @@
       },
       {
         "name": "onRemoveToken",
-        "type": "(symbol: string) => void",
+        "type": "(id: string) => void",
         "default": null,
         "editor": null,
         "options": null,
@@ -17978,7 +18110,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The removed token's symbol, for the undo banner."
       },
       {
         "name": "onUndoRemove",
@@ -18033,18 +18165,18 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "\"settings\", \"recipients\", \"send\", \"receive\", \"swap\", or \"send:ICP\" etc. for a token's own menu."
+        "doc": "\"settings\", \"recipients\", \"send\", \"receive\", \"swap\", or \"send:<id>\" etc. for a token's own menu."
       },
       {
         "name": "onToken",
-        "type": "(symbol: string) => void",
+        "type": "(id: string) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "A token row picked, by its id (`id`, else the symbol)."
       },
       {
         "name": "selectedToken",
@@ -18055,7 +18187,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The selected token's id."
       },
       {
         "name": "onHome",
@@ -18089,6 +18221,28 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "rates",
+        "type": "Partial<Record<string, number>>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "USD per unit of each display currency (BTC, ETH, ICP) when the host prices them; otherwise the tokens' own prices (a token with that symbol) are used."
+      },
+      {
+        "name": "supportedCount",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "How many tokens the wallet can receive (the deduped catalogue); defaults to `tokens`' length."
       }
     ],
     "group": "features"

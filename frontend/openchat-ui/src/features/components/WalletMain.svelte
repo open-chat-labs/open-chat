@@ -12,9 +12,14 @@
   export interface WalletActivity {
     id: string;
     symbol: string;
-    kind: 'send' | 'receive' | 'swap';
-    /** "Received from Lucy Linden", "Swapped to USDT" … */
-    title: string;
+    /** The token's id (WalletToken `id`) when tokens share a symbol; defaults to the symbol. */
+    token?: string;
+    /** `own`: between two of your own wallets, neither in nor out (listed under All only, unsigned). */
+    kind: 'send' | 'receive' | 'swap' | 'own';
+    /** "Received from Lucy Linden", "Swapped to USDT" …; without it, worded from `kind` and `party`. */
+    title?: string;
+    /** The other side ("@lucy", a saved name, an account), for the worded title. */
+    party?: string;
     /** ms epoch */
     timestamp: number;
     /** Shown after the time: "direct chat", "in The Awesome Group" … */
@@ -40,13 +45,16 @@
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { onDestroy, untrack } from 'svelte';
-  import type { WalletToken } from '../../lib/types';
-  import CopyButton from '../../lib/components/CopyButton.svelte';
+  import type { MenuItem, WalletToken } from '../../lib/types';
+  import ContextMenu from '../../lib/components/ContextMenu.svelte';
+  import IconButton from '../../lib/components/IconButton.svelte';
+  import { copyText } from '../../lib/clipboard';
   import DialogShell from '../../lib/components/DialogShell.svelte';
+  import Button from '../../lib/components/Button.svelte';
   import EmptyState from '../../lib/components/EmptyState.svelte';
+  import Skeleton from '../../lib/components/Skeleton.svelte';
   import ListSectionLabel from '../../lib/components/ListSectionLabel.svelte';
   import PageHeader from '../../lib/components/PageHeader.svelte';
-  import Pill from '../../lib/components/Pill.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import ShareBar from '../../lib/components/ShareBar.svelte';
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
@@ -57,12 +65,12 @@
   import WalletReceive, { type ShareChat } from './WalletReceive.svelte';
   import WalletRecipients, { type Recipient, type RecipientDraft } from './WalletRecipients.svelte';
   import WalletSend, { type SendContact, type WalletSendRequest } from './WalletSend.svelte';
-  import { txIdOf } from '../../lib/wallet';
+  import { flowReturn, pickedFlow, txIdOf, type WalletPlace } from '../../lib/wallet';
   import WalletSwap, { type SwapQuote, type SwapRequest } from './WalletSwap.svelte';
   const i18n = getI18n(); // number formatting follows the host locale
 
   type View = 'all' | 'token' | 'send' | 'receive' | 'swap' | 'recipients';
-  type Kind = 'send' | 'receive' | 'swap';
+  type Kind = 'send' | 'receive' | 'swap' | 'own';
 
   const mask = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
   const num = (v: number, dp: number) => v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -74,21 +82,22 @@
 
   interface Entry {
     id: string;
-    symbol: string;
+    /** The token's id. */
+    token: string;
     title: string;
     /** Day bucket: 'today', 'yesterday' or a formatted date. */
     day: string;
     timestamp: number;
     /** Time and context under the title ("10:42 · direct chat"). */
     sub: string;
-    /** 1 sent, 2 received, 3 swapped — the filter tabs' indexes. */
-    kind: 1 | 2 | 3;
+    /** 1 sent, 2 received, 3 swapped — the filter tabs' indexes; 0 between your own wallets (All only). */
+    kind: 0 | 1 | 2 | 3;
     amount: string;
     fiat: string;
     fresh?: boolean;
     status?: 'pending' | 'sent' | 'failed';
   }
-  const KIND_NUM: Record<WalletActivity['kind'], 1 | 2 | 3> = { send: 1, receive: 2, swap: 3 };
+  const KIND_NUM: Record<WalletActivity['kind'], 0 | 1 | 2 | 3> = { own: 0, send: 1, receive: 2, swap: 3 };
 
   const DAY_MS = 86400000;
   const startOfDay = (ms: number) => {
@@ -102,10 +111,12 @@
   };
   const timeOf = (ts: number) => new Date(ts).toLocaleTimeString(i18n.locale ?? 'en', { hour: '2-digit', minute: '2-digit' });
   const dayLabel = (d: string) => (d === 'today' ? t('ui.walletMain.today') : d === 'yesterday' ? t('ui.walletMain.yesterday') : d).toUpperCase();
-  const KIND: Record<number, Kind> = { 1: 'send', 2: 'receive', 3: 'swap' };
+  // between your own wallets reads with the swap arrows
+  const KIND: Record<number, Kind> = { 0: 'own', 1: 'send', 2: 'receive', 3: 'swap' };
 
   export interface WalletRequest {
-    view: View;
+    /** `browse`: the Supported tokens picker. `ledger`: copy `token`'s ledger ID (the view stays). */
+    view: View | 'browse' | 'ledger';
     token?: string;
     /** A new nonce re-applies the request. */
     nonce: number;
@@ -114,6 +125,7 @@
   }
 
   interface Props {
+    /** The catalogue, held or not: a token you don't hold still gets its page, at zero. */
     tokens: WalletToken[];
     request?: WalletRequest | null;
     onViewChange?: (v: { view: View; token: string | null }) => void;
@@ -153,6 +165,23 @@
     chats?: ShareChat[];
     onShare?: (v: { chatId: string; message: string; symbol: string; network: NetworkId; address: string }) => Promise<unknown> | void;
     qr?: Snippet<[string]>;
+    /** The token page's history as the host loads it: the first page loading or failed (with `onRetryHistory`), or
+     *  loaded, with older entries to load (`more`, `onMoreHistory`) or loading; `unavailable` for a token whose
+     *  transactions can't be listed. Without it, `activity` is all there is. */
+    history?: { state: 'loading' | 'failed' | 'loaded' | 'unavailable'; more?: boolean; loadingMore?: boolean };
+    onMoreHistory?: () => void;
+    onRetryHistory?: () => void;
+    /** An activity row clicked (its id), e.g. to open it on the token's explorer; on All activity a row opens its token. */
+    onActivity?: (id: string) => void;
+    /** In place of All activity's list, when the host can't list activity across tokens: resource keys (or text). */
+    allActivityNote?: { title: string; body: string };
+    /** The host is still loading `tokens`: a token's page waits (neither the page nor "Token not found" yet). */
+    tokensLoading?: boolean;
+    /** The token page's eye: the shared wallet veil. Without it there's no eye. */
+    onBalanceHiddenChange?: (hidden: boolean) => void;
+    /** The flows the host offers: requests, picks and menu items for the others are left out, and their buttons (the
+     *  token page's, the welcome's Receive card) do nothing. All three without it. */
+    flows?: ('send' | 'receive' | 'swap')[];
   }
 
   let {
@@ -181,6 +210,14 @@
     chats,
     onShare,
     qr,
+    history,
+    onMoreHistory,
+    onRetryHistory,
+    onActivity,
+    allActivityNote,
+    onBalanceHiddenChange,
+    flows = ['send', 'receive', 'swap'],
+    tokensLoading = false,
   }: Props = $props();
   const t = useT();
 
@@ -196,46 +233,88 @@
   let flowBusy = $state(0);
   let filter = $state(0);
   let tokFilter = $state(0);
-  let pick = $state<{ view: 'send' | 'receive' } | null>(null);
+  let pick = $state<{ view: 'send' | 'receive' | 'browse' } | null>(null);
   // sends the host confirmed (with an id) but its activity doesn't list yet
   let sent = $state<Entry[]>([]);
-  let toast = $state<{ id: number; message: string; userId: string | null } | null>(null);
+  // `notice`: a plain message, with no action (a copied ledger ID or username)
+  let toast = $state<{ id: number; message: string; userId: string | null; notice?: boolean } | null>(null);
+  let tokMenu = $state<{ left: number; right: number; top: number; bottom: number } | null>(null);
   let toastTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(toastTimer));
 
   const isFlow = (v: View) => v === 'send' || v === 'swap' || v === 'receive';
 
-  const rows = $derived(tokens.filter((t) => t.held > 0).map((t) => ({ ...t, value: t.price * t.held })));
+  // a token's identity (`sym` holds it): several ledgers can share a symbol. Send, Receive and Swap still pick their
+  // token by symbol, so they get the shown token's symbol and their results map back to the first token with it
+  const idOf = (tk: { id?: string; symbol: string }) => tk.id ?? tk.symbol;
+  const valued = $derived(tokens.map((t) => ({ ...t, value: t.price * t.held })));
+  const rows = $derived(valued.filter((t) => t.held > 0));
   const total = $derived(rows.reduce((n, t) => n + t.value, 0));
-  const raw = $derived(rows.find((t) => t.symbol === sym) ?? rows[0]);
+  // nothing owned yet: All activity is the welcome
+  const empty = $derived(rows.length === 0);
+  // a token you don't hold (an empty wallet, or one opened from Supported tokens) still gets its page, at zero
+  const raw = $derived(rows.find((t) => idOf(t) === sym) ?? valued.find((t) => idOf(t) === sym) ?? rows[0] ?? valued[0]);
+  // a page asked for a token that isn't in `tokens`: it says so, rather than showing another token's page (once the host
+  // has loaded them)
+  const missing = $derived(!!sym && !tokensLoading && !valued.some((t) => idOf(t) === sym));
+  const offers = (flow: 'send' | 'receive' | 'swap') => flows.includes(flow) && (!raw?.actions || raw.actions.includes(flow));
+  const idForSymbol = (symbol: string) => {
+    const tk = tokens.find((t) => t.symbol === symbol);
+    return tk ? idOf(tk) : symbol;
+  };
+  const symbolOf = (id: string) => tokens.find((t) => idOf(t) === id)?.symbol ?? id;
   const pct = (v: number) => (total ? `${((v / total) * 100).toFixed(1)}%` : '0%');
 
   function report() {
     const flow = isFlow(view);
-    onViewChange?.({ view, token: view === 'all' || view === 'recipients' || (flow && fromAll) ? null : sym });
+    // receiving a token outside `tokens` reports that token; the page shown (`sym`) is only where Receive goes back to
+    const token = view === 'receive' && extTok ? extTok : view === 'all' || view === 'recipients' || (flow && fromAll) ? null : sym || null;
+    onViewChange?.({ view, token });
   }
 
   function apply(r: WalletRequest) {
-    extTok = null;
-    const flow = isFlow(r.view);
-    // no token yet (e.g. Send in the summary card): ask which one first
+    if (r.view === 'ledger') {
+      if (r.token) copyLedger(r.token);
+      return;
+    }
+    if (r.view === 'browse') {
+      pick = { view: 'browse' };
+      return;
+    }
+    // a flow the host doesn't offer: its token's page, if it names one
+    if (isFlow(r.view) && !flows.includes(r.view as 'send' | 'receive' | 'swap')) {
+      if (r.token) apply({ view: 'token', token: r.token, nonce: r.nonce });
+      return;
+    }
+    const view0: View = r.view;
+    const flow = isFlow(view0);
+    // no token yet (e.g. Send in the summary card): ask which one first. What's open stays as it is (an extra token's
+    // Receive keeps its token) until a token is picked
     if ((r.view === 'send' || r.view === 'receive') && !r.token) {
       pick = { view: r.view };
       return;
     }
-    // receiving a token you don't hold yet (one of `receivable`)
-    if (r.view === 'receive' && r.token && !rows.some((x) => x.symbol === r.token) && receivable.some((x) => x.symbol === r.token && x.nets.length)) extTok = r.token;
+    extTok = null;
+    // receiving a token outside `tokens` (one of `receivable`): only received, so the page shown stays for Receive to go
+    // back to (All activity if it was opened there)
+    if (r.view === 'receive' && r.token && !valued.some((x) => idOf(x) === r.token) && receivable.some((x) => x.symbol === r.token && x.nets.length)) extTok = r.token;
     const startFromAll = flow && !r.token && view === 'all';
+    // where it goes back to: a request naming a token from the wallet goes back to that token's page (from anywhere, as a
+    // token request opens its page); an extra token, which has no page, where it was opened (lib/wallet's flowReturn, as
+    // for one picked in the token picker)
+    const backTo = extTok ? flowReturn(here(), false) : 'token';
     // a token-less flow opened from a token page acts on the token shown there (sym may name one with no balance)
-    const shown = raw?.symbol;
+    const shown = raw ? idOf(raw) : undefined;
     if (r.token && r.token !== sym) tokFilter = 0;
-    // a request starts afresh: an open flow (e.g. a token click from inside Send) is left, with nothing to return to
-    backToAll = backToRecipients = false;
+    // an open flow (e.g. a token click from inside Send) is left; the new one goes back to where it was opened (a page
+    // request has nowhere to go back to)
+    backToAll = flow && backTo === 'all';
+    backToRecipients = flow && backTo === 'recipients';
     sendAddr = '';
     // ... and a flow requested again (e.g. Send for the token whose receipt is showing) remounts as a fresh form
     if (flow) flowNonce++;
-    view = r.view || 'all';
-    sym = r.token || (flow && !startFromAll && shown ? shown : sym);
+    view = view0 || 'all';
+    sym = extTok ? sym : r.token || (flow && !startFromAll && shown ? shown : sym);
     fromAll = flow ? startFromAll || !!r.fromAll : false;
     pinFlowSym();
     report();
@@ -244,7 +323,7 @@
   // a flow opened on the shown token (sym still empty) records that token, so the flow stays on it even if its
   // balance reaches 0 and the shown token changes
   function pinFlowSym() {
-    if (isFlow(view) && !fromAll && !sym && raw) sym = raw.symbol;
+    if (isFlow(view) && !fromAll && !sym && raw) sym = idOf(raw);
   }
 
   let lastNonce: number | undefined;
@@ -289,7 +368,7 @@
   // a saved recipient's own token lock wins; otherwise the network's native token
   function sendToRecipient(r: Recipient & { network: string | null }) {
     const native: Record<string, string> = { BTC: 'BTC', ETH: 'ETH', XRP: 'XRP' };
-    sym = r.token || (r.network ? native[r.network] : undefined) || 'ICP';
+    sym = idForSymbol(r.token || (r.network ? native[r.network] : undefined) || 'ICP');
     view = 'send';
     fromAll = false;
     backToRecipients = true;
@@ -314,7 +393,7 @@
     if (!txId || sent.some((e) => e.id === txId)) return;
     const amt = sentAmount(x);
     sent = [
-      { id: txId, symbol: x.symbol, title: t('ui.walletMain.sentTo', { name: x.toLabel }), day: 'today', timestamp: Date.now(), sub: t('ui.walletMain.justNow'), kind: 1, amount: `\u2212${amt}`, fiat: usd(x.fiat), fresh: true, status: 'pending' },
+      { id: txId, token: idForSymbol(x.symbol), title: t('ui.walletMain.sentTo', { name: x.toLabel }), day: 'today', timestamp: Date.now(), sub: t('ui.walletMain.justNow'), kind: 1, amount: `\u2212${amt}`, fiat: usd(x.fiat), fresh: true, status: 'pending' },
       ...sent,
     ];
   }
@@ -328,7 +407,7 @@
     // the next send starts fresh: no pre-filled recipient, and Back no longer returns to Recipients
     fromAll = backToAll = backToRecipients = false;
     sendAddr = '';
-    sym = x.symbol;
+    sym = idForSymbol(x.symbol);
     report();
     const message = t('ui.walletMain.sentToast', { amount: sentAmount(x), name: x.toLabel });
     if (openChat && x.userId && onMessage) {
@@ -344,31 +423,71 @@
     }, 6000);
   }
 
+  // one place that knows ledger IDs: both kebabs (the list's and the token page's) copy through here
+  async function copyLedger(id: string) {
+    const tk = tokens.find((x) => idOf(x) === id);
+    if (!tk?.ledger) return;
+    if (await copyText(tk.ledger)) notify(t('ui.walletMain.ledgerCopied', { symbol: tk.symbol }));
+  }
+
+  async function copyHandle() {
+    if (handle && (await copyText(handle))) notify(t('ui.walletMain.usernameCopied'));
+  }
+
+  function notify(message: string) {
+    const tid = Date.now();
+    toast = { id: tid, message, userId: null, notice: true };
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      if (toast?.id === tid) toast = null;
+    }, 4000);
+  }
+
+  // `s` is a token's id, or the symbol of a receivable token not in `tokens`
+  // where the user is now, for where a flow opened from here goes back to (lib/wallet)
+  const here = (): WalletPlace => ({ view, fromAll, backToAll, backToRecipients, sym });
+
   function pickToken(s: string) {
-    const flow = pick?.view ?? 'send';
+    const tk = tokens.find((x) => idOf(x) === s);
+    // browse (Supported tokens): a token in the wallet's catalogue opens its page; anything else goes to Receive
+    if (pick?.view === 'browse') {
+      pick = null;
+      if (tk) {
+        go({ view: 'token', sym: s, fromAll: false });
+        return;
+      }
+      if (!flows.includes('receive')) return;
+      pick = { view: 'receive' };
+    }
+    const flow: 'send' | 'receive' = pick?.view === 'receive' ? 'receive' : 'send';
     pick = null;
-    backToAll = view === 'all';
-    view = flow;
-    sym = s;
-    extTok = rows.some((r) => r.symbol === s) ? null : s;
-    fromAll = false;
+    // the flow, where it goes back to, the token shown and an extra token (lib/wallet's pickedFlow)
+    ({ view, sym, extTok, fromAll, backToAll, backToRecipients, sendAddr } = pickedFlow(here(), { id: s, inTokens: !!tk, flow }));
     flowNonce = Date.now();
     report();
   }
 
-  const tokenFor = (symbol: string) => tokens.find((tk) => tk.symbol === symbol);
+  const tokenFor = (id: string) => tokens.find((tk) => idOf(tk) === id);
+  // a host that gives the other side and not a title: "Received from @lucy", "Sent to …", "Between your wallets"
+  const activityTitle = (a: WalletActivity) =>
+    a.kind === 'own'
+      ? t('ui.walletMain.betweenYourWallets')
+      : t(a.kind === 'receive' ? 'ui.walletMain.receivedFrom' : a.kind === 'swap' ? 'ui.walletMain.swappedTo' : 'ui.walletMain.sentTo', {
+          name: a.party ?? '',
+          symbol: a.party ?? '',
+        });
   const toEntry = (a: WalletActivity): Entry | null => {
-    const tk = tokenFor(a.symbol);
+    const tk = tokenFor(a.token ?? a.symbol);
     if (!tk) return null;
     return {
       id: a.id,
-      symbol: a.symbol,
-      title: a.title,
+      token: idOf(tk),
+      title: a.title ?? activityTitle(a),
       day: dayOf(a.timestamp),
       timestamp: a.timestamp,
       sub: [timeOf(a.timestamp), a.context].filter(Boolean).join(' · '),
       kind: KIND_NUM[a.kind],
-      amount: `${a.kind === 'receive' ? '+' : '\u2212'}${num(a.amount, tk.dp)} ${tk.symbol}`,
+      amount: `${a.kind === 'receive' ? '+' : a.kind === 'own' ? '' : '\u2212'}${num(a.amount, tk.dp)} ${tk.symbol}`,
       fiat: usd(a.fiat),
       status: a.status,
     };
@@ -399,12 +518,12 @@
     untrack(() => setTimeout(() => onCount?.(count)));
   });
 
-  const allGroups = $derived(groupByDay(entries.filter((e) => !filter || e.kind === filter).map((e) => ({ ...e, tk: tokenFor(e.symbol)! }))));
+  const allGroups = $derived(groupByDay(entries.filter((e) => !filter || e.kind === filter).map((e) => ({ ...e, tk: tokenFor(e.token)! }))));
 
   // token page: that token's activity (with status), grouped by day, filterable
   const tokGroups = $derived.by(() => {
     if (!raw) return [];
-    const shown = entries.filter((e) => e.symbol === raw.symbol && (!tokFilter || e.kind === tokFilter));
+    const shown = entries.filter((e) => e.token === idOf(raw) && (!tokFilter || e.kind === tokFilter));
     return groupByDay(shown).map((g) => ({
       ...g,
       items: g.items.map((x, i) => ({ ...x, divider: i > 0 && !x.fresh, kindName: KIND[x.kind] ?? 'receive', sub: x.sub || t('ui.walletMain.justNow') })),
@@ -412,19 +531,17 @@
   });
 
   // empty token history per filter tab: keys take { symbol }
-  const EMPTY: Record<number, { icon: Kind; title: string; body: string }> = {
+  const EMPTY: Record<number, { icon: 'send' | 'receive' | 'swap'; title: string; body: string }> = {
     1: { icon: 'send', title: 'ui.walletMain.emptySentTitle', body: 'ui.walletMain.emptySentBody' },
     2: { icon: 'receive', title: 'ui.walletMain.emptyReceivedTitle', body: 'ui.walletMain.emptyReceivedBody' },
     3: { icon: 'swap', title: 'ui.walletMain.emptySwapsTitle', body: 'ui.walletMain.emptySwapsBody' },
   };
 
-  const change = $derived(raw?.change24h);
-  const ledger = $derived(raw?.ledger);
   // keyed on the chosen symbol, not the shown row: a token whose balance reaches 0 (e.g. sending all of it) leaves
   // `rows`, and keying on that would remount a send or swap the host is still working on
-  const flowSym = $derived(sym || raw?.symbol || '');
+  const flowSym = $derived(sym || (raw ? idOf(raw) : ''));
   const flowKey = $derived(`${view}:${fromAll ? '-' : flowSym}:${flowNonce}`);
-  const flowToken = $derived(extTok && view === 'receive' ? extTok : fromAll ? '' : flowSym);
+  const flowToken = $derived(extTok && view === 'receive' ? extTok : fromAll ? '' : symbolOf(flowSym));
   // Receive also offers tokens you don't hold yet, on their own networks
   const receiveTokens = $derived<WalletToken[]>([
     ...tokens,
@@ -433,13 +550,79 @@
       .map((x) => ({ symbol: x.symbol, name: x.name, mark: x.mark, grad: x.grad, held: 0, price: 0, dp: 4, nets: x.nets })),
   ]);
   const swapPinned = $derived(onSwap ? (r: Parameters<NonNullable<typeof onSwap>>[0]) => pinned(() => onSwap(r)) : undefined);
-  const showToken = $derived(view === 'token' && !!raw);
+  const showToken = $derived(view === 'token' && !!raw && !missing);
+  const notFound = $derived(view === 'token' && missing);
+  // a token's page asked for while the host is loading the tokens (a reload of it): neither the page nor "not found" yet
+  const pending = $derived(view === 'token' && !!sym && tokensLoading && !valued.some((t) => idOf(t) === sym));
 
-  const pickTokens = $derived(
-    rows
-      .map((tk) => ({ symbol: tk.symbol, name: tk.name, mark: tk.mark, gradient: tk.grad, owned: true, held: `${num(tk.held, tk.dp)} ${tk.symbol}`, note: usd(tk.value) }))
-      .concat(pick?.view === 'receive' ? receivable.filter((x) => x.nets.length && !rows.some((r) => r.symbol === x.symbol)).map((x) => ({ symbol: x.symbol, name: x.name, mark: x.mark, gradient: x.grad, owned: false, held: '', note: '' })) : []),
-  );
+  // sending: the tokens you hold. Receiving or browsing: yours first, then the rest of the catalogue, then the extra
+  // receivable tokens (only while Receive is offered), no symbol twice
+  // sending: the tokens you hold. Receiving or browsing: yours first, then the rest of the catalogue, then the extra
+  // receivable tokens (only while Receive is offered) whose symbol the catalogue doesn't have. Rows are keyed by the
+  // token's id, so two tokens sharing a symbol both show and each opens its own page
+  const pickTokens = $derived.by(() => {
+    const anyToken = pick?.view === 'receive' || pick?.view === 'browse';
+    const owned = rows.map((tk) => ({ id: idOf(tk), symbol: tk.symbol, name: tk.name, mark: tk.mark, gradient: tk.grad, owned: true, held: `${num(tk.held, tk.dp)} ${tk.symbol}`, note: usd(tk.value) }));
+    if (!anyToken) return owned;
+    const rest = valued.filter((tk) => !(tk.held > 0)).map((tk) => ({ id: idOf(tk), symbol: tk.symbol, name: tk.name, mark: tk.mark, gradient: tk.grad, owned: false, held: '', note: '' }));
+    const known = new Set(tokens.map((tk) => tk.symbol));
+    const extra = flows.includes('receive')
+      ? receivable
+          .filter((x) => x.nets.length && !known.has(x.symbol))
+          .filter((x, i, all) => all.findIndex((y) => y.symbol === x.symbol) === i)
+          .map((x) => ({ symbol: x.symbol, name: x.name, mark: x.mark, gradient: x.grad, owned: false, held: '', note: '' }))
+      : [];
+    return [...owned, ...rest, ...extra];
+  });
+
+  // the token page's actions: Send / Receive / Swap when held; at zero, Receive leads and Send and Swap wait for funds
+  const heroActions = $derived.by(() => {
+    if (!raw) return [];
+    // as designed whatever the host offers; one it doesn't does nothing
+    const all = [
+      { target: 'send' as const, label: 'ui.walletMain.sendSymbol', icon: 'wallet-send' },
+      { target: 'receive' as const, label: 'ui.walletMain.receiveSymbol', icon: 'receive' },
+      { target: 'swap' as const, label: 'ui.walletMain.swapSymbol', icon: 'swap' },
+    ];
+    if (raw.held > 0) return all.map((a, i) => ({ ...a, primary: i === 0, disabled: false }));
+    const receive = all.filter((a) => a.target === 'receive').map((a) => ({ ...a, primary: true, disabled: false }));
+    return [...receive, ...all.filter((a) => a.target !== 'receive').map((a) => ({ ...a, primary: false, disabled: true }))];
+  });
+
+  // the token page's kebab: its flows (Receive only at zero), then Copy ledger ID when it has a ledger
+  const tokMenuItems = $derived.by((): MenuItem[] => {
+    if (!raw) return [];
+    const flowItems = (raw.held > 0 ? (['send', 'receive', 'swap'] as const) : (['receive'] as const))
+      .filter((f) => offers(f))
+      .map((f) => ({
+        label: t(f === 'send' ? 'ui.walletMain.sendSymbol' : f === 'receive' ? 'ui.walletMain.receiveSymbol' : 'ui.walletMain.swapSymbol', { symbol: raw.symbol }),
+        mask: mask(f === 'send' ? 'wallet-send' : f),
+        onSelect: () => {
+          tokMenu = null;
+          go({ view: f, sym: idOf(raw), fromAll: false });
+        },
+      }));
+    const ledgerItems = raw.ledger
+      ? [
+          ...(flowItems.length ? [{ label: '', variant: 'separator' as const }] : []),
+          {
+            label: t('ui.walletMain.copyLedgerId'),
+            mask: mask('copy'),
+            onSelect: () => {
+              tokMenu = null;
+              copyLedger(idOf(raw));
+            },
+          },
+        ]
+      : [];
+    return [...flowItems, ...ledgerItems];
+  });
+
+  function openTokMenu(e?: Event) {
+    const el = e?.currentTarget as Element | null | undefined;
+    const r = el?.getBoundingClientRect();
+    tokMenu = r ? { left: r.left, right: r.right, top: r.top, bottom: r.bottom } : { left: 0, right: 0, top: 0, bottom: 0 };
+  }
 </script>
 
 <div class="main" data-screen-label="Wallet main">
@@ -472,15 +655,48 @@
   {/if}
   {#if view === 'all' || view === 'token'}
     <PageHeader
-      title={showToken ? raw.name : t('ui.walletMain.allActivity')}
-      onBack={showToken ? () => go({ view: 'all' }) : undefined}
+      title={pending ? '' : showToken ? raw.name : notFound ? t('ui.walletMain.tokenNotFoundTitle') : t(empty ? 'ui.walletMain.wallet' : 'ui.walletMain.allActivity')}
+      onBack={showToken || notFound || pending ? () => go({ view: 'all' }) : undefined}
       backLabel={t('ui.walletMain.backToAll')}
       avatarMark={showToken ? raw.mark : ''}
+      avatarLogo={showToken ? raw.logo : undefined}
       avatarGradient={raw?.grad}
-    />
+      titleTag={showToken ? price(raw.price) : undefined}
+      >{#if showToken && tokMenuItems.length}<IconButton icon="more" label="ui.walletMain.tokenOptions" onClick={openTokMenu} />{/if}</PageHeader
+    >
     <div class="scroll">
       <div class="column">
-        {#if !showToken}
+        {#if pending}
+          <div class="history-note"><Skeleton variant="token" count={3} /></div>
+        {:else if notFound}
+          <EmptyState icon="search" title={t('ui.walletMain.tokenNotFoundTitle')} body={t('ui.walletMain.tokenNotFoundBody')} actionLabel="" />
+        {:else if !showToken && empty}
+          <div class="welcome">
+            <span class="welcome-tile"><span class="welcome-icon"></span></span>
+            <span class="welcome-text">
+              <span class="welcome-title">{t('ui.walletMain.welcomeTitle')}</span>
+              <span class="welcome-body">{t('ui.walletMain.welcomeBody')}</span>
+            </span>
+            <div class="welcome-cards">
+                <div class="welcome-card" onclick={flows.includes('receive') ? () => (pick = { view: 'receive' }) : undefined} role="button" tabindex="0">
+                  <span class="card-icon" style:mask={mask('receive')}></span>
+                  <span class="card-title">{t('ui.walletMain.receiveTokensTitle')}</span>
+                  <span class="card-body">{t('ui.walletMain.receiveTokensBody')}</span>
+                  <span class="card-link">{t('ui.walletMain.showMyAddress')}</span>
+                </div>
+                {#if handle}
+                <div class="welcome-card" onclick={copyHandle} role="button" tabindex="0">
+                  <span class="card-icon" style:mask={mask('share')}></span>
+                  <span class="card-title">{t('ui.walletMain.getPaidTitle')}</span>
+                  <span class="card-body">{t('ui.walletMain.getPaidBody')}</span>
+                  <span class="card-link">{t('ui.walletMain.copyUsername', { handle })}</span>
+                </div>
+                {/if}
+              </div>
+          </div>
+        {:else if !showToken && allActivityNote}
+          <EmptyState icon="receive" title={t(allActivityNote.title)} body={t(allActivityNote.body)} actionLabel="" />
+        {:else if !showToken}
           <div class="tabs"><SegmentedTabs labels={FILTERS.map((k) => t(k))} selectedIndex={filter} dotOnLast={false} onSelect={(i) => (filter = i)} /></div>
           {#each allGroups as g}
             <div class="day">
@@ -494,12 +710,13 @@
                     sub="{e.tk.symbol} · {e.fresh ? t('ui.walletMain.justNowInline') : e.sub}"
                     amount={e.amount}
                     fiat={e.fiat}
-                    kind={k === 2 ? 'receive' : k === 1 ? 'send' : 'swap'}
+                    kind={KIND[k] ?? 'receive'}
+                    positive={k === 2}
                     symbol={e.tk.symbol}
                     mark={e.tk.mark}
                     gradient={e.tk.grad}
                     fresh={e.fresh}
-                    onClick={() => go({ view: 'token', sym: e.symbol })}
+                    onClick={() => go({ view: 'token', sym: e.token })}
                   />
                 {/each}
               </div>
@@ -510,43 +727,50 @@
           {@const tokenEmpty = EMPTY[tokFilter]}
           <div class="token-page">
             <div class="summary">
-              <div class="summary-top">
-                <div class="hero">
-                  <TokenAvatar size={52} symbol={raw.symbol} mark={raw.mark} gradient={raw.grad} />
-                  <div class="hero-text">
-                    <span class="held veilable" class:veiled={balanceHidden}>{num(raw.held, raw.dp)} <span class="held-symbol">{raw.symbol}</span></span>
-                    <span class="value-line"
-                      ><span class="veilable" class:veiled={balanceHidden}>{usd(raw.value)}</span>{#if change !== undefined}<Pill
-                          size="md"
-                          label={t('ui.walletMain.changeToday', { change: `${change > 0 ? '+' : change < 0 ? '\u2212' : ''}${Math.abs(change).toFixed(1)}%` })}
-                          tone={change > 0 ? 'success' : change < 0 ? 'danger' : 'neutral'}
-                        />{/if}</span
-                    >
-                  </div>
+              <div class="hero">
+                <TokenAvatar size={52} symbol={raw.symbol} mark={raw.mark} gradient={raw.grad} logo={raw.logo} />
+                <div class="hero-text">
+                  <span class="held-line"
+                    ><span class="held veilable" class:veiled={balanceHidden}>{num(raw.held, raw.dp)} <span class="held-symbol">{raw.symbol}</span></span
+                    >{#if onBalanceHiddenChange}<span
+                        class="eye"
+                        onclick={() => onBalanceHiddenChange(!balanceHidden)}
+                        role="button"
+                        tabindex="0"
+                        aria-label={t(balanceHidden ? 'ui.balanceCard.showBalance' : 'ui.balanceCard.hideBalance')}
+                        title={t(balanceHidden ? 'ui.balanceCard.showBalance' : 'ui.balanceCard.hideBalance')}
+                        ><span class="eye-icon" style:mask={mask(balanceHidden ? 'eye-off' : 'eye')}></span></span
+                      >{/if}</span
+                  >
+                  <span class="value-line veilable" class:veiled={balanceHidden}>≈ {usd(raw.value)}</span>
                 </div>
+              </div>
+              {#if raw.held > 0}
+                <div class="share">
+                  <span class="share-head"
+                    ><span class="share-label">{t('ui.walletMain.shareOfWallet')}</span><span class="share-value">{balanceHidden ? '••••' : pct(raw.value)}</span></span
+                  >
+                  <ShareBar share={balanceHidden ? 33 : total ? (raw.value / total) * 100 : 0} gradient={raw.grad} thickness={4} />
+                </div>
+              {/if}
+              {#if heroActions.length}
                 <div class="actions">
-                  {#each [['ui.walletMain.sendSymbol', 'send', 'wallet-send'], ['ui.walletMain.receiveSymbol', 'receive', 'receive'], ['ui.walletMain.swapSymbol', 'swap', 'swap']] as [label, target, icon], i}
-                    <span class="action" class:primary={i === 0} onclick={() => go({ view: target as View, sym: raw.symbol, fromAll: false })} role="button" tabindex="0"
-                      ><span class="action-icon" style:mask={mask(icon)}></span><span class="action-label">{t(label, { symbol: raw.symbol })}</span></span
+                  {#each heroActions as a (a.target)}
+                    <span
+                      class="action"
+                      class:primary={a.primary}
+                      class:disabled={a.disabled}
+                      onclick={a.disabled || !offers(a.target) ? undefined : () => go({ view: a.target, sym: idOf(raw), fromAll: false })}
+                      role="button"
+                      tabindex="0"
+                      aria-disabled={a.disabled}
+                      title={a.disabled ? t('ui.balanceCard.addFundsFirst') : undefined}
+                      data-tip={a.disabled ? t('ui.balanceCard.addFundsFirst') : undefined}
+                      ><span class="action-icon" style:mask={mask(a.icon)}></span><span class="action-label">{t(a.label, { symbol: raw.symbol })}</span></span
                     >
                   {/each}
                 </div>
-              </div>
-              <div class="facts">
-                <div class="fact"><span class="fact-label">{t('ui.walletMain.price')}</span><span class="fact-value">{price(raw.price)}</span></div>
-                {#if raw.fee !== undefined}<div class="fact"><span class="fact-label">{t('ui.walletMain.transferFee')}</span><span class="fact-value">{num(raw.fee, raw.dp)} {raw.symbol}</span></div>{/if}
-                {#if raw.standard}<div class="fact"><span class="fact-label">{t('ui.walletMain.standard')}</span><span class="fact-value">{raw.standard}</span></div>{/if}
-                {#if ledger}<div class="fact">
-                    <span class="fact-label">{t('ui.walletMain.ledger')}</span><span class="fact-value"
-                      >{`${ledger.slice(0, 5)}\u2026${ledger.slice(-4)}`}<span class="fact-copy"><CopyButton value={ledger} label="ui.walletMain.copyLedgerId" /></span></span
-                    >
-                  </div>{/if}
-              </div>
-              <div class="share">
-                <span class="share-label">{t('ui.walletMain.shareOfWallet')}</span>
-                <div class="share-bar"><ShareBar share={balanceHidden ? 33 : total ? (raw.value / total) * 100 : 0} gradient={raw.grad} thickness={4} /></div>
-                <span class="share-value">{balanceHidden ? '••••' : pct(raw.value)}</span>
-              </div>
+              {/if}
             </div>
             <div class="activity">
               <div class="tabs"><SegmentedTabs labels={FILTERS.map((k) => t(k))} selectedIndex={tokFilter} dotOnLast={false} onSelect={(i) => (tokFilter = i)} /></div>
@@ -565,11 +789,25 @@
                         statusTone={x.status === 'pending' ? 'warning' : x.status === 'failed' ? 'danger' : 'success'}
                         divider={x.divider}
                         fresh={x.fresh}
+                        positive={x.kind === 2}
+                        onClick={onActivity ? () => onActivity(x.id) : undefined}
                       />{/each}
                   </div>
                 </div>
               {/each}
-              {#if tokGroups.length === 0}
+              {#if history?.state === 'loading'}
+                <div class="history-note"><Skeleton variant="token" count={4} /></div>
+              {:else if history?.state === 'unavailable'}
+                <EmptyState icon="receive" title={t('ui.walletMain.noHistoryTitle')} body={t('ui.walletMain.noHistoryBody', { symbol: raw.symbol })} actionLabel="" />
+              {:else if history?.state === 'failed'}
+                <EmptyState
+                  icon="receive"
+                  title={t('ui.walletMain.historyFailedTitle')}
+                  body={t('ui.walletMain.historyFailedBody', { symbol: raw.symbol })}
+                  actionLabel={onRetryHistory ? t('ui.emptyState.tryAgain') : ''}
+                  actionHandler={onRetryHistory}
+                />
+              {:else if tokGroups.length === 0 && !history?.more}
                 <EmptyState
                   icon={tokenEmpty?.icon}
                   title={t(tokenEmpty ? tokenEmpty.title : 'ui.walletMain.emptyTitle', { symbol: raw.symbol })}
@@ -577,19 +815,27 @@
                   actionLabel=""
                 />
               {/if}
+              {#if history?.state === 'loaded' && history.more && onMoreHistory}
+                <div class="more-history">
+                  <Button label={history.loadingMore ? 'ui.walletMain.loadingOlder' : 'ui.walletMain.loadOlder'} variant="secondary" disabled={history.loadingMore} onClick={onMoreHistory} />
+                </div>
+              {/if}
             </div>
           </div>
         {/if}
       </div>
     </div>
   {/if}
+  <ContextMenu open={!!tokMenu} items={tokMenuItems} anchor={tokMenu} align="end" onClose={() => (tokMenu = null)} />
   {#if pick}
-    <DialogShell title={pick.view === 'receive' ? 'ui.walletMain.receiveWhich' : 'ui.walletMain.sendWhich'} onClose={() => (pick = null)}
+    <DialogShell
+      title={pick.view === 'browse' ? 'ui.walletMain.supportedTokens' : pick.view === 'receive' ? 'ui.walletMain.receiveWhich' : 'ui.walletMain.sendWhich'}
+      onClose={() => (pick = null)}
       ><TokenPicker
         tokens={pickTokens}
-        placeholder={t(pick.view === 'receive' ? 'ui.walletMain.searchAnyToken' : 'ui.walletMain.searchYourTokens')}
+        placeholder={t(pick.view === 'send' ? 'ui.walletMain.searchYourTokens' : 'ui.walletMain.searchAnyToken')}
         ownedHeading={t('ui.walletMain.inYourWallet')}
-        otherHeading={t(pick.view === 'receive' ? 'ui.walletMain.allSupportedTokens' : 'ui.walletMain.allTokens')}
+        otherHeading={t(pick.view === 'send' ? 'ui.walletMain.allTokens' : 'ui.walletMain.allSupportedTokens')}
         onSelect={pickToken}
       /></DialogShell
     >
@@ -604,7 +850,7 @@
             icon="check"
             message={toast.message}
             actionLabel={t(toast.userId && onMessage ? 'ui.walletMain.message' : 'ui.walletMain.view')}
-            onAction={() => {
+            onAction={toast.notice ? undefined : () => {
               const done = toast;
               toast = null;
               go({ view: 'token' });
@@ -676,6 +922,16 @@
     color: var(--ink-4);
   }
 
+  .history-note {
+    padding: var(--space-8) 0;
+  }
+
+  .more-history {
+    display: flex;
+    justify-content: center;
+    padding: var(--space-16) 0;
+  }
+
   .token-page {
     display: flex;
     flex-direction: column;
@@ -683,16 +939,12 @@
   }
 
   .summary {
-    border-radius: 18px;
-    background: var(--overlay-1);
-    overflow: hidden;
-  }
-
-  .summary-top {
     display: flex;
     flex-direction: column;
     gap: 18px;
     padding: 22px 22px 20px;
+    border-radius: 18px;
+    background: var(--overlay-1);
   }
 
   .hero {
@@ -709,7 +961,15 @@
     gap: var(--space-8);
   }
 
+  .held-line {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    min-width: 0;
+  }
+
   .held {
+    min-width: 0;
     font: 700 30px/1.1 var(--font-sans);
     letter-spacing: -0.02em;
     color: var(--ink);
@@ -718,6 +978,27 @@
 
   .held-symbol {
     color: var(--ink-4);
+  }
+
+  .eye {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .eye:hover {
+    background: var(--overlay-2);
+  }
+
+  .eye-icon {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-4);
   }
 
   .veilable {
@@ -732,12 +1013,32 @@
   }
 
   .value-line {
-    display: inline-flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-10);
     font: var(--weight-medium) 13.5px / 1 var(--font-mono);
     color: var(--ink-2);
+  }
+
+  .share {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .share-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+  }
+
+  .share-label {
+    flex: 1;
+    font: var(--weight-medium) 12.5px/1 var(--font-sans);
+    color: var(--ink-3);
+  }
+
+  .share-value {
+    flex: none;
+    font: 600 12.5px/1 var(--font-mono);
+    color: var(--ink);
   }
 
   .actions {
@@ -773,6 +1074,17 @@
     background: var(--accent);
   }
 
+  .action.disabled {
+    --action-ink: var(--ink-4);
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-1);
+    cursor: not-allowed;
+  }
+
+  .action.disabled:hover {
+    filter: none;
+  }
+
   .action-icon {
     flex: none;
     width: 14px;
@@ -785,64 +1097,94 @@
     text-overflow: ellipsis;
   }
 
-  .facts {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    border-top: 1px solid var(--line-1);
-  }
-
-  .fact {
+  .welcome {
     display: flex;
     flex-direction: column;
-    gap: 7px;
-    padding: 14px 18px;
-    box-shadow: inset 1px 0 0 var(--line-1);
+    align-items: center;
+    gap: 22px;
+    padding: 24px 0 8px;
+    text-align: center;
   }
 
-  .fact-label {
-    font: var(--weight-medium) 10px/1 var(--font-mono);
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--ink-4);
-  }
-
-  .fact-value {
+  .welcome-tile {
+    width: 144px;
+    height: 144px;
+    border-radius: 40px;
+    background: var(--accent-soft);
     display: flex;
     align-items: center;
-    gap: 6px;
-    font: 600 13.5px/1.2 var(--font-mono);
+    justify-content: center;
+  }
+
+  .welcome-icon {
+    width: 64px;
+    height: 64px;
+    background: var(--accent);
+    mask: var(--icon-wallet) center/contain no-repeat;
+  }
+
+  .welcome-text {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 520px;
+  }
+
+  .welcome-title {
+    font: 800 26px/1.15 var(--font-sans);
+    letter-spacing: -0.01em;
     color: var(--ink);
-    white-space: nowrap;
   }
 
-  .fact-copy {
+  .welcome-body {
+    font: 400 15px/1.55 var(--font-sans);
+    color: var(--ink-3);
+    text-wrap: pretty;
+  }
+
+  .welcome-cards {
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+    text-align: start;
+  }
+
+  .welcome-card {
     display: flex;
-    margin: -6px 0;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px;
+    border-radius: 16px;
+    background: var(--overlay-1);
+    cursor: pointer;
   }
 
-  .share {
-    display: flex;
-    align-items: center;
-    gap: var(--space-12);
-    padding: 12px 18px 14px;
-    border-top: 1px solid var(--line-1);
+  .welcome-card:hover {
+    background: var(--overlay-2);
   }
 
-  .share-label {
-    flex: none;
-    font: var(--weight-medium) 12.5px/1 var(--font-sans);
+  .card-icon {
+    width: 20px;
+    height: 20px;
+    background: var(--ink-2);
+  }
+
+  .card-title {
+    font: 700 15px/1.2 var(--font-sans);
+    color: var(--ink);
+  }
+
+  .card-body {
+    font: 400 13px/1.45 var(--font-sans);
     color: var(--ink-3);
   }
 
-  .share-bar {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .share-value {
-    flex: none;
-    font: 600 12.5px/1 var(--font-mono);
-    color: var(--ink);
+  .card-link {
+    margin-top: 4px;
+    font: 700 13.5px/1 var(--font-sans);
+    color: var(--accent-bright);
   }
 
   .activity {

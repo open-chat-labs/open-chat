@@ -36,8 +36,7 @@
         deleting = account;
         const res = await client.deleteCryptoAccount(name);
         if (res.kind === "success") {
-            const accts = await client.loadSavedCryptoAccounts();
-            namedAccountsStore.set(accts);
+            await client.loadSavedCryptoAccounts();
         }
         deleting = undefined;
     }

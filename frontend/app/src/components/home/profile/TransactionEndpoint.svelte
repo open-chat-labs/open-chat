@@ -2,49 +2,42 @@
     import {
         allUsersStore,
         AvatarSize,
+        namedAccountsStore,
         OpenChat,
         type CreatedUser,
-        type NamedAccount,
     } from "@client";
+    import { counterpartyOf } from "@src/logic/wallet/accountTransactions";
     import { getContext } from "svelte";
     import Avatar from "../../Avatar.svelte";
 
     const client = getContext<OpenChat>("client");
     interface Props {
         address: string | undefined;
-        accounts: Record<string, NamedAccount>;
         currentUser: CreatedUser;
     }
 
-    let { address, accounts, currentUser }: Props = $props();
+    let { address, currentUser }: Props = $props();
 
-    let user = $derived(
-        address === currentUser.cryptoAccount
-            ? $allUsersStore.get(currentUser.userId)
-            : address
-              ? $allUsersStore.get(address)
-              : undefined,
-    );
+    // a user (the current user's own account included), a saved account or the account itself
+    let party = $derived(counterpartyOf(address, currentUser, $allUsersStore, $namedAccountsStore));
 </script>
 
-{#if address !== undefined}
-    {#if user}
-        <div class="user">
-            <div class="avatar">
-                <Avatar
-                    url={client.userAvatarUrl(user)}
-                    userId={user.userId}
-                    size={AvatarSize.Tiny} />
-            </div>
-            <div class="name">
-                {client.getDisplayName(user.userId)}
-            </div>
+{#if party.kind === "user"}
+    <div class="user">
+        <div class="avatar">
+            <Avatar
+                url={client.userAvatarUrl(party.user)}
+                userId={party.user.userId}
+                size={AvatarSize.Tiny} />
         </div>
-    {:else if accounts[address] !== undefined}
-        <div class="account" title={accounts[address].name}>{accounts[address].name}</div>
-    {:else}
-        <div class="raw" title={address}>{address}</div>
-    {/if}
+        <div class="name">
+            {client.getDisplayName(party.user.userId)}
+        </div>
+    </div>
+{:else if party.kind === "saved"}
+    <div class="account" title={party.name}>{party.name}</div>
+{:else if party.kind === "account"}
+    <div class="raw" title={party.account}>{party.account}</div>
 {/if}
 
 <style lang="scss">
