@@ -319,11 +319,7 @@ impl MessageInternal {
     // Whether the user can delete the message as their own: they sent it, or a bot sent it in response
     // to a command they used
     pub fn deletable_as_own_by(&self, user_id: UserId) -> bool {
-        self.sender == user_id
-            || self
-                .bot_context()
-                .and_then(|b| b.command.as_ref())
-                .is_some_and(|c| c.initiator == user_id)
+        self.sender == user_id || self.reply_recipient() == user_id
     }
 
     // Who a reply to the message is for: its sender, or for a bot's response to a command, whoever
@@ -533,7 +529,8 @@ impl ThreadSummaryInternal {
         &mut self,
         sender: UserId,
         mentioned_users: &[UserId],
-        root_message_sender: UserId,
+        // Who the thread's root message is for (see `MessageInternal::reply_recipient`)
+        root_message_recipient: UserId,
         latest_event_index: EventIndex,
         now: TimestampMillis,
     ) {
@@ -550,7 +547,7 @@ impl ThreadSummaryInternal {
 
         let is_first_message = self.reply_count == 1;
         if is_first_message {
-            self.followers.insert(root_message_sender);
+            self.followers.insert(root_message_recipient);
         }
     }
 }
