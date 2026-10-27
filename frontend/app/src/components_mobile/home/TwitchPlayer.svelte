@@ -37,10 +37,16 @@
         }),
     );
     let width = $state<number>();
-    let playing = $state(false);
     let playerUrl = $derived(parent !== undefined ? twitchPlayerUrl(embed, parent) : undefined);
     // Twitch won't play in less than 400px, so a narrower bubble (any phone's) links to Twitch
     let fits = $derived(width !== undefined && width >= TWITCH_PLAYER_MIN_WIDTH);
+    let shown = $derived(playerUrl !== undefined && fits);
+    // Set by a click on the poster, and back to false whenever the player is hidden: the player
+    // starts as it loads, so only a click may load it, not a bubble widening again
+    let playing = $derived.by(() => {
+        void shown;
+        return false;
+    });
     let { title, image } = $derived(twitchPoster(embed, ogPreview));
     let textColour: ColourVarKeys = $derived(me ? "primaryAccent" : "textSecondary");
     let ctaColour: ColourVarKeys = $derived(me ? "textPrimary" : "secondary");
@@ -50,9 +56,14 @@
     <!-- Asks for the player's width but gives way, so a narrower bubble keeps its own width,
          which is then what's measured -->
     <canvas class="sizer" aria-hidden="true"></canvas>
-    {#if playerUrl !== undefined && fits}
+    {#if shown}
         {#if playing}
-            <iframe class="player" src={playerUrl} {title} allow="autoplay; fullscreen" allowfullscreen>
+            <iframe
+                class="player"
+                src={playerUrl}
+                {title}
+                allow="autoplay; fullscreen"
+                allowfullscreen>
             </iframe>
         {:else}
             <button
