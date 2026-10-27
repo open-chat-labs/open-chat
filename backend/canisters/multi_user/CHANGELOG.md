@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Price charts, a message type only bots post, which anyone can forward ([#10267](https://github.com/open-chat-labs/open-chat/pull/10267))
+
 ### Removed
 
 - Remove the old names of the endpoints which the event endpoints replaced, as nothing calls them any more ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))

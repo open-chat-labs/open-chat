@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Price charts, a message type only bots post, needing the Image permission, which anyone can forward ([#10267](https://github.com/open-chat-labs/open-chat/pull/10267))
+
 ### Changed
 
 - Let the user who issued a bot command delete the bot's response ([#10261](https://github.com/open-chat-labs/open-chat/pull/10261))
