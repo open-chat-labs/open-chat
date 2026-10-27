@@ -9,7 +9,7 @@ use community_canister::{c2c_bot_delete_messages, delete_messages::*};
 use constants::MINUTE_IN_MS;
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
-use types::{Achievement, BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, OCResult};
+use types::{Achievement, BotCaller, BotInitiator, BotPermissions, Caller, CanisterId, ChatPermission, OCResult};
 use user_index_canister_c2c_client::lookup_user;
 
 #[update(msgpack = true)]
@@ -59,13 +59,31 @@ fn c2c_bot_delete_messages_impl(args: c2c_bot_delete_messages::Args, state: &mut
         new_achievement: false,
     };
 
+    // Without the DeleteMessages permission a bot can still delete its own messages autonomously, as
+    // it can edit them, if it's installed with autonomous permissions
     if !state.data.is_bot_permitted(
         &bot_caller.bot,
         Some(args.channel_id),
         &bot_caller.initiator,
         &BotPermissions::from_chat_permission(ChatPermission::DeleteMessages),
     ) {
-        return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        if !matches!(bot_caller.initiator, BotInitiator::Autonomous)
+            || !state.data.is_bot_permitted(
+                &bot_caller.bot,
+                Some(args.channel_id),
+                &bot_caller.initiator,
+                &BotPermissions::default(),
+            )
+        {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
+        let Some(channel) = state.data.channels.get(&args.channel_id) else {
+            return Err(OCErrorCode::ChatNotFound.into());
+        };
+        channel
+            .chat
+            .events
+            .check_deletable_as_own_by(args.thread_root_message_index, &args.message_ids, bot_caller.bot)?;
     }
 
     commit(args, Some(Caller::BotV2(bot_caller)), state)
