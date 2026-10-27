@@ -29,3 +29,44 @@ export function returnPlace(p: WalletPlace): 'recipients' | 'all' | 'token' {
   if (p.view === 'all' || (flow && (p.fromAll || p.backToAll)) || !p.sym) return 'all';
   return 'token';
 }
+
+/**
+ * Where a flow opened from here goes back to (the token picker's pick, and a host request for an extra token; a request
+ * naming a token from the wallet goes back to that token's page): where the user was when it opened.
+ * From Recipients, Recipients; from All activity, All activity. A token with a page of its own (one in the wallet's
+ * tokens) goes back to that page, also when it replaces an open flow (a request starts afresh). An extra token (no page)
+ * goes back where the user was: the open flow's way back, else the page shown, else All activity.
+ */
+export function flowReturn(p: WalletPlace, tokenHasPage: boolean): 'recipients' | 'all' | 'token' {
+  if (p.view === 'recipients') return 'recipients';
+  if (p.view === 'all') return 'all';
+  if (tokenHasPage) return 'token';
+  return returnPlace(p);
+}
+
+/** WalletMain's state after a token is picked for a flow in the token picker. */
+export interface PickedFlow extends WalletPlace {
+  view: 'send' | 'receive';
+  /** A receivable token outside the wallet's tokens, received by its symbol; null for one of the wallet's. */
+  extTok: string | null;
+  /** The Send's address: always cleared, a picked flow starts afresh. */
+  sendAddr: '';
+}
+
+/**
+ * A token picked in the token picker for Send or Receive: the flow opens on it and goes back to where it was opened
+ * (flowReturn). One of the wallet's tokens (`inTokens`) becomes the shown token; an extra token is only received, so
+ * the page shown stays for Receive to go back to.
+ */
+export function pickedFlow(p: WalletPlace, picked: { id: string; inTokens: boolean; flow: 'send' | 'receive' }): PickedFlow {
+  const back = flowReturn(p, picked.inTokens);
+  return {
+    view: picked.flow,
+    sym: picked.inTokens ? picked.id : p.sym,
+    extTok: picked.inTokens ? null : picked.id,
+    fromAll: false,
+    backToAll: back === 'all',
+    backToRecipients: back === 'recipients',
+    sendAddr: '',
+  };
+}

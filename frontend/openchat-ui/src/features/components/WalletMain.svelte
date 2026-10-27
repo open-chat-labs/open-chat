@@ -65,7 +65,7 @@
   import WalletReceive, { type ShareChat } from './WalletReceive.svelte';
   import WalletRecipients, { type Recipient, type RecipientDraft } from './WalletRecipients.svelte';
   import WalletSend, { type SendContact, type WalletSendRequest } from './WalletSend.svelte';
-  import { returnPlace, txIdOf } from '../../lib/wallet';
+  import { flowReturn, pickedFlow, txIdOf, type WalletPlace } from '../../lib/wallet';
   import WalletSwap, { type SwapQuote, type SwapRequest } from './WalletSwap.svelte';
   const i18n = getI18n(); // number formatting follows the host locale
 
@@ -298,14 +298,17 @@
     // back to (All activity if it was opened there)
     if (r.view === 'receive' && r.token && !valued.some((x) => idOf(x) === r.token) && receivable.some((x) => x.symbol === r.token && x.nets.length)) extTok = r.token;
     const startFromAll = flow && !r.token && view === 'all';
-    const backTo = placeNow();
+    // where it goes back to: a request naming a token from the wallet goes back to that token's page (from anywhere, as a
+    // token request opens its page); an extra token, which has no page, where it was opened (lib/wallet's flowReturn, as
+    // for one picked in the token picker)
+    const backTo = extTok ? flowReturn(here(), false) : 'token';
     // a token-less flow opened from a token page acts on the token shown there (sym may name one with no balance)
     const shown = raw ? idOf(raw) : undefined;
     if (r.token && r.token !== sym) tokFilter = 0;
-    // a request starts afresh: an open flow (e.g. a token click from inside Send) is left, with nothing to return to,
-    // except where an extra token's Receive was opened
-    backToAll = !!extTok && backTo === 'all';
-    backToRecipients = !!extTok && backTo === 'recipients';
+    // an open flow (e.g. a token click from inside Send) is left; the new one goes back to where it was opened (a page
+    // request has nowhere to go back to)
+    backToAll = flow && backTo === 'all';
+    backToRecipients = flow && backTo === 'recipients';
     sendAddr = '';
     // ... and a flow requested again (e.g. Send for the token whose receipt is showing) remounts as a fresh form
     if (flow) flowNonce++;
@@ -440,8 +443,8 @@
   }
 
   // `s` is a token's id, or the symbol of a receivable token not in `tokens`
-  // where a flow opened from here goes back to (lib/wallet's returnPlace)
-  const placeNow = () => returnPlace({ view, fromAll, backToAll, backToRecipients, sym });
+  // where the user is now, for where a flow opened from here goes back to (lib/wallet)
+  const here = (): WalletPlace => ({ view, fromAll, backToAll, backToRecipients, sym });
 
   function pickToken(s: string) {
     const tk = tokens.find((x) => idOf(x) === s);
@@ -457,17 +460,8 @@
     }
     const flow: 'send' | 'receive' = pick?.view === 'receive' ? 'receive' : 'send';
     pick = null;
-    // the flow goes back to where it was picked from: Recipients, All activity, else (the picked token's) page
-    const place = placeNow();
-    backToAll = place === 'all';
-    backToRecipients = place === 'recipients';
-    // a picked flow starts afresh: no address left from an earlier Send
-    sendAddr = '';
-    view = flow;
-    // a receivable token outside `tokens` is only received: the page shown stays, for Receive to go back to
-    if (tk) sym = s;
-    extTok = tk ? null : s;
-    fromAll = false;
+    // the flow, where it goes back to, the token shown and an extra token (lib/wallet's pickedFlow)
+    ({ view, sym, extTok, fromAll, backToAll, backToRecipients, sendAddr } = pickedFlow(here(), { id: s, inTokens: !!tk, flow }));
     flowNonce = Date.now();
     report();
   }
