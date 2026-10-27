@@ -508,6 +508,7 @@
       "chats": "Chats",
       "chooseAnother": "Choose another chat",
       "messagePlaceholder": "Add a message (optional)",
+      "noChats": "No chats available",
       "noMatches": "No chats match “{query}”.",
       "recentChats": "RECENT CHATS",
       "results": "RESULTS",

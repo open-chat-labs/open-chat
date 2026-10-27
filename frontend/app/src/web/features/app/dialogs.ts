@@ -42,6 +42,9 @@ export type LinkedDialog =
     | { kind: "puzzle"; gameId?: string; how?: boolean }
     // the claim calendar (?chit=calendar), from the CHIT dialog or the profile's CHIT section
     | { kind: "claim_history" }
+    // picking a chat to share into what another app shared (/share?title&text&url, which redirects
+    // to ?share=<the fields, as JSON>): its text goes into the chosen chat's draft
+    | { kind: "share"; title?: string; text?: string; url?: string }
     | { kind: "leaderboard" };
 
 // someone's profile card, for a name clicked in a message; a token's or coin's price card, for a
@@ -172,6 +175,9 @@ export const dialogs: Dialogs = {
 
     // the CHIT claim calendar (8e)
     claim_history: () => import("../chit/ClaimHistoryDialogScreen.svelte"),
+
+    // picking a chat to share into (4d)
+    share: () => import("../share/ShareDialogScreen.svelte"),
 };
 
 // each linked dialog's query param; the CHIT dialog's views share its param, told apart by its value
@@ -184,10 +190,11 @@ const PARAMS: Record<LinkedDialog["kind"], string> = {
     puzzle: "chit",
     claim_history: "chit",
     leaderboard: "hof",
+    share: "share",
 };
 
 // the params, in the order they win when more than one is in the URL
-const PARAM_ORDER = ["profile", "diamond", "chit", "hof"];
+const PARAM_ORDER = ["profile", "diamond", "chit", "hof", "share"];
 
 // the CHIT dialog's views' values
 const EARN = "earn";
@@ -211,6 +218,8 @@ export function linkedDialog(query: URLSearchParams): LinkedDialog | undefined {
             return { kind: "diamond" };
         case "hof":
             return { kind: "leaderboard" };
+        case "share":
+            return { kind: "share", ...sharedFields(value) };
         default:
             if (value === INSURANCE) return { kind: "streak_insurance" };
             if (value === CALENDAR) return { kind: "claim_history" };
@@ -230,6 +239,29 @@ export function linkedDialog(query: URLSearchParams): LinkedDialog | undefined {
     }
 }
 
+// what was shared, from ?share's value (JSON): only its string fields, and nothing from a value that
+// isn't JSON
+function sharedFields(value: string): { title?: string; text?: string; url?: string } {
+    try {
+        const parsed: unknown = JSON.parse(value);
+        if (typeof parsed !== "object" || parsed === null) return {};
+        const field = (key: string) => {
+            const v: unknown = Reflect.get(parsed, key);
+            return typeof v === "string" && v !== "" ? v : undefined;
+        };
+        return { title: field("title"), text: field("text"), url: field("url") };
+    } catch {
+        return {};
+    }
+}
+
+/** The query that opens the share picker for what another app shared (/share?title&text&url). */
+export function shareQuery(shared: { title: string; text: string; url: string }): string {
+    // the fields alone: a route also carries its own kind
+    const { title, text, url } = shared;
+    return openLinkedDialog(new URLSearchParams(), { kind: "share", title, text, url }) ?? "";
+}
+
 function isProfileLinkSection(value: string): value is ProfileLinkSection {
     return PROFILE_LINK_SECTIONS.includes(value);
 }
@@ -245,6 +277,8 @@ function valueOf(dialog: LinkedDialog): string | undefined {
             return INSURANCE;
         case "claim_history":
             return CALENDAR;
+        case "share":
+            return JSON.stringify({ title: dialog.title, text: dialog.text, url: dialog.url });
         case "puzzle": {
             const view = dialog.how ? HOW_TO : PUZZLE;
             return dialog.gameId === undefined ? view : `${view}:${dialog.gameId}`;

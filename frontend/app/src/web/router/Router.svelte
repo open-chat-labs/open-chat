@@ -47,6 +47,7 @@
     import { defaultChatRoute, defaultChatUrl } from "./defaultChat";
     import { redirectTable, routeTable } from "./routeTable";
     import { leftToBrowser } from "./links";
+    import { shareQuery } from "../features/app/dialogs";
 
     let { children }: { children: Snippet } = $props();
 
@@ -247,8 +248,9 @@
             if (client.isHomeRoute(route)) {
                 client.filterRightPanelHistory((panel) => panel.kind === "user_profile");
             } else if (client.isShareRoute(route)) {
-                // TODO(phase 4, 4d): pick the chat to share into (ChatPicker), as Home.svelte does
-                navigate(routeForScope(client.getDefaultScope()));
+                // what another app shared: the chat picker over the default page (?share), which
+                // puts it in the chosen chat's draft
+                navigate(`${routeForScope(client.getDefaultScope())}${shareQuery(route)}`, "auto");
             }
         });
     });
@@ -269,7 +271,9 @@
             }
             const usergroup = qs.get("usergroup");
             if (usergroup !== null) {
-                setRightPanelHistory([{ kind: "show_community_members", userGroupId: Number(usergroup) }]);
+                setRightPanelHistory([
+                    { kind: "show_community_members", userGroupId: Number(usergroup) },
+                ]);
                 handled.push("usergroup");
             }
             const faq = qs.get("faq");

@@ -5471,7 +5471,7 @@
       },
       {
         "name": "chats",
-        "type": "{ id: string; name: string; kind?: string; grad: string; radius?: string }[]",
+        "type": "{ id: string; name: string; kind?: string; sub?: string; group?: string; grad: string; radius?: string }[]",
         "default": null,
         "editor": null,
         "options": null,
@@ -5512,6 +5512,28 @@
         "required": false,
         "componentDefault": "90",
         "doc": ""
+      },
+      {
+        "name": "filter",
+        "type": "(query: string) => Chat[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's search: the chats to list for a query (a name, a username, a community …); the picker otherwise matches `chats` by name and kind."
+      },
+      {
+        "name": "emptyLabel",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.chatPicker.noChats'",
+        "doc": "Resource key (or literal text): what an empty list says when nothing is searched for."
       }
     ],
     "group": "library"
@@ -11596,7 +11618,7 @@
       },
       {
         "name": "chats",
-        "type": "{ id: string; name: string; kind?: string; grad: string; radius?: string }[]",
+        "type": "{ id: string; name: string; kind?: string; sub?: string; group?: string; grad: string; radius?: string }[]",
         "default": null,
         "editor": null,
         "options": null,
@@ -11614,7 +11636,18 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Post the link to a chat; the confirmation toast shows once it resolves."
+        "doc": "Send the link to a chat; resolve `false` when nothing was sent and there's nothing to say (the user backed out), which leaves the picker open with no toast."
+      },
+      {
+        "name": "filterChats",
+        "type": "(query: string) => Chat[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's search for the picker's chats (see ChatPicker's `filter`)."
       }
     ],
     "group": "features"

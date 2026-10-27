@@ -1,17 +1,20 @@
 <!-- Gradient avatar placeholder with an optional online dot. shape: circle | squircle (radius = a third of the size). -->
-<script lang="ts">
-  const GRADIENTS = {
+<script lang="ts" module>
+  /** The avatar swatches' gradients, for a host drawing a face the same colour elsewhere (a picker's tile). */
+  export const AVATAR_GRADIENTS = {
     violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
     blue: 'linear-gradient(140deg,#3d7bff,#7a3dff)',
     teal: 'linear-gradient(140deg,#2ee6a8,#1f8fbf)',
     amber: 'linear-gradient(140deg,#ffb03d,#ff5f4d)',
     plum: 'linear-gradient(140deg,#b04dff,#4d2dff)',
   };
+</script>
 
+<script lang="ts">
   interface Props {
     size?: number;
     shape?: 'circle' | 'squircle';
-    color?: keyof typeof GRADIENTS;
+    color?: keyof typeof AVATAR_GRADIENTS;
     online?: boolean;
   }
 
@@ -24,7 +27,7 @@
   <div
     class="face"
     style:border-radius={shape === 'circle' ? '999px' : `${Math.round(size * 0.33)}px`}
-    style:background={GRADIENTS[color] ?? GRADIENTS.violet}
+    style:background={AVATAR_GRADIENTS[color] ?? AVATAR_GRADIENTS.violet}
   >
     {#if online}
       <span class="dot" class:big></span>

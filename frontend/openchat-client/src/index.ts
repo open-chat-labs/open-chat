@@ -40,6 +40,17 @@ export {
 export { formatClock, formatDuration } from "./utils/time";
 export { default as formatFileSize } from "./utils/fileSize";
 export {
+    groupMembersLine,
+    sharedDraftText,
+    shareTargets,
+    type ShareableChat,
+    type ShareableCommunity,
+    type ShareCommunityTarget,
+    type ShareTarget,
+    type ShareTargets,
+    type ShareTargetsInput,
+} from "./utils/shareTargets";
+export {
     botOwnerCandidates,
     compareIsNotYouThenUsername,
     directChatUsers,
