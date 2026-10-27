@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Tell a bot when its own message is deleted or restored, whatever it's subscribed to ([#10275](https://github.com/open-chat-labs/open-chat/pull/10275))
 - Price charts, a message type only bots post, which anyone can forward ([#10267](https://github.com/open-chat-labs/open-chat/pull/10267))
 
 ### Removed
