@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add MiniApp messages, which only bots post: text with rows of buttons, some shown only to chosen users ([#10293](https://github.com/open-chat-labs/open-chat/pull/10293))
+
 ### Changed
 
 - Let any bot edit its own messages, not only bridge bots ([#10282](https://github.com/open-chat-labs/open-chat/pull/10282))
