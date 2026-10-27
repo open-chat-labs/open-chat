@@ -1,6 +1,8 @@
 export * from "./user";
 export {
+    expandTypedMentions,
     extractUserIdsFromMentions,
+    typedMentions,
     userGroupMentionRegex,
     userIdMentionRegex,
     userOrUserGroupId,

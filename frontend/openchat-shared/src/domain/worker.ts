@@ -326,6 +326,7 @@ export type WorkerRequest = Cloneable<
     | GetPublicGroupSummary
     | GetUserStorageLimits
     | SearchUsers
+    | GetUserIdByUsername
     | CheckUsername
     | RehydrateMessage
     | ChatEventsByEventIndex
@@ -1676,6 +1677,11 @@ type CheckUsername = {
     isBot: boolean;
 };
 
+type GetUserIdByUsername = {
+    username: string;
+    kind: "getUserIdByUsername";
+};
+
 type SearchUsers = {
     searchTerm: string;
     maxResults: number;
@@ -2665,6 +2671,7 @@ export type WorkerResults = ResultsByKind<{
     rehydrateMessage: EventWrapper<Message>;
     checkUsername: CheckUsernameResponse;
     searchUsers: UserSummary[];
+    getUserIdByUsername: string | undefined;
     getUserStorageLimits: StorageStatus;
     getPublicGroupSummary: PublicGroupSummaryResponse;
     toggleMuteNotifications: ToggleMuteNotificationResponse;

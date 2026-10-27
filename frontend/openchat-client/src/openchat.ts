@@ -59,6 +59,7 @@ import {
     deletedUser,
     directMessageCommandInstance,
     emptyEventsResponse,
+    expandTypedMentions,
     extractEnabledLinks,
     extractMessagePreviews,
     extractUserIdsFromMentions,
@@ -399,6 +400,7 @@ import {
     isIosTauriApp,
     isPrincipalValid,
     messageContextToString,
+    typedMentions,
     paymentSpenderAccount,
 } from "@shared";
 import { tick } from "svelte";
@@ -871,6 +873,9 @@ const USERS_SEARCHED_TO_FIND_MEMBERS = 255;
 const MAX_PAGES_SEARCHED_FOR_MEMBERS = 4;
 // How many members to find to offer as mentions for what has been typed
 const MEMBERS_FOUND_TO_MENTION = 50;
+// The most usernames mentioned in a message which are looked up among the members of a chat which
+// holds only some of them
+const MAX_USERNAMES_MENTIONED_LOOKED_UP = 10;
 // How often, and how many times, to check for the output of a swap reaching the wallet
 const SWAP_OUTPUT_CHECK_INTERVAL_MS = 2000;
 const SWAP_OUTPUT_CHECKS = 10;
@@ -4034,6 +4039,93 @@ export class OpenChat {
         }
     }
 
+    // A message's text with each @username typed in it which can be mentioned in the chat replaced
+    // by the mention, and the users mentioned, both those typed and those picked from the mention
+    // picker. Only a message to the selected chat (or a thread of it) is expanded, since what can be
+    // mentioned is only known for that. A chat which holds only some of its members may not hold
+    // those typed, so the users with those of the usernames it doesn't know are looked up, and
+    // mentioned if they're members of the chat who haven't lapsed. Never rejects: if the lookups
+    // fail, those usernames are left as typed.
+    async #expandTypedMentions(
+        messageContext: MessageContext,
+        text: string | undefined,
+        picked: User[],
+    ): Promise<{ text: string | undefined; mentioned: User[] }> {
+        const chatId = messageContext.chatId;
+        if (text === undefined || !chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
+            return { text, mentioned: picked };
+        }
+        // What the chat knows is taken now, so that it's this chat's, whatever is selected by the
+        // time any lookups return
+        const known = new Map<string, UserOrUserGroup>();
+        const unknown = new Set<string>();
+        const myUsername = currentUserStore.value.username.toLowerCase();
+        for (const typed of typedMentions(text)) {
+            const username = typed.toLowerCase();
+            const found = this.lookupUserForMention(username, false);
+            if (found !== undefined) {
+                known.set(username, found);
+            } else if (username !== myUsername) {
+                unknown.add(username);
+            }
+        }
+        if (unknown.size > 0 && chatId.kind !== "direct_chat" && this.membersIncomplete(chatId)) {
+            try {
+                const members = await this.#findMembersByUsername(
+                    chatId,
+                    [...unknown].slice(0, MAX_USERNAMES_MENTIONED_LOOKED_UP),
+                );
+                members.forEach((user, username) => known.set(username, user));
+            } catch (err) {
+                console.warn("Unable to look up the members mentioned in a message", err);
+            }
+        }
+
+        const expanded = expandTypedMentions(text, (username) => known.get(username.toLowerCase()));
+        const mentioned = new Set(expanded.mentioned.map((u) => u.userId));
+        return {
+            text: expanded.text,
+            mentioned: [...expanded.mentioned, ...picked.filter((u) => !mentioned.has(u.userId))],
+        };
+    }
+
+    // The members of the selected chat with this id who haven't lapsed, out of the users with these
+    // usernames (in lower case), by username. Those found are held from then on.
+    async #findMembersByUsername(
+        chatId: MultiUserChatIdentifier,
+        usernames: string[],
+    ): Promise<Map<string, UserSummary>> {
+        const lookedUp = await Promise.all(
+            usernames.map(async (username) => {
+                const userId = await this.#worker
+                    .send({ kind: "getUserIdByUsername", username })
+                    .catch(() => undefined);
+                return [username, userId] as const;
+            }),
+        );
+        const me = currentUserIdStore.value;
+        const userIds = new Map<string, string>();
+        for (const [username, userId] of lookedUp) {
+            if (userId !== undefined && userId !== me) {
+                userIds.set(userId, username);
+            }
+        }
+        const [members] = await Promise.all([
+            this.#membersAmong(chatId, [...userIds.keys()]),
+            this.getMissingUsers(userIds.keys()),
+        ]);
+        // By the username typed, which a user held from before they changed it doesn't have
+        const found = new Map<string, UserSummary>();
+        for (const userId of members) {
+            const user = userStore.get(userId);
+            const username = userIds.get(userId);
+            if (user !== undefined && username !== undefined) {
+                found.set(username, user);
+            }
+        }
+        return found;
+    }
+
     // Adds members who have been looked up to the details of the selected chat or community, if that
     // is still the one selected
     #addLookedUpMembers(
@@ -6130,7 +6222,8 @@ export class OpenChat {
      * Sends what the composer holds (its text, and an attachment it captions) and settles as soon as
      * the message shows in the chat, or is refused before that: the rules turned down, the PIN
      * prompt dismissed, the user throttled. A second send from the same chat or thread while one is
-     * on its way is `busy`. Never rejects.
+     * on its way is `busy`. Never rejects. Those mentioned as @username in the text are mentioned,
+     * along with those picked from the mention picker (`mentioned`).
      */
     async sendMessage(
         messageContext: MessageContext,
@@ -6143,17 +6236,22 @@ export class OpenChat {
         if (this.#sendsBeingPosted.has(key)) return { kind: "busy" };
         this.#sendsBeingPosted.add(key);
         try {
+            const expanded = await this.#expandTypedMentions(
+                messageContext,
+                textContent,
+                mentioned,
+            );
             return await new Promise<SendMessageOutcome>((settle) => {
                 let rulesDeclined = false;
                 this.sendMessageWithContent(
                     messageContext,
-                    this.#getMessageContent(textContent, attachment),
+                    this.#getMessageContent(expanded.text, attachment),
                     blockLevelMarkdown,
-                    mentioned,
+                    expanded.mentioned,
                     false,
                     undefined,
                     fetchOgPreviews(
-                        extractEnabledLinks(textContent),
+                        extractEnabledLinks(expanded.text),
                         import.meta.env.OC_PREVIEW_PROXY_URL,
                     ),
                     {
@@ -6341,6 +6439,11 @@ export class OpenChat {
         }
 
         if (textContent || attachment) {
+            // The draft, which holds the message being edited, is done with. (Done before looking up
+            // those mentioned, else a message sent meanwhile would be taken as another edit.)
+            localUpdates.draftMessages.delete(messageContext);
+            textContent = (await this.#expandTypedMentions(messageContext, textContent, [])).text;
+
             const captioned =
                 attachment ??
                 (isCaptionedContent(editingEvent.event.content)
@@ -6364,7 +6467,6 @@ export class OpenChat {
                 editingEvent,
                 msg,
             );
-            localUpdates.draftMessages.delete(messageContext);
 
             const newAchievement = !achievementsStore.value.has("edited_message");
 

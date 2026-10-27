@@ -39,7 +39,6 @@
     import { getContext, tick, untrack } from "svelte";
     import {
         entryBlock,
-        expandMentions as expandMentionsIn,
         focusEntryOnOpen,
         TypingNotifier,
     } from "@src/logic/composer/composer";
@@ -282,15 +281,6 @@
         });
     }
 
-    // @username becomes @UserId(xyz) or @UserGroup(abc) for those the chat knows (shared with the
-    // other trees)
-    function expandMentions(text: string): [string | undefined, User[], boolean] {
-        const expanded = expandMentionsIn(text, (username) =>
-            client.lookupUserForMention(username, false),
-        );
-        return [expanded.text, expanded.mentioned, containsMarkdown];
-    }
-
     function parseCommands(txt: string): boolean {
         if (/snow|xmas|christmas|noel/.test(txt)) {
             $snowing = true;
@@ -307,19 +297,15 @@
         const txt = editor?.getMarkdown() ?? "";
 
         if (!parseCommands(txt)) {
-            const [text, mentioned, blockLevelMarkdown] = expandMentions(txt);
-            // Mentions picked from the mention picker are stored as nodes within the editor and
-            // are already in the `@UserId(xyz)` form, so `expandMentions` misses them - collect
-            // them from the editor itself
-            const mentionedUserIds = new Set(mentioned.map((u) => u.userId));
-            for (const user of editor?.getMentionedUsers() ?? []) {
-                if (!mentionedUserIds.has(user.userId)) {
-                    mentioned.push(user);
-                }
-            }
-            const result = onSendMessage([text, mentioned, blockLevelMarkdown]);
+            // The client mentions those typed as @username. Mentions picked from the mention picker
+            // are stored as nodes within the editor and are already in the `@UserId(xyz)` form, so
+            // they're collected from the editor itself
+            const mentioned = editor?.getMentionedUsers() ?? [];
+            const result = onSendMessage([txt, mentioned, containsMarkdown]);
             // refused before it was sent (rules turned down, PIN dismissed, throttled): the text stays
             if (!(await clearsEntry(result, (busy) => (sending = busy)))) return;
+            // anything typed while it was being sent (those mentioned being looked up) stays
+            if ((editor?.getMarkdown() ?? "") !== txt) return;
         }
 
         afterSendMessage();

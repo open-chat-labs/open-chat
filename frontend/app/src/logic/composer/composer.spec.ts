@@ -1,35 +1,11 @@
-import { ScreenWidth, type UserOrUserGroup } from "@client";
+import { ScreenWidth } from "@client";
 import {
-    expandMentions,
     entryBlock,
     focusEntryOnOpen,
     throttleCountdown,
     TypingNotifier,
     type EntryState,
 } from "./composer";
-
-describe("a message's mentions", () => {
-    const known: Record<string, UserOrUserGroup> = {
-        alice: { kind: "user", userId: "a1", username: "alice" } as UserOrUserGroup,
-        mods: { kind: "user_group", id: 7 } as UserOrUserGroup,
-        everyone: { kind: "everyone" },
-    };
-    const lookup = (username: string) => known[username.toLowerCase()];
-
-    test("become the client's mentions, listing the users", () => {
-        expect(expandMentions("hi @alice, @mods and @everyone", lookup)).toEqual({
-            text: "hi @UserId(a1), @UserGroup(7) and @everyone",
-            mentioned: [known.alice],
-        });
-    });
-
-    test("leave unknown names as typed, and list a user once", () => {
-        expect(expandMentions("@bob @alice @alice", lookup)).toEqual({
-            text: "@bob @UserId(a1) @UserId(a1)",
-            mentioned: [known.alice],
-        });
-    });
-});
 
 /** Invariant: every tree's entry blocks sending for the same reasons, in the old footers' order. */
 describe("why a message can't be sent", () => {

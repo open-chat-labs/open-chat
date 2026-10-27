@@ -1,32 +1,8 @@
-import { ScreenWidth, type User, type UserOrUserGroup } from "@client";
+import { ScreenWidth } from "@client";
 
-// The message entry's decisions, shared by every tree: what a typed message is sent as, why one
-// can't be sent, when the others hear someone is typing, and when it takes focus.
-
-/**
- * A message's text as it's sent: each @username the chat knows becomes the client's mention
- * (`@UserId(…)`, `@UserGroup(…)`, `@everyone`), and the users mentioned are listed.
- */
-export function expandMentions(
-    text: string,
-    lookup: (username: string) => UserOrUserGroup | undefined,
-): { text: string; mentioned: User[] } {
-    const mentioned = new Map<string, User>();
-    const expanded = text.replace(/@(\w+)/g, (match, username: string) => {
-        const found = lookup(username);
-        if (found === undefined) return match;
-        switch (found.kind) {
-            case "user_group":
-                return `@UserGroup(${found.id})`;
-            case "everyone":
-                return "@everyone";
-            default:
-                mentioned.set(found.userId, found);
-                return `@UserId(${found.userId})`;
-        }
-    });
-    return { text: expanded, mentioned: [...mentioned.values()] };
-}
+// The message entry's decisions, shared by every tree: why a message can't be sent, when the
+// others hear someone is typing, and when it takes focus. (What a typed message is sent as, its
+// mentions expanded, is up to the client's send.)
 
 /** What the message entry knows about where it is. */
 export type EntryState = {
