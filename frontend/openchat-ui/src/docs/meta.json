@@ -4673,7 +4673,7 @@
       },
       {
         "name": "badge",
-        "type": "'none' | 'send' | 'receive' | 'swap'",
+        "type": "'none' | 'send' | 'receive' | 'swap' | 'own'",
         "default": "none",
         "editor": "enum",
         "options": [
@@ -4779,14 +4779,14 @@
       },
       {
         "name": "onSelect",
-        "type": "(symbol: string) => void",
+        "type": "(id: string) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The picked option's `id`, else its symbol."
       }
     ],
     "group": "library"
@@ -4847,7 +4847,7 @@
       },
       {
         "name": "kind",
-        "type": "Kind",
+        "type": "'send' | 'receive' | 'swap' | 'own'",
         "default": "receive",
         "editor": "enum",
         "options": [

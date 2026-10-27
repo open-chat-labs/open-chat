@@ -9,29 +9,32 @@
         allUsersStore,
         cryptoLookup,
         currentUserStore,
+        enhancedCryptoLookup,
         exchangeRatesLookupStore,
         namedAccountsStore,
         swappableTokensStore,
         walletConfigStore,
-        cryptoTokensSorted,
         type OpenChat,
     } from "@client";
-    import WalletMain, {
-        type WalletRequest,
-    } from "@openchat/ui/src/features/components/WalletMain.svelte";
+    import WalletMain from "@openchat/ui/src/features/components/WalletMain.svelte";
     import type { ComponentProps } from "svelte";
     import { accountTransactionUrl } from "@src/logic/wallet/accountTransactions";
-    import { hasTransactionHistory } from "@src/logic/wallet/tokenActions";
+    import {
+        hasTransactionHistory,
+        tokenActions,
+        tokenActionsContext,
+    } from "@src/logic/wallet/tokenActions";
     import { TransactionHistoryState } from "@src/logic/wallet/transactionHistoryState.svelte";
     import { hideTokenBalances } from "@src/stores/settings";
     import { toastStore } from "@src/stores/toast";
-    import { walletActionsDisabled } from "@src/utils/features";
     import { navigate } from "@src/utils/navigation";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onDestroy, onMount, untrack } from "svelte";
+    import { _ } from "svelte-i18n";
     import { i18nKey } from "@src/i18n/i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
-    import { tokenActivity, walletTokens } from "./wallet.adapter";
-    import { newest, numbered, panelRequests } from "./walletRequests.svelte";
+    import { tokenActivity, walletToken } from "./wallet.adapter";
+    import { walletCatalogue } from "./walletCatalogue.svelte";
+    import { walletRequests } from "./walletRequests.svelte";
 
     type WalletMainProps = ComponentProps<typeof WalletMain>;
 
@@ -42,29 +45,33 @@
     // the saved account names a transaction's other side can go by (namedAccountsStore)
     onMount(() => client.loadSavedCryptoAccounts());
 
-    // the catalogue: a token you don't hold still gets its page, at zero
-    const tokens = $derived(
-        walletTokens($cryptoTokensSorted, $exchangeRatesLookupStore, {
-            swappable: $swappableTokensStore,
-            manualWallet: $walletConfigStore.kind === "manual_wallet",
-            disabled: walletActionsDisabled,
-        }),
-    );
-
     // the token whose page shows: /wallet/:ledger, and for now Send / Receive / Swap's ?token
     const ledger = $derived(
         region.view === "all" || region.view === "recipients" ? undefined : region.ledger,
     );
 
-    // WalletMain follows the URL (a new request each time it names another page) and the panel's
-    // own asks: browse the supported tokens, copy a ledger ID
-    const pageRequest = $derived.by(
-        (): WalletRequest =>
-            ledger === undefined
-                ? numbered({ view: "all" })
-                : numbered({ view: "token", token: ledger }),
-    );
-    const request = $derived(newest(pageRequest, panelRequests.latest));
+    // the catalogue (a token you don't hold still gets its page, at zero), and the token the URL
+    // names if the catalogue leaves it out (a disabled one, at zero) but the app knows it
+    const tokens = $derived.by(() => {
+        const catalogue = walletCatalogue.tokens;
+        const extra = ledger === undefined ? undefined : $enhancedCryptoLookup.get(ledger);
+        if (extra === undefined || catalogue.some((t) => t.id === extra.ledger)) return catalogue;
+        const ctx = tokenActionsContext($swappableTokensStore, $walletConfigStore);
+        const price = $exchangeRatesLookupStore.get(extra.ledger)?.toUSD;
+        return [...catalogue, walletToken(extra, price, tokenActions(extra, ctx))];
+    });
+
+    // WalletMain follows the URL: a request each time it names another page (the panel's asks
+    // share the slot); none is left behind for the next wallet page
+    $effect(() => {
+        const page = ledger;
+        untrack(() =>
+            walletRequests.send(
+                page === undefined ? { view: "all" } : { view: "token", token: page },
+            ),
+        );
+    });
+    onDestroy(() => walletRequests.clear());
 
     // the shown token's history, loaded when its page opens
     let history = $state<{ ledger: string; state: TransactionHistoryState } | undefined>();
@@ -92,6 +99,7 @@
                       },
                       users: $allUsersStore,
                       saved: $namedAccountsStore,
+                      unknown: $_("unknownUser"),
                   },
               )
             : [],
@@ -126,7 +134,7 @@
 
 <WalletMain
     {tokens}
-    {request}
+    request={walletRequests.current}
     {activity}
     balanceHidden={$hideTokenBalances}
     history={historyProp}

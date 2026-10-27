@@ -14,8 +14,11 @@
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
     import ViewList from "svelte-material-icons/ViewList.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { walletActionsDisabled } from "@src/utils/features";
-    import { hasTransactionHistory, tokenActions } from "@src/logic/wallet/tokenActions";
+    import {
+        hasTransactionHistory,
+        tokenActions,
+        tokenActionsContext,
+    } from "@src/logic/wallet/tokenActions";
     import { formatWalletTotal, walletTotal } from "@src/logic/wallet/walletState.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Menu from "../../Menu.svelte";
@@ -96,11 +99,7 @@
         client.removeTokenFromWallet(ledger);
     }
     // what each token's menu offers: the same rules in every tree (tokenActions)
-    let actionContext = $derived({
-        swappable: $swappableTokensStore,
-        manualWallet: $walletConfigStore.kind === "manual_wallet",
-        disabled: walletActionsDisabled,
-    });
+    let actionContext = $derived(tokenActionsContext($swappableTokensStore, $walletConfigStore));
     let total = $derived(
         selectedConversion === "none"
             ? ""

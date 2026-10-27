@@ -124,6 +124,8 @@ export type ActivityContext = {
     me: MyWallets;
     users: UserLookup;
     saved: readonly NamedAccount[];
+    /** The other side's name when there's none (a mint has no sender, a burn no recipient). */
+    unknown: string;
 };
 
 /**
@@ -144,7 +146,9 @@ export function tokenActivity(
             symbol: token.symbol,
             token: token.ledger,
             kind: direction === "own" ? "own" : direction === "out" ? "send" : "receive",
-            party: counterpartyName(transactionCounterparty(tx, ctx.me, ctx.users, ctx.saved)),
+            party:
+                counterpartyName(transactionCounterparty(tx, ctx.me, ctx.users, ctx.saved)) ??
+                ctx.unknown,
             timestamp: tx.timestamp.getTime(),
             amount,
             fiat: amount * (price ?? 0),

@@ -1,4 +1,6 @@
 // What the wallet offers for a token (its menu, its page's buttons), the same in every tree.
+import type { WalletConfig } from "@client";
+import { walletActionsDisabled } from "@src/utils/features";
 
 /** An action on one token. */
 export type TokenAction = "send" | "receive" | "swap" | "refresh" | "remove";
@@ -17,6 +19,18 @@ export type TokenActionsContext = {
     /** Actions the build turns off (an app store build: `utils/features`). */
     disabled: { send: boolean; receive: boolean; swap: boolean };
 };
+
+/** The context every tree's token actions are worked out in: the swappable tokens and the wallet's config. */
+export function tokenActionsContext(
+    swappable: TokenActionsContext["swappable"],
+    walletConfig: WalletConfig,
+): TokenActionsContext {
+    return {
+        swappable,
+        manualWallet: walletConfig.kind === "manual_wallet",
+        disabled: walletActionsDisabled,
+    };
+}
 
 /**
  * Which actions a token offers (invariant 4): Send always, Receive only for an enabled token, Swap

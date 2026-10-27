@@ -1,34 +1,23 @@
 import type { WalletRequest } from "@openchat/ui/src/features/components/WalletMain.svelte";
 
-// The wallet's two screens share one stream of requests for WalletMain: the URL's page (All
-// activity, a token) from the main screen, and the panel's own asks (browse the supported tokens,
-// copy a ledger ID) that change no URL. One counter numbers them both, so the newest wins.
-
-let counter = 0;
-
-/** A request numbered after every one before it. */
-export function numbered(request: Omit<WalletRequest, "nonce">): WalletRequest {
-    counter += 1;
-    return { ...request, nonce: counter };
-}
-
-/** The newer of two requests, by their numbers. */
-export function newest(
-    a: WalletRequest | undefined,
-    b: WalletRequest | undefined,
-): WalletRequest | undefined {
-    if (a === undefined) return b;
-    if (b === undefined) return a;
-    return a.nonce >= b.nonce ? a : b;
-}
-
-/** What the panel last asked WalletMain for. */
-class PanelRequests {
-    latest = $state<WalletRequest | undefined>();
+/**
+ * What WalletMain is asked for, from either wallet screen: the main screen asks for the URL's page
+ * (All activity, a token) as it changes, the panel for what changes no URL (browse the supported
+ * tokens, copy a ledger ID). One slot, so the latest ask is the one WalletMain applies.
+ */
+class WalletRequests {
+    #nonce = 0;
+    current = $state<WalletRequest | undefined>();
 
     send(request: Omit<WalletRequest, "nonce">): void {
-        this.latest = numbered(request);
+        this.#nonce += 1;
+        this.current = { ...request, nonce: this.#nonce };
+    }
+
+    /** As the main screen goes: nothing left for the next one to apply. */
+    clear(): void {
+        this.current = undefined;
     }
 }
 
-export const panelRequests = new PanelRequests();
+export const walletRequests = new WalletRequests();

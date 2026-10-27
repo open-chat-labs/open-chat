@@ -70,7 +70,7 @@
   const i18n = getI18n(); // number formatting follows the host locale
 
   type View = 'all' | 'token' | 'send' | 'receive' | 'swap' | 'recipients';
-  type Kind = 'send' | 'receive' | 'swap';
+  type Kind = 'send' | 'receive' | 'swap' | 'own';
 
   const mask = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
   const num = (v: number, dp: number) => v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -112,7 +112,7 @@
   const timeOf = (ts: number) => new Date(ts).toLocaleTimeString(i18n.locale ?? 'en', { hour: '2-digit', minute: '2-digit' });
   const dayLabel = (d: string) => (d === 'today' ? t('ui.walletMain.today') : d === 'yesterday' ? t('ui.walletMain.yesterday') : d).toUpperCase();
   // between your own wallets reads with the swap arrows
-  const KIND: Record<number, Kind> = { 0: 'swap', 1: 'send', 2: 'receive', 3: 'swap' };
+  const KIND: Record<number, Kind> = { 0: 'own', 1: 'send', 2: 'receive', 3: 'swap' };
 
   export interface WalletRequest {
     /** `browse`: the Supported tokens picker. `ledger`: copy `token`'s ledger ID (the view stays). */
@@ -251,6 +251,8 @@
   const empty = $derived(rows.length === 0);
   // a token you don't hold (an empty wallet, or one opened from Supported tokens) still gets its page, at zero
   const raw = $derived(rows.find((t) => idOf(t) === sym) ?? valued.find((t) => idOf(t) === sym) ?? rows[0] ?? valued[0]);
+  // a page asked for a token that isn't in `tokens`: it says so, rather than showing another token's page
+  const missing = $derived(!!sym && !valued.some((t) => idOf(t) === sym));
   const offers = (flow: 'send' | 'receive' | 'swap') => flows.includes(flow) && (!raw?.actions || raw.actions.includes(flow));
   const idForSymbol = (symbol: string) => {
     const tk = tokens.find((t) => t.symbol === symbol);
@@ -427,12 +429,14 @@
     }, 4000);
   }
 
+  // `s` is a token's id, or the symbol of a receivable token not in `tokens`
   function pickToken(s: string) {
+    const tk = tokens.find((x) => idOf(x) === s);
     // browse (Supported tokens): a token in the wallet's catalogue opens its page; anything else goes to Receive
     if (pick?.view === 'browse') {
       pick = null;
-      if (tokens.some((x) => x.symbol === s)) {
-        go({ view: 'token', sym: idForSymbol(s), fromAll: false });
+      if (tk) {
+        go({ view: 'token', sym: s, fromAll: false });
         return;
       }
       if (!flows.includes('receive')) return;
@@ -442,8 +446,8 @@
     pick = null;
     backToAll = view === 'all';
     view = flow;
-    sym = idForSymbol(s);
-    extTok = rows.some((r) => r.symbol === s) ? null : s;
+    sym = tk ? s : idForSymbol(s);
+    extTok = rows.some((r) => idOf(r) === sym) ? null : (tk?.symbol ?? s);
     fromAll = false;
     flowNonce = Date.now();
     report();
@@ -513,7 +517,7 @@
   });
 
   // empty token history per filter tab: keys take { symbol }
-  const EMPTY: Record<number, { icon: Kind; title: string; body: string }> = {
+  const EMPTY: Record<number, { icon: 'send' | 'receive' | 'swap'; title: string; body: string }> = {
     1: { icon: 'send', title: 'ui.walletMain.emptySentTitle', body: 'ui.walletMain.emptySentBody' },
     2: { icon: 'receive', title: 'ui.walletMain.emptyReceivedTitle', body: 'ui.walletMain.emptyReceivedBody' },
     3: { icon: 'swap', title: 'ui.walletMain.emptySwapsTitle', body: 'ui.walletMain.emptySwapsBody' },
@@ -532,19 +536,25 @@
       .map((x) => ({ symbol: x.symbol, name: x.name, mark: x.mark, grad: x.grad, held: 0, price: 0, dp: 4, nets: x.nets })),
   ]);
   const swapPinned = $derived(onSwap ? (r: Parameters<NonNullable<typeof onSwap>>[0]) => pinned(() => onSwap(r)) : undefined);
-  const showToken = $derived(view === 'token' && !!raw);
+  const showToken = $derived(view === 'token' && !!raw && !missing);
+  const notFound = $derived(view === 'token' && missing);
 
   // sending: the tokens you hold. Receiving or browsing: yours first, then the rest of the catalogue, then the extra
   // receivable tokens (only while Receive is offered), no symbol twice
+  // sending: the tokens you hold. Receiving or browsing: yours first, then the rest of the catalogue, then the extra
+  // receivable tokens (only while Receive is offered) whose symbol the catalogue doesn't have. Rows are keyed by the
+  // token's id, so two tokens sharing a symbol both show and each opens its own page
   const pickTokens = $derived.by(() => {
     const anyToken = pick?.view === 'receive' || pick?.view === 'browse';
-    const seen = new Set<string>();
-    const once = <T extends { symbol: string }>(x: T) => !seen.has(x.symbol) && !!seen.add(x.symbol);
-    const owned = rows.filter(once).map((tk) => ({ symbol: tk.symbol, name: tk.name, mark: tk.mark, gradient: tk.grad, owned: true, held: `${num(tk.held, tk.dp)} ${tk.symbol}`, note: usd(tk.value) }));
+    const owned = rows.map((tk) => ({ id: idOf(tk), symbol: tk.symbol, name: tk.name, mark: tk.mark, gradient: tk.grad, owned: true, held: `${num(tk.held, tk.dp)} ${tk.symbol}`, note: usd(tk.value) }));
     if (!anyToken) return owned;
-    const rest = valued.filter((tk) => !(tk.held > 0)).filter(once).map((tk) => ({ symbol: tk.symbol, name: tk.name, mark: tk.mark, gradient: tk.grad, owned: false, held: '', note: '' }));
+    const rest = valued.filter((tk) => !(tk.held > 0)).map((tk) => ({ id: idOf(tk), symbol: tk.symbol, name: tk.name, mark: tk.mark, gradient: tk.grad, owned: false, held: '', note: '' }));
+    const known = new Set(tokens.map((tk) => tk.symbol));
     const extra = flows.includes('receive')
-      ? receivable.filter((x) => x.nets.length).filter(once).map((x) => ({ symbol: x.symbol, name: x.name, mark: x.mark, gradient: x.grad, owned: false, held: '', note: '' }))
+      ? receivable
+          .filter((x) => x.nets.length && !known.has(x.symbol))
+          .filter((x, i, all) => all.findIndex((y) => y.symbol === x.symbol) === i)
+          .map((x) => ({ symbol: x.symbol, name: x.name, mark: x.mark, gradient: x.grad, owned: false, held: '', note: '' }))
       : [];
     return [...owned, ...rest, ...extra];
   });
@@ -629,8 +639,8 @@
   {/if}
   {#if view === 'all' || view === 'token'}
     <PageHeader
-      title={showToken ? raw.name : t(empty ? 'ui.walletMain.wallet' : 'ui.walletMain.allActivity')}
-      onBack={showToken ? () => go({ view: 'all' }) : undefined}
+      title={showToken ? raw.name : notFound ? t('ui.walletMain.tokenNotFoundTitle') : t(empty ? 'ui.walletMain.wallet' : 'ui.walletMain.allActivity')}
+      onBack={showToken || notFound ? () => go({ view: 'all' }) : undefined}
       backLabel={t('ui.walletMain.backToAll')}
       avatarMark={showToken ? raw.mark : ''}
       avatarLogo={showToken ? raw.logo : undefined}
@@ -640,7 +650,9 @@
     >
     <div class="scroll">
       <div class="column">
-        {#if !showToken && empty}
+        {#if notFound}
+          <EmptyState icon="search" title={t('ui.walletMain.tokenNotFoundTitle')} body={t('ui.walletMain.tokenNotFoundBody')} actionLabel="" />
+        {:else if !showToken && empty}
           <div class="welcome">
             <span class="welcome-tile"><span class="welcome-icon"></span></span>
             <span class="welcome-text">
@@ -680,7 +692,7 @@
                     sub="{e.tk.symbol} · {e.fresh ? t('ui.walletMain.justNowInline') : e.sub}"
                     amount={e.amount}
                     fiat={e.fiat}
-                    kind={k === 2 ? 'receive' : k === 1 ? 'send' : 'swap'}
+                    kind={KIND[k] ?? 'receive'}
                     positive={k === 2}
                     symbol={e.tk.symbol}
                     mark={e.tk.mark}

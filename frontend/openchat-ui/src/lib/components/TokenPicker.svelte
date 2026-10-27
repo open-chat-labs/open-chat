@@ -15,7 +15,8 @@
     otherHeading?: string;
     /** Resource key (or literal text). */
     emptyHint?: string;
-    onSelect?: (symbol: string) => void;
+    /** The picked option's `id`, else its symbol. */
+    onSelect?: (id: string) => void;
   }
 
   let {
@@ -56,7 +57,7 @@
   function select(tk: TokenOption) {
     if (tk.disabled) return;
     query = '';
-    onSelect?.(tk.symbol);
+    onSelect?.(tk.id ?? tk.symbol);
   }
 </script>
 

@@ -89,7 +89,12 @@ describe("a token's activity", () => {
             ],
             token(),
             0.5,
-            { me, users: new Map(), saved: [{ name: "Exchange", account: "them" }] },
+            {
+                me,
+                users: new Map(),
+                saved: [{ name: "Exchange", account: "them" }],
+                unknown: "Unknown",
+            },
         );
         expect(rows.map((r) => r.kind)).toEqual(["own", "send", "receive"]);
         expect(rows[1]).toMatchObject({
@@ -100,6 +105,33 @@ describe("a token's activity", () => {
             fiat: 1,
             timestamp: 1000,
         });
+    });
+
+    test("a mint (no sender) or a burn (no recipient) names the other side as unknown", () => {
+        const mint: AccountTransaction = {
+            kind: "mint",
+            id: 5n,
+            amount: 1n,
+            timestamp: new Date(0),
+            to: "me-account",
+        };
+        const burn: AccountTransaction = {
+            kind: "burn",
+            id: 4n,
+            amount: 1n,
+            timestamp: new Date(0),
+            from: "me-user",
+        };
+        const rows = tokenActivity([mint, burn], token(), 0, {
+            me,
+            users: new Map(),
+            saved: [],
+            unknown: "Unknown",
+        });
+        expect(rows.map((r) => [r.kind, r.party])).toEqual([
+            ["receive", "Unknown"],
+            ["send", "Unknown"],
+        ]);
     });
 });
 

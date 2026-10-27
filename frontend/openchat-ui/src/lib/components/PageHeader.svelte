@@ -82,13 +82,13 @@
 
   .tag {
     flex: none;
-    height: 22px;
-    padding: 0 8px;
+    height: 24px;
+    padding: 0 9px;
     border-radius: var(--radius-pill);
     display: inline-flex;
     align-items: center;
     background: var(--overlay-2);
-    font: var(--weight-medium) var(--text-xs) / 1 var(--font-mono);
+    font: var(--weight-medium) var(--text-md) / 1 var(--font-mono);
     color: var(--ink-2);
   }
 

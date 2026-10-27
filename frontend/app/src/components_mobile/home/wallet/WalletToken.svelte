@@ -17,8 +17,7 @@
         walletConfigStore,
         type EnhancedTokenDetails,
     } from "@client";
-    import { tokenActions } from "@src/logic/wallet/tokenActions";
-    import { walletActionsDisabled } from "@src/utils/features";
+    import { tokenActions, tokenActionsContext } from "@src/logic/wallet/tokenActions";
     import { getContext } from "svelte";
     import HeartRemoveOutline from "svelte-material-icons/HeartRemoveOutline.svelte";
     import MenuRight from "svelte-material-icons/MenuRight.svelte";
@@ -52,11 +51,7 @@
     // what the token's menu offers: the same rules in every tree (tokenActions); this menu has
     // Refresh and Remove, the token page the rest
     let actions = $derived(
-        tokenActions(token, {
-            swappable: $swappableTokensStore,
-            manualWallet: $walletConfigStore.kind === "manual_wallet",
-            disabled: walletActionsDisabled,
-        }),
+        tokenActions(token, tokenActionsContext($swappableTokensStore, $walletConfigStore)),
     );
 </script>
 

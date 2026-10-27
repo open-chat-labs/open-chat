@@ -5,7 +5,9 @@
   import Pill from './Pill.svelte';
   import TokenAvatar from './TokenAvatar.svelte';
 
-  type Kind = 'send' | 'receive' | 'swap';
+  // own: between two of your own wallets, neither in nor out
+  type Kind = 'send' | 'receive' | 'swap' | 'own';
+  const ICON: Record<Kind, string> = { send: 'send', receive: 'receive', swap: 'swap', own: 'refresh' };
 
   interface Props {
     title: string;
@@ -64,7 +66,7 @@
   {#if mark}
     <TokenAvatar size={40} {symbol} {mark} {gradient} badge={kind} />
   {:else}
-    <span class="kind"><span class="kind-icon" style:mask="var(--icon-{kind}) center/contain no-repeat"></span></span>
+    <span class="kind"><span class="kind-icon" style:mask="var(--icon-{ICON[kind]}) center/contain no-repeat"></span></span>
   {/if}
   <span class="main">
     <span class="title">{title}</span>

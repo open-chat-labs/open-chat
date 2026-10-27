@@ -409,3 +409,10 @@
 
 ## 2026-10-27 — pass 5: WalletPanel's small balances and supported tokens rows, ported by hand
 - From the pass 5 export's `WalletPanel` (the rest of pass 5 is ported separately). Small balances and Supported tokens are token-shaped rows with no background (the token rows' padding and hover) and a 40px `--overlay-1` circle with the `coins` / `search` icon. Small balances: "Under $X each", the total on the right, and a down chevron; it expands in place into a compact list indented to the text column (24px avatars, 40px rows: symbol, amount, value), each opening its token. One 1px `--line-1` divider between the two rows. Supported tokens: "N you can receive" and a right chevron. Both chevrons sit in the token kebabs' 24px column.
+
+## 2026-10-27 — wallet review fixes, by hand
+- `WalletMain`: a token page asked for by an id that isn't in `tokens` says "Token not found" (`ui.walletMain.tokenNotFoundTitle` / `Body`) instead of showing another token's page. The token picker's rows carry each token's id, so two tokens sharing a symbol both show and each opens its own page. An `own` activity row has its own kind (not swap).
+- `TokenPicker`: `TokenOption.id`, reported by `onSelect` (else the symbol). `TransactionRow` and `TokenAvatar`'s badge: kind `own` (the refresh glyph).
+- `TokenAvatar`: a logo that fails to load falls back to the mark on its gradient.
+- `PageHeader`: the `titleTag` pill is larger (24px, `--text-md`), a small visual fix against the design (22px, `--text-xs`).
+- `types.ts`: `WalletToken`'s description back on `WalletToken`.

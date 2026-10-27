@@ -3098,6 +3098,8 @@
       "swappedTo": "Swapped to {symbol}",
       "today": "Today",
       "tokenOptions": "Token options",
+      "tokenNotFoundBody": "This wallet doesn't have that token.",
+      "tokenNotFoundTitle": "Token not found",
       "transferFee": "Transfer fee",
       "usernameCopied": "Username copied",
       "view": "View",

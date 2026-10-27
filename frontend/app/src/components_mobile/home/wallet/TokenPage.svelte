@@ -1,6 +1,5 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { walletActionsDisabled } from "@src/utils/features";
     import { ColourVars, CommonButton, Container, MenuItem } from "component-lib";
     import { publish, swappableTokensStore, walletConfigStore } from "@client";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
@@ -14,7 +13,7 @@
     import TokenCard from "./TokenCard.svelte";
     import Transactions from "./Transactions.svelte";
     import { TokenState } from "@src/logic/wallet/walletState.svelte";
-    import { tokenActions } from "@src/logic/wallet/tokenActions";
+    import { tokenActions, tokenActionsContext } from "@src/logic/wallet/tokenActions";
 
     interface Props {
         tokenState: TokenState;
@@ -24,11 +23,7 @@
 
     // what the token offers: the same rules in every tree (tokenActions)
     let actions = $derived(
-        tokenActions(tokenState, {
-            swappable: $swappableTokensStore,
-            manualWallet: $walletConfigStore.kind === "manual_wallet",
-            disabled: walletActionsDisabled,
-        }),
+        tokenActions(tokenState, tokenActionsContext($swappableTokensStore, $walletConfigStore)),
     );
 </script>
 

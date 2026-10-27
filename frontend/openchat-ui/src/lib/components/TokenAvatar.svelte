@@ -6,7 +6,7 @@
     mark?: string;
     gradient?: string;
     size?: number;
-    badge?: 'none' | 'send' | 'receive' | 'swap';
+    badge?: 'none' | 'send' | 'receive' | 'swap' | 'own';
     /** The token's logo (an image URL), shown in place of the mark. */
     logo?: string;
   }
@@ -19,6 +19,10 @@
     badge = 'none',
     logo,
   }: Props = $props();
+
+  // a logo that fails to load falls back to the mark on its gradient
+  let failedLogo = $state<string>();
+  const showLogo = $derived(!!logo && failedLogo !== logo);
 </script>
 
 <span
@@ -26,12 +30,12 @@
   class:small={size < 36}
   style:--size="{size}px"
   style:font-size="{Math.round(size * 0.38)}px"
-  style:background={logo ? 'transparent' : gradient}
+  style:background={showLogo ? 'transparent' : gradient}
   title={symbol}
 >
-  {#if logo}<img class="logo" src={logo} alt="" />{:else}{mark}{/if}
+  {#if showLogo}<img class="logo" src={logo} alt="" onerror={() => (failedLogo = logo)} />{:else}{mark}{/if}
   {#if badge !== 'none'}
-    <span class="badge"><span class="badge-icon" style:mask="var(--icon-{badge}) center/contain no-repeat"></span></span>
+    <span class="badge"><span class="badge-icon" style:mask="var(--icon-{badge === 'own' ? 'refresh' : badge}) center/contain no-repeat"></span></span>
   {/if}
 </span>
 
