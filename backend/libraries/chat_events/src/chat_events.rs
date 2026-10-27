@@ -2847,11 +2847,11 @@ impl ChatEvents {
             .and_then(|e| e.event.into_message().map(|m| (m, e.index)))
     }
 
-    // A bridge bot relays the edits made on the other platform, which only change a message's
-    // content within its type. So an edit must be valid content of the same type, and not a poll,
-    // whose votes an edit would lose. Nor can a deleted message be edited, since its content isn't
-    // moderated again.
-    pub fn check_relayed_edit(
+    // A bot's edit only changes a message's content within its type, eg. a bridge bot relaying an
+    // edit made on the other platform. So an edit must be valid content of the same type, and not a
+    // poll, whose votes an edit would lose. Nor can a deleted message be edited, since its content
+    // isn't moderated again.
+    pub fn check_bot_edit(
         &self,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,

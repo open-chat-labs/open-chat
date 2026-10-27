@@ -493,6 +493,126 @@ fn replies_to_bots_response_are_for_user_who_used_command() {
     assert!(!mentioned(env, bots_reply_to_deleted_id));
 }
 
+// Any bot can edit its own messages, autonomously, eg. to strike out a command's response that no
+// longer holds
+#[test]
+fn bots_edit_their_own_messages_autonomously() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+
+    let command_name = random_string();
+    let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, random_string(), command_name.clone());
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Group(group_id),
+        bot_id,
+        BotPermissions::text_only(),
+        Some(BotPermissions::text_only()),
+    );
+
+    let access_token = match client::local_user_index::access_token_v2(
+        env,
+        owner.principal,
+        local_user_index,
+        &access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
+            bot_id,
+            command: BotCommandInitial {
+                name: command_name,
+                args: Vec::new(),
+                meta: None,
+            },
+            scope: BotActionScope::Chat(BotActionChatDetails {
+                chat: Chat::Group(group_id),
+                thread: None,
+                message_id: random_from_u128(),
+                user_message_id: None,
+            }),
+        }),
+    ) {
+        access_token_v2::Response::Success(access_token) => access_token,
+        response => panic!("'access_token' error: {response:?}"),
+    };
+    let response = bot_send_message(
+        env,
+        bot_principal,
+        local_user_index,
+        BotChatContext::Command(access_token.clone()),
+        None,
+        None,
+    );
+
+    let edit = |env: &mut PocketIc, chat_context: BotChatContext, message_id: MessageId, text: &str| {
+        client::local_user_index::bot_edit_message(
+            env,
+            bot_principal,
+            local_user_index,
+            &local_user_index_canister::bot_edit_message::Args {
+                chat_context,
+                thread: None,
+                message_id,
+                content: BotMessageContent::Text(TextContent { text: text.to_string() }),
+                block_level_markdown: false,
+                og_previews: None,
+            },
+        )
+    };
+    let text_of = |env: &PocketIc, event_index: EventIndex| {
+        let events = client::group::happy_path::events_by_index(env, &owner, group_id, vec![event_index]);
+        let ChatEvent::Message(message) = &events.events[0].event else {
+            panic!("Expected a message: {:?}", events.events[0].event);
+        };
+        let MessageContent::Text(text) = &message.content else {
+            panic!("Expected text: {:?}", message.content);
+        };
+        (text.text.clone(), message.edited)
+    };
+
+    // The bot edits its response to the command
+    let result = edit(
+        env,
+        BotChatContext::Autonomous(Chat::Group(group_id)),
+        response.message_id,
+        "~~Struck out~~",
+    );
+    assert!(matches!(result, types::UnitResult::Success), "{result:?}");
+    assert_eq!(text_of(env, response.event_index), ("~~Struck out~~".to_string(), true));
+
+    // But not with the command's access token
+    let result = edit(env, BotChatContext::Command(access_token), response.message_id, "Edited by command");
+    assert!(
+        matches!(&result, types::UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{result:?}"
+    );
+
+    // Nor someone else's message
+    let text = random_string();
+    let members_message_id = random_from_u128();
+    let members_message =
+        client::group::happy_path::send_text_message(env, &owner, group_id, None, &text, Some(members_message_id));
+    let result = edit(
+        env,
+        BotChatContext::Autonomous(Chat::Group(group_id)),
+        members_message_id,
+        "Edited by the bot",
+    );
+    assert!(
+        matches!(&result, types::UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "{result:?}"
+    );
+    assert_eq!(text_of(env, members_message.event_index), (text, false));
+}
+
 fn bot_send_message(
     env: &mut PocketIc,
     bot_principal: Principal,

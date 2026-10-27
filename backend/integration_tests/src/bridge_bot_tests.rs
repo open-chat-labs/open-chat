@@ -484,19 +484,6 @@ fn bridge_bots_relay_messages_as_their_authors() {
         matches!(&response, StartLinkResponse::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "{response:?}"
     );
-
-    let response = edit(
-        env,
-        discord_bot_principal,
-        community_local_user_index,
-        channel,
-        channel_message.message_id,
-        "Edited again",
-    );
-    assert!(
-        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
-        "{response:?}"
-    );
 }
 
 // A relayed message's tips go to the OpenChat user who linked the account it came from, and only if
