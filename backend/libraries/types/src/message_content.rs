@@ -8,7 +8,7 @@ use candid::CandidType;
 use oc_error_codes::{OCError, OCErrorCode};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_bytes::ByteBuf;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Display, Formatter};
 use ts_export::ts_export;
 
@@ -35,6 +35,7 @@ pub enum MessageContentInitial {
     Encrypted(EncryptedContent),
     Custom(CustomContent),
     PriceChart(PriceChartContent),
+    MiniApp(MiniAppContent),
 }
 
 #[ts_export]
@@ -61,6 +62,7 @@ pub enum MessageContent {
     Encrypted(EncryptedContent),
     Custom(CustomContent),
     PriceChart(PriceChartContent),
+    MiniApp(MiniAppContent),
 }
 
 #[ts_export]
@@ -85,6 +87,7 @@ pub enum MessageContentType {
     P2PSwap,
     VideoCall,
     PriceChart,
+    MiniApp,
     Custom(String),
 }
 
@@ -128,6 +131,7 @@ pub enum ContentValidationError {
     PrizeEndDateInThePast,
     Unauthorized,
     InvalidPriceChart(String),
+    InvalidMiniApp(String),
 }
 
 impl From<ContentValidationError> for OCError {
@@ -180,7 +184,8 @@ impl MessageContent {
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
             | MessageContent::Custom(_)
-            | MessageContent::PriceChart(_) => {}
+            | MessageContent::PriceChart(_)
+            | MessageContent::MiniApp(_) => {}
         }
 
         references
@@ -200,6 +205,7 @@ impl MessageContent {
             MessageContent::Prize(p) => p.caption.as_deref(),
             MessageContent::P2PSwap(p) => p.caption.as_deref(),
             MessageContent::PriceChart(c) => Some(c.title.as_str()),
+            MessageContent::MiniApp(c) => Some(c.text.as_str()),
             MessageContent::Deleted(_)
             | MessageContent::PrizeWinner(_)
             | MessageContent::MessageReminderCreated(_)
@@ -331,7 +337,8 @@ impl MessageContent {
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
             | MessageContent::Custom(_)
-            | MessageContent::PriceChart(_) => None,
+            | MessageContent::PriceChart(_)
+            | MessageContent::MiniApp(_) => None,
         }
     }
 
@@ -357,7 +364,8 @@ impl MessageContent {
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
             | MessageContent::Custom(_)
-            | MessageContent::PriceChart(_) => None,
+            | MessageContent::PriceChart(_)
+            | MessageContent::MiniApp(_) => None,
         }
     }
 
@@ -404,6 +412,7 @@ impl MessageContentInitial {
             MessageContentInitial::MessageReminder(r) => r.notes.as_deref(),
             MessageContentInitial::P2PSwap(p) => p.caption.as_deref(),
             MessageContentInitial::PriceChart(c) => Some(c.title.as_str()),
+            MessageContentInitial::MiniApp(c) => Some(c.text.as_str()),
             MessageContentInitial::Encrypted(_) | MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
         }
     }
@@ -447,6 +456,7 @@ impl From<&MessageContentInitial> for MessagePermission {
             MessageContentInitial::P2PSwap(_) => MessagePermission::P2pSwap,
             // a chart is a picture
             MessageContentInitial::PriceChart(_) => MessagePermission::Image,
+            MessageContentInitial::MiniApp(_) => MessagePermission::MiniApp,
             _ => unreachable!(),
         }
     }
@@ -475,6 +485,7 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::Encrypted(e) => MessageContentInitial::Encrypted(e),
             MessageContent::Custom(c) => MessageContentInitial::Custom(c),
             MessageContent::PriceChart(c) => MessageContentInitial::PriceChart(c),
+            MessageContent::MiniApp(c) => MessageContentInitial::MiniApp(c),
             MessageContent::P2PSwap(_) | MessageContent::VideoCall(_) => unimplemented!(),
         }
     }
@@ -517,6 +528,7 @@ impl From<MessageContentInitial> for MessageContent {
             MessageContentInitial::Encrypted(e) => MessageContent::Encrypted(e),
             MessageContentInitial::Custom(c) => MessageContent::Custom(c),
             MessageContentInitial::PriceChart(c) => MessageContent::PriceChart(c),
+            MessageContentInitial::MiniApp(c) => MessageContent::MiniApp(c),
             MessageContentInitial::P2PSwap(_) => unimplemented!(),
         }
     }
@@ -543,7 +555,7 @@ impl MessageContentType {
             MessageContentType::ModerationReport => None,
             MessageContentType::P2PSwap => Some(Achievement::SentP2PSwapOffer),
             MessageContentType::VideoCall => Some(Achievement::StartedCall),
-            MessageContentType::PriceChart => None,
+            MessageContentType::PriceChart | MessageContentType::MiniApp => None,
             MessageContentType::Custom(c) => {
                 if c == "meme_fighter" {
                     Some(Achievement::SentMeme)
@@ -577,6 +589,7 @@ impl Display for MessageContentType {
             MessageContentType::P2PSwap => "P2PSwap",
             MessageContentType::VideoCall => "VideoCall",
             MessageContentType::PriceChart => "PriceChart",
+            MessageContentType::MiniApp => "MiniApp",
             MessageContentType::Custom(c) => c,
         };
 
@@ -608,6 +621,7 @@ impl From<&MessageContent> for MessageContentType {
             MessageContent::Encrypted(e) => e.content_type.clone().into(),
             MessageContent::Custom(c) => MessageContentType::Custom(c.kind.clone()),
             MessageContent::PriceChart(_) => MessageContentType::PriceChart,
+            MessageContent::MiniApp(_) => MessageContentType::MiniApp,
         }
     }
 }
@@ -1082,6 +1096,79 @@ impl PriceChartContent {
             check_chars("source url", &source.url, Self::MAX_URL_CHARS)?;
             if !source.url.starts_with("https://") {
                 return Err(format!("{}'s url must be https", source.name));
+            }
+        }
+        Ok(())
+    }
+}
+
+/// A message a bot keeps up to date while something it runs goes on, eg. a game's lobby, with
+/// buttons which call the bot when pressed. Only a bot can send one, needing the MiniApp permission.
+/// It can't be forwarded, and can't be sent in a direct chat.
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MiniAppContent {
+    // markdown, eg. "**Uno** · 2 of 4 players: @UserId(..) @UserId(..)": the message's text, in
+    // notifications, previews and search
+    pub text: String,
+    // shown under the text, row by row
+    pub button_rows: Vec<Vec<MessageButton>>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MessageButton {
+    // the bot's own name for the button, sent to it when the button is pressed
+    pub id: String,
+    pub label: String,
+    pub style: MessageButtonStyle,
+    // who's shown the button, everyone if None. It only hides the button, so the bot still checks
+    // who may press it.
+    pub visible_to: Option<Vec<UserId>>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum MessageButtonStyle {
+    #[default]
+    Primary,
+    Secondary,
+    Danger,
+}
+
+impl MiniAppContent {
+    pub const MAX_TEXT_CHARS: usize = 2_000;
+    pub const MAX_ROWS: usize = 5;
+    pub const MAX_BUTTONS_PER_ROW: usize = 5;
+    pub const MAX_ID_BYTES: usize = 64;
+    pub const MAX_LABEL_CHARS: usize = 40;
+    pub const MAX_VISIBLE_TO: usize = 100;
+
+    pub fn validate(&self) -> Result<(), String> {
+        check_chars("text", &self.text, Self::MAX_TEXT_CHARS)?;
+        if self.button_rows.len() > Self::MAX_ROWS {
+            return Err(format!("A message has at most {} rows of buttons", Self::MAX_ROWS));
+        }
+        let mut ids = HashSet::new();
+        for row in &self.button_rows {
+            if row.is_empty() || row.len() > Self::MAX_BUTTONS_PER_ROW {
+                return Err(format!("A row has 1 to {} buttons", Self::MAX_BUTTONS_PER_ROW));
+            }
+            for button in row {
+                if button.id.is_empty() || button.id.len() > Self::MAX_ID_BYTES {
+                    return Err(format!("A button's id has 1 to {} bytes", Self::MAX_ID_BYTES));
+                }
+                if !ids.insert(button.id.as_str()) {
+                    return Err(format!("Two buttons have the id {}", button.id));
+                }
+                check_chars("button label", &button.label, Self::MAX_LABEL_CHARS)?;
+                if button
+                    .visible_to
+                    .as_ref()
+                    .is_some_and(|users| users.len() > Self::MAX_VISIBLE_TO)
+                {
+                    return Err(format!("A button is shown to at most {} users", Self::MAX_VISIBLE_TO));
+                }
             }
         }
         Ok(())

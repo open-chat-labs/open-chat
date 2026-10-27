@@ -5,8 +5,8 @@ use serde::Serialize;
 use ts_export::ts_export;
 use types::{
     AudioContent, BotChatContext, ChatEvent, CryptoContent, CustomContent, DeletedBy, EventIndex, EventWrapper, FileContent,
-    GiphyContent, ImageContent, MessageId, MessageIndex, PollContent, PriceChartContent, Reaction, ReplyContext, SenderContext,
-    TextContent, ThreadSummary, TimestampMillis, Tips, UserId, VideoContent,
+    GiphyContent, ImageContent, MessageId, MessageIndex, MiniAppContent, PollContent, PriceChartContent, Reaction,
+    ReplyContext, SenderContext, TextContent, ThreadSummary, TimestampMillis, Tips, UserId, VideoContent,
 };
 
 #[ts_export(local_user_index, bot_chat_events)]
@@ -67,6 +67,7 @@ pub enum MessageContent {
     Giphy(GiphyContent),
     Custom(CustomContent),
     PriceChart(PriceChartContent),
+    MiniApp(MiniAppContent),
     Unsupported(UnsupportedContent),
 }
 
@@ -122,6 +123,7 @@ impl From<types::MessageContent> for MessageContent {
             types::MessageContent::Giphy(giphy_content) => Self::Giphy(giphy_content),
             types::MessageContent::Custom(custom_content) => Self::Custom(custom_content),
             types::MessageContent::PriceChart(price_chart_content) => Self::PriceChart(price_chart_content),
+            types::MessageContent::MiniApp(mini_app_content) => Self::MiniApp(mini_app_content),
             other => Self::Unsupported(UnsupportedContent {
                 kind: other.content_type().to_string(),
             }),

@@ -49,6 +49,7 @@ mod member_search_tests;
 mod members_paging_tests;
 mod mentions_tests;
 mod message_activity_tests;
+mod mini_app_tests;
 mod moderation_tests;
 mod multi_user_canister_tests;
 mod notification_tests;

@@ -9,12 +9,13 @@ use types::{
     AudioContent, AuthorityReportState, BlobReference, CallParticipant, CanisterId, Chat, CompletedCryptoTransaction,
     CryptoContent, CryptoTransaction, CustomContent, DeletedBy, EncryptedContent, EncryptedMessageContentType,
     FailedCryptoTransaction, FileContent, GiphyContent, GiphyImageVariant, ImageContent, MediaScanMatch, MediaScanProvider,
-    MessageContent, MessageReminderContent, MessageReminderCreatedContent, MessageReport, ModerationReportContent,
-    ModerationReportResolution, ModerationReportStatus, NnsProposal, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted,
-    P2PSwapContent, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollVotes,
-    PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent, PrizeWinnerContent, Proposal,
-    ProposalContent, ProposalDecisionStatus, ProposalRewardStatus, ReportedMessage, SnsProposal, Tally, TextContent,
-    ThumbnailData, TokenInfo, TotalVotes, UserId, VideoCallContent, VideoCallType, VideoContent, certified, icrc1, icrc2, nns,
+    MessageButton, MessageButtonStyle, MessageContent, MessageReminderContent, MessageReminderCreatedContent, MessageReport,
+    MiniAppContent, ModerationReportContent, ModerationReportResolution, ModerationReportStatus, NnsProposal, P2PSwapAccepted,
+    P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig,
+    PollContent, PollVotes, PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent,
+    PrizeWinnerContent, Proposal, ProposalContent, ProposalDecisionStatus, ProposalRewardStatus, ReportedMessage, SnsProposal,
+    Tally, TextContent, ThumbnailData, TokenInfo, TotalVotes, UserId, VideoCallContent, VideoCallType, VideoContent, certified,
+    icrc1, icrc2, nns,
 };
 
 /// One value of every kind of content OpenChat sends bots, and of every variant within them, with
@@ -111,6 +112,23 @@ pub fn message_contents() -> Vec<MessageContent> {
                 name: "CoinGecko".to_string(),
                 url: "https://www.coingecko.com".to_string(),
             }],
+        }),
+        MessageContent::MiniApp(MiniAppContent {
+            text: "**Uno** · 2 of 4 players".to_string(),
+            button_rows: vec![vec![
+                MessageButton {
+                    id: "join".to_string(),
+                    label: "Join".to_string(),
+                    style: MessageButtonStyle::Primary,
+                    visible_to: Some(vec![Principal::from_slice(&[1]).into()]),
+                },
+                MessageButton {
+                    id: "leave".to_string(),
+                    label: "Leave".to_string(),
+                    style: MessageButtonStyle::Danger,
+                    visible_to: Some(vec![Principal::from_slice(&[2]).into()]),
+                },
+            ]],
         }),
     ];
 

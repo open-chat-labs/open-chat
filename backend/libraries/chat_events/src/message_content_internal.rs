@@ -14,16 +14,17 @@ use types::{
     ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction, Cryptocurrency, CustomContent,
     EncryptedContent, EncryptedContentEventPayload, EncryptedMessageContentType, EncryptionKey, FileContent,
     FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
-    ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
-    MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
-    MessageReminderCreatedContent, MessageReport, Milliseconds, ModerationInput, ModerationReportContent, OCResult,
-    P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial,
-    P2PSwapExpired, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload,
-    PollVotes, PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent, PrizeContentEventPayload,
-    PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal, ProposalContent, RegisterVoteResult,
-    ReportedMessage, ReportedMessageContentEventPayload, TextContent, TextContentEventPayload, ThumbnailData, TimestampMillis,
-    TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId, UserIdAndPrincipal, UserType, VideoCallContent,
-    VideoCallPresence, VideoContent, VoteOperation, is_default,
+    ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageButton, MessageButtonStyle, MessageContent,
+    MessageContentEventPayload, MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent,
+    MessageReminderContentEventPayload, MessageReminderCreatedContent, MessageReport, Milliseconds, MiniAppContent,
+    ModerationInput, ModerationReportContent, OCResult, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent,
+    P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
+    PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes, PriceChartContent, PriceChartSeries,
+    PriceChartSource, PriceChartToken, PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent,
+    PrizeWinnerContentEventPayload, Proposal, ProposalContent, RegisterVoteResult, ReportedMessage,
+    ReportedMessageContentEventPayload, TextContent, TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos,
+    TokenInfo, TotalVotes, TransactionHash, UserId, UserIdAndPrincipal, UserType, VideoCallContent, VideoCallPresence,
+    VideoContent, VoteOperation, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -70,6 +71,8 @@ pub enum MessageContentInternal {
     Custom(CustomContentInternal),
     #[serde(rename = "pc")]
     PriceChart(PriceChartContentInternal),
+    #[serde(rename = "ma")]
+    MiniApp(MiniAppContentInternal),
 }
 
 impl MessageContentInternal {
@@ -86,7 +89,9 @@ impl MessageContentInternal {
             let invalid_type_for_forwarding = contains_crypto_transfer
                 || matches!(
                     &content,
-                    MessageContentInitial::Poll(_) | MessageContentInitial::GovernanceProposal(_)
+                    MessageContentInitial::Poll(_)
+                        | MessageContentInitial::GovernanceProposal(_)
+                        | MessageContentInitial::MiniApp(_)
                 );
 
             if invalid_type_for_forwarding {
@@ -125,6 +130,15 @@ impl MessageContentInternal {
                     return ValidateNewMessageContentResult::Error(ContentValidationError::InvalidPriceChart(reason));
                 }
             }
+            MessageContentInitial::MiniApp(c) => {
+                // Only bots post them, and not in direct chats, which have no buttons yet
+                if !sender_user_type.is_bot() || is_direct_chat {
+                    return ValidateNewMessageContentResult::Error(ContentValidationError::Unauthorized);
+                }
+                if let Err(reason) = c.validate() {
+                    return ValidateNewMessageContentResult::Error(ContentValidationError::InvalidMiniApp(reason));
+                }
+            }
             _ => {}
         };
 
@@ -145,7 +159,8 @@ impl MessageContentInternal {
             | MessageContentInitial::MessageReminder(_)
             | MessageContentInitial::P2PSwap(_)
             | MessageContentInitial::Custom(_)
-            | MessageContentInitial::PriceChart(_) => false,
+            | MessageContentInitial::PriceChart(_)
+            | MessageContentInitial::MiniApp(_) => false,
         };
 
         if is_empty {
@@ -242,6 +257,7 @@ impl MessageContentInternal {
             MessageContentInternal::Encrypted(e) => MessageContent::Encrypted(e.hydrate(my_user)),
             MessageContentInternal::Custom(c) => MessageContent::Custom(c.hydrate(my_user)),
             MessageContentInternal::PriceChart(c) => MessageContent::PriceChart(c.hydrate(my_user)),
+            MessageContentInternal::MiniApp(c) => MessageContent::MiniApp(c.hydrate(my_user)),
         }
     }
 
@@ -261,6 +277,7 @@ impl MessageContentInternal {
             MessageContentInternal::MessageReminder(r) => r.notes.as_deref(),
             MessageContentInternal::P2PSwap(p) => p.caption.as_deref(),
             MessageContentInternal::PriceChart(c) => Some(&c.title),
+            MessageContentInternal::MiniApp(c) => Some(&c.text),
             MessageContentInternal::PrizeWinner(_)
             | MessageContentInternal::Deleted(_)
             | MessageContentInternal::ReportedMessage(_)
@@ -398,7 +415,8 @@ impl MessageContentInternal {
             | MessageContentInternal::VideoCall(_)
             | MessageContentInternal::Encrypted(_)
             | MessageContentInternal::Custom(_)
-            | MessageContentInternal::PriceChart(_) => {}
+            | MessageContentInternal::PriceChart(_)
+            | MessageContentInternal::MiniApp(_) => {}
         }
 
         references
@@ -495,6 +513,9 @@ impl MessageContentInternal {
             | MessageContentInternal::VideoCall(_)
             | MessageContentInternal::Custom(_)
             | MessageContentInternal::PriceChart(_) => MessageContentEventPayload::Empty,
+            MessageContentInternal::MiniApp(c) => MessageContentEventPayload::Text(TextContentEventPayload {
+                length: c.text.len() as u32,
+            }),
         }
     }
 
@@ -582,6 +603,9 @@ impl From<&MessageContentInternal> for Document {
                 for series in &c.series {
                     document.add_field(&series.symbol);
                 }
+            }
+            MessageContentInternal::MiniApp(c) => {
+                document.add_field(&c.text);
             }
             MessageContentInternal::ModerationReport(_)
             | MessageContentInternal::ReportedMessage(_)
@@ -2263,6 +2287,80 @@ impl MessageContentInternalSubtype for PriceChartContentInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MiniAppContentInternal {
+    #[serde(rename = "t")]
+    pub text: String,
+    #[serde(rename = "b", default, skip_serializing_if = "Vec::is_empty")]
+    pub button_rows: Vec<Vec<MessageButtonInternal>>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MessageButtonInternal {
+    #[serde(rename = "i")]
+    pub id: String,
+    #[serde(rename = "l")]
+    pub label: String,
+    #[serde(rename = "s", default, skip_serializing_if = "is_default")]
+    pub style: MessageButtonStyle,
+    #[serde(rename = "v", default, skip_serializing_if = "Option::is_none")]
+    pub visible_to: Option<Vec<UserId>>,
+}
+
+impl From<MiniAppContent> for MiniAppContentInternal {
+    fn from(value: MiniAppContent) -> Self {
+        MiniAppContentInternal {
+            text: value.text,
+            button_rows: value
+                .button_rows
+                .into_iter()
+                .map(|row| {
+                    row.into_iter()
+                        .map(|b| MessageButtonInternal {
+                            id: b.id,
+                            label: b.label,
+                            style: b.style,
+                            visible_to: b.visible_to,
+                        })
+                        .collect()
+                })
+                .collect(),
+        }
+    }
+}
+
+impl MessageContentInternalSubtype for MiniAppContentInternal {
+    type ContentType = MiniAppContent;
+
+    // Each viewer is shown the buttons they may see. With no viewer, eg. a bot reading the chat,
+    // every button is kept, so a bot always sees its whole message.
+    fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
+        let visible = |b: &MessageButtonInternal| match (&b.visible_to, &my_user) {
+            (Some(users), Some(me)) => users.contains(&me.user_id),
+            _ => true,
+        };
+        MiniAppContent {
+            text: self.text,
+            button_rows: self
+                .button_rows
+                .into_iter()
+                .map(|row| {
+                    row.into_iter()
+                        .filter(visible)
+                        .map(|b| MessageButton {
+                            id: b.id,
+                            label: b.label,
+                            style: b.style,
+                            visible_to: b.visible_to,
+                        })
+                        .collect::<Vec<_>>()
+                })
+                .filter(|row| !row.is_empty())
+                .collect(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BlobReferenceInternal {
     #[serde(rename = "c", alias = "canister_id")]
     pub canister_id: CanisterId,
@@ -2305,6 +2403,7 @@ impl From<MessageContentInitial> for MessageContentInternal {
             MessageContentInitial::Encrypted(e) => MessageContentInternal::Encrypted(e.into()),
             MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c.into()),
             MessageContentInitial::PriceChart(c) => MessageContentInternal::PriceChart(c.into()),
+            MessageContentInitial::MiniApp(c) => MessageContentInternal::MiniApp(c.into()),
             MessageContentInitial::Crypto(c) => c
                 .try_into()
                 .map(MessageContentInternal::Crypto)
@@ -2340,6 +2439,7 @@ impl From<&MessageContentInternal> for MessageContentType {
             MessageContentInternal::Encrypted(e) => e.content_type.clone().into(),
             MessageContentInternal::Custom(c) => MessageContentType::Custom(c.kind.clone()),
             MessageContentInternal::PriceChart(_) => MessageContentType::PriceChart,
+            MessageContentInternal::MiniApp(_) => MessageContentType::MiniApp,
         }
     }
 }
@@ -2695,5 +2795,140 @@ mod edit_tests {
         assert!(edit(deleted, UserType::User).is_err());
         assert!(edit(completed_transfer(), UserType::User).is_err());
         assert!(edit(pending_transfer(), UserType::User).is_err());
+    }
+}
+
+#[cfg(test)]
+mod mini_app_tests {
+    use super::*;
+
+    fn button(id: &str, visible_to: Option<Vec<UserId>>) -> MessageButton {
+        MessageButton {
+            id: id.to_string(),
+            label: id.to_uppercase(),
+            style: MessageButtonStyle::Primary,
+            visible_to,
+        }
+    }
+
+    fn user(n: u8) -> UserId {
+        Principal::from_slice(&[n]).into()
+    }
+
+    fn lobby() -> MiniAppContent {
+        MiniAppContent {
+            text: "**Uno** · 1 of 4 players".to_string(),
+            button_rows: vec![
+                vec![button("join", None), button("leave", None)],
+                vec![button("start", Some(vec![user(1)]))],
+            ],
+        }
+    }
+
+    fn validate(
+        content: MiniAppContent,
+        is_direct_chat: bool,
+        sender: UserType,
+        forwarding: bool,
+    ) -> ValidateNewMessageContentResult {
+        MessageContentInternal::validate_new_message(
+            MessageContentInitial::MiniApp(content),
+            is_direct_chat,
+            sender,
+            forwarding,
+            0,
+        )
+    }
+
+    fn is_invalid(content: MiniAppContent) -> bool {
+        matches!(
+            validate(content, false, UserType::BotV2, false),
+            ValidateNewMessageContentResult::Error(ContentValidationError::InvalidMiniApp(_))
+        )
+    }
+
+    #[test]
+    fn only_a_bot_can_post_one_and_not_in_a_direct_chat() {
+        assert!(matches!(
+            validate(lobby(), false, UserType::BotV2, false),
+            ValidateNewMessageContentResult::Success(MessageContentInternal::MiniApp(_))
+        ));
+        for (is_direct_chat, sender) in [(false, UserType::User), (true, UserType::BotV2)] {
+            assert!(matches!(
+                validate(lobby(), is_direct_chat, sender, false),
+                ValidateNewMessageContentResult::Error(ContentValidationError::Unauthorized)
+            ));
+        }
+    }
+
+    #[test]
+    fn it_cant_be_forwarded() {
+        assert!(matches!(
+            validate(lobby(), false, UserType::User, true),
+            ValidateNewMessageContentResult::Error(ContentValidationError::InvalidTypeForForwarding)
+        ));
+    }
+
+    #[test]
+    fn an_invalid_one_is_refused() {
+        let mut content = lobby();
+        content.text = " ".to_string();
+        assert!(is_invalid(content));
+
+        let mut content = lobby();
+        content.button_rows[1].push(button("join", None));
+        assert!(is_invalid(content));
+
+        let mut content = lobby();
+        content.button_rows.push(Vec::new());
+        assert!(is_invalid(content));
+
+        let mut content = lobby();
+        content.button_rows = (0..=MiniAppContent::MAX_ROWS)
+            .map(|i| vec![button(&i.to_string(), None)])
+            .collect();
+        assert!(is_invalid(content));
+
+        let mut content = lobby();
+        content.button_rows[0][0].id = "x".repeat(MiniAppContent::MAX_ID_BYTES + 1);
+        assert!(is_invalid(content));
+
+        let mut content = lobby();
+        content.button_rows[0][0].label = String::new();
+        assert!(is_invalid(content));
+    }
+
+    fn button_ids(content: MessageContent) -> Vec<Vec<String>> {
+        let MessageContent::MiniApp(content) = content else {
+            panic!("Expected a mini app");
+        };
+        content
+            .button_rows
+            .into_iter()
+            .map(|row| row.into_iter().map(|b| b.id).collect())
+            .collect()
+    }
+
+    #[test]
+    fn each_viewer_sees_only_the_buttons_shown_to_them() {
+        let ValidateNewMessageContentResult::Success(internal) = validate(lobby(), false, UserType::BotV2, false) else {
+            panic!("Expected the lobby to be valid");
+        };
+        let stored: MessageContentInternal = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&internal));
+        let viewer = |n| Some(UserIdAndPrincipal::new(user(n), Principal::from_slice(&[n])));
+
+        assert_eq!(
+            button_ids(stored.clone().hydrate(viewer(1))),
+            vec![vec!["join", "leave"], vec!["start"]]
+        );
+        // A row left with no buttons isn't shown
+        assert_eq!(button_ids(stored.clone().hydrate(viewer(2))), vec![vec!["join", "leave"]]);
+        // A bot reading the chat sees every button
+        assert_eq!(
+            button_ids(stored.clone().hydrate(None)),
+            vec![vec!["join", "leave"], vec!["start"]]
+        );
+        assert!(matches!(stored.content_type(), MessageContentType::MiniApp));
+        assert_eq!(stored.text(), Some("**Uno** · 1 of 4 players"));
     }
 }

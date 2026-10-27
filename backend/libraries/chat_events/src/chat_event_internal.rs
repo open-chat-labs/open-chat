@@ -368,7 +368,8 @@ impl MessageInternal {
         }
 
         match &self.content.content_type() {
-            MessageContentType::Text => {
+            // a mini app's message is counted as the text it shows
+            MessageContentType::Text | MessageContentType::MiniApp => {
                 metrics.incr(MetricKey::TextMessages, 1);
             }
             // a price chart is counted as the image it replaces
