@@ -76,8 +76,7 @@
                             {formatUsdPrice(price)}
                         {:else}
                             <span class="none"
-                                ><Translatable resourceKey={i18nKey("cashtag.noPrice")} /></span
-                            >
+                                ><Translatable resourceKey={i18nKey("cashtag.noPrice")} /></span>
                         {/if}
                     </div>
                     {#if change !== undefined}
@@ -85,8 +84,7 @@
                             <Translatable
                                 resourceKey={i18nKey("cashtag.change7d", {
                                     change: formatPercentChange(change),
-                                })}
-                            />
+                                })} />
                         </div>
                     {/if}
                     <!-- no chart at all when the history couldn't be loaded -->
@@ -99,14 +97,11 @@
                                     data={chart}
                                     label={$_("cashtag.chartLabel", {
                                         values: { symbol: token.symbol },
-                                    })}
-                                />
+                                    })} />
                             {:else}
                                 <span class="none"
                                     ><Translatable
-                                        resourceKey={i18nKey("cashtag.noHistory")}
-                                    /></span
-                                >
+                                        resourceKey={i18nKey("cashtag.noHistory")} /></span>
                             {/if}
                         </div>
                     {/if}
@@ -119,9 +114,7 @@
                             ><Translatable
                                 resourceKey={i18nKey("cashtag.priceDataBy", {
                                     source: credit.name,
-                                })}
-                            /></a
-                        >
+                                })} /></a>
                     {/each}
                 </div>
             {/snippet}

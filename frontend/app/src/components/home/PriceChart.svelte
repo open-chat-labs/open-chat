@@ -66,8 +66,7 @@
     onpointerleave={() => reader.clear()}
     onpointercancel={() => reader.clear()}
     onblur={() => reader.clear()}
-    onkeydown={onKeyDown}
->
+    onkeydown={onKeyDown}>
     {#if layout !== undefined}
         <svg width={layout.width} height={layout.height} aria-hidden="true">
             {#each layout.lines as line}
@@ -80,8 +79,7 @@
                     class={`line series-${i}`}
                     class:single={layout.kind === "usd"}
                     class:falling={!line.rising}
-                    d={line.path}
-                />
+                    d={line.path} />
             {/each}
             {#each layout.marks as mark}
                 <circle class="mark" cx={mark.x} cy={mark.y} r="3" />
@@ -97,8 +95,7 @@
                     class:falling={!line.rising}
                     cx={reading !== undefined && value !== undefined ? reading.x : line.end.x}
                     cy={value?.y ?? line.end.y}
-                    r="4"
-                />
+                    r="4" />
             {/each}
         </svg>
         {#if reading === undefined}
@@ -107,15 +104,13 @@
                     class="mark-label"
                     class:low={mark.kind === "low"}
                     style:left={`clamp(2rem, ${mark.x}px, calc(100% - 2rem))`}
-                    style:top={`${mark.y}px`}>{formatUsdPrice(mark.usd)}</span
-                >
+                    style:top={`${mark.y}px`}>{formatUsdPrice(mark.usd)}</span>
             {/each}
         {:else}
             <div
                 class="reading"
                 style:left={readingOnLeft ? undefined : `${reading.x + 8}px`}
-                style:right={readingOnLeft ? `${width - reading.x + 8}px` : undefined}
-            >
+                style:right={readingOnLeft ? `${width - reading.x + 8}px` : undefined}>
                 <div class="time">{readingTime(data, reading.timestamp, $locale ?? "en")}</div>
                 {#each reading.values as value}
                     <div class="value">{readingValue(layout, value)}</div>

@@ -77,8 +77,7 @@
                     <PriceChart
                         data={chart}
                         label={$_("cashtag.chartLabel", { values: { symbol: token.symbol } })}
-                        locale={$locale ?? "en"}
-                    />
+                        locale={$locale ?? "en"} />
                 {:else}
                     <p class="none">{$_("cashtag.noHistory")}</p>
                 {/if}
@@ -86,8 +85,7 @@
         {/if}
         {#each credits as credit}
             <a class="credit" href={credit.url} target="_blank" rel="noopener noreferrer"
-                >{$_("cashtag.priceDataBy", { values: { source: credit.name } })}</a
-            >
+                >{$_("cashtag.priceDataBy", { values: { source: credit.name } })}</a>
         {/each}
     </DialogShell>
 {/if}

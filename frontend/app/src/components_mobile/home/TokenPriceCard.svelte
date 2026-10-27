@@ -74,8 +74,7 @@
                 <Container direction={"vertical"}>
                     <Body width={"hug"} fontWeight={"bold"}>{token.name}</Body>
                     <Caption width={"hug"} colour={"textSecondary"} fontWeight={"bold"}
-                        >${token.symbol}</Caption
-                    >
+                        >${token.symbol}</Caption>
                 </Container>
             </Container>
             <Container direction={"vertical"} gap={"xs"}>
@@ -83,8 +82,7 @@
                     <H2 width={"hug"} fontWeight={"bold"}>{formatUsdPrice(price)}</H2>
                 {:else}
                     <BodySmall width={"hug"} colour={"textSecondary"}
-                        ><Translatable resourceKey={i18nKey("cashtag.noPrice")} /></BodySmall
-                    >
+                        ><Translatable resourceKey={i18nKey("cashtag.noPrice")} /></BodySmall>
                 {/if}
                 {#if change !== undefined}
                     <BodySmall
@@ -94,9 +92,7 @@
                         ><Translatable
                             resourceKey={i18nKey("cashtag.change7d", {
                                 change: formatPercentChange(change),
-                            })}
-                        /></BodySmall
-                    >
+                            })} /></BodySmall>
                 {/if}
             </Container>
             <!-- no chart at all when the history couldn't be loaded -->
@@ -109,12 +105,10 @@
                             data={chart}
                             label={$_("cashtag.chartLabel", {
                                 values: { symbol: token.symbol },
-                            })}
-                        />
+                            })} />
                     {:else}
                         <BodySmall width={"hug"} colour={"textSecondary"}
-                            ><Translatable resourceKey={i18nKey("cashtag.noHistory")} /></BodySmall
-                        >
+                            ><Translatable resourceKey={i18nKey("cashtag.noHistory")} /></BodySmall>
                     {/if}
                 </div>
             {/if}
@@ -126,9 +120,7 @@
                     target="_blank"
                     rel="noopener noreferrer"
                     ><Translatable
-                        resourceKey={i18nKey("cashtag.priceDataBy", { source: credit.name })}
-                    /></a
-                >
+                        resourceKey={i18nKey("cashtag.priceDataBy", { source: credit.name })} /></a>
             {/each}
         </Container>
     </Sheet>
