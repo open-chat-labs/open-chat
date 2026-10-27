@@ -714,6 +714,8 @@ design export needs. Each entry says where it came up.
   `twitchPlayerUrl` and `twitchPoster` in `@client`): `ChatBubble` takes cards only. The player's
   URL starts playing as it loads, so a player here must load only on its poster's click, and back
   to the poster when hidden, with `allow="autoplay; fullscreen"` on its iframe, as the old trees do.
+  Nothing may lie over it, not even an invisible layer clicks pass through (the old trees'
+  `ChitEarned` was one), or Twitch won't start it.
 - **Transfers** (`features/conversation`, 5a): a transfer shows as `TransferMessage`, with the
   token's logo as its mark. `TransferMessage` takes `direction` and `recipient` by hand: the design
   signs it by the bubble's side, which shows a transfer between two other people in a group as the
