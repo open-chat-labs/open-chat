@@ -1,4 +1,5 @@
 import {
+    allowsVoteChange,
     formatClock,
     formatFileSize,
     ogPreviewCard,
@@ -388,7 +389,7 @@ function pollMessage(
         })),
         multiple: config.allowMultipleVotesPerUser,
         publicVotes: !config.anonymous,
-        canChange: config.allowUserToChangeVote,
+        canChange: allowsVoteChange(config),
         closed: content.ended,
         endsIn: config.endDate === undefined ? "" : timeLeft(Number(config.endDate) - ctx.now),
         myVotes: content.votes.user,
