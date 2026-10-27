@@ -13,11 +13,13 @@
     backLabel?: string;
     avatarMark?: string;
     avatarGradient?: string;
+    /** The avatar's logo image, in place of the mark. */
+    avatarLogo?: string;
     onBack?: () => void;
     children?: Snippet;
   }
 
-  let { title, backLabel = 'ui.common.back', avatarMark, avatarGradient, onBack, children }: Props = $props();
+  let { title, backLabel = 'ui.common.back', avatarMark, avatarGradient, avatarLogo, onBack, children }: Props = $props();
   const t = useT();
 </script>
 
@@ -25,8 +27,8 @@
   {#if onBack}
     <div class="back"><IconButton label={backLabel} variant="ghost" icon="back" onClick={onBack} /></div>
   {/if}
-  {#if avatarMark}
-    <TokenAvatar size={28} mark={avatarMark} gradient={avatarGradient} />
+  {#if avatarMark || avatarLogo}
+    <TokenAvatar size={28} mark={avatarMark} gradient={avatarGradient} logo={avatarLogo} />
   {/if}
   <span class="title">{t(title)}</span>
   {#if children}

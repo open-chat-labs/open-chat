@@ -3036,6 +3036,8 @@
     },
     "walletMain": {
       "allActivity": "All activity",
+      "allActivityUnavailableBody": "Pick a token to see its transactions.",
+      "allActivityUnavailableTitle": "Activity is listed per token",
       "allSupportedTokens": "ALL SUPPORTED TOKENS",
       "allTokens": "ALL TOKENS",
       "backToAll": "Back to All activity",
@@ -3065,6 +3067,8 @@
       "loadOlder": "Load older",
       "loadingOlder": "Loading…",
       "message": "Message",
+      "noHistoryBody": "{symbol} transactions can't be listed here.",
+      "noHistoryTitle": "No history for this token",
       "noneOfType": "No transactions of this type yet.",
       "price": "Price",
       "receiveSymbol": "Receive {symbol}",

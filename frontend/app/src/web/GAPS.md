@@ -578,6 +578,30 @@ design export needs. Each entry says where it came up.
 
 ### Wiring
 
+- **Wallet** (6a #10120, `features/wallet`): `WalletPanel` on the left and `WalletMain` in the
+  middle, on `/wallet` and `/wallet/:ledger`, from `walletTokensSorted` and the exchange rates.
+  The token page's history is the token's index canister's, a page at a time
+  (`TransactionHistoryState`); a row opens the transaction on the token's explorer. The logic is
+  shared with the old wallets (`logic/wallet`: `walletTotal`, `tokenActions`,
+  `accountTransactions`). Not yet:
+  - All activity: there's no history across tokens, so it says to pick a token (#10120's open
+    question; merging each indexed token's first page would mean one call per ledger on every open).
+  - Send, Receive and Swap (6b, 6c), and Settings and Manage recipients (6d): the tokens' menus
+    don't offer them, but the balance card's Send / Receive / Swap and the panel's ⋯ menu still
+    show and do nothing, and `/wallet/send`, `/receive`, `/swap` show the token's page (or All
+    activity), `/wallet/recipients` All activity.
+  - a token with no balance isn't listed (the panel and the token page are the design's, for held
+    tokens), where the old wallets listed every token in the wallet; `/wallet/:ledger` for one shows
+    the first held token.
+  - the display currency is the panel's own, back to USD each time it opens (as the old wallets'
+    toggle), not a setting.
+  - the token page's "change today" pill: no 24h change (see the data gaps below).
+  - by hand: `WalletToken` gains `id` (the ledger: callbacks, the selection and activity use it,
+    as two ledgers can share a symbol), `actions` and `logo`; `WalletPanel` takes `rates`;
+    `WalletMain` takes `history`, `onMoreHistory`, `onRetryHistory`, `onActivity` and
+    `allActivityNote`, and `WalletActivity` gains `token`, `party` and kind `own`; `TokenAvatar` and
+    `PageHeader` take a logo. Send, Receive and Swap still pick their token by symbol (6b, 6c).
+
 - **Diamond** (`?diamond`, `features/diamond`, 8e #10131): paid through the shared payment
   (`logic/diamond`, which both legacy `Payment.svelte`s use too), in CHAT or ICP at the backend's
   own prices (CHAT in production, ICP elsewhere, by default), auto-renew on, a timed member opening

@@ -272,8 +272,10 @@ export interface WalletToken {
   symbol: string;
   name: string;
   mark: string;
-  /** Brand gradient (CSS background). */
+  /** Brand gradient (CSS background); also its colour in the allocation and share bars. */
   grad: string;
+  /** Logo image URL, shown in place of the mark. */
+  logo?: string;
   /** Balance, in whole tokens. */
   held: number;
   /** USD per token. */

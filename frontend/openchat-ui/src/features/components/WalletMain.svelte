@@ -163,8 +163,9 @@
     onShare?: (v: { chatId: string; message: string; symbol: string; network: NetworkId; address: string }) => Promise<unknown> | void;
     qr?: Snippet<[string]>;
     /** The token page's history as the host loads it: the first page loading or failed (with `onRetryHistory`), or
-     *  loaded, with older entries to load (`more`, `onMoreHistory`) or loading. Without it, `activity` is all there is. */
-    history?: { state: 'loading' | 'failed' | 'loaded'; more?: boolean; loadingMore?: boolean };
+     *  loaded, with older entries to load (`more`, `onMoreHistory`) or loading; `unavailable` for a token whose
+     *  transactions can't be listed. Without it, `activity` is all there is. */
+    history?: { state: 'loading' | 'failed' | 'loaded' | 'unavailable'; more?: boolean; loadingMore?: boolean };
     onMoreHistory?: () => void;
     onRetryHistory?: () => void;
     /** An activity row clicked (its id), e.g. to open it on the token's explorer; on All activity a row opens its token. */
@@ -515,6 +516,7 @@
       onBack={showToken ? () => go({ view: 'all' }) : undefined}
       backLabel={t('ui.walletMain.backToAll')}
       avatarMark={showToken ? raw.mark : ''}
+      avatarLogo={showToken ? raw.logo : undefined}
       avatarGradient={raw?.grad}
     />
     <div class="scroll">
@@ -554,7 +556,7 @@
             <div class="summary">
               <div class="summary-top">
                 <div class="hero">
-                  <TokenAvatar size={52} symbol={raw.symbol} mark={raw.mark} gradient={raw.grad} />
+                  <TokenAvatar size={52} symbol={raw.symbol} mark={raw.mark} gradient={raw.grad} logo={raw.logo} />
                   <div class="hero-text">
                     <span class="held veilable" class:veiled={balanceHidden}>{num(raw.held, raw.dp)} <span class="held-symbol">{raw.symbol}</span></span>
                     <span class="value-line"
@@ -615,6 +617,8 @@
               {/each}
               {#if history?.state === 'loading'}
                 <div class="history-note"><Skeleton variant="token" count={4} /></div>
+              {:else if history?.state === 'unavailable'}
+                <EmptyState icon="receive" title={t('ui.walletMain.noHistoryTitle')} body={t('ui.walletMain.noHistoryBody', { symbol: raw.symbol })} actionLabel="" />
               {:else if history?.state === 'failed'}
                 <EmptyState
                   icon="receive"

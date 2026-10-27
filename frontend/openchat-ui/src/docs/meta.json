@@ -3406,6 +3406,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "avatarLogo",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The avatar's logo image, in place of the mark."
       }
     ],
     "group": "library"
@@ -4664,6 +4675,17 @@
         "required": false,
         "componentDefault": "'none'",
         "doc": ""
+      },
+      {
+        "name": "logo",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The token's logo (an image URL), shown in place of the mark."
       }
     ],
     "group": "library"
@@ -17870,14 +17892,14 @@
       },
       {
         "name": "history",
-        "type": "{ state: 'loading' | 'failed' | 'loaded'; more?: boolean; loadingMore?: boolean }",
+        "type": "{ state: 'loading' | 'failed' | 'loaded' | 'unavailable'; more?: boolean; loadingMore?: boolean }",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "The token page's history as the host loads it: the first page loading or failed (with `onRetryHistory`), or loaded, with older entries to load (`more`, `onMoreHistory`) or loading. Without it, `activity` is all there is."
+        "doc": "The token page's history as the host loads it: the first page loading or failed (with `onRetryHistory`), or loaded, with older entries to load (`more`, `onMoreHistory`) or loading; `unavailable` for a token whose transactions can't be listed. Without it, `activity` is all there is."
       },
       {
         "name": "onMoreHistory",

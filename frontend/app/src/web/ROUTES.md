@@ -133,9 +133,9 @@ it from showing: a desktop window shrunk after load scrolls the shell sideways i
 | `/profile_summary` **(mobile's path, new on desktop)** | `profile_summary_route` | redirects to the default chat list with `?profile` | | | | sign in |
 | `/welcome` **(mobile's path, new on desktop)** | `welcome_route` | – | `ExploreCommunities` (as `/communities`) | – | full | yes |
 | `/communities` | `communities_route` | – (full width) | `ExploreCommunities` (search query in the URL, see below) | `JoinGateDialog` on join | full | yes |
-| `/wallet` **(mobile's path, new on desktop)** | `wallet_route` {view: all} | `WalletPanel` | `WalletMain` All activity | – (`WalletSettingsDialog` is a dialog) | panel, then main | sign in |
-| `/wallet/:ledger` **(new)** | `wallet_route` {view: token} | `WalletPanel`, token selected | `WalletMain` token page | – | main | sign in |
-| `/wallet/send` · `/receive` · `/swap` (`?token=`) **(new)** | `wallet_route` {view} | `WalletPanel` | Send / Receive / Swap in place | – | main | sign in |
+| `/wallet` **(mobile's path, new on desktop)** | `wallet_route` {view: all} | `WalletPanel` (6a) | `WalletMain` All activity (6a: a note to pick a token, GAPS) | – (`WalletSettingsDialog` is a dialog) | panel, then main | sign in |
+| `/wallet/:ledger` **(new)** | `wallet_route` {view: token} | `WalletPanel`, token selected (6a) | `WalletMain` token page (6a) | – | main | sign in |
+| `/wallet/send` · `/receive` · `/swap` (`?token=`) **(new)** | `wallet_route` {view} | `WalletPanel` | Send / Receive / Swap in place (6b, 6c; until then the token's page) | – | main | sign in |
 | `/wallet/recipients` **(new)** | `wallet_route` {view: recipients} | `WalletPanel` | `WalletRecipients` | – | main | sign in |
 | `/share?title&text&url` | `share_route` | as the default scope | as the default scope | `ChatPicker` on `?share` (redirect, then pick a chat) | picker | sign in |
 | `/admin` | `admin_route` | – | `TODO(design)`: platform operator console, operators only (existing check) | – | full | blocked |

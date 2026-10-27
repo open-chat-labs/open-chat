@@ -1,4 +1,5 @@
-<!-- Token mark on its brand gradient. Sizes in use: 28 (headers, pills), 40 (rows), 52 (hero). Optional activity badge. -->
+<!-- Token mark on its brand gradient, or its logo when given. Sizes in use: 28 (headers, pills), 40 (rows), 52 (hero).
+     Optional activity badge. -->
 <script lang="ts">
   interface Props {
     symbol?: string;
@@ -6,6 +7,8 @@
     gradient?: string;
     size?: number;
     badge?: 'none' | 'send' | 'receive' | 'swap';
+    /** The token's logo (an image URL), shown in place of the mark. */
+    logo?: string;
   }
 
   let {
@@ -14,6 +17,7 @@
     gradient = 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
     size = 40,
     badge = 'none',
+    logo,
   }: Props = $props();
 </script>
 
@@ -22,10 +26,10 @@
   class:small={size < 36}
   style:--size="{size}px"
   style:font-size="{Math.round(size * 0.38)}px"
-  style:background={gradient}
+  style:background={logo ? 'transparent' : gradient}
   title={symbol}
 >
-  {mark}
+  {#if logo}<img class="logo" src={logo} alt="" />{:else}{mark}{/if}
   {#if badge !== 'none'}
     <span class="badge"><span class="badge-icon" style:mask="var(--icon-{badge}) center/contain no-repeat"></span></span>
   {/if}
@@ -47,6 +51,13 @@
     line-height: 1;
     font-family: var(--font-sans);
     color: #0b0b10;
+  }
+
+  .logo {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
   }
 
   .small {

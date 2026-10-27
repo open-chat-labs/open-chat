@@ -441,7 +441,7 @@
           onkeydown={(e) => rowKey(e, tk)}
           tabindex="0"
         >
-          <TokenAvatar size={40} symbol={tk.symbol} mark={tk.mark} gradient={tk.grad} />
+          <TokenAvatar size={40} symbol={tk.symbol} mark={tk.mark} gradient={tk.grad} logo={tk.logo} />
           <div class="token-body">
             <div class="token-line"><span class="symbol">{tk.symbol}</span><span class="value">{veiled ? DOTS : money(tk.value)}</span></div>
             <div class="token-line"
