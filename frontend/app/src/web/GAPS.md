@@ -124,7 +124,9 @@ design export needs. Each entry says where it came up.
   - **Token price card**: the card a cashtag in a message opens (`$CHAT`, or a coin OpenChat
     doesn't list such as `$ADA`, `<cash-tag>`): the token's logo (coins have none), name, price now,
     its change over 7 days and a chart of its last 7 days' prices (from the price service,
-    `getPriceHistory`), with loading and no-history states, and where the prices are from
+    `getPriceHistory`) which shows the price at any time when hovered, dragged along or moved
+    through with the arrow keys, its high and low marked (`features/cashtag/PriceChart.svelte`,
+    from `logic/priceChart`), with loading and no-history states, and where the prices are from
     ("Price data by ICPSwap" or "by CoinGecko", linked). The new UI shows it as a `DialogShell` laid out like the
     old UI's card (`features/cashtag/TokenDialogScreen.svelte`, `TODO(design)`). The chip itself is
     the shared `<cash-tag>` web component, coloured from the text it's in, with a coin's credit as

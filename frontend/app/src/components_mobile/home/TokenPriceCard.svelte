@@ -33,6 +33,7 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
+    import PriceChart from "./PriceChart.svelte";
 
     interface Props {
         subject: PriceSubject;
@@ -44,9 +45,6 @@
     const client = getContext<OpenChat>("client");
     // the card's token or coin is fixed for its life: another cashtag opens another card
     const history = new TokenPriceHistory(client, subject);
-
-    const CHART_WIDTH = 300;
-    const CHART_HEIGHT = 100;
 
     const known = lastCardDetails();
     let token = $derived(
@@ -60,7 +58,7 @@
         ),
     );
     let price = $derived(token?.usd);
-    let chart = $derived(history.chart(CHART_WIDTH, CHART_HEIGHT));
+    let chart = $derived(token === undefined ? undefined : history.chartData(token.symbol));
     let change = $derived(history.change);
     // where its price and chart are from, always named, and linked
     let credits = $derived(priceSourcesFor($priceSourcesStore, [token?.source, history.source]));
@@ -99,24 +97,15 @@
             </Container>
             <!-- no chart at all when the history couldn't be loaded -->
             {#if history.history.kind !== "error"}
-                <div
-                    class="chart"
-                    style:--up={ColourVars.validationSuccess}
-                    style:--down={ColourVars.validationError}>
+                <div class="chart">
                     {#if history.history.kind === "loading"}
                         <Spinner size={"2rem"} foregroundColour={ColourVars.primary} />
                     {:else if chart !== undefined}
-                        <svg
-                            role="img"
-                            aria-label={$_("cashtag.chartLabel", {
+                        <PriceChart
+                            data={chart}
+                            label={$_("cashtag.chartLabel", {
                                 values: { symbol: token.symbol },
-                            })}
-                            class:falling={!chart.rising}
-                            viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-                            preserveAspectRatio="none">
-                            <path class="area" d={chart.area} />
-                            <path class="line" d={chart.line} vector-effect="non-scaling-stroke" />
-                        </svg>
+                            })} />
                     {:else}
                         <BodySmall width={"hug"} colour={"textSecondary"}
                             ><Translatable resourceKey={i18nKey("cashtag.noHistory")} /></BodySmall>
@@ -149,27 +138,5 @@
         justify-content: center;
         width: 100%;
         height: 7rem;
-
-        svg {
-            width: 100%;
-            height: 100%;
-            color: var(--up);
-
-            &.falling {
-                color: var(--down);
-            }
-        }
-
-        .area {
-            fill: currentColor;
-            fill-opacity: 0.12;
-        }
-
-        .line {
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2;
-            stroke-linejoin: round;
-        }
     }
 </style>

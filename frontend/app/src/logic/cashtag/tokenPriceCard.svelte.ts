@@ -8,21 +8,14 @@ import type {
     TokenExchangeRates,
     TokenPricePoint,
 } from "@client";
+import type { PriceChartData } from "@src/logic/priceChart/priceChart.svelte";
 import type { RemoteData } from "@src/utils/remoteData";
 
 // A token's or coin's price card, opened by a cashtag clicked in a message (`<cash-tag>`): its
-// price now, and a chart of its price over the last 7 days, loaded as the card opens. The same in
-// every tree.
+// price now, and a chart of its price over the last 7 days (logic/priceChart), loaded as the card
+// opens. The same in every tree.
 
 const SEVEN_DAYS_MILLIS = 7 * 24 * 60 * 60 * 1000;
-
-/** The SVG paths of a price chart: the line through the prices, and the area under it. */
-export type PriceChart = {
-    line: string;
-    area: string;
-    // whether the price ended the week at least where it started it
-    rising: boolean;
-};
 
 /** What a card shows of its token or coin, besides the chart. */
 export type CashtagCardDetails = {
@@ -84,47 +77,6 @@ export function priceChange(points: TokenPricePoint[]): number | undefined {
     return (points[points.length - 1].usd / points[0].usd - 1) * 100;
 }
 
-/**
- * A chart `width` by `height` of the prices over the 7 days up to `now`. The line runs on flat from
- * the last price to `now`, since the price is the last trade's until there's another, so a lone price
- * is a flat line. Undefined with no prices.
- */
-export function priceChart(
-    points: TokenPricePoint[],
-    now: number,
-    width: number,
-    height: number,
-): PriceChart | undefined {
-    if (points.length === 0) return undefined;
-
-    const start = now - SEVEN_DAYS_MILLIS;
-    const prices = points.map((p) => p.usd);
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
-    // a little room above and below, so the line isn't cut by the edges
-    const pad = height * 0.05;
-    const x = (timestamp: number) =>
-        ((Math.min(Math.max(timestamp, start), now) - start) / SEVEN_DAYS_MILLIS) * width;
-    const y = (usd: number) =>
-        max === min ? height / 2 : pad + ((max - usd) / (max - min)) * (height - 2 * pad);
-
-    const first = points[0];
-    const last = points[points.length - 1];
-    const coords = [...points, { timestamp: now, usd: last.usd }].map(
-        (p) => `${round(x(p.timestamp))},${round(y(p.usd))}`,
-    );
-    const line = `M${coords.join("L")}`;
-    return {
-        line,
-        area: `${line}L${round(x(now))},${height}L${round(x(first.timestamp))},${height}Z`,
-        rising: last.usd >= first.usd,
-    };
-}
-
-function round(n: number): number {
-    return Math.round(n * 10) / 10;
-}
-
 /** The card's price history, loading as it opens. */
 export class TokenPriceHistory {
     #history: RemoteData<PriceHistory, "unavailable"> = $state({ kind: "loading" });
@@ -151,10 +103,17 @@ export class TokenPriceHistory {
             : undefined;
     }
 
-    /** The chart at the given size, once the history has loaded. */
-    chart(width: number, height: number): PriceChart | undefined {
+    /**
+     * The chart of the 7 days up to when the history loaded, once it has. Its line runs on flat from
+     * the last price to then, since the price is the last trade's until there's another.
+     */
+    chartData(symbol: string): PriceChartData | undefined {
         return this.#history.kind === "success"
-            ? priceChart(this.#history.data.points, this.#loadedAt, width, height)
+            ? {
+                  series: [{ symbol, points: this.#history.data.points }],
+                  start: this.#loadedAt - SEVEN_DAYS_MILLIS,
+                  end: this.#loadedAt,
+              }
             : undefined;
     }
 
