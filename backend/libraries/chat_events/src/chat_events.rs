@@ -2879,6 +2879,26 @@ impl ChatEvents {
         Ok(())
     }
 
+    // A bot without the DeleteMessages permission can only delete its own messages, so every message
+    // must be its own before any is deleted. A missing one, eg. expired, is skipped, as the deletion
+    // skips it.
+    pub fn check_deletable_as_own_by(
+        &self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_ids: &[MessageId],
+        user_id: UserId,
+    ) -> OCResult {
+        for message_id in message_ids {
+            if let Some((message, _)) =
+                self.message_internal(EventIndex::default(), thread_root_message_index, (*message_id).into())
+                && !message.deletable_as_own_by(user_id)
+            {
+                return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Bots can only delete their own messages"));
+            }
+        }
+        Ok(())
+    }
+
     fn expiry_date(&self, event: &ChatEventInternal, is_thread_event: bool, now: TimestampMillis) -> Option<TimestampMillis> {
         if !is_thread_event && let Some(ttl) = self.events_ttl.value {
             if self.can_delete_event(event) { Some(now + ttl) } else { None }

@@ -638,6 +638,175 @@ fn bots_edit_their_own_messages_autonomously() {
     assert_eq!(text_of(env, response.event_index), ("~~Struck out~~".to_string(), true));
 }
 
+// Any bot can delete its own messages autonomously, as it can edit them, without the DeleteMessages
+// permission
+#[test_case(ChatType::Group)]
+#[test_case(ChatType::Channel)]
+fn bots_delete_their_own_messages_autonomously(chat_type: ChatType) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let chat = match chat_type {
+        ChatType::Group => Chat::Group(client::user::happy_path::create_group(
+            env,
+            &owner,
+            &random_string(),
+            true,
+            true,
+        )),
+        ChatType::Channel => {
+            let community_id =
+                client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+            let channel_id =
+                client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+            Chat::Channel(community_id, channel_id)
+        }
+        ChatType::Direct => unreachable!(),
+    };
+    let local_user_index = canister_ids.local_user_index(env, chat.canister_id());
+
+    let command_name = random_string();
+    let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, random_string(), command_name.clone());
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        chat.into(),
+        bot_id,
+        BotPermissions::text_only(),
+        Some(BotPermissions::text_only()),
+    );
+
+    let access_token = match client::local_user_index::access_token_v2(
+        env,
+        owner.principal,
+        local_user_index,
+        &access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
+            bot_id,
+            command: BotCommandInitial {
+                name: command_name,
+                args: Vec::new(),
+                meta: None,
+            },
+            scope: BotActionScope::Chat(BotActionChatDetails {
+                chat,
+                thread: None,
+                message_id: random_from_u128(),
+                user_message_id: None,
+            }),
+        }),
+    ) {
+        access_token_v2::Response::Success(access_token) => access_token,
+        response => panic!("'access_token' error: {response:?}"),
+    };
+    let response = bot_send_message(
+        env,
+        bot_principal,
+        local_user_index,
+        BotChatContext::Command(access_token.clone()),
+        None,
+        None,
+    );
+
+    let delete = |env: &mut PocketIc, chat_context: BotChatContext, message_ids: Vec<MessageId>| {
+        client::local_user_index::bot_delete_messages(
+            env,
+            bot_principal,
+            local_user_index,
+            &local_user_index_canister::bot_delete_messages::Args {
+                chat_context,
+                thread: None,
+                message_ids,
+            },
+        )
+    };
+    let deleted_by = |env: &PocketIc, event_index: EventIndex| {
+        let events = match chat {
+            Chat::Group(group_id) => client::group::happy_path::events_by_index(env, &owner, group_id, vec![event_index]),
+            Chat::Channel(community_id, channel_id) => {
+                client::community::happy_path::events_by_index(env, &owner, community_id, channel_id, vec![event_index])
+            }
+            Chat::Direct(_) => unreachable!(),
+        };
+        let ChatEvent::Message(message) = &events.events[0].event else {
+            panic!("Expected a message: {:?}", events.events[0].event);
+        };
+        match &message.content {
+            MessageContent::Deleted(deleted_by) => Some(deleted_by.deleted_by),
+            _ => None,
+        }
+    };
+
+    // The bot can't delete its response with the command's access token, lacking the permission
+    let result = delete(env, BotChatContext::Command(access_token), vec![response.message_id]);
+    assert!(
+        matches!(&result, types::UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "{result:?}"
+    );
+    assert_eq!(deleted_by(env, response.event_index), None);
+
+    // Nor someone else's message autonomously, which stops it deleting its own alongside
+    let members_message_id = random_from_u128();
+    let members_message_event_index = match chat {
+        Chat::Group(group_id) => {
+            client::group::happy_path::send_text_message(env, &owner, group_id, None, random_string(), Some(members_message_id))
+                .event_index
+        }
+        Chat::Channel(community_id, channel_id) => {
+            client::community::happy_path::send_text_message(
+                env,
+                &owner,
+                community_id,
+                channel_id,
+                None,
+                random_string(),
+                Some(members_message_id),
+            )
+            .event_index
+        }
+        Chat::Direct(_) => unreachable!(),
+    };
+    let result = delete(
+        env,
+        BotChatContext::Autonomous(chat),
+        vec![response.message_id, members_message_id],
+    );
+    assert!(
+        matches!(&result, types::UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "{result:?}"
+    );
+    assert_eq!(deleted_by(env, response.event_index), None);
+    assert_eq!(deleted_by(env, members_message_event_index), None);
+
+    // But it deletes its own autonomously
+    let result = delete(env, BotChatContext::Autonomous(chat), vec![response.message_id]);
+    assert!(matches!(result, types::UnitResult::Success), "{result:?}");
+    assert_eq!(deleted_by(env, response.event_index), Some(bot_id));
+
+    // Though not once it's uninstalled, which only the group or community checks
+    let autonomous_message = bot_send_message(
+        env,
+        bot_principal,
+        local_user_index,
+        BotChatContext::Autonomous(chat),
+        None,
+        None,
+    );
+    client::local_user_index::happy_path::uninstall_bot(env, owner.principal, local_user_index, chat.into(), bot_id);
+    let result = delete(env, BotChatContext::Autonomous(chat), vec![autonomous_message.message_id]);
+    assert!(
+        matches!(&result, types::UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "{result:?}"
+    );
+    assert_eq!(deleted_by(env, autonomous_message.event_index), None);
+}
+
 fn bot_send_message(
     env: &mut PocketIc,
     bot_principal: Principal,
