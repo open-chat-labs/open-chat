@@ -77,6 +77,7 @@
     import {
         entryBlock,
         expandMentions,
+        mentionedUsernames,
         focusEntryOnOpen,
         throttleCountdown,
     } from "@src/logic/composer/composer";
@@ -342,9 +343,9 @@
             if (outcome.kind !== "sent") throw new Error(outcome.kind);
             return;
         }
-        const { text: expanded, mentioned } = expandMentions(text, (username) =>
-            client.lookupUserForMention(username, false),
-        );
+        // members mentioned whom the chat doesn't hold are looked up
+        const lookup = await client.lookupUsersForMentions(mentionedUsernames(text));
+        const { text: expanded, mentioned } = expandMentions(text, lookup);
         const outcome = await client.sendMessage(
             context,
             expanded,

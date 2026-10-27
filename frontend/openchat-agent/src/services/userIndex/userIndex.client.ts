@@ -119,6 +119,8 @@ import {
     UserIndexUpdateBotArgs,
     UserIndexUpdateBotResponse,
     UserIndexUserRegistrationCanisterResponse,
+    UserIndexUserArgs,
+    UserIndexUserResponse,
     UserIndexUsersArgs,
     UserIndexUsersResponse,
 } from "../../typebox";
@@ -159,6 +161,7 @@ import {
     submitProofOfUniquePersonhoodResponse,
     suspendUserResponse,
     unsuspendUserResponse,
+    userIdResponse,
     userRegistrationCanisterResponse,
     usersApiResponse,
     userSearchResponse,
@@ -706,6 +709,17 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             userSearchResponse,
             UserIndexSearchArgs,
             UserIndexSearchResponse,
+        );
+    }
+
+    // The id of the user with this username (in any case), if there is one
+    getUserIdByUsername(username: string): Promise<string | undefined> {
+        return this.query(
+            "user",
+            { username },
+            userIdResponse,
+            UserIndexUserArgs,
+            UserIndexUserResponse,
         );
     }
 

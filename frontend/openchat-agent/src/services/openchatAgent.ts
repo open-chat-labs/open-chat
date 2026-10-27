@@ -2934,6 +2934,12 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setModerationFlags(flags);
     }
 
+    getUserIdByUsername(username: string): Promise<string | undefined> {
+        if (offline()) return Promise.resolve(undefined);
+
+        return this._userIndexClient.getUserIdByUsername(username);
+    }
+
     checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
         if (offline()) return Promise.resolve("offline");
 

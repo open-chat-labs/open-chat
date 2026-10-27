@@ -1,6 +1,7 @@
 import { ScreenWidth, type UserOrUserGroup } from "@client";
 import {
     expandMentions,
+    mentionedUsernames,
     entryBlock,
     focusEntryOnOpen,
     throttleCountdown,
@@ -28,6 +29,15 @@ describe("a message's mentions", () => {
             text: "@bob @UserId(a1) @UserId(a1)",
             mentioned: [known.alice],
         });
+    });
+
+    test("are found by username, to look up those the chat doesn't hold", () => {
+        expect(mentionedUsernames("hi @alice, @Bob_1 and @everyone")).toEqual([
+            "alice",
+            "Bob_1",
+            "everyone",
+        ]);
+        expect(mentionedUsernames("no mentions")).toEqual([]);
     });
 });
 

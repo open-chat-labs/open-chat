@@ -483,6 +483,7 @@ const handlers: Handlers = {
     checkUsername: (payload, agent) => agent.checkUsername(payload.username, payload.isBot),
     searchUsers: (payload, agent) =>
         agent.searchUsers(payload.searchTerm, payload.maxResults, payload.pageIndex),
+    getUserIdByUsername: (payload, agent) => agent.getUserIdByUsername(payload.username),
     getUserStorageLimits: (_payload, agent) => agent.getUserStorageLimits(),
     getPublicGroupSummary: (payload, agent) => agent.getPublicGroupSummary(payload.chatId),
     toggleMuteNotifications: (payload, agent) =>

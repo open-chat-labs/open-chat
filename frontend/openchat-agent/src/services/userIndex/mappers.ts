@@ -75,6 +75,7 @@ import type {
     UserIndexSuspendUserResponse,
     UserIndexUnsuspendUserResponse,
     UserIndexUserRegistrationCanisterResponse,
+    UserIndexUserResponse,
     UserIndexUsersResponse,
 } from "../../typebox";
 import { toRecord } from "../../utils/list";
@@ -174,6 +175,17 @@ export function userSearchResponse(value: UserIndexSearchResponse): UserSummary[
         return value.Success.users.map((u) => userSummary(u, timestamp));
     }
     throw new Error(`Unknown UserIndex.SearchResponse of ${value}`);
+}
+
+// The id of the user found, if there is one
+export function userIdResponse(value: UserIndexUserResponse): string | undefined {
+    if (value === "UserNotFound") {
+        return undefined;
+    }
+    if ("Success" in value) {
+        return principalBytesToString(value.Success.user_id);
+    }
+    throw new Error(`Unknown UserIndex.UserResponse of ${JSON.stringify(value)}`);
 }
 
 export function usersApiResponse(value: UserIndexUsersResponse): UsersApiResponse {

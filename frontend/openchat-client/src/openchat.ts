@@ -870,6 +870,9 @@ const USERS_SEARCHED_TO_FIND_MEMBERS = 255;
 const MAX_PAGES_SEARCHED_FOR_MEMBERS = 4;
 // How many members to find to offer as mentions for what has been typed
 const MEMBERS_FOUND_TO_MENTION = 50;
+// The most usernames mentioned in a message which are looked up among the members of a chat which
+// holds only some of them
+const MAX_USERNAMES_MENTIONED_LOOKED_UP = 10;
 // How often, and how many times, to check for the output of a swap reaching the wallet
 const SWAP_OUTPUT_CHECK_INTERVAL_MS = 2000;
 const SWAP_OUTPUT_CHECKS = 10;
@@ -10400,6 +10403,60 @@ export class OpenChat {
             return lookup;
         }
         return cached.lookup;
+    }
+
+    // A lookup of the users and user groups which can be mentioned in the selected chat by these
+    // usernames, as `lookupUserForMention` (without the current user). A chat which holds only some
+    // of its members may not hold those mentioned, so the users with those of the usernames it
+    // doesn't know are looked up, and included if they're members of the chat who haven't lapsed.
+    // Those found are held from then on.
+    async lookupUsersForMentions(
+        usernames: Iterable<string>,
+    ): Promise<(username: string) => UserOrUserGroup | undefined> {
+        const found = new Map<string, UserSummary>();
+        const lookup = (username: string): UserOrUserGroup | undefined =>
+            this.lookupUserForMention(username, false) ?? found.get(username.toLowerCase());
+
+        const chatId = selectedChatIdStore.value;
+        if (
+            chatId === undefined ||
+            chatId.kind === "direct_chat" ||
+            !this.membersIncomplete(chatId)
+        ) {
+            return lookup;
+        }
+        const unknown = new Set<string>();
+        for (const username of usernames) {
+            if (lookup(username) === undefined) {
+                unknown.add(username.toLowerCase());
+            }
+        }
+        if (unknown.size === 0) {
+            return lookup;
+        }
+
+        const lookedUp = await Promise.all(
+            [...unknown]
+                .slice(0, MAX_USERNAMES_MENTIONED_LOOKED_UP)
+                .map((username) =>
+                    this.#worker
+                        .send({ kind: "getUserIdByUsername", username })
+                        .catch(() => undefined),
+                ),
+        );
+        const me = currentUserIdStore.value;
+        const userIds = lookedUp.filter((u): u is string => u !== undefined && u !== me);
+        const [members] = await Promise.all([
+            this.#membersAmong(chatId, userIds),
+            this.getMissingUsers(userIds),
+        ]);
+        for (const userId of members) {
+            const user = userStore.get(userId);
+            if (user !== undefined) {
+                found.set(user.username.toLowerCase(), user);
+            }
+        }
+        return lookup;
     }
 
     lookupUserForMention(username: string, includeSelf: boolean): UserOrUserGroup | undefined {
