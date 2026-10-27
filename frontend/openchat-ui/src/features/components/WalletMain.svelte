@@ -298,9 +298,7 @@
     // back to (All activity if it was opened there)
     if (r.view === 'receive' && r.token && !valued.some((x) => idOf(x) === r.token) && receivable.some((x) => x.symbol === r.token && x.nets.length)) extTok = r.token;
     const startFromAll = flow && !r.token && view === 'all';
-    // where an extra token's Receive goes back to: Recipients, All activity (also from a flow opened there, or with no
-    // token page to go back to), else the token page shown
-    const backTo = view === 'recipients' ? 'recipients' : view === 'all' || (isFlow(view) && fromAll) || !sym ? 'all' : 'token';
+    const backTo = returnPlace();
     // a token-less flow opened from a token page acts on the token shown there (sym may name one with no balance)
     const shown = raw ? idOf(raw) : undefined;
     if (r.token && r.token !== sym) tokFilter = 0;
@@ -442,6 +440,14 @@
   }
 
   // `s` is a token's id, or the symbol of a receivable token not in `tokens`
+  // where an extra token's Receive goes back to, from where the user is now: Recipients (or a flow opened from it), All
+  // activity (or a flow opened from it, however it was picked, or with no token page to go back to), else the token page
+  function returnPlace(): 'recipients' | 'all' | 'token' {
+    if (view === 'recipients' || (isFlow(view) && backToRecipients)) return 'recipients';
+    if (view === 'all' || (isFlow(view) && (fromAll || backToAll)) || !sym) return 'all';
+    return 'token';
+  }
+
   function pickToken(s: string) {
     const tk = tokens.find((x) => idOf(x) === s);
     // browse (Supported tokens): a token in the wallet's catalogue opens its page; anything else goes to Receive
@@ -456,7 +462,14 @@
     }
     const flow: 'send' | 'receive' = pick?.view === 'receive' ? 'receive' : 'send';
     pick = null;
-    backToAll = view === 'all';
+    if (tk) {
+      backToAll = view === 'all';
+    } else {
+      // an extra token's Receive goes back to where it was picked from
+      const place = returnPlace();
+      backToAll = place === 'all';
+      backToRecipients = place === 'recipients';
+    }
     view = flow;
     // a receivable token outside `tokens` is only received: the page shown stays, for Receive to go back to
     if (tk) sym = s;
