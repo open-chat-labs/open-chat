@@ -33,6 +33,7 @@ describe("a swap offer", () => {
             canCancel: false,
         });
         expect(swapActions(swap(), { mine: false, now: 1000 }).canAccept).toBe(false);
+        expect(swapActions(swap(), { mine: true, now: 1000 }).canCancel).toBe(false);
         expect(
             swapActions(swap({ kind: "p2p_swap_reserved", reservedBy: "bob" }), {
                 mine: false,
