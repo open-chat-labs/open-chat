@@ -228,7 +228,8 @@
 
   onMount(() => {
     const tick = setInterval(() => {
-      if (view === 'play' && !flow.closing) elapsed++;
+      // the clock stops once the board is locked: while the host checks a solve, and while it holds one
+      if (view === 'play' && !checking && !flow.closing) elapsed++;
     }, 1000);
     // Esc closes, but only while this is the topmost dialog (shared stack with DialogShell)
     const self = { boxRef: { get current() { return layer; } } };
