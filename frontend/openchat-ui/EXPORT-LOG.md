@@ -326,5 +326,67 @@
 - Not in the design export: to go back to it when the export has one (the app's `GAPS.md` lists it).
 
 ## 2026-10-26 — CreateGroupDialog: channel names as typed, by hand
-- A channel's name (and a new community's channel list) was slugged as you typed: lowercased, spaces to hyphens, anything else dropped. Nothing requires that, so names are now kept as typed (trimmed; the channel list still caps each at its length and rejects duplicates), and the channel name's hint no longer says "Lowercase, no spaces".
+- A channel's name (and a new community's channel list) was slugged as you typed: lowercased, spaces to hyphens, anything else dropped. Nothing requires that, so names are now kept as typed (trimmed; the channel list still caps each at its length and rejects duplicates), and the channel name's and the channel list's hints no longer say "Lowercase, no spaces"; a new community's first channel is "General". The people list's heading is hidden over an empty list (as InviteDialog's).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — CreateGroupDialog: a community's permissions, by hand
+- A community's permissions default to admin (`communityDef`, and private channels and user groups), as the backend's and GroupSettingsDialog's do; the dialog offered invite and private channels to every member and roles and user groups to the owner only. A community shows no message permissions (delete, pin, react, @everyone, calls) and no Messages / Threads tabs, which a community doesn't have. `communityDefaults` lets the host pass its own community defaults (the app passes its own), so a re-export that loses the built-in ones can't change who runs a new community.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — CreateGroupDialog: locked while creating, by hand
+- While the host's create is in flight the tabs and the form are `inert` and dimmed, so nothing can be changed or switched until it resolves or fails; Cancel and close were already held. The form used to stay editable while creating.
+
+## 2026-10-26 — ChatPicker in sections with the host's search; InviteDialog's share to a chat; Avatar's gradients, by hand
+- `ChatPicker`: a long item line (an invite link) no longer widens the picker past its card (the dialog body's grid column grew to it); it's cut with an ellipsis, as meant. Section labels are uppercased, as the design's "RECENT CHATS" is, so a host's names (Group chats, a community's) read the same.
+- `ChatPicker`: a chat's `sub` (literal text under its name, in place of `kind`: a DM's last seen, a group's description) and `group` (the section it's listed under, literal text shown as given: a community's name isn't run through the translator). When the chats have sections, a header starts each, in place of "Recent chats" / "Results"; the host gives them in order. `filter`: the host's search (a name, a @username, a community's name), in place of matching `chats` by name and kind. `emptyLabel` (default `ui.chatPicker.noChats`, "No chats available"): what an empty list says with nothing searched for.
+- `InviteDialog`: `filterChats`, passed to its picker as `filter`; its chats take `sub` and `group` too. `onShareToChat` may resolve `false`: nothing sent and nothing to say (the user backed out), so the picker stays open with no toast.
+- `Avatar`: its gradients exported as `AVATAR_GRADIENTS` (a module script), for a host drawing a face the same colour elsewhere (the picker's tiles).
+- `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — WebhookDialog: delete, by hand
+- `onDelete` adds "Delete webhook" to edit mode (beside Cancel). It swaps the body for a confirm step (the name, the URL struck through, "anything posting to its URL will stop working"), as Regenerate's does, and closes once the host's promise resolves; a rejection keeps it open with "Couldn't delete the webhook". The design has no way to remove a webhook; the old pages did. Strings under `ui.webhookDialog.delete*`, `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — BotDialog: the host's permissions, by hand
+- `permissions` (`BotPermissionInfo[]`: key, label, group, risky) replaces the built-in eleven-permission vocabulary: the bot's `perms`, its commands' `needs` and `granted` use the host's keys, the toggles are listed under the host's headings in its order, and the summary sentence lists the host's labels (risky ones highlighted). The app's bots ask for some thirty permissions, for commands and for acting on their own apart, which the built-in set can't express without granting by guesswork. Without `permissions` the dialog behaves as before. `BotDefinition.perms` / `needs` / `granted` and `BotInstall.granted` are keyed by string; `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — VoiceMessage: the recording's waveform, by hand
+- `levels` (0–1 per bar) draws the recording's own waveform; without it the placeholder bars show as before. The design's bars are made up. `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-26 — LinkCard and ChatBubble previews, by hand
+- `LinkCard` is `LinkPreview`'s card, taken out unchanged (large or compact, links only to http(s)) so `LinkPreview` and `ChatBubble` share it; `LinkPreview` renders one.
+- `ChatBubble` takes `previews`, a `LinkCard` each under the text. With any, the bubble takes `LinkPreview`'s shell: 320px wide, a 4px inset the cards sit flush to, the text, quote and forwarded tag padded as `LinkPreview`'s text, and the time and tick in a footer under the cards rather than at the end of the text. A message with link previews keeps its markdown, edit, quote, thread and reactions; `LinkPreview` as a message kind of its own has none of them. `onRemovePreview` puts an X on each card (shown on hover or focus, always on touch), for the sender to remove it, as the old trees allow. `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-27 — TransferMessage: direction and recipient, by hand
+- `direction` (`in` / `out` / `other`) replaces the side as what sets the sign: a transfer between two other people in a group has no sign and no green, where the side alone would show it as received by the reader. `recipient` adds "to Bob" after the USD value. Without either it behaves as before. String `ui.transferMessage.to`; `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-27 — PollMessage: readonly and showResults, by hand
+- `readonly` locks the poll for a reader who may not vote at all (a DM, a read-only chat); the design locks it only once closed or voted without "change vote". `showResults` lets the host say when the counts show: the poll's sender sees them before voting, and a poll that hides its votes until the end doesn't show them after a vote. Without either it behaves as before. The footer counts votes whenever the results show, and "View votes" shows only with `onViewVotes`. `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-27 — PrizeMessage: the claim's click and canClaim, by hand
+- `onClaim` gets the click: the app claims only from a trusted one. `canClaim` (default true) leaves Claim out where the host doesn't offer it (the sender's own prize, a DM, all taken); the design offered it to everyone. Without `wonAmount` a win says "You won" (`ui.prizeMessage.youWonIt`): a prize message carries no amount. `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-27 — SwapOffer: pending and cancelled, by hand
+- `state` gains `pending` (taken, not yet settled: `doneText` says how, in a quiet segment with no check) and `cancelled` (dimmed like `expired`, headed "Cancelled"); the design had only open, done and expired, so a cancelled offer would have read "Expired" and one being settled had nothing to show. Strings `ui.swapOffer.cancelled` and `ui.swapOffer.inProgress`. `caption` shows the offer's message under the card, as `TransferMessage` does; the design had none. `canAct` (default true) leaves the action out for a reader who can't take it (previewing the chat). `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-27 — pass 5, ported by hand
+- From the pass 5 export (13 components and the icon set); its `.logic.js` and demo data not taken. `WalletPanel`'s rows are ported with the wallet (6a).
+- Icons: `backspace`, `keyboard` and `minus` added; `screen-share` and `phone-off` redrawn; `calendar`, `video-off`, `maximize` and `minimize` take the export's path order. Ours keeps `moon`, `sun`, `smartphone`, `pause-filled` and `play-filled`, which the export doesn't have (154 icons).
+- `Button`: labels never wrap (ellipsis; the full text is the tooltip only when it's cut off); `size` (`md` 40px, `lg` 52px with a 14px radius); `icon` before the label, an icon-only button (empty label) is square with the icon centred; `ariaLabel` (an icon-only button's accessible name and tooltip). A disabled button is `role="button"` with `aria-disabled`.
+- `ChatRow`: the pin is accent; `locked` puts a lock before the title (private channels and groups). `ChatListPanel` passes a row's `locked` through.
+- `ActivityRow`: an unread row has no tint; its dot alone marks it.
+- `ChatBubble`: `mirror` puts the grouped / tail corners on the inline-end side (right-aligned layouts), a deleted message's too. Web unchanged.
+- `Confetti`: `within`, a CSS selector of an ancestor to clip the burst to (the clip and the pieces follow it if it moves during the burst; an invalid selector clips to nothing).
+- `AchievementToast`: `speed` (every duration, delay and timer) and `outroSpeed` (the collapse and fade only), both 1 by default.
+- `PuzzleDialog`: the solved screen's trophy is 80px; `holdSolved` + `solvedReady` keep a solve on the (locked, no hints) board after `onSolved` until the host is ready; it's revealed from the board only, so How to play opened meanwhile isn't cut short, and stays revealed whatever `solvedReady` does next; the clock stops while a solve is checked or held.
+- Already in place from the hand ports of 2026-10-24: `ClaimCalendar`, `ClaimHistoryDialog`, `ChitDialog`'s calendar link and cog, `ProfileDialog`'s Claim history row (ours keep the real claim data in place of the export's demo props).
+- Not ported, as nothing on the web uses them (native layouts): `MessageComposer`'s sizing variables, `emojiPlacement` / `plusPlacement`, host-owned panels (`onPlus` / `plusActive`, `onEmoji` / `emojiActive`, `onInputFocus`, `insert`) and its markup fix around the + button (ours is a separate hand conversion without that nesting); `PuzzleDialog`'s `layout="screen"`, `topInset`, `backIcon` and `backFlip`.
+- `meta.json` and the strings (`ui.chatRow.private`) updated. `features/index.ts` exports `ClaimDay` from `ClaimCalendar`.

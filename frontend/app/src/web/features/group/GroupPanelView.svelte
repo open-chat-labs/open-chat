@@ -28,6 +28,13 @@
         selectedCommunityRulesStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
+        selectedChatWebhooksStore,
+        selectedChatBotsStore,
+        selectedCommunityBotsStore,
+        botState,
+        hydrateBots,
+        type BotInstallationLocation,
+        type ExternalBotLike,
         usersFromIds,
         type MultiUserChat,
     } from "@client";
@@ -49,7 +56,7 @@
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { profileClickedEvent } from "@src/web-components/profileLink";
-    import { getContext, untrack } from "svelte";
+    import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
     import { communityPermissionsValue, permissionsValue } from "./settings.adapter";
@@ -64,6 +71,8 @@
         panelHeader,
         pinRow,
         userGroupRow,
+        webhookRow,
+        botRow,
         userPerson,
     } from "./group.adapter";
     import { leaveOrDeleteFor } from "./manage.adapter";
@@ -81,6 +90,8 @@
         embedded?: boolean;
         /** The right column's compact panel: its views open Manage, except pinned messages. */
         quick?: boolean;
+        /** Embedded: GroupPanel's bots view shows only the bots or only the webhooks. */
+        botsPart?: "" | "bots" | "webhooks";
         /** The quick panel's ⋯ menu, in place of GroupPanel's own. */
         menuOverride?: MenuItem[];
         /** Shows a back arrow, for a panel opened over another. */
@@ -99,6 +110,7 @@
         dialogs,
         embedded = false,
         quick = false,
+        botsPart = "",
         menuOverride,
         back = false,
         onManage,
@@ -318,8 +330,49 @@
     // GroupPanel offers Leave to everyone, so the rules are checked here (GAPS.md). Settings and
     // invite open Manage: the editor or, for someone who can't edit, the About page.
     // TODO(4b): bots, webhooks, convert, import and new channels (parts 4-5)
+    // ── bots: a group's, or a channel's community's ──
+
+    const botLocation = $derived.by((): BotInstallationLocation | undefined => {
+        if (collection === undefined) return undefined;
+        if (collection.kind === "group_chat") return collection.id;
+        return community?.id;
+    });
+    const installedBots = $derived(
+        hydrateBots(
+            collection?.kind === "group_chat"
+                ? $selectedChatBotsStore
+                : $selectedCommunityBotsStore,
+            botState.externalBots,
+        ),
+    );
+    // the bots to add, for someone who may manage them: loaded once Manage's Bots page opens
+    let recommended = $state<ExternalBotLike[]>([]);
+    onMount(async () => {
+        if (botsPart !== "bots" || botLocation === undefined || !permissions?.canManageBots) return;
+        const found = await client.exploreBots(undefined, 0, 20, botLocation, true);
+        if (found.kind === "success") recommended = found.matches;
+    });
+    function knownBot(id: string): ExternalBotLike | undefined {
+        return installedBots.find((b) => b.id === id) ?? recommended.find((b) => b.id === id);
+    }
+
     function onDialog(kind: string, payload?: unknown, tab?: string) {
         if (collection === undefined) return;
+        if (kind === "bot") {
+            const { id } = (payload ?? {}) as { id?: string };
+            const bot = id === undefined ? undefined : knownBot(id);
+            if (bot !== undefined && botLocation !== undefined) {
+                dialogs.open({ kind: "bot", location: botLocation, bot });
+            }
+            return;
+        }
+        if (kind === "webhook") {
+            if (collection.kind !== "community" && permissions?.canManageWebhooks) {
+                const { id } = (payload ?? {}) as { id?: string };
+                dialogs.open({ kind: "webhook", chatId: collection.id, webhookId: id });
+            }
+            return;
+        }
         if (kind === "usergroup") {
             if (collection.kind === "community" && permissions?.canManageUserGroups) {
                 const { dialogMode, key } = payload as UserGroupDialogRequest;
@@ -463,6 +516,15 @@
         onUnpin={unpin}
         {embedded}
         {quick}
+        {botsPart}
+        bots={installedBots.map(botRow)}
+        recommendedBots={recommended.map(botRow)}
+        webhooks={collection.kind === "community"
+            ? []
+            : [...$selectedChatWebhooksStore.values()].map(webhookRow)}
+        canManageBots={botsPart === "webhooks"
+            ? (permissions?.canManageWebhooks ?? false)
+            : (permissions?.canManageBots ?? false)}
         manageIcon={permissions?.canEdit ? "manage" : "info"}
         {menuOverride}
         onManage={(v) => manage(panelViewSection(v))}

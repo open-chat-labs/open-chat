@@ -1,6 +1,11 @@
-import { bridgedFrom, type Message, type MessageActivityEvent, type ResourceKey } from "@client";
+import {
+    bridgedFrom,
+    totalVotes,
+    type Message,
+    type MessageActivityEvent,
+    type ResourceKey,
+} from "@client";
 import { i18nKey } from "@src/i18n/i18n";
-import { totalVotes } from "@src/utils/polls";
 
 export type SummaryNames = {
     /** The signed-in user's id: they are never counted among the others who reacted. */

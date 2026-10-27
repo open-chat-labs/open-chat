@@ -204,6 +204,7 @@
                   color={row.color}
                   online={row.online}
                   verified={row.verified}
+                  locked={row.locked}
                   pinned={row.pinned}
                   selected={row.selected}
                   typing={row.typing}

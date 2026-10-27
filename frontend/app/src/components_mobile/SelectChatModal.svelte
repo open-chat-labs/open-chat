@@ -13,12 +13,13 @@
     } from "@client";
     import {
         allUsersStore,
-        chatIdentifiersEqual,
         communitiesStore,
         favouritesStore,
+        groupMembersLine,
         selectedChatIdStore,
         serverDirectChatsStore,
         serverGroupChatsStore,
+        type ShareTarget,
     } from "@client";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import {
@@ -31,6 +32,7 @@
         Search,
         Subtitle,
     } from "component-lib";
+    import { chatsToShareTo } from "@src/logic/share/chatsToShareTo";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
@@ -38,7 +40,6 @@
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import { i18nKey, interpolate } from "../i18n/i18n";
     import { now } from "../stores/time";
-    import { buildDisplayName } from "../utils/user";
     import CollapsibleCard from "./CollapsibleCard.svelte";
     import NothingToSee from "./home/NothingToSee.svelte";
     import Badges from "./home/profile/Badges.svelte";
@@ -101,98 +102,47 @@
         );
     }
 
-    async function targetsFromChatList(
-        now: number,
-        chats: ChatSummary[],
-        selectedChatId: ChatIdentifier | undefined,
-    ): Promise<ShareChat[]> {
-        return Promise.all(
-            filterChatSelection(chats, selectedChatId).map((c) => normaliseChatSummary(now, c)),
-        );
-    }
-
-    function matchesSearch(thing: ShareChat | ShareCommunity, searchTerm: string): boolean {
-        return (
-            (searchTerm === "" ||
-                thing.name.toLocaleLowerCase().includes(searchTerm) ||
-                (thing.kind === "chat" &&
-                    thing.username?.toLocaleLowerCase()?.includes(searchTerm))) ??
-            false
-        );
-    }
-
-    function chatMatchesSearch(chats: ShareChat[], searchTerm: string): ShareChat[] {
-        return chats.filter((c) => matchesSearch(c, searchTerm)).sort(compare);
-    }
-
-    function communityMatchesSearch(communities: ShareCommunity[], searchTerm: string) {
-        return communities
-            .reduce((agg, c) => {
-                if (matchesSearch(c, searchTerm)) {
-                    agg.push(c);
-                } else {
-                    const filtered = chatMatchesSearch(c.channels, searchTerm);
-                    if (filtered.length > 0) {
-                        agg.push({
-                            ...c,
-                            channels: filtered,
-                        });
-                    }
-                }
-                return agg;
-            }, [] as ShareCommunity[])
-            .sort(compare);
-    }
-
     async function buildListOfTargets(
         now: number,
         selectedChatId: ChatIdentifier | undefined,
         searchTerm: string,
     ): Promise<ShareTo> {
-        const targets: ShareTo = {
-            directChats: [],
-            groupChats: [],
-            favourites: [],
-            communities: [],
-        };
-        const direct = [...$serverDirectChatsStore.values()].map((d) => ({
-            ...d,
-            name: buildDisplayName($allUsersStore, d.them.userId, "user"),
-        }));
-
-        const group = [...$serverGroupChatsStore.values()];
-        const channels = [...$communitiesStore.values()].flatMap((c) => c.channels);
-        const all = [...group, ...direct, ...channels];
-        const favs = all.filter((c) => $favouritesStore.has(c.id));
+        const chats = (targets: ShareTarget[]) =>
+            Promise.all(targets.map((t) => normaliseChatSummary(now, t.chat)));
         try {
-            const directChats = await targetsFromChatList(now, direct, selectedChatId);
-            const groupChats = await targetsFromChatList(now, group, selectedChatId);
-            const favourites = await targetsFromChatList(now, favs, selectedChatId);
-            const communities = await Promise.all(
-                [...$communitiesStore.values()].map((c) =>
-                    normaliseCommunity(now, selectedChatId, c),
-                ),
+            // which chats, the search and their order: the same in every tree (chatsToShareTo)
+            const found = chatsToShareTo(
+                client,
+                {
+                    directChats: $serverDirectChatsStore.values(),
+                    groupChats: $serverGroupChatsStore.values(),
+                    communities: $communitiesStore.values(),
+                    favourites: $favouritesStore,
+                    users: $allUsersStore,
+                },
+                excludeCurrent ? selectedChatId : undefined,
+                searchTerm,
             );
             return {
-                directChats: chatMatchesSearch(directChats, searchTerm),
-                groupChats: chatMatchesSearch(groupChats, searchTerm),
-                favourites: chatMatchesSearch(favourites, searchTerm),
-                communities: communityMatchesSearch(communities, searchTerm),
+                directChats: await chats(found.directChats),
+                groupChats: await chats(found.groupChats),
+                favourites: await chats(found.favourites),
+                communities: await Promise.all(
+                    found.communities.map(async ({ community, channels }) =>
+                        normaliseCommunity(community, await chats(channels)),
+                    ),
+                ),
             };
         } catch {
-            // a search that throws leaves the targets unfiltered
+            // a description that can't be built leaves the targets empty
+            return { directChats: [], groupChats: [], favourites: [], communities: [] };
         }
-        return targets;
     }
 
-    async function normaliseCommunity(
-        now: number,
-        selectedChatId: ChatIdentifier | undefined,
-        { id, name, avatar, description, channels, lastUpdated }: CommunitySummary,
-    ): Promise<ShareCommunity> {
-        const normalisedChannels = await Promise.all(
-            filterChatSelection(channels, selectedChatId).map((c) => normaliseChatSummary(now, c)),
-        );
+    function normaliseCommunity(
+        { id, name, avatar, description, lastUpdated }: CommunitySummary,
+        channels: ShareChat[],
+    ): ShareCommunity {
         return {
             kind: "community",
             id,
@@ -200,7 +150,7 @@
             avatarUrl: client.communityAvatarUrl(id.communityId, avatar),
             description,
             lastUpdated,
-            channels: normalisedChannels,
+            channels,
         };
     }
 
@@ -255,30 +205,9 @@
     }
 
     function buildGroupChatDescription(group: MultiUserChat): string {
-        if (group.description.length > 0) {
-            return group.description;
-        } else {
-            const level = $_(`level.${group.level}`).toLowerCase();
-            const number = group.memberCount;
-            return group.public
-                ? $_("publicGroupWithN", { values: { number, level } })
-                : $_("privateGroupWithN", { values: { number, level } });
-        }
-    }
-
-    function filterChatSelection(
-        chats: ChatSummary[],
-        selectedChatId: ChatIdentifier | undefined,
-    ): ChatSummary[] {
-        return chats.filter(
-            (c) =>
-                (!excludeCurrent || !chatIdentifiersEqual(selectedChatId, c.id)) &&
-                client.canSendMessage(c.id, "message", "text"),
-        );
-    }
-
-    function compare(a: { name: string }, b: { name: string }): number {
-        return a.name.localeCompare(b.name);
+        return group.description.length > 0
+            ? group.description
+            : interpolate($_, groupMembersLine(group));
     }
 </script>
 

@@ -1,5 +1,5 @@
 <!-- Swap offer, read from the viewer's side: what leaves your wallet (−) on top, what arrives (+) below, joined by an arrow.
-     state: open | done | expired. Your own offer (side 'sent') shows Cancel offer as a quiet segment; others' offers show accent Accept swap. -->
+     state: open | pending (taken, not yet settled) | done | cancelled | expired. Your own offer (side 'sent') shows Cancel offer as a quiet segment; others' offers show accent Accept swap. -->
 <script lang="ts">
   import { useT } from '../i18n';
   import TokenAvatar from './TokenAvatar.svelte';
@@ -15,7 +15,8 @@
 
   interface Props {
     side?: 'received' | 'sent';
-    state?: 'open' | 'done' | 'expired';
+    /** pending: taken and on its way, doneText says how; cancelled reads like expired. */
+    state?: 'open' | 'pending' | 'done' | 'cancelled' | 'expired';
     /** What leaves the viewer's wallet. */
     give: Leg;
     /** What arrives. */
@@ -24,24 +25,29 @@
     expiresIn?: string;
     /** Resource key (or literal text). */
     doneText?: string;
+    /** The offer's message, under the card. */
+    caption?: string;
+    /** Whether an open offer offers its action (Accept / Cancel offer) to this reader. */
+    canAct?: boolean;
     time: string;
     lastInGroup?: boolean;
     onAccept?: () => void;
     onCancel?: () => void;
   }
 
-  let { side = 'received', state = 'open', give, get, expiresIn = '', doneText = 'ui.swapOffer.swapped', time, lastInGroup = true, onAccept, onCancel }: Props = $props();
+  let { side = 'received', state = 'open', give, get, expiresIn = '', doneText = 'ui.swapOffer.swapped', caption = '', canAct = true, time, lastInGroup = true, onAccept, onCancel }: Props = $props();
   const t = useT();
 
   const sent = $derived(side === 'sent');
-  const when = $derived(state === 'open' ? (expiresIn ? t('ui.swapOffer.timeLeft', { time: expiresIn }) : '') : t(state === 'done' ? 'ui.swapOffer.finished' : 'ui.swapOffer.expired'));
+  const WHEN = { pending: 'ui.swapOffer.inProgress', done: 'ui.swapOffer.finished', cancelled: 'ui.swapOffer.cancelled', expired: 'ui.swapOffer.expired' };
+  const when = $derived(state === 'open' ? (expiresIn ? t('ui.swapOffer.timeLeft', { time: expiresIn }) : '') : t(WHEN[state]));
   const legs = $derived([
     { leg: give, sign: '−', incoming: false },
     { leg: get, sign: '+', incoming: true },
   ]);
 </script>
 
-<div class="shell" class:sent class:last={lastInGroup} class:expired={state === 'expired'}>
+<div class="shell" class:sent class:last={lastInGroup} class:expired={state === 'expired' || state === 'cancelled'}>
   <div class="stack">
     <div class="head"><span class="label"><span class="swap-icon"></span><span class="grow">{t('ui.swapOffer.title')}</span><span class="when">{when}</span></span></div>
     <div class="legs">
@@ -53,12 +59,15 @@
       {/each}
       <span class="arrow" aria-hidden="true"><span class="arrow-icon"></span></span>
     </div>
-    {#if state === 'open'}
+    {#if state === 'open' && canAct}
       <span class="action" onclick={sent ? onCancel : onAccept} role="button" tabindex="0">{t(sent ? 'ui.swapOffer.cancelOffer' : 'ui.swapOffer.acceptSwap')}</span>
     {:else if state === 'done'}
       <span class="done"><span class="check"></span>{t(doneText)}</span>
+    {:else if state === 'pending'}
+      <span class="done pending">{t(doneText)}</span>
     {/if}
   </div>
+  {#if caption}<p class="caption">{caption}</p>{/if}
   <div class="time">{time}</div>
 </div>
 
@@ -221,11 +230,24 @@
     color: var(--status-online);
   }
 
+  .done.pending {
+    color: var(--msg-soft);
+  }
+
   .check {
     width: 13px;
     height: 13px;
     background: currentColor;
     mask: var(--icon-check) center/contain no-repeat;
+  }
+
+  .caption {
+    margin: 0;
+    padding: 10px 10px 0;
+    font: var(--weight-regular) var(--text-base) / 1.45 var(--font-sans);
+    color: var(--msg-ink);
+    text-wrap: pretty;
+    overflow-wrap: anywhere;
   }
 
   .time {

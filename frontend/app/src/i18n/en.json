@@ -466,6 +466,13 @@
         "unlink": "Unlink",
         "unlinkFailed": "Couldn't unlink the account"
     },
+    "cashtag": {
+        "chartLabel": "{symbol} price over the last 7 days",
+        "change7d": "{change} over 7 days",
+        "noHistory": "No trades in the last 7 days",
+        "noPrice": "No price available",
+        "priceDataBy": "Price data by {source}"
+    },
     "bridgedUserUnknown": "{platform} user",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "cancel": "Cancel",
@@ -1736,6 +1743,9 @@
     "owner": "owner",
     "ownerCantLeave": "You must add another owner before you can leave the {level}",
     "p2pSwap": {
+        "cancelOffer": "Cancel offer",
+        "cancelOfferQuestion": "Cancel this swap offer?",
+        "keepOffer": "Keep offer",
         "accept": "Accept",
         "accepted": "Accepted",
         "acceptedBy": "This offer has been accepted by {user} and is pending completion.",
@@ -1991,7 +2001,7 @@
         "authRequiredTitle": "Sign in to claim",
         "claim": "Claim",
         "claimed": "Success!",
-        "claimFailed": "Sorry your claim was unsuccessfull! Better luck next time. ",
+        "claimFailed": "Sorry, your claim was unsuccessful! Better luck next time.",
         "claimIneligible": "Sorry you don't meet the requirements to claim this prize.",
         "click": "Click the button below for a chance to win a prize.",
         "creatingPrizeMessageFailed": "Failed to create your prize message",
@@ -2264,6 +2274,7 @@
     "removedBy": "{changedBy} removed {changed} from the {level}",
     "removeMemberFailed": "Unable to remove member",
     "removePreviewQuestion": "Remove preview?",
+    "errorRemovingLinkPreview": "Couldn't remove the preview",
     "renderPreviews": "Auto-render link previews",
     "reply": "Reply",
     "replyPrivately": "Reply privately",
@@ -2735,7 +2746,10 @@
         "updateTitle": "Update {name}",
         "urlLabel": "Webhook URL",
         "username": "webhook",
-        "viewEditAction": "View/edit webhook details"
+        "viewEditAction": "View/edit webhook details",
+        "registerFailed": "Sorry, we couldn't register the webhook",
+        "updateFailed": "Sorry, we couldn't update the webhook",
+        "regenerateFailed": "Sorry, we couldn't regenerate the webhook's URL"
     },
     "websiteVersion": "of the website",
     "weeks": "Weeks",

@@ -1,9 +1,29 @@
-import { userGroupMentionRegex, userIdMentionRegex } from "@client";
+import {
+    formatUsdPrice,
+    userGroupMentionRegex,
+    userIdMentionRegex,
+    type CashtagCoin,
+    type CryptocurrencyDetails,
+    type PriceSubject,
+    type ReadonlyMap,
+    type TokenExchangeRates,
+} from "@client";
 import { marked } from "marked";
 import { DOMPurifyDefault, sanitizeOneLine } from "@src/utils/domPurify";
 
 export type MentionedUser = { id: string; userId: string; username: string };
 export type MentionedUserGroup = { id: number; groupId: number; name: string };
+// The token or coin a cashtag stands for: `symbol` as found in the text, in lower case; the token's
+// own symbol; what it is; its price as shown (eg. "$0.0281"), if it's known; and the credit that
+// price needs, if any (eg. "Price data by CoinGecko"). The price as shown, not as a number, so a
+// message re-renders only when the price it shows changes, not with every poll
+export type MentionedToken = {
+    symbol: string;
+    tokenSymbol: string;
+    subject: PriceSubject;
+    price: string | undefined;
+    credit: string | undefined;
+};
 
 export type RenderMarkdownInput = {
     text: string;
@@ -12,6 +32,7 @@ export type RenderMarkdownInput = {
     suppressLinks: boolean;
     users: MentionedUser[];
     userGroups: MentionedUserGroup[];
+    tokens: MentionedToken[];
 };
 
 const htmlEscapes: Record<string, string> = {
@@ -41,6 +62,143 @@ export function extractMentionedUserIds(text: string): string[] {
 
 export function extractMentionedUserGroupIds(text: string): number[] {
     return uniqueMatches(text, userGroupMentionRegex).map(Number);
+}
+
+// A cashtag: $ and a token's symbol, which starts with a letter, so an amount like $5 isn't one, and
+// may have dots in it (RICH.OT). Not inside a word or straight after another $, nor followed by more
+// of a word. The character before it is captured rather than looked behind at, which older Safaris
+// can't parse
+const cashtagRegex =
+    /(^|[^\p{L}\p{N}_$])\$([A-Za-z][A-Za-z0-9]*(?:\.[A-Za-z0-9]+)*)(?![\p{L}\p{N}_$])/gu;
+
+// Anything that could be a cashtag in the raw text, before markdown: the text around it isn't
+// checked here, since markdown can change it (`_$CHAT_` is <em>$CHAT</em>). replaceCashtags checks
+const candidateRegex = /\$([A-Za-z][A-Za-z0-9]*(?:\.[A-Za-z0-9]+)*)/g;
+
+// The symbols the text's cashtags could stand for, in lower case: each cashtag's symbol and, for one
+// with dots in it, each shorter one up to a dot, so "$CHAT.Nice" can still be CHAT
+export function extractCashtagSymbols(text: string): string[] {
+    if (!text.includes("$")) return [];
+    const symbols: string[] = [];
+    for (const m of text.matchAll(candidateRegex)) {
+        for (const symbol of cashtagSymbols(m[1].toLowerCase())) {
+            if (!symbols.includes(symbol)) symbols.push(symbol);
+        }
+    }
+    return symbols;
+}
+
+// longest first
+function cashtagSymbols(symbol: string): string[] {
+    const symbols = [symbol];
+    for (let dot = symbol.lastIndexOf("."); dot > 0; dot = symbol.lastIndexOf(".", dot - 1)) {
+        symbols.push(symbol.slice(0, dot));
+    }
+    return symbols;
+}
+
+/**
+ * What the text's cashtag symbols stand for: a token OpenChat lists first (`tokensBySymbol`, keyed by
+ * symbol in lower case), else one of the largest coins it doesn't (eg. $ADA), else nothing. `credit`
+ * gives the credit a price from the given source needs, if any.
+ */
+export function mentionedTokens(
+    symbols: string[],
+    tokensBySymbol: ReadonlyMap<string, Pick<CryptocurrencyDetails, "symbol" | "ledger">>,
+    exchangeRates: ReadonlyMap<string, TokenExchangeRates>,
+    coins: ReadonlyMap<string, CashtagCoin>,
+    credit: (source: string | undefined) => string | undefined,
+): MentionedToken[] {
+    const tokens: MentionedToken[] = [];
+    for (const symbol of symbols) {
+        const token = tokensBySymbol.get(symbol);
+        if (token !== undefined) {
+            const rate = exchangeRates.get(token.ledger);
+            tokens.push({
+                symbol,
+                tokenSymbol: token.symbol,
+                subject: { kind: "token", ledger: token.ledger },
+                price: rate?.toUSD !== undefined ? formatUsdPrice(rate.toUSD) : undefined,
+                credit: credit(rate?.source),
+            });
+            continue;
+        }
+        const coin = coins.get(symbol);
+        if (coin !== undefined) {
+            tokens.push({
+                symbol,
+                tokenSymbol: coin.symbol,
+                subject: { kind: "coin", id: coin.id },
+                price: formatUsdPrice(coin.usd),
+                credit: credit(coin.source),
+            });
+        }
+    }
+    return tokens;
+}
+
+export function sameMentionedTokens(a: MentionedToken[], b: MentionedToken[]): boolean {
+    return (
+        a.length === b.length &&
+        a.every(
+            (t, i) =>
+                t.symbol === b[i].symbol &&
+                t.tokenSymbol === b[i].tokenSymbol &&
+                subjectKey(t.subject) === subjectKey(b[i].subject) &&
+                t.price === b[i].price &&
+                t.credit === b[i].credit,
+        )
+    );
+}
+
+// The elements whose text cashtags are left alone in: code; links, whose text is the link's own; and
+// spoilers, which render their contents in a shadow root, out of reach of the chip's styles
+const noCashtagsIn = new Set(["a", "code", "pre", "spoiler-span"]);
+
+// Replaces the cashtags of known tokens in rendered HTML with <cash-tag>s, leaving any in code,
+// links or spoilers as they are. Unknown symbols stay as text
+export function replaceCashtags(
+    html: string,
+    tokens: MentionedToken[],
+    suppressLinks: boolean,
+): string {
+    if (tokens.length === 0) return html;
+    // how many code or link elements the text is inside
+    let skipping = 0;
+    return html.replace(/<(\/?)([a-zA-Z][\w-]*)[^>]*>|[^<]+/g, (part, closing, tag) => {
+        if (tag !== undefined) {
+            if (noCashtagsIn.has(tag.toLowerCase())) {
+                skipping = Math.max(0, skipping + (closing === "/" ? -1 : 1));
+            }
+            return part;
+        }
+        if (skipping > 0) return part;
+        return part.replace(cashtagRegex, (match, before: string, symbol: string) => {
+            for (const s of cashtagSymbols(symbol)) {
+                const token = tokens.find((t) => t.symbol === s.toLowerCase());
+                if (token !== undefined) {
+                    return `${before}${cashtagElement(token, suppressLinks)}${symbol.slice(s.length)}`;
+                }
+            }
+            return match;
+        });
+    });
+}
+
+function subjectKey(subject: PriceSubject): string {
+    return subject.kind === "token" ? `token:${subject.ledger}` : `coin:${subject.id}`;
+}
+
+function cashtagElement(token: MentionedToken, suppressLinks: boolean): string {
+    const subject =
+        token.subject.kind === "token"
+            ? `data-ledger="${escapeHtml(token.subject.ledger)}"`
+            : `data-coin="${escapeHtml(token.subject.id)}"`;
+    const price = token.price !== undefined ? ` data-price="${escapeHtml(token.price)}"` : "";
+    const credit = token.credit !== undefined ? ` data-credit="${escapeHtml(token.credit)}"` : "";
+    return `<cash-tag ${subject}${price}${credit} suppress-links="${suppressLinks}">$${escapeHtml(
+        token.tokenSymbol,
+    )}</cash-tag>`;
 }
 
 export function sameMentionedUsers(a: MentionedUser[], b: MentionedUser[]): boolean {
@@ -101,7 +259,7 @@ export function replaceEveryone(text: string): string {
 // had datetimes and the link-disabled marker handled by the caller. DOMPurify
 // runs on every call; nothing here is cached.
 export function renderMarkdown(
-    { text, inline, oneLine, suppressLinks, users, userGroups }: RenderMarkdownInput,
+    { text, inline, oneLine, suppressLinks, users, userGroups, tokens }: RenderMarkdownInput,
     logError: (msg: string, err: unknown) => void,
 ): string {
     let parsed = replaceEveryone(
@@ -120,6 +278,7 @@ export function renderMarkdown(
         parsed = replaceUserIds(parsed, users, suppressLinks);
         parsed = replaceCustomEmojis(parsed);
         parsed = replaceSpoilers(parsed);
+        parsed = replaceCashtags(parsed, tokens, suppressLinks);
     } catch (err) {
         logError("Error parsing markdown: ", err);
     }

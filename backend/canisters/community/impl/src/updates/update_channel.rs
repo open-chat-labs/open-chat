@@ -110,7 +110,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<Suc
         jobs::unlapse_members::start_job_if_required(state);
     }
 
-    state.push_bot_notifications(result.bot_notifications);
+    state.push_bot_notifications(result.bot_notifications.into_iter().flatten());
     handle_activity_notification(state);
 
     Ok(SuccessResult {

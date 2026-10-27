@@ -34,6 +34,7 @@ pub enum MessageContentInitial {
     P2PSwap(P2PSwapContentInitial),
     Encrypted(EncryptedContent),
     Custom(CustomContent),
+    PriceChart(PriceChartContent),
 }
 
 #[ts_export]
@@ -59,6 +60,7 @@ pub enum MessageContent {
     VideoCall(VideoCallContent),
     Encrypted(EncryptedContent),
     Custom(CustomContent),
+    PriceChart(PriceChartContent),
 }
 
 #[ts_export]
@@ -82,6 +84,7 @@ pub enum MessageContentType {
     ModerationReport,
     P2PSwap,
     VideoCall,
+    PriceChart,
     Custom(String),
 }
 
@@ -124,6 +127,7 @@ pub enum ContentValidationError {
     InvalidTypeForForwarding,
     PrizeEndDateInThePast,
     Unauthorized,
+    InvalidPriceChart(String),
 }
 
 impl From<ContentValidationError> for OCError {
@@ -175,7 +179,8 @@ impl MessageContent {
             | MessageContent::P2PSwap(_)
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
-            | MessageContent::Custom(_) => {}
+            | MessageContent::Custom(_)
+            | MessageContent::PriceChart(_) => {}
         }
 
         references
@@ -194,6 +199,7 @@ impl MessageContent {
             MessageContent::GovernanceProposal(gp) => Some(gp.proposal.title()),
             MessageContent::Prize(p) => p.caption.as_deref(),
             MessageContent::P2PSwap(p) => p.caption.as_deref(),
+            MessageContent::PriceChart(c) => Some(c.title.as_str()),
             MessageContent::Deleted(_)
             | MessageContent::PrizeWinner(_)
             | MessageContent::MessageReminderCreated(_)
@@ -324,7 +330,8 @@ impl MessageContent {
             | MessageContent::P2PSwap(_)
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
-            | MessageContent::Custom(_) => None,
+            | MessageContent::Custom(_)
+            | MessageContent::PriceChart(_) => None,
         }
     }
 
@@ -349,7 +356,8 @@ impl MessageContent {
             | MessageContent::P2PSwap(_)
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
-            | MessageContent::Custom(_) => None,
+            | MessageContent::Custom(_)
+            | MessageContent::PriceChart(_) => None,
         }
     }
 
@@ -395,6 +403,7 @@ impl MessageContentInitial {
             MessageContentInitial::MessageReminderCreated(r) => r.notes.as_deref(),
             MessageContentInitial::MessageReminder(r) => r.notes.as_deref(),
             MessageContentInitial::P2PSwap(p) => p.caption.as_deref(),
+            MessageContentInitial::PriceChart(c) => Some(c.title.as_str()),
             MessageContentInitial::Encrypted(_) | MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
         }
     }
@@ -436,6 +445,8 @@ impl From<&MessageContentInitial> for MessagePermission {
             MessageContentInitial::Giphy(_) => MessagePermission::Giphy,
             MessageContentInitial::Prize(_) => MessagePermission::Prize,
             MessageContentInitial::P2PSwap(_) => MessagePermission::P2pSwap,
+            // a chart is a picture
+            MessageContentInitial::PriceChart(_) => MessagePermission::Image,
             _ => unreachable!(),
         }
     }
@@ -463,6 +474,7 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::ModerationReport(_) => panic!("Cannot send a 'moderation report' message"),
             MessageContent::Encrypted(e) => MessageContentInitial::Encrypted(e),
             MessageContent::Custom(c) => MessageContentInitial::Custom(c),
+            MessageContent::PriceChart(c) => MessageContentInitial::PriceChart(c),
             MessageContent::P2PSwap(_) | MessageContent::VideoCall(_) => unimplemented!(),
         }
     }
@@ -504,6 +516,7 @@ impl From<MessageContentInitial> for MessageContent {
             MessageContentInitial::MessageReminder(r) => MessageContent::MessageReminder(r),
             MessageContentInitial::Encrypted(e) => MessageContent::Encrypted(e),
             MessageContentInitial::Custom(c) => MessageContent::Custom(c),
+            MessageContentInitial::PriceChart(c) => MessageContent::PriceChart(c),
             MessageContentInitial::P2PSwap(_) => unimplemented!(),
         }
     }
@@ -530,6 +543,7 @@ impl MessageContentType {
             MessageContentType::ModerationReport => None,
             MessageContentType::P2PSwap => Some(Achievement::SentP2PSwapOffer),
             MessageContentType::VideoCall => Some(Achievement::StartedCall),
+            MessageContentType::PriceChart => None,
             MessageContentType::Custom(c) => {
                 if c == "meme_fighter" {
                     Some(Achievement::SentMeme)
@@ -562,6 +576,7 @@ impl Display for MessageContentType {
             MessageContentType::ModerationReport => "ModerationReport",
             MessageContentType::P2PSwap => "P2PSwap",
             MessageContentType::VideoCall => "VideoCall",
+            MessageContentType::PriceChart => "PriceChart",
             MessageContentType::Custom(c) => c,
         };
 
@@ -592,6 +607,7 @@ impl From<&MessageContent> for MessageContentType {
             MessageContent::VideoCall(_) => MessageContentType::VideoCall,
             MessageContent::Encrypted(e) => e.content_type.clone().into(),
             MessageContent::Custom(c) => MessageContentType::Custom(c.kind.clone()),
+            MessageContent::PriceChart(_) => MessageContentType::PriceChart,
         }
     }
 }
@@ -971,6 +987,115 @@ pub struct CustomContent {
     pub data: Vec<u8>,
 }
 
+/// A chart of token prices, which the frontend draws so that readers can see the price at any
+/// time. Only a bot can send one, needing the Image permission, though anyone can forward one.
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PriceChartContent {
+    // eg. "CHAT · 30 days": the chart's text, in notifications, previews and search
+    pub title: String,
+    // the time drawn: each line runs on flat from its last price to `end`
+    pub start: TimestampMillis,
+    pub end: TimestampMillis,
+    // one token's prices are drawn in USD, several tokens' as their change since `start`
+    pub series: Vec<PriceChartSeries>,
+    // where the prices are from, credited with links under the chart
+    pub sources: Vec<PriceChartSource>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PriceChartSeries {
+    pub token: PriceChartToken,
+    pub symbol: String,
+    pub name: String,
+    // each time and its price in USD
+    pub points: Vec<(TimestampMillis, f64)>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum PriceChartToken {
+    // a token on the Internet Computer, by its ledger
+    Ledger(CanisterId),
+    // any other coin, by its CoinGecko id, eg. "cardano"
+    Coin(String),
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PriceChartSource {
+    pub name: String,
+    pub url: String,
+}
+
+impl PriceChartContent {
+    pub const MAX_TITLE_CHARS: usize = 100;
+    pub const MAX_SERIES: usize = 5;
+    // across all the series
+    pub const MAX_POINTS: usize = 1_000;
+    pub const MAX_SOURCES: usize = 3;
+    const MAX_SYMBOL_CHARS: usize = 20;
+    const MAX_NAME_CHARS: usize = 50;
+    const MAX_COIN_ID_CHARS: usize = 100;
+    const MAX_URL_CHARS: usize = 200;
+
+    pub fn validate(&self) -> Result<(), String> {
+        check_chars("title", &self.title, Self::MAX_TITLE_CHARS)?;
+        if self.start >= self.end {
+            return Err("The start must be before the end".to_string());
+        }
+        if self.series.is_empty() || self.series.len() > Self::MAX_SERIES {
+            return Err(format!("A chart has 1 to {} series", Self::MAX_SERIES));
+        }
+        if self.series.iter().map(|s| s.points.len()).sum::<usize>() > Self::MAX_POINTS {
+            return Err(format!("A chart has at most {} points", Self::MAX_POINTS));
+        }
+        for series in &self.series {
+            check_chars("symbol", &series.symbol, Self::MAX_SYMBOL_CHARS)?;
+            check_chars("name", &series.name, Self::MAX_NAME_CHARS)?;
+            if let PriceChartToken::Coin(id) = &series.token {
+                check_chars("coin id", id, Self::MAX_COIN_ID_CHARS)?;
+            }
+            if series.points.is_empty() {
+                return Err(format!("{} has no prices", series.symbol));
+            }
+            let mut previous = None;
+            for &(timestamp, usd) in &series.points {
+                if timestamp < self.start || timestamp > self.end || previous.is_some_and(|p| timestamp <= p) {
+                    return Err(format!(
+                        "{}'s times must be increasing, between the start and end",
+                        series.symbol
+                    ));
+                }
+                if !usd.is_finite() || usd <= 0.0 {
+                    return Err(format!("{}'s prices must be above 0", series.symbol));
+                }
+                previous = Some(timestamp);
+            }
+        }
+        if self.sources.is_empty() || self.sources.len() > Self::MAX_SOURCES {
+            return Err(format!("A chart credits 1 to {} sources", Self::MAX_SOURCES));
+        }
+        for source in &self.sources {
+            check_chars("source", &source.name, Self::MAX_NAME_CHARS)?;
+            check_chars("source url", &source.url, Self::MAX_URL_CHARS)?;
+            if !source.url.starts_with("https://") {
+                return Err(format!("{}'s url must be https", source.name));
+            }
+        }
+        Ok(())
+    }
+}
+
+fn check_chars(field: &str, value: &str, max: usize) -> Result<(), String> {
+    if value.trim().is_empty() || value.chars().count() > max {
+        Err(format!("The {field} must have 1 to {max} characters"))
+    } else {
+        Ok(())
+    }
+}
+
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DeletedBy {
@@ -1016,4 +1141,76 @@ pub struct OgPreview {
     pub title: String,
     pub description: String,
     pub image: Option<OgPreviewImage>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn chart() -> PriceChartContent {
+        PriceChartContent {
+            title: "CHAT · 30 days".to_string(),
+            start: 1_000,
+            end: 4_000,
+            series: vec![PriceChartSeries {
+                token: PriceChartToken::Coin("cardano".to_string()),
+                symbol: "ADA".to_string(),
+                name: "Cardano".to_string(),
+                points: vec![(1_000, 0.5), (2_000, 0.25), (4_000, 0.75)],
+            }],
+            sources: vec![PriceChartSource {
+                name: "CoinGecko".to_string(),
+                url: "https://www.coingecko.com".to_string(),
+            }],
+        }
+    }
+
+    fn invalid(change: impl FnOnce(&mut PriceChartContent)) -> String {
+        let mut chart = chart();
+        change(&mut chart);
+        chart.validate().expect_err("Expected the chart to be invalid")
+    }
+
+    #[test]
+    fn a_price_chart_within_its_limits_is_valid() {
+        assert_eq!(chart().validate(), Ok(()));
+    }
+
+    #[test]
+    fn a_price_chart_needs_a_title_and_a_time() {
+        invalid(|c| c.title = " ".to_string());
+        invalid(|c| c.title = "x".repeat(PriceChartContent::MAX_TITLE_CHARS + 1));
+        invalid(|c| c.end = c.start);
+    }
+
+    #[test]
+    fn a_price_chart_has_1_to_5_series_and_at_most_1000_points() {
+        invalid(|c| c.series.clear());
+        invalid(|c| c.series = vec![c.series[0].clone(); PriceChartContent::MAX_SERIES + 1]);
+        invalid(|c| {
+            c.end = 10_000;
+            c.series[0].points = (0..=PriceChartContent::MAX_POINTS as u64).map(|i| (1_000 + i, 1.0)).collect();
+        });
+    }
+
+    #[test]
+    fn a_price_charts_series_needs_names_and_prices_in_time_order_within_its_time() {
+        invalid(|c| c.series[0].symbol = String::new());
+        invalid(|c| c.series[0].name = "x".repeat(51));
+        invalid(|c| c.series[0].token = PriceChartToken::Coin(String::new()));
+        invalid(|c| c.series[0].points.clear());
+        invalid(|c| c.series[0].points = vec![(2_000, 1.0), (2_000, 1.0)]);
+        invalid(|c| c.series[0].points = vec![(500, 1.0)]);
+        invalid(|c| c.series[0].points = vec![(5_000, 1.0)]);
+        invalid(|c| c.series[0].points = vec![(2_000, 0.0)]);
+        invalid(|c| c.series[0].points = vec![(2_000, f64::NAN)]);
+    }
+
+    #[test]
+    fn a_price_chart_credits_1_to_3_sources_with_https_links() {
+        invalid(|c| c.sources.clear());
+        invalid(|c| c.sources = vec![c.sources[0].clone(); PriceChartContent::MAX_SOURCES + 1]);
+        invalid(|c| c.sources[0].url = "http://www.coingecko.com".to_string());
+        invalid(|c| c.sources[0].url = "javascript:alert(1)".to_string());
+    }
 }

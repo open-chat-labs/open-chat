@@ -9,6 +9,19 @@ const ctx: ConversationContext = {
     contentText: (content) => `[${content.kind}]`,
     time: (timestamp) => `t${timestamp}`,
     date: (timestamp) => `d${timestamp}`,
+    media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
+    direct: false,
+    readonly: false,
+    now: 0,
+    claimant: {
+        previewingOrLapsed: false,
+        diamond: false,
+        lifetimeDiamond: false,
+        streak: 0,
+        chitEarned: 0,
+    },
+    text: (key) => key.key,
+    token: () => undefined,
 };
 
 function message(): EventWrapper<Message> {
@@ -48,7 +61,7 @@ describe("the rows kept per event", () => {
         const first = rows.row("k", evt, "sent", ctx);
         expect(rows.row("k", message(), "sent", ctx)).not.toBe(first);
         const second = rows.row("k", evt, "sent", ctx);
-        expect(rows.row("k", evt, "delivered", ctx).message.status).toBe("delivered");
+        expect(rows.row("k", evt, "delivered", ctx).message).toMatchObject({ status: "delivered" });
         expect(rows.row("k", evt, "delivered", ctx)).not.toBe(second);
         const renamed = { ...ctx, userName: () => "Alicia" };
         expect(rows.row("k", evt, "delivered", renamed).senderName).toBe("Alicia");

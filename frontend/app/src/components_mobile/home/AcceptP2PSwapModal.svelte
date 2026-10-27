@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Body, Column, CommonButton, Row, Sheet, Subtitle } from "component-lib";
     import type { OpenChat, SignerWallet, TokenInfo } from "@client";
-    import { cryptoBalanceStore, walletApprovalFee } from "@client";
+    import { cryptoBalanceStore, swapAcceptCost, walletApprovalFee } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -70,7 +70,8 @@
     let depositFees = $derived(BigInt(2) * token1.fee);
     // The wallet also pays for the approval it makes before the deposit is pulled from it
     let approvalFee = $derived(walletApprovalFee(token1.fee));
-    let transferFees = $derived(depositFees + approvalFee);
+    // what accepting takes on top of the amount: the deposit fees and the approval fee
+    let transferFees = $derived(swapAcceptCost(amount1, token1.fee).fees);
     // An OpenChat balance which cannot cover the swap is no obstacle when an external wallet is
     // paying instead
     let insufficient = $derived(

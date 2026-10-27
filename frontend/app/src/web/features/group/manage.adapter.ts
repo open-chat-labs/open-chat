@@ -12,6 +12,8 @@ const LABEL: Record<ManageNavLabel, string> = {
     invite: "ui.manageDialog.invite",
     channels: "ui.manageDialog.channels",
     userGroups: "ui.manageDialog.userGroups",
+    bots: "ui.manageDialog.bots",
+    webhooks: "ui.manageDialog.webhooks",
     rules: "ui.manageDialog.rules",
     permissions: "ui.manageDialog.permissions",
     gates: "ui.manageDialog.gates",
@@ -22,7 +24,11 @@ export function manageNavGroups(groups: ManageNavGroup[]): LibraryNavGroup[] {
         .filter((g) => g.items.length > 0)
         .map((g) => ({
             label: `ui.manageDialog.${g.label}`,
-            items: g.items.map((i) => ({ key: i.section, label: LABEL[i.label], icon: i.section })),
+            items: g.items.map((i) =>
+                "section" in i
+                    ? { key: i.section, label: LABEL[i.label], icon: i.section }
+                    : { key: i.action, label: `ui.manageDialog.${i.action}`, icon: i.action },
+            ),
         }));
 }
 

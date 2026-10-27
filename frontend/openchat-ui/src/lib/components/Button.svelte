@@ -1,27 +1,74 @@
 <!-- Text button. variant: primary | secondary | ghost | danger; disabled overrides the variant.
-     `state` forces a look (hover / focus / active) for specimens; leave it at default in real use. -->
+     `state` forces a look (hover / focus / active) for specimens; leave it at default in real use.
+     size: md (40px) | lg (52px). An optional icon shows before the label; with an empty label the button is icon-only.
+     Labels never wrap: a long one truncates with an ellipsis, and then (only then) the full text is its tooltip.
+     An icon-only button needs `ariaLabel`, its accessible name and tooltip. -->
 <script lang="ts">
   import { useT } from '../i18n';
 
   interface Props {
-    /** Resource key (or literal text). */
+    /** Resource key (or literal text). Empty with an `icon` for an icon-only button. */
     label: string;
     variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
     state?: 'default' | 'hover' | 'focus' | 'active';
+    size?: 'md' | 'lg';
+    /** Icon name (see icons.js), shown before the label. */
+    icon?: string;
+    /** Resource key (or literal text): the accessible name, for an icon-only button. */
+    ariaLabel?: string;
     fullWidth?: boolean;
     disabled?: boolean;
     onClick?: () => void;
   }
 
-  let { label, variant = 'primary', state = 'default', fullWidth = false, disabled = false, onClick }: Props = $props();
+  let { label, variant = 'primary', state: look = 'default', size = 'md', icon, ariaLabel, fullWidth = false, disabled = false, onClick }: Props = $props();
   const t = useT();
+
+  const text = $derived(label ? t(label) : '');
+  const iconOnly = $derived(!!icon && !text);
+  const name = $derived(ariaLabel ? t(ariaLabel) : undefined);
+
+  // the full label as a tooltip only when it's cut off (checked as the pointer comes in)
+  let labelEl = $state<HTMLSpanElement>();
+  let truncated = $state(false);
+  const measure = () => (truncated = !!labelEl && labelEl.scrollWidth > labelEl.clientWidth);
+  const title = $derived(iconOnly ? name : truncated ? text : undefined);
 </script>
+
+{#snippet content()}
+  {#if icon}<span class="icon" style:mask="var(--icon-{icon}) center/contain no-repeat" aria-hidden="true"></span>{/if}
+  {#if text}<span class="label" bind:this={labelEl}>{text}</span>{/if}
+{/snippet}
 
 <div class="wrap" class:full={fullWidth}>
   {#if disabled}
-    <div class="button disabled">{t(label)}</div>
+    <div
+      class="button disabled"
+      class:lg={size === 'lg'}
+      class:icon-only={iconOnly}
+      role="button"
+      aria-disabled="true"
+      {title}
+      aria-label={name}
+      onpointerenter={measure}
+    >
+      {@render content()}
+    </div>
   {:else}
-    <div class="button {variant} {state}" onclick={onClick} role="button" tabindex="0">{t(label)}</div>
+    <div
+      class="button {variant} {look}"
+      class:lg={size === 'lg'}
+      class:icon-only={iconOnly}
+      onclick={onClick}
+      role="button"
+      tabindex="0"
+      {title}
+      aria-label={name}
+      onpointerenter={measure}
+      onfocus={measure}
+    >
+      {@render content()}
+    </div>
   {/if}
 </div>
 
@@ -29,12 +76,16 @@
   .wrap {
     display: inline-flex;
     width: auto;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .button {
     --ring: none;
     display: inline-flex;
     width: auto;
+    min-width: 0;
+    max-width: 100%;
     box-sizing: border-box;
     align-items: center;
     justify-content: center;
@@ -46,6 +97,33 @@
     cursor: pointer;
     user-select: none;
     box-shadow: var(--ring);
+    --icon-size: 16px;
+  }
+
+  .button.lg {
+    height: 52px;
+    border-radius: 14px;
+    --icon-size: 18px;
+  }
+
+  .button.icon-only {
+    gap: 0;
+    padding: 0;
+    aspect-ratio: 1;
+  }
+
+  .icon {
+    flex: none;
+    width: var(--icon-size);
+    height: var(--icon-size);
+    background: currentColor;
+  }
+
+  .label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .full,

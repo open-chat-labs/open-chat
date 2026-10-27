@@ -264,7 +264,9 @@ fn process_send_message_result(
         // Whoever replied, which for a reply a bridge bot relayed is the bot
         let relayed_from = message_event.event.bot_context().and_then(|b| b.bridged_from);
         let replier = caller.initiator().or(relayed_from.map(|_| sender));
-        // The sender of the message replied to, and the account it was relayed from, if it was
+        // Who the message replied to is for (its sender, or whoever used the command a bot's message
+        // responds to), and the account it was relayed from, if it was. A deleted message is for no one,
+        // as is one that can't be found.
         let replied_to = message_event
             .event
             .replies_to
@@ -277,7 +279,8 @@ fn process_send_message_result(
                     .events
                     .message_internal(EventIndex::default(), thread_root_message_index, r.event_index.into())
             })
-            .map(|(m, _)| (m.sender, m.bridged_from()));
+            .filter(|(m, _)| !m.is_deleted())
+            .map(|(m, _)| (m.reply_recipient(), m.bridged_from()));
 
         // A reply to a message a bridge bot relayed is for whoever linked the account it came from,
         // unless it was relayed from that account too

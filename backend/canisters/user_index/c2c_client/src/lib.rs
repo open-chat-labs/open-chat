@@ -18,7 +18,6 @@ generate_c2c_call!(users_chit);
 generate_c2c_call!(add_local_user_index_canister);
 generate_c2c_call!(c2c_delete_user);
 generate_c2c_call!(c2c_report_message);
-generate_c2c_call!(c2c_set_avatar);
 generate_c2c_call!(c2c_storage_index, 300);
 generate_c2c_call!(c2c_suspend_users);
 generate_c2c_call!(c2c_translations, 300);

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ChatIdentifier, OpenChat } from "@client";
-    import { localUpdates } from "@client";
+    import { localUpdates, sharedDraftText } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../i18n/i18n";
     import type { Share } from "../utils/share";
@@ -26,20 +26,7 @@
     const client = getContext<OpenChat>("client");
 
     function shareMessage(chatId: ChatIdentifier) {
-        const shareText = share.text ?? "";
-        const shareTitle = share.title ?? "";
-        const shareUrl = share.url ?? "";
-
-        let text = shareText.length > 0 ? shareText : shareTitle;
-
-        if (shareUrl.length > 0) {
-            if (text.length > 0) {
-                text += "\n";
-            }
-            text += shareUrl;
-        }
-
-        localUpdates.draftMessages.setTextContent({ chatId }, text);
+        localUpdates.draftMessages.setTextContent({ chatId }, sharedDraftText(share));
 
         // The composer holds a single attachment per draft, so when the share
         // delivers multiple files we attach the first and drop the rest. Fire

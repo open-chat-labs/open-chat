@@ -1,19 +1,24 @@
 import {
+    CommunityMap,
     defaultChatPermissions,
     defaultChatRules,
     emptyChatMetrics,
     ROLE_ADMIN,
     ROLE_MEMBER,
     ROLE_MODERATOR,
+    ROLE_NONE,
     ROLE_OWNER,
     type AccessGate,
     type BridgedUserId,
     type BridgedUserSummary,
     type CandidateGroupChat,
+    type ChannelSummary,
     type ChatEvent,
     type ChatIdentifier,
+    type CommunitySummary,
     type EventWrapper,
     type GroupChatSummary,
+    type Message,
     type MultiUserChatIdentifier,
     type PollConfig,
     type PollContent,
@@ -27,10 +32,12 @@ import {
     addVoteToPoll,
     buildBridgedUserAvatarUrl,
     buildIdenticonUrl,
+    canSendDirectMessage,
     disappearingMessagesUpdate,
     eventsTTLUpdate,
     getMembersString,
     groupChatFromCandidate,
+    isPreviewingOrLapsed,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
     navigationAfterArchivingOpenChat,
@@ -38,6 +45,7 @@ import {
     sortByTimestampThenEventIndex,
     startTyping,
     stopTyping,
+    userCanDeleteMessage,
 } from "./chat";
 import { rtcConnectionsManager } from "./rtcConnectionsManager";
 
@@ -688,5 +696,156 @@ describe("disappearingMessagesUpdate", () => {
             value: 86_400_000n,
         });
         expect(disappearingMessagesUpdate(false, 3_600_000, 3_600_000n)).toBe("set_to_none");
+    });
+});
+
+describe("previewing or lapsed", () => {
+    const channel: ChannelSummary = {
+        ...defaultGroupChat,
+        kind: "channel",
+        id: { kind: "channel", communityId: "c", channelId: 1 },
+        level: "channel",
+        isInvited: false,
+        messagesVisibleToNonMembers: false,
+    };
+
+    function communities(lapsed: boolean): CommunityMap<CommunitySummary> {
+        const community: CommunitySummary = {
+            kind: "community",
+            id: { kind: "community", communityId: "c" },
+            name: "",
+            description: "",
+            memberCount: 0,
+            avatar: {},
+            banner: {},
+            gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
+            public: true,
+            permissions: {
+                changeRoles: ROLE_ADMIN,
+                updateDetails: ROLE_ADMIN,
+                inviteUsers: ROLE_ADMIN,
+                removeMembers: ROLE_ADMIN,
+                createPublicChannel: ROLE_ADMIN,
+                createPrivateChannel: ROLE_ADMIN,
+                manageUserGroups: ROLE_ADMIN,
+            },
+            historyVisible: true,
+            frozen: false,
+            level: "community",
+            lastUpdated: BigInt(0),
+            latestEventIndex: 0,
+            channels: [channel],
+            membership: {
+                role: ROLE_MEMBER,
+                joined: BigInt(0),
+                archived: false,
+                pinned: [],
+                index: 0,
+                displayName: undefined,
+                rulesAccepted: false,
+                lapsed,
+            },
+            primaryLanguage: "en",
+            metrics: emptyChatMetrics(),
+            userGroups: new Map(),
+            localUserIndex: "",
+            isInvited: false,
+            verified: false,
+            moderationFlags: 0,
+        };
+        return CommunityMap.fromList([community]);
+    }
+
+    test("a member of the chat and its community is neither", () => {
+        expect(isPreviewingOrLapsed(defaultGroupChat, new CommunityMap())).toBe(false);
+        expect(isPreviewingOrLapsed(channel, communities(false))).toBe(false);
+    });
+
+    test("previewing the chat", () => {
+        const group: GroupChatSummary = {
+            ...defaultGroupChat,
+            membership: { ...defaultGroupChat.membership, role: ROLE_NONE },
+        };
+        expect(isPreviewingOrLapsed(group, new CommunityMap())).toBe(true);
+        const previewed: ChannelSummary = {
+            ...channel,
+            membership: { ...channel.membership, role: ROLE_NONE },
+        };
+        expect(isPreviewingOrLapsed(previewed, communities(false))).toBe(true);
+    });
+
+    test("lapsed from the chat", () => {
+        const group = {
+            ...defaultGroupChat,
+            membership: { ...defaultGroupChat.membership, lapsed: true },
+        };
+        expect(isPreviewingOrLapsed(group, new CommunityMap())).toBe(true);
+        const lapsed = { ...channel, membership: { ...channel.membership, lapsed: true } };
+        expect(isPreviewingOrLapsed(lapsed, communities(false))).toBe(true);
+    });
+
+    test("lapsed from the channel's community", () => {
+        expect(isPreviewingOrLapsed(channel, communities(true))).toBe(true);
+    });
+});
+
+describe("who can delete a message", () => {
+    type Deletable = Pick<Message, "sender" | "senderContext" | "content">;
+    const text: Message["content"] = { kind: "text_content", text: "hi" };
+    const message = (sender: string): Deletable => ({ sender, content: text });
+    const botResponse = (initiator: string): Deletable => ({
+        sender: "bot",
+        senderContext: {
+            kind: "bot",
+            finalised: true,
+            command: { name: "joke", args: [], initiator },
+        },
+        content: text,
+    });
+
+    test("its sender", () => {
+        expect(userCanDeleteMessage(message("me"), true, "me", false)).toBe(true);
+        expect(userCanDeleteMessage(message("them"), true, "me", false)).toBe(false);
+    });
+
+    test("the user who used the command a bot responded to", () => {
+        expect(userCanDeleteMessage(botResponse("me"), true, "me", false)).toBe(true);
+        expect(userCanDeleteMessage(botResponse("them"), true, "me", false)).toBe(false);
+    });
+
+    test("not the user who used the command while the response is a local placeholder", () => {
+        expect(userCanDeleteMessage(botResponse("me"), false, "me", false)).toBe(false);
+        // Unchanged for a user's own unconfirmed messages and for those who can delete anyone's
+        expect(userCanDeleteMessage(message("me"), false, "me", false)).toBe(true);
+        expect(userCanDeleteMessage(botResponse("me"), false, "me", true)).toBe(true);
+    });
+
+    test("anyone who can delete other users' messages", () => {
+        expect(userCanDeleteMessage(message("them"), true, "me", true)).toBe(true);
+        expect(userCanDeleteMessage(botResponse("them"), true, "me", true)).toBe(true);
+    });
+
+    test("no one while a call is in progress", () => {
+        const call = (ended?: bigint): Deletable => ({
+            sender: "me",
+            content: { kind: "video_call_content", participants: [], ended, callType: "default" },
+        });
+        expect(userCanDeleteMessage(call(), true, "me", true)).toBe(false);
+        expect(userCanDeleteMessage(call(1n), true, "me", false)).toBe(true);
+    });
+});
+
+describe("what can be sent in a direct chat", () => {
+    const user = { kind: "user", userId: "them" } as UserSummary;
+    const bot = { kind: "bot", userId: "chart-bot" } as UserSummary;
+
+    // Invariant: a bot is never sent tokens. Its id isn't an account anyone controls, so they
+    // would be lost.
+    test("tokens and swaps go to users, not bots", () => {
+        for (const permission of ["crypto", "p2pSwap"] as const) {
+            expect(canSendDirectMessage(user, "message", "proposals-bot", permission)).toBe(true);
+            expect(canSendDirectMessage(bot, "message", "proposals-bot", permission)).toBe(false);
+        }
+        expect(canSendDirectMessage(bot, "message", "proposals-bot", "text")).toBe(true);
     });
 });

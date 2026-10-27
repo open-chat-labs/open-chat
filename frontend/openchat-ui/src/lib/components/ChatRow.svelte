@@ -19,6 +19,8 @@
     liveCall?: '' | 'voice' | 'video';
     unreadCount?: number;
     typing?: boolean;
+    /** A private channel or group: a lock before the title. */
+    locked?: boolean;
     pinned?: boolean;
     muted?: boolean;
     selected?: boolean;
@@ -39,6 +41,7 @@
     liveCall = '',
     unreadCount = 0,
     typing = false,
+    locked = false,
     pinned = false,
     muted = false,
     selected = false,
@@ -179,6 +182,7 @@
     </div>
     <div class="body">
       <div class="line">
+        {#if locked}<span class="lock" role="img" aria-label={t('ui.chatRow.private')}></span>{/if}
         <span class="title">{kind === 'channel' ? '#' : ''}{title}</span>
         {#if verified && kind === 'user'}
           <span class="verified"></span>
@@ -333,7 +337,16 @@
   }
 
   .pin {
+    background: var(--accent);
     mask: var(--icon-pin) center/contain no-repeat;
+  }
+
+  .lock {
+    flex: none;
+    width: 13px;
+    height: 13px;
+    background: var(--ink-3);
+    mask: var(--icon-lock) center/contain no-repeat;
   }
 
   .mute {

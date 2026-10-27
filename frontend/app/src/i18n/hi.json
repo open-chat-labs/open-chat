@@ -199,6 +199,13 @@
         "unlink": "अनलिंक करें",
         "unlinkFailed": "खाते को अनलिंक नहीं किया जा सका"
     },
+    "cashtag": {
+        "chartLabel": "पिछले 7 दिनों में {symbol} की कीमत",
+        "change7d": "7 दिनों में {change}",
+        "noHistory": "पिछले 7 दिनों में कोई ट्रेड नहीं हुआ",
+        "noPrice": "कोई कीमत उपलब्ध नहीं है",
+        "priceDataBy": "मूल्य डेटा {source} द्वारा"
+    },
     "bridgedUserUnknown": "{platform} उपयोगकर्ता",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
@@ -1681,6 +1688,9 @@
     "owner": "मालिक",
     "ownerCantLeave": "{level} छोड़ने से पहले आपको एक अन्य मालिक को जोड़ना होगा",
     "p2pSwap": {
+        "cancelOffer": "ऑफ़र रद्द करें",
+        "cancelOfferQuestion": "यह स्वैप ऑफ़र रद्द करें?",
+        "keepOffer": "ऑफ़र रखें",
         "accept": "स्वीकार करना",
         "accepted": "स्वीकृत",
         "acceptedBy": "यह प्रस्ताव {user} द्वारा स्वीकार कर लिया गया है और पूरा होने के लिए लंबित है।",
@@ -2204,6 +2214,7 @@
     "removedBy": "{changedBy} ने {changed} को {level} से हटा दिया",
     "removeMemberFailed": "सदस्य को हटाने में असमर्थ",
     "removePreviewQuestion": "पूर्वावलोकन हटाएँ?",
+    "errorRemovingLinkPreview": "पूर्वावलोकन हटाया नहीं जा सका",
     "renderPreviews": "लिंक पूर्वावलोकन स्वतः प्रस्तुत करें",
     "reply": "जवाब",
     "replyPrivately": "निजी तौर पर उत्तर दें",
@@ -2714,7 +2725,10 @@
         "updateTitle": "{name} अपडेट करें",
         "urlLabel": "वेबहुक यूआरएल",
         "username": "WEbhook",
-        "viewEditAction": "वेबहुक विवरण देखें/संपादित करें"
+        "viewEditAction": "वेबहुक विवरण देखें/संपादित करें",
+        "registerFailed": "क्षमा करें, हम वेबहुक पंजीकृत नहीं कर सके",
+        "updateFailed": "क्षमा करें, हम वेबहुक अपडेट नहीं कर सके",
+        "regenerateFailed": "क्षमा करें, हम वेबहुक का URL फिर से नहीं बना सके"
     },
     "websiteVersion": "वेबसाइट का",
     "weeks": "हफ्तों",

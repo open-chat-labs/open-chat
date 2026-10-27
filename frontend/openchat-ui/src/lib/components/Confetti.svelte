@@ -11,9 +11,11 @@
     /** Launch speed multiplier. */
     power?: number;
     fire?: number;
+    /** CSS selector of an ancestor to clip the burst to (e.g. a device frame); the whole viewport without it. */
+    within?: string;
   }
 
-  let { count = 80, spread = 92, power = 1, fire = 0 }: Props = $props();
+  let { count = 80, spread = 92, power = 1, fire = 0, within }: Props = $props();
 
   let anchor: HTMLSpanElement;
   let last = untrack(() => fire);
@@ -53,7 +55,33 @@
     const acc = getComputedStyle(el).getPropertyValue('--accent').trim() || '#FF5672';
     const colors = [acc, acc, '#FFFFFF', '#FFC061', '#2EE6A8', '#3D9BFF', '#E27BFF'];
     const layer = document.createElement('div');
-    layer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden';
+    // an invalid selector clips to nothing rather than stopping the burst
+    let box: Element | null = null;
+    if (within) {
+      try {
+        box = el.closest(within);
+      } catch {
+        box = null;
+      }
+    }
+    let ox = 0, oy = 0;
+    // the clip, and the pieces in it, follow the ancestor if it scrolls or moves during the burst
+    const place = () => {
+      if (!box) return;
+      const b = box.getBoundingClientRect();
+      ox = b.left;
+      oy = b.top;
+      layer.style.left = `${b.left}px`;
+      layer.style.top = `${b.top}px`;
+      layer.style.width = `${b.width}px`;
+      layer.style.height = `${b.height}px`;
+    };
+    if (box) {
+      layer.style.cssText = `position:fixed;border-radius:${getComputedStyle(box).borderRadius};pointer-events:none;z-index:9999;overflow:hidden`;
+      place();
+    } else {
+      layer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden';
+    }
     document.body.appendChild(layer);
     const parts: Piece[] = [];
     for (let k = 0; k < count; k++) {
@@ -62,7 +90,8 @@
       layer.appendChild(node);
       const ang = -Math.PI / 2 + (Math.random() - 0.5) * ((spread * Math.PI) / 180), v = (520 + Math.random() * 520) * power;
       parts.push({
-        node, x: cx + (Math.random() - 0.5) * r.width * 0.6, y: cy, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v,
+        // relative to the clip box (from where it was at fire time), so the pieces move with it
+        node, x: cx - ox + (Math.random() - 0.5) * r.width * 0.6, y: cy - oy, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v,
         drag: 2.2 + Math.random() * 2.4, g: 520 + Math.random() * 380, rot: Math.random() * 360, vr: (Math.random() - 0.5) * 720,
         sway: 14 + Math.random() * 26, phase: Math.random() * 6.28, life: 2.2 + Math.random() * 1.4, t: 0,
       });
@@ -72,6 +101,7 @@
       const dt = Math.min(0.033, (now - prev) / 1000);
       prev = now;
       let alive = 0;
+      place();
       for (const p of parts) {
         p.t += dt;
         if (p.t > p.life) {

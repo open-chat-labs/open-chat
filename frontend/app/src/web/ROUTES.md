@@ -137,7 +137,7 @@ it from showing: a desktop window shrunk after load scrolls the shell sideways i
 | `/wallet/:ledger` **(new)** | `wallet_route` {view: token} | `WalletPanel`, token selected | `WalletMain` token page | – | main | sign in |
 | `/wallet/send` · `/receive` · `/swap` (`?token=`) **(new)** | `wallet_route` {view} | `WalletPanel` | Send / Receive / Swap in place | – | main | sign in |
 | `/wallet/recipients` **(new)** | `wallet_route` {view: recipients} | `WalletPanel` | `WalletRecipients` | – | main | sign in |
-| `/share?title&text&url` | `share_route` | as the default scope | as the default scope | `ChatPicker` (existing flow: redirect, then pick a chat) | picker | sign in |
+| `/share?title&text&url` | `share_route` | as the default scope | as the default scope | `ChatPicker` on `?share` (redirect, then pick a chat) | picker | sign in |
 | `/admin` | `admin_route` | – | `TODO(design)`: platform operator console, operators only (existing check) | – | full | blocked |
 | `*` | `not_found_route` | – | `EmptyState` (not found) | – | full | yes |
 
@@ -263,8 +263,8 @@ Still to come:
   `?profile` is `ProfileDialog` with the sections built so far (8c).
   So does `<profile-link>`'s `profile-clicked` (`UserDialog`, phase 4), and the `profile` and
   `upgrade` events open `?profile` and `?diamond`.
-- **Share**: `/share` goes to the default scope as today, but picking the chat (`ChatPicker`)
-  comes in phase 4.
+- **Share**: `/share` goes to the default scope with `?share={"title","text","url"}`, which opens
+  `ChatPicker` (4d). Picking a chat opens it with the shared text in its draft.
 
 ## Known router issues (not fixed here)
 

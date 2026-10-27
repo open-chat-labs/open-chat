@@ -199,6 +199,13 @@
         "unlink": "Desvincular",
         "unlinkFailed": "No se pudo desvincular la cuenta"
     },
+    "cashtag": {
+        "chartLabel": "Precio de {symbol} en los últimos 7 días",
+        "change7d": "{change} en 7 días",
+        "noHistory": "No hay operaciones en los últimos 7 días",
+        "noPrice": "Precio no disponible",
+        "priceDataBy": "Datos de precios de {source}"
+    },
     "bridgedUserUnknown": "Usuario de {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
@@ -1681,6 +1688,9 @@
     "owner": "dueño",
     "ownerCantLeave": "Debe agregar otro propietario antes de poder abandonar el {level}",
     "p2pSwap": {
+        "cancelOffer": "Cancelar oferta",
+        "cancelOfferQuestion": "¿Cancelar esta oferta de intercambio?",
+        "keepOffer": "Mantener oferta",
         "accept": "Aceptar",
         "accepted": "Aceptado",
         "acceptedBy": "Esta oferta ha sido aceptada por {user} y está pendiente de finalización.",
@@ -2204,6 +2214,7 @@
     "removedBy": "{changedBy} eliminó {changed} de {level}",
     "removeMemberFailed": "No se puede eliminar el miembro",
     "removePreviewQuestion": "¿Eliminar vista previa?",
+    "errorRemovingLinkPreview": "No se pudo quitar la vista previa",
     "renderPreviews": "Renderizado automático de vistas previas de enlaces",
     "reply": "Responder",
     "replyPrivately": "Responder mensaje",
@@ -2714,7 +2725,10 @@
         "updateTitle": "Actualizar {name}",
         "urlLabel": "URL del webhook",
         "username": "webhook",
-        "viewEditAction": "Ver/editar detalles del webhook"
+        "viewEditAction": "Ver/editar detalles del webhook",
+        "registerFailed": "Lo sentimos, no pudimos registrar el webhook",
+        "updateFailed": "Lo sentimos, no pudimos actualizar el webhook",
+        "regenerateFailed": "Lo sentimos, no pudimos regenerar la URL del webhook"
     },
     "websiteVersion": "del sitio web",
     "weeks": "Semanas",

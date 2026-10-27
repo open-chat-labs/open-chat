@@ -12,7 +12,9 @@ export type ManageSection =
     | "invite"
     | "members"
     | "channels"
-    | "usergroups";
+    | "usergroups"
+    | "bots"
+    | "webhooks";
 
 const FORM: readonly ManageSection[] = ["main", "gates", "rules", "permissions"];
 
@@ -20,7 +22,12 @@ export function isFormSection(section: ManageSection): boolean {
     return FORM.includes(section);
 }
 
-export type ManageNavItem = { section: ManageSection; label: ManageNavLabel };
+/** Owner-only actions in the nav, which open their own dialog over Manage. */
+export type ManageAction = "convert" | "import";
+
+export type ManageNavItem =
+    | { section: ManageSection; label: ManageNavLabel }
+    | { action: ManageAction; label: ManageAction };
 export type ManageNavLabel =
     | "overview"
     | "about"
@@ -30,7 +37,9 @@ export type ManageNavLabel =
     | "userGroups"
     | "rules"
     | "permissions"
-    | "gates";
+    | "gates"
+    | "bots"
+    | "webhooks";
 export type ManageNavGroup = { label: "general" | "advanced"; items: ManageNavItem[] };
 
 export type ManageNavInput = {
@@ -40,6 +49,11 @@ export type ManageNavInput = {
     community: boolean;
     /** User groups are a community's, for someone who may manage them. */
     canManageUserGroups: boolean;
+    /** A group's owner can convert it to a community, or import it into one they own. */
+    canConvert: boolean;
+    canImport: boolean;
+    /** A group's or channel's webhooks, for its owner. */
+    canManageWebhooks: boolean;
 };
 
 /**
@@ -52,6 +66,9 @@ export function manageNav({
     canOpenInvite,
     community,
     canManageUserGroups,
+    canConvert,
+    canImport,
+    canManageWebhooks,
 }: ManageNavInput): ManageNavGroup[] {
     const edit = access.kind === "edit";
     const general: ManageNavItem[] = [
@@ -67,6 +84,12 @@ export function manageNav({
     const advanced: ManageNavItem[] = [
         ...(edit ? [{ section: "permissions" as const, label: "permissions" as const }] : []),
         { section: "gates", label: "gates" },
+        { section: "bots", label: "bots" },
+        ...(canManageWebhooks
+            ? [{ section: "webhooks" as const, label: "webhooks" as const }]
+            : []),
+        ...(canConvert ? [{ action: "convert" as const, label: "convert" as const }] : []),
+        ...(canImport ? [{ action: "import" as const, label: "import" as const }] : []),
     ];
     return [
         { label: "general", items: general },

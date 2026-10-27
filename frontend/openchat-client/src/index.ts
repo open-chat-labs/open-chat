@@ -32,10 +32,24 @@ export {
     disappearingMessagesUpdate,
     eventsTTLUpdate,
     getMembersString,
+    isPreviewingOrLapsed,
     subrangesCover,
     TimelineGrouper,
+    userCanDeleteMessage,
 } from "./utils/chat";
-export { formatDuration } from "./utils/time";
+export { formatClock, formatDuration } from "./utils/time";
+export { default as formatFileSize } from "./utils/fileSize";
+export {
+    groupMembersLine,
+    sharedDraftText,
+    shareTargets,
+    type ShareableChat,
+    type ShareableCommunity,
+    type ShareCommunityTarget,
+    type ShareTarget,
+    type ShareTargets,
+    type ShareTargetsInput,
+} from "./utils/shareTargets";
 export {
     botOwnerCandidates,
     compareIsNotYouThenUsername,
@@ -46,6 +60,7 @@ export {
     unsuspendUserMessage,
 } from "./utils/user";
 export * from "./utils/cryptoFormatter";
+export * from "./utils/priceSources";
 export {
     candidateGroupFromChat,
     groupChanges,
@@ -102,6 +117,7 @@ export {
     type LeaveOrDeleteOutcome,
 } from "./utils/leaveOrDelete";
 export { type UserGroupSaveOutcome } from "./utils/userGroups";
+export { webhookFailure, type WebhookSaveOutcome } from "./utils/webhook";
 export {
     memberDisplayNameResult,
     profileChanges,
@@ -120,11 +136,37 @@ export {
 export { cloneWalletConfig, walletConfigForMode } from "./utils/walletConfig";
 export type { TrackingCategory } from "./utils/ga";
 export { toRecord } from "./utils/list";
-export { quantiseWaveform, type Dimensions } from "./utils/media";
+export { quantiseWaveform, waveformLevels, type Dimensions } from "./utils/media";
 export * from "./utils/permissions";
 export { Poller } from "./utils/poller";
 export * from "./utils/routes";
 export { dexName } from "./utils/swap";
 export { formatTimeRemaining } from "./utils/time";
-export { toMonthString } from "./utils/date";
+export {
+    allowsVoteChange,
+    getVotersForAnswer,
+    percentageOfVote,
+    pollVoteChange,
+    pollView,
+    totalVotes,
+    voteCount,
+    votedFor,
+    votesForAnswer,
+    type PollReader,
+    type PollView,
+} from "./utils/polls";
+export {
+    isTrustedClick,
+    prizeView,
+    type PrizeReader,
+    type PrizeView,
+} from "./utils/prizes";
+export {
+    swapAcceptCost,
+    swapActions,
+    swapFailureMessage,
+    swapLabels,
+    swapTakenBy,
+} from "./utils/swaps";
+export { toDateString, toDatetimeString, toMonthString } from "./utils/date";
 export * from "./utils/url";

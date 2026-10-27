@@ -482,7 +482,7 @@
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Resource key (or literal text). Empty with an `icon` for an icon-only button."
       },
       {
         "name": "variant",
@@ -548,6 +548,42 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "size",
+        "type": "'md' | 'lg'",
+        "default": "md",
+        "editor": "select",
+        "options": [
+          "md",
+          "lg"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'md'",
+        "doc": ""
+      },
+      {
+        "name": "icon",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Icon name (see icons.js), shown before the label."
+      },
+      {
+        "name": "ariaLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): the accessible name, for an icon-only button."
       }
     ],
     "group": "library"
@@ -811,6 +847,39 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "previews",
+        "type": "Omit<ComponentProps<typeof LinkCard>, 'side'>[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Previews of the links in the text, a card each under it."
+      },
+      {
+        "name": "onRemovePreview",
+        "type": "(index: number) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The sender removes a preview (by its index in `previews`): an X on each card. None without it."
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Right-aligned layouts (native sent bubbles): the grouped / tail corners go on the inline-end side."
       }
     ],
     "group": "library"
@@ -1003,6 +1072,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "locked",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A private channel or group: a lock before the title."
       }
     ],
     "group": "library"
@@ -5241,6 +5321,17 @@
         "doc": "0–1"
       },
       {
+        "name": "levels",
+        "type": "number[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The recording's waveform, 0–1 per bar; placeholder bars without it."
+      },
+      {
         "name": "elapsed",
         "type": "string",
         "default": "0:12",
@@ -5438,7 +5529,7 @@
       },
       {
         "name": "chats",
-        "type": "{ id: string; name: string; kind?: string; grad: string; radius?: string }[]",
+        "type": "{ id: string; name: string; kind?: string; sub?: string; group?: string; grad: string; radius?: string }[]",
         "default": null,
         "editor": null,
         "options": null,
@@ -5479,6 +5570,28 @@
         "required": false,
         "componentDefault": "90",
         "doc": ""
+      },
+      {
+        "name": "filter",
+        "type": "(query: string) => Chat[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's search: the chats to list for a query (a name, a username, a community …); the picker otherwise matches `chats` by name and kind."
+      },
+      {
+        "name": "emptyLabel",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.chatPicker.noChats'",
+        "doc": "Resource key (or literal text): what an empty list says when nothing is searched for."
       }
     ],
     "group": "library"
@@ -5827,6 +5940,28 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "speed",
+        "type": "number",
+        "default": 1,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "1",
+        "doc": "1 = the authored timing; 1.25 plays 20% faster (every duration, delay and timer)."
+      },
+      {
+        "name": "outroSpeed",
+        "type": "number",
+        "default": 1,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "1",
+        "doc": "Speeds up only the collapse and fade at the end; the entrance and hold keep their timing."
       }
     ],
     "group": "features"
@@ -6506,6 +6641,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "Install a new bot, or save an installed bot's permissions ({ botId, granted }). Closes on resolve, error on reject."
+      },
+      {
+        "name": "permissions",
+        "type": "BotPermissionInfo[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's permissions, in place of the built-in vocabulary (BotPerm): every key in `bot.perms` and the commands' `needs`, with its label and heading, in the order to list them."
       },
       {
         "name": "onCancel",
@@ -7729,6 +7875,17 @@
         "required": false,
         "componentDefault": "0",
         "doc": ""
+      },
+      {
+        "name": "within",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "CSS selector of an ancestor to clip the burst to (e.g. a device frame); the whole viewport without it."
       }
     ],
     "group": "library"
@@ -8434,6 +8591,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "communityDefaults",
+        "type": "Record<string, GroupRole>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Communities: the host's default general permissions, in place of the built-in ones (which are all admin)."
       }
     ],
     "group": "features"
@@ -11541,7 +11709,7 @@
       },
       {
         "name": "chats",
-        "type": "{ id: string; name: string; kind?: string; grad: string; radius?: string }[]",
+        "type": "{ id: string; name: string; kind?: string; sub?: string; group?: string; grad: string; radius?: string }[]",
         "default": null,
         "editor": null,
         "options": null,
@@ -11559,7 +11727,18 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Post the link to a chat; the confirmation toast shows once it resolves."
+        "doc": "Send the link to a chat; resolve `false` when nothing was sent and there's nothing to say (the user backed out), which leaves the picker open with no toast."
+      },
+      {
+        "name": "filterChats",
+        "type": "(query: string) => Chat[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's search for the picker's chats (see ChatPicker's `filter`)."
       }
     ],
     "group": "features"
@@ -12148,6 +12327,113 @@
         "doc": ""
       }
     ]
+  },
+  {
+    "name": "LinkCard",
+    "source": "by hand (5a, 2026-10-26)",
+    "hash": "",
+    "description": "A link's preview card, as LinkPreview shows it under its text and ChatBubble under a message's. Taken out of LinkPreview so both share it.",
+    "preview": {
+      "width": 340,
+      "height": 260
+    },
+    "props": [
+      {
+        "name": "url",
+        "type": "string",
+        "default": "https://oc.app/blog/sns-treasury-2026",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "domain",
+        "type": "string",
+        "default": "oc.app",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "default": "How SNS treasuries are changing in 2026",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "default": "Proposal flow, spending limits and what this means for community-owned apps.",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "image",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Image URL for the card."
+      },
+      {
+        "name": "imageBg",
+        "type": "string | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'linear-gradient(170deg,#2b1055,#7597de 55%,#ffb36b)'",
+        "doc": "CSS background used when there is no image; null hides the image area."
+      },
+      {
+        "name": "size",
+        "type": "'large' | 'compact'",
+        "default": "large",
+        "editor": "enum",
+        "options": [
+          "large",
+          "compact"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'large'",
+        "doc": ""
+      },
+      {
+        "name": "side",
+        "type": "'received' | 'sent'",
+        "default": "received",
+        "editor": "enum",
+        "options": [
+          "received",
+          "sent"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'received'",
+        "doc": ""
+      }
+    ],
+    "group": "library"
   },
   {
     "name": "LinkPreview",
@@ -13686,6 +13972,28 @@
         "doc": ""
       },
       {
+        "name": "readonly",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "No voting at all (a DM, a read-only chat); closed and a cast vote that can't change lock it too."
+      },
+      {
+        "name": "showResults",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Whether the counts and bars show; defaults to once you've voted or it's closed."
+      },
+      {
         "name": "side",
         "type": "'received' | 'sent'",
         "default": "received",
@@ -13914,7 +14222,18 @@
         "section": null,
         "required": false,
         "componentDefault": "''",
-        "doc": "Shown once won, e.g. \"6.2 ICP\"."
+        "doc": "Shown once won, e.g. \"6.2 ICP\"; \"You won\" alone without it."
+      },
+      {
+        "name": "canClaim",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Whether Claim is offered when the prize is open and its requirements met."
       },
       {
         "name": "note",
@@ -13951,14 +14270,14 @@
       },
       {
         "name": "onClaim",
-        "type": "() => void",
+        "type": "(e: MouseEvent) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Gets the click: a claim needs a trusted one."
       }
     ],
     "group": "library"
@@ -15225,6 +15544,28 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "holdSolved",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Hold a solve on the board (after onSolved) until the host sets `solvedReady`, e.g. once its celebration ends."
+      },
+      {
+        "name": "solvedReady",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": ""
       }
     ],
     "group": "features"
@@ -15868,18 +16209,20 @@
       },
       {
         "name": "state",
-        "type": "'open' | 'done' | 'expired'",
+        "type": "'open' | 'pending' | 'done' | 'cancelled' | 'expired'",
         "default": "open",
         "editor": "enum",
         "options": [
           "open",
+          "pending",
           "done",
+          "cancelled",
           "expired"
         ],
         "section": null,
         "required": false,
         "componentDefault": "'open'",
-        "doc": ""
+        "doc": "pending: taken and on its way, doneText says how; cancelled reads like expired."
       },
       {
         "name": "give",
@@ -15924,6 +16267,28 @@
         "required": false,
         "componentDefault": "'Swapped'",
         "doc": ""
+      },
+      {
+        "name": "caption",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "The offer's message, under the card."
+      },
+      {
+        "name": "canAct",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Whether an open offer offers its action (Accept / Cancel offer) to this reader."
       },
       {
         "name": "time",
@@ -16522,6 +16887,32 @@
         "required": true,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "direction",
+        "type": "'in' | 'out' | 'other'",
+        "default": null,
+        "editor": "enum",
+        "options": [
+          "in",
+          "out",
+          "other"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Which way it went for the reader: in (+, green), out (−), or other, between two other people (no sign). Defaults by side."
+      },
+      {
+        "name": "recipient",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Who it went to, shown after the USD value (\"to Bob\")."
       },
       {
         "name": "caption",
@@ -18490,6 +18881,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "Replace the secret; resolve with the new URL (issued by the host). Hidden without it."
+      },
+      {
+        "name": "onDelete",
+        "type": "(hook: { id: string }) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Remove the webhook, after the user confirms; the dialog closes when this resolves. Hidden without it."
       },
       {
         "name": "onCancel",

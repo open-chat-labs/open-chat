@@ -199,6 +199,13 @@
         "unlink": "Rozłącz",
         "unlinkFailed": "Nie udało się rozłączyć konta"
     },
+    "cashtag": {
+        "chartLabel": "Cena {symbol} w ciągu ostatnich 7 dni",
+        "change7d": "{change} w ciągu 7 dni",
+        "noHistory": "Brak transakcji w ciągu ostatnich 7 dni",
+        "noPrice": "Brak dostępnej ceny",
+        "priceDataBy": "Dane o cenach: {source}"
+    },
     "bridgedUserUnknown": "Użytkownik {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
@@ -1681,6 +1688,9 @@
     "owner": "właściciel",
     "ownerCantLeave": "Zanim opuścisz {level}, musisz dodać kolejnego właściciela",
     "p2pSwap": {
+        "cancelOffer": "Anuluj ofertę",
+        "cancelOfferQuestion": "Anulować tę ofertę wymiany?",
+        "keepOffer": "Zachowaj ofertę",
         "accept": "Zaakceptuj",
         "accepted": "Przyjęty",
         "acceptedBy": "Ta oferta została zaakceptowana przez firmę {user} i oczekuje na zakończenie.",
@@ -2204,6 +2214,7 @@
     "removedBy": "{changedBy} usunął {changed} z {level}",
     "removeMemberFailed": "Nie można usunąć członka",
     "removePreviewQuestion": "Usunąć podgląd?",
+    "errorRemovingLinkPreview": "Nie udało się usunąć podglądu",
     "renderPreviews": "Automatyczne renderowanie podglądów linków",
     "reply": "Odpowiedź",
     "replyPrivately": "Odpowiedz prywatnie",
@@ -2714,7 +2725,10 @@
         "updateTitle": "Aktualizacja {name}",
         "urlLabel": "Adres URL webhooka",
         "username": "hak internetowy",
-        "viewEditAction": "Wyświetl/edytuj szczegóły webhooka"
+        "viewEditAction": "Wyświetl/edytuj szczegóły webhooka",
+        "registerFailed": "Niestety nie udało się zarejestrować webhooka",
+        "updateFailed": "Niestety nie udało się zaktualizować webhooka",
+        "regenerateFailed": "Niestety nie udało się wygenerować nowego adresu URL webhooka"
     },
     "websiteVersion": "strony internetowej",
     "weeks": "Tygodnie",

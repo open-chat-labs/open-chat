@@ -14,6 +14,8 @@ import type {
     ChatListScope,
     ChatPermissions,
     ChatSummary,
+    CommunityMap,
+    CommunitySummary,
     CreatedUser,
     CryptocurrencyContent,
     CryptocurrencyDetails,
@@ -133,6 +135,20 @@ export function isPreviewing(chat: ChatSummary): boolean {
 
 export function isLapsed(chat: ChatSummary): boolean {
     return chat.membership.lapsed;
+}
+
+/**
+ * Whether the user is previewing the chat, or their membership of it or of its community (for a
+ * channel) has lapsed. Either way they can't act as a member, e.g. to claim a prize.
+ */
+export function isPreviewingOrLapsed(
+    chat: ChatSummary,
+    communities: CommunityMap<CommunitySummary>,
+): boolean {
+    if (isPreviewing(chat) || isLapsed(chat)) return true;
+    if (chat.kind !== "channel") return false;
+    const community = communities.get({ kind: "community", communityId: chat.id.communityId });
+    return community?.membership.lapsed ?? false;
 }
 
 export function isFrozen(thing: AccessControlled): boolean {
@@ -1275,6 +1291,26 @@ export function canDeleteOtherUsersMessages(chat: ChatSummary): boolean {
     }
 }
 
+// Whether the user can delete the message: one they sent, a bot's response to a command they used
+// (once confirmed: before then it's the placeholder shown while the bot works), or anyone's where
+// they can delete other users' messages. A call can't be deleted until it ends.
+export function userCanDeleteMessage(
+    msg: Pick<Message, "sender" | "senderContext" | "content">,
+    confirmed: boolean,
+    userId: string,
+    canDeleteOthers: boolean,
+): boolean {
+    const mine =
+        msg.sender === userId ||
+        (confirmed &&
+            msg.senderContext?.kind === "bot" &&
+            msg.senderContext.command?.initiator === userId);
+    return (
+        (canDeleteOthers || mine) &&
+        !(msg.content.kind === "video_call_content" && msg.content.ended === undefined)
+    );
+}
+
 export function canEditGroupDetails(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat" && !chat.frozen) {
         return isPermitted(chat.membership.role, chat.permissions.updateGroup);
@@ -1451,6 +1487,11 @@ export function canSendDirectMessage(
         return false;
     }
 
+    // A bot has no wallet: its id isn't an account anyone controls, so tokens sent to it would be lost
+    if (recipient.kind === "bot" && (permission === "crypto" || permission === "p2pSwap")) {
+        return false;
+    }
+
     return permission !== "poll" && permission !== "prize";
 }
 
@@ -1533,7 +1574,9 @@ export function canForward(content: MessageContent): boolean {
         content.kind === "meme_fighter_content" ||
         content.kind === "video_content" ||
         content.kind === "audio_content" ||
-        content.kind === "giphy_content"
+        content.kind === "giphy_content" ||
+        // a bot posts a chart, but anyone can forward one
+        content.kind === "price_chart_content"
     );
 }
 

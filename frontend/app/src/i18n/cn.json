@@ -199,6 +199,13 @@
         "unlink": "取消关联",
         "unlinkFailed": "无法取消关联该账号"
     },
+    "cashtag": {
+        "chartLabel": "{symbol} 过去 7 天的价格",
+        "change7d": "7 天内 {change}",
+        "noHistory": "过去 7 天没有交易",
+        "noPrice": "暂无价格",
+        "priceDataBy": "价格数据来自 {source}"
+    },
     "bridgedUserUnknown": "{platform} 用户",
     "bridgedUserWithPlatform": "{name}（{platform}）",
     "nativeUpdate": {
@@ -1681,6 +1688,9 @@
     "owner": "群主",
     "ownerCantLeave": "您必须先添加另一个所有者，然后才能离开 {level}",
     "p2pSwap": {
+        "cancelOffer": "取消报价",
+        "cancelOfferQuestion": "取消此兑换报价？",
+        "keepOffer": "保留报价",
         "accept": "接受",
         "accepted": "公认",
         "acceptedBy": "此要约已被 {user} 接受并等待完成。",
@@ -2204,6 +2214,7 @@
     "removedBy": "{changedBy} 从 {changed} 中删除了 {level}",
     "removeMemberFailed": "无法删除成员",
     "removePreviewQuestion": "删除预览？",
+    "errorRemovingLinkPreview": "无法移除预览",
     "renderPreviews": "自动渲染链接预览",
     "reply": "回复",
     "replyPrivately": "在私聊中回复",
@@ -2714,7 +2725,10 @@
         "updateTitle": "更新 {name}",
         "urlLabel": "Webhook URL",
         "username": "网络钩子",
-        "viewEditAction": "查看/编辑 webhook 详细信息"
+        "viewEditAction": "查看/编辑 webhook 详细信息",
+        "registerFailed": "抱歉，我们无法注册该 Webhook",
+        "updateFailed": "抱歉，我们无法更新该 Webhook",
+        "regenerateFailed": "抱歉，我们无法重新生成该 Webhook 的 URL"
     },
     "websiteVersion": "网站的",
     "weeks": "周数",

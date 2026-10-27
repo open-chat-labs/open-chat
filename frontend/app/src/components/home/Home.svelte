@@ -2,6 +2,7 @@
     import { muteChat } from "@src/logic/chats/muteChat";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { flushPendingNavigation } from "@src/utils/navigation";
+    import type { CashtagClickedEvent } from "@webcomponents/cashTag";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import { portalState } from "component-lib";
     import type {
@@ -23,6 +24,7 @@
         MultiUserChatIdentifier,
         NervousSystemDetails,
         OpenChat,
+        PriceSubject,
         ResourceKey,
         RouteParams,
         Rules,
@@ -59,6 +61,7 @@
         publish,
         subscribe,
         suspendedUserStore,
+        sharedDraftText,
     } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext, onMount, tick, untrack } from "svelte";
@@ -121,6 +124,7 @@
     import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
     import RightPanel from "./RightPanelWrapper.svelte";
     import SuspendModal from "./SuspendModal.svelte";
+    import TokenPriceCard from "./TokenPriceCard.svelte";
     import Upgrade from "./upgrade/Upgrade.svelte";
 
     // desktop anchors the card to the name clicked
@@ -130,6 +134,9 @@
 
     let convertGroup: GroupChatSummary | undefined = $state(undefined);
     let showProfileCard: ViewProfileConfig | undefined = $state(undefined);
+    // a token's or coin's price card, anchored to the cashtag clicked
+    let showTokenCard: { subject: PriceSubject; alignTo?: HTMLElement } | undefined =
+        $state(undefined);
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -273,6 +280,7 @@
         ];
         client.initialiseNotifications();
         document.body.addEventListener("profile-clicked", profileClicked);
+        document.body.addEventListener("cashtag-clicked", cashtagClicked);
 
         if ($suspendedUserStore) {
             modal = { kind: "suspended" };
@@ -281,11 +289,20 @@
         return () => {
             unsubEvents.forEach((u) => u());
             document.body.removeEventListener("profile-clicked", profileClicked);
+            document.body.removeEventListener("cashtag-clicked", cashtagClicked);
         };
     });
 
     function profileClicked(event: Event) {
         profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
+    }
+
+    function cashtagClicked(event: Event) {
+        const ev = event as CustomEvent<CashtagClickedEvent>;
+        showTokenCard = {
+            subject: ev.detail,
+            alignTo: ev.target ? (ev.target as HTMLElement) : undefined,
+        };
     }
 
     function sendMessageFailed(alert: boolean) {
@@ -591,20 +608,7 @@
     function shareWithChat(chatId: ChatIdentifier) {
         navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
 
-        const shareText = share.text ?? "";
-        const shareTitle = share.title ?? "";
-        const shareUrl = share.url ?? "";
-
-        let text = shareText.length > 0 ? shareText : shareTitle;
-
-        if (shareUrl.length > 0) {
-            if (text.length > 0) {
-                text += "\n";
-            }
-            text += shareUrl;
-        }
-
-        localUpdates.draftMessages.setTextContent({ chatId }, text);
+        localUpdates.draftMessages.setTextContent({ chatId }, sharedDraftText(share));
     }
 
     function showWallet() {
@@ -640,7 +644,13 @@
         mute: boolean | undefined;
         muteAtEveryone: boolean | undefined;
     }) {
-        const failed = await muteChat(client, detail.chatId, detail.mute, detail.muteAtEveryone, $_);
+        const failed = await muteChat(
+            client,
+            detail.chatId,
+            detail.mute,
+            detail.muteAtEveryone,
+            $_,
+        );
         if (failed !== undefined) toastStore.showFailureToast(failed);
     }
 
@@ -800,9 +810,18 @@
             chatButton={showProfileCard.chatButton}
             alignTo={showProfileCard.alignTo}
             onOpenDirectChat={chatWithFromProfileCard}
-            onClose={() => (showProfileCard = undefined)}
-        />
+            onClose={() => (showProfileCard = undefined)} />
     {/if}
+{/if}
+
+{#if showTokenCard !== undefined}
+    <!-- another cashtag is another card -->
+    {#key showTokenCard}
+        <TokenPriceCard
+            subject={showTokenCard.subject}
+            alignTo={showTokenCard.alignTo}
+            onClose={() => (showTokenCard = undefined)} />
+    {/key}
 {/if}
 
 <main class:anon={$anonUserStore} class:offline={$offlineStore}>
@@ -827,8 +846,7 @@
             ? confirmActionEvent.doubleCheck
             : undefined}
         message={confirmMessage}
-        action={onConfirmAction}
-    />
+        action={onConfirmAction} />
 {/if}
 
 <Toast />
@@ -844,14 +862,12 @@
             modal.kind !== "registering" &&
             modal.kind !== "make_proposal"}
         alignLeft={modal.kind === "select_chat"}
-        onClose={closeModal}
-    >
+        onClose={closeModal}>
         {#if modal.kind === "select_chat"}
             <SelectChatModal
                 onClose={onCloseSelectChat}
                 onSelect={onSelectChat}
-                excludeCurrent={modal.excludeCurrent ?? true}
-            />
+                excludeCurrent={modal.excludeCurrent ?? true} />
         {:else if modal.kind === "suspended"}
             <SuspendedModal onClose={closeModal} />
         {:else if modal.kind === "register_bot"}
@@ -864,14 +880,12 @@
             <WebhookModal
                 chatId={$selectedChatIdStore}
                 mode={{ kind: "register" }}
-                onClose={closeModal}
-            />
+                onClose={closeModal} />
         {:else if modal.kind === "update_webhook" && ($selectedChatIdStore?.kind === "group_chat" || $selectedChatIdStore?.kind === "channel")}
             <WebhookModal
                 chatId={$selectedChatIdStore}
                 mode={{ kind: "update", webhook: modal.webhook }}
-                onClose={closeModal}
-            />
+                onClose={closeModal} />
         {:else if modal.kind === "no_access"}
             <NoAccess onClose={closeNoAccess} />
         {:else if modal.kind === "not_found"}
@@ -880,46 +894,39 @@
             <NoAccess
                 onClose={closeNoAccess}
                 titleKey={"appStore.notAvailableTitle"}
-                textKey={"appStore.notAvailable"}
-            />
+                textKey={"appStore.notAvailable"} />
         {:else if modal.kind === "gate_check_failed"}
             <GateCheckFailed onClose={closeModal} gates={modal.gates} />
         {:else if modal.kind === "evaluating_access_gates"}
             <AccessGateEvaluator
                 gates={modal.gates}
                 onClose={closeModal}
-                onSuccess={accessGatesEvaluated}
-            />
+                onSuccess={accessGatesEvaluated} />
         {:else if modal.kind === "new_group"}
             <CreateOrUpdateGroup
                 embeddedContent={modal.embeddedContent}
                 candidateGroup={modal.candidate}
-                onClose={closeModal}
-            />
+                onClose={closeModal} />
         {:else if modal.kind === "edit_community"}
             <EditCommunity
                 originalRules={modal.communityRules}
                 original={modal.community}
-                onClose={closeModal}
-            />
+                onClose={closeModal} />
         {:else if modal.kind === "wallet"}
             <AccountsModal onClose={closeModal} />
         {:else if modal.kind === "hall_of_fame"}
             <HallOfFame
                 onStreak={() => (modal = { kind: "claim_daily_chit" })}
-                onClose={closeModal}
-            />
+                onClose={closeModal} />
         {:else if modal.kind === "make_proposal"}
             <MakeProposalModal
                 selectedMultiUserChat={modal.chat}
                 nervousSystem={modal.nervousSystem}
-                onClose={closeModal}
-            />
+                onClose={closeModal} />
         {:else if modal.kind === "logging_in" || modal.kind === "registering"}
             <OnboardModal
                 step={modal.kind === "registering" ? "sign_up" : "select_mode"}
-                onClose={closeModal}
-            />
+                onClose={closeModal} />
         {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
         {:else if modal.kind === "daily_puzzle"}
@@ -939,8 +946,7 @@
         left={"0"}
         opacity={"0.05"}
         skew={"5deg"}
-        viewBox={`0 0 361 ${bgClip}`}
-    />
+        viewBox={`0 0 361 ${bgClip}`} />
 {/if}
 
 <Convert bind:group={convertGroup} />
@@ -952,8 +958,7 @@
         <AccessGateEvaluator
             gates={communityPreviewState.gatesToEvaluate}
             onClose={() => communityPreviewState.reset()}
-            onSuccess={(gateCheck) => communityPreviewState.doJoinCommunity(client, gateCheck)}
-        />
+            onSuccess={(gateCheck) => communityPreviewState.doJoinCommunity(client, gateCheck)} />
     </Overlay>
 {/if}
 
@@ -961,8 +966,7 @@
     <Overlay dismissible onClose={() => communityPreviewState.reset()}>
         <GateCheckFailed
             onClose={() => communityPreviewState.reset()}
-            gates={communityPreviewState.gateCheckFailed}
-        />
+            gates={communityPreviewState.gateCheckFailed} />
     </Overlay>
 {/if}
 
@@ -983,16 +987,14 @@
         <SetPinNumberModal
             onPinSet={onPinNumberComplete}
             onClose={() => (forgotPin = false)}
-            type={{ kind: "forgot", while: { kind: "enter" } }}
-        />
+            type={{ kind: "forgot", while: { kind: "enter" } }} />
     </Overlay>
 {:else if $pinNumberResolverStore !== undefined}
     <Overlay>
         <PinNumberModal
             onClose={onPinNumberClose}
             onComplete={onPinNumberComplete}
-            onForgot={onForgotPin}
-        />
+            onForgot={onForgotPin} />
     </Overlay>
 {/if}
 

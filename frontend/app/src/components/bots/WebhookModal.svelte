@@ -7,6 +7,7 @@
         mobileWidth,
         OpenChat,
         validBotComponentName,
+        webhookFailure,
         type FullWebhookDetails,
         type MultiUserChatIdentifier,
     } from "@client";
@@ -61,16 +62,16 @@
         if (valid && dirty) {
             busy = true;
             client
-                .registerWebhook(chatId, webhook.current.name, webhook.current.avatarUrl)
-                .then((success) => {
-                    if (success === undefined) {
-                        toastStore.showFailureToast(i18nKey("Unable to register webhook"));
-                    } else {
+                .saveWebhook(chatId, undefined, webhook.current.name, webhook.current.avatarUrl)
+                .then((outcome) => {
+                    if (outcome.kind === "failed") {
+                        toastStore.showFailureToast(outcome.message);
+                    } else if (outcome.kind === "registered") {
                         webhook.current = {
-                            id: success.id,
+                            id: outcome.webhook.id,
                             name: webhook.current.name,
-                            secret: success.secret,
-                            avatarUrl: success.avatarUrl,
+                            secret: outcome.webhook.secret,
+                            avatarUrl: outcome.webhook.avatarUrl,
                         };
                         webhook.original = { ...webhook.current };
                         step = "registered";
@@ -84,19 +85,15 @@
         busyUpdate = true;
         if (valid && dirty) {
             client
-                .updateWebhook(
+                .saveWebhook(
                     chatId,
-                    webhook.current,
-                    nameDirty ? webhook.current.name : undefined,
-                    avatarDirty
-                        ? webhook.current.avatarUrl !== undefined
-                            ? { value: webhook.current.avatarUrl }
-                            : "set_to_none"
-                        : undefined,
+                    webhook.original,
+                    webhook.current.name,
+                    webhook.current.avatarUrl,
                 )
-                .then((success) => {
-                    if (!success) {
-                        toastStore.showFailureToast(i18nKey("Unable to update webhook details"));
+                .then((outcome) => {
+                    if (outcome.kind === "failed") {
+                        toastStore.showFailureToast(outcome.message);
                     } else {
                         webhook.original = { ...webhook.current };
                     }
@@ -111,7 +108,7 @@
             .regenerateWebhook(chatId, webhook.original.id)
             .then((success) => {
                 if (success === undefined) {
-                    toastStore.showFailureToast(i18nKey("Unable to regenerate webhook"));
+                    toastStore.showFailureToast(webhookFailure("regenerate"));
                 } else {
                     webhook.current.secret = success;
                     webhook.original.secret = success;

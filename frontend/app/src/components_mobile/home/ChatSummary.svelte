@@ -11,11 +11,7 @@
         Row,
         Subtitle,
     } from "component-lib";
-    import type {
-        ChatSummary,
-        DiamondMembershipStatus,
-        TypersByKey,
-    } from "@client";
+    import type { ChatSummary, DiamondMembershipStatus, TypersByKey } from "@client";
     import {
         allUsersStore,
         bridgedUsersStore,
@@ -44,6 +40,7 @@
     import BellIcon from "svelte-material-icons/Bell.svelte";
     import MutedIcon from "svelte-material-icons/BellOff.svelte";
     import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
+    import ChartLine from "svelte-material-icons/ChartLine.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import Heart from "svelte-material-icons/Heart.svelte";
     import Image from "svelte-material-icons/ImageOutline.svelte";
@@ -169,6 +166,8 @@
                 return MemeFighter;
             case "daily_result":
                 return Puzzle;
+            case "price_chart_content":
+                return ChartLine;
             case "video_call_content":
                 return Phone;
             case "video_content":
@@ -234,7 +233,6 @@
                 };
         }
     }
-
 
     function pinChat() {
         client.pinChat(chatSummary.id).then((success) => {

@@ -199,6 +199,13 @@
         "unlink": "ביטול קישור",
         "unlinkFailed": "לא ניתן לבטל את קישור החשבון"
     },
+    "cashtag": {
+        "chartLabel": "המחיר של {symbol} ב-7 הימים האחרונים",
+        "change7d": "{change} ב-7 ימים",
+        "noHistory": "אין עסקאות ב-7 הימים האחרונים",
+        "noPrice": "אין מחיר זמין",
+        "priceDataBy": "נתוני מחירים מאת {source}"
+    },
     "bridgedUserUnknown": "משתמש {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
@@ -1681,6 +1688,9 @@
     "owner": "בעלים",
     "ownerCantLeave": "עליך להוסיף בעלים נוסף לפני שתוכל לעזוב את {level}",
     "p2pSwap": {
+        "cancelOffer": "ביטול ההצעה",
+        "cancelOfferQuestion": "לבטל את הצעת ההחלפה הזו?",
+        "keepOffer": "השארת ההצעה",
         "accept": "לְקַבֵּל",
         "accepted": "מְקוּבָּל",
         "acceptedBy": "הצעה זו התקבלה על ידי {user} והיא ממתינה להשלמתה.",
@@ -2204,6 +2214,7 @@
     "removedBy": "{changedBy} הסיר את {changed} מה-{level}",
     "removeMemberFailed": "לא ניתן להסיר חבר",
     "removePreviewQuestion": "להסיר את התצוגה המקדימה?",
+    "errorRemovingLinkPreview": "לא ניתן להסיר את התצוגה המקדימה",
     "renderPreviews": "תצוגה מקדימה של קישורים לעיבוד אוטומטי",
     "reply": "תשובה",
     "replyPrivately": "השב בפרטי",
@@ -2714,7 +2725,10 @@
         "updateTitle": "עדכון {name}",
         "urlLabel": "כתובת אתר של Webhook",
         "username": "וובהוק",
-        "viewEditAction": "הצג/ערוך פרטי webhook"
+        "viewEditAction": "הצג/ערוך פרטי webhook",
+        "registerFailed": "מצטערים, לא הצלחנו לרשום את ה-webhook",
+        "updateFailed": "מצטערים, לא הצלחנו לעדכן את ה-webhook",
+        "regenerateFailed": "מצטערים, לא הצלחנו ליצור מחדש את כתובת ה-webhook"
     },
     "websiteVersion": "של האתר",
     "weeks": "שבועות",

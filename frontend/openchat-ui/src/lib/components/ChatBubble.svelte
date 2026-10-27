@@ -1,9 +1,12 @@
 <!-- Text message bubble: optional reply quote, forwarded tag, code block, text with an inline time/status stamp,
+     link preview cards (LinkCard) under the text: with any, the bubble takes LinkPreview's shape (its 320px width,
+     cards flush to a 4px inset, the stamp in a footer under them), and an X on each card for the sender with onRemovePreview,
      failed + Retry line, thread link and reaction chips. Emoji-only messages of one or two emoji render large.
      Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
 <script lang="ts">
   import { useT } from '../i18n';
-  import { untrack, type Snippet } from 'svelte';
+  import { untrack, type ComponentProps, type Snippet } from 'svelte';
+  import LinkCard from './LinkCard.svelte';
 
   // count grapheme clusters so flags, skin tones and ZWJ families read as one emoji
   const SEG = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
@@ -33,6 +36,8 @@
     time: string;
     side?: 'sent' | 'received';
     lastInGroup?: boolean;
+    /** Right-aligned layouts (native sent bubbles): the grouped / tail corners go on the inline-end side. */
+    mirror?: boolean;
     status?: 'sending' | 'sent' | 'delivered' | 'failed';
     /** Shown under a failed message; defaults by side. */
     failedText?: string;
@@ -53,6 +58,10 @@
     threadCount?: number;
     threadLastAt?: string;
     onOpenThread?: () => void;
+    /** Previews of the links in the text, a card each under it. */
+    previews?: Omit<ComponentProps<typeof LinkCard>, 'side'>[];
+    /** The sender removes a preview (by its index in `previews`): an X on each card. None without it. */
+    onRemovePreview?: (index: number) => void;
   }
 
   let {
@@ -61,6 +70,7 @@
     time,
     side = 'sent',
     lastInGroup = true,
+    mirror = false,
     status = 'delivered',
     failedText = '',
     retryAction,
@@ -78,10 +88,13 @@
     threadCount = 0,
     threadLastAt = '',
     onOpenThread,
+    previews = [],
+    onRemovePreview,
   }: Props = $props();
   const t = useT();
 
   const sent = $derived(side === 'sent');
+  const carded = $derived(previews.length > 0);
   const emojiCount = $derived(emojiOnlyCount(text));
   const scale = $derived(
     emojiCount === 1 ? { size: '42px', leading: '1.15' } : emojiCount === 2 ? { size: '32px', leading: '1.2' } : { size: 'var(--text-base)', leading: '1.5' },
@@ -133,14 +146,14 @@
 
 <div class="wrap">
   {#if deleted}
-    <div class="deleted" class:sent>
+    <div class="deleted" class:sent class:mirror>
       <span class="trash"></span>
       <span class="deleted-text">{t(deletedText)}</span>
       <span class="deleted-time">{time}</span>
     </div>
   {:else}
     <div class="column" class:sent>
-      <div class="bubble" class:last={lastInGroup} bind:this={bubble} data-oc-bubble>
+      <div class="bubble" class:last={lastInGroup} class:mirror class:carded bind:this={bubble} data-oc-bubble>
         {#if quoteName}
           <div class="quote">
             <span class="quote-bar"></span>
@@ -157,9 +170,22 @@
           <pre class="code">{code}</pre>
         {/if}
         {#if body}
-          <div class="text body" style:font-size={scale.size} style:line-height={scale.leading} style:--oc-stamp-room="{stampWidth + 9}px">{@render body()}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner" bind:offsetWidth={stampWidth}>{@render stamp()}</span></div>
+          <div class="text body" style:font-size={scale.size} style:line-height={scale.leading} style:--oc-stamp-room="{stampWidth + 9}px">{@render body()}{#if !carded}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner" bind:offsetWidth={stampWidth}>{@render stamp()}</span>{/if}</div>
         {:else}
-          <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></p>
+          <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}{#if !carded}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span>{/if}</p>
+        {/if}
+        {#if carded}
+          <div class="previews">
+            {#each previews as p, i}
+              <div class="preview">
+                <LinkCard {...p} {side} />
+                {#if onRemovePreview}
+                  <button class="remove" type="button" aria-label={t('ui.chatBubble.removePreview')} title={t('ui.chatBubble.removePreview')} onclick={() => onRemovePreview(i)}></button>
+                {/if}
+              </div>
+            {/each}
+          </div>
+          <div class="meta"><span class="stamp">{@render stamp()}</span></div>
         {/if}
       </div>
       {#if status === 'failed'}
@@ -242,6 +268,12 @@
     border-radius: var(--radius-xl) var(--radius-xs) var(--radius-xl) var(--radius-xl);
   }
 
+  /* mirrored, like the bubble: the grouped corner on the inline-end side */
+  .deleted.mirror {
+    border-radius: var(--radius-xl);
+    border-start-end-radius: var(--radius-xs);
+  }
+
   .trash {
     flex: none;
     width: 14px;
@@ -297,6 +329,17 @@
 
   .bubble.last {
     border-end-start-radius: var(--radius-xl);
+  }
+
+  .bubble.mirror {
+    border-start-start-radius: var(--radius-xl);
+    border-start-end-radius: var(--radius-xs);
+    border-end-end-radius: var(--radius-xs);
+    border-end-start-radius: var(--radius-xl);
+  }
+
+  .bubble.mirror.last {
+    border-end-end-radius: var(--radius-xl);
   }
 
   .sent .bubble {
@@ -423,6 +466,86 @@
     content: '';
     display: inline-block;
     width: var(--oc-stamp-room, 0);
+  }
+
+  /* with link previews: LinkPreview's shell, the cards flush to its inset and the rest padded as its text */
+  .bubble.carded {
+    width: 320px;
+    padding: var(--space-4);
+  }
+
+  .carded > .quote {
+    margin: 0 0 var(--space-8);
+  }
+
+  .carded > .forwarded,
+  .carded > .code,
+  .carded > .text {
+    margin-inline: var(--space-10);
+  }
+
+  .carded > :is(.forwarded, .code, .text):first-child {
+    margin-top: var(--space-8);
+  }
+
+  .carded > .text {
+    padding-bottom: var(--space-10);
+  }
+
+  .previews {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .preview {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* on the bubble's own colour, so it reads over a card's image too; shown on hover or focus where there's a pointer */
+  .remove {
+    position: absolute;
+    top: var(--space-6);
+    inset-inline-end: var(--space-6);
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--bubble-recv-bg);
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  .remove::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    background: var(--msg-ink);
+    mask: var(--icon-close) center/contain no-repeat;
+  }
+
+  .sent .remove {
+    background: var(--bubble-send-bg);
+  }
+
+  .preview:hover .remove,
+  .remove:focus-visible {
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    .remove {
+      opacity: 1;
+    }
+  }
+
+  .meta {
+    display: flex;
+    justify-content: flex-end;
+    padding: var(--space-6) var(--space-10) var(--space-4);
   }
 
   .stamp {

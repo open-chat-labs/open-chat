@@ -232,6 +232,8 @@ export function getContentAsFormattedText(
         text = "Moderation report";
     } else if (content.kind === "restricted_content") {
         text = "Restricted message";
+    } else if (content.kind === "price_chart_content") {
+        text = content.title;
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }

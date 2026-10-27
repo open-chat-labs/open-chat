@@ -31,8 +31,7 @@ pub struct BotAccessContext {
     pub scope: BotActionScope,
 }
 
-// Bridge bots relay messages from other platforms, eg. Discord, and the edits made to them there,
-// autonomously into groups and channels
+// Bridge bots relay messages from other platforms, eg. Discord, autonomously into groups and channels
 pub fn check_is_relaying_into_group_or_channel(context: &BotAccessContext) -> OCResult {
     if !matches!(context.initiator, BotInitiator::Autonomous) {
         return Err(OCErrorCode::InvalidRequest.with_message("Bridged messages must be relayed autonomously"));

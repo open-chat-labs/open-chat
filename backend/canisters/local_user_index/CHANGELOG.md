@@ -8,6 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Pass on to bots what was tipped, and whether it's held for an unlinked account ([#10249](https://github.com/open-chat-labs/open-chat/pull/10249))
+- Let bots post price charts, with the Image permission, and read them in chat events ([#10267](https://github.com/open-chat-labs/open-chat/pull/10267))
+
+### Changed
+
+- Let any bot edit its own messages, not only bridge bots ([#10282](https://github.com/open-chat-labs/open-chat/pull/10282))
+
+### Removed
+
+- Stop reading the user id migration events, which no canister sends any more ([#10257](https://github.com/open-chat-labs/open-chat/pull/10257))
+
+## [[2.0.2189](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2189-local_user_index)] - 2026-10-26
+
+### Added
+
 - Store map of linked Discord/Telegram accounts, so tips on them can be routed to the linked OpenChat user's account ([#10210](https://github.com/open-chat-labs/open-chat/pull/10210))
 - Let groups and communities look up who linked a Discord/Telegram account, to route tips on its relayed messages ([#10211](https://github.com/open-chat-labs/open-chat/pull/10211))
 - Let the Twitch bridge bot relay messages from Twitch ([#10214](https://github.com/open-chat-labs/open-chat/pull/10214))

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{BotChatContext, BotMessageContent, MessageId, MessageIndex, OgPreview, UnitResult};
 
-// Only bridge bots can edit their messages for now, to relay the edits made on the other platform
+// A bot edits its own messages autonomously, in a group or channel
 #[ts_export(local_user_index, bot_edit_message)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {

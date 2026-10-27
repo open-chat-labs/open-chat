@@ -124,7 +124,7 @@ fn prepare(
             return Ok(PrepareResult::LookUpLinkedUser(user, state.data.local_user_index_canister_id));
         }
         TipRecipient::UnlinkedAccount(account) => {
-            check_tip_can_be_held(&args.transfer)?;
+            check_tip_can_be_held(&args.transfer, args.decimals)?;
             Payee::UnlinkedAccount(account)
         }
     };
@@ -146,8 +146,8 @@ fn prepare(
     let transfer_recipient = match payee {
         Payee::User(recipient) => TransferRecipient::User {
             user_id: recipient,
-            // A member's wallet is held for them, and a bot's comes from its id. A user who has
-            // left is paid in the wallet looked up for them.
+            // A member's wallet is held for them, and a bot has none (see `member_wallet`). A user
+            // who has left is paid in the wallet looked up for them.
             wallet: if !recipient.is_indexed() || state.data.chat.members.get(&recipient).is_some() {
                 state.member_wallet(recipient)?
             } else if let Some((non_member, wallet)) = non_member_wallet

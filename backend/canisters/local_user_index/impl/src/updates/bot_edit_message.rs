@@ -1,23 +1,19 @@
 use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
-use crate::{
-    bots::{check_is_relaying_into_group_or_channel, extract_access_context_from_chat_context},
-    mutate_state,
-};
+use crate::{bots::extract_access_context_from_chat_context, mutate_state};
 use canister_api_macros::update;
 use local_user_index_canister::bot_edit_message::*;
 use oc_error_codes::OCErrorCode;
-use types::{CanisterId, Chat};
+use types::{BotInitiator, CanisterId, Chat};
 
-// Only bridge bots can edit their messages for now, to relay the edits made on the other platform.
-// The group or community checks the message is the bot's own.
+// A bot edits its own messages autonomously, in a group or channel, eg. a bridge bot relaying the
+// edits made on the other platform. The group or community checks the message is the bot's own.
 #[update(candid = true, msgpack = true)]
 async fn bot_edit_message(args: Args) -> Response {
     let context = match mutate_state(|state| {
         let context = extract_access_context_from_chat_context(args.chat_context, state)?;
-        if !state.data.bridge_bots.values().any(|bot_id| *bot_id == context.bot_id) {
-            return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Only bridge bots can edit their messages"));
+        if !matches!(context.initiator, BotInitiator::Autonomous) {
+            return Err(OCErrorCode::InvalidRequest.with_message("Bots must edit their messages autonomously"));
         }
-        check_is_relaying_into_group_or_channel(&context)?;
         Ok(context)
     }) {
         Ok(context) => context,

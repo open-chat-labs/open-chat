@@ -585,6 +585,7 @@ type MessageContentInitial = variant {
     MessageReminder : MessageReminder;
     Encrypted : EncryptedContent;
     Custom : CustomMessageContent;
+    PriceChart : PriceChartContent;
 };
 
 type MessageContent = variant {
@@ -607,6 +608,7 @@ type MessageContent = variant {
     VideoCall : VideoCallContent;
     Encrypted : EncryptedContent;
     Custom : CustomMessageContent;
+    PriceChart : PriceChartContent;
     ReportedMessage : ReportedMessage;
 };
 
@@ -1492,6 +1494,31 @@ type EncryptedContent = record {
 type CustomMessageContent = record {
     kind : text;
     data : blob;
+};
+
+type PriceChartContent = record {
+    title : text;
+    start : TimestampMillis;
+    end : TimestampMillis;
+    series : vec PriceChartSeries;
+    sources : vec PriceChartSource;
+};
+
+type PriceChartSeries = record {
+    token : PriceChartToken;
+    symbol : text;
+    name : text;
+    points : vec record { TimestampMillis; float64 };
+};
+
+type PriceChartToken = variant {
+    Ledger : CanisterId;
+    Coin : text;
+};
+
+type PriceChartSource = record {
+    name : text;
+    url : text;
 };
 
 type EncryptedMessageContentType = variant {

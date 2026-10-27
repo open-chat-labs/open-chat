@@ -199,6 +199,13 @@
         "unlink": "Отвязать",
         "unlinkFailed": "Не удалось отвязать аккаунт"
     },
+    "cashtag": {
+        "chartLabel": "Цена {symbol} за последние 7 дней",
+        "change7d": "{change} за 7 дней",
+        "noHistory": "Нет сделок за последние 7 дней",
+        "noPrice": "Цена недоступна",
+        "priceDataBy": "Данные о ценах: {source}"
+    },
     "bridgedUserUnknown": "Пользователь {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
@@ -1681,6 +1688,9 @@
     "owner": "Владелец",
     "ownerCantLeave": "Вы должны добавить другого владельца, прежде чем сможете покинуть {level}",
     "p2pSwap": {
+        "cancelOffer": "Отменить предложение",
+        "cancelOfferQuestion": "Отменить это предложение обмена?",
+        "keepOffer": "Оставить предложение",
         "accept": "Принимать",
         "accepted": "Принял",
         "acceptedBy": "Это предложение было принято {user} и ожидает завершения.",
@@ -2204,6 +2214,7 @@
     "removedBy": "{changedBy} удалил {changed} из {level}",
     "removeMemberFailed": "Не удалось удалить участника",
     "removePreviewQuestion": "Удалить предварительный просмотр?",
+    "errorRemovingLinkPreview": "Не удалось удалить предпросмотр",
     "renderPreviews": "Автоматический предварительный просмотр ссылок",
     "reply": "Ответить",
     "replyPrivately": "Ответить лично",
@@ -2714,7 +2725,10 @@
         "updateTitle": "Обновление {name}",
         "urlLabel": "URL-адрес веб-перехватчика",
         "username": "вебхук",
-        "viewEditAction": "Просмотр/редактирование данных вебхука"
+        "viewEditAction": "Просмотр/редактирование данных вебхука",
+        "registerFailed": "К сожалению, не удалось зарегистрировать вебхук",
+        "updateFailed": "К сожалению, не удалось обновить вебхук",
+        "regenerateFailed": "К сожалению, не удалось заново создать URL вебхука"
     },
     "websiteVersion": "веб-сайта",
     "weeks": "Недели",

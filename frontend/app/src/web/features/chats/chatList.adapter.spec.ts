@@ -70,6 +70,13 @@ describe("a chat list row", () => {
         });
     });
 
+    test("is locked for a private group, not a public one or a direct chat", () => {
+        const g = group("g1", "Hikers");
+        expect(chatRow({ ...g, public: false } as ChatSummary, ctx).locked).toBe(true);
+        expect(chatRow({ ...g, public: true } as ChatSummary, ctx).locked).toBe(false);
+        expect(chatRow(dm("bob"), ctx).locked).toBe(false);
+    });
+
     test("is pinned (in the Pinned section), selected and unread as the context says", () => {
         const row = chatRow(dm("bob"), {
             ...ctx,

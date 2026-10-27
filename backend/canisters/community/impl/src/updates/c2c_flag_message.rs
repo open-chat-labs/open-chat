@@ -41,7 +41,7 @@ pub(crate) fn c2c_flag_message_impl(args: Args, state: &mut RuntimeState) -> OCR
         results
             .into_iter()
             .filter_map(|(_, result)| result.ok())
-            .map(|r| r.bot_notification)
+            .flat_map(|r| r.bot_notifications)
             .collect()
     } else {
         Vec::new()

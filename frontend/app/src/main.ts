@@ -4,6 +4,7 @@ BigInt.prototype.toJSON = function () {
     return this.toString();
 };
 
+import "./web-components/cashTag";
 import "./web-components/customEmoji";
 import "./web-components/profileLink";
 import "./web-components/spoiler";
