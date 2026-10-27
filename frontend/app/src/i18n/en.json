@@ -1994,7 +1994,7 @@
         "authRequiredTitle": "Sign in to claim",
         "claim": "Claim",
         "claimed": "Success!",
-        "claimFailed": "Sorry your claim was unsuccessfull! Better luck next time. ",
+        "claimFailed": "Sorry, your claim was unsuccessful! Better luck next time.",
         "claimIneligible": "Sorry you don't meet the requirements to claim this prize.",
         "click": "Click the button below for a chance to win a prize.",
         "creatingPrizeMessageFailed": "Failed to create your prize message",

@@ -1,4 +1,4 @@
-import type { PollContent } from "@shared";
+import type { PollConfig, PollContent } from "@shared";
 
 export function totalVotes(content: PollContent): number {
     if (content.votes.total.kind === "anonymous_poll_votes") {
@@ -56,6 +56,17 @@ export function getVotersForAnswer(content: PollContent, idx: number): string[] 
     return content.votes.total.votes[idx];
 }
 
+/**
+ * Whether a poll's votes can change. A multiple-choice poll's always can: the backend lets a voter
+ * add and remove votes whatever its "change vote" flag says, so the flag only counts for single
+ * choice.
+ */
+export function allowsVoteChange(
+    config: Pick<PollConfig, "allowMultipleVotesPerUser" | "allowUserToChangeVote">,
+): boolean {
+    return config.allowMultipleVotesPerUser || config.allowUserToChangeVote;
+}
+
 /** What the reader may do with a poll and see of it. */
 export type PollView = {
     cannotVote: boolean;
@@ -74,7 +85,7 @@ export function pollView(content: PollContent, reader: PollReader): PollView {
             reader.direct ||
             reader.readonly ||
             content.ended ||
-            (voted && !content.config.allowUserToChangeVote),
+            (voted && !allowsVoteChange(content.config)),
         showVotes:
             content.ended ||
             ((voted || reader.sender === reader.me) &&

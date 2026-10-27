@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        allowsVoteChange,
         iconSize,
         mobileWidth,
         type PollContent,
@@ -135,7 +136,7 @@
             },
             config: {
                 allowMultipleVotesPerUser: poll.allowMultipleVotesPerUser,
-                allowUserToChangeVote: poll.allowUserToChangeVote,
+                allowUserToChangeVote: allowsVoteChange(poll),
                 text: poll.pollQuestion === "" ? undefined : poll.pollQuestion,
                 showVotesBeforeEndDate: poll.showVotesBeforeEndDate,
                 endDate: createPollEndDate(),
@@ -262,7 +263,7 @@
                         disabled={poll.allowMultipleVotesPerUser}
                         label={i18nKey("poll.allowChangeVotes")}
                         onChange={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
-                        checked={!poll.allowMultipleVotesPerUser && poll.allowUserToChangeVote} />
+                        checked={allowsVoteChange(poll)} />
 
                     <Toggle
                         small
