@@ -40,7 +40,8 @@ export function returnPlace(p: WalletPlace): 'recipients' | 'all' | 'token' {
 export function flowReturn(p: WalletPlace, tokenHasPage: boolean): 'recipients' | 'all' | 'token' {
   if (p.view === 'recipients') return 'recipients';
   if (p.view === 'all') return 'all';
-  if (tokenHasPage) return 'token';
+  // a token page goes back to itself (with none picked yet, it shows the first token)
+  if (tokenHasPage || p.view === 'token') return 'token';
   return returnPlace(p);
 }
 

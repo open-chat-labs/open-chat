@@ -55,7 +55,10 @@ describe('where a newly opened flow goes back to (a host request or the token pi
     expect(flowReturn(at({ view: 'send', backToAll: true }), false)).toBe('all');
     expect(flowReturn(at({ view: 'receive' }), false)).toBe('token');
     expect(flowReturn(at({}), false)).toBe('token');
-    expect(flowReturn(at({ sym: '' }), false)).toBe('all');
+    // a token page goes back to itself, also with none picked yet (it shows the first token)
+    expect(flowReturn(at({ sym: '' }), false)).toBe('token');
+    // over a flow with no page behind it: All activity
+    expect(flowReturn(at({ view: 'receive', sym: '' }), false)).toBe('all');
   });
 });
 
@@ -88,7 +91,7 @@ describe('a token picked for a flow', () => {
     expect(pick({}, true)).toMatchObject({ sym: 'ckbtc', backToAll: false, backToRecipients: false });
     expect(pick({ sym: '' }, true)).toMatchObject({ sym: 'ckbtc', backToAll: false });
     expect(pick({}, false)).toMatchObject({ sym: 'icp', backToAll: false });
-    expect(pick({ sym: '' }, false)).toMatchObject({ sym: '', backToAll: true });
+    expect(pick({ sym: '' }, false)).toMatchObject({ sym: '', backToAll: false });
   });
 
   test('always starts afresh: no earlier address', () => {

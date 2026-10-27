@@ -287,13 +287,14 @@
       return;
     }
     const view0: View = r.view;
-    extTok = null;
     const flow = isFlow(view0);
-    // no token yet (e.g. Send in the summary card): ask which one first
+    // no token yet (e.g. Send in the summary card): ask which one first. What's open stays as it is (an extra token's
+    // Receive keeps its token) until a token is picked
     if ((r.view === 'send' || r.view === 'receive') && !r.token) {
       pick = { view: r.view };
       return;
     }
+    extTok = null;
     // receiving a token outside `tokens` (one of `receivable`): only received, so the page shown stays for Receive to go
     // back to (All activity if it was opened there)
     if (r.view === 'receive' && r.token && !valued.some((x) => idOf(x) === r.token) && receivable.some((x) => x.symbol === r.token && x.nets.length)) extTok = r.token;
