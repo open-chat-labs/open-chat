@@ -361,3 +361,7 @@
 ## 2026-10-27 — PollMessage: readonly and showResults, by hand
 - `readonly` locks the poll for a reader who may not vote at all (a DM, a read-only chat); the design locks it only once closed or voted without "change vote". `showResults` lets the host say when the counts show: the poll's sender sees them before voting, and a poll that hides its votes until the end doesn't show them after a vote. Without either it behaves as before. The footer counts votes whenever the results show, and "View votes" shows only with `onViewVotes`. `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-27 — PrizeMessage: the claim's click and canClaim, by hand
+- `onClaim` gets the click: the app claims only from a trusted one. `canClaim` (default true) leaves Claim out where the host doesn't offer it (the sender's own prize, a DM, all taken); the design offered it to everyone. Without `wonAmount` a win says "You won" (`ui.prizeMessage.youWonIt`): a prize message carries no amount. `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

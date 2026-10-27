@@ -14098,7 +14098,18 @@
         "section": null,
         "required": false,
         "componentDefault": "''",
-        "doc": "Shown once won, e.g. \"6.2 ICP\"."
+        "doc": "Shown once won, e.g. \"6.2 ICP\"; \"You won\" alone without it."
+      },
+      {
+        "name": "canClaim",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Whether Claim is offered when the prize is open and its requirements met."
       },
       {
         "name": "note",
@@ -14135,14 +14146,14 @@
       },
       {
         "name": "onClaim",
-        "type": "() => void",
+        "type": "(e: MouseEvent) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Gets the click: a claim needs a trusted one."
       }
     ],
     "group": "library"

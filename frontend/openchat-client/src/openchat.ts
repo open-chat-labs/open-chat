@@ -409,6 +409,7 @@ import type { OpenChatConfig } from "./config";
 import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
 import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import { blockOutcome, type BlockContext, type BlockOutcome } from "./utils/profileBlock";
+import { isTrustedClick } from "./utils/prizes";
 import {
     FilteredProposals,
     achievementsStore,
@@ -9488,17 +9489,13 @@ export class OpenChat {
         }
     }
 
-    #validMouseEvent(e: MouseEvent) {
-        return e instanceof MouseEvent && e.isTrusted && e.type === "click";
-    }
-
     claimPrize(
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
         e: MouseEvent,
         signInProof: string | undefined,
     ): Promise<boolean> {
-        if (!this.#validMouseEvent(e)) {
+        if (!isTrustedClick(e)) {
             return Promise.resolve(false);
         }
 
