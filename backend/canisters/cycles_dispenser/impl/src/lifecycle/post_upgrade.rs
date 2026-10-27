@@ -6,6 +6,7 @@ use canister_tracing_macros::trace;
 use cycles_dispenser_canister::post_upgrade::Args;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
+use std::time::Duration;
 use tracing::info;
 
 #[post_upgrade]
@@ -22,7 +23,8 @@ fn post_upgrade(args: Args) {
     let env = init_env(data.rng_seed);
     init_state(env, data, args.wasm_version);
 
-    mutate_state(|state| state.record_cycles_balance());
+    // Recorded once the upgrade is over, when its cost has been charged
+    ic_cdk_timers::set_timer(Duration::ZERO, async { mutate_state(|state| state.record_cycles_balance()) });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");

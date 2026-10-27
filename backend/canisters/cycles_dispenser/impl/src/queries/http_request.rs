@@ -8,15 +8,19 @@ use types::{Cycles, HeaderField, HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
-    let path = request.url.trim_matches('/').to_lowercase();
+    let url = request.url.to_lowercase();
+    let (path, query) = url.split_once('?').unwrap_or((&url, ""));
 
-    match path.as_str() {
+    match path.trim_matches('/') {
         "ledger_account" => read_state(get_ledger_account_impl),
         "logs" => encode_logs(canister_logger::export_logs()),
         "metrics" => read_state(|state| to_json_response(&state.metrics())),
         "trace" => encode_logs(canister_logger::export_traces()),
         "latest_top_ups" => read_state(get_latest_top_ups_impl),
-        "cycles_balance_samples" => read_state(get_cycles_balance_samples_impl),
+        "cycles_balance_samples" => {
+            let since: Option<TimestampMillis> = query.split('&').find_map(|param| param.strip_prefix("since=")?.parse().ok());
+            read_state(|state| get_cycles_balance_samples_impl(since, state))
+        }
         _ => HttpResponse::not_found(),
     }
 }
@@ -78,10 +82,12 @@ fn get_latest_top_ups_impl(state: &State) -> HttpResponse {
     to_json_response(&top_ups)
 }
 
-fn get_cycles_balance_samples_impl(state: &State) -> HttpResponse {
-    let samples: Vec<_> = state
-        .data
-        .cycles_balance_samples
+// The samples taken at or after `since` if given, else all of them. They're held in the order they
+// were taken, so in time order.
+fn get_cycles_balance_samples_impl(since: Option<TimestampMillis>, state: &State) -> HttpResponse {
+    let all = &state.data.cycles_balance_samples;
+    let start = since.map_or(0, |since| all.partition_point(|s| s.timestamp < since));
+    let samples: Vec<_> = all[start..]
         .iter()
         .map(|s| CyclesBalanceSample {
             timestamp: s.timestamp,

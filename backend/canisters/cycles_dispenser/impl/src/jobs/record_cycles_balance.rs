@@ -6,8 +6,7 @@ use types::{Milliseconds, TimestampMillis};
 // Records the cycles balance on the hour, or at midnight UTC in test mode, so that the samples are
 // evenly spaced. Each run schedules the next from the time it actually ran, so they never drift.
 pub fn start_job() {
-    // The state isn't set up yet when the jobs are started
-    ic_cdk_timers::set_timer(Duration::ZERO, async { schedule_next() });
+    schedule_next();
 }
 
 fn schedule_next() {

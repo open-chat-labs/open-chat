@@ -25,8 +25,8 @@ fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion)
     let now = env.now();
     let state = State::new(env, data);
 
-    crate::jobs::start();
     crate::init_state(state);
+    crate::jobs::start();
     WASM_VERSION.set(Timestamped::new(wasm_version, now));
 }
 

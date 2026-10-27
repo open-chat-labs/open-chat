@@ -70,6 +70,9 @@ fn icp_is_burned_into_cycles() {
             .any(|after| after.cycles_balance > before.cycles_balance)),
         "{samples:?}"
     );
+
+    // The config left behind carries on burning ICP every 5 minutes
+    wrapper.discard();
 }
 
 #[test]
@@ -102,6 +105,19 @@ fn cycles_balance_is_recorded_at_the_start_and_end_of_an_upgrade() {
         ..
     } = wrapper.env();
 
+    // Else the dispenser, which starts out holding ICP, burns some once it's upgraded
+    client::cycles_dispenser::update_config(
+        env,
+        *controller,
+        canister_ids.cycles_dispenser,
+        &cycles_dispenser_canister::update_config::Args {
+            min_cycles_balance: Some(0),
+            min_interval: None,
+            max_top_up_amount: None,
+            icp_burn_amount: None,
+        },
+    );
+
     let start = now_millis(env);
     env.advance_time(Duration::from_millis(1));
 
@@ -115,10 +131,10 @@ fn cycles_balance_is_recorded_at_the_start_and_end_of_an_upgrade() {
         .unwrap();
     start_canister(env, *controller, canister_ids.cycles_dispenser);
 
-    // Both are recorded while the upgrade runs, so at the same time
+    // The start is recorded during the upgrade, and the end by the first timer to run after it
+    tick_many(env, 3);
     let samples = cycles_balance_samples_since(env, canister_ids.cycles_dispenser, start);
     assert_eq!(samples.len(), 2, "{samples:?}");
-    assert_eq!(samples[0].timestamp, samples[1].timestamp, "{samples:?}");
 
     wrapper.discard();
 }
@@ -140,7 +156,7 @@ fn cycles_balance_samples_since(
         cycles_dispenser_canister_id,
         &HttpRequest {
             method: "GET".to_string(),
-            url: "/cycles_balance_samples".to_string(),
+            url: format!("/cycles_balance_samples?since={since}"),
             headers: Vec::new(),
             body: Vec::new(),
         },
@@ -148,5 +164,6 @@ fn cycles_balance_samples_since(
     assert_eq!(response.status_code, 200);
 
     let samples: Vec<CyclesBalanceSample> = serde_json::from_slice(&response.body).unwrap();
-    samples.into_iter().filter(|s| s.timestamp >= since).collect()
+    assert!(samples.iter().all(|s| s.timestamp >= since), "{since} {samples:?}");
+    samples
 }

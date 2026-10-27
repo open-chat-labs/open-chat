@@ -50,8 +50,9 @@ async fn run_async(canister_id: CanisterId) {
         if !to_top_up.is_empty() {
             let top_up_amount = read_state(|state| state.data.max_top_up_amount);
 
+            // Each top up's balance afterwards is the next one's balance before
+            mutate_state(|state| state.record_cycles_balance());
             for canister_id in to_top_up {
-                mutate_state(|state| state.record_cycles_balance());
                 let result = deposit_cycles(canister_id, top_up_amount).await;
                 mutate_state(|state| {
                     state.record_cycles_balance();
