@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Let bots delete their own messages autonomously, without the DeleteMessages permission ([#10283](https://github.com/open-chat-labs/open-chat/pull/10283))
+
 ## [[2.0.2196](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2196-community)] - 2026-10-27
 
 ### Added
@@ -20,7 +24,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Tell whoever used a bot's command of replies to the bot's response ([#10274](https://github.com/open-chat-labs/open-chat/pull/10274))
 - Don't notify the sender of a deleted message of replies to it ([#10277](https://github.com/open-chat-labs/open-chat/pull/10277))
 - Don't notify the sender of a deleted message of a thread started on it ([#10278](https://github.com/open-chat-labs/open-chat/pull/10278))
-- Let bots delete their own messages autonomously, without the DeleteMessages permission ([#10283](https://github.com/open-chat-labs/open-chat/pull/10283))
 
 ### Fixed
 
