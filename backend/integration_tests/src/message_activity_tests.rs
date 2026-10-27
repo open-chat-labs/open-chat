@@ -11,9 +11,9 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    Chat, ChatType, CryptoContent, CryptoTransaction, DiamondMembershipPlanDuration, GroupReplyContext, MessageContentInitial,
-    P2PSwapContentInitial, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, TextContent, TimestampMillis,
-    TotalVotes,
+    Chat, ChatType, CryptoContent, CryptoTransaction, DiamondMembershipPlanDuration, EventIndex, GroupReplyContext,
+    MessageContentInitial, P2PSwapContentInitial, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, TextContent,
+    TimestampMillis, TotalVotes, UnitResult,
 };
 
 #[test_case(ChatType::Direct)]
@@ -324,6 +324,104 @@ fn quote_reply_to_message_and_check_activity_feed(chat_type: ChatType) {
     tick_many(env, 3);
 
     check_updates(env, 0, &us, &them, MessageActivity::QuoteReply);
+}
+
+// A reply to a deleted message is for no one, as is one to a message that can't be found: the sender
+// isn't mentioned and gets no activity
+#[test_case(ChatType::Group, true; "deleted in a group")]
+#[test_case(ChatType::Group, false; "not found in a group")]
+#[test_case(ChatType::Channel, true; "deleted in a channel")]
+#[test_case(ChatType::Channel, false; "not found in a channel")]
+fn quote_reply_to_deleted_or_missing_message_is_for_no_one(chat_type: ChatType, deleted: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
+
+    let message_id = random_from_u128();
+    let reply_id = random_from_u128();
+    let content = MessageContentInitial::Text(TextContent { text: random_string() });
+    // The deleted message, or an event index no message has
+    let replies_to = |event_index: EventIndex| {
+        Some(GroupReplyContext {
+            event_index: if deleted { event_index } else { (u32::from(event_index) + 1000).into() },
+        })
+    };
+
+    let mentions = match chat {
+        Chat::Direct(_) => unreachable!(),
+        Chat::Group(group_id) => {
+            let result =
+                client::group::happy_path::send_text_message(env, &us, group_id, None, random_string(), Some(message_id));
+            if deleted {
+                client::group::happy_path::delete_messages(env, us.principal, group_id, None, vec![message_id]);
+            }
+            client::group::happy_path::send_message(
+                env,
+                &them,
+                group_id,
+                None,
+                content,
+                replies_to(result.event_index),
+                Some(reply_id),
+            );
+            client::group::happy_path::summary(env, us.principal, group_id)
+                .membership
+                .unwrap()
+                .mentions
+        }
+        Chat::Channel(community_id, channel_id) => {
+            let result = client::community::happy_path::send_text_message(
+                env,
+                &us,
+                community_id,
+                channel_id,
+                None,
+                random_string(),
+                Some(message_id),
+            );
+            if deleted {
+                let response = client::community::delete_messages(
+                    env,
+                    us.principal,
+                    community_id.into(),
+                    &community_canister::delete_messages::Args {
+                        channel_id,
+                        thread_root_message_index: None,
+                        message_ids: vec![message_id],
+                        as_platform_moderator: None,
+                        new_achievement: false,
+                    },
+                );
+                assert!(matches!(response, UnitResult::Success), "{response:?}");
+            }
+            client::community::happy_path::send_message(
+                env,
+                &them,
+                community_id,
+                channel_id,
+                None,
+                content,
+                replies_to(result.event_index),
+                Some(reply_id),
+            );
+            client::community::happy_path::channel_summary(env, &us, community_id, channel_id)
+                .membership
+                .unwrap()
+                .mentions
+        }
+    };
+
+    tick_many(env, 3);
+
+    assert!(!mentions.iter().any(|m| m.message_id == reply_id), "{mentions:?}");
+    let feed = client::user::happy_path::message_activity_feed(env, &us, 0);
+    assert!(feed.events.is_empty(), "{:?}", feed.events);
 }
 
 #[test_case(ChatType::Group)]
