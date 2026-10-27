@@ -419,6 +419,11 @@ impl MessageInternal {
     pub fn bot_context(&self) -> Option<&BotMessageContext> {
         if let Some(SenderContext::Bot(bc)) = &self.sender_context { Some(bc) } else { None }
     }
+
+    // The bot which sent the message, if one did
+    pub fn sent_by_bot(&self) -> Option<UserId> {
+        self.bot_context().map(|_| self.sender)
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
