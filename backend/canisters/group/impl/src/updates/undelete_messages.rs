@@ -29,7 +29,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
 
     let (messages, bot_notifications): (Vec<_>, Vec<_>) = results
         .into_iter()
-        .map(|success| (success.message, success.bot_notification))
+        .map(|success| (success.message, success.bot_notifications))
         .unzip();
 
     let message_ids: HashSet<_> = messages.iter().map(|m| m.message_id).collect();
@@ -41,7 +41,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
         }
     });
 
-    state.push_bot_notifications(bot_notifications);
+    state.push_bot_notification(bot_notifications.into_iter().flatten());
     handle_activity_notification(state);
     Ok(SuccessResult { messages })
 }

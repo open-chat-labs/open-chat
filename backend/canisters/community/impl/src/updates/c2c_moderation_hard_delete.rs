@@ -9,18 +9,26 @@ use types::{Caller, UnitResult};
 
 pub(crate) fn c2c_moderation_hard_delete_impl(args: Args, state: &mut RuntimeState) -> UnitResult {
     let now = state.env.now();
+    let mut bot_notifications = Vec::new();
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
         // Content is only removable once the message is soft-deleted. It may not be: the
         // moderation delete can have been lost, or the message undeleted before its read-gate
         // flag landed. Deleting here (idempotent for an already-deleted message) means a hard
         // delete never reports success while the content is still live.
-        let _ = channel.chat.delete_messages(
+        if let Ok(results) = channel.chat.delete_messages(
             Caller::OCBot(OPENCHAT_BOT_USER_ID),
             args.thread_root_message_index,
             vec![args.message_id],
             true,
             now,
-        );
+        ) {
+            bot_notifications.extend(
+                results
+                    .into_iter()
+                    .filter_map(|(_, r)| r.ok())
+                    .flat_map(|d| d.bot_notifications),
+            );
+        }
 
         if let Some((content, _sender)) =
             channel
@@ -39,6 +47,7 @@ pub(crate) fn c2c_moderation_hard_delete_impl(args: Args, state: &mut RuntimeSta
             error!(message_id = %args.message_id, "Moderation hard delete: message not found");
         }
     }
+    state.push_bot_notification(bot_notifications);
     handle_activity_notification(state);
     UnitResult::Success
 }

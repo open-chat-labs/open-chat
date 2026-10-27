@@ -571,10 +571,7 @@ impl ChatEvents {
             .collect()
     }
 
-    pub fn undelete_messages(
-        &mut self,
-        args: DeleteUndeleteMessagesArgs,
-    ) -> Vec<(MessageId, OCResult<Option<BotNotification>>)> {
+    pub fn undelete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, OCResult<Vec<BotNotification>>)> {
         args.iter()
             .map(|undelete_message_args| (undelete_message_args.message_id, self.undelete_message(undelete_message_args)))
             .collect()
@@ -591,7 +588,7 @@ impl ChatEvents {
             |message, _| Self::delete_message_inner(message, &args),
             |d| d.bot,
         ) {
-            Ok(result) => {
+            Ok((result, sender_bot_notification)) => {
                 let DeletedOrRestored {
                     sender,
                     message_index,
@@ -628,7 +625,7 @@ impl ChatEvents {
                 }
                 Ok(DeleteMessageSuccess {
                     sender,
-                    bot_notification: result.bot_notification,
+                    bot_notifications: result.bot_notification.into_iter().chain(sender_bot_notification).collect(),
                 })
             }
             Err(UpdateEventError::NoChange(error)) => Err(error.into()),
@@ -659,7 +656,7 @@ impl ChatEvents {
                     message_index: message.message_index,
                     document: Document::from(&message.content),
                     reported: !own_message,
-                    bot: message.sent_by_bot(),
+                    bot: message.sent_by_bot().filter(|bot| *bot != args.caller),
                 })
             }
         } else {
@@ -675,7 +672,7 @@ impl ChatEvents {
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         now: TimestampMillis,
-    ) -> OCResult<Option<BotNotification>> {
+    ) -> OCResult<Vec<BotNotification>> {
         let deleted_by = self
             .events_reader(EventIndex::default(), thread_root_message_index, None)
             .and_then(|reader| reader.message_internal(message_id.into()))
@@ -702,7 +699,7 @@ impl ChatEvents {
         })
     }
 
-    fn undelete_message(&mut self, args: DeleteUndeleteMessageArgs) -> OCResult<Option<BotNotification>> {
+    fn undelete_message(&mut self, args: DeleteUndeleteMessageArgs) -> OCResult<Vec<BotNotification>> {
         match self.update_message_notifying(
             args.thread_root_message_index,
             args.message_id.into(),
@@ -713,7 +710,7 @@ impl ChatEvents {
             |message, _| Self::undelete_message_inner(message, &args),
             |d| d.bot,
         ) {
-            Ok(result) => {
+            Ok((result, sender_bot_notification)) => {
                 let DeletedOrRestored {
                     sender,
                     message_index,
@@ -747,7 +744,7 @@ impl ChatEvents {
                     self.search_index
                         .add(self.main.stable_memory_prefix(), message_index, sender, &document);
                 }
-                Ok(result.bot_notification)
+                Ok(result.bot_notification.into_iter().chain(sender_bot_notification).collect())
             }
             Err(UpdateEventError::NoChange(error)) => Err(error.into()),
             Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
@@ -782,7 +779,7 @@ impl ChatEvents {
                         message_index: message.message_index,
                         document: Document::from(&message.content),
                         reported,
-                        bot: message.sent_by_bot(),
+                        bot: message.sent_by_bot().filter(|bot| *bot != args.caller),
                     })
                 }
             }
@@ -2941,10 +2938,13 @@ impl ChatEvents {
             update_message_fn,
             |_| None,
         )
+        .map(|(success, _)| success)
     }
 
-    // As `update_message`, and the bot `also_notify` picks from the update, if any, is notified too,
-    // whether or not it's subscribed to the event, eg. the bot whose own message was deleted
+    // As `update_message`, and the bot `also_notify` picks from the update, if any, is told too,
+    // whether or not it's subscribed to the event, eg. the bot whose own message was deleted. Unless
+    // it's subscribed, and so allowed to read messages, it's told in a notification of its own,
+    // without what others added to the message, eg. reactions.
     #[expect(clippy::too_many_arguments)]
     fn update_message_notifying<
         F: FnOnce(&mut MessageInternal, EventMetaData) -> Result<T, UpdateEventError<E>>,
@@ -2961,7 +2961,7 @@ impl ChatEvents {
         event_type: ChatEventType,
         update_message_fn: F,
         also_notify: N,
-    ) -> Result<UpdateMessageSuccess<T>, UpdateEventError<E>> {
+    ) -> Result<(UpdateMessageSuccess<T>, Option<BotNotification>), UpdateEventError<E>> {
         self.update_event(
             thread_root_message_index,
             event_key,
@@ -2970,34 +2970,32 @@ impl ChatEvents {
             |event| Self::update_message_inner(event, update_message_fn),
         )
         .map(|r| {
-            let mut bots_to_notify = self.bots_to_notify(&event_type);
-            if let Some(bot) = also_notify(&r.value)
-                && !bots_to_notify.contains(&bot)
-            {
-                bots_to_notify.push(bot);
-            }
-            let bot_notification = if !bots_to_notify.is_empty() {
-                Some(BotNotification {
-                    event: types::BotEvent::Chat(BotChatEvent {
-                        event: r.event,
-                        chat: self.chat,
-                        thread: thread_root_message_index,
-                        event_index: r.event_index,
-                        latest_event_index: r.latest_event_index,
-                    }),
-                    recipients: bots_to_notify,
-                    timestamp: now,
-                })
-            } else {
-                None
+            let bots_to_notify = self.bots_to_notify(&event_type);
+            let notification = |event, recipients| BotNotification {
+                event: types::BotEvent::Chat(BotChatEvent {
+                    event,
+                    chat: self.chat,
+                    thread: thread_root_message_index,
+                    event_index: r.event_index,
+                    latest_event_index: r.latest_event_index,
+                }),
+                recipients,
+                timestamp: now,
             };
+            let also_notified = also_notify(&r.value)
+                .filter(|bot| !bots_to_notify.contains(bot))
+                .map(|bot| notification(without_others_additions(r.event.clone()), vec![bot]));
+            let bot_notification = (!bots_to_notify.is_empty()).then(|| notification(r.event, bots_to_notify));
 
-            UpdateMessageSuccess {
-                event_index: r.event_index,
-                latest_event_index: r.latest_event_index,
-                value: r.value,
-                bot_notification,
-            }
+            (
+                UpdateMessageSuccess {
+                    event_index: r.event_index,
+                    latest_event_index: r.latest_event_index,
+                    value: r.value,
+                    bot_notification,
+                },
+                also_notified,
+            )
         })
     }
 
@@ -3028,6 +3026,21 @@ impl ChatEvents {
             .get(event_type)
             .map(|s| s.iter().cloned().collect())
             .unwrap_or_default()
+    }
+}
+
+// A message as its sender is told of it without being allowed to read messages: without what others
+// added to it, ie. reactions, tips, its thread's participants and OpenChat's moderation flags
+fn without_others_additions(event: ChatEvent) -> ChatEvent {
+    match event {
+        ChatEvent::Message(mut message) => {
+            message.reactions.clear();
+            message.tips = Default::default();
+            message.thread_summary = None;
+            message.moderation_flags = 0;
+            ChatEvent::Message(message)
+        }
+        event => event,
     }
 }
 
@@ -3217,18 +3230,19 @@ struct DeletedOrRestored {
     document: Document,
     // Whether the deletion counts, or counted, as reporting the message
     reported: bool,
-    // The bot which sent the message, if one did, which is told it was deleted or restored
+    // The bot which sent the message, if one did and it wasn't the caller, which is told it was
+    // deleted or restored
     bot: Option<UserId>,
 }
 
 pub struct DeleteMessageSuccess {
     pub sender: UserId,
-    pub bot_notification: Option<BotNotification>,
+    pub bot_notifications: Vec<BotNotification>,
 }
 
 pub struct UndeleteMessageSuccess {
     pub message: Message,
-    pub bot_notification: Option<BotNotification>,
+    pub bot_notifications: Vec<BotNotification>,
 }
 
 #[derive(Copy, Clone)]
@@ -3312,7 +3326,10 @@ mod tests {
     use candid::Principal;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-    use types::{BotMessageContext, MultiUserChat, NnsProposal, Proposal, ProposalDecisionStatus, ProposalRewardStatus, Tally};
+    use types::{
+        BotMessageContext, MessageContent, MultiUserChat, NnsProposal, Proposal, ProposalDecisionStatus, ProposalRewardStatus,
+        Reaction, Tally,
+    };
 
     #[test]
     fn record_proposal_vote_records_one_vote_per_user() {
@@ -3389,24 +3406,38 @@ mod tests {
         p.votes
     }
 
-    #[test]
-    fn a_bot_is_told_when_its_own_message_is_deleted_or_restored() {
-        let (mut events, _, _) = setup_events();
-        let admin: UserId = Principal::from_slice(&[2]).into();
-        let bot: UserId = Principal::from_slice(&[20]).into();
+    const ADMIN: u8 = 2;
+    const BOT: u8 = 20;
+
+    fn user(n: u8) -> UserId {
+        Principal::from_slice(&[n]).into()
+    }
+
+    fn bot_context() -> SenderContext {
+        SenderContext::Bot(BotMessageContext {
+            command: None,
+            finalised: true,
+            bridged_from: None,
+        })
+    }
+
+    // A message from `sender`, in the thread if one's given, with a reaction from someone else
+    fn push_message_with_reaction(
+        events: &mut ChatEvents,
+        sender: UserId,
+        sender_context: Option<SenderContext>,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: u128,
+    ) -> EventIndex {
         let (message, _) = events.push_message::<NullEventPusher>(
             PushMessageArgs {
-                sender: bot,
-                thread_root_message_index: None,
-                message_id: MessageId::from(30u128),
+                sender,
+                thread_root_message_index,
+                message_id: MessageId::from(message_id),
                 content: MessageContentInternal::Text(TextContentInternal {
                     text: "I'll reply here when CHAT goes above $0.05".to_string(),
                 }),
-                sender_context: Some(SenderContext::Bot(BotMessageContext {
-                    command: None,
-                    finalised: true,
-                    bridged_from: None,
-                })),
+                sender_context,
                 mentioned: Vec::new(),
                 replies_to: None,
                 forwarded: false,
@@ -3417,43 +3448,116 @@ mod tests {
             },
             None,
         );
-
-        // It isn't subscribed to anything, nor allowed to read messages, but it's told about its own
-        let deleted = events.delete_messages(delete_args(admin, 30));
-        let notification = deleted[0].1.as_ref().unwrap().bot_notification.clone().unwrap();
-        assert_eq!(notified_of(notification), (vec![bot], message.index));
-
-        let restored = events.undelete_messages(delete_args(admin, 30));
-        let notification = restored[0].1.as_ref().unwrap().clone().unwrap();
-        assert_eq!(notified_of(notification), (vec![bot], message.index));
+        events
+            .add_reaction::<NullEventPusher>(
+                AddRemoveReactionArgs {
+                    user_id: user(3),
+                    min_visible_event_index: EventIndex::default(),
+                    thread_root_message_index,
+                    message_id: MessageId::from(message_id),
+                    reaction: Reaction::new("👍".to_string()),
+                    now: 11,
+                },
+                None,
+            )
+            .unwrap();
+        message.index
     }
 
-    #[test]
-    fn no_bot_is_told_when_a_users_message_is_deleted_unless_subscribed() {
-        let (mut events, _, _) = setup_events();
-        let admin: UserId = Principal::from_slice(&[2]).into();
-
-        let deleted = events.delete_messages(delete_args(admin, 2));
-
-        assert!(deleted[0].1.as_ref().unwrap().bot_notification.is_none());
-    }
-
-    fn delete_args(caller: UserId, message_id: u128) -> DeleteUndeleteMessagesArgs {
+    fn delete_args(
+        caller: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: u128,
+    ) -> DeleteUndeleteMessagesArgs {
         DeleteUndeleteMessagesArgs {
             caller,
             is_admin: true,
             min_visible_event_index: EventIndex::default(),
-            thread_root_message_index: None,
+            thread_root_message_index,
             message_ids: vec![MessageId::from(message_id)],
             now: 20,
         }
     }
 
-    fn notified_of(notification: BotNotification) -> (Vec<UserId>, EventIndex) {
+    fn deleted(events: &mut ChatEvents, args: DeleteUndeleteMessagesArgs) -> Vec<BotNotification> {
+        events.delete_messages(args).remove(0).1.unwrap().bot_notifications
+    }
+
+    // Who's told, of which event, in which thread, and the message they're told of
+    fn notified_of(mut notifications: Vec<BotNotification>) -> (Vec<UserId>, EventIndex, Option<MessageIndex>, Message) {
+        assert_eq!(notifications.len(), 1);
+        let notification = notifications.remove(0);
         let types::BotEvent::Chat(event) = notification.event else {
             panic!("Expected a chat event");
         };
-        (notification.recipients, event.event_index)
+        let ChatEvent::Message(message) = event.event else {
+            panic!("Expected a message");
+        };
+        (notification.recipients, event.event_index, event.thread, *message)
+    }
+
+    #[test]
+    fn a_bot_is_told_when_its_own_message_is_deleted_or_restored_without_what_others_added() {
+        let (mut events, _, _) = setup_events();
+        let event_index = push_message_with_reaction(&mut events, user(BOT), Some(bot_context()), None, 30);
+
+        // It isn't subscribed to anything, nor allowed to read messages, but it's told about its own,
+        // without who reacted to it
+        let (recipients, notified_index, thread, message) =
+            notified_of(deleted(&mut events, delete_args(user(ADMIN), None, 30)));
+        assert_eq!((recipients, notified_index, thread), (vec![user(BOT)], event_index, None));
+        assert!(matches!(message.content, MessageContent::Deleted(_)));
+        assert!(message.reactions.is_empty());
+
+        let restored = events
+            .undelete_messages(delete_args(user(ADMIN), None, 30))
+            .remove(0)
+            .1
+            .unwrap();
+        let (recipients, notified_index, _, message) = notified_of(restored);
+        assert_eq!((recipients, notified_index), (vec![user(BOT)], event_index));
+        assert!(matches!(message.content, MessageContent::Text(_)));
+        assert!(message.reactions.is_empty());
+    }
+
+    #[test]
+    fn a_bot_subscribed_to_deletions_is_told_once_in_full() {
+        let (mut events, _, _) = setup_events();
+        events.subscribe_bot_to_events(
+            user(BOT),
+            HashSet::from([ChatEventType::MessageDeleted]),
+            &HashSet::from([ChatEventCategory::Message]),
+        );
+        push_message_with_reaction(&mut events, user(BOT), Some(bot_context()), None, 30);
+
+        let (recipients, _, _, message) = notified_of(deleted(&mut events, delete_args(user(ADMIN), None, 30)));
+
+        assert_eq!(recipients, vec![user(BOT)]);
+        assert_eq!(message.reactions.len(), 1);
+    }
+
+    #[test]
+    fn a_bot_is_told_of_its_message_in_a_thread_by_its_index_there() {
+        let (mut events, _, text_message_index) = setup_events();
+        let event_index = push_message_with_reaction(&mut events, user(BOT), Some(bot_context()), Some(text_message_index), 30);
+
+        let (recipients, notified_index, thread, _) =
+            notified_of(deleted(&mut events, delete_args(user(ADMIN), Some(text_message_index), 30)));
+
+        assert_eq!(recipients, vec![user(BOT)]);
+        assert_eq!((notified_index, thread), (event_index, Some(text_message_index)));
+    }
+
+    #[test]
+    fn no_bot_is_told_of_a_deletion_it_made_or_of_a_message_it_didnt_send() {
+        let (mut events, _, _) = setup_events();
+        push_message_with_reaction(&mut events, user(BOT), Some(bot_context()), None, 30);
+        push_message_with_reaction(&mut events, user(BOT), Some(SenderContext::Webhook), None, 31);
+
+        assert!(deleted(&mut events, delete_args(user(BOT), None, 30)).is_empty());
+        assert!(deleted(&mut events, delete_args(user(ADMIN), None, 31)).is_empty());
+        // and a user's message
+        assert!(deleted(&mut events, delete_args(user(ADMIN), None, 2)).is_empty());
     }
 
     #[test]

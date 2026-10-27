@@ -1199,13 +1199,13 @@ impl GroupChatCore {
 
         let messages = results
             .into_iter()
-            .filter_map(|(message_id, result)| result.ok().map(|bot_notification| (message_id, bot_notification)))
-            .filter_map(|(message_id, bot_notification)| {
+            .filter_map(|(message_id, result)| result.ok().map(|bot_notifications| (message_id, bot_notifications)))
+            .filter_map(|(message_id, bot_notifications)| {
                 events_reader
                     .message_internal(message_id.into())
                     .map(|m| UndeleteMessageSuccess {
                         message: m.hydrate(Some(user)),
-                        bot_notification,
+                        bot_notifications,
                     })
             })
             .collect();
