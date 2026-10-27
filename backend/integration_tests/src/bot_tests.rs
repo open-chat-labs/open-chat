@@ -616,6 +616,26 @@ fn bots_edit_their_own_messages_autonomously() {
         "{result:?}"
     );
     assert_eq!(text_of(env, members_message.event_index), (text, false));
+
+    // Nor its own once it's uninstalled, which only the group checks
+    client::local_user_index::happy_path::uninstall_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Group(group_id),
+        bot_id,
+    );
+    let result = edit(
+        env,
+        BotChatContext::Autonomous(Chat::Group(group_id)),
+        response.message_id,
+        "Edited once uninstalled",
+    );
+    assert!(
+        matches!(&result, types::UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "{result:?}"
+    );
+    assert_eq!(text_of(env, response.event_index), ("~~Struck out~~".to_string(), true));
 }
 
 fn bot_send_message(
