@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2198](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2198-group_index)] - 2026-10-27
+
 ### Added
 
 - Add support for the new PriceChart message content type ([#10267](https://github.com/open-chat-labs/open-chat/pull/10267))

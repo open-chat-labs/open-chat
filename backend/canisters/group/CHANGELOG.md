@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2195](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2195-group)] - 2026-10-27
+
 ### Added
 
 - Tell bots what was tipped, and whether it's held for an unlinked account, so a bridge can tell the author ([#10249](https://github.com/open-chat-labs/open-chat/pull/10249))
