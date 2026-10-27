@@ -2050,7 +2050,7 @@ impl ChatEvents {
         }
     }
 
-    fn update_thread_summary<F: FnOnce(&mut ThreadSummaryInternal, UserId) -> bool>(
+    fn update_thread_summary<F: FnOnce(&mut ThreadSummaryInternal, Option<UserId>) -> bool>(
         &mut self,
         thread_root_message_index: MessageIndex,
         update_fn: F,
@@ -2069,12 +2069,13 @@ impl ChatEvents {
         )
     }
 
-    fn update_thread_summary_inner<F: FnOnce(&mut ThreadSummaryInternal, UserId) -> bool>(
+    fn update_thread_summary_inner<F: FnOnce(&mut ThreadSummaryInternal, Option<UserId>) -> bool>(
         root_message: &mut MessageInternal,
         create_if_not_exists: bool,
         update_fn: F,
     ) -> Result<(), UpdateEventError> {
-        let root_message_recipient = root_message.reply_recipient();
+        // A thread on a deleted message is for no one, as a reply to one is
+        let root_message_recipient = (!root_message.is_deleted()).then(|| root_message.reply_recipient());
         let summary = if create_if_not_exists {
             root_message.thread_summary.get_or_insert(ThreadSummaryInternal::default())
         } else if let Some(s) = root_message.thread_summary.as_mut() {
