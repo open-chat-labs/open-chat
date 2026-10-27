@@ -88,8 +88,12 @@
     onClose?: () => void;
     /** Embedded: reports whether anything is picked. */
     onDirtyChange?: (dirty: boolean) => void;
-    chats?: { id: string; name: string; kind?: string; grad: string; radius?: string }[];
+    chats?: { id: string; name: string; kind?: string; sub?: string; group?: string; grad: string; radius?: string }[];
+    /** Send the link to a chat; resolve `false` when nothing was sent and there's nothing to say (the user backed out),
+     *  which leaves the picker open with no toast. */
     onShareToChat?: (v: { chatId: string; message: string; link: string }) => Promise<unknown> | void;
+    /** The host's search for the picker's chats (see ChatPicker's `filter`). */
+    filterChats?: (query: string) => { id: string; name: string; kind?: string; sub?: string; group?: string; grad: string; radius?: string }[];
   }
 
   let {
@@ -117,6 +121,7 @@
     onDirtyChange,
     chats = [],
     onShareToChat,
+    filterChats,
   }: Props = $props();
   const t = useT();
 
@@ -250,7 +255,11 @@
   async function sentToChat(x: { chatId: string; chat: string; message: string }) {
     const chat = chats.find((c) => c.id === x.chatId);
     if (!chat || !onShareToChat) return;
-    if (await attempt('chat', () => onShareToChat({ chatId: chat.id, message: x.message, link }))) {
+    let sent = true;
+    const shared = await attempt('chat', async () => {
+      sent = (await onShareToChat({ chatId: chat.id, message: x.message, link })) !== false;
+    });
+    if (shared && sent) {
       pickerOpen = false;
       showToast(t('ui.inviteDialog.linkSent', { chat: chat.name }));
     }
@@ -517,7 +526,7 @@
     {/if}
   </div>
   {#if pickerOpen}
-    <ChatPicker title={t('ui.inviteDialog.shareInviteLink')} previewLabel={t('ui.inviteDialog.inviteLinkCaps')} item={{ title: t('ui.inviteDialog.inviteLink'), sub: linkShown, icon: 'link' }} {chats} z={95} onSend={sentToChat} onClose={() => (pickerOpen = false)} />
+    <ChatPicker title={t('ui.inviteDialog.shareInviteLink')} previewLabel={t('ui.inviteDialog.inviteLinkCaps')} item={{ title: t('ui.inviteDialog.inviteLink'), sub: linkShown, icon: 'link' }} {chats} filter={filterChats} z={95} onSend={sentToChat} onClose={() => (pickerOpen = false)} />
   {/if}
   {#if toast}
     <div class="toast-layer">

@@ -26,6 +26,11 @@
     id: string;
     name: string;
     kind?: string;
+    /** Literal text under the name, in place of `kind` (a DM's last seen, a group's description). */
+    sub?: string;
+    /** Literal text, shown as given: the section it's listed under (Favourites, Direct chats, a community's name);
+     *  chats of one section come together, and the list shows a header for each. */
+    group?: string;
     grad: string;
     radius?: string;
   }
@@ -42,9 +47,25 @@
     onSend?: (v: { chatId: string; chat: string; message: string }) => void;
     onClose?: () => void;
     z?: number;
+    /** The host's search: the chats to list for a query (a name, a username, a community …); the picker otherwise
+     *  matches `chats` by name and kind. */
+    filter?: (query: string) => Chat[];
+    /** Resource key (or literal text): what an empty list says when nothing is searched for. */
+    emptyLabel?: string;
   }
 
-  let { title = 'ui.chatPicker.title', sendLabel = 'ui.common.send', previewLabel = 'ui.chatPicker.sharing', item = null, chats, onSend, onClose, z = 90 }: Props = $props();
+  let {
+    title = 'ui.chatPicker.title',
+    sendLabel = 'ui.common.send',
+    previewLabel = 'ui.chatPicker.sharing',
+    item = null,
+    chats,
+    onSend,
+    onClose,
+    z = 90,
+    filter,
+    emptyLabel = 'ui.chatPicker.noChats',
+  }: Props = $props();
   const t = useT();
 
   let query = $state('');
@@ -52,7 +73,11 @@
   let message = $state('');
 
   const needle = $derived(query.trim().toLowerCase());
-  const list = $derived(needle ? chats.filter((c) => `${c.name} ${c.kind ?? ''}`.toLowerCase().includes(needle)) : chats);
+  const list = $derived(
+    filter ? filter(query.trim()) : needle ? chats.filter((c) => `${c.name} ${c.kind ?? ''}`.toLowerCase().includes(needle)) : chats,
+  );
+  // whether the list is in sections (the host gave them): a header starts each, in place of "Recent chats"
+  const sectioned = $derived(list.some((c) => c.group !== undefined));
 
   function pick(c: Chat) {
     to = c;
@@ -88,15 +113,17 @@
         <Field placeholder={t('ui.chatPicker.searchChats')} value={query} onInput={(e) => (query = e.currentTarget.value)} onClear={() => (query = '')} showShortcut={false} />
       </div>
       <div class="list" role="listbox" aria-label={t('ui.chatPicker.chats')}>
-        <span class="list-label">{t(needle ? 'ui.chatPicker.results' : 'ui.chatPicker.recentChats')}</span>
-        {#each list as chat}
+        {#if !sectioned}<span class="list-label">{t(needle ? 'ui.chatPicker.results' : 'ui.chatPicker.recentChats')}</span>{/if}
+        {#each list as chat, i}
+          {#if sectioned && chat.group !== list[i - 1]?.group}<span class="list-label">{chat.group}</span>{/if}
           <div class="chat" onclick={() => pick(chat)} role="option" aria-selected="false" tabindex="0">
             <span class="face" style:border-radius={chat.radius ?? '50%'} style:background={chat.grad}></span>
-            <span class="chat-text"><span class="chat-name">{chat.name}</span><span class="chat-kind">{chat.kind ?? ''}</span></span>
+            <span class="chat-text"><span class="chat-name">{chat.name}</span><span class="chat-kind">{chat.sub ?? chat.kind ?? ''}</span></span>
             <span class="chevron" data-oc-flip=""></span>
           </div>
         {/each}
-        {#if needle && list.length === 0}<span class="empty">{t('ui.chatPicker.noMatches', { query })}</span>{/if}
+        {#if needle && list.length === 0}<span class="empty">{t('ui.chatPicker.noMatches', { query })}</span>
+        {:else if list.length === 0}<span class="empty">{t(emptyLabel)}</span>{/if}
       </div>
     {:else}
       <div class="confirm">
@@ -125,6 +152,8 @@
 <style>
   .picker {
     min-height: 0;
+    /* the shell's grid column would otherwise grow to a long unbroken line (a link) */
+    min-width: 0;
     display: flex;
     flex-direction: column;
   }
@@ -217,6 +246,8 @@
     padding: 10px 8px 8px;
     font: var(--weight-semibold) 11.5px/1 var(--font-mono);
     letter-spacing: 0.08em;
+    /* the host's section names (Group chats, a community's name) read as the design's labels */
+    text-transform: uppercase;
     color: var(--ink-4);
   }
 
