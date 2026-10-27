@@ -19,9 +19,13 @@
     icon?: string;
     onClick?: () => void;
     onDone?: () => void;
+    /** 1 = the authored timing; 1.25 plays 20% faster (every duration, delay and timer). */
+    speed?: number;
+    /** Speeds up only the collapse and fade at the end; the entrance and hold keep their timing. */
+    outroSpeed?: number;
   }
 
-  let { title, kicker = 'ui.achievementToast.unlocked', reward = 0, icon = 'camera', onClick, onDone }: Props = $props();
+  let { title, kicker = 'ui.achievementToast.unlocked', reward = 0, icon = 'camera', onClick, onDone, speed = 1, outroSpeed = 1 }: Props = $props();
   const t = useT();
 
   let pill: HTMLDivElement;
@@ -44,9 +48,16 @@
 
   const fmt = (n: number) => `+${n.toLocaleString(i18n.locale ?? 'en')}`;
 
+  const sp = () => Math.max(0.25, speed);
+  const later = (fn: () => void, ms: number) => timers.push(setTimeout(fn, ms / sp()));
+
   function animate(el: Element | undefined, keys: Keyframe[], opts: KeyframeAnimationOptions) {
     if (!el) return null;
-    const a = el.animate(keys, opts);
+    const timed = { ...opts };
+    if (typeof timed.duration === 'number') timed.duration /= sp();
+    if (timed.delay) timed.delay /= sp();
+    if (timed.endDelay) timed.endDelay /= sp();
+    const a = el.animate(keys, timed);
     anims.push(a);
     return a;
   }
@@ -57,7 +68,8 @@
     if (num) num.textContent = fmt(reward);
     const W = row.scrollWidth;
     if (num) num.textContent = '+0';
-    const total = 6600, f = (ms: number) => ms / total, out = 5300;
+    const os = Math.max(0.25, outroSpeed);
+    const out = 5300, total = out + 1300 / os, f = (ms: number) => ms / total;
     const open = { width: `${W}px`, marginLeft: `${-W / 2}px` }, shut = { width: '64px', marginLeft: '-32px' };
     const done = () => onDone?.();
 
@@ -78,7 +90,7 @@
         { opacity: 1, transform: 'none', offset: f(650), easing: 'cubic-bezier(.2,.9,.3,1)', ...shut },
         { opacity: 1, transform: 'none', offset: f(1200), ...open },
         { opacity: 1, transform: 'none', offset: f(out), easing: 'cubic-bezier(.6,0,.8,.4)', ...open },
-        { opacity: 1, transform: 'none', offset: f(out + 420), ...shut },
+        { opacity: 1, transform: 'none', offset: f(out + 420 / os), ...shut },
         { opacity: 0, transform: 'translateY(10px) scale(.6)', ...shut },
       ],
       { duration: total, fill: 'forwards' },
@@ -92,7 +104,7 @@
     });
     animate(glow, [{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 0.5, offset: 0.85 }, { opacity: 0 }], { duration: out - 600, delay: 650, fill: 'forwards' });
     animate(ring, [{ opacity: 0.9, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(1.9)' }], { duration: 700, delay: 380, easing: 'ease-out', fill: 'forwards' });
-    animate(text, [{ opacity: 0 }, { opacity: 0, offset: f(800) }, { opacity: 1, offset: f(1150) }, { opacity: 1, offset: f(out) }, { opacity: 0, offset: f(out + 200) }, { opacity: 0 }], {
+    animate(text, [{ opacity: 0 }, { opacity: 0, offset: f(800) }, { opacity: 1, offset: f(1150) }, { opacity: 1, offset: f(out) }, { opacity: 0, offset: f(out + 200 / os) }, { opacity: 0 }], {
       duration: total,
       fill: 'forwards',
     });
@@ -114,17 +126,16 @@
         { opacity: 0, transform: 'scale(.6)', offset: f(2200) },
         { opacity: 1, transform: 'scale(1)', offset: f(2450) },
         { opacity: 1, transform: 'scale(1)', offset: f(out) },
-        { opacity: 0, offset: f(out + 150) },
+        { opacity: 0, offset: f(out + 150 / os) },
         { opacity: 0 },
       ],
       { duration: total, fill: 'forwards' },
     );
-    timers.push(setTimeout(() => medalBurst++, 380));
+    later(() => medalBurst++, 380);
     if (chip && num) {
       const c = chip, n = num;
-      timers.push(
-        setTimeout(() => {
-          const t0 = performance.now(), D = 900;
+      later(() => {
+          const t0 = performance.now(), D = 900 / sp();
           counter = setInterval(() => {
             const k = Math.min(1, (performance.now() - t0) / D), e = 1 - Math.pow(1 - k, 3);
             n.textContent = fmt(Math.round(reward * e));
@@ -134,8 +145,7 @@
               chipBurst++;
             }
           }, 30);
-        }, 2500),
-      );
+        }, 2500);
     }
   }
 

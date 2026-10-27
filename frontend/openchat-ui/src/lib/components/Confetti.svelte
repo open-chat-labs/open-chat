@@ -11,9 +11,11 @@
     /** Launch speed multiplier. */
     power?: number;
     fire?: number;
+    /** CSS selector of an ancestor to clip the burst to (e.g. a device frame); the whole viewport without it. */
+    within?: string;
   }
 
-  let { count = 80, spread = 92, power = 1, fire = 0 }: Props = $props();
+  let { count = 80, spread = 92, power = 1, fire = 0, within }: Props = $props();
 
   let anchor: HTMLSpanElement;
   let last = untrack(() => fire);
@@ -53,7 +55,16 @@
     const acc = getComputedStyle(el).getPropertyValue('--accent').trim() || '#FF5672';
     const colors = [acc, acc, '#FFFFFF', '#FFC061', '#2EE6A8', '#3D9BFF', '#E27BFF'];
     const layer = document.createElement('div');
-    layer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden';
+    const box = within ? el.closest(within) : null;
+    let ox = 0, oy = 0;
+    if (box) {
+      const b = box.getBoundingClientRect();
+      ox = b.left;
+      oy = b.top;
+      layer.style.cssText = `position:fixed;left:${b.left}px;top:${b.top}px;width:${b.width}px;height:${b.height}px;border-radius:${getComputedStyle(box).borderRadius};pointer-events:none;z-index:9999;overflow:hidden`;
+    } else {
+      layer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden';
+    }
     document.body.appendChild(layer);
     const parts: Piece[] = [];
     for (let k = 0; k < count; k++) {
@@ -87,7 +98,7 @@
         p.rot += p.vr * dt;
         const flutter = p.vy > 0 ? Math.sin(p.t * 5 + p.phase) * p.sway : 0;
         const fade = Math.min(1, (p.life - p.t) / 0.6);
-        p.node.style.transform = `translate(${p.x + flutter}px,${p.y}px) rotate(${p.rot}deg) rotateX(${p.t * 400 + p.phase * 60}deg)`;
+        p.node.style.transform = `translate(${p.x + flutter - ox}px,${p.y - oy}px) rotate(${p.rot}deg) rotateX(${p.t * 400 + p.phase * 60}deg)`;
         p.node.style.opacity = String(fade);
       }
       if (alive) requestAnimationFrame(step);

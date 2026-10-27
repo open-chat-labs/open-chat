@@ -36,6 +36,8 @@
     time: string;
     side?: 'sent' | 'received';
     lastInGroup?: boolean;
+    /** Right-aligned layouts (native sent bubbles): the grouped / tail corners go on the inline-end side. */
+    mirror?: boolean;
     status?: 'sending' | 'sent' | 'delivered' | 'failed';
     /** Shown under a failed message; defaults by side. */
     failedText?: string;
@@ -68,6 +70,7 @@
     time,
     side = 'sent',
     lastInGroup = true,
+    mirror = false,
     status = 'delivered',
     failedText = '',
     retryAction,
@@ -150,7 +153,7 @@
     </div>
   {:else}
     <div class="column" class:sent>
-      <div class="bubble" class:last={lastInGroup} class:carded bind:this={bubble} data-oc-bubble>
+      <div class="bubble" class:last={lastInGroup} class:mirror class:carded bind:this={bubble} data-oc-bubble>
         {#if quoteName}
           <div class="quote">
             <span class="quote-bar"></span>
@@ -320,6 +323,17 @@
 
   .bubble.last {
     border-end-start-radius: var(--radius-xl);
+  }
+
+  .bubble.mirror {
+    border-start-start-radius: var(--radius-xl);
+    border-start-end-radius: var(--radius-xs);
+    border-end-end-radius: var(--radius-xs);
+    border-end-start-radius: var(--radius-xl);
+  }
+
+  .bubble.mirror.last {
+    border-end-end-radius: var(--radius-xl);
   }
 
   .sent .bubble {
