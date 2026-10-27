@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Save an edit that changes a message's content but not its text, and finalise a bot's message re-sent unchanged ([#10290](https://github.com/open-chat-labs/open-chat/pull/10290))
+- Check a user's edit as if it were a new message, so an edit can only make content they could have sent ([#10291](https://github.com/open-chat-labs/open-chat/pull/10291))
 
 ## [[2.0.2195](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2195-group)] - 2026-10-27
 
