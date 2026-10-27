@@ -204,10 +204,21 @@
         width: 100%;
         overflow: hidden;
         pointer-events: none;
-        transition: backdrop-filter 300ms ease-in-out;
+        // Hidden between coins: a layer over the whole page counts as covering it, even an
+        // invisible one that clicks pass through, and Twitch won't start a player (TwitchPlayer)
+        // that something covers
+        visibility: hidden;
+        // hidden once the backdrop has faded back
+        transition:
+            backdrop-filter 300ms ease-in-out,
+            visibility 0s 300ms;
 
         &.active {
+            visibility: visible;
             backdrop-filter: saturate(0.3);
+            transition:
+                backdrop-filter 300ms ease-in-out,
+                visibility 0s;
         }
     }
 </style>

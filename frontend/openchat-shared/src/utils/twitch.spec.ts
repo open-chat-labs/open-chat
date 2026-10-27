@@ -166,21 +166,21 @@ describe("twitchPlayerUrl", () => {
     test("a channel plays from player.twitch.tv", () => {
         const embed = parseTwitchUrl("https://www.twitch.tv/nelly")!;
         expect(twitchPlayerUrl(embed, "oc.app")).toBe(
-            "https://player.twitch.tv/?channel=nelly&parent=oc.app&autoplay=false",
+            "https://player.twitch.tv/?channel=nelly&parent=oc.app&autoplay=true",
         );
     });
 
     test("a video plays from player.twitch.tv, from its start time", () => {
         const embed = parseTwitchUrl("https://www.twitch.tv/videos/2290587843?t=1h2m3s")!;
         expect(twitchPlayerUrl(embed, "webtest.oc.app")).toBe(
-            "https://player.twitch.tv/?video=v2290587843&time=1h2m3s&parent=webtest.oc.app&autoplay=false",
+            "https://player.twitch.tv/?video=v2290587843&time=1h2m3s&parent=webtest.oc.app&autoplay=true",
         );
     });
 
     test("a clip plays from clips.twitch.tv", () => {
         const embed = parseTwitchUrl("https://www.twitch.tv/nelly/clip/Awkward-Salamander")!;
         expect(twitchPlayerUrl(embed, "localhost")).toBe(
-            "https://clips.twitch.tv/embed?clip=Awkward-Salamander&parent=localhost&autoplay=false",
+            "https://clips.twitch.tv/embed?clip=Awkward-Salamander&parent=localhost&autoplay=true",
         );
     });
 
