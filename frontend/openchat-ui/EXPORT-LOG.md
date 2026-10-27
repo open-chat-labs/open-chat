@@ -357,3 +357,7 @@
 ## 2026-10-27 — TransferMessage: direction and recipient, by hand
 - `direction` (`in` / `out` / `other`) replaces the side as what sets the sign: a transfer between two other people in a group has no sign and no green, where the side alone would show it as received by the reader. `recipient` adds "to Bob" after the USD value. Without either it behaves as before. String `ui.transferMessage.to`; `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-27 — PollMessage: readonly and showResults, by hand
+- `readonly` locks the poll for a reader who may not vote at all (a DM, a read-only chat); the design locks it only once closed or voted without "change vote". `showResults` lets the host say when the counts show: the poll's sender sees them before voting, and a poll that hides its votes until the end doesn't show them after a vote. Without either it behaves as before. The footer counts votes whenever the results show, and "View votes" shows only with `onViewVotes`. `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

@@ -17,6 +17,8 @@ const ctx: ConversationContext = {
     date: (timestamp) => `d${timestamp}`,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
     direct: false,
+    readonly: false,
+    now: 0,
     token: (ledger) =>
         ledger === "icp"
             ? {
@@ -88,8 +90,10 @@ describe("a message row", () => {
 
     test("shows other kinds as their text, and a deleted message as deleted", () => {
         // a kind not built yet
-        const poll = message({ content: { kind: "poll_content" } as Message["content"] });
-        expect(messageRow(poll, "sent", ctx).message).toMatchObject({ text: "[poll_content]" });
+        const proposal = message({ content: { kind: "proposal_content" } as Message["content"] });
+        expect(messageRow(proposal, "sent", ctx).message).toMatchObject({
+            text: "[proposal_content]",
+        });
         const deleted = message({ content: { kind: "deleted_content" } as Message["content"] });
         expect(messageRow(deleted, "sent", ctx).message.deleted).toBe(true);
     });

@@ -28,6 +28,7 @@
         localUpdates,
         messageIndexStore,
         messagesRead,
+        pollVoteChange,
         screenWidth,
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
@@ -49,6 +50,7 @@
         type FileContent,
         type Message,
         type OpenChat,
+        type PollContent,
     } from "@client";
     import ConversationHeader from "@openchat/ui/src/features/components/ConversationHeader.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
@@ -144,6 +146,8 @@
                 url: getProxyAdjustedBlobUrl,
             },
             direct: chat?.kind === "direct_chat",
+            readonly: chat !== undefined && client.isChatReadOnly(chat.id),
+            now: Date.now(),
             token: (ledger) => {
                 const token = $cryptoLookup.get(ledger);
                 if (token === undefined) return undefined;
@@ -503,6 +507,12 @@
                       onOpen: () => window.open(url, "_blank", "noopener"),
                   } as GroupMessage);
         }
+        if (content.kind === "poll_content") {
+            return {
+                ...row.message,
+                onVote: (next: number[]) => vote(msg, content, next),
+            } as GroupMessage;
+        }
         if (content.kind === "file_content") {
             return { ...row.message, onDownload: () => download(content) } as GroupMessage;
         }
@@ -552,6 +562,32 @@
             console.warn("Couldn't download a file, opening it instead", err);
             window.open(url, "_blank", "noopener");
         }
+    }
+
+    // a poll vote, if the poll can take one (5a invariant 4, pollVoteChange); the vote shows at once,
+    // as in the old trees
+    async function vote(msg: Message, content: PollContent, next: number[]) {
+        if (chat === undefined || chat.kind === "direct_chat") return;
+        const change = pollVoteChange(
+            content,
+            {
+                me,
+                sender: msg.sender,
+                direct: false,
+                readonly: client.isChatReadOnly(chat.id),
+            },
+            next,
+        );
+        if (change === undefined) return;
+        const voted = await client.registerPollVote(
+            chat.id,
+            undefined,
+            msg.messageId,
+            msg.messageIndex,
+            change.answerIndex,
+            change.type,
+        );
+        if (!voted) toastStore.showFailureToast(i18nKey("poll.voteFailed"));
     }
 
     // one voice message plays at a time, and none once the chat is left

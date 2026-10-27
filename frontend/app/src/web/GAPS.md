@@ -694,6 +694,13 @@ design export needs. Each entry says where it came up.
   quote or thread yet. A failed transfer, or one in a ledger the registry
   doesn't carry, stays a text bubble. The dollar value is worked out when the row is made and
   doesn't follow later rate changes.
+- **Polls** (`features/conversation`, 5a): a poll shows as `PollMessage` and votes through
+  `registerPollVote` (`pollVoteChange` in `@client` turns the card's choices into one vote, and
+  refuses one the poll can't take). `PollMessage` takes `readonly` and `showResults` by hand: the
+  design locks a poll only once it's closed or voted, and shows results only after a vote. A
+  public poll shows no voters' avatars and has no "View votes" list yet (the old mobile
+  `PollPublicVotes`). How long it has left is worked out when the row is made (3d, 5h, 12m), and
+  doesn't count down. No tick, reactions, quote or thread yet, and polls in threads aren't wired.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked

@@ -2,6 +2,8 @@ import {
     formatClock,
     formatFileSize,
     ogPreviewCard,
+    pollView,
+    votesForAnswer,
     waveformLevels,
     type CryptocurrencyContent,
     type EventWrapper,
@@ -11,6 +13,7 @@ import {
     type Message,
     type MessageContent,
     type OgPreview,
+    type PollContent,
     type VideoContent,
 } from "@client";
 import type ChatBubble from "@openchat/ui/src/lib/components/ChatBubble.svelte";
@@ -49,6 +52,10 @@ export type ConversationContext = {
     media: MediaView;
     /** Whether the conversation is a DM. */
     direct: boolean;
+    /** Whether the reader can only read it (suspended, previewing). */
+    readonly: boolean;
+    /** When the rows are made (ms), for how long a poll has left. */
+    now: number;
     /** A ledger's token as transfers show it; undefined for one the registry doesn't carry. */
     token: (ledger: string) => TransferToken | undefined;
 };
@@ -309,6 +316,8 @@ function kindMessage(
             };
         case "crypto_content":
             return transferMessage(msg.sender, content, ctx, base);
+        case "poll_content":
+            return pollMessage(msg.sender, content, ctx, base);
         case "file_content":
             return {
                 ...base,
@@ -350,6 +359,50 @@ function transferMessage(
         recipient: ctx.direct || direction === "in" ? undefined : ctx.userName(transfer.recipient),
         caption: content.caption ?? "",
     };
+}
+
+/**
+ * A poll's card. It's locked when it can't be voted on (5a invariant 4, `pollView`), and its counts
+ * show only when the poll lets the reader see them.
+ */
+function pollMessage(
+    sender: string,
+    content: PollContent,
+    ctx: ConversationContext,
+    base: KindBase,
+): GroupMessage {
+    const config = content.config;
+    const view = pollView(content, {
+        me: ctx.me,
+        sender,
+        direct: ctx.direct,
+        readonly: ctx.readonly,
+    });
+    return {
+        ...base,
+        kind: "poll",
+        question: config.text ?? "",
+        options: config.options.map((label, i) => ({
+            label,
+            votes: votesForAnswer(content, i),
+        })),
+        multiple: config.allowMultipleVotesPerUser,
+        publicVotes: !config.anonymous,
+        canChange: config.allowUserToChangeVote,
+        closed: content.ended,
+        endsIn: config.endDate === undefined ? "" : timeLeft(Number(config.endDate) - ctx.now),
+        myVotes: content.votes.user,
+        readonly: view.cannotVote,
+        showResults: view.showVotes,
+    };
+}
+
+/** Time left as its largest unit: 3d, 5h, 12m (under a minute counts as 1m). */
+function timeLeft(ms: number): string {
+    const minutes = Math.max(1, Math.ceil(ms / 60_000));
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    return hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
 }
 
 /** How long until the next local day starts, so labels like "Today" can be redone then. */

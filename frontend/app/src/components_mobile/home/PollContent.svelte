@@ -8,7 +8,15 @@
         Column,
         Row,
     } from "component-lib";
-    import { currentUserIdStore, publish, type OpenChat, type PollContent } from "@client";
+    import {
+        currentUserIdStore,
+        percentageOfVote,
+        pollView,
+        publish,
+        totalVotes,
+        type OpenChat,
+        type PollContent,
+    } from "@client";
     import { getContext, type Snippet } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -63,53 +71,21 @@
         publish("pollPublicVotes", { content, senderId });
     }
 
-    function totalVotes(content: PollContent): number {
-        if (content.votes.total.kind === "anonymous_poll_votes") {
-            return Object.values(content.votes.total.votes).reduce((total, n) => total + n, 0);
-        }
-        if (content.votes.total.kind === "hidden_poll_votes") {
-            return content.votes.total.votes;
-        }
-        if (content.votes.total.kind === "visible_poll_votes") {
-            return Object.values(content.votes.total.votes).reduce(
-                (total, n) => total + n.length,
-                0,
-            );
-        }
-        return 0;
-    }
-
-    function votesForAnswer(idx: number): number {
-        if (content.votes.total.kind === "anonymous_poll_votes") {
-            return content.votes.total.votes[idx] ?? 0;
-        }
-        if (content.votes.total.kind === "hidden_poll_votes") {
-            return 0;
-        }
-        if (content.votes.total.kind === "visible_poll_votes") {
-            return content.votes.total.votes[idx]?.length ?? 0;
-        }
-        return 0;
-    }
-
-    function percentageOfVote(idx: number) {
-        const answerVotes = votesForAnswer(idx);
-        return showVotes && answerVotes > 0 ? (votesForAnswer(idx) / numberOfVotes) * 100 : 0;
+    // the moved helper guards a poll with no votes (0%, not NaN)
+    function percent(idx: number) {
+        return showVotes ? percentageOfVote(content, idx) : 0;
     }
 
     let date = $derived(
         content.config.endDate ? new Date(Number(content.config.endDate)) : undefined,
     );
-    let haveIVoted = $derived(content.votes.user.length > 0);
     let numberOfVotes = $derived(totalVotes(content));
-    let cannotVote = $derived(
-        content.ended || readonly || (haveIVoted && !content.config.allowUserToChangeVote),
+    // a DM's poll can't be voted on either; ChatMessage's onRegisterVote refuses it
+    let view = $derived(
+        pollView(content, { me: $currentUserIdStore, sender: senderId, direct: false, readonly }),
     );
-    let showVotes = $derived(
-        content.ended ||
-            ((haveIVoted || senderId === $currentUserIdStore) &&
-                (content.config.showVotesBeforeEndDate || content.config.endDate === undefined)),
-    );
+    let cannotVote = $derived(view.cannotVote);
+    let showVotes = $derived(view.showVotes);
 
     type ShortStatusKeys = {
         visibility: string;
@@ -176,7 +152,7 @@
         <Column padding={["sm", "md"]} gap="xl">
             {#each [...content.config.options] as answer, i (answer)}
                 {@const voted = votedFor(i)}
-                {@const pct = percentageOfVote(i)}
+                {@const pct = percent(i)}
                 {@const pctSingleDec = Math.round(pct * 10) / 10}
                 <Column gap="sm" onClick={() => vote(i)}>
                     <Row gap="sm" padding={["zero", "xs"]} crossAxisAlignment="center">

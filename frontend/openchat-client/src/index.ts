@@ -131,5 +131,17 @@ export { Poller } from "./utils/poller";
 export * from "./utils/routes";
 export { dexName } from "./utils/swap";
 export { formatTimeRemaining } from "./utils/time";
+export {
+    getVotersForAnswer,
+    percentageOfVote,
+    pollVoteChange,
+    pollView,
+    totalVotes,
+    voteCount,
+    votedFor,
+    votesForAnswer,
+    type PollReader,
+    type PollView,
+} from "./utils/polls";
 export { toDateString, toDatetimeString, toMonthString } from "./utils/date";
 export * from "./utils/url";
