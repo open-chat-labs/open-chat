@@ -146,7 +146,7 @@
 
 <div class="wrap">
   {#if deleted}
-    <div class="deleted" class:sent>
+    <div class="deleted" class:sent class:mirror>
       <span class="trash"></span>
       <span class="deleted-text">{t(deletedText)}</span>
       <span class="deleted-time">{time}</span>
@@ -266,6 +266,12 @@
 
   .deleted.sent {
     border-radius: var(--radius-xl) var(--radius-xs) var(--radius-xl) var(--radius-xl);
+  }
+
+  /* mirrored, like the bubble: the grouped corner on the inline-end side */
+  .deleted.mirror {
+    border-radius: var(--radius-xl);
+    border-start-end-radius: var(--radius-xs);
   }
 
   .trash {

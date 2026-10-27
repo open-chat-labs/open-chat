@@ -55,13 +55,30 @@
     const acc = getComputedStyle(el).getPropertyValue('--accent').trim() || '#FF5672';
     const colors = [acc, acc, '#FFFFFF', '#FFC061', '#2EE6A8', '#3D9BFF', '#E27BFF'];
     const layer = document.createElement('div');
-    const box = within ? el.closest(within) : null;
+    // an invalid selector clips to nothing rather than stopping the burst
+    let box: Element | null = null;
+    if (within) {
+      try {
+        box = el.closest(within);
+      } catch {
+        box = null;
+      }
+    }
     let ox = 0, oy = 0;
-    if (box) {
+    // the clip follows the ancestor if it scrolls or moves during the burst
+    const place = () => {
+      if (!box) return;
       const b = box.getBoundingClientRect();
       ox = b.left;
       oy = b.top;
-      layer.style.cssText = `position:fixed;left:${b.left}px;top:${b.top}px;width:${b.width}px;height:${b.height}px;border-radius:${getComputedStyle(box).borderRadius};pointer-events:none;z-index:9999;overflow:hidden`;
+      layer.style.left = `${b.left}px`;
+      layer.style.top = `${b.top}px`;
+      layer.style.width = `${b.width}px`;
+      layer.style.height = `${b.height}px`;
+    };
+    if (box) {
+      layer.style.cssText = `position:fixed;border-radius:${getComputedStyle(box).borderRadius};pointer-events:none;z-index:9999;overflow:hidden`;
+      place();
     } else {
       layer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden';
     }
@@ -83,6 +100,7 @@
       const dt = Math.min(0.033, (now - prev) / 1000);
       prev = now;
       let alive = 0;
+      place();
       for (const p of parts) {
         p.t += dt;
         if (p.t > p.life) {

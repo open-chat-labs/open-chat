@@ -380,13 +380,13 @@
 ## 2026-10-27 — pass 5, ported by hand
 - From the pass 5 export (13 components and the icon set); its `.logic.js` and demo data not taken. `WalletPanel`'s rows are ported with the wallet (6a).
 - Icons: `backspace`, `keyboard` and `minus` added; `screen-share` and `phone-off` redrawn; `calendar`, `video-off`, `maximize` and `minimize` take the export's path order. Ours keeps `moon`, `sun`, `smartphone`, `pause-filled` and `play-filled`, which the export doesn't have (154 icons).
-- `Button`: labels never wrap (ellipsis, the full text in the title); `size` (`md` 40px, `lg` 52px with a 14px radius); `icon` before the label, an icon-only button (empty label) is square with the icon centred; `ariaLabel`.
+- `Button`: labels never wrap (ellipsis; the full text is the tooltip only when it's cut off); `size` (`md` 40px, `lg` 52px with a 14px radius); `icon` before the label, an icon-only button (empty label) is square with the icon centred; `ariaLabel` (an icon-only button's accessible name and tooltip). A disabled button is `role="button"` with `aria-disabled`.
 - `ChatRow`: the pin is accent; `locked` puts a lock before the title (private channels and groups). `ChatListPanel` passes a row's `locked` through.
 - `ActivityRow`: an unread row has no tint; its dot alone marks it.
-- `ChatBubble`: `mirror` puts the grouped / tail corners on the inline-end side (right-aligned layouts). Web unchanged.
-- `Confetti`: `within`, a CSS selector of an ancestor to clip the burst to.
+- `ChatBubble`: `mirror` puts the grouped / tail corners on the inline-end side (right-aligned layouts), a deleted message's too. Web unchanged.
+- `Confetti`: `within`, a CSS selector of an ancestor to clip the burst to (followed if it moves during the burst; an invalid selector clips to nothing).
 - `AchievementToast`: `speed` (every duration, delay and timer) and `outroSpeed` (the collapse and fade only), both 1 by default.
-- `PuzzleDialog`: the solved screen's trophy is 80px; `holdSolved` + `solvedReady` keep a solve on the (locked) board after `onSolved` until the host is ready.
+- `PuzzleDialog`: the solved screen's trophy is 80px; `holdSolved` + `solvedReady` keep a solve on the (locked, no hints) board after `onSolved` until the host is ready; it's revealed from the board only, so How to play opened meanwhile isn't cut short.
 - Already in place from the hand ports of 2026-10-24: `ClaimCalendar`, `ClaimHistoryDialog`, `ChitDialog`'s calendar link and cog, `ProfileDialog`'s Claim history row (ours keep the real claim data in place of the export's demo props).
 - Not ported, as nothing on the web uses them (native layouts): `MessageComposer`'s sizing variables, `emojiPlacement` / `plusPlacement`, host-owned panels (`onPlus` / `plusActive`, `onEmoji` / `emojiActive`, `onInputFocus`, `insert`) and its markup fix around the + button (ours is a separate hand conversion without that nesting); `PuzzleDialog`'s `layout="screen"`, `topInset`, `backIcon` and `backFlip`.
 - `meta.json` and the strings (`ui.chatRow.private`) updated. `features/index.ts` exports `ClaimDay` from `ClaimCalendar`.

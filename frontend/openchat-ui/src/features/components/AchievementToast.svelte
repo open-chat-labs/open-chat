@@ -141,7 +141,7 @@
             n.textContent = fmt(Math.round(reward * e));
             if (k >= 1) {
               clearInterval(counter);
-              c.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }], { duration: 320, easing: 'ease-out', composite: 'add' });
+              c.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }], { duration: 320 / sp(), easing: 'ease-out', composite: 'add' });
               chipBurst++;
             }
           }, 30);
@@ -170,7 +170,7 @@
   aria-live="polite"
   aria-label={t(reward ? 'ui.achievementToast.announceReward' : 'ui.achievementToast.announce', { kicker: t(kicker), title: t(title), reward })}
   onclick={() => onClick?.()}
-  onmouseenter={() => main && (main.currentTime as number) > 1300 && each((a) => a.pause())}
+  onmouseenter={() => main && (main.currentTime as number) > 1300 / sp() && each((a) => a.pause())}
   onmouseleave={() => each((a) => a.play())}
 >
   <span class="sweep" bind:this={sweep}></span>
