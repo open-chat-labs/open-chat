@@ -48,7 +48,7 @@
     <canvas class="sizer" aria-hidden="true"></canvas>
     {#if playerUrl !== undefined && fits}
         {#if playing}
-            <iframe class="player" src={playerUrl} {title} allow="fullscreen" allowfullscreen>
+            <iframe class="player" src={playerUrl} {title} allow="autoplay; fullscreen" allowfullscreen>
             </iframe>
         {:else}
             <button

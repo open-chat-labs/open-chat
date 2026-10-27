@@ -60,7 +60,7 @@ describe("Permissions-Policy header", () => {
         expect(policy.get("microphone")).toBe(`(self ${daily})`);
         // self is needed as well: a document can only delegate a feature it holds itself
         expect(policy.get("display-capture")).toBe(`(self ${daily})`);
-        expect(policy.get("autoplay")).toBe(`(self ${daily})`);
+        expect(policy.get("autoplay")).toBe(`(self ${daily} ${twitch})`);
     });
 
     // Invariant: features the app calls on its own document stay enabled for self.
@@ -78,11 +78,13 @@ describe("Permissions-Policy header", () => {
         expect(policy.get("picture-in-picture")).toBe(`(self ${youtube})`);
     });
 
-    // Invariant: a Twitch link's player (TwitchPlayer) can go fullscreen, and gets nothing
-    // else. It plays on a click, which needs no autoplay.
-    test("Twitch players keep fullscreen, and nothing else", () => {
+    // Invariant: a Twitch link's player (TwitchPlayer) can start playing when its poster is
+    // clicked, and go fullscreen, and gets nothing else.
+    test("Twitch players keep autoplay and fullscreen, and nothing else", () => {
         for (const [feature, allowlist] of policy) {
-            expect(allowlist.includes("twitch.tv"), feature).toBe(feature === "fullscreen");
+            expect(allowlist.includes("twitch.tv"), feature).toBe(
+                feature === "autoplay" || feature === "fullscreen",
+            );
         }
     });
 

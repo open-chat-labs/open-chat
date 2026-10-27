@@ -119,8 +119,9 @@ export function twitchPlayerParent({ hostname, native, framed }: TwitchHost): st
 }
 
 /**
- * The player's address, for a `parent` from twitchPlayerParent. The player waits to be clicked: a
- * phone won't start one without a tap, so none autoplays.
+ * The player's address, for a `parent` from twitchPlayerParent. It's only loaded once its poster
+ * is clicked, so it starts playing straight away. A phone may still want a tap of its own: Twitch
+ * doesn't autoplay on mobile.
  */
 export function twitchPlayerUrl(embed: TwitchEmbed, parent: string): string {
     const params = new URLSearchParams();
@@ -137,7 +138,7 @@ export function twitchPlayerUrl(embed: TwitchEmbed, parent: string): string {
             break;
     }
     params.set("parent", parent);
-    params.set("autoplay", "false");
+    params.set("autoplay", "true");
 
     return `${embed.kind === "twitch_clip" ? CLIP_PLAYER_URL : PLAYER_URL}?${params}`;
 }
