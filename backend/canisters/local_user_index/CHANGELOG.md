@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Pass on to bots what was tipped, and whether it's held for an unlinked account ([#10249](https://github.com/open-chat-labs/open-chat/pull/10249))
 - Let bots post price charts, with the Image permission, and read them in chat events ([#10267](https://github.com/open-chat-labs/open-chat/pull/10267))
 
+### Changed
+
+- Let any bot edit its own messages, not only bridge bots ([#10282](https://github.com/open-chat-labs/open-chat/pull/10282))
+
 ### Removed
 
 - Stop reading the user id migration events, which no canister sends any more ([#10257](https://github.com/open-chat-labs/open-chat/pull/10257))

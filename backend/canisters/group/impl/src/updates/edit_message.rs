@@ -24,8 +24,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     commit(sender, is_bot, min_visible_event_index, args, state)
 }
 
-// For now only bridge bots can do this, which the LocalUserIndex checks, to relay the edits made on
-// the other platform to the messages they relayed
+// A bot editing its own message, eg. a bridge bot relaying an edit made on the other platform
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_bot_edit_message(args: c2c_bot_edit_message::Args) -> c2c_bot_edit_message::Response {
@@ -47,7 +46,7 @@ fn c2c_bot_edit_message_impl(args: c2c_bot_edit_message::Args, state: &mut Runti
         .data
         .chat
         .events
-        .check_relayed_edit(args.thread, args.message_id, &content, state.env.now())?;
+        .check_bot_edit(args.thread, args.message_id, &content, state.env.now())?;
 
     // The bot isn't a member, and sees the whole chat. It can only edit its own messages, since the
     // edit is made as it.
