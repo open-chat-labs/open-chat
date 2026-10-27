@@ -17,6 +17,7 @@
         chatsInitialisedStore,
         chitStateStore,
         communitiesStore,
+        cryptoBalanceStore,
         cryptoLookup,
         currentUserIdStore,
         eventsStore,
@@ -34,6 +35,7 @@
         messageIndexStore,
         messagesRead,
         pollVoteChange,
+        publish,
         screenWidth,
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
@@ -43,6 +45,9 @@
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
         suspendedUserStore,
+        swapAcceptCost,
+        swapActions,
+        swapFailureMessage,
         threadOpenStore,
         throttleDeadline,
         TimelineGrouper,
@@ -55,6 +60,7 @@
         type FileContent,
         type Message,
         type OpenChat,
+        type P2PSwapContent,
         type PollContent,
         type PrizeContent,
     } from "@client";
@@ -106,7 +112,8 @@
         type MessageRow,
     } from "./conversation.adapter";
     import MediaViewer from "./MediaViewer.svelte";
-    import RemovePreviewDialog from "./RemovePreviewDialog.svelte";
+    import ConfirmDialog from "./ConfirmDialog.svelte";
+    import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import SignInAgainDialog from "../auth/SignInAgainDialog.svelte";
     import { SignInAgain } from "../auth/signInAgain.svelte";
     import { prizeClaimStep } from "@src/logic/prize/prizeClaim";
@@ -145,10 +152,16 @@
         chitEarned: $chitStateStore.totalChitEarned,
     });
 
+    // the exchange rates load after the first rows; once they do, rows are made again (below)
+    const ratesLoaded = $derived($exchangeRatesLookupStore.size > 0);
+
     const ctx = $derived.by((): ConversationContext => {
         void day;
-        // a revealed image redoes its row (the cache is cleared with it)
+        // a revealed image redoes its row (the cache is cleared with it), as do the token registry
+        // and the exchange rates arriving: rows are made again from this, so it has to change too
         void rowsVersion;
+        void $cryptoLookup;
+        void ratesLoaded;
         const users = $allUsersStore;
         const webhooks = $selectedChatWebhooksStore;
         return {
@@ -457,6 +470,9 @@
         // its ledger is known), so a change to either starts them again
         void $lowBandwidth;
         void $cryptoLookup;
+        // nor the exchange rates: they're redone once the rates first load (a dollar value would be
+        // missing), not at every five-minute refresh
+        void ratesLoaded;
         void claimant;
         rows.clear();
     });
@@ -529,6 +545,13 @@
                       ...row.message,
                       onOpen: () => window.open(url, "_blank", "noopener"),
                   } as GroupMessage);
+        }
+        if (content.kind === "p2p_swap_content") {
+            return {
+                ...row.message,
+                onAccept: () => startSwap(msg, content, "accept"),
+                onCancel: () => startSwap(msg, content, "cancel"),
+            } as GroupMessage;
         }
         if (content.kind === "prize_content") {
             return {
@@ -661,6 +684,53 @@
     function stopClaiming() {
         prizeSignIn.dispose();
         claiming = undefined;
+    }
+
+    // accepting someone's swap offer (Diamond only: anyone else is offered the upgrade, as in the
+    // old trees) or cancelling your own, once confirmed; only while it's open (swapActions). The
+    // accept pays from the OpenChat wallet; the client asks for the PIN
+    let swapping = $state<{ msg: Message; content: P2PSwapContent; action: "accept" | "cancel" }>();
+
+    function startSwap(msg: Message, content: P2PSwapContent, action: "accept" | "cancel") {
+        if (chat === undefined) return;
+        const { canAccept, canCancel } = swapActions(content, {
+            mine: msg.sender === me,
+            now: Date.now(),
+            readonly: client.isChatReadOnly(chat.id),
+        });
+        if (action === "accept" ? !canAccept : !canCancel) return;
+        if (action === "accept" && !$isDiamondStore) {
+            publish("upgrade");
+            return;
+        }
+        swapping = { msg, content, action };
+    }
+
+    async function settleSwap() {
+        const swap = swapping;
+        swapping = undefined;
+        if (chat === undefined || swap === undefined) return;
+        const { msg, content, action } = swap;
+        const resp =
+            action === "accept"
+                ? await client.acceptP2PSwap(
+                      chat.id,
+                      undefined,
+                      msg.messageId,
+                      content.token1,
+                      content.token1Amount,
+                  )
+                : await client.cancelP2PSwap(chat.id, undefined, msg.messageId);
+        if (resp.kind === "success") {
+            // the accept paid token1; a cancel returns token0
+            client.refreshAccountBalance(
+                action === "accept" ? content.token1.ledger : content.token0.ledger,
+            );
+        } else if ($pinNumberErrorMessageStore !== undefined) {
+            toastStore.showFailureToast($pinNumberErrorMessageStore);
+        } else {
+            toastStore.showFailureToast(swapFailureMessage(action === "accept"));
+        }
     }
 
     // one voice message plays at a time, and none once the chat is left
@@ -933,7 +1003,58 @@
     />
 {/if}
 {#if removingPreview !== undefined}
-    <RemovePreviewDialog onConfirm={removePreview} onClose={() => (removingPreview = undefined)} />
+    <ConfirmDialog
+        title={$_("removePreviewQuestion")}
+        confirmLabel={$_("remove")}
+        onConfirm={removePreview}
+        onClose={() => (removingPreview = undefined)}
+    />
+{/if}
+{#if swapping !== undefined}
+    {@const content = swapping.content}
+    {#if swapping.action === "accept"}
+        {@const cost = swapAcceptCost(content.token1Amount, content.token1.fee)}
+        {@const short = ($cryptoBalanceStore.get(content.token1.ledger) ?? 0n) < cost.total}
+        {@const amount = client.formatTokens(cost.total, content.token1.decimals)}
+        {@const fees = client.formatTokens(cost.fees, content.token1.decimals)}
+        <ConfirmDialog
+            title={$_("p2pSwap.accept")}
+            message={short
+                ? $_("p2pSwap.insufficientBalanceMessage", {
+                      values: { amount, token: content.token1.symbol, fees },
+                  })
+                : $_("p2pSwap.confirmAccept", {
+                      values: {
+                          amount,
+                          token: content.token1.symbol,
+                          fees,
+                          amountOther: client.formatTokens(
+                              content.token0Amount,
+                              content.token0.decimals,
+                          ),
+                          tokenOther: content.token0.symbol,
+                      },
+                  })}
+            confirmLabel={$_("p2pSwap.accept")}
+            disabled={short}
+            onConfirm={settleSwap}
+            onClose={() => (swapping = undefined)}
+        />
+    {:else}
+        <ConfirmDialog
+            title={$_("p2pSwap.cancelOfferQuestion")}
+            message={$_("p2pSwap.confirmCancel", {
+                values: {
+                    amount: client.formatTokens(content.token0Amount, content.token0.decimals),
+                    token: content.token0.symbol,
+                },
+            })}
+            confirmLabel={$_("p2pSwap.cancelOffer")}
+            cancelLabel={$_("p2pSwap.keepOffer")}
+            onConfirm={settleSwap}
+            onClose={() => (swapping = undefined)}
+        />
+    {/if}
 {/if}
 {#if viewing !== undefined}
     <MediaViewer content={viewing} onClose={() => (viewing = undefined)} />

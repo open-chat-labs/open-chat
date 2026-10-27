@@ -1684,6 +1684,9 @@
     "owner": "オーナー",
     "ownerCantLeave": "{level} から離れる前に、別の所有者を追加する必要があります",
     "p2pSwap": {
+        "cancelOffer": "オファーを取り消す",
+        "cancelOfferQuestion": "このスワップのオファーを取り消しますか？",
+        "keepOffer": "オファーを残す",
         "accept": "受け入れる",
         "accepted": "承認されました",
         "acceptedBy": "このオファーは {user} によって受け入れられ、完了待ちです。",

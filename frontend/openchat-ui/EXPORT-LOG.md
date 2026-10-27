@@ -372,3 +372,7 @@
 ## 2026-10-27 — PrizeMessage: the claim's click and canClaim, by hand
 - `onClaim` gets the click: the app claims only from a trusted one. `canClaim` (default true) leaves Claim out where the host doesn't offer it (the sender's own prize, a DM, all taken); the design offered it to everyone. Without `wonAmount` a win says "You won" (`ui.prizeMessage.youWonIt`): a prize message carries no amount. `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-27 — SwapOffer: pending and cancelled, by hand
+- `state` gains `pending` (taken, not yet settled: `doneText` says how, in a quiet segment with no check) and `cancelled` (dimmed like `expired`, headed "Cancelled"); the design had only open, done and expired, so a cancelled offer would have read "Expired" and one being settled had nothing to show. Strings `ui.swapOffer.cancelled` and `ui.swapOffer.inProgress`. `caption` shows the offer's message under the card, as `TransferMessage` does; the design had none. `canAct` (default true) leaves the action out for a reader who can't take it (previewing the chat). `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

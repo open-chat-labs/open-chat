@@ -2,9 +2,13 @@ import {
     allowsVoteChange,
     formatClock,
     formatFileSize,
+    formatTokens,
+    i18nKey,
     ogPreviewCard,
     pollView,
     prizeView,
+    swapActions,
+    swapLabels,
     votesForAnswer,
     waveformLevels,
     type CryptocurrencyContent,
@@ -15,10 +19,12 @@ import {
     type Message,
     type MessageContent,
     type OgPreview,
+    type P2PSwapContent,
     type PollContent,
     type PrizeContent,
     type PrizeReader,
     type ResourceKey,
+    type TokenInfo,
     type VideoContent,
 } from "@client";
 import type ChatBubble from "@openchat/ui/src/lib/components/ChatBubble.svelte";
@@ -329,6 +335,8 @@ function kindMessage(
             return pollMessage(msg.sender, content, ctx, base);
         case "prize_content":
             return prizeMessage(msg.sender, content, ctx, base);
+        case "p2p_swap_content":
+            return swapMessage(msg.sender, content, ctx, base);
         case "file_content":
             return {
                 ...base,
@@ -440,6 +448,68 @@ function prizeMessage(
         state: view.claimedByYou ? "claimed" : view.finished ? "ended" : "open",
         canClaim: view.canClaim,
         note: content.caption ?? "",
+    };
+}
+
+/**
+ * A swap offer's card, read from the reader's side: what they'd pay on top (the sender pays token0,
+ * anyone else token1), what they'd get below. Cancel for its sender and Accept for anyone else only
+ * while it's open and the chat isn't read-only (`swapActions`); once taken it says how far it got
+ * (`swapLabels`). One with a token the registry doesn't carry shows as text.
+ */
+function swapMessage(
+    sender: string,
+    content: P2PSwapContent,
+    ctx: ConversationContext,
+    base: KindBase,
+): GroupMessage | undefined {
+    const token0 = ctx.token(content.token0.ledger);
+    const token1 = ctx.token(content.token1.ledger);
+    if (token0 === undefined || token1 === undefined) return undefined;
+    const mine = sender === ctx.me;
+    const labels = swapLabels(content, { me: ctx.me, mine });
+    const { canAccept, canCancel } = swapActions(content, {
+        mine,
+        now: ctx.now,
+        readonly: ctx.readonly,
+    });
+    // amounts in the message's own token info, which is what the swap settles in
+    const leg = (token: TransferToken, info: TokenInfo, amount: bigint) => ({
+        amount: formatTokens(amount, info.decimals),
+        symbol: info.symbol,
+        mark: "",
+        gradient: `url("${token.logo}") center / cover`,
+        usd: token.usd(amount),
+    });
+    const zero = leg(token0, content.token0, content.token0Amount);
+    const one = leg(token1, content.token1, content.token1Amount);
+    const status = content.status.kind;
+    const state =
+        status === "p2p_swap_open"
+            ? ctx.now < Number(content.expiresAt)
+                ? "open"
+                : "expired"
+            : status === "p2p_swap_cancelled"
+              ? "cancelled"
+              : status === "p2p_swap_expired"
+                ? "expired"
+                : status === "p2p_swap_completed"
+                  ? "done"
+                  : "pending";
+    const doneKey =
+        state === "done" && !labels.takenByYou && !mine
+            ? "p2pSwap.accepted"
+            : labels.buttonLabelKey;
+    return {
+        ...base,
+        kind: "swap",
+        give: mine ? zero : one,
+        get: mine ? one : zero,
+        state,
+        expiresIn: state === "open" ? timeLeft(Number(content.expiresAt) - ctx.now) : "",
+        doneText: ctx.text(i18nKey(doneKey)),
+        caption: content.caption ?? "",
+        canAct: canAccept || canCancel,
     };
 }
 

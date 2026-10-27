@@ -2866,8 +2866,10 @@
     "swapOffer": {
       "acceptSwap": "Accept swap",
       "cancelOffer": "Cancel offer",
+      "cancelled": "Cancelled",
       "expired": "Expired",
       "finished": "Finished",
+      "inProgress": "In progress",
       "swapped": "Swapped",
       "timeLeft": "{time} left",
       "title": "Swap offer"

@@ -707,7 +707,7 @@ design export needs. Each entry says where it came up.
   no edit, quote, thread or reactions, so it isn't used; with previews the bubble takes its shape
   instead (320px, cards flush, the time under them). A card links only to an http(s) URL
   (`ogPreviewCard` in `@client`, shared with the old trees). The sender removes one with the X on
-  its card, after a confirm (`RemovePreviewDialog`, no design for it: `TODO(design)`). A link to
+  its card, after a confirm (`ConfirmDialog`, no design for it: `TODO(design)`). A link to
   another OpenChat message (`messagePreviews`) shows no preview: nothing in the library renders a
   quoted message.
 - **Transfers** (`features/conversation`, 5a): a transfer shows as `TransferMessage`, with the
@@ -717,8 +717,8 @@ design export needs. Each entry says where it came up.
   transaction" opens the ledger's explorer. The caption is plain text (no markdown), the card
   shows no sent or delivered tick (`TransferMessage` takes no status), and it has no reactions,
   quote or thread yet. A failed transfer, or one in a ledger the registry
-  doesn't carry, stays a text bubble. The dollar value is worked out when the row is made and
-  doesn't follow later rate changes.
+  doesn't carry, stays a text bubble. The dollar value is worked out when the row is made (and
+  again once the exchange rates first load); it doesn't follow the rates' later refreshes.
 - **Polls** (`features/conversation`, 5a): a poll shows as `PollMessage` and votes through
   `registerPollVote` (`pollVoteChange` in `@client` turns the card's choices into one vote, and
   refuses one the poll can't take). `PollMessage` takes `readonly` and `showResults` by hand: the
@@ -729,6 +729,18 @@ design export needs. Each entry says where it came up.
   The library's `PollBuilderDialog` (5b's composer) still offers "lock votes" with multiple
   choice, which the backend ignores; when it's wired, send `allowsVoteChange` as the old builders
   do.
+- **Swap offers** (`features/conversation`, 5a): a swap offer shows as `SwapOffer`, read from the
+  reader's side. `SwapOffer` takes `pending` and `cancelled` states by hand (the design had only
+  open, done and expired). Its sender can Cancel and anyone else Accept, only while it's open
+  (`swapActions` in `@client`); a non-Diamond reader's Accept opens the Diamond dialog. Both ask
+  first in `ConfirmDialog` (no design for it: `TODO(design)`), the accept with what it costs
+  (`swapAcceptCost`, shared with the old accept modals) and held back when the OpenChat wallet
+  can't cover it. The accept pays from the OpenChat wallet only: the old modals' external wallet
+  (an approval popup) and a MultiUser user's own wallet aren't offered yet. The old trees' details
+  view (the escrow transfers, `P2PSwapProgress`) and who took it aren't shown. The offer's message
+  shows as plain text under the card (`SwapOffer` takes `caption` and `canAct` by hand: no action
+  while previewing). Time left is worked out when the row is made. No tick, reactions, quote or thread yet, and swaps in threads aren't
+  wired.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked

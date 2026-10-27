@@ -1684,6 +1684,9 @@
     "owner": "مالك",
     "ownerCantLeave": "يجب عليك إضافة مالك آخر قبل أن تتمكن من مغادرة {level}",
     "p2pSwap": {
+        "cancelOffer": "إلغاء العرض",
+        "cancelOfferQuestion": "هل تريد إلغاء عرض المبادلة هذا؟",
+        "keepOffer": "الإبقاء على العرض",
         "accept": "يقبل",
         "accepted": "مقبول",
         "acceptedBy": "لقد تم قبول هذا العرض من قبل {user} وهو قيد الانتظار للاستكمال.",

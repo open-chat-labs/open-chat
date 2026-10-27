@@ -264,6 +264,52 @@ describe("prizes", () => {
     });
 });
 
+describe("swap offers", () => {
+    const swap = (sender: string, ledger1 = "icp") =>
+        message({
+            sender,
+            content: {
+                kind: "p2p_swap_content",
+                token0: { symbol: "ICP", ledger: "icp", decimals: 8, fee: 10_000n },
+                token1: { symbol: "ICP", ledger: ledger1, decimals: 8, fee: 10_000n },
+                token0Amount: 100_000_000n,
+                token1Amount: 300_000_000n,
+                expiresAt: 1000n,
+                status: { kind: "p2p_swap_open" },
+                swapId: 1,
+                token0TxnIn: 1n,
+            },
+        } as Partial<Message>);
+
+    // the sender pays token0 and gets token1; anyone accepting pays token1 and gets token0
+    test("read from the reader's side", () => {
+        expect(messageRow(swap("me"), "sent", ctx).message).toMatchObject({
+            kind: "swap",
+            give: { amount: "1.00" },
+            get: { amount: "3.00" },
+            state: "open",
+        });
+        expect(messageRow(swap("bob"), "sent", ctx).message).toMatchObject({
+            give: { amount: "3.00" },
+            get: { amount: "1.00" },
+        });
+    });
+
+    test("stay open to a reader previewing the chat, with nothing to do", () => {
+        expect(messageRow(swap("bob"), "sent", { ...ctx, readonly: true }).message).toMatchObject({
+            state: "open",
+            canAct: false,
+        });
+    });
+
+    test("with a token the registry doesn't carry, show as text", () => {
+        expect(messageRow(swap("bob", "unknown"), "sent", ctx).message).toMatchObject({
+            kind: "text",
+            text: "[p2p_swap_content]",
+        });
+    });
+});
+
 describe("the time until the next day", () => {
     test("runs to the coming local midnight", () => {
         expect(untilNextDay(new Date(2026, 9, 20, 23, 59, 30))).toBe(30_000);
