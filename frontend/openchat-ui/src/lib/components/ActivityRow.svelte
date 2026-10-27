@@ -21,7 +21,7 @@
   const t = useT();
 </script>
 
-<div class="row" class:unread onclick={onClick} role="button" tabindex="0">
+<div class="row" onclick={onClick} role="button" tabindex="0">
   <div class="avatar"><Avatar size={36} shape={kind === 'group' ? 'squircle' : 'circle'} {color} online={false} /></div>
   <div class="main">
     <span class="title">{title}</span>
@@ -55,10 +55,6 @@
     border-radius: var(--radius-md);
     background: transparent;
     cursor: pointer;
-  }
-
-  .row.unread {
-    background: var(--overlay-1);
   }
 
   .row:hover {

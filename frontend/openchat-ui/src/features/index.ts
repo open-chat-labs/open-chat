@@ -82,5 +82,6 @@ export type { WebhookSave, WebhookColour } from './components/WebhookDialog.svel
 export type { InvitePerson } from './components/InviteDialog.svelte';
 export type { ExploreQuery } from './components/ExploreCommunities.svelte';
 export type { AuthPerson } from './components/AuthDialog.svelte';
-export type { ClaimDay, ProfileCommunity } from './components/ProfileDialog.svelte';
+export type { ClaimDay } from './components/ClaimCalendar.svelte';
+export type { ProfileCommunity } from './components/ProfileDialog.svelte';
 export type { DisappearSetting } from './components/DmChatSettings.svelte';

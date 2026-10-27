@@ -519,6 +519,7 @@
     },
     "chatRow": {
       "muted": "Notifications muted",
+      "private": "Private",
       "videoCallLive": "Video call in progress",
       "voiceCallLive": "Voice call in progress"
     },

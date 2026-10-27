@@ -58,6 +58,8 @@ export function chatRow(chat: ChatSummary, ctx: RowContext, now = Date.now()): C
         kind:
             chat.kind === "direct_chat" ? "user" : chat.kind === "group_chat" ? "group" : "channel",
         color: swatchFor(id),
+        // a private group or channel shows a lock
+        locked: chat.kind !== "direct_chat" && !chat.public,
         unreadCount: unreadCount(chat, ctx, now),
         muted: chat.membership.notificationsMuted,
         pinned,

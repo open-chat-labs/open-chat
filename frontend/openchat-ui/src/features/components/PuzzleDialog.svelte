@@ -134,6 +134,9 @@
     /** The board is complete: the host verifies it (and records the time). The solved view shows once this resolves;
      *  a rejection keeps the board in play with an error. */
     onSolved?: (r: { puzzleId: string; bridges: Bridges; elapsed: number; hints: number }) => Promise<unknown> | void;
+    /** Hold a solve on the board (after onSolved) until the host sets `solvedReady`, e.g. once its celebration ends. */
+    holdSolved?: boolean;
+    solvedReady?: boolean;
     /** Charge for a hint and return one correct bridge [island i, island j, count]. Nothing changes if it rejects. */
     onHint?: (r: { puzzleId: string; bridges: Bridges; cost: number }) => Promise<[number, number, number]>;
     onRemind?: (on: boolean) => Promise<unknown> | void;
@@ -158,6 +161,8 @@
     solvedHints = null,
     onProgress,
     onSolved,
+    holdSolved = false,
+    solvedReady = false,
     onHint,
     onRemind,
     onTutorialDone,
@@ -167,6 +172,16 @@
   const t = useT();
 
   let view = $state<'tutorial' | 'play' | 'solved'>(untrack(() => (solved ? 'solved' : tutorialSeen ? 'play' : 'tutorial')));
+  // a solve the host holds on the board (holdSolved) until its celebration is over (solvedReady). It's revealed from the
+  // board only, so How to play opened meanwhile isn't cut short (leaving it goes back to the board, and the reveal follows),
+  // and once revealed it stays, whatever solvedReady does next. A prop the host flips needs an effect to latch it.
+  let awaitingReveal = $state(false);
+  $effect(() => {
+    if (view === 'play' && awaitingReveal && solvedReady) {
+      awaitingReveal = false;
+      view = 'solved';
+    }
+  });
   let step = $state(0);
   // progress for another puzzle (e.g. yesterday's, kept past the daily rollover) is ignored; bridges must join two of
   // this board's islands, so a stale key can never break the board
@@ -195,7 +210,8 @@
   // `hintFlow` the paid hint. Nothing closes while either is pending, and nothing starts while leaving.
   const flow = new DialogFlow();
   const hintFlow = new DialogFlow();
-  const checking = $derived(flow.busy);
+  // the board is locked while the host checks a solve, and while it holds one (holdSolved)
+  const checking = $derived(flow.busy || awaitingReveal);
   const hinting = $derived(hintFlow.busy);
   const PUZZLE = $derived<Puzzle>({ grid: puzzle.grid, isl: puzzle.islands });
   const NB = $derived(neighbours(PUZZLE.isl));
@@ -212,7 +228,8 @@
 
   onMount(() => {
     const tick = setInterval(() => {
-      if (view === 'play' && !flow.closing) elapsed++;
+      // the clock stops once the board is locked: while the host checks a solve, and while it holds one
+      if (view === 'play' && !checking && !flow.closing) elapsed++;
     }, 1000);
     // Esc closes, but only while this is the topmost dialog (shared stack with DialogShell)
     const self = { boxRef: { get current() { return layer; } } };
@@ -281,8 +298,10 @@
     checkFailed = false;
     // ignored while a check is already running or the dialog is leaving
     const result = await flow.run(() => onSolved?.({ puzzleId: puzzle.id, bridges, elapsed, hints }));
-    if (result.ok) view = 'solved';
-    else if (flow.failed) {
+    if (result.ok) {
+      if (holdSolved && !solvedReady) awaitingReveal = true;
+      else view = 'solved';
+    } else if (flow.failed) {
       checkFailed = true;
       flash(false, 'ui.puzzleDialog.solveFailed');
     }
@@ -314,7 +333,8 @@
     commit(tut, updated);
   }
 
-  const canHint = $derived(!!onHint && hints < hintsAllowed && balance >= hintCost && !hinting);
+  // no hint while a solve is held: the board is done, and a hint would check it again
+  const canHint = $derived(!!onHint && hints < hintsAllowed && balance >= hintCost && !hinting && !awaitingReveal);
 
   // the host charges for the hint and returns one bridge of the solution; it's applied only once that resolves
   async function hint() {
@@ -529,7 +549,7 @@
                 ><span class="action-icon" style:mask="var(--icon-refresh) center/contain no-repeat"></span>{t('ui.puzzleDialog.reset')}</span
               >
             </div>
-            {#if checking}
+            {#if flow.busy}
               <span class="check-status" role="status">{t('ui.puzzleDialog.checking')}</span>
             {:else if checkFailed}
               <span class="action retry" onclick={submit} role="button" tabindex="0"
@@ -1114,9 +1134,9 @@
   }
 
   .trophy {
-    width: 64px;
-    height: 64px;
-    border-radius: 20px;
+    width: 80px;
+    height: 80px;
+    border-radius: 24px;
     background: var(--accent-soft);
     display: flex;
     align-items: center;
@@ -1125,8 +1145,8 @@
   }
 
   .trophy-icon {
-    width: 30px;
-    height: 30px;
+    width: 38px;
+    height: 38px;
     background: var(--accent-bright);
     mask: var(--icon-trophy) center/contain no-repeat;
   }

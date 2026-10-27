@@ -482,7 +482,7 @@
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Resource key (or literal text). Empty with an `icon` for an icon-only button."
       },
       {
         "name": "variant",
@@ -548,6 +548,42 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "size",
+        "type": "'md' | 'lg'",
+        "default": "md",
+        "editor": "select",
+        "options": [
+          "md",
+          "lg"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'md'",
+        "doc": ""
+      },
+      {
+        "name": "icon",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Icon name (see icons.js), shown before the label."
+      },
+      {
+        "name": "ariaLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): the accessible name, for an icon-only button."
       }
     ],
     "group": "library"
@@ -833,6 +869,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "The sender removes a preview (by its index in `previews`): an X on each card. None without it."
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Right-aligned layouts (native sent bubbles): the grouped / tail corners go on the inline-end side."
       }
     ],
     "group": "library"
@@ -1025,6 +1072,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "locked",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A private channel or group: a lock before the title."
       }
     ],
     "group": "library"
@@ -5882,6 +5940,28 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "speed",
+        "type": "number",
+        "default": 1,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "1",
+        "doc": "1 = the authored timing; 1.25 plays 20% faster (every duration, delay and timer)."
+      },
+      {
+        "name": "outroSpeed",
+        "type": "number",
+        "default": 1,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "1",
+        "doc": "Speeds up only the collapse and fade at the end; the entrance and hold keep their timing."
       }
     ],
     "group": "features"
@@ -7795,6 +7875,17 @@
         "required": false,
         "componentDefault": "0",
         "doc": ""
+      },
+      {
+        "name": "within",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "CSS selector of an ancestor to clip the burst to (e.g. a device frame); the whole viewport without it."
       }
     ],
     "group": "library"
@@ -15452,6 +15543,28 @@
         "section": null,
         "required": false,
         "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "holdSolved",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Hold a solve on the board (after onSolved) until the host sets `solvedReady`, e.g. once its celebration ends."
+      },
+      {
+        "name": "solvedReady",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
         "doc": ""
       }
     ],

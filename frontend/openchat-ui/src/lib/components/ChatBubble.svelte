@@ -36,6 +36,8 @@
     time: string;
     side?: 'sent' | 'received';
     lastInGroup?: boolean;
+    /** Right-aligned layouts (native sent bubbles): the grouped / tail corners go on the inline-end side. */
+    mirror?: boolean;
     status?: 'sending' | 'sent' | 'delivered' | 'failed';
     /** Shown under a failed message; defaults by side. */
     failedText?: string;
@@ -68,6 +70,7 @@
     time,
     side = 'sent',
     lastInGroup = true,
+    mirror = false,
     status = 'delivered',
     failedText = '',
     retryAction,
@@ -143,14 +146,14 @@
 
 <div class="wrap">
   {#if deleted}
-    <div class="deleted" class:sent>
+    <div class="deleted" class:sent class:mirror>
       <span class="trash"></span>
       <span class="deleted-text">{t(deletedText)}</span>
       <span class="deleted-time">{time}</span>
     </div>
   {:else}
     <div class="column" class:sent>
-      <div class="bubble" class:last={lastInGroup} class:carded bind:this={bubble} data-oc-bubble>
+      <div class="bubble" class:last={lastInGroup} class:mirror class:carded bind:this={bubble} data-oc-bubble>
         {#if quoteName}
           <div class="quote">
             <span class="quote-bar"></span>
@@ -265,6 +268,12 @@
     border-radius: var(--radius-xl) var(--radius-xs) var(--radius-xl) var(--radius-xl);
   }
 
+  /* mirrored, like the bubble: the grouped corner on the inline-end side */
+  .deleted.mirror {
+    border-radius: var(--radius-xl);
+    border-start-end-radius: var(--radius-xs);
+  }
+
   .trash {
     flex: none;
     width: 14px;
@@ -320,6 +329,17 @@
 
   .bubble.last {
     border-end-start-radius: var(--radius-xl);
+  }
+
+  .bubble.mirror {
+    border-start-start-radius: var(--radius-xl);
+    border-start-end-radius: var(--radius-xs);
+    border-end-end-radius: var(--radius-xs);
+    border-end-start-radius: var(--radius-xl);
+  }
+
+  .bubble.mirror.last {
+    border-end-end-radius: var(--radius-xl);
   }
 
   .sent .bubble {
