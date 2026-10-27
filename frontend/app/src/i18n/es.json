@@ -1527,6 +1527,10 @@
     "maxImageSize": "Se excedió el tamaño máximo de imagen de 1 MB",
     "maxStorage": "Puedes mejorar a un máximo de 1 GB de almacenamiento",
     "maxVideoSize": "Se excedió el tamaño máximo de video de 5 MB",
+    "twitch": {
+        "play": "Reproducir {title}",
+        "watchOnTwitch": "Ver en Twitch"
+    },
     "videoProcessing": "Optimizando el vídeo…",
     "member": "miembro",
     "memberCount": "{contar} miembro(s)",

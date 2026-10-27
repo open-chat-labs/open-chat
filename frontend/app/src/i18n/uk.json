@@ -1527,6 +1527,10 @@
     "maxImageSize": "Перевищено максимальний розмір зображення в 1 МБ",
     "maxStorage": "Ви можете збільшити обсяг пам’яті до 1 ГБ",
     "maxVideoSize": "Перевищено максимальний розмір відео 5 Мб",
+    "twitch": {
+        "play": "Відтворити {title}",
+        "watchOnTwitch": "Дивитися на Twitch"
+    },
     "videoProcessing": "Оптимізація відео…",
     "member": "член",
     "memberCount": "{count} учасників",

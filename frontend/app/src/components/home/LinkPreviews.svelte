@@ -1,14 +1,16 @@
 <script lang="ts">
-    import { iconSize } from "@client";
-    import type { OgPreview, RehydratedMessagePreview } from "@shared";
+    import { iconSize, twitchPlayersAndCards } from "@client";
+    import type { OgPreview, RehydratedMessagePreview, TwitchEmbed } from "@shared";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
     import GenericPreviewComponent from "./GenericPreview.svelte";
     import MessagePreviewComponent from "./MessagePreview.svelte";
+    import TwitchPlayer from "./TwitchPlayer.svelte";
 
     interface Props {
         messagePreviews: RehydratedMessagePreview[];
         ogPreviews: OgPreview[];
+        twitchEmbeds: TwitchEmbed[];
         intersecting: boolean;
         pinned: boolean;
         fill: boolean;
@@ -16,7 +18,10 @@
         onRemove?: (url: string) => void;
     }
 
-    let { messagePreviews, ogPreviews, intersecting, me, onRemove }: Props = $props();
+    let { messagePreviews, ogPreviews, twitchEmbeds, intersecting, me, onRemove }: Props = $props();
+
+    // A Twitch link's player takes the place of its preview, which it shows on its poster
+    let { players, cards } = $derived(twitchPlayersAndCards(twitchEmbeds, ogPreviews));
 
     const rtl = $rtlStore;
 
@@ -44,7 +49,14 @@
         </div>
     </div>
 {/each}
-{#each ogPreviews as p (p.url)}
+{#each players as { embed, ogPreview } (embed.url)}
+    <div class="preview" class:me>
+        <div class="inner" class:me>
+            <TwitchPlayer {embed} {ogPreview} />
+        </div>
+    </div>
+{/each}
+{#each cards as p (p.url)}
     <div class="preview" class:me>
         {@render remove(p.url)}
         <div class="inner" class:me>

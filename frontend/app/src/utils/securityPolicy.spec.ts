@@ -43,6 +43,7 @@ function directive(csp: string, name: string): string {
 
 describe("Permissions-Policy header", () => {
     const policy = permissionsPolicy();
+    const twitch = '"https://player.twitch.tv" "https://clips.twitch.tv"';
 
     // Invariant: no Permissions-Policy feature is granted to every origin.
     test("no feature uses a wildcard allowlist", () => {
@@ -73,8 +74,16 @@ describe("Permissions-Policy header", () => {
     // app keeps them for its own <video> controls.
     test("YouTube embed keeps fullscreen and picture-in-picture", () => {
         const youtube = '"https://www.youtube.com"';
-        expect(policy.get("fullscreen")).toBe(`(self ${youtube})`);
+        expect(policy.get("fullscreen")).toBe(`(self ${youtube} ${twitch})`);
         expect(policy.get("picture-in-picture")).toBe(`(self ${youtube})`);
+    });
+
+    // Invariant: a Twitch link's player (TwitchPlayer) can go fullscreen, and gets nothing
+    // else. It plays on a click, which needs no autoplay.
+    test("Twitch players keep fullscreen, and nothing else", () => {
+        for (const [feature, allowlist] of policy) {
+            expect(allowlist.includes("twitch.tv"), feature).toBe(feature === "fullscreen");
+        }
     });
 
     // Invariant: features with no consumer are off.

@@ -1527,6 +1527,10 @@
     "maxImageSize": "Taille d'image maximale de 1 Mo dépassée",
     "maxStorage": "Vous pouvez passer à un maximum de 1 Go de stockage",
     "maxVideoSize": "Taille vidéo maximale de 5 Mo dépassée",
+    "twitch": {
+        "play": "Lire {title}",
+        "watchOnTwitch": "Regarder sur Twitch"
+    },
     "videoProcessing": "Optimisation de la vidéo…",
     "member": "membre",
     "memberCount": "{count} membre(s)",

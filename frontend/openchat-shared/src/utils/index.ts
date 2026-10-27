@@ -30,5 +30,6 @@ export * from "./standalonePages";
 export * from "./string";
 export * from "./tauri";
 export * from "./time";
+export * from "./twitch";
 export * from "./userId";
 export * from "./validation";

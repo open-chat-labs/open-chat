@@ -1,4 +1,12 @@
-import type { LinkPreview, Message, MessagePreview, OgPreview, OgPreviewImage } from "../domain";
+import type {
+    LinkPreview,
+    Message,
+    MessagePreview,
+    OgPreview,
+    OgPreviewImage,
+    TwitchEmbed,
+} from "../domain";
+import { parseTwitchUrl, twitchWatchUrl } from "./twitch";
 
 // Originally taken from here - https://stackoverflow.com/a/6041965
 const URL_REGEX = new RegExp(
@@ -161,16 +169,37 @@ export function extractMessagePreviews(text: string): MessagePreview[] {
         }, []);
 }
 
+// The links a message shows previews for, as written: a link disabled by the legacy marker still
+// ends in it
+function previewedLinks(text: string): string[] {
+    return extractRawUrls(text)
+        .filter((url) => classifyUrl(withoutLinkRemoved(url)) === undefined)
+        .slice(0, MAX_LINK_PREVIEWS);
+}
+
+function withoutLinkRemoved(url: string): string {
+    return url.endsWith(LINK_REMOVED) ? url.substring(0, url.length - LINK_REMOVED.length) : url;
+}
+
+// The Twitch links among those a message shows previews for, which play in it, one per channel,
+// clip, or video and start time. The sender still fetches their OG previews, for the posters.
+export function extractTwitchEmbeds(text: string): TwitchEmbed[] {
+    const embeds = new Map<string, TwitchEmbed>();
+    for (const url of previewedLinks(text)) {
+        if (url.endsWith(LINK_REMOVED)) continue;
+        const embed = parseTwitchUrl(url);
+        if (embed === undefined) continue;
+        const key = twitchWatchUrl(embed);
+        if (!embeds.has(key)) embeds.set(key, embed);
+    }
+    return [...embeds.values()];
+}
+
 // Used by the client layer to get URLs to fetch OG previews for.
 // Strips LINK_REMOVED suffix, limits to MAX_LINK_PREVIEWS, and excludes OC message URLs.
 export function extractEnabledLinks(text?: string): string[] {
     if (!text) return [];
-    return extractRawUrls(text)
-        .map((url) =>
-            url.endsWith(LINK_REMOVED) ? url.substring(0, url.length - LINK_REMOVED.length) : url,
-        )
-        .filter((url) => classifyUrl(url) === undefined)
-        .slice(0, MAX_LINK_PREVIEWS);
+    return previewedLinks(text).map(withoutLinkRemoved);
 }
 
 function getImageDimensions(url: string): Promise<{ width: number; height: number } | undefined> {

@@ -1518,6 +1518,10 @@
     "maxImageSize": "Maximum image size of 1MB exceeded",
     "maxStorage": "You can upgrade to a maximum of 1GB of storage",
     "maxVideoSize": "Maximum video size of 5MB exceeded",
+    "twitch": {
+        "play": "Play {title}",
+        "watchOnTwitch": "Watch on Twitch"
+    },
     "videoProcessing": "Optimising video…",
     "member": "member",
     "memberCount": "{count} members",

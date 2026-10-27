@@ -1,7 +1,7 @@
 <script lang="ts">
     import Markdown from "@src/core/Markdown.svelte";
     import { ChatCaption, ChatText, Column } from "component-lib";
-    import type { OgPreview, RehydratedMessagePreview, TextContent } from "@client";
+    import type { OgPreview, RehydratedMessagePreview, TextContent, TwitchEmbed } from "@client";
     import { type Snippet } from "svelte";
     import { lowBandwidth } from "../../stores/settings";
     import IntersectionObserver from "./IntersectionObserver.svelte";
@@ -22,6 +22,7 @@
         onRemovePreview?: (url: string) => void;
         ogPreviews?: OgPreview[];
         messagePreviews?: RehydratedMessagePreview[];
+        twitchEmbeds?: TwitchEmbed[];
     }
 
     let {
@@ -37,6 +38,7 @@
         onRemovePreview,
         ogPreviews = [],
         messagePreviews = [],
+        twitchEmbeds = [],
     }: Props = $props();
 
     let textContent = $derived<TextContent | undefined>("kind" in content ? content : undefined);
@@ -45,7 +47,7 @@
     let text = $derived(textContent?.text);
 </script>
 
-{#if ogPreviews.length > 0 || messagePreviews.length > 0}
+{#if ogPreviews.length > 0 || messagePreviews.length > 0 || twitchEmbeds.length > 0}
     <IntersectionObserver
         unobserveOnIntersect={false}
         rootMarginTop={$lowBandwidth ? 0 : 1000}
@@ -56,6 +58,7 @@
                 {me}
                 {ogPreviews}
                 {messagePreviews}
+                {twitchEmbeds}
                 {intersecting}
                 onRemove={onRemovePreview} />
         {/snippet}
