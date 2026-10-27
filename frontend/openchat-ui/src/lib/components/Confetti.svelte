@@ -65,7 +65,7 @@
       }
     }
     let ox = 0, oy = 0;
-    // the clip follows the ancestor if it scrolls or moves during the burst
+    // the clip, and the pieces in it, follow the ancestor if it scrolls or moves during the burst
     const place = () => {
       if (!box) return;
       const b = box.getBoundingClientRect();
@@ -90,7 +90,8 @@
       layer.appendChild(node);
       const ang = -Math.PI / 2 + (Math.random() - 0.5) * ((spread * Math.PI) / 180), v = (520 + Math.random() * 520) * power;
       parts.push({
-        node, x: cx + (Math.random() - 0.5) * r.width * 0.6, y: cy, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v,
+        // relative to the clip box (from where it was at fire time), so the pieces move with it
+        node, x: cx - ox + (Math.random() - 0.5) * r.width * 0.6, y: cy - oy, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v,
         drag: 2.2 + Math.random() * 2.4, g: 520 + Math.random() * 380, rot: Math.random() * 360, vr: (Math.random() - 0.5) * 720,
         sway: 14 + Math.random() * 26, phase: Math.random() * 6.28, life: 2.2 + Math.random() * 1.4, t: 0,
       });
@@ -116,7 +117,7 @@
         p.rot += p.vr * dt;
         const flutter = p.vy > 0 ? Math.sin(p.t * 5 + p.phase) * p.sway : 0;
         const fade = Math.min(1, (p.life - p.t) / 0.6);
-        p.node.style.transform = `translate(${p.x + flutter - ox}px,${p.y - oy}px) rotate(${p.rot}deg) rotateX(${p.t * 400 + p.phase * 60}deg)`;
+        p.node.style.transform = `translate(${p.x + flutter}px,${p.y}px) rotate(${p.rot}deg) rotateX(${p.t * 400 + p.phase * 60}deg)`;
         p.node.style.opacity = String(fade);
       }
       if (alive) requestAnimationFrame(step);

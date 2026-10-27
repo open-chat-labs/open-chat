@@ -171,13 +171,17 @@
   }: Props = $props();
   const t = useT();
 
-  // where the user is; `view` is what shows
-  let stage = $state<'tutorial' | 'play' | 'solved'>(untrack(() => (solved ? 'solved' : tutorialSeen ? 'play' : 'tutorial')));
-  // a solve the host holds on the board (holdSolved) until its celebration is over (solvedReady): it's revealed from the
-  // board only, so How to play opened meanwhile isn't cut short, and leaving it goes back to the board (still held, or
-  // revealed by then)
+  let view = $state<'tutorial' | 'play' | 'solved'>(untrack(() => (solved ? 'solved' : tutorialSeen ? 'play' : 'tutorial')));
+  // a solve the host holds on the board (holdSolved) until its celebration is over (solvedReady). It's revealed from the
+  // board only, so How to play opened meanwhile isn't cut short (leaving it goes back to the board, and the reveal follows),
+  // and once revealed it stays, whatever solvedReady does next. A prop the host flips needs an effect to latch it.
   let awaitingReveal = $state(false);
-  const view = $derived(stage === 'play' && awaitingReveal && solvedReady ? 'solved' : stage);
+  $effect(() => {
+    if (view === 'play' && awaitingReveal && solvedReady) {
+      awaitingReveal = false;
+      view = 'solved';
+    }
+  });
   let step = $state(0);
   // progress for another puzzle (e.g. yesterday's, kept past the daily rollover) is ignored; bridges must join two of
   // this board's islands, so a stale key can never break the board
@@ -295,7 +299,7 @@
     const result = await flow.run(() => onSolved?.({ puzzleId: puzzle.id, bridges, elapsed, hints }));
     if (result.ok) {
       if (holdSolved && !solvedReady) awaitingReveal = true;
-      else stage = 'solved';
+      else view = 'solved';
     } else if (flow.failed) {
       checkFailed = true;
       flash(false, 'ui.puzzleDialog.solveFailed');
@@ -388,7 +392,7 @@
 
   function finishTutorial() {
     onTutorialDone?.();
-    stage = solved ? 'solved' : 'play';
+    view = solved ? 'solved' : 'play';
     step = 0;
   }
 
@@ -482,7 +486,7 @@
         <span
           class="head-button"
           onclick={() => {
-            stage = 'tutorial';
+            view = 'tutorial';
             step = 0;
             tbr = {};
             tsel = null;
