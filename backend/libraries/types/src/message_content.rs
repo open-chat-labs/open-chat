@@ -64,7 +64,7 @@ pub enum MessageContent {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum MessageContentType {
     Text,
     Image,

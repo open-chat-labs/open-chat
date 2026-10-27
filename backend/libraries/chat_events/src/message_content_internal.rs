@@ -180,21 +180,22 @@ impl MessageContentInternal {
     }
 
     // A user's edit can only make content they could have sent as a new message, eg. not a proposal,
-    // a reminder or a bot's chart, nor a transfer, which an edit doesn't make
+    // a reminder or a bot's chart, nor a transfer, prize or swap, which an edit doesn't make
     pub fn validate_edit(
         content: &MessageContentInitial,
         is_direct_chat: bool,
         sender_user_type: UserType,
         now: TimestampMillis,
-    ) -> OCResult {
+    ) -> OCResult<MessageContentInternal> {
         match Self::validate_new_message(content.clone(), is_direct_chat, sender_user_type, false, now) {
-            ValidateNewMessageContentResult::Success(_) => Ok(()),
-            ValidateNewMessageContentResult::Error(error) => Err(error.into()),
-            ValidateNewMessageContentResult::SuccessCrypto(_)
+            ValidateNewMessageContentResult::Success(MessageContentInternal::Prize(_) | MessageContentInternal::P2PSwap(_))
+            | ValidateNewMessageContentResult::SuccessCrypto(_)
             | ValidateNewMessageContentResult::SuccessPrize(_)
             | ValidateNewMessageContentResult::SuccessP2PSwap(_) => {
                 Err(OCErrorCode::InvalidRequest.with_message("An edit can't make a transfer"))
             }
+            ValidateNewMessageContentResult::Success(content) => Ok(content),
+            ValidateNewMessageContentResult::Error(error) => Err(error.into()),
         }
     }
 
@@ -2643,12 +2644,44 @@ mod edit_tests {
     }
 
     fn edit(content: MessageContentInitial, sender: UserType) -> OCResult {
-        MessageContentInternal::validate_edit(&content, false, sender, 0)
+        MessageContentInternal::validate_edit(&content, false, sender, 0).map(|_| ())
+    }
+
+    fn pending_transfer() -> MessageContentInitial {
+        MessageContentInitial::Crypto(CryptoContent {
+            recipient: Principal::from_slice(&[3]).into(),
+            transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
+                ledger: Principal::from_slice(&[5]),
+                token_symbol: "ICP".to_string(),
+                amount: 100_000_000,
+                to: Principal::from_slice(&[3]).into(),
+                fee: 10_000,
+                memo: None,
+                created: 0,
+            })),
+            caption: None,
+        })
+    }
+
+    fn image() -> MessageContentInitial {
+        MessageContentInitial::Image(ImageContent {
+            width: 10,
+            height: 10,
+            thumbnail_data: ThumbnailData(String::new()),
+            caption: Some("hello".to_string()),
+            mime_type: "image/png".to_string(),
+            blob_reference: Some(BlobReference {
+                canister_id: Principal::from_slice(&[4]),
+                blob_id: 1,
+            }),
+        })
     }
 
     #[test]
     fn a_user_can_edit_into_content_they_could_send() {
         assert!(edit(text("hello"), UserType::User).is_ok());
+        // eg. text edited into an image with the text as its caption
+        assert!(edit(image(), UserType::User).is_ok());
     }
 
     #[test]
@@ -2661,5 +2694,6 @@ mod edit_tests {
         });
         assert!(edit(deleted, UserType::User).is_err());
         assert!(edit(completed_transfer(), UserType::User).is_err());
+        assert!(edit(pending_transfer(), UserType::User).is_err());
     }
 }

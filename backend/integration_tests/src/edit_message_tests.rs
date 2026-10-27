@@ -4,7 +4,10 @@ use crate::{TestEnv, client};
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
-use types::{ChatEvent, DeletedBy, MessageContentInitial, TextContent, UnitResult};
+use types::{
+    BlobReference, ChatEvent, DeletedBy, GroupPermissionRole, ImageContent, MessageContentInitial, OptionUpdate,
+    OptionalGroupPermissions, OptionalMessagePermissions, TextContent, ThumbnailData, UnitResult,
+};
 
 #[test]
 fn edit_message_succeeds() {
@@ -213,4 +216,79 @@ fn a_user_cant_edit_a_message_into_content_they_couldnt_send() {
     let ChatEvent::Message(message) = event.event else { panic!() };
     assert!(!message.edited);
     assert_eq!(message.content.text().unwrap(), "TEXT");
+}
+
+#[test]
+fn a_member_cant_edit_a_message_into_a_type_they_cant_send() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let owner = client::register_user(env, canister_ids);
+    let member = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), false, true);
+    client::local_user_index::happy_path::add_users_to_group(
+        env,
+        &owner,
+        canister_ids.local_user_index(env, group_id),
+        group_id,
+        vec![(member.user_id, member.principal)],
+    );
+    // Only admins may post images
+    client::group::happy_path::update_group(
+        env,
+        owner.principal,
+        group_id,
+        &group_canister::update_group_v2::Args {
+            permissions_v2: Some(OptionalGroupPermissions {
+                message_permissions: Some(OptionalMessagePermissions {
+                    image: OptionUpdate::SetToSome(GroupPermissionRole::Admins),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+    );
+
+    let message_id = random_from_u128();
+    client::group::happy_path::send_text_message(env, &member, group_id, None, "TEXT", Some(message_id));
+
+    let edit = |env: &mut pocket_ic::PocketIc, content| {
+        client::group::edit_message_v2(
+            env,
+            member.principal,
+            group_id.into(),
+            &group_canister::edit_message_v2::Args {
+                thread_root_message_index: None,
+                message_id,
+                content,
+                block_level_markdown: None,
+                new_achievement: false,
+                og_previews: Vec::new(),
+            },
+        )
+    };
+
+    let image = MessageContentInitial::Image(ImageContent {
+        width: 10,
+        height: 10,
+        thumbnail_data: ThumbnailData(String::new()),
+        caption: Some("TEXT".to_string()),
+        mime_type: "image/png".to_string(),
+        blob_reference: Some(BlobReference {
+            canister_id: canister_ids.local_user_index(env, group_id),
+            blob_id: 1,
+        }),
+    });
+    let response = edit(env, image);
+    assert!(matches!(response, UnitResult::Error(_)), "{response:?}");
+
+    // Keeping the type, they can still edit it
+    let response = edit(
+        env,
+        MessageContentInitial::Text(TextContent {
+            text: "TEXT!".to_string(),
+        }),
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
 }

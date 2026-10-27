@@ -1050,6 +1050,34 @@ impl GroupChatCore {
     // from, who must be in the chat, or if no one has, the account itself. Who linked it isn't known
     // here, so until `link` is given, the caller is asked to look it up and call this again. Used
     // before making the transfer for a tip.
+    // A member's edit which changes a message's type needs the permission to send that type, as a
+    // new message would. Keeping its type, they can still edit it, eg. to fix a typo, whatever the
+    // permissions are now.
+    pub fn check_can_edit_into(
+        &self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        content: &MessageContentInternal,
+    ) -> OCResult {
+        let member = self.members.get_verified_member(user_id)?;
+
+        let (message, _) = self
+            .events
+            .message_internal(member.min_visible_event_index(), thread_root_message_index, message_id.into())
+            .ok_or(OCErrorCode::MessageNotFound)?;
+
+        let content_type: MessageContentType = content.into();
+        if message.content.content_type() != content_type
+            && !member
+                .role()
+                .can_send_message(content_type, thread_root_message_index.is_some(), &self.permissions)
+        {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
+        Ok(())
+    }
+
     pub fn check_can_tip_message(
         &self,
         user_id: UserId,

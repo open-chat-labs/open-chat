@@ -24,7 +24,10 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let sender = member.user_id;
     let min_visible_event_index = channel.chat.members.get_verified_member(sender)?.min_visible_event_index();
 
-    MessageContentInternal::validate_edit(&args.content, false, member.user_type, state.env.now())?;
+    let content = MessageContentInternal::validate_edit(&args.content, false, member.user_type, state.env.now())?;
+    channel
+        .chat
+        .check_can_edit_into(sender, args.thread_root_message_index, args.message_id, &content)?;
 
     commit(sender, min_visible_event_index, args, state)
 }
