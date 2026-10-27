@@ -43,7 +43,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
         }
     });
 
-    state.push_bot_notification(bot_notifications.into_iter().flatten());
+    state.push_bot_notifications(bot_notifications.into_iter().flatten());
     handle_activity_notification(state);
     Ok(SuccessResult { messages })
 }

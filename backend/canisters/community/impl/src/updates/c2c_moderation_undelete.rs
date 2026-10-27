@@ -19,7 +19,7 @@ pub(crate) fn c2c_moderation_undelete_impl(args: Args, state: &mut RuntimeState)
             tracing::error!(?error, message_id = %args.message_id, "Moderation restore failed");
         })
         .map(|bot_notifications| {
-            state.push_bot_notification(bot_notifications);
+            state.push_bot_notifications(bot_notifications);
             // Without this, clients never learn the message changed and their cached copy
             // keeps showing the deleted placeholder until local state is cleared
             handle_activity_notification(state);

@@ -46,7 +46,7 @@ pub(crate) fn c2c_flag_message_impl(args: Args, state: &mut RuntimeState) -> OCR
     } else {
         Vec::new()
     };
-    state.push_bot_notification(bot_notifications);
+    state.push_bot_notifications(bot_notifications);
 
     handle_activity_notification(state);
     Ok(())

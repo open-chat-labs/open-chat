@@ -232,15 +232,9 @@ impl RuntimeState {
         });
     }
 
-    pub fn push_bot_notifications(&mut self, notifications: Vec<Option<BotNotification>>) {
-        for notification in notifications {
-            self.push_bot_notification(notification);
-        }
-    }
-
     // A chat event only goes to bots still installed, eg. not to one whose message is deleted after
     // it's uninstalled
-    pub fn push_bot_notification(&mut self, notifications: impl IntoIterator<Item = BotNotification>) {
+    pub fn push_bot_notifications(&mut self, notifications: impl IntoIterator<Item = BotNotification>) {
         for mut notification in notifications {
             if matches!(notification.event, types::BotEvent::Chat(_)) {
                 notification.recipients.retain(|bot| self.data.bots.get(bot).is_some());
@@ -249,6 +243,10 @@ impl RuntimeState {
                 self.push_notification_inner(Notification::Bot(notification));
             }
         }
+    }
+
+    pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {
+        self.push_bot_notifications(notification);
     }
 
     fn push_notification_inner(&mut self, notification: Notification<GroupChatUserNotificationPayload>) {

@@ -47,7 +47,7 @@ pub(crate) fn c2c_moderation_hard_delete_impl(args: Args, state: &mut RuntimeSta
             error!(message_id = %args.message_id, "Moderation hard delete: message not found");
         }
     }
-    state.push_bot_notification(bot_notifications);
+    state.push_bot_notifications(bot_notifications);
     handle_activity_notification(state);
     UnitResult::Success
 }

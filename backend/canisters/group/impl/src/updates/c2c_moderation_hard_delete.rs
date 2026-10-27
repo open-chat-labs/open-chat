@@ -21,7 +21,7 @@ pub(crate) fn c2c_moderation_hard_delete_impl(args: Args, state: &mut RuntimeSta
         true,
         now,
     ) {
-        state.push_bot_notification(
+        state.push_bot_notifications(
             results
                 .into_iter()
                 .filter_map(|(_, r)| r.ok())

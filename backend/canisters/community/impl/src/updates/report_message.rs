@@ -87,7 +87,7 @@ fn delete_message(args: &Args, reporter: UserIdAndPrincipal, state: &mut Runtime
     {
         let deleted: Vec<_> = results.into_iter().filter_map(|(_, r)| r.ok()).collect();
         if !deleted.is_empty() {
-            state.push_bot_notification(deleted.into_iter().flat_map(|d| d.bot_notifications));
+            state.push_bot_notifications(deleted.into_iter().flat_map(|d| d.bot_notifications));
             handle_activity_notification(state);
         }
     }
