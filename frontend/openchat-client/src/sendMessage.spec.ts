@@ -22,6 +22,7 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
     AuthClient: { create: () => new Promise(() => {}) },
 }));
 
+import { Principal } from "@icp-sdk/core/principal";
 import {
     CommunityMap,
     ROLE_MEMBER,
@@ -33,11 +34,14 @@ import {
     type CommunityIdentifier,
     type CommunitySummary,
     type EventWrapper,
+    type Member,
     type Message,
     type MessageContext,
     type RehydratedMessagePreview,
     type RulesAcceptanceResolver,
     type SendMessageOutcome,
+    type User,
+    type UserSummary,
     type WorkerRequest,
 } from "@shared";
 import type { OpenChatConfig } from "./config";
@@ -53,6 +57,8 @@ import {
 } from "./state";
 import { ChatDetailsState } from "./state/chat/serverDetails";
 import { currentChatVisit, serverEventsStore, startChatVisit } from "./state/selectedChat";
+import { userStore } from "./state/users/state";
+import { allUsersStore } from "./state/users/stores";
 import { captureRulesAcceptanceStore } from "./stores/rules";
 import { mostRecentStore } from "./stores/throttling";
 import { WorkerAgent } from "./workerAgent";
@@ -112,7 +118,14 @@ function community(chatRulesAccepted: boolean): CommunitySummary {
                 historyVisible: true,
             } as unknown as ChannelSummary,
         ],
-        membership: { role: ROLE_MEMBER, archived: false, pinned: [], index: 0, rulesAccepted: true },
+        membership: {
+            role: ROLE_MEMBER,
+            archived: false,
+            pinned: [],
+            index: 0,
+            rulesAccepted: true,
+        },
+        userGroups: new Map(),
         lastUpdated: 0n,
     } as unknown as CommunitySummary;
 }
@@ -539,6 +552,194 @@ describe("sending from the composer", () => {
                 await edit("never mind");
                 await loadLinked("found");
                 expect(shown()?.event.messagePreviews).toEqual([]);
+            });
+        });
+    });
+
+    describe("mentions typed as @username", () => {
+        const userId = (n: number) => Principal.fromUint8Array(new Uint8Array([n])).toText();
+        // alice is a member the chat holds, xavier one it doesn't, and zed a user who isn't a member
+        const [alice, xavier, zed] = [2, 3, 4].map(userId);
+        const userIds: Record<string, string> = { alice, xavier, zed, myself: "me" };
+        // the usernames looked up
+        let lookedUp: string[];
+        // whether looking users up by username fails
+        let failing: boolean;
+        // the edits sent to the worker
+        let edits: Extract<WorkerRequest, { kind: "editMessage" }>[];
+
+        const member = (userId: string): Member => ({
+            userId,
+            role: ROLE_MEMBER,
+            displayName: undefined,
+            lapsed: false,
+        });
+
+        const user = (userId: string, username: string): UserSummary => ({
+            kind: "user",
+            userId,
+            username,
+            displayName: undefined,
+            updated: 0n,
+            suspended: false,
+            diamondStatus: "inactive",
+            chitBalance: 0,
+            totalChitEarned: 0,
+            streak: 0,
+            maxStreak: 0,
+            isUniquePerson: false,
+            hideOnlineStatus: false,
+        });
+
+        // the chat, holding alice, and either all of its members or only some
+        function holding(allMembers: boolean) {
+            startChatVisit(chatId);
+            currentChatVisit()?.setDetails(
+                new ChatDetailsState(
+                    chatId,
+                    10n,
+                    new Map([[alice, member(alice)]]),
+                    new Set(),
+                    new Set(),
+                    new Set(),
+                    new Set(),
+                    new Map(),
+                    new Map(),
+                    undefined,
+                    allMembers ? undefined : alice,
+                ),
+            );
+        }
+
+        beforeEach(() => {
+            lookedUp = [];
+            failing = false;
+            edits = [];
+            currentUserStore.set({ ...anonymousUser(), userId: "me", username: "myself" });
+            // xavier's summary isn't held either, so is loaded once he's found
+            allUsersStore.update((users) => {
+                users.delete(xavier);
+                return users;
+            });
+            userStore.addMany([user(alice, "alice"), user(zed, "zed")]);
+            vi.spyOn(WorkerAgent.prototype, "send").mockImplementation((async (
+                req: WorkerRequest,
+            ) => {
+                switch (req.kind) {
+                    case "getUserIdByUsername":
+                        lookedUp.push(req.username);
+                        if (failing) throw new Error("offline");
+                        return userIds[req.username];
+                    case "lookupMembers":
+                        return {
+                            kind: "success",
+                            members: req.userIds.filter((u) => u === xavier).map(member),
+                        };
+                    case "getUsers":
+                        return {
+                            users: req.users.userGroups
+                                .flatMap((g) => g.users)
+                                .filter((u) => u === xavier)
+                                .map((u) => user(u, "xavier")),
+                            deletedUserIds: new Set(),
+                        };
+                    case "editMessage":
+                        edits.push(req);
+                        return new Promise(() => {});
+                    default:
+                        return new Promise(() => {});
+                }
+            }) as never);
+        });
+
+        // the text sent, and the users it mentions
+        async function sendText(
+            text: string,
+            picked: User[] = [],
+        ): Promise<{ text: string; mentioned: string[] }> {
+            const outcome = client.sendMessage(context, text, false, undefined, picked);
+            expect(await settled(outcome)).toEqual({ kind: "posted" });
+            const req = sent[0];
+            if (req?.kind !== "sendMessage" || req.event.event.content.kind !== "text_content") {
+                throw new Error("nothing was sent");
+            }
+            return {
+                text: req.event.event.content.text,
+                mentioned: req.mentioned.map((u) => u.userId),
+            };
+        }
+
+        test("a member the chat doesn't hold is looked up and mentioned", async () => {
+            holding(false);
+            expect(await sendText("hi @Xavier")).toEqual({
+                text: `hi @UserId(${xavier})`,
+                mentioned: [xavier],
+            });
+            expect(lookedUp).toEqual(["xavier"]);
+        });
+
+        test("a user who isn't a member of the chat isn't mentioned", async () => {
+            holding(false);
+            expect(await sendText("hi @zed")).toEqual({ text: "hi @zed", mentioned: [] });
+        });
+
+        test("those the chat holds, and the sender, aren't looked up", async () => {
+            holding(false);
+            expect(await sendText("@alice and @myself")).toEqual({
+                text: `@UserId(${alice}) and @myself`,
+                mentioned: [alice],
+            });
+            expect(lookedUp).toEqual([]);
+        });
+
+        test("nobody is looked up in a chat which holds all its members", async () => {
+            holding(true);
+            expect(await sendText("hi @xavier")).toEqual({ text: "hi @xavier", mentioned: [] });
+            expect(lookedUp).toEqual([]);
+        });
+
+        test("if the lookup fails, the mention is sent as typed", async () => {
+            holding(false);
+            failing = true;
+            expect(await sendText("hi @xavier")).toEqual({ text: "hi @xavier", mentioned: [] });
+        });
+
+        test("those picked from the mention picker are mentioned too, once", async () => {
+            holding(false);
+            expect(await sendText(`@UserId(${alice}) and @alice`, [user(alice, "alice")])).toEqual({
+                text: `@UserId(${alice}) and @UserId(${alice})`,
+                mentioned: [alice],
+            });
+            // and a picked mention isn't taken for a username
+            expect(lookedUp).toEqual([]);
+        });
+
+        test("an edit mentions a member the chat doesn't hold", async () => {
+            holding(false);
+            const editing = {
+                index: 1,
+                timestamp: 1n,
+                event: {
+                    kind: "message",
+                    messageId: 2000n,
+                    messageIndex: 0,
+                    sender: "me",
+                    content: { kind: "text_content", text: "hi" },
+                    reactions: [],
+                    tips: {},
+                    edited: false,
+                    forwarded: false,
+                    deleted: false,
+                    blockLevelMarkdown: false,
+                    ogPreviews: [],
+                    messagePreviews: [],
+                },
+            } as unknown as EventWrapper<Message>;
+            void client.editMessageWithAttachment(context, "hi @xavier", false, undefined, editing);
+            await vi.advanceTimersByTimeAsync(0);
+            expect(edits[0]?.msg.content).toEqual({
+                kind: "text_content",
+                text: `hi @UserId(${xavier})`,
             });
         });
     });

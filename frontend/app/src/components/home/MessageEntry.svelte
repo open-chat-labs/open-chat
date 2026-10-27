@@ -39,8 +39,6 @@
     import { getContext, tick, untrack } from "svelte";
     import {
         entryBlock,
-        expandMentions as expandMentionsIn,
-        mentionedUsernames,
         focusEntryOnOpen,
         TypingNotifier,
     } from "@src/logic/composer/composer";
@@ -283,15 +281,6 @@
         });
     }
 
-    // @username becomes @UserId(xyz) or @UserGroup(abc) for those who can be mentioned in the chat,
-    // including members it doesn't hold, who are looked up (shared with the other trees)
-    async function expandMentions(text: string): Promise<[string | undefined, User[], boolean]> {
-        const blockLevelMarkdown = containsMarkdown;
-        const lookup = await client.lookupUsersForMentions(mentionedUsernames(text));
-        const expanded = expandMentionsIn(text, lookup);
-        return [expanded.text, expanded.mentioned, blockLevelMarkdown];
-    }
-
     function parseCommands(txt: string): boolean {
         if (/snow|xmas|christmas|noel/.test(txt)) {
             $snowing = true;
@@ -308,27 +297,15 @@
         const txt = editor?.getMarkdown() ?? "";
 
         if (!parseCommands(txt)) {
-            // Busy while the members mentioned are looked up, so that it isn't sent twice
-            sending = true;
-            let expanded: [string | undefined, User[], boolean];
-            try {
-                expanded = await expandMentions(txt);
-            } finally {
-                sending = false;
-            }
-            const [text, mentioned, blockLevelMarkdown] = expanded;
-            // Mentions picked from the mention picker are stored as nodes within the editor and
-            // are already in the `@UserId(xyz)` form, so `expandMentions` misses them - collect
-            // them from the editor itself
-            const mentionedUserIds = new Set(mentioned.map((u) => u.userId));
-            for (const user of editor?.getMentionedUsers() ?? []) {
-                if (!mentionedUserIds.has(user.userId)) {
-                    mentioned.push(user);
-                }
-            }
-            const result = onSendMessage([text, mentioned, blockLevelMarkdown]);
+            // The client mentions those typed as @username. Mentions picked from the mention picker
+            // are stored as nodes within the editor and are already in the `@UserId(xyz)` form, so
+            // they're collected from the editor itself
+            const mentioned = editor?.getMentionedUsers() ?? [];
+            const result = onSendMessage([txt, mentioned, containsMarkdown]);
             // refused before it was sent (rules turned down, PIN dismissed, throttled): the text stays
             if (!(await clearsEntry(result, (busy) => (sending = busy)))) return;
+            // anything typed while it was being sent (those mentioned being looked up) stays
+            if ((editor?.getMarkdown() ?? "") !== txt) return;
         }
 
         afterSendMessage();

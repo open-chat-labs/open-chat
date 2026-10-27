@@ -76,8 +76,6 @@
     import type { GroupMessage } from "@openchat/ui/src/lib/types";
     import {
         entryBlock,
-        expandMentions,
-        mentionedUsernames,
         focusEntryOnOpen,
         throttleCountdown,
     } from "@src/logic/composer/composer";
@@ -343,16 +341,8 @@
             if (outcome.kind !== "sent") throw new Error(outcome.kind);
             return;
         }
-        // members mentioned whom the chat doesn't hold are looked up
-        const lookup = await client.lookupUsersForMentions(mentionedUsernames(text));
-        const { text: expanded, mentioned } = expandMentions(text, lookup);
-        const outcome = await client.sendMessage(
-            context,
-            expanded,
-            detectMarkdown(text),
-            undefined,
-            mentioned,
-        );
+        // the client mentions those typed as @username
+        const outcome = await client.sendMessage(context, text, detectMarkdown(text), undefined);
         if (outcome.kind !== "posted") throw new Error(outcome.kind);
     }
 

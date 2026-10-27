@@ -974,8 +974,6 @@ describe("finding members when not all are held", () => {
     // The pages of users the user search returns, if not just `found`
     let pages: string[][] | undefined;
     let searches: Extract<WorkerRequest, { kind: "searchUsers" }>[];
-    // The usernames looked up, each of which is `user_<id>` for one of the users above
-    let usernamesLookedUp: string[];
 
     async function select(details: GroupChatDetailsResponse) {
         vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
@@ -998,11 +996,6 @@ describe("finding members when not all are held", () => {
                         (pages === undefined ? found : (pages[req.pageIndex ?? 0] ?? [])).map(
                             userSummary,
                         ),
-                    );
-                case "getUserIdByUsername":
-                    usernamesLookedUp.push(req.username);
-                    return Promise.resolve(
-                        [a, b, x, z].find((u) => `user_${u}`.toLowerCase() === req.username),
                     );
                 case "getUsers":
                     return Promise.resolve({ users: [], deletedUserIds: new Set() });
@@ -1049,7 +1042,6 @@ describe("finding members when not all are held", () => {
         found = [a, x, z];
         pages = undefined;
         searches = [];
-        usernamesLookedUp = [];
     });
 
     afterEach(() => {
@@ -1147,48 +1139,6 @@ describe("finding members when not all are held", () => {
         await client.findMembersToMention("user");
 
         expect(client.getUserLookupForMentions()[`user_${x}`]).toMatchObject({ userId: x });
-    });
-
-    // The users who can be mentioned are those whose summaries are held
-    const holdUsers = () => userStore.addMany([a, b, x, z].map(userSummary) as UserSummary[]);
-
-    test("members mentioned by a username the chat doesn't hold are looked up", async () => {
-        await select(someHeld());
-        holdUsers();
-        lookupResponses.push([member(x)]);
-
-        // typed in any case
-        const lookup = await client.lookupUsersForMentions([`USER_${x}`, `user_${z}`]);
-
-        expect(lookup(`user_${x}`)).toMatchObject({ userId: x });
-        // a user who isn't a member can't be mentioned
-        expect(lookup(`user_${z}`)).toBeUndefined();
-        expect(usernamesLookedUp).toEqual([`user_${x}`, `user_${z}`]);
-        expect(lookups.map((l) => l.userIds)).toEqual([[x, z]]);
-        // and those found are held from then on
-        expect(client.lookupUserForMention(`user_${x}`, false)).toMatchObject({ userId: x });
-    });
-
-    test("usernames the chat knows aren't looked up", async () => {
-        await select(someHeld());
-        holdUsers();
-
-        const lookup = await client.lookupUsersForMentions([`USER_${a}`]);
-
-        expect(lookup(`user_${a}`)).toMatchObject({ userId: a });
-        expect(usernamesLookedUp).toEqual([]);
-        expect(lookups).toHaveLength(0);
-    });
-
-    test("nobody mentioned is looked up when every member is held", async () => {
-        await select(chatDetails(10n, [member(a), member(b)]));
-        holdUsers();
-
-        const lookup = await client.lookupUsersForMentions([`user_${x}`]);
-
-        expect(lookup(`user_${x}`)).toBeUndefined();
-        expect(usernamesLookedUp).toEqual([]);
-        expect(lookups).toHaveLength(0);
     });
 
     test("members who aren't held are left out of those to invite", async () => {
