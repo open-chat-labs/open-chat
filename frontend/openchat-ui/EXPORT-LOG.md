@@ -381,7 +381,7 @@
 - From the pass 5 export (13 components and the icon set); its `.logic.js` and demo data not taken. `WalletPanel`'s rows are ported with the wallet (6a).
 - Icons: `backspace`, `keyboard` and `minus` added; `screen-share` and `phone-off` redrawn; `calendar`, `video-off`, `maximize` and `minimize` take the export's path order. Ours keeps `moon`, `sun`, `smartphone`, `pause-filled` and `play-filled`, which the export doesn't have (154 icons).
 - `Button`: labels never wrap (ellipsis, the full text in the title); `size` (`md` 40px, `lg` 52px with a 14px radius); `icon` before the label, an icon-only button (empty label) is square with the icon centred; `ariaLabel`.
-- `ChatRow`: the pin is accent; `locked` puts a lock before the title (private channels and groups).
+- `ChatRow`: the pin is accent; `locked` puts a lock before the title (private channels and groups). `ChatListPanel` passes a row's `locked` through.
 - `ActivityRow`: an unread row has no tint; its dot alone marks it.
 - `ChatBubble`: `mirror` puts the grouped / tail corners on the inline-end side (right-aligned layouts). Web unchanged.
 - `Confetti`: `within`, a CSS selector of an ancestor to clip the burst to.
