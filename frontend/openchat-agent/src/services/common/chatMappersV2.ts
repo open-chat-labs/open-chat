@@ -79,6 +79,7 @@ import type {
     PollConfig,
     PollContent,
     PollVotes,
+    PriceChartContent,
     PrizeContent,
     PrizeContentInitial,
     PrizeWinnerContent,
@@ -218,6 +219,7 @@ import type {
     FileContent as TFileContent,
     GateCheckFailedReason as TGateCheckFailedReason,
     GiphyContent as TGiphyContent,
+    PriceChartContent as TPriceChartContent,
     GiphyImageVariant as TGiphyImageVariant,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterThreadDetails as TGroupCanisterThreadDetails,
@@ -840,6 +842,9 @@ export function messageContent(value: TMessageContent, sender: string): MessageC
     if ("Custom" in value) {
         return customContent(value.Custom);
     }
+    if ("PriceChart" in value) {
+        return priceChartContent(value.PriceChart);
+    }
     if ("ReportedMessage" in value) {
         return reportedMessage(value.ReportedMessage);
     }
@@ -1243,6 +1248,25 @@ function proposalRewardStatus(value: TProposalRewardStatus): ProposalRewardStatu
     if (value === "ReadyToSettle") return ProposalRewardStatus.ReadyToSettle;
     if (value === "Settled") return ProposalRewardStatus.Settled;
     return ProposalRewardStatus.Unspecified;
+}
+
+export function priceChartContent(value: TPriceChartContent): PriceChartContent {
+    return {
+        kind: "price_chart_content",
+        title: value.title,
+        start: Number(value.start),
+        end: Number(value.end),
+        series: value.series.map((s) => ({
+            token:
+                "Ledger" in s.token
+                    ? { kind: "token", ledger: principalBytesToString(s.token.Ledger) }
+                    : { kind: "coin", id: s.token.Coin },
+            symbol: s.symbol,
+            name: s.name,
+            points: s.points.map(([timestamp, usd]) => ({ timestamp: Number(timestamp), usd })),
+        })),
+        sources: value.sources.map((s) => ({ name: s.name, url: s.url })),
+    };
 }
 
 function giphyContent(value: TGiphyContent): GiphyContent {
@@ -1817,6 +1841,10 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
         case "giphy_content":
             return { Giphy: apiGiphyContent(domain) };
 
+        // a chart a bot posted, forwarded
+        case "price_chart_content":
+            return { PriceChart: apiPriceChartContent(domain) };
+
         case "prize_content_initial":
             return { Prize: apiPrizeContentInitial(domain) };
 
@@ -1885,6 +1913,24 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
         case "restricted_content":
             throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);
     }
+}
+
+function apiPriceChartContent(domain: PriceChartContent): TPriceChartContent {
+    return {
+        title: domain.title,
+        start: BigInt(domain.start),
+        end: BigInt(domain.end),
+        series: domain.series.map((s) => ({
+            token:
+                s.token.kind === "token"
+                    ? { Ledger: principalStringToBytes(s.token.ledger) }
+                    : { Coin: s.token.id },
+            symbol: s.symbol,
+            name: s.name,
+            points: s.points.map((p): [bigint, number] => [BigInt(p.timestamp), p.usd]),
+        })),
+        sources: domain.sources.map((s) => ({ name: s.name, url: s.url })),
+    };
 }
 
 function apiGiphyContent(domain: GiphyContent): TGiphyContent {

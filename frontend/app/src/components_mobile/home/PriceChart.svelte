@@ -1,8 +1,9 @@
 <!-- A chart of token prices which the reader can explore: hovering over it, pressing and dragging
-     along it, or with the arrow keys, shows the prices at that time (logic/priceChart). So far only
-     one token's chart is drawn: several tokens' lines get their colours with price chart messages. -->
+     along it, or with the arrow keys, shows the prices at that time (logic/priceChart). One token's
+     line is coloured by whether its price rose, several tokens' by PRICE_CHART_COLOURS. -->
 <script lang="ts">
     import {
+        PRICE_CHART_COLOURS,
         PriceChartReader,
         priceChartLayout,
         readingAt,
@@ -35,6 +36,13 @@
     );
     // the reading sits beside the line, on whichever side has more room
     let readingOnLeft = $derived(reading !== undefined && reading.x > width / 2);
+
+    // several tokens' lines each have their own colour; one token's is styled by its rise or fall
+    function seriesColour(i: number): string | undefined {
+        return layout?.kind === "change"
+            ? PRICE_CHART_COLOURS[i % PRICE_CHART_COLOURS.length]
+            : undefined;
+    }
 
     function pointAt(ev: PointerEvent) {
         if (layout === undefined) return;
@@ -83,9 +91,10 @@
             {/each}
             {#each layout.lines as line, i}
                 <path
-                    class={`line series-${i}`}
+                    class="line"
                     class:single={layout.kind === "usd"}
                     class:falling={!line.rising}
+                    style:stroke={seriesColour(i)}
                     d={line.path} />
             {/each}
             {#each layout.marks as mark}
@@ -97,9 +106,10 @@
             {#each layout.lines as line, i}
                 {@const value = reading?.values.find((v) => v.symbol === line.symbol)}
                 <circle
-                    class={`dot series-${i}`}
+                    class="dot"
                     class:single={layout.kind === "usd"}
                     class:falling={!line.rising}
+                    style:stroke={seriesColour(i)}
                     cx={reading !== undefined && value !== undefined ? reading.x : line.end.x}
                     cy={value?.y ?? line.end.y}
                     r="4" />

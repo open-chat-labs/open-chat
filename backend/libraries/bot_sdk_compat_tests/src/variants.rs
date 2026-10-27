@@ -55,10 +55,14 @@ variants!(
         VideoCall,
         Encrypted,
         Custom,
+        PriceChart,
     ]
 );
 
-variants!(types::BotMessageContent, [Text, Image, Video, Audio, File, Poll, Giphy]);
+variants!(
+    types::BotMessageContent,
+    [Text, Image, Video, Audio, File, Poll, Giphy, PriceChart]
+);
 
 variants!(types::CryptoTransaction, [Pending, Completed, Failed]);
 variants!(types::PendingCryptoTransaction, [NNS, ICRC1, ICRC2, Certified]);
@@ -99,5 +103,5 @@ variants!(types::Chat, [Direct, Group, Channel]);
 
 variants!(
     oc_bots_sdk::types::MessageContentInitial,
-    [Text, Image, Video, Audio, File, Poll, Giphy, Custom]
+    [Text, Image, Video, Audio, File, Poll, Giphy, Custom, PriceChart]
 );

@@ -510,6 +510,12 @@ export const PinNumberSettings = /* @__PURE__ */ Type.Object({
 export type MediaScanProvider = Static<typeof MediaScanProvider>;
 export const MediaScanProvider = /* @__PURE__ */ Type.Literal("PhotoDna");
 
+export type PriceChartSource = Static<typeof PriceChartSource>;
+export const PriceChartSource = /* @__PURE__ */ Type.Object({
+    name: Type.String(),
+    url: Type.String(),
+});
+
 export type VideoCallPresence = Static<typeof VideoCallPresence>;
 export const VideoCallPresence = /* @__PURE__ */ Type.Union([
     Type.Literal("Default"),
@@ -5214,6 +5220,16 @@ export const VersionedRules = /* @__PURE__ */ Type.Object({
     enabled: Type.Boolean(),
 });
 
+export type PriceChartToken = Static<typeof PriceChartToken>;
+export const PriceChartToken = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Ledger: TSPrincipal,
+    }),
+    Type.Object({
+        Coin: Type.String(),
+    }),
+]);
+
 export type GroupSubtype = Static<typeof GroupSubtype>;
 export const GroupSubtype = /* @__PURE__ */ Type.Object({
     GovernanceProposals: GovernanceProposalsSubtype,
@@ -6267,6 +6283,14 @@ export const MembersResponse = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
+export type PriceChartSeries = Static<typeof PriceChartSeries>;
+export const PriceChartSeries = /* @__PURE__ */ Type.Object({
+    token: PriceChartToken,
+    symbol: Type.String(),
+    name: Type.String(),
+    points: Type.Array(Type.Tuple([Type.BigInt(), Type.Number()])),
+});
+
 export type HistoryDeleted = Static<typeof HistoryDeleted>;
 export const HistoryDeleted = /* @__PURE__ */ Type.Object({
     before: Type.BigInt(),
@@ -6629,6 +6653,15 @@ export const CommunityOrGroup = /* @__PURE__ */ Type.Union([
         Group: ChatId,
     }),
 ]);
+
+export type PriceChartContent = Static<typeof PriceChartContent>;
+export const PriceChartContent = /* @__PURE__ */ Type.Object({
+    title: Type.String(),
+    start: Type.BigInt(),
+    end: Type.BigInt(),
+    series: Type.Array(PriceChartSeries),
+    sources: Type.Array(PriceChartSource),
+});
 
 export type OptionUpdateGroupSubtype = Static<typeof OptionUpdateGroupSubtype>;
 export const OptionUpdateGroupSubtype = /* @__PURE__ */ Type.Union(
@@ -9024,6 +9057,9 @@ export const BotMessageContent = /* @__PURE__ */ Type.Union([
     Type.Object({
         Giphy: GiphyContent,
     }),
+    Type.Object({
+        PriceChart: PriceChartContent,
+    }),
 ]);
 
 export type CurrentUserSummary = Static<typeof CurrentUserSummary>;
@@ -9336,6 +9372,9 @@ export const MessageContent = /* @__PURE__ */ Type.Union([
     Type.Object({
         Custom: CustomContent,
     }),
+    Type.Object({
+        PriceChart: PriceChartContent,
+    }),
 ]);
 
 export type GroupMatch = Static<typeof GroupMatch>;
@@ -9405,6 +9444,9 @@ export const MessageContentInitial = /* @__PURE__ */ Type.Union([
     }),
     Type.Object({
         Custom: CustomContent,
+    }),
+    Type.Object({
+        PriceChart: PriceChartContent,
     }),
 ]);
 

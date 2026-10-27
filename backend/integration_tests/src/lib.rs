@@ -56,6 +56,7 @@ mod online_users_tests;
 mod p2p_swap_tests;
 mod pin_number_tests;
 mod poll_tests;
+mod price_chart_tests;
 mod prize_message_tests;
 mod proposals_bot_tests;
 mod pruned_updates_tests;

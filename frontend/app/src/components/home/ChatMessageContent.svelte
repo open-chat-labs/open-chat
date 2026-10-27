@@ -1,5 +1,10 @@
 <script lang="ts">
-    import type { MessageContent, MessageContext, OgPreview, RehydratedMessagePreview } from "@client";
+    import type {
+        MessageContent,
+        MessageContext,
+        OgPreview,
+        RehydratedMessagePreview,
+    } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import AudioContent from "./AudioContent.svelte";
     import BlockedContent from "@shared_components/home/BlockedContent.svelte";
@@ -24,6 +29,7 @@
     import TextContent from "./TextContent.svelte";
     import UserReferralCardContent from "./UserReferralCardContent.svelte";
     import DailyResultContent from "./dailypuzzle/DailyResultContent.svelte";
+    import PriceChartContent from "./PriceChartContent.svelte";
     import VideoCallContent from "./VideoCallContent.svelte";
     import VideoContent from "./VideoContent.svelte";
 
@@ -164,4 +170,6 @@
     <UserReferralCardContent />
 {:else if content.kind === "daily_result"}
     <DailyResultContent {content} {intersecting} {edited} {blockLevelMarkdown} />
+{:else if content.kind === "price_chart_content"}
+    <PriceChartContent {content} {reply} />
 {/if}

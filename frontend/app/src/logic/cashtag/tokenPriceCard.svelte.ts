@@ -6,9 +6,8 @@ import type {
     PriceSubject,
     ReadonlyMap,
     TokenExchangeRates,
-    TokenPricePoint,
 } from "@client";
-import type { PriceChartData } from "@src/logic/priceChart/priceChart.svelte";
+import { priceChange, type PriceChartData } from "@src/logic/priceChart/priceChart.svelte";
 import type { RemoteData } from "@src/utils/remoteData";
 
 // A token's or coin's price card, opened by a cashtag clicked in a message (`<cash-tag>`): its
@@ -69,12 +68,6 @@ export function lastCardDetails(): (
 ) => CashtagCardDetails | undefined {
     let last: CashtagCardDetails | undefined;
     return (details) => (last = details ?? last);
-}
-
-/** The change in percent from the first price to the last, with at least two. */
-export function priceChange(points: TokenPricePoint[]): number | undefined {
-    if (points.length < 2) return undefined;
-    return (points[points.length - 1].usd / points[0].usd - 1) * 100;
 }
 
 /** The card's price history, loading as it opens. */

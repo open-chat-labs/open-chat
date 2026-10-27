@@ -5,12 +5,7 @@ import type {
     PriceSubject,
     TokenPricePoint,
 } from "@client";
-import {
-    cashtagCardDetails,
-    lastCardDetails,
-    priceChange,
-    TokenPriceHistory,
-} from "./tokenPriceCard.svelte";
+import { cashtagCardDetails, lastCardDetails, TokenPriceHistory } from "./tokenPriceCard.svelte";
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -31,18 +26,6 @@ function client(points: TokenPricePoint[] | undefined, source?: string) {
 async function settle() {
     await new Promise((resolve) => setTimeout(resolve, 0));
 }
-
-describe("priceChange", () => {
-    test("is from the first price to the last, in percent", () => {
-        expect(priceChange([point(7 * DAY, 2), point(DAY, 4), point(0, 3)])).toBeCloseTo(50);
-        expect(priceChange([point(DAY, 4), point(0, 3)])).toBeCloseTo(-25);
-    });
-
-    test("needs two prices", () => {
-        expect(priceChange([])).toBeUndefined();
-        expect(priceChange([point(0, 3)])).toBeUndefined();
-    });
-});
 
 describe("a token price card's history", () => {
     test("loads the token's history as the card opens", async () => {

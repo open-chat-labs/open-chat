@@ -1574,7 +1574,9 @@ export function canForward(content: MessageContent): boolean {
         content.kind === "meme_fighter_content" ||
         content.kind === "video_content" ||
         content.kind === "audio_content" ||
-        content.kind === "giphy_content"
+        content.kind === "giphy_content" ||
+        // a bot posts a chart, but anyone can forward one
+        content.kind === "price_chart_content"
     );
 }
 

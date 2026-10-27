@@ -11,10 +11,10 @@ use types::{
     FailedCryptoTransaction, FileContent, GiphyContent, GiphyImageVariant, ImageContent, MediaScanMatch, MediaScanProvider,
     MessageContent, MessageReminderContent, MessageReminderCreatedContent, MessageReport, ModerationReportContent,
     ModerationReportResolution, ModerationReportStatus, NnsProposal, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted,
-    P2PSwapContent, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, PrizeContent,
-    PrizeWinnerContent, Proposal, ProposalContent, ProposalDecisionStatus, ProposalRewardStatus, ReportedMessage, SnsProposal,
-    Tally, TextContent, ThumbnailData, TokenInfo, TotalVotes, UserId, VideoCallContent, VideoCallType, VideoContent, certified,
-    icrc1, icrc2, nns,
+    P2PSwapContent, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollVotes,
+    PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent, PrizeWinnerContent, Proposal,
+    ProposalContent, ProposalDecisionStatus, ProposalRewardStatus, ReportedMessage, SnsProposal, Tally, TextContent,
+    ThumbnailData, TokenInfo, TotalVotes, UserId, VideoCallContent, VideoCallType, VideoContent, certified, icrc1, icrc2, nns,
 };
 
 /// One value of every kind of content OpenChat sends bots, and of every variant within them, with
@@ -88,6 +88,29 @@ pub fn message_contents() -> Vec<MessageContent> {
         MessageContent::Custom(CustomContent {
             kind: "custom".to_string(),
             data: vec![1, 2, 3],
+        }),
+        MessageContent::PriceChart(PriceChartContent {
+            title: "CHAT and ADA · 30 days".to_string(),
+            start: max(),
+            end: max(),
+            series: vec![
+                PriceChartSeries {
+                    token: PriceChartToken::Ledger(Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 2, 1, 1])),
+                    symbol: "CHAT".to_string(),
+                    name: "OpenChat".to_string(),
+                    points: vec![(max(), 0.5)],
+                },
+                PriceChartSeries {
+                    token: PriceChartToken::Coin("cardano".to_string()),
+                    symbol: "ADA".to_string(),
+                    name: "Cardano".to_string(),
+                    points: vec![(max(), 0.25)],
+                },
+            ],
+            sources: vec![PriceChartSource {
+                name: "CoinGecko".to_string(),
+                url: "https://www.coingecko.com".to_string(),
+            }],
         }),
     ];
 

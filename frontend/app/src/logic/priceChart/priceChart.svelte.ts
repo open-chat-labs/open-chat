@@ -18,6 +18,15 @@ const LONGEST_WITH_TIMES = 90 * DAY;
 const MARKED_PAD = 0.2;
 const PAD = 0.05;
 
+/**
+ * The colours of several tokens' lines, in order: ChartBot's, so a chart message looks as its
+ * image did. Each colour is told apart from the next for colour blind readers (CVD ΔE at least 8)
+ * and stands out from light and dark backgrounds (3:1), as checked by the dataviz palette
+ * validator. Lines don't need every pair told apart, only neighbours, and each line is also named
+ * in the chart's legend and readings.
+ */
+export const PRICE_CHART_COLOURS = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181"] as const;
+
 /** One token's prices, oldest first */
 export type PriceSeries = {
     symbol: string;
@@ -75,6 +84,37 @@ export type PriceChartValue = {
     change: number;
     y: number;
 };
+
+/** A token's latest price on a chart, and its change since its first, for the chart's legend */
+export type PriceChartToken<S extends PriceSeries = PriceSeries> = {
+    series: S;
+    usd: number;
+    // undefined with a lone price
+    change: number | undefined;
+};
+
+/** The change in percent from the first price to the last, with at least two. */
+export function priceChange(points: TokenPricePoint[]): number | undefined {
+    if (points.length < 2) return undefined;
+    return (points[points.length - 1].usd / points[0].usd - 1) * 100;
+}
+
+/**
+ * Each token with prices on the chart, in the order of its lines, with its latest price and change.
+ * Its series is the one it was given, so a legend keeps whatever else it knows of the token.
+ */
+export function priceChartTokens<S extends PriceSeries>(data: {
+    series: S[];
+    start: number;
+    end: number;
+}): PriceChartToken<S>[] {
+    return data.series.flatMap((series) => {
+        const points = within(data, series.points);
+        return points.length === 0
+            ? []
+            : [{ series, usd: points[points.length - 1].usd, change: priceChange(points) }];
+    });
+}
 
 /** The chart at `width` by `height`. Undefined if it has no prices to draw. */
 export function priceChartLayout(
@@ -291,11 +331,15 @@ export class PriceChartReader {
 // The series with prices, each cut to the chart's time
 function drawable(data: PriceChartData): PriceSeries[] {
     return data.series
-        .map((s) => ({
-            symbol: s.symbol,
-            points: s.points.filter((p) => p.timestamp >= data.start && p.timestamp <= data.end),
-        }))
+        .map((s) => ({ symbol: s.symbol, points: within(data, s.points) }))
         .filter((s) => s.points.length > 0);
+}
+
+function within(
+    time: { start: number; end: number },
+    points: TokenPricePoint[],
+): TokenPricePoint[] {
+    return points.filter((p) => p.timestamp >= time.start && p.timestamp <= time.end);
 }
 
 function value(kind: PriceChartLayout["kind"], series: PriceSeries, usd: number): number {

@@ -1,8 +1,10 @@
 import type { TokenPricePoint } from "@client";
 import {
     extremes,
+    priceChange,
     PriceChartReader,
     priceChartLayout,
+    priceChartTokens,
     readingAt,
     readingNear,
     readingShowsTime,
@@ -213,5 +215,32 @@ describe("a price chart's reading", () => {
 
         reader.clear();
         expect(reader.timestamp).toBeUndefined();
+    });
+});
+
+describe("priceChange", () => {
+    test("is from the first price to the last, in percent", () => {
+        expect(priceChange([point(7 * DAY, 2), point(DAY, 4), point(0, 3)])).toBeCloseTo(50);
+        expect(priceChange([point(DAY, 4), point(0, 3)])).toBeCloseTo(-25);
+    });
+
+    test("needs two prices", () => {
+        expect(priceChange([])).toBeUndefined();
+        expect(priceChange([point(0, 3)])).toBeUndefined();
+    });
+});
+
+describe("a price chart's tokens", () => {
+    test("are each token with prices, with its latest price and its change", () => {
+        const data = week(
+            [point(7 * DAY, 2), point(DAY, 3)],
+            [point(8 * DAY, 9)],
+            [point(2 * DAY, 4)],
+        );
+
+        expect(priceChartTokens(data)).toEqual([
+            { series: data.series[0], usd: 3, change: 50 },
+            { series: data.series[2], usd: 4, change: undefined },
+        ]);
     });
 });
