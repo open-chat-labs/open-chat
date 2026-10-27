@@ -489,7 +489,7 @@ impl ChatEvents {
     fn edit_message_inner<P: EventPusher>(
         message: &mut MessageInternal,
         event: EventMetaData,
-        args: EditMessageArgs,
+        mut args: EditMessageArgs,
         chat: Chat,
         anonymized_id: String,
         mut event_pusher: Option<P>,
@@ -499,6 +499,16 @@ impl ChatEvents {
     > {
         if message.sender != args.sender || matches!(message.content, MessageContentInternal::Deleted(_)) {
             return Err(UpdateEventError::NoChange(Err(OCErrorCode::InitiatorNotAuthorized.into())));
+        }
+
+        // A poll keeps its votes, and whether it has ended, through an edit which keeps its options,
+        // eg. a bot finalising a poll it sent unfinalised
+        if let (MessageContentInternal::Poll(existing), MessageContentInternal::Poll(new)) =
+            (&message.content, &mut args.content)
+            && existing.config.options == new.config.options
+        {
+            new.votes = existing.votes.clone();
+            new.ended = existing.ended;
         }
 
         let existing_text = message.content.text();
@@ -3382,9 +3392,10 @@ mod tests {
     use candid::Principal;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use std::collections::HashMap;
     use types::{
         BotMessageContext, MessageContent, MultiUserChat, NnsProposal, Proposal, ProposalDecisionStatus, ProposalRewardStatus,
-        Reaction, Tally,
+        Reaction, Tally, VoteOperation,
     };
 
     #[test]
@@ -3764,6 +3775,74 @@ mod tests {
         // Nothing about it changed, so it isn't shown as edited, but clients are told it's finalised
         assert_eq!(finalised.last_edited, None);
         assert_eq!(events.recently_updated_events(15, 100).len(), 1);
+    }
+
+    #[test]
+    fn finalising_an_already_finalised_bot_message_with_the_content_it_has_changes_nothing() {
+        let (mut events, _, _) = setup_events();
+        push_bot_message(&mut events, 30, custom_content(&[1]), true);
+
+        events
+            .edit_message::<NullEventPusher>(edit_args(30, custom_content(&[1]), true), None)
+            .unwrap();
+
+        assert_eq!(message(&events, 30).last_edited, None);
+        assert!(events.recently_updated_events(15, 100).is_empty());
+    }
+
+    fn poll(question: &str) -> MessageContentInternal {
+        MessageContentInternal::Poll(PollContentInternal {
+            config: PollConfigInternal {
+                text: Some(question.to_string()),
+                options: vec!["Yes".to_string(), "No".to_string()],
+                end_date: None,
+                anonymous: false,
+                show_votes_before_end_date: true,
+                allow_multiple_votes_per_user: false,
+                allow_user_to_change_vote: true,
+            },
+            votes: HashMap::new(),
+            ended: false,
+        })
+    }
+
+    fn poll_votes(events: &ChatEvents, message_id: u128) -> HashMap<u32, Vec<UserId>> {
+        let MessageContentInternal::Poll(p) = message(events, message_id).content else {
+            panic!("Expected a poll");
+        };
+        p.votes
+    }
+
+    #[test]
+    fn finalising_a_bot_poll_keeps_its_votes() {
+        let (mut events, _, _) = setup_events();
+        push_bot_message(&mut events, 30, poll("Lunch?"), false);
+        events
+            .register_poll_vote(RegisterPollVoteArgs {
+                user_id: user(3),
+                min_visible_event_index: EventIndex::default(),
+                thread_root_message_index: None,
+                message_index: message(&events, 30).message_index,
+                option_index: 0,
+                operation: VoteOperation::RegisterVote,
+                now: 15,
+            })
+            .unwrap();
+
+        events
+            .edit_message::<NullEventPusher>(edit_args(30, poll("Lunch?"), true), None)
+            .unwrap();
+
+        let finalised = message(&events, 30);
+        assert!(finalised.bot_context().unwrap().finalised);
+        assert_eq!(finalised.last_edited, None);
+        assert_eq!(poll_votes(&events, 30), HashMap::from([(0, vec![user(3)])]));
+
+        // Rewording the question keeps the votes too, since the options are the same
+        events
+            .edit_message::<NullEventPusher>(edit_args(30, poll("Lunch today?"), false), None)
+            .unwrap();
+        assert_eq!(poll_votes(&events, 30), HashMap::from([(0, vec![user(3)])]));
     }
 
     fn setup_events() -> (ChatEvents, MessageIndex, MessageIndex) {
