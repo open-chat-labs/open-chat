@@ -539,8 +539,9 @@ impl ThreadSummaryInternal {
         &mut self,
         sender: UserId,
         mentioned_users: &[UserId],
-        // Who the thread's root message is for (see `MessageInternal::reply_recipient`)
-        root_message_recipient: UserId,
+        // Who the thread's root message is for (see `MessageInternal::reply_recipient`), or None if
+        // it's been deleted
+        root_message_recipient: Option<UserId>,
         latest_event_index: EventIndex,
         now: TimestampMillis,
     ) {
@@ -556,7 +557,7 @@ impl ThreadSummaryInternal {
         }
 
         let is_first_message = self.reply_count == 1;
-        if is_first_message {
+        if is_first_message && let Some(root_message_recipient) = root_message_recipient {
             self.followers.insert(root_message_recipient);
         }
     }

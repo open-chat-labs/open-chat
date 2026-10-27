@@ -485,6 +485,12 @@ fn replies_to_bots_response_are_for_user_who_used_command() {
     let response_in_thread = respond_to_command(env, Some(root_message_index));
     let bots_reply_in_thread_id = bot_replies(env, Some(root_message_index), response_in_thread.event_index);
     assert!(mentioned(env, bots_reply_in_thread_id));
+
+    // Once the initiator has deleted a response, the bot's reply to it is for no one
+    let deleted_response = respond_to_command(env, None);
+    client::group::happy_path::delete_messages(env, initiator.principal, group_id, None, vec![deleted_response.message_id]);
+    let bots_reply_to_deleted_id = bot_replies(env, None, deleted_response.event_index);
+    assert!(!mentioned(env, bots_reply_to_deleted_id));
 }
 
 fn bot_send_message(

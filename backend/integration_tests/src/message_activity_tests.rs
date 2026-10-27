@@ -345,6 +345,8 @@ fn quote_reply_to_deleted_or_missing_message_is_for_no_one(chat_type: ChatType, 
 
     let message_id = random_from_u128();
     let reply_id = random_from_u128();
+    // A thread on the deleted message is for no one either
+    let thread_reply_id = random_from_u128();
     let content = MessageContentInitial::Text(TextContent { text: random_string() });
     // The deleted message, or an event index no message has
     let replies_to = |event_index: EventIndex| {
@@ -370,6 +372,17 @@ fn quote_reply_to_deleted_or_missing_message_is_for_no_one(chat_type: ChatType, 
                 replies_to(result.event_index),
                 Some(reply_id),
             );
+            if deleted {
+                client::group::happy_path::send_message(
+                    env,
+                    &them,
+                    group_id,
+                    Some(result.message_index),
+                    MessageContentInitial::Text(TextContent { text: random_string() }),
+                    None,
+                    Some(thread_reply_id),
+                );
+            }
             client::group::happy_path::summary(env, us.principal, group_id)
                 .membership
                 .unwrap()
@@ -410,6 +423,18 @@ fn quote_reply_to_deleted_or_missing_message_is_for_no_one(chat_type: ChatType, 
                 replies_to(result.event_index),
                 Some(reply_id),
             );
+            if deleted {
+                client::community::happy_path::send_message(
+                    env,
+                    &them,
+                    community_id,
+                    channel_id,
+                    Some(result.message_index),
+                    MessageContentInitial::Text(TextContent { text: random_string() }),
+                    None,
+                    Some(thread_reply_id),
+                );
+            }
             client::community::happy_path::channel_summary(env, &us, community_id, channel_id)
                 .membership
                 .unwrap()
@@ -419,7 +444,12 @@ fn quote_reply_to_deleted_or_missing_message_is_for_no_one(chat_type: ChatType, 
 
     tick_many(env, 3);
 
-    assert!(!mentions.iter().any(|m| m.message_id == reply_id), "{mentions:?}");
+    assert!(
+        !mentions
+            .iter()
+            .any(|m| m.message_id == reply_id || m.message_id == thread_reply_id),
+        "{mentions:?}"
+    );
     let feed = client::user::happy_path::message_activity_feed(env, &us, 0);
     assert!(feed.events.is_empty(), "{:?}", feed.events);
 }
