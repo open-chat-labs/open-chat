@@ -82,9 +82,6 @@
     rates?: Partial<Record<string, number>>;
     /** How many tokens the wallet can receive (the deduped catalogue); defaults to `tokens`' length. */
     supportedCount?: number;
-    /** The flows the host offers (`onAction('send' | 'receive' | 'swap')`); the balance card's buttons for the others
-     *  are left out. All three without it. */
-    flows?: ('send' | 'receive' | 'swap')[];
     /** Workspace mode: shows an "All activity" row above the tokens. */
     onHome?: () => void;
     homeSelected?: boolean;
@@ -113,7 +110,6 @@
     homeCount,
     rates: hostRates,
     supportedCount,
-    flows = ['send', 'receive', 'swap'],
   }: Props = $props();
   const t = useT();
 
@@ -304,8 +300,7 @@
   function tokenItems(tk: WalletToken): MenuItem[] {
     const { symbol } = tk;
     const id = idOf(tk);
-    const offers = (a: WalletTokenAction) =>
-      (a === 'send' || a === 'receive' || a === 'swap' ? flows.includes(a) : true) && (tk.actions ? tk.actions.includes(a) : a !== 'hide' || manual);
+    const offers = (a: WalletTokenAction) => (tk.actions ? tk.actions.includes(a) : a !== 'hide' || manual);
     const items: MenuItem[] = [
       // built when the menu opens, so labels are translated here (they carry the symbol)
       ...(offers('send') ? [{ label: t('ui.walletPanel.send', { symbol }), mask: mask('wallet-send'), onSelect: () => onAction?.(`send:${id}`) }] : []),
@@ -424,9 +419,9 @@
       {empty}
       onToggleVeil={() => (onBalanceHiddenChange ? onBalanceHiddenChange(!veiled) : (localVeil = !veiled))}
       onRefresh={onRefresh ? () => refresh() : undefined}
-      onSend={flows.includes('send') ? () => onAction?.('send') : undefined}
-      onReceive={flows.includes('receive') ? () => onAction?.('receive') : undefined}
-      onSwap={flows.includes('swap') ? () => onAction?.('swap') : undefined}
+      onSend={() => onAction?.('send')}
+      onReceive={() => onAction?.('receive')}
+      onSwap={() => onAction?.('swap')}
     />
   </div>
 

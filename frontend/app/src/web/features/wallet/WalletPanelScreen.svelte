@@ -4,7 +4,8 @@
      Each token's menu is tokenActions', plus Copy ledger ID; "View all" and Copy ledger ID are asks
      of WalletMain (panelRequests). A token opens its page (/wallet/:ledger), All activity /wallet.
      The wallet's balances refresh as the list first shows them (a recent one is kept), Refresh all
-     one ledger at a time. No Send, Receive or Swap until their flows are built (6b, 6c). -->
+     one ledger at a time. The card's Send / Receive / Swap do nothing until their flows are built
+     (6b, 6c). -->
 <script lang="ts">
     import {
         conversionLedgers,
@@ -81,7 +82,6 @@
     {rates}
     settings={panelSettings($walletConfigStore)}
     supportedCount={supportedCount(tokens)}
-    flows={[]}
     onAction={action}
     balanceHidden={$hideTokenBalances}
     onBalanceHiddenChange={(hidden) => hideTokenBalances.set(hidden)}

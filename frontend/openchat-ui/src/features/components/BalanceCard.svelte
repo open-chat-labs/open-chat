@@ -30,7 +30,6 @@
     onToggleVeil?: () => void;
     /** Shows the refresh button. */
     onRefresh?: () => void;
-    /** Send, Receive and Swap: each button shows only with its handler. */
     onSend?: () => void;
     onReceive?: () => void;
     onSwap?: () => void;
@@ -105,23 +104,16 @@
     </div>
   {/if}
 
-  {#if !onSend && !onReceive && !onSwap}
-    <!-- no actions offered -->
-  {:else if empty}
+  {#if empty}
     <div class="actions">
-      {#if onReceive}
-        <span class="action send" onclick={onReceive} role="button" tabindex="0">
-          <span class="action-icon" style:mask="var(--icon-receive) center/contain no-repeat"></span>
-          <span class="action-label">{t('ui.balanceCard.receive')}</span>
-        </span>
-      {/if}
-      {#if onSend}
+      <span class="action send" onclick={onReceive} role="button" tabindex="0">
+        <span class="action-icon" style:mask="var(--icon-receive) center/contain no-repeat"></span>
+        <span class="action-label">{t('ui.balanceCard.receive')}</span>
+      </span>
       <span class="action disabled" role="button" tabindex="0" aria-disabled="true" title={t('ui.balanceCard.addFundsFirst')} data-tip={t('ui.balanceCard.addFundsFirst')}>
         <span class="action-icon" style:mask="var(--icon-wallet-send) center/contain no-repeat"></span>
         <span class="action-label">{t('ui.common.send')}</span>
       </span>
-      {/if}
-      {#if onSwap}
       <span
         class="action disabled square"
         role="button"
@@ -133,27 +125,20 @@
       >
         <span class="action-icon" style:mask="var(--icon-swap) center/contain no-repeat"></span>
       </span>
-      {/if}
     </div>
   {:else}
     <div class="actions">
-      {#if onSend}
-        <span class="action send" onclick={onSend} role="button" tabindex="0">
-          <span class="action-icon" style:mask="var(--icon-wallet-send) center/contain no-repeat"></span>
-          <span class="action-label">{t('ui.common.send')}</span>
-        </span>
-      {/if}
-      {#if onReceive}
-        <span class="action outline" onclick={onReceive} role="button" tabindex="0">
-          <span class="action-icon" style:mask="var(--icon-receive) center/contain no-repeat"></span>
-          <span class="action-label">{t('ui.balanceCard.receive')}</span>
-        </span>
-      {/if}
-      {#if onSwap}
-        <span class="action outline square" onclick={onSwap} role="button" tabindex="0" aria-label={t('ui.balanceCard.swap')} title={t('ui.balanceCard.swap')}>
-          <span class="action-icon" style:mask="var(--icon-swap) center/contain no-repeat"></span>
-        </span>
-      {/if}
+      <span class="action send" onclick={onSend} role="button" tabindex="0">
+        <span class="action-icon" style:mask="var(--icon-wallet-send) center/contain no-repeat"></span>
+        <span class="action-label">{t('ui.common.send')}</span>
+      </span>
+      <span class="action outline" onclick={onReceive} role="button" tabindex="0">
+        <span class="action-icon" style:mask="var(--icon-receive) center/contain no-repeat"></span>
+        <span class="action-label">{t('ui.balanceCard.receive')}</span>
+      </span>
+      <span class="action outline square" onclick={onSwap} role="button" tabindex="0" aria-label={t('ui.balanceCard.swap')} title={t('ui.balanceCard.swap')}>
+        <span class="action-icon" style:mask="var(--icon-swap) center/contain no-repeat"></span>
+      </span>
     </div>
   {/if}
 </div>

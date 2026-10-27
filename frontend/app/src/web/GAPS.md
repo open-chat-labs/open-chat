@@ -592,10 +592,10 @@ design export needs. Each entry says where it came up.
   - All activity (with something owned): there's no history across tokens, so it says to pick a
     token (#10120's open question; merging each indexed token's first page would mean one call per
     ledger on every open).
-  - Send, Receive and Swap (6b, 6c): the app passes no `flows`, so their buttons, menu items, the
-    welcome's "Receive tokens" card and the picker's Receive are left out (the design leads an
-    empty wallet with Receive); `/wallet/send`, `/receive`, `/swap` show the token's page (or All
-    activity). Settings and Manage recipients (6d): the panel's ⋯ menu still offers them and they do
+  - Send, Receive and Swap (6b, 6c): the app passes no `flows`. Their buttons show as designed (the
+    balance card's, the token page's, the welcome's "Receive tokens" card) and do nothing; the menus
+    and the token picker leave them out; `/wallet/send`, `/receive`, `/swap` show the token's page
+    (or All activity). Settings and Manage recipients (6d): the panel's ⋯ menu still offers them and they do
     nothing; `/wallet/recipients` shows All activity.
   - the total is what the panel lists (Your tokens and small balances); the old wallets' total is
     `walletTokensSorted`'s (in automatic mode, the default tokens plus those worth the minimum).
@@ -603,11 +603,10 @@ design export needs. Each entry says where it came up.
     toggle), not a setting.
   - no 24h change (see the data gaps below).
   - by hand: `WalletToken` gains `id` (the ledger: callbacks, the selection and activity use it,
-    as two ledgers can share a symbol), `actions` and `logo`; `WalletPanel` takes `rates` and
-    `flows`, and its manual `settings.tokens` are ids; `WalletMain` takes `history`,
-    `onMoreHistory`, `onRetryHistory`, `onActivity`, `allActivityNote` and `flows`, and
-    `WalletActivity` gains `token`, `party` and kind `own`; `BalanceCard` shows only the buttons it
-    has handlers for; `TokenAvatar` and `PageHeader` take a logo. Send, Receive and Swap still pick
+    as two ledgers can share a symbol), `actions` and `logo`; `WalletPanel` takes `rates`, and its
+    manual `settings.tokens` are ids; `WalletMain` takes `history`, `onMoreHistory`,
+    `onRetryHistory`, `onActivity`, `allActivityNote` and `flows`, and `WalletActivity` gains
+    `token`, `party` and kind `own`; `TokenAvatar` and `PageHeader` take a logo. Send, Receive and Swap still pick
     their token by symbol (6b, 6c).
 
 - **Diamond** (`?diamond`, `features/diamond`, 8e #10131): paid through the shared payment

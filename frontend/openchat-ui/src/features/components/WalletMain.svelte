@@ -177,8 +177,8 @@
     allActivityNote?: { title: string; body: string };
     /** The token page's eye: the shared wallet veil. Without it there's no eye. */
     onBalanceHiddenChange?: (hidden: boolean) => void;
-    /** The flows the host offers; buttons, menu items, welcome cards and requests for the others are left out. All three
-     *  without it. */
+    /** The flows the host offers: requests, picks and menu items for the others are left out, and their buttons (the
+     *  token page's, the welcome's Receive card) do nothing. All three without it. */
     flows?: ('send' | 'receive' | 'swap')[];
   }
 
@@ -552,11 +552,12 @@
   // the token page's actions: Send / Receive / Swap when held; at zero, Receive leads and Send and Swap wait for funds
   const heroActions = $derived.by(() => {
     if (!raw) return [];
+    // as designed whatever the host offers; one it doesn't does nothing
     const all = [
       { target: 'send' as const, label: 'ui.walletMain.sendSymbol', icon: 'wallet-send' },
       { target: 'receive' as const, label: 'ui.walletMain.receiveSymbol', icon: 'receive' },
       { target: 'swap' as const, label: 'ui.walletMain.swapSymbol', icon: 'swap' },
-    ].filter((a) => offers(a.target));
+    ];
     if (raw.held > 0) return all.map((a, i) => ({ ...a, primary: i === 0, disabled: false }));
     const receive = all.filter((a) => a.target === 'receive').map((a) => ({ ...a, primary: true, disabled: false }));
     return [...receive, ...all.filter((a) => a.target !== 'receive').map((a) => ({ ...a, primary: false, disabled: true }))];
@@ -646,26 +647,22 @@
               <span class="welcome-title">{t('ui.walletMain.welcomeTitle')}</span>
               <span class="welcome-body">{t('ui.walletMain.welcomeBody')}</span>
             </span>
-            {#if flows.includes('receive') || handle}
-              <div class="welcome-cards">
-                {#if flows.includes('receive')}
-                  <div class="welcome-card" onclick={() => (pick = { view: 'receive' })} role="button" tabindex="0">
-                    <span class="card-icon" style:mask={mask('receive')}></span>
-                    <span class="card-title">{t('ui.walletMain.receiveTokensTitle')}</span>
-                    <span class="card-body">{t('ui.walletMain.receiveTokensBody')}</span>
-                    <span class="card-link">{t('ui.walletMain.showMyAddress')}</span>
-                  </div>
-                {/if}
+            <div class="welcome-cards">
+                <div class="welcome-card" onclick={flows.includes('receive') ? () => (pick = { view: 'receive' }) : undefined} role="button" tabindex="0">
+                  <span class="card-icon" style:mask={mask('receive')}></span>
+                  <span class="card-title">{t('ui.walletMain.receiveTokensTitle')}</span>
+                  <span class="card-body">{t('ui.walletMain.receiveTokensBody')}</span>
+                  <span class="card-link">{t('ui.walletMain.showMyAddress')}</span>
+                </div>
                 {#if handle}
-                  <div class="welcome-card" onclick={copyHandle} role="button" tabindex="0">
-                    <span class="card-icon" style:mask={mask('share')}></span>
-                    <span class="card-title">{t('ui.walletMain.getPaidTitle')}</span>
-                    <span class="card-body">{t('ui.walletMain.getPaidBody')}</span>
-                    <span class="card-link">{t('ui.walletMain.copyUsername', { handle })}</span>
-                  </div>
+                <div class="welcome-card" onclick={copyHandle} role="button" tabindex="0">
+                  <span class="card-icon" style:mask={mask('share')}></span>
+                  <span class="card-title">{t('ui.walletMain.getPaidTitle')}</span>
+                  <span class="card-body">{t('ui.walletMain.getPaidBody')}</span>
+                  <span class="card-link">{t('ui.walletMain.copyUsername', { handle })}</span>
+                </div>
                 {/if}
               </div>
-            {/if}
           </div>
         {:else if !showToken && allActivityNote}
           <EmptyState icon="receive" title={t(allActivityNote.title)} body={t(allActivityNote.body)} actionLabel="" />
@@ -733,7 +730,7 @@
                       class="action"
                       class:primary={a.primary}
                       class:disabled={a.disabled}
-                      onclick={a.disabled ? undefined : () => go({ view: a.target, sym: idOf(raw), fromAll: false })}
+                      onclick={a.disabled || !offers(a.target) ? undefined : () => go({ view: a.target, sym: idOf(raw), fromAll: false })}
                       role="button"
                       tabindex="0"
                       aria-disabled={a.disabled}

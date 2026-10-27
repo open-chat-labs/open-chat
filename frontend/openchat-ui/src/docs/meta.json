@@ -6558,7 +6558,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Send, Receive and Swap: each button shows only with its handler."
+        "doc": ""
       },
       {
         "name": "onReceive",
@@ -17987,7 +17987,7 @@
         "section": null,
         "required": false,
         "componentDefault": "['send', 'receive', 'swap']",
-        "doc": "The flows the host offers; buttons, menu items, welcome cards and requests for the others are left out. All three without it."
+        "doc": "The flows the host offers: requests, picks and menu items for the others are left out, and their buttons (the token page's, the welcome's Receive card) do nothing. All three without it."
       }
     ],
     "group": "features"
@@ -18232,17 +18232,6 @@
         "required": false,
         "componentDefault": null,
         "doc": "How many tokens the wallet can receive (the deduped catalogue); defaults to `tokens`' length."
-      },
-      {
-        "name": "flows",
-        "type": "('send' | 'receive' | 'swap')[]",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": "['send', 'receive', 'swap']",
-        "doc": "The flows the host offers (`onAction('send' | 'receive' | 'swap')`); the balance card's buttons for the others are left out. All three without it."
       }
     ],
     "group": "features"
