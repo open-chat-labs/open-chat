@@ -1,9 +1,14 @@
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::{now_millis, tick_many};
 use crate::{T, TestEnv, client};
+use candid::Principal;
+use constants::DAY_IN_MS;
 use ic_ledger_types::Tokens;
+use pocket_ic::PocketIc;
+use serde::Deserialize;
 use std::ops::Deref;
 use std::time::Duration;
+use types::{CanisterId, Cycles, HttpRequest, TimestampMillis};
 
 #[test]
 fn icp_is_burned_into_cycles() {
@@ -14,6 +19,8 @@ fn icp_is_burned_into_cycles() {
         controller,
         ..
     } = wrapper.env();
+
+    let start = now_millis(env);
 
     client::ledger::happy_path::transfer(
         env,
@@ -52,4 +59,60 @@ fn icp_is_burned_into_cycles() {
         "{cycles_balance} {new_cycles_balance} {}",
         canister_ids.cycles_dispenser
     );
+
+    // The balance is recorded either side of the CMC depositing the cycles, so it rises from one
+    // sample to a later one
+    let samples = cycles_balance_samples_since(env, canister_ids.cycles_dispenser, start);
+    assert!(
+        samples.iter().enumerate().any(|(i, before)| samples[i + 1..]
+            .iter()
+            .any(|after| after.cycles_balance > before.cycles_balance)),
+        "{samples:?}"
+    );
+}
+
+#[test]
+fn cycles_balance_is_recorded_at_midnight_in_test_mode() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let now = now_millis(env);
+    let midnight = now - now % DAY_IN_MS + DAY_IN_MS;
+    env.advance_time(Duration::from_millis(midnight - now));
+
+    tick_many(env, 5);
+
+    let samples = cycles_balance_samples_since(env, canister_ids.cycles_dispenser, midnight);
+    assert!(
+        samples.iter().any(|s| s.timestamp < midnight + 60_000),
+        "{midnight} {samples:?}"
+    );
+}
+
+#[derive(Deserialize, Debug)]
+struct CyclesBalanceSample {
+    timestamp: TimestampMillis,
+    cycles_balance: Cycles,
+}
+
+fn cycles_balance_samples_since(
+    env: &PocketIc,
+    cycles_dispenser_canister_id: CanisterId,
+    since: TimestampMillis,
+) -> Vec<CyclesBalanceSample> {
+    let response = client::http_request(
+        env,
+        Principal::anonymous(),
+        cycles_dispenser_canister_id,
+        &HttpRequest {
+            method: "GET".to_string(),
+            url: "/cycles_balance_samples".to_string(),
+            headers: Vec::new(),
+            body: Vec::new(),
+        },
+    );
+    assert_eq!(response.status_code, 200);
+
+    let samples: Vec<CyclesBalanceSample> = serde_json::from_slice(&response.body).unwrap();
+    samples.into_iter().filter(|s| s.timestamp >= since).collect()
 }

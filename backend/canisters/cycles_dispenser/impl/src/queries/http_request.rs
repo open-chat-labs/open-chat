@@ -4,7 +4,7 @@ use ic_cdk::query;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use serde::Serialize;
 use std::io::Write;
-use types::{HeaderField, HttpRequest, HttpResponse};
+use types::{Cycles, HeaderField, HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
@@ -16,6 +16,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         "metrics" => read_state(|state| to_json_response(&state.metrics())),
         "trace" => encode_logs(canister_logger::export_traces()),
         "latest_top_ups" => read_state(get_latest_top_ups_impl),
+        "cycles_balance_samples" => read_state(get_cycles_balance_samples_impl),
         _ => HttpResponse::not_found(),
     }
 }
@@ -75,4 +76,24 @@ fn get_latest_top_ups_impl(state: &State) -> HttpResponse {
     let top_ups = state.data.canisters.latest_top_ups(200);
 
     to_json_response(&top_ups)
+}
+
+fn get_cycles_balance_samples_impl(state: &State) -> HttpResponse {
+    let samples: Vec<_> = state
+        .data
+        .cycles_balance_samples
+        .iter()
+        .map(|s| CyclesBalanceSample {
+            timestamp: s.timestamp,
+            cycles_balance: s.value,
+        })
+        .collect();
+
+    to_json_response(&samples)
+}
+
+#[derive(Serialize)]
+struct CyclesBalanceSample {
+    timestamp: TimestampMillis,
+    cycles_balance: Cycles,
 }
