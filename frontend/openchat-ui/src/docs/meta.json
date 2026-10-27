@@ -13848,6 +13848,28 @@
         "doc": ""
       },
       {
+        "name": "readonly",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "No voting at all (a DM, a read-only chat); closed and a cast vote that can't change lock it too."
+      },
+      {
+        "name": "showResults",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Whether the counts and bars show; defaults to once you've voted or it's closed."
+      },
+      {
         "name": "side",
         "type": "'received' | 'sent'",
         "default": "received",

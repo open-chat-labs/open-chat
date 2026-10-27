@@ -4,7 +4,10 @@
     import {
         allUsersStore,
         currentUserIdStore,
+        getVotersForAnswer,
+        percentageOfVote,
         publish,
+        voteCount,
         type OpenChat,
         type PollContent,
         type ReducedPublicProfile,
@@ -13,7 +16,6 @@
     import { i18nKey } from "../../i18n/i18n";
     import { _ } from "svelte-i18n";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { voteCount, getVotersForAnswer, percentageOfVote } from "@utils/polls";
 
     const client = getContext<OpenChat>("client");
 

@@ -11,6 +11,8 @@ const ctx: ConversationContext = {
     date: (timestamp) => `d${timestamp}`,
     media: { lowBandwidth: false, revealed: () => false, url: (u) => u },
     direct: false,
+    readonly: false,
+    now: 0,
     token: () => undefined,
 };
 

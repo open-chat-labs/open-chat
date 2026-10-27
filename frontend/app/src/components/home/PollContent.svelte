@@ -1,5 +1,15 @@
 <script lang="ts">
-    import { currentUserIdStore, iconSize, type OpenChat, type PollContent } from "@client";
+    import {
+        currentUserIdStore,
+        getVotersForAnswer,
+        iconSize,
+        percentageOfVote,
+        pollView,
+        totalVotes,
+        voteCount,
+        type OpenChat,
+        type PollContent,
+    } from "@client";
     import { getContext } from "svelte";
     import Poll from "svelte-material-icons/Poll.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -31,72 +41,21 @@
         return content.votes.user.includes(idx);
     }
 
-    function voteCount(idx: number): number {
-        const total = content.votes.total;
-        switch (total.kind) {
-            case "anonymous_poll_votes":
-                return total.votes[idx] ?? 0;
-            case "hidden_poll_votes":
-                return total.votes;
-            case "visible_poll_votes":
-                return total.votes[idx]?.length ?? 0;
-        }
-    }
-
-    function voters(idx: number): string[] | undefined {
-        if (content.votes.total.kind !== "visible_poll_votes") {
-            return undefined;
-        }
-
-        return content.votes.total.votes[idx];
-    }
-
-    function totalVotes(content: PollContent): number {
-        if (content.votes.total.kind === "anonymous_poll_votes") {
-            return Object.values(content.votes.total.votes).reduce((total, n) => total + n, 0);
-        }
-        if (content.votes.total.kind === "hidden_poll_votes") {
-            return content.votes.total.votes;
-        }
-        if (content.votes.total.kind === "visible_poll_votes") {
-            return Object.values(content.votes.total.votes).reduce(
-                (total, n) => total + n.length,
-                0,
-            );
-        }
-        return 0;
-    }
-
-    function votesForAnswer(idx: number): number {
-        if (content.votes.total.kind === "anonymous_poll_votes") {
-            return content.votes.total.votes[idx] ?? 0;
-        }
-        if (content.votes.total.kind === "hidden_poll_votes") {
-            return 0;
-        }
-        if (content.votes.total.kind === "visible_poll_votes") {
-            return content.votes.total.votes[idx]?.length ?? 0;
-        }
-        return 0;
-    }
-
-    function percentageOfVote(idx: number) {
-        return showVotes ? (votesForAnswer(idx) / numberOfVotes) * 100 : 0;
+    // the moved helper guards a poll with no votes (0%, not NaN)
+    function percent(idx: number) {
+        return showVotes ? percentageOfVote(content, idx) : 0;
     }
     let txtColor = $derived(me ? "#ffffff" : "var(--txt)");
     let date = $derived(
         content.config.endDate ? new Date(Number(content.config.endDate)) : undefined,
     );
-    let haveIVoted = $derived(content.votes.user.length > 0);
     let numberOfVotes = $derived(totalVotes(content));
-    let cannotVote = $derived(
-        content.ended || readonly || (haveIVoted && !content.config.allowUserToChangeVote),
+    // a DM's poll can't be voted on either; ChatMessage's onRegisterVote refuses it
+    let view = $derived(
+        pollView(content, { me: $currentUserIdStore, sender: senderId, direct: false, readonly }),
     );
-    let showVotes = $derived(
-        content.ended ||
-            ((haveIVoted || senderId === $currentUserIdStore) &&
-                (content.config.showVotesBeforeEndDate || content.config.endDate === undefined)),
-    );
+    let cannotVote = $derived(view.cannotVote);
+    let showVotes = $derived(view.showVotes);
 </script>
 
 <div class="poll">
@@ -114,13 +73,13 @@
                 onClick={() => vote(i)}
                 finished={content.ended}
                 {readonly}
-                percent={percentageOfVote(i)}
+                percent={percent(i)}
                 {answer}
                 voted={votedFor(i)}
                 {txtColor}
                 {me}
-                voters={voters(i)}
-                numVotes={voteCount(i)}
+                voters={getVotersForAnswer(content, i)}
+                numVotes={voteCount(content, i)}
                 {showVotes} />
         {/each}
     </div>

@@ -1,5 +1,6 @@
 <!-- Poll: header tile (question + rule chips), option rows with slim bars (voter avatars on public polls), footer tile.
-     Results stay hidden until you vote. Radios for single choice, checkboxes for multiple. Controlled via `myVotes` + onVote(indexes), or uncontrolled. -->
+     Results stay hidden until you vote (the host can say otherwise with showResults). Radios for single choice, checkboxes for multiple.
+     Controlled via `myVotes` + onVote(indexes), or uncontrolled; readonly locks it. -->
 <script lang="ts">
   import { useT } from '../i18n';
   import AvatarStack from './AvatarStack.svelte';
@@ -22,6 +23,10 @@
     closed?: boolean;
     endsIn?: string;
     myVotes?: number[] | null;
+    /** No voting at all (a DM, a read-only chat); closed and a cast vote that can't change lock it too. */
+    readonly?: boolean;
+    /** Whether the counts and bars show; defaults to once you've voted or it's closed. */
+    showResults?: boolean;
     side?: 'received' | 'sent';
     time: string;
     lastInGroup?: boolean;
@@ -38,6 +43,8 @@
     closed = false,
     endsIn = '',
     myVotes = null,
+    readonly = false,
+    showResults,
     side = 'received',
     time,
     lastInGroup = true,
@@ -53,11 +60,11 @@
   const counts = $derived(options.map((o, j) => (o.votes || 0) + (myVotes == null && mine.includes(j) ? 1 : 0)));
   const total = $derived(counts.reduce((a, b) => a + b, 0));
   const voted = $derived(mine.length > 0);
-  const show = $derived(voted || closed);
-  const locked = $derived(closed || (voted && !canChange));
+  const show = $derived(showResults ?? (voted || closed));
+  const locked = $derived(readonly || closed || (voted && !canChange));
   const rules = $derived([publicVotes ? RULES.pub : RULES.anon, multiple ? RULES.multi : RULES.single, ...(canChange ? [RULES.change] : [])]);
   const foot = $derived(
-    t(closed ? 'ui.pollMessage.footClosed' : voted ? 'ui.pollMessage.footVoted' : 'ui.pollMessage.footHidden', {
+    t(closed ? 'ui.pollMessage.footClosed' : show ? 'ui.pollMessage.footVoted' : 'ui.pollMessage.footHidden', {
       count: total,
       hasEnd: endsIn ? 'yes' : 'no',
       endsIn,
@@ -100,7 +107,7 @@
     </div>
     <div class="tile foot">
       <span class="foot-text">{foot}</span>
-      {#if publicVotes && show}<span class="view" onclick={onViewVotes} role="button" tabindex="0">{t('ui.pollMessage.viewVotes')}</span>{/if}
+      {#if publicVotes && show && onViewVotes}<span class="view" onclick={onViewVotes} role="button" tabindex="0">{t('ui.pollMessage.viewVotes')}</span>{/if}
     </div>
   </div>
   <div class="time">{time}</div>
