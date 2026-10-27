@@ -228,8 +228,8 @@ describe("transfers", () => {
 });
 
 describe("prizes", () => {
-    test("in a ledger the registry doesn't carry, show as text", () => {
-        const prize = message({
+    const prize = (ledger: string) =>
+        message({
             content: {
                 kind: "prize_content",
                 prizesRemaining: 1,
@@ -241,13 +241,23 @@ describe("prizes", () => {
                 winnerCount: 0,
                 userIsWinner: false,
                 token: "ICP",
-                ledger: "unknown",
+                ledger,
                 endDate: 1n,
                 requiresCaptcha: false,
                 minChitEarned: 0,
             },
         } as Partial<Message>);
-        expect(messageRow(prize, "sent", ctx).message).toMatchObject({
+
+    // several ledgers can share a symbol
+    test("look their token up by ledger, not symbol", () => {
+        expect(messageRow(prize("icp"), "sent", ctx).message).toMatchObject({
+            kind: "prize",
+            token: { symbol: "ICP", gradient: 'url("icp.svg") center / cover' },
+        });
+    });
+
+    test("in a ledger the registry doesn't carry, show as text", () => {
+        expect(messageRow(prize("unknown"), "sent", ctx).message).toMatchObject({
             kind: "text",
             text: "[prize_content]",
         });
