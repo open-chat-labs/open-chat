@@ -199,6 +199,13 @@
         "unlink": "Dissocier",
         "unlinkFailed": "Impossible de dissocier le compte"
     },
+    "cashtag": {
+        "chartLabel": "Prix de {symbol} sur les 7 derniers jours",
+        "change7d": "{change} sur 7 jours",
+        "noHistory": "Aucune transaction sur les 7 derniers jours",
+        "noPrice": "Aucun prix disponible",
+        "priceDataBy": "Données de prix fournies par {source}"
+    },
     "bridgedUserUnknown": "Utilisateur {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
@@ -1677,6 +1684,9 @@
     "owner": "propriétaire",
     "ownerCantLeave": "Vous devez ajouter un autre propriétaire avant de pouvoir quitter le {level}",
     "p2pSwap": {
+        "cancelOffer": "Annuler l'offre",
+        "cancelOfferQuestion": "Annuler cette offre d'échange ?",
+        "keepOffer": "Garder l'offre",
         "accept": "Accepter",
         "accepted": "Accepté",
         "acceptedBy": "Cette offre a été acceptée par {user} et est en attente de finalisation.",
@@ -2200,6 +2210,7 @@
     "removedBy": "{changedBy} a supprimé {changed} du {level}",
     "removeMemberFailed": "Impossible de supprimer le membre",
     "removePreviewQuestion": "Supprimer l'aperçu ?",
+    "errorRemovingLinkPreview": "Impossible de supprimer l'aperçu",
     "renderPreviews": "Aperçus des liens avec rendu automatique",
     "reply": "Répondre",
     "replyPrivately": "Répondre en privé",
@@ -2710,7 +2721,10 @@
         "updateTitle": "Mettre à jour {name}",
         "urlLabel": "URL du webhook",
         "username": "webhook",
-        "viewEditAction": "Afficher/modifier les détails du webhook"
+        "viewEditAction": "Afficher/modifier les détails du webhook",
+        "registerFailed": "Désolé, nous n'avons pas pu enregistrer le webhook",
+        "updateFailed": "Désolé, nous n'avons pas pu mettre à jour le webhook",
+        "regenerateFailed": "Désolé, nous n'avons pas pu régénérer l'URL du webhook"
     },
     "websiteVersion": "du site web",
     "weeks": "Semaines",

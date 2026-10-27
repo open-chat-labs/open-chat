@@ -8,7 +8,6 @@ pub mod award_external_achievement;
 pub mod c2c_delete_user;
 pub mod c2c_local_index;
 pub mod c2c_report_message;
-pub mod c2c_set_avatar;
 pub mod c2c_storage_index;
 pub mod c2c_suspend_users;
 pub mod c2c_translations;

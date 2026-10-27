@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     Achievement, BotDefinitionUpdate, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId,
-    DeletedCommunityInfo, DeletedGroupInfoInternal, DiamondMembershipPlanDuration, EventIndex, IdempotentEnvelope,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, OgPreview, P2PSwapLocation, P2PSwapStatus,
-    PhoneNumber, Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, TokenInfo, UniquePersonProof, User, UserId,
+    DeletedCommunityInfo, DeletedGroupInfoInternal, DiamondMembershipPlanDuration, EventIndex, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, Milliseconds, OgPreview, P2PSwapLocation, P2PSwapStatus, PhoneNumber,
+    Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, TokenInfo, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -486,24 +486,6 @@ pub struct RemovedFromCommunity {
 pub enum GroupIndexEvent {
     GroupDeleted(Box<DeletedGroupInfoInternal>),
     CommunityDeleted(Box<DeletedCommunityInfo>),
-}
-
-// Puts the removals back among the other events, in the order they were created, since the
-// idempotency checker drops any event older than the latest it has had from the same canister
-fn merge_in_removals<T, R>(
-    mut events: Vec<IdempotentEnvelope<T>>,
-    removals: Vec<IdempotentEnvelope<R>>,
-    into_event: impl Fn(R) -> T,
-) -> Vec<IdempotentEnvelope<T>> {
-    if !removals.is_empty() {
-        events.extend(removals.into_iter().map(|removal| IdempotentEnvelope {
-            created_at: removal.created_at,
-            idempotency_id: removal.idempotency_id,
-            value: into_event(removal.value),
-        }));
-        events.sort_by_key(|event| event.created_at);
-    }
-    events
 }
 
 // A P2P swap the user created directly in a group or community, which the group or community used

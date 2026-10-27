@@ -58,6 +58,21 @@ design export needs. Each entry says where it came up.
 - **Proposals**: `ProposalMessage` isn't in the `GroupMessage` union, so `MessageGroup` can't
   render proposal chats. When it can, a vote that comes back `neuron_votes_failed` should list each
   neuron with its reason, as the old UI does.
+- **Prizes** (`features/conversation`, 5a): a prize shows as `PrizeMessage`. `PrizeMessage` takes
+  `canClaim` and passes the click to `onClaim` by hand: the design offers Claim to everyone and
+  gives no click, which `claimPrize` refuses. Claim shows only where `prizeView` (`@client`, shared
+  with the old trees) offers it: not the sender's, not in a DM, not while previewing or lapsed,
+  not once claimed, ended or all taken, not to a reader who misses a requirement. A captcha prize
+  asks the reader to sign in again (`SignInAgainDialog`) and claims with its proof. A prize
+  carries no amount, so a win says "You won". There's no spinner while a claim is on its way
+  (the old trees' `claimsStore`), and `PrizeMessage`'s confetti fires on the click, before the claim
+  lands (behind the sign-in dialog for a captcha prize). A captcha prize shows no requirement chip
+  for it; it's asked for only on Claim. How long it has left is worked out when the row is made and
+  doesn't count down. A prize still being sent (`prize_content_initial`), and one in a ledger the
+  registry doesn't carry, stay text bubbles. No reactions, quote or thread yet.
+- **Deleting messages**: the message menu isn't wired yet (phase 5). Its Delete should go by
+  `userCanDeleteMessage`, as the old menus do: the user's own messages, a bot's response to a
+  command they used, and anyone's where they can delete other users' messages.
 - **Thread replies**: `ThreadPanel` renders replies with no react / menu / reply / edit handlers.
 - **Composer banner**: `ComposerBar` takes `bannerAction` as a label but doesn't pass a handler
   through to `Banner`.
@@ -114,6 +129,23 @@ design export needs. Each entry says where it came up.
     the balance is too low (today: "Keep collecting!" with Pay disabled), e.g. how to earn more.
     The new UI shows it as a `DialogShell` with the old UI's words for now
     (`features/profile/PremiumItemDialog.svelte`, `TODO(design)`).
+  - **Token price card**: the card a cashtag in a message opens (`$CHAT`, or a coin OpenChat
+    doesn't list such as `$ADA`, `<cash-tag>`): the token's logo (coins have none), name, price now,
+    its change over 7 days and a chart of its last 7 days' prices (from the price service,
+    `getPriceHistory`) which shows the price at any time when hovered, dragged along or moved
+    through with the arrow keys, its high and low marked, and gridlines at round prices
+    (`features/cashtag/PriceChart.svelte`, from `logic/priceChart`), with loading and no-history
+    states, and where the prices are from ("Price data by ICPSwap" or "by CoinGecko", linked). Its
+    symbol is under its name unless it's the same. The new UI shows it as a `DialogShell` laid out like the
+    old UI's card (`features/cashtag/TokenDialogScreen.svelte`, `TODO(design)`). The chip itself is
+    the shared `<cash-tag>` web component, coloured from the text it's in, with a coin's credit as
+    its tooltip.
+  - **Price chart message**: a chart a bot such as ChartBot posts (`price_chart_content`): its
+    title, each token's latest price and change (a symbol opens that token's price card), the same
+    chart as the price card, with several tokens' lines in `PRICE_CHART_COLOURS`, and where its
+    prices are from, linked. The library has no bubble for it, so the new UI shows its title as
+    text (`contentText`); the old UI's is `PriceChartContent.svelte`, and the chart itself is
+    `features/cashtag/PriceChart.svelte`.
 - **`ProfileDialog`, by hand** (8c, to go back to the design export): `sections`, the sections
   its nav offers (a host that has built only some); the cover and photo edit buttons only with
   `onCoverEdit` / `onPhotoEdit`; `engagement` counts as numbers; `memberSince` from `joined` in the
@@ -291,7 +323,35 @@ design export needs. Each entry says where it came up.
   asks "Discard changes?".
   - by hand: `ManageDialog` is new in the library. The design has it only in the App prototype
     (`_manageVals`), with no exported component.
-  - pages still to come: Bots, Webhooks, Stats, Convert and Import.
+  - Bots: GroupPanel's bots view, its bots part: the installed bots (a group's, or a channel's
+    community's) and, for someone who may manage them (`canManageBots`), up to 20 to add
+    (`exploreBots`). Either opens `BotDialog` (`BotDialogScreen`): details, install, change
+    permissions or remove, saved through `BotInstall` as the old installer did.
+  - by hand: `BotDialog` takes the host's permission list (`permissions`): the bot's own
+    permissions with the app's words, under "Command permissions" / "Autonomous permissions" ·
+    Chat / Community / Message. What's granted is exactly what's toggled on (`grantedFromDialog`);
+    nothing is mapped onto the dialog's built-in eleven. Its summary sentence lists the app's
+    labels.
+  - a new install starts with every permission off, as the design has it (the old installer
+    started with everything the bot asked for on), so Install straight away grants nothing.
+  - the new UI has no way to register a bot (the old mobile UI's Explore → Register a bot does),
+    and no command picker in the composer to run one.
+  - the bots to add are the first 20 the directory offers (GroupPanel's search filters those);
+    with none installed and none to add, the page has no empty-state text for the owner.
+  - Webhooks (a group's or channel's owner, `canManageWebhooks`): GroupPanel's bots view, its
+    webhooks part, lists them; Register and a webhook's row open `WebhookDialog`
+    (`WebhookDialogScreen`), saving through `saveWebhook` (only the name or avatar that changed,
+    `webhookChanges`). A new webhook opens straight away in edit mode to show its URL, which holds
+    its secret.
+  - by hand: `WebhookDialog` has Delete webhook in edit mode, with a confirm step, as the old
+    pages had remove; the design has no way to remove one.
+  - a webhook's colour isn't stored: without a photo it gets its id's colour.
+  - no Stats page: the design's `GroupStats` shows the last 30 days, a 12-week series and the top
+    senders, and the backend keeps only all-time counters (`metrics`). Showing those as the last
+    30 days would mislead, so it waits on the data (see Community stats).
+  - Convert to community and Import into community (a group's owner, under Advanced) open
+    `ConvertToCommunityDialog` / `ImportToCommunityDialog` over Manage, then the community, as the
+    old pages did. Import lists the communities you own; with none it says so and doesn't open.
   - a community's Channels page lists the channels you're in (the community's summary holds
     no others), each opening that channel's Manage with a back arrow to Channels. Manage reads the
     open chat, so a channel that isn't open is opened first.
@@ -323,8 +383,8 @@ design export needs. Each entry says where it came up.
   - Manage opens from a group's or channel's name (with the design's chevron and hint), the
     header menu's first item ("Manage group", or "Group details" without edit rights), the quick
     panel's cog, and the community header and its menu.
-  - the header menu follows the design's (`_chatMenu`) but has no Share to chat (the chat picker
-    is 4d) and no Report (no report flow yet); a DM keeps Delete chat, which the design leaves out.
+  - the header menu follows the design's (`_chatMenu`) but has no Share to chat (the picker is
+    built, 4d, but this item isn't wired to it yet) and no Report (no report flow yet); a DM keeps Delete chat, which the design leaves out.
     The community menu has no Stats or Add a bot until those pages land, and no longer mutes every channel (the community's About page does).
   - a channel's Manage has no back arrow to its community yet (the community has no Channels
     page).
@@ -333,6 +393,21 @@ design export needs. Each entry says where it came up.
   - the nav's subtitle and the About page say "1 members": the app's `memberCount` has no plural.
   - a member's read-only Rules page still shows the editor's character counter and hint.
   - Invite & share's page title says "Invite and share" (InviteDialog's own string).
+
+- **Create a group or community** (4b): `CreateGroupDialog` (`features/group/CreateGroupDialogScreen.svelte`)
+  from the chat list header's Create new group and the rail's Create community. The result is read
+  as an edit is (`candidateFromCreate`, `candidateCommunityFromCreate`), created through
+  `UpdateGroupState` / `UpdateCommunityState`, and then opened.
+  - a community needs Diamond: without it the rail opens the Diamond dialog. A guest is sent to
+    sign in, but the community isn't started after signing in (the old Home did that; 10a).
+  - by hand: `CreateGroupDialog`'s community defaults are all admin (the app's and the backend's),
+    and a community shows no message permissions or Messages / Threads tabs.
+  - by hand: the form is locked (inert, dimmed) while the create is in flight.
+  - the invite list starts empty: people are found by searching (no frequent contacts).
+  - Explore's create (8a) isn't wired.
+  - a failed community create (e.g. the 10-community limit) says only "Sorry we were unable to
+    create your community", and that toast showed twice in one headless run though the app shows
+    it once.
 
 - **Group and channel settings** (4b part 2a): GroupPanel's Settings opens Manage on its settings
   pages: `GroupSettingsDialog`, embedded, on `UpdateGroupState` (`features/group/ManageSettings.svelte`,
@@ -370,8 +445,6 @@ design export needs. Each entry says where it came up.
   - the community About page's Mute mutes every channel and can't unmute (as in the old menus).
     Tapping it while muted says "That didn't go through" when it can't, not why. It has no
     Favourite, because a community can't be a favourite.
-  - `CreateGroupDialog` still has the old community defaults (invite and private channels for
-    everyone, roles and user groups for owners). Part 4 brings them in line.
   - the primary language isn't in the dialog, and is kept as it was.
   - removing an avatar or banner in the dialog saves nothing. `groupChanges` and
     `communityChanges` turn a removed image into "no change", because the client has no way to
@@ -394,8 +467,7 @@ design export needs. Each entry says where it came up.
     partial add ("group.addMembersPartialSuccess") and a failure's reason.
   - nobody is listed before you search; the old pages listed nobody either.
   - resetting the link doesn't ask first; the old pages did ("invite.confirmReset").
-  - no QR code, no "share to a chat" (the chat picker is 4d), and invited-but-not-joined people
-    aren't listed.
+  - no QR code, and invited-but-not-joined people aren't listed.
   - it opens for a private channel too (its Add tab) and for any member of a public chat (to
     share its link), as the old header menu did (`canOpenInvite`).
   - a failed invite or add shows two toasts: the dialog's "That didn't go through" and the app's
@@ -405,6 +477,24 @@ design export needs. Each entry says where it came up.
   - a public chat's link shows a switch locked on, and the warning that access gates are skipped
     for people joining by link. Switching a private link on takes a few seconds with nothing
     shown meanwhile.
+- **Chat picker** (4d #10115, `features/share`): `ChatPicker`, listing the chats the user can send
+  text in (`shareTargets` in `@client`, which both old pickers now use too), in the old pickers'
+  sections (favourites, direct chats, groups, each community's channels), searched by name or
+  @username, the open chat left out. A DM's line is its last seen, a group's its description or
+  size. Faces are the chat list's swatches (`swatchFor`), not uploaded avatars (see Swatches).
+  - `/share?title&text&url` opens it over the default page (`?share`): picking a chat opens it with
+    the shared text, after the user's message, in its draft, as the old trees do. Nothing is sent.
+  - Invite & share's "Share to chat" (in Manage) sends the link (and the message) to the chosen
+    chat at once and stays on the page. A group's or channel's link isn't offered to itself; a
+    community's goes to any chat, its open channel included. Backing out of the chat's rules or the PIN sends nothing
+    and says nothing; the picker stays open.
+  - by hand: `ChatPicker` takes `filter` (the host's search), `emptyLabel`, and each chat's `sub`
+    and `group` (the sections); `InviteDialog` takes `filterChats`, and its `onShareToChat` may
+    resolve `false`; `Avatar` exports `AVATAR_GRADIENTS` for the picker's faces.
+  - not yet: Receive's "Share to chat" (6b, with `SharePicker`), forward (5b), a daily puzzle
+    result (#10236). The picker has no recent chats order (the design's "Recent chats"): sections
+    are sorted by name, as the old pickers did.
+
 - **User groups** (4b part 3b): `UserGroupDialog` creates, edits and deletes a community's user
   groups from GroupPanel's user group views, for someone who may manage them
   (`canManageUserGroups`). The client sends an edit's members added and removed
@@ -425,7 +515,8 @@ design export needs. Each entry says where it came up.
 ### Data the design shows that the backend doesn't have
 
 - **Wallet**:
-  - no 24h price change and no price history (only the current USD rate);
+  - no 24h price change. A 7-day price history comes from the price service
+    (`getPriceHistory`, hourly) where there is one (`OC_PRICE_SERVICE_URL`);
   - transaction history only for tokens with an index canister, one token at a time. There's no
     all-tokens activity, swaps aren't told apart from transfers, there's no chat context, and
     BTC/EVM/SOL-side transfers aren't shown;
@@ -551,8 +642,8 @@ design export needs. Each entry says where it came up.
   old modal showed no row (and none while they're still loading). A game this build can't draw
   is left out, and a link to a game that's off today opens no puzzle. The rail's puzzle dot shows
   while one is still to play. Not yet:
-  - sharing a result (the old "Share" button), which waits on the chat picker (4d), and the
-    result card in a chat (`DailyResultContent`), which waits on the message kinds;
+  - sharing a result (the old "Share" button) and the result card in a chat
+    (`DailyResultContent`), which wait on the message kinds (#10236);
   - the card's reminder and hide (its "⋯" menu has only "How to play", `?chit=howto`): the old UI
     has neither.
 - **Leaderboard** (`?hof`): this month's, last month's and all time's top 10, as the old hall of
@@ -593,6 +684,63 @@ design export needs. Each entry says where it came up.
   favourite, mute and copy link only: the rest open dialogs (phase 4), and calls are phase 7. The
   old list's go-to-mention button and sticky date aren't carried over; it keeps go-to-latest.
   Own messages show no name (the design's "You" would be the lower-case app string).
+- **Media messages** (`features/conversation`, 5a): images, memes, GIFs and videos show as
+  `MediaMessage` tiles. They have no reactions, quote, thread or edited mark yet (`MediaMessage`
+  takes none). In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
+  first click, which loads it in the bubble; the old trees put a "load image" button on it, which
+  `MediaMessage` hasn't got. Unlike the old trees, the reader's own image is held too while it's
+  still sending. A click on a shown one opens `MediaViewer`, the mobile app's full-screen
+  viewer (pan and zoom from `core/zoom`, shared with `ZoomedImage`; no design for it:
+  `TODO(design)`). It has none of the old desktop viewer's arrows between a chat's images. A
+  failed send shows the tile's own failed state, with no retry yet.
+- **Voice and file messages** (`features/conversation`, 5a): a voice message plays through the
+  screen's `VoicePlayer` (one audio element, so one at a time), with the recording's waveform
+  (`VoiceMessage` takes `levels` by hand: the design's bars are made up). Unlike the mobile app,
+  the next voice message doesn't play when one ends, and the speed is one for the whole chat. A
+  voice message's caption isn't shown and a failed one shows no failed state (`VoiceMessage` has
+  neither). Neither shows a sent or delivered tick (`VoiceMessage` and `FileMessage` take no
+  status). A file shows its name, size and type and downloads under its own name. Neither has
+  reactions, a quote, a thread or an edited mark yet.
+- **Link previews** (`features/conversation`, 5a): a text message's previews show as cards under
+  its text (`ChatBubble` takes `previews` by hand, a `LinkCard` each, the card the design's
+  `LinkPreview` has). The design's `LinkPreview` is a message kind of its own, with plain text and
+  no edit, quote, thread or reactions, so it isn't used; with previews the bubble takes its shape
+  instead (320px, cards flush, the time under them). A card links only to an http(s) URL
+  (`ogPreviewCard` in `@client`, shared with the old trees). The sender removes one with the X on
+  its card, after a confirm (`ConfirmDialog`, no design for it: `TODO(design)`). A link to
+  another OpenChat message (`messagePreviews`) shows no preview: nothing in the library renders a
+  quoted message.
+- **Transfers** (`features/conversation`, 5a): a transfer shows as `TransferMessage`, with the
+  token's logo as its mark. `TransferMessage` takes `direction` and `recipient` by hand: the design
+  signs it by the bubble's side, which shows a transfer between two other people in a group as the
+  reader's own receipt. Outside a DM it says who got it ("to Bob") unless that's the reader. "View
+  transaction" opens the ledger's explorer. The caption is plain text (no markdown), the card
+  shows no sent or delivered tick (`TransferMessage` takes no status), and it has no reactions,
+  quote or thread yet. A failed transfer, or one in a ledger the registry
+  doesn't carry, stays a text bubble. The dollar value is worked out when the row is made (and
+  again once the exchange rates first load); it doesn't follow the rates' later refreshes.
+- **Polls** (`features/conversation`, 5a): a poll shows as `PollMessage` and votes through
+  `registerPollVote` (`pollVoteChange` in `@client` turns the card's choices into one vote, and
+  refuses one the poll can't take). `PollMessage` takes `readonly` and `showResults` by hand: the
+  design locks a poll only once it's closed or voted, and shows results only after a vote. A
+  public poll shows no voters' avatars and has no "View votes" list yet (the old mobile
+  `PollPublicVotes`). How long it has left is worked out when the row is made (3d, 5h, 12m), and
+  doesn't count down. No tick, reactions, quote or thread yet, and polls in threads aren't wired.
+  The library's `PollBuilderDialog` (5b's composer) still offers "lock votes" with multiple
+  choice, which the backend ignores; when it's wired, send `allowsVoteChange` as the old builders
+  do.
+- **Swap offers** (`features/conversation`, 5a): a swap offer shows as `SwapOffer`, read from the
+  reader's side. `SwapOffer` takes `pending` and `cancelled` states by hand (the design had only
+  open, done and expired). Its sender can Cancel and anyone else Accept, only while it's open
+  (`swapActions` in `@client`); a non-Diamond reader's Accept opens the Diamond dialog. Both ask
+  first in `ConfirmDialog` (no design for it: `TODO(design)`), the accept with what it costs
+  (`swapAcceptCost`, shared with the old accept modals) and held back when the OpenChat wallet
+  can't cover it. The accept pays from the OpenChat wallet only: the old modals' external wallet
+  (an approval popup) and a MultiUser user's own wallet aren't offered yet. The old trees' details
+  view (the escrow transfers, `P2PSwapProgress`) and who took it aren't shown. The offer's message
+  shows as plain text under the card (`SwapOffer` takes `caption` and `canAct` by hand: no action
+  while previewing). Time left is worked out when the row is made. No tick, reactions, quote or thread yet, and swaps in threads aren't
+  wired.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked

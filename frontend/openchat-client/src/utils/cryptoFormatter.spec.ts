@@ -1,4 +1,9 @@
-import { formatTokens, validateTokenInput } from "./cryptoFormatter";
+import {
+    formatPercentChange,
+    formatTokens,
+    formatUsdPrice,
+    validateTokenInput,
+} from "./cryptoFormatter";
 
 describe("crypto formatter", () => {
     describe("validate ICP input", () => {
@@ -103,5 +108,39 @@ describe("crypto formatter", () => {
             const formatted = formatTokens(BigInt(123_400_000_000), 8, ".");
             expect(formatted).toEqual("1234.00");
         });
+    });
+});
+
+describe("formatUsdPrice", () => {
+    test("is to 2 or 3 significant figures below $1", () => {
+        expect(formatUsdPrice(0.028133492)).toBe("$0.0281");
+        expect(formatUsdPrice(0.999)).toBe("$0.999");
+        expect(formatUsdPrice(0.5)).toBe("$0.50");
+        expect(formatUsdPrice(5.662481998699757e-9)).toBe("$0.00000000566");
+    });
+
+    test("shows a price that rounds to $1 as $1.00, on either side of it", () => {
+        expect(formatUsdPrice(0.9996)).toBe("$1.00");
+        expect(formatUsdPrice(1.0003)).toBe("$1.00");
+    });
+
+    test("is to the cent from $1 up to $1,000", () => {
+        expect(formatUsdPrice(1)).toBe("$1.00");
+        expect(formatUsdPrice(2.58132)).toBe("$2.58");
+        expect(formatUsdPrice(999.5)).toBe("$999.50");
+    });
+
+    test("is to the dollar from $1,000", () => {
+        expect(formatUsdPrice(1000)).toBe("$1,000");
+        expect(formatUsdPrice(81157.5)).toBe("$81,158");
+    });
+});
+
+describe("formatPercentChange", () => {
+    test("is signed, to 1 decimal place", () => {
+        expect(formatPercentChange(2.872)).toBe("+2.9%");
+        expect(formatPercentChange(-12)).toBe("-12.0%");
+        expect(formatPercentChange(0)).toBe("0.0%");
+        expect(formatPercentChange(1234.56)).toBe("+1,234.6%");
     });
 });

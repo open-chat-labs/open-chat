@@ -4,6 +4,7 @@ import {
     linkedDialog,
     linkedDialogParam,
     openLinkedDialog,
+    shareQuery,
     shownLinkedDialog,
 } from "./dialogs";
 
@@ -162,5 +163,33 @@ describe("the dialogs loaded ahead", () => {
         const built = Object.values(dialogs).filter((load) => load !== undefined);
         expect(builtDialogScreens()).toEqual(built);
         expect(builtDialogScreens().length).toBeGreaterThan(0);
+    });
+});
+
+describe("the share picker's link", () => {
+    test("carries what another app shared, and nothing from a value that isn't it", () => {
+        const query = shareQuery({ title: "T", text: "Look at this", url: "https://x.y" });
+        expect(linkedDialog(new URLSearchParams(query.slice(1)))).toEqual({
+            kind: "share",
+            title: "T",
+            text: "Look at this",
+            url: "https://x.y",
+        });
+        expect(linkedDialog(new URLSearchParams("share=not-json"))).toEqual({
+            kind: "share",
+            title: undefined,
+            text: undefined,
+            url: undefined,
+        });
+        // from the /share route itself, whose own kind isn't the dialog's
+        const route = { kind: "share_route" as const, title: "T", text: "", url: "u" };
+        expect(shareQuery(route)).toContain("?share=");
+        // empty fields are left out, as the draft adds no blank line for them
+        const empty = shareQuery({ title: "", text: "", url: "https://x.y" });
+        expect(linkedDialog(new URLSearchParams(empty.slice(1)))).toMatchObject({
+            kind: "share",
+            text: undefined,
+            url: "https://x.y",
+        });
     });
 });

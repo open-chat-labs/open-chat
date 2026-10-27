@@ -106,7 +106,8 @@ impl GroupRoleInternal {
 
         let sender_role = match message_type {
             MessageContentType::Text => ps.text.unwrap_or(ps.default),
-            MessageContentType::Image => ps.image.unwrap_or(ps.default),
+            // a price chart is a picture
+            MessageContentType::Image | MessageContentType::PriceChart => ps.image.unwrap_or(ps.default),
             MessageContentType::Video => ps.video.unwrap_or(ps.default),
             MessageContentType::Audio => ps.audio.unwrap_or(ps.default),
             MessageContentType::File => ps.file.unwrap_or(ps.default),

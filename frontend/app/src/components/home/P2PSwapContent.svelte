@@ -1,7 +1,5 @@
 <script lang="ts">
     import type {
-        AcceptP2PSwapResponse,
-        CancelP2PSwapResponse,
         MessageContext,
         OpenChat,
         P2PSwapContent,
@@ -14,6 +12,8 @@
         exchangeRatesLookupStore as exchangeRatesLookup,
         isDiamondStore,
         publish,
+        swapFailureMessage,
+        swapTakenBy,
     } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -58,13 +58,7 @@
             ? $_("p2pSwap.expired")
             : client.formatTimeRemaining($now500, Number(content.expiresAt)),
     );
-    let acceptedByYou = $derived(
-        (content.status.kind === "p2p_swap_reserved" &&
-            content.status.reservedBy === $currentUserIdStore) ||
-            ((content.status.kind === "p2p_swap_accepted" ||
-                content.status.kind === "p2p_swap_completed") &&
-                content.status.acceptedBy === $currentUserIdStore),
-    );
+    let acceptedByYou = $derived(swapTakenBy(content.status) === $currentUserIdStore);
 
     let fromAmount = $derived(client.formatTokens(content.token0Amount, content.token0.decimals));
     let toAmount = $derived(client.formatTokens(content.token1Amount, content.token1.decimals));
@@ -175,7 +169,7 @@
                 )
                 .then((resp) => {
                     if (resp.kind !== "success") {
-                        showFailureToast(resp, false);
+                        showFailureToast(false);
                     }
                 });
         }
@@ -198,43 +192,19 @@
                 )
                 .then((resp) => {
                     if (resp.kind !== "success") {
-                        showFailureToast(resp, true);
+                        showFailureToast(true);
                     }
                 });
         }
     }
 
-    function showFailureToast(
-        response: AcceptP2PSwapResponse | CancelP2PSwapResponse,
-        accepting: boolean,
-    ) {
+    function showFailureToast(accepting: boolean) {
         if ($pinNumberErrorMessageStore !== undefined) {
             toastStore.showFailureToast(pinNumberErrorMessageStore);
             return;
         }
 
-        let key: string = response.kind;
-
-        switch (key) {
-            case "already_reserved":
-            case "already_completed":
-                key = "already_accepted";
-                break;
-            case "channel_not_found":
-            case "chat_not_found":
-            case "user_suspended":
-            case "user_not_in_group":
-            case "user_not_in_community":
-            case "user_not_in_channel":
-            case "chat_frozen":
-            case "insufficient_funds":
-            case "internal_error":
-            case "error":
-                key = accepting ? "unknown_accept_error" : "unknown_cancel_error";
-                break;
-        }
-
-        toastStore.showFailureToast(i18nKey("p2pSwap." + key));
+        toastStore.showFailureToast(swapFailureMessage(accepting));
     }
 
     function onSwapClick() {

@@ -378,10 +378,7 @@ impl DirectChat {
         self.events.delete_messages(args)
     }
 
-    pub fn undelete_messages(
-        &mut self,
-        args: DeleteUndeleteMessagesArgs,
-    ) -> Vec<(MessageId, OCResult<Option<BotNotification>>)> {
+    pub fn undelete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, OCResult<Vec<BotNotification>>)> {
         self.events.undelete_messages(args)
     }
 

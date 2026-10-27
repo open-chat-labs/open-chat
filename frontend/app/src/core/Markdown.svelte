@@ -1,15 +1,28 @@
 <script lang="ts">
     import "highlight.js/styles/base16/helios.css";
     import type { OpenChat } from "@client";
-    import { allUsersStore, userGroupSummariesStore } from "@client";
+    import {
+        allUsersStore,
+        cashtagCoinsStore,
+        exchangeRatesLookupStore,
+        priceSourcesFor,
+        priceSourcesStore,
+        tokensBySymbolStore,
+        userGroupSummariesStore,
+    } from "@client";
+    import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import { isSingleEmoji } from "@src/utils/emojis";
     import {
+        extractCashtagSymbols,
         extractMentionedUserGroupIds,
         extractMentionedUserIds,
+        mentionedTokens,
         renderMarkdown,
+        sameMentionedTokens,
         sameMentionedUserGroups,
         sameMentionedUsers,
+        type MentionedToken,
         type MentionedUser,
         type MentionedUserGroup,
     } from "./markdownRender";
@@ -36,6 +49,7 @@
 
     const noUsers: MentionedUser[] = [];
     const noUserGroups: MentionedUserGroup[] = [];
+    const noTokens: MentionedToken[] = [];
 
     let singleEmoji = $derived(isSingleEmoji(text));
 
@@ -45,6 +59,8 @@
     // stops Svelte propagating to the parse+sanitise derived below.
     let mentionedUserIds = $derived(extractMentionedUserIds(text));
     let mentionedUserGroupIds = $derived(extractMentionedUserGroupIds(text));
+    // and likewise the tokens and prices of cashtags, whose prices change every few minutes
+    let cashtagSymbols = $derived(extractCashtagSymbols(text));
 
     let lastUsers = noUsers;
     let users = $derived.by(() => {
@@ -70,6 +86,27 @@
             : (lastUserGroups = next);
     });
 
+    let lastTokens = noTokens;
+    let tokens = $derived.by(() => {
+        if (cashtagSymbols.length === 0) return noTokens;
+        const next = mentionedTokens(
+            cashtagSymbols,
+            $tokensBySymbolStore,
+            $exchangeRatesLookupStore,
+            $cashtagCoinsStore,
+            credit,
+        );
+        return sameMentionedTokens(next, lastTokens) ? lastTokens : (lastTokens = next);
+    });
+
+    // the chip's tooltip, crediting where its price is from (as the card it opens does)
+    function credit(source: string | undefined): string | undefined {
+        const [s] = priceSourcesFor($priceSourcesStore, [source]);
+        return s !== undefined
+            ? $_("cashtag.priceDataBy", { values: { source: s.name } })
+            : undefined;
+    }
+
     let sanitized = $derived(
         renderMarkdown(
             {
@@ -79,6 +116,7 @@
                 suppressLinks,
                 users,
                 userGroups,
+                tokens,
             },
             (msg, err) => client.logError(msg, err),
         ),

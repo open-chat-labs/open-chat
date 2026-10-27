@@ -35,7 +35,7 @@ pub(crate) fn c2c_flag_message_impl(args: Args, state: &mut RuntimeState) -> OCR
             now,
         )?;
         for result in results.into_iter().filter_map(|(_, result)| result.ok()) {
-            state.push_bot_notification(result.bot_notification);
+            state.push_bot_notifications(result.bot_notifications);
         }
     }
 

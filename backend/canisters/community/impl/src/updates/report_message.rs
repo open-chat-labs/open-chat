@@ -75,16 +75,20 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> OCResult<(c2c_report_mes
 }
 
 fn delete_message(args: &Args, reporter: UserIdAndPrincipal, state: &mut RuntimeState) {
+    let now = state.env.now();
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id)
         && let Ok(results) = channel.chat.delete_messages(
             Caller::User(reporter),
             args.thread_root_message_index,
             vec![args.message_id],
             false,
-            state.env.now(),
+            now,
         )
-        && results.iter().any(|(_, r)| r.is_ok())
     {
-        handle_activity_notification(state);
+        let deleted: Vec<_> = results.into_iter().filter_map(|(_, r)| r.ok()).collect();
+        if !deleted.is_empty() {
+            state.push_bot_notifications(deleted.into_iter().flat_map(|d| d.bot_notifications));
+            handle_activity_notification(state);
+        }
     }
 }

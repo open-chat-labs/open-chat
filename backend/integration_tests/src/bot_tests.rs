@@ -7,8 +7,10 @@ use community_canister::c2c_bot_community_events::{
     EventsByIndexArgs as CommunityEventsByIndexArgs, EventsSelectionCriteria as CommunityEventsSelectionCriteria,
 };
 use community_canister::community_events::EventsPageArgs;
+use constants::MINUTE_IN_MS;
 use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs, BotCommandInitial};
 use local_user_index_canister::chat_events::{EventsByIndexArgs, EventsSelectionCriteria};
+use multi_user_canister::MessageActivity;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
@@ -20,9 +22,9 @@ use types::{
     AutonomousConfig, BotActionChatDetails, BotActionScope, BotChatContext, BotChatEvent, BotCommandArg, BotCommandArgValue,
     BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDataEncoding, BotDefinition, BotEvent, BotEventWrapper,
     BotInstallationLocation, BotMessageContent, BotPermissions, BotSubscriptions, BridgePlatform, CanisterId, ChannelId, Chat,
-    ChatEvent, ChatEventType, ChatPermission, ChatType, CommunityEventType, CommunityPermission, EventIndex, HttpRequest,
-    MessageContent, MessageId, MessagePermission, NotificationEnvelope, OptionUpdate, Rules, StringParam, TextContent,
-    UpdatedRules, UserId,
+    ChatEvent, ChatEventType, ChatPermission, ChatType, CommunityEventType, CommunityPermission, EventIndex, GroupReplyContext,
+    HttpRequest, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePermission, NotificationEnvelope,
+    OptionUpdate, Rules, StringParam, TextContent, UpdatedRules, UserId,
 };
 
 #[test]
@@ -233,6 +235,303 @@ fn e2e_command_bot_test() {
 
     let bot = &response.added_or_updated[0];
     assert_eq!(bot.endpoint, new_endpoint);
+}
+
+#[test]
+fn user_who_used_command_can_delete_bots_response() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let initiator = client::register_user(env, canister_ids);
+    let other_member = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    client::group::happy_path::join_group(env, initiator.principal, group_id);
+    client::group::happy_path::join_group(env, other_member.principal, group_id);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+
+    let command_name = random_string();
+    let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, random_string(), command_name.clone());
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Group(group_id),
+        bot_id,
+        BotPermissions::text_only(),
+        None,
+    );
+
+    // The bot responds to a command used by a member who can't delete other users' messages
+    let message_id = random_from_u128();
+    let access_token = match client::local_user_index::access_token_v2(
+        env,
+        initiator.principal,
+        local_user_index,
+        &access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
+            bot_id,
+            command: BotCommandInitial {
+                name: command_name,
+                args: Vec::new(),
+                meta: None,
+            },
+            scope: BotActionScope::Chat(BotActionChatDetails {
+                chat: Chat::Group(group_id),
+                thread: None,
+                message_id,
+                user_message_id: None,
+            }),
+        }),
+    ) {
+        access_token_v2::Response::Success(access_token) => access_token,
+        response => panic!("'access_token' error: {response:?}"),
+    };
+    let response = client::local_user_index::bot_send_message(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_send_message::Args {
+            chat_context: BotChatContext::Command(access_token),
+            thread: None,
+            message_id: None,
+            replies_to: None,
+            content: BotMessageContent::Text(TextContent {
+                text: "Hello".to_string(),
+            }),
+            block_level_markdown: false,
+            finalised: true,
+            og_previews: None,
+            bridged_from: None,
+        },
+    );
+    let local_user_index_canister::bot_send_message::Response::Success(result) = response else {
+        panic!("'bot_send_message' error: {response:?}");
+    };
+
+    let content = |env: &PocketIc| {
+        let response = client::group::happy_path::events_by_index(env, &owner, group_id, vec![result.event_index]);
+        let Some(ChatEvent::Message(message)) = response.events.first().map(|e| &e.event) else {
+            panic!("Unexpected response from `events_by_index`: {response:?}");
+        };
+        message.content.clone()
+    };
+
+    // Another member can't delete it
+    client::group::happy_path::delete_messages(env, other_member.principal, group_id, None, vec![message_id]);
+    assert!(matches!(content(env), MessageContent::Text(_)));
+
+    // The member who used the command can
+    client::group::happy_path::delete_messages(env, initiator.principal, group_id, None, vec![message_id]);
+    assert!(matches!(
+        content(env),
+        MessageContent::Deleted(d) if d.deleted_by == initiator.user_id
+    ));
+
+    // As when an admin deletes someone else's message, its content is kept after the 5 minutes in which
+    // a sender's own deleted message can be undeleted. They can see it and undelete it.
+    env.advance_time(Duration::from_millis(6 * MINUTE_IN_MS));
+    tick_many(env, 3);
+    let response = client::group::deleted_message(
+        env,
+        initiator.principal,
+        group_id.into(),
+        &group_canister::deleted_message::Args {
+            thread_root_message_index: None,
+            message_id,
+        },
+    );
+    assert!(
+        matches!(response, group_canister::deleted_message::Response::Success(_)),
+        "{response:?}"
+    );
+    let response = client::group::undelete_messages(
+        env,
+        initiator.principal,
+        group_id.into(),
+        &group_canister::undelete_messages::Args {
+            thread_root_message_index: None,
+            message_ids: vec![message_id],
+        },
+    );
+    assert!(
+        matches!(&response, group_canister::undelete_messages::Response::Success(r) if r.messages.len() == 1),
+        "{response:?}"
+    );
+    assert!(matches!(content(env), MessageContent::Text(_)));
+}
+
+// A reply to a bot's response to a command is for whoever used the command, as the bot's own later
+// reply is, eg. an alert they set, in the chat or in a thread
+#[test]
+fn replies_to_bots_response_are_for_user_who_used_command() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let initiator = client::register_user(env, canister_ids);
+    let other_member = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    client::group::happy_path::join_group(env, initiator.principal, group_id);
+    client::group::happy_path::join_group(env, other_member.principal, group_id);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+
+    let command_name = random_string();
+    let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, random_string(), command_name.clone());
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Group(group_id),
+        bot_id,
+        BotPermissions::text_only(),
+        Some(BotPermissions::text_only()),
+    );
+
+    // The initiator uses the command, in the chat or in a thread, and the bot responds
+    let respond_to_command = |env: &mut PocketIc, thread: Option<MessageIndex>| {
+        let access_token = match client::local_user_index::access_token_v2(
+            env,
+            initiator.principal,
+            local_user_index,
+            &access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
+                bot_id,
+                command: BotCommandInitial {
+                    name: command_name.clone(),
+                    args: Vec::new(),
+                    meta: None,
+                },
+                scope: BotActionScope::Chat(BotActionChatDetails {
+                    chat: Chat::Group(group_id),
+                    thread,
+                    message_id: random_from_u128(),
+                    user_message_id: None,
+                }),
+            }),
+        ) {
+            access_token_v2::Response::Success(access_token) => access_token,
+            response => panic!("'access_token' error: {response:?}"),
+        };
+        bot_send_message(
+            env,
+            bot_principal,
+            local_user_index,
+            BotChatContext::Command(access_token),
+            None,
+            None,
+        )
+    };
+    // The bot replies on its own, later
+    let bot_replies = |env: &mut PocketIc, thread: Option<MessageIndex>, replies_to: EventIndex| {
+        bot_send_message(
+            env,
+            bot_principal,
+            local_user_index,
+            BotChatContext::Autonomous(Chat::Group(group_id)),
+            thread,
+            Some(replies_to),
+        )
+        .message_id
+    };
+    let member_replies = |env: &mut PocketIc, thread: Option<MessageIndex>, replies_to: Option<EventIndex>| {
+        let message_id = random_from_u128();
+        client::group::happy_path::send_message(
+            env,
+            &other_member,
+            group_id,
+            thread,
+            MessageContentInitial::Text(TextContent { text: random_string() }),
+            replies_to.map(|event_index| GroupReplyContext { event_index }),
+            Some(message_id),
+        );
+        message_id
+    };
+    let mentioned = |env: &PocketIc, message_id: MessageId| {
+        client::group::happy_path::summary(env, initiator.principal, group_id)
+            .membership
+            .unwrap()
+            .mentions
+            .iter()
+            .any(|m| m.message_id == message_id)
+    };
+
+    // In the chat, a member's reply to the response mentions the initiator and makes them activity
+    let response = respond_to_command(env, None);
+    let reply_id = member_replies(env, None, Some(response.event_index));
+    assert!(mentioned(env, reply_id));
+    wait_for_activity(env, &initiator, MessageActivity::QuoteReply, reply_id, other_member.user_id);
+
+    // As does the bot's own reply, to its mention
+    let bots_reply_id = bot_replies(env, None, response.event_index);
+    assert!(mentioned(env, bots_reply_id));
+
+    // A thread started on the response is for the initiator, who follows it
+    let thread_reply_id = member_replies(env, Some(response.message_index), None);
+    assert!(mentioned(env, thread_reply_id));
+
+    // A response in a thread the initiator hasn't posted in makes them follow it, so the bot's reply
+    // to the response reaches them
+    let root_message_index =
+        client::group::happy_path::send_text_message(env, &owner, group_id, None, random_string(), None).message_index;
+    let response_in_thread = respond_to_command(env, Some(root_message_index));
+    let bots_reply_in_thread_id = bot_replies(env, Some(root_message_index), response_in_thread.event_index);
+    assert!(mentioned(env, bots_reply_in_thread_id));
+}
+
+fn bot_send_message(
+    env: &mut PocketIc,
+    bot_principal: Principal,
+    local_user_index: CanisterId,
+    chat_context: BotChatContext,
+    thread: Option<MessageIndex>,
+    replies_to: Option<EventIndex>,
+) -> local_user_index_canister::bot_send_message::SuccessResult {
+    let response = client::local_user_index::bot_send_message(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_send_message::Args {
+            chat_context,
+            thread,
+            message_id: None,
+            replies_to,
+            content: BotMessageContent::Text(TextContent { text: random_string() }),
+            block_level_markdown: false,
+            finalised: true,
+            og_previews: None,
+            bridged_from: None,
+        },
+    );
+    match response {
+        local_user_index_canister::bot_send_message::Response::Success(result) => result,
+        response => panic!("'bot_send_message' error: {response:?}"),
+    }
+}
+
+fn wait_for_activity(env: &mut PocketIc, user: &User, activity: MessageActivity, message_id: MessageId, by: UserId) {
+    for _ in 0..20 {
+        if client::user::happy_path::message_activity_feed(env, user, 0)
+            .events
+            .iter()
+            .any(|e| e.activity == activity && e.message_id == message_id && e.user_id == Some(by))
+        {
+            return;
+        }
+        env.tick();
+    }
+    panic!(
+        "{activity:?} activity on {message_id:?} by {by} never reached {}",
+        user.user_id
+    );
 }
 
 #[test]

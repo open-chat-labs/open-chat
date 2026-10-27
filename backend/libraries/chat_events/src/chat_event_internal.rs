@@ -316,6 +316,20 @@ impl MessageInternal {
         self.sender_context.as_ref()?.bot_context()?.bridged_from
     }
 
+    // Whether the user can delete the message as their own: they sent it, or a bot sent it in response
+    // to a command they used
+    pub fn deletable_as_own_by(&self, user_id: UserId) -> bool {
+        self.sender == user_id || self.reply_recipient() == user_id
+    }
+
+    // Who a reply to the message is for: its sender, or for a bot's response to a command, whoever
+    // used the command
+    pub fn reply_recipient(&self) -> UserId {
+        self.bot_context()
+            .and_then(|b| b.command.as_ref())
+            .map_or(self.sender, |c| c.initiator)
+    }
+
     pub fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Message {
         Message {
             message_index: self.message_index,
@@ -352,7 +366,8 @@ impl MessageInternal {
             MessageContentType::Text => {
                 metrics.incr(MetricKey::TextMessages, 1);
             }
-            MessageContentType::Image => {
+            // a price chart is counted as the image it replaces
+            MessageContentType::Image | MessageContentType::PriceChart => {
                 metrics.incr(MetricKey::ImageMessages, 1);
             }
             MessageContentType::Video => {
@@ -407,6 +422,11 @@ impl MessageInternal {
 
     pub fn bot_context(&self) -> Option<&BotMessageContext> {
         if let Some(SenderContext::Bot(bc)) = &self.sender_context { Some(bc) } else { None }
+    }
+
+    // The bot which sent the message, if one did
+    pub fn sent_by_bot(&self) -> Option<UserId> {
+        self.bot_context().map(|_| self.sender)
     }
 }
 
@@ -514,7 +534,8 @@ impl ThreadSummaryInternal {
         &mut self,
         sender: UserId,
         mentioned_users: &[UserId],
-        root_message_sender: UserId,
+        // Who the thread's root message is for (see `MessageInternal::reply_recipient`)
+        root_message_recipient: UserId,
         latest_event_index: EventIndex,
         now: TimestampMillis,
     ) {
@@ -531,7 +552,7 @@ impl ThreadSummaryInternal {
 
         let is_first_message = self.reply_count == 1;
         if is_first_message {
-            self.followers.insert(root_message_sender);
+            self.followers.insert(root_message_recipient);
         }
     }
 }

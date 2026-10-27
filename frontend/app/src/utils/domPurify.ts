@@ -7,7 +7,11 @@ function createDefault(): DOMPurify.DOMPurify {
     domPurify.setConfig({
         ALLOWED_ATTR: ["target", "href", "class", "user-id", "suppress-links", "src", "alt"],
         CUSTOM_ELEMENT_HANDLING: {
-            tagNameCheck: (tag) => tag === "profile-link" || tag === "custom-emoji" || tag === "spoiler-span",
+            tagNameCheck: (tag) =>
+                tag === "profile-link" ||
+                tag === "custom-emoji" ||
+                tag === "spoiler-span" ||
+                tag === "cash-tag",
             attributeNameCheck: (attr) => ["text", "userId", "data-id"].includes(attr),
             allowCustomizedBuiltInElements: true,
         },

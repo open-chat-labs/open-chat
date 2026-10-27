@@ -199,6 +199,13 @@
         "unlink": "Відв'язати",
         "unlinkFailed": "Не вдалося відв'язати акаунт"
     },
+    "cashtag": {
+        "chartLabel": "Ціна {symbol} за останні 7 днів",
+        "change7d": "{change} за 7 днів",
+        "noHistory": "Немає угод за останні 7 днів",
+        "noPrice": "Ціна недоступна",
+        "priceDataBy": "Дані про ціни: {source}"
+    },
     "bridgedUserUnknown": "Користувач {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
@@ -1677,6 +1684,9 @@
     "owner": "власник",
     "ownerCantLeave": "Ви повинні додати іншого власника, перш ніж ви зможете залишити {level}",
     "p2pSwap": {
+        "cancelOffer": "Скасувати пропозицію",
+        "cancelOfferQuestion": "Скасувати цю пропозицію обміну?",
+        "keepOffer": "Залишити пропозицію",
         "accept": "прийняти",
         "accepted": "прийнято",
         "acceptedBy": "Ця пропозиція була прийнята {user} і очікує на завершення.",
@@ -2200,6 +2210,7 @@
     "removedBy": "{changedBy} видалив {changed} із {level}",
     "removeMemberFailed": "Не вдалося видалити учасника",
     "removePreviewQuestion": "Вилучити попередній перегляд?",
+    "errorRemovingLinkPreview": "Не вдалося видалити попередній перегляд",
     "renderPreviews": "Автоматичний попередній перегляд посилань",
     "reply": "Відповісти",
     "replyPrivately": "Відповісти приватно",
@@ -2710,7 +2721,10 @@
         "updateTitle": "Оновлення {name}",
         "urlLabel": "URL-адреса вебхука",
         "username": "вебхук",
-        "viewEditAction": "Переглянути/редагувати деталі вебхука"
+        "viewEditAction": "Переглянути/редагувати деталі вебхука",
+        "registerFailed": "На жаль, не вдалося зареєструвати вебхук",
+        "updateFailed": "На жаль, не вдалося оновити вебхук",
+        "regenerateFailed": "На жаль, не вдалося заново створити URL вебхука"
     },
     "websiteVersion": "веб-сайту",
     "weeks": "тижнів",

@@ -500,6 +500,7 @@ impl GroupChatCore {
                         // one here - designated reviewers access it via the evidence vault
                         Err(OCErrorCode::MessageHardDeleted.into())
                     } else if user_id == message.sender
+                        || user_id == deleted_by.deleted_by
                         || (deleted_by.deleted_by != message.sender && member.role().can_delete_messages(&self.permissions))
                     {
                         Ok(message.content.hydrate(Some(user)))
@@ -765,7 +766,8 @@ impl GroupChatCore {
         let agent = UserIdAndPrincipal::new(caller.agent(), caller.agent().as_principal());
         let message_event = reader.message_event(message_id.into(), Some(agent)).unwrap();
 
-        let users_to_notify = if finalise {
+        // No one is notified of a response deleted while the bot was still sending it
+        let users_to_notify = if finalise && !matches!(message_event.event.content, MessageContent::Deleted(_)) {
             self.build_users_to_notify(
                 thread_root_message_index,
                 min_visible_event_index,
@@ -817,11 +819,14 @@ impl GroupChatCore {
 
         if !suppressed {
             if let Some(root_message_index) = thread_root_message_index {
-                if let Some((root_message_sender, thread_summary)) = self
+                if let Some((root_message_recipient, thread_summary)) = self
                     .events
                     .visible_main_events_reader(min_visible_event_index)
                     .message_internal(root_message_index.into())
-                    .and_then(|m| m.thread_summary.map(|s| (m.sender, s)))
+                    .and_then(|m| {
+                        let recipient = m.reply_recipient();
+                        m.thread_summary.map(|s| (recipient, s))
+                    })
                 {
                     let is_first_reply = message_index == MessageIndex::default();
                     let followers: HashSet<_> = thread_summary.followers.into_iter().collect();
@@ -831,7 +836,8 @@ impl GroupChatCore {
 
                         let user_id = m.user_id();
                         if user_id != initiator {
-                            let mentioned = mentions.contains(&user_id) || (is_first_reply && user_id == root_message_sender);
+                            let mentioned =
+                                mentions.contains(&user_id) || (is_first_reply && user_id == root_message_recipient);
 
                             if mentioned {
                                 m.mentions.add(thread_root_message_index, message_index, message_id, now);
@@ -1197,13 +1203,13 @@ impl GroupChatCore {
 
         let messages = results
             .into_iter()
-            .filter_map(|(message_id, result)| result.ok().map(|bot_notification| (message_id, bot_notification)))
-            .filter_map(|(message_id, bot_notification)| {
+            .filter_map(|(message_id, result)| result.ok().map(|bot_notifications| (message_id, bot_notifications)))
+            .filter_map(|(message_id, bot_notifications)| {
                 events_reader
                     .message_internal(message_id.into())
                     .map(|m| UndeleteMessageSuccess {
                         message: m.hydrate(Some(user)),
-                        bot_notification,
+                        bot_notifications,
                     })
             })
             .collect();
@@ -2120,7 +2126,7 @@ impl GroupChatCore {
 
         events_reader
             .message_internal(replies_to.event_index.into())
-            .map(|message| message.sender)
+            .map(|message| message.reply_recipient())
     }
 
     fn merge_permissions(new: OptionalGroupPermissions, old: GroupPermissions) -> GroupPermissions {

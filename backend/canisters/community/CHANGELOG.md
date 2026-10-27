@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Tell a bot when its own message is deleted or restored, whatever it's subscribed to, without what others added to it ([#10275](https://github.com/open-chat-labs/open-chat/pull/10275))
+- Price charts, a message type only bots post, needing the Image permission, which anyone can forward ([#10267](https://github.com/open-chat-labs/open-chat/pull/10267))
+
+### Changed
+
+- Let the user who issued a bot command delete the bot's response ([#10261](https://github.com/open-chat-labs/open-chat/pull/10261))
+- Tell whoever used a bot's command of replies to the bot's response ([#10274](https://github.com/open-chat-labs/open-chat/pull/10274))
+
+### Fixed
+
+- Reject tips and transfers to bots and webhooks ([#10262](https://github.com/open-chat-labs/open-chat/pull/10262))
+
+## [[2.0.2192](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2192-community)] - 2026-10-26
+
+### Added
+
 - Route tips on messages relayed from Discord/Telegram to the OpenChat user who linked the account ([#10211](https://github.com/open-chat-labs/open-chat/pull/10211))
 - Add Twitch as a supported platform for bridged chats ([#10214](https://github.com/open-chat-labs/open-chat/pull/10214))
 - Route reactions and replies on messages relayed from Discord/Telegram/Twitch to the OpenChat user who linked the account ([#10219](https://github.com/open-chat-labs/open-chat/pull/10219))

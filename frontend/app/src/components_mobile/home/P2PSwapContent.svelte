@@ -11,8 +11,6 @@
         Subtitle,
     } from "component-lib";
     import type {
-        AcceptP2PSwapResponse,
-        CancelP2PSwapResponse,
         MessageContext,
         OpenChat,
         P2PSwapContent,
@@ -23,6 +21,8 @@
         currentUserIdStore,
         isDiamondStore,
         publish,
+        swapFailureMessage,
+        swapLabels,
     } from "@client";
     import { type Snippet, getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -89,17 +89,13 @@
             ? client.formatTimeRemaining($now500, Number(content.expiresAt))
             : $_("p2pSwap.expired"),
     );
-    let recipientId = $derived(
+    let labels = $derived(
         content.kind === "p2p_swap_content"
-            ? content.status.kind === "p2p_swap_reserved"
-                ? content.status.reservedBy
-                : content.status.kind === "p2p_swap_accepted" ||
-                    content.status.kind === "p2p_swap_completed"
-                  ? content.status.acceptedBy
-                  : undefined
+            ? swapLabels(content, { me: $currentUserIdStore, mine: me })
             : undefined,
     );
-    let acceptedByYou = $derived(recipientId === $currentUserIdStore);
+    let recipientId = $derived(labels?.takenBy);
+    let acceptedByYou = $derived(labels?.takenByYou ?? false);
     let fromAmount = $derived(client.formatTokens(content.token0Amount, content.token0.decimals));
     let toAmount = $derived(client.formatTokens(content.token1Amount, content.token1.decimals));
     let buttonDisabled = $derived(
@@ -108,58 +104,10 @@
             pinned,
     );
 
-    let buttonLabelKey = $derived.by<string | undefined>(() => {
-        if (content.kind !== "p2p_swap_content") return;
-        const ifAcceptedByYou = (labelKey: string) =>
-            acceptedByYou || me ? labelKey : "p2pSwap.notAvailable";
-
-        switch (content.status.kind) {
-            case "p2p_swap_open":
-                return me ? "p2pSwap.cancel" : "p2pSwap.accept";
-
-            case "p2p_swap_cancelled":
-                return "p2pSwap.cancelled";
-
-            case "p2p_swap_expired":
-                return "p2pSwap.expired";
-
-            case "p2p_swap_reserved":
-            case "p2p_swap_accepted":
-                return ifAcceptedByYou("p2pSwap.progress.pendingCompletion");
-
-            case "p2p_swap_completed":
-                return ifAcceptedByYou("p2pSwap.progress.success");
-        }
-    });
-
-    let headerLabelKey = $derived.by<string | undefined>(() => {
-        if (content.kind !== "p2p_swap_content") return;
-
-        switch (content.status.kind) {
-            case "p2p_swap_open":
-                return timeRemaining;
-
-            case "p2p_swap_cancelled":
-                return "p2pSwap.cancelled";
-
-            case "p2p_swap_expired":
-                return "p2pSwap.expired";
-
-            case "p2p_swap_reserved":
-                return acceptedByYou ? "p2pSwap.reserved" : "p2pSwap.progress.acceptedBy";
-
-            case "p2p_swap_accepted":
-                return acceptedByYou ? "p2pSwap.accepted" : "p2pSwap.progress.acceptedBy";
-
-            case "p2p_swap_completed":
-                return acceptedByYou
-                    ? "p2pSwap.progress.completed"
-                    : recipientId
-                      ? "p2pSwap.progress.acceptedBy"
-                      : "p2pSwap.accepted";
-        }
-    });
-
+    let buttonLabelKey = $derived(labels?.buttonLabelKey);
+    let headerLabelKey = $derived(
+        labels === undefined ? undefined : (labels.headerLabelKey ?? timeRemaining),
+    );
     function onAcceptOrCancel(e: MouseEvent) {
         if (e.isTrusted && !buttonDisabled) {
             if (!me && !$isDiamondStore) {
@@ -183,7 +131,7 @@
                     )
                     .then((resp) => {
                         if (resp.kind !== "success") {
-                            showFailureToast(resp, false);
+                            showFailureToast(false);
                         } else {
                             client.refreshAccountBalance(content.token1.ledger);
                         }
@@ -210,7 +158,7 @@
                 )
                 .then((resp) => {
                     if (resp.kind !== "success") {
-                        showFailureToast(resp, true);
+                        showFailureToast(true);
                     } else {
                         client.refreshAccountBalance(content.token1.ledger);
                     }
@@ -218,37 +166,13 @@
         }
     }
 
-    function showFailureToast(
-        response: AcceptP2PSwapResponse | CancelP2PSwapResponse,
-        accepting: boolean,
-    ) {
+    function showFailureToast(accepting: boolean) {
         if ($pinNumberErrorMessageStore !== undefined) {
             toastStore.showFailureToast(pinNumberErrorMessageStore);
             return;
         }
 
-        let key: string = response.kind;
-
-        switch (key) {
-            case "already_reserved":
-            case "already_completed":
-                key = "already_accepted";
-                break;
-            case "channel_not_found":
-            case "chat_not_found":
-            case "user_suspended":
-            case "user_not_in_group":
-            case "user_not_in_community":
-            case "user_not_in_channel":
-            case "chat_frozen":
-            case "insufficient_funds":
-            case "internal_error":
-            case "error":
-                key = accepting ? "unknown_accept_error" : "unknown_cancel_error";
-                break;
-        }
-
-        toastStore.showFailureToast(i18nKey("p2pSwap." + key));
+        toastStore.showFailureToast(swapFailureMessage(accepting));
     }
 
     function onSwapClick() {

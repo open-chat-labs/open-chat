@@ -15,13 +15,18 @@
         Subtitle,
     } from "component-lib";
     import {
+        allChatsStore,
         AuthProvider,
         chitBands,
         chitStateStore,
+        communitiesStore,
         cryptoLookup,
         enhancedCryptoLookup,
         isDiamondStore,
         isLifetimeDiamondStore,
+        isPreviewingOrLapsed,
+        isTrustedClick,
+        prizeView,
         type ChatIdentifier,
         type DiamondMembershipStatus,
         type OpenChat,
@@ -49,7 +54,7 @@
     import Streak from "./profile/Streak.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
     import { TokenState } from "@src/logic/wallet/walletState.svelte";
-    import { prizeClaimStep } from "@shared_components/home/prize/prizeClaim";
+    import { prizeClaimStep } from "@src/logic/prize/prizeClaim";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import TextContent from "./TextContent.svelte";
 
@@ -121,7 +126,7 @@
             return;
         }
 
-        if (e.isTrusted && chatId.kind !== "direct_chat" && !me && userEligible) {
+        if (isTrustedClick(e) && chatId.kind !== "direct_chat" && view?.canClaim) {
             claimsStore.add(messageId);
             client
                 .claimPrize(chatId, messageId, e, step.signInProof)
@@ -145,19 +150,33 @@
     let percentage = $derived(
         content.kind === "prize_content" && total > 0 ? (content.winnerCount / total) * 100 : 0,
     );
-    let claimedByYou = $derived(content.kind === "prize_content" ? content.userIsWinner : false);
-    let finished = $derived($now500 >= Number(content.endDate));
-    let allClaimed = $derived(
-        content.kind === "prize_content" ? content.prizesRemaining <= 0 : false,
+    // Read from the stores so the button enables as soon as the user joins or rejoins
+    let previewingOrLapsed = $derived.by(() => {
+        const chat = chatId !== undefined ? $allChatsStore.get(chatId) : undefined;
+        return chat !== undefined && isPreviewingOrLapsed(chat, $communitiesStore);
+    });
+    // a prize still being sent (prize_content_initial) can't be claimed yet
+    let view = $derived(
+        content.kind === "prize_content"
+            ? prizeView(content, {
+                  mine: me,
+                  direct: chatId?.kind === "direct_chat",
+                  previewingOrLapsed,
+                  now: $now500,
+                  diamond: $isDiamondStore,
+                  lifetimeDiamond: $isLifetimeDiamondStore,
+                  streak: $chitStateStore.streak,
+                  chitEarned: $chitStateStore.totalChitEarned,
+              })
+            : undefined,
     );
-    let userEligible = $derived(
-        (!content.diamondOnly || $isDiamondStore) &&
-            (!content.lifetimeDiamondOnly || $isLifetimeDiamondStore) &&
-            // Unique person ("verified user") gating is suspended - always eligible
-            content.streakOnly <= $chitStateStore.streak &&
-            content.minChitEarned <= $chitStateStore.totalChitEarned,
+    let claimedByYou = $derived(view?.claimedByYou ?? false);
+    let finished = $derived(view?.finished ?? $now500 >= Number(content.endDate));
+    let allClaimed = $derived(view?.allClaimed ?? false);
+    let userEligible = $derived(view?.eligible ?? false);
+    let disabled = $derived(
+        previewingOrLapsed || finished || claimedByYou || allClaimed || !userEligible,
     );
-    let disabled = $derived(finished || claimedByYou || allClaimed || !userEligible);
     let timeRemaining = $derived(
         finished
             ? $_("prizes.finished")

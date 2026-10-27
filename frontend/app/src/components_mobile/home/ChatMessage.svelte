@@ -46,6 +46,7 @@
         translationsStore,
         unconfirmedReadByThem,
         undeletingMessagesStore,
+        userCanDeleteMessage,
         type UserSummary,
     } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
@@ -395,12 +396,14 @@
             ? $selectedChatMembersStore
             : new Map<string, Member>(),
     );
-    // The sender, or for a relayed message whoever linked its account, if they're in the chat. A
-    // message relayed from the user's own linked account is shown as theirs, so isn't tipped.
-    // Only the members held count. In a chat too big for all of them to be held, the client looks
-    // the linked user up among its members, so until they're found the message can't be tipped. Nor
-    // can it in a thread preview from another chat, whose members aren't held.
-    let tipTo = $derived(tipRecipient(msg, $bridgedUsersStore, (userId) => chatMembers.has(userId)));
+    // The sender, unless a bot, or for a relayed message whoever linked its account, if they're in
+    // the chat. A message relayed from the user's own linked account is shown as theirs, so isn't
+    // tipped. Only the members held count. In a chat too big for all of them to be held, the client
+    // looks the linked user up among its members, so until they're found the message can't be
+    // tipped. Nor can it in a thread preview from another chat, whose members aren't held.
+    let tipTo = $derived(
+        tipRecipient(msg, sender, $bridgedUsersStore, (userId) => chatMembers.has(userId)),
+    );
     let canTip = $derived(
         canTipMessages &&
             !me &&
@@ -463,9 +466,7 @@
     let canForward = $derived(client.canForward(msg.content));
     let canTranslate = $derived((client.getMessageText(msg.content) ?? "").length > 0);
     let canDeleteMessage = $derived(
-        (canDelete || me) &&
-            !inert &&
-            !(msg.content.kind === "video_call_content" && msg.content.ended === undefined),
+        userCanDeleteMessage(msg, confirmed, $currentUserIdStore, canDelete) && !inert,
     );
     let showConfirmDelete = $state(false);
 

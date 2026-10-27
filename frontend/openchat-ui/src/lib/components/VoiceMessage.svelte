@@ -12,6 +12,8 @@
   interface Props {
     /** 0–1 */
     progress?: number;
+    /** The recording's waveform, 0–1 per bar; placeholder bars without it. */
+    levels?: number[];
     elapsed: string;
     total: string;
     speed?: Speed;
@@ -26,7 +28,7 @@
     onSeek?: (fraction: number) => void;
   }
 
-  let { progress = 0, elapsed, total, speed = '1x', side = 'received', lastInGroup = true, time, cornerBottomLeft = null, playing = false, onPlay, onPause, onSpeedChange, onSeek }: Props = $props();
+  let { progress = 0, levels, elapsed, total, speed = '1x', side = 'received', lastInGroup = true, time, cornerBottomLeft = null, playing = false, onPlay, onPause, onSpeedChange, onSeek }: Props = $props();
   const t = useT();
 
   // play state, seeking and speed changes stick locally until the parent sends new values
@@ -64,7 +66,7 @@
       <div class="play" class:playing={isPlaying} onclick={togglePlay} role="button" tabindex="0" aria-label={t(isPlaying ? 'ui.voiceMessage.pause' : 'ui.voiceMessage.play')}>
         <span class="play-icon"></span>
       </div>
-      <div class="wave"><Waveform levels={LEVELS} progress={at} seekable={true} onSeek={seek} height={22} label={t('ui.voiceMessage.seek')} /></div>
+      <div class="wave"><Waveform levels={levels?.length ? levels : LEVELS} progress={at} seekable={true} onSeek={seek} height={22} label={t('ui.voiceMessage.seek')} /></div>
       <div class="speed" onclick={cycleSpeed} role="button" tabindex="0">{SPEEDS[speedIndex]}</div>
     </div>
     <div class="meta">

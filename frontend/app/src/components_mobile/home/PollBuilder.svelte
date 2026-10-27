@@ -12,6 +12,7 @@
         ExpandingTextArea,
     } from "component-lib";
     import {
+        allowsVoteChange,
         ONE_DAY,
         OpenChat,
         publish,
@@ -90,7 +91,7 @@
         return {
             visibility: poll.anonymous ? "poll.anonymous" : "poll.app.public",
             voteType: poll.allowMultipleVotesPerUser ? "poll.app.multiVote" : "poll.app.singleVote",
-            voteEdit: poll.allowUserToChangeVote
+            voteEdit: allowsVoteChange(poll)
                 ? "poll.app.canChangeVote"
                 : "poll.app.cantChangeVote",
             viewResults: poll.showVotesBeforeEndDate ? undefined : "poll.app.resultsWillShow",
@@ -199,7 +200,7 @@
             },
             config: {
                 allowMultipleVotesPerUser: poll.allowMultipleVotesPerUser,
-                allowUserToChangeVote: poll.allowUserToChangeVote,
+                allowUserToChangeVote: allowsVoteChange(poll),
                 text: poll.pollQuestion === "" ? undefined : poll.pollQuestion,
                 showVotesBeforeEndDate: poll.showVotesBeforeEndDate,
                 endDate: BigInt(+new Date()) + poll.duration,
@@ -399,14 +400,18 @@
                     </Setting>
 
                     <Setting
-                        toggle={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
+                        toggle={() => {
+                            if (!poll.allowMultipleVotesPerUser)
+                                poll.allowUserToChangeVote = !poll.allowUserToChangeVote;
+                        }}
                         info={"poll.app.settings.changeVoteInfo"}>
                         <Switch
                             onChange={() =>
                                 (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
                             width={"fill"}
                             reverse
-                            checked={!poll.allowUserToChangeVote}>
+                            disabled={poll.allowMultipleVotesPerUser}
+                            checked={!allowsVoteChange(poll)}>
                             <Translatable
                                 resourceKey={i18nKey("poll.app.settings.changeVoteLabel")} />
                         </Switch>

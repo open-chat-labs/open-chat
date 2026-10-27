@@ -199,6 +199,13 @@
         "unlink": "Hủy liên kết",
         "unlinkFailed": "Không thể hủy liên kết tài khoản"
     },
+    "cashtag": {
+        "chartLabel": "Giá {symbol} trong 7 ngày qua",
+        "change7d": "{change} trong 7 ngày",
+        "noHistory": "Không có giao dịch nào trong 7 ngày qua",
+        "noPrice": "Không có giá",
+        "priceDataBy": "Dữ liệu giá từ {source}"
+    },
     "bridgedUserUnknown": "Người dùng {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
@@ -1677,6 +1684,9 @@
     "owner": "Chủ",
     "ownerCantLeave": "Bạn phải thêm chủ sở hữu khác trước khi có thể rời khỏi {level}",
     "p2pSwap": {
+        "cancelOffer": "Hủy đề nghị",
+        "cancelOfferQuestion": "Hủy đề nghị hoán đổi này?",
+        "keepOffer": "Giữ đề nghị",
         "accept": "Chấp nhận",
         "accepted": "Đã được chấp nhận",
         "acceptedBy": "Ưu đãi này đã được {user} chấp nhận và đang chờ hoàn thành.",
@@ -2200,6 +2210,7 @@
     "removedBy": "{changedBy} đã xóa {changed} khỏi {level}",
     "removeMemberFailed": "Không thể xóa thành viên",
     "removePreviewQuestion": "Xóa bản xem trước?",
+    "errorRemovingLinkPreview": "Không thể xóa bản xem trước",
     "renderPreviews": "Tự động hiển thị bản xem trước liên kết",
     "reply": "Phản hồi",
     "replyPrivately": "Phản hồi kín",
@@ -2710,7 +2721,10 @@
         "updateTitle": "Cập nhật {name}",
         "urlLabel": "URL Webhook",
         "username": "móc treo",
-        "viewEditAction": "Xem/chỉnh sửa chi tiết webhook"
+        "viewEditAction": "Xem/chỉnh sửa chi tiết webhook",
+        "registerFailed": "Rất tiếc, chúng tôi không thể đăng ký webhook",
+        "updateFailed": "Rất tiếc, chúng tôi không thể cập nhật webhook",
+        "regenerateFailed": "Rất tiếc, chúng tôi không thể tạo lại URL của webhook"
     },
     "websiteVersion": "của trang web",
     "weeks": "Tuần",

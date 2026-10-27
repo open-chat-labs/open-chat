@@ -1,4 +1,12 @@
-import type { CommunityIdentifier, LeaveOrDelete, MultiUserChatIdentifier } from "@client";
+import type {
+    BotInstallationLocation,
+    CommunityIdentifier,
+    ExternalBotLike,
+    GroupChatIdentifier,
+    LeaveOrDelete,
+    MultiUserChatIdentifier,
+    PriceSubject,
+} from "@client";
 import type { DialogStack } from "../../shell/dialogStack.svelte";
 import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
@@ -34,18 +42,23 @@ export type LinkedDialog =
     | { kind: "puzzle"; gameId?: string; how?: boolean }
     // the claim calendar (?chit=calendar), from the CHIT dialog or the profile's CHIT section
     | { kind: "claim_history" }
+    // picking a chat to share into what another app shared (/share?title&text&url, which redirects
+    // to ?share=<the fields, as JSON>): its text goes into the chosen chat's draft
+    | { kind: "share"; title?: string; text?: string; url?: string }
     | { kind: "leaderboard" };
 
-// someone's profile card, for a name clicked in a message; confirming leaving or deleting a chat or
-// community, called `name`; Manage for a group, channel or community (its settings, or its About
-// page for someone who can't edit it, and inviting people or sharing its link); a new channel; or
-// creating, editing or deleting one of a community's user groups
+// someone's profile card, for a name clicked in a message; a token's or coin's price card, for a
+// cashtag clicked in one; confirming leaving or deleting a chat or community, called `name`; Manage
+// for a group, channel or community (its settings, or its About page for someone who can't edit it,
+// and inviting people or sharing its link); a new channel; or creating, editing or deleting one of a
+// community's user groups
 export type LocalDialog =
     | ({
           kind: "user";
           /** Your DM with them: the Profile / This chat tabs, opened on this one. */
           dmTab?: "profile" | "chat";
       } & ProfileCard)
+    | { kind: "cashtag"; subject: PriceSubject }
     | { kind: "leave_or_delete"; action: LeaveOrDelete; name: string }
     | {
           kind: "manage";
@@ -54,6 +67,21 @@ export type LocalDialog =
           /** Invite & share's tab, when it opens there. */
           inviteTab?: "people" | "share";
       }
+    | { kind: "create_group"; level: "group" | "community" }
+    | { kind: "convert_group"; chatId: GroupChatIdentifier }
+    | {
+          kind: "bot";
+          /** Where it is, or would be, installed: a group, or a community (a channel's bots are its community's). */
+          location: BotInstallationLocation;
+          bot: ExternalBotLike;
+      }
+    | {
+          kind: "webhook";
+          chatId: MultiUserChatIdentifier;
+          /** The webhook to edit; none registers one. */
+          webhookId?: string;
+      }
+    | { kind: "import_group"; chatId: GroupChatIdentifier }
     | {
           kind: "new_channel";
           communityId: CommunityIdentifier;
@@ -108,11 +136,27 @@ export const dialogs: Dialogs = {
     // someone's profile card. A dialog, not anchored to the name clicked as the old desktop card was
     user: () => import("../user/UserDialogScreen.svelte"),
 
+    // a token's or coin's price card, with its last 7 days' prices
+    cashtag: () => import("../cashtag/TokenDialogScreen.svelte"),
+
     // confirming leaving or deleting a group, channel, DM or community (4b)
     leave_or_delete: () => import("../chats/LeaveOrDeleteDialogScreen.svelte"),
 
     // Manage for a group, channel or community: its settings (or About page) and Invite & share (4b)
     manage: () => import("../group/ManageDialogScreen.svelte"),
+
+    // converting a group to a community, or importing it into one you own (4b)
+    convert_group: () => import("../group/ConvertGroupDialogScreen.svelte"),
+    import_group: () => import("../group/ImportGroupDialogScreen.svelte"),
+
+    // a bot's details, installing it, changing its permissions or removing it (4b)
+    bot: () => import("../group/BotDialogScreen.svelte"),
+
+    // registering or editing a group's or channel's webhook (4b)
+    webhook: () => import("../group/WebhookDialogScreen.svelte"),
+
+    // a new group or community (4b)
+    create_group: () => import("../group/CreateGroupDialogScreen.svelte"),
 
     // a new channel in a community, or an embedded one (4b)
     new_channel: () => import("../group/CreateChannelDialogScreen.svelte"),
@@ -131,6 +175,9 @@ export const dialogs: Dialogs = {
 
     // the CHIT claim calendar (8e)
     claim_history: () => import("../chit/ClaimHistoryDialogScreen.svelte"),
+
+    // picking a chat to share into (4d)
+    share: () => import("../share/ShareDialogScreen.svelte"),
 };
 
 // each linked dialog's query param; the CHIT dialog's views share its param, told apart by its value
@@ -143,10 +190,11 @@ const PARAMS: Record<LinkedDialog["kind"], string> = {
     puzzle: "chit",
     claim_history: "chit",
     leaderboard: "hof",
+    share: "share",
 };
 
 // the params, in the order they win when more than one is in the URL
-const PARAM_ORDER = ["profile", "diamond", "chit", "hof"];
+const PARAM_ORDER = ["profile", "diamond", "chit", "hof", "share"];
 
 // the CHIT dialog's views' values
 const EARN = "earn";
@@ -170,6 +218,8 @@ export function linkedDialog(query: URLSearchParams): LinkedDialog | undefined {
             return { kind: "diamond" };
         case "hof":
             return { kind: "leaderboard" };
+        case "share":
+            return { kind: "share", ...sharedFields(value) };
         default:
             if (value === INSURANCE) return { kind: "streak_insurance" };
             if (value === CALENDAR) return { kind: "claim_history" };
@@ -189,6 +239,29 @@ export function linkedDialog(query: URLSearchParams): LinkedDialog | undefined {
     }
 }
 
+// what was shared, from ?share's value (JSON): only its string fields, and nothing from a value that
+// isn't JSON
+function sharedFields(value: string): { title?: string; text?: string; url?: string } {
+    try {
+        const parsed: unknown = JSON.parse(value);
+        if (typeof parsed !== "object" || parsed === null) return {};
+        const field = (key: string) => {
+            const v: unknown = Reflect.get(parsed, key);
+            return typeof v === "string" && v !== "" ? v : undefined;
+        };
+        return { title: field("title"), text: field("text"), url: field("url") };
+    } catch {
+        return {};
+    }
+}
+
+/** The query that opens the share picker for what another app shared (/share?title&text&url). */
+export function shareQuery(shared: { title: string; text: string; url: string }): string {
+    // the fields alone: a route also carries its own kind
+    const { title, text, url } = shared;
+    return openLinkedDialog(new URLSearchParams(), { kind: "share", title, text, url }) ?? "";
+}
+
 function isProfileLinkSection(value: string): value is ProfileLinkSection {
     return PROFILE_LINK_SECTIONS.includes(value);
 }
@@ -204,6 +277,8 @@ function valueOf(dialog: LinkedDialog): string | undefined {
             return INSURANCE;
         case "claim_history":
             return CALENDAR;
+        case "share":
+            return JSON.stringify({ title: dialog.title, text: dialog.text, url: dialog.url });
         case "puzzle": {
             const view = dialog.how ? HOW_TO : PUZZLE;
             return dialog.gameId === undefined ? view : `${view}:${dialog.gameId}`;

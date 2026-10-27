@@ -6,29 +6,48 @@
     import { showInRightColumn } from "../app/rightPanel";
     import {
         allUsersStore,
+        formatClock,
         anonUserStore,
         blockedUsersStore,
         botState,
+        buildTransactionUrl,
         byContext as typersByContext,
         chatIdentifiersEqual,
         chatIdentifierToString,
         chatsInitialisedStore,
+        chitStateStore,
+        communitiesStore,
+        cryptoBalanceStore,
+        cryptoLookup,
         currentUserIdStore,
         eventsStore,
+        exchangeRatesLookupStore,
         failedMessagesStore,
         favouritesStore,
+        formatTokens,
+        getConvertedBalances,
+        i18nKey,
+        isDiamondStore,
+        isLifetimeDiamondStore,
+        isPreviewingOrLapsed,
         isPrivateCommunityPreview,
         localUpdates,
         messageIndexStore,
         messagesRead,
+        pollVoteChange,
+        publish,
         screenWidth,
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
         selectedChatPinnedMessagesStore,
+        selectedChatWebhooksStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
         suspendedUserStore,
+        swapAcceptCost,
+        swapActions,
+        swapFailureMessage,
         threadOpenStore,
         throttleDeadline,
         TimelineGrouper,
@@ -38,8 +57,12 @@
         type ChatIdentifier,
         type ChatSummary,
         type EventWrapper,
+        type FileContent,
         type Message,
         type OpenChat,
+        type P2PSwapContent,
+        type PollContent,
+        type PrizeContent,
     } from "@client";
     import ConversationHeader from "@openchat/ui/src/features/components/ConversationHeader.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
@@ -57,12 +80,15 @@
         focusEntryOnOpen,
         throttleCountdown,
     } from "@src/logic/composer/composer";
-    import { enterSend } from "@src/stores/settings";
+    import { enterSend, lowBandwidth } from "@src/stores/settings";
+    import { getProxyAdjustedBlobUrl } from "@src/utils/media";
     import { now500 } from "@src/stores/time";
+    import { toastStore } from "@src/stores/toast";
+    import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { isTouchOnlyDevice } from "@src/utils/devices";
     import { isSingleEmoji } from "@src/utils/emojis";
-    import { buildDisplayName } from "@src/utils/user";
+    import { buildDisplayName, findUser } from "@src/utils/user";
     import {
         aggregateEventText,
         isTextEvent,
@@ -76,12 +102,23 @@
     import Composer from "./Composer.svelte";
     import {
         headerMenuItems,
+        isMedia,
+        mediaHeld,
         messageStatus,
         senderColor,
         untilNextDay,
         type ConversationContext,
+        type MediaContent,
         type MessageRow,
     } from "./conversation.adapter";
+    import MediaViewer from "./MediaViewer.svelte";
+    import ConfirmDialog from "./ConfirmDialog.svelte";
+    import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
+    import SignInAgainDialog from "../auth/SignInAgainDialog.svelte";
+    import { SignInAgain } from "../auth/signInAgain.svelte";
+    import { prizeClaimStep } from "@src/logic/prize/prizeClaim";
+    import { interpolate } from "@i18n/i18n";
+    import { VoicePlayer, type VoiceSpeed } from "./voicePlayer.svelte";
     import { RowCache } from "./rowCache";
     import { profileClickedEvent } from "@src/web-components/profileLink";
 
@@ -105,19 +142,88 @@
         return () => clearTimeout(timer);
     });
 
+    // what a prize's requirements ask of the reader; rows are made again when it changes (joining
+    // a previewed chat offers its prizes' Claim)
+    const claimant = $derived({
+        previewingOrLapsed: chat !== undefined && isPreviewingOrLapsed(chat, $communitiesStore),
+        diamond: $isDiamondStore,
+        lifetimeDiamond: $isLifetimeDiamondStore,
+        streak: $chitStateStore.streak,
+        chitEarned: $chitStateStore.totalChitEarned,
+    });
+
+    // the exchange rates load after the first rows; once they do, rows are made again (below)
+    const ratesLoaded = $derived($exchangeRatesLookupStore.size > 0);
+
     const ctx = $derived.by((): ConversationContext => {
         void day;
+        // a revealed image redoes its row (the cache is cleared with it), as do the token registry
+        // and the exchange rates arriving: rows are made again from this, so it has to change too
+        void rowsVersion;
+        void $cryptoLookup;
+        void ratesLoaded;
         const users = $allUsersStore;
+        const webhooks = $selectedChatWebhooksStore;
         return {
             me,
             you: $_("you"),
-            userName: (userId) => client.displayName(users.get(userId)),
+            // a webhook's messages are sent as it, named as the old timeline names them (findUser)
+            userName: (userId) => client.displayName(findUser(userId, users, webhooks)),
             contentText: (content) => client.getContentAsText($_, content),
             time: (timestamp) => client.toShortTimeString(new Date(Number(timestamp))),
             date: (timestamp) =>
                 client.formatMessageDate(timestamp, $_("today"), $_("yesterday"), true, true),
+            media: {
+                lowBandwidth: $lowBandwidth,
+                revealed: (messageId) => revealed.has(messageId),
+                url: getProxyAdjustedBlobUrl,
+            },
+            direct: chat?.kind === "direct_chat",
+            readonly: chat !== undefined && client.isChatReadOnly(chat.id),
+            now: Date.now(),
+            claimant,
+            text: (key) => interpolate($_, key),
+            token: (ledger) => {
+                const token = $cryptoLookup.get(ledger);
+                if (token === undefined) return undefined;
+                return {
+                    symbol: token.symbol,
+                    logo: token.logo,
+                    amount: (e8s) => formatTokens(e8s, token.decimals),
+                    usd: (e8s) => {
+                        const { dollarBalance } = getConvertedBalances(
+                            exchangeRatesLookupStore.value,
+                            e8s,
+                            token.decimals,
+                            ledger,
+                        );
+                        return dollarBalance === undefined
+                            ? ""
+                            : formatConvertedValue("usd", dollarBalance);
+                    },
+                };
+            },
         };
     });
+
+    // ── media ──
+
+    // what the reader asked to see full size in low bandwidth (5a invariant 1), and what's open
+    // in the viewer
+    const revealed = new Set<bigint>();
+    let viewing = $state<MediaContent>();
+
+    function openMedia(msg: Message) {
+        if (!isMedia(msg.content)) return;
+        if (mediaHeld(msg.content, msg.messageId, ctx.media)) {
+            // the first click shows it in the bubble; the next opens it
+            revealed.add(msg.messageId);
+            rows.clear();
+            rowsVersion += 1;
+        } else {
+            viewing = msg.content;
+        }
+    }
 
     const level = $derived(chat?.kind === "channel" ? "channel" : "group");
     const eventCtx = $derived.by((): EventTextContext => {
@@ -354,10 +460,20 @@
     // updates don't redo every bubble; started again for a new chat, wording or day
     const rows = new RowCache();
     const groupMessages = new WeakMap<MessageRow, GroupMessage[]>();
+    // bumped when a revealed image needs its row redone
+    let rowsVersion = $state(0);
     $effect.pre(() => {
         void chatKey;
         void $_;
         void day;
+        // rows don't key on the media view or the token registry (a transfer shows as text until
+        // its ledger is known), so a change to either starts them again
+        void $lowBandwidth;
+        void $cryptoLookup;
+        // nor the exchange rates: they're redone once the rates first load (a dollar value would be
+        // missing), not at every five-minute refresh
+        void ratesLoaded;
+        void claimant;
         rows.clear();
     });
 
@@ -367,14 +483,262 @@
         return client.formatMessageDate(timestamp, $_("today"), $_("yesterday"));
     }
 
-    function messagesFor(row: MessageRow, body: Snippet, withBody: boolean): GroupMessage[] {
+    function messagesFor(
+        row: MessageRow,
+        body: Snippet,
+        withBody: boolean,
+        evt: EventWrapper<Message>,
+    ): GroupMessage[] {
         let messages = groupMessages.get(row);
         if (messages === undefined) {
-            messages = [withBody ? { ...row.message, body } : row.message];
+            const message = withBody
+                ? ({ ...row.message, body } as GroupMessage)
+                : withActions(row, evt.event);
+            messages = [{ ...message, ...previewRemoval(evt) } as GroupMessage];
             groupMessages.set(row, messages);
         }
         return messages;
     }
+
+    // ── link previews ──
+
+    // the sender can remove a preview from their own text message, once they've confirmed it, as
+    // in the old trees
+    let removingPreview = $state<{ evt: EventWrapper<Message>; url: string }>();
+
+    function previewRemoval(evt: EventWrapper<Message>) {
+        const msg = evt.event;
+        if (msg.sender !== me || msg.content.kind !== "text_content" || msg.ogPreviews.length === 0)
+            return {};
+        return {
+            onRemovePreview: (index: number) => {
+                const url = msg.ogPreviews[index]?.url;
+                if (url !== undefined) removingPreview = { evt, url };
+            },
+        };
+    }
+
+    async function removePreview() {
+        const removing = removingPreview;
+        removingPreview = undefined;
+        if (chat === undefined || removing === undefined) return;
+        const removed = await client.hideLinkPreview(
+            { chatId: chat.id },
+            removing.evt,
+            removing.url,
+        );
+        if (!removed) toastStore.showFailureToast(i18nKey("errorRemovingLinkPreview"));
+    }
+
+    // a rich kind's handlers, and a voice message's playing state (read as it renders, so playing
+    // doesn't redo the row)
+    function withActions(row: MessageRow, msg: Message): GroupMessage {
+        const content = msg.content;
+        if (isMedia(content)) {
+            return { ...row.message, onOpen: () => openMedia(msg) } as GroupMessage;
+        }
+        if (content.kind === "crypto_content") {
+            const url = buildTransactionUrl(content.transfer, $cryptoLookup);
+            return url === undefined
+                ? row.message
+                : ({
+                      ...row.message,
+                      onOpen: () => window.open(url, "_blank", "noopener"),
+                  } as GroupMessage);
+        }
+        if (content.kind === "p2p_swap_content") {
+            return {
+                ...row.message,
+                onAccept: () => startSwap(msg, content, "accept"),
+                onCancel: () => startSwap(msg, content, "cancel"),
+            } as GroupMessage;
+        }
+        if (content.kind === "prize_content") {
+            return {
+                ...row.message,
+                onClaim: (e: MouseEvent) => claim(msg, content, e),
+            } as GroupMessage;
+        }
+        if (content.kind === "poll_content") {
+            return {
+                ...row.message,
+                onVote: (next: number[]) => vote(msg, content, next),
+            } as GroupMessage;
+        }
+        if (content.kind === "file_content") {
+            return { ...row.message, onDownload: () => download(content) } as GroupMessage;
+        }
+        if (content.kind === "audio_content") {
+            const key = row.message.id ?? "";
+            const url = getProxyAdjustedBlobUrl(content.blobUrl);
+            const length = Number(content.durationMs) / 1000;
+            return {
+                ...row.message,
+                get playing() {
+                    return voice.playing(key);
+                },
+                get progress() {
+                    return length > 0 ? voice.time(key) / length : 0;
+                },
+                get elapsed() {
+                    return formatClock(voice.time(key));
+                },
+                get speed() {
+                    return voice.speed;
+                },
+                onPlay: () => voice.play(key, url),
+                onPause: () => voice.pause(key),
+                onSeek: (fraction: number) => voice.seek(key, url, fraction * length),
+                onSpeedChange: (speed: VoiceSpeed) => voice.setSpeed(speed),
+            } as GroupMessage;
+        }
+        return row.message;
+    }
+
+    // a file is saved under its own name. The blob is on the canister's own origin, where a
+    // link's download attribute is ignored (the tab would go to the file), so it's fetched and
+    // saved from here; if that fails it opens in a new tab, as the old trees do
+    async function download(content: FileContent) {
+        const url = getProxyAdjustedBlobUrl(content.blobUrl);
+        if (url === undefined) return;
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`status ${resp.status}`);
+            const local = URL.createObjectURL(await resp.blob());
+            const link = document.createElement("a");
+            link.href = local;
+            link.download = content.name;
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(local), 60_000);
+        } catch (err) {
+            console.warn("Couldn't download a file, opening it instead", err);
+            window.open(url, "_blank", "noopener");
+        }
+    }
+
+    // a poll vote, if the poll can take one (5a invariant 4, pollVoteChange); the vote shows at once,
+    // as in the old trees
+    async function vote(msg: Message, content: PollContent, next: number[]) {
+        if (chat === undefined || chat.kind === "direct_chat") return;
+        const change = pollVoteChange(
+            content,
+            {
+                me,
+                sender: msg.sender,
+                direct: false,
+                readonly: client.isChatReadOnly(chat.id),
+            },
+            next,
+        );
+        if (change === undefined) return;
+        const voted = await client.registerPollVote(
+            chat.id,
+            undefined,
+            msg.messageId,
+            msg.messageIndex,
+            change.answerIndex,
+            change.type,
+        );
+        if (!voted) toastStore.showFailureToast(i18nKey("poll.voteFailed"));
+    }
+
+    // a prize claim, from the reader's own click (claimPrize refuses any other); a captcha prize
+    // asks them to sign in again first and claims with that sign-in's proof (prizeClaimStep, 5a
+    // invariant 2)
+    let claiming = $state<{ msg: Message; content: PrizeContent; e: MouseEvent }>();
+    const prizeSignIn = new SignInAgain(
+        client,
+        (key) => interpolate($_, key),
+        async (outcome) => {
+            const waiting = claiming;
+            claiming = undefined;
+            if (waiting !== undefined) {
+                await claim(waiting.msg, waiting.content, waiting.e, {
+                    proof: outcome.signInProofJwt,
+                });
+            }
+            return undefined;
+        },
+    );
+
+    async function claim(
+        msg: Message,
+        content: PrizeContent,
+        e: MouseEvent,
+        signIn?: { proof: string | undefined },
+    ) {
+        if (chat === undefined || chat.kind === "direct_chat") return;
+        const step = prizeClaimStep(content.requiresCaptcha, signIn);
+        if (step.kind === "authenticate") {
+            claiming = { msg, content, e };
+            return;
+        }
+        if (step.kind === "failed") {
+            toastStore.showFailureToast(step.message);
+            return;
+        }
+        const claimed = await client.claimPrize(chat.id, msg.messageId, e, step.signInProof);
+        if (!claimed) toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
+    }
+
+    function stopClaiming() {
+        prizeSignIn.dispose();
+        claiming = undefined;
+    }
+
+    // accepting someone's swap offer (Diamond only: anyone else is offered the upgrade, as in the
+    // old trees) or cancelling your own, once confirmed; only while it's open (swapActions). The
+    // accept pays from the OpenChat wallet; the client asks for the PIN
+    let swapping = $state<{ msg: Message; content: P2PSwapContent; action: "accept" | "cancel" }>();
+
+    function startSwap(msg: Message, content: P2PSwapContent, action: "accept" | "cancel") {
+        if (chat === undefined) return;
+        const { canAccept, canCancel } = swapActions(content, {
+            mine: msg.sender === me,
+            now: Date.now(),
+            readonly: client.isChatReadOnly(chat.id),
+        });
+        if (action === "accept" ? !canAccept : !canCancel) return;
+        if (action === "accept" && !$isDiamondStore) {
+            publish("upgrade");
+            return;
+        }
+        swapping = { msg, content, action };
+    }
+
+    async function settleSwap() {
+        const swap = swapping;
+        swapping = undefined;
+        if (chat === undefined || swap === undefined) return;
+        const { msg, content, action } = swap;
+        const resp =
+            action === "accept"
+                ? await client.acceptP2PSwap(
+                      chat.id,
+                      undefined,
+                      msg.messageId,
+                      content.token1,
+                      content.token1Amount,
+                  )
+                : await client.cancelP2PSwap(chat.id, undefined, msg.messageId);
+        if (resp.kind === "success") {
+            // the accept paid token1; a cancel returns token0
+            client.refreshAccountBalance(
+                action === "accept" ? content.token1.ledger : content.token0.ledger,
+            );
+        } else if ($pinNumberErrorMessageStore !== undefined) {
+            toastStore.showFailureToast($pinNumberErrorMessageStore);
+        } else {
+            toastStore.showFailureToast(swapFailureMessage(action === "accept"));
+        }
+    }
+
+    // one voice message plays at a time, and none once the chat is left
+    const voice = new VoicePlayer();
+    $effect(() => {
+        void chatKey;
+        return () => voice.stop();
+    });
 
     // a lone native emoji shows as the bubble's own, large; anything else (a custom emoji too)
     // goes through the markdown
@@ -534,6 +898,7 @@
                                             body,
                                             content.kind === "text_content" &&
                                                 withMarkdown(content.text),
+                                            evt,
                                         )}
                                     />
                                 </div>
@@ -628,6 +993,71 @@
             />
         {/key}
     </div>
+{/if}
+
+{#if claiming !== undefined}
+    <SignInAgainDialog
+        flow={prizeSignIn}
+        reason={$_("prizes.authRequiredMessage")}
+        onClose={stopClaiming}
+    />
+{/if}
+{#if removingPreview !== undefined}
+    <ConfirmDialog
+        title={$_("removePreviewQuestion")}
+        confirmLabel={$_("remove")}
+        onConfirm={removePreview}
+        onClose={() => (removingPreview = undefined)}
+    />
+{/if}
+{#if swapping !== undefined}
+    {@const content = swapping.content}
+    {#if swapping.action === "accept"}
+        {@const cost = swapAcceptCost(content.token1Amount, content.token1.fee)}
+        {@const short = ($cryptoBalanceStore.get(content.token1.ledger) ?? 0n) < cost.total}
+        {@const amount = client.formatTokens(cost.total, content.token1.decimals)}
+        {@const fees = client.formatTokens(cost.fees, content.token1.decimals)}
+        <ConfirmDialog
+            title={$_("p2pSwap.accept")}
+            message={short
+                ? $_("p2pSwap.insufficientBalanceMessage", {
+                      values: { amount, token: content.token1.symbol, fees },
+                  })
+                : $_("p2pSwap.confirmAccept", {
+                      values: {
+                          amount,
+                          token: content.token1.symbol,
+                          fees,
+                          amountOther: client.formatTokens(
+                              content.token0Amount,
+                              content.token0.decimals,
+                          ),
+                          tokenOther: content.token0.symbol,
+                      },
+                  })}
+            confirmLabel={$_("p2pSwap.accept")}
+            disabled={short}
+            onConfirm={settleSwap}
+            onClose={() => (swapping = undefined)}
+        />
+    {:else}
+        <ConfirmDialog
+            title={$_("p2pSwap.cancelOfferQuestion")}
+            message={$_("p2pSwap.confirmCancel", {
+                values: {
+                    amount: client.formatTokens(content.token0Amount, content.token0.decimals),
+                    token: content.token0.symbol,
+                },
+            })}
+            confirmLabel={$_("p2pSwap.cancelOffer")}
+            cancelLabel={$_("p2pSwap.keepOffer")}
+            onConfirm={settleSwap}
+            onClose={() => (swapping = undefined)}
+        />
+    {/if}
+{/if}
+{#if viewing !== undefined}
+    <MediaViewer content={viewing} onClose={() => (viewing = undefined)} />
 {/if}
 
 <style>

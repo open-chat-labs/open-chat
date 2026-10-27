@@ -149,8 +149,8 @@ fn prepare(
         Payee::User(recipient) => TransferRecipient::User {
             user_id: recipient,
             // A community member's wallet is held for them, even once they've left the channel,
-            // and a bot's comes from its id. A user who has left the community is paid in the
-            // wallet looked up for them.
+            // and a bot has none (see `member_wallet`). A user who has left the community is paid
+            // in the wallet looked up for them.
             wallet: if !recipient.is_indexed() || state.data.members.get_by_user_id(&recipient).is_some() {
                 state.member_wallet(recipient)?
             } else if let Some((non_member, wallet)) = non_member_wallet

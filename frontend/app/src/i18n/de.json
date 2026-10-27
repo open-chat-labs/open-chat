@@ -199,6 +199,13 @@
         "unlink": "Verknüpfung aufheben",
         "unlinkFailed": "Die Verknüpfung des Kontos konnte nicht aufgehoben werden"
     },
+    "cashtag": {
+        "chartLabel": "{symbol}-Preis in den letzten 7 Tagen",
+        "change7d": "{change} in 7 Tagen",
+        "noHistory": "Keine Trades in den letzten 7 Tagen",
+        "noPrice": "Kein Preis verfügbar",
+        "priceDataBy": "Preisdaten von {source}"
+    },
     "bridgedUserUnknown": "{platform}-Nutzer",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
@@ -1677,6 +1684,9 @@
     "owner": "Eigentümer",
     "ownerCantLeave": "Sie müssen einen weiteren Eigentümer hinzufügen, bevor Sie {level} verlassen können.",
     "p2pSwap": {
+        "cancelOffer": "Angebot zurückziehen",
+        "cancelOfferQuestion": "Dieses Tauschangebot zurückziehen?",
+        "keepOffer": "Angebot behalten",
         "accept": "Akzeptieren",
         "accepted": "Akzeptiert",
         "acceptedBy": "Dieses Angebot wurde von {user} angenommen und wartet auf den Abschluss.",
@@ -2200,6 +2210,7 @@
     "removedBy": "{changedBy} hat {changed} aus {level} entfernt",
     "removeMemberFailed": "Mitglied kann nicht entfernt werden",
     "removePreviewQuestion": "Vorschau entfernen?",
+    "errorRemovingLinkPreview": "Vorschau konnte nicht entfernt werden",
     "renderPreviews": "Linkvorschauen automatisch rendern",
     "reply": "Antwort",
     "replyPrivately": "Privat antworten",
@@ -2710,7 +2721,10 @@
         "updateTitle": "Aktualisieren Sie {name}",
         "urlLabel": "Webhook-URL",
         "username": "Webhook",
-        "viewEditAction": "Webhook-Details anzeigen/bearbeiten"
+        "viewEditAction": "Webhook-Details anzeigen/bearbeiten",
+        "registerFailed": "Leider konnten wir den Webhook nicht registrieren",
+        "updateFailed": "Leider konnten wir den Webhook nicht aktualisieren",
+        "regenerateFailed": "Leider konnten wir die URL des Webhooks nicht neu erzeugen"
     },
     "websiteVersion": "der Webseite",
     "weeks": "Wochen",

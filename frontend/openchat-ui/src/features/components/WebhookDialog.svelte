@@ -59,10 +59,12 @@
     onSave?: (hook: WebhookSave) => Promise<unknown> | void;
     /** Replace the secret; resolve with the new URL. Hidden without it. */
     onRegenerate?: (hook: { id: string }) => Promise<{ url: string }>;
+    /** Remove the webhook, after the user confirms; the dialog closes when this resolves. Hidden without it. */
+    onDelete?: (hook: { id: string }) => Promise<unknown> | void;
     onCancel?: () => void;
   }
 
-  let { dialogMode = 'register', webhook = null, groupName, takenNames = [], onSave, onRegenerate, onCancel }: Props = $props();
+  let { dialogMode = 'register', webhook = null, groupName, takenNames = [], onSave, onRegenerate, onDelete, onCancel }: Props = $props();
   const t = useT();
 
   let nameEdit = $state<string | null>(null);
@@ -75,10 +77,12 @@
   // one flow for both host calls (save leaves on success, regenerate stays): busy / leaving / the exit
   // (lib/behaviours/dialog.svelte.ts); `action` says which call the busy / failed state belongs to
   const flow = new DialogFlow({ exitMs: LEAVE_MS });
-  let action = $state<'save' | 'regenerate'>('save');
+  let action = $state<'save' | 'regenerate' | 'delete'>('save');
   const busy = $derived(flow.busy ? action : '');
   const failed = $derived(flow.failed ? action : '');
-  let confirming = $state(false);
+  // the confirm step shown in place of the form: replacing the secret, or removing the webhook
+  let confirm = $state<'regenerate' | 'delete' | null>(null);
+  const confirming = $derived(confirm !== null);
   let copied = $state(false);
   let regenerated = $state(false);
   let explainer = $state(false);
@@ -116,9 +120,17 @@
     const result = await flow.run(() => regen({ id }));
     if (!result.ok) return;
     urlEdit = result.value.url;
-    confirming = false;
+    confirm = null;
     regenerated = true;
     copied = false;
+  }
+
+  async function remove() {
+    if (flow.locked || !onDelete || !webhook) return;
+    const del = onDelete, id = webhook.id;
+    action = 'delete';
+    const result = await flow.run(() => del({ id }));
+    if (result.ok) flow.leave(onCancel);
   }
 
   // the URL itself is a second way to copy
@@ -148,7 +160,7 @@
   <div class="card">
     <div class="head">
       {#if confirming}
-        <span class="head-tile warn"><span class="head-glyph" style:mask="var(--icon-refresh) center/contain no-repeat"></span></span>
+        <span class="head-tile warn"><span class="head-glyph" style:mask="var(--icon-{confirm === 'delete' ? 'trash' : 'refresh'}) center/contain no-repeat"></span></span>
       {:else if isEdit}
         <span class="head-avatar" style:background={GRADIENTS[colour] ?? GRADIENTS.slate}>
           <span class="photo" style:background={photo ? `${cssUrl(photo)} center/cover no-repeat` : 'none'}></span>
@@ -158,7 +170,7 @@
         <span class="head-tile"><span class="head-glyph" style:mask="var(--icon-hook) center/contain no-repeat"></span></span>
       {/if}
       <div class="head-text">
-        <span class="head-title">{confirming ? t('ui.webhookDialog.regenerateTitle') : isEdit ? name : t('ui.webhookDialog.registerTitle')}</span>
+        <span class="head-title">{confirm === 'delete' ? t('ui.webhookDialog.deleteTitle') : confirming ? t('ui.webhookDialog.regenerateTitle') : isEdit ? name : t('ui.webhookDialog.registerTitle')}</span>
         <span class="head-sub">{confirming ? `${name} · ${groupName}` : isEdit ? t('ui.webhookDialog.inGroup', { group: groupName }) : groupName}</span>
       </div>
       <span class="close" onclick={dismiss} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
@@ -245,11 +257,16 @@
             {#if onRegenerate}
               <div class="regen-row">
                 <span class="regen-note">{t('ui.webhookDialog.regenNote')}</span>
-                <span class="regen" onclick={() => !flow.locked && (confirming = true)} role="button" tabindex="0"><span class="regen-icon"></span><span class="regen-label">{t('ui.webhookDialog.regenerate')}</span></span>
+                <span class="regen" onclick={() => !flow.locked && (confirm = 'regenerate')} role="button" tabindex="0"><span class="regen-icon"></span><span class="regen-label">{t('ui.webhookDialog.regenerate')}</span></span>
               </div>
             {/if}
           </div>
         {/if}
+      {:else if confirm === 'delete'}
+        <div class="section">
+          <span class="caption">{t('ui.webhookDialog.deleteBody', { name })}</span>
+          <div class="old-url"><span class="url struck">{url}</span></div>
+        </div>
       {:else}
         <div class="section">
           <span class="caption">{t('ui.webhookDialog.stopsWorking')}</span>
@@ -272,22 +289,25 @@
     </div>
 
     <div class="foot">
-      <span class="secondary" onclick={() => (flow.locked ? undefined : confirming ? (confirming = false) : dismiss())} role="button" tabindex="0" aria-disabled={flow.locked}>{t(confirming ? 'ui.common.back' : 'ui.common.cancel')}</span>
+      <span class="secondary" onclick={() => (flow.locked ? undefined : confirming ? (confirm = null) : dismiss())} role="button" tabindex="0" aria-disabled={flow.locked}>{t(confirming ? 'ui.common.back' : 'ui.common.cancel')}</span>
+      {#if isEdit && onDelete && !confirming}
+        <span class="danger-link" onclick={() => !flow.locked && (confirm = 'delete')} role="button" tabindex="0" aria-disabled={flow.locked}>{t('ui.webhookDialog.delete')}</span>
+      {/if}
       <span class="spacer"></span>
       {#if failed}
-        <span class="error" role="alert">{t(failed === 'save' ? 'ui.webhookDialog.saveFailed' : 'ui.webhookDialog.regenerateFailed')}</span>
+        <span class="error" role="alert">{t(failed === 'save' ? 'ui.webhookDialog.saveFailed' : failed === 'delete' ? 'ui.webhookDialog.deleteFailed' : 'ui.webhookDialog.regenerateFailed')}</span>
       {/if}
       <div
         class="primary"
         class:warn={confirming}
         class:ready={!flow.locked && (confirming || (valid && !!onSave))}
-        onclick={() => (confirming ? regenerate() : save())}
+        onclick={() => (confirm === 'delete' ? remove() : confirming ? regenerate() : save())}
         role="button"
         tabindex="0"
         aria-disabled={flow.locked || (!confirming && (!valid || !onSave))}
       >
-        <span>{t(busy ? 'ui.webhookDialog.working' : confirming ? 'ui.webhookDialog.regenerateCta' : isEdit ? 'ui.webhookDialog.updateCta' : 'ui.webhookDialog.registerCta')}</span>
-        <span class="primary-icon" style:mask="var(--icon-{confirming ? 'refresh' : isEdit ? 'check' : 'hook'}) center/contain no-repeat"></span>
+        <span>{t(busy ? 'ui.webhookDialog.working' : confirm === 'delete' ? 'ui.webhookDialog.deleteCta' : confirming ? 'ui.webhookDialog.regenerateCta' : isEdit ? 'ui.webhookDialog.updateCta' : 'ui.webhookDialog.registerCta')}</span>
+        <span class="primary-icon" style:mask="var(--icon-{confirm === 'delete' ? 'trash' : confirming ? 'refresh' : isEdit ? 'check' : 'hook'}) center/contain no-repeat"></span>
       </div>
     </div>
   </div>
@@ -873,6 +893,20 @@
 
   .secondary:hover {
     background: var(--accent-soft);
+  }
+
+  .danger-link {
+    flex: none;
+    padding: var(--space-10) var(--space-14);
+    border-radius: var(--radius-md);
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--status-danger);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .danger-link:hover {
+    background: var(--btn-danger-bg);
   }
 
   .spacer {

@@ -476,6 +476,7 @@
       "forwarded": "Forwarded",
       "lastReply": "Last reply {when}",
       "notDelivered": "Not delivered",
+      "removePreview": "Remove preview",
       "removeReaction": "Remove your {emoji} · {count}",
       "replies": "{count, plural, one {# reply} other {# replies}}"
     },
@@ -507,6 +508,7 @@
       "chats": "Chats",
       "chooseAnother": "Choose another chat",
       "messagePlaceholder": "Add a message (optional)",
+      "noChats": "No chats available",
       "noMatches": "No chats match “{query}”.",
       "recentChats": "RECENT CHATS",
       "results": "RESULTS",
@@ -695,7 +697,7 @@
         "add": "Add a channel",
         "duplicate": "#{name} is already in the list.",
         "empty": "No public channels. Newcomers will only see private channels they're added to, so add at least one to give them somewhere to start.",
-        "hint": "Lowercase, no spaces. Press Enter to add.",
+        "hint": "Press Enter to add.",
         "lead": "Everyone who joins the community is added to these channels automatically. You can add private channels, and edit these, once the community exists.",
         "needsName": "Your channel needs a name.",
         "removeAll": "Remove all",
@@ -2345,7 +2347,8 @@
       "requirementsNotMet": "Requirements not met",
       "toClaim": "TO CLAIM",
       "winners": "{count, plural, one {# winner} other {# winners}}",
-      "youWon": "You won {amount}"
+      "youWon": "You won {amount}",
+      "youWonIt": "You won"
     },
     "profileDialog": {
       "about": {
@@ -2863,8 +2866,10 @@
     "swapOffer": {
       "acceptSwap": "Accept swap",
       "cancelOffer": "Cancel offer",
+      "cancelled": "Cancelled",
       "expired": "Expired",
       "finished": "Finished",
+      "inProgress": "In progress",
       "swapped": "Swapped",
       "timeLeft": "{time} left",
       "title": "Swap offer"
@@ -2956,6 +2961,7 @@
       "amountHidden": "Amount hidden"
     },
     "transferMessage": {
+      "to": "to {name}",
       "viewTransaction": "View transaction"
     },
     "typingIndicator": {
@@ -3409,6 +3415,11 @@
       },
       "copied": "Copied to your clipboard",
       "copyUrl": "Copy the URL",
+      "delete": "Delete webhook",
+      "deleteBody": "{name} will be removed, and anything posting to its URL will stop working.",
+      "deleteCta": "Delete webhook",
+      "deleteFailed": "Couldn't delete the webhook. Try again.",
+      "deleteTitle": "Delete this webhook?",
       "explainer": "Your tools send an HTTP POST to the URL and the body arrives here as a message from this webhook. The URL holds a secret, so treat it like a password — anyone with it can post to this group. The full request format is in the {link}.",
       "explainerLink": "bots developer guide",
       "hideDetails": "Hide details",

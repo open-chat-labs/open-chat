@@ -25,6 +25,9 @@ export type OpenChatConfig = {
     // Where the bridges' CDN serves the avatars of the accounts they relay messages from, eg. a
     // Telegram user's photo. Empty where there's none.
     bridgeAvatarsUrl: string;
+    // The pricing service, which every token price comes from. Empty where there's none, in which
+    // case the prices come from ICPSwap and there are no price charts
+    priceServiceUrl: string;
     canisterUrlPath: string;
     proposalBotCanister: string;
     signInWithEmailCanister: string;

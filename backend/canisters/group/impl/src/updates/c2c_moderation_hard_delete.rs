@@ -14,13 +14,20 @@ pub(crate) fn c2c_moderation_hard_delete_impl(args: Args, state: &mut RuntimeSta
     // delete can have been lost, or the message undeleted before its read-gate flag landed.
     // Deleting here (idempotent for an already-deleted message) means a hard delete never
     // reports success while the content is still live.
-    let _ = state.data.chat.delete_messages(
+    if let Ok(results) = state.data.chat.delete_messages(
         Caller::OCBot(OPENCHAT_BOT_USER_ID),
         args.thread_root_message_index,
         vec![args.message_id],
         true,
         now,
-    );
+    ) {
+        state.push_bot_notifications(
+            results
+                .into_iter()
+                .filter_map(|(_, r)| r.ok())
+                .flat_map(|d| d.bot_notifications),
+        );
+    }
 
     if let Some((content, _sender)) =
         state

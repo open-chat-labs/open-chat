@@ -199,6 +199,13 @@
         "unlink": "連携を解除",
         "unlinkFailed": "アカウントの連携を解除できませんでした"
     },
+    "cashtag": {
+        "chartLabel": "過去7日間の{symbol}の価格",
+        "change7d": "7日間で{change}",
+        "noHistory": "過去7日間の取引はありません",
+        "noPrice": "価格情報がありません",
+        "priceDataBy": "価格データ提供：{source}"
+    },
     "bridgedUserUnknown": "{platform} ユーザー",
     "bridgedUserWithPlatform": "{name}（{platform}）",
     "nativeUpdate": {
@@ -1677,6 +1684,9 @@
     "owner": "オーナー",
     "ownerCantLeave": "{level} から離れる前に、別の所有者を追加する必要があります",
     "p2pSwap": {
+        "cancelOffer": "オファーを取り消す",
+        "cancelOfferQuestion": "このスワップのオファーを取り消しますか？",
+        "keepOffer": "オファーを残す",
         "accept": "受け入れる",
         "accepted": "承認されました",
         "acceptedBy": "このオファーは {user} によって受け入れられ、完了待ちです。",
@@ -2200,6 +2210,7 @@
     "removedBy": "{changedBy} が {changed} を {level} から削除しました",
     "removeMemberFailed": "メンバーを削除できません",
     "removePreviewQuestion": "プレビューを削除しますか?",
+    "errorRemovingLinkPreview": "プレビューを削除できませんでした",
     "renderPreviews": "自動レンダリングリンクプレビュー",
     "reply": "返信",
     "replyPrivately": "プライベートで返信",
@@ -2710,7 +2721,10 @@
         "updateTitle": "{name}を更新",
         "urlLabel": "ウェブフックURL",
         "username": "ウェブフック",
-        "viewEditAction": "Webhook の詳細を表示/編集する"
+        "viewEditAction": "Webhook の詳細を表示/編集する",
+        "registerFailed": "申し訳ありません。Webhook を登録できませんでした",
+        "updateFailed": "申し訳ありません。Webhook を更新できませんでした",
+        "regenerateFailed": "申し訳ありません。Webhook の URL を再生成できませんでした"
     },
     "websiteVersion": "ウェブサイト",
     "weeks": "週",

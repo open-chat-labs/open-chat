@@ -30,6 +30,10 @@ function client(frozen: { chat?: boolean; community?: boolean }, privateChat = f
         canEditCommunity: () => true,
         canDeleteCommunity: () => true,
         canManageUserGroups: () => true,
+        canConvertGroupToCommunity: () => true,
+        canImportToCommunity: () => true,
+        canRegisterWebhook: () => true,
+        canManageBots: () => true,
     } as never as OpenChat;
 }
 
@@ -40,8 +44,20 @@ const all = {
     canInvite: true,
     canOpenInvite: true,
     canManageUserGroups: false,
+    canConvert: false,
+    canImport: false,
+    canManageWebhooks: true,
+    canManageBots: true,
 };
-const none = { ...all, canEdit: false, canDelete: false, canInvite: false, canOpenInvite: false };
+const none = {
+    ...all,
+    canEdit: false,
+    canDelete: false,
+    canInvite: false,
+    canOpenInvite: false,
+    canManageWebhooks: false,
+    canManageBots: false,
+};
 
 describe("details permissions", () => {
     // #10112 "Desktop vs mobile": a frozen chat or community, and a guest, get no edit, delete or invite
@@ -57,6 +73,7 @@ describe("details permissions", () => {
         expect(communityDetailsPermissions(client({}), community, false)).toEqual({
             ...all,
             canManageUserGroups: true,
+            canManageWebhooks: false,
         });
         expect(communityDetailsPermissions(client({ community: true }), community, false)).toEqual(
             none,
@@ -90,6 +107,54 @@ describe("details permissions", () => {
         const adder = { ...member, canAddMembers: () => true } as never as OpenChat;
         expect(chatDetailsPermissions(adder, channel, community, false).canOpenInvite).toBe(true);
     });
+});
+
+// 4b invariant 7: converting or importing is for a group's owner (the client's predicates), never a
+// channel's, and nothing in a frozen group or for a guest
+test("convert and import are offered for an owner's group only", () => {
+    const group = { kind: "group_chat", id: { kind: "group_chat", groupId: "g" } } as MultiUserChat;
+    const owner = (yes: boolean) =>
+        ({
+            ...client({}),
+            canConvertGroupToCommunity: () => yes,
+            canImportToCommunity: () => yes,
+        }) as never as OpenChat;
+    const offered = (c: OpenChat, chat: MultiUserChat, anon = false) => {
+        const p = chatDetailsPermissions(c, chat, undefined, anon);
+        return [p.canConvert, p.canImport];
+    };
+    expect(offered(owner(true), group)).toEqual([true, true]);
+    expect(offered(owner(false), group)).toEqual([false, false]);
+    expect(offered(owner(true), channel)).toEqual([false, false]);
+    expect(offered(owner(true), group, true)).toEqual([false, false]);
+});
+
+// 4b invariant 7: a group's or channel's webhooks are its owner's (the client's predicate), not an
+// admin's who may edit the group
+test("webhooks are offered to the owner only", () => {
+    const admin = {
+        ...client({}),
+        canRegisterWebhook: () => false,
+    } as never as OpenChat;
+    expect(chatDetailsPermissions(admin, channel, community, false).canManageWebhooks).toBe(false);
+    expect(chatDetailsPermissions(client({}), channel, community, false).canManageWebhooks).toBe(
+        true,
+    );
+});
+
+// 4b invariant 7: a channel's bots are its community's, so managing them is the community's right,
+// not the channel's
+test("a channel's bots are managed by whoever may manage its community's", () => {
+    const byCommunity = {
+        ...client({}),
+        canManageBots: (id: { kind: string }) => id.kind === "community",
+    } as never as OpenChat;
+    expect(chatDetailsPermissions(byCommunity, channel, community, false).canManageBots).toBe(true);
+    const byChannel = {
+        ...client({}),
+        canManageBots: (id: { kind: string }) => id.kind !== "community",
+    } as never as OpenChat;
+    expect(chatDetailsPermissions(byChannel, channel, community, false).canManageBots).toBe(false);
 });
 
 describe("chat rules text", () => {

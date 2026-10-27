@@ -176,6 +176,7 @@ import {
     type CreateCommunityOutcome,
     type CreateCommunityResponse,
     type CreateGroupOutcome,
+    type GroupMoveOutcome,
     type CreateGroupResponse,
     type CreateMultiUserCanisterResponse,
     type FinaliseAccountLinkingResponse,
@@ -385,6 +386,8 @@ import {
     type BridgedUserLinkCode,
     type BridgedUserSummary,
     type BridgePlatform,
+    type PriceHistory,
+    type PriceSubject,
     bridgedUserId,
     bridgedUserIdsFromEvents,
     bridgedUserIdsFromLatestMessages,
@@ -406,6 +409,7 @@ import type { OpenChatConfig } from "./config";
 import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
 import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import { blockOutcome, type BlockContext, type BlockOutcome } from "./utils/profileBlock";
+import { isTrustedClick } from "./utils/prizes";
 import {
     FilteredProposals,
     achievementsStore,
@@ -434,6 +438,8 @@ import {
     eventListScrollTop,
     eventsStore,
     exchangeRatesLookupStore,
+    cashtagCoinsStore,
+    priceSourcesStore,
     expiredServerEventRanges,
     favouritesStore,
     hasFlag,
@@ -584,6 +590,7 @@ import {
     userGroupSaveOutcome,
     type UserGroupSaveOutcome,
 } from "./utils/userGroups";
+import { webhookChanges, webhookFailure, type WebhookSaveOutcome } from "./utils/webhook";
 import {
     defaultChat,
     navigationAfterArchivingOpenChat,
@@ -9482,17 +9489,13 @@ export class OpenChat {
         }
     }
 
-    #validMouseEvent(e: MouseEvent) {
-        return e instanceof MouseEvent && e.isTrusted && e.type === "click";
-    }
-
     claimPrize(
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
         e: MouseEvent,
         signInProof: string | undefined,
     ): Promise<boolean> {
-        if (!this.#validMouseEvent(e)) {
+        if (!isTrustedClick(e)) {
             return Promise.resolve(false);
         }
 
@@ -10302,13 +10305,25 @@ export class OpenChat {
     #updateExchangeRates(): Promise<void> {
         return this.#worker
             .send({ kind: "exchangeRates" })
-            .then((exchangeRates) => {
-                // undefined if ICPSwap failed, in which case the last rates are kept
-                if (exchangeRates !== undefined) {
-                    exchangeRatesLookupStore.set(new Map(Object.entries(exchangeRates)));
+            .then((prices) => {
+                // undefined if the prices couldn't be loaded, in which case the last ones are kept
+                if (prices !== undefined) {
+                    exchangeRatesLookupStore.set(new Map(Object.entries(prices.exchangeRates)));
+                    cashtagCoinsStore.set(new Map(Object.entries(prices.coins)));
+                    priceSourcesStore.set(new Map(Object.entries(prices.sources)));
                 }
             })
             .catch(() => undefined);
+    }
+
+    // A token's or coin's prices over the last 7 days, for its price chart. Undefined if they couldn't
+    // be loaded
+    async getPriceHistory(subject: PriceSubject): Promise<PriceHistory | undefined> {
+        try {
+            return await this.#worker.send({ kind: "priceHistory", subject });
+        } catch {
+            return undefined;
+        }
     }
 
     async refreshBalancesInSeries() {
@@ -12220,7 +12235,11 @@ export class OpenChat {
     importToCommunity(
         groupId: GroupChatIdentifier,
         communityId: CommunityIdentifier,
-    ): Promise<ChannelIdentifier | undefined> {
+    ): Promise<GroupMoveOutcome> {
+        const failed: GroupMoveOutcome = {
+            kind: "failed",
+            message: i18nKey("communities.errors.importFailed"),
+        };
         const group = chatSummariesStore.value.get(groupId);
         return this.#worker
             .send({
@@ -12235,13 +12254,14 @@ export class OpenChat {
                             ...group,
                             id: resp.channelId,
                             kind: "channel",
+                            level: "channel",
                         } as ChannelSummary);
                     }
-                    return resp.channelId;
+                    return { kind: "success", channelId: resp.channelId } as const;
                 }
-                return undefined;
+                return failed;
             })
-            .catch(() => undefined);
+            .catch(() => failed);
     }
 
     submitProofOfUniquePersonhood(
@@ -12536,10 +12556,11 @@ export class OpenChat {
         return communityUpdateResult(resp);
     }
 
-    convertGroupToCommunity(
-        group: GroupChatSummary,
-        rules: Rules,
-    ): Promise<ChannelIdentifier | undefined> {
+    convertGroupToCommunity(group: GroupChatSummary, rules: Rules): Promise<GroupMoveOutcome> {
+        const failed: GroupMoveOutcome = {
+            kind: "failed",
+            message: i18nKey("communities.errors.convertFailed"),
+        };
         return this.#worker
             .send({
                 kind: "convertGroupToCommunity",
@@ -12547,8 +12568,12 @@ export class OpenChat {
                 historyVisible: group.historyVisible,
                 rules,
             })
-            .then((resp) => (resp.kind === "success" ? resp.id : undefined))
-            .catch(() => undefined);
+            .then((resp) =>
+                resp.kind === "success"
+                    ? ({ kind: "success", channelId: resp.id } as const)
+                    : failed,
+            )
+            .catch(() => failed);
     }
 
     deleteUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): Promise<boolean> {
@@ -12859,6 +12884,30 @@ export class OpenChat {
                 undo();
                 return false;
             });
+    }
+
+    /**
+     * Registers a webhook (no `original`), or sends the name and avatar changes to `original`;
+     * nothing when there are none.
+     */
+    async saveWebhook(
+        chatId: MultiUserChatIdentifier,
+        original: WebhookDetails | undefined,
+        name: string,
+        avatarUrl: string | undefined,
+    ): Promise<WebhookSaveOutcome> {
+        if (original === undefined) {
+            const webhook = await this.registerWebhook(chatId, name, avatarUrl);
+            return webhook === undefined
+                ? { kind: "failed", message: webhookFailure("register") }
+                : { kind: "registered", webhook };
+        }
+        const changes = webhookChanges(original, name, avatarUrl);
+        if (changes === undefined) return { kind: "unchanged" };
+        const updated = await this.updateWebhook(chatId, original, changes.name, changes.avatar);
+        return updated
+            ? { kind: "updated" }
+            : { kind: "failed", message: webhookFailure("update") };
     }
 
     regenerateWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<string | undefined> {

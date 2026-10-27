@@ -199,6 +199,13 @@
         "unlink": "Scollega",
         "unlinkFailed": "Impossibile scollegare l'account"
     },
+    "cashtag": {
+        "chartLabel": "Prezzo di {symbol} negli ultimi 7 giorni",
+        "change7d": "{change} in 7 giorni",
+        "noHistory": "Nessuno scambio negli ultimi 7 giorni",
+        "noPrice": "Nessun prezzo disponibile",
+        "priceDataBy": "Dati sui prezzi forniti da {source}"
+    },
     "bridgedUserUnknown": "Utente {platform}",
     "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
@@ -1677,6 +1684,9 @@
     "owner": "proprietario",
     "ownerCantLeave": "Devi aggiungere un altro proprietario prima di poter lasciare {level}",
     "p2pSwap": {
+        "cancelOffer": "Annulla offerta",
+        "cancelOfferQuestion": "Annullare questa offerta di scambio?",
+        "keepOffer": "Mantieni offerta",
         "accept": "Accettare",
         "accepted": "Accettato",
         "acceptedBy": "Questa offerta è stata accettata da {user} ed è in attesa di completamento.",
@@ -2200,6 +2210,7 @@
     "removedBy": "{changedBy} ha rimosso {changed} da {level}",
     "removeMemberFailed": "Impossibile rimuovere il membro",
     "removePreviewQuestion": "Rimuovere l'anteprima?",
+    "errorRemovingLinkPreview": "Impossibile rimuovere l'anteprima",
     "renderPreviews": "Anteprime dei collegamenti con rendering automatico",
     "reply": "Rispondi",
     "replyPrivately": "Rispondi in privato",
@@ -2710,7 +2721,10 @@
         "updateTitle": "Aggiorna {name}",
         "urlLabel": "URL del webhook",
         "username": "webhook",
-        "viewEditAction": "Visualizza/modifica i dettagli del webhook"
+        "viewEditAction": "Visualizza/modifica i dettagli del webhook",
+        "registerFailed": "Spiacenti, non siamo riusciti a registrare il webhook",
+        "updateFailed": "Spiacenti, non siamo riusciti ad aggiornare il webhook",
+        "regenerateFailed": "Spiacenti, non siamo riusciti a rigenerare l'URL del webhook"
     },
     "websiteVersion": "del sito web",
     "weeks": "Settimane",
