@@ -23,7 +23,8 @@ import { pickerChats, pickerIds, type PickerChat } from "./share.adapter";
  */
 export class SharePicker {
     #lastSeen = new SvelteMap<string, string>();
-    #lastSeenLoading = false;
+    // the DMs whose last seen has been asked for
+    #lastSeenAsked = new Set<string>();
     // each listed chat's id as the picker passes it back
     #ids = new Map<string, ChatIdentifier>();
 
@@ -82,15 +83,20 @@ export class SharePicker {
     }
 
     /**
-     * The picker's own search: as `chats`, and the first one loads each DM's last seen, so it's
-     * fetched only once a picker is showing (an Invite page that never opens one fetches nothing).
+     * The picker's own search: as `chats`, and it loads the last seen of each DM not asked for yet,
+     * so it's fetched only once a picker is showing (an Invite page that never opens one fetches
+     * nothing), and DMs that load later (a reloaded ?share) get theirs as the list follows them.
      */
     search(query: string): PickerChat[] {
-        if (!this.#lastSeenLoading) {
-            this.#lastSeenLoading = true;
-            void this.#loadLastSeen();
+        const list = this.chats(query);
+        const userIds = [...serverDirectChatsStore.value.values()]
+            .map((chat) => chat.them.userId)
+            .filter((userId) => !this.#lastSeenAsked.has(userId));
+        if (userIds.length > 0) {
+            userIds.forEach((userId) => this.#lastSeenAsked.add(userId));
+            void this.#loadLastSeen(userIds);
         }
-        return this.chats(query);
+        return list;
     }
 
     /** The chat the picker passed back. */
@@ -98,13 +104,13 @@ export class SharePicker {
         return this.#ids.get(id);
     }
 
-    // each DM's last seen ("offline" when it isn't known), written at once so the list is built once
-    async #loadLastSeen(): Promise<void> {
+    // these users' last seen ("offline" when it isn't known), written at once so the list is built
+    // once per batch
+    async #loadLastSeen(userIds: string[]): Promise<void> {
         const now = Date.now();
         const offline = this.translate("offline");
         const seen = await Promise.all(
-            [...serverDirectChatsStore.value.values()].map(async (chat) => {
-                const userId = chat.them.userId;
+            userIds.map(async (userId) => {
                 try {
                     const ms = await this.client.getLastOnlineDate(userId, now);
                     return [userId, lastOnlineStatus(this.translate, now, ms)[0] || offline];
