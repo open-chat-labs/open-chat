@@ -42,7 +42,6 @@ export { default as formatFileSize } from "./utils/fileSize";
 export {
     groupMembersLine,
     sharedDraftText,
-    shareTargetCount,
     shareTargets,
     type ShareableChat,
     type ShareableCommunity,

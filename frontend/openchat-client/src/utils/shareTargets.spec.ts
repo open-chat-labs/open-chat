@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest";
 import {
     groupMembersLine,
     sharedDraftText,
-    shareTargetCount,
     shareTargets,
     type ShareableChat,
     type ShareTargetsInput,
@@ -62,7 +61,6 @@ describe("the chats something can be shared to", () => {
         expect(names(t.favourites)).toEqual(["Rust fans"]);
         expect(t.communities.map((c) => c.community.name)).toEqual(["Gardening", "OpenChat"]);
         expect(names(t.communities[1].channels)).toEqual(["Dev", "General"]);
-        expect(shareTargetCount(t)).toBe(7);
     });
 
     test("invariant 1: never a chat the user can't send text in", () => {

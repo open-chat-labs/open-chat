@@ -8,12 +8,13 @@
         chatListScopeStore,
         localUpdates,
         routeForChatIdentifier,
+        selectedChatIdStore,
         sharedDraftText,
         type OpenChat,
     } from "@client";
     import ChatPicker from "@openchat/ui/src/lib/components/ChatPicker.svelte";
     import { navigate } from "@src/utils/navigation";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { SharePicker } from "./sharePicker.svelte";
@@ -21,9 +22,9 @@
     let { dialog, onClose }: DialogProps<Extract<LinkedDialog, { kind: "share" }>> = $props();
 
     const client = getContext<OpenChat>("client");
+    // the open chat is left out (#10115 invariant 2)
     // svelte-ignore state_referenced_locally
-    const picker = new SharePicker(client, $_);
-    onMount(() => picker.loadLastSeen());
+    const picker = new SharePicker(client, $_, () => selectedChatIdStore.value);
 
     // what was shared: the text (or title), with the url under it
     const draft = $derived(sharedDraftText(dialog));
@@ -36,7 +37,7 @@
     function pick({ chatId, message }: { chatId: string; message: string }) {
         const id = picker.chatId(chatId);
         if (id === undefined) return;
-        const content = [message, draft].filter((part) => part !== "").join("\n");
+        const content = [message.trim(), draft].filter((part) => part !== "").join("\n");
         localUpdates.draftMessages.setTextContent({ chatId: id }, content);
         navigate(routeForChatIdentifier($chatListScopeStore.kind, id));
     }
@@ -45,7 +46,7 @@
 <ChatPicker
     {item}
     chats={picker.chats()}
-    filter={(query) => picker.chats(query)}
+    filter={(query) => picker.search(query)}
     sendLabel="ui.common.continue"
     onSend={pick}
     {onClose} />

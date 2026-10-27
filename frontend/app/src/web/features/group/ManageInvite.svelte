@@ -36,10 +36,12 @@
     const client = getContext<OpenChat>("client");
 
     // the chats the invite link can be shared to (4d): sent there at once, the dialog staying open,
-    // as the picker has already shown the link and the message
+    // as the picker has already shown the link and the message. A group's or channel's own link
+    // isn't offered to itself; a community's goes to any chat, its open channel included.
     // svelte-ignore state_referenced_locally
-    const sharePicker = new SharePicker(client, $_);
-    onMount(() => sharePicker.loadLastSeen());
+    const sharePicker = new SharePicker(client, $_, () =>
+        target.kind === "community" ? undefined : target.id,
+    );
 
     async function shareToChat({
         chatId,
@@ -151,7 +153,7 @@
     onShareToggle={switchable ? toggleLink : undefined}
     onResetLink={link?.kind === "enabled" ? resetLink : undefined}
     chats={sharePicker.chats()}
-    filterChats={(query) => sharePicker.chats(query)}
+    filterChats={(query) => sharePicker.search(query)}
     onShareToChat={shareToChat}
     {onDirtyChange}
     {onClose} />

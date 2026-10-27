@@ -28,7 +28,7 @@
     kind?: string;
     /** Literal text under the name, in place of `kind` (a DM's last seen, a group's description). */
     sub?: string;
-    /** Resource key (or literal text): the section it's listed under (Favourites, Direct chats, a community's name);
+    /** Literal text, shown as given: the section it's listed under (Favourites, Direct chats, a community's name);
      *  chats of one section come together, and the list shows a header for each. */
     group?: string;
     grad: string;
@@ -115,7 +115,7 @@
       <div class="list" role="listbox" aria-label={t('ui.chatPicker.chats')}>
         {#if !sectioned}<span class="list-label">{t(needle ? 'ui.chatPicker.results' : 'ui.chatPicker.recentChats')}</span>{/if}
         {#each list as chat, i}
-          {#if sectioned && chat.group !== list[i - 1]?.group}<span class="list-label">{t(chat.group ?? '')}</span>{/if}
+          {#if sectioned && chat.group !== list[i - 1]?.group}<span class="list-label">{chat.group}</span>{/if}
           <div class="chat" onclick={() => pick(chat)} role="option" aria-selected="false" tabindex="0">
             <span class="face" style:border-radius={chat.radius ?? '50%'} style:background={chat.grad}></span>
             <span class="chat-text"><span class="chat-name">{chat.name}</span><span class="chat-kind">{chat.sub ?? chat.kind ?? ''}</span></span>

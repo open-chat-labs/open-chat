@@ -111,17 +111,6 @@ export function shareTargets<C extends ShareableChat, M extends ShareableCommuni
     };
 }
 
-/** How many chats there are to share to (favourites are counted where they belong too). */
-export function shareTargetCount<C extends ShareableChat, M extends ShareableCommunity<C>>(
-    targets: ShareTargets<C, M>,
-): number {
-    return (
-        targets.directChats.length +
-        targets.groupChats.length +
-        targets.communities.reduce((n, c) => n + c.channels.length, 0)
-    );
-}
-
 /** A group's line in the picker when it has no description: "Public group with 12 members". */
 export function groupMembersLine(
     group: Pick<MultiUserChat, "public" | "memberCount" | "level">,

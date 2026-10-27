@@ -1,5 +1,5 @@
 import { shareTargets, type ShareableChat } from "@client";
-import { pickedChat, pickerChats, sharedLinkText } from "./share.adapter";
+import { pickerChats, pickerIds, sharedLinkText } from "./share.adapter";
 
 const dm = (userId: string): ShareableChat => ({
     kind: "direct_chat",
@@ -50,12 +50,9 @@ describe("the chat picker's list", () => {
     });
 
     test("finds the chat it passed back by its id", () => {
-        expect(pickedChat(targets, "c1_7")).toEqual({
-            kind: "channel",
-            communityId: "c1",
-            channelId: 7,
-        });
-        expect(pickedChat(targets, "nope")).toBeUndefined();
+        const ids = pickerIds(targets);
+        expect(ids.get("c1_7")).toEqual({ kind: "channel", communityId: "c1", channelId: 7 });
+        expect(ids.get("nope")).toBeUndefined();
     });
 });
 

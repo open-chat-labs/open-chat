@@ -485,7 +485,8 @@ design export needs. Each entry says where it came up.
   - `/share?title&text&url` opens it over the default page (`?share`): picking a chat opens it with
     the shared text, after the user's message, in its draft, as the old trees do. Nothing is sent.
   - Invite & share's "Share to chat" (in Manage) sends the link (and the message) to the chosen
-    chat at once and stays on the page. Backing out of the chat's rules or the PIN sends nothing
+    chat at once and stays on the page. A group's or channel's link isn't offered to itself; a
+    community's goes to any chat, its open channel included. Backing out of the chat's rules or the PIN sends nothing
     and says nothing; the picker stays open.
   - by hand: `ChatPicker` takes `filter` (the host's search), `emptyLabel`, and each chat's `sub`
     and `group` (the sections); `InviteDialog` takes `filterChats`, and its `onShareToChat` may

@@ -32,7 +32,7 @@ export type PickerChatText<C extends ShareableChat> = {
 /**
  * The picker's list, in sections as the old pickers show them: favourites, direct chats, groups,
  * then each community's channels under its name (a favourite is listed in its own section too).
- * Each chat's id is its identifier as a string (pickedChat finds it again), and its face the
+ * Each chat's id is its identifier as a string (pickerIds maps it back), and its face the
  * swatch the chat list gives it (swatchFor: the list shows no uploaded avatars either).
  */
 export function pickerChats<C extends ShareableChat, M extends ShareableCommunity<C>>(
@@ -55,18 +55,17 @@ export function pickerChats<C extends ShareableChat, M extends ShareableCommunit
     ];
 }
 
-/** The chat the picker passed back (its id string), among the targets. */
-export function pickedChat<C extends ShareableChat, M extends ShareableCommunity<C>>(
+/** Each listed chat's id as the picker passes it back, to its identifier. */
+export function pickerIds<C extends ShareableChat, M extends ShareableCommunity<C>>(
     targets: ShareTargets<C, M>,
-    id: string,
-): ChatIdentifier | undefined {
+): Map<string, ChatIdentifier> {
     const all = [
         ...targets.favourites,
         ...targets.directChats,
         ...targets.groupChats,
         ...targets.communities.flatMap((c) => c.channels),
     ];
-    return all.find((t) => chatIdentifierToString(t.chat.id) === id)?.chat.id;
+    return new Map(all.map((t) => [chatIdentifierToString(t.chat.id), t.chat.id]));
 }
 
 /** What sharing a link (an invite) to a chat sends: the user's message, then the link on its own line. */

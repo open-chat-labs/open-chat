@@ -21,9 +21,9 @@
         selectedChatIdStore,
         serverDirectChatsStore,
         serverGroupChatsStore,
-        shareTargets,
         type ShareTarget,
     } from "@client";
+    import { chatsToShareTo } from "@src/logic/share/chatsToShareTo";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -34,7 +34,6 @@
     import { i18nKey, interpolate } from "../i18n/i18n";
     import { rtlStore } from "../stores/rtl";
     import { now } from "../stores/time";
-    import { buildDisplayName } from "../utils/user";
     import Avatar from "./Avatar.svelte";
     import CollapsibleCard from "./CollapsibleCard.svelte";
     import HoverIcon from "./HoverIcon.svelte";
@@ -108,24 +107,22 @@
         selectedChatId: ChatIdentifier | undefined,
         searchTerm: string,
     ): Promise<ShareTo> {
-        // which chats, the search and their order: the same in every tree (@client shareTargets)
-        const found = shareTargets<ChatSummary, CommunitySummary>({
-            directChats: [...$serverDirectChatsStore.values()],
-            groupChats: [...$serverGroupChatsStore.values()],
-            communities: [...$communitiesStore.values()],
-            isFavourite: (id) => $favouritesStore.has(id),
-            directChatName: (userId) => ({
-                name: buildDisplayName($allUsersStore, userId, "user"),
-                username: $allUsersStore.get(userId)?.username,
-            }),
-            canSendText: (id) => client.canSendMessage(id, "message", "text"),
-            selectedChatId,
-            excludeCurrent,
-            search: searchTerm,
-        });
         const chats = (targets: ShareTarget[]) =>
             Promise.all(targets.map((t) => normaliseChatSummary(now, t.chat)));
         try {
+            // which chats, the search and their order: the same in every tree (chatsToShareTo)
+            const found = chatsToShareTo(
+                client,
+                {
+                    directChats: $serverDirectChatsStore.values(),
+                    groupChats: $serverGroupChatsStore.values(),
+                    communities: $communitiesStore.values(),
+                    favourites: $favouritesStore,
+                    users: $allUsersStore,
+                },
+                excludeCurrent ? selectedChatId : undefined,
+                searchTerm,
+            );
             return {
                 directChats: await chats(found.directChats),
                 groupChats: await chats(found.groupChats),
