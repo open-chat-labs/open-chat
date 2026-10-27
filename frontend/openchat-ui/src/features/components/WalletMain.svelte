@@ -65,7 +65,7 @@
   import WalletReceive, { type ShareChat } from './WalletReceive.svelte';
   import WalletRecipients, { type Recipient, type RecipientDraft } from './WalletRecipients.svelte';
   import WalletSend, { type SendContact, type WalletSendRequest } from './WalletSend.svelte';
-  import { txIdOf } from '../../lib/wallet';
+  import { returnPlace, txIdOf } from '../../lib/wallet';
   import WalletSwap, { type SwapQuote, type SwapRequest } from './WalletSwap.svelte';
   const i18n = getI18n(); // number formatting follows the host locale
 
@@ -298,7 +298,7 @@
     // back to (All activity if it was opened there)
     if (r.view === 'receive' && r.token && !valued.some((x) => idOf(x) === r.token) && receivable.some((x) => x.symbol === r.token && x.nets.length)) extTok = r.token;
     const startFromAll = flow && !r.token && view === 'all';
-    const backTo = returnPlace();
+    const backTo = placeNow();
     // a token-less flow opened from a token page acts on the token shown there (sym may name one with no balance)
     const shown = raw ? idOf(raw) : undefined;
     if (r.token && r.token !== sym) tokFilter = 0;
@@ -440,13 +440,8 @@
   }
 
   // `s` is a token's id, or the symbol of a receivable token not in `tokens`
-  // where an extra token's Receive goes back to, from where the user is now: Recipients (or a flow opened from it), All
-  // activity (or a flow opened from it, however it was picked, or with no token page to go back to), else the token page
-  function returnPlace(): 'recipients' | 'all' | 'token' {
-    if (view === 'recipients' || (isFlow(view) && backToRecipients)) return 'recipients';
-    if (view === 'all' || (isFlow(view) && (fromAll || backToAll)) || !sym) return 'all';
-    return 'token';
-  }
+  // where a flow opened from here goes back to (lib/wallet's returnPlace)
+  const placeNow = () => returnPlace({ view, fromAll, backToAll, backToRecipients, sym });
 
   function pickToken(s: string) {
     const tk = tokens.find((x) => idOf(x) === s);
@@ -462,14 +457,12 @@
     }
     const flow: 'send' | 'receive' = pick?.view === 'receive' ? 'receive' : 'send';
     pick = null;
-    if (tk) {
-      backToAll = view === 'all';
-    } else {
-      // an extra token's Receive goes back to where it was picked from
-      const place = returnPlace();
-      backToAll = place === 'all';
-      backToRecipients = place === 'recipients';
-    }
+    // the flow goes back to where it was picked from: Recipients, All activity, else (the picked token's) page
+    const place = placeNow();
+    backToAll = place === 'all';
+    backToRecipients = place === 'recipients';
+    // a picked flow starts afresh: no address left from an earlier Send
+    sendAddr = '';
     view = flow;
     // a receivable token outside `tokens` is only received: the page shown stays, for Receive to go back to
     if (tk) sym = s;

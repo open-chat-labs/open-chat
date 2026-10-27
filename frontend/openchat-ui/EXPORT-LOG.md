@@ -414,5 +414,6 @@
 - `WalletMain`: a token page asked for by an id that isn't in `tokens` says "Token not found" (`ui.walletMain.tokenNotFoundTitle` / `Body`) instead of showing another token's page. The token picker's rows carry each token's id, so two tokens sharing a symbol both show and each opens its own page. An `own` activity row has its own kind (not swap).
 - `TokenPicker`: `TokenOption.id`, reported by `onSelect` (else the symbol). `TransactionRow` and `TokenAvatar`'s badge: kind `own` (the refresh glyph).
 - `TokenAvatar`: a logo that fails to load falls back to the mark on its gradient.
+- `lib/wallet.ts`: `returnPlace`, where a flow WalletMain opens goes back to (Recipients, All activity or the token page), spec'd; a picked token's flow uses it whether or not the token is in `tokens`, and starts without an earlier Send's address.
 - `PageHeader`: the `titleTag` pill is larger (24px, `--text-md`), a small visual fix against the design (22px, `--text-xs`).
 - `types.ts`: `WalletToken`'s description back on `WalletToken`.
