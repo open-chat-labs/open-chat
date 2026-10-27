@@ -26,6 +26,7 @@
         bridgedUserKey,
         bridgedUsersStore,
         type EnhancedReplyContext,
+        extractTwitchEmbeds,
         linkedAuthor,
         localUpdates,
         type Member,
@@ -432,6 +433,10 @@
         `${routeForMessage($chatListScopeStore.kind, { chatId }, msg.messageIndex)}?open=true`,
     );
     let isProposal = $derived(msg.content.kind === "proposal_content");
+    // Twitch links play in the message, from the text, so a relayed message's do too
+    let twitchEmbeds = $derived(
+        msg.content.kind === "text_content" ? extractTwitchEmbeds(msg.content.text) : [],
+    );
     let canEdit = $derived(
         me && supportsEdit && !msg.deleted && client.contentTypeSupportsEdit(msg.content.kind),
     );
@@ -839,7 +844,8 @@
                                     {onRegisterVote}
                                     {onExpandMessage}
                                     ogPreviews={msg.ogPreviews}
-                                    messagePreviews={msg.messagePreviews} />
+                                    messagePreviews={msg.messagePreviews}
+                                    {twitchEmbeds} />
                             {/snippet}
                         </MessageBubble>
                     </MenuTrigger>

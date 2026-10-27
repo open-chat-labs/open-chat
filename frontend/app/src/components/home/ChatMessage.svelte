@@ -4,7 +4,7 @@
     import Typing from "@shared_components/Typing.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { allUsersStore, AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, linkedAuthor, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, shouldShowAsMe, tipRecipient, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
+    import { allUsersStore, AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, currentUserStore, type EnhancedReplyContext, extractTwitchEmbeds, iconSize, linkedAuthor, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, shouldShowAsMe, tipRecipient, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -226,6 +226,10 @@
             : onDeviceTranslator.translationFor(msg.messageId, autoTranslateText),
     );
     let showOriginal = $state(false);
+    // Twitch links play in the message, from the text, so a relayed message's do too
+    let twitchEmbeds = $derived(
+        msg.content.kind === "text_content" ? extractTwitchEmbeds(msg.content.text) : [],
+    );
     let displayContent = $derived(
         autoTranslation !== undefined && !showOriginal
             ? client.applyTranslation(msg.content, autoTranslation.text)
@@ -732,7 +736,8 @@
                                 {onRegisterVote}
                                 {onExpandMessage}
                                 ogPreviews={msg.ogPreviews}
-                                messagePreviews={msg.messagePreviews} />
+                                messagePreviews={msg.messagePreviews}
+                                {twitchEmbeds} />
 
                             {#snippet timeAndTicks()}
                                 <TimeAndTicks

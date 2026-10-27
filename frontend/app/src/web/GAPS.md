@@ -709,7 +709,9 @@ design export needs. Each entry says where it came up.
   (`ogPreviewCard` in `@client`, shared with the old trees). The sender removes one with the X on
   its card, after a confirm (`ConfirmDialog`, no design for it: `TODO(design)`). A link to
   another OpenChat message (`messagePreviews`) shows no preview: nothing in the library renders a
-  quoted message.
+  quoted message. A Twitch link shows its card, not the click-to-play player the old trees show
+  (`TwitchPlayer`, from `extractTwitchEmbeds`, `twitchPlayersAndCards`, `twitchPlayerParent`,
+  `twitchPlayerUrl` and `twitchPoster` in `@client`): `ChatBubble` takes cards only.
 - **Transfers** (`features/conversation`, 5a): a transfer shows as `TransferMessage`, with the
   token's logo as its mark. `TransferMessage` takes `direction` and `recipient` by hand: the design
   signs it by the bubble's side, which shows a transfer between two other people in a group as the
