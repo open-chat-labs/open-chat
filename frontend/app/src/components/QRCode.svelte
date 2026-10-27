@@ -1,4 +1,5 @@
 <script lang="ts">
+    import CoreQRCode from "@src/core/QRCode.svelte";
     import { Spinner } from "component-lib";
 
     interface Props {
@@ -24,16 +25,10 @@
         class:smaller={size === "smaller"}
         class:larger={size === "larger"}
         class:full-width-on-mobile={fullWidthOnMobile}>
-        {#await import("svelte-qrcode-image")}
-            <div aria-busy="true"><Spinner size="2em" /></div>
-        {:then { QRCodeImage }}
-            <QRCodeImage {text} errorCorrectionLevel="Q" margin={2} displayClass="qr-code-image" />
-        {:catch}
-            <p>Unable to load QR code</p>
-        {/await}
-        {#if logo !== undefined}
-            <img class="icon" src={logo} />
-        {/if}
+        <!-- the QR code itself is every tree's (core/QRCode); this sizes and frames it -->
+        <CoreQRCode {text} {logo}>
+            {#snippet loading()}<Spinner size="2em" />{/snippet}
+        </CoreQRCode>
     </div>
 </div>
 
@@ -57,39 +52,14 @@
         border-radius: 4px;
         overflow: hidden;
 
-        .icon {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #fff;
-            padding: 4px;
-            height: 35px;
-            width: 35px;
-            border-radius: 4px;
-        }
-
-        :global(.qr-code-image) {
-            width: 100%;
-            height: 100%;
-        }
-
         &.smaller {
             width: 150px;
             height: 150px;
-            .icon {
-                height: 30px;
-                width: 30px;
-            }
         }
 
         &.larger {
             width: 250px;
             height: 250px;
-            .icon {
-                height: 45px;
-                width: 45px;
-            }
         }
 
         &.full-width-on-mobile {
