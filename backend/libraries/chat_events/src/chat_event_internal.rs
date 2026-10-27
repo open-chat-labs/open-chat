@@ -326,6 +326,14 @@ impl MessageInternal {
                 .is_some_and(|c| c.initiator == user_id)
     }
 
+    // Who a reply to the message is for: its sender, or for a bot's response to a command, whoever
+    // used the command
+    pub fn reply_recipient(&self) -> UserId {
+        self.bot_context()
+            .and_then(|b| b.command.as_ref())
+            .map_or(self.sender, |c| c.initiator)
+    }
+
     pub fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Message {
         Message {
             message_index: self.message_index,

@@ -2122,7 +2122,7 @@ impl GroupChatCore {
 
         events_reader
             .message_internal(replies_to.event_index.into())
-            .map(|message| message.sender)
+            .map(|message| message.reply_recipient())
     }
 
     fn merge_permissions(new: OptionalGroupPermissions, old: GroupPermissions) -> GroupPermissions {
