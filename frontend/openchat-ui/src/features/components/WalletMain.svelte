@@ -264,7 +264,9 @@
 
   function report() {
     const flow = isFlow(view);
-    onViewChange?.({ view, token: view === 'all' || view === 'recipients' || (flow && fromAll) ? null : sym });
+    // receiving a token outside `tokens` reports that token; the page shown (`sym`) is only where Receive goes back to
+    const token = view === 'receive' && extTok ? extTok : view === 'all' || view === 'recipients' || (flow && fromAll) ? null : sym || null;
+    onViewChange?.({ view, token });
   }
 
   function apply(r: WalletRequest) {
@@ -289,9 +291,10 @@
       pick = { view: r.view };
       return;
     }
-    // receiving a token you don't hold yet (one of `receivable`)
-    if (r.view === 'receive' && r.token && !rows.some((x) => idOf(x) === r.token) && receivable.some((x) => x.symbol === r.token && x.nets.length)) extTok = r.token;
-    const startFromAll = flow && !r.token && view === 'all';
+    // receiving a token outside `tokens` (one of `receivable`): only received, so the page shown stays for Receive to go
+    // back to (All activity if it was opened there)
+    if (r.view === 'receive' && r.token && !valued.some((x) => idOf(x) === r.token) && receivable.some((x) => x.symbol === r.token && x.nets.length)) extTok = r.token;
+    const startFromAll = flow && (!r.token || !!extTok) && view === 'all';
     // a token-less flow opened from a token page acts on the token shown there (sym may name one with no balance)
     const shown = raw ? idOf(raw) : undefined;
     if (r.token && r.token !== sym) tokFilter = 0;
@@ -301,7 +304,7 @@
     // ... and a flow requested again (e.g. Send for the token whose receipt is showing) remounts as a fresh form
     if (flow) flowNonce++;
     view = view0 || 'all';
-    sym = r.token || (flow && !startFromAll && shown ? shown : sym);
+    sym = extTok ? sym : r.token || (flow && !startFromAll && shown ? shown : sym);
     fromAll = flow ? startFromAll || !!r.fromAll : false;
     pinFlowSym();
     report();
@@ -540,6 +543,8 @@
   const swapPinned = $derived(onSwap ? (r: Parameters<NonNullable<typeof onSwap>>[0]) => pinned(() => onSwap(r)) : undefined);
   const showToken = $derived(view === 'token' && !!raw && !missing);
   const notFound = $derived(view === 'token' && missing);
+  // a token's page asked for before the host has any tokens (a reload of it): neither the page nor "not found" yet
+  const pending = $derived(view === 'token' && !!sym && valued.length === 0);
 
   // sending: the tokens you hold. Receiving or browsing: yours first, then the rest of the catalogue, then the extra
   // receivable tokens (only while Receive is offered), no symbol twice
@@ -641,8 +646,8 @@
   {/if}
   {#if view === 'all' || view === 'token'}
     <PageHeader
-      title={showToken ? raw.name : notFound ? t('ui.walletMain.tokenNotFoundTitle') : t(empty ? 'ui.walletMain.wallet' : 'ui.walletMain.allActivity')}
-      onBack={showToken || notFound ? () => go({ view: 'all' }) : undefined}
+      title={pending ? '' : showToken ? raw.name : notFound ? t('ui.walletMain.tokenNotFoundTitle') : t(empty ? 'ui.walletMain.wallet' : 'ui.walletMain.allActivity')}
+      onBack={showToken || notFound || pending ? () => go({ view: 'all' }) : undefined}
       backLabel={t('ui.walletMain.backToAll')}
       avatarMark={showToken ? raw.mark : ''}
       avatarLogo={showToken ? raw.logo : undefined}
@@ -652,7 +657,9 @@
     >
     <div class="scroll">
       <div class="column">
-        {#if notFound}
+        {#if pending}
+          <div class="history-note"><Skeleton variant="token" count={3} /></div>
+        {:else if notFound}
           <EmptyState icon="search" title={t('ui.walletMain.tokenNotFoundTitle')} body={t('ui.walletMain.tokenNotFoundBody')} actionLabel="" />
         {:else if !showToken && empty}
           <div class="welcome">
