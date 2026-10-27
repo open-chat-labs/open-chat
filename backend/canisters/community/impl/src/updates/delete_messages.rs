@@ -60,7 +60,7 @@ fn c2c_bot_delete_messages_impl(args: c2c_bot_delete_messages::Args, state: &mut
     };
 
     // Without the DeleteMessages permission a bot can still delete its own messages autonomously, as
-    // it can edit them, if it's installed with autonomous permissions
+    // it can edit them, if it's installed to act autonomously, which needs no particular permission
     if !state.data.is_bot_permitted(
         &bot_caller.bot,
         Some(args.channel_id),
