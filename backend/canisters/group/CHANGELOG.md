@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Let the user who issued a bot command delete the bot's response ([#10261](https://github.com/open-chat-labs/open-chat/pull/10261))
+- Tell whoever used a bot's command of replies to the bot's response ([#10274](https://github.com/open-chat-labs/open-chat/pull/10274))
 
 ### Fixed
 
