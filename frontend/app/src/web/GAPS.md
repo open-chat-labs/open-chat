@@ -578,29 +578,37 @@ design export needs. Each entry says where it came up.
 
 ### Wiring
 
-- **Wallet** (6a #10120, `features/wallet`): `WalletPanel` on the left and `WalletMain` in the
-  middle, on `/wallet` and `/wallet/:ledger`, from `walletTokensSorted` and the exchange rates.
-  The token page's history is the token's index canister's, a page at a time
-  (`TransactionHistoryState`); a row opens the transaction on the token's explorer. The logic is
-  shared with the old wallets (`logic/wallet`: `walletTotal`, `tokenActions`,
+- **Wallet** (6a #10120, `features/wallet`, the design's changes of 2026-10-27): `WalletPanel` on
+  the left and `WalletMain` in the middle, on `/wallet` and `/wallet/:ledger`, over the wallet's
+  catalogue (`cryptoTokensSorted`: every token it can receive, or holds). The panel lists what you
+  own, folds what's under the wallet's minimum value into "small balances", and ends with
+  Supported tokens (the token picker); with nothing owned, its card is empty, the first few
+  supported tokens are listed under "View all", and the middle is the welcome. Any token has a
+  page, at zero if you don't hold it. The token page's history is the token's index canister's,
+  a page at a time (`TransactionHistoryState`); a row opens the transaction on the token's
+  explorer. Copy ledger ID from either kebab copies through `WalletMain` (`panelRequests`). The
+  logic is shared with the old wallets (`logic/wallet`: `walletTotal`, `tokenActions`,
   `accountTransactions`). Not yet:
-  - All activity: there's no history across tokens, so it says to pick a token (#10120's open
-    question; merging each indexed token's first page would mean one call per ledger on every open).
-  - Send, Receive and Swap (6b, 6c), and Settings and Manage recipients (6d): the tokens' menus
-    don't offer them, but the balance card's Send / Receive / Swap and the panel's ⋯ menu still
-    show and do nothing, and `/wallet/send`, `/receive`, `/swap` show the token's page (or All
-    activity), `/wallet/recipients` All activity.
-  - a token with no balance isn't listed (the panel and the token page are the design's, for held
-    tokens), where the old wallets listed every token in the wallet; `/wallet/:ledger` for one shows
-    the first held token.
+  - All activity (with something owned): there's no history across tokens, so it says to pick a
+    token (#10120's open question; merging each indexed token's first page would mean one call per
+    ledger on every open).
+  - Send, Receive and Swap (6b, 6c): the app passes no `flows`, so their buttons, menu items, the
+    welcome's "Receive tokens" card and the picker's Receive are left out (the design leads an
+    empty wallet with Receive); `/wallet/send`, `/receive`, `/swap` show the token's page (or All
+    activity). Settings and Manage recipients (6d): the panel's ⋯ menu still offers them and they do
+    nothing; `/wallet/recipients` shows All activity.
+  - the total is what the panel lists (Your tokens and small balances); the old wallets' total is
+    `walletTokensSorted`'s (in automatic mode, the default tokens plus those worth the minimum).
   - the display currency is the panel's own, back to USD each time it opens (as the old wallets'
     toggle), not a setting.
-  - the token page's "change today" pill: no 24h change (see the data gaps below).
+  - no 24h change (see the data gaps below).
   - by hand: `WalletToken` gains `id` (the ledger: callbacks, the selection and activity use it,
-    as two ledgers can share a symbol), `actions` and `logo`; `WalletPanel` takes `rates`;
-    `WalletMain` takes `history`, `onMoreHistory`, `onRetryHistory`, `onActivity` and
-    `allActivityNote`, and `WalletActivity` gains `token`, `party` and kind `own`; `TokenAvatar` and
-    `PageHeader` take a logo. Send, Receive and Swap still pick their token by symbol (6b, 6c).
+    as two ledgers can share a symbol), `actions` and `logo`; `WalletPanel` takes `rates` and
+    `flows`, and its manual `settings.tokens` are ids; `WalletMain` takes `history`,
+    `onMoreHistory`, `onRetryHistory`, `onActivity`, `allActivityNote` and `flows`, and
+    `WalletActivity` gains `token`, `party` and kind `own`; `BalanceCard` shows only the buttons it
+    has handlers for; `TokenAvatar` and `PageHeader` take a logo. Send, Receive and Swap still pick
+    their token by symbol (6b, 6c).
 
 - **Diamond** (`?diamond`, `features/diamond`, 8e #10131): paid through the shared payment
   (`logic/diamond`, which both legacy `Payment.svelte`s use too), in CHAT or ICP at the backend's

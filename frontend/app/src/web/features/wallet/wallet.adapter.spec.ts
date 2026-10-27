@@ -1,6 +1,14 @@
 import type { AccountTransaction, EnhancedTokenDetails } from "@client";
 import { describe, expect, test } from "vitest";
-import { displayDecimals, tokenActivity, walletToken, walletTokenActions } from "./wallet.adapter";
+import {
+    displayDecimals,
+    panelSettings,
+    supportedCount,
+    tokenActivity,
+    walletToken,
+    walletTokenActions,
+    walletTokens,
+} from "./wallet.adapter";
 
 function token(over: Partial<EnhancedTokenDetails> = {}): EnhancedTokenDetails {
     return {
@@ -91,6 +99,41 @@ describe("a token's activity", () => {
             amount: 2,
             fiat: 1,
             timestamp: 1000,
+        });
+    });
+});
+
+describe("the wallet's catalogue", () => {
+    test("every token with its price; one counted per symbol", () => {
+        const list = walletTokens(
+            [
+                token(),
+                token({ ledger: "another-chat", balance: 0n }),
+                token({ symbol: "ICP", ledger: "icp" }),
+            ],
+            new Map([["icp", { toUSD: 5 }]]),
+            {
+                swappable: new Set(),
+                manualWallet: false,
+                disabled: { send: false, receive: false, swap: false },
+            },
+        );
+        expect(list.map((t) => [t.id, t.price])).toEqual([
+            ["chat-ledger", 0],
+            ["another-chat", 0],
+            ["icp", 5],
+        ]);
+        expect(supportedCount(list)).toBe(2);
+    });
+
+    test("the panel reads the wallet config: a minimum value, or the chosen ledgers", () => {
+        expect(panelSettings({ kind: "auto_wallet", minDollarValue: 2.5 })).toEqual({
+            autoConfig: true,
+            minBalance: "2.5",
+        });
+        expect(panelSettings({ kind: "manual_wallet", tokens: new Set(["a", "b"]) })).toEqual({
+            autoConfig: false,
+            tokens: ["a", "b"],
         });
     });
 });

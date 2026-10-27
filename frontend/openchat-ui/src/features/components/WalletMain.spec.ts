@@ -241,19 +241,22 @@ describe('WalletMain', () => {
     expect(onViewChange).toHaveBeenLastCalledWith({ view: 'token', token: 'ICP' });
   });
 
-  test('after a whole-balance send, the token page shows and acts on the token that is left', async () => {
+  test('after a whole-balance send, the token page stays on that token at zero: Receive leads, Send and Swap wait for funds', async () => {
     const { props } = setup({ onSent: () => Promise.resolve() });
     go(props, { view: 'send', token: 'ICP' }, 1);
     await send().onSent(request());
     props.tokens = [{ ...tokens[0], held: 0 }, tokens[1]];
     send().onDone({ request: request(), result: undefined, openChat: false });
     await settle();
-    // the token page now shows Tether (ICP has no balance left)
-    const actions = target.querySelectorAll<HTMLElement>('.actions .action');
-    expect(actions[1].textContent).toContain('USDT');
-    actions[1].click(); // Receive USDT
+    const actions = [...target.querySelectorAll<HTMLElement>('.actions .action')];
+    expect(actions.map((a) => a.textContent)).toEqual(['Receive ICP', 'Send ICP', 'Swap ICP']);
+    expect(actions[0].classList.contains('primary')).toBe(true);
+    expect(actions.slice(1).map((a) => a.getAttribute('aria-disabled'))).toEqual(['true', 'true']);
+    // no share of wallet for a token you don't hold
+    expect(target.querySelector('.summary .share')).toBeNull();
+    actions[0].click(); // Receive ICP
     flushSync();
-    expect(flows.receive.rec.props!.token).toBe('USDT');
+    expect(flows.receive.rec.props!.token).toBe('ICP');
   });
 
   test('a host request drops where an open flow would have returned to', () => {
@@ -272,11 +275,11 @@ describe('WalletMain', () => {
     expect(onViewChange).toHaveBeenLastCalledWith({ view: 'token', token: 'USDT' });
   });
 
-  test('a token-less flow request from a token page uses the token shown there', () => {
+  test('a token-less flow request from a token page uses the token shown there, held or not', () => {
     const { props } = setup({ tokens: [{ ...tokens[0], held: 0 }, tokens[1]] });
-    go(props, { view: 'token', token: 'ICP' }, 1); // ICP has no balance: the page shows Tether
+    go(props, { view: 'token', token: 'ICP' }, 1); // ICP has no balance: its page still shows, at zero
     go(props, { view: 'swap' }, 2);
-    expect(flows.swap.rec.props!.token).toBe('USDT');
+    expect(flows.swap.rec.props!.token).toBe('ICP');
   });
 
   test('Receive offers a receivable token on its own networks', () => {
@@ -287,15 +290,14 @@ describe('WalletMain', () => {
     expect(rec.tokens.find((x) => x.symbol === 'USDC')?.nets).toEqual(['eth', 'icp']);
   });
 
-  test('the token page summary: balance, Send / Receive / Swap, facts with a ledger copy, share of wallet', () => {
+  test('the token page summary: balance, Send / Receive / Swap, the price by the name, share of wallet, no facts', () => {
     const { props } = setup();
     go(props, { view: 'token', token: 'ICP' }, 1);
     const summary = target.querySelector('.summary')!;
     expect(summary.querySelector('.held')!.textContent).toContain('10.0000 ICP');
     expect([...summary.querySelectorAll('.action')].map((a) => a.textContent)).toEqual(['Send ICP', 'Receive ICP', 'Swap ICP']);
-    const facts = [...summary.querySelectorAll('.fact-label')].map((f) => f.textContent);
-    expect(facts).toEqual(['Price', 'Transfer fee', 'Standard', 'Ledger']);
-    expect(summary.querySelector('.fact [role=button]')!.getAttribute('aria-label')).toBe('Copy ledger ID');
+    expect(summary.querySelector('.fact')).toBeNull();
+    expect(target.querySelector('.page-header .tag')).not.toBeNull();
     // ICP is $50 of $150
     expect(summary.querySelector('.share-value')!.textContent).toBe('33.3%');
     props.balanceHidden = true;

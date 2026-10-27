@@ -1,14 +1,19 @@
 <!-- Wallet side panel: display currency, ⋯ menu (settings, recipients), balance card with allocation bar, optional
      "All activity" home row, and the token list (sortable by value or name, either direction) with per-token menus.
+     `tokens` is the catalogue, held or not: the tokens you own are listed (those under the minimum value folded into one
+     "small balances" row), then a folded "Supported tokens" row; with nothing owned, the card is empty and the first few
+     supported tokens are listed under "View all". Both emit onAction('browse').
      Menus: right-click opens at the cursor, the kebab anchors under itself, a touch long-press anchors to the row.
      Veil, hidden tokens and settings can be owned by the host (the props) or kept locally (no handler passed). -->
 <script lang="ts" module>
   /** The parts of the wallet settings this panel reads. */
   export interface WalletPanelSettings {
     currency?: string;
-    /** false = only `tokens` are listed; otherwise holdings worth at least `minBalance` USD. */
+    /** false = only `tokens` are listed; otherwise holdings worth at least `minBalance` USD, the rest folded into
+     *  "small balances" (the minimum never hides a supported token). */
     autoConfig?: boolean;
     minBalance?: string;
+    /** The manual list: token ids (`id`, else the symbol). */
     tokens?: string[];
   }
 </script>
@@ -75,6 +80,11 @@
     /** USD per unit of each display currency (BTC, ETH, ICP) when the host prices them; otherwise the tokens' own
      *  prices (a token with that symbol) are used. */
     rates?: Partial<Record<string, number>>;
+    /** How many tokens the wallet can receive (the deduped catalogue); defaults to `tokens`' length. */
+    supportedCount?: number;
+    /** The flows the host offers (`onAction('send' | 'receive' | 'swap')`); the balance card's buttons for the others
+     *  are left out. All three without it. */
+    flows?: ('send' | 'receive' | 'swap')[];
     /** Workspace mode: shows an "All activity" row above the tokens. */
     onHome?: () => void;
     homeSelected?: boolean;
@@ -102,6 +112,8 @@
     homeSelected = false,
     homeCount,
     rates: hostRates,
+    supportedCount,
+    flows = ['send', 'receive', 'swap'],
   }: Props = $props();
   const t = useT();
 
@@ -113,6 +125,7 @@
   // direction is its own control: it sticks when the sort key changes
   let dir = $state<'asc' | 'desc'>('desc');
   let spinning = $state(false);
+  let smallOpen = $state(false);
   let undo = $state<{ symbol: string; hidden: string[] } | null>(null);
   // a token's identity in callbacks, the hidden list and the selection: several ledgers can share a symbol
   const idOf = (tk: WalletToken) => tk.id ?? tk.symbol;
@@ -181,16 +194,27 @@
 
   // wallet settings decide which tokens exist here at all: either a minimum
   // dollar value (automatic) or an explicit list (manual)
-  const held = $derived.by(() => {
-    const floor = manual ? 0 : parseAmount(settings.minBalance || '');
-    const allow = manual && settings.tokens ? settings.tokens : null;
-    return tokens
+  const floor = $derived(manual ? 0 : parseAmount(settings.minBalance || ''));
+  // the tokens you own, not hidden from the list
+  const owned = $derived(
+    tokens
       .filter((t) => t.held > 0)
       .filter((t) => !hidden.includes(idOf(t)))
-      .filter((t) => (allow ? allow.includes(t.symbol) : t.price * t.held >= floor))
-      .map((t) => ({ ...t, value: t.price * t.held }));
+      .map((t) => ({ ...t, value: t.price * t.held })),
+  );
+  const held = $derived.by(() => {
+    const allow = manual && settings.tokens ? settings.tokens : null;
+    return owned.filter((t) => (allow ? allow.includes(idOf(t)) : t.value >= floor));
   });
-  const total = $derived(held.reduce((sum, t) => sum + t.value, 0));
+  // owned, but under the minimum value: folded into one row instead of disappearing
+  const small = $derived(manual ? [] : owned.filter((t) => t.value < floor));
+  const smallTotal = $derived(small.reduce((sum, t) => sum + t.value, 0));
+  // what's listed counts towards the total, small balances included
+  const total = $derived([...held, ...small].reduce((sum, t) => sum + t.value, 0));
+  // nothing owned yet: the supported tokens lead, Receive is the primary action
+  const empty = $derived(!loading && tokens.every((t) => !(t.held > 0)));
+  const supported = $derived(tokens.slice(0, 5));
+  const supportedTotal = $derived(supportedCount ?? tokens.length);
   const listed = $derived(
     held.slice().sort((x, y) => (dir === 'asc' ? 1 : -1) * (sort === 'name' ? x.symbol.localeCompare(y.symbol) : x.value - y.value)),
   );
@@ -280,13 +304,20 @@
   function tokenItems(tk: WalletToken): MenuItem[] {
     const { symbol } = tk;
     const id = idOf(tk);
-    const offers = (a: WalletTokenAction) => (tk.actions ? tk.actions.includes(a) : a !== 'hide' || manual);
+    const offers = (a: WalletTokenAction) =>
+      (a === 'send' || a === 'receive' || a === 'swap' ? flows.includes(a) : true) && (tk.actions ? tk.actions.includes(a) : a !== 'hide' || manual);
     const items: MenuItem[] = [
       // built when the menu opens, so labels are translated here (they carry the symbol)
       ...(offers('send') ? [{ label: t('ui.walletPanel.send', { symbol }), mask: mask('wallet-send'), onSelect: () => onAction?.(`send:${id}`) }] : []),
       ...(offers('receive') ? [{ label: t('ui.walletPanel.receive', { symbol }), mask: mask('receive'), onSelect: () => onAction?.(`receive:${id}`) }] : []),
       ...(offers('swap') ? [{ label: t('ui.walletPanel.swap', { symbol }), mask: mask('swap'), onSelect: () => onAction?.(`swap:${id}`) }] : []),
       ...(onRefresh && offers('refresh') ? [{ label: t('ui.walletPanel.refresh'), mask: mask('refresh'), onSelect: () => refresh(id) }] : []),
+      ...(tk.ledger
+        ? [
+            { label: '', variant: 'separator' as const },
+            { label: t('ui.walletPanel.copyLedgerId'), mask: mask('copy'), onSelect: () => onAction?.(`ledger:${id}`) },
+          ]
+        : []),
     ];
     if (offers('hide')) items.push({ label: t('ui.walletPanel.hide'), mask: mask('eye-off'), onSelect: () => removeToken(tk) });
     return items;
@@ -390,22 +421,29 @@
       {veiled}
       {spinning}
       {allocation}
+      {empty}
       onToggleVeil={() => (onBalanceHiddenChange ? onBalanceHiddenChange(!veiled) : (localVeil = !veiled))}
       onRefresh={onRefresh ? () => refresh() : undefined}
-      onSend={() => onAction?.('send')}
-      onReceive={() => onAction?.('receive')}
-      onSwap={() => onAction?.('swap')}
+      onSend={flows.includes('send') ? () => onAction?.('send') : undefined}
+      onReceive={flows.includes('receive') ? () => onAction?.('receive') : undefined}
+      onSwap={flows.includes('swap') ? () => onAction?.('swap') : undefined}
     />
   </div>
 
   <div class="tokens">
-    {#if onHome}
+    {#if onHome && !empty}
       <div class="home" class:on={homeSelected} onclick={onHome} role="button" tabindex="0" aria-current={homeSelected}>
         <span class="home-badge"><span class="home-icon"></span></span>
         <span class="home-label">{t('ui.walletPanel.allActivity')}</span>
         <span class="home-count">{homeCount ?? ''}</span>
       </div>
     {/if}
+    {#if empty}
+      <div class="list-head">
+        <span class="heading">{t('ui.walletPanel.supportedTokens')}</span>
+        <span class="view-all" onclick={() => onAction?.('browse')} role="button" tabindex="0">{t('ui.walletPanel.viewAll', { count: supportedTotal })}</span>
+      </div>
+    {:else}
     <div class="list-head">
       <span class="heading">{t('ui.walletPanel.tokens', { count: listed.length })}</span>
       <span
@@ -423,6 +461,7 @@
         <span class="direction-icon" style:mask={mask(dir === 'asc' ? 'arrow-up' : 'arrow-down')}></span>
       </span>
     </div>
+    {/if}
 
     <div class="scroll">
       {#if loading}<Skeleton variant="token" count={5} />{/if}
@@ -467,6 +506,49 @@
           </span>
         </div>
       {/each}
+      {#if empty}
+        {#each supported as tk (idOf(tk))}
+          <div class="token supported" onclick={() => onToken?.(idOf(tk))} role="button" tabindex="0">
+            <TokenAvatar size={40} symbol={tk.symbol} mark={tk.mark} gradient={tk.grad} logo={tk.logo} />
+            <div class="token-body">
+              <span class="symbol">{tk.symbol}</span>
+              <span class="name">{tk.name}</span>
+            </div>
+            <span class="supported-price">{price(tk.price)}</span>
+          </div>
+        {/each}
+      {/if}
+      {#if !loading && small.length > 0}
+        <div class="folded" onclick={() => (smallOpen = !smallOpen)} role="button" tabindex="0" aria-expanded={smallOpen}>
+          <span class="folded-badge"><span class="folded-icon small-icon"></span></span>
+          <span class="folded-text">
+            <span class="folded-title">{t('ui.walletPanel.smallBalances', { count: small.length })}</span>
+            <span class="folded-sub">{t('ui.walletPanel.smallBalancesSub', { floor: money(floor), total: veiled ? DOTS : money(smallTotal) })}</span>
+          </span>
+          <span class="folded-chevron" class:open={smallOpen}></span>
+        </div>
+        {#if smallOpen}
+          {#each small as tk (idOf(tk))}
+            <div class="token" onclick={() => onToken?.(idOf(tk))} role="button" tabindex="0">
+              <TokenAvatar size={40} symbol={tk.symbol} mark={tk.mark} gradient={tk.grad} logo={tk.logo} />
+              <div class="token-body">
+                <div class="token-line"><span class="symbol">{tk.symbol}</span><span class="small-holdings">{veiled ? DOTS : num(tk.held, tk.held < 1 ? 4 : 2)}</span></div>
+                <div class="token-line"><span class="name">{tk.name}</span><span class="small-value">{veiled ? DOTS : money(tk.value)}</span></div>
+              </div>
+            </div>
+          {/each}
+        {/if}
+      {/if}
+      {#if !loading && !empty}
+        <div class="folded" onclick={() => onAction?.('browse')} role="button" tabindex="0">
+          <span class="folded-badge"><span class="folded-icon search-icon"></span></span>
+          <span class="folded-text">
+            <span class="folded-title">{t('ui.walletPanel.supportedTokensRow')}</span>
+            <span class="folded-sub">{t('ui.walletPanel.canReceive', { count: supportedTotal })}</span>
+          </span>
+          <span class="folded-chevron forward"></span>
+        </div>
+      {/if}
     </div>
   </div>
 
@@ -692,6 +774,133 @@
 
   .token.selected {
     background: var(--overlay-2);
+  }
+
+  .view-all {
+    flex: none;
+    height: 28px;
+    margin: -6px -6px -6px 0;
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+    border-radius: var(--radius-sm);
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--accent-bright);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .view-all:hover {
+    background: var(--overlay-1);
+  }
+
+  .name {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-regular) var(--text-sm) / 1.2 var(--font-sans);
+    color: var(--ink-4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .supported-price {
+    flex: none;
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
+    color: var(--ink-3);
+  }
+
+  .small-holdings {
+    flex: none;
+    font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-mono);
+    color: var(--ink-2);
+  }
+
+  .small-value {
+    flex: none;
+    font: var(--weight-regular) var(--text-sm) / 1 var(--font-mono);
+    color: var(--ink-4);
+  }
+
+  .folded {
+    outline-offset: -2px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-14);
+    margin-block-start: var(--space-6);
+    padding: var(--space-12) var(--space-10);
+    border-radius: var(--radius-md);
+    background: var(--overlay-1);
+    cursor: pointer;
+  }
+
+  .folded:hover {
+    background: var(--overlay-2);
+  }
+
+  .folded-badge {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--overlay-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .folded-icon {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-3);
+  }
+
+  .small-icon {
+    mask: var(--icon-kebab) center/contain no-repeat;
+    transform: rotate(90deg);
+  }
+
+  .search-icon {
+    mask: var(--icon-search) center/contain no-repeat;
+  }
+
+  .folded-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .folded-title {
+    font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
+    color: var(--ink);
+  }
+
+  .folded-sub {
+    font: var(--weight-regular) var(--text-sm) / 1.2 var(--font-sans);
+    color: var(--ink-4);
+  }
+
+  .folded-chevron {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    background: var(--ink-4);
+    mask: var(--icon-chevron-down) center/contain no-repeat;
+    transition: transform 0.2s;
+  }
+
+  .folded-chevron.open {
+    transform: rotate(180deg);
+  }
+
+  .folded-chevron.forward {
+    transform: rotate(-90deg);
+  }
+
+  :global([dir='rtl']) .folded-chevron.forward {
+    transform: rotate(90deg);
   }
 
   .token:hover {

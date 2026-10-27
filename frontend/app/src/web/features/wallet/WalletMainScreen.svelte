@@ -13,7 +13,7 @@
         namedAccountsStore,
         swappableTokensStore,
         walletConfigStore,
-        walletTokensSorted,
+        cryptoTokensSorted,
         type OpenChat,
     } from "@client";
     import WalletMain, {
@@ -21,7 +21,7 @@
     } from "@openchat/ui/src/features/components/WalletMain.svelte";
     import type { ComponentProps } from "svelte";
     import { accountTransactionUrl } from "@src/logic/wallet/accountTransactions";
-    import { hasTransactionHistory, tokenActions } from "@src/logic/wallet/tokenActions";
+    import { hasTransactionHistory } from "@src/logic/wallet/tokenActions";
     import { TransactionHistoryState } from "@src/logic/wallet/transactionHistoryState.svelte";
     import { hideTokenBalances } from "@src/stores/settings";
     import { toastStore } from "@src/stores/toast";
@@ -30,7 +30,8 @@
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
-    import { tokenActivity, walletToken } from "./wallet.adapter";
+    import { tokenActivity, walletTokens } from "./wallet.adapter";
+    import { newest, numbered, panelRequests } from "./walletRequests.svelte";
 
     type WalletMainProps = ComponentProps<typeof WalletMain>;
 
@@ -41,18 +42,13 @@
     // the saved account names a transaction's other side can go by (namedAccountsStore)
     onMount(() => client.loadSavedCryptoAccounts());
 
+    // the catalogue: a token you don't hold still gets its page, at zero
     const tokens = $derived(
-        $walletTokensSorted.map((token) =>
-            walletToken(
-                token,
-                $exchangeRatesLookupStore.get(token.ledger)?.toUSD,
-                tokenActions(token, {
-                    swappable: $swappableTokensStore,
-                    manualWallet: $walletConfigStore.kind === "manual_wallet",
-                    disabled: walletActionsDisabled,
-                }),
-            ),
-        ),
+        walletTokens($cryptoTokensSorted, $exchangeRatesLookupStore, {
+            swappable: $swappableTokensStore,
+            manualWallet: $walletConfigStore.kind === "manual_wallet",
+            disabled: walletActionsDisabled,
+        }),
     );
 
     // the token whose page shows: /wallet/:ledger, and for now Send / Receive / Swap's ?token
@@ -60,14 +56,15 @@
         region.view === "all" || region.view === "recipients" ? undefined : region.ledger,
     );
 
-    // WalletMain follows the URL: a new request each time it names another page
-    let nonce = 0;
-    const request = $derived.by((): WalletRequest => {
-        nonce += 1;
-        return ledger === undefined
-            ? { view: "all", nonce }
-            : { view: "token", token: ledger, nonce };
-    });
+    // WalletMain follows the URL (a new request each time it names another page) and the panel's
+    // own asks: browse the supported tokens, copy a ledger ID
+    const pageRequest = $derived.by(
+        (): WalletRequest =>
+            ledger === undefined
+                ? numbered({ view: "all" })
+                : numbered({ view: "token", token: ledger }),
+    );
+    const request = $derived(newest(pageRequest, panelRequests.latest));
 
     // the shown token's history, loaded when its page opens
     let history = $state<{ ledger: string; state: TransactionHistoryState } | undefined>();
@@ -137,6 +134,9 @@
     onRetryHistory={() => shown?.load()}
     onActivity={openActivity}
     onViewChange={viewChanged}
+    onBalanceHiddenChange={(hidden) => hideTokenBalances.set(hidden)}
+    handle={$currentUserStore.username ? `@${$currentUserStore.username}` : undefined}
+    flows={[]}
     allActivityNote={{
         title: "ui.walletMain.allActivityUnavailableTitle",
         body: "ui.walletMain.allActivityUnavailableBody",

@@ -16,10 +16,12 @@
     /** The avatar's logo image, in place of the mark. */
     avatarLogo?: string;
     onBack?: () => void;
+    /** Resource key (or literal text): a pill right after the title (e.g. a token's price). */
+    titleTag?: string;
     children?: Snippet;
   }
 
-  let { title, backLabel = 'ui.common.back', avatarMark, avatarGradient, avatarLogo, onBack, children }: Props = $props();
+  let { title, backLabel = 'ui.common.back', avatarMark, avatarGradient, avatarLogo, onBack, titleTag, children }: Props = $props();
   const t = useT();
 </script>
 
@@ -30,7 +32,10 @@
   {#if avatarMark || avatarLogo}
     <TokenAvatar size={28} mark={avatarMark} gradient={avatarGradient} logo={avatarLogo} />
   {/if}
-  <span class="title">{t(title)}</span>
+  <span class="title-line">
+    <span class="title">{t(title)}</span>
+    {#if titleTag}<span class="tag">{t(titleTag)}</span>{/if}
+  </span>
   {#if children}
     <div class="trailing">{@render children()}</div>
   {/if}
@@ -58,14 +63,33 @@
     display: flex;
   }
 
-  .title {
+  .title-line {
     flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+  }
+
+  .title {
     min-width: 0;
     font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
     color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .tag {
+    flex: none;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: var(--radius-pill);
+    display: inline-flex;
+    align-items: center;
+    background: var(--overlay-2);
+    font: var(--weight-medium) var(--text-xs) / 1 var(--font-mono);
+    color: var(--ink-2);
   }
 
   .trailing {

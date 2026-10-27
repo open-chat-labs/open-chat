@@ -1,6 +1,14 @@
 // The wallet's data in the library's shapes: the tokens WalletPanel and WalletMain list, and a
 // token's history as WalletMain's activity rows.
-import type { AccountTransaction, EnhancedTokenDetails, NamedAccount, UserLookup } from "@client";
+import type {
+    AccountTransaction,
+    EnhancedTokenDetails,
+    NamedAccount,
+    TokenExchangeRates,
+    UserLookup,
+    WalletConfig,
+} from "@client";
+import type { WalletPanelSettings } from "@openchat/ui/src/features/components/WalletPanel.svelte";
 import type { WalletActivity } from "@openchat/ui/src/features/components/WalletMain.svelte";
 import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
 import type { WalletToken, WalletTokenAction } from "@openchat/ui/src/lib/types";
@@ -10,7 +18,11 @@ import {
     transactionDirection,
     type MyWallets,
 } from "@src/logic/wallet/accountTransactions";
-import type { TokenAction } from "@src/logic/wallet/tokenActions";
+import {
+    tokenActions,
+    type TokenAction,
+    type TokenActionsContext,
+} from "@src/logic/wallet/tokenActions";
 import { swatchFor } from "../chats/chatList.adapter";
 
 /** The standard the token page names: ICRC-2 when the ledger has it (approvals), else ICRC-1. */
@@ -75,6 +87,36 @@ export function walletToken(
         standard: tokenStandard(token.supportedStandards),
         actions: walletTokenActions(actions),
     };
+}
+
+/**
+ * The wallet's catalogue as the panel and the token page list it: every token it can receive or
+ * holds (`cryptoTokensSorted`), each with its price and what it offers. Never CHIT, which isn't a
+ * token.
+ */
+export function walletTokens(
+    catalogue: EnhancedTokenDetails[],
+    rates: { get(ledger: string): TokenExchangeRates | undefined },
+    actions: TokenActionsContext,
+): WalletToken[] {
+    return catalogue.map((token) =>
+        walletToken(token, rates.get(token.ledger)?.toUSD, tokenActions(token, actions)),
+    );
+}
+
+/** How many tokens the wallet can receive: the catalogue, one per symbol. */
+export function supportedCount(tokens: Pick<WalletToken, "symbol">[]): number {
+    return new Set(tokens.map((t) => t.symbol)).size;
+}
+
+/**
+ * The wallet config as the panel reads it: automatic lists what you own worth at least the
+ * minimum (the rest folded into small balances); manual lists the chosen tokens, by ledger.
+ */
+export function panelSettings(config: WalletConfig): WalletPanelSettings {
+    return config.kind === "auto_wallet"
+        ? { autoConfig: true, minBalance: String(config.minDollarValue) }
+        : { autoConfig: false, tokens: [...config.tokens] };
 }
 
 /** Who's on the other side of the user's transactions. */

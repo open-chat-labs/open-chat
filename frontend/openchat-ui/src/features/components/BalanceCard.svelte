@@ -1,6 +1,7 @@
 <!-- Balance summary card: label, big amount (+ optional fiat), optional veil and refresh toggles, an optional allocation bar
      with a hover tooltip per segment, and Send / Receive / Swap actions. Veiled: amounts blur and the bar shows equal segments
-     so relative holdings don't leak. -->
+     so relative holdings don't leak. Empty (nothing owned yet): the bar is a plain track, Receive leads and Send / Swap are
+     disabled ("Add funds first"). -->
 <script lang="ts" module>
   export interface AllocationSegment {
     share: number;
@@ -29,12 +30,15 @@
     onToggleVeil?: () => void;
     /** Shows the refresh button. */
     onRefresh?: () => void;
+    /** Send, Receive and Swap: each button shows only with its handler. */
     onSend?: () => void;
     onReceive?: () => void;
     onSwap?: () => void;
+    /** Nothing owned yet: a plain track for the bar, Receive first, Send and Swap disabled. */
+    empty?: boolean;
   }
 
-  let { label = 'ui.balanceCard.totalBalance', amount, fiat = '', veiled = false, spinning = false, allocation = [], onToggleVeil, onRefresh, onSend, onReceive, onSwap }: Props = $props();
+  let { label = 'ui.balanceCard.totalBalance', amount, fiat = '', veiled = false, spinning = false, allocation = [], onToggleVeil, onRefresh, onSend, onReceive, onSwap, empty = false }: Props = $props();
   const t = useT();
 
   let hovered = $state<number | null>(null);
@@ -74,7 +78,9 @@
     {/if}
   </div>
 
-  {#if allocation.length > 0}
+  {#if empty}
+    <span class="track"></span>
+  {:else if allocation.length > 0}
     <div class="bar">
       {#each allocation as s, i}
         <span
@@ -99,19 +105,57 @@
     </div>
   {/if}
 
-  <div class="actions">
-    <span class="action send" onclick={onSend} role="button" tabindex="0">
-      <span class="action-icon" style:mask="var(--icon-wallet-send) center/contain no-repeat"></span>
-      <span class="action-label">{t('ui.common.send')}</span>
-    </span>
-    <span class="action outline" onclick={onReceive} role="button" tabindex="0">
-      <span class="action-icon" style:mask="var(--icon-receive) center/contain no-repeat"></span>
-      <span class="action-label">{t('ui.balanceCard.receive')}</span>
-    </span>
-    <span class="action outline square" onclick={onSwap} role="button" tabindex="0" aria-label={t('ui.balanceCard.swap')} title={t('ui.balanceCard.swap')}>
-      <span class="action-icon" style:mask="var(--icon-swap) center/contain no-repeat"></span>
-    </span>
-  </div>
+  {#if !onSend && !onReceive && !onSwap}
+    <!-- no actions offered -->
+  {:else if empty}
+    <div class="actions">
+      {#if onReceive}
+        <span class="action send" onclick={onReceive} role="button" tabindex="0">
+          <span class="action-icon" style:mask="var(--icon-receive) center/contain no-repeat"></span>
+          <span class="action-label">{t('ui.balanceCard.receive')}</span>
+        </span>
+      {/if}
+      {#if onSend}
+      <span class="action disabled" role="button" tabindex="0" aria-disabled="true" title={t('ui.balanceCard.addFundsFirst')} data-tip={t('ui.balanceCard.addFundsFirst')}>
+        <span class="action-icon" style:mask="var(--icon-wallet-send) center/contain no-repeat"></span>
+        <span class="action-label">{t('ui.common.send')}</span>
+      </span>
+      {/if}
+      {#if onSwap}
+      <span
+        class="action disabled square"
+        role="button"
+        tabindex="0"
+        aria-disabled="true"
+        aria-label={t('ui.balanceCard.swap')}
+        title={t('ui.balanceCard.addFundsFirst')}
+        data-tip={t('ui.balanceCard.addFundsFirst')}
+      >
+        <span class="action-icon" style:mask="var(--icon-swap) center/contain no-repeat"></span>
+      </span>
+      {/if}
+    </div>
+  {:else}
+    <div class="actions">
+      {#if onSend}
+        <span class="action send" onclick={onSend} role="button" tabindex="0">
+          <span class="action-icon" style:mask="var(--icon-wallet-send) center/contain no-repeat"></span>
+          <span class="action-label">{t('ui.common.send')}</span>
+        </span>
+      {/if}
+      {#if onReceive}
+        <span class="action outline" onclick={onReceive} role="button" tabindex="0">
+          <span class="action-icon" style:mask="var(--icon-receive) center/contain no-repeat"></span>
+          <span class="action-label">{t('ui.balanceCard.receive')}</span>
+        </span>
+      {/if}
+      {#if onSwap}
+        <span class="action outline square" onclick={onSwap} role="button" tabindex="0" aria-label={t('ui.balanceCard.swap')} title={t('ui.balanceCard.swap')}>
+          <span class="action-icon" style:mask="var(--icon-swap) center/contain no-repeat"></span>
+        </span>
+      {/if}
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -199,6 +243,13 @@
     flex: none;
     font: var(--weight-semibold) var(--text-lg) / 1.3 var(--font-mono);
     color: var(--accent);
+  }
+
+  .track {
+    display: block;
+    height: 8px;
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2);
   }
 
   .bar {
@@ -304,6 +355,12 @@
 
   .action.outline:hover {
     background: var(--overlay-1);
+  }
+
+  .action.disabled {
+    box-shadow: inset 0 0 0 1px var(--line-1);
+    cursor: not-allowed;
+    --action-ink: var(--ink-4);
   }
 
   .action.square {

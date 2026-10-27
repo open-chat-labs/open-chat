@@ -45,15 +45,16 @@
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { onDestroy, untrack } from 'svelte';
-  import type { WalletToken, WalletTokenAction } from '../../lib/types';
-  import CopyButton from '../../lib/components/CopyButton.svelte';
+  import type { MenuItem, WalletToken } from '../../lib/types';
+  import ContextMenu from '../../lib/components/ContextMenu.svelte';
+  import IconButton from '../../lib/components/IconButton.svelte';
+  import { copyText } from '../../lib/clipboard';
   import DialogShell from '../../lib/components/DialogShell.svelte';
   import Button from '../../lib/components/Button.svelte';
   import EmptyState from '../../lib/components/EmptyState.svelte';
   import Skeleton from '../../lib/components/Skeleton.svelte';
   import ListSectionLabel from '../../lib/components/ListSectionLabel.svelte';
   import PageHeader from '../../lib/components/PageHeader.svelte';
-  import Pill from '../../lib/components/Pill.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import ShareBar from '../../lib/components/ShareBar.svelte';
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
@@ -114,7 +115,8 @@
   const KIND: Record<number, Kind> = { 0: 'swap', 1: 'send', 2: 'receive', 3: 'swap' };
 
   export interface WalletRequest {
-    view: View;
+    /** `browse`: the Supported tokens picker. `ledger`: copy `token`'s ledger ID (the view stays). */
+    view: View | 'browse' | 'ledger';
     token?: string;
     /** A new nonce re-applies the request. */
     nonce: number;
@@ -123,6 +125,7 @@
   }
 
   interface Props {
+    /** The catalogue, held or not: a token you don't hold still gets its page, at zero. */
     tokens: WalletToken[];
     request?: WalletRequest | null;
     onViewChange?: (v: { view: View; token: string | null }) => void;
@@ -172,6 +175,11 @@
     onActivity?: (id: string) => void;
     /** In place of All activity's list, when the host can't list activity across tokens: resource keys (or text). */
     allActivityNote?: { title: string; body: string };
+    /** The token page's eye: the shared wallet veil. Without it there's no eye. */
+    onBalanceHiddenChange?: (hidden: boolean) => void;
+    /** The flows the host offers; buttons, menu items, welcome cards and requests for the others are left out. All three
+     *  without it. */
+    flows?: ('send' | 'receive' | 'swap')[];
   }
 
   let {
@@ -205,6 +213,8 @@
     onRetryHistory,
     onActivity,
     allActivityNote,
+    onBalanceHiddenChange,
+    flows = ['send', 'receive', 'swap'],
   }: Props = $props();
   const t = useT();
 
@@ -220,10 +230,12 @@
   let flowBusy = $state(0);
   let filter = $state(0);
   let tokFilter = $state(0);
-  let pick = $state<{ view: 'send' | 'receive' } | null>(null);
+  let pick = $state<{ view: 'send' | 'receive' | 'browse' } | null>(null);
   // sends the host confirmed (with an id) but its activity doesn't list yet
   let sent = $state<Entry[]>([]);
-  let toast = $state<{ id: number; message: string; userId: string | null } | null>(null);
+  // `notice`: a plain message, with no action (a copied ledger ID or username)
+  let toast = $state<{ id: number; message: string; userId: string | null; notice?: boolean } | null>(null);
+  let tokMenu = $state<{ left: number; right: number; top: number; bottom: number } | null>(null);
   let toastTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(toastTimer));
 
@@ -232,9 +244,14 @@
   // a token's identity (`sym` holds it): several ledgers can share a symbol. Send, Receive and Swap still pick their
   // token by symbol, so they get the shown token's symbol and their results map back to the first token with it
   const idOf = (tk: { id?: string; symbol: string }) => tk.id ?? tk.symbol;
-  const rows = $derived(tokens.filter((t) => t.held > 0).map((t) => ({ ...t, value: t.price * t.held })));
+  const valued = $derived(tokens.map((t) => ({ ...t, value: t.price * t.held })));
+  const rows = $derived(valued.filter((t) => t.held > 0));
   const total = $derived(rows.reduce((n, t) => n + t.value, 0));
-  const raw = $derived(rows.find((t) => idOf(t) === sym) ?? rows[0]);
+  // nothing owned yet: All activity is the welcome
+  const empty = $derived(rows.length === 0);
+  // a token you don't hold (an empty wallet, or one opened from Supported tokens) still gets its page, at zero
+  const raw = $derived(rows.find((t) => idOf(t) === sym) ?? valued.find((t) => idOf(t) === sym) ?? rows[0] ?? valued[0]);
+  const offers = (flow: 'send' | 'receive' | 'swap') => flows.includes(flow) && (!raw?.actions || raw.actions.includes(flow));
   const idForSymbol = (symbol: string) => {
     const tk = tokens.find((t) => t.symbol === symbol);
     return tk ? idOf(tk) : symbol;
@@ -248,8 +265,22 @@
   }
 
   function apply(r: WalletRequest) {
+    if (r.view === 'ledger') {
+      if (r.token) copyLedger(r.token);
+      return;
+    }
+    if (r.view === 'browse') {
+      pick = { view: 'browse' };
+      return;
+    }
+    // a flow the host doesn't offer: its token's page, if it names one
+    if (isFlow(r.view) && !flows.includes(r.view as 'send' | 'receive' | 'swap')) {
+      if (r.token) apply({ view: 'token', token: r.token, nonce: r.nonce });
+      return;
+    }
+    const view0: View = r.view;
     extTok = null;
-    const flow = isFlow(r.view);
+    const flow = isFlow(view0);
     // no token yet (e.g. Send in the summary card): ask which one first
     if ((r.view === 'send' || r.view === 'receive') && !r.token) {
       pick = { view: r.view };
@@ -266,7 +297,7 @@
     sendAddr = '';
     // ... and a flow requested again (e.g. Send for the token whose receipt is showing) remounts as a fresh form
     if (flow) flowNonce++;
-    view = r.view || 'all';
+    view = view0 || 'all';
     sym = r.token || (flow && !startFromAll && shown ? shown : sym);
     fromAll = flow ? startFromAll || !!r.fromAll : false;
     pinFlowSym();
@@ -376,8 +407,38 @@
     }, 6000);
   }
 
+  // one place that knows ledger IDs: both kebabs (the list's and the token page's) copy through here
+  async function copyLedger(id: string) {
+    const tk = tokens.find((x) => idOf(x) === id);
+    if (!tk?.ledger) return;
+    if (await copyText(tk.ledger)) notify(t('ui.walletMain.ledgerCopied', { symbol: tk.symbol }));
+  }
+
+  async function copyHandle() {
+    if (handle && (await copyText(handle))) notify(t('ui.walletMain.usernameCopied'));
+  }
+
+  function notify(message: string) {
+    const tid = Date.now();
+    toast = { id: tid, message, userId: null, notice: true };
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      if (toast?.id === tid) toast = null;
+    }, 4000);
+  }
+
   function pickToken(s: string) {
-    const flow = pick?.view ?? 'send';
+    // browse (Supported tokens): a token in the wallet's catalogue opens its page; anything else goes to Receive
+    if (pick?.view === 'browse') {
+      pick = null;
+      if (tokens.some((x) => x.symbol === s)) {
+        go({ view: 'token', sym: idForSymbol(s), fromAll: false });
+        return;
+      }
+      if (!flows.includes('receive')) return;
+      pick = { view: 'receive' };
+    }
+    const flow: 'send' | 'receive' = pick?.view === 'receive' ? 'receive' : 'send';
     pick = null;
     backToAll = view === 'all';
     view = flow;
@@ -458,8 +519,6 @@
     3: { icon: 'swap', title: 'ui.walletMain.emptySwapsTitle', body: 'ui.walletMain.emptySwapsBody' },
   };
 
-  const change = $derived(raw?.change24h);
-  const ledger = $derived(raw?.ledger);
   // keyed on the chosen symbol, not the shown row: a token whose balance reaches 0 (e.g. sending all of it) leaves
   // `rows`, and keying on that would remount a send or swap the host is still working on
   const flowSym = $derived(sym || (raw ? idOf(raw) : ''));
@@ -475,11 +534,68 @@
   const swapPinned = $derived(onSwap ? (r: Parameters<NonNullable<typeof onSwap>>[0]) => pinned(() => onSwap(r)) : undefined);
   const showToken = $derived(view === 'token' && !!raw);
 
-  const pickTokens = $derived(
-    rows
-      .map((tk) => ({ symbol: tk.symbol, name: tk.name, mark: tk.mark, gradient: tk.grad, owned: true, held: `${num(tk.held, tk.dp)} ${tk.symbol}`, note: usd(tk.value) }))
-      .concat(pick?.view === 'receive' ? receivable.filter((x) => x.nets.length && !rows.some((r) => r.symbol === x.symbol)).map((x) => ({ symbol: x.symbol, name: x.name, mark: x.mark, gradient: x.grad, owned: false, held: '', note: '' })) : []),
-  );
+  // sending: the tokens you hold. Receiving or browsing: yours first, then the rest of the catalogue, then the extra
+  // receivable tokens (only while Receive is offered), no symbol twice
+  const pickTokens = $derived.by(() => {
+    const anyToken = pick?.view === 'receive' || pick?.view === 'browse';
+    const seen = new Set<string>();
+    const once = <T extends { symbol: string }>(x: T) => !seen.has(x.symbol) && !!seen.add(x.symbol);
+    const owned = rows.filter(once).map((tk) => ({ symbol: tk.symbol, name: tk.name, mark: tk.mark, gradient: tk.grad, owned: true, held: `${num(tk.held, tk.dp)} ${tk.symbol}`, note: usd(tk.value) }));
+    if (!anyToken) return owned;
+    const rest = valued.filter((tk) => !(tk.held > 0)).filter(once).map((tk) => ({ symbol: tk.symbol, name: tk.name, mark: tk.mark, gradient: tk.grad, owned: false, held: '', note: '' }));
+    const extra = flows.includes('receive')
+      ? receivable.filter((x) => x.nets.length).filter(once).map((x) => ({ symbol: x.symbol, name: x.name, mark: x.mark, gradient: x.grad, owned: false, held: '', note: '' }))
+      : [];
+    return [...owned, ...rest, ...extra];
+  });
+
+  // the token page's actions: Send / Receive / Swap when held; at zero, Receive leads and Send and Swap wait for funds
+  const heroActions = $derived.by(() => {
+    if (!raw) return [];
+    const all = [
+      { target: 'send' as const, label: 'ui.walletMain.sendSymbol', icon: 'wallet-send' },
+      { target: 'receive' as const, label: 'ui.walletMain.receiveSymbol', icon: 'receive' },
+      { target: 'swap' as const, label: 'ui.walletMain.swapSymbol', icon: 'swap' },
+    ].filter((a) => offers(a.target));
+    if (raw.held > 0) return all.map((a, i) => ({ ...a, primary: i === 0, disabled: false }));
+    const receive = all.filter((a) => a.target === 'receive').map((a) => ({ ...a, primary: true, disabled: false }));
+    return [...receive, ...all.filter((a) => a.target !== 'receive').map((a) => ({ ...a, primary: false, disabled: true }))];
+  });
+
+  // the token page's kebab: its flows (Receive only at zero), then Copy ledger ID when it has a ledger
+  const tokMenuItems = $derived.by((): MenuItem[] => {
+    if (!raw) return [];
+    const flowItems = (raw.held > 0 ? (['send', 'receive', 'swap'] as const) : (['receive'] as const))
+      .filter((f) => offers(f))
+      .map((f) => ({
+        label: t(f === 'send' ? 'ui.walletMain.sendSymbol' : f === 'receive' ? 'ui.walletMain.receiveSymbol' : 'ui.walletMain.swapSymbol', { symbol: raw.symbol }),
+        mask: mask(f === 'send' ? 'wallet-send' : f),
+        onSelect: () => {
+          tokMenu = null;
+          go({ view: f, sym: idOf(raw), fromAll: false });
+        },
+      }));
+    const ledgerItems = raw.ledger
+      ? [
+          ...(flowItems.length ? [{ label: '', variant: 'separator' as const }] : []),
+          {
+            label: t('ui.walletMain.copyLedgerId'),
+            mask: mask('copy'),
+            onSelect: () => {
+              tokMenu = null;
+              copyLedger(idOf(raw));
+            },
+          },
+        ]
+      : [];
+    return [...flowItems, ...ledgerItems];
+  });
+
+  function openTokMenu(e?: Event) {
+    const el = e?.currentTarget as Element | null | undefined;
+    const r = el?.getBoundingClientRect();
+    tokMenu = r ? { left: r.left, right: r.right, top: r.top, bottom: r.bottom } : { left: 0, right: 0, top: 0, bottom: 0 };
+  }
 </script>
 
 <div class="main" data-screen-label="Wallet main">
@@ -512,16 +628,46 @@
   {/if}
   {#if view === 'all' || view === 'token'}
     <PageHeader
-      title={showToken ? raw.name : t('ui.walletMain.allActivity')}
+      title={showToken ? raw.name : t(empty ? 'ui.walletMain.wallet' : 'ui.walletMain.allActivity')}
       onBack={showToken ? () => go({ view: 'all' }) : undefined}
       backLabel={t('ui.walletMain.backToAll')}
       avatarMark={showToken ? raw.mark : ''}
       avatarLogo={showToken ? raw.logo : undefined}
       avatarGradient={raw?.grad}
-    />
+      titleTag={showToken ? price(raw.price) : undefined}
+      >{#if showToken && tokMenuItems.length}<IconButton icon="more" label="ui.walletMain.tokenOptions" onClick={openTokMenu} />{/if}</PageHeader
+    >
     <div class="scroll">
       <div class="column">
-        {#if !showToken && allActivityNote}
+        {#if !showToken && empty}
+          <div class="welcome">
+            <span class="welcome-tile"><span class="welcome-icon"></span></span>
+            <span class="welcome-text">
+              <span class="welcome-title">{t('ui.walletMain.welcomeTitle')}</span>
+              <span class="welcome-body">{t('ui.walletMain.welcomeBody')}</span>
+            </span>
+            {#if flows.includes('receive') || handle}
+              <div class="welcome-cards">
+                {#if flows.includes('receive')}
+                  <div class="welcome-card" onclick={() => (pick = { view: 'receive' })} role="button" tabindex="0">
+                    <span class="card-icon" style:mask={mask('receive')}></span>
+                    <span class="card-title">{t('ui.walletMain.receiveTokensTitle')}</span>
+                    <span class="card-body">{t('ui.walletMain.receiveTokensBody')}</span>
+                    <span class="card-link">{t('ui.walletMain.showMyAddress')}</span>
+                  </div>
+                {/if}
+                {#if handle}
+                  <div class="welcome-card" onclick={copyHandle} role="button" tabindex="0">
+                    <span class="card-icon" style:mask={mask('share')}></span>
+                    <span class="card-title">{t('ui.walletMain.getPaidTitle')}</span>
+                    <span class="card-body">{t('ui.walletMain.getPaidBody')}</span>
+                    <span class="card-link">{t('ui.walletMain.copyUsername', { handle })}</span>
+                  </div>
+                {/if}
+              </div>
+            {/if}
+          </div>
+        {:else if !showToken && allActivityNote}
           <EmptyState icon="receive" title={t(allActivityNote.title)} body={t(allActivityNote.body)} actionLabel="" />
         {:else if !showToken}
           <div class="tabs"><SegmentedTabs labels={FILTERS.map((k) => t(k))} selectedIndex={filter} dotOnLast={false} onSelect={(i) => (filter = i)} /></div>
@@ -554,43 +700,50 @@
           {@const tokenEmpty = EMPTY[tokFilter]}
           <div class="token-page">
             <div class="summary">
-              <div class="summary-top">
-                <div class="hero">
-                  <TokenAvatar size={52} symbol={raw.symbol} mark={raw.mark} gradient={raw.grad} logo={raw.logo} />
-                  <div class="hero-text">
-                    <span class="held veilable" class:veiled={balanceHidden}>{num(raw.held, raw.dp)} <span class="held-symbol">{raw.symbol}</span></span>
-                    <span class="value-line"
-                      ><span class="veilable" class:veiled={balanceHidden}>{usd(raw.value)}</span>{#if change !== undefined}<Pill
-                          size="md"
-                          label={t('ui.walletMain.changeToday', { change: `${change > 0 ? '+' : change < 0 ? '\u2212' : ''}${Math.abs(change).toFixed(1)}%` })}
-                          tone={change > 0 ? 'success' : change < 0 ? 'danger' : 'neutral'}
-                        />{/if}</span
-                    >
-                  </div>
+              <div class="hero">
+                <TokenAvatar size={52} symbol={raw.symbol} mark={raw.mark} gradient={raw.grad} logo={raw.logo} />
+                <div class="hero-text">
+                  <span class="held-line"
+                    ><span class="held veilable" class:veiled={balanceHidden}>{num(raw.held, raw.dp)} <span class="held-symbol">{raw.symbol}</span></span
+                    >{#if onBalanceHiddenChange}<span
+                        class="eye"
+                        onclick={() => onBalanceHiddenChange(!balanceHidden)}
+                        role="button"
+                        tabindex="0"
+                        aria-label={t(balanceHidden ? 'ui.balanceCard.showBalance' : 'ui.balanceCard.hideBalance')}
+                        title={t(balanceHidden ? 'ui.balanceCard.showBalance' : 'ui.balanceCard.hideBalance')}
+                        ><span class="eye-icon" style:mask={mask(balanceHidden ? 'eye-off' : 'eye')}></span></span
+                      >{/if}</span
+                  >
+                  <span class="value-line veilable" class:veiled={balanceHidden}>≈ {usd(raw.value)}</span>
                 </div>
+              </div>
+              {#if raw.held > 0}
+                <div class="share">
+                  <span class="share-head"
+                    ><span class="share-label">{t('ui.walletMain.shareOfWallet')}</span><span class="share-value">{balanceHidden ? '••••' : pct(raw.value)}</span></span
+                  >
+                  <ShareBar share={balanceHidden ? 33 : total ? (raw.value / total) * 100 : 0} gradient={raw.grad} thickness={4} />
+                </div>
+              {/if}
+              {#if heroActions.length}
                 <div class="actions">
-                  {#each [['ui.walletMain.sendSymbol', 'send', 'wallet-send'], ['ui.walletMain.receiveSymbol', 'receive', 'receive'], ['ui.walletMain.swapSymbol', 'swap', 'swap']].filter(([, target]) => !raw.actions || raw.actions.includes(target as WalletTokenAction)) as [label, target, icon], i}
-                    <span class="action" class:primary={i === 0} onclick={() => go({ view: target as View, sym: idOf(raw), fromAll: false })} role="button" tabindex="0"
-                      ><span class="action-icon" style:mask={mask(icon)}></span><span class="action-label">{t(label, { symbol: raw.symbol })}</span></span
+                  {#each heroActions as a (a.target)}
+                    <span
+                      class="action"
+                      class:primary={a.primary}
+                      class:disabled={a.disabled}
+                      onclick={a.disabled ? undefined : () => go({ view: a.target, sym: idOf(raw), fromAll: false })}
+                      role="button"
+                      tabindex="0"
+                      aria-disabled={a.disabled}
+                      title={a.disabled ? t('ui.balanceCard.addFundsFirst') : undefined}
+                      data-tip={a.disabled ? t('ui.balanceCard.addFundsFirst') : undefined}
+                      ><span class="action-icon" style:mask={mask(a.icon)}></span><span class="action-label">{t(a.label, { symbol: raw.symbol })}</span></span
                     >
                   {/each}
                 </div>
-              </div>
-              <div class="facts">
-                <div class="fact"><span class="fact-label">{t('ui.walletMain.price')}</span><span class="fact-value">{price(raw.price)}</span></div>
-                {#if raw.fee !== undefined}<div class="fact"><span class="fact-label">{t('ui.walletMain.transferFee')}</span><span class="fact-value">{num(raw.fee, raw.dp)} {raw.symbol}</span></div>{/if}
-                {#if raw.standard}<div class="fact"><span class="fact-label">{t('ui.walletMain.standard')}</span><span class="fact-value">{raw.standard}</span></div>{/if}
-                {#if ledger}<div class="fact">
-                    <span class="fact-label">{t('ui.walletMain.ledger')}</span><span class="fact-value"
-                      >{`${ledger.slice(0, 5)}\u2026${ledger.slice(-4)}`}<span class="fact-copy"><CopyButton value={ledger} label="ui.walletMain.copyLedgerId" /></span></span
-                    >
-                  </div>{/if}
-              </div>
-              <div class="share">
-                <span class="share-label">{t('ui.walletMain.shareOfWallet')}</span>
-                <div class="share-bar"><ShareBar share={balanceHidden ? 33 : total ? (raw.value / total) * 100 : 0} gradient={raw.grad} thickness={4} /></div>
-                <span class="share-value">{balanceHidden ? '••••' : pct(raw.value)}</span>
-              </div>
+              {/if}
             </div>
             <div class="activity">
               <div class="tabs"><SegmentedTabs labels={FILTERS.map((k) => t(k))} selectedIndex={tokFilter} dotOnLast={false} onSelect={(i) => (tokFilter = i)} /></div>
@@ -646,13 +799,16 @@
       </div>
     </div>
   {/if}
+  <ContextMenu open={!!tokMenu} items={tokMenuItems} anchor={tokMenu} align="end" onClose={() => (tokMenu = null)} />
   {#if pick}
-    <DialogShell title={pick.view === 'receive' ? 'ui.walletMain.receiveWhich' : 'ui.walletMain.sendWhich'} onClose={() => (pick = null)}
+    <DialogShell
+      title={pick.view === 'browse' ? 'ui.walletMain.supportedTokens' : pick.view === 'receive' ? 'ui.walletMain.receiveWhich' : 'ui.walletMain.sendWhich'}
+      onClose={() => (pick = null)}
       ><TokenPicker
         tokens={pickTokens}
-        placeholder={t(pick.view === 'receive' ? 'ui.walletMain.searchAnyToken' : 'ui.walletMain.searchYourTokens')}
+        placeholder={t(pick.view === 'send' ? 'ui.walletMain.searchYourTokens' : 'ui.walletMain.searchAnyToken')}
         ownedHeading={t('ui.walletMain.inYourWallet')}
-        otherHeading={t(pick.view === 'receive' ? 'ui.walletMain.allSupportedTokens' : 'ui.walletMain.allTokens')}
+        otherHeading={t(pick.view === 'send' ? 'ui.walletMain.allTokens' : 'ui.walletMain.allSupportedTokens')}
         onSelect={pickToken}
       /></DialogShell
     >
@@ -667,7 +823,7 @@
             icon="check"
             message={toast.message}
             actionLabel={t(toast.userId && onMessage ? 'ui.walletMain.message' : 'ui.walletMain.view')}
-            onAction={() => {
+            onAction={toast.notice ? undefined : () => {
               const done = toast;
               toast = null;
               go({ view: 'token' });
@@ -756,16 +912,12 @@
   }
 
   .summary {
-    border-radius: 18px;
-    background: var(--overlay-1);
-    overflow: hidden;
-  }
-
-  .summary-top {
     display: flex;
     flex-direction: column;
     gap: 18px;
     padding: 22px 22px 20px;
+    border-radius: 18px;
+    background: var(--overlay-1);
   }
 
   .hero {
@@ -782,7 +934,15 @@
     gap: var(--space-8);
   }
 
+  .held-line {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    min-width: 0;
+  }
+
   .held {
+    min-width: 0;
     font: 700 30px/1.1 var(--font-sans);
     letter-spacing: -0.02em;
     color: var(--ink);
@@ -791,6 +951,27 @@
 
   .held-symbol {
     color: var(--ink-4);
+  }
+
+  .eye {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .eye:hover {
+    background: var(--overlay-2);
+  }
+
+  .eye-icon {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-4);
   }
 
   .veilable {
@@ -805,12 +986,32 @@
   }
 
   .value-line {
-    display: inline-flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-10);
     font: var(--weight-medium) 13.5px / 1 var(--font-mono);
     color: var(--ink-2);
+  }
+
+  .share {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .share-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+  }
+
+  .share-label {
+    flex: 1;
+    font: var(--weight-medium) 12.5px/1 var(--font-sans);
+    color: var(--ink-3);
+  }
+
+  .share-value {
+    flex: none;
+    font: 600 12.5px/1 var(--font-mono);
+    color: var(--ink);
   }
 
   .actions {
@@ -846,6 +1047,17 @@
     background: var(--accent);
   }
 
+  .action.disabled {
+    --action-ink: var(--ink-4);
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-1);
+    cursor: not-allowed;
+  }
+
+  .action.disabled:hover {
+    filter: none;
+  }
+
   .action-icon {
     flex: none;
     width: 14px;
@@ -858,64 +1070,94 @@
     text-overflow: ellipsis;
   }
 
-  .facts {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    border-top: 1px solid var(--line-1);
-  }
-
-  .fact {
+  .welcome {
     display: flex;
     flex-direction: column;
-    gap: 7px;
-    padding: 14px 18px;
-    box-shadow: inset 1px 0 0 var(--line-1);
+    align-items: center;
+    gap: 22px;
+    padding: 24px 0 8px;
+    text-align: center;
   }
 
-  .fact-label {
-    font: var(--weight-medium) 10px/1 var(--font-mono);
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--ink-4);
-  }
-
-  .fact-value {
+  .welcome-tile {
+    width: 144px;
+    height: 144px;
+    border-radius: 40px;
+    background: var(--accent-soft);
     display: flex;
     align-items: center;
-    gap: 6px;
-    font: 600 13.5px/1.2 var(--font-mono);
+    justify-content: center;
+  }
+
+  .welcome-icon {
+    width: 64px;
+    height: 64px;
+    background: var(--accent);
+    mask: var(--icon-wallet) center/contain no-repeat;
+  }
+
+  .welcome-text {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 520px;
+  }
+
+  .welcome-title {
+    font: 800 26px/1.15 var(--font-sans);
+    letter-spacing: -0.01em;
     color: var(--ink);
-    white-space: nowrap;
   }
 
-  .fact-copy {
+  .welcome-body {
+    font: 400 15px/1.55 var(--font-sans);
+    color: var(--ink-3);
+    text-wrap: pretty;
+  }
+
+  .welcome-cards {
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+    text-align: start;
+  }
+
+  .welcome-card {
     display: flex;
-    margin: -6px 0;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px;
+    border-radius: 16px;
+    background: var(--overlay-1);
+    cursor: pointer;
   }
 
-  .share {
-    display: flex;
-    align-items: center;
-    gap: var(--space-12);
-    padding: 12px 18px 14px;
-    border-top: 1px solid var(--line-1);
+  .welcome-card:hover {
+    background: var(--overlay-2);
   }
 
-  .share-label {
-    flex: none;
-    font: var(--weight-medium) 12.5px/1 var(--font-sans);
+  .card-icon {
+    width: 20px;
+    height: 20px;
+    background: var(--ink-2);
+  }
+
+  .card-title {
+    font: 700 15px/1.2 var(--font-sans);
+    color: var(--ink);
+  }
+
+  .card-body {
+    font: 400 13px/1.45 var(--font-sans);
     color: var(--ink-3);
   }
 
-  .share-bar {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .share-value {
-    flex: none;
-    font: 600 12.5px/1 var(--font-mono);
-    color: var(--ink);
+  .card-link {
+    margin-top: 4px;
+    font: 700 13.5px/1 var(--font-sans);
+    color: var(--accent-bright);
   }
 
   .activity {
