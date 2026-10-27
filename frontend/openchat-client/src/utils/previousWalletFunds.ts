@@ -11,9 +11,10 @@ import {
 // How long after the wallets of the canisters a user had before being migrated to a MultiUser
 // canister have been checked for funds to check them again. Each check queries each wallet's
 // balance on every token, and funds only reach those wallets now if sent from outside OpenChat, so
-// once a day is plenty. A move which failed is tried again sooner, since that's usually because the
-// old canister was still being closed out or its cycles refunded. It isn't tried on every load
-// though, since each attempt which gets as far as a transfer costs the LocalUserIndex cycles.
+// once a day is plenty. A move which failed for a passing reason (see `retryFor`) is tried again
+// sooner, since that's usually because the old canister was still being closed out or its cycles
+// refunded. It isn't tried on every load though, since each attempt which gets as far as a
+// transfer costs the LocalUserIndex cycles.
 export const PREVIOUS_WALLETS_CHECK_INTERVAL = ONE_DAY;
 export const PREVIOUS_WALLETS_RETRY_INTERVAL = ONE_HOUR;
 // A balance whose move failed with an error from the LocalUserIndex, eg. because the ledger refuses
@@ -21,16 +22,21 @@ export const PREVIOUS_WALLETS_RETRY_INTERVAL = ONE_HOUR;
 // tried again until it changes, or until this long has passed, in case the ledger has recovered
 export const PREVIOUS_WALLETS_STUCK_RETRY_INTERVAL = ONE_WEEK;
 
-// Failures which may not happen next time: the old canister was busy, the LocalUserIndex was short
-// of cycles or hadn't yet loaded the tokens from the Registry, or, with `Unknown` or a negative
-// code, the call failed on the client before an answer came back
-const TRANSIENT_ERROR_CODES = new Set<number>([
-    ErrorCode.AlreadyInProgress,
-    ErrorCode.CyclesBalanceTooLow,
-    ErrorCode.NotInitialized,
-]);
+// When a move which failed is tried again
+type Retry =
+    // An hour later: the old canister was busy, the LocalUserIndex was short of cycles or hadn't
+    // yet loaded the tokens from the Registry, or, with `Unknown` or a negative code, the call
+    // failed on the client before an answer came back
+    | "soon"
+    // At the next daily check: a call failed, eg. because a subnet was busy or a ledger was being
+    // upgraded, or the LocalUserIndex, which reloads the Registry's tokens daily, didn't yet know
+    // the ledger. Either may last, so isn't worth trying hourly, but nor is it reason enough to
+    // hold the balance back for a week.
+    | "next_check"
+    // Once the balance changes, or after `PREVIOUS_WALLETS_STUCK_RETRY_INTERVAL`
+    | "stuck";
 
-// A balance whose move failed with an error which isn't transient, and when it failed
+// A balance whose move failed and was then stuck, and when it failed
 type StuckBalance = {
     previousUserId: string;
     ledger: string;
@@ -65,7 +71,8 @@ export async function movePreviousWalletFunds(
         return undefined;
     }
 
-    // A stuck balance which has since changed, or gone, is forgotten here
+    // A stuck balance which has since changed, or gone, is forgotten here. So is one whose balance
+    // couldn't be read this time, since `find` leaves it out, which costs one more failed move.
     const stuckKey = `openchat_previous_wallets_stuck_${user.userId}`;
     const stillStuck = stuckBalances(stuckKey).filter(
         (s) =>
@@ -76,7 +83,7 @@ export async function movePreviousWalletFunds(
     const outcomes = await move(funds.filter((f) => !stillStuck.some((s) => isSameBalance(s, f))));
 
     const newlyStuck = outcomes.flatMap(({ previousUserId, ledger, result }): StuckBalance[] => {
-        if (result.kind !== "failed" || isTransient(result.error)) return [];
+        if (result.kind !== "failed" || retryFor(result.error) !== "stuck") return [];
         const funded = funds.find(
             (f) => f.previousUserId === previousUserId && f.ledger === ledger,
         );
@@ -86,16 +93,29 @@ export async function movePreviousWalletFunds(
     });
     setStuckBalances(stuckKey, [...stillStuck, ...newlyStuck]);
 
-    const failed = outcomes.some((o) => o.result.kind === "failed" && isTransient(o.result.error));
+    const retrySoon = outcomes.some(
+        (o) => o.result.kind === "failed" && retryFor(o.result.error) === "soon",
+    );
     setNextCheck(
         key,
-        now + (failed ? PREVIOUS_WALLETS_RETRY_INTERVAL : PREVIOUS_WALLETS_CHECK_INTERVAL),
+        now + (retrySoon ? PREVIOUS_WALLETS_RETRY_INTERVAL : PREVIOUS_WALLETS_CHECK_INTERVAL),
     );
     return outcomes;
 }
 
-function isTransient(error: OCError): boolean {
-    return error.code <= ErrorCode.Unknown || TRANSIENT_ERROR_CODES.has(error.code);
+function retryFor(error: OCError): Retry {
+    if (error.code <= ErrorCode.Unknown) return "soon";
+    switch (error.code) {
+        case ErrorCode.AlreadyInProgress:
+        case ErrorCode.CyclesBalanceTooLow:
+        case ErrorCode.NotInitialized:
+            return "soon";
+        case ErrorCode.C2CError:
+        case ErrorCode.LedgerNotFound:
+            return "next_check";
+        default:
+            return "stuck";
+    }
 }
 
 function isSameBalance(stuck: StuckBalance, funds: FundsInPreviousWallet): boolean {

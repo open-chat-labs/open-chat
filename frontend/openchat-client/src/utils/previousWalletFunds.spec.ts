@@ -190,6 +190,36 @@ describe("movePreviousWalletFunds", () => {
         expect(move).toHaveBeenLastCalledWith(FUNDS);
     });
 
+    test.each([
+        ["a call failed", ErrorCode.C2CError],
+        ["the LocalUserIndex didn't know the ledger", ErrorCode.LedgerNotFound],
+    ])("a move which failed because %s is tried again a day later", async (_, code) => {
+        result = failedWith(code);
+        await run(NOW);
+
+        expect(await run(NOW + PREVIOUS_WALLETS_RETRY_INTERVAL)).toBeUndefined();
+        expect(await run(NOW + PREVIOUS_WALLETS_CHECK_INTERVAL)).toBeDefined();
+        expect(move).toHaveBeenLastCalledWith(FUNDS);
+    });
+
+    test("a stuck balance is passed over when another's failure brings the next check forward", async () => {
+        const chat = { previousUserId: "previous", ledger: "chat", balance: 7n };
+        find = vi.fn(() => Promise.resolve([...FUNDS, chat]));
+        move = vi.fn((funds: FundsInPreviousWallet[]) =>
+            Promise.resolve(
+                funds.map(({ previousUserId, ledger }) => ({
+                    previousUserId,
+                    ledger,
+                    result: ledger === "icp" ? STUCK : FAILED,
+                })),
+            ),
+        );
+        await run(NOW);
+
+        expect(await run(NOW + PREVIOUS_WALLETS_RETRY_INTERVAL)).toBeDefined();
+        expect(move).toHaveBeenLastCalledWith([chat]);
+    });
+
     test("a balance stuck by a clock which was ahead is tried again once the clock is right", async () => {
         result = STUCK;
         await run(NOW + 365 * PREVIOUS_WALLETS_CHECK_INTERVAL);
