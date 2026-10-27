@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Show how many accounts are bridged and linked on each platform in the metrics ([#10243](https://github.com/open-chat-labs/open-chat/pull/10243))
+- Tell whoever links a Discord/Telegram/Twitch account what they've been paid of the tips held for it ([#10249](https://github.com/open-chat-labs/open-chat/pull/10249))
 
 ### Removed
 

@@ -130,7 +130,10 @@ pub fn format_crypto_amount_with_symbol(units: u128, decimals: u8, symbol: &str)
 }
 
 pub fn format_crypto_amount(units: u128, decimals: u8) -> String {
-    let subdividable_by = 10u128.pow(decimals as u32);
+    // Decimals given by a client may be more than any token has, which would overflow
+    let Some(subdividable_by) = 10u128.checked_pow(decimals as u32) else {
+        return units.to_string();
+    };
     let whole_units = units / subdividable_by;
     let fractional = units % subdividable_by;
 
@@ -160,6 +163,7 @@ mod tests {
     #[test_case(321000000, 8, "3.21")]
     #[test_case(9876543210, 6, "9876.54321")]
     #[test_case(123456789, 8, "1.23456789")]
+    #[test_case(5, 255, "5")]
     fn format(units: u128, decimals: u8, expected: &str) {
         let formatted = super::format_crypto_amount(units, decimals);
         assert_eq!(formatted, expected);

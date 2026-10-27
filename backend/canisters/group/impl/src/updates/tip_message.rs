@@ -124,7 +124,7 @@ fn prepare(
             return Ok(PrepareResult::LookUpLinkedUser(user, state.data.local_user_index_canister_id));
         }
         TipRecipient::UnlinkedAccount(account) => {
-            check_tip_can_be_held(&args.transfer)?;
+            check_tip_can_be_held(&args.transfer, args.decimals)?;
             Payee::UnlinkedAccount(account)
         }
     };

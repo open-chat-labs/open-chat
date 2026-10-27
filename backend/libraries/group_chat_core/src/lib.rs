@@ -2416,14 +2416,26 @@ pub enum AccountLink {
     CantBeLinked,
 }
 
+// The most decimals a token held for an account no one has linked may have, eg. 18 for ckETH
+const MAX_HELD_TIP_DECIMALS: u8 = 18;
+const MAX_HELD_TIP_SYMBOL_LENGTH: usize = 20;
+
 // A tip held for an account no one has linked is paid out of the UserIndex less the fee, in one
-// payment, so it must be more than the fee, and fit in the payment
-pub fn check_tip_can_be_held(transfer: &types::PendingCryptoTransaction) -> OCResult {
+// payment, so it must be more than the fee, and fit in the payment. The OpenChat bot tells whoever
+// links the account how much they were paid in its token, as the tipper's client gave it, so its
+// symbol and decimals must look like a token's.
+pub fn check_tip_can_be_held(transfer: &types::PendingCryptoTransaction, decimals: u8) -> OCResult {
     let amount = transfer.units();
+    let symbol = transfer.token_symbol();
     if amount <= transfer.fee() {
         Err(OCErrorCode::InvalidRequest.with_message("A tip for an account no one has linked must be more than the fee"))
     } else if amount > u64::MAX as u128 {
         Err(OCErrorCode::InvalidRequest.with_message("A tip for an account no one has linked is too large"))
+    } else if decimals > MAX_HELD_TIP_DECIMALS
+        || !(1..=MAX_HELD_TIP_SYMBOL_LENGTH).contains(&symbol.chars().count())
+        || !symbol.chars().all(|c| c.is_alphanumeric() || matches!(c, '-' | '_' | '•'))
+    {
+        Err(OCErrorCode::InvalidRequest.with_message("A tip for an account no one has linked must be in a token"))
     } else {
         Ok(())
     }
@@ -2433,24 +2445,44 @@ pub fn check_tip_can_be_held(transfer: &types::PendingCryptoTransaction) -> OCRe
 mod tests {
     use super::*;
 
+    fn transfer(token_symbol: &str, amount: u128) -> types::PendingCryptoTransaction {
+        types::PendingCryptoTransaction::ICRC2(types::icrc2::PendingCryptoTransaction {
+            ledger: candid::Principal::anonymous(),
+            token_symbol: token_symbol.to_string(),
+            amount,
+            from: candid::Principal::anonymous().into(),
+            to: candid::Principal::anonymous().into(),
+            fee: 10_000,
+            memo: None,
+            created: 0,
+        })
+    }
+
     #[test]
     fn a_tip_held_for_an_unlinked_account_must_be_more_than_the_fee_and_fit_in_a_payment() {
-        let transfer = |amount| {
-            types::PendingCryptoTransaction::ICRC2(types::icrc2::PendingCryptoTransaction {
-                ledger: candid::Principal::anonymous(),
-                token_symbol: "ICP".to_string(),
-                amount,
-                from: candid::Principal::anonymous().into(),
-                to: candid::Principal::anonymous().into(),
-                fee: 10_000,
-                memo: None,
-                created: 0,
-            })
-        };
-        assert!(check_tip_can_be_held(&transfer(10_000)).is_err());
-        assert!(check_tip_can_be_held(&transfer(10_001)).is_ok());
-        assert!(check_tip_can_be_held(&transfer(u64::MAX as u128)).is_ok());
-        assert!(check_tip_can_be_held(&transfer(u64::MAX as u128 + 1)).is_err());
+        assert!(check_tip_can_be_held(&transfer("ICP", 10_000), 8).is_err());
+        assert!(check_tip_can_be_held(&transfer("ICP", 10_001), 8).is_ok());
+        assert!(check_tip_can_be_held(&transfer("ICP", u64::MAX as u128), 8).is_ok());
+        assert!(check_tip_can_be_held(&transfer("ICP", u64::MAX as u128 + 1), 8).is_err());
+    }
+
+    // As the tipper's client gives them, which the OpenChat bot repeats to whoever links the account
+    #[test]
+    fn a_tip_held_for_an_unlinked_account_must_be_in_a_token() {
+        for symbol in ["ckETH", "ckUSDC", "ODINDOG•ID•YTTL"] {
+            assert!(check_tip_can_be_held(&transfer(symbol, 10_001), 18).is_ok(), "{symbol}");
+        }
+        assert!(check_tip_can_be_held(&transfer("ICP", 10_001), 19).is_err());
+        assert!(check_tip_can_be_held(&transfer("ICP", 10_001), 255).is_err());
+        for symbol in [
+            "",
+            "ICP\n\n[Claim](https://example.com)",
+            "evil.example",
+            "ICP ",
+            &"A".repeat(21),
+        ] {
+            assert!(check_tip_can_be_held(&transfer(symbol, 10_001), 8).is_err(), "{symbol}");
+        }
     }
     use chat_events::TextContentInternal;
     use ic_stable_structures::DefaultMemoryImpl;

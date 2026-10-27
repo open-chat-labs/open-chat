@@ -5520,6 +5520,15 @@ export const NnsProposal = /* @__PURE__ */ Type.Object({
     last_updated: Type.BigInt(),
 });
 
+export type BotMessageTip = Static<typeof BotMessageTip>;
+export const BotMessageTip = /* @__PURE__ */ Type.Object({
+    tipped_by: UserId,
+    ledger: TSPrincipal,
+    token_symbol: Type.String(),
+    amount: Type.BigInt(),
+    held_for: Type.Optional(BridgedUserId),
+});
+
 export type MembersRemoved = Static<typeof MembersRemoved>;
 export const MembersRemoved = /* @__PURE__ */ Type.Object({
     user_ids: Type.Array(UserId),
@@ -10409,6 +10418,7 @@ export const BotChatEvent = /* @__PURE__ */ Type.Object({
     thread: Type.Optional(MessageIndex),
     event_index: EventIndex,
     latest_event_index: EventIndex,
+    tip: Type.Optional(BotMessageTip),
 });
 
 export type GroupIndexRecommendedGroupsSuccessResult = Static<

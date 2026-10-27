@@ -1,4 +1,4 @@
-use crate::model::bridged_user_deposits::{BridgedUserDeposits, DEPOSIT_HOLD_DURATION, HeldDeposit};
+use crate::model::bridged_user_deposits::{BridgedUserDeposits, DEPOSIT_HOLD_DURATION, HeldDeposit, Payout, payouts_message};
 use crate::model::bridged_users::{BridgedUserMetrics, BridgedUsers};
 use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
@@ -23,8 +23,8 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use identity_canister::UserIdentity;
 use identity_canister::UserIndexEvent as IdentityEvent;
-use local_user_index_canister::BridgedUserLinked;
 use local_user_index_canister::UserIndexEvent as LocalUserIndexEvent;
+use local_user_index_canister::{BridgedUserLinked, OpenChatBotMessageV2};
 use model::authority_reports::{AuthorityReportMetrics, AuthorityReports};
 use model::chit_leaderboard::ChitLeaderboard;
 use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
@@ -47,8 +47,8 @@ use storage_index_canister::UserIndexEvent as StorageIndexEvent;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BotInstallationLocation, BridgePlatform, BridgedUserId, BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms,
-    CommunityId, Cycles, DiamondMembershipFees, IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig,
-    OCResult, TimestampMillis, Timestamped, UserId, UserType, icrc1,
+    CommunityId, Cycles, DiamondMembershipFees, IdempotentEnvelope, MediaScanConfig, MessageContentInitial, Milliseconds,
+    ModerationReferralConfig, OCResult, TextContent, TimestampMillis, Timestamped, UserId, UserType, icrc1,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
@@ -305,13 +305,31 @@ impl RuntimeState {
             .data
             .bridged_user_deposits
             .take_for(account, |deposit| tokens.payout_fees(&deposit.ledger, deposit.fee).is_some());
+        let mut payouts = Vec::new();
         for (deposit_id, deposit) in claimable {
-            self.pay_out_held_deposit(
+            payouts.extend(self.pay_out_held_deposit(
                 deposit_id,
                 deposit,
                 wallet,
                 MEMO_BRIDGED_CLAIM,
                 PendingPaymentReason::BridgedUserDepositClaim,
+            ));
+        }
+        self.tell_user_of_payouts(user_id, account, &payouts);
+    }
+
+    // Tells whoever linked the account, in a message from the OpenChat bot, what they've been paid of
+    // the funds held for it
+    fn tell_user_of_payouts(&mut self, user_id: UserId, account: &BridgedUserId, payouts: &[Payout]) {
+        if let Some(text) = payouts_message(account.platform(), payouts) {
+            self.push_event_to_local_user_index(
+                user_id,
+                LocalUserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
+                    user_id,
+                    thread_root_message_id: None,
+                    content: MessageContentInitial::Text(TextContent { text }),
+                    mentioned: Vec::new(),
+                })),
             );
         }
     }
@@ -324,19 +342,23 @@ impl RuntimeState {
         let Some(deposit) = self.data.bridged_user_deposits.take(deposit_id) else {
             return;
         };
-        let linked_user_wallet = self
+        let linked_user = self
             .data
             .bridged_users
             .linked_user_id(&deposit.account)
-            .and_then(|user_id| self.wallet_of(user_id));
-        match linked_user_wallet {
-            Some(wallet) => self.pay_out_held_deposit(
-                deposit_id,
-                deposit,
-                wallet,
-                MEMO_BRIDGED_CLAIM,
-                PendingPaymentReason::BridgedUserDepositClaim,
-            ),
+            .and_then(|user_id| self.wallet_of(user_id).map(|wallet| (user_id, wallet)));
+        match linked_user {
+            Some((user_id, wallet)) => {
+                let account = deposit.account;
+                let payout = self.pay_out_held_deposit(
+                    deposit_id,
+                    deposit,
+                    wallet,
+                    MEMO_BRIDGED_CLAIM,
+                    PendingPaymentReason::BridgedUserDepositClaim,
+                );
+                self.tell_user_of_payouts(user_id, &account, payout.as_slice());
+            }
             None => {
                 let refund_to = deposit.refund_to;
                 self.pay_out_held_deposit(
@@ -345,7 +367,7 @@ impl RuntimeState {
                     refund_to,
                     MEMO_BRIDGED_REFUND,
                     PendingPaymentReason::BridgedUserDepositRefund,
-                )
+                );
             }
         }
     }
@@ -356,8 +378,8 @@ impl RuntimeState {
     }
 
     // Pays the deposit out of its account's subaccount, less the ledger's fees, if it's a ledger the
-    // UserIndex knows. The memo carries the deposit's id, so the ledger doesn't take two equal
-    // deposits paid out at once to be the same transfer.
+    // UserIndex knows, returning what's paid. The memo carries the deposit's id, so the ledger doesn't
+    // take two equal deposits paid out at once to be the same transfer.
     fn pay_out_held_deposit(
         &mut self,
         deposit_id: u64,
@@ -365,14 +387,14 @@ impl RuntimeState {
         to: icrc1::Account,
         memo_prefix: [u8; 8],
         reason: PendingPaymentReason,
-    ) {
+    ) -> Option<Payout> {
         let Some(fees) = self.data.registry_tokens.payout_fees(&deposit.ledger, deposit.fee) else {
             tracing::error!(
                 deposit_id,
                 ?deposit,
                 "Dropped a held deposit in a ledger the Registry doesn't know"
             );
-            return;
+            return None;
         };
         // The group or community only sends funds which are more than the fee, and fit, but the
         // ledger may burn a fee too, or have raised its fee since
@@ -383,14 +405,14 @@ impl RuntimeState {
             .and_then(|amount| u64::try_from(amount).ok())
         else {
             tracing::error!(deposit_id, ?deposit, ?fees, "Held deposit can't be paid out");
-            return;
+            return None;
         };
         let mut memo = [0; 32];
         memo[..8].copy_from_slice(&memo_prefix);
         memo[8..16].copy_from_slice(&deposit_id.to_be_bytes());
         self.queue_payment(PendingPayment {
             amount,
-            token_symbol: deposit.token_symbol,
+            token_symbol: deposit.token_symbol.clone(),
             ledger: deposit.ledger,
             fee: fees.fee,
             timestamp: self.env.now_nanos(),
@@ -399,6 +421,12 @@ impl RuntimeState {
             reason,
             from_subaccount: Some(deposit.account.subaccount()),
         });
+        Some(Payout {
+            ledger: deposit.ledger,
+            token_symbol: deposit.token_symbol,
+            decimals: deposit.decimals,
+            amount: amount.into(),
+        })
     }
 
     pub fn delete_user(&mut self, user_id: UserId, triggered_by_user: bool) -> bool {
