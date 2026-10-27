@@ -2,12 +2,15 @@
      /wallet/:ledger (the token's page: summary, facts and its history from the index canister, a
      page at a time, TransactionHistoryState). The URL says which: WalletMain's own moves (a row on
      All activity, Back to All activity) navigate there. There's no history across tokens, so All
-     activity says to pick a token (GAPS). Send, Receive, Swap and Recipients aren't built yet
-     (6b-6d): their paths show the token's page, or All activity. -->
+     activity says to pick a token (GAPS). Receive (6b) is /wallet/receive?token=<ledger>: the
+     token's networks and address (ReceiveAccount), its QR, Share to chat, the balance refreshed
+     every 10 s while it's open. Send, Swap and Recipients aren't built yet (6b-6d): their paths
+     show the token's page, or All activity. -->
 <script lang="ts">
     import {
         allUsersStore,
         cryptoLookup,
+        currentUserIdStore,
         currentUserStore,
         enhancedCryptoLookup,
         exchangeRatesLookupStore,
@@ -19,6 +22,11 @@
     import WalletMain from "@openchat/ui/src/features/components/WalletMain.svelte";
     import type { ComponentProps } from "svelte";
     import { accountTransactionUrl } from "@src/logic/wallet/accountTransactions";
+    import { ReceiveAccount, type ReceiveToken } from "@src/logic/wallet/receiveAccount.svelte";
+    import QRCode from "@src/core/QRCode.svelte";
+    import type { ShareChat } from "@openchat/ui/src/features/components/WalletReceive.svelte";
+    import { sharedLinkText } from "../share/share.adapter";
+    import { SharePicker } from "../share/sharePicker.svelte";
     import {
         hasTransactionHistory,
         tokenActions,
@@ -32,7 +40,7 @@
     import { _ } from "svelte-i18n";
     import { i18nKey } from "@src/i18n/i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
-    import { tokenActivity, walletToken } from "./wallet.adapter";
+    import { receiveNetworks, tokenActivity, walletToken } from "./wallet.adapter";
     import { walletCatalogue } from "./walletCatalogue.svelte";
     import { walletRequests } from "./walletRequests.svelte";
 
@@ -62,14 +70,16 @@
     });
 
     // WalletMain follows the URL: a request each time it names another page (the panel's asks
-    // share the slot); none is left behind for the next wallet page
+    // share the slot); none is left behind for the next wallet page. A page WalletMain moved to
+    // itself (and reported) isn't asked for again, which would reopen a flow already open
+    let reported: { view: string; token: string | null } | undefined;
     $effect(() => {
+        const view = region.view === "receive" ? "receive" : ledger === undefined ? "all" : "token";
         const page = ledger;
-        untrack(() =>
-            walletRequests.send(
-                page === undefined ? { view: "all" } : { view: "token", token: page },
-            ),
-        );
+        untrack(() => {
+            if (reported?.view === view && reported.token === (page ?? null)) return;
+            walletRequests.send(page === undefined ? { view } : { view, token: page });
+        });
     });
     onDestroy(() => walletRequests.clear());
 
@@ -127,8 +137,88 @@
 
     // WalletMain's own moves go to their URL
     function viewChanged({ view, token: id }: { view: string; token: string | null }): void {
-        const path = view === "token" && id !== null ? `/wallet/${id}` : "/wallet";
-        if (path !== window.location.pathname) navigate(path);
+        reported = { view, token: id };
+        const path =
+            view === "receive"
+                ? `/wallet/receive${id !== null ? `?token=${id}` : ""}`
+                : view === "token" && id !== null
+                  ? `/wallet/${id}`
+                  : "/wallet";
+        if (path !== `${window.location.pathname}${window.location.search}`) navigate(path);
+    }
+
+    // Receive: the token's networks, the address on the chosen one and what depositing costs
+    const receiving = $derived(region.view === "receive" ? region.ledger : undefined);
+    const NO_TOKEN: ReceiveToken = {
+        ledger: "",
+        symbol: "",
+        decimals: 8,
+        oneSecEnabled: false,
+        evmContractAddresses: [],
+    };
+    const receiveAccount = new ReceiveAccount(
+        client,
+        () => (receiving === undefined ? undefined : $cryptoLookup.get(receiving)) ?? NO_TOKEN,
+        () => ({
+            cryptoAccount: $currentUserStore.cryptoAccount,
+            userId: $currentUserIdStore,
+            principal: () => client.OcIdentityPrincipal,
+        }),
+    );
+    const receiveToken = $derived(
+        receiving === undefined ? undefined : $cryptoLookup.get(receiving),
+    );
+    const networks = $derived(
+        receiveToken === undefined
+            ? undefined
+            : receiveNetworks(receiveAccount, receiveToken.symbol, (key, values) =>
+                  $_(key, { values }),
+              ),
+    );
+
+    // deposits arrive while Receive is open: its token's balance is refreshed every 10 s
+    $effect(() => {
+        const ledger = receiving;
+        if (ledger === undefined) return;
+        const timer = setInterval(() => client.refreshAccountBalance(ledger, false), 10_000);
+        return () => clearInterval(timer);
+    });
+
+    // Share to chat: the address (and the user's message) posted to any of their chats
+    // svelte-ignore state_referenced_locally
+    const sharePicker = new SharePicker(client, $_, () => undefined);
+    const shareChats = $derived(
+        sharePicker
+            .chats()
+            .map(
+                (c): ShareChat => ({
+                    id: c.id,
+                    name: c.name,
+                    kind: c.sub,
+                    grad: c.grad,
+                    radius: c.radius,
+                }),
+            ),
+    );
+
+    async function share({
+        chatId,
+        message,
+        address,
+    }: {
+        chatId: string;
+        message: string;
+        address: string;
+    }): Promise<void> {
+        const id = sharePicker.chatId(chatId);
+        if (id === undefined) throw new Error("not a chat to share to");
+        const outcome = await client.sendMessage(
+            { chatId: id },
+            sharedLinkText(message, address),
+            false,
+            undefined,
+        );
+        if (outcome.kind !== "posted") throw new Error(`address not shared: ${outcome.kind}`);
     }
 </script>
 
@@ -145,8 +235,18 @@
     onViewChange={viewChanged}
     onBalanceHiddenChange={(hidden) => hideTokenBalances.set(hidden)}
     handle={$currentUserStore.username ? `@${$currentUserStore.username}` : undefined}
-    flows={[]}
+    flows={["receive"]}
+    receiveNetworks={networks}
+    receiveNetwork={receiveAccount.selectedNetwork}
+    onReceiveNetwork={(id) => (receiveAccount.selectedNetwork = id)}
+    chats={shareChats}
+    onShare={share}
+    {qr}
     allActivityNote={{
         title: "ui.walletMain.allActivityUnavailableTitle",
         body: "ui.walletMain.allActivityUnavailableBody",
     }} />
+
+{#snippet qr(address: string)}
+    <QRCode text={address} logo={receiveToken?.logo || undefined} />
+{/snippet}

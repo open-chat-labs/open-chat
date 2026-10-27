@@ -3141,11 +3141,13 @@
       "zToA": "Z to A"
     },
     "walletReceive": {
+      "addressFailed": "Your address couldn't be generated. Try again later.",
       "arrivesAs": "Arrives as {token}",
       "copyAddress": "Copy address",
       "copyQr": "Copy QR image",
       "copyUsername": "Copy username",
       "fromOpenChat": "FROM OPENCHAT",
+      "generating": "Generating your address…",
       "handleNote": "Other OpenChat users can pay you from any chat. No address or network needed.",
       "net": {
         "btc": {

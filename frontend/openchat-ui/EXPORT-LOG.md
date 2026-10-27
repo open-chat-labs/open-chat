@@ -417,3 +417,9 @@
 - `lib/wallet.ts`, spec'd: `returnPlace` (where an open flow goes back to), `flowReturn` (where a newly opened one goes back to: where it was opened; one of the wallet's tokens over an open flow, its page) and `pickedFlow` (WalletMain's state after a token is picked for Send or Receive: the token shown or an extra, the way back, no earlier address). A host request naming one of the wallet's tokens goes back to its page, as the design has it; an extra token's uses `flowReturn`.
 - `PageHeader`: the `titleTag` pill is larger (24px, `--text-md`), a small visual fix against the design (22px, `--text-xs`).
 - `types.ts`: `WalletToken`'s description back on `WalletToken`.
+
+## 2026-10-28 — WalletReceive: the host's networks, by hand
+- `networks` (`ReceiveNetwork[]`: `id`, `label`, `short`, `time`, `address`, `failed`, `note`), the host's networks for the shown token in place of the token's `nets` and `addresses`, with `network` (the chosen id) and `onNetwork` (a pick). The address card says "Generating your address…" while the chosen network's address is coming and that it couldn't be generated when it failed; `note` (what depositing costs or needs) shows under the warning. Any token works with them, `nets` or not. Without them, Receive is as it was. `onShare`'s `network` is a string. The header shows the token's logo.
+- `WalletMain`: `receiveNetworks`, `receiveNetwork` and `onReceiveNetwork`, passed to Receive.
+- Strings `ui.walletReceive.generating`, `addressFailed`; `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

@@ -62,7 +62,7 @@
   import TransactionRow from '../../lib/components/TransactionRow.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
   import type { Snippet } from 'svelte';
-  import WalletReceive, { type ShareChat } from './WalletReceive.svelte';
+  import WalletReceive, { type ReceiveNetwork, type ShareChat } from './WalletReceive.svelte';
   import WalletRecipients, { type Recipient, type RecipientDraft } from './WalletRecipients.svelte';
   import WalletSend, { type SendContact, type WalletSendRequest } from './WalletSend.svelte';
   import { flowReturn, pickedFlow, txIdOf, type WalletPlace } from '../../lib/wallet';
@@ -163,8 +163,12 @@
     onSwap?: (r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void }) => Promise<{ out?: number } | void>;
     /** Receive: chats to share to, sharing, and the QR renderer (see WalletReceive). */
     chats?: ShareChat[];
-    onShare?: (v: { chatId: string; message: string; symbol: string; network: NetworkId; address: string }) => Promise<unknown> | void;
+    onShare?: (v: { chatId: string; message: string; symbol: string; network: string; address: string }) => Promise<unknown> | void;
     qr?: Snippet<[string]>;
+    /** Receive: the host's networks for the token received, the chosen one and its pick (see WalletReceive). */
+    receiveNetworks?: ReceiveNetwork[];
+    receiveNetwork?: string;
+    onReceiveNetwork?: (id: string) => void;
     /** The token page's history as the host loads it: the first page loading or failed (with `onRetryHistory`), or
      *  loaded, with older entries to load (`more`, `onMoreHistory`) or loading; `unavailable` for a token whose
      *  transactions can't be listed. Without it, `activity` is all there is. */
@@ -210,6 +214,9 @@
     chats,
     onShare,
     qr,
+    receiveNetworks,
+    receiveNetwork,
+    onReceiveNetwork,
     history,
     onMoreHistory,
     onRetryHistory,
@@ -640,7 +647,19 @@
         onDone={handleDone}
         canOpenChat={!!onMessage}
       />{/key}{/if}
-  {#if view === 'receive'}{#key flowKey}<WalletReceive tokens={receiveTokens} token={flowToken} {handle} {addresses} {chats} {onShare} {qr} onClose={leaveFlow} />{/key}{/if}
+  {#if view === 'receive'}{#key flowKey}<WalletReceive
+        tokens={receiveTokens}
+        token={flowToken}
+        {handle}
+        {addresses}
+        {chats}
+        {onShare}
+        {qr}
+        networks={receiveNetworks}
+        network={receiveNetwork}
+        onNetwork={onReceiveNetwork}
+        onClose={leaveFlow}
+      />{/key}{/if}
   {#if view === 'swap'}{#key flowKey}<WalletSwap {tokens} token={flowToken} {onQuote} onSwap={swapPinned} onClose={leaveFlow} />{/key}{/if}
   {#if view === 'recipients'}
     <WalletRecipients
