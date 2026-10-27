@@ -175,6 +175,8 @@
     onActivity?: (id: string) => void;
     /** In place of All activity's list, when the host can't list activity across tokens: resource keys (or text). */
     allActivityNote?: { title: string; body: string };
+    /** The host is still loading `tokens`: a token's page waits (neither the page nor "Token not found" yet). */
+    tokensLoading?: boolean;
     /** The token page's eye: the shared wallet veil. Without it there's no eye. */
     onBalanceHiddenChange?: (hidden: boolean) => void;
     /** The flows the host offers: requests, picks and menu items for the others are left out, and their buttons (the
@@ -215,6 +217,7 @@
     allActivityNote,
     onBalanceHiddenChange,
     flows = ['send', 'receive', 'swap'],
+    tokensLoading = false,
   }: Props = $props();
   const t = useT();
 
@@ -251,9 +254,9 @@
   const empty = $derived(rows.length === 0);
   // a token you don't hold (an empty wallet, or one opened from Supported tokens) still gets its page, at zero
   const raw = $derived(rows.find((t) => idOf(t) === sym) ?? valued.find((t) => idOf(t) === sym) ?? rows[0] ?? valued[0]);
-  // a page asked for a token that isn't in `tokens`: it says so, rather than showing another token's page. Not while
-  // `tokens` is empty, as it is until the host has loaded them (a reload of a token's page)
-  const missing = $derived(!!sym && valued.length > 0 && !valued.some((t) => idOf(t) === sym));
+  // a page asked for a token that isn't in `tokens`: it says so, rather than showing another token's page (once the host
+  // has loaded them)
+  const missing = $derived(!!sym && !tokensLoading && !valued.some((t) => idOf(t) === sym));
   const offers = (flow: 'send' | 'receive' | 'swap') => flows.includes(flow) && (!raw?.actions || raw.actions.includes(flow));
   const idForSymbol = (symbol: string) => {
     const tk = tokens.find((t) => t.symbol === symbol);
@@ -294,12 +297,17 @@
     // receiving a token outside `tokens` (one of `receivable`): only received, so the page shown stays for Receive to go
     // back to (All activity if it was opened there)
     if (r.view === 'receive' && r.token && !valued.some((x) => idOf(x) === r.token) && receivable.some((x) => x.symbol === r.token && x.nets.length)) extTok = r.token;
-    const startFromAll = flow && (!r.token || !!extTok) && view === 'all';
+    const startFromAll = flow && !r.token && view === 'all';
+    // where an extra token's Receive goes back to: Recipients, All activity (also from a flow opened there, or with no
+    // token page to go back to), else the token page shown
+    const backTo = view === 'recipients' ? 'recipients' : view === 'all' || (isFlow(view) && fromAll) || !sym ? 'all' : 'token';
     // a token-less flow opened from a token page acts on the token shown there (sym may name one with no balance)
     const shown = raw ? idOf(raw) : undefined;
     if (r.token && r.token !== sym) tokFilter = 0;
-    // a request starts afresh: an open flow (e.g. a token click from inside Send) is left, with nothing to return to
-    backToAll = backToRecipients = false;
+    // a request starts afresh: an open flow (e.g. a token click from inside Send) is left, with nothing to return to,
+    // except where an extra token's Receive was opened
+    backToAll = !!extTok && backTo === 'all';
+    backToRecipients = !!extTok && backTo === 'recipients';
     sendAddr = '';
     // ... and a flow requested again (e.g. Send for the token whose receipt is showing) remounts as a fresh form
     if (flow) flowNonce++;
@@ -452,7 +460,7 @@
     view = flow;
     // a receivable token outside `tokens` is only received: the page shown stays, for Receive to go back to
     if (tk) sym = s;
-    extTok = tk ? (rows.some((r) => idOf(r) === s) ? null : tk.symbol) : s;
+    extTok = tk ? null : s;
     fromAll = false;
     flowNonce = Date.now();
     report();
@@ -543,8 +551,8 @@
   const swapPinned = $derived(onSwap ? (r: Parameters<NonNullable<typeof onSwap>>[0]) => pinned(() => onSwap(r)) : undefined);
   const showToken = $derived(view === 'token' && !!raw && !missing);
   const notFound = $derived(view === 'token' && missing);
-  // a token's page asked for before the host has any tokens (a reload of it): neither the page nor "not found" yet
-  const pending = $derived(view === 'token' && !!sym && valued.length === 0);
+  // a token's page asked for while the host is loading the tokens (a reload of it): neither the page nor "not found" yet
+  const pending = $derived(view === 'token' && !!sym && tokensLoading && !valued.some((t) => idOf(t) === sym));
 
   // sending: the tokens you hold. Receiving or browsing: yours first, then the rest of the catalogue, then the extra
   // receivable tokens (only while Receive is offered), no symbol twice

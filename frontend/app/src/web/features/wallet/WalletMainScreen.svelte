@@ -135,6 +135,7 @@
 <WalletMain
     {tokens}
     request={walletRequests.current}
+    tokensLoading={$cryptoLookup.size === 0}
     {activity}
     balanceHidden={$hideTokenBalances}
     history={historyProp}

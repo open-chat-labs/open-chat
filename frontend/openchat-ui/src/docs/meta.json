@@ -17988,6 +17988,17 @@
         "required": false,
         "componentDefault": "['send', 'receive', 'swap']",
         "doc": "The flows the host offers: requests, picks and menu items for the others are left out, and their buttons (the token page's, the welcome's Receive card) do nothing. All three without it."
+      },
+      {
+        "name": "tokensLoading",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The host is still loading `tokens`: a token's page waits (neither the page nor \"Token not found\" yet)."
       }
     ],
     "group": "features"
