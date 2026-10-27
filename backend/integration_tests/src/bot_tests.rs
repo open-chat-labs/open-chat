@@ -589,7 +589,12 @@ fn bots_edit_their_own_messages_autonomously() {
     assert_eq!(text_of(env, response.event_index), ("~~Struck out~~".to_string(), true));
 
     // But not with the command's access token
-    let result = edit(env, BotChatContext::Command(access_token), response.message_id, "Edited by command");
+    let result = edit(
+        env,
+        BotChatContext::Command(access_token),
+        response.message_id,
+        "Edited by command",
+    );
     assert!(
         matches!(&result, types::UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "{result:?}"
