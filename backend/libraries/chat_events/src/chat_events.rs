@@ -373,6 +373,7 @@ impl ChatEvents {
 
         // The sender's principal isn't known here, but nothing in a new message depends on it
         let sender = UserIdAndPrincipal::new(message_internal.sender, message_internal.sender.as_principal());
+        let reply_recipient = message_internal.reply_recipient();
         let message = message_internal.clone().hydrate(Some(sender));
 
         let push_event_result = self.push_event(
@@ -384,14 +385,17 @@ impl ChatEvents {
         if let Some(root_message_index) = args.thread_root_message_index {
             let _ = self.update_thread_summary(
                 root_message_index,
-                |thread_summary, root_message_sender| {
+                |thread_summary, root_message_recipient| {
                     thread_summary.mark_message_added(
                         args.sender,
                         &args.mentioned,
-                        root_message_sender,
+                        root_message_recipient,
                         push_event_result.index,
                         args.now,
                     );
+                    // Whoever used the command a bot's message responds to follows the thread, as if
+                    // they'd posted it, so replies to the response reach them
+                    thread_summary.followers.insert(reply_recipient);
                     true
                 },
                 EventIndex::default(),
@@ -2032,6 +2036,7 @@ impl ChatEvents {
         create_if_not_exists: bool,
         update_fn: F,
     ) -> Result<(), UpdateEventError> {
+        let root_message_recipient = root_message.reply_recipient();
         let summary = if create_if_not_exists {
             root_message.thread_summary.get_or_insert(ThreadSummaryInternal::default())
         } else if let Some(s) = root_message.thread_summary.as_mut() {
@@ -2040,7 +2045,11 @@ impl ChatEvents {
             return Err(UpdateEventError::NotFound);
         };
 
-        if update_fn(summary, root_message.sender) { Ok(()) } else { Err(UpdateEventError::NoChange(())) }
+        if update_fn(summary, root_message_recipient) {
+            Ok(())
+        } else {
+            Err(UpdateEventError::NoChange(()))
+        }
     }
 
     // Note: this method assumes that if there is some thread_root_message_index then the thread exists

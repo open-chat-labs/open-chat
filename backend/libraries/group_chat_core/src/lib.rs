@@ -819,11 +819,14 @@ impl GroupChatCore {
 
         if !suppressed {
             if let Some(root_message_index) = thread_root_message_index {
-                if let Some((root_message_sender, thread_summary)) = self
+                if let Some((root_message_recipient, thread_summary)) = self
                     .events
                     .visible_main_events_reader(min_visible_event_index)
                     .message_internal(root_message_index.into())
-                    .and_then(|m| m.thread_summary.map(|s| (m.sender, s)))
+                    .and_then(|m| {
+                        let recipient = m.reply_recipient();
+                        m.thread_summary.map(|s| (recipient, s))
+                    })
                 {
                     let is_first_reply = message_index == MessageIndex::default();
                     let followers: HashSet<_> = thread_summary.followers.into_iter().collect();
@@ -833,7 +836,8 @@ impl GroupChatCore {
 
                         let user_id = m.user_id();
                         if user_id != initiator {
-                            let mentioned = mentions.contains(&user_id) || (is_first_reply && user_id == root_message_sender);
+                            let mentioned =
+                                mentions.contains(&user_id) || (is_first_reply && user_id == root_message_recipient);
 
                             if mentioned {
                                 m.mentions.add(thread_root_message_index, message_index, message_id, now);
@@ -2122,7 +2126,7 @@ impl GroupChatCore {
 
         events_reader
             .message_internal(replies_to.event_index.into())
-            .map(|message| message.sender)
+            .map(|message| message.reply_recipient())
     }
 
     fn merge_permissions(new: OptionalGroupPermissions, old: GroupPermissions) -> GroupPermissions {
