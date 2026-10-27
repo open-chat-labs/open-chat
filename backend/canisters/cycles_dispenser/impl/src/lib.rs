@@ -89,7 +89,7 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
     // The cycles balance on the hour (at midnight UTC in test mode), and just before and after each
-    // top up and each ICP burn, from which the balance over time can be charted
+    // top up, each ICP burn and each upgrade, from which the balance over time can be charted
     #[serde(default)]
     pub cycles_balance_samples: Vec<Timestamped<Cycles>>,
 }

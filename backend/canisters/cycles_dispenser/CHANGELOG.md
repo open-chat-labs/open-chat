@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Record the cycles balance hourly, and before and after each top-up and ICP burn ([#10289](https://github.com/open-chat-labs/open-chat/pull/10289))
+- Record the cycles balance hourly, and before and after each top-up, ICP burn and upgrade ([#10289](https://github.com/open-chat-labs/open-chat/pull/10289))
 
 ### Changed
 

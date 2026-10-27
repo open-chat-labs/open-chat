@@ -1,6 +1,7 @@
+use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
-use crate::{T, TestEnv, client};
+use crate::{T, TestEnv, client, wasms};
 use candid::Principal;
 use constants::DAY_IN_MS;
 use ic_ledger_types::Tokens;
@@ -87,6 +88,39 @@ fn cycles_balance_is_recorded_at_midnight_in_test_mode() {
         samples.iter().any(|s| s.timestamp < midnight + 60_000),
         "{midnight} {samples:?}"
     );
+}
+
+#[test]
+fn cycles_balance_is_recorded_at_the_start_and_end_of_an_upgrade() {
+    // A new env, so that nothing else, eg. an ICP burn left configured by another test, records a
+    // sample meanwhile
+    let mut wrapper = ENV.deref().create_new();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let start = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+
+    let wasm = wasms::CYCLES_DISPENSER.clone();
+    let args = candid::encode_one(cycles_dispenser_canister::post_upgrade::Args {
+        wasm_version: wasm.version,
+    })
+    .unwrap();
+    stop_canister(env, *controller, canister_ids.cycles_dispenser);
+    env.upgrade_canister(canister_ids.cycles_dispenser, wasm.module.into(), args, Some(*controller))
+        .unwrap();
+    start_canister(env, *controller, canister_ids.cycles_dispenser);
+
+    // Both are recorded while the upgrade runs, so at the same time
+    let samples = cycles_balance_samples_since(env, canister_ids.cycles_dispenser, start);
+    assert_eq!(samples.len(), 2, "{samples:?}");
+    assert_eq!(samples[0].timestamp, samples[1].timestamp, "{samples:?}");
+
+    wrapper.discard();
 }
 
 #[derive(Deserialize, Debug)]

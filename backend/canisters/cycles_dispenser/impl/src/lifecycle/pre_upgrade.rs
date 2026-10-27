@@ -13,6 +13,7 @@ fn pre_upgrade() {
 
     let mut state = take_state();
     state.data.rng_seed = state.env.rng().random();
+    state.record_cycles_balance();
 
     let errors = canister_logger::export_errors();
     let logs = canister_logger::export_logs();
