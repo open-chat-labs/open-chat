@@ -330,6 +330,11 @@ impl MessageInternal {
             .map_or(self.sender, |c| c.initiator)
     }
 
+    // Whether the message has been deleted, whether or not its content has been removed yet
+    pub fn is_deleted(&self) -> bool {
+        self.deleted_by.is_some() || matches!(self.content, MessageContentInternal::Deleted(_))
+    }
+
     pub fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Message {
         Message {
             message_index: self.message_index,

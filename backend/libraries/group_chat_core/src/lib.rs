@@ -2126,6 +2126,8 @@ impl GroupChatCore {
 
         events_reader
             .message_internal(replies_to.event_index.into())
+            // A reply to a deleted message is for no one, as is one to a message that can't be found
+            .filter(|message| !message.is_deleted())
             .map(|message| message.reply_recipient())
     }
 

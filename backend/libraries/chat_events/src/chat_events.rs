@@ -645,7 +645,7 @@ impl ChatEvents {
     ) -> Result<DeletedOrRestored, UpdateEventError<OCErrorCode>> {
         let own_message = message.deletable_as_own_by(args.caller);
         if own_message || args.is_admin {
-            if message.deleted_by.is_some() || matches!(message.content, MessageContentInternal::Deleted(_)) {
+            if message.is_deleted() {
                 Err(UpdateEventError::NoChange(OCErrorCode::NoChange))
             } else if matches!(message.content, MessageContentInternal::VideoCall(ref c) if c.ended.is_none()) {
                 Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized))
