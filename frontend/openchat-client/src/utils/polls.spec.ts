@@ -32,6 +32,10 @@ describe("a poll vote", () => {
 
     test("registers a new answer, else deletes a dropped one", () => {
         expect(pollVoteChange(poll(), reader, [1])).toEqual({ type: "register", answerIndex: 1 });
+        expect(pollVoteChange(poll({ canChange: false }), reader, [0])).toEqual({
+            type: "register",
+            answerIndex: 0,
+        });
         expect(pollVoteChange(poll({ user: [0] }), reader, [2])).toEqual({
             type: "register",
             answerIndex: 2,
