@@ -131,5 +131,5 @@ export { Poller } from "./utils/poller";
 export * from "./utils/routes";
 export { dexName } from "./utils/swap";
 export { formatTimeRemaining } from "./utils/time";
-export { toMonthString } from "./utils/date";
+export { toDateString, toDatetimeString, toMonthString } from "./utils/date";
 export * from "./utils/url";

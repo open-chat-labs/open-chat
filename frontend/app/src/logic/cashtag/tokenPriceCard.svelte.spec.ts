@@ -9,7 +9,6 @@ import {
     cashtagCardDetails,
     lastCardDetails,
     priceChange,
-    priceChart,
     TokenPriceHistory,
 } from "./tokenPriceCard.svelte";
 
@@ -45,47 +44,6 @@ describe("priceChange", () => {
     });
 });
 
-describe("priceChart", () => {
-    test("runs across the 7 days, highest price at the top, then on flat to now", () => {
-        const chart = priceChart(
-            [point(7 * DAY, 1), point(3.5 * DAY, 3), point(DAY, 2)],
-            NOW,
-            700,
-            100,
-        );
-
-        // 5% of the height is left above and below the line
-        expect(chart?.line).toBe("M0,95L350,5L600,50L700,50");
-        expect(chart?.area).toBe("M0,95L350,5L600,50L700,50L700,100L0,100Z");
-        expect(chart?.rising).toBe(true);
-    });
-
-    test("starts where the first price in the week is", () => {
-        const chart = priceChart([point(3.5 * DAY, 3), point(0, 1)], NOW, 700, 100);
-
-        expect(chart?.line).toBe("M350,5L700,95L700,95");
-        expect(chart?.area).toBe("M350,5L700,95L700,95L700,100L350,100Z");
-        expect(chart?.rising).toBe(false);
-    });
-
-    test("is a flat line across the middle when the price didn't move", () => {
-        const chart = priceChart([point(7 * DAY, 2), point(0, 2)], NOW, 700, 100);
-
-        expect(chart?.line).toBe("M0,50L700,50L700,50");
-        expect(chart?.rising).toBe(true);
-    });
-
-    test("is a flat line from a lone price to now", () => {
-        const chart = priceChart([point(3.5 * DAY, 2)], NOW, 700, 100);
-
-        expect(chart?.line).toBe("M350,50L700,50");
-    });
-
-    test("needs a price", () => {
-        expect(priceChart([], NOW, 700, 100)).toBeUndefined();
-    });
-});
-
 describe("a token price card's history", () => {
     test("loads the token's history as the card opens", async () => {
         const c = client([point(DAY, 2), point(0, 3)], "icpswap");
@@ -93,7 +51,7 @@ describe("a token price card's history", () => {
 
         expect(history.history.kind).toBe("loading");
         expect(history.change).toBeUndefined();
-        expect(history.chart(700, 100)).toBeUndefined();
+        expect(history.chartData("CHAT")).toBeUndefined();
 
         await settle();
 
@@ -101,7 +59,9 @@ describe("a token price card's history", () => {
         expect(history.history.kind).toBe("success");
         expect(history.source).toBe("icpswap");
         expect(history.change).toBeCloseTo(50);
-        expect(history.chart(700, 100)?.rising).toBe(true);
+        expect(history.chartData("CHAT")?.series).toEqual([
+            { symbol: "CHAT", points: [point(DAY, 2), point(0, 3)] },
+        ]);
     });
 
     test("runs its chart to the last price when the device's clock is behind it", async () => {
@@ -111,7 +71,7 @@ describe("a token price card's history", () => {
         now.mockRestore();
 
         // the last price at the right edge, not squashed onto it from two hours on
-        expect(history.chart(700, 100)?.line).toBe("M600,95L700,5L700,5");
+        expect(history.chartData("CHAT")).toMatchObject({ start: NOW - 7 * DAY, end: NOW });
     });
 
     test("is unavailable when it can't be loaded", async () => {
@@ -119,7 +79,7 @@ describe("a token price card's history", () => {
         await settle();
 
         expect(history.history).toEqual({ kind: "error", error: "unavailable" });
-        expect(history.chart(700, 100)).toBeUndefined();
+        expect(history.chartData("CHAT")).toBeUndefined();
     });
 });
 

@@ -25,6 +25,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
+    import PriceChart from "./PriceChart.svelte";
 
     interface Props {
         subject: PriceSubject;
@@ -38,9 +39,6 @@
     // the card's token or coin is fixed for its life: another cashtag opens another card
     const history = new TokenPriceHistory(client, subject);
 
-    const CHART_WIDTH = 300;
-    const CHART_HEIGHT = 100;
-
     const known = lastCardDetails();
     let token = $derived(
         known(
@@ -53,7 +51,7 @@
         ),
     );
     let price = $derived(token?.usd);
-    let chart = $derived(history.chart(CHART_WIDTH, CHART_HEIGHT));
+    let chart = $derived(token === undefined ? undefined : history.chartData(token.symbol));
     let change = $derived(history.change);
     // where its price and chart are from, always named, and linked
     let credits = $derived(priceSourcesFor($priceSourcesStore, [token?.source, history.source]));
@@ -78,7 +76,8 @@
                             {formatUsdPrice(price)}
                         {:else}
                             <span class="none"
-                                ><Translatable resourceKey={i18nKey("cashtag.noPrice")} /></span>
+                                ><Translatable resourceKey={i18nKey("cashtag.noPrice")} /></span
+                            >
                         {/if}
                     </div>
                     {#if change !== undefined}
@@ -86,7 +85,8 @@
                             <Translatable
                                 resourceKey={i18nKey("cashtag.change7d", {
                                     change: formatPercentChange(change),
-                                })} />
+                                })}
+                            />
                         </div>
                     {/if}
                     <!-- no chart at all when the history couldn't be loaded -->
@@ -95,24 +95,18 @@
                             {#if history.history.kind === "loading"}
                                 <Loading size={"small"} />
                             {:else if chart !== undefined}
-                                <svg
-                                    role="img"
-                                    aria-label={$_("cashtag.chartLabel", {
+                                <PriceChart
+                                    data={chart}
+                                    label={$_("cashtag.chartLabel", {
                                         values: { symbol: token.symbol },
                                     })}
-                                    class:falling={!chart.rising}
-                                    viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-                                    preserveAspectRatio="none">
-                                    <path class="area" d={chart.area} />
-                                    <path
-                                        class="line"
-                                        d={chart.line}
-                                        vector-effect="non-scaling-stroke" />
-                                </svg>
+                                />
                             {:else}
                                 <span class="none"
                                     ><Translatable
-                                        resourceKey={i18nKey("cashtag.noHistory")} /></span>
+                                        resourceKey={i18nKey("cashtag.noHistory")}
+                                    /></span
+                                >
                             {/if}
                         </div>
                     {/if}
@@ -125,7 +119,9 @@
                             ><Translatable
                                 resourceKey={i18nKey("cashtag.priceDataBy", {
                                     source: credit.name,
-                                })} /></a>
+                                })}
+                            /></a
+                        >
                     {/each}
                 </div>
             {/snippet}
@@ -200,27 +196,5 @@
         justify-content: center;
         height: toRem(100);
         margin-top: $sp3;
-
-        svg {
-            width: 100%;
-            height: 100%;
-            color: var(--success);
-
-            &.falling {
-                color: var(--error);
-            }
-        }
-
-        .area {
-            fill: currentColor;
-            fill-opacity: 0.12;
-        }
-
-        .line {
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2;
-            stroke-linejoin: round;
-        }
     }
 </style>

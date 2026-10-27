@@ -20,8 +20,9 @@
         TokenPriceHistory,
     } from "@src/logic/cashtag/tokenPriceCard.svelte";
     import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
+    import PriceChart from "./PriceChart.svelte";
 
     let { dialog, onClose }: DialogProps<Extract<LocalDialog, { kind: "cashtag" }>> = $props();
 
@@ -29,9 +30,6 @@
     // the card's token or coin is fixed for its life: another cashtag opens another card
     const subject = dialog.subject;
     const history = new TokenPriceHistory(client, subject);
-
-    const CHART_WIDTH = 400;
-    const CHART_HEIGHT = 120;
 
     const known = lastCardDetails();
     const token = $derived(
@@ -45,7 +43,7 @@
         ),
     );
     const price = $derived(token?.usd);
-    const chart = $derived(history.chart(CHART_WIDTH, CHART_HEIGHT));
+    const chart = $derived(token === undefined ? undefined : history.chartData(token.symbol));
     const change = $derived(history.change);
     // where its price and chart are from, always named, and linked
     const credits = $derived(priceSourcesFor($priceSourcesStore, [token?.source, history.source]));
@@ -76,15 +74,11 @@
                 {#if history.history.kind === "loading"}
                     <Spinner />
                 {:else if chart !== undefined}
-                    <svg
-                        role="img"
-                        aria-label={$_("cashtag.chartLabel", { values: { symbol: token.symbol } })}
-                        class:falling={!chart.rising}
-                        viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-                        preserveAspectRatio="none">
-                        <path class="area" d={chart.area} />
-                        <path class="line" d={chart.line} vector-effect="non-scaling-stroke" />
-                    </svg>
+                    <PriceChart
+                        data={chart}
+                        label={$_("cashtag.chartLabel", { values: { symbol: token.symbol } })}
+                        locale={$locale ?? "en"}
+                    />
                 {:else}
                     <p class="none">{$_("cashtag.noHistory")}</p>
                 {/if}
@@ -92,7 +86,8 @@
         {/if}
         {#each credits as credit}
             <a class="credit" href={credit.url} target="_blank" rel="noopener noreferrer"
-                >{$_("cashtag.priceDataBy", { values: { source: credit.name } })}</a>
+                >{$_("cashtag.priceDataBy", { values: { source: credit.name } })}</a
+            >
         {/each}
     </DialogShell>
 {/if}
@@ -154,27 +149,5 @@
         justify-content: center;
         height: 120px;
         margin-block-start: var(--space-16);
-    }
-
-    svg {
-        width: 100%;
-        height: 100%;
-        color: var(--status-online);
-    }
-
-    svg.falling {
-        color: var(--status-danger);
-    }
-
-    .area {
-        fill: currentColor;
-        fill-opacity: 0.12;
-    }
-
-    .line {
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 2;
-        stroke-linejoin: round;
     }
 </style>
