@@ -143,5 +143,11 @@ export {
     type PollReader,
     type PollView,
 } from "./utils/polls";
+export {
+    isTrustedClick,
+    prizeView,
+    type PrizeReader,
+    type PrizeView,
+} from "./utils/prizes";
 export { toDateString, toDatetimeString, toMonthString } from "./utils/date";
 export * from "./utils/url";

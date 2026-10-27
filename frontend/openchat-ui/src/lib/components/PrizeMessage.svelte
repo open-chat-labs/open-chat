@@ -1,7 +1,8 @@
 <!-- Prize message. Built only on what a prize carries: token, winners, time left, claimed count and gates.
      The amount is revealed on claim ("You won 6.2 ICP"). 3D spinning coin with the token mark (paused with reduced motion); confetti bursts from Claim.
      state: open | claimed | ended. gates: [{ label, met }]. Any unmet gate → "Requirements not met".
-     Without onClaim it marks itself claimed. -->
+     Without onClaim it marks itself claimed; onClaim gets the click (a claim needs a trusted one). canClaim false offers no Claim
+     (the sender, a DM, all claimed). -->
 <script lang="ts">
   import { useT } from '../i18n';
   import Confetti from './Confetti.svelte';
@@ -17,12 +18,14 @@
     endingSoon?: boolean;
     gates?: { label: string; met: boolean }[];
     state?: 'open' | 'claimed' | 'ended';
-    /** Shown once won, e.g. "6.2 ICP". */
+    /** Shown once won, e.g. "6.2 ICP"; "You won" alone without it. */
     wonAmount?: string;
+    /** Whether Claim is offered when the prize is open and its requirements met. */
+    canClaim?: boolean;
     note?: string;
     time: string;
     lastInGroup?: boolean;
-    onClaim?: () => void;
+    onClaim?: (e: MouseEvent) => void;
   }
 
   let {
@@ -34,6 +37,7 @@
     gates = [],
     state: status = 'open',
     wonAmount = '',
+    canClaim = true,
     note = '',
     time,
     lastInGroup = true,
@@ -49,9 +53,9 @@
   const blocked = $derived(gates.some((g) => !g.met));
   const taken = $derived(claimed + (claimedHere && status !== 'claimed' ? 1 : 0));
 
-  function claim() {
+  function claim(e: MouseEvent) {
     burst++;
-    if (onClaim) onClaim();
+    if (onClaim) onClaim(e);
     else claimedHere = true;
   }
 </script>
@@ -85,12 +89,12 @@
     {/if}
     <div class="confetti-anchor" aria-hidden="true"><div class="confetti-box"><Confetti fire={burst} /></div></div>
     {#if won}
-      <span class="outcome won"><span class="outcome-icon check"></span>{t('ui.prizeMessage.youWon', { amount: wonAmount })}</span>
+      <span class="outcome won"><span class="outcome-icon check"></span>{wonAmount ? t('ui.prizeMessage.youWon', { amount: wonAmount }) : t('ui.prizeMessage.youWonIt')}</span>
     {:else if ended}
       <span class="outcome"><span class="outcome-icon clock"></span>{t('ui.prizeMessage.hasEnded')}</span>
     {:else if blocked}
       <span class="outcome" aria-disabled="true"><span class="outcome-icon lock"></span>{t('ui.prizeMessage.requirementsNotMet')}</span>
-    {:else}
+    {:else if canClaim}
       <span class="claim" onclick={claim} role="button" tabindex="0"><span class="gift"></span>{t('ui.prizeMessage.claim')}</span>
     {/if}
   </div>

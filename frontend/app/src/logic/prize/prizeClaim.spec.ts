@@ -11,6 +11,7 @@ describe("claiming a prize", () => {
         });
     });
 
+    // 5a invariant 2: a captcha prize is claimed only with a sign-in proof
     test("a prize that needs a captcha asks the user to sign in, then claims with the proof", () => {
         expect(prizeClaimStep(true, undefined)).toEqual({ kind: "authenticate" });
         expect(prizeClaimStep(true, { proof: "jwt" })).toEqual({

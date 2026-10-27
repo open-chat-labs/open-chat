@@ -13,6 +13,14 @@ const ctx: ConversationContext = {
     direct: false,
     readonly: false,
     now: 0,
+    claimant: {
+        previewingOrLapsed: false,
+        diamond: false,
+        lifetimeDiamond: false,
+        streak: 0,
+        chitEarned: 0,
+    },
+    text: (key) => key.key,
     token: () => undefined,
 };
 
