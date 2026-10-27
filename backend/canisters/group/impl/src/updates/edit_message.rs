@@ -3,7 +3,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::{GroupEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::EditMessageArgs;
+use chat_events::{EditMessageArgs, MessageContentInternal};
 use group_canister::c2c_bot_edit_message;
 use group_canister::edit_message_v2::*;
 use oc_error_codes::OCErrorCode;
@@ -18,10 +18,12 @@ fn edit_message_v2(args: Args) -> Response {
 fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let member = state.get_calling_member(None, true)?;
     let sender = member.user_id();
-    let is_bot = member.user_type().is_bot();
+    let user_type = member.user_type();
     let min_visible_event_index = member.min_visible_event_index();
 
-    commit(sender, is_bot, min_visible_event_index, args, state)
+    MessageContentInternal::validate_edit(&args.content, false, user_type, state.env.now())?;
+
+    commit(sender, user_type.is_bot(), min_visible_event_index, args, state)
 }
 
 // A bot editing its own message, eg. a bridge bot relaying an edit made on the other platform

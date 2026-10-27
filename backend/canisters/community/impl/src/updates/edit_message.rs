@@ -2,7 +2,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::{CommunityEventPusher, RuntimeState, activity_notifications::handle_activity_notification, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::EditMessageArgs;
+use chat_events::{EditMessageArgs, MessageContentInternal};
 use community_canister::c2c_bot_edit_message;
 use community_canister::edit_message::*;
 use oc_error_codes::OCErrorCode;
@@ -23,6 +23,8 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     let sender = member.user_id;
     let min_visible_event_index = channel.chat.members.get_verified_member(sender)?.min_visible_event_index();
+
+    MessageContentInternal::validate_edit(&args.content, false, member.user_type, state.env.now())?;
 
     commit(sender, min_visible_event_index, args, state)
 }

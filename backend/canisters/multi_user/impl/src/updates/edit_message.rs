@@ -2,12 +2,12 @@ use crate::guards::caller_is_hosted_user;
 use crate::{MultiUserEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::EditMessageArgs;
+use chat_events::{EditMessageArgs, MessageContentInternal};
 use constants::OPENCHAT_BOT_USER_ID;
 use multi_user_canister::edit_message_v2::*;
 use multi_user_canister::{EditMessageArgs as C2CEditMessageArgs, UserCanisterEvent};
 use oc_error_codes::OCErrorCode;
-use types::{Achievement, EventIndex, OCResult};
+use types::{Achievement, EventIndex, OCResult, UserType};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
@@ -19,6 +19,8 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let my_index = state.caller_user_index_or_trap();
     let my_user_id = state.user_id(my_index);
     let now = state.env.now();
+
+    MessageContentInternal::validate_edit(&args.content, true, UserType::User, now)?;
 
     let event_pusher = MultiUserEventPusher {
         user_id: my_user_id,

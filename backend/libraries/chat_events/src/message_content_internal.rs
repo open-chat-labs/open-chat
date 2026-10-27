@@ -3,6 +3,7 @@ use crate::DeletedByInternal;
 use candid::{CandidType, Principal};
 use constants::{MEMO_PRIZE_FEE, MEMO_PRIZE_REFUND, OPENCHAT_TREASURY_CANISTER_ID, PRIZE_FEE_PERCENT};
 use ledger_utils::{create_pending_transaction, format_crypto_amount};
+use oc_error_codes::OCErrorCode;
 use search::simple::Document;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_bytes::ByteBuf;
@@ -15,10 +16,10 @@ use types::{
     FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
     ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
     MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
-    MessageReminderCreatedContent, MessageReport, Milliseconds, ModerationInput, ModerationReportContent, P2PSwapAccepted,
-    P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired,
-    P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes,
-    PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent, PrizeContentEventPayload,
+    MessageReminderCreatedContent, MessageReport, Milliseconds, ModerationInput, ModerationReportContent, OCResult,
+    P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial,
+    P2PSwapExpired, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload,
+    PollVotes, PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent, PrizeContentEventPayload,
     PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal, ProposalContent, RegisterVoteResult,
     ReportedMessage, ReportedMessageContentEventPayload, TextContent, TextContentEventPayload, ThumbnailData, TimestampMillis,
     TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId, UserIdAndPrincipal, UserType, VideoCallContent,
@@ -175,6 +176,25 @@ impl MessageContentInternal {
             },
             MessageContentInitial::P2PSwap(c) => ValidateNewMessageContentResult::SuccessP2PSwap(c),
             content => ValidateNewMessageContentResult::Success(content.into()),
+        }
+    }
+
+    // A user's edit can only make content they could have sent as a new message, eg. not a proposal,
+    // a reminder or a bot's chart, nor a transfer, which an edit doesn't make
+    pub fn validate_edit(
+        content: &MessageContentInitial,
+        is_direct_chat: bool,
+        sender_user_type: UserType,
+        now: TimestampMillis,
+    ) -> OCResult {
+        match Self::validate_new_message(content.clone(), is_direct_chat, sender_user_type, false, now) {
+            ValidateNewMessageContentResult::Success(_) => Ok(()),
+            ValidateNewMessageContentResult::Error(error) => Err(error.into()),
+            ValidateNewMessageContentResult::SuccessCrypto(_)
+            | ValidateNewMessageContentResult::SuccessPrize(_)
+            | ValidateNewMessageContentResult::SuccessP2PSwap(_) => {
+                Err(OCErrorCode::InvalidRequest.with_message("An edit can't make a transfer"))
+            }
         }
     }
 
@@ -2555,6 +2575,13 @@ mod price_chart_tests {
     }
 
     #[test]
+    fn a_user_cant_edit_a_message_into_a_price_chart() {
+        let content = MessageContentInitial::PriceChart(chart());
+        assert!(MessageContentInternal::validate_edit(&content, false, UserType::BotV2, 0).is_ok());
+        assert!(MessageContentInternal::validate_edit(&content, false, UserType::User, 0).is_err());
+    }
+
+    #[test]
     fn an_invalid_price_chart_is_refused_even_from_a_bot() {
         let mut content = chart();
         content.sources.clear();
@@ -2583,5 +2610,56 @@ mod price_chart_tests {
         assert_eq!(content.sources[0].url, "https://www.coingecko.com");
         assert!(matches!(read.content_type(), MessageContentType::PriceChart));
         assert_eq!(read.text(), Some("ADA · 1 day"));
+    }
+}
+
+#[cfg(test)]
+mod edit_tests {
+    use super::*;
+    use types::CompletedCryptoTransaction;
+
+    fn text(text: &str) -> MessageContentInitial {
+        MessageContentInitial::Text(TextContent { text: text.to_string() })
+    }
+
+    fn completed_transfer() -> MessageContentInitial {
+        MessageContentInitial::Crypto(CryptoContent {
+            recipient: Principal::from_slice(&[3]).into(),
+            transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::ICRC1(
+                types::icrc1::CompletedCryptoTransaction {
+                    ledger: Principal::from_slice(&[5]),
+                    token_symbol: "ICP".to_string(),
+                    amount: 100_000_000,
+                    from: types::icrc1::CryptoAccount::Mint,
+                    to: types::icrc1::CryptoAccount::Mint,
+                    fee: 10_000,
+                    memo: None,
+                    created: 0,
+                    block_index: 1,
+                },
+            )),
+            caption: None,
+        })
+    }
+
+    fn edit(content: MessageContentInitial, sender: UserType) -> OCResult {
+        MessageContentInternal::validate_edit(&content, false, sender, 0)
+    }
+
+    #[test]
+    fn a_user_can_edit_into_content_they_could_send() {
+        assert!(edit(text("hello"), UserType::User).is_ok());
+    }
+
+    #[test]
+    fn a_user_cant_edit_into_content_they_couldnt_send() {
+        assert!(edit(text(""), UserType::User).is_err());
+        assert!(edit(text(&"a".repeat(MAX_TEXT_LENGTH_USIZE + 1)), UserType::User).is_err());
+        let deleted = MessageContentInitial::Deleted(types::DeletedBy {
+            deleted_by: Principal::from_slice(&[3]).into(),
+            timestamp: 0,
+        });
+        assert!(edit(deleted, UserType::User).is_err());
+        assert!(edit(completed_transfer(), UserType::User).is_err());
     }
 }

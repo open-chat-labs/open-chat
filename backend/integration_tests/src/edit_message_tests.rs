@@ -3,8 +3,8 @@ use crate::utils::tick_many;
 use crate::{TestEnv, client};
 use std::ops::Deref;
 use test_case::test_case;
-use testing::rng::random_from_u128;
-use types::{ChatEvent, MessageContentInitial, TextContent};
+use testing::rng::{random_from_u128, random_string};
+use types::{ChatEvent, DeletedBy, MessageContentInitial, TextContent, UnitResult};
 
 #[test]
 fn edit_message_succeeds() {
@@ -171,4 +171,46 @@ fn edit_thread_reply_in_direct_chat_succeeds() {
     };
     assert!(!root_message.edited);
     assert_eq!(root_message.content.text().unwrap(), "ROOT");
+}
+
+#[test]
+fn a_user_cant_edit_a_message_into_content_they_couldnt_send() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &user, &random_string(), false, true);
+    let message_id = random_from_u128();
+    let sent = client::group::happy_path::send_text_message(env, &user, group_id, None, "TEXT", Some(message_id));
+
+    for content in [
+        MessageContentInitial::Text(TextContent { text: String::new() }),
+        MessageContentInitial::Deleted(DeletedBy {
+            deleted_by: user.user_id,
+            timestamp: 0,
+        }),
+    ] {
+        let response = client::group::edit_message_v2(
+            env,
+            user.principal,
+            group_id.into(),
+            &group_canister::edit_message_v2::Args {
+                thread_root_message_index: None,
+                message_id,
+                content,
+                block_level_markdown: None,
+                new_achievement: false,
+                og_previews: Vec::new(),
+            },
+        );
+        assert!(matches!(response, UnitResult::Error(_)), "{response:?}");
+    }
+
+    let event = client::group::happy_path::events_by_index(env, &user, group_id, vec![sent.event_index])
+        .events
+        .pop()
+        .unwrap();
+    let ChatEvent::Message(message) = event.event else { panic!() };
+    assert!(!message.edited);
+    assert_eq!(message.content.text().unwrap(), "TEXT");
 }
