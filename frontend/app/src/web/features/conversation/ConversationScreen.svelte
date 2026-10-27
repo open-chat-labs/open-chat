@@ -152,10 +152,16 @@
         chitEarned: $chitStateStore.totalChitEarned,
     });
 
+    // the exchange rates load after the first rows; once they do, rows are made again (below)
+    const ratesLoaded = $derived($exchangeRatesLookupStore.size > 0);
+
     const ctx = $derived.by((): ConversationContext => {
         void day;
-        // a revealed image redoes its row (the cache is cleared with it)
+        // a revealed image redoes its row (the cache is cleared with it), as do the token registry
+        // and the exchange rates arriving: rows are made again from this, so it has to change too
         void rowsVersion;
+        void $cryptoLookup;
+        void ratesLoaded;
         const users = $allUsersStore;
         const webhooks = $selectedChatWebhooksStore;
         return {
@@ -452,7 +458,6 @@
 
     // rows kept per event (RowCache), and their messages with them, so user and other chat
     // updates don't redo every bubble; started again for a new chat, wording or day
-    const ratesLoaded = $derived($exchangeRatesLookupStore.size > 0);
     const rows = new RowCache();
     const groupMessages = new WeakMap<MessageRow, GroupMessage[]>();
     // bumped when a revealed image needs its row redone
