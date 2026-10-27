@@ -503,11 +503,24 @@ impl ChatEvents {
 
         let existing_text = message.content.text();
         let new_text = args.content.text();
+        let text_changed = new_text != existing_text;
+        // Content can change while its text stays the same, eg. a bot replacing a chart or an image
+        // but keeping its title or caption
+        let other_content_changed =
+            !text_changed && msgpack::serialize_then_unwrap(&args.content) != msgpack::serialize_then_unwrap(&message.content);
         let block_level_markdown_update = args.block_level_markdown.filter(|md| *md != message.block_level_markdown);
+        // A bot finalising its message with the content it already has still finalises it
+        let finalising = args.finalise_bot_message && message.bot_context().is_some_and(|c| !c.finalised);
 
-        if new_text != existing_text || block_level_markdown_update.is_some() || args.og_previews != message.og_previews {
+        if text_changed
+            || other_content_changed
+            || block_level_markdown_update.is_some()
+            || args.og_previews != message.og_previews
+            || finalising
+        {
             let edited = new_text.map(|t| t.replace("#LINK_REMOVED", ""))
                 != existing_text.map(|t| t.replace("#LINK_REMOVED", ""))
+                || other_content_changed
                 || block_level_markdown_update.is_some();
 
             let old_length = message.content.text_length();
@@ -521,6 +534,10 @@ impl ChatEvents {
                 .is_none()
                 .then(|| (old_document, Document::from(&message.content)));
 
+            if finalising && let Some(bot_context) = message.bot_context_mut() {
+                bot_context.finalised = true;
+            }
+
             if edited {
                 if let Some(block_level_markdown) = block_level_markdown_update {
                     message.block_level_markdown = block_level_markdown;
@@ -528,12 +545,6 @@ impl ChatEvents {
 
                 let already_edited = message.last_edited.is_some();
                 message.last_edited = Some(args.now);
-
-                if args.finalise_bot_message
-                    && let Some(bot_context) = message.bot_context_mut()
-                {
-                    bot_context.finalised = true;
-                }
 
                 if let Some(event_pusher) = event_pusher.as_mut() {
                     let new_length = message.content.text_length();
@@ -3654,6 +3665,105 @@ mod tests {
             panic!("Expected the latest event to be `MembersAddedToPublicChannel`");
         };
         m.count
+    }
+
+    fn custom_content(data: &[u8]) -> MessageContentInternal {
+        MessageContentInternal::Custom(CustomContentInternal {
+            kind: "board".to_string(),
+            data: data.to_vec(),
+        })
+    }
+
+    fn push_bot_message(events: &mut ChatEvents, message_id: u128, content: MessageContentInternal, finalised: bool) {
+        events.push_message::<NullEventPusher>(
+            PushMessageArgs {
+                sender: user(BOT),
+                thread_root_message_index: None,
+                message_id: MessageId::from(message_id),
+                content,
+                sender_context: Some(SenderContext::Bot(BotMessageContext {
+                    command: None,
+                    finalised,
+                    bridged_from: None,
+                })),
+                mentioned: Vec::new(),
+                replies_to: None,
+                forwarded: false,
+                sender_is_bot: true,
+                block_level_markdown: false,
+                og_previews: Vec::new(),
+                now: 10,
+            },
+            None,
+        );
+    }
+
+    fn edit_args(message_id: u128, content: MessageContentInternal, finalise_bot_message: bool) -> EditMessageArgs {
+        EditMessageArgs {
+            sender: user(BOT),
+            min_visible_event_index: EventIndex::default(),
+            thread_root_message_index: None,
+            message_id: MessageId::from(message_id),
+            content,
+            block_level_markdown: None,
+            og_previews: Vec::new(),
+            finalise_bot_message,
+            now: 20,
+        }
+    }
+
+    fn message(events: &ChatEvents, message_id: u128) -> MessageInternal {
+        events
+            .message_internal(EventIndex::default(), None, MessageId::from(message_id).into())
+            .unwrap()
+            .0
+    }
+
+    #[test]
+    fn an_edit_changing_content_but_not_text_is_saved() {
+        let (mut events, _, _) = setup_events();
+        push_bot_message(&mut events, 30, custom_content(&[1]), true);
+
+        events
+            .edit_message::<NullEventPusher>(edit_args(30, custom_content(&[2]), false), None)
+            .unwrap();
+
+        let edited = message(&events, 30);
+        let MessageContentInternal::Custom(content) = edited.content else {
+            panic!("Expected custom content");
+        };
+        assert_eq!(content.data, vec![2]);
+        assert_eq!(edited.last_edited, Some(20));
+        assert_eq!(events.recently_updated_events(15, 100).len(), 1);
+    }
+
+    #[test]
+    fn an_edit_changing_nothing_is_not_saved() {
+        let (mut events, _, _) = setup_events();
+        push_bot_message(&mut events, 30, custom_content(&[1]), true);
+
+        events
+            .edit_message::<NullEventPusher>(edit_args(30, custom_content(&[1]), false), None)
+            .unwrap();
+
+        assert_eq!(message(&events, 30).last_edited, None);
+        assert!(events.recently_updated_events(15, 100).is_empty());
+    }
+
+    #[test]
+    fn finalising_a_bot_message_with_the_content_it_has_finalises_it() {
+        let (mut events, _, _) = setup_events();
+        push_bot_message(&mut events, 30, custom_content(&[1]), false);
+
+        events
+            .edit_message::<NullEventPusher>(edit_args(30, custom_content(&[1]), true), None)
+            .unwrap();
+
+        let finalised = message(&events, 30);
+        assert!(finalised.bot_context().unwrap().finalised);
+        // Nothing about it changed, so it isn't shown as edited, but clients are told it's finalised
+        assert_eq!(finalised.last_edited, None);
+        assert_eq!(events.recently_updated_events(15, 100).len(), 1);
     }
 
     fn setup_events() -> (ChatEvents, MessageIndex, MessageIndex) {
