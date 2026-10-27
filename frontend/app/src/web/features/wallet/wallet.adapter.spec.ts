@@ -136,7 +136,7 @@ describe("a token's activity", () => {
 });
 
 describe("the wallet's catalogue", () => {
-    test("every token with its price; one counted per symbol", () => {
+    test("every token with its price; one counted per ledger, as the picker lists them", () => {
         const list = walletTokens(
             [
                 token(),
@@ -155,7 +155,7 @@ describe("the wallet's catalogue", () => {
             ["another-chat", 0],
             ["icp", 5],
         ]);
-        expect(supportedCount(list)).toBe(2);
+        expect(supportedCount(list)).toBe(3);
     });
 
     test("the panel reads the wallet config: a minimum value, or the chosen ledgers", () => {

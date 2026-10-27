@@ -104,9 +104,9 @@ export function walletTokens(
     );
 }
 
-/** How many tokens the wallet can receive: the catalogue, one per symbol. */
-export function supportedCount(tokens: Pick<WalletToken, "symbol">[]): number {
-    return new Set(tokens.map((t) => t.symbol)).size;
+/** How many tokens the wallet can receive: the catalogue, one per ledger, as the Supported tokens picker lists it. */
+export function supportedCount(tokens: Pick<WalletToken, "id" | "symbol">[]): number {
+    return new Set(tokens.map((t) => t.id ?? t.symbol)).size;
 }
 
 /**

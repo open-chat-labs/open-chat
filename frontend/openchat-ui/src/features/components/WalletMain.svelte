@@ -251,8 +251,9 @@
   const empty = $derived(rows.length === 0);
   // a token you don't hold (an empty wallet, or one opened from Supported tokens) still gets its page, at zero
   const raw = $derived(rows.find((t) => idOf(t) === sym) ?? valued.find((t) => idOf(t) === sym) ?? rows[0] ?? valued[0]);
-  // a page asked for a token that isn't in `tokens`: it says so, rather than showing another token's page
-  const missing = $derived(!!sym && !valued.some((t) => idOf(t) === sym));
+  // a page asked for a token that isn't in `tokens`: it says so, rather than showing another token's page. Not while
+  // `tokens` is empty, as it is until the host has loaded them (a reload of a token's page)
+  const missing = $derived(!!sym && valued.length > 0 && !valued.some((t) => idOf(t) === sym));
   const offers = (flow: 'send' | 'receive' | 'swap') => flows.includes(flow) && (!raw?.actions || raw.actions.includes(flow));
   const idForSymbol = (symbol: string) => {
     const tk = tokens.find((t) => t.symbol === symbol);
@@ -446,8 +447,9 @@
     pick = null;
     backToAll = view === 'all';
     view = flow;
-    sym = tk ? s : idForSymbol(s);
-    extTok = rows.some((r) => idOf(r) === sym) ? null : (tk?.symbol ?? s);
+    // a receivable token outside `tokens` is only received: the page shown stays, for Receive to go back to
+    if (tk) sym = s;
+    extTok = tk ? (rows.some((r) => idOf(r) === s) ? null : tk.symbol) : s;
     fromAll = false;
     flowNonce = Date.now();
     report();
