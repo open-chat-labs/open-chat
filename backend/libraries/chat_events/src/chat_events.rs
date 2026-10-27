@@ -3058,17 +3058,14 @@ impl ChatEvents {
 
 // A message as its sender is told of it without being allowed to read messages: without what others
 // added to it, ie. reactions, tips, its thread's participants and OpenChat's moderation flags
-fn without_others_additions(event: ChatEvent) -> ChatEvent {
-    match event {
-        ChatEvent::Message(mut message) => {
-            message.reactions.clear();
-            message.tips = Default::default();
-            message.thread_summary = None;
-            message.moderation_flags = 0;
-            ChatEvent::Message(message)
-        }
-        event => event,
+fn without_others_additions(mut event: ChatEvent) -> ChatEvent {
+    if let ChatEvent::Message(message) = &mut event {
+        message.reactions.clear();
+        message.tips = Default::default();
+        message.thread_summary = None;
+        message.moderation_flags = 0;
     }
+    event
 }
 
 #[allow(clippy::too_many_arguments)]
