@@ -18,10 +18,11 @@ use types::{
     MessageReminderCreatedContent, MessageReport, Milliseconds, ModerationInput, ModerationReportContent, P2PSwapAccepted,
     P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired,
     P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes,
-    PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
-    ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
-    TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
-    UserIdAndPrincipal, UserType, VideoCallContent, VideoCallPresence, VideoContent, VoteOperation, is_default,
+    PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent, PrizeContentEventPayload,
+    PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal, ProposalContent, RegisterVoteResult,
+    ReportedMessage, ReportedMessageContentEventPayload, TextContent, TextContentEventPayload, ThumbnailData, TimestampMillis,
+    TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId, UserIdAndPrincipal, UserType, VideoCallContent,
+    VideoCallPresence, VideoContent, VoteOperation, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -66,6 +67,8 @@ pub enum MessageContentInternal {
     Encrypted(EncryptedContentInternal),
     #[serde(rename = "cu")]
     Custom(CustomContentInternal),
+    #[serde(rename = "pc")]
+    PriceChart(PriceChartContentInternal),
 }
 
 impl MessageContentInternal {
@@ -112,6 +115,15 @@ impl MessageContentInternal {
             | MessageContentInitial::MessageReminder(_) => {
                 return ValidateNewMessageContentResult::Error(ContentValidationError::Unauthorized);
             }
+            MessageContentInitial::PriceChart(c) => {
+                // Bots post charts, though anyone can forward one
+                if !sender_user_type.is_bot() && !forwarding {
+                    return ValidateNewMessageContentResult::Error(ContentValidationError::Unauthorized);
+                }
+                if let Err(reason) = c.validate() {
+                    return ValidateNewMessageContentResult::Error(ContentValidationError::InvalidPriceChart(reason));
+                }
+            }
             _ => {}
         };
 
@@ -131,7 +143,8 @@ impl MessageContentInternal {
             | MessageContentInitial::MessageReminderCreated(_)
             | MessageContentInitial::MessageReminder(_)
             | MessageContentInitial::P2PSwap(_)
-            | MessageContentInitial::Custom(_) => false,
+            | MessageContentInitial::Custom(_)
+            | MessageContentInitial::PriceChart(_) => false,
         };
 
         if is_empty {
@@ -207,6 +220,7 @@ impl MessageContentInternal {
             MessageContentInternal::VideoCall(c) => MessageContent::VideoCall(c.hydrate()),
             MessageContentInternal::Encrypted(e) => MessageContent::Encrypted(e.hydrate(my_user)),
             MessageContentInternal::Custom(c) => MessageContent::Custom(c.hydrate(my_user)),
+            MessageContentInternal::PriceChart(c) => MessageContent::PriceChart(c.hydrate(my_user)),
         }
     }
 
@@ -225,6 +239,7 @@ impl MessageContentInternal {
             MessageContentInternal::MessageReminderCreated(r) => r.notes.as_deref(),
             MessageContentInternal::MessageReminder(r) => r.notes.as_deref(),
             MessageContentInternal::P2PSwap(p) => p.caption.as_deref(),
+            MessageContentInternal::PriceChart(c) => Some(&c.title),
             MessageContentInternal::PrizeWinner(_)
             | MessageContentInternal::Deleted(_)
             | MessageContentInternal::ReportedMessage(_)
@@ -361,7 +376,8 @@ impl MessageContentInternal {
             | MessageContentInternal::P2PSwap(_)
             | MessageContentInternal::VideoCall(_)
             | MessageContentInternal::Encrypted(_)
-            | MessageContentInternal::Custom(_) => {}
+            | MessageContentInternal::Custom(_)
+            | MessageContentInternal::PriceChart(_) => {}
         }
 
         references
@@ -454,9 +470,10 @@ impl MessageContentInternal {
                 content_type: MessageContentType::from(e.content_type.clone()).to_string(),
                 encrypted_length: e.encrypted_data.len() as u32,
             }),
-            MessageContentInternal::Deleted(_) | MessageContentInternal::VideoCall(_) | MessageContentInternal::Custom(_) => {
-                MessageContentEventPayload::Empty
-            }
+            MessageContentInternal::Deleted(_)
+            | MessageContentInternal::VideoCall(_)
+            | MessageContentInternal::Custom(_)
+            | MessageContentInternal::PriceChart(_) => MessageContentEventPayload::Empty,
         }
     }
 
@@ -538,6 +555,12 @@ impl From<&MessageContentInternal> for Document {
             }
             MessageContentInternal::Custom(c) => {
                 document.add_field(&c.kind);
+            }
+            MessageContentInternal::PriceChart(c) => {
+                document.add_field(&c.title);
+                for series in &c.series {
+                    document.add_field(&series.symbol);
+                }
             }
             MessageContentInternal::ModerationReport(_)
             | MessageContentInternal::ReportedMessage(_)
@@ -2127,6 +2150,98 @@ impl MessageContentInternalSubtype for CustomContentInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PriceChartContentInternal {
+    #[serde(rename = "t")]
+    pub title: String,
+    #[serde(rename = "s")]
+    pub start: TimestampMillis,
+    #[serde(rename = "e")]
+    pub end: TimestampMillis,
+    #[serde(rename = "l")]
+    pub series: Vec<PriceChartSeriesInternal>,
+    #[serde(rename = "c")]
+    pub sources: Vec<PriceChartSourceInternal>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PriceChartSeriesInternal {
+    #[serde(rename = "t")]
+    pub token: PriceChartToken,
+    #[serde(rename = "s")]
+    pub symbol: String,
+    #[serde(rename = "n")]
+    pub name: String,
+    #[serde(rename = "p")]
+    pub points: Vec<(TimestampMillis, f64)>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PriceChartSourceInternal {
+    #[serde(rename = "n")]
+    pub name: String,
+    #[serde(rename = "u")]
+    pub url: String,
+}
+
+impl From<PriceChartContent> for PriceChartContentInternal {
+    fn from(value: PriceChartContent) -> Self {
+        PriceChartContentInternal {
+            title: value.title,
+            start: value.start,
+            end: value.end,
+            series: value
+                .series
+                .into_iter()
+                .map(|s| PriceChartSeriesInternal {
+                    token: s.token,
+                    symbol: s.symbol,
+                    name: s.name,
+                    points: s.points,
+                })
+                .collect(),
+            sources: value
+                .sources
+                .into_iter()
+                .map(|s| PriceChartSourceInternal {
+                    name: s.name,
+                    url: s.url,
+                })
+                .collect(),
+        }
+    }
+}
+
+impl MessageContentInternalSubtype for PriceChartContentInternal {
+    type ContentType = PriceChartContent;
+
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
+        PriceChartContent {
+            title: self.title,
+            start: self.start,
+            end: self.end,
+            series: self
+                .series
+                .into_iter()
+                .map(|s| PriceChartSeries {
+                    token: s.token,
+                    symbol: s.symbol,
+                    name: s.name,
+                    points: s.points,
+                })
+                .collect(),
+            sources: self
+                .sources
+                .into_iter()
+                .map(|s| PriceChartSource {
+                    name: s.name,
+                    url: s.url,
+                })
+                .collect(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BlobReferenceInternal {
     #[serde(rename = "c", alias = "canister_id")]
     pub canister_id: CanisterId,
@@ -2168,6 +2283,7 @@ impl From<MessageContentInitial> for MessageContentInternal {
             MessageContentInitial::MessageReminder(r) => MessageContentInternal::MessageReminder(r.into()),
             MessageContentInitial::Encrypted(e) => MessageContentInternal::Encrypted(e.into()),
             MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c.into()),
+            MessageContentInitial::PriceChart(c) => MessageContentInternal::PriceChart(c.into()),
             MessageContentInitial::Crypto(c) => c
                 .try_into()
                 .map(MessageContentInternal::Crypto)
@@ -2202,6 +2318,7 @@ impl From<&MessageContentInternal> for MessageContentType {
             MessageContentInternal::VideoCall(_) => MessageContentType::VideoCall,
             MessageContentInternal::Encrypted(e) => e.content_type.clone().into(),
             MessageContentInternal::Custom(c) => MessageContentType::Custom(c.kind.clone()),
+            MessageContentInternal::PriceChart(_) => MessageContentType::PriceChart,
         }
     }
 }
@@ -2392,5 +2509,79 @@ mod prize_tests {
         let sender: UserId = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap().into();
 
         assert_eq!(refunded_to(sender, Principal::anonymous()), sender.as_principal());
+    }
+}
+
+#[cfg(test)]
+mod price_chart_tests {
+    use super::*;
+
+    fn chart() -> PriceChartContent {
+        PriceChartContent {
+            title: "ADA · 1 day".to_string(),
+            start: 1_000,
+            end: 3_000,
+            series: vec![PriceChartSeries {
+                token: PriceChartToken::Coin("cardano".to_string()),
+                symbol: "ADA".to_string(),
+                name: "Cardano".to_string(),
+                points: vec![(1_000, 0.5), (2_000, 0.25)],
+            }],
+            sources: vec![PriceChartSource {
+                name: "CoinGecko".to_string(),
+                url: "https://www.coingecko.com".to_string(),
+            }],
+        }
+    }
+
+    fn validate(content: PriceChartContent, sender: UserType, forwarding: bool) -> ValidateNewMessageContentResult {
+        MessageContentInternal::validate_new_message(MessageContentInitial::PriceChart(content), false, sender, forwarding, 0)
+    }
+
+    #[test]
+    fn a_bot_can_post_a_price_chart_and_anyone_can_forward_one() {
+        assert!(matches!(
+            validate(chart(), UserType::BotV2, false),
+            ValidateNewMessageContentResult::Success(MessageContentInternal::PriceChart(_))
+        ));
+        assert!(matches!(
+            validate(chart(), UserType::User, true),
+            ValidateNewMessageContentResult::Success(MessageContentInternal::PriceChart(_))
+        ));
+        assert!(matches!(
+            validate(chart(), UserType::User, false),
+            ValidateNewMessageContentResult::Error(ContentValidationError::Unauthorized)
+        ));
+    }
+
+    #[test]
+    fn an_invalid_price_chart_is_refused_even_from_a_bot() {
+        let mut content = chart();
+        content.sources.clear();
+
+        assert!(matches!(
+            validate(content, UserType::BotV2, false),
+            ValidateNewMessageContentResult::Error(ContentValidationError::InvalidPriceChart(_))
+        ));
+    }
+
+    #[test]
+    fn a_price_chart_is_stored_and_read_back_whole() {
+        let ValidateNewMessageContentResult::Success(internal) = validate(chart(), UserType::BotV2, false) else {
+            panic!("Expected the chart to be valid");
+        };
+        let bytes = msgpack::serialize_then_unwrap(&internal);
+        let read: MessageContentInternal = msgpack::deserialize_then_unwrap(&bytes);
+
+        let MessageContent::PriceChart(content) = read.clone().hydrate(None) else {
+            panic!("Expected a price chart");
+        };
+        assert_eq!(content.title, "ADA · 1 day");
+        assert_eq!((content.start, content.end), (1_000, 3_000));
+        assert!(matches!(&content.series[0].token, PriceChartToken::Coin(id) if id == "cardano"));
+        assert_eq!(content.series[0].points, [(1_000, 0.5), (2_000, 0.25)]);
+        assert_eq!(content.sources[0].url, "https://www.coingecko.com");
+        assert!(matches!(read.content_type(), MessageContentType::PriceChart));
+        assert_eq!(read.text(), Some("ADA · 1 day"));
     }
 }

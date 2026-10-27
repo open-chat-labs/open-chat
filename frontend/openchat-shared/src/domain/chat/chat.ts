@@ -15,7 +15,7 @@ import type {
     CommunityIdentifier,
     CommunitySummary,
 } from "../community";
-import type { WalletConfig } from "../crypto";
+import type { PriceSubject, TokenPricePoint, WalletConfig } from "../crypto";
 import { type BlobReference, DataContentSchema, type DataContent } from "../data/data";
 import type { OCError } from "../error";
 import type { OptionUpdate } from "../optionUpdate";
@@ -114,7 +114,8 @@ export type MessageContent =
     | MemeFighterContent
     | DailyResultContent
     | VideoCallContent
-    | EncryptedContent;
+    | EncryptedContent
+    | PriceChartContent;
 
 export type VideoCallParticipant = {
     userId: string;
@@ -123,6 +124,35 @@ export type VideoCallParticipant = {
 
 export type EncryptedContent = {
     kind: "encrypted_content";
+};
+
+/**
+ * A chart of token prices, which a bot sends and OpenChat draws, so that readers can see the price
+ * at any time. One token's prices are drawn in USD, several tokens' as their change since `start`.
+ */
+export type PriceChartContent = {
+    kind: "price_chart_content";
+    // eg. "CHAT · 30 days"
+    title: string;
+    // the time drawn: each line runs on flat from its last price to `end`
+    start: number;
+    end: number;
+    series: PriceChartSeries[];
+    // where the prices are from, credited with links under the chart
+    sources: PriceChartSource[];
+};
+
+export type PriceChartSeries = {
+    // a token OpenChat lists, by its ledger, or any other coin, by its CoinGecko id
+    token: PriceSubject;
+    symbol: string;
+    name: string;
+    points: TokenPricePoint[];
+};
+
+export type PriceChartSource = {
+    name: string;
+    url: string;
 };
 
 export type VideoCallContent = {

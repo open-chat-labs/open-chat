@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Let bots post price charts, with the Image permission, and read them in chat events ([#10267](https://github.com/open-chat-labs/open-chat/pull/10267))
+
 ### Removed
 
 - Stop reading the user id migration events, which no canister sends any more ([#10257](https://github.com/open-chat-labs/open-chat/pull/10257))

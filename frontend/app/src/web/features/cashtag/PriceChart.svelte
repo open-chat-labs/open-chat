@@ -1,9 +1,10 @@
 <!-- A chart of token prices which the reader can explore: hovering over it, pressing and dragging
-     along it, or with the arrow keys, shows the prices at that time (logic/priceChart). So far only
-     one token's chart is drawn: several tokens' lines get their colours with price chart messages.
+     along it, or with the arrow keys, shows the prices at that time (logic/priceChart). One token's
+     line is coloured by whether its price rose, several tokens' by PRICE_CHART_COLOURS.
      TODO(design): no price chart in the design (GAPS.md) -->
 <script lang="ts">
     import {
+        PRICE_CHART_COLOURS,
         PriceChartReader,
         priceChartLayout,
         readingAt,
@@ -36,6 +37,13 @@
     );
     // the reading sits beside the line, on whichever side has more room
     let readingOnLeft = $derived(reading !== undefined && reading.x > width / 2);
+
+    // several tokens' lines each have their own colour; one token's is styled by its rise or fall
+    function seriesColour(i: number): string | undefined {
+        return layout?.kind === "change"
+            ? PRICE_CHART_COLOURS[i % PRICE_CHART_COLOURS.length]
+            : undefined;
+    }
 
     function pointAt(ev: PointerEvent) {
         if (layout === undefined) return;
@@ -71,6 +79,14 @@
     onkeydown={onKeyDown}>
     {#if layout !== undefined}
         <svg width={layout.width} height={layout.height} aria-hidden="true">
+            {#each layout.gridlines as gridline}
+                <line
+                    class="gridline"
+                    x1={layout.left}
+                    x2={layout.width}
+                    y1={gridline.y}
+                    y2={gridline.y} />
+            {/each}
             {#each layout.lines as line}
                 {#if line.area !== undefined}
                     <path class="area" class:falling={!line.rising} d={line.area} />
@@ -78,9 +94,10 @@
             {/each}
             {#each layout.lines as line, i}
                 <path
-                    class={`line series-${i}`}
+                    class="line"
                     class:single={layout.kind === "usd"}
                     class:falling={!line.rising}
+                    style:stroke={seriesColour(i)}
                     d={line.path} />
             {/each}
             {#each layout.marks as mark}
@@ -92,14 +109,21 @@
             {#each layout.lines as line, i}
                 {@const value = reading?.values.find((v) => v.symbol === line.symbol)}
                 <circle
-                    class={`dot series-${i}`}
+                    class="dot"
                     class:single={layout.kind === "usd"}
                     class:falling={!line.rising}
+                    style:stroke={seriesColour(i)}
                     cx={reading !== undefined && value !== undefined ? reading.x : line.end.x}
                     cy={value?.y ?? line.end.y}
                     r="4" />
             {/each}
         </svg>
+        {#each layout.gridlines as gridline}
+            <span
+                class="gridline-label"
+                style:top={`${gridline.y}px`}
+                style:width={`${layout.left}px`}>{gridline.label}</span>
+        {/each}
         {#if reading === undefined}
             {#each layout.marks as mark}
                 <span
@@ -176,6 +200,24 @@
 
     .dot.single.falling {
         fill: var(--status-danger);
+    }
+
+    .gridline {
+        stroke: var(--line-2);
+        stroke-width: 1;
+    }
+
+    .gridline-label {
+        position: absolute;
+        left: 0;
+        transform: translateY(-50%);
+        box-sizing: border-box;
+        padding-right: 6px;
+        text-align: right;
+        font: var(--weight-regular) var(--text-2xs) / 1.2 var(--font-sans);
+        color: var(--ink-4);
+        white-space: nowrap;
+        pointer-events: none;
     }
 
     .mark {

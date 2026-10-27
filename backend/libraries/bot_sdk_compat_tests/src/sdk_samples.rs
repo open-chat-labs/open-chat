@@ -2,8 +2,9 @@ use crate::variants::every;
 use candid::Principal;
 use num_traits::Bounded;
 use oc_bots_sdk::types::{
-    AudioContent, BlobReference, CustomContent, FileContent, GiphyContent, GiphyImageVariant, ImageContent,
-    MessageContentInitial, PollConfig, TextContent, ThumbnailData, VideoContent,
+    AudioContent, BlobReference, CanisterId, CustomContent, FileContent, GiphyContent, GiphyImageVariant, ImageContent,
+    MessageContentInitial, PollConfig, PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, TextContent,
+    ThumbnailData, VideoContent,
 };
 
 /// One value of every kind of content a bot can send, with every `Option` filled in if `filled`,
@@ -74,6 +75,29 @@ pub fn message_contents_initial(filled: bool) -> Vec<MessageContentInitial> {
         MessageContentInitial::Custom(CustomContent {
             kind: "custom".to_string(),
             data: vec![1, 2, 3],
+        }),
+        MessageContentInitial::PriceChart(PriceChartContent {
+            title: "CHAT and ADA · 30 days".to_string(),
+            start: max(),
+            end: max(),
+            series: vec![
+                PriceChartSeries {
+                    token: PriceChartToken::Ledger(CanisterId::from(Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 2, 1, 1]))),
+                    symbol: "CHAT".to_string(),
+                    name: "OpenChat".to_string(),
+                    points: vec![(max(), 0.5)],
+                },
+                PriceChartSeries {
+                    token: PriceChartToken::Coin("cardano".to_string()),
+                    symbol: "ADA".to_string(),
+                    name: "Cardano".to_string(),
+                    points: vec![(max(), 0.25)],
+                },
+            ],
+            sources: vec![PriceChartSource {
+                name: "CoinGecko".to_string(),
+                url: "https://www.coingecko.com".to_string(),
+            }],
         }),
     ])
 }

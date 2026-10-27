@@ -23,6 +23,7 @@
     import ReportedMessageContent from "./ReportedMessageContent.svelte";
     import UserReferralCardContent from "./UserReferralCardContent.svelte";
     import DailyResultContent from "./dailypuzzle/DailyResultContent.svelte";
+    import PriceChartContent from "./PriceChartContent.svelte";
     import VideoCallContent from "./VideoCallContent.svelte";
     import VideoContent from "./VideoContent.svelte";
     import TextContentReply from "./TextContentReply.svelte";
@@ -181,4 +182,6 @@
     <UserReferralCardContent />
 {:else if content.kind === "daily_result"}
     <DailyResultContent {content} {intersecting} />
+{:else if content.kind === "price_chart_content"}
+    <PriceChartContent {content} reply />
 {/if}

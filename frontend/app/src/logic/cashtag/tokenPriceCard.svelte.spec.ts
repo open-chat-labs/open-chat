@@ -8,7 +8,7 @@ import type {
 import {
     cashtagCardDetails,
     lastCardDetails,
-    priceChange,
+    showsSymbol,
     TokenPriceHistory,
 } from "./tokenPriceCard.svelte";
 
@@ -31,18 +31,6 @@ function client(points: TokenPricePoint[] | undefined, source?: string) {
 async function settle() {
     await new Promise((resolve) => setTimeout(resolve, 0));
 }
-
-describe("priceChange", () => {
-    test("is from the first price to the last, in percent", () => {
-        expect(priceChange([point(7 * DAY, 2), point(DAY, 4), point(0, 3)])).toBeCloseTo(50);
-        expect(priceChange([point(DAY, 4), point(0, 3)])).toBeCloseTo(-25);
-    });
-
-    test("needs two prices", () => {
-        expect(priceChange([])).toBeUndefined();
-        expect(priceChange([point(0, 3)])).toBeUndefined();
-    });
-});
 
 describe("a token price card's history", () => {
     test("loads the token's history as the card opens", async () => {
@@ -143,5 +131,24 @@ describe("a price card's last details", () => {
         expect(known(ada)).toBe(ada);
         expect(known(undefined)).toBe(ada);
         expect(known({ ...ada, usd: 0.21 })?.usd).toBe(0.21);
+    });
+});
+
+describe("a price card's symbol", () => {
+    const details = (name: string, symbol: string) => ({
+        name,
+        symbol,
+        logo: undefined,
+        usd: 1,
+        source: undefined,
+    });
+
+    test("is shown under a name that differs from it", () => {
+        expect(showsSymbol(details("Internet Computer", "ICP"))).toBe(true);
+    });
+
+    test("isn't shown when it's the name again", () => {
+        expect(showsSymbol(details("CHAT", "CHAT"))).toBe(false);
+        expect(showsSymbol(details("ckBTC", "CKBTC"))).toBe(false);
     });
 });

@@ -125,12 +125,19 @@ design export needs. Each entry says where it came up.
     doesn't list such as `$ADA`, `<cash-tag>`): the token's logo (coins have none), name, price now,
     its change over 7 days and a chart of its last 7 days' prices (from the price service,
     `getPriceHistory`) which shows the price at any time when hovered, dragged along or moved
-    through with the arrow keys, its high and low marked (`features/cashtag/PriceChart.svelte`,
-    from `logic/priceChart`), with loading and no-history states, and where the prices are from
-    ("Price data by ICPSwap" or "by CoinGecko", linked). The new UI shows it as a `DialogShell` laid out like the
+    through with the arrow keys, its high and low marked, and gridlines at round prices
+    (`features/cashtag/PriceChart.svelte`, from `logic/priceChart`), with loading and no-history
+    states, and where the prices are from ("Price data by ICPSwap" or "by CoinGecko", linked). Its
+    symbol is under its name unless it's the same. The new UI shows it as a `DialogShell` laid out like the
     old UI's card (`features/cashtag/TokenDialogScreen.svelte`, `TODO(design)`). The chip itself is
     the shared `<cash-tag>` web component, coloured from the text it's in, with a coin's credit as
     its tooltip.
+  - **Price chart message**: a chart a bot such as ChartBot posts (`price_chart_content`): its
+    title, each token's latest price and change (a symbol opens that token's price card), the same
+    chart as the price card, with several tokens' lines in `PRICE_CHART_COLOURS`, and where its
+    prices are from, linked. The library has no bubble for it, so the new UI shows its title as
+    text (`contentText`); the old UI's is `PriceChartContent.svelte`, and the chart itself is
+    `features/cashtag/PriceChart.svelte`.
 - **`ProfileDialog`, by hand** (8c, to go back to the design export): `sections`, the sections
   its nav offers (a host that has built only some); the cover and photo edit buttons only with
   `onCoverEdit` / `onPhotoEdit`; `engagement` counts as numbers; `memberSince` from `joined` in the

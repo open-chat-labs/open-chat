@@ -7979,7 +7979,7 @@ dependencies = [
 [[package]]
 name = "oc_bots_sdk"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/open-chat-bots?rev=f35a7c1a754ca894dea6dab7c690ef13d7825d6d#f35a7c1a754ca894dea6dab7c690ef13d7825d6d"
+source = "git+https://github.com/open-chat-labs/open-chat-bots?rev=719504ed16c46096ab10994c24ce6267762c7e8f#719504ed16c46096ab10994c24ce6267762c7e8f"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -7987,6 +7987,7 @@ dependencies = [
  "ct-codecs",
  "dataurl",
  "enum-repr",
+ "futures-util",
  "ic_principal",
  "icrc-ledger-types 0.1.13",
  "image 0.25.10",
@@ -7994,7 +7995,9 @@ dependencies = [
  "rand 0.8.7",
  "rmp-serde",
  "serde",
+ "serde_bytes",
  "serde_json",
+ "sha3 0.10.9",
  "strum 0.27.2",
  "strum_macros 0.27.2",
 ]

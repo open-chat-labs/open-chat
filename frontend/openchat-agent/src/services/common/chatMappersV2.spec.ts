@@ -1,5 +1,10 @@
 import { Principal } from "@icp-sdk/core/principal";
-import type { DailyResultContent, MessageContent, PendingCryptocurrencyTransfer } from "@shared";
+import type {
+    DailyResultContent,
+    MessageContent,
+    PendingCryptocurrencyTransfer,
+    PriceChartContent,
+} from "@shared";
 import { encodeIcrcAccount } from "@shared";
 import { describe, expect, test } from "vitest";
 import type { MessageContent as TMessageContent } from "../../typebox";
@@ -100,6 +105,47 @@ describe("daily result custom content mapping", () => {
         const captioned = { ...card, caption: "got there in the end" };
         expect(roundTrip(card)).toEqual(card);
         expect(roundTrip(captioned)).toEqual(captioned);
+    });
+});
+
+describe("price chart content mapping", () => {
+    const chart: PriceChartContent = {
+        kind: "price_chart_content",
+        title: "CHAT and ADA · 30 days",
+        start: 1_790_000_000_000,
+        end: 1_792_592_000_000,
+        series: [
+            {
+                token: { kind: "token", ledger },
+                symbol: "CHAT",
+                name: "OpenChat",
+                points: [
+                    { timestamp: 1_790_000_000_000, usd: 0.0312 },
+                    { timestamp: 1_791_000_000_000, usd: 0.0287 },
+                ],
+            },
+            {
+                token: { kind: "coin", id: "cardano" },
+                symbol: "ADA",
+                name: "Cardano",
+                points: [{ timestamp: 1_790_500_000_000, usd: 0.21 }],
+            },
+        ],
+        sources: [
+            { name: "ICPSwap", url: "https://www.icpswap.com" },
+            { name: "CoinGecko", url: "https://www.coingecko.com" },
+        ],
+    };
+
+    test("reads a chart a bot sent", () => {
+        const api = apiMessageContent(chart);
+        expect(api).toMatchObject({
+            PriceChart: {
+                start: 1_790_000_000_000n,
+                series: [{ token: { Ledger: expect.anything() } }, {}],
+            },
+        });
+        expect(messageContent(api as TMessageContent, "bot-1")).toEqual(chart);
     });
 });
 

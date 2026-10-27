@@ -2175,7 +2175,7 @@ pub(crate) fn register_bot(
     )
 }
 
-fn default_bot_definition(command_name: String) -> BotDefinition {
+pub(crate) fn default_bot_definition(command_name: String) -> BotDefinition {
     let commands = vec![BotCommandDefinition {
         name: command_name,
         description: Some("Hello {user}".to_string()),

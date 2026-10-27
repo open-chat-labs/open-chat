@@ -16,6 +16,7 @@
     import {
         cashtagCardDetails,
         lastCardDetails,
+        showsSymbol,
         TokenPriceHistory,
     } from "@src/logic/cashtag/tokenPriceCard.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -73,8 +74,10 @@
                 {/if}
                 <Container direction={"vertical"}>
                     <Body width={"hug"} fontWeight={"bold"}>{token.name}</Body>
-                    <Caption width={"hug"} colour={"textSecondary"} fontWeight={"bold"}
-                        >${token.symbol}</Caption>
+                    {#if showsSymbol(token)}
+                        <Caption width={"hug"} colour={"textSecondary"} fontWeight={"bold"}
+                            >{token.symbol}</Caption>
+                    {/if}
                 </Container>
             </Container>
             <Container direction={"vertical"} gap={"xs"}>

@@ -362,7 +362,8 @@ impl MessageInternal {
             MessageContentType::Text => {
                 metrics.incr(MetricKey::TextMessages, 1);
             }
-            MessageContentType::Image => {
+            // a price chart is counted as the image it replaces
+            MessageContentType::Image | MessageContentType::PriceChart => {
                 metrics.incr(MetricKey::ImageMessages, 1);
             }
             MessageContentType::Video => {
