@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Save an edit that changes a message's content but not its text, and finalise a bot's message re-sent unchanged ([#10290](https://github.com/open-chat-labs/open-chat/pull/10290))
+
 ## [[2.0.2197](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2197-multi_user)] - 2026-10-27
 
 ### Added
