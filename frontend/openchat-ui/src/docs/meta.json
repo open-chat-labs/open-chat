@@ -17867,6 +17867,61 @@
         "required": false,
         "componentDefault": null,
         "doc": "See WalletReceive.qr."
+      },
+      {
+        "name": "history",
+        "type": "{ state: 'loading' | 'failed' | 'loaded'; more?: boolean; loadingMore?: boolean }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The token page's history as the host loads it: the first page loading or failed (with `onRetryHistory`), or loaded, with older entries to load (`more`, `onMoreHistory`) or loading. Without it, `activity` is all there is."
+      },
+      {
+        "name": "onMoreHistory",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onRetryHistory",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onActivity",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "An activity row clicked (its id), e.g. to open it on the token's explorer; on All activity a row opens its token."
+      },
+      {
+        "name": "allActivityNote",
+        "type": "{ title: string; body: string }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "In place of All activity's list, when the host can't list activity across tokens: resource keys (or text)."
       }
     ],
     "group": "features"
@@ -17927,14 +17982,14 @@
       },
       {
         "name": "onRefresh",
-        "type": "(symbol?: string) => Promise<unknown> | void",
+        "type": "(id?: string) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Reload balances (one token, or all). The spinner runs until it settles; Refresh is hidden without it."
+        "doc": "Reload balances (one token by its id, or all when none). The spinner runs until it settles; Refresh is hidden without it."
       },
       {
         "name": "hidden",
@@ -17945,7 +18000,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Hidden token symbols when a host owns the list."
+        "doc": "Hidden tokens (their ids: `id`, else the symbol) when a host owns the list."
       },
       {
         "name": "onHiddenChange",
@@ -17960,7 +18015,7 @@
       },
       {
         "name": "onRemoveToken",
-        "type": "(symbol: string) => void",
+        "type": "(id: string) => void",
         "default": null,
         "editor": null,
         "options": null,
@@ -17978,7 +18033,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The removed token's symbol, for the undo banner."
       },
       {
         "name": "onUndoRemove",
@@ -18033,18 +18088,18 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "\"settings\", \"recipients\", \"send\", \"receive\", \"swap\", or \"send:ICP\" etc. for a token's own menu."
+        "doc": "\"settings\", \"recipients\", \"send\", \"receive\", \"swap\", or \"send:<id>\" etc. for a token's own menu."
       },
       {
         "name": "onToken",
-        "type": "(symbol: string) => void",
+        "type": "(id: string) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "A token row picked, by its id (`id`, else the symbol)."
       },
       {
         "name": "selectedToken",
@@ -18055,7 +18110,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The selected token's id."
       },
       {
         "name": "onHome",
@@ -18089,6 +18144,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "rates",
+        "type": "Partial<Record<string, number>>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "USD per unit of each display currency (BTC, ETH, ICP) when the host prices them; otherwise the tokens' own prices (a token with that symbol) are used."
       }
     ],
     "group": "features"

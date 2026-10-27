@@ -15,7 +15,7 @@
 
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
-  import type { MenuItem, WalletToken } from '../../lib/types';
+  import type { MenuItem, WalletToken, WalletTokenAction } from '../../lib/types';
   import BalanceCard from './BalanceCard.svelte';
   import ContextMenu from '../../lib/components/ContextMenu.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
@@ -52,23 +52,29 @@
     /** Wallet settings when a host owns them (currency, which tokens are listed). */
     settings?: WalletPanelSettings;
     onSettingsChange?: (settings: WalletPanelSettings) => void;
-    /** Hidden token symbols when a host owns the list. */
+    /** Hidden tokens (their ids: `id`, else the symbol) when a host owns the list. */
     hidden?: string[];
     onHiddenChange?: (hidden: string[]) => void;
     /** Host-owned removal (and its undo window). */
-    onRemoveToken?: (symbol: string) => void;
+    onRemoveToken?: (id: string) => void;
+    /** The removed token's symbol, for the undo banner. */
     undoSymbol?: string;
     onUndoRemove?: () => void;
     onDismissUndo?: () => void;
     /** Veiled balances when a host owns the veil. */
     balanceHidden?: boolean;
     onBalanceHiddenChange?: (hidden: boolean) => void;
-    /** Reload balances (one token, or all when no symbol). The spinner runs until it settles; Refresh is hidden without it. */
-    onRefresh?: (symbol?: string) => Promise<unknown> | void;
-    /** "settings", "recipients", "send", "receive", "swap", or "send:ICP" etc. for a token's own menu. */
+    /** Reload balances (one token by its id, or all when none). The spinner runs until it settles; Refresh is hidden without it. */
+    onRefresh?: (id?: string) => Promise<unknown> | void;
+    /** "settings", "recipients", "send", "receive", "swap", or "send:<id>" etc. for a token's own menu. */
     onAction?: (kind: string) => void;
-    onToken?: (symbol: string) => void;
+    /** A token row picked, by its id (`id`, else the symbol). */
+    onToken?: (id: string) => void;
+    /** The selected token's id. */
     selectedToken?: string;
+    /** USD per unit of each display currency (BTC, ETH, ICP) when the host prices them; otherwise the tokens' own
+     *  prices (a token with that symbol) are used. */
+    rates?: Partial<Record<string, number>>;
     /** Workspace mode: shows an "All activity" row above the tokens. */
     onHome?: () => void;
     homeSelected?: boolean;
@@ -95,6 +101,7 @@
     onHome,
     homeSelected = false,
     homeCount,
+    rates: hostRates,
   }: Props = $props();
   const t = useT();
 
@@ -107,6 +114,8 @@
   let dir = $state<'asc' | 'desc'>('desc');
   let spinning = $state(false);
   let undo = $state<{ symbol: string; hidden: string[] } | null>(null);
+  // a token's identity in callbacks, the hidden list and the selection: several ledgers can share a symbol
+  const idOf = (tk: WalletToken) => tk.id ?? tk.symbol;
   let menu = $state<{ items: MenuItem[]; key: string | null; point: { x: number; y: number } | null; anchor: Rect | null; align: 'start' | 'end' } | null>(null);
 
   let undoTimer: ReturnType<typeof setTimeout> | undefined;
@@ -142,18 +151,18 @@
   const rates = $derived.by(() => {
     const out: Record<string, number> = { USD: 1 };
     for (const c of CURRENCIES.slice(1)) {
-      const p = tokens.find((tk) => tk.symbol === c)?.price;
+      const p = hostRates ? hostRates[c] : tokens.find((tk) => tk.symbol === c)?.price;
       if (p && p > 0) out[c] = p;
     }
     return out;
   });
   const currencies = $derived(CURRENCIES.filter((c) => rates[c]));
 
-  async function refresh(symbol?: string) {
+  async function refresh(id?: string) {
     if (!onRefresh || spinning) return;
     spinning = true;
     try {
-      await onRefresh(symbol);
+      await onRefresh(id);
     } catch {
       // the balances simply stay as they were; the host reports its own errors
     } finally {
@@ -177,7 +186,7 @@
     const allow = manual && settings.tokens ? settings.tokens : null;
     return tokens
       .filter((t) => t.held > 0)
-      .filter((t) => !hidden.includes(t.symbol))
+      .filter((t) => !hidden.includes(idOf(t)))
       .filter((t) => (allow ? allow.includes(t.symbol) : t.price * t.held >= floor))
       .map((t) => ({ ...t, value: t.price * t.held }));
   });
@@ -215,13 +224,13 @@
 
   // a host that owns wallet settings also owns the undo window, so the banner
   // can outlive a dialog that closes on removal
-  function removeToken(symbol: string) {
+  function removeToken(tk: WalletToken) {
     if (onRemoveToken) {
-      onRemoveToken(symbol);
+      onRemoveToken(idOf(tk));
       return;
     }
-    const snapshot = { symbol, hidden };
-    setHidden([...hidden, symbol]);
+    const snapshot = { symbol: tk.symbol, hidden };
+    setHidden([...hidden, idOf(tk)]);
     clearTimeout(undoTimer);
     undo = snapshot;
     undoTimer = setTimeout(() => (undo = null), UNDO_MS);
@@ -266,15 +275,20 @@
     };
   }
 
-  function tokenItems(symbol: string): MenuItem[] {
+  // the token's menu: labels carry its symbol, callbacks its id. A token's `actions` (from the host) decide which
+  // items it offers; without them, all of them (Hide in a manual wallet only)
+  function tokenItems(tk: WalletToken): MenuItem[] {
+    const { symbol } = tk;
+    const id = idOf(tk);
+    const offers = (a: WalletTokenAction) => (tk.actions ? tk.actions.includes(a) : a !== 'hide' || manual);
     const items: MenuItem[] = [
       // built when the menu opens, so labels are translated here (they carry the symbol)
-      { label: t('ui.walletPanel.send', { symbol }), mask: mask('wallet-send'), onSelect: () => onAction?.(`send:${symbol}`) },
-      { label: t('ui.walletPanel.receive', { symbol }), mask: mask('receive'), onSelect: () => onAction?.(`receive:${symbol}`) },
-      { label: t('ui.walletPanel.swap', { symbol }), mask: mask('swap'), onSelect: () => onAction?.(`swap:${symbol}`) },
-      ...(onRefresh ? [{ label: t('ui.walletPanel.refresh'), mask: mask('refresh'), onSelect: () => refresh(symbol) }] : []),
+      ...(offers('send') ? [{ label: t('ui.walletPanel.send', { symbol }), mask: mask('wallet-send'), onSelect: () => onAction?.(`send:${id}`) }] : []),
+      ...(offers('receive') ? [{ label: t('ui.walletPanel.receive', { symbol }), mask: mask('receive'), onSelect: () => onAction?.(`receive:${id}`) }] : []),
+      ...(offers('swap') ? [{ label: t('ui.walletPanel.swap', { symbol }), mask: mask('swap'), onSelect: () => onAction?.(`swap:${id}`) }] : []),
+      ...(onRefresh && offers('refresh') ? [{ label: t('ui.walletPanel.refresh'), mask: mask('refresh'), onSelect: () => refresh(id) }] : []),
     ];
-    if (manual) items.push({ label: t('ui.walletPanel.hide'), mask: mask('eye-off'), onSelect: () => removeToken(symbol) });
+    if (offers('hide')) items.push({ label: t('ui.walletPanel.hide'), mask: mask('eye-off'), onSelect: () => removeToken(tk) });
     return items;
   }
 
@@ -302,7 +316,7 @@
     );
   }
 
-  function rowContextMenu(e: MouseEvent, symbol: string) {
+  function rowContextMenu(e: MouseEvent, tk: WalletToken) {
     e.stopPropagation();
     e.preventDefault();
     if (touch) {
@@ -310,14 +324,14 @@
       if (!menu) {
         clearTimeout(pressTimer);
         pressFired = true;
-        openMenu(tokenItems(symbol), e, symbol, { left: e.clientX, right: e.clientX, top: row.top, bottom: row.bottom });
+        openMenu(tokenItems(tk), e, idOf(tk), { left: e.clientX, right: e.clientX, top: row.top, bottom: row.bottom });
       }
       return;
     }
-    openMenu(tokenItems(symbol), e, symbol);
+    openMenu(tokenItems(tk), e, idOf(tk));
   }
 
-  function rowPointerDown(e: PointerEvent, symbol: string) {
+  function rowPointerDown(e: PointerEvent, tk: WalletToken) {
     touch = e.pointerType === 'touch';
     if (!touch) return;
     const x = e.clientX, y = e.clientY, row = (e.currentTarget as Element).getBoundingClientRect();
@@ -325,7 +339,7 @@
     clearTimeout(pressTimer);
     pressTimer = setTimeout(() => {
       pressFired = true;
-      openMenu(tokenItems(symbol), null, symbol, { left: x, right: x, top: row.top, bottom: row.bottom });
+      openMenu(tokenItems(tk), null, idOf(tk), { left: x, right: x, top: row.top, bottom: row.bottom });
     }, 500);
   }
 
@@ -341,21 +355,21 @@
     pressStart = null;
   }
 
-  function rowKey(e: KeyboardEvent, symbol: string) {
+  function rowKey(e: KeyboardEvent, tk: WalletToken) {
     if (e.target !== e.currentTarget) return;
-    if (e.key === 'Enter') onToken?.(symbol);
+    if (e.key === 'Enter') onToken?.(idOf(tk));
     else if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
       e.preventDefault();
-      openMenu(tokenItems(symbol), e, symbol);
+      openMenu(tokenItems(tk), e, idOf(tk));
     }
   }
 
-  function press(symbol: string) {
+  function press(tk: WalletToken) {
     if (pressFired) {
       pressFired = false;
       return;
     }
-    onToken?.(symbol);
+    onToken?.(idOf(tk));
   }
 </script>
 
@@ -412,19 +426,19 @@
 
     <div class="scroll">
       {#if loading}<Skeleton variant="token" count={5} />{/if}
-      {#each loading ? [] : listed as tk (tk.symbol)}
+      {#each loading ? [] : listed as tk (idOf(tk))}
         {@const share = (tk.value / total) * 100}
         <div
           class="token"
-          class:selected={selectedToken === tk.symbol}
-          onclick={() => press(tk.symbol)}
+          class:selected={selectedToken === idOf(tk)}
+          onclick={() => press(tk)}
           role="button"
-          oncontextmenu={(e) => rowContextMenu(e, tk.symbol)}
-          onpointerdown={(e) => rowPointerDown(e, tk.symbol)}
+          oncontextmenu={(e) => rowContextMenu(e, tk)}
+          onpointerdown={(e) => rowPointerDown(e, tk)}
           onpointerup={rowPointerUp}
           onpointercancel={rowPointerUp}
           onpointermove={rowPointerMove}
-          onkeydown={(e) => rowKey(e, tk.symbol)}
+          onkeydown={(e) => rowKey(e, tk)}
           tabindex="0"
         >
           <TokenAvatar size={40} symbol={tk.symbol} mark={tk.mark} gradient={tk.grad} />
@@ -439,8 +453,8 @@
             class="kebab"
             onclick={(e) => {
               e.stopPropagation();
-              if (menu?.key === tk.symbol) menu = null;
-              else openMenu(tokenItems(tk.symbol), e, tk.symbol);
+              if (menu?.key === idOf(tk)) menu = null;
+              else openMenu(tokenItems(tk), e, idOf(tk));
             }}
             role="button"
             tabindex="0"

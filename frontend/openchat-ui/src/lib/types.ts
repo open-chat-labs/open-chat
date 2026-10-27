@@ -262,7 +262,13 @@ export interface ComposerContext {
 }
 
 /** One token in the user's wallet, as the wallet screens (WalletMain, WalletPanel, WalletSend …) take it. */
+/** Something a wallet token's menu or page offers. */
+export type WalletTokenAction = 'send' | 'receive' | 'swap' | 'refresh' | 'hide';
+
 export interface WalletToken {
+  /** Identifies the token in callbacks, requests and activity when several share a symbol (e.g. its ledger);
+   *  defaults to the symbol. */
+  id?: string;
   symbol: string;
   name: string;
   mark: string;
@@ -288,6 +294,8 @@ export interface WalletToken {
   ledger?: string;
   /** Token standard, e.g. "ICRC-1" (token page; hidden without it). */
   standard?: string;
+  /** What its menu and page offer; all of them without it (Hide in a manual wallet only). */
+  actions?: WalletTokenAction[];
 }
 
 /** One configured access gate (AccessGates rules, AccessGatesCards gates). `a` / `b` are the type's numeric fields as decimal strings with a "." mark ("1.5", also when typed "1,5"). */

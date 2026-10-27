@@ -12,9 +12,14 @@
   export interface WalletActivity {
     id: string;
     symbol: string;
-    kind: 'send' | 'receive' | 'swap';
-    /** "Received from Lucy Linden", "Swapped to USDT" … */
-    title: string;
+    /** The token's id (WalletToken `id`) when tokens share a symbol; defaults to the symbol. */
+    token?: string;
+    /** `own`: between two of your own wallets, neither in nor out (listed under All only, unsigned). */
+    kind: 'send' | 'receive' | 'swap' | 'own';
+    /** "Received from Lucy Linden", "Swapped to USDT" …; without it, worded from `kind` and `party`. */
+    title?: string;
+    /** The other side ("@lucy", a saved name, an account), for the worded title. */
+    party?: string;
     /** ms epoch */
     timestamp: number;
     /** Shown after the time: "direct chat", "in The Awesome Group" … */
@@ -40,10 +45,12 @@
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { onDestroy, untrack } from 'svelte';
-  import type { WalletToken } from '../../lib/types';
+  import type { WalletToken, WalletTokenAction } from '../../lib/types';
   import CopyButton from '../../lib/components/CopyButton.svelte';
   import DialogShell from '../../lib/components/DialogShell.svelte';
+  import Button from '../../lib/components/Button.svelte';
   import EmptyState from '../../lib/components/EmptyState.svelte';
+  import Skeleton from '../../lib/components/Skeleton.svelte';
   import ListSectionLabel from '../../lib/components/ListSectionLabel.svelte';
   import PageHeader from '../../lib/components/PageHeader.svelte';
   import Pill from '../../lib/components/Pill.svelte';
@@ -74,21 +81,22 @@
 
   interface Entry {
     id: string;
-    symbol: string;
+    /** The token's id. */
+    token: string;
     title: string;
     /** Day bucket: 'today', 'yesterday' or a formatted date. */
     day: string;
     timestamp: number;
     /** Time and context under the title ("10:42 · direct chat"). */
     sub: string;
-    /** 1 sent, 2 received, 3 swapped — the filter tabs' indexes. */
-    kind: 1 | 2 | 3;
+    /** 1 sent, 2 received, 3 swapped — the filter tabs' indexes; 0 between your own wallets (All only). */
+    kind: 0 | 1 | 2 | 3;
     amount: string;
     fiat: string;
     fresh?: boolean;
     status?: 'pending' | 'sent' | 'failed';
   }
-  const KIND_NUM: Record<WalletActivity['kind'], 1 | 2 | 3> = { send: 1, receive: 2, swap: 3 };
+  const KIND_NUM: Record<WalletActivity['kind'], 0 | 1 | 2 | 3> = { own: 0, send: 1, receive: 2, swap: 3 };
 
   const DAY_MS = 86400000;
   const startOfDay = (ms: number) => {
@@ -102,7 +110,8 @@
   };
   const timeOf = (ts: number) => new Date(ts).toLocaleTimeString(i18n.locale ?? 'en', { hour: '2-digit', minute: '2-digit' });
   const dayLabel = (d: string) => (d === 'today' ? t('ui.walletMain.today') : d === 'yesterday' ? t('ui.walletMain.yesterday') : d).toUpperCase();
-  const KIND: Record<number, Kind> = { 1: 'send', 2: 'receive', 3: 'swap' };
+  // between your own wallets reads with the swap arrows
+  const KIND: Record<number, Kind> = { 0: 'swap', 1: 'send', 2: 'receive', 3: 'swap' };
 
   export interface WalletRequest {
     view: View;
@@ -153,6 +162,15 @@
     chats?: ShareChat[];
     onShare?: (v: { chatId: string; message: string; symbol: string; network: NetworkId; address: string }) => Promise<unknown> | void;
     qr?: Snippet<[string]>;
+    /** The token page's history as the host loads it: the first page loading or failed (with `onRetryHistory`), or
+     *  loaded, with older entries to load (`more`, `onMoreHistory`) or loading. Without it, `activity` is all there is. */
+    history?: { state: 'loading' | 'failed' | 'loaded'; more?: boolean; loadingMore?: boolean };
+    onMoreHistory?: () => void;
+    onRetryHistory?: () => void;
+    /** An activity row clicked (its id), e.g. to open it on the token's explorer; on All activity a row opens its token. */
+    onActivity?: (id: string) => void;
+    /** In place of All activity's list, when the host can't list activity across tokens: resource keys (or text). */
+    allActivityNote?: { title: string; body: string };
   }
 
   let {
@@ -181,6 +199,11 @@
     chats,
     onShare,
     qr,
+    history,
+    onMoreHistory,
+    onRetryHistory,
+    onActivity,
+    allActivityNote,
   }: Props = $props();
   const t = useT();
 
@@ -205,9 +228,17 @@
 
   const isFlow = (v: View) => v === 'send' || v === 'swap' || v === 'receive';
 
+  // a token's identity (`sym` holds it): several ledgers can share a symbol. Send, Receive and Swap still pick their
+  // token by symbol, so they get the shown token's symbol and their results map back to the first token with it
+  const idOf = (tk: { id?: string; symbol: string }) => tk.id ?? tk.symbol;
   const rows = $derived(tokens.filter((t) => t.held > 0).map((t) => ({ ...t, value: t.price * t.held })));
   const total = $derived(rows.reduce((n, t) => n + t.value, 0));
-  const raw = $derived(rows.find((t) => t.symbol === sym) ?? rows[0]);
+  const raw = $derived(rows.find((t) => idOf(t) === sym) ?? rows[0]);
+  const idForSymbol = (symbol: string) => {
+    const tk = tokens.find((t) => t.symbol === symbol);
+    return tk ? idOf(tk) : symbol;
+  };
+  const symbolOf = (id: string) => tokens.find((t) => idOf(t) === id)?.symbol ?? id;
   const pct = (v: number) => (total ? `${((v / total) * 100).toFixed(1)}%` : '0%');
 
   function report() {
@@ -224,10 +255,10 @@
       return;
     }
     // receiving a token you don't hold yet (one of `receivable`)
-    if (r.view === 'receive' && r.token && !rows.some((x) => x.symbol === r.token) && receivable.some((x) => x.symbol === r.token && x.nets.length)) extTok = r.token;
+    if (r.view === 'receive' && r.token && !rows.some((x) => idOf(x) === r.token) && receivable.some((x) => x.symbol === r.token && x.nets.length)) extTok = r.token;
     const startFromAll = flow && !r.token && view === 'all';
     // a token-less flow opened from a token page acts on the token shown there (sym may name one with no balance)
-    const shown = raw?.symbol;
+    const shown = raw ? idOf(raw) : undefined;
     if (r.token && r.token !== sym) tokFilter = 0;
     // a request starts afresh: an open flow (e.g. a token click from inside Send) is left, with nothing to return to
     backToAll = backToRecipients = false;
@@ -244,7 +275,7 @@
   // a flow opened on the shown token (sym still empty) records that token, so the flow stays on it even if its
   // balance reaches 0 and the shown token changes
   function pinFlowSym() {
-    if (isFlow(view) && !fromAll && !sym && raw) sym = raw.symbol;
+    if (isFlow(view) && !fromAll && !sym && raw) sym = idOf(raw);
   }
 
   let lastNonce: number | undefined;
@@ -289,7 +320,7 @@
   // a saved recipient's own token lock wins; otherwise the network's native token
   function sendToRecipient(r: Recipient & { network: string | null }) {
     const native: Record<string, string> = { BTC: 'BTC', ETH: 'ETH', XRP: 'XRP' };
-    sym = r.token || (r.network ? native[r.network] : undefined) || 'ICP';
+    sym = idForSymbol(r.token || (r.network ? native[r.network] : undefined) || 'ICP');
     view = 'send';
     fromAll = false;
     backToRecipients = true;
@@ -314,7 +345,7 @@
     if (!txId || sent.some((e) => e.id === txId)) return;
     const amt = sentAmount(x);
     sent = [
-      { id: txId, symbol: x.symbol, title: t('ui.walletMain.sentTo', { name: x.toLabel }), day: 'today', timestamp: Date.now(), sub: t('ui.walletMain.justNow'), kind: 1, amount: `\u2212${amt}`, fiat: usd(x.fiat), fresh: true, status: 'pending' },
+      { id: txId, token: idForSymbol(x.symbol), title: t('ui.walletMain.sentTo', { name: x.toLabel }), day: 'today', timestamp: Date.now(), sub: t('ui.walletMain.justNow'), kind: 1, amount: `\u2212${amt}`, fiat: usd(x.fiat), fresh: true, status: 'pending' },
       ...sent,
     ];
   }
@@ -328,7 +359,7 @@
     // the next send starts fresh: no pre-filled recipient, and Back no longer returns to Recipients
     fromAll = backToAll = backToRecipients = false;
     sendAddr = '';
-    sym = x.symbol;
+    sym = idForSymbol(x.symbol);
     report();
     const message = t('ui.walletMain.sentToast', { amount: sentAmount(x), name: x.toLabel });
     if (openChat && x.userId && onMessage) {
@@ -349,26 +380,34 @@
     pick = null;
     backToAll = view === 'all';
     view = flow;
-    sym = s;
+    sym = idForSymbol(s);
     extTok = rows.some((r) => r.symbol === s) ? null : s;
     fromAll = false;
     flowNonce = Date.now();
     report();
   }
 
-  const tokenFor = (symbol: string) => tokens.find((tk) => tk.symbol === symbol);
+  const tokenFor = (id: string) => tokens.find((tk) => idOf(tk) === id);
+  // a host that gives the other side and not a title: "Received from @lucy", "Sent to …", "Between your wallets"
+  const activityTitle = (a: WalletActivity) =>
+    a.kind === 'own'
+      ? t('ui.walletMain.betweenYourWallets')
+      : t(a.kind === 'receive' ? 'ui.walletMain.receivedFrom' : a.kind === 'swap' ? 'ui.walletMain.swappedTo' : 'ui.walletMain.sentTo', {
+          name: a.party ?? '',
+          symbol: a.party ?? '',
+        });
   const toEntry = (a: WalletActivity): Entry | null => {
-    const tk = tokenFor(a.symbol);
+    const tk = tokenFor(a.token ?? a.symbol);
     if (!tk) return null;
     return {
       id: a.id,
-      symbol: a.symbol,
-      title: a.title,
+      token: idOf(tk),
+      title: a.title ?? activityTitle(a),
       day: dayOf(a.timestamp),
       timestamp: a.timestamp,
       sub: [timeOf(a.timestamp), a.context].filter(Boolean).join(' · '),
       kind: KIND_NUM[a.kind],
-      amount: `${a.kind === 'receive' ? '+' : '\u2212'}${num(a.amount, tk.dp)} ${tk.symbol}`,
+      amount: `${a.kind === 'receive' ? '+' : a.kind === 'own' ? '' : '\u2212'}${num(a.amount, tk.dp)} ${tk.symbol}`,
       fiat: usd(a.fiat),
       status: a.status,
     };
@@ -399,12 +438,12 @@
     untrack(() => setTimeout(() => onCount?.(count)));
   });
 
-  const allGroups = $derived(groupByDay(entries.filter((e) => !filter || e.kind === filter).map((e) => ({ ...e, tk: tokenFor(e.symbol)! }))));
+  const allGroups = $derived(groupByDay(entries.filter((e) => !filter || e.kind === filter).map((e) => ({ ...e, tk: tokenFor(e.token)! }))));
 
   // token page: that token's activity (with status), grouped by day, filterable
   const tokGroups = $derived.by(() => {
     if (!raw) return [];
-    const shown = entries.filter((e) => e.symbol === raw.symbol && (!tokFilter || e.kind === tokFilter));
+    const shown = entries.filter((e) => e.token === idOf(raw) && (!tokFilter || e.kind === tokFilter));
     return groupByDay(shown).map((g) => ({
       ...g,
       items: g.items.map((x, i) => ({ ...x, divider: i > 0 && !x.fresh, kindName: KIND[x.kind] ?? 'receive', sub: x.sub || t('ui.walletMain.justNow') })),
@@ -422,9 +461,9 @@
   const ledger = $derived(raw?.ledger);
   // keyed on the chosen symbol, not the shown row: a token whose balance reaches 0 (e.g. sending all of it) leaves
   // `rows`, and keying on that would remount a send or swap the host is still working on
-  const flowSym = $derived(sym || raw?.symbol || '');
+  const flowSym = $derived(sym || (raw ? idOf(raw) : ''));
   const flowKey = $derived(`${view}:${fromAll ? '-' : flowSym}:${flowNonce}`);
-  const flowToken = $derived(extTok && view === 'receive' ? extTok : fromAll ? '' : flowSym);
+  const flowToken = $derived(extTok && view === 'receive' ? extTok : fromAll ? '' : symbolOf(flowSym));
   // Receive also offers tokens you don't hold yet, on their own networks
   const receiveTokens = $derived<WalletToken[]>([
     ...tokens,
@@ -480,7 +519,9 @@
     />
     <div class="scroll">
       <div class="column">
-        {#if !showToken}
+        {#if !showToken && allActivityNote}
+          <EmptyState icon="receive" title={t(allActivityNote.title)} body={t(allActivityNote.body)} actionLabel="" />
+        {:else if !showToken}
           <div class="tabs"><SegmentedTabs labels={FILTERS.map((k) => t(k))} selectedIndex={filter} dotOnLast={false} onSelect={(i) => (filter = i)} /></div>
           {#each allGroups as g}
             <div class="day">
@@ -495,11 +536,12 @@
                     amount={e.amount}
                     fiat={e.fiat}
                     kind={k === 2 ? 'receive' : k === 1 ? 'send' : 'swap'}
+                    positive={k === 2}
                     symbol={e.tk.symbol}
                     mark={e.tk.mark}
                     gradient={e.tk.grad}
                     fresh={e.fresh}
-                    onClick={() => go({ view: 'token', sym: e.symbol })}
+                    onClick={() => go({ view: 'token', sym: e.token })}
                   />
                 {/each}
               </div>
@@ -525,8 +567,8 @@
                   </div>
                 </div>
                 <div class="actions">
-                  {#each [['ui.walletMain.sendSymbol', 'send', 'wallet-send'], ['ui.walletMain.receiveSymbol', 'receive', 'receive'], ['ui.walletMain.swapSymbol', 'swap', 'swap']] as [label, target, icon], i}
-                    <span class="action" class:primary={i === 0} onclick={() => go({ view: target as View, sym: raw.symbol, fromAll: false })} role="button" tabindex="0"
+                  {#each [['ui.walletMain.sendSymbol', 'send', 'wallet-send'], ['ui.walletMain.receiveSymbol', 'receive', 'receive'], ['ui.walletMain.swapSymbol', 'swap', 'swap']].filter(([, target]) => !raw.actions || raw.actions.includes(target as WalletTokenAction)) as [label, target, icon], i}
+                    <span class="action" class:primary={i === 0} onclick={() => go({ view: target as View, sym: idOf(raw), fromAll: false })} role="button" tabindex="0"
                       ><span class="action-icon" style:mask={mask(icon)}></span><span class="action-label">{t(label, { symbol: raw.symbol })}</span></span
                     >
                   {/each}
@@ -565,17 +607,34 @@
                         statusTone={x.status === 'pending' ? 'warning' : x.status === 'failed' ? 'danger' : 'success'}
                         divider={x.divider}
                         fresh={x.fresh}
+                        positive={x.kind === 2}
+                        onClick={onActivity ? () => onActivity(x.id) : undefined}
                       />{/each}
                   </div>
                 </div>
               {/each}
-              {#if tokGroups.length === 0}
+              {#if history?.state === 'loading'}
+                <div class="history-note"><Skeleton variant="token" count={4} /></div>
+              {:else if history?.state === 'failed'}
+                <EmptyState
+                  icon="receive"
+                  title={t('ui.walletMain.historyFailedTitle')}
+                  body={t('ui.walletMain.historyFailedBody', { symbol: raw.symbol })}
+                  actionLabel={onRetryHistory ? t('ui.emptyState.tryAgain') : ''}
+                  actionHandler={onRetryHistory}
+                />
+              {:else if tokGroups.length === 0 && !history?.more}
                 <EmptyState
                   icon={tokenEmpty?.icon}
                   title={t(tokenEmpty ? tokenEmpty.title : 'ui.walletMain.emptyTitle', { symbol: raw.symbol })}
                   body={t(tokenEmpty ? tokenEmpty.body : 'ui.walletMain.emptyBody', { symbol: raw.symbol })}
                   actionLabel=""
                 />
+              {/if}
+              {#if history?.state === 'loaded' && history.more && onMoreHistory}
+                <div class="more-history">
+                  <Button label={history.loadingMore ? 'ui.walletMain.loadingOlder' : 'ui.walletMain.loadOlder'} variant="secondary" disabled={history.loadingMore} onClick={onMoreHistory} />
+                </div>
               {/if}
             </div>
           </div>
@@ -674,6 +733,16 @@
     text-align: center;
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
     color: var(--ink-4);
+  }
+
+  .history-note {
+    padding: var(--space-8) 0;
+  }
+
+  .more-history {
+    display: flex;
+    justify-content: center;
+    padding: var(--space-16) 0;
   }
 
   .token-page {
