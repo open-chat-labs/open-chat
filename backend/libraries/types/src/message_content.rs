@@ -258,7 +258,7 @@ impl MessageContent {
                 if let Some(image) = &m.image {
                     input.image_urls.push(image.blob_reference.url());
                 }
-                if let Some(result) = &m.result {
+                if let Some(result) = m.status.result() {
                     input.text = Some(format!("{}\n{result}", input.text.unwrap_or_default()));
                 }
             }
@@ -1125,12 +1125,12 @@ impl PriceChartContent {
 }
 
 /// A bot's card for a game, or another app, it hosts. Its text, image, player limit and whether others
-/// can watch are set when it's posted and never change. Its status, players and result are written
-/// only by the MiniApp service (`update_mini_app` on the LocalUserIndex), as players join through it
-/// and the bot reports the game's progress, until the game is finished. Everything else the app
-/// shows, its board and buttons, is the bot's own page, which OpenChat opens from the card in a frame.
-/// Only a bot can send one, needing the MiniApp permission. It can't be forwarded, edited, or sent in a
-/// direct chat.
+/// can watch are set when it's posted and never change. Its status is written only by the MiniApp
+/// service (`update_mini_app` on the LocalUserIndex): the players the game starts with, who joined
+/// through the service and were accepted by the bot, and then its result. Who's joined so far, while
+/// the game's taking players, is shown live by the service. Everything else the app shows, its board
+/// and buttons, is the bot's own page, which OpenChat opens from the card in a frame. Only a bot can
+/// send one, needing the MiniApp permission. It can't be forwarded, edited, or sent in a direct chat.
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MiniAppContent {
@@ -1144,11 +1144,6 @@ pub struct MiniAppContent {
     // whether people who aren't playing can watch: members, and anyone who can see a public chat
     pub spectators: bool,
     pub status: MiniAppStatus,
-    // the members who joined through the MiniApp service and were accepted by the bot, in the order
-    // they joined
-    pub players: Vec<UserId>,
-    // eg. "Bob won", once the game is finished
-    pub result: Option<String>,
 }
 
 /// An image the bot uploaded to OpenChat's storage, as for an image message, so it's scanned like one
@@ -1164,23 +1159,48 @@ pub struct MiniAppImage {
 
 // In the order a game goes through them, which it only ever moves forward through
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 pub enum MiniAppStatus {
     // taking players
     #[default]
     Open,
     // being played
-    Active,
+    Active(MiniAppActive),
     // over, after which the card never changes
-    Finished,
+    Finished(MiniAppFinished),
 }
 
-/// What the MiniApp service writes to a card: its game's status, players and result as they now are
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct MiniAppUpdate {
-    pub status: MiniAppStatus,
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppActive {
+    // who the game started with, in the order they joined
     pub players: Vec<UserId>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppFinished {
+    // who the game started with, or no one if it never started
+    pub players: Vec<UserId>,
+    // eg. "Bob won", or none if the game was abandoned
     pub result: Option<String>,
+}
+
+impl MiniAppStatus {
+    pub fn players(&self) -> &[UserId] {
+        match self {
+            MiniAppStatus::Open => &[],
+            MiniAppStatus::Active(active) => &active.players,
+            MiniAppStatus::Finished(finished) => &finished.players,
+        }
+    }
+
+    pub fn result(&self) -> Option<&str> {
+        match self {
+            MiniAppStatus::Finished(finished) => finished.result.as_deref(),
+            _ => None,
+        }
+    }
 }
 
 impl MiniAppContent {
@@ -1188,11 +1208,10 @@ impl MiniAppContent {
     pub const MAX_PLAYERS: usize = 100;
     pub const MAX_RESULT_CHARS: usize = 200;
 
-    // A card as the bot posts it: open, with no players or result, which only the MiniApp service
-    // writes
+    // A card as the bot posts it: open, as only the MiniApp service writes its status
     pub fn validate_new(&self) -> Result<(), String> {
-        if self.status != MiniAppStatus::Open || !self.players.is_empty() || self.result.is_some() {
-            return Err("A game is posted open, with no players or result".to_string());
+        if self.status != MiniAppStatus::Open {
+            return Err("A game is posted open".to_string());
         }
         self.validate()
     }
@@ -1213,27 +1232,36 @@ impl MiniAppContent {
         {
             return Err(format!("A game has 1 to {} players at most", Self::MAX_PLAYERS));
         }
+        let players = self.status.players();
         let limit = self.max_players.map_or(Self::MAX_PLAYERS, |max| max as usize);
-        if self.players.len() > limit {
+        if players.len() > limit {
             return Err(format!("This game has at most {limit} players"));
         }
-        if self.players.iter().collect::<HashSet<_>>().len() < self.players.len() {
+        if players.iter().collect::<HashSet<_>>().len() < players.len() {
             return Err("A player is listed twice".to_string());
         }
-        if let Some(result) = &self.result {
-            if self.status != MiniAppStatus::Finished {
-                return Err("Only a finished game has a result".to_string());
-            }
+        if let Some(result) = self.status.result() {
             check_chars("result", result, Self::MAX_RESULT_CHARS)?;
         }
         Ok(())
     }
 
-    // The card as the update leaves it, which the caller then validates
-    pub fn apply(&mut self, update: MiniAppUpdate) {
-        self.status = update.status;
-        self.players = update.players;
-        self.result = update.result;
+    // Whether the MiniApp service can write `status`: a game starts with its players, then finishes
+    // with them, or finishes without starting, and never changes once finished. Writing the status
+    // the card already has succeeds, so the service can retry a write whose outcome it didn't learn.
+    pub fn check_move(&self, status: &MiniAppStatus) -> Result<(), String> {
+        use MiniAppStatus::*;
+
+        match (&self.status, status) {
+            (current, new) if current == new => Ok(()),
+            (Open, Active(_)) => Ok(()),
+            (Open, Finished(finished)) if finished.players.is_empty() => Ok(()),
+            (Active(active), Finished(finished)) if finished.players == active.players => Ok(()),
+            (Open | Active(_), Finished(_)) => Err("A game finishes with the players it started with".to_string()),
+            (Active(_), Active(_)) => Err("A game's players are set when it starts".to_string()),
+            (Finished(_), _) => Err("A finished game's card can't be changed".to_string()),
+            (_, Open) => Err("A game's status only moves forward".to_string()),
+        }
     }
 }
 

@@ -82,8 +82,9 @@ The first message must be `connect`, within 10 seconds:
 2. Otherwise it asks the bot (see "Service → bot"), with a 5 second timeout.
 3. If the bot accepts:
    - the service replies `{ "type": "joined", "id": 2, "player_token": "..." }`;
-   - it pushes a new `card` to everyone following the game;
-   - it writes the players to the card in the chat.
+   - it pushes a new `card` to everyone following the game.
+
+While a game is taking players, who's joined is only in the service. The card in the chat records them when the game starts.
 
 Asking again as a player returns `joined` without asking the bot.
 
@@ -131,7 +132,7 @@ The reply is `{ "type": "player_token", "id": 4, "token": "..." }`, or `refused`
 { "type": "leave", "id": 5, "game": game }
 ```
 - Only while the game is Open.
-- The service replies `ok`, tells the bot, pushes a new `card`, and writes the players to the card in the chat.
+- The service replies `ok`, tells the bot, and pushes a new `card`.
 
 ## Bot → service: HTTPS
 
@@ -168,7 +169,11 @@ Every field but `game` is optional.
   - `seq` must increase. The service drops a state whose `seq` isn't above the last one.
   - The bot includes a format version, so an app left open from an older release knows to reload. It also includes the last move, so the app can animate it.
 - **The body** is at most 64 KB.
-- **Writing to the card:** after a change to the players, status or result, the service writes them to the card in the chat. Finished ends the game.
+- **Writing to the card:** the service writes the card's status through the LocalUserIndex's `update_mini_app`.
+  - When the bot sets Active, it writes `Active { players }`, with the game's players as it starts.
+  - When the bot sets Finished, it writes `Finished { players, result }`, with the players the game started with, or no one if it never started.
+  - Finished ends the game.
+  - Removing a player after the game has started doesn't change the card, only the live one.
 
 Errors:
 
@@ -220,7 +225,7 @@ A player's app sends the player token, in `x-oc-jwt`, with each request to the b
 - **Joining and leaving** only happen through OpenChat's own buttons on the card and around the frame. Nothing lets an app join or leave for its user. Otherwise an app could sign up everyone who opens it.
 - **A bot checks its own player list on every request.** A player token outlives a removal by up to an hour.
 - **Spectators get only the shared state,** which every player sees too, so watching can't leak a player's hand.
-- **Only the service writes a card's players, status and result.**
+- **Only the service writes a card's status**, which holds its players once the game starts, and its result once it finishes.
   - A bot can take players off but never put them on.
   - The service ends a game:
     - after 24 hours with no update from its bot, writing the card as Finished, with no result;

@@ -16,15 +16,14 @@ use types::{
     FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
     ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
     MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
-    MessageReminderCreatedContent, MessageReport, Milliseconds, MiniAppContent, MiniAppImage, MiniAppStatus, MiniAppUpdate,
-    ModerationInput, ModerationReportContent, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent,
-    P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
-    PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes, PriceChartContent, PriceChartSeries,
-    PriceChartSource, PriceChartToken, PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent,
-    PrizeWinnerContentEventPayload, Proposal, ProposalContent, RegisterVoteResult, ReportedMessage,
-    ReportedMessageContentEventPayload, TextContent, TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos,
-    TokenInfo, TotalVotes, TransactionHash, UserId, UserIdAndPrincipal, UserType, VideoCallContent, VideoCallPresence,
-    VideoContent, VoteOperation, is_default,
+    MessageReminderCreatedContent, MessageReport, Milliseconds, MiniAppContent, MiniAppImage, MiniAppStatus, ModerationInput,
+    ModerationReportContent, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload,
+    P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent,
+    PollContentEventPayload, PollVotes, PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent,
+    PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
+    ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
+    TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
+    UserIdAndPrincipal, UserType, VideoCallContent, VideoCallPresence, VideoContent, VoteOperation, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -326,7 +325,7 @@ impl MessageContentInternal {
                 if let Some(image) = &m.image {
                     input.image_urls.push(BlobReference::from(image.blob_reference.clone()).url());
                 }
-                if let Some(result) = &m.result {
+                if let Some(result) = m.status.result() {
                     input.text = Some(format!("{}\n{result}", input.text.unwrap_or_default()));
                 }
             }
@@ -2322,10 +2321,6 @@ pub struct MiniAppContentInternal {
     pub spectators: bool,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     pub status: MiniAppStatus,
-    #[serde(rename = "p", default, skip_serializing_if = "Vec::is_empty")]
-    pub players: Vec<UserId>,
-    #[serde(rename = "r", default, skip_serializing_if = "Option::is_none")]
-    pub result: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -2353,8 +2348,6 @@ impl From<MiniAppContent> for MiniAppContentInternal {
             max_players: value.max_players,
             spectators: value.spectators,
             status: value.status,
-            players: value.players,
-            result: value.result,
         }
     }
 }
@@ -2374,29 +2367,19 @@ impl MessageContentInternalSubtype for MiniAppContentInternal {
             max_players: self.max_players,
             spectators: self.spectators,
             status: self.status,
-            players: self.players,
-            result: self.result,
         }
     }
 }
 
 impl MiniAppContentInternal {
-    // Writes the MiniApp service's update, unless the game is finished, after which the card never
-    // changes, the update would move the game's status back, or the card it leaves isn't valid. The
-    // service can retry a write whose outcome it didn't learn, so writing the card as it is succeeds.
-    pub fn update(&mut self, update: MiniAppUpdate) -> Result<(), OCError> {
-        if self.status == MiniAppStatus::Finished {
-            return if update.status == self.status && update.players == self.players && update.result == self.result {
-                Ok(())
-            } else {
-                Err(OCErrorCode::InvalidRequest.with_message("A finished game's card can't be changed"))
-            };
-        }
-        if update.status < self.status {
-            return Err(OCErrorCode::InvalidRequest.with_message("A game's status only moves forward"));
-        }
+    // Writes the status the MiniApp service gives, unless the game can't move to it (see
+    // `MiniAppContent::check_move`), or the card it leaves isn't valid
+    pub fn update(&mut self, status: MiniAppStatus) -> Result<(), OCError> {
         let mut content = self.clone().hydrate(None);
-        content.apply(update);
+        content
+            .check_move(&status)
+            .map_err(|reason| OCErrorCode::InvalidRequest.with_message(reason))?;
+        content.status = status;
         content
             .validate()
             .map_err(|reason| OCError::from(ContentValidationError::InvalidMiniApp(reason)))?;
@@ -2834,6 +2817,7 @@ mod with_text_tests {
 #[cfg(test)]
 mod mini_app_tests {
     use super::*;
+    use types::{MiniAppActive, MiniAppFinished};
 
     fn card(text: &str) -> MiniAppContent {
         MiniAppContent {
@@ -2842,13 +2826,24 @@ mod mini_app_tests {
             max_players: None,
             spectators: false,
             status: MiniAppStatus::Open,
-            players: Vec::new(),
-            result: None,
         }
     }
 
     fn user(n: u8) -> UserId {
         Principal::from_slice(&[n]).into()
+    }
+
+    fn active(players: &[u8]) -> MiniAppStatus {
+        MiniAppStatus::Active(MiniAppActive {
+            players: players.iter().map(|&n| user(n)).collect(),
+        })
+    }
+
+    fn finished(players: &[u8], result: Option<&str>) -> MiniAppStatus {
+        MiniAppStatus::Finished(MiniAppFinished {
+            players: players.iter().map(|&n| user(n)).collect(),
+            result: result.map(|r| r.to_string()),
+        })
     }
 
     fn invalid(card: MiniAppContent) -> bool {
@@ -2883,14 +2878,6 @@ mod mini_app_tests {
             forwarding,
             0,
         )
-    }
-
-    fn update(status: MiniAppStatus, players: Vec<UserId>, result: Option<&str>) -> MiniAppUpdate {
-        MiniAppUpdate {
-            status,
-            players,
-            result: result.map(|r| r.to_string()),
-        }
     }
 
     #[test]
@@ -2984,74 +2971,71 @@ mod mini_app_tests {
         }));
     }
 
-    // Only the MiniApp service writes them, as players join through it
+    // Only the MiniApp service writes the status, as players join through it
     #[test]
-    fn a_game_is_posted_open_with_no_players_or_result() {
-        for posted in [
-            MiniAppContent {
-                status: MiniAppStatus::Active,
-                ..card("Uno")
-            },
-            MiniAppContent {
-                players: vec![user(1)],
-                ..card("Uno")
-            },
-            MiniAppContent {
-                status: MiniAppStatus::Finished,
-                result: Some("Bob won".to_string()),
-                ..card("Uno")
-            },
-        ] {
-            assert!(invalid(posted));
+    fn a_game_is_posted_open() {
+        for status in [active(&[1]), finished(&[], Some("Bob won"))] {
+            assert!(invalid(MiniAppContent { status, ..card("Uno") }));
         }
     }
 
     #[test]
-    fn the_service_updates_the_game_until_its_finished() {
+    fn a_game_starts_with_its_players_then_finishes_with_them() {
         let mut stored: MiniAppContentInternal = MiniAppContent {
             max_players: Some(4),
             ..card("Uno")
         }
         .into();
 
-        stored.update(update(MiniAppStatus::Open, vec![user(1)], None)).unwrap();
-        stored
-            .update(update(MiniAppStatus::Active, vec![user(1), user(2)], None))
-            .unwrap();
-        assert_eq!(stored.status, MiniAppStatus::Active);
-        assert_eq!(stored.players, vec![user(1), user(2)]);
+        stored.update(active(&[1, 2])).unwrap();
+        assert_eq!(stored.status, active(&[1, 2]));
         assert_eq!(stored.max_players, Some(4));
 
-        stored
-            .update(update(MiniAppStatus::Finished, vec![user(1), user(2)], Some("Bob won")))
-            .unwrap();
-        assert_eq!(stored.result.as_deref(), Some("Bob won"));
+        stored.update(finished(&[1, 2], Some("Bob won"))).unwrap();
+        assert_eq!(stored.status.players(), [user(1), user(2)]);
+        assert_eq!(stored.status.result(), Some("Bob won"));
+    }
 
-        // A finished game's card never changes
-        assert!(
-            stored
-                .update(update(MiniAppStatus::Finished, vec![user(1)], Some("Alice won")))
-                .is_err()
-        );
-        assert_eq!(stored.players, vec![user(1), user(2)]);
-        assert_eq!(stored.result.as_deref(), Some("Bob won"));
+    // Abandoned, or its bot uninstalled
+    #[test]
+    fn a_game_can_finish_without_starting_or_a_result() {
+        let mut stored: MiniAppContentInternal = card("Uno").into();
+        assert!(stored.update(finished(&[1], None)).is_err());
 
-        // But the service can retry the write which finished it
-        stored
-            .update(update(MiniAppStatus::Finished, vec![user(1), user(2)], Some("Bob won")))
-            .unwrap();
+        stored.update(finished(&[], None)).unwrap();
+        assert_eq!(stored.status, finished(&[], None));
     }
 
     #[test]
-    fn a_games_status_only_moves_forward() {
+    fn a_games_players_are_set_when_it_starts_and_its_status_only_moves_forward() {
         let mut stored: MiniAppContentInternal = card("Uno").into();
-        stored.update(update(MiniAppStatus::Active, vec![user(1)], None)).unwrap();
+        stored.update(active(&[1, 2])).unwrap();
 
-        assert!(stored.update(update(MiniAppStatus::Open, vec![user(1)], None)).is_err());
-        assert_eq!(stored.status, MiniAppStatus::Active);
+        for status in [
+            MiniAppStatus::Open,
+            active(&[1]),
+            finished(&[1], Some("Bob won")),
+            finished(&[], None),
+        ] {
+            assert!(stored.update(status.clone()).is_err(), "{status:?}");
+            assert_eq!(stored.status, active(&[1, 2]));
+        }
+    }
 
-        // Writing the same status again is fine, so the service can retry a write
-        stored.update(update(MiniAppStatus::Active, vec![user(1)], None)).unwrap();
+    // A finished game's card never changes, but the service can retry the write which finished it,
+    // or started it, having not learned whether it went through
+    #[test]
+    fn a_finished_card_never_changes_but_a_write_can_be_retried() {
+        let mut stored: MiniAppContentInternal = card("Uno").into();
+        stored.update(active(&[1, 2])).unwrap();
+        stored.update(active(&[1, 2])).unwrap();
+        stored.update(finished(&[1, 2], Some("Bob won"))).unwrap();
+
+        for status in [MiniAppStatus::Open, active(&[1, 2]), finished(&[1, 2], Some("Alice won"))] {
+            assert!(stored.update(status.clone()).is_err(), "{status:?}");
+        }
+        stored.update(finished(&[1, 2], Some("Bob won"))).unwrap();
+        assert_eq!(stored.status.result(), Some("Bob won"));
     }
 
     // An update which would leave the card invalid changes nothing
@@ -3064,19 +3048,13 @@ mod mini_app_tests {
         .into();
 
         for invalid in [
-            update(MiniAppStatus::Active, vec![user(1), user(2), user(3)], None),
-            update(MiniAppStatus::Active, vec![user(1), user(1)], None),
-            update(MiniAppStatus::Active, vec![user(1)], Some("Bob won")),
-            update(
-                MiniAppStatus::Finished,
-                vec![user(1)],
-                Some(&"x".repeat(MiniAppContent::MAX_RESULT_CHARS + 1)),
-            ),
+            active(&[1, 2, 3]),
+            active(&[1, 1]),
+            finished(&[], Some(&"x".repeat(MiniAppContent::MAX_RESULT_CHARS + 1))),
+            finished(&[], Some(" ")),
         ] {
-            assert!(stored.update(invalid).is_err());
+            assert!(stored.update(invalid.clone()).is_err(), "{invalid:?}");
             assert_eq!(stored.status, MiniAppStatus::Open);
-            assert!(stored.players.is_empty());
-            assert_eq!(stored.result, None);
         }
     }
 
@@ -3096,9 +3074,8 @@ mod mini_app_tests {
                 ..card("**Uno**")
             }
             .into();
-            stored
-                .update(update(MiniAppStatus::Finished, vec![user(1), user(2)], Some("Bob won")))
-                .unwrap();
+            stored.update(active(&[1, 2])).unwrap();
+            stored.update(finished(&[1, 2], Some("Bob won"))).unwrap();
             let content = MessageContentInternal::MiniApp(stored);
             let bytes = msgpack::serialize_then_unwrap(&content);
             let read: MessageContentInternal = msgpack::deserialize_then_unwrap(&bytes);
@@ -3113,9 +3090,16 @@ mod mini_app_tests {
             );
             assert_eq!(read.max_players, Some(4));
             assert!(read.spectators);
-            assert_eq!(read.status, MiniAppStatus::Finished);
-            assert_eq!(read.players, vec![user(1), user(2)]);
-            assert_eq!(read.result.as_deref(), Some("Bob won"));
+            assert_eq!(read.status, finished(&[1, 2], Some("Bob won")));
         }
+    }
+
+    // A result is moderated with the card's text
+    #[test]
+    fn a_result_is_moderated_with_the_text() {
+        let mut stored: MiniAppContentInternal = card("Uno").into();
+        stored.update(finished(&[], Some("Bob won"))).unwrap();
+        let input = MessageContentInternal::MiniApp(stored).moderation_input();
+        assert_eq!(input.text.as_deref(), Some("Uno\nBob won"));
     }
 }

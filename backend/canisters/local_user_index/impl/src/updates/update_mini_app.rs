@@ -6,8 +6,8 @@ use local_user_index_canister::update_mini_app::*;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, Chat};
 
-// The MiniApp service writing a card's game to the group or channel it's in. Only the service writes
-// a card's players, status and result, so a bot can't list anyone who didn't join.
+// The MiniApp service writing a card's status to the group or channel it's in. Only the service writes
+// it, so a bot can't list anyone who didn't join.
 #[update(guard = "caller_is_mini_app_service", candid = true, msgpack = true)]
 #[trace]
 async fn update_mini_app(args: Args) -> Response {
@@ -21,7 +21,7 @@ async fn update_mini_app(args: Args) -> Response {
                 channel_id,
                 thread: args.thread,
                 message_id: args.message_id,
-                update: args.update,
+                status: args.status,
             };
             top_up_and_retry_if_out_of_cycles(canister_id, || {
                 community_canister_c2c_client::c2c_update_mini_app(canister_id, &c2c_args)
@@ -34,7 +34,7 @@ async fn update_mini_app(args: Args) -> Response {
             let c2c_args = group_canister::c2c_update_mini_app::Args {
                 thread: args.thread,
                 message_id: args.message_id,
-                update: args.update,
+                status: args.status,
             };
             top_up_and_retry_if_out_of_cycles(canister_id, || {
                 group_canister_c2c_client::c2c_update_mini_app(canister_id, &c2c_args)

@@ -1529,14 +1529,21 @@ type MiniAppContent = record {
     max_players : opt nat32;
     spectators : bool;
     status : MiniAppStatus;
-    players : vec UserId;
-    result : opt text;
 };
 
 type MiniAppStatus = variant {
     Open;
-    Active;
-    Finished;
+    Active : MiniAppActive;
+    Finished : MiniAppFinished;
+};
+
+type MiniAppActive = record {
+    players : vec UserId;
+};
+
+type MiniAppFinished = record {
+    players : vec UserId;
+    result : opt text;
 };
 
 type MiniAppImage = record {
