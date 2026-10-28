@@ -2,8 +2,8 @@ use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
     AudioContent, CanisterId, Chat, ChatEventCategory, ChatEventType, ChatId, ChatPermission, CommunityEventCategory,
     CommunityEventType, CommunityId, CommunityOrGroup, CommunityPermission, FileContent, GiphyContent, GroupRole, ImageContent,
-    MessageContentInitial, MessageId, MessagePermission, OgPreview, OptionUpdate, PollContent, PriceChartContent, TextContent,
-    TimestampMillis, UserId, VideoContent, is_default,
+    MessageContentInitial, MessageId, MessagePermission, MiniAppContent, OgPreview, OptionUpdate, PollContent,
+    PriceChartContent, TextContent, TimestampMillis, UserId, VideoContent, is_default,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -233,6 +233,7 @@ impl BotPermissions {
                 MessagePermission::Prize,
                 MessagePermission::P2pSwap,
                 MessagePermission::VideoCall,
+                MessagePermission::MiniApp,
             ]))
     }
 
@@ -453,6 +454,7 @@ pub enum BotMessageContent {
     Poll(PollContent),
     Giphy(GiphyContent),
     PriceChart(PriceChartContent),
+    MiniApp(MiniAppContent),
 }
 
 #[ts_export]
@@ -489,6 +491,7 @@ impl From<BotMessageContent> for MessageContentInitial {
             BotMessageContent::Poll(c) => MessageContentInitial::Poll(c),
             BotMessageContent::Giphy(c) => MessageContentInitial::Giphy(c),
             BotMessageContent::PriceChart(c) => MessageContentInitial::PriceChart(c),
+            BotMessageContent::MiniApp(c) => MessageContentInitial::MiniApp(c),
         }
     }
 }

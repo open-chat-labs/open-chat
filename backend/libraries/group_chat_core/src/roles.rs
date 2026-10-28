@@ -105,7 +105,8 @@ impl GroupRoleInternal {
         };
 
         let sender_role = match message_type {
-            MessageContentType::Text => ps.text.unwrap_or(ps.default),
+            // a mini app's card is text with an Open button
+            MessageContentType::Text | MessageContentType::MiniApp => ps.text.unwrap_or(ps.default),
             // a price chart is a picture
             MessageContentType::Image | MessageContentType::PriceChart => ps.image.unwrap_or(ps.default),
             MessageContentType::Video => ps.video.unwrap_or(ps.default),
@@ -230,6 +231,8 @@ impl GroupRoleInternal {
             (role_permissions.poll, MessagePermission::Poll),
             (role_permissions.prize, MessagePermission::Prize),
             (role_permissions.text, MessagePermission::Text),
+            // a member who can post text can have a bot post a mini app's card for them
+            (role_permissions.text, MessagePermission::MiniApp),
             (role_permissions.video, MessagePermission::Video),
         ];
 

@@ -586,6 +586,7 @@ type MessageContentInitial = variant {
     Encrypted : EncryptedContent;
     Custom : CustomMessageContent;
     PriceChart : PriceChartContent;
+    MiniApp : MiniAppContent;
 };
 
 type MessageContent = variant {
@@ -609,6 +610,7 @@ type MessageContent = variant {
     Encrypted : EncryptedContent;
     Custom : CustomMessageContent;
     PriceChart : PriceChartContent;
+    MiniApp : MiniAppContent;
     ReportedMessage : ReportedMessage;
 };
 
@@ -1521,6 +1523,10 @@ type PriceChartSource = record {
     url : text;
 };
 
+type MiniAppContent = record {
+    text : text;
+};
+
 type EncryptedMessageContentType = variant {
     Text;
     Image;
@@ -2049,6 +2055,7 @@ type MessagePermission = variant {
     Prize;
     P2pSwap;
     VideoCall;
+    MiniApp;
 };
 
 type BotGroupConfig = record {

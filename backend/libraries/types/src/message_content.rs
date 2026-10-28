@@ -35,6 +35,7 @@ pub enum MessageContentInitial {
     Encrypted(EncryptedContent),
     Custom(CustomContent),
     PriceChart(PriceChartContent),
+    MiniApp(MiniAppContent),
 }
 
 #[ts_export]
@@ -61,6 +62,7 @@ pub enum MessageContent {
     Encrypted(EncryptedContent),
     Custom(CustomContent),
     PriceChart(PriceChartContent),
+    MiniApp(MiniAppContent),
 }
 
 #[ts_export]
@@ -85,6 +87,7 @@ pub enum MessageContentType {
     P2PSwap,
     VideoCall,
     PriceChart,
+    MiniApp,
     Custom(String),
 }
 
@@ -128,6 +131,7 @@ pub enum ContentValidationError {
     PrizeEndDateInThePast,
     Unauthorized,
     InvalidPriceChart(String),
+    InvalidMiniApp(String),
 }
 
 impl From<ContentValidationError> for OCError {
@@ -180,7 +184,8 @@ impl MessageContent {
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
             | MessageContent::Custom(_)
-            | MessageContent::PriceChart(_) => {}
+            | MessageContent::PriceChart(_)
+            | MessageContent::MiniApp(_) => {}
         }
 
         references
@@ -200,6 +205,7 @@ impl MessageContent {
             MessageContent::Prize(p) => p.caption.as_deref(),
             MessageContent::P2PSwap(p) => p.caption.as_deref(),
             MessageContent::PriceChart(c) => Some(c.title.as_str()),
+            MessageContent::MiniApp(c) => Some(c.text.as_str()),
             MessageContent::Deleted(_)
             | MessageContent::PrizeWinner(_)
             | MessageContent::MessageReminderCreated(_)
@@ -331,7 +337,8 @@ impl MessageContent {
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
             | MessageContent::Custom(_)
-            | MessageContent::PriceChart(_) => None,
+            | MessageContent::PriceChart(_)
+            | MessageContent::MiniApp(_) => None,
         }
     }
 
@@ -357,7 +364,8 @@ impl MessageContent {
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
             | MessageContent::Custom(_)
-            | MessageContent::PriceChart(_) => None,
+            | MessageContent::PriceChart(_)
+            | MessageContent::MiniApp(_) => None,
         }
     }
 
@@ -404,6 +412,7 @@ impl MessageContentInitial {
             MessageContentInitial::MessageReminder(r) => r.notes.as_deref(),
             MessageContentInitial::P2PSwap(p) => p.caption.as_deref(),
             MessageContentInitial::PriceChart(c) => Some(c.title.as_str()),
+            MessageContentInitial::MiniApp(c) => Some(c.text.as_str()),
             MessageContentInitial::Encrypted(_) | MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
         }
     }
@@ -447,6 +456,7 @@ impl From<&MessageContentInitial> for MessagePermission {
             MessageContentInitial::P2PSwap(_) => MessagePermission::P2pSwap,
             // a chart is a picture
             MessageContentInitial::PriceChart(_) => MessagePermission::Image,
+            MessageContentInitial::MiniApp(_) => MessagePermission::MiniApp,
             _ => unreachable!(),
         }
     }
@@ -475,6 +485,7 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::Encrypted(e) => MessageContentInitial::Encrypted(e),
             MessageContent::Custom(c) => MessageContentInitial::Custom(c),
             MessageContent::PriceChart(c) => MessageContentInitial::PriceChart(c),
+            MessageContent::MiniApp(c) => MessageContentInitial::MiniApp(c),
             MessageContent::P2PSwap(_) | MessageContent::VideoCall(_) => unimplemented!(),
         }
     }
@@ -517,6 +528,7 @@ impl From<MessageContentInitial> for MessageContent {
             MessageContentInitial::Encrypted(e) => MessageContent::Encrypted(e),
             MessageContentInitial::Custom(c) => MessageContent::Custom(c),
             MessageContentInitial::PriceChart(c) => MessageContent::PriceChart(c),
+            MessageContentInitial::MiniApp(c) => MessageContent::MiniApp(c),
             MessageContentInitial::P2PSwap(_) => unimplemented!(),
         }
     }
@@ -543,7 +555,7 @@ impl MessageContentType {
             MessageContentType::ModerationReport => None,
             MessageContentType::P2PSwap => Some(Achievement::SentP2PSwapOffer),
             MessageContentType::VideoCall => Some(Achievement::StartedCall),
-            MessageContentType::PriceChart => None,
+            MessageContentType::PriceChart | MessageContentType::MiniApp => None,
             MessageContentType::Custom(c) => {
                 if c == "meme_fighter" {
                     Some(Achievement::SentMeme)
@@ -577,6 +589,7 @@ impl Display for MessageContentType {
             MessageContentType::P2PSwap => "P2PSwap",
             MessageContentType::VideoCall => "VideoCall",
             MessageContentType::PriceChart => "PriceChart",
+            MessageContentType::MiniApp => "MiniApp",
             MessageContentType::Custom(c) => c,
         };
 
@@ -608,6 +621,7 @@ impl From<&MessageContent> for MessageContentType {
             MessageContent::Encrypted(e) => e.content_type.clone().into(),
             MessageContent::Custom(c) => MessageContentType::Custom(c.kind.clone()),
             MessageContent::PriceChart(_) => MessageContentType::PriceChart,
+            MessageContent::MiniApp(_) => MessageContentType::MiniApp,
         }
     }
 }
@@ -1085,6 +1099,26 @@ impl PriceChartContent {
             }
         }
         Ok(())
+    }
+}
+
+/// A bot's card for an app it hosts, eg. a game. It never changes: everything the app shows, its
+/// lobby, board and buttons, is the bot's own page, which OpenChat opens from the card in a frame.
+/// Only a bot can send one, needing the MiniApp permission. It can't be forwarded, edited, or sent
+/// in a direct chat.
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MiniAppContent {
+    // markdown, eg. "**Uno** · 2 to 4 players": the message's text in notifications, previews and
+    // search
+    pub text: String,
+}
+
+impl MiniAppContent {
+    pub const MAX_TEXT_CHARS: usize = 2_000;
+
+    pub fn validate(&self) -> Result<(), String> {
+        check_chars("text", &self.text, Self::MAX_TEXT_CHARS)
     }
 }
 

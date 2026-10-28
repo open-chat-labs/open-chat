@@ -16,10 +16,10 @@ use types::{
     FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
     ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
     MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
-    MessageReminderCreatedContent, MessageReport, Milliseconds, ModerationInput, ModerationReportContent, P2PSwapAccepted,
-    P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired,
-    P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes,
-    PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent, PrizeContentEventPayload,
+    MessageReminderCreatedContent, MessageReport, Milliseconds, MiniAppContent, ModerationInput, ModerationReportContent,
+    P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial,
+    P2PSwapExpired, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload,
+    PollVotes, PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent, PrizeContentEventPayload,
     PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal, ProposalContent, RegisterVoteResult,
     ReportedMessage, ReportedMessageContentEventPayload, TextContent, TextContentEventPayload, ThumbnailData, TimestampMillis,
     TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId, UserIdAndPrincipal, UserType, VideoCallContent,
@@ -70,6 +70,8 @@ pub enum MessageContentInternal {
     Custom(CustomContentInternal),
     #[serde(rename = "pc")]
     PriceChart(PriceChartContentInternal),
+    #[serde(rename = "ma")]
+    MiniApp(MiniAppContentInternal),
 }
 
 impl MessageContentInternal {
@@ -86,7 +88,9 @@ impl MessageContentInternal {
             let invalid_type_for_forwarding = contains_crypto_transfer
                 || matches!(
                     &content,
-                    MessageContentInitial::Poll(_) | MessageContentInitial::GovernanceProposal(_)
+                    MessageContentInitial::Poll(_)
+                        | MessageContentInitial::GovernanceProposal(_)
+                        | MessageContentInitial::MiniApp(_)
                 );
 
             if invalid_type_for_forwarding {
@@ -125,6 +129,16 @@ impl MessageContentInternal {
                     return ValidateNewMessageContentResult::Error(ContentValidationError::InvalidPriceChart(reason));
                 }
             }
+            MessageContentInitial::MiniApp(c) => {
+                // Only bots installed with the MiniApp permission post them (not the older bots which
+                // are members), and not in direct chats, whose members can't open the bot's app yet
+                if !matches!(sender_user_type, UserType::BotV2) || is_direct_chat {
+                    return ValidateNewMessageContentResult::Error(ContentValidationError::Unauthorized);
+                }
+                if let Err(reason) = c.validate() {
+                    return ValidateNewMessageContentResult::Error(ContentValidationError::InvalidMiniApp(reason));
+                }
+            }
             _ => {}
         };
 
@@ -145,7 +159,8 @@ impl MessageContentInternal {
             | MessageContentInitial::MessageReminder(_)
             | MessageContentInitial::P2PSwap(_)
             | MessageContentInitial::Custom(_)
-            | MessageContentInitial::PriceChart(_) => false,
+            | MessageContentInitial::PriceChart(_)
+            | MessageContentInitial::MiniApp(_) => false,
         };
 
         if is_empty {
@@ -222,6 +237,7 @@ impl MessageContentInternal {
             MessageContentInternal::Encrypted(e) => MessageContent::Encrypted(e.hydrate(my_user)),
             MessageContentInternal::Custom(c) => MessageContent::Custom(c.hydrate(my_user)),
             MessageContentInternal::PriceChart(c) => MessageContent::PriceChart(c.hydrate(my_user)),
+            MessageContentInternal::MiniApp(c) => MessageContent::MiniApp(c.hydrate(my_user)),
         }
     }
 
@@ -241,6 +257,7 @@ impl MessageContentInternal {
             MessageContentInternal::MessageReminder(r) => r.notes.as_deref(),
             MessageContentInternal::P2PSwap(p) => p.caption.as_deref(),
             MessageContentInternal::PriceChart(c) => Some(&c.title),
+            MessageContentInternal::MiniApp(c) => Some(&c.text),
             MessageContentInternal::PrizeWinner(_)
             | MessageContentInternal::Deleted(_)
             | MessageContentInternal::ReportedMessage(_)
@@ -399,7 +416,8 @@ impl MessageContentInternal {
             | MessageContentInternal::VideoCall(_)
             | MessageContentInternal::Encrypted(_)
             | MessageContentInternal::Custom(_)
-            | MessageContentInternal::PriceChart(_) => {}
+            | MessageContentInternal::PriceChart(_)
+            | MessageContentInternal::MiniApp(_) => {}
         }
 
         references
@@ -496,6 +514,9 @@ impl MessageContentInternal {
             | MessageContentInternal::VideoCall(_)
             | MessageContentInternal::Custom(_)
             | MessageContentInternal::PriceChart(_) => MessageContentEventPayload::Empty,
+            MessageContentInternal::MiniApp(c) => MessageContentEventPayload::Text(TextContentEventPayload {
+                length: c.text.len() as u32,
+            }),
         }
     }
 
@@ -583,6 +604,9 @@ impl From<&MessageContentInternal> for Document {
                 for series in &c.series {
                     document.add_field(&series.symbol);
                 }
+            }
+            MessageContentInternal::MiniApp(c) => {
+                document.add_field(&c.text);
             }
             MessageContentInternal::ModerationReport(_)
             | MessageContentInternal::ReportedMessage(_)
@@ -2264,6 +2288,26 @@ impl MessageContentInternalSubtype for PriceChartContentInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MiniAppContentInternal {
+    #[serde(rename = "t")]
+    pub text: String,
+}
+
+impl From<MiniAppContent> for MiniAppContentInternal {
+    fn from(value: MiniAppContent) -> Self {
+        MiniAppContentInternal { text: value.text }
+    }
+}
+
+impl MessageContentInternalSubtype for MiniAppContentInternal {
+    type ContentType = MiniAppContent;
+
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
+        MiniAppContent { text: self.text }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BlobReferenceInternal {
     #[serde(rename = "c", alias = "canister_id")]
     pub canister_id: CanisterId,
@@ -2306,6 +2350,7 @@ impl From<MessageContentInitial> for MessageContentInternal {
             MessageContentInitial::Encrypted(e) => MessageContentInternal::Encrypted(e.into()),
             MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c.into()),
             MessageContentInitial::PriceChart(c) => MessageContentInternal::PriceChart(c.into()),
+            MessageContentInitial::MiniApp(c) => MessageContentInternal::MiniApp(c.into()),
             MessageContentInitial::Crypto(c) => c
                 .try_into()
                 .map(MessageContentInternal::Crypto)
@@ -2341,6 +2386,7 @@ impl From<&MessageContentInternal> for MessageContentType {
             MessageContentInternal::Encrypted(e) => e.content_type.clone().into(),
             MessageContentInternal::Custom(c) => MessageContentType::Custom(c.kind.clone()),
             MessageContentInternal::PriceChart(_) => MessageContentType::PriceChart,
+            MessageContentInternal::MiniApp(_) => MessageContentType::MiniApp,
         }
     }
 }
@@ -2684,5 +2730,104 @@ mod with_text_tests {
             ended: false,
         });
         assert!(poll.with_text(Some("Which now?".to_string())).is_err());
+    }
+}
+
+#[cfg(test)]
+mod mini_app_tests {
+    use super::*;
+
+    fn card(text: &str) -> MiniAppContent {
+        MiniAppContent { text: text.to_string() }
+    }
+
+    fn validate(
+        content: MiniAppContent,
+        is_direct_chat: bool,
+        sender: UserType,
+        forwarding: bool,
+    ) -> ValidateNewMessageContentResult {
+        MessageContentInternal::validate_new_message(
+            MessageContentInitial::MiniApp(content),
+            is_direct_chat,
+            sender,
+            forwarding,
+            0,
+        )
+    }
+
+    #[test]
+    fn a_bot_can_post_a_card() {
+        assert!(matches!(
+            validate(card("**Uno** · 2 to 4 players"), false, UserType::BotV2, false),
+            ValidateNewMessageContentResult::Success(MessageContentInternal::MiniApp(_))
+        ));
+    }
+
+    #[test]
+    fn only_bots_installed_in_a_chat_post_cards_and_not_in_direct_chats() {
+        for (is_direct_chat, sender) in [
+            (false, UserType::User),
+            (false, UserType::Bot),
+            (false, UserType::OcControlledBot),
+            (true, UserType::BotV2),
+        ] {
+            assert!(
+                matches!(
+                    validate(card("Uno"), is_direct_chat, sender, false),
+                    ValidateNewMessageContentResult::Error(ContentValidationError::Unauthorized)
+                ),
+                "{sender:?} in a direct chat: {is_direct_chat}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_card_cant_be_forwarded() {
+        assert!(matches!(
+            validate(card("Uno"), false, UserType::User, true),
+            ValidateNewMessageContentResult::Error(ContentValidationError::InvalidTypeForForwarding)
+        ));
+    }
+
+    #[test]
+    fn a_card_has_1_to_2000_characters() {
+        for text in [
+            String::new(),
+            "  ".to_string(),
+            "é".repeat(MiniAppContent::MAX_TEXT_CHARS + 1),
+        ] {
+            assert!(matches!(
+                validate(card(&text), false, UserType::BotV2, false),
+                ValidateNewMessageContentResult::Error(ContentValidationError::InvalidMiniApp(_))
+            ));
+        }
+        assert!(matches!(
+            validate(
+                card(&"é".repeat(MiniAppContent::MAX_TEXT_CHARS)),
+                false,
+                UserType::BotV2,
+                false
+            ),
+            ValidateNewMessageContentResult::Success(_)
+        ));
+    }
+
+    #[test]
+    fn a_card_cant_be_edited() {
+        let content = MessageContentInternal::MiniApp(card("Uno").into());
+        assert!(content.with_text(Some("Ludo".to_string())).is_err());
+    }
+
+    #[test]
+    fn a_card_is_stored_and_read_back_unchanged() {
+        let content = MessageContentInternal::MiniApp(card("**Uno**").into());
+        let bytes = msgpack::serialize_then_unwrap(&content);
+        let read: MessageContentInternal = msgpack::deserialize_then_unwrap(&bytes);
+
+        let MessageContent::MiniApp(read) = read.clone().hydrate(None) else {
+            panic!("Expected a mini app: {read:?}");
+        };
+        assert_eq!(read.text, "**Uno**");
     }
 }

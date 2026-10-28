@@ -56,12 +56,13 @@ variants!(
         Encrypted,
         Custom,
         PriceChart,
+        MiniApp,
     ]
 );
 
 variants!(
     types::BotMessageContent,
-    [Text, Image, Video, Audio, File, Poll, Giphy, PriceChart]
+    [Text, Image, Video, Audio, File, Poll, Giphy, PriceChart, MiniApp]
 );
 
 variants!(types::CryptoTransaction, [Pending, Completed, Failed]);

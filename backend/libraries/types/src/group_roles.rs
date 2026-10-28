@@ -273,6 +273,7 @@ pub enum MessagePermission {
     Prize = 8,
     P2pSwap = 9,
     VideoCall = 10,
+    MiniApp = 11,
 }
 
 impl From<MessagePermission> for u8 {
@@ -297,6 +298,7 @@ impl TryFrom<u8> for MessagePermission {
             8 => Ok(MessagePermission::Prize),
             9 => Ok(MessagePermission::P2pSwap),
             10 => Ok(MessagePermission::VideoCall),
+            11 => Ok(MessagePermission::MiniApp),
             _ => Err(()),
         }
     }
