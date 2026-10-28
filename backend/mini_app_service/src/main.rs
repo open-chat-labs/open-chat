@@ -13,8 +13,8 @@ use std::time::Duration;
 use tracing::{info, warn};
 use types::{Empty, Error};
 
-// How often the service looks for games whose bots stopped updating them
-const ABANDONED_CHECK_INTERVAL: Duration = Duration::from_secs(10 * 60);
+// How often the service ends abandoned games, and writes cards which haven't caught up
+const MAINTENANCE_INTERVAL: Duration = Duration::from_secs(10 * 60);
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -61,12 +61,13 @@ async fn main() -> Result<(), Error> {
         Arc::new(IcCardWriter::new(agent)),
     ));
 
-    let sweeper = app.clone();
+    // Its first run, straight away, writes any cards the service was writing when it last stopped
+    let maintainer = app.clone();
     tokio::spawn(async move {
-        let mut interval = tokio::time::interval(ABANDONED_CHECK_INTERVAL);
+        let mut interval = tokio::time::interval(MAINTENANCE_INTERVAL);
         loop {
             interval.tick().await;
-            sweeper.end_abandoned_games().await;
+            maintainer.maintain().await;
         }
     });
 

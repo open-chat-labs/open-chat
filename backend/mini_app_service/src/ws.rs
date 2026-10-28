@@ -10,14 +10,18 @@ use futures::stream::SplitStream;
 use futures::{SinkExt, StreamExt};
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::mpsc::unbounded_channel;
+use tokio::sync::mpsc::channel;
 use types::UserId;
 
 // The first message must connect within this long
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
 // Keeps the connection open through load balancers, which close idle ones
 const PING_INTERVAL: Duration = Duration::from_secs(30);
+// A connection heard nothing from for this long, not even a pong, is closed
+const READ_TIMEOUT: Duration = Duration::from_secs(90);
 const MAX_MESSAGE_BYTES: usize = 16 * 1024;
+// What's queued for a connection which reads slower than the service pushes. It's dropped if it fills.
+const QUEUE_SIZE: usize = 256;
 
 pub async fn connect(ws: WebSocketUpgrade, State(app): State<Arc<App>>) -> Response {
     ws.max_message_size(MAX_MESSAGE_BYTES)
@@ -37,10 +41,11 @@ async fn serve(socket: WebSocket, app: Arc<App>) {
         return;
     };
 
-    let (sender, mut receiver) = unbounded_channel();
+    let (sender, mut receiver) = channel::<Arc<ServerMessage>>(QUEUE_SIZE);
     let id = app.hub.connect(user_id, sender);
     app.hub.send(id, ServerMessage::Connected { user_id });
 
+    // Ends when the hub drops the connection, eg. as it stopped reading, closing the socket
     let writer = tokio::spawn(async move {
         let mut ping = tokio::time::interval(PING_INTERVAL);
         ping.tick().await;
@@ -48,21 +53,26 @@ async fn serve(socket: WebSocket, app: Arc<App>) {
             tokio::select! {
                 message = receiver.recv() => match message {
                     Some(message) => if sink.send(text(&message)).await.is_err() { break },
-                    None => break,
+                    None => {
+                        let _ = sink.close().await;
+                        break;
+                    }
                 },
                 _ = ping.tick() => if sink.send(Message::Ping(Default::default())).await.is_err() { break },
             }
         }
     });
 
-    while let Some(Ok(message)) = stream.next().await {
+    while let Ok(Some(Ok(message))) = tokio::time::timeout(READ_TIMEOUT, stream.next()).await {
         match message {
-            // Requests are handled at once, so a join waiting on its bot holds up nothing else
             Message::Text(text) => match serde_json::from_str::<ClientMessage>(text.as_str()) {
-                Ok(message) => {
+                // A join or a leave waits on the bot, so holds up nothing else. The rest are handled
+                // in order, so eg. an open then a close leave the game closed.
+                Ok(message @ (ClientMessage::Join { .. } | ClientMessage::Leave { .. })) => {
                     let app = app.clone();
                     tokio::spawn(async move { app.handle(id, user_id, message).await });
                 }
+                Ok(message) => app.handle(id, user_id, message).await,
                 Err(_) => app.hub.send(
                     id,
                     ServerMessage::Error {

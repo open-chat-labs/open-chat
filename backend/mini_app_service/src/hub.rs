@@ -4,8 +4,9 @@ use crate::protocol::{Card, GameState, Role, ServerMessage};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tokio::sync::mpsc::UnboundedSender;
+use tokio::sync::mpsc::Sender;
 use tokio::time::Instant;
+use tracing::info;
 use types::{MiniAppGame, UserId};
 
 pub type ConnectionId = u64;
@@ -29,7 +30,8 @@ struct HubInner {
 
 struct Connection {
     user_id: UserId,
-    sender: UnboundedSender<ServerMessage>,
+    // Bounded, so a connection which stops reading is dropped rather than queuing without end
+    sender: Sender<Arc<ServerMessage>>,
     following: HashSet<MiniAppGame>,
     open: HashSet<MiniAppGame>,
 }
@@ -41,7 +43,7 @@ struct SpectatorFeed {
 }
 
 impl Hub {
-    pub fn connect(&self, user_id: UserId, sender: UnboundedSender<ServerMessage>) -> ConnectionId {
+    pub fn connect(&self, user_id: UserId, sender: Sender<Arc<ServerMessage>>) -> ConnectionId {
         let mut inner = self.inner.lock().unwrap();
         inner.next_id += 1;
         let id = inner.next_id;
@@ -59,30 +61,11 @@ impl Hub {
 
     // Returns the games someone stopped watching, whose cards' counts changed
     pub fn disconnect(&self, id: ConnectionId) -> Vec<MiniAppGame> {
-        let mut inner = self.inner.lock().unwrap();
-        let Some(connection) = inner.connections.remove(&id) else {
-            return Vec::new();
-        };
-        for game in &connection.following {
-            if let Some(followers) = inner.followers.get_mut(game) {
-                followers.remove(&id);
-                if followers.is_empty() {
-                    inner.followers.remove(game);
-                }
-            }
-        }
-        connection
-            .open
-            .iter()
-            .filter(|game| inner.close(id, game) == Some(Role::Spectator))
-            .copied()
-            .collect()
+        self.inner.lock().unwrap().disconnect(id)
     }
 
     pub fn send(&self, id: ConnectionId, message: ServerMessage) {
-        if let Some(connection) = self.inner.lock().unwrap().connections.get(&id) {
-            let _ = connection.sender.send(message);
-        }
+        self.inner.lock().unwrap().send_to(id, Arc::new(message));
     }
 
     pub fn follow(&self, id: ConnectionId, games: &[MiniAppGame]) {
@@ -104,12 +87,7 @@ impl Hub {
             }
         }
         for game in games {
-            if let Some(followers) = inner.followers.get_mut(game) {
-                followers.remove(&id);
-                if followers.is_empty() {
-                    inner.followers.remove(game);
-                }
-            }
+            inner.unfollow(id, game);
         }
     }
 
@@ -128,12 +106,35 @@ impl Hub {
     // Whether the number watching changed
     pub fn close(&self, id: ConnectionId, game: &MiniAppGame) -> bool {
         let mut inner = self.inner.lock().unwrap();
-        if let Some(connection) = inner.connections.get_mut(&id) {
-            connection.open.remove(game);
-        }
         let before = inner.watching(game);
         inner.close(id, game);
         inner.watching(game) != before
+    }
+
+    // A user's role changed, eg. they joined, left or were removed: their connections with the game
+    // open take it, or close it if they can no longer watch. Returns those connections, and whether the
+    // number watching changed.
+    pub fn set_role(&self, game: MiniAppGame, user_id: UserId, role: Option<Role>) -> (Vec<ConnectionId>, bool) {
+        let mut inner = self.inner.lock().unwrap();
+        let before = inner.watching(&game);
+        let ids: Vec<_> = inner
+            .openers
+            .get(&game)
+            .into_iter()
+            .flatten()
+            .map(|(id, _)| *id)
+            .filter(|id| inner.connections.get(id).is_some_and(|c| c.user_id == user_id))
+            .collect();
+        for id in &ids {
+            match role {
+                Some(role) => {
+                    inner.openers.entry(game).or_default().insert(*id, role);
+                }
+                None => inner.close(*id, &game),
+            }
+        }
+        let changed = inner.watching(&game) != before;
+        (ids, changed)
     }
 
     // How many people are watching, counted once however many times they have it open
@@ -142,11 +143,11 @@ impl Hub {
     }
 
     pub fn push_card(&self, card: Card) {
-        let inner = self.inner.lock().unwrap();
-        for id in inner.followers.get(&card.game).into_iter().flatten() {
-            if let Some(connection) = inner.connections.get(id) {
-                let _ = connection.sender.send(ServerMessage::Card(card.clone()));
-            }
+        let mut inner = self.inner.lock().unwrap();
+        let ids: Vec<_> = inner.followers.get(&card.game).into_iter().flatten().copied().collect();
+        let message = Arc::new(ServerMessage::Card(card));
+        for id in ids {
+            inner.send_to(id, message.clone());
         }
     }
 
@@ -197,17 +198,61 @@ impl Hub {
         self.inner.lock().unwrap().spectator_feeds.remove(game);
     }
 
-    // A player opening a game which already has a state, or a spectator
-    pub fn send_latest_state(&self, id: ConnectionId, game: MiniAppGame, state: &GameState, role: Role) {
-        let inner = self.inner.lock().unwrap();
-        if let Some(connection) = inner.connections.get(&id) {
-            let _ = connection.sender.send(state_message(game, state, connection.user_id, role));
+    // The game's latest state, for connections which just opened it or whose role changed
+    pub fn send_latest_state(&self, ids: &[ConnectionId], game: MiniAppGame, state: &GameState, role: Role) {
+        let mut inner = self.inner.lock().unwrap();
+        for id in ids {
+            if let Some(user_id) = inner.connections.get(id).map(|c| c.user_id) {
+                inner.send_to(*id, Arc::new(state_message(game, state, user_id, role)));
+            }
         }
     }
 }
 
 impl HubInner {
-    fn close(&mut self, id: ConnectionId, game: &MiniAppGame) -> Option<Role> {
+    // A connection whose queue is full has stopped reading, so is dropped
+    fn send_to(&mut self, id: ConnectionId, message: Arc<ServerMessage>) {
+        let Some(connection) = self.connections.get(&id) else {
+            return;
+        };
+        if connection.sender.try_send(message).is_err() {
+            info!(id, "Dropping a connection which stopped reading");
+            self.disconnect(id);
+        }
+    }
+
+    fn disconnect(&mut self, id: ConnectionId) -> Vec<MiniAppGame> {
+        let Some(connection) = self.connections.remove(&id) else {
+            return Vec::new();
+        };
+        for game in &connection.following {
+            self.unfollow(id, game);
+        }
+        connection
+            .open
+            .iter()
+            .filter(|game| self.close_opener(id, game) == Some(Role::Spectator))
+            .copied()
+            .collect()
+    }
+
+    fn unfollow(&mut self, id: ConnectionId, game: &MiniAppGame) {
+        if let Some(followers) = self.followers.get_mut(game) {
+            followers.remove(&id);
+            if followers.is_empty() {
+                self.followers.remove(game);
+            }
+        }
+    }
+
+    fn close(&mut self, id: ConnectionId, game: &MiniAppGame) {
+        if let Some(connection) = self.connections.get_mut(&id) {
+            connection.open.remove(game);
+        }
+        self.close_opener(id, game);
+    }
+
+    fn close_opener(&mut self, id: ConnectionId, game: &MiniAppGame) -> Option<Role> {
         let openers = self.openers.get_mut(game)?;
         let role = openers.remove(&id);
         if openers.is_empty() {
@@ -229,13 +274,33 @@ impl HubInner {
             .len() as u32
     }
 
-    fn send_state(&self, game: &MiniAppGame, state: &GameState, to: Role) {
-        for (id, role) in self.openers.get(game).into_iter().flatten() {
-            if *role == to
-                && let Some(connection) = self.connections.get(id)
-            {
-                let _ = connection.sender.send(state_message(*game, state, connection.user_id, to));
-            }
+    // Spectators all get the same message, so it's built once
+    fn send_state(&mut self, game: &MiniAppGame, state: &GameState, to: Role) {
+        let ids: Vec<_> = self
+            .openers
+            .get(game)
+            .into_iter()
+            .flatten()
+            .filter(|(_, role)| **role == to)
+            .map(|(id, _)| *id)
+            .collect();
+        let spectators_message = (to == Role::Spectator).then(|| {
+            Arc::new(ServerMessage::State {
+                game: *game,
+                seq: state.seq,
+                shared: state.shared.clone(),
+                private: None,
+            })
+        });
+        for id in ids {
+            let Some(user_id) = self.connections.get(&id).map(|c| c.user_id) else {
+                continue;
+            };
+            let message = match &spectators_message {
+                Some(message) => message.clone(),
+                None => Arc::new(state_message(*game, state, user_id, to)),
+            };
+            self.send_to(id, message);
         }
     }
 }
@@ -257,7 +322,7 @@ mod tests {
     use super::*;
     use candid::Principal;
     use serde_json::json;
-    use tokio::sync::mpsc::{UnboundedReceiver, unbounded_channel};
+    use tokio::sync::mpsc::{Receiver, channel};
     use types::Chat;
 
     fn user(n: u8) -> UserId {
@@ -272,8 +337,8 @@ mod tests {
         }
     }
 
-    fn connect(hub: &Hub, user_id: UserId) -> (ConnectionId, UnboundedReceiver<ServerMessage>) {
-        let (sender, receiver) = unbounded_channel();
+    fn connect(hub: &Hub, user_id: UserId) -> (ConnectionId, Receiver<Arc<ServerMessage>>) {
+        let (sender, receiver) = channel(16);
         (hub.connect(user_id, sender), receiver)
     }
 
@@ -285,14 +350,25 @@ mod tests {
         }
     }
 
-    fn states(receiver: &mut UnboundedReceiver<ServerMessage>) -> Vec<(u64, Option<serde_json::Value>)> {
+    fn states(receiver: &mut Receiver<Arc<ServerMessage>>) -> Vec<(u64, Option<serde_json::Value>)> {
         let mut states = Vec::new();
         while let Ok(message) = receiver.try_recv() {
-            if let ServerMessage::State { seq, private, .. } = message {
-                states.push((seq, private));
+            if let ServerMessage::State { seq, private, .. } = &*message {
+                states.push((*seq, private.clone()));
             }
         }
         states
+    }
+
+    fn card() -> Card {
+        Card {
+            game: game(),
+            status: crate::protocol::GameStatus::Open,
+            players: Vec::new(),
+            waiting_for: Vec::new(),
+            watching: 0,
+            result: None,
+        }
     }
 
     // Counted once however many tabs they have it open in, and not counting players
@@ -336,6 +412,29 @@ mod tests {
         assert_eq!(states(&mut spectator_messages), vec![(4, None)]);
     }
 
+    // A spectator who joins starts getting their own part, and someone removed from a game closed to
+    // spectators stops getting anything
+    #[test]
+    fn a_users_open_connections_take_their_new_role() {
+        let hub = Arc::new(Hub::default());
+        let (tab1, mut tab1_messages) = connect(&hub, user(1));
+        let (tab2, _) = connect(&hub, user(1));
+        hub.open(tab1, game(), Role::Spectator);
+        hub.open(tab2, game(), Role::Spectator);
+        assert_eq!(hub.watching(&game()), 1);
+
+        let (ids, watching_changed) = hub.set_role(game(), user(1), Some(Role::Player));
+        assert_eq!(ids.len(), 2);
+        assert!(watching_changed);
+        hub.push_state(game(), &state(1));
+        assert_eq!(states(&mut tab1_messages), vec![(1, Some(json!({ "hand": [1] })))]);
+
+        hub.set_role(game(), user(1), None);
+        hub.push_state(game(), &state(2));
+        assert!(states(&mut tab1_messages).is_empty());
+        assert_eq!(hub.watching(&game()), 0);
+    }
+
     #[test]
     fn a_card_goes_to_its_followers() {
         let hub = Hub::default();
@@ -345,14 +444,23 @@ mod tests {
         hub.follow(other, &[game()]);
         hub.unfollow(other, &[game()]);
 
-        hub.push_card(Card {
-            game: game(),
-            status: crate::protocol::GameStatus::Open,
-            players: Vec::new(),
-            watching: 0,
-            result: None,
-        });
-        assert!(matches!(following_messages.try_recv(), Ok(ServerMessage::Card(_))));
+        hub.push_card(card());
+        assert!(matches!(following_messages.try_recv().as_deref(), Ok(ServerMessage::Card(_))));
         assert!(other_messages.try_recv().is_err());
+    }
+
+    // So it can't make the service queue messages without end
+    #[test]
+    fn a_connection_which_stops_reading_is_dropped() {
+        let hub = Hub::default();
+        let (sender, _receiver) = channel(2);
+        let id = hub.connect(user(1), sender);
+        hub.follow(id, &[game()]);
+
+        for _ in 0..3 {
+            hub.push_card(card());
+        }
+        assert!(hub.inner.lock().unwrap().connections.is_empty());
+        assert!(hub.inner.lock().unwrap().followers.is_empty());
     }
 }

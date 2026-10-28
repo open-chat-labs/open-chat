@@ -35,6 +35,6 @@ The script:
 
 ## What it keeps
 
-- **In Redis:** each game, with its players and latest state. A restart or a deploy doesn't end games; the website reconnects with the tokens it kept.
+- **In Redis:** each game, with its players, latest state and what its card in the chat holds. A restart or a deploy doesn't end games: the website reconnects with the tokens it kept, and the service writes any card it was writing as it stopped. An ended game is remembered for two hours, so its bot can't register it again.
 - **In memory:** the connections, which cards each follows and which games each has open. Spectators are counted from these.
 - **One instance for now.** Running more than one needs the instances to share their connections' pushes through Redis.

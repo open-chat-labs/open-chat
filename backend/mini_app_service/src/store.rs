@@ -3,27 +3,32 @@ use crate::games::Game;
 use async_trait::async_trait;
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
-use types::{Error, MiniAppGame, TimestampMillis};
+use types::{Error, MiniAppGame};
+
+// An ended game is remembered for longer than a registration lasts, so a bot registering it again
+// doesn't bring it back
+const ENDED_SECONDS: u64 = 2 * 60 * 60;
 
 #[async_trait]
 pub trait Store: Send + Sync {
     async fn get(&self, game: &MiniAppGame) -> Result<Option<Game>, Error>;
-    // Saves the game, and when its bot last updated it
     async fn put(&self, game: &Game) -> Result<(), Error>;
-    async fn delete(&self, game: &MiniAppGame) -> Result<(), Error>;
-    // The games whose bots haven't updated them since `before`
-    async fn idle_since(&self, before: TimestampMillis) -> Result<Vec<MiniAppGame>, Error>;
+    // Forgets the game, remembering it ended
+    async fn end(&self, game: &MiniAppGame) -> Result<(), Error>;
+    async fn has_ended(&self, game: &MiniAppGame) -> Result<bool, Error>;
+    async fn all(&self) -> Result<Vec<MiniAppGame>, Error>;
 }
 
-// A game's key, which is also how it's listed by when its bot last updated it
+// A game's key, which is also how it's listed
 fn key(game: &MiniAppGame) -> String {
     serde_json::to_string(game).expect("A game serializes")
 }
 
 const GAME_PREFIX: &str = "mini_app:game:";
-const ACTIVITY_KEY: &str = "mini_app:activity";
+const ENDED_PREFIX: &str = "mini_app:ended:";
+const GAMES_KEY: &str = "mini_app:games";
 
 pub struct RedisStore {
     connection: ConnectionManager,
@@ -50,29 +55,30 @@ impl Store for RedisStore {
         redis::pipe()
             .atomic()
             .set(format!("{GAME_PREFIX}{key}"), json)
-            .zadd(ACTIVITY_KEY, &key, game.last_bot_update)
+            .sadd(GAMES_KEY, &key)
             .exec_async(&mut self.connection.clone())
             .await?;
         Ok(())
     }
 
-    async fn delete(&self, game: &MiniAppGame) -> Result<(), Error> {
+    async fn end(&self, game: &MiniAppGame) -> Result<(), Error> {
         let key = key(game);
         redis::pipe()
             .atomic()
             .del(format!("{GAME_PREFIX}{key}"))
-            .zrem(ACTIVITY_KEY, &key)
+            .srem(GAMES_KEY, &key)
+            .set_ex(format!("{ENDED_PREFIX}{key}"), 1, ENDED_SECONDS)
             .exec_async(&mut self.connection.clone())
             .await?;
         Ok(())
     }
 
-    async fn idle_since(&self, before: TimestampMillis) -> Result<Vec<MiniAppGame>, Error> {
-        let keys: Vec<String> = self
-            .connection
-            .clone()
-            .zrangebyscore(ACTIVITY_KEY, "-inf", format!("({before}"))
-            .await?;
+    async fn has_ended(&self, game: &MiniAppGame) -> Result<bool, Error> {
+        Ok(self.connection.clone().exists(format!("{ENDED_PREFIX}{}", key(game))).await?)
+    }
+
+    async fn all(&self) -> Result<Vec<MiniAppGame>, Error> {
+        let keys: Vec<String> = self.connection.clone().smembers(GAMES_KEY).await?;
         keys.iter()
             .map(|key| serde_json::from_str(key).map_err(Error::from))
             .collect()
@@ -83,6 +89,7 @@ impl Store for RedisStore {
 #[derive(Default)]
 pub struct MemoryStore {
     games: Mutex<HashMap<MiniAppGame, Game>>,
+    ended: Mutex<HashSet<MiniAppGame>>,
 }
 
 #[async_trait]
@@ -96,19 +103,17 @@ impl Store for MemoryStore {
         Ok(())
     }
 
-    async fn delete(&self, game: &MiniAppGame) -> Result<(), Error> {
+    async fn end(&self, game: &MiniAppGame) -> Result<(), Error> {
         self.games.lock().unwrap().remove(game);
+        self.ended.lock().unwrap().insert(*game);
         Ok(())
     }
 
-    async fn idle_since(&self, before: TimestampMillis) -> Result<Vec<MiniAppGame>, Error> {
-        Ok(self
-            .games
-            .lock()
-            .unwrap()
-            .values()
-            .filter(|game| game.last_bot_update < before)
-            .map(|game| game.game)
-            .collect())
+    async fn has_ended(&self, game: &MiniAppGame) -> Result<bool, Error> {
+        Ok(self.ended.lock().unwrap().contains(game))
+    }
+
+    async fn all(&self) -> Result<Vec<MiniAppGame>, Error> {
+        Ok(self.games.lock().unwrap().keys().copied().collect())
     }
 }

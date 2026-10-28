@@ -37,8 +37,10 @@ pub struct HttpBotClient {
 impl HttpBotClient {
     pub fn new(tokens: Arc<Tokens>) -> HttpBotClient {
         HttpBotClient {
+            // A bot's endpoint can't redirect the service's calls elsewhere
             http: reqwest::Client::builder()
                 .timeout(JOIN_TIMEOUT)
+                .redirect(reqwest::redirect::Policy::none())
                 .build()
                 .expect("An HTTP client builds"),
             tokens,

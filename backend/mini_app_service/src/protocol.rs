@@ -137,6 +137,8 @@ pub struct Card {
     pub game: MiniAppGame,
     pub status: GameStatus,
     pub players: Vec<UserId>,
+    // Whose turn it is
+    pub waiting_for: Vec<UserId>,
     pub watching: u32,
     pub result: Option<String>,
 }
@@ -153,6 +155,9 @@ pub struct UpdateArgs {
     pub game: MiniAppGame,
     #[serde(default)]
     pub status: Option<GameStatus>,
+    // Whose turn it is now, or none to leave it as it is
+    #[serde(default)]
+    pub waiting_for: Option<Vec<UserId>>,
     #[serde(default)]
     pub result: Option<String>,
     #[serde(default)]
@@ -207,8 +212,9 @@ mod tests {
         let user: UserId = Principal::from_text("27eue-hyaaa-aaaaf-aaa4a-cai").unwrap().into();
         let card = ServerMessage::Card(Card {
             game: game(),
-            status: GameStatus::Open,
+            status: GameStatus::Active,
             players: vec![user],
+            waiting_for: vec![user],
             watching: 3,
             result: None,
         });
@@ -217,8 +223,9 @@ mod tests {
             json!({
                 "type": "card",
                 "game": { "chat": { "Group": "6nb6r-kyaaa-aaaar-asvgq-cai" }, "thread": null, "message_id": "18446744073709551615" },
-                "status": "Open",
+                "status": "Active",
                 "players": ["27eue-hyaaa-aaaaf-aaa4a-cai"],
+                "waiting_for": ["27eue-hyaaa-aaaaf-aaa4a-cai"],
                 "watching": 3,
                 "result": null
             })
