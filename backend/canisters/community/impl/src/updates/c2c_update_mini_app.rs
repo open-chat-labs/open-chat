@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_update_mini_app::*;
 use oc_error_codes::OCErrorCode;
-use types::{EventIndex, OCResult};
+use types::{EventIndex, MiniAppStatus, OCResult};
 
 // The MiniApp service writing a card's game, through the LocalUserIndex, which only takes it from the
 // service
@@ -20,13 +20,14 @@ fn c2c_update_mini_app_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::ChatNotFound.into());
     };
 
-    // Uninstalling the card's bot ends its game, which the service learns from this
+    // Uninstalling the card's bot ends its game. The service learns of it from this, then writes the
+    // game as finished, which is let through so the card doesn't look like it's still being played
     let (message, _) = channel
         .chat
         .events
         .message_internal(EventIndex::default(), args.thread, args.message_id.into())
         .ok_or(OCErrorCode::MessageNotFound)?;
-    if state.data.bots.get(&message.sender).is_none() {
+    if args.update.status != MiniAppStatus::Finished && state.data.bots.get(&message.sender).is_none() {
         return Err(OCErrorCode::BotNotFound.into());
     }
 

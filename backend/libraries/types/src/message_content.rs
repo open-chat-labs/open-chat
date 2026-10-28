@@ -1141,7 +1141,7 @@ pub struct MiniAppContent {
     pub image: Option<MiniAppImage>,
     // the most who can play, if there's a limit, so the card can show eg. "2 of 4"
     pub max_players: Option<u32>,
-    // whether members who aren't playing can open the app once the game has started
+    // whether people who aren't playing can watch: members, and anyone who can see a public chat
     pub spectators: bool,
     pub status: MiniAppStatus,
     // the members who joined through the MiniApp service and were accepted by the bot, in the order

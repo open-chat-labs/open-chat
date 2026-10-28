@@ -429,7 +429,7 @@ fn only_the_mini_app_service_writes_a_card() {
 }
 
 // In a group too, and in a thread: members' clients see the write. The service's writes are refused
-// once the card's deleted, or its bot uninstalled, which ends the game.
+// once the card's deleted, or its bot uninstalled, which ends the game, but for the one finishing it.
 #[test]
 fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
     let mut wrapper = ENV.deref().get();
@@ -579,6 +579,22 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
         matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::BotNotFound)),
         "Expected BotNotFound: {response:?}"
     );
+
+    // Then writes the game as finished, so its card doesn't look like it's still being played
+    let response = write_card(
+        env,
+        service,
+        local_user_index,
+        chat,
+        thread,
+        other_message_id,
+        MiniAppUpdate {
+            status: MiniAppStatus::Finished,
+            players: Vec::new(),
+            result: None,
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
 }
 
 // That a card can't be forwarded either is in chat_events' unit tests: a member would be refused as
