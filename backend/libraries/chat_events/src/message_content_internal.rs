@@ -2382,10 +2382,15 @@ impl MessageContentInternalSubtype for MiniAppContentInternal {
 
 impl MiniAppContentInternal {
     // Writes the MiniApp service's update, unless the game is finished, after which the card never
-    // changes, the update would move the game's status back, or the card it leaves isn't valid
+    // changes, the update would move the game's status back, or the card it leaves isn't valid. The
+    // service can retry a write whose outcome it didn't learn, so writing the card as it is succeeds.
     pub fn update(&mut self, update: MiniAppUpdate) -> Result<(), OCError> {
         if self.status == MiniAppStatus::Finished {
-            return Err(OCErrorCode::InvalidRequest.with_message("A finished game's card can't be changed"));
+            return if update.status == self.status && update.players == self.players && update.result == self.result {
+                Ok(())
+            } else {
+                Err(OCErrorCode::InvalidRequest.with_message("A finished game's card can't be changed"))
+            };
         }
         if update.status < self.status {
             return Err(OCErrorCode::InvalidRequest.with_message("A game's status only moves forward"));
@@ -3030,6 +3035,11 @@ mod mini_app_tests {
         );
         assert_eq!(stored.players, vec![user(1), user(2)]);
         assert_eq!(stored.result.as_deref(), Some("Bob won"));
+
+        // But the service can retry the write which finished it
+        stored
+            .update(update(MiniAppStatus::Finished, vec![user(1), user(2)], Some("Bob won")))
+            .unwrap();
     }
 
     #[test]
