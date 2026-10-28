@@ -92,7 +92,12 @@ describe("ConnectionHealth", () => {
         expect(health.unusable).toBe(false);
         expect(changes).toEqual([]);
 
-        // the count starts again
+        // the probe's response counts like any other, so bad queries don't count for a while
+        badQueriesToProbe(health);
+        expect(probe).toHaveBeenCalledTimes(1);
+
+        // and then the count starts again
+        vi.setSystemTime(Date.now() + SLOW_QUERY_MS);
         for (let i = 0; i < BAD_QUERIES_TO_UNUSABLE - 1; i++) {
             badQuery(health);
         }
@@ -109,6 +114,41 @@ describe("ConnectionHealth", () => {
         badQueriesToProbe(health);
         badQueriesToProbe(health);
         expect(probe).toHaveBeenCalledTimes(1);
+    });
+
+    test("bad queries while unusable send no probes beyond the backoff", async () => {
+        const { health, probe, changes } = setup();
+        await makeUnusable(health);
+        const probes = probe.mock.calls.length;
+        for (let i = 0; i < BAD_QUERIES_TO_UNUSABLE * 3; i++) {
+            badQuery(health);
+        }
+        await vi.advanceTimersByTimeAsync(0);
+        expect(probe).toHaveBeenCalledTimes(probes);
+        expect(changes).toEqual([true]);
+    });
+
+    // A probe out when the network changes, or the app resumes, may fail because of the change
+    test("a possible connection change while a probe is out probes again as soon as it fails", async () => {
+        const { health, probe, answer } = setupWithHeldProbe();
+        badQueriesToProbe(health);
+        health.connectionMayHaveChanged();
+        answer(false);
+        await vi.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
+        expect(health.unusable).toBe(true);
+        expect(probe).toHaveBeenCalledTimes(2);
+
+        // and the same for a probe of a connection that is already unusable
+        health.connectionMayHaveChanged();
+        answer(false);
+        await vi.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
+        expect(probe).toHaveBeenCalledTimes(3);
+
+        answer(true);
+        await vi.advanceTimersByTimeAsync(0);
+        expect(health.unusable).toBe(false);
     });
 
     test("a good query, or the app being hidden, while the probe is out keeps it usable", async () => {
@@ -251,14 +291,16 @@ describe("ConnectionHealth", () => {
         expect(changes).toEqual([true]);
     });
 
-    test("coming back forgets bad queries counted before the app was hidden", () => {
-        const { health } = setup();
+    test("coming back forgets bad queries counted before the app was hidden", async () => {
+        const { health, probe } = setup();
         for (let i = 0; i < BAD_QUERIES_TO_UNUSABLE - 1; i++) {
             badQuery(health);
         }
         health.setHidden(true);
         health.setHidden(false);
         badQuery(health);
+        await vi.advanceTimersByTimeAsync(0);
+        expect(probe).not.toHaveBeenCalled();
         expect(health.unusable).toBe(false);
     });
 

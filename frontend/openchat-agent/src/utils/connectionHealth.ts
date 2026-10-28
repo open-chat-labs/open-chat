@@ -50,8 +50,9 @@ export class ConnectionHealth implements QueryOutcomes {
     #lastResponseAt = Number.NEGATIVE_INFINITY;
     #probeTimer: ReturnType<typeof setTimeout> | undefined;
     #probing = false;
-    // Whether a probe is out to check a connection whose queries have started failing
-    #confirming = false;
+    // Whether the connection may have changed while a probe was out, in which case a failed probe
+    // says nothing about the new one
+    #changedWhileProbing = false;
     #probesFailed = 0;
     #lastBadAt = Number.NEGATIVE_INFINITY;
     // Queries sent before this went out on a connection that may since have gone, so their
@@ -96,19 +97,21 @@ export class ConnectionHealth implements QueryOutcomes {
         if (now - this.#lastBadAt < BAD_QUERY_SPACING_MS) return;
         this.#lastBadAt = now;
         this.#badInARow += 1;
-        if (!this.#unusable && !this.#confirming && this.#badInARow >= BAD_QUERIES_TO_UNUSABLE) {
+        if (!this.#unusable && !this.#probing && this.#badInARow >= BAD_QUERIES_TO_UNUSABLE) {
             void this.#confirmUnusable();
         }
     }
 
     /**
      * Something suggests the connection may have changed: the browser came back online, switched
-     * network, or the app resumed. If the connection is unusable, probe now instead of waiting.
+     * network, or the app resumed. If the connection is unusable, probe now instead of waiting, or
+     * as soon as a probe that's already out fails.
      */
     connectionMayHaveChanged(): void {
-        if (this.#unusable && !this.#probing) {
-            this.#probesFailed = 0;
-            this.#scheduleProbe(0);
+        if (this.#probing) {
+            this.#changedWhileProbing = true;
+        } else if (this.#unusable) {
+            this.#probeNow();
         }
     }
 
@@ -142,9 +145,7 @@ export class ConnectionHealth implements QueryOutcomes {
 
     // Going offline also stops the app sending, so a probe checks the connection itself first
     async #confirmUnusable() {
-        this.#confirming = true;
         const ok = await this.#probeConnection();
-        this.#confirming = false;
 
         // A good query, or the app coming back, may have reset the count while the probe was out.
         // A probe failing while the app is hidden says no more than a query failing then.
@@ -154,7 +155,13 @@ export class ConnectionHealth implements QueryOutcomes {
             this.#badInARow = 0;
         } else {
             this.#setUnusable(true);
+            if (this.#changedWhileProbing) this.#probeNow();
         }
+    }
+
+    #probeNow() {
+        this.#probesFailed = 0;
+        this.#scheduleProbe(0);
     }
 
     #scheduleProbe(delayMs: number) {
@@ -166,8 +173,8 @@ export class ConnectionHealth implements QueryOutcomes {
         this.#probeTimer = undefined;
         if (!this.#unusable) return;
 
-        // With the browser reporting no network this fails without probing, and the schedule carries
-        // on rather than relying on the `online` event to restart it
+        // With the browser reporting no network this fails without probing, and the schedule
+        // carries on rather than relying on the `online` event to restart it
         const ok = await this.#probeConnection();
 
         // A fast query may have cleared it while the probe was out
@@ -175,6 +182,8 @@ export class ConnectionHealth implements QueryOutcomes {
 
         if (ok) {
             this.#setUnusable(false);
+        } else if (this.#changedWhileProbing) {
+            this.#probeNow();
         } else {
             this.#probesFailed += 1;
             const index = Math.min(this.#probesFailed, PROBE_INTERVALS_MS.length - 1);
@@ -182,17 +191,24 @@ export class ConnectionHealth implements QueryOutcomes {
         }
     }
 
-    // With the browser reporting no network at all, a probe can't succeed
+    // With the browser reporting no network at all, a probe can't succeed. One that gets through is
+    // a response like any other, so bad queries don't count for a while after it.
     async #probeConnection(): Promise<boolean> {
+        this.#changedWhileProbing = false;
         if (!this.#isOnline()) return false;
         this.#probing = true;
+        let ok: boolean;
         try {
-            return await this.#probe();
+            ok = await this.#probe();
         } catch {
-            return false;
+            ok = false;
         } finally {
             this.#probing = false;
         }
+        if (ok) {
+            this.#lastResponseAt = Date.now();
+        }
+        return ok;
     }
 }
 
