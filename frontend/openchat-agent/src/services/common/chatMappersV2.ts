@@ -1944,8 +1944,7 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
         case "p2p_swap_content":
         case "encrypted_content":
         case "restricted_content":
-        // only bots post them
-        case "mini_app_content":
+        case "mini_app_content": // only bots post them
             throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);
     }
 }
