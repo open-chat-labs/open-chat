@@ -137,6 +137,11 @@
 
     // WalletMain's own moves go to their URL
     function viewChanged({ view, token: id }: { view: string; token: string | null }): void {
+        // Receive opens on its token's first network each time: a network picked lasts only while
+        // it stays open (WalletMain reports every page it moves to, never a network picked)
+        const stillReceiving =
+            view === "receive" && reported?.view === "receive" && reported.token === id;
+        if (!stillReceiving) receiveAccount.selectedNetwork = undefined;
         reported = { view, token: id };
         const path =
             view === "receive"
