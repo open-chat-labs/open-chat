@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_update_mini_app::*;
 use oc_error_codes::OCErrorCode;
-use types::{EventIndex, MiniAppStatus, OCResult};
+use types::{EventIndex, MiniAppStatusUpdate, OCResult};
 
 // The MiniApp service writing a card's game, through the LocalUserIndex, which only takes it from the
 // service
@@ -20,21 +20,21 @@ fn c2c_update_mini_app_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::ChatNotFound.into());
     };
 
-    // Uninstalling the card's bot ends its game. The service learns of it from this, then writes the
-    // game as finished, which is let through so the card doesn't look like it's still being played
+    // Uninstalling the card's bot ends its game. The service learns of it from this, then ends the game,
+    // which is let through so the card doesn't look like it's still being played
     let (message, _) = channel
         .chat
         .events
         .message_internal(EventIndex::default(), args.thread, args.message_id.into())
         .ok_or(OCErrorCode::MessageNotFound)?;
-    if !matches!(args.status, MiniAppStatus::Finished(_)) && state.data.bots.get(&message.sender).is_none() {
+    if !matches!(args.update, MiniAppStatusUpdate::Ended(_)) && state.data.bots.get(&message.sender).is_none() {
         return Err(OCErrorCode::BotNotFound.into());
     }
 
     // A finished game's card never changes, so a result is only ever written once, but for a retry
-    let new_result = args.status.result().is_some();
+    let new_result = matches!(&args.update, MiniAppStatusUpdate::Ended(ended) if ended.result.is_some());
     let now = state.env.now();
-    channel.chat.update_mini_app(args.thread, args.message_id, args.status, now)?;
+    channel.chat.update_mini_app(args.thread, args.message_id, args.update, now)?;
 
     // The result is text the bot wrote, classified as an edit's would be
     if new_result

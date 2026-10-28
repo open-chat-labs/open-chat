@@ -20,7 +20,7 @@ use types::{
     EventsResponse, ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions,
     GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
     MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentType, MessageId, MessageIndex,
-    MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MiniAppStatus,
+    MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MiniAppStatusUpdate,
     MultiUserChat, OCResult, OgPreview, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged,
     Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates, SenderContext, ThreadPreview, TimestampMillis,
     Timestamped, UpdatedRules, UserId, UserIdAndPrincipal, UserType, UsersBlocked, UsersInvited, Version, Versioned,
@@ -1908,18 +1908,18 @@ impl GroupChatCore {
         Ok(())
     }
 
-    // The MiniApp service writing a card's status (see `ChatEvents::update_mini_app`)
+    // The MiniApp service updating a card's status (see `ChatEvents::update_mini_app`)
     pub fn update_mini_app(
         &mut self,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        status: MiniAppStatus,
+        update: MiniAppStatusUpdate,
         now: TimestampMillis,
     ) -> OCResult {
         self.events.update_mini_app(UpdateMiniAppArgs {
             thread_root_message_index,
             message_id,
-            status,
+            update,
             now,
         })
     }

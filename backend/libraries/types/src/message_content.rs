@@ -1126,9 +1126,10 @@ impl PriceChartContent {
 
 /// A bot's card for a game, or another app, it hosts. Its text, image, player limit and whether others
 /// can watch are set when it's posted and never change. Its status is written only by the MiniApp
-/// service (`update_mini_app` on the LocalUserIndex): the players the game starts with, who joined
-/// through the service and were accepted by the bot, and then its result. Who's joined so far, while
-/// the game's taking players, is shown live by the service. Everything else the app shows, its board
+/// service (`update_mini_app` on the LocalUserIndex, with a `MiniAppStatusUpdate`): the players the
+/// game starts with, who joined through the service and were accepted by the bot, whose turn it is,
+/// and then its result. Who's joined so far, while the game's taking players, is shown live by the
+/// service. Everything else the app shows, its board
 /// and buttons, is the bot's own page, which OpenChat opens from the card in a frame. Only a bot can
 /// send one, needing the MiniApp permission. It can't be forwarded, edited, or sent in a direct chat.
 #[ts_export]
@@ -1175,6 +1176,8 @@ pub enum MiniAppStatus {
 pub struct MiniAppActive {
     // who the game started with, in the order they joined
     pub players: Vec<UserId>,
+    // the players whose turn it is, or no one in particular, eg. in a game without turns
+    pub waiting_for: Vec<UserId>,
 }
 
 #[ts_export]
@@ -1182,6 +1185,34 @@ pub struct MiniAppActive {
 pub struct MiniAppFinished {
     // who the game started with, or no one if it never started
     pub players: Vec<UserId>,
+    // eg. "Bob won", or none if the game was abandoned
+    pub result: Option<String>,
+}
+
+/// What the MiniApp service writes to a card as its game goes on
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum MiniAppStatusUpdate {
+    // The game started, with its players
+    Started(MiniAppStarted),
+    // Whose turn it is now
+    Turn(MiniAppTurn),
+    // The game finished, with the players it started with, if it did
+    Ended(MiniAppEnded),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppStarted {
+    pub players: Vec<UserId>,
+    pub waiting_for: Vec<UserId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppTurn {
+    pub waiting_for: Vec<UserId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppEnded {
     // eg. "Bob won", or none if the game was abandoned
     pub result: Option<String>,
 }
@@ -1240,27 +1271,50 @@ impl MiniAppContent {
         if players.iter().collect::<HashSet<_>>().len() < players.len() {
             return Err("A player is listed twice".to_string());
         }
+        if let MiniAppStatus::Active(active) = &self.status {
+            if active.waiting_for.iter().any(|user_id| !players.contains(user_id)) {
+                return Err("Only players can be waited for".to_string());
+            }
+            if active.waiting_for.iter().collect::<HashSet<_>>().len() < active.waiting_for.len() {
+                return Err("A player is waited for twice".to_string());
+            }
+        }
         if let Some(result) = self.status.result() {
             check_chars("result", result, Self::MAX_RESULT_CHARS)?;
         }
         Ok(())
     }
 
-    // Whether the MiniApp service can write `status`: a game starts with its players, then finishes
-    // with them, or finishes without starting, and never changes once finished. Writing the status
-    // the card already has succeeds, so the service can retry a write whose outcome it didn't learn.
-    pub fn check_move(&self, status: &MiniAppStatus) -> Result<(), String> {
+    // The status the MiniApp service's update leaves: a game starts with its players, its turns pass
+    // between them, and it ends with them and its result, or ends without starting. A finished game
+    // never changes. An update the card already reflects changes nothing, so the service can retry a
+    // write whose outcome it didn't learn.
+    pub fn next_status(&self, update: MiniAppStatusUpdate) -> Result<MiniAppStatus, String> {
         use MiniAppStatus::*;
+        use MiniAppStatusUpdate::*;
 
-        match (&self.status, status) {
-            (current, new) if current == new => Ok(()),
-            (Open, Active(_)) => Ok(()),
-            (Open, Finished(finished)) if finished.players.is_empty() => Ok(()),
-            (Active(active), Finished(finished)) if finished.players == active.players => Ok(()),
-            (Open | Active(_), Finished(_)) => Err("A game finishes with the players it started with".to_string()),
-            (Active(_), Active(_)) => Err("A game's players are set when it starts".to_string()),
+        match (&self.status, update) {
+            (Open, Started(started)) => Ok(Active(MiniAppActive {
+                players: started.players,
+                waiting_for: started.waiting_for,
+            })),
+            (Active(active), Started(started)) if active.players == started.players => Ok(self.status.clone()),
+            (Active(_), Started(_)) => Err("The game has already started".to_string()),
+            (Active(active), Turn(turn)) => Ok(Active(MiniAppActive {
+                players: active.players.clone(),
+                waiting_for: turn.waiting_for,
+            })),
+            (Open, Turn(_)) => Err("The game hasn't started".to_string()),
+            (Open, Ended(ended)) => Ok(Finished(MiniAppFinished {
+                players: Vec::new(),
+                result: ended.result,
+            })),
+            (Active(active), Ended(ended)) => Ok(Finished(MiniAppFinished {
+                players: active.players.clone(),
+                result: ended.result,
+            })),
+            (Finished(finished), Ended(ended)) if finished.result == ended.result => Ok(self.status.clone()),
             (Finished(_), _) => Err("A finished game's card can't be changed".to_string()),
-            (_, Open) => Err("A game's status only moves forward".to_string()),
         }
     }
 }

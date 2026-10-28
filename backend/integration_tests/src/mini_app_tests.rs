@@ -18,8 +18,9 @@ use types::{
     CLAIM_TYPE_MINI_APP_BOT, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_CONNECTION, CLAIM_TYPE_MINI_APP_REGISTRATION,
     CanisterId, ChannelId, Chat, ChatEvent, ChatPermission, CommunityId, Empty, EventIndex, MessageContent,
     MessageContentInitial, MessageId, MessageIndex, MessagePermission, MiniAppActive, MiniAppBotClaims, MiniAppChatClaims,
-    MiniAppConnectionClaims, MiniAppContent, MiniAppFinished, MiniAppGame, MiniAppImage, MiniAppRegistrationClaims,
-    MiniAppStatus, SuccessOnly, UnitResult, UserId,
+    MiniAppConnectionClaims, MiniAppContent, MiniAppEnded, MiniAppFinished, MiniAppGame, MiniAppImage,
+    MiniAppRegistrationClaims, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, SuccessOnly, UnitResult,
+    UserId,
 };
 
 #[test]
@@ -248,7 +249,7 @@ fn a_card_is_posted_open() {
         Chat::Channel(community_id, channel_id),
         random_from_u128(),
         MiniAppContent {
-            status: active(vec![member.user_id]),
+            status: active(vec![member.user_id], Vec::new()),
             ..card()
         },
     );
@@ -258,11 +259,11 @@ fn a_card_is_posted_open() {
     );
 }
 
-// The game starts with its players, then finishes with them and its result. The message isn't marked
-// as edited, its status only moves forward, its players are set when it starts, and once it's finished
-// the card never changes, though the service can retry a write.
+// The game starts with its players, its turns pass between them, then it ends with them and its result.
+// The message isn't marked as edited, the game starts once, and once it's finished the card never
+// changes, though the service can retry a write.
 #[test]
-fn the_mini_app_service_starts_then_finishes_a_cards_game() {
+fn the_mini_app_service_starts_a_game_then_ends_it() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -294,8 +295,9 @@ fn the_mini_app_service_starts_then_finishes_a_cards_game() {
         panic!("'bot_send_message' error: {response:?}");
     };
 
-    let write =
-        |env: &mut PocketIc, status: MiniAppStatus| write_card(env, service, local_user_index, chat, None, message_id, status);
+    let write = |env: &mut PocketIc, update: MiniAppStatusUpdate| {
+        write_card(env, service, local_user_index, chat, None, message_id, update)
+    };
     let read = |env: &PocketIc| {
         let events =
             client::community::happy_path::events_by_index(env, &member, community_id, channel_id, vec![sent.event_index]);
@@ -310,32 +312,40 @@ fn the_mini_app_service_starts_then_finishes_a_cards_game() {
     };
     let players = vec![member.user_id, owner.user_id];
 
-    let response = write(env, active(players.clone()));
+    let response = write(env, started(players.clone(), vec![member.user_id]));
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     let card = read(env);
-    assert_eq!(card.status, active(players.clone()));
+    assert_eq!(card.status, active(players.clone(), vec![member.user_id]));
     assert_eq!(card.max_players, Some(4));
     assert_eq!(card.text, self::card().text);
 
-    for status in [MiniAppStatus::Open, active(vec![member.user_id])] {
-        let response = write(env, status);
-        assert!(
-            matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
-            "Expected InvalidRequest: {response:?}"
-        );
-    }
-    assert_eq!(read(env).status, active(players.clone()));
+    let response = write(env, turn(vec![owner.user_id]));
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    assert_eq!(read(env).status, active(players.clone(), vec![owner.user_id]));
 
-    let response = write(env, finished(players.clone(), Some("Bob won")));
+    let response = write(env, started(vec![member.user_id], Vec::new()));
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "Expected the game not to start again: {response:?}"
+    );
+    let outsider = client::register_user(env, canister_ids);
+    let response = write(env, turn(vec![outsider.user_id]));
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent)),
+        "Expected only players to be waited for: {response:?}"
+    );
+    assert_eq!(read(env).status, active(players.clone(), vec![owner.user_id]));
+
+    let response = write(env, ended(Some("Bob won")));
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     assert_eq!(read(env).status, finished(players.clone(), Some("Bob won")));
 
-    let response = write(env, finished(players.clone(), Some("Alice won")));
+    let response = write(env, ended(Some("Alice won")));
     assert!(
         matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "Expected the finished card not to change: {response:?}"
     );
-    let response = write(env, finished(players.clone(), Some("Bob won")));
+    let response = write(env, ended(Some("Bob won")));
     assert!(
         matches!(response, UnitResult::Success),
         "Expected a retry to succeed: {response:?}"
@@ -376,13 +386,17 @@ fn only_the_mini_app_service_writes_a_card() {
     let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
         panic!("'bot_send_message' error: {response:?}");
     };
-    // Once the LocalUserIndex knows the service, so the refusals below aren't for want of one
-    let response = write_card(env, service, local_user_index, chat, None, message_id, MiniAppStatus::Open);
-    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    // Once the LocalUserIndex knows the service, so the refusals below aren't for want of one. A turn
+    // before the game's started is refused, but by the card, not the LocalUserIndex.
+    let response = write_card(env, service, local_user_index, chat, None, message_id, turn(Vec::new()));
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{response:?}"
+    );
 
-    let status = active(vec![member.user_id]);
+    let update = started(vec![member.user_id], Vec::new());
     for caller in [bot_principal, owner.principal, member.principal] {
-        let error = call_update_mini_app(env, caller, local_user_index, chat, None, message_id, status.clone()).unwrap_err();
+        let error = call_update_mini_app(env, caller, local_user_index, chat, None, message_id, update.clone()).unwrap_err();
         assert_eq!(error.error_code, ErrorCode::CanisterRejectedMessage, "{error:?}");
     }
     let card = client::community::happy_path::events_by_index(env, &member, community_id, channel_id, vec![sent.event_index]);
@@ -481,7 +495,7 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
             chat,
             thread,
             message_id,
-            active(vec![owner.user_id, member.user_id]),
+            started(vec![owner.user_id, member.user_id], Vec::new()),
         )
     };
 
@@ -522,7 +536,7 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
             _ => None,
         })
         .unwrap();
-    assert_eq!(card.status, active(vec![owner.user_id, member.user_id]));
+    assert_eq!(card.status, active(vec![owner.user_id, member.user_id], Vec::new()));
 
     client::group::happy_path::delete_messages(env, owner.principal, group_id, thread, vec![message_id]);
     let response = write(env, message_id);
@@ -545,15 +559,7 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
     );
 
     // Then writes the game as finished, so its card doesn't look like it's still being played
-    let response = write_card(
-        env,
-        service,
-        local_user_index,
-        chat,
-        thread,
-        other_message_id,
-        finished(Vec::new(), None),
-    );
+    let response = write_card(env, service, local_user_index, chat, thread, other_message_id, ended(None));
     assert!(matches!(response, UnitResult::Success), "{response:?}");
 }
 
@@ -966,13 +972,27 @@ fn card() -> MiniAppContent {
     }
 }
 
-fn active(players: Vec<UserId>) -> MiniAppStatus {
-    MiniAppStatus::Active(MiniAppActive { players })
+fn active(players: Vec<UserId>, waiting_for: Vec<UserId>) -> MiniAppStatus {
+    MiniAppStatus::Active(MiniAppActive { players, waiting_for })
 }
 
 fn finished(players: Vec<UserId>, result: Option<&str>) -> MiniAppStatus {
     MiniAppStatus::Finished(MiniAppFinished {
         players,
+        result: result.map(|r| r.to_string()),
+    })
+}
+
+fn started(players: Vec<UserId>, waiting_for: Vec<UserId>) -> MiniAppStatusUpdate {
+    MiniAppStatusUpdate::Started(MiniAppStarted { players, waiting_for })
+}
+
+fn turn(waiting_for: Vec<UserId>) -> MiniAppStatusUpdate {
+    MiniAppStatusUpdate::Turn(MiniAppTurn { waiting_for })
+}
+
+fn ended(result: Option<&str>) -> MiniAppStatusUpdate {
+    MiniAppStatusUpdate::Ended(MiniAppEnded {
         result: result.map(|r| r.to_string()),
     })
 }
@@ -991,7 +1011,7 @@ fn set_mini_app_service(env: &mut PocketIc, canister_ids: &crate::CanisterIds, c
     service
 }
 
-// The MiniApp service writing a card's status, once the LocalUserIndex has learned its principal from
+// The MiniApp service updating a card's status, once the LocalUserIndex has learned its principal from
 // the UserIndex, which takes a few rounds after it's set
 fn write_card(
     env: &mut PocketIc,
@@ -1000,10 +1020,10 @@ fn write_card(
     chat: Chat,
     thread: Option<MessageIndex>,
     message_id: MessageId,
-    status: MiniAppStatus,
+    update: MiniAppStatusUpdate,
 ) -> UnitResult {
     for _ in 0..20 {
-        match call_update_mini_app(env, service, local_user_index, chat, thread, message_id, status.clone()) {
+        match call_update_mini_app(env, service, local_user_index, chat, thread, message_id, update.clone()) {
             Ok(response) => return response,
             Err(error) if error.error_code == ErrorCode::CanisterRejectedMessage => {
                 env.advance_time(Duration::from_millis(100));
@@ -1024,13 +1044,13 @@ fn call_update_mini_app(
     chat: Chat,
     thread: Option<MessageIndex>,
     message_id: MessageId,
-    status: MiniAppStatus,
+    update: MiniAppStatusUpdate,
 ) -> Result<UnitResult, RejectResponse> {
     let args = local_user_index_canister::update_mini_app::Args {
         chat,
         thread,
         message_id,
-        status,
+        update,
     };
     env.update_call(
         local_user_index,
