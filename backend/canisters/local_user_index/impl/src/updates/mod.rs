@@ -52,4 +52,5 @@ pub mod set_call_push_enabled;
 pub mod set_daily_puzzle_canister_id;
 pub mod submit_media_scan_verdicts;
 pub mod uninstall_bot;
+pub mod update_mini_app;
 pub mod video_call_declined;

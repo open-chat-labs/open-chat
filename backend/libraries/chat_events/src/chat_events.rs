@@ -26,12 +26,12 @@ use types::{
     DiamondMembershipStatus, DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention,
     Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
-    MessageTippedEventPayload, Milliseconds, ModerationCategories, ModerationReportStatus, MultiUserChat, OCResult, OgPreview,
-    OptionUpdate, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus,
-    PendingCryptoTransaction, PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload,
-    RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips,
-    UserId, UserIdAndPrincipal, UserType, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence,
-    VoteOperation, is_default,
+    MessageTippedEventPayload, Milliseconds, MiniAppStatusUpdate, ModerationCategories, ModerationReportStatus, MultiUserChat,
+    OCResult, OgPreview, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent,
+    P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction,
+    ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis,
+    TimestampNanos, Timestamped, Tips, UserId, UserIdAndPrincipal, UserType, VideoCall, VideoCallEndedEventPayload,
+    VideoCallParticipants, VideoCallPresence, VoteOperation, is_default,
 };
 
 // The patchable fields of a moderation-report card; each is applied when present so that
@@ -888,6 +888,38 @@ impl ChatEvents {
         let sender = message.sender;
 
         Ok((content, sender))
+    }
+
+    // The MiniApp service updating a card's status: the game starting with its players, whose turn it
+    // is, then its finishing with its result. The rest of the card never changes, and nor does any of
+    // it once the game is finished. Unlike an edit, the message isn't marked as edited.
+    pub fn update_mini_app(&mut self, args: UpdateMiniAppArgs) -> OCResult {
+        match self.update_message(
+            args.thread_root_message_index,
+            args.message_id.into(),
+            EventIndex::default(),
+            args.now,
+            true,
+            ChatEventType::MessageOther,
+            |message, _| Self::update_mini_app_inner(message, args.update),
+        ) {
+            Ok(_) => Ok(()),
+            Err(UpdateEventError::NoChange(error)) => Err(error),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
+        }
+    }
+
+    fn update_mini_app_inner(
+        message: &mut MessageInternal,
+        update: MiniAppStatusUpdate,
+    ) -> Result<(), UpdateEventError<OCError>> {
+        if message.deleted_by.is_some() {
+            return Err(UpdateEventError::NotFound);
+        }
+        let MessageContentInternal::MiniApp(card) = &mut message.content else {
+            return Err(UpdateEventError::NoChange(OCErrorCode::InvalidMessageType.into()));
+        };
+        card.update(update).map_err(UpdateEventError::NoChange)
     }
 
     pub fn register_poll_vote(
@@ -3189,6 +3221,13 @@ pub struct EditMessageArgs {
     pub text: Option<String>,
     pub block_level_markdown: Option<bool>,
     pub og_previews: Vec<OgPreview>,
+    pub now: TimestampMillis,
+}
+
+pub struct UpdateMiniAppArgs {
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+    pub update: MiniAppStatusUpdate,
     pub now: TimestampMillis,
 }
 

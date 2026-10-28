@@ -9,12 +9,13 @@ use types::{
     AudioContent, AuthorityReportState, BlobReference, CallParticipant, CanisterId, Chat, CompletedCryptoTransaction,
     CryptoContent, CryptoTransaction, CustomContent, DeletedBy, EncryptedContent, EncryptedMessageContentType,
     FailedCryptoTransaction, FileContent, GiphyContent, GiphyImageVariant, ImageContent, MediaScanMatch, MediaScanProvider,
-    MessageContent, MessageReminderContent, MessageReminderCreatedContent, MessageReport, ModerationReportContent,
-    ModerationReportResolution, ModerationReportStatus, NnsProposal, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted,
-    P2PSwapContent, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollVotes,
-    PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent, PrizeWinnerContent, Proposal,
-    ProposalContent, ProposalDecisionStatus, ProposalRewardStatus, ReportedMessage, SnsProposal, Tally, TextContent,
-    ThumbnailData, TokenInfo, TotalVotes, UserId, VideoCallContent, VideoCallType, VideoContent, certified, icrc1, icrc2, nns,
+    MessageContent, MessageReminderContent, MessageReminderCreatedContent, MessageReport, MiniAppActive, MiniAppContent,
+    MiniAppFinished, MiniAppImage, MiniAppStatus, ModerationReportContent, ModerationReportResolution, ModerationReportStatus,
+    NnsProposal, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapReserved, P2PSwapStatus,
+    PendingCryptoTransaction, PollConfig, PollContent, PollVotes, PriceChartContent, PriceChartSeries, PriceChartSource,
+    PriceChartToken, PrizeContent, PrizeWinnerContent, Proposal, ProposalContent, ProposalDecisionStatus, ProposalRewardStatus,
+    ReportedMessage, SnsProposal, Tally, TextContent, ThumbnailData, TokenInfo, TotalVotes, UserId, VideoCallContent,
+    VideoCallType, VideoContent, certified, icrc1, icrc2, nns,
 };
 
 /// One value of every kind of content OpenChat sends bots, and of every variant within them, with
@@ -113,6 +114,38 @@ pub fn message_contents() -> Vec<MessageContent> {
             }],
         }),
     ];
+
+    contents.extend(
+        every(vec![
+            MiniAppStatus::Open,
+            MiniAppStatus::Active(MiniAppActive {
+                players: vec![user_id(1), user_id(2)],
+                waiting_for: vec![user_id(2)],
+            }),
+            MiniAppStatus::Finished(MiniAppFinished {
+                players: vec![user_id(1), user_id(2)],
+                result: Some("Bob won".to_string()),
+            }),
+        ])
+        .into_iter()
+        .map(|status| {
+            MessageContent::MiniApp(MiniAppContent {
+                text: "**Uno** · 2 to 4 players".to_string(),
+                image: Some(MiniAppImage {
+                    width: max(),
+                    height: max(),
+                    mime_type: "image/png".to_string(),
+                    blob_reference: BlobReference {
+                        canister_id: Principal::from_slice(&[1]),
+                        blob_id: max(),
+                    },
+                }),
+                max_players: Some(max()),
+                spectators: true,
+                status,
+            })
+        }),
+    );
 
     contents.extend(total_votes().into_iter().map(|total| {
         MessageContent::Poll(PollContent {

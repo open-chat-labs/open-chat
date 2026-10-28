@@ -105,7 +105,8 @@ impl GroupRoleInternal {
         };
 
         let sender_role = match message_type {
-            MessageContentType::Text => ps.text.unwrap_or(ps.default),
+            // a mini app's card is text with an Open button
+            MessageContentType::Text | MessageContentType::MiniApp => ps.text.unwrap_or(ps.default),
             // a price chart is a picture
             MessageContentType::Image | MessageContentType::PriceChart => ps.image.unwrap_or(ps.default),
             MessageContentType::Video => ps.video.unwrap_or(ps.default),
@@ -230,6 +231,8 @@ impl GroupRoleInternal {
             (role_permissions.poll, MessagePermission::Poll),
             (role_permissions.prize, MessagePermission::Prize),
             (role_permissions.text, MessagePermission::Text),
+            // a member who can post text can have a bot post a mini app's card for them
+            (role_permissions.text, MessagePermission::MiniApp),
             (role_permissions.video, MessagePermission::Video),
         ];
 
@@ -239,5 +242,38 @@ impl GroupRoleInternal {
             .into_iter()
             .filter_map(|(orp, p)| orp.map_or(default_permitted, |rp| self.is_permitted(rp)).then_some(p))
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn text_by(role: GroupPermissionRole) -> GroupPermissions {
+        GroupPermissions {
+            message_permissions: MessagePermissions {
+                text: Some(role),
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+    }
+
+    // A member's command can answer with a bot's mini app card exactly when they can post text
+    #[test]
+    fn a_member_who_can_post_text_can_have_a_bot_post_a_mini_app() {
+        for (role, can) in [(GroupPermissionRole::Members, true), (GroupPermissionRole::Admins, false)] {
+            let permissions = text_by(role);
+            let member = GroupRoleInternal::Member;
+
+            assert_eq!(
+                member
+                    .message_permissions(&permissions.message_permissions)
+                    .contains(&MessagePermission::MiniApp),
+                can
+            );
+            assert_eq!(member.can_send_message(MessageContentType::MiniApp, false, &permissions), can);
+            assert!(GroupRoleInternal::Admin.can_send_message(MessageContentType::MiniApp, false, &permissions));
+        }
     }
 }

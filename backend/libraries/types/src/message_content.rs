@@ -8,7 +8,7 @@ use candid::CandidType;
 use oc_error_codes::{OCError, OCErrorCode};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_bytes::ByteBuf;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Display, Formatter};
 use ts_export::ts_export;
 
@@ -35,6 +35,7 @@ pub enum MessageContentInitial {
     Encrypted(EncryptedContent),
     Custom(CustomContent),
     PriceChart(PriceChartContent),
+    MiniApp(MiniAppContent),
 }
 
 #[ts_export]
@@ -61,6 +62,7 @@ pub enum MessageContent {
     Encrypted(EncryptedContent),
     Custom(CustomContent),
     PriceChart(PriceChartContent),
+    MiniApp(MiniAppContent),
 }
 
 #[ts_export]
@@ -85,6 +87,7 @@ pub enum MessageContentType {
     P2PSwap,
     VideoCall,
     PriceChart,
+    MiniApp,
     Custom(String),
 }
 
@@ -128,6 +131,7 @@ pub enum ContentValidationError {
     PrizeEndDateInThePast,
     Unauthorized,
     InvalidPriceChart(String),
+    InvalidMiniApp(String),
 }
 
 impl From<ContentValidationError> for OCError {
@@ -162,6 +166,11 @@ impl MessageContent {
             MessageContent::File(f) => {
                 if let Some(br) = f.blob_reference.clone() {
                     references.push(br);
+                }
+            }
+            MessageContent::MiniApp(m) => {
+                if let Some(image) = &m.image {
+                    references.push(image.blob_reference.clone());
                 }
             }
             MessageContent::Text(_)
@@ -200,6 +209,7 @@ impl MessageContent {
             MessageContent::Prize(p) => p.caption.as_deref(),
             MessageContent::P2PSwap(p) => p.caption.as_deref(),
             MessageContent::PriceChart(c) => Some(c.title.as_str()),
+            MessageContent::MiniApp(c) => Some(c.text.as_str()),
             MessageContent::Deleted(_)
             | MessageContent::PrizeWinner(_)
             | MessageContent::MessageReminderCreated(_)
@@ -244,6 +254,14 @@ impl MessageContent {
                 }
                 input.text = Some(text);
             }
+            MessageContent::MiniApp(m) => {
+                if let Some(image) = &m.image {
+                    input.image_urls.push(image.blob_reference.url());
+                }
+                if let Some(result) = m.status.result() {
+                    input.text = Some(format!("{}\n{result}", input.text.unwrap_or_default()));
+                }
+            }
             _ => {}
         }
 
@@ -284,6 +302,16 @@ impl MessageContent {
                 .map(|blob_reference| crate::MediaScanBlob {
                     blob_reference,
                     mime_type: "image/*".to_string(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            MessageContent::MiniApp(m) => m
+                .image
+                .as_ref()
+                .map(|image| crate::MediaScanBlob {
+                    blob_reference: image.blob_reference.clone(),
+                    mime_type: image.mime_type.clone(),
                     frame_index: None,
                 })
                 .into_iter()
@@ -331,7 +359,8 @@ impl MessageContent {
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
             | MessageContent::Custom(_)
-            | MessageContent::PriceChart(_) => None,
+            | MessageContent::PriceChart(_)
+            | MessageContent::MiniApp(_) => None,
         }
     }
 
@@ -357,7 +386,8 @@ impl MessageContent {
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
             | MessageContent::Custom(_)
-            | MessageContent::PriceChart(_) => None,
+            | MessageContent::PriceChart(_)
+            | MessageContent::MiniApp(_) => None,
         }
     }
 
@@ -404,6 +434,7 @@ impl MessageContentInitial {
             MessageContentInitial::MessageReminder(r) => r.notes.as_deref(),
             MessageContentInitial::P2PSwap(p) => p.caption.as_deref(),
             MessageContentInitial::PriceChart(c) => Some(c.title.as_str()),
+            MessageContentInitial::MiniApp(c) => Some(c.text.as_str()),
             MessageContentInitial::Encrypted(_) | MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
         }
     }
@@ -447,6 +478,7 @@ impl From<&MessageContentInitial> for MessagePermission {
             MessageContentInitial::P2PSwap(_) => MessagePermission::P2pSwap,
             // a chart is a picture
             MessageContentInitial::PriceChart(_) => MessagePermission::Image,
+            MessageContentInitial::MiniApp(_) => MessagePermission::MiniApp,
             _ => unreachable!(),
         }
     }
@@ -475,6 +507,7 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::Encrypted(e) => MessageContentInitial::Encrypted(e),
             MessageContent::Custom(c) => MessageContentInitial::Custom(c),
             MessageContent::PriceChart(c) => MessageContentInitial::PriceChart(c),
+            MessageContent::MiniApp(c) => MessageContentInitial::MiniApp(c),
             MessageContent::P2PSwap(_) | MessageContent::VideoCall(_) => unimplemented!(),
         }
     }
@@ -517,6 +550,7 @@ impl From<MessageContentInitial> for MessageContent {
             MessageContentInitial::Encrypted(e) => MessageContent::Encrypted(e),
             MessageContentInitial::Custom(c) => MessageContent::Custom(c),
             MessageContentInitial::PriceChart(c) => MessageContent::PriceChart(c),
+            MessageContentInitial::MiniApp(c) => MessageContent::MiniApp(c),
             MessageContentInitial::P2PSwap(_) => unimplemented!(),
         }
     }
@@ -543,7 +577,7 @@ impl MessageContentType {
             MessageContentType::ModerationReport => None,
             MessageContentType::P2PSwap => Some(Achievement::SentP2PSwapOffer),
             MessageContentType::VideoCall => Some(Achievement::StartedCall),
-            MessageContentType::PriceChart => None,
+            MessageContentType::PriceChart | MessageContentType::MiniApp => None,
             MessageContentType::Custom(c) => {
                 if c == "meme_fighter" {
                     Some(Achievement::SentMeme)
@@ -577,6 +611,7 @@ impl Display for MessageContentType {
             MessageContentType::P2PSwap => "P2PSwap",
             MessageContentType::VideoCall => "VideoCall",
             MessageContentType::PriceChart => "PriceChart",
+            MessageContentType::MiniApp => "MiniApp",
             MessageContentType::Custom(c) => c,
         };
 
@@ -608,6 +643,7 @@ impl From<&MessageContent> for MessageContentType {
             MessageContent::Encrypted(e) => e.content_type.clone().into(),
             MessageContent::Custom(c) => MessageContentType::Custom(c.kind.clone()),
             MessageContent::PriceChart(_) => MessageContentType::PriceChart,
+            MessageContent::MiniApp(_) => MessageContentType::MiniApp,
         }
     }
 }
@@ -1085,6 +1121,201 @@ impl PriceChartContent {
             }
         }
         Ok(())
+    }
+}
+
+/// A bot's card for a game, or another app, it hosts. Its text, image, player limit and whether others
+/// can watch are set when it's posted and never change. Its status is written only by the MiniApp
+/// service (`update_mini_app` on the LocalUserIndex, with a `MiniAppStatusUpdate`): the players the
+/// game starts with, who joined through the service and were accepted by the bot, whose turn it is,
+/// and then its result. Who's joined so far, while the game's taking players, is shown live by the
+/// service. Everything else the app shows, its board
+/// and buttons, is the bot's own page, which OpenChat opens from the card in a frame. Only a bot can
+/// send one, needing the MiniApp permission. It can't be forwarded, edited, or sent in a direct chat.
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MiniAppContent {
+    // markdown, eg. "**Uno** · 2 to 4 players": the message's text in notifications, previews and
+    // search
+    pub text: String,
+    // shown above the text, eg. the game's artwork
+    pub image: Option<MiniAppImage>,
+    // the most who can play, if there's a limit, so the card can show eg. "2 of 4"
+    pub max_players: Option<u32>,
+    // whether people who aren't playing can watch: members, and anyone who can see a public chat
+    pub spectators: bool,
+    pub status: MiniAppStatus,
+}
+
+/// An image the bot uploaded to OpenChat's storage, as for an image message, so it's scanned like one
+/// and deleted with the message
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MiniAppImage {
+    pub width: u32,
+    pub height: u32,
+    pub mime_type: String,
+    pub blob_reference: BlobReference,
+}
+
+// In the order a game goes through them, which it only ever moves forward through
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+pub enum MiniAppStatus {
+    // taking players
+    #[default]
+    Open,
+    // being played
+    Active(MiniAppActive),
+    // over, after which the card never changes
+    Finished(MiniAppFinished),
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppActive {
+    // who the game started with, in the order they joined
+    pub players: Vec<UserId>,
+    // the players whose turn it is, or no one in particular, eg. in a game without turns
+    pub waiting_for: Vec<UserId>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppFinished {
+    // who the game started with, or no one if it never started
+    pub players: Vec<UserId>,
+    // eg. "Bob won", or none if the game was abandoned
+    pub result: Option<String>,
+}
+
+/// What the MiniApp service writes to a card as its game goes on
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum MiniAppStatusUpdate {
+    // The game started, with its players
+    Started(MiniAppStarted),
+    // Whose turn it is now
+    Turn(MiniAppTurn),
+    // The game finished, with the players it started with, if it did
+    Ended(MiniAppEnded),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppStarted {
+    pub players: Vec<UserId>,
+    pub waiting_for: Vec<UserId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppTurn {
+    pub waiting_for: Vec<UserId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppEnded {
+    // eg. "Bob won", or none if the game was abandoned
+    pub result: Option<String>,
+}
+
+impl MiniAppStatus {
+    pub fn players(&self) -> &[UserId] {
+        match self {
+            MiniAppStatus::Open => &[],
+            MiniAppStatus::Active(active) => &active.players,
+            MiniAppStatus::Finished(finished) => &finished.players,
+        }
+    }
+
+    pub fn result(&self) -> Option<&str> {
+        match self {
+            MiniAppStatus::Finished(finished) => finished.result.as_deref(),
+            _ => None,
+        }
+    }
+}
+
+impl MiniAppContent {
+    pub const MAX_TEXT_CHARS: usize = 2_000;
+    pub const MAX_PLAYERS: usize = 100;
+    pub const MAX_RESULT_CHARS: usize = 200;
+
+    // A card as the bot posts it: open, as only the MiniApp service writes its status
+    pub fn validate_new(&self) -> Result<(), String> {
+        if self.status != MiniAppStatus::Open {
+            return Err("A game is posted open".to_string());
+        }
+        self.validate()
+    }
+
+    pub fn validate(&self) -> Result<(), String> {
+        check_chars("text", &self.text, Self::MAX_TEXT_CHARS)?;
+        if let Some(image) = &self.image {
+            if image.width == 0 || image.height == 0 {
+                return Err("The image must have a width and a height".to_string());
+            }
+            if !image.mime_type.starts_with("image/") {
+                return Err("The image's mime type must be an image's".to_string());
+            }
+        }
+        if self
+            .max_players
+            .is_some_and(|max| max == 0 || max as usize > Self::MAX_PLAYERS)
+        {
+            return Err(format!("A game has 1 to {} players at most", Self::MAX_PLAYERS));
+        }
+        let players = self.status.players();
+        let limit = self.max_players.map_or(Self::MAX_PLAYERS, |max| max as usize);
+        if players.len() > limit {
+            return Err(format!("This game has at most {limit} players"));
+        }
+        if players.iter().collect::<HashSet<_>>().len() < players.len() {
+            return Err("A player is listed twice".to_string());
+        }
+        if let MiniAppStatus::Active(active) = &self.status {
+            if active.waiting_for.iter().any(|user_id| !players.contains(user_id)) {
+                return Err("Only players can be waited for".to_string());
+            }
+            if active.waiting_for.iter().collect::<HashSet<_>>().len() < active.waiting_for.len() {
+                return Err("A player is waited for twice".to_string());
+            }
+        }
+        if let Some(result) = self.status.result() {
+            check_chars("result", result, Self::MAX_RESULT_CHARS)?;
+        }
+        Ok(())
+    }
+
+    // The status the MiniApp service's update leaves: a game starts with its players, its turns pass
+    // between them, and it ends with them and its result, or ends without starting. A finished game
+    // never changes. An update the card already reflects changes nothing, so the service can retry a
+    // write whose outcome it didn't learn.
+    pub fn next_status(&self, update: MiniAppStatusUpdate) -> Result<MiniAppStatus, String> {
+        use MiniAppStatus::*;
+        use MiniAppStatusUpdate::*;
+
+        match (&self.status, update) {
+            (Open, Started(started)) => Ok(Active(MiniAppActive {
+                players: started.players,
+                waiting_for: started.waiting_for,
+            })),
+            (Active(active), Started(started)) if active.players == started.players => Ok(self.status.clone()),
+            (Active(_), Started(_)) => Err("The game has already started".to_string()),
+            (Active(active), Turn(turn)) => Ok(Active(MiniAppActive {
+                players: active.players.clone(),
+                waiting_for: turn.waiting_for,
+            })),
+            (Open, Turn(_)) => Err("The game hasn't started".to_string()),
+            (Open, Ended(ended)) => Ok(Finished(MiniAppFinished {
+                players: Vec::new(),
+                result: ended.result,
+            })),
+            (Active(active), Ended(ended)) => Ok(Finished(MiniAppFinished {
+                players: active.players.clone(),
+                result: ended.result,
+            })),
+            (Finished(finished), Ended(ended)) if finished.result == ended.result => Ok(self.status.clone()),
+            (Finished(_), _) => Err("A finished game's card can't be changed".to_string()),
+        }
     }
 }
 

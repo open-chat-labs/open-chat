@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add MiniApp messages, which only bots post: a card for a bot's app, eg. a game, with an optional image, whose players, status and result the MiniApp service keeps up to date ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300))
+
 ### Changed
 
 - Let bots delete their own messages autonomously, without the DeleteMessages permission ([#10283](https://github.com/open-chat-labs/open-chat/pull/10283))

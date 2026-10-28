@@ -586,6 +586,7 @@ type MessageContentInitial = variant {
     Encrypted : EncryptedContent;
     Custom : CustomMessageContent;
     PriceChart : PriceChartContent;
+    MiniApp : MiniAppContent;
 };
 
 type MessageContent = variant {
@@ -609,6 +610,7 @@ type MessageContent = variant {
     Encrypted : EncryptedContent;
     Custom : CustomMessageContent;
     PriceChart : PriceChartContent;
+    MiniApp : MiniAppContent;
     ReportedMessage : ReportedMessage;
 };
 
@@ -1521,6 +1523,37 @@ type PriceChartSource = record {
     url : text;
 };
 
+type MiniAppContent = record {
+    text : text;
+    image : opt MiniAppImage;
+    max_players : opt nat32;
+    spectators : bool;
+    status : MiniAppStatus;
+};
+
+type MiniAppStatus = variant {
+    Open;
+    Active : MiniAppActive;
+    Finished : MiniAppFinished;
+};
+
+type MiniAppActive = record {
+    players : vec UserId;
+    waiting_for : vec UserId;
+};
+
+type MiniAppFinished = record {
+    players : vec UserId;
+    result : opt text;
+};
+
+type MiniAppImage = record {
+    width : nat32;
+    height : nat32;
+    mime_type : text;
+    blob_reference : BlobReference;
+};
+
 type EncryptedMessageContentType = variant {
     Text;
     Image;
@@ -2049,6 +2082,7 @@ type MessagePermission = variant {
     Prize;
     P2pSwap;
     VideoCall;
+    MiniApp;
 };
 
 type BotGroupConfig = record {

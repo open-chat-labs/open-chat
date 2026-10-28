@@ -26,6 +26,7 @@ pub mod c2c_local_index;
 pub mod c2c_send_message;
 pub mod c2c_unfreeze_community;
 pub mod c2c_uninstall_bot;
+pub mod c2c_update_mini_app;
 pub mod c2c_update_proposals;
 pub mod c2c_user_index;
 pub mod cancel_invites;

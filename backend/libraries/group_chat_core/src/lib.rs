@@ -3,7 +3,7 @@ use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageSuccess,
     DeleteUndeleteMessagesArgs, EventPusher, ExpiredThread, GroupGateUpdatedInternal, MessageContentInternal, MessageInternal,
     NullEventPusher, PushEventResultInternal, PushMessageArgs, Reader, RegisterPollVoteArgs, RegisterPollVoteSuccess,
-    RemoveEventsResult, ReservePrizeSuccess, TipMessageArgs, UndeleteMessageSuccess, UpdateMessageSuccess,
+    RemoveEventsResult, ReservePrizeSuccess, TipMessageArgs, UndeleteMessageSuccess, UpdateMessageSuccess, UpdateMiniAppArgs,
     UpdateUnfinalisedBotMessageArgs,
 };
 use group_community_common::MemberUpdate;
@@ -20,9 +20,9 @@ use types::{
     EventsResponse, ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions,
     GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
     MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentType, MessageId, MessageIndex,
-    MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult,
-    OgPreview, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, Reaction,
-    ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates, SenderContext, ThreadPreview, TimestampMillis,
+    MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MiniAppStatusUpdate,
+    MultiUserChat, OCResult, OgPreview, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged,
+    Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates, SenderContext, ThreadPreview, TimestampMillis,
     Timestamped, UpdatedRules, UserId, UserIdAndPrincipal, UserType, UsersBlocked, UsersInvited, Version, Versioned,
     VersionedRules, VideoCall, VideoCallPresence, VoteOperation, WebhookDetails,
 };
@@ -584,6 +584,14 @@ impl GroupChatCore {
         og_previews: Vec<OgPreview>,
         now: TimestampMillis,
     ) -> OCResult<SendMessageSuccess> {
+        if let MessageContentInternal::MiniApp(_) = &content {
+            // A card is sent whole, as it never changes but for its game's state, which the MiniApp
+            // service writes
+            if !finalised {
+                return Err(OCErrorCode::InvalidRequest.with_message("A mini app's card is sent finalised"));
+            }
+        }
+
         // If there is an existing message with the same message id then this is invalid unless
         // a bot is updating an unfinalised message
         if let Some((message, _)) =
@@ -1898,6 +1906,22 @@ impl GroupChatCore {
             true
         });
         Ok(())
+    }
+
+    // The MiniApp service updating a card's status (see `ChatEvents::update_mini_app`)
+    pub fn update_mini_app(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        update: MiniAppStatusUpdate,
+        now: TimestampMillis,
+    ) -> OCResult {
+        self.events.update_mini_app(UpdateMiniAppArgs {
+            thread_root_message_index,
+            message_id,
+            update,
+            now,
+        })
     }
 
     pub fn register_poll_vote(

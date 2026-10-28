@@ -16,14 +16,15 @@ use types::{
     FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
     ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
     MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
-    MessageReminderCreatedContent, MessageReport, Milliseconds, ModerationInput, ModerationReportContent, P2PSwapAccepted,
-    P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired,
-    P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes,
-    PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent, PrizeContentEventPayload,
-    PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal, ProposalContent, RegisterVoteResult,
-    ReportedMessage, ReportedMessageContentEventPayload, TextContent, TextContentEventPayload, ThumbnailData, TimestampMillis,
-    TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId, UserIdAndPrincipal, UserType, VideoCallContent,
-    VideoCallPresence, VideoContent, VoteOperation, is_default,
+    MessageReminderCreatedContent, MessageReport, Milliseconds, MiniAppContent, MiniAppImage, MiniAppStatus,
+    MiniAppStatusUpdate, ModerationInput, ModerationReportContent, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted,
+    P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
+    PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes, PriceChartContent, PriceChartSeries,
+    PriceChartSource, PriceChartToken, PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent,
+    PrizeWinnerContentEventPayload, Proposal, ProposalContent, RegisterVoteResult, ReportedMessage,
+    ReportedMessageContentEventPayload, TextContent, TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos,
+    TokenInfo, TotalVotes, TransactionHash, UserId, UserIdAndPrincipal, UserType, VideoCallContent, VideoCallPresence,
+    VideoContent, VoteOperation, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -70,6 +71,8 @@ pub enum MessageContentInternal {
     Custom(CustomContentInternal),
     #[serde(rename = "pc")]
     PriceChart(PriceChartContentInternal),
+    #[serde(rename = "ma")]
+    MiniApp(MiniAppContentInternal),
 }
 
 impl MessageContentInternal {
@@ -86,7 +89,9 @@ impl MessageContentInternal {
             let invalid_type_for_forwarding = contains_crypto_transfer
                 || matches!(
                     &content,
-                    MessageContentInitial::Poll(_) | MessageContentInitial::GovernanceProposal(_)
+                    MessageContentInitial::Poll(_)
+                        | MessageContentInitial::GovernanceProposal(_)
+                        | MessageContentInitial::MiniApp(_)
                 );
 
             if invalid_type_for_forwarding {
@@ -125,6 +130,16 @@ impl MessageContentInternal {
                     return ValidateNewMessageContentResult::Error(ContentValidationError::InvalidPriceChart(reason));
                 }
             }
+            MessageContentInitial::MiniApp(c) => {
+                // Only bots installed with the MiniApp permission post them (not the older bots which
+                // are members), and not in direct chats, whose members can't open the bot's app yet
+                if !matches!(sender_user_type, UserType::BotV2) || is_direct_chat {
+                    return ValidateNewMessageContentResult::Error(ContentValidationError::Unauthorized);
+                }
+                if let Err(reason) = c.validate_new() {
+                    return ValidateNewMessageContentResult::Error(ContentValidationError::InvalidMiniApp(reason));
+                }
+            }
             _ => {}
         };
 
@@ -145,7 +160,8 @@ impl MessageContentInternal {
             | MessageContentInitial::MessageReminder(_)
             | MessageContentInitial::P2PSwap(_)
             | MessageContentInitial::Custom(_)
-            | MessageContentInitial::PriceChart(_) => false,
+            | MessageContentInitial::PriceChart(_)
+            | MessageContentInitial::MiniApp(_) => false,
         };
 
         if is_empty {
@@ -222,6 +238,7 @@ impl MessageContentInternal {
             MessageContentInternal::Encrypted(e) => MessageContent::Encrypted(e.hydrate(my_user)),
             MessageContentInternal::Custom(c) => MessageContent::Custom(c.hydrate(my_user)),
             MessageContentInternal::PriceChart(c) => MessageContent::PriceChart(c.hydrate(my_user)),
+            MessageContentInternal::MiniApp(c) => MessageContent::MiniApp(c.hydrate(my_user)),
         }
     }
 
@@ -241,6 +258,7 @@ impl MessageContentInternal {
             MessageContentInternal::MessageReminder(r) => r.notes.as_deref(),
             MessageContentInternal::P2PSwap(p) => p.caption.as_deref(),
             MessageContentInternal::PriceChart(c) => Some(&c.title),
+            MessageContentInternal::MiniApp(c) => Some(&c.text),
             MessageContentInternal::PrizeWinner(_)
             | MessageContentInternal::Deleted(_)
             | MessageContentInternal::ReportedMessage(_)
@@ -304,6 +322,14 @@ impl MessageContentInternal {
                 }
                 input.text = Some(text);
             }
+            MessageContentInternal::MiniApp(m) => {
+                if let Some(image) = &m.image {
+                    input.image_urls.push(BlobReference::from(image.blob_reference.clone()).url());
+                }
+                if let Some(result) = m.status.result() {
+                    input.text = Some(format!("{}\n{result}", input.text.unwrap_or_default()));
+                }
+            }
             _ => {}
         }
 
@@ -352,6 +378,16 @@ impl MessageContentInternal {
                 })
                 .into_iter()
                 .collect(),
+            MessageContentInternal::MiniApp(m) => m
+                .image
+                .as_ref()
+                .map(|image| types::MediaScanBlob {
+                    blob_reference: image.blob_reference.clone().into(),
+                    mime_type: image.mime_type.clone(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
             _ => Vec::new(),
         }
     }
@@ -381,6 +417,11 @@ impl MessageContentInternal {
             MessageContentInternal::File(f) => {
                 if let Some(br) = f.blob_reference.clone() {
                     references.push(br.into());
+                }
+            }
+            MessageContentInternal::MiniApp(m) => {
+                if let Some(image) = &m.image {
+                    references.push(image.blob_reference.clone().into());
                 }
             }
             MessageContentInternal::Text(_)
@@ -496,6 +537,9 @@ impl MessageContentInternal {
             | MessageContentInternal::VideoCall(_)
             | MessageContentInternal::Custom(_)
             | MessageContentInternal::PriceChart(_) => MessageContentEventPayload::Empty,
+            MessageContentInternal::MiniApp(c) => MessageContentEventPayload::Text(TextContentEventPayload {
+                length: c.text.len() as u32,
+            }),
         }
     }
 
@@ -583,6 +627,9 @@ impl From<&MessageContentInternal> for Document {
                 for series in &c.series {
                     document.add_field(&series.symbol);
                 }
+            }
+            MessageContentInternal::MiniApp(c) => {
+                document.add_field(&c.text);
             }
             MessageContentInternal::ModerationReport(_)
             | MessageContentInternal::ReportedMessage(_)
@@ -2264,6 +2311,84 @@ impl MessageContentInternalSubtype for PriceChartContentInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MiniAppContentInternal {
+    #[serde(rename = "t")]
+    pub text: String,
+    #[serde(rename = "i", default, skip_serializing_if = "Option::is_none")]
+    pub image: Option<MiniAppImageInternal>,
+    #[serde(rename = "m", default, skip_serializing_if = "Option::is_none")]
+    pub max_players: Option<u32>,
+    #[serde(rename = "v", default, skip_serializing_if = "is_default")]
+    pub spectators: bool,
+    #[serde(rename = "s", default, skip_serializing_if = "is_default")]
+    pub status: MiniAppStatus,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MiniAppImageInternal {
+    #[serde(rename = "w")]
+    pub width: u32,
+    #[serde(rename = "h")]
+    pub height: u32,
+    #[serde(rename = "m")]
+    pub mime_type: String,
+    #[serde(rename = "b")]
+    pub blob_reference: BlobReferenceInternal,
+}
+
+impl From<MiniAppContent> for MiniAppContentInternal {
+    fn from(value: MiniAppContent) -> Self {
+        MiniAppContentInternal {
+            text: value.text,
+            image: value.image.map(|i| MiniAppImageInternal {
+                width: i.width,
+                height: i.height,
+                mime_type: i.mime_type,
+                blob_reference: i.blob_reference.into(),
+            }),
+            max_players: value.max_players,
+            spectators: value.spectators,
+            status: value.status,
+        }
+    }
+}
+
+impl MessageContentInternalSubtype for MiniAppContentInternal {
+    type ContentType = MiniAppContent;
+
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
+        MiniAppContent {
+            text: self.text,
+            image: self.image.map(|i| MiniAppImage {
+                width: i.width,
+                height: i.height,
+                mime_type: i.mime_type,
+                blob_reference: i.blob_reference.into(),
+            }),
+            max_players: self.max_players,
+            spectators: self.spectators,
+            status: self.status,
+        }
+    }
+}
+
+impl MiniAppContentInternal {
+    // Applies the MiniApp service's update, unless the game can't go that way (see
+    // `MiniAppContent::next_status`), or the card it leaves isn't valid
+    pub fn update(&mut self, update: MiniAppStatusUpdate) -> Result<(), OCError> {
+        let mut content = self.clone().hydrate(None);
+        content.status = content
+            .next_status(update)
+            .map_err(|reason| OCErrorCode::InvalidRequest.with_message(reason))?;
+        content
+            .validate()
+            .map_err(|reason| OCError::from(ContentValidationError::InvalidMiniApp(reason)))?;
+        *self = content.into();
+        Ok(())
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BlobReferenceInternal {
     #[serde(rename = "c", alias = "canister_id")]
     pub canister_id: CanisterId,
@@ -2306,6 +2431,7 @@ impl From<MessageContentInitial> for MessageContentInternal {
             MessageContentInitial::Encrypted(e) => MessageContentInternal::Encrypted(e.into()),
             MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c.into()),
             MessageContentInitial::PriceChart(c) => MessageContentInternal::PriceChart(c.into()),
+            MessageContentInitial::MiniApp(c) => MessageContentInternal::MiniApp(c.into()),
             MessageContentInitial::Crypto(c) => c
                 .try_into()
                 .map(MessageContentInternal::Crypto)
@@ -2341,6 +2467,7 @@ impl From<&MessageContentInternal> for MessageContentType {
             MessageContentInternal::Encrypted(e) => e.content_type.clone().into(),
             MessageContentInternal::Custom(c) => MessageContentType::Custom(c.kind.clone()),
             MessageContentInternal::PriceChart(_) => MessageContentType::PriceChart,
+            MessageContentInternal::MiniApp(_) => MessageContentType::MiniApp,
         }
     }
 }
@@ -2684,5 +2811,320 @@ mod with_text_tests {
             ended: false,
         });
         assert!(poll.with_text(Some("Which now?".to_string())).is_err());
+    }
+}
+
+#[cfg(test)]
+mod mini_app_tests {
+    use super::*;
+    use types::{MiniAppActive, MiniAppEnded, MiniAppFinished, MiniAppStarted, MiniAppTurn};
+
+    fn card(text: &str) -> MiniAppContent {
+        MiniAppContent {
+            text: text.to_string(),
+            image: None,
+            max_players: None,
+            spectators: false,
+            status: MiniAppStatus::Open,
+        }
+    }
+
+    fn user(n: u8) -> UserId {
+        Principal::from_slice(&[n]).into()
+    }
+
+    fn users(ns: &[u8]) -> Vec<UserId> {
+        ns.iter().map(|&n| user(n)).collect()
+    }
+
+    fn active(players: &[u8], waiting_for: &[u8]) -> MiniAppStatus {
+        MiniAppStatus::Active(MiniAppActive {
+            players: users(players),
+            waiting_for: users(waiting_for),
+        })
+    }
+
+    fn finished(players: &[u8], result: Option<&str>) -> MiniAppStatus {
+        MiniAppStatus::Finished(MiniAppFinished {
+            players: users(players),
+            result: result.map(|r| r.to_string()),
+        })
+    }
+
+    fn started(players: &[u8], waiting_for: &[u8]) -> MiniAppStatusUpdate {
+        MiniAppStatusUpdate::Started(MiniAppStarted {
+            players: users(players),
+            waiting_for: users(waiting_for),
+        })
+    }
+
+    fn turn(waiting_for: &[u8]) -> MiniAppStatusUpdate {
+        MiniAppStatusUpdate::Turn(MiniAppTurn {
+            waiting_for: users(waiting_for),
+        })
+    }
+
+    fn ended(result: Option<&str>) -> MiniAppStatusUpdate {
+        MiniAppStatusUpdate::Ended(MiniAppEnded {
+            result: result.map(|r| r.to_string()),
+        })
+    }
+
+    fn invalid(card: MiniAppContent) -> bool {
+        matches!(
+            validate(card, false, UserType::BotV2, false),
+            ValidateNewMessageContentResult::Error(ContentValidationError::InvalidMiniApp(_))
+        )
+    }
+
+    fn image(mime_type: &str, width: u32) -> MiniAppImage {
+        MiniAppImage {
+            width,
+            height: 300,
+            mime_type: mime_type.to_string(),
+            blob_reference: BlobReference {
+                canister_id: Principal::from_slice(&[1]),
+                blob_id: 7,
+            },
+        }
+    }
+
+    fn validate(
+        content: MiniAppContent,
+        is_direct_chat: bool,
+        sender: UserType,
+        forwarding: bool,
+    ) -> ValidateNewMessageContentResult {
+        MessageContentInternal::validate_new_message(
+            MessageContentInitial::MiniApp(content),
+            is_direct_chat,
+            sender,
+            forwarding,
+            0,
+        )
+    }
+
+    #[test]
+    fn a_bot_can_post_a_card() {
+        assert!(matches!(
+            validate(card("**Uno** · 2 to 4 players"), false, UserType::BotV2, false),
+            ValidateNewMessageContentResult::Success(MessageContentInternal::MiniApp(_))
+        ));
+    }
+
+    #[test]
+    fn only_bots_installed_in_a_chat_post_cards_and_not_in_direct_chats() {
+        for (is_direct_chat, sender) in [
+            (false, UserType::User),
+            (false, UserType::Bot),
+            (false, UserType::OcControlledBot),
+            (true, UserType::BotV2),
+        ] {
+            assert!(
+                matches!(
+                    validate(card("Uno"), is_direct_chat, sender, false),
+                    ValidateNewMessageContentResult::Error(ContentValidationError::Unauthorized)
+                ),
+                "{sender:?} in a direct chat: {is_direct_chat}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_card_cant_be_forwarded() {
+        assert!(matches!(
+            validate(card("Uno"), false, UserType::User, true),
+            ValidateNewMessageContentResult::Error(ContentValidationError::InvalidTypeForForwarding)
+        ));
+    }
+
+    #[test]
+    fn a_card_has_1_to_2000_characters() {
+        for text in [
+            String::new(),
+            "  ".to_string(),
+            "é".repeat(MiniAppContent::MAX_TEXT_CHARS + 1),
+        ] {
+            assert!(invalid(card(&text)));
+        }
+        assert!(!invalid(card(&"é".repeat(MiniAppContent::MAX_TEXT_CHARS))));
+    }
+
+    #[test]
+    fn a_cards_image_is_an_image_with_a_size() {
+        for image in [image("image/png", 0), image("text/html", 400)] {
+            assert!(invalid(MiniAppContent {
+                image: Some(image),
+                ..card("Uno")
+            }));
+        }
+    }
+
+    // As for an image message, so it's scanned like one, and deleted with the message
+    #[test]
+    fn a_cards_image_is_scanned_and_deleted_with_it() {
+        let content = MessageContentInternal::MiniApp(
+            MiniAppContent {
+                image: Some(image("image/png", 400)),
+                ..card("Uno")
+            }
+            .into(),
+        );
+
+        let scanned = content.scannable_blobs();
+        assert_eq!(scanned.len(), 1);
+        assert_eq!(scanned[0].blob_reference.blob_id, 7);
+        assert_eq!(scanned[0].mime_type, "image/png");
+        assert_eq!(
+            content.blob_references().iter().map(|b| b.blob_id).collect::<Vec<_>>(),
+            vec![7]
+        );
+    }
+
+    #[test]
+    fn a_game_has_1_to_100_players_at_most() {
+        for max_players in [0, MiniAppContent::MAX_PLAYERS as u32 + 1] {
+            assert!(invalid(MiniAppContent {
+                max_players: Some(max_players),
+                ..card("Uno")
+            }));
+        }
+        assert!(!invalid(MiniAppContent {
+            max_players: Some(4),
+            ..card("Uno")
+        }));
+    }
+
+    // Only the MiniApp service writes the status, as players join through it
+    #[test]
+    fn a_game_is_posted_open() {
+        for status in [active(&[1], &[1]), finished(&[], Some("Bob won"))] {
+            assert!(invalid(MiniAppContent { status, ..card("Uno") }));
+        }
+    }
+
+    #[test]
+    fn a_game_starts_with_its_players_takes_turns_then_ends_with_them() {
+        let mut stored: MiniAppContentInternal = MiniAppContent {
+            max_players: Some(4),
+            ..card("Uno")
+        }
+        .into();
+
+        stored.update(started(&[1, 2], &[1])).unwrap();
+        assert_eq!(stored.status, active(&[1, 2], &[1]));
+        assert_eq!(stored.max_players, Some(4));
+
+        stored.update(turn(&[2])).unwrap();
+        stored.update(turn(&[])).unwrap();
+        assert_eq!(stored.status, active(&[1, 2], &[]));
+
+        stored.update(ended(Some("Bob won"))).unwrap();
+        assert_eq!(stored.status, finished(&[1, 2], Some("Bob won")));
+    }
+
+    // Abandoned, or its bot uninstalled
+    #[test]
+    fn a_game_can_end_without_starting_or_a_result() {
+        let mut stored: MiniAppContentInternal = card("Uno").into();
+        assert!(stored.update(turn(&[1])).is_err());
+
+        stored.update(ended(None)).unwrap();
+        assert_eq!(stored.status, finished(&[], None));
+    }
+
+    #[test]
+    fn a_game_starts_once_and_only_waits_for_its_players() {
+        let mut stored: MiniAppContentInternal = MiniAppContent {
+            max_players: Some(2),
+            ..card("Uno")
+        }
+        .into();
+
+        for update in [
+            started(&[1, 2, 3], &[]),
+            started(&[1, 1], &[]),
+            started(&[1, 2], &[3]),
+            started(&[1, 2], &[1, 1]),
+        ] {
+            assert!(stored.update(update.clone()).is_err(), "{update:?}");
+            assert_eq!(stored.status, MiniAppStatus::Open);
+        }
+
+        stored.update(started(&[1, 2], &[1])).unwrap();
+        assert!(stored.update(started(&[1], &[1])).is_err());
+        assert!(stored.update(turn(&[3])).is_err());
+        assert_eq!(stored.status, active(&[1, 2], &[1]));
+    }
+
+    // A finished game's card never changes, but the service can retry the write which started it, or
+    // ended it, having not learned whether it went through
+    #[test]
+    fn a_finished_card_never_changes_but_a_write_can_be_retried() {
+        let mut stored: MiniAppContentInternal = card("Uno").into();
+        stored.update(started(&[1, 2], &[1])).unwrap();
+        stored.update(turn(&[2])).unwrap();
+        stored.update(started(&[1, 2], &[1])).unwrap();
+        assert_eq!(stored.status, active(&[1, 2], &[2]));
+
+        stored.update(ended(Some("Bob won"))).unwrap();
+        for update in [started(&[1, 2], &[1]), turn(&[1]), ended(Some("Alice won")), ended(None)] {
+            assert!(stored.update(update.clone()).is_err(), "{update:?}");
+        }
+        stored.update(ended(Some("Bob won"))).unwrap();
+        assert_eq!(stored.status, finished(&[1, 2], Some("Bob won")));
+    }
+
+    #[test]
+    fn a_result_has_1_to_200_characters() {
+        for result in [" ".to_string(), "x".repeat(MiniAppContent::MAX_RESULT_CHARS + 1)] {
+            let mut stored: MiniAppContentInternal = card("Uno").into();
+            assert!(stored.update(ended(Some(&result))).is_err());
+            assert_eq!(stored.status, MiniAppStatus::Open);
+        }
+    }
+
+    #[test]
+    fn a_card_cant_be_edited() {
+        let content = MessageContentInternal::MiniApp(card("Uno").into());
+        assert!(content.with_text(Some("Ludo".to_string())).is_err());
+    }
+
+    #[test]
+    fn a_card_is_stored_and_read_back_unchanged() {
+        for image in [None, Some(image("image/png", 400))] {
+            let mut stored: MiniAppContentInternal = MiniAppContent {
+                image: image.clone(),
+                max_players: Some(4),
+                spectators: true,
+                ..card("**Uno**")
+            }
+            .into();
+            stored.update(started(&[1, 2], &[2])).unwrap();
+            let content = MessageContentInternal::MiniApp(stored);
+            let bytes = msgpack::serialize_then_unwrap(&content);
+            let read: MessageContentInternal = msgpack::deserialize_then_unwrap(&bytes);
+
+            let MessageContent::MiniApp(read) = read.clone().hydrate(None) else {
+                panic!("Expected a mini app: {read:?}");
+            };
+            assert_eq!(read.text, "**Uno**");
+            assert_eq!(
+                read.image.map(|i| (i.width, i.height, i.mime_type, i.blob_reference.blob_id)),
+                image.map(|i| (i.width, i.height, i.mime_type, i.blob_reference.blob_id))
+            );
+            assert_eq!(read.max_players, Some(4));
+            assert!(read.spectators);
+            assert_eq!(read.status, active(&[1, 2], &[2]));
+        }
+    }
+
+    // A result is moderated with the card's text
+    #[test]
+    fn a_result_is_moderated_with_the_text() {
+        let mut stored: MiniAppContentInternal = card("Uno").into();
+        stored.update(ended(Some("Bob won"))).unwrap();
+        let input = MessageContentInternal::MiniApp(stored).moderation_input();
+        assert_eq!(input.text.as_deref(), Some("Uno\nBob won"));
     }
 }
