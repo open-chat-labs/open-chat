@@ -19,8 +19,8 @@ import type {
     BotActionScope,
     BotChatPermission,
     BotCommunityPermission,
+    BotMessagePermission,
     MemberRole,
-    MessagePermission,
 } from "./permission";
 import type { BotMatch } from "./search/search";
 import type { Level } from "./structure";
@@ -261,7 +261,7 @@ function mergePermissions(
 export type ExternalBotPermissionsSet = {
     chatPermissions: Set<BotChatPermission>;
     communityPermissions: Set<BotCommunityPermission>;
-    messagePermissions: Set<MessagePermission>;
+    messagePermissions: Set<BotMessagePermission>;
 };
 
 export function setifyCommandPermissions(perm: ExternalBotPermissions): ExternalBotPermissionsSet {
@@ -297,7 +297,7 @@ export function hasEveryRequiredPermission(
 export type ExternalBotPermissions = {
     chatPermissions: BotChatPermission[];
     communityPermissions: BotCommunityPermission[];
-    messagePermissions: MessagePermission[];
+    messagePermissions: BotMessagePermission[];
 };
 
 export type GrantedBotPermissions = {
@@ -806,6 +806,21 @@ export type BotCommandInternalError = {
 export type BotCommandSuccess = {
     kind: "success";
     message?: BotResponseMessage;
+};
+
+// What a bot answered when a MiniApp message's button was pressed
+export type BotActionResponse =
+    | BotActionSuccess
+    | BotCommandBadRequest
+    | BotCommandTooManyRequests
+    | BotCommandInternalError
+    // OpenChat wouldn't vouch for the press, eg. the user isn't a member, or the bot's gone
+    | { kind: "not_authorized" };
+
+export type BotActionSuccess = {
+    kind: "success";
+    // shown only to whoever pressed the button
+    reply?: { messageContent: MessageContent; blockLevelMarkdown: boolean };
 };
 
 export type BotResponseMessage = {

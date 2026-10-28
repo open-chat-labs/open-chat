@@ -455,6 +455,11 @@
             "people": "人们",
             "webhooks": "Webhook"
         },
+        "miniApp": {
+            "failed": "无法连接到机器人。请重试。",
+            "notAuthorized": "你无法使用此消息的按钮。你可能需要先加入聊天。",
+            "tooManyRequests": "机器人正忙。请稍候再试。"
+        },
         "poll": {
             "desc": "在当前聊天中创建投票"
         },
@@ -1768,11 +1773,13 @@
             "giphy": "发送 gif 消息",
             "image": "发送图像消息",
             "memeFighter": "发送 Meme Fighter 消息",
+            "miniApp": "发送带按钮的互动消息",
             "p2pSwap": "发送P2P交换消息",
             "poll": "创建民意调查消息",
             "prize": "发送有奖短信",
             "text": "发送短信",
-            "video": "发送视频消息"
+            "video": "发送视频消息",
+            "videoCall": "发起视频通话"
         },
         "nobody": "没有人可以",
         "notPermitted": "您无权{permission}",

@@ -16,8 +16,10 @@ import type {
     AuthenticationPrincipalsResponse,
     BlobReference,
     BlockUserResponse,
+    BotActionResponse,
     BotCommandResponse,
     BotDefinition,
+    BotMessageSession,
     BridgedUserId,
     BridgedUserLinkCode,
     BridgedUserSummary,
@@ -258,6 +260,7 @@ import {
     UnsupportedValueError,
     applyOptionUpdate,
     buildBlobUrl,
+    chatIdentifierToString,
     chatIdentifiersEqual,
     emptyEventsResponse,
     encodeIcrcAccount,
@@ -335,7 +338,7 @@ import { DexesAgent } from "./dexes";
 import { TACO_TREASURY_CANISTER_ID } from "./dexes/taco/index/mappers";
 import { IcpSwapPoolClient } from "./dexes/icpSwap/pool/icpSwap.pool.client";
 import { TacoPoolClient } from "./dexes/taco/pool/taco.pool.client";
-import { callBotCommandEndpoint } from "./externalBot/externalBot";
+import { callBotActionEndpoint, callBotCommandEndpoint } from "./externalBot/externalBot";
 import { GroupClient } from "./group/group.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { IcpLedgerIndexClient } from "./icpLedgerIndex/icpLedgerIndex.client";
@@ -417,6 +420,9 @@ export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
     private _userIndexClient: UserIndexClient;
     private _storageBucketClients: Map<string, StorageBucketClient> = new Map();
+    // Each MiniApp message's session token, reused for every button pressed on it until it's
+    // nearly expired
+    private _botMessageSessions: Map<string, { token: string; expiresAt: number }> = new Map();
     private _onlineClient: OnlineClient;
     private _dailyPuzzleClient: Lazy<DailyPuzzleClient>;
     private _groupIndexClient: GroupIndexClient;
@@ -1657,6 +1663,61 @@ export class OpenChatAgent extends EventTarget {
                       ref?.blobId ?? undefined,
                   ),
               };
+    }
+
+    /**
+     * Presses a button on one of a bot's MiniApp messages: the bot is sent the button's id with the
+     * user's session token for the message. The token is fetched once per message and reused, and
+     * fetched afresh if the bot rejects it, eg. as it has expired.
+     */
+    async executeBotAction(
+        localUserIndex: string,
+        session: BotMessageSession,
+        endpoint: string,
+        buttonId: string,
+    ): Promise<BotActionResponse> {
+        const key = botMessageSessionKey(session);
+        for (const fresh of [false, true]) {
+            const token = await this.botMessageSessionToken(localUserIndex, session, key, fresh);
+            if (token === undefined) return { kind: "not_authorized" };
+
+            const response = await callBotActionEndpoint(endpoint, token, buttonId);
+            if (response !== "token_rejected") {
+                if (response.kind === "success" && response.reply !== undefined) {
+                    return {
+                        ...response,
+                        reply: {
+                            ...response.reply,
+                            messageContent: this.rehydrateMessageContent(
+                                response.reply.messageContent,
+                            ),
+                        },
+                    };
+                }
+                return response;
+            }
+            this._botMessageSessions.delete(key);
+        }
+        return { kind: "not_authorized" };
+    }
+
+    private async botMessageSessionToken(
+        localUserIndex: string,
+        session: BotMessageSession,
+        key: string,
+        fresh: boolean,
+    ): Promise<string | undefined> {
+        const cached = this._botMessageSessions.get(key);
+        // A minute's grace, so a token doesn't expire on its way to the bot
+        if (!fresh && cached !== undefined && cached.expiresAt > Date.now() + 60_000) {
+            return cached.token;
+        }
+        const token = await this.getAccessToken(session, localUserIndex);
+        const expiresAt = token === undefined ? undefined : jwtExpiry(token);
+        if (token !== undefined && expiresAt !== undefined) {
+            this._botMessageSessions.set(key, { token, expiresAt });
+        }
+        return token;
     }
 
     callBotCommandEndpoint(endpoint: string, token: string): Promise<BotCommandResponse> {
@@ -6129,4 +6190,24 @@ export interface ExchangeRateClient {
     // The token's or coin's prices over the last 7 days, oldest first. Undefined if they couldn't be
     // loaded
     priceHistory(subject: PriceSubject): Promise<PriceHistory | undefined>;
+}
+
+function botMessageSessionKey({
+    botId,
+    chatId,
+    threadRootMessageIndex,
+    messageId,
+}: BotMessageSession): string {
+    return `${botId}|${chatIdentifierToString(chatId)}|${threadRootMessageIndex ?? ""}|${messageId}`;
+}
+
+// The expiry of a JWT we've been issued, in milliseconds, without verifying it
+function jwtExpiry(token: string): number | undefined {
+    try {
+        const payload = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        const { exp } = JSON.parse(atob(payload)) as { exp?: number };
+        return exp === undefined ? undefined : exp * 1000;
+    } catch {
+        return undefined;
+    }
 }

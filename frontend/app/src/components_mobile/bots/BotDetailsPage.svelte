@@ -33,7 +33,7 @@
         type ExternalBot,
         type ExternalBotPermissions,
         type GrantedBotPermissions,
-        type MessagePermission,
+        type BotMessagePermission,
     } from "@client";
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
@@ -341,8 +341,8 @@
 {#snippet permList(
     name: string,
     Icon: IconComponent,
-    requested: (BotChatPermission | BotCommunityPermission | MessagePermission)[],
-    granted: (BotChatPermission | BotCommunityPermission | MessagePermission)[] | undefined,
+    requested: (BotChatPermission | BotCommunityPermission | BotMessagePermission)[],
+    granted: (BotChatPermission | BotCommunityPermission | BotMessagePermission)[] | undefined,
     labelPrefix: string = "",
 )}
     <Container wrap crossAxisAlignment={"center"} gap={"xs"}>

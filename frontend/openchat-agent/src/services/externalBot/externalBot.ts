@@ -1,4 +1,9 @@
-import { type BotCommandResponse, type BotDefinitionResponse, toBigInt64 } from "@shared";
+import {
+    type BotActionResponse,
+    type BotCommandResponse,
+    type BotDefinitionResponse,
+    toBigInt64,
+} from "@shared";
 import { AssertError } from "@sinclair/typebox/value";
 import { Type, type Static } from "@sinclair/typebox";
 import { BotDefinition, BotMessageContent as MessageContent } from "../../typebox";
@@ -38,6 +43,51 @@ const ApiBotResponse = Type.Union([
     Type.Literal("TooManyRequests"),
 ]);
 type ApiBotResponse = Static<typeof ApiBotResponse>;
+
+// A bot's answer to a button press: an optional reply shown only to whoever pressed it
+const ApiBotActionSuccess = Type.Object({
+    message: Type.Optional(
+        Type.Object({
+            content: MessageContent,
+            block_level_markdown: Type.Optional(Type.Boolean()),
+        }),
+    ),
+});
+
+/**
+ * Tells a bot that one of its MiniApp message's buttons was pressed, vouched for by the user's
+ * session token for the message. `token_rejected` (401): the bot didn't accept the token, eg. as it
+ * had expired, so a fresh one is worth trying.
+ */
+export async function callBotActionEndpoint(
+    endpoint: string,
+    token: string,
+    buttonId: string,
+): Promise<BotActionResponse | "token_rejected"> {
+    try {
+        const res = await fetch(`${endpoint}/execute_action`, {
+            method: "POST",
+            headers: { "Content-type": "application/json", "x-oc-jwt": token },
+            body: JSON.stringify({ button_id: buttonId }),
+        });
+        if (res.status === 401) return "token_rejected";
+        if (res.status === 400) return { kind: "bad_request", reason: await res.text() };
+        if (res.status === 429) return { kind: "too_many_requests" };
+        if (!res.ok) return { kind: "internal_error", error: await res.text() };
+
+        const value = typeboxValidate(await res.json(), ApiBotActionSuccess);
+        return {
+            kind: "success",
+            reply: mapOptional(value.message, ({ content, block_level_markdown }) => ({
+                messageContent: messageContent(content, ""),
+                blockLevelMarkdown: block_level_markdown ?? false,
+            })),
+        };
+    } catch (err) {
+        console.log("Bot action failed: ", err);
+        return { kind: "internal_error", error: formatError(err) };
+    }
+}
 
 export function getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
     return fetch(`${endpoint}/bot_definition`).then(async (res): Promise<BotDefinitionResponse> => {

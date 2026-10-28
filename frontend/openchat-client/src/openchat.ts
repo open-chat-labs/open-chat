@@ -249,6 +249,7 @@ import {
     type MessageActivityFeedResponse,
     type MessageActivitySummary,
     type MessageContent,
+    type MessageButton,
     type MessageContext,
     type ModerationVerdict,
     type NcaPriority,
@@ -679,6 +680,7 @@ import {
     swapUnconfirmed,
 } from "./utils/swap";
 import { joinGroupFailureMessage } from "./utils/join";
+import { miniAppButtonFailureMessage, type PressMiniAppButtonOutcome } from "./utils/miniApp";
 import { currentTip, tipResult } from "./utils/tip";
 import { cryptoTransferResult } from "./utils/cryptoTransfer";
 import {
@@ -13415,6 +13417,71 @@ export class OpenChat {
                     });
             case "internal_bot":
                 return this.executeInternalBotCommand(scope, bot);
+        }
+    }
+
+    /**
+     * Presses a button on one of a bot's MiniApp messages. The bot is told who pressed which button,
+     * vouched for by the user's session token for the message, which the agent fetches once and
+     * reuses. The bot may answer the presser alone, shown as a command's ephemeral reply is.
+     */
+    async pressMiniAppButton(
+        context: MessageContext,
+        messageId: bigint,
+        botId: string,
+        button: MessageButton,
+    ): Promise<PressMiniAppButtonOutcome> {
+        const bot = botState.externalBots.get(botId);
+        const chat = this.lookupChatSummary(context.chatId);
+        if (bot === undefined || chat === undefined || chat.kind === "direct_chat") {
+            return { kind: "failed", reason: i18nKey("bots.miniApp.failed") };
+        }
+        try {
+            const localUserIndex = await this.#getLocalUserIndex(chat, true);
+            const response = await this.#worker.send({
+                kind: "executeBotAction",
+                localUserIndex,
+                session: {
+                    kind: "bot_message_session",
+                    botId,
+                    chatId: context.chatId,
+                    threadRootMessageIndex: context.threadRootMessageIndex,
+                    messageId,
+                    meta: {
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        language: this.#locale.substring(0, 2),
+                    },
+                },
+                endpoint: bot.endpoint,
+                buttonId: button.id,
+            });
+            if (response.kind !== "success") {
+                console.log("MiniApp button press failed: ", response);
+                return { kind: "failed", reason: miniAppButtonFailureMessage(response) };
+            }
+            if (response.reply !== undefined) {
+                publish("ephemeralMessage", {
+                    message: {
+                        messageId: random128(),
+                        messageContent: response.reply.messageContent,
+                        finalised: true,
+                        blockLevelMarkdown: response.reply.blockLevelMarkdown,
+                        ephemeral: true,
+                    },
+                    botId,
+                    commandName: button.label,
+                    scope: {
+                        kind: "chat_scope",
+                        chatId: context.chatId,
+                        threadRootMessageIndex: context.threadRootMessageIndex,
+                        messageId,
+                    },
+                });
+            }
+            return { kind: "success" };
+        } catch (err) {
+            console.log("MiniApp button press failed: ", err);
+            return { kind: "failed", reason: i18nKey("bots.miniApp.failed") };
         }
     }
 

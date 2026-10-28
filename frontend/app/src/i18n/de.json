@@ -455,6 +455,11 @@
             "people": "Menschen",
             "webhooks": "Webhooks"
         },
+        "miniApp": {
+            "failed": "Der Bot ist nicht erreichbar. Bitte versuche es erneut.",
+            "notAuthorized": "Du kannst die Schaltflächen dieser Nachricht nicht verwenden. Eventuell musst du zuerst dem Chat beitreten.",
+            "tooManyRequests": "Der Bot ist beschäftigt. Bitte warte einen Moment und versuche es erneut."
+        },
         "poll": {
             "desc": "Erstellen Sie eine Umfrage im aktuellen Chat"
         },
@@ -1768,11 +1773,13 @@
             "giphy": "GIF-Nachrichten senden",
             "image": "Bildnachrichten senden",
             "memeFighter": "Senden Sie Meme Fighter-Nachrichten",
+            "miniApp": "interaktive Nachrichten mit Schaltflächen senden",
             "p2pSwap": "Senden Sie P2P-Swap-Nachrichten",
             "poll": "Umfragenachrichten erstellen",
             "prize": "Senden Sie Preisnachrichten",
             "text": "sende Textnachrichten",
-            "video": "Videonachrichten verschicken"
+            "video": "Videonachrichten verschicken",
+            "videoCall": "Videoanrufe starten"
         },
         "nobody": "Niemand kann",
         "notPermitted": "Sie dürfen nicht {permission}",

@@ -294,3 +294,32 @@ describe("the gate a new chat is created with", () => {
         });
     });
 });
+
+describe("mini app content mapping", () => {
+    test("maps the text and each row of buttons, with their styles", () => {
+        const api: TMessageContent = {
+            MiniApp: {
+                text: "**Uno** · 2 of 4 players",
+                button_rows: [
+                    [
+                        { id: "join", label: "Join", style: "Primary" },
+                        { id: "leave", label: "Leave", style: "Danger" },
+                    ],
+                    [{ id: "start", label: "Start", style: "Secondary" }],
+                ],
+            },
+        };
+
+        expect(messageContent(api, "sender")).toEqual({
+            kind: "mini_app_content",
+            text: "**Uno** · 2 of 4 players",
+            buttonRows: [
+                [
+                    { id: "join", label: "Join", style: "primary" },
+                    { id: "leave", label: "Leave", style: "danger" },
+                ],
+                [{ id: "start", label: "Start", style: "secondary" }],
+            ],
+        });
+    });
+});

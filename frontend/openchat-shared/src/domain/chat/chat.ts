@@ -115,7 +115,8 @@ export type MessageContent =
     | DailyResultContent
     | VideoCallContent
     | EncryptedContent
-    | PriceChartContent;
+    | PriceChartContent
+    | MiniAppContent;
 
 export type VideoCallParticipant = {
     userId: string;
@@ -141,6 +142,28 @@ export type PriceChartContent = {
     // where the prices are from, credited with links under the chart
     sources: PriceChartSource[];
 };
+
+/**
+ * A message a bot keeps up to date while something it runs goes on, eg. a game's lobby, with
+ * buttons. Pressing one calls the bot, which may answer the presser with an ephemeral message and
+ * edits the message as things change. Only bots post them, and they can't be forwarded.
+ */
+export type MiniAppContent = {
+    kind: "mini_app_content";
+    // markdown, eg. "**Uno** · 2 of 4 players: @UserId(..) @UserId(..)"
+    text: string;
+    // only the buttons this user is shown
+    buttonRows: MessageButton[][];
+};
+
+export type MessageButton = {
+    // the bot's own name for the button, sent to it when the button is pressed
+    id: string;
+    label: string;
+    style: MessageButtonStyle;
+};
+
+export type MessageButtonStyle = "primary" | "secondary" | "danger";
 
 export type PriceChartSeries = {
     // a token OpenChat lists, by its ledger, or any other coin, by its CoinGecko id

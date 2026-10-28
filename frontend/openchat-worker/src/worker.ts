@@ -1120,6 +1120,13 @@ const handlers: Handlers = {
     getBotDefinition: (payload) => getBotDefinition(payload.endpoint),
     callBotCommandEndpoint: (payload, agent) =>
         agent.callBotCommandEndpoint(payload.endpoint, payload.token),
+    executeBotAction: (payload, agent) =>
+        agent.executeBotAction(
+            payload.localUserIndex,
+            payload.session,
+            payload.endpoint,
+            payload.buttonId,
+        ),
     payForStreakInsurance: (payload, agent) =>
         agent.payForStreakInsurance(payload.additionalDays, payload.expectedPrice, payload.pin),
     updateDirectChatSettings: (payload, agent) =>

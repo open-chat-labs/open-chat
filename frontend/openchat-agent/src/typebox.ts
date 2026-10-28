@@ -590,6 +590,13 @@ export const VideoCallType = /* @__PURE__ */ Type.Union([
     Type.Literal("Default"),
 ]);
 
+export type MessageButtonStyle = Static<typeof MessageButtonStyle>;
+export const MessageButtonStyle = /* @__PURE__ */ Type.Union([
+    Type.Literal("Primary"),
+    Type.Literal("Secondary"),
+    Type.Literal("Danger"),
+]);
+
 export type BotDataEncoding = Static<typeof BotDataEncoding>;
 export const BotDataEncoding = /* @__PURE__ */ Type.Union([
     Type.Literal("MsgPack"),
@@ -6123,6 +6130,14 @@ export const OptionUpdateVideoCall = /* @__PURE__ */ Type.Union(
     { default: "NoChange" },
 );
 
+export type MessageButton = Static<typeof MessageButton>;
+export const MessageButton = /* @__PURE__ */ Type.Object({
+    id: Type.String(),
+    label: Type.String(),
+    style: MessageButtonStyle,
+    visible_to: Type.Optional(Type.Array(UserId)),
+});
+
 export type DeletedCommunityInfo = Static<typeof DeletedCommunityInfo>;
 export const DeletedCommunityInfo = /* @__PURE__ */ Type.Object({
     id: CommunityId,
@@ -8002,6 +8017,12 @@ export const VideoContent = /* @__PURE__ */ Type.Object({
     video_blob_reference: Type.Optional(BlobReference),
 });
 
+export type MiniAppContent = Static<typeof MiniAppContent>;
+export const MiniAppContent = /* @__PURE__ */ Type.Object({
+    text: Type.String(),
+    button_rows: Type.Array(Type.Array(MessageButton)),
+});
+
 export type GroupPermissions = Static<typeof GroupPermissions>;
 export const GroupPermissions = /* @__PURE__ */ Type.Object({
     change_roles: GroupPermissionRole,
@@ -8101,6 +8122,15 @@ export const BotRegistrationStatus = /* @__PURE__ */ Type.Union([
         Private: Type.Union([BotInstallationLocation, Type.Null()]),
     }),
 ]);
+
+export type BotMessageSessionArgs = Static<typeof BotMessageSessionArgs>;
+export const BotMessageSessionArgs = /* @__PURE__ */ Type.Object({
+    bot_id: UserId,
+    chat: Chat,
+    thread: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    meta: Type.Optional(BotCommandMeta),
+});
 
 export type EventWrapperGroupUnfrozen = Static<typeof EventWrapperGroupUnfrozen>;
 export const EventWrapperGroupUnfrozen = /* @__PURE__ */ Type.Object({
@@ -9069,6 +9099,9 @@ export const BotMessageContent = /* @__PURE__ */ Type.Union([
     Type.Object({
         PriceChart: PriceChartContent,
     }),
+    Type.Object({
+        MiniApp: MiniAppContent,
+    }),
 ]);
 
 export type CurrentUserSummary = Static<typeof CurrentUserSummary>;
@@ -9275,6 +9308,9 @@ export const LocalUserIndexAccessTokenV2Args = /* @__PURE__ */ Type.Union([
     Type.Object({
         BotActionByCommand: BotActionByCommandArgs,
     }),
+    Type.Object({
+        BotMessageSession: BotMessageSessionArgs,
+    }),
     Type.Literal("Translate"),
 ]);
 
@@ -9384,6 +9420,9 @@ export const MessageContent = /* @__PURE__ */ Type.Union([
     Type.Object({
         PriceChart: PriceChartContent,
     }),
+    Type.Object({
+        MiniApp: MiniAppContent,
+    }),
 ]);
 
 export type GroupMatch = Static<typeof GroupMatch>;
@@ -9456,6 +9495,9 @@ export const MessageContentInitial = /* @__PURE__ */ Type.Union([
     }),
     Type.Object({
         PriceChart: PriceChartContent,
+    }),
+    Type.Object({
+        MiniApp: MiniAppContent,
     }),
 ]);
 

@@ -234,6 +234,8 @@ export function getContentAsFormattedText(
         text = "Restricted message";
     } else if (content.kind === "price_chart_content") {
         text = content.title;
+    } else if (content.kind === "mini_app_content") {
+        text = content.text;
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }

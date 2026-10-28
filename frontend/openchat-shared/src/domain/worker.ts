@@ -13,6 +13,7 @@ import type {
     WithdrawSolResponse,
 } from "./solana";
 import type {
+    BotActionResponse,
     BotCommandResponse,
     BotDefinition,
     BotDefinitionResponse,
@@ -210,6 +211,7 @@ import type { MinutesOnline } from "./online";
 import type { OptionUpdate } from "./optionUpdate";
 import type {
     AccessTokenType,
+    BotMessageSession,
     CommunityPermissions,
     MemberRole,
     OptionalChatPermissions,
@@ -534,6 +536,7 @@ export type WorkerRequest = Cloneable<
     | UpdateRegisteredBot
     | GetBotDefinition
     | CallBotCommandEndpoint
+    | ExecuteBotAction
     | RegisterWebhook
     | UpdateWebhook
     | RegenerateWebhook
@@ -799,6 +802,14 @@ type CallBotCommandEndpoint = {
     kind: "callBotCommandEndpoint";
     endpoint: string;
     token: string;
+};
+
+type ExecuteBotAction = {
+    kind: "executeBotAction";
+    localUserIndex: string;
+    session: BotMessageSession;
+    endpoint: string;
+    buttonId: string;
 };
 
 type GetBotDefinition = {
@@ -2885,6 +2896,7 @@ export type WorkerResults = ResultsByKind<{
     installBot: boolean;
     getBotDefinition: BotDefinitionResponse;
     callBotCommandEndpoint: BotCommandResponse;
+    executeBotAction: BotActionResponse;
     uninstallBot: boolean;
     updateInstalledBot: boolean;
     registerWebhook: FullWebhookDetails | undefined;

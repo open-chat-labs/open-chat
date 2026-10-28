@@ -68,6 +68,11 @@ export {
     hasAccessGateChanged,
 } from "./utils/group.svelte";
 export { communityChanges, isPrivateCommunityPreview } from "./utils/community";
+export {
+    miniAppButtonFailureMessage,
+    userMessagePermissionFor,
+    type PressMiniAppButtonOutcome,
+} from "./utils/miniApp";
 export { executionPaymentAmount, proposalFundsRequired } from "./utils/proposal";
 export {
     achievementList,
@@ -155,12 +160,7 @@ export {
     type PollReader,
     type PollView,
 } from "./utils/polls";
-export {
-    isTrustedClick,
-    prizeView,
-    type PrizeReader,
-    type PrizeView,
-} from "./utils/prizes";
+export { isTrustedClick, prizeView, type PrizeReader, type PrizeView } from "./utils/prizes";
 export {
     swapAcceptCost,
     swapActions,

@@ -31,6 +31,7 @@
     import UserReferralCardContent from "./UserReferralCardContent.svelte";
     import DailyResultContent from "./dailypuzzle/DailyResultContent.svelte";
     import PriceChartContent from "./PriceChartContent.svelte";
+    import MiniAppContent from "./MiniAppContent.svelte";
     import VideoCallContent from "./VideoCallContent.svelte";
     import VideoContent from "./VideoContent.svelte";
 
@@ -176,4 +177,6 @@
     <DailyResultContent {content} {intersecting} {edited} {blockLevelMarkdown} />
 {:else if content.kind === "price_chart_content"}
     <PriceChartContent {content} {reply} {me} />
+{:else if content.kind === "mini_app_content"}
+    <MiniAppContent {content} {messageContext} {messageId} {senderId} {readonly} {reply} />
 {/if}

@@ -423,6 +423,11 @@
             "people": "People",
             "webhooks": "Webhooks"
         },
+        "miniApp": {
+            "failed": "Couldn't reach the bot. Please try again.",
+            "notAuthorized": "You can't use this message's buttons. You may need to join the chat first.",
+            "tooManyRequests": "The bot is busy. Please wait a moment and try again."
+        },
         "poll": {
             "desc": "Create a poll in the current chat"
         },
@@ -1823,11 +1828,13 @@
             "giphy": "send gif messages",
             "image": "send image messages",
             "memeFighter": "send Meme Fighter messages",
+            "miniApp": "send interactive messages with buttons",
             "p2pSwap": "send P2P swap messages",
             "poll": "create poll messages",
             "prize": "send prize mssages",
             "text": "send text messages",
-            "video": "send video messages"
+            "video": "send video messages",
+            "videoCall": "start video calls"
         },
         "nobody": "Nobody can",
         "notPermitted": "You are not permitted to {permission}",

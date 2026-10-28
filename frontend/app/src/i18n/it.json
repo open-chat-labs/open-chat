@@ -455,6 +455,11 @@
             "people": "Persone",
             "webhooks": "Webhook"
         },
+        "miniApp": {
+            "failed": "Impossibile raggiungere il bot. Riprova.",
+            "notAuthorized": "Non puoi usare i pulsanti di questo messaggio. Potrebbe essere necessario unirti prima alla chat.",
+            "tooManyRequests": "Il bot è occupato. Attendi un momento e riprova."
+        },
         "poll": {
             "desc": "Crea un sondaggio nella chat corrente"
         },
@@ -1768,11 +1773,13 @@
             "giphy": "inviare messaggi gif",
             "image": "inviare messaggi immagine",
             "memeFighter": "inviare messaggi di Meme Fighter",
+            "miniApp": "inviare messaggi interattivi con pulsanti",
             "p2pSwap": "inviare messaggi di scambio P2P",
             "poll": "creare messaggi di sondaggio",
             "prize": "inviare messaggi premio",
             "text": "inviare messaggi di testo",
-            "video": "inviare videomessaggi"
+            "video": "inviare videomessaggi",
+            "videoCall": "avviare videochiamate"
         },
         "nobody": "Nessuno può",
         "notPermitted": "Non sei autorizzato a {permission}",

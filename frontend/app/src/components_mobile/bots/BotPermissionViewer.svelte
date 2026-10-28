@@ -4,7 +4,7 @@
         botChatPermissionList,
         botCommunityPermissionList,
         type ExternalBotPermissions,
-        messagePermissionsList,
+        botMessagePermissionList,
         type ResourceKey,
     } from "@client";
     import Check from "svelte-material-icons/Check.svelte";
@@ -57,7 +57,7 @@
 {/snippet}
 {#snippet messageTab()}
     <Column gap={"sm"}>
-        {#each messagePermissionsList as perm}
+        {#each botMessagePermissionList as perm}
             {@render check(
                 i18nKey(`permissions.messagePermissions.${perm}`),
                 permissions.messagePermissions.includes(perm),
