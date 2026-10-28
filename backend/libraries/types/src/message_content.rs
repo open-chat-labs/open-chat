@@ -168,6 +168,11 @@ impl MessageContent {
                     references.push(br);
                 }
             }
+            MessageContent::MiniApp(m) => {
+                if let Some(image) = &m.image {
+                    references.push(image.blob_reference.clone());
+                }
+            }
             MessageContent::Text(_)
             | MessageContent::Poll(_)
             | MessageContent::Crypto(_)
@@ -184,8 +189,7 @@ impl MessageContent {
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
             | MessageContent::Custom(_)
-            | MessageContent::PriceChart(_)
-            | MessageContent::MiniApp(_) => {}
+            | MessageContent::PriceChart(_) => {}
         }
 
         references
@@ -290,6 +294,16 @@ impl MessageContent {
                 .map(|blob_reference| crate::MediaScanBlob {
                     blob_reference,
                     mime_type: "image/*".to_string(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            MessageContent::MiniApp(m) => m
+                .image
+                .as_ref()
+                .map(|image| crate::MediaScanBlob {
+                    blob_reference: image.blob_reference.clone(),
+                    mime_type: image.mime_type.clone(),
                     frame_index: None,
                 })
                 .into_iter()
@@ -1112,13 +1126,35 @@ pub struct MiniAppContent {
     // markdown, eg. "**Uno** · 2 to 4 players": the message's text in notifications, previews and
     // search
     pub text: String,
+    // shown above the text, eg. the game's artwork
+    pub image: Option<MiniAppImage>,
+}
+
+/// An image the bot uploaded to OpenChat's storage, as for an image message, so it's scanned like one
+/// and deleted with the message
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MiniAppImage {
+    pub width: u32,
+    pub height: u32,
+    pub mime_type: String,
+    pub blob_reference: BlobReference,
 }
 
 impl MiniAppContent {
     pub const MAX_TEXT_CHARS: usize = 2_000;
 
     pub fn validate(&self) -> Result<(), String> {
-        check_chars("text", &self.text, Self::MAX_TEXT_CHARS)
+        check_chars("text", &self.text, Self::MAX_TEXT_CHARS)?;
+        if let Some(image) = &self.image {
+            if image.width == 0 || image.height == 0 {
+                return Err("The image must have a width and a height".to_string());
+            }
+            if !image.mime_type.starts_with("image/") {
+                return Err("The image's mime type must be an image's".to_string());
+            }
+        }
+        Ok(())
     }
 }
 
