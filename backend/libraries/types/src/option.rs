@@ -96,6 +96,7 @@ macro_rules! option_update {
 }
 
 option_update!(OptionUpdateString, String);
+option_update!(OptionUpdateUserIds, Vec<crate::UserId>);
 option_update!(OptionUpdateU64, u64);
 option_update!(OptionUpdateU128, u128);
 option_update!(OptionUpdateAccessGate, crate::AccessGate);

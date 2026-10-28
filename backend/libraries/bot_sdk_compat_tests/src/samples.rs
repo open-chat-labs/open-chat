@@ -10,7 +10,7 @@ use types::{
     CryptoContent, CryptoTransaction, CustomContent, DeletedBy, EncryptedContent, EncryptedMessageContentType,
     FailedCryptoTransaction, FileContent, GiphyContent, GiphyImageVariant, ImageContent, MediaScanMatch, MediaScanProvider,
     MessageContent, MessageReminderContent, MessageReminderCreatedContent, MessageReport, MiniAppContent, MiniAppImage,
-    ModerationReportContent, ModerationReportResolution, ModerationReportStatus, NnsProposal, P2PSwapAccepted,
+    MiniAppStatus, ModerationReportContent, ModerationReportResolution, ModerationReportStatus, NnsProposal, P2PSwapAccepted,
     P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig,
     PollContent, PollVotes, PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent,
     PrizeWinnerContent, Proposal, ProposalContent, ProposalDecisionStatus, ProposalRewardStatus, ReportedMessage, SnsProposal,
@@ -113,19 +113,33 @@ pub fn message_contents() -> Vec<MessageContent> {
                 url: "https://www.coingecko.com".to_string(),
             }],
         }),
-        MessageContent::MiniApp(MiniAppContent {
-            text: "**Uno** · 2 to 4 players".to_string(),
-            image: Some(MiniAppImage {
-                width: max(),
-                height: max(),
-                mime_type: "image/png".to_string(),
-                blob_reference: BlobReference {
-                    canister_id: Principal::from_slice(&[1]),
-                    blob_id: max(),
-                },
-            }),
-        }),
     ];
+
+    contents.extend(
+        every(vec![MiniAppStatus::Open, MiniAppStatus::Active, MiniAppStatus::Finished])
+            .into_iter()
+            .map(|status| {
+                MessageContent::MiniApp(MiniAppContent {
+                    text: "**Uno** · 2 to 4 players".to_string(),
+                    image: Some(MiniAppImage {
+                        width: max(),
+                        height: max(),
+                        mime_type: "image/png".to_string(),
+                        blob_reference: BlobReference {
+                            canister_id: Principal::from_slice(&[1]),
+                            blob_id: max(),
+                        },
+                    }),
+                    max_players: Some(max()),
+                    spectators: true,
+                    spectator_count: max(),
+                    status,
+                    players: vec![user_id(1), user_id(2)],
+                    waiting_for: Some(vec![user_id(2)]),
+                    result: Some("Bob won".to_string()),
+                })
+            }),
+    );
 
     contents.extend(total_votes().into_iter().map(|total| {
         MessageContent::Poll(PollContent {
