@@ -27,14 +27,14 @@ fn c2c_update_mini_app_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .events
         .message_internal(EventIndex::default(), args.thread, args.message_id.into())
         .ok_or(OCErrorCode::MessageNotFound)?;
-    if args.update.status != MiniAppStatus::Finished && state.data.bots.get(&message.sender).is_none() {
+    if !matches!(args.status, MiniAppStatus::Finished(_)) && state.data.bots.get(&message.sender).is_none() {
         return Err(OCErrorCode::BotNotFound.into());
     }
 
-    // A finished game's card never changes, so a result is only ever written once
-    let new_result = args.update.result.is_some();
+    // A finished game's card never changes, so a result is only ever written once, but for a retry
+    let new_result = args.status.result().is_some();
     let now = state.env.now();
-    channel.chat.update_mini_app(args.thread, args.message_id, args.update, now)?;
+    channel.chat.update_mini_app(args.thread, args.message_id, args.status, now)?;
 
     // The result is text the bot wrote, classified as an edit's would be
     if new_result
