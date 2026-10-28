@@ -168,7 +168,7 @@ fn a_bot_cant_replace_a_card_it_hasnt_finished_sending() {
         channel_id,
         local_user_index,
     } = setup(env, canister_ids, *controller);
-    let bot_principal = install_bot(
+    let (_, bot_principal) = install_bot(
         env,
         &owner,
         canister_ids.user_index,
