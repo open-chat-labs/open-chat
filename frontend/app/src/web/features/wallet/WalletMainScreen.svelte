@@ -144,7 +144,12 @@
                 : view === "token" && id !== null
                   ? `/wallet/${id}`
                   : "/wallet";
-        if (path !== `${window.location.pathname}${window.location.search}`) navigate(path);
+        // the page is its path and ?token=: the URL's other params (a dialog's ?diamond …) stay
+        // unless the page changes
+        const here = window.location;
+        const token = new URLSearchParams(here.search).get("token");
+        const current = `${here.pathname}${token !== null ? `?token=${token}` : ""}`;
+        if (path !== current) navigate(path);
     }
 
     // Receive: the token's networks, the address on the chosen one and what depositing costs
@@ -187,18 +192,19 @@
     // Share to chat: the address (and the user's message) posted to any of their chats
     // svelte-ignore state_referenced_locally
     const sharePicker = new SharePicker(client, $_, () => undefined);
+    // only built while Receive is open: it follows every chat and user
     const shareChats = $derived(
-        sharePicker
-            .chats()
-            .map(
-                (c): ShareChat => ({
-                    id: c.id,
-                    name: c.name,
-                    kind: c.sub,
-                    grad: c.grad,
-                    radius: c.radius,
-                }),
-            ),
+        receiving === undefined
+            ? []
+            : sharePicker.chats().map(
+                  (c): ShareChat => ({
+                      id: c.id,
+                      name: c.name,
+                      kind: c.sub,
+                      grad: c.grad,
+                      radius: c.radius,
+                  }),
+              ),
     );
 
     async function share({

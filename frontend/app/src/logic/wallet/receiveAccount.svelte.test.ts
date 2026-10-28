@@ -34,23 +34,23 @@ function client() {
         getCksolMinterDepositInfo: vi.fn(async () => ({ minimumDepositAmount: 10_000_000n })),
         oneSecGetTransferFees: vi.fn(async (): Promise<OneSecTransferFees[]> => []),
         oneSecGetNetworks: vi.fn(() => ["ICP", "Ethereum", "Base"]),
-        formatTokens: vi.fn((amount: bigint) => String(amount)),
     };
 }
 
-// builds the account inside an effect root, as a component would, and lets its effects run
-async function receive(t: ReceiveToken, c = client()) {
-    let account!: ReceiveAccount;
-    const stop = $effect.root(() => {
-        account = new ReceiveAccount(
-            c as never,
-            () => t,
-            () => owner,
-        );
-    });
+async function settle() {
     flushSync();
     await tick();
     flushSync();
+}
+
+// builds the account inside an effect root, as a component would, and lets its effects run
+async function receive(t: ReceiveToken | (() => ReceiveToken), c = client()) {
+    let account!: ReceiveAccount;
+    const current = typeof t === "function" ? t : () => t;
+    const stop = $effect.root(() => {
+        account = new ReceiveAccount(c as never, current, () => owner);
+    });
+    await settle();
     return { account, c, stop };
 }
 
@@ -71,7 +71,7 @@ describe("where a token is received", () => {
         expect(account.networks).toEqual([BTC_SYMBOL, CKBTC_SYMBOL]);
         expect(account.selectedNetwork).toBe(BTC_SYMBOL);
         expect(account.address).toBe("bc1-address");
-        expect(account.depositNote).toEqual({ kind: "btc", fee: "~1000" });
+        expect(account.depositNote).toEqual({ kind: "btc", fee: "~0.00001" });
         account.selectedNetwork = CKBTC_SYMBOL;
         flushSync();
         expect(account.address).toBe(userWalletAddress(owner.userId, owner.principal));
@@ -85,7 +85,7 @@ describe("where a token is received", () => {
         );
         expect(account.selectedNetwork).toBe(SOL_SYMBOL);
         expect(account.address).toBe("sol-address");
-        expect(account.depositNote).toMatchObject({ kind: "sol", minimum: "10000000" });
+        expect(account.depositNote).toMatchObject({ kind: "sol", minimum: "0.01" });
         stop();
     });
 
@@ -140,7 +140,47 @@ describe("where a token is received", () => {
         await tick();
         flushSync();
         expect(account.address).toBe("0x-address");
-        expect(account.depositNote).toEqual({ kind: "one_sec", fee: "0.1% + ~500" });
+        expect(account.depositNote).toEqual({ kind: "one_sec", fee: "0.1% + ~0.000005" });
+        stop();
+    });
+
+    test("a minimum that failed to load is asked for again the next time its network is chosen", async () => {
+        const c = client();
+        c.getCksolMinterDepositInfo.mockRejectedValueOnce(new Error("minter down"));
+        const { account, stop } = await receive(
+            token({ symbol: "SOL", ledger: LEDGER_CANISTER_CKSOL, decimals: 9 }),
+            c,
+        );
+        expect(account.depositNote).toMatchObject({ kind: "sol", minimum: undefined });
+        account.selectedNetwork = "ckSOL";
+        await settle();
+        account.selectedNetwork = SOL_SYMBOL;
+        await settle();
+        expect(c.getCksolMinterDepositInfo).toHaveBeenCalledTimes(2);
+        expect(account.depositNote).toMatchObject({ kind: "sol", minimum: "0.01" });
+        stop();
+    });
+
+    test("a network picked for one token isn't carried over to the next", async () => {
+        const usdc = token({
+            symbol: "USDC",
+            ledger: "usdc",
+            oneSecEnabled: true,
+            evmContractAddresses: [
+                { token: "USDC", chain: "Base", address: "0x" },
+            ] as ReceiveToken["evmContractAddresses"],
+        });
+        let current = $state(usdc);
+        const { account, stop } = await receive(() => current);
+        account.selectedNetwork = "Base";
+        await settle();
+        expect(account.selectedNetwork).toBe("Base");
+        current = { ...usdc, symbol: "USDT", ledger: "usdt" };
+        await settle();
+        expect(account.selectedNetwork).toBe("ICP");
+        current = usdc;
+        await settle();
+        expect(account.selectedNetwork).toBe("ICP");
         stop();
     });
 });

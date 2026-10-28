@@ -548,7 +548,7 @@
   // `rows`, and keying on that would remount a send or swap the host is still working on
   const flowSym = $derived(sym || (raw ? idOf(raw) : ''));
   const flowKey = $derived(`${view}:${fromAll ? '-' : flowSym}:${flowNonce}`);
-  const flowToken = $derived(extTok && view === 'receive' ? extTok : fromAll ? '' : symbolOf(flowSym));
+  const flowToken = $derived(fromAll ? '' : symbolOf(flowSym));
   // Receive also offers tokens you don't hold yet, on their own networks
   const receiveTokens = $derived<WalletToken[]>([
     ...tokens,
@@ -649,7 +649,7 @@
       />{/key}{/if}
   {#if view === 'receive'}{#key flowKey}<WalletReceive
         tokens={receiveTokens}
-        token={flowToken}
+        token={extTok ?? (fromAll ? '' : flowSym)}
         {handle}
         {addresses}
         {chats}

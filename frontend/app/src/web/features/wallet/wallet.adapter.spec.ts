@@ -208,6 +208,8 @@ describe("Receive's networks", () => {
             words,
         );
         expect(list.map((n) => n.label)).toEqual(["Bitcoin", "ckBTC"]);
+        // the warning names what each address takes: BTC, or ckBTC
+        expect(list.map((n) => n.token)).toEqual(["BTC", "ckBTC"]);
         expect(list[0]).toMatchObject({
             address: undefined,
             note: "cryptoAccount.networkFee(~0.0001,BTC)",

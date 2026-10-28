@@ -423,3 +423,7 @@
 - `WalletMain`: `receiveNetworks`, `receiveNetwork` and `onReceiveNetwork`, passed to Receive.
 - Strings `ui.walletReceive.generating`, `addressFailed`; `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-28 — WalletReceive review fixes, by hand
+- `WalletReceive`: `token` is an id (or a symbol), so with two tokens sharing a symbol the header matches the host's networks; `ReceiveNetwork.token`, the token arriving on a network when it isn't the token's own symbol (ckBTC on the ckBTC network), is what the warning names. `WalletMain` gives Receive the token's id.
+- `meta.json` updated.

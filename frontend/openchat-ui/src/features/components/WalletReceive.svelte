@@ -20,6 +20,8 @@
     failed?: boolean;
     /** What depositing on it costs or needs (literal text), under the warning. */
     note?: string;
+    /** The token that arrives on it, when it isn't the token's own symbol (ckBTC on the ckBTC network), for the warning. */
+    token?: string;
   }
 
   export interface ShareChat {
@@ -60,7 +62,7 @@
   interface Props {
     /** Tokens with `nets` can be received; any listed token works, held or not. */
     tokens: WalletToken[];
-    /** Symbol to receive; falls back to ICP, then the first receivable token. */
+    /** Token to receive, by its id (WalletToken.id) or symbol; falls back to ICP, then the first receivable token. */
     token?: string;
     /** Your OpenChat handle; shows the "From OpenChat" row. */
     handle?: string;
@@ -105,7 +107,13 @@
   const narrow = $derived(width > 0 && width < 760);
   // the host's networks (any token), or the token's own `nets` with the library's names
   const receivable = $derived(hostNets ? tokens : tokens.filter((t) => t.nets?.length));
-  const tok = $derived(receivable.find((x) => x.symbol === token) ?? receivable.find((x) => x.symbol === 'ICP') ?? receivable[0]);
+  // a token is its id first: two can share a symbol, and the host's networks are for the one it names
+  const tok = $derived(
+    receivable.find((x) => (x.id ?? x.symbol) === token) ??
+      receivable.find((x) => x.symbol === token) ??
+      receivable.find((x) => x.symbol === 'ICP') ??
+      receivable[0],
+  );
   const ids = $derived(hostNets ? hostNets.map((n) => n.id) : ((tok?.nets ?? []) as NetworkId[]));
   const hostCurrent = $derived(hostNets ? (hostNets.find((n) => n.id === hostNet) ?? hostNets[0]) : undefined);
   const id = $derived(hostNets ? hostCurrent?.id : ids[Math.min(netIdx, ids.length - 1)]);
@@ -240,7 +248,7 @@
         </div>
         <div class="warning">
           <span class="warning-icon"></span><span class="warning-text"
-            >{t('ui.walletReceive.warning', { token: wrapped || tok.symbol, network: t(net.label), symbol: tok.symbol })}{#if hostCurrent?.note}<span
+            >{t('ui.walletReceive.warning', { token: hostCurrent?.token || wrapped || tok.symbol, network: t(net.label), symbol: tok.symbol })}{#if hostCurrent?.note}<span
                 class="note">{hostCurrent.note}</span
               >{/if}</span
           >

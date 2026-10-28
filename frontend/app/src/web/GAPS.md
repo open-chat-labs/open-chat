@@ -610,7 +610,7 @@ design export needs. Each entry says where it came up.
     as two ledgers can share a symbol), `actions` and `logo`; `WalletPanel` takes `rates`, and its
     manual `settings.tokens` are ids; `WalletMain` takes `history`, `onMoreHistory`,
     `onRetryHistory`, `onActivity`, `allActivityNote` and `flows`, and `WalletActivity` gains
-    `token`, `party` and kind `own`; `TokenAvatar` and `PageHeader` take a logo (a broken one falls back to the mark); `TokenPicker` options carry an id; `TransactionRow` has kind `own`; `PageHeader`'s price pill is larger than the design's. `WalletReceive` takes the host's `networks` (address, failed, note per network) with `network` / `onNetwork`, and shows the token's logo. Send, Receive and Swap still pick
+    `token`, `party` and kind `own`; `TokenAvatar` and `PageHeader` take a logo (a broken one falls back to the mark); `TokenPicker` options carry an id; `TransactionRow` has kind `own`; `PageHeader`'s price pill is larger than the design's. `WalletReceive` takes the host's `networks` (address, failed, note and the token arriving, per network) with `network` / `onNetwork`, shows the token's logo and picks its token by id. Send and Swap still pick
     their token by symbol (6b, 6c).
 
 - **Diamond** (`?diamond`, `features/diamond`, 8e #10131): paid through the shared payment

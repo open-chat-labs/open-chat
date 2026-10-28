@@ -18319,7 +18319,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Symbol to receive; falls back to ICP, then the first receivable token."
+        "doc": "Token to receive, by its id (WalletToken.id) or symbol; falls back to ICP, then the first receivable token."
       },
       {
         "name": "handle",
