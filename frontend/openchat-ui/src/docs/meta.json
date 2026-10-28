@@ -17858,6 +17858,28 @@
         "doc": "Current fee (in BTC) for sending BTC to a Bitcoin address natively or as ckBTC; a route without a fee can't be used."
       },
       {
+        "name": "sendHostPin",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Send: the host asks for the PIN itself, and its say on an address (see WalletSend)."
+      },
+      {
+        "name": "checkAddress",
+        "type": "(address: string, symbol: string) => boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Send: the host asks for the PIN itself, and its say on an address (see WalletSend)."
+      },
+      {
         "name": "onQuote",
         "type": "(r: SwapRequest) => Promise<SwapQuote>",
         "default": null,
@@ -18550,7 +18572,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Symbol to send; falls back to ICP."
+        "doc": "Token to send, by its id (WalletToken.id) or symbol; falls back to ICP."
       },
       {
         "name": "address",
@@ -18661,6 +18683,28 @@
         "required": false,
         "componentDefault": "false",
         "doc": "The host can open the DM with the recipient from onDone's openChat: offers \"View in chat\" on the receipt."
+      },
+      {
+        "name": "hostPin",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The host asks for the PIN itself (or none is set): Send makes the transfer straight away, with no PIN step, and a failure shows under the form. onSent resolving `false` means nothing was sent and there's nothing to say (the user dismissed the host's PIN prompt): the form stays as it was."
+      },
+      {
+        "name": "checkAddress",
+        "type": "(address: string, symbol: string) => boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's say on an address for a token (e.g. not the user's own, on a network the send can reach); without it, the detected network and the token's `nets` decide."
       }
     ],
     "group": "features"

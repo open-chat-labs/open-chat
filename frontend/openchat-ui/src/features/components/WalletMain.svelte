@@ -158,6 +158,9 @@
     /** Send: user search and BTC route fees (see WalletSend). */
     onSearchUsers?: (query: string) => Promise<SendContact[]>;
     btcFees?: Partial<Record<'btc' | 'ckbtc', number>>;
+    /** Send: the host asks for the PIN itself, and its say on an address (see WalletSend). */
+    sendHostPin?: boolean;
+    checkAddress?: (address: string, symbol: string) => boolean;
     /** Swap: quote and execution (see WalletSwap). */
     onQuote?: (r: SwapRequest) => Promise<SwapQuote>;
     onSwap?: (r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void }) => Promise<{ out?: number } | void>;
@@ -209,6 +212,8 @@
     onRemoveRecipient,
     onSearchUsers,
     btcFees,
+    sendHostPin = false,
+    checkAddress,
     onQuote,
     onSwap,
     chats,
@@ -400,7 +405,7 @@
     if (!txId || sent.some((e) => e.id === txId)) return;
     const amt = sentAmount(x);
     sent = [
-      { id: txId, token: idForSymbol(x.symbol), title: t('ui.walletMain.sentTo', { name: x.toLabel }), day: 'today', timestamp: Date.now(), sub: t('ui.walletMain.justNow'), kind: 1, amount: `\u2212${amt}`, fiat: usd(x.fiat), fresh: true, status: 'pending' },
+      { id: txId, token: x.token, title: t('ui.walletMain.sentTo', { name: x.toLabel }), day: 'today', timestamp: Date.now(), sub: t('ui.walletMain.justNow'), kind: 1, amount: `\u2212${amt}`, fiat: usd(x.fiat), fresh: true, status: 'pending' },
       ...sent,
     ];
   }
@@ -414,7 +419,7 @@
     // the next send starts fresh: no pre-filled recipient, and Back no longer returns to Recipients
     fromAll = backToAll = backToRecipients = false;
     sendAddr = '';
-    sym = idForSymbol(x.symbol);
+    sym = x.token;
     report();
     const message = t('ui.walletMain.sentToast', { amount: sentAmount(x), name: x.toLabel });
     if (openChat && x.userId && onMessage) {
@@ -635,7 +640,7 @@
 <div class="main" data-screen-label="Wallet main">
   {#if view === 'send'}{#key flowKey}<WalletSend
         {tokens}
-        token={flowToken}
+        token={fromAll ? '' : flowSym}
         address={sendAddr}
         {contacts}
         {onSearchUsers}
@@ -646,6 +651,8 @@
         onSent={onSent ? handleSent : undefined}
         onDone={handleDone}
         canOpenChat={!!onMessage}
+        hostPin={sendHostPin}
+        {checkAddress}
       />{/key}{/if}
   {#if view === 'receive'}{#key flowKey}<WalletReceive
         tokens={receiveTokens}

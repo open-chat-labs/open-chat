@@ -10,9 +10,11 @@ describe('detectNetwork', () => {
     ['5sj6i-pqaaa-aaaaf-a3cmq-cai', 'ICP'],
     ['6fe2b-qpkus-3dzpo-iuc7d-nwyfk-7tqaf-2lhi4-cpm5c-ys7gz-wbf3a-dae', 'ICP'],
     ['a'.repeat(64), 'ICP'],
+    // an ICRC-1 account with a subaccount
+    ['k2t6j-2nvnp-4zjm3-25dtz-6xhaa-c7boj-5gayf-oj3xs-i43lp-teztq-6ae-dfxgiyy.102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20', 'ICP'],
   ])('%s is %s', (address, network) => expect(detectNetwork(address)).toBe(network));
 
   test('trims whitespace', () => expect(detectNetwork('  5sj6i-pqaaa-aaaaf-a3cmq-cai \n')).toBe('ICP'));
   test('empty is null', () => expect(detectNetwork('   ')).toBeNull());
-  test.each(['hello', '0x123', 'bc1short', '5sj6i'])('%s is unknown', (address) => expect(detectNetwork(address)).toBe('unknown'));
+  test.each(['hello', '0x123', 'bc1short', '5sj6i', '5sj6i-pqaaa-aaaaf-a3cmq-cai.0102'])('%s is unknown', (address) => expect(detectNetwork(address)).toBe('unknown'));
 });

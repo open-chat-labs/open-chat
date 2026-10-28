@@ -18,7 +18,8 @@ import {
 } from "@client";
 import { userWalletAddress } from "./receiveAddress";
 import { CkbtcWithdrawalInfoRequests } from "@src/utils/ckbtcWithdrawalInfo";
-import { addressNetwork, type AddressNetwork } from "@src/utils/cryptoAddress";
+import { type AddressNetwork } from "@src/utils/cryptoAddress";
+import { acceptsAddress } from "./walletSend";
 import type { TokenState } from "./walletState.svelte";
 
 /**
@@ -203,12 +204,12 @@ export class WithdrawForm {
     // Whether the send could reach this address, so that a saved one it couldn't can be left out
     // of the address book's choices
     acceptsAddress(address: string): boolean {
-        if (address === this.#ownAccount) return false;
         // Refused whichever network is chosen, since anything sent to a user id would be lost, and
-        // BTC sent over the ckBTC network goes to an IC account
-        if (this.#client.isAccountOfMultiUserCanisterUserId(address)) return false;
-        const network = addressNetwork(address);
-        return network !== undefined && this.#acceptedNetworks.includes(network);
+        // BTC sent over the ckBTC network goes to an IC account (the web wallet's Send asks the same)
+        return acceptsAddress(address, this.#acceptedNetworks, {
+            ownAccount: this.#ownAccount,
+            isUserIdAccount: (a) => this.#client.isAccountOfMultiUserCanisterUserId(a),
+        });
     }
 
     get minAmount(): bigint {

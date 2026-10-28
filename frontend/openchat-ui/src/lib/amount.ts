@@ -25,7 +25,7 @@ export function parseAmount(text: string): number {
 // and, past 15-17 significant digits (18-decimal tokens, large balances), can round up past the balance.
 
 /** x as plain decimal digits: String(x) without an exponent ("1e-8" → "0.00000001"). */
-function plain(x: number): string {
+export function plain(x: number): string {
   const m = String(x).match(/^(\d+)(?:\.(\d+))?e([+-]\d+)$/);
   if (!m) return String(x);
   const digits = m[1] + (m[2] ?? '');

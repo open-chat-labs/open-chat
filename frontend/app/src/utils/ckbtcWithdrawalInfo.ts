@@ -22,11 +22,14 @@ export class CkbtcWithdrawalInfoRequests {
 
     public now(amount: bigint): void {
         const id = ++this.#latest;
-        this.fetch(amount).then((info) => {
-            if (id === this.#latest) {
-                this.onInfo(info);
-            }
-        });
+        this.fetch(amount)
+            .then((info) => {
+                if (id === this.#latest) {
+                    this.onInfo(info);
+                }
+            })
+            // the estimate stays as it was; the next request tries again
+            .catch((err) => console.warn("Couldn't get the ckBTC minter's withdrawal info", err));
     }
 
     public debounced(amount: bigint): void {

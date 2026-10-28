@@ -427,3 +427,13 @@
 ## 2026-10-28 — WalletReceive review fixes, by hand
 - `WalletReceive`: `token` is an id (or a symbol), so with two tokens sharing a symbol the header matches the host's networks; `ReceiveNetwork.token`, the token arriving on a network when the network names it (BTC or ckBTC; the token's symbol without it), is what the warning names. `WalletMain` gives Receive the token's id.
 - `meta.json` updated.
+
+## 2026-10-28 — WalletSend: the host's PIN, exact amounts and the token's id, by hand
+- `hostPin`: the host asks for the PIN itself (or none is set), so Send has no PIN step: Send makes the transfer straight away and a failure shows under the form (`ui.walletSend.sendFailed`); `onSent` resolving `false` means nothing was sent and there's nothing to say, and the form stays as it was. The hint under Send reads `ui.walletSend.confirmHintHostPin`.
+- `checkAddress(address, symbol)`: the host's say on an address (e.g. not the user's own, on a network the send can reach), on top of the detected network and the token's `nets`.
+- `WalletSendRequest`: `token` (the token's id), `amountText` (the amount as a plain decimal, for exact ledger units) and `max` (Max was picked); `to` is trimmed. Send picks its token by id (`token` is an id or a symbol), so two tokens sharing a symbol stay apart; a user-mode send's fee is `WalletToken.userFee` when given.
+- `WalletMain`: `sendHostPin` and `checkAddress`, passed to Send; Send is given the token's id, and the pending row and the way back use the request's `token`.
+- `lib/networks.ts`: an ICRC-1 account with a subaccount (`<principal>-<checksum>.<hex>`) is an ICP address. `lib/amount.ts` exports `plain`. `types.ts`: `WalletToken.userFee`.
+- `lib/behaviours/dialog.spec.ts`: the one-run-at-a-time test is named after the app's 6b invariant 4 (one send per confirm), which it covers.
+- `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
