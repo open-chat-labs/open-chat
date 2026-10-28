@@ -1,14 +1,15 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{Chat, MessageId, MessageIndex, MiniAppStatus, UnitResult};
+use types::{Chat, MessageId, MessageIndex, MiniAppStatusUpdate, UnitResult};
 
-// The MiniApp service writes a card's status: the game starting with its players, or finishing
+// The MiniApp service updates a card's status: the game starting with its players, whose turn it is,
+// or its finishing
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub chat: Chat,
     pub thread: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub status: MiniAppStatus,
+    pub update: MiniAppStatusUpdate,
 }
 
 pub type Response = UnitResult;

@@ -21,7 +21,7 @@ async fn update_mini_app(args: Args) -> Response {
                 channel_id,
                 thread: args.thread,
                 message_id: args.message_id,
-                status: args.status,
+                update: args.update,
             };
             top_up_and_retry_if_out_of_cycles(canister_id, || {
                 community_canister_c2c_client::c2c_update_mini_app(canister_id, &c2c_args)
@@ -34,7 +34,7 @@ async fn update_mini_app(args: Args) -> Response {
             let c2c_args = group_canister::c2c_update_mini_app::Args {
                 thread: args.thread,
                 message_id: args.message_id,
-                status: args.status,
+                update: args.update,
             };
             top_up_and_retry_if_out_of_cycles(canister_id, || {
                 group_canister_c2c_client::c2c_update_mini_app(canister_id, &c2c_args)
