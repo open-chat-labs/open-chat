@@ -1223,13 +1223,13 @@ impl MiniAppContent {
         if self.spectator_count > 0 && !self.spectators {
             return Err("Only a game open to spectators has any".to_string());
         }
-        if self
-            .waiting_for
-            .iter()
-            .flatten()
-            .any(|user_id| !self.players.contains(user_id))
-        {
-            return Err("Only players can be waited for".to_string());
+        if let Some(waiting_for) = &self.waiting_for {
+            if waiting_for.iter().any(|user_id| !self.players.contains(user_id)) {
+                return Err("Only players can be waited for".to_string());
+            }
+            if waiting_for.iter().collect::<HashSet<_>>().len() < waiting_for.len() {
+                return Err("A player is waited for twice".to_string());
+            }
         }
         if let Some(result) = &self.result {
             if self.status != MiniAppStatus::Finished {
