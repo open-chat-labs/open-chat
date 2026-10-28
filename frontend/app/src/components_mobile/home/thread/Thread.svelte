@@ -150,13 +150,7 @@
         const [text, mentioned, blockLevelMarkdown] = detail;
         if (editingEvent !== undefined) {
             client
-                .editMessageWithAttachment(
-                    messageContext,
-                    text,
-                    blockLevelMarkdown,
-                    attachment,
-                    editingEvent,
-                )
+                .editMessage(messageContext, text, blockLevelMarkdown, editingEvent)
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("errorEditingMessage"));

@@ -9,8 +9,8 @@ use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    BlobReference, ChatEvent, ChatId, EventIndex, ImageContent, Message, MessageContent, MessageContentInitial, PollConfig,
-    PollContent, PollVotes, TextContent, ThumbnailData, TotalVotes, UnitResult, UserId,
+    BlobReference, ChatEvent, ChatId, EventIndex, ImageContent, Message, MessageContent, MessageContentInitial, OgPreview,
+    PollConfig, PollContent, PollVotes, TextContent, ThumbnailData, TotalVotes, UnitResult, UserId,
 };
 
 #[test]
@@ -360,6 +360,112 @@ fn edit_message_text_in_a_channel_succeeds() {
     let ChatEvent::Message(message) = event.event else { panic!() };
     assert!(message.edited);
     assert_eq!(message.content.text(), Some("TEXT!"));
+}
+
+#[test]
+fn editing_an_images_caption_in_a_direct_chat_keeps_the_image_in_both_copies() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+    let message_id = random_from_u128();
+    let sent =
+        client::user::happy_path::send_message(env, &user1, user2.user_id, None, image(Some("old")), None, Some(message_id));
+
+    let response = client::user::edit_message_text(
+        env,
+        user1.principal,
+        user1.canister(),
+        &multi_user_canister::edit_message_text::Args {
+            user_id: user2.user_id,
+            thread_root_message_index: None,
+            message_id,
+            text: Some("new".to_string()),
+            block_level_markdown: None,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    tick_until(env, |env| {
+        direct_message(env, &user2, user1.user_id, sent.event_index).content.text() == Some("new")
+    });
+
+    for (user, them) in [(&user1, user2.user_id), (&user2, user1.user_id)] {
+        let message = direct_message(env, user, them, sent.event_index);
+        assert!(message.edited);
+        assert_image(&message.content, Some("new"));
+    }
+}
+
+// Hiding a link's preview is an edit which changes only the previews, so the message isn't marked
+// as edited
+#[test]
+fn an_edit_of_only_the_link_previews_doesnt_mark_the_message_edited() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+    let text = "See https://oc.app";
+    let preview = OgPreview {
+        url: "https://oc.app".to_string(),
+        title: "OpenChat".to_string(),
+        description: "Chat".to_string(),
+        image: None,
+    };
+
+    let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, true);
+    let group_message_id = random_from_u128();
+    let group_sent = client::group::happy_path::send_text_message(env, &user1, group_id, None, text, Some(group_message_id));
+    let response = client::group::edit_message_text(
+        env,
+        user1.principal,
+        group_id.into(),
+        &group_canister::edit_message_text::Args {
+            thread_root_message_index: None,
+            message_id: group_message_id,
+            text: Some(text.to_string()),
+            block_level_markdown: None,
+            new_achievement: false,
+            og_previews: vec![preview.clone()],
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    let message = group_message(env, &user1, group_id, group_sent.event_index);
+    assert!(!message.edited);
+    assert_eq!(message.og_previews, vec![preview.clone()]);
+
+    let direct_message_id = random_from_u128();
+    let direct_sent = client::user::happy_path::send_text_message(env, &user1, user2.user_id, text, Some(direct_message_id));
+    let response = client::user::edit_message_text(
+        env,
+        user1.principal,
+        user1.canister(),
+        &multi_user_canister::edit_message_text::Args {
+            user_id: user2.user_id,
+            thread_root_message_index: None,
+            message_id: direct_message_id,
+            text: Some(text.to_string()),
+            block_level_markdown: None,
+            og_previews: vec![preview.clone()],
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    tick_until(env, |env| {
+        !direct_message(env, &user2, user1.user_id, direct_sent.event_index)
+            .og_previews
+            .is_empty()
+    });
+
+    for (user, them) in [(&user1, user2.user_id), (&user2, user1.user_id)] {
+        let message = direct_message(env, user, them, direct_sent.event_index);
+        assert!(!message.edited);
+        assert_eq!(message.og_previews, vec![preview.clone()]);
+        assert_eq!(message.content.text(), Some(text));
+    }
 }
 
 fn image(caption: Option<&str>) -> MessageContentInitial {

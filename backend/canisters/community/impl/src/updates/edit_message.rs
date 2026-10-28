@@ -109,6 +109,8 @@ fn commit(channel_id: ChannelId, args: EditMessageArgs, new_achievement: bool, s
     let thread_root_message_index = args.thread_root_message_index;
     let message_id = args.message_id;
     let now = args.now;
+    // A user's edit only changes the text, so only a bot's can bring new media to scan
+    let content_replaced = matches!(args.edit, MessageEdit::Content(_));
 
     let Some(channel) = state.data.channels.get_mut(&channel_id) else {
         return Err(OCErrorCode::ChatNotFound.into());
@@ -145,7 +147,7 @@ fn commit(channel_id: ChannelId, args: EditMessageArgs, new_achievement: bool, s
         // Unlike classification there is no empty-request "clear" for media: verdicts only
         // ever act on a match, and a match escalates regardless of later edits (the matched
         // content was posted publicly; editing it away does not void the report)
-        let blobs = message.content.scannable_blobs();
+        let blobs = if content_replaced { message.content.scannable_blobs() } else { Vec::new() };
         state.queue_message_for_moderation(channel_id, thread_root_message_index, message_id, input);
         if !blobs.is_empty() {
             state.queue_media_for_scanning(channel_id, thread_root_message_index, message_id, blobs);
