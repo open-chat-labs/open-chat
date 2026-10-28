@@ -68,6 +68,7 @@ export {
     hasAccessGateChanged,
 } from "./utils/group.svelte";
 export { communityChanges, isPrivateCommunityPreview } from "./utils/community";
+export { userMessagePermissionFor } from "./utils/botMessagePermissions";
 export { executionPaymentAmount, proposalFundsRequired } from "./utils/proposal";
 export {
     achievementList,

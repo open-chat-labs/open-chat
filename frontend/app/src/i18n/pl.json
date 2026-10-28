@@ -455,6 +455,10 @@
             "people": "Ludzie",
             "webhooks": "Webhooki"
         },
+        "miniApp": {
+            "failed": "Nie udało się otworzyć tej aplikacji. Może musisz najpierw dołączyć do czatu.",
+            "open": "Otwórz"
+        },
         "poll": {
             "desc": "Utwórz ankietę w bieżącym czacie"
         },
@@ -1768,11 +1772,13 @@
             "giphy": "wysyłaj wiadomości gif",
             "image": "wysyłaj wiadomości obrazkowe",
             "memeFighter": "wysyłaj wiadomości do walki z memami",
+            "miniApp": "publikować miniaplikacje, np. gry",
             "p2pSwap": "wysyłaj wiadomości wymiany P2P",
             "poll": "tworzyć wiadomości ankietowe",
             "prize": "wysyłaj wiadomości z nagrodami",
             "text": "wysyłać wiadomości tekstowe",
-            "video": "wysyłaj wiadomości wideo"
+            "video": "wysyłaj wiadomości wideo",
+            "videoCall": "rozpoczynać rozmowy wideo"
         },
         "nobody": "Nikt nie może",
         "notPermitted": "Nie masz pozwolenia na {permission}",

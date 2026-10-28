@@ -423,6 +423,10 @@
             "people": "People",
             "webhooks": "Webhooks"
         },
+        "miniApp": {
+            "failed": "Couldn't open this app. You may need to join the chat first.",
+            "open": "Open"
+        },
         "poll": {
             "desc": "Create a poll in the current chat"
         },
@@ -1823,11 +1827,13 @@
             "giphy": "send gif messages",
             "image": "send image messages",
             "memeFighter": "send Meme Fighter messages",
+            "miniApp": "post mini apps, eg. games",
             "p2pSwap": "send P2P swap messages",
             "poll": "create poll messages",
             "prize": "send prize mssages",
             "text": "send text messages",
-            "video": "send video messages"
+            "video": "send video messages",
+            "videoCall": "start video calls"
         },
         "nobody": "Nobody can",
         "notPermitted": "You are not permitted to {permission}",

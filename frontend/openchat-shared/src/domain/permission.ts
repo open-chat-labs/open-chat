@@ -37,6 +37,24 @@ export const messagePermissionsList = [
 type MessagePermissionsType = typeof messagePermissionsList;
 export type MessagePermission = MessagePermissionsType[number];
 
+// A bot's message permissions, in the order of the backend's MessagePermission bits. Unlike the
+// group permissions above, they include video calls and MiniApp messages, and not Meme Fighter.
+export const botMessagePermissionList = [
+    "text",
+    "image",
+    "video",
+    "audio",
+    "file",
+    "poll",
+    "crypto",
+    "giphy",
+    "prize",
+    "p2pSwap",
+    "videoCall",
+    "miniApp",
+] as const;
+export type BotMessagePermission = (typeof botMessagePermissionList)[number];
+
 export const chatPermissionsList = [
     "changeRoles",
     "updateGroup",
@@ -229,6 +247,7 @@ export type AccessTokenType =
     | MarkVideoCallEnded
     | VideoCallParticipantToken
     | BotActionByCommand
+    | BotMessageSession
     | Translate;
 
 export type Translate = {
@@ -283,6 +302,17 @@ export type BotActionCommunityScope = {
 };
 
 export type BotActionScope = BotActionChatScope | BotActionCommunityScope;
+
+// A token for this user, for the app a bot opens from one of its MiniApp messages. It tells the
+// bot's app who the user is.
+export type BotMessageSession = {
+    kind: "bot_message_session";
+    botId: string;
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number | undefined;
+    messageId: bigint;
+    meta: BotCommandMeta;
+};
 
 export type BotActionByCommand = {
     kind: "bot_action_by_command";

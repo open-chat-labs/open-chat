@@ -146,6 +146,12 @@ design export needs. Each entry says where it came up.
     prices are from, linked. The library has no bubble for it, so the new UI shows its title as
     text (`contentText`); the old UI's is `PriceChartContent.svelte`, and the chart itself is
     `features/cashtag/PriceChart.svelte`.
+  - **MiniApp message**: a bot's card for an app it hosts, such as a game (`mini_app_content`): its
+    markdown text and an Open button, which opens the bot's app (its endpoint + `/app`, from
+    `utils/miniApp.ts`) in a sandboxed frame showing the app's host. `logic/miniApp/miniAppHost.svelte.ts`
+    answers the app's postMessages with a token from `client.miniAppToken`. The library has no
+    bubble for it, so the new UI shows its text (`contentText`) without the button; the old UI's are
+    `MiniAppContent.svelte` and `MiniAppFrame.svelte`.
 - **`ProfileDialog`, by hand** (8c, to go back to the design export): `sections`, the sections
   its nav offers (a host that has built only some); the cover and photo edit buttons only with
   `onCoverEdit` / `onPhotoEdit`; `engagement` counts as numbers; `memberSince` from `joined` in the

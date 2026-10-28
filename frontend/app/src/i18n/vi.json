@@ -455,6 +455,10 @@
             "people": "Mọi người",
             "webhooks": "Webhook"
         },
+        "miniApp": {
+            "failed": "Không thể mở ứng dụng này. Có thể bạn cần tham gia cuộc trò chuyện trước.",
+            "open": "Mở"
+        },
         "poll": {
             "desc": "Tạo một cuộc thăm dò trong cuộc trò chuyện hiện tại"
         },
@@ -1768,11 +1772,13 @@
             "giphy": "gửi tin nhắn gif",
             "image": "gửi tin nhắn hình ảnh",
             "memeFighter": "gửi tin nhắn Meme Fighter",
+            "miniApp": "đăng ứng dụng nhỏ, ví dụ trò chơi",
             "p2pSwap": "gửi tin nhắn trao đổi P2P",
             "poll": "tạo tin nhắn thăm dò ý kiến",
             "prize": "gửi tin nhắn trúng thưởng",
             "text": "gửi tin nhắn văn bản",
-            "video": "gửi tin nhắn video"
+            "video": "gửi tin nhắn video",
+            "videoCall": "bắt đầu cuộc gọi video"
         },
         "nobody": "Không ai có thể",
         "notPermitted": "Bạn không được phép {permission}",

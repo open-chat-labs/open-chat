@@ -455,6 +455,10 @@
             "people": "Personnes",
             "webhooks": "Webhooks"
         },
+        "miniApp": {
+            "failed": "Impossible d'ouvrir cette application. Vous devrez peut-être d'abord rejoindre la discussion.",
+            "open": "Ouvrir"
+        },
         "poll": {
             "desc": "Créer un sondage dans le chat actuel"
         },
@@ -1768,11 +1772,13 @@
             "giphy": "envoyer des messages gif",
             "image": "envoyer des messages image",
             "memeFighter": "envoyer des messages à Meme Fighter",
+            "miniApp": "publier des mini-applications, par ex. des jeux",
             "p2pSwap": "envoyer des messages d'échange P2P",
             "poll": "créer des messages de sondage",
             "prize": "envoyer des messages de récompense",
             "text": "envoyer des messages texte",
-            "video": "envoyer des messages vidéo"
+            "video": "envoyer des messages vidéo",
+            "videoCall": "lancer des appels vidéo"
         },
         "nobody": "Personne ne peut",
         "notPermitted": "Vous n'êtes pas autorisé à {permission}",

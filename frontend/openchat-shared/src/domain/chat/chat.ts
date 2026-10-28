@@ -115,7 +115,8 @@ export type MessageContent =
     | DailyResultContent
     | VideoCallContent
     | EncryptedContent
-    | PriceChartContent;
+    | PriceChartContent
+    | MiniAppContent;
 
 export type VideoCallParticipant = {
     userId: string;
@@ -140,6 +141,16 @@ export type PriceChartContent = {
     series: PriceChartSeries[];
     // where the prices are from, credited with links under the chart
     sources: PriceChartSource[];
+};
+
+/**
+ * A bot's card for an app it hosts, eg. a game. It never changes: its Open button opens the bot's
+ * app, whose page shows everything else. Only bots post them, and they can't be forwarded.
+ */
+export type MiniAppContent = {
+    kind: "mini_app_content";
+    // markdown, eg. "**Uno** · 2 to 4 players"
+    text: string;
 };
 
 export type PriceChartSeries = {

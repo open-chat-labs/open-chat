@@ -10,10 +10,12 @@ import { describe, expect, test } from "vitest";
 import type { MessageContent as TMessageContent } from "../../typebox";
 import {
     addressToIcrcAccount,
+    apiExternalBotPermissions,
     apiMaybeAccessGate,
     apiMessageContent,
     groupDetailsUpdatesResponse,
     apiPendingCryptoTransaction,
+    externalBotPermissions,
     formatIcrcAccount,
     messageContent,
     pendingCryptoTransfer,
@@ -292,5 +294,31 @@ describe("the gate a new chat is created with", () => {
         ).toEqual({
             Composite: { and: false, inner: ["LifetimeDiamondMember", "UniquePerson"] },
         });
+    });
+});
+
+describe("mini app content mapping", () => {
+    test("maps the card's text", () => {
+        const api: TMessageContent = { MiniApp: { text: "**Uno** · 2 to 4 players" } };
+
+        expect(messageContent(api, "sender")).toEqual({
+            kind: "mini_app_content",
+            text: "**Uno** · 2 to 4 players",
+        });
+    });
+
+    test("isn't sent: only bots post them", () => {
+        expect(() => apiMessageContent({ kind: "mini_app_content", text: "Uno" })).toThrow();
+    });
+});
+
+describe("bot permission bits", () => {
+    test("message permissions follow the backend's MessagePermission bits, both ways", () => {
+        // P2pSwap = 9, VideoCall = 10, MiniApp = 11
+        const message = (1 << 9) | (1 << 10) | (1 << 11);
+        const permissions = externalBotPermissions({ community: 0, chat: 0, message });
+
+        expect(permissions.messagePermissions).toEqual(["p2pSwap", "videoCall", "miniApp"]);
+        expect(apiExternalBotPermissions(permissions).message).toBe(message);
     });
 });

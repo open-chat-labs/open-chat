@@ -17,6 +17,7 @@
         selectedChatSummaryStore,
         selectedCommunityBotsStore,
         threadPermissionsForSelectedChatStore,
+        userMessagePermissionFor,
     } from "@client";
     import {
         hasEveryRequiredPermission,
@@ -111,17 +112,25 @@
                 return (
                     chatRolePermitted &&
                     chatPermitted &&
-                    [...command.permissions.messagePermissions].every((p) =>
-                        $messagePermissionsForSelectedChatStore.has(p),
-                    )
+                    [...command.permissions.messagePermissions].every((p) => {
+                        const userPermission = userMessagePermissionFor(p);
+                        return (
+                            userPermission !== undefined &&
+                            $messagePermissionsForSelectedChatStore.has(userPermission)
+                        );
+                    })
                 );
             case "thread":
                 return (
                     chatRolePermitted &&
                     chatPermitted &&
-                    [...command.permissions.messagePermissions].every((p) =>
-                        $threadPermissionsForSelectedChatStore.has(p),
-                    )
+                    [...command.permissions.messagePermissions].every((p) => {
+                        const userPermission = userMessagePermissionFor(p);
+                        return (
+                            userPermission !== undefined &&
+                            $threadPermissionsForSelectedChatStore.has(userPermission)
+                        );
+                    })
                 );
         }
     }

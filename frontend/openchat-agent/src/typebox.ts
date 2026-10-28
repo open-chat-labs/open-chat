@@ -401,6 +401,11 @@ export const MessageReminderContent = /* @__PURE__ */ Type.Object({
 export type Reaction = Static<typeof Reaction>;
 export const Reaction = /* @__PURE__ */ Type.String();
 
+export type MiniAppContent = Static<typeof MiniAppContent>;
+export const MiniAppContent = /* @__PURE__ */ Type.Object({
+    text: Type.String(),
+});
+
 export type MessageIndex = Static<typeof MessageIndex>;
 export const MessageIndex = /* @__PURE__ */ Type.Number();
 
@@ -8133,6 +8138,15 @@ export const BotRegistrationStatus = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
+export type BotMessageSessionArgs = Static<typeof BotMessageSessionArgs>;
+export const BotMessageSessionArgs = /* @__PURE__ */ Type.Object({
+    bot_id: UserId,
+    chat: Chat,
+    thread: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    meta: Type.Optional(BotCommandMeta),
+});
+
 export type EventWrapperGroupUnfrozen = Static<typeof EventWrapperGroupUnfrozen>;
 export const EventWrapperGroupUnfrozen = /* @__PURE__ */ Type.Object({
     index: EventIndex,
@@ -9100,6 +9114,9 @@ export const BotMessageContent = /* @__PURE__ */ Type.Union([
     Type.Object({
         PriceChart: PriceChartContent,
     }),
+    Type.Object({
+        MiniApp: MiniAppContent,
+    }),
 ]);
 
 export type CurrentUserSummary = Static<typeof CurrentUserSummary>;
@@ -9306,6 +9323,9 @@ export const LocalUserIndexAccessTokenV2Args = /* @__PURE__ */ Type.Union([
     Type.Object({
         BotActionByCommand: BotActionByCommandArgs,
     }),
+    Type.Object({
+        BotMessageSession: BotMessageSessionArgs,
+    }),
     Type.Literal("Translate"),
 ]);
 
@@ -9415,6 +9435,9 @@ export const MessageContent = /* @__PURE__ */ Type.Union([
     Type.Object({
         PriceChart: PriceChartContent,
     }),
+    Type.Object({
+        MiniApp: MiniAppContent,
+    }),
 ]);
 
 export type GroupMatch = Static<typeof GroupMatch>;
@@ -9487,6 +9510,9 @@ export const MessageContentInitial = /* @__PURE__ */ Type.Union([
     }),
     Type.Object({
         PriceChart: PriceChartContent,
+    }),
+    Type.Object({
+        MiniApp: MiniAppContent,
     }),
 ]);
 

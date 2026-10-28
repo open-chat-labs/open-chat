@@ -5,7 +5,7 @@
         botChatPermissionList,
         botCommunityPermissionList,
         type ExternalBotPermissions,
-        messagePermissionsList,
+        botMessagePermissionList,
         type ResourceKey,
     } from "@client";
     import { i18nKey } from "../../i18n/i18n";
@@ -51,7 +51,7 @@
     {/each}
 {/snippet}
 {#snippet messageTab()}
-    {#each messagePermissionsList as perm}
+    {#each botMessagePermissionList as perm}
         {@render check(
             i18nKey(`permissions.messagePermissions.${perm}`),
             permissions.messagePermissions.includes(perm),

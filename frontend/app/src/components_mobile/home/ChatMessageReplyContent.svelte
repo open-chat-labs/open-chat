@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Markdown from "@src/core/Markdown.svelte";
     import { Row, ChatCaption } from "component-lib";
     import type { MessageContent, MessageContext } from "@client";
     import { i18nKey } from "../../i18n/i18n";
@@ -184,4 +185,6 @@
     <DailyResultContent {content} {intersecting} />
 {:else if content.kind === "price_chart_content"}
     <PriceChartContent {content} reply />
+{:else if content.kind === "mini_app_content"}
+    <Markdown text={content.text} oneLine suppressLinks />
 {/if}

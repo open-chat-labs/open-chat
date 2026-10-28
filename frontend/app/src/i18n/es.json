@@ -455,6 +455,10 @@
             "people": "Gente",
             "webhooks": "Webhooks"
         },
+        "miniApp": {
+            "failed": "No se pudo abrir esta aplicación. Puede que tengas que unirte al chat primero.",
+            "open": "Abrir"
+        },
         "poll": {
             "desc": "Crear una encuesta en el chat actual"
         },
@@ -1768,11 +1772,13 @@
             "giphy": "enviar mensajes gif",
             "image": "enviar mensajes de imagen",
             "memeFighter": "enviar mensajes de Meme Fighter",
+            "miniApp": "publicar miniaplicaciones, p. ej. juegos",
             "p2pSwap": "enviar mensajes de intercambio P2P",
             "poll": "crear mensajes de encuesta",
             "prize": "enviar mensajes de premio",
             "text": "enviar mensajes de texto",
-            "video": "enviar mensajes de vídeo"
+            "video": "enviar mensajes de vídeo",
+            "videoCall": "iniciar videollamadas"
         },
         "nobody": "Nadie puede",
         "notPermitted": "No tienes permiso para {permission}",

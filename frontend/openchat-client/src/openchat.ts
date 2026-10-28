@@ -11186,6 +11186,42 @@ export class OpenChat {
         return this.#getRoomAccessToken(token);
     }
 
+    /**
+     * A token for the app a bot opens from one of its MiniApp messages, which tells the app's server
+     * who the user is. Got when the app opens, and again whenever it asks for a fresh one, so it's
+     * not kept. Undefined if OpenChat won't issue one, eg. the user isn't in the chat any more.
+     */
+    async miniAppToken(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        botId: string,
+    ): Promise<string | undefined> {
+        const chat = allChatsStore.value.get(chatId);
+        if (chat === undefined) return undefined;
+        try {
+            const localUserIndex = await this.#getLocalUserIndex(chat);
+            return await this.#worker.send({
+                kind: "getAccessToken",
+                accessTokenType: {
+                    kind: "bot_message_session",
+                    botId,
+                    chatId,
+                    threadRootMessageIndex,
+                    messageId,
+                    meta: {
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        language: this.#locale.substring(0, 2),
+                    },
+                },
+                localUserIndex,
+            });
+        } catch (err) {
+            console.warn("Couldn't get a token for a bot's mini app", err);
+            return undefined;
+        }
+    }
+
     #translationToken: { token: string; expiresAt: number } | undefined;
 
     async getTranslationToken(forceRefresh: boolean = false): Promise<string | undefined> {
