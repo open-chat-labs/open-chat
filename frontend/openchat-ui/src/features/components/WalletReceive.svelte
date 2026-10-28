@@ -6,6 +6,24 @@
 <script lang="ts" module>
   export type NetworkId = 'icp' | 'eth' | 'btc' | 'xrpl';
 
+  /** A network the host offers for the shown token (`networks`), with the user's address on it. */
+  export interface ReceiveNetwork {
+    id: string;
+    /** Resource key (or literal text). */
+    label: string;
+    /** Under the label in the picker, e.g. "Arrives as ckBTC". */
+    short?: string;
+    /** How long it takes, e.g. "~10 min". */
+    time?: string;
+    /** The address; without it, it's still being fetched (or `failed`). */
+    address?: string;
+    failed?: boolean;
+    /** What depositing on it costs or needs (literal text), under the warning. */
+    note?: string;
+    /** The token that arrives on it, for the warning, when the network names it (BTC or ckBTC); the token's symbol without it. */
+    token?: string;
+  }
+
   export interface ShareChat {
     id: string;
     name: string;
@@ -44,7 +62,7 @@
   interface Props {
     /** Tokens with `nets` can be received; any listed token works, held or not. */
     tokens: WalletToken[];
-    /** Symbol to receive; falls back to ICP, then the first receivable token. */
+    /** Token to receive, by its id (WalletToken.id) or symbol; falls back to ICP, then the first receivable token. */
     token?: string;
     /** Your OpenChat handle; shows the "From OpenChat" row. */
     handle?: string;
@@ -53,14 +71,20 @@
     /** Chats the address can be shared to. Share is hidden without chats or onShare. */
     chats?: ShareChat[];
     /** Post the address to a chat. Reject to keep the picker open with an error. */
-    onShare?: (v: { chatId: string; message: string; symbol: string; network: NetworkId; address: string }) => Promise<unknown> | void;
+    onShare?: (v: { chatId: string; message: string; symbol: string; network: string; address: string }) => Promise<unknown> | void;
     /** Draws a scannable QR code for the address as an svg, canvas or img, scaled to fill a white square of about 135px
      *  (that element is what "Copy QR image" copies). Without it the address card has no QR. */
     qr?: Snippet<[string]>;
     onClose?: () => void;
+    /** The host's networks for the shown token, in place of the token's `nets` and `addresses`: the host knows the
+     *  addresses (fetching some as they're chosen) and what each network costs. Any token works, `nets` or not. */
+    networks?: ReceiveNetwork[];
+    /** With `networks`: the chosen one's id (the first without it), and the host's ear for a pick. */
+    network?: string;
+    onNetwork?: (id: string) => void;
   }
 
-  let { tokens, token, handle = '', addresses = {}, chats = [], onShare, qr, onClose }: Props = $props();
+  let { tokens, token, handle = '', addresses = {}, chats = [], onShare, qr, onClose, networks: hostNets, network: hostNet, onNetwork }: Props = $props();
   const t = useT();
 
   let width = $state(0);
@@ -81,13 +105,35 @@
   onDestroy(() => clearTimeout(toastTimer));
 
   const narrow = $derived(width > 0 && width < 760);
-  const receivable = $derived(tokens.filter((t) => t.nets?.length));
-  const tok = $derived(receivable.find((x) => x.symbol === token) ?? receivable.find((x) => x.symbol === 'ICP') ?? receivable[0]);
-  const ids = $derived((tok?.nets ?? []) as NetworkId[]);
-  const id = $derived(ids[Math.min(netIdx, ids.length - 1)]);
-  const wrapped = $derived(id === 'icp' && tok ? ICP_AS[tok.symbol] : undefined);
-  const net = $derived(id ? { ...NET[id], ...(wrapped ? { short: t('ui.walletReceive.arrivesAs', { token: wrapped }) } : {}) } : null);
-  const address = $derived((id && addresses[id]) || '');
+  // the host's networks (any token), or the token's own `nets` with the library's names
+  const receivable = $derived(hostNets ? tokens : tokens.filter((t) => t.nets?.length));
+  // a token is its id first: two can share a symbol, and the host's networks are for the one it names
+  const tok = $derived(
+    receivable.find((x) => (x.id ?? x.symbol) === token) ??
+      receivable.find((x) => x.symbol === token) ??
+      receivable.find((x) => x.symbol === 'ICP') ??
+      receivable[0],
+  );
+  const ids = $derived(hostNets ? hostNets.map((n) => n.id) : ((tok?.nets ?? []) as NetworkId[]));
+  const hostCurrent = $derived(hostNets ? (hostNets.find((n) => n.id === hostNet) ?? hostNets[0]) : undefined);
+  const id = $derived(hostNets ? hostCurrent?.id : ids[Math.min(netIdx, ids.length - 1)]);
+  const wrapped = $derived(!hostNets && id === 'icp' && tok ? ICP_AS[tok.symbol] : undefined);
+  const netOf = (nid: string) => {
+    const host = hostNets?.find((n) => n.id === nid);
+    if (host) return { label: host.label, short: host.short ?? '', time: host.time ?? '' };
+    const w = nid === 'icp' && tok ? ICP_AS[tok.symbol] : undefined;
+    return { ...NET[nid as NetworkId], ...(w ? { short: t('ui.walletReceive.arrivesAs', { token: w }) } : {}) };
+  };
+  const net = $derived(id ? netOf(id) : null);
+  const address = $derived((hostNets ? hostCurrent?.address : id && addresses[id as NetworkId]) || '');
+  const addressFailed = $derived(!!hostCurrent?.failed);
+  const addressPending = $derived(!!hostNets && !address && !addressFailed);
+
+  function pickNetwork(i: number) {
+    open = false;
+    if (hostNets) onNetwork?.(ids[i]);
+    else netIdx = i;
+  }
 
 
   // the QR as an image: offered only where the browser can put an image on the clipboard
@@ -138,7 +184,7 @@
 
 <div class="receive" bind:clientWidth={width} data-screen-label="Wallet receive">
   {#if tok && net}
-    <PageHeader title={t('ui.walletReceive.receiveToken', { symbol: tok.symbol })} onBack={() => onClose?.()} avatarMark={tok.mark} avatarGradient={tok.grad} />
+    <PageHeader title={t('ui.walletReceive.receiveToken', { symbol: tok.symbol })} onBack={() => onClose?.()} avatarMark={tok.mark} avatarGradient={tok.grad} avatarLogo={tok.logo} />
     <div class="scroll">
       <div class="column" class:narrow>
         <div class="group">
@@ -154,20 +200,12 @@
                 <div class="away" onclick={() => (open = false)} role="presentation"></div>
                 <div class="options">
                   {#each ids as nid, i}
-                    {@const w = nid === 'icp' ? ICP_AS[tok.symbol] : undefined}
-                    <div
-                      class="option"
-                      onclick={() => {
-                        netIdx = i;
-                        open = false;
-                      }}
-                      tabindex="0"
-                      role="option"
-                      aria-selected={i === netIdx}
-                    >
-                      <span class="option-text"><span class="option-label">{t(NET[nid].label)}</span><span class="option-short">{w ? t('ui.walletReceive.arrivesAs', { token: w }) : t(NET[nid].short)}</span></span>
-                      <span class="option-time">{t(NET[nid].time)}</span>
-                      <span class="tick" class:on={i === netIdx}></span>
+                    {@const o = netOf(nid)}
+                    {@const on = nid === id}
+                    <div class="option" onclick={() => pickNetwork(i)} tabindex="0" role="option" aria-selected={on}>
+                      <span class="option-text"><span class="option-label">{t(o.label)}</span><span class="option-short">{t(o.short)}</span></span>
+                      <span class="option-time">{t(o.time)}</span>
+                      <span class="tick" class:on></span>
                     </div>
                   {/each}
                 </div>
@@ -180,7 +218,11 @@
         <div class="group">
           <ListSectionLabel label={t('ui.walletReceive.yourAddress')} />
           <div class="address-card">
-            {#if !address}
+            {#if addressPending}
+              <span class="address-missing">{t('ui.walletReceive.generating')}</span>
+            {:else if addressFailed}
+              <span class="address-missing">{t('ui.walletReceive.addressFailed')}</span>
+            {:else if !address}
               <span class="address-missing">{t('ui.walletReceive.noAddress')}</span>
             {:else}
               {#if qr}
@@ -206,7 +248,9 @@
         </div>
         <div class="warning">
           <span class="warning-icon"></span><span class="warning-text"
-            >{t('ui.walletReceive.warning', { token: wrapped || tok.symbol, network: t(net.label), symbol: tok.symbol })}</span
+            >{t('ui.walletReceive.warning', { token: hostCurrent?.token || wrapped || tok.symbol, network: t(net.label), symbol: tok.symbol })}{#if hostCurrent?.note}<span
+                class="note">{hostCurrent.note}</span
+              >{/if}</span
           >
         </div>
         {#if handle}
@@ -590,6 +634,12 @@
     font: var(--weight-regular) 13px/1.5 var(--font-sans);
     color: var(--ink-2);
     text-wrap: pretty;
+  }
+
+  .note {
+    display: block;
+    margin-top: var(--space-6);
+    color: var(--ink-3);
   }
 
   .handle-box {
