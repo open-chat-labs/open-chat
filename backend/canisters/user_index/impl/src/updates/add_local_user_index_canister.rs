@@ -198,6 +198,9 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                 UserIndexEvent::SetDailyPuzzleCanisterId(daily_puzzle_canister_id),
             );
         }
+        if let Some(principal) = state.data.mini_app_service_principal {
+            pusher.push(canister_id, UserIndexEvent::SetMiniAppServicePrincipal(principal));
+        }
         for (&platform, &bot_id) in state.data.bridge_bots.iter() {
             pusher.push(
                 canister_id,

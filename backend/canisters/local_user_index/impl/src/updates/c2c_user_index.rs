@@ -13,6 +13,7 @@ use multi_user_canister::{
 use p256_key_pair::P256KeyPair;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
+use tracing::info;
 use types::{
     BotEvent, BotInstallationLocation, BotLifecycleEvent, BotNotification, BotRegisteredEvent, PushIfNotContains,
     TimestampMillis,
@@ -334,6 +335,10 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         UserIndexEvent::SetDailyPuzzleCanisterId(canister_id) => {
             state.set_daily_puzzle_canister_id(canister_id);
+        }
+        UserIndexEvent::SetMiniAppServicePrincipal(principal) => {
+            state.data.mini_app_service = Some(principal);
+            info!(%principal, "MiniApp service principal set");
         }
         UserIndexEvent::SetBridgeBot(ev) => {
             if let Some(bot_id) = ev.bot_id {

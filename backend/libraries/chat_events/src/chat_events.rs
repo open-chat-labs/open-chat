@@ -890,9 +890,9 @@ impl ChatEvents {
         Ok((content, sender))
     }
 
-    // A bot changing what its MiniApp card shows as its game goes on: the status, players, whose move
-    // it is and the result. The rest of the card never changes, and nor does any of it once the game
-    // is finished. Unlike an edit, the message isn't marked as edited.
+    // The MiniApp service writing a card's game as it now is: its status, players and result. The rest
+    // of the card never changes, and nor does any of it once the game is finished. Unlike an edit, the
+    // message isn't marked as edited.
     pub fn update_mini_app(&mut self, args: UpdateMiniAppArgs) -> OCResult {
         match self.update_message(
             args.thread_root_message_index,
@@ -901,7 +901,7 @@ impl ChatEvents {
             args.now,
             true,
             ChatEventType::MessageOther,
-            |message, _| Self::update_mini_app_inner(message, args.bot, args.update),
+            |message, _| Self::update_mini_app_inner(message, args.update),
         ) {
             Ok(_) => Ok(()),
             Err(UpdateEventError::NoChange(error)) => Err(error),
@@ -909,16 +909,9 @@ impl ChatEvents {
         }
     }
 
-    fn update_mini_app_inner(
-        message: &mut MessageInternal,
-        bot: UserId,
-        update: MiniAppUpdate,
-    ) -> Result<(), UpdateEventError<OCError>> {
+    fn update_mini_app_inner(message: &mut MessageInternal, update: MiniAppUpdate) -> Result<(), UpdateEventError<OCError>> {
         if message.deleted_by.is_some() {
             return Err(UpdateEventError::NotFound);
-        }
-        if message.sender != bot {
-            return Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized.into()));
         }
         let MessageContentInternal::MiniApp(card) = &mut message.content else {
             return Err(UpdateEventError::NoChange(OCErrorCode::InvalidMessageType.into()));
@@ -3229,7 +3222,6 @@ pub struct EditMessageArgs {
 }
 
 pub struct UpdateMiniAppArgs {
-    pub bot: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub update: MiniAppUpdate,

@@ -5,15 +5,15 @@ use crate::{TestEnv, User, client};
 use candid::Principal;
 use local_user_index_canister::chat_events::{EventsByIndexArgs, EventsSelectionCriteria};
 use oc_error_codes::OCErrorCode;
-use pocket_ic::PocketIc;
+use pocket_ic::{ErrorCode, PocketIc, RejectResponse};
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
-use testing::rng::{random_from_u128, random_string};
+use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     AutonomousConfig, BlobReference, BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId,
     ChannelId, Chat, ChatEvent, ChatPermission, CommunityId, EventIndex, MessageContent, MessageContentInitial, MessageId,
-    MessagePermission, MiniAppContent, MiniAppImage, MiniAppStatus, MiniAppUpdate, OptionUpdate, UnitResult,
+    MessageIndex, MessagePermission, MiniAppContent, MiniAppImage, MiniAppStatus, MiniAppUpdate, SuccessOnly, UnitResult,
 };
 
 #[test]
@@ -159,7 +159,7 @@ fn a_bot_without_the_mini_app_permission_cant_post_one() {
     );
 }
 
-// A card is sent whole: only its game's state changes, which the bot updates
+// A card is sent whole: only its game's state changes, which the MiniApp service writes
 #[test]
 fn a_card_is_sent_finalised() {
     let mut wrapper = ENV.deref().get();
@@ -208,10 +208,9 @@ fn a_card_is_sent_finalised() {
     );
 }
 
-// The bot keeps its card up to date as its game goes on: who's playing, whose move it is, and the
-// result. The message isn't marked as edited, and once the game is finished the card never changes.
+// Its players, status and result are written only by the MiniApp service, as players join through it
 #[test]
-fn a_bot_updates_its_card_as_its_game_goes_on() {
+fn a_card_is_posted_open_with_no_players() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -235,6 +234,52 @@ fn a_bot_updates_its_card_as_its_game_goes_on() {
         community_id,
         MessagePermission::MiniApp,
     );
+
+    let response = send(
+        env,
+        bot_principal,
+        local_user_index,
+        Chat::Channel(community_id, channel_id),
+        random_from_u128(),
+        MiniAppContent {
+            players: vec![member.user_id],
+            ..card()
+        },
+    );
+    assert!(
+        matches!(&response, local_user_index_canister::bot_send_message::Response::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent)),
+        "Expected InvalidMessageContent: {response:?}"
+    );
+}
+
+// As players join and the game goes on. The message isn't marked as edited, its status only moves
+// forward, and once the game is finished the card never changes.
+#[test]
+fn the_mini_app_service_writes_a_cards_game() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let Setup {
+        owner,
+        member,
+        community_id,
+        channel_id,
+        local_user_index,
+    } = setup(env, canister_ids, *controller);
+    let bot_principal = install_bot(
+        env,
+        &owner,
+        canister_ids.user_index,
+        local_user_index,
+        community_id,
+        MessagePermission::MiniApp,
+    );
+    let service = set_mini_app_service(env, canister_ids, *controller);
     let chat = Chat::Channel(community_id, channel_id);
     let message_id = random_from_u128();
     let response = send(env, bot_principal, local_user_index, chat, message_id, card());
@@ -242,16 +287,18 @@ fn a_bot_updates_its_card_as_its_game_goes_on() {
         panic!("'bot_send_message' error: {response:?}");
     };
 
-    let update = |env: &mut PocketIc, update: MiniAppUpdate| {
-        client::local_user_index::bot_update_mini_app(
+    let write = |env: &mut PocketIc, status: MiniAppStatus, players: Vec<_>, result: Option<&str>| {
+        write_card(
             env,
-            bot_principal,
+            service,
             local_user_index,
-            &local_user_index_canister::bot_update_mini_app::Args {
-                chat_context: BotChatContext::Autonomous(chat),
-                thread: None,
-                message_id,
-                update,
+            chat,
+            None,
+            message_id,
+            MiniAppUpdate {
+                status,
+                players,
+                result: result.map(|r| r.to_string()),
             },
         )
     };
@@ -268,57 +315,48 @@ fn a_bot_updates_its_card_as_its_game_goes_on() {
         content.clone()
     };
 
-    let response = update(
-        env,
-        MiniAppUpdate {
-            status: Some(MiniAppStatus::Active),
-            players: Some(vec![owner.user_id, member.user_id]),
-            spectator_count: Some(3),
-            waiting_for: OptionUpdate::SetToSome(vec![member.user_id]),
-            ..Default::default()
-        },
-    );
+    let response = write(env, MiniAppStatus::Open, vec![member.user_id], None);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    let card = read(env);
+    assert_eq!(card.status, MiniAppStatus::Open);
+    assert_eq!(card.players, vec![member.user_id]);
+
+    let response = write(env, MiniAppStatus::Active, vec![member.user_id, owner.user_id], None);
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     let card = read(env);
     assert_eq!(card.status, MiniAppStatus::Active);
-    assert_eq!(card.players, vec![owner.user_id, member.user_id]);
-    assert_eq!(card.waiting_for, Some(vec![member.user_id]));
-    assert_eq!(card.spectator_count, 3);
+    assert_eq!(card.players, vec![member.user_id, owner.user_id]);
     assert_eq!(card.max_players, Some(4));
     assert_eq!(card.text, self::card().text);
 
-    let response = update(
+    let response = write(env, MiniAppStatus::Open, vec![member.user_id], None);
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "Expected the status not to move back: {response:?}"
+    );
+
+    let response = write(
         env,
-        MiniAppUpdate {
-            status: Some(MiniAppStatus::Finished),
-            waiting_for: OptionUpdate::SetToNone,
-            result: OptionUpdate::SetToSome("Bob won".to_string()),
-            ..Default::default()
-        },
+        MiniAppStatus::Finished,
+        vec![member.user_id, owner.user_id],
+        Some("Bob won"),
     );
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     let card = read(env);
     assert_eq!(card.status, MiniAppStatus::Finished);
-    assert_eq!(card.waiting_for, None);
     assert_eq!(card.result.as_deref(), Some("Bob won"));
 
-    let response = update(
-        env,
-        MiniAppUpdate {
-            status: Some(MiniAppStatus::Active),
-            ..Default::default()
-        },
-    );
+    let response = write(env, MiniAppStatus::Finished, vec![member.user_id], Some("Alice won"));
     assert!(
         matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "Expected the finished card not to change: {response:?}"
     );
-    assert_eq!(read(env).status, MiniAppStatus::Finished);
+    assert_eq!(read(env).result.as_deref(), Some("Bob won"));
 }
 
-// Only the bot which posted a card updates it, and its players are members of the chat
+// Not the bot which posted the card, nor a member: so a bot can't list anyone who didn't join
 #[test]
-fn only_the_cards_bot_updates_it_with_the_chats_members() {
+fn only_the_mini_app_service_writes_a_card() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -329,10 +367,10 @@ fn only_the_cards_bot_updates_it_with_the_chats_members() {
 
     let Setup {
         owner,
+        member,
         community_id,
         channel_id,
         local_user_index,
-        ..
     } = setup(env, canister_ids, *controller);
     let bot_principal = install_bot(
         env,
@@ -342,58 +380,59 @@ fn only_the_cards_bot_updates_it_with_the_chats_members() {
         community_id,
         MessagePermission::MiniApp,
     );
-    let other_bot_principal = install_bot(
-        env,
-        &owner,
-        canister_ids.user_index,
-        local_user_index,
-        community_id,
-        MessagePermission::MiniApp,
-    );
+    let service = set_mini_app_service(env, canister_ids, *controller);
     let chat = Chat::Channel(community_id, channel_id);
     let message_id = random_from_u128();
     let response = send(env, bot_principal, local_user_index, chat, message_id, card());
-    assert!(
-        matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)),
-        "'bot_send_message' error: {response:?}"
+    let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
+        panic!("'bot_send_message' error: {response:?}");
+    };
+    let update = MiniAppUpdate {
+        status: MiniAppStatus::Open,
+        players: vec![member.user_id],
+        result: None,
+    };
+    // Once the LocalUserIndex knows the service, so the refusals below aren't for want of one
+    let response = write_card(
+        env,
+        service,
+        local_user_index,
+        chat,
+        None,
+        message_id,
+        MiniAppUpdate {
+            players: Vec::new(),
+            ..update.clone()
+        },
     );
-    let outsider = client::register_user(env, canister_ids);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
 
-    for (caller, players, expected) in [
-        (other_bot_principal, vec![owner.user_id], OCErrorCode::InitiatorNotAuthorized),
-        (
-            bot_principal,
-            vec![owner.user_id, outsider.user_id],
-            OCErrorCode::InvalidRequest,
-        ),
-    ] {
-        let response = client::local_user_index::bot_update_mini_app(
-            env,
-            caller,
-            local_user_index,
-            &local_user_index_canister::bot_update_mini_app::Args {
-                chat_context: BotChatContext::Autonomous(chat),
-                thread: None,
-                message_id,
-                update: MiniAppUpdate {
-                    players: Some(players),
-                    ..Default::default()
-                },
-            },
-        );
-        assert!(
-            matches!(&response, UnitResult::Error(e) if e.matches_code(expected)),
-            "Unexpected response: {response:?}"
-        );
+    for caller in [bot_principal, owner.principal, member.principal] {
+        let error = call_update_mini_app(env, caller, local_user_index, chat, None, message_id, update.clone()).unwrap_err();
+        assert_eq!(error.error_code, ErrorCode::CanisterRejectedMessage, "{error:?}");
     }
+    let card = client::community::happy_path::events_by_index(env, &member, community_id, channel_id, vec![sent.event_index]);
+    let ChatEvent::Message(message) = &card.events[0].event else {
+        panic!("Expected a message: {:?}", card.events[0].event);
+    };
+    assert!(
+        matches!(&message.content, MessageContent::MiniApp(c) if c.players.is_empty()),
+        "{:?}",
+        message.content
+    );
 }
 
-// In a group too, and in a thread: members' clients see the update, which isn't refused until the
-// card's deleted, or the bot's uninstalled
+// In a group too, and in a thread: members' clients see the write. The service's writes are refused
+// once the card's deleted, or its bot uninstalled, which ends the game.
 #[test]
-fn a_bot_updates_its_card_in_a_groups_thread() {
+fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
     let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
 
     let owner = client::register_user(env, canister_ids);
     let member = client::register_user(env, canister_ids);
@@ -428,52 +467,57 @@ fn a_bot_updates_its_card_in_a_groups_thread() {
         permissions.clone(),
         Some(permissions),
     );
+    let service = set_mini_app_service(env, canister_ids, *controller);
     env.advance_time(Duration::from_millis(1000));
     env.tick();
 
     let chat = Chat::Group(group_id);
     let root = client::group::happy_path::send_text_message(env, &owner, group_id, None, "Who's playing?", None);
     let thread = Some(root.message_index);
-    let message_id = random_from_u128();
-    let response = client::local_user_index::bot_send_message(
-        env,
-        bot_principal,
-        local_user_index,
-        &local_user_index_canister::bot_send_message::Args {
-            chat_context: BotChatContext::Autonomous(chat),
-            thread,
-            message_id: Some(message_id),
-            replies_to: None,
-            content: BotMessageContent::MiniApp(card()),
-            block_level_markdown: false,
-            finalised: true,
-            og_previews: None,
-            bridged_from: None,
-        },
-    );
-    let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
-        panic!("'bot_send_message' error: {response:?}");
-    };
-    let update = |env: &mut PocketIc| {
-        client::local_user_index::bot_update_mini_app(
+    let post = |env: &mut PocketIc| {
+        let message_id = random_from_u128();
+        let response = client::local_user_index::bot_send_message(
             env,
             bot_principal,
             local_user_index,
-            &local_user_index_canister::bot_update_mini_app::Args {
+            &local_user_index_canister::bot_send_message::Args {
                 chat_context: BotChatContext::Autonomous(chat),
                 thread,
-                message_id,
-                update: MiniAppUpdate {
-                    players: Some(vec![owner.user_id, member.user_id]),
-                    ..Default::default()
-                },
+                message_id: Some(message_id),
+                replies_to: None,
+                content: BotMessageContent::MiniApp(card()),
+                block_level_markdown: false,
+                finalised: true,
+                og_previews: None,
+                bridged_from: None,
+            },
+        );
+        let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
+            panic!("'bot_send_message' error: {response:?}");
+        };
+        (message_id, sent.event_index)
+    };
+    let (message_id, event_index) = post(env);
+    let (other_message_id, _) = post(env);
+    let write = |env: &mut PocketIc, message_id| {
+        write_card(
+            env,
+            service,
+            local_user_index,
+            chat,
+            thread,
+            message_id,
+            MiniAppUpdate {
+                status: MiniAppStatus::Open,
+                players: vec![owner.user_id, member.user_id],
+                result: None,
             },
         )
     };
 
     let since = now_millis(env);
     env.advance_time(Duration::from_millis(1));
-    let response = update(env);
+    let response = write(env, message_id);
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     env.tick();
 
@@ -483,7 +527,7 @@ fn a_bot_updates_its_card_in_a_groups_thread() {
         updates
             .updated_events
             .iter()
-            .any(|(root, event_index, _)| *root == thread && *event_index == sent.event_index),
+            .any(|(root, index, _)| *root == thread && *index == event_index),
         "{:?}",
         updates.updated_events
     );
@@ -511,7 +555,7 @@ fn a_bot_updates_its_card_in_a_groups_thread() {
     assert_eq!(card.players, vec![owner.user_id, member.user_id]);
 
     client::group::happy_path::delete_messages(env, owner.principal, group_id, thread, vec![message_id]);
-    let response = update(env);
+    let response = write(env, message_id);
     assert!(
         matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::MessageNotFound)),
         "Expected MessageNotFound: {response:?}"
@@ -524,10 +568,10 @@ fn a_bot_updates_its_card_in_a_groups_thread() {
         BotInstallationLocation::Group(group_id),
         bot_id,
     );
-    let response = update(env);
+    let response = write(env, other_message_id);
     assert!(
-        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
-        "Expected InitiatorNotAuthorized: {response:?}"
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::BotNotFound)),
+        "Expected BotNotFound: {response:?}"
     );
 }
 
@@ -688,12 +732,74 @@ fn card() -> MiniAppContent {
         }),
         max_players: Some(4),
         spectators: true,
-        spectator_count: 0,
         status: MiniAppStatus::Open,
         players: Vec::new(),
-        waiting_for: None,
         result: None,
     }
+}
+
+// A new principal for the MiniApp service, set by proposal, which the UserIndex fans out to the
+// LocalUserIndexes
+fn set_mini_app_service(env: &mut PocketIc, canister_ids: &crate::CanisterIds, controller: Principal) -> Principal {
+    let service = random_principal();
+    let response = client::user_index::set_mini_app_service_principal(
+        env,
+        controller,
+        canister_ids.user_index,
+        &user_index_canister::set_mini_app_service_principal::Args { principal: service },
+    );
+    assert!(matches!(response, SuccessOnly::Success));
+    service
+}
+
+// The MiniApp service writing a card's game, once the LocalUserIndex has learned its principal from
+// the UserIndex, which takes a few rounds after it's set
+fn write_card(
+    env: &mut PocketIc,
+    service: Principal,
+    local_user_index: CanisterId,
+    chat: Chat,
+    thread: Option<MessageIndex>,
+    message_id: MessageId,
+    update: MiniAppUpdate,
+) -> UnitResult {
+    for _ in 0..20 {
+        match call_update_mini_app(env, service, local_user_index, chat, thread, message_id, update.clone()) {
+            Ok(response) => return response,
+            Err(error) if error.error_code == ErrorCode::CanisterRejectedMessage => {
+                env.advance_time(Duration::from_millis(100));
+                env.tick();
+            }
+            Err(error) => panic!("'update_mini_app' error: {error:?}"),
+        }
+    }
+    panic!("The LocalUserIndex never learned the MiniApp service's principal");
+}
+
+// Raw, so a refused caller's rejection can be checked. The LocalUserIndex's inspect_message refuses
+// anyone but the service.
+fn call_update_mini_app(
+    env: &mut PocketIc,
+    caller: Principal,
+    local_user_index: CanisterId,
+    chat: Chat,
+    thread: Option<MessageIndex>,
+    message_id: MessageId,
+    update: MiniAppUpdate,
+) -> Result<UnitResult, RejectResponse> {
+    let args = local_user_index_canister::update_mini_app::Args {
+        chat,
+        thread,
+        message_id,
+        update,
+    };
+    env.update_call(
+        local_user_index,
+        caller,
+        "update_mini_app",
+        candid::encode_one(&args).unwrap(),
+    )
+    .map(|bytes| candid::decode_one(&bytes).unwrap())
 }
 
 fn card_text(env: &PocketIc, user: &User, community_id: CommunityId, channel_id: ChannelId, event_index: EventIndex) -> String {

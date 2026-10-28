@@ -1528,10 +1528,8 @@ type MiniAppContent = record {
     image : opt MiniAppImage;
     max_players : opt nat32;
     spectators : bool;
-    spectator_count : nat32;
     status : MiniAppStatus;
     players : vec UserId;
-    waiting_for : opt vec UserId;
     result : opt text;
 };
 

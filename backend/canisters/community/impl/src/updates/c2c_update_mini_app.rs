@@ -3,38 +3,37 @@ use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::c2c_bot_update_mini_app::*;
+use community_canister::c2c_update_mini_app::*;
 use oc_error_codes::OCErrorCode;
-use types::{BotPermissions, EventIndex, OCResult};
+use types::{EventIndex, OCResult};
 
-// A bot changing what its MiniApp card shows as its game goes on
+// The MiniApp service writing a card's game, through the LocalUserIndex, which only takes it from the
+// service
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
-fn c2c_bot_update_mini_app(args: Args) -> Response {
-    execute_update(|state| c2c_bot_update_mini_app_impl(args, state)).into()
+fn c2c_update_mini_app(args: Args) -> Response {
+    execute_update(|state| c2c_update_mini_app_impl(args, state)).into()
 }
 
-fn c2c_bot_update_mini_app_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    // A bot updates its own cards without a particular permission, as it deletes its own messages:
-    // outside a command, if it's installed to act autonomously
-    if !state.data.is_bot_permitted(
-        &args.bot_id,
-        Some(args.channel_id),
-        &args.initiator,
-        &BotPermissions::default(),
-    ) {
-        return Err(OCErrorCode::InitiatorNotAuthorized.into());
-    }
-
+fn c2c_update_mini_app_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
         return Err(OCErrorCode::ChatNotFound.into());
     };
 
-    let new_result = args.update.result.has_update();
-    let now = state.env.now();
-    channel
+    // Uninstalling the card's bot ends its game, which the service learns from this
+    let (message, _) = channel
         .chat
-        .update_mini_app(args.bot_id, args.thread, args.message_id, args.update, now)?;
+        .events
+        .message_internal(EventIndex::default(), args.thread, args.message_id.into())
+        .ok_or(OCErrorCode::MessageNotFound)?;
+    if state.data.bots.get(&message.sender).is_none() {
+        return Err(OCErrorCode::BotNotFound.into());
+    }
+
+    // A finished game's card never changes, so a result is only ever written once
+    let new_result = args.update.result.is_some();
+    let now = state.env.now();
+    channel.chat.update_mini_app(args.thread, args.message_id, args.update, now)?;
 
     // The result is text the bot wrote, classified as an edit's would be
     if new_result

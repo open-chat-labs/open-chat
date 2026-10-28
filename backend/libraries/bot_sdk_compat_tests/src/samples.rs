@@ -132,10 +132,8 @@ pub fn message_contents() -> Vec<MessageContent> {
                     }),
                     max_players: Some(max()),
                     spectators: true,
-                    spectator_count: max(),
                     status,
                     players: vec![user_id(1), user_id(2)],
-                    waiting_for: Some(vec![user_id(2)]),
                     result: Some("Bob won".to_string()),
                 })
             }),
