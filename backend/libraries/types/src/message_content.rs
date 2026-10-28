@@ -250,6 +250,13 @@ impl MessageContent {
                 }
                 input.text = Some(text);
             }
+            MessageContent::MiniApp(c) => {
+                let mut text = input.text.unwrap_or_default();
+                for button in c.button_rows.iter().flatten() {
+                    text.push_str(&format!("\n- {}", button.label));
+                }
+                input.text = Some(text);
+            }
             _ => {}
         }
 

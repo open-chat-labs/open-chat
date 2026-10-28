@@ -3,6 +3,8 @@ use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{TestEnv, User, client};
 use candid::Principal;
+use local_user_index_canister::chat_events::{EventsByIndexArgs, EventsSelectionCriteria};
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
 use std::ops::Deref;
@@ -10,8 +12,8 @@ use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{
     AutonomousConfig, BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, ChannelId, Chat,
-    ChatEvent, CommunityId, EventIndex, MessageButton, MessageButtonStyle, MessageContent, MessageContentInitial, MessageId,
-    MessagePermission, MiniAppContent, UnitResult, UserId,
+    ChatEvent, ChatPermission, CommunityId, EventIndex, MessageButton, MessageButtonStyle, MessageContent,
+    MessageContentInitial, MessageId, MessagePermission, MiniAppContent, UnitResult, UserId,
 };
 
 #[test]
@@ -59,6 +61,30 @@ fn a_bot_posts_a_mini_app_and_changes_its_buttons() {
     let read = |env: &PocketIc, user: &User| buttons(env, user, community_id, channel_id, result.event_index);
     assert_eq!(read(env, &owner), vec![vec!["join", "leave"], vec!["start"]]);
     assert_eq!(read(env, &member), vec![vec!["join", "leave"]]);
+
+    // The bot reads back its whole message, whoever each button is shown to
+    let response = client::local_user_index::bot_chat_events(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_chat_events::Args {
+            chat_context: BotChatContext::Autonomous(chat),
+            thread: None,
+            events: EventsSelectionCriteria::ByIndex(EventsByIndexArgs {
+                events: vec![result.event_index],
+            }),
+        },
+    );
+    let local_user_index_canister::bot_chat_events::Response::Success(events) = response else {
+        panic!("'bot_chat_events' error: {response:?}");
+    };
+    let ChatEvent::Message(message) = &events.events[0].event else {
+        panic!("Expected a message: {:?}", events.events[0].event);
+    };
+    let MessageContent::MiniApp(content) = &message.content else {
+        panic!("Expected a mini app: {:?}", message.content);
+    };
+    assert_eq!(content.button_rows.iter().map(|r| r.len()).collect::<Vec<_>>(), vec![2, 1]);
 
     // An edit which only changes the buttons is saved
     let response = client::local_user_index::bot_edit_message(
@@ -118,8 +144,8 @@ fn a_bot_without_the_mini_app_permission_cant_post_one() {
         lobby(owner.user_id, false),
     );
     assert!(
-        matches!(response, local_user_index_canister::bot_send_message::Response::Error(_)),
-        "Expected an error: {response:?}"
+        matches!(&response, local_user_index_canister::bot_send_message::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "Expected InitiatorNotAuthorized: {response:?}"
     );
 }
 
@@ -164,8 +190,8 @@ fn a_member_cant_post_or_forward_a_mini_app() {
             },
         );
         assert!(
-            matches!(response, community_canister::send_message::Response::Error(_)),
-            "Expected an error: {response:?}"
+            matches!(&response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent)),
+            "Expected InvalidMessageContent: {response:?}"
         );
     }
 }
@@ -208,7 +234,8 @@ fn install_bot(
     let mut definition = default_bot_definition(random_string());
     definition.autonomous_config = Some(AutonomousConfig {
         permissions: BotPermissions::default()
-            .with_message(&HashSet::from_iter([MessagePermission::Text, MessagePermission::MiniApp])),
+            .with_message(&HashSet::from_iter([MessagePermission::Text, MessagePermission::MiniApp]))
+            .with_chat(&HashSet::from_iter([ChatPermission::ReadMessages])),
     });
     let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(
         env,
@@ -220,14 +247,17 @@ fn install_bot(
     );
 
     let permissions = BotPermissions::default().with_message(&HashSet::from_iter([granted]));
+    let autonomous_permissions = permissions
+        .clone()
+        .with_chat(&HashSet::from_iter([ChatPermission::ReadMessages]));
     client::local_user_index::happy_path::install_bot(
         env,
         owner.principal,
         local_user_index,
         BotInstallationLocation::Community(community_id),
         bot_id,
-        permissions.clone(),
-        Some(permissions),
+        permissions,
+        Some(autonomous_permissions),
     );
 
     env.advance_time(Duration::from_millis(1000));

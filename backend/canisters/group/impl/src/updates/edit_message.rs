@@ -7,7 +7,7 @@ use chat_events::{EditMessageArgs, MessageContentInternal};
 use group_canister::c2c_bot_edit_message;
 use group_canister::edit_message_v2::*;
 use oc_error_codes::OCErrorCode;
-use types::{Achievement, BotPermissions, EventIndex, MessageContentInitial, OCResult, UserId};
+use types::{Achievement, BotPermissions, EventIndex, MessageContentInitial, MessageId, MessageIndex, OCResult, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -74,6 +74,7 @@ fn c2c_bot_edit_message_impl(args: c2c_bot_edit_message::Args, state: &mut Runti
 
 fn commit(sender: UserId, is_bot: bool, min_visible_event_index: EventIndex, args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
+    let previous_text = moderated_text(state, args.thread_root_message_index, args.message_id);
 
     let edit_message_args = EditMessageArgs {
         sender,
@@ -113,11 +114,15 @@ fn commit(sender: UserId, is_bot: bool, min_visible_event_index: EventIndex, arg
         // dequeue the earlier content and reply with an empty classification, clearing any
         // stale flags left by text this edit removed
         let input = message.content.moderation_input();
+        // eg. a bot changing only its MiniApp's buttons, or a link preview being added
+        let text_unchanged = previous_text.is_some_and(|t| t == input.text);
         // Unlike classification there is no empty-request "clear" for media: verdicts only
         // ever act on a match, and a match escalates regardless of later edits (the matched
         // content was posted publicly; editing it away does not void the report)
         let blobs = message.content.scannable_blobs();
-        state.queue_message_for_moderation(args.thread_root_message_index, args.message_id, input);
+        if !text_unchanged {
+            state.queue_message_for_moderation(args.thread_root_message_index, args.message_id, input);
+        }
         if !blobs.is_empty() {
             state.queue_media_for_scanning(args.thread_root_message_index, args.message_id, blobs);
         }
@@ -126,4 +131,14 @@ fn commit(sender: UserId, is_bot: bool, min_visible_event_index: EventIndex, arg
     state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);
     Ok(())
+}
+
+// The text a message's moderation classified, to tell whether an edit changed it
+fn moderated_text(state: &RuntimeState, thread: Option<MessageIndex>, message_id: MessageId) -> Option<Option<String>> {
+    state
+        .data
+        .chat
+        .events
+        .message_internal(EventIndex::default(), thread, message_id.into())
+        .map(|(message, _)| message.content.moderation_input().text)
 }

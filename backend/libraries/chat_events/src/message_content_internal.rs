@@ -131,8 +131,9 @@ impl MessageContentInternal {
                 }
             }
             MessageContentInitial::MiniApp(c) => {
-                // Only bots post them, and not in direct chats, which have no buttons yet
-                if !sender_user_type.is_bot() || is_direct_chat {
+                // Only bots installed with the MiniApp permission post them (not the older bots which
+                // are members), and not in direct chats, which have no buttons yet
+                if !matches!(sender_user_type, UserType::BotV2) || is_direct_chat {
                     return ValidateNewMessageContentResult::Error(ContentValidationError::Unauthorized);
                 }
                 if let Err(reason) = c.validate() {
@@ -317,6 +318,13 @@ impl MessageContentInternal {
                 let mut text = input.text.unwrap_or_default();
                 for option in p.config.options.iter() {
                     text.push_str(&format!("\n- {option}"));
+                }
+                input.text = Some(text);
+            }
+            MessageContentInternal::MiniApp(c) => {
+                let mut text = input.text.unwrap_or_default();
+                for button in c.button_rows.iter().flatten() {
+                    text.push_str(&format!("\n- {}", button.label));
                 }
                 input.text = Some(text);
             }
@@ -2328,15 +2336,15 @@ impl From<MiniAppContent> for MiniAppContentInternal {
     }
 }
 
-impl MessageContentInternalSubtype for MiniAppContentInternal {
-    type ContentType = MiniAppContent;
-
-    // Each viewer is shown the buttons they may see. With no viewer, eg. a bot reading the chat,
-    // every button is kept, so a bot always sees its whole message.
-    fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
-        let visible = |b: &MessageButtonInternal| match (&b.visible_to, &my_user) {
-            (Some(users), Some(me)) => users.contains(&me.user_id),
-            _ => true,
+impl MiniAppContentInternal {
+    // The buttons for everyone, and those shown to `viewer`. The bot which sent the message sees every
+    // button, so it can read back and edit its whole message. Someone unknown, eg. previewing a
+    // public chat, sees only the buttons for everyone.
+    pub fn for_viewer(self, viewer: Option<UserId>, sender: Option<UserId>) -> MiniAppContent {
+        let sees_every_button = viewer.is_some() && viewer == sender;
+        let visible = |b: &MessageButtonInternal| match &b.visible_to {
+            None => true,
+            Some(users) => sees_every_button || viewer.is_some_and(|v| users.contains(&v)),
         };
         MiniAppContent {
             text: self.text,
@@ -2357,6 +2365,15 @@ impl MessageContentInternalSubtype for MiniAppContentInternal {
                 .filter(|row| !row.is_empty())
                 .collect(),
         }
+    }
+}
+
+impl MessageContentInternalSubtype for MiniAppContentInternal {
+    type ContentType = MiniAppContent;
+
+    // Without the message's sender: `MessageInternal::hydrate` shows its sender every button
+    fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
+        self.for_viewer(my_user.map(|u| u.user_id), None)
     }
 }
 
@@ -2853,7 +2870,7 @@ mod mini_app_tests {
             validate(lobby(), false, UserType::BotV2, false),
             ValidateNewMessageContentResult::Success(MessageContentInternal::MiniApp(_))
         ));
-        for (is_direct_chat, sender) in [(false, UserType::User), (true, UserType::BotV2)] {
+        for (is_direct_chat, sender) in [(false, UserType::User), (false, UserType::Bot), (true, UserType::BotV2)] {
             assert!(matches!(
                 validate(lobby(), is_direct_chat, sender, false),
                 ValidateNewMessageContentResult::Error(ContentValidationError::Unauthorized)
@@ -2923,11 +2940,15 @@ mod mini_app_tests {
         );
         // A row left with no buttons isn't shown
         assert_eq!(button_ids(stored.clone().hydrate(viewer(2))), vec![vec!["join", "leave"]]);
-        // A bot reading the chat sees every button
-        assert_eq!(
-            button_ids(stored.clone().hydrate(None)),
-            vec![vec!["join", "leave"], vec!["start"]]
-        );
+        // Someone unknown sees only the buttons for everyone
+        assert_eq!(button_ids(stored.clone().hydrate(None)), vec![vec!["join", "leave"]]);
+        // The bot which sent it sees every button
+        let MessageContentInternal::MiniApp(lobby) = stored.clone() else {
+            panic!("Expected a mini app");
+        };
+        let bot = user(9);
+        let rows = lobby.for_viewer(Some(bot), Some(bot)).button_rows;
+        assert_eq!(rows.iter().map(|r| r.len()).collect::<Vec<_>>(), vec![2, 1]);
         assert!(matches!(stored.content_type(), MessageContentType::MiniApp));
         assert_eq!(stored.text(), Some("**Uno** · 1 of 4 players"));
     }

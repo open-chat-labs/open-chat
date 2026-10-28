@@ -84,6 +84,13 @@ fn commit(sender: UserId, min_visible_event_index: EventIndex, args: Args, state
         return Err(OCErrorCode::ChatNotFound.into());
     };
 
+    // The text the message's moderation classified, to tell whether this edit changes it
+    let previous_text = channel
+        .chat
+        .events
+        .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
+        .map(|(message, _)| message.content.moderation_input().text);
+
     let result = channel.chat.events.edit_message(
         EditMessageArgs {
             sender,
@@ -122,11 +129,15 @@ fn commit(sender: UserId, min_visible_event_index: EventIndex, args: Args, state
         // dequeue the earlier content and reply with an empty classification, clearing any
         // stale flags left by text this edit removed
         let input = message.content.moderation_input();
+        // eg. a bot changing only its MiniApp's buttons, or a link preview being added
+        let text_unchanged = previous_text.is_some_and(|t| t == input.text);
         // Unlike classification there is no empty-request "clear" for media: verdicts only
         // ever act on a match, and a match escalates regardless of later edits (the matched
         // content was posted publicly; editing it away does not void the report)
         let blobs = message.content.scannable_blobs();
-        state.queue_message_for_moderation(args.channel_id, args.thread_root_message_index, args.message_id, input);
+        if !text_unchanged {
+            state.queue_message_for_moderation(args.channel_id, args.thread_root_message_index, args.message_id, input);
+        }
         if !blobs.is_empty() {
             state.queue_media_for_scanning(args.channel_id, args.thread_root_message_index, args.message_id, blobs);
         }

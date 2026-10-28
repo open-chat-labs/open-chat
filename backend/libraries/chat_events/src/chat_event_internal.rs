@@ -340,10 +340,13 @@ impl MessageInternal {
             message_index: self.message_index,
             message_id: self.message_id,
             sender: self.sender,
-            content: if let Some(deleted_by) = self.deleted_by {
-                MessageContent::Deleted(deleted_by.hydrate())
-            } else {
-                self.content.hydrate(my_user)
+            content: match (self.deleted_by, self.content) {
+                (Some(deleted_by), _) => MessageContent::Deleted(deleted_by.hydrate()),
+                // The bot which sent it sees every button
+                (None, MessageContentInternal::MiniApp(c)) => {
+                    MessageContent::MiniApp(c.for_viewer(my_user.map(|u| u.user_id), Some(self.sender)))
+                }
+                (None, content) => content.hydrate(my_user),
             },
             sender_context: self.sender_context,
             replies_to: self.replies_to.as_ref().map(|r| r.hydrate()),
