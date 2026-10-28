@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add MiniApp messages, which only bots post: a card that never changes, with an optional image, which opens the bot's app ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300))
+- Add MiniApp messages, which only bots post: a card for a bot's app, eg. a game, with an optional image, whose status and players the bot keeps up to date ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300))
+- Add `bot_update_mini_app`, for a bot to keep its MiniApp cards up to date ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300))
 
 ### Changed
 

@@ -100,6 +100,7 @@ variants!(
     [Text, Image, Video, Audio, File, Crypto, Giphy, Custom]
 );
 variants!(types::VideoCallType, [Broadcast, Default]);
+variants!(types::MiniAppStatus, [Open, Active, Finished]);
 variants!(types::Chat, [Direct, Group, Channel]);
 
 variants!(
