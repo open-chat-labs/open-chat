@@ -9,6 +9,7 @@ import com.ocplugin.app.calls.CallSession
 import android.webkit.WebView
 import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
+import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -21,6 +22,11 @@ import com.ocplugin.app.NotificationsManager
 import com.ocplugin.app.OCPluginCompanion
 import com.ocplugin.app.ShareIntentManager
 import kotlinx.coroutines.launch
+
+private val WEBVIEW_HANDLED_INSETS =
+    WindowInsetsCompat.Type.ime() or
+        WindowInsetsCompat.Type.systemBars() or
+        WindowInsetsCompat.Type.displayCutout()
 
 class MainActivity : TauriActivity() {
     // Last inset values forwarded to the WebView. The inset listener fires on
@@ -211,11 +217,16 @@ class MainActivity : TauriActivity() {
                 OCPluginCompanion.triggerRef("window-inset-change", insetData)
             }
 
-            if (OCPluginCompanion.viewportResizeEnabled) {
-                insets
-            } else {
-                WindowInsetsCompat.CONSUMED
-            }
+            // We handle every one of these insets ourselves: the keyboard and nav bar as padding
+            // above (or, with viewport resize off, the web side's input tray), and the status bar
+            // via CSS vars. Since M139 the WebView also shrinks its visual viewport by any ime()
+            // inset it is handed, so passing the insets through doubled the keyboard offset on top
+            // of our padding. Zero them rather than returning CONSUMED: consumed insets stop the
+            // WebView hearing about later changes, so it keeps the last keyboard height it saw
+            // and the input tray ends up stacked on top of that ghost padding.
+            WindowInsetsCompat.Builder(insets)
+                .setInsets(WEBVIEW_HANDLED_INSETS, Insets.NONE)
+                .build()
         }
     }
 
