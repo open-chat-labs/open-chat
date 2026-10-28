@@ -691,7 +691,7 @@ fn a_chat_token_says_whether_the_user_is_a_member() {
         member,
         community_id,
         channel_id,
-        local_user_index,
+        ..
     } = setup(env, canister_ids, *controller);
     let outsider = client::register_user(env, canister_ids);
     let private_channel_id =
@@ -703,24 +703,94 @@ fn a_chat_token_says_whether_the_user_is_a_member() {
         (&member, private_channel_id, None),
         (&outsider, private_channel_id, None),
     ] {
-        let chat = Chat::Channel(community_id, channel_id);
-        let response = client::local_user_index::access_token_v2(
-            env,
-            user.principal,
-            local_user_index,
-            &access_token_v2::Args::MiniAppChat(access_token_v2::MiniAppChatArgs { chat }),
-        );
-        match (response, member) {
-            (access_token_v2::Response::Success(token), Some(member)) => {
-                let claims: MiniAppChatClaims = verify(env, canister_ids, &token, CLAIM_TYPE_MINI_APP_CHAT);
-                assert_eq!(claims.user_id, user.user_id);
-                assert_eq!(claims.chat, chat);
-                assert_eq!(claims.member, member);
-            }
-            (access_token_v2::Response::NotAuthorized, None) => {}
-            (response, member) => panic!("Expected {member:?}: {response:?}"),
-        }
+        assert_chat_token(env, canister_ids, user, Chat::Channel(community_id, channel_id), member);
     }
+}
+
+// In a group, as for its events: anyone can see a public group, unless it hides its messages from
+// non-members, but someone it's blocked can't, and nobody can see a private group they aren't in
+#[test]
+fn a_chat_token_follows_who_can_see_a_group() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let member = client::register_user(env, canister_ids);
+    let outsider = client::register_user(env, canister_ids);
+    let blocked = client::register_user(env, canister_ids);
+    let public_group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    let private_group_id = client::user::happy_path::create_group(env, &owner, &random_string(), false, true);
+    let local_user_index = canister_ids.local_user_index(env, public_group_id);
+    client::local_user_index::happy_path::add_users_to_group(
+        env,
+        &owner,
+        local_user_index,
+        public_group_id,
+        vec![(member.user_id, member.principal), (blocked.user_id, blocked.principal)],
+    );
+    client::group::happy_path::block_user(env, owner.principal, public_group_id, blocked.user_id);
+
+    let public_group = Chat::Group(public_group_id);
+    for (user, chat, member) in [
+        (&member, public_group, Some(true)),
+        (&outsider, public_group, Some(false)),
+        (&blocked, public_group, None),
+        (&outsider, Chat::Group(private_group_id), None),
+    ] {
+        assert_chat_token(env, canister_ids, user, chat, member);
+    }
+
+    client::group::happy_path::update_group(
+        env,
+        owner.principal,
+        public_group_id,
+        &group_canister::update_group_v2::Args {
+            messages_visible_to_non_members: Some(false),
+            ..Default::default()
+        },
+    );
+    assert_chat_token(env, canister_ids, &member, public_group, Some(true));
+    assert_chat_token(env, canister_ids, &outsider, public_group, None);
+}
+
+// A member of a private community sees its public channels, so may watch the games in one they've left,
+// but nobody outside the community can
+#[test]
+fn a_community_member_watches_a_public_channels_games_without_joining_it() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let member = client::register_user(env, canister_ids);
+    let outsider = client::register_user(env, canister_ids);
+    let community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), false, vec!["General".to_string()]);
+    let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+    let local_user_index = canister_ids.local_user_index(env, community_id);
+    client::local_user_index::happy_path::add_users_to_community(
+        env,
+        &owner,
+        local_user_index,
+        community_id,
+        vec![(member.user_id, member.principal)],
+    );
+    // Joining the community put them in its public channels
+    client::community::happy_path::leave_channel(env, member.principal, community_id, channel_id);
+
+    let chat = Chat::Channel(community_id, channel_id);
+    assert_chat_token(env, canister_ids, &owner, chat, Some(true));
+    assert_chat_token(env, canister_ids, &member, chat, Some(false));
+    assert_chat_token(env, canister_ids, &outsider, chat, None);
 }
 
 // Which bot is calling the MiniApp service. A user can't get one.
@@ -1024,4 +1094,29 @@ fn verify<T: DeserializeOwned>(env: &mut PocketIc, canister_ids: &crate::Caniste
         claims.exp_ms()
     );
     claims.into_custom()
+}
+
+// `member` is whether the user's chat token says they're a member, or None if they get none
+fn assert_chat_token(env: &mut PocketIc, canister_ids: &crate::CanisterIds, user: &User, chat: Chat, member: Option<bool>) {
+    let local_user_index = match chat {
+        Chat::Group(chat_id) => canister_ids.local_user_index(env, chat_id),
+        Chat::Channel(community_id, _) => canister_ids.local_user_index(env, community_id),
+        Chat::Direct(_) => unreachable!(),
+    };
+    let response = client::local_user_index::access_token_v2(
+        env,
+        user.principal,
+        local_user_index,
+        &access_token_v2::Args::MiniAppChat(access_token_v2::MiniAppChatArgs { chat }),
+    );
+    match (response, member) {
+        (access_token_v2::Response::Success(token), Some(member)) => {
+            let claims: MiniAppChatClaims = verify(env, canister_ids, &token, CLAIM_TYPE_MINI_APP_CHAT);
+            assert_eq!(claims.user_id, user.user_id);
+            assert_eq!(claims.chat, chat);
+            assert_eq!(claims.member, member, "{chat:?}");
+        }
+        (access_token_v2::Response::NotAuthorized, None) => {}
+        (response, member) => panic!("Expected {member:?} in {chat:?}: {response:?}"),
+    }
 }

@@ -44,14 +44,18 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
     };
 
     // The MiniApp service's chat token: a member of the channel, and of the community, whose membership
-    // hasn't lapsed and who isn't suspended, who may join its games, or, as anyone can see a public
-    // channel in a public community, someone who may watch them
+    // hasn't lapsed and who isn't suspended, who may join its games, or someone who can see the
+    // channel's messages, who may watch them. They're as the events queries show them: a public
+    // community without a payment gate shows its public channels to anyone, unless a channel hides its
+    // messages from non-members, and a community's members see its public channels.
     if let AccessTypeArgs::MiniAppChat(args) = &args_outer.access_type {
+        let in_community = state.data.members.get_verified_member(args.initiator.as_principal()).is_ok();
         let can = if args.member {
-            state.data.members.get_verified_member(args.initiator.as_principal()).is_ok()
-                && channel.chat.members.get_verified_member(args.initiator).is_ok()
+            in_community && channel.chat.members.get_verified_member(args.initiator).is_ok()
         } else {
-            state.data.is_public.value && channel.chat.is_public.value && !state.data.members.is_blocked(&args.initiator)
+            (in_community || (state.data.is_public.value && !state.data.has_payment_gate()))
+                && !state.data.members.is_blocked(&args.initiator)
+                && channel.chat.min_visible_event_index(Some(args.initiator)).is_ok()
         };
         return if can { Response::Success } else { Response::Failure };
     }

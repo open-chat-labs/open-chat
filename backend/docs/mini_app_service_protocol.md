@@ -9,9 +9,10 @@ This document is the contract between the website, the service, bots and their a
 ## Conventions
 
 - Everything is JSON.
-- Ids are strings:
+- Ids:
   - user, bot and canister ids are principal text;
-  - message ids are decimal strings, since they don't fit a JavaScript number.
+  - message ids are decimal strings, since they don't fit a JavaScript number;
+  - channel ids and message indexes are numbers.
 - A game is the bot's MiniApp message it's played from:
   ```json
   { "chat": { "Group": "<chat id>" }, "thread": null, "message_id": "123" }
@@ -29,7 +30,9 @@ This document is the contract between the website, the service, bots and their a
 
 The LocalUserIndex signs the first four with OpenChat's key, the same key as its other tokens. The website and bots get its public key from the UserIndex's `public_key`.
 
-- **A chat token** says whether the user is a member, who may join the chat's games, or can only see the chat, as anyone can a public group or a public channel in a public community, and may only watch them. Anyone else is refused one.
+- **A chat token** says whether the user is a member, who may join the chat's games, or can only see the chat's messages, and may only watch them. Anyone else is refused one.
+  - Who can see a chat follows its events: anyone can see a public group, or a public channel in a public community without a payment gate, unless it hides its messages from non-members.
+  - A community's members can see its public channels.
 - **The service writes to a card** through the LocalUserIndex's `update_mini_app`, which only its principal may call. That principal is set by the UserIndex's `set_mini_app_service_principal` proposal.
 
 The service also signs `MiniAppJoin` and `MiniAppLeave` for its calls to bots. Its public key is at `GET /public_key` (PEM).
@@ -57,7 +60,7 @@ The first message must be `connect`, within 10 seconds:
 { "type": "unfollow", "games": [game, ...] }
 ```
 
-- Every game must be in the chat token's chat.
+- The chat token must be the connected user's, and every game must be in its chat. The service checks both on every request that takes a chat token.
 - The service replies `{ "type": "ok", "id": 1 }`, then pushes a `card` for each game it knows, and again whenever one changes.
 - A game the service doesn't know gets nothing, and its card shows the copy stored in the chat.
 
@@ -219,4 +222,7 @@ A player's app sends the player token, in `x-oc-jwt`, with each request to the b
 - **Spectators get only the shared state,** which every player sees too, so watching can't leak a player's hand.
 - **Only the service writes a card's players, status and result.**
   - A bot can take players off but never put them on.
-  - The service ends a game after 24 hours with no update from its bot, or when a write fails because the card was deleted or the bot uninstalled. It writes the card as Finished, with no result.
+  - The service ends a game:
+    - after 24 hours with no update from its bot, writing the card as Finished, with no result;
+    - when a write fails because the card was deleted (`MessageNotFound`);
+    - when a write fails because the bot was uninstalled (`BotNotFound`). It then writes the card as Finished, with no result, which is let through, so the card doesn't look like it's still being played.

@@ -38,13 +38,15 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
         return if args.requested_permissions.is_subset(&granted) { Response::Success } else { Response::Failure };
     }
 
-    // The MiniApp service's chat token: a member, who may join the chat's games, or, as anyone can see
-    // a public group, someone who may watch them
+    // The MiniApp service's chat token: a member, who may join the chat's games, or someone who can see
+    // the group's messages, as anyone can a public group's unless they're hidden from non-members, who
+    // may watch them
     if let AccessTypeArgs::MiniAppChat(args) = &args_outer {
         let can = if args.member {
             state.data.chat.members.get_verified_member(args.initiator).is_ok()
         } else {
-            state.data.chat.is_public.value && !state.data.chat.members.is_blocked(&args.initiator)
+            !state.data.chat.members.is_blocked(&args.initiator)
+                && state.data.chat.min_visible_event_index(Some(args.initiator)).is_ok()
         };
         return if can { Response::Success } else { Response::Failure };
     }
