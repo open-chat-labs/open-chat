@@ -181,6 +181,8 @@ describe("Receive's networks", () => {
         address: "icrc-address",
         failed: false,
         depositNote: { kind: "none" as const },
+        arrivingToken: (network: string) =>
+            ["BTC", "ckBTC"].includes(network) ? network : undefined,
     };
 
     test("an IC token: the Internet Computer alone, with the address", () => {

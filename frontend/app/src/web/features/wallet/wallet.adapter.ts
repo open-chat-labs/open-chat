@@ -1,16 +1,12 @@
 // The wallet's data in the library's shapes: the tokens WalletPanel and WalletMain list, and a
 // token's history as WalletMain's activity rows.
-import {
-    BTC_SYMBOL,
-    CKBTC_SYMBOL,
-    CKSOL_SYMBOL,
-    SOL_SYMBOL,
-    type AccountTransaction,
-    type EnhancedTokenDetails,
-    type NamedAccount,
-    type TokenExchangeRates,
-    type UserLookup,
-    type WalletConfig,
+import type {
+    AccountTransaction,
+    EnhancedTokenDetails,
+    NamedAccount,
+    TokenExchangeRates,
+    UserLookup,
+    WalletConfig,
 } from "@client";
 import type { WalletPanelSettings } from "@openchat/ui/src/features/components/WalletPanel.svelte";
 import type { WalletActivity } from "@openchat/ui/src/features/components/WalletMain.svelte";
@@ -178,9 +174,8 @@ export type ReceiveState = {
     address: string | undefined;
     failed: boolean;
     depositNote: DepositNote;
+    arrivingToken(network: string): string | undefined;
 };
-
-const NAMED_BY_NETWORK = new Set([BTC_SYMBOL, CKBTC_SYMBOL, SOL_SYMBOL, CKSOL_SYMBOL]);
 
 /**
  * Receive's networks for a token: ReceiveAccount's (BTC or ckBTC, SOL or ckSOL, oneSec's chains),
@@ -195,10 +190,12 @@ export function receiveNetworks(
     const names = state.networks.length > 0 ? state.networks : ["ICP"];
     const selected = state.selectedNetwork ?? names[0];
     return names.map((id) => {
-        const network: ReceiveNetwork = { id, label: NETWORK_NAMES[id] ?? id };
-        // BTC and SOL arrive as themselves or as their chain-key twin, named after the network (as
-        // the old AccountInfos), so the warning names what the address takes
-        if (NAMED_BY_NETWORK.has(id)) network.token = id;
+        // the warning names what the address takes: ckBTC on the ckBTC network (ReceiveAccount)
+        const network: ReceiveNetwork = {
+            id,
+            label: NETWORK_NAMES[id] ?? id,
+            token: state.arrivingToken(id),
+        };
         if (id !== selected) return network;
         return {
             ...network,

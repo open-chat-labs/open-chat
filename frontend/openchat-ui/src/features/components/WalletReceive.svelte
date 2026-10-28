@@ -20,7 +20,7 @@
     failed?: boolean;
     /** What depositing on it costs or needs (literal text), under the warning. */
     note?: string;
-    /** The token that arrives on it, when it isn't the token's own symbol (ckBTC on the ckBTC network), for the warning. */
+    /** The token that arrives on it, for the warning, when the network names it (BTC or ckBTC); the token's symbol without it. */
     token?: string;
   }
 

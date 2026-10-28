@@ -76,6 +76,9 @@ describe("where a token is received", () => {
         flushSync();
         expect(account.address).toBe(userWalletAddress(owner.userId, owner.principal));
         expect(c.getBtcAddress).toHaveBeenCalledTimes(1);
+        // what arrives is named after the network: BTC, or ckBTC
+        expect(account.arrivingToken(BTC_SYMBOL)).toBe(BTC_SYMBOL);
+        expect(account.arrivingToken(CKBTC_SYMBOL)).toBe(CKBTC_SYMBOL);
         stop();
     });
 
@@ -134,6 +137,8 @@ describe("where a token is received", () => {
             c,
         );
         expect(account.networks).toEqual(["ICP", "Ethereum", "Base"]);
+        // USDC arrives as itself on every chain
+        expect(account.arrivingToken("Ethereum")).toBeUndefined();
         expect(account.address).toBe(userWalletAddress(owner.userId, owner.principal));
         account.selectedNetwork = "Ethereum";
         flushSync();
@@ -155,13 +160,14 @@ describe("where a token is received", () => {
         account.selectedNetwork = "ckSOL";
         await settle();
         account.selectedNetwork = SOL_SYMBOL;
+        flushSync();
         await settle();
         expect(c.getCksolMinterDepositInfo).toHaveBeenCalledTimes(2);
         expect(account.depositNote).toMatchObject({ kind: "sol", minimum: "0.01" });
         stop();
     });
 
-    test("a network picked for one token isn't carried over to the next", async () => {
+    test("a network picked for one token isn't carried over to another", async () => {
         const usdc = token({
             symbol: "USDC",
             ledger: "usdc",
@@ -178,9 +184,41 @@ describe("where a token is received", () => {
         current = { ...usdc, symbol: "USDT", ledger: "usdt" };
         await settle();
         expect(account.selectedNetwork).toBe("ICP");
+        // its own pick is kept for it
         current = usdc;
         await settle();
-        expect(account.selectedNetwork).toBe("ICP");
+        expect(account.selectedNetwork).toBe("Base");
+        stop();
+    });
+
+    test("a fee being asked for again shows as loading, not as the earlier failure", async () => {
+        const c = client();
+        c.oneSecGetTransferFees.mockRejectedValueOnce(new Error("oneSec down"));
+        let answer!: (fees: OneSecTransferFees[]) => void;
+        const { account, stop } = await receive(
+            token({
+                symbol: "USDC",
+                oneSecEnabled: true,
+                evmContractAddresses: [
+                    { token: "USDC", chain: "Ethereum", address: "0x" },
+                ] as ReceiveToken["evmContractAddresses"],
+            }),
+            c,
+        );
+        account.selectedNetwork = "Ethereum";
+        await settle();
+        expect(account.depositNote).toEqual({ kind: "failed" });
+        c.oneSecGetTransferFees.mockImplementationOnce(
+            () => new Promise((resolve) => (answer = resolve)),
+        );
+        account.selectedNetwork = "ICP";
+        await settle();
+        account.selectedNetwork = "Ethereum";
+        await settle();
+        expect(account.depositNote).toEqual({ kind: "loading" });
+        answer([]);
+        await settle();
+        expect(c.oneSecGetTransferFees).toHaveBeenCalledTimes(2);
         stop();
     });
 });

@@ -1,13 +1,6 @@
 <script lang="ts">
     import { BodySmall, ColourVars, Container, Row, type Padding } from "component-lib";
-    import {
-        BTC_SYMBOL,
-        cryptoLookup,
-        currentUserIdStore,
-        currentUserStore,
-        LEDGER_CANISTER_CKSOL,
-        OpenChat,
-    } from "@client";
+    import { cryptoLookup, currentUserIdStore, currentUserStore, OpenChat } from "@client";
     import { ReceiveAccount } from "@src/logic/wallet/receiveAccount.svelte";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -47,17 +40,15 @@
     let selectedNetwork = $derived(receive.selectedNetwork);
     let account = $derived(receive.address);
     let note = $derived(receive.depositNote);
-    let isBtc = $derived(tokenDetails.symbol === BTC_SYMBOL);
-    let isSol = $derived(tokenDetails.ledger === LEDGER_CANISTER_CKSOL);
 
     let tokenName = $derived.by(() => {
-        if (isBtc || isSol) return selectedNetwork;
-        if (selectedNetwork !== undefined) {
-            return $rtlStore
-                ? `(${selectedNetwork}) ${tokenDetails.symbol}`
-                : `${tokenDetails.symbol} (${selectedNetwork})`;
-        }
-        return tokenDetails.symbol;
+        if (selectedNetwork === undefined) return tokenDetails.symbol;
+        // BTC / ckBTC and SOL / ckSOL are named after the network
+        const arriving = receive.arrivingToken(selectedNetwork);
+        if (arriving !== undefined) return arriving;
+        return $rtlStore
+            ? `(${selectedNetwork}) ${tokenDetails.symbol}`
+            : `${tokenDetails.symbol} (${selectedNetwork})`;
     });
 </script>
 

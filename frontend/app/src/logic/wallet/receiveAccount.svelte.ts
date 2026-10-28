@@ -12,6 +12,7 @@ import {
     type OneSecTransferFees,
     type OpenChat,
 } from "@client";
+import type { RemoteData } from "@src/utils/remoteData";
 import { untrack } from "svelte";
 import { userWalletAddress } from "./receiveAddress";
 
@@ -36,9 +37,6 @@ export type DepositNote =
     | { kind: "btc"; fee: string }
     | { kind: "sol"; minimum: string | undefined; firstFee: string; laterFee: string }
     | { kind: "one_sec"; fee: string };
-
-/** Something fetched once it has arrived; a failure is asked for again. */
-type Fetched<T> = { kind: "loaded"; value: T } | { kind: "failed" };
 
 type Client = Pick<
     OpenChat,
@@ -67,9 +65,10 @@ export class ReceiveAccount {
     #chosen = $state<{ ledger: string; network: string }>();
     #fetched = $state<Partial<Record<"btc" | "sol" | "one_sec", string>>>({});
     #failed = $state<Partial<Record<"btc" | "sol" | "one_sec", boolean>>>({});
-    #btcFee = $state<DepositNote>({ kind: "loading" });
-    #solMinimum = $state<Fetched<string>>();
-    #oneSecFees = $state<Fetched<OneSecTransferFees[]>>();
+    // what depositing costs, fetched when first needed; a failure is asked for again the next time
+    #btcFee = $state<RemoteData<string, unknown>>({ kind: "idle" });
+    #solMinimum = $state<RemoteData<string, unknown>>({ kind: "idle" });
+    #oneSecFees = $state<RemoteData<OneSecTransferFees[], unknown>>({ kind: "idle" });
 
     #isBtc = $derived.by(() => this.#token().symbol === BTC_SYMBOL);
     #isSol = $derived.by(() => this.#token().ledger === LEDGER_CANISTER_CKSOL);
@@ -104,16 +103,6 @@ export class ReceiveAccount {
         this.#client = client;
         this.#token = token;
         this.#owner = owner;
-
-        // another token starts again from its first network, even when it comes back later
-        $effect(() => {
-            const ledger = this.#token().ledger;
-            untrack(() => {
-                if (this.#chosen !== undefined && this.#chosen.ledger !== ledger) {
-                    this.#chosen = undefined;
-                }
-            });
-        });
 
         // a deposit address is fetched the first time its network is chosen
         $effect(() => {
@@ -158,6 +147,16 @@ export class ReceiveAccount {
             : userWalletAddress(owner.userId, owner.principal);
     }
 
+    /**
+     * The token that arrives on a network when the network names it (BTC or ckBTC, SOL or ckSOL);
+     * undefined when it's the token itself, whichever network it comes over.
+     */
+    arrivingToken(network: string): string | undefined {
+        return (this.#isBtc || this.#isSol) && this.#networks.includes(network)
+            ? network
+            : undefined;
+    }
+
     /** The chosen network's address couldn't be fetched. */
     get failed(): boolean {
         const remote = this.#remote;
@@ -167,11 +166,15 @@ export class ReceiveAccount {
     /** What depositing on the chosen network costs or needs. */
     get depositNote(): DepositNote {
         const decimals = this.#token().decimals;
-        if (this.#selected === BTC_SYMBOL) return this.#btcFee;
+        if (this.#selected === BTC_SYMBOL) {
+            const fee = this.#btcFee;
+            if (fee.kind === "success") return { kind: "btc", fee: fee.data };
+            return fee.kind === "error" ? { kind: "failed" } : { kind: "loading" };
+        }
         if (this.#selected === SOL_SYMBOL) {
             return {
                 kind: "sol",
-                minimum: this.#solMinimum?.kind === "loaded" ? this.#solMinimum.value : undefined,
+                minimum: this.#solMinimum.kind === "success" ? this.#solMinimum.data : undefined,
                 firstFee: formatTokens(FIRST_SOL_DEPOSIT_FEE, decimals),
                 laterFee: formatTokens(SOL_DEPOSIT_FEE, decimals),
             };
@@ -182,9 +185,9 @@ export class ReceiveAccount {
 
     #oneSecNote(decimals: number): DepositNote {
         const fetched = this.#oneSecFees;
-        if (fetched === undefined) return { kind: "loading" };
-        if (fetched.kind === "failed") return { kind: "failed" };
-        const fees = fetched.value;
+        if (fetched.kind === "error") return { kind: "failed" };
+        if (fetched.kind !== "success") return { kind: "loading" };
+        const fees = fetched.data;
         const symbol = this.#token().symbol;
         const network = this.#selected;
         const forToken = fees.filter((f) => f.sourceToken === symbol);
@@ -217,52 +220,41 @@ export class ReceiveAccount {
         }
     }
 
-    #btcFeeLoading = false;
+    // each is asked for unless it has arrived or is on its way; a retry shows as loading
     async #loadBtcFee(): Promise<void> {
-        if (this.#btcFeeLoading || this.#btcFee.kind === "btc") return;
-        this.#btcFeeLoading = true;
+        if (this.#btcFee.kind === "loading" || this.#btcFee.kind === "success") return;
+        this.#btcFee = { kind: "loading" };
         try {
             const info = await this.#client.getCkbtcMinterDepositInfo();
-            this.#btcFee = { kind: "btc", fee: `~${formatTokens(info.depositFee, 8)}` };
-        } catch {
-            this.#btcFee = { kind: "failed" };
-        } finally {
-            this.#btcFeeLoading = false;
+            this.#btcFee = { kind: "success", data: `~${formatTokens(info.depositFee, 8)}` };
+        } catch (error) {
+            this.#btcFee = { kind: "error", error };
         }
     }
 
-    // a minimum or fees that failed are asked for again the next time they're needed
-    #solMinimumLoading = false;
     async #loadSolMinimum(): Promise<void> {
-        if (this.#solMinimumLoading || this.#solMinimum?.kind === "loaded") return;
-        this.#solMinimumLoading = true;
+        if (this.#solMinimum.kind === "loading" || this.#solMinimum.kind === "success") return;
+        this.#solMinimum = { kind: "loading" };
         try {
             const info = await this.#client.getCksolMinterDepositInfo();
-            this.#solMinimum = {
-                kind: "loaded",
-                value: formatTokens(info.minimumDepositAmount, this.#token().decimals),
-            };
-        } catch {
+            const data = formatTokens(info.minimumDepositAmount, this.#token().decimals);
+            this.#solMinimum = { kind: "success", data };
+        } catch (error) {
             // the minimum is only informational
-            this.#solMinimum = { kind: "failed" };
-        } finally {
-            this.#solMinimumLoading = false;
+            this.#solMinimum = { kind: "error", error };
         }
     }
 
-    #oneSecLoading = false;
     async #loadOneSecFees(): Promise<void> {
-        if (this.#oneSecLoading || this.#oneSecFees?.kind === "loaded") return;
-        this.#oneSecLoading = true;
+        if (this.#oneSecFees.kind === "loading" || this.#oneSecFees.kind === "success") return;
+        this.#oneSecFees = { kind: "loading" };
         try {
             const fees = await this.#client.oneSecGetTransferFees();
             // cross-chain deposits: the source token is the destination token
-            const value = fees.filter((f) => f.sourceToken === f.destinationToken);
-            this.#oneSecFees = { kind: "loaded", value };
-        } catch {
-            this.#oneSecFees = { kind: "failed" };
-        } finally {
-            this.#oneSecLoading = false;
+            const data = fees.filter((f) => f.sourceToken === f.destinationToken);
+            this.#oneSecFees = { kind: "success", data };
+        } catch (error) {
+            this.#oneSecFees = { kind: "error", error };
         }
     }
 }
