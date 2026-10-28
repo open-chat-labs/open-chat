@@ -9,7 +9,7 @@ use types::{
     AudioContent, AuthorityReportState, BlobReference, CallParticipant, CanisterId, Chat, CompletedCryptoTransaction,
     CryptoContent, CryptoTransaction, CustomContent, DeletedBy, EncryptedContent, EncryptedMessageContentType,
     FailedCryptoTransaction, FileContent, GiphyContent, GiphyImageVariant, ImageContent, MediaScanMatch, MediaScanProvider,
-    MessageContent, MessageReminderContent, MessageReminderCreatedContent, MessageReport, MiniAppContent,
+    MessageContent, MessageReminderContent, MessageReminderCreatedContent, MessageReport, MiniAppContent, MiniAppImage,
     ModerationReportContent, ModerationReportResolution, ModerationReportStatus, NnsProposal, P2PSwapAccepted,
     P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig,
     PollContent, PollVotes, PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent,
@@ -115,6 +115,15 @@ pub fn message_contents() -> Vec<MessageContent> {
         }),
         MessageContent::MiniApp(MiniAppContent {
             text: "**Uno** · 2 to 4 players".to_string(),
+            image: Some(MiniAppImage {
+                width: max(),
+                height: max(),
+                mime_type: "image/png".to_string(),
+                blob_reference: BlobReference {
+                    canister_id: Principal::from_slice(&[1]),
+                    blob_id: max(),
+                },
+            }),
         }),
     ];
 

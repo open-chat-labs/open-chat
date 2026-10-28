@@ -1525,6 +1525,14 @@ type PriceChartSource = record {
 
 type MiniAppContent = record {
     text : text;
+    image : opt MiniAppImage;
+};
+
+type MiniAppImage = record {
+    width : nat32;
+    height : nat32;
+    mime_type : text;
+    blob_reference : BlobReference;
 };
 
 type EncryptedMessageContentType = variant {

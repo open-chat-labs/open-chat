@@ -16,14 +16,14 @@ use types::{
     FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
     ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
     MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
-    MessageReminderCreatedContent, MessageReport, Milliseconds, MiniAppContent, ModerationInput, ModerationReportContent,
-    P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial,
-    P2PSwapExpired, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload,
-    PollVotes, PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent, PrizeContentEventPayload,
-    PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal, ProposalContent, RegisterVoteResult,
-    ReportedMessage, ReportedMessageContentEventPayload, TextContent, TextContentEventPayload, ThumbnailData, TimestampMillis,
-    TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId, UserIdAndPrincipal, UserType, VideoCallContent,
-    VideoCallPresence, VideoContent, VoteOperation, is_default,
+    MessageReminderCreatedContent, MessageReport, Milliseconds, MiniAppContent, MiniAppImage, ModerationInput,
+    ModerationReportContent, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload,
+    P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent,
+    PollContentEventPayload, PollVotes, PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent,
+    PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
+    ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
+    TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
+    UserIdAndPrincipal, UserType, VideoCallContent, VideoCallPresence, VideoContent, VoteOperation, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -369,6 +369,16 @@ impl MessageContentInternal {
                 })
                 .into_iter()
                 .collect(),
+            MessageContentInternal::MiniApp(m) => m
+                .image
+                .as_ref()
+                .map(|image| types::MediaScanBlob {
+                    blob_reference: image.blob_reference.clone().into(),
+                    mime_type: image.mime_type.clone(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
             _ => Vec::new(),
         }
     }
@@ -400,6 +410,11 @@ impl MessageContentInternal {
                     references.push(br.into());
                 }
             }
+            MessageContentInternal::MiniApp(m) => {
+                if let Some(image) = &m.image {
+                    references.push(image.blob_reference.clone().into());
+                }
+            }
             MessageContentInternal::Text(_)
             | MessageContentInternal::Poll(_)
             | MessageContentInternal::Crypto(_)
@@ -416,8 +431,7 @@ impl MessageContentInternal {
             | MessageContentInternal::VideoCall(_)
             | MessageContentInternal::Encrypted(_)
             | MessageContentInternal::Custom(_)
-            | MessageContentInternal::PriceChart(_)
-            | MessageContentInternal::MiniApp(_) => {}
+            | MessageContentInternal::PriceChart(_) => {}
         }
 
         references
@@ -2291,11 +2305,33 @@ impl MessageContentInternalSubtype for PriceChartContentInternal {
 pub struct MiniAppContentInternal {
     #[serde(rename = "t")]
     pub text: String,
+    #[serde(rename = "i", default, skip_serializing_if = "Option::is_none")]
+    pub image: Option<MiniAppImageInternal>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MiniAppImageInternal {
+    #[serde(rename = "w")]
+    pub width: u32,
+    #[serde(rename = "h")]
+    pub height: u32,
+    #[serde(rename = "m")]
+    pub mime_type: String,
+    #[serde(rename = "b")]
+    pub blob_reference: BlobReferenceInternal,
 }
 
 impl From<MiniAppContent> for MiniAppContentInternal {
     fn from(value: MiniAppContent) -> Self {
-        MiniAppContentInternal { text: value.text }
+        MiniAppContentInternal {
+            text: value.text,
+            image: value.image.map(|i| MiniAppImageInternal {
+                width: i.width,
+                height: i.height,
+                mime_type: i.mime_type,
+                blob_reference: i.blob_reference.into(),
+            }),
+        }
     }
 }
 
@@ -2303,7 +2339,15 @@ impl MessageContentInternalSubtype for MiniAppContentInternal {
     type ContentType = MiniAppContent;
 
     fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
-        MiniAppContent { text: self.text }
+        MiniAppContent {
+            text: self.text,
+            image: self.image.map(|i| MiniAppImage {
+                width: i.width,
+                height: i.height,
+                mime_type: i.mime_type,
+                blob_reference: i.blob_reference.into(),
+            }),
+        }
     }
 }
 
@@ -2738,7 +2782,22 @@ mod mini_app_tests {
     use super::*;
 
     fn card(text: &str) -> MiniAppContent {
-        MiniAppContent { text: text.to_string() }
+        MiniAppContent {
+            text: text.to_string(),
+            image: None,
+        }
+    }
+
+    fn image(mime_type: &str, width: u32) -> MiniAppImage {
+        MiniAppImage {
+            width,
+            height: 300,
+            mime_type: mime_type.to_string(),
+            blob_reference: BlobReference {
+                canister_id: Principal::from_slice(&[1]),
+                blob_id: 7,
+            },
+        }
     }
 
     fn validate(
@@ -2814,6 +2873,41 @@ mod mini_app_tests {
     }
 
     #[test]
+    fn a_cards_image_is_an_image_with_a_size() {
+        for image in [image("image/png", 0), image("text/html", 400)] {
+            let card = MiniAppContent {
+                image: Some(image),
+                ..card("Uno")
+            };
+            assert!(matches!(
+                validate(card, false, UserType::BotV2, false),
+                ValidateNewMessageContentResult::Error(ContentValidationError::InvalidMiniApp(_))
+            ));
+        }
+    }
+
+    // As for an image message, so it's scanned like one, and deleted with the message
+    #[test]
+    fn a_cards_image_is_scanned_and_deleted_with_it() {
+        let content = MessageContentInternal::MiniApp(
+            MiniAppContent {
+                image: Some(image("image/png", 400)),
+                ..card("Uno")
+            }
+            .into(),
+        );
+
+        let scanned = content.scannable_blobs();
+        assert_eq!(scanned.len(), 1);
+        assert_eq!(scanned[0].blob_reference.blob_id, 7);
+        assert_eq!(scanned[0].mime_type, "image/png");
+        assert_eq!(
+            content.blob_references().iter().map(|b| b.blob_id).collect::<Vec<_>>(),
+            vec![7]
+        );
+    }
+
+    #[test]
     fn a_card_cant_be_edited() {
         let content = MessageContentInternal::MiniApp(card("Uno").into());
         assert!(content.with_text(Some("Ludo".to_string())).is_err());
@@ -2821,13 +2915,25 @@ mod mini_app_tests {
 
     #[test]
     fn a_card_is_stored_and_read_back_unchanged() {
-        let content = MessageContentInternal::MiniApp(card("**Uno**").into());
-        let bytes = msgpack::serialize_then_unwrap(&content);
-        let read: MessageContentInternal = msgpack::deserialize_then_unwrap(&bytes);
+        for image in [None, Some(image("image/png", 400))] {
+            let content = MessageContentInternal::MiniApp(
+                MiniAppContent {
+                    image: image.clone(),
+                    ..card("**Uno**")
+                }
+                .into(),
+            );
+            let bytes = msgpack::serialize_then_unwrap(&content);
+            let read: MessageContentInternal = msgpack::deserialize_then_unwrap(&bytes);
 
-        let MessageContent::MiniApp(read) = read.clone().hydrate(None) else {
-            panic!("Expected a mini app: {read:?}");
-        };
-        assert_eq!(read.text, "**Uno**");
+            let MessageContent::MiniApp(read) = read.clone().hydrate(None) else {
+                panic!("Expected a mini app: {read:?}");
+            };
+            assert_eq!(read.text, "**Uno**");
+            assert_eq!(
+                read.image.map(|i| (i.width, i.height, i.mime_type, i.blob_reference.blob_id)),
+                image.map(|i| (i.width, i.height, i.mime_type, i.blob_reference.blob_id))
+            );
+        }
     }
 }

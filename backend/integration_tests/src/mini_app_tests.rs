@@ -13,10 +13,10 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    AutonomousConfig, BotChatContext, BotInstallationLocation, BotMessageContent, BotMessageSessionClaims, BotPermissions,
-    CLAIM_TYPE_BOT_MESSAGE_SESSION, CanisterId, ChannelId, Chat, ChatEvent, ChatPermission, CommunityId, EventIndex,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePermission, MiniAppContent, TextContent, UnitResult,
-    UserId,
+    AutonomousConfig, BlobReference, BotChatContext, BotInstallationLocation, BotMessageContent, BotMessageSessionClaims,
+    BotPermissions, CLAIM_TYPE_BOT_MESSAGE_SESSION, CanisterId, ChannelId, Chat, ChatEvent, ChatPermission, CommunityId,
+    EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePermission, MiniAppContent,
+    MiniAppImage, TextContent, UnitResult, UserId,
 };
 
 #[test]
@@ -57,6 +57,18 @@ fn a_bot_posts_a_mini_app_card_which_cant_be_edited() {
         card_text(env, &member, community_id, channel_id, result.event_index),
         card().text
     );
+    let events =
+        client::community::happy_path::events_by_index(env, &member, community_id, channel_id, vec![result.event_index]);
+    let ChatEvent::Message(message) = &events.events[0].event else {
+        panic!("Expected a message: {:?}", events.events[0].event);
+    };
+    let MessageContent::MiniApp(content) = &message.content else {
+        panic!("Expected a mini app: {:?}", message.content);
+    };
+    assert_eq!(
+        content.image.as_ref().map(|i| (i.width, i.height, i.blob_reference.blob_id)),
+        Some((600, 400, 7))
+    );
 
     // The bot reads its card back
     let response = client::local_user_index::bot_chat_events(
@@ -94,6 +106,7 @@ fn a_bot_posts_a_mini_app_card_which_cant_be_edited() {
             message_id,
             content: BotMessageContent::MiniApp(MiniAppContent {
                 text: "**Uno** · game over".to_string(),
+                image: None,
             }),
             block_level_markdown: false,
             og_previews: None,
@@ -206,6 +219,7 @@ fn a_bot_cant_replace_a_card_it_hasnt_finished_sending() {
         env,
         BotMessageContent::MiniApp(MiniAppContent {
             text: "**Uno** · game over".to_string(),
+            image: None,
         }),
         true,
     );
@@ -610,9 +624,19 @@ fn send(
     )
 }
 
+// With an image, as if the bot had uploaded one. Nothing here reads the file itself.
 fn card() -> MiniAppContent {
     MiniAppContent {
         text: "**Uno** · 2 to 4 players".to_string(),
+        image: Some(MiniAppImage {
+            width: 600,
+            height: 400,
+            mime_type: "image/png".to_string(),
+            blob_reference: BlobReference {
+                canister_id: Principal::from_slice(&[1]),
+                blob_id: 7,
+            },
+        }),
     }
 }
 
