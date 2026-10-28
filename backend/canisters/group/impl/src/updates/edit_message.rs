@@ -3,7 +3,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::{GroupEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{EditMessageArgs, MessageEdit};
+use chat_events::EditMessageArgs;
 use group_canister::{c2c_bot_edit_message, edit_message_text, edit_message_v2};
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, BotPermissions, EventIndex, MessageContentInitial, OCResult};
@@ -39,10 +39,9 @@ fn edit_message_text_impl(args: edit_message_text::Args, state: &mut RuntimeStat
             min_visible_event_index: member.min_visible_event_index(),
             thread_root_message_index: args.thread_root_message_index,
             message_id: args.message_id,
-            edit: MessageEdit::Text(args.text),
+            text: args.text,
             block_level_markdown: args.block_level_markdown,
             og_previews: args.og_previews,
-            finalise_bot_message: false,
             now: state.env.now(),
         },
         args.new_achievement && !is_bot,
@@ -50,7 +49,8 @@ fn edit_message_text_impl(args: edit_message_text::Args, state: &mut RuntimeStat
     )
 }
 
-// A bot editing its own message, eg. a bridge bot relaying an edit made on the other platform
+// A bot editing its own message, eg. a bridge bot relaying an edit made on the other platform. As
+// with a user's edit, only the text changes.
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_bot_edit_message(args: c2c_bot_edit_message::Args) -> c2c_bot_edit_message::Response {
@@ -82,10 +82,9 @@ fn c2c_bot_edit_message_impl(args: c2c_bot_edit_message::Args, state: &mut Runti
             min_visible_event_index: EventIndex::default(),
             thread_root_message_index: args.thread,
             message_id: args.message_id,
-            edit: MessageEdit::Content(Box::new(content.into())),
+            text: content.text().map(|t| t.to_string()),
             block_level_markdown: Some(args.block_level_markdown),
             og_previews: args.og_previews,
-            finalise_bot_message: false,
             now: state.env.now(),
         },
         false,
@@ -98,8 +97,6 @@ fn commit(args: EditMessageArgs, new_achievement: bool, state: &mut RuntimeState
     let thread_root_message_index = args.thread_root_message_index;
     let message_id = args.message_id;
     let now = args.now;
-    // A user's edit only changes the text, so only a bot's can bring new media to scan
-    let content_replaced = matches!(args.edit, MessageEdit::Content(_));
 
     let result = state.data.chat.events.edit_message(
         args,
@@ -114,7 +111,7 @@ fn commit(args: EditMessageArgs, new_achievement: bool, state: &mut RuntimeState
         state.notify_user_of_achievement(sender, Achievement::EditedMessage, now);
     }
 
-    // Re-classify the edited content
+    // Re-classify the edited text. The media can't have changed, so isn't scanned again.
     if state.data.chat.is_public.value
         && let Some((message, _)) =
             state
@@ -128,14 +125,7 @@ fn commit(args: EditMessageArgs, new_achievement: bool, state: &mut RuntimeState
         // dequeue the earlier content and reply with an empty classification, clearing any
         // stale flags left by text this edit removed
         let input = message.content.moderation_input();
-        // Unlike classification there is no empty-request "clear" for media: verdicts only
-        // ever act on a match, and a match escalates regardless of later edits (the matched
-        // content was posted publicly; editing it away does not void the report)
-        let blobs = if content_replaced { message.content.scannable_blobs() } else { Vec::new() };
         state.queue_message_for_moderation(thread_root_message_index, message_id, input);
-        if !blobs.is_empty() {
-            state.queue_media_for_scanning(thread_root_message_index, message_id, blobs);
-        }
     }
 
     state.push_bot_notification(result.bot_notification);

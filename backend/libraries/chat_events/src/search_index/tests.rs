@@ -1,6 +1,6 @@
 use super::*;
 use crate::{
-    ChatEvents, DeleteUndeleteMessagesArgs, EditMessageArgs, EventKey, MessageContentInternal, MessageEdit, NullEventPusher,
+    ChatEvents, DeleteUndeleteMessagesArgs, EditMessageArgs, EventKey, MessageContentInternal, NullEventPusher,
     PushMessageArgs, TextContentInternal,
 };
 use candid::Principal;
@@ -419,10 +419,9 @@ fn edit_args(sender: UserId, message_index: MessageIndex, text: &str, now: Times
         min_visible_event_index: EventIndex::default(),
         thread_root_message_index: None,
         message_id: message_id_of(message_index),
-        edit: MessageEdit::Text(Some(text.to_string())),
+        text: Some(text.to_string()),
         block_level_markdown: None,
         og_previews: Vec::new(),
-        finalise_bot_message: false,
         now,
     }
 }

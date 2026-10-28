@@ -5,8 +5,8 @@
 
 use crate::User;
 use chat_events::{
-    AddRemoveReactionArgs, DeleteUndeleteMessagesArgs, EditMessageArgs, EventPusher, MessageContentInternal, MessageEdit,
-    NullEventPusher, PushMessageArgs, Reader, ReplyContextInternal, TipMessageArgs,
+    AddRemoveReactionArgs, DeleteUndeleteMessagesArgs, EditMessageArgs, EventPusher, MessageContentInternal, NullEventPusher,
+    PushMessageArgs, Reader, ReplyContextInternal, TipMessageArgs,
 };
 use direct_chat::{DirectChat, EventsTtlChange, EventsTtlLatestChange};
 use ledger_utils::format_crypto_amount_with_symbol;
@@ -194,10 +194,9 @@ pub fn edit_message(chat: &mut DirectChat, sender: UserId, args: C2CEditMessageA
             min_visible_event_index: EventIndex::default(),
             thread_root_message_index,
             message_id: args.message_id,
-            edit: MessageEdit::Text(args.content.text().map(|t| t.to_string())),
+            text: args.content.text().map(|t| t.to_string()),
             block_level_markdown: args.block_level_markdown,
             og_previews: args.og_previews,
-            finalise_bot_message: false,
             now,
         },
         None,

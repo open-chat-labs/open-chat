@@ -2,7 +2,7 @@ use crate::guards::caller_is_hosted_user;
 use crate::{MultiUserEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{EditMessageArgs, MessageEdit};
+use chat_events::EditMessageArgs;
 use constants::OPENCHAT_BOT_USER_ID;
 use multi_user_canister::{EditMessageArgs as C2CEditMessageArgs, UserCanisterEvent};
 use multi_user_canister::{edit_message_text, edit_message_v2};
@@ -61,10 +61,9 @@ fn edit_message_text_impl(args: edit_message_text::Args, state: &mut RuntimeStat
                     min_visible_event_index: EventIndex::default(),
                     thread_root_message_index: args.thread_root_message_index,
                     message_id: args.message_id,
-                    edit: MessageEdit::Text(args.text),
+                    text: args.text,
                     block_level_markdown: args.block_level_markdown,
                     og_previews: args.og_previews.clone(),
-                    finalise_bot_message: false,
                     now,
                 },
                 Some(event_pusher),

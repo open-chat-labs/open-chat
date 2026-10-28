@@ -1,10 +1,10 @@
 use candid::Principal;
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageSuccess,
-    DeleteUndeleteMessagesArgs, EditMessageArgs, EventPusher, ExpiredThread, GroupGateUpdatedInternal, MessageContentInternal,
-    MessageEdit, MessageInternal, NullEventPusher, PushEventResultInternal, PushMessageArgs, Reader, RegisterPollVoteArgs,
-    RegisterPollVoteSuccess, RemoveEventsResult, ReservePrizeSuccess, TipMessageArgs, UndeleteMessageSuccess,
-    UpdateMessageSuccess,
+    DeleteUndeleteMessagesArgs, EventPusher, ExpiredThread, GroupGateUpdatedInternal, MessageContentInternal, MessageInternal,
+    NullEventPusher, PushEventResultInternal, PushMessageArgs, Reader, RegisterPollVoteArgs, RegisterPollVoteSuccess,
+    RemoveEventsResult, ReservePrizeSuccess, TipMessageArgs, UndeleteMessageSuccess, UpdateMessageSuccess,
+    UpdateUnfinalisedBotMessageArgs,
 };
 use group_community_common::MemberUpdate;
 use itertools::Itertools;
@@ -743,19 +743,22 @@ impl GroupChatCore {
             everyone_mentioned,
         } = self.prepare_send_message(caller, thread_root_message_index, &content, rules_accepted, now)?;
 
-        let edit_message_args = EditMessageArgs {
-            sender: caller.agent(),
+        let update_args = UpdateUnfinalisedBotMessageArgs {
+            bot: caller.agent(),
             min_visible_event_index,
             thread_root_message_index,
             message_id,
-            edit: MessageEdit::Content(Box::new(content)),
-            block_level_markdown: Some(block_level_markdown),
+            content,
+            block_level_markdown,
             og_previews,
-            finalise_bot_message: finalise,
+            finalise,
             now,
         };
 
-        let result = self.events.edit_message::<NullEventPusher>(edit_message_args, None).ok();
+        let result = self
+            .events
+            .update_unfinalised_bot_message::<NullEventPusher>(update_args, None)
+            .ok();
 
         let reader = self
             .events

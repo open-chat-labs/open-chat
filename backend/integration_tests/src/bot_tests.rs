@@ -19,12 +19,13 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    AutonomousConfig, BotActionChatDetails, BotActionScope, BotChatContext, BotChatEvent, BotCommandArg, BotCommandArgValue,
-    BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDataEncoding, BotDefinition, BotEvent, BotEventWrapper,
-    BotInstallationLocation, BotMessageContent, BotPermissions, BotSubscriptions, BridgePlatform, CanisterId, ChannelId, Chat,
-    ChatEvent, ChatEventType, ChatPermission, ChatType, CommunityEventType, CommunityPermission, EventIndex, GroupReplyContext,
-    HttpRequest, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePermission, NotificationEnvelope,
-    OptionUpdate, Rules, StringParam, TextContent, UpdatedRules, UserId,
+    AutonomousConfig, BlobReference, BotActionChatDetails, BotActionScope, BotChatContext, BotChatEvent, BotCommandArg,
+    BotCommandArgValue, BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDataEncoding, BotDefinition, BotEvent,
+    BotEventWrapper, BotInstallationLocation, BotMessageContent, BotPermissions, BotSubscriptions, BridgePlatform, CanisterId,
+    ChannelId, Chat, ChatEvent, ChatEventType, ChatPermission, ChatType, CommunityEventType, CommunityPermission, EventIndex,
+    GroupReplyContext, HttpRequest, ImageContent, MessageContent, MessageContentInitial, MessageId, MessageIndex,
+    MessagePermission, NotificationEnvelope, OptionUpdate, Rules, StringParam, TextContent, ThumbnailData, UpdatedRules,
+    UserId,
 };
 
 #[test]
@@ -636,6 +637,142 @@ fn bots_edit_their_own_messages_autonomously() {
         "{result:?}"
     );
     assert_eq!(text_of(env, response.event_index), ("~~Struck out~~".to_string(), true));
+}
+
+// A bot can replace the "Thinking ..." placeholder it's still sending with what it made, but once
+// that's sent, an edit only changes the text, as a user's does
+#[test]
+fn a_bot_replaces_its_placeholder_but_its_edits_only_change_the_text() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+
+    let command_name = random_string();
+    let text_and_images =
+        BotPermissions::default().with_message(&HashSet::from_iter([MessagePermission::Text, MessagePermission::Image]));
+    let mut definition = default_bot_definition(command_name.clone());
+    definition.commands[0].permissions = text_and_images.clone();
+    definition.autonomous_config = Some(AutonomousConfig {
+        permissions: text_and_images.clone(),
+    });
+    let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        random_string(),
+        "https://my.bot.xyz/".to_string(),
+        definition,
+    );
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Group(group_id),
+        bot_id,
+        text_and_images.clone(),
+        Some(text_and_images),
+    );
+
+    let access_token = match client::local_user_index::access_token_v2(
+        env,
+        owner.principal,
+        local_user_index,
+        &access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
+            bot_id,
+            command: BotCommandInitial {
+                name: command_name,
+                args: Vec::new(),
+                meta: None,
+            },
+            scope: BotActionScope::Chat(BotActionChatDetails {
+                chat: Chat::Group(group_id),
+                thread: None,
+                message_id: random_from_u128(),
+                user_message_id: None,
+            }),
+        }),
+    ) {
+        access_token_v2::Response::Success(access_token) => access_token,
+        response => panic!("'access_token' error: {response:?}"),
+    };
+
+    let send =
+        |env: &mut PocketIc, content: BotMessageContent, finalised: bool| match client::local_user_index::bot_send_message(
+            env,
+            bot_principal,
+            local_user_index,
+            &local_user_index_canister::bot_send_message::Args {
+                chat_context: BotChatContext::Command(access_token.clone()),
+                thread: None,
+                message_id: None,
+                replies_to: None,
+                content,
+                block_level_markdown: false,
+                finalised,
+                og_previews: None,
+                bridged_from: None,
+            },
+        ) {
+            local_user_index_canister::bot_send_message::Response::Success(result) => result,
+            response => panic!("'bot_send_message' error: {response:?}"),
+        };
+    let image = |caption: &str, blob_id: u128| {
+        BotMessageContent::Image(ImageContent {
+            width: 100,
+            height: 100,
+            thumbnail_data: ThumbnailData("data:image/jpeg;base64,".to_string()),
+            caption: Some(caption.to_string()),
+            mime_type: "image/jpeg".to_string(),
+            blob_reference: Some(BlobReference {
+                canister_id: Principal::from_slice(&[1]),
+                blob_id,
+            }),
+        })
+    };
+    let image_of = |env: &PocketIc, event_index: EventIndex| {
+        let events = client::group::happy_path::events_by_index(env, &owner, group_id, vec![event_index]);
+        let ChatEvent::Message(message) = &events.events[0].event else {
+            panic!("Expected a message: {:?}", events.events[0].event);
+        };
+        let MessageContent::Image(image) = &message.content else {
+            panic!("Expected an image: {:?}", message.content);
+        };
+        (image.caption.clone(), image.blob_reference.as_ref().map(|b| b.blob_id))
+    };
+
+    send(
+        env,
+        BotMessageContent::Text(TextContent {
+            text: "Thinking ...".to_string(),
+        }),
+        false,
+    );
+    let sent = send(env, image("A cat", 7), true);
+    assert_eq!(image_of(env, sent.event_index), (Some("A cat".to_string()), Some(7)));
+
+    let result = client::local_user_index::bot_edit_message(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_edit_message::Args {
+            chat_context: BotChatContext::Autonomous(Chat::Group(group_id)),
+            thread: None,
+            message_id: sent.message_id,
+            content: image("A dog", 8),
+            block_level_markdown: false,
+            og_previews: None,
+        },
+    );
+    assert!(matches!(result, types::UnitResult::Success), "{result:?}");
+    assert_eq!(image_of(env, sent.event_index), (Some("A dog".to_string()), Some(7)));
 }
 
 // Any bot can delete its own messages autonomously, as it can edit them, without the DeleteMessages

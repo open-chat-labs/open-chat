@@ -4,7 +4,7 @@ use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, ChatInternal, DeleteMessageSuccess,
     DeleteUndeleteMessagesArgs, EditMessageArgs, EditMessageSuccess, EventKey, EventPusher, MessageContentInternal,
     MessageInternal, PushEventResultInternal, PushMessageArgs, Reader, RemoveEventsResult, TipMessageArgs, UpdateEventError,
-    UpdateMessageSuccess,
+    UpdateMessageSuccess, UpdateUnfinalisedBotMessageArgs,
 };
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
@@ -372,6 +372,14 @@ impl DirectChat {
         event_pusher: Option<P>,
     ) -> OCResult<EditMessageSuccess> {
         self.events.edit_message(args, event_pusher)
+    }
+
+    pub fn update_unfinalised_bot_message<P: EventPusher>(
+        &mut self,
+        args: UpdateUnfinalisedBotMessageArgs,
+        event_pusher: Option<P>,
+    ) -> OCResult<EditMessageSuccess> {
+        self.events.update_unfinalised_bot_message(args, event_pusher)
     }
 
     pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, OCResult<DeleteMessageSuccess>)> {
