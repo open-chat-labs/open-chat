@@ -2389,6 +2389,12 @@ impl MessageContentInternalSubtype for MiniAppContentInternal {
 }
 
 impl MiniAppContentInternal {
+    // Anyone may open the app while the game is taking players, to join it. After that only its
+    // players may, unless it's open to spectators.
+    pub fn can_open(&self, user: UserId) -> bool {
+        self.status == MiniAppStatus::Open || self.spectators || self.players.contains(&user)
+    }
+
     // Applies the bot's update, unless the game is finished, after which the card never changes, or
     // the card the update leaves isn't valid
     pub fn update(&mut self, update: MiniAppUpdate) -> Result<(), OCError> {
@@ -3049,6 +3055,23 @@ mod mini_app_tests {
             result: Some("Bob won".to_string()),
             ..playing
         }));
+    }
+
+    #[test]
+    fn anyone_opens_a_game_taking_players_then_only_its_players_unless_others_may_watch() {
+        let mut card: MiniAppContentInternal = MiniAppContent {
+            players: vec![user(1)],
+            ..card("Uno")
+        }
+        .into();
+        assert!(card.can_open(user(2)));
+
+        card.status = MiniAppStatus::Active;
+        assert!(card.can_open(user(1)));
+        assert!(!card.can_open(user(2)));
+
+        card.spectators = true;
+        assert!(card.can_open(user(2)));
     }
 
     #[test]

@@ -43,7 +43,7 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
         return Response::Failure;
     };
 
-    // A member opening the app of one of the bot's MiniApp messages, which they can see
+    // A member opening the app of one of the bot's MiniApp cards, which they can see, and may open
     if let AccessTypeArgs::BotMessageSession(args) = &args_outer.access_type {
         // A member of the community too, whose membership hasn't lapsed and who isn't suspended
         if state.data.members.get_verified_member(args.initiator.as_principal()).is_err() {
@@ -53,8 +53,9 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
             return Response::Failure;
         };
         let can_open = state.data.bots.get(&args.bot_id).is_some()
-            && channel.chat.events.is_mini_app_message_of(
+            && channel.chat.events.can_open_mini_app(
                 args.bot_id,
+                args.initiator,
                 member.min_visible_event_index(),
                 args.thread,
                 args.message_id,

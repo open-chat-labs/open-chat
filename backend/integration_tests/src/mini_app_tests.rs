@@ -664,6 +664,74 @@ fn a_group_member_gets_a_session_token_for_a_mini_app_in_a_thread_until_its_dele
     assert!(matches!(response, access_token_v2::Response::NotAuthorized), "{response:?}");
 }
 
+// Once a game closed to spectators has started, only its players get a token for its app
+#[test]
+fn a_game_closed_to_spectators_opens_only_for_its_players_once_started() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let Setup {
+        owner,
+        member,
+        community_id,
+        channel_id,
+        local_user_index,
+    } = setup(env, canister_ids, *controller);
+    let (bot_id, bot_principal) = install_bot(
+        env,
+        &owner,
+        canister_ids.user_index,
+        local_user_index,
+        community_id,
+        MessagePermission::MiniApp,
+    );
+    let chat = Chat::Channel(community_id, channel_id);
+    let message_id = random_from_u128();
+    let response = send(
+        env,
+        bot_principal,
+        local_user_index,
+        chat,
+        message_id,
+        MiniAppContent {
+            spectators: false,
+            ..card()
+        },
+    );
+    assert!(is_sent(&response), "'bot_send_message' error: {response:?}");
+
+    // While it's taking players, anyone may open it, to join
+    let response = session_token(env, &member, local_user_index, bot_id, chat, None, message_id);
+    assert!(matches!(response, access_token_v2::Response::Success(_)), "{response:?}");
+
+    let response = client::local_user_index::bot_update_mini_app(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_update_mini_app::Args {
+            chat_context: BotChatContext::Autonomous(chat),
+            thread: None,
+            message_id,
+            update: MiniAppUpdate {
+                status: Some(MiniAppStatus::Active),
+                players: Some(vec![owner.user_id]),
+                ..Default::default()
+            },
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    let response = session_token(env, &owner, local_user_index, bot_id, chat, None, message_id);
+    assert!(matches!(response, access_token_v2::Response::Success(_)), "{response:?}");
+    let response = session_token(env, &member, local_user_index, bot_id, chat, None, message_id);
+    assert!(matches!(response, access_token_v2::Response::NotAuthorized), "{response:?}");
+}
+
 fn session_token(
     env: &PocketIc,
     user: &User,
