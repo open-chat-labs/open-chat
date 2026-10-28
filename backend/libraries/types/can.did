@@ -1526,6 +1526,19 @@ type PriceChartSource = record {
 type MiniAppContent = record {
     text : text;
     image : opt MiniAppImage;
+    max_players : opt nat32;
+    spectators : bool;
+    spectator_count : nat32;
+    status : MiniAppStatus;
+    players : vec UserId;
+    waiting_for : opt vec UserId;
+    result : opt text;
+};
+
+type MiniAppStatus = variant {
+    Open;
+    Active;
+    Finished;
 };
 
 type MiniAppImage = record {

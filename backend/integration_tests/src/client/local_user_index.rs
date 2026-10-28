@@ -20,6 +20,7 @@ generate_update_call!(bot_create_channel);
 generate_update_call!(bot_delete_channel);
 generate_update_call!(bot_delete_messages);
 generate_update_call!(bot_edit_message);
+generate_update_call!(bot_update_mini_app);
 generate_update_call!(bot_send_message);
 generate_msgpack_update_call!(c2c_community);
 generate_msgpack_update_call!(c2c_group);

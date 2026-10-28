@@ -26,12 +26,12 @@ use types::{
     DiamondMembershipStatus, DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention,
     Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
-    MessageTippedEventPayload, Milliseconds, ModerationCategories, ModerationReportStatus, MultiUserChat, OCResult, OgPreview,
-    OptionUpdate, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus,
-    PendingCryptoTransaction, PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload,
-    RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips,
-    UserId, UserIdAndPrincipal, UserType, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence,
-    VoteOperation, is_default,
+    MessageTippedEventPayload, Milliseconds, MiniAppUpdate, ModerationCategories, ModerationReportStatus, MultiUserChat,
+    OCResult, OgPreview, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent,
+    P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction,
+    ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis,
+    TimestampNanos, Timestamped, Tips, UserId, UserIdAndPrincipal, UserType, VideoCall, VideoCallEndedEventPayload,
+    VideoCallParticipants, VideoCallPresence, VoteOperation, is_default,
 };
 
 // The patchable fields of a moderation-report card; each is applied when present so that
@@ -888,6 +888,42 @@ impl ChatEvents {
         let sender = message.sender;
 
         Ok((content, sender))
+    }
+
+    // A bot changing what its MiniApp card shows as its game goes on: the status, players, whose move
+    // it is and the result. The rest of the card never changes, and nor does any of it once the game
+    // is finished. Unlike an edit, the message isn't marked as edited.
+    pub fn update_mini_app(&mut self, args: UpdateMiniAppArgs) -> OCResult {
+        match self.update_message(
+            args.thread_root_message_index,
+            args.message_id.into(),
+            EventIndex::default(),
+            args.now,
+            true,
+            ChatEventType::MessageOther,
+            |message, _| Self::update_mini_app_inner(message, args.bot, args.update),
+        ) {
+            Ok(_) => Ok(()),
+            Err(UpdateEventError::NoChange(error)) => Err(error),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
+        }
+    }
+
+    fn update_mini_app_inner(
+        message: &mut MessageInternal,
+        bot: UserId,
+        update: MiniAppUpdate,
+    ) -> Result<(), UpdateEventError<OCError>> {
+        if message.deleted_by.is_some() {
+            return Err(UpdateEventError::NotFound);
+        }
+        if message.sender != bot {
+            return Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized.into()));
+        }
+        let MessageContentInternal::MiniApp(card) = &mut message.content else {
+            return Err(UpdateEventError::NoChange(OCErrorCode::InvalidMessageType.into()));
+        };
+        card.update(update).map_err(UpdateEventError::NoChange)
     }
 
     pub fn register_poll_vote(
@@ -2911,11 +2947,13 @@ impl ChatEvents {
     // edit made on the other platform. So an edit must be valid content of the same type, and not a
     // poll, whose votes an edit would lose. Nor can a deleted message be edited, since its content
     // isn't moderated again.
-    // Whether the message is one of `bot`'s MiniApp messages, not deleted, which a member who can see
-    // from `min_visible_event_index` can see
-    pub fn is_mini_app_message_of(
+    // Whether `user`, a member who can see from `min_visible_event_index`, may open the app of the
+    // message, which must be one of `bot`'s MiniApp cards, not deleted (see `MiniAppContentInternal::
+    // can_open`)
+    pub fn can_open_mini_app(
         &self,
         bot: UserId,
+        user: UserId,
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
@@ -2924,7 +2962,7 @@ impl ChatEvents {
             .is_some_and(|(message, _)| {
                 message.sender == bot
                     && message.deleted_by.is_none()
-                    && matches!(message.content, MessageContentInternal::MiniApp(_))
+                    && matches!(&message.content, MessageContentInternal::MiniApp(card) if card.can_open(user))
             })
     }
 
@@ -3206,6 +3244,14 @@ pub struct EditMessageArgs {
     pub text: Option<String>,
     pub block_level_markdown: Option<bool>,
     pub og_previews: Vec<OgPreview>,
+    pub now: TimestampMillis,
+}
+
+pub struct UpdateMiniAppArgs {
+    pub bot: UserId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+    pub update: MiniAppUpdate,
     pub now: TimestampMillis,
 }
 

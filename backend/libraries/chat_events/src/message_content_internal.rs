@@ -16,14 +16,15 @@ use types::{
     FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
     ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
     MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
-    MessageReminderCreatedContent, MessageReport, Milliseconds, MiniAppContent, MiniAppImage, ModerationInput,
-    ModerationReportContent, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload,
-    P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent,
-    PollContentEventPayload, PollVotes, PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent,
-    PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
-    ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
-    TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
-    UserIdAndPrincipal, UserType, VideoCallContent, VideoCallPresence, VideoContent, VoteOperation, is_default,
+    MessageReminderCreatedContent, MessageReport, Milliseconds, MiniAppContent, MiniAppImage, MiniAppStatus, MiniAppUpdate,
+    ModerationInput, ModerationReportContent, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent,
+    P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
+    PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes, PriceChartContent, PriceChartSeries,
+    PriceChartSource, PriceChartToken, PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent,
+    PrizeWinnerContentEventPayload, Proposal, ProposalContent, RegisterVoteResult, ReportedMessage,
+    ReportedMessageContentEventPayload, TextContent, TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos,
+    TokenInfo, TotalVotes, TransactionHash, UserId, UserIdAndPrincipal, UserType, VideoCallContent, VideoCallPresence,
+    VideoContent, VoteOperation, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -320,6 +321,14 @@ impl MessageContentInternal {
                     text.push_str(&format!("\n- {option}"));
                 }
                 input.text = Some(text);
+            }
+            MessageContentInternal::MiniApp(m) => {
+                if let Some(image) = &m.image {
+                    input.image_urls.push(BlobReference::from(image.blob_reference.clone()).url());
+                }
+                if let Some(result) = &m.result {
+                    input.text = Some(format!("{}\n{result}", input.text.unwrap_or_default()));
+                }
             }
             _ => {}
         }
@@ -2307,6 +2316,20 @@ pub struct MiniAppContentInternal {
     pub text: String,
     #[serde(rename = "i", default, skip_serializing_if = "Option::is_none")]
     pub image: Option<MiniAppImageInternal>,
+    #[serde(rename = "m", default, skip_serializing_if = "Option::is_none")]
+    pub max_players: Option<u32>,
+    #[serde(rename = "v", default, skip_serializing_if = "is_default")]
+    pub spectators: bool,
+    #[serde(rename = "c", default, skip_serializing_if = "is_default")]
+    pub spectator_count: u32,
+    #[serde(rename = "s", default, skip_serializing_if = "is_default")]
+    pub status: MiniAppStatus,
+    #[serde(rename = "p", default, skip_serializing_if = "Vec::is_empty")]
+    pub players: Vec<UserId>,
+    #[serde(rename = "w", default, skip_serializing_if = "Option::is_none")]
+    pub waiting_for: Option<Vec<UserId>>,
+    #[serde(rename = "r", default, skip_serializing_if = "Option::is_none")]
+    pub result: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -2331,6 +2354,13 @@ impl From<MiniAppContent> for MiniAppContentInternal {
                 mime_type: i.mime_type,
                 blob_reference: i.blob_reference.into(),
             }),
+            max_players: value.max_players,
+            spectators: value.spectators,
+            spectator_count: value.spectator_count,
+            status: value.status,
+            players: value.players,
+            waiting_for: value.waiting_for,
+            result: value.result,
         }
     }
 }
@@ -2347,7 +2377,37 @@ impl MessageContentInternalSubtype for MiniAppContentInternal {
                 mime_type: i.mime_type,
                 blob_reference: i.blob_reference.into(),
             }),
+            max_players: self.max_players,
+            spectators: self.spectators,
+            spectator_count: self.spectator_count,
+            status: self.status,
+            players: self.players,
+            waiting_for: self.waiting_for,
+            result: self.result,
         }
+    }
+}
+
+impl MiniAppContentInternal {
+    // Anyone may open the app while the game is taking players, to join it. After that only its
+    // players may, unless it's open to spectators.
+    pub fn can_open(&self, user: UserId) -> bool {
+        self.status == MiniAppStatus::Open || self.spectators || self.players.contains(&user)
+    }
+
+    // Applies the bot's update, unless the game is finished, after which the card never changes, or
+    // the card the update leaves isn't valid
+    pub fn update(&mut self, update: MiniAppUpdate) -> Result<(), OCError> {
+        if self.status == MiniAppStatus::Finished {
+            return Err(OCErrorCode::InvalidRequest.with_message("A finished game's card can't be changed"));
+        }
+        let mut content = self.clone().hydrate(None);
+        content.apply(update);
+        content
+            .validate()
+            .map_err(|reason| OCError::from(ContentValidationError::InvalidMiniApp(reason)))?;
+        *self = content.into();
+        Ok(())
     }
 }
 
@@ -2780,12 +2840,31 @@ mod with_text_tests {
 #[cfg(test)]
 mod mini_app_tests {
     use super::*;
+    use types::OptionUpdate;
 
     fn card(text: &str) -> MiniAppContent {
         MiniAppContent {
             text: text.to_string(),
             image: None,
+            max_players: None,
+            spectators: false,
+            spectator_count: 0,
+            status: MiniAppStatus::Open,
+            players: Vec::new(),
+            waiting_for: None,
+            result: None,
         }
+    }
+
+    fn user(n: u8) -> UserId {
+        Principal::from_slice(&[n]).into()
+    }
+
+    fn invalid(card: MiniAppContent) -> bool {
+        matches!(
+            validate(card, false, UserType::BotV2, false),
+            ValidateNewMessageContentResult::Error(ContentValidationError::InvalidMiniApp(_))
+        )
     }
 
     fn image(mime_type: &str, width: u32) -> MiniAppImage {
@@ -2905,6 +2984,149 @@ mod mini_app_tests {
             content.blob_references().iter().map(|b| b.blob_id).collect::<Vec<_>>(),
             vec![7]
         );
+    }
+
+    #[test]
+    fn a_game_has_no_more_players_than_its_limit_and_no_one_twice() {
+        assert!(invalid(MiniAppContent {
+            max_players: Some(0),
+            ..card("Uno")
+        }));
+        assert!(invalid(MiniAppContent {
+            max_players: Some(MiniAppContent::MAX_PLAYERS as u32 + 1),
+            ..card("Uno")
+        }));
+        assert!(invalid(MiniAppContent {
+            max_players: Some(2),
+            players: vec![user(1), user(2), user(3)],
+            ..card("Uno")
+        }));
+        assert!(invalid(MiniAppContent {
+            players: vec![user(1), user(1)],
+            ..card("Uno")
+        }));
+        assert!(!invalid(MiniAppContent {
+            max_players: Some(2),
+            players: vec![user(1), user(2)],
+            ..card("Uno")
+        }));
+    }
+
+    // Spectators are counted, so they stay anonymous
+    #[test]
+    fn only_a_game_open_to_spectators_has_any() {
+        assert!(invalid(MiniAppContent {
+            spectator_count: 2,
+            ..card("Uno")
+        }));
+        assert!(!invalid(MiniAppContent {
+            spectators: true,
+            spectator_count: 2,
+            ..card("Uno")
+        }));
+    }
+
+    #[test]
+    fn only_players_are_waited_for_and_only_a_finished_game_has_a_result() {
+        let playing = MiniAppContent {
+            status: MiniAppStatus::Active,
+            players: vec![user(1), user(2)],
+            ..card("Uno")
+        };
+        assert!(invalid(MiniAppContent {
+            waiting_for: Some(vec![user(3)]),
+            ..playing.clone()
+        }));
+        assert!(!invalid(MiniAppContent {
+            waiting_for: Some(vec![user(2)]),
+            ..playing.clone()
+        }));
+        assert!(invalid(MiniAppContent {
+            result: Some("Bob won".to_string()),
+            ..playing.clone()
+        }));
+        assert!(invalid(MiniAppContent {
+            status: MiniAppStatus::Finished,
+            result: Some("x".repeat(MiniAppContent::MAX_RESULT_CHARS + 1)),
+            ..playing.clone()
+        }));
+        assert!(!invalid(MiniAppContent {
+            status: MiniAppStatus::Finished,
+            result: Some("Bob won".to_string()),
+            ..playing
+        }));
+    }
+
+    #[test]
+    fn anyone_opens_a_game_taking_players_then_only_its_players_unless_others_may_watch() {
+        let mut card: MiniAppContentInternal = MiniAppContent {
+            players: vec![user(1)],
+            ..card("Uno")
+        }
+        .into();
+        assert!(card.can_open(user(2)));
+
+        card.status = MiniAppStatus::Active;
+        assert!(card.can_open(user(1)));
+        assert!(!card.can_open(user(2)));
+
+        card.spectators = true;
+        assert!(card.can_open(user(2)));
+    }
+
+    #[test]
+    fn the_bot_updates_the_game_until_its_finished() {
+        let mut stored: MiniAppContentInternal = MiniAppContent {
+            max_players: Some(4),
+            ..card("Uno")
+        }
+        .into();
+
+        stored
+            .update(MiniAppUpdate {
+                status: Some(MiniAppStatus::Active),
+                players: Some(vec![user(1), user(2)]),
+                waiting_for: OptionUpdate::SetToSome(vec![user(1)]),
+                ..Default::default()
+            })
+            .unwrap();
+        assert_eq!(stored.status, MiniAppStatus::Active);
+        assert_eq!(stored.players, vec![user(1), user(2)]);
+        assert_eq!(stored.waiting_for, Some(vec![user(1)]));
+        assert_eq!(stored.max_players, Some(4));
+
+        // An update which would leave the card invalid changes nothing
+        assert!(
+            stored
+                .update(MiniAppUpdate {
+                    result: OptionUpdate::SetToSome("Bob won".to_string()),
+                    ..Default::default()
+                })
+                .is_err()
+        );
+        assert_eq!(stored.result, None);
+
+        stored
+            .update(MiniAppUpdate {
+                status: Some(MiniAppStatus::Finished),
+                waiting_for: OptionUpdate::SetToNone,
+                result: OptionUpdate::SetToSome("Bob won".to_string()),
+                ..Default::default()
+            })
+            .unwrap();
+        assert_eq!(stored.result.as_deref(), Some("Bob won"));
+        assert_eq!(stored.waiting_for, None);
+
+        // A finished game's card never changes
+        assert!(
+            stored
+                .update(MiniAppUpdate {
+                    status: Some(MiniAppStatus::Active),
+                    ..Default::default()
+                })
+                .is_err()
+        );
+        assert_eq!(stored.status, MiniAppStatus::Finished);
     }
 
     #[test]
