@@ -16,14 +16,15 @@ use types::{
     FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
     ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
     MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
-    MessageReminderCreatedContent, MessageReport, Milliseconds, MiniAppContent, MiniAppImage, MiniAppStatus, ModerationInput,
-    ModerationReportContent, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload,
-    P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent,
-    PollContentEventPayload, PollVotes, PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, PrizeContent,
-    PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
-    ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
-    TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
-    UserIdAndPrincipal, UserType, VideoCallContent, VideoCallPresence, VideoContent, VoteOperation, is_default,
+    MessageReminderCreatedContent, MessageReport, Milliseconds, MiniAppContent, MiniAppImage, MiniAppStatus,
+    MiniAppStatusUpdate, ModerationInput, ModerationReportContent, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted,
+    P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
+    PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes, PriceChartContent, PriceChartSeries,
+    PriceChartSource, PriceChartToken, PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent,
+    PrizeWinnerContentEventPayload, Proposal, ProposalContent, RegisterVoteResult, ReportedMessage,
+    ReportedMessageContentEventPayload, TextContent, TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos,
+    TokenInfo, TotalVotes, TransactionHash, UserId, UserIdAndPrincipal, UserType, VideoCallContent, VideoCallPresence,
+    VideoContent, VoteOperation, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -2372,14 +2373,13 @@ impl MessageContentInternalSubtype for MiniAppContentInternal {
 }
 
 impl MiniAppContentInternal {
-    // Writes the status the MiniApp service gives, unless the game can't move to it (see
-    // `MiniAppContent::check_move`), or the card it leaves isn't valid
-    pub fn update(&mut self, status: MiniAppStatus) -> Result<(), OCError> {
+    // Applies the MiniApp service's update, unless the game can't go that way (see
+    // `MiniAppContent::next_status`), or the card it leaves isn't valid
+    pub fn update(&mut self, update: MiniAppStatusUpdate) -> Result<(), OCError> {
         let mut content = self.clone().hydrate(None);
-        content
-            .check_move(&status)
+        content.status = content
+            .next_status(update)
             .map_err(|reason| OCErrorCode::InvalidRequest.with_message(reason))?;
-        content.status = status;
         content
             .validate()
             .map_err(|reason| OCError::from(ContentValidationError::InvalidMiniApp(reason)))?;
@@ -2817,7 +2817,7 @@ mod with_text_tests {
 #[cfg(test)]
 mod mini_app_tests {
     use super::*;
-    use types::{MiniAppActive, MiniAppFinished};
+    use types::{MiniAppActive, MiniAppEnded, MiniAppFinished, MiniAppStarted, MiniAppTurn};
 
     fn card(text: &str) -> MiniAppContent {
         MiniAppContent {
@@ -2833,15 +2833,39 @@ mod mini_app_tests {
         Principal::from_slice(&[n]).into()
     }
 
-    fn active(players: &[u8]) -> MiniAppStatus {
+    fn users(ns: &[u8]) -> Vec<UserId> {
+        ns.iter().map(|&n| user(n)).collect()
+    }
+
+    fn active(players: &[u8], waiting_for: &[u8]) -> MiniAppStatus {
         MiniAppStatus::Active(MiniAppActive {
-            players: players.iter().map(|&n| user(n)).collect(),
+            players: users(players),
+            waiting_for: users(waiting_for),
         })
     }
 
     fn finished(players: &[u8], result: Option<&str>) -> MiniAppStatus {
         MiniAppStatus::Finished(MiniAppFinished {
-            players: players.iter().map(|&n| user(n)).collect(),
+            players: users(players),
+            result: result.map(|r| r.to_string()),
+        })
+    }
+
+    fn started(players: &[u8], waiting_for: &[u8]) -> MiniAppStatusUpdate {
+        MiniAppStatusUpdate::Started(MiniAppStarted {
+            players: users(players),
+            waiting_for: users(waiting_for),
+        })
+    }
+
+    fn turn(waiting_for: &[u8]) -> MiniAppStatusUpdate {
+        MiniAppStatusUpdate::Turn(MiniAppTurn {
+            waiting_for: users(waiting_for),
+        })
+    }
+
+    fn ended(result: Option<&str>) -> MiniAppStatusUpdate {
+        MiniAppStatusUpdate::Ended(MiniAppEnded {
             result: result.map(|r| r.to_string()),
         })
     }
@@ -2974,86 +2998,88 @@ mod mini_app_tests {
     // Only the MiniApp service writes the status, as players join through it
     #[test]
     fn a_game_is_posted_open() {
-        for status in [active(&[1]), finished(&[], Some("Bob won"))] {
+        for status in [active(&[1], &[1]), finished(&[], Some("Bob won"))] {
             assert!(invalid(MiniAppContent { status, ..card("Uno") }));
         }
     }
 
     #[test]
-    fn a_game_starts_with_its_players_then_finishes_with_them() {
+    fn a_game_starts_with_its_players_takes_turns_then_ends_with_them() {
         let mut stored: MiniAppContentInternal = MiniAppContent {
             max_players: Some(4),
             ..card("Uno")
         }
         .into();
 
-        stored.update(active(&[1, 2])).unwrap();
-        assert_eq!(stored.status, active(&[1, 2]));
+        stored.update(started(&[1, 2], &[1])).unwrap();
+        assert_eq!(stored.status, active(&[1, 2], &[1]));
         assert_eq!(stored.max_players, Some(4));
 
-        stored.update(finished(&[1, 2], Some("Bob won"))).unwrap();
-        assert_eq!(stored.status.players(), [user(1), user(2)]);
-        assert_eq!(stored.status.result(), Some("Bob won"));
+        stored.update(turn(&[2])).unwrap();
+        stored.update(turn(&[])).unwrap();
+        assert_eq!(stored.status, active(&[1, 2], &[]));
+
+        stored.update(ended(Some("Bob won"))).unwrap();
+        assert_eq!(stored.status, finished(&[1, 2], Some("Bob won")));
     }
 
     // Abandoned, or its bot uninstalled
     #[test]
-    fn a_game_can_finish_without_starting_or_a_result() {
+    fn a_game_can_end_without_starting_or_a_result() {
         let mut stored: MiniAppContentInternal = card("Uno").into();
-        assert!(stored.update(finished(&[1], None)).is_err());
+        assert!(stored.update(turn(&[1])).is_err());
 
-        stored.update(finished(&[], None)).unwrap();
+        stored.update(ended(None)).unwrap();
         assert_eq!(stored.status, finished(&[], None));
     }
 
     #[test]
-    fn a_games_players_are_set_when_it_starts_and_its_status_only_moves_forward() {
-        let mut stored: MiniAppContentInternal = card("Uno").into();
-        stored.update(active(&[1, 2])).unwrap();
-
-        for status in [
-            MiniAppStatus::Open,
-            active(&[1]),
-            finished(&[1], Some("Bob won")),
-            finished(&[], None),
-        ] {
-            assert!(stored.update(status.clone()).is_err(), "{status:?}");
-            assert_eq!(stored.status, active(&[1, 2]));
-        }
-    }
-
-    // A finished game's card never changes, but the service can retry the write which finished it,
-    // or started it, having not learned whether it went through
-    #[test]
-    fn a_finished_card_never_changes_but_a_write_can_be_retried() {
-        let mut stored: MiniAppContentInternal = card("Uno").into();
-        stored.update(active(&[1, 2])).unwrap();
-        stored.update(active(&[1, 2])).unwrap();
-        stored.update(finished(&[1, 2], Some("Bob won"))).unwrap();
-
-        for status in [MiniAppStatus::Open, active(&[1, 2]), finished(&[1, 2], Some("Alice won"))] {
-            assert!(stored.update(status.clone()).is_err(), "{status:?}");
-        }
-        stored.update(finished(&[1, 2], Some("Bob won"))).unwrap();
-        assert_eq!(stored.status.result(), Some("Bob won"));
-    }
-
-    // An update which would leave the card invalid changes nothing
-    #[test]
-    fn an_update_leaves_a_valid_card_or_changes_nothing() {
+    fn a_game_starts_once_and_only_waits_for_its_players() {
         let mut stored: MiniAppContentInternal = MiniAppContent {
             max_players: Some(2),
             ..card("Uno")
         }
         .into();
 
-        for invalid in [
-            active(&[1, 2, 3]),
-            active(&[1, 1]),
-            finished(&[], Some(&"x".repeat(MiniAppContent::MAX_RESULT_CHARS + 1))),
-            finished(&[], Some(" ")),
+        for update in [
+            started(&[1, 2, 3], &[]),
+            started(&[1, 1], &[]),
+            started(&[1, 2], &[3]),
+            started(&[1, 2], &[1, 1]),
         ] {
-            assert!(stored.update(invalid.clone()).is_err(), "{invalid:?}");
+            assert!(stored.update(update.clone()).is_err(), "{update:?}");
+            assert_eq!(stored.status, MiniAppStatus::Open);
+        }
+
+        stored.update(started(&[1, 2], &[1])).unwrap();
+        assert!(stored.update(started(&[1], &[1])).is_err());
+        assert!(stored.update(turn(&[3])).is_err());
+        assert_eq!(stored.status, active(&[1, 2], &[1]));
+    }
+
+    // A finished game's card never changes, but the service can retry the write which started it, or
+    // ended it, having not learned whether it went through
+    #[test]
+    fn a_finished_card_never_changes_but_a_write_can_be_retried() {
+        let mut stored: MiniAppContentInternal = card("Uno").into();
+        stored.update(started(&[1, 2], &[1])).unwrap();
+        stored.update(turn(&[2])).unwrap();
+        stored.update(started(&[1, 2], &[1])).unwrap();
+        assert_eq!(stored.status, active(&[1, 2], &[2]));
+
+        stored.update(ended(Some("Bob won"))).unwrap();
+        for update in [started(&[1, 2], &[1]), turn(&[1]), ended(Some("Alice won")), ended(None)] {
+            assert!(stored.update(update.clone()).is_err(), "{update:?}");
+        }
+        stored.update(ended(Some("Bob won"))).unwrap();
+        assert_eq!(stored.status, finished(&[1, 2], Some("Bob won")));
+    }
+
+    #[test]
+    fn a_result_has_1_to_200_characters() {
+        for result in [" ".to_string(), "x".repeat(MiniAppContent::MAX_RESULT_CHARS + 1)] {
+            let mut stored: MiniAppContentInternal = card("Uno").into();
+            assert!(stored.update(ended(Some(&result))).is_err());
             assert_eq!(stored.status, MiniAppStatus::Open);
         }
     }
@@ -3074,8 +3100,7 @@ mod mini_app_tests {
                 ..card("**Uno**")
             }
             .into();
-            stored.update(active(&[1, 2])).unwrap();
-            stored.update(finished(&[1, 2], Some("Bob won"))).unwrap();
+            stored.update(started(&[1, 2], &[2])).unwrap();
             let content = MessageContentInternal::MiniApp(stored);
             let bytes = msgpack::serialize_then_unwrap(&content);
             let read: MessageContentInternal = msgpack::deserialize_then_unwrap(&bytes);
@@ -3090,7 +3115,7 @@ mod mini_app_tests {
             );
             assert_eq!(read.max_players, Some(4));
             assert!(read.spectators);
-            assert_eq!(read.status, finished(&[1, 2], Some("Bob won")));
+            assert_eq!(read.status, active(&[1, 2], &[2]));
         }
     }
 
@@ -3098,7 +3123,7 @@ mod mini_app_tests {
     #[test]
     fn a_result_is_moderated_with_the_text() {
         let mut stored: MiniAppContentInternal = card("Uno").into();
-        stored.update(finished(&[], Some("Bob won"))).unwrap();
+        stored.update(ended(Some("Bob won"))).unwrap();
         let input = MessageContentInternal::MiniApp(stored).moderation_input();
         assert_eq!(input.text.as_deref(), Some("Uno\nBob won"));
     }

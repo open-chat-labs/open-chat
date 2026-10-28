@@ -120,6 +120,7 @@ pub fn message_contents() -> Vec<MessageContent> {
             MiniAppStatus::Open,
             MiniAppStatus::Active(MiniAppActive {
                 players: vec![user_id(1), user_id(2)],
+                waiting_for: vec![user_id(2)],
             }),
             MiniAppStatus::Finished(MiniAppFinished {
                 players: vec![user_id(1), user_id(2)],
