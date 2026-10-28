@@ -11,6 +11,7 @@ import {
     type WithdrawOutcome,
 } from "@client";
 import { addressNetwork, type AddressNetwork } from "@src/utils/cryptoAddress";
+import { userWalletAddress } from "./receiveAddress";
 
 /**
  * A decimal amount in whole tokens ("1.5", "0.00000001") as the ledger's units, exactly: digits
@@ -42,13 +43,18 @@ export type SendRequest = {
 
 /**
  * The send to make: a transfer in the DM with a person (`sendInDirectChat`, which pays the ledger's
- * fee), or a withdrawal to an address paying `fee`. `too_small`: under the ckBTC minter's minimum
- * for a Bitcoin withdrawal, so nothing is sent.
+ * fee), or a withdrawal to an address paying `fee`. `too_small`: under the least a send may be (the
+ * old wallets' 10 fees, or the ckBTC minter's minimum for a Bitcoin withdrawal), so nothing is sent.
  */
 export type SendPlan =
     | { kind: "transfer"; userId: string; amount: bigint }
     | { kind: "withdraw"; to: string; route: WithdrawalRoute; amount: bigint; fee: bigint }
     | { kind: "too_small"; minimum: bigint };
+
+/** The least a send over the ledger may be, as the old wallets have it (`TokenState.minAmount`). */
+export function minimumSend(token: Pick<SendToken, "transferFee">): bigint {
+    return token.transferFee * 10n;
+}
 
 /** The ckBTC minter's say on a Bitcoin withdrawal: its fee (an estimate) and the least it takes. */
 export type BtcWithdrawal = { fee: bigint; minimum: bigint };
@@ -75,7 +81,8 @@ export function sendCost(
  * with that user id; to an address, a withdrawal over the ledger, or Bitcoin's own network when
  * the form chose it (burning the minter's fee on top of the amount). The fee is always the token's
  * ledger fee, never the form's figure. Max sends what's left after `sendCost`. No plan for nothing
- * to send, or for a Bitcoin send before the minter has answered.
+ * to send, for a Bitcoin send before the minter has answered, or for a Bitcoin address off
+ * Bitcoin's own network (the ledger can't send there).
  */
 export function sendPlan(
     request: SendRequest,
@@ -87,14 +94,18 @@ export function sendPlan(
     const userId = request.userId;
     const native = userId === undefined && request.network === "btc";
     if (native && btc === undefined) return undefined;
+    if (userId === undefined && !native && addressNetwork(request.to) === "btc") return undefined;
     const to = userId !== undefined ? "person" : native ? "btc" : "address";
     const amount = request.max
         ? balance - sendCost(token, to, btc)
         : amountUnits(request.amountText, token.decimals);
     if (amount <= 0n) return undefined;
-    if (userId !== undefined) return { kind: "transfer", userId, amount };
     if (!native || btc === undefined) {
-        return { kind: "withdraw", to: request.to, route: { kind: "ledger" }, amount, fee };
+        const minimum = minimumSend(token);
+        if (amount < minimum) return { kind: "too_small", minimum };
+        return userId !== undefined
+            ? { kind: "transfer", userId, amount }
+            : { kind: "withdraw", to: request.to, route: { kind: "ledger" }, amount, fee };
     }
     const burnt = amount + btc.fee;
     if (burnt < btc.minimum) return { kind: "too_small", minimum: btc.minimum };
@@ -103,8 +114,8 @@ export function sendPlan(
 
 /** Who can't be sent to, and what's the user's own. */
 export type AddressContext = {
-    /** The user's own wallet for the token, which they can't send to. */
-    ownAccount: string;
+    /** The user's own wallet for the token, in each form it's written, which they can't send to. */
+    ownAccounts: string[];
     /** An account of a MultiUser user id: anything sent there is lost. */
     isUserIdAccount: (address: string) => boolean;
 };
@@ -119,10 +130,22 @@ export function acceptsAddress(
     networks: AddressNetwork[],
     ctx: AddressContext,
 ): boolean {
-    if (address === ctx.ownAccount) return false;
+    if (ctx.ownAccounts.includes(address)) return false;
     if (ctx.isUserIdAccount(address)) return false;
     const network = addressNetwork(address);
     return network !== undefined && networks.includes(network);
+}
+
+/**
+ * The user's own wallet for a token, in each form an address can name it: the wallet's ICRC
+ * account, and for ICP its account identifier too.
+ */
+export function ownAccounts(
+    symbol: string,
+    owner: { cryptoAccount: string; userId: string; principal: () => string },
+): string[] {
+    const icrc = userWalletAddress(owner.userId, owner.principal);
+    return symbol === ICP_SYMBOL ? [owner.cryptoAccount, icrc] : [icrc];
 }
 
 /**

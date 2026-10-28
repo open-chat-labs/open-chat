@@ -16,10 +16,9 @@ import {
     type WithdrawalRoute,
     type WithdrawOutcome,
 } from "@client";
-import { userWalletAddress } from "./receiveAddress";
 import { CkbtcWithdrawalInfoRequests } from "@src/utils/ckbtcWithdrawalInfo";
 import { type AddressNetwork } from "@src/utils/cryptoAddress";
-import { acceptsAddress } from "./walletSend";
+import { acceptsAddress, ownAccounts } from "./walletSend";
 import type { TokenState } from "./walletState.svelte";
 
 /**
@@ -30,8 +29,8 @@ import type { TokenState } from "./walletState.svelte";
 export class WithdrawForm {
     #client: OpenChat;
     #tokenState: TokenState;
-    // The user's own wallet, which they can't send to
-    #ownAccount: string;
+    // The user's own wallet, in each form an address names it, which they can't send to
+    #ownAccounts: string[];
     #chosenNetwork = $state<string>();
     #ckbtcInfo = $state<CkbtcMinterWithdrawalInfo>();
     #cksolInfo = $state<CksolMinterWithdrawalInfo>();
@@ -133,10 +132,11 @@ export class WithdrawForm {
     constructor(client: OpenChat, tokenState: TokenState) {
         this.#client = client;
         this.#tokenState = tokenState;
-        this.#ownAccount =
-            tokenState.symbol === ICP_SYMBOL
-                ? currentUserStore.value.cryptoAccount
-                : userWalletAddress(currentUserIdStore.value, () => client.OcIdentityPrincipal);
+        this.#ownAccounts = ownAccounts(tokenState.symbol, {
+            cryptoAccount: currentUserStore.value.cryptoAccount,
+            userId: currentUserIdStore.value,
+            principal: () => client.OcIdentityPrincipal,
+        });
         this.#ckbtcInfoRequests = new CkbtcWithdrawalInfoRequests(
             (amount) => client.getCkbtcMinterWithdrawalInfo(amount),
             (info) => (this.#ckbtcInfo = info),
@@ -207,7 +207,7 @@ export class WithdrawForm {
         // Refused whichever network is chosen, since anything sent to a user id would be lost, and
         // BTC sent over the ckBTC network goes to an IC account (the web wallet's Send asks the same)
         return acceptsAddress(address, this.#acceptedNetworks, {
-            ownAccount: this.#ownAccount,
+            ownAccounts: this.#ownAccounts,
             isUserIdAccount: (a) => this.#client.isAccountOfMultiUserCanisterUserId(a),
         });
     }

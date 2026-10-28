@@ -19,7 +19,6 @@
         enhancedCryptoLookup,
         exchangeRatesLookupStore,
         formatTokens,
-        ICP_SYMBOL,
         namedAccountsStore,
         routeForChatIdentifier,
         serverDirectChatsStore,
@@ -35,9 +34,9 @@
     import type { ShareChat } from "@openchat/ui/src/features/components/WalletReceive.svelte";
     import type { WalletSendRequest } from "@openchat/ui/src/features/components/WalletSend.svelte";
     import { sendInDirectChat } from "@src/logic/cryptoTransfer/cryptoTransferForm.svelte";
-    import { userWalletAddress } from "@src/logic/wallet/receiveAddress";
     import {
         acceptsAddress,
+        ownAccounts,
         sendAnswer,
         sendCost,
         sendNetworks,
@@ -270,36 +269,43 @@
         sendContacts(directChatUsers($serverDirectChatsStore, $allUsersStore)),
     );
 
-    // a Bitcoin send's minter fee and minimum, asked when Send opens with BTC in the wallet; only
-    // the latest answer counts (#9638)
+    // a Bitcoin send's minter fee and minimum, asked while Send is open for BTC, again every 10 s
+    // until the minter answers; only the latest answer counts (#9638)
     let btcWithdrawal = $state<BtcWithdrawal>();
     const btcInfo = new CkbtcWithdrawalInfoRequests(
         (amount) => client.getCkbtcMinterWithdrawalInfo(amount),
         (info) => (btcWithdrawal = { fee: info.feeEstimate, minimum: info.minWithdrawalAmount }),
     );
-    const btcToken = $derived([...$cryptoLookup.values()].find((t) => t.symbol === BTC_SYMBOL));
+    const sendToken = $derived(
+        sending && ledger !== undefined ? $cryptoLookup.get(ledger) : undefined,
+    );
+    const sendingBtc = $derived(sendToken?.symbol === BTC_SYMBOL);
     $effect(() => {
-        if (sending && btcToken !== undefined) untrack(() => btcInfo.now(0n));
+        if (!sendingBtc || btcWithdrawal !== undefined) return;
+        untrack(() => btcInfo.now(0n));
+        const timer = setInterval(() => btcInfo.now(0n), 10_000);
+        return () => clearInterval(timer);
     });
     onDestroy(() => btcInfo.cancel());
-    // what each route costs on top of what arrives: Bitcoin's own adds the approval and the minter
+    // a Bitcoin address costs the approval and the minter's fee on top. The design's other route,
+    // ckBTC to that address, can't reach it (the ledger only sends to IC accounts), so it gets no
+    // fee and can't be chosen
     const btcFees = $derived.by((): WalletMainProps["btcFees"] => {
-        if (btcToken === undefined) return {};
-        const ckbtc = wholeTokens(sendCost(btcToken, "address"), btcToken.decimals);
-        if (btcWithdrawal === undefined) return { ckbtc };
-        const btc = wholeTokens(sendCost(btcToken, "btc", btcWithdrawal), btcToken.decimals);
-        return { ckbtc, btc };
+        if (sendToken === undefined || !sendingBtc || btcWithdrawal === undefined) return {};
+        return {
+            btc: wholeTokens(sendCost(sendToken, "btc", btcWithdrawal), sendToken.decimals),
+        };
     });
 
     // never the user's own wallet, nor an account of a MultiUser user id, and only on a network
     // the send can reach
     function checkAddress(address: string, symbol: string): boolean {
-        const ownAccount =
-            symbol === ICP_SYMBOL
-                ? $currentUserStore.cryptoAccount
-                : userWalletAddress($currentUserIdStore, () => client.OcIdentityPrincipal);
         return acceptsAddress(address, sendNetworks(symbol), {
-            ownAccount,
+            ownAccounts: ownAccounts(symbol, {
+                cryptoAccount: $currentUserStore.cryptoAccount,
+                userId: $currentUserIdStore,
+                principal: () => client.OcIdentityPrincipal,
+            }),
             isUserIdAccount: (a) => client.isAccountOfMultiUserCanisterUserId(a),
         });
     }

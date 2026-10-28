@@ -1,9 +1,11 @@
 import { i18nKey } from "@client";
 import { describe, expect, test } from "vitest";
 import { pendingTransfer } from "../cryptoTransfer/cryptoTransferForm.svelte";
+import { userWalletAddress } from "./receiveAddress";
 import {
     acceptsAddress,
     amountUnits,
+    ownAccounts,
     sendAnswer,
     sendCost,
     sendNetworks,
@@ -111,6 +113,36 @@ describe("where a send goes", () => {
         ).toEqual({ kind: "too_small", minimum: 50_000n });
     });
 
+    test("a send under ten fees is refused, as the old wallets do", () => {
+        expect(
+            sendPlan(request({ amountText: "0.00999999", to: "abc" }), chat, 10n ** 10n),
+        ).toEqual({
+            kind: "too_small",
+            minimum: 1_000_000n,
+        });
+        expect(
+            sendPlan(request({ amountText: "0.000001", userId: "u1" }), chat, 10n ** 10n),
+        ).toEqual({ kind: "too_small", minimum: 1_000_000n });
+        expect(
+            sendPlan(request({ amountText: "0.01", to: "abc" }), chat, 10n ** 10n),
+        ).toMatchObject({
+            kind: "withdraw",
+            amount: 1_000_000n,
+        });
+    });
+
+    test("a Bitcoin address only over Bitcoin's own network: the ledger can't send there", () => {
+        const bitcoin = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh";
+        expect(
+            sendPlan(request({ to: bitcoin, network: "ckbtc" }), chat, 10n ** 10n, btc),
+        ).toBeUndefined();
+        expect(
+            sendPlan(request({ to: bitcoin, network: "btc" }), chat, 10n ** 10n, btc),
+        ).toMatchObject({
+            route: { kind: "btc" },
+        });
+    });
+
     test("what Send shows on top: a fee to an address, the approval too for a person, and the minter's fee to Bitcoin", () => {
         expect(sendCost(chat, "address")).toBe(100_000n);
         expect(sendCost(chat, "person")).toBe(200_000n);
@@ -119,7 +151,10 @@ describe("where a send goes", () => {
 });
 
 describe("the addresses a send accepts", () => {
-    const ctx = { ownAccount: "aaaaa-aa", isUserIdAccount: (a: string) => a === "user-id-account" };
+    const ctx = {
+        ownAccounts: ["aaaaa-aa"],
+        isUserIdAccount: (a: string) => a === "user-id-account",
+    };
     const principal = "ryjl3-tyaaa-aaaaa-aaaba-cai";
     const accountId = "517a929e03de7038888d2cf7370ab7bf605405ce5795efa87464ec0e7a03beaa";
 
@@ -134,6 +169,19 @@ describe("the addresses a send accepts", () => {
                 isUserIdAccount: () => true,
             }),
         ).toBe(false);
+    });
+});
+
+describe("the user's own wallet", () => {
+    test("for ICP, both its account identifier and its ICRC account; for another token, the ICRC account", () => {
+        const owner = {
+            cryptoAccount: "icp-account-identifier",
+            userId: "qp43m-xeaaa-aaaaa-qaama-daa",
+            principal: () => "2vxsx-fae",
+        };
+        const icrc = userWalletAddress(owner.userId, owner.principal);
+        expect(ownAccounts("ICP", owner)).toEqual(["icp-account-identifier", icrc]);
+        expect(ownAccounts("CHAT", owner)).toEqual([icrc]);
     });
 });
 

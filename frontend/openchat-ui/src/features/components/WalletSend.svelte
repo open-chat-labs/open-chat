@@ -31,7 +31,8 @@
     memo?: string;
     /** The 6-digit PIN the user typed, for the host to verify ('' with `hostPin`). */
     pin: string;
-    /** The amount as a plain decimal in whole tokens ("1.5"), for the host to turn into ledger units exactly. */
+    /** The amount as a plain decimal in whole tokens ("1.5"): the digits typed when typed in the token, for the host to
+     *  turn into ledger units exactly. */
     amountText: string;
     /** The whole available balance was picked (Max): the host sends what's left after the fee, exactly. */
     max: boolean;
@@ -403,7 +404,8 @@
       network,
       memo: msg.trim() || undefined,
       pin: hostPin ? '' : pinText,
-      amountText: plain(n),
+      // the digits typed (already cut to the token's decimals), not the float: the host turns them into units exactly
+      amountText: inUsd ? plain(n) : cleanAmount(amt).replace(',', '.'),
       max: !!exact && exact.text === amt && exact.sym === idOf(tk) && exact.n === floorTo(avail, inDp) && n > 0,
       dp: tk.dp,
       person: mode === 'user' && !!person,
