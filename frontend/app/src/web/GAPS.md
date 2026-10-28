@@ -78,6 +78,8 @@ design export needs. Each entry says where it came up.
   through to `Banner`.
 - **Calls**: `CallPanel` / `VideoTile` render `MediaStream`s. The app uses Daily's prebuilt
   iframe, which doesn't expose them; it needs Daily's call-object mode (phase 7 decision).
+  The call's menu must cope with its chat going away while the menu is open: the old mobile
+  menu items are mounted in their own root and read `chat` after the call ended (Rollbar #32132).
 - **Built-in fallbacks** that should come from the app: Diamond limits and feature matrix (`DiamondDialog`), storage caps and about URLs
   (`ProfileDialog`), the language list (`CreateGroupDialog`), the token colour map
   (`AccessGates`).

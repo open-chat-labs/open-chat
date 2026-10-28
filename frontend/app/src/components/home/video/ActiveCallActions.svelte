@@ -39,7 +39,7 @@
     let isOwner = $derived($activeVideoCall?.isOwner ?? false);
 
     function toggleThread() {
-        if (chat.chatId !== undefined && chat.videoCallInProgress?.messageIndex !== undefined) {
+        if (chat?.chatId !== undefined && chat.videoCallInProgress?.messageIndex !== undefined) {
             if (threadOpen) {
                 client.popRightPanelHistory();
                 navigate(removeQueryStringParam("open"));
@@ -117,7 +117,8 @@
                             {/snippet}
                         </MenuItem>
                     {/if}
-                    {#if chat.chatId && chat.videoCallInProgress?.messageIndex !== undefined}
+                    <!-- MenuIcon mounts these items in their own root, so they can outlive `chat` when the call ends -->
+                    {#if chat?.chatId && chat.videoCallInProgress?.messageIndex !== undefined}
                         <MenuItem onclick={toggleThread}>
                             {#snippet icon()}
                                 <MessageOutline
