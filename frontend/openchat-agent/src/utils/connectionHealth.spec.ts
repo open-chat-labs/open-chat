@@ -1,5 +1,10 @@
 import { vi } from "vitest";
-import { BAD_QUERIES_TO_UNUSABLE, ConnectionHealth, FAST_RESPONSE_MS } from "./connectionHealth";
+import {
+    BAD_QUERIES_TO_UNUSABLE,
+    BAD_QUERY_SPACING_MS,
+    ConnectionHealth,
+    FAST_RESPONSE_MS,
+} from "./connectionHealth";
 
 // The issue promises a probe at least this often while unusable
 const LONGEST_PROBE_INTERVAL_MS = 60_000;
@@ -12,9 +17,16 @@ function setup(probeResults: boolean[] = [], online = true) {
     return { health, probe, changes, isOnline };
 }
 
+// A query sent now fails, then time moves on far enough for the next failure to count separately.
+// The clock is moved without running timers, so no probe goes out meanwhile.
+function badQuery(health: ConnectionHealth) {
+    health.bad(Date.now());
+    vi.setSystemTime(Date.now() + BAD_QUERY_SPACING_MS);
+}
+
 function makeUnusable(health: ConnectionHealth) {
     for (let i = 0; i < BAD_QUERIES_TO_UNUSABLE; i++) {
-        health.bad();
+        badQuery(health);
     }
 }
 
@@ -30,15 +42,15 @@ describe("ConnectionHealth", () => {
     test("is unusable after enough bad queries in a row, and a good one resets the count", () => {
         const { health, changes } = setup();
         for (let i = 0; i < BAD_QUERIES_TO_UNUSABLE - 1; i++) {
-            health.bad();
+            badQuery(health);
         }
         health.good(200);
         for (let i = 0; i < BAD_QUERIES_TO_UNUSABLE - 1; i++) {
-            health.bad();
+            badQuery(health);
         }
         expect(health.unusable).toBe(false);
 
-        health.bad();
+        badQuery(health);
         expect(health.unusable).toBe(true);
         expect(changes).toEqual([true]);
     });
@@ -110,7 +122,7 @@ describe("ConnectionHealth", () => {
         const { health, probe } = setup();
         for (let i = 0; i < 10; i++) {
             for (let j = 0; j < BAD_QUERIES_TO_UNUSABLE - 1; j++) {
-                health.bad();
+                badQuery(health);
             }
             health.good(200);
             health.connectionMayHaveChanged();
@@ -123,5 +135,59 @@ describe("ConnectionHealth", () => {
         await vi.advanceTimersByTimeAsync(LONGEST_PROBE_INTERVAL_MS * 5);
 
         expect(probe).not.toHaveBeenCalled();
+    });
+
+    test("queries failing together count as one bad query", () => {
+        const { health } = setup();
+        for (let i = 0; i < BAD_QUERIES_TO_UNUSABLE * 3; i++) {
+            health.bad(Date.now());
+        }
+        expect(health.unusable).toBe(false);
+
+        makeUnusable(health);
+        expect(health.unusable).toBe(true);
+    });
+
+    // The OS may cut a hidden app's network, or let its connections die, while the network itself
+    // is fine. That used to have the app say it was offline for a moment each time it came back.
+    test("failures while hidden, or of queries sent before coming back, don't count", () => {
+        const { health, changes } = setup();
+        health.setHidden(true);
+        const sentWhileHidden = Date.now();
+        makeUnusable(health);
+        expect(health.unusable).toBe(false);
+
+        health.setHidden(false);
+        for (let i = 0; i < BAD_QUERIES_TO_UNUSABLE; i++) {
+            health.bad(sentWhileHidden);
+            vi.setSystemTime(Date.now() + BAD_QUERY_SPACING_MS);
+        }
+        expect(health.unusable).toBe(false);
+
+        // queries sent since coming back count as usual
+        makeUnusable(health);
+        expect(health.unusable).toBe(true);
+        expect(changes).toEqual([true]);
+    });
+
+    test("coming back forgets bad queries counted before the app was hidden", () => {
+        const { health } = setup();
+        for (let i = 0; i < BAD_QUERIES_TO_UNUSABLE - 1; i++) {
+            badQuery(health);
+        }
+        health.setHidden(true);
+        health.setHidden(false);
+        badQuery(health);
+        expect(health.unusable).toBe(false);
+    });
+
+    test("coming back probes an unusable connection straight away", async () => {
+        const { health, probe } = setup([true]);
+        makeUnusable(health);
+        health.setHidden(true);
+        health.setHidden(false);
+        await vi.advanceTimersByTimeAsync(0);
+        expect(probe).toHaveBeenCalledTimes(1);
+        expect(health.unusable).toBe(false);
     });
 });

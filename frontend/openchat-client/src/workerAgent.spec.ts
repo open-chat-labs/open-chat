@@ -71,8 +71,18 @@ describe("WorkerAgent", () => {
         createAgent();
         createAgent();
 
-        expect(prestarted.posted).toHaveLength(1);
-        expect(FakeWorker.instance!.posted).toEqual([expect.objectContaining({ kind: "init" })]);
+        const inits = (worker: FakeWorker) =>
+            worker.posted.filter((msg) => (msg as { kind: string }).kind === "init");
+        expect(inits(prestarted)).toHaveLength(1);
+        expect(inits(FakeWorker.instance!)).toHaveLength(1);
+    });
+
+    // The worker ignores failed queries while the app is hidden, so it has to be told
+    test("tells the worker whether the app is hidden, starting with now", () => {
+        createAgent();
+        expect(FakeWorker.instance!.posted).toContainEqual(
+            expect.objectContaining({ kind: "setAppHidden", hidden: false }),
+        );
     });
 
     // #10184 invariant 5: the main thread follows the connection health the worker measures
