@@ -42,6 +42,7 @@ pub mod delete_user_groups;
 pub mod delete_webhook;
 pub mod disable_invite_code;
 pub mod edit_message;
+pub mod edit_message_text;
 pub mod enable_invite_code;
 pub mod end_video_call_v2;
 pub mod follow_thread;

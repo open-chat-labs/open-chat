@@ -501,8 +501,16 @@ impl ChatEvents {
             return Err(UpdateEventError::NoChange(Err(OCErrorCode::InitiatorNotAuthorized.into())));
         }
 
+        let content = match args.edit {
+            MessageEdit::Text(text) => message
+                .content
+                .with_text(text)
+                .map_err(|e| UpdateEventError::NoChange(Err(e)))?,
+            MessageEdit::Content(content) => *content,
+        };
+
         let existing_text = message.content.text();
-        let new_text = args.content.text();
+        let new_text = content.text();
         let block_level_markdown_update = args.block_level_markdown.filter(|md| *md != message.block_level_markdown);
 
         if new_text != existing_text || block_level_markdown_update.is_some() || args.og_previews != message.og_previews {
@@ -512,7 +520,7 @@ impl ChatEvents {
 
             let old_length = message.content.text_length();
             let old_document = Document::from(&message.content);
-            message.content = args.content;
+            message.content = content;
             message.og_previews = args.og_previews;
 
             // Deleted messages aren't in the search index, so there is nothing to update
@@ -3126,11 +3134,18 @@ pub struct EditMessageArgs {
     pub min_visible_event_index: EventIndex,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub content: MessageContentInternal,
+    pub edit: MessageEdit,
     pub block_level_markdown: Option<bool>,
     pub og_previews: Vec<OgPreview>,
     pub finalise_bot_message: bool,
     pub now: TimestampMillis,
+}
+
+pub enum MessageEdit {
+    // Every user's edit, which only changes the text (see `MessageContentInternal::with_text`)
+    Text(Option<String>),
+    // A bot's message: one it is still sending, or one of its own it edits (after `check_bot_edit`)
+    Content(Box<MessageContentInternal>),
 }
 
 pub struct DeleteUndeleteMessagesArgs {

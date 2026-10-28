@@ -55,6 +55,7 @@ generate_msgpack_update_call!(delete_direct_chat);
 generate_msgpack_update_call!(delete_group);
 generate_msgpack_update_call!(delete_messages);
 generate_msgpack_update_call!(delete_saved_crypto_account);
+generate_msgpack_update_call!(edit_message_text);
 generate_msgpack_update_call!(edit_message_v2);
 generate_update_call!(end_video_call_v2);
 generate_msgpack_update_call!(join_video_call);
@@ -274,23 +275,23 @@ pub mod happy_path {
         text: impl ToString,
         block_level_markdown: Option<bool>,
     ) {
-        let response = super::edit_message_v2(
+        let response = super::edit_message_text(
             env,
             sender.principal,
             sender.canister(),
-            &multi_user_canister::edit_message_v2::Args {
+            &multi_user_canister::edit_message_text::Args {
                 user_id,
                 thread_root_message_index: None,
                 message_id,
-                content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
+                text: Some(text.to_string()),
                 block_level_markdown,
                 og_previews: Vec::new(),
             },
         );
 
         match response {
-            multi_user_canister::edit_message_v2::Response::Success => {}
-            response => panic!("'edit_message_v2' error: {response:?}"),
+            multi_user_canister::edit_message_text::Response::Success => {}
+            response => panic!("'edit_message_text' error: {response:?}"),
         }
     }
 

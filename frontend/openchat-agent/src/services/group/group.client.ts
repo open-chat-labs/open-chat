@@ -53,7 +53,7 @@ import type {
     VideoCallPresence,
     LookupMembersResponse,
 } from "@shared";
-import { MAX_EVENTS, MAX_MESSAGES, MEMBERS_PAGE_SIZE, random32 } from "@shared";
+import { getContentAsText, MAX_EVENTS, MAX_MESSAGES, MEMBERS_PAGE_SIZE, random32 } from "@shared";
 import type { AgentConfig } from "../../config";
 import {
     ActiveProposalTalliesResponse,
@@ -71,7 +71,7 @@ import {
     GroupDeletedMessageResponse,
     GroupDeleteMessagesArgs,
     GroupDeleteWebhookArgs,
-    GroupEditMessageArgs,
+    GroupEditMessageTextArgs,
     GroupEnableInviteCodeResponse,
     GroupEventsArgs,
     GroupEventsByIndexArgs,
@@ -343,26 +343,21 @@ export class GroupClient
         blockLevelMarkdown: boolean | undefined,
         newAchievement: boolean,
     ): Promise<EditMessageResponse> {
-        return new DataClient(this.identity, this.agent, this.config)
-            .uploadData(message.content, [groupId])
-            .then((content) => {
-                const args = {
-                    thread_root_message_index: threadRootMessageIndex,
-                    content: apiMessageContent(content ?? message.content),
-                    message_id: message.messageId,
-                    block_level_markdown: blockLevelMarkdown,
-                    new_achievement: newAchievement,
-                    og_previews: message.ogPreviews.map(apiOgPreview),
-                };
-                return this.update(
-                    groupId,
-                    "edit_message_v2",
-                    args,
-                    unitResult,
-                    GroupEditMessageArgs,
-                    UnitResult,
-                );
-            });
+        return this.update(
+            groupId,
+            "edit_message_text",
+            {
+                thread_root_message_index: threadRootMessageIndex,
+                message_id: message.messageId,
+                text: getContentAsText(message.content),
+                block_level_markdown: blockLevelMarkdown,
+                new_achievement: newAchievement,
+                og_previews: message.ogPreviews.map(apiOgPreview),
+            },
+            unitResult,
+            GroupEditMessageTextArgs,
+            UnitResult,
+        );
     }
 
     sendMessage(

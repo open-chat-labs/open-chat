@@ -5,8 +5,8 @@
 
 use crate::User;
 use chat_events::{
-    AddRemoveReactionArgs, DeleteUndeleteMessagesArgs, EditMessageArgs, EventPusher, MessageContentInternal, NullEventPusher,
-    PushMessageArgs, Reader, ReplyContextInternal, TipMessageArgs,
+    AddRemoveReactionArgs, DeleteUndeleteMessagesArgs, EditMessageArgs, EventPusher, MessageContentInternal, MessageEdit,
+    NullEventPusher, PushMessageArgs, Reader, ReplyContextInternal, TipMessageArgs,
 };
 use direct_chat::{DirectChat, EventsTtlChange, EventsTtlLatestChange};
 use ledger_utils::format_crypto_amount_with_symbol;
@@ -18,8 +18,8 @@ use multi_user_canister::{
 };
 use types::{
     CanisterId, Chat, DirectChatUserNotificationPayload, DirectMessageNotification, DirectMessageTipped,
-    DirectReactionAddedNotification, EventIndex, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, OCResult, OgPreview, P2PSwapStatus, TimestampMillis, UserId, UserType, VideoCallPresence,
+    DirectReactionAddedNotification, EventIndex, EventWrapper, Message, MessageContent, MessageId, MessageIndex, OCResult,
+    OgPreview, P2PSwapStatus, TimestampMillis, UserId, UserType, VideoCallPresence,
 };
 
 // Whether a sender is one a canister of this kind can act for: a MultiUser canister acts only for the
@@ -194,7 +194,7 @@ pub fn edit_message(chat: &mut DirectChat, sender: UserId, args: C2CEditMessageA
             min_visible_event_index: EventIndex::default(),
             thread_root_message_index,
             message_id: args.message_id,
-            content: MessageContentInitial::from(args.content).into(),
+            edit: MessageEdit::Text(args.content.text().map(|t| t.to_string())),
             block_level_markdown: args.block_level_markdown,
             og_previews: args.og_previews,
             finalise_bot_message: false,

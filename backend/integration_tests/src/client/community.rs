@@ -39,6 +39,7 @@ generate_msgpack_update_call!(delete_messages);
 generate_msgpack_update_call!(delete_channel_history);
 generate_msgpack_update_call!(delete_user_groups);
 generate_msgpack_update_call!(edit_message);
+generate_msgpack_update_call!(edit_message_text);
 generate_msgpack_update_call!(enable_invite_code);
 generate_msgpack_update_call!(import_group);
 generate_msgpack_update_call!(leave_channel);

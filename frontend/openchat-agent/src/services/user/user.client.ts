@@ -1,6 +1,7 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import {
     encodeIcrcAccount,
+    getContentAsText,
     MAX_EVENTS,
     MAX_MESSAGES,
     offline,
@@ -111,7 +112,7 @@ import {
     UserDeleteGroupArgs,
     UserDeleteMessagesArgs,
     UserDeleteSavedCryptoAccountArgs,
-    UserEditMessageArgs,
+    UserEditMessageTextArgs,
     UserEventsArgs,
     UserEventsByIndexArgs,
     UserEventsResponse,
@@ -543,25 +544,20 @@ export class UserClient
         threadRootMessageIndex?: number,
         blockLevelMarkdown?: boolean,
     ): Promise<EditMessageResponse> {
-        return new DataClient(this.identity, this.agent, this.config)
-            .uploadData(message.content, accessorCanisterIds(this.userId, recipientId))
-            .then((content) => {
-                const req = {
-                    content: apiMessageContent(content ?? message.content),
-                    user_id: principalStringToBytes(recipientId),
-                    thread_root_message_index: threadRootMessageIndex,
-                    message_id: message.messageId,
-                    block_level_markdown: blockLevelMarkdown,
-                    og_previews: message.ogPreviews.map(apiOgPreview),
-                };
-                return this.update(
-                    "edit_message_v2",
-                    req,
-                    unitResult,
-                    UserEditMessageArgs,
-                    UnitResult,
-                );
-            });
+        return this.update(
+            "edit_message_text",
+            {
+                user_id: principalStringToBytes(recipientId),
+                thread_root_message_index: threadRootMessageIndex,
+                message_id: message.messageId,
+                text: getContentAsText(message.content),
+                block_level_markdown: blockLevelMarkdown,
+                og_previews: message.ogPreviews.map(apiOgPreview),
+            },
+            unitResult,
+            UserEditMessageTextArgs,
+            UnitResult,
+        );
     }
 
     sendMessage(

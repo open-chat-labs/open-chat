@@ -40,6 +40,7 @@ fn main() {
     generate_ts_method!(group, delete_history);
     generate_ts_method!(group, delete_webhook);
     generate_ts_method!(group, disable_invite_code);
+    generate_ts_method!(group, edit_message_text);
     generate_ts_method!(group, edit_message_v2);
     generate_ts_method!(group, enable_invite_code);
     generate_ts_method!(group, follow_thread);

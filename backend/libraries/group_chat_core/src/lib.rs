@@ -2,7 +2,7 @@ use candid::Principal;
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageSuccess,
     DeleteUndeleteMessagesArgs, EditMessageArgs, EventPusher, ExpiredThread, GroupGateUpdatedInternal, MessageContentInternal,
-    MessageInternal, NullEventPusher, PushEventResultInternal, PushMessageArgs, Reader, RegisterPollVoteArgs,
+    MessageEdit, MessageInternal, NullEventPusher, PushEventResultInternal, PushMessageArgs, Reader, RegisterPollVoteArgs,
     RegisterPollVoteSuccess, RemoveEventsResult, ReservePrizeSuccess, TipMessageArgs, UndeleteMessageSuccess,
     UpdateMessageSuccess,
 };
@@ -748,7 +748,7 @@ impl GroupChatCore {
             min_visible_event_index,
             thread_root_message_index,
             message_id,
-            content,
+            edit: MessageEdit::Content(Box::new(content)),
             block_level_markdown: Some(block_level_markdown),
             og_previews,
             finalise_bot_message: finalise,
