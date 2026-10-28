@@ -43,6 +43,21 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
         return Response::Failure;
     };
 
+    // A member acting on one of the bot's MiniApp messages, which they can see
+    if let AccessTypeArgs::BotMessageSession(args) = &args_outer.access_type {
+        let Ok(member) = channel.chat.members.get_verified_member(args.initiator) else {
+            return Response::Failure;
+        };
+        let can_act = state.data.bots.get(&args.bot_id).is_some()
+            && channel.chat.events.is_mini_app_message_of(
+                args.bot_id,
+                member.min_visible_event_index(),
+                args.thread,
+                args.message_id,
+            );
+        return if can_act { Response::Success } else { Response::Failure };
+    }
+
     let initiator = match &args_outer.access_type {
         AccessTypeArgs::StartVideoCall(args) => args.initiator,
         AccessTypeArgs::JoinVideoCall(args) => args.initiator,

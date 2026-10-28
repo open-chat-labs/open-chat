@@ -2868,6 +2868,23 @@ impl ChatEvents {
             .and_then(|e| e.event.into_message().map(|m| (m, e.index)))
     }
 
+    // Whether the message is one of `bot`'s MiniApp messages, not deleted, which a member who can see
+    // from `min_visible_event_index` can see
+    pub fn is_mini_app_message_of(
+        &self,
+        bot: UserId,
+        min_visible_event_index: EventIndex,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+    ) -> bool {
+        self.message_internal(min_visible_event_index, thread_root_message_index, message_id.into())
+            .is_some_and(|(message, _)| {
+                message.sender == bot
+                    && message.deleted_by.is_none()
+                    && matches!(message.content, MessageContentInternal::MiniApp(_))
+            })
+    }
+
     // A bot's edit only changes a message's content within its type, eg. a bridge bot relaying an
     // edit made on the other platform. So an edit must be valid content of the same type, and not a
     // poll, whose votes an edit would lose. Nor can a deleted message be edited, since its content

@@ -1,6 +1,6 @@
 use crate::{
-    BlobReference, BotActionScope, BotCommand, BotPermissions, CanisterId, Chat, MessageId, MessageIndex, NcaPriority, UserId,
-    VideoCallType,
+    BlobReference, BotActionScope, BotCommand, BotCommandMeta, BotPermissions, CanisterId, Chat, MessageId, MessageIndex,
+    NcaPriority, UserId, VideoCallType,
 };
 use serde::{Deserialize, Serialize};
 
@@ -19,6 +19,9 @@ pub const CLAIM_TYPE_DECLINE_VIDEO_CALL: &str = "DeclineVideoCall";
 // it for a decline or a leave, never for a join. See open-chat #9559.
 pub const CLAIM_TYPE_VIDEO_CALL_PARTICIPANT: &str = "VideoCallParticipant";
 pub const CLAIM_TYPE_BOT_ACTION_BY_COMMAND: &str = "BotActionByCommand";
+// That a user, a member of the chat, is acting on one of a bot's MiniApp messages there, eg. pressing
+// its buttons. The bot verifies it; OpenChat's bot endpoints don't accept it.
+pub const CLAIM_TYPE_BOT_MESSAGE_SESSION: &str = "BotMessageSession";
 pub const CLAIM_TYPE_NCA_VAULT_EXPORT: &str = "NcaVaultExport";
 pub const CLAIM_TYPE_NCA_SUBMITTER: &str = "NcaSubmitter";
 
@@ -137,6 +140,18 @@ mod u128_as_string {
         let s = String::deserialize(deserializer)?;
         s.parse().map_err(serde::de::Error::custom)
     }
+}
+
+// Signed once for a user and a MiniApp message, and reused for every button they press on it
+#[derive(Serialize, Deserialize)]
+pub struct BotMessageSessionClaims {
+    pub bot_api_gateway: CanisterId,
+    pub bot: UserId,
+    pub chat: Chat,
+    pub thread: Option<MessageIndex>,
+    pub message_id: MessageId,
+    pub user_id: UserId,
+    pub meta: Option<BotCommandMeta>,
 }
 
 #[derive(Serialize, Deserialize)]

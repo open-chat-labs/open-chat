@@ -1,7 +1,7 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{BotActionScope, BotCommandArg, BotCommandMeta, Chat, UserId, VideoCallType};
+use types::{BotActionScope, BotCommandArg, BotCommandMeta, Chat, MessageId, MessageIndex, UserId, VideoCallType};
 
 #[ts_export(local_user_index, access_token_v2)]
 #[derive(Serialize, Deserialize, Debug)]
@@ -11,6 +11,7 @@ pub enum Args {
     MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs),
     VideoCallParticipant(VideoCallParticipantArgs),
     BotActionByCommand(BotActionByCommandArgs),
+    BotMessageSession(BotMessageSessionArgs),
     Translate,
 }
 
@@ -59,6 +60,18 @@ pub struct BotActionByCommandArgs {
     pub bot_id: UserId,
     pub command: BotCommandInitial,
     pub scope: BotActionScope,
+}
+
+// A token for the caller to act on one of a bot's MiniApp messages, eg. to press its buttons, which
+// they fetch once for the message and reuse
+#[ts_export]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct BotMessageSessionArgs {
+    pub bot_id: UserId,
+    pub chat: Chat,
+    pub thread: Option<MessageIndex>,
+    pub message_id: MessageId,
+    pub meta: Option<BotCommandMeta>,
 }
 
 #[ts_export]
