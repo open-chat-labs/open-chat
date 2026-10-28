@@ -432,7 +432,8 @@
 - `hostPin`: the host asks for the PIN itself (or none is set), so Send has no PIN step: Send makes the transfer straight away and a failure shows under the form (`ui.walletSend.sendFailed`); `onSent` resolving `false` means nothing was sent and there's nothing to say, and the form stays as it was. The hint under Send reads `ui.walletSend.confirmHintHostPin`.
 - `checkAddress(address, symbol)`: the host's say on an address (e.g. not the user's own, on a network the send can reach), on top of the detected network and the token's `nets`.
 - `WalletSendRequest`: `token` (the token's id), `amountText` (the amount as a plain decimal, for exact ledger units: the digits typed, when typed in the token) and `max` (Max was picked); `to` is trimmed. Send picks its token by id (`token` is an id or a symbol), so two tokens sharing a symbol stay apart; a user-mode send's fee is `WalletToken.userFee` when given.
-- `WalletMain`: `sendHostPin` and `checkAddress`, passed to Send; Send is given the token's id, and the pending row and the way back use the request's `token`.
+- `btcRoutes`: the routes the host can send BTC to a Bitcoin address over (both without it); the route picker lists only those.
+- `WalletMain`: `sendHostPin`, `checkAddress` and `btcRoutes`, passed to Send; Send is given the token's id, and the pending row and the way back use the request's `token`.
 - `lib/networks.ts`: an ICRC-1 account with a subaccount (`<principal>-<checksum>.<hex>`) is an ICP address. `lib/amount.ts` exports `plain`. `types.ts`: `WalletToken.userFee`.
 - `lib/behaviours/dialog.spec.ts`: the one-run-at-a-time test is named after the app's 6b invariant 4 (one send per confirm), which it covers.
 - `meta.json` updated.

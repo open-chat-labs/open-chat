@@ -3,6 +3,8 @@
 // address over the route the address calls for.
 import {
     BTC_SYMBOL,
+    decodeIcrcAccount,
+    encodeIcrcAccount,
     ICP_SYMBOL,
     walletApprovalFee,
     type CryptoTransferOutcome,
@@ -43,15 +45,18 @@ export type SendRequest = {
 
 /**
  * The send to make: a transfer in the DM with a person (`sendInDirectChat`, which pays the ledger's
- * fee), or a withdrawal to an address paying `fee`. `too_small`: under the least a send may be (the
- * old wallets' 10 fees, or the ckBTC minter's minimum for a Bitcoin withdrawal), so nothing is sent.
+ * fee), or a withdrawal to an address paying `fee`. `too_small`: under the least a send may be (10
+ * fees to a person, or the ckBTC minter's minimum for a Bitcoin withdrawal), so nothing is sent.
  */
 export type SendPlan =
     | { kind: "transfer"; userId: string; amount: bigint }
     | { kind: "withdraw"; to: string; route: WithdrawalRoute; amount: bigint; fee: bigint }
     | { kind: "too_small"; minimum: bigint };
 
-/** The least a send over the ledger may be, as the old wallets have it (`TokenState.minAmount`). */
+/**
+ * The least a transfer to a person may be, as the old in-chat transfer has it
+ * (`TokenState.minAmount`). A withdrawal to an address over the ledger has none (`WithdrawForm`).
+ */
 export function minimumSend(token: Pick<SendToken, "transferFee">): bigint {
     return token.transferFee * 10n;
 }
@@ -100,12 +105,13 @@ export function sendPlan(
         ? balance - sendCost(token, to, btc)
         : amountUnits(request.amountText, token.decimals);
     if (amount <= 0n) return undefined;
-    if (!native || btc === undefined) {
+    if (userId !== undefined) {
         const minimum = minimumSend(token);
         if (amount < minimum) return { kind: "too_small", minimum };
-        return userId !== undefined
-            ? { kind: "transfer", userId, amount }
-            : { kind: "withdraw", to: request.to, route: { kind: "ledger" }, amount, fee };
+        return { kind: "transfer", userId, amount };
+    }
+    if (!native || btc === undefined) {
+        return { kind: "withdraw", to: request.to, route: { kind: "ledger" }, amount, fee };
     }
     const burnt = amount + btc.fee;
     if (burnt < btc.minimum) return { kind: "too_small", minimum: btc.minimum };
@@ -114,7 +120,7 @@ export function sendPlan(
 
 /** Who can't be sent to, and what's the user's own. */
 export type AddressContext = {
-    /** The user's own wallet for the token, in each form it's written, which they can't send to. */
+    /** The user's own wallet for the token, in each form, canonical (`ownAccounts`): they can't send to it. */
     ownAccounts: string[];
     /** An account of a MultiUser user id: anything sent there is lost. */
     isUserIdAccount: (address: string) => boolean;
@@ -130,22 +136,36 @@ export function acceptsAddress(
     networks: AddressNetwork[],
     ctx: AddressContext,
 ): boolean {
-    if (ctx.ownAccounts.includes(address)) return false;
+    if (ctx.ownAccounts.includes(canonicalAccount(address))) return false;
     if (ctx.isUserIdAccount(address)) return false;
     const network = addressNetwork(address);
     return network !== undefined && networks.includes(network);
 }
 
 /**
- * The user's own wallet for a token, in each form an address can name it: the wallet's ICRC
- * account, and for ICP its account identifier too.
+ * An account as one spelling: an account identifier in lower case, an ICRC account re-encoded (so
+ * an explicit default subaccount is the bare principal). Anything else as it is.
+ */
+export function canonicalAccount(address: string): string {
+    const text = address.trim();
+    if (/^[0-9a-f]{64}$/i.test(text)) return text.toLowerCase();
+    try {
+        return encodeIcrcAccount(decodeIcrcAccount(text));
+    } catch {
+        return text;
+    }
+}
+
+/**
+ * The user's own wallet for a token, in each form an address can name it, canonical: the wallet's
+ * ICRC account, and for ICP its account identifier too.
  */
 export function ownAccounts(
     symbol: string,
     owner: { cryptoAccount: string; userId: string; principal: () => string },
 ): string[] {
-    const icrc = userWalletAddress(owner.userId, owner.principal);
-    return symbol === ICP_SYMBOL ? [owner.cryptoAccount, icrc] : [icrc];
+    const icrc = canonicalAccount(userWalletAddress(owner.userId, owner.principal));
+    return symbol === ICP_SYMBOL ? [canonicalAccount(owner.cryptoAccount), icrc] : [icrc];
 }
 
 /**

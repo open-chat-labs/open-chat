@@ -70,4 +70,34 @@ describe("CkbtcWithdrawalInfoRequests", () => {
 
         expect(shown).toEqual([1n, 2n]);
     });
+
+    it("tells only the latest request's failure, and nothing once cancelled", async () => {
+        vi.spyOn(console, "warn").mockImplementation(() => {});
+        const failed = vi.fn();
+        const shown: bigint[] = [];
+        const answers: ReturnType<typeof deferred<CkbtcMinterWithdrawalInfo>>[] = [];
+        let fail = true;
+        const requests = new CkbtcWithdrawalInfoRequests(
+            () => {
+                if (fail) return Promise.reject(new Error("minter down"));
+                const d = deferred<CkbtcMinterWithdrawalInfo>();
+                answers.push(d);
+                return d.promise;
+            },
+            (i) => shown.push(i.feeEstimate),
+            500,
+            failed,
+        );
+
+        requests.now(0n);
+        await vi.runAllTimersAsync();
+        expect(failed).toHaveBeenCalledOnce();
+
+        fail = false;
+        requests.now(0n);
+        requests.cancel();
+        answers[0].resolve(info(111n));
+        await vi.runAllTimersAsync();
+        expect(shown).toEqual([]);
+    });
 });

@@ -158,6 +158,7 @@
     /** Send: user search and BTC route fees (see WalletSend). */
     onSearchUsers?: (query: string) => Promise<SendContact[]>;
     btcFees?: Partial<Record<'btc' | 'ckbtc', number>>;
+    btcRoutes?: ('btc' | 'ckbtc')[];
     /** Send: the host asks for the PIN itself, and its say on an address (see WalletSend). */
     sendHostPin?: boolean;
     checkAddress?: (address: string, symbol: string) => boolean;
@@ -212,6 +213,7 @@
     onRemoveRecipient,
     onSearchUsers,
     btcFees,
+    btcRoutes,
     sendHostPin = false,
     checkAddress,
     onQuote,
@@ -645,6 +647,7 @@
         {contacts}
         {onSearchUsers}
         {btcFees}
+        {btcRoutes}
         {onPickSaved}
         {onScanQr}
         onClose={leaveFlow}

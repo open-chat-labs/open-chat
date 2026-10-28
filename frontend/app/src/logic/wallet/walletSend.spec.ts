@@ -5,6 +5,7 @@ import { userWalletAddress } from "./receiveAddress";
 import {
     acceptsAddress,
     amountUnits,
+    canonicalAccount,
     ownAccounts,
     sendAnswer,
     sendCost,
@@ -113,22 +114,16 @@ describe("where a send goes", () => {
         ).toEqual({ kind: "too_small", minimum: 50_000n });
     });
 
-    test("a send under ten fees is refused, as the old wallets do", () => {
-        expect(
-            sendPlan(request({ amountText: "0.00999999", to: "abc" }), chat, 10n ** 10n),
-        ).toEqual({
-            kind: "too_small",
-            minimum: 1_000_000n,
-        });
+    test("a transfer to a person under ten fees is refused, as the old in-chat transfer does; an address has no minimum", () => {
         expect(
             sendPlan(request({ amountText: "0.000001", userId: "u1" }), chat, 10n ** 10n),
         ).toEqual({ kind: "too_small", minimum: 1_000_000n });
         expect(
-            sendPlan(request({ amountText: "0.01", to: "abc" }), chat, 10n ** 10n),
-        ).toMatchObject({
-            kind: "withdraw",
-            amount: 1_000_000n,
-        });
+            sendPlan(request({ amountText: "0.01", userId: "u1" }), chat, 10n ** 10n),
+        ).toMatchObject({ kind: "transfer", amount: 1_000_000n });
+        expect(
+            sendPlan(request({ amountText: "0.0005", to: "abc" }), chat, 10n ** 10n),
+        ).toMatchObject({ kind: "withdraw", amount: 50_000n });
     });
 
     test("a Bitcoin address only over Bitcoin's own network: the ledger can't send there", () => {
@@ -182,6 +177,21 @@ describe("the user's own wallet", () => {
         const icrc = userWalletAddress(owner.userId, owner.principal);
         expect(ownAccounts("ICP", owner)).toEqual(["icp-account-identifier", icrc]);
         expect(ownAccounts("CHAT", owner)).toEqual([icrc]);
+    });
+
+    test("another spelling of the user's own account is still theirs", () => {
+        const ctx = {
+            ownAccounts: ownAccounts("ICP", {
+                cryptoAccount: "517a929e03de7038888d2cf7370ab7bf605405ce5795efa87464ec0e7a03beaa",
+                userId: "qp43m-xeaaa-aaaaa-qaama-daa",
+                principal: () => "2vxsx-fae",
+            }),
+            isUserIdAccount: () => false,
+        };
+        const upper = "517A929E03DE7038888D2CF7370AB7BF605405CE5795EFA87464EC0E7A03BEAA";
+        expect(acceptsAddress(upper, sendNetworks("ICP"), ctx)).toBe(false);
+        expect(canonicalAccount(upper)).toBe(upper.toLowerCase());
+        expect(canonicalAccount(" not-an-account ")).toBe("not-an-account");
     });
 });
 

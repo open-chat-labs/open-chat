@@ -92,6 +92,9 @@
     onSearchUsers?: (query: string) => Promise<SendContact[]>;
     /** Current fee (in BTC) for sending BTC to a Bitcoin address natively or as ckBTC; a route without a fee can't be used. */
     btcFees?: Partial<Record<'btc' | 'ckbtc', number>>;
+    /** The routes the host can send BTC to a Bitcoin address over (e.g. only `btc`: a ckBTC transfer can't reach one);
+     *  both without it. */
+    btcRoutes?: ('btc' | 'ckbtc')[];
     /** Opens the host's saved-address picker; resolve with the chosen address (or nothing to cancel). Hidden without it. */
     onPickSaved?: () => Promise<string | null | undefined>;
     /** Opens the host's QR scanner; resolve with the scanned address. Hidden without it. */
@@ -115,7 +118,7 @@
     checkAddress?: (address: string, symbol: string) => boolean;
   }
 
-  let { tokens, token, address: initialAddress = '', contacts = [], onSearchUsers, btcFees = {}, onPickSaved, onScanQr, onClose, onSent, onDone, canOpenChat = false, hostPin = false, checkAddress }: Props = $props();
+  let { tokens, token, address: initialAddress = '', contacts = [], onSearchUsers, btcFees = {}, btcRoutes, onPickSaved, onScanQr, onClose, onSent, onDone, canOpenChat = false, hostPin = false, checkAddress }: Props = $props();
   const t = useT();
   const i18n = getI18n();
 
@@ -171,8 +174,10 @@
   // amounts never carry more decimals than the input accepts (rounded down, so a max send stays within balance)
   const n = $derived(tk ? (exact && exact.text === amt && exact.sym === idOf(tk) ? exact.n : floorTo(inUsd ? typed / tk.price : typed, inDp)) : 0);
   const det = $derived(mode === 'address' ? detectNetwork(address) : null);
+  // the routes offered: the host's, else both
+  const routes = $derived(btcRoutes ? NETS.filter((x) => btcRoutes.includes(x.id)) : NETS);
   const multi = $derived(mode === 'address' && tk?.symbol === 'BTC' && det === 'BTC');
-  const routeFee = $derived(multi ? btcFees[NETS[net].id] : undefined);
+  const routeFee = $derived(multi ? btcFees[routes[net].id] : undefined);
   const fee = $derived(multi ? (routeFee ?? 0) : mode === 'user' ? (tk?.userFee ?? tk?.fee ?? 0) : (tk?.fee ?? 0));
   // a BTC route without a fee from the host can't be priced, so it can't be sent
   const feeKnown = $derived(!multi || routeFee !== undefined);
@@ -200,12 +205,12 @@
 
   // the summary under the form: network, fee, what they receive, total
   const rows = $derived([
-    { k: t('ui.walletSend.network'), v: mode === 'user' ? 'OpenChat' : multi ? t(NETS[net].label) : det && det !== 'unknown' ? NET_NAME[det] : '—', ink: 'var(--ink)' },
+    { k: t('ui.walletSend.network'), v: mode === 'user' ? 'OpenChat' : multi ? t(routes[net].label) : det && det !== 'unknown' ? NET_NAME[det] : '—', ink: 'var(--ink)' },
     { k: t('ui.walletSend.networkFee'), v: `${fmt(fee, tk?.dp ?? 0)} ${tk?.symbol}`, ink: 'var(--ink)' },
     { k: mode === 'user' && person ? t('ui.walletSend.nameReceives', { name: first }) : t('ui.walletSend.theyReceive'), v: `${fmt(n, inDp)} ${tk?.symbol}`, ink: n > 0 ? 'var(--ink)' : 'var(--ink-5,#6E6E7C)' },
     { k: t('ui.walletSend.total'), v: `${fmt(n + fee, tk?.dp ?? 0)} ${tk?.symbol}`, ink: over ? 'var(--status-danger)' : 'var(--ink)' },
   ]);
-  const network = $derived(mode === 'user' ? 'openchat' : multi ? NETS[net].id : det && det !== 'unknown' ? CHAIN_NET[det] : '');
+  const network = $derived(mode === 'user' ? 'openchat' : multi ? routes[net].id : det && det !== 'unknown' ? CHAIN_NET[det] : '');
 
   const ctaLabel = $derived(
     ok
@@ -528,14 +533,14 @@
           <ListSectionLabel label={t('ui.walletSend.networkKicker')} />
           <div class="net-picker">
             <div class="net-select" class:open={netOpen} onclick={() => (netOpen = !netOpen)} tabindex="0" role="button" aria-expanded={netOpen}>
-              <span class="net-label">{t(NETS[net].label)}</span>
-              <span class="net-meta">{t(NETS[net].time)} · {routeFee !== undefined ? `${fmt(routeFee, 8)} BTC` : t('ui.walletSend.feeUnknown')}</span>
+              <span class="net-label">{t(routes[net].label)}</span>
+              <span class="net-meta">{t(routes[net].time)} · {routeFee !== undefined ? `${fmt(routeFee, 8)} BTC` : t('ui.walletSend.feeUnknown')}</span>
               <span class="caret" class:open={netOpen}></span>
             </div>
             {#if netOpen}
               <div class="away" onclick={() => (netOpen = false)} role="presentation"></div>
               <div class="net-options">
-                {#each NETS as x, i}
+                {#each routes as x, i}
                   <div
                     class="net-option"
                     onclick={() => {

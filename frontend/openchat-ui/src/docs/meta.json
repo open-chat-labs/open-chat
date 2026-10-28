@@ -17858,6 +17858,17 @@
         "doc": "Current fee (in BTC) for sending BTC to a Bitcoin address natively or as ckBTC; a route without a fee can't be used."
       },
       {
+        "name": "btcRoutes",
+        "type": "('btc' | 'ckbtc')[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Send: the routes the host can send BTC to a Bitcoin address over (see WalletSend)."
+      },
+      {
         "name": "sendHostPin",
         "type": "boolean",
         "default": null,
@@ -18617,6 +18628,17 @@
         "required": false,
         "componentDefault": "{}",
         "doc": "Current fee (in BTC) for sending BTC to a Bitcoin address natively or as ckBTC; a route without a fee can't be used."
+      },
+      {
+        "name": "btcRoutes",
+        "type": "('btc' | 'ckbtc')[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The routes the host can send BTC to a Bitcoin address over (e.g. only `btc`: a ckBTC transfer can't reach one); both without it."
       },
       {
         "name": "onPickSaved",

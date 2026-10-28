@@ -269,31 +269,57 @@
         sendContacts(directChatUsers($serverDirectChatsStore, $allUsersStore)),
     );
 
-    // a Bitcoin send's minter fee and minimum, asked while Send is open for BTC, again every 10 s
-    // until the minter answers; only the latest answer counts (#9638)
+    // a Bitcoin send's minter fee and minimum, asked each time Send opens while BTC is held (Send
+    // may pick BTC itself when opened without a token), and again 10 s after a failure; only the
+    // latest answer counts (#9638), and none from an earlier opening
     let btcWithdrawal = $state<BtcWithdrawal>();
+    let btcRetry: ReturnType<typeof setTimeout> | undefined;
     const btcInfo = new CkbtcWithdrawalInfoRequests(
         (amount) => client.getCkbtcMinterWithdrawalInfo(amount),
         (info) => (btcWithdrawal = { fee: info.feeEstimate, minimum: info.minWithdrawalAmount }),
+        500,
+        () => {
+            if (sendingBtc) btcRetry = setTimeout(() => btcInfo.now(0n), 10_000);
+        },
     );
-    const sendToken = $derived(
-        sending && ledger !== undefined ? $cryptoLookup.get(ledger) : undefined,
+    const btcToken = $derived(
+        [...$enhancedCryptoLookup.values()].find((t) => t.symbol === BTC_SYMBOL),
     );
-    const sendingBtc = $derived(sendToken?.symbol === BTC_SYMBOL);
+    const sendingBtc = $derived(sending && btcToken !== undefined && btcToken.balance > 0n);
     $effect(() => {
-        if (!sendingBtc || btcWithdrawal !== undefined) return;
+        if (!sendingBtc) return;
         untrack(() => btcInfo.now(0n));
-        const timer = setInterval(() => btcInfo.now(0n), 10_000);
-        return () => clearInterval(timer);
+        return () => {
+            clearTimeout(btcRetry);
+            btcInfo.cancel();
+            btcWithdrawal = undefined;
+        };
     });
-    onDestroy(() => btcInfo.cancel());
     // a Bitcoin address costs the approval and the minter's fee on top. The design's other route,
-    // ckBTC to that address, can't reach it (the ledger only sends to IC accounts), so it gets no
-    // fee and can't be chosen
+    // ckBTC to that address, can't reach it (the ledger only sends to IC accounts), so Send only
+    // offers Bitcoin's own
     const btcFees = $derived.by((): WalletMainProps["btcFees"] => {
-        if (sendToken === undefined || !sendingBtc || btcWithdrawal === undefined) return {};
+        if (btcToken === undefined || btcWithdrawal === undefined) return {};
         return {
-            btc: wholeTokens(sendCost(sendToken, "btc", btcWithdrawal), sendToken.decimals),
+            btc: wholeTokens(sendCost(btcToken, "btc", btcWithdrawal), btcToken.decimals),
+        };
+    });
+
+    // the user's own wallet for a token, in each form, worked out once per token and user
+    const ownWallets = $derived.by(() => {
+        const owner = {
+            cryptoAccount: $currentUserStore.cryptoAccount,
+            userId: $currentUserIdStore,
+            principal: () => client.OcIdentityPrincipal,
+        };
+        const bySymbol = new Map<string, string[]>();
+        return (symbol: string): string[] => {
+            let own = bySymbol.get(symbol);
+            if (own === undefined) {
+                own = ownAccounts(symbol, owner);
+                bySymbol.set(symbol, own);
+            }
+            return own;
         };
     });
 
@@ -301,11 +327,7 @@
     // the send can reach
     function checkAddress(address: string, symbol: string): boolean {
         return acceptsAddress(address, sendNetworks(symbol), {
-            ownAccounts: ownAccounts(symbol, {
-                cryptoAccount: $currentUserStore.cryptoAccount,
-                userId: $currentUserIdStore,
-                principal: () => client.OcIdentityPrincipal,
-            }),
+            ownAccounts: ownWallets(symbol),
             isUserIdAccount: (a) => client.isAccountOfMultiUserCanisterUserId(a),
         });
     }
@@ -382,6 +404,7 @@
     flows={["send", "receive"]}
     {contacts}
     {btcFees}
+    btcRoutes={["btc"]}
     sendHostPin
     {checkAddress}
     onSent={send}

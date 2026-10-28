@@ -610,13 +610,14 @@ design export needs. Each entry says where it came up.
     - the saved-address picker (`onPickSaved`), saving a new address after a send, and the QR
       scanner (`onScanQr`): with the address book (6d).
     - the message on a send to an address: the design offers a note to self; nothing keeps it.
-    - the ckBTC minter's fee is its estimate for any amount, asked when Send opens for BTC (again
-      every 10 s until it answers); a send under the minter's minimum stops with a toast before
-      anything is sent.
+    - the ckBTC minter's fee is its estimate for any amount, asked each time Send opens while BTC
+      is held (again 10 s after a failure); a send under the minter's minimum stops with a toast
+      before anything is sent.
     - the design's "ckBTC on ICP" route to a Bitcoin address can't reach it (the ledger only sends
-      to IC accounts), so it shows with no fee and can't be chosen. It wants leaving out.
-    - a send under ten fees (the old wallets' minimum) is refused with a toast after Confirm, not
-      flagged on the form as the old wallets do: `WalletSend` has no minimum.
+      to IC accounts), so the host offers only Bitcoin's own (`btcRoutes`, by hand).
+    - a transfer to a person under ten fees (the old in-chat transfer's minimum) is refused with a
+      toast after Confirm, not flagged on the form: `WalletSend` has no minimum. An address has
+      none, as in the old Send.
     - no pending row after a send: the client doesn't return the transaction's id.
   - Swap (6c): the app passes `flows` without it. Its buttons show as designed and do nothing; the
     menus and the token picker leave it out; `/wallet/swap` shows the token's page (or All
