@@ -5,7 +5,11 @@ import { setConnectionUnusable } from "@shared";
 // only a connection which is barely carrying anything trips it.
 export const SLOW_QUERY_MS = 10_000;
 
-// Bad queries in a row before the connection is treated as unusable. Any good one resets the count.
+// Bad queries in a row before the connection is treated as unusable. Any good one resets the count,
+// and none counts while responses are still arriving: a connection carrying responses is usable,
+// however slow or failed some queries are. A burst of queries (the first load, or catching up
+// after a resume) queues in the browser, so the last of them can wait well past `SLOW_QUERY_MS`
+// on a connection that is busy rather than dead, and those used to trip it.
 export const BAD_QUERIES_TO_UNUSABLE = 3;
 
 // Bad queries closer together than this count as one. A single blip, such as the network changing,
@@ -41,6 +45,7 @@ export class ConnectionHealth implements QueryOutcomes {
     #isOnline: () => boolean;
     #unusable = false;
     #badInARow = 0;
+    #lastResponseAt = Number.NEGATIVE_INFINITY;
     #probeTimer: ReturnType<typeof setTimeout> | undefined;
     #probing = false;
     #probesFailed = 0;
@@ -71,6 +76,7 @@ export class ConnectionHealth implements QueryOutcomes {
 
     good(responseMs: number): void {
         this.#badInARow = 0;
+        this.#lastResponseAt = Date.now();
         if (this.#unusable && responseMs <= FAST_RESPONSE_MS) {
             this.#setUnusable(false);
         }
@@ -82,6 +88,7 @@ export class ConnectionHealth implements QueryOutcomes {
         // for a moment each time it came back.
         if (this.#hidden || sentAt < this.#ignoreSentBefore) return;
         const now = Date.now();
+        if (now - this.#lastResponseAt < SLOW_QUERY_MS) return;
         if (now - this.#lastBadAt < BAD_QUERY_SPACING_MS) return;
         this.#lastBadAt = now;
         this.#badInARow += 1;

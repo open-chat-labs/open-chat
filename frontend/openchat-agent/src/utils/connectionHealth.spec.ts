@@ -4,6 +4,7 @@ import {
     BAD_QUERY_SPACING_MS,
     ConnectionHealth,
     FAST_RESPONSE_MS,
+    SLOW_QUERY_MS,
 } from "./connectionHealth";
 
 // The issue promises a probe at least this often while unusable
@@ -45,6 +46,7 @@ describe("ConnectionHealth", () => {
             badQuery(health);
         }
         health.good(200);
+        vi.setSystemTime(Date.now() + SLOW_QUERY_MS);
         for (let i = 0; i < BAD_QUERIES_TO_UNUSABLE - 1; i++) {
             badQuery(health);
         }
@@ -189,5 +191,21 @@ describe("ConnectionHealth", () => {
         await vi.advanceTimersByTimeAsync(0);
         expect(probe).toHaveBeenCalledTimes(1);
         expect(health.unusable).toBe(false);
+    });
+
+    // A burst of queries queues in the browser, so the last of them can pass SLOW_QUERY_MS on a
+    // connection that is busy rather than dead
+    test("bad queries don't count while responses are still arriving", () => {
+        const { health } = setup();
+        for (let i = 0; i < BAD_QUERIES_TO_UNUSABLE * 3; i++) {
+            health.good(SLOW_QUERY_MS * 2);
+            badQuery(health);
+        }
+        expect(health.unusable).toBe(false);
+
+        // once responses stop, they count again
+        vi.setSystemTime(Date.now() + SLOW_QUERY_MS);
+        makeUnusable(health);
+        expect(health.unusable).toBe(true);
     });
 });
