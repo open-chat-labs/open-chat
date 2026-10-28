@@ -121,7 +121,10 @@
                     chatPermitted &&
                     [...command.permissions.messagePermissions].every((p) => {
                         const userPermission = userMessagePermissionFor(p);
-                        return userPermission !== undefined && $messagePermissionsForSelectedChatStore.has(userPermission);
+                        return (
+                            userPermission !== undefined &&
+                            $messagePermissionsForSelectedChatStore.has(userPermission)
+                        );
                     })
                 );
             case "thread":
@@ -130,7 +133,10 @@
                     chatPermitted &&
                     [...command.permissions.messagePermissions].every((p) => {
                         const userPermission = userMessagePermissionFor(p);
-                        return userPermission !== undefined && $threadPermissionsForSelectedChatStore.has(userPermission);
+                        return (
+                            userPermission !== undefined &&
+                            $threadPermissionsForSelectedChatStore.has(userPermission)
+                        );
                     })
                 );
         }

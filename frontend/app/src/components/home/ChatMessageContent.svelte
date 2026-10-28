@@ -178,5 +178,13 @@
 {:else if content.kind === "price_chart_content"}
     <PriceChartContent {content} {reply} {me} />
 {:else if content.kind === "mini_app_content"}
-    <MiniAppContent {content} {messageContext} {messageId} {senderId} {readonly} {reply} />
+    <MiniAppContent
+        {content}
+        {messageContext}
+        {messageId}
+        {senderId}
+        {readonly}
+        {reply}
+        {pinned}
+        {blockLevelMarkdown} />
 {/if}

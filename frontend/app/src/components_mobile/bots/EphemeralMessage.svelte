@@ -69,7 +69,12 @@
             <Row padding={["md", "zero"]} gap={"sm"} crossAxisAlignment={"center"}>
                 <BotAvatar size={"xs"} {bot} />
                 <Subtitle fontWeight={"bold"}>
-                    <Translatable resourceKey={i18nKey(`${bot.name} /${event.commandName}`)} />
+                    <Translatable
+                        resourceKey={i18nKey(
+                            event.commandName === undefined
+                                ? bot.name
+                                : `${bot.name} /${event.commandName}`,
+                        )} />
                 </Subtitle>
                 <IconButton size={"sm"} onclick={closeClicked}>
                     {#snippet icon(color)}

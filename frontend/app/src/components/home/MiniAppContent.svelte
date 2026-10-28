@@ -17,9 +17,20 @@
         // eg. in a reply, a pinned message, or while previewing a chat
         readonly: boolean;
         reply?: boolean;
+        pinned?: boolean;
+        blockLevelMarkdown: boolean;
     }
 
-    let { content, messageContext, messageId, senderId, readonly, reply = false }: Props = $props();
+    let {
+        content,
+        messageContext,
+        messageId,
+        senderId,
+        readonly,
+        reply = false,
+        pinned = false,
+        blockLevelMarkdown,
+    }: Props = $props();
 
     const buttons = new MiniAppButtons(client, () => ({ messageContext, messageId, botId: senderId }));
 
@@ -31,7 +42,11 @@
     }
 </script>
 
-<Markdown text={content.text} />
+{#if reply}
+    <Markdown text={content.text} oneLine suppressLinks />
+{:else}
+    <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} text={content.text} />
+{/if}
 {#if !reply && !readonly}
     {#each content.buttonRows as row}
         <div class="row">

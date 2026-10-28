@@ -69,6 +69,7 @@ import {
     getDisplayDate,
     getEmailSignInSession,
     i18nKey,
+    jwtExpiryMs,
     indexRangeForChat,
     isAccountOfMultiUserCanisterUserId,
     isCaptionedContent,
@@ -13469,7 +13470,6 @@ export class OpenChat {
                         ephemeral: true,
                     },
                     botId,
-                    commandName: button.label,
                     scope: {
                         kind: "chat_scope",
                         chatId: context.chatId,
@@ -14670,20 +14670,3 @@ export class OpenChat {
 type UserIndexMetrics = {
     oc_public_key: string;
 };
-
-function jwtExpiryMs(token: string): number | undefined {
-    const parts = token.split(".");
-    if (parts.length < 2) return undefined;
-    try {
-        const payload = JSON.parse(
-            new TextDecoder().decode(
-                Uint8Array.from(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")), (c) =>
-                    c.charCodeAt(0),
-                ),
-            ),
-        );
-        return typeof payload.exp === "number" ? payload.exp * 1000 : undefined;
-    } catch {
-        return undefined;
-    }
-}

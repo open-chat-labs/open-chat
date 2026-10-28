@@ -458,6 +458,7 @@
         "miniApp": {
             "failed": "Không thể kết nối với bot. Vui lòng thử lại.",
             "notAuthorized": "Bạn không thể dùng các nút của tin nhắn này. Có thể bạn cần tham gia cuộc trò chuyện trước.",
+            "refused": "Bot không thể làm điều đó lúc này.",
             "tooManyRequests": "Bot đang bận. Vui lòng đợi một chút rồi thử lại."
         },
         "poll": {

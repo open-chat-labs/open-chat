@@ -11,7 +11,7 @@ describe("miniAppButtonFailureMessage", () => {
         );
         expect(
             miniAppButtonFailureMessage({ kind: "bad_request", reason: "Not your turn" }).key,
-        ).toBe("bots.miniApp.failed");
+        ).toBe("bots.miniApp.refused");
         expect(miniAppButtonFailureMessage({ kind: "internal_error", error: "boom" }).key).toBe(
             "bots.miniApp.failed",
         );

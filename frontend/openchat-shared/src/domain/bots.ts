@@ -952,6 +952,7 @@ export type FullWebhookDetails = WebhookDetails & {
 export type EphemeralMessageEvent = {
     message: BotResponseMessage;
     botId: string;
-    commandName: string;
+    // the command it answers, if it does, rather than a button pressed
+    commandName?: string;
     scope: BotActionScope;
 };

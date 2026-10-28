@@ -75,14 +75,21 @@ export async function callBotActionEndpoint(
         if (res.status === 429) return { kind: "too_many_requests" };
         if (!res.ok) return { kind: "internal_error", error: await res.text() };
 
-        const value = typeboxValidate(await res.json(), ApiBotActionSuccess);
-        return {
-            kind: "success",
-            reply: mapOptional(value.message, ({ content, block_level_markdown }) => ({
-                messageContent: messageContent(content, ""),
-                blockLevelMarkdown: block_level_markdown ?? false,
-            })),
-        };
+        // The bot has acted, so a reply it sent which can't be shown is dropped rather than the
+        // press being reported as failed, which would have the user press again
+        try {
+            const value = typeboxValidate(await res.json(), ApiBotActionSuccess);
+            return {
+                kind: "success",
+                reply: mapOptional(value.message, ({ content, block_level_markdown }) => ({
+                    messageContent: messageContent(content, ""),
+                    blockLevelMarkdown: block_level_markdown ?? false,
+                })),
+            };
+        } catch (err) {
+            console.log("Bot action's reply can't be shown: ", formatError(err));
+            return { kind: "success" };
+        }
     } catch (err) {
         console.log("Bot action failed: ", err);
         return { kind: "internal_error", error: formatError(err) };

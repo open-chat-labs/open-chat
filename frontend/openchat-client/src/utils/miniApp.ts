@@ -23,7 +23,9 @@ export function miniAppButtonFailureMessage(
             return i18nKey("bots.miniApp.notAuthorized");
         case "too_many_requests":
             return i18nKey("bots.miniApp.tooManyRequests");
+        // the bot was reached, and refused, eg. a move which isn't allowed now
         case "bad_request":
+            return i18nKey("bots.miniApp.refused");
         case "internal_error":
             return i18nKey("bots.miniApp.failed");
     }

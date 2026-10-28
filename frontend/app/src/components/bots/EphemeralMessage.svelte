@@ -69,7 +69,12 @@
             <div class="header">
                 <BotAvatar size={AvatarSize.Tiny} {bot} />
                 <div class="title">
-                    <Translatable resourceKey={i18nKey(`${bot.name} /${event.commandName}`)} />
+                    <Translatable
+                        resourceKey={i18nKey(
+                            event.commandName === undefined
+                                ? bot.name
+                                : `${bot.name} /${event.commandName}`,
+                        )} />
                 </div>
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->

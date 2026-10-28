@@ -10,10 +10,12 @@ import { describe, expect, test } from "vitest";
 import type { MessageContent as TMessageContent } from "../../typebox";
 import {
     addressToIcrcAccount,
+    apiExternalBotPermissions,
     apiMaybeAccessGate,
     apiMessageContent,
     groupDetailsUpdatesResponse,
     apiPendingCryptoTransaction,
+    externalBotPermissions,
     formatIcrcAccount,
     messageContent,
     pendingCryptoTransfer,
@@ -321,5 +323,16 @@ describe("mini app content mapping", () => {
                 [{ id: "start", label: "Start", style: "secondary" }],
             ],
         });
+    });
+});
+
+describe("bot permission bits", () => {
+    test("message permissions follow the backend's MessagePermission bits, both ways", () => {
+        // P2pSwap = 9, VideoCall = 10, MiniApp = 11
+        const message = (1 << 9) | (1 << 10) | (1 << 11);
+        const permissions = externalBotPermissions({ community: 0, chat: 0, message });
+
+        expect(permissions.messagePermissions).toEqual(["p2pSwap", "videoCall", "miniApp"]);
+        expect(apiExternalBotPermissions(permissions).message).toBe(message);
     });
 });

@@ -458,6 +458,7 @@
         "miniApp": {
             "failed": "无法连接到机器人。请重试。",
             "notAuthorized": "你无法使用此消息的按钮。你可能需要先加入聊天。",
+            "refused": "机器人现在无法执行该操作。",
             "tooManyRequests": "机器人正忙。请稍候再试。"
         },
         "poll": {

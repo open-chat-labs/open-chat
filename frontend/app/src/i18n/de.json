@@ -458,6 +458,7 @@
         "miniApp": {
             "failed": "Der Bot ist nicht erreichbar. Bitte versuche es erneut.",
             "notAuthorized": "Du kannst die Schaltflächen dieser Nachricht nicht verwenden. Eventuell musst du zuerst dem Chat beitreten.",
+            "refused": "Der Bot konnte das gerade nicht tun.",
             "tooManyRequests": "Der Bot ist beschäftigt. Bitte warte einen Moment und versuche es erneut."
         },
         "poll": {

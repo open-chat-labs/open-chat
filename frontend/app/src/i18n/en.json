@@ -426,6 +426,7 @@
         "miniApp": {
             "failed": "Couldn't reach the bot. Please try again.",
             "notAuthorized": "You can't use this message's buttons. You may need to join the chat first.",
+            "refused": "The bot couldn't do that right now.",
             "tooManyRequests": "The bot is busy. Please wait a moment and try again."
         },
         "poll": {

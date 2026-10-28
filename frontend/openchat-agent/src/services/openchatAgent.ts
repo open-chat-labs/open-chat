@@ -261,6 +261,7 @@ import {
     applyOptionUpdate,
     buildBlobUrl,
     chatIdentifierToString,
+    jwtExpiryMs,
     chatIdentifiersEqual,
     emptyEventsResponse,
     encodeIcrcAccount,
@@ -1677,43 +1678,49 @@ export class OpenChatAgent extends EventTarget {
         buttonId: string,
     ): Promise<BotActionResponse> {
         const key = botMessageSessionKey(session);
-        for (const fresh of [false, true]) {
-            const token = await this.botMessageSessionToken(localUserIndex, session, key, fresh);
-            if (token === undefined) return { kind: "not_authorized" };
+        // A minute's grace, so a token doesn't expire on its way to the bot
+        const cached = this._botMessageSessions.get(key);
+        const cachedToken =
+            cached !== undefined && cached.expiresAt > Date.now() + 60_000
+                ? cached.token
+                : undefined;
 
-            const response = await callBotActionEndpoint(endpoint, token, buttonId);
-            if (response !== "token_rejected") {
-                if (response.kind === "success" && response.reply !== undefined) {
-                    return {
-                        ...response,
-                        reply: {
-                            ...response.reply,
-                            messageContent: this.rehydrateMessageContent(
-                                response.reply.messageContent,
-                            ),
-                        },
-                    };
-                }
-                return response;
-            }
+        let token =
+            cachedToken ?? (await this.newBotMessageSessionToken(localUserIndex, session, key));
+        if (token === undefined) return { kind: "not_authorized" };
+        let response = await callBotActionEndpoint(endpoint, token, buttonId);
+
+        // A cached token may have been revoked, so a fresh one is worth one try. A bot which rejects
+        // a token as soon as it's issued has a problem of its own, which the user can't fix.
+        if (response === "token_rejected" && cachedToken !== undefined) {
             this._botMessageSessions.delete(key);
+            token = await this.newBotMessageSessionToken(localUserIndex, session, key);
+            if (token === undefined) return { kind: "not_authorized" };
+            response = await callBotActionEndpoint(endpoint, token, buttonId);
         }
-        return { kind: "not_authorized" };
+        if (response === "token_rejected") {
+            this._botMessageSessions.delete(key);
+            return { kind: "internal_error", error: "The bot rejected a new session token" };
+        }
+        if (response.kind === "success" && response.reply !== undefined) {
+            return {
+                ...response,
+                reply: {
+                    ...response.reply,
+                    messageContent: this.rehydrateMessageContent(response.reply.messageContent),
+                },
+            };
+        }
+        return response;
     }
 
-    private async botMessageSessionToken(
+    private async newBotMessageSessionToken(
         localUserIndex: string,
         session: BotMessageSession,
         key: string,
-        fresh: boolean,
     ): Promise<string | undefined> {
-        const cached = this._botMessageSessions.get(key);
-        // A minute's grace, so a token doesn't expire on its way to the bot
-        if (!fresh && cached !== undefined && cached.expiresAt > Date.now() + 60_000) {
-            return cached.token;
-        }
         const token = await this.getAccessToken(session, localUserIndex);
-        const expiresAt = token === undefined ? undefined : jwtExpiry(token);
+        const expiresAt = token === undefined ? undefined : jwtExpiryMs(token);
         if (token !== undefined && expiresAt !== undefined) {
             this._botMessageSessions.set(key, { token, expiresAt });
         }
@@ -6199,15 +6206,4 @@ function botMessageSessionKey({
     messageId,
 }: BotMessageSession): string {
     return `${botId}|${chatIdentifierToString(chatId)}|${threadRootMessageIndex ?? ""}|${messageId}`;
-}
-
-// The expiry of a JWT we've been issued, in milliseconds, without verifying it
-function jwtExpiry(token: string): number | undefined {
-    try {
-        const payload = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-        const { exp } = JSON.parse(atob(payload)) as { exp?: number };
-        return exp === undefined ? undefined : exp * 1000;
-    } catch {
-        return undefined;
-    }
 }

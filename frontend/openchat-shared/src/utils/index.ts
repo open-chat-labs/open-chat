@@ -10,6 +10,7 @@ export * from "./error";
 export * from "./i18n";
 export * from "./icrcAccount";
 export * from "./identity";
+export * from "./jwt";
 export * from "./identityStorage";
 export * from "./immutable";
 export * from "./lazy";

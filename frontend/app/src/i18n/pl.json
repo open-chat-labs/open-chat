@@ -458,6 +458,7 @@
         "miniApp": {
             "failed": "Nie udało się połączyć z botem. Spróbuj ponownie.",
             "notAuthorized": "Nie możesz używać przycisków tej wiadomości. Być może musisz najpierw dołączyć do czatu.",
+            "refused": "Bot nie mógł teraz tego zrobić.",
             "tooManyRequests": "Bot jest zajęty. Poczekaj chwilę i spróbuj ponownie."
         },
         "poll": {
