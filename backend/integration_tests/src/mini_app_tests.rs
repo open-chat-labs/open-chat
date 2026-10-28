@@ -3,17 +3,23 @@ use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use candid::Principal;
+use jwt::{Claims, verify_and_decode};
+use local_user_index_canister::access_token_v2;
 use local_user_index_canister::chat_events::{EventsByIndexArgs, EventsSelectionCriteria};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::{ErrorCode, PocketIc, RejectResponse};
+use serde::de::DeserializeOwned;
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    AutonomousConfig, BlobReference, BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId,
-    ChannelId, Chat, ChatEvent, ChatPermission, CommunityId, EventIndex, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, MessagePermission, MiniAppContent, MiniAppImage, MiniAppStatus, MiniAppUpdate, SuccessOnly, UnitResult,
+    AutonomousConfig, BlobReference, BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions,
+    CLAIM_TYPE_MINI_APP_BOT, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_CONNECTION, CLAIM_TYPE_MINI_APP_REGISTRATION,
+    CanisterId, ChannelId, Chat, ChatEvent, ChatPermission, CommunityId, Empty, EventIndex, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, MessagePermission, MiniAppBotClaims, MiniAppChatClaims,
+    MiniAppConnectionClaims, MiniAppContent, MiniAppGame, MiniAppImage, MiniAppRegistrationClaims, MiniAppStatus,
+    MiniAppUpdate, SuccessOnly, UnitResult, UserId,
 };
 
 #[test]
@@ -33,7 +39,7 @@ fn a_bot_posts_a_mini_app_card_which_cant_be_edited() {
         channel_id,
         local_user_index,
     } = setup(env, canister_ids, *controller);
-    let bot_principal = install_bot(
+    let (_, bot_principal) = install_bot(
         env,
         &owner,
         canister_ids.user_index,
@@ -136,7 +142,7 @@ fn a_bot_without_the_mini_app_permission_cant_post_one() {
         local_user_index,
         ..
     } = setup(env, canister_ids, *controller);
-    let bot_principal = install_bot(
+    let (_, bot_principal) = install_bot(
         env,
         &owner,
         canister_ids.user_index,
@@ -177,7 +183,7 @@ fn a_card_is_sent_finalised() {
         local_user_index,
         ..
     } = setup(env, canister_ids, *controller);
-    let bot_principal = install_bot(
+    let (_, bot_principal) = install_bot(
         env,
         &owner,
         canister_ids.user_index,
@@ -226,7 +232,7 @@ fn a_card_is_posted_open_with_no_players() {
         channel_id,
         local_user_index,
     } = setup(env, canister_ids, *controller);
-    let bot_principal = install_bot(
+    let (_, bot_principal) = install_bot(
         env,
         &owner,
         canister_ids.user_index,
@@ -271,7 +277,7 @@ fn the_mini_app_service_writes_a_cards_game() {
         channel_id,
         local_user_index,
     } = setup(env, canister_ids, *controller);
-    let bot_principal = install_bot(
+    let (_, bot_principal) = install_bot(
         env,
         &owner,
         canister_ids.user_index,
@@ -372,7 +378,7 @@ fn only_the_mini_app_service_writes_a_card() {
         channel_id,
         local_user_index,
     } = setup(env, canister_ids, *controller);
-    let bot_principal = install_bot(
+    let (_, bot_principal) = install_bot(
         env,
         &owner,
         canister_ids.user_index,
@@ -622,6 +628,184 @@ fn a_member_cant_post_a_mini_app() {
     );
 }
 
+// Who the user is, and nothing more, for a WebSocket to the MiniApp service
+#[test]
+fn a_user_gets_a_connection_token_for_the_mini_app_service() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let Setup {
+        member,
+        local_user_index,
+        ..
+    } = setup(env, canister_ids, *controller);
+
+    let response = client::local_user_index::access_token_v2(
+        env,
+        member.principal,
+        local_user_index,
+        &access_token_v2::Args::MiniAppConnection,
+    );
+    let access_token_v2::Response::Success(token) = response else {
+        panic!("'access_token_v2' error: {response:?}");
+    };
+    let claims: MiniAppConnectionClaims = verify(env, canister_ids, &token, CLAIM_TYPE_MINI_APP_CONNECTION);
+    assert_eq!(claims.user_id, member.user_id);
+}
+
+// A member may join the chat's games. Someone who can only see the chat, as anyone can a public
+// channel in a public community, may watch them. Nobody else gets one.
+#[test]
+fn a_chat_token_says_whether_the_user_is_a_member() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let Setup {
+        owner,
+        member,
+        community_id,
+        channel_id,
+        local_user_index,
+    } = setup(env, canister_ids, *controller);
+    let outsider = client::register_user(env, canister_ids);
+    let private_channel_id =
+        client::community::happy_path::create_channel(env, owner.principal, community_id, false, random_string());
+
+    for (user, channel_id, member) in [
+        (&member, channel_id, Some(true)),
+        (&outsider, channel_id, Some(false)),
+        (&member, private_channel_id, None),
+        (&outsider, private_channel_id, None),
+    ] {
+        let chat = Chat::Channel(community_id, channel_id);
+        let response = client::local_user_index::access_token_v2(
+            env,
+            user.principal,
+            local_user_index,
+            &access_token_v2::Args::MiniAppChat(access_token_v2::MiniAppChatArgs { chat }),
+        );
+        match (response, member) {
+            (access_token_v2::Response::Success(token), Some(member)) => {
+                let claims: MiniAppChatClaims = verify(env, canister_ids, &token, CLAIM_TYPE_MINI_APP_CHAT);
+                assert_eq!(claims.user_id, user.user_id);
+                assert_eq!(claims.chat, chat);
+                assert_eq!(claims.member, member);
+            }
+            (access_token_v2::Response::NotAuthorized, None) => {}
+            (response, member) => panic!("Expected {member:?}: {response:?}"),
+        }
+    }
+}
+
+// Which bot is calling the MiniApp service. A user can't get one.
+#[test]
+fn a_bot_gets_a_token_for_the_mini_app_service() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let Setup {
+        owner,
+        member,
+        community_id,
+        local_user_index,
+        ..
+    } = setup(env, canister_ids, *controller);
+    let (bot_id, bot_principal) = install_bot(
+        env,
+        &owner,
+        canister_ids.user_index,
+        local_user_index,
+        community_id,
+        MessagePermission::MiniApp,
+    );
+
+    let response = client::local_user_index::bot_mini_app_token(env, bot_principal, local_user_index, &Empty {});
+    let local_user_index_canister::bot_mini_app_token::Response::Success(token) = response else {
+        panic!("'bot_mini_app_token' error: {response:?}");
+    };
+    let claims: MiniAppBotClaims = verify(env, canister_ids, &token, CLAIM_TYPE_MINI_APP_BOT);
+    assert_eq!(claims.bot, bot_id);
+
+    let response = client::local_user_index::bot_mini_app_token(env, member.principal, local_user_index, &Empty {});
+    assert!(
+        matches!(
+            response,
+            local_user_index_canister::bot_mini_app_token::Response::NotAuthorized
+        ),
+        "Expected NotAuthorized: {response:?}"
+    );
+}
+
+// The bot registers its game with the MiniApp service with the token posting the card gives it: which
+// game it is, its settings, and where the service sends join requests
+#[test]
+fn posting_a_card_gives_the_bot_its_games_registration() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let Setup {
+        owner,
+        community_id,
+        channel_id,
+        local_user_index,
+        ..
+    } = setup(env, canister_ids, *controller);
+    let (bot_id, bot_principal) = install_bot(
+        env,
+        &owner,
+        canister_ids.user_index,
+        local_user_index,
+        community_id,
+        MessagePermission::MiniApp,
+    );
+    let chat = Chat::Channel(community_id, channel_id);
+    let message_id = random_from_u128();
+
+    let response = send(env, bot_principal, local_user_index, chat, message_id, card());
+    let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
+        panic!("'bot_send_message' error: {response:?}");
+    };
+    let claims: MiniAppRegistrationClaims = verify(
+        env,
+        canister_ids,
+        &sent.mini_app_registration.unwrap(),
+        CLAIM_TYPE_MINI_APP_REGISTRATION,
+    );
+    assert_eq!(claims.bot, bot_id);
+    assert_eq!(claims.bot_endpoint, "https://my.bot.xyz/");
+    assert_eq!(claims.bot_api_gateway, local_user_index);
+    assert!(
+        claims.game
+            == MiniAppGame {
+                chat,
+                thread: None,
+                message_id,
+            }
+    );
+    assert_eq!(claims.max_players, Some(4));
+    assert!(claims.spectators);
+}
+
 struct Setup {
     owner: User,
     member: User,
@@ -656,7 +840,7 @@ fn install_bot(
     local_user_index: CanisterId,
     community_id: CommunityId,
     granted: MessagePermission,
-) -> Principal {
+) -> (UserId, Principal) {
     let mut definition = default_bot_definition(random_string());
     definition.autonomous_config = Some(AutonomousConfig {
         permissions: BotPermissions::default()
@@ -688,7 +872,7 @@ fn install_bot(
 
     env.advance_time(Duration::from_millis(1000));
     env.tick();
-    bot_principal
+    (bot_id, bot_principal)
 }
 
 fn send(
@@ -811,4 +995,17 @@ fn card_text(env: &PocketIc, user: &User, community_id: CommunityId, channel_id:
         panic!("Expected a mini app: {:?}", message.content);
     };
     content.text.clone()
+}
+
+// Signed by OpenChat, with the claim type expected, for an hour
+fn verify<T: DeserializeOwned>(env: &mut PocketIc, canister_ids: &crate::CanisterIds, token: &str, claim_type: &str) -> T {
+    let public_key = client::user_index::happy_path::public_key(env, canister_ids.user_index);
+    let claims: Claims<T> = verify_and_decode(token, &public_key, claim_type).unwrap();
+    let now = now_millis(env);
+    assert!(
+        claims.exp_ms() > now + 59 * 60 * 1000 && claims.exp_ms() <= now + 60 * 60 * 1000,
+        "Expires at {}, now {now}",
+        claims.exp_ms()
+    );
+    claims.into_custom()
 }

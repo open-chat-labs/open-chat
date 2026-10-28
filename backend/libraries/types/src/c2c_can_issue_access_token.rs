@@ -1,4 +1,4 @@
-use crate::{BotPermissions, GroupRole, MessageId, MessageIndex, UserId, VideoCallType};
+use crate::{BotPermissions, GroupRole, UserId, VideoCallType};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -7,7 +7,7 @@ pub enum AccessTypeArgs {
     JoinVideoCall(JoinVideoCallArgs),
     MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs),
     BotActionByCommand(BotActionByCommandArgs),
-    BotMessageSession(BotMessageSessionArgs),
+    MiniAppChat(MiniAppChatArgs),
 }
 
 impl AccessTypeArgs {
@@ -24,7 +24,7 @@ impl AccessTypeArgs {
             AccessTypeArgs::JoinVideoCall(args) => args.initiator,
             AccessTypeArgs::MarkVideoCallAsEnded(args) => args.initiator,
             AccessTypeArgs::BotActionByCommand(args) => args.initiator,
-            AccessTypeArgs::BotMessageSession(args) => args.initiator,
+            AccessTypeArgs::MiniAppChat(args) => args.initiator,
         }
     }
 }
@@ -63,10 +63,10 @@ pub struct BotActionByCommandArgs {
     pub requested_permissions: BotPermissions,
 }
 
+// For the MiniApp service's chat token: that the initiator is a member of the chat, who may join its
+// games, or, if `member` is false, that they can see it, as anyone can a public chat, to watch them
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct BotMessageSessionArgs {
-    pub bot_id: UserId,
+pub struct MiniAppChatArgs {
     pub initiator: UserId,
-    pub thread: Option<MessageIndex>,
-    pub message_id: MessageId,
+    pub member: bool,
 }

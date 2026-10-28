@@ -19,13 +19,18 @@ This document is the contract between the website, the service, bots and their a
   `chat` is `{ "Group": id }` or `{ "Channel": [community id, channel id] }`. `thread` is the thread's root message index, or `null`.
 - Every token is a JWT that lasts an hour. Its `claim_type` must be the one expected; the claims are in `types::claims`.
 
-| Token | Claim type | Signed by | Held by |
+| Token | Claim type | From | Held by |
 |---|---|---|---|
-| Connection | `MiniAppConnection` | LocalUserIndex | the website |
-| Chat | `MiniAppChat` | LocalUserIndex | the website, one per chat |
-| Registration | `MiniAppRegistration` | LocalUserIndex | the bot, one per game |
-| Bot | `MiniAppBot` | LocalUserIndex | the bot |
-| Player | `MiniAppPlayer` | the service | the app, one per player per game |
+| Connection | `MiniAppConnection` | the LocalUserIndex's `access_token_v2`, `MiniAppConnection` | the website |
+| Chat | `MiniAppChat` | the LocalUserIndex's `access_token_v2`, `MiniAppChat { chat }` | the website, one per chat |
+| Registration | `MiniAppRegistration` | `mini_app_registration` in the LocalUserIndex's reply when a bot posts a card with `bot_send_message` | the bot, one per game |
+| Bot | `MiniAppBot` | the LocalUserIndex's `bot_mini_app_token`, called as the bot | the bot |
+| Player | `MiniAppPlayer` | the service, when a player joins or opens a game | the app, one per player per game |
+
+The LocalUserIndex signs the first four with OpenChat's key, the same key as its other tokens. The website and bots get its public key from the UserIndex's `public_key`.
+
+- **A chat token** says whether the user is a member, who may join the chat's games, or can only see the chat, as anyone can a public group or a public channel in a public community, and may only watch them. Anyone else is refused one.
+- **The service writes to a card** through the LocalUserIndex's `update_mini_app`, which only its principal may call. That principal is set by the UserIndex's `set_mini_app_service_principal` proposal.
 
 The service also signs `MiniAppJoin` and `MiniAppLeave` for its calls to bots. Its public key is at `GET /public_key` (PEM).
 

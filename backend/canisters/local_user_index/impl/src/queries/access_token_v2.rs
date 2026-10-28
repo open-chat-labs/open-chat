@@ -1,3 +1,4 @@
+use crate::mini_app::sign_token;
 use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::query;
 use canister_tracing_macros::trace;
@@ -8,21 +9,17 @@ use rand::SeedableRng;
 use rand::rngs::StdRng;
 use serde::Serialize;
 use types::c2c_can_issue_access_token::{
-    AccessTypeArgs, BotActionByCommandArgs, BotMessageSessionArgs, JoinVideoCallArgs, MarkVideoCallAsEndedArgs,
-    StartVideoCallArgs,
+    AccessTypeArgs, BotActionByCommandArgs, JoinVideoCallArgs, MarkVideoCallAsEndedArgs, MiniAppChatArgs, StartVideoCallArgs,
 };
 use types::{
-    AutonomousBotScope, BotActionByCommandClaims, BotActionScope, BotCommand, BotMessageSessionClaims,
-    CLAIM_TYPE_BOT_ACTION_BY_COMMAND, CLAIM_TYPE_BOT_MESSAGE_SESSION, CLAIM_TYPE_JOIN_VIDEO_CALL,
-    CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED, CLAIM_TYPE_START_VIDEO_CALL, CLAIM_TYPE_VIDEO_CALL_PARTICIPANT, CallKind, Chat,
-    JoinOrEndVideoCallClaims, Milliseconds, StartVideoCallClaims, TranslateClaims, UserId,
+    AutonomousBotScope, BotActionByCommandClaims, BotActionScope, BotCommand, CLAIM_TYPE_BOT_ACTION_BY_COMMAND,
+    CLAIM_TYPE_JOIN_VIDEO_CALL, CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_CONNECTION,
+    CLAIM_TYPE_START_VIDEO_CALL, CLAIM_TYPE_VIDEO_CALL_PARTICIPANT, CallKind, Chat, JoinOrEndVideoCallClaims, Milliseconds,
+    MiniAppChatClaims, MiniAppConnectionClaims, StartVideoCallClaims, TranslateClaims, UserId,
 };
 
 const DEFAULT_TOKEN_VALIDITY: Milliseconds = 5 * 60 * 1000;
 const TRANSLATE_TOKEN_VALIDITY: Milliseconds = 30 * 60 * 1000;
-// The bot's app asks the website for a fresh one when it runs out. It's short so that a member who's
-// removed, or a message which is deleted, can't be acted on for long.
-const BOT_MESSAGE_SESSION_TOKEN_VALIDITY: Milliseconds = 15 * 60 * 1000;
 
 #[query(composite = true, msgpack = true)]
 #[trace]
@@ -40,6 +37,14 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
 
     if let ArgsInternal::Translate = &args_wrapper {
         return mutate_state(translate_token);
+    }
+
+    if let ArgsInternal::MiniAppConnection = &args_wrapper {
+        return mutate_state(mini_app_connection_token);
+    }
+
+    if let ArgsInternal::MiniAppChat(args) = &args_wrapper {
+        return mini_app_chat_token(args.chat).await;
     }
 
     let PrepareResult { scope, access_type_args } = match read_state(|state| prepare(&args_wrapper, state)) {
@@ -72,19 +77,6 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                 },
             };
             return build_token(token_type_name, custom_claims, DEFAULT_TOKEN_VALIDITY, state);
-        }
-
-        if let ArgsInternal::BotMessageSession(args) = &args_wrapper {
-            let custom_claims = BotMessageSessionClaims {
-                bot_api_gateway: state.env.canister_id(),
-                bot: args.bot_id,
-                chat: args.chat,
-                thread: args.thread,
-                message_id: args.message_id,
-                user_id: access_type_args.initiator(),
-                meta: args.meta.clone(),
-            };
-            return build_token(token_type_name, custom_claims, BOT_MESSAGE_SESSION_TOKEN_VALIDITY, state);
         }
 
         match access_type_args {
@@ -150,23 +142,6 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
                 initiator: user.user_id,
                 initiator_role: command.default_role.unwrap_or_default(),
                 requested_permissions: command.permissions.clone(),
-            }),
-        });
-    }
-
-    if let ArgsInternal::BotMessageSession(args) = args_outer {
-        // Direct chats have no MiniApp messages
-        if matches!(args.chat, Chat::Direct(_)) || state.data.bots.get(&args.bot_id).is_none() {
-            return Err(Response::NotAuthorized);
-        }
-
-        return Ok(PrepareResult {
-            scope: AutonomousBotScope::Chat(args.chat),
-            access_type_args: AccessTypeArgs::BotMessageSession(BotMessageSessionArgs {
-                bot_id: args.bot_id,
-                initiator: user.user_id,
-                thread: args.thread,
-                message_id: args.message_id,
             }),
         });
     }
@@ -244,6 +219,61 @@ fn translate_token(state: &mut RuntimeState) -> Response {
     )
 }
 
+// That the caller is signed in, for a WebSocket to the MiniApp service
+fn mini_app_connection_token(state: &mut RuntimeState) -> Response {
+    let Some(user_id) = caller_user_id(state) else {
+        return NotAuthorized;
+    };
+
+    match sign_token(CLAIM_TYPE_MINI_APP_CONNECTION, MiniAppConnectionClaims { user_id }, state) {
+        Ok(token) => Success(token),
+        Err(error) => InternalError(error),
+    }
+}
+
+// A member's chat token lets them join the chat's games. Anyone else who can see the chat, as anyone can
+// a public one, gets one to watch them.
+async fn mini_app_chat_token(chat: Chat) -> Response {
+    let Some(user_id) = read_state(caller_user_id) else {
+        return NotAuthorized;
+    };
+    // Direct chats have no MiniApp games
+    if matches!(chat, Chat::Direct(_)) {
+        return NotAuthorized;
+    }
+
+    let check = |member| {
+        AccessTypeArgs::MiniAppChat(MiniAppChatArgs {
+            initiator: user_id,
+            member,
+        })
+    };
+    let member = match can_issue_access_token(AutonomousBotScope::Chat(chat), &check(true)).await {
+        Ok(()) => true,
+        Err(NotAuthorized) => match can_issue_access_token(AutonomousBotScope::Chat(chat), &check(false)).await {
+            Ok(()) => false,
+            Err(response) => return response,
+        },
+        Err(response) => return response,
+    };
+
+    mutate_state(
+        |state| match sign_token(CLAIM_TYPE_MINI_APP_CHAT, MiniAppChatClaims { user_id, chat, member }, state) {
+            Ok(token) => Success(token),
+            Err(error) => InternalError(error),
+        },
+    )
+}
+
+fn caller_user_id(state: &RuntimeState) -> Option<UserId> {
+    state
+        .data
+        .global_users
+        .get_by_principal(&state.env.caller())
+        .filter(|u| !u.user_type.is_bot())
+        .map(|u| u.user_id)
+}
+
 fn build_token<T: Serialize>(
     token_type_name: String,
     custom_claims: T,
@@ -271,7 +301,8 @@ enum ArgsInternal {
     MarkVideoCallAsEnded(access_token_v2::MarkVideoCallAsEndedArgs),
     VideoCallParticipant(access_token_v2::VideoCallParticipantArgs),
     BotActionByCommand(access_token_v2::BotActionByCommandArgs),
-    BotMessageSession(access_token_v2::BotMessageSessionArgs),
+    MiniAppConnection,
+    MiniAppChat(access_token_v2::MiniAppChatArgs),
     Translate,
 }
 
@@ -283,7 +314,8 @@ impl ArgsInternal {
             Args::MarkVideoCallAsEnded(args) => Ok(ArgsInternal::MarkVideoCallAsEnded(args)),
             Args::VideoCallParticipant(args) => Ok(ArgsInternal::VideoCallParticipant(args)),
             Args::BotActionByCommand(args) => Ok(ArgsInternal::BotActionByCommand(args)),
-            Args::BotMessageSession(args) => Ok(ArgsInternal::BotMessageSession(args)),
+            Args::MiniAppConnection => Ok(ArgsInternal::MiniAppConnection),
+            Args::MiniAppChat(args) => Ok(ArgsInternal::MiniAppChat(args)),
             Args::Translate => Ok(ArgsInternal::Translate),
         }
     }
@@ -295,7 +327,8 @@ impl ArgsInternal {
             Self::MarkVideoCallAsEnded(_) => CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED,
             Self::VideoCallParticipant(_) => CLAIM_TYPE_VIDEO_CALL_PARTICIPANT,
             Self::BotActionByCommand(_) => CLAIM_TYPE_BOT_ACTION_BY_COMMAND,
-            Self::BotMessageSession(_) => CLAIM_TYPE_BOT_MESSAGE_SESSION,
+            Self::MiniAppConnection => CLAIM_TYPE_MINI_APP_CONNECTION,
+            Self::MiniAppChat(_) => CLAIM_TYPE_MINI_APP_CHAT,
             Self::Translate => "Translate",
         }
     }
@@ -307,8 +340,8 @@ impl ArgsInternal {
             Self::MarkVideoCallAsEnded(args) => Some(args.chat),
             Self::VideoCallParticipant(args) => Some(args.chat),
             Self::BotActionByCommand(args) => args.scope.chat(None),
-            Self::BotMessageSession(args) => Some(args.chat),
-            Self::Translate => None,
+            Self::MiniAppChat(args) => Some(args.chat),
+            Self::MiniAppConnection | Self::Translate => None,
         }
     }
 
@@ -322,8 +355,8 @@ impl ArgsInternal {
                 BotActionScope::Chat(details) => Some(&mut details.chat),
                 BotActionScope::Community(_) => None,
             },
-            Self::BotMessageSession(args) => Some(&mut args.chat),
-            Self::Translate => None,
+            Self::MiniAppChat(args) => Some(&mut args.chat),
+            Self::MiniAppConnection | Self::Translate => None,
         }
     }
 }

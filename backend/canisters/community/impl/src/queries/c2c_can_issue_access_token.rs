@@ -43,24 +43,17 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
         return Response::Failure;
     };
 
-    // A member opening the app of one of the bot's MiniApp cards, which they can see, and may open
-    if let AccessTypeArgs::BotMessageSession(args) = &args_outer.access_type {
-        // A member of the community too, whose membership hasn't lapsed and who isn't suspended
-        if state.data.members.get_verified_member(args.initiator.as_principal()).is_err() {
-            return Response::Failure;
-        }
-        let Ok(member) = channel.chat.members.get_verified_member(args.initiator) else {
-            return Response::Failure;
+    // The MiniApp service's chat token: a member of the channel, and of the community, whose membership
+    // hasn't lapsed and who isn't suspended, who may join its games, or, as anyone can see a public
+    // channel in a public community, someone who may watch them
+    if let AccessTypeArgs::MiniAppChat(args) = &args_outer.access_type {
+        let can = if args.member {
+            state.data.members.get_verified_member(args.initiator.as_principal()).is_ok()
+                && channel.chat.members.get_verified_member(args.initiator).is_ok()
+        } else {
+            state.data.is_public.value && channel.chat.is_public.value && !state.data.members.is_blocked(&args.initiator)
         };
-        let can_open = state.data.bots.get(&args.bot_id).is_some()
-            && channel.chat.events.can_open_mini_app(
-                args.bot_id,
-                args.initiator,
-                member.min_visible_event_index(),
-                args.thread,
-                args.message_id,
-            );
-        return if can_open { Response::Success } else { Response::Failure };
+        return if can { Response::Success } else { Response::Failure };
     }
 
     let initiator = match &args_outer.access_type {

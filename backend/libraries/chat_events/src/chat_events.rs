@@ -2940,25 +2940,6 @@ impl ChatEvents {
     // edit made on the other platform. So an edit must be valid content of the same type, and not a
     // poll, whose votes an edit would lose. Nor can a deleted message be edited, since its content
     // isn't moderated again.
-    // Whether `user`, a member who can see from `min_visible_event_index`, may open the app of the
-    // message, which must be one of `bot`'s MiniApp cards, not deleted (see `MiniAppContentInternal::
-    // can_open`)
-    pub fn can_open_mini_app(
-        &self,
-        bot: UserId,
-        user: UserId,
-        min_visible_event_index: EventIndex,
-        thread_root_message_index: Option<MessageIndex>,
-        message_id: MessageId,
-    ) -> bool {
-        self.message_internal(min_visible_event_index, thread_root_message_index, message_id.into())
-            .is_some_and(|(message, _)| {
-                message.sender == bot
-                    && message.deleted_by.is_none()
-                    && matches!(&message.content, MessageContentInternal::MiniApp(card) if card.can_open(user))
-            })
-    }
-
     pub fn check_bot_edit(
         &self,
         thread_root_message_index: Option<MessageIndex>,

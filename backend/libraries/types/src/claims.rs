@@ -1,6 +1,6 @@
 use crate::{
-    BlobReference, BotActionScope, BotCommand, BotCommandMeta, BotPermissions, CanisterId, Chat, MessageId, MessageIndex,
-    NcaPriority, UserId, VideoCallType,
+    BlobReference, BotActionScope, BotCommand, BotPermissions, CanisterId, Chat, MessageId, MessageIndex, NcaPriority, UserId,
+    VideoCallType,
 };
 use serde::{Deserialize, Serialize};
 
@@ -19,9 +19,6 @@ pub const CLAIM_TYPE_DECLINE_VIDEO_CALL: &str = "DeclineVideoCall";
 // it for a decline or a leave, never for a join. See open-chat #9559.
 pub const CLAIM_TYPE_VIDEO_CALL_PARTICIPANT: &str = "VideoCallParticipant";
 pub const CLAIM_TYPE_BOT_ACTION_BY_COMMAND: &str = "BotActionByCommand";
-// That a user, a member of the chat, is using the app a bot opened from one of its MiniApp messages
-// there. The bot's server verifies it; OpenChat's bot endpoints don't accept it.
-pub const CLAIM_TYPE_BOT_MESSAGE_SESSION: &str = "BotMessageSession";
 // The MiniApp service's tokens. The LocalUserIndexes sign the first four with OpenChat's key, and the
 // service signs the rest with its own, which bots fetch from the service.
 //
@@ -159,18 +156,6 @@ mod u128_as_string {
         let s = String::deserialize(deserializer)?;
         s.parse().map_err(serde::de::Error::custom)
     }
-}
-
-// Signed for a user and one of a bot's MiniApp messages, and reused by the bot's app until it runs out
-#[derive(Serialize, Deserialize)]
-pub struct BotMessageSessionClaims {
-    pub bot_api_gateway: CanisterId,
-    pub bot: UserId,
-    pub chat: Chat,
-    pub thread: Option<MessageIndex>,
-    pub message_id: MessageId,
-    pub user_id: UserId,
-    pub meta: Option<BotCommandMeta>,
 }
 
 #[derive(Serialize, Deserialize)]

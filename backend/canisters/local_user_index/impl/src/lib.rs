@@ -75,6 +75,7 @@ mod guards;
 mod jobs;
 mod lifecycle;
 mod memory;
+mod mini_app;
 mod model;
 mod no_inline_anchor;
 mod queries;

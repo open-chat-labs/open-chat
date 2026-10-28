@@ -38,20 +38,15 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
         return if args.requested_permissions.is_subset(&granted) { Response::Success } else { Response::Failure };
     }
 
-    // A member opening the app of one of the bot's MiniApp cards, which they can see, and may open
-    if let AccessTypeArgs::BotMessageSession(args) = &args_outer {
-        let Ok(member) = state.data.chat.members.get_verified_member(args.initiator) else {
-            return Response::Failure;
+    // The MiniApp service's chat token: a member, who may join the chat's games, or, as anyone can see
+    // a public group, someone who may watch them
+    if let AccessTypeArgs::MiniAppChat(args) = &args_outer {
+        let can = if args.member {
+            state.data.chat.members.get_verified_member(args.initiator).is_ok()
+        } else {
+            state.data.chat.is_public.value && !state.data.chat.members.is_blocked(&args.initiator)
         };
-        let can_open = state.data.get_bot_permissions(&args.bot_id).is_some()
-            && state.data.chat.events.can_open_mini_app(
-                args.bot_id,
-                args.initiator,
-                member.min_visible_event_index(),
-                args.thread,
-                args.message_id,
-            );
-        return if can_open { Response::Success } else { Response::Failure };
+        return if can { Response::Success } else { Response::Failure };
     }
 
     let initiator = match &args_outer {

@@ -5,6 +5,7 @@ pub mod bot_chat_summary;
 pub mod bot_community_events;
 pub mod bot_community_summary;
 pub mod bot_members;
+pub mod bot_mini_app_token;
 pub mod c2c_bridged_user_link;
 pub mod c2c_lookup_user;
 pub mod c2c_lookup_users;
