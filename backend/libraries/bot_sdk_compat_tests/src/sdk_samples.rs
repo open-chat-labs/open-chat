@@ -3,8 +3,8 @@ use candid::Principal;
 use num_traits::Bounded;
 use oc_bots_sdk::types::{
     AudioContent, BlobReference, CanisterId, CustomContent, FileContent, GiphyContent, GiphyImageVariant, ImageContent,
-    MessageContentInitial, PollConfig, PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, TextContent,
-    ThumbnailData, VideoContent,
+    MessageButton, MessageButtonStyle, MessageContentInitial, MiniAppContent, PollConfig, PriceChartContent, PriceChartSeries,
+    PriceChartSource, PriceChartToken, TextContent, ThumbnailData, VideoContent,
 };
 
 /// One value of every kind of content a bot can send, with every `Option` filled in if `filled`,
@@ -98,6 +98,23 @@ pub fn message_contents_initial(filled: bool) -> Vec<MessageContentInitial> {
                 name: "CoinGecko".to_string(),
                 url: "https://www.coingecko.com".to_string(),
             }],
+        }),
+        MessageContentInitial::MiniApp(MiniAppContent {
+            text: "**Uno** · 2 of 4 players".to_string(),
+            button_rows: vec![vec![
+                MessageButton {
+                    id: "join".to_string(),
+                    label: "Join".to_string(),
+                    style: MessageButtonStyle::Primary,
+                    visible_to: filled.then(|| vec![Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 10]).into()]),
+                },
+                MessageButton {
+                    id: "start".to_string(),
+                    label: "Start".to_string(),
+                    style: MessageButtonStyle::Danger,
+                    visible_to: filled.then(|| vec![Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 9]).into()]),
+                },
+            ]],
         }),
     ])
 }

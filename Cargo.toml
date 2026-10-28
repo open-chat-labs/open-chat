@@ -246,7 +246,7 @@ lazy_static = "1"
 leb128 = "0.2.7"
 num-traits = "0.2"
 # Pinned to a commit on open-chat-bots main. Only bot_sdk_compat_tests uses it, so bump it whenever the SDK changes
-oc_bots_sdk = { git = "https://github.com/open-chat-labs/open-chat-bots", rev = "d762ba4cb1b0484768e6346da2558a94779edb20" }
+oc_bots_sdk = { git = "https://github.com/open-chat-labs/open-chat-bots", rev = "aa6a3dcec484043c9ca504b36c7dd78771979293" }
 openssl = "0.10"
 p256 = { version = "0.14" }
 # `pocket-ic` should be pinned to an exact version so that the PocketIC server binary version
