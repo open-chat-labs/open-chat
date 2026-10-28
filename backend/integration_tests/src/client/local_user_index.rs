@@ -20,7 +20,6 @@ generate_update_call!(bot_create_channel);
 generate_update_call!(bot_delete_channel);
 generate_update_call!(bot_delete_messages);
 generate_update_call!(bot_edit_message);
-generate_update_call!(bot_update_mini_app);
 generate_update_call!(bot_send_message);
 generate_msgpack_update_call!(c2c_community);
 generate_msgpack_update_call!(c2c_group);
@@ -44,6 +43,7 @@ generate_msgpack_update_call!(register_user);
 generate_msgpack_update_call!(set_daily_puzzle_canister_id);
 generate_update_call!(submit_media_scan_verdicts);
 generate_msgpack_update_call!(uninstall_bot);
+generate_update_call!(update_mini_app);
 generate_msgpack_update_call!(video_call_declined);
 
 pub mod happy_path {

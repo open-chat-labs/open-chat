@@ -730,6 +730,9 @@ struct Data {
     // Set by proposal and fanned out to the LocalUserIndexes, including any added later
     #[serde(default)]
     pub daily_puzzle_canister_id: Option<CanisterId>,
+    // Set by proposal and fanned out to the LocalUserIndexes, including any added later
+    #[serde(default)]
+    pub mini_app_service_principal: Option<Principal>,
     // The bot that bridges each platform, eg. Discord. Set by a platform operator and fanned out to
     // the LocalUserIndexes, including any added later
     #[serde(default)]
@@ -857,6 +860,7 @@ impl Data {
             multi_user_canisters: MultiUserCanisterMap::default(),
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
+            mini_app_service_principal: None,
             bridge_bots: BTreeMap::new(),
             bridged_users: BridgedUsers::default(),
             bridged_user_deposits: BridgedUserDeposits::default(),
@@ -975,6 +979,7 @@ impl Default for Data {
             multi_user_canisters: MultiUserCanisterMap::default(),
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
+            mini_app_service_principal: None,
             bridge_bots: BTreeMap::new(),
             bridged_users: BridgedUsers::default(),
             bridged_user_deposits: BridgedUserDeposits::default(),

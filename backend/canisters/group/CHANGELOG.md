@@ -8,8 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add MiniApp messages, which only bots post: a card for a bot's app, eg. a game, with an optional image, whose status and players the bot keeps up to date ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300))
-- Issue a member a token for the app a bot opens from one of its MiniApp messages, which the bot's server verifies ([#10301](https://github.com/open-chat-labs/open-chat/pull/10301))
+- Add MiniApp messages, which only bots post: a card for a bot's app, eg. a game, with an optional image, whose players, status and result the MiniApp service keeps up to date ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300))
+- Check a user can see a chat, and whether they're a member, before the LocalUserIndex gives them a token for the MiniApp service ([#10301](https://github.com/open-chat-labs/open-chat/pull/10301))
 
 ### Changed
 

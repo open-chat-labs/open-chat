@@ -1,8 +1,8 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     Achievement, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, EncryptionKey,
-    MessageId, MessageIndex, MessagePermission, Milliseconds, ModerationInput, OptionUpdate, P2PSwapStatus,
-    PendingCryptoTransaction, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType, icrc1,
+    MessageId, MessageIndex, MessagePermission, Milliseconds, ModerationInput, P2PSwapStatus, PendingCryptoTransaction,
+    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType, icrc1,
 };
 use candid::CandidType;
 use oc_error_codes::{OCError, OCErrorCode};
@@ -1124,12 +1124,13 @@ impl PriceChartContent {
     }
 }
 
-/// A bot's card for an app it hosts, eg. a game. Its text, image, player limit and whether others can
-/// watch are set when it's posted and never change. Its status, players, whose move it is and the
-/// result are the bot's to update, with the LocalUserIndex's `bot_update_mini_app`, until the game is
-/// finished. Everything else the app shows, its board and buttons, is the bot's own page, which
-/// OpenChat opens from the card in a frame. Only a bot can send one, needing the MiniApp permission.
-/// It can't be forwarded, edited, or sent in a direct chat.
+/// A bot's card for a game, or another app, it hosts. Its text, image, player limit and whether others
+/// can watch are set when it's posted and never change. Its status, players and result are written
+/// only by the MiniApp service (`update_mini_app` on the LocalUserIndex), as players join through it
+/// and the bot reports the game's progress, until the game is finished. Everything else the app
+/// shows, its board and buttons, is the bot's own page, which OpenChat opens from the card in a frame.
+/// Only a bot can send one, needing the MiniApp permission. It can't be forwarded, edited, or sent in a
+/// direct chat.
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MiniAppContent {
@@ -1142,14 +1143,10 @@ pub struct MiniAppContent {
     pub max_players: Option<u32>,
     // whether members who aren't playing can open the app once the game has started
     pub spectators: bool,
-    // how many members who aren't playing have the app open, which the bot counts, so they stay
-    // anonymous
-    pub spectator_count: u32,
     pub status: MiniAppStatus,
-    // the members playing, in the bot's order. The bot which posted the card can be one.
+    // the members who joined through the MiniApp service and were accepted by the bot, in the order
+    // they joined
     pub players: Vec<UserId>,
-    // the players whose move it is, if the game has turns
-    pub waiting_for: Option<Vec<UserId>>,
     // eg. "Bob won", once the game is finished
     pub result: Option<String>,
 }
@@ -1165,8 +1162,9 @@ pub struct MiniAppImage {
     pub blob_reference: BlobReference,
 }
 
+// In the order a game goes through them, which it only ever moves forward through
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MiniAppStatus {
     // taking players
     #[default]
@@ -1177,25 +1175,27 @@ pub enum MiniAppStatus {
     Finished,
 }
 
-/// What `bot_update_mini_app` changes on a card. Whatever isn't given stays as it was.
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+/// What the MiniApp service writes to a card: its game's status, players and result as they now are
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MiniAppUpdate {
-    pub status: Option<MiniAppStatus>,
-    pub players: Option<Vec<UserId>>,
-    pub spectator_count: Option<u32>,
-    #[ts(as = "crate::OptionUpdateUserIds")]
-    #[serde(default)]
-    pub waiting_for: OptionUpdate<Vec<UserId>>,
-    #[ts(as = "crate::OptionUpdateString")]
-    #[serde(default)]
-    pub result: OptionUpdate<String>,
+    pub status: MiniAppStatus,
+    pub players: Vec<UserId>,
+    pub result: Option<String>,
 }
 
 impl MiniAppContent {
     pub const MAX_TEXT_CHARS: usize = 2_000;
     pub const MAX_PLAYERS: usize = 100;
     pub const MAX_RESULT_CHARS: usize = 200;
+
+    // A card as the bot posts it: open, with no players or result, which only the MiniApp service
+    // writes
+    pub fn validate_new(&self) -> Result<(), String> {
+        if self.status != MiniAppStatus::Open || !self.players.is_empty() || self.result.is_some() {
+            return Err("A game is posted open, with no players or result".to_string());
+        }
+        self.validate()
+    }
 
     pub fn validate(&self) -> Result<(), String> {
         check_chars("text", &self.text, Self::MAX_TEXT_CHARS)?;
@@ -1220,17 +1220,6 @@ impl MiniAppContent {
         if self.players.iter().collect::<HashSet<_>>().len() < self.players.len() {
             return Err("A player is listed twice".to_string());
         }
-        if self.spectator_count > 0 && !self.spectators {
-            return Err("Only a game open to spectators has any".to_string());
-        }
-        if let Some(waiting_for) = &self.waiting_for {
-            if waiting_for.iter().any(|user_id| !self.players.contains(user_id)) {
-                return Err("Only players can be waited for".to_string());
-            }
-            if waiting_for.iter().collect::<HashSet<_>>().len() < waiting_for.len() {
-                return Err("A player is waited for twice".to_string());
-            }
-        }
         if let Some(result) = &self.result {
             if self.status != MiniAppStatus::Finished {
                 return Err("Only a finished game has a result".to_string());
@@ -1242,17 +1231,9 @@ impl MiniAppContent {
 
     // The card as the update leaves it, which the caller then validates
     pub fn apply(&mut self, update: MiniAppUpdate) {
-        if let Some(status) = update.status {
-            self.status = status;
-        }
-        if let Some(players) = update.players {
-            self.players = players;
-        }
-        if let Some(spectator_count) = update.spectator_count {
-            self.spectator_count = spectator_count;
-        }
-        self.waiting_for = update.waiting_for.apply_to(self.waiting_for.take());
-        self.result = update.result.apply_to(self.result.take());
+        self.status = update.status;
+        self.players = update.players;
+        self.result = update.result;
     }
 }
 

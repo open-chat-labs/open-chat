@@ -64,6 +64,7 @@ pub enum UserIndexEvent {
     UserIdMigrated(UserIdMigrated),
     SetAlchemyApiKey(SetAlchemyApiKey),
     BridgedUserLinked(BridgedUserLinked),
+    SetMiniAppServicePrincipal(Principal),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

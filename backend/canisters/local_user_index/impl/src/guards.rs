@@ -111,3 +111,11 @@ pub fn caller_is_video_call_operator() -> Result<(), String> {
         Err("Caller is not a video call operator".to_string())
     }
 }
+
+pub fn caller_is_mini_app_service() -> Result<(), String> {
+    if read_state(|state| state.is_caller_mini_app_service()) {
+        Ok(())
+    } else {
+        Err("Caller is not the MiniApp service".to_string())
+    }
+}
