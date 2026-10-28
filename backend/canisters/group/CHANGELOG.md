@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add MiniApp messages, which only bots post: text with rows of buttons, some shown only to chosen users ([#10293](https://github.com/open-chat-labs/open-chat/pull/10293))
+- Issue a member one token per MiniApp message, which a bot verifies when they press its buttons ([#10294](https://github.com/open-chat-labs/open-chat/pull/10294))
 
 ### Changed
 
