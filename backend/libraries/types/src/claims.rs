@@ -22,6 +22,25 @@ pub const CLAIM_TYPE_BOT_ACTION_BY_COMMAND: &str = "BotActionByCommand";
 // That a user, a member of the chat, is using the app a bot opened from one of its MiniApp messages
 // there. The bot's server verifies it; OpenChat's bot endpoints don't accept it.
 pub const CLAIM_TYPE_BOT_MESSAGE_SESSION: &str = "BotMessageSession";
+// The MiniApp service's tokens. The LocalUserIndexes sign the first four with OpenChat's key, and the
+// service signs the rest with its own, which bots fetch from the service.
+//
+// That a user is signed in, and nothing more. It opens a WebSocket to the service.
+pub const CLAIM_TYPE_MINI_APP_CONNECTION: &str = "MiniAppConnection";
+// That a user can see a chat, and whether they're a member of it. The service takes it to follow the
+// chat's game cards and to watch its games, and, from a member, to join one.
+pub const CLAIM_TYPE_MINI_APP_CHAT: &str = "MiniAppChat";
+// A game a bot has just posted, which the bot passes to the service to register it
+pub const CLAIM_TYPE_MINI_APP_REGISTRATION: &str = "MiniAppRegistration";
+// Which bot is calling the service
+pub const CLAIM_TYPE_MINI_APP_BOT: &str = "MiniAppBot";
+// Signed by the service: a user is a player in a game. The bot's server takes it with the player's
+// requests.
+pub const CLAIM_TYPE_MINI_APP_PLAYER: &str = "MiniAppPlayer";
+// Signed by the service: a user asks to join a game, which the bot accepts or refuses
+pub const CLAIM_TYPE_MINI_APP_JOIN: &str = "MiniAppJoin";
+// Signed by the service: a player has left a game
+pub const CLAIM_TYPE_MINI_APP_LEAVE: &str = "MiniAppLeave";
 pub const CLAIM_TYPE_NCA_VAULT_EXPORT: &str = "NcaVaultExport";
 pub const CLAIM_TYPE_NCA_SUBMITTER: &str = "NcaSubmitter";
 
@@ -161,4 +180,52 @@ pub struct BotActionByCommandClaims {
     pub scope: BotActionScope,
     pub granted_permissions: BotPermissions,
     pub command: BotCommand,
+}
+
+// A game, which is played from one of a bot's MiniApp messages
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct MiniAppGame {
+    pub chat: Chat,
+    pub thread: Option<MessageIndex>,
+    pub message_id: MessageId,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct MiniAppConnectionClaims {
+    pub user_id: UserId,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct MiniAppChatClaims {
+    pub user_id: UserId,
+    pub chat: Chat,
+    // A member may join the chat's games. Someone who can only see the chat, a public group, may
+    // watch them.
+    pub member: bool,
+}
+
+// What the service needs to know of a game, from when the bot posted it
+#[derive(Serialize, Deserialize)]
+pub struct MiniAppRegistrationClaims {
+    pub bot: UserId,
+    // Where the service sends join requests, as the bot was registered when it posted the game
+    pub bot_endpoint: String,
+    // The LocalUserIndex the service writes the game's card through
+    pub bot_api_gateway: CanisterId,
+    pub game: MiniAppGame,
+    pub max_players: Option<u32>,
+    pub spectators: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct MiniAppBotClaims {
+    pub bot: UserId,
+}
+
+// A player token, and the service's calls telling a bot that a user asks to join or has left
+#[derive(Serialize, Deserialize)]
+pub struct MiniAppPlayerClaims {
+    pub bot: UserId,
+    pub game: MiniAppGame,
+    pub user_id: UserId,
 }
