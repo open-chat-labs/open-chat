@@ -17892,7 +17892,7 @@
       },
       {
         "name": "onShare",
-        "type": "(v: { chatId: string; message: string; symbol: string; network: NetworkId; address: string }) => Promise<unknown> | void",
+        "type": "(v: { chatId: string; message: string; symbol: string; network: string; address: string }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
@@ -17999,6 +17999,39 @@
         "required": false,
         "componentDefault": "false",
         "doc": "The host is still loading `tokens`: a token's page waits (neither the page nor \"Token not found\" yet)."
+      },
+      {
+        "name": "receiveNetworks",
+        "type": "ReceiveNetwork[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Receive: the host's networks for the token received (see WalletReceive)."
+      },
+      {
+        "name": "receiveNetwork",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Receive: the chosen network."
+      },
+      {
+        "name": "onReceiveNetwork",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Receive: a network picked."
       }
     ],
     "group": "features"
@@ -18286,7 +18319,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Symbol to receive; falls back to ICP, then the first receivable token."
+        "doc": "Token to receive, by its id (WalletToken.id) or symbol; falls back to ICP, then the first receivable token."
       },
       {
         "name": "handle",
@@ -18334,7 +18367,7 @@
       },
       {
         "name": "onShare",
-        "type": "(v: { chatId: string; message: string; symbol: string; network: NetworkId; address: string }) => Promise<unknown> | void",
+        "type": "(v: { chatId: string; message: string; symbol: string; network: string; address: string }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
@@ -18353,6 +18386,39 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "networks",
+        "type": "ReceiveNetwork[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's networks for the shown token, in place of the token's `nets` and `addresses`: the host knows the addresses (fetching some as they're chosen) and what each network costs. Any token works, `nets` or not."
+      },
+      {
+        "name": "network",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "With `networks`: the chosen one's id (the first without it)."
+      },
+      {
+        "name": "onNetwork",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "With `networks`: the host's ear for a pick."
       }
     ],
     "group": "features"

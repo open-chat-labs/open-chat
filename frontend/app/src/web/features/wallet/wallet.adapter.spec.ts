@@ -2,6 +2,7 @@ import type { AccountTransaction, EnhancedTokenDetails } from "@client";
 import { describe, expect, test } from "vitest";
 import {
     displayDecimals,
+    receiveNetworks,
     panelSettings,
     supportedCount,
     tokenActivity,
@@ -54,8 +55,9 @@ describe("the wallet's tokens", () => {
         expect(t.grad).toMatch(/^linear-gradient/);
     });
 
-    test("Remove is the panel's Hide; Send, Receive and Swap wait for their flows", () => {
+    test("Remove is the panel's Hide; Send and Swap wait for their flows", () => {
         expect(walletTokenActions(["send", "receive", "swap", "refresh", "remove"])).toEqual([
+            "receive",
             "refresh",
             "hide",
         ]);
@@ -167,5 +169,71 @@ describe("the wallet's catalogue", () => {
             autoConfig: false,
             tokens: ["a", "b"],
         });
+    });
+});
+
+describe("Receive's networks", () => {
+    const words = (key: string, values: Record<string, string>) =>
+        `${key}(${Object.values(values).join(",")})`;
+    const state = {
+        networks: [] as string[],
+        selectedNetwork: undefined,
+        address: "icrc-address",
+        failed: false,
+        depositNote: { kind: "none" as const },
+        arrivingToken: (network: string) =>
+            ["BTC", "ckBTC"].includes(network) ? network : undefined,
+    };
+
+    test("an IC token: the Internet Computer alone, with the address", () => {
+        expect(receiveNetworks(state, "CHAT", words)).toEqual([
+            {
+                id: "ICP",
+                label: "Internet Computer",
+                address: "icrc-address",
+                failed: false,
+                note: undefined,
+            },
+        ]);
+    });
+
+    test("BTC: both networks, the chosen one with its address and fee", () => {
+        const list = receiveNetworks(
+            {
+                ...state,
+                networks: ["BTC", "ckBTC"],
+                selectedNetwork: "BTC",
+                address: undefined,
+                depositNote: { kind: "btc", fee: "~0.0001" },
+            },
+            "BTC",
+            words,
+        );
+        expect(list.map((n) => n.label)).toEqual(["Bitcoin", "ckBTC"]);
+        // the warning names what each address takes: BTC, or ckBTC
+        expect(list.map((n) => n.token)).toEqual(["BTC", "ckBTC"]);
+        expect(list[0]).toMatchObject({
+            address: undefined,
+            note: "cryptoAccount.networkFee(~0.0001,BTC)",
+        });
+        expect(list[1].address).toBeUndefined();
+    });
+
+    test("an address that failed says so; SOL's note has its minimum and fees", () => {
+        const [sol] = receiveNetworks(
+            {
+                ...state,
+                networks: ["SOL", "ckSOL"],
+                selectedNetwork: "SOL",
+                failed: true,
+                depositNote: { kind: "sol", minimum: "0.01", firstFee: "0.002", laterFee: "0.001" },
+            },
+            "SOL",
+            words,
+        );
+        expect(sol.failed).toBe(true);
+        expect(sol.note).toBe(
+            "cryptoAccount.minimumDeposit(0.01,SOL) cryptoAccount.solDepositFee(0.002,0.001,SOL)",
+        );
     });
 });
