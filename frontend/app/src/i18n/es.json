@@ -456,8 +456,16 @@
             "webhooks": "Webhooks"
         },
         "miniApp": {
-            "failed": "No se pudo abrir esta aplicación. Puede que tengas que unirte al chat primero.",
-            "open": "Abrir"
+            "failed": "No se pudo abrir esta aplicación.",
+            "finished": "Fin del juego",
+            "join": "Unirse",
+            "play": "Jugar",
+            "playing": "{count} jugando",
+            "playingOf": "{count} de {max} jugando",
+            "view": "Ver",
+            "watch": "Mirar",
+            "watching": "{count} mirando",
+            "yourMove": "Tu turno"
         },
         "poll": {
             "desc": "Crear una encuesta en el chat actual"

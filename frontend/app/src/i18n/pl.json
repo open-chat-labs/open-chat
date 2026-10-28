@@ -456,8 +456,16 @@
             "webhooks": "Webhooki"
         },
         "miniApp": {
-            "failed": "Nie udało się otworzyć tej aplikacji. Może musisz najpierw dołączyć do czatu.",
-            "open": "Otwórz"
+            "failed": "Nie udało się otworzyć tej aplikacji.",
+            "finished": "Koniec gry",
+            "join": "Dołącz",
+            "play": "Graj",
+            "playing": "Grający: {count}",
+            "playingOf": "Grający: {count} z {max}",
+            "view": "Zobacz",
+            "watch": "Oglądaj",
+            "watching": "Oglądający: {count}",
+            "yourMove": "Twój ruch"
         },
         "poll": {
             "desc": "Utwórz ankietę w bieżącym czacie"

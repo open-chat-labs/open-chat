@@ -456,8 +456,16 @@
             "webhooks": "Webhooks"
         },
         "miniApp": {
-            "failed": "Impossible d'ouvrir cette application. Vous devrez peut-être d'abord rejoindre la discussion.",
-            "open": "Ouvrir"
+            "failed": "Impossible d'ouvrir cette application.",
+            "finished": "Partie terminée",
+            "join": "Rejoindre",
+            "play": "Jouer",
+            "playing": "{count} joueurs",
+            "playingOf": "{count} joueurs sur {max}",
+            "view": "Voir",
+            "watch": "Regarder",
+            "watching": "{count} spectateurs",
+            "yourMove": "À vous de jouer"
         },
         "poll": {
             "desc": "Créer un sondage dans le chat actuel"

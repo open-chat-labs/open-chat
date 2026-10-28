@@ -456,8 +456,16 @@
             "webhooks": "Webhook"
         },
         "miniApp": {
-            "failed": "无法打开此应用。你可能需要先加入该聊天。",
-            "open": "打开"
+            "failed": "无法打开此应用。",
+            "finished": "游戏结束",
+            "join": "加入",
+            "play": "开始玩",
+            "playing": "{count} 人在玩",
+            "playingOf": "{count}/{max} 人在玩",
+            "view": "查看",
+            "watch": "观看",
+            "watching": "{count} 人在观看",
+            "yourMove": "轮到你了"
         },
         "poll": {
             "desc": "在当前聊天中创建投票"

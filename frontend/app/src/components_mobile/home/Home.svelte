@@ -73,6 +73,8 @@
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import AnonFooter from "./AnonFooter.svelte";
     import ChitEarned from "./ChitEarned.svelte";
+    import MiniAppFrame from "./MiniAppFrame.svelte";
+    import { openMiniApp } from "@src/logic/miniApp/openMiniApp.svelte";
     import LeftPanel from "./LeftPanel.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import NoAccess from "./NoAccess.svelte";
@@ -562,6 +564,13 @@
 
 {#if $chitPopup && !$disableChit}
     <ChitEarned />
+{/if}
+
+<!-- Beside the chat rather than in the card's row, which the message list drops once it scrolls far out of view -->
+{#if openMiniApp.current !== undefined}
+    {#key openMiniApp.current.messageId}
+        <MiniAppFrame app={openMiniApp.current} onClose={() => openMiniApp.close()} />
+    {/key}
 {/if}
 
 <style lang="scss">

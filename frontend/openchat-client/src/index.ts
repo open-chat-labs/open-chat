@@ -69,6 +69,7 @@ export {
 } from "./utils/group.svelte";
 export { communityChanges, isPrivateCommunityPreview } from "./utils/community";
 export { userMessagePermissionFor } from "./utils/botMessagePermissions";
+export { miniAppAction, type MiniAppAction } from "./utils/miniApp";
 export { executionPaymentAmount, proposalFundsRequired } from "./utils/proposal";
 export {
     achievementList,

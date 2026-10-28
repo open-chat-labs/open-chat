@@ -6,8 +6,9 @@ import { EXTERNAL_CONTENT_SANDBOX } from "./externalContent";
 export const MINI_APP_SANDBOX = EXTERNAL_CONTENT_SANDBOX;
 
 // A bot serves its app at /app beside its other endpoints. Undefined unless the endpoint is https,
-// or http on this machine for a bot run locally, and isn't OpenChat's own origin, whose pages a
-// frame allowed scripts and its own origin could reach into.
+// or http on this machine for a bot run locally while OpenChat is too (only development builds may
+// frame those), and isn't OpenChat's own origin, whose pages a frame allowed scripts and its own
+// origin could reach into.
 export function miniAppUrl(botEndpoint: string, ownOrigin: string): URL | undefined {
     let url: URL;
     try {
@@ -15,9 +16,14 @@ export function miniAppUrl(botEndpoint: string, ownOrigin: string): URL | undefi
     } catch {
         return undefined;
     }
-    const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
-    const scheme = url.protocol === "https:" || (url.protocol === "http:" && local);
+    const scheme =
+        url.protocol === "https:" ||
+        (url.protocol === "http:" && isLocal(url.hostname) && isLocal(new URL(ownOrigin).hostname));
     return scheme && url.origin !== ownOrigin ? url : undefined;
+}
+
+function isLocal(hostname: string): boolean {
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".localhost");
 }
 
 // What OpenChat sends the app

@@ -456,8 +456,16 @@
             "webhooks": "Webhook"
         },
         "miniApp": {
-            "failed": "Không thể mở ứng dụng này. Có thể bạn cần tham gia cuộc trò chuyện trước.",
-            "open": "Mở"
+            "failed": "Không thể mở ứng dụng này.",
+            "finished": "Trò chơi kết thúc",
+            "join": "Tham gia",
+            "play": "Chơi",
+            "playing": "{count} người đang chơi",
+            "playingOf": "{count}/{max} người đang chơi",
+            "view": "Mở",
+            "watch": "Xem",
+            "watching": "{count} người đang xem",
+            "yourMove": "Đến lượt bạn"
         },
         "poll": {
             "desc": "Tạo một cuộc thăm dò trong cuộc trò chuyện hiện tại"

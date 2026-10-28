@@ -456,8 +456,16 @@
             "webhooks": "Webhook"
         },
         "miniApp": {
-            "failed": "Impossibile aprire questa app. Potrebbe essere necessario unirsi prima alla chat.",
-            "open": "Apri"
+            "failed": "Impossibile aprire questa app.",
+            "finished": "Partita finita",
+            "join": "Partecipa",
+            "play": "Gioca",
+            "playing": "{count} in gioco",
+            "playingOf": "{count} di {max} in gioco",
+            "view": "Visualizza",
+            "watch": "Guarda",
+            "watching": "{count} spettatori",
+            "yourMove": "Tocca a te"
         },
         "poll": {
             "desc": "Crea un sondaggio nella chat corrente"

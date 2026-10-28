@@ -456,8 +456,16 @@
             "webhooks": "Webhooks"
         },
         "miniApp": {
-            "failed": "Diese App konnte nicht geöffnet werden. Möglicherweise musst du zuerst dem Chat beitreten.",
-            "open": "Öffnen"
+            "failed": "Diese App konnte nicht geöffnet werden.",
+            "finished": "Spiel vorbei",
+            "join": "Beitreten",
+            "play": "Spielen",
+            "playing": "{count} spielen",
+            "playingOf": "{count} von {max} spielen",
+            "view": "Ansehen",
+            "watch": "Zuschauen",
+            "watching": "{count} schauen zu",
+            "yourMove": "Du bist dran"
         },
         "poll": {
             "desc": "Erstellen Sie eine Umfrage im aktuellen Chat"

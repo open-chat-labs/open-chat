@@ -13,12 +13,12 @@ describe("miniAppUrl", () => {
         );
     });
 
-    test("allows http only for a bot run on this machine", () => {
-        expect(miniAppUrl("http://localhost:4000", OPENCHAT)?.href).toBe(
-            "http://localhost:4000/app",
-        );
-        expect(miniAppUrl("http://127.0.0.1:4000", OPENCHAT)).toBeDefined();
-        expect(miniAppUrl("http://uno.example.com", OPENCHAT)).toBeUndefined();
+    test("allows http only for a bot run on this machine, while OpenChat is too", () => {
+        const local = "http://localhost:5001";
+        expect(miniAppUrl("http://localhost:4000", local)?.href).toBe("http://localhost:4000/app");
+        expect(miniAppUrl("http://127.0.0.1:4000", "http://bob.localhost:5001")).toBeDefined();
+        expect(miniAppUrl("http://uno.example.com", local)).toBeUndefined();
+        expect(miniAppUrl("http://localhost:4000", OPENCHAT)).toBeUndefined();
     });
 
     test.each(["javascript:alert(1)", "data:text/html,hi", "not a url", ""])(

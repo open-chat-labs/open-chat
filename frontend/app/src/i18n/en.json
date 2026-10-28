@@ -424,8 +424,16 @@
             "webhooks": "Webhooks"
         },
         "miniApp": {
-            "failed": "Couldn't open this app. You may need to join the chat first.",
-            "open": "Open"
+            "failed": "Couldn't open this app.",
+            "finished": "Game over",
+            "join": "Join",
+            "play": "Play",
+            "playing": "{count} playing",
+            "playingOf": "{count} of {max} playing",
+            "view": "View",
+            "watch": "Watch",
+            "watching": "{count} watching",
+            "yourMove": "Your move"
         },
         "poll": {
             "desc": "Create a poll in the current chat"

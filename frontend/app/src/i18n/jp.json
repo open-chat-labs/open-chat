@@ -456,8 +456,16 @@
             "webhooks": "ウェブフック"
         },
         "miniApp": {
-            "failed": "このアプリを開けませんでした。先にチャットに参加する必要があるかもしれません。",
-            "open": "開く"
+            "failed": "このアプリを開けませんでした。",
+            "finished": "ゲーム終了",
+            "join": "参加",
+            "play": "プレイ",
+            "playing": "{count}人がプレイ中",
+            "playingOf": "{max}人中{count}人がプレイ中",
+            "view": "表示",
+            "watch": "観戦",
+            "watching": "{count}人が観戦中",
+            "yourMove": "あなたの番です"
         },
         "poll": {
             "desc": "現在のチャットでアンケートを作成する"

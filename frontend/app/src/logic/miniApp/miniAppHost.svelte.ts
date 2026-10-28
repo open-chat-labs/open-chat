@@ -2,36 +2,28 @@
 // both trees. When the app says it's ready, it's sent a token which tells its server who the user
 // is, and later a fresh one whenever it asks. Nothing else about the user is shared with it.
 
-import type { ChatIdentifier, OpenChat } from "@client";
+import type { OpenChat } from "@client";
 import { miniAppMessage, type MiniAppHostMessage } from "@src/utils/miniApp";
-
-export type MiniAppHostArgs = {
-    chatId: ChatIdentifier;
-    threadRootMessageIndex: number | undefined;
-    messageId: bigint;
-    // the bot which posted the message
-    botId: string;
-    // the app's, which only it may talk to OpenChat from
-    origin: string;
-};
+import type { OpenMiniApp } from "./openMiniApp.svelte";
 
 export type MiniAppStatus = "connecting" | "connected" | "failed";
 
 export class MiniAppHost {
     // "failed" if no token could be got for the app when it opened, eg. the user has left the chat
     status = $state<MiniAppStatus>("connecting");
-    #client: OpenChat;
-    #args: MiniAppHostArgs;
+    #tokens: Pick<OpenChat, "miniAppToken">;
+    #app: OpenMiniApp;
     #frame: HTMLIFrameElement | undefined;
     #darkMode = false;
 
-    constructor(client: OpenChat, args: MiniAppHostArgs) {
-        this.#client = client;
-        this.#args = args;
+    constructor(tokens: Pick<OpenChat, "miniAppToken">, app: OpenMiniApp) {
+        this.#tokens = tokens;
+        this.#app = app;
     }
 
-    // Listens for the app's messages from `frame`, returning a function which stops
-    attach(frame: HTMLIFrameElement, darkMode: boolean, locale: string): () => void {
+    // Listens for the app's messages from `frame`, returning a function which stops. `locale` is read
+    // when the app is sent it, so it's current if the app reloads itself.
+    attach(frame: HTMLIFrameElement, darkMode: boolean, locale: () => string): () => void {
         this.#frame = frame;
         this.#darkMode = darkMode;
         const listener = (ev: MessageEvent) => void this.#onMessage(ev, locale);
@@ -50,12 +42,12 @@ export class MiniAppHost {
         }
     }
 
-    async #onMessage(ev: MessageEvent, locale: string): Promise<void> {
-        const message = miniAppMessage(ev, this.#frame?.contentWindow, this.#args.origin);
+    async #onMessage(ev: MessageEvent, locale: () => string): Promise<void> {
+        const message = miniAppMessage(ev, this.#frame?.contentWindow, this.#app.url.origin);
         if (message === undefined) return;
 
-        const { chatId, threadRootMessageIndex, messageId, botId } = this.#args;
-        const token = await this.#client.miniAppToken(
+        const { chatId, threadRootMessageIndex, messageId, botId } = this.#app;
+        const token = await this.#tokens.miniAppToken(
             chatId,
             threadRootMessageIndex,
             messageId,
@@ -73,7 +65,7 @@ export class MiniAppHost {
                     kind: "initialise_mini_app",
                     token,
                     dark_mode: this.#darkMode,
-                    locale,
+                    locale: locale(),
                 });
                 this.status = "connected";
                 return;
@@ -89,6 +81,6 @@ export class MiniAppHost {
     }
 
     #send(message: MiniAppHostMessage): void {
-        this.#frame?.contentWindow?.postMessage(message, this.#args.origin);
+        this.#frame?.contentWindow?.postMessage(message, this.#app.url.origin);
     }
 }

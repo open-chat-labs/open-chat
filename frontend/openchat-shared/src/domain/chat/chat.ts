@@ -144,14 +144,38 @@ export type PriceChartContent = {
 };
 
 /**
- * A bot's card for an app it hosts, eg. a game. It never changes: its Open button opens the bot's
- * app, whose page shows everything else. Only bots post them, and they can't be forwarded.
+ * A bot's card for an app it hosts, eg. a game, whose button opens the bot's app. Its text and image
+ * never change; the bot keeps the game's status, players and result up to date. Only bots post
+ * them, and they can't be forwarded.
  */
 export type MiniAppContent = {
     kind: "mini_app_content";
     // markdown, eg. "**Uno** · 2 to 4 players"
     text: string;
+    // eg. the game's artwork
+    image?: MiniAppImage;
+    maxPlayers?: number;
+    // whether members who aren't playing can open the app once the game has started
+    spectators: boolean;
+    // how many members who aren't playing have the app open, which the bot counts, so they stay
+    // anonymous
+    spectatorCount: number;
+    status: MiniAppStatus;
+    // the members playing, in the bot's order, which can include the bot itself
+    players: string[];
+    // the players whose move it is, if the game has turns
+    waitingFor?: string[];
+    // eg. "Bob won", once the game is finished
+    result?: string;
 };
+
+export type MiniAppImage = DataContent & {
+    width: number;
+    height: number;
+    mimeType: string;
+};
+
+export type MiniAppStatus = "open" | "active" | "finished";
 
 export type PriceChartSeries = {
     // a token OpenChat lists, by its ledger, or any other coin, by its CoinGecko id

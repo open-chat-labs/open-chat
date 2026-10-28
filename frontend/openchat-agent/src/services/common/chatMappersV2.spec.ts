@@ -298,17 +298,82 @@ describe("the gate a new chat is created with", () => {
 });
 
 describe("mini app content mapping", () => {
-    test("maps the card's text", () => {
-        const api: TMessageContent = { MiniApp: { text: "**Uno** · 2 to 4 players" } };
+    const alice = Principal.selfAuthenticating(new Uint8Array(32).fill(1));
+    const bob = Principal.selfAuthenticating(new Uint8Array(32).fill(2));
+    const bucket = Principal.selfAuthenticating(new Uint8Array(32).fill(3));
+
+    test("maps the card and the game's state", () => {
+        const api: TMessageContent = {
+            MiniApp: {
+                text: "**Uno** · 2 to 4 players",
+                image: {
+                    width: 600,
+                    height: 400,
+                    mime_type: "image/png",
+                    blob_reference: { canister_id: bucket.toUint8Array(), blob_id: 7n },
+                },
+                max_players: 4,
+                spectators: true,
+                spectator_count: 3,
+                status: "Active",
+                players: [alice.toUint8Array(), bob.toUint8Array()],
+                waiting_for: [bob.toUint8Array()],
+                result: undefined,
+            },
+        };
 
         expect(messageContent(api, "sender")).toEqual({
             kind: "mini_app_content",
             text: "**Uno** · 2 to 4 players",
+            image: {
+                width: 600,
+                height: 400,
+                mimeType: "image/png",
+                blobReference: { canisterId: bucket.toText(), blobId: 7n },
+            },
+            maxPlayers: 4,
+            spectators: true,
+            spectatorCount: 3,
+            status: "active",
+            players: [alice.toText(), bob.toText()],
+            waitingFor: [bob.toText()],
+            result: undefined,
         });
     });
 
+    test("maps each status", () => {
+        for (const [api, domain] of [
+            ["Open", "open"],
+            ["Active", "active"],
+            ["Finished", "finished"],
+        ] as const) {
+            const content = messageContent(
+                {
+                    MiniApp: {
+                        text: "Uno",
+                        spectators: false,
+                        spectator_count: 0,
+                        status: api,
+                        players: [],
+                    },
+                },
+                "sender",
+            );
+            expect(content.kind === "mini_app_content" && content.status).toBe(domain);
+        }
+    });
+
     test("isn't sent: only bots post them", () => {
-        expect(() => apiMessageContent({ kind: "mini_app_content", text: "Uno" })).toThrow();
+        expect(() =>
+            apiMessageContent({
+                kind: "mini_app_content",
+                text: "Uno",
+                spectators: false,
+                spectatorCount: 0,
+                status: "open",
+                players: [],
+            }),
+        ).toThrow();
     });
 });
 

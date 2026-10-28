@@ -401,11 +401,6 @@ export const MessageReminderContent = /* @__PURE__ */ Type.Object({
 export type Reaction = Static<typeof Reaction>;
 export const Reaction = /* @__PURE__ */ Type.String();
 
-export type MiniAppContent = Static<typeof MiniAppContent>;
-export const MiniAppContent = /* @__PURE__ */ Type.Object({
-    text: Type.String(),
-});
-
 export type MessageIndex = Static<typeof MessageIndex>;
 export const MessageIndex = /* @__PURE__ */ Type.Number();
 
@@ -557,6 +552,13 @@ export const AuthorityReportState = /* @__PURE__ */ Type.Union([
             urgent: Type.Optional(Type.Boolean()),
         }),
     }),
+]);
+
+export type MiniAppStatus = Static<typeof MiniAppStatus>;
+export const MiniAppStatus = /* @__PURE__ */ Type.Union([
+    Type.Literal("Open"),
+    Type.Literal("Active"),
+    Type.Literal("Finished"),
 ]);
 
 export type ChatMetrics = Static<typeof ChatMetrics>;
@@ -5653,6 +5655,14 @@ export const GroupCallDismissedNotification = /* @__PURE__ */ Type.Object({
     mc: Type.Number(),
 });
 
+export type MiniAppImage = Static<typeof MiniAppImage>;
+export const MiniAppImage = /* @__PURE__ */ Type.Object({
+    width: Type.Number(),
+    height: Type.Number(),
+    mime_type: Type.String(),
+    blob_reference: BlobReference,
+});
+
 export type GroupCreated = Static<typeof GroupCreated>;
 export const GroupCreated = /* @__PURE__ */ Type.Object({
     name: Type.String(),
@@ -6219,6 +6229,18 @@ export const GroupUnfrozen = /* @__PURE__ */ Type.Object({
     unfrozen_by: UserId,
 });
 
+export type OptionUpdateUserIds = Static<typeof OptionUpdateUserIds>;
+export const OptionUpdateUserIds = /* @__PURE__ */ Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: Type.Array(UserId),
+        }),
+    ],
+    { default: "NoChange" },
+);
+
 export type EventsTimeToLiveUpdated = Static<typeof EventsTimeToLiveUpdated>;
 export const EventsTimeToLiveUpdated = /* @__PURE__ */ Type.Object({
     updated_by: UserId,
@@ -6464,6 +6486,15 @@ export type ReplyContext = Static<typeof ReplyContext>;
 export const ReplyContext = /* @__PURE__ */ Type.Object({
     chat_if_other: Type.Optional(Type.Tuple([Chat, Type.Union([MessageIndex, Type.Null()])])),
     event_index: EventIndex,
+});
+
+export type MiniAppUpdate = Static<typeof MiniAppUpdate>;
+export const MiniAppUpdate = /* @__PURE__ */ Type.Object({
+    status: Type.Optional(MiniAppStatus),
+    players: Type.Optional(Type.Array(UserId)),
+    spectator_count: Type.Optional(Type.Number()),
+    waiting_for: OptionUpdateUserIds,
+    result: OptionUpdateString,
 });
 
 export type DirectCallDismissedNotification = Static<typeof DirectCallDismissedNotification>;
@@ -8038,6 +8069,19 @@ export const VideoContent = /* @__PURE__ */ Type.Object({
     video_blob_reference: Type.Optional(BlobReference),
 });
 
+export type MiniAppContent = Static<typeof MiniAppContent>;
+export const MiniAppContent = /* @__PURE__ */ Type.Object({
+    text: Type.String(),
+    image: Type.Optional(MiniAppImage),
+    max_players: Type.Optional(Type.Number()),
+    spectators: Type.Boolean(),
+    spectator_count: Type.Number(),
+    status: MiniAppStatus,
+    players: Type.Array(UserId),
+    waiting_for: Type.Optional(Type.Array(UserId)),
+    result: Type.Optional(Type.String()),
+});
+
 export type GroupPermissions = Static<typeof GroupPermissions>;
 export const GroupPermissions = /* @__PURE__ */ Type.Object({
     change_roles: GroupPermissionRole,
@@ -8659,6 +8703,14 @@ export const LocalUserIndexClaimPrizeResponse = /* @__PURE__ */ Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type LocalUserIndexBotUpdateMiniAppArgs = Static<typeof LocalUserIndexBotUpdateMiniAppArgs>;
+export const LocalUserIndexBotUpdateMiniAppArgs = /* @__PURE__ */ Type.Object({
+    chat_context: BotChatContext,
+    thread: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    update: MiniAppUpdate,
+});
 
 export type LocalUserIndexBotChatSummaryArgs = Static<typeof LocalUserIndexBotChatSummaryArgs>;
 export const LocalUserIndexBotChatSummaryArgs = /* @__PURE__ */ Type.Object({

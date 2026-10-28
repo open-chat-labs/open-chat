@@ -81,6 +81,7 @@ import type {
     PollVotes,
     PriceChartContent,
     MiniAppContent,
+    MiniAppStatus,
     PrizeContent,
     PrizeContentInitial,
     PrizeWinnerContent,
@@ -222,6 +223,7 @@ import type {
     GiphyContent as TGiphyContent,
     PriceChartContent as TPriceChartContent,
     MiniAppContent as TMiniAppContent,
+    MiniAppStatus as TMiniAppStatus,
     GiphyImageVariant as TGiphyImageVariant,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterThreadDetails as TGroupCanisterThreadDetails,
@@ -1256,7 +1258,34 @@ function proposalRewardStatus(value: TProposalRewardStatus): ProposalRewardStatu
 }
 
 export function miniAppContent(value: TMiniAppContent): MiniAppContent {
-    return { kind: "mini_app_content", text: value.text };
+    return {
+        kind: "mini_app_content",
+        text: value.text,
+        image: mapOptional(value.image, (image) => ({
+            width: image.width,
+            height: image.height,
+            mimeType: image.mime_type,
+            blobReference: blobReference(image.blob_reference),
+        })),
+        maxPlayers: mapOptional(value.max_players, identity),
+        spectators: value.spectators,
+        spectatorCount: value.spectator_count,
+        status: miniAppStatus(value.status),
+        players: value.players.map(principalBytesToString),
+        waitingFor: mapOptional(value.waiting_for, (users) => users.map(principalBytesToString)),
+        result: mapOptional(value.result, identity),
+    };
+}
+
+function miniAppStatus(value: TMiniAppStatus): MiniAppStatus {
+    switch (value) {
+        case "Open":
+            return "open";
+        case "Active":
+            return "active";
+        case "Finished":
+            return "finished";
+    }
 }
 
 export function priceChartContent(value: TPriceChartContent): PriceChartContent {
