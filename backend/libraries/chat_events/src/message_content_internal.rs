@@ -3,6 +3,7 @@ use crate::DeletedByInternal;
 use candid::{CandidType, Principal};
 use constants::{MEMO_PRIZE_FEE, MEMO_PRIZE_REFUND, OPENCHAT_TREASURY_CANISTER_ID, PRIZE_FEE_PERCENT};
 use ledger_utils::{create_pending_transaction, format_crypto_amount};
+use oc_error_codes::{OCError, OCErrorCode};
 use search::simple::Document;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_bytes::ByteBuf;
@@ -248,6 +249,27 @@ impl MessageContentInternal {
             | MessageContentInternal::Encrypted(_)
             | MessageContentInternal::Custom(_) => None,
         }
+    }
+
+    // A user's edit only changes the text: a text message's text, or the caption of an image, video,
+    // audio, file or gif. Everything else about the message, the image say, stays as it was.
+    pub fn with_text(&self, text: Option<String>) -> Result<MessageContentInternal, OCError> {
+        let text = text.filter(|t| !t.is_empty());
+        if text.as_ref().is_some_and(|t| t.chars().count() > MAX_TEXT_LENGTH_USIZE) {
+            return Err(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH).into());
+        }
+
+        let mut content = self.clone();
+        match &mut content {
+            MessageContentInternal::Text(c) => c.text = text.ok_or(ContentValidationError::Empty)?,
+            MessageContentInternal::Image(c) => c.caption = text,
+            MessageContentInternal::Video(c) => c.caption = text,
+            MessageContentInternal::Audio(c) => c.caption = text,
+            MessageContentInternal::File(c) => c.caption = text,
+            MessageContentInternal::Giphy(c) => c.caption = text,
+            _ => return Err(OCErrorCode::InvalidMessageType.with_message("Only text and captions can be edited")),
+        }
+        Ok(content)
     }
 
     pub fn moderation_input(&self) -> ModerationInput {
@@ -2583,5 +2605,84 @@ mod price_chart_tests {
         assert_eq!(content.sources[0].url, "https://www.coingecko.com");
         assert!(matches!(read.content_type(), MessageContentType::PriceChart));
         assert_eq!(read.text(), Some("ADA · 1 day"));
+    }
+}
+
+#[cfg(test)]
+mod with_text_tests {
+    use super::*;
+
+    fn image(caption: Option<&str>) -> MessageContentInternal {
+        MessageContentInternal::Image(
+            ImageContent {
+                width: 10,
+                height: 20,
+                thumbnail_data: ThumbnailData("thumbnail".to_string()),
+                caption: caption.map(|c| c.to_string()),
+                mime_type: "image/png".to_string(),
+                blob_reference: Some(BlobReference {
+                    canister_id: Principal::from_slice(&[1]),
+                    blob_id: 7,
+                }),
+            }
+            .into(),
+        )
+    }
+
+    fn text(text: &str) -> MessageContentInternal {
+        MessageContentInternal::Text(TextContentInternal { text: text.to_string() })
+    }
+
+    #[test]
+    fn a_text_message_gets_the_new_text() {
+        let edited = text("hello").with_text(Some("goodbye".to_string())).unwrap();
+        assert_eq!(edited.text(), Some("goodbye"));
+    }
+
+    #[test]
+    fn a_text_message_cant_lose_its_text() {
+        assert!(text("hello").with_text(None).is_err());
+        assert!(text("hello").with_text(Some(String::new())).is_err());
+    }
+
+    #[test]
+    fn an_image_keeps_everything_but_its_caption() {
+        let MessageContentInternal::Image(edited) = image(Some("old")).with_text(Some("new".to_string())).unwrap() else {
+            panic!("The image became another type");
+        };
+        assert_eq!(edited.caption.as_deref(), Some("new"));
+        assert_eq!(edited.blob_reference.map(|b| b.blob_id), Some(7));
+        assert_eq!(edited.width, 10);
+
+        let removed = image(Some("old")).with_text(None).unwrap();
+        assert_eq!(removed.text(), None);
+        assert!(matches!(removed, MessageContentInternal::Image(_)));
+    }
+
+    #[test]
+    fn text_over_the_limit_is_refused() {
+        let too_long = "a".repeat(MAX_TEXT_LENGTH_USIZE + 1);
+        assert!(text("hello").with_text(Some(too_long.clone())).is_err());
+        assert!(image(None).with_text(Some(too_long)).is_err());
+        assert!(text("hello").with_text(Some("é".repeat(MAX_TEXT_LENGTH_USIZE))).is_ok());
+    }
+
+    #[test]
+    fn a_poll_cant_be_edited() {
+        let poll = MessageContentInternal::Poll(PollContentInternal {
+            config: PollConfig {
+                text: Some("Which?".to_string()),
+                options: vec!["A".to_string(), "B".to_string()],
+                end_date: None,
+                anonymous: false,
+                show_votes_before_end_date: true,
+                allow_multiple_votes_per_user: false,
+                allow_user_to_change_vote: true,
+            }
+            .into(),
+            votes: HashMap::new(),
+            ended: false,
+        });
+        assert!(poll.with_text(Some("Which now?".to_string())).is_err());
     }
 }

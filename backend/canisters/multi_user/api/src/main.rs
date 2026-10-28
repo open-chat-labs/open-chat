@@ -43,6 +43,7 @@ fn main() {
     generate_ts_method!(multi_user, delete_group);
     generate_ts_method!(multi_user, delete_messages);
     generate_ts_method!(multi_user, delete_saved_crypto_account);
+    generate_ts_method!(multi_user, edit_message_text);
     generate_ts_method!(multi_user, edit_message_v2);
     generate_ts_method!(multi_user, generate_btc_address);
     generate_ts_method!(multi_user, generate_one_sec_address);

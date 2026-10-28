@@ -1,7 +1,7 @@
 use crate::User;
 use chat_events::{
-    EditMessageArgs, EditMessageSuccess, EventPusher, MessageContentInternal, PushMessageArgs, TextContentInternal,
-    ValidateNewMessageContentResult,
+    EditMessageSuccess, EventPusher, MessageContentInternal, PushMessageArgs, TextContentInternal,
+    UpdateUnfinalisedBotMessageArgs, ValidateNewMessageContentResult,
 };
 use constants::OPENCHAT_BOT_USER_ID;
 use multi_user_canister::c2c_bot_send_message::Args;
@@ -134,16 +134,16 @@ pub fn send<P: EventPusher>(
         let EditMessageSuccess {
             message_index, event, ..
         } = chat
-            .edit_message::<P>(
-                EditMessageArgs {
-                    sender: bot_id,
+            .update_unfinalised_bot_message::<P>(
+                UpdateUnfinalisedBotMessageArgs {
+                    bot: bot_id,
                     min_visible_event_index: EventIndex::default(),
                     thread_root_message_index: message.thread_root_message_index,
                     message_id: message.message_id,
                     content: message.content,
-                    block_level_markdown: Some(message.block_level_markdown),
+                    block_level_markdown: message.block_level_markdown,
                     og_previews: message.og_previews,
-                    finalise_bot_message: message.finalised,
+                    finalise: message.finalised,
                     now,
                 },
                 None,

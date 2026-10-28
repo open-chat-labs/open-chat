@@ -18,8 +18,8 @@ use multi_user_canister::{
 };
 use types::{
     CanisterId, Chat, DirectChatUserNotificationPayload, DirectMessageNotification, DirectMessageTipped,
-    DirectReactionAddedNotification, EventIndex, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, OCResult, OgPreview, P2PSwapStatus, TimestampMillis, UserId, UserType, VideoCallPresence,
+    DirectReactionAddedNotification, EventIndex, EventWrapper, Message, MessageContent, MessageId, MessageIndex, OCResult,
+    OgPreview, P2PSwapStatus, TimestampMillis, UserId, UserType, VideoCallPresence,
 };
 
 // Whether a sender is one a canister of this kind can act for: a MultiUser canister acts only for the
@@ -194,10 +194,9 @@ pub fn edit_message(chat: &mut DirectChat, sender: UserId, args: C2CEditMessageA
             min_visible_event_index: EventIndex::default(),
             thread_root_message_index,
             message_id: args.message_id,
-            content: MessageContentInitial::from(args.content).into(),
+            text: args.content.text().map(|t| t.to_string()),
             block_level_markdown: args.block_level_markdown,
             og_previews: args.og_previews,
-            finalise_bot_message: false,
             now,
         },
         None,

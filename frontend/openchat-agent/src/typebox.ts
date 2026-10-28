@@ -3377,6 +3377,17 @@ export const CommunityUnblockUserArgs = /* @__PURE__ */ Type.Object({
     user_id: UserId,
 });
 
+export type CommunityEditMessageTextArgs = Static<typeof CommunityEditMessageTextArgs>;
+export const CommunityEditMessageTextArgs = /* @__PURE__ */ Type.Object({
+    channel_id: ChannelId,
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    text: Type.Optional(Type.String()),
+    block_level_markdown: Type.Optional(Type.Boolean()),
+    new_achievement: Type.Boolean(),
+    og_previews: Type.Array(OgPreview),
+});
+
 export type CommunityExploreChannelsArgs = Static<typeof CommunityExploreChannelsArgs>;
 export const CommunityExploreChannelsArgs = /* @__PURE__ */ Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
@@ -4583,6 +4594,16 @@ export const GroupUnblockUserArgs = /* @__PURE__ */ Type.Object({
     user_id: UserId,
 });
 
+export type GroupEditMessageTextArgs = Static<typeof GroupEditMessageTextArgs>;
+export const GroupEditMessageTextArgs = /* @__PURE__ */ Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    text: Type.Optional(Type.String()),
+    block_level_markdown: Type.Optional(Type.Boolean()),
+    new_achievement: Type.Boolean(),
+    og_previews: Type.Array(OgPreview),
+});
+
 export type GroupEventsWindowArgs = Static<typeof GroupEventsWindowArgs>;
 export const GroupEventsWindowArgs = /* @__PURE__ */ Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
@@ -4934,6 +4955,16 @@ export const UserChannelSummaryUpdates = /* @__PURE__ */ Type.Object({
     threads_read: Type.Record(MessageIndex, MessageIndex),
     archived: Type.Optional(Type.Boolean()),
     date_read_pinned: Type.Optional(Type.BigInt()),
+});
+
+export type UserEditMessageTextArgs = Static<typeof UserEditMessageTextArgs>;
+export const UserEditMessageTextArgs = /* @__PURE__ */ Type.Object({
+    user_id: UserId,
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    text: Type.Optional(Type.String()),
+    block_level_markdown: Type.Optional(Type.Boolean()),
+    og_previews: Type.Array(OgPreview),
 });
 
 export type UserContactsContact = Static<typeof UserContactsContact>;

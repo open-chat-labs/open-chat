@@ -6425,11 +6425,12 @@ export class OpenChat {
     setSoftDisabled = setSoftDisabled;
     gaTrack = gaTrack;
 
-    async editMessageWithAttachment(
+    // An edit only changes the text: a text message's text, or the caption of an image, video,
+    // audio, file or gif. A file pasted or dropped while editing isn't part of the edit.
+    async editMessage(
         messageContext: MessageContext,
         textContent: string | undefined,
         blockLevelMarkdown: boolean,
-        attachment: AttachmentContent | undefined,
         editingEvent: EventWrapper<Message>,
     ): Promise<boolean> {
         const chat = chatSummariesStore.value.get(messageContext.chatId);
@@ -6438,17 +6439,15 @@ export class OpenChat {
             return Promise.resolve(false);
         }
 
-        if (textContent || attachment) {
+        const captioned = isCaptionedContent(editingEvent.event.content)
+            ? editingEvent.event.content
+            : undefined;
+
+        if (textContent || captioned) {
             // The draft, which holds the message being edited, is done with. (Done before looking up
             // those mentioned, else a message sent meanwhile would be taken as another edit.)
             localUpdates.draftMessages.delete(messageContext);
             textContent = (await this.#expandTypedMentions(messageContext, textContent, [])).text;
-
-            const captioned =
-                attachment ??
-                (isCaptionedContent(editingEvent.event.content)
-                    ? editingEvent.event.content
-                    : undefined);
 
             const msg: Message = {
                 ...editingEvent.event,

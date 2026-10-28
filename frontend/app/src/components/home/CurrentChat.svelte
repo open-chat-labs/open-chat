@@ -258,11 +258,10 @@
         const [text, mentioned, blockLevelMarkdown] = detail;
         if ($selectedChatDraftMessageStore?.editingEvent !== undefined) {
             client
-                .editMessageWithAttachment(
+                .editMessage(
                     messageContext,
                     text,
                     blockLevelMarkdown,
-                    $selectedChatDraftMessageStore.attachment,
                     $selectedChatDraftMessageStore.editingEvent,
                 )
                 .then((success) => {

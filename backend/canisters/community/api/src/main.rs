@@ -52,6 +52,7 @@ fn main() {
     generate_ts_method!(community, delete_webhook);
     generate_ts_method!(community, disable_invite_code);
     generate_ts_method!(community, edit_message);
+    generate_ts_method!(community, edit_message_text);
     generate_ts_method!(community, enable_invite_code);
     generate_ts_method!(community, follow_thread);
     generate_ts_method!(community, import_group);

@@ -34,6 +34,7 @@ pub mod delete_history;
 pub mod delete_messages;
 pub mod delete_webhook;
 pub mod disable_invite_code;
+pub mod edit_message_text;
 pub mod edit_message_v2;
 pub mod enable_invite_code;
 pub mod end_video_call_v2;

@@ -429,25 +429,82 @@ impl ChatEvents {
         )
     }
 
+    // An edit only changes the text: a text message's text, or the caption of an image, video, audio,
+    // file or gif (see `MessageContentInternal::with_text`)
     pub fn edit_message<P: EventPusher>(
         &mut self,
         args: EditMessageArgs,
         event_pusher: Option<P>,
     ) -> OCResult<EditMessageSuccess> {
-        let sender = args.sender;
-        let thread_root_message_index = args.thread_root_message_index;
-        let now = args.now;
+        let text = args.text;
+        self.update_message_content(
+            ContentUpdate {
+                sender: args.sender,
+                min_visible_event_index: args.min_visible_event_index,
+                thread_root_message_index: args.thread_root_message_index,
+                message_id: args.message_id,
+                block_level_markdown: args.block_level_markdown,
+                og_previews: args.og_previews,
+                finalise_bot_message: false,
+                now: args.now,
+            },
+            |message| message.content.with_text(text),
+            event_pusher,
+        )
+    }
+
+    // A bot replacing the content of a message it hasn't finished sending, eg. a "Thinking ..."
+    // placeholder with the image it was making. Unlike an edit, this can change the message's type.
+    pub fn update_unfinalised_bot_message<P: EventPusher>(
+        &mut self,
+        args: UpdateUnfinalisedBotMessageArgs,
+        event_pusher: Option<P>,
+    ) -> OCResult<EditMessageSuccess> {
+        let content = args.content;
+        self.update_message_content(
+            ContentUpdate {
+                sender: args.bot,
+                min_visible_event_index: args.min_visible_event_index,
+                thread_root_message_index: args.thread_root_message_index,
+                message_id: args.message_id,
+                block_level_markdown: Some(args.block_level_markdown),
+                og_previews: args.og_previews,
+                finalise_bot_message: args.finalise,
+                now: args.now,
+            },
+            |message| {
+                if message.bot_context().is_some_and(|b| !b.finalised) {
+                    Ok(content)
+                } else {
+                    Err(OCErrorCode::MessageAlreadyFinalized.into())
+                }
+            },
+            event_pusher,
+        )
+    }
+
+    fn update_message_content<P: EventPusher>(
+        &mut self,
+        update: ContentUpdate,
+        new_content: impl FnOnce(&MessageInternal) -> OCResult<MessageContentInternal>,
+        event_pusher: Option<P>,
+    ) -> OCResult<EditMessageSuccess> {
+        let sender = update.sender;
+        let thread_root_message_index = update.thread_root_message_index;
+        let now = update.now;
         let chat = self.chat;
         let anonymized_id = self.anonymized_id.clone();
 
         match self.update_message(
             thread_root_message_index,
-            args.message_id.into(),
-            args.min_visible_event_index,
+            update.message_id.into(),
+            update.min_visible_event_index,
             now,
             true,
             ChatEventType::MessageEdited,
-            |message, event| Self::edit_message_inner(message, event, args, chat, anonymized_id, event_pusher),
+            |message, event| {
+                Self::update_message_content_inner(message, event, update, new_content, chat, anonymized_id, event_pusher)
+            },
         ) {
             Ok(result) => {
                 let bot_notification = result.bot_notification;
@@ -486,10 +543,11 @@ impl ChatEvents {
     }
 
     #[expect(clippy::type_complexity)]
-    fn edit_message_inner<P: EventPusher>(
+    fn update_message_content_inner<P: EventPusher>(
         message: &mut MessageInternal,
         event: EventMetaData,
-        args: EditMessageArgs,
+        args: ContentUpdate,
+        new_content: impl FnOnce(&MessageInternal) -> OCResult<MessageContentInternal>,
         chat: Chat,
         anonymized_id: String,
         mut event_pusher: Option<P>,
@@ -501,8 +559,10 @@ impl ChatEvents {
             return Err(UpdateEventError::NoChange(Err(OCErrorCode::InitiatorNotAuthorized.into())));
         }
 
+        let content = new_content(message).map_err(|e| UpdateEventError::NoChange(Err(e)))?;
+
         let existing_text = message.content.text();
-        let new_text = args.content.text();
+        let new_text = content.text();
         let block_level_markdown_update = args.block_level_markdown.filter(|md| *md != message.block_level_markdown);
 
         if new_text != existing_text || block_level_markdown_update.is_some() || args.og_previews != message.og_previews {
@@ -512,7 +572,7 @@ impl ChatEvents {
 
             let old_length = message.content.text_length();
             let old_document = Document::from(&message.content);
-            message.content = args.content;
+            message.content = content;
             message.og_previews = args.og_previews;
 
             // Deleted messages aren't in the search index, so there is nothing to update
@@ -3126,11 +3186,33 @@ pub struct EditMessageArgs {
     pub min_visible_event_index: EventIndex,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub content: MessageContentInternal,
+    pub text: Option<String>,
     pub block_level_markdown: Option<bool>,
     pub og_previews: Vec<OgPreview>,
-    pub finalise_bot_message: bool,
     pub now: TimestampMillis,
+}
+
+pub struct UpdateUnfinalisedBotMessageArgs {
+    pub bot: UserId,
+    pub min_visible_event_index: EventIndex,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+    pub content: MessageContentInternal,
+    pub block_level_markdown: bool,
+    pub og_previews: Vec<OgPreview>,
+    pub finalise: bool,
+    pub now: TimestampMillis,
+}
+
+struct ContentUpdate {
+    sender: UserId,
+    min_visible_event_index: EventIndex,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    block_level_markdown: Option<bool>,
+    og_previews: Vec<OgPreview>,
+    finalise_bot_message: bool,
+    now: TimestampMillis,
 }
 
 pub struct DeleteUndeleteMessagesArgs {

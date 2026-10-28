@@ -72,6 +72,7 @@ import type {
 } from "@shared";
 import {
     CanisterMethodNotFoundError,
+    getContentAsText,
     isCanisterGoneError,
     MAX_EVENTS,
     MAX_MESSAGES,
@@ -106,7 +107,7 @@ import {
     CommunityDeleteWebhookArgs,
     CommunityDeletedMessageArgs,
     CommunityDeletedMessageResponse,
-    CommunityEditMessageArgs,
+    CommunityEditMessageTextArgs,
     CommunityEnableInviteCodeResponse,
     CommunityEventsArgs,
     CommunityEventsByIndexArgs,
@@ -487,26 +488,22 @@ export class CommunityClient
         blockLevelMarkdown: boolean | undefined,
         newAchievement: boolean,
     ): Promise<EditMessageResponse> {
-        return new DataClient(this.identity, this.agent, this.config)
-            .uploadData(message.content, [chatId.communityId])
-            .then((content) => {
-                return this.update(
-                    chatId.communityId,
-                    "edit_message",
-                    {
-                        channel_id: toBigInt32(chatId.channelId),
-                        thread_root_message_index: threadRootMessageIndex,
-                        content: apiMessageContent(content ?? message.content),
-                        message_id: message.messageId,
-                        block_level_markdown: blockLevelMarkdown,
-                        new_achievement: newAchievement,
-                        og_previews: message.ogPreviews.map(apiOgPreview),
-                    },
-                    unitResult,
-                    CommunityEditMessageArgs,
-                    UnitResult,
-                );
-            });
+        return this.update(
+            chatId.communityId,
+            "edit_message_text",
+            {
+                channel_id: toBigInt32(chatId.channelId),
+                thread_root_message_index: threadRootMessageIndex,
+                message_id: message.messageId,
+                text: getContentAsText(message.content),
+                block_level_markdown: blockLevelMarkdown,
+                new_achievement: newAchievement,
+                og_previews: message.ogPreviews.map(apiOgPreview),
+            },
+            unitResult,
+            CommunityEditMessageTextArgs,
+            UnitResult,
+        );
     }
 
     enableInviteCode(communityId: string): Promise<EnableInviteCodeResponse> {

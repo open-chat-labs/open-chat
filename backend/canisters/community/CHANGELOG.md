@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Let bots delete their own messages autonomously, without the DeleteMessages permission ([#10283](https://github.com/open-chat-labs/open-chat/pull/10283))
+- Add `edit_message_text`, and only let an edit, a user's or a bot's, change a message's text or caption ([#10298](https://github.com/open-chat-labs/open-chat/pull/10298))
 
 ## [[2.0.2196](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2196-community)] - 2026-10-27
 

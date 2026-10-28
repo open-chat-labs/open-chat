@@ -28,6 +28,7 @@ generate_msgpack_update_call!(change_role);
 generate_msgpack_update_call!(convert_into_community);
 generate_msgpack_update_call!(delete_history);
 generate_msgpack_update_call!(delete_messages);
+generate_msgpack_update_call!(edit_message_text);
 generate_msgpack_update_call!(edit_message_v2);
 generate_msgpack_update_call!(enable_invite_code);
 generate_update_call!(end_video_call_v2);

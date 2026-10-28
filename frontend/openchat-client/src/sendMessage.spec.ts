@@ -460,13 +460,7 @@ describe("sending from the composer", () => {
             async function edit(text: string, messageContext: MessageContext = context) {
                 const editing = shown();
                 if (editing === undefined) throw new Error("the message isn't in the chat");
-                void client.editMessageWithAttachment(
-                    messageContext,
-                    text,
-                    false,
-                    undefined,
-                    editing,
-                );
+                void client.editMessage(messageContext, text, false, editing);
                 await vi.advanceTimersByTimeAsync(0);
             }
 
@@ -735,7 +729,7 @@ describe("sending from the composer", () => {
                     messagePreviews: [],
                 },
             } as unknown as EventWrapper<Message>;
-            void client.editMessageWithAttachment(context, "hi @xavier", false, undefined, editing);
+            void client.editMessage(context, "hi @xavier", false, editing);
             await vi.advanceTimersByTimeAsync(0);
             expect(edits[0]?.msg.content).toEqual({
                 kind: "text_content",
