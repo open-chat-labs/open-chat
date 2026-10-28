@@ -597,6 +597,11 @@ impl GroupChatCore {
                 && bot_now.initiator.command() == bot_message.command.as_ref()
                 && !bot_message.finalised
             {
+                // A mini app's card never changes, even before it's finalised, as the website opens
+                // the bot's app from it
+                if matches!(message.content, MessageContentInternal::MiniApp(_)) {
+                    return Err(OCErrorCode::InvalidMessageType.with_message("A mini app's card can't be changed"));
+                }
                 return self.update_bot_message(
                     caller,
                     finalised,
