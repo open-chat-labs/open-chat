@@ -6,7 +6,8 @@ use oc_error_codes::OCErrorCode;
 use types::{CanisterId, Chat};
 
 // A bot changes what its MiniApp card shows as its game goes on, in a group or channel. It needs no
-// permission beyond being installed there: the group or community checks the card is the bot's own.
+// particular permission: the group or community checks the card is the bot's own, and, outside a
+// command, that the bot is installed to act autonomously.
 #[update(candid = true, msgpack = true)]
 async fn bot_update_mini_app(args: Args) -> Response {
     let context = match mutate_state(|state| extract_access_context_from_chat_context(args.chat_context, state)) {
@@ -30,6 +31,7 @@ async fn bot_update_mini_app(args: Args) -> Response {
             let canister_id = CanisterId::from(community_id);
             let c2c_args = community_canister::c2c_bot_update_mini_app::Args {
                 bot_id: context.bot_id,
+                initiator: context.initiator,
                 channel_id,
                 thread,
                 message_id: args.message_id,
@@ -45,6 +47,7 @@ async fn bot_update_mini_app(args: Args) -> Response {
             let canister_id = CanisterId::from(chat_id);
             let c2c_args = group_canister::c2c_bot_update_mini_app::Args {
                 bot_id: context.bot_id,
+                initiator: context.initiator,
                 thread,
                 message_id: args.message_id,
                 update: args.update,

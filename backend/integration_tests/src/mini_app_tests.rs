@@ -1,6 +1,6 @@
 use crate::bot_tests::default_bot_definition;
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use candid::Principal;
 use local_user_index_canister::chat_events::{EventsByIndexArgs, EventsSelectionCriteria};
@@ -159,10 +159,9 @@ fn a_bot_without_the_mini_app_permission_cant_post_one() {
     );
 }
 
-// A bot can replace a message it hasn't finished sending, eg. a "Thinking ..." placeholder, but not a
-// card, which never changes
+// A card is sent whole: only its game's state changes, which the bot updates
 #[test]
-fn a_bot_cant_replace_a_card_it_hasnt_finished_sending() {
+fn a_card_is_sent_finalised() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -173,10 +172,10 @@ fn a_bot_cant_replace_a_card_it_hasnt_finished_sending() {
 
     let Setup {
         owner,
-        member,
         community_id,
         channel_id,
         local_user_index,
+        ..
     } = setup(env, canister_ids, *controller);
     let bot_principal = install_bot(
         env,
@@ -186,48 +185,26 @@ fn a_bot_cant_replace_a_card_it_hasnt_finished_sending() {
         community_id,
         MessagePermission::MiniApp,
     );
-    let chat = Chat::Channel(community_id, channel_id);
-    let message_id = random_from_u128();
-    let send = |env: &mut PocketIc, content: BotMessageContent, finalised: bool| {
-        client::local_user_index::bot_send_message(
-            env,
-            bot_principal,
-            local_user_index,
-            &local_user_index_canister::bot_send_message::Args {
-                chat_context: BotChatContext::Autonomous(chat),
-                thread: None,
-                message_id: Some(message_id),
-                replies_to: None,
-                content,
-                block_level_markdown: false,
-                finalised,
-                og_previews: None,
-                bridged_from: None,
-            },
-        )
-    };
 
-    let response = send(env, BotMessageContent::MiniApp(card()), false);
-    let local_user_index_canister::bot_send_message::Response::Success(result) = response else {
-        panic!("'bot_send_message' error: {response:?}");
-    };
-
-    let response = send(
+    let response = client::local_user_index::bot_send_message(
         env,
-        BotMessageContent::MiniApp(MiniAppContent {
-            text: "**Uno** · game over".to_string(),
-            ..card()
-        }),
-        true,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_send_message::Args {
+            chat_context: BotChatContext::Autonomous(Chat::Channel(community_id, channel_id)),
+            thread: None,
+            message_id: Some(random_from_u128()),
+            replies_to: None,
+            content: BotMessageContent::MiniApp(card()),
+            block_level_markdown: false,
+            finalised: false,
+            og_previews: None,
+            bridged_from: None,
+        },
     );
     assert!(
-        matches!(&response, local_user_index_canister::bot_send_message::Response::Error(e) if e.matches_code(OCErrorCode::InvalidMessageType)),
-        "Expected the card not to change: {response:?}"
-    );
-    tick_many(env, 3);
-    assert_eq!(
-        card_text(env, &member, community_id, channel_id, result.event_index),
-        card().text
+        matches!(&response, local_user_index_canister::bot_send_message::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "Expected InvalidRequest: {response:?}"
     );
 }
 
@@ -409,6 +386,149 @@ fn only_the_cards_bot_updates_it_with_the_chats_members() {
             "Unexpected response: {response:?}"
         );
     }
+}
+
+// In a group too, and in a thread: members' clients see the update, which isn't refused until the
+// card's deleted, or the bot's uninstalled
+#[test]
+fn a_bot_updates_its_card_in_a_groups_thread() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let owner = client::register_user(env, canister_ids);
+    let member = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), false, true);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+    client::local_user_index::happy_path::add_users_to_group(
+        env,
+        &owner,
+        local_user_index,
+        group_id,
+        vec![(member.user_id, member.principal)],
+    );
+    let mut definition = default_bot_definition(random_string());
+    let permissions = BotPermissions::default().with_message(&HashSet::from_iter([MessagePermission::MiniApp]));
+    definition.autonomous_config = Some(AutonomousConfig {
+        permissions: permissions.clone(),
+    });
+    let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        random_string(),
+        "https://my.bot.xyz/".to_string(),
+        definition,
+    );
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Group(group_id),
+        bot_id,
+        permissions.clone(),
+        Some(permissions),
+    );
+    env.advance_time(Duration::from_millis(1000));
+    env.tick();
+
+    let chat = Chat::Group(group_id);
+    let root = client::group::happy_path::send_text_message(env, &owner, group_id, None, "Who's playing?", None);
+    let thread = Some(root.message_index);
+    let message_id = random_from_u128();
+    let response = client::local_user_index::bot_send_message(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_send_message::Args {
+            chat_context: BotChatContext::Autonomous(chat),
+            thread,
+            message_id: Some(message_id),
+            replies_to: None,
+            content: BotMessageContent::MiniApp(card()),
+            block_level_markdown: false,
+            finalised: true,
+            og_previews: None,
+            bridged_from: None,
+        },
+    );
+    let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
+        panic!("'bot_send_message' error: {response:?}");
+    };
+    let update = |env: &mut PocketIc| {
+        client::local_user_index::bot_update_mini_app(
+            env,
+            bot_principal,
+            local_user_index,
+            &local_user_index_canister::bot_update_mini_app::Args {
+                chat_context: BotChatContext::Autonomous(chat),
+                thread,
+                message_id,
+                update: MiniAppUpdate {
+                    players: Some(vec![owner.user_id, member.user_id]),
+                    ..Default::default()
+                },
+            },
+        )
+    };
+
+    let since = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+    let response = update(env);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    env.tick();
+
+    // Members' clients see it as an updated event
+    let updates = client::group::happy_path::summary_updates(env, member.principal, group_id, since).unwrap();
+    assert!(
+        updates
+            .updated_events
+            .iter()
+            .any(|(root, event_index, _)| *root == thread && *event_index == sent.event_index),
+        "{:?}",
+        updates.updated_events
+    );
+    let events = client::group::happy_path::thread_events(
+        env,
+        &member,
+        group_id,
+        root.message_index,
+        EventIndex::default(),
+        true,
+        10,
+        10,
+    );
+    let card = events
+        .events
+        .iter()
+        .find_map(|e| match &e.event {
+            ChatEvent::Message(m) if m.message_id == message_id => match &m.content {
+                MessageContent::MiniApp(c) => Some(c.clone()),
+                _ => None,
+            },
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(card.players, vec![owner.user_id, member.user_id]);
+
+    client::group::happy_path::delete_messages(env, owner.principal, group_id, thread, vec![message_id]);
+    let response = update(env);
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::MessageNotFound)),
+        "Expected MessageNotFound: {response:?}"
+    );
+
+    client::local_user_index::happy_path::uninstall_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Group(group_id),
+        bot_id,
+    );
+    let response = update(env);
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "Expected InitiatorNotAuthorized: {response:?}"
+    );
 }
 
 // That a card can't be forwarded either is in chat_events' unit tests: a member would be refused as

@@ -3036,6 +3036,10 @@ mod mini_app_tests {
             ..playing.clone()
         }));
         assert!(invalid(MiniAppContent {
+            waiting_for: Some(vec![user(2), user(2)]),
+            ..playing.clone()
+        }));
+        assert!(invalid(MiniAppContent {
             result: Some("Bob won".to_string()),
             ..playing.clone()
         }));

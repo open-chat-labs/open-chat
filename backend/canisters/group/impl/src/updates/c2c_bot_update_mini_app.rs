@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_bot_update_mini_app::*;
 use oc_error_codes::OCErrorCode;
-use types::{EventIndex, OCResult};
+use types::{BotPermissions, EventIndex, OCResult};
 
 // A bot changing what its MiniApp card shows as its game goes on
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -15,8 +15,12 @@ fn c2c_bot_update_mini_app(args: Args) -> Response {
 }
 
 fn c2c_bot_update_mini_app_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    // Any bot installed in the group may update its own cards, without a permission of its own
-    if state.data.get_bot_permissions(&args.bot_id).is_none() {
+    // A bot updates its own cards without a particular permission, as it deletes its own messages:
+    // outside a command, if it's installed to act autonomously
+    if !state
+        .data
+        .is_bot_permitted(&args.bot_id, &args.initiator, &BotPermissions::default())
+    {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
