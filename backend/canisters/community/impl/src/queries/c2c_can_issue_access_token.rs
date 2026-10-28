@@ -45,6 +45,10 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
 
     // A member acting on one of the bot's MiniApp messages, which they can see
     if let AccessTypeArgs::BotMessageSession(args) = &args_outer.access_type {
+        // A member of the community too, whose membership hasn't lapsed and who isn't suspended
+        if state.data.members.get_verified_member(args.initiator.as_principal()).is_err() {
+            return Response::Failure;
+        }
         let Ok(member) = channel.chat.members.get_verified_member(args.initiator) else {
             return Response::Failure;
         };

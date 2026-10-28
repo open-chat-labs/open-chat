@@ -20,9 +20,9 @@ use types::{
 
 const DEFAULT_TOKEN_VALIDITY: Milliseconds = 5 * 60 * 1000;
 const TRANSLATE_TOKEN_VALIDITY: Milliseconds = 30 * 60 * 1000;
-// Long enough to cover most games, as the token is reused for every button pressed on the message.
-// The website refreshes it before it runs out.
-const BOT_MESSAGE_SESSION_TOKEN_VALIDITY: Milliseconds = 60 * 60 * 1000;
+// Reused for every button pressed on the message, and fetched afresh when it runs out. It's short so
+// that a member who's removed, or a message which is deleted, can't be acted on for long.
+const BOT_MESSAGE_SESSION_TOKEN_VALIDITY: Milliseconds = 15 * 60 * 1000;
 
 #[query(composite = true, msgpack = true)]
 #[trace]
@@ -155,7 +155,8 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
     }
 
     if let ArgsInternal::BotMessageSession(args) = args_outer {
-        if state.data.bots.get(&args.bot_id).is_none() {
+        // Direct chats have no MiniApp messages
+        if matches!(args.chat, Chat::Direct(_)) || state.data.bots.get(&args.bot_id).is_none() {
             return Err(Response::NotAuthorized);
         }
 

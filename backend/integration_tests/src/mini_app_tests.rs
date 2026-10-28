@@ -15,8 +15,8 @@ use testing::rng::{random_from_u128, random_string};
 use types::{
     AutonomousConfig, BotChatContext, BotInstallationLocation, BotMessageContent, BotMessageSessionClaims, BotPermissions,
     CLAIM_TYPE_BOT_MESSAGE_SESSION, CanisterId, ChannelId, Chat, ChatEvent, ChatPermission, CommunityId, EventIndex,
-    MessageButton, MessageButtonStyle, MessageContent, MessageContentInitial, MessageId, MessagePermission, MiniAppContent,
-    TextContent, UnitResult, UserId,
+    MessageButton, MessageButtonStyle, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePermission,
+    MiniAppContent, TextContent, UnitResult, UserId,
 };
 
 #[test]
@@ -226,7 +226,7 @@ fn a_member_gets_a_session_token_for_a_bots_mini_app_message() {
     );
     let chat = Chat::Channel(community_id, channel_id);
     let message_id = random_from_u128();
-    send(
+    let response = send(
         env,
         bot_principal,
         local_user_index,
@@ -234,9 +234,10 @@ fn a_member_gets_a_session_token_for_a_bots_mini_app_message() {
         message_id,
         lobby(owner.user_id, false),
     );
+    assert!(is_sent(&response), "'bot_send_message' error: {response:?}");
     tick_many(env, 3);
 
-    let token = match session_token(env, &member, local_user_index, bot_id, chat, message_id) {
+    let token = match session_token(env, &member, local_user_index, bot_id, chat, None, message_id) {
         access_token_v2::Response::Success(token) => token,
         response => panic!("'access_token_v2' error: {response:?}"),
     };
@@ -244,7 +245,7 @@ fn a_member_gets_a_session_token_for_a_bots_mini_app_message() {
     let claims: Claims<BotMessageSessionClaims> =
         verify_and_decode(&token, &public_key, CLAIM_TYPE_BOT_MESSAGE_SESSION).unwrap();
     let now = env.get_time().as_nanos_since_unix_epoch() / 1_000_000;
-    assert!(claims.exp_ms() > now + 59 * 60 * 1000);
+    assert!(claims.exp_ms() > now + 14 * 60 * 1000 && claims.exp_ms() <= now + 15 * 60 * 1000);
     let claims = claims.into_custom();
     assert_eq!(claims.bot, bot_id);
     assert_eq!(claims.user_id, member.user_id);
@@ -304,7 +305,7 @@ fn a_session_token_is_only_for_members_and_the_bots_mini_app_messages() {
     );
     let chat = Chat::Channel(community_id, channel_id);
     let mini_app_message_id = random_from_u128();
-    send(
+    let response = send(
         env,
         bot_principal,
         local_user_index,
@@ -312,6 +313,20 @@ fn a_session_token_is_only_for_members_and_the_bots_mini_app_messages() {
         mini_app_message_id,
         lobby(owner.user_id, false),
     );
+    assert!(is_sent(&response), "'bot_send_message' error: {response:?}");
+    // In a private channel the member isn't in
+    let private_channel_id =
+        client::community::happy_path::create_channel(env, owner.principal, community_id, false, random_string());
+    let private_message_id = random_from_u128();
+    let response = send(
+        env,
+        bot_principal,
+        local_user_index,
+        Chat::Channel(community_id, private_channel_id),
+        private_message_id,
+        lobby(owner.user_id, false),
+    );
+    assert!(is_sent(&response), "'bot_send_message' error: {response:?}");
     let text_message_id = random_from_u128();
     client::community::happy_path::send_text_message(
         env,
@@ -325,20 +340,80 @@ fn a_session_token_is_only_for_members_and_the_bots_mini_app_messages() {
     let outsider = client::register_user(env, canister_ids);
     tick_many(env, 3);
 
-    for (user, message_id) in [
+    for (user, chat, message_id) in [
         // not a member
-        (&outsider, mini_app_message_id),
+        (&outsider, chat, mini_app_message_id),
         // not the bot's message
-        (&member, text_message_id),
+        (&member, chat, text_message_id),
         // no such message
-        (&member, random_from_u128()),
+        (&member, chat, random_from_u128()),
+        // not in the channel
+        (&member, Chat::Channel(community_id, private_channel_id), private_message_id),
     ] {
-        let response = session_token(env, user, local_user_index, bot_id, chat, message_id);
+        let response = session_token(env, user, local_user_index, bot_id, chat, None, message_id);
         assert!(
             matches!(response, access_token_v2::Response::NotAuthorized),
             "Expected NotAuthorized: {response:?}"
         );
     }
+}
+
+#[test]
+fn a_group_member_gets_a_session_token_for_a_mini_app_in_a_thread_until_its_deleted() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let owner = client::register_user(env, canister_ids);
+    let member = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), false, true);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+    client::local_user_index::happy_path::add_users_to_group(
+        env,
+        &owner,
+        local_user_index,
+        group_id,
+        vec![(member.user_id, member.principal)],
+    );
+    let (bot_id, bot_principal) = install_bot_at(
+        env,
+        &owner,
+        canister_ids.user_index,
+        local_user_index,
+        BotInstallationLocation::Group(group_id),
+        MessagePermission::MiniApp,
+    );
+    let root = client::group::happy_path::send_text_message(env, &owner, group_id, None, "Who's playing?", None);
+    let thread = Some(root.message_index);
+    let message_id = random_from_u128();
+    let response = client::local_user_index::bot_send_message(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_send_message::Args {
+            chat_context: BotChatContext::Autonomous(Chat::Group(group_id)),
+            thread,
+            message_id: Some(message_id),
+            replies_to: None,
+            content: BotMessageContent::MiniApp(lobby(owner.user_id, false)),
+            block_level_markdown: false,
+            finalised: true,
+            og_previews: None,
+            bridged_from: None,
+        },
+    );
+    assert!(is_sent(&response), "'bot_send_message' error: {response:?}");
+    tick_many(env, 3);
+
+    let chat = Chat::Group(group_id);
+    let response = session_token(env, &member, local_user_index, bot_id, chat, thread, message_id);
+    assert!(matches!(response, access_token_v2::Response::Success(_)), "{response:?}");
+    // The message is in the thread, not the main chat
+    let response = session_token(env, &member, local_user_index, bot_id, chat, None, message_id);
+    assert!(matches!(response, access_token_v2::Response::NotAuthorized), "{response:?}");
+
+    client::group::happy_path::delete_messages(env, owner.principal, group_id, thread, vec![message_id]);
+    let response = session_token(env, &member, local_user_index, bot_id, chat, thread, message_id);
+    assert!(matches!(response, access_token_v2::Response::NotAuthorized), "{response:?}");
 }
 
 fn session_token(
@@ -347,6 +422,7 @@ fn session_token(
     local_user_index: CanisterId,
     bot_id: UserId,
     chat: Chat,
+    thread: Option<MessageIndex>,
     message_id: MessageId,
 ) -> access_token_v2::Response {
     client::local_user_index::access_token_v2(
@@ -356,11 +432,15 @@ fn session_token(
         &access_token_v2::Args::BotMessageSession(BotMessageSessionArgs {
             bot_id,
             chat,
-            thread: None,
+            thread,
             message_id,
             meta: None,
         }),
     )
+}
+
+fn is_sent(response: &local_user_index_canister::bot_send_message::Response) -> bool {
+    matches!(response, local_user_index_canister::bot_send_message::Response::Success(_))
 }
 
 struct Setup {
@@ -398,6 +478,24 @@ fn install_bot(
     community_id: CommunityId,
     granted: MessagePermission,
 ) -> (UserId, Principal) {
+    install_bot_at(
+        env,
+        owner,
+        user_index,
+        local_user_index,
+        BotInstallationLocation::Community(community_id),
+        granted,
+    )
+}
+
+fn install_bot_at(
+    env: &mut PocketIc,
+    owner: &User,
+    user_index: CanisterId,
+    local_user_index: CanisterId,
+    location: BotInstallationLocation,
+    granted: MessagePermission,
+) -> (UserId, Principal) {
     let mut definition = default_bot_definition(random_string());
     definition.autonomous_config = Some(AutonomousConfig {
         permissions: BotPermissions::default()
@@ -421,7 +519,7 @@ fn install_bot(
         env,
         owner.principal,
         local_user_index,
-        BotInstallationLocation::Community(community_id),
+        location,
         bot_id,
         permissions,
         Some(autonomous_permissions),
