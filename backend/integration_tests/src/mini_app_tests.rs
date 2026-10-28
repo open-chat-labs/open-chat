@@ -149,8 +149,81 @@ fn a_bot_without_the_mini_app_permission_cant_post_one() {
     );
 }
 
+// A bot can replace a message it hasn't finished sending, eg. a "Thinking ..." placeholder, but not a
+// card, which never changes
 #[test]
-fn a_member_cant_post_or_forward_a_mini_app() {
+fn a_bot_cant_replace_a_card_it_hasnt_finished_sending() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let Setup {
+        owner,
+        member,
+        community_id,
+        channel_id,
+        local_user_index,
+    } = setup(env, canister_ids, *controller);
+    let bot_principal = install_bot(
+        env,
+        &owner,
+        canister_ids.user_index,
+        local_user_index,
+        community_id,
+        MessagePermission::MiniApp,
+    );
+    let chat = Chat::Channel(community_id, channel_id);
+    let message_id = random_from_u128();
+    let send = |env: &mut PocketIc, content: BotMessageContent, finalised: bool| {
+        client::local_user_index::bot_send_message(
+            env,
+            bot_principal,
+            local_user_index,
+            &local_user_index_canister::bot_send_message::Args {
+                chat_context: BotChatContext::Autonomous(chat),
+                thread: None,
+                message_id: Some(message_id),
+                replies_to: None,
+                content,
+                block_level_markdown: false,
+                finalised,
+                og_previews: None,
+                bridged_from: None,
+            },
+        )
+    };
+
+    let response = send(env, BotMessageContent::MiniApp(card()), false);
+    let local_user_index_canister::bot_send_message::Response::Success(result) = response else {
+        panic!("'bot_send_message' error: {response:?}");
+    };
+
+    let response = send(
+        env,
+        BotMessageContent::MiniApp(MiniAppContent {
+            text: "**Uno** · game over".to_string(),
+        }),
+        true,
+    );
+    assert!(
+        matches!(&response, local_user_index_canister::bot_send_message::Response::Error(e) if e.matches_code(OCErrorCode::InvalidMessageType)),
+        "Expected the card not to change: {response:?}"
+    );
+    tick_many(env, 3);
+    assert_eq!(
+        card_text(env, &member, community_id, channel_id, result.event_index),
+        card().text
+    );
+}
+
+// That a card can't be forwarded either is in chat_events' unit tests: a member would be refused as
+// someone who can't post one at all
+#[test]
+fn a_member_cant_post_a_mini_app() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -166,34 +239,32 @@ fn a_member_cant_post_or_forward_a_mini_app() {
         ..
     } = setup(env, canister_ids, *controller);
 
-    for forwarding in [false, true] {
-        let response = client::community::send_message(
-            env,
-            owner.principal,
-            community_id.into(),
-            &community_canister::send_message::Args {
-                channel_id,
-                thread_root_message_index: None,
-                message_id: random_from_u128(),
-                content: MessageContentInitial::MiniApp(card()),
-                sender_name: owner.username(),
-                sender_display_name: None,
-                replies_to: None,
-                mentioned: Vec::new(),
-                forwarding,
-                block_level_markdown: false,
-                community_rules_accepted: None,
-                channel_rules_accepted: None,
-                message_filter_failed: None,
-                new_achievement: false,
-                og_previews: Vec::new(),
-            },
-        );
-        assert!(
-            matches!(&response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent)),
-            "Expected InvalidMessageContent: {response:?}"
-        );
-    }
+    let response = client::community::send_message(
+        env,
+        owner.principal,
+        community_id.into(),
+        &community_canister::send_message::Args {
+            channel_id,
+            thread_root_message_index: None,
+            message_id: random_from_u128(),
+            content: MessageContentInitial::MiniApp(card()),
+            sender_name: owner.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            community_rules_accepted: None,
+            channel_rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(&response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent)),
+        "Expected InvalidMessageContent: {response:?}"
+    );
 }
 
 #[test]

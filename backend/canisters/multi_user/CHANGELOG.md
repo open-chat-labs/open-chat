@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Refuse MiniApp messages in direct chats, which have no way to open a bot's app yet ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300))
+
 ### Changed
 
 - Add `edit_message_text`, and only let a user's edit change a message's text or caption ([#10298](https://github.com/open-chat-labs/open-chat/pull/10298))

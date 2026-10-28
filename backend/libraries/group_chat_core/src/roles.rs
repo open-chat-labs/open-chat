@@ -244,3 +244,36 @@ impl GroupRoleInternal {
             .collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn text_by(role: GroupPermissionRole) -> GroupPermissions {
+        GroupPermissions {
+            message_permissions: MessagePermissions {
+                text: Some(role),
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+    }
+
+    // A member's command can answer with a bot's mini app card exactly when they can post text
+    #[test]
+    fn a_member_who_can_post_text_can_have_a_bot_post_a_mini_app() {
+        for (role, can) in [(GroupPermissionRole::Members, true), (GroupPermissionRole::Admins, false)] {
+            let permissions = text_by(role);
+            let member = GroupRoleInternal::Member;
+
+            assert_eq!(
+                member
+                    .message_permissions(&permissions.message_permissions)
+                    .contains(&MessagePermission::MiniApp),
+                can
+            );
+            assert_eq!(member.can_send_message(MessageContentType::MiniApp, false, &permissions), can);
+            assert!(GroupRoleInternal::Admin.can_send_message(MessageContentType::MiniApp, false, &permissions));
+        }
+    }
+}
