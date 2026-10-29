@@ -18053,7 +18053,7 @@
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": "The host is still loading `tokens`: a token's page waits (neither the page nor \"Token not found\" yet)."
+        "doc": "The host is still loading `tokens` (and their balances): All activity and a token's page wait, showing a skeleton (not the welcome, an empty list, a balance of 0 or \"Token not found\")."
       },
       {
         "name": "receiveNetworks",

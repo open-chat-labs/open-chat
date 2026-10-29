@@ -28,6 +28,7 @@
         serverDirectChatsStore,
         swappableTokensStore,
         walletConfigStore,
+        walletTokensSorted,
         type NamedAccount,
         type OpenChat,
     } from "@client";
@@ -135,6 +136,19 @@
     });
     onDestroy(() => walletRequests.clear());
 
+    // the balances of the tokens the wallet lists, asked for as the page opens (the panel asks for
+    // the same: the client shares the request, or answers from a recent one); the page waits for
+    // them, so it never shows the welcome, an empty list or a balance of 0 while they're coming
+    let balancesKnown = $state(false);
+    $effect(() => {
+        const ledgers = $walletTokensSorted.map((t) => t.ledger);
+        if (balancesKnown || $cryptoLookup.size === 0) return;
+        untrack(async () => {
+            await Promise.all(ledgers.map((l) => client.refreshAccountBalance(l, true)));
+            balancesKnown = true;
+        });
+    });
+
     // the wallet's histories (WalletHistories): the shown token's, loaded when its page opens, and
     // on All activity the first page of every token held, merged by time
     const histories = walletHistories(client);
@@ -190,9 +204,13 @@
             );
         }),
     );
-    // All activity waits while a held token's first page is still coming
+    // All activity waits while a held token's first page is still coming (or not yet asked for)
     const allActivityLoading = $derived(
-        histories.all.some(([, history]) => history.state.kind === "loading"),
+        heldIndexed !== "" &&
+            heldIndexed.split(",").some((t) => {
+                const history = histories.get(t.split(" ")[0]);
+                return history === undefined || history.state.kind === "loading";
+            }),
     );
     const historyProp = $derived.by((): WalletMainProps["history"] => {
         if (token !== undefined && !indexed) return { state: "unavailable" };
@@ -542,7 +560,7 @@
 <WalletMain
     {tokens}
     request={walletRequests.current}
-    tokensLoading={$cryptoLookup.size === 0}
+    tokensLoading={$cryptoLookup.size === 0 || !balancesKnown}
     {activity}
     balanceHidden={$hideTokenBalances}
     history={historyProp}

@@ -458,6 +458,7 @@
 
 ## 2026-10-29 — WalletMain: All activity's loading and empty state, by hand
 - `allActivityLoading`: a skeleton on All activity while the host is still loading `activity` and nothing is listed yet.
+- `tokensLoading` holds All activity too, not only a token's page: while the host is loading the tokens and their balances, both show a skeleton rather than the welcome, an empty list or a balance of 0.
 - All activity with nothing in it (the All tab) shows the empty state ("No activity yet", `ui.walletMain.emptyAllBody`) in place of the one-line "No transactions of this type yet", which the other tabs keep.
 - `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).

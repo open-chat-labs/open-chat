@@ -188,7 +188,8 @@
     allActivityNote?: { title: string; body: string };
     /** The host is still loading `activity` for All activity: it shows a skeleton until there's something to list. */
     allActivityLoading?: boolean;
-    /** The host is still loading `tokens`: a token's page waits (neither the page nor "Token not found" yet). */
+    /** The host is still loading `tokens` (and their balances): All activity and a token's page wait, showing a skeleton
+     *  (not the welcome, an empty list, a balance of 0 or "Token not found"). */
     tokensLoading?: boolean;
     /** The token page's eye: the shared wallet veil. Without it there's no eye. */
     onBalanceHiddenChange?: (hidden: boolean) => void;
@@ -573,8 +574,9 @@
   const swapPinned = $derived(onSwap ? (r: Parameters<NonNullable<typeof onSwap>>[0]) => pinned(() => onSwap(r)) : undefined);
   const showToken = $derived(view === 'token' && !!raw && !missing);
   const notFound = $derived(view === 'token' && missing);
-  // a token's page asked for while the host is loading the tokens (a reload of it): neither the page nor "not found" yet
-  const pending = $derived(view === 'token' && !!sym && tokensLoading && !valued.some((t) => idOf(t) === sym));
+  // the host is loading the tokens (a reload): All activity and a token's page wait, rather than show the welcome, an
+  // empty list, a balance of 0 or "not found" until the tokens are in
+  const pending = $derived(tokensLoading && (view === 'all' || (view === 'token' && !!sym)));
 
   // sending: the tokens you hold. Receiving or browsing: yours first, then the rest of the catalogue, then the extra
   // receivable tokens (only while Receive is offered), no symbol twice
