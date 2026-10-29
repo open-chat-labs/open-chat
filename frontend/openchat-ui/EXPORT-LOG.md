@@ -462,3 +462,9 @@
 - All activity with nothing in it (the All tab) shows the empty state ("No activity yet", `ui.walletMain.emptyAllBody`) in place of the one-line "No transactions of this type yet", which the other tabs keep.
 - `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-29 — Loading states: a delayed skeleton, and the total balance's spinner, by hand
+- `Skeleton`: `delay` (ms): invisible that long, then a short fade in, so a load that finishes sooner never shows it. WalletMain's skeletons use 500 ms.
+- `BalanceCard`: `loading`, a small spinner by the label while the balances load. `WalletPanel`: `balancesLoading`, passed to it; while it's on, the panel doesn't take the empty wallet's layout.
+- `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

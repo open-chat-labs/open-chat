@@ -1,6 +1,7 @@
 <!-- Loading placeholder rows shaped like the real lists. Soft shimmer (tokens: --skeleton-base/--skeleton-sheen,
      keyframes oc-shimmer in tokens.css; stops under prefers-reduced-motion). Announces once as "Loading …".
-     variant: chat | token | activity | member. -->
+     variant: chat | token | activity | member. `delay`: it stays invisible that long, then fades in, so a load that
+     finishes sooner never shows it. -->
 <script lang="ts">
   import { useT } from '../i18n';
   type Variant = 'chat' | 'token' | 'activity' | 'member';
@@ -21,13 +22,15 @@
     /** Overrides the announced label. */
     /** Resource key (or literal text) for the accessible name; defaults per variant. */
     label?: string;
+    /** ms it stays invisible before fading in (0: shown at once). */
+    delay?: number;
   }
 
-  let { variant = 'chat', count = 6, label = '' }: Props = $props();
+  let { variant = 'chat', count = 6, label = '', delay = 0 }: Props = $props();
   const t = useT();
 </script>
 
-<div class="skeleton {variant}" role="status" aria-live="polite" aria-busy="true" aria-label={t(label || LABELS[variant])}>
+<div class="skeleton {variant}" class:delayed={delay > 0} style:--skeleton-delay="{delay}ms" role="status" aria-live="polite" aria-busy="true" aria-label={t(label || LABELS[variant])}>
   {#each { length: count } as _, i}
     <div class="row" style:--row-delay="{i * 90}ms" aria-hidden="true">
       <span class="shim avatar"></span>
@@ -52,6 +55,26 @@
     flex-direction: column;
     gap: 4px;
     width: 100%;
+  }
+
+  /* invisible for the delay, then a short fade in */
+  .skeleton.delayed {
+    animation: skeleton-in 220ms ease-out var(--skeleton-delay) both;
+  }
+
+  @keyframes skeleton-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton.delayed {
+      animation-duration: 1ms;
+    }
   }
 
   .row {

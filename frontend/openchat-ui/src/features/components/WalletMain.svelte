@@ -706,7 +706,7 @@
     <div class="scroll">
       <div class="column">
         {#if pending}
-          <div class="history-note"><Skeleton variant="token" count={3} /></div>
+          <div class="history-note"><Skeleton variant="token" count={3} delay={500} /></div>
         {:else if notFound}
           <EmptyState icon="search" title={t('ui.walletMain.tokenNotFoundTitle')} body={t('ui.walletMain.tokenNotFoundBody')} actionLabel="" />
         {:else if !showToken && empty}
@@ -762,7 +762,7 @@
             </div>
           {/each}
           {#if allGroups.length === 0 && allActivityLoading}
-            <div class="history-note"><Skeleton variant="token" count={4} /></div>
+            <div class="history-note"><Skeleton variant="token" count={4} delay={500} /></div>
           {:else if allGroups.length === 0 && filter === 0}
             <EmptyState icon="receive" title={t('ui.walletMain.emptyTitle')} body={t('ui.walletMain.emptyAllBody')} actionLabel="" />
           {:else if allGroups.length === 0}<span class="none">{t('ui.walletMain.noneOfType')}</span>{/if}
@@ -839,7 +839,7 @@
                 </div>
               {/each}
               {#if history?.state === 'loading'}
-                <div class="history-note"><Skeleton variant="token" count={4} /></div>
+                <div class="history-note"><Skeleton variant="token" count={4} delay={500} /></div>
               {:else if history?.state === 'unavailable'}
                 <EmptyState icon="receive" title={t('ui.walletMain.noHistoryTitle')} body={t('ui.walletMain.noHistoryBody', { symbol: raw.symbol })} actionLabel="" />
               {:else if history?.state === 'failed'}

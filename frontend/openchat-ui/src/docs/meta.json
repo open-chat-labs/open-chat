@@ -5714,6 +5714,17 @@
         "required": false,
         "componentDefault": "''",
         "doc": "Overrides the announced label."
+      },
+      {
+        "name": "delay",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "ms it stays invisible before fading in (0: shown at once)."
       }
     ],
     "group": "library"
@@ -6592,6 +6603,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Nothing owned yet: a plain track for the bar, Receive first, Send and Swap disabled."
+      },
+      {
+        "name": "loading",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The balances are still loading: a small spinner by the label."
       }
     ],
     "group": "features"
@@ -18122,6 +18144,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": ""
+      },
+      {
+        "name": "balancesLoading",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The balances are still loading: a small spinner by the total's label, and no empty wallet's layout yet."
       },
       {
         "name": "settings",

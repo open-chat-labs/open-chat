@@ -19,7 +19,8 @@
     import WalletPanel from "@openchat/ui/src/features/components/WalletPanel.svelte";
     import { hideTokenBalances, walletCurrency } from "@src/stores/settings";
     import { navigate } from "@src/utils/navigation";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onMount, untrack } from "svelte";
+    import { SvelteSet } from "svelte/reactivity";
     import type { LeftRegion, ScreenProps } from "../app/screens";
     import { panelSettings, supportedCount } from "./wallet.adapter";
     import { walletCatalogue } from "./walletCatalogue.svelte";
@@ -47,12 +48,19 @@
     onMount(() => client.refreshSwappableTokens());
 
     // each token's balance, once as the list first shows it, a recent one accepted
+    // (the total shows a small spinner while those first ones are coming, and until the exchange
+    // rates it's priced with are in)
     const refreshed = new Set<string>();
+    const loadingBalances = new SvelteSet<string>();
     $effect(() => {
         for (const token of $walletTokensSorted) {
             if (refreshed.has(token.ledger)) continue;
             refreshed.add(token.ledger);
-            client.refreshAccountBalance(token.ledger, true);
+            const ledger = token.ledger;
+            untrack(() => loadingBalances.add(ledger));
+            client
+                .refreshAccountBalance(ledger, true)
+                .finally(() => loadingBalances.delete(ledger));
         }
     });
 
@@ -91,6 +99,7 @@
     balanceHidden={$hideTokenBalances}
     onBalanceHiddenChange={(hidden) => hideTokenBalances.set(hidden)}
     onRefresh={refresh}
+    balancesLoading={loadingBalances.size > 0 || $exchangeRatesLookupStore.size === 0}
     onRemoveToken={(ledger) => client.removeTokenFromWallet(ledger)}
     onToken={(ledger) => navigate(`/wallet/${ledger}`)}
     selectedToken={page?.view === "token" ? page.ledger : undefined}
