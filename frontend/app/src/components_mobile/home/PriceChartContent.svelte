@@ -103,8 +103,9 @@
         grid-template-columns: minmax(0, 22rem);
         width: fit-content;
         gap: var(--sp-sm);
-        // inset as a text message's is, in line with the sender's name
-        padding: var(--sp-xs) var(--sp-sm);
+        // inset as a text message's is, in line with the sender's name, but with none below, so the
+        // credit's last line is on the time's row
+        padding: var(--sp-xs) var(--sp-sm) 0;
 
         // in the reader's own bubble it's on a panel of the other bubbles' colour, as its line and
         // change colours are chosen for those
@@ -158,9 +159,10 @@
         margin: var(--sp-sm) 0 var(--sp-xs) 0;
     }
 
+    // in the time's type (MessageMetadata), so the two line up
     .credit {
-        font-size: 0.75rem;
-        text-align: end;
+        font-size: var(--typo-chatFootnote-sz);
+        line-height: var(--typo-chatFootnote-lh);
         opacity: 0.7;
 
         a {

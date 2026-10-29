@@ -157,7 +157,6 @@
 
     .credit {
         @include font(book, normal, fs-60);
-        text-align: end;
         opacity: 0.7;
 
         a {
