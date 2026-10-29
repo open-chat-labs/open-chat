@@ -154,6 +154,8 @@ export function authPrincipalsResponse(
                 isIIPrincipal: p.is_ii_principal,
                 isCurrentIdentity: principal === currentAuthPrincipal,
                 webAuthnKey: mapOptional(p.webauthn_key, webAuthnKey),
+                // 0 for a principal not used since the canister started recording it
+                lastUsed: p.last_used === 0n ? undefined : p.last_used,
             };
         });
     }

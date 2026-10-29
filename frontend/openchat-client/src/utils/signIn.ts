@@ -10,6 +10,7 @@ import {
     type SignInMethod,
     type SignInOutcome,
 } from "@shared";
+import { toDayString } from "./date";
 
 /** The provider a sign-in method records as the one used (selectedAuthProviderStore). */
 export function signInProvider(method: SignInMethod): AuthProvider {
@@ -123,6 +124,13 @@ export function unlinkIdentityFailure(resp: RemoveIdentityLinkResponse): Resourc
         default:
             return resp satisfies never;
     }
+}
+
+/** A linked sign-in method's "Last used 12 Oct 2026" line, from its `lastUsed` (ms). */
+export function signInLastUsed(lastUsed: bigint, locale: string): ResourceKey {
+    return i18nKey("identity.linkedAccounts.lastUsed", {
+        date: toDayString(new Date(Number(lastUsed)), locale),
+    });
 }
 
 /**

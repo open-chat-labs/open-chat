@@ -154,7 +154,8 @@ design export needs. Each entry says where it came up.
   `qrCode`, the invite's QR code drawn by the host (the dialog's own needs a global `qrcode`
   library); the storage section's "report a problem" row only with `onReportIssue`; the storage
   meter only with an allowance above 0; `aboutPages`, the About pages the host has; an empty
-  communities section says so; "Just linked" only for a sign-in method linked in the dialog, and no empty "last used"
+  communities section says so; "Just linked" only for a sign-in method linked in the dialog, in
+  place of the host's `used` (which would say the day it was linked), and no empty "last used"
   line; the delete flow's CHIT step for a user who has never earned any says they haven't
   discovered it yet; a host step in the sign-in "add" form that rejects with `{ reason }` shows
   that reason in place of the generic one (linking a method says why it couldn't, e.g. the

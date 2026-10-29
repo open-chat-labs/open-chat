@@ -1447,9 +1447,11 @@
                 <span class="caps">{t(T.label)}</span>
                 <div class="list">
                   {#each items as x}
+                    <!-- one linked here says so, over the host's line (which would say the day it was linked) -->
+                    {@const sub = siAdded.some((a) => a.id === x.id) ? t('ui.profileDialog.signin.justLinked') : x.used}
                     <div class="method">
                       {@render glyph(T.icon, 'method-glyph')}
-                      <div class="method-text"><span class="method-title">{x.title + (type === 'email' ? '' : ` · ${x.id.slice(0, 5)}`)}</span>{#if x.used || siAdded.some((a) => a.id === x.id)}<span class="method-sub">{x.used || t('ui.profileDialog.signin.justLinked')}</span>{/if}</div>
+                      <div class="method-text"><span class="method-title">{x.title + (type === 'email' ? '' : ` · ${x.id.slice(0, 5)}`)}</span>{#if sub}<span class="method-sub">{sub}</span>{/if}</div>
                       {#if onUnlinkMethod}<span class="unlink" onclick={() => unlink(x)} role="button" tabindex="0">{@render glyph('unlink', 'unlink-glyph')}{t('ui.profileDialog.signin.unlink')}</span>{/if}
                     </div>
                   {/each}

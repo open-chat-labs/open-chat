@@ -1343,6 +1343,7 @@
         "link": "liên kết",
         "linkedAccounts": {
             "currentAccount": "Hiện đang đăng nhập với hiệu trưởng này",
+            "lastUsed": "Lần sử dụng cuối: {date}",
             "linkAdvice": "Để thêm nhà cung cấp đăng nhập mới, trước tiên hãy đăng nhập bằng nhà cung cấp mới mà bạn muốn thêm, sau đó đăng nhập bằng nhà cung cấp hiện tại và cuối cùng liên kết cả hai với nhau.",
             "linkAnother": "Thêm một cái nữa",
             "section": "Nhà cung cấp đăng nhập",
