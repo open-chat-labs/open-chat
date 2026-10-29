@@ -3048,6 +3048,7 @@
       "copyUsername": "Copy {handle}",
       "directChat": "direct chat",
       "emptyBody": "Transactions for {symbol} will show up here.",
+      "emptyAllBody": "Tokens you send, receive or swap will show up here.",
       "emptyReceivedBody": "{symbol} people send you will show up here.",
       "emptyReceivedTitle": "No {symbol} received yet",
       "emptySentBody": "{symbol} you send to people or addresses will show up here.",

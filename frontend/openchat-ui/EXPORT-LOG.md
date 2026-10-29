@@ -455,3 +455,9 @@
 - `onPickSaved(token)`: Send passes the id of the token being sent, so the host's picker can offer only the saved addresses that token can reach. `WalletMain`'s `onPickSaved` takes it too.
 - `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-29 — WalletMain: All activity's loading and empty state, by hand
+- `allActivityLoading`: a skeleton on All activity while the host is still loading `activity` and nothing is listed yet.
+- All activity with nothing in it (the All tab) shows the empty state ("No activity yet", `ui.walletMain.emptyAllBody`) in place of the one-line "No transactions of this type yet", which the other tabs keep.
+- `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

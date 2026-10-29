@@ -53,6 +53,24 @@ export class TransactionHistoryState {
                   };
     }
 
+    /**
+     * Loads the first page again, for transactions since it was loaded, keeping what's shown until
+     * it arrives (older pages loaded since are let go: Load older fetches them again). A failure
+     * keeps what's loaded; one that never loaded loads as `load` does.
+     */
+    async refresh(): Promise<void> {
+        const current = this.#state;
+        if (current.kind !== "loaded") return this.load();
+        if (current.loadingMore) return;
+        const page = await this.#page(undefined);
+        if (page === undefined || this.#state !== current) return;
+        this.#state = {
+            kind: "loaded",
+            history: addTransactionsPage(undefined, page),
+            loadingMore: false,
+        };
+    }
+
     /** Loads the next page. A failure keeps what's loaded, for the view to say it failed. */
     async loadMore(): Promise<LoadMoreOutcome> {
         const current = this.#state;

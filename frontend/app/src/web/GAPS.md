@@ -597,9 +597,12 @@ design export needs. Each entry says where it came up.
   explorer. Copy ledger ID from either kebab copies through `WalletMain` (`panelRequests`). The
   logic is shared with the old wallets (`logic/wallet`: `walletTotal`, `tokenActions`,
   `accountTransactions`). Not yet:
-  - All activity (with something owned): there's no history across tokens, so it says to pick a
-    token (#10120's open question; merging each indexed token's first page would mean one call per
-    ledger on every open).
+  - All activity merges the first page of each token held that has an index canister (one call
+    per token the first time, `WalletHistories`): no Load older across tokens (a token's page
+    has it), and a token held at zero, or whose history fails to load, isn't in it. The
+    histories are kept for the session (`walletHistories`): coming back costs no calls, and a
+    token's first page is fetched again only when its balance has changed. Not kept across
+    reloads (the agent has no cache for them).
   - Receive (6b) is built: `/wallet/receive?token=<ledger>`, the token's networks and address from
     `ReceiveAccount` (shared with the old AccountInfos), its QR (`core/QRCode`), Share to chat and
     the balance refreshed every 10 s while it's open. Receive offers the wallet's catalogue only: no
