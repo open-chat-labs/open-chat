@@ -1,5 +1,5 @@
-// The website's WebSocket: it connects with a connection token, then follows cards, joins and opens
-// games, and the service pushes it what changes
+// The website's WebSocket: it connects with one of its user's chat tokens, then follows cards, joins
+// and opens games, and the service pushes it what changes
 use crate::app::App;
 use crate::now_millis;
 use crate::protocol::{ClientMessage, ErrorCode, ServerMessage};
@@ -95,10 +95,10 @@ async fn authenticate(stream: &mut SplitStream<WebSocket>, app: &App) -> Option<
     let Ok(Some(Ok(Message::Text(text)))) = tokio::time::timeout(CONNECT_TIMEOUT, stream.next()).await else {
         return None;
     };
-    let ClientMessage::Connect { token } = serde_json::from_str(text.as_str()).ok()? else {
+    let ClientMessage::Connect { chat_token } = serde_json::from_str(text.as_str()).ok()? else {
         return None;
     };
-    app.tokens.connection(&token, now_millis())
+    app.tokens.connection(&chat_token, now_millis())
 }
 
 fn text(message: &ServerMessage) -> Message {

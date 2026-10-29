@@ -5,10 +5,9 @@ use p256_key_pair::P256KeyPair;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use types::{
-    CLAIM_TYPE_MINI_APP_BOT, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_CONNECTION, CLAIM_TYPE_MINI_APP_JOIN,
-    CLAIM_TYPE_MINI_APP_LEAVE, CLAIM_TYPE_MINI_APP_PLAYER, CLAIM_TYPE_MINI_APP_REGISTRATION, Error, Milliseconds,
-    MiniAppBotClaims, MiniAppChatClaims, MiniAppConnectionClaims, MiniAppGame, MiniAppPlayerClaims, MiniAppRegistrationClaims,
-    TimestampMillis, UserId,
+    CLAIM_TYPE_MINI_APP_BOT, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_JOIN, CLAIM_TYPE_MINI_APP_LEAVE,
+    CLAIM_TYPE_MINI_APP_PLAYER, CLAIM_TYPE_MINI_APP_REGISTRATION, Error, Milliseconds, MiniAppBotClaims, MiniAppChatClaims,
+    MiniAppGame, MiniAppPlayerClaims, MiniAppRegistrationClaims, TimestampMillis, UserId,
 };
 
 // A player's app keeps its token for an hour, like the website its tokens
@@ -34,8 +33,9 @@ impl Tokens {
         self.key_pair.public_key_pem()
     }
 
+    // Any of a user's chat tokens opens a WebSocket, as its user
     pub fn connection(&self, token: &str, now: TimestampMillis) -> Option<UserId> {
-        self.verify::<MiniAppConnectionClaims>(token, CLAIM_TYPE_MINI_APP_CONNECTION, now)
+        self.verify::<MiniAppChatClaims>(token, CLAIM_TYPE_MINI_APP_CHAT, now)
             .map(|claims| claims.user_id)
     }
 
@@ -125,12 +125,13 @@ pub mod tests {
     fn a_token_is_taken_with_its_claim_type_until_it_expires() {
         let oc = P256KeyPair::new(&mut rand::rng());
         let tokens = tokens(&oc);
-        let token = oc_token(
-            &oc,
-            CLAIM_TYPE_MINI_APP_CONNECTION,
-            MiniAppConnectionClaims { user_id: user(1) },
-            60_000,
-        );
+        let chat = Chat::Group(Principal::from_slice(&[9]).into());
+        let claims = || MiniAppChatClaims {
+            user_id: user(1),
+            chat,
+            member: false,
+        };
+        let token = oc_token(&oc, CLAIM_TYPE_MINI_APP_CHAT, claims(), 60_000);
 
         assert_eq!(tokens.connection(&token, 0), Some(user(1)));
         assert_eq!(tokens.connection(&token, 60_000), None);
@@ -138,12 +139,7 @@ pub mod tests {
 
         // Nor one signed by anyone else
         let other = P256KeyPair::new(&mut rand::rng());
-        let token = oc_token(
-            &other,
-            CLAIM_TYPE_MINI_APP_CONNECTION,
-            MiniAppConnectionClaims { user_id: user(1) },
-            60_000,
-        );
+        let token = oc_token(&other, CLAIM_TYPE_MINI_APP_CHAT, claims(), 60_000);
         assert_eq!(tokens.connection(&token, 0), None);
     }
 

@@ -10,8 +10,9 @@ pub type RequestId = u64;
 #[derive(Deserialize, Debug)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ClientMessage {
+    // With any of the user's chat tokens
     Connect {
-        token: String,
+        chat_token: String,
     },
     Follow {
         id: RequestId,
@@ -90,7 +91,7 @@ pub enum ServerMessage {
 #[derive(Serialize, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ErrorCode {
-    // The connection token is missing, invalid or expired, so the socket closes
+    // The token to connect with is missing, invalid or expired, so the socket closes
     InvalidToken,
     // A message the service can't read
     InvalidMessage,
