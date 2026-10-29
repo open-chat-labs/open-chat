@@ -1,4 +1,5 @@
 // A game as the service keeps it, and the rules for changing it
+use crate::bots::Started;
 use crate::protocol::{Card, GameState, GameStatus, Refusal};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -42,6 +43,14 @@ pub struct Applied {
     // The game started or finished, or its turn passed, so the card in the chat needs writing
     pub write_card: bool,
     // A newer state, for everyone with the game open
+    pub new_state: bool,
+}
+
+// Who a game's start took off and put on, and whether it came with a newer state
+#[derive(Debug, PartialEq, Eq)]
+pub struct StartChanges {
+    pub removed: Vec<UserId>,
+    pub added: Vec<UserId>,
     pub new_state: bool,
 }
 
@@ -137,6 +146,11 @@ impl Game {
         if status < self.status {
             return Err(UpdateError::Invalid("A game's status only moves forward".to_string()));
         }
+        if status == GameStatus::Active && self.status == GameStatus::Open {
+            return Err(UpdateError::Invalid(
+                "A game is started by a player, through the service".to_string(),
+            ));
+        }
         if let Some(waiting_for) = &update.waiting_for {
             let players: Vec<_> = self.players.iter().filter(|p| !update.remove.contains(p)).collect();
             if waiting_for.iter().any(|user_id| !players.contains(&user_id)) {
@@ -173,9 +187,6 @@ impl Game {
             applied.write_card = true;
         }
         if status != self.status {
-            if status == GameStatus::Active {
-                self.started_with = self.players.clone();
-            }
             if status == GameStatus::Finished {
                 self.waiting_for.clear();
             }
@@ -199,6 +210,71 @@ impl Game {
 
     // Ends a game its bot stopped updating, or was uninstalled from the chat. A result the bot gave is
     // kept.
+    // The bot's answer to a player starting the game: it plays with the players the bot gives, in the
+    // order they joined. Each must be playing, or still `joining`, having asked to join through OpenChat
+    // and been accepted by the bot as it answered. Anyone playing whom it leaves out is taken off.
+    pub fn start(&mut self, started: Started, joining: &[UserId], now: TimestampMillis) -> Result<StartChanges, String> {
+        if self.status != GameStatus::Open {
+            return Err("The game has already started".to_string());
+        }
+        if started.players.is_empty() {
+            return Err("A game starts with a player at least".to_string());
+        }
+        if started.players.iter().collect::<HashSet<_>>().len() < started.players.len() {
+            return Err("A player is listed twice".to_string());
+        }
+        if started
+            .players
+            .iter()
+            .any(|user_id| !self.players.contains(user_id) && !joining.contains(user_id))
+        {
+            return Err("Only users who joined can play".to_string());
+        }
+        let limit = self.max_players.map_or(MiniAppContent::MAX_PLAYERS, |max| {
+            (max as usize).min(MiniAppContent::MAX_PLAYERS)
+        });
+        if started.players.len() > limit {
+            return Err(format!("This game has at most {limit} players"));
+        }
+        if started.waiting_for.iter().any(|user_id| !started.players.contains(user_id)) {
+            return Err("Only players can be waited for".to_string());
+        }
+        if started.waiting_for.iter().collect::<HashSet<_>>().len() < started.waiting_for.len() {
+            return Err("A player is waited for twice".to_string());
+        }
+
+        let removed: Vec<_> = self
+            .players
+            .iter()
+            .filter(|user_id| !started.players.contains(user_id))
+            .copied()
+            .collect();
+        let added: Vec<_> = started
+            .players
+            .iter()
+            .filter(|user_id| !self.players.contains(user_id))
+            .copied()
+            .collect();
+        self.players.retain(|user_id| started.players.contains(user_id));
+        self.players.extend(added.iter().copied());
+        self.started_with = self.players.clone();
+        self.waiting_for = started.waiting_for;
+        self.status = GameStatus::Active;
+        let mut new_state = false;
+        if let Some(state) = started.state
+            && self.state.as_ref().is_none_or(|current| state.seq > current.seq)
+        {
+            self.state = Some(state);
+            new_state = true;
+        }
+        self.last_bot_update = now;
+        Ok(StartChanges {
+            removed,
+            added,
+            new_state,
+        })
+    }
+
     pub fn abandon(&mut self) {
         if self.status != GameStatus::Finished {
             self.status = GameStatus::Finished;
@@ -321,6 +397,16 @@ mod tests {
         }
     }
 
+    // A player starts it, and the bot with its players
+    fn start(game: &mut Game) {
+        let started = Started {
+            players: game.players.clone(),
+            waiting_for: Vec::new(),
+            state: None,
+        };
+        game.start(started, &[], 1).unwrap();
+    }
+
     fn status(status: GameStatus) -> BotUpdate {
         BotUpdate {
             status: Some(status),
@@ -349,7 +435,7 @@ mod tests {
 
         let mut game = self::game(None);
         game.add_player(user(1)).unwrap();
-        game.apply(status(GameStatus::Active), 1).unwrap();
+        start(&mut game);
         assert_eq!(game.can_join(), Err(Refusal::NotOpen));
         assert_eq!(game.add_player(user(2)), Err(Refusal::NotOpen));
     }
@@ -375,7 +461,7 @@ mod tests {
         assert_eq!(game.leave(user(1)), Ok(true));
 
         game.add_player(user(1)).unwrap();
-        game.apply(status(GameStatus::Active), 1).unwrap();
+        start(&mut game);
         assert_eq!(game.leave(user(1)), Err(Refusal::NotOpen));
     }
 
@@ -388,17 +474,16 @@ mod tests {
         game.add_player(user(2)).unwrap();
         assert!(catch_up(&mut game).is_empty());
 
-        let applied = game
-            .apply(
-                BotUpdate {
-                    status: Some(GameStatus::Active),
-                    waiting_for: Some(vec![user(1)]),
-                    ..Default::default()
-                },
-                1,
-            )
-            .unwrap();
-        assert!(applied.card_changed && applied.write_card);
+        game.start(
+            Started {
+                players: game.players.clone(),
+                waiting_for: vec![user(1)],
+                state: None,
+            },
+            &[],
+            1,
+        )
+        .unwrap();
         assert_eq!(
             catch_up(&mut game),
             vec![MiniAppStatusUpdate::Started(MiniAppStarted {
@@ -470,7 +555,7 @@ mod tests {
     fn a_game_which_finishes_before_its_start_is_written_records_its_players() {
         let mut game = game(None);
         game.add_player(user(1)).unwrap();
-        game.apply(status(GameStatus::Active), 1).unwrap();
+        start(&mut game);
         game.apply(status(GameStatus::Finished), 2).unwrap();
 
         let written = catch_up(&mut game);
@@ -484,7 +569,7 @@ mod tests {
     fn a_game_whose_bot_was_uninstalled_just_ends() {
         let mut game = game(None);
         game.add_player(user(1)).unwrap();
-        game.apply(status(GameStatus::Active), 1).unwrap();
+        start(&mut game);
         game.bot_uninstalled = true;
         game.abandon();
 
@@ -498,7 +583,7 @@ mod tests {
     fn a_bots_update_is_valid_or_changes_nothing() {
         let mut game = game(None);
         game.add_player(user(1)).unwrap();
-        game.apply(status(GameStatus::Active), 1).unwrap();
+        start(&mut game);
         let before = game.clone();
 
         for update in [

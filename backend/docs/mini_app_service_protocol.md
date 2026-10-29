@@ -34,14 +34,14 @@ The LocalUserIndex signs the first three with OpenChat's key, the same key as it
   - A community's members can see its public channels.
 - **The service writes to a card** through the LocalUserIndex's `update_mini_app`, which only its principal may call. That principal is set by the UserIndex's `set_mini_app_service_principal` proposal.
 
-The service also signs `MiniAppJoin` and `MiniAppLeave` for its calls to bots. Its public key is at `GET /public_key` (PEM).
+The service also signs `MiniAppJoin`, `MiniAppStart` and `MiniAppLeave` for its calls to bots. Its public key is at `GET /public_key` (PEM).
 
 ## Website ↔ service: WebSocket
 
 `wss://<service>/ws`. Messages have a `type`. A request carries an `id`, which its reply repeats; pushes have none.
 
 - **Tokens:** the website keeps its tokens for their hour. If the socket drops, it reconnects with them and sends its `follow` and `open` requests again.
-- **Order:** requests are handled in order, except `join` and `leave`, which wait on the bot.
+- **Order:** requests are handled in order, except `join`, `start` and `leave`, which wait on the bot.
 - **Liveness:**
   - The service pings every 30 seconds, and closes a socket it hears nothing from for 90.
   - It also closes a socket which stops reading, rather than queuing messages for it.
@@ -95,7 +95,7 @@ Asking again as a player returns `joined` without asking the bot.
 
 The bot is asked without the game being held, so it can update the game before it answers. If the game started or filled up meanwhile, the join is refused, and the bot is told the user left.
 
-The user isn't a player until the service adds them, after the bot answers. So the bot mustn't start the game, or wait for the user, while answering. It starts the game from a later request, eg. a player pressing Start in the app.
+The user isn't a player until the service adds them, after the bot answers. So the bot mustn't count them as playing until it's asked to start the game (see "Starting"), which may come while it's still answering.
 
 ### Refusals
 
@@ -107,12 +107,12 @@ Any request can be refused: `{ "type": "refused", "id": 2, "reason": "...", "mes
 | `wrong_chat` | a game isn't in the chat token's chat |
 | `not_member` | joining with a chat token that isn't a member's |
 | `unknown_game` | the service doesn't know the game |
-| `not_open` | joining or leaving a game that has started or finished |
+| `not_open` | joining, leaving or starting a game that has started or finished |
 | `full` | the game has `max_players` players, or 100, a card's most |
 | `refused_by_bot` | the bot said no; `message` is the bot's, to show the user |
-| `bot_unavailable` | the bot didn't answer within 5 seconds. It's told the user left, in case it accepted late. |
+| `bot_unavailable` | the bot didn't answer within 5 seconds. After a join, it's told the user left, in case it accepted late. Also when the bot starts a game with players who didn't join. |
 | `no_spectators` | opening a game that isn't the user's, which doesn't allow spectators |
-| `not_a_player` | asking for a player token for a game the user isn't playing |
+| `not_a_player` | asking for a player token for, or to start, a game the user isn't playing |
 | `unavailable` | the service couldn't read or save the game; try again |
 
 ### Opening a game
@@ -161,6 +161,18 @@ The reply is `{ "type": "player_token", "id": 4, "token": "..." }`, or `refused`
 - Only while the game is Open.
 - The service tells the bot, then replies `ok`, so rejoining can't overtake the leave. It also pushes a new `card`.
 
+### Starting
+
+A player asks to start the game, eg. from a Start button in the app (see "App ↔ website"):
+
+```json
+{ "type": "start", "id": 6, "game": game }
+```
+- Only a player, while the game is Open.
+- The service asks the bot (see "Service → bot"), and holds the game meanwhile, so no one joins or leaves but those whose joins the bot is still answering.
+- If the bot starts it, the service replies `ok`. Everyone gets the new `card`, and everyone with the game open gets its first `state`, after a `role` message for anyone whose role changed.
+- Otherwise it's `refused`, with `refused_by_bot` and the bot's message, eg. "Needs 2 players".
+
 ## Bot → service: HTTPS
 
 Every call has `Authorization: Bearer <bot token>`.
@@ -188,7 +200,7 @@ Every call has `Authorization: Bearer <bot token>`.
 ```
 Every field but `game` is optional.
 
-- **`status`** only moves forward: Open → Active → Finished, or Open → Finished. Active closes joining.
+- **`status`** is only `Finished`, which ends the game, whether it started or not. A player starts it, through the service (see "Starting").
 - **`waiting_for`** is whose turn it is now, all players, each once. Leave it out to keep it as it is; send it empty when it's no one in particular.
 - **`result`** is up to 200 characters, and only comes with Finished.
 - **`remove`** takes players off the game.
@@ -199,7 +211,7 @@ Every field but `game` is optional.
   - The bot includes a format version, so an app left open from an older release knows to reload. It also includes the last move, so the app can animate it.
 - **The body** is at most 64 KB.
 - **Writing to the card:** the service updates the card through the LocalUserIndex's `update_mini_app`, with a `MiniAppStatusUpdate`.
-  - When the bot sets Active: `Started { players, waiting_for }`, with the game's players as it starts.
+  - When a player starts the game: `Started { players, waiting_for }`, with the players the bot started it with.
   - When whose turn it is changes: `Turn { waiting_for }`.
   - When the bot sets Finished: `Ended { result }`. The card keeps the players the game started with, or no one if it never started. Finished ends the game.
   - The service remembers what the card holds, and sends the updates it still needs, in order. Turns that pass while an update's being written go as one.
@@ -209,7 +221,7 @@ Errors:
 
 | Status | Meaning |
 |---|---|
-| 400 | invalid: status moving back, a result without Finished, waiting for someone who isn't playing |
+| 400 | invalid: setting Active, status moving back, a result without Finished, waiting for someone who isn't playing |
 | 403 | not the bot's game |
 | 404 | unknown game |
 | 409 | the game has finished |
@@ -228,6 +240,21 @@ The token is `MiniAppJoin`, with `{ bot, game, user_id }`. The bot answers withi
 { "accepted": false, "message": "Seats are taken" }
 ```
 
+### `POST <endpoint>/mini_app/start`
+
+The token is `MiniAppStart`, with `{ bot, game, user_id }`: the player who asked. The bot answers within 5 seconds, starting the game:
+
+```json
+{ "accepted": true, "players": ["..."], "waiting_for": ["..."], "state": { "seq": 1, "shared": {}, "private": {} } }
+```
+or not:
+```json
+{ "accepted": false, "message": "Needs 2 players" }
+```
+- **`players`** are who it starts with, in any order. Each must be playing, or have a join the bot's still answering, as it accepted them; that join then succeeds. Anyone playing whom the bot leaves out is taken off, as with `remove`.
+- **`waiting_for`** and **`state`** are as in `/bot/update`. The service holds the game while it asks, so the bot answers with the game's first state rather than calling `/bot/update`, which would wait until the start timed out.
+- If the service can't save the start, the player can ask again, so a bot asked to start a game it already started answers as it did.
+
 ### `POST <endpoint>/mini_app/leave`
 
 The token is `MiniAppLeave`, with `{ bot, game, user_id }`. A player left, or isn't playing after all, eg. the bot accepted them too late. The bot answers 200, treating a leave for someone who isn't a player as done. The service retries a few times if it doesn't answer.
@@ -241,6 +268,7 @@ The website loads `<endpoint>/app` in a sandboxed iframe. It sends messages only
 **App → website:**
 - `{ kind: "mini_app_ready" }`
 - `{ kind: "mini_app_token_request" }`: a player's token is running out.
+- `{ kind: "mini_app_start" }`: the player asks to start the game. The website sends `start`.
 
 **Website → app:**
 - `{ kind: "initialise_mini_app", role: "player" | "spectator", user_id, token, dark_mode, locale }`
@@ -251,12 +279,14 @@ The website loads `<endpoint>/app` in a sandboxed iframe. It sends messages only
   - The website holds the latest state until the app is ready.
   - The app drops a state whose `seq` is below the last one, and takes one with the same `seq` in place of the one it has.
 - `{ kind: "set_dark_mode", dark_mode }`
+- `{ kind: "mini_app_start_result", accepted, message }`: the answer to `mini_app_start`. `message` is the bot's, or why OpenChat couldn't start it.
 
 A player's app sends the player token, in `x-oc-jwt`, with each request to the bot.
 
 ## Rules
 
 - **Joining and leaving** only happen through OpenChat's own buttons on the card and around the frame. Nothing lets an app join or leave for its user. Otherwise an app could sign up everyone who opens it.
+- **Starting goes through OpenChat,** so the card records exactly who the game started with. An app asks for its player, and the bot decides. Moves go straight to the bot.
 - **A bot checks its own player list on every request.** A player token outlives a removal by up to an hour.
 - **Spectators get only the shared state,** which every player sees too, so watching can't leak a player's hand.
 - **Only the service writes a card's status.** The status holds the game's players once it starts, whose turn it is, and its result once it finishes.

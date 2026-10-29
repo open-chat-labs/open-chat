@@ -43,6 +43,11 @@ pub enum ClientMessage {
         id: RequestId,
         game: MiniAppGame,
     },
+    // A player asks to start the game, which the bot does or refuses
+    Start {
+        id: RequestId,
+        game: MiniAppGame,
+    },
 }
 
 // What the service sends the website
@@ -186,6 +191,21 @@ pub struct GameState {
     pub shared: Value,
     #[serde(default)]
     pub private: HashMap<UserId, Value>,
+}
+
+// A bot's answer to `POST <endpoint>/mini_app/start`: if it starts the game, who plays, whose turn it
+// is first, and the game's first state
+#[derive(Serialize, Deserialize, Debug)]
+pub struct StartResponse {
+    pub accepted: bool,
+    #[serde(default)]
+    pub message: Option<String>,
+    #[serde(default)]
+    pub players: Vec<UserId>,
+    #[serde(default)]
+    pub waiting_for: Vec<UserId>,
+    #[serde(default)]
+    pub state: Option<GameState>,
 }
 
 // A bot's answer to `POST <endpoint>/mini_app/join`

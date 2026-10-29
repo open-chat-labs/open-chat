@@ -6,8 +6,8 @@ use serde::Serialize;
 use serde::de::DeserializeOwned;
 use types::{
     CLAIM_TYPE_MINI_APP_BOT, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_JOIN, CLAIM_TYPE_MINI_APP_LEAVE,
-    CLAIM_TYPE_MINI_APP_PLAYER, CLAIM_TYPE_MINI_APP_REGISTRATION, Error, Milliseconds, MiniAppBotClaims, MiniAppChatClaims,
-    MiniAppGame, MiniAppPlayerClaims, MiniAppRegistrationClaims, TimestampMillis, UserId,
+    CLAIM_TYPE_MINI_APP_PLAYER, CLAIM_TYPE_MINI_APP_REGISTRATION, CLAIM_TYPE_MINI_APP_START, Error, Milliseconds,
+    MiniAppBotClaims, MiniAppChatClaims, MiniAppGame, MiniAppPlayerClaims, MiniAppRegistrationClaims, TimestampMillis, UserId,
 };
 
 // A player's app keeps its token for an hour, like the website its tokens
@@ -60,6 +60,10 @@ impl Tokens {
 
     pub fn join_call(&self, bot: UserId, game: MiniAppGame, user_id: UserId, now: TimestampMillis) -> String {
         self.sign(CLAIM_TYPE_MINI_APP_JOIN, bot, game, user_id, BOT_CALL_TOKEN_VALIDITY, now)
+    }
+
+    pub fn start_call(&self, bot: UserId, game: MiniAppGame, user_id: UserId, now: TimestampMillis) -> String {
+        self.sign(CLAIM_TYPE_MINI_APP_START, bot, game, user_id, BOT_CALL_TOKEN_VALIDITY, now)
     }
 
     pub fn leave_call(&self, bot: UserId, game: MiniAppGame, user_id: UserId, now: TimestampMillis) -> String {
