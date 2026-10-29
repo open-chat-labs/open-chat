@@ -194,7 +194,7 @@
   const shortId = (id: string) => {
     if (!PRINCIPAL.test(id)) return id;
     const groups = id.split('-');
-    return `${groups.slice(0, 2).join('-')}-…-${groups.slice(-2).join('-')}`;
+    return `${groups[0]}-…-${groups[groups.length - 1]}`;
   };
 </script>
 

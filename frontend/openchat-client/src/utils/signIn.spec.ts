@@ -3,6 +3,7 @@ import {
     isOwnPrincipal,
     linkIdentitiesResult,
     markCurrentSignIn,
+    shortSignInPrincipal,
     signInLastUsed,
     signInOptions,
     unlinkIdentityFailure,
@@ -151,5 +152,17 @@ describe("a sign-in method's last used line", () => {
         const key = signInLastUsed(1_760_270_400_000n, "en-GB");
         expect(key.key).toBe("identity.linkedAccounts.lastUsed");
         expect(key.params).toEqual({ date: "12 Oct 2025" });
+    });
+});
+
+describe("a sign-in method's principal", () => {
+    test("keeps only its first and last groups", () => {
+        expect(
+            shortSignInPrincipal("7z6fx-jpbwz-amxwd-ngxyp-a3d4t-gqtxc-ehwxl-5s4ut-ouvzm-4pv7u-wae"),
+        ).toBe("7z6fx-...-wae");
+    });
+
+    test("is left whole when it has no middle groups", () => {
+        expect(shortSignInPrincipal("2vxsx-fae")).toBe("2vxsx-fae");
     });
 });
