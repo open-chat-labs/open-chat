@@ -8,9 +8,9 @@ use types::{CanisterId, EventIndex, MiniAppContent, MiniAppGame, MiniAppStatusUp
 
 #[derive(Debug)]
 pub enum PostError {
-    // The card's message id is taken, so the card was posted by an earlier try
-    AlreadyPosted,
-    // OpenChat refused the card, which retrying won't change, eg. the bot isn't installed in the chat
+    // OpenChat refused the card, which retrying won't change, eg. the bot isn't installed in the chat,
+    // or another message has the card's message id. A repeated post of the card itself isn't refused:
+    // the chat answers with the card it holds.
     Refused(String),
     // The call failed, eg. the chat's canister was stopped for an upgrade, so it's worth trying again
     Failed(String),
@@ -70,9 +70,6 @@ impl CardWriter for IcCardWriter {
         };
         match local_user_index_canister_client::mini_app_send_message(&self.agent, &gateway, &args).await {
             Ok(mini_app_send_message::Response::Success(_)) => Ok(()),
-            Ok(mini_app_send_message::Response::Error(error)) if error.matches_code(OCErrorCode::MessageIdAlreadyExists) => {
-                Err(PostError::AlreadyPosted)
-            }
             Ok(mini_app_send_message::Response::Error(error)) if error.matches_code(OCErrorCode::C2CError) => {
                 Err(PostError::Failed(format!("{error:?}")))
             }

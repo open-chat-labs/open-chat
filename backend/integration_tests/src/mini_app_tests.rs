@@ -17,10 +17,14 @@ use types::{
     AutonomousConfig, BlobReference, BotActionChatDetails, BotActionCommunityDetails, BotActionScope, BotChatContext,
     BotInitiator, BotInstallationLocation, BotMessageContent, BotPermissions, CLAIM_TYPE_MINI_APP_BOT,
     CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_POST, CanisterId, ChannelId, Chat, ChatEvent, ChatPermission, CommunityId,
-    Empty, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePermission, MiniAppActive,
-    MiniAppBotClaims, MiniAppChatClaims, MiniAppContent, MiniAppEnded, MiniAppFinished, MiniAppGame, MiniAppImage,
-    MiniAppPostClaims, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, SuccessOnly, UnitResult, UserId,
+    Empty, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePermission, Milliseconds,
+    MiniAppActive, MiniAppBotClaims, MiniAppChatClaims, MiniAppContent, MiniAppEnded, MiniAppFinished, MiniAppGame,
+    MiniAppImage, MiniAppPostClaims, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, SuccessOnly, UnitResult,
+    UserId,
 };
+
+// How long a command's token, and so the post token of a command's card, lasts
+const COMMAND_TOKEN_VALIDITY: Milliseconds = 5 * 60 * 1000;
 
 #[test]
 fn a_bot_posts_a_mini_app_card_which_cant_be_edited() {
@@ -786,10 +790,8 @@ fn a_bot_gets_a_token_for_the_mini_app_service() {
     );
 }
 
-// The bot registers its game with the MiniApp service with the token posting the card gives it: which
-// game it is, its settings, and where the service sends join requests
 // The token fixes the card's message id, so posting it twice posts one card, and a bot which got no
-// answer posts it again. A bot chooses the id, or the LocalUserIndex does.
+// answer posts it again. The bot chooses the id, unless a chat command's token fixes it.
 #[test]
 fn a_bots_post_token_posts_its_card_once() {
     let mut wrapper = ENV.deref().get();
@@ -863,14 +865,32 @@ fn a_bots_post_token_posts_its_card_once() {
         panic!("'mini_app_send_message' error: {response:?}");
     };
     assert_eq!(sent.message_id, message_id);
+    // Posting again, as the service does when its first try went unanswered, gives the card the chat
+    // holds, not a second card
+    let response = post_with_token(env, service, local_user_index, &token, card());
+    let local_user_index_canister::bot_send_message::Response::Success(again) = response else {
+        panic!("'mini_app_send_message' error: {response:?}");
+    };
+    assert_eq!((again.message_id, again.event_index), (sent.message_id, sent.event_index));
+    assert_eq!(
+        card_text(env, &member, community_id, channel_id, sent.event_index),
+        card().text
+    );
+    // Any other message at the card's id is taken
+    let taken = random_from_u128();
+    client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, "Taken", Some(taken));
+    let token = post_token(
+        env,
+        bot_principal,
+        local_user_index,
+        BotChatContext::Autonomous(chat),
+        None,
+        Some(taken),
+    );
     let response = post_with_token(env, service, local_user_index, &token, card());
     assert!(
         matches!(&response, local_user_index_canister::bot_send_message::Response::Error(e) if e.matches_code(OCErrorCode::MessageIdAlreadyExists)),
         "Expected MessageIdAlreadyExists: {response:?}"
-    );
-    assert_eq!(
-        card_text(env, &member, community_id, channel_id, sent.event_index),
-        card().text
     );
 
     // Only a bot gets one, and never for a direct chat
@@ -924,7 +944,8 @@ fn a_bots_post_token_posts_its_card_once() {
 }
 
 // A member's `/uno` is answered with a card at the command's message id, by the member's leave: the
-// command's token fixes the id, and the card holds the command
+// command's token fixes the id, and the card holds the command. The card can be posted for as long as
+// the command can be answered.
 #[test]
 fn a_card_answers_a_members_command() {
     let mut wrapper = ENV.deref().get();
@@ -1024,7 +1045,8 @@ fn a_card_answers_a_members_command() {
         None,
         None,
     );
-    let claims: MiniAppPostClaims = verify(env, canister_ids, &token, CLAIM_TYPE_MINI_APP_POST);
+    let claims: MiniAppPostClaims =
+        verify_expiring(env, canister_ids, &token, CLAIM_TYPE_MINI_APP_POST, COMMAND_TOKEN_VALIDITY);
     assert_eq!(claims.game.message_id, message_id);
     assert!(matches!(&claims.initiator, BotInitiator::Command(command) if command.initiator == member.user_id));
 
@@ -1085,9 +1107,15 @@ fn a_card_answers_a_members_command() {
     let local_user_index_canister::bot_mini_app_post_token::Response::Success(token) = response else {
         panic!("'bot_mini_app_post_token' error: {response:?}");
     };
-    let claims: MiniAppPostClaims = verify(env, canister_ids, &token, CLAIM_TYPE_MINI_APP_POST);
+    let claims: MiniAppPostClaims =
+        verify_expiring(env, canister_ids, &token, CLAIM_TYPE_MINI_APP_POST, COMMAND_TOKEN_VALIDITY);
     assert_eq!(claims.game.chat, chat);
     assert_eq!(claims.game.message_id, message_id);
+    let response = post_with_token(env, service, local_user_index, &token, card());
+    let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
+        panic!("'mini_app_send_message' error: {response:?}");
+    };
+    assert_eq!(sent.message_id, message_id);
 }
 
 struct Setup {
@@ -1379,12 +1407,23 @@ fn card_text(env: &PocketIc, user: &User, community_id: CommunityId, channel_id:
 
 // Signed by OpenChat, with the claim type expected, for an hour
 fn verify<T: DeserializeOwned>(env: &mut PocketIc, canister_ids: &crate::CanisterIds, token: &str, claim_type: &str) -> T {
+    verify_expiring(env, canister_ids, token, claim_type, 60 * 60 * 1000)
+}
+
+// Signed by OpenChat, with the claim type expected, for `validity`
+fn verify_expiring<T: DeserializeOwned>(
+    env: &mut PocketIc,
+    canister_ids: &crate::CanisterIds,
+    token: &str,
+    claim_type: &str,
+    validity: Milliseconds,
+) -> T {
     let public_key = client::user_index::happy_path::public_key(env, canister_ids.user_index);
     let claims: Claims<T> = verify_and_decode(token, &public_key, claim_type).unwrap();
     let now = now_millis(env);
     assert!(
-        claims.exp_ms() > now + 59 * 60 * 1000 && claims.exp_ms() <= now + 60 * 60 * 1000,
-        "Expires at {}, now {now}",
+        claims.exp_ms() > now + validity - 60 * 1000 && claims.exp_ms() <= now + validity,
+        "Expires at {}, now {now}, validity {validity}",
         claims.exp_ms()
     );
     claims.into_custom()

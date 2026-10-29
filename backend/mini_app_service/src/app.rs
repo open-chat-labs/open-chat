@@ -14,7 +14,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::{Mutex as AsyncMutex, MutexGuard};
 use tracing::{error, info, warn};
-use types::{Error, Milliseconds, MiniAppChatClaims, MiniAppGame, TimestampMillis, UserId};
+use types::{Error, Milliseconds, MiniAppChatClaims, MiniAppEnded, MiniAppGame, MiniAppStatusUpdate, TimestampMillis, UserId};
 
 // A game whose bot hasn't updated it for this long is ended
 pub const ABANDONED_AFTER: Milliseconds = 24 * 60 * 60 * 1000;
@@ -35,6 +35,8 @@ pub struct App {
     // for up to its timeout, which holds up the games sharing the lock too.
     locks: Vec<AsyncMutex<()>>,
     card_writes: Mutex<CardWrites>,
+    // The games whose cards OpenChat couldn't take, being posted again
+    posts: Mutex<HashSet<MiniAppGame>>,
     // The users whose joins are being answered by bots, who a bot may start a game with
     joining: Mutex<Vec<(MiniAppGame, UserId)>>,
 }
@@ -72,6 +74,7 @@ impl App {
             cards,
             locks: (0..LOCK_STRIPES).map(|_| AsyncMutex::new(())).collect(),
             card_writes: Mutex::default(),
+            posts: Mutex::default(),
             joining: Mutex::default(),
         }
     }
@@ -368,9 +371,9 @@ impl App {
 
     // A bot posting a card, with its post token. The service posts the card as the bot, through the
     // LocalUserIndex, so it knows the game from the moment the card exists. The token fixes the card's
-    // message id, so posting it again posts nothing new: the chat refuses the taken id, which counts
-    // as posted. Nothing is held while OpenChat is called.
-    pub async fn post(&self, bot: UserId, args: PostArgs) -> Result<MiniAppGame, ApiError> {
+    // message id, and the chat answers a repeated card with the one it holds, so posting again posts
+    // nothing new. Nothing is held while OpenChat is called.
+    pub async fn post(self: &Arc<Self>, bot: UserId, args: PostArgs) -> Result<MiniAppGame, ApiError> {
         let now = now_millis();
         let Some(claims) = self.tokens.post(&args.token, now) else {
             return Err(ApiError::new(400, "Invalid post token"));
@@ -387,27 +390,39 @@ impl App {
                 return Err(ApiError::new(409, "The game has finished"));
             }
             match self.store.get(&game).await.map_err(store_error)? {
+                Some(found) if found.bot != bot => return Err(ApiError::new(403, "Another bot's game")),
                 Some(found) if found.is_posted() => return Ok(game),
-                // Posted again before an earlier post was answered, eg. as the service restarted: the
+                // Posted again before an earlier post was answered, eg. as the service restarted: that
                 // post goes again
-                _ => {
+                Some(found) => found,
+                None => {
                     let pending = Game::posting(claims, args, now);
                     self.store.put(&pending).await.map_err(store_error)?;
                     pending
                 }
             }
         };
-        self.post_pending(&pending).await.map(|()| game)
+        match self.post_pending(&pending).await {
+            Ok(()) => Ok(game),
+            Err(PostError::Refused(error)) => Err(ApiError::new(400, &format!("OpenChat refused the card: {error}"))),
+            Err(PostError::Failed(_)) => {
+                self.retry_post(game);
+                Err(ApiError::new(
+                    503,
+                    "Couldn't reach OpenChat; the service keeps trying, and the same token can be posted again",
+                ))
+            }
+        }
     }
 
-    // Sends a pending post to OpenChat. A refused card is forgotten; one OpenChat couldn't take is left
-    // pending, for the bot to post again, or maintenance to.
-    async fn post_pending(&self, pending: &Game) -> Result<(), ApiError> {
+    // Sends a pending post to OpenChat once. A card OpenChat took is marked posted, one it refused is
+    // forgotten, and one it couldn't take is left pending.
+    async fn post_pending(&self, pending: &Game) -> Result<(), PostError> {
         let game = pending.game;
         let Some(post) = &pending.pending_post else {
             return Ok(());
         };
-        let content = post.card.to_content().map_err(|error| ApiError::new(400, &error))?;
+        let content = post.card.to_content().map_err(PostError::Refused)?;
         let result = self
             .cards
             .post(
@@ -419,23 +434,105 @@ impl App {
             )
             .await;
         match result {
-            Ok(()) | Err(PostError::AlreadyPosted) => {
+            Ok(()) => {
                 info!(bot = %pending.bot, game = ?game, "Card posted");
-                self.change(&game, |found| found.pending_post = None)
+                self.mark_posted(pending)
                     .await
-                    .map_err(store_error)
+                    .map_err(|error| PostError::Failed(error.to_string()))
             }
             Err(PostError::Refused(error)) => {
                 info!(bot = %pending.bot, game = ?game, error, "OpenChat refused a card");
-                let _guard = self.lock(&game).await;
-                self.store.forget(&game).await.map_err(store_error)?;
-                Err(ApiError::new(400, &format!("OpenChat refused the card: {error}")))
+                self.forget_pending(pending).await;
+                Err(PostError::Refused(error))
             }
             Err(PostError::Failed(error)) => {
                 warn!(bot = %pending.bot, game = ?game, error, "Failed to post a card");
-                Err(ApiError::new(503, "Couldn't reach OpenChat; post the same token again"))
+                Err(PostError::Failed(error))
             }
         }
+    }
+
+    // The card's in the chat, so the game is kept, as posted, whatever happened to its record meanwhile,
+    // eg. a concurrent attempt was refused and forgot it
+    async fn mark_posted(&self, pending: &Game) -> Result<(), Error> {
+        let game = pending.game;
+        let _guard = self.lock(&game).await;
+        let mut found = self.store.get(&game).await?.unwrap_or_else(|| pending.clone());
+        found.pending_post = None;
+        self.store.put(&found).await?;
+        // Followers who found the game pending get their first card
+        self.hub.push_card(found.card(self.hub.watching(&game)));
+        Ok(())
+    }
+
+    // A post OpenChat refused, or whose token expired: the game's forgotten, unless a concurrent attempt
+    // got the card in. In case the card landed unheard, eg. before the bot's permission was taken away,
+    // it's ended, so it doesn't stay Open with no game behind it. A card which never landed answers
+    // MessageNotFound, which is nothing.
+    async fn forget_pending(&self, pending: &Game) {
+        let game = pending.game;
+        let Some(post) = &pending.pending_post else {
+            return;
+        };
+        {
+            let _guard = self.lock(&game).await;
+            match self.store.get(&game).await {
+                Ok(Some(found)) if found.pending_post.as_ref().is_some_and(|p| p.token == post.token) => {
+                    if let Err(error) = self.store.forget(&game).await {
+                        error!(%error, "Failed to forget a game");
+                        return;
+                    }
+                }
+                Ok(_) => return,
+                Err(error) => {
+                    error!(%error, "Failed to read a game");
+                    return;
+                }
+            }
+        }
+        let cards = self.cards.clone();
+        let gateway = pending.bot_api_gateway;
+        tokio::spawn(async move {
+            let _ = cards
+                .write(gateway, &game, MiniAppStatusUpdate::Ended(MiniAppEnded { result: None }))
+                .await;
+        });
+    }
+
+    // Keeps trying a post OpenChat couldn't take, backing off, until it's taken or refused or its token
+    // expires. One at a time per game.
+    fn retry_post(self: &Arc<Self>, game: MiniAppGame) {
+        if !self.posts.lock().unwrap().insert(game) {
+            return;
+        }
+        let app = self.clone();
+        tokio::spawn(async move {
+            let mut retry = Retry::new();
+            while retry.wait().await {
+                let found = match app.store.get(&game).await {
+                    Ok(Some(found)) if !found.is_posted() => found,
+                    Ok(_) => break,
+                    Err(error) => {
+                        warn!(%error, "Failed to read a game to post its card");
+                        continue;
+                    }
+                };
+                let expired = found
+                    .pending_post
+                    .as_ref()
+                    .is_none_or(|post| app.tokens.post(&post.token, now_millis()).is_none());
+                if expired {
+                    info!(game = ?game, "Forgetting a card whose post token expired");
+                    app.forget_pending(&found).await;
+                    break;
+                }
+                match app.post_pending(&found).await {
+                    Ok(()) | Err(PostError::Refused(_)) => break,
+                    Err(PostError::Failed(_)) => {}
+                }
+            }
+            app.posts.lock().unwrap().remove(&game);
+        });
     }
 
     // A game whose card OpenChat has taken. Until then no one can follow, join or open it, nor its bot
@@ -488,7 +585,7 @@ impl App {
         Ok(())
     }
 
-    // Run on starting and then every few minutes: posts any card still pending, eg. as the service
+    // Run on starting and then every few minutes: posts again any card still pending, eg. as the service
     // restarted before OpenChat answered, ends the games whose bots haven't updated them for a day, and
     // writes any card which hasn't caught up with its game, eg. as the service restarted before writing
     // it
@@ -504,17 +601,9 @@ impl App {
                 let Ok(Some(mut found)) = self.store.get(&game).await else {
                     continue;
                 };
-                if let Some(post) = &found.pending_post {
-                    // Once the token has expired the post can't go, and the bot gets a new token
-                    if self.tokens.post(&post.token, now).is_none() {
-                        info!(game = ?game, "Forgetting a card whose post token expired");
-                        if let Err(error) = self.store.forget(&game).await {
-                            error!(%error, "Failed to forget a game");
-                        }
-                        continue;
-                    }
+                if found.pending_post.is_some() {
                     drop(_guard);
-                    let _ = self.post_pending(&found).await;
+                    self.retry_post(game);
                     continue;
                 }
                 if found.status != GameStatus::Finished && found.last_bot_update < now.saturating_sub(ABANDONED_AFTER) {
@@ -864,12 +953,12 @@ mod tests {
             if let Some(error) = self.refuse_post.lock().unwrap().clone() {
                 return Err(PostError::Refused(error));
             }
+            // As the chat does: a bot's repeated card is the card it holds
             let mut posted = self.posted.lock().unwrap();
-            if posted.iter().any(|t| t == token) {
-                return Err(PostError::AlreadyPosted);
+            if !posted.iter().any(|t| t == token) {
+                posted.push(token.to_string());
+                *self.card.lock().unwrap() = content;
             }
-            posted.push(token.to_string());
-            *self.card.lock().unwrap() = content;
             Ok(())
         }
 
@@ -923,6 +1012,16 @@ mod tests {
         }
     }
 
+    fn post_claims(bot: UserId) -> MiniAppPostClaims {
+        MiniAppPostClaims {
+            bot,
+            bot_endpoint: "https://uno.example.com".to_string(),
+            bot_api_gateway: Principal::from_slice(&[200]),
+            game: game(),
+            initiator: BotInitiator::Autonomous,
+        }
+    }
+
     fn update(status: Option<GameStatus>) -> UpdateArgs {
         UpdateArgs {
             game: game(),
@@ -962,18 +1061,7 @@ mod tests {
         }
 
         fn post_token_for(&self, bot: UserId) -> String {
-            oc_token(
-                &self.oc,
-                CLAIM_TYPE_MINI_APP_POST,
-                MiniAppPostClaims {
-                    bot,
-                    bot_endpoint: "https://uno.example.com".to_string(),
-                    bot_api_gateway: Principal::from_slice(&[200]),
-                    game: game(),
-                    initiator: BotInitiator::Autonomous,
-                },
-                now_millis() + HOUR,
-            )
+            oc_token(&self.oc, CLAIM_TYPE_MINI_APP_POST, post_claims(bot), now_millis() + HOUR)
         }
 
         fn post_args(&self, max_players: Option<u32>, spectators: bool) -> PostArgs {
@@ -1181,7 +1269,7 @@ mod tests {
     }
 
     // The card in the chat records the players the game started with, whose turn it is, then its
-    // result, after which the service forgets the game, and doesn't let its bot register it again
+    // result, after which the service forgets the game, and doesn't let its bot post its card again
     #[tokio::test]
     async fn the_card_follows_the_game_from_its_start_to_its_end() {
         let test = Test::new();
@@ -1781,71 +1869,136 @@ mod tests {
         assert!(test.stored().await.is_none());
     }
 
-    // A card OpenChat couldn't take is pending, and unknown to everyone, until it's posted again: by the
-    // bot, with the same token, or by maintenance, as after a restart
-    #[tokio::test]
+    // A card OpenChat couldn't take is pending, and unknown to everyone, until the service gets it in,
+    // trying again with backoff, or the bot posts the same token again
+    #[tokio::test(start_paused = true)]
     async fn a_card_the_chat_couldnt_take_is_posted_again() {
         let test = Test::new();
         *test.cards.post_failures.lock().unwrap() = 2;
         let args = test.post_args(None, true);
         assert_eq!(test.app.post(user(BOT), args.clone()).await.unwrap_err().status, 503);
         assert!(!test.stored().await.unwrap().is_posted());
-        assert!(matches!(
-            test.join(user(1)).await,
-            ServerMessage::Refused {
-                reason: Refusal::UnknownGame,
-                ..
-            }
-        ));
+
+        let refused = |message: &ServerMessage| {
+            matches!(
+                message,
+                ServerMessage::Refused {
+                    reason: Refusal::UnknownGame,
+                    ..
+                }
+            )
+        };
+        assert!(refused(&test.join(user(1)).await));
+        assert!(refused(&test.app.leave(user(1), 1, game()).await));
+        assert!(refused(&test.app.player_token(user(1), 1, game()).await));
+        assert!(refused(&test.app.start(user(1), 1, game()).await));
+        let (id, mut received) = test.connect(user(1));
+        test.app.open(id, user(1), 1, &test.chat_token(user(1), true), game()).await;
+        assert!(refused(&messages(&mut received)[0]));
+        test.app
+            .follow(id, user(1), 2, &test.chat_token(user(1), true), vec![game()])
+            .await;
+        assert!(cards(&mut received).is_empty());
         assert_eq!(test.update(update(None)).await.unwrap_err().status, 404);
 
-        assert_eq!(test.app.post(user(BOT), args).await.unwrap_err().status, 503);
-        test.app.maintain().await;
+        // The service's own retries get it in, and the followers their card
+        tokio::time::sleep(Duration::from_secs(10)).await;
+        test.settle().await;
         assert!(test.stored().await.unwrap().is_posted());
         assert_eq!(test.cards.posted.lock().unwrap().len(), 1);
+        assert_eq!(cards(&mut received).len(), 1);
         assert!(matches!(test.join(user(1)).await, ServerMessage::Joined { .. }));
+        assert!(test.app.posts.lock().unwrap().is_empty());
     }
 
-    // The chat took the card but the service didn't hear, eg. it restarted meanwhile: the chat refuses
-    // the message id as taken, which counts as posted
+    // The chat took the card but the service didn't hear, eg. it restarted meanwhile: the chat answers
+    // the repeated card with the one it holds
     #[tokio::test]
-    async fn a_card_the_chat_took_unheard_counts_as_posted() {
+    async fn a_card_the_chat_took_unheard_is_confirmed_by_posting_again() {
         let test = Test::new();
         let args = test.post_args(None, true);
         test.cards.posted.lock().unwrap().push(args.token.clone());
         assert_eq!(test.app.post(user(BOT), args).await, Ok(game()));
         assert!(test.stored().await.unwrap().is_posted());
+        assert_eq!(test.cards.posted.lock().unwrap().len(), 1);
     }
 
-    // The bot gets a new token then, as it has to post a new card. JWTs expire to the second, so the
-    // pending game is stored as a restart would leave it, with a token which has since expired.
+    // Two attempts at the same post can be in flight, the bot's and the service's. One getting the card
+    // in wins: a refusal after it, eg. as the bot's permission was taken away between them, doesn't
+    // forget the live game, and a success after the record was forgotten keeps the game.
     #[tokio::test]
-    async fn a_pending_card_whose_token_expired_is_forgotten() {
+    async fn a_posted_game_survives_a_late_refusal_and_a_forgotten_one_a_late_success() {
+        let test = Test::new();
+        let args = test.post_args(None, true);
+        let as_read_before = Game::posting(post_claims(user(BOT)), args.clone(), now_millis());
+        assert_eq!(test.app.post(user(BOT), args.clone()).await, Ok(game()));
+        test.join(user(1)).await;
+
+        *test.cards.refuse_post.lock().unwrap() = Some("Bot not installed".to_string());
+        assert!(matches!(
+            test.app.post_pending(&as_read_before).await,
+            Err(PostError::Refused(_))
+        ));
+        let stored = test.stored().await.unwrap();
+        assert!(stored.is_posted());
+        assert_eq!(stored.players, vec![user(1)]);
+        test.settle().await;
+        assert!(test.cards.written.lock().unwrap().is_empty());
+
+        let test = Test::new();
+        let pending = Game::posting(post_claims(user(BOT)), test.post_args(None, true), now_millis());
+        test.store.put(&pending).await.unwrap();
+        test.app.forget_pending(&pending).await;
+        assert!(test.stored().await.is_none());
+        test.app.mark_posted(&pending).await.unwrap();
+        assert!(test.stored().await.unwrap().is_posted());
+    }
+
+    // Whether the game's posted or still pending
+    #[tokio::test]
+    async fn another_bot_cant_post_over_a_games_record() {
+        let test = Test::new();
+        *test.cards.post_failures.lock().unwrap() = 1;
+        let args = test.post_args(None, true);
+        assert_eq!(test.app.post(user(BOT), args.clone()).await.unwrap_err().status, 503);
+        let other = PostArgs {
+            token: test.post_token_for(user(101)),
+            ..args.clone()
+        };
+        assert_eq!(test.app.post(user(101), other.clone()).await.unwrap_err().status, 403);
+        assert_eq!(test.stored().await.unwrap().bot, user(BOT));
+
+        assert_eq!(test.app.post(user(BOT), args).await, Ok(game()));
+        assert_eq!(test.app.post(user(101), other).await.unwrap_err().status, 403);
+        assert_eq!(test.stored().await.unwrap().bot, user(BOT));
+    }
+
+    // The bot gets a new token then, as it has to post a new card. In case the card landed unheard, it's
+    // ended. JWTs expire to the second, so the pending game is stored as a restart would leave it, with a
+    // token which has since expired.
+    #[tokio::test(start_paused = true)]
+    async fn a_pending_card_whose_token_expired_is_forgotten_and_ended() {
         let test = Test::new();
         let mut args = test.post_args(None, true);
         args.token = oc_token(
             &test.oc,
             CLAIM_TYPE_MINI_APP_POST,
-            MiniAppPostClaims {
-                bot: user(BOT),
-                bot_endpoint: "https://uno.example.com".to_string(),
-                bot_api_gateway: Principal::from_slice(&[200]),
-                game: game(),
-                initiator: BotInitiator::Autonomous,
-            },
+            post_claims(user(BOT)),
             now_millis() - 1_000,
         );
-        let claims = MiniAppPostClaims {
-            bot: user(BOT),
-            bot_endpoint: "https://uno.example.com".to_string(),
-            bot_api_gateway: Principal::from_slice(&[200]),
-            game: game(),
-            initiator: BotInitiator::Autonomous,
-        };
-        test.store.put(&Game::posting(claims, args, now_millis())).await.unwrap();
+        test.store
+            .put(&Game::posting(post_claims(user(BOT)), args, now_millis()))
+            .await
+            .unwrap();
 
         test.app.maintain().await;
+        tokio::time::sleep(Duration::from_secs(2)).await;
+        test.settle().await;
         assert!(test.stored().await.is_none());
         assert!(test.cards.posted.lock().unwrap().is_empty());
+        assert!(matches!(
+            test.cards.written.lock().unwrap().as_slice(),
+            [MiniAppStatusUpdate::Ended(MiniAppEnded { result: None })]
+        ));
     }
 }

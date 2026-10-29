@@ -7,8 +7,8 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 use types::{Error, MiniAppGame};
 
-// An ended game is remembered for longer than a registration lasts, so a bot registering it again
-// doesn't bring it back
+// An ended game is remembered for longer than a post token lasts, so posting its token again doesn't
+// bring it back
 const ENDED_SECONDS: u64 = 2 * 60 * 60;
 
 #[async_trait]

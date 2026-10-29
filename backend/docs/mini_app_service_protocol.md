@@ -33,7 +33,7 @@ The LocalUserIndex signs the first three with OpenChat's key, the same key as it
 - **A chat token** says whether the user is a member, who may join the chat's games, or can only see the chat's messages, and may only watch them. Anyone else is refused one.
   - Who can see a chat follows its events: anyone can see a public group, or a public channel in a public community without a payment gate, unless it hides its messages from non-members.
   - A community's members can see its public channels.
-- **A post token** is a bot's permission to post one card: the bot, its endpoint, the chat, thread and message id, and who asked (a command and its user, or the bot itself). The LocalUserIndex resolves those as it would for `bot_send_message`, and fixes the message id: a chat command's, or otherwise one the bot chooses (the SDKs pick a random one). Posting the same token again posts nothing new, as the card's message id is taken, so a bot can safely retry.
+- **A post token** is a bot's permission to post one card: the bot, its endpoint, the chat, thread and message id, and who asked (a command and its user, or the bot itself). The LocalUserIndex resolves those as it would for `bot_send_message`, and fixes the message id: a chat command's, or otherwise one the bot chooses (the SDKs pick a random one). Posting the same token again posts nothing new, as the chat answers a bot's repeated card with the card it holds, so a bot can safely retry. A command's token lasts as long as the command can be answered.
 - **The service posts a card** through the LocalUserIndex's `mini_app_send_message`, with the bot's post token, and **writes to it** through `update_mini_app`. Only its principal may call either; it's set by the UserIndex's `set_mini_app_service_principal` proposal. A bot can't post a card any other way: `bot_send_message` refuses MiniApp content.
 
 The service also signs `MiniAppJoin`, `MiniAppStart` and `MiniAppLeave` for its calls to bots. Its public key is at `GET /public_key` (PEM).
@@ -197,7 +197,7 @@ Every call has `Authorization: Bearer <bot token>`.
 - The bot gets the token from the LocalUserIndex's `bot_mini_app_post_token`, with the same context it would send a message with: a command's token or an autonomous chat, the channel for a community command, the thread, and the message id it chose, unless a chat command's token fixes it. The token must be the bot's own.
 - `card` is the card as the bot posts it: `image`, `max_players` and `replies_to` are optional, and `block_level_markdown` is false if left out. Its status is Open. `blob_id` is a decimal string, as message ids are. The bot uploads the image to OpenChat's storage first, as for an image message.
 - The service posts the card as the bot, through the LocalUserIndex, and answers `{ "game": game }` once it's in the chat. The game is in the token, so the bot knows it before the card is posted.
-- **Posting again with the same token** answers `{ "game": game }` too, without posting another card. So a bot which doesn't get an answer, eg. as the service restarted, sends the same token again.
+- **Posting again with the same token** answers `{ "game": game }` too, without posting another card: the chat answers a bot's repeated card with the card it holds. So a bot which doesn't get an answer, eg. as the service restarted, sends the same token again. Any other message at the card's message id is a refusal, so a command answered with a card isn't answered with anything else at its id first, except an unfinalised placeholder, which the card replaces.
 - Until the service has posted a card, it doesn't know the game: no one can follow, join or open it, and `/bot/update` answers 404.
 
 Errors:
@@ -207,7 +207,7 @@ Errors:
 | 400 | the token is invalid or expired, the card is invalid, or OpenChat refused it, eg. the bot isn't installed in the chat, or lacks the MiniApp permission; `error` says which |
 | 403 | another bot's token |
 | 409 | the game has finished |
-| 503 | the service couldn't reach OpenChat, or read or save the game; post the same token again |
+| 503 | the service couldn't reach OpenChat, or read or save the game. The service keeps trying for as long as the token lasts; the bot may post the same token again too |
 
 ### `POST /bot/update`
 
@@ -251,7 +251,7 @@ Errors:
 
 ## Service → bot: HTTPS
 
-The service calls the bot at the endpoint in the game's registration. It sends a token it signs, in `x-oc-jwt`, which lasts a minute. The bot verifies it with the service's public key, checking `claim_type` and that `bot` is its own id.
+The service calls the bot at the endpoint in the game's post token, the bot's when it posted the card. It sends a token it signs, in `x-oc-jwt`, which lasts a minute. The bot verifies it with the service's public key, checking `claim_type` and that `bot` is its own id.
 
 ### `POST <endpoint>/mini_app/join`
 

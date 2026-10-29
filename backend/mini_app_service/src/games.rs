@@ -30,7 +30,7 @@ pub struct Game {
     // Whose turn it is, as the bot last said
     pub waiting_for: Vec<UserId>,
     pub result: Option<String>,
-    // When the bot last updated the game, or registered it
+    // When the bot last updated the game, or posted it
     pub last_bot_update: TimestampMillis,
     pub state: Option<GameState>,
     // What the card in the chat holds, as the service last wrote it

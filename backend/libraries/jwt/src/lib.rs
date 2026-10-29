@@ -250,7 +250,7 @@ mod tests {
     // The MiniApp service, its website client and bots in TypeScript all read these, so a game's
     // message id must come out as a string, where a number this size would lose digits
     #[test]
-    fn a_mini_app_registration_round_trips_with_its_game() {
+    fn a_mini_app_post_token_round_trips_with_its_game() {
         let mut rng = rand::rng();
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
         let kp = P256KeyPair::new(&mut rng);
