@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add MiniApp messages, which only bots post: a card for a bot's app, eg. a game, with an optional image, whose players, status and result the MiniApp service keeps up to date ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300))
 - Add `update_mini_app`, for the MiniApp service to keep MiniApp cards up to date ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300))
-- Issue the MiniApp service's tokens: a connection token and a chat token for users, a token for bots, and a registration for each MiniApp card a bot posts ([#10301](https://github.com/open-chat-labs/open-chat/pull/10301))
+- Issue the MiniApp service's tokens: a chat token for users, a token for bots, and a registration for each MiniApp card a bot posts ([#10301](https://github.com/open-chat-labs/open-chat/pull/10301))
 
 ### Changed
 

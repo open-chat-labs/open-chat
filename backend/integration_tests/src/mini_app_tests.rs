@@ -15,12 +15,11 @@ use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     AutonomousConfig, BlobReference, BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions,
-    CLAIM_TYPE_MINI_APP_BOT, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_CONNECTION, CLAIM_TYPE_MINI_APP_REGISTRATION,
-    CanisterId, ChannelId, Chat, ChatEvent, ChatPermission, CommunityId, Empty, EventIndex, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, MessagePermission, MiniAppActive, MiniAppBotClaims, MiniAppChatClaims,
-    MiniAppConnectionClaims, MiniAppContent, MiniAppEnded, MiniAppFinished, MiniAppGame, MiniAppImage,
-    MiniAppRegistrationClaims, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, SuccessOnly, UnitResult,
-    UserId,
+    CLAIM_TYPE_MINI_APP_BOT, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_REGISTRATION, CanisterId, ChannelId, Chat,
+    ChatEvent, ChatPermission, CommunityId, Empty, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex,
+    MessagePermission, MiniAppActive, MiniAppBotClaims, MiniAppChatClaims, MiniAppContent, MiniAppEnded, MiniAppFinished,
+    MiniAppGame, MiniAppImage, MiniAppRegistrationClaims, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn,
+    SuccessOnly, UnitResult, UserId,
 };
 
 #[test]
@@ -608,36 +607,6 @@ fn a_member_cant_post_a_mini_app() {
         matches!(&response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent)),
         "Expected InvalidMessageContent: {response:?}"
     );
-}
-
-// Who the user is, and nothing more, for a WebSocket to the MiniApp service
-#[test]
-fn a_user_gets_a_connection_token_for_the_mini_app_service() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let Setup {
-        member,
-        local_user_index,
-        ..
-    } = setup(env, canister_ids, *controller);
-
-    let response = client::local_user_index::access_token_v2(
-        env,
-        member.principal,
-        local_user_index,
-        &access_token_v2::Args::MiniAppConnection,
-    );
-    let access_token_v2::Response::Success(token) = response else {
-        panic!("'access_token_v2' error: {response:?}");
-    };
-    let claims: MiniAppConnectionClaims = verify(env, canister_ids, &token, CLAIM_TYPE_MINI_APP_CONNECTION);
-    assert_eq!(claims.user_id, member.user_id);
 }
 
 // A member may join the chat's games. Someone who can only see the chat, as anyone can a public

@@ -19,13 +19,12 @@ pub const CLAIM_TYPE_DECLINE_VIDEO_CALL: &str = "DeclineVideoCall";
 // it for a decline or a leave, never for a join. See open-chat #9559.
 pub const CLAIM_TYPE_VIDEO_CALL_PARTICIPANT: &str = "VideoCallParticipant";
 pub const CLAIM_TYPE_BOT_ACTION_BY_COMMAND: &str = "BotActionByCommand";
-// The MiniApp service's tokens. The LocalUserIndexes sign the first four with OpenChat's key, and the
+// The MiniApp service's tokens. The LocalUserIndexes sign the first three with OpenChat's key, and the
 // service signs the rest with its own, which bots fetch from the service.
 //
-// That a user is signed in, and nothing more. It opens a WebSocket to the service.
-pub const CLAIM_TYPE_MINI_APP_CONNECTION: &str = "MiniAppConnection";
-// That a user can see a chat, and whether they're a member of it. The service takes it to follow the
-// chat's game cards and to watch its games, and, from a member, to join one.
+// That a user can see a chat, and whether they're a member of it. The service takes it to open a
+// WebSocket, as its user, to follow the chat's game cards and to watch its games, and, from a member,
+// to join one.
 pub const CLAIM_TYPE_MINI_APP_CHAT: &str = "MiniAppChat";
 // A game a bot has just posted, which the bot passes to the service to register it
 pub const CLAIM_TYPE_MINI_APP_REGISTRATION: &str = "MiniAppRegistration";
@@ -173,11 +172,6 @@ pub struct MiniAppGame {
     pub chat: Chat,
     pub thread: Option<MessageIndex>,
     pub message_id: MessageId,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct MiniAppConnectionClaims {
-    pub user_id: UserId,
 }
 
 #[derive(Serialize, Deserialize)]

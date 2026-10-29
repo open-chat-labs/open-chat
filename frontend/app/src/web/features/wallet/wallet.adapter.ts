@@ -10,6 +10,8 @@ import type {
 } from "@client";
 import type { WalletPanelSettings } from "@openchat/ui/src/features/components/WalletPanel.svelte";
 import type { WalletActivity } from "@openchat/ui/src/features/components/WalletMain.svelte";
+import type { ReceiveNetwork } from "@openchat/ui/src/features/components/WalletReceive.svelte";
+import type { DepositNote } from "@src/logic/wallet/receiveAccount.svelte";
 import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
 import type { WalletToken, WalletTokenAction } from "@openchat/ui/src/lib/types";
 import {
@@ -45,14 +47,16 @@ export function displayDecimals(decimals: number, price: number): number {
 }
 
 /**
- * The library's actions from the wallet's (tokenActions): Remove is the panel's Hide. Send,
- * Receive and Swap aren't offered until their flows are built (6b, 6c).
+ * The library's actions from the wallet's (tokenActions): Remove is the panel's Hide. Send and
+ * Swap aren't offered until their flows are built (6b, 6c).
  */
 export function walletTokenActions(actions: TokenAction[]): WalletTokenAction[] {
     return actions.flatMap((a): WalletTokenAction[] => {
         switch (a) {
             case "refresh":
                 return ["refresh"];
+            case "receive":
+                return ["receive"];
             case "remove":
                 return ["hide"];
             default:
@@ -154,4 +158,78 @@ export function tokenActivity(
             fiat: amount * (price ?? 0),
         };
     });
+}
+
+// a network's name as Receive shows it
+const NETWORK_NAMES: Record<string, string> = {
+    BTC: "Bitcoin",
+    SOL: "Solana",
+    ICP: "Internet Computer",
+};
+
+/** Where a token is received, as ReceiveAccount works it out. */
+export type ReceiveState = {
+    networks: string[];
+    selectedNetwork: string | undefined;
+    address: string | undefined;
+    failed: boolean;
+    depositNote: DepositNote;
+    arrivingToken(network: string): string | undefined;
+};
+
+/**
+ * Receive's networks for a token: ReceiveAccount's (BTC or ckBTC, SOL or ckSOL, oneSec's chains),
+ * or the Internet Computer alone for an IC token. The chosen one carries the address (or that it's
+ * still coming, or failed) and what depositing there costs, in the app's words.
+ */
+export function receiveNetworks(
+    state: ReceiveState,
+    symbol: string,
+    translate: (key: string, values: Record<string, string>) => string,
+): ReceiveNetwork[] {
+    const names = state.networks.length > 0 ? state.networks : ["ICP"];
+    const selected = state.selectedNetwork ?? names[0];
+    return names.map((id) => {
+        // the warning names what the address takes: ckBTC on the ckBTC network (ReceiveAccount)
+        const network: ReceiveNetwork = {
+            id,
+            label: NETWORK_NAMES[id] ?? id,
+            token: state.arrivingToken(id),
+        };
+        if (id !== selected) return network;
+        return {
+            ...network,
+            address: state.address,
+            failed: state.failed,
+            note: depositNoteText(state.depositNote, symbol, translate),
+        };
+    });
+}
+
+function depositNoteText(
+    note: DepositNote,
+    symbol: string,
+    translate: (key: string, values: Record<string, string>) => string,
+): string | undefined {
+    switch (note.kind) {
+        case "none":
+            return undefined;
+        case "loading":
+            return translate("cryptoAccount.fetchingDepositFee", {});
+        case "failed":
+            return translate("cryptoAccount.failedToFetchDepositFee", {});
+        case "btc":
+        case "one_sec":
+            return translate("cryptoAccount.networkFee", { amount: note.fee, token: symbol });
+        case "sol": {
+            const fees = translate("cryptoAccount.solDepositFee", {
+                first: note.firstFee,
+                subsequent: note.laterFee,
+                token: symbol,
+            });
+            return note.minimum === undefined
+                ? fees
+                : `${translate("cryptoAccount.minimumDeposit", { amount: note.minimum, token: symbol })} ${fees}`;
+        }
+    }
 }

@@ -50,14 +50,14 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
     // messages from non-members, and a community's members see its public channels.
     if let AccessTypeArgs::MiniAppChat(args) = &args_outer.access_type {
         let in_community = state.data.members.get_verified_member(args.initiator.as_principal()).is_ok();
-        let can = if args.member {
+        let success = if args.member {
             in_community && channel.chat.members.get_verified_member(args.initiator).is_ok()
         } else {
             (in_community || (state.data.is_public.value && !state.data.has_payment_gate()))
                 && !state.data.members.is_blocked(&args.initiator)
                 && channel.chat.min_visible_event_index(Some(args.initiator)).is_ok()
         };
-        return if can { Response::Success } else { Response::Failure };
+        return if success { Response::Success } else { Response::Failure };
     }
 
     let initiator = match &args_outer.access_type {
