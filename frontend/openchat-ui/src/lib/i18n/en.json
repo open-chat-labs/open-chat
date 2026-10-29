@@ -3141,11 +3141,13 @@
       "zToA": "Z to A"
     },
     "walletReceive": {
+      "addressFailed": "Your address couldn't be generated. Try again later.",
       "arrivesAs": "Arrives as {token}",
       "copyAddress": "Copy address",
       "copyQr": "Copy QR image",
       "copyUsername": "Copy username",
       "fromOpenChat": "FROM OPENCHAT",
+      "generating": "Generating your address…",
       "handleNote": "Other OpenChat users can pay you from any chat. No address or network needed.",
       "net": {
         "btc": {
@@ -3239,6 +3241,7 @@
       "ckBtcOnIcp": "ckBTC on ICP",
       "clear": "Clear",
       "confirmHint": "You'll confirm with your PIN next. Transfers can't be reversed.",
+      "confirmHintHostPin": "Transfers can't be reversed.",
       "confirmSending": "Confirm sending {amount} {symbol} to {to}.",
       "destinationAddress": "Destination address",
       "enterAmount": "Enter an amount",
@@ -3262,6 +3265,7 @@
       "optional": "· OPTIONAL",
       "paste": "Paste",
       "pinFailed": "That didn't work. Check your PIN and try again.",
+      "sendFailed": "That didn't go through. Nothing was sent.",
       "receiptSending": "SENDING",
       "receiptSent": "SENT",
       "saved": "Saved",

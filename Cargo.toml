@@ -161,6 +161,7 @@ members = [
     "backend/libraries/user_core",
     "backend/libraries/user_ids_set",
     "backend/libraries/utils",
+    "backend/mini_app_service",
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
@@ -192,6 +193,7 @@ aws-config = "1"
 aws-sdk-dynamodb = "1"
 aws-sign-v4 = "0.3"
 aws-types = "1"
+axum = "0.8"
 base64 = "0.23"
 bitflags = { version = "2", features = ["serde"] }
 bs58 = "0.5"
@@ -263,6 +265,7 @@ querystring = "1"
 quote = "1"
 rand = "0.10"
 range-set = "0.1"
+redis = "1.8"
 regex-lite = "0.1"
 reqwest = "0.13"
 rmp-serde = "1"

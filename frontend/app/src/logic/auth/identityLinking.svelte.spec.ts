@@ -28,6 +28,7 @@ function linked(root: ECDSAKeyIdentity, isCurrentIdentity: boolean): LinkedAuthe
         isIIPrincipal: false,
         isCurrentIdentity,
         webAuthnKey: undefined,
+        lastUsed: undefined,
         provider: AuthProvider.PASSKEY,
     };
 }

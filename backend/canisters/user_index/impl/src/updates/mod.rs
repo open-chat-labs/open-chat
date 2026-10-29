@@ -44,6 +44,7 @@ pub mod set_display_name;
 pub mod set_hide_online_status;
 pub(crate) mod set_internal_moderation_channel;
 pub(crate) mod set_media_scan_config;
+pub mod set_mini_app_service_principal;
 pub mod set_moderation_flags;
 pub mod set_moderation_referral_config;
 pub(crate) mod set_openai_api_key;

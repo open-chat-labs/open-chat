@@ -145,7 +145,8 @@ design export needs. Each entry says where it came up.
     chart as the price card, with several tokens' lines in `PRICE_CHART_COLOURS`, and where its
     prices are from, linked. The library has no bubble for it, so the new UI shows its title as
     text (`contentText`); the old UI's is `PriceChartContent.svelte`, and the chart itself is
-    `features/cashtag/PriceChart.svelte`.
+    `features/cashtag/PriceChart.svelte`. On a phone the chart has to shrink to fit the bubble: the
+    mobile tree's was a fixed 22rem, wider than the bubble, so its end was cut off.
   - **MiniApp message**: a bot's card for an app it hosts, such as a game (`mini_app_content`): its
     image, markdown text, players (avatars and names, "2 of 4 playing", whose move it is), how many
     are watching, the result once finished, and a Join / Play / Watch / View button
@@ -163,7 +164,8 @@ design export needs. Each entry says where it came up.
   `qrCode`, the invite's QR code drawn by the host (the dialog's own needs a global `qrcode`
   library); the storage section's "report a problem" row only with `onReportIssue`; the storage
   meter only with an allowance above 0; `aboutPages`, the About pages the host has; an empty
-  communities section says so; "Just linked" only for a sign-in method linked in the dialog, and no empty "last used"
+  communities section says so; "Just linked" only for a sign-in method linked in the dialog, in
+  place of the host's `used` (which would say the day it was linked), and no empty "last used"
   line; the delete flow's CHIT step for a user who has never earned any says they haven't
   discovered it yet; a host step in the sign-in "add" form that rejects with `{ reason }` shows
   that reason in place of the generic one (linking a method says why it couldn't, e.g. the
@@ -246,6 +248,8 @@ design export needs. Each entry says where it came up.
   again through `AuthDialog` (its subtitle says why; a failure after an emailed link was followed
   shows there too, as `AuthDialog` has no error prop once it's stopped waiting) and then asks for
   the new PIN in another plain dialog (`NewPinDialog`). Neither has a design.
+  The wallet's Send uses this prompt too, not its own PIN step (`WalletSend`'s `hostPin`, 6b): the
+  client asks only when a PIN is set, and checks it itself.
 
 - **User card** (4a, `features/user`): `UserDialog` has no badges, so the old card's Diamond,
   streak and CHIT-earned badges (`userBadges`) don't show; CHIT earned is one of its facts
@@ -601,11 +605,35 @@ design export needs. Each entry says where it came up.
   - All activity (with something owned): there's no history across tokens, so it says to pick a
     token (#10120's open question; merging each indexed token's first page would mean one call per
     ledger on every open).
-  - Send, Receive and Swap (6b, 6c): the app passes no `flows`. Their buttons show as designed (the
-    balance card's, the token page's, the welcome's "Receive tokens" card) and do nothing; the menus
-    and the token picker leave them out; `/wallet/send`, `/receive`, `/swap` show the token's page
-    (or All activity). Settings and Manage recipients (6d): the panel's ⋯ menu still offers them and they do
-    nothing; `/wallet/recipients` shows All activity.
+  - Receive (6b) is built: `/wallet/receive?token=<ledger>`, the token's networks and address from
+    `ReceiveAccount` (shared with the old AccountInfos), its QR (`core/QRCode`), Share to chat and
+    the balance refreshed every 10 s while it's open. Receive offers the wallet's catalogue only: no
+    extra receivable tokens (`receivable`). Network names are the app's (Bitcoin, Solana, Internet
+    Computer, oneSec's chains), without the design's "~10 min" times.
+  - Send (6b) is built: `/wallet/send?token=<ledger>`. To a person, a transfer in their DM
+    (`sendInDirectChat`, shared with mobile's Send to user), offered only for users already DM'd
+    (mobile's rule: `contacts`, no `onSearchUsers`); to an address, a withdrawal over the ledger,
+    or for BTC over Bitcoin's own network (the ckBTC minter's fee sent on top, so what arrives is
+    what was typed). The amount and fee are worked out in ledger units (`logic/wallet/walletSend`),
+    the PIN is the client's prompt. Not yet:
+    - SOL to a Solana address and oneSec's EVM chains: the library's Send knows neither, so those
+      addresses are refused (`checkAddress`); the old wallets send them (`WithdrawForm`).
+    - the saved-address picker (`onPickSaved`), saving a new address after a send, and the QR
+      scanner (`onScanQr`): with the address book (6d).
+    - the message on a send to an address: the design offers a note to self; nothing keeps it.
+    - the ckBTC minter's fee is its estimate for any amount, asked each time Send opens while BTC
+      is held (again 10 s after a failure); a send under the minter's minimum stops with a toast
+      before anything is sent.
+    - the design's "ckBTC on ICP" route to a Bitcoin address can't reach it (the ledger only sends
+      to IC accounts), so the host offers only Bitcoin's own (`btcRoutes`, by hand).
+    - a transfer to a person under ten fees (the old in-chat transfer's minimum) is refused with a
+      toast after Confirm, not flagged on the form: `WalletSend` has no minimum. An address has
+      none, as in the old Send.
+    - no pending row after a send: the client doesn't return the transaction's id.
+  - Swap (6c): the app passes `flows` without it. Its buttons show as designed and do nothing; the
+    menus and the token picker leave it out; `/wallet/swap` shows the token's page (or All
+    activity). Settings and Manage recipients (6d): the panel's ⋯ menu still offers them and they
+    do nothing; `/wallet/recipients` shows All activity.
   - the total is what the panel lists (Your tokens and small balances); the old wallets' total is
     `walletTokensSorted`'s (in automatic mode, the default tokens plus those worth the minimum).
   - the display currency is the panel's own, back to USD each time it opens (as the old wallets'
@@ -615,8 +643,10 @@ design export needs. Each entry says where it came up.
     as two ledgers can share a symbol), `actions` and `logo`; `WalletPanel` takes `rates`, and its
     manual `settings.tokens` are ids; `WalletMain` takes `history`, `onMoreHistory`,
     `onRetryHistory`, `onActivity`, `allActivityNote` and `flows`, and `WalletActivity` gains
-    `token`, `party` and kind `own`; `TokenAvatar` and `PageHeader` take a logo (a broken one falls back to the mark); `TokenPicker` options carry an id; `TransactionRow` has kind `own`; `PageHeader`'s price pill is larger than the design's. Send, Receive and Swap still pick
-    their token by symbol (6b, 6c).
+    `token`, `party` and kind `own`; `TokenAvatar` and `PageHeader` take a logo (a broken one falls back to the mark); `TokenPicker` options carry an id; `TransactionRow` has kind `own`; `PageHeader`'s price pill is larger than the design's. `WalletReceive` takes the host's `networks` (address, failed, note and the token arriving, per network) with `network` / `onNetwork`, shows the token's logo and picks its token by id. `WalletSend` picks its token by id and
+    names it in the request (`token`), with the amount as exact text (`amountText`, `max`), the
+    user fee (`WalletToken.userFee`), `hostPin` and `checkAddress`; an ICRC-1 account with a
+    subaccount is an IC address. Swap still picks its token by symbol (6c).
 
 - **Diamond** (`?diamond`, `features/diamond`, 8e #10131): paid through the shared payment
   (`logic/diamond`, which both legacy `Payment.svelte`s use too), in CHAT or ICP at the backend's

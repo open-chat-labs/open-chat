@@ -20,7 +20,7 @@ use types::{
     EventsResponse, ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions,
     GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
     MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentType, MessageId, MessageIndex,
-    MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MiniAppUpdate,
+    MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MiniAppStatusUpdate,
     MultiUserChat, OCResult, OgPreview, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged,
     Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates, SenderContext, ThreadPreview, TimestampMillis,
     Timestamped, UpdatedRules, UserId, UserIdAndPrincipal, UserType, UsersBlocked, UsersInvited, Version, Versioned,
@@ -584,12 +584,12 @@ impl GroupChatCore {
         og_previews: Vec<OgPreview>,
         now: TimestampMillis,
     ) -> OCResult<SendMessageSuccess> {
-        if let MessageContentInternal::MiniApp(card) = &content {
-            // A card is sent whole, as it never changes but for its game's state, which the bot updates
+        if let MessageContentInternal::MiniApp(_) = &content {
+            // A card is sent whole, as it never changes but for its game's state, which the MiniApp
+            // service writes
             if !finalised {
                 return Err(OCErrorCode::InvalidRequest.with_message("A mini app's card is sent finalised"));
             }
-            self.check_mini_app_players(caller.agent(), &card.players)?;
         }
 
         // If there is an existing message with the same message id then this is invalid unless
@@ -1908,34 +1908,20 @@ impl GroupChatCore {
         Ok(())
     }
 
-    // A bot changing its MiniApp card as its game goes on (see `ChatEvents::update_mini_app`)
+    // The MiniApp service updating a card's status (see `ChatEvents::update_mini_app`)
     pub fn update_mini_app(
         &mut self,
-        bot: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        update: MiniAppUpdate,
+        update: MiniAppStatusUpdate,
         now: TimestampMillis,
     ) -> OCResult {
-        if let Some(players) = &update.players {
-            self.check_mini_app_players(bot, players)?;
-        }
         self.events.update_mini_app(UpdateMiniAppArgs {
-            bot,
             thread_root_message_index,
             message_id,
             update,
             now,
         })
-    }
-
-    // A card's players are the chat's members, or the bot which posted it, playing itself
-    fn check_mini_app_players(&self, bot: UserId, players: &[UserId]) -> OCResult {
-        if players.iter().all(|p| *p == bot || self.members.contains(p)) {
-            Ok(())
-        } else {
-            Err(OCErrorCode::InvalidRequest.with_message("Every player must be a member of the chat"))
-        }
     }
 
     pub fn register_poll_vote(

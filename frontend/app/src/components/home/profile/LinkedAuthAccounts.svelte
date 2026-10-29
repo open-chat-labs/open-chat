@@ -2,9 +2,12 @@
     import {
         iconSize,
         OpenChat,
+        shortSignInPrincipal,
+        signInLastUsed,
         type LinkedAuthenticationPrincipal,
     } from "@client";
     import { getContext, onMount } from "svelte";
+    import { locale } from "svelte-i18n";
     import Account from "svelte-material-icons/Account.svelte";
     import LinkOff from "svelte-material-icons/LinkOff.svelte";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
@@ -55,68 +58,88 @@
     </Overlay>
 {/if}
 
-{#each accounts as account}
-    <div class="account">
-        <TruncatedAccount account={account.principal} disableCopy={true}>
-            <AuthProviderLogo square provider={account.provider} />
-        </TruncatedAccount>
-        {#if account.passkeyProvider !== undefined}
-            <div class="provider-name" title={account.passkeyProvider}>
-                {account.passkeyProvider}
-            </div>
-        {/if}
-        {#if account.isCurrentIdentity}
-            <div class="current">
-                <Tooltip position="top" align="end">
-                    <Account size={$iconSize} color={"var(--icon-txt)"} />
-                    {#snippet popupTemplate()}
-                        <Translatable
-                            resourceKey={i18nKey("identity.linkedAccounts.currentAccount")} />
-                    {/snippet}
-                </Tooltip>
-            </div>
-        {:else}
-            <div class="unlink">
-                <Tooltip position="top" align="end">
-                    <HoverIcon onclick={() => (unlinking = account)}>
-                        <LinkOff size={$iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                    {#snippet popupTemplate()}
-                        <Translatable resourceKey={i18nKey("identity.linkedAccounts.unlink")} />
-                    {/snippet}
-                </Tooltip>
-            </div>
-        {/if}
-    </div>
-{/each}
+<div class="accounts">
+    {#each accounts as account}
+        <div class="account">
+            <TruncatedAccount account={shortSignInPrincipal(account.principal)} disableCopy={true}>
+                <AuthProviderLogo square provider={account.provider} />
+            </TruncatedAccount>
+            {#if account.passkeyProvider !== undefined || account.lastUsed !== undefined}
+                <div class="details">
+                    {#if account.passkeyProvider !== undefined}
+                        <div class="provider-name" title={account.passkeyProvider}>
+                            {account.passkeyProvider}
+                        </div>
+                    {/if}
+                    {#if account.lastUsed !== undefined}
+                        <div class="last-used">
+                            <Translatable
+                                resourceKey={signInLastUsed(account.lastUsed, $locale ?? "en")} />
+                        </div>
+                    {/if}
+                </div>
+            {/if}
+            {#if account.isCurrentIdentity}
+                <div class="current">
+                    <Tooltip position="top" align="end">
+                        <Account size={$iconSize} color={"var(--icon-txt)"} />
+                        {#snippet popupTemplate()}
+                            <Translatable
+                                resourceKey={i18nKey("identity.linkedAccounts.currentAccount")} />
+                        {/snippet}
+                    </Tooltip>
+                </div>
+            {:else}
+                <div class="unlink">
+                    <Tooltip position="top" align="end">
+                        <HoverIcon onclick={() => (unlinking = account)}>
+                            <LinkOff size={$iconSize} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                        {#snippet popupTemplate()}
+                            <Translatable resourceKey={i18nKey("identity.linkedAccounts.unlink")} />
+                        {/snippet}
+                    </Tooltip>
+                </div>
+            {/if}
+        </div>
+    {/each}
+</div>
 
 <Button onClick={() => (linking = true)}>
     <Translatable resourceKey={i18nKey("identity.linkedAccounts.linkAnother")} />
 </Button>
 
 <style lang="scss">
-    .account {
-        margin-bottom: $sp3;
-        display: flex;
+    // one grid for every row, so each row's details start after the longest principal
+    .accounts {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
         align-items: center;
+        gap: $sp3;
+        margin-bottom: $sp3;
+    }
 
-        > :global(.wrapper) {
-            flex: none;
+    .account {
+        display: contents;
+
+        .details {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
         }
 
-        .provider-name {
+        .provider-name,
+        .last-used {
             @include font(book, normal, fs-80);
             @include ellipsis();
-            flex: 0 1 auto;
-            min-width: 0;
             color: var(--txt-light);
-            margin-inline-start: $sp3;
         }
 
         .current,
         .unlink {
-            flex: none;
-            margin-inline-start: auto;
+            // the last column, also in a row with no details, centred under the padded unlink icons
+            grid-column: 3;
+            justify-self: center;
         }
     }
 </style>

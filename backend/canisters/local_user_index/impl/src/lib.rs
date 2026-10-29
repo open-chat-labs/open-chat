@@ -75,6 +75,7 @@ mod guards;
 mod jobs;
 mod lifecycle;
 mod memory;
+mod mini_app;
 mod model;
 mod no_inline_anchor;
 mod queries;
@@ -268,6 +269,11 @@ impl RuntimeState {
     pub fn is_caller_daily_puzzle_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.daily_puzzle_canister_id == Some(caller)
+    }
+
+    pub fn is_caller_mini_app_service(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.mini_app_service == Some(caller)
     }
 
     pub fn is_caller_video_call_operator(&self) -> bool {
@@ -968,6 +974,9 @@ struct Data {
     pub unlinkable_bridged_users: BTreeSet<BridgedUserId>,
     #[serde(default)]
     pub daily_puzzle_canister_id: Option<CanisterId>,
+    // The only caller which can write a MiniApp card's players, status and result, set by the UserIndex
+    #[serde(default)]
+    pub mini_app_service: Option<Principal>,
     #[serde(default)]
     pub daily_puzzle_engine: DailyPuzzleEngine,
     // Created when the daily puzzle canister id is set, since the queue needs a target
@@ -1109,6 +1118,7 @@ impl Data {
             bridged_user_links: BTreeMap::new(),
             unlinkable_bridged_users: BTreeSet::new(),
             daily_puzzle_canister_id: None,
+            mini_app_service: None,
             daily_puzzle_engine: DailyPuzzleEngine::default(),
             daily_puzzle_event_sync_queue: None,
             game_chit_credit_retry_queue: new_retry_queue(),

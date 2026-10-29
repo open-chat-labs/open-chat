@@ -147,7 +147,7 @@ export function createQueryAwareFetch(
         const slowTimer = setTimeout(() => {
             counted = true;
             if (Date.now() - query.sentAt < SLOW_QUERY_MS + LATE_TIMER_MS) {
-                outcomes.bad();
+                outcomes.bad(query.sentAt);
             }
         }, SLOW_QUERY_MS);
         inFlightQueries.add(query);
@@ -161,7 +161,7 @@ export function createQueryAwareFetch(
         } catch (err) {
             if (!counted && !controller.signal.aborted) {
                 counted = true;
-                outcomes.bad();
+                outcomes.bad(query.sentAt);
             }
             throw err;
         } finally {

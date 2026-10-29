@@ -1,7 +1,7 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{BotActionScope, BotCommandArg, BotCommandMeta, Chat, MessageId, MessageIndex, UserId, VideoCallType};
+use types::{BotActionScope, BotCommandArg, BotCommandMeta, Chat, UserId, VideoCallType};
 
 #[ts_export(local_user_index, access_token_v2)]
 #[derive(Serialize, Deserialize, Debug)]
@@ -11,7 +11,7 @@ pub enum Args {
     MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs),
     VideoCallParticipant(VideoCallParticipantArgs),
     BotActionByCommand(BotActionByCommandArgs),
-    BotMessageSession(BotMessageSessionArgs),
+    MiniAppChat(MiniAppChatArgs),
     Translate,
 }
 
@@ -62,16 +62,12 @@ pub struct BotActionByCommandArgs {
     pub scope: BotActionScope,
 }
 
-// A token which says who the caller is to the app a bot opens from one of its MiniApp messages. The
-// website fetches it when the app is opened, and again whenever the app asks for a fresh one.
+// A token for the MiniApp service which says the caller can see the chat, and whether they're a member,
+// who may join its games, or can only see it, as anyone can a public chat, and may only watch them
 #[ts_export]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct BotMessageSessionArgs {
-    pub bot_id: UserId,
+pub struct MiniAppChatArgs {
     pub chat: Chat,
-    pub thread: Option<MessageIndex>,
-    pub message_id: MessageId,
-    pub meta: Option<BotCommandMeta>,
 }
 
 #[ts_export]

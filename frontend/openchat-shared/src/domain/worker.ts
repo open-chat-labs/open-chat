@@ -577,11 +577,18 @@ export type WorkerRequest = Cloneable<
     | UpdateBlockedUsernamePatterns
     | MarkNotificationSubscriptionActive
     | AbortInFlightQueries
+    | SetAppHidden
 >;
 
 // Sent when the app resumes after being suspended, see `abortInFlightQueries` in openchat-agent
 type AbortInFlightQueries = {
     kind: "abortInFlightQueries";
+};
+
+// Sent whenever the app is hidden or shown, see `ConnectionHealth` in openchat-agent
+type SetAppHidden = {
+    kind: "setAppHidden";
+    hidden: boolean;
 };
 
 type MarkNotificationSubscriptionActive = {
@@ -2925,6 +2932,7 @@ export type WorkerResults = ResultsByKind<{
     updateBlockedUsernamePatterns: void;
     markNotificationSubscriptionActive: void;
     abortInFlightQueries: void;
+    setAppHidden: void;
     addFcmToken: void;
     fcmTokenExists: boolean;
     removeFcmToken: void;

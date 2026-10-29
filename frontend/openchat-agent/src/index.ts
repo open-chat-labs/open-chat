@@ -5,5 +5,9 @@ export { deserializeFromMsgPack, serializeToMsgPack } from "./utils/msgpack";
 export { setCommunityReferral } from "./utils/referralCache";
 export { typeboxValidate } from "./utils/typebox";
 export { setCachedWebAuthnKey } from "./utils/webAuthnKeyCache";
-export { connectionMayHaveChanged, monitorConnection } from "./utils/connectionHealth";
+export {
+    connectionMayHaveChanged,
+    monitorConnection,
+    setAppHidden,
+} from "./utils/connectionHealth";
 export { abortInFlightQueries } from "./utils/httpAgent";

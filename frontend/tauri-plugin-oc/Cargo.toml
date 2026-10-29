@@ -16,7 +16,7 @@ tauri = { workspace = true }
 tauri-plugin-android-fs = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["fs", "io-util"] }
-zip = "2.2.2"
+zip = "9.0.5"
 
 [build-dependencies]
 tauri-plugin = { version = "2.4.0", features = ["build"] }

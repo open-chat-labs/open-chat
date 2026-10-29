@@ -1355,6 +1355,7 @@
         "link": "Lien",
         "linkedAccounts": {
             "currentAccount": "Actuellement connecté avec ce principal",
+            "lastUsed": "Dernière utilisation le {date}",
             "linkAdvice": "Pour ajouter un nouveau fournisseur de connexion, connectez-vous d'abord avec le nouveau fournisseur que vous souhaitez ajouter, puis connectez-vous avec votre fournisseur actuel et enfin associez les deux.",
             "linkAnother": "Ajouter un autre",
             "section": "Fournisseurs de connexion",

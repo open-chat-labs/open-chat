@@ -43,24 +43,21 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
         return Response::Failure;
     };
 
-    // A member opening the app of one of the bot's MiniApp cards, which they can see, and may open
-    if let AccessTypeArgs::BotMessageSession(args) = &args_outer.access_type {
-        // A member of the community too, whose membership hasn't lapsed and who isn't suspended
-        if state.data.members.get_verified_member(args.initiator.as_principal()).is_err() {
-            return Response::Failure;
-        }
-        let Ok(member) = channel.chat.members.get_verified_member(args.initiator) else {
-            return Response::Failure;
+    // The MiniApp service's chat token: a member of the channel, and of the community, whose membership
+    // hasn't lapsed and who isn't suspended, who may join its games, or someone who can see the
+    // channel's messages, who may watch them. They're as the events queries show them: a public
+    // community without a payment gate shows its public channels to anyone, unless a channel hides its
+    // messages from non-members, and a community's members see its public channels.
+    if let AccessTypeArgs::MiniAppChat(args) = &args_outer.access_type {
+        let in_community = state.data.members.get_verified_member(args.initiator.as_principal()).is_ok();
+        let success = if args.member {
+            in_community && channel.chat.members.get_verified_member(args.initiator).is_ok()
+        } else {
+            (in_community || (state.data.is_public.value && !state.data.has_payment_gate()))
+                && !state.data.members.is_blocked(&args.initiator)
+                && channel.chat.min_visible_event_index(Some(args.initiator)).is_ok()
         };
-        let can_open = state.data.bots.get(&args.bot_id).is_some()
-            && channel.chat.events.can_open_mini_app(
-                args.bot_id,
-                args.initiator,
-                member.min_visible_event_index(),
-                args.thread,
-                args.message_id,
-            );
-        return if can_open { Response::Success } else { Response::Failure };
+        return if success { Response::Success } else { Response::Failure };
     }
 
     let initiator = match &args_outer.access_type {

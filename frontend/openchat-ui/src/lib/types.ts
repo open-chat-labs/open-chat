@@ -288,6 +288,8 @@ export interface WalletToken {
   inputDp?: number;
   /** Ledger transfer fee, in whole tokens. */
   fee?: number;
+  /** The fee for a send to an OpenChat user, when it differs from `fee` (e.g. the approval it needs). */
+  userFee?: number;
   /** Accepted for payments (e.g. Diamond membership). */
   payable?: boolean;
   /** Networks it can be sent on: icp, btc, eth … */

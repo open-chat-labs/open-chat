@@ -1,3 +1,4 @@
+use crate::mini_app::sign_token;
 use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::{
     RuntimeState,
@@ -8,9 +9,11 @@ use canister_api_macros::update;
 use local_user_index_canister::bot_send_message::*;
 use oc_error_codes::{OCError, OCErrorCode};
 use rand::RngExt;
+use tracing::error;
 use types::{
-    BotActionScope, BotInitiator, BotMessageContent, BridgedUser, CanisterId, ChannelId, Chat, ChatId, CommunityId, EventIndex,
-    MessageId, MessageIndex, OCResult, OgPreview, UserId,
+    BotActionScope, BotInitiator, BotMessageContent, BridgedUser, CLAIM_TYPE_MINI_APP_REGISTRATION, CanisterId, ChannelId,
+    Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, MiniAppGame, MiniAppRegistrationClaims, OCResult,
+    OgPreview, UserId,
 };
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 
@@ -91,8 +94,13 @@ async fn bot_send_message_impl(
         Ok(context) => context,
         Err(error) => return Response::Error(error),
     };
+    let (bot_id, chat, thread) = (context.bot_id, context.chat, context.thread);
+    let mini_app = match &content {
+        BotMessageContent::MiniApp(card) => Some((card.max_players, card.spectators)),
+        _ => None,
+    };
 
-    match context.chat {
+    let response = match context.chat {
         Chat::Direct(chat_id) => {
             send_message_to_user(
                 context.bot_id,
@@ -145,7 +153,48 @@ async fn bot_send_message_impl(
             )
             .await
         }
+    };
+
+    // A MiniApp card comes back with a token the bot registers its game with the MiniApp service by
+    match (response, mini_app) {
+        (Response::Success(mut result), Some((max_players, spectators))) => {
+            let game = MiniAppGame {
+                chat,
+                thread,
+                message_id: result.message_id,
+            };
+            match mutate_state(|state| mini_app_registration(bot_id, game, max_players, spectators, state)) {
+                Ok(token) => result.mini_app_registration = Some(token),
+                Err(error) => error!(%bot_id, error, "Failed to sign a MiniApp registration"),
+            }
+            Response::Success(result)
+        }
+        (response, _) => response,
     }
+}
+
+fn mini_app_registration(
+    bot_id: UserId,
+    game: MiniAppGame,
+    max_players: Option<u32>,
+    spectators: bool,
+    state: &mut RuntimeState,
+) -> Result<String, String> {
+    let bot_endpoint = state
+        .data
+        .bots
+        .get(&bot_id)
+        .map(|bot| bot.endpoint.clone())
+        .ok_or("Bot not found")?;
+    let claims = MiniAppRegistrationClaims {
+        bot: bot_id,
+        bot_endpoint,
+        bot_api_gateway: state.env.canister_id(),
+        game,
+        max_players,
+        spectators,
+    };
+    sign_token(CLAIM_TYPE_MINI_APP_REGISTRATION, claims, state)
 }
 
 fn extract_message_access_context(
@@ -235,6 +284,7 @@ async fn send_message_to_channel(
                 message_index: result.message_index,
                 timestamp: result.timestamp,
                 expires_at: result.expires_at,
+                mini_app_registration: None,
             }),
             community_canister::c2c_bot_send_message::Response::Error(error) => Error(error),
         },
@@ -286,6 +336,7 @@ async fn send_message_to_group(
                 message_index: result.message_index,
                 timestamp: result.timestamp,
                 expires_at: result.expires_at,
+                mini_app_registration: None,
             }),
             group_canister::c2c_bot_send_message::Response::Error(error) => Error(error),
         },
@@ -339,6 +390,7 @@ async fn send_message_to_user(
                 message_index: result.message_index,
                 timestamp: result.timestamp,
                 expires_at: result.expires_at,
+                mini_app_registration: None,
             }),
             multi_user_canister::c2c_bot_send_message::Response::Error(error) => Error(error),
         },

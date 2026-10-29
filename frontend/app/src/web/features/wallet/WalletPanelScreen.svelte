@@ -4,8 +4,8 @@
      Each token's menu is tokenActions', plus Copy ledger ID; "View all" and Copy ledger ID are asks
      of WalletMain (walletRequests). A token opens its page (/wallet/:ledger), All activity /wallet.
      The wallet's balances refresh as the list first shows them (a recent one is kept), Refresh all
-     one ledger at a time. The card's Send / Receive / Swap do nothing until their flows are built
-     (6b, 6c). -->
+     one ledger at a time. Receive opens in WalletMain; the card's Send and Swap do nothing until
+     their flows are built (6b, 6c). -->
 <script lang="ts">
     import {
         conversionLedgers,
@@ -59,7 +59,13 @@
     // "View all" and Copy ledger ID are WalletMain's to do
     function action(kind: string): void {
         if (kind === "browse") walletRequests.send({ view: "browse" });
-        else if (kind.startsWith("ledger:")) {
+        // Send and Receive: the token's, or the picker first (the balance card's)
+        else if (kind === "send" || kind === "receive") walletRequests.send({ view: kind });
+        else if (kind.startsWith("send:")) {
+            walletRequests.send({ view: "send", token: kind.slice("send:".length) });
+        } else if (kind.startsWith("receive:")) {
+            walletRequests.send({ view: "receive", token: kind.slice("receive:".length) });
+        } else if (kind.startsWith("ledger:")) {
             walletRequests.send({ view: "ledger", token: kind.slice("ledger:".length) });
         }
     }

@@ -13,13 +13,7 @@
         Sheet,
         TextArea,
     } from "component-lib";
-    import {
-        formatTokens,
-        nowNanos,
-        OpenChat,
-        type MessageContext,
-        type UserSummary,
-    } from "@client";
+    import { formatTokens, OpenChat, type UserSummary } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import SendOutline from "svelte-material-icons/SendOutline.svelte";
@@ -30,6 +24,7 @@
     import TransferFeesMessage from "../TransferFeesMessage.svelte";
     import SuccessIcon from "./SuccessIcon.svelte";
     import type { TokenState } from "@src/logic/wallet/walletState.svelte";
+    import { sendInDirectChat } from "@src/logic/cryptoTransfer/cryptoTransferForm.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -41,10 +36,6 @@
     let { tokenState, onComplete }: Props = $props();
 
     let selectedUser = $state<UserSummary>();
-    let messageContext = $derived.by<MessageContext | undefined>(() => {
-        if (selectedUser === undefined) return undefined;
-        return { chatId: { kind: "direct_chat", userId: selectedUser.userId } };
-    });
     let validAmount = $state(false);
     // svelte-ignore state_referenced_locally
     let message = $state("");
@@ -53,21 +44,15 @@
     let busy = $derived(status === "sending");
 
     async function send() {
-        if (selectedUser === undefined || messageContext === undefined) return;
+        if (selectedUser === undefined) return;
 
         status = "sending";
 
-        const outcome = await client.sendCryptoTransfer(
-            messageContext,
-            {
-                kind: "pending",
-                ledger: tokenState.ledger,
-                token: tokenState.symbol,
-                recipient: selectedUser.userId,
-                amountE8s: tokenState.draftAmount,
-                feeE8s: tokenState.transferFee,
-                createdAtNanos: nowNanos(),
-            },
+        const outcome = await sendInDirectChat(
+            client,
+            tokenState,
+            selectedUser.userId,
+            tokenState.draftAmount,
             message,
         );
         switch (outcome.kind) {
@@ -97,8 +82,7 @@
     disabled={busy}
     onSelect={(user) => (selectedUser = user)}
     selected={selectedUser}
-    placeholder={`Select user`}
->
+    placeholder={`Select user`}>
     {#snippet subtext()}
         <!-- TODO i18n -->
         {`You may only select users you have DM'd with`}
@@ -113,8 +97,7 @@
     error={!validAmount}
     bind:valid={validAmount}
     maxAmount={tokenState.maxAmount}
-    bind:amount={tokenState.draftAmount}
->
+    bind:amount={tokenState.draftAmount}>
     {#snippet subtext()}
         {`Minimum amount ${tokenState.minAmountLabel} ${tokenState.symbol}`}
     {/snippet}
@@ -125,8 +108,7 @@
     maxlength={200}
     rows={3}
     placeholder={interpolate($_, i18nKey("tokenTransfer.messagePlaceholder"))}
-    bind:value={message}
->
+    bind:value={message}>
     {#snippet subtext()}
         {"Recipient will receive this message as a DM"}
     {/snippet}
@@ -138,8 +120,7 @@
         <TransferFeesMessage
             symbol={tokenState.symbol}
             tokenDecimals={tokenState.decimals}
-            transferFees={tokenState.transferFees}
-        />
+            transferFees={tokenState.transferFees} />
     </Container>
 
     <CommonButton2
@@ -147,8 +128,7 @@
         loading={status === "sending"}
         disabled={!valid}
         variant="primary"
-        mode={"regular"}
-    >
+        mode={"regular"}>
         {#snippet icon(color, size)}
             <SendOutline {color} {size} />
         {/snippet}
@@ -165,8 +145,7 @@
                 padding={"lg"}
                 gap={"md"}
                 borderRadius={["lg", "lg", "zero", "zero"]}
-                background={ColourVars.surface2}
-            >
+                background={ColourVars.surface2}>
                 <Avatar url={client.userAvatarUrl(selectedUser)}></Avatar>
                 <Container direction={"vertical"}>
                     <BodySmall colour={"textSecondary"}>
@@ -185,8 +164,7 @@
                 gap={"lg"}
                 background={ColourVars.surface2}
                 padding={"lg"}
-                direction={"vertical"}
-            >
+                direction={"vertical"}>
                 <Container mainAxisAlignment={"spaceBetween"}>
                     <BodySmall colour={"textSecondary"}>
                         <Translatable resourceKey={i18nKey("Transfer amount")} />
@@ -225,8 +203,7 @@
                 padding={"lg"}
                 gap={"md"}
                 borderRadius={["zero", "zero", "lg", "lg"]}
-                background={ColourVars.surface2}
-            >
+                background={ColourVars.surface2}>
                 <BodySmall colour={"textSecondary"}>
                     <Translatable resourceKey={i18nKey("With message")} />
                 </BodySmall>

@@ -62,7 +62,7 @@
   import TransactionRow from '../../lib/components/TransactionRow.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
   import type { Snippet } from 'svelte';
-  import WalletReceive, { type ShareChat } from './WalletReceive.svelte';
+  import WalletReceive, { type ReceiveNetwork, type ShareChat } from './WalletReceive.svelte';
   import WalletRecipients, { type Recipient, type RecipientDraft } from './WalletRecipients.svelte';
   import WalletSend, { type SendContact, type WalletSendRequest } from './WalletSend.svelte';
   import { flowReturn, pickedFlow, txIdOf, type WalletPlace } from '../../lib/wallet';
@@ -158,13 +158,21 @@
     /** Send: user search and BTC route fees (see WalletSend). */
     onSearchUsers?: (query: string) => Promise<SendContact[]>;
     btcFees?: Partial<Record<'btc' | 'ckbtc', number>>;
+    btcRoutes?: ('btc' | 'ckbtc')[];
+    /** Send: the host asks for the PIN itself, and its say on an address (see WalletSend). */
+    sendHostPin?: boolean;
+    checkAddress?: (address: string, symbol: string) => boolean;
     /** Swap: quote and execution (see WalletSwap). */
     onQuote?: (r: SwapRequest) => Promise<SwapQuote>;
     onSwap?: (r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void }) => Promise<{ out?: number } | void>;
     /** Receive: chats to share to, sharing, and the QR renderer (see WalletReceive). */
     chats?: ShareChat[];
-    onShare?: (v: { chatId: string; message: string; symbol: string; network: NetworkId; address: string }) => Promise<unknown> | void;
+    onShare?: (v: { chatId: string; message: string; symbol: string; network: string; address: string }) => Promise<unknown> | void;
     qr?: Snippet<[string]>;
+    /** Receive: the host's networks for the token received, the chosen one and its pick (see WalletReceive). */
+    receiveNetworks?: ReceiveNetwork[];
+    receiveNetwork?: string;
+    onReceiveNetwork?: (id: string) => void;
     /** The token page's history as the host loads it: the first page loading or failed (with `onRetryHistory`), or
      *  loaded, with older entries to load (`more`, `onMoreHistory`) or loading; `unavailable` for a token whose
      *  transactions can't be listed. Without it, `activity` is all there is. */
@@ -205,11 +213,17 @@
     onRemoveRecipient,
     onSearchUsers,
     btcFees,
+    btcRoutes,
+    sendHostPin = false,
+    checkAddress,
     onQuote,
     onSwap,
     chats,
     onShare,
     qr,
+    receiveNetworks,
+    receiveNetwork,
+    onReceiveNetwork,
     history,
     onMoreHistory,
     onRetryHistory,
@@ -393,7 +407,7 @@
     if (!txId || sent.some((e) => e.id === txId)) return;
     const amt = sentAmount(x);
     sent = [
-      { id: txId, token: idForSymbol(x.symbol), title: t('ui.walletMain.sentTo', { name: x.toLabel }), day: 'today', timestamp: Date.now(), sub: t('ui.walletMain.justNow'), kind: 1, amount: `\u2212${amt}`, fiat: usd(x.fiat), fresh: true, status: 'pending' },
+      { id: txId, token: x.token, title: t('ui.walletMain.sentTo', { name: x.toLabel }), day: 'today', timestamp: Date.now(), sub: t('ui.walletMain.justNow'), kind: 1, amount: `\u2212${amt}`, fiat: usd(x.fiat), fresh: true, status: 'pending' },
       ...sent,
     ];
   }
@@ -407,7 +421,7 @@
     // the next send starts fresh: no pre-filled recipient, and Back no longer returns to Recipients
     fromAll = backToAll = backToRecipients = false;
     sendAddr = '';
-    sym = idForSymbol(x.symbol);
+    sym = x.token;
     report();
     const message = t('ui.walletMain.sentToast', { amount: sentAmount(x), name: x.toLabel });
     if (openChat && x.userId && onMessage) {
@@ -541,7 +555,7 @@
   // `rows`, and keying on that would remount a send or swap the host is still working on
   const flowSym = $derived(sym || (raw ? idOf(raw) : ''));
   const flowKey = $derived(`${view}:${fromAll ? '-' : flowSym}:${flowNonce}`);
-  const flowToken = $derived(extTok && view === 'receive' ? extTok : fromAll ? '' : symbolOf(flowSym));
+  const flowToken = $derived(fromAll ? '' : symbolOf(flowSym));
   // Receive also offers tokens you don't hold yet, on their own networks
   const receiveTokens = $derived<WalletToken[]>([
     ...tokens,
@@ -628,19 +642,34 @@
 <div class="main" data-screen-label="Wallet main">
   {#if view === 'send'}{#key flowKey}<WalletSend
         {tokens}
-        token={flowToken}
+        token={fromAll ? '' : flowSym}
         address={sendAddr}
         {contacts}
         {onSearchUsers}
         {btcFees}
+        {btcRoutes}
         {onPickSaved}
         {onScanQr}
         onClose={leaveFlow}
         onSent={onSent ? handleSent : undefined}
         onDone={handleDone}
         canOpenChat={!!onMessage}
+        hostPin={sendHostPin}
+        {checkAddress}
       />{/key}{/if}
-  {#if view === 'receive'}{#key flowKey}<WalletReceive tokens={receiveTokens} token={flowToken} {handle} {addresses} {chats} {onShare} {qr} onClose={leaveFlow} />{/key}{/if}
+  {#if view === 'receive'}{#key flowKey}<WalletReceive
+        tokens={receiveTokens}
+        token={extTok ?? (fromAll ? '' : flowSym)}
+        {handle}
+        {addresses}
+        {chats}
+        {onShare}
+        {qr}
+        networks={receiveNetworks}
+        network={receiveNetwork}
+        onNetwork={onReceiveNetwork}
+        onClose={leaveFlow}
+      />{/key}{/if}
   {#if view === 'swap'}{#key flowKey}<WalletSwap {tokens} token={flowToken} {onQuote} onSwap={swapPinned} onClose={leaveFlow} />{/key}{/if}
   {#if view === 'recipients'}
     <WalletRecipients

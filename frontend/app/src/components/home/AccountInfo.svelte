@@ -1,21 +1,6 @@
 <script lang="ts">
-    import { userWalletAddress } from "@src/logic/wallet/receiveAddress";
-    import {
-        BTC_SYMBOL,
-        CKBTC_SYMBOL,
-        CKSOL_SYMBOL,
-        cryptoLookup,
-        currentUserIdStore,
-        currentUserStore,
-        ICP_SYMBOL,
-        Lazy,
-        LEDGER_CANISTER_CKSOL,
-        type OneSecTransferFees,
-        OpenChat,
-        FIRST_SOL_DEPOSIT_FEE,
-        SOL_DEPOSIT_FEE,
-        SOL_SYMBOL,
-    } from "@client";
+    import { cryptoLookup, currentUserIdStore, currentUserStore, OpenChat } from "@client";
+    import { ReceiveAccount } from "@src/logic/wallet/receiveAccount.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
@@ -44,143 +29,45 @@
     const client = getContext<OpenChat>("client");
 
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
-    let selectedNetwork = $state<string>();
-    let isBtc = $derived(tokenDetails.symbol === BTC_SYMBOL);
-    let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
-    let isSol = $derived(tokenDetails.ledger === LEDGER_CANISTER_CKSOL);
-    let isSolNetwork = $derived(selectedNetwork === SOL_SYMBOL);
-    let oneSecEnabled = $derived(
-        tokenDetails.oneSecEnabled && tokenDetails.evmContractAddresses.length > 0,
+    // the networks, the address on the chosen one and what depositing there costs (ReceiveAccount,
+    // shared with the mobile tree and the web wallet)
+    const receive = new ReceiveAccount(
+        client,
+        () => tokenDetails,
+        () => ({
+            cryptoAccount: $currentUserStore.cryptoAccount,
+            userId: $currentUserIdStore,
+            principal: () => client.OcIdentityPrincipal,
+        }),
     );
-    let isOneSecNetwork = $derived(oneSecEnabled && selectedNetwork !== ICP_SYMBOL);
-    let networks = $derived.by(() => {
-        if (isBtc) {
-            return [BTC_SYMBOL, CKBTC_SYMBOL];
-        } else if (isSol) {
-            return [SOL_SYMBOL, CKSOL_SYMBOL];
-        } else if (oneSecEnabled) {
-            return client.oneSecGetNetworks(tokenDetails.symbol);
-        } else {
-            return [];
-        }
-    });
-    let btcAddress = $state<string>();
-    let oneSecAddress = $state<string>();
-    let solAddress = $state<string>();
-
-    // Whenever the networks list changes, autoselect the first one
-    $effect(() => {
-        selectedNetwork = networks[0];
-    });
-
-    let account = $derived.by(() => {
-        if (tokenDetails.symbol === ICP_SYMBOL) {
-            return $currentUserStore.cryptoAccount;
-        } else if (isBtcNetwork) {
-            return btcAddress;
-        } else if (isOneSecNetwork) {
-            return oneSecAddress;
-        } else if (isSolNetwork) {
-            return solAddress;
-        } else {
-            // The user's wallet, which is their principal's account
-            return userWalletAddress($currentUserIdStore, () => client.OcIdentityPrincipal);
-        }
-    });
-
-    let error = $state();
-    $effect(() => {
-        if (account === undefined) {
-            if (isBtcNetwork) {
-                client
-                    .getBtcAddress()
-                    .then((addr) => (btcAddress = addr))
-                    .catch((e) => (error = e));
-            } else if (isOneSecNetwork) {
-                client
-                    .getOneSecAddress()
-                    .then((addr) => (oneSecAddress = addr))
-                    .catch((e) => (error = e));
-            } else if (isSolNetwork) {
-                client
-                    .getSolAddress()
-                    .then((addr) => (solAddress = addr))
-                    .catch((e) => (error = e));
-            }
-        }
-    });
+    let networks = $derived(receive.networks);
+    let selectedNetwork = $derived(receive.selectedNetwork);
+    let account = $derived(receive.address);
+    let note = $derived(receive.depositNote);
 
     let tokenName = $derived.by(() => {
-        if (isBtc || isSol) return selectedNetwork;
-        if (selectedNetwork !== undefined) {
-            return $rtlStore
-                ? `(${selectedNetwork}) ${tokenDetails.symbol}`
-                : `${tokenDetails.symbol} (${selectedNetwork})`;
-        }
-        return tokenDetails.symbol;
-    });
-
-    const btcDepositFeePromise = new Lazy(() =>
-        client
-            .getCkbtcMinterDepositInfo()
-            .then((depositInfo) => `~${client.formatTokens(depositInfo.depositFee, 8)}`),
-    );
-
-    let solDepositFees = $derived({
-        first: client.formatTokens(FIRST_SOL_DEPOSIT_FEE, tokenDetails.decimals),
-        subsequent: client.formatTokens(SOL_DEPOSIT_FEE, tokenDetails.decimals),
-        token: tokenDetails.symbol,
-    });
-
-    // SOL sent to the deposit address is only credited once the address holds the minter's minimum
-    const solMinimumDepositPromise = new Lazy(() =>
-        client
-            .getCksolMinterDepositInfo()
-            .then((depositInfo) =>
-                client.formatTokens(depositInfo.minimumDepositAmount, tokenDetails.decimals),
-            ),
-    );
-
-    const oneSecFeesPromise = new Lazy(() =>
-        client
-            .oneSecGetTransferFees()
-            // Filter to where source token equals destination token since we're dealing with cross-chain deposits
-            .then(
-                (fees) => (oneSecFees = fees.filter((f) => f.sourceToken === f.destinationToken)),
-            ),
-    );
-
-    let oneSecFees = $state<OneSecTransferFees[]>();
-    let oneSecFeesForToken = $derived.by(() => {
-        if (!isOneSecNetwork || oneSecFees === undefined) return undefined;
-        return oneSecFees.filter((f) => f.sourceToken === tokenDetails.symbol);
-    });
-    let oneSecProtocolFee = $derived.by(() => {
-        if (oneSecFeesForToken === undefined) return undefined;
-        return oneSecFeesForToken.find(
-            (f) => f.sourceChain === selectedNetwork && f.destinationChain === ICP_SYMBOL,
-        )?.protocolFeePercent;
-    });
-    let oneSecTransferFee = $derived.by(() => {
-        if (oneSecFeesForToken === undefined) return undefined;
-        return oneSecFeesForToken.find(
-            (f) => f.sourceChain === ICP_SYMBOL && f.destinationChain === selectedNetwork,
-        )?.latestTransferFee;
-    });
-    let oneSecTotalFee = $derived.by(() => {
-        if (oneSecProtocolFee === undefined || oneSecTransferFee === undefined) return undefined;
-        return `${oneSecProtocolFee}% + ~${client.formatTokens(oneSecTransferFee, tokenDetails.decimals)}`;
+        if (selectedNetwork === undefined) return tokenDetails.symbol;
+        // BTC / ckBTC and SOL / ckSOL are named after the network
+        const arriving = receive.arrivingToken(selectedNetwork);
+        if (arriving !== undefined) return arriving;
+        return $rtlStore
+            ? `(${selectedNetwork}) ${tokenDetails.symbol}`
+            : `${tokenDetails.symbol} (${selectedNetwork})`;
     });
 </script>
 
 <div class="account-info">
     {#if networks.length > 0 && selectedNetwork !== undefined}
-        <NetworkSelector {networks} bind:selectedNetwork />
+        <NetworkSelector
+            {networks}
+            bind:selectedNetwork={
+                () => selectedNetwork ?? "", (v) => (receive.selectedNetwork = v)
+            } />
     {/if}
 
     {#if account === undefined}
         <div class="generating">
-            {#if error !== undefined}
+            {#if receive.failed}
                 <div class="error-icon"></div>
             {:else}
                 <div class="spinner"></div>
@@ -198,7 +85,7 @@
         <Translatable resourceKey={i18nKey("tokenTransfer.yourAccount", { token: tokenName })} />
     </p>
     {#if account === undefined}
-        {#if error !== undefined}
+        {#if receive.failed}
             <span class="error-label">{$_("cryptoAccount.failedToGenerateAddress")}</span>
         {:else}
             <span class="label">{$_("generating")}</span>
@@ -207,42 +94,30 @@
         <TruncatedAccount {centered} {account} />
     {/if}
 
-    {#if isBtcNetwork}
-        {#await btcDepositFeePromise.get()}
-            <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>
-        {:then amount}
-            <span class="label"
-                >{$_("cryptoAccount.networkFee", {
-                    values: { amount, token: tokenDetails.symbol },
-                })}</span>
-        {:catch}
-            <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
-        {/await}
-    {:else if isSolNetwork}
-        {#await solMinimumDepositPromise.get() then amount}
+    {#if note.kind === "loading"}
+        <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>
+    {:else if note.kind === "failed"}
+        <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
+    {:else if note.kind === "btc" || note.kind === "one_sec"}
+        <span class="label"
+            >{$_("cryptoAccount.networkFee", {
+                values: { amount: note.fee, token: tokenDetails.symbol },
+            })}</span>
+    {:else if note.kind === "sol"}
+        {#if note.minimum !== undefined}
             <span class="label"
                 >{$_("cryptoAccount.minimumDeposit", {
-                    values: { amount, token: tokenDetails.symbol },
+                    values: { amount: note.minimum, token: tokenDetails.symbol },
                 })}</span>
-        {:catch}
-            <!-- The minimum is only informational, so a failure to fetch it shows nothing -->
-        {/await}
-        <span class="label">{$_("cryptoAccount.solDepositFee", { values: solDepositFees })}</span>
-    {:else if isOneSecNetwork}
-        {#await oneSecFeesPromise.get()}
-            <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>
-        {:then}
-            {#if oneSecTotalFee !== undefined}
-                <span class="label"
-                    >{$_("cryptoAccount.networkFee", {
-                        values: { amount: oneSecTotalFee, token: tokenDetails.symbol },
-                    })}</span>
-            {:else}
-                <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
-            {/if}
-        {:catch}
-            <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
-        {/await}
+        {/if}
+        <span class="label"
+            >{$_("cryptoAccount.solDepositFee", {
+                values: {
+                    first: note.firstFee,
+                    subsequent: note.laterFee,
+                    token: tokenDetails.symbol,
+                },
+            })}</span>
     {/if}
 </div>
 

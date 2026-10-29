@@ -1,8 +1,8 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     Achievement, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, EncryptionKey,
-    MessageId, MessageIndex, MessagePermission, Milliseconds, ModerationInput, OptionUpdate, P2PSwapStatus,
-    PendingCryptoTransaction, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType, icrc1,
+    MessageId, MessageIndex, MessagePermission, Milliseconds, ModerationInput, P2PSwapStatus, PendingCryptoTransaction,
+    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType, icrc1,
 };
 use candid::CandidType;
 use oc_error_codes::{OCError, OCErrorCode};
@@ -258,7 +258,7 @@ impl MessageContent {
                 if let Some(image) = &m.image {
                     input.image_urls.push(image.blob_reference.url());
                 }
-                if let Some(result) = &m.result {
+                if let Some(result) = m.status.result() {
                     input.text = Some(format!("{}\n{result}", input.text.unwrap_or_default()));
                 }
             }
@@ -1124,12 +1124,14 @@ impl PriceChartContent {
     }
 }
 
-/// A bot's card for an app it hosts, eg. a game. Its text, image, player limit and whether others can
-/// watch are set when it's posted and never change. Its status, players, whose move it is and the
-/// result are the bot's to update, with the LocalUserIndex's `bot_update_mini_app`, until the game is
-/// finished. Everything else the app shows, its board and buttons, is the bot's own page, which
-/// OpenChat opens from the card in a frame. Only a bot can send one, needing the MiniApp permission.
-/// It can't be forwarded, edited, or sent in a direct chat.
+/// A bot's card for a game, or another app, it hosts. Its text, image, player limit and whether others
+/// can watch are set when it's posted and never change. Its status is written only by the MiniApp
+/// service (`update_mini_app` on the LocalUserIndex, with a `MiniAppStatusUpdate`): the players the
+/// game starts with, who joined through the service and were accepted by the bot, whose turn it is,
+/// and then its result. Who's joined so far, while the game's taking players, is shown live by the
+/// service. Everything else the app shows, its board
+/// and buttons, is the bot's own page, which OpenChat opens from the card in a frame. Only a bot can
+/// send one, needing the MiniApp permission. It can't be forwarded, edited, or sent in a direct chat.
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MiniAppContent {
@@ -1140,18 +1142,9 @@ pub struct MiniAppContent {
     pub image: Option<MiniAppImage>,
     // the most who can play, if there's a limit, so the card can show eg. "2 of 4"
     pub max_players: Option<u32>,
-    // whether members who aren't playing can open the app once the game has started
+    // whether people who aren't playing can watch: members, and anyone who can see a public chat
     pub spectators: bool,
-    // how many members who aren't playing have the app open, which the bot counts, so they stay
-    // anonymous
-    pub spectator_count: u32,
     pub status: MiniAppStatus,
-    // the members playing, in the bot's order. The bot which posted the card can be one.
-    pub players: Vec<UserId>,
-    // the players whose move it is, if the game has turns
-    pub waiting_for: Option<Vec<UserId>>,
-    // eg. "Bob won", once the game is finished
-    pub result: Option<String>,
 }
 
 /// An image the bot uploaded to OpenChat's storage, as for an image message, so it's scanned like one
@@ -1165,37 +1158,94 @@ pub struct MiniAppImage {
     pub blob_reference: BlobReference,
 }
 
+// In the order a game goes through them, which it only ever moves forward through
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 pub enum MiniAppStatus {
     // taking players
     #[default]
     Open,
     // being played
-    Active,
+    Active(MiniAppActive),
     // over, after which the card never changes
-    Finished,
+    Finished(MiniAppFinished),
 }
 
-/// What `bot_update_mini_app` changes on a card. Whatever isn't given stays as it was.
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
-pub struct MiniAppUpdate {
-    pub status: Option<MiniAppStatus>,
-    pub players: Option<Vec<UserId>>,
-    pub spectator_count: Option<u32>,
-    #[ts(as = "crate::OptionUpdateUserIds")]
-    #[serde(default)]
-    pub waiting_for: OptionUpdate<Vec<UserId>>,
-    #[ts(as = "crate::OptionUpdateString")]
-    #[serde(default)]
-    pub result: OptionUpdate<String>,
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppActive {
+    // who the game started with, in the order they joined
+    pub players: Vec<UserId>,
+    // the players whose turn it is, or no one in particular, eg. in a game without turns
+    pub waiting_for: Vec<UserId>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppFinished {
+    // who the game started with, or no one if it never started
+    pub players: Vec<UserId>,
+    // eg. "Bob won", or none if the game was abandoned
+    pub result: Option<String>,
+}
+
+/// What the MiniApp service writes to a card as its game goes on
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum MiniAppStatusUpdate {
+    // The game started, with its players
+    Started(MiniAppStarted),
+    // Whose turn it is now
+    Turn(MiniAppTurn),
+    // The game finished, with the players it started with, if it did
+    Ended(MiniAppEnded),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppStarted {
+    pub players: Vec<UserId>,
+    pub waiting_for: Vec<UserId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppTurn {
+    pub waiting_for: Vec<UserId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MiniAppEnded {
+    // eg. "Bob won", or none if the game was abandoned
+    pub result: Option<String>,
+}
+
+impl MiniAppStatus {
+    pub fn players(&self) -> &[UserId] {
+        match self {
+            MiniAppStatus::Open => &[],
+            MiniAppStatus::Active(active) => &active.players,
+            MiniAppStatus::Finished(finished) => &finished.players,
+        }
+    }
+
+    pub fn result(&self) -> Option<&str> {
+        match self {
+            MiniAppStatus::Finished(finished) => finished.result.as_deref(),
+            _ => None,
+        }
+    }
 }
 
 impl MiniAppContent {
     pub const MAX_TEXT_CHARS: usize = 2_000;
     pub const MAX_PLAYERS: usize = 100;
     pub const MAX_RESULT_CHARS: usize = 200;
+
+    // A card as the bot posts it: open, as only the MiniApp service writes its status
+    pub fn validate_new(&self) -> Result<(), String> {
+        if self.status != MiniAppStatus::Open {
+            return Err("A game is posted open".to_string());
+        }
+        self.validate()
+    }
 
     pub fn validate(&self) -> Result<(), String> {
         check_chars("text", &self.text, Self::MAX_TEXT_CHARS)?;
@@ -1213,46 +1263,59 @@ impl MiniAppContent {
         {
             return Err(format!("A game has 1 to {} players at most", Self::MAX_PLAYERS));
         }
+        let players = self.status.players();
         let limit = self.max_players.map_or(Self::MAX_PLAYERS, |max| max as usize);
-        if self.players.len() > limit {
+        if players.len() > limit {
             return Err(format!("This game has at most {limit} players"));
         }
-        if self.players.iter().collect::<HashSet<_>>().len() < self.players.len() {
+        if players.iter().collect::<HashSet<_>>().len() < players.len() {
             return Err("A player is listed twice".to_string());
         }
-        if self.spectator_count > 0 && !self.spectators {
-            return Err("Only a game open to spectators has any".to_string());
-        }
-        if let Some(waiting_for) = &self.waiting_for {
-            if waiting_for.iter().any(|user_id| !self.players.contains(user_id)) {
+        if let MiniAppStatus::Active(active) = &self.status {
+            if active.waiting_for.iter().any(|user_id| !players.contains(user_id)) {
                 return Err("Only players can be waited for".to_string());
             }
-            if waiting_for.iter().collect::<HashSet<_>>().len() < waiting_for.len() {
+            if active.waiting_for.iter().collect::<HashSet<_>>().len() < active.waiting_for.len() {
                 return Err("A player is waited for twice".to_string());
             }
         }
-        if let Some(result) = &self.result {
-            if self.status != MiniAppStatus::Finished {
-                return Err("Only a finished game has a result".to_string());
-            }
+        if let Some(result) = self.status.result() {
             check_chars("result", result, Self::MAX_RESULT_CHARS)?;
         }
         Ok(())
     }
 
-    // The card as the update leaves it, which the caller then validates
-    pub fn apply(&mut self, update: MiniAppUpdate) {
-        if let Some(status) = update.status {
-            self.status = status;
+    // The status the MiniApp service's update leaves: a game starts with its players, its turns pass
+    // between them, and it ends with them and its result, or ends without starting. A finished game
+    // never changes. An update the card already reflects changes nothing, so the service can retry a
+    // write whose outcome it didn't learn.
+    pub fn next_status(&self, update: MiniAppStatusUpdate) -> Result<MiniAppStatus, String> {
+        use MiniAppStatus::*;
+        use MiniAppStatusUpdate::*;
+
+        match (&self.status, update) {
+            (Open, Started(started)) => Ok(Active(MiniAppActive {
+                players: started.players,
+                waiting_for: started.waiting_for,
+            })),
+            (Active(active), Started(started)) if active.players == started.players => Ok(self.status.clone()),
+            (Active(_), Started(_)) => Err("The game has already started".to_string()),
+            (Active(active), Turn(turn)) => Ok(Active(MiniAppActive {
+                players: active.players.clone(),
+                waiting_for: turn.waiting_for,
+            })),
+            (Open, Turn(_)) => Err("The game hasn't started".to_string()),
+            (Open, Ended(ended)) => Ok(Finished(MiniAppFinished {
+                players: Vec::new(),
+                result: ended.result,
+            })),
+            (Active(active), Ended(ended)) => Ok(Finished(MiniAppFinished {
+                players: active.players.clone(),
+                result: ended.result,
+            })),
+            (Finished(finished), Ended(ended)) if finished.result == ended.result => Ok(self.status.clone()),
+            (Finished(_), _) => Err("A finished game's card can't be changed".to_string()),
         }
-        if let Some(players) = update.players {
-            self.players = players;
-        }
-        if let Some(spectator_count) = update.spectator_count {
-            self.spectator_count = spectator_count;
-        }
-        self.waiting_for = update.waiting_for.apply_to(self.waiting_for.take());
-        self.result = update.result.apply_to(self.result.take());
     }
 }
 

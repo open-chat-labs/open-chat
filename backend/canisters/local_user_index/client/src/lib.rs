@@ -7,3 +7,4 @@ generate_candid_query_call!(notifications);
 
 // Updates
 generate_candid_update_call!(remove_notifications);
+generate_candid_update_call!(update_mini_app);

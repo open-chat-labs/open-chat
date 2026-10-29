@@ -33,6 +33,8 @@
         premiumItemsStore,
         selectedAuthProviderStore,
         isDisplayNameValid,
+        signInLastUsed,
+        toDayString,
         unlinkIdentityFailure,
         type LinkedAuthenticationPrincipal,
         type ResourceKey,
@@ -350,13 +352,7 @@
 
     // when the account was made, in the user's locale, as the dialog would show its `joined` (which
     // is the calendar's day for it)
-    const memberSince = $derived(
-        new Intl.DateTimeFormat($locale ?? "en", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-        }).format(header.joined),
-    );
+    const memberSince = $derived(toDayString(new Date(header.joined), $locale ?? "en"));
 
     // ---- CHIT: its settings (the old UI's, in this browser) ----
     function changeChit(patch: ChitSettingsPatch) {
@@ -374,7 +370,11 @@
     // principal
     const unlisted = new SvelteMap<string, LinkingIdentity>();
     const signinMethods = $derived(
-        signinMethodsProps(linked, (type) => $_(`ui.profileDialog.signin.${type}`)).map((m) => ({
+        signinMethodsProps(
+            linked,
+            (type) => $_(`ui.profileDialog.signin.${type}`),
+            (lastUsed) => translate(signInLastUsed(lastUsed, $locale ?? "en")),
+        ).map((m) => ({
             ...m,
             id: idOf(m.id),
         })),

@@ -144,8 +144,9 @@ mod tests {
     use p256_key_pair::P256KeyPair;
     use std::time::{SystemTime, UNIX_EPOCH};
     use types::{
-        CLAIM_TYPE_DECLINE_VIDEO_CALL, CLAIM_TYPE_JOIN_VIDEO_CALL, Chat, DeclineVideoCallClaims, StartVideoCallClaims,
-        VideoCallType,
+        CLAIM_TYPE_DECLINE_VIDEO_CALL, CLAIM_TYPE_JOIN_VIDEO_CALL, CLAIM_TYPE_MINI_APP_PLAYER,
+        CLAIM_TYPE_MINI_APP_REGISTRATION, Chat, DeclineVideoCallClaims, MiniAppGame, MiniAppPlayerClaims,
+        MiniAppRegistrationClaims, StartVideoCallClaims, UserId, VideoCallType,
     };
 
     #[test]
@@ -244,5 +245,43 @@ mod tests {
         assert_eq!(decoded.custom().message_id, "18446744073709551615");
         assert_eq!(decoded.custom().local_user_index, lui);
         assert!(verify_and_decode::<DeclineVideoCallClaims>(&jwt, kp.public_key_pem(), CLAIM_TYPE_JOIN_VIDEO_CALL).is_err());
+    }
+
+    // The MiniApp service, its website client and bots in TypeScript all read these, so a game's
+    // message id must come out as a string, where a number this size would lose digits
+    #[test]
+    fn a_mini_app_registration_round_trips_with_its_game() {
+        let mut rng = rand::rng();
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
+        let kp = P256KeyPair::new(&mut rng);
+        let bot: UserId = Principal::from_text("27eue-hyaaa-aaaaf-aaa4a-cai").unwrap().into();
+        let community = Principal::from_text("6nb6r-kyaaa-aaaar-asvgq-cai").unwrap();
+        let game = MiniAppGame {
+            chat: Chat::Channel(community.into(), 7u32.into()),
+            thread: Some(3.into()),
+            message_id: u64::MAX.into(),
+        };
+        let claims = Claims::new(
+            now + 3_600_000,
+            CLAIM_TYPE_MINI_APP_REGISTRATION.to_string(),
+            MiniAppRegistrationClaims {
+                bot,
+                bot_endpoint: "https://uno.example.com".to_string(),
+                bot_api_gateway: community,
+                game,
+                max_players: Some(4),
+                spectators: true,
+            },
+        );
+        let jwt = sign_and_encode_token(kp.secret_key_der(), claims, &mut rng).unwrap();
+
+        let json = String::from_utf8(decode_to_bytes(jwt.split('.').nth(1).unwrap()).unwrap()).unwrap();
+        assert!(json.contains(r#""message_id":"18446744073709551615""#), "{json}");
+
+        let decoded: Claims<MiniAppRegistrationClaims> =
+            verify_and_decode(&jwt, kp.public_key_pem(), CLAIM_TYPE_MINI_APP_REGISTRATION).unwrap();
+        assert!(decoded.custom().game == game);
+        assert_eq!(decoded.custom().max_players, Some(4));
+        assert!(verify_and_decode::<MiniAppPlayerClaims>(&jwt, kp.public_key_pem(), CLAIM_TYPE_MINI_APP_PLAYER).is_err());
     }
 }

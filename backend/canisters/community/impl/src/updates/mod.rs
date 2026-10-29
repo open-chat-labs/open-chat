@@ -1,7 +1,6 @@
 pub mod accept_p2p_swap;
 pub mod add_members_to_channel;
 pub mod add_reaction;
-pub mod c2c_bot_update_mini_app;
 pub mod c2c_claim_prize;
 pub mod c2c_delete_community;
 pub mod c2c_escrow;
@@ -21,6 +20,7 @@ pub mod c2c_send_moderation_report;
 pub mod c2c_set_user_suspended;
 pub mod c2c_unfreeze_community;
 pub mod c2c_uninstall_bot;
+pub mod c2c_update_mini_app;
 pub mod c2c_update_moderation_report_status;
 pub mod c2c_update_proposals;
 pub mod c2c_user_index;

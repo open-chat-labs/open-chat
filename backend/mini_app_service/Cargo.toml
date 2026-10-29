@@ -1,0 +1,34 @@
+[package]
+name = "mini_app_service"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+async-trait = { workspace = true }
+axum = { workspace = true, features = ["ws"] }
+candid = { workspace = true }
+dotenv = { workspace = true }
+envconfig = { workspace = true }
+futures = { workspace = true }
+ic-agent = { workspace = true }
+jwt = { path = "../libraries/jwt" }
+local_user_index_canister = { path = "../canisters/local_user_index/api" }
+local_user_index_canister_client = { path = "../canisters/local_user_index/client" }
+oc_error_codes = { path = "../libraries/error_codes" }
+p256 = { workspace = true, features = ["pem", "pkcs8"] }
+p256_key_pair = { path = "../libraries/p256_key_pair" }
+rand = { workspace = true }
+redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
+reqwest = { workspace = true, features = ["json"] }
+rustls = { workspace = true, features = ["ring"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "sync", "time"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+types = { path = "../libraries/types" }
+user_index_canister = { path = "../canisters/user_index/api" }
+user_index_canister_client = { path = "../canisters/user_index/client" }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "test-util", "time"] }

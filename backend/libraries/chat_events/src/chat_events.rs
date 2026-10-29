@@ -26,7 +26,7 @@ use types::{
     DiamondMembershipStatus, DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention,
     Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
-    MessageTippedEventPayload, Milliseconds, MiniAppUpdate, ModerationCategories, ModerationReportStatus, MultiUserChat,
+    MessageTippedEventPayload, Milliseconds, MiniAppStatusUpdate, ModerationCategories, ModerationReportStatus, MultiUserChat,
     OCResult, OgPreview, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent,
     P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction,
     ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis,
@@ -890,9 +890,9 @@ impl ChatEvents {
         Ok((content, sender))
     }
 
-    // A bot changing what its MiniApp card shows as its game goes on: the status, players, whose move
-    // it is and the result. The rest of the card never changes, and nor does any of it once the game
-    // is finished. Unlike an edit, the message isn't marked as edited.
+    // The MiniApp service updating a card's status: the game starting with its players, whose turn it
+    // is, then its finishing with its result. The rest of the card never changes, and nor does any of
+    // it once the game is finished. Unlike an edit, the message isn't marked as edited.
     pub fn update_mini_app(&mut self, args: UpdateMiniAppArgs) -> OCResult {
         match self.update_message(
             args.thread_root_message_index,
@@ -901,7 +901,7 @@ impl ChatEvents {
             args.now,
             true,
             ChatEventType::MessageOther,
-            |message, _| Self::update_mini_app_inner(message, args.bot, args.update),
+            |message, _| Self::update_mini_app_inner(message, args.update),
         ) {
             Ok(_) => Ok(()),
             Err(UpdateEventError::NoChange(error)) => Err(error),
@@ -911,14 +911,10 @@ impl ChatEvents {
 
     fn update_mini_app_inner(
         message: &mut MessageInternal,
-        bot: UserId,
-        update: MiniAppUpdate,
+        update: MiniAppStatusUpdate,
     ) -> Result<(), UpdateEventError<OCError>> {
         if message.deleted_by.is_some() {
             return Err(UpdateEventError::NotFound);
-        }
-        if message.sender != bot {
-            return Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized.into()));
         }
         let MessageContentInternal::MiniApp(card) = &mut message.content else {
             return Err(UpdateEventError::NoChange(OCErrorCode::InvalidMessageType.into()));
@@ -2947,25 +2943,6 @@ impl ChatEvents {
     // edit made on the other platform. So an edit must be valid content of the same type, and not a
     // poll, whose votes an edit would lose. Nor can a deleted message be edited, since its content
     // isn't moderated again.
-    // Whether `user`, a member who can see from `min_visible_event_index`, may open the app of the
-    // message, which must be one of `bot`'s MiniApp cards, not deleted (see `MiniAppContentInternal::
-    // can_open`)
-    pub fn can_open_mini_app(
-        &self,
-        bot: UserId,
-        user: UserId,
-        min_visible_event_index: EventIndex,
-        thread_root_message_index: Option<MessageIndex>,
-        message_id: MessageId,
-    ) -> bool {
-        self.message_internal(min_visible_event_index, thread_root_message_index, message_id.into())
-            .is_some_and(|(message, _)| {
-                message.sender == bot
-                    && message.deleted_by.is_none()
-                    && matches!(&message.content, MessageContentInternal::MiniApp(card) if card.can_open(user))
-            })
-    }
-
     pub fn check_bot_edit(
         &self,
         thread_root_message_index: Option<MessageIndex>,
@@ -3248,10 +3225,9 @@ pub struct EditMessageArgs {
 }
 
 pub struct UpdateMiniAppArgs {
-    pub bot: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub update: MiniAppUpdate,
+    pub update: MiniAppStatusUpdate,
     pub now: TimestampMillis,
 }
 

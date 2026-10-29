@@ -16,6 +16,7 @@
     } from "@client";
     import { onMount, tick } from "svelte";
     import { currentTheme } from "../../theme/themes";
+    import { getEmojiSupportLevel } from "../../utils/emojis";
     import PremiumItemPayment from "../PremiumItemPayment.svelte";
 
     interface Props {
@@ -28,6 +29,9 @@
     let { mode = "message", onEmojiSelected, onSkintoneChanged, customEmojis }: Props = $props();
     let showPayGate = $state<CustomEmoji>();
     let emojiPickerEl = $state<Picker>();
+    // Passed to the picker so that it skips its own emoji support check, which can leave it
+    // empty after a cold start (see getEmojiSupportLevel)
+    const emojiVersion = getEmojiSupportLevel();
 
     function lockedCategoryCss(groupId: number, price: number) {
         return `
@@ -138,6 +142,7 @@
 
 <emoji-picker
     bind:this={emojiPickerEl}
+    emoji-version={emojiVersion}
     class:message={mode === "message"}
     class:reaction={mode === "reaction"}
     class:thread={mode === "thread"}

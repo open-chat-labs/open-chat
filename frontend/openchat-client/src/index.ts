@@ -131,6 +131,8 @@ export { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 export { rightPanelView, type RightPanelInput } from "./utils/rightPanel";
 export {
     linkIdentitiesResult,
+    shortSignInPrincipal,
+    signInLastUsed,
     signInOptions,
     unlinkIdentityFailure,
     type LinkIdentitiesResult,
@@ -170,5 +172,5 @@ export {
     swapLabels,
     swapTakenBy,
 } from "./utils/swaps";
-export { toDateString, toDatetimeString, toMonthString } from "./utils/date";
+export { toDateString, toDatetimeString, toDayString, toMonthString } from "./utils/date";
 export * from "./utils/url";

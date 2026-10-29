@@ -37,6 +37,50 @@ function canBePaid(user: UserSummary): boolean {
     return user.kind !== "bot";
 }
 
+/** The token a transfer is in, as its ledger has it: the fee is always the ledger's. */
+export type TransferToken = { ledger: string; symbol: string; transferFee: bigint };
+
+/**
+ * A transfer of `amount` to `recipient`, paying the ledger's fee. `fromAccount` is an external
+ * wallet which has approved us taking it, `fromWallet` the one a draft will ask; without either the
+ * funds come from the user's own OpenChat account.
+ */
+export function pendingTransfer(
+    token: TransferToken,
+    recipient: string,
+    amount: bigint,
+    from: { fromAccount?: string; fromWallet?: string } = {},
+): PendingCryptocurrencyTransfer {
+    return {
+        kind: "pending",
+        ledger: token.ledger,
+        token: token.symbol,
+        recipient,
+        amountE8s: amount,
+        feeE8s: token.transferFee,
+        createdAtNanos: nowNanos(),
+        ...from,
+    };
+}
+
+/**
+ * Sends `amount` to a user in a message in the direct chat with them, from the user's own
+ * OpenChat account (the wallets' Send to a user, which only offers users already DM'd).
+ */
+export function sendInDirectChat(
+    client: Pick<OpenChat, "sendCryptoTransfer">,
+    token: TransferToken,
+    userId: string,
+    amount: bigint,
+    caption: string,
+): Promise<CryptoTransferOutcome> {
+    return client.sendCryptoTransfer(
+        { chatId: { kind: "direct_chat", userId } },
+        pendingTransfer(token, userId, amount),
+        caption,
+    );
+}
+
 export class CryptoTransferForm extends TransferForm {
     #chat: ChatSummary;
     receiver = $state<UserSummary>();
@@ -95,7 +139,12 @@ export class CryptoTransferForm extends TransferForm {
         if (recipient === undefined) return;
         localUpdates.draftMessages.setAttachment(messageContext, {
             kind: "crypto_content",
-            transfer: this.#transfer(recipient.userId, { fromWallet: this.sourceWallet?.id }),
+            transfer: pendingTransfer(
+                this.tokenState,
+                recipient.userId,
+                this.tokenState.draftAmount,
+                { fromWallet: this.sourceWallet?.id },
+            ),
         });
     }
 
@@ -113,24 +162,10 @@ export class CryptoTransferForm extends TransferForm {
         if (recipient === undefined) return Promise.resolve({ kind: "cancelled" });
         return this.client.sendCryptoTransfer(
             messageContext,
-            this.#transfer(recipient.userId, { fromAccount }),
+            pendingTransfer(this.tokenState, recipient.userId, this.tokenState.draftAmount, {
+                fromAccount,
+            }),
             caption,
         );
-    }
-
-    #transfer(
-        recipient: string,
-        from: { fromAccount?: string; fromWallet?: string },
-    ): PendingCryptocurrencyTransfer {
-        return {
-            kind: "pending",
-            ledger: this.tokenState.ledger,
-            token: this.tokenState.symbol,
-            recipient,
-            amountE8s: this.tokenState.draftAmount,
-            feeE8s: this.tokenState.transferFee,
-            createdAtNanos: nowNanos(),
-            ...from,
-        };
     }
 }

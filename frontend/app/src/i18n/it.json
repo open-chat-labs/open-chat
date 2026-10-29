@@ -1355,6 +1355,7 @@
         "link": "Collegamento",
         "linkedAccounts": {
             "currentAccount": "Attualmente connesso con questo preside",
+            "lastUsed": "Ultimo utilizzo il {date}",
             "linkAdvice": "Per aggiungere un nuovo provider di accesso, accedi prima con il nuovo provider che desideri aggiungere, poi accedi con il tuo provider attuale e infine collega i due.",
             "linkAnother": "Aggiungine un altro",
             "section": "Provider di accesso",
