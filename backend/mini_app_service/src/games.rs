@@ -46,11 +46,13 @@ pub struct Applied {
     pub new_state: bool,
 }
 
-// Who a game's start took off and put on, and whether it came with a newer state
+// Who a game's start took off and put on, who the bot gave who didn't join, and whether it came with a
+// state
 #[derive(Debug, PartialEq, Eq)]
 pub struct StartChanges {
     pub removed: Vec<UserId>,
     pub added: Vec<UserId>,
+    pub not_joined: Vec<UserId>,
     pub new_state: bool,
 }
 
@@ -97,11 +99,14 @@ impl Game {
     }
 
     // A card holds at most `MiniAppContent::MAX_PLAYERS`, whatever the game's limit
-    fn is_full(&self) -> bool {
-        let limit = self.max_players.map_or(MiniAppContent::MAX_PLAYERS, |max| {
+    fn limit(&self) -> usize {
+        self.max_players.map_or(MiniAppContent::MAX_PLAYERS, |max| {
             (max as usize).min(MiniAppContent::MAX_PLAYERS)
-        });
-        self.players.len() >= limit
+        })
+    }
+
+    fn is_full(&self) -> bool {
+        self.players.len() >= self.limit()
     }
 
     // Whether a user can join, before the bot's asked
@@ -142,23 +147,14 @@ impl Game {
         if self.status == GameStatus::Finished {
             return Err(UpdateError::Finished);
         }
+        // A player starts a game, through the service, so a bot only ends one
+        if update.status.is_some_and(|status| status != GameStatus::Finished) {
+            return Err(UpdateError::Invalid("A bot only sets a game Finished".to_string()));
+        }
         let status = update.status.unwrap_or(self.status);
-        if status < self.status {
-            return Err(UpdateError::Invalid("A game's status only moves forward".to_string()));
-        }
-        if status == GameStatus::Active && self.status == GameStatus::Open {
-            return Err(UpdateError::Invalid(
-                "A game is started by a player, through the service".to_string(),
-            ));
-        }
         if let Some(waiting_for) = &update.waiting_for {
-            let players: Vec<_> = self.players.iter().filter(|p| !update.remove.contains(p)).collect();
-            if waiting_for.iter().any(|user_id| !players.contains(&user_id)) {
-                return Err(UpdateError::Invalid("Only players can be waited for".to_string()));
-            }
-            if waiting_for.iter().collect::<HashSet<_>>().len() < waiting_for.len() {
-                return Err(UpdateError::Invalid("A player is waited for twice".to_string()));
-            }
+            let players: Vec<_> = self.players.iter().filter(|p| !update.remove.contains(p)).copied().collect();
+            check_waiting_for(waiting_for, &players).map_err(UpdateError::Invalid)?;
         }
         if let Some(result) = &update.result {
             if status != GameStatus::Finished {
@@ -208,39 +204,37 @@ impl Game {
         Ok(applied)
     }
 
-    // Ends a game its bot stopped updating, or was uninstalled from the chat. A result the bot gave is
-    // kept.
     // The bot's answer to a player starting the game: it plays with the players the bot gives, in the
     // order they joined. Each must be playing, or still `joining`, having asked to join through OpenChat
-    // and been accepted by the bot as it answered. Anyone playing whom it leaves out is taken off.
-    pub fn start(&mut self, started: Started, joining: &[UserId], now: TimestampMillis) -> Result<StartChanges, String> {
+    // and been accepted by the bot as it answered. Anyone else it gives isn't added, eg. a player whose
+    // leave hasn't reached the bot yet, and the bot's told they left. Anyone playing whom it leaves out
+    // is taken off. An answer which is invalid in itself changes nothing.
+    pub fn start(&mut self, mut started: Started, joining: &[UserId], now: TimestampMillis) -> Result<StartChanges, String> {
         if self.status != GameStatus::Open {
             return Err("The game has already started".to_string());
-        }
-        if started.players.is_empty() {
-            return Err("A game starts with a player at least".to_string());
         }
         if started.players.iter().collect::<HashSet<_>>().len() < started.players.len() {
             return Err("A player is listed twice".to_string());
         }
-        if started
+        if started.players.len() > self.limit() {
+            return Err(format!("This game has at most {} players", self.limit()));
+        }
+        check_waiting_for(&started.waiting_for, &started.players)?;
+        if let (Some(state), Some(current)) = (&started.state, &self.state)
+            && state.seq <= current.seq
+        {
+            return Err("The first state's seq must be above the last state's".to_string());
+        }
+        let not_joined: Vec<_> = started
             .players
             .iter()
-            .any(|user_id| !self.players.contains(user_id) && !joining.contains(user_id))
-        {
-            return Err("Only users who joined can play".to_string());
-        }
-        let limit = self.max_players.map_or(MiniAppContent::MAX_PLAYERS, |max| {
-            (max as usize).min(MiniAppContent::MAX_PLAYERS)
-        });
-        if started.players.len() > limit {
-            return Err(format!("This game has at most {limit} players"));
-        }
-        if started.waiting_for.iter().any(|user_id| !started.players.contains(user_id)) {
-            return Err("Only players can be waited for".to_string());
-        }
-        if started.waiting_for.iter().collect::<HashSet<_>>().len() < started.waiting_for.len() {
-            return Err("A player is waited for twice".to_string());
+            .filter(|user_id| !self.players.contains(user_id) && !joining.contains(user_id))
+            .copied()
+            .collect();
+        started.players.retain(|user_id| !not_joined.contains(user_id));
+        started.waiting_for.retain(|user_id| !not_joined.contains(user_id));
+        if started.players.is_empty() {
+            return Err("A game starts with a player at least".to_string());
         }
 
         let removed: Vec<_> = self
@@ -260,21 +254,21 @@ impl Game {
         self.started_with = self.players.clone();
         self.waiting_for = started.waiting_for;
         self.status = GameStatus::Active;
-        let mut new_state = false;
-        if let Some(state) = started.state
-            && self.state.as_ref().is_none_or(|current| state.seq > current.seq)
-        {
-            self.state = Some(state);
-            new_state = true;
+        let new_state = started.state.is_some();
+        if started.state.is_some() {
+            self.state = started.state;
         }
         self.last_bot_update = now;
         Ok(StartChanges {
             removed,
             added,
+            not_joined,
             new_state,
         })
     }
 
+    // Ends a game its bot stopped updating, or was uninstalled from the chat. A result the bot gave is
+    // kept.
     pub fn abandon(&mut self) {
         if self.status != GameStatus::Finished {
             self.status = GameStatus::Finished;
@@ -357,6 +351,17 @@ impl Game {
             .copied()
             .collect()
     }
+}
+
+// Whose turn it is: some of the players, each once
+fn check_waiting_for(waiting_for: &[UserId], players: &[UserId]) -> Result<(), String> {
+    if waiting_for.iter().any(|user_id| !players.contains(user_id)) {
+        return Err("Only players can be waited for".to_string());
+    }
+    if waiting_for.iter().collect::<HashSet<_>>().len() < waiting_for.len() {
+        return Err("A player is waited for twice".to_string());
+    }
+    Ok(())
 }
 
 #[cfg(test)]

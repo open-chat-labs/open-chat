@@ -110,7 +110,7 @@ Any request can be refused: `{ "type": "refused", "id": 2, "reason": "...", "mes
 | `not_open` | joining, leaving or starting a game that has started or finished |
 | `full` | the game has `max_players` players, or 100, a card's most |
 | `refused_by_bot` | the bot said no; `message` is the bot's, to show the user |
-| `bot_unavailable` | the bot didn't answer within 5 seconds. After a join, it's told the user left, in case it accepted late. Also when the bot starts a game with players who didn't join. |
+| `bot_unavailable` | the bot didn't answer within 5 seconds. After a join, it's told the user left, in case it accepted late. Also when the bot answers a start invalidly. |
 | `no_spectators` | opening a game that isn't the user's, which doesn't allow spectators |
 | `not_a_player` | asking for a player token for, or to start, a game the user isn't playing |
 | `unavailable` | the service couldn't read or save the game; try again |
@@ -191,7 +191,6 @@ Every call has `Authorization: Bearer <bot token>`.
 ```json
 {
   "game": game,
-  "status": "Active",
   "waiting_for": ["<user id>"],
   "result": null,
   "remove": ["<user id>"],
@@ -221,7 +220,7 @@ Errors:
 
 | Status | Meaning |
 |---|---|
-| 400 | invalid: setting Active, status moving back, a result without Finished, waiting for someone who isn't playing |
+| 400 | invalid: a status other than Finished, a result without Finished, waiting for someone who isn't playing |
 | 403 | not the bot's game |
 | 404 | unknown game |
 | 409 | the game has finished |
@@ -251,9 +250,14 @@ or not:
 ```json
 { "accepted": false, "message": "Needs 2 players" }
 ```
-- **`players`** are who it starts with, in any order. Each must be playing, or have a join the bot's still answering, as it accepted them; that join then succeeds. Anyone playing whom the bot leaves out is taken off, as with `remove`.
-- **`waiting_for`** and **`state`** are as in `/bot/update`. The service holds the game while it asks, so the bot answers with the game's first state rather than calling `/bot/update`, which would wait until the start timed out.
-- If the service can't save the start, the player can ask again, so a bot asked to start a game it already started answers as it did.
+- **`players`** are who it starts with, in any order.
+  - Each should be playing, or have a join the bot's still answering, as it accepted them; that join then succeeds.
+  - Anyone else isn't added, and the bot's told they left, eg. a player whose leave hadn't reached the bot yet.
+  - Anyone playing whom the bot leaves out is taken off, as with `remove`.
+- **`waiting_for`** and **`state`** are as in `/bot/update`. The state's `seq` must be above any state the bot has already sent.
+- **The service holds the game while it asks.** So the bot answers with the game's first state rather than calling `/bot/update`, and its answer mustn't wait on any `/bot/update` call for the game, eg. one made while answering a join. Those would wait until the start timed out.
+- **An answer which is invalid in itself is refused:** a player listed twice, more than the game's limit, waiting for someone it doesn't list, or a state that isn't newer.
+- **If a start fails,** eg. it timed out or the service couldn't save it, the player can ask again. So a bot asked to start a game it already started answers with its players as they are now.
 
 ### `POST <endpoint>/mini_app/leave`
 

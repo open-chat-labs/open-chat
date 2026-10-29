@@ -31,7 +31,8 @@ pub struct App {
     bots: Arc<dyn BotClient>,
     cards: Arc<dyn CardWriter>,
     // Changes to a game happen one at a time: joins, leaves, starts, its bot's updates and its card's
-    // writes. None is held while a bot's asked to accept a player, but one is while it's asked to start.
+    // writes. None is held while a bot's asked to accept a player, but one is while it's asked to start,
+    // for up to its timeout, which holds up the games sharing the lock too.
     locks: Vec<AsyncMutex<()>>,
     card_writes: Mutex<CardWrites>,
     // The users whose joins are being answered by bots, who a bot may start a game with
@@ -155,7 +156,10 @@ impl App {
         self.joining.lock().unwrap().push((game, user_id));
         let outcome = self.bots.join(&found, user_id).await;
         let _guard = self.lock(&game).await;
-        self.stop_joining(&game, user_id);
+        // A player started the game while the bot was answering, and the bot started it with this user
+        if !self.stop_joining(&game, user_id) {
+            return self.joined(request, &found, user_id);
+        }
 
         let mut latest = match self.store.get(&game).await {
             Ok(Some(latest)) => latest,
@@ -168,7 +172,7 @@ impl App {
                 return unavailable(request, error);
             }
         };
-        // A player started the game while the bot was answering, and the bot started it with this user
+        // Their join from another tab went through
         if latest.is_player(user_id) {
             return self.joined(request, &latest, user_id);
         }
@@ -200,11 +204,11 @@ impl App {
         self.joined(request, &latest, user_id)
     }
 
-    fn stop_joining(&self, game: &MiniAppGame, user_id: UserId) {
+    // Whether the user was still joining, rather than a start having taken them in
+    fn stop_joining(&self, game: &MiniAppGame, user_id: UserId) -> bool {
         let mut joining = self.joining.lock().unwrap();
-        if let Some(index) = joining.iter().position(|j| *j == (*game, user_id)) {
-            joining.swap_remove(index);
-        }
+        let index = joining.iter().position(|j| *j == (*game, user_id));
+        index.map(|index| joining.swap_remove(index)).is_some()
     }
 
     // A player asks to start the game. The bot's asked holding the game's lock, so no one joins or leaves
@@ -253,7 +257,14 @@ impl App {
         if let Err(error) = self.store.put(&found).await {
             return unavailable(request, error);
         }
+        self.joining
+            .lock()
+            .unwrap()
+            .retain(|(g, user_id)| *g != game || !changes.added.contains(user_id));
 
+        for user_id in changes.not_joined {
+            self.tell_bot_left(found.clone(), user_id);
+        }
         for user_id in changes.removed {
             self.role_changed(&found, user_id, false);
         }
@@ -303,12 +314,13 @@ impl App {
                 player_token: (role == Role::Player).then(|| self.tokens.player(found.bot, game, user_id, now_millis())),
             },
         );
-        // Read again, so a state pushed before the connection was open isn't missed. The website drops
-        // a state no newer than one it has.
-        if let Ok(Some(latest)) = self.store.get(&game).await
-            && let Some(state) = &latest.state
-        {
-            self.hub.send_latest_state(&[id], game, state, role);
+        // Read again, so a state pushed, or a join, before the connection was open isn't missed
+        if let Ok(Some(latest)) = self.store.get(&game).await {
+            if latest.is_player(user_id) != (role == Role::Player) {
+                self.role_changed(&latest, user_id, latest.is_player(user_id));
+            } else if let Some(state) = &latest.state {
+                self.hub.send_latest_state(&[id], game, state, role);
+            }
         }
         if watching_changed {
             self.push_card(&game).await;
@@ -574,7 +586,6 @@ impl App {
         } else {
             None
         };
-        let (ids, _) = self.hub.set_role(found.game, user_id, role);
         let message = match role {
             Some(role) => ServerMessage::Role {
                 game: found.game,
@@ -583,9 +594,7 @@ impl App {
             },
             None => ServerMessage::Closed { game: found.game },
         };
-        for id in &ids {
-            self.hub.send(*id, message.clone());
-        }
+        let (ids, _) = self.hub.set_role(found.game, user_id, role, message);
         if let (Some(role), Some(state)) = (role, &found.state) {
             self.hub.send_latest_state(&ids, found.game, state, role);
         }
@@ -1442,19 +1451,143 @@ mod tests {
         assert_eq!(test.card().players(), [user(2), user(1)]);
     }
 
-    // Only users who asked to join through OpenChat can play: anyone else in the bot's answer refuses
-    // the start, and anyone playing whom it leaves out is taken off
+    // Only users who asked to join through OpenChat play: anyone else in the bot's answer, eg. a player
+    // whose leave hadn't reached the bot, isn't added, and the bot's told they left. Anyone playing whom
+    // it leaves out is taken off.
     #[tokio::test]
     async fn a_game_starts_only_with_users_who_joined() {
         let test = Test::new();
         test.register(None, true).await;
         test.join(user(1)).await;
         test.join(user(2)).await;
+        test.join(user(3)).await;
+        test.app.leave(user(2), 1, game()).await;
+        test.bot.left.lock().unwrap().clear();
 
         *test.bot.start_answer.lock().unwrap() = Some(StartOutcome::Accepted(Started {
-            players: vec![user(1), user(3)],
+            players: vec![user(1), user(2)],
+            waiting_for: vec![user(2), user(1)],
+            state: None,
+        }));
+        assert_eq!(test.start(user(1)).await, ServerMessage::Ok { id: 1 });
+        test.settle().await;
+        let stored = test.stored().await.unwrap();
+        assert_eq!(stored.started_with, vec![user(1)]);
+        assert_eq!(stored.waiting_for, vec![user(1)]);
+        assert_eq!(*test.bot.left.lock().unwrap(), vec![user(2)]);
+    }
+
+    // It's told its role before the state, which has their own part if they're now playing
+    #[tokio::test]
+    async fn a_start_tells_open_apps_their_new_roles_then_sends_the_first_state() {
+        let test = Test::new();
+        test.register(None, true).await;
+        test.join(user(1)).await;
+        test.join(user(2)).await;
+        let (tab1, mut tab1_messages) = test.connect(user(1));
+        let (tab2, mut tab2_messages) = test.connect(user(2));
+        test.app.open(tab1, user(1), 1, &test.chat_token(user(1), true), game()).await;
+        test.app.open(tab2, user(2), 1, &test.chat_token(user(2), true), game()).await;
+        messages(&mut tab1_messages);
+        messages(&mut tab2_messages);
+
+        *test.bot.start_answer.lock().unwrap() = Some(StartOutcome::Accepted(Started {
+            players: vec![user(1)],
+            waiting_for: vec![user(1)],
+            state: Some(GameState {
+                seq: 1,
+                shared: json!({}),
+                private: HashMap::from([(user(1), json!({ "hand": [1] })), (user(2), json!({ "hand": [2] }))]),
+            }),
+        }));
+        assert_eq!(test.start(user(1)).await, ServerMessage::Ok { id: 1 });
+        test.settle().await;
+
+        let received = messages(&mut tab1_messages);
+        assert!(received.iter().any(|m| matches!(
+            m,
+            ServerMessage::State {
+                seq: 1,
+                private: Some(_),
+                ..
+            }
+        )));
+        let received = messages(&mut tab2_messages);
+        assert_eq!(
+            received[0],
+            ServerMessage::Role {
+                game: game(),
+                role: Role::Spectator,
+                player_token: None,
+            }
+        );
+        assert!(
+            received
+                .iter()
+                .all(|m| !matches!(m, ServerMessage::State { private: Some(_), .. }))
+        );
+    }
+
+    // The bot listed them, so it accepted them, whatever it answered to the join
+    #[tokio::test]
+    async fn a_join_the_bot_answered_badly_succeeds_if_the_game_started_with_them() {
+        let test = Test::new();
+        test.register(None, true).await;
+        test.join(user(2)).await;
+        let (tab, mut tab_messages) = test.connect(user(1));
+        test.app.open(tab, user(1), 1, &test.chat_token(user(1), true), game()).await;
+        messages(&mut tab_messages);
+        *test.bot.answer.lock().unwrap() = JoinOutcome::Unavailable;
+        let gate = Arc::new(Notify::new());
+        *test.bot.gate.lock().unwrap() = Some(gate.clone());
+        let app = test.app.clone();
+        let chat_token = test.chat_token(user(1), true);
+        let join = tokio::spawn(async move { app.join(user(1), 1, &chat_token, game()).await });
+        test.settle().await;
+
+        *test.bot.start_answer.lock().unwrap() = Some(StartOutcome::Accepted(Started {
+            players: vec![user(2), user(1)],
             waiting_for: Vec::new(),
             state: None,
+        }));
+        assert_eq!(test.start(user(2)).await, ServerMessage::Ok { id: 1 });
+        assert!(matches!(
+            messages(&mut tab_messages)[0],
+            ServerMessage::Role {
+                role: Role::Player,
+                player_token: Some(_),
+                ..
+            }
+        ));
+
+        gate.notify_one();
+        assert!(matches!(join.await.unwrap(), ServerMessage::Joined { .. }));
+        test.settle().await;
+        assert!(test.bot.left.lock().unwrap().is_empty());
+    }
+
+    // As it's not the game's state, rather than drop it, so the players would see none
+    #[tokio::test]
+    async fn a_start_whose_state_isnt_newer_is_refused() {
+        let test = Test::new();
+        test.register(None, true).await;
+        test.join(user(1)).await;
+        let lobby = GameState {
+            seq: 3,
+            shared: json!({}),
+            private: HashMap::new(),
+        };
+        test.update(UpdateArgs {
+            state: Some(lobby.clone()),
+            ..update(None)
+        })
+        .await
+        .unwrap();
+
+        *test.bot.start_answer.lock().unwrap() = Some(StartOutcome::Accepted(Started {
+            players: vec![user(1)],
+            waiting_for: Vec::new(),
+            state: Some(lobby),
         }));
         assert!(matches!(
             test.start(user(1)).await,
@@ -1464,16 +1597,6 @@ mod tests {
             }
         ));
         assert_eq!(test.stored().await.unwrap().status, GameStatus::Open);
-
-        *test.bot.start_answer.lock().unwrap() = Some(StartOutcome::Accepted(Started {
-            players: vec![user(1)],
-            waiting_for: vec![user(1)],
-            state: None,
-        }));
-        assert_eq!(test.start(user(1)).await, ServerMessage::Ok { id: 1 });
-        let stored = test.stored().await.unwrap();
-        assert_eq!(stored.players, vec![user(1)]);
-        assert_eq!(stored.started_with, vec![user(1)]);
     }
 
     #[tokio::test]
