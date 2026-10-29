@@ -2604,7 +2604,6 @@
         "ii": "Internet Identity",
         "iiCaps": "INTERNET IDENTITY",
         "justLinked": "Just linked",
-        "lastUsed": "Last used {date}",
         "lead": "The ways you can sign in to this account. You can’t remove the one you’re signed in with right now.",
         "linkFailed": "Couldn’t link it. Try again.",
         "linkIi": "Link an Internet Identity",

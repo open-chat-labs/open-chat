@@ -33,6 +33,8 @@
         premiumItemsStore,
         selectedAuthProviderStore,
         isDisplayNameValid,
+        signInLastUsed,
+        toDayString,
         unlinkIdentityFailure,
         type LinkedAuthenticationPrincipal,
         type ResourceKey,
@@ -348,19 +350,9 @@
 
     const inviteLink = $derived(referralLink(client.canonicalOrigin(), userId));
 
-    // a day in the user's locale, as the dialog shows when the account was made and when each
-    // sign-in method was last used
-    const dayFormat = $derived(
-        new Intl.DateTimeFormat($locale ?? "en", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-        }),
-    );
-
-    // when the account was made, as the dialog would show its `joined` (which is the calendar's day
-    // for it)
-    const memberSince = $derived(dayFormat.format(header.joined));
+    // when the account was made, in the user's locale, as the dialog would show its `joined` (which
+    // is the calendar's day for it)
+    const memberSince = $derived(toDayString(new Date(header.joined), $locale ?? "en"));
 
     // ---- CHIT: its settings (the old UI's, in this browser) ----
     function changeChit(patch: ChitSettingsPatch) {
@@ -381,10 +373,7 @@
         signinMethodsProps(
             linked,
             (type) => $_(`ui.profileDialog.signin.${type}`),
-            (lastUsed) =>
-                $_("ui.profileDialog.signin.lastUsed", {
-                    values: { date: dayFormat.format(lastUsed) },
-                }),
+            (lastUsed) => translate(signInLastUsed(lastUsed, $locale ?? "en")),
         ).map((m) => ({
             ...m,
             id: idOf(m.id),

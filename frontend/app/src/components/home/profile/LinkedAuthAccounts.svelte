@@ -2,9 +2,11 @@
     import {
         iconSize,
         OpenChat,
+        signInLastUsed,
         type LinkedAuthenticationPrincipal,
     } from "@client";
     import { getContext, onMount } from "svelte";
+    import { locale } from "svelte-i18n";
     import Account from "svelte-material-icons/Account.svelte";
     import LinkOff from "svelte-material-icons/LinkOff.svelte";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
@@ -60,9 +62,19 @@
         <TruncatedAccount account={account.principal} disableCopy={true}>
             <AuthProviderLogo square provider={account.provider} />
         </TruncatedAccount>
-        {#if account.passkeyProvider !== undefined}
-            <div class="provider-name" title={account.passkeyProvider}>
-                {account.passkeyProvider}
+        {#if account.passkeyProvider !== undefined || account.lastUsed !== undefined}
+            <div class="details">
+                {#if account.passkeyProvider !== undefined}
+                    <div class="provider-name" title={account.passkeyProvider}>
+                        {account.passkeyProvider}
+                    </div>
+                {/if}
+                {#if account.lastUsed !== undefined}
+                    <div class="last-used">
+                        <Translatable
+                            resourceKey={signInLastUsed(account.lastUsed, $locale ?? "en")} />
+                    </div>
+                {/if}
             </div>
         {/if}
         {#if account.isCurrentIdentity}
@@ -104,13 +116,19 @@
             flex: none;
         }
 
-        .provider-name {
-            @include font(book, normal, fs-80);
-            @include ellipsis();
+        .details {
+            display: flex;
+            flex-direction: column;
             flex: 0 1 auto;
             min-width: 0;
-            color: var(--txt-light);
             margin-inline-start: $sp3;
+        }
+
+        .provider-name,
+        .last-used {
+            @include font(book, normal, fs-80);
+            @include ellipsis();
+            color: var(--txt-light);
         }
 
         .current,

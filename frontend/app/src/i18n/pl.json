@@ -1343,6 +1343,7 @@
         "link": "Połączyć",
         "linkedAccounts": {
             "currentAccount": "Obecnie zalogowany z tym podmiotem",
+            "lastUsed": "Ostatnio użyto {date}",
             "linkAdvice": "Aby dodać nowego dostawcę usług logowania, najpierw zaloguj się u nowego dostawcy, którego chcesz dodać, następnie u bieżącego dostawcy i na końcu połącz oba dostawcy.",
             "linkAnother": "Dodaj kolejny",
             "section": "Dostawcy logowania",

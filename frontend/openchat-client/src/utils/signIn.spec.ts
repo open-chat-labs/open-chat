@@ -3,6 +3,7 @@ import {
     isOwnPrincipal,
     linkIdentitiesResult,
     markCurrentSignIn,
+    signInLastUsed,
     signInOptions,
     unlinkIdentityFailure,
 } from "./signIn";
@@ -141,5 +142,14 @@ describe("linking a sign-in method", () => {
                 "identity.failure.limitReached",
             );
         }
+    });
+});
+
+describe("a sign-in method's last used line", () => {
+    test("is the day it was last used, in the locale", () => {
+        // midday UTC, so 12 Oct in any time zone within 12 hours of UTC
+        const key = signInLastUsed(1_760_270_400_000n, "en-GB");
+        expect(key.key).toBe("identity.linkedAccounts.lastUsed");
+        expect(key.params).toEqual({ date: "12 Oct 2025" });
     });
 });

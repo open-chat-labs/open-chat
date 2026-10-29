@@ -1343,6 +1343,7 @@
         "link": "Verknüpfung",
         "linkedAccounts": {
             "currentAccount": "Derzeit mit diesem Auftraggeber angemeldet",
+            "lastUsed": "Zuletzt verwendet am {date}",
             "linkAdvice": "Um einen neuen Anmeldeanbieter hinzuzufügen, melden Sie sich zuerst bei dem neuen Anbieter an, den Sie hinzufügen möchten. Melden Sie sich dann bei Ihrem aktuellen Anbieter an und verknüpfen Sie die beiden schließlich miteinander.",
             "linkAnother": "Weitere hinzufügen",
             "section": "Anmeldeanbieter",
