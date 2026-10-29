@@ -466,6 +466,7 @@
             "playingOf": "{max}人中{count}人がプレイ中",
             "refusals": {
                 "botUnavailable": "ゲームが応答しませんでした。もう一度お試しください。",
+                "finished": "このゲームは終了しました。",
                 "full": "このゲームは満員です。",
                 "invalidToken": "ここでプレイできるか確認できませんでした。もう一度お試しください。",
                 "noSpectators": "このゲームは観戦できません。",

@@ -466,6 +466,7 @@
             "playingOf": "{count} di {max} in gioco",
             "refusals": {
                 "botUnavailable": "Il gioco non ha risposto. Riprova.",
+                "finished": "Questa partita è finita.",
                 "full": "Questa partita è al completo.",
                 "invalidToken": "Impossibile verificare che tu possa giocare qui. Riprova.",
                 "noSpectators": "Questa partita non si può guardare.",

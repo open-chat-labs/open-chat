@@ -62,7 +62,8 @@ export function miniAppCardView(
         status,
         players,
         waitingFor,
-        watching: live?.watching,
+        // Nobody's watching a finished game, whatever the last live card said
+        watching: status === "finished" ? undefined : live?.watching,
         result:
             live !== undefined
                 ? live.result

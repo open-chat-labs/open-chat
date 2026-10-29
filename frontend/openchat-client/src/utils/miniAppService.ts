@@ -108,6 +108,8 @@ type OpenGame = {
     listener: MiniAppGameListener;
     // whether the service has it open on the current socket
     opened: boolean;
+    // whether the frame has had a state, which it keeps if the game ends while the socket's down
+    hadState: boolean;
 };
 
 /**
@@ -230,7 +232,7 @@ export class MiniAppService {
     /** Opens a game, as its app is shown, after which `listener` hears what happens until it's closed */
     async open(game: MiniAppGame, listener: MiniAppGameListener): Promise<MiniAppOpenOutcome> {
         const key = miniAppGameKey(game);
-        const open: OpenGame = { game, listener, opened: false };
+        const open: OpenGame = { game, listener, opened: false, hadState: false };
         this.#open.set(key, open);
         const reply = await this.#openRequest(game);
         if (reply?.type === "opened") {
@@ -482,6 +484,11 @@ export class MiniAppService {
             this.#reconnectLater();
         } else if (reply.type === "opened") {
             open.listener.onRole(reply.role, reply.player_token);
+        } else if (reply.type === "refused" && reply.reason === "unknown_game" && open.hadState) {
+            // The game ended while the socket was down, and the service has forgotten it. The frame
+            // keeps the final state it has, and nothing more comes for it.
+            this.#open.delete(key);
+            this.#closeIfIdle();
         } else {
             this.#open.delete(key);
             open.listener.onClosed(
@@ -515,13 +522,17 @@ export class MiniAppService {
             case "card":
                 this.#onCard(message);
                 return;
-            case "state":
-                this.#listener(message.game)?.onState({
+            case "state": {
+                const open = this.#open.get(miniAppGameKey(domainGame(message.game)));
+                if (open === undefined) return;
+                open.hadState = true;
+                open.listener.onState({
                     seq: message.seq,
                     shared: message.shared,
                     private: message.private,
                 });
                 return;
+            }
             case "role":
                 this.#listener(message.game)?.onRole(message.role, message.player_token);
                 return;

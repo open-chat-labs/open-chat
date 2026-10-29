@@ -466,6 +466,7 @@
             "playingOf": "{count}/{max} 人在玩",
             "refusals": {
                 "botUnavailable": "游戏没有响应，请重试。",
+                "finished": "这场游戏已经结束。",
                 "full": "这局游戏已满员。",
                 "invalidToken": "无法确认你能否在这里玩，请重试。",
                 "noSpectators": "这局游戏不能观看。",

@@ -270,6 +270,34 @@ describe("MiniAppHost", () => {
         });
     });
 
+    // The service forgets a game once its card records the end, so its app can't be opened, which
+    // isn't an error
+    test("says a finished game has finished if the service doesn't know it", async () => {
+        close();
+        const finished: OpenMiniApp = {
+            ...APP,
+            content: {
+                ...APP.content,
+                status: { kind: "finished", players: [], result: undefined },
+            },
+        };
+        games = new FakeGames();
+        host = new MiniAppHost(games, finished, {
+            userId: "me",
+            darkMode: true,
+            locale: () => "fr",
+            translate: (key) => `translated ${key.key}`,
+        });
+        close = host.open(frame);
+        games.opened({ kind: "failed", message: key("bots.miniApp.refusals.unknownGame") });
+        await settle();
+
+        expect(host.status).toEqual({
+            kind: "closed",
+            message: key("bots.miniApp.refusals.finished"),
+        });
+    });
+
     test("closes when the service closes the game", async () => {
         await opened("player", "player");
         games.listener!.onClosed(key("bots.miniApp.closed"));

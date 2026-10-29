@@ -466,6 +466,7 @@
             "playingOf": "{count}/{max} người đang chơi",
             "refusals": {
                 "botUnavailable": "Trò chơi không phản hồi. Hãy thử lại.",
+                "finished": "Trò chơi này đã kết thúc.",
                 "full": "Trò chơi này đã đủ người.",
                 "invalidToken": "Không thể kiểm tra bạn có được chơi ở đây không. Hãy thử lại.",
                 "noSpectators": "Trò chơi này không cho phép xem.",

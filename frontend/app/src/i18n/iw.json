@@ -466,6 +466,7 @@
             "playingOf": "{count} מתוך {max} משחקים",
             "refusals": {
                 "botUnavailable": "המשחק לא הגיב. נסה שוב.",
+                "finished": "המשחק הזה הסתיים.",
                 "full": "המשחק הזה מלא.",
                 "invalidToken": "לא ניתן לבדוק שאתה יכול לשחק כאן. נסה שוב.",
                 "noSpectators": "לא ניתן לצפות במשחק הזה.",

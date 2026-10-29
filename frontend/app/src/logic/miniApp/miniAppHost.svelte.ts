@@ -11,6 +11,7 @@ import type {
     OpenChat,
     ResourceKey,
 } from "@client";
+import { i18nKey } from "@src/i18n/i18n";
 import { miniAppMessage, type MiniAppHostMessage } from "@src/utils/miniApp";
 import type { OpenMiniApp } from "./openMiniApp.svelte";
 
@@ -83,7 +84,15 @@ export class MiniAppHost {
         };
         const outcome = await this.#games.openMiniApp(this.#app.game, listener);
         if (outcome.kind === "failed") {
-            this.status = { kind: "closed", message: outcome.message };
+            // The service forgets a game once its card records the end, so a finished card's app
+            // can't be opened, which isn't an error
+            const finished =
+                this.#app.content.status.kind === "finished" &&
+                outcome.message.key === "bots.miniApp.refusals.unknownGame";
+            this.status = {
+                kind: "closed",
+                message: finished ? i18nKey("bots.miniApp.refusals.finished") : outcome.message,
+            };
             return;
         }
         this.#playerToken = outcome.playerToken;

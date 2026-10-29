@@ -480,6 +480,30 @@ describe("MiniAppService", () => {
         expect(frame.calls).toEqual([["closed", "bots.miniApp.refusals.unknownGame"]]);
     });
 
+    // The service forgets a game once its card records the end, so a frame which had the game open
+    // while the socket was down keeps the final state it has
+    test("keeps a frame's state when its game ended while the socket was down", async () => {
+        const frame = listener();
+        const open = service.open(GAME, frame);
+        const first = await connected();
+        first.receive({ type: "opened", id: 1, role: "player", player_token: "player" });
+        await open;
+        first.receive({ type: "state", game: WIRE_GAME, seq: 9, shared: { over: true } });
+
+        first.drop();
+        await vi.advanceTimersByTimeAsync(1000);
+        const second = await connected();
+        second.receive({ type: "refused", id: 2, reason: "unknown_game" });
+        await settle();
+
+        expect(frame.calls).toEqual([
+            ["state", { seq: 9, shared: { over: true }, private: undefined }],
+        ]);
+        // and nothing's left to reconnect for
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(sockets.length).toBe(2);
+    });
+
     test("doesn't reconnect once there's nothing to follow or open", async () => {
         service.follow(GAME);
         const ws = await connected();

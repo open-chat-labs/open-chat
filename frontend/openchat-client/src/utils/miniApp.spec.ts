@@ -72,12 +72,12 @@ describe("miniAppCardView", () => {
             "carol",
         );
 
-        // once it's finished it's no one's turn
+        // once it's finished it's no one's turn, and no one's watching
         expect(view).toEqual({
             status: "finished",
             players: ["alice", "bob"],
             waitingFor: [],
-            watching: 3,
+            watching: undefined,
             result: "Bob won",
             yourTurn: false,
             actions: [],

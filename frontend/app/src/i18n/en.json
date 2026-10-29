@@ -434,6 +434,7 @@
             "playingOf": "{count} of {max} playing",
             "refusals": {
                 "botUnavailable": "The game didn't answer. Try again.",
+                "finished": "This game has finished.",
                 "full": "This game is full.",
                 "invalidToken": "Couldn't check you can play here. Try again.",
                 "noSpectators": "This game can't be watched.",
