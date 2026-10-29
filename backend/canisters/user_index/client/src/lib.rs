@@ -10,6 +10,7 @@ generate_candid_query_call!(current_user);
 generate_candid_query_call!(search);
 generate_candid_query_call!(platform_moderators);
 generate_candid_query_call!(platform_operators);
+generate_candid_query_call!(public_key);
 generate_candid_query_call!(user);
 
 // Updates
