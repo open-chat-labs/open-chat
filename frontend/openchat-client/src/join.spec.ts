@@ -42,6 +42,7 @@ import {
     serverGroupChatsStore,
 } from "./state";
 import { postLoginJoin } from "./utils/join";
+import { MiniAppService } from "./utils/miniAppService";
 import { WorkerAgent } from "./workerAgent";
 
 class FakeWorker {
@@ -294,5 +295,53 @@ describe("joining a group or community", () => {
 
         expect(outcome).toMatchObject({ kind: "failed", message: { key: "joinGroupFailed" } });
         expect(joinRequests()).toHaveLength(1);
+    });
+});
+
+describe("joining a chat with games in it", () => {
+    let client: OpenChat;
+    let joinedChat: ReturnType<typeof vi.spyOn>;
+    const channelId = {
+        kind: "channel" as const,
+        communityId: communityId.communityId,
+        channelId: 1,
+    };
+
+    beforeEach(() => {
+        vi.stubGlobal("Worker", FakeWorker);
+        currentUserStore.set({ ...anonymousUser(), userId: "me" });
+        client = new OpenChat({ ...config(), miniAppServiceUrl: "https://minigames.example.com" });
+        joinedChat = vi.spyOn(MiniAppService.prototype, "joinedChat");
+        vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
+            switch (req.kind) {
+                case "joinGroup":
+                    return Promise.resolve({ kind: "success", group: group(ROLE_MEMBER) });
+                case "joinCommunity":
+                    return Promise.resolve({
+                        kind: "success",
+                        community: { ...community(ROLE_MEMBER), channels: [{ id: channelId }] },
+                    });
+                default:
+                    return new Promise(() => {});
+            }
+        }) as never);
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+        currentUserStore.set(anonymousUser());
+        serverGroupChatsStore.set(new ChatMap<GroupChatSummary>());
+        serverCommunitiesStore.set(new CommunityMap<CommunitySummary>());
+        identityStateStore.set({ kind: "loading_user", registering: false });
+    });
+
+    // so a user who was only watching its games may join them
+    test("gets fresh tokens for the chat's games once the user's a member", async () => {
+        expect(await client.joinGroup(group(ROLE_NONE))).toEqual({ kind: "success" });
+        expect(joinedChat).toHaveBeenCalledWith(chatId);
+
+        await client.joinCommunity(community(ROLE_NONE));
+        expect(joinedChat).toHaveBeenCalledWith(channelId);
     });
 });

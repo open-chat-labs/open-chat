@@ -1,7 +1,7 @@
-import type { MiniAppGame, MiniAppGameListener, MiniAppLiveCard, ReadonlyMap } from "@shared";
+import type { MiniAppGame, MiniAppLiveCard, ReadonlyMap } from "@shared";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { miniAppGameKey } from "./miniApp";
-import { MiniAppService, type MiniAppSocket } from "./miniAppService";
+import { MiniAppService, type MiniAppGameListener, type MiniAppSocket } from "./miniAppService";
 import { writable, type Writable } from "./stores";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -25,6 +25,8 @@ class FakeSocket implements MiniAppSocket {
     onmessage: ((ev: MessageEvent) => void) | null = null;
     onclose: (() => void) | null = null;
     sent: Record<string, unknown>[] = [];
+    // A socket which has stopped working doesn't say it's closed
+    closed = false;
 
     constructor(readonly url: string) {}
 
@@ -44,6 +46,10 @@ class FakeSocket implements MiniAppSocket {
 
     drop(): void {
         this.onclose?.();
+    }
+
+    close(): void {
+        this.closed = true;
     }
 
     lastRequest(): Record<string, unknown> {
@@ -67,6 +73,8 @@ describe("MiniAppService", () => {
     // the chat tokens got, in order
     let tokens: string[];
     let member: boolean;
+    // whether OpenChat will issue a chat token
+    let issueTokens: boolean;
     let service: MiniAppService;
 
     beforeEach(() => {
@@ -75,9 +83,11 @@ describe("MiniAppService", () => {
         cards = writable(new Map());
         tokens = [];
         member = true;
+        issueTokens = true;
         service = new MiniAppService({
             url: "https://minigames.example.com",
             chatToken: async () => {
+                if (!issueTokens) return undefined;
                 tokens.push(chatToken(member, tokens.length + 1));
                 return tokens[tokens.length - 1];
             },
@@ -483,12 +493,14 @@ describe("MiniAppService", () => {
     test("keeps a chat token until shortly before it expires", async () => {
         service.follow(GAME);
         const ws = await connected();
+        ws.receive({ type: "ok", id: 1 });
         expect(tokens.length).toBe(1);
 
         await vi.advanceTimersByTimeAsync(50 * 60 * 1000);
         void service.join(GAME);
         await settle();
         expect(tokens.length).toBe(1);
+        ws.receive({ type: "joined", id: 2, player_token: "player" });
 
         await vi.advanceTimersByTimeAsync(6 * 60 * 1000);
         void service.join(GAME);
@@ -511,5 +523,201 @@ describe("MiniAppService", () => {
         socket().onopen?.();
         expect(tokens.length).toBe(2);
         expect(socket().sent).toEqual([{ type: "connect", chat_token: tokens[1] }]);
+    });
+
+    test("a follow answered after the user left the chat and came back leaves it followed", async () => {
+        service.follow(GAME);
+        const ws = await connected();
+        service.viewChat(OTHER_GAME.chatId);
+        service.viewChat(GAME.chatId);
+        service.follow(GAME);
+        await settle();
+        ws.receive({ type: "ok", id: 1 });
+        ws.receive({ type: "ok", id: 2 });
+        await settle();
+
+        expect(ws.sent.map((m) => m.type)).toEqual(["connect", "follow", "unfollow", "follow"]);
+    });
+
+    test("unfollows games whose chat the user left while they were being followed", async () => {
+        service.follow(GAME);
+        await settle();
+        // left while the socket was connecting, so there was nothing to unfollow then
+        service.viewChat(undefined);
+        const ws = await connected();
+        expect(ws.sent.map((m) => m.type)).toEqual(["connect", "follow"]);
+
+        ws.receive({ type: "ok", id: 1 });
+        await settle();
+        expect(ws.lastRequest()).toEqual({ type: "unfollow", games: [WIRE_GAME] });
+    });
+
+    test("follows a card again later if there was no chat token for it", async () => {
+        issueTokens = false;
+        service.follow(GAME);
+        await settle();
+        expect(sockets).toEqual([]);
+
+        issueTokens = true;
+        // the same card, still in view, isn't followed twice, but it's followed again later
+        service.follow(GAME);
+        await vi.advanceTimersByTimeAsync(1000);
+        const ws = await connected();
+        expect(ws.lastRequest()).toEqual({
+            type: "follow",
+            id: 1,
+            chat_token: tokens[0],
+            games: [WIRE_GAME],
+        });
+    });
+
+    test("opens a game again later if there was no chat token for it after reconnecting", async () => {
+        const frame = listener();
+        const open = service.open(GAME, frame);
+        const first = await connected();
+        first.receive({ type: "opened", id: 1, role: "spectator" });
+        await open;
+
+        // the chat token's expired, and no fresh one can be got
+        await vi.advanceTimersByTimeAsync(56 * 60 * 1000);
+        issueTokens = false;
+        first.drop();
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(sockets.length).toBe(1);
+
+        issueTokens = true;
+        await vi.advanceTimersByTimeAsync(2000);
+        const second = await connected();
+        expect(second.lastRequest()).toMatchObject({ type: "open", game: WIRE_GAME });
+    });
+
+    test("a game closed while it's being opened is closed once it's open", async () => {
+        const open = service.open(GAME, listener());
+        const ws = await connected();
+        service.close(GAME);
+        expect(ws.lastRequest().type).toBe("open");
+
+        ws.receive({ type: "opened", id: 1, role: "spectator" });
+        await open;
+        expect(ws.sent.map((m) => m.type)).toEqual(["connect", "open", "close"]);
+    });
+
+    test("a request the service doesn't answer times out, and the socket's closed and reconnected", async () => {
+        service.follow(GAME);
+        const first = await connected();
+        first.receive({ type: "ok", id: 1 });
+
+        const join = service.join(GAME);
+        await vi.advanceTimersByTimeAsync(14_999);
+        expect(first.closed).toBe(false);
+        await vi.advanceTimersByTimeAsync(1);
+
+        expect(await join).toEqual({
+            kind: "failed",
+            message: expect.objectContaining({ key: "bots.miniApp.refusals.unreachable" }),
+        });
+        expect(first.closed).toBe(true);
+
+        await vi.advanceTimersByTimeAsync(1000);
+        const second = await connected();
+        expect(second.lastRequest()).toMatchObject({ type: "follow", games: [WIRE_GAME] });
+
+        // the old socket's late pushes are ignored
+        first.receive({
+            type: "card",
+            game: WIRE_GAME,
+            status: "Open",
+            players: [],
+            waiting_for: [],
+            watching: 0,
+            result: null,
+        });
+        expect(cards.value.size).toBe(0);
+    });
+
+    test("a socket the service doesn't connect is closed, and connected again", async () => {
+        service.follow(GAME);
+        await settle();
+        socket().onopen?.();
+        await vi.advanceTimersByTimeAsync(15_000);
+        expect(sockets[0].closed).toBe(true);
+
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(sockets.length).toBe(2);
+    });
+
+    test("closes the socket a while after there's nothing to follow or open", async () => {
+        service.follow(GAME);
+        const ws = await connected();
+        ws.receive({ type: "ok", id: 1 });
+
+        // switching chats keeps it
+        service.viewChat(OTHER_GAME.chatId);
+        service.follow(OTHER_GAME);
+        await settle();
+        ws.receive({ type: "ok", id: 2 });
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(ws.closed).toBe(false);
+
+        service.viewChat(undefined);
+        await vi.advanceTimersByTimeAsync(59_999);
+        expect(ws.closed).toBe(false);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(ws.closed).toBe(true);
+
+        // and doesn't reconnect, until there's a card to follow again
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(sockets.length).toBe(1);
+        service.follow(GAME);
+        await settle();
+        expect(sockets.length).toBe(2);
+    });
+
+    test("connects again when the app resumes, if the socket stopped working meanwhile", async () => {
+        service.follow(GAME);
+        const ws = await connected();
+        ws.receive({ type: "ok", id: 1 });
+
+        service.resume();
+        await settle();
+        expect(ws.lastRequest()).toEqual({
+            type: "follow",
+            id: 2,
+            chat_token: tokens[0],
+            games: [WIRE_GAME],
+        });
+
+        // no answer, so it reconnects
+        await vi.advanceTimersByTimeAsync(16_000);
+        expect(ws.closed).toBe(true);
+        expect(sockets.length).toBe(2);
+    });
+
+    test("a chat token which can't be got, or a socket which can't be made, is tried again next time", async () => {
+        let asked = 0;
+        const failing = new MiniAppService({
+            url: "https://minigames.example.com",
+            chatToken: () => {
+                asked++;
+                return Promise.reject(new Error("offline"));
+            },
+            cards,
+            createSocket: (url) => {
+                const socket = new FakeSocket(url);
+                sockets.push(socket);
+                return socket;
+            },
+        });
+        expect(await failing.join(GAME)).toMatchObject({ kind: "failed" });
+        expect(await failing.join(GAME)).toMatchObject({ kind: "failed" });
+        expect(asked).toBe(2);
+
+        const throwing = new MiniAppService({
+            url: "not a url",
+            chatToken: async () => chatToken(true, 1),
+            cards,
+        });
+        expect(await throwing.join(GAME)).toMatchObject({ kind: "failed" });
+        expect(await throwing.join(GAME)).toMatchObject({ kind: "failed" });
     });
 });

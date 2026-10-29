@@ -1728,6 +1728,7 @@ export class OpenChat {
         // Deferred so that the poller has seen the visibility change first. A hidden app
         // ignores triggers.
         window.setTimeout(() => this.#chatsPoller?.triggerNow(), 0);
+        this.#miniApps?.resume();
     }
 
     #startChatsPoller() {
@@ -12540,6 +12541,7 @@ export class OpenChat {
                     resp.community.avatar = community.avatar;
                     localUpdates.addCommunity(resp.community);
                     this.#loadCommunityDetails(resp.community);
+                    resp.community.channels.forEach((c) => this.#miniApps?.joinedChat(c.id));
                     withPausedStores(() => {
                         resp.community.channels.forEach((c) => {
                             if (c.latestMessage) {

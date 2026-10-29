@@ -31,8 +31,11 @@ export class MiniAppActions {
         if (this.busy !== undefined) return;
         this.busy = action;
         this.error = undefined;
-        const outcome = await request();
-        this.busy = undefined;
-        this.error = outcome.kind === "failed" ? outcome.message : undefined;
+        try {
+            const outcome = await request();
+            this.error = outcome.kind === "failed" ? outcome.message : undefined;
+        } finally {
+            this.busy = undefined;
+        }
     }
 }

@@ -44,7 +44,7 @@ export function generateCspForScripts(
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com/ https://cdnjs.cloudflare.com/;
         style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com/ https://cdnjs.cloudflare.com/;
         font-src 'self' https://fonts.gstatic.com/ data:;
-        frame-src 'self' https:${development ? " http://localhost:* http://127.0.0.1:*" : ""};
+        frame-src 'self' https:${development ? " http://localhost:* http://127.0.0.1:* http://*.localhost:*" : ""};
         object-src 'none';
         base-uri 'self';
         form-action 'self';${production ? "\nupgrade-insecure-requests;" : ""}

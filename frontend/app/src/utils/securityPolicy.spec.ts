@@ -138,7 +138,7 @@ describe("CSP frame-src", () => {
     test("also allows http frames from this machine in development builds", () => {
         const csp = generateCspForScripts(["window.x = 1;"], true);
         expect(directive(csp, "frame-src")).toBe(
-            "'self' https: http://localhost:* http://127.0.0.1:*",
+            "'self' https: http://localhost:* http://127.0.0.1:* http://*.localhost:*",
         );
     });
 });

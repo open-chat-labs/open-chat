@@ -22,6 +22,11 @@ import type { Writable } from "./stores";
 const CHAT_TOKEN_MARGIN_MS = 5 * 60 * 1000;
 const RECONNECT_MIN_MS = 1000;
 const RECONNECT_MAX_MS = 30_000;
+// Longer than the 5 seconds the service gives a bot. A socket which takes longer to answer has
+// probably stopped working without closing, as a phone's often does, so it's closed.
+const REQUEST_TIMEOUT_MS = 15_000;
+// How long a socket with nothing to follow or open is kept, in case the user's only switching chats
+const IDLE_CLOSE_MS = 60_000;
 
 // The WebSocket's messages, as backend/mini_app_service/src/protocol.rs reads and writes them
 type WireChat = { Group: string } | { Channel: [string, number] };
@@ -72,7 +77,7 @@ export type MiniAppGameListener = {
 };
 
 // The parts of a WebSocket the service uses
-export type MiniAppSocket = Pick<WebSocket, "send" | "onopen" | "onmessage" | "onclose">;
+export type MiniAppSocket = Pick<WebSocket, "send" | "close" | "onopen" | "onmessage" | "onclose">;
 
 export type MiniAppServiceDeps = {
     // the service's URL, whose WebSocket is at /ws
@@ -98,6 +103,13 @@ type FollowedChat = {
     member: boolean;
 };
 
+type OpenGame = {
+    game: MiniAppGame;
+    listener: MiniAppGameListener;
+    // whether the service has it open on the current socket
+    opened: boolean;
+};
+
 /**
  * The website's WebSocket to OpenChat's MiniApp service (backend/docs/mini_app_service_protocol.md),
  * through which users follow the live cards of games in messages, join and leave them, open them and
@@ -116,12 +128,15 @@ export class MiniAppService {
     #socket: MiniAppSocket | undefined;
     // resolves to the socket once it's connected, or undefined if it couldn't be
     #connecting: Promise<MiniAppSocket | undefined> | undefined;
+    // closes the socket being connected or connected, at once, whether or not it answers
+    #closeSocket: (() => void) | undefined;
+    #idleTimer: ReturnType<typeof setTimeout> | undefined;
     #nextRequestId = 0;
     #pending = new Map<number, (reply: Reply | undefined) => void>();
     // by chat
     #followed = new Map<string, FollowedChat>();
     // by `miniAppGameKey`
-    #open = new Map<string, { game: MiniAppGame; listener: MiniAppGameListener }>();
+    #open = new Map<string, OpenGame>();
     #reconnectAttempts = 0;
     #reconnectTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -170,6 +185,15 @@ export class MiniAppService {
                 return updated;
             });
         }
+        this.#closeIfIdle();
+    }
+
+    /** The app's back after being suspended, so the socket may have stopped working without closing */
+    resume(): void {
+        clearTimeout(this.#reconnectTimer);
+        this.#reconnectTimer = undefined;
+        this.#reconnectAttempts = 0;
+        void this.#reconnect();
     }
 
     /**
@@ -206,26 +230,30 @@ export class MiniAppService {
     /** Opens a game, as its app is shown, after which `listener` hears what happens until it's closed */
     async open(game: MiniAppGame, listener: MiniAppGameListener): Promise<MiniAppOpenOutcome> {
         const key = miniAppGameKey(game);
-        const open = { game, listener };
+        const open: OpenGame = { game, listener, opened: false };
         this.#open.set(key, open);
         const reply = await this.#openRequest(game);
         if (reply?.type === "opened") {
-            // closed before it was opened, while there was no socket to send `close` on
-            if (!this.#open.has(key)) {
-                this.#send({ type: "close", game: wireGame(game) });
-            }
+            this.#opened(key, open);
             return { kind: "opened", role: reply.role, playerToken: reply.player_token };
         }
         if (this.#open.get(key) === open) {
             this.#open.delete(key);
+            this.#closeIfIdle();
         }
         return failed(reply);
     }
 
     close(game: MiniAppGame): void {
-        if (this.#open.delete(miniAppGameKey(game))) {
+        const key = miniAppGameKey(game);
+        const open = this.#open.get(key);
+        if (open === undefined) return;
+        this.#open.delete(key);
+        // otherwise it's closed once it's opened
+        if (open.opened) {
             this.#send({ type: "close", game: wireGame(game) });
         }
+        this.#closeIfIdle();
     }
 
     /** A fresh token for a game the user's playing, which their app asked for */
@@ -257,14 +285,19 @@ export class MiniAppService {
             chat.member = chatToken.member;
             return { type: "follow", id, chat_token: chatToken.token, games: games.map(wireGame) };
         });
-        if (reply?.type === "refused") {
+        if (reply === undefined) {
+            // eg. there was no chat token, or no socket, so they're followed again later
+            this.#reconnectLater();
+        } else if (reply.type === "refused") {
             console.warn("The MiniApp service refused to follow the chat's games", reply);
-        } else if (
-            reply?.type === "ok" &&
-            this.#followed.get(chatIdentifierToString(chat.chatId)) !== chat
-        ) {
-            // the user left the chat while they were being followed
-            this.#send({ type: "unfollow", games: games.map(wireGame) });
+        } else {
+            // games whose chat the user left while they were being followed, unless they've been
+            // followed again since
+            const current = this.#followed.get(chatIdentifierToString(chat.chatId));
+            const left = games.filter((game) => !current?.games.has(miniAppGameKey(game)));
+            if (left.length > 0) {
+                this.#send({ type: "unfollow", games: left.map(wireGame) });
+            }
         }
     }
 
@@ -294,7 +327,7 @@ export class MiniAppService {
         }
     }
 
-    // Undefined if there's no socket, or it drops before the reply
+    // Undefined if there's no socket, or it closes or times out before the reply
     async #request(
         chatId: MultiUserChatIdentifier,
         build: (id: number) => ClientMessage,
@@ -303,7 +336,17 @@ export class MiniAppService {
         if (socket === undefined) return undefined;
         const id = ++this.#nextRequestId;
         return new Promise((resolve) => {
-            this.#pending.set(id, resolve);
+            const timeout = setTimeout(() => {
+                if (this.#pending.delete(id)) {
+                    resolve(undefined);
+                    // so it reconnects
+                    this.#closeSocket?.();
+                }
+            }, REQUEST_TIMEOUT_MS);
+            this.#pending.set(id, (reply) => {
+                clearTimeout(timeout);
+                resolve(reply);
+            });
             socket.send(JSON.stringify(build(id)));
         });
     }
@@ -314,51 +357,89 @@ export class MiniAppService {
 
     // Connects, if there's no socket, with the token of `chatId`, the chat of whatever's asked for
     #connected(chatId: MultiUserChatIdentifier): Promise<MiniAppSocket | undefined> {
-        this.#connecting ??= this.#connect(chatId);
+        if (this.#connecting === undefined) {
+            const connecting = this.#connect(chatId);
+            this.#connecting = connecting;
+            void connecting.then((socket) => {
+                if (socket === undefined && this.#connecting === connecting) {
+                    this.#connecting = undefined;
+                }
+            });
+        }
         return this.#connecting;
     }
 
     async #connect(chatId: MultiUserChatIdentifier): Promise<MiniAppSocket | undefined> {
-        const chatToken = await this.#chatToken(chatId);
-        if (chatToken === undefined) {
-            this.#connecting = undefined;
+        try {
+            const chatToken = await this.#chatToken(chatId);
+            if (chatToken === undefined) return undefined;
+            const url = new URL("/ws", this.#deps.url);
+            url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+            const socket = this.#createSocket(url.toString());
+            return await new Promise((resolve) => {
+                let closed = false;
+                // the service closes a socket that doesn't connect, but one which has stopped
+                // working may never close
+                const timeout = setTimeout(() => this.#closeSocket?.(), REQUEST_TIMEOUT_MS);
+                const onClose = () => {
+                    if (closed) return;
+                    closed = true;
+                    clearTimeout(timeout);
+                    resolve(undefined);
+                    this.#onClose();
+                };
+                this.#closeSocket = () => {
+                    socket.close();
+                    onClose();
+                };
+                socket.onopen = () =>
+                    socket.send(JSON.stringify({ type: "connect", chat_token: chatToken.token }));
+                socket.onmessage = (ev: MessageEvent) => {
+                    const message = parse(ev.data);
+                    if (closed || message === undefined) return;
+                    if (message.type === "connected") {
+                        clearTimeout(timeout);
+                        this.#socket = socket;
+                        this.#reconnectAttempts = 0;
+                        resolve(socket);
+                    } else if (message.type === "error" && message.code === "invalid_token") {
+                        // the socket closes, and reconnects with a fresh token
+                        this.#dropChatToken(chatId);
+                    } else {
+                        this.#onMessage(message);
+                    }
+                };
+                socket.onclose = onClose;
+            });
+        } catch (err) {
+            console.warn("Couldn't connect to the MiniApp service", err);
             return undefined;
         }
-        const url = new URL("/ws", this.#deps.url);
-        url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-        const socket = this.#createSocket(url.toString());
-        return new Promise((resolve) => {
-            socket.onopen = () =>
-                socket.send(JSON.stringify({ type: "connect", chat_token: chatToken.token }));
-            socket.onmessage = (ev: MessageEvent) => {
-                const message = parse(ev.data);
-                if (message === undefined) return;
-                if (message.type === "connected") {
-                    this.#socket = socket;
-                    this.#reconnectAttempts = 0;
-                    resolve(socket);
-                } else if (message.type === "error" && message.code === "invalid_token") {
-                    // the socket closes, and reconnects with a fresh token
-                    this.#dropChatToken(chatId);
-                } else {
-                    this.#onMessage(message);
-                }
-            };
-            socket.onclose = () => {
-                resolve(undefined);
-                this.#onClose(socket);
-            };
-        });
     }
 
-    #onClose(socket: MiniAppSocket): void {
-        if (this.#socket !== undefined && this.#socket !== socket) return;
+    // There's one socket at a time, from when it's created until it closes
+    #onClose(): void {
         this.#socket = undefined;
         this.#connecting = undefined;
+        this.#closeSocket = undefined;
+        for (const open of this.#open.values()) {
+            open.opened = false;
+        }
         const pending = [...this.#pending.values()];
         this.#pending.clear();
         pending.forEach((resolve) => resolve(undefined));
         this.#reconnectLater();
+    }
+
+    // A socket with nothing to follow or open is closed after a while
+    #closeIfIdle(): void {
+        if (this.#wanted() || this.#idleTimer !== undefined) return;
+        this.#idleTimer = setTimeout(() => {
+            this.#idleTimer = undefined;
+            if (!this.#wanted()) {
+                this.#closeSocket?.();
+            }
+        }, IDLE_CLOSE_MS);
     }
 
     #reconnectLater(): void {
@@ -385,19 +466,37 @@ export class MiniAppService {
             void this.#follow(chat, [...chat.games.values()]);
         }
         for (const [key, open] of this.#open) {
-            void this.#reopen(key, open.game, open.listener);
+            void this.#reopen(key, open);
         }
     }
 
-    async #reopen(key: string, game: MiniAppGame, listener: MiniAppGameListener): Promise<void> {
-        const reply = await this.#openRequest(game);
-        // closed meanwhile, or the socket dropped again, after which it's opened again
-        if (this.#open.get(key)?.listener !== listener || reply === undefined) return;
-        if (reply.type === "opened") {
-            listener.onRole(reply.role, reply.player_token);
+    async #reopen(key: string, open: OpenGame): Promise<void> {
+        const reply = await this.#openRequest(open.game);
+        if (reply?.type === "opened") {
+            this.#opened(key, open);
+        }
+        // closed meanwhile
+        if (this.#open.get(key) !== open) return;
+        if (reply === undefined) {
+            // eg. the socket dropped again, or there was no chat token, so it's opened again later
+            this.#reconnectLater();
+        } else if (reply.type === "opened") {
+            open.listener.onRole(reply.role, reply.player_token);
         } else {
             this.#open.delete(key);
-            listener.onClosed(miniAppFailureMessage(reply.type === "refused" ? reply : undefined));
+            open.listener.onClosed(
+                miniAppFailureMessage(reply.type === "refused" ? reply : undefined),
+            );
+            this.#closeIfIdle();
+        }
+    }
+
+    // The service has opened a game. If its frame closed meanwhile, it's closed now.
+    #opened(key: string, open: OpenGame): void {
+        if (this.#open.get(key) === open) {
+            open.opened = true;
+        } else if (!this.#open.has(key)) {
+            this.#send({ type: "close", game: wireGame(open.game) });
         }
     }
 
@@ -431,6 +530,7 @@ export class MiniAppService {
                 const open = this.#open.get(key);
                 this.#open.delete(key);
                 open?.listener.onClosed(i18nKey("bots.miniApp.closed"));
+                this.#closeIfIdle();
                 return;
             }
             case "error":
@@ -482,7 +582,10 @@ export class MiniAppService {
         chatId: MultiUserChatIdentifier,
         entry: CachedChatToken,
     ): Promise<ChatToken | undefined> {
-        const token = await this.#deps.chatToken(chatId);
+        const token = await this.#deps.chatToken(chatId).catch((err) => {
+            console.warn("Couldn't get a chat token for the MiniApp service", err);
+            return undefined;
+        });
         entry.usableUntil =
             token === undefined ? 0 : (jwtExpiryMs(token) ?? 0) - CHAT_TOKEN_MARGIN_MS;
         return token === undefined
