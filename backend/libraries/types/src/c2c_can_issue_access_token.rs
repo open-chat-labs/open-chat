@@ -7,6 +7,7 @@ pub enum AccessTypeArgs {
     JoinVideoCall(JoinVideoCallArgs),
     MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs),
     BotActionByCommand(BotActionByCommandArgs),
+    MiniAppChat(MiniAppChatArgs),
 }
 
 impl AccessTypeArgs {
@@ -23,6 +24,7 @@ impl AccessTypeArgs {
             AccessTypeArgs::JoinVideoCall(args) => args.initiator,
             AccessTypeArgs::MarkVideoCallAsEnded(args) => args.initiator,
             AccessTypeArgs::BotActionByCommand(args) => args.initiator,
+            AccessTypeArgs::MiniAppChat(args) => args.initiator,
         }
     }
 }
@@ -59,4 +61,12 @@ pub struct BotActionByCommandArgs {
     pub initiator: UserId,
     pub initiator_role: GroupRole,
     pub requested_permissions: BotPermissions,
+}
+
+// For the MiniApp service's chat token: that the initiator is a member of the chat, who may join its
+// games, or, if `member` is false, that they can see it, as anyone can a public chat, to watch them
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct MiniAppChatArgs {
+    pub initiator: UserId,
+    pub member: bool,
 }

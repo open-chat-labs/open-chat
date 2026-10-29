@@ -11,6 +11,7 @@ pub enum Args {
     MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs),
     VideoCallParticipant(VideoCallParticipantArgs),
     BotActionByCommand(BotActionByCommandArgs),
+    MiniAppChat(MiniAppChatArgs),
     Translate,
 }
 
@@ -59,6 +60,14 @@ pub struct BotActionByCommandArgs {
     pub bot_id: UserId,
     pub command: BotCommandInitial,
     pub scope: BotActionScope,
+}
+
+// A token for the MiniApp service which says the caller can see the chat, and whether they're a member,
+// who may join its games, or can only see it, as anyone can a public chat, and may only watch them
+#[ts_export]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct MiniAppChatArgs {
+    pub chat: Chat,
 }
 
 #[ts_export]

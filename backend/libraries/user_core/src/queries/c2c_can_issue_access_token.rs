@@ -12,5 +12,7 @@ pub fn c2c_can_issue_access_token(user: &User, args: &AccessTypeArgs) -> bool {
         AccessTypeArgs::StartVideoCall(args) => !user.blocked_users.contains(&args.initiator),
         AccessTypeArgs::JoinVideoCall(args) => !user.blocked_users.contains(&args.initiator),
         AccessTypeArgs::MarkVideoCallAsEnded(args) => !user.blocked_users.contains(&args.initiator),
+        // Direct chats have no MiniApp games
+        AccessTypeArgs::MiniAppChat(_) => false,
     }
 }
