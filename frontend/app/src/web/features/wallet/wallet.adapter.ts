@@ -292,6 +292,20 @@ export function walletRecipients(accounts: NamedAccount[], ledgers: RecipientLed
     });
 }
 
+/**
+ * Send's user search: the people it offers (`sendContacts`, the users already DM'd) whose name or
+ * handle has the query in it, ignoring case and a leading "@".
+ */
+export function searchContacts(contacts: SendContact[], query: string): SendContact[] {
+    const needle = query.trim().replace(/^@/, "").toLowerCase();
+    if (needle === "") return [];
+    return contacts.filter(
+        (c) =>
+            c.name.toLowerCase().includes(needle) ||
+            c.handle.replace(/^@/, "").toLowerCase().includes(needle),
+    );
+}
+
 const ADDRESS_NETWORK_NAMES: Record<AddressNetwork, string> = {
     icrc: "Internet Computer",
     icp: "Internet Computer",

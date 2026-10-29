@@ -4,6 +4,7 @@ import {
     displayDecimals,
     receiveNetworks,
     panelSettings,
+    searchContacts,
     sendContacts,
     sendTokenNets,
     supportedCount,
@@ -299,5 +300,18 @@ describe("the address book", () => {
         expect(sol).toMatchObject({ networkName: "Solana", sendToken: "icp-ledger" });
         expect(addressNetworkName("icrc")).toBe("Internet Computer");
         expect(addressNetworkName("sol")).toBe("Solana");
+    });
+});
+
+describe("Send's user search", () => {
+    test("finds the DM'd users by name or handle, ignoring case and a leading @", () => {
+        const contacts = [
+            { userId: "u1", name: "Alice", handle: "@alice" },
+            { userId: "u2", name: "Bob Smith", handle: "@bobby" },
+        ];
+        expect(searchContacts(contacts, "ALI").map((c) => c.userId)).toEqual(["u1"]);
+        expect(searchContacts(contacts, "@bob").map((c) => c.userId)).toEqual(["u2"]);
+        expect(searchContacts(contacts, "smith").map((c) => c.userId)).toEqual(["u2"]);
+        expect(searchContacts(contacts, "  ")).toEqual([]);
     });
 });
