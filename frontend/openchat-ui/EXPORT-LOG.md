@@ -438,3 +438,7 @@
 - `lib/behaviours/dialog.spec.ts`: the one-run-at-a-time test is named after the app's 6b invariant 4 (one send per confirm), which it covers.
 - `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-29 — ProfileDialog: "Just linked" over the host's last used line, by hand
+- A sign-in method linked in the dialog says "Just linked" even once the host lists it with a `used` line, which would say the day it was linked.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
