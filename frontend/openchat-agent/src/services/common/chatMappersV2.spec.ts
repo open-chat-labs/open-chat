@@ -7,7 +7,10 @@ import type {
 } from "@shared";
 import { encodeIcrcAccount } from "@shared";
 import { describe, expect, test } from "vitest";
-import type { MessageContent as TMessageContent } from "../../typebox";
+import type {
+    MessageContent as TMessageContent,
+    MiniAppStatus as TMiniAppStatus,
+} from "../../typebox";
 import {
     addressToIcrcAccount,
     apiExternalBotPermissions,
@@ -302,7 +305,7 @@ describe("mini app content mapping", () => {
     const bob = Principal.selfAuthenticating(new Uint8Array(32).fill(2));
     const bucket = Principal.selfAuthenticating(new Uint8Array(32).fill(3));
 
-    test("maps the card and the game's state", () => {
+    test("maps the card, as the service wrote it", () => {
         const api: TMessageContent = {
             MiniApp: {
                 text: "**Uno** · 2 to 4 players",
@@ -314,11 +317,12 @@ describe("mini app content mapping", () => {
                 },
                 max_players: 4,
                 spectators: true,
-                spectator_count: 3,
-                status: "Active",
-                players: [alice.toUint8Array(), bob.toUint8Array()],
-                waiting_for: [bob.toUint8Array()],
-                result: undefined,
+                status: {
+                    Active: {
+                        players: [alice.toUint8Array(), bob.toUint8Array()],
+                        waiting_for: [bob.toUint8Array()],
+                    },
+                },
             },
         };
 
@@ -333,34 +337,32 @@ describe("mini app content mapping", () => {
             },
             maxPlayers: 4,
             spectators: true,
-            spectatorCount: 3,
-            status: "active",
-            players: [alice.toText(), bob.toText()],
-            waitingFor: [bob.toText()],
-            result: undefined,
+            status: {
+                kind: "active",
+                players: [alice.toText(), bob.toText()],
+                waitingFor: [bob.toText()],
+            },
         });
     });
 
-    test("maps each status", () => {
-        for (const [api, domain] of [
-            ["Open", "open"],
-            ["Active", "active"],
-            ["Finished", "finished"],
-        ] as const) {
+    test("maps a game taking players, and a finished one, with or without a result", () => {
+        const status = (status: TMiniAppStatus) => {
             const content = messageContent(
-                {
-                    MiniApp: {
-                        text: "Uno",
-                        spectators: false,
-                        spectator_count: 0,
-                        status: api,
-                        players: [],
-                    },
-                },
+                { MiniApp: { text: "Uno", spectators: false, status } },
                 "sender",
             );
-            expect(content.kind === "mini_app_content" && content.status).toBe(domain);
-        }
+            return content.kind === "mini_app_content" ? content.status : undefined;
+        };
+
+        expect(status("Open")).toEqual({ kind: "open" });
+        expect(
+            status({ Finished: { players: [alice.toUint8Array()], result: "Alice won" } }),
+        ).toEqual({ kind: "finished", players: [alice.toText()], result: "Alice won" });
+        expect(status({ Finished: { players: [] } })).toEqual({
+            kind: "finished",
+            players: [],
+            result: undefined,
+        });
     });
 
     test("isn't sent: only bots post them", () => {
@@ -369,9 +371,7 @@ describe("mini app content mapping", () => {
                 kind: "mini_app_content",
                 text: "Uno",
                 spectators: false,
-                spectatorCount: 0,
-                status: "open",
-                players: [],
+                status: { kind: "open" },
             }),
         ).toThrow();
     });

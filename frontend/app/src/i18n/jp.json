@@ -456,16 +456,32 @@
             "webhooks": "ウェブフック"
         },
         "miniApp": {
-            "failed": "このアプリを開けませんでした。",
+            "closed": "このゲームにはもう参加していません。このゲームは観戦できません。",
             "finished": "ゲーム終了",
             "join": "参加",
+            "leave": "退出",
+            "open": "開く",
             "play": "プレイ",
             "playing": "{count}人がプレイ中",
             "playingOf": "{max}人中{count}人がプレイ中",
-            "view": "表示",
+            "refusals": {
+                "botUnavailable": "ゲームが応答しませんでした。もう一度お試しください。",
+                "full": "このゲームは満員です。",
+                "invalidToken": "ここでプレイできるか確認できませんでした。もう一度お試しください。",
+                "noSpectators": "このゲームは観戦できません。",
+                "notAPlayer": "このゲームに参加していません。",
+                "notMember": "このチャットのメンバーだけが参加できます。",
+                "notOpen": "このゲームはすでに始まっています。",
+                "refusedByBot": "ゲームからのメッセージ：{message}",
+                "refusedByBotNoReason": "ゲームに参加できませんでした。",
+                "unavailable": "問題が発生しました。もう一度お試しください。",
+                "unknownGame": "このゲームはもう行われていません。",
+                "unreachable": "ゲームに接続できませんでした。もう一度お試しください。"
+            },
+            "waitingFor": "{names}を待っています",
             "watch": "観戦",
             "watching": "{count}人が観戦中",
-            "yourMove": "あなたの番です"
+            "yourTurn": "あなたの番です"
         },
         "poll": {
             "desc": "現在のチャットでアンケートを作成する"

@@ -221,7 +221,7 @@
         {messageContext}
         {messageId}
         {senderId}
-        {readonly}
+        {intersecting}
         {reply}
         {pinned}
         {blockLevelMarkdown} />

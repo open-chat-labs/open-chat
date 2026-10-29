@@ -49,6 +49,7 @@ describe("miniAppMessage", () => {
 
     test("accepts the app's messages from its frame", () => {
         expect(from({ kind: "mini_app_ready" })).toEqual({ kind: "mini_app_ready" });
+        expect(from({ kind: "mini_app_start" })).toEqual({ kind: "mini_app_start" });
         expect(from({ kind: "mini_app_token_request", extra: 1 })).toEqual({
             kind: "mini_app_token_request",
         });

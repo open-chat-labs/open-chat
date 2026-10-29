@@ -456,16 +456,32 @@
             "webhooks": "Webhooki"
         },
         "miniApp": {
-            "failed": "Nie udało się otworzyć tej aplikacji.",
+            "closed": "Nie grasz już w tę grę, a nie można jej oglądać.",
             "finished": "Koniec gry",
             "join": "Dołącz",
+            "leave": "Opuść",
+            "open": "Otwórz",
             "play": "Graj",
             "playing": "Grający: {count}",
             "playingOf": "Grający: {count} z {max}",
-            "view": "Zobacz",
+            "refusals": {
+                "botUnavailable": "Gra nie odpowiedziała. Spróbuj ponownie.",
+                "full": "Ta gra jest pełna.",
+                "invalidToken": "Nie udało się sprawdzić, czy możesz tu grać. Spróbuj ponownie.",
+                "noSpectators": "Tej gry nie można oglądać.",
+                "notAPlayer": "Nie grasz w tę grę.",
+                "notMember": "Dołączyć mogą tylko członkowie tego czatu.",
+                "notOpen": "Ta gra już się zaczęła.",
+                "refusedByBot": "Gra odpowiada: {message}",
+                "refusedByBotNoReason": "Gra nie pozwoliła ci dołączyć.",
+                "unavailable": "Coś poszło nie tak. Spróbuj ponownie.",
+                "unknownGame": "Ta gra już się nie toczy.",
+                "unreachable": "Nie udało się połączyć z grą. Spróbuj ponownie."
+            },
+            "waitingFor": "Czekamy na: {names}",
             "watch": "Oglądaj",
             "watching": "Oglądający: {count}",
-            "yourMove": "Twój ruch"
+            "yourTurn": "Twoja kolej"
         },
         "poll": {
             "desc": "Utwórz ankietę w bieżącym czacie"

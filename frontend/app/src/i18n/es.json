@@ -456,16 +456,32 @@
             "webhooks": "Webhooks"
         },
         "miniApp": {
-            "failed": "No se pudo abrir esta aplicación.",
+            "closed": "Ya no juegas en esta partida y no se puede mirar.",
             "finished": "Fin del juego",
             "join": "Unirse",
+            "leave": "Salir",
+            "open": "Abrir",
             "play": "Jugar",
             "playing": "{count} jugando",
             "playingOf": "{count} de {max} jugando",
-            "view": "Ver",
+            "refusals": {
+                "botUnavailable": "El juego no respondió. Inténtalo de nuevo.",
+                "full": "Esta partida está llena.",
+                "invalidToken": "No se pudo comprobar si puedes jugar aquí. Inténtalo de nuevo.",
+                "noSpectators": "Esta partida no se puede mirar.",
+                "notAPlayer": "No estás jugando esta partida.",
+                "notMember": "Solo los miembros de este chat pueden unirse.",
+                "notOpen": "Esta partida ya ha empezado.",
+                "refusedByBot": "El juego dice: {message}",
+                "refusedByBotNoReason": "El juego no te dejó unirte.",
+                "unavailable": "Algo salió mal. Inténtalo de nuevo.",
+                "unknownGame": "Esta partida ya no está en curso.",
+                "unreachable": "No se pudo conectar con el juego. Inténtalo de nuevo."
+            },
+            "waitingFor": "Esperando a {names}",
             "watch": "Mirar",
             "watching": "{count} mirando",
-            "yourMove": "Tu turno"
+            "yourTurn": "Tu turno"
         },
         "poll": {
             "desc": "Crear una encuesta en el chat actual"

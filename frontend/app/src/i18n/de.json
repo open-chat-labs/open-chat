@@ -456,16 +456,32 @@
             "webhooks": "Webhooks"
         },
         "miniApp": {
-            "failed": "Diese App konnte nicht geöffnet werden.",
+            "closed": "Du spielst nicht mehr mit, und bei diesem Spiel kann man nicht zuschauen.",
             "finished": "Spiel vorbei",
             "join": "Beitreten",
+            "leave": "Verlassen",
+            "open": "Öffnen",
             "play": "Spielen",
             "playing": "{count} spielen",
             "playingOf": "{count} von {max} spielen",
-            "view": "Ansehen",
+            "refusals": {
+                "botUnavailable": "Das Spiel hat nicht geantwortet. Versuche es erneut.",
+                "full": "Dieses Spiel ist voll.",
+                "invalidToken": "Es konnte nicht geprüft werden, ob du hier spielen darfst. Versuche es erneut.",
+                "noSpectators": "Bei diesem Spiel kann man nicht zuschauen.",
+                "notAPlayer": "Du spielst bei diesem Spiel nicht mit.",
+                "notMember": "Nur Mitglieder dieses Chats können beitreten.",
+                "notOpen": "Dieses Spiel hat schon begonnen.",
+                "refusedByBot": "Das Spiel sagt: {message}",
+                "refusedByBotNoReason": "Das Spiel hat dich nicht beitreten lassen.",
+                "unavailable": "Etwas ist schiefgelaufen. Versuche es erneut.",
+                "unknownGame": "Dieses Spiel läuft nicht mehr.",
+                "unreachable": "Das Spiel ist nicht erreichbar. Versuche es erneut."
+            },
+            "waitingFor": "Warten auf {names}",
             "watch": "Zuschauen",
             "watching": "{count} schauen zu",
-            "yourMove": "Du bist dran"
+            "yourTurn": "Du bist dran"
         },
         "poll": {
             "desc": "Erstellen Sie eine Umfrage im aktuellen Chat"

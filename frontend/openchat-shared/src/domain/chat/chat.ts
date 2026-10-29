@@ -144,9 +144,10 @@ export type PriceChartContent = {
 };
 
 /**
- * A bot's card for an app it hosts, eg. a game, whose button opens the bot's app. Its text and image
- * never change; the bot keeps the game's status, players and result up to date. Only bots post
- * them, and they can't be forwarded.
+ * A bot's card for a game, or another app, it hosts, whose buttons open the bot's app. Its text,
+ * image, player limit and whether others can watch never change. Its status is written only by
+ * OpenChat's MiniApp service, which also shows the card live while it runs the game (see
+ * `MiniAppLiveCard`). Only bots post them, and they can't be forwarded.
  */
 export type MiniAppContent = {
     kind: "mini_app_content";
@@ -155,18 +156,9 @@ export type MiniAppContent = {
     // eg. the game's artwork
     image?: MiniAppImage;
     maxPlayers?: number;
-    // whether members who aren't playing can open the app once the game has started
+    // whether people who aren't playing can watch: members, and anyone who can see a public chat
     spectators: boolean;
-    // how many members who aren't playing have the app open, which the bot counts, so they stay
-    // anonymous
-    spectatorCount: number;
     status: MiniAppStatus;
-    // the members playing, in the bot's order, which can include the bot itself
-    players: string[];
-    // the players whose move it is, if the game has turns
-    waitingFor?: string[];
-    // eg. "Bob won", once the game is finished
-    result?: string;
 };
 
 export type MiniAppImage = DataContent & {
@@ -175,7 +167,14 @@ export type MiniAppImage = DataContent & {
     mimeType: string;
 };
 
-export type MiniAppStatus = "open" | "active" | "finished";
+// As the card in the chat records it. Who's joined a game that's taking players is only shown live.
+export type MiniAppStatus =
+    | { kind: "open" }
+    // who the game started with, and the players whose turn it is, if anyone's in particular
+    | { kind: "active"; players: string[]; waitingFor: string[] }
+    // who the game started with, or no one if it never started, and eg. "Bob won", unless it was
+    // abandoned
+    | { kind: "finished"; players: string[]; result: string | undefined };
 
 export type PriceChartSeries = {
     // a token OpenChat lists, by its ledger, or any other coin, by its CoinGecko id

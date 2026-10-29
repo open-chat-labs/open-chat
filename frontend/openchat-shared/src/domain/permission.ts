@@ -1,6 +1,6 @@
 import { ROLE_ADMIN, ROLE_MEMBER, ROLE_MODERATOR, ROLE_NONE, ROLE_OWNER } from "../constants";
 import type { CommandArg } from "./bots";
-import type { ChatIdentifier, VideoCallType } from "./chat";
+import type { ChatIdentifier, MultiUserChatIdentifier, VideoCallType } from "./chat";
 import type { CommunityIdentifier } from "./community";
 import type { OptionUpdate } from "./optionUpdate";
 
@@ -247,7 +247,7 @@ export type AccessTokenType =
     | MarkVideoCallEnded
     | VideoCallParticipantToken
     | BotActionByCommand
-    | BotMessageSession
+    | MiniAppChatToken
     | Translate;
 
 export type Translate = {
@@ -303,15 +303,11 @@ export type BotActionCommunityScope = {
 
 export type BotActionScope = BotActionChatScope | BotActionCommunityScope;
 
-// A token for this user, for the app a bot opens from one of its MiniApp messages. It tells the
-// bot's app who the user is.
-export type BotMessageSession = {
-    kind: "bot_message_session";
-    botId: string;
-    chatId: ChatIdentifier;
-    threadRootMessageIndex: number | undefined;
-    messageId: bigint;
-    meta: BotCommandMeta;
+// A token for OpenChat's MiniApp service, which says the user can see the chat, and whether they're a
+// member, who may join its games, or may only watch them
+export type MiniAppChatToken = {
+    kind: "mini_app_chat";
+    chatId: MultiUserChatIdentifier;
 };
 
 export type BotActionByCommand = {

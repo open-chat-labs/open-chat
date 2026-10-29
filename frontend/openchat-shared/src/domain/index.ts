@@ -24,6 +24,7 @@ export * from "./inviteCodes";
 export * from "./layout";
 export * from "./lazyFile";
 export * from "./logging";
+export * from "./miniApp";
 export * from "./newGroup";
 export * from "./notifications";
 export * from "./oneSec";

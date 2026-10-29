@@ -388,6 +388,10 @@ import {
     type BridgedUserSummary,
     type BridgePlatform,
     type PriceHistory,
+    type MiniAppGame,
+    type MiniAppOpenOutcome,
+    type MiniAppOutcome,
+    type MiniAppStartOutcome,
     type PriceSubject,
     bridgedUserId,
     bridgedUserIdsFromEvents,
@@ -442,6 +446,7 @@ import {
     exchangeRatesLookupStore,
     cashtagCoinsStore,
     priceSourcesStore,
+    miniAppCardsStore,
     expiredServerEventRanges,
     favouritesStore,
     hasFlag,
@@ -766,6 +771,8 @@ import {
     PREVIOUS_WALLETS_RETRY_INTERVAL,
 } from "./utils/previousWalletFunds";
 import { openChatIdentityOrSignOut } from "./utils/openChatIdentity";
+import { jwtExpiryMs } from "./utils/jwt";
+import { MiniAppService, type MiniAppGameListener } from "./utils/miniAppService";
 import { SyncPuller } from "./utils/syncPuller";
 import { passkeyProviderName } from "./utils/passkeyProvider";
 import { showTrace } from "./utils/profiling";
@@ -972,6 +979,8 @@ export class OpenChat {
     #solDepositWatchedUntil = 0;
     #userUpdatePoller: Poller | undefined = undefined;
     #exchangeRatePoller: Poller | undefined = undefined;
+    // undefined where there's no MiniApp service
+    readonly #miniApps: MiniAppService | undefined;
     #proposalTalliesPoller: Poller | undefined = undefined;
     #notificationSubscriptionPoller: Poller | undefined = undefined;
     #recentlyActiveUsersTracker: RecentlyActiveUsersTracker = new RecentlyActiveUsersTracker();
@@ -1007,6 +1016,16 @@ export class OpenChat {
         this.#mobileLayout = config.mobileLayout;
         this.#vapidPublicKey = config.vapidPublicKey;
         locale.subscribe((v) => (this.#locale = v ?? "en"));
+
+        if (config.miniAppServiceUrl !== "") {
+            const miniApps = new MiniAppService({
+                url: config.miniAppServiceUrl,
+                chatToken: (chatId) => this.#miniAppChatToken(chatId),
+                cards: miniAppCardsStore,
+            });
+            this.#miniApps = miniApps;
+            selectedChatIdStore.subscribe((chatId) => miniApps.viewChat(chatId));
+        }
 
         userStore.setSpecialUsers([
             openChatBotUser,
@@ -2545,6 +2564,7 @@ export class OpenChat {
         );
         switch (resp.kind) {
             case "success":
+                this.#miniApps?.joinedChat(chat.id);
                 return resp;
             case "gate_check_failed": {
                 // With no gates to show the user would see nothing, so report a plain failure
@@ -11186,38 +11206,53 @@ export class OpenChat {
         return this.#getRoomAccessToken(token);
     }
 
-    /**
-     * A token for the app a bot opens from one of its MiniApp messages, which tells the app's server
-     * who the user is. Got when the app opens, and again whenever it asks for a fresh one, so it's
-     * not kept. Undefined if OpenChat won't issue one, eg. the user isn't in the chat any more.
-     */
-    async miniAppToken(
-        chatId: ChatIdentifier,
-        threadRootMessageIndex: number | undefined,
-        messageId: bigint,
-        botId: string,
-    ): Promise<string | undefined> {
+    // Games in messages, through the MiniApp service. Where there's no service, nothing's live, and
+    // a game's card shows only what's stored in its chat.
+
+    /** Follows a game's card, which has come into view, so it's shown live in `miniAppCardsStore` */
+    followMiniApp(game: MiniAppGame): void {
+        this.#miniApps?.follow(game);
+    }
+
+    joinMiniApp(game: MiniAppGame): Promise<MiniAppOutcome> {
+        return this.#miniApps?.join(game) ?? Promise.resolve(noMiniAppService());
+    }
+
+    leaveMiniApp(game: MiniAppGame): Promise<MiniAppOutcome> {
+        return this.#miniApps?.leave(game) ?? Promise.resolve(noMiniAppService());
+    }
+
+    /** Opens a game as its app is shown, after which `listener` hears its state and the user's role */
+    openMiniApp(game: MiniAppGame, listener: MiniAppGameListener): Promise<MiniAppOpenOutcome> {
+        return this.#miniApps?.open(game, listener) ?? Promise.resolve(noMiniAppService());
+    }
+
+    closeMiniApp(game: MiniAppGame): void {
+        this.#miniApps?.close(game);
+    }
+
+    miniAppPlayerToken(game: MiniAppGame): Promise<string | undefined> {
+        return this.#miniApps?.playerToken(game) ?? Promise.resolve(undefined);
+    }
+
+    startMiniApp(game: MiniAppGame): Promise<MiniAppStartOutcome> {
+        return this.#miniApps?.start(game) ?? Promise.resolve(noMiniAppService());
+    }
+
+    // The MiniApp service's token for a chat, which says the user can see it, and whether they're a
+    // member. Undefined if OpenChat won't issue one, eg. the chat's private and the user's left it.
+    async #miniAppChatToken(chatId: MultiUserChatIdentifier): Promise<string | undefined> {
         const chat = allChatsStore.value.get(chatId);
-        if (chat === undefined) return undefined;
+        if (chat === undefined || anonUserStore.value) return undefined;
         try {
             const localUserIndex = await this.#getLocalUserIndex(chat);
             return await this.#worker.send({
                 kind: "getAccessToken",
-                accessTokenType: {
-                    kind: "bot_message_session",
-                    botId,
-                    chatId,
-                    threadRootMessageIndex,
-                    messageId,
-                    meta: {
-                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                        language: this.#locale.substring(0, 2),
-                    },
-                },
+                accessTokenType: { kind: "mini_app_chat", chatId },
                 localUserIndex,
             });
         } catch (err) {
-            console.warn("Couldn't get a token for a bot's mini app", err);
+            console.warn("Couldn't get a token for the chat's games", err);
             return undefined;
         }
     }
@@ -14639,19 +14674,6 @@ type UserIndexMetrics = {
     oc_public_key: string;
 };
 
-function jwtExpiryMs(token: string): number | undefined {
-    const parts = token.split(".");
-    if (parts.length < 2) return undefined;
-    try {
-        const payload = JSON.parse(
-            new TextDecoder().decode(
-                Uint8Array.from(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")), (c) =>
-                    c.charCodeAt(0),
-                ),
-            ),
-        );
-        return typeof payload.exp === "number" ? payload.exp * 1000 : undefined;
-    } catch {
-        return undefined;
-    }
+function noMiniAppService(): { kind: "failed"; message: ResourceKey } {
+    return { kind: "failed", message: i18nKey("bots.miniApp.refusals.unreachable") };
 }

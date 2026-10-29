@@ -1269,23 +1269,26 @@ export function miniAppContent(value: TMiniAppContent): MiniAppContent {
         })),
         maxPlayers: mapOptional(value.max_players, identity),
         spectators: value.spectators,
-        spectatorCount: value.spectator_count,
         status: miniAppStatus(value.status),
-        players: value.players.map(principalBytesToString),
-        waitingFor: mapOptional(value.waiting_for, (users) => users.map(principalBytesToString)),
-        result: mapOptional(value.result, identity),
     };
 }
 
 function miniAppStatus(value: TMiniAppStatus): MiniAppStatus {
-    switch (value) {
-        case "Open":
-            return "open";
-        case "Active":
-            return "active";
-        case "Finished":
-            return "finished";
+    if (value === "Open") {
+        return { kind: "open" };
     }
+    if ("Active" in value) {
+        return {
+            kind: "active",
+            players: value.Active.players.map(principalBytesToString),
+            waitingFor: value.Active.waiting_for.map(principalBytesToString),
+        };
+    }
+    return {
+        kind: "finished",
+        players: value.Finished.players.map(principalBytesToString),
+        result: mapOptional(value.Finished.result, identity),
+    };
 }
 
 export function priceChartContent(value: TPriceChartContent): PriceChartContent {

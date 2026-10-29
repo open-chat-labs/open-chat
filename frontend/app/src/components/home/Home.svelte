@@ -46,6 +46,7 @@
         fullWidth,
         identityStateStore,
         localUpdates,
+        miniAppGameKey,
         offlineStore,
         pinNumberResolverStore,
         querystringStore,
@@ -1008,7 +1009,7 @@
 
 <!-- Beside the chat rather than in the card's row, which the message list drops once it scrolls far out of view -->
 {#if openMiniApp.current !== undefined}
-    {#key openMiniApp.current.messageId}
+    {#key miniAppGameKey(openMiniApp.current.game)}
         <MiniAppFrame app={openMiniApp.current} onClose={() => openMiniApp.close()} />
     {/key}
 {/if}

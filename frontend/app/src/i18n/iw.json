@@ -456,16 +456,32 @@
             "webhooks": "וובים"
         },
         "miniApp": {
-            "failed": "לא ניתן לפתוח את האפליקציה.",
+            "closed": "אינך משחק עוד במשחק הזה, ולא ניתן לצפות בו.",
             "finished": "המשחק נגמר",
             "join": "הצטרפות",
+            "leave": "עזיבה",
+            "open": "פתיחה",
             "play": "שחק",
             "playing": "{count} משחקים",
             "playingOf": "{count} מתוך {max} משחקים",
-            "view": "הצגה",
+            "refusals": {
+                "botUnavailable": "המשחק לא הגיב. נסה שוב.",
+                "full": "המשחק הזה מלא.",
+                "invalidToken": "לא ניתן לבדוק שאתה יכול לשחק כאן. נסה שוב.",
+                "noSpectators": "לא ניתן לצפות במשחק הזה.",
+                "notAPlayer": "אינך משחק במשחק הזה.",
+                "notMember": "רק חברי הצ'אט הזה יכולים להצטרף.",
+                "notOpen": "המשחק הזה כבר התחיל.",
+                "refusedByBot": "המשחק אמר: {message}",
+                "refusedByBotNoReason": "המשחק לא אפשר לך להצטרף.",
+                "unavailable": "משהו השתבש. נסה שוב.",
+                "unknownGame": "המשחק הזה כבר לא פעיל.",
+                "unreachable": "לא ניתן להתחבר למשחק. נסה שוב."
+            },
+            "waitingFor": "ממתינים ל-{names}",
             "watch": "צפייה",
             "watching": "{count} צופים",
-            "yourMove": "תורך"
+            "yourTurn": "תורך"
         },
         "poll": {
             "desc": "צור סקר בצ'אט הנוכחי"

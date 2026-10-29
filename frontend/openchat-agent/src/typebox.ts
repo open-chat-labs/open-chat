@@ -554,13 +554,6 @@ export const AuthorityReportState = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
-export type MiniAppStatus = Static<typeof MiniAppStatus>;
-export const MiniAppStatus = /* @__PURE__ */ Type.Union([
-    Type.Literal("Open"),
-    Type.Literal("Active"),
-    Type.Literal("Finished"),
-]);
-
 export type ChatMetrics = Static<typeof ChatMetrics>;
 export const ChatMetrics = /* @__PURE__ */ Type.Object({
     text_messages: Type.Optional(Type.Number()),
@@ -5663,6 +5656,29 @@ export const MiniAppImage = /* @__PURE__ */ Type.Object({
     blob_reference: BlobReference,
 });
 
+export type MiniAppActive = Static<typeof MiniAppActive>;
+export const MiniAppActive = /* @__PURE__ */ Type.Object({
+    players: Type.Array(UserId),
+    waiting_for: Type.Array(UserId),
+});
+
+export type MiniAppFinished = Static<typeof MiniAppFinished>;
+export const MiniAppFinished = /* @__PURE__ */ Type.Object({
+    players: Type.Array(UserId),
+    result: Type.Optional(Type.String()),
+});
+
+export type MiniAppStatus = Static<typeof MiniAppStatus>;
+export const MiniAppStatus = /* @__PURE__ */ Type.Union([
+    Type.Literal("Open"),
+    Type.Object({
+        Active: MiniAppActive,
+    }),
+    Type.Object({
+        Finished: MiniAppFinished,
+    }),
+]);
+
 export type GroupCreated = Static<typeof GroupCreated>;
 export const GroupCreated = /* @__PURE__ */ Type.Object({
     name: Type.String(),
@@ -6111,6 +6127,11 @@ export const VideoCallParticipantArgs = /* @__PURE__ */ Type.Object({
     chat: Chat,
 });
 
+export type MiniAppChatArgs = Static<typeof MiniAppChatArgs>;
+export const MiniAppChatArgs = /* @__PURE__ */ Type.Object({
+    chat: Chat,
+});
+
 export type BotRegisteredEvent = Static<typeof BotRegisteredEvent>;
 export const BotRegisteredEvent = /* @__PURE__ */ Type.Object({
     bot_id: UserId,
@@ -6228,18 +6249,6 @@ export type GroupUnfrozen = Static<typeof GroupUnfrozen>;
 export const GroupUnfrozen = /* @__PURE__ */ Type.Object({
     unfrozen_by: UserId,
 });
-
-export type OptionUpdateUserIds = Static<typeof OptionUpdateUserIds>;
-export const OptionUpdateUserIds = /* @__PURE__ */ Type.Union(
-    [
-        Type.Literal("NoChange"),
-        Type.Literal("SetToNone"),
-        Type.Object({
-            SetToSome: Type.Array(UserId),
-        }),
-    ],
-    { default: "NoChange" },
-);
 
 export type EventsTimeToLiveUpdated = Static<typeof EventsTimeToLiveUpdated>;
 export const EventsTimeToLiveUpdated = /* @__PURE__ */ Type.Object({
@@ -6486,15 +6495,6 @@ export type ReplyContext = Static<typeof ReplyContext>;
 export const ReplyContext = /* @__PURE__ */ Type.Object({
     chat_if_other: Type.Optional(Type.Tuple([Chat, Type.Union([MessageIndex, Type.Null()])])),
     event_index: EventIndex,
-});
-
-export type MiniAppUpdate = Static<typeof MiniAppUpdate>;
-export const MiniAppUpdate = /* @__PURE__ */ Type.Object({
-    status: Type.Optional(MiniAppStatus),
-    players: Type.Optional(Type.Array(UserId)),
-    spectator_count: Type.Optional(Type.Number()),
-    waiting_for: OptionUpdateUserIds,
-    result: OptionUpdateString,
 });
 
 export type DirectCallDismissedNotification = Static<typeof DirectCallDismissedNotification>;
@@ -8075,11 +8075,7 @@ export const MiniAppContent = /* @__PURE__ */ Type.Object({
     image: Type.Optional(MiniAppImage),
     max_players: Type.Optional(Type.Number()),
     spectators: Type.Boolean(),
-    spectator_count: Type.Number(),
     status: MiniAppStatus,
-    players: Type.Array(UserId),
-    waiting_for: Type.Optional(Type.Array(UserId)),
-    result: Type.Optional(Type.String()),
 });
 
 export type GroupPermissions = Static<typeof GroupPermissions>;
@@ -8181,15 +8177,6 @@ export const BotRegistrationStatus = /* @__PURE__ */ Type.Union([
         Private: Type.Union([BotInstallationLocation, Type.Null()]),
     }),
 ]);
-
-export type BotMessageSessionArgs = Static<typeof BotMessageSessionArgs>;
-export const BotMessageSessionArgs = /* @__PURE__ */ Type.Object({
-    bot_id: UserId,
-    chat: Chat,
-    thread: Type.Optional(MessageIndex),
-    message_id: MessageId,
-    meta: Type.Optional(BotCommandMeta),
-});
 
 export type EventWrapperGroupUnfrozen = Static<typeof EventWrapperGroupUnfrozen>;
 export const EventWrapperGroupUnfrozen = /* @__PURE__ */ Type.Object({
@@ -8703,14 +8690,6 @@ export const LocalUserIndexClaimPrizeResponse = /* @__PURE__ */ Type.Union([
         Error: OCError,
     }),
 ]);
-
-export type LocalUserIndexBotUpdateMiniAppArgs = Static<typeof LocalUserIndexBotUpdateMiniAppArgs>;
-export const LocalUserIndexBotUpdateMiniAppArgs = /* @__PURE__ */ Type.Object({
-    chat_context: BotChatContext,
-    thread: Type.Optional(MessageIndex),
-    message_id: MessageId,
-    update: MiniAppUpdate,
-});
 
 export type LocalUserIndexBotChatSummaryArgs = Static<typeof LocalUserIndexBotChatSummaryArgs>;
 export const LocalUserIndexBotChatSummaryArgs = /* @__PURE__ */ Type.Object({
@@ -9376,7 +9355,7 @@ export const LocalUserIndexAccessTokenV2Args = /* @__PURE__ */ Type.Union([
         BotActionByCommand: BotActionByCommandArgs,
     }),
     Type.Object({
-        BotMessageSession: BotMessageSessionArgs,
+        MiniAppChat: MiniAppChatArgs,
     }),
     Type.Literal("Translate"),
 ]);

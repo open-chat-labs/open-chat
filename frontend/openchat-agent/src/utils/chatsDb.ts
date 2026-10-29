@@ -72,7 +72,7 @@ import {
 } from "./sync";
 
 // With no migrations registered, a bump deletes the whole cache
-const CACHE_VERSION = 158;
+const CACHE_VERSION = 159;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;

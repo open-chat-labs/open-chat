@@ -28,6 +28,9 @@ export type OpenChatConfig = {
     // The pricing service, which every token price comes from. Empty where there's none, in which
     // case the prices come from ICPSwap and there are no price charts
     priceServiceUrl: string;
+    // The MiniApp service, which games in messages are played through. Empty where there's none, in
+    // which case their cards show only what's stored in their chats
+    miniAppServiceUrl: string;
     canisterUrlPath: string;
     proposalBotCanister: string;
     signInWithEmailCanister: string;

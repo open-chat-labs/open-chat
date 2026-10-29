@@ -456,16 +456,32 @@
             "webhooks": "Webhook"
         },
         "miniApp": {
-            "failed": "无法打开此应用。",
+            "closed": "你已不再参与这局游戏，且这局游戏不能观看。",
             "finished": "游戏结束",
             "join": "加入",
+            "leave": "离开",
+            "open": "打开",
             "play": "开始玩",
             "playing": "{count} 人在玩",
             "playingOf": "{count}/{max} 人在玩",
-            "view": "查看",
+            "refusals": {
+                "botUnavailable": "游戏没有响应，请重试。",
+                "full": "这局游戏已满员。",
+                "invalidToken": "无法确认你能否在这里玩，请重试。",
+                "noSpectators": "这局游戏不能观看。",
+                "notAPlayer": "你没有参与这局游戏。",
+                "notMember": "只有此聊天的成员才能加入。",
+                "notOpen": "这局游戏已经开始了。",
+                "refusedByBot": "游戏回复：{message}",
+                "refusedByBotNoReason": "游戏没有让你加入。",
+                "unavailable": "出了点问题，请重试。",
+                "unknownGame": "这局游戏已不再进行。",
+                "unreachable": "无法连接到游戏，请重试。"
+            },
+            "waitingFor": "等待 {names}",
             "watch": "观看",
             "watching": "{count} 人在观看",
-            "yourMove": "轮到你了"
+            "yourTurn": "轮到你了"
         },
         "poll": {
             "desc": "在当前聊天中创建投票"
