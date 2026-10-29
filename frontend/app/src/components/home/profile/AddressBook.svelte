@@ -2,6 +2,7 @@
     import {
         iconSize,
         mobileWidth,
+        namedAccountsStore,
         type NamedAccount,
         type OpenChat,
         type ResourceKey,
@@ -17,8 +18,13 @@
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import { addressNetwork } from "../../../utils/cryptoAddress";
-    import { isRecipientNameTaken } from "../../../utils/savedRecipient";
+    import { addressNetwork } from "@src/utils/cryptoAddress";
+    import {
+        checkRecipientAddress,
+        checkRecipientName,
+        recipientAddressError,
+        RECIPIENT_NAME_MAX,
+    } from "@src/logic/wallet/addressBook";
     import AreYouSure from "../../AreYouSure.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -30,8 +36,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
 
-    // The canister truncates longer names to this length
-    const MAX_NAME_LENGTH = 25;
+    const MAX_NAME_LENGTH = RECIPIENT_NAME_MAX;
 
     const client = getContext<OpenChat>("client");
 
@@ -41,7 +46,8 @@
 
     let { onClose }: Props = $props();
 
-    let accounts: NamedAccount[] = $state([]);
+    // the client keeps it as the canister has it (loaded on open, then each save and delete)
+    let accounts = $derived($namedAccountsStore);
     let loading = $state(true);
     let busy = $state(false);
     let adding = $state(false);
@@ -54,37 +60,35 @@
     let trimmedName = $derived(name.trim());
     let trimmedAddress = $derived(address.trim());
     let trimmedNewName = $derived(newName.trim());
-    let addressIsUserId = $derived(client.isAccountOfMultiUserCanisterUserId(trimmedAddress));
-    // The network the new address is for, in the same forms the canister accepts
-    let newAddressNetwork = $derived(addressNetwork(trimmedAddress));
-    let addressValid = $derived(!addressIsUserId && newAddressNetwork !== undefined);
-    // Saving an address which is already saved would rename it rather than add it
-    let alreadySavedAs = $derived(accounts.find((a) => a.account === trimmedAddress)?.name);
-    let addNameTaken = $derived(isRecipientNameTaken(accounts, trimmedName));
-    let addValid = $derived(
-        trimmedName.length > 0 && !addNameTaken && addressValid && alreadySavedAs === undefined,
+    // the address book's rules (logic/wallet/addressBook), shared with the other trees
+    let addressCheck = $derived(
+        checkRecipientAddress(address, accounts, (a) =>
+            client.isAccountOfMultiUserCanisterUserId(a),
+        ),
     );
-    let addError: ResourceKey | undefined = $derived.by(() => {
-        if (addNameTaken) return i18nKey("addressBook.nameTaken");
-        if (addressIsUserId) return i18nKey("cryptoAccount.sendToUserId");
-        if (trimmedAddress.length > 0 && newAddressNetwork === undefined)
-            return i18nKey("addressBook.invalidAddress");
-        if (alreadySavedAs !== undefined)
-            return i18nKey("addressBook.alreadySaved", { name: alreadySavedAs });
-        return undefined;
-    });
-    let renameNameTaken = $derived(
-        renaming !== undefined && isRecipientNameTaken(accounts, trimmedNewName, renaming.account),
+    let newAddressNetwork = $derived(
+        addressCheck.kind === "valid" ? addressCheck.network : undefined,
     );
-    let renameValid = $derived(trimmedNewName.length > 0 && !renameNameTaken);
+    let addNameCheck = $derived(checkRecipientName(name, accounts));
+    let addNameTaken = $derived(addNameCheck.kind === "taken");
+    let addValid = $derived(addNameCheck.kind === "valid" && addressCheck.kind === "valid");
+    let addError: ResourceKey | undefined = $derived(
+        addNameTaken ? i18nKey("addressBook.nameTaken") : recipientAddressError(addressCheck),
+    );
+    let renameNameCheck = $derived(
+        renaming === undefined
+            ? undefined
+            : checkRecipientName(newName, accounts, renaming.account),
+    );
+    let renameNameTaken = $derived(renameNameCheck?.kind === "taken");
+    let renameValid = $derived(renameNameCheck?.kind === "valid");
 
     onMount(async () => {
-        accounts = await client.loadSavedCryptoAccounts();
+        await client.loadSavedCryptoAccounts();
         loading = false;
     });
 
-    // Saving an account which is already saved renames it. The list is updated here to match
-    // what the canister stores, rather than loaded again.
+    // Saving an account which is already saved renames it; the client updates the list
     async function save(account: NamedAccount): Promise<boolean> {
         busy = true;
         const resp = await client.saveCryptoAccount(account);
@@ -93,9 +97,6 @@
             toastStore.showFailureToast(i18nKey("addressBook.saveFailed"));
             return false;
         }
-        accounts = accounts.some((a) => a.account === account.account)
-            ? accounts.map((a) => (a.account === account.account ? account : a))
-            : [...accounts, account];
         return true;
     }
 
@@ -146,10 +147,7 @@
         return client
             .deleteCryptoAccount(account.name)
             .then((resp) => {
-                if (resp.kind === "success") {
-                    const nameLower = account.name.toLowerCase();
-                    accounts = accounts.filter((a) => a.name.toLowerCase() !== nameLower);
-                } else {
+                if (resp.kind !== "success") {
                     toastStore.showFailureToast(i18nKey("addressBook.deleteFailed"));
                 }
             })
@@ -190,12 +188,15 @@
                         <Input
                             bind:value={address}
                             maxlength={200}
-                            invalid={trimmedAddress.length > 0 && !addressValid}
+                            invalid={addressCheck.kind === "user_id" ||
+                                addressCheck.kind === "unsupported"}
                             placeholder={i18nKey("addressBook.addressPlaceholder")}
                             onEnter={add}>
                             {#if newAddressNetwork !== undefined}
                                 <div class="network">
-                                    <AddressNetworkIcon network={newAddressNetwork} size={"1.5rem"} />
+                                    <AddressNetworkIcon
+                                        network={newAddressNetwork}
+                                        size={"1.5rem"} />
                                 </div>
                             {/if}
                         </Input>
