@@ -42,13 +42,13 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
     // the group's messages, as anyone can a public group's unless they're hidden from non-members, who
     // may watch them
     if let AccessTypeArgs::MiniAppChat(args) = &args_outer {
-        let can = if args.member {
+        let success = if args.member {
             state.data.chat.members.get_verified_member(args.initiator).is_ok()
         } else {
             !state.data.chat.members.is_blocked(&args.initiator)
                 && state.data.chat.min_visible_event_index(Some(args.initiator)).is_ok()
         };
-        return if can { Response::Success } else { Response::Failure };
+        return if success { Response::Success } else { Response::Failure };
     }
 
     let initiator = match &args_outer {
