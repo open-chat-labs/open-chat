@@ -478,9 +478,10 @@ impl App {
         }
     }
 
-    // A user started or stopped playing: their connections with the game open take their new role,
-    // getting their own part of the state if they're now a player, and closing it if they can no longer
-    // watch
+    // A user started or stopped playing: their connections with the game open are told their new role,
+    // then get the latest state, with their own part if they're now a player, or have the game closed if
+    // they can no longer watch. The website tells the app its new role before the state, which has the
+    // same seq as the one the app has.
     fn role_changed(&self, found: &Game, user_id: UserId, playing: bool) {
         let role = if playing {
             Some(Role::Player)
@@ -490,6 +491,17 @@ impl App {
             None
         };
         let (ids, _) = self.hub.set_role(found.game, user_id, role);
+        let message = match role {
+            Some(role) => ServerMessage::Role {
+                game: found.game,
+                role,
+                player_token: (role == Role::Player).then(|| self.tokens.player(found.bot, found.game, user_id, now_millis())),
+            },
+            None => ServerMessage::Closed { game: found.game },
+        };
+        for id in &ids {
+            self.hub.send(*id, message.clone());
+        }
         if let (Some(role), Some(state)) = (role, &found.state) {
             self.hub.send_latest_state(&ids, found.game, state, role);
         }
@@ -1155,7 +1167,8 @@ mod tests {
         ));
     }
 
-    // Their open app starts getting their own part of the state, and they're no longer counted watching
+    // Their open app is told they're a player, then gets their own part of the state, and they're no
+    // longer counted watching
     #[tokio::test]
     async fn a_spectator_who_joins_plays_from_the_app_they_have_open() {
         let test = Test::new();
@@ -1176,12 +1189,54 @@ mod tests {
         messages(&mut tab_messages);
 
         test.join(user(1)).await;
-        assert!(
-            messages(&mut tab_messages)
-                .iter()
-                .any(|message| matches!(message, ServerMessage::State { private: Some(_), .. }))
-        );
+        let received = messages(&mut tab_messages);
+        let role = received.iter().position(|message| {
+            matches!(
+                message,
+                ServerMessage::Role {
+                    role: Role::Player,
+                    player_token: Some(_),
+                    ..
+                }
+            )
+        });
+        let state = received.iter().position(|message| {
+            matches!(
+                message,
+                ServerMessage::State {
+                    seq: 1,
+                    private: Some(_),
+                    ..
+                }
+            )
+        });
+        assert!(role.is_some() && role < state, "{received:?}");
         assert_eq!(test.app.hub.watching(&game()), 0);
+    }
+
+    // They watch from the app they have open, or it's closed if the game doesn't allow spectators
+    #[tokio::test]
+    async fn a_player_who_leaves_watches_or_has_the_game_closed() {
+        for spectators in [true, false] {
+            let test = Test::new();
+            test.register(None, spectators).await;
+            test.join(user(1)).await;
+            let (tab, mut tab_messages) = test.connect(user(1));
+            test.app.open(tab, user(1), 1, &test.chat_token(user(1), true), game()).await;
+            messages(&mut tab_messages);
+
+            test.app.leave(user(1), 2, game()).await;
+            let expected = if spectators {
+                ServerMessage::Role {
+                    game: game(),
+                    role: Role::Spectator,
+                    player_token: None,
+                }
+            } else {
+                ServerMessage::Closed { game: game() }
+            };
+            assert_eq!(messages(&mut tab_messages), vec![expected]);
+        }
     }
 
     #[tokio::test]

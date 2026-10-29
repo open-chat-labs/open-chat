@@ -72,6 +72,18 @@ pub enum ServerMessage {
         id: RequestId,
         token: String,
     },
+    // A user's role in a game they have open changed, as they joined, left or were removed. A player
+    // gets a player token. The latest state follows, with their own part if they're now a player.
+    Role {
+        game: MiniAppGame,
+        role: Role,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        player_token: Option<String>,
+    },
+    // A user stopped playing a game they had open, which spectators can't watch, so it's closed for them
+    Closed {
+        game: MiniAppGame,
+    },
     Refused {
         id: RequestId,
         reason: Refusal,

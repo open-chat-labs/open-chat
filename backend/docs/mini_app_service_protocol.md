@@ -95,6 +95,8 @@ Asking again as a player returns `joined` without asking the bot.
 
 The bot is asked without the game being held, so it can update the game before it answers. If the game started or filled up meanwhile, the join is refused, and the bot is told the user left.
 
+The user isn't a player until the service adds them, after the bot answers. So the bot mustn't start the game, or wait for the user, while answering. It starts the game from a later request, eg. a player pressing Start in the app.
+
 ### Refusals
 
 Any request can be refused: `{ "type": "refused", "id": 2, "reason": "...", "message": "..." }`.
@@ -132,10 +134,17 @@ The website sends this when it opens the game's app:
 - `private` is the user's own part, and is only sent to players.
 - Spectators get at most about 4 updates a second. When updates come faster, they get only the latest.
 - Spectators count towards the card's `watching` while they have a game open.
-- A state can arrive twice, or out of order, so the website drops one whose `seq` isn't above the last it had.
-- **Changing role:** when a user joins, leaves, or is removed, the game stays open on their connections, in their new role.
-  - A spectator who joins starts getting their own part of the state.
-  - A player who leaves gets the shared part, as a spectator, or nothing if the game doesn't allow spectators.
+- A state can arrive twice, or out of order, so the website drops one whose `seq` is below the last it had. One with the same `seq` replaces it: it's the same state, re-sent when the user's role changes.
+- **Changing role:** when a user joins, leaves, or is removed, the service tells their connections with the game open, then re-sends the latest state:
+
+```json
+{ "type": "role", "game": game, "role": "player", "player_token": "..." }
+{ "type": "role", "game": game, "role": "spectator" }
+{ "type": "closed", "game": game }
+```
+  - A spectator who joins becomes a player, with a player token, and gets their own part of the state.
+  - A player who leaves becomes a spectator, getting the shared part, or has the game closed if it doesn't allow spectators.
+  - The website initialises the app again in its new role before passing it the state.
 
 ### Refreshing a player token
 
@@ -235,10 +244,12 @@ The website loads `<endpoint>/app` in a sandboxed iframe. It sends messages only
 
 **Website → app:**
 - `{ kind: "initialise_mini_app", role: "player" | "spectator", user_id, token, dark_mode, locale }`
+  - The website sends it again when the user's role changes.
   - `token` is the player token, and only players get one.
 - `{ kind: "mini_app_token", token }`
 - `{ kind: "mini_app_state", seq, shared, private }`
   - The website holds the latest state until the app is ready.
+  - The app drops a state whose `seq` is below the last one, and takes one with the same `seq` in place of the one it has.
 - `{ kind: "set_dark_mode", dark_mode }`
 
 A player's app sends the player token, in `x-oc-jwt`, with each request to the bot.
