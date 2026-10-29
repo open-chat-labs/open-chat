@@ -51,11 +51,11 @@ describe("the wallet settings form", () => {
         expect(manual.config).toEqual({ kind: "auto_wallet", minDollarValue: 0 });
     });
 
-    test("a minimum that isn't a number can't be saved", async () => {
+    test("a minimum that isn't a number isn't saved, and says so", async () => {
         const { form: f, client } = form({ kind: "auto_wallet", minDollarValue: 1 });
         f.setMinimum(Number("abc"));
         expect(f.valid).toBe(false);
-        expect(await f.save()).toBe("unchanged");
+        expect(await f.save()).toBe("invalid");
         expect(client.setWalletConfig).not.toHaveBeenCalled();
     });
 });

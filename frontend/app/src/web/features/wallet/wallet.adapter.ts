@@ -16,7 +16,7 @@ import type { ReceiveNetwork } from "@openchat/ui/src/features/components/Wallet
 import type { SendContact } from "@openchat/ui/src/features/components/WalletSend.svelte";
 import type { DepositNote } from "@src/logic/wallet/receiveAccount.svelte";
 import type { Recipient } from "@openchat/ui/src/features/components/WalletRecipients.svelte";
-import type { AddressNetwork } from "@src/utils/cryptoAddress";
+import { addressNetwork, type AddressNetwork } from "@src/utils/cryptoAddress";
 import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
 import type { WalletToken, WalletTokenAction } from "@openchat/ui/src/lib/types";
 import {
@@ -269,12 +269,27 @@ export function sendContacts(users: UserSummary[]): SendContact[] {
     }));
 }
 
+/** The ledgers Send can open on for a saved address: ICP's, and BTC's and ckSOL's when the app has them. */
+export type RecipientLedgers = { icp: string; btc?: string; sol?: string };
+
 /**
  * The address book as WalletRecipients lists it: each saved account, keyed by its account (the
- * canister's key; a recipient has no id of its own).
+ * canister's key; a recipient has no id of its own), with its network's name and the token Send
+ * opens on: BTC for a Bitcoin address, ckSOL for a Solana one, else ICP.
  */
-export function walletRecipients(accounts: NamedAccount[]): Recipient[] {
-    return accounts.map((a) => ({ id: a.account, name: a.name, address: a.account }));
+export function walletRecipients(accounts: NamedAccount[], ledgers: RecipientLedgers): Recipient[] {
+    return accounts.map((a) => {
+        const network = addressNetwork(a.account);
+        const sendToken =
+            network === "btc" ? ledgers.btc : network === "sol" ? ledgers.sol : undefined;
+        return {
+            id: a.account,
+            name: a.name,
+            address: a.account,
+            networkName: network === undefined ? undefined : addressNetworkName(network),
+            sendToken: sendToken ?? ledgers.icp,
+        };
+    });
 }
 
 const ADDRESS_NETWORK_NAMES: Record<AddressNetwork, string> = {

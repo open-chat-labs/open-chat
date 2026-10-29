@@ -1,12 +1,17 @@
 // The address book's rules, for every tree's: which addresses can be saved, and which names. The
 // client's save and delete keep `namedAccountsStore` as the canister has it.
-import type { NamedAccount, ResourceKey } from "@client";
+import {
+    SAVED_ACCOUNT_NAME_MAX,
+    savedAccountName,
+    type NamedAccount,
+    type ResourceKey,
+} from "@client";
 import { i18nKey } from "@src/i18n/i18n";
 import { addressNetwork, type AddressNetwork } from "@src/utils/cryptoAddress";
 import { isRecipientNameTaken } from "@src/utils/savedRecipient";
 
 /** The canister truncates longer names to this length. */
-export const RECIPIENT_NAME_MAX = 25;
+export const RECIPIENT_NAME_MAX = SAVED_ACCOUNT_NAME_MAX;
 
 /** Whether an address can be saved, and if not, why. */
 export type RecipientAddressCheck =
@@ -54,7 +59,10 @@ export function recipientAddressError(check: RecipientAddressCheck): ResourceKey
     }
 }
 
-/** Whether a name can be saved: not empty, and not another recipient's, ignoring case. */
+/**
+ * Whether a name can be saved: not empty, and not another recipient's, ignoring case, once it's cut
+ * to what the canister keeps.
+ */
 export type RecipientNameCheck = { kind: "valid" } | { kind: "empty" } | { kind: "taken" };
 
 export function checkRecipientName(
@@ -62,7 +70,7 @@ export function checkRecipientName(
     saved: NamedAccount[],
     exceptAccount?: string,
 ): RecipientNameCheck {
-    const text = name.trim();
+    const text = savedAccountName(name);
     if (text.length === 0) return { kind: "empty" };
     if (isRecipientNameTaken(saved, text, exceptAccount)) return { kind: "taken" };
     return { kind: "valid" };

@@ -8,6 +8,7 @@
     import {
         cryptoLookup,
         defaultWalletLedgers,
+        pinNumberFailureStore,
         pinNumberRequiredStore,
         walletConfigStore,
         type OpenChat,
@@ -48,21 +49,21 @@
     onDestroy(() => void save());
 
     async function save(): Promise<void> {
-        if ((await form.save()) === "failed") {
+        const outcome = await form.save();
+        if (outcome === "failed") {
             toastStore.showFailureToast(i18nKey("cryptoAccount.configureWalletFailure"));
+        } else if (outcome === "invalid") {
+            toastStore.showFailureToast(i18nKey("cryptoAccount.invalidMinimum"));
         }
     }
 
-    // the minimum as last typed, while it still means the stored number ("1." stays "1.")
-    let typedMinimum = $state("");
+    // the minimum as last typed, shown as typed ("1.", ".", "" stay so) until the mode changes;
+    // only a number reaches the form
+    let typedMinimum = $state<string>();
     const value = $derived.by((): Partial<WalletSettings> => {
         const config = form.config;
         const minimum =
-            config.kind === "auto_wallet"
-                ? Number(typedMinimum) === config.minDollarValue && typedMinimum !== ""
-                    ? typedMinimum
-                    : String(config.minDollarValue)
-                : "";
+            config.kind === "auto_wallet" ? (typedMinimum ?? String(config.minDollarValue)) : "";
         return {
             pinOn: $pinNumberRequiredStore ?? false,
             autoConfig: config.kind === "auto_wallet",
@@ -76,23 +77,29 @@
         return c === "BTC" || c === "ETH" || c === "ICP" ? c : "USD";
     }
 
-    // the dialog applies as it goes: a mode switch starts that mode afresh (WalletSettingsForm), a
-    // pick or a minimum edits the copy, the currency is kept at once
+    // the dialog applies as it goes: a mode switch starts that mode (WalletSettingsForm), a pick or
+    // a minimum edits the copy, the currency is kept at once. Turning automatic off (the toggle,
+    // or "take over") hands over the tokens it showed, which the hand-picked list starts from; with
+    // none, it starts from the default tokens
     function changed(next: WalletSettings): void {
         if (next.currency !== $walletCurrency) walletCurrency.set(next.currency);
         const auto = form.config.kind === "auto_wallet";
         if (next.autoConfig !== auto) {
+            typedMinimum = undefined;
             form.selectMode(next.autoConfig ? "auto_wallet" : "manual_wallet");
+            if (!next.autoConfig && next.tokens.length > 0) form.setTokens(next.tokens);
         } else if (auto) {
             typedMinimum = next.minBalance;
-            form.setMinimum(Number(next.minBalance || "0"));
+            const minimum = Number(next.minBalance || "0");
+            if (!isNaN(minimum)) form.setMinimum(minimum);
         } else {
             form.setTokens(next.tokens);
         }
     }
 
     // the PIN, as PinNumberForm sets, changes and clears it; a refusal keeps the dialog's sheet
-    // open with its error, and a lockout says why in a toast
+    // open with its error. Only a lockout this call ran into (too many wrong PINs: how long to
+    // wait) is also a toast; setPinNumber clears any earlier failure as it starts
     async function pin(
         operation: PinOperation,
         current: string | undefined,
@@ -103,7 +110,7 @@
         pinForm.newPin = next?.split("") ?? [];
         const outcome = await pinForm.save();
         if (outcome.kind === "failed") {
-            if ($pinNumberErrorMessageStore !== undefined) {
+            if (pinNumberFailureStore.value?.kind === "too_main_failed_pin_attempts") {
                 toastStore.showFailureToast(pinNumberErrorMessageStore);
             }
             throw new Error("pin not saved");

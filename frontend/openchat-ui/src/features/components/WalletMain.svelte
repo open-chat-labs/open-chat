@@ -383,10 +383,10 @@
     report();
   }
 
-  // a saved recipient's own token lock wins; otherwise the network's native token
+  // the host's token for the recipient first; then its own token lock; then the network's native token
   function sendToRecipient(r: Recipient & { network: string | null }) {
     const native: Record<string, string> = { BTC: 'BTC', ETH: 'ETH', XRP: 'XRP' };
-    sym = idForSymbol(r.token || (r.network ? native[r.network] : undefined) || 'ICP');
+    sym = r.sendToken ?? idForSymbol(r.token || (r.network ? native[r.network] : undefined) || 'ICP');
     view = 'send';
     fromAll = false;
     backToRecipients = true;

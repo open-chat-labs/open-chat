@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { withoutAccountsNamed, withSavedAccount } from "./namedAccounts";
+import { savedAccountName, withoutAccountsNamed, withSavedAccount } from "./namedAccounts";
 
 const saved = [
     { name: "Exchange", account: "aaa" },
@@ -20,5 +20,15 @@ describe("the saved accounts", () => {
         expect(withoutAccountsNamed(twice, "exchange")).toEqual([
             { name: "Cold wallet", account: "bbb" },
         ]);
+    });
+
+    test("a name is kept as the canister keeps it: trimmed and cut to 25 characters", () => {
+        const long = "  Internet Computer recipient  ";
+        expect(savedAccountName(long)).toBe("Internet Computer recipie");
+        expect(withSavedAccount([], { name: long, account: "ccc" })).toEqual([
+            { name: "Internet Computer recipie", account: "ccc" },
+        ]);
+        const saved = withSavedAccount([], { name: long, account: "ccc" });
+        expect(withoutAccountsNamed(saved, long)).toEqual([]);
     });
 });

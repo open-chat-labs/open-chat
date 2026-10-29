@@ -8,7 +8,8 @@ import {
     type WalletConfig,
 } from "@client";
 
-export type WalletSettingsSave = "unchanged" | "saved" | "failed";
+// `invalid`: changed, but the minimum isn't a number, so nothing was saved
+export type WalletSettingsSave = "unchanged" | "invalid" | "saved" | "failed";
 
 /**
  * Edits a copy of the stored wallet config, never the stored one (6d invariant 4): switching mode
@@ -71,9 +72,10 @@ export class WalletSettingsForm {
         return walletConfigChanged(this.#stored(), this.config);
     }
 
-    /** Stores the config when it's valid and differs from the stored one. */
+    /** Stores the config when it differs from the stored one, and is valid. */
     async save(): Promise<WalletSettingsSave> {
-        if (!this.valid || !this.changed) return "unchanged";
+        if (!this.changed) return "unchanged";
+        if (!this.valid) return "invalid";
         const ok = await this.#client.setWalletConfig(cloneWalletConfig(this.config));
         return ok ? "saved" : "failed";
     }
