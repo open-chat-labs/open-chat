@@ -133,6 +133,14 @@ export function signInLastUsed(lastUsed: bigint, locale: string): ResourceKey {
     });
 }
 
+/** A linked sign-in method's principal cut to its first and last groups, "7z6fx-...-wae". */
+export function shortSignInPrincipal(principal: string): string {
+    const first = principal.indexOf("-");
+    const last = principal.lastIndexOf("-");
+    if (first === last) return principal;
+    return `${principal.slice(0, first + 1)}...${principal.slice(last)}`;
+}
+
 /**
  * The linked sign-in methods with the one this session signed in with marked (isCurrentIdentity).
  * The backend marks it by the session's auth principal, which a passkey's linked principal never

@@ -129,6 +129,7 @@ export { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 export { rightPanelView, type RightPanelInput } from "./utils/rightPanel";
 export {
     linkIdentitiesResult,
+    shortSignInPrincipal,
     signInLastUsed,
     signInOptions,
     unlinkIdentityFailure,
