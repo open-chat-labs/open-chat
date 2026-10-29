@@ -442,3 +442,10 @@
 ## 2026-10-29 — ProfileDialog: "Just linked" over the host's last used line, by hand
 - A sign-in method linked in the dialog says "Just linked" even once the host lists it with a `used` line, which would say the day it was linked.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-29 — WalletRecipients and WalletSettingsDialog for the app's address book and settings, by hand
+- `WalletRecipients`: `checkAddress(address, id)` (the host's say: the network's name, or why it can't be saved; rows show the network it names), `checkName(name, id)` (why a name can't be saved), `editAddress` (false: an edit only renames, the address read-only), `tokenLocks` and `lastSent` (false hides the token lock and "last sent"), `maxNameLength`. A recipient the host's new list already holds isn't added a second time after a save (it was, as a duplicate key).
+- `WalletMain`: `recipientOptions`, passed to Recipients.
+- `WalletSettingsDialog`: hand-picked tokens are ids (`id`, else the symbol), so two tokens sharing a symbol stay apart.
+- `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

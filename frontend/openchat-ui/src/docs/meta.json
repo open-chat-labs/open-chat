@@ -17836,6 +17836,17 @@
         "doc": "See WalletRecipients.onRemove."
       },
       {
+        "name": "recipientOptions",
+        "type": "Pick<ComponentProps<typeof WalletRecipients>, 'checkAddress' | 'checkName' | 'editAddress' | 'tokenLocks' | 'lastSent' | 'maxNameLength'>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Recipients: the host's rules and what it keeps (see WalletRecipients' checkAddress, checkName, editAddress, tokenLocks, lastSent and maxNameLength)."
+      },
+      {
         "name": "onSearchUsers",
         "type": "(query: string) => Promise<SendContact[]>",
         "default": null,
@@ -18542,6 +18553,72 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "checkAddress",
+        "type": "(address: string, id: string | null) => { network: string } | { error: string }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's say on an address (`id`: the recipient being edited, else null): its network's name, or why it can't be saved (text). Rows show the network it names. Without it, the address's own shape and the list's duplicates decide."
+      },
+      {
+        "name": "checkName",
+        "type": "(name: string, id: string | null) => string | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's say on a name (the one saved, the default when left empty): why it can't be saved (text), or null."
+      },
+      {
+        "name": "editAddress",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Editing can change the address; false: an edit only renames (the address shows, read-only)."
+      },
+      {
+        "name": "tokenLocks",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Recipients can be locked to a token; false hides the lock (the form's field and the rows' badge)."
+      },
+      {
+        "name": "lastSent",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Rows say when each was last sent to; false leaves it out."
+      },
+      {
+        "name": "maxNameLength",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The longest name the host keeps."
       }
     ],
     "group": "features"

@@ -136,7 +136,7 @@ it from showing: a desktop window shrunk after load scrolls the shell sideways i
 | `/wallet` **(mobile's path, new on desktop)** | `wallet_route` {view: all} | `WalletPanel` (6a) | `WalletMain` All activity (6a: a note to pick a token, GAPS) | – (`WalletSettingsDialog` is a dialog) | panel, then main | sign in |
 | `/wallet/:ledger` **(new)** | `wallet_route` {view: token} | `WalletPanel`, token selected (6a) | `WalletMain` token page (6a) | – | main | sign in |
 | `/wallet/send` · `/receive` · `/swap` (`?token=`) **(new)** | `wallet_route` {view} | `WalletPanel` | Send and Receive in place (6b); Swap in place (6c; until then the token's page) | – | main | sign in |
-| `/wallet/recipients` **(new)** | `wallet_route` {view: recipients} | `WalletPanel` | `WalletRecipients` | – | main | sign in |
+| `/wallet/recipients` **(new)** | `wallet_route` {view: recipients} | `WalletPanel` | `WalletRecipients` (6d) | – | main | sign in |
 | `/share?title&text&url` | `share_route` | as the default scope | as the default scope | `ChatPicker` on `?share` (redirect, then pick a chat) | picker | sign in |
 | `/admin` | `admin_route` | – | `TODO(design)`: platform operator console, operators only (existing check) | – | full | blocked |
 | `*` | `not_found_route` | – | `EmptyState` (not found) | – | full | yes |

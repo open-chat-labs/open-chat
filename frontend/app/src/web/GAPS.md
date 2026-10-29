@@ -84,8 +84,11 @@ design export needs. Each entry says where it came up.
 - **Types not exported** from `src/features/index.ts` that adapters need: `WalletActivity`,
   `Recipient`, `SwapRequest`/`SwapQuote`, `ExploreCommunity`, `Achievement`, `DailyPuzzle`,
   `ChatSettings`, `SigninMethod` and others. Deep imports work meanwhile.
-- **Address validation**: `WalletSettingsDialog` has its own ICP address regex, which differs
-  from `lib/networks.ts`.
+- **Address validation**: `WalletSettingsDialog` has its own address regexes (BTC, ETH, XRP,
+  ICP), which differ from `lib/networks.ts` and know no Solana. The app doesn't use its recipients
+  section (only reachable through `section`): saved recipients are `WalletRecipients`, which takes
+  the host's say on an address (`checkAddress`, by hand: the old address book's rules, so Solana and
+  ICRC subaccount forms save and XRP doesn't).
 - **Sign-in, added by hand** (to go back to the design export): `AuthDialog` got `methods` (for
   `?auth=` and browsers without WebAuthn), a wallet step for Ethereum / Solana (`wallets`; the old
   UI asks which wallet), the emailed link's code on "Check your inbox", and `kind: 'link'`, the
@@ -524,7 +527,8 @@ design export needs. Each entry says where it came up.
   - transaction history only for tokens with an index canister, one token at a time. There's no
     all-tokens activity, swaps aren't told apart from transfers, there's no chat context, and
     BTC/EVM/SOL-side transfers aren't shown;
-  - saved recipients have no id, token, "last sent" or edit;
+  - saved recipients have no id, token lock or "last sent", and an edit only renames (the canister
+    keys a saved address by its account);
   - no native ETH deposit address;
   - swaps quote across several DEXes, while the design says ICPSwap only.
 - **Explore**:
@@ -609,8 +613,9 @@ design export needs. Each entry says where it came up.
     the PIN is the client's prompt. Not yet:
     - SOL to a Solana address and oneSec's EVM chains: the library's Send knows neither, so those
       addresses are refused (`checkAddress`); the old wallets send them (`WithdrawForm`).
-    - the saved-address picker (`onPickSaved`), saving a new address after a send, and the QR
-      scanner (`onScanQr`): with the address book (6d).
+    - the saved-address picker (`onPickSaved`) and saving a new address after a send: the design
+      has neither screen. Recipients' Send opens Send on the saved address instead. No QR scanner
+      (`onScanQr`).
     - the message on a send to an address: the design offers a note to self; nothing keeps it.
     - the ckBTC minter's fee is its estimate for any amount, asked each time Send opens while BTC
       is held (again 10 s after a failure); a send under the minter's minimum stops with a toast
@@ -621,14 +626,29 @@ design export needs. Each entry says where it came up.
       toast after Confirm, not flagged on the form: `WalletSend` has no minimum. An address has
       none, as in the old Send.
     - no pending row after a send: the client doesn't return the transaction's id.
+  - Recipients (6d) are built: `/wallet/recipients` from the panel's ⋯ menu, the address book as
+    `namedAccountsStore` holds it (the client's save and delete keep it). The old address book's
+    rules (`logic/wallet/addressBook`, shared with both old trees): only an address
+    `addressNetwork` recognises, never a MultiUser user id's account nor one already saved, and a
+    name not taken (ignoring case, at most 25 characters). An edit only renames; removing deletes
+    by name. By hand in the library: `checkAddress`, `checkName`, `editAddress`, `tokenLocks`,
+    `lastSent`, `maxNameLength`.
+  - Settings (6d) are built: the panel's ⋯ menu opens `WalletSettingsDialog` (a local dialog,
+    `wallet_settings`). The token list is `WalletSettingsForm`'s copy of the stored config (shared
+    with both old trees), saved when the dialog closes and only if it changed. The PIN goes through
+    `PinNumberForm`. Not yet:
+    - "I've forgotten my PIN": the dialog has no such step. A transfer's PIN prompt has it (S3).
+    - the hand-picked list offers the tokens with a balance only (the dialog's own rule); the old
+      settings offer the whole catalogue.
+    - switching to hand-picked starts from the default tokens, as the old settings do, not from
+      the tokens shown at the minimum, as the dialog's "take over" button reads.
   - Swap (6c): the app passes `flows` without it. Its buttons show as designed and do nothing; the
     menus and the token picker leave it out; `/wallet/swap` shows the token's page (or All
-    activity). Settings and Manage recipients (6d): the panel's ⋯ menu still offers them and they
-    do nothing; `/wallet/recipients` shows All activity.
+    activity).
   - the total is what the panel lists (Your tokens and small balances); the old wallets' total is
     `walletTokensSorted`'s (in automatic mode, the default tokens plus those worth the minimum).
-  - the display currency is the panel's own, back to USD each time it opens (as the old wallets'
-    toggle), not a setting.
+  - the display currency is kept on this device (`walletCurrency`, a local storage store), shared
+    by the panel and the settings dialog; neither old tree stores it.
   - no 24h change (see the data gaps below).
   - by hand: `WalletToken` gains `id` (the ledger: callbacks, the selection and activity use it,
     as two ledgers can share a symbol), `actions` and `logo`; `WalletPanel` takes `rates`, and its
