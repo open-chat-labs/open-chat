@@ -190,7 +190,7 @@
   const BLANK_GIF = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
   // a principal: groups of five lower-case letters and digits, the last one shorter or not
   const PRINCIPAL = /^([a-z0-9]{5}-){4,}[a-z0-9]{1,5}$/;
-  /** A principal's first two and last two groups with the rest elided; anything else (an email address) as it is. */
+  /** A principal's first and last groups with the rest elided; anything else (an email address) as it is. */
   const shortId = (id: string) => {
     if (!PRINCIPAL.test(id)) return id;
     const groups = id.split('-');

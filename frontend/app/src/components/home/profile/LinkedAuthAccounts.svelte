@@ -114,15 +114,13 @@
     .accounts {
         display: grid;
         grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
         gap: $sp3;
         margin-bottom: $sp3;
     }
 
     .account {
-        display: grid;
-        grid-column: 1 / -1;
-        grid-template-columns: subgrid;
-        align-items: center;
+        display: contents;
 
         .details {
             display: flex;
@@ -139,8 +137,9 @@
 
         .current,
         .unlink {
-            // the last column, also in a row with no details
+            // the last column, also in a row with no details, centred under the padded unlink icons
             grid-column: 3;
+            justify-self: center;
         }
     }
 </style>
