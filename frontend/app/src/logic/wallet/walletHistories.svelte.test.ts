@@ -128,10 +128,47 @@ describe("refreshing a history", () => {
         await vi.waitFor(() => expect(icp.state.kind).toBe("loaded"));
         histories.load("icp", "icp-index", 90n);
         c.answers[1](new Error("down"));
-        await vi.waitFor(() => expect(c.getAccountTransactions).toHaveBeenCalledTimes(2));
-        await Promise.resolve();
+        // the failed refresh settles
+        await new Promise((resolve) => setTimeout(resolve, 0));
         // still the old page, and the same balance asks again
         expect(ids(icp)).toEqual([1n]);
+        histories.load("icp", "icp-index", 90n);
+        expect(c.getAccountTransactions).toHaveBeenCalledTimes(3);
+    });
+
+    test("a balance that changes while the first page is coming starts a refresh, and is the one kept", async () => {
+        vi.spyOn(console, "warn").mockImplementation(() => {});
+        const c = controlled();
+        const histories = new WalletHistories(c);
+        const icp = histories.load("icp", "icp-index", 5n);
+        // a receive lands before the first page answers
+        histories.load("icp", "icp-index", 6n);
+        expect(c.getAccountTransactions).toHaveBeenCalledTimes(2);
+        c.answers[1](page(2n, 1n));
+        await vi.waitFor(() => expect(ids(icp)).toEqual([2n, 1n]));
+        c.answers[0](page(1n));
+        await Promise.resolve();
+        await Promise.resolve();
+        // 6 is what's fetched: asking with it again costs nothing
+        histories.load("icp", "icp-index", 6n);
+        expect(c.getAccountTransactions).toHaveBeenCalledTimes(2);
+    });
+
+    test("Load older doesn't cancel a refresh on its way, and is dropped only once the refresh replaces the history", async () => {
+        vi.spyOn(console, "warn").mockImplementation(() => {});
+        const c = controlled();
+        const histories = new WalletHistories(c);
+        const icp = histories.load("icp", "icp-index", 100n);
+        c.answers[0]({ kind: "success", transactions: [tx(5n)], oldestTransactionId: 1n });
+        await vi.waitFor(() => expect(icp.state.kind).toBe("loaded"));
+        histories.load("icp", "icp-index", 90n); // refresh
+        const older = icp.loadMore();
+        c.answers[1](page(6n, 5n)); // the refresh answers first
+        await vi.waitFor(() => expect(ids(icp)).toEqual([6n, 5n]));
+        c.answers[2](page(4n));
+        expect(await older).toBe("none");
+        expect(ids(icp)).toEqual([6n, 5n]);
+        // and 90 counts as fetched
         histories.load("icp", "icp-index", 90n);
         expect(c.getAccountTransactions).toHaveBeenCalledTimes(3);
     });
