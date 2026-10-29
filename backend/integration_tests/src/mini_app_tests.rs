@@ -14,13 +14,17 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    AutonomousConfig, BlobReference, BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions,
-    CLAIM_TYPE_MINI_APP_BOT, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_REGISTRATION, CanisterId, ChannelId, Chat,
-    ChatEvent, ChatPermission, CommunityId, Empty, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex,
-    MessagePermission, MiniAppActive, MiniAppBotClaims, MiniAppChatClaims, MiniAppContent, MiniAppEnded, MiniAppFinished,
-    MiniAppGame, MiniAppImage, MiniAppRegistrationClaims, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn,
-    SuccessOnly, UnitResult, UserId,
+    AutonomousConfig, BlobReference, BotActionChatDetails, BotActionCommunityDetails, BotActionScope, BotChatContext,
+    BotInitiator, BotInstallationLocation, BotMessageContent, BotPermissions, CLAIM_TYPE_MINI_APP_BOT,
+    CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_POST, CanisterId, ChannelId, Chat, ChatEvent, ChatPermission, CommunityId,
+    Empty, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePermission, Milliseconds,
+    MiniAppActive, MiniAppBotClaims, MiniAppChatClaims, MiniAppContent, MiniAppEnded, MiniAppFinished, MiniAppGame,
+    MiniAppImage, MiniAppPostClaims, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, SuccessOnly, UnitResult,
+    UserId,
 };
+
+// How long a command's token, and so the post token of a command's card, lasts
+const COMMAND_TOKEN_VALIDITY: Milliseconds = 5 * 60 * 1000;
 
 #[test]
 fn a_bot_posts_a_mini_app_card_which_cant_be_edited() {
@@ -38,6 +42,7 @@ fn a_bot_posts_a_mini_app_card_which_cant_be_edited() {
         community_id,
         channel_id,
         local_user_index,
+        service,
     } = setup(env, canister_ids, *controller);
     let (_, bot_principal) = install_bot(
         env,
@@ -50,10 +55,11 @@ fn a_bot_posts_a_mini_app_card_which_cant_be_edited() {
     let chat = Chat::Channel(community_id, channel_id);
     let message_id = random_from_u128();
 
-    let response = send(env, bot_principal, local_user_index, chat, message_id, card());
+    let response = post_card(env, service, bot_principal, local_user_index, chat, None, message_id, card());
     let local_user_index_canister::bot_send_message::Response::Success(result) = response else {
-        panic!("'bot_send_message' error: {response:?}");
+        panic!("'send_mini_app_message' error: {response:?}");
     };
+    assert_eq!(result.message_id, message_id);
     tick_many(env, 3);
 
     assert_eq!(
@@ -140,6 +146,7 @@ fn a_bot_without_the_mini_app_permission_cant_post_one() {
         community_id,
         channel_id,
         local_user_index,
+        service,
         ..
     } = setup(env, canister_ids, *controller);
     let (_, bot_principal) = install_bot(
@@ -151,11 +158,13 @@ fn a_bot_without_the_mini_app_permission_cant_post_one() {
         MessagePermission::Text,
     );
 
-    let response = send(
+    let response = post_card(
         env,
+        service,
         bot_principal,
         local_user_index,
         Chat::Channel(community_id, channel_id),
+        None,
         random_from_u128(),
         card(),
     );
@@ -165,9 +174,10 @@ fn a_bot_without_the_mini_app_permission_cant_post_one() {
     );
 }
 
-// A card is sent whole: only its game's state changes, which the MiniApp service writes
+// Cards are posted through the MiniApp service, so the service knows every game from the moment its
+// card exists
 #[test]
-fn a_card_is_sent_finalised() {
+fn a_bot_cant_post_a_card_itself() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -203,7 +213,7 @@ fn a_card_is_sent_finalised() {
             replies_to: None,
             content: BotMessageContent::MiniApp(card()),
             block_level_markdown: false,
-            finalised: false,
+            finalised: true,
             og_previews: None,
             bridged_from: None,
         },
@@ -231,6 +241,7 @@ fn a_card_is_posted_open() {
         community_id,
         channel_id,
         local_user_index,
+        service,
     } = setup(env, canister_ids, *controller);
     let (_, bot_principal) = install_bot(
         env,
@@ -241,11 +252,13 @@ fn a_card_is_posted_open() {
         MessagePermission::MiniApp,
     );
 
-    let response = send(
+    let response = post_card(
         env,
+        service,
         bot_principal,
         local_user_index,
         Chat::Channel(community_id, channel_id),
+        None,
         random_from_u128(),
         MiniAppContent {
             status: active(vec![member.user_id], Vec::new()),
@@ -277,6 +290,7 @@ fn the_mini_app_service_starts_a_game_then_ends_it() {
         community_id,
         channel_id,
         local_user_index,
+        service,
     } = setup(env, canister_ids, *controller);
     let (_, bot_principal) = install_bot(
         env,
@@ -286,12 +300,11 @@ fn the_mini_app_service_starts_a_game_then_ends_it() {
         community_id,
         MessagePermission::MiniApp,
     );
-    let service = set_mini_app_service(env, canister_ids, *controller);
     let chat = Chat::Channel(community_id, channel_id);
     let message_id = random_from_u128();
-    let response = send(env, bot_principal, local_user_index, chat, message_id, card());
+    let response = post_card(env, service, bot_principal, local_user_index, chat, None, message_id, card());
     let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
-        panic!("'bot_send_message' error: {response:?}");
+        panic!("'send_mini_app_message' error: {response:?}");
     };
 
     let write = |env: &mut PocketIc, update: MiniAppStatusUpdate| {
@@ -369,6 +382,7 @@ fn only_the_mini_app_service_writes_a_card() {
         community_id,
         channel_id,
         local_user_index,
+        service,
     } = setup(env, canister_ids, *controller);
     let (_, bot_principal) = install_bot(
         env,
@@ -378,12 +392,11 @@ fn only_the_mini_app_service_writes_a_card() {
         community_id,
         MessagePermission::MiniApp,
     );
-    let service = set_mini_app_service(env, canister_ids, *controller);
     let chat = Chat::Channel(community_id, channel_id);
     let message_id = random_from_u128();
-    let response = send(env, bot_principal, local_user_index, chat, message_id, card());
+    let response = post_card(env, service, bot_principal, local_user_index, chat, None, message_id, card());
     let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
-        panic!("'bot_send_message' error: {response:?}");
+        panic!("'send_mini_app_message' error: {response:?}");
     };
     // Once the LocalUserIndex knows the service, so the refusals below aren't for want of one. A turn
     // before the game's started is refused, but by the card, not the LocalUserIndex.
@@ -394,8 +407,19 @@ fn only_the_mini_app_service_writes_a_card() {
     );
 
     let update = started(vec![member.user_id], Vec::new());
+    let token = post_token(
+        env,
+        bot_principal,
+        local_user_index,
+        BotChatContext::Autonomous(chat),
+        None,
+        Some(random_from_u128()),
+    );
     for caller in [bot_principal, owner.principal, member.principal] {
         let error = call_update_mini_app(env, caller, local_user_index, chat, None, message_id, update.clone()).unwrap_err();
+        assert_eq!(error.error_code, ErrorCode::CanisterRejectedMessage, "{error:?}");
+        // Nor does anyone else post a card, even with the bot's token
+        let error = call_send_mini_app_message(env, caller, local_user_index, &token, card()).unwrap_err();
         assert_eq!(error.error_code, ErrorCode::CanisterRejectedMessage, "{error:?}");
     }
     let card = client::community::happy_path::events_by_index(env, &member, community_id, channel_id, vec![sent.event_index]);
@@ -463,24 +487,18 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
     let thread = Some(root.message_index);
     let post = |env: &mut PocketIc| {
         let message_id = random_from_u128();
-        let response = client::local_user_index::bot_send_message(
+        let response = post_card(
             env,
+            service,
             bot_principal,
             local_user_index,
-            &local_user_index_canister::bot_send_message::Args {
-                chat_context: BotChatContext::Autonomous(chat),
-                thread,
-                message_id: Some(message_id),
-                replies_to: None,
-                content: BotMessageContent::MiniApp(card()),
-                block_level_markdown: false,
-                finalised: true,
-                og_previews: None,
-                bridged_from: None,
-            },
+            chat,
+            thread,
+            message_id,
+            card(),
         );
         let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
-            panic!("'bot_send_message' error: {response:?}");
+            panic!("'send_mini_app_message' error: {response:?}");
         };
         (message_id, sent.event_index)
     };
@@ -772,10 +790,10 @@ fn a_bot_gets_a_token_for_the_mini_app_service() {
     );
 }
 
-// The bot registers its game with the MiniApp service with the token posting the card gives it: which
-// game it is, its settings, and where the service sends join requests
+// The token fixes the card's message id, so posting it twice posts one card, and a bot which got no
+// answer posts it again. The bot chooses the id, unless a chat command's token fixes it.
 #[test]
-fn posting_a_card_gives_the_bot_its_games_registration() {
+fn a_bots_post_token_posts_its_card_once() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -786,10 +804,11 @@ fn posting_a_card_gives_the_bot_its_games_registration() {
 
     let Setup {
         owner,
+        member,
         community_id,
         channel_id,
         local_user_index,
-        ..
+        service,
     } = setup(env, canister_ids, *controller);
     let (bot_id, bot_principal) = install_bot(
         env,
@@ -802,16 +821,15 @@ fn posting_a_card_gives_the_bot_its_games_registration() {
     let chat = Chat::Channel(community_id, channel_id);
     let message_id = random_from_u128();
 
-    let response = send(env, bot_principal, local_user_index, chat, message_id, card());
-    let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
-        panic!("'bot_send_message' error: {response:?}");
-    };
-    let claims: MiniAppRegistrationClaims = verify(
+    let token = post_token(
         env,
-        canister_ids,
-        &sent.mini_app_registration.unwrap(),
-        CLAIM_TYPE_MINI_APP_REGISTRATION,
+        bot_principal,
+        local_user_index,
+        BotChatContext::Autonomous(chat),
+        None,
+        Some(message_id),
     );
+    let claims: MiniAppPostClaims = verify(env, canister_ids, &token, CLAIM_TYPE_MINI_APP_POST);
     assert_eq!(claims.bot, bot_id);
     assert_eq!(claims.bot_endpoint, "https://my.bot.xyz/");
     assert_eq!(claims.bot_api_gateway, local_user_index);
@@ -823,8 +841,281 @@ fn posting_a_card_gives_the_bot_its_games_registration() {
                 message_id,
             }
     );
-    assert_eq!(claims.max_players, Some(4));
-    assert!(claims.spectators);
+    assert!(matches!(claims.initiator, BotInitiator::Autonomous));
+
+    // The bot chooses an autonomous card's message id: a query can't pick one afresh each time
+    let response = client::local_user_index::bot_mini_app_post_token(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_mini_app_post_token::Args {
+            chat_context: BotChatContext::Autonomous(chat),
+            channel_id: None,
+            thread: None,
+            message_id: None,
+        },
+    );
+    assert!(
+        matches!(&response, local_user_index_canister::bot_mini_app_post_token::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "Expected InvalidRequest: {response:?}"
+    );
+
+    let response = post_with_token(env, service, local_user_index, &token, card());
+    let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
+        panic!("'send_mini_app_message' error: {response:?}");
+    };
+    assert_eq!(sent.message_id, message_id);
+    // Posting again, as the service does when its first try went unanswered, gives the card the chat
+    // holds, not a second card
+    let response = post_with_token(env, service, local_user_index, &token, card());
+    let local_user_index_canister::bot_send_message::Response::Success(again) = response else {
+        panic!("'send_mini_app_message' error: {response:?}");
+    };
+    assert_eq!((again.message_id, again.event_index), (sent.message_id, sent.event_index));
+    assert_eq!(
+        card_text(env, &member, community_id, channel_id, sent.event_index),
+        card().text
+    );
+    // Any other message at the card's id is taken
+    let taken = random_from_u128();
+    client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, "Taken", Some(taken));
+    let token = post_token(
+        env,
+        bot_principal,
+        local_user_index,
+        BotChatContext::Autonomous(chat),
+        None,
+        Some(taken),
+    );
+    let response = post_with_token(env, service, local_user_index, &token, card());
+    assert!(
+        matches!(&response, local_user_index_canister::bot_send_message::Response::Error(e) if e.matches_code(OCErrorCode::MessageIdAlreadyExists)),
+        "Expected MessageIdAlreadyExists: {response:?}"
+    );
+
+    // Only a bot gets one, and never for a direct chat
+    let response = client::local_user_index::bot_mini_app_post_token(
+        env,
+        member.principal,
+        local_user_index,
+        &local_user_index_canister::bot_mini_app_post_token::Args {
+            chat_context: BotChatContext::Autonomous(chat),
+            channel_id: None,
+            thread: None,
+            message_id: None,
+        },
+    );
+    assert!(
+        matches!(&response, local_user_index_canister::bot_mini_app_post_token::Response::Error(e) if e.matches_code(OCErrorCode::BotNotAuthenticated)),
+        "Expected BotNotAuthenticated: {response:?}"
+    );
+    let response = client::local_user_index::bot_mini_app_post_token(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_mini_app_post_token::Args {
+            chat_context: BotChatContext::Autonomous(Chat::Direct(owner.user_id.into())),
+            channel_id: None,
+            thread: None,
+            message_id: Some(random_from_u128()),
+        },
+    );
+    assert!(
+        matches!(&response, local_user_index_canister::bot_mini_app_post_token::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "Expected InvalidRequest: {response:?}"
+    );
+
+    // A token lasts an hour
+    let token = post_token(
+        env,
+        bot_principal,
+        local_user_index,
+        BotChatContext::Autonomous(chat),
+        None,
+        Some(random_from_u128()),
+    );
+    env.advance_time(Duration::from_secs(61 * 60));
+    env.tick();
+    let response = post_with_token(env, service, local_user_index, &token, card());
+    assert!(
+        matches!(&response, local_user_index_canister::bot_send_message::Response::Error(e) if e.matches_code(OCErrorCode::Expired)),
+        "Expected Expired: {response:?}"
+    );
+}
+
+// A member's `/uno` is answered with a card at the command's message id, by the member's leave: the
+// command's token fixes the id, and the card holds the command. The card can be posted for as long as
+// the command can be answered.
+#[test]
+fn a_card_answers_a_members_command() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let Setup {
+        owner,
+        member,
+        community_id,
+        channel_id,
+        local_user_index,
+        service,
+    } = setup(env, canister_ids, *controller);
+    let command_name = random_string();
+    let mut definition = default_bot_definition(command_name.clone());
+    definition.commands[0].permissions =
+        BotPermissions::default().with_message(&HashSet::from_iter([MessagePermission::MiniApp]));
+    // A command in the community's scope: message permissions aren't granted there, so it asks for none
+    let community_command_name = random_string();
+    let mut community_command = definition.commands[0].clone();
+    community_command.name = community_command_name.clone();
+    community_command.permissions = BotPermissions::default();
+    definition.commands.push(community_command);
+    let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        random_string(),
+        "https://my.bot.xyz/".to_string(),
+        definition,
+    );
+    let permissions = BotPermissions::default().with_message(&HashSet::from_iter([MessagePermission::MiniApp]));
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Community(community_id),
+        bot_id,
+        permissions,
+        None,
+    );
+    env.advance_time(Duration::from_millis(1000));
+    env.tick();
+
+    let chat = Chat::Channel(community_id, channel_id);
+    let message_id = random_from_u128();
+    let response = client::local_user_index::access_token_v2(
+        env,
+        member.principal,
+        local_user_index,
+        &access_token_v2::Args::BotActionByCommand(access_token_v2::BotActionByCommandArgs {
+            bot_id,
+            command: access_token_v2::BotCommandInitial {
+                name: command_name.clone(),
+                args: Vec::new(),
+                meta: None,
+            },
+            scope: BotActionScope::Chat(BotActionChatDetails {
+                chat,
+                thread: None,
+                message_id,
+                user_message_id: None,
+            }),
+        }),
+    );
+    let access_token_v2::Response::Success(command_token) = response else {
+        panic!("'access_token_v2' error: {response:?}");
+    };
+
+    // Another message id is refused, as the command's is fixed
+    let response = client::local_user_index::bot_mini_app_post_token(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_mini_app_post_token::Args {
+            chat_context: BotChatContext::Command(command_token.clone()),
+            channel_id: None,
+            thread: None,
+            message_id: Some(random_from_u128()),
+        },
+    );
+    assert!(
+        matches!(&response, local_user_index_canister::bot_mini_app_post_token::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "Expected InvalidRequest: {response:?}"
+    );
+
+    let token = post_token(
+        env,
+        bot_principal,
+        local_user_index,
+        BotChatContext::Command(command_token),
+        None,
+        None,
+    );
+    let claims: MiniAppPostClaims =
+        verify_expiring(env, canister_ids, &token, CLAIM_TYPE_MINI_APP_POST, COMMAND_TOKEN_VALIDITY);
+    assert_eq!(claims.game.message_id, message_id);
+    assert!(matches!(&claims.initiator, BotInitiator::Command(command) if command.initiator == member.user_id));
+
+    let response = post_with_token(env, service, local_user_index, &token, card());
+    let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
+        panic!("'send_mini_app_message' error: {response:?}");
+    };
+    assert_eq!(sent.message_id, message_id);
+    tick_many(env, 3);
+    let events = client::community::happy_path::events_by_index(env, &member, community_id, channel_id, vec![sent.event_index]);
+    let ChatEvent::Message(message) = &events.events[0].event else {
+        panic!("Expected a message: {:?}", events.events[0].event);
+    };
+    assert_eq!(message.sender, bot_id);
+    assert!(
+        matches!(message.bot_context(), Some(context) if context.command.as_ref().is_some_and(|c| c.initiator == member.user_id)),
+        "{:?}",
+        message.bot_context()
+    );
+
+    // A community command's card goes in the channel the bot names, with a message id the bot chooses
+    let response = client::local_user_index::access_token_v2(
+        env,
+        member.principal,
+        local_user_index,
+        &access_token_v2::Args::BotActionByCommand(access_token_v2::BotActionByCommandArgs {
+            bot_id,
+            command: access_token_v2::BotCommandInitial {
+                name: community_command_name,
+                args: Vec::new(),
+                meta: None,
+            },
+            scope: BotActionScope::Community(BotActionCommunityDetails { community_id }),
+        }),
+    );
+    let access_token_v2::Response::Success(community_token) = response else {
+        panic!("'access_token_v2' error: {response:?}");
+    };
+    let community_args = |message_id| local_user_index_canister::bot_mini_app_post_token::Args {
+        chat_context: BotChatContext::Command(community_token.clone()),
+        channel_id: Some(channel_id),
+        thread: None,
+        message_id,
+    };
+    let response =
+        client::local_user_index::bot_mini_app_post_token(env, bot_principal, local_user_index, &community_args(None));
+    assert!(
+        matches!(&response, local_user_index_canister::bot_mini_app_post_token::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "Expected InvalidRequest: {response:?}"
+    );
+    let message_id = random_from_u128();
+    let response = client::local_user_index::bot_mini_app_post_token(
+        env,
+        bot_principal,
+        local_user_index,
+        &community_args(Some(message_id)),
+    );
+    let local_user_index_canister::bot_mini_app_post_token::Response::Success(token) = response else {
+        panic!("'bot_mini_app_post_token' error: {response:?}");
+    };
+    let claims: MiniAppPostClaims =
+        verify_expiring(env, canister_ids, &token, CLAIM_TYPE_MINI_APP_POST, COMMAND_TOKEN_VALIDITY);
+    assert_eq!(claims.game.chat, chat);
+    assert_eq!(claims.game.message_id, message_id);
+    let response = post_with_token(env, service, local_user_index, &token, card());
+    let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
+        panic!("'send_mini_app_message' error: {response:?}");
+    };
+    assert_eq!(sent.message_id, message_id);
 }
 
 struct Setup {
@@ -833,6 +1124,8 @@ struct Setup {
     community_id: CommunityId,
     channel_id: ChannelId,
     local_user_index: CanisterId,
+    // The MiniApp service's principal, which the LocalUserIndex learns from the UserIndex
+    service: Principal,
 }
 
 fn setup(env: &mut PocketIc, canister_ids: &crate::CanisterIds, controller: Principal) -> Setup {
@@ -844,12 +1137,14 @@ fn setup(env: &mut PocketIc, canister_ids: &crate::CanisterIds, controller: Prin
     let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
     client::community::happy_path::join_channel(env, member.principal, community_id, channel_id);
     let local_user_index = canister_ids.local_user_index(env, community_id);
+    let service = set_mini_app_service(env, canister_ids, controller);
     Setup {
         owner,
         member,
         community_id,
         channel_id,
         local_user_index,
+        service,
     }
 }
 
@@ -896,30 +1191,99 @@ fn install_bot(
     (bot_id, bot_principal)
 }
 
-fn send(
+// The bot gets its post token, with the message id it chose, and the MiniApp service posts the card
+// with it
+#[expect(clippy::too_many_arguments)]
+fn post_card(
     env: &mut PocketIc,
+    service: Principal,
     bot_principal: Principal,
     local_user_index: CanisterId,
     chat: Chat,
+    thread: Option<MessageIndex>,
     message_id: MessageId,
     content: MiniAppContent,
 ) -> local_user_index_canister::bot_send_message::Response {
-    client::local_user_index::bot_send_message(
+    let token = post_token(
         env,
         bot_principal,
         local_user_index,
-        &local_user_index_canister::bot_send_message::Args {
-            chat_context: BotChatContext::Autonomous(chat),
-            thread: None,
-            message_id: Some(message_id),
-            replies_to: None,
-            content: BotMessageContent::MiniApp(content),
-            block_level_markdown: false,
-            finalised: true,
-            og_previews: None,
-            bridged_from: None,
+        BotChatContext::Autonomous(chat),
+        thread,
+        Some(message_id),
+    );
+    post_with_token(env, service, local_user_index, &token, content)
+}
+
+fn post_token(
+    env: &mut PocketIc,
+    bot_principal: Principal,
+    local_user_index: CanisterId,
+    chat_context: BotChatContext,
+    thread: Option<MessageIndex>,
+    message_id: Option<MessageId>,
+) -> String {
+    let response = client::local_user_index::bot_mini_app_post_token(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_mini_app_post_token::Args {
+            chat_context,
+            channel_id: None,
+            thread,
+            message_id,
         },
+    );
+    match response {
+        local_user_index_canister::bot_mini_app_post_token::Response::Success(token) => token,
+        response => panic!("'bot_mini_app_post_token' error: {response:?}"),
+    }
+}
+
+// The MiniApp service posting a card, once the LocalUserIndex has learned its principal from the
+// UserIndex, which takes a few rounds after it's set
+fn post_with_token(
+    env: &mut PocketIc,
+    service: Principal,
+    local_user_index: CanisterId,
+    token: &str,
+    content: MiniAppContent,
+) -> local_user_index_canister::bot_send_message::Response {
+    for _ in 0..20 {
+        match call_send_mini_app_message(env, service, local_user_index, token, content.clone()) {
+            Ok(response) => return response,
+            Err(error) if error.error_code == ErrorCode::CanisterRejectedMessage => {
+                env.advance_time(Duration::from_millis(100));
+                env.tick();
+            }
+            Err(error) => panic!("'send_mini_app_message' error: {error:?}"),
+        }
+    }
+    panic!("The LocalUserIndex never learned the MiniApp service's principal");
+}
+
+// Raw, so a refused caller's rejection can be checked. The LocalUserIndex's inspect_message refuses
+// anyone but the service.
+fn call_send_mini_app_message(
+    env: &mut PocketIc,
+    caller: Principal,
+    local_user_index: CanisterId,
+    token: &str,
+    content: MiniAppContent,
+) -> Result<local_user_index_canister::bot_send_message::Response, RejectResponse> {
+    let args = local_user_index_canister::send_mini_app_message::Args {
+        token: token.to_string(),
+        content,
+        block_level_markdown: false,
+        replies_to: None,
+    };
+    env.update_call(
+        local_user_index,
+        caller,
+        "send_mini_app_message",
+        candid::encode_one(&args).unwrap(),
     )
+    .map(|bytes| candid::decode_one(&bytes).unwrap())
 }
 
 // With an image, as if the bot had uploaded one. Nothing here reads the file itself.
@@ -1043,12 +1407,23 @@ fn card_text(env: &PocketIc, user: &User, community_id: CommunityId, channel_id:
 
 // Signed by OpenChat, with the claim type expected, for an hour
 fn verify<T: DeserializeOwned>(env: &mut PocketIc, canister_ids: &crate::CanisterIds, token: &str, claim_type: &str) -> T {
+    verify_expiring(env, canister_ids, token, claim_type, 60 * 60 * 1000)
+}
+
+// Signed by OpenChat, with the claim type expected, for `validity`
+fn verify_expiring<T: DeserializeOwned>(
+    env: &mut PocketIc,
+    canister_ids: &crate::CanisterIds,
+    token: &str,
+    claim_type: &str,
+    validity: Milliseconds,
+) -> T {
     let public_key = client::user_index::happy_path::public_key(env, canister_ids.user_index);
     let claims: Claims<T> = verify_and_decode(token, &public_key, claim_type).unwrap();
     let now = now_millis(env);
     assert!(
-        claims.exp_ms() > now + 59 * 60 * 1000 && claims.exp_ms() <= now + 60 * 60 * 1000,
-        "Expires at {}, now {now}",
+        claims.exp_ms() > now + validity - 60 * 1000 && claims.exp_ms() <= now + validity,
+        "Expires at {}, now {now}, validity {validity}",
         claims.exp_ms()
     );
     claims.into_custom()

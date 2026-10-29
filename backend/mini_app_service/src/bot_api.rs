@@ -1,8 +1,8 @@
-// The bots' HTTPS API: registering a game, and updating it. Every call carries the bot's token from
-// the LocalUserIndex.
+// The bots' HTTPS API: posting a game's card, and updating the game. Every call carries the bot's token
+// from the LocalUserIndex.
 use crate::app::{ApiError, App};
 use crate::now_millis;
-use crate::protocol::{RegisterArgs, UpdateArgs};
+use crate::protocol::{PostArgs, PostResponse, UpdateArgs};
 use axum::Json;
 use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode, header};
@@ -14,9 +14,9 @@ use types::UserId;
 // A state, with every player's part, is at most this big
 pub const MAX_UPDATE_BYTES: usize = 64 * 1024;
 
-pub async fn register(State(app): State<Arc<App>>, headers: HeaderMap, Json(args): Json<RegisterArgs>) -> Response {
+pub async fn post(State(app): State<Arc<App>>, headers: HeaderMap, Json(args): Json<PostArgs>) -> Response {
     let result = match bot(&app, &headers) {
-        Ok(bot) => app.register(bot, &args.registration).await,
+        Ok(bot) => app.post(bot, args).await.map(|game| json!(PostResponse { game })),
         Err(error) => Err(error),
     };
     reply(result)
@@ -24,7 +24,7 @@ pub async fn register(State(app): State<Arc<App>>, headers: HeaderMap, Json(args
 
 pub async fn update(State(app): State<Arc<App>>, headers: HeaderMap, Json(args): Json<UpdateArgs>) -> Response {
     let result = match bot(&app, &headers) {
-        Ok(bot) => app.update(bot, args).await,
+        Ok(bot) => app.update(bot, args).await.map(|()| json!({})),
         Err(error) => Err(error),
     };
     reply(result)
@@ -47,9 +47,9 @@ fn bot(app: &App, headers: &HeaderMap) -> Result<UserId, ApiError> {
         })
 }
 
-fn reply(result: Result<(), ApiError>) -> Response {
+fn reply(result: Result<serde_json::Value, ApiError>) -> Response {
     match result {
-        Ok(()) => Json(json!({})).into_response(),
+        Ok(body) => Json(body).into_response(),
         Err(error) => (
             StatusCode::from_u16(error.status).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
             Json(json!({ "error": error.message })),

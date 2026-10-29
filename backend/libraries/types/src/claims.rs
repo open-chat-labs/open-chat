@@ -1,6 +1,6 @@
 use crate::{
-    BlobReference, BotActionScope, BotCommand, BotPermissions, CanisterId, Chat, MessageId, MessageIndex, NcaPriority, UserId,
-    VideoCallType,
+    BlobReference, BotActionScope, BotCommand, BotInitiator, BotPermissions, CanisterId, Chat, MessageId, MessageIndex,
+    NcaPriority, UserId, VideoCallType,
 };
 use serde::{Deserialize, Serialize};
 
@@ -26,8 +26,9 @@ pub const CLAIM_TYPE_BOT_ACTION_BY_COMMAND: &str = "BotActionByCommand";
 // WebSocket, as its user, to follow the chat's game cards and to watch its games, and, from a member,
 // to join one.
 pub const CLAIM_TYPE_MINI_APP_CHAT: &str = "MiniAppChat";
-// A game a bot has just posted, which the bot passes to the service to register it
-pub const CLAIM_TYPE_MINI_APP_REGISTRATION: &str = "MiniAppRegistration";
+// A bot's permission to post one card, which it passes to the service, and the service to the
+// LocalUserIndex, which posts the card as the bot
+pub const CLAIM_TYPE_MINI_APP_POST: &str = "MiniAppPost";
 // Which bot is calling the service
 pub const CLAIM_TYPE_MINI_APP_BOT: &str = "MiniAppBot";
 // Signed by the service: a user is a player in a game. The bot's server takes it with the player's
@@ -37,6 +38,8 @@ pub const CLAIM_TYPE_MINI_APP_PLAYER: &str = "MiniAppPlayer";
 pub const CLAIM_TYPE_MINI_APP_JOIN: &str = "MiniAppJoin";
 // Signed by the service: a player has left a game
 pub const CLAIM_TYPE_MINI_APP_LEAVE: &str = "MiniAppLeave";
+// Signed by the service: a player asks to start a game, which the bot does, with its players, or refuses
+pub const CLAIM_TYPE_MINI_APP_START: &str = "MiniAppStart";
 pub const CLAIM_TYPE_NCA_VAULT_EXPORT: &str = "NcaVaultExport";
 pub const CLAIM_TYPE_NCA_SUBMITTER: &str = "NcaSubmitter";
 
@@ -183,17 +186,17 @@ pub struct MiniAppChatClaims {
     pub member: bool,
 }
 
-// What the service needs to know of a game, from when the bot posted it
-#[derive(Serialize, Deserialize)]
-pub struct MiniAppRegistrationClaims {
+// One card a bot may post, resolved by the LocalUserIndex as it would for `bot_send_message`: the
+// chat, thread and message id, and who asked for it. The message id is fixed here, so posting the
+// same token twice posts one card. The service keeps the endpoint to call the bot at, and the
+// LocalUserIndex to post and write the card through.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MiniAppPostClaims {
     pub bot: UserId,
-    // Where the service sends join requests, as the bot was registered when it posted the game
     pub bot_endpoint: String,
-    // The LocalUserIndex the service writes the game's card through
     pub bot_api_gateway: CanisterId,
     pub game: MiniAppGame,
-    pub max_players: Option<u32>,
-    pub spectators: bool,
+    pub initiator: BotInitiator,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -201,7 +204,8 @@ pub struct MiniAppBotClaims {
     pub bot: UserId,
 }
 
-// A player token, and the service's calls telling a bot that a user asks to join or has left
+// A player token, and the service's calls telling a bot that a user asks to join, has left, or asks to
+// start the game
 #[derive(Serialize, Deserialize)]
 pub struct MiniAppPlayerClaims {
     pub bot: UserId,

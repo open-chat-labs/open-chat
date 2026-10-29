@@ -66,9 +66,9 @@ async fn serve(socket: WebSocket, app: Arc<App>) {
     while let Ok(Some(Ok(message))) = tokio::time::timeout(READ_TIMEOUT, stream.next()).await {
         match message {
             Message::Text(text) => match serde_json::from_str::<ClientMessage>(text.as_str()) {
-                // A join or a leave waits on the bot, so holds up nothing else. The rest are handled
-                // in order, so eg. an open then a close leave the game closed.
-                Ok(message @ (ClientMessage::Join { .. } | ClientMessage::Leave { .. })) => {
+                // A join, a leave or a start waits on the bot, so holds up nothing else. The rest are
+                // handled in order, so eg. an open then a close leave the game closed.
+                Ok(message @ (ClientMessage::Join { .. } | ClientMessage::Leave { .. } | ClientMessage::Start { .. })) => {
                     let app = app.clone();
                     tokio::spawn(async move { app.handle(id, user_id, message).await });
                 }

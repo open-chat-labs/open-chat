@@ -7,8 +7,8 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 use types::{Error, MiniAppGame};
 
-// An ended game is remembered for longer than a registration lasts, so a bot registering it again
-// doesn't bring it back
+// An ended game is remembered for longer than a post token lasts, so posting its token again doesn't
+// bring it back
 const ENDED_SECONDS: u64 = 2 * 60 * 60;
 
 #[async_trait]
@@ -17,6 +17,8 @@ pub trait Store: Send + Sync {
     async fn put(&self, game: &Game) -> Result<(), Error>;
     // Forgets the game, remembering it ended
     async fn end(&self, game: &MiniAppGame) -> Result<(), Error>;
+    // Forgets a game whose card was never posted
+    async fn forget(&self, game: &MiniAppGame) -> Result<(), Error>;
     async fn has_ended(&self, game: &MiniAppGame) -> Result<bool, Error>;
     async fn all(&self) -> Result<Vec<MiniAppGame>, Error>;
 }
@@ -73,6 +75,17 @@ impl Store for RedisStore {
         Ok(())
     }
 
+    async fn forget(&self, game: &MiniAppGame) -> Result<(), Error> {
+        let key = key(game);
+        redis::pipe()
+            .atomic()
+            .del(format!("{GAME_PREFIX}{key}"))
+            .srem(GAMES_KEY, &key)
+            .exec_async(&mut self.connection.clone())
+            .await?;
+        Ok(())
+    }
+
     async fn has_ended(&self, game: &MiniAppGame) -> Result<bool, Error> {
         Ok(self.connection.clone().exists(format!("{ENDED_PREFIX}{}", key(game))).await?)
     }
@@ -106,6 +119,11 @@ impl Store for MemoryStore {
     async fn end(&self, game: &MiniAppGame) -> Result<(), Error> {
         self.games.lock().unwrap().remove(game);
         self.ended.lock().unwrap().insert(*game);
+        Ok(())
+    }
+
+    async fn forget(&self, game: &MiniAppGame) -> Result<(), Error> {
+        self.games.lock().unwrap().remove(game);
         Ok(())
     }
 

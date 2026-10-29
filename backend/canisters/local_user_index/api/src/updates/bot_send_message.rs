@@ -36,6 +36,4 @@ pub struct SuccessResult {
     pub message_index: MessageIndex,
     pub timestamp: TimestampMillis,
     pub expires_at: Option<TimestampMillis>,
-    // For a MiniApp card, a token which registers its game with the MiniApp service
-    pub mini_app_registration: Option<String>,
 }
