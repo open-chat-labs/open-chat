@@ -168,7 +168,8 @@ export function tokenActivity(
         const direction = transactionDirection(tx, ctx.me);
         const amount = wholeTokens(tx.amount, token.decimals);
         return {
-            id: tx.id.toString(),
+            // a block index is only unique within its ledger, and All activity lists several
+            id: activityId(token.ledger, tx.id),
             symbol: token.symbol,
             token: token.ledger,
             kind: direction === "own" ? "own" : direction === "out" ? "send" : "receive",
@@ -271,6 +272,22 @@ export function sendContacts(users: UserSummary[]): SendContact[] {
 
 /** The ledgers Send can open on for a saved address: ICP's, and BTC's and ckSOL's when the app has them. */
 export type RecipientLedgers = { icp: string; btc?: string; sol?: string };
+
+/** An activity row's id: its ledger and the transaction's block index there. */
+export function activityId(ledger: string, blockIndex: bigint): string {
+    return `${ledger}:${blockIndex}`;
+}
+
+/** The ledger and block index an activity row's id names (`activityId`). */
+export function parseActivityId(id: string): { ledger: string; blockIndex: bigint } | undefined {
+    const at = id.lastIndexOf(":");
+    if (at <= 0) return undefined;
+    try {
+        return { ledger: id.slice(0, at), blockIndex: BigInt(id.slice(at + 1)) };
+    } catch {
+        return undefined;
+    }
+}
 
 /**
  * The address book as WalletRecipients lists it: each saved account, keyed by its account (the

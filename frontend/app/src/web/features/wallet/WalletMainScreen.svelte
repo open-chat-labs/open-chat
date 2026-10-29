@@ -79,6 +79,7 @@
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import {
         addressNetworkName,
+        parseActivityId,
         receiveNetworks,
         searchContacts,
         sendContacts,
@@ -162,7 +163,8 @@
     $effect(() => {
         if (ledger === undefined || token === undefined || !indexed) return;
         const index = token.index;
-        const held = balance;
+        // before the balances are in, the lookup says 0: that isn't a balance to fetch against
+        const held = balancesKnown ? balance : undefined;
         untrack(() => histories.load(ledger, index, held));
     });
     const shown = $derived(ledger === undefined ? undefined : histories.get(ledger));
@@ -176,7 +178,7 @@
             .join(","),
     );
     $effect(() => {
-        if (region.view !== "all" || heldIndexed === "") return;
+        if (region.view !== "all" || heldIndexed === "" || !balancesKnown) return;
         const tokens = heldIndexed.split(",").map((t) => t.split(" "));
         untrack(() => {
             for (const [ledger, index, held] of tokens) histories.load(ledger, index, BigInt(held));
@@ -229,8 +231,10 @@
 
     // a transaction opens on the token's explorer
     function openActivity(id: string): void {
-        const format = token?.transactionUrlFormat;
-        if (format) window.open(accountTransactionUrl(format, BigInt(id)), "_blank");
+        const row = parseActivityId(id);
+        if (row === undefined) return;
+        const format = $cryptoLookup.get(row.ledger)?.transactionUrlFormat;
+        if (format) window.open(accountTransactionUrl(format, row.blockIndex), "_blank");
     }
 
     // WalletMain's own moves go to their URL

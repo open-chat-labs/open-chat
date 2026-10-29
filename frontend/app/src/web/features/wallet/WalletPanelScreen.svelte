@@ -11,6 +11,7 @@
     import {
         conversionLedgers,
         exchangeRatesLookupStore,
+        exchangeRatesTriedStore,
         routeStore,
         walletConfigStore,
         walletTokensSorted,
@@ -48,8 +49,8 @@
     onMount(() => client.refreshSwappableTokens());
 
     // each token's balance, once as the list first shows it, a recent one accepted
-    // (the total shows a small spinner while those first ones are coming, and until the exchange
-    // rates it's priced with are in)
+    // (the total shows a small spinner while those first ones are coming, and until the client's
+    // first try at the exchange rates it's priced with has finished, whether or not they came)
     const refreshed = new Set<string>();
     const loadingBalances = new SvelteSet<string>();
     $effect(() => {
@@ -99,7 +100,8 @@
     balanceHidden={$hideTokenBalances}
     onBalanceHiddenChange={(hidden) => hideTokenBalances.set(hidden)}
     onRefresh={refresh}
-    balancesLoading={loadingBalances.size > 0 || $exchangeRatesLookupStore.size === 0}
+    balancesLoading={loadingBalances.size > 0}
+    ratesLoading={!$exchangeRatesTriedStore}
     onRemoveToken={(ledger) => client.removeTokenFromWallet(ledger)}
     onToken={(ledger) => navigate(`/wallet/${ledger}`)}
     selectedToken={page?.view === "token" ? page.ledger : undefined}
