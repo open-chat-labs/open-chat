@@ -56,6 +56,8 @@
     loading?: boolean;
     /** The balances are still loading: a small spinner by the total's label, and no empty wallet's layout yet. */
     balancesLoading?: boolean;
+    /** The prices the total is worked out with are still loading: the same spinner, the layout as the balances say. */
+    ratesLoading?: boolean;
     /** Wallet settings when a host owns them (currency, which tokens are listed). */
     settings?: WalletPanelSettings;
     onSettingsChange?: (settings: WalletPanelSettings) => void;
@@ -94,6 +96,7 @@
     tokens,
     loading = false,
     balancesLoading = false,
+    ratesLoading = false,
     settings = {},
     onSettingsChange,
     onRefresh,
@@ -421,7 +424,7 @@
       {spinning}
       {allocation}
       {empty}
-      loading={balancesLoading}
+      loading={balancesLoading || ratesLoading}
       onToggleVeil={() => (onBalanceHiddenChange ? onBalanceHiddenChange(!veiled) : (localVeil = !veiled))}
       onRefresh={onRefresh ? () => refresh() : undefined}
       onSend={() => onAction?.('send')}

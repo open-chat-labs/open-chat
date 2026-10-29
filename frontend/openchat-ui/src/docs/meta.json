@@ -18157,6 +18157,17 @@
         "doc": "The balances are still loading: a small spinner by the total's label, and no empty wallet's layout yet."
       },
       {
+        "name": "ratesLoading",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The prices the total is worked out with are still loading: the same spinner, the layout as the balances say."
+      },
+      {
         "name": "settings",
         "type": "WalletPanelSettings",
         "default": null,

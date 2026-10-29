@@ -441,6 +441,7 @@ import {
     eventListScrollTop,
     eventsStore,
     exchangeRatesLookupStore,
+    exchangeRatesTriedStore,
     cashtagCoinsStore,
     priceSourcesStore,
     expiredServerEventRanges,
@@ -10444,7 +10445,8 @@ export class OpenChat {
                     priceSourcesStore.set(new Map(Object.entries(prices.sources)));
                 }
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(() => exchangeRatesTriedStore.set(true));
     }
 
     // A token's or coin's prices over the last 7 days, for its price chart. Undefined if they couldn't

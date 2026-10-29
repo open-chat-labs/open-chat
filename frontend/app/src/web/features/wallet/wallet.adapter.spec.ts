@@ -14,6 +14,8 @@ import {
     walletTokens,
     walletRecipients,
     addressNetworkName,
+    activityId,
+    parseActivityId,
 } from "./wallet.adapter";
 
 function token(over: Partial<EnhancedTokenDetails> = {}): EnhancedTokenDetails {
@@ -114,7 +116,7 @@ describe("a token's activity", () => {
         );
         expect(rows.map((r) => r.kind)).toEqual(["own", "send", "receive"]);
         expect(rows[1]).toMatchObject({
-            id: "2",
+            id: "chat-ledger:2",
             token: "chat-ledger",
             party: "Exchange",
             amount: 2,
@@ -313,5 +315,20 @@ describe("Send's user search", () => {
         expect(searchContacts(contacts, "@bob").map((c) => c.userId)).toEqual(["u2"]);
         expect(searchContacts(contacts, "smith").map((c) => c.userId)).toEqual(["u2"]);
         expect(searchContacts(contacts, "  ")).toEqual([]);
+    });
+});
+
+describe("activity ids", () => {
+    test("a row's id holds its ledger, as a block index is only unique within one", () => {
+        expect(activityId("ryjl3-tyaaa-aaaaa-aaaba-cai", 42n)).toBe(
+            "ryjl3-tyaaa-aaaaa-aaaba-cai:42",
+        );
+        expect(parseActivityId("ryjl3-tyaaa-aaaaa-aaaba-cai:42")).toEqual({
+            ledger: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+            blockIndex: 42n,
+        });
+        expect(activityId("a", 1n)).not.toBe(activityId("b", 1n));
+        expect(parseActivityId("42")).toBeUndefined();
+        expect(parseActivityId("ledger:x")).toBeUndefined();
     });
 });
