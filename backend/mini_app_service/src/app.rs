@@ -1,11 +1,11 @@
 // What the service does: the website's requests over its WebSocket, the bots' calls, and keeping the
 // cards in the chats up to date
 use crate::bots::{BotClient, JoinOutcome, StartOutcome};
-use crate::cards::{CardWriter, WriteError};
+use crate::cards::{CardWriter, PostError, WriteError};
 use crate::games::{BotUpdate, Game, UpdateError};
 use crate::hub::{ConnectionId, Hub};
 use crate::now_millis;
-use crate::protocol::{ClientMessage, GameStatus, Refusal, RequestId, Role, ServerMessage, UpdateArgs};
+use crate::protocol::{ClientMessage, GameStatus, PostArgs, Refusal, RequestId, Role, ServerMessage, UpdateArgs};
 use crate::store::Store;
 use crate::tokens::Tokens;
 use std::collections::HashSet;
@@ -125,7 +125,7 @@ impl App {
         self.hub.follow(id, &games);
         self.hub.send(id, ServerMessage::Ok { id: request });
         for game in games {
-            if let Ok(Some(found)) = self.store.get(&game).await {
+            if let Ok(Some(found)) = self.known(&game).await {
                 self.hub.send(id, ServerMessage::Card(found.card(self.hub.watching(&game))));
             }
         }
@@ -142,7 +142,7 @@ impl App {
             return refused(request, Refusal::NotMember);
         }
 
-        let found = match self.store.get(&game).await {
+        let found = match self.known(&game).await {
             Ok(Some(found)) => found,
             Ok(None) => return refused(request, Refusal::UnknownGame),
             Err(error) => return unavailable(request, error),
@@ -161,7 +161,7 @@ impl App {
             return self.joined(request, &found, user_id);
         }
 
-        let mut latest = match self.store.get(&game).await {
+        let mut latest = match self.known(&game).await {
             Ok(Some(latest)) => latest,
             Ok(None) => {
                 self.tell_bot_left(found, user_id);
@@ -216,7 +216,7 @@ impl App {
     // them. Their joins then succeed as they finish.
     async fn start(self: &Arc<Self>, user_id: UserId, request: RequestId, game: MiniAppGame) -> ServerMessage {
         let _guard = self.lock(&game).await;
-        let mut found = match self.store.get(&game).await {
+        let mut found = match self.known(&game).await {
             Ok(Some(found)) => found,
             Ok(None) => return refused(request, Refusal::UnknownGame),
             Err(error) => return unavailable(request, error),
@@ -292,7 +292,7 @@ impl App {
         if let Err(reason) = self.chat_claims(chat_token, user_id, &[game]) {
             return self.hub.send(id, refused(request, reason));
         }
-        let found = match self.store.get(&game).await {
+        let found = match self.known(&game).await {
             Ok(Some(found)) => found,
             Ok(None) => return self.hub.send(id, refused(request, Refusal::UnknownGame)),
             Err(error) => return self.hub.send(id, unavailable(request, error)),
@@ -315,7 +315,7 @@ impl App {
             },
         );
         // Read again, so a state pushed, or a join, before the connection was open isn't missed
-        if let Ok(Some(latest)) = self.store.get(&game).await {
+        if let Ok(Some(latest)) = self.known(&game).await {
             if latest.is_player(user_id) != (role == Role::Player) {
                 self.role_changed(&latest, user_id, latest.is_player(user_id));
             } else if let Some(state) = &latest.state {
@@ -328,7 +328,7 @@ impl App {
     }
 
     async fn player_token(&self, user_id: UserId, request: RequestId, game: MiniAppGame) -> ServerMessage {
-        match self.store.get(&game).await {
+        match self.known(&game).await {
             Ok(Some(found)) if found.is_player(user_id) => ServerMessage::PlayerToken {
                 id: request,
                 token: self.tokens.player(found.bot, game, user_id, now_millis()),
@@ -343,7 +343,7 @@ impl App {
     async fn leave(&self, user_id: UserId, request: RequestId, game: MiniAppGame) -> ServerMessage {
         let left = {
             let _guard = self.lock(&game).await;
-            let mut found = match self.store.get(&game).await {
+            let mut found = match self.known(&game).await {
                 Ok(Some(found)) => found,
                 Ok(None) => return refused(request, Refusal::UnknownGame),
                 Err(error) => return unavailable(request, error),
@@ -366,35 +366,89 @@ impl App {
         ServerMessage::Ok { id: request }
     }
 
-    // A bot registering a game it posted, with the token posting it gave it. A game which has ended
-    // stays ended.
-    pub async fn register(&self, bot: UserId, registration: &str) -> Result<(), ApiError> {
+    // A bot posting a card, with its post token. The service posts the card as the bot, through the
+    // LocalUserIndex, so it knows the game from the moment the card exists. The token fixes the card's
+    // message id, so posting it again posts nothing new: the chat refuses the taken id, which counts
+    // as posted. Nothing is held while OpenChat is called.
+    pub async fn post(&self, bot: UserId, args: PostArgs) -> Result<MiniAppGame, ApiError> {
         let now = now_millis();
-        let Some(claims) = self.tokens.registration(registration, now) else {
-            return Err(ApiError::new(400, "Invalid registration"));
+        let Some(claims) = self.tokens.post(&args.token, now) else {
+            return Err(ApiError::new(400, "Invalid post token"));
         };
         if claims.bot != bot {
-            return Err(ApiError::new(403, "Another bot's game"));
+            return Err(ApiError::new(403, "Another bot's token"));
         }
-        let _guard = self.lock(&claims.game).await;
-        if self.store.has_ended(&claims.game).await.map_err(store_error)? {
-            return Ok(());
-        }
-        match self.store.get(&claims.game).await {
-            Ok(Some(_)) => Ok(()),
-            Ok(None) => {
-                info!(%bot, game = ?claims.game, "Game registered");
-                self.store.put(&Game::register(claims, now)).await.map_err(store_error)
+        let game = claims.game;
+        args.card.to_content().map_err(|error| ApiError::new(400, &error))?;
+
+        let pending = {
+            let _guard = self.lock(&game).await;
+            if self.store.has_ended(&game).await.map_err(store_error)? {
+                return Err(ApiError::new(409, "The game has finished"));
             }
-            Err(error) => Err(store_error(error)),
+            match self.store.get(&game).await.map_err(store_error)? {
+                Some(found) if found.is_posted() => return Ok(game),
+                // Posted again before an earlier post was answered, eg. as the service restarted: the
+                // post goes again
+                _ => {
+                    let pending = Game::posting(claims, args, now);
+                    self.store.put(&pending).await.map_err(store_error)?;
+                    pending
+                }
+            }
+        };
+        self.post_pending(&pending).await.map(|()| game)
+    }
+
+    // Sends a pending post to OpenChat. A refused card is forgotten; one OpenChat couldn't take is left
+    // pending, for the bot to post again, or maintenance to.
+    async fn post_pending(&self, pending: &Game) -> Result<(), ApiError> {
+        let game = pending.game;
+        let Some(post) = &pending.pending_post else {
+            return Ok(());
+        };
+        let content = post.card.to_content().map_err(|error| ApiError::new(400, &error))?;
+        let result = self
+            .cards
+            .post(
+                pending.bot_api_gateway,
+                &post.token,
+                content,
+                post.block_level_markdown,
+                post.replies_to,
+            )
+            .await;
+        match result {
+            Ok(()) | Err(PostError::AlreadyPosted) => {
+                info!(bot = %pending.bot, game = ?game, "Card posted");
+                self.change(&game, |found| found.pending_post = None)
+                    .await
+                    .map_err(store_error)
+            }
+            Err(PostError::Refused(error)) => {
+                info!(bot = %pending.bot, game = ?game, error, "OpenChat refused a card");
+                let _guard = self.lock(&game).await;
+                self.store.forget(&game).await.map_err(store_error)?;
+                Err(ApiError::new(400, &format!("OpenChat refused the card: {error}")))
+            }
+            Err(PostError::Failed(error)) => {
+                warn!(bot = %pending.bot, game = ?game, error, "Failed to post a card");
+                Err(ApiError::new(503, "Couldn't reach OpenChat; post the same token again"))
+            }
         }
+    }
+
+    // A game whose card OpenChat has taken. Until then no one can follow, join or open it, nor its bot
+    // update it.
+    async fn known(&self, game: &MiniAppGame) -> Result<Option<Game>, Error> {
+        Ok(self.store.get(game).await?.filter(Game::is_posted))
     }
 
     // A bot's update to one of its games
     pub async fn update(self: &Arc<Self>, bot: UserId, args: UpdateArgs) -> Result<(), ApiError> {
         let game = args.game;
         let _guard = self.lock(&game).await;
-        let mut found = match self.store.get(&game).await {
+        let mut found = match self.known(&game).await {
             Ok(Some(found)) => found,
             Ok(None) => return Err(ApiError::new(404, "Unknown game")),
             Err(error) => return Err(store_error(error)),
@@ -434,9 +488,10 @@ impl App {
         Ok(())
     }
 
-    // Run on starting and then every few minutes: ends the games whose bots haven't updated them for a
-    // day, and writes any card which hasn't caught up with its game, eg. as the service restarted
-    // before writing it
+    // Run on starting and then every few minutes: posts any card still pending, eg. as the service
+    // restarted before OpenChat answered, ends the games whose bots haven't updated them for a day, and
+    // writes any card which hasn't caught up with its game, eg. as the service restarted before writing
+    // it
     pub async fn maintain(self: &Arc<Self>) {
         let now = now_millis();
         let games = match self.store.all().await {
@@ -449,6 +504,19 @@ impl App {
                 let Ok(Some(mut found)) = self.store.get(&game).await else {
                     continue;
                 };
+                if let Some(post) = &found.pending_post {
+                    // Once the token has expired the post can't go, and the bot gets a new token
+                    if self.tokens.post(&post.token, now).is_none() {
+                        info!(game = ?game, "Forgetting a card whose post token expired");
+                        if let Err(error) = self.store.forget(&game).await {
+                            error!(%error, "Failed to forget a game");
+                        }
+                        continue;
+                    }
+                    drop(_guard);
+                    let _ = self.post_pending(&found).await;
+                    continue;
+                }
                 if found.status != GameStatus::Finished && found.last_bot_update < now.saturating_sub(ABANDONED_AFTER) {
                     info!(game = ?game, "Ending an abandoned game");
                     found.abandon();
@@ -680,6 +748,7 @@ fn store_error(error: Error) -> ApiError {
 mod tests {
     use super::*;
     use crate::bots::Started;
+    use crate::protocol::CardContent;
     use crate::protocol::{Card, GameState};
     use crate::store::MemoryStore;
     use crate::tokens::tests::{oc_token, tokens};
@@ -691,8 +760,8 @@ mod tests {
     use tokio::sync::Notify;
     use tokio::sync::mpsc::{Receiver, channel};
     use types::{
-        CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_REGISTRATION, CanisterId, Chat, MiniAppActive, MiniAppContent,
-        MiniAppFinished, MiniAppRegistrationClaims, MiniAppStatus, MiniAppStatusUpdate,
+        BotInitiator, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_POST, CanisterId, Chat, EventIndex, MiniAppActive,
+        MiniAppContent, MiniAppFinished, MiniAppPostClaims, MiniAppStatus, MiniAppStatusUpdate,
     };
 
     const HOUR: Milliseconds = 60 * 60 * 1000;
@@ -740,13 +809,19 @@ mod tests {
         }
     }
 
-    // The card in the chat, which takes or refuses an update as the canister does
+    // The chat, which takes a card once per message id, and then takes or refuses an update as the
+    // canister does
     struct FakeCards {
         card: Mutex<MiniAppContent>,
+        // The tokens cards were posted with
+        posted: Mutex<Vec<String>>,
         written: Mutex<Vec<MiniAppStatusUpdate>>,
         bot_uninstalled: Mutex<bool>,
-        // How many writes fail before they go through
+        // How many posts, and how many writes, fail before they go through
+        post_failures: Mutex<u32>,
         failures: Mutex<u32>,
+        // Why the chat refuses a card, if it does
+        refuse_post: Mutex<Option<String>>,
     }
 
     impl Default for FakeCards {
@@ -759,15 +834,45 @@ mod tests {
                     spectators: true,
                     status: MiniAppStatus::Open,
                 }),
+                posted: Mutex::default(),
                 written: Mutex::default(),
                 bot_uninstalled: Mutex::default(),
+                post_failures: Mutex::default(),
                 failures: Mutex::default(),
+                refuse_post: Mutex::default(),
             }
         }
     }
 
     #[async_trait]
     impl CardWriter for FakeCards {
+        async fn post(
+            &self,
+            _gateway: CanisterId,
+            token: &str,
+            content: MiniAppContent,
+            _block_level_markdown: bool,
+            _replies_to: Option<EventIndex>,
+        ) -> Result<(), PostError> {
+            {
+                let mut failures = self.post_failures.lock().unwrap();
+                if *failures > 0 {
+                    *failures -= 1;
+                    return Err(PostError::Failed("Stopped for an upgrade".to_string()));
+                }
+            }
+            if let Some(error) = self.refuse_post.lock().unwrap().clone() {
+                return Err(PostError::Refused(error));
+            }
+            let mut posted = self.posted.lock().unwrap();
+            if posted.iter().any(|t| t == token) {
+                return Err(PostError::AlreadyPosted);
+            }
+            posted.push(token.to_string());
+            *self.card.lock().unwrap() = content;
+            Ok(())
+        }
+
         async fn write(
             &self,
             _gateway: CanisterId,
@@ -851,27 +956,46 @@ mod tests {
             }
         }
 
-        fn registration(&self, max_players: Option<u32>, spectators: bool) -> String {
+        // The bot's permission to post the test's game, as the LocalUserIndex would sign it
+        fn post_token(&self) -> String {
+            self.post_token_for(user(BOT))
+        }
+
+        fn post_token_for(&self, bot: UserId) -> String {
             oc_token(
                 &self.oc,
-                CLAIM_TYPE_MINI_APP_REGISTRATION,
-                MiniAppRegistrationClaims {
-                    bot: user(BOT),
+                CLAIM_TYPE_MINI_APP_POST,
+                MiniAppPostClaims {
+                    bot,
                     bot_endpoint: "https://uno.example.com".to_string(),
                     bot_api_gateway: Principal::from_slice(&[200]),
                     game: game(),
-                    max_players,
-                    spectators,
+                    initiator: BotInitiator::Autonomous,
                 },
                 now_millis() + HOUR,
             )
         }
 
-        async fn register(&self, max_players: Option<u32>, spectators: bool) {
-            self.app
-                .register(user(BOT), &self.registration(max_players, spectators))
-                .await
-                .unwrap();
+        fn post_args(&self, max_players: Option<u32>, spectators: bool) -> PostArgs {
+            PostArgs {
+                token: self.post_token(),
+                card: CardContent {
+                    text: "Uno".to_string(),
+                    image: None,
+                    max_players,
+                    spectators,
+                },
+                block_level_markdown: false,
+                replies_to: None,
+            }
+        }
+
+        // The bot posts the test's game, and the chat takes the card
+        async fn post(&self, max_players: Option<u32>, spectators: bool) {
+            assert_eq!(
+                self.app.post(user(BOT), self.post_args(max_players, spectators)).await,
+                Ok(game())
+            );
         }
 
         fn chat_token(&self, user_id: UserId, member: bool) -> String {
@@ -941,7 +1065,7 @@ mod tests {
     #[tokio::test]
     async fn a_member_joins_once_the_bot_accepts_and_followers_see_it() {
         let test = Test::new();
-        test.register(Some(4), true).await;
+        test.post(Some(4), true).await;
         let (follower, mut follower_messages) = test.connect(user(3));
         test.app
             .follow(follower, user(3), 1, &test.chat_token(user(3), false), vec![game()])
@@ -964,7 +1088,7 @@ mod tests {
     #[tokio::test]
     async fn a_join_is_refused_by_the_bot_or_the_service() {
         let test = Test::new();
-        test.register(Some(1), true).await;
+        test.post(Some(1), true).await;
 
         *test.bot.answer.lock().unwrap() = JoinOutcome::Refused(Some("Seats are taken".to_string()));
         assert_eq!(
@@ -1023,7 +1147,7 @@ mod tests {
     #[tokio::test]
     async fn a_join_doesnt_hold_up_the_game_while_the_bot_answers() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.join(user(2)).await;
         let gate = Arc::new(Notify::new());
         *test.bot.gate.lock().unwrap() = Some(gate.clone());
@@ -1061,7 +1185,7 @@ mod tests {
     #[tokio::test]
     async fn the_card_follows_the_game_from_its_start_to_its_end() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.join(user(1)).await;
         test.join(user(2)).await;
 
@@ -1108,7 +1232,11 @@ mod tests {
         assert!(test.stored().await.is_none());
         assert_eq!(test.update(update(None)).await.unwrap_err().status, 404);
 
-        test.app.register(user(BOT), &test.registration(None, true)).await.unwrap();
+        // Nor can its card be posted again
+        assert_eq!(
+            test.app.post(user(BOT), test.post_args(None, true)).await.unwrap_err().status,
+            409
+        );
         assert!(test.stored().await.is_none());
     }
 
@@ -1117,7 +1245,7 @@ mod tests {
     #[tokio::test(start_paused = true)]
     async fn the_card_catches_up_after_failed_writes() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.join(user(1)).await;
         *test.cards.failures.lock().unwrap() = 2;
 
@@ -1141,7 +1269,7 @@ mod tests {
     #[tokio::test]
     async fn a_game_ends_when_its_bot_is_uninstalled() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.join(user(1)).await;
         *test.cards.bot_uninstalled.lock().unwrap() = true;
 
@@ -1161,7 +1289,7 @@ mod tests {
     #[tokio::test]
     async fn a_card_which_hasnt_caught_up_is_written_by_maintenance() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         let mut stored = test.stored().await.unwrap();
         stored.players = vec![user(1)];
         stored.started_with = vec![user(1)];
@@ -1176,7 +1304,7 @@ mod tests {
     #[tokio::test]
     async fn an_abandoned_game_ends() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.join(user(1)).await;
         let mut stored = test.stored().await.unwrap();
         stored.last_bot_update = now_millis() - ABANDONED_AFTER - 1;
@@ -1197,7 +1325,7 @@ mod tests {
     #[tokio::test]
     async fn only_the_games_bot_updates_it_and_only_with_whats_valid() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.join(user(1)).await;
         let error = test
             .app
@@ -1227,7 +1355,7 @@ mod tests {
     #[tokio::test]
     async fn players_and_spectators_open_the_game() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.join(user(1)).await;
         test.update(UpdateArgs {
             state: Some(GameState {
@@ -1291,7 +1419,7 @@ mod tests {
     #[tokio::test]
     async fn a_spectator_who_joins_plays_from_the_app_they_have_open() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.update(UpdateArgs {
             state: Some(GameState {
                 seq: 1,
@@ -1338,7 +1466,7 @@ mod tests {
     async fn a_player_who_leaves_watches_or_has_the_game_closed() {
         for spectators in [true, false] {
             let test = Test::new();
-            test.register(None, spectators).await;
+            test.post(None, spectators).await;
             test.join(user(1)).await;
             let (tab, mut tab_messages) = test.connect(user(1));
             test.app.open(tab, user(1), 1, &test.chat_token(user(1), true), game()).await;
@@ -1361,7 +1489,7 @@ mod tests {
     #[tokio::test]
     async fn a_game_closed_to_spectators_opens_only_for_its_players() {
         let test = Test::new();
-        test.register(None, false).await;
+        test.post(None, false).await;
         let (spectator, mut spectator_messages) = test.connect(user(2));
         test.app
             .open(spectator, user(2), 1, &test.chat_token(user(2), true), game())
@@ -1378,7 +1506,7 @@ mod tests {
     #[tokio::test]
     async fn a_player_leaves_and_the_bot_is_told() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.join(user(1)).await;
 
         assert_eq!(test.app.leave(user(1), 1, game()).await, ServerMessage::Ok { id: 1 });
@@ -1390,7 +1518,7 @@ mod tests {
     #[tokio::test]
     async fn a_player_starts_the_game_if_the_bot_agrees() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.join(user(1)).await;
         assert!(matches!(
             test.start(user(2)).await,
@@ -1426,7 +1554,7 @@ mod tests {
     #[tokio::test]
     async fn a_game_starts_with_a_player_whose_join_the_bot_is_still_answering() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.join(user(2)).await;
         let gate = Arc::new(Notify::new());
         *test.bot.gate.lock().unwrap() = Some(gate.clone());
@@ -1457,7 +1585,7 @@ mod tests {
     #[tokio::test]
     async fn a_game_starts_only_with_users_who_joined() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.join(user(1)).await;
         test.join(user(2)).await;
         test.join(user(3)).await;
@@ -1481,7 +1609,7 @@ mod tests {
     #[tokio::test]
     async fn a_start_tells_open_apps_their_new_roles_then_sends_the_first_state() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.join(user(1)).await;
         test.join(user(2)).await;
         let (tab1, mut tab1_messages) = test.connect(user(1));
@@ -1532,7 +1660,7 @@ mod tests {
     #[tokio::test]
     async fn a_join_the_bot_answered_badly_succeeds_if_the_game_started_with_them() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.join(user(2)).await;
         let (tab, mut tab_messages) = test.connect(user(1));
         test.app.open(tab, user(1), 1, &test.chat_token(user(1), true), game()).await;
@@ -1570,7 +1698,7 @@ mod tests {
     #[tokio::test]
     async fn a_start_whose_state_isnt_newer_is_refused() {
         let test = Test::new();
-        test.register(None, true).await;
+        test.post(None, true).await;
         test.join(user(1)).await;
         let lobby = GameState {
             seq: 3,
@@ -1599,14 +1727,125 @@ mod tests {
         assert_eq!(test.stored().await.unwrap().status, GameStatus::Open);
     }
 
+    // Once, however often the token's posted, so a bot which got no answer posts it again
     #[tokio::test]
-    async fn a_bot_registers_only_its_own_games() {
+    async fn a_bot_posts_its_card_through_the_service_once() {
         let test = Test::new();
-        let registration = test.registration(None, true);
-        assert_eq!(test.app.register(user(101), &registration).await.unwrap_err().status, 403);
-        assert_eq!(test.app.register(user(BOT), "nonsense").await.unwrap_err().status, 400);
-        test.app.register(user(BOT), &registration).await.unwrap();
-        test.app.register(user(BOT), &registration).await.unwrap();
-        assert!(test.stored().await.is_some());
+        let args = test.post_args(Some(4), true);
+        assert_eq!(test.app.post(user(BOT), args.clone()).await, Ok(game()));
+        assert_eq!(test.app.post(user(BOT), args.clone()).await, Ok(game()));
+        assert_eq!(test.cards.posted.lock().unwrap().len(), 1);
+        let stored = test.stored().await.unwrap();
+        assert!(stored.is_posted());
+        assert_eq!(stored.max_players, Some(4));
+        assert_eq!(test.cards.card.lock().unwrap().max_players, Some(4));
+
+        assert_eq!(test.app.post(user(101), args.clone()).await.unwrap_err().status, 403);
+        let other = test.post_token_for(user(101));
+        assert_eq!(
+            test.app
+                .post(
+                    user(BOT),
+                    PostArgs {
+                        token: other,
+                        ..args.clone()
+                    }
+                )
+                .await
+                .unwrap_err()
+                .status,
+            403
+        );
+        let nonsense = PostArgs {
+            token: "nonsense".to_string(),
+            ..args.clone()
+        };
+        assert_eq!(test.app.post(user(BOT), nonsense).await.unwrap_err().status, 400);
+    }
+
+    // An invalid card, or one OpenChat refuses, isn't kept, so a bot can post a card for the same
+    // command again once it's fixed
+    #[tokio::test]
+    async fn a_card_the_chat_wont_take_is_forgotten() {
+        let test = Test::new();
+        let mut args = test.post_args(None, true);
+        args.card.text = String::new();
+        let error = test.app.post(user(BOT), args).await.unwrap_err();
+        assert_eq!(error.status, 400, "{error:?}");
+        assert!(test.stored().await.is_none());
+
+        *test.cards.refuse_post.lock().unwrap() = Some("Bot not installed".to_string());
+        let error = test.app.post(user(BOT), test.post_args(None, true)).await.unwrap_err();
+        assert_eq!(error.status, 400);
+        assert!(error.message.contains("Bot not installed"), "{error:?}");
+        assert!(test.stored().await.is_none());
+    }
+
+    // A card OpenChat couldn't take is pending, and unknown to everyone, until it's posted again: by the
+    // bot, with the same token, or by maintenance, as after a restart
+    #[tokio::test]
+    async fn a_card_the_chat_couldnt_take_is_posted_again() {
+        let test = Test::new();
+        *test.cards.post_failures.lock().unwrap() = 2;
+        let args = test.post_args(None, true);
+        assert_eq!(test.app.post(user(BOT), args.clone()).await.unwrap_err().status, 503);
+        assert!(!test.stored().await.unwrap().is_posted());
+        assert!(matches!(
+            test.join(user(1)).await,
+            ServerMessage::Refused {
+                reason: Refusal::UnknownGame,
+                ..
+            }
+        ));
+        assert_eq!(test.update(update(None)).await.unwrap_err().status, 404);
+
+        assert_eq!(test.app.post(user(BOT), args).await.unwrap_err().status, 503);
+        test.app.maintain().await;
+        assert!(test.stored().await.unwrap().is_posted());
+        assert_eq!(test.cards.posted.lock().unwrap().len(), 1);
+        assert!(matches!(test.join(user(1)).await, ServerMessage::Joined { .. }));
+    }
+
+    // The chat took the card but the service didn't hear, eg. it restarted meanwhile: the chat refuses
+    // the message id as taken, which counts as posted
+    #[tokio::test]
+    async fn a_card_the_chat_took_unheard_counts_as_posted() {
+        let test = Test::new();
+        let args = test.post_args(None, true);
+        test.cards.posted.lock().unwrap().push(args.token.clone());
+        assert_eq!(test.app.post(user(BOT), args).await, Ok(game()));
+        assert!(test.stored().await.unwrap().is_posted());
+    }
+
+    // The bot gets a new token then, as it has to post a new card. JWTs expire to the second, so the
+    // pending game is stored as a restart would leave it, with a token which has since expired.
+    #[tokio::test]
+    async fn a_pending_card_whose_token_expired_is_forgotten() {
+        let test = Test::new();
+        let mut args = test.post_args(None, true);
+        args.token = oc_token(
+            &test.oc,
+            CLAIM_TYPE_MINI_APP_POST,
+            MiniAppPostClaims {
+                bot: user(BOT),
+                bot_endpoint: "https://uno.example.com".to_string(),
+                bot_api_gateway: Principal::from_slice(&[200]),
+                game: game(),
+                initiator: BotInitiator::Autonomous,
+            },
+            now_millis() - 1_000,
+        );
+        let claims = MiniAppPostClaims {
+            bot: user(BOT),
+            bot_endpoint: "https://uno.example.com".to_string(),
+            bot_api_gateway: Principal::from_slice(&[200]),
+            game: game(),
+            initiator: BotInitiator::Autonomous,
+        };
+        test.store.put(&Game::posting(claims, args, now_millis())).await.unwrap();
+
+        test.app.maintain().await;
+        assert!(test.stored().await.is_none());
+        assert!(test.cards.posted.lock().unwrap().is_empty());
     }
 }

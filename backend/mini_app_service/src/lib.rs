@@ -1,6 +1,6 @@
-// The MiniApp service: it sits between the website and the bots which host games in messages. Players
-// join through it, and spectators watch through it, and only it writes a game's card. The protocol is
-// in backend/docs/mini_app_service_protocol.md.
+// The MiniApp service: it sits between the website and the bots which host games in messages. Bots post
+// their cards through it, players join through it, spectators watch through it, and only it writes a
+// game's card. The protocol is in backend/docs/mini_app_service_protocol.md.
 use crate::app::App;
 use axum::Router;
 use axum::extract::DefaultBodyLimit;
@@ -26,7 +26,7 @@ pub fn router(app: Arc<App>) -> Router {
         .route("/ws", get(ws::connect))
         .route("/public_key", get(bot_api::public_key))
         .route("/health", get(|| async { "ok" }))
-        .route("/bot/register", post(bot_api::register))
+        .route("/bot/post", post(bot_api::post))
         .route(
             "/bot/update",
             post(bot_api::update).layer(DefaultBodyLimit::max(bot_api::MAX_UPDATE_BYTES)),

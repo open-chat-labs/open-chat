@@ -29,7 +29,7 @@ fn accept_if_valid(state: &RuntimeState) {
             state.is_caller_platform_operator()
         }
         "register_user" => true,
-        "update_mini_app" => state.is_caller_mini_app_service(),
+        "mini_app_send_message" | "update_mini_app" => state.is_caller_mini_app_service(),
         "video_call_declined" => state.is_caller_video_call_operator(),
         // Canister callers bypass inspect_message; these only matter for tests that impersonate the canisters
         "c2c_community" => state.is_caller_local_community_canister(),

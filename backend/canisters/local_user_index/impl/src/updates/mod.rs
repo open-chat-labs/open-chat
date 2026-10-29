@@ -42,6 +42,7 @@ pub mod invite_users_to_group;
 pub mod join_channel;
 pub mod join_community;
 pub mod join_group;
+pub mod mini_app_send_message;
 pub mod move_funds_from_old_canister;
 pub mod pay_for_premium_item;
 pub mod push_events;

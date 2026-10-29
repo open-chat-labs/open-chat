@@ -2,7 +2,8 @@
 
 The MiniApp service is run by OpenChat. It sits between the website and the game servers (bots), so that:
 - a user is on a game's card only if they asked to join through OpenChat and the bot accepted them;
-- spectators watch through the service and never reach the bot.
+- spectators watch through the service and never reach the bot;
+- a card exists only if the service knows its game, as bots post cards through the service.
 
 This document is the contract between the website, the service, bots and their apps.
 
@@ -23,7 +24,7 @@ This document is the contract between the website, the service, bots and their a
 | Token | Claim type | From | Held by |
 |---|---|---|---|
 | Chat | `MiniAppChat` | the LocalUserIndex's `access_token_v2`, `MiniAppChat { chat }` | the website, one per chat |
-| Registration | `MiniAppRegistration` | `mini_app_registration` in the LocalUserIndex's reply when a bot posts a card with `bot_send_message` | the bot, one per game |
+| Post | `MiniAppPost` | the LocalUserIndex's `bot_mini_app_post_token`, called as the bot | the bot, one per card |
 | Bot | `MiniAppBot` | the LocalUserIndex's `bot_mini_app_token`, called as the bot | the bot |
 | Player | `MiniAppPlayer` | the service, when a player joins or opens a game | the app, one per player per game |
 
@@ -32,7 +33,8 @@ The LocalUserIndex signs the first three with OpenChat's key, the same key as it
 - **A chat token** says whether the user is a member, who may join the chat's games, or can only see the chat's messages, and may only watch them. Anyone else is refused one.
   - Who can see a chat follows its events: anyone can see a public group, or a public channel in a public community without a payment gate, unless it hides its messages from non-members.
   - A community's members can see its public channels.
-- **The service writes to a card** through the LocalUserIndex's `update_mini_app`, which only its principal may call. That principal is set by the UserIndex's `set_mini_app_service_principal` proposal.
+- **A post token** is a bot's permission to post one card: the bot, its endpoint, the chat, thread and message id, and who asked (a command and its user, or the bot itself). The LocalUserIndex resolves those as it would for `bot_send_message`, and fixes the message id: a chat command's, or otherwise one the bot chooses (the SDKs pick a random one). Posting the same token again posts nothing new, as the card's message id is taken, so a bot can safely retry.
+- **The service posts a card** through the LocalUserIndex's `mini_app_send_message`, with the bot's post token, and **writes to it** through `update_mini_app`. Only its principal may call either; it's set by the UserIndex's `set_mini_app_service_principal` proposal. A bot can't post a card any other way: `bot_send_message` refuses MiniApp content.
 
 The service also signs `MiniAppJoin`, `MiniAppStart` and `MiniAppLeave` for its calls to bots. Its public key is at `GET /public_key` (PEM).
 
@@ -177,14 +179,35 @@ A player asks to start the game, eg. from a Start button in the app (see "App â†
 
 Every call has `Authorization: Bearer <bot token>`.
 
-### `POST /bot/register`
+### `POST /bot/post`
 
 ```json
-{ "registration": "<registration token>" }
+{
+  "token": "<post token>",
+  "card": {
+    "text": "**Uno** Â· 2 to 4 players",
+    "image": { "width": 600, "height": 400, "mime_type": "image/png", "blob_reference": { "canister_id": "<storage bucket id>", "blob_id": "<decimal string>" } },
+    "max_players": 4,
+    "spectators": true
+  },
+  "block_level_markdown": false,
+  "replies_to": null
+}
 ```
-- The bot sends this after posting a game. The LocalUserIndex returns the registration token with the posted message.
-- It must be the bot's own registration.
-- Registering again does nothing.
+- The bot gets the token from the LocalUserIndex's `bot_mini_app_post_token`, with the same context it would send a message with: a command's token or an autonomous chat, the channel for a community command, the thread, and the message id it chose, unless a chat command's token fixes it. The token must be the bot's own.
+- `card` is the card as the bot posts it: `image`, `max_players` and `replies_to` are optional, and `block_level_markdown` is false if left out. Its status is Open. `blob_id` is a decimal string, as message ids are. The bot uploads the image to OpenChat's storage first, as for an image message.
+- The service posts the card as the bot, through the LocalUserIndex, and answers `{ "game": game }` once it's in the chat. The game is in the token, so the bot knows it before the card is posted.
+- **Posting again with the same token** answers `{ "game": game }` too, without posting another card. So a bot which doesn't get an answer, eg. as the service restarted, sends the same token again.
+- Until the service has posted a card, it doesn't know the game: no one can follow, join or open it, and `/bot/update` answers 404.
+
+Errors:
+
+| Status | Meaning |
+|---|---|
+| 400 | the token is invalid or expired, the card is invalid, or OpenChat refused it, eg. the bot isn't installed in the chat, or lacks the MiniApp permission; `error` says which |
+| 403 | another bot's token |
+| 409 | the game has finished |
+| 503 | the service couldn't reach OpenChat, or read or save the game; post the same token again |
 
 ### `POST /bot/update`
 
@@ -222,7 +245,7 @@ Errors:
 |---|---|
 | 400 | invalid: a status other than Finished, a result without Finished, waiting for someone who isn't playing |
 | 403 | not the bot's game |
-| 404 | unknown game |
+| 404 | unknown game, eg. one whose card hasn't been posted |
 | 409 | the game has finished |
 | 413 | over 64 KB |
 
@@ -293,11 +316,11 @@ A player's app sends the player token, in `x-oc-jwt`, with each request to the b
 - **Starting goes through OpenChat,** so the card records exactly who the game started with. An app asks for its player, and the bot decides. Moves go straight to the bot.
 - **A bot checks its own player list on every request.** A player token outlives a removal by up to an hour.
 - **Spectators get only the shared state,** which every player sees too, so watching can't leak a player's hand.
-- **Only the service writes a card's status.** The status holds the game's players once it starts, whose turn it is, and its result once it finishes.
+- **Only the service posts a card, and only it writes the card's status.** So every card is a game the service knows from the moment it exists. The status holds the game's players once it starts, whose turn it is, and its result once it finishes.
   - A bot can take players off but never put them on.
   - The service ends a game:
     - after 24 hours with no update from its bot, ending the card with no result;
     - when an update fails because the card was deleted (`MessageNotFound`);
     - when an update fails because the bot was uninstalled (`BotNotFound`). It then ends the card with no result, which is let through, so the card doesn't look like it's still being played;
     - when updates keep failing for a day.
-  - A game which ended stays ended: its bot can't register it again.
+  - A game which ended stays ended: posting its token again is refused.

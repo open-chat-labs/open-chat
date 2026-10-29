@@ -1,11 +1,11 @@
 // A game as the service keeps it, and the rules for changing it
 use crate::bots::Started;
-use crate::protocol::{Card, GameState, GameStatus, Refusal};
+use crate::protocol::{Card, GameState, GameStatus, PostArgs, Refusal};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
-    CanisterId, MiniAppActive, MiniAppContent, MiniAppEnded, MiniAppFinished, MiniAppGame, MiniAppRegistrationClaims,
-    MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, TimestampMillis, UserId,
+    CanisterId, MiniAppActive, MiniAppContent, MiniAppEnded, MiniAppFinished, MiniAppGame, MiniAppPostClaims, MiniAppStarted,
+    MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -14,8 +14,12 @@ pub struct Game {
     pub bot: UserId,
     // Where join requests go, as the bot was registered when it posted the game
     pub bot_endpoint: String,
-    // The LocalUserIndex the game's card is written through
+    // The LocalUserIndex the game's card is posted and written through
     pub bot_api_gateway: CanisterId,
+    // The post the card is being made with, until OpenChat has taken it. Until then the game is
+    // unknown to everyone, and the post is sent again if it failed or was cut off.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pending_post: Option<PostArgs>,
     pub max_players: Option<u32>,
     pub spectators: bool,
     pub status: GameStatus,
@@ -74,14 +78,16 @@ pub struct BotUpdate {
 }
 
 impl Game {
-    pub fn register(claims: MiniAppRegistrationClaims, now: TimestampMillis) -> Game {
+    // A game whose card is being posted, with the bot's post token
+    pub fn posting(claims: MiniAppPostClaims, post: PostArgs, now: TimestampMillis) -> Game {
         Game {
             game: claims.game,
             bot: claims.bot,
             bot_endpoint: claims.bot_endpoint,
             bot_api_gateway: claims.bot_api_gateway,
-            max_players: claims.max_players,
-            spectators: claims.spectators,
+            max_players: post.card.max_players,
+            spectators: post.card.spectators,
+            pending_post: Some(post),
             status: GameStatus::Open,
             players: Vec::new(),
             started_with: Vec::new(),
@@ -92,6 +98,11 @@ impl Game {
             card: MiniAppStatus::Open,
             bot_uninstalled: false,
         }
+    }
+
+    // Whether OpenChat has taken the card, before which no one knows the game
+    pub fn is_posted(&self) -> bool {
+        self.pending_post.is_none()
     }
 
     pub fn is_player(&self, user_id: UserId) -> bool {
@@ -367,18 +378,20 @@ fn check_waiting_for(waiting_for: &[UserId], players: &[UserId]) -> Result<(), S
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::protocol::CardContent;
     use candid::Principal;
     use serde_json::json;
     use std::collections::HashMap;
-    use types::Chat;
+    use types::{BotInitiator, Chat};
 
     fn user(n: u8) -> UserId {
         Principal::from_slice(&[n]).into()
     }
 
+    // A posted game
     fn game(max_players: Option<u32>) -> Game {
-        Game::register(
-            MiniAppRegistrationClaims {
+        let mut game = Game::posting(
+            MiniAppPostClaims {
                 bot: user(100),
                 bot_endpoint: "https://uno.example.com".to_string(),
                 bot_api_gateway: Principal::from_slice(&[200]),
@@ -387,11 +400,24 @@ mod tests {
                     thread: None,
                     message_id: 7u64.into(),
                 },
-                max_players,
-                spectators: true,
+                initiator: BotInitiator::Autonomous,
+            },
+            PostArgs {
+                token: "token".to_string(),
+                card: CardContent {
+                    text: "Uno".to_string(),
+                    image: None,
+                    max_players,
+                    spectators: true,
+                },
+                block_level_markdown: false,
+                replies_to: None,
             },
             0,
-        )
+        );
+        assert!(!game.is_posted());
+        game.pending_post = None;
+        game
     }
 
     fn state(seq: u64) -> GameState {

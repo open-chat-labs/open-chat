@@ -6,8 +6,8 @@ use serde::Serialize;
 use serde::de::DeserializeOwned;
 use types::{
     CLAIM_TYPE_MINI_APP_BOT, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_JOIN, CLAIM_TYPE_MINI_APP_LEAVE,
-    CLAIM_TYPE_MINI_APP_PLAYER, CLAIM_TYPE_MINI_APP_REGISTRATION, CLAIM_TYPE_MINI_APP_START, Error, Milliseconds,
-    MiniAppBotClaims, MiniAppChatClaims, MiniAppGame, MiniAppPlayerClaims, MiniAppRegistrationClaims, TimestampMillis, UserId,
+    CLAIM_TYPE_MINI_APP_PLAYER, CLAIM_TYPE_MINI_APP_POST, CLAIM_TYPE_MINI_APP_START, Error, Milliseconds, MiniAppBotClaims,
+    MiniAppChatClaims, MiniAppGame, MiniAppPlayerClaims, MiniAppPostClaims, TimestampMillis, UserId,
 };
 
 // A player's app keeps its token for an hour, like the website its tokens
@@ -45,8 +45,9 @@ impl Tokens {
             .filter(|claims| claims.user_id == user_id)
     }
 
-    pub fn registration(&self, token: &str, now: TimestampMillis) -> Option<MiniAppRegistrationClaims> {
-        self.verify(token, CLAIM_TYPE_MINI_APP_REGISTRATION, now)
+    // A bot's permission to post one card, which the service passes on to the LocalUserIndex
+    pub fn post(&self, token: &str, now: TimestampMillis) -> Option<MiniAppPostClaims> {
+        self.verify(token, CLAIM_TYPE_MINI_APP_POST, now)
     }
 
     pub fn bot(&self, token: &str, now: TimestampMillis) -> Option<UserId> {

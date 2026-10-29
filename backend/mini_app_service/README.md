@@ -1,9 +1,10 @@
 # The MiniApp service
 
 An off-chain service OpenChat runs between the website and the bots that host games in messages:
+- Bots post their games' cards through it, with a post token from the LocalUserIndex, so it knows every game from the moment its card exists.
 - Players join games through it, and the bot accepts or refuses each one.
 - Spectators watch through it, and never reach the bot.
-- Only the service writes a game's card in its chat, through the LocalUserIndex's `update_mini_app`, so a bot can't list anyone who didn't join.
+- Only the service posts a game's card in its chat and writes to it, through the LocalUserIndex's `mini_app_send_message` and `update_mini_app`, so a bot can't list anyone who didn't join.
 
 The protocol, between the website, the service, bots and their apps, is in [`backend/docs/mini_app_service_protocol.md`](../docs/mini_app_service_protocol.md).
 
@@ -35,6 +36,6 @@ The script:
 
 ## What it keeps
 
-- **In Redis:** each game, with its players, latest state and what its card in the chat holds. A restart or a deploy doesn't end games: the website reconnects with the tokens it kept, and the service writes any card it was writing as it stopped. An ended game is remembered for two hours, so its bot can't register it again.
+- **In Redis:** each game, with its players, latest state and what its card in the chat holds. A restart or a deploy doesn't end games: the website reconnects with the tokens it kept, and the service writes any card it was writing as it stopped. A card being posted is kept until OpenChat has taken it, so a post cut off by a restart is sent again. An ended game is remembered for two hours, so posting its token again is refused.
 - **In memory:** the connections, which cards each follows and which games each has open. Spectators are counted from these.
 - **One instance for now.** Running more than one needs the instances to share their connections' pushes through Redis.

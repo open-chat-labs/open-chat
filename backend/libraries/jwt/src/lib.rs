@@ -144,9 +144,9 @@ mod tests {
     use p256_key_pair::P256KeyPair;
     use std::time::{SystemTime, UNIX_EPOCH};
     use types::{
-        CLAIM_TYPE_DECLINE_VIDEO_CALL, CLAIM_TYPE_JOIN_VIDEO_CALL, CLAIM_TYPE_MINI_APP_PLAYER,
-        CLAIM_TYPE_MINI_APP_REGISTRATION, Chat, DeclineVideoCallClaims, MiniAppGame, MiniAppPlayerClaims,
-        MiniAppRegistrationClaims, StartVideoCallClaims, UserId, VideoCallType,
+        BotInitiator, CLAIM_TYPE_DECLINE_VIDEO_CALL, CLAIM_TYPE_JOIN_VIDEO_CALL, CLAIM_TYPE_MINI_APP_PLAYER,
+        CLAIM_TYPE_MINI_APP_POST, Chat, DeclineVideoCallClaims, MiniAppGame, MiniAppPlayerClaims, MiniAppPostClaims,
+        StartVideoCallClaims, UserId, VideoCallType,
     };
 
     #[test]
@@ -263,14 +263,13 @@ mod tests {
         };
         let claims = Claims::new(
             now + 3_600_000,
-            CLAIM_TYPE_MINI_APP_REGISTRATION.to_string(),
-            MiniAppRegistrationClaims {
+            CLAIM_TYPE_MINI_APP_POST.to_string(),
+            MiniAppPostClaims {
                 bot,
                 bot_endpoint: "https://uno.example.com".to_string(),
                 bot_api_gateway: community,
                 game,
-                max_players: Some(4),
-                spectators: true,
+                initiator: BotInitiator::Autonomous,
             },
         );
         let jwt = sign_and_encode_token(kp.secret_key_der(), claims, &mut rng).unwrap();
@@ -278,10 +277,10 @@ mod tests {
         let json = String::from_utf8(decode_to_bytes(jwt.split('.').nth(1).unwrap()).unwrap()).unwrap();
         assert!(json.contains(r#""message_id":"18446744073709551615""#), "{json}");
 
-        let decoded: Claims<MiniAppRegistrationClaims> =
-            verify_and_decode(&jwt, kp.public_key_pem(), CLAIM_TYPE_MINI_APP_REGISTRATION).unwrap();
+        let decoded: Claims<MiniAppPostClaims> =
+            verify_and_decode(&jwt, kp.public_key_pem(), CLAIM_TYPE_MINI_APP_POST).unwrap();
         assert!(decoded.custom().game == game);
-        assert_eq!(decoded.custom().max_players, Some(4));
+        assert!(matches!(decoded.custom().initiator, BotInitiator::Autonomous));
         assert!(verify_and_decode::<MiniAppPlayerClaims>(&jwt, kp.public_key_pem(), CLAIM_TYPE_MINI_APP_PLAYER).is_err());
     }
 }

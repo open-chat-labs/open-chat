@@ -27,6 +27,7 @@ fn main() {
     generate_ts_method!(local_user_index, bot_edit_message);
     generate_ts_method!(local_user_index, bot_invite_users);
     generate_ts_method!(local_user_index, bot_members);
+    generate_ts_method!(local_user_index, bot_mini_app_post_token);
     generate_ts_method!(local_user_index, bot_mini_app_token);
     generate_ts_method!(local_user_index, bot_send_message);
     generate_ts_method!(local_user_index, claim_prize);
