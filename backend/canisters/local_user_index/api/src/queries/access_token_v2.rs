@@ -11,7 +11,6 @@ pub enum Args {
     MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs),
     VideoCallParticipant(VideoCallParticipantArgs),
     BotActionByCommand(BotActionByCommandArgs),
-    MiniAppConnection,
     MiniAppChat(MiniAppChatArgs),
     Translate,
 }

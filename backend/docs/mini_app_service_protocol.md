@@ -22,13 +22,12 @@ This document is the contract between the website, the service, bots and their a
 
 | Token | Claim type | From | Held by |
 |---|---|---|---|
-| Connection | `MiniAppConnection` | the LocalUserIndex's `access_token_v2`, `MiniAppConnection` | the website |
 | Chat | `MiniAppChat` | the LocalUserIndex's `access_token_v2`, `MiniAppChat { chat }` | the website, one per chat |
 | Registration | `MiniAppRegistration` | `mini_app_registration` in the LocalUserIndex's reply when a bot posts a card with `bot_send_message` | the bot, one per game |
 | Bot | `MiniAppBot` | the LocalUserIndex's `bot_mini_app_token`, called as the bot | the bot |
 | Player | `MiniAppPlayer` | the service, when a player joins or opens a game | the app, one per player per game |
 
-The LocalUserIndex signs the first four with OpenChat's key, the same key as its other tokens. The website and bots get its public key from the UserIndex's `public_key`.
+The LocalUserIndex signs the first three with OpenChat's key, the same key as its other tokens. The website and bots get its public key from the UserIndex's `public_key`.
 
 - **A chat token** says whether the user is a member, who may join the chat's games, or can only see the chat's messages, and may only watch them. Anyone else is refused one.
   - Who can see a chat follows its events: anyone can see a public group, or a public channel in a public community without a payment gate, unless it hides its messages from non-members.
@@ -50,12 +49,13 @@ The service also signs `MiniAppJoin` and `MiniAppLeave` for its calls to bots. I
 
 ### Connecting
 
-The first message must be `connect`, within 10 seconds:
+The first message must be `connect`, within 10 seconds, with any of the user's chat tokens. Its user becomes the socket's user.
 
 ```json
-{ "type": "connect", "token": "<connection token>" }
+{ "type": "connect", "chat_token": "<chat token>" }
 ```
 - Success: `{ "type": "connected", "user_id": "..." }`.
+- Connecting doesn't follow the chat; `follow` does that.
 - Otherwise: `{ "type": "error", "code": "invalid_token" }`, and the socket closes.
 
 ### Following cards
