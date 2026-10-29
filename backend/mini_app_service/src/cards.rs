@@ -1,9 +1,20 @@
-// Writing a game's status to its card in the chat, through the LocalUserIndex's `update_mini_app`
+// Posting a game's card in its chat, and writing the game's status to it, through the LocalUserIndex's
+// `send_mini_app_message` and `update_mini_app`
 use async_trait::async_trait;
 use ic_agent::Agent;
-use local_user_index_canister::update_mini_app;
+use local_user_index_canister::{send_mini_app_message, update_mini_app};
 use oc_error_codes::OCErrorCode;
-use types::{CanisterId, MiniAppGame, MiniAppStatusUpdate, UnitResult};
+use types::{CanisterId, EventIndex, MiniAppContent, MiniAppGame, MiniAppStatusUpdate, UnitResult};
+
+#[derive(Debug)]
+pub enum PostError {
+    // OpenChat refused the card, which retrying won't change, eg. the bot isn't installed in the chat,
+    // or another message has the card's message id. A repeated post of the card itself isn't refused:
+    // the chat answers with the card it holds.
+    Refused(String),
+    // The call failed, eg. the chat's canister was stopped for an upgrade, so it's worth trying again
+    Failed(String),
+}
 
 #[derive(Debug)]
 pub enum WriteError {
@@ -19,6 +30,15 @@ pub enum WriteError {
 
 #[async_trait]
 pub trait CardWriter: Send + Sync {
+    // Posts a card as the bot whose post token this is
+    async fn post(
+        &self,
+        gateway: CanisterId,
+        token: &str,
+        content: MiniAppContent,
+        block_level_markdown: bool,
+        replies_to: Option<EventIndex>,
+    ) -> Result<(), PostError>;
     async fn write(&self, gateway: CanisterId, game: &MiniAppGame, update: MiniAppStatusUpdate) -> Result<(), WriteError>;
 }
 
@@ -34,6 +54,32 @@ impl IcCardWriter {
 
 #[async_trait]
 impl CardWriter for IcCardWriter {
+    async fn post(
+        &self,
+        gateway: CanisterId,
+        token: &str,
+        content: MiniAppContent,
+        block_level_markdown: bool,
+        replies_to: Option<EventIndex>,
+    ) -> Result<(), PostError> {
+        let args = send_mini_app_message::Args {
+            token: token.to_string(),
+            content,
+            block_level_markdown,
+            replies_to,
+        };
+        match local_user_index_canister_client::send_mini_app_message(&self.agent, &gateway, &args).await {
+            Ok(send_mini_app_message::Response::Success(_)) => Ok(()),
+            Ok(send_mini_app_message::Response::Error(error)) if error.matches_code(OCErrorCode::C2CError) => {
+                Err(PostError::Failed(format!("{error:?}")))
+            }
+            Ok(send_mini_app_message::Response::Error(error)) => Err(PostError::Refused(
+                error.message().map_or_else(|| format!("{error:?}"), str::to_string),
+            )),
+            Err(error) => Err(PostError::Failed(error.to_string())),
+        }
+    }
+
     async fn write(&self, gateway: CanisterId, game: &MiniAppGame, update: MiniAppStatusUpdate) -> Result<(), WriteError> {
         let args = update_mini_app::Args {
             chat: game.chat,

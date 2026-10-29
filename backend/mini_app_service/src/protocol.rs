@@ -2,7 +2,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use types::{MiniAppGame, UserId};
+use types::{BlobReference, CanisterId, EventIndex, MiniAppContent, MiniAppGame, MiniAppImage, MiniAppStatus, UserId};
 
 pub type RequestId = u64;
 
@@ -161,10 +161,80 @@ pub struct Card {
     pub result: Option<String>,
 }
 
-// The body of the bots' `POST /bot/register`
-#[derive(Deserialize, Debug)]
-pub struct RegisterArgs {
-    pub registration: String,
+// The body of the bots' `POST /bot/post`: the bot's post token from the LocalUserIndex, and the card.
+// Kept with the game until OpenChat has taken the card, so a post cut off by a restart is sent again.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct PostArgs {
+    pub token: String,
+    pub card: CardContent,
+    #[serde(default)]
+    pub block_level_markdown: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub replies_to: Option<EventIndex>,
+}
+
+// A card as a bot posts it. Its status is Open, so isn't sent.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct CardContent {
+    pub text: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image: Option<CardImage>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_players: Option<u32>,
+    #[serde(default)]
+    pub spectators: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct CardImage {
+    pub width: u32,
+    pub height: u32,
+    pub mime_type: String,
+    pub blob_reference: CardBlob,
+}
+
+// The blob id is a decimal string, as it doesn't fit a JavaScript number
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct CardBlob {
+    pub canister_id: CanisterId,
+    pub blob_id: String,
+}
+
+impl CardContent {
+    // The card as OpenChat takes it, checked as OpenChat checks a new card
+    pub fn to_content(&self) -> Result<MiniAppContent, String> {
+        let image = match &self.image {
+            Some(image) => Some(MiniAppImage {
+                width: image.width,
+                height: image.height,
+                mime_type: image.mime_type.clone(),
+                blob_reference: BlobReference {
+                    canister_id: image.blob_reference.canister_id,
+                    blob_id: image
+                        .blob_reference
+                        .blob_id
+                        .parse()
+                        .map_err(|_| "The image's blob id must be a decimal string".to_string())?,
+                },
+            }),
+            None => None,
+        };
+        let content = MiniAppContent {
+            text: self.text.clone(),
+            image,
+            max_players: self.max_players,
+            spectators: self.spectators,
+            status: MiniAppStatus::Open,
+        };
+        content.validate_new()?;
+        Ok(content)
+    }
+}
+
+// The answer to `POST /bot/post`: the game, which is in the token too
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PostResponse {
+    pub game: MiniAppGame,
 }
 
 // The body of the bots' `POST /bot/update`. Every field but `game` is optional.

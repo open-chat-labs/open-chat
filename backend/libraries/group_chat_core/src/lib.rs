@@ -621,6 +621,29 @@ impl GroupChatCore {
                 );
             }
 
+            // The MiniApp service posting a bot's card again, as its first try went unanswered: the
+            // card's there, so nothing changes, and the service hears which message it is. Only the
+            // same bot's card counts: any other message at the id is taken.
+            if let Caller::BotV2(bot_now) = &caller
+                && bot_now.bot == message.sender
+                && message.deleted_by.is_none()
+                && matches!(message.content, MessageContentInternal::MiniApp(_))
+                && matches!(content, MessageContentInternal::MiniApp(_))
+            {
+                let reader = self
+                    .events
+                    .events_reader(EventIndex::default(), thread_root_message_index, None)
+                    .unwrap();
+                let agent = UserIdAndPrincipal::new(caller.agent(), caller.agent().as_principal());
+                let message_event = reader.message_event(message_id.into(), Some(agent)).unwrap();
+                return Ok(SendMessageSuccess {
+                    message_event,
+                    users_to_notify: Vec::new(),
+                    unfinalised_bot_message: false,
+                    bot_notification: None,
+                });
+            }
+
             return Err(OCErrorCode::MessageIdAlreadyExists.into());
         }
 
