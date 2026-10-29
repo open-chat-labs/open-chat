@@ -5,11 +5,11 @@ import { setConnectionUnusable } from "@shared";
 // only a connection which is barely carrying anything trips it.
 export const SLOW_QUERY_MS = 10_000;
 
-// Bad queries in a row before the connection is treated as unusable. Any good one resets the count,
-// and none counts while responses are still arriving: a connection carrying responses is usable,
-// however slow or failed some queries are. A burst of queries (the first load, or catching up
-// after a resume) queues in the browser, so the last of them can wait well past `SLOW_QUERY_MS`
-// on a connection that is busy rather than dead, and those used to trip it.
+// Bad queries in a row before the connection is probed to see whether it's unusable. Any good one
+// resets the count, and none counts while responses are still arriving: a connection carrying
+// responses is usable, however slow or failed some queries are. A burst of queries (the first
+// load, or catching up after a resume) queues in the browser, so the last of them can wait well
+// past `SLOW_QUERY_MS` on a connection that is busy rather than dead, and those used to trip it.
 export const BAD_QUERIES_TO_UNUSABLE = 3;
 
 // Bad queries closer together than this count as one. A single blip, such as the network changing,
@@ -36,8 +36,10 @@ export type QueryOutcomes = {
  *
  * The browser's estimates (`navigator.connection.downlink` and the like) aren't used: they come
  * from recent traffic, so once the app treats the connection as unusable and stops sending, they
- * stop changing and the app never recovers. Here, while the connection is unusable, a small probe
- * is sent with backoff until one gets a fast response. A healthy connection sends no probes.
+ * stop changing and the app never recovers. Bad queries alone don't make the connection unusable:
+ * they can fail or stall for reasons that have nothing to do with it, such as a slow subnet, so a
+ * small probe has to fail too. While the connection is unusable, the probe is sent with backoff
+ * until one gets a fast response. A healthy connection sends no probes.
  */
 export class ConnectionHealth implements QueryOutcomes {
     #probe: () => Promise<boolean>;
@@ -48,6 +50,9 @@ export class ConnectionHealth implements QueryOutcomes {
     #lastResponseAt = Number.NEGATIVE_INFINITY;
     #probeTimer: ReturnType<typeof setTimeout> | undefined;
     #probing = false;
+    // Whether the connection may have changed while a probe was out, in which case a failed probe
+    // says nothing about the new one
+    #changedWhileProbing = false;
     #probesFailed = 0;
     #lastBadAt = Number.NEGATIVE_INFINITY;
     // Queries sent before this went out on a connection that may since have gone, so their
@@ -92,19 +97,21 @@ export class ConnectionHealth implements QueryOutcomes {
         if (now - this.#lastBadAt < BAD_QUERY_SPACING_MS) return;
         this.#lastBadAt = now;
         this.#badInARow += 1;
-        if (!this.#unusable && this.#badInARow >= BAD_QUERIES_TO_UNUSABLE) {
-            this.#setUnusable(true);
+        if (!this.#unusable && !this.#probing && this.#badInARow >= BAD_QUERIES_TO_UNUSABLE) {
+            void this.#confirmUnusable();
         }
     }
 
     /**
      * Something suggests the connection may have changed: the browser came back online, switched
-     * network, or the app resumed. If the connection is unusable, probe now instead of waiting.
+     * network, or the app resumed. If the connection is unusable, probe now instead of waiting, or
+     * as soon as a probe that's already out fails.
      */
     connectionMayHaveChanged(): void {
-        if (this.#unusable && !this.#probing) {
-            this.#probesFailed = 0;
-            this.#scheduleProbe(0);
+        if (this.#probing) {
+            this.#changedWhileProbing = true;
+        } else if (this.#unusable) {
+            this.#probeNow();
         }
     }
 
@@ -136,6 +143,27 @@ export class ConnectionHealth implements QueryOutcomes {
         this.#onChange(unusable);
     }
 
+    // Going offline also stops the app sending, so a probe checks the connection itself first
+    async #confirmUnusable() {
+        const ok = await this.#probeConnection();
+
+        // A good query, or the app coming back, may have reset the count while the probe was out.
+        // A probe failing while the app is hidden says no more than a query failing then.
+        if (this.#hidden || this.#badInARow < BAD_QUERIES_TO_UNUSABLE) return;
+
+        if (ok) {
+            this.#badInARow = 0;
+        } else {
+            this.#setUnusable(true);
+            if (this.#changedWhileProbing) this.#probeNow();
+        }
+    }
+
+    #probeNow() {
+        this.#probesFailed = 0;
+        this.#scheduleProbe(0);
+    }
+
     #scheduleProbe(delayMs: number) {
         clearTimeout(this.#probeTimer);
         this.#probeTimer = setTimeout(() => this.#runProbe(), delayMs);
@@ -145,30 +173,42 @@ export class ConnectionHealth implements QueryOutcomes {
         this.#probeTimer = undefined;
         if (!this.#unusable) return;
 
-        // With the browser reporting no network at all, a probe can't succeed. Keep the schedule
-        // going anyway rather than relying on the `online` event to restart it.
-        let ok = false;
-        if (this.#isOnline()) {
-            this.#probing = true;
-            try {
-                ok = await this.#probe();
-            } catch {
-                ok = false;
-            } finally {
-                this.#probing = false;
-            }
-        }
+        // With the browser reporting no network this fails without probing, and the schedule
+        // carries on rather than relying on the `online` event to restart it
+        const ok = await this.#probeConnection();
 
         // A fast query may have cleared it while the probe was out
         if (!this.#unusable) return;
 
         if (ok) {
             this.#setUnusable(false);
+        } else if (this.#changedWhileProbing) {
+            this.#probeNow();
         } else {
             this.#probesFailed += 1;
             const index = Math.min(this.#probesFailed, PROBE_INTERVALS_MS.length - 1);
             this.#scheduleProbe(PROBE_INTERVALS_MS[index]);
         }
+    }
+
+    // With the browser reporting no network at all, a probe can't succeed. One that gets through is
+    // a response like any other, so bad queries don't count for a while after it.
+    async #probeConnection(): Promise<boolean> {
+        this.#changedWhileProbing = false;
+        if (!this.#isOnline()) return false;
+        this.#probing = true;
+        let ok: boolean;
+        try {
+            ok = await this.#probe();
+        } catch {
+            ok = false;
+        } finally {
+            this.#probing = false;
+        }
+        if (ok) {
+            this.#lastResponseAt = Date.now();
+        }
+        return ok;
     }
 }
 
