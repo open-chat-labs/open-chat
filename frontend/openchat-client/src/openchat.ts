@@ -10305,11 +10305,12 @@ export class OpenChat {
 
     /** Loads the user's saved accounts into `namedAccountsStore` (kept as it was if they fail to load). */
     async loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
-        // a save or delete made while this was loading is newer than what it brings back
+        // a save or delete made while this was loading isn't in what it brings back: load again,
+        // so the store gets the whole list with it
         const version = this.#namedAccountsVersion;
         try {
             const accounts = await this.#worker.send({ kind: "loadSavedCryptoAccounts" });
-            if (version !== this.#namedAccountsVersion) return namedAccountsStore.value;
+            if (version !== this.#namedAccountsVersion) return this.loadSavedCryptoAccounts();
             namedAccountsStore.set(accounts);
             return accounts;
         } catch {

@@ -22,6 +22,19 @@ export const pinNumberErrorMessageStore = derived(
     },
 );
 
+/**
+ * Whether a PIN failure means waiting before trying again: too many wrong PINs, or a wrong PIN
+ * whose next try is still to come. Its message (`pinNumberErrorMessage`) says for how long.
+ */
+export function pinFailureNeedsWait(
+    failure: PinNumberFailures | undefined,
+    now: number = Date.now(),
+): boolean {
+    if (failure === undefined) return false;
+    if (failure.kind === "too_main_failed_pin_attempts") return true;
+    return failure.kind === "pin_incorrect" && failure.nextRetryAt > now;
+}
+
 export function pinNumberErrorMessage(
     resp: PinNumberFailures | undefined,
     now: number = 0,

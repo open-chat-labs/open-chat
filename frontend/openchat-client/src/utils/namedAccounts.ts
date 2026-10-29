@@ -5,7 +5,8 @@ export const SAVED_ACCOUNT_NAME_MAX = 25;
 
 /** A name as the canister keeps it: trimmed, and cut to `SAVED_ACCOUNT_NAME_MAX` characters. */
 export function savedAccountName(name: string): string {
-    return name.trim().slice(0, SAVED_ACCOUNT_NAME_MAX);
+    // by characters (code points), as the canister counts them, so an emoji isn't split in two
+    return Array.from(name.trim()).slice(0, SAVED_ACCOUNT_NAME_MAX).join("");
 }
 
 /**
