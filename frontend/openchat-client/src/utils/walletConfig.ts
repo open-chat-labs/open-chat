@@ -1,4 +1,4 @@
-import type { WalletConfig } from "@shared";
+import { DEFAULT_TOKENS, type WalletConfig } from "@shared";
 
 /**
  * A copy of `config` that a settings form can edit without touching the original. The `tokens` Set
@@ -44,4 +44,33 @@ export function walletConfigForMode(
         case "manual_wallet":
             return { kind: "manual_wallet", tokens: new Set(defaultLedgers) };
     }
+}
+
+function setsAreEqual<T>(a: Set<T>, b: Set<T>): boolean {
+    if (a.size !== b.size) return false;
+    for (const item of a) {
+        if (!b.has(item)) return false;
+    }
+    return true;
+}
+
+/** Whether two wallet configs differ: another mode, minimum or set of hand-picked tokens. */
+export function walletConfigChanged(a: WalletConfig, b: WalletConfig): boolean {
+    if (a.kind !== b.kind) return true;
+    if (a.kind === "auto_wallet" && b.kind === "auto_wallet")
+        return a.minDollarValue !== b.minDollarValue;
+    if (a.kind === "manual_wallet" && b.kind === "manual_wallet")
+        return !setsAreEqual(a.tokens, b.tokens);
+    return false;
+}
+
+/** The ledgers of `DEFAULT_TOKENS` the app knows, which a hand-picked list starts from. */
+export function defaultWalletLedgers(
+    tokens: Iterable<{ symbol: string; ledger: string }>,
+): Set<string> {
+    const bySymbol = new Map<string, string>();
+    for (const t of tokens) bySymbol.set(t.symbol, t.ledger);
+    return new Set(
+        DEFAULT_TOKENS.map((s) => bySymbol.get(s)).filter((l): l is string => l !== undefined),
+    );
 }

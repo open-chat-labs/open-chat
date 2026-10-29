@@ -412,6 +412,7 @@ import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from
 import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import { blockOutcome, type BlockContext, type BlockOutcome } from "./utils/profileBlock";
 import { isTrustedClick } from "./utils/prizes";
+import { withoutAccountsNamed, withSavedAccount } from "./utils/namedAccounts";
 import {
     FilteredProposals,
     achievementsStore,
@@ -10313,22 +10314,38 @@ export class OpenChat {
         }
     }
 
-    saveCryptoAccount(namedAccount: NamedAccount): Promise<SaveCryptoAccountResponse> {
-        return this.#worker
+    /**
+     * Saves an account to the user's address book, and once it's stored, to `namedAccountsStore`:
+     * saving one already saved renames it.
+     */
+    async saveCryptoAccount(namedAccount: NamedAccount): Promise<SaveCryptoAccountResponse> {
+        const resp: SaveCryptoAccountResponse = await this.#worker
             .send({
                 kind: "saveCryptoAccount",
                 namedAccount,
             })
             .catch(() => ({ kind: "failure" }));
+        if (resp.kind === "success") {
+            namedAccountsStore.set(withSavedAccount(namedAccountsStore.value, namedAccount));
+        }
+        return resp;
     }
 
-    deleteCryptoAccount(name: string): Promise<DeleteCryptoAccountResponse> {
-        return this.#worker
+    /**
+     * Deletes the saved accounts with this name (the canister ignores case), from the address book
+     * and, once it has gone, from `namedAccountsStore`.
+     */
+    async deleteCryptoAccount(name: string): Promise<DeleteCryptoAccountResponse> {
+        const resp: DeleteCryptoAccountResponse = await this.#worker
             .send({
                 kind: "deleteCryptoAccount",
                 name,
             })
             .catch(() => ({ kind: "failure" }));
+        if (resp.kind === "success") {
+            namedAccountsStore.set(withoutAccountsNamed(namedAccountsStore.value, name));
+        }
+        return resp;
     }
 
     async #updateRegistry(): Promise<void> {
@@ -13663,25 +13680,6 @@ export class OpenChat {
         if (config !== undefined) {
             return this.setWalletConfig(config);
         }
-    }
-
-    setsAreEqual<T>(a: Set<T>, b: Set<T>): boolean {
-        if (a.size !== b.size) return false;
-        for (const item of a) {
-            if (!b.has(item)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    walletConfigChanged(a: WalletConfig, b: WalletConfig): boolean {
-        if (a.kind !== b.kind) return true;
-        if (a.kind === "auto_wallet" && b.kind === "auto_wallet")
-            return a.minDollarValue !== b.minDollarValue;
-        if (a.kind === "manual_wallet" && b.kind === "manual_wallet")
-            return !this.setsAreEqual(a.tokens, b.tokens);
-        return false;
     }
 
     setWalletConfig(config: WalletConfig): Promise<boolean> {
