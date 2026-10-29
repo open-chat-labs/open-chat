@@ -672,6 +672,7 @@
         "comingSoon": "（近日公開）",
         "configureWallet": "ウォレットを設定する",
         "configureWalletFailure": "申し訳ありませんが、ウォレットの設定を保存できませんでした",
+        "invalidMinimum": "ウォレットの設定は保存されませんでした：最低残高は数値で入力してください",
         "failedToFetchDepositFee": "入金手数料の取得に失敗しました",
         "failedToGenerateAddress": "アドレスの生成に失敗しました",
         "fetchingDepositFee": "デポジット手数料を取得しています...",

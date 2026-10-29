@@ -672,6 +672,7 @@
         "comingSoon": "(قريباً)",
         "configureWallet": "قم بضبط إعدادات محفظتك",
         "configureWalletFailure": "نأسف لأننا لم نتمكن من حفظ تكوين محفظتك",
+        "invalidMinimum": "لم يتم حفظ إعدادات محفظتك: يجب أن يكون الحد الأدنى للرصيد رقمًا",
         "failedToFetchDepositFee": "فشل في جلب رسوم الإيداع",
         "failedToGenerateAddress": "فشل في إنشاء العنوان",
         "fetchingDepositFee": "جاري جلب رسوم الإيداع...",

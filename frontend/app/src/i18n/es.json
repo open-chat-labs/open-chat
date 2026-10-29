@@ -672,6 +672,7 @@
         "comingSoon": "(próximamente)",
         "configureWallet": "Configura tu billetera",
         "configureWalletFailure": "Lo sentimos, no pudimos guardar la configuración de tu billetera.",
+        "invalidMinimum": "No se guardó la configuración de tu billetera: el saldo mínimo debe ser un número",
         "failedToFetchDepositFee": "No se pudo obtener la tarifa de depósito",
         "failedToGenerateAddress": "No se pudo generar la dirección",
         "fetchingDepositFee": "Obteniendo tarifa de depósito...",

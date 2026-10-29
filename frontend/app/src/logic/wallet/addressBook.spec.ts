@@ -39,6 +39,11 @@ describe("the addresses the address book saves", () => {
     test("a name is needed, and not another recipient's in any case", () => {
         expect(checkRecipientName("  ", saved)).toEqual({ kind: "empty" });
         expect(checkRecipientName("exchange", saved)).toEqual({ kind: "taken" });
+        // compared as the canister keeps it: a longer name is cut to 25 characters
+        const long = [{ name: "Cold storage wallet numbe", account: "ccc" }];
+        expect(checkRecipientName("cold storage wallet number two", long)).toEqual({
+            kind: "taken",
+        });
         expect(checkRecipientName("EXCHANGE", saved, "ryjl3-tyaaa-aaaaa-aaaba-cai")).toEqual({
             kind: "valid",
         });

@@ -12,6 +12,10 @@
     token?: string | null;
     /** e.g. "Sent 3 days ago". */
     last?: string;
+    /** The network's name as the host reads the address, shown on the row (else read off the address). */
+    networkName?: string;
+    /** The token Send opens on for this recipient (its id), when the host knows one that can reach the address. */
+    sendToken?: string;
   }
 
   export type RecipientNetwork = 'BTC' | 'ETH' | 'XRP' | 'ICP';
@@ -113,7 +117,8 @@
   const status = $derived(form && addr && checkAddress ? checkAddress(addr, form.id) : null);
   const addressOk = $derived(status ? 'network' in status : !!net && net !== 'unknown' && !dupe);
   const netName = $derived(status ? ('network' in status ? status.network : '') : net && net !== 'unknown' ? NET_NAME[net] : '');
-  const defaultName = $derived(addressOk ? t('ui.walletRecipients.defaultName', { network: netName }) : '');
+  // no longer than the host keeps a name
+  const defaultName = $derived(addressOk ? t('ui.walletRecipients.defaultName', { network: netName }).slice(0, maxNameLength) : '');
   const nameError = $derived(form && addressOk && checkName ? checkName(form.name.trim() || defaultName, form.id) : null);
   const valid = $derived(addressOk && !nameError);
   const note = $derived(
@@ -131,6 +136,7 @@
   );
   // a row's network: the host's name for it, else the address's shape
   const rowNetwork = (r: Recipient) => {
+    if (r.networkName) return r.networkName;
     if (!checkAddress) {
       const n = detect(r.address);
       return n === 'unknown' ? t('ui.walletRecipients.unknownNetwork') : n;

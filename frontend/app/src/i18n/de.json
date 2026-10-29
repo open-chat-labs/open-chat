@@ -672,6 +672,7 @@
         "comingSoon": "(kommt bald)",
         "configureWallet": "Konfigurieren Sie Ihre Wallet",
         "configureWalletFailure": "Leider konnten wir Ihre Wallet-Konfiguration nicht speichern",
+        "invalidMinimum": "Ihre Wallet-Einstellungen wurden nicht gespeichert: Der Mindestbetrag muss eine Zahl sein",
         "failedToFetchDepositFee": "Die Einzahlungsgebühr konnte nicht abgerufen werden",
         "failedToGenerateAddress": "Adresse konnte nicht generiert werden",
         "fetchingDepositFee": "Kautionsgebühr wird abgerufen …",

@@ -14,6 +14,7 @@
         checkRecipientAddress,
         checkRecipientName,
         recipientAddressError,
+        RECIPIENT_NAME_MAX,
     } from "@src/logic/wallet/addressBook";
 
     const client = getContext<OpenChat>("client");
@@ -92,7 +93,7 @@
                 <Input
                     bind:value={name}
                     countdown={false}
-                    maxlength={100}
+                    maxlength={RECIPIENT_NAME_MAX}
                     placeholder={interpolate($_, i18nKey("Recipient's name or title"))}>
                     {#snippet subtext()}
                         <Translatable

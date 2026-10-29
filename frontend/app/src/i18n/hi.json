@@ -672,6 +672,7 @@
         "comingSoon": "(जल्द आ रहा है)",
         "configureWallet": "अपने वॉलेट को कॉन्फ़िगर करें",
         "configureWalletFailure": "क्षमा करें, हम आपका वॉलेट कॉन्फ़िगरेशन सहेजने में असमर्थ रहे",
+        "invalidMinimum": "आपकी वॉलेट सेटिंग्स सहेजी नहीं गईं: न्यूनतम शेष राशि एक संख्या होनी चाहिए",
         "failedToFetchDepositFee": "जमा शुल्क प्राप्त करने में विफल",
         "failedToGenerateAddress": "पता जनरेट करने में विफल",
         "fetchingDepositFee": "जमा शुल्क प्राप्त किया जा रहा है...",

@@ -412,7 +412,7 @@ import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from
 import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import { blockOutcome, type BlockContext, type BlockOutcome } from "./utils/profileBlock";
 import { isTrustedClick } from "./utils/prizes";
-import { withoutAccountsNamed, withSavedAccount } from "./utils/namedAccounts";
+import { savedAccountName, withoutAccountsNamed, withSavedAccount } from "./utils/namedAccounts";
 import {
     FilteredProposals,
     achievementsStore,
@@ -10305,14 +10305,20 @@ export class OpenChat {
 
     /** Loads the user's saved accounts into `namedAccountsStore` (kept as it was if they fail to load). */
     async loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
+        // a save or delete made while this was loading is newer than what it brings back
+        const version = this.#namedAccountsVersion;
         try {
             const accounts = await this.#worker.send({ kind: "loadSavedCryptoAccounts" });
+            if (version !== this.#namedAccountsVersion) return namedAccountsStore.value;
             namedAccountsStore.set(accounts);
             return accounts;
         } catch {
             return namedAccountsStore.value;
         }
     }
+
+    // bumped by each save and delete, so that a load which started before one doesn't undo it
+    #namedAccountsVersion = 0;
 
     /**
      * Saves an account to the user's address book, and once it's stored, to `namedAccountsStore`:
@@ -10322,10 +10328,11 @@ export class OpenChat {
         const resp: SaveCryptoAccountResponse = await this.#worker
             .send({
                 kind: "saveCryptoAccount",
-                namedAccount,
+                namedAccount: { ...namedAccount, name: savedAccountName(namedAccount.name) },
             })
             .catch(() => ({ kind: "failure" }));
         if (resp.kind === "success") {
+            this.#namedAccountsVersion++;
             namedAccountsStore.set(withSavedAccount(namedAccountsStore.value, namedAccount));
         }
         return resp;
@@ -10339,10 +10346,11 @@ export class OpenChat {
         const resp: DeleteCryptoAccountResponse = await this.#worker
             .send({
                 kind: "deleteCryptoAccount",
-                name,
+                name: savedAccountName(name),
             })
             .catch(() => ({ kind: "failure" }));
         if (resp.kind === "success") {
+            this.#namedAccountsVersion++;
             namedAccountsStore.set(withoutAccountsNamed(namedAccountsStore.value, name));
         }
         return resp;

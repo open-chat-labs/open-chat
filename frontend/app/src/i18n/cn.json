@@ -672,6 +672,7 @@
         "comingSoon": "（快来了）",
         "configureWallet": "配置您的钱包",
         "configureWalletFailure": "抱歉，我们无法保存您的钱包配置",
+        "invalidMinimum": "钱包设置未保存：最低余额必须是数字",
         "failedToFetchDepositFee": "提取存款费用失败",
         "failedToGenerateAddress": "生成地址失败",
         "fetchingDepositFee": "正在获取存款费用...",

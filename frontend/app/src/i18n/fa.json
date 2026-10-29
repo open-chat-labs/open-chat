@@ -672,6 +672,7 @@
         "comingSoon": "(به زودی)",
         "configureWallet": "کیف پول خود را پیکربندی کنید",
         "configureWalletFailure": "متأسفیم که نتوانستیم پیکربندی کیف پول شما را ذخیره کنیم",
+        "invalidMinimum": "تنظیمات کیف پول شما ذخیره نشد: حداقل موجودی باید یک عدد باشد",
         "failedToFetchDepositFee": "واکشی کارمزد سپرده انجام نشد",
         "failedToGenerateAddress": "آدرس ایجاد نشد",
         "fetchingDepositFee": "واکشی کارمزد سپرده...",

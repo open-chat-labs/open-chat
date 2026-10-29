@@ -630,9 +630,11 @@ design export needs. Each entry says where it came up.
     `namedAccountsStore` holds it (the client's save and delete keep it). The old address book's
     rules (`logic/wallet/addressBook`, shared with both old trees): only an address
     `addressNetwork` recognises, never a MultiUser user id's account nor one already saved, and a
-    name not taken (ignoring case, at most 25 characters). An edit only renames; removing deletes
-    by name. By hand in the library: `checkAddress`, `checkName`, `editAddress`, `tokenLocks`,
-    `lastSent`, `maxNameLength`.
+    name not taken (ignoring case, as the canister keeps it: trimmed, at most 25 characters). An
+    edit only renames; removing deletes by name. A recipient's Send opens on BTC for a Bitcoin
+    address, ckSOL for a Solana one (which Send can't reach yet), else ICP. By hand in the library:
+    `checkAddress`, `checkName`, `editAddress`, `tokenLocks`, `lastSent`, `maxNameLength`, and a
+    recipient's `networkName` and `sendToken`.
   - Settings (6d) are built: the panel's ⋯ menu opens `WalletSettingsDialog` (a local dialog,
     `wallet_settings`). The token list is `WalletSettingsForm`'s copy of the stored config (shared
     with both old trees), saved when the dialog closes and only if it changed. The PIN goes through
@@ -640,8 +642,9 @@ design export needs. Each entry says where it came up.
     - "I've forgotten my PIN": the dialog has no such step. A transfer's PIN prompt has it (S3).
     - the hand-picked list offers the tokens with a balance only (the dialog's own rule); the old
       settings offer the whole catalogue.
-    - switching to hand-picked starts from the default tokens, as the old settings do, not from
-      the tokens shown at the minimum, as the dialog's "take over" button reads.
+    - switching to hand-picked starts from the tokens the minimum showed (the dialog's toggle and
+      "take over"), or the default tokens when it showed none; the old settings always start from
+      the default tokens.
   - Swap (6c): the app passes `flows` without it. Its buttons show as designed and do nothing; the
     menus and the token picker leave it out; `/wallet/swap` shows the token's page (or All
     activity).

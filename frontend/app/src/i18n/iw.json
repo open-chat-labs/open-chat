@@ -672,6 +672,7 @@
         "comingSoon": "(בקרוב)",
         "configureWallet": "הגדר את הארנק שלך",
         "configureWalletFailure": "מצטערים שלא הצלחנו לשמור את תצורת הארנק שלך",
+        "invalidMinimum": "הגדרות הארנק שלך לא נשמרו: היתרה המינימלית חייבת להיות מספר",
         "failedToFetchDepositFee": "שליפת עמלת הפיקדון נכשלה",
         "failedToGenerateAddress": "יצירת הכתובת נכשלה",
         "fetchingDepositFee": "מביא עמלת פיקדון...",

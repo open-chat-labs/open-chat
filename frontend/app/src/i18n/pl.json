@@ -672,6 +672,7 @@
         "comingSoon": "(wkrótce)",
         "configureWallet": "Skonfiguruj swój portfel",
         "configureWalletFailure": "Przepraszamy, nie udało nam się zapisać konfiguracji Twojego portfela",
+        "invalidMinimum": "Ustawienia portfela nie zostały zapisane: minimalne saldo musi być liczbą",
         "failedToFetchDepositFee": "Nie udało się pobrać opłaty za depozyt",
         "failedToGenerateAddress": "Nie udało się wygenerować adresu",
         "fetchingDepositFee": "Pobieranie opłaty depozytowej...",

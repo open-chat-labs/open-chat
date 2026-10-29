@@ -52,8 +52,11 @@
     });
 
     async function saveOnClose(): Promise<void> {
-        if ((await form.save()) === "failed") {
+        const outcome = await form.save();
+        if (outcome === "failed") {
             toastStore.showFailureToast(i18nKey("cryptoAccount.configureWalletFailure"));
+        } else if (outcome === "invalid") {
+            toastStore.showFailureToast(i18nKey("cryptoAccount.invalidMinimum"));
         }
     }
 

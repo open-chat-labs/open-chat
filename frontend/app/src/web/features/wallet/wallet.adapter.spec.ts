@@ -277,10 +277,26 @@ describe("Send's people", () => {
 });
 
 describe("the address book", () => {
-    test("each saved account is a recipient keyed by its account, with its network's name", () => {
-        expect(walletRecipients([{ name: "Exchange", account: "abc" }])).toEqual([
-            { id: "abc", name: "Exchange", address: "abc" },
-        ]);
+    test("each saved account is a recipient keyed by its account, with its network's name and the token Send opens on", () => {
+        const ledgers = { icp: "icp-ledger", btc: "ckbtc-ledger" };
+        const [ic, btc, sol] = walletRecipients(
+            [
+                { name: "Exchange", account: "ryjl3-tyaaa-aaaaa-aaaba-cai" },
+                { name: "Cold", account: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" },
+                { name: "Phantom", account: "7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV" },
+            ],
+            ledgers,
+        );
+        expect(ic).toEqual({
+            id: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+            name: "Exchange",
+            address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+            networkName: "Internet Computer",
+            sendToken: "icp-ledger",
+        });
+        expect(btc).toMatchObject({ networkName: "Bitcoin", sendToken: "ckbtc-ledger" });
+        // no ckSOL in the app: ICP, which Send then says can't reach the address
+        expect(sol).toMatchObject({ networkName: "Solana", sendToken: "icp-ledger" });
         expect(addressNetworkName("icrc")).toBe("Internet Computer");
         expect(addressNetworkName("sol")).toBe("Solana");
     });

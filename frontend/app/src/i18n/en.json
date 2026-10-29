@@ -661,6 +661,7 @@
         "comingSoon": "(coming soon)",
         "configureWallet": "Configure your wallet",
         "configureWalletFailure": "Sorry we were unable to save your wallet config",
+        "invalidMinimum": "Your wallet settings weren't saved: the minimum balance must be a number",
         "failedToFetchDepositFee": "Failed to fetch deposit fee",
         "failedToGenerateAddress": "Failed to generate address",
         "fetchingDepositFee": "Fetching deposit fee...",

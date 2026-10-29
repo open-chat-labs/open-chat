@@ -672,6 +672,7 @@
         "comingSoon": "(Bientôt disponible)",
         "configureWallet": "Configurez votre portefeuille",
         "configureWalletFailure": "Désolé, nous n'avons pas pu enregistrer la configuration de votre portefeuille",
+        "invalidMinimum": "Vos paramètres de portefeuille n'ont pas été enregistrés : le solde minimum doit être un nombre",
         "failedToFetchDepositFee": "Échec de la récupération des frais de dépôt",
         "failedToGenerateAddress": "Échec de la génération de l'adresse",
         "fetchingDepositFee": "Récupération des frais de dépôt...",

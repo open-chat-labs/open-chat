@@ -21,6 +21,8 @@
         enhancedCryptoLookup,
         exchangeRatesLookupStore,
         formatTokens,
+        LEDGER_CANISTER_CKSOL,
+        LEDGER_CANISTER_ICP,
         namedAccountsStore,
         routeForChatIdentifier,
         serverDirectChatsStore,
@@ -405,6 +407,12 @@
     // the canister keys a saved address by its account, so a new address would leave the old one);
     // a removal deletes by name, as the canister does
     const isUserIdAccount = (a: string): boolean => client.isAccountOfMultiUserCanisterUserId(a);
+    // the tokens Send opens on for a saved address: BTC for Bitcoin, ckSOL for Solana, else ICP
+    const recipientLedgers = $derived({
+        icp: LEDGER_CANISTER_ICP,
+        btc: btcToken?.ledger,
+        sol: $cryptoLookup.has(LEDGER_CANISTER_CKSOL) ? LEDGER_CANISTER_CKSOL : undefined,
+    });
 
     function checkRecipient(
         address: string,
@@ -486,7 +494,7 @@
     {checkAddress}
     onSent={send}
     onMessage={openDm}
-    recipients={walletRecipients($namedAccountsStore)}
+    recipients={walletRecipients($namedAccountsStore, recipientLedgers)}
     onAddRecipient={addRecipient}
     onUpdateRecipient={renameRecipient}
     onRemoveRecipient={removeRecipient}

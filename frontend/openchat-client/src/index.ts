@@ -134,6 +134,7 @@ export {
     unlinkIdentityFailure,
     type LinkIdentitiesResult,
 } from "./utils/signIn";
+export { SAVED_ACCOUNT_NAME_MAX, savedAccountName } from "./utils/namedAccounts";
 export {
     cloneWalletConfig,
     defaultWalletLedgers,
