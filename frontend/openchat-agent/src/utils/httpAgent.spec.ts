@@ -179,7 +179,7 @@ describe("createQueryAwareFetch", () => {
 describe("createQueryAwareFetch's connection outcomes", () => {
     function recorder() {
         const good = vi.fn((_responseMs: number) => undefined);
-        const bad = vi.fn(() => undefined);
+        const bad = vi.fn((_sentAt: number) => undefined);
         return { good, bad };
     }
 
@@ -211,13 +211,15 @@ describe("createQueryAwareFetch's connection outcomes", () => {
         expect(outcomes.good).not.toHaveBeenCalled();
     });
 
-    test("a query that fails on the network counts as bad", async () => {
+    test("a query that fails on the network counts as bad, with when it was sent", async () => {
         const outcomes = recorder();
         const fn = vi.fn(async () => {
             throw new TypeError("Failed to fetch");
         }) as unknown as typeof fetch;
+        const sentAt = Date.now();
         await expect(createQueryAwareFetch(fn, 60_000, outcomes)(QUERY_URL)).rejects.toThrow();
         expect(outcomes.bad).toHaveBeenCalledTimes(1);
+        expect(outcomes.bad).toHaveBeenCalledWith(sentAt);
     });
 
     test("a query still waiting after SLOW_QUERY_MS counts as bad, once", async () => {

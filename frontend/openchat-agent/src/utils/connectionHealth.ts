@@ -5,8 +5,17 @@ import { setConnectionUnusable } from "@shared";
 // only a connection which is barely carrying anything trips it.
 export const SLOW_QUERY_MS = 10_000;
 
-// Bad queries in a row before the connection is treated as unusable. Any good one resets the count.
+// Bad queries in a row before the connection is treated as unusable. Any good one resets the count,
+// and none counts while responses are still arriving: a connection carrying responses is usable,
+// however slow or failed some queries are. A burst of queries (the first load, or catching up
+// after a resume) queues in the browser, so the last of them can wait well past `SLOW_QUERY_MS`
+// on a connection that is busy rather than dead, and those used to trip it.
 export const BAD_QUERIES_TO_UNUSABLE = 3;
+
+// Bad queries closer together than this count as one. A single blip, such as the network changing,
+// fails every query in flight at once, and the app often has several out together, so counting
+// each of them tripped the connection on one hiccup.
+export const BAD_QUERY_SPACING_MS = 2_000;
 
 // A response must start within this long to show that an unusable connection is working again.
 // Stricter than `SLOW_QUERY_MS`, so that a connection on the edge doesn't flip back and forth.
@@ -18,8 +27,8 @@ export const PROBE_INTERVALS_MS = [5_000, 10_000, 20_000, 40_000, 60_000];
 export type QueryOutcomes = {
     // The query's response started arriving after `responseMs`
     good(responseMs: number): void;
-    // The query failed, timed out, or has waited `SLOW_QUERY_MS` without a response
-    bad(): void;
+    // The query sent at `sentAt` failed, or has waited `SLOW_QUERY_MS` without a response
+    bad(sentAt: number): void;
 };
 
 /**
@@ -36,9 +45,15 @@ export class ConnectionHealth implements QueryOutcomes {
     #isOnline: () => boolean;
     #unusable = false;
     #badInARow = 0;
+    #lastResponseAt = Number.NEGATIVE_INFINITY;
     #probeTimer: ReturnType<typeof setTimeout> | undefined;
     #probing = false;
     #probesFailed = 0;
+    #lastBadAt = Number.NEGATIVE_INFINITY;
+    // Queries sent before this went out on a connection that may since have gone, so their
+    // failures say nothing about the current one
+    #ignoreSentBefore = Number.NEGATIVE_INFINITY;
+    #hidden = false;
 
     /**
      * @param probe resolves to true if a small request got a response within `FAST_RESPONSE_MS`.
@@ -61,12 +76,21 @@ export class ConnectionHealth implements QueryOutcomes {
 
     good(responseMs: number): void {
         this.#badInARow = 0;
+        this.#lastResponseAt = Date.now();
         if (this.#unusable && responseMs <= FAST_RESPONSE_MS) {
             this.#setUnusable(false);
         }
     }
 
-    bad(): void {
+    bad(sentAt: number): void {
+        // While the app is hidden the OS may cut its network access, or let its connections die,
+        // even though the network is fine. Counting those failures had the app say it was offline
+        // for a moment each time it came back.
+        if (this.#hidden || sentAt < this.#ignoreSentBefore) return;
+        const now = Date.now();
+        if (now - this.#lastResponseAt < SLOW_QUERY_MS) return;
+        if (now - this.#lastBadAt < BAD_QUERY_SPACING_MS) return;
+        this.#lastBadAt = now;
         this.#badInARow += 1;
         if (!this.#unusable && this.#badInARow >= BAD_QUERIES_TO_UNUSABLE) {
             this.#setUnusable(true);
@@ -81,6 +105,21 @@ export class ConnectionHealth implements QueryOutcomes {
         if (this.#unusable && !this.#probing) {
             this.#probesFailed = 0;
             this.#scheduleProbe(0);
+        }
+    }
+
+    /**
+     * Whether the app is hidden. Bad queries aren't counted while it is, nor afterwards for
+     * queries sent before it came back, since those may have been waiting on a connection that
+     * died meanwhile.
+     */
+    setHidden(hidden: boolean): void {
+        if (hidden === this.#hidden) return;
+        this.#hidden = hidden;
+        if (!hidden) {
+            this.#badInARow = 0;
+            this.#ignoreSentBefore = Date.now();
+            this.connectionMayHaveChanged();
         }
     }
 
@@ -156,7 +195,7 @@ let connectionHealth: ConnectionHealth | undefined;
 
 export const queryOutcomes: QueryOutcomes = {
     good: (responseMs) => connectionHealth?.good(responseMs),
-    bad: () => connectionHealth?.bad(),
+    bad: (sentAt) => connectionHealth?.bad(sentAt),
 };
 
 /**
@@ -172,8 +211,17 @@ export function monitorConnection(icUrl: string, onChange: (unusable: boolean) =
             onChange(unusable);
         },
     );
+    connectionHealth.setHidden(appHidden);
 }
 
 export function connectionMayHaveChanged(): void {
     connectionHealth?.connectionMayHaveChanged();
+}
+
+// Recorded even before `monitorConnection` is called, so that monitoring starts in the right state
+let appHidden = false;
+
+export function setAppHidden(hidden: boolean): void {
+    appHidden = hidden;
+    connectionHealth?.setHidden(hidden);
 }

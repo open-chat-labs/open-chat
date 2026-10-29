@@ -13,6 +13,7 @@ import {
     IdentityAgent,
     monitorConnection,
     OpenChatAgent,
+    setAppHidden,
     setCachedWebAuthnKey,
     setCommunityReferral,
     type AgentConfig,
@@ -281,6 +282,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             return;
         }
 
+        if (kind === "setAppHidden") {
+            setAppHidden(payload.hidden);
+            sendResponse(kind, correlationId, undefined);
+            return;
+        }
+
         if (kind === "setAuthIdentity") {
             executeThenReply(
                 payload,
@@ -391,7 +398,8 @@ type HandledBeforeAgent =
     | "createOpenChatIdentity"
     | "logout"
     | "setMinLogLevel"
-    | "abortInFlightQueries";
+    | "abortInFlightQueries"
+    | "setAppHidden";
 
 type AgentRequestKind = Exclude<WorkerRequest["kind"], HandledBeforeAgent>;
 
