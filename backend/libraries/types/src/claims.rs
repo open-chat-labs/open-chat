@@ -37,6 +37,8 @@ pub const CLAIM_TYPE_MINI_APP_PLAYER: &str = "MiniAppPlayer";
 pub const CLAIM_TYPE_MINI_APP_JOIN: &str = "MiniAppJoin";
 // Signed by the service: a player has left a game
 pub const CLAIM_TYPE_MINI_APP_LEAVE: &str = "MiniAppLeave";
+// Signed by the service: a player asks to start a game, which the bot does, with its players, or refuses
+pub const CLAIM_TYPE_MINI_APP_START: &str = "MiniAppStart";
 pub const CLAIM_TYPE_NCA_VAULT_EXPORT: &str = "NcaVaultExport";
 pub const CLAIM_TYPE_NCA_SUBMITTER: &str = "NcaSubmitter";
 
@@ -201,7 +203,8 @@ pub struct MiniAppBotClaims {
     pub bot: UserId,
 }
 
-// A player token, and the service's calls telling a bot that a user asks to join or has left
+// A player token, and the service's calls telling a bot that a user asks to join, has left, or asks to
+// start the game
 #[derive(Serialize, Deserialize)]
 pub struct MiniAppPlayerClaims {
     pub bot: UserId,

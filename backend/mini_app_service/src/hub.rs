@@ -112,9 +112,16 @@ impl Hub {
     }
 
     // A user's role changed, eg. they joined, left or were removed: their connections with the game
-    // open take it, or close it if they can no longer watch. Returns those connections, and whether the
-    // number watching changed.
-    pub fn set_role(&self, game: MiniAppGame, user_id: UserId, role: Option<Role>) -> (Vec<ConnectionId>, bool) {
+    // open take it, or close it if they can no longer watch, and are sent `message`, before anything
+    // else is pushed to them in their new role. Returns those connections, and whether the number
+    // watching changed.
+    pub fn set_role(
+        &self,
+        game: MiniAppGame,
+        user_id: UserId,
+        role: Option<Role>,
+        message: ServerMessage,
+    ) -> (Vec<ConnectionId>, bool) {
         let mut inner = self.inner.lock().unwrap();
         let before = inner.watching(&game);
         let ids: Vec<_> = inner
@@ -125,6 +132,7 @@ impl Hub {
             .map(|(id, _)| *id)
             .filter(|id| inner.connections.get(id).is_some_and(|c| c.user_id == user_id))
             .collect();
+        let message = Arc::new(message);
         for id in &ids {
             match role {
                 Some(role) => {
@@ -132,6 +140,7 @@ impl Hub {
                 }
                 None => inner.close(*id, &game),
             }
+            inner.send_to(*id, message.clone());
         }
         let changed = inner.watching(&game) != before;
         (ids, changed)
@@ -423,13 +432,22 @@ mod tests {
         hub.open(tab2, game(), Role::Spectator);
         assert_eq!(hub.watching(&game()), 1);
 
-        let (ids, watching_changed) = hub.set_role(game(), user(1), Some(Role::Player));
+        let (ids, watching_changed) = hub.set_role(
+            game(),
+            user(1),
+            Some(Role::Player),
+            ServerMessage::Role {
+                game: game(),
+                role: Role::Player,
+                player_token: None,
+            },
+        );
         assert_eq!(ids.len(), 2);
         assert!(watching_changed);
         hub.push_state(game(), &state(1));
         assert_eq!(states(&mut tab1_messages), vec![(1, Some(json!({ "hand": [1] })))]);
 
-        hub.set_role(game(), user(1), None);
+        hub.set_role(game(), user(1), None, ServerMessage::Closed { game: game() });
         hub.push_state(game(), &state(2));
         assert!(states(&mut tab1_messages).is_empty());
         assert_eq!(hub.watching(&game()), 0);

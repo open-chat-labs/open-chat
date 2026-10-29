@@ -43,6 +43,11 @@ pub enum ClientMessage {
         id: RequestId,
         game: MiniAppGame,
     },
+    // A player asks to start the game, which the bot does or refuses
+    Start {
+        id: RequestId,
+        game: MiniAppGame,
+    },
 }
 
 // What the service sends the website
@@ -71,6 +76,18 @@ pub enum ServerMessage {
     PlayerToken {
         id: RequestId,
         token: String,
+    },
+    // A user's role in a game they have open changed, as they joined, left or were removed. A player
+    // gets a player token. The latest state follows, with their own part if they're now a player.
+    Role {
+        game: MiniAppGame,
+        role: Role,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        player_token: Option<String>,
+    },
+    // A user stopped playing a game they had open, which spectators can't watch, so it's closed for them
+    Closed {
+        game: MiniAppGame,
     },
     Refused {
         id: RequestId,
@@ -174,6 +191,21 @@ pub struct GameState {
     pub shared: Value,
     #[serde(default)]
     pub private: HashMap<UserId, Value>,
+}
+
+// A bot's answer to `POST <endpoint>/mini_app/start`: if it starts the game, who plays, whose turn it
+// is first, and the game's first state
+#[derive(Serialize, Deserialize, Debug)]
+pub struct StartResponse {
+    pub accepted: bool,
+    #[serde(default)]
+    pub message: Option<String>,
+    #[serde(default)]
+    pub players: Vec<UserId>,
+    #[serde(default)]
+    pub waiting_for: Vec<UserId>,
+    #[serde(default)]
+    pub state: Option<GameState>,
 }
 
 // A bot's answer to `POST <endpoint>/mini_app/join`
