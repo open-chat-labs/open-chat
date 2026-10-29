@@ -83,6 +83,9 @@
                         rel="noopener noreferrer">{part.source.name}</a
                     >{/if}
             {/each}
+            <!-- room for the time over the bubble's bottom right corner, as a text message leaves;
+                 in the reader's own bubble the panel's padding keeps the credit clear of it -->
+            {#if !me}<span class="metadata_spacer"></span>{/if}
         </div>
     </div>
 {/if}
@@ -99,6 +102,7 @@
     .price-chart-content {
         display: grid;
         grid-template-columns: minmax(0, 22rem);
+        width: fit-content;
         gap: var(--sp-sm);
         // inset as a text message's is, in line with the sender's name
         padding: var(--sp-xs) var(--sp-sm);
@@ -163,5 +167,10 @@
             color: inherit;
             text-decoration: underline;
         }
+    }
+
+    .metadata_spacer {
+        display: inline-block;
+        width: 2.25rem;
     }
 </style>
