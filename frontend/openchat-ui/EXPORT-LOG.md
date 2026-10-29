@@ -450,3 +450,8 @@
 - `WalletSettingsDialog`: hand-picked tokens are ids (`id`, else the symbol), so two tokens sharing a symbol stay apart.
 - `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-29 — WalletSend: the saved-address picker knows the token, by hand
+- `onPickSaved(token)`: Send passes the id of the token being sent, so the host's picker can offer only the saved addresses that token can reach. `WalletMain`'s `onPickSaved` takes it too.
+- `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

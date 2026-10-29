@@ -17727,7 +17727,7 @@
       },
       {
         "name": "onPickSaved",
-        "type": "() => Promise<string | null | undefined>",
+        "type": "(token: string) => Promise<string | null | undefined>",
         "default": null,
         "editor": null,
         "options": null,
@@ -18719,14 +18719,14 @@
       },
       {
         "name": "onPickSaved",
-        "type": "() => Promise<string | null | undefined>",
+        "type": "(token: string) => Promise<string | null | undefined>",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Opens the host's saved-address picker; resolve with the chosen address (or nothing to cancel). Hidden without it."
+        "doc": "Opens the host's saved-address picker for the token being sent (its id), so it can offer only the addresses that token can reach; resolve with the chosen address (or nothing to cancel). Hidden without it."
       },
       {
         "name": "onScanQr",

@@ -161,6 +161,7 @@
         "name": "Nom",
         "namePlaceholder": "Entrez un nom pour cette adresse",
         "nameTaken": "Vous avez déjà une adresse enregistrée sous ce nom",
+        "noneForToken": "Aucune de vos adresses enregistrées ne peut recevoir {token}",
         "rename": "Renommer",
         "saveFailed": "Désolé, nous n'avons pas pu enregistrer cette adresse",
         "title": "Carnet d'adresses"
@@ -673,6 +674,8 @@
         "configureWallet": "Configurez votre portefeuille",
         "configureWalletFailure": "Désolé, nous n'avons pas pu enregistrer la configuration de votre portefeuille",
         "invalidMinimum": "Vos paramètres de portefeuille n'ont pas été enregistrés : le solde minimum doit être un nombre",
+        "cameraUnavailable": "Impossible d'utiliser la caméra. Autorisez l'accès à la caméra et réessayez.",
+        "scanHint": "Pointez votre caméra vers le code QR de l'adresse",
         "failedToFetchDepositFee": "Échec de la récupération des frais de dépôt",
         "failedToGenerateAddress": "Échec de la génération de l'adresse",
         "fetchingDepositFee": "Récupération des frais de dépôt...",

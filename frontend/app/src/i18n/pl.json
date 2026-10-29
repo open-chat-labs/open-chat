@@ -161,6 +161,7 @@
         "name": "Nazwa",
         "namePlaceholder": "Wprowadź nazwę tego adresu",
         "nameTaken": "Masz już zapisany adres o tej nazwie",
+        "noneForToken": "Żaden z zapisanych adresów nie może otrzymać {token}",
         "rename": "Zmień nazwę",
         "saveFailed": "Niestety nie udało się zapisać tego adresu",
         "title": "Książka adresowa"
@@ -673,6 +674,8 @@
         "configureWallet": "Skonfiguruj swój portfel",
         "configureWalletFailure": "Przepraszamy, nie udało nam się zapisać konfiguracji Twojego portfela",
         "invalidMinimum": "Ustawienia portfela nie zostały zapisane: minimalne saldo musi być liczbą",
+        "cameraUnavailable": "Nie można użyć aparatu. Zezwól na dostęp do aparatu i spróbuj ponownie.",
+        "scanHint": "Skieruj aparat na kod QR adresu",
         "failedToFetchDepositFee": "Nie udało się pobrać opłaty za depozyt",
         "failedToGenerateAddress": "Nie udało się wygenerować adresu",
         "fetchingDepositFee": "Pobieranie opłaty depozytowej...",

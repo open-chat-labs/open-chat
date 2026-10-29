@@ -79,6 +79,7 @@
     import {
         addressNetworkName,
         receiveNetworks,
+        searchContacts,
         sendContacts,
         tokenActivity,
         wholeTokens,
@@ -86,6 +87,8 @@
         walletToken,
     } from "./wallet.adapter";
     import { walletCatalogue } from "./walletCatalogue.svelte";
+    import QrScanDialog from "./QrScanDialog.svelte";
+    import SavedAddressPicker from "./SavedAddressPicker.svelte";
     import { walletRequests } from "./walletRequests.svelte";
 
     type WalletMainProps = ComponentProps<typeof WalletMain>;
@@ -467,6 +470,41 @@
         if (resp.kind !== "success") throw new Error(`recipient not removed: ${resp.kind}`);
     }
 
+    // Send's Saved and Scan QR: the address book's entries the token can reach (as the old Send
+    // offers them, #10013), and the camera. Each opens its dialog and answers with the address
+    // picked or scanned, or nothing when it's closed
+    let picking = $state<{ token: string; resolve: (address: string | undefined) => void }>();
+    let scanning = $state<(address: string | undefined) => void>();
+
+    function pickSaved(token: string): Promise<string | undefined> {
+        picking?.resolve(undefined);
+        return new Promise((resolve) => (picking = { token, resolve }));
+    }
+
+    function picked(address: string | undefined): void {
+        picking?.resolve(address);
+        picking = undefined;
+    }
+
+    // the saved recipients the token being sent can reach
+    const pickable = $derived.by(() => {
+        const symbol = picking === undefined ? undefined : $cryptoLookup.get(picking.token)?.symbol;
+        if (symbol === undefined) return [];
+        return walletRecipients($namedAccountsStore, recipientLedgers).filter((r) =>
+            checkAddress(r.address, symbol),
+        );
+    });
+
+    function scanQr(): Promise<string | undefined> {
+        scanning?.(undefined);
+        return new Promise((resolve) => (scanning = resolve));
+    }
+
+    function scanned(address: string | undefined): void {
+        scanning?.(address);
+        scanning = undefined;
+    }
+
     // "View in chat": the DM the tokens went to
     function openDm({ userId }: { userId: string }): void {
         navigate(routeForChatIdentifier("chats", { kind: "direct_chat", userId }));
@@ -494,6 +532,9 @@
     {checkAddress}
     onSent={send}
     onMessage={openDm}
+    onSearchUsers={async (query) => searchContacts(contacts, query)}
+    onPickSaved={pickSaved}
+    onScanQr={scanQr}
     recipients={walletRecipients($namedAccountsStore, recipientLedgers)}
     onAddRecipient={addRecipient}
     onUpdateRecipient={renameRecipient}
@@ -516,6 +557,18 @@
         title: "ui.walletMain.allActivityUnavailableTitle",
         body: "ui.walletMain.allActivityUnavailableBody",
     }} />
+
+{#if picking !== undefined}
+    <SavedAddressPicker
+        recipients={pickable}
+        anySaved={$namedAccountsStore.length > 0}
+        symbol={$cryptoLookup.get(picking.token)?.symbol ?? ""}
+        onPick={picked}
+        onClose={() => picked(undefined)} />
+{/if}
+{#if scanning !== undefined}
+    <QrScanDialog onScan={scanned} onClose={() => scanned(undefined)} />
+{/if}
 
 {#snippet qr(address: string)}
     <QRCode text={address} logo={receiveToken?.logo || undefined} />

@@ -607,15 +607,18 @@ design export needs. Each entry says where it came up.
     Computer, oneSec's chains), without the design's "~10 min" times.
   - Send (6b) is built: `/wallet/send?token=<ledger>`. To a person, a transfer in their DM
     (`sendInDirectChat`, shared with mobile's Send to user), offered only for users already DM'd
-    (mobile's rule: `contacts`, no `onSearchUsers`); to an address, a withdrawal over the ledger,
+    (mobile's rule: `contacts`, and the search looks among them, `searchContacts`); to an
+    address, a withdrawal over the ledger,
     or for BTC over Bitcoin's own network (the ckBTC minter's fee sent on top, so what arrives is
     what was typed). The amount and fee are worked out in ledger units (`logic/wallet/walletSend`),
     the PIN is the client's prompt. Not yet:
     - SOL to a Solana address and oneSec's EVM chains: the library's Send knows neither, so those
       addresses are refused (`checkAddress`); the old wallets send them (`WithdrawForm`).
-    - the saved-address picker (`onPickSaved`) and saving a new address after a send: the design
-      has neither screen. Recipients' Send opens Send on the saved address instead. No QR scanner
-      (`onScanQr`).
+    - Saved (`onPickSaved`) and Scan QR (`onScanQr`) open the app's own dialogs, which the design
+      doesn't have (`TODO(design)`): `SavedAddressPicker` (the saved addresses the token can reach,
+      as the old Send offers them) on `DialogShell` and `MemberRow`, and `QrScanDialog` around
+      `core/QRScanner` (every tree's scanner). By hand: `onPickSaved` gets the token's id.
+    - saving a new address after a send: the design has no screen for it.
     - the message on a send to an address: the design offers a note to self; nothing keeps it.
     - the ckBTC minter's fee is its estimate for any amount, asked each time Send opens while BTC
       is held (again 10 s after a failure); a send under the minter's minimum stops with a toast

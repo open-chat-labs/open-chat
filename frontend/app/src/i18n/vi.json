@@ -161,6 +161,7 @@
         "name": "Tên",
         "namePlaceholder": "Nhập tên cho địa chỉ này",
         "nameTaken": "Bạn đã có một địa chỉ được lưu với tên này",
+        "noneForToken": "Không địa chỉ đã lưu nào có thể nhận {token}",
         "rename": "Đổi tên",
         "saveFailed": "Rất tiếc, chúng tôi không thể lưu địa chỉ này",
         "title": "Sổ địa chỉ"
@@ -673,6 +674,8 @@
         "configureWallet": "Cấu hình ví của bạn",
         "configureWalletFailure": "Xin lỗi, chúng tôi không thể lưu cấu hình ví của bạn",
         "invalidMinimum": "Chưa lưu cài đặt ví: số dư tối thiểu phải là một số",
+        "cameraUnavailable": "Không thể dùng máy ảnh. Hãy cho phép truy cập máy ảnh và thử lại.",
+        "scanHint": "Hướng máy ảnh vào mã QR của địa chỉ",
         "failedToFetchDepositFee": "Không thể lấy phí gửi tiền",
         "failedToGenerateAddress": "Không tạo được địa chỉ",
         "fetchingDepositFee": "Đang lấy phí đặt cọc...",

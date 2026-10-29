@@ -161,6 +161,7 @@
         "name": "שם",
         "namePlaceholder": "הזן שם עבור כתובת זו",
         "nameTaken": "כבר יש לך כתובת שמורה בשם זה",
+        "noneForToken": "אף אחת מהכתובות השמורות שלך לא יכולה לקבל {token}",
         "rename": "שינוי שם",
         "saveFailed": "מצטערים, לא הצלחנו לשמור כתובת זו",
         "title": "פנקס כתובות"
@@ -673,6 +674,8 @@
         "configureWallet": "הגדר את הארנק שלך",
         "configureWalletFailure": "מצטערים שלא הצלחנו לשמור את תצורת הארנק שלך",
         "invalidMinimum": "הגדרות הארנק שלך לא נשמרו: היתרה המינימלית חייבת להיות מספר",
+        "cameraUnavailable": "לא ניתן היה להשתמש במצלמה. אפשר גישה למצלמה ונסה שוב.",
+        "scanHint": "כוון את המצלמה לקוד ה-QR של הכתובת",
         "failedToFetchDepositFee": "שליפת עמלת הפיקדון נכשלה",
         "failedToGenerateAddress": "יצירת הכתובת נכשלה",
         "fetchingDepositFee": "מביא עמלת פיקדון...",

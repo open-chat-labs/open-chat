@@ -161,6 +161,7 @@
         "name": "名前",
         "namePlaceholder": "このアドレスの名前を入力してください",
         "nameTaken": "この名前で保存されたアドレスがすでにあります",
+        "noneForToken": "保存したアドレスのどれも {token} を受け取れません",
         "rename": "名前を変更",
         "saveFailed": "申し訳ありませんが、このアドレスを保存できませんでした",
         "title": "アドレス帳"
@@ -673,6 +674,8 @@
         "configureWallet": "ウォレットを設定する",
         "configureWalletFailure": "申し訳ありませんが、ウォレットの設定を保存できませんでした",
         "invalidMinimum": "ウォレットの設定は保存されませんでした：最低残高は数値で入力してください",
+        "cameraUnavailable": "カメラを使用できませんでした。カメラへのアクセスを許可して、もう一度お試しください。",
+        "scanHint": "アドレスのQRコードにカメラを向けてください",
         "failedToFetchDepositFee": "入金手数料の取得に失敗しました",
         "failedToGenerateAddress": "アドレスの生成に失敗しました",
         "fetchingDepositFee": "デポジット手数料を取得しています...",

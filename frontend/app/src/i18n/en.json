@@ -162,6 +162,7 @@
         "name": "Name",
         "namePlaceholder": "Enter a name for this address",
         "nameTaken": "You already have an address saved with this name",
+        "noneForToken": "None of your saved addresses can receive {token}",
         "network": {
             "btc": "Bitcoin address",
             "eth": "Ethereum address",
@@ -662,6 +663,8 @@
         "configureWallet": "Configure your wallet",
         "configureWalletFailure": "Sorry we were unable to save your wallet config",
         "invalidMinimum": "Your wallet settings weren't saved: the minimum balance must be a number",
+        "cameraUnavailable": "Couldn't use the camera. Allow camera access and try again.",
+        "scanHint": "Point your camera at the QR code of the address",
         "failedToFetchDepositFee": "Failed to fetch deposit fee",
         "failedToGenerateAddress": "Failed to generate address",
         "fetchingDepositFee": "Fetching deposit fee...",

@@ -95,8 +95,9 @@
     /** The routes the host can send BTC to a Bitcoin address over (e.g. only `btc`: a ckBTC transfer can't reach one);
      *  both without it. */
     btcRoutes?: ('btc' | 'ckbtc')[];
-    /** Opens the host's saved-address picker; resolve with the chosen address (or nothing to cancel). Hidden without it. */
-    onPickSaved?: () => Promise<string | null | undefined>;
+    /** Opens the host's saved-address picker for the token being sent (its id), so it can offer only the addresses that
+     *  token can reach; resolve with the chosen address (or nothing to cancel). Hidden without it. */
+    onPickSaved?: (token: string) => Promise<string | null | undefined>;
     /** Opens the host's QR scanner; resolve with the scanned address. Hidden without it. */
     onScanQr?: () => Promise<string | null | undefined>;
     onClose?: () => void;
@@ -358,7 +359,7 @@
   async function fill(source: 'paste' | 'saved' | 'qr') {
     let next: string | null | undefined;
     try {
-      next = source === 'paste' ? await navigator.clipboard.readText() : source === 'saved' ? await onPickSaved?.() : await onScanQr?.();
+      next = source === 'paste' ? await navigator.clipboard.readText() : source === 'saved' ? await onPickSaved?.(tk ? idOf(tk) : '') : await onScanQr?.();
     } catch {
       return; // clipboard permission denied, picker cancelled …
     }

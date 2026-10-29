@@ -161,6 +161,7 @@
         "name": "Nombre",
         "namePlaceholder": "Introduzca un nombre para esta dirección",
         "nameTaken": "Ya tiene una dirección guardada con este nombre",
+        "noneForToken": "Ninguna de tus direcciones guardadas puede recibir {token}",
         "rename": "Cambiar nombre",
         "saveFailed": "Lo sentimos, no hemos podido guardar esta dirección",
         "title": "Libreta de direcciones"
@@ -673,6 +674,8 @@
         "configureWallet": "Configura tu billetera",
         "configureWalletFailure": "Lo sentimos, no pudimos guardar la configuración de tu billetera.",
         "invalidMinimum": "No se guardó la configuración de tu billetera: el saldo mínimo debe ser un número",
+        "cameraUnavailable": "No se pudo usar la cámara. Permite el acceso a la cámara e inténtalo de nuevo.",
+        "scanHint": "Apunta la cámara al código QR de la dirección",
         "failedToFetchDepositFee": "No se pudo obtener la tarifa de depósito",
         "failedToGenerateAddress": "No se pudo generar la dirección",
         "fetchingDepositFee": "Obteniendo tarifa de depósito...",

@@ -139,7 +139,7 @@
     /** People to pick from on Send. */
     contacts?: SendContact[];
     /** Send's saved-address picker and QR scanner (see WalletSend). */
-    onPickSaved?: () => Promise<string | null | undefined>;
+    onPickSaved?: (token: string) => Promise<string | null | undefined>;
     onScanQr?: () => Promise<string | null | undefined>;
     /** Make the transfer; reject (e.g. wrong PIN) to keep Send open with an error. Resolve with the transaction's { id }
      *  to show a pending row until `activity` lists it. */

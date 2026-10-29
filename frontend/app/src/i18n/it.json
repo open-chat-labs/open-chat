@@ -161,6 +161,7 @@
         "name": "Nome",
         "namePlaceholder": "Inserisci un nome per questo indirizzo",
         "nameTaken": "Hai già un indirizzo salvato con questo nome",
+        "noneForToken": "Nessuno dei tuoi indirizzi salvati può ricevere {token}",
         "rename": "Rinomina",
         "saveFailed": "Spiacenti, non è stato possibile salvare questo indirizzo",
         "title": "Rubrica indirizzi"
@@ -673,6 +674,8 @@
         "configureWallet": "Configura il tuo portafoglio",
         "configureWalletFailure": "Spiacenti, non siamo riusciti a salvare la configurazione del tuo portafoglio",
         "invalidMinimum": "Le impostazioni del portafoglio non sono state salvate: il saldo minimo deve essere un numero",
+        "cameraUnavailable": "Impossibile usare la fotocamera. Consenti l'accesso alla fotocamera e riprova.",
+        "scanHint": "Inquadra con la fotocamera il codice QR dell'indirizzo",
         "failedToFetchDepositFee": "Impossibile recuperare la commissione di deposito",
         "failedToGenerateAddress": "Impossibile generare l'indirizzo",
         "fetchingDepositFee": "Recupero della quota di deposito in corso...",
