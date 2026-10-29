@@ -94,13 +94,14 @@
         gap: var(--sp-xs);
     }
 
+    // up to 22rem wide, but narrower on a phone: the bubble sizes itself to its content, so a fixed
+    // width (or the chart's own) would push past the bubble's max width and the chart's end be cut off
     .price-chart-content {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: minmax(0, 22rem);
         gap: var(--sp-sm);
-        width: 22rem;
-        max-width: 100%;
-        padding: var(--sp-xs) 0;
+        // inset as a text message's is, in line with the sender's name
+        padding: var(--sp-xs) var(--sp-sm);
 
         // in the reader's own bubble it's on a panel of the other bubbles' colour, as its line and
         // change colours are chosen for those

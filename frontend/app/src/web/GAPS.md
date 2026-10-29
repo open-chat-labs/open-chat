@@ -145,7 +145,8 @@ design export needs. Each entry says where it came up.
     chart as the price card, with several tokens' lines in `PRICE_CHART_COLOURS`, and where its
     prices are from, linked. The library has no bubble for it, so the new UI shows its title as
     text (`contentText`); the old UI's is `PriceChartContent.svelte`, and the chart itself is
-    `features/cashtag/PriceChart.svelte`.
+    `features/cashtag/PriceChart.svelte`. On a phone the chart has to shrink to fit the bubble: the
+    mobile tree's was a fixed 22rem, wider than the bubble, so its end was cut off.
 - **`ProfileDialog`, by hand** (8c, to go back to the design export): `sections`, the sections
   its nav offers (a host that has built only some); the cover and photo edit buttons only with
   `onCoverEdit` / `onPhotoEdit`; `engagement` counts as numbers; `memberSince` from `joined` in the
