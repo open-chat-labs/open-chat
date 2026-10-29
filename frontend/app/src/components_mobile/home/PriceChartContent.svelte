@@ -83,9 +83,8 @@
                         rel="noopener noreferrer">{part.source.name}</a
                     >{/if}
             {/each}
-            <!-- room for the time over the bubble's bottom right corner, as a text message leaves;
-                 in the reader's own bubble the panel's padding keeps the credit clear of it -->
-            {#if !me}<span class="metadata_spacer"></span>{/if}
+            <!-- room for the time over the bubble's bottom right corner, as a text message leaves -->
+            <span class="metadata_spacer" class:me></span>
         </div>
     </div>
 {/if}
@@ -161,6 +160,7 @@
 
     .credit {
         font-size: 0.75rem;
+        text-align: end;
         opacity: 0.7;
 
         a {
@@ -172,5 +172,10 @@
     .metadata_spacer {
         display: inline-block;
         width: 2.25rem;
+
+        // and the ticks
+        &.me {
+            width: 3.25rem;
+        }
     }
 </style>
