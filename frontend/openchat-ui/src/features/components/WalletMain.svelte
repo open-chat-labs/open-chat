@@ -186,6 +186,8 @@
     onActivity?: (id: string) => void;
     /** In place of All activity's list, when the host can't list activity across tokens: resource keys (or text). */
     allActivityNote?: { title: string; body: string };
+    /** The host is still loading `activity` for All activity: it shows a skeleton until there's something to list. */
+    allActivityLoading?: boolean;
     /** The host is still loading `tokens`: a token's page waits (neither the page nor "Token not found" yet). */
     tokensLoading?: boolean;
     /** The token page's eye: the shared wallet veil. Without it there's no eye. */
@@ -233,6 +235,7 @@
     onRetryHistory,
     onActivity,
     allActivityNote,
+    allActivityLoading = false,
     onBalanceHiddenChange,
     flows = ['send', 'receive', 'swap'],
     tokensLoading = false,
@@ -756,7 +759,11 @@
               </div>
             </div>
           {/each}
-          {#if allGroups.length === 0}<span class="none">{t('ui.walletMain.noneOfType')}</span>{/if}
+          {#if allGroups.length === 0 && allActivityLoading}
+            <div class="history-note"><Skeleton variant="token" count={4} /></div>
+          {:else if allGroups.length === 0 && filter === 0}
+            <EmptyState icon="receive" title={t('ui.walletMain.emptyTitle')} body={t('ui.walletMain.emptyAllBody')} actionLabel="" />
+          {:else if allGroups.length === 0}<span class="none">{t('ui.walletMain.noneOfType')}</span>{/if}
         {:else}
           {@const tokenEmpty = EMPTY[tokFilter]}
           <div class="token-page">

@@ -1,8 +1,8 @@
 <!-- The wallet's page (region "wallet", 6a #10120): WalletMain on /wallet (All activity) and
      /wallet/:ledger (the token's page: summary, facts and its history from the index canister, a
-     page at a time, TransactionHistoryState). The URL says which: WalletMain's own moves (a row on
-     All activity, Back to All activity) navigate there. There's no history across tokens, so All
-     activity says to pick a token (GAPS). Receive (6b) is /wallet/receive?token=<ledger>: the
+     page at a time, WalletHistories). The URL says which: WalletMain's own moves (a row on
+     All activity, Back to All activity) navigate there. All activity merges the first page of
+     every token held that has a history (its empty state when there's none). Receive (6b) is /wallet/receive?token=<ledger>: the
      token's networks and address (ReceiveAccount), its QR, Share to chat, the balance refreshed
      every 10 s while it's open. Send (6b) is /wallet/send?token=<ledger>: to a user already DM'd,
      a transfer in their DM; to an address, a withdrawal over the ledger or, for BTC, Bitcoin's own
@@ -68,7 +68,7 @@
         tokenActions,
         tokenActionsContext,
     } from "@src/logic/wallet/tokenActions";
-    import { TransactionHistoryState } from "@src/logic/wallet/transactionHistoryState.svelte";
+    import { walletHistories } from "./walletHistories";
     import { hideTokenBalances } from "@src/stores/settings";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
@@ -135,36 +135,64 @@
     });
     onDestroy(() => walletRequests.clear());
 
-    // the shown token's history, loaded when its page opens
-    let history = $state<{ ledger: string; state: TransactionHistoryState } | undefined>();
-    $effect(() => {
-        if (ledger === undefined || history?.ledger === ledger || !indexed) return;
-        const state = new TransactionHistoryState(client, $cryptoLookup.get(ledger)?.index);
-        history = { ledger, state };
-        state.load();
-    });
-
-    const shown = $derived(history?.ledger === ledger ? history?.state : undefined);
+    // the wallet's histories (WalletHistories): the shown token's, loaded when its page opens, and
+    // on All activity the first page of every token held, merged by time
+    const histories = walletHistories(client);
     const token = $derived(ledger === undefined ? undefined : $cryptoLookup.get(ledger));
     // only a token with an index canister has a history
     const indexed = $derived(token !== undefined && hasTransactionHistory(token));
+    // its balance too: a balance that changed since its history loaded means transactions since
+    const balance = $derived(
+        ledger === undefined ? undefined : $enhancedCryptoLookup.get(ledger)?.balance,
+    );
+    $effect(() => {
+        if (ledger === undefined || token === undefined || !indexed) return;
+        const index = token.index;
+        const held = balance;
+        untrack(() => histories.load(ledger, index, held));
+    });
+    const shown = $derived(ledger === undefined ? undefined : histories.get(ledger));
+
+    // the tokens held that have a history, with their balances, for All activity (a token at zero
+    // isn't listed)
+    const heldIndexed = $derived(
+        [...$enhancedCryptoLookup.values()]
+            .filter((t) => t.balance > 0n && hasTransactionHistory(t))
+            .map((t) => `${t.ledger} ${t.index} ${t.balance}`)
+            .join(","),
+    );
+    $effect(() => {
+        if (region.view !== "all" || heldIndexed === "") return;
+        const tokens = heldIndexed.split(",").map((t) => t.split(" "));
+        untrack(() => {
+            for (const [ledger, index, held] of tokens) histories.load(ledger, index, BigInt(held));
+        });
+    });
+
+    // every history loaded so far as activity rows: the token page lists its own, All activity all
     const activity = $derived(
-        shown?.state.kind === "loaded" && token !== undefined
-            ? tokenActivity(
-                  shown.state.history.transactions,
-                  token,
-                  $exchangeRatesLookupStore.get(token.ledger)?.toUSD,
-                  {
-                      me: {
-                          userId: $currentUserStore.userId,
-                          cryptoAccount: $currentUserStore.cryptoAccount,
-                      },
-                      users: $allUsersStore,
-                      saved: $namedAccountsStore,
-                      unknown: $_("unknownUser"),
-                  },
-              )
-            : [],
+        histories.all.flatMap(([historyLedger, history]) => {
+            const t = $cryptoLookup.get(historyLedger);
+            if (t === undefined || history.state.kind !== "loaded") return [];
+            return tokenActivity(
+                history.state.history.transactions,
+                t,
+                $exchangeRatesLookupStore.get(t.ledger)?.toUSD,
+                {
+                    me: {
+                        userId: $currentUserStore.userId,
+                        cryptoAccount: $currentUserStore.cryptoAccount,
+                    },
+                    users: $allUsersStore,
+                    saved: $namedAccountsStore,
+                    unknown: $_("unknownUser"),
+                },
+            );
+        }),
+    );
+    // All activity waits while a held token's first page is still coming
+    const allActivityLoading = $derived(
+        histories.all.some(([, history]) => history.state.kind === "loading"),
     );
     const historyProp = $derived.by((): WalletMainProps["history"] => {
         if (token !== undefined && !indexed) return { state: "unavailable" };
@@ -553,10 +581,7 @@
     chats={shareChats}
     onShare={share}
     {qr}
-    allActivityNote={{
-        title: "ui.walletMain.allActivityUnavailableTitle",
-        body: "ui.walletMain.allActivityUnavailableBody",
-    }} />
+    {allActivityLoading} />
 
 {#if picking !== undefined}
     <SavedAddressPicker

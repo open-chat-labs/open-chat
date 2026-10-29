@@ -3,6 +3,7 @@
 <script lang="ts">
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
+    import Field from "@openchat/ui/src/lib/components/Field.svelte";
     import MemberRow from "@openchat/ui/src/lib/components/MemberRow.svelte";
     import type { Recipient } from "@openchat/ui/src/features/components/WalletRecipients.svelte";
     import { _ } from "svelte-i18n";
@@ -21,6 +22,15 @@
     let { recipients, anySaved, symbol, onPick, onClose }: Props = $props();
 
     const short = (a: string): string => (a.length > 26 ? `${a.slice(0, 12)}…${a.slice(-8)}` : a);
+
+    // by name or address
+    let query = $state("");
+    const needle = $derived(query.trim().toLowerCase());
+    const shown = $derived(
+        needle === ""
+            ? recipients
+            : recipients.filter((r) => `${r.name} ${r.address}`.toLowerCase().includes(needle)),
+    );
 </script>
 
 <!-- TODO(design): no saved-address picker in the design (GAPS.md); built from DialogShell and MemberRow -->
@@ -36,8 +46,16 @@
                 actionLabel="" />
         </div>
     {:else}
+        <div class="top">
+            <Field
+                placeholder="ui.walletRecipients.searchPlaceholder"
+                value={query}
+                onInput={(e) => (query = e.currentTarget.value)}
+                onClear={() => (query = "")}
+                showShortcut={false} />
+        </div>
         <div class="list">
-            {#each recipients as r (r.id)}
+            {#each shown as r (r.id)}
                 <MemberRow
                     title={r.name}
                     subtitle={short(r.address)}
@@ -46,15 +64,28 @@
                     showMenu={false}
                     onClick={() => onPick(r.address)} />
             {/each}
+            {#if shown.length === 0}
+                <EmptyState
+                    preset="no-results"
+                    title="ui.walletRecipients.noMatches"
+                    actionLabel="" />
+            {/if}
         </div>
     {/if}
 </DialogShell>
 
 <style>
+    .top {
+        padding: var(--space-16) var(--space-16) var(--space-8);
+    }
+
     .list {
         display: flex;
         flex-direction: column;
-        padding: var(--space-8) 0;
+        gap: 2px;
+        max-height: min(420px, 60vh);
+        overflow-y: auto;
+        padding: var(--space-4) var(--space-10) var(--space-16);
     }
 
     .empty {
