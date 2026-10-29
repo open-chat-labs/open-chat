@@ -1343,6 +1343,7 @@
         "link": "关联",
         "linkedAccounts": {
             "currentAccount": "当前以该主体身份登录",
+            "lastUsed": "上次使用：{date}",
             "linkAdvice": "要添加新的登录提供商，请先使用您要添加的新提供商登录，然后使用您当前的提供商登录，最后将两者链接在一起。",
             "linkAnother": "添加另一个",
             "section": "登录提供商",

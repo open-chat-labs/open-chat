@@ -1,16 +1,19 @@
 // The wallet's data in the library's shapes: the tokens WalletPanel and WalletMain list, and a
 // token's history as WalletMain's activity rows.
-import type {
-    AccountTransaction,
-    EnhancedTokenDetails,
-    NamedAccount,
-    TokenExchangeRates,
-    UserLookup,
-    WalletConfig,
+import {
+    walletApprovalFee,
+    type AccountTransaction,
+    type EnhancedTokenDetails,
+    type NamedAccount,
+    type TokenExchangeRates,
+    type UserLookup,
+    type UserSummary,
+    type WalletConfig,
 } from "@client";
 import type { WalletPanelSettings } from "@openchat/ui/src/features/components/WalletPanel.svelte";
 import type { WalletActivity } from "@openchat/ui/src/features/components/WalletMain.svelte";
 import type { ReceiveNetwork } from "@openchat/ui/src/features/components/WalletReceive.svelte";
+import type { SendContact } from "@openchat/ui/src/features/components/WalletSend.svelte";
 import type { DepositNote } from "@src/logic/wallet/receiveAccount.svelte";
 import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
 import type { WalletToken, WalletTokenAction } from "@openchat/ui/src/lib/types";
@@ -25,6 +28,7 @@ import {
     type TokenAction,
     type TokenActionsContext,
 } from "@src/logic/wallet/tokenActions";
+import { sendNetworks } from "@src/logic/wallet/walletSend";
 import { swatchFor } from "../chats/chatList.adapter";
 
 /** The standard the token page names: ICRC-2 when the ledger has it (approvals), else ICRC-1. */
@@ -47,14 +51,16 @@ export function displayDecimals(decimals: number, price: number): number {
 }
 
 /**
- * The library's actions from the wallet's (tokenActions): Remove is the panel's Hide. Send and
- * Swap aren't offered until their flows are built (6b, 6c).
+ * The library's actions from the wallet's (tokenActions): Remove is the panel's Hide. Swap isn't
+ * offered until its flow is built (6c).
  */
 export function walletTokenActions(actions: TokenAction[]): WalletTokenAction[] {
     return actions.flatMap((a): WalletTokenAction[] => {
         switch (a) {
             case "refresh":
                 return ["refresh"];
+            case "send":
+                return ["send"];
             case "receive":
                 return ["receive"];
             case "remove":
@@ -63,6 +69,14 @@ export function walletTokenActions(actions: TokenAction[]): WalletTokenAction[] 
                 return [];
         }
     });
+}
+
+/**
+ * The networks Send can send a token on, as the library names them: the IC (an ICRC account, or
+ * an ICP account identifier for ICP) and, for BTC, Bitcoin's own (`sendNetworks`).
+ */
+export function sendTokenNets(symbol: string): string[] {
+    return [...new Set(sendNetworks(symbol).map((n) => (n === "icrc" ? "icp" : n)))];
 }
 
 /**
@@ -87,6 +101,12 @@ export function walletToken(
         price: usd,
         dp: displayDecimals(token.decimals, usd),
         fee: wholeTokens(token.transferFee, token.decimals),
+        // a send to a user is a transfer pulled from the wallet once approved: the approval's fee too
+        userFee: wholeTokens(
+            token.transferFee + walletApprovalFee(token.transferFee),
+            token.decimals,
+        ),
+        nets: sendTokenNets(token.symbol),
         ledger: token.ledger,
         standard: tokenStandard(token.supportedStandards),
         actions: walletTokenActions(actions),
@@ -232,4 +252,17 @@ function depositNoteText(
                 : `${translate("cryptoAccount.minimumDeposit", { amount: note.minimum, token: symbol })} ${fees}`;
         }
     }
+}
+
+/**
+ * The people Send offers: the users the user has DM'd (`directChatUsers`), as mobile's Send to a
+ * user does. Tokens sent to anyone else would start a chat they never asked for.
+ */
+export function sendContacts(users: UserSummary[]): SendContact[] {
+    return users.map((u) => ({
+        userId: u.userId,
+        name: u.displayName ?? u.username,
+        handle: `@${u.username}`,
+        grad: AVATAR_GRADIENTS[swatchFor(u.userId)],
+    }));
 }

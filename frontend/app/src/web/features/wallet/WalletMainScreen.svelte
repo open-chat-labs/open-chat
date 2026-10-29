@@ -4,17 +4,24 @@
      All activity, Back to All activity) navigate there. There's no history across tokens, so All
      activity says to pick a token (GAPS). Receive (6b) is /wallet/receive?token=<ledger>: the
      token's networks and address (ReceiveAccount), its QR, Share to chat, the balance refreshed
-     every 10 s while it's open. Send, Swap and Recipients aren't built yet (6b-6d): their paths
-     show the token's page, or All activity. -->
+     every 10 s while it's open. Send (6b) is /wallet/send?token=<ledger>: to a user already DM'd,
+     a transfer in their DM; to an address, a withdrawal over the ledger or, for BTC, Bitcoin's own
+     network. The client asks for the PIN (S3), so Send has no PIN step of its own. Swap and
+     Recipients aren't built yet (6c, 6d): their paths show the token's page, or All activity. -->
 <script lang="ts">
     import {
         allUsersStore,
+        BTC_SYMBOL,
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
+        directChatUsers,
         enhancedCryptoLookup,
         exchangeRatesLookupStore,
+        formatTokens,
         namedAccountsStore,
+        routeForChatIdentifier,
+        serverDirectChatsStore,
         swappableTokensStore,
         walletConfigStore,
         type OpenChat,
@@ -25,6 +32,19 @@
     import { ReceiveAccount, type ReceiveToken } from "@src/logic/wallet/receiveAccount.svelte";
     import QRCode from "@src/core/QRCode.svelte";
     import type { ShareChat } from "@openchat/ui/src/features/components/WalletReceive.svelte";
+    import type { WalletSendRequest } from "@openchat/ui/src/features/components/WalletSend.svelte";
+    import { sendInDirectChat } from "@src/logic/cryptoTransfer/cryptoTransferForm.svelte";
+    import {
+        acceptsAddress,
+        ownAccounts,
+        sendAnswer,
+        sendCost,
+        sendNetworks,
+        sendPlan,
+        type BtcWithdrawal,
+    } from "@src/logic/wallet/walletSend";
+    import { CkbtcWithdrawalInfoRequests } from "@src/utils/ckbtcWithdrawalInfo";
+    import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import { sharedLinkText } from "../share/share.adapter";
     import { SharePicker } from "../share/sharePicker.svelte";
     import {
@@ -40,7 +60,13 @@
     import { _ } from "svelte-i18n";
     import { i18nKey } from "@src/i18n/i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
-    import { receiveNetworks, tokenActivity, walletToken } from "./wallet.adapter";
+    import {
+        receiveNetworks,
+        sendContacts,
+        tokenActivity,
+        wholeTokens,
+        walletToken,
+    } from "./wallet.adapter";
     import { walletCatalogue } from "./walletCatalogue.svelte";
     import { walletRequests } from "./walletRequests.svelte";
 
@@ -74,7 +100,12 @@
     // itself (and reported) isn't asked for again, which would reopen a flow already open
     let reported: { view: string; token: string | null } | undefined;
     $effect(() => {
-        const view = region.view === "receive" ? "receive" : ledger === undefined ? "all" : "token";
+        const view =
+            region.view === "receive" || region.view === "send"
+                ? region.view
+                : ledger === undefined
+                  ? "all"
+                  : "token";
         const page = ledger;
         untrack(() => {
             if (reported?.view === view && reported.token === (page ?? null)) return;
@@ -144,8 +175,8 @@
         if (!stillReceiving) receiveAccount.selectedNetwork = undefined;
         reported = { view, token: id };
         const path =
-            view === "receive"
-                ? `/wallet/receive${id !== null ? `?token=${id}` : ""}`
+            view === "receive" || view === "send"
+                ? `/wallet/${view}${id !== null ? `?token=${id}` : ""}`
                 : view === "token" && id !== null
                   ? `/wallet/${id}`
                   : "/wallet";
@@ -231,6 +262,130 @@
         );
         if (outcome.kind !== "posted") throw new Error(`address not shared: ${outcome.kind}`);
     }
+
+    // Send: the people are the users already DM'd (mobile's rule); the client asks for the PIN
+    const sending = $derived(region.view === "send");
+    const contacts = $derived(
+        sendContacts(directChatUsers($serverDirectChatsStore, $allUsersStore)),
+    );
+
+    // a Bitcoin send's minter fee and minimum, asked each time Send opens while BTC is held (Send
+    // may pick BTC itself when opened without a token), and again 10 s after a failure; only the
+    // latest answer counts (#9638), and none from an earlier opening
+    let btcWithdrawal = $state<BtcWithdrawal>();
+    let btcRetry: ReturnType<typeof setTimeout> | undefined;
+    const btcInfo = new CkbtcWithdrawalInfoRequests(
+        (amount) => client.getCkbtcMinterWithdrawalInfo(amount),
+        (info) => (btcWithdrawal = { fee: info.feeEstimate, minimum: info.minWithdrawalAmount }),
+        500,
+        () => {
+            if (sendingBtc) btcRetry = setTimeout(() => btcInfo.now(0n), 10_000);
+        },
+    );
+    const btcToken = $derived(
+        [...$enhancedCryptoLookup.values()].find((t) => t.symbol === BTC_SYMBOL),
+    );
+    const sendingBtc = $derived(sending && btcToken !== undefined && btcToken.balance > 0n);
+    $effect(() => {
+        if (!sendingBtc) return;
+        untrack(() => btcInfo.now(0n));
+        return () => {
+            clearTimeout(btcRetry);
+            btcInfo.cancel();
+            btcWithdrawal = undefined;
+        };
+    });
+    // a Bitcoin address costs the approval and the minter's fee on top. The design's other route,
+    // ckBTC to that address, can't reach it (the ledger only sends to IC accounts), so Send only
+    // offers Bitcoin's own
+    const btcFees = $derived.by((): WalletMainProps["btcFees"] => {
+        if (btcToken === undefined || btcWithdrawal === undefined) return {};
+        return {
+            btc: wholeTokens(sendCost(btcToken, "btc", btcWithdrawal), btcToken.decimals),
+        };
+    });
+
+    // the user's own wallet for a token, in each form, worked out once per token and user
+    const ownWallets = $derived.by(() => {
+        const owner = {
+            cryptoAccount: $currentUserStore.cryptoAccount,
+            userId: $currentUserIdStore,
+            principal: () => client.OcIdentityPrincipal,
+        };
+        const bySymbol = new Map<string, string[]>();
+        return (symbol: string): string[] => {
+            let own = bySymbol.get(symbol);
+            if (own === undefined) {
+                own = ownAccounts(symbol, owner);
+                bySymbol.set(symbol, own);
+            }
+            return own;
+        };
+    });
+
+    // never the user's own wallet, nor an account of a MultiUser user id, and only on a network
+    // the send can reach
+    function checkAddress(address: string, symbol: string): boolean {
+        return acceptsAddress(address, sendNetworks(symbol), {
+            ownAccounts: ownWallets(symbol),
+            isUserIdAccount: (a) => client.isAccountOfMultiUserCanisterUserId(a),
+        });
+    }
+
+    // One send per confirm (WalletSend can't confirm again while this runs): to a person a
+    // transfer in their DM, to an address a withdrawal, each through the client's PIN prompt.
+    // Resolves `false` when nothing was sent and there's nothing to say; rejects on a failure,
+    // which the toast explains
+    async function send(x: WalletSendRequest): Promise<boolean> {
+        const token = enhancedCryptoLookup.value.get(x.token);
+        if (token === undefined) throw new Error(`no token ${x.token} to send`);
+        const plan = sendPlan(
+            {
+                amountText: x.amountText,
+                max: x.max,
+                userId: x.person ? x.userId : undefined,
+                to: x.to,
+                network: x.network,
+            },
+            token,
+            token.balance,
+            token.symbol === BTC_SYMBOL ? btcWithdrawal : undefined,
+        );
+        if (plan === undefined) throw new Error("nothing to send");
+        if (plan.kind === "too_small") {
+            const amount = formatTokens(plan.minimum, token.decimals);
+            toastStore.showFailureToast(i18nKey("minimumAmount", { amount, symbol: token.symbol }));
+            throw new Error("under the minimum");
+        }
+        const outcome =
+            plan.kind === "transfer"
+                ? await sendInDirectChat(client, token, plan.userId, plan.amount, x.memo ?? "")
+                : await client.withdraw({
+                      ledger: token.ledger,
+                      symbol: token.symbol,
+                      route: plan.route,
+                      to: plan.to,
+                      amount: plan.amount,
+                      fee: plan.fee,
+                  });
+        const answer = sendAnswer(outcome);
+        switch (answer.kind) {
+            case "sent":
+                return true;
+            case "not_sent":
+                return false;
+            case "failed":
+                toastStore.showFailureToast(
+                    answer.reason === "pin" ? pinNumberErrorMessageStore : answer.reason,
+                );
+                throw new Error("send failed");
+        }
+    }
+
+    // "View in chat": the DM the tokens went to
+    function openDm({ userId }: { userId: string }): void {
+        navigate(routeForChatIdentifier("chats", { kind: "direct_chat", userId }));
+    }
 </script>
 
 <WalletMain
@@ -246,7 +401,14 @@
     onViewChange={viewChanged}
     onBalanceHiddenChange={(hidden) => hideTokenBalances.set(hidden)}
     handle={$currentUserStore.username ? `@${$currentUserStore.username}` : undefined}
-    flows={["receive"]}
+    flows={["send", "receive"]}
+    {contacts}
+    {btcFees}
+    btcRoutes={["btc"]}
+    sendHostPin
+    {checkAddress}
+    onSent={send}
+    onMessage={openDm}
     receiveNetworks={networks}
     receiveNetwork={receiveAccount.selectedNetwork}
     onReceiveNetwork={(id) => (receiveAccount.selectedNetwork = id)}

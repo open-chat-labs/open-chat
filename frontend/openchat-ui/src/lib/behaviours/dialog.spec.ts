@@ -11,7 +11,8 @@ describe('DialogFlow', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  test('a second run while the first is pending is ignored', async () => {
+  // WalletSend sends through run(), so a confirm while a send is in flight sends nothing
+  test('a second run while the first is pending is ignored (6b invariant 4: one send per confirm)', async () => {
     const flow = new DialogFlow();
     const d = deferred<string>();
     const call = vi.fn(() => d.promise);

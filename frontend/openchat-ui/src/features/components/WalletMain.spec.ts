@@ -47,8 +47,11 @@ const tokens: WalletToken[] = [
   { symbol: 'USDT', name: 'Tether', mark: 'T', grad: 'green', held: 100, price: 1, dp: 2, nets: ['eth', 'icp'] },
 ];
 const request = (extra: Partial<WalletSendRequest> = {}): WalletSendRequest => ({
+  token: 'ICP',
   symbol: 'ICP',
   amount: 1,
+  amountText: '1',
+  max: false,
   fee: 0.0001,
   fiat: 5,
   to: '5sj6i-pqaaa-aaaaf-a3cmq-cai',

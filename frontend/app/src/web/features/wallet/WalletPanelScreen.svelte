@@ -59,12 +59,13 @@
     // "View all" and Copy ledger ID are WalletMain's to do
     function action(kind: string): void {
         if (kind === "browse") walletRequests.send({ view: "browse" });
-        // Receive: the token's, or the picker first (the balance card's)
-        else if (kind === "receive") walletRequests.send({ view: "receive" });
-        else if (kind.startsWith("receive:")) {
+        // Send and Receive: the token's, or the picker first (the balance card's)
+        else if (kind === "send" || kind === "receive") walletRequests.send({ view: kind });
+        else if (kind.startsWith("send:")) {
+            walletRequests.send({ view: "send", token: kind.slice("send:".length) });
+        } else if (kind.startsWith("receive:")) {
             walletRequests.send({ view: "receive", token: kind.slice("receive:".length) });
-        }
-        else if (kind.startsWith("ledger:")) {
+        } else if (kind.startsWith("ledger:")) {
             walletRequests.send({ view: "ledger", token: kind.slice("ledger:".length) });
         }
     }

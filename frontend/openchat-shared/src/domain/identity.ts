@@ -122,6 +122,8 @@ export type AuthenticationPrincipal = {
     isIIPrincipal: boolean;
     isCurrentIdentity: boolean;
     webAuthnKey: WebAuthnKeyFull | undefined;
+    // when it was last used to sign in, or linked, if the identity canister has a record of it
+    lastUsed: bigint | undefined;
 };
 
 export type AuthenticationPrincipalsResponse = AuthenticationPrincipal[];

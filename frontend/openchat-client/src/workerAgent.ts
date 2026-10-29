@@ -13,6 +13,7 @@ import type { OpenChatConfig } from "./config";
 import { snapshot } from "./snapshot.svelte";
 import { messagesRead, storageStore } from "./state";
 import { userStore } from "./state/users/state";
+import { background } from "./stores/background";
 import { connectionUnusableChanged } from "./stores/network";
 import { withPausedStores } from "./utils/stores";
 
@@ -133,6 +134,14 @@ export class WorkerAgent {
         };
 
         this.send(initArgs);
+
+        // The worker judges the connection from its queries, and needs to know when the app is
+        // hidden, when their failures say nothing about the connection. Lives as long as the page.
+        background.subscribe((hidden) => {
+            this.send({ kind: "setAppHidden", hidden }).catch((err) =>
+                console.warn("Unable to tell the worker whether the app is hidden", err),
+            );
+        });
 
         window.setInterval(() => this.#monitorPendingRequests(), ONE_MINUTE_MILLIS);
     }

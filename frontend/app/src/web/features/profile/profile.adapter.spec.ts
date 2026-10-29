@@ -169,6 +169,7 @@ describe("the profile dialog's props", () => {
                 isIIPrincipal: false,
                 isCurrentIdentity: false,
                 webAuthnKey: undefined,
+                lastUsed: undefined,
                 ...extra,
             }) as LinkedAuthenticationPrincipal;
         const methods = signinMethodsProps(
@@ -182,12 +183,32 @@ describe("the profile dialog's props", () => {
                 linked(AuthProvider.ETH, "e1"),
             ],
             (type) => `name:${type}`,
+            (lastUsed) => `used:${lastUsed}`,
         );
         expect(methods).toEqual([
             { type: "passkey", id: "p1", title: "iCloud Keychain", current: true },
             { type: "passkey", id: "p2", title: "name:passkey", current: false },
             { type: "ii", id: "i1", title: "name:ii", current: false },
         ]);
+    });
+
+    test("a sign-in method's last used line, only where the identity canister has a record", () => {
+        const linked = (principal: string, lastUsed: bigint | undefined) =>
+            ({
+                provider: AuthProvider.II,
+                principal,
+                originatingCanister: "c",
+                isIIPrincipal: true,
+                isCurrentIdentity: false,
+                webAuthnKey: undefined,
+                lastUsed,
+            }) as LinkedAuthenticationPrincipal;
+        const methods = signinMethodsProps(
+            [linked("i1", 1_700_000_000_000n), linked("i2", undefined)],
+            (type) => `name:${type}`,
+            (lastUsed) => `used:${lastUsed}`,
+        );
+        expect(methods.map((m) => m.used)).toEqual(["used:1700000000000", undefined]);
     });
 
     test("a device-link code expires in ms", () => {

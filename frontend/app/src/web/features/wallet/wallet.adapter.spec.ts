@@ -1,9 +1,11 @@
-import type { AccountTransaction, EnhancedTokenDetails } from "@client";
+import type { AccountTransaction, EnhancedTokenDetails, UserSummary } from "@client";
 import { describe, expect, test } from "vitest";
 import {
     displayDecimals,
     receiveNetworks,
     panelSettings,
+    sendContacts,
+    sendTokenNets,
     supportedCount,
     tokenActivity,
     walletToken,
@@ -51,16 +53,25 @@ describe("the wallet's tokens", () => {
     test("amounts are in whole tokens, the logo is its face", () => {
         const t = walletToken(token({ logo: "/chat.svg" }), 0.05, ["send", "refresh"]);
         expect(t).toMatchObject({ held: 1.5, fee: 0.001, price: 0.05, standard: "ICRC-2" });
+        // to a user: the transfer, and the approval it's pulled through
+        expect(t.userFee).toBe(0.002);
         expect(t.logo).toBe("/chat.svg");
         expect(t.grad).toMatch(/^linear-gradient/);
     });
 
-    test("Remove is the panel's Hide; Send and Swap wait for their flows", () => {
+    test("Remove is the panel's Hide; Swap waits for its flow", () => {
         expect(walletTokenActions(["send", "receive", "swap", "refresh", "remove"])).toEqual([
+            "send",
             "receive",
             "refresh",
             "hide",
         ]);
+    });
+
+    test("Send's networks: the IC for every token, and Bitcoin's own for BTC", () => {
+        expect(sendTokenNets("CHAT")).toEqual(["icp"]);
+        expect(sendTokenNets("ICP")).toEqual(["icp"]);
+        expect(sendTokenNets("BTC")).toEqual(["icp", "btc"]);
     });
 
     test("shows 8 places for a token worth a lot, 2 for a dollar one, else 4, never more than it has", () => {
@@ -235,5 +246,30 @@ describe("Receive's networks", () => {
         expect(sol.note).toBe(
             "cryptoAccount.minimumDeposit(0.01,SOL) cryptoAccount.solDepositFee(0.002,0.001,SOL)",
         );
+    });
+});
+
+describe("Send's people", () => {
+    test("a DM'd user by their display name, else username, with their handle", () => {
+        const user = (over: Partial<UserSummary>): UserSummary => ({
+            kind: "user",
+            userId: "u1",
+            username: "alice",
+            displayName: undefined,
+            updated: 0n,
+            suspended: false,
+            diamondStatus: "inactive",
+            chitBalance: 0,
+            totalChitEarned: 0,
+            streak: 0,
+            maxStreak: 0,
+            isUniquePerson: false,
+            hideOnlineStatus: false,
+            ...over,
+        });
+        const [a, b] = sendContacts([user({}), user({ userId: "u2", displayName: "Bob" })]);
+        expect(a).toMatchObject({ userId: "u1", name: "alice", handle: "@alice" });
+        expect(b).toMatchObject({ userId: "u2", name: "Bob" });
+        expect(a.grad).toMatch(/gradient/);
     });
 });

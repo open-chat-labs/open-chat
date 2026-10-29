@@ -93,6 +93,7 @@ const dateFormatters: Record<string, Intl.DateTimeFormat> = {};
 const longDateFormatters: Record<string, Intl.DateTimeFormat> = {};
 const shortTimeFormatters: Record<string, Intl.DateTimeFormat> = {};
 const monthYearFormatters: Record<string, Intl.DateTimeFormat> = {};
+const dayFormatters: Record<string, Intl.DateTimeFormat> = {};
 
 export function toMonthString(date: Date, locale: string): string {
     return memoisedFormatter(longMonthFormatters, locale, { month: "long" }).format(date);
@@ -103,6 +104,15 @@ export function toMonthYearString(date: Date, locale: string): string {
     return memoisedFormatter(monthYearFormatters, locale, { month: "short", year: "numeric" }).format(
         date,
     );
+}
+
+/** "12 Oct 2026" (in en-GB): a day, such as when a sign-in method was last used. */
+export function toDayString(date: Date, locale: string): string {
+    return memoisedFormatter(dayFormatters, locale, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    }).format(date);
 }
 
 export function toDayOfWeekString(date: Date, locale: string): string {
