@@ -117,8 +117,9 @@
   const status = $derived(form && addr && checkAddress ? checkAddress(addr, form.id) : null);
   const addressOk = $derived(status ? 'network' in status : !!net && net !== 'unknown' && !dupe);
   const netName = $derived(status ? ('network' in status ? status.network : '') : net && net !== 'unknown' ? NET_NAME[net] : '');
-  // no longer than the host keeps a name
-  const defaultName = $derived(addressOk ? t('ui.walletRecipients.defaultName', { network: netName }).slice(0, maxNameLength) : '');
+  // no longer than the host keeps a name, counted in characters (an emoji is one)
+  const cut = (text: string) => (maxNameLength === undefined ? text : Array.from(text).slice(0, maxNameLength).join(''));
+  const defaultName = $derived(addressOk ? cut(t('ui.walletRecipients.defaultName', { network: netName })) : '');
   const nameError = $derived(form && addressOk && checkName ? checkName(form.name.trim() || defaultName, form.id) : null);
   const valid = $derived(addressOk && !nameError);
   const note = $derived(

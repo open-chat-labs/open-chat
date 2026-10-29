@@ -31,4 +31,10 @@ describe("the saved accounts", () => {
         const saved = withSavedAccount([], { name: long, account: "ccc" });
         expect(withoutAccountsNamed(saved, long)).toEqual([]);
     });
+
+    test("a name is cut by characters, as the canister cuts it, never inside an emoji", () => {
+        const name = "Savings for holidays ok 🎉";
+        expect(savedAccountName(name)).toBe(name);
+        expect(savedAccountName(`${name}!`)).toBe(name);
+    });
 });

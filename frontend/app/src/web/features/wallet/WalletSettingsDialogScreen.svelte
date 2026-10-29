@@ -19,7 +19,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { PinNumberForm } from "@src/logic/pin/pinNumberForm.svelte";
     import { WalletSettingsForm } from "@src/logic/wallet/walletSettingsForm.svelte";
-    import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
+    import { pinFailureNeedsWait, pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import { walletCurrency } from "@src/stores/settings";
     import { toastStore } from "@src/stores/toast";
     import type { PinOperation } from "@src/stores/pinNumber";
@@ -98,8 +98,9 @@
     }
 
     // the PIN, as PinNumberForm sets, changes and clears it; a refusal keeps the dialog's sheet
-    // open with its error. Only a lockout this call ran into (too many wrong PINs: how long to
-    // wait) is also a toast; setPinNumber clears any earlier failure as it starts
+    // open with its error. Only a wait this call ran into (too many wrong PINs, or a wrong PIN with
+    // a timeout: how long to wait) is also a toast; setPinNumber clears any earlier failure as it
+    // starts
     async function pin(
         operation: PinOperation,
         current: string | undefined,
@@ -110,7 +111,7 @@
         pinForm.newPin = next?.split("") ?? [];
         const outcome = await pinForm.save();
         if (outcome.kind === "failed") {
-            if (pinNumberFailureStore.value?.kind === "too_main_failed_pin_attempts") {
+            if (pinFailureNeedsWait(pinNumberFailureStore.value)) {
                 toastStore.showFailureToast(pinNumberErrorMessageStore);
             }
             throw new Error("pin not saved");
