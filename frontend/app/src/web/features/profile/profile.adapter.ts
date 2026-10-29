@@ -216,11 +216,13 @@ const SIGNIN_TYPES: Partial<Record<AuthProvider, SigninMethod["type"]>> = {
 
 /**
  * The sign-in methods pane: the identities linked to the account. `name` is a method's name for a
- * type (a passkey is named by its provider where it has one).
+ * type (a passkey is named by its provider where it has one), and `used` its "last used" line for
+ * when it was last used, in ms (a method with no record of that has none).
  */
 export function signinMethodsProps(
     linked: LinkedAuthenticationPrincipal[],
     name: (type: SigninMethod["type"]) => string,
+    used: (lastUsed: number) => string,
 ): SigninMethod[] {
     return linked.flatMap((p) => {
         const type = SIGNIN_TYPES[p.provider];
@@ -230,6 +232,7 @@ export function signinMethodsProps(
                 type,
                 id: p.principal,
                 title: (type === "passkey" ? p.passkeyProvider : undefined) ?? name(type),
+                used: p.lastUsed === undefined ? undefined : used(Number(p.lastUsed)),
                 current: p.isCurrentIdentity,
             },
         ];

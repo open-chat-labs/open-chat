@@ -78,6 +78,7 @@ describe("the sign-in method this session used", () => {
             crossPlatform: false,
             aaguid: new Uint8Array(),
         },
+        lastUsed: undefined,
     });
 
     test("is the passkey whose credential the session used, which the backend can't tell", () => {
