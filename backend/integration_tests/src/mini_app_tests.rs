@@ -57,7 +57,7 @@ fn a_bot_posts_a_mini_app_card_which_cant_be_edited() {
 
     let response = post_card(env, service, bot_principal, local_user_index, chat, None, message_id, card());
     let local_user_index_canister::bot_send_message::Response::Success(result) = response else {
-        panic!("'mini_app_send_message' error: {response:?}");
+        panic!("'send_mini_app_message' error: {response:?}");
     };
     assert_eq!(result.message_id, message_id);
     tick_many(env, 3);
@@ -304,7 +304,7 @@ fn the_mini_app_service_starts_a_game_then_ends_it() {
     let message_id = random_from_u128();
     let response = post_card(env, service, bot_principal, local_user_index, chat, None, message_id, card());
     let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
-        panic!("'mini_app_send_message' error: {response:?}");
+        panic!("'send_mini_app_message' error: {response:?}");
     };
 
     let write = |env: &mut PocketIc, update: MiniAppStatusUpdate| {
@@ -396,7 +396,7 @@ fn only_the_mini_app_service_writes_a_card() {
     let message_id = random_from_u128();
     let response = post_card(env, service, bot_principal, local_user_index, chat, None, message_id, card());
     let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
-        panic!("'mini_app_send_message' error: {response:?}");
+        panic!("'send_mini_app_message' error: {response:?}");
     };
     // Once the LocalUserIndex knows the service, so the refusals below aren't for want of one. A turn
     // before the game's started is refused, but by the card, not the LocalUserIndex.
@@ -419,7 +419,7 @@ fn only_the_mini_app_service_writes_a_card() {
         let error = call_update_mini_app(env, caller, local_user_index, chat, None, message_id, update.clone()).unwrap_err();
         assert_eq!(error.error_code, ErrorCode::CanisterRejectedMessage, "{error:?}");
         // Nor does anyone else post a card, even with the bot's token
-        let error = call_mini_app_send_message(env, caller, local_user_index, &token, card()).unwrap_err();
+        let error = call_send_mini_app_message(env, caller, local_user_index, &token, card()).unwrap_err();
         assert_eq!(error.error_code, ErrorCode::CanisterRejectedMessage, "{error:?}");
     }
     let card = client::community::happy_path::events_by_index(env, &member, community_id, channel_id, vec![sent.event_index]);
@@ -498,7 +498,7 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
             card(),
         );
         let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
-            panic!("'mini_app_send_message' error: {response:?}");
+            panic!("'send_mini_app_message' error: {response:?}");
         };
         (message_id, sent.event_index)
     };
@@ -862,14 +862,14 @@ fn a_bots_post_token_posts_its_card_once() {
 
     let response = post_with_token(env, service, local_user_index, &token, card());
     let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
-        panic!("'mini_app_send_message' error: {response:?}");
+        panic!("'send_mini_app_message' error: {response:?}");
     };
     assert_eq!(sent.message_id, message_id);
     // Posting again, as the service does when its first try went unanswered, gives the card the chat
     // holds, not a second card
     let response = post_with_token(env, service, local_user_index, &token, card());
     let local_user_index_canister::bot_send_message::Response::Success(again) = response else {
-        panic!("'mini_app_send_message' error: {response:?}");
+        panic!("'send_mini_app_message' error: {response:?}");
     };
     assert_eq!((again.message_id, again.event_index), (sent.message_id, sent.event_index));
     assert_eq!(
@@ -1052,7 +1052,7 @@ fn a_card_answers_a_members_command() {
 
     let response = post_with_token(env, service, local_user_index, &token, card());
     let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
-        panic!("'mini_app_send_message' error: {response:?}");
+        panic!("'send_mini_app_message' error: {response:?}");
     };
     assert_eq!(sent.message_id, message_id);
     tick_many(env, 3);
@@ -1113,7 +1113,7 @@ fn a_card_answers_a_members_command() {
     assert_eq!(claims.game.message_id, message_id);
     let response = post_with_token(env, service, local_user_index, &token, card());
     let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
-        panic!("'mini_app_send_message' error: {response:?}");
+        panic!("'send_mini_app_message' error: {response:?}");
     };
     assert_eq!(sent.message_id, message_id);
 }
@@ -1250,13 +1250,13 @@ fn post_with_token(
     content: MiniAppContent,
 ) -> local_user_index_canister::bot_send_message::Response {
     for _ in 0..20 {
-        match call_mini_app_send_message(env, service, local_user_index, token, content.clone()) {
+        match call_send_mini_app_message(env, service, local_user_index, token, content.clone()) {
             Ok(response) => return response,
             Err(error) if error.error_code == ErrorCode::CanisterRejectedMessage => {
                 env.advance_time(Duration::from_millis(100));
                 env.tick();
             }
-            Err(error) => panic!("'mini_app_send_message' error: {error:?}"),
+            Err(error) => panic!("'send_mini_app_message' error: {error:?}"),
         }
     }
     panic!("The LocalUserIndex never learned the MiniApp service's principal");
@@ -1264,14 +1264,14 @@ fn post_with_token(
 
 // Raw, so a refused caller's rejection can be checked. The LocalUserIndex's inspect_message refuses
 // anyone but the service.
-fn call_mini_app_send_message(
+fn call_send_mini_app_message(
     env: &mut PocketIc,
     caller: Principal,
     local_user_index: CanisterId,
     token: &str,
     content: MiniAppContent,
 ) -> Result<local_user_index_canister::bot_send_message::Response, RejectResponse> {
-    let args = local_user_index_canister::mini_app_send_message::Args {
+    let args = local_user_index_canister::send_mini_app_message::Args {
         token: token.to_string(),
         content,
         block_level_markdown: false,
@@ -1280,7 +1280,7 @@ fn call_mini_app_send_message(
     env.update_call(
         local_user_index,
         caller,
-        "mini_app_send_message",
+        "send_mini_app_message",
         candid::encode_one(&args).unwrap(),
     )
     .map(|bytes| candid::decode_one(&bytes).unwrap())

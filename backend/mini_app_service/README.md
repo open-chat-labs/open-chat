@@ -4,7 +4,7 @@ An off-chain service OpenChat runs between the website and the bots that host ga
 - Bots post their games' cards through it, with a post token from the LocalUserIndex, so it knows every game from the moment its card exists.
 - Players join games through it, and the bot accepts or refuses each one.
 - Spectators watch through it, and never reach the bot.
-- Only the service posts a game's card in its chat and writes to it, through the LocalUserIndex's `mini_app_send_message` and `update_mini_app`, so a bot can't list anyone who didn't join.
+- Only the service posts a game's card in its chat and writes to it, through the LocalUserIndex's `send_mini_app_message` and `update_mini_app`, so a bot can't list anyone who didn't join.
 
 The protocol, between the website, the service, bots and their apps, is in [`backend/docs/mini_app_service_protocol.md`](../docs/mini_app_service_protocol.md).
 

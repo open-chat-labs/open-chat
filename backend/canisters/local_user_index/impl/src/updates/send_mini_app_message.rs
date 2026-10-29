@@ -4,7 +4,7 @@ use crate::updates::bot_send_message::bot_send_message_impl;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use local_user_index_canister::mini_app_send_message::*;
+use local_user_index_canister::send_mini_app_message::*;
 use oc_error_codes::OCErrorCode;
 use types::{
     BotActionChatDetails, BotActionScope, BotMessageContent, CLAIM_TYPE_MINI_APP_POST, Chat, MiniAppGame, MiniAppPostClaims,
@@ -15,7 +15,7 @@ use types::{
 // is refused by the chat, as the message id is taken, so the service can retry a post safely.
 #[update(guard = "caller_is_mini_app_service", candid = true, msgpack = true)]
 #[trace]
-async fn mini_app_send_message(args: Args) -> Response {
+async fn send_mini_app_message(args: Args) -> Response {
     let (context, game) = match read_state(|state| access_context_from_post_token(&args.token, state)) {
         Ok(context) => context,
         Err(error) => return Response::Error(error),

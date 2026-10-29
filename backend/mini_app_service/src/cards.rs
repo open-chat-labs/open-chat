@@ -1,8 +1,8 @@
 // Posting a game's card in its chat, and writing the game's status to it, through the LocalUserIndex's
-// `mini_app_send_message` and `update_mini_app`
+// `send_mini_app_message` and `update_mini_app`
 use async_trait::async_trait;
 use ic_agent::Agent;
-use local_user_index_canister::{mini_app_send_message, update_mini_app};
+use local_user_index_canister::{send_mini_app_message, update_mini_app};
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, EventIndex, MiniAppContent, MiniAppGame, MiniAppStatusUpdate, UnitResult};
 
@@ -62,18 +62,18 @@ impl CardWriter for IcCardWriter {
         block_level_markdown: bool,
         replies_to: Option<EventIndex>,
     ) -> Result<(), PostError> {
-        let args = mini_app_send_message::Args {
+        let args = send_mini_app_message::Args {
             token: token.to_string(),
             content,
             block_level_markdown,
             replies_to,
         };
-        match local_user_index_canister_client::mini_app_send_message(&self.agent, &gateway, &args).await {
-            Ok(mini_app_send_message::Response::Success(_)) => Ok(()),
-            Ok(mini_app_send_message::Response::Error(error)) if error.matches_code(OCErrorCode::C2CError) => {
+        match local_user_index_canister_client::send_mini_app_message(&self.agent, &gateway, &args).await {
+            Ok(send_mini_app_message::Response::Success(_)) => Ok(()),
+            Ok(send_mini_app_message::Response::Error(error)) if error.matches_code(OCErrorCode::C2CError) => {
                 Err(PostError::Failed(format!("{error:?}")))
             }
-            Ok(mini_app_send_message::Response::Error(error)) => Err(PostError::Refused(
+            Ok(send_mini_app_message::Response::Error(error)) => Err(PostError::Refused(
                 error.message().map_or_else(|| format!("{error:?}"), str::to_string),
             )),
             Err(error) => Err(PostError::Failed(error.to_string())),

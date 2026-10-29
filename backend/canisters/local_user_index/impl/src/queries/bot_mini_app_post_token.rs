@@ -12,7 +12,7 @@ use types::{
 };
 
 // A bot's permission to post one MiniApp card, which it passes to the MiniApp service, and the service
-// to `mini_app_send_message`. The card's context is resolved as `bot_send_message` would resolve it,
+// to `send_mini_app_message`. The card's context is resolved as `bot_send_message` would resolve it,
 // and its message id fixed, so posting the token twice posts one card. The id is a chat command's, or
 // one the bot chose: a query can't pick one, as its randomness repeats within a round.
 #[query(candid = true, msgpack = true)]
