@@ -14,6 +14,8 @@
   }
 
   export interface WalletSendRequest {
+    /** The sent token's id (WalletToken.id, else its symbol): two tokens can share a symbol. */
+    token: string;
     symbol: string;
     amount: number;
     fee: number;
@@ -27,8 +29,13 @@
     /** openchat | icp | btc | ckbtc | eth | xrpl */
     network: string;
     memo?: string;
-    /** The 6-digit PIN the user typed, for the host to verify. */
+    /** The 6-digit PIN the user typed, for the host to verify ('' with `hostPin`). */
     pin: string;
+    /** The amount as a plain decimal in whole tokens ("1.5"): the digits typed when typed in the token, for the host to
+     *  turn into ledger units exactly. */
+    amountText: string;
+    /** The whole available balance was picked (Max): the host sends what's left after the fee, exactly. */
+    max: boolean;
     dp: number;
     person: boolean;
   }
@@ -45,7 +52,7 @@
   import StepIndicator from '../../lib/components/StepIndicator.svelte';
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
   import { getI18n, useT } from '../../lib/i18n';
-  import { amountText, cleanAmount, floorTo, fromUnits, parseAmount, toUnits, usdText } from '../../lib/amount';
+  import { amountText, cleanAmount, floorTo, fromUnits, parseAmount, plain, toUnits, usdText } from '../../lib/amount';
   import { detectNetwork, type AddressNetwork } from '../../lib/networks';
   import { onDestroy, tick } from 'svelte';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
@@ -75,7 +82,7 @@
 
   interface Props {
     tokens: WalletToken[];
-    /** Symbol to send; falls back to ICP. */
+    /** Token to send, by its id (WalletToken.id) or symbol; falls back to ICP. */
     token?: string;
     /** Pre-fills the address mode, e.g. from a saved recipient. */
     address?: string;
@@ -85,6 +92,9 @@
     onSearchUsers?: (query: string) => Promise<SendContact[]>;
     /** Current fee (in BTC) for sending BTC to a Bitcoin address natively or as ckBTC; a route without a fee can't be used. */
     btcFees?: Partial<Record<'btc' | 'ckbtc', number>>;
+    /** The routes the host can send BTC to a Bitcoin address over (e.g. only `btc`: a ckBTC transfer can't reach one);
+     *  both without it. */
+    btcRoutes?: ('btc' | 'ckbtc')[];
     /** Opens the host's saved-address picker; resolve with the chosen address (or nothing to cancel). Hidden without it. */
     onPickSaved?: () => Promise<string | null | undefined>;
     /** Opens the host's QR scanner; resolve with the scanned address. Hidden without it. */
@@ -99,19 +109,29 @@
     onDone?: (v: { request: WalletSendRequest; result: unknown; openChat: boolean }) => void;
     /** The host can open the DM with the recipient from onDone's openChat: offers "View in chat" on the receipt. */
     canOpenChat?: boolean;
+    /** The host asks for the PIN itself (or none is set): Send makes the transfer straight away, with no PIN step, and a
+     *  failure shows under the form. onSent resolving `false` means nothing was sent and there's nothing to say (the
+     *  user dismissed the host's PIN prompt): the form stays as it was. */
+    hostPin?: boolean;
+    /** The host's say on an address for a token (e.g. not the user's own, on a network the send can reach); without it,
+     *  the detected network and the token's `nets` decide. */
+    checkAddress?: (address: string, symbol: string) => boolean;
   }
 
-  let { tokens, token, address: initialAddress = '', contacts = [], onSearchUsers, btcFees = {}, onPickSaved, onScanQr, onClose, onSent, onDone, canOpenChat = false }: Props = $props();
+  let { tokens, token, address: initialAddress = '', contacts = [], onSearchUsers, btcFees = {}, btcRoutes, onPickSaved, onScanQr, onClose, onSent, onDone, canOpenChat = false, hostPin = false, checkAddress }: Props = $props();
   const t = useT();
   const i18n = getI18n();
 
   const held = $derived(tokens.filter((tok) => tok.held > 0));
-  const startSymbol = (() => {
+  // a token is its id: two can share a symbol
+  const idOf = (tok: WalletToken) => tok.id ?? tok.symbol;
+  const startId = (() => {
     const list = tokens.filter((tok) => tok.held > 0);
-    return (list.find((x) => x.symbol === token) ?? list.find((x) => x.symbol === 'ICP') ?? list[0])?.symbol ?? '';
+    const start = list.find((x) => idOf(x) === token) ?? list.find((x) => x.symbol === token) ?? list.find((x) => x.symbol === 'ICP') ?? list[0];
+    return start ? idOf(start) : '';
   })();
 
-  const sym = $state(startSymbol);
+  const sel = $state(startId);
   let mode = $state<'user' | 'address'>(initialAddress ? 'address' : 'user');
   let picked = $state<SendContact | null>(null);
   let userQuery = $state('');
@@ -147,16 +167,18 @@
 
   const narrow = $derived(width > 0 && width < 760);
   // the chosen token stays the chosen token even if its balance reaches 0 (e.g. while sending all of it)
-  const tk = $derived(tokens.find((x) => x.symbol === sym) ?? held[0]);
+  const tk = $derived(tokens.find((x) => idOf(x) === sel) ?? held[0]);
   // decimals the amount accepts: inputDp when the token has more than people type (an 18-decimal token)
   const inDp = $derived(tk ? Math.min(tk.inputDp ?? tk.dp, tk.dp) : 0);
   const typed = $derived(parseAmount(amt));
   // amounts never carry more decimals than the input accepts (rounded down, so a max send stays within balance)
-  const n = $derived(tk ? (exact && exact.text === amt && exact.sym === tk.symbol ? exact.n : floorTo(inUsd ? typed / tk.price : typed, inDp)) : 0);
+  const n = $derived(tk ? (exact && exact.text === amt && exact.sym === idOf(tk) ? exact.n : floorTo(inUsd ? typed / tk.price : typed, inDp)) : 0);
   const det = $derived(mode === 'address' ? detectNetwork(address) : null);
+  // the routes offered: the host's, else both
+  const routes = $derived(btcRoutes ? NETS.filter((x) => btcRoutes.includes(x.id)) : NETS);
   const multi = $derived(mode === 'address' && tk?.symbol === 'BTC' && det === 'BTC');
-  const routeFee = $derived(multi ? btcFees[NETS[net].id] : undefined);
-  const fee = $derived(multi ? (routeFee ?? 0) : (tk?.fee ?? 0));
+  const routeFee = $derived(multi ? btcFees[routes[net].id] : undefined);
+  const fee = $derived(multi ? (routeFee ?? 0) : mode === 'user' ? (tk?.userFee ?? tk?.fee ?? 0) : (tk?.fee ?? 0));
   // a BTC route without a fee from the host can't be priced, so it can't be sent
   const feeKnown = $derived(!multi || routeFee !== undefined);
   const person = $derived(picked ? { name: picked.name, handle: picked.handle, grad: picked.grad ?? FALLBACK_GRAD } : null);
@@ -164,7 +186,9 @@
   // a token can go to any network it lists in `nets` (CHAT and ckBTC-style sends to an ICP principal, USDT to ETH …);
   // tokens without `nets` are ICP ledger tokens
   const tokenNets = $derived(tk?.nets?.length ? tk.nets : ['icp']);
-  const wrongNet = $derived(!!det && det !== 'unknown' && !tokenNets.includes(CHAIN_NET[det]));
+  const wrongNet = $derived(
+    !!det && det !== 'unknown' && (!tokenNets.includes(CHAIN_NET[det]) || (!!checkAddress && !!tk && !checkAddress(address.trim(), tk.symbol))),
+  );
   const badAddress = $derived(det === 'unknown' || wrongNet);
   const recipOk = $derived(mode === 'user' ? !!person : !!det && det !== 'unknown' && !wrongNet);
   // compared in whole units: float sums are off by a hair for many-decimal tokens and large balances
@@ -181,12 +205,12 @@
 
   // the summary under the form: network, fee, what they receive, total
   const rows = $derived([
-    { k: t('ui.walletSend.network'), v: mode === 'user' ? 'OpenChat' : multi ? t(NETS[net].label) : det && det !== 'unknown' ? NET_NAME[det] : '—', ink: 'var(--ink)' },
+    { k: t('ui.walletSend.network'), v: mode === 'user' ? 'OpenChat' : multi ? t(routes[net].label) : det && det !== 'unknown' ? NET_NAME[det] : '—', ink: 'var(--ink)' },
     { k: t('ui.walletSend.networkFee'), v: `${fmt(fee, tk?.dp ?? 0)} ${tk?.symbol}`, ink: 'var(--ink)' },
     { k: mode === 'user' && person ? t('ui.walletSend.nameReceives', { name: first }) : t('ui.walletSend.theyReceive'), v: `${fmt(n, inDp)} ${tk?.symbol}`, ink: n > 0 ? 'var(--ink)' : 'var(--ink-5,#6E6E7C)' },
     { k: t('ui.walletSend.total'), v: `${fmt(n + fee, tk?.dp ?? 0)} ${tk?.symbol}`, ink: over ? 'var(--status-danger)' : 'var(--ink)' },
   ]);
-  const network = $derived(mode === 'user' ? 'openchat' : multi ? NETS[net].id : det && det !== 'unknown' ? CHAIN_NET[det] : '');
+  const network = $derived(mode === 'user' ? 'openchat' : multi ? routes[net].id : det && det !== 'unknown' ? CHAIN_NET[det] : '');
 
   const ctaLabel = $derived(
     ok
@@ -287,7 +311,7 @@
   function pick(v: number) {
     if (!tk) return;
     amt = inUsd ? usdText(v * tk.price) : amountText(v, inDp);
-    exact = { text: amt, sym: tk.symbol, n: v };
+    exact = { text: amt, sym: idOf(tk), n: v };
   }
 
   function chooseFraction(k: number) {
@@ -298,6 +322,8 @@
   // the PIN dialog can't be reopened while a send is in flight, so a send can never run twice
   function openPin() {
     if (!ok || pinFlow.busy || step !== 'form') return;
+    // the host asks for the PIN itself: Send makes the transfer now
+    if (hostPin) return void send();
     pinText = '';
     pinFlow.failed = false;
     step = 'pin';
@@ -361,18 +387,31 @@
       pinInput?.focus();
       return;
     }
-    if (!onSent) return;
+    await send();
+  }
+
+  // a send through the host's own PIN (hostPin) that failed: said under the form
+  let sendFailed = $state(false);
+
+  // the transfer, through onSent: the receipt shows "Sending" until the host answers
+  async function send() {
+    if (!tk || !onSent || pinFlow.busy) return;
+    sendFailed = false;
     const request: WalletSendRequest = {
+      token: idOf(tk),
       symbol: tk.symbol,
       amount: n,
       fee,
       fiat: n * tk.price,
-      to: mode === 'user' ? (picked?.userId ?? '') : address,
+      to: mode === 'user' ? (picked?.userId ?? '') : address.trim(),
       userId: mode === 'user' ? picked?.userId : undefined,
       toLabel,
       network,
       memo: msg.trim() || undefined,
-      pin: pinText,
+      pin: hostPin ? '' : pinText,
+      // the digits typed (already cut to the token's decimals), not the float: the host turns them into units exactly
+      amountText: inUsd ? plain(n) : cleanAmount(amt).replace(',', '.'),
+      max: !!exact && exact.text === amt && exact.sym === idOf(tk) && exact.n === floorTo(avail, inDp) && n > 0,
       dp: tk.dp,
       person: mode === 'user' && !!person,
     };
@@ -380,12 +419,23 @@
     sent = { request, at: Date.now() };
     step = 'sending';
     const outcome = await pinFlow.run(() => sending(request));
+    if (outcome.ok && outcome.value === false) {
+      // nothing sent, nothing to say: back to the form as it was
+      sent = null;
+      step = 'form';
+      return;
+    }
     if (outcome.ok) {
       sent = { ...sent, doneAt: Date.now(), result: outcome.value };
       step = 'done';
       return;
     }
     sent = null;
+    if (hostPin) {
+      step = 'form';
+      sendFailed = pinFlow.failed;
+      return;
+    }
     step = 'pin';
     pinText = '';
     await tick(); // the dialog is back on the next render
@@ -483,14 +533,14 @@
           <ListSectionLabel label={t('ui.walletSend.networkKicker')} />
           <div class="net-picker">
             <div class="net-select" class:open={netOpen} onclick={() => (netOpen = !netOpen)} tabindex="0" role="button" aria-expanded={netOpen}>
-              <span class="net-label">{t(NETS[net].label)}</span>
-              <span class="net-meta">{t(NETS[net].time)} · {routeFee !== undefined ? `${fmt(routeFee, 8)} BTC` : t('ui.walletSend.feeUnknown')}</span>
+              <span class="net-label">{t(routes[net].label)}</span>
+              <span class="net-meta">{t(routes[net].time)} · {routeFee !== undefined ? `${fmt(routeFee, 8)} BTC` : t('ui.walletSend.feeUnknown')}</span>
               <span class="caret" class:open={netOpen}></span>
             </div>
             {#if netOpen}
               <div class="away" onclick={() => (netOpen = false)} role="presentation"></div>
               <div class="net-options">
-                {#each NETS as x, i}
+                {#each routes as x, i}
                   <div
                     class="net-option"
                     onclick={() => {
@@ -558,7 +608,8 @@
           {#each rows as r, i}<DetailRow label={r.k} value={r.v} valueColor={r.ink} size="sm" rule={i === rows.length - 1 ? 'none' : 'bottom'} />{/each}
         </div>
         <span class="cta" class:blocked={!ok} onclick={openPin} tabindex="0" role="button" aria-disabled={!ok}>{ctaLabel}</span>
-        <span class="cta-hint">{t(ok ? 'ui.walletSend.confirmHint' : 'ui.walletSend.summaryHint')}</span>
+        {#if sendFailed}<span class="send-error" role="alert">{t('ui.walletSend.sendFailed')}</span>{/if}
+        <span class="cta-hint">{t(ok ? (hostPin ? 'ui.walletSend.confirmHintHostPin' : 'ui.walletSend.confirmHint') : 'ui.walletSend.summaryHint')}</span>
       </div>
     </div>
   {/if}
@@ -1258,6 +1309,11 @@
   .pin-error {
     margin-block-start: -10px;
     font: 500 13px/1.4 var(--sans);
+    color: var(--status-danger);
+  }
+
+  .send-error {
+    font: 500 13px/1.4 var(--font-sans);
     color: var(--status-danger);
   }
 

@@ -6,8 +6,9 @@ const TESTS: [AddressNetwork, RegExp][] = [
   ['BTC', /^(bc1[a-z0-9]{20,}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/],
   ['ETH', /^0x[0-9a-fA-F]{40}$/],
   ['XRP', /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/],
-  // textual principal (groups of 5, shorter last group) or a 64-hex account identifier
-  ['ICP', /^([a-z0-9]{5}-){2,10}[a-z0-9]{1,5}$|^[0-9a-f]{64}$/],
+  // textual principal (groups of 5, shorter last group), optionally an ICRC-1 account's checksum and subaccount, or a
+  // 64-hex account identifier
+  ['ICP', /^([a-z0-9]{5}-){2,10}[a-z0-9]{1,5}(-[a-z2-7]{7}\.[0-9a-f]{1,64})?$|^[0-9a-f]{64}$/],
 ];
 
 /** null for an empty address, 'unknown' when no network matches. */
