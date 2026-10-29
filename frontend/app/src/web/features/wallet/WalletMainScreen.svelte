@@ -6,8 +6,10 @@
      token's networks and address (ReceiveAccount), its QR, Share to chat, the balance refreshed
      every 10 s while it's open. Send (6b) is /wallet/send?token=<ledger>: to a user already DM'd,
      a transfer in their DM; to an address, a withdrawal over the ledger or, for BTC, Bitcoin's own
-     network. The client asks for the PIN (S3), so Send has no PIN step of its own. Swap and
-     Recipients aren't built yet (6c, 6d): their paths show the token's page, or All activity. -->
+     network. The client asks for the PIN (S3), so Send has no PIN step of its own. Recipients
+     (6d) is /wallet/recipients: the address book (namedAccountsStore), saved through the client
+     under the old address book's rules (logic/wallet/addressBook). Swap isn't built yet (6c): its
+     path shows the token's page, or All activity. -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -24,6 +26,7 @@
         serverDirectChatsStore,
         swappableTokensStore,
         walletConfigStore,
+        type NamedAccount,
         type OpenChat,
     } from "@client";
     import WalletMain from "@openchat/ui/src/features/components/WalletMain.svelte";
@@ -33,6 +36,17 @@
     import QRCode from "@src/core/QRCode.svelte";
     import type { ShareChat } from "@openchat/ui/src/features/components/WalletReceive.svelte";
     import type { WalletSendRequest } from "@openchat/ui/src/features/components/WalletSend.svelte";
+    import type {
+        Recipient,
+        RecipientDraft,
+    } from "@openchat/ui/src/features/components/WalletRecipients.svelte";
+    import {
+        checkRecipientAddress,
+        checkRecipientName,
+        recipientAddressError,
+        RECIPIENT_NAME_MAX,
+    } from "@src/logic/wallet/addressBook";
+    import { recipientToSave } from "@src/utils/savedRecipient";
     import { sendInDirectChat } from "@src/logic/cryptoTransfer/cryptoTransferForm.svelte";
     import {
         acceptsAddress,
@@ -61,10 +75,12 @@
     import { i18nKey } from "@src/i18n/i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import {
+        addressNetworkName,
         receiveNetworks,
         sendContacts,
         tokenActivity,
         wholeTokens,
+        walletRecipients,
         walletToken,
     } from "./wallet.adapter";
     import { walletCatalogue } from "./walletCatalogue.svelte";
@@ -101,7 +117,7 @@
     let reported: { view: string; token: string | null } | undefined;
     $effect(() => {
         const view =
-            region.view === "receive" || region.view === "send"
+            region.view === "receive" || region.view === "send" || region.view === "recipients"
                 ? region.view
                 : ledger === undefined
                   ? "all"
@@ -179,7 +195,9 @@
                 ? `/wallet/${view}${id !== null ? `?token=${id}` : ""}`
                 : view === "token" && id !== null
                   ? `/wallet/${id}`
-                  : "/wallet";
+                  : view === "recipients"
+                    ? "/wallet/recipients"
+                    : "/wallet";
         // the page is its path and ?token=: the URL's other params (a dialog's ?diamond …) stay
         // unless the page changes
         const here = window.location;
@@ -382,6 +400,65 @@
         }
     }
 
+    // Recipients (6d): the address book, as the client keeps it (namedAccountsStore). An address is
+    // checked before anything is saved (6d invariant 1); an edit only renames (6d invariant 2:
+    // the canister keys a saved address by its account, so a new address would leave the old one);
+    // a removal deletes by name, as the canister does
+    const isUserIdAccount = (a: string): boolean => client.isAccountOfMultiUserCanisterUserId(a);
+
+    function checkRecipient(
+        address: string,
+        id: string | null,
+    ): { network: string } | { error: string } {
+        const check = checkRecipientAddress(
+            address,
+            $namedAccountsStore,
+            isUserIdAccount,
+            id ?? undefined,
+        );
+        if (check.kind === "valid") return { network: addressNetworkName(check.network) };
+        const error = recipientAddressError(check);
+        return { error: error === undefined ? "" : $_(error.key, { values: error.params }) };
+    }
+
+    function checkName(name: string, id: string | null): string | null {
+        const check = checkRecipientName(name, $namedAccountsStore, id ?? undefined);
+        return check.kind === "taken" ? $_("addressBook.nameTaken") : null;
+    }
+
+    async function addRecipient(draft: RecipientDraft): Promise<Recipient> {
+        const address = draft.address.trim();
+        const name = draft.name.trim();
+        const ok =
+            checkRecipientAddress(address, $namedAccountsStore, isUserIdAccount).kind === "valid" &&
+            checkRecipientName(name, $namedAccountsStore).kind === "valid";
+        if (!ok) throw new Error("not a recipient to save");
+        await saveAccount({ name, account: address });
+        return { id: address, name, address };
+    }
+
+    async function renameRecipient(recipient: Recipient): Promise<void> {
+        const editing = $namedAccountsStore.find((a) => a.account === recipient.id);
+        const name = recipient.name.trim();
+        if (editing === undefined) throw new Error("no such recipient");
+        if (checkRecipientName(name, $namedAccountsStore, editing.account).kind !== "valid") {
+            throw new Error("name taken");
+        }
+        await saveAccount(recipientToSave(editing, name, recipient.address));
+    }
+
+    async function saveAccount(account: NamedAccount): Promise<void> {
+        const resp = await client.saveCryptoAccount(account);
+        if (resp.kind !== "success") throw new Error(`recipient not saved: ${resp.kind}`);
+    }
+
+    async function removeRecipient(id: string): Promise<void> {
+        const account = $namedAccountsStore.find((a) => a.account === id);
+        if (account === undefined) return;
+        const resp = await client.deleteCryptoAccount(account.name);
+        if (resp.kind !== "success") throw new Error(`recipient not removed: ${resp.kind}`);
+    }
+
     // "View in chat": the DM the tokens went to
     function openDm({ userId }: { userId: string }): void {
         navigate(routeForChatIdentifier("chats", { kind: "direct_chat", userId }));
@@ -409,6 +486,18 @@
     {checkAddress}
     onSent={send}
     onMessage={openDm}
+    recipients={walletRecipients($namedAccountsStore)}
+    onAddRecipient={addRecipient}
+    onUpdateRecipient={renameRecipient}
+    onRemoveRecipient={removeRecipient}
+    recipientOptions={{
+        checkAddress: checkRecipient,
+        checkName: checkName,
+        editAddress: false,
+        tokenLocks: false,
+        lastSent: false,
+        maxNameLength: RECIPIENT_NAME_MAX,
+    }}
     receiveNetworks={networks}
     receiveNetwork={receiveAccount.selectedNetwork}
     onReceiveNetwork={(id) => (receiveAccount.selectedNetwork = id)}

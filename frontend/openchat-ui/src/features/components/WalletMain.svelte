@@ -61,7 +61,7 @@
   import TokenPicker from '../../lib/components/TokenPicker.svelte';
   import TransactionRow from '../../lib/components/TransactionRow.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
-  import type { Snippet } from 'svelte';
+  import type { ComponentProps, Snippet } from 'svelte';
   import WalletReceive, { type ReceiveNetwork, type ShareChat } from './WalletReceive.svelte';
   import WalletRecipients, { type Recipient, type RecipientDraft } from './WalletRecipients.svelte';
   import WalletSend, { type SendContact, type WalletSendRequest } from './WalletSend.svelte';
@@ -155,6 +155,9 @@
     onAddRecipient?: (r: RecipientDraft) => Promise<Recipient>;
     onUpdateRecipient?: (r: Recipient) => Promise<unknown> | void;
     onRemoveRecipient?: (id: string) => Promise<unknown> | void;
+    /** Recipients: the host's rules and what it keeps (see WalletRecipients' checkAddress, checkName, editAddress,
+     *  tokenLocks, lastSent and maxNameLength). */
+    recipientOptions?: Pick<ComponentProps<typeof WalletRecipients>, 'checkAddress' | 'checkName' | 'editAddress' | 'tokenLocks' | 'lastSent' | 'maxNameLength'>;
     /** Send: user search and BTC route fees (see WalletSend). */
     onSearchUsers?: (query: string) => Promise<SendContact[]>;
     btcFees?: Partial<Record<'btc' | 'ckbtc', number>>;
@@ -211,6 +214,7 @@
     onAddRecipient,
     onUpdateRecipient,
     onRemoveRecipient,
+    recipientOptions,
     onSearchUsers,
     btcFees,
     btcRoutes,
@@ -680,6 +684,7 @@
       onRemove={onRemoveRecipient}
       onSend={sendToRecipient}
       onClose={() => go({ view: 'all' })}
+      {...recipientOptions}
     />
   {/if}
   {#if view === 'all' || view === 'token'}

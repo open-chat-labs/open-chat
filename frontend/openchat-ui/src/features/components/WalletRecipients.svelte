@@ -56,9 +56,37 @@
     onRemove?: (id: string) => Promise<unknown> | void;
     onSend?: (recipient: Recipient & { network: RecipientNetwork | 'unknown' | null }) => void;
     onClose?: () => void;
+    /** The host's say on an address (`id`: the recipient being edited, else null): its network's name, or why it can't
+     *  be saved (text). Rows show the network it names. Without it, the address's own shape and the list's duplicates
+     *  decide. */
+    checkAddress?: (address: string, id: string | null) => { network: string } | { error: string };
+    /** The host's say on a name (the one saved, the default when left empty): why it can't be saved (text), or null. */
+    checkName?: (name: string, id: string | null) => string | null;
+    /** Editing can change the address; false: an edit only renames (the address shows, read-only). */
+    editAddress?: boolean;
+    /** Recipients can be locked to a token; false hides the lock (the form's field and the rows' badge). */
+    tokenLocks?: boolean;
+    /** Rows say when each was last sent to; false leaves it out. */
+    lastSent?: boolean;
+    /** The longest name the host keeps. */
+    maxNameLength?: number;
   }
 
-  let { tokens, recipients = [], onAdd, onUpdate, onRemove, onSend, onClose }: Props = $props();
+  let {
+    tokens,
+    recipients = [],
+    onAdd,
+    onUpdate,
+    onRemove,
+    onSend,
+    onClose,
+    checkAddress,
+    checkName,
+    editAddress = true,
+    tokenLocks = true,
+    lastSent = true,
+    maxNameLength,
+  }: Props = $props();
   const t = useT();
 
   // local edits stick until the parent sends a new list
@@ -81,10 +109,35 @@
   const addr = $derived(form ? form.address.trim() : '');
   const net = $derived(form ? detect(addr) : null);
   const dupe = $derived(form ? list.find((r) => r.address === addr && r.id !== form?.id) : undefined);
-  const valid = $derived(!!net && net !== 'unknown' && !dupe);
+  // the host's say, when it has one; otherwise the address's shape and the list
+  const status = $derived(form && addr && checkAddress ? checkAddress(addr, form.id) : null);
+  const addressOk = $derived(status ? 'network' in status : !!net && net !== 'unknown' && !dupe);
+  const netName = $derived(status ? ('network' in status ? status.network : '') : net && net !== 'unknown' ? NET_NAME[net] : '');
+  const defaultName = $derived(addressOk ? t('ui.walletRecipients.defaultName', { network: netName }) : '');
+  const nameError = $derived(form && addressOk && checkName ? checkName(form.name.trim() || defaultName, form.id) : null);
+  const valid = $derived(addressOk && !nameError);
   const note = $derived(
-    !addr ? '' : dupe ? t('ui.walletRecipients.alreadySaved', { name: dupe.name }) : net === 'unknown' ? t('ui.walletRecipients.unsupported') : t('ui.walletRecipients.networkAddress', { network: NET_NAME[net as RecipientNetwork] }),
+    !addr
+      ? ''
+      : status
+        ? 'error' in status
+          ? status.error
+          : t('ui.walletRecipients.networkAddress', { network: status.network })
+        : dupe
+          ? t('ui.walletRecipients.alreadySaved', { name: dupe.name })
+          : net === 'unknown'
+            ? t('ui.walletRecipients.unsupported')
+            : t('ui.walletRecipients.networkAddress', { network: netName }),
   );
+  // a row's network: the host's name for it, else the address's shape
+  const rowNetwork = (r: Recipient) => {
+    if (!checkAddress) {
+      const n = detect(r.address);
+      return n === 'unknown' ? t('ui.walletRecipients.unknownNetwork') : n;
+    }
+    const s = checkAddress(r.address, r.id);
+    return 'network' in s ? s.network : t('ui.walletRecipients.unknownNetwork');
+  };
   // labels are resource keys (token symbols render as themselves)
   const chips = $derived([{ symbol: null as string | null, label: 'ui.walletRecipients.anyToken', mark: '', grad: 'transparent' }].concat(held.map((tok) => ({ symbol: tok.symbol, label: tok.symbol, mark: tok.mark, grad: tok.grad }))));
 
@@ -128,7 +181,7 @@
   // the form stays (with an error) until the host has stored it
   async function save() {
     if (!valid || !form) return;
-    const name = form.name.trim() || t('ui.walletRecipients.defaultName', { network: NET_NAME[net as RecipientNetwork] });
+    const name = form.name.trim() || defaultName;
     const f = form;
     const address = addr;
     error = '';
@@ -140,7 +193,8 @@
         list = list.map((r) => (r.id === f.id ? next : r));
       } else if (onAdd) {
         const stored = await onAdd({ name, address, token: f.token });
-        list = [...list, stored];
+        // a host that has already passed the new list holds it once
+        if (!list.some((r) => r.id === stored.id)) list = [...list, stored];
       }
     });
     if (result.ok) form = null;
@@ -183,11 +237,11 @@
               <div class="row-body">
                 <div class="row-head">
                   <span class="name">{r.name}</span>
-                  <span class="net">{network === 'unknown' ? t('ui.walletRecipients.unknownNetwork') : network}</span>
-                  {#if r.token}<span class="lock" title={t('ui.walletRecipients.lockTitle', { token: r.token })}><span class="lock-icon"></span>{r.token}</span>{/if}
+                  <span class="net">{rowNetwork(r)}</span>
+                  {#if tokenLocks && r.token}<span class="lock" title={t('ui.walletRecipients.lockTitle', { token: r.token })}><span class="lock-icon"></span>{r.token}</span>{/if}
                 </div>
                 <div class="row-meta">
-                  <span class="address" class:copied={copiedFor === r.id}>{copiedFor === r.id ? t('ui.walletRecipients.addressCopied') : short(r.address)}</span><span class="last">· {r.last || t('ui.walletRecipients.neverSent')}</span>
+                  <span class="address" class:copied={copiedFor === r.id}>{copiedFor === r.id ? t('ui.walletRecipients.addressCopied') : short(r.address)}</span>{#if lastSent}<span class="last">· {r.last || t('ui.walletRecipients.neverSent')}</span>{/if}
                 </div>
               </div>
               {#if confirmFor !== r.id}
@@ -263,6 +317,7 @@
               class:valid
               class:invalid={!!addr && !valid}
               value={form.address}
+              readonly={!!form.id && !editAddress}
               oninput={(e) => form && (form.address = e.currentTarget.value)}
               placeholder={t('ui.walletRecipients.addressPlaceholder')}
               rows="2"
@@ -279,11 +334,13 @@
             <input
               class="name-input"
               value={form.name}
+              maxlength={maxNameLength}
               oninput={(e) => form && (form.name = e.currentTarget.value)}
-              placeholder={valid ? t('ui.walletRecipients.defaultName', { network: NET_NAME[net as RecipientNetwork] }) : t('ui.walletRecipients.namePlaceholder')}
+              placeholder={addressOk ? defaultName : t('ui.walletRecipients.namePlaceholder')}
             />
-            <span class="hint">{t('ui.walletRecipients.nameHint')}</span>
+            {#if nameError}<span class="error" role="alert">{nameError}</span>{:else}<span class="hint">{t('ui.walletRecipients.nameHint')}</span>{/if}
           </div>
+          {#if tokenLocks}
           <div class="field">
             <span class="field-label">{t('ui.walletRecipients.restrictLabel')}</span>
             <div class="chips">
@@ -297,6 +354,7 @@
             </div>
             <span class="hint wrap">{form.token ? t('ui.walletRecipients.onlyTokenHint', { token: form.token }) : t('ui.walletRecipients.anyTokenHint')}</span>
           </div>
+          {/if}
           {#if saveFlow.failed}<span class="error" role="alert">{t('ui.walletRecipients.saveFailed')}</span>{/if}
           <div class="form-actions">
             <span class="form-cancel" onclick={back} role="button" tabindex="0">{t('ui.common.cancel')}</span>

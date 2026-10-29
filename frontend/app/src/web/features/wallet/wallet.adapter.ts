@@ -15,6 +15,8 @@ import type { WalletActivity } from "@openchat/ui/src/features/components/Wallet
 import type { ReceiveNetwork } from "@openchat/ui/src/features/components/WalletReceive.svelte";
 import type { SendContact } from "@openchat/ui/src/features/components/WalletSend.svelte";
 import type { DepositNote } from "@src/logic/wallet/receiveAccount.svelte";
+import type { Recipient } from "@openchat/ui/src/features/components/WalletRecipients.svelte";
+import type { AddressNetwork } from "@src/utils/cryptoAddress";
 import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
 import type { WalletToken, WalletTokenAction } from "@openchat/ui/src/lib/types";
 import {
@@ -265,4 +267,25 @@ export function sendContacts(users: UserSummary[]): SendContact[] {
         handle: `@${u.username}`,
         grad: AVATAR_GRADIENTS[swatchFor(u.userId)],
     }));
+}
+
+/**
+ * The address book as WalletRecipients lists it: each saved account, keyed by its account (the
+ * canister's key; a recipient has no id of its own).
+ */
+export function walletRecipients(accounts: NamedAccount[]): Recipient[] {
+    return accounts.map((a) => ({ id: a.account, name: a.name, address: a.account }));
+}
+
+const ADDRESS_NETWORK_NAMES: Record<AddressNetwork, string> = {
+    icrc: "Internet Computer",
+    icp: "Internet Computer",
+    btc: "Bitcoin",
+    eth: "Ethereum",
+    sol: "Solana",
+};
+
+/** The name of the network an address is on, as the recipients' rows show it. */
+export function addressNetworkName(network: AddressNetwork): string {
+    return ADDRESS_NETWORK_NAMES[network];
 }

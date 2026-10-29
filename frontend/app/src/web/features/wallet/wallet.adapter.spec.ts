@@ -11,6 +11,8 @@ import {
     walletToken,
     walletTokenActions,
     walletTokens,
+    walletRecipients,
+    addressNetworkName,
 } from "./wallet.adapter";
 
 function token(over: Partial<EnhancedTokenDetails> = {}): EnhancedTokenDetails {
@@ -271,5 +273,15 @@ describe("Send's people", () => {
         expect(a).toMatchObject({ userId: "u1", name: "alice", handle: "@alice" });
         expect(b).toMatchObject({ userId: "u2", name: "Bob" });
         expect(a.grad).toMatch(/gradient/);
+    });
+});
+
+describe("the address book", () => {
+    test("each saved account is a recipient keyed by its account, with its network's name", () => {
+        expect(walletRecipients([{ name: "Exchange", account: "abc" }])).toEqual([
+            { id: "abc", name: "Exchange", address: "abc" },
+        ]);
+        expect(addressNetworkName("icrc")).toBe("Internet Computer");
+        expect(addressNetworkName("sol")).toBe("Solana");
     });
 });
