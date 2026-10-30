@@ -2380,13 +2380,6 @@ export const UserIndexSetCallPushEnabledArgs = /* @__PURE__ */ Type.Object({
     enabled: Type.Boolean(),
 });
 
-export type UserIndexSetMiniAppServicePrincipalArgs = Static<
-    typeof UserIndexSetMiniAppServicePrincipalArgs
->;
-export const UserIndexSetMiniAppServicePrincipalArgs = /* @__PURE__ */ Type.Object({
-    principal: TSPrincipal,
-});
-
 export type UserIndexPayForDiamondMembershipSuccessResult = Static<
     typeof UserIndexPayForDiamondMembershipSuccessResult
 >;
@@ -2784,6 +2777,13 @@ export type UserIndexSetPremiumItemCostArgs = Static<typeof UserIndexSetPremiumI
 export const UserIndexSetPremiumItemCostArgs = /* @__PURE__ */ Type.Object({
     item_id: Type.Number(),
     chit_cost: Type.Number(),
+});
+
+export type UserIndexSetMiniAppServicePrincipalArgs = Static<
+    typeof UserIndexSetMiniAppServicePrincipalArgs
+>;
+export const UserIndexSetMiniAppServicePrincipalArgs = /* @__PURE__ */ Type.Object({
+    principal: TSPrincipal,
 });
 
 export type LocalUserIndexInviteUsersToCommunityArgs = Static<
