@@ -1328,8 +1328,13 @@ impl MiniAppContent {
                 waiting_for: started.waiting_for,
                 settings: started.settings,
             })),
+            // A retried start carries the turn as the service knows it now, which may have passed
+            // since the write it's retrying
             (Active(active), Started(started)) if active.players == started.players && active.settings == started.settings => {
-                Ok(self.status.clone())
+                Ok(Active(MiniAppActive {
+                    waiting_for: started.waiting_for,
+                    ..active.clone()
+                }))
             }
             (Active(_), Started(_)) => Err("The game has already started".to_string()),
             (Active(active), Turn(turn)) => Ok(Active(MiniAppActive {

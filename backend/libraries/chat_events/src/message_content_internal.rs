@@ -3078,8 +3078,12 @@ mod mini_app_tests {
         let mut stored: MiniAppContentInternal = card("Uno").into();
         stored.update(started(&[1, 2], &[1])).unwrap();
         stored.update(turn(&[2])).unwrap();
-        stored.update(started(&[1, 2], &[1])).unwrap();
+        // A retried start carries the turn as it is now, which a turn passing meanwhile may have
+        // moved on: the card takes it, so it never shows a turn the service has moved past
+        stored.update(started(&[1, 2], &[2])).unwrap();
         assert_eq!(stored.status, active(&[1, 2], &[2]));
+        stored.update(started(&[1, 2], &[1])).unwrap();
+        assert_eq!(stored.status, active(&[1, 2], &[1]));
 
         stored.update(ended(Some("Bob won"))).unwrap();
         for update in [started(&[1, 2], &[1]), turn(&[1]), ended(Some("Alice won")), ended(None)] {
