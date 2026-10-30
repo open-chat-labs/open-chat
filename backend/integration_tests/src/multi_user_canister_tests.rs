@@ -3589,6 +3589,7 @@ fn a_bot_can_send_a_direct_message_to_a_user_in_a_multi_user_canister() {
             default_subscriptions: None,
             data_encoding: None,
             restricted_locations: None,
+            mini_apps: None,
         },
     );
     client::local_user_index::happy_path::install_bot(
@@ -4841,6 +4842,7 @@ fn users_can_chat_with_bots_but_not_send_them_crypto() {
             default_subscriptions: None,
             data_encoding: None,
             restricted_locations: None,
+            mini_apps: None,
         },
     );
     tick_many(env, 3);
@@ -6548,6 +6550,7 @@ fn bots_read_their_direct_chats_with_users_via_the_local_user_index() {
             default_subscriptions: None,
             data_encoding: None,
             restricted_locations: None,
+            mini_apps: None,
         },
     );
     client::local_user_index::happy_path::install_bot(
@@ -6683,6 +6686,7 @@ fn bot_command_tokens_are_issued_for_direct_chats_with_users_in_multi_user_canis
             default_subscriptions: None,
             data_encoding: None,
             restricted_locations: None,
+            mini_apps: None,
         },
     );
     client::local_user_index::happy_path::install_bot(

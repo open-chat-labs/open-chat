@@ -249,6 +249,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                     permitted_install_location,
                     default_subscriptions: bot.definition.default_subscriptions.clone(),
                     data_encoding: bot.definition.data_encoding.unwrap_or_default(),
+                    mini_apps: bot.definition.mini_apps.clone().unwrap_or_default(),
                     notification_canister: this_canister_id,
                 }),
             );

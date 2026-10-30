@@ -3,6 +3,9 @@
 // and player token, and the game's state, to the app, and the app's requests for a fresh token and to
 // start the game to the service (backend/docs/mini_app_service_protocol.md, "App ↔ website"). Nothing
 // else about the user is shared with the app.
+//
+// A finished game whose card records how it ended doesn't go through the service, which has forgotten
+// it: the app's shown that end state instead, as a player if the user was one.
 
 import type {
     MiniAppContent,
@@ -21,7 +24,8 @@ export type HostedMiniApp = {
     url: URL;
     botName: string;
     game: MiniAppGame;
-    // the card it's shown in, for the buttons around the frame
+    // the card it's shown in, for the buttons around the frame. The frame passes the host the card as
+    // it changes (`setContent`).
     content: MiniAppContent;
 };
 
@@ -46,13 +50,29 @@ export type MiniAppHostOptions = {
     translate: (key: ResourceKey) => string;
 };
 
+// How a game ended, as its card records it, parsed from the JSON the bot chose. Undefined if the card
+// doesn't say, or what it says isn't JSON, when there's nothing for the app to show.
+export function miniAppEndState(content: MiniAppContent): { state: unknown } | undefined {
+    if (content.status.kind !== "finished" || content.status.endState === undefined) {
+        return undefined;
+    }
+    try {
+        return { state: JSON.parse(content.status.endState) };
+    } catch {
+        return undefined;
+    }
+}
+
 export class MiniAppHost {
     status = $state<MiniAppFrameStatus>({ kind: "opening" });
     #games: MiniAppGames;
     #app: HostedMiniApp;
+    #content: MiniAppContent;
+    // how the game ended, once its card records that
+    #endState: { state: unknown } | undefined;
     #options: MiniAppHostOptions;
     #frame: HTMLIFrameElement | undefined;
-    // what the service tells this frame about the game, once it's open
+    // what the service tells this frame about the game, while it's open through the service
     #listener: MiniAppGameListener | undefined;
     #playerToken: string | undefined;
     // whether the app has said it's ready
@@ -63,6 +83,8 @@ export class MiniAppHost {
     constructor(games: MiniAppGames, app: HostedMiniApp, options: MiniAppHostOptions) {
         this.#games = games;
         this.#app = app;
+        this.#content = app.content;
+        this.#endState = miniAppEndState(app.content);
         this.#options = { ...options };
     }
 
@@ -74,13 +96,15 @@ export class MiniAppHost {
         this.#frame = frame;
         const listener = (ev: MessageEvent) => void this.#onMessage(ev);
         window.addEventListener("message", listener);
-        void this.#open();
+        if (this.#endState !== undefined) {
+            this.#openFinished();
+        } else {
+            void this.#open();
+        }
         return () => {
             window.removeEventListener("message", listener);
             this.#frame = undefined;
-            if (this.#listener !== undefined) {
-                this.#games.closeMiniApp(this.#app.game, this.#listener);
-            }
+            this.#closeListener();
         };
     }
 
@@ -89,6 +113,26 @@ export class MiniAppHost {
         this.#ready = false;
         this.#playerToken = undefined;
         this.status = { kind: "opening" };
+    }
+
+    // The card as it now is. Once it records how the game ended, the app's shown that: one open
+    // through the service is told, and the service is done with.
+    setContent(content: MiniAppContent): void {
+        this.#content = content;
+        if (this.#endState !== undefined) return;
+        this.#endState = miniAppEndState(content);
+        if (this.#endState === undefined) return;
+        this.#closeListener();
+        if (this.status.kind === "open") {
+            // the app, if it's ready, has had the game as it was played, and now its end
+            this.#playerToken = undefined;
+            if (this.#ready) {
+                this.#send({ kind: "mini_app_end_state", state: this.#endState.state });
+            }
+        } else {
+            // opening through the service, or closed by it: the end's shown instead
+            this.#openFinished();
+        }
     }
 
     setDarkMode(darkMode: boolean): void {
@@ -107,13 +151,13 @@ export class MiniAppHost {
         };
         this.#listener = listener;
         const outcome = await this.#games.openMiniApp(this.#app.game, listener);
-        // a frame given since then has an opening of its own
+        // a frame given since then has an opening of its own, or the game's finished meanwhile
         if (this.#listener !== listener) return;
         if (outcome.kind === "failed") {
             // The service forgets a game once its card records the end, so a finished card's app
             // can't be opened, which isn't an error
             const finished =
-                this.#app.content.status.kind === "finished" &&
+                this.#content.status.kind === "finished" &&
                 outcome.message.key === "bots.miniApp.refusals.unknownGame";
             this.status = {
                 kind: "closed",
@@ -126,8 +170,27 @@ export class MiniAppHost {
         this.#initialise(true);
     }
 
-    // Tells the app the user's role, once it's ready, and then the latest state, unless the service
-    // is about to send it
+    // Shows the app how the game ended, as one of its players if the user was, without the service
+    #openFinished(): void {
+        const players =
+            this.#content.status.kind === "finished" ? this.#content.status.players : [];
+        this.#playerToken = undefined;
+        this.status = {
+            kind: "open",
+            role: players.includes(this.#options.userId) ? "player" : "spectator",
+        };
+        this.#initialise(true);
+    }
+
+    #closeListener(): void {
+        if (this.#listener !== undefined) {
+            this.#games.closeMiniApp(this.#app.game, this.#listener);
+            this.#listener = undefined;
+        }
+    }
+
+    // Tells the app the user's role, once it's ready, and then how the game ended, or else the
+    // latest state, unless the service is about to send it
     #initialise(withState: boolean): void {
         if (!this.#ready || this.status.kind !== "open") return;
         this.#send({
@@ -137,8 +200,11 @@ export class MiniAppHost {
             token: this.#playerToken,
             dark_mode: this.#options.darkMode,
             locale: this.#options.locale(),
+            finished: this.#endState !== undefined,
         });
-        if (withState && this.#state !== undefined) {
+        if (this.#endState !== undefined) {
+            this.#send({ kind: "mini_app_end_state", state: this.#endState.state });
+        } else if (withState && this.#state !== undefined) {
             this.#send(stateMessage(this.#state));
         }
     }
@@ -173,10 +239,16 @@ export class MiniAppHost {
                 this.#initialise(true);
                 return;
 
-            // Left unanswered if there's no token, eg. the user's no longer playing: the bot
-            // refuses the old one, and the app says so
+            // Left unanswered if there's no token, eg. the user's no longer playing, or the game's
+            // over: the bot refuses the old one, and the app says so
             case "mini_app_token_request": {
-                if (this.status.kind !== "open" || this.status.role !== "player") return;
+                if (
+                    this.status.kind !== "open" ||
+                    this.status.role !== "player" ||
+                    this.#endState !== undefined
+                ) {
+                    return;
+                }
                 const token = await this.#games.miniAppPlayerToken(this.#app.game);
                 if (token !== undefined) {
                     this.#playerToken = token;
@@ -185,7 +257,9 @@ export class MiniAppHost {
                 return;
             }
 
+            // Nothing to start once the game's over
             case "mini_app_start": {
+                if (this.#endState !== undefined) return;
                 const outcome = await this.#games.startMiniApp(this.#app.game);
                 this.#send({
                     kind: "mini_app_start_result",

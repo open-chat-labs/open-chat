@@ -30,6 +30,9 @@ pub struct Game {
     // Whose turn it is, as the bot last said
     pub waiting_for: Vec<UserId>,
     pub result: Option<String>,
+    // How the game ended, as JSON the bot gave with Finished, which its card's app shows
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub end_state: Option<String>,
     // When the bot last updated the game, or posted it
     pub last_bot_update: TimestampMillis,
     pub state: Option<GameState>,
@@ -73,6 +76,8 @@ pub struct BotUpdate {
     pub status: Option<GameStatus>,
     pub waiting_for: Option<Vec<UserId>>,
     pub result: Option<String>,
+    // The end state as the bot's JSON, serialized compactly
+    pub end_state: Option<String>,
     pub remove: Vec<UserId>,
     pub state: Option<GameState>,
 }
@@ -93,6 +98,7 @@ impl Game {
             started_with: Vec::new(),
             waiting_for: Vec::new(),
             result: None,
+            end_state: None,
             last_bot_update: now,
             state: None,
             card: MiniAppStatus::Open,
@@ -151,9 +157,9 @@ impl Game {
         Ok(self.players.len() < before)
     }
 
-    // The bot's update: its status only moves forward, it only waits for players, a result only comes
-    // with Finished, and a state older than the latest is dropped. Nothing changes if any of it is
-    // invalid.
+    // The bot's update: its status only moves forward, it only waits for players, a result and an end
+    // state only come with Finished, and a state older than the latest is dropped. Nothing changes if
+    // any of it is invalid.
     pub fn apply(&mut self, update: BotUpdate, now: TimestampMillis) -> Result<Applied, UpdateError> {
         if self.status == GameStatus::Finished {
             return Err(UpdateError::Finished);
@@ -175,6 +181,17 @@ impl Game {
                 return Err(UpdateError::Invalid(format!(
                     "A result has 1 to {} characters",
                     MiniAppContent::MAX_RESULT_CHARS
+                )));
+            }
+        }
+        if let Some(end_state) = &update.end_state {
+            if status != GameStatus::Finished {
+                return Err(UpdateError::Invalid("An end state only comes with Finished".to_string()));
+            }
+            if end_state.len() > MiniAppContent::MAX_END_STATE_BYTES {
+                return Err(UpdateError::Invalid(format!(
+                    "The end state is at most {} bytes",
+                    MiniAppContent::MAX_END_STATE_BYTES
                 )));
             }
         }
@@ -204,6 +221,9 @@ impl Game {
         if update.result.is_some() {
             self.result = update.result;
             applied.card_changed = true;
+        }
+        if update.end_state.is_some() {
+            self.end_state = update.end_state;
         }
         if let Some(state) = update.state
             && self.state.as_ref().is_none_or(|current| state.seq > current.seq)
@@ -324,6 +344,7 @@ impl Game {
             }
             (_, GameStatus::Finished) => Some(MiniAppStatusUpdate::Ended(MiniAppEnded {
                 result: self.result.clone(),
+                end_state: self.end_state.clone(),
             })),
         }
     }
@@ -345,6 +366,7 @@ impl Game {
             MiniAppStatusUpdate::Ended(ended) => MiniAppStatus::Finished(MiniAppFinished {
                 players: self.card.players().to_vec(),
                 result: ended.result.clone(),
+                end_state: ended.end_state.clone(),
             }),
         };
     }
@@ -407,7 +429,7 @@ mod tests {
                 token: "token".to_string(),
                 card: CardContent {
                     text: "Uno".to_string(),
-                    image: None,
+                    app: "uno".to_string(),
                     max_players,
                     spectators: true,
                     app_size: MiniAppSize { width: 440, height: 740 },
@@ -569,7 +591,8 @@ mod tests {
         assert_eq!(
             catch_up(&mut game),
             vec![MiniAppStatusUpdate::Ended(MiniAppEnded {
-                result: Some("Alice won".to_string())
+                result: Some("Alice won".to_string()),
+                end_state: None,
             })]
         );
         assert!(game.is_done());
@@ -578,6 +601,7 @@ mod tests {
             MiniAppStatus::Finished(MiniAppFinished {
                 players: vec![user(1), user(2)],
                 result: Some("Alice won".to_string()),
+                end_state: None,
             })
         );
         assert_eq!(game.apply(BotUpdate::default(), 5), Err(UpdateError::Finished));
@@ -608,7 +632,10 @@ mod tests {
 
         assert_eq!(
             catch_up(&mut game),
-            vec![MiniAppStatusUpdate::Ended(MiniAppEnded { result: None })]
+            vec![MiniAppStatusUpdate::Ended(MiniAppEnded {
+                result: None,
+                end_state: None
+            })]
         );
     }
 
@@ -633,6 +660,17 @@ mod tests {
             BotUpdate {
                 status: Some(GameStatus::Finished),
                 result: Some("x".repeat(MiniAppContent::MAX_RESULT_CHARS + 1)),
+                ..Default::default()
+            },
+            // An end state only comes with Finished
+            BotUpdate {
+                end_state: Some(r#"{"moves":[]}"#.to_string()),
+                ..Default::default()
+            },
+            // and is at most 16 KB
+            BotUpdate {
+                status: Some(GameStatus::Finished),
+                end_state: Some(format!(r#"["{}"]"#, "x".repeat(MiniAppContent::MAX_END_STATE_BYTES))),
                 ..Default::default()
             },
             BotUpdate {
@@ -681,7 +719,10 @@ mod tests {
         assert_eq!(game.status, GameStatus::Finished);
         assert_eq!(
             catch_up(&mut game),
-            vec![MiniAppStatusUpdate::Ended(MiniAppEnded { result: None })]
+            vec![MiniAppStatusUpdate::Ended(MiniAppEnded {
+                result: None,
+                end_state: None
+            })]
         );
         assert_eq!(game.card.players(), []);
 
@@ -698,5 +739,122 @@ mod tests {
         .unwrap();
         game.abandon();
         assert_eq!(game.result.as_deref(), Some("Bob won"));
+    }
+
+    // The bot's end state is kept with the game and written to the card with the result, so the
+    // card's app can show how the game ended
+    #[test]
+    fn an_end_state_goes_to_the_card_with_the_result() {
+        let mut game = game(None);
+        game.add_player(user(1)).unwrap();
+        start(&mut game);
+        catch_up(&mut game);
+
+        let end_state = r#"{"fen":"8/8/8/8/8/8/8/8 w - - 0 1","moves":["e4","e5"]}"#.to_string();
+        let applied = game
+            .apply(
+                BotUpdate {
+                    status: Some(GameStatus::Finished),
+                    result: Some("Checkmate".to_string()),
+                    end_state: Some(end_state.clone()),
+                    ..Default::default()
+                },
+                2,
+            )
+            .unwrap();
+        assert!(applied.write_card);
+        assert_eq!(game.end_state, Some(end_state.clone()));
+
+        assert_eq!(
+            catch_up(&mut game),
+            vec![MiniAppStatusUpdate::Ended(MiniAppEnded {
+                result: Some("Checkmate".to_string()),
+                end_state: Some(end_state.clone()),
+            })]
+        );
+        assert_eq!(
+            game.card,
+            MiniAppStatus::Finished(MiniAppFinished {
+                players: vec![user(1)],
+                result: Some("Checkmate".to_string()),
+                end_state: Some(end_state.clone()),
+            })
+        );
+        assert!(game.is_done());
+
+        // Finished again, with the same result and end state, changes nothing: the game's over
+        let before = game.clone();
+        assert_eq!(
+            game.apply(
+                BotUpdate {
+                    status: Some(GameStatus::Finished),
+                    result: Some("Checkmate".to_string()),
+                    end_state: Some(end_state),
+                    ..Default::default()
+                },
+                3,
+            ),
+            Err(UpdateError::Finished)
+        );
+        assert_eq!(game, before);
+        assert_eq!(game.next_card_update(), None);
+    }
+
+    #[test]
+    fn an_end_state_only_comes_with_finished() {
+        let mut game = game(None);
+        game.add_player(user(1)).unwrap();
+        start(&mut game);
+        let before = game.clone();
+
+        assert_eq!(
+            game.apply(
+                BotUpdate {
+                    end_state: Some("{}".to_string()),
+                    ..Default::default()
+                },
+                2,
+            ),
+            Err(UpdateError::Invalid("An end state only comes with Finished".to_string()))
+        );
+        assert_eq!(game, before);
+    }
+
+    #[test]
+    fn an_end_state_is_at_most_16_kb() {
+        let mut game = game(None);
+        game.add_player(user(1)).unwrap();
+        start(&mut game);
+        let before = game.clone();
+
+        let fits = format!(r#""{}""#, "x".repeat(MiniAppContent::MAX_END_STATE_BYTES - 2));
+        let too_big = format!(r#""{}""#, "x".repeat(MiniAppContent::MAX_END_STATE_BYTES - 1));
+        assert_eq!(fits.len(), MiniAppContent::MAX_END_STATE_BYTES);
+        assert_eq!(
+            game.apply(
+                BotUpdate {
+                    status: Some(GameStatus::Finished),
+                    end_state: Some(too_big),
+                    ..Default::default()
+                },
+                2,
+            ),
+            Err(UpdateError::Invalid(format!(
+                "The end state is at most {} bytes",
+                MiniAppContent::MAX_END_STATE_BYTES
+            )))
+        );
+        assert_eq!(game, before);
+
+        game.apply(
+            BotUpdate {
+                status: Some(GameStatus::Finished),
+                end_state: Some(fits.clone()),
+                ..Default::default()
+            },
+            2,
+        )
+        .unwrap();
+        assert_eq!(game.end_state, Some(fits));
     }
 }

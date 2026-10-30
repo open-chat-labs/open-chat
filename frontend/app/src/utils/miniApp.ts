@@ -30,7 +30,8 @@ function isLocal(hostname: string): boolean {
 // What OpenChat sends the app (backend/docs/mini_app_service_protocol.md, "App ↔ website")
 export type MiniAppHostMessage =
     // once the app says it's ready, and again whenever the user's role changes. Only a player gets a
-    // token, which the app sends with each request to its bot.
+    // token, which the app sends with each request to its bot. A finished game is shown from how it
+    // ended (`mini_app_end_state` follows), without the service or a token.
     | {
           kind: "initialise_mini_app";
           role: MiniAppRole;
@@ -38,11 +39,14 @@ export type MiniAppHostMessage =
           token: string | undefined;
           dark_mode: boolean;
           locale: string;
+          finished: boolean;
       }
     // a fresh player token, which the app asked for
     | { kind: "mini_app_token"; token: string }
     // the game's state: what everyone sees, and the user's own part if they're playing
     | { kind: "mini_app_state"; seq: number; shared: unknown; private: unknown }
+    // how the game ended, as the JSON the bot chose, parsed: the app shows it in place of the game
+    | { kind: "mini_app_end_state"; state: unknown }
     | { kind: "set_dark_mode"; dark_mode: boolean }
     // the answer to `mini_app_start`, with the bot's reason, or OpenChat's, if it didn't start
     | { kind: "mini_app_start_result"; accepted: boolean; message: string | undefined };

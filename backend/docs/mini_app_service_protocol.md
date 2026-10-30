@@ -175,6 +175,19 @@ A player asks to start the game, eg. from a Start button in the app (see "App �
 - If the bot starts it, the service replies `ok`. Everyone gets the new `card`, and everyone with the game open gets its first `state`, after a `role` message for anyone whose role changed.
 - Otherwise it's `refused`, with `refused_by_bot` and the bot's message, eg. "Needs 2 players".
 
+## The bot's apps
+
+A bot declares the apps it hosts in its definition, each with its artwork, and a card names one of them:
+
+```json
+"mini_apps": [{ "name": "chess", "image_url": "app/chess.svg" }]
+```
+
+- `name` is 1 to 50 characters, and what a card's `app` names. The LocalUserIndex refuses a card whose app isn't in the bot's definition.
+- `image_url` is https, or a path relative to the bot's endpoint, eg. `app/chess.svg`.
+
+The website shows the image in the card's frame box whenever there's no app to show: before the app loads, to someone who can't open it, and when the game is over with no end state, with the result, or "Game over", over it.
+
 ## Bot → service: HTTPS
 
 Every call has `Authorization: Bearer <bot token>`.
@@ -186,7 +199,7 @@ Every call has `Authorization: Bearer <bot token>`.
   "token": "<post token>",
   "card": {
     "text": "**Uno** · 2 to 4 players",
-    "image": { "width": 600, "height": 400, "mime_type": "image/png", "blob_reference": { "canister_id": "<storage bucket id>", "blob_id": "<decimal string>" } },
+    "app": "uno",
     "max_players": 4,
     "spectators": true,
     "app_size": { "width": 440, "height": 720 }
@@ -196,7 +209,7 @@ Every call has `Authorization: Bearer <bot token>`.
 }
 ```
 - The bot gets the token from the LocalUserIndex's `bot_mini_app_post_token`, with the same context it would send a message with: a command's token or an autonomous chat, the channel for a community command, the thread, and the message id it chose, unless a chat command's token fixes it. The token must be the bot's own.
-- `card` is the card as the bot posts it: `image`, `max_players` and `replies_to` are optional, and `block_level_markdown` is false if left out. `app_size` is the size the app's designed for, in CSS pixels, each 1 to 10,000 and neither more than three times the other: the card shows the app at that aspect ratio, sized before it loads. Its status is Open. `blob_id` is a decimal string, as message ids are. The bot uploads the image to OpenChat's storage first, as for an image message.
+- `card` is the card as the bot posts it: `max_players` and `replies_to` are optional, and `block_level_markdown` is false if left out. `app` names one of the bot's apps, as its definition declares them (see "The bot's apps"): the LocalUserIndex refuses a card whose app isn't in the bot's definition. The card shows the app's image, from the definition, whenever there's no app to show. `app_size` is the size the app's designed for, in CSS pixels, each 1 to 10,000 and neither more than three times the other: the card shows the app at that aspect ratio, sized before it loads. Its status is Open.
 - The service posts the card as the bot, through the LocalUserIndex, and answers `{ "game": game }` once it's in the chat. The game is in the token, so the bot knows it before the card is posted.
 - **Posting again with the same token** answers `{ "game": game }` too, without posting another card: the chat answers a bot's repeated card with the card it holds. So a bot which doesn't get an answer, eg. as the service restarted, sends the same token again. Any other message at the card's message id is a refusal, so a command answered with a card isn't answered with anything else at its id first, except an unfinalised placeholder, which the card replaces.
 - Until the service has posted a card, it doesn't know the game: no one can follow, join or open it, and `/bot/update` answers 404.
@@ -205,7 +218,7 @@ Errors:
 
 | Status | Meaning |
 |---|---|
-| 400 | the token is invalid or expired, the card is invalid, or OpenChat refused it, eg. the bot isn't installed in the chat, or lacks the MiniApp permission; `error` says which |
+| 400 | the token is invalid or expired, the card is invalid, or OpenChat refused it, eg. the bot isn't installed in the chat, lacks the MiniApp permission, or has no app of that name; `error` says which |
 | 403 | another bot's token |
 | 409 | the game has finished |
 | 503 | the service couldn't reach OpenChat, or read or save the game. The service keeps trying for as long as the token lasts; the bot may post the same token again too |
@@ -217,6 +230,7 @@ Errors:
   "game": game,
   "waiting_for": ["<user id>"],
   "result": null,
+  "end_state": null,
   "remove": ["<user id>"],
   "state": { "seq": 12, "shared": {}, "private": { "<user id>": {} } }
 }
@@ -226,6 +240,7 @@ Every field but `game` is optional.
 - **`status`** is only `Finished`, which ends the game, whether it started or not. A player starts it, through the service (see "Starting").
 - **`waiting_for`** is whose turn it is now, all players, each once. Leave it out to keep it as it is; send it empty when it's no one in particular.
 - **`result`** is up to 200 characters, and only comes with Finished.
+- **`end_state`** is how the game ended, as any JSON, eg. for chess the final position and the moves, so viewers can step through them. At most 16 KB serialized, and only with Finished. It's written to the card with the result, and the website hands it to the app, which shows it as how the game ended (see "App ↔ website"). A finished card with an end state shows the app with it; one without shows the app's image and the result.
 - **`remove`** takes players off the game.
 - **`state`:**
   - It goes to everyone with the game open.
@@ -236,7 +251,7 @@ Every field but `game` is optional.
 - **Writing to the card:** the service updates the card through the LocalUserIndex's `update_mini_app`, with a `MiniAppStatusUpdate`.
   - When a player starts the game: `Started { players, waiting_for }`, with the players the bot started it with.
   - When whose turn it is changes: `Turn { waiting_for }`.
-  - When the bot sets Finished: `Ended { result }`. The card keeps the players the game started with, or no one if it never started. Finished ends the game.
+  - When the bot sets Finished: `Ended { result, end_state }`. The card keeps the players the game started with, or no one if it never started. Finished ends the game.
   - The service remembers what the card holds, and sends the updates it still needs, in order. Turns that pass while an update's being written go as one.
   - Removing a player after the game has started doesn't change the card's players, only the live card's.
 
@@ -244,7 +259,7 @@ Errors:
 
 | Status | Meaning |
 |---|---|
-| 400 | invalid: a status other than Finished, a result without Finished, waiting for someone who isn't playing |
+| 400 | invalid: a status other than Finished, a result or an end state without Finished, an end state over 16 KB, waiting for someone who isn't playing |
 | 403 | not the bot's game |
 | 404 | unknown game, eg. one whose card hasn't been posted |
 | 409 | the game has finished |
@@ -299,9 +314,11 @@ The website loads `<endpoint>/app` in a sandboxed iframe. It sends messages only
 - `{ kind: "mini_app_start" }`: the player asks to start the game. The website sends `start`.
 
 **Website → app:**
-- `{ kind: "initialise_mini_app", role: "player" | "spectator", user_id, token, dark_mode, locale }`
+- `{ kind: "initialise_mini_app", role: "player" | "spectator", user_id, token, dark_mode, locale, finished }`
   - The website sends it again when the user's role changes.
   - `token` is the player token, and only players get one.
+  - `finished` is true when the game is over and the card holds how it ended. Then there's no token, `role` is "player" if the user was one of the game's players and "spectator" otherwise, and no `mini_app_state` follows: a `mini_app_end_state` does.
+- `{ kind: "mini_app_end_state", state }`: the bot's end state, as JSON. The website sends it after `initialise_mini_app` for a finished card, and also to an app that's open live when its game finishes and the card gets its end state, so the app switches to its end view. The website opens a finished card's app only when the card has an end state; otherwise it shows the app's image with the result.
 - `{ kind: "mini_app_token", token }`
 - `{ kind: "mini_app_state", seq, shared, private }`
   - The website holds the latest state until the app is ready.
@@ -317,7 +334,7 @@ A player's app sends the player token, in `x-oc-jwt`, with each request to the b
 - **Starting goes through OpenChat,** so the card records exactly who the game started with. An app asks for its player, and the bot decides. Moves go straight to the bot.
 - **A bot checks its own player list on every request.** A player token outlives a removal by up to an hour.
 - **Spectators get only the shared state,** which every player sees too, so watching can't leak a player's hand.
-- **Only the service posts a card, and only it writes the card's status.** So every card is a game the service knows from the moment it exists. The status holds the game's players once it starts, whose turn it is, and its result once it finishes.
+- **Only the service posts a card, and only it writes the card's status.** So every card is a game the service knows from the moment it exists. The status holds the game's players once it starts, whose turn it is, and its result and end state once it finishes.
   - A bot can take players off but never put them on.
   - The service ends a game:
     - after 24 hours with no update from its bot, ending the card with no result;

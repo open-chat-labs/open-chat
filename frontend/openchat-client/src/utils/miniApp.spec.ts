@@ -1,11 +1,18 @@
-import type { MiniAppContent, MiniAppLiveCard } from "@shared";
+import type { BotDefinition, MiniAppContent, MiniAppLiveCard } from "@shared";
 import { describe, expect, test } from "vitest";
-import { miniAppCardView, miniAppFailureMessage, miniAppGame, miniAppGameKey } from "./miniApp";
+import {
+    miniAppCardView,
+    miniAppFailureMessage,
+    miniAppGame,
+    miniAppGameKey,
+    miniAppImageUrl,
+} from "./miniApp";
 
 function card(change: Partial<MiniAppContent> = {}): MiniAppContent {
     return {
         kind: "mini_app_content",
         text: "Uno",
+        app: "uno",
         maxPlayers: 2,
         spectators: false,
         appSize: { width: 440, height: 740 },
@@ -42,6 +49,7 @@ describe("miniAppCardView", () => {
             waitingFor: ["bob"],
             watching: undefined,
             result: undefined,
+            endState: undefined,
             yourTurn: true,
             canOpen: true,
             actions: [],
@@ -49,7 +57,14 @@ describe("miniAppCardView", () => {
 
         expect(
             miniAppCardView(
-                card({ status: { kind: "finished", players: ["alice"], result: "Alice won" } }),
+                card({
+                    status: {
+                        kind: "finished",
+                        players: ["alice"],
+                        result: "Alice won",
+                        endState: undefined,
+                    },
+                }),
                 undefined,
                 "alice",
             ),
@@ -81,6 +96,7 @@ describe("miniAppCardView", () => {
             waitingFor: [],
             watching: undefined,
             result: "Bob won",
+            endState: undefined,
             yourTurn: false,
             canOpen: false,
             actions: [],
@@ -174,12 +190,97 @@ describe("miniAppCardView", () => {
             miniAppCardView(
                 card({
                     spectators: true,
-                    status: { kind: "finished", players: ["alice"], result: "Alice won" },
+                    status: {
+                        kind: "finished",
+                        players: ["alice"],
+                        result: "Alice won",
+                        endState: undefined,
+                    },
                 }),
                 undefined,
                 "bob",
             ).canOpen,
         ).toBe(false);
+    });
+});
+
+describe("miniAppCardView end state", () => {
+    test("is how the stored card says the game ended, whatever the live card shows", () => {
+        const stored = card({
+            status: {
+                kind: "finished",
+                players: ["alice"],
+                result: "Alice won",
+                endState: '{"winner":"alice"}',
+            },
+        });
+        expect(miniAppCardView(stored, undefined, "bob").endState).toBe('{"winner":"alice"}');
+        expect(
+            miniAppCardView(stored, live({ status: "finished", players: ["alice"] }), "bob")
+                .endState,
+        ).toBe('{"winner":"alice"}');
+        // the service never has one: the card records it once the game's over
+        expect(
+            miniAppCardView(card(), live({ status: "finished", players: ["alice"] }), "bob")
+                .endState,
+        ).toBeUndefined();
+        expect(
+            miniAppCardView(
+                card({
+                    status: {
+                        kind: "finished",
+                        players: [],
+                        result: undefined,
+                        endState: undefined,
+                    },
+                }),
+                undefined,
+                "bob",
+            ).endState,
+        ).toBeUndefined();
+    });
+});
+
+describe("miniAppImageUrl", () => {
+    const definition: BotDefinition = {
+        kind: "bot_definition",
+        description: "",
+        commands: [],
+        autonomousConfig: undefined,
+        defaultSubscriptions: undefined,
+        dataEncoding: undefined,
+        restrictedLocations: undefined,
+        miniApps: [
+            { name: "chess", imageUrl: "app/chess.svg" },
+            { name: "uno", imageUrl: "https://cdn.example.com/uno.png" },
+            { name: "odd", imageUrl: "javascript:alert(1)" },
+            { name: "broken", imageUrl: "https://" },
+        ],
+    };
+
+    test("resolves a relative image against the bot's endpoint", () => {
+        expect(miniAppImageUrl(definition, "chess", "https://bot.example.com/chess")).toBe(
+            "https://bot.example.com/chess/app/chess.svg",
+        );
+        expect(miniAppImageUrl(definition, "chess", "https://bot.example.com/chess///")).toBe(
+            "https://bot.example.com/chess/app/chess.svg",
+        );
+        expect(miniAppImageUrl(definition, "chess", "http://localhost:3000")).toBe(
+            "http://localhost:3000/app/chess.svg",
+        );
+    });
+
+    test("takes an absolute https image as it is", () => {
+        expect(miniAppImageUrl(definition, "uno", "https://bot.example.com")).toBe(
+            "https://cdn.example.com/uno.png",
+        );
+    });
+
+    test("has none for an app the bot doesn't declare, or an image that isn't http(s)", () => {
+        expect(miniAppImageUrl(definition, "poker", "https://bot.example.com")).toBeUndefined();
+        expect(miniAppImageUrl(definition, "odd", "https://bot.example.com")).toBeUndefined();
+        expect(miniAppImageUrl(definition, "broken", "https://bot.example.com")).toBeUndefined();
+        expect(miniAppImageUrl(definition, "chess", "not a url")).toBeUndefined();
     });
 });
 

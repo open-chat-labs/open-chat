@@ -139,6 +139,7 @@ impl Bot {
             last_updated: self.last_updated,
             registration_status: self.registration_status.clone(),
             restricted_locations: self.definition.restricted_locations.clone(),
+            mini_apps: self.definition.mini_apps.clone(),
         }
     }
 }

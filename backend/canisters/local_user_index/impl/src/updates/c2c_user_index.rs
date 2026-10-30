@@ -108,6 +108,7 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
                 ev.default_subscriptions,
                 ev.permitted_install_location,
                 ev.data_encoding,
+                ev.mini_apps,
             );
 
             let this_canister_id = state.env.canister_id();

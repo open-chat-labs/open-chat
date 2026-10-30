@@ -4,7 +4,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    AutonomousConfig, BotCommandDefinition, BotInstallationLocationType, BotRegistrationStatus, TimestampMillis, UserId,
+    AutonomousConfig, BotCommandDefinition, BotInstallationLocationType, BotRegistrationStatus, MiniAppDefinition,
+    TimestampMillis, UserId,
 };
 
 #[ts_export(user_index, bot_updates)]
@@ -42,4 +43,5 @@ pub struct BotDetails {
     pub last_updated: TimestampMillis,
     pub registration_status: BotRegistrationStatus,
     pub restricted_locations: Option<HashSet<BotInstallationLocationType>>,
+    pub mini_apps: Option<Vec<MiniAppDefinition>>,
 }

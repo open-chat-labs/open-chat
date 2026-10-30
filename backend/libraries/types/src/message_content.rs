@@ -1,8 +1,8 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     Achievement, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, EncryptionKey,
-    MessageId, MessageIndex, MessagePermission, Milliseconds, ModerationInput, P2PSwapStatus, PendingCryptoTransaction,
-    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType, icrc1,
+    MessageId, MessageIndex, MessagePermission, Milliseconds, MiniAppDefinition, ModerationInput, P2PSwapStatus,
+    PendingCryptoTransaction, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType, icrc1,
 };
 use candid::CandidType;
 use oc_error_codes::{OCError, OCErrorCode};
@@ -168,12 +168,8 @@ impl MessageContent {
                     references.push(br);
                 }
             }
-            MessageContent::MiniApp(m) => {
-                if let Some(image) = &m.image {
-                    references.push(image.blob_reference.clone());
-                }
-            }
             MessageContent::Text(_)
+            | MessageContent::MiniApp(_)
             | MessageContent::Poll(_)
             | MessageContent::Crypto(_)
             | MessageContent::Deleted(_)
@@ -255,9 +251,6 @@ impl MessageContent {
                 input.text = Some(text);
             }
             MessageContent::MiniApp(m) => {
-                if let Some(image) = &m.image {
-                    input.image_urls.push(image.blob_reference.url());
-                }
                 if let Some(result) = m.status.result() {
                     input.text = Some(format!("{}\n{result}", input.text.unwrap_or_default()));
                 }
@@ -302,16 +295,6 @@ impl MessageContent {
                 .map(|blob_reference| crate::MediaScanBlob {
                     blob_reference,
                     mime_type: "image/*".to_string(),
-                    frame_index: None,
-                })
-                .into_iter()
-                .collect(),
-            MessageContent::MiniApp(m) => m
-                .image
-                .as_ref()
-                .map(|image| crate::MediaScanBlob {
-                    blob_reference: image.blob_reference.clone(),
-                    mime_type: image.mime_type.clone(),
                     frame_index: None,
                 })
                 .into_iter()
@@ -1124,22 +1107,23 @@ impl PriceChartContent {
     }
 }
 
-/// A bot's card for a game, or another app, it hosts. Its text, image, player limit and whether others
+/// A bot's card for a game, or another app, it hosts. Its text, app, player limit and whether others
 /// can watch are set when it's posted and never change. Its status is written only by the MiniApp
 /// service (`update_mini_app` on the LocalUserIndex, with a `MiniAppStatusUpdate`): the players the
 /// game starts with, who joined through the service and were accepted by the bot, whose turn it is,
 /// and then its result. Who's joined so far, while the game's taking players, is shown live by the
 /// service. Everything else the app shows, its board
-/// and buttons, is the bot's own page, which OpenChat opens from the card in a frame. Only a bot can
-/// send one, needing the MiniApp permission. It can't be forwarded, edited, or sent in a direct chat.
+/// and buttons, is the bot's own page, which OpenChat opens from the card in a frame. The app's image,
+/// from the bot's definition, is shown whenever there's no app to show. Only a bot can send one,
+/// needing the MiniApp permission. It can't be forwarded, edited, or sent in a direct chat.
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MiniAppContent {
     // markdown, eg. "**Uno** · 2 to 4 players": the message's text in notifications, previews and
     // search
     pub text: String,
-    // shown above the text, eg. the game's artwork
-    pub image: Option<MiniAppImage>,
+    // which of the bot's apps, by its name in the bot's definition, eg. "chess"
+    pub app: String,
     // the most who can play, if there's a limit, so the card can show eg. "2 of 4"
     pub max_players: Option<u32>,
     // whether people who aren't playing can watch: members, and anyone who can see a public chat
@@ -1155,17 +1139,6 @@ pub struct MiniAppContent {
 pub struct MiniAppSize {
     pub width: u32,
     pub height: u32,
-}
-
-/// An image the bot uploaded to OpenChat's storage, as for an image message, so it's scanned like one
-/// and deleted with the message
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct MiniAppImage {
-    pub width: u32,
-    pub height: u32,
-    pub mime_type: String,
-    pub blob_reference: BlobReference,
 }
 
 // In the order a game goes through them, which it only ever moves forward through
@@ -1197,6 +1170,9 @@ pub struct MiniAppFinished {
     pub players: Vec<UserId>,
     // eg. "Bob won", or none if the game was abandoned
     pub result: Option<String>,
+    // how the game ended, as JSON the bot chose, which its app shows in the card: eg. the final
+    // position and the moves. None if the bot gave none, when the card shows the app's image instead.
+    pub end_state: Option<String>,
 }
 
 /// What the MiniApp service writes to a card as its game goes on
@@ -1225,6 +1201,8 @@ pub struct MiniAppTurn {
 pub struct MiniAppEnded {
     // eg. "Bob won", or none if the game was abandoned
     pub result: Option<String>,
+    // JSON, which the card's app shows as how the game ended
+    pub end_state: Option<String>,
 }
 
 impl MiniAppStatus {
@@ -1251,6 +1229,9 @@ impl MiniAppContent {
     pub const MAX_APP_SIZE: u32 = 10_000;
     pub const MAX_APP_SIZE_RATIO: u32 = 3;
     pub const MAX_RESULT_CHARS: usize = 200;
+    pub const MAX_APP_NAME_CHARS: usize = MiniAppDefinition::MAX_NAME_CHARS;
+    // an end state is JSON of at most this many bytes
+    pub const MAX_END_STATE_BYTES: usize = 16 * 1024;
 
     // A card as the bot posts it: open, as only the MiniApp service writes its status
     pub fn validate_new(&self) -> Result<(), String> {
@@ -1262,14 +1243,7 @@ impl MiniAppContent {
 
     pub fn validate(&self) -> Result<(), String> {
         check_chars("text", &self.text, Self::MAX_TEXT_CHARS)?;
-        if let Some(image) = &self.image {
-            if image.width == 0 || image.height == 0 {
-                return Err("The image must have a width and a height".to_string());
-            }
-            if !image.mime_type.starts_with("image/") {
-                return Err("The image's mime type must be an image's".to_string());
-            }
-        }
+        check_chars("app", &self.app, Self::MAX_APP_NAME_CHARS)?;
         if self
             .max_players
             .is_some_and(|max| max == 0 || max as usize > Self::MAX_PLAYERS)
@@ -1302,6 +1276,14 @@ impl MiniAppContent {
         if let Some(result) = self.status.result() {
             check_chars("result", result, Self::MAX_RESULT_CHARS)?;
         }
+        if let MiniAppStatus::Finished(finished) = &self.status
+            && finished
+                .end_state
+                .as_ref()
+                .is_some_and(|state| state.len() > Self::MAX_END_STATE_BYTES)
+        {
+            return Err(format!("The end state is at most {} bytes", Self::MAX_END_STATE_BYTES));
+        }
         Ok(())
     }
 
@@ -1328,12 +1310,16 @@ impl MiniAppContent {
             (Open, Ended(ended)) => Ok(Finished(MiniAppFinished {
                 players: Vec::new(),
                 result: ended.result,
+                end_state: ended.end_state,
             })),
             (Active(active), Ended(ended)) => Ok(Finished(MiniAppFinished {
                 players: active.players.clone(),
                 result: ended.result,
+                end_state: ended.end_state,
             })),
-            (Finished(finished), Ended(ended)) if finished.result == ended.result => Ok(self.status.clone()),
+            (Finished(finished), Ended(ended)) if finished.result == ended.result && finished.end_state == ended.end_state => {
+                Ok(self.status.clone())
+            }
             (Finished(_), _) => Err("A finished game's card can't be changed".to_string()),
         }
     }

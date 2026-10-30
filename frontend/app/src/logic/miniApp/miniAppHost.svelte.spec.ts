@@ -1,4 +1,5 @@
 import type {
+    MiniAppContent,
     MiniAppGameListener,
     MiniAppOpenOutcome,
     MiniAppStartOutcome,
@@ -19,6 +20,7 @@ const APP: HostedMiniApp = {
     content: {
         kind: "mini_app_content",
         text: "Uno",
+        app: "uno",
         spectators: true,
         appSize: { width: 440, height: 740 },
         status: { kind: "open" },
@@ -37,11 +39,13 @@ class FakeGames implements Pick<
 > {
     listener: MiniAppGameListener | undefined;
     opened: (outcome: MiniAppOpenOutcome) => void = () => undefined;
+    opens = 0;
     closed = 0;
     playerToken: string | undefined = "fresh";
     started: MiniAppStartOutcome = { kind: "started" };
 
     openMiniApp(_: unknown, listener: MiniAppGameListener): Promise<MiniAppOpenOutcome> {
+        this.opens++;
         this.listener = listener;
         return new Promise((resolve) => (this.opened = resolve));
     }
@@ -106,7 +110,7 @@ describe("MiniAppHost", () => {
         await settle();
     }
 
-    function initialise(role: "player" | "spectator", token?: string) {
+    function initialise(role: "player" | "spectator", token?: string, finished = false) {
         return {
             kind: "initialise_mini_app",
             role,
@@ -114,7 +118,36 @@ describe("MiniAppHost", () => {
             token,
             dark_mode: true,
             locale: "fr",
+            finished,
         };
+    }
+
+    // The card once its game's over, with how it ended if the bot said
+    function finished(players: string[], endState: string | undefined): MiniAppContent {
+        return {
+            ...APP.content,
+            status: { kind: "finished", players, result: "Someone won", endState },
+        };
+    }
+
+    const END_STATE = '{"board":"rnbqkbnr","moves":["e4"]}';
+    const endState = { kind: "mini_app_end_state", state: { board: "rnbqkbnr", moves: ["e4"] } };
+
+    // A host for a card that's already finished when its frame's shown
+    function openFinished(players: string[], endState: string | undefined) {
+        close();
+        games = new FakeGames();
+        host = new MiniAppHost(
+            games,
+            { ...APP, content: finished(players, endState) },
+            {
+                userId: "me",
+                darkMode: true,
+                locale: () => "fr",
+                translate: (key) => `translated ${key.key}`,
+            },
+        );
+        close = host.open(frame);
     }
 
     function state(seq: number, shared: unknown = { seq }, priv?: unknown) {
@@ -283,7 +316,7 @@ describe("MiniAppHost", () => {
             ...APP,
             content: {
                 ...APP.content,
-                status: { kind: "finished", players: [], result: undefined },
+                status: { kind: "finished", players: [], result: undefined, endState: undefined },
             },
         };
         games = new FakeGames();
@@ -300,6 +333,118 @@ describe("MiniAppHost", () => {
         expect(host.status).toEqual({
             kind: "closed",
             message: key("bots.miniApp.refusals.finished"),
+        });
+    });
+
+    describe("a finished game, shown from how it ended", () => {
+        test("opens without the service, as a player if the user was one, and the app's told once it's ready", async () => {
+            openFinished(["me", "bob"], END_STATE);
+            expect(games.opens).toBe(0);
+            expect(host.status).toEqual({ kind: "open", role: "player" });
+            expect(sent).toEqual([]);
+
+            await fromApp({ kind: "mini_app_ready" });
+            expect(sent).toEqual([initialise("player", undefined, true), endState]);
+            expect(origins).toEqual(new Set([ORIGIN]));
+
+            // nothing to close with the service when the frame goes
+            close();
+            expect(games.closed).toBe(0);
+        });
+
+        test("as a spectator if the user wasn't playing", async () => {
+            openFinished(["alice", "bob"], END_STATE);
+            await fromApp({ kind: "mini_app_ready" });
+            expect(host.status).toEqual({ kind: "open", role: "spectator" });
+            expect(sent).toEqual([initialise("spectator", undefined, true), endState]);
+        });
+
+        test("goes through the service if the card doesn't say how it ended, or says it unreadably", async () => {
+            openFinished(["me"], undefined);
+            expect(games.opens).toBe(1);
+            expect(host.status).toEqual({ kind: "opening" });
+
+            openFinished(["me"], "{not json");
+            expect(games.opens).toBe(1);
+            expect(host.status).toEqual({ kind: "opening" });
+        });
+
+        test("doesn't ask the service for a token, or to start, once the game's over", async () => {
+            openFinished(["me"], END_STATE);
+            await fromApp({ kind: "mini_app_ready" });
+            sent = [];
+
+            await fromApp({ kind: "mini_app_token_request" });
+            await fromApp({ kind: "mini_app_start" });
+            expect(sent).toEqual([]);
+        });
+    });
+
+    describe("when the card records the end of a game that's open", () => {
+        test("the app's told how it ended, and the service is done with", async () => {
+            await opened("player", "player");
+            await fromApp({ kind: "mini_app_ready" });
+            games.listener!.onState(state(9));
+            sent = [];
+
+            host.setContent(finished(["me"], END_STATE));
+            expect(sent).toEqual([endState]);
+            expect(games.closed).toBe(1);
+            expect(host.status).toEqual({ kind: "open", role: "player" });
+
+            // the app's initialised from the end if it reloads itself
+            sent = [];
+            await fromApp({ kind: "mini_app_ready" });
+            expect(sent).toEqual([initialise("player", undefined, true), endState]);
+
+            // and the frame closing has nothing more to close
+            close();
+            expect(games.closed).toBe(1);
+        });
+
+        test("the app hears the end once it's ready, if it wasn't yet", async () => {
+            await opened("spectator");
+            games.listener!.onState(state(9));
+            host.setContent(finished(["alice"], END_STATE));
+            expect(sent).toEqual([]);
+
+            await fromApp({ kind: "mini_app_ready" });
+            expect(sent).toEqual([initialise("spectator", undefined, true), endState]);
+        });
+
+        test("nothing changes for the app if the card doesn't say how it ended", async () => {
+            await opened("player", "player");
+            await fromApp({ kind: "mini_app_ready" });
+            sent = [];
+
+            host.setContent(finished(["me"], undefined));
+            expect(sent).toEqual([]);
+            expect(games.closed).toBe(0);
+            expect(host.status).toEqual({ kind: "open", role: "player" });
+        });
+
+        test("an opening still with the service is given up, and the end shown instead", async () => {
+            const first = games.opened;
+            host.setContent(finished(["alice"], END_STATE));
+            expect(games.closed).toBe(1);
+            expect(host.status).toEqual({ kind: "open", role: "spectator" });
+
+            // the service's answer comes too late to matter
+            first({ kind: "opened", role: "player", playerToken: "late" });
+            await settle();
+            expect(host.status).toEqual({ kind: "open", role: "spectator" });
+
+            await fromApp({ kind: "mini_app_ready" });
+            expect(sent).toEqual([initialise("spectator", undefined, true), endState]);
+        });
+
+        test("a game the service had closed is shown from its end", async () => {
+            await opened("player", "player");
+            games.listener!.onClosed(key("bots.miniApp.closed"));
+            expect(host.status.kind).toBe("closed");
+
+            host.setContent(finished(["me"], END_STATE));
+            expect(host.status).toEqual({ kind: "open", role: "player" });
         });
     });
 

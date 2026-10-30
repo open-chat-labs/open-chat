@@ -2,9 +2,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use types::{
-    BlobReference, CanisterId, EventIndex, MiniAppContent, MiniAppGame, MiniAppImage, MiniAppSize, MiniAppStatus, UserId,
-};
+use types::{EventIndex, MiniAppContent, MiniAppGame, MiniAppSize, MiniAppStatus, UserId};
 
 pub type RequestId = u64;
 
@@ -179,8 +177,9 @@ pub struct PostArgs {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct CardContent {
     pub text: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub image: Option<CardImage>,
+    // which of the bot's apps it's for, by its name in the bot's definition, whose image the card
+    // shows whenever there's no app to show
+    pub app: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_players: Option<u32>,
     #[serde(default)]
@@ -189,43 +188,13 @@ pub struct CardContent {
     pub app_size: MiniAppSize,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct CardImage {
-    pub width: u32,
-    pub height: u32,
-    pub mime_type: String,
-    pub blob_reference: CardBlob,
-}
-
-// The blob id is a decimal string, as it doesn't fit a JavaScript number
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct CardBlob {
-    pub canister_id: CanisterId,
-    pub blob_id: String,
-}
-
 impl CardContent {
-    // The card as OpenChat takes it, checked as OpenChat checks a new card
+    // The card as OpenChat takes it, checked as OpenChat checks a new card. Whether the app is one of
+    // the bot's is checked by the LocalUserIndex, which has the bot's definition.
     pub fn to_content(&self) -> Result<MiniAppContent, String> {
-        let image = match &self.image {
-            Some(image) => Some(MiniAppImage {
-                width: image.width,
-                height: image.height,
-                mime_type: image.mime_type.clone(),
-                blob_reference: BlobReference {
-                    canister_id: image.blob_reference.canister_id,
-                    blob_id: image
-                        .blob_reference
-                        .blob_id
-                        .parse()
-                        .map_err(|_| "The image's blob id must be a decimal string".to_string())?,
-                },
-            }),
-            None => None,
-        };
         let content = MiniAppContent {
             text: self.text.clone(),
-            image,
+            app: self.app.clone(),
             max_players: self.max_players,
             spectators: self.spectators,
             app_size: self.app_size,
@@ -253,6 +222,9 @@ pub struct UpdateArgs {
     pub waiting_for: Option<Vec<UserId>>,
     #[serde(default)]
     pub result: Option<String>,
+    // How the game ended, as any JSON, which the card's app shows: only with Finished
+    #[serde(default)]
+    pub end_state: Option<Value>,
     #[serde(default)]
     pub remove: Vec<UserId>,
     #[serde(default)]
@@ -364,5 +336,41 @@ mod tests {
         assert_eq!(state.private.get(&user), Some(&json!({ "hand": [1, 2] })));
         assert_eq!(update.status, Some(GameStatus::Active));
         assert!(update.remove.is_empty());
+        assert_eq!(update.end_state, None);
+    }
+
+    // The end state is any JSON the bot chooses
+    #[test]
+    fn a_bots_update_reads_with_its_end_state() {
+        let update: UpdateArgs = serde_json::from_value(json!({
+            "game": { "chat": { "Group": "6nb6r-kyaaa-aaaar-asvgq-cai" }, "thread": null, "message_id": "18446744073709551615" },
+            "status": "Finished",
+            "result": "Checkmate",
+            "end_state": { "fen": "8/8/8/8/8/8/8/8 w - - 0 1", "moves": ["e4", "e5"] }
+        }))
+        .unwrap();
+        assert_eq!(update.status, Some(GameStatus::Finished));
+        assert_eq!(
+            update.end_state,
+            Some(json!({ "fen": "8/8/8/8/8/8/8/8 w - - 0 1", "moves": ["e4", "e5"] }))
+        );
+    }
+
+    // A card names the bot's app, whose image OpenChat shows when there's no app to show
+    #[test]
+    fn a_card_is_posted_with_its_app() {
+        let args: PostArgs = serde_json::from_value(json!({
+            "token": "token",
+            "card": { "text": "**Uno**", "app": "uno", "max_players": 4, "spectators": true, "app_size": { "width": 440, "height": 720 } }
+        }))
+        .unwrap();
+        let content = args.card.to_content().unwrap();
+        assert_eq!(content.app, "uno");
+        assert_eq!(content.max_players, Some(4));
+        assert_eq!(content.status, MiniAppStatus::Open);
+
+        let mut card = args.card.clone();
+        card.app = String::new();
+        assert!(card.to_content().is_err());
     }
 }

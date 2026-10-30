@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotInstallationLocation, BotRegistrationStatus,
-    BotSubscriptions, UserId,
+    BotSubscriptions, MiniAppDefinition, UserId,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -24,6 +24,9 @@ pub struct Bot {
     pub principal: Principal,
     pub registration_status: BotRegistrationStatus,
     pub data_encoding: BotDataEncoding,
+    // the apps the bot posts MiniApp cards for, which a card names one of
+    #[serde(default)]
+    pub mini_apps: Vec<MiniAppDefinition>,
 }
 
 impl BotsMap {
@@ -50,6 +53,7 @@ impl BotsMap {
         default_subscriptions: Option<BotSubscriptions>,
         permitted_install_location: Option<BotInstallationLocation>,
         data_encoding: BotDataEncoding,
+        mini_apps: Vec<MiniAppDefinition>,
     ) {
         self.bots.insert(
             bot_id,
@@ -64,6 +68,7 @@ impl BotsMap {
                 principal: user_principal,
                 registration_status: BotRegistrationStatus::Private(permitted_install_location),
                 data_encoding,
+                mini_apps,
             },
         );
         self.principal_to_user_id.insert(user_principal, bot_id);
@@ -93,6 +98,7 @@ impl BotsMap {
         bot.autonomous_config = definition.autonomous_config;
         bot.default_subscriptions = definition.default_subscriptions;
         bot.data_encoding = definition.data_encoding.unwrap_or_default();
+        bot.mini_apps = definition.mini_apps.unwrap_or_default();
 
         if let Some(principal) = principal
             && principal != bot.principal

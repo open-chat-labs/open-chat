@@ -74,6 +74,7 @@ export {
     miniAppCardView,
     miniAppGame,
     miniAppGameKey,
+    miniAppImageUrl,
     type MiniAppAction,
     type MiniAppCardView,
 } from "./utils/miniApp";

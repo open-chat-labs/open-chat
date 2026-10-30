@@ -1261,12 +1261,7 @@ export function miniAppContent(value: TMiniAppContent): MiniAppContent {
     return {
         kind: "mini_app_content",
         text: value.text,
-        image: mapOptional(value.image, (image) => ({
-            width: image.width,
-            height: image.height,
-            mimeType: image.mime_type,
-            blobReference: blobReference(image.blob_reference),
-        })),
+        app: value.app,
         maxPlayers: mapOptional(value.max_players, identity),
         spectators: value.spectators,
         appSize: { width: value.app_size.width, height: value.app_size.height },
@@ -1289,6 +1284,7 @@ function miniAppStatus(value: TMiniAppStatus): MiniAppStatus {
         kind: "finished",
         players: value.Finished.players.map(principalBytesToString),
         result: mapOptional(value.Finished.result, identity),
+        endState: mapOptional(value.Finished.end_state, identity),
     };
 }
 
@@ -3120,6 +3116,10 @@ export function externalBotDefinition(value: ApiBotDefinition): BotDefinition {
         })),
         dataEncoding: mapOptional(value.data_encoding, dataEncoding),
         restrictedLocations: mapOptional(value.restricted_locations, restrictedLocations),
+        miniApps: (value.mini_apps ?? []).map((app) => ({
+            name: app.name,
+            imageUrl: app.image_url,
+        })),
     };
 }
 
