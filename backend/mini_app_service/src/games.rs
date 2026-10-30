@@ -1,11 +1,11 @@
 // A game as the service keeps it, and the rules for changing it
 use crate::bots::Started;
-use crate::protocol::{Card, CardSize, GameState, GameStatus, PostArgs, Refusal};
+use crate::protocol::{Card, GameState, GameStatus, PostArgs, Refusal};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
-    CanisterId, MiniAppActive, MiniAppContent, MiniAppEnded, MiniAppFinished, MiniAppGame, MiniAppPostClaims, MiniAppStarted,
-    MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, TimestampMillis, UserId,
+    CanisterId, MiniAppActive, MiniAppContent, MiniAppEnded, MiniAppFinished, MiniAppGame, MiniAppPostClaims, MiniAppSize,
+    MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -409,7 +409,7 @@ mod tests {
                     image: None,
                     max_players,
                     spectators: true,
-                    app_size: CardSize { width: 440, height: 740 },
+                    app_size: MiniAppSize { width: 440, height: 740 },
                 },
                 block_level_markdown: false,
                 replies_to: None,

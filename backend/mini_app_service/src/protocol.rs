@@ -185,14 +185,8 @@ pub struct CardContent {
     pub max_players: Option<u32>,
     #[serde(default)]
     pub spectators: bool,
-    pub app_size: CardSize,
-}
-
-// The size the app's designed for, in CSS pixels
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
-pub struct CardSize {
-    pub width: u32,
-    pub height: u32,
+    // the size the app's designed for, in CSS pixels
+    pub app_size: MiniAppSize,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -234,10 +228,7 @@ impl CardContent {
             image,
             max_players: self.max_players,
             spectators: self.spectators,
-            app_size: MiniAppSize {
-                width: self.app_size.width,
-                height: self.app_size.height,
-            },
+            app_size: self.app_size,
             status: MiniAppStatus::Open,
         };
         content.validate_new()?;

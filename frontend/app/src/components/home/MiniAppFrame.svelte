@@ -75,6 +75,11 @@
         return untrack(() => host.open(frame));
     });
     $effect(() => host.setDarkMode(darkMode));
+    // While the app's away, whatever became of its last opening is forgotten, so that it's opened
+    // afresh when it's back: eg. an opening which failed while the service was unreachable
+    $effect(() => {
+        if (!active) untrack(() => host.reset());
+    });
 </script>
 
 <!-- A dialog, open in place, so that full screen can put it in the top layer without reloading the
@@ -219,6 +224,8 @@ app (MiniAppFullScreen) -->
             height: auto;
             min-height: 0;
             aspect-ratio: auto;
+            // auto margins would stop the flex column stretching it
+            margin: 0;
         }
     }
 

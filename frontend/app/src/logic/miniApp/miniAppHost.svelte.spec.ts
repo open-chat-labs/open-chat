@@ -331,4 +331,63 @@ describe("MiniAppHost", () => {
         await fromApp({ kind: "mini_app_ready" });
         expect(sent).toEqual([]);
     });
+
+    test("opens the game afresh with a new frame, which hears nothing until its own app's ready", async () => {
+        await fromApp({ kind: "mini_app_ready" });
+        await opened("player", "first");
+        games.listener!.onState(state(3));
+        close();
+
+        const second = document.createElement("iframe");
+        document.body.appendChild(second);
+        const sentToSecond: unknown[] = [];
+        vi.spyOn(second.contentWindow!, "postMessage").mockImplementation((message: unknown) => {
+            sentToSecond.push(message);
+        });
+        const sentToFirst = sent.length;
+        close = host.open(second);
+        expect(host.status).toEqual({ kind: "opening" });
+
+        // the service answers the new opening, but the new app isn't ready
+        games.opened({ kind: "opened", role: "player", playerToken: "second" });
+        await settle();
+        expect(sentToSecond).toEqual([]);
+
+        // then it gets its role, and the state the host held meanwhile, which the service's next
+        // state replaces or follows
+        await fromApp({ kind: "mini_app_ready" }, ORIGIN, second.contentWindow);
+        expect(sentToSecond).toEqual([
+            initialise("player", "second"),
+            { kind: "mini_app_state", seq: 3, shared: { seq: 3 }, private: undefined },
+        ]);
+        expect(sent.length).toBe(sentToFirst);
+        second.remove();
+    });
+
+    test("forgets a failed opening when it's reset, so a new frame tries again", async () => {
+        games.opened({ kind: "failed", message: key("bots.miniApp.refusals.unreachable") });
+        await settle();
+        expect(host.status.kind).toBe("closed");
+
+        host.reset();
+        expect(host.status).toEqual({ kind: "opening" });
+    });
+
+    test("ignores how an opening went once another frame has been given", async () => {
+        const first = games.opened;
+        close();
+        const second = document.createElement("iframe");
+        document.body.appendChild(second);
+        close = host.open(second);
+
+        // the first frame's opening comes back late, and failed
+        first({ kind: "failed", message: key("bots.miniApp.refusals.unreachable") });
+        await settle();
+        expect(host.status).toEqual({ kind: "opening" });
+
+        games.opened({ kind: "opened", role: "spectator", playerToken: undefined });
+        await settle();
+        expect(host.status).toEqual({ kind: "open", role: "spectator" });
+        second.remove();
+    });
 });

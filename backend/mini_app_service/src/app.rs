@@ -5,7 +5,7 @@ use crate::cards::{CardWriter, PostError, WriteError};
 use crate::games::{BotUpdate, Game, UpdateError};
 use crate::hub::{ConnectionId, Hub};
 use crate::now_millis;
-use crate::protocol::{CardSize, ClientMessage, GameStatus, PostArgs, Refusal, RequestId, Role, ServerMessage, UpdateArgs};
+use crate::protocol::{ClientMessage, GameStatus, PostArgs, Refusal, RequestId, Role, ServerMessage, UpdateArgs};
 use crate::store::Store;
 use crate::tokens::Tokens;
 use std::collections::HashSet;
@@ -1076,7 +1076,7 @@ mod tests {
                     image: None,
                     max_players,
                     spectators,
-                    app_size: CardSize { width: 440, height: 740 },
+                    app_size: MiniAppSize { width: 440, height: 740 },
                 },
                 block_level_markdown: false,
                 replies_to: None,

@@ -2321,9 +2321,35 @@ pub struct MiniAppContentInternal {
     #[serde(rename = "v", default, skip_serializing_if = "is_default")]
     pub spectators: bool,
     #[serde(rename = "a")]
-    pub app_size: MiniAppSize,
+    pub app_size: MiniAppSizeInternal,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     pub status: MiniAppStatus,
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+pub struct MiniAppSizeInternal {
+    #[serde(rename = "w")]
+    pub width: u32,
+    #[serde(rename = "h")]
+    pub height: u32,
+}
+
+impl From<MiniAppSize> for MiniAppSizeInternal {
+    fn from(value: MiniAppSize) -> Self {
+        MiniAppSizeInternal {
+            width: value.width,
+            height: value.height,
+        }
+    }
+}
+
+impl From<MiniAppSizeInternal> for MiniAppSize {
+    fn from(value: MiniAppSizeInternal) -> Self {
+        MiniAppSize {
+            width: value.width,
+            height: value.height,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -2350,7 +2376,7 @@ impl From<MiniAppContent> for MiniAppContentInternal {
             }),
             max_players: value.max_players,
             spectators: value.spectators,
-            app_size: value.app_size,
+            app_size: value.app_size.into(),
             status: value.status,
         }
     }
@@ -2370,7 +2396,7 @@ impl MessageContentInternalSubtype for MiniAppContentInternal {
             }),
             max_players: self.max_players,
             spectators: self.spectators,
-            app_size: self.app_size,
+            app_size: self.app_size.into(),
             status: self.status,
         }
     }
@@ -2967,7 +2993,7 @@ mod mini_app_tests {
 
     #[test]
     fn a_cards_app_size_is_within_reason() {
-        for (width, height) in [(0, 500), (500, 0), (20_000, 500), (100, 400), (400, 100)] {
+        for (width, height) in [(0, 500), (500, 0), (10_001, 500), (500, 10_001), (100, 301), (301, 100)] {
             assert!(
                 invalid(MiniAppContent {
                     app_size: MiniAppSize { width, height },
@@ -2976,10 +3002,15 @@ mod mini_app_tests {
                 "{width} by {height}"
             );
         }
-        assert!(!invalid(MiniAppContent {
-            app_size: MiniAppSize { width: 440, height: 740 },
-            ..card("Uno")
-        }));
+        for (width, height) in [(440, 740), (1, 1), (10_000, 10_000), (100, 300), (300, 100)] {
+            assert!(
+                !invalid(MiniAppContent {
+                    app_size: MiniAppSize { width, height },
+                    ..card("Uno")
+                }),
+                "{width} by {height}"
+            );
+        }
     }
 
     // As for an image message, so it's scanned like one, and deleted with the message
