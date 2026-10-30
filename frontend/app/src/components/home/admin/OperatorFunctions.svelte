@@ -182,6 +182,7 @@
     // Sets the MiniApp service's principal on the user index, which passes it on to every
     // LocalUserIndex. Only that principal can post a MiniApp card or write to one
     function setMiniAppServicePrincipal(): Promise<void> {
+        error = undefined;
         const principal = miniAppServicePrincipal.trim();
         if (!isValidPrincipal(principal)) {
             error = i18nKey(`"${principal}" is not a valid principal`);

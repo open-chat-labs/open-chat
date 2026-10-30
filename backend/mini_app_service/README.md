@@ -19,7 +19,7 @@ With the local replica running:
 The script:
 - generates the service's keys into `backend/mini_app_service/.local` the first time;
 - starts Redis, if it isn't already running;
-- prints the service's principal, for a platform operator to set on the UserIndex from the website's admin page (`/admin`), as on mainnet;
+- prints the service's principal, for a platform operator to set on the UserIndex from the website's admin page (`/admin`), as on mainnet. Locally, make your user an operator first with dfx's identity, which is the governance principal: `dfx canister call user_index add_platform_operator '(record { user_id = principal "<your user id>" })'`;
 - then starts the service on port 8095.
 
 ## Config
