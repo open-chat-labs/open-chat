@@ -1131,6 +1131,7 @@
     "deleteMessageAndReport": "Löschen und melden",
     "deleteMessageConfirm": "Möchten Sie diese Nachricht wirklich löschen?",
     "deleteMessageForMe": "Für mich löschen",
+    "deletedWebhook": "Gelöschter Webhook",
     "demoteFailed": "Herabstufung auf {role} nicht möglich",
     "demoteTo": "Zurückstufen auf {role}",
     "directChatCreatedAt": "Chat gestartet",

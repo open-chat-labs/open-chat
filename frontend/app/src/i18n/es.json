@@ -1131,6 +1131,7 @@
     "deleteMessageAndReport": "Eliminar e informar",
     "deleteMessageConfirm": "¿Realmente quieres eliminar este mensaje?",
     "deleteMessageForMe": "Eliminar para mí",
+    "deletedWebhook": "Webhook eliminado",
     "demoteFailed": "No se puede degradar a {role}",
     "demoteTo": "Degradar a {role}",
     "directChatCreatedAt": "chat iniciado",

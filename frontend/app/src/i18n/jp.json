@@ -1131,6 +1131,7 @@
     "deleteMessageAndReport": "削除して報告",
     "deleteMessageConfirm": "このメッセージを本当に削除しますか?",
     "deleteMessageForMe": "削除してください",
+    "deletedWebhook": "削除されたWebhook",
     "demoteFailed": "{role} に降格できません",
     "demoteTo": "{role}に降格",
     "directChatCreatedAt": "チャット開始",

@@ -1131,6 +1131,7 @@
     "deleteMessageAndReport": "删除并举报",
     "deleteMessageConfirm": "您确实要删除此消息吗？",
     "deleteMessageForMe": "帮我删除",
+    "deletedWebhook": "已删除的 Webhook",
     "demoteFailed": "无法降级到 {role}",
     "demoteTo": "降级为 {role}",
     "directChatCreatedAt": "聊天创建于",

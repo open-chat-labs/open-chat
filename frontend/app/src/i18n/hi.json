@@ -1131,6 +1131,7 @@
     "deleteMessageAndReport": "हटाएं और रिपोर्ट करें",
     "deleteMessageConfirm": "क्या आप सचमुच इस संदेश को हटाना चाहते हैं?",
     "deleteMessageForMe": "मेरे लिए हटाएं",
+    "deletedWebhook": "हटाया गया वेबहुक",
     "demoteFailed": "{role} को अवनत करने में असमर्थ",
     "demoteTo": "{role} पर अवनत करें",
     "directChatCreatedAt": "चैट शुरू हुई",

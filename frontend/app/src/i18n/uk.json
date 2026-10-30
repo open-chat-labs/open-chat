@@ -1131,6 +1131,7 @@
     "deleteMessageAndReport": "Видалити та повідомити",
     "deleteMessageConfirm": "Ви справді хочете видалити це повідомлення?",
     "deleteMessageForMe": "Видалити для мене",
+    "deletedWebhook": "Видалений вебхук",
     "demoteFailed": "Не вдалося понизити до {role}",
     "demoteTo": "Понизити до {role}",
     "directChatCreatedAt": "чат почався",

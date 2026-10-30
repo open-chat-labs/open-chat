@@ -1131,6 +1131,7 @@
     "deleteMessageAndReport": "Xóa và báo cáo",
     "deleteMessageConfirm": "Bạn có thực sự muốn xóa tin nhắn này không?",
     "deleteMessageForMe": "Xóa cho tôi",
+    "deletedWebhook": "Webhook đã xóa",
     "demoteFailed": "Không thể hạ cấp xuống {role}",
     "demoteTo": "Giảm xuống {role}",
     "directChatCreatedAt": "Bắt đầu trò chuyện",

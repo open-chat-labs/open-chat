@@ -1131,6 +1131,7 @@
     "deleteMessageAndReport": "מחק ודווח",
     "deleteMessageConfirm": "האם אתה באמת רוצה למחוק את ההודעה הזו?",
     "deleteMessageForMe": "מחק בשבילי",
+    "deletedWebhook": "Webhook שנמחק",
     "demoteFailed": "לא ניתן לרדת בדרגה ל-{role}",
     "demoteTo": "הורד ל-{role}",
     "directChatCreatedAt": "צ'אט התחיל",

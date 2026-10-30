@@ -1121,6 +1121,7 @@
     "deleteMessageAndReport": "Delete and report",
     "deleteMessageConfirm": "Do you really want to delete this message?",
     "deleteMessageForMe": "Delete for me",
+    "deletedWebhook": "Deleted webhook",
     "demoteFailed": "Unable to demote to {role}",
     "demoteTo": "Demote to {role}",
     "directChatCreatedAt": "chat started",
