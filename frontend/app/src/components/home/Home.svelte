@@ -46,6 +46,7 @@
         fullWidth,
         identityStateStore,
         localUpdates,
+        miniAppGameKey,
         offlineStore,
         pinNumberResolverStore,
         querystringStore,
@@ -106,6 +107,8 @@
     import { communityPreviewState } from "@src/utils/preview.svelte";
     import AnonFooter from "./AnonFooter.svelte";
     import ChitEarned from "./ChitEarned.svelte";
+    import MiniAppFrame from "./MiniAppFrame.svelte";
+    import { openMiniApp } from "@src/logic/miniApp/openMiniApp.svelte";
     import HallOfFame from "./ChitHallOfFame.svelte";
     import Convert from "./communities/Convert.svelte";
     import EditCommunity from "./communities/edit/Edit.svelte";
@@ -1002,6 +1005,13 @@
 
 {#if $chitPopup && !$disableChit}
     <ChitEarned />
+{/if}
+
+<!-- Beside the chat rather than in the card's row, which the message list drops once it scrolls far out of view -->
+{#if openMiniApp.current !== undefined}
+    {#key miniAppGameKey(openMiniApp.current.game)}
+        <MiniAppFrame app={openMiniApp.current} onClose={() => openMiniApp.close()} />
+    {/key}
 {/if}
 
 <style lang="scss">

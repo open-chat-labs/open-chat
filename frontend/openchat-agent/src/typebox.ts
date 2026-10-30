@@ -5648,6 +5648,37 @@ export const GroupCallDismissedNotification = /* @__PURE__ */ Type.Object({
     mc: Type.Number(),
 });
 
+export type MiniAppImage = Static<typeof MiniAppImage>;
+export const MiniAppImage = /* @__PURE__ */ Type.Object({
+    width: Type.Number(),
+    height: Type.Number(),
+    mime_type: Type.String(),
+    blob_reference: BlobReference,
+});
+
+export type MiniAppActive = Static<typeof MiniAppActive>;
+export const MiniAppActive = /* @__PURE__ */ Type.Object({
+    players: Type.Array(UserId),
+    waiting_for: Type.Array(UserId),
+});
+
+export type MiniAppFinished = Static<typeof MiniAppFinished>;
+export const MiniAppFinished = /* @__PURE__ */ Type.Object({
+    players: Type.Array(UserId),
+    result: Type.Optional(Type.String()),
+});
+
+export type MiniAppStatus = Static<typeof MiniAppStatus>;
+export const MiniAppStatus = /* @__PURE__ */ Type.Union([
+    Type.Literal("Open"),
+    Type.Object({
+        Active: MiniAppActive,
+    }),
+    Type.Object({
+        Finished: MiniAppFinished,
+    }),
+]);
+
 export type GroupCreated = Static<typeof GroupCreated>;
 export const GroupCreated = /* @__PURE__ */ Type.Object({
     name: Type.String(),
@@ -6093,6 +6124,11 @@ export const ChannelReactionAddedNotification = /* @__PURE__ */ Type.Object({
 
 export type VideoCallParticipantArgs = Static<typeof VideoCallParticipantArgs>;
 export const VideoCallParticipantArgs = /* @__PURE__ */ Type.Object({
+    chat: Chat,
+});
+
+export type MiniAppChatArgs = Static<typeof MiniAppChatArgs>;
+export const MiniAppChatArgs = /* @__PURE__ */ Type.Object({
     chat: Chat,
 });
 
@@ -8033,6 +8069,15 @@ export const VideoContent = /* @__PURE__ */ Type.Object({
     video_blob_reference: Type.Optional(BlobReference),
 });
 
+export type MiniAppContent = Static<typeof MiniAppContent>;
+export const MiniAppContent = /* @__PURE__ */ Type.Object({
+    text: Type.String(),
+    image: Type.Optional(MiniAppImage),
+    max_players: Type.Optional(Type.Number()),
+    spectators: Type.Boolean(),
+    status: MiniAppStatus,
+});
+
 export type GroupPermissions = Static<typeof GroupPermissions>;
 export const GroupPermissions = /* @__PURE__ */ Type.Object({
     change_roles: GroupPermissionRole,
@@ -9100,6 +9145,9 @@ export const BotMessageContent = /* @__PURE__ */ Type.Union([
     Type.Object({
         PriceChart: PriceChartContent,
     }),
+    Type.Object({
+        MiniApp: MiniAppContent,
+    }),
 ]);
 
 export type CurrentUserSummary = Static<typeof CurrentUserSummary>;
@@ -9306,6 +9354,9 @@ export const LocalUserIndexAccessTokenV2Args = /* @__PURE__ */ Type.Union([
     Type.Object({
         BotActionByCommand: BotActionByCommandArgs,
     }),
+    Type.Object({
+        MiniAppChat: MiniAppChatArgs,
+    }),
     Type.Literal("Translate"),
 ]);
 
@@ -9415,6 +9466,9 @@ export const MessageContent = /* @__PURE__ */ Type.Union([
     Type.Object({
         PriceChart: PriceChartContent,
     }),
+    Type.Object({
+        MiniApp: MiniAppContent,
+    }),
 ]);
 
 export type GroupMatch = Static<typeof GroupMatch>;
@@ -9487,6 +9541,9 @@ export const MessageContentInitial = /* @__PURE__ */ Type.Union([
     }),
     Type.Object({
         PriceChart: PriceChartContent,
+    }),
+    Type.Object({
+        MiniApp: MiniAppContent,
     }),
 ]);
 

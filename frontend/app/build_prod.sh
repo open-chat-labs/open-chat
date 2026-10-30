@@ -11,6 +11,8 @@ export OC_TELEGRAM_BRIDGE_LINK_URL=https://t.me/OpenChatBridgeBot?start={code}
 export OC_TWITCH_BRIDGE_LINK_URL=https://d3k84enwyokagr.cloudfront.net/link?code={code}
 export OC_BRIDGE_AVATARS_URL=https://d31v79nf0k3ss4.cloudfront.net
 export OC_PRICE_SERVICE_URL=https://d2r0806cxz8193.cloudfront.net
+# Not deployed yet, so games in messages show only the cards stored in their chats
+export OC_MINI_APP_SERVICE_URL=
 export OC_NCA_REPORTER_URL=https://d368tfz0uea1ks.cloudfront.net
 export OC_IC_URL=https://icp-api.io
 export OC_II_DERIVATION_ORIGIN=https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app

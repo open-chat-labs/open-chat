@@ -455,6 +455,35 @@
             "people": "Gente",
             "webhooks": "Webhooks"
         },
+        "miniApp": {
+            "closed": "Ya no juegas en esta partida y no se puede mirar.",
+            "finished": "Fin del juego",
+            "join": "Unirse",
+            "leave": "Salir",
+            "open": "Abrir",
+            "play": "Jugar",
+            "playing": "{count} jugando",
+            "playingOf": "{count} de {max} jugando",
+            "refusals": {
+                "botUnavailable": "El juego no respondió. Inténtalo de nuevo.",
+                "finished": "Esta partida ha terminado.",
+                "full": "Esta partida está llena.",
+                "invalidToken": "No se pudo comprobar si puedes jugar aquí. Inténtalo de nuevo.",
+                "noSpectators": "Esta partida no se puede mirar.",
+                "notAPlayer": "No estás jugando esta partida.",
+                "notMember": "Solo los miembros de este chat pueden unirse.",
+                "notOpen": "Esta partida ya ha empezado.",
+                "refusedByBot": "El juego dice: {message}",
+                "refusedByBotNoReason": "El juego no te dejó unirte.",
+                "unavailable": "Algo salió mal. Inténtalo de nuevo.",
+                "unknownGame": "Esta partida ya no está en curso.",
+                "unreachable": "No se pudo conectar con el juego. Inténtalo de nuevo."
+            },
+            "waitingFor": "Esperando a {names}",
+            "watch": "Mirar",
+            "watching": "{count} mirando",
+            "yourTurn": "Tu turno"
+        },
         "poll": {
             "desc": "Crear una encuesta en el chat actual"
         },
@@ -1769,11 +1798,13 @@
             "giphy": "enviar mensajes gif",
             "image": "enviar mensajes de imagen",
             "memeFighter": "enviar mensajes de Meme Fighter",
+            "miniApp": "publicar miniaplicaciones, p. ej. juegos",
             "p2pSwap": "enviar mensajes de intercambio P2P",
             "poll": "crear mensajes de encuesta",
             "prize": "enviar mensajes de premio",
             "text": "enviar mensajes de texto",
-            "video": "enviar mensajes de vídeo"
+            "video": "enviar mensajes de vídeo",
+            "videoCall": "iniciar videollamadas"
         },
         "nobody": "Nadie puede",
         "notPermitted": "No tienes permiso para {permission}",

@@ -455,6 +455,35 @@
             "people": "Mọi người",
             "webhooks": "Webhook"
         },
+        "miniApp": {
+            "closed": "Bạn không còn chơi trò chơi này nữa, và trò chơi này không cho phép xem.",
+            "finished": "Trò chơi kết thúc",
+            "join": "Tham gia",
+            "leave": "Rời đi",
+            "open": "Mở",
+            "play": "Chơi",
+            "playing": "{count} người đang chơi",
+            "playingOf": "{count}/{max} người đang chơi",
+            "refusals": {
+                "botUnavailable": "Trò chơi không phản hồi. Hãy thử lại.",
+                "finished": "Trò chơi này đã kết thúc.",
+                "full": "Trò chơi này đã đủ người.",
+                "invalidToken": "Không thể kiểm tra bạn có được chơi ở đây không. Hãy thử lại.",
+                "noSpectators": "Trò chơi này không cho phép xem.",
+                "notAPlayer": "Bạn không chơi trò chơi này.",
+                "notMember": "Chỉ thành viên của cuộc trò chuyện này mới có thể tham gia.",
+                "notOpen": "Trò chơi này đã bắt đầu.",
+                "refusedByBot": "Trò chơi cho biết: {message}",
+                "refusedByBotNoReason": "Trò chơi không cho bạn tham gia.",
+                "unavailable": "Đã xảy ra lỗi. Hãy thử lại.",
+                "unknownGame": "Trò chơi này không còn diễn ra.",
+                "unreachable": "Không thể kết nối với trò chơi. Hãy thử lại."
+            },
+            "waitingFor": "Đang chờ {names}",
+            "watch": "Xem",
+            "watching": "{count} người đang xem",
+            "yourTurn": "Đến lượt bạn"
+        },
         "poll": {
             "desc": "Tạo một cuộc thăm dò trong cuộc trò chuyện hiện tại"
         },
@@ -1769,11 +1798,13 @@
             "giphy": "gửi tin nhắn gif",
             "image": "gửi tin nhắn hình ảnh",
             "memeFighter": "gửi tin nhắn Meme Fighter",
+            "miniApp": "đăng ứng dụng nhỏ, ví dụ trò chơi",
             "p2pSwap": "gửi tin nhắn trao đổi P2P",
             "poll": "tạo tin nhắn thăm dò ý kiến",
             "prize": "gửi tin nhắn trúng thưởng",
             "text": "gửi tin nhắn văn bản",
-            "video": "gửi tin nhắn video"
+            "video": "gửi tin nhắn video",
+            "videoCall": "bắt đầu cuộc gọi video"
         },
         "nobody": "Không ai có thể",
         "notPermitted": "Bạn không được phép {permission}",

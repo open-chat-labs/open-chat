@@ -7,13 +7,18 @@ import type {
 } from "@shared";
 import { encodeIcrcAccount } from "@shared";
 import { describe, expect, test } from "vitest";
-import type { MessageContent as TMessageContent } from "../../typebox";
+import type {
+    MessageContent as TMessageContent,
+    MiniAppStatus as TMiniAppStatus,
+} from "../../typebox";
 import {
     addressToIcrcAccount,
+    apiExternalBotPermissions,
     apiMaybeAccessGate,
     apiMessageContent,
     groupDetailsUpdatesResponse,
     apiPendingCryptoTransaction,
+    externalBotPermissions,
     formatIcrcAccount,
     messageContent,
     pendingCryptoTransfer,
@@ -292,5 +297,93 @@ describe("the gate a new chat is created with", () => {
         ).toEqual({
             Composite: { and: false, inner: ["LifetimeDiamondMember", "UniquePerson"] },
         });
+    });
+});
+
+describe("mini app content mapping", () => {
+    const alice = Principal.selfAuthenticating(new Uint8Array(32).fill(1));
+    const bob = Principal.selfAuthenticating(new Uint8Array(32).fill(2));
+    const bucket = Principal.selfAuthenticating(new Uint8Array(32).fill(3));
+
+    test("maps the card, as the service wrote it", () => {
+        const api: TMessageContent = {
+            MiniApp: {
+                text: "**Uno** · 2 to 4 players",
+                image: {
+                    width: 600,
+                    height: 400,
+                    mime_type: "image/png",
+                    blob_reference: { canister_id: bucket.toUint8Array(), blob_id: 7n },
+                },
+                max_players: 4,
+                spectators: true,
+                status: {
+                    Active: {
+                        players: [alice.toUint8Array(), bob.toUint8Array()],
+                        waiting_for: [bob.toUint8Array()],
+                    },
+                },
+            },
+        };
+
+        expect(messageContent(api, "sender")).toEqual({
+            kind: "mini_app_content",
+            text: "**Uno** · 2 to 4 players",
+            image: {
+                width: 600,
+                height: 400,
+                mimeType: "image/png",
+                blobReference: { canisterId: bucket.toText(), blobId: 7n },
+            },
+            maxPlayers: 4,
+            spectators: true,
+            status: {
+                kind: "active",
+                players: [alice.toText(), bob.toText()],
+                waitingFor: [bob.toText()],
+            },
+        });
+    });
+
+    test("maps a game taking players, and a finished one, with or without a result", () => {
+        const status = (status: TMiniAppStatus) => {
+            const content = messageContent(
+                { MiniApp: { text: "Uno", spectators: false, status } },
+                "sender",
+            );
+            return content.kind === "mini_app_content" ? content.status : undefined;
+        };
+
+        expect(status("Open")).toEqual({ kind: "open" });
+        expect(
+            status({ Finished: { players: [alice.toUint8Array()], result: "Alice won" } }),
+        ).toEqual({ kind: "finished", players: [alice.toText()], result: "Alice won" });
+        expect(status({ Finished: { players: [] } })).toEqual({
+            kind: "finished",
+            players: [],
+            result: undefined,
+        });
+    });
+
+    test("isn't sent: only bots post them", () => {
+        expect(() =>
+            apiMessageContent({
+                kind: "mini_app_content",
+                text: "Uno",
+                spectators: false,
+                status: { kind: "open" },
+            }),
+        ).toThrow();
+    });
+});
+
+describe("bot permission bits", () => {
+    test("message permissions follow the backend's MessagePermission bits, both ways", () => {
+        // P2pSwap = 9, VideoCall = 10, MiniApp = 11
+        const message = (1 << 9) | (1 << 10) | (1 << 11);
+        const permissions = externalBotPermissions({ community: 0, chat: 0, message });
+
+        expect(permissions.messagePermissions).toEqual(["p2pSwap", "videoCall", "miniApp"]);
+        expect(apiExternalBotPermissions(permissions).message).toBe(message);
     });
 });

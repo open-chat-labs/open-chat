@@ -80,6 +80,8 @@ import type {
     PollContent,
     PollVotes,
     PriceChartContent,
+    MiniAppContent,
+    MiniAppStatus,
     PrizeContent,
     PrizeContentInitial,
     PrizeWinnerContent,
@@ -139,7 +141,7 @@ import {
     codeToText,
     decodeIcrcAccount,
     encodeIcrcAccount,
-    messagePermissionsList,
+    botMessagePermissionList,
     nullMembership,
     toBigInt32,
     toBigInt64,
@@ -220,6 +222,8 @@ import type {
     GateCheckFailedReason as TGateCheckFailedReason,
     GiphyContent as TGiphyContent,
     PriceChartContent as TPriceChartContent,
+    MiniAppContent as TMiniAppContent,
+    MiniAppStatus as TMiniAppStatus,
     GiphyImageVariant as TGiphyImageVariant,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterThreadDetails as TGroupCanisterThreadDetails,
@@ -845,6 +849,9 @@ export function messageContent(value: TMessageContent, sender: string): MessageC
     if ("PriceChart" in value) {
         return priceChartContent(value.PriceChart);
     }
+    if ("MiniApp" in value) {
+        return miniAppContent(value.MiniApp);
+    }
     if ("ReportedMessage" in value) {
         return reportedMessage(value.ReportedMessage);
     }
@@ -1248,6 +1255,40 @@ function proposalRewardStatus(value: TProposalRewardStatus): ProposalRewardStatu
     if (value === "ReadyToSettle") return ProposalRewardStatus.ReadyToSettle;
     if (value === "Settled") return ProposalRewardStatus.Settled;
     return ProposalRewardStatus.Unspecified;
+}
+
+export function miniAppContent(value: TMiniAppContent): MiniAppContent {
+    return {
+        kind: "mini_app_content",
+        text: value.text,
+        image: mapOptional(value.image, (image) => ({
+            width: image.width,
+            height: image.height,
+            mimeType: image.mime_type,
+            blobReference: blobReference(image.blob_reference),
+        })),
+        maxPlayers: mapOptional(value.max_players, identity),
+        spectators: value.spectators,
+        status: miniAppStatus(value.status),
+    };
+}
+
+function miniAppStatus(value: TMiniAppStatus): MiniAppStatus {
+    if (value === "Open") {
+        return { kind: "open" };
+    }
+    if ("Active" in value) {
+        return {
+            kind: "active",
+            players: value.Active.players.map(principalBytesToString),
+            waitingFor: value.Active.waiting_for.map(principalBytesToString),
+        };
+    }
+    return {
+        kind: "finished",
+        players: value.Finished.players.map(principalBytesToString),
+        result: mapOptional(value.Finished.result, identity),
+    };
 }
 
 export function priceChartContent(value: TPriceChartContent): PriceChartContent {
@@ -1911,6 +1952,7 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
         case "p2p_swap_content":
         case "encrypted_content":
         case "restricted_content":
+        case "mini_app_content": // only bots post them, and they can't be forwarded
             throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);
     }
 }
@@ -2998,7 +3040,7 @@ export function externalBotPermissions(value: ApiExternalBotPermissions): Extern
             ...botCommunityPermissionList,
         ]),
         chatPermissions: permissionsFromBits(value.chat ?? 0, [...botChatPermissionList]),
-        messagePermissions: permissionsFromBits(value.message ?? 0, [...messagePermissionsList]),
+        messagePermissions: permissionsFromBits(value.message ?? 0, [...botMessagePermissionList]),
     };
 }
 
@@ -3008,7 +3050,7 @@ export function apiExternalBotPermissions(
     return {
         community: permissionsToBits(value.communityPermissions, [...botCommunityPermissionList]),
         chat: permissionsToBits(value.chatPermissions, [...botChatPermissionList]),
-        message: permissionsToBits(value.messagePermissions, [...messagePermissionsList]),
+        message: permissionsToBits(value.messagePermissions, [...botMessagePermissionList]),
     };
 }
 

@@ -294,6 +294,9 @@ export default {
             "import.meta.env.OC_PRICE_SERVICE_URL": JSON.stringify(
                 process.env.OC_PRICE_SERVICE_URL ?? "",
             ),
+            "import.meta.env.OC_MINI_APP_SERVICE_URL": JSON.stringify(
+                process.env.OC_MINI_APP_SERVICE_URL ?? "",
+            ),
             "import.meta.env.OC_CANISTER_URL_PATH": JSON.stringify(
                 process.env.OC_CANISTER_URL_PATH,
             ),

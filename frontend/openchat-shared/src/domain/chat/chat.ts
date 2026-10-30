@@ -115,7 +115,8 @@ export type MessageContent =
     | DailyResultContent
     | VideoCallContent
     | EncryptedContent
-    | PriceChartContent;
+    | PriceChartContent
+    | MiniAppContent;
 
 export type VideoCallParticipant = {
     userId: string;
@@ -141,6 +142,39 @@ export type PriceChartContent = {
     // where the prices are from, credited with links under the chart
     sources: PriceChartSource[];
 };
+
+/**
+ * A bot's card for a game, or another app, it hosts, whose buttons open the bot's app. Its text,
+ * image, player limit and whether others can watch never change. Its status is written only by
+ * OpenChat's MiniApp service, which also shows the card live while it runs the game (see
+ * `MiniAppLiveCard`). Only bots post them, and they can't be forwarded.
+ */
+export type MiniAppContent = {
+    kind: "mini_app_content";
+    // markdown, eg. "**Uno** · 2 to 4 players"
+    text: string;
+    // eg. the game's artwork
+    image?: MiniAppImage;
+    maxPlayers?: number;
+    // whether people who aren't playing can watch: members, and anyone who can see a public chat
+    spectators: boolean;
+    status: MiniAppStatus;
+};
+
+export type MiniAppImage = DataContent & {
+    width: number;
+    height: number;
+    mimeType: string;
+};
+
+// As the card in the chat records it. Who's joined a game that's taking players is only shown live.
+export type MiniAppStatus =
+    | { kind: "open" }
+    // who the game started with, and the players whose turn it is, if anyone's in particular
+    | { kind: "active"; players: string[]; waitingFor: string[] }
+    // who the game started with, or no one if it never started, and eg. "Bob won", unless it was
+    // abandoned
+    | { kind: "finished"; players: string[]; result: string | undefined };
 
 export type PriceChartSeries = {
     // a token OpenChat lists, by its ledger, or any other coin, by its CoinGecko id

@@ -19,8 +19,8 @@ import type {
     BotActionScope,
     BotChatPermission,
     BotCommunityPermission,
+    BotMessagePermission,
     MemberRole,
-    MessagePermission,
 } from "./permission";
 import type { BotMatch } from "./search/search";
 import type { Level } from "./structure";
@@ -261,7 +261,7 @@ function mergePermissions(
 export type ExternalBotPermissionsSet = {
     chatPermissions: Set<BotChatPermission>;
     communityPermissions: Set<BotCommunityPermission>;
-    messagePermissions: Set<MessagePermission>;
+    messagePermissions: Set<BotMessagePermission>;
 };
 
 export function setifyCommandPermissions(perm: ExternalBotPermissions): ExternalBotPermissionsSet {
@@ -297,7 +297,7 @@ export function hasEveryRequiredPermission(
 export type ExternalBotPermissions = {
     chatPermissions: BotChatPermission[];
     communityPermissions: BotCommunityPermission[];
-    messagePermissions: MessagePermission[];
+    messagePermissions: BotMessagePermission[];
 };
 
 export type GrantedBotPermissions = {

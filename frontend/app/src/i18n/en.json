@@ -423,6 +423,35 @@
             "people": "People",
             "webhooks": "Webhooks"
         },
+        "miniApp": {
+            "closed": "You're no longer playing this game, and it can't be watched.",
+            "finished": "Game over",
+            "join": "Join",
+            "leave": "Leave",
+            "open": "Open",
+            "play": "Play",
+            "playing": "{count} playing",
+            "playingOf": "{count} of {max} playing",
+            "refusals": {
+                "botUnavailable": "The game didn't answer. Try again.",
+                "finished": "This game has finished.",
+                "full": "This game is full.",
+                "invalidToken": "Couldn't check you can play here. Try again.",
+                "noSpectators": "This game can't be watched.",
+                "notAPlayer": "You're not playing this game.",
+                "notMember": "Only members of this chat can join.",
+                "notOpen": "This game has already started.",
+                "refusedByBot": "The game said: {message}",
+                "refusedByBotNoReason": "The game didn't let you join.",
+                "unavailable": "Something went wrong. Try again.",
+                "unknownGame": "This game isn't running any more.",
+                "unreachable": "Couldn't reach the game. Try again."
+            },
+            "waitingFor": "Waiting for {names}",
+            "watch": "Watch",
+            "watching": "{count} watching",
+            "yourTurn": "Your turn"
+        },
         "poll": {
             "desc": "Create a poll in the current chat"
         },
@@ -1824,11 +1853,13 @@
             "giphy": "send gif messages",
             "image": "send image messages",
             "memeFighter": "send Meme Fighter messages",
+            "miniApp": "post mini apps, eg. games",
             "p2pSwap": "send P2P swap messages",
             "poll": "create poll messages",
             "prize": "send prize mssages",
             "text": "send text messages",
-            "video": "send video messages"
+            "video": "send video messages",
+            "videoCall": "start video calls"
         },
         "nobody": "Nobody can",
         "notPermitted": "You are not permitted to {permission}",

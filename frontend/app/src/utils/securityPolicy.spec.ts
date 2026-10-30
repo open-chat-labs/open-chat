@@ -126,15 +126,19 @@ describe("Asset headers", () => {
 });
 
 describe("CSP frame-src", () => {
-    // Invariant: frames are limited to https and the site's own origin in every build flavour,
-    // so javascript:, data:, blob: and other http frames are refused. The own origin is for the
-    // Architecture page's frame of the canister map (CanisterMapFrame.svelte), which has to work
-    // on local http builds too.
-    test.each([
-        ["production", false],
-        ["development", true],
-    ])("is the site itself and https only in %s builds", (_, development) => {
-        const csp = generateCspForScripts(["window.x = 1;"], development);
+    // Invariant: frames are limited to https and the site's own origin, so javascript:, data:,
+    // blob: and other http frames are refused. The own origin is for the Architecture page's frame
+    // of the canister map (CanisterMapFrame.svelte), which has to work on local http builds too.
+    test("is the site itself and https only in production builds", () => {
+        const csp = generateCspForScripts(["window.x = 1;"], false);
         expect(directive(csp, "frame-src")).toBe("'self' https:");
+    });
+
+    // A bot's mini app run on this machine is served over http
+    test("also allows http frames from this machine in development builds", () => {
+        const csp = generateCspForScripts(["window.x = 1;"], true);
+        expect(directive(csp, "frame-src")).toBe(
+            "'self' https: http://localhost:* http://127.0.0.1:* http://*.localhost:*",
+        );
     });
 });

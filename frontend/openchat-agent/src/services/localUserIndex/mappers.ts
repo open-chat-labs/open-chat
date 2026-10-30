@@ -142,6 +142,9 @@ export function apiAccessTokenType(domain: AccessTokenType): LocalUserIndexAcces
         case "translate":
             return "Translate";
 
+        case "mini_app_chat":
+            return { MiniAppChat: { chat: apiChatIdentifier(domain.chatId) } };
+
         case "bot_action_by_command":
             return {
                 BotActionByCommand: {

@@ -35,6 +35,7 @@ export function createOpenChatClient(
         blobUrlPattern,
         bridgeAvatarsUrl: import.meta.env.OC_BRIDGE_AVATARS_URL ?? "",
         priceServiceUrl: import.meta.env.OC_PRICE_SERVICE_URL ?? "",
+        miniAppServiceUrl: import.meta.env.OC_MINI_APP_SERVICE_URL ?? "",
         canisterUrlPath: import.meta.env.OC_CANISTER_URL_PATH!,
         proposalBotCanister: import.meta.env.OC_PROPOSALS_BOT_CANISTER!,
         signInWithEmailCanister: import.meta.env.OC_SIGN_IN_WITH_EMAIL_CANISTER!,

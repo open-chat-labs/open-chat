@@ -455,6 +455,35 @@
             "people": "Persone",
             "webhooks": "Webhook"
         },
+        "miniApp": {
+            "closed": "Non partecipi più a questa partita, e non si può guardare.",
+            "finished": "Partita finita",
+            "join": "Partecipa",
+            "leave": "Esci",
+            "open": "Apri",
+            "play": "Gioca",
+            "playing": "{count} in gioco",
+            "playingOf": "{count} di {max} in gioco",
+            "refusals": {
+                "botUnavailable": "Il gioco non ha risposto. Riprova.",
+                "finished": "Questa partita è finita.",
+                "full": "Questa partita è al completo.",
+                "invalidToken": "Impossibile verificare che tu possa giocare qui. Riprova.",
+                "noSpectators": "Questa partita non si può guardare.",
+                "notAPlayer": "Non stai giocando a questa partita.",
+                "notMember": "Solo i membri di questa chat possono partecipare.",
+                "notOpen": "Questa partita è già iniziata.",
+                "refusedByBot": "Il gioco dice: {message}",
+                "refusedByBotNoReason": "Il gioco non ti ha fatto partecipare.",
+                "unavailable": "Qualcosa è andato storto. Riprova.",
+                "unknownGame": "Questa partita non è più in corso.",
+                "unreachable": "Impossibile raggiungere il gioco. Riprova."
+            },
+            "waitingFor": "In attesa di {names}",
+            "watch": "Guarda",
+            "watching": "{count} spettatori",
+            "yourTurn": "Tocca a te"
+        },
         "poll": {
             "desc": "Crea un sondaggio nella chat corrente"
         },
@@ -1769,11 +1798,13 @@
             "giphy": "inviare messaggi gif",
             "image": "inviare messaggi immagine",
             "memeFighter": "inviare messaggi di Meme Fighter",
+            "miniApp": "pubblicare mini app, ad es. giochi",
             "p2pSwap": "inviare messaggi di scambio P2P",
             "poll": "creare messaggi di sondaggio",
             "prize": "inviare messaggi premio",
             "text": "inviare messaggi di testo",
-            "video": "inviare videomessaggi"
+            "video": "inviare videomessaggi",
+            "videoCall": "avviare videochiamate"
         },
         "nobody": "Nessuno può",
         "notPermitted": "Non sei autorizzato a {permission}",

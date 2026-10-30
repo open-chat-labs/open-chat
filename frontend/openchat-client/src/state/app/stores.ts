@@ -63,6 +63,7 @@ import {
     type ThreadSyncDetails,
     type TokenExchangeRates,
     type CashtagCoin,
+    type MiniAppLiveCard,
     type PriceSource,
     type UserGroupDetails,
     type UserGroupSummary,
@@ -156,6 +157,13 @@ export const cashtagCoinsStore = writable<ReadonlyMap<string, CashtagCoin>>(
 // Where prices come from, keyed as the prices' `source`s
 export const priceSourcesStore = writable<ReadonlyMap<string, PriceSource>>(
     new SafeMap(),
+    undefined,
+    notEq,
+);
+// The cards of games in messages which the MiniApp service is showing live, for the chat being
+// viewed, keyed by `miniAppGameKey`
+export const miniAppCardsStore = writable<ReadonlyMap<string, MiniAppLiveCard>>(
+    new Map(),
     undefined,
     notEq,
 );

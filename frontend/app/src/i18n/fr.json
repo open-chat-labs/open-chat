@@ -455,6 +455,35 @@
             "people": "Personnes",
             "webhooks": "Webhooks"
         },
+        "miniApp": {
+            "closed": "Vous ne jouez plus à cette partie, et elle ne peut pas être regardée.",
+            "finished": "Partie terminée",
+            "join": "Rejoindre",
+            "leave": "Quitter",
+            "open": "Ouvrir",
+            "play": "Jouer",
+            "playing": "{count} joueurs",
+            "playingOf": "{count} joueurs sur {max}",
+            "refusals": {
+                "botUnavailable": "Le jeu n'a pas répondu. Réessayez.",
+                "finished": "Cette partie est terminée.",
+                "full": "Cette partie est complète.",
+                "invalidToken": "Impossible de vérifier que vous pouvez jouer ici. Réessayez.",
+                "noSpectators": "Cette partie ne peut pas être regardée.",
+                "notAPlayer": "Vous ne jouez pas à cette partie.",
+                "notMember": "Seuls les membres de ce chat peuvent rejoindre.",
+                "notOpen": "Cette partie a déjà commencé.",
+                "refusedByBot": "Le jeu indique : {message}",
+                "refusedByBotNoReason": "Le jeu ne vous a pas laissé rejoindre.",
+                "unavailable": "Une erreur s'est produite. Réessayez.",
+                "unknownGame": "Cette partie n'est plus en cours.",
+                "unreachable": "Impossible de joindre le jeu. Réessayez."
+            },
+            "waitingFor": "En attente de {names}",
+            "watch": "Regarder",
+            "watching": "{count} spectateurs",
+            "yourTurn": "À vous de jouer"
+        },
         "poll": {
             "desc": "Créer un sondage dans le chat actuel"
         },
@@ -1769,11 +1798,13 @@
             "giphy": "envoyer des messages gif",
             "image": "envoyer des messages image",
             "memeFighter": "envoyer des messages à Meme Fighter",
+            "miniApp": "publier des mini-applications, par ex. des jeux",
             "p2pSwap": "envoyer des messages d'échange P2P",
             "poll": "créer des messages de sondage",
             "prize": "envoyer des messages de récompense",
             "text": "envoyer des messages texte",
-            "video": "envoyer des messages vidéo"
+            "video": "envoyer des messages vidéo",
+            "videoCall": "lancer des appels vidéo"
         },
         "nobody": "Personne ne peut",
         "notPermitted": "Vous n'êtes pas autorisé à {permission}",

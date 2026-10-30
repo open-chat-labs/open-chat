@@ -1,6 +1,6 @@
 import { ROLE_ADMIN, ROLE_MEMBER, ROLE_MODERATOR, ROLE_NONE, ROLE_OWNER } from "../constants";
 import type { CommandArg } from "./bots";
-import type { ChatIdentifier, VideoCallType } from "./chat";
+import type { ChatIdentifier, MultiUserChatIdentifier, VideoCallType } from "./chat";
 import type { CommunityIdentifier } from "./community";
 import type { OptionUpdate } from "./optionUpdate";
 
@@ -36,6 +36,24 @@ export const messagePermissionsList = [
 ] as const;
 type MessagePermissionsType = typeof messagePermissionsList;
 export type MessagePermission = MessagePermissionsType[number];
+
+// A bot's message permissions, in the order of the backend's MessagePermission bits. Unlike the
+// group permissions above, they include video calls and MiniApp messages, and not Meme Fighter.
+export const botMessagePermissionList = [
+    "text",
+    "image",
+    "video",
+    "audio",
+    "file",
+    "poll",
+    "crypto",
+    "giphy",
+    "prize",
+    "p2pSwap",
+    "videoCall",
+    "miniApp",
+] as const;
+export type BotMessagePermission = (typeof botMessagePermissionList)[number];
 
 export const chatPermissionsList = [
     "changeRoles",
@@ -229,6 +247,7 @@ export type AccessTokenType =
     | MarkVideoCallEnded
     | VideoCallParticipantToken
     | BotActionByCommand
+    | MiniAppChatToken
     | Translate;
 
 export type Translate = {
@@ -283,6 +302,13 @@ export type BotActionCommunityScope = {
 };
 
 export type BotActionScope = BotActionChatScope | BotActionCommunityScope;
+
+// A token for OpenChat's MiniApp service, which says the user can see the chat, and whether they're a
+// member, who may join its games, or may only watch them
+export type MiniAppChatToken = {
+    kind: "mini_app_chat";
+    chatId: MultiUserChatIdentifier;
+};
 
 export type BotActionByCommand = {
     kind: "bot_action_by_command";

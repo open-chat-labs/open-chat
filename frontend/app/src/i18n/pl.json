@@ -455,6 +455,35 @@
             "people": "Ludzie",
             "webhooks": "Webhooki"
         },
+        "miniApp": {
+            "closed": "Nie grasz już w tę grę, a nie można jej oglądać.",
+            "finished": "Koniec gry",
+            "join": "Dołącz",
+            "leave": "Opuść",
+            "open": "Otwórz",
+            "play": "Graj",
+            "playing": "Grający: {count}",
+            "playingOf": "Grający: {count} z {max}",
+            "refusals": {
+                "botUnavailable": "Gra nie odpowiedziała. Spróbuj ponownie.",
+                "finished": "Ta gra się zakończyła.",
+                "full": "Ta gra jest pełna.",
+                "invalidToken": "Nie udało się sprawdzić, czy możesz tu grać. Spróbuj ponownie.",
+                "noSpectators": "Tej gry nie można oglądać.",
+                "notAPlayer": "Nie grasz w tę grę.",
+                "notMember": "Dołączyć mogą tylko członkowie tego czatu.",
+                "notOpen": "Ta gra już się zaczęła.",
+                "refusedByBot": "Gra odpowiada: {message}",
+                "refusedByBotNoReason": "Gra nie pozwoliła ci dołączyć.",
+                "unavailable": "Coś poszło nie tak. Spróbuj ponownie.",
+                "unknownGame": "Ta gra już się nie toczy.",
+                "unreachable": "Nie udało się połączyć z grą. Spróbuj ponownie."
+            },
+            "waitingFor": "Czekamy na: {names}",
+            "watch": "Oglądaj",
+            "watching": "Oglądający: {count}",
+            "yourTurn": "Twoja kolej"
+        },
         "poll": {
             "desc": "Utwórz ankietę w bieżącym czacie"
         },
@@ -1769,11 +1798,13 @@
             "giphy": "wysyłaj wiadomości gif",
             "image": "wysyłaj wiadomości obrazkowe",
             "memeFighter": "wysyłaj wiadomości do walki z memami",
+            "miniApp": "publikować miniaplikacje, np. gry",
             "p2pSwap": "wysyłaj wiadomości wymiany P2P",
             "poll": "tworzyć wiadomości ankietowe",
             "prize": "wysyłaj wiadomości z nagrodami",
             "text": "wysyłać wiadomości tekstowe",
-            "video": "wysyłaj wiadomości wideo"
+            "video": "wysyłaj wiadomości wideo",
+            "videoCall": "rozpoczynać rozmowy wideo"
         },
         "nobody": "Nikt nie może",
         "notPermitted": "Nie masz pozwolenia na {permission}",
