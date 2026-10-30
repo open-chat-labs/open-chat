@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Refuse a MiniApp card naming an app the bot's definition lacks; a finished game's card can hold an end state its app shows ([#10323](https://github.com/open-chat-labs/open-chat/pull/10323))
 - A MiniApp game's card records the game's settings once it starts, for its app ([#10325](https://github.com/open-chat-labs/open-chat/pull/10325))
 
+## [[2.0.2201](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2201-local_user_index)] - 2026-10-27
+
 ### Changed
 
 - Let any bot edit its own messages, not only bridge bots ([#10282](https://github.com/open-chat-labs/open-chat/pull/10282))
