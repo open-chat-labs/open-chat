@@ -135,7 +135,7 @@ The website sends this when it opens the game's app:
 ```
 - `private` is the user's own part, and is only sent to players.
 - Spectators get at most about 4 updates a second. When updates come faster, they get only the latest.
-- Spectators count towards the card's `watching` while they have a game open.
+- Spectators count towards the card's `watching` while they have a game open. The website opens a game while its card is on screen, in the card itself, so anyone looking at a game which allows spectators is watching it.
 - A state can arrive twice, or out of order, so the website drops one whose `seq` is below the last it had. One with the same `seq` replaces it: it's the same state, re-sent when the user's role changes.
 - **Changing role:** when a user joins, leaves, or is removed, the service tells their connections with the game open, then re-sends the latest state:
 

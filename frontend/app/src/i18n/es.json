@@ -457,11 +457,11 @@
         },
         "miniApp": {
             "closed": "Ya no juegas en esta partida y no se puede mirar.",
+            "exitFullScreen": "Salir de pantalla completa",
             "finished": "Fin del juego",
+            "fullScreen": "Pantalla completa",
             "join": "Unirse",
             "leave": "Salir",
-            "open": "Abrir",
-            "play": "Jugar",
             "playing": "{count} jugando",
             "playingOf": "{count} de {max} jugando",
             "refusals": {
@@ -480,7 +480,6 @@
                 "unreachable": "No se pudo conectar con el juego. Inténtalo de nuevo."
             },
             "waitingFor": "Esperando a {names}",
-            "watch": "Mirar",
             "watching": "{count} mirando",
             "yourTurn": "Tu turno"
         },

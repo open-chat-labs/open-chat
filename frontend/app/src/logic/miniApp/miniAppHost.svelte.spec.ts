@@ -6,10 +6,9 @@ import type {
     ResourceKey,
 } from "@client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { MiniAppHost } from "./miniAppHost.svelte";
-import type { OpenMiniApp } from "./openMiniApp.svelte";
+import { MiniAppHost, type HostedMiniApp } from "./miniAppHost.svelte";
 
-const APP: OpenMiniApp = {
+const APP: HostedMiniApp = {
     url: new URL("https://uno.example.com/app"),
     botName: "Uno",
     game: {
@@ -274,7 +273,7 @@ describe("MiniAppHost", () => {
     // isn't an error
     test("says a finished game has finished if the service doesn't know it", async () => {
         close();
-        const finished: OpenMiniApp = {
+        const finished: HostedMiniApp = {
             ...APP,
             content: {
                 ...APP.content,

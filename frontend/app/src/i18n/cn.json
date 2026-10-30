@@ -457,11 +457,11 @@
         },
         "miniApp": {
             "closed": "你已不再参与这局游戏，且这局游戏不能观看。",
+            "exitFullScreen": "退出全屏",
             "finished": "游戏结束",
+            "fullScreen": "全屏",
             "join": "加入",
             "leave": "离开",
-            "open": "打开",
-            "play": "开始玩",
             "playing": "{count} 人在玩",
             "playingOf": "{count}/{max} 人在玩",
             "refusals": {
@@ -480,7 +480,6 @@
                 "unreachable": "无法连接到游戏，请重试。"
             },
             "waitingFor": "等待 {names}",
-            "watch": "观看",
             "watching": "{count} 人在观看",
             "yourTurn": "轮到你了"
         },

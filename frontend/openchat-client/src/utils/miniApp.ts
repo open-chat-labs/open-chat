@@ -28,9 +28,7 @@ export function miniAppGame(context: MessageContext, messageId: bigint): MiniApp
 // service, so there's nothing to do from a card the service isn't showing live.
 // - join: a member, while the game's taking players and isn't full
 // - leave: a player, while the game's taking players
-// - play: a player, until the game's finished, and then open it
-// - watch: anyone else, if the game allows spectators, and then open it
-export type MiniAppAction = "join" | "leave" | "play" | "watch" | "open";
+export type MiniAppAction = "join" | "leave";
 
 export type MiniAppCardView = {
     status: "open" | "active" | "finished";
@@ -41,6 +39,9 @@ export type MiniAppCardView = {
     watching: number | undefined;
     result: string | undefined;
     yourTurn: boolean;
+    // whether the user may have the game's app open, which shows the game in the card: a player
+    // may, and so may anyone else if the game allows spectators, until it's finished
+    canOpen: boolean;
     // the first is the main one
     actions: MiniAppAction[];
 };
@@ -71,6 +72,7 @@ export function miniAppCardView(
                   ? stored.result
                   : undefined,
         yourTurn: status === "active" && waitingFor.includes(userId),
+        canOpen: status !== "finished" && (players.includes(userId) || content.spectators),
         actions: live === undefined ? [] : miniAppActions(content, live, userId),
     };
 }
@@ -80,25 +82,14 @@ function miniAppActions(
     live: MiniAppLiveCard,
     userId: string,
 ): MiniAppAction[] {
+    if (live.status !== "open") {
+        return [];
+    }
     if (live.players.includes(userId)) {
-        switch (live.status) {
-            case "open":
-                return ["play", "leave"];
-            case "active":
-                return ["play"];
-            case "finished":
-                return ["open"];
-        }
+        return ["leave"];
     }
-    const actions: MiniAppAction[] = [];
     const full = live.players.length >= Math.min(content.maxPlayers ?? MAX_PLAYERS, MAX_PLAYERS);
-    if (live.status === "open" && live.member && !full) {
-        actions.push("join");
-    }
-    if (content.spectators) {
-        actions.push(live.status === "finished" ? "open" : "watch");
-    }
-    return actions;
+    return live.member && !full ? ["join"] : [];
 }
 
 // Why the service refused a request, or, with no refusal, that it couldn't be reached

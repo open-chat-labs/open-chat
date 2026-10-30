@@ -457,11 +457,11 @@
         },
         "miniApp": {
             "closed": "لم تعد تلعب هذه اللعبة، ولا يمكن مشاهدتها.",
+            "exitFullScreen": "الخروج من ملء الشاشة",
             "finished": "انتهت اللعبة",
+            "fullScreen": "ملء الشاشة",
             "join": "انضمام",
             "leave": "مغادرة",
-            "open": "فتح",
-            "play": "العب",
             "playing": "{count} يلعبون",
             "playingOf": "{count} من {max} يلعبون",
             "refusals": {
@@ -480,7 +480,6 @@
                 "unreachable": "تعذّر الوصول إلى اللعبة. حاول مرة أخرى."
             },
             "waitingFor": "في انتظار {names}",
-            "watch": "مشاهدة",
             "watching": "{count} يشاهدون",
             "yourTurn": "دورك"
         },

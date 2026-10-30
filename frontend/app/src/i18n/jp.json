@@ -457,11 +457,11 @@
         },
         "miniApp": {
             "closed": "このゲームにはもう参加していません。このゲームは観戦できません。",
+            "exitFullScreen": "全画面表示を終了",
             "finished": "ゲーム終了",
+            "fullScreen": "全画面表示",
             "join": "参加",
             "leave": "退出",
-            "open": "開く",
-            "play": "プレイ",
             "playing": "{count}人がプレイ中",
             "playingOf": "{max}人中{count}人がプレイ中",
             "refusals": {
@@ -480,7 +480,6 @@
                 "unreachable": "ゲームに接続できませんでした。もう一度お試しください。"
             },
             "waitingFor": "{names}を待っています",
-            "watch": "観戦",
             "watching": "{count}人が観戦中",
             "yourTurn": "あなたの番です"
         },

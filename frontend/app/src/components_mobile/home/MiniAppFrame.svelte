@@ -6,15 +6,17 @@
         miniAppGameKey,
         type OpenChat,
     } from "@client";
-    import { MiniAppActions } from "@src/logic/miniApp/miniAppActions.svelte";
-    import { MiniAppHost } from "@src/logic/miniApp/miniAppHost.svelte";
-    import type { OpenMiniApp } from "@src/logic/miniApp/openMiniApp.svelte";
+    import type { MiniAppActions } from "@src/logic/miniApp/miniAppActions.svelte";
+    import { MiniAppFullScreen } from "@src/logic/miniApp/miniAppFrame.svelte";
+    import { MiniAppHost, type HostedMiniApp } from "@src/logic/miniApp/miniAppHost.svelte";
     import { MINI_APP_SANDBOX } from "@src/utils/miniApp";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { BodySmall, Button, Caption, Column, Row, Sheet, Subtitle } from "component-lib";
+    import { BodySmall, Button, Caption, IconButton } from "component-lib";
     import { getContext, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
+    import Fullscreen from "svelte-material-icons/Fullscreen.svelte";
+    import FullscreenExit from "svelte-material-icons/FullscreenExit.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { currentTheme } from "../../theme/themes";
 
@@ -22,11 +24,14 @@
 
     interface Props {
         // fixed for the frame's life: a different game gets a frame of its own
-        app: OpenMiniApp;
-        onClose: () => void;
+        app: HostedMiniApp;
+        // the card's, so a request from either shows on both
+        actions: MiniAppActions;
+        // the card's too, which keeps the frame while it's full screen
+        fullScreen: MiniAppFullScreen;
     }
 
-    let { app, onClose }: Props = $props();
+    let { app, actions, fullScreen }: Props = $props();
 
     let darkMode = $derived($currentTheme.mode === "dark");
     const host = untrack(
@@ -38,20 +43,26 @@
                 translate: (key) => interpolate($_, key),
             }),
     );
-    const actions = untrack(() => new MiniAppActions(client, app.game));
     let url = $derived(app.url);
     let botName = $derived(app.botName);
-    // Joining and leaving are only ever OpenChat's own buttons, never the app's
+    // Joining and leaving are only ever OpenChat's own buttons, never the app's. The card's are
+    // hidden in full screen, so the frame has its own there.
     let joinOrLeave = $derived(
         miniAppCardView(
             app.content,
             $miniAppCardsStore.get(miniAppGameKey(app.game)),
             $currentUserIdStore,
-        ).actions.filter((a) => a === "join" || a === "leave"),
+        ).actions,
     );
 
+    let dialog: HTMLDialogElement | undefined = $state();
     let iframe: HTMLIFrameElement | undefined = $state();
 
+    $effect(() => {
+        const el = dialog;
+        if (!el) return;
+        return untrack(() => fullScreen.attach(el));
+    });
     $effect(() => {
         // null once the frame's removed, when the game's closed
         const frame = iframe;
@@ -61,14 +72,16 @@
     $effect(() => host.setDarkMode(darkMode));
 </script>
 
-<Sheet onDismiss={onClose}>
-    <Column gap={"md"} padding={"lg"}>
-        <Row gap={"md"} crossAxisAlignment={"center"}>
-            <Column gap={"xs"}>
-                <Subtitle fontWeight={"bold"}>{botName}</Subtitle>
-                <!-- The host is shown so the user can see where the app comes from -->
-                <Caption colour={"textSecondary"}>{url.host}</Caption>
-            </Column>
+<!-- A dialog, open in place, so that full screen can put it in the top layer without reloading the
+app (MiniAppFullScreen) -->
+<dialog bind:this={dialog} open class="frame" class:full-screen={fullScreen.on}>
+    <div class="bar">
+        <div class="title">
+            <BodySmall fontWeight={"bold"} width={"hug"}>{botName}</BodySmall>
+            <!-- The host is shown so the user can see where the app comes from -->
+            <Caption colour={"textSecondary"} width={"hug"}>{url.host}</Caption>
+        </div>
+        {#if fullScreen.on}
             {#each joinOrLeave as action (action)}
                 <Button
                     width={"hug"}
@@ -79,36 +92,111 @@
                     <Translatable resourceKey={i18nKey(`bots.miniApp.${action}`)} />
                 </Button>
             {/each}
-        </Row>
-        {#if actions.error !== undefined}
+        {/if}
+        {#if MiniAppFullScreen.supported}
+            <IconButton padding={"xs"} size={"sm"} onclick={() => fullScreen.toggle()}>
+                {#snippet icon(color)}
+                    {#if fullScreen.on}
+                        <FullscreenExit {color} />
+                    {:else}
+                        <Fullscreen {color} />
+                    {/if}
+                {/snippet}
+            </IconButton>
+        {/if}
+    </div>
+    {#if fullScreen.on && actions.error !== undefined}
+        <div class="action-error">
             <BodySmall colour={"validationError"}>
                 <Translatable resourceKey={actions.error} />
             </BodySmall>
-        {/if}
-        <div class="app">
-            {#if host.status.kind === "closed"}
-                <div class="closed">
-                    <AlertCircleOutline size={"2em"} color={"var(--validation-error)"} />
-                    <Translatable resourceKey={host.status.message} />
-                </div>
-            {:else}
-                <iframe
-                    title={botName}
-                    bind:this={iframe}
-                    src={url.href}
-                    sandbox={MINI_APP_SANDBOX}
-                    referrerpolicy="no-referrer"></iframe>
-            {/if}
         </div>
-    </Column>
-</Sheet>
+    {/if}
+    <div class="app">
+        {#if host.status.kind === "closed"}
+            <div class="closed">
+                <AlertCircleOutline size={"2em"} color={"var(--validation-error)"} />
+                <Translatable resourceKey={host.status.message} />
+            </div>
+        {:else}
+            <iframe
+                title={botName}
+                bind:this={iframe}
+                src={url.href}
+                sandbox={MINI_APP_SANDBOX}
+                referrerpolicy="no-referrer"></iframe>
+        {/if}
+    </div>
+</dialog>
 
 <style lang="scss">
+    .frame {
+        // in place in the card, rather than where a dialog puts itself
+        position: static;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: none;
+        max-height: none;
+        margin: 0;
+        padding: 0;
+        border: none;
+        border-radius: var(--rad-md);
+        overflow: hidden;
+        background-color: var(--surface-1);
+        color: var(--text-primary);
+
+        &:not([open]) {
+            display: none;
+        }
+
+        &:modal {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100dvh;
+            border-radius: 0;
+            // so a scroll over it doesn't scroll the chat behind it
+            overscroll-behavior: contain;
+        }
+
+        &::backdrop {
+            background-color: var(--backdrop);
+        }
+    }
+
+    .bar {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-md);
+        padding: var(--sp-xs) var(--sp-sm);
+    }
+
+    .title {
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: var(--sp-xxs) var(--sp-sm);
+        flex: auto;
+        min-width: 0;
+    }
+
+    .action-error {
+        padding: 0 var(--sp-sm) var(--sp-xs) var(--sp-sm);
+    }
+
     .app {
-        height: 75vh;
+        height: min(65vh, 520px);
+
+        .full-screen & {
+            flex: auto;
+            height: auto;
+            min-height: 0;
+        }
     }
 
     iframe {
+        display: block;
         border: none;
         height: 100%;
         width: 100%;
@@ -121,6 +209,7 @@
         justify-content: center;
         gap: var(--sp-md);
         height: 100%;
+        padding: var(--sp-md);
         text-align: center;
     }
 </style>

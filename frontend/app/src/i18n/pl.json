@@ -457,11 +457,11 @@
         },
         "miniApp": {
             "closed": "Nie grasz już w tę grę, a nie można jej oglądać.",
+            "exitFullScreen": "Wyjdź z pełnego ekranu",
             "finished": "Koniec gry",
+            "fullScreen": "Pełny ekran",
             "join": "Dołącz",
             "leave": "Opuść",
-            "open": "Otwórz",
-            "play": "Graj",
             "playing": "Grający: {count}",
             "playingOf": "Grający: {count} z {max}",
             "refusals": {
@@ -480,7 +480,6 @@
                 "unreachable": "Nie udało się połączyć z grą. Spróbuj ponownie."
             },
             "waitingFor": "Czekamy na: {names}",
-            "watch": "Oglądaj",
             "watching": "Oglądający: {count}",
             "yourTurn": "Twoja kolej"
         },

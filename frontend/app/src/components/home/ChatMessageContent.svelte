@@ -186,5 +186,6 @@
         {intersecting}
         {reply}
         {pinned}
+        {readonly}
         {blockLevelMarkdown} />
 {/if}

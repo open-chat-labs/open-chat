@@ -5,6 +5,8 @@
 // else about the user is shared with the app.
 
 import type {
+    MiniAppContent,
+    MiniAppGame,
     MiniAppGameListener,
     MiniAppRole,
     MiniAppState,
@@ -13,7 +15,15 @@ import type {
 } from "@client";
 import { i18nKey } from "@src/i18n/i18n";
 import { miniAppMessage, type MiniAppHostMessage } from "@src/utils/miniApp";
-import type { OpenMiniApp } from "./openMiniApp.svelte";
+
+// The bot's app shown in a game's card
+export type HostedMiniApp = {
+    url: URL;
+    botName: string;
+    game: MiniAppGame;
+    // the card it's shown in, for the buttons around the frame
+    content: MiniAppContent;
+};
 
 export type MiniAppFrameStatus =
     // until the service says how the user has it open
@@ -39,7 +49,7 @@ export type MiniAppHostOptions = {
 export class MiniAppHost {
     status = $state<MiniAppFrameStatus>({ kind: "opening" });
     #games: MiniAppGames;
-    #app: OpenMiniApp;
+    #app: HostedMiniApp;
     #options: MiniAppHostOptions;
     #frame: HTMLIFrameElement | undefined;
     #playerToken: string | undefined;
@@ -48,7 +58,7 @@ export class MiniAppHost {
     // the latest state, which is held until the app's ready
     #state: MiniAppState | undefined;
 
-    constructor(games: MiniAppGames, app: OpenMiniApp, options: MiniAppHostOptions) {
+    constructor(games: MiniAppGames, app: HostedMiniApp, options: MiniAppHostOptions) {
         this.#games = games;
         this.#app = app;
         this.#options = { ...options };
