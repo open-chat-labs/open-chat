@@ -374,10 +374,39 @@ describe("MiniAppService", () => {
             ["state", { seq: 4, shared: { board: 1 }, private: { hand: [2] } }],
         ]);
 
-        service.close(GAME);
+        service.close(GAME, frame);
         expect(ws.lastRequest()).toEqual({ type: "close", game: WIRE_GAME });
         ws.receive({ type: "state", game: WIRE_GAME, seq: 5, shared: {} });
         expect(frame.calls.length).toBe(3);
+    });
+
+    test("a game shown by two frames is heard by both, and closed once the last one closes it", async () => {
+        const first = listener();
+        const second = listener();
+        const opens = [service.open(GAME, first), service.open(GAME, second)];
+        const ws = await connected();
+        ws.receive({ type: "opened", id: 1, role: "spectator" });
+        ws.receive({ type: "opened", id: 2, role: "spectator" });
+        expect((await Promise.all(opens)).map((o) => o.kind)).toEqual(["opened", "opened"]);
+
+        ws.receive({ type: "state", game: WIRE_GAME, seq: 4, shared: { board: 1 } });
+        ws.receive({ type: "role", game: WIRE_GAME, role: "player", player_token: "player" });
+        const heard = [
+            ["state", { seq: 4, shared: { board: 1 }, private: undefined }],
+            ["role", "player", "player"],
+        ];
+        expect(first.calls).toEqual(heard);
+        expect(second.calls).toEqual(heard);
+
+        // the other frame still shows it
+        service.close(GAME, first);
+        expect(ws.lastRequest().type).toBe("open");
+        ws.receive({ type: "state", game: WIRE_GAME, seq: 5, shared: {} });
+        expect(first.calls.length).toBe(2);
+        expect(second.calls.length).toBe(3);
+
+        service.close(GAME, second);
+        expect(ws.lastRequest()).toEqual({ type: "close", game: WIRE_GAME });
     });
 
     test("tells the frame when the service closes its game", async () => {
@@ -391,12 +420,13 @@ describe("MiniAppService", () => {
         expect(frame.calls).toEqual([["closed", "bots.miniApp.closed"]]);
 
         // so it isn't sent `close`
-        service.close(GAME);
+        service.close(GAME, frame);
         expect(ws.lastRequest().type).toBe("open");
     });
 
     test("a game which can't be opened isn't kept open", async () => {
-        const open = service.open(GAME, listener());
+        const frame = listener();
+        const open = service.open(GAME, frame);
         const ws = await connected();
         ws.receive({ type: "refused", id: 1, reason: "no_spectators" });
 
@@ -404,7 +434,7 @@ describe("MiniAppService", () => {
             kind: "failed",
             message: expect.objectContaining({ key: "bots.miniApp.refusals.noSpectators" }),
         });
-        service.close(GAME);
+        service.close(GAME, frame);
         expect(ws.lastRequest().type).toBe("open");
     });
 
@@ -616,9 +646,10 @@ describe("MiniAppService", () => {
     });
 
     test("a game closed while it's being opened is closed once it's open", async () => {
-        const open = service.open(GAME, listener());
+        const frame = listener();
+        const open = service.open(GAME, frame);
         const ws = await connected();
-        service.close(GAME);
+        service.close(GAME, frame);
         expect(ws.lastRequest().type).toBe("open");
 
         ws.receive({ type: "opened", id: 1, role: "spectator" });

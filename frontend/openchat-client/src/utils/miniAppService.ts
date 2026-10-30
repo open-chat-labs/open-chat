@@ -105,7 +105,8 @@ type FollowedChat = {
 
 type OpenGame = {
     game: MiniAppGame;
-    listener: MiniAppGameListener;
+    // the frames showing it, eg. a card's in the chat and in a thread, each told what happens to it
+    listeners: Set<MiniAppGameListener>;
     // whether the service has it open on the current socket
     opened: boolean;
     // whether the frame has had a state, which it keeps if the game ends while the socket's down
@@ -229,33 +230,47 @@ export class MiniAppService {
         return reply?.type === "ok" ? { kind: "success" } : failed(reply);
     }
 
-    /** Opens a game, as its app is shown, after which `listener` hears what happens until it's closed */
+    /**
+     * Opens a game, as its app is shown, after which `listener` hears what happens until it's closed.
+     * A game shown by several frames at once is open until the last of them closes it.
+     */
     async open(game: MiniAppGame, listener: MiniAppGameListener): Promise<MiniAppOpenOutcome> {
         const key = miniAppGameKey(game);
-        const open: OpenGame = { game, listener, opened: false, hadState: false };
-        this.#open.set(key, open);
+        let open = this.#open.get(key);
+        if (open === undefined) {
+            open = { game, listeners: new Set(), opened: false, hadState: false };
+            this.#open.set(key, open);
+        }
+        open.listeners.add(listener);
         const reply = await this.#openRequest(game);
         if (reply?.type === "opened") {
             this.#opened(key, open);
             return { kind: "opened", role: reply.role, playerToken: reply.player_token };
         }
         if (this.#open.get(key) === open) {
-            this.#open.delete(key);
-            this.#closeIfIdle();
+            this.#drop(key, open, listener);
         }
         return failed(reply);
     }
 
-    close(game: MiniAppGame): void {
+    close(game: MiniAppGame, listener: MiniAppGameListener): void {
         const key = miniAppGameKey(game);
         const open = this.#open.get(key);
-        if (open === undefined) return;
-        this.#open.delete(key);
-        // otherwise it's closed once it's opened
-        if (open.opened) {
+        if (open === undefined || !open.listeners.has(listener)) return;
+        if (this.#drop(key, open, listener) && open.opened) {
+            // otherwise it's closed once it's opened
             this.#send({ type: "close", game: wireGame(game) });
         }
+    }
+
+    // Takes a frame off a game, and the game off the open ones if it was the last. Returns whether
+    // it was.
+    #drop(key: string, open: OpenGame, listener: MiniAppGameListener): boolean {
+        open.listeners.delete(listener);
+        if (open.listeners.size > 0) return false;
+        this.#open.delete(key);
         this.#closeIfIdle();
+        return true;
     }
 
     /** A fresh token for a game the user's playing, which their app asked for */
@@ -483,7 +498,7 @@ export class MiniAppService {
             // eg. the socket dropped again, or there was no chat token, so it's opened again later
             this.#reconnectLater();
         } else if (reply.type === "opened") {
-            open.listener.onRole(reply.role, reply.player_token);
+            open.listeners.forEach((listener) => listener.onRole(reply.role, reply.player_token));
         } else if (reply.type === "refused" && reply.reason === "unknown_game" && open.hadState) {
             // The game ended while the socket was down, and the service has forgotten it. The frame
             // keeps the final state it has, and nothing more comes for it.
@@ -491,9 +506,8 @@ export class MiniAppService {
             this.#closeIfIdle();
         } else {
             this.#open.delete(key);
-            open.listener.onClosed(
-                miniAppFailureMessage(reply.type === "refused" ? reply : undefined),
-            );
+            const message = miniAppFailureMessage(reply.type === "refused" ? reply : undefined);
+            open.listeners.forEach((listener) => listener.onClosed(message));
             this.#closeIfIdle();
         }
     }
@@ -526,21 +540,26 @@ export class MiniAppService {
                 const open = this.#open.get(miniAppGameKey(domainGame(message.game)));
                 if (open === undefined) return;
                 open.hadState = true;
-                open.listener.onState({
+                const state = {
                     seq: message.seq,
                     shared: message.shared,
                     private: message.private,
-                });
+                };
+                open.listeners.forEach((listener) => listener.onState(state));
                 return;
             }
             case "role":
-                this.#listener(message.game)?.onRole(message.role, message.player_token);
+                this.#listeners(message.game).forEach((listener) =>
+                    listener.onRole(message.role, message.player_token),
+                );
                 return;
             case "closed": {
                 const key = miniAppGameKey(domainGame(message.game));
                 const open = this.#open.get(key);
                 this.#open.delete(key);
-                open?.listener.onClosed(i18nKey("bots.miniApp.closed"));
+                open?.listeners.forEach((listener) =>
+                    listener.onClosed(i18nKey("bots.miniApp.closed")),
+                );
                 this.#closeIfIdle();
                 return;
             }
@@ -567,8 +586,8 @@ export class MiniAppService {
         this.#deps.cards.update((cards) => new Map(cards).set(key, live));
     }
 
-    #listener(game: WireGame): MiniAppGameListener | undefined {
-        return this.#open.get(miniAppGameKey(domainGame(game)))?.listener;
+    #listeners(game: WireGame): MiniAppGameListener[] {
+        return [...(this.#open.get(miniAppGameKey(domainGame(game)))?.listeners ?? [])];
     }
 
     #chatToken(chatId: MultiUserChatIdentifier): Promise<ChatToken | undefined> {

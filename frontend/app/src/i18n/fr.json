@@ -457,11 +457,11 @@
         },
         "miniApp": {
             "closed": "Vous ne jouez plus à cette partie, et elle ne peut pas être regardée.",
+            "exitFullScreen": "Quitter le plein écran",
             "finished": "Partie terminée",
+            "fullScreen": "Plein écran",
             "join": "Rejoindre",
             "leave": "Quitter",
-            "open": "Ouvrir",
-            "play": "Jouer",
             "playing": "{count} joueurs",
             "playingOf": "{count} joueurs sur {max}",
             "refusals": {
@@ -480,7 +480,6 @@
                 "unreachable": "Impossible de joindre le jeu. Réessayez."
             },
             "waitingFor": "En attente de {names}",
-            "watch": "Regarder",
             "watching": "{count} spectateurs",
             "yourTurn": "À vous de jouer"
         },

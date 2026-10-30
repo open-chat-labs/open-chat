@@ -457,11 +457,11 @@
         },
         "miniApp": {
             "closed": "Bạn không còn chơi trò chơi này nữa, và trò chơi này không cho phép xem.",
+            "exitFullScreen": "Thoát toàn màn hình",
             "finished": "Trò chơi kết thúc",
+            "fullScreen": "Toàn màn hình",
             "join": "Tham gia",
             "leave": "Rời đi",
-            "open": "Mở",
-            "play": "Chơi",
             "playing": "{count} người đang chơi",
             "playingOf": "{count}/{max} người đang chơi",
             "refusals": {
@@ -480,7 +480,6 @@
                 "unreachable": "Không thể kết nối với trò chơi. Hãy thử lại."
             },
             "waitingFor": "Đang chờ {names}",
-            "watch": "Xem",
             "watching": "{count} người đang xem",
             "yourTurn": "Đến lượt bạn"
         },

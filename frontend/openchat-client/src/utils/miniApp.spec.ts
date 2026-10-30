@@ -42,6 +42,7 @@ describe("miniAppCardView", () => {
             watching: undefined,
             result: undefined,
             yourTurn: true,
+            canOpen: true,
             actions: [],
         });
 
@@ -80,6 +81,7 @@ describe("miniAppCardView", () => {
             watching: undefined,
             result: "Bob won",
             yourTurn: false,
+            canOpen: false,
             actions: [],
         });
     });
@@ -96,7 +98,6 @@ describe("miniAppCardView", () => {
             "join",
         ]);
         expect(miniAppCardView(card(), live({ players: ["alice"] }), "alice").actions).toEqual([
-            "play",
             "leave",
         ]);
         expect(
@@ -108,35 +109,76 @@ describe("miniAppCardView", () => {
         ).toEqual(["join"]);
     });
 
-    test("someone who can only see the chat may only watch", () => {
-        expect(miniAppCardView(card(), live({ member: false }), "bob").actions).toEqual([]);
+    test("someone who can only see the chat can't join, but may open the game if it can be watched", () => {
+        expect(miniAppCardView(card(), live({ member: false }), "bob")).toMatchObject({
+            canOpen: false,
+            actions: [],
+        });
         expect(
-            miniAppCardView(card({ spectators: true }), live({ member: false }), "bob").actions,
-        ).toEqual(["watch"]);
+            miniAppCardView(card({ spectators: true }), live({ member: false }), "bob"),
+        ).toMatchObject({ canOpen: true, actions: [] });
     });
 
-    test("once it's started, its players play it, and others watch it if they may", () => {
+    test("a player may open the game, and so may others if it can be watched", () => {
+        expect(miniAppCardView(card(), live({ players: ["alice"] }), "alice").canOpen).toBe(true);
+        expect(miniAppCardView(card(), live({ players: ["alice"] }), "bob").canOpen).toBe(false);
+        expect(
+            miniAppCardView(card({ spectators: true }), live({ players: ["alice"] }), "bob")
+                .canOpen,
+        ).toBe(true);
+        // A player's known from the stored card once the game's started, before the live one shows
+        expect(
+            miniAppCardView(
+                card({ status: { kind: "active", players: ["alice"], waitingFor: ["alice"] } }),
+                undefined,
+                "alice",
+            ).canOpen,
+        ).toBe(true);
+        // but not before, when the stored card has no players
+        expect(miniAppCardView(card(), undefined, "alice").canOpen).toBe(false);
+        expect(miniAppCardView(card({ spectators: true }), undefined, "alice").canOpen).toBe(true);
+    });
+
+    test("once it's started, there's nothing to do from the card, and its players play it in the card", () => {
         const active = live({ status: "active", players: ["alice"], waitingFor: ["alice"] });
 
         expect(miniAppCardView(card(), active, "alice")).toMatchObject({
             yourTurn: true,
-            actions: ["play"],
+            canOpen: true,
+            actions: [],
         });
-        expect(miniAppCardView(card(), active, "bob").actions).toEqual([]);
+        expect(miniAppCardView(card(), active, "bob")).toMatchObject({
+            canOpen: false,
+            actions: [],
+        });
         expect(miniAppCardView(card({ spectators: true }), active, "bob")).toMatchObject({
             yourTurn: false,
-            actions: ["watch"],
+            canOpen: true,
+            actions: [],
         });
     });
 
-    test("once it's finished, its players open it, and others too if it can be watched", () => {
+    test("once it's finished, nobody can open it any more", () => {
         const finished = live({ status: "finished", players: ["alice"] });
 
-        expect(miniAppCardView(card(), finished, "alice").actions).toEqual(["open"]);
-        expect(miniAppCardView(card(), finished, "bob").actions).toEqual([]);
-        expect(miniAppCardView(card({ spectators: true }), finished, "bob").actions).toEqual([
-            "open",
-        ]);
+        expect(miniAppCardView(card(), finished, "alice")).toMatchObject({
+            canOpen: false,
+            actions: [],
+        });
+        expect(miniAppCardView(card({ spectators: true }), finished, "bob")).toMatchObject({
+            canOpen: false,
+            actions: [],
+        });
+        expect(
+            miniAppCardView(
+                card({
+                    spectators: true,
+                    status: { kind: "finished", players: ["alice"], result: "Alice won" },
+                }),
+                undefined,
+                "bob",
+            ).canOpen,
+        ).toBe(false);
     });
 });
 

@@ -425,11 +425,11 @@
         },
         "miniApp": {
             "closed": "You're no longer playing this game, and it can't be watched.",
+            "exitFullScreen": "Exit full screen",
             "finished": "Game over",
+            "fullScreen": "Full screen",
             "join": "Join",
             "leave": "Leave",
-            "open": "Open",
-            "play": "Play",
             "playing": "{count} playing",
             "playingOf": "{count} of {max} playing",
             "refusals": {
@@ -448,7 +448,6 @@
                 "unreachable": "Couldn't reach the game. Try again."
             },
             "waitingFor": "Waiting for {names}",
-            "watch": "Watch",
             "watching": "{count} watching",
             "yourTurn": "Your turn"
         },

@@ -15,7 +15,8 @@
     } from "@client";
     import Markdown from "@src/core/Markdown.svelte";
     import { MiniAppActions } from "@src/logic/miniApp/miniAppActions.svelte";
-    import { openMiniApp } from "@src/logic/miniApp/openMiniApp.svelte";
+    import { MiniAppFullScreen, MiniAppPresence } from "@src/logic/miniApp/miniAppFrame.svelte";
+    import type { HostedMiniApp } from "@src/logic/miniApp/miniAppHost.svelte";
     import { miniAppUrl } from "@src/utils/miniApp";
     import { buildDisplayName } from "@src/utils/user";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -23,6 +24,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import Avatar from "../Avatar.svelte";
     import Button from "../Button.svelte";
+    import MiniAppFrame from "./MiniAppFrame.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -35,6 +37,8 @@
         intersecting: boolean;
         reply?: boolean;
         pinned?: boolean;
+        // a preview of the message elsewhere, eg. where it's linked from another message
+        preview?: boolean;
         blockLevelMarkdown: boolean;
     }
 
@@ -46,6 +50,7 @@
         intersecting,
         reply = false,
         pinned = false,
+        preview = false,
         blockLevelMarkdown,
     }: Props = $props();
 
@@ -62,12 +67,49 @@
     );
     let view = $derived(miniAppCardView(content, live, $currentUserIdStore));
     let playersKey = $derived(view.players.join());
+    // the app, where the game's shown and played, from the card itself
+    let hosted = $derived<HostedMiniApp | undefined>(
+        !reply &&
+            !pinned &&
+            !preview &&
+            url !== undefined &&
+            bot !== undefined &&
+            game !== undefined
+            ? { url, botName: bot.name, game, content }
+            : undefined,
+    );
 
     // The service shows the card live once it's in view
     $effect(() => {
         if (intersecting && !reply && game !== undefined) {
             client.followMiniApp(game);
         }
+    });
+
+    // The app's shown while the card's on screen, which opens the game: a player sees it as it
+    // stands, and anyone else is watching it, if the game allows that
+    const presence = new MiniAppPresence();
+    const fullScreen = new MiniAppFullScreen();
+    let card: HTMLElement | undefined = $state();
+    let showApp = $state(false);
+    $effect(() => {
+        // Only the card itself is read here: watching it again would drop the app for a moment
+        const el = card;
+        if (!el) return;
+        return untrack(() => presence.observe(el));
+    });
+    $effect(() => presence.hold(fullScreen.on));
+    $effect(() => {
+        if (!presence.shown || hosted === undefined) {
+            showApp = false;
+        } else if (view.canOpen) {
+            showApp = true;
+        } else if (view.status !== "finished") {
+            // eg. the user left a game which can't be watched, so there's nothing to show until
+            // they join again
+            showApp = false;
+        }
+        // A finished game's app stays as it is: one showing the game as it finished keeps its end
     });
 
     $effect(() => {
@@ -86,17 +128,10 @@
     }
 
     function onAction(action: MiniAppAction) {
-        switch (action) {
-            case "join":
-                void actions?.join();
-                return;
-            case "leave":
-                void actions?.leave();
-                return;
-            default:
-                if (url !== undefined && bot !== undefined && game !== undefined) {
-                    openMiniApp.open({ url, botName: bot.name, game, content });
-                }
+        if (action === "join") {
+            void actions?.join();
+        } else {
+            void actions?.leave();
         }
     }
 </script>
@@ -104,93 +139,95 @@
 {#if reply}
     <Markdown text={content.text} oneLine suppressLinks />
 {:else}
-    {#if content.image?.blobUrl !== undefined}
-        <img
-            class="image"
-            src={content.image.blobUrl}
-            alt=""
-            style={`aspect-ratio: ${content.image.width} / ${content.image.height}`} />
-    {/if}
-    <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} text={content.text} />
-    {#if view.players.length > 0 || (live !== undefined && view.status === "open")}
-        <div class="players">
-            {#if view.status !== "finished"}
-                <div class="count">
-                    {#if content.maxPlayers !== undefined}
-                        <Translatable
-                            resourceKey={i18nKey("bots.miniApp.playingOf", {
-                                count: view.players.length,
-                                max: content.maxPlayers,
-                            })} />
-                    {:else}
-                        <Translatable
-                            resourceKey={i18nKey("bots.miniApp.playing", {
-                                count: view.players.length,
-                            })} />
-                    {/if}
-                </div>
-            {/if}
-            {#each view.players as player (player)}
-                <div class="player" class:to-move={view.waitingFor.includes(player)}>
-                    <Avatar
-                        url={client.userAvatarUrl($allUsersStore.get(player))}
-                        userId={player}
-                        size={AvatarSize.Tiny} />
-                    <span>{name(player)}</span>
-                </div>
-            {/each}
-        </div>
-    {/if}
-    <div class="state">
-        {#if view.status === "finished"}
-            <span class="result">
-                {#if view.result !== undefined}
-                    {view.result}
-                {:else}
-                    <Translatable resourceKey={i18nKey("bots.miniApp.finished")} />
+    <div bind:this={card}>
+        {#if content.image?.blobUrl !== undefined}
+            <img
+                class="image"
+                src={content.image.blobUrl}
+                alt=""
+                style={`aspect-ratio: ${content.image.width} / ${content.image.height}`} />
+        {/if}
+        <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} text={content.text} />
+        {#if showApp && hosted !== undefined && actions !== undefined}
+            <MiniAppFrame app={hosted} {actions} {fullScreen} />
+        {/if}
+        {#if view.players.length > 0 || (live !== undefined && view.status === "open")}
+            <div class="players">
+                {#if view.status !== "finished"}
+                    <div class="count">
+                        {#if content.maxPlayers !== undefined}
+                            <Translatable
+                                resourceKey={i18nKey("bots.miniApp.playingOf", {
+                                    count: view.players.length,
+                                    max: content.maxPlayers,
+                                })} />
+                        {:else}
+                            <Translatable
+                                resourceKey={i18nKey("bots.miniApp.playing", {
+                                    count: view.players.length,
+                                })} />
+                        {/if}
+                    </div>
                 {/if}
-            </span>
-        {:else if view.yourTurn}
-            <span class="your-turn">
-                <Translatable resourceKey={i18nKey("bots.miniApp.yourTurn")} />
-            </span>
-        {:else if view.waitingFor.length > 0}
-            <span>
-                <Translatable
-                    resourceKey={i18nKey("bots.miniApp.waitingFor", {
-                        names: view.waitingFor.map(name).join(", "),
-                    })} />
-            </span>
+                {#each view.players as player (player)}
+                    <div class="player" class:to-move={view.waitingFor.includes(player)}>
+                        <Avatar
+                            url={client.userAvatarUrl($allUsersStore.get(player))}
+                            userId={player}
+                            size={AvatarSize.Tiny} />
+                        <span>{name(player)}</span>
+                    </div>
+                {/each}
+            </div>
         {/if}
-        {#if view.watching !== undefined && view.watching > 0}
-            <span class="watching">
-                <Translatable
-                    resourceKey={i18nKey("bots.miniApp.watching", { count: view.watching })} />
-            </span>
-        {/if}
-    </div>
-    {#if view.actions.length > 0}
-        <div class="actions">
-            {#each view.actions as action, i (action)}
-                <!-- The others open the bot's app -->
-                {#if action === "join" || action === "leave" || url !== undefined}
+        <div class="state">
+            {#if view.status === "finished"}
+                <span class="result">
+                    {#if view.result !== undefined}
+                        {view.result}
+                    {:else}
+                        <Translatable resourceKey={i18nKey("bots.miniApp.finished")} />
+                    {/if}
+                </span>
+            {:else if view.yourTurn}
+                <span class="your-turn">
+                    <Translatable resourceKey={i18nKey("bots.miniApp.yourTurn")} />
+                </span>
+            {:else if view.waitingFor.length > 0}
+                <span>
+                    <Translatable
+                        resourceKey={i18nKey("bots.miniApp.waitingFor", {
+                            names: view.waitingFor.map(name).join(", "),
+                        })} />
+                </span>
+            {/if}
+            {#if view.watching !== undefined && view.watching > 0}
+                <span class="watching">
+                    <Translatable
+                        resourceKey={i18nKey("bots.miniApp.watching", { count: view.watching })} />
+                </span>
+            {/if}
+        </div>
+        {#if view.actions.length > 0}
+            <div class="actions">
+                {#each view.actions as action (action)}
                     <Button
                         tiny
-                        secondary={i > 0}
+                        secondary={action === "leave"}
                         loading={actions?.busy === action}
                         disabled={actions?.busy !== undefined}
                         onClick={() => onAction(action)}>
                         <Translatable resourceKey={i18nKey(`bots.miniApp.${action}`)} />
                     </Button>
-                {/if}
-            {/each}
-        </div>
-    {/if}
-    {#if actions?.error !== undefined}
-        <div class="error">
-            <Translatable resourceKey={actions.error} />
-        </div>
-    {/if}
+                {/each}
+            </div>
+        {/if}
+        {#if actions?.error !== undefined}
+            <div class="error">
+                <Translatable resourceKey={actions.error} />
+            </div>
+        {/if}
+    </div>
 {/if}
 
 <style lang="scss">

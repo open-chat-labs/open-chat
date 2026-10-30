@@ -457,11 +457,11 @@
         },
         "miniApp": {
             "closed": "دیگر در این بازی نیستید و این بازی قابل تماشا نیست.",
+            "exitFullScreen": "خروج از تمام‌صفحه",
             "finished": "بازی تمام شد",
+            "fullScreen": "تمام‌صفحه",
             "join": "پیوستن",
             "leave": "ترک کردن",
-            "open": "باز کردن",
-            "play": "بازی",
             "playing": "{count} نفر در حال بازی",
             "playingOf": "{count} از {max} نفر در حال بازی",
             "refusals": {
@@ -480,7 +480,6 @@
                 "unreachable": "دسترسی به بازی ممکن نشد. دوباره تلاش کنید."
             },
             "waitingFor": "در انتظار {names}",
-            "watch": "تماشا",
             "watching": "{count} نفر در حال تماشا",
             "yourTurn": "نوبت شماست"
         },

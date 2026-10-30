@@ -5,6 +5,8 @@
 // else about the user is shared with the app.
 
 import type {
+    MiniAppContent,
+    MiniAppGame,
     MiniAppGameListener,
     MiniAppRole,
     MiniAppState,
@@ -13,7 +15,15 @@ import type {
 } from "@client";
 import { i18nKey } from "@src/i18n/i18n";
 import { miniAppMessage, type MiniAppHostMessage } from "@src/utils/miniApp";
-import type { OpenMiniApp } from "./openMiniApp.svelte";
+
+// The bot's app shown in a game's card
+export type HostedMiniApp = {
+    url: URL;
+    botName: string;
+    game: MiniAppGame;
+    // the card it's shown in, for the buttons around the frame
+    content: MiniAppContent;
+};
 
 export type MiniAppFrameStatus =
     // until the service says how the user has it open
@@ -39,16 +49,18 @@ export type MiniAppHostOptions = {
 export class MiniAppHost {
     status = $state<MiniAppFrameStatus>({ kind: "opening" });
     #games: MiniAppGames;
-    #app: OpenMiniApp;
+    #app: HostedMiniApp;
     #options: MiniAppHostOptions;
     #frame: HTMLIFrameElement | undefined;
+    // what the service tells this frame about the game, once it's open
+    #listener: MiniAppGameListener | undefined;
     #playerToken: string | undefined;
     // whether the app has said it's ready
     #ready = false;
     // the latest state, which is held until the app's ready
     #state: MiniAppState | undefined;
 
-    constructor(games: MiniAppGames, app: OpenMiniApp, options: MiniAppHostOptions) {
+    constructor(games: MiniAppGames, app: HostedMiniApp, options: MiniAppHostOptions) {
         this.#games = games;
         this.#app = app;
         this.#options = { ...options };
@@ -64,7 +76,9 @@ export class MiniAppHost {
         return () => {
             window.removeEventListener("message", listener);
             this.#frame = undefined;
-            this.#games.closeMiniApp(this.#app.game);
+            if (this.#listener !== undefined) {
+                this.#games.closeMiniApp(this.#app.game, this.#listener);
+            }
         };
     }
 
@@ -82,6 +96,7 @@ export class MiniAppHost {
             onRole: (role, token) => this.#onRole(role, token),
             onClosed: (message) => (this.status = { kind: "closed", message }),
         };
+        this.#listener = listener;
         const outcome = await this.#games.openMiniApp(this.#app.game, listener);
         if (outcome.kind === "failed") {
             // The service forgets a game once its card records the end, so a finished card's app

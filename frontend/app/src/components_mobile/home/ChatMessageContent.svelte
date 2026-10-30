@@ -43,6 +43,8 @@
         fill: boolean;
         reply?: boolean;
         pinned?: boolean;
+        // a preview of the message elsewhere, eg. where it's linked from another message
+        preview?: boolean;
         height?: number | undefined;
         readonly: boolean;
         senderId: string;
@@ -74,6 +76,7 @@
         fill,
         reply = false,
         pinned = false,
+        preview = false,
         height = undefined,
         readonly,
         senderId,
@@ -224,5 +227,6 @@
         {intersecting}
         {reply}
         {pinned}
+        {preview}
         {blockLevelMarkdown} />
 {/if}

@@ -59,6 +59,7 @@
             <ChatMessageContent
                 {me}
                 readonly
+                preview
                 messageContext={{
                     chatId: preview.chatId,
                     threadRootMessageIndex: preview.threadRootMessageIndex,

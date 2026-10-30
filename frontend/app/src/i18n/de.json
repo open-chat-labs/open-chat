@@ -457,11 +457,11 @@
         },
         "miniApp": {
             "closed": "Du spielst nicht mehr mit, und bei diesem Spiel kann man nicht zuschauen.",
+            "exitFullScreen": "Vollbild beenden",
             "finished": "Spiel vorbei",
+            "fullScreen": "Vollbild",
             "join": "Beitreten",
             "leave": "Verlassen",
-            "open": "Öffnen",
-            "play": "Spielen",
             "playing": "{count} spielen",
             "playingOf": "{count} von {max} spielen",
             "refusals": {
@@ -480,7 +480,6 @@
                 "unreachable": "Das Spiel ist nicht erreichbar. Versuche es erneut."
             },
             "waitingFor": "Warten auf {names}",
-            "watch": "Zuschauen",
             "watching": "{count} schauen zu",
             "yourTurn": "Du bist dran"
         },

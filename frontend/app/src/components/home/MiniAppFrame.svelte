@@ -6,29 +6,33 @@
         miniAppGameKey,
         type OpenChat,
     } from "@client";
-    import { MiniAppActions } from "@src/logic/miniApp/miniAppActions.svelte";
-    import { MiniAppHost } from "@src/logic/miniApp/miniAppHost.svelte";
-    import type { OpenMiniApp } from "@src/logic/miniApp/openMiniApp.svelte";
+    import type { MiniAppActions } from "@src/logic/miniApp/miniAppActions.svelte";
+    import { MiniAppFullScreen } from "@src/logic/miniApp/miniAppFrame.svelte";
+    import { MiniAppHost, type HostedMiniApp } from "@src/logic/miniApp/miniAppHost.svelte";
     import { MINI_APP_SANDBOX } from "@src/utils/miniApp";
     import Translatable from "@shared_components/Translatable.svelte";
     import { getContext, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
+    import Fullscreen from "svelte-material-icons/Fullscreen.svelte";
+    import FullscreenExit from "svelte-material-icons/FullscreenExit.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { currentTheme } from "../../theme/themes";
     import Button from "../Button.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Overlay from "../Overlay.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         // fixed for the frame's life: a different game gets a frame of its own
-        app: OpenMiniApp;
-        onClose: () => void;
+        app: HostedMiniApp;
+        // the card's, so a request from either shows on both
+        actions: MiniAppActions;
+        // the card's too, which keeps the frame while it's full screen
+        fullScreen: MiniAppFullScreen;
     }
 
-    let { app, onClose }: Props = $props();
+    let { app, actions, fullScreen }: Props = $props();
 
     let darkMode = $derived($currentTheme.mode === "dark");
     const host = untrack(
@@ -40,20 +44,26 @@
                 translate: (key) => interpolate($_, key),
             }),
     );
-    const actions = untrack(() => new MiniAppActions(client, app.game));
     let url = $derived(app.url);
     let botName = $derived(app.botName);
-    // Joining and leaving are only ever OpenChat's own buttons, never the app's
+    // Joining and leaving are only ever OpenChat's own buttons, never the app's. The card's are
+    // hidden in full screen, so the frame has its own there.
     let joinOrLeave = $derived(
         miniAppCardView(
             app.content,
             $miniAppCardsStore.get(miniAppGameKey(app.game)),
             $currentUserIdStore,
-        ).actions.filter((a) => a === "join" || a === "leave"),
+        ).actions,
     );
 
+    let dialog: HTMLDialogElement | undefined = $state();
     let iframe: HTMLIFrameElement | undefined = $state();
 
+    $effect(() => {
+        const el = dialog;
+        if (!el) return;
+        return untrack(() => fullScreen.attach(el));
+    });
     $effect(() => {
         // null once the frame's removed, when the game's closed
         const frame = iframe;
@@ -63,83 +73,148 @@
     $effect(() => host.setDarkMode(darkMode));
 </script>
 
-<Overlay dismissible {onClose}>
-    <ModalContent large closeIcon {onClose}>
-        {#snippet header()}
-            <div class="header">
-                <div class="title">
-                    <div class="name">{botName}</div>
-                    <!-- The host is shown so the user can see where the app comes from -->
-                    <div class="host">{url.host}</div>
-                </div>
-                {#each joinOrLeave as action (action)}
-                    <Button
-                        tiny
-                        secondary={action === "leave"}
-                        loading={actions.busy === action}
-                        disabled={actions.busy !== undefined}
-                        onClick={() => (action === "join" ? actions.join() : actions.leave())}>
-                        <Translatable resourceKey={i18nKey(`bots.miniApp.${action}`)} />
-                    </Button>
-                {/each}
-            </div>
-            {#if actions.error !== undefined}
-                <div class="action-error">
-                    <Translatable resourceKey={actions.error} />
-                </div>
-            {/if}
-        {/snippet}
-        {#snippet body()}
-            <div class="app">
-                {#if host.status.kind === "closed"}
-                    <div class="closed">
-                        <AlertCircleOutline size={"2em"} color={"var(--error)"} />
-                        <Translatable resourceKey={host.status.message} />
-                    </div>
+<!-- A dialog, open in place, so that full screen can put it in the top layer without reloading the
+app (MiniAppFullScreen) -->
+<dialog bind:this={dialog} open class="frame" class:full-screen={fullScreen.on}>
+    <div class="bar">
+        <div class="title">
+            <span class="name">{botName}</span>
+            <!-- The host is shown so the user can see where the app comes from -->
+            <span class="host">{url.host}</span>
+        </div>
+        {#if fullScreen.on}
+            {#each joinOrLeave as action (action)}
+                <Button
+                    tiny
+                    secondary={action === "leave"}
+                    loading={actions.busy === action}
+                    disabled={actions.busy !== undefined}
+                    onClick={() => (action === "join" ? actions.join() : actions.leave())}>
+                    <Translatable resourceKey={i18nKey(`bots.miniApp.${action}`)} />
+                </Button>
+            {/each}
+        {/if}
+        {#if MiniAppFullScreen.supported}
+            <HoverIcon
+                compact
+                title={$_(
+                    fullScreen.on ? "bots.miniApp.exitFullScreen" : "bots.miniApp.fullScreen",
+                )}
+                onclick={() => fullScreen.toggle()}>
+                {#if fullScreen.on}
+                    <FullscreenExit size={"1.4em"} color={"var(--icon-txt)"} />
                 {:else}
-                    <iframe
-                        title={botName}
-                        bind:this={iframe}
-                        src={url.href}
-                        sandbox={MINI_APP_SANDBOX}
-                        referrerpolicy="no-referrer"></iframe>
+                    <Fullscreen size={"1.4em"} color={"var(--icon-txt)"} />
                 {/if}
+            </HoverIcon>
+        {/if}
+    </div>
+    {#if fullScreen.on && actions.error !== undefined}
+        <div class="action-error">
+            <Translatable resourceKey={actions.error} />
+        </div>
+    {/if}
+    <div class="app">
+        {#if host.status.kind === "closed"}
+            <div class="closed">
+                <AlertCircleOutline size={"2em"} color={"var(--error)"} />
+                <Translatable resourceKey={host.status.message} />
             </div>
-        {/snippet}
-        {#snippet footer()}{/snippet}
-    </ModalContent>
-</Overlay>
+        {:else}
+            <iframe
+                title={botName}
+                bind:this={iframe}
+                src={url.href}
+                sandbox={MINI_APP_SANDBOX}
+                referrerpolicy="no-referrer"></iframe>
+        {/if}
+    </div>
+</dialog>
 
 <style lang="scss">
-    .header {
+    .frame {
+        // in place in the card, rather than where a dialog puts itself
+        position: static;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: none;
+        max-height: none;
+        margin: $sp3 0 0 0;
+        padding: 0;
+        border: 1px solid var(--modal-bd);
+        border-radius: var(--rd);
+        overflow: hidden;
+        background-color: var(--modal-bg);
+        color: var(--txt);
+
+        &:not([open]) {
+            display: none;
+        }
+
+        &:modal {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100dvh;
+            margin: 0;
+            border: none;
+            border-radius: 0;
+            // so a scroll over it doesn't scroll the chat behind it
+            overscroll-behavior: contain;
+        }
+
+        &::backdrop {
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+    }
+
+    .bar {
         display: flex;
         align-items: center;
         gap: $sp3;
+        padding: $sp2 $sp3;
+        border-bottom: 1px solid var(--modal-bd);
     }
 
     .title {
         display: flex;
-        flex-direction: column;
-        gap: $sp1;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: $sp1 $sp3;
         flex: auto;
+        min-width: 0;
+    }
+
+    .name {
+        @include font(bold, normal, fs-90);
     }
 
     .host {
         @include font(book, normal, fs-70);
         color: var(--txt-light);
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .action-error {
-        margin-top: $sp2;
+        padding: $sp2 $sp3 0 $sp3;
         @include font(book, normal, fs-80);
         color: var(--error);
     }
 
     .app {
-        height: min(75vh, 720px);
+        height: min(65vh, 520px);
+
+        .full-screen & {
+            flex: auto;
+            height: auto;
+            min-height: 0;
+        }
     }
 
     iframe {
+        display: block;
         border: none;
         height: 100%;
         width: 100%;
@@ -152,6 +227,7 @@
         justify-content: center;
         gap: $sp3;
         height: 100%;
+        padding: $sp3;
         text-align: center;
     }
 </style>

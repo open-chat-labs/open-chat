@@ -457,11 +457,11 @@
         },
         "miniApp": {
             "closed": "Non partecipi più a questa partita, e non si può guardare.",
+            "exitFullScreen": "Esci da schermo intero",
             "finished": "Partita finita",
+            "fullScreen": "Schermo intero",
             "join": "Partecipa",
             "leave": "Esci",
-            "open": "Apri",
-            "play": "Gioca",
             "playing": "{count} in gioco",
             "playingOf": "{count} di {max} in gioco",
             "refusals": {
@@ -480,7 +480,6 @@
                 "unreachable": "Impossibile raggiungere il gioco. Riprova."
             },
             "waitingFor": "In attesa di {names}",
-            "watch": "Guarda",
             "watching": "{count} spettatori",
             "yourTurn": "Tocca a te"
         },

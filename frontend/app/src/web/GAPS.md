@@ -148,13 +148,14 @@ design export needs. Each entry says where it came up.
     `features/cashtag/PriceChart.svelte`. On a phone the chart has to shrink to fit the bubble: the
     mobile tree's was a fixed 22rem, wider than the bubble, so its end was cut off.
   - **MiniApp message**: a bot's card for a game, or another app, it hosts (`mini_app_content`): its
-    image, markdown text, players (avatars and names, "2 of 4 playing", whose turn it is), how many
-    are watching, the result once finished, and Join / Leave / Play / Watch / Open buttons, from
+    image, markdown text, the bot's app, players (avatars and names, "2 of 4 playing", whose turn it
+    is), how many are watching, the result once finished, and Join / Leave buttons, from
     `miniAppCardView`, which shows the MiniApp service's live card (`miniAppCardsStore`, followed with
     `client.followMiniApp` once the card's in view) or else the one stored in the chat. Join and leave
-    go through `logic/miniApp/miniAppActions.svelte.ts`. The others open the bot's app (its endpoint +
-    `/app`, from `utils/miniApp.ts`) in a sandboxed frame showing the app's host, with Join / Leave
-    beside it, mounted beside the chat from `logic/miniApp/openMiniApp.svelte.ts`;
+    go through `logic/miniApp/miniAppActions.svelte.ts`. The app (the bot's endpoint + `/app`, from
+    `utils/miniApp.ts`) is shown in the card, in a sandboxed frame with a bar naming the app's host and
+    a full screen button, while the card's on screen (`logic/miniApp/miniAppFrame.svelte.ts`), for a
+    player or, if the game allows spectators, anyone, who's then watching it;
     `logic/miniApp/miniAppHost.svelte.ts` relays between the app and the service. The library has no
     bubble for it, so the new UI shows its text (`contentText`) without the rest; the old UI's are
     `MiniAppContent.svelte` and `MiniAppFrame.svelte`.
