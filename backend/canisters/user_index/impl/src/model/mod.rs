@@ -59,6 +59,9 @@ pub fn validate_mini_apps(mini_apps: &[MiniAppDefinition]) -> Result<(), String>
         if !names.insert(app.name.as_str()) {
             return Err(format!("mini app name \"{}\" is used more than once", app.name));
         }
+        if app.image_url.trim().is_empty() {
+            return Err(format!("mini app \"{}\" image url is blank", app.name));
+        }
         if app.image_url.chars().count() > MiniAppDefinition::MAX_IMAGE_URL_CHARS {
             return Err(format!(
                 "mini app \"{}\" image url is longer than {} characters",
@@ -127,8 +130,10 @@ mod tests {
     }
 
     #[test]
-    fn image_urls_are_at_most_500_characters_and_http_or_relative() {
+    fn image_urls_are_non_blank_at_most_500_characters_and_http_or_relative() {
         for url in [
+            "",
+            " ",
             &"y".repeat(MiniAppDefinition::MAX_IMAGE_URL_CHARS + 1),
             "ftp://cdn.example.com/chess.png",
             "javascript:alert(1)",

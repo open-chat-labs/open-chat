@@ -9,11 +9,7 @@
     } from "@client";
     import type { MiniAppActions } from "@src/logic/miniApp/miniAppActions.svelte";
     import { MiniAppFullScreen } from "@src/logic/miniApp/miniAppFrame.svelte";
-    import {
-        MiniAppHost,
-        miniAppEndState,
-        type HostedMiniApp,
-    } from "@src/logic/miniApp/miniAppHost.svelte";
+    import { MiniAppHost, type HostedMiniApp } from "@src/logic/miniApp/miniAppHost.svelte";
     import { MINI_APP_SANDBOX } from "@src/utils/miniApp";
     import Translatable from "@shared_components/Translatable.svelte";
     import { BodySmall, Button, Caption, IconButton } from "component-lib";
@@ -71,8 +67,9 @@
     );
     let finished = $derived(view.status === "finished");
     // The app's shown while the user may open the game, and once it's over if the card records how
-    // it ended, which the app shows. Otherwise the frame shows the app's artwork instead.
-    let showApp = $derived(view.canOpen || miniAppEndState(app.content) !== undefined);
+    // it ended, which the app shows. Otherwise the frame shows the app's artwork instead. The
+    // artwork's also under the app until it's loaded, and while the card's off screen.
+    let showApp = $derived(view.showsApp);
     // over the app, or its artwork, once the game's over
     let label = $derived(
         finished ? (view.result ?? interpolate($_, i18nKey("bots.miniApp.finished"))) : undefined,
@@ -80,6 +77,8 @@
     // the user's taken the label off the finished game's app, to look through it, until the card's
     // shown afresh
     let dismissed = $state(false);
+    // whether the app in the frame has loaded, when it's shown in place of the artwork
+    let loaded = $state(false);
     // an image which couldn't be loaded, so the box is left plain
     let failedImage: string | undefined = $state();
 
@@ -95,14 +94,24 @@
         // null once the frame's removed, when the game's closed
         const frame = iframe;
         if (!frame) return;
-        return untrack(() => host.open(frame));
+        return untrack(() => {
+            const close = host.open(frame);
+            return () => {
+                close();
+                // the next frame starts unloaded
+                loaded = false;
+            };
+        });
     });
     $effect(() => host.setContent(app.content));
     $effect(() => host.setDarkMode(darkMode));
     // While the app's away, whatever became of its last opening is forgotten, so that it's opened
     // afresh when it's back: eg. an opening which failed while the service was unreachable
     $effect(() => {
-        if (!active) untrack(() => host.reset());
+        if (!active) {
+            untrack(() => host.reset());
+            dismissed = false;
+        }
     });
     // Nothing to see full screen but the artwork
     $effect(() => {
@@ -170,32 +179,35 @@ app (MiniAppFullScreen) -->
         </div>
     {/if}
     <div class="app" style={`--app-w: ${size.width}; --app-h: ${size.height};`}>
-        {#if showApp}
-            {#if host.status.kind === "closed"}
-                <div class="closed">
-                    <AlertCircleOutline size={"2em"} color={"var(--validation-error)"} />
-                    <Translatable resourceKey={host.status.message} />
+        {#if showApp && host.status.kind === "closed"}
+            <div class="closed">
+                <AlertCircleOutline size={"2em"} color={"var(--validation-error)"} />
+                <Translatable resourceKey={host.status.message} />
+            </div>
+        {:else}
+            <!-- The artwork, whenever there's no loaded app over it -->
+            {#if !showApp || !active || !loaded}
+                <div class="cover">
+                    {#if imageUrl !== undefined && imageUrl !== failedImage}
+                        <img src={imageUrl} alt="" onerror={() => (failedImage = imageUrl)} />
+                    {/if}
+                    {#if !showApp && label !== undefined}
+                        {@render overlay(false)}
+                    {/if}
                 </div>
-            {:else if active}
+            {/if}
+            {#if showApp && active}
                 <iframe
                     title={botName}
                     bind:this={iframe}
                     src={url.href}
                     sandbox={MINI_APP_SANDBOX}
-                    referrerpolicy="no-referrer"></iframe>
+                    referrerpolicy="no-referrer"
+                    onload={() => (loaded = true)}></iframe>
             {/if}
-            {#if label !== undefined && !dismissed}
+            {#if showApp && label !== undefined && !dismissed}
                 {@render overlay(true)}
             {/if}
-        {:else}
-            <div class="cover">
-                {#if imageUrl !== undefined && imageUrl !== failedImage}
-                    <img src={imageUrl} alt="" onerror={() => (failedImage = imageUrl)} />
-                {/if}
-                {#if label !== undefined}
-                    {@render overlay(false)}
-                {/if}
-            </div>
         {/if}
     </div>
 </dialog>
@@ -274,7 +286,10 @@ app (MiniAppFullScreen) -->
         }
     }
 
+    // over the artwork, which shows through until the app's loaded
     iframe {
+        position: absolute;
+        inset: 0;
         display: block;
         border: none;
         height: 100%;

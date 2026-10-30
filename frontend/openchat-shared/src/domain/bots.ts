@@ -376,7 +376,7 @@ export type BotDefinition = {
 // the app's image whenever there's no app to show.
 export type MiniAppDefinition = {
     name: string;
-    // https, or a path relative to the bot's endpoint, eg. "app/chess.svg"
+    // http(s), or a path relative to the bot's endpoint, eg. "app/chess.svg"
     imageUrl: string;
 };
 

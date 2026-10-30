@@ -49,9 +49,8 @@ describe("miniAppCardView", () => {
             waitingFor: ["bob"],
             watching: undefined,
             result: undefined,
-            endState: undefined,
             yourTurn: true,
-            canOpen: true,
+            showsApp: true,
             actions: [],
         });
 
@@ -96,9 +95,8 @@ describe("miniAppCardView", () => {
             waitingFor: [],
             watching: undefined,
             result: "Bob won",
-            endState: undefined,
             yourTurn: false,
-            canOpen: false,
+            showsApp: false,
             actions: [],
         });
     });
@@ -126,22 +124,22 @@ describe("miniAppCardView", () => {
         ).toEqual(["join"]);
     });
 
-    test("someone who can only see the chat can't join, but may open the game if it can be watched", () => {
+    test("someone who can only see the chat can't join, but sees the game's app if it can be watched", () => {
         expect(miniAppCardView(card(), live({ member: false }), "bob")).toMatchObject({
-            canOpen: false,
+            showsApp: false,
             actions: [],
         });
         expect(
             miniAppCardView(card({ spectators: true }), live({ member: false }), "bob"),
-        ).toMatchObject({ canOpen: true, actions: [] });
+        ).toMatchObject({ showsApp: true, actions: [] });
     });
 
-    test("a player may open the game, and so may others if it can be watched", () => {
-        expect(miniAppCardView(card(), live({ players: ["alice"] }), "alice").canOpen).toBe(true);
-        expect(miniAppCardView(card(), live({ players: ["alice"] }), "bob").canOpen).toBe(false);
+    test("a player sees the game's app, and so do others if it can be watched", () => {
+        expect(miniAppCardView(card(), live({ players: ["alice"] }), "alice").showsApp).toBe(true);
+        expect(miniAppCardView(card(), live({ players: ["alice"] }), "bob").showsApp).toBe(false);
         expect(
             miniAppCardView(card({ spectators: true }), live({ players: ["alice"] }), "bob")
-                .canOpen,
+                .showsApp,
         ).toBe(true);
         // A player's known from the stored card once the game's started, before the live one shows
         expect(
@@ -149,11 +147,11 @@ describe("miniAppCardView", () => {
                 card({ status: { kind: "active", players: ["alice"], waitingFor: ["alice"] } }),
                 undefined,
                 "alice",
-            ).canOpen,
+            ).showsApp,
         ).toBe(true);
         // but not before, when the stored card has no players
-        expect(miniAppCardView(card(), undefined, "alice").canOpen).toBe(false);
-        expect(miniAppCardView(card({ spectators: true }), undefined, "alice").canOpen).toBe(true);
+        expect(miniAppCardView(card(), undefined, "alice").showsApp).toBe(false);
+        expect(miniAppCardView(card({ spectators: true }), undefined, "alice").showsApp).toBe(true);
     });
 
     test("once it's started, there's nothing to do from the card, and its players play it in the card", () => {
@@ -161,83 +159,70 @@ describe("miniAppCardView", () => {
 
         expect(miniAppCardView(card(), active, "alice")).toMatchObject({
             yourTurn: true,
-            canOpen: true,
+            showsApp: true,
             actions: [],
         });
         expect(miniAppCardView(card(), active, "bob")).toMatchObject({
-            canOpen: false,
+            showsApp: false,
             actions: [],
         });
         expect(miniAppCardView(card({ spectators: true }), active, "bob")).toMatchObject({
             yourTurn: false,
-            canOpen: true,
+            showsApp: true,
             actions: [],
         });
     });
 
-    test("once it's finished, nobody can open it any more", () => {
-        const finished = live({ status: "finished", players: ["alice"] });
+    // The service says a game's finished before the card in the chat records the end, and an app
+    // open live is handed the end in place, so it's kept meanwhile rather than torn down and reloaded
+    test("when the service says it's finished before the stored card does, whoever saw the app keeps it", () => {
+        const finished = live({ status: "finished", players: ["alice"], result: "Alice won" });
 
         expect(miniAppCardView(card(), finished, "alice")).toMatchObject({
-            canOpen: false,
+            status: "finished",
+            result: "Alice won",
+            showsApp: true,
             actions: [],
         });
         expect(miniAppCardView(card({ spectators: true }), finished, "bob")).toMatchObject({
-            canOpen: false,
+            showsApp: true,
             actions: [],
         });
+        // whoever couldn't see it still can't
+        expect(miniAppCardView(card(), finished, "bob").showsApp).toBe(false);
         expect(
             miniAppCardView(
-                card({
-                    spectators: true,
-                    status: {
-                        kind: "finished",
-                        players: ["alice"],
-                        result: "Alice won",
-                        endState: undefined,
-                    },
-                }),
-                undefined,
-                "bob",
-            ).canOpen,
-        ).toBe(false);
+                card({ status: { kind: "active", players: ["alice"], waitingFor: ["alice"] } }),
+                finished,
+                "alice",
+            ).showsApp,
+        ).toBe(true);
     });
-});
 
-describe("miniAppCardView end state", () => {
-    test("is how the stored card says the game ended, whatever the live card shows", () => {
-        const stored = card({
-            status: {
-                kind: "finished",
-                players: ["alice"],
-                result: "Alice won",
-                endState: '{"winner":"alice"}',
-            },
-        });
-        expect(miniAppCardView(stored, undefined, "bob").endState).toBe('{"winner":"alice"}');
-        expect(
-            miniAppCardView(stored, live({ status: "finished", players: ["alice"] }), "bob")
-                .endState,
-        ).toBe('{"winner":"alice"}');
-        // the service never has one: the card records it once the game's over
-        expect(
-            miniAppCardView(card(), live({ status: "finished", players: ["alice"] }), "bob")
-                .endState,
-        ).toBeUndefined();
-        expect(
-            miniAppCardView(
-                card({
-                    status: {
-                        kind: "finished",
-                        players: [],
-                        result: undefined,
-                        endState: undefined,
-                    },
-                }),
-                undefined,
-                "bob",
-            ).endState,
-        ).toBeUndefined();
+    test("once the stored card records the end, the app shows only if it records how the game ended", () => {
+        const ended = (endState: string | undefined) =>
+            card({
+                spectators: true,
+                status: { kind: "finished", players: ["alice"], result: "Alice won", endState },
+            });
+        const finished = live({ status: "finished", players: ["alice"] });
+
+        for (const [content, userId] of [
+            [ended(undefined), "alice"],
+            [ended(undefined), "bob"],
+        ] as const) {
+            expect(miniAppCardView(content, undefined, userId).showsApp).toBe(false);
+            expect(miniAppCardView(content, finished, userId).showsApp).toBe(false);
+        }
+        // how it ended is shown to everyone, whether or not they could have watched the game
+        for (const [content, userId] of [
+            [ended('{"winner":"alice"}'), "alice"],
+            [ended('{"winner":"alice"}'), "bob"],
+            [{ ...ended('{"winner":"alice"}'), spectators: false }, "bob"],
+        ] as const) {
+            expect(miniAppCardView(content, undefined, userId).showsApp).toBe(true);
+            expect(miniAppCardView(content, finished, userId).showsApp).toBe(true);
+        }
     });
 });
 

@@ -184,7 +184,7 @@ A bot declares the apps it hosts in its definition, each with its artwork, and a
 ```
 
 - `name` is 1 to 50 characters, and what a card's `app` names. The LocalUserIndex refuses a card whose app isn't in the bot's definition.
-- `image_url` is https, or a path relative to the bot's endpoint, eg. `app/chess.svg`.
+- `image_url` is an absolute http(s) URL, or a path relative to the bot's endpoint, eg. `app/chess.svg`.
 
 The website shows the image in the card's frame box whenever there's no app to show: before the app loads, to someone who can't open it, and when the game is over with no end state, with the result, or "Game over", over it.
 

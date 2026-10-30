@@ -39,14 +39,14 @@ export type MiniAppCardView = {
     // how many are watching, which only the service knows
     watching: number | undefined;
     result: string | undefined;
-    // how the game ended, as JSON the bot chose, once the card in the chat records it: the app shows
-    // it in the card in place of the game. Only ever from the stored card, as the service forgets a
-    // game once it's finished.
-    endState: string | undefined;
     yourTurn: boolean;
-    // whether the user may have the game's app open, which shows the game in the card: a player
-    // may, and so may anyone else if the game allows spectators, until it's finished
-    canOpen: boolean;
+    // whether the card's frame shows the game's app, rather than the app's artwork. Until the card in
+    // the chat records the end, a player's does, and so does anyone else's if the game allows
+    // spectators: that holds while the service says the game's finished but the stored card doesn't
+    // yet, so an app that's open live stays, to be handed the end in place rather than reloaded. Once
+    // the stored card records the end, the app's shown only if it records how the game ended, which
+    // the app shows.
+    showsApp: boolean;
     // the first is the main one
     actions: MiniAppAction[];
 };
@@ -76,22 +76,26 @@ export function miniAppCardView(
                 : stored.kind === "finished"
                   ? stored.result
                   : undefined,
-        endState: stored.kind === "finished" ? stored.endState : undefined,
         yourTurn: status === "active" && waitingFor.includes(userId),
-        canOpen: status !== "finished" && (players.includes(userId) || content.spectators),
+        showsApp:
+            stored.kind === "finished"
+                ? stored.endState !== undefined
+                : players.includes(userId) || content.spectators,
         actions: live === undefined ? [] : miniAppActions(content, live, userId),
     };
 }
 
 // The image of the bot's app a card names, from the bot's definition, which the card shows whenever
-// there's no app to show. The definition gives it as https, or a path relative to the bot's endpoint,
-// eg. "app/chess.svg". Undefined if the bot doesn't declare the app, or the image isn't http(s).
+// there's no app to show. The definition gives it as http(s), or a path relative to the bot's
+// endpoint, eg. "app/chess.svg". Undefined if the bot doesn't declare the app, or the image isn't
+// http(s).
 export function miniAppImageUrl(
     definition: BotDefinition,
     app: string,
     endpoint: string,
 ): string | undefined {
-    const imageUrl = definition.miniApps.find((a) => a.name === app)?.imageUrl;
+    // a bot cached before its definition listed its apps has none
+    const imageUrl = (definition.miniApps ?? []).find((a) => a.name === app)?.imageUrl;
     if (imageUrl === undefined) return undefined;
     try {
         const url = new URL(imageUrl, `${endpoint.replace(/\/+$/, "")}/`);

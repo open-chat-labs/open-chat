@@ -33,7 +33,7 @@ pub struct BotDefinition {
 pub struct MiniAppDefinition {
     // what a card names it by, eg. "chess"
     pub name: String,
-    // https, or a path relative to the bot's endpoint, eg. "app/chess.svg"
+    // an absolute http(s) URL, or a path relative to the bot's endpoint, eg. "app/chess.svg"
     pub image_url: String,
 }
 
