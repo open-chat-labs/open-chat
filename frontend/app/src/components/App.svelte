@@ -544,8 +544,22 @@
     const boundaryError = boundaryErrorHandler(logger);
 
     function resize() {
+        // On a phone, focusing a field in an open menu (such as the token picker's search box)
+        // brings up the keyboard, which can resize the window. Closing the menu then takes away
+        // the field the user is about to type into, so leave it open.
+        if (!focusIsInPortalMenu()) {
+            portalState.close();
+        }
+        calculateHeight();
+    }
+
+    function orientationChanged() {
         portalState.close();
         calculateHeight();
+    }
+
+    function focusIsInPortalMenu(): boolean {
+        return document.activeElement?.closest("[data-portal-menu]") != null;
     }
 
     function startVideoCall(payload: {
@@ -642,7 +656,7 @@
     {/snippet}
 </svelte:boundary>
 
-<svelte:window onresize={resize} onerror={unhandledError} onorientationchange={resize} />
+<svelte:window onresize={resize} onerror={unhandledError} onorientationchange={orientationChanged} />
 
 <style lang="scss">
     .burst-wrapper {
