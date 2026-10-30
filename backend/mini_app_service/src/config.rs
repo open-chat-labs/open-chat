@@ -5,8 +5,8 @@ pub struct Config {
     #[envconfig(from = "IC_URL", default = "http://127.0.0.1:8080")]
     pub ic_url: String,
 
-    // The service's identity on the IC, whose principal the UserIndex's `set_mini_app_service_principal`
-    // proposal sets, so the LocalUserIndexes take its card writes
+    // The service's identity on the IC, whose principal a platform operator sets through the UserIndex's
+    // `set_mini_app_service_principal`, so the LocalUserIndexes take its card writes
     #[envconfig(from = "IC_IDENTITY_PEM")]
     pub ic_identity_pem: String,
 

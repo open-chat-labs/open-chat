@@ -1,17 +1,18 @@
-use crate::guards::caller_is_governance_principal;
+use crate::guards::caller_is_platform_operator;
 use crate::{RuntimeState, mutate_state};
-use canister_api_macros::proposal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::UserIndexEvent;
 use tracing::info;
 use user_index_canister::set_mini_app_service_principal::*;
 
-// The MiniApp service's principal, the only caller the LocalUserIndexes let write a MiniApp card's
-// players, status and result. Recorded here and fanned out to every LocalUserIndex over the event
-// queue, so a new LocalUserIndex is seeded with it.
-#[proposal(guard = "caller_is_governance_principal")]
+// The MiniApp service's principal, the only caller the LocalUserIndexes let post a MiniApp card or
+// write its players, status and result. A platform operator sets it from the website's admin page.
+// Recorded here and fanned out to every LocalUserIndex over the event queue, so a new
+// LocalUserIndex is seeded with it.
+#[update(guard = "caller_is_platform_operator", msgpack = true)]
 #[trace]
-async fn set_mini_app_service_principal(args: Args) -> Response {
+fn set_mini_app_service_principal(args: Args) -> Response {
     mutate_state(|state| set_mini_app_service_principal_impl(args, state))
 }
 

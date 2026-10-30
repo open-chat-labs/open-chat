@@ -2779,6 +2779,13 @@ export const UserIndexSetPremiumItemCostArgs = /* @__PURE__ */ Type.Object({
     chit_cost: Type.Number(),
 });
 
+export type UserIndexSetMiniAppServicePrincipalArgs = Static<
+    typeof UserIndexSetMiniAppServicePrincipalArgs
+>;
+export const UserIndexSetMiniAppServicePrincipalArgs = /* @__PURE__ */ Type.Object({
+    principal: TSPrincipal,
+});
+
 export type LocalUserIndexInviteUsersToCommunityArgs = Static<
     typeof LocalUserIndexInviteUsersToCommunityArgs
 >;

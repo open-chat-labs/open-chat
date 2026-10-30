@@ -97,6 +97,7 @@ import {
     UserIndexStartBridgedUserLinkResponse,
     UserIndexUnlinkBridgedUserArgs,
     UserIndexSetCallPushEnabledArgs,
+    UserIndexSetMiniAppServicePrincipalArgs,
     BridgePlatform as ApiBridgePlatform,
     UserIndexRecordAuthorityReportFiledArgs,
     UserIndexSetModerationReferralConfigArgs,
@@ -552,6 +553,18 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             { enabled },
             unitResult,
             UserIndexSetCallPushEnabledArgs,
+            UnitResult,
+        );
+    }
+
+    // A platform operator only. The user index passes the MiniApp service's principal on to every
+    // LocalUserIndex, which then takes that principal's card writes
+    setMiniAppServicePrincipal(principal: string): Promise<Success | OCError> {
+        return this.update(
+            "set_mini_app_service_principal",
+            { principal: principalStringToBytes(principal) },
+            unitResult,
+            UserIndexSetMiniAppServicePrincipalArgs,
             UnitResult,
         );
     }

@@ -13985,6 +13985,10 @@ export class OpenChat {
         return this.#worker.send({ kind: "setCallPushEnabled", enabled });
     }
 
+    setMiniAppServicePrincipal(principal: string): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "setMiniAppServicePrincipal", principal });
+    }
+
     setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "setAlchemyApiKey", apiKey });
     }
