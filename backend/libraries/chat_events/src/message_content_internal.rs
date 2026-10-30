@@ -2446,7 +2446,8 @@ impl MessageContentInternalSubtype for MiniAppContentInternal {
 }
 
 impl MiniAppContentInternal {
-    pub fn status(&self) -> MiniAppStatus {
+    #[cfg(test)]
+    fn status(&self) -> MiniAppStatus {
         self.status.clone().into()
     }
 
@@ -3294,8 +3295,10 @@ mod mini_app_tests {
         assert!(content.with_text(Some("Ludo".to_string())).is_err());
     }
 
+    // Stored with short names only, so that the public type's names are free to change, and read
+    // back as it was, in each of a game's states
     #[test]
-    fn a_card_is_stored_and_read_back_unchanged() {
+    fn a_card_is_stored_with_short_names_and_read_back_unchanged() {
         let mut stored: MiniAppContentInternal = MiniAppContent {
             app: "chess".to_string(),
             max_players: Some(4),
@@ -3303,29 +3306,27 @@ mod mini_app_tests {
             ..card("**Uno**")
         }
         .into();
-        stored.update(started_with(&[1, 2], &[2], Some("{\"minutes\":10}"))).unwrap();
-        stored.update(ended_with(Some("Bob won"), Some("{\"fen\":\"8/8\"}"))).unwrap();
-        let content = MessageContentInternal::MiniApp(stored);
-        let bytes = msgpack::serialize_then_unwrap(&content);
-        // Stored with short names only, so that the public type's names are free to change
-        for name in ["Finished", "players", "waiting_for", "result", "end_state", "settings"] {
-            assert!(
-                !bytes.windows(name.len()).any(|w| w == name.as_bytes()),
-                "The stored card carries the name {name:?}"
-            );
-        }
-        let read: MessageContentInternal = msgpack::deserialize_then_unwrap(&bytes);
-
-        let MessageContent::MiniApp(read) = read.clone().hydrate(None) else {
-            panic!("Expected a mini app: {read:?}");
-        };
+        let read = round_trip(&stored);
         assert_eq!(read.text, "**Uno**");
         assert_eq!(read.app, "chess");
         assert_eq!(read.max_players, Some(4));
         assert!(read.spectators);
         assert_eq!(read.app_size.width, 440);
+        assert_eq!(read.status, MiniAppStatus::Open);
+
+        stored.update(started_with(&[1, 2], &[2], Some("{\"minutes\":10}"))).unwrap();
         assert_eq!(
-            read.status,
+            round_trip(&stored).status,
+            MiniAppStatus::Active(MiniAppActive {
+                players: users(&[1, 2]),
+                waiting_for: users(&[2]),
+                settings: Some("{\"minutes\":10}".to_string()),
+            })
+        );
+
+        stored.update(ended_with(Some("Bob won"), Some("{\"fen\":\"8/8\"}"))).unwrap();
+        assert_eq!(
+            round_trip(&stored).status,
             MiniAppStatus::Finished(MiniAppFinished {
                 players: users(&[1, 2]),
                 result: Some("Bob won".to_string()),
@@ -3333,6 +3334,31 @@ mod mini_app_tests {
                 settings: Some("{\"minutes\":10}".to_string()),
             })
         );
+    }
+
+    fn round_trip(stored: &MiniAppContentInternal) -> MiniAppContent {
+        let content = MessageContentInternal::MiniApp(stored.clone());
+        let bytes = msgpack::serialize_then_unwrap(&content);
+        for name in [
+            "Open",
+            "Active",
+            "Finished",
+            "players",
+            "waiting_for",
+            "result",
+            "end_state",
+            "settings",
+        ] {
+            assert!(
+                !bytes.windows(name.len()).any(|w| w == name.as_bytes()),
+                "The stored card carries the name {name:?}"
+            );
+        }
+        let read: MessageContentInternal = msgpack::deserialize_then_unwrap(&bytes);
+        let MessageContent::MiniApp(read) = read.clone().hydrate(None) else {
+            panic!("Expected a mini app: {read:?}");
+        };
+        read
     }
 
     // A result is moderated with the card's text
