@@ -105,5 +105,5 @@ variants!(types::Chat, [Direct, Group, Channel]);
 
 variants!(
     oc_bots_sdk::types::MessageContentInitial,
-    [Text, Image, Video, Audio, File, Poll, Giphy, Custom, PriceChart]
+    [Text, Image, Video, Audio, File, Poll, Giphy, Custom, PriceChart, MiniApp]
 );
