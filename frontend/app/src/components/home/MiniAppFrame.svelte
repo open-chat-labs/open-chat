@@ -160,13 +160,10 @@ takes it away so the user can look through the game. -->
 app (MiniAppFullScreen) -->
 <dialog bind:this={dialog} open class="frame" class:full-screen={fullScreen.on}>
     <!-- In the card the frame is just the app, as the message says who posted it. Full screen has
-    a bar: the bot and where its app comes from, the card's buttons, and the way back. -->
+    a bar with only the card's buttons and the way back: the user knows what they opened, and the
+    app's host is a hosting address no one reads or visits. -->
     {#if fullScreen.on}
         <div class="bar">
-            <div class="title">
-                <span class="name">{botName}</span>
-                <span class="host">{url.host}</span>
-            </div>
             {#each joinOrLeave as action (action)}
                 <Button
                     tiny
@@ -277,29 +274,10 @@ app (MiniAppFullScreen) -->
     .bar {
         display: flex;
         align-items: center;
+        justify-content: flex-end;
         gap: $sp3;
         padding: $sp2 $sp3;
         border-bottom: 1px solid var(--modal-bd);
-    }
-
-    .title {
-        display: flex;
-        align-items: baseline;
-        flex-wrap: wrap;
-        gap: $sp1 $sp3;
-        flex: auto;
-        min-width: 0;
-    }
-
-    .name {
-        @include font(bold, normal, fs-90);
-    }
-
-    .host {
-        @include font(book, normal, fs-70);
-        color: var(--txt-light);
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
 
     .action-error {

@@ -12,7 +12,7 @@
     import { MiniAppHost, type HostedMiniApp } from "@src/logic/miniApp/miniAppHost.svelte";
     import { MINI_APP_SANDBOX } from "@src/utils/miniApp";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { BodySmall, Button, Caption, IconButton } from "component-lib";
+    import { BodySmall, Button, IconButton } from "component-lib";
     import { getContext, tick, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
@@ -159,13 +159,10 @@ takes it away so the user can look through the game. -->
 app (MiniAppFullScreen) -->
 <dialog bind:this={dialog} open class="frame" class:full-screen={fullScreen.on}>
     <!-- In the card the frame is just the app, as the message says who posted it. Full screen has
-    a bar: the bot and where its app comes from, the card's buttons, and the way back. -->
+    a bar with only the card's buttons and the way back: the user knows what they opened, and the
+    app's host is a hosting address no one reads or visits. -->
     {#if fullScreen.on}
         <div class="bar">
-            <div class="title">
-                <BodySmall fontWeight={"bold"} width={"hug"}>{botName}</BodySmall>
-                <Caption colour={"textSecondary"} width={"hug"}>{url.host}</Caption>
-            </div>
             {#each joinOrLeave as action (action)}
                 <Button
                     width={"hug"}
@@ -275,17 +272,9 @@ app (MiniAppFullScreen) -->
     .bar {
         display: flex;
         align-items: center;
+        justify-content: flex-end;
         gap: var(--sp-md);
         padding: var(--sp-xs) var(--sp-sm);
-    }
-
-    .title {
-        display: flex;
-        align-items: baseline;
-        flex-wrap: wrap;
-        gap: var(--sp-xxs) var(--sp-sm);
-        flex: auto;
-        min-width: 0;
     }
 
     .action-error {
