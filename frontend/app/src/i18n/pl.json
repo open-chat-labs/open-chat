@@ -1131,7 +1131,6 @@
     "deleteMessageAndReport": "Usuń i zgłoś",
     "deleteMessageConfirm": "Czy na pewno chcesz usunąć tę wiadomość?",
     "deleteMessageForMe": "Usuń dla mnie",
-    "deletedWebhook": "Usunięty webhook",
     "demoteFailed": "Nie można zdegradować do {role}",
     "demoteTo": "Zdegraduj do {role}",
     "directChatCreatedAt": "rozpoczął się czat",
@@ -2745,6 +2744,7 @@
     "walletSettings": "Ustawienia portfela",
     "webhook": {
         "avatarLabel": "Awatara",
+        "deleted": "Usunięty webhook",
         "nameLabel": "Nazwa",
         "namePlaceholder": "Wprowadź nazwę webhooka",
         "nameRules": "Musi być unikalny w tym czacie i zawierać wyłącznie znaki alfanumeryczne i podkreślenia",

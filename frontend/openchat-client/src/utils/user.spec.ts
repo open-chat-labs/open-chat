@@ -4,18 +4,20 @@ import {
     type DirectChatSummary,
     type UserLookup,
     type UserSummary,
+    type WebhookDetails,
 } from "@shared";
 import { _, addMessages, init } from "svelte-i18n";
 import { get } from "svelte/store";
 import { vi } from "vitest";
 import {
     botOwnerCandidates,
-    userBadges,
     buildUsernameList,
     compareUsername,
     directChatUsers,
+    isDeletedWebhook,
     missingUserIds,
     shouldRestartForNewUserId,
+    userBadges,
 } from "./user";
 
 addMessages("en", {
@@ -244,5 +246,32 @@ describe("userBadges", () => {
             chit: { streak: 5, earned: 1000 },
         });
         expect(userBadges(user, true)).toEqual({ diamond: "lifetime", chit: undefined });
+    });
+});
+
+describe("deleted webhooks", () => {
+    const live = { id: "live", name: "Relay" } as unknown as WebhookDetails;
+    const webhooks = new Map([[live.id, live]]);
+    // both have sent messages in the chat
+    const webhookUserIds = new Set(["live", "gone"]);
+
+    test("a webhook which sent messages but is no longer the chat's is deleted", () => {
+        expect(isDeletedWebhook("gone", webhooks, webhookUserIds, true)).toBe(true);
+    });
+
+    test("a webhook the chat still has is not", () => {
+        expect(isDeletedWebhook("live", webhooks, webhookUserIds, true)).toBe(false);
+    });
+
+    test("an id never seen as a webhook is not", () => {
+        expect(isDeletedWebhook("user", webhooks, webhookUserIds, true)).toBe(false);
+    });
+
+    test("nothing is concluded before the chat's details load", () => {
+        expect(isDeletedWebhook("gone", new Map(), webhookUserIds, false)).toBe(false);
+    });
+
+    test("nothing is concluded without the chat's webhooks", () => {
+        expect(isDeletedWebhook("gone", undefined, webhookUserIds, true)).toBe(false);
     });
 });

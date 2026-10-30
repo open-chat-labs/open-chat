@@ -801,6 +801,7 @@ import {
     buildReducedProfileDataList,
     buildUsernameList,
     formatLastOnlineDate,
+    isDeletedWebhook,
     missingUserIds,
     shouldRestartForNewUserId,
     nullUser,
@@ -7355,15 +7356,20 @@ export class OpenChat {
                 if (displayName?.length > 0) {
                     return displayName;
                 }
-            } else if (webhooks !== undefined) {
-                const webhook = webhooks.get(userId);
+            } else {
+                const webhook = webhooks?.get(userId);
                 if (webhook !== undefined) {
                     return webhook.name;
                 }
-                // A webhook which sent messages in the chat but is no longer one of its webhooks
-                // has been deleted
-                if (webhookUserIdsStore.value.has(userId)) {
-                    return this.config.i18nFormatter("deletedWebhook");
+                if (
+                    isDeletedWebhook(
+                        userId,
+                        webhooks,
+                        webhookUserIdsStore.value,
+                        selectedServerChatStore.value !== undefined,
+                    )
+                ) {
+                    return this.config.i18nFormatter("webhook.deleted");
                 }
             }
         }

@@ -1131,7 +1131,6 @@
     "deleteMessageAndReport": "हटाएं और रिपोर्ट करें",
     "deleteMessageConfirm": "क्या आप सचमुच इस संदेश को हटाना चाहते हैं?",
     "deleteMessageForMe": "मेरे लिए हटाएं",
-    "deletedWebhook": "हटाया गया वेबहुक",
     "demoteFailed": "{role} को अवनत करने में असमर्थ",
     "demoteTo": "{role} पर अवनत करें",
     "directChatCreatedAt": "चैट शुरू हुई",
@@ -2745,6 +2744,7 @@
     "walletSettings": "वॉलेट सेटिंग",
     "webhook": {
         "avatarLabel": "अवतार",
+        "deleted": "हटाया गया वेबहुक",
         "nameLabel": "नाम",
         "namePlaceholder": "वेबहुक नाम दर्ज करें",
         "nameRules": "इस चैट में अद्वितीय होना चाहिए और इसमें केवल अल्फ़ान्यूमेरिक वर्ण और अंडरस्कोर शामिल होने चाहिए",

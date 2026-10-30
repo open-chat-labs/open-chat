@@ -54,6 +54,7 @@ export {
     botOwnerCandidates,
     compareIsNotYouThenUsername,
     directChatUsers,
+    isDeletedWebhook,
     lastOnlineStatus,
     userBadges,
     type UserBadges,

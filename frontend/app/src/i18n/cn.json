@@ -1131,7 +1131,6 @@
     "deleteMessageAndReport": "删除并举报",
     "deleteMessageConfirm": "您确实要删除此消息吗？",
     "deleteMessageForMe": "帮我删除",
-    "deletedWebhook": "已删除的 Webhook",
     "demoteFailed": "无法降级到 {role}",
     "demoteTo": "降级为 {role}",
     "directChatCreatedAt": "聊天创建于",
@@ -2745,6 +2744,7 @@
     "walletSettings": "钱包设置",
     "webhook": {
         "avatarLabel": "阿凡达",
+        "deleted": "已删除的 Webhook",
         "nameLabel": "姓名",
         "namePlaceholder": "输入 webhook 名称",
         "nameRules": "在此聊天中必须是唯一的，并且仅包含字母数字字符和下划线",

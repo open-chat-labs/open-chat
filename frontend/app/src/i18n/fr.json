@@ -1131,7 +1131,6 @@
     "deleteMessageAndReport": "Supprimer et signaler",
     "deleteMessageConfirm": "Voulez-vous vraiment supprimer ce message ?",
     "deleteMessageForMe": "Supprimer pour moi",
-    "deletedWebhook": "Webhook supprimé",
     "demoteFailed": "Impossible de rétrograder à {role}",
     "demoteTo": "Rétrograder à {role}",
     "directChatCreatedAt": "le chat a commencé",
@@ -2745,6 +2744,7 @@
     "walletSettings": "Paramètres du portefeuille",
     "webhook": {
         "avatarLabel": "Avatar",
+        "deleted": "Webhook supprimé",
         "nameLabel": "Nom",
         "namePlaceholder": "Entrez le nom du webhook",
         "nameRules": "Doit être unique dans ce chat et contenir uniquement des caractères alphanumériques et des traits de soulignement",

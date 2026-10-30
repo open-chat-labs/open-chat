@@ -1131,7 +1131,6 @@
     "deleteMessageAndReport": "Удалить и пожаловаться",
     "deleteMessageConfirm": "Вы действительно хотите удалить это сообщение?",
     "deleteMessageForMe": "Удалить для меня",
-    "deletedWebhook": "Удалённый вебхук",
     "demoteFailed": "Не удалось понизить до {role}",
     "demoteTo": "Понизить до {role}",
     "directChatCreatedAt": "чат начался",
@@ -2745,6 +2744,7 @@
     "walletSettings": "Настройки кошелька",
     "webhook": {
         "avatarLabel": "Аватар",
+        "deleted": "Удалённый вебхук",
         "nameLabel": "Имя",
         "namePlaceholder": "Введите имя вебхука",
         "nameRules": "Должен быть уникальным в этом чате и содержать только буквенно-цифровые символы и подчеркивания.",

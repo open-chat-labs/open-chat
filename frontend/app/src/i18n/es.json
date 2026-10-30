@@ -1131,7 +1131,6 @@
     "deleteMessageAndReport": "Eliminar e informar",
     "deleteMessageConfirm": "¿Realmente quieres eliminar este mensaje?",
     "deleteMessageForMe": "Eliminar para mí",
-    "deletedWebhook": "Webhook eliminado",
     "demoteFailed": "No se puede degradar a {role}",
     "demoteTo": "Degradar a {role}",
     "directChatCreatedAt": "chat iniciado",
@@ -2745,6 +2744,7 @@
     "walletSettings": "Configuración de billetera",
     "webhook": {
         "avatarLabel": "Avatar",
+        "deleted": "Webhook eliminado",
         "nameLabel": "Nombre",
         "namePlaceholder": "Introduzca el nombre del webhook",
         "nameRules": "Debe ser único en este chat y contener únicamente caracteres alfanuméricos y guiones bajos.",

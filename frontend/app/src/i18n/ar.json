@@ -1131,7 +1131,6 @@
     "deleteMessageAndReport": "حذف والإبلاغ",
     "deleteMessageConfirm": "هل تريد حقًا حذف هذه الرسالة؟",
     "deleteMessageForMe": "حذف بالنسبة لي",
-    "deletedWebhook": "ويب هوك محذوف",
     "demoteFailed": "غير قادر على التخفيض إلى {role}",
     "demoteTo": "تخفيض إلى {role}",
     "directChatCreatedAt": "بدأت الدردشة",
@@ -2745,6 +2744,7 @@
     "walletSettings": "إعدادات المحفظة",
     "webhook": {
         "avatarLabel": "الصورة الرمزية",
+        "deleted": "ويب هوك محذوف",
         "nameLabel": "اسم",
         "namePlaceholder": "أدخل اسم خطاف الويب",
         "nameRules": "يجب أن تكون فريدة في هذه الدردشة وتحتوي على أحرف أبجدية رقمية وشرطات سفلية فقط",

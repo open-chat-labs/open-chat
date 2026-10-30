@@ -1131,7 +1131,6 @@
     "deleteMessageAndReport": "Xóa và báo cáo",
     "deleteMessageConfirm": "Bạn có thực sự muốn xóa tin nhắn này không?",
     "deleteMessageForMe": "Xóa cho tôi",
-    "deletedWebhook": "Webhook đã xóa",
     "demoteFailed": "Không thể hạ cấp xuống {role}",
     "demoteTo": "Giảm xuống {role}",
     "directChatCreatedAt": "Bắt đầu trò chuyện",
@@ -2745,6 +2744,7 @@
     "walletSettings": "Cài đặt ví",
     "webhook": {
         "avatarLabel": "Hình đại diện",
+        "deleted": "Webhook đã xóa",
         "nameLabel": "Tên",
         "namePlaceholder": "Nhập tên webhook",
         "nameRules": "Phải là duy nhất trong cuộc trò chuyện này và chỉ chứa các ký tự chữ và số và dấu gạch dưới",

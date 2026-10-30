@@ -1131,7 +1131,6 @@
     "deleteMessageAndReport": "削除して報告",
     "deleteMessageConfirm": "このメッセージを本当に削除しますか?",
     "deleteMessageForMe": "削除してください",
-    "deletedWebhook": "削除されたWebhook",
     "demoteFailed": "{role} に降格できません",
     "demoteTo": "{role}に降格",
     "directChatCreatedAt": "チャット開始",
@@ -2745,6 +2744,7 @@
     "walletSettings": "ウォレット設定",
     "webhook": {
         "avatarLabel": "アバター",
+        "deleted": "削除されたWebhook",
         "nameLabel": "名前",
         "namePlaceholder": "ウェブフック名を入力",
         "nameRules": "このチャット内で一意であり、英数字とアンダースコアのみを含める必要があります",

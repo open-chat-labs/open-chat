@@ -22,9 +22,11 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
     AuthClient: { create: () => new Promise(() => {}) },
 }));
 
-import type { UserSummary, WebhookDetails } from "@shared";
+import type { ChatIdentifier, UserSummary, WebhookDetails } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
+import { ChatDetailsState } from "./state/chat/serverDetails";
+import { currentChatVisit, startChatVisit } from "./state/selectedChat";
 import { userStore } from "./state/users/state";
 
 class FakeWorker {
@@ -45,6 +47,24 @@ function config(): OpenChatConfig {
 const user = { kind: "user", userId: "user", username: "alice" } as unknown as UserSummary;
 const webhook = { id: "live", name: "Relay" } as unknown as WebhookDetails;
 const webhooks = new Map([[webhook.id, webhook]]);
+const chatId: ChatIdentifier = { kind: "group_chat", groupId: "rrkah-fqaaa-aaaaa-aaaaq-cai" };
+
+// The chat's details, which hold its webhooks, have loaded
+function detailsLoaded() {
+    currentChatVisit()?.setDetails(
+        new ChatDetailsState(
+            chatId,
+            0n,
+            new Map(),
+            new Set(),
+            new Set(),
+            new Set(),
+            new Set(),
+            new Map(),
+            webhooks,
+        ),
+    );
+}
 
 describe("the display name of a message's sender", () => {
     let client: OpenChat;
@@ -52,6 +72,7 @@ describe("the display name of a message's sender", () => {
     beforeEach(() => {
         vi.stubGlobal("Worker", FakeWorker);
         client = new OpenChat(config());
+        startChatVisit(chatId);
         userStore.addUser(user);
         // Both webhooks have sent messages in the chat, but only `live` is still one of its webhooks
         userStore.addWebhookIds(["live", "gone"]);
@@ -66,7 +87,12 @@ describe("the display name of a message's sender", () => {
     });
 
     test("a webhook the chat no longer has is shown as deleted", () => {
-        expect(client.getDisplayName("gone", undefined, webhooks)).toBe("deletedWebhook");
+        detailsLoaded();
+        expect(client.getDisplayName("gone", undefined, webhooks)).toBe("webhook.deleted");
+    });
+
+    test("until the chat's details load, its webhooks aren't known, so none is deleted", () => {
+        expect(client.getDisplayName("gone", undefined, new Map())).toBe("unknownUser");
     });
 
     test("without the chat's webhooks a webhook can't be told from an unknown user", () => {
