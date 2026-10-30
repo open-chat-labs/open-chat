@@ -48,6 +48,7 @@
     let tokenEnabled = $state(true);
     let openAiApiKey = $state("");
     let alchemyApiKey = $state("");
+    let miniAppServicePrincipal = $state("");
     const bridgeBotIds = $state<Record<BridgePlatform, string>>({
         discord: "",
         telegram: "",
@@ -176,6 +177,39 @@
                 toastStore.showFailureToast(i18nKey("Failed to set the Alchemy API key"), err),
             )
             .finally(() => busy.delete(21));
+    }
+
+    // Sets the MiniApp service's principal on the user index, which passes it on to every
+    // LocalUserIndex. Only that principal can post a MiniApp card or write to one
+    function setMiniAppServicePrincipal(): Promise<void> {
+        const principal = miniAppServicePrincipal.trim();
+        if (!isValidPrincipal(principal)) {
+            error = i18nKey(`"${principal}" is not a valid principal`);
+            toastStore.showFailureToast(error);
+            return Promise.resolve();
+        }
+        busy.add(23);
+        return client
+            .setMiniAppServicePrincipal(principal)
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    toastStore.showSuccessToast(i18nKey("MiniApp service principal set"));
+                    miniAppServicePrincipal = "";
+                } else {
+                    toastStore.showFailureToast(
+                        i18nKey(
+                            `Failed to set the MiniApp service principal: ${resp.message ?? `code ${resp.code}`}`,
+                        ),
+                    );
+                }
+            })
+            .catch((err) =>
+                toastStore.showFailureToast(
+                    i18nKey("Failed to set the MiniApp service principal"),
+                    err,
+                ),
+            )
+            .finally(() => busy.delete(23));
     }
 
     // Sets the bot that bridges a platform, eg. Discord, on the user index, which passes it on to
@@ -935,6 +969,16 @@
                 disabled={busy.has(21)}
                 onClick={() => setAlchemyApiKey(undefined)}>Unset</Button>
         </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">MiniApp service principal</div>
+        <Input bind:value={miniAppServicePrincipal} placeholder={i18nKey("Service principal")} />
+        <Button
+            tiny
+            loading={busy.has(23)}
+            disabled={busy.has(23) || miniAppServicePrincipal.trim() === ""}
+            onClick={setMiniAppServicePrincipal}>Set</Button>
     </section>
 
     {#each Object.keys(BRIDGE_PLATFORM_NAMES) as BridgePlatform[] as platform}

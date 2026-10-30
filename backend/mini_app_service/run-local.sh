@@ -24,7 +24,8 @@ export USER_INDEX_CANISTER_ID=$(dfx canister id --identity "$IDENTITY" user_inde
 cargo build -q -p mini_app_service
 PRINCIPAL=$(./target/debug/mini_app_service principal)
 
-# Tells the LocalUserIndexes which principal is the service, as the proposal does on mainnet
-dfx canister call --identity "$IDENTITY" user_index set_mini_app_service_principal "(record { \"principal\" = principal \"$PRINCIPAL\" })"
+# Only a platform operator can tell the UserIndex (and through it the LocalUserIndexes) which principal
+# is the service, so that's done from the website's admin page (/admin), as on mainnet
+echo "MiniApp service principal: $PRINCIPAL (set it from /admin as a platform operator, if it isn't already)"
 
 ./target/debug/mini_app_service

@@ -34,7 +34,7 @@ The LocalUserIndex signs the first three with OpenChat's key, the same key as it
   - Who can see a chat follows its events: anyone can see a public group, or a public channel in a public community without a payment gate, unless it hides its messages from non-members.
   - A community's members can see its public channels.
 - **A post token** is a bot's permission to post one card: the bot, its endpoint, the chat, thread and message id, and who asked (a command and its user, or the bot itself). The LocalUserIndex resolves those as it would for `bot_send_message`, and fixes the message id: a chat command's, or otherwise one the bot chooses (the SDKs pick a random one). Posting the same token again posts nothing new, as the chat answers a bot's repeated card with the card it holds, so a bot can safely retry. A command's token lasts as long as the command can be answered.
-- **The service posts a card** through the LocalUserIndex's `send_mini_app_message`, with the bot's post token, and **writes to it** through `update_mini_app`. Only its principal may call either; it's set by the UserIndex's `set_mini_app_service_principal` proposal. A bot can't post a card any other way: `bot_send_message` refuses MiniApp content.
+- **The service posts a card** through the LocalUserIndex's `send_mini_app_message`, with the bot's post token, and **writes to it** through `update_mini_app`. Only its principal may call either; a platform operator sets it, from the website's admin page, through the UserIndex's `set_mini_app_service_principal`. A bot can't post a card any other way: `bot_send_message` refuses MiniApp content.
 
 The service also signs `MiniAppJoin`, `MiniAppStart` and `MiniAppLeave` for its calls to bots. Its public key is at `GET /public_key` (PEM).
 

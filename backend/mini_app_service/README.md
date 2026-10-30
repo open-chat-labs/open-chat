@@ -19,7 +19,7 @@ With the local replica running:
 The script:
 - generates the service's keys into `backend/mini_app_service/.local` the first time;
 - starts Redis, if it isn't already running;
-- sets the service's principal on the UserIndex, as the `set_mini_app_service_principal` proposal does on mainnet;
+- prints the service's principal, for a platform operator to set on the UserIndex from the website's admin page (`/admin`), as on mainnet;
 - then starts the service on port 8095.
 
 ## Config
@@ -27,7 +27,7 @@ The script:
 | Variable | |
 |---|---|
 | `IC_URL` | The IC, `http://127.0.0.1:8080` if not set. |
-| `IC_IDENTITY_PEM` | The service's identity on the IC, an Ed25519 or secp256k1 key. Its principal must be set by the UserIndex's `set_mini_app_service_principal` proposal; `mini_app_service principal` prints it. |
+| `IC_IDENTITY_PEM` | The service's identity on the IC, an Ed25519 or secp256k1 key. A platform operator must set its principal on the UserIndex with `set_mini_app_service_principal`, from the website's admin page; `mini_app_service principal` prints it. |
 | `USER_INDEX_CANISTER_ID` | Where OpenChat's public key is fetched from. The tokens the service takes are signed with it. |
 | `MINI_APP_SERVICE_KEY_PEM` | The key the service signs its own tokens with: a P-256 key in PKCS#8 PEM. Bots fetch its public key from `GET /public_key`. |
 | `REDIS_URL` | Where games are kept. Without one they're kept in memory, so they end when the service does. |

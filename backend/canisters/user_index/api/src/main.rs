@@ -71,6 +71,7 @@ fn main() {
     generate_ts_method!(user_index, set_bridge_bot);
     generate_ts_method!(user_index, start_bridged_user_link);
     generate_ts_method!(user_index, set_call_push_enabled);
+    generate_ts_method!(user_index, set_mini_app_service_principal);
     generate_ts_method!(user_index, set_display_name);
     generate_ts_method!(user_index, set_hide_online_status);
     generate_ts_method!(user_index, set_premium_item_cost);

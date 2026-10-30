@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `set_mini_app_service_principal` proposal endpoint, which tells the LocalUserIndexes which principal is the MiniApp service ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300))
 - Bots' definitions list their MiniApps, each with a name and an image URL, which the card for an app names ([#10323](https://github.com/open-chat-labs/open-chat/pull/10323))
 
+### Changed
+
+- Platform operators set the MiniApp service's principal with `set_mini_app_service_principal`, which was a proposal endpoint ([#TBD](https://github.com/open-chat-labs/open-chat/pull/TBD))
+
 ## [[2.0.2199](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2199-user_index)] - 2026-10-27
 
 ### Added

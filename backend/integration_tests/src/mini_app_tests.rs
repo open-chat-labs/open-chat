@@ -19,8 +19,7 @@ use types::{
     CLAIM_TYPE_MINI_APP_POST, CanisterId, ChannelId, Chat, ChatEvent, ChatPermission, CommunityId, Empty, EventIndex,
     MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePermission, Milliseconds, MiniAppActive,
     MiniAppBotClaims, MiniAppChatClaims, MiniAppContent, MiniAppDefinition, MiniAppEnded, MiniAppFinished, MiniAppGame,
-    MiniAppPostClaims, MiniAppSize, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, SuccessOnly, UnitResult,
-    UserId,
+    MiniAppPostClaims, MiniAppSize, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, UnitResult, UserId,
 };
 
 // How long a command's token, and so the post token of a command's card, lasts
@@ -33,6 +32,7 @@ fn a_bot_posts_a_mini_app_card_which_cant_be_edited() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -43,7 +43,7 @@ fn a_bot_posts_a_mini_app_card_which_cant_be_edited() {
         channel_id,
         local_user_index,
         service,
-    } = setup(env, canister_ids, *controller);
+    } = setup(env, canister_ids, *controller, *platform_operator);
     let (_, bot_principal) = install_bot(
         env,
         &owner,
@@ -135,6 +135,7 @@ fn a_bot_without_the_mini_app_permission_cant_post_one() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -145,7 +146,7 @@ fn a_bot_without_the_mini_app_permission_cant_post_one() {
         local_user_index,
         service,
         ..
-    } = setup(env, canister_ids, *controller);
+    } = setup(env, canister_ids, *controller, *platform_operator);
     let (_, bot_principal) = install_bot(
         env,
         &owner,
@@ -180,6 +181,7 @@ fn a_bot_cant_post_a_card_itself() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -189,7 +191,7 @@ fn a_bot_cant_post_a_card_itself() {
         channel_id,
         local_user_index,
         ..
-    } = setup(env, canister_ids, *controller);
+    } = setup(env, canister_ids, *controller, *platform_operator);
     let (_, bot_principal) = install_bot(
         env,
         &owner,
@@ -229,6 +231,7 @@ fn a_card_is_posted_open() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -239,7 +242,7 @@ fn a_card_is_posted_open() {
         channel_id,
         local_user_index,
         service,
-    } = setup(env, canister_ids, *controller);
+    } = setup(env, canister_ids, *controller, *platform_operator);
     let (_, bot_principal) = install_bot(
         env,
         &owner,
@@ -278,6 +281,7 @@ fn a_card_names_an_app_in_the_bots_definition() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -288,7 +292,7 @@ fn a_card_names_an_app_in_the_bots_definition() {
         local_user_index,
         service,
         ..
-    } = setup(env, canister_ids, *controller);
+    } = setup(env, canister_ids, *controller, *platform_operator);
     let (bot_id, bot_principal) = install_bot(
         env,
         &owner,
@@ -378,6 +382,7 @@ fn a_game_ends_with_its_end_state() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -388,7 +393,7 @@ fn a_game_ends_with_its_end_state() {
         channel_id,
         local_user_index,
         service,
-    } = setup(env, canister_ids, *controller);
+    } = setup(env, canister_ids, *controller, *platform_operator);
     let (_, bot_principal) = install_bot(
         env,
         &owner,
@@ -474,6 +479,7 @@ fn a_game_starts_with_its_settings() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -484,7 +490,7 @@ fn a_game_starts_with_its_settings() {
         channel_id,
         local_user_index,
         service,
-    } = setup(env, canister_ids, *controller);
+    } = setup(env, canister_ids, *controller, *platform_operator);
     let (_, bot_principal) = install_bot(
         env,
         &owner,
@@ -563,6 +569,7 @@ fn the_mini_app_service_starts_a_game_then_ends_it() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -573,7 +580,7 @@ fn the_mini_app_service_starts_a_game_then_ends_it() {
         channel_id,
         local_user_index,
         service,
-    } = setup(env, canister_ids, *controller);
+    } = setup(env, canister_ids, *controller, *platform_operator);
     let (_, bot_principal) = install_bot(
         env,
         &owner,
@@ -655,6 +662,7 @@ fn only_the_mini_app_service_writes_a_card() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -665,7 +673,7 @@ fn only_the_mini_app_service_writes_a_card() {
         channel_id,
         local_user_index,
         service,
-    } = setup(env, canister_ids, *controller);
+    } = setup(env, canister_ids, *controller, *platform_operator);
     let (_, bot_principal) = install_bot(
         env,
         &owner,
@@ -723,7 +731,7 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
     let TestEnv {
         env,
         canister_ids,
-        controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -760,7 +768,7 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
         permissions.clone(),
         Some(permissions),
     );
-    let service = set_mini_app_service(env, canister_ids, *controller);
+    let service = set_mini_app_service(env, canister_ids, *platform_operator);
     env.advance_time(Duration::from_millis(1000));
     env.tick();
 
@@ -871,6 +879,7 @@ fn a_member_cant_post_a_mini_app() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -879,7 +888,7 @@ fn a_member_cant_post_a_mini_app() {
         community_id,
         channel_id,
         ..
-    } = setup(env, canister_ids, *controller);
+    } = setup(env, canister_ids, *controller, *platform_operator);
 
     let response = client::community::send_message(
         env,
@@ -918,6 +927,7 @@ fn a_chat_token_says_whether_the_user_is_a_member() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -927,7 +937,7 @@ fn a_chat_token_says_whether_the_user_is_a_member() {
         community_id,
         channel_id,
         ..
-    } = setup(env, canister_ids, *controller);
+    } = setup(env, canister_ids, *controller, *platform_operator);
     let outsider = client::register_user(env, canister_ids);
     let private_channel_id =
         client::community::happy_path::create_channel(env, owner.principal, community_id, false, random_string());
@@ -1036,6 +1046,7 @@ fn a_bot_gets_a_token_for_the_mini_app_service() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -1045,7 +1056,7 @@ fn a_bot_gets_a_token_for_the_mini_app_service() {
         community_id,
         local_user_index,
         ..
-    } = setup(env, canister_ids, *controller);
+    } = setup(env, canister_ids, *controller, *platform_operator);
     let (bot_id, bot_principal) = install_bot(
         env,
         &owner,
@@ -1081,6 +1092,7 @@ fn a_bots_post_token_posts_its_card_once() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -1091,7 +1103,7 @@ fn a_bots_post_token_posts_its_card_once() {
         channel_id,
         local_user_index,
         service,
-    } = setup(env, canister_ids, *controller);
+    } = setup(env, canister_ids, *controller, *platform_operator);
     let (bot_id, bot_principal) = install_bot(
         env,
         &owner,
@@ -1235,6 +1247,7 @@ fn a_card_answers_a_members_command() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -1245,7 +1258,7 @@ fn a_card_answers_a_members_command() {
         channel_id,
         local_user_index,
         service,
-    } = setup(env, canister_ids, *controller);
+    } = setup(env, canister_ids, *controller, *platform_operator);
     let command_name = random_string();
     let mut definition = mini_app_bot_definition(command_name.clone());
     definition.commands[0].permissions =
@@ -1400,6 +1413,26 @@ fn a_card_answers_a_members_command() {
     assert_eq!(sent.message_id, message_id);
 }
 
+// Only a platform operator sets the MiniApp service's principal: an ordinary user is refused at the
+// door, before the endpoint runs
+#[test]
+fn only_a_platform_operator_sets_the_mini_app_service_principal() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    let args = msgpack::serialize_then_unwrap(user_index_canister::set_mini_app_service_principal::Args {
+        principal: random_principal(),
+    });
+    let response = env.update_call(
+        canister_ids.user_index,
+        user.principal,
+        "set_mini_app_service_principal_msgpack",
+        args,
+    );
+    assert!(response.is_err(), "the UserIndex accepted the call");
+}
+
 struct Setup {
     owner: User,
     member: User,
@@ -1410,7 +1443,7 @@ struct Setup {
     service: Principal,
 }
 
-fn setup(env: &mut PocketIc, canister_ids: &crate::CanisterIds, controller: Principal) -> Setup {
+fn setup(env: &mut PocketIc, canister_ids: &crate::CanisterIds, controller: Principal, platform_operator: Principal) -> Setup {
     env.advance_time(Duration::from_millis(1));
     let owner = client::register_diamond_user(env, canister_ids, controller);
     let member = client::register_user(env, canister_ids);
@@ -1419,7 +1452,7 @@ fn setup(env: &mut PocketIc, canister_ids: &crate::CanisterIds, controller: Prin
     let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
     client::community::happy_path::join_channel(env, member.principal, community_id, channel_id);
     let local_user_index = canister_ids.local_user_index(env, community_id);
-    let service = set_mini_app_service(env, canister_ids, controller);
+    let service = set_mini_app_service(env, canister_ids, platform_operator);
     Setup {
         owner,
         member,
@@ -1636,17 +1669,17 @@ fn ended_with(result: Option<&str>, end_state: Option<&str>) -> MiniAppStatusUpd
     })
 }
 
-// A new principal for the MiniApp service, set by proposal, which the UserIndex fans out to the
-// LocalUserIndexes
-fn set_mini_app_service(env: &mut PocketIc, canister_ids: &crate::CanisterIds, controller: Principal) -> Principal {
+// A new principal for the MiniApp service, set by a platform operator as the admin page does, which
+// the UserIndex fans out to the LocalUserIndexes
+fn set_mini_app_service(env: &mut PocketIc, canister_ids: &crate::CanisterIds, platform_operator: Principal) -> Principal {
     let service = random_principal();
     let response = client::user_index::set_mini_app_service_principal(
         env,
-        controller,
+        platform_operator,
         canister_ids.user_index,
         &user_index_canister::set_mini_app_service_principal::Args { principal: service },
     );
-    assert!(matches!(response, SuccessOnly::Success));
+    assert!(matches!(response, UnitResult::Success));
     service
 }
 

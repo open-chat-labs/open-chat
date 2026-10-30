@@ -6083,6 +6083,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setCallPushEnabled(enabled);
     }
 
+    setMiniAppServicePrincipal(principal: string): Promise<Success | OCError> {
+        return this._userIndexClient.setMiniAppServicePrincipal(principal);
+    }
+
     setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
         return this._userIndexClient.setAlchemyApiKey(apiKey);
     }

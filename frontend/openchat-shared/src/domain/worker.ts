@@ -563,6 +563,7 @@ export type WorkerRequest = Cloneable<
     | DailyPuzzleRegenerateToday
     | CallPushEnabled
     | SetCallPushEnabled
+    | SetMiniAppServicePrincipal
     | SetAlchemyApiKey
     | SetBridgeBot
     | GetBridgedUsers
@@ -705,6 +706,11 @@ type CallPushEnabled = {
 type SetCallPushEnabled = {
     kind: "setCallPushEnabled";
     enabled: boolean;
+};
+// Platform operators only
+type SetMiniAppServicePrincipal = {
+    kind: "setMiniAppServicePrincipal";
+    principal: string;
 };
 // Platform operators only
 type SetAlchemyApiKey = {
@@ -2915,6 +2921,7 @@ export type WorkerResults = ResultsByKind<{
     dailyPuzzleRegenerateToday: Success | OCError;
     callPushEnabled: boolean;
     setCallPushEnabled: Success | OCError;
+    setMiniAppServicePrincipal: Success | OCError;
     setAlchemyApiKey: Success | OCError;
     setBridgeBot: Success | OCError;
     getBridgedUsers: BridgedUserSummary[];

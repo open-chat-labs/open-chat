@@ -1,11 +1,12 @@
 use candid::{CandidType, Principal};
-use human_readable::HumanReadable;
 use serde::{Deserialize, Serialize};
-use types::SuccessOnly;
+use ts_export::ts_export;
+use types::UnitResult;
 
-#[derive(CandidType, Serialize, Deserialize, HumanReadable, Clone, Debug)]
+#[ts_export(user_index, set_mini_app_service_principal)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub principal: Principal,
 }
 
-pub type Response = SuccessOnly;
+pub type Response = UnitResult;
