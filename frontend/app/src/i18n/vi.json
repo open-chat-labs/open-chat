@@ -2744,6 +2744,7 @@
     "walletSettings": "Cài đặt ví",
     "webhook": {
         "avatarLabel": "Hình đại diện",
+        "deleted": "Webhook đã xóa",
         "nameLabel": "Tên",
         "namePlaceholder": "Nhập tên webhook",
         "nameRules": "Phải là duy nhất trong cuộc trò chuyện này và chỉ chứa các ký tự chữ và số và dấu gạch dưới",

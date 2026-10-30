@@ -6,6 +6,9 @@
     import { showInRightColumn } from "../app/rightPanel";
     import {
         allUsersStore,
+        isDeletedWebhook,
+        selectedServerChatStore,
+        webhookUserIdsStore,
         formatClock,
         anonUserStore,
         blockedUsersStore,
@@ -163,11 +166,16 @@
         void ratesLoaded;
         const users = $allUsersStore;
         const webhooks = $selectedChatWebhooksStore;
+        const webhookIds = $webhookUserIdsStore;
+        const detailsLoaded = $selectedServerChatStore !== undefined;
         return {
             me,
             you: $_("you"),
             // a webhook's messages are sent as it, named as the old timeline names them (findUser)
-            userName: (userId) => client.displayName(findUser(userId, users, webhooks)),
+            userName: (userId) =>
+                isDeletedWebhook(userId, webhooks, webhookIds, detailsLoaded)
+                    ? $_("webhook.deleted")
+                    : client.displayName(findUser(userId, users, webhooks)),
             contentText: (content) => client.getContentAsText($_, content),
             time: (timestamp) => client.toShortTimeString(new Date(Number(timestamp))),
             date: (timestamp) =>

@@ -801,6 +801,7 @@ import {
     buildReducedProfileDataList,
     buildUsernameList,
     formatLastOnlineDate,
+    isDeletedWebhook,
     missingUserIds,
     shouldRestartForNewUserId,
     nullUser,
@@ -7359,6 +7360,16 @@ export class OpenChat {
                 const webhook = webhooks?.get(userId);
                 if (webhook !== undefined) {
                     return webhook.name;
+                }
+                if (
+                    isDeletedWebhook(
+                        userId,
+                        webhooks,
+                        webhookUserIdsStore.value,
+                        selectedServerChatStore.value !== undefined,
+                    )
+                ) {
+                    return this.config.i18nFormatter("webhook.deleted");
                 }
             }
         }

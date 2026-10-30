@@ -4,9 +4,12 @@ import type {
     DirectChatSummary,
     MessageFormatter,
     PublicProfile,
+    ReadonlyMap,
+    ReadonlySet,
     UserLookup,
     UserSummary,
     ReducedPublicProfile,
+    WebhookDetails,
 } from "@shared";
 import { compareChats, i18nKey, isDeletedUser, type ResourceKey } from "@shared";
 
@@ -109,6 +112,24 @@ export function buildReducedProfileDataList(
             }
         })
         .filter((reducedProfile) => reducedProfile !== undefined);
+}
+
+// Whether `userId` is a webhook which has sent messages in the chat, so is among `webhookUserIds`,
+// but is no longer one of the chat's `webhooks`, so has been deleted. Nothing can be concluded
+// until the chat's details, which hold its webhooks, have loaded: until then the list is empty,
+// not short.
+export function isDeletedWebhook(
+    userId: string,
+    webhooks: ReadonlyMap<string, WebhookDetails> | undefined,
+    webhookUserIds: ReadonlySet<string>,
+    detailsLoaded: boolean,
+): boolean {
+    return (
+        detailsLoaded &&
+        webhooks !== undefined &&
+        !webhooks.has(userId) &&
+        webhookUserIds.has(userId)
+    );
 }
 
 export function nullUser(username: string): UserSummary {

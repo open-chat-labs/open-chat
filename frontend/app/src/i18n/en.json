@@ -2765,6 +2765,7 @@
     "walletSettings": "Wallet settings",
     "webhook": {
         "avatarLabel": "Avatar",
+        "deleted": "Deleted webhook",
         "nameLabel": "Name",
         "namePlaceholder": "Enter webhook name",
         "nameRules": "Must be unique in this chat and contain alphanumeric characters and underscores only",

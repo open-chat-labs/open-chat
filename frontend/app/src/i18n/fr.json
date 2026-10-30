@@ -2744,6 +2744,7 @@
     "walletSettings": "Paramètres du portefeuille",
     "webhook": {
         "avatarLabel": "Avatar",
+        "deleted": "Webhook supprimé",
         "nameLabel": "Nom",
         "namePlaceholder": "Entrez le nom du webhook",
         "nameRules": "Doit être unique dans ce chat et contenir uniquement des caractères alphanumériques et des traits de soulignement",

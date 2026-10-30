@@ -1,9 +1,11 @@
 <script lang="ts">
     import {
         allUsersStore,
+        chatIdentifiersEqual,
         AvatarSize,
         currentUserIdStore,
         OpenChat,
+        selectedChatIdStore,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
         type RehydratedMessagePreview,
@@ -29,7 +31,10 @@
             : client.getDisplayName(
                   preview.message.sender,
                   $selectedCommunityMembersStore,
-                  $selectedChatWebhooksStore,
+                  // the preview can be of a message in another chat, whose webhooks aren't held
+                  chatIdentifiersEqual(preview.chatId, $selectedChatIdStore)
+                      ? $selectedChatWebhooksStore
+                      : undefined,
               ),
     );
 </script>

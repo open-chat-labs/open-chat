@@ -2744,6 +2744,7 @@
     "walletSettings": "钱包设置",
     "webhook": {
         "avatarLabel": "阿凡达",
+        "deleted": "已删除的 Webhook",
         "nameLabel": "姓名",
         "namePlaceholder": "输入 webhook 名称",
         "nameRules": "在此聊天中必须是唯一的，并且仅包含字母数字字符和下划线",

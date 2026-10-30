@@ -2744,6 +2744,7 @@
     "walletSettings": "ウォレット設定",
     "webhook": {
         "avatarLabel": "アバター",
+        "deleted": "削除されたWebhook",
         "nameLabel": "名前",
         "namePlaceholder": "ウェブフック名を入力",
         "nameRules": "このチャット内で一意であり、英数字とアンダースコアのみを含める必要があります",
