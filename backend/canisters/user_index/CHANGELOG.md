@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Platform operators set the MiniApp service's principal with `set_mini_app_service_principal`, which was a proposal endpoint ([#TBD](https://github.com/open-chat-labs/open-chat/pull/TBD))
+- Platform operators set the MiniApp service's principal with `set_mini_app_service_principal`, which was a proposal endpoint ([#10331](https://github.com/open-chat-labs/open-chat/pull/10331))
 
 ## [[2.0.2199](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2199-user_index)] - 2026-10-27
 
