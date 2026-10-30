@@ -4,8 +4,8 @@ use crate::protocol::{Card, GameState, GameStatus, PostArgs, Refusal};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
-    CanisterId, MiniAppActive, MiniAppContent, MiniAppEnded, MiniAppFinished, MiniAppGame, MiniAppPostClaims, MiniAppSize,
-    MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, TimestampMillis, UserId,
+    CanisterId, MiniAppActive, MiniAppContent, MiniAppEnded, MiniAppFinished, MiniAppGame, MiniAppPostClaims, MiniAppStarted,
+    MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -382,6 +382,7 @@ mod tests {
     use candid::Principal;
     use serde_json::json;
     use std::collections::HashMap;
+    use types::MiniAppSize;
     use types::{BotInitiator, Chat};
 
     fn user(n: u8) -> UserId {

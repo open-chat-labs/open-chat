@@ -14,10 +14,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::{Mutex as AsyncMutex, MutexGuard};
 use tracing::{error, info, warn};
-use types::{
-    Error, Milliseconds, MiniAppChatClaims, MiniAppEnded, MiniAppGame, MiniAppSize, MiniAppStatusUpdate, TimestampMillis,
-    UserId,
-};
+use types::{Error, Milliseconds, MiniAppChatClaims, MiniAppEnded, MiniAppGame, MiniAppStatusUpdate, TimestampMillis, UserId};
 
 // A game whose bot hasn't updated it for this long is ended
 pub const ABANDONED_AFTER: Milliseconds = 24 * 60 * 60 * 1000;
@@ -851,6 +848,7 @@ mod tests {
     use std::collections::HashMap;
     use tokio::sync::Notify;
     use tokio::sync::mpsc::{Receiver, channel};
+    use types::MiniAppSize;
     use types::{
         BotInitiator, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_POST, CanisterId, Chat, EventIndex, MiniAppActive,
         MiniAppContent, MiniAppFinished, MiniAppPostClaims, MiniAppStatus, MiniAppStatusUpdate,
