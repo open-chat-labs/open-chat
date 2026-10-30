@@ -141,13 +141,14 @@ takes it away so the user can look through the game. -->
 <!-- A dialog, open in place, so that full screen can put it in the top layer without reloading the
 app (MiniAppFullScreen) -->
 <dialog bind:this={dialog} open class="frame" class:full-screen={fullScreen.on}>
-    <div class="bar">
-        <div class="title">
-            <BodySmall fontWeight={"bold"} width={"hug"}>{botName}</BodySmall>
-            <!-- The host is shown so the user can see where the app comes from -->
-            <Caption colour={"textSecondary"} width={"hug"}>{url.host}</Caption>
-        </div>
-        {#if fullScreen.on}
+    <!-- In the card the frame is just the app, as the message says who posted it. Full screen has
+    a bar: the bot and where its app comes from, the card's buttons, and the way back. -->
+    {#if fullScreen.on}
+        <div class="bar">
+            <div class="title">
+                <BodySmall fontWeight={"bold"} width={"hug"}>{botName}</BodySmall>
+                <Caption colour={"textSecondary"} width={"hug"}>{url.host}</Caption>
+            </div>
             {#each joinOrLeave as action (action)}
                 <Button
                     width={"hug"}
@@ -158,19 +159,13 @@ app (MiniAppFullScreen) -->
                     <Translatable resourceKey={i18nKey(`bots.miniApp.${action}`)} />
                 </Button>
             {/each}
-        {/if}
-        {#if MiniAppFullScreen.supported && showApp}
-            <IconButton padding={"xs"} size={"sm"} onclick={() => fullScreen.toggle()}>
+            <IconButton padding={"xs"} size={"sm"} onclick={() => fullScreen.exit()}>
                 {#snippet icon(color)}
-                    {#if fullScreen.on}
-                        <FullscreenExit {color} />
-                    {:else}
-                        <Fullscreen {color} />
-                    {/if}
+                    <FullscreenExit {color} />
                 {/snippet}
             </IconButton>
-        {/if}
-    </div>
+        </div>
+    {/if}
     {#if fullScreen.on && actions.error !== undefined}
         <div class="action-error">
             <BodySmall colour={"validationError"}>
@@ -208,6 +203,15 @@ app (MiniAppFullScreen) -->
             {#if showApp && label !== undefined && !dismissed}
                 {@render overlay(true)}
             {/if}
+        {/if}
+        {#if MiniAppFullScreen.supported && showApp && !fullScreen.on && (label === undefined || dismissed)}
+            <button
+                type="button"
+                class="corner"
+                title={$_("bots.miniApp.fullScreen")}
+                onclick={() => fullScreen.enter()}>
+                <Fullscreen size={"1.2em"} color={"currentColor"} />
+            </button>
         {/if}
     </div>
 </dialog>
@@ -355,7 +359,8 @@ app (MiniAppFullScreen) -->
         overflow-wrap: anywhere;
     }
 
-    .close {
+    .close,
+    .corner {
         position: absolute;
         top: var(--sp-xs);
         right: var(--sp-xs);
@@ -364,5 +369,28 @@ app (MiniAppFullScreen) -->
         border-radius: var(--rad-circle);
         background-color: rgba(0, 0, 0, 0.65);
         color: #fff;
+    }
+
+    // over the app, out of its way in a corner, and out of sight until the pointer's over the frame
+    // where there is one
+    .corner {
+        z-index: 1;
+        border: none;
+        cursor: pointer;
+        opacity: 0.7;
+
+        @media (hover: hover) {
+            opacity: 0;
+
+            .frame:hover &,
+            &:focus-visible {
+                opacity: 0.7;
+            }
+        }
+
+        &:hover,
+        &:focus-visible {
+            opacity: 1;
+        }
     }
 </style>
