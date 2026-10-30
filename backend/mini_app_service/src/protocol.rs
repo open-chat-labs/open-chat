@@ -241,7 +241,7 @@ pub struct GameState {
 }
 
 // A bot's answer to `POST <endpoint>/mini_app/start`: if it starts the game, who plays, whose turn it
-// is first, and the game's first state
+// is first, the game's settings, and its first state
 #[derive(Serialize, Deserialize, Debug)]
 pub struct StartResponse {
     pub accepted: bool,
@@ -251,6 +251,9 @@ pub struct StartResponse {
     pub players: Vec<UserId>,
     #[serde(default)]
     pub waiting_for: Vec<UserId>,
+    // The game's settings, as any JSON, which the card records: `null` or absent is none
+    #[serde(default)]
+    pub settings: Option<Value>,
     #[serde(default)]
     pub state: Option<GameState>,
 }
@@ -354,6 +357,23 @@ mod tests {
             update.end_state,
             Some(json!({ "fen": "8/8/8/8/8/8/8/8 w - - 0 1", "moves": ["e4", "e5"] }))
         );
+    }
+
+    // The settings are any JSON the bot chooses, or none
+    #[test]
+    fn a_bots_start_reads_with_its_settings() {
+        let start: StartResponse = serde_json::from_value(json!({
+            "accepted": true,
+            "players": ["27eue-hyaaa-aaaaf-aaa4a-cai"],
+            "settings": { "target": 2048, "seconds": 120 }
+        }))
+        .unwrap();
+        assert_eq!(start.settings, Some(json!({ "target": 2048, "seconds": 120 })));
+
+        for answer in [json!({ "accepted": true }), json!({ "accepted": true, "settings": null })] {
+            let start: StartResponse = serde_json::from_value(answer).unwrap();
+            assert_eq!(start.settings, None);
+        }
     }
 
     // A card names the bot's app, whose image OpenChat shows when there's no app to show

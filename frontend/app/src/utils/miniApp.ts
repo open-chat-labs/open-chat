@@ -31,7 +31,9 @@ function isLocal(hostname: string): boolean {
 export type MiniAppHostMessage =
     // once the app says it's ready, and again whenever the user's role changes. Only a player gets a
     // token, which the app sends with each request to its bot. A finished game is shown from how it
-    // ended (`mini_app_end_state` follows), without the service or a token.
+    // ended (`mini_app_end_state` follows), without the service or a token. The settings are the
+    // game's, as its card records them from its start, parsed from the bot's JSON: undefined while
+    // the card has none, or if they don't parse.
     | {
           kind: "initialise_mini_app";
           role: MiniAppRole;
@@ -40,6 +42,7 @@ export type MiniAppHostMessage =
           dark_mode: boolean;
           locale: string;
           finished: boolean;
+          settings: unknown;
       }
     // a fresh player token, which the app asked for
     | { kind: "mini_app_token"; token: string }

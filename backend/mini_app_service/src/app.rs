@@ -897,6 +897,7 @@ mod tests {
                 StartOutcome::Accepted(Started {
                     players: game.players.clone(),
                     waiting_for: game.players.first().copied().into_iter().collect(),
+                    settings: None,
                     state: None,
                 })
             })
@@ -1297,6 +1298,7 @@ mod tests {
             MiniAppStatus::Active(MiniAppActive {
                 players: vec![user(1), user(2)],
                 waiting_for: vec![user(1)],
+                settings: None,
             })
         );
         assert!(matches!(
@@ -1329,6 +1331,7 @@ mod tests {
                 players: vec![user(1), user(2)],
                 result: Some("Bob won".to_string()),
                 end_state: None,
+                settings: None,
             })
         );
         assert!(test.stored().await.is_none());
@@ -1363,6 +1366,7 @@ mod tests {
                 players: vec![user(1)],
                 result: None,
                 end_state: None,
+                settings: None,
             })
         );
         assert!(test.stored().await.is_none());
@@ -1395,6 +1399,7 @@ mod tests {
                 players: vec![user(1), user(2)],
                 result: Some("Checkmate".to_string()),
                 end_state: Some(end_state.clone()),
+                settings: None,
             })
         );
         assert!(matches!(
@@ -1403,6 +1408,92 @@ mod tests {
                 if result.as_deref() == Some("Checkmate") && *state == Some(end_state.clone())
         ));
         assert!(test.stored().await.is_none());
+    }
+
+    // The settings the bot started the game with, serialized compactly, are written to the card with
+    // its players, and the card keeps them when the game finishes. The live card doesn't carry them: the
+    // website reads them from the stored card.
+    #[tokio::test]
+    async fn a_bots_settings_are_written_to_the_card_when_the_game_starts() {
+        let test = Test::new();
+        test.post(None, true).await;
+        test.join(user(1)).await;
+        test.join(user(2)).await;
+        let (tab, mut tab_messages) = test.connect(user(1));
+        test.app
+            .follow(tab, user(1), 1, &test.chat_token(user(1), true), vec![game()])
+            .await;
+        cards(&mut tab_messages);
+
+        *test.bot.start_answer.lock().unwrap() = Some(StartOutcome::Accepted(Started {
+            players: vec![user(1), user(2)],
+            waiting_for: vec![user(1)],
+            settings: Some(json!({ "target": 2048, "seconds": 120 }).to_string()),
+            state: None,
+        }));
+        assert_eq!(test.start(user(1)).await, ServerMessage::Ok { id: 1 });
+        test.settle().await;
+
+        let settings = r#"{"seconds":120,"target":2048}"#.to_string();
+        assert_eq!(test.stored().await.unwrap().settings, Some(settings.clone()));
+        assert_eq!(
+            test.card(),
+            MiniAppStatus::Active(MiniAppActive {
+                players: vec![user(1), user(2)],
+                waiting_for: vec![user(1)],
+                settings: Some(settings.clone()),
+            })
+        );
+        assert_eq!(
+            serde_json::to_value(cards(&mut tab_messages).last().unwrap()).unwrap()["settings"],
+            serde_json::Value::Null
+        );
+
+        test.update(UpdateArgs {
+            result: Some("Alice won".to_string()),
+            ..update(Some(GameStatus::Finished))
+        })
+        .await
+        .unwrap();
+        test.settle().await;
+        assert_eq!(
+            test.card(),
+            MiniAppStatus::Finished(MiniAppFinished {
+                players: vec![user(1), user(2)],
+                result: Some("Alice won".to_string()),
+                end_state: None,
+                settings: Some(settings),
+            })
+        );
+    }
+
+    // As the card would refuse them: the bot answered as the protocol doesn't allow, and the player can
+    // ask again
+    #[tokio::test]
+    async fn a_start_with_settings_over_4_kb_is_refused() {
+        let test = Test::new();
+        test.post(None, true).await;
+        test.join(user(1)).await;
+
+        *test.bot.start_answer.lock().unwrap() = Some(StartOutcome::Accepted(Started {
+            players: vec![user(1)],
+            waiting_for: Vec::new(),
+            settings: Some(format!(r#""{}""#, "x".repeat(MiniAppContent::MAX_SETTINGS_BYTES))),
+            state: None,
+        }));
+        assert!(matches!(
+            test.start(user(1)).await,
+            ServerMessage::Refused {
+                reason: Refusal::BotUnavailable,
+                ..
+            }
+        ));
+        test.settle().await;
+        let stored = test.stored().await.unwrap();
+        assert_eq!(stored.status, GameStatus::Open);
+        assert_eq!(stored.settings, None);
+        assert_eq!(test.card(), MiniAppStatus::Open);
+        assert!(test.cards.written.lock().unwrap().is_empty());
     }
 
     // Only ending the game goes through then
@@ -1421,6 +1512,7 @@ mod tests {
                 players: Vec::new(),
                 result: None,
                 end_state: None,
+                settings: None,
             })
         );
         assert!(test.stored().await.is_none());
@@ -1459,6 +1551,7 @@ mod tests {
                 players: Vec::new(),
                 result: None,
                 end_state: None,
+                settings: None,
             })
         );
         assert!(test.stored().await.is_none());
@@ -1713,6 +1806,7 @@ mod tests {
         *test.bot.start_answer.lock().unwrap() = Some(StartOutcome::Accepted(Started {
             players: vec![user(1), user(2)],
             waiting_for: vec![user(1)],
+            settings: None,
             state: None,
         }));
         assert_eq!(test.start(user(2)).await, ServerMessage::Ok { id: 1 });
@@ -1742,6 +1836,7 @@ mod tests {
         *test.bot.start_answer.lock().unwrap() = Some(StartOutcome::Accepted(Started {
             players: vec![user(1), user(2)],
             waiting_for: vec![user(2), user(1)],
+            settings: None,
             state: None,
         }));
         assert_eq!(test.start(user(1)).await, ServerMessage::Ok { id: 1 });
@@ -1769,6 +1864,7 @@ mod tests {
         *test.bot.start_answer.lock().unwrap() = Some(StartOutcome::Accepted(Started {
             players: vec![user(1)],
             waiting_for: vec![user(1)],
+            settings: None,
             state: Some(GameState {
                 seq: 1,
                 shared: json!({}),
@@ -1823,6 +1919,7 @@ mod tests {
         *test.bot.start_answer.lock().unwrap() = Some(StartOutcome::Accepted(Started {
             players: vec![user(2), user(1)],
             waiting_for: Vec::new(),
+            settings: None,
             state: None,
         }));
         assert_eq!(test.start(user(2)).await, ServerMessage::Ok { id: 1 });
@@ -1862,6 +1959,7 @@ mod tests {
         *test.bot.start_answer.lock().unwrap() = Some(StartOutcome::Accepted(Started {
             players: vec![user(1)],
             waiting_for: Vec::new(),
+            settings: None,
             state: Some(lobby),
         }));
         assert!(matches!(

@@ -249,9 +249,9 @@ Every field but `game` is optional.
   - The bot includes a format version, so an app left open from an older release knows to reload. It also includes the last move, so the app can animate it.
 - **The body** is at most 64 KB.
 - **Writing to the card:** the service updates the card through the LocalUserIndex's `update_mini_app`, with a `MiniAppStatusUpdate`.
-  - When a player starts the game: `Started { players, waiting_for }`, with the players the bot started it with.
+  - When a player starts the game: `Started { players, waiting_for, settings }`, with the players the bot started it with, and its settings (see "Starting" under "Service → bot").
   - When whose turn it is changes: `Turn { waiting_for }`.
-  - When the bot sets Finished: `Ended { result, end_state }`. The card keeps the players the game started with, or no one if it never started. Finished ends the game.
+  - When the bot sets Finished: `Ended { result, end_state }`. The card keeps the players the game started with, and its settings, or no one and none if it never started. Finished ends the game.
   - The service remembers what the card holds, and sends the updates it still needs, in order. Turns that pass while an update's being written go as one.
   - Removing a player after the game has started doesn't change the card's players, only the live card's.
 
@@ -283,7 +283,7 @@ The token is `MiniAppJoin`, with `{ bot, game, user_id }`. The bot answers withi
 The token is `MiniAppStart`, with `{ bot, game, user_id }`: the player who asked. The bot answers within 5 seconds, starting the game:
 
 ```json
-{ "accepted": true, "players": ["..."], "waiting_for": ["..."], "state": { "seq": 1, "shared": {}, "private": {} } }
+{ "accepted": true, "players": ["..."], "waiting_for": ["..."], "settings": { "target": 2048, "seconds": 120 }, "state": { "seq": 1, "shared": {}, "private": {} } }
 ```
 or not:
 ```json
@@ -294,8 +294,9 @@ or not:
   - Anyone else isn't added, and the bot's told they left, eg. a player whose leave hadn't reached the bot yet.
   - Anyone playing whom the bot leaves out is taken off, as with `remove`.
 - **`waiting_for`** and **`state`** are as in `/bot/update`. The state's `seq` must be above any state the bot has already sent.
+- **`settings`** are the game's settings, as the players chose them before the start: any JSON value but `null`, eg. for the 2048 race the winning tile and the time limit. At most 4 KB serialized. Leave it out, or send `null`, for none. They're fixed at the start: the service writes them to the card with the players, the card keeps them when the game finishes, and the website hands them to the app (see "App ↔ website"). OpenChat never reads or shows them. `/bot/update` can't change them.
 - **The service holds the game while it asks.** So the bot answers with the game's first state rather than calling `/bot/update`, and its answer mustn't wait on any `/bot/update` call for the game, eg. one made while answering a join. Those would wait until the start timed out.
-- **An answer which is invalid in itself is refused:** a player listed twice, more than the game's limit, waiting for someone it doesn't list, or a state that isn't newer.
+- **An answer which is invalid in itself is refused:** a player listed twice, more than the game's limit, waiting for someone it doesn't list, settings over 4 KB, or a state that isn't newer.
 - **If a start fails,** eg. it timed out or the service couldn't save it, the player can ask again. So a bot asked to start a game it already started answers with its players as they are now.
 
 ### `POST <endpoint>/mini_app/leave`
@@ -314,10 +315,11 @@ The website loads `<endpoint>/app` in a sandboxed iframe. It sends messages only
 - `{ kind: "mini_app_start" }`: the player asks to start the game. The website sends `start`.
 
 **Website → app:**
-- `{ kind: "initialise_mini_app", role: "player" | "spectator", user_id, token, dark_mode, locale, finished }`
+- `{ kind: "initialise_mini_app", role: "player" | "spectator", user_id, token, dark_mode, locale, finished, settings }`
   - The website sends it again when the user's role changes.
   - `token` is the player token, and only players get one.
   - `finished` is true when the game is over and the card holds how it ended. Then there's no token, `role` is "player" if the user was one of the game's players and "spectator" otherwise, and no `mini_app_state` follows: a `mini_app_end_state` does.
+  - `settings` are the game's settings as the card records them, parsed from the JSON the bot started the game with, and absent (`undefined`) while the card has none, or if they don't parse. They come with every initialise, a finished card's included. The card's copy arrives with the next initialise only, so an app that's open when the game starts learns the settings from the bot's state, as it does everything else about the game.
 - `{ kind: "mini_app_end_state", state }`: the bot's end state, as JSON. The website sends it after `initialise_mini_app` for a finished card, and also to an app that's open live when its game finishes and the card gets its end state, so the app switches to its end view. The website opens a finished card's app only when the card has an end state; otherwise it shows the app's image with the result.
 - `{ kind: "mini_app_token", token }`
 - `{ kind: "mini_app_state", seq, shared, private }`
@@ -334,7 +336,7 @@ A player's app sends the player token, in `x-oc-jwt`, with each request to the b
 - **Starting goes through OpenChat,** so the card records exactly who the game started with. An app asks for its player, and the bot decides. Moves go straight to the bot.
 - **A bot checks its own player list on every request.** A player token outlives a removal by up to an hour.
 - **Spectators get only the shared state,** which every player sees too, so watching can't leak a player's hand.
-- **Only the service posts a card, and only it writes the card's status.** So every card is a game the service knows from the moment it exists. The status holds the game's players once it starts, whose turn it is, and its result and end state once it finishes.
+- **Only the service posts a card, and only it writes the card's status.** So every card is a game the service knows from the moment it exists. The status holds the game's players and settings once it starts, whose turn it is, and its result and end state once it finishes.
   - A bot can take players off but never put them on.
   - The service ends a game:
     - after 24 hours with no update from its bot, ending the card with no result;

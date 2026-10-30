@@ -121,11 +121,13 @@ pub fn message_contents() -> Vec<MessageContent> {
             MiniAppStatus::Active(MiniAppActive {
                 players: vec![user_id(1), user_id(2)],
                 waiting_for: vec![user_id(2)],
+                settings: Some("{\"target\":2048}".to_string()),
             }),
             MiniAppStatus::Finished(MiniAppFinished {
                 players: vec![user_id(1), user_id(2)],
                 result: Some("Bob won".to_string()),
                 end_state: Some("{\"fen\":\"8/8\"}".to_string()),
+                settings: Some("{\"target\":2048}".to_string()),
             }),
         ])
         .into_iter()

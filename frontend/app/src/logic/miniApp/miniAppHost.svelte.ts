@@ -63,6 +63,18 @@ export function miniAppEndState(content: MiniAppContent): { state: unknown } | u
     }
 }
 
+// The game's settings, as its card records them from its start, parsed from the JSON the bot chose.
+// Undefined while the card has none, or if what it holds isn't JSON.
+export function miniAppSettings(content: MiniAppContent): unknown {
+    const settings = content.status.kind === "open" ? undefined : content.status.settings;
+    if (settings === undefined) return undefined;
+    try {
+        return JSON.parse(settings);
+    } catch {
+        return undefined;
+    }
+}
+
 export class MiniAppHost {
     status = $state<MiniAppFrameStatus>({ kind: "opening" });
     #games: MiniAppGames;
@@ -189,8 +201,9 @@ export class MiniAppHost {
         }
     }
 
-    // Tells the app the user's role, once it's ready, and then how the game ended, or else the
-    // latest state, unless the service is about to send it
+    // Tells the app the user's role, and the game's settings if its card records them yet, once it's
+    // ready, and then how the game ended, or else the latest state, unless the service is about to
+    // send it
     #initialise(withState: boolean): void {
         if (!this.#ready || this.status.kind !== "open") return;
         this.#send({
@@ -201,6 +214,7 @@ export class MiniAppHost {
             dark_mode: this.#options.darkMode,
             locale: this.#options.locale(),
             finished: this.#endState !== undefined,
+            settings: miniAppSettings(this.#content),
         });
         if (this.#endState !== undefined) {
             this.#send({ kind: "mini_app_end_state", state: this.#endState.state });

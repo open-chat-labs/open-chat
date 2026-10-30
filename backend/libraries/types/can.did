@@ -1546,12 +1546,14 @@ type MiniAppStatus = variant {
 type MiniAppActive = record {
     players : vec UserId;
     waiting_for : vec UserId;
+    settings : opt text;
 };
 
 type MiniAppFinished = record {
     players : vec UserId;
     result : opt text;
     end_state : opt text;
+    settings : opt text;
 };
 
 type EncryptedMessageContentType = variant {

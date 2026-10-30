@@ -1278,6 +1278,7 @@ function miniAppStatus(value: TMiniAppStatus): MiniAppStatus {
             kind: "active",
             players: value.Active.players.map(principalBytesToString),
             waitingFor: value.Active.waiting_for.map(principalBytesToString),
+            settings: mapOptional(value.Active.settings, identity),
         };
     }
     return {
@@ -1285,6 +1286,7 @@ function miniAppStatus(value: TMiniAppStatus): MiniAppStatus {
         players: value.Finished.players.map(principalBytesToString),
         result: mapOptional(value.Finished.result, identity),
         endState: mapOptional(value.Finished.end_state, identity),
+        settings: mapOptional(value.Finished.settings, identity),
     };
 }
 

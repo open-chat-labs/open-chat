@@ -110,7 +110,12 @@ describe("MiniAppHost", () => {
         await settle();
     }
 
-    function initialise(role: "player" | "spectator", token?: string, finished = false) {
+    function initialise(
+        role: "player" | "spectator",
+        token?: string,
+        finished = false,
+        settings: unknown = undefined,
+    ) {
         return {
             kind: "initialise_mini_app",
             role,
@@ -119,27 +124,47 @@ describe("MiniAppHost", () => {
             dark_mode: true,
             locale: "fr",
             finished,
+            settings,
         };
     }
 
     // The card once its game's over, with how it ended if the bot said
-    function finished(players: string[], endState: string | undefined): MiniAppContent {
+    function finished(
+        players: string[],
+        endState: string | undefined,
+        settings: string | undefined = undefined,
+    ): MiniAppContent {
         return {
             ...APP.content,
-            status: { kind: "finished", players, result: "Someone won", endState },
+            status: { kind: "finished", players, result: "Someone won", endState, settings },
         };
     }
+
+    // The card once its game's started, with the settings it started with if the bot gave any
+    function active(players: string[], settings: string | undefined): MiniAppContent {
+        return {
+            ...APP.content,
+            status: { kind: "active", players, waitingFor: [], settings },
+        };
+    }
+
+    const SETTINGS = '{"target":2048,"seconds":120}';
+    const settings = { target: 2048, seconds: 120 };
 
     const END_STATE = '{"board":"rnbqkbnr","moves":["e4"]}';
     const endState = { kind: "mini_app_end_state", state: { board: "rnbqkbnr", moves: ["e4"] } };
 
     // A host for a card that's already finished when its frame's shown
-    function openFinished(players: string[], endState: string | undefined) {
+    function openFinished(
+        players: string[],
+        endState: string | undefined,
+        settings: string | undefined = undefined,
+    ) {
         close();
         games = new FakeGames();
         host = new MiniAppHost(
             games,
-            { ...APP, content: finished(players, endState) },
+            { ...APP, content: finished(players, endState, settings) },
             {
                 userId: "me",
                 darkMode: true,
@@ -316,7 +341,13 @@ describe("MiniAppHost", () => {
             ...APP,
             content: {
                 ...APP.content,
-                status: { kind: "finished", players: [], result: undefined, endState: undefined },
+                status: {
+                    kind: "finished",
+                    players: [],
+                    result: undefined,
+                    endState: undefined,
+                    settings: undefined,
+                },
             },
         };
         games = new FakeGames();
@@ -377,6 +408,45 @@ describe("MiniAppHost", () => {
             await fromApp({ kind: "mini_app_token_request" });
             await fromApp({ kind: "mini_app_start" });
             expect(sent).toEqual([]);
+        });
+    });
+
+    // The game's settings, as its card records them from its start, go to the app with each initialise,
+    // parsed from the bot's JSON. OpenChat never reads them itself.
+    describe("the game's settings", () => {
+        test("are sent once the card records them, with the app's role", async () => {
+            host.setContent(active(["me"], SETTINGS));
+            await opened("player", "player");
+            await fromApp({ kind: "mini_app_ready" });
+            expect(sent).toEqual([initialise("player", "player", false, settings)]);
+        });
+
+        test("are undefined while the card has none, or if they don't parse", async () => {
+            await opened("player", "player");
+            await fromApp({ kind: "mini_app_ready" });
+            expect(sent).toEqual([initialise("player", "player")]);
+
+            sent = [];
+            host.setContent(active(["me"], "{not json"));
+            games.listener!.onRole("spectator", undefined);
+            expect(sent).toEqual([initialise("spectator")]);
+        });
+
+        test("are sent again with the role, from the card as it is then", async () => {
+            await opened("spectator");
+            await fromApp({ kind: "mini_app_ready" });
+            sent = [];
+
+            // the card caught up with the start since the app was initialised
+            host.setContent(active(["me"], SETTINGS));
+            games.listener!.onRole("player", "player");
+            expect(sent).toEqual([initialise("player", "player", false, settings)]);
+        });
+
+        test("a finished card's go with its end", async () => {
+            openFinished(["me"], END_STATE, SETTINGS);
+            await fromApp({ kind: "mini_app_ready" });
+            expect(sent).toEqual([initialise("player", undefined, true, settings), endState]);
         });
     });
 

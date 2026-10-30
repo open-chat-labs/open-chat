@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Issue the MiniApp service's tokens: a chat token for users, and a token for bots ([#10301](https://github.com/open-chat-labs/open-chat/pull/10301))
 - Post MiniApp cards through the MiniApp service: a bot gets a post token from `bot_mini_app_post_token`, and the service posts the card with `send_mini_app_message` ([#10316](https://github.com/open-chat-labs/open-chat/pull/10316))
 - Refuse a MiniApp card naming an app the bot's definition lacks; a finished game's card can hold an end state its app shows ([#10323](https://github.com/open-chat-labs/open-chat/pull/10323))
+- A MiniApp game's card records the game's settings once it starts, for its app ([#10325](https://github.com/open-chat-labs/open-chat/pull/10325))
 
 ### Changed
 
