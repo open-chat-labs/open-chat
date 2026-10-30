@@ -29,9 +29,11 @@
         actions: MiniAppActions;
         // the card's too, which keeps the frame while it's full screen
         fullScreen: MiniAppFullScreen;
+        // whether the app's running in the frame, which otherwise keeps the app's place in the card
+        active: boolean;
     }
 
-    let { app, actions, fullScreen }: Props = $props();
+    let { app, actions, fullScreen, active }: Props = $props();
 
     let darkMode = $derived($currentTheme.mode === "dark");
     const host = untrack(
@@ -45,6 +47,8 @@
     );
     let url = $derived(app.url);
     let botName = $derived(app.botName);
+    // the size the app's designed for, which gives the frame its aspect ratio
+    let size = $derived(app.content.appSize);
     // Joining and leaving are only ever OpenChat's own buttons, never the app's. The card's are
     // hidden in full screen, so the frame has its own there.
     let joinOrLeave = $derived(
@@ -70,6 +74,11 @@
         return untrack(() => host.open(frame));
     });
     $effect(() => host.setDarkMode(darkMode));
+    // While the app's away, whatever became of its last opening is forgotten, so that it's opened
+    // afresh when it's back: eg. an opening which failed while the service was unreachable
+    $effect(() => {
+        if (!active) untrack(() => host.reset());
+    });
 </script>
 
 <!-- A dialog, open in place, so that full screen can put it in the top layer without reloading the
@@ -112,13 +121,13 @@ app (MiniAppFullScreen) -->
             </BodySmall>
         </div>
     {/if}
-    <div class="app">
+    <div class="app" style={`--app-w: ${size.width}; --app-h: ${size.height};`}>
         {#if host.status.kind === "closed"}
             <div class="closed">
                 <AlertCircleOutline size={"2em"} color={"var(--validation-error)"} />
                 <Translatable resourceKey={host.status.message} />
             </div>
-        {:else}
+        {:else if active}
             <iframe
                 title={botName}
                 bind:this={iframe}
@@ -186,12 +195,19 @@ app (MiniAppFullScreen) -->
     }
 
     .app {
-        height: min(65vh, 520px);
+        // at the app's aspect ratio, no taller than most of the screen
+        width: min(100%, calc(75dvh * var(--app-w) / var(--app-h)));
+        aspect-ratio: var(--app-w) / var(--app-h);
+        margin: 0 auto;
 
         .full-screen & {
             flex: auto;
+            width: auto;
             height: auto;
             min-height: 0;
+            aspect-ratio: auto;
+            // auto margins would stop the flex column stretching it
+            margin: 0;
         }
     }
 

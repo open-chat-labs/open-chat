@@ -2,7 +2,9 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use types::{BlobReference, CanisterId, EventIndex, MiniAppContent, MiniAppGame, MiniAppImage, MiniAppStatus, UserId};
+use types::{
+    BlobReference, CanisterId, EventIndex, MiniAppContent, MiniAppGame, MiniAppImage, MiniAppSize, MiniAppStatus, UserId,
+};
 
 pub type RequestId = u64;
 
@@ -183,6 +185,8 @@ pub struct CardContent {
     pub max_players: Option<u32>,
     #[serde(default)]
     pub spectators: bool,
+    // the size the app's designed for, in CSS pixels
+    pub app_size: MiniAppSize,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -224,6 +228,7 @@ impl CardContent {
             image,
             max_players: self.max_players,
             spectators: self.spectators,
+            app_size: self.app_size,
             status: MiniAppStatus::Open,
         };
         content.validate_new()?;

@@ -19,8 +19,8 @@ use types::{
     CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_POST, CanisterId, ChannelId, Chat, ChatEvent, ChatPermission, CommunityId,
     Empty, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePermission, Milliseconds,
     MiniAppActive, MiniAppBotClaims, MiniAppChatClaims, MiniAppContent, MiniAppEnded, MiniAppFinished, MiniAppGame,
-    MiniAppImage, MiniAppPostClaims, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, SuccessOnly, UnitResult,
-    UserId,
+    MiniAppImage, MiniAppPostClaims, MiniAppSize, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, SuccessOnly,
+    UnitResult, UserId,
 };
 
 // How long a command's token, and so the post token of a command's card, lasts
@@ -1301,6 +1301,7 @@ fn card() -> MiniAppContent {
         }),
         max_players: Some(4),
         spectators: true,
+        app_size: MiniAppSize { width: 440, height: 740 },
         status: MiniAppStatus::Open,
     }
 }

@@ -848,6 +848,7 @@ mod tests {
     use std::collections::HashMap;
     use tokio::sync::Notify;
     use tokio::sync::mpsc::{Receiver, channel};
+    use types::MiniAppSize;
     use types::{
         BotInitiator, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_POST, CanisterId, Chat, EventIndex, MiniAppActive,
         MiniAppContent, MiniAppFinished, MiniAppPostClaims, MiniAppStatus, MiniAppStatusUpdate,
@@ -921,6 +922,7 @@ mod tests {
                     image: None,
                     max_players: None,
                     spectators: true,
+                    app_size: MiniAppSize { width: 440, height: 740 },
                     status: MiniAppStatus::Open,
                 }),
                 posted: Mutex::default(),
@@ -1072,6 +1074,7 @@ mod tests {
                     image: None,
                     max_players,
                     spectators,
+                    app_size: MiniAppSize { width: 440, height: 740 },
                 },
                 block_level_markdown: false,
                 replies_to: None,

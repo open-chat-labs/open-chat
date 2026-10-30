@@ -382,6 +382,7 @@ mod tests {
     use candid::Principal;
     use serde_json::json;
     use std::collections::HashMap;
+    use types::MiniAppSize;
     use types::{BotInitiator, Chat};
 
     fn user(n: u8) -> UserId {
@@ -409,6 +410,7 @@ mod tests {
                     image: None,
                     max_players,
                     spectators: true,
+                    app_size: MiniAppSize { width: 440, height: 740 },
                 },
                 block_level_markdown: false,
                 replies_to: None,

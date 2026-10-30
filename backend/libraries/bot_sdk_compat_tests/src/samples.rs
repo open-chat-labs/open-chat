@@ -10,12 +10,12 @@ use types::{
     CryptoContent, CryptoTransaction, CustomContent, DeletedBy, EncryptedContent, EncryptedMessageContentType,
     FailedCryptoTransaction, FileContent, GiphyContent, GiphyImageVariant, ImageContent, MediaScanMatch, MediaScanProvider,
     MessageContent, MessageReminderContent, MessageReminderCreatedContent, MessageReport, MiniAppActive, MiniAppContent,
-    MiniAppFinished, MiniAppImage, MiniAppStatus, ModerationReportContent, ModerationReportResolution, ModerationReportStatus,
-    NnsProposal, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapReserved, P2PSwapStatus,
-    PendingCryptoTransaction, PollConfig, PollContent, PollVotes, PriceChartContent, PriceChartSeries, PriceChartSource,
-    PriceChartToken, PrizeContent, PrizeWinnerContent, Proposal, ProposalContent, ProposalDecisionStatus, ProposalRewardStatus,
-    ReportedMessage, SnsProposal, Tally, TextContent, ThumbnailData, TokenInfo, TotalVotes, UserId, VideoCallContent,
-    VideoCallType, VideoContent, certified, icrc1, icrc2, nns,
+    MiniAppFinished, MiniAppImage, MiniAppSize, MiniAppStatus, ModerationReportContent, ModerationReportResolution,
+    ModerationReportStatus, NnsProposal, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapReserved,
+    P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, PriceChartContent, PriceChartSeries,
+    PriceChartSource, PriceChartToken, PrizeContent, PrizeWinnerContent, Proposal, ProposalContent, ProposalDecisionStatus,
+    ProposalRewardStatus, ReportedMessage, SnsProposal, Tally, TextContent, ThumbnailData, TokenInfo, TotalVotes, UserId,
+    VideoCallContent, VideoCallType, VideoContent, certified, icrc1, icrc2, nns,
 };
 
 /// One value of every kind of content OpenChat sends bots, and of every variant within them, with
@@ -142,6 +142,10 @@ pub fn message_contents() -> Vec<MessageContent> {
                 }),
                 max_players: Some(max()),
                 spectators: true,
+                app_size: MiniAppSize {
+                    width: max(),
+                    height: max(),
+                },
                 status,
             })
         }),

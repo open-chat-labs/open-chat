@@ -317,6 +317,7 @@ describe("mini app content mapping", () => {
                 },
                 max_players: 4,
                 spectators: true,
+                app_size: { width: 440, height: 740 },
                 status: {
                     Active: {
                         players: [alice.toUint8Array(), bob.toUint8Array()],
@@ -337,6 +338,7 @@ describe("mini app content mapping", () => {
             },
             maxPlayers: 4,
             spectators: true,
+            appSize: { width: 440, height: 740 },
             status: {
                 kind: "active",
                 players: [alice.toText(), bob.toText()],
@@ -348,7 +350,14 @@ describe("mini app content mapping", () => {
     test("maps a game taking players, and a finished one, with or without a result", () => {
         const status = (status: TMiniAppStatus) => {
             const content = messageContent(
-                { MiniApp: { text: "Uno", spectators: false, status } },
+                {
+                    MiniApp: {
+                        text: "Uno",
+                        spectators: false,
+                        app_size: { width: 440, height: 740 },
+                        status,
+                    },
+                },
                 "sender",
             );
             return content.kind === "mini_app_content" ? content.status : undefined;
@@ -371,6 +380,7 @@ describe("mini app content mapping", () => {
                 kind: "mini_app_content",
                 text: "Uno",
                 spectators: false,
+                appSize: { width: 440, height: 740 },
                 status: { kind: "open" },
             }),
         ).toThrow();

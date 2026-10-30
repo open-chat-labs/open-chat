@@ -188,14 +188,15 @@ Every call has `Authorization: Bearer <bot token>`.
     "text": "**Uno** · 2 to 4 players",
     "image": { "width": 600, "height": 400, "mime_type": "image/png", "blob_reference": { "canister_id": "<storage bucket id>", "blob_id": "<decimal string>" } },
     "max_players": 4,
-    "spectators": true
+    "spectators": true,
+    "app_size": { "width": 440, "height": 720 }
   },
   "block_level_markdown": false,
   "replies_to": null
 }
 ```
 - The bot gets the token from the LocalUserIndex's `bot_mini_app_post_token`, with the same context it would send a message with: a command's token or an autonomous chat, the channel for a community command, the thread, and the message id it chose, unless a chat command's token fixes it. The token must be the bot's own.
-- `card` is the card as the bot posts it: `image`, `max_players` and `replies_to` are optional, and `block_level_markdown` is false if left out. Its status is Open. `blob_id` is a decimal string, as message ids are. The bot uploads the image to OpenChat's storage first, as for an image message.
+- `card` is the card as the bot posts it: `image`, `max_players` and `replies_to` are optional, and `block_level_markdown` is false if left out. `app_size` is the size the app's designed for, in CSS pixels, each 1 to 10,000 and neither more than three times the other: the card shows the app at that aspect ratio, sized before it loads. Its status is Open. `blob_id` is a decimal string, as message ids are. The bot uploads the image to OpenChat's storage first, as for an image message.
 - The service posts the card as the bot, through the LocalUserIndex, and answers `{ "game": game }` once it's in the chat. The game is in the token, so the bot knows it before the card is posted.
 - **Posting again with the same token** answers `{ "game": game }` too, without posting another card: the chat answers a bot's repeated card with the card it holds. So a bot which doesn't get an answer, eg. as the service restarted, sends the same token again. Any other message at the card's message id is a refusal, so a command answered with a card isn't answered with anything else at its id first, except an unfinalised placeholder, which the card replaces.
 - Until the service has posted a card, it doesn't know the game: no one can follow, join or open it, and `/bot/update` answers 404.

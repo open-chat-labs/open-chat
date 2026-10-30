@@ -8,6 +8,7 @@ function card(change: Partial<MiniAppContent> = {}): MiniAppContent {
         text: "Uno",
         maxPlayers: 2,
         spectators: false,
+        appSize: { width: 440, height: 740 },
         status: { kind: "open" },
         ...change,
     };

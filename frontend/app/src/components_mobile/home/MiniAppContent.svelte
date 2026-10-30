@@ -84,12 +84,15 @@
         }
     });
 
-    // The app's shown while the card's on screen, which opens the game: a player sees it as it
-    // stands, and anyone else is watching it, if the game allows that
+    // The frame's in the card while the user may open the game, so the card has its size before the
+    // app loads, and keeps it while the app's away. The app runs in it while the card's on screen,
+    // which opens the game: a player sees it as it stands, and anyone else is watching it, if the
+    // game allows that.
     const presence = new MiniAppPresence();
     const fullScreen = new MiniAppFullScreen();
     let card: HTMLElement | undefined = $state();
-    let showApp = $state(false);
+    let frame = $state(false);
+    let active = $derived(frame && presence.shown);
     $effect(() => {
         // Only the card itself is read here: watching it again would drop the app for a moment
         const el = card;
@@ -98,14 +101,14 @@
     });
     $effect(() => presence.hold(fullScreen.on));
     $effect(() => {
-        if (!presence.shown || hosted === undefined) {
-            showApp = false;
+        if (hosted === undefined) {
+            frame = false;
         } else if (view.canOpen) {
-            showApp = true;
-        } else if (view.status !== "finished") {
+            frame = true;
+        } else if (view.status !== "finished" || !presence.shown) {
             // eg. the user left a game which can't be watched, so there's nothing to show until
-            // they join again
-            showApp = false;
+            // they join again; and a finished game's app stays only while the card's on screen
+            frame = false;
         }
         // A finished game's app stays as it is: one showing the game as it finished keeps its end
     });
@@ -147,8 +150,8 @@
                     style={`aspect-ratio: ${content.image.width} / ${content.image.height}`} />
             {/if}
             <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} text={content.text} />
-            {#if showApp && hosted !== undefined && actions !== undefined}
-                <MiniAppFrame app={hosted} {actions} {fullScreen} />
+            {#if frame && hosted !== undefined && actions !== undefined}
+                <MiniAppFrame app={hosted} {actions} {fullScreen} {active} />
             {/if}
             {#if view.players.length > 0 || (live !== undefined && view.status === "open")}
                 <Column gap={"xs"}>

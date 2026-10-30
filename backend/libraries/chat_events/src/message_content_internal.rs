@@ -16,7 +16,7 @@ use types::{
     FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
     ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
     MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
-    MessageReminderCreatedContent, MessageReport, Milliseconds, MiniAppContent, MiniAppImage, MiniAppStatus,
+    MessageReminderCreatedContent, MessageReport, Milliseconds, MiniAppContent, MiniAppImage, MiniAppSize, MiniAppStatus,
     MiniAppStatusUpdate, ModerationInput, ModerationReportContent, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted,
     P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
     PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes, PriceChartContent, PriceChartSeries,
@@ -2320,8 +2320,36 @@ pub struct MiniAppContentInternal {
     pub max_players: Option<u32>,
     #[serde(rename = "v", default, skip_serializing_if = "is_default")]
     pub spectators: bool,
+    #[serde(rename = "a")]
+    pub app_size: MiniAppSizeInternal,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     pub status: MiniAppStatus,
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+pub struct MiniAppSizeInternal {
+    #[serde(rename = "w")]
+    pub width: u32,
+    #[serde(rename = "h")]
+    pub height: u32,
+}
+
+impl From<MiniAppSize> for MiniAppSizeInternal {
+    fn from(value: MiniAppSize) -> Self {
+        MiniAppSizeInternal {
+            width: value.width,
+            height: value.height,
+        }
+    }
+}
+
+impl From<MiniAppSizeInternal> for MiniAppSize {
+    fn from(value: MiniAppSizeInternal) -> Self {
+        MiniAppSize {
+            width: value.width,
+            height: value.height,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -2348,6 +2376,7 @@ impl From<MiniAppContent> for MiniAppContentInternal {
             }),
             max_players: value.max_players,
             spectators: value.spectators,
+            app_size: value.app_size.into(),
             status: value.status,
         }
     }
@@ -2367,6 +2396,7 @@ impl MessageContentInternalSubtype for MiniAppContentInternal {
             }),
             max_players: self.max_players,
             spectators: self.spectators,
+            app_size: self.app_size.into(),
             status: self.status,
         }
     }
@@ -2817,7 +2847,7 @@ mod with_text_tests {
 #[cfg(test)]
 mod mini_app_tests {
     use super::*;
-    use types::{MiniAppActive, MiniAppEnded, MiniAppFinished, MiniAppStarted, MiniAppTurn};
+    use types::{MiniAppActive, MiniAppEnded, MiniAppFinished, MiniAppSize, MiniAppStarted, MiniAppTurn};
 
     fn card(text: &str) -> MiniAppContent {
         MiniAppContent {
@@ -2825,6 +2855,7 @@ mod mini_app_tests {
             image: None,
             max_players: None,
             spectators: false,
+            app_size: MiniAppSize { width: 440, height: 740 },
             status: MiniAppStatus::Open,
         }
     }
@@ -2957,6 +2988,28 @@ mod mini_app_tests {
                 image: Some(image),
                 ..card("Uno")
             }));
+        }
+    }
+
+    #[test]
+    fn a_cards_app_size_is_within_reason() {
+        for (width, height) in [(0, 500), (500, 0), (10_001, 500), (500, 10_001), (100, 301), (301, 100)] {
+            assert!(
+                invalid(MiniAppContent {
+                    app_size: MiniAppSize { width, height },
+                    ..card("Uno")
+                }),
+                "{width} by {height}"
+            );
+        }
+        for (width, height) in [(440, 740), (1, 1), (10_000, 10_000), (100, 300), (300, 100)] {
+            assert!(
+                !invalid(MiniAppContent {
+                    app_size: MiniAppSize { width, height },
+                    ..card("Uno")
+                }),
+                "{width} by {height}"
+            );
         }
     }
 
