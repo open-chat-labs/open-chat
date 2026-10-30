@@ -21,7 +21,6 @@ export class IndexedDbConnectionManager<Schema extends DBSchema> {
         ) => Promise<void>
     > = new Map();
 
-    private earliestSupportedVersion: number | undefined = undefined;
     private openDbPromise: Promise<IDBPDatabase<Schema>> | undefined = undefined;
 
     private constructor(
@@ -46,13 +45,6 @@ export class IndexedDbConnectionManager<Schema extends DBSchema> {
         ) => Promise<void>
     ): IndexedDbConnectionManager<Schema> {
         this.migrations.set(fromVersion, action);
-
-        if (
-            this.earliestSupportedVersion === undefined ||
-            this.earliestSupportedVersion > fromVersion
-        ) {
-            this.earliestSupportedVersion = fromVersion;
-        }
         return this;
     }
 
@@ -76,19 +68,18 @@ export class IndexedDbConnectionManager<Schema extends DBSchema> {
         return this.openDbPromise;
     }
 
+    // A database at an earlier version is migrated to the current one when a migration is
+    // registered for every version in between, and otherwise wiped and recreated, as a new one is.
+    // So dropping the migrations, or never writing one for a bump, clears the cache for everyone.
     private _openDB(): Promise<IDBPDatabase<Schema>> {
-        const earliestSupportedVersion = this.earliestSupportedVersion;
         const currentVersion = this.currentVersion;
         const nuke = this.nukeDb.bind(this);
         const migrate = this.migrate.bind(this);
+        const canMigrateFrom = this.canMigrateFrom.bind(this);
 
         return openDB<Schema>(this.name, this.currentVersion, {
             upgrade(db, previousVersion, _, tx) {
-                if (
-                    previousVersion == null ||
-                    earliestSupportedVersion == null ||
-                    previousVersion < earliestSupportedVersion
-                ) {
+                if (previousVersion == null || !canMigrateFrom(previousVersion)) {
                     nuke(db);
                 } else {
                     console.debug(
@@ -123,6 +114,15 @@ export class IndexedDbConnectionManager<Schema extends DBSchema> {
         }
     }
 
+    private canMigrateFrom(fromVersion: number): boolean {
+        for (let version = fromVersion; version < this.currentVersion; version++) {
+            if (!this.migrations.has(version)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private async migrate(
         fromVersion: number,
         db: IDBPDatabase<Schema>,
@@ -132,8 +132,6 @@ export class IndexedDbConnectionManager<Schema extends DBSchema> {
             const migration = this.migrations.get(version);
             if (migration) {
                 await migration(db, tx);
-            } else {
-                console.error("Migration missing from version " + version);
             }
         }
     }
