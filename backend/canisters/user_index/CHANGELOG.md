@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add support for the new MiniApp message content type ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300))
-- Add `set_mini_app_service_principal`, with which a platform operator tells the LocalUserIndexes which principal is the MiniApp service ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300), [#10331](https://github.com/open-chat-labs/open-chat/pull/10331))
+- Add `set_mini_app_service_principal`, with which a platform operator tells the LocalUserIndexes which principal the MiniApp service runs as ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300), [#10331](https://github.com/open-chat-labs/open-chat/pull/10331))
 - Bots' definitions list their MiniApps, each with a name and an image URL, which the card for an app names ([#10323](https://github.com/open-chat-labs/open-chat/pull/10323))
 
 ## [[2.0.2199](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2199-user_index)] - 2026-10-27
