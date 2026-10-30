@@ -87,11 +87,13 @@ describe("opening a cache database", () => {
         expect(db.createObjectStore.mock.calls.map((c) => c[0])).toEqual(["a", "b"]);
     });
 
-    test("a version with no migration wipes rather than skipping it", async () => {
-        const from2 = vi.fn(async () => {});
-        const db = await upgradeFrom(manager().withMigration(2, from2), 1, ["a", "b"]);
+    // The version on disk has a migration but a later one doesn't, which used to run the first,
+    // log the gap and leave the data in place under the current version
+    test("a later version with no migration wipes rather than skipping it", async () => {
+        const from1 = vi.fn(async () => {});
+        const db = await upgradeFrom(manager().withMigration(1, from1), 1, ["a", "b"]);
 
-        expect(from2).not.toHaveBeenCalled();
+        expect(from1).not.toHaveBeenCalled();
         expect(db.deleteObjectStore.mock.calls.map((c) => c[0])).toEqual(["a", "b"]);
         expect(db.createObjectStore.mock.calls.map((c) => c[0])).toEqual(["a", "b"]);
     });
