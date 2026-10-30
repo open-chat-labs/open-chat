@@ -37,6 +37,8 @@ pub enum StartOutcome {
 pub struct Started {
     pub players: Vec<UserId>,
     pub waiting_for: Vec<UserId>,
+    // The game's settings as the bot's JSON, serialized compactly, as the card records them
+    pub settings: Option<String>,
     pub state: Option<GameState>,
 }
 
@@ -84,11 +86,13 @@ impl BotClient for HttpBotClient {
                 accepted: true,
                 players,
                 waiting_for,
+                settings,
                 state,
                 ..
             }) => StartOutcome::Accepted(Started {
                 players,
                 waiting_for,
+                settings: settings.map(|settings| settings.to_string()),
                 state,
             }),
             Some(StartResponse { message, .. }) => StartOutcome::Refused(shorten(message)),

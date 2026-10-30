@@ -3,8 +3,8 @@ use candid::Principal;
 use num_traits::Bounded;
 use oc_bots_sdk::types::{
     AudioContent, BlobReference, CanisterId, CustomContent, FileContent, GiphyContent, GiphyImageVariant, ImageContent,
-    MessageContentInitial, PollConfig, PriceChartContent, PriceChartSeries, PriceChartSource, PriceChartToken, TextContent,
-    ThumbnailData, VideoContent,
+    MessageContentInitial, MiniAppContent, MiniAppSize, MiniAppStatus, PollConfig, PriceChartContent, PriceChartSeries,
+    PriceChartSource, PriceChartToken, TextContent, ThumbnailData, VideoContent,
 };
 
 /// One value of every kind of content a bot can send, with every `Option` filled in if `filled`,
@@ -98,6 +98,18 @@ pub fn message_contents_initial(filled: bool) -> Vec<MessageContentInitial> {
                 name: "CoinGecko".to_string(),
                 url: "https://www.coingecko.com".to_string(),
             }],
+        }),
+        // A card as a bot posts it: open, as only the MiniApp service writes its status
+        MessageContentInitial::MiniApp(MiniAppContent {
+            text: "**Uno** · 2 to 4 players".to_string(),
+            app: "uno".to_string(),
+            max_players: filled.then(max),
+            spectators: true,
+            app_size: MiniAppSize {
+                width: max(),
+                height: max(),
+            },
+            status: MiniAppStatus::Open,
         }),
     ])
 }

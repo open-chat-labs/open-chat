@@ -2833,6 +2833,7 @@ mod mini_app_tests {
         MiniAppStatus::Active(MiniAppActive {
             players: users(players),
             waiting_for: users(waiting_for),
+            settings: None,
         })
     }
 
@@ -2841,13 +2842,19 @@ mod mini_app_tests {
             players: users(players),
             result: result.map(|r| r.to_string()),
             end_state: None,
+            settings: None,
         })
     }
 
     fn started(players: &[u8], waiting_for: &[u8]) -> MiniAppStatusUpdate {
+        started_with(players, waiting_for, None)
+    }
+
+    fn started_with(players: &[u8], waiting_for: &[u8], settings: Option<&str>) -> MiniAppStatusUpdate {
         MiniAppStatusUpdate::Started(MiniAppStarted {
             players: users(players),
             waiting_for: users(waiting_for),
+            settings: settings.map(|s| s.to_string()),
         })
     }
 
@@ -3071,8 +3078,12 @@ mod mini_app_tests {
         let mut stored: MiniAppContentInternal = card("Uno").into();
         stored.update(started(&[1, 2], &[1])).unwrap();
         stored.update(turn(&[2])).unwrap();
-        stored.update(started(&[1, 2], &[1])).unwrap();
+        // A retried start carries the turn as it is now, which a turn passing meanwhile may have
+        // moved on: the card takes it, so it never shows a turn the service has moved past
+        stored.update(started(&[1, 2], &[2])).unwrap();
         assert_eq!(stored.status, active(&[1, 2], &[2]));
+        stored.update(started(&[1, 2], &[1])).unwrap();
+        assert_eq!(stored.status, active(&[1, 2], &[1]));
 
         stored.update(ended(Some("Bob won"))).unwrap();
         for update in [started(&[1, 2], &[1]), turn(&[1]), ended(Some("Alice won")), ended(None)] {
@@ -3094,6 +3105,7 @@ mod mini_app_tests {
                 players: users(&[1, 2]),
                 result: Some("Bob won".to_string()),
                 end_state: Some("{\"fen\":\"8/8\"}".to_string()),
+                settings: None,
             })
         );
 
@@ -3122,6 +3134,63 @@ mod mini_app_tests {
             panic!("{:?}", stored.status);
         };
         assert_eq!(finished.end_state.as_deref(), Some(longest.as_str()));
+    }
+
+    // The game's settings, as JSON the bot chose, are fixed when it starts and kept for the card's life:
+    // through its turns and into its end, with the end state
+    #[test]
+    fn a_game_starts_with_its_settings_and_keeps_them() {
+        let settings = "{\"target\":2048,\"seconds\":120}";
+        let mut stored: MiniAppContentInternal = card("2048").into();
+        stored.update(started_with(&[1, 2], &[1], Some(settings))).unwrap();
+        assert_eq!(
+            stored.status,
+            MiniAppStatus::Active(MiniAppActive {
+                players: users(&[1, 2]),
+                waiting_for: users(&[1]),
+                settings: Some(settings.to_string()),
+            })
+        );
+
+        stored.update(turn(&[2])).unwrap();
+        assert_eq!(stored.status.settings(), Some(settings));
+
+        // A retry carries the same settings; different ones are a change to a started game
+        stored.update(started_with(&[1, 2], &[1], Some(settings))).unwrap();
+        assert!(stored.update(started(&[1, 2], &[1])).is_err());
+        assert!(stored.update(started_with(&[1, 2], &[1], Some("{}"))).is_err());
+        assert_eq!(stored.status.settings(), Some(settings));
+
+        stored.update(ended_with(Some("Bob won"), Some("{\"boards\":[]}"))).unwrap();
+        assert_eq!(
+            stored.status,
+            MiniAppStatus::Finished(MiniAppFinished {
+                players: users(&[1, 2]),
+                result: Some("Bob won".to_string()),
+                end_state: Some("{\"boards\":[]}".to_string()),
+                settings: Some(settings.to_string()),
+            })
+        );
+    }
+
+    // A game which never started has none
+    #[test]
+    fn a_game_which_ends_without_starting_has_no_settings() {
+        let mut stored: MiniAppContentInternal = card("Uno").into();
+        stored.update(ended(None)).unwrap();
+        assert_eq!(stored.status.settings(), None);
+    }
+
+    #[test]
+    fn settings_are_at_most_4kb() {
+        let mut stored: MiniAppContentInternal = card("Uno").into();
+        let too_long = format!("{{\"seed\":\"{}\"}}", "x".repeat(MiniAppContent::MAX_SETTINGS_BYTES));
+        assert!(stored.update(started_with(&[1, 2], &[1], Some(&too_long))).is_err());
+        assert_eq!(stored.status, MiniAppStatus::Open);
+
+        let longest = "x".repeat(MiniAppContent::MAX_SETTINGS_BYTES);
+        stored.update(started_with(&[1, 2], &[1], Some(&longest))).unwrap();
+        assert_eq!(stored.status.settings(), Some(longest.as_str()));
     }
 
     #[test]
@@ -3168,6 +3237,7 @@ mod mini_app_tests {
                 players: users(&[1, 2]),
                 result: Some("Bob won".to_string()),
                 end_state: Some("{\"fen\":\"8/8\"}".to_string()),
+                settings: None,
             })
         );
     }

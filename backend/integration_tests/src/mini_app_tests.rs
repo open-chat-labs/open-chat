@@ -459,6 +459,96 @@ fn a_game_ends_with_its_end_state() {
             players,
             result: Some("Bob won".to_string()),
             end_state: Some(end_state.to_string()),
+            settings: None,
+        })
+    );
+}
+
+// The game's settings, as JSON the bot chose, are written to the card with the players when the game
+// starts, and the card keeps them through its turns and into its end, with the end state. Over 4 KB
+// they're refused, leaving the card as it was.
+#[test]
+fn a_game_starts_with_its_settings() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let Setup {
+        owner,
+        member,
+        community_id,
+        channel_id,
+        local_user_index,
+        service,
+    } = setup(env, canister_ids, *controller);
+    let (_, bot_principal) = install_bot(
+        env,
+        &owner,
+        canister_ids.user_index,
+        local_user_index,
+        community_id,
+        MessagePermission::MiniApp,
+    );
+    let chat = Chat::Channel(community_id, channel_id);
+    let message_id = random_from_u128();
+    let response = post_card(env, service, bot_principal, local_user_index, chat, None, message_id, card());
+    let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
+        panic!("'send_mini_app_message' error: {response:?}");
+    };
+    let write = |env: &mut PocketIc, update: MiniAppStatusUpdate| {
+        write_card(env, service, local_user_index, chat, None, message_id, update)
+    };
+    let read = |env: &PocketIc| {
+        let events =
+            client::community::happy_path::events_by_index(env, &member, community_id, channel_id, vec![sent.event_index]);
+        let ChatEvent::Message(message) = &events.events[0].event else {
+            panic!("Expected a message: {:?}", events.events[0].event);
+        };
+        let MessageContent::MiniApp(content) = &message.content else {
+            panic!("Expected a mini app: {:?}", message.content);
+        };
+        content.status.clone()
+    };
+    let players = vec![member.user_id, owner.user_id];
+
+    let too_long = format!("{{\"seed\":\"{}\"}}", "x".repeat(MiniAppContent::MAX_SETTINGS_BYTES));
+    let response = write(env, started_with(players.clone(), Vec::new(), Some(&too_long)));
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent)),
+        "Expected the settings to be refused: {response:?}"
+    );
+    assert_eq!(read(env), MiniAppStatus::Open);
+
+    let settings = "{\"target\":2048,\"seconds\":120}";
+    let response = write(env, started_with(players.clone(), vec![member.user_id], Some(settings)));
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    assert_eq!(
+        read(env),
+        MiniAppStatus::Active(MiniAppActive {
+            players: players.clone(),
+            waiting_for: vec![member.user_id],
+            settings: Some(settings.to_string()),
+        })
+    );
+
+    let response = write(env, turn(vec![owner.user_id]));
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    assert_eq!(read(env).settings(), Some(settings));
+
+    let end_state = "{\"boards\":[[2,4],[8,2048]]}";
+    let response = write(env, ended_with(Some("Bob won"), Some(end_state)));
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    assert_eq!(
+        read(env),
+        MiniAppStatus::Finished(MiniAppFinished {
+            players,
+            result: Some("Bob won".to_string()),
+            end_state: Some(end_state.to_string()),
+            settings: Some(settings.to_string()),
         })
     );
 }
@@ -1503,7 +1593,11 @@ fn card() -> MiniAppContent {
 }
 
 fn active(players: Vec<UserId>, waiting_for: Vec<UserId>) -> MiniAppStatus {
-    MiniAppStatus::Active(MiniAppActive { players, waiting_for })
+    MiniAppStatus::Active(MiniAppActive {
+        players,
+        waiting_for,
+        settings: None,
+    })
 }
 
 fn finished(players: Vec<UserId>, result: Option<&str>) -> MiniAppStatus {
@@ -1511,11 +1605,20 @@ fn finished(players: Vec<UserId>, result: Option<&str>) -> MiniAppStatus {
         players,
         result: result.map(|r| r.to_string()),
         end_state: None,
+        settings: None,
     })
 }
 
 fn started(players: Vec<UserId>, waiting_for: Vec<UserId>) -> MiniAppStatusUpdate {
-    MiniAppStatusUpdate::Started(MiniAppStarted { players, waiting_for })
+    started_with(players, waiting_for, None)
+}
+
+fn started_with(players: Vec<UserId>, waiting_for: Vec<UserId>, settings: Option<&str>) -> MiniAppStatusUpdate {
+    MiniAppStatusUpdate::Started(MiniAppStarted {
+        players,
+        waiting_for,
+        settings: settings.map(|s| s.to_string()),
+    })
 }
 
 fn turn(waiting_for: Vec<UserId>) -> MiniAppStatusUpdate {

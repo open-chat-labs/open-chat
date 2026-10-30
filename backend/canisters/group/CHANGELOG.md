@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add MiniApp messages, which only bots post: a card for a bot's app, eg. a game, whose players, status and result the MiniApp service keeps up to date ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300))
 - Check a user can see a chat, and whether they're a member, before the LocalUserIndex gives them a token for the MiniApp service ([#10301](https://github.com/open-chat-labs/open-chat/pull/10301))
 - A finished MiniApp game's card can hold an end state, which its app shows ([#10323](https://github.com/open-chat-labs/open-chat/pull/10323))
+- A MiniApp game's card records the game's settings once it starts, for its app ([#10325](https://github.com/open-chat-labs/open-chat/pull/10325))
 
 ### Changed
 

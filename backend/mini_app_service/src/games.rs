@@ -33,6 +33,9 @@ pub struct Game {
     // How the game ended, as JSON the bot gave with Finished, which its card's app shows
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub end_state: Option<String>,
+    // The game's settings, as JSON the bot gave when it started it, which its card records
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub settings: Option<String>,
     // When the bot last updated the game, or posted it
     pub last_bot_update: TimestampMillis,
     pub state: Option<GameState>,
@@ -99,6 +102,7 @@ impl Game {
             waiting_for: Vec::new(),
             result: None,
             end_state: None,
+            settings: None,
             last_bot_update: now,
             state: None,
             card: MiniAppStatus::Open,
@@ -236,10 +240,11 @@ impl Game {
     }
 
     // The bot's answer to a player starting the game: it plays with the players the bot gives, in the
-    // order they joined. Each must be playing, or still `joining`, having asked to join through OpenChat
-    // and been accepted by the bot as it answered. Anyone else it gives isn't added, eg. a player whose
-    // leave hasn't reached the bot yet, and the bot's told they left. Anyone playing whom it leaves out
-    // is taken off. An answer which is invalid in itself changes nothing.
+    // order they joined, and with the settings it gives, fixed from then on. Each player must be
+    // playing, or still `joining`, having asked to join through OpenChat and been accepted by the bot
+    // as it answered. Anyone else it gives isn't added, eg. a player whose leave hasn't reached the bot
+    // yet, and the bot's told they left. Anyone playing whom it leaves out is taken off. An answer which
+    // is invalid in itself changes nothing.
     pub fn start(&mut self, mut started: Started, joining: &[UserId], now: TimestampMillis) -> Result<StartChanges, String> {
         if self.status != GameStatus::Open {
             return Err("The game has already started".to_string());
@@ -251,6 +256,16 @@ impl Game {
             return Err(format!("This game has at most {} players", self.limit()));
         }
         check_waiting_for(&started.waiting_for, &started.players)?;
+        if started
+            .settings
+            .as_ref()
+            .is_some_and(|settings| settings.len() > MiniAppContent::MAX_SETTINGS_BYTES)
+        {
+            return Err(format!(
+                "The settings are at most {} bytes",
+                MiniAppContent::MAX_SETTINGS_BYTES
+            ));
+        }
         if let (Some(state), Some(current)) = (&started.state, &self.state)
             && state.seq <= current.seq
         {
@@ -284,6 +299,7 @@ impl Game {
         self.players.extend(added.iter().copied());
         self.started_with = self.players.clone();
         self.waiting_for = started.waiting_for;
+        self.settings = started.settings;
         self.status = GameStatus::Active;
         let new_state = started.state.is_some();
         if started.state.is_some() {
@@ -320,13 +336,14 @@ impl Game {
     }
 
     // The update the card in the chat needs next, to catch up with the game: the game starting with
-    // its players, whose turn it now is, or its ending. Nothing's written while the game's taking
-    // players.
+    // its players and settings, whose turn it now is, or its ending. Nothing's written while the game's
+    // taking players.
     pub fn next_card_update(&self) -> Option<MiniAppStatusUpdate> {
         let started = || {
             MiniAppStatusUpdate::Started(MiniAppStarted {
                 players: self.started_with.clone(),
                 waiting_for: self.card_waiting_for(),
+                settings: self.settings.clone(),
             })
         };
         match (&self.card, self.status) {
@@ -355,11 +372,13 @@ impl Game {
             MiniAppStatusUpdate::Started(started) => MiniAppStatus::Active(MiniAppActive {
                 players: started.players.clone(),
                 waiting_for: started.waiting_for.clone(),
+                settings: started.settings.clone(),
             }),
             MiniAppStatusUpdate::Turn(turn) => match &self.card {
                 MiniAppStatus::Active(active) => MiniAppStatus::Active(MiniAppActive {
                     players: active.players.clone(),
                     waiting_for: turn.waiting_for.clone(),
+                    settings: active.settings.clone(),
                 }),
                 card => card.clone(),
             },
@@ -367,6 +386,7 @@ impl Game {
                 players: self.card.players().to_vec(),
                 result: ended.result.clone(),
                 end_state: ended.end_state.clone(),
+                settings: self.card.settings().map(|settings| settings.to_string()),
             }),
         };
     }
@@ -457,6 +477,7 @@ mod tests {
         let started = Started {
             players: game.players.clone(),
             waiting_for: Vec::new(),
+            settings: None,
             state: None,
         };
         game.start(started, &[], 1).unwrap();
@@ -533,6 +554,7 @@ mod tests {
             Started {
                 players: game.players.clone(),
                 waiting_for: vec![user(1)],
+                settings: None,
                 state: None,
             },
             &[],
@@ -544,6 +566,7 @@ mod tests {
             vec![MiniAppStatusUpdate::Started(MiniAppStarted {
                 players: vec![user(1), user(2)],
                 waiting_for: vec![user(1)],
+                settings: None,
             })]
         );
 
@@ -602,6 +625,7 @@ mod tests {
                 players: vec![user(1), user(2)],
                 result: Some("Alice won".to_string()),
                 end_state: None,
+                settings: None,
             })
         );
         assert_eq!(game.apply(BotUpdate::default(), 5), Err(UpdateError::Finished));
@@ -778,6 +802,7 @@ mod tests {
                 players: vec![user(1)],
                 result: Some("Checkmate".to_string()),
                 end_state: Some(end_state.clone()),
+                settings: None,
             })
         );
         assert!(game.is_done());
@@ -856,5 +881,90 @@ mod tests {
         )
         .unwrap();
         assert_eq!(game.end_state, Some(fits));
+    }
+
+    // The settings the bot started the game with are kept with the game and written to the card with
+    // the players, and the card keeps them through its turns and into its end
+    #[test]
+    fn a_games_settings_go_to_the_card_with_its_players_and_stay() {
+        let mut game = game(None);
+        game.add_player(user(1)).unwrap();
+        let settings = r#"{"target":2048,"seconds":120}"#.to_string();
+        game.start(
+            Started {
+                players: vec![user(1)],
+                waiting_for: vec![user(1)],
+                settings: Some(settings.clone()),
+                state: None,
+            },
+            &[],
+            1,
+        )
+        .unwrap();
+        assert_eq!(game.settings, Some(settings.clone()));
+
+        assert_eq!(
+            catch_up(&mut game),
+            vec![MiniAppStatusUpdate::Started(MiniAppStarted {
+                players: vec![user(1)],
+                waiting_for: vec![user(1)],
+                settings: Some(settings.clone()),
+            })]
+        );
+        assert_eq!(game.card.settings(), Some(settings.as_str()));
+
+        // A bot's update never touches them
+        game.apply(
+            BotUpdate {
+                waiting_for: Some(Vec::new()),
+                ..Default::default()
+            },
+            2,
+        )
+        .unwrap();
+        assert!(matches!(catch_up(&mut game)[0], MiniAppStatusUpdate::Turn(_)));
+        assert_eq!(game.card.settings(), Some(settings.as_str()));
+
+        game.apply(status(GameStatus::Finished), 3).unwrap();
+        assert!(matches!(catch_up(&mut game)[0], MiniAppStatusUpdate::Ended(_)));
+        assert_eq!(
+            game.card,
+            MiniAppStatus::Finished(MiniAppFinished {
+                players: vec![user(1)],
+                result: None,
+                end_state: None,
+                settings: Some(settings),
+            })
+        );
+    }
+
+    // As the card would refuse them, so the start isn't half done
+    #[test]
+    fn settings_over_4_kb_refuse_the_start() {
+        let mut game = game(None);
+        game.add_player(user(1)).unwrap();
+        let before = game.clone();
+
+        let fits = format!(r#""{}""#, "x".repeat(MiniAppContent::MAX_SETTINGS_BYTES - 2));
+        let too_big = format!(r#""{}""#, "x".repeat(MiniAppContent::MAX_SETTINGS_BYTES - 1));
+        assert_eq!(fits.len(), MiniAppContent::MAX_SETTINGS_BYTES);
+        let started = |settings: &str| Started {
+            players: vec![user(1)],
+            waiting_for: Vec::new(),
+            settings: Some(settings.to_string()),
+            state: None,
+        };
+        assert_eq!(
+            game.start(started(&too_big), &[], 1),
+            Err(format!(
+                "The settings are at most {} bytes",
+                MiniAppContent::MAX_SETTINGS_BYTES
+            ))
+        );
+        assert_eq!(game, before);
+        assert_eq!(game.next_card_update(), None);
+
+        game.start(started(&fits), &[], 1).unwrap();
+        assert_eq!(game.settings, Some(fits));
     }
 }

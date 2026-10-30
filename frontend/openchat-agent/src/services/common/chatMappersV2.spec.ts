@@ -316,6 +316,7 @@ describe("mini app content mapping", () => {
                     Active: {
                         players: [alice.toUint8Array(), bob.toUint8Array()],
                         waiting_for: [bob.toUint8Array()],
+                        settings: '{"target":2048}',
                     },
                 },
             },
@@ -332,6 +333,7 @@ describe("mini app content mapping", () => {
                 kind: "active",
                 players: [alice.toText(), bob.toText()],
                 waitingFor: [bob.toText()],
+                settings: '{"target":2048}',
             },
         });
     });
@@ -360,6 +362,7 @@ describe("mini app content mapping", () => {
                     players: [alice.toUint8Array()],
                     result: "Alice won",
                     end_state: '{"winner":"alice"}',
+                    settings: '{"target":2048}',
                 },
             }),
         ).toEqual({
@@ -367,12 +370,14 @@ describe("mini app content mapping", () => {
             players: [alice.toText()],
             result: "Alice won",
             endState: '{"winner":"alice"}',
+            settings: '{"target":2048}',
         });
         expect(status({ Finished: { players: [] } })).toEqual({
             kind: "finished",
             players: [],
             result: undefined,
             endState: undefined,
+            settings: undefined,
         });
     });
 

@@ -1110,9 +1110,9 @@ impl PriceChartContent {
 /// A bot's card for a game, or another app, it hosts. Its text, app, player limit and whether others
 /// can watch are set when it's posted and never change. Its status is written only by the MiniApp
 /// service (`update_mini_app` on the LocalUserIndex, with a `MiniAppStatusUpdate`): the players the
-/// game starts with, who joined through the service and were accepted by the bot, whose turn it is,
-/// and then its result. Who's joined so far, while the game's taking players, is shown live by the
-/// service. Everything else the app shows, its board
+/// game starts with, who joined through the service and were accepted by the bot, its settings, fixed
+/// then, whose turn it is, and then its result. Who's joined so far, while the game's taking players,
+/// is shown live by the service. Everything else the app shows, its board
 /// and buttons, is the bot's own page, which OpenChat opens from the card in a frame. The app's image,
 /// from the bot's definition, is shown whenever there's no app to show. Only a bot can send one,
 /// needing the MiniApp permission. It can't be forwarded, edited, or sent in a direct chat.
@@ -1161,6 +1161,9 @@ pub struct MiniAppActive {
     pub players: Vec<UserId>,
     // the players whose turn it is, or no one in particular, eg. in a game without turns
     pub waiting_for: Vec<UserId>,
+    // the game's settings, fixed when it started, as JSON the bot chose, which its app reads: eg. the
+    // winning tile and the time limit. None if the bot gave none. OpenChat never reads or shows them.
+    pub settings: Option<String>,
 }
 
 #[ts_export]
@@ -1173,6 +1176,9 @@ pub struct MiniAppFinished {
     // how the game ended, as JSON the bot chose, which its app shows in the card: eg. the final
     // position and the moves. None if the bot gave none, when the card shows the app's image instead.
     pub end_state: Option<String>,
+    // the game's settings, as the card recorded them when it started, or none if it never started or
+    // the bot gave none
+    pub settings: Option<String>,
 }
 
 /// What the MiniApp service writes to a card as its game goes on
@@ -1190,6 +1196,8 @@ pub enum MiniAppStatusUpdate {
 pub struct MiniAppStarted {
     pub players: Vec<UserId>,
     pub waiting_for: Vec<UserId>,
+    // JSON the bot chose, which the card records for the game's life
+    pub settings: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -1220,6 +1228,15 @@ impl MiniAppStatus {
             _ => None,
         }
     }
+
+    // The game's settings, once it has started
+    pub fn settings(&self) -> Option<&str> {
+        match self {
+            MiniAppStatus::Open => None,
+            MiniAppStatus::Active(active) => active.settings.as_deref(),
+            MiniAppStatus::Finished(finished) => finished.settings.as_deref(),
+        }
+    }
 }
 
 impl MiniAppContent {
@@ -1232,6 +1249,8 @@ impl MiniAppContent {
     pub const MAX_APP_NAME_CHARS: usize = MiniAppDefinition::MAX_NAME_CHARS;
     // an end state is JSON of at most this many bytes
     pub const MAX_END_STATE_BYTES: usize = 16 * 1024;
+    // a game's settings are JSON of at most this many bytes
+    pub const MAX_SETTINGS_BYTES: usize = 4 * 1024;
 
     // A card as the bot posts it: open, as only the MiniApp service writes its status
     pub fn validate_new(&self) -> Result<(), String> {
@@ -1284,13 +1303,21 @@ impl MiniAppContent {
         {
             return Err(format!("The end state is at most {} bytes", Self::MAX_END_STATE_BYTES));
         }
+        if self
+            .status
+            .settings()
+            .is_some_and(|settings| settings.len() > Self::MAX_SETTINGS_BYTES)
+        {
+            return Err(format!("The settings are at most {} bytes", Self::MAX_SETTINGS_BYTES));
+        }
         Ok(())
     }
 
-    // The status the MiniApp service's update leaves: a game starts with its players, its turns pass
-    // between them, and it ends with them and its result, or ends without starting. A finished game
-    // never changes. An update the card already reflects changes nothing, so the service can retry a
-    // write whose outcome it didn't learn.
+    // The status the MiniApp service's update leaves: a game starts with its players and its settings,
+    // its turns pass between them, and it ends with them, its settings and its result, or ends without
+    // starting. A finished game never changes. An update the card already reflects changes nothing,
+    // so the service can retry a write whose outcome it didn't learn: a repeated start carries the
+    // players and settings the card holds, whatever turns have passed since.
     pub fn next_status(&self, update: MiniAppStatusUpdate) -> Result<MiniAppStatus, String> {
         use MiniAppStatus::*;
         use MiniAppStatusUpdate::*;
@@ -1299,23 +1326,34 @@ impl MiniAppContent {
             (Open, Started(started)) => Ok(Active(MiniAppActive {
                 players: started.players,
                 waiting_for: started.waiting_for,
+                settings: started.settings,
             })),
-            (Active(active), Started(started)) if active.players == started.players => Ok(self.status.clone()),
+            // A retried start carries the turn as the service knows it now, which may have passed
+            // since the write it's retrying
+            (Active(active), Started(started)) if active.players == started.players && active.settings == started.settings => {
+                Ok(Active(MiniAppActive {
+                    waiting_for: started.waiting_for,
+                    ..active.clone()
+                }))
+            }
             (Active(_), Started(_)) => Err("The game has already started".to_string()),
             (Active(active), Turn(turn)) => Ok(Active(MiniAppActive {
                 players: active.players.clone(),
                 waiting_for: turn.waiting_for,
+                settings: active.settings.clone(),
             })),
             (Open, Turn(_)) => Err("The game hasn't started".to_string()),
             (Open, Ended(ended)) => Ok(Finished(MiniAppFinished {
                 players: Vec::new(),
                 result: ended.result,
                 end_state: ended.end_state,
+                settings: None,
             })),
             (Active(active), Ended(ended)) => Ok(Finished(MiniAppFinished {
                 players: active.players.clone(),
                 result: ended.result,
                 end_state: ended.end_state,
+                settings: active.settings.clone(),
             })),
             (Finished(finished), Ended(ended)) if finished.result == ended.result && finished.end_state == ended.end_state => {
                 Ok(self.status.clone())

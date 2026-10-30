@@ -38,7 +38,12 @@ describe("miniAppCardView", () => {
         expect(
             miniAppCardView(
                 card({
-                    status: { kind: "active", players: ["alice", "bob"], waitingFor: ["bob"] },
+                    status: {
+                        kind: "active",
+                        players: ["alice", "bob"],
+                        waitingFor: ["bob"],
+                        settings: undefined,
+                    },
                 }),
                 undefined,
                 "bob",
@@ -62,6 +67,7 @@ describe("miniAppCardView", () => {
                         players: ["alice"],
                         result: "Alice won",
                         endState: undefined,
+                        settings: undefined,
                     },
                 }),
                 undefined,
@@ -77,7 +83,14 @@ describe("miniAppCardView", () => {
 
     test("shows the live card in place of the stored one", () => {
         const view = miniAppCardView(
-            card({ status: { kind: "active", players: ["alice", "bob"], waitingFor: ["bob"] } }),
+            card({
+                status: {
+                    kind: "active",
+                    players: ["alice", "bob"],
+                    waitingFor: ["bob"],
+                    settings: undefined,
+                },
+            }),
             live({
                 status: "finished",
                 players: ["alice", "bob"],
@@ -144,7 +157,14 @@ describe("miniAppCardView", () => {
         // A player's known from the stored card once the game's started, before the live one shows
         expect(
             miniAppCardView(
-                card({ status: { kind: "active", players: ["alice"], waitingFor: ["alice"] } }),
+                card({
+                    status: {
+                        kind: "active",
+                        players: ["alice"],
+                        waitingFor: ["alice"],
+                        settings: undefined,
+                    },
+                }),
                 undefined,
                 "alice",
             ).showsApp,
@@ -192,7 +212,14 @@ describe("miniAppCardView", () => {
         expect(miniAppCardView(card(), finished, "bob").showsApp).toBe(false);
         expect(
             miniAppCardView(
-                card({ status: { kind: "active", players: ["alice"], waitingFor: ["alice"] } }),
+                card({
+                    status: {
+                        kind: "active",
+                        players: ["alice"],
+                        waitingFor: ["alice"],
+                        settings: undefined,
+                    },
+                }),
                 finished,
                 "alice",
             ).showsApp,
@@ -203,7 +230,13 @@ describe("miniAppCardView", () => {
         const ended = (endState: string | undefined) =>
             card({
                 spectators: true,
-                status: { kind: "finished", players: ["alice"], result: "Alice won", endState },
+                status: {
+                    kind: "finished",
+                    players: ["alice"],
+                    result: "Alice won",
+                    endState,
+                    settings: undefined,
+                },
             });
         const finished = live({ status: "finished", players: ["alice"] });
 
