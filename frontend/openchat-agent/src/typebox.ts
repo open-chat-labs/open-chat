@@ -663,6 +663,12 @@ export const ChannelId = /* @__PURE__ */ Type.BigInt();
 export type SuccessOnly = Static<typeof SuccessOnly>;
 export const SuccessOnly = /* @__PURE__ */ Type.Literal("Success");
 
+export type MiniAppSize = Static<typeof MiniAppSize>;
+export const MiniAppSize = /* @__PURE__ */ Type.Object({
+    width: Type.Number(),
+    height: Type.Number(),
+});
+
 export type GroupPermissionRole = Static<typeof GroupPermissionRole>;
 export const GroupPermissionRole = /* @__PURE__ */ Type.Union([
     Type.Literal("None"),
@@ -2922,6 +2928,18 @@ export const LocalUserIndexDailyPuzzleSaveGridArgs = /* @__PURE__ */ Type.Object
     grid: TSBytes,
 });
 
+export type LocalUserIndexBotMiniAppPostTokenResponse = Static<
+    typeof LocalUserIndexBotMiniAppPostTokenResponse
+>;
+export const LocalUserIndexBotMiniAppPostTokenResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: Type.String(),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type LocalUserIndexRegisterUserArgs = Static<typeof LocalUserIndexRegisterUserArgs>;
 export const LocalUserIndexRegisterUserArgs = /* @__PURE__ */ Type.Object({
     username: Type.String(),
@@ -3013,6 +3031,19 @@ export const LocalUserIndexJoinCommunityArgs = /* @__PURE__ */ Type.Object({
     verified_credential_args: Type.Optional(VerifiedCredentialGateArgs),
     composite_gate_index: Type.Optional(Type.Number()),
 });
+
+export type LocalUserIndexBotMiniAppTokenResponse = Static<
+    typeof LocalUserIndexBotMiniAppTokenResponse
+>;
+export const LocalUserIndexBotMiniAppTokenResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: Type.String(),
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
 
 export type LocalUserIndexJoinChannelArgs = Static<typeof LocalUserIndexJoinChannelArgs>;
 export const LocalUserIndexJoinChannelArgs = /* @__PURE__ */ Type.Object({
@@ -5495,6 +5526,12 @@ export const AvatarChanged = /* @__PURE__ */ Type.Object({
     changed_by: UserId,
 });
 
+export type MiniAppActive = Static<typeof MiniAppActive>;
+export const MiniAppActive = /* @__PURE__ */ Type.Object({
+    players: Type.Array(UserId),
+    waiting_for: Type.Array(UserId),
+});
+
 export type CommunityUsersBlocked = Static<typeof CommunityUsersBlocked>;
 export const CommunityUsersBlocked = /* @__PURE__ */ Type.Object({
     user_ids: Type.Array(UserId),
@@ -5655,29 +5692,6 @@ export const MiniAppImage = /* @__PURE__ */ Type.Object({
     mime_type: Type.String(),
     blob_reference: BlobReference,
 });
-
-export type MiniAppActive = Static<typeof MiniAppActive>;
-export const MiniAppActive = /* @__PURE__ */ Type.Object({
-    players: Type.Array(UserId),
-    waiting_for: Type.Array(UserId),
-});
-
-export type MiniAppFinished = Static<typeof MiniAppFinished>;
-export const MiniAppFinished = /* @__PURE__ */ Type.Object({
-    players: Type.Array(UserId),
-    result: Type.Optional(Type.String()),
-});
-
-export type MiniAppStatus = Static<typeof MiniAppStatus>;
-export const MiniAppStatus = /* @__PURE__ */ Type.Union([
-    Type.Literal("Open"),
-    Type.Object({
-        Active: MiniAppActive,
-    }),
-    Type.Object({
-        Finished: MiniAppFinished,
-    }),
-]);
 
 export type GroupCreated = Static<typeof GroupCreated>;
 export const GroupCreated = /* @__PURE__ */ Type.Object({
@@ -6127,11 +6141,6 @@ export const VideoCallParticipantArgs = /* @__PURE__ */ Type.Object({
     chat: Chat,
 });
 
-export type MiniAppChatArgs = Static<typeof MiniAppChatArgs>;
-export const MiniAppChatArgs = /* @__PURE__ */ Type.Object({
-    chat: Chat,
-});
-
 export type BotRegisteredEvent = Static<typeof BotRegisteredEvent>;
 export const BotRegisteredEvent = /* @__PURE__ */ Type.Object({
     bot_id: UserId,
@@ -6313,6 +6322,12 @@ export const AddedToChannelNotification = /* @__PURE__ */ Type.Object({
     ad: Type.Optional(Type.String()),
     ca: Type.Optional(Type.BigInt()),
     cha: Type.Optional(Type.BigInt()),
+});
+
+export type MiniAppFinished = Static<typeof MiniAppFinished>;
+export const MiniAppFinished = /* @__PURE__ */ Type.Object({
+    players: Type.Array(UserId),
+    result: Type.Optional(Type.String()),
 });
 
 export type AudioContent = Static<typeof AudioContent>;
@@ -8058,6 +8073,11 @@ export const UserUnpinChatArgs = /* @__PURE__ */ Type.Object({
     chat: UserChatInList,
 });
 
+export type MiniAppChatArgs = Static<typeof MiniAppChatArgs>;
+export const MiniAppChatArgs = /* @__PURE__ */ Type.Object({
+    chat: Chat,
+});
+
 export type VideoContent = Static<typeof VideoContent>;
 export const VideoContent = /* @__PURE__ */ Type.Object({
     width: Type.Number(),
@@ -8067,15 +8087,6 @@ export const VideoContent = /* @__PURE__ */ Type.Object({
     mime_type: Type.String(),
     image_blob_reference: Type.Optional(BlobReference),
     video_blob_reference: Type.Optional(BlobReference),
-});
-
-export type MiniAppContent = Static<typeof MiniAppContent>;
-export const MiniAppContent = /* @__PURE__ */ Type.Object({
-    text: Type.String(),
-    image: Type.Optional(MiniAppImage),
-    max_players: Type.Optional(Type.Number()),
-    spectators: Type.Boolean(),
-    status: MiniAppStatus,
 });
 
 export type GroupPermissions = Static<typeof GroupPermissions>;
@@ -8185,6 +8196,17 @@ export const EventWrapperGroupUnfrozen = /* @__PURE__ */ Type.Object({
     expires_at: Type.Optional(Type.BigInt()),
     event: GroupUnfrozen,
 });
+
+export type MiniAppStatus = Static<typeof MiniAppStatus>;
+export const MiniAppStatus = /* @__PURE__ */ Type.Union([
+    Type.Literal("Open"),
+    Type.Object({
+        Active: MiniAppActive,
+    }),
+    Type.Object({
+        Finished: MiniAppFinished,
+    }),
+]);
 
 export type P2PSwapContentInitial = Static<typeof P2PSwapContentInitial>;
 export const P2PSwapContentInitial = /* @__PURE__ */ Type.Object({
@@ -8703,6 +8725,16 @@ export const LocalUserIndexBotChangeRoleArgs = /* @__PURE__ */ Type.Object({
     new_role: GroupRole,
 });
 
+export type LocalUserIndexBotMiniAppPostTokenArgs = Static<
+    typeof LocalUserIndexBotMiniAppPostTokenArgs
+>;
+export const LocalUserIndexBotMiniAppPostTokenArgs = /* @__PURE__ */ Type.Object({
+    chat_context: BotChatContext,
+    channel_id: Type.Optional(ChannelId),
+    thread: Type.Optional(MessageIndex),
+    message_id: Type.Optional(MessageId),
+});
+
 export type LocalUserIndexChatEventsEventsArgs = Static<typeof LocalUserIndexChatEventsEventsArgs>;
 export const LocalUserIndexChatEventsEventsArgs = /* @__PURE__ */ Type.Object({
     context: LocalUserIndexChatEventsEventsContext,
@@ -9066,6 +9098,16 @@ export const PollContent = /* @__PURE__ */ Type.Object({
     config: PollConfig,
     votes: PollVotes,
     ended: Type.Boolean(),
+});
+
+export type MiniAppContent = Static<typeof MiniAppContent>;
+export const MiniAppContent = /* @__PURE__ */ Type.Object({
+    text: Type.String(),
+    image: Type.Optional(MiniAppImage),
+    max_players: Type.Optional(Type.Number()),
+    spectators: Type.Boolean(),
+    app_size: MiniAppSize,
+    status: MiniAppStatus,
 });
 
 export type PrizeWinnerContent = Static<typeof PrizeWinnerContent>;

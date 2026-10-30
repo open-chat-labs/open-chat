@@ -158,7 +158,15 @@ export type MiniAppContent = {
     maxPlayers?: number;
     // whether people who aren't playing can watch: members, and anyone who can see a public chat
     spectators: boolean;
+    // the size the app's designed for, in CSS pixels: the card shows the app at that aspect ratio,
+    // sized before it loads
+    appSize: MiniAppSize;
     status: MiniAppStatus;
+};
+
+export type MiniAppSize = {
+    width: number;
+    height: number;
 };
 
 export type MiniAppImage = DataContent & {

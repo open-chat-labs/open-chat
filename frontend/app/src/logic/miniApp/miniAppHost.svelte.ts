@@ -67,9 +67,13 @@ export class MiniAppHost {
     }
 
     // Opens the game, listening for the app's messages from `frame`, and returns a function which
-    // closes it
+    // closes it. A host opens the game again with each frame it's given, afresh: the app in a new
+    // frame hasn't said it's ready, and the service sends the latest state once the game's open.
     open(frame: HTMLIFrameElement): () => void {
         this.#frame = frame;
+        this.#ready = false;
+        this.#playerToken = undefined;
+        this.status = { kind: "opening" };
         const listener = (ev: MessageEvent) => void this.#onMessage(ev);
         window.addEventListener("message", listener);
         void this.#open();

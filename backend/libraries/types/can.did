@@ -1528,7 +1528,13 @@ type MiniAppContent = record {
     image : opt MiniAppImage;
     max_players : opt nat32;
     spectators : bool;
+    app_size : MiniAppSize;
     status : MiniAppStatus;
+};
+
+type MiniAppSize = record {
+    width : nat32;
+    height : nat32;
 };
 
 type MiniAppStatus = variant {

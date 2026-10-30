@@ -1269,6 +1269,7 @@ export function miniAppContent(value: TMiniAppContent): MiniAppContent {
         })),
         maxPlayers: mapOptional(value.max_players, identity),
         spectators: value.spectators,
+        appSize: { width: value.app_size.width, height: value.app_size.height },
         status: miniAppStatus(value.status),
     };
 }

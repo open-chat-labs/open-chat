@@ -5,7 +5,7 @@ use crate::cards::{CardWriter, PostError, WriteError};
 use crate::games::{BotUpdate, Game, UpdateError};
 use crate::hub::{ConnectionId, Hub};
 use crate::now_millis;
-use crate::protocol::{ClientMessage, GameStatus, PostArgs, Refusal, RequestId, Role, ServerMessage, UpdateArgs};
+use crate::protocol::{CardSize, ClientMessage, GameStatus, PostArgs, Refusal, RequestId, Role, ServerMessage, UpdateArgs};
 use crate::store::Store;
 use crate::tokens::Tokens;
 use std::collections::HashSet;
@@ -14,7 +14,10 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::{Mutex as AsyncMutex, MutexGuard};
 use tracing::{error, info, warn};
-use types::{Error, Milliseconds, MiniAppChatClaims, MiniAppEnded, MiniAppGame, MiniAppStatusUpdate, TimestampMillis, UserId};
+use types::{
+    Error, Milliseconds, MiniAppChatClaims, MiniAppEnded, MiniAppGame, MiniAppSize, MiniAppStatusUpdate, TimestampMillis,
+    UserId,
+};
 
 // A game whose bot hasn't updated it for this long is ended
 pub const ABANDONED_AFTER: Milliseconds = 24 * 60 * 60 * 1000;
@@ -921,6 +924,7 @@ mod tests {
                     image: None,
                     max_players: None,
                     spectators: true,
+                    app_size: MiniAppSize { width: 440, height: 740 },
                     status: MiniAppStatus::Open,
                 }),
                 posted: Mutex::default(),
@@ -1072,6 +1076,7 @@ mod tests {
                     image: None,
                     max_players,
                     spectators,
+                    app_size: CardSize { width: 440, height: 740 },
                 },
                 block_level_markdown: false,
                 replies_to: None,

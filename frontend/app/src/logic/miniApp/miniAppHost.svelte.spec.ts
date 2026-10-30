@@ -16,7 +16,13 @@ const APP: HostedMiniApp = {
         threadRootMessageIndex: undefined,
         messageId: 7n,
     },
-    content: { kind: "mini_app_content", text: "Uno", spectators: true, status: { kind: "open" } },
+    content: {
+        kind: "mini_app_content",
+        text: "Uno",
+        spectators: true,
+        appSize: { width: 440, height: 740 },
+        status: { kind: "open" },
+    },
 };
 const ORIGIN = "https://uno.example.com";
 

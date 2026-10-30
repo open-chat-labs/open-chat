@@ -1144,7 +1144,17 @@ pub struct MiniAppContent {
     pub max_players: Option<u32>,
     // whether people who aren't playing can watch: members, and anyone who can see a public chat
     pub spectators: bool,
+    // the size the app's designed for, in CSS pixels, eg. 440 by 740: the card shows the app at that
+    // aspect ratio, sized before the app loads, so the chat doesn't jump as it does
+    pub app_size: MiniAppSize,
     pub status: MiniAppStatus,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct MiniAppSize {
+    pub width: u32,
+    pub height: u32,
 }
 
 /// An image the bot uploaded to OpenChat's storage, as for an image message, so it's scanned like one
@@ -1237,6 +1247,9 @@ impl MiniAppStatus {
 impl MiniAppContent {
     pub const MAX_TEXT_CHARS: usize = 2_000;
     pub const MAX_PLAYERS: usize = 100;
+    // an app's size is in pixels, no more than this each way, and no taller or wider than this ratio
+    pub const MAX_APP_SIZE: u32 = 10_000;
+    pub const MAX_APP_SIZE_RATIO: u32 = 3;
     pub const MAX_RESULT_CHARS: usize = 200;
 
     // A card as the bot posts it: open, as only the MiniApp service writes its status
@@ -1262,6 +1275,13 @@ impl MiniAppContent {
             .is_some_and(|max| max == 0 || max as usize > Self::MAX_PLAYERS)
         {
             return Err(format!("A game has 1 to {} players at most", Self::MAX_PLAYERS));
+        }
+        let size = self.app_size;
+        if size.width == 0 || size.height == 0 || size.width > Self::MAX_APP_SIZE || size.height > Self::MAX_APP_SIZE {
+            return Err(format!("The app's size is 1 to {} pixels each way", Self::MAX_APP_SIZE));
+        }
+        if size.width > size.height * Self::MAX_APP_SIZE_RATIO || size.height > size.width * Self::MAX_APP_SIZE_RATIO {
+            return Err(format!("The app's size is at most {}:1 either way", Self::MAX_APP_SIZE_RATIO));
         }
         let players = self.status.players();
         let limit = self.max_players.map_or(Self::MAX_PLAYERS, |max| max as usize);
