@@ -52,6 +52,8 @@ export class MiniAppHost {
     #app: HostedMiniApp;
     #options: MiniAppHostOptions;
     #frame: HTMLIFrameElement | undefined;
+    // what the service tells this frame about the game, once it's open
+    #listener: MiniAppGameListener | undefined;
     #playerToken: string | undefined;
     // whether the app has said it's ready
     #ready = false;
@@ -74,7 +76,9 @@ export class MiniAppHost {
         return () => {
             window.removeEventListener("message", listener);
             this.#frame = undefined;
-            this.#games.closeMiniApp(this.#app.game);
+            if (this.#listener !== undefined) {
+                this.#games.closeMiniApp(this.#app.game, this.#listener);
+            }
         };
     }
 
@@ -92,6 +96,7 @@ export class MiniAppHost {
             onRole: (role, token) => this.#onRole(role, token),
             onClosed: (message) => (this.status = { kind: "closed", message }),
         };
+        this.#listener = listener;
         const outcome = await this.#games.openMiniApp(this.#app.game, listener);
         if (outcome.kind === "failed") {
             // The service forgets a game once its card records the end, so a finished card's app

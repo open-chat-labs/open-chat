@@ -169,10 +169,12 @@ describe("MiniAppFullScreen", () => {
         expect(dialog.calls).toEqual(["close", "showModal", "close", "show"]);
     });
 
-    test("once detached, nothing's done to the dialog", async () => {
+    test("once detached, nothing's done to the dialog, and full screen is off", async () => {
+        fullScreen.enter();
         detach();
+        expect(fullScreen.on).toBe(false);
         fullScreen.enter();
         expect(fullScreen.on).toBe(false);
-        expect(dialog.calls).toEqual([]);
+        expect(dialog.calls).toEqual(["close", "showModal"]);
     });
 });

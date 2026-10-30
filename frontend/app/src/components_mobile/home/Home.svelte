@@ -564,8 +564,6 @@
     <ChitEarned />
 {/if}
 
-<!-- Beside the chat rather than in the card's row, which the message list drops once it scrolls far out of view -->
-
 <style lang="scss">
     :global(.edited-msg) {
         @include font(light, normal, fs-70);

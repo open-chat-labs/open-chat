@@ -35,7 +35,8 @@
         intersecting: boolean;
         reply?: boolean;
         pinned?: boolean;
-        readonly?: boolean;
+        // a preview of the message elsewhere, eg. where it's linked from another message
+        preview?: boolean;
         blockLevelMarkdown: boolean;
     }
 
@@ -47,7 +48,7 @@
         intersecting,
         reply = false,
         pinned = false,
-        readonly = false,
+        preview = false,
         blockLevelMarkdown,
     }: Props = $props();
 
@@ -68,7 +69,7 @@
     let hosted = $derived<HostedMiniApp | undefined>(
         !reply &&
             !pinned &&
-            !readonly &&
+            !preview &&
             url !== undefined &&
             bot !== undefined &&
             game !== undefined
@@ -101,8 +102,12 @@
             showApp = false;
         } else if (view.canOpen) {
             showApp = true;
+        } else if (view.status !== "finished") {
+            // eg. the user left a game which can't be watched, so there's nothing to show until
+            // they join again
+            showApp = false;
         }
-        // Otherwise it stays as it is: an app showing a game as it finishes keeps showing its end
+        // A finished game's app stays as it is: one showing the game as it finished keeps its end
     });
 
     $effect(() => {

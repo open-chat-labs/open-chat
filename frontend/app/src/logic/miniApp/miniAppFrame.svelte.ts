@@ -123,6 +123,8 @@ export class MiniAppFullScreen {
         return () => {
             dialog.removeEventListener("close", onClose);
             this.#dialog = undefined;
+            // whatever's attached next starts in place
+            this.on = false;
         };
     }
 

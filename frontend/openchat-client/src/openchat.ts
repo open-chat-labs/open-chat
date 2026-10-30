@@ -11228,8 +11228,8 @@ export class OpenChat {
         return this.#miniApps?.open(game, listener) ?? Promise.resolve(noMiniAppService());
     }
 
-    closeMiniApp(game: MiniAppGame): void {
-        this.#miniApps?.close(game);
+    closeMiniApp(game: MiniAppGame, listener: MiniAppGameListener): void {
+        this.#miniApps?.close(game, listener);
     }
 
     miniAppPlayerToken(game: MiniAppGame): Promise<string | undefined> {
