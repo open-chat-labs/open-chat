@@ -12,7 +12,7 @@
     import { MiniAppHost, type HostedMiniApp } from "@src/logic/miniApp/miniAppHost.svelte";
     import { MINI_APP_SANDBOX } from "@src/utils/miniApp";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { getContext, untrack } from "svelte";
+    import { getContext, tick, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -85,6 +85,23 @@
 
     let dialog: HTMLDialogElement | undefined = $state();
     let iframe: HTMLIFrameElement | undefined = $state();
+    let corner: HTMLButtonElement | undefined = $state();
+    // Going full screen unmounts the corner button, and coming back unmounts the bar's exit
+    // button, so a keyboard user's focus is put where they'd expect: on the exit button once the
+    // bar's in, and back on the corner button once the card's back
+    let wasFullScreen = fullScreen.on;
+    $effect(() => {
+        const on = fullScreen.on;
+        if (on === wasFullScreen) return;
+        wasFullScreen = on;
+        void tick().then(() => {
+            if (on) {
+                dialog?.querySelector<HTMLElement>(".exit button, .exit [role='button']")?.focus();
+            } else {
+                corner?.focus();
+            }
+        });
+    });
 
     $effect(() => {
         const el = dialog;
@@ -142,13 +159,11 @@ takes it away so the user can look through the game. -->
 <!-- A dialog, open in place, so that full screen can put it in the top layer without reloading the
 app (MiniAppFullScreen) -->
 <dialog bind:this={dialog} open class="frame" class:full-screen={fullScreen.on}>
-    <div class="bar">
-        <div class="title">
-            <span class="name">{botName}</span>
-            <!-- The host is shown so the user can see where the app comes from -->
-            <span class="host">{url.host}</span>
-        </div>
-        {#if fullScreen.on}
+    <!-- In the card the frame is just the app, as the message says who posted it. Full screen has
+    a bar with only the card's buttons and the way back: the user knows what they opened, and the
+    app's host is a hosting address no one reads or visits. -->
+    {#if fullScreen.on}
+        <div class="bar">
             {#each joinOrLeave as action (action)}
                 <Button
                     tiny
@@ -159,22 +174,16 @@ app (MiniAppFullScreen) -->
                     <Translatable resourceKey={i18nKey(`bots.miniApp.${action}`)} />
                 </Button>
             {/each}
-        {/if}
-        {#if MiniAppFullScreen.supported && showApp}
-            <HoverIcon
-                compact
-                title={$_(
-                    fullScreen.on ? "bots.miniApp.exitFullScreen" : "bots.miniApp.fullScreen",
-                )}
-                onclick={() => fullScreen.toggle()}>
-                {#if fullScreen.on}
+            <span class="exit">
+                <HoverIcon
+                    compact
+                    title={$_("bots.miniApp.exitFullScreen")}
+                    onclick={() => fullScreen.exit()}>
                     <FullscreenExit size={"1.4em"} color={"var(--icon-txt)"} />
-                {:else}
-                    <Fullscreen size={"1.4em"} color={"var(--icon-txt)"} />
-                {/if}
-            </HoverIcon>
-        {/if}
-    </div>
+                </HoverIcon>
+            </span>
+        </div>
+    {/if}
     {#if fullScreen.on && actions.error !== undefined}
         <div class="action-error">
             <Translatable resourceKey={actions.error} />
@@ -210,6 +219,16 @@ app (MiniAppFullScreen) -->
             {#if showApp && label !== undefined && !dismissed}
                 {@render overlay(true)}
             {/if}
+        {/if}
+        {#if MiniAppFullScreen.supported && showApp && !fullScreen.on && (label === undefined || dismissed)}
+            <button
+                bind:this={corner}
+                type="button"
+                class="corner"
+                title={$_("bots.miniApp.fullScreen")}
+                onclick={() => fullScreen.enter()}>
+                <Fullscreen size={"1.2em"} color={"currentColor"} />
+            </button>
         {/if}
     </div>
 </dialog>
@@ -255,29 +274,10 @@ app (MiniAppFullScreen) -->
     .bar {
         display: flex;
         align-items: center;
+        justify-content: flex-end;
         gap: $sp3;
         padding: $sp2 $sp3;
         border-bottom: 1px solid var(--modal-bd);
-    }
-
-    .title {
-        display: flex;
-        align-items: baseline;
-        flex-wrap: wrap;
-        gap: $sp1 $sp3;
-        flex: auto;
-        min-width: 0;
-    }
-
-    .name {
-        @include font(bold, normal, fs-90);
-    }
-
-    .host {
-        @include font(book, normal, fs-70);
-        color: var(--txt-light);
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
 
     .action-error {
@@ -371,7 +371,8 @@ app (MiniAppFullScreen) -->
         overflow-wrap: anywhere;
     }
 
-    .close {
+    .close,
+    .corner {
         position: absolute;
         top: $sp2;
         right: $sp2;
@@ -380,5 +381,26 @@ app (MiniAppFullScreen) -->
         border-radius: 50%;
         background-color: rgba(0, 0, 0, 0.65);
         color: #fff;
+    }
+
+    // over the app, out of its way in a corner, and out of sight until the pointer's over the frame
+    // where there is one
+    .corner {
+        border: none;
+        cursor: pointer;
+        opacity: 0.7;
+
+        @media (hover: hover) {
+            opacity: 0;
+
+            .frame:hover & {
+                opacity: 0.7;
+            }
+        }
+
+        &:hover,
+        &:focus-visible {
+            opacity: 1;
+        }
     }
 </style>

@@ -137,7 +137,7 @@ describe("MiniAppFullScreen", () => {
 
     test("going full screen reopens the dialog as a modal, and leaving it reopens it in place", async () => {
         expect(fullScreen.on).toBe(false);
-        fullScreen.toggle();
+        fullScreen.enter();
         expect(fullScreen.on).toBe(true);
         expect(dialog.modal).toBe(true);
         await settle();
@@ -145,7 +145,7 @@ describe("MiniAppFullScreen", () => {
         expect(fullScreen.on).toBe(true);
         expect(dialog.modal).toBe(true);
 
-        fullScreen.toggle();
+        fullScreen.exit();
         expect(fullScreen.on).toBe(false);
         expect(dialog.open).toBe(true);
         expect(dialog.modal).toBe(false);
