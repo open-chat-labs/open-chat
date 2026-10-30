@@ -656,7 +656,10 @@
     {/snippet}
 </svelte:boundary>
 
-<svelte:window onresize={resize} onerror={unhandledError} onorientationchange={orientationChanged} />
+<svelte:window
+    onresize={resize}
+    onerror={unhandledError}
+    onorientationchange={orientationChanged} />
 
 <style lang="scss">
     .burst-wrapper {
