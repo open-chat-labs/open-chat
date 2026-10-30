@@ -128,14 +128,6 @@ export class MiniAppFullScreen {
         };
     }
 
-    toggle(): void {
-        if (this.on) {
-            this.exit();
-        } else {
-            this.enter();
-        }
-    }
-
     enter(): void {
         const dialog = this.#dialog;
         if (dialog === undefined || this.on) return;

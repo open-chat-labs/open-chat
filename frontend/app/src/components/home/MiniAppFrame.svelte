@@ -12,7 +12,7 @@
     import { MiniAppHost, type HostedMiniApp } from "@src/logic/miniApp/miniAppHost.svelte";
     import { MINI_APP_SANDBOX } from "@src/utils/miniApp";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { getContext, untrack } from "svelte";
+    import { getContext, tick, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -85,6 +85,23 @@
 
     let dialog: HTMLDialogElement | undefined = $state();
     let iframe: HTMLIFrameElement | undefined = $state();
+    let corner: HTMLButtonElement | undefined = $state();
+    // Going full screen unmounts the corner button, and coming back unmounts the bar's exit
+    // button, so a keyboard user's focus is put where they'd expect: on the exit button once the
+    // bar's in, and back on the corner button once the card's back
+    let wasFullScreen = fullScreen.on;
+    $effect(() => {
+        const on = fullScreen.on;
+        if (on === wasFullScreen) return;
+        wasFullScreen = on;
+        void tick().then(() => {
+            if (on) {
+                dialog?.querySelector<HTMLElement>(".exit button, .exit [role='button']")?.focus();
+            } else {
+                corner?.focus();
+            }
+        });
+    });
 
     $effect(() => {
         const el = dialog;
@@ -160,12 +177,14 @@ app (MiniAppFullScreen) -->
                     <Translatable resourceKey={i18nKey(`bots.miniApp.${action}`)} />
                 </Button>
             {/each}
-            <HoverIcon
-                compact
-                title={$_("bots.miniApp.exitFullScreen")}
-                onclick={() => fullScreen.exit()}>
-                <FullscreenExit size={"1.4em"} color={"var(--icon-txt)"} />
-            </HoverIcon>
+            <span class="exit">
+                <HoverIcon
+                    compact
+                    title={$_("bots.miniApp.exitFullScreen")}
+                    onclick={() => fullScreen.exit()}>
+                    <FullscreenExit size={"1.4em"} color={"var(--icon-txt)"} />
+                </HoverIcon>
+            </span>
         </div>
     {/if}
     {#if fullScreen.on && actions.error !== undefined}
@@ -206,6 +225,7 @@ app (MiniAppFullScreen) -->
         {/if}
         {#if MiniAppFullScreen.supported && showApp && !fullScreen.on && (label === undefined || dismissed)}
             <button
+                bind:this={corner}
                 type="button"
                 class="corner"
                 title={$_("bots.miniApp.fullScreen")}
@@ -388,7 +408,6 @@ app (MiniAppFullScreen) -->
     // over the app, out of its way in a corner, and out of sight until the pointer's over the frame
     // where there is one
     .corner {
-        z-index: 1;
         border: none;
         cursor: pointer;
         opacity: 0.7;
@@ -396,8 +415,7 @@ app (MiniAppFullScreen) -->
         @media (hover: hover) {
             opacity: 0;
 
-            .frame:hover &,
-            &:focus-visible {
+            .frame:hover & {
                 opacity: 0.7;
             }
         }
