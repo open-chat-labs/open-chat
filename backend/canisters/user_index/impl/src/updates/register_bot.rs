@@ -1,7 +1,7 @@
 use crate::StorageIndexEvent;
 use crate::guards::caller_is_openchat_user;
 use crate::model::user_map::Bot;
-use crate::model::{JSON_DATA_ENCODING_NOT_SUPPORTED, MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN};
+use crate::model::{JSON_DATA_ENCODING_NOT_SUPPORTED, MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN, validate_mini_apps};
 use crate::{RuntimeState, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
@@ -94,6 +94,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             permitted_install_location: args.permitted_install_location,
             default_subscriptions: args.definition.default_subscriptions.clone(),
             data_encoding: args.definition.data_encoding.unwrap_or_default(),
+            mini_apps: args.definition.mini_apps.clone().unwrap_or_default(),
             notification_canister,
         }),
         None,
@@ -148,6 +149,10 @@ fn validate_request(args: &Args, owner_id: UserId, state: &RuntimeState) -> Resu
 
     if args.definition.data_encoding == Some(BotDataEncoding::Json) {
         return Err(JSON_DATA_ENCODING_NOT_SUPPORTED.to_string());
+    }
+
+    if let Some(mini_apps) = args.definition.mini_apps.as_ref() {
+        validate_mini_apps(mini_apps)?;
     }
 
     if Principal::from_text(&args.endpoint).is_err() && Url::parse(&args.endpoint).is_err() {

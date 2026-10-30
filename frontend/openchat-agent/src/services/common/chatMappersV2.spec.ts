@@ -303,18 +303,12 @@ describe("the gate a new chat is created with", () => {
 describe("mini app content mapping", () => {
     const alice = Principal.selfAuthenticating(new Uint8Array(32).fill(1));
     const bob = Principal.selfAuthenticating(new Uint8Array(32).fill(2));
-    const bucket = Principal.selfAuthenticating(new Uint8Array(32).fill(3));
 
     test("maps the card, as the service wrote it", () => {
         const api: TMessageContent = {
             MiniApp: {
                 text: "**Uno** · 2 to 4 players",
-                image: {
-                    width: 600,
-                    height: 400,
-                    mime_type: "image/png",
-                    blob_reference: { canister_id: bucket.toUint8Array(), blob_id: 7n },
-                },
+                app: "uno",
                 max_players: 4,
                 spectators: true,
                 app_size: { width: 440, height: 740 },
@@ -330,12 +324,7 @@ describe("mini app content mapping", () => {
         expect(messageContent(api, "sender")).toEqual({
             kind: "mini_app_content",
             text: "**Uno** · 2 to 4 players",
-            image: {
-                width: 600,
-                height: 400,
-                mimeType: "image/png",
-                blobReference: { canisterId: bucket.toText(), blobId: 7n },
-            },
+            app: "uno",
             maxPlayers: 4,
             spectators: true,
             appSize: { width: 440, height: 740 },
@@ -353,6 +342,7 @@ describe("mini app content mapping", () => {
                 {
                     MiniApp: {
                         text: "Uno",
+                        app: "uno",
                         spectators: false,
                         app_size: { width: 440, height: 740 },
                         status,
@@ -365,12 +355,24 @@ describe("mini app content mapping", () => {
 
         expect(status("Open")).toEqual({ kind: "open" });
         expect(
-            status({ Finished: { players: [alice.toUint8Array()], result: "Alice won" } }),
-        ).toEqual({ kind: "finished", players: [alice.toText()], result: "Alice won" });
+            status({
+                Finished: {
+                    players: [alice.toUint8Array()],
+                    result: "Alice won",
+                    end_state: '{"winner":"alice"}',
+                },
+            }),
+        ).toEqual({
+            kind: "finished",
+            players: [alice.toText()],
+            result: "Alice won",
+            endState: '{"winner":"alice"}',
+        });
         expect(status({ Finished: { players: [] } })).toEqual({
             kind: "finished",
             players: [],
             result: undefined,
+            endState: undefined,
         });
     });
 
@@ -379,6 +381,7 @@ describe("mini app content mapping", () => {
             apiMessageContent({
                 kind: "mini_app_content",
                 text: "Uno",
+                app: "uno",
                 spectators: false,
                 appSize: { width: 440, height: 740 },
                 status: { kind: "open" },

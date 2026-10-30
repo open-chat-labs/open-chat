@@ -494,7 +494,14 @@ impl App {
         let gateway = pending.bot_api_gateway;
         tokio::spawn(async move {
             let _ = cards
-                .write(gateway, &game, MiniAppStatusUpdate::Ended(MiniAppEnded { result: None }))
+                .write(
+                    gateway,
+                    &game,
+                    MiniAppStatusUpdate::Ended(MiniAppEnded {
+                        result: None,
+                        end_state: None,
+                    }),
+                )
                 .await;
         });
     }
@@ -558,6 +565,8 @@ impl App {
             status: args.status,
             waiting_for: args.waiting_for,
             result: args.result,
+            // The bot's JSON, serialized compactly, as the card holds it
+            end_state: args.end_state.map(|state| state.to_string()),
             remove: args.remove,
             state: args.state,
         };
@@ -919,7 +928,7 @@ mod tests {
             FakeCards {
                 card: Mutex::new(MiniAppContent {
                     text: "Uno".to_string(),
-                    image: None,
+                    app: "uno".to_string(),
                     max_players: None,
                     spectators: true,
                     app_size: MiniAppSize { width: 440, height: 740 },
@@ -1030,6 +1039,7 @@ mod tests {
             status,
             waiting_for: None,
             result: None,
+            end_state: None,
             remove: Vec::new(),
             state: None,
         }
@@ -1071,7 +1081,7 @@ mod tests {
                 token: self.post_token(),
                 card: CardContent {
                     text: "Uno".to_string(),
-                    image: None,
+                    app: "uno".to_string(),
                     max_players,
                     spectators,
                     app_size: MiniAppSize { width: 440, height: 740 },
@@ -1318,6 +1328,7 @@ mod tests {
             MiniAppStatus::Finished(MiniAppFinished {
                 players: vec![user(1), user(2)],
                 result: Some("Bob won".to_string()),
+                end_state: None,
             })
         );
         assert!(test.stored().await.is_none());
@@ -1351,8 +1362,46 @@ mod tests {
             MiniAppStatus::Finished(MiniAppFinished {
                 players: vec![user(1)],
                 result: None,
+                end_state: None,
             })
         );
+        assert!(test.stored().await.is_none());
+    }
+
+    // The bot's end state, as it sent it, is written to the card with the result, serialized compactly,
+    // so the card's app can show how the game ended
+    #[tokio::test]
+    async fn a_bots_end_state_is_written_to_the_card() {
+        let test = Test::new();
+        test.post(None, true).await;
+        test.join(user(1)).await;
+        test.join(user(2)).await;
+        test.start(user(1)).await;
+        test.settle().await;
+
+        test.update(UpdateArgs {
+            result: Some("Checkmate".to_string()),
+            end_state: Some(json!({ "fen": "8/8/8/8/8/8/8/8 w - - 0 1", "moves": ["e4", "e5"] })),
+            ..update(Some(GameStatus::Finished))
+        })
+        .await
+        .unwrap();
+        test.settle().await;
+
+        let end_state = r#"{"fen":"8/8/8/8/8/8/8/8 w - - 0 1","moves":["e4","e5"]}"#.to_string();
+        assert_eq!(
+            test.card(),
+            MiniAppStatus::Finished(MiniAppFinished {
+                players: vec![user(1), user(2)],
+                result: Some("Checkmate".to_string()),
+                end_state: Some(end_state.clone()),
+            })
+        );
+        assert!(matches!(
+            test.cards.written.lock().unwrap().last(),
+            Some(MiniAppStatusUpdate::Ended(MiniAppEnded { result, end_state: state }))
+                if result.as_deref() == Some("Checkmate") && *state == Some(end_state.clone())
+        ));
         assert!(test.stored().await.is_none());
     }
 
@@ -1371,6 +1420,7 @@ mod tests {
             MiniAppStatus::Finished(MiniAppFinished {
                 players: Vec::new(),
                 result: None,
+                end_state: None,
             })
         );
         assert!(test.stored().await.is_none());
@@ -1408,6 +1458,7 @@ mod tests {
             MiniAppStatus::Finished(MiniAppFinished {
                 players: Vec::new(),
                 result: None,
+                end_state: None,
             })
         );
         assert!(test.stored().await.is_none());
@@ -1433,6 +1484,11 @@ mod tests {
             },
             UpdateArgs {
                 waiting_for: Some(vec![user(2)]),
+                ..update(None)
+            },
+            // An end state only comes with Finished
+            UpdateArgs {
+                end_state: Some(json!({ "moves": [] })),
                 ..update(None)
             },
         ] {
@@ -2001,7 +2057,10 @@ mod tests {
         assert!(test.cards.posted.lock().unwrap().is_empty());
         assert!(matches!(
             test.cards.written.lock().unwrap().as_slice(),
-            [MiniAppStatusUpdate::Ended(MiniAppEnded { result: None })]
+            [MiniAppStatusUpdate::Ended(MiniAppEnded {
+                result: None,
+                end_state: None
+            })]
         ));
     }
 }

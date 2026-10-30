@@ -1,6 +1,9 @@
 use crate::{
     RuntimeState, StorageIndexEvent,
-    model::{JSON_DATA_ENCODING_NOT_SUPPORTED, MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN, user_map::UpdateBotResult},
+    model::{
+        JSON_DATA_ENCODING_NOT_SUPPORTED, MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN, user_map::UpdateBotResult,
+        validate_mini_apps,
+    },
     mutate_state,
 };
 use candid::Principal;
@@ -204,6 +207,12 @@ fn validate(args: &Args, state: &RuntimeState) -> Result<(), Response> {
             return Err(Error(
                 OCErrorCode::InvalidRequest.with_message(JSON_DATA_ENCODING_NOT_SUPPORTED),
             ));
+        }
+
+        if let Some(mini_apps) = definition.mini_apps.as_ref()
+            && let Err(message) = validate_mini_apps(mini_apps)
+        {
+            return Err(Error(OCErrorCode::InvalidRequest.with_message(message)));
         }
     }
 

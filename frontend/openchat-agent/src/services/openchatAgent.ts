@@ -1375,9 +1375,6 @@ export class OpenChatAgent extends EventTarget {
                 imageData: this.rehydrateDataContent(content.imageData),
             };
         }
-        if (content.kind === "mini_app_content" && content.image !== undefined) {
-            return { ...content, image: this.rehydrateDataContent(content.image) };
-        }
         return content;
     }
 

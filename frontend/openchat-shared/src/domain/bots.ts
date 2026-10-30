@@ -328,6 +328,7 @@ export function emptyBotInstance(ownerId: string): ExternalBot {
             defaultSubscriptions: undefined,
             dataEncoding: undefined,
             restrictedLocations: undefined,
+            miniApps: [],
         },
         registrationStatus: { kind: "private" },
     };
@@ -367,6 +368,16 @@ export type BotDefinition = {
     defaultSubscriptions: BotSubscriptions | undefined;
     dataEncoding: "json" | "candid" | "msgpack" | undefined;
     restrictedLocations: BotInstallationLocationType[] | undefined;
+    // the apps the bot posts MiniApp cards for, each with its artwork, which a card names
+    miniApps: MiniAppDefinition[];
+};
+
+// An app a bot hosts, as its definition declares it. A MiniApp card names one, and the card shows
+// the app's image whenever there's no app to show.
+export type MiniAppDefinition = {
+    name: string;
+    // http(s), or a path relative to the bot's endpoint, eg. "app/chess.svg"
+    imageUrl: string;
 };
 
 export type AutonomousBotConfig = {

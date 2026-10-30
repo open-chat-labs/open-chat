@@ -295,5 +295,6 @@ export const builtinBot: InternalBot = {
         defaultSubscriptions: undefined,
         dataEncoding: undefined,
         restrictedLocations: undefined,
+        miniApps: [],
     },
 };

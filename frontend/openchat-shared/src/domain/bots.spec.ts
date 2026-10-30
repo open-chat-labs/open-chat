@@ -116,6 +116,7 @@ describe("the permissions offered when installing a bot", () => {
         defaultSubscriptions: undefined,
         dataEncoding: undefined,
         restrictedLocations: undefined,
+        miniApps: [],
     };
 
     // Invariant: a bot installed outside a community is never granted community permissions, in

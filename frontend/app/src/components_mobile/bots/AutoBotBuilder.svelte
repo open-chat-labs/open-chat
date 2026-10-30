@@ -127,6 +127,7 @@
             defaultSubscriptions: undefined,
             dataEncoding: undefined,
             restrictedLocations: undefined,
+            miniApps: [],
         };
     }
 

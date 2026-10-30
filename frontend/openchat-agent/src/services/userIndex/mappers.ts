@@ -748,6 +748,11 @@ export function apiBotDefinition(domain: BotDefinition): ApiBotDefinition {
         default_subscriptions: mapOptional(domain.defaultSubscriptions, identity),
         data_encoding: mapOptional(domain.dataEncoding, apiDataEncoding),
         restricted_locations: mapOptional(domain.restrictedLocations, apiRestrictedLocations),
+        // a bot cached before its definition listed its apps has none
+        mini_apps:
+            (domain.miniApps ?? []).length > 0
+                ? domain.miniApps.map((app) => ({ name: app.name, image_url: app.imageUrl }))
+                : undefined,
     };
 }
 

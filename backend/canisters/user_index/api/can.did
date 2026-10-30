@@ -30,6 +30,7 @@ type BotUpdatesResponse = variant {
             last_updated : TimestampMillis;
             registration_status : BotRegistrationStatus;
             restricted_locations : opt vec BotInstallationLocationType;
+            mini_apps : opt vec MiniAppDefinition;
         };
         removed : vec UserId;
         timestamp : TimestampMillis;
@@ -244,6 +245,12 @@ type BotDefinition = record {
     default_subscriptions : opt BotSubscriptions;
     data_encoding : opt BotDataEncoding;
     restricted_locations : opt vec BotInstallationLocationType;
+    mini_apps : opt vec MiniAppDefinition;
+};
+
+type MiniAppDefinition = record {
+    name : text;
+    image_url : text;
 };
 
 type AutonomousConfig = record {

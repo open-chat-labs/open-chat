@@ -21,6 +21,25 @@ pub struct BotDefinition {
     pub default_subscriptions: Option<BotSubscriptions>,
     pub data_encoding: Option<BotDataEncoding>,
     pub restricted_locations: Option<HashSet<BotInstallationLocationType>>,
+    // the apps the bot posts MiniApp cards for, each with its artwork, which a card names
+    pub mini_apps: Option<Vec<MiniAppDefinition>>,
+}
+
+/// An app a bot hosts, as its definition declares it. A MiniApp card names one, and the card shows
+/// the app's image whenever there's no app to show: before the app loads, to someone who can't open
+/// it, and once the game's over, with its result.
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct MiniAppDefinition {
+    // what a card names it by, eg. "chess"
+    pub name: String,
+    // an absolute http(s) URL, or a path relative to the bot's endpoint, eg. "app/chess.svg"
+    pub image_url: String,
+}
+
+impl MiniAppDefinition {
+    pub const MAX_NAME_CHARS: usize = 50;
+    pub const MAX_IMAGE_URL_CHARS: usize = 500;
 }
 
 #[ts_export]

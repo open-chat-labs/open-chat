@@ -62,7 +62,7 @@ pub fn anchor() {
 
         // Anchors for large variant-payload structs whose visit_map is otherwise unique to
         // UserIndexEvent::visit_enum and would be inlined into it by wasm-opt.
-        assert!(msgpack::deserialize::<BotRegistered, _>(s).is_err()); // 11 fields
+        assert!(msgpack::deserialize::<BotRegistered, _>(s).is_err()); // 12 fields
         assert!(msgpack::deserialize::<DiamondMembershipPaymentReceived, _>(s).is_err()); // 10 fields
         assert!(msgpack::deserialize::<UserDetailsFull, _>(s).is_err()); // 10 serde-renamed fields
         assert!(msgpack::deserialize::<BotUpdated, _>(s).is_err()); // 5 fields incl. BotDefinition

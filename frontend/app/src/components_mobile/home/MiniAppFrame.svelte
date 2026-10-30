@@ -4,6 +4,7 @@
         miniAppCardsStore,
         miniAppCardView,
         miniAppGameKey,
+        type MiniAppCardView,
         type OpenChat,
     } from "@client";
     import type { MiniAppActions } from "@src/logic/miniApp/miniAppActions.svelte";
@@ -15,6 +16,7 @@
     import { getContext, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import Fullscreen from "svelte-material-icons/Fullscreen.svelte";
     import FullscreenExit from "svelte-material-icons/FullscreenExit.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
@@ -23,17 +25,22 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        // fixed for the frame's life: a different game gets a frame of its own
+        // the game's fixed for the frame's life: a different game gets a frame of its own. Its card
+        // (`app.content`) follows the message.
         app: HostedMiniApp;
         // the card's, so a request from either shows on both
         actions: MiniAppActions;
         // the card's too, which keeps the frame while it's full screen
         fullScreen: MiniAppFullScreen;
-        // whether the app's running in the frame, which otherwise keeps the app's place in the card
+        // whether the card's on screen, when the app runs in the frame
         active: boolean;
+        // the card as it's shown, live or as stored
+        view: MiniAppCardView;
+        // the app's artwork, shown whenever there's no app to show
+        imageUrl: string | undefined;
     }
 
-    let { app, actions, fullScreen, active }: Props = $props();
+    let { app, actions, fullScreen, active, view, imageUrl }: Props = $props();
 
     let darkMode = $derived($currentTheme.mode === "dark");
     const host = untrack(
@@ -58,6 +65,22 @@
             $currentUserIdStore,
         ).actions,
     );
+    let finished = $derived(view.status === "finished");
+    // The app's shown while the user may open the game, and once it's over if the card records how
+    // it ended, which the app shows. Otherwise the frame shows the app's artwork instead. The
+    // artwork's also under the app until it's loaded, and while the card's off screen.
+    let showApp = $derived(view.showsApp);
+    // over the app, or its artwork, once the game's over
+    let label = $derived(
+        finished ? (view.result ?? interpolate($_, i18nKey("bots.miniApp.finished"))) : undefined,
+    );
+    // the user's taken the label off the finished game's app, to look through it, until the card's
+    // shown afresh
+    let dismissed = $state(false);
+    // whether the app in the frame has loaded, when it's shown in place of the artwork
+    let loaded = $state(false);
+    // an image which couldn't be loaded, so the box is left plain
+    let failedImage: string | undefined = $state();
 
     let dialog: HTMLDialogElement | undefined = $state();
     let iframe: HTMLIFrameElement | undefined = $state();
@@ -71,15 +94,49 @@
         // null once the frame's removed, when the game's closed
         const frame = iframe;
         if (!frame) return;
-        return untrack(() => host.open(frame));
+        return untrack(() => {
+            const close = host.open(frame);
+            return () => {
+                close();
+                // the next frame starts unloaded
+                loaded = false;
+            };
+        });
     });
+    $effect(() => host.setContent(app.content));
     $effect(() => host.setDarkMode(darkMode));
     // While the app's away, whatever became of its last opening is forgotten, so that it's opened
     // afresh when it's back: eg. an opening which failed while the service was unreachable
     $effect(() => {
-        if (!active) untrack(() => host.reset());
+        if (!active) {
+            untrack(() => host.reset());
+            dismissed = false;
+        }
+    });
+    // Nothing to see full screen but the artwork
+    $effect(() => {
+        if (!showApp) untrack(() => fullScreen.exit());
     });
 </script>
+
+<!-- The result, or that the game's over, across the frame's box. Over the app it's a button, which
+takes it away so the user can look through the game. -->
+{#snippet overlay(dismissible: boolean)}
+    {#if dismissible}
+        <button
+            type="button"
+            class="overlay dismissible"
+            title={$_("close")}
+            onclick={() => (dismissed = true)}>
+            <span class="label">{label}</span>
+            <span class="close"><Close size={"1.2em"} color={"currentColor"} /></span>
+        </button>
+    {:else}
+        <div class="overlay">
+            <span class="label">{label}</span>
+        </div>
+    {/if}
+{/snippet}
 
 <!-- A dialog, open in place, so that full screen can put it in the top layer without reloading the
 app (MiniAppFullScreen) -->
@@ -102,7 +159,7 @@ app (MiniAppFullScreen) -->
                 </Button>
             {/each}
         {/if}
-        {#if MiniAppFullScreen.supported}
+        {#if MiniAppFullScreen.supported && showApp}
             <IconButton padding={"xs"} size={"sm"} onclick={() => fullScreen.toggle()}>
                 {#snippet icon(color)}
                     {#if fullScreen.on}
@@ -122,18 +179,35 @@ app (MiniAppFullScreen) -->
         </div>
     {/if}
     <div class="app" style={`--app-w: ${size.width}; --app-h: ${size.height};`}>
-        {#if host.status.kind === "closed"}
+        {#if showApp && host.status.kind === "closed"}
             <div class="closed">
                 <AlertCircleOutline size={"2em"} color={"var(--validation-error)"} />
                 <Translatable resourceKey={host.status.message} />
             </div>
-        {:else if active}
-            <iframe
-                title={botName}
-                bind:this={iframe}
-                src={url.href}
-                sandbox={MINI_APP_SANDBOX}
-                referrerpolicy="no-referrer"></iframe>
+        {:else}
+            <!-- The artwork, whenever there's no loaded app over it -->
+            {#if !showApp || !active || !loaded}
+                <div class="cover">
+                    {#if imageUrl !== undefined && imageUrl !== failedImage}
+                        <img src={imageUrl} alt="" onerror={() => (failedImage = imageUrl)} />
+                    {/if}
+                    {#if !showApp && label !== undefined}
+                        {@render overlay(false)}
+                    {/if}
+                </div>
+            {/if}
+            {#if showApp && active}
+                <iframe
+                    title={botName}
+                    bind:this={iframe}
+                    src={url.href}
+                    sandbox={MINI_APP_SANDBOX}
+                    referrerpolicy="no-referrer"
+                    onload={() => (loaded = true)}></iframe>
+            {/if}
+            {#if showApp && label !== undefined && !dismissed}
+                {@render overlay(true)}
+            {/if}
         {/if}
     </div>
 </dialog>
@@ -196,6 +270,7 @@ app (MiniAppFullScreen) -->
 
     .app {
         // at the app's aspect ratio, no taller than most of the screen
+        position: relative;
         width: min(100%, calc(75dvh * var(--app-w) / var(--app-h)));
         aspect-ratio: var(--app-w) / var(--app-h);
         margin: 0 auto;
@@ -211,7 +286,10 @@ app (MiniAppFullScreen) -->
         }
     }
 
+    // over the artwork, which shows through until the app's loaded
     iframe {
+        position: absolute;
+        inset: 0;
         display: block;
         border: none;
         height: 100%;
@@ -227,5 +305,64 @@ app (MiniAppFullScreen) -->
         height: 100%;
         padding: var(--sp-md);
         text-align: center;
+    }
+
+    .cover {
+        height: 100%;
+        width: 100%;
+
+        img {
+            display: block;
+            height: 100%;
+            width: 100%;
+            object-fit: cover;
+        }
+    }
+
+    // Across the box, with the label in the middle. Readable over any artwork, so not themed.
+    .overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--sp-md);
+        margin: 0;
+        border: none;
+        background: none;
+        color: inherit;
+        font: inherit;
+        text-align: center;
+
+        &.dismissible {
+            cursor: pointer;
+
+            &:focus-visible {
+                outline: 2px solid var(--primary);
+                outline-offset: -2px;
+            }
+        }
+    }
+
+    .label {
+        font-size: var(--typo-body-sz);
+        line-height: var(--typo-body-lh);
+        font-weight: var(--font-weight-bold);
+        padding: var(--sp-xs) var(--sp-lg);
+        border-radius: var(--rad-circle);
+        background-color: rgba(0, 0, 0, 0.65);
+        color: #fff;
+        overflow-wrap: anywhere;
+    }
+
+    .close {
+        position: absolute;
+        top: var(--sp-xs);
+        right: var(--sp-xs);
+        display: flex;
+        padding: var(--sp-xxs);
+        border-radius: var(--rad-circle);
+        background-color: rgba(0, 0, 0, 0.65);
+        color: #fff;
     }
 </style>

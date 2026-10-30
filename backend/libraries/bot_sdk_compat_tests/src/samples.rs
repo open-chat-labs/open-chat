@@ -10,12 +10,12 @@ use types::{
     CryptoContent, CryptoTransaction, CustomContent, DeletedBy, EncryptedContent, EncryptedMessageContentType,
     FailedCryptoTransaction, FileContent, GiphyContent, GiphyImageVariant, ImageContent, MediaScanMatch, MediaScanProvider,
     MessageContent, MessageReminderContent, MessageReminderCreatedContent, MessageReport, MiniAppActive, MiniAppContent,
-    MiniAppFinished, MiniAppImage, MiniAppSize, MiniAppStatus, ModerationReportContent, ModerationReportResolution,
-    ModerationReportStatus, NnsProposal, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapReserved,
-    P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, PriceChartContent, PriceChartSeries,
-    PriceChartSource, PriceChartToken, PrizeContent, PrizeWinnerContent, Proposal, ProposalContent, ProposalDecisionStatus,
-    ProposalRewardStatus, ReportedMessage, SnsProposal, Tally, TextContent, ThumbnailData, TokenInfo, TotalVotes, UserId,
-    VideoCallContent, VideoCallType, VideoContent, certified, icrc1, icrc2, nns,
+    MiniAppFinished, MiniAppSize, MiniAppStatus, ModerationReportContent, ModerationReportResolution, ModerationReportStatus,
+    NnsProposal, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapReserved, P2PSwapStatus,
+    PendingCryptoTransaction, PollConfig, PollContent, PollVotes, PriceChartContent, PriceChartSeries, PriceChartSource,
+    PriceChartToken, PrizeContent, PrizeWinnerContent, Proposal, ProposalContent, ProposalDecisionStatus, ProposalRewardStatus,
+    ReportedMessage, SnsProposal, Tally, TextContent, ThumbnailData, TokenInfo, TotalVotes, UserId, VideoCallContent,
+    VideoCallType, VideoContent, certified, icrc1, icrc2, nns,
 };
 
 /// One value of every kind of content OpenChat sends bots, and of every variant within them, with
@@ -125,21 +125,14 @@ pub fn message_contents() -> Vec<MessageContent> {
             MiniAppStatus::Finished(MiniAppFinished {
                 players: vec![user_id(1), user_id(2)],
                 result: Some("Bob won".to_string()),
+                end_state: Some("{\"fen\":\"8/8\"}".to_string()),
             }),
         ])
         .into_iter()
         .map(|status| {
             MessageContent::MiniApp(MiniAppContent {
                 text: "**Uno** · 2 to 4 players".to_string(),
-                image: Some(MiniAppImage {
-                    width: max(),
-                    height: max(),
-                    mime_type: "image/png".to_string(),
-                    blob_reference: BlobReference {
-                        canister_id: Principal::from_slice(&[1]),
-                        blob_id: max(),
-                    },
-                }),
+                app: "chess".to_string(),
                 max_players: Some(max()),
                 spectators: true,
                 app_size: MiniAppSize {

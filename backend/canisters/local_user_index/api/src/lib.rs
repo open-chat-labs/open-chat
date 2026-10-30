@@ -10,9 +10,10 @@ use types::{
     BotInstallationLocation, BotSubscriptions, BridgePlatform, BridgedUserId, BuildVersion, CanisterId, ChannelId,
     ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId, ClassifyMessageRequest, CommunityId, CyclesTopUp,
     DiamondMembershipPlanDuration, GroupChatUserNotificationPayload, MediaScanMatch, MessageContentInitial, MessageId,
-    MessageIndex, Milliseconds, Notification, NotifyChit, PhoneNumber, PublicCommunityActivity, PublicGroupActivity,
-    ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId, UserNotificationPayload, UserType, icrc1, is_default,
+    MessageIndex, Milliseconds, MiniAppDefinition, Notification, NotifyChit, PhoneNumber, PublicCommunityActivity,
+    PublicGroupActivity, ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof, User,
+    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotificationPayload, UserType, icrc1,
+    is_default,
 };
 
 mod lifecycle;
@@ -252,6 +253,8 @@ pub struct BotRegistered {
     pub permitted_install_location: Option<BotInstallationLocation>,
     pub default_subscriptions: Option<BotSubscriptions>,
     pub data_encoding: BotDataEncoding,
+    #[serde(default)]
+    pub mini_apps: Vec<MiniAppDefinition>,
     pub notification_canister: CanisterId,
 }
 

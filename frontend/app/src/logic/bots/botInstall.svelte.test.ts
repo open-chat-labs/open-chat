@@ -21,6 +21,7 @@ const bot = {
         defaultSubscriptions: undefined,
         dataEncoding: undefined,
         restrictedLocations: undefined,
+        miniApps: [],
     },
 } as unknown as ExternalBotLike;
 

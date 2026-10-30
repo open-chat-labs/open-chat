@@ -1525,7 +1525,7 @@ type PriceChartSource = record {
 
 type MiniAppContent = record {
     text : text;
-    image : opt MiniAppImage;
+    app : text;
     max_players : opt nat32;
     spectators : bool;
     app_size : MiniAppSize;
@@ -1551,13 +1551,7 @@ type MiniAppActive = record {
 type MiniAppFinished = record {
     players : vec UserId;
     result : opt text;
-};
-
-type MiniAppImage = record {
-    width : nat32;
-    height : nat32;
-    mime_type : text;
-    blob_reference : BlobReference;
+    end_state : opt text;
 };
 
 type EncryptedMessageContentType = variant {

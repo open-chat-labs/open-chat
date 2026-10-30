@@ -24,8 +24,8 @@ use types::{
     BotEventWrapper, BotInstallationLocation, BotMessageContent, BotPermissions, BotSubscriptions, BridgePlatform, CanisterId,
     ChannelId, Chat, ChatEvent, ChatEventType, ChatPermission, ChatType, CommunityEventType, CommunityPermission, EventIndex,
     GroupReplyContext, HttpRequest, ImageContent, MessageContent, MessageContentInitial, MessageId, MessageIndex,
-    MessagePermission, NotificationEnvelope, OptionUpdate, Rules, StringParam, TextContent, ThumbnailData, UpdatedRules,
-    UserId,
+    MessagePermission, MiniAppDefinition, NotificationEnvelope, OptionUpdate, Rules, StringParam, TextContent, ThumbnailData,
+    UpdatedRules, UserId,
 };
 
 #[test]
@@ -1428,6 +1428,7 @@ fn read_messages_by_command() {
             default_subscriptions: None,
             data_encoding: None,
             restricted_locations: None,
+            mini_apps: None,
         },
     );
 
@@ -1541,6 +1542,7 @@ fn send_direct_message() {
             default_subscriptions: None,
             data_encoding: None,
             restricted_locations: None,
+            mini_apps: None,
         },
     );
 
@@ -2130,6 +2132,7 @@ fn updating_autonomous_permissions_should_propogate_to_installations(chat_type: 
             }),
             data_encoding: None,
             restricted_locations: None,
+            mini_apps: None,
         }),
     );
 
@@ -2696,6 +2699,96 @@ fn json_data_encoding_rejected() {
     );
 }
 
+// A bot's apps, which its MiniApp cards name, have unique names and http(s) or relative image urls
+#[test]
+fn mini_apps_with_duplicate_names_or_bad_image_urls_rejected() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let app = |name: &str, image_url: &str| MiniAppDefinition {
+        name: name.to_string(),
+        image_url: image_url.to_string(),
+    };
+    let bad_definitions = [
+        vec![app("chess", "app/chess.svg"), app("chess", "https://my.bot.xyz/chess.png")],
+        vec![app("chess", "ftp://my.bot.xyz/chess.png")],
+        vec![app("chess", "javascript:alert(1)")],
+        vec![app(" ", "app/chess.svg")],
+    ];
+
+    for mini_apps in bad_definitions.iter() {
+        let mut definition = default_bot_definition(random_string());
+        definition.mini_apps = Some(mini_apps.clone());
+        let response = client::user_index::register_bot(
+            env,
+            owner.principal,
+            canister_ids.user_index,
+            &user_index_canister::register_bot::Args {
+                principal: random_principal(),
+                name: random_string(),
+                avatar: None,
+                endpoint: "https://my.bot.xyz/".to_string(),
+                definition,
+                permitted_install_location: None,
+            },
+        );
+        assert!(
+            matches!(response, user_index_canister::register_bot::Response::InvalidRequest(_)),
+            "'register_bot' expected InvalidRequest for {mini_apps:?}: {response:?}"
+        );
+    }
+
+    let (bot_id, _) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
+    for mini_apps in bad_definitions.iter() {
+        let mut definition = default_bot_definition(random_string());
+        definition.mini_apps = Some(mini_apps.clone());
+        let response = client::user_index::update_bot(
+            env,
+            owner.principal,
+            canister_ids.user_index,
+            &user_index_canister::update_bot::Args {
+                bot_id,
+                owner: None,
+                principal: None,
+                avatar: OptionUpdate::NoChange,
+                endpoint: None,
+                definition: Some(definition),
+            },
+        );
+        assert!(
+            matches!(&response, user_index_canister::update_bot::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+            "'update_bot' expected InvalidRequest for {mini_apps:?}: {response:?}"
+        );
+    }
+
+    // And a good one is taken
+    let mut definition = default_bot_definition(random_string());
+    definition.mini_apps = Some(vec![app("chess", "app/chess.svg"), app("uno", "https://my.bot.xyz/uno.png")]);
+    let response = client::user_index::update_bot(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        &user_index_canister::update_bot::Args {
+            bot_id,
+            owner: None,
+            principal: None,
+            avatar: OptionUpdate::NoChange,
+            endpoint: None,
+            definition: Some(definition),
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::update_bot::Response::Success),
+        "'update_bot' error: {response:?}"
+    );
+}
+
 fn set_channel_public_args(channel_id: ChannelId, public: bool) -> community_canister::update_channel::Args {
     community_canister::update_channel::Args {
         channel_id,
@@ -2827,5 +2920,6 @@ pub(crate) fn default_bot_definition(command_name: String) -> BotDefinition {
         }),
         data_encoding: None,
         restricted_locations: None,
+        mini_apps: None,
     }
 }

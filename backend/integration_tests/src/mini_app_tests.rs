@@ -14,13 +14,13 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    AutonomousConfig, BlobReference, BotActionChatDetails, BotActionCommunityDetails, BotActionScope, BotChatContext,
-    BotInitiator, BotInstallationLocation, BotMessageContent, BotPermissions, CLAIM_TYPE_MINI_APP_BOT,
-    CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_POST, CanisterId, ChannelId, Chat, ChatEvent, ChatPermission, CommunityId,
-    Empty, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePermission, Milliseconds,
-    MiniAppActive, MiniAppBotClaims, MiniAppChatClaims, MiniAppContent, MiniAppEnded, MiniAppFinished, MiniAppGame,
-    MiniAppImage, MiniAppPostClaims, MiniAppSize, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, SuccessOnly,
-    UnitResult, UserId,
+    AutonomousConfig, BotActionChatDetails, BotActionCommunityDetails, BotActionScope, BotChatContext, BotInitiator,
+    BotInstallationLocation, BotMessageContent, BotPermissions, CLAIM_TYPE_MINI_APP_BOT, CLAIM_TYPE_MINI_APP_CHAT,
+    CLAIM_TYPE_MINI_APP_POST, CanisterId, ChannelId, Chat, ChatEvent, ChatPermission, CommunityId, Empty, EventIndex,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePermission, Milliseconds, MiniAppActive,
+    MiniAppBotClaims, MiniAppChatClaims, MiniAppContent, MiniAppDefinition, MiniAppEnded, MiniAppFinished, MiniAppGame,
+    MiniAppPostClaims, MiniAppSize, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, SuccessOnly, UnitResult,
+    UserId,
 };
 
 // How long a command's token, and so the post token of a command's card, lasts
@@ -74,10 +74,7 @@ fn a_bot_posts_a_mini_app_card_which_cant_be_edited() {
     let MessageContent::MiniApp(content) = &message.content else {
         panic!("Expected a mini app: {:?}", message.content);
     };
-    assert_eq!(
-        content.image.as_ref().map(|i| (i.width, i.height, i.blob_reference.blob_id)),
-        Some((600, 400, 7))
-    );
+    assert_eq!(content.app, APP);
 
     // The bot reads its card back
     let response = client::local_user_index::bot_chat_events(
@@ -271,6 +268,201 @@ fn a_card_is_posted_open() {
     );
 }
 
+// A card names one of the bot's apps, from its definition, whose image the card shows: the
+// LocalUserIndex refuses a card naming one the definition lacks. Once the definition has the app, the
+// LocalUserIndexes learn of it and the card is posted.
+#[test]
+fn a_card_names_an_app_in_the_bots_definition() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let Setup {
+        owner,
+        community_id,
+        channel_id,
+        local_user_index,
+        service,
+        ..
+    } = setup(env, canister_ids, *controller);
+    let (bot_id, bot_principal) = install_bot(
+        env,
+        &owner,
+        canister_ids.user_index,
+        local_user_index,
+        community_id,
+        MessagePermission::MiniApp,
+    );
+    let chat = Chat::Channel(community_id, channel_id);
+    let unknown = MiniAppContent {
+        app: "uno".to_string(),
+        ..card()
+    };
+
+    let response = post_card(
+        env,
+        service,
+        bot_principal,
+        local_user_index,
+        chat,
+        None,
+        random_from_u128(),
+        unknown.clone(),
+    );
+    let local_user_index_canister::bot_send_message::Response::Error(error) = &response else {
+        panic!("Expected InvalidMessageContent: {response:?}");
+    };
+    assert!(error.matches_code(OCErrorCode::InvalidMessageContent), "{response:?}");
+    // The reason is the JSON of a ContentValidationError, so the app's quotes are escaped
+    assert!(
+        error
+            .message()
+            .is_some_and(|m| m.contains(r#"The bot's definition has no app named \"uno\""#)),
+        "{response:?}"
+    );
+
+    let mut definition = mini_app_bot_definition(random_string());
+    definition.autonomous_config = Some(AutonomousConfig {
+        permissions: BotPermissions::default()
+            .with_message(&HashSet::from_iter([MessagePermission::Text, MessagePermission::MiniApp]))
+            .with_chat(&HashSet::from_iter([ChatPermission::ReadMessages])),
+    });
+    definition.mini_apps.as_mut().unwrap().push(MiniAppDefinition {
+        name: "uno".to_string(),
+        image_url: "https://my.bot.xyz/uno.png".to_string(),
+    });
+    let response = client::user_index::update_bot(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        &user_index_canister::update_bot::Args {
+            bot_id,
+            owner: None,
+            principal: None,
+            avatar: types::OptionUpdate::NoChange,
+            endpoint: None,
+            definition: Some(definition),
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::update_bot::Response::Success),
+        "'update_bot' error: {response:?}"
+    );
+    tick_many(env, 3);
+
+    let response = post_card(
+        env,
+        service,
+        bot_principal,
+        local_user_index,
+        chat,
+        None,
+        random_from_u128(),
+        unknown,
+    );
+    assert!(
+        matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)),
+        "'send_mini_app_message' error: {response:?}"
+    );
+}
+
+// How the game ended, as JSON the bot chose, which its app shows in the finished card: at most 16KB
+#[test]
+fn a_game_ends_with_its_end_state() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let Setup {
+        owner,
+        member,
+        community_id,
+        channel_id,
+        local_user_index,
+        service,
+    } = setup(env, canister_ids, *controller);
+    let (_, bot_principal) = install_bot(
+        env,
+        &owner,
+        canister_ids.user_index,
+        local_user_index,
+        community_id,
+        MessagePermission::MiniApp,
+    );
+    let chat = Chat::Channel(community_id, channel_id);
+    let message_id = random_from_u128();
+    let response = post_card(env, service, bot_principal, local_user_index, chat, None, message_id, card());
+    let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
+        panic!("'send_mini_app_message' error: {response:?}");
+    };
+    let read = |env: &PocketIc| {
+        let events =
+            client::community::happy_path::events_by_index(env, &member, community_id, channel_id, vec![sent.event_index]);
+        let ChatEvent::Message(message) = &events.events[0].event else {
+            panic!("Expected a message: {:?}", events.events[0].event);
+        };
+        let MessageContent::MiniApp(content) = &message.content else {
+            panic!("Expected a mini app: {:?}", message.content);
+        };
+        content.status.clone()
+    };
+    let players = vec![member.user_id, owner.user_id];
+    let response = write_card(
+        env,
+        service,
+        local_user_index,
+        chat,
+        None,
+        message_id,
+        started(players.clone(), Vec::new()),
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    let too_long = format!("{{\"moves\":\"{}\"}}", "x".repeat(MiniAppContent::MAX_END_STATE_BYTES));
+    let response = write_card(
+        env,
+        service,
+        local_user_index,
+        chat,
+        None,
+        message_id,
+        ended_with(Some("Bob won"), Some(&too_long)),
+    );
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent)),
+        "Expected the end state to be refused: {response:?}"
+    );
+    assert_eq!(read(env), active(players.clone(), Vec::new()));
+
+    let end_state = "{\"fen\":\"8/8\",\"moves\":[\"e4\",\"e5\"]}";
+    let response = write_card(
+        env,
+        service,
+        local_user_index,
+        chat,
+        None,
+        message_id,
+        ended_with(Some("Bob won"), Some(end_state)),
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    assert_eq!(
+        read(env),
+        MiniAppStatus::Finished(MiniAppFinished {
+            players,
+            result: Some("Bob won".to_string()),
+            end_state: Some(end_state.to_string()),
+        })
+    );
+}
+
 // The game starts with its players, its turns pass between them, then it ends with them and its result.
 // The message isn't marked as edited, the game starts once, and once it's finished the card never
 // changes, though the service can retry a write.
@@ -456,7 +648,7 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
         group_id,
         vec![(member.user_id, member.principal)],
     );
-    let mut definition = default_bot_definition(random_string());
+    let mut definition = mini_app_bot_definition(random_string());
     let permissions = BotPermissions::default().with_message(&HashSet::from_iter([MessagePermission::MiniApp]));
     definition.autonomous_config = Some(AutonomousConfig {
         permissions: permissions.clone(),
@@ -965,7 +1157,7 @@ fn a_card_answers_a_members_command() {
         service,
     } = setup(env, canister_ids, *controller);
     let command_name = random_string();
-    let mut definition = default_bot_definition(command_name.clone());
+    let mut definition = mini_app_bot_definition(command_name.clone());
     definition.commands[0].permissions =
         BotPermissions::default().with_message(&HashSet::from_iter([MessagePermission::MiniApp]));
     // A command in the community's scope: message permissions aren't granted there, so it asks for none
@@ -1157,7 +1349,7 @@ fn install_bot(
     community_id: CommunityId,
     granted: MessagePermission,
 ) -> (UserId, Principal) {
-    let mut definition = default_bot_definition(random_string());
+    let mut definition = mini_app_bot_definition(random_string());
     definition.autonomous_config = Some(AutonomousConfig {
         permissions: BotPermissions::default()
             .with_message(&HashSet::from_iter([MessagePermission::Text, MessagePermission::MiniApp]))
@@ -1286,19 +1478,23 @@ fn call_send_mini_app_message(
     .map(|bytes| candid::decode_one(&bytes).unwrap())
 }
 
-// With an image, as if the bot had uploaded one. Nothing here reads the file itself.
+// The app every bot here declares, which its cards name
+const APP: &str = "press_counter";
+
+// A bot's definition with the app its cards name, so the LocalUserIndex accepts them
+fn mini_app_bot_definition(command_name: String) -> types::BotDefinition {
+    let mut definition = default_bot_definition(command_name);
+    definition.mini_apps = Some(vec![MiniAppDefinition {
+        name: APP.to_string(),
+        image_url: "app/press.svg".to_string(),
+    }]);
+    definition
+}
+
 fn card() -> MiniAppContent {
     MiniAppContent {
         text: "**Uno** · 2 to 4 players".to_string(),
-        image: Some(MiniAppImage {
-            width: 600,
-            height: 400,
-            mime_type: "image/png".to_string(),
-            blob_reference: BlobReference {
-                canister_id: Principal::from_slice(&[1]),
-                blob_id: 7,
-            },
-        }),
+        app: APP.to_string(),
         max_players: Some(4),
         spectators: true,
         app_size: MiniAppSize { width: 440, height: 740 },
@@ -1314,6 +1510,7 @@ fn finished(players: Vec<UserId>, result: Option<&str>) -> MiniAppStatus {
     MiniAppStatus::Finished(MiniAppFinished {
         players,
         result: result.map(|r| r.to_string()),
+        end_state: None,
     })
 }
 
@@ -1326,8 +1523,13 @@ fn turn(waiting_for: Vec<UserId>) -> MiniAppStatusUpdate {
 }
 
 fn ended(result: Option<&str>) -> MiniAppStatusUpdate {
+    ended_with(result, None)
+}
+
+fn ended_with(result: Option<&str>, end_state: Option<&str>) -> MiniAppStatusUpdate {
     MiniAppStatusUpdate::Ended(MiniAppEnded {
         result: result.map(|r| r.to_string()),
+        end_state: end_state.map(|s| s.to_string()),
     })
 }
 
