@@ -1434,7 +1434,8 @@ mod tests {
         assert_eq!(test.start(user(1)).await, ServerMessage::Ok { id: 1 });
         test.settle().await;
 
-        let settings = r#"{"seconds":120,"target":2048}"#.to_string();
+        // Compact, in whichever key order this serde_json keeps
+        let settings = json!({ "target": 2048, "seconds": 120 }).to_string();
         assert_eq!(test.stored().await.unwrap().settings, Some(settings.clone()));
         assert_eq!(
             test.card(),
