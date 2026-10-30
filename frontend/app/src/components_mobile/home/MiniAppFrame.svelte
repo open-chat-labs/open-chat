@@ -145,8 +145,10 @@ takes it away so the user can look through the game. -->
             class="overlay dismissible"
             title={$_("close")}
             onclick={() => (dismissed = true)}>
-            <span class="label">{label}</span>
-            <span class="close"><Close size={"1.2em"} color={"currentColor"} /></span>
+            <span class="pill">
+                <span class="label">{label}</span>
+                <span class="close"><Close size={"1.2em"} color={"currentColor"} /></span>
+            </span>
         </button>
     {:else}
         <div class="overlay">
@@ -357,7 +359,15 @@ app (MiniAppFullScreen) -->
         }
     }
 
+    // the label with its close button on its corner, which move together
+    .pill {
+        position: relative;
+        display: inline-block;
+        max-width: 100%;
+    }
+
     .label {
+        display: inline-block;
         font-size: var(--typo-body-sz);
         line-height: var(--typo-body-lh);
         font-weight: var(--font-weight-bold);
@@ -371,13 +381,23 @@ app (MiniAppFullScreen) -->
     .close,
     .corner {
         position: absolute;
-        top: var(--sp-xs);
-        right: var(--sp-xs);
         display: flex;
         padding: var(--sp-xxs);
         border-radius: var(--rad-circle);
         background-color: rgba(0, 0, 0, 0.65);
         color: #fff;
+    }
+
+    // on the label's top right corner
+    .close {
+        top: calc(-1 * var(--sp-xs));
+        right: calc(-1 * var(--sp-xs));
+        border: 2px solid var(--surface-1);
+    }
+
+    .corner {
+        top: var(--sp-xs);
+        right: var(--sp-xs);
     }
 
     // over the app, out of its way in a corner, and out of sight until the pointer's over the frame
