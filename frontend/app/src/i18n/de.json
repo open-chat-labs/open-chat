@@ -2643,6 +2643,11 @@
     "useAtOwnRisk": "Benutzung auf eigene Gefahr",
     "userId": "Benutzer-ID",
     "userIdCopiedToClipboard": "Benutzer-ID in die Zwischenablage kopiert",
+    "userIdCopyWarning": {
+        "title": "Dies ist keine Wallet-Adresse",
+        "message": "Senden Sie keine Token an Ihre Benutzer-ID, sie gingen verloren. Ihre Einzahlungsadressen finden Sie in Ihrer Wallet.",
+        "confirm": "Verstanden, kopieren"
+    },
     "userInfoHeader": "Öffentlich",
     "userIsBlocked": "Entsperren Sie den Benutzer, um Nachrichten zu senden",
     "userJoined": "{username} ist der Gruppe {level} beigetreten",

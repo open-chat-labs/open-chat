@@ -2643,6 +2643,11 @@
     "useAtOwnRisk": "Sử dụng có nguy cơ của riêng bạn",
     "userId": "Id người dùng",
     "userIdCopiedToClipboard": "Đã sao chép Id người dùng vào bảng nhớ tạm",
+    "userIdCopyWarning": {
+        "title": "Đây không phải là địa chỉ ví",
+        "message": "Đừng gửi mã thông báo đến Id người dùng của bạn, chúng sẽ bị mất. Bạn có thể xem địa chỉ nạp tiền trong ví của mình.",
+        "confirm": "Tôi hiểu, sao chép"
+    },
     "userInfoHeader": "Công cộng",
     "userIsBlocked": "Bỏ chặn người dùng trước khi gửi tin nhắn",
     "userJoined": "{username} đã tham gia {level}",

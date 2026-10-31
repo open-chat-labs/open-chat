@@ -237,7 +237,8 @@ design export needs. Each entry says where it came up.
   - the restricted-content toggles show in every build (the mobile app hides them in app-store
     builds, which don't run this tree yet);
   - no rows for: the language, translation edit mode, named light and dark themes, the user id's
-    and voting hotkey's "don't send tokens here" warning, the crash log, Diamond's expiry and
+    and voting hotkey's "don't send tokens here" warning (the user id's row also wants the old
+    trees' confirmation before it copies, `userIdCopyWarning`), the crash log, Diamond's expiry and
     extend, referred users, Discord / Telegram accounts.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a

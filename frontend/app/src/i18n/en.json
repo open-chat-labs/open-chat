@@ -2686,6 +2686,11 @@
     "useAtOwnRisk": "Use at your own risk",
     "userId": "User id",
     "userIdCopiedToClipboard": "User Id copied to clipboard",
+    "userIdCopyWarning": {
+        "title": "This is not a wallet address",
+        "message": "Do not send tokens to your user id, as they would be lost. You can view your deposit addresses within your wallet.",
+        "confirm": "I understand, copy"
+    },
     "userInfoHeader": "Public",
     "userIsBlocked": "Unblock user to send messages",
     "userJoined": "{username} joined the {level}",

@@ -2643,6 +2643,11 @@
     "useAtOwnRisk": "Úselo bajo su propio riesgo",
     "userId": "identificación de usuario",
     "userIdCopiedToClipboard": "ID de usuario copiado al portapapeles",
+    "userIdCopyWarning": {
+        "title": "Esta no es una dirección de cartera",
+        "message": "No envíes tokens a tu ID de usuario, ya que se perderían. Puedes ver tus direcciones de depósito en tu cartera.",
+        "confirm": "Entendido, copiar"
+    },
     "userInfoHeader": "Público",
     "userIsBlocked": "Desbloquear usuario para enviar mensajes",
     "userJoined": "{username} se unió a {level}",

@@ -70,6 +70,7 @@
     import { isTouchDevice } from "../../../utils/devices";
     import { clearCrashLog, formatCrashLog } from "../../../utils/errorPostmortem";
     import AlertBox from "../../AlertBox.svelte";
+    import AreYouSure from "../../AreYouSure.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
@@ -118,6 +119,7 @@
     let selectedCommunityId = $state("");
     let deleting = $state(false);
     let confirmDelete = $state(false);
+    let confirmCopyUserId = $state(false);
     let botConfigData: BotClientConfigData | undefined = $state(undefined);
 
     let selectedCommunity = $derived(
@@ -214,6 +216,13 @@
         });
     }
 
+    // Tokens sent to a user id are lost, so warn before copying it. The hotkey doesn't need this:
+    // it's the owner of the user's wallet.
+    async function onConfirmCopyUserId(yes: boolean) {
+        confirmCopyUserId = false;
+        if (yes) copyToClipboard(user.userId, "userIdCopiedToClipboard");
+    }
+
     function getBotConfig() {
         client
             .getBotConfig()
@@ -226,6 +235,15 @@
 
 {#if confirmDelete}
     <ConfirmDeleteAccount bind:deleting onClose={() => (confirmDelete = false)} />
+{/if}
+
+{#if confirmCopyUserId}
+    <AreYouSure
+        title={i18nKey("userIdCopyWarning.title")}
+        message={i18nKey("userIdCopyWarning.message")}
+        yesLabel={i18nKey("userIdCopyWarning.confirm")}
+        noLabel={i18nKey("cancel")}
+        action={onConfirmCopyUserId} />
 {/if}
 
 <SectionHeader border={false} flush shadow>
@@ -565,8 +583,7 @@
                             <button
                                 type="button"
                                 aria-label={$_("copyToClipboard")}
-                                onclick={() =>
-                                    copyToClipboard(user.userId, "userIdCopiedToClipboard")}
+                                onclick={() => (confirmCopyUserId = true)}
                                 class="copy">
                                 <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
                             </button>

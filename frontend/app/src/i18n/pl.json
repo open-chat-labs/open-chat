@@ -2643,6 +2643,11 @@
     "useAtOwnRisk": "Używaj na własne ryzyko",
     "userId": "Identyfikator użytkownika",
     "userIdCopiedToClipboard": "Identyfikator użytkownika skopiowany do schowka",
+    "userIdCopyWarning": {
+        "title": "To nie jest adres portfela",
+        "message": "Nie wysyłaj tokenów na swój identyfikator użytkownika, ponieważ zostaną utracone. Swoje adresy do wpłat możesz zobaczyć w swoim portfelu.",
+        "confirm": "Rozumiem, skopiuj"
+    },
     "userInfoHeader": "Publiczny",
     "userIsBlocked": "Odblokuj użytkownika, aby móc wysyłać wiadomości",
     "userJoined": "{username} dołączył do {level}",
