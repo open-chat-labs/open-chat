@@ -1,7 +1,8 @@
 <!-- Copy control: writes value to the clipboard and shows a check (and "Copied") for 1.6s, only when the write succeeded.
      variant: ghost (icon, hover fill) | soft (icon on a tinted square) | outline (icon, hairline ring) | filled (icon on accent)
      | text (icon + "Copy" pill) | primary (icon + "Copy" on accent, 40px: a card's main action).
-     bind:copied lets the owner show its own hint; copy() lets another element (the value itself) trigger the same copy. -->
+     bind:copied lets the owner show its own hint; copy() lets another element (the value itself) trigger the same copy;
+     onPress lets the owner ask first. -->
 <script lang="ts">
   import { useT } from '../i18n';
   import { onDestroy } from 'svelte';
@@ -17,9 +18,11 @@
     /** True while the check is showing. */
     copied?: boolean;
     onCopy?: () => void;
+    /** Called on a click in place of copying, with the copy to run (say, once the user has confirmed). */
+    onPress?: (copy: () => void) => void;
   }
 
-  let { value, label = 'ui.common.copy', variant = 'ghost', size = 'sm', copied = $bindable(false), onCopy }: Props = $props();
+  let { value, label = 'ui.common.copy', variant = 'ghost', size = 'sm', copied = $bindable(false), onCopy, onPress }: Props = $props();
   const t = useT();
 
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -37,7 +40,8 @@
 
   function press(e: Event) {
     e.stopPropagation();
-    copy();
+    if (onPress) onPress(copy);
+    else copy();
   }
 </script>
 

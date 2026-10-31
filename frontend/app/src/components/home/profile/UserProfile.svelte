@@ -243,7 +243,8 @@
         message={i18nKey("userIdCopyWarning.message")}
         yesLabel={i18nKey("userIdCopyWarning.confirm")}
         noLabel={i18nKey("cancel")}
-        action={onConfirmCopyUserId} />
+        action={onConfirmCopyUserId}
+        dismiss={() => (confirmCopyUserId = false)} />
 {/if}
 
 <SectionHeader border={false} flush shadow>

@@ -297,6 +297,8 @@
     /** Open the claim calendar from the CHIT section ("Claim history"): it replaces this one, over the same backdrop
      *  (no exit plays). Without it, the row isn't offered. */
     onChitHistory?: () => void;
+    /** Ask before the user id is copied: called in place of the copy, with the copy to run. Without it, it copies at once. */
+    onCopyUserId?: (copy: () => void) => void;
     onEarn?: () => void;
     /** Open the Diamond dialog: it replaces this one, over the same backdrop (no exit plays). */
     onDiamond?: () => void;
@@ -388,6 +390,7 @@
     onBack,
     onSectionChange,
     onChitHistory,
+    onCopyUserId,
     onEarn,
     onDiamond,
     onSave,
@@ -1200,7 +1203,7 @@
             <div class="kv-row ruled">
               <span class="kv-label">{t('ui.profileDialog.profile.userId')}</span>
               <span class="kv-id">{userId}</span>
-              <span class="copy"><CopyButton value={userId} label="ui.profileDialog.profile.copyUserId" size="md" /></span>
+              <span class="copy"><CopyButton value={userId} label="ui.profileDialog.profile.copyUserId" size="md" onPress={onCopyUserId} /></span>
             </div>
           </div>
         </div>

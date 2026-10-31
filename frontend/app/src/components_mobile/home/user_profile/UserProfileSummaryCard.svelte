@@ -29,6 +29,7 @@
     import { getContext, onMount, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import { toastStore } from "@src/stores/toast";
+    import { copyToClipboard } from "@src/utils/urls";
     import Markdown from "@src/core/Markdown.svelte";
     import Badges from "../profile/Badges.svelte";
     import ChitSummary from "./ChitSummary.svelte";
@@ -85,10 +86,8 @@
     // Tokens sent to a user id are lost, so warn before copying it
     async function onConfirmCopyUserId(yes: boolean) {
         confirmCopyUserId = false;
-        if (yes) {
-            navigator.clipboard.writeText(user.userId).then(() => {
-                toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
-            });
+        if (yes && (await copyToClipboard(user.userId))) {
+            toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
         }
     }
 </script>

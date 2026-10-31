@@ -442,3 +442,8 @@
 ## 2026-10-29 — ProfileDialog: "Just linked" over the host's last used line, by hand
 - A sign-in method linked in the dialog says "Just linked" even once the host lists it with a `used` line, which would say the day it was linked.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-31 — ProfileDialog: the host can ask before the user id is copied, by hand
+- `CopyButton` takes `onPress`: called on a click in place of copying, with the copy to run, so the owner can ask first.
+- `ProfileDialog` takes `onCopyUserId`, the user id's `CopyButton`'s `onPress`: tokens sent to a user id are lost, so the app says it isn't a wallet address first. `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

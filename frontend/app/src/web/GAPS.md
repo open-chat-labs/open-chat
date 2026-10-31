@@ -178,7 +178,9 @@ design export needs. Each entry says where it came up.
   does nothing without `onChit` (the app's `onChit` opens the CHIT dialog);
   `puzzleSetting`, so a host without a daily puzzle setting leaves it out; "Ways to earn more"
   only with `onEarn`; `onClaim`, the calendar's Claim made in place with a "Claiming…" state; a
-  day before `joined` isn't a missed one.
+  day before `joined` isn't a missed one; `onCopyUserId` (`CopyButton`'s `onPress`), so the app
+  can say the user id isn't a wallet address before it's copied, in `ConfirmDialog` (no design
+  for it: `TODO(design)`).
 - **`ProfileDialog` against the app** (8c):
   - the CHIT settings (`disableChit` and the others) are kept in each origin's browser storage,
     as the old UI keeps them, so turning CHIT off in the old UI doesn't reach the new one on
@@ -237,8 +239,7 @@ design export needs. Each entry says where it came up.
   - the restricted-content toggles show in every build (the mobile app hides them in app-store
     builds, which don't run this tree yet);
   - no rows for: the language, translation edit mode, named light and dark themes, the user id's
-    and voting hotkey's "don't send tokens here" warning (the user id's row also wants the old
-    trees' confirmation before it copies, `userIdCopyWarning`), the crash log, Diamond's expiry and
+    and voting hotkey's "don't send tokens here" warning, the crash log, Diamond's expiry and
     extend, referred users, Discord / Telegram accounts.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a

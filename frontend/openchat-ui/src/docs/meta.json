@@ -1819,6 +1819,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "onPress",
+        "type": "(copy: () => void) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Called on a click in place of copying, with the copy to run (say, once the user has confirmed)."
       }
     ],
     "group": "library"
@@ -15081,6 +15092,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "Open the claim calendar from the CHIT section (\"Claim history\"): it replaces this one, over the same backdrop (no exit plays). Without it, the row isn't offered."
+      },
+      {
+        "name": "onCopyUserId",
+        "type": "(copy: () => void) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Ask before the user id is copied: called in place of the copy, with the copy to run. Without it, it copies at once."
       },
       {
         "name": "onChitSettings",
