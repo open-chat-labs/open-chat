@@ -1,6 +1,7 @@
 import {
     type BotDefinition,
     chatIdentifierToString,
+    extractUserIdsFromMentions,
     i18nKey,
     type MessageContext,
     type MiniAppContent,
@@ -35,6 +36,8 @@ export type MiniAppCardView = {
     status: "open" | "active" | "finished";
     // as the service shows them live, or else as the card in the chat records them
     players: string[];
+    // everyone the card names, so the ones to load: the players, and anyone the result mentions
+    users: string[];
     waitingFor: string[];
     // how many are watching, which only the service knows
     watching: number | undefined;
@@ -64,18 +67,16 @@ export function miniAppCardView(
         status === "finished"
             ? []
             : (live?.waitingFor ?? (stored.kind === "active" ? stored.waitingFor : []));
+    const result =
+        live !== undefined ? live.result : stored.kind === "finished" ? stored.result : undefined;
     return {
         status,
         players,
+        users: [...new Set([...players, ...extractUserIdsFromMentions(result ?? "")])],
         waitingFor,
         // Nobody's watching a finished game, whatever the last live card said
         watching: status === "finished" ? undefined : live?.watching,
-        result:
-            live !== undefined
-                ? live.result
-                : stored.kind === "finished"
-                  ? stored.result
-                  : undefined,
+        result,
         yourTurn: status === "active" && waitingFor.includes(userId),
         showsApp:
             stored.kind === "finished"

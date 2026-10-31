@@ -7,6 +7,7 @@
         type MiniAppCardView,
         type OpenChat,
     } from "@client";
+    import Markdown from "@src/core/Markdown.svelte";
     import type { MiniAppActions } from "@src/logic/miniApp/miniAppActions.svelte";
     import { MiniAppFullScreen } from "@src/logic/miniApp/miniAppFrame.svelte";
     import { MiniAppHost, type HostedMiniApp } from "@src/logic/miniApp/miniAppHost.svelte";
@@ -146,13 +147,13 @@ takes it away so the user can look through the game. -->
             title={$_("close")}
             onclick={() => (dismissed = true)}>
             <span class="pill">
-                <span class="label">{label}</span>
+                <span class="label"><Markdown text={label ?? ""} suppressLinks /></span>
                 <span class="close"><Close size={"1.2em"} color={"currentColor"} /></span>
             </span>
         </button>
     {:else}
         <div class="overlay">
-            <span class="label">{label}</span>
+            <span class="label"><Markdown text={label ?? ""} suppressLinks /></span>
         </div>
     {/if}
 {/snippet}
