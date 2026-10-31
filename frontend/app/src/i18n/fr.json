@@ -1363,6 +1363,7 @@
             "loginInitiator": "Désolé, nous n'avons pas pu vous connecter à l'identité Internet que vous avez choisie.",
             "pollingError": "Une erreur inattendue s'est produite lors de l'attente de la connexion par e-mail",
             "principalMismatch": "Il semble que vous ne vous soyez pas réauthentifié auprès du même fournisseur avec lequel vous êtes actuellement connecté.",
+            "signInNotLinked": "Cette connexion n'est pas liée à votre compte. Veuillez réessayer avec l'identité, le portefeuille ou l'adresse e-mail que vous avez liés.",
             "unexpectedError": "Impossible de traiter votre demande. Veuillez réessayer ultérieurement.",
             "unlinkActivePrincipal": "Vous ne pouvez pas dissocier le fournisseur avec lequel vous êtes actuellement connecté.",
             "userNotFound": "Il ne semble pas que le fournisseur avec lequel vous êtes actuellement connecté soit disponible et ne puisse pas être utilisé pour la dissociation."

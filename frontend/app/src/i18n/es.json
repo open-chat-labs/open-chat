@@ -1363,6 +1363,7 @@
             "loginInitiator": "Lo sentimos, no pudimos iniciar sesión en su identidad de Internet elegida.",
             "pollingError": "Se produjo un error inesperado al esperar el inicio de sesión del correo electrónico.",
             "principalMismatch": "Parece que no se volvió a autenticar con el mismo proveedor con el que inició sesión actualmente.",
+            "signInNotLinked": "Este inicio de sesión no está vinculado a su cuenta. Inténtelo de nuevo con la identidad, la billetera o la dirección de correo electrónico que vinculó.",
             "unexpectedError": "No se pudo procesar su solicitud. Inténtelo nuevamente más tarde.",
             "unlinkActivePrincipal": "No puedes desvincular el proveedor con el que estás conectado actualmente.",
             "userNotFound": "Parece que el proveedor con el que está conectado actualmente no está disponible y no se puede utilizar para desvincularlo."

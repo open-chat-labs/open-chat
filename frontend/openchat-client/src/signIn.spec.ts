@@ -36,6 +36,7 @@ import type { OpenChat as OpenChatType } from "./openchat";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import { identityStateStore, selectedAuthProviderStore } from "./state";
+import { MultiWebAuthnIdentity } from "./utils/webAuthn";
 
 class FakeWorker {
     onmessage: ((ev: MessageEvent) => void) | undefined;
@@ -49,6 +50,7 @@ function config(): OpenChatConfig {
         websiteVersion: "test",
         logger: { error: vi.fn(), debug: vi.fn(), warn: vi.fn(), log: vi.fn() },
         proposalBotCanister: "aaaaa-aa",
+        webAuthnOrigin: "oc.app",
     } as unknown as OpenChatConfig;
 }
 
@@ -288,7 +290,7 @@ describe("signing in", () => {
                 ...someoneElse,
             });
             expect(outcome.kind === "failed" && outcome.reason.key).toBe(
-                "identity.failure.principalMismatch",
+                "identity.failure.signInNotLinked",
             );
             expect(proof).not.toHaveBeenCalled();
         });
@@ -302,6 +304,84 @@ describe("signing in", () => {
                 ...linkedIdentity,
             });
             expect(outcome.kind === "success" && outcome.signInProofJwt).toBe("jwt");
+        });
+
+        describe("with a passkey", () => {
+            // the passkey the user picks in the browser's prompt
+            async function picksPasskey() {
+                const passkey = await ECDSAKeyIdentity.generate();
+                const prototype = MultiWebAuthnIdentity.prototype;
+                vi.spyOn(prototype, "sign").mockImplementation((blob) => passkey.sign(blob));
+                vi.spyOn(prototype, "getPublicKey").mockReturnValue(passkey.getPublicKey());
+                vi.spyOn(prototype, "innerIdentity").mockReturnValue(passkey as never);
+                return passkey.getPrincipal().toString();
+            }
+
+            /** Invariant: any passkey linked to the account will do, whichever way this session
+             * signed in, and it's never taken as the identity. */
+            test("accepts a linked passkey in a session that signed in another way", async () => {
+                set({ kind: "logged_in" });
+                linked = [await picksPasskey()];
+                const sessionsOwn = vi.spyOn(client, "reSignInWithCurrentWebAuthnIdentity");
+                const outcome = await client.reAuthenticate({ kind: "passkey" });
+                expect(outcome.kind === "success" && outcome.provider).toBe(AuthProvider.PASSKEY);
+                expect(sessionsOwn).not.toHaveBeenCalled();
+                expect(identityStateStore.value).toEqual({ kind: "logged_in" });
+            });
+
+            /** Invariant: confirming a link can only be done with the session's own passkey. */
+            test("can be only the passkey this session signed in with", async () => {
+                const { key, delegation, principal } = await anIdentity();
+                linked = [principal];
+                const sessionsOwn = vi
+                    .spyOn(client, "reSignInWithCurrentWebAuthnIdentity")
+                    .mockResolvedValue([key, delegation, {} as never]);
+                const outcome = await client.reAuthenticate({ kind: "session_passkey" });
+                expect(outcome.kind === "success" && outcome.provider).toBe(AuthProvider.PASSKEY);
+                expect(sessionsOwn).toHaveBeenCalledOnce();
+            });
+
+            test("refuses a passkey that isn't linked to the account", async () => {
+                await picksPasskey();
+                const outcome = await client.reAuthenticate({ kind: "passkey" });
+                expect(outcome.kind === "failed" && outcome.reason.key).toBe(
+                    "identity.failure.signInNotLinked",
+                );
+                expect(proof).not.toHaveBeenCalled();
+            });
+
+            test("uses the native app's own passkeys, without taking the identity", async () => {
+                const { key, delegation, principal } = await anIdentity();
+                linked = [principal];
+                vi.spyOn(client, "isNativeApp").mockReturnValue(true);
+                const native = vi
+                    .spyOn(client, "signInWithAndroidWebAuthn")
+                    .mockResolvedValue([key, delegation, {} as never]);
+                const outcome = await client.reAuthenticate({ kind: "passkey" });
+                expect(outcome.kind).toBe("success");
+                expect(native).toHaveBeenCalledWith(false);
+            });
+        });
+
+        describe("the ways offered", () => {
+            test("are those linked to the account", async () => {
+                vi.spyOn(client, "getAuthenticationPrincipals").mockResolvedValue([
+                    { provider: AuthProvider.EMAIL },
+                    { provider: AuthProvider.PASSKEY },
+                ] as never);
+                expect(await client.reAuthProviders()).toEqual(
+                    new Set([AuthProvider.EMAIL, AuthProvider.PASSKEY]),
+                );
+            });
+
+            /** Invariant: failing to look them up never leaves the user with nothing to pick. */
+            test("are all of them when they can't be looked up", async () => {
+                vi.spyOn(console, "warn").mockImplementation(() => {});
+                vi.spyOn(client, "getAuthenticationPrincipals").mockRejectedValue(
+                    new Error("down"),
+                );
+                expect(await client.reAuthProviders()).toEqual(new Set());
+            });
         });
 
         test("doesn't reject: a failed lookup is a failure to show", async () => {

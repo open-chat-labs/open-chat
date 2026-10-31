@@ -1363,6 +1363,7 @@
             "loginInitiator": "抱歉，我们无法登录您选择的互联网身份",
             "pollingError": "等待电子邮件登录时出现意外错误",
             "principalMismatch": "似乎您没有使用当前登录的同一提供商重新进行身份验证",
+            "signInNotLinked": "此登录方式未与您的帐户关联。请使用您已关联的身份、钱包或电子邮件地址重试。",
             "unexpectedError": "无法处理您的请求。请稍后重试。",
             "unlinkActivePrincipal": "您无法取消当前登录的提供商的链接。",
             "userNotFound": "您当前登录的提供商似乎不可用，并且无法用于取消链接。"

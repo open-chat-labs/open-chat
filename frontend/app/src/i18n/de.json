@@ -1363,6 +1363,7 @@
             "loginInitiator": "Leider konnten wir uns nicht mit Ihrer gewählten Internetidentität anmelden",
             "pollingError": "Beim Warten auf die E-Mail-Anmeldung ist ein unerwarteter Fehler aufgetreten",
             "principalMismatch": "Es scheint, als hätten Sie sich nicht bei demselben Anbieter erneut authentifiziert, bei dem Sie aktuell angemeldet sind",
+            "signInNotLinked": "Diese Anmeldung ist nicht mit Ihrem Konto verknüpft. Bitte versuchen Sie es erneut mit der Identität, dem Wallet oder der E-Mail-Adresse, die Sie verknüpft haben.",
             "unexpectedError": "Ihre Anfrage konnte nicht verarbeitet werden. Bitte versuchen Sie es später noch einmal.",
             "unlinkActivePrincipal": "Sie können die Verknüpfung mit dem Anbieter, bei dem Sie aktuell angemeldet sind, nicht aufheben.",
             "userNotFound": "Der Anbieter, bei dem Sie aktuell angemeldet sind, scheint nicht verfügbar zu sein und kann nicht zum Aufheben der Verknüpfung verwendet werden."

@@ -521,12 +521,17 @@
         // promise settles and its attempts stop
         signingInAgain?.giveUp();
         return new Promise((resolve, reject) => {
-            const signIn = new SignInAgain(client, translate, async (outcome) => {
-                const failure = await signedIn(outcome);
-                if (failure !== undefined) return failure;
-                if (signingInAgain?.signIn === signIn) signingInAgain = undefined;
-                resolve();
-            });
+            const signIn = new SignInAgain(
+                client,
+                translate,
+                async (outcome) => {
+                    const failure = await signedIn(outcome);
+                    if (failure !== undefined) return failure;
+                    if (signingInAgain?.signIn === signIn) signingInAgain = undefined;
+                    resolve();
+                },
+                only !== undefined,
+            );
             signingInAgain = {
                 signIn,
                 reason,

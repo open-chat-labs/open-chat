@@ -9,6 +9,7 @@ import {
     type ResourceKey,
     type SignInMethod,
     type SignInOutcome,
+    WEBAUTHN_ORIGINATING_CANISTER,
 } from "@shared";
 import { toDayString } from "./date";
 
@@ -105,6 +106,43 @@ export async function isOwnPrincipal(
 ): Promise<boolean> {
     if (principal === current) return true;
     return (await linked()).includes(principal);
+}
+
+/**
+ * How a principal linked to an account signs in, from the canister it originated from. NFID has
+ * canisters of its own (NFID Wallet's among them), so one that's none of these is taken for NFID.
+ */
+export function linkedPrincipalProvider(
+    principal: Pick<AuthenticationPrincipal, "originatingCanister" | "isIIPrincipal">,
+    canisters: { ethereum?: string; solana?: string; email?: string; internetIdentity?: string },
+): AuthProvider {
+    switch (principal.originatingCanister) {
+        case WEBAUTHN_ORIGINATING_CANISTER:
+            return AuthProvider.PASSKEY;
+        case canisters.ethereum:
+            return AuthProvider.ETH;
+        case canisters.solana:
+            return AuthProvider.SOL;
+        case canisters.email:
+            return AuthProvider.EMAIL;
+        case canisters.internetIdentity:
+            return principal.isIIPrincipal ? AuthProvider.II : AuthProvider.NFID;
+        default:
+            return AuthProvider.NFID;
+    }
+}
+
+/**
+ * The sign-in methods linked to an account, to offer for signing in again, as `signInOptions`'
+ * `restrictTo`. Empty, which offers them all, when `platform` has none of them: there has to be
+ * something to pick.
+ */
+export function linkedSignInProviders(
+    linked: { provider: AuthProvider }[],
+    platform: { webAuthn: boolean; native: boolean },
+): Set<AuthProvider> {
+    const providers = new Set(linked.map((l) => l.provider));
+    return signInOptions(providers, platform).length > 0 ? providers : new Set();
 }
 
 /**

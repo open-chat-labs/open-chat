@@ -223,11 +223,13 @@ export type EmailSignInRequest =
 
 /**
  * How the signed-in user signs in again to prove it's them (resetting a forgotten PIN, claiming a
- * prize, deleting the account): a way to sign in, or an identity signed in some other way (the
- * old UIs' wallet buttons sign with the wallet themselves).
+ * prize, deleting the account): a way to sign in, an identity signed in some other way (the old
+ * UIs' wallet buttons sign with the wallet themselves), or the passkey this session signed in with
+ * where no other will do (`session_passkey`: confirming a link; `passkey` is any the user picks).
  */
 export type ReAuthMethod =
     | SignInMethod
+    | { kind: "session_passkey" }
     | {
           kind: "identity";
           provider: AuthProvider;
@@ -238,7 +240,7 @@ export type ReAuthMethod =
 /**
  * How signing in again went. `success`: the identity is one of the user's own (the one they're
  * signed in with, or one linked to it), with the backend's proof of the sign-in, if it gave one.
- * `failed`: another account (`identity.failure.principalMismatch`), or the sign-in failed, a dismissed passkey prompt
+ * `failed`: another account (`identity.failure.signInNotLinked`), or the sign-in failed, a dismissed passkey prompt
  * or Internet Identity window included (`identity.failure.loginApprover`, as the old UIs said).
  * `cancelled`: the caller gave it up.
  */

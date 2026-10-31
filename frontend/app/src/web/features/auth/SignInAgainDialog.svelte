@@ -8,7 +8,7 @@
         type OpenChat,
     } from "@client";
     import AuthDialog from "@openchat/ui/src/features/components/AuthDialog.svelte";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { OPTIONS } from "./auth.adapter";
     import { AUTH_WALLETS } from "./signIn";
     import type { SignInAgain } from "./signInAgain.svelte";
@@ -26,15 +26,21 @@
 
     const client = getContext<OpenChat>("client");
 
-    // the ways to sign in again, the last one used first. `only` when this platform offers it:
-    // otherwise all it does (the client still refuses another account), not none
+    onMount(() => {
+        if (only === undefined) flow.loadProviders();
+    });
+
+    // the ways to sign in again, the last one used first: `only`, or those linked to the account,
+    // when this platform offers them. Otherwise all it does (the client still refuses another
+    // account), not none
     const methods = $derived.by(() => {
         const platform = {
             webAuthn: "PublicKeyCredential" in window,
             native: client.isNativeApp(),
         };
         const last = selectedAuthProviderStore.value;
-        const offered = only === undefined ? [] : signInOptions([only], platform, last);
+        const restrictTo = only === undefined ? [...flow.providers] : [only];
+        const offered = signInOptions(restrictTo, platform, last);
         return (offered.length > 0 ? offered : signInOptions([], platform, last)).map(
             (o) => OPTIONS[o],
         );

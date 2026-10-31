@@ -1354,6 +1354,7 @@
             "loginInitiator": "Sorry we were unable to sign into your chosen provider",
             "pollingError": "There was an unexpected error waiting for email signin",
             "principalMismatch": "It seems like you did not re-authenticate with the same provider that you are currently signed in with",
+            "signInNotLinked": "That sign-in isn't linked to your account. Please try again with the identity, wallet or email address you linked.",
             "unexpectedError": "Could not process your request. Please try again later.",
             "unlinkActivePrincipal": "You cannot unlink the provider you are currently logged in with.",
             "userNotFound": "It does not appear that the provider you are currently logged in with is available, and cannot be used for unlinking."
