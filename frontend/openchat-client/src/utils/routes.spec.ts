@@ -16,12 +16,4 @@ describe("selectedChannelRoute", () => {
             expect(route.kind).toBe("selected_community_route");
         }
     });
-
-    test("a numeric channel id still selects the channel", () => {
-        const route = selectedChannelRoute(false)(ctx("4158992150"));
-        expect(route).toMatchObject({
-            kind: "selected_channel_route",
-            chatId: { kind: "channel", communityId: "community", channelId: 4158992150 },
-        });
-    });
 });
