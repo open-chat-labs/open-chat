@@ -18,6 +18,7 @@
 
 <script lang="ts">
   import { useT } from '../../lib/i18n';
+  import Spinner from '../../lib/components/Spinner.svelte';
   interface Props {
     /** Resource key (or literal text). */
     label?: string;
@@ -35,9 +36,11 @@
     onSwap?: () => void;
     /** Nothing owned yet: a plain track for the bar, Receive first, Send and Swap disabled. */
     empty?: boolean;
+    /** The balances are still loading: a small spinner by the label. */
+    loading?: boolean;
   }
 
-  let { label = 'ui.balanceCard.totalBalance', amount, fiat = '', veiled = false, spinning = false, allocation = [], onToggleVeil, onRefresh, onSend, onReceive, onSwap, empty = false }: Props = $props();
+  let { label = 'ui.balanceCard.totalBalance', amount, fiat = '', veiled = false, spinning = false, allocation = [], onToggleVeil, onRefresh, onSend, onReceive, onSwap, empty = false, loading = false }: Props = $props();
   const t = useT();
 
   let hovered = $state<number | null>(null);
@@ -57,7 +60,7 @@
 
 <div class="card">
   <div class="head">
-    <span class="label">{t(label)}</span>
+    <span class="label">{t(label)}{#if loading}<span class="loading"><Spinner size={12} tone="ink" /></span>{/if}</span>
     {#if onToggleVeil}
       <span class="head-button" onclick={onToggleVeil} role="button" tabindex="0" aria-label={t(veiled ? 'ui.balanceCard.showBalance' : 'ui.balanceCard.hideBalance')} title={t(veiled ? 'ui.balanceCard.showBalance' : 'ui.balanceCard.hideBalance')}>
         <span class="head-icon" style:mask="var(--icon-{veiled ? 'eye-off' : 'eye'}) center/contain no-repeat"></span>
@@ -164,6 +167,9 @@
   .label {
     flex: 1;
     min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-6);
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
     color: var(--ink-4);

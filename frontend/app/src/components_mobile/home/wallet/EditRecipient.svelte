@@ -9,8 +9,13 @@
     import AddressNetworkIcon from "@shared_components/home/wallet/AddressNetworkIcon.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import { toastStore } from "@src/stores/toast";
-    import { addressNetwork } from "@src/utils/cryptoAddress";
-    import { isRecipientNameTaken, recipientToSave } from "@src/utils/savedRecipient";
+    import { recipientToSave } from "@src/utils/savedRecipient";
+    import {
+        checkRecipientAddress,
+        checkRecipientName,
+        recipientAddressError,
+        RECIPIENT_NAME_MAX,
+    } from "@src/logic/wallet/addressBook";
 
     const client = getContext<OpenChat>("client");
 
@@ -28,15 +33,23 @@
     let nameDirty = $derived(trimmedName !== account?.name);
     // An existing recipient can only be renamed: its address is fixed (see recipientToSave)
     let dirty = $derived(account === undefined || nameDirty);
-    // The network the address is for, in the same forms the canister accepts. Saving anything else
-    // used to succeed here and then throw out of the worker, unhandled, when the withdrawal mapper
-    // tried to decode it.
-    let network = $derived(addressNetwork(trimmedAddress));
+    // The address book's rules (logic/wallet/addressBook), shared with the other trees: only an
+    // address addressNetwork recognises (anything else used to save, then throw out of the worker
+    // when sent to), never a MultiUser user id's account nor one already saved
+    let addressCheck = $derived(
+        checkRecipientAddress(
+            address,
+            $namedAccountsStore,
+            (a) => client.isAccountOfMultiUserCanisterUserId(a),
+            account?.account,
+        ),
+    );
+    let network = $derived(addressCheck.kind === "valid" ? addressCheck.network : undefined);
     let validAddress = $derived(network !== undefined);
-    let invalidAddress = $derived(trimmedAddress.length > 0 && !validAddress);
+    let addressError = $derived(recipientAddressError(addressCheck));
+    let invalidAddress = $derived(addressError !== undefined);
     let validName = $derived(
-        trimmedName.length > 0 &&
-            !isRecipientNameTaken($namedAccountsStore, trimmedName, account?.account),
+        checkRecipientName(name, $namedAccountsStore, account?.account).kind === "valid",
     );
     let valid = $derived(validAddress && validName);
 
@@ -47,7 +60,6 @@
         );
 
         if (res.kind === "success") {
-            await client.loadSavedCryptoAccounts();
             loading = false;
 
             // TODO - we really need to know where we came from
@@ -81,7 +93,7 @@
                 <Input
                     bind:value={name}
                     countdown={false}
-                    maxlength={100}
+                    maxlength={RECIPIENT_NAME_MAX}
                     placeholder={interpolate($_, i18nKey("Recipient's name or title"))}>
                     {#snippet subtext()}
                         <Translatable
@@ -104,11 +116,8 @@
                     {/snippet}
                     {#snippet subtext()}
                         <Translatable
-                            resourceKey={i18nKey(
-                                invalidAddress
-                                    ? "addressBook.invalidAddress"
-                                    : "Provide an address for your recipient",
-                            )} />
+                            resourceKey={addressError ??
+                                i18nKey("Provide an address for your recipient")} />
                     {/snippet}
                 </Input>
             </Container>

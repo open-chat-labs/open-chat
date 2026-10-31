@@ -146,7 +146,13 @@ export {
     unlinkIdentityFailure,
     type LinkIdentitiesResult,
 } from "./utils/signIn";
-export { cloneWalletConfig, walletConfigForMode } from "./utils/walletConfig";
+export { SAVED_ACCOUNT_NAME_MAX, savedAccountName } from "./utils/namedAccounts";
+export {
+    cloneWalletConfig,
+    defaultWalletLedgers,
+    walletConfigChanged,
+    walletConfigForMode,
+} from "./utils/walletConfig";
 export type { TrackingCategory } from "./utils/ga";
 export { toRecord } from "./utils/list";
 export { quantiseWaveform, waveformLevels, type Dimensions } from "./utils/media";

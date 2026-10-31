@@ -57,6 +57,7 @@ export const configKeys = {
     referredUsersOpen: "openchat_referred_users_section",
     browseChannels: "openchat_browse_channels",
     hideTokenBalances: "openchat_hide_token_balances",
+    walletCurrency: "openchat_wallet_currency",
     linkDeviceSection: "link_account_with_native_app",
     chatListFilter: "openchat_chat_list_filter",
     softDisabled: "openchat_softdisabled",

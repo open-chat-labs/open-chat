@@ -416,6 +416,7 @@ import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from
 import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import { blockOutcome, type BlockContext, type BlockOutcome } from "./utils/profileBlock";
 import { isTrustedClick } from "./utils/prizes";
+import { savedAccountName, withoutAccountsNamed, withSavedAccount } from "./utils/namedAccounts";
 import {
     FilteredProposals,
     achievementsStore,
@@ -444,6 +445,7 @@ import {
     eventListScrollTop,
     eventsStore,
     exchangeRatesLookupStore,
+    exchangeRatesTriedStore,
     cashtagCoinsStore,
     priceSourcesStore,
     miniAppCardsStore,
@@ -10336,8 +10338,12 @@ export class OpenChat {
 
     /** Loads the user's saved accounts into `namedAccountsStore` (kept as it was if they fail to load). */
     async loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
+        // a save or delete made while this was loading isn't in what it brings back: load again,
+        // so the store gets the whole list with it
+        const version = this.#namedAccountsVersion;
         try {
             const accounts = await this.#worker.send({ kind: "loadSavedCryptoAccounts" });
+            if (version !== this.#namedAccountsVersion) return this.loadSavedCryptoAccounts();
             namedAccountsStore.set(accounts);
             return accounts;
         } catch {
@@ -10345,22 +10351,43 @@ export class OpenChat {
         }
     }
 
-    saveCryptoAccount(namedAccount: NamedAccount): Promise<SaveCryptoAccountResponse> {
-        return this.#worker
+    // bumped by each save and delete, so that a load which started before one doesn't undo it
+    #namedAccountsVersion = 0;
+
+    /**
+     * Saves an account to the user's address book, and once it's stored, to `namedAccountsStore`:
+     * saving one already saved renames it.
+     */
+    async saveCryptoAccount(namedAccount: NamedAccount): Promise<SaveCryptoAccountResponse> {
+        const resp: SaveCryptoAccountResponse = await this.#worker
             .send({
                 kind: "saveCryptoAccount",
-                namedAccount,
+                namedAccount: { ...namedAccount, name: savedAccountName(namedAccount.name) },
             })
             .catch(() => ({ kind: "failure" }));
+        if (resp.kind === "success") {
+            this.#namedAccountsVersion++;
+            namedAccountsStore.set(withSavedAccount(namedAccountsStore.value, namedAccount));
+        }
+        return resp;
     }
 
-    deleteCryptoAccount(name: string): Promise<DeleteCryptoAccountResponse> {
-        return this.#worker
+    /**
+     * Deletes the saved accounts with this name (the canister ignores case), from the address book
+     * and, once it has gone, from `namedAccountsStore`.
+     */
+    async deleteCryptoAccount(name: string): Promise<DeleteCryptoAccountResponse> {
+        const resp: DeleteCryptoAccountResponse = await this.#worker
             .send({
                 kind: "deleteCryptoAccount",
-                name,
+                name: savedAccountName(name),
             })
             .catch(() => ({ kind: "failure" }));
+        if (resp.kind === "success") {
+            this.#namedAccountsVersion++;
+            namedAccountsStore.set(withoutAccountsNamed(namedAccountsStore.value, name));
+        }
+        return resp;
     }
 
     async #updateRegistry(): Promise<void> {
@@ -10450,7 +10477,8 @@ export class OpenChat {
                     priceSourcesStore.set(new Map(Object.entries(prices.sources)));
                 }
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(() => exchangeRatesTriedStore.set(true));
     }
 
     // A token's or coin's prices over the last 7 days, for its price chart. Undefined if they couldn't
@@ -13747,25 +13775,6 @@ export class OpenChat {
         if (config !== undefined) {
             return this.setWalletConfig(config);
         }
-    }
-
-    setsAreEqual<T>(a: Set<T>, b: Set<T>): boolean {
-        if (a.size !== b.size) return false;
-        for (const item of a) {
-            if (!b.has(item)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    walletConfigChanged(a: WalletConfig, b: WalletConfig): boolean {
-        if (a.kind !== b.kind) return true;
-        if (a.kind === "auto_wallet" && b.kind === "auto_wallet")
-            return a.minDollarValue !== b.minDollarValue;
-        if (a.kind === "manual_wallet" && b.kind === "manual_wallet")
-            return !this.setsAreEqual(a.tokens, b.tokens);
-        return false;
     }
 
     setWalletConfig(config: WalletConfig): Promise<boolean> {

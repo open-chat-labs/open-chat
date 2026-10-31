@@ -161,6 +161,7 @@
         "name": "Name",
         "namePlaceholder": "Geben Sie einen Namen für diese Adresse ein",
         "nameTaken": "Sie haben bereits eine Adresse unter diesem Namen gespeichert",
+        "noneForToken": "Keine Ihrer gespeicherten Adressen kann {token} empfangen",
         "rename": "Umbenennen",
         "saveFailed": "Leider konnten wir diese Adresse nicht speichern",
         "title": "Adressbuch"
@@ -700,6 +701,9 @@
         "comingSoon": "(kommt bald)",
         "configureWallet": "Konfigurieren Sie Ihre Wallet",
         "configureWalletFailure": "Leider konnten wir Ihre Wallet-Konfiguration nicht speichern",
+        "invalidMinimum": "Ihre Wallet-Einstellungen wurden nicht gespeichert: Der Mindestbetrag muss eine Zahl sein",
+        "cameraUnavailable": "Die Kamera konnte nicht verwendet werden. Erlauben Sie den Kamerazugriff und versuchen Sie es erneut.",
+        "scanHint": "Richten Sie Ihre Kamera auf den QR-Code der Adresse",
         "failedToFetchDepositFee": "Die Einzahlungsgebühr konnte nicht abgerufen werden",
         "failedToGenerateAddress": "Adresse konnte nicht generiert werden",
         "fetchingDepositFee": "Kautionsgebühr wird abgerufen …",

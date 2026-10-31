@@ -5714,6 +5714,17 @@
         "required": false,
         "componentDefault": "''",
         "doc": "Overrides the announced label."
+      },
+      {
+        "name": "delay",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "ms it stays invisible before fading in (0: shown at once)."
       }
     ],
     "group": "library"
@@ -6592,6 +6603,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Nothing owned yet: a plain track for the bar, Receive first, Send and Swap disabled."
+      },
+      {
+        "name": "loading",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The balances are still loading: a small spinner by the label."
       }
     ],
     "group": "features"
@@ -17727,7 +17749,7 @@
       },
       {
         "name": "onPickSaved",
-        "type": "() => Promise<string | null | undefined>",
+        "type": "(token: string) => Promise<string | null | undefined>",
         "default": null,
         "editor": null,
         "options": null,
@@ -17834,6 +17856,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "See WalletRecipients.onRemove."
+      },
+      {
+        "name": "recipientOptions",
+        "type": "Pick<ComponentProps<typeof WalletRecipients>, 'checkAddress' | 'checkName' | 'editAddress' | 'tokenLocks' | 'lastSent' | 'maxNameLength'>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Recipients: the host's rules and what it keeps (see WalletRecipients' checkAddress, checkName, editAddress, tokenLocks, lastSent and maxNameLength)."
       },
       {
         "name": "onSearchUsers",
@@ -18001,6 +18034,17 @@
         "doc": "In place of All activity's list, when the host can't list activity across tokens: resource keys (or text)."
       },
       {
+        "name": "allActivityLoading",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The host is still loading `activity` for All activity: it shows a skeleton until there's something to list."
+      },
+      {
         "name": "onBalanceHiddenChange",
         "type": "(hidden: boolean) => void",
         "default": null,
@@ -18031,7 +18075,7 @@
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": "The host is still loading `tokens`: a token's page waits (neither the page nor \"Token not found\" yet)."
+        "doc": "The host is still loading `tokens` (and their balances): All activity and a token's page wait, showing a skeleton (not the welcome, an empty list, a balance of 0 or \"Token not found\")."
       },
       {
         "name": "receiveNetworks",
@@ -18100,6 +18144,28 @@
         "required": false,
         "componentDefault": "false",
         "doc": ""
+      },
+      {
+        "name": "balancesLoading",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The balances are still loading: a small spinner by the total's label, and no empty wallet's layout yet."
+      },
+      {
+        "name": "ratesLoading",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The prices the total is worked out with are still loading: the same spinner, the layout as the balances say."
       },
       {
         "name": "settings",
@@ -18542,6 +18608,72 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "checkAddress",
+        "type": "(address: string, id: string | null) => { network: string } | { error: string }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's say on an address (`id`: the recipient being edited, else null): its network's name, or why it can't be saved (text). Rows show the network it names. Without it, the address's own shape and the list's duplicates decide."
+      },
+      {
+        "name": "checkName",
+        "type": "(name: string, id: string | null) => string | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's say on a name (the one saved, the default when left empty): why it can't be saved (text), or null."
+      },
+      {
+        "name": "editAddress",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Editing can change the address; false: an edit only renames (the address shows, read-only)."
+      },
+      {
+        "name": "tokenLocks",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Recipients can be locked to a token; false hides the lock (the form's field and the rows' badge)."
+      },
+      {
+        "name": "lastSent",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Rows say when each was last sent to; false leaves it out."
+      },
+      {
+        "name": "maxNameLength",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The longest name the host keeps."
       }
     ],
     "group": "features"
@@ -18642,14 +18774,14 @@
       },
       {
         "name": "onPickSaved",
-        "type": "() => Promise<string | null | undefined>",
+        "type": "(token: string) => Promise<string | null | undefined>",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Opens the host's saved-address picker; resolve with the chosen address (or nothing to cancel). Hidden without it."
+        "doc": "Opens the host's saved-address picker for the token being sent (its id), so it can offer only the addresses that token can reach; resolve with the chosen address (or nothing to cancel). Hidden without it."
       },
       {
         "name": "onScanQr",

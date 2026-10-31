@@ -442,3 +442,29 @@
 ## 2026-10-29 — ProfileDialog: "Just linked" over the host's last used line, by hand
 - A sign-in method linked in the dialog says "Just linked" even once the host lists it with a `used` line, which would say the day it was linked.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-29 — WalletRecipients and WalletSettingsDialog for the app's address book and settings, by hand
+- `WalletRecipients`: `checkAddress(address, id)` (the host's say: the network's name, or why it can't be saved; rows show the network it names), `checkName(name, id)` (why a name can't be saved), `editAddress` (false: an edit only renames, the address read-only), `tokenLocks` and `lastSent` (false hides the token lock and "last sent"), `maxNameLength`. A recipient the host's new list already holds isn't added a second time after a save (it was, as a duplicate key).
+- `Recipient`: `networkName` (the host's name for the address's network, shown on the row in place of checking each row) and `sendToken` (the token Send opens on for it). The default name is cut to `maxNameLength`.
+- `WalletMain`: `recipientOptions`, passed to Recipients; a recipient's Send opens on its `sendToken` first.
+- `WalletSettingsDialog`: hand-picked tokens are ids (`id`, else the symbol), so two tokens sharing a symbol stay apart.
+- `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-29 — WalletSend: the saved-address picker knows the token, by hand
+- `onPickSaved(token)`: Send passes the id of the token being sent, so the host's picker can offer only the saved addresses that token can reach. `WalletMain`'s `onPickSaved` takes it too.
+- `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-29 — WalletMain: All activity's loading and empty state, by hand
+- `allActivityLoading`: a skeleton on All activity while the host is still loading `activity` and nothing is listed yet.
+- `tokensLoading` holds All activity too, not only a token's page: while the host is loading the tokens and their balances, both show a skeleton rather than the welcome, an empty list or a balance of 0.
+- All activity with nothing in it (the All tab) shows the empty state ("No activity yet", `ui.walletMain.emptyAllBody`) in place of the one-line "No transactions of this type yet", which the other tabs keep.
+- `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-29 — Loading states: a delayed skeleton, and the total balance's spinner, by hand
+- `Skeleton`: `delay` (ms): invisible that long, then a short fade in, so a load that finishes sooner never shows it. WalletMain's skeletons use 500 ms.
+- `BalanceCard`: `loading`, a small spinner by the label while the balances load. `WalletPanel`: `balancesLoading`, passed to it; while it's on, the panel doesn't take the empty wallet's layout. `ratesLoading` shows the same spinner without holding the layout.
+- `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
