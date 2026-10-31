@@ -51,6 +51,7 @@ describe("miniAppCardView", () => {
         ).toEqual({
             status: "active",
             players: ["alice", "bob"],
+            users: ["alice", "bob"],
             waitingFor: ["bob"],
             watching: undefined,
             result: undefined,
@@ -105,6 +106,7 @@ describe("miniAppCardView", () => {
         expect(view).toEqual({
             status: "finished",
             players: ["alice", "bob"],
+            users: ["alice", "bob"],
             waitingFor: [],
             watching: undefined,
             result: "Bob won",
@@ -256,6 +258,46 @@ describe("miniAppCardView", () => {
             expect(miniAppCardView(content, undefined, userId).showsApp).toBe(true);
             expect(miniAppCardView(content, finished, userId).showsApp).toBe(true);
         }
+    });
+});
+
+describe("miniAppCardView's users", () => {
+    const finished = (result: string | undefined) =>
+        card({
+            status: {
+                kind: "finished",
+                players: ["alice", "bob"],
+                result,
+                endState: undefined,
+                settings: undefined,
+            },
+        });
+
+    test("are the players, with anyone the result mentions who isn't one", () => {
+        expect(
+            miniAppCardView(finished("@UserId(carol) won with 84 points"), undefined, "bob").users,
+        ).toEqual(["alice", "bob", "carol"]);
+    });
+
+    test("are each listed once", () => {
+        expect(
+            miniAppCardView(finished("@UserId(bob) beat @UserId(bob)"), undefined, "bob").users,
+        ).toEqual(["alice", "bob"]);
+    });
+
+    test("are just the players when there's no result, or it mentions no one", () => {
+        expect(miniAppCardView(finished(undefined), undefined, "bob").users).toEqual(["alice", "bob"]);
+        expect(miniAppCardView(finished("Bob won"), undefined, "bob").users).toEqual(["alice", "bob"]);
+    });
+
+    test("take the result from the live card while the service is showing it", () => {
+        expect(
+            miniAppCardView(
+                card(),
+                live({ status: "finished", players: ["alice"], result: "@UserId(bob) won" }),
+                "bob",
+            ).users,
+        ).toEqual(["alice", "bob"]);
     });
 });
 
