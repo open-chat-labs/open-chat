@@ -26,8 +26,7 @@ const Coin = Type.Object({
 
 const Source = Type.Object({
     name: Type.String(),
-    url: Type.String(),
-    token_url: Type.Optional(Type.String()),
+    token_url: Type.String(),
 });
 
 const PriceHistoryResponse = Type.Object({
@@ -59,10 +58,9 @@ export function pricesResponse(
     const sources: Record<string, PriceSource> = {};
     for (const [key, entry] of Object.entries(entries(json, "sources"))) {
         const s = parse(entry, Source, `source ${key}`);
-        // they become links
-        if (s !== undefined && s.url.startsWith("https://")) {
-            const tokenUrl = s.token_url?.startsWith("https://") ? s.token_url : undefined;
-            sources[key] = { name: s.name, url: s.url, tokenUrl };
+        // it becomes a link
+        if (s !== undefined && s.token_url.startsWith("https://")) {
+            sources[key] = { name: s.name, tokenUrl: s.token_url };
         }
     }
 

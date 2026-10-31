@@ -19,8 +19,8 @@ const supportedTokens = [
 ];
 
 const sources = {
-    coingecko: { name: "CoinGecko", url: "https://www.coingecko.com" },
-    icpswap: { name: "ICPSwap", url: "https://www.icpswap.com" },
+    coingecko: { name: "CoinGecko", token_url: "https://www.coingecko.com/en/coins/{id}" },
+    icpswap: { name: "ICPSwap", token_url: "https://app.icpswap.com/info-tokens/details/{id}" },
 };
 
 function quietly<T>(fn: () => T): T {
@@ -112,40 +112,18 @@ describe("the price service's prices", () => {
                 prices: {},
                 sources: {
                     ...sources,
-                    shady: { name: "Shady", url: "javascript:alert(1)" },
+                    shady: { name: "Shady", token_url: "javascript:alert(1)" },
                 },
             },
             supportedTokens,
         );
 
         expect(prices?.sources).toEqual({
-            coingecko: { name: "CoinGecko", url: "https://www.coingecko.com" },
-            icpswap: { name: "ICPSwap", url: "https://www.icpswap.com" },
-        });
-    });
-
-    test("include where a source links for one token, unless it isn't a safe link", () => {
-        const prices = pricesResponse(
-            {
-                prices: {},
-                sources: {
-                    coingecko: {
-                        ...sources.coingecko,
-                        token_url: "https://www.coingecko.com/en/coins/{id}",
-                    },
-                    icpswap: { ...sources.icpswap, token_url: "javascript:alert(1)" },
-                },
+            coingecko: { name: "CoinGecko", tokenUrl: "https://www.coingecko.com/en/coins/{id}" },
+            icpswap: {
+                name: "ICPSwap",
+                tokenUrl: "https://app.icpswap.com/info-tokens/details/{id}",
             },
-            supportedTokens,
-        );
-
-        expect(prices?.sources).toEqual({
-            coingecko: {
-                name: "CoinGecko",
-                url: "https://www.coingecko.com",
-                tokenUrl: "https://www.coingecko.com/en/coins/{id}",
-            },
-            icpswap: { name: "ICPSwap", url: "https://www.icpswap.com" },
         });
     });
 

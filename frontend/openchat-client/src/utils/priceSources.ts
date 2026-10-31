@@ -16,9 +16,8 @@ export function priceSourcesFor(
     return found;
 }
 
-/** What a credit for one token's or coin's prices links to: its page at the source, if there's one. */
+/** What a credit for a token's or coin's prices links to: its page at the source. */
 export function priceSourceUrl(source: PriceSource, subject: PriceSubject): string {
-    if (source.tokenUrl === undefined) return source.url;
     const id = subject.kind === "token" ? subject.ledger : subject.id;
     return source.tokenUrl.replace("{id}", encodeURIComponent(id));
 }
