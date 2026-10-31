@@ -124,6 +124,31 @@ describe("the price service's prices", () => {
         });
     });
 
+    test("include where a source links for one token, unless it isn't a safe link", () => {
+        const prices = pricesResponse(
+            {
+                prices: {},
+                sources: {
+                    coingecko: {
+                        ...sources.coingecko,
+                        token_url: "https://www.coingecko.com/en/coins/{id}",
+                    },
+                    icpswap: { ...sources.icpswap, token_url: "javascript:alert(1)" },
+                },
+            },
+            supportedTokens,
+        );
+
+        expect(prices?.sources).toEqual({
+            coingecko: {
+                name: "CoinGecko",
+                url: "https://www.coingecko.com",
+                tokenUrl: "https://www.coingecko.com/en/coins/{id}",
+            },
+            icpswap: { name: "ICPSwap", url: "https://www.icpswap.com" },
+        });
+    });
+
     test("leave out a coin whose source isn't described, as it couldn't be credited", () => {
         const prices = pricesResponse(
             {
