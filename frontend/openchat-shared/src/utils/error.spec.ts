@@ -143,6 +143,25 @@ describe("shouldReportError", () => {
         );
     });
 
+    test("silences a boundary node with no healthy route to a replica (#32147, #32148)", () => {
+        const body =
+            "HTTP request failed:\n  Status: 500 ()\n  Body: {\n" +
+            '  "error_type": "internal_server_error",\n' +
+            '  "details": "Unable to obtain URLs: Route provider failed to generate url: No healthy routes available"\n}\n';
+        expect(shouldReportError(new HttpError(500, new Error(body)))).toBe(false);
+    });
+
+    test("still reports a 500 from a replica rejection (#32147, #32148)", () => {
+        expect(
+            shouldReportError(
+                new HttpError(
+                    500,
+                    new Error("HTTP request failed:\n  Status: 500 ()\n  Body: Canister trapped"),
+                ),
+            ),
+        ).toBe(true);
+    });
+
     test("silences errors thrown from browser-extension code", () => {
         const v8 = new Error("func sseError not found");
         v8.stack =
