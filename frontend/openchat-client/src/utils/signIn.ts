@@ -134,16 +134,14 @@ export function linkedPrincipalProvider(
 
 /**
  * The sign-in methods linked to an account, to offer for signing in again, as `signInOptions`'
- * `restrictTo`. Internet Identity and NFID both originate from the II canister, and one not used
- * since they were told apart is labelled NFID, so that offers both. Empty, which offers them all,
- * when `platform` has none of them: there has to be something to pick.
+ * `restrictTo`. Empty, which offers them all, when `platform` has none of them: there has to be
+ * something to pick.
  */
 export function linkedSignInProviders(
     linked: { provider: AuthProvider }[],
     platform: { webAuthn: boolean; native: boolean },
 ): Set<AuthProvider> {
     const providers = new Set(linked.map((l) => l.provider));
-    if (providers.has(AuthProvider.NFID)) providers.add(AuthProvider.II);
     return signInOptions(providers, platform).length > 0 ? providers : new Set();
 }
 

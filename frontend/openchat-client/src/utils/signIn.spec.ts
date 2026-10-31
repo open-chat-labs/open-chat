@@ -60,13 +60,9 @@ describe("the ways to sign in again", () => {
         );
     });
 
-    test("don't include NFID for an Internet Identity", () => {
+    test("keep Internet Identity and NFID apart", () => {
         expect(linkedSignInProviders(linked(II), browser)).toEqual(new Set([II]));
-    });
-
-    /** Invariant: an Internet Identity labelled NFID can still be used. */
-    test("include Internet Identity for NFID, which it may really be", () => {
-        expect(linkedSignInProviders(linked(NFID), browser)).toEqual(new Set([NFID, II]));
+        expect(linkedSignInProviders(linked(NFID), browser)).toEqual(new Set([NFID]));
     });
 
     test("restrict the sign-in options, offering all of them when there are none", () => {
