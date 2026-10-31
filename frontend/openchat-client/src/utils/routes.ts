@@ -1,4 +1,5 @@
 import {
+    parseBigInt,
     toBigInt32,
     type ChatListScope,
     type ChatType,
@@ -139,13 +140,19 @@ export function routeForScope(scope: ChatListScope): string {
 
 export function selectedChannelRoute(fav: boolean) {
     return (ctx: PageJS.Context): RouteParams => {
+        // A channel id that isn't an integer (e.g. a domain pasted into the URL) would make
+        // BigInt throw during routing, so show the community instead
+        const channelId = parseBigInt(ctx.params["channelId"]);
+        if (channelId === undefined) {
+            return selectedCommunityRoute(ctx);
+        }
         const $qs = qs(ctx);
         return {
             kind: "selected_channel_route",
             chatId: {
                 kind: "channel",
                 communityId: ctx.params["communityId"],
-                channelId: Number(toBigInt32(ctx.params["channelId"])),
+                channelId: Number(toBigInt32(channelId)),
             },
             communityId: { kind: "community", communityId: ctx.params["communityId"] },
             messageIndex: ctx.params["messageIndex"]
