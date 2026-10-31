@@ -1,4 +1,4 @@
-import type { PriceSource, ReadonlyMap } from "@shared";
+import type { PriceSource, PriceSubject, ReadonlyMap } from "@shared";
 
 /**
  * Where prices from the given sources come from, each once: what a price card and a cashtag chip's
@@ -14,4 +14,11 @@ export function priceSourcesFor(
         if (source !== undefined) found.push(source);
     }
     return found;
+}
+
+/** What a credit for one token's or coin's prices links to: its page at the source, if there's one. */
+export function priceSourceUrl(source: PriceSource, subject: PriceSubject): string {
+    if (source.tokenUrl === undefined) return source.url;
+    const id = subject.kind === "token" ? subject.ledger : subject.id;
+    return source.tokenUrl.replace("{id}", encodeURIComponent(id));
 }

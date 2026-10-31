@@ -189,6 +189,8 @@ export type CashtagCoin = {
 export type PriceSource = {
     name: string;
     url: string;
+    // what a credit for one token or coin links to instead, with {id} for its ledger or id
+    tokenUrl: string | undefined;
 };
 
 // The prices of the tokens OpenChat lists, keyed by ledger; of the coins it doesn't, keyed by
