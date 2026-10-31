@@ -30,6 +30,7 @@
     let email = $state("");
 
     onMount(() => {
+        reAuth.loadProviders();
         if (autoSelect) {
             login($selectedAuthProviderStore);
         }
@@ -40,7 +41,7 @@
         if (success !== undefined) onSuccess(success);
     }
 
-    // This is where we login in with the provider that we are currently signed in with (which can be any provider type)
+    // This is where we login in with any of the providers linked to the account (which can be any provider type)
     async function login(provider: AuthProvider) {
         if (emailInvalid && provider === AuthProvider.EMAIL) {
             return;
@@ -62,7 +63,13 @@
         <div class="info center">
             <Translatable resourceKey={message} />
         </div>
-        <ChooseSignInOption mode={"signin"} bind:emailInvalid bind:email onLogin={login} />
+        <ChooseSignInOption
+            mode={"signin"}
+            restrictTo={reAuth.providers}
+            showMore={reAuth.providers.size > 0}
+            bind:emailInvalid
+            bind:email
+            onLogin={login} />
     {:else if reAuth.step === "choose_eth_wallet"}
         <div class="eth-options">
             {#await import("../SigninWithEth.svelte")}

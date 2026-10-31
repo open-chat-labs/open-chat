@@ -1,6 +1,7 @@
 import { AuthProvider, ErrorCode } from "@shared";
 import {
     isOwnPrincipal,
+    linkedSignInProviders,
     linkIdentitiesResult,
     markCurrentSignIn,
     shortSignInPrincipal,
@@ -24,6 +25,33 @@ describe("signing in again accepts a linked principal and refuses any other", ()
 
 const { EMAIL, PASSKEY, II, ETH, SOL, NFID } = AuthProvider;
 const browser = { webAuthn: true, native: false };
+
+describe("the ways to sign in again", () => {
+    const linked = (...providers: AuthProvider[]) => providers.map((provider) => ({ provider }));
+
+    test("are the methods linked to the account", () => {
+        expect(linkedSignInProviders(linked(EMAIL, PASSKEY, PASSKEY))).toEqual(
+            new Set([EMAIL, PASSKEY]),
+        );
+    });
+
+    test("don't include NFID for an Internet Identity", () => {
+        expect(linkedSignInProviders(linked(II))).toEqual(new Set([II]));
+    });
+
+    /** Invariant: an Internet Identity labelled NFID can still be used. */
+    test("include Internet Identity for NFID, which it may really be", () => {
+        expect(linkedSignInProviders(linked(NFID))).toEqual(new Set([NFID, II]));
+    });
+
+    test("restrict the sign-in options, offering all of them when there are none", () => {
+        expect(signInOptions(linkedSignInProviders(linked(ETH, EMAIL)), browser, II)).toEqual([
+            EMAIL,
+            ETH,
+        ]);
+        expect(signInOptions(linkedSignInProviders([]), browser)).toHaveLength(6);
+    });
+});
 
 describe("the sign-in options", () => {
     test("are all of them with WebAuthn", () => {

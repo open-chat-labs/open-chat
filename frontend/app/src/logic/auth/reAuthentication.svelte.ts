@@ -1,7 +1,8 @@
 // Signing in again to prove it's the user (resetting a forgotten pin, claiming a prize, deleting
 // the account), as the old trees' ReAuthenticate shows it: pick a way to sign in, then a wallet or
 // an emailed link where that needs one. The client does the signing in and refuses another
-// account (reAuthenticate); this holds the steps between.
+// account (reAuthenticate); this holds the steps between. Only the ways linked to the account are
+// offered, as any of them proves it's the user and none other can.
 
 import {
     AuthProvider,
@@ -28,6 +29,8 @@ export class ReAuthentication {
     #emailLink: AbortController | undefined;
 
     step = $state<ReAuthStep>("choose_provider");
+    // the ways to offer: those linked to the account, or all of them until that's known
+    providers = $state<Set<AuthProvider>>(new Set());
     // why the last attempt didn't sign the user in again
     error = $state<ResourceKey>();
     // the code the emailed link shows, and whether it's still waited on
@@ -36,6 +39,11 @@ export class ReAuthentication {
 
     constructor(client: OpenChat) {
         this.#client = client;
+    }
+
+    /** Finds out which ways to offer. */
+    async loadProviders(): Promise<void> {
+        this.providers = await this.#client.reAuthProviders();
     }
 
     /**

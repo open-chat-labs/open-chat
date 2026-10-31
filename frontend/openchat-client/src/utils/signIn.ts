@@ -108,6 +108,17 @@ export async function isOwnPrincipal(
 }
 
 /**
+ * The sign-in methods linked to an account, to offer for signing in again. Internet Identity and
+ * NFID both originate from the II canister, and one not used since they were told apart is labelled
+ * NFID, so that offers both.
+ */
+export function linkedSignInProviders(linked: { provider: AuthProvider }[]): Set<AuthProvider> {
+    const providers = new Set(linked.map((l) => l.provider));
+    if (providers.has(AuthProvider.NFID)) providers.add(AuthProvider.II);
+    return providers;
+}
+
+/**
  * Why a sign-in method couldn't be unlinked (removeIdentityLink), or undefined when it was. The
  * one the user is signed in with can't be.
  */

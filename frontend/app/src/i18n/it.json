@@ -1363,6 +1363,7 @@
             "loginInitiator": "Siamo spiacenti, non siamo riusciti ad accedere all'identità Internet scelta",
             "pollingError": "Si è verificato un errore imprevisto durante l'attesa dell'accesso all'e-mail",
             "principalMismatch": "Sembra che tu non abbia effettuato nuovamente l'autenticazione con lo stesso provider con cui hai attualmente effettuato l'accesso",
+            "signInNotLinked": "Questo accesso non è collegato al tuo account. Riprova con l'identità, il portafoglio o l'indirizzo email che hai collegato.",
             "unexpectedError": "Impossibile elaborare la tua richiesta. Riprova più tardi.",
             "unlinkActivePrincipal": "Non puoi scollegare il provider con cui hai effettuato l'accesso.",
             "userNotFound": "Sembra che il provider con cui hai effettuato l'accesso non sia disponibile e non può essere utilizzato per la disconnessione."

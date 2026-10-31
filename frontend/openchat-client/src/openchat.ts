@@ -689,6 +689,7 @@ import { cryptoTransferResult } from "./utils/cryptoTransfer";
 import {
     emailLinkFailure,
     isOwnPrincipal,
+    linkedSignInProviders,
     markCurrentSignIn,
     signInOutcome,
     signInProvider,
@@ -11752,20 +11753,29 @@ export class OpenChat {
     }
 
     async signInWithWebAuthn() {
+        await this.#signInWithAnyWebAuthnIdentity(true);
+    }
+
+    // The user picks which of their passkeys to use
+    #signInWithAnyWebAuthnIdentity(
+        assumeIdentity: boolean,
+    ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
 
         const webAuthnIdentity = new MultiWebAuthnIdentity(webAuthnOrigin, (credentialId) =>
             this.lookupWebAuthnPubKey(credentialId),
         );
-        await this.#finaliseWebAuthnSignin(
+        return this.#finaliseWebAuthnSignin(
             webAuthnIdentity,
             () => webAuthnIdentity.innerIdentity(),
-            true,
+            assumeIdentity,
         );
     }
 
-    async signInWithAndroidWebAuthn(): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
+    async signInWithAndroidWebAuthn(
+        assumeIdentity: boolean = true,
+    ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
         const webAuthnIdentity = new AndroidWebAuthnPasskeyIdentity((credentialId) =>
             this.lookupWebAuthnPubKey(credentialId),
         );
@@ -11773,7 +11783,7 @@ export class OpenChat {
         return await this.#finaliseWebAuthnSignin(
             webAuthnIdentity,
             () => webAuthnIdentity.identity(),
-            true,
+            assumeIdentity,
         );
     }
 
@@ -12063,7 +12073,7 @@ export class OpenChat {
                 (await this.getAuthenticationPrincipals()).map((p) => p.principal),
             );
             if (!own) {
-                return { kind: "failed", reason: i18nKey("identity.failure.principalMismatch") };
+                return { kind: "failed", reason: i18nKey("identity.failure.signInNotLinked") };
             }
             const signInProofJwt = await this.getSignInProof(key, delegation);
             if (signal?.aborted) return { kind: "cancelled" };
@@ -12080,13 +12090,29 @@ export class OpenChat {
         }
     }
 
+    /**
+     * The ways to offer for signing in again: those linked to the user's account. Empty if they
+     * can't be looked up, which offers them all, as reAuthenticate checks what's used regardless.
+     */
+    async reAuthProviders(): Promise<Set<AuthProvider>> {
+        try {
+            return linkedSignInProviders(await this.getAuthenticationPrincipals());
+        } catch (err) {
+            console.warn("Unable to look up the linked sign-in methods", err);
+            return new Set();
+        }
+    }
+
     // The identity a ReAuthMethod signs in, without taking it
     async #reAuthIdentity(method: ReAuthMethod): Promise<ReAuthIdentity | "failed"> {
         switch (method.kind) {
             case "identity":
                 return method;
             case "passkey": {
-                const [key, delegation] = await this.reSignInWithCurrentWebAuthnIdentity();
+                // any passkey linked to the account, whichever way this session signed in
+                const [key, delegation] = await (this.isNativeApp()
+                    ? this.signInWithAndroidWebAuthn(false)
+                    : this.#signInWithAnyWebAuthnIdentity(false));
                 return { provider: AuthProvider.PASSKEY, key, delegation };
             }
             case "wallet": {

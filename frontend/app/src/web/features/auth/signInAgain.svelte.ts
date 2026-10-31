@@ -1,5 +1,6 @@
 import {
     selectedAuthProviderStore,
+    type AuthProvider,
     type OpenChat,
     type ReAuthOutcome,
     type ResourceKey,
@@ -27,6 +28,8 @@ export class SignInAgain {
     // the sign-ins and the emailed link being waited on; dispose gives them up
     #attempts = new AbortController();
 
+    // the ways to offer: those linked to the account, or all of them until that's known
+    providers = $state<Set<AuthProvider>>(new Set());
     // why a sign-in through an emailed link failed, once the dialog had stopped waiting on it
     linkFailure = $state<string>();
     // a new AuthDialog after such a failure, back at its choices
@@ -37,6 +40,11 @@ export class SignInAgain {
         this.#translate = translate;
         this.#signedIn = signedIn;
     }
+
+    /** The dialog is opening: finds out which ways to offer. */
+    loadProviders = async (): Promise<void> => {
+        this.providers = await this.#client.reAuthProviders();
+    };
 
     /** AuthDialog's onMethod: signs in again; rejects with the reason it didn't. */
     onMethod = async (method: AuthMethod, _kind: unknown, wallet?: string): Promise<void> => {

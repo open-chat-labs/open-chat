@@ -1363,6 +1363,7 @@
             "loginInitiator": "Rất tiếc, chúng tôi không thể đăng nhập vào Internet Identity mà bạn đã chọn",
             "pollingError": "Đã xảy ra lỗi không mong muốn khi chờ đăng nhập email",
             "principalMismatch": "Có vẻ như bạn đã không xác thực lại với cùng một nhà cung cấp mà bạn hiện đang đăng nhập",
+            "signInNotLinked": "Thông tin đăng nhập này chưa được liên kết với tài khoản của bạn. Vui lòng thử lại bằng danh tính, ví hoặc địa chỉ email bạn đã liên kết.",
             "unexpectedError": "Không thể xử lý yêu cầu của bạn. Vui lòng thử lại sau.",
             "unlinkActivePrincipal": "Bạn không thể hủy liên kết với nhà cung cấp mà bạn hiện đang đăng nhập.",
             "userNotFound": "Có vẻ như nhà cung cấp mà bạn hiện đang đăng nhập không khả dụng và không thể sử dụng để hủy liên kết."
