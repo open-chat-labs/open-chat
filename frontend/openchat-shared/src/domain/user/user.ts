@@ -223,11 +223,13 @@ export type EmailSignInRequest =
 
 /**
  * How the signed-in user signs in again to prove it's them (resetting a forgotten PIN, claiming a
- * prize, deleting the account): a way to sign in, or an identity signed in some other way (the
- * old UIs' wallet buttons sign with the wallet themselves).
+ * prize, deleting the account): a way to sign in, an identity signed in some other way (the old
+ * UIs' wallet buttons sign with the wallet themselves), or the passkey this session signed in with
+ * where no other will do (`session_passkey`: confirming a link; `passkey` is any the user picks).
  */
 export type ReAuthMethod =
     | SignInMethod
+    | { kind: "session_passkey" }
     | {
           kind: "identity";
           provider: AuthProvider;

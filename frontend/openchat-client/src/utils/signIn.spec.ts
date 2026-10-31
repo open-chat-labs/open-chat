@@ -1,6 +1,7 @@
 import { AuthProvider, ErrorCode } from "@shared";
 import {
     isOwnPrincipal,
+    linkedPrincipalProvider,
     linkedSignInProviders,
     linkIdentitiesResult,
     markCurrentSignIn,
@@ -26,30 +27,63 @@ describe("signing in again accepts a linked principal and refuses any other", ()
 const { EMAIL, PASSKEY, II, ETH, SOL, NFID } = AuthProvider;
 const browser = { webAuthn: true, native: false };
 
+describe("a linked principal's provider", () => {
+    const canisters = { ethereum: "eth", solana: "sol", email: "email", internetIdentity: "ii" };
+    const provider = (originatingCanister: string, isIIPrincipal = false) =>
+        linkedPrincipalProvider({ originatingCanister, isIIPrincipal }, canisters);
+
+    test("comes from the canister it originated from", () => {
+        expect(provider("zzzxd-webau-thnke-yr7oc-cai")).toBe(PASSKEY);
+        expect(provider("eth")).toBe(ETH);
+        expect(provider("sol")).toBe(SOL);
+        expect(provider("email")).toBe(EMAIL);
+    });
+
+    test("tells Internet Identity from NFID, which both originate from the II canister", () => {
+        expect(provider("ii", true)).toBe(II);
+        expect(provider("ii", false)).toBe(NFID);
+    });
+
+    /** Invariant: an NFID canister of its own (NFID Wallet's) is NFID, not Internet Identity,
+     * which could only ever give the user a different principal. */
+    test("is NFID from any other canister", () => {
+        expect(provider("yak5f-6iaaa-aaaal-ajn2a-cai")).toBe(NFID);
+    });
+});
+
 describe("the ways to sign in again", () => {
     const linked = (...providers: AuthProvider[]) => providers.map((provider) => ({ provider }));
 
     test("are the methods linked to the account", () => {
-        expect(linkedSignInProviders(linked(EMAIL, PASSKEY, PASSKEY))).toEqual(
+        expect(linkedSignInProviders(linked(EMAIL, PASSKEY, PASSKEY), browser)).toEqual(
             new Set([EMAIL, PASSKEY]),
         );
     });
 
     test("don't include NFID for an Internet Identity", () => {
-        expect(linkedSignInProviders(linked(II))).toEqual(new Set([II]));
+        expect(linkedSignInProviders(linked(II), browser)).toEqual(new Set([II]));
     });
 
     /** Invariant: an Internet Identity labelled NFID can still be used. */
     test("include Internet Identity for NFID, which it may really be", () => {
-        expect(linkedSignInProviders(linked(NFID))).toEqual(new Set([NFID, II]));
+        expect(linkedSignInProviders(linked(NFID), browser)).toEqual(new Set([NFID, II]));
     });
 
     test("restrict the sign-in options, offering all of them when there are none", () => {
-        expect(signInOptions(linkedSignInProviders(linked(ETH, EMAIL)), browser, II)).toEqual([
+        const options = (...providers: AuthProvider[]) =>
+            signInOptions(linkedSignInProviders(linked(...providers), browser), browser, II);
+        expect(options(ETH, EMAIL)).toEqual([EMAIL, ETH]);
+        expect(options()).toHaveLength(6);
+    });
+
+    /** Invariant: the user is never left with nothing to pick. */
+    test("are all of them when this platform has none of those linked", () => {
+        const native = { webAuthn: false, native: true };
+        expect(signInOptions(linkedSignInProviders(linked(ETH, SOL), native), native)).toEqual([
             EMAIL,
-            ETH,
+            PASSKEY,
+            II,
         ]);
-        expect(signInOptions(linkedSignInProviders([]), browser)).toHaveLength(6);
     });
 });
 

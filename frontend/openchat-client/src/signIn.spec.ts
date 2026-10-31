@@ -329,6 +329,18 @@ describe("signing in", () => {
                 expect(identityStateStore.value).toEqual({ kind: "logged_in" });
             });
 
+            /** Invariant: confirming a link can only be done with the session's own passkey. */
+            test("can be only the passkey this session signed in with", async () => {
+                const { key, delegation, principal } = await anIdentity();
+                linked = [principal];
+                const sessionsOwn = vi
+                    .spyOn(client, "reSignInWithCurrentWebAuthnIdentity")
+                    .mockResolvedValue([key, delegation, {} as never]);
+                const outcome = await client.reAuthenticate({ kind: "session_passkey" });
+                expect(outcome.kind === "success" && outcome.provider).toBe(AuthProvider.PASSKEY);
+                expect(sessionsOwn).toHaveBeenCalledOnce();
+            });
+
             test("refuses a passkey that isn't linked to the account", async () => {
                 await picksPasskey();
                 const outcome = await client.reAuthenticate({ kind: "passkey" });

@@ -25,6 +25,8 @@ export class SignInAgain {
     #client: OpenChat;
     #translate: (key: ResourceKey) => string;
     #signedIn: SignedIn;
+    // whether it has to be the way this session signed in, as when confirming a link
+    #sessionsOwn: boolean;
     // the sign-ins and the emailed link being waited on; dispose gives them up
     #attempts = new AbortController();
 
@@ -35,10 +37,16 @@ export class SignInAgain {
     // a new AuthDialog after such a failure, back at its choices
     attempt = $state(0);
 
-    constructor(client: OpenChat, translate: (key: ResourceKey) => string, signedIn: SignedIn) {
+    constructor(
+        client: OpenChat,
+        translate: (key: ResourceKey) => string,
+        signedIn: SignedIn,
+        sessionsOwn: boolean = false,
+    ) {
         this.#client = client;
         this.#translate = translate;
         this.#signedIn = signedIn;
+        this.#sessionsOwn = sessionsOwn;
     }
 
     /** The dialog is opening: finds out which ways to offer. */
@@ -50,7 +58,10 @@ export class SignInAgain {
     onMethod = async (method: AuthMethod, _kind: unknown, wallet?: string): Promise<void> => {
         const signal = this.#attempts.signal;
         const how = await signInMethod(this.#client, method, wallet, signal);
-        await this.#reAuthenticated(await this.#client.reAuthenticate(how, signal));
+        const passkey = how.kind === "passkey" && this.#sessionsOwn;
+        await this.#reAuthenticated(
+            await this.#client.reAuthenticate(passkey ? { kind: "session_passkey" } : how, signal),
+        );
     };
 
     /** AuthDialog's onRequestEmailLink: the link signs in again once it's followed. */

@@ -42,7 +42,6 @@ import {
     ROLE_NONE,
     ROLE_OWNER,
     Stream,
-    WEBAUTHN_ORIGINATING_CANISTER,
     ANON_USER_ID,
     anonymousUser,
     buildDelegationChain,
@@ -689,6 +688,7 @@ import { cryptoTransferResult } from "./utils/cryptoTransfer";
 import {
     emailLinkFailure,
     isOwnPrincipal,
+    linkedPrincipalProvider,
     linkedSignInProviders,
     markCurrentSignIn,
     signInOutcome,
@@ -12096,7 +12096,10 @@ export class OpenChat {
      */
     async reAuthProviders(): Promise<Set<AuthProvider>> {
         try {
-            return linkedSignInProviders(await this.getAuthenticationPrincipals());
+            return linkedSignInProviders(await this.getAuthenticationPrincipals(), {
+                webAuthn: "PublicKeyCredential" in window,
+                native: this.isNativeApp(),
+            });
         } catch (err) {
             console.warn("Unable to look up the linked sign-in methods", err);
             return new Set();
@@ -12113,6 +12116,10 @@ export class OpenChat {
                 const [key, delegation] = await (this.isNativeApp()
                     ? this.signInWithAndroidWebAuthn(false)
                     : this.#signInWithAnyWebAuthnIdentity(false));
+                return { provider: AuthProvider.PASSKEY, key, delegation };
+            }
+            case "session_passkey": {
+                const [key, delegation] = await this.reSignInWithCurrentWebAuthnIdentity();
                 return { provider: AuthProvider.PASSKEY, key, delegation };
             }
             case "wallet": {
@@ -13630,24 +13637,12 @@ export class OpenChat {
     }
 
     #authProviderFromAuthPrincipal(principal: AuthenticationPrincipal): AuthProvider {
-        if (principal.originatingCanister === WEBAUTHN_ORIGINATING_CANISTER) {
-            return AuthProvider.PASSKEY;
-        } else if (principal.originatingCanister === this.config.signInWithEthereumCanister) {
-            return AuthProvider.ETH;
-        } else if (principal.originatingCanister === this.config.signInWithSolanaCanister) {
-            return AuthProvider.SOL;
-        } else if (principal.originatingCanister === this.config.signInWithEmailCanister) {
-            return AuthProvider.EMAIL;
-        } else if (
-            principal.originatingCanister === import.meta.env.OC_INTERNET_IDENTITY_CANISTER_ID
-        ) {
-            if (principal.isIIPrincipal) {
-                return AuthProvider.II;
-            } else {
-                return AuthProvider.NFID;
-            }
-        }
-        return AuthProvider.II;
+        return linkedPrincipalProvider(principal, {
+            ethereum: this.config.signInWithEthereumCanister,
+            solana: this.config.signInWithSolanaCanister,
+            email: this.config.signInWithEmailCanister,
+            internetIdentity: import.meta.env.OC_INTERNET_IDENTITY_CANISTER_ID,
+        });
     }
 
     createAccountLinkingCode(): Promise<AccountLinkingCode | undefined> {

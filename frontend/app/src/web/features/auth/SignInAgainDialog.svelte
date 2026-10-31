@@ -27,7 +27,7 @@
     const client = getContext<OpenChat>("client");
 
     onMount(() => {
-        flow.loadProviders();
+        if (only === undefined) flow.loadProviders();
     });
 
     // the ways to sign in again, the last one used first: `only`, or those linked to the account,
