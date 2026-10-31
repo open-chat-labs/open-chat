@@ -10,6 +10,7 @@
         formatUsdPrice,
         OpenChat,
         priceSourcesFor,
+        priceSourceUrl,
         priceSourcesStore,
     } from "@client";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
@@ -87,7 +88,11 @@
             </div>
         {/if}
         {#each credits as credit}
-            <a class="credit" href={credit.url} target="_blank" rel="noopener noreferrer"
+            <a
+                class="credit"
+                href={priceSourceUrl(credit, subject)}
+                target="_blank"
+                rel="noopener noreferrer"
                 >{$_("cashtag.priceDataBy", { values: { source: credit.name } })}</a>
         {/each}
     </DialogShell>

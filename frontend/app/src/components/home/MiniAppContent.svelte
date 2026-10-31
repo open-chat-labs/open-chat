@@ -71,7 +71,7 @@
         game === undefined ? undefined : $miniAppCardsStore.get(miniAppGameKey(game)),
     );
     let view = $derived(miniAppCardView(content, live, $currentUserIdStore));
-    let playersKey = $derived(view.players.join());
+    let usersKey = $derived(view.users.join());
     // the app, where the game's shown and played, from the card itself
     let hosted = $derived<HostedMiniApp | undefined>(
         !reply &&
@@ -107,8 +107,8 @@
     $effect(() => presence.hold(fullScreen.on));
 
     $effect(() => {
-        if (playersKey !== "") {
-            untrack(() => client.getMissingUsers(view.players));
+        if (usersKey !== "") {
+            untrack(() => client.getMissingUsers(view.users));
         }
     });
 
@@ -177,7 +177,7 @@
             {#if view.status === "finished"}
                 <span class="result">
                     {#if view.result !== undefined}
-                        {view.result}
+                        <Markdown text={view.result} suppressLinks />
                     {:else}
                         <Translatable resourceKey={i18nKey("bots.miniApp.finished")} />
                     {/if}

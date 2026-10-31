@@ -9,6 +9,7 @@
         formatPercentChange,
         formatUsdPrice,
         priceSourcesFor,
+        priceSourceUrl,
         priceSourcesStore,
         type OpenChat,
         type PriceSubject,
@@ -111,7 +112,7 @@
                     {#each credits as credit}
                         <a
                             class="credit"
-                            href={credit.url}
+                            href={priceSourceUrl(credit, subject)}
                             target="_blank"
                             rel="noopener noreferrer"
                             ><Translatable
