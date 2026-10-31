@@ -239,7 +239,7 @@ Every field but `game` is optional.
 
 - **`status`** is only `Finished`, which ends the game, whether it started or not. A player starts it, through the service (see "Starting").
 - **`waiting_for`** is whose turn it is now, all players, each once. Leave it out to keep it as it is; send it empty when it's no one in particular.
-- **`result`** is up to 200 characters, and only comes with Finished.
+- **`result`** is up to 200 characters, and only comes with Finished. It's markdown, as the card's text is, with links turned off, so `@UserId(<user id>)` shows that user's username as it is now.
 - **`end_state`** is how the game ended, as any JSON, eg. for chess the final position and the moves, so viewers can step through them. At most 16 KB serialized, and only with Finished. It's written to the card with the result, and the website hands it to the app, which shows it as how the game ended (see "App ↔ website"). A finished card with an end state shows the app with it; one without shows the app's image and the result.
 - **`remove`** takes players off the game.
 - **`state`:**
