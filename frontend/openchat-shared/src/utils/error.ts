@@ -85,8 +85,8 @@ function isTransientNetworkError(error: unknown): boolean {
         // recover inside one request, and server-side monitoring owns the incident.
         const code = Number((error as { code?: unknown }).code);
         if (code >= 502 && code <= 504) return true;
-        // The same weather as a 502-504 but sent as a 500. A replica rejection never carries
-        // this text, so the 500s this filter must keep still report.
+        // The same weather as a 502-504 but sent as a 500. None of our canisters' reject text
+        // contains it, so the 500s this filter must keep still report.
         if (NO_HEALTHY_ROUTES_PATTERN.test(errorMessage(error))) return true;
     }
     const message = errorMessage(error);

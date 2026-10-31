@@ -143,23 +143,31 @@ describe("shouldReportError", () => {
         );
     });
 
-    test("silences a boundary node with no healthy route to a replica (#32147, #32148)", () => {
-        const body =
-            "HTTP request failed:\n  Status: 500 ()\n  Body: {\n" +
-            '  "error_type": "internal_server_error",\n' +
-            '  "details": "Unable to obtain URLs: Route provider failed to generate url: No healthy routes available"\n}\n';
-        expect(shouldReportError(new HttpError(500, new Error(body)))).toBe(false);
-    });
+    const boundaryNode500 = (details: string) =>
+        new HttpError(
+            500,
+            new Error(
+                "HTTP request failed:\n  Status: 500 ()\n  Body: {\n" +
+                    '  "error_type": "internal_server_error",\n' +
+                    '  "description": "Something went wrong. Please try again later.",\n' +
+                    `  "details": "${details}"\n}\n`,
+            ),
+        );
 
-    test("still reports a 500 from a replica rejection (#32147, #32148)", () => {
+    test("silences a boundary node with no healthy route to a replica (#32147, #32148)", () => {
         expect(
             shouldReportError(
-                new HttpError(
-                    500,
-                    new Error("HTTP request failed:\n  Status: 500 ()\n  Body: Canister trapped"),
+                boundaryNode500(
+                    "Unable to obtain URLs: Route provider failed to generate url: No healthy routes available",
                 ),
             ),
-        ).toBe(true);
+        ).toBe(false);
+    });
+
+    test("still reports any other boundary node 500 (#32147, #32148)", () => {
+        expect(shouldReportError(boundaryNode500("Unable to obtain URLs: something else"))).toBe(
+            true,
+        );
     });
 
     test("silences errors thrown from browser-extension code", () => {
