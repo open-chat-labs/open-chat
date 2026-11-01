@@ -33,15 +33,16 @@
     function onChange(val: string | number | bigint) {
         if (typeof val !== "string") return;
 
-        displayName = val;
-
-        if (displayName.length === 0) {
+        // Check val, not displayName: a getter/setter binding can hand back a different
+        // value (ProfileForm turns "" into undefined)
+        if (val.length === 0) {
             displayName = undefined;
             displayNameValid = true;
             return;
         }
 
-        displayNameValid = isDisplayNameValid(displayName);
+        displayName = val;
+        displayNameValid = isDisplayNameValid(val);
     }
 </script>
 

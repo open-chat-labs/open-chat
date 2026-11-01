@@ -60,7 +60,7 @@
 </script>
 
 {#if children}
-    <span bind:this={container} class="menu" onclick={onClose}>
+    <span bind:this={container} class="menu" data-portal-menu onclick={onClose}>
         {@render children()}
     </span>
 {/if}
