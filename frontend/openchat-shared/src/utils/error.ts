@@ -62,6 +62,9 @@ const AGENT_FETCH_FAILED_PATTERN = /^failed to fetch http request/i;
 
 const AGENT_UNEXPECTED_ERROR_PATTERN = /^unexpected error: /i;
 
+// The boundary node had no replica to route to and answered 500 itself (#32147, #32148)
+const NO_HEALTHY_ROUTES_PATTERN = /no healthy routes available/i;
+
 // Every HttpError subclass overwrites `name` with its own, so a bare `name === "HttpError"` test
 // misses them. `code` only means an HTTP status on one of these.
 const HTTP_ERROR_NAMES = new Set<string>([
@@ -82,6 +85,9 @@ function isTransientNetworkError(error: unknown): boolean {
         // recover inside one request, and server-side monitoring owns the incident.
         const code = Number((error as { code?: unknown }).code);
         if (code >= 502 && code <= 504) return true;
+        // The same weather as a 502-504 but sent as a 500. None of our canisters' reject text
+        // contains it, so the 500s this filter must keep still report.
+        if (NO_HEALTHY_ROUTES_PATTERN.test(errorMessage(error))) return true;
     }
     const message = errorMessage(error);
     // Exempt from the TypeError rule below because it only ever originates from the Tauri
