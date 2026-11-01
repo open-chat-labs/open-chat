@@ -19,8 +19,16 @@ const supportedTokens = [
 ];
 
 const sources = {
-    coingecko: { name: "CoinGecko", token_url: "https://www.coingecko.com/en/coins/{id}" },
-    icpswap: { name: "ICPSwap", token_url: "https://app.icpswap.com/info-tokens/details/{id}" },
+    coingecko: {
+        name: "CoinGecko",
+        url: "https://www.coingecko.com",
+        token_url: "https://www.coingecko.com/en/coins/{id}",
+    },
+    icpswap: {
+        name: "ICPSwap",
+        url: "https://www.icpswap.com",
+        token_url: "https://app.icpswap.com/info-tokens/details/{id}",
+    },
 };
 
 function quietly<T>(fn: () => T): T {
@@ -138,6 +146,27 @@ describe("the price service's prices", () => {
         );
 
         expect(prices?.coins).toEqual({});
+    });
+
+    test("leave out a source with no token url and its coins, but keep the tokens' prices", () => {
+        const prices = quietly(() =>
+            pricesResponse(
+                {
+                    prices: { [ICP_LEDGER]: { usd: 2.58 } },
+                    coins: {
+                        ADA: { id: "cardano", name: "Cardano", usd: 0.2, source: "coingecko" },
+                    },
+                    sources: { coingecko: { name: "CoinGecko", url: "https://www.coingecko.com" } },
+                },
+                supportedTokens,
+            ),
+        );
+
+        expect(prices).toEqual({
+            exchangeRates: { [ICP_LEDGER]: { toUSD: 2.58 } },
+            coins: {},
+            sources: {},
+        });
     });
 
     test("parse each source on its own, so a bad one doesn't drop the rest", () => {
