@@ -3,12 +3,10 @@ import { priceSourcesFor, priceSourceUrl } from "./priceSources";
 
 const coingecko: PriceSource = {
     name: "CoinGecko",
-    url: "https://www.coingecko.com",
     tokenUrl: "https://www.coingecko.com/en/coins/{id}",
 };
 const icpswap: PriceSource = {
     name: "ICPSwap",
-    url: "https://www.icpswap.com",
     tokenUrl: "https://app.icpswap.com/info-tokens/details/{id}",
 };
 const sources = new Map([
@@ -46,13 +44,6 @@ describe("priceSourceUrl", () => {
     test("escapes the id", () => {
         expect(priceSourceUrl(coingecko, { kind: "coin", id: "a/b?c" })).toEqual(
             "https://www.coingecko.com/en/coins/a%2Fb%3Fc",
-        );
-    });
-
-    test("links to the source if it has no page for a token", () => {
-        const source = { ...coingecko, tokenUrl: undefined };
-        expect(priceSourceUrl(source, { kind: "coin", id: "cardano" })).toEqual(
-            "https://www.coingecko.com",
         );
     });
 });
