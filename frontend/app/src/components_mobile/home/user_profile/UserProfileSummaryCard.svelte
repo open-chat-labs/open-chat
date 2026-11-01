@@ -29,10 +29,12 @@
     import { getContext, onMount, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import { toastStore } from "@src/stores/toast";
+    import { copyToClipboard } from "@src/utils/urls";
     import Markdown from "@src/core/Markdown.svelte";
     import Badges from "../profile/Badges.svelte";
     import ChitSummary from "./ChitSummary.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import AreYouSure from "../../AreYouSure.svelte";
     import Progress from "../../Progress.svelte";
     import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
@@ -54,6 +56,7 @@
     let me = $derived(user.userId === $currentUserIdStore);
     let lastOnline: number | undefined = $state();
     let showAboutSheet = $state(false);
+    let confirmCopyUserId = $state(false);
 
     onMount(async () => {
         try {
@@ -80,10 +83,12 @@
         return client.toMonthYearString(new Date(Number(timestamp)));
     }
 
-    function onCopy() {
-        navigator.clipboard.writeText(user.userId).then(() => {
+    // Tokens sent to a user id are lost, so warn before copying it
+    async function onConfirmCopyUserId(yes: boolean) {
+        confirmCopyUserId = false;
+        if (yes && (await copyToClipboard(user.userId))) {
             toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
-        });
+        }
     }
 </script>
 
@@ -116,6 +121,16 @@
             </Row>
         </Column>
     </Sheet>
+{/if}
+
+{#if confirmCopyUserId}
+    <AreYouSure
+        title={i18nKey("userIdCopyWarning.title")}
+        message={i18nKey("userIdCopyWarning.message")}
+        yesLabel={i18nKey("userIdCopyWarning.confirm")}
+        noLabel={i18nKey("cancel")}
+        action={onConfirmCopyUserId}
+        dismiss={() => (confirmCopyUserId = false)} />
 {/if}
 
 <Container gap={"xxl"} direction={"vertical"}>
@@ -256,7 +271,7 @@
         {#if me}
             <!-- User id -->
             <Row
-                onClick={onCopy}
+                onClick={() => (confirmCopyUserId = true)}
                 backgroundColor={ColourVars.surface1}
                 borderRadius="md"
                 padding={["lg", "md", "lg", "xl"]}

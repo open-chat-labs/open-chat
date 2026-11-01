@@ -94,6 +94,7 @@
     import { clearCacheAndRestart } from "@src/utils/clearCache";
     import SignInAgainDialog from "../auth/SignInAgainDialog.svelte";
     import { SignInAgain, type SignedIn } from "../auth/signInAgain.svelte";
+    import ConfirmDialog from "../conversation/ConfirmDialog.svelte";
     import {
         IdentityLinking,
         linkedAs,
@@ -120,6 +121,9 @@
 
     const client = getContext<OpenChat>("client");
     const translate = (key: ResourceKey) => interpolate($_, key);
+
+    // Tokens sent to a user id are lost, so warn before copying it: the copy waiting on that answer
+    let copyUserId: (() => void) | undefined = $state(undefined);
 
     // the sections built so far (ProfileDialog shows only these)
     const SECTIONS: ProfileSection[] = [
@@ -647,6 +651,7 @@
     onChitHistory={readOnly || $disableChit
         ? undefined
         : () => openFromDialog({ kind: "claim_history" })}
+    onCopyUserId={(copy) => (copyUserId = copy)}
     puzzleSetting={false}
     onChitSettings={changeChit}
     onlineMinutes={stats.onlineMinutes}
@@ -739,6 +744,18 @@
         reason={signingInAgain.reason}
         only={signingInAgain.only}
         onClose={() => signingInAgain?.giveUp()} />
+{/if}
+
+{#if copyUserId !== undefined}
+    <ConfirmDialog
+        title={$_("userIdCopyWarning.title")}
+        message={$_("userIdCopyWarning.message")}
+        confirmLabel={$_("userIdCopyWarning.confirm")}
+        onConfirm={() => {
+            copyUserId?.();
+            copyUserId = undefined;
+        }}
+        onClose={() => (copyUserId = undefined)} />
 {/if}
 
 <style>

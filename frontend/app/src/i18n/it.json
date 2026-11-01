@@ -2643,6 +2643,11 @@
     "useAtOwnRisk": "Utilizzare a proprio rischio",
     "userId": "ID utente",
     "userIdCopiedToClipboard": "ID utente copiato negli appunti",
+    "userIdCopyWarning": {
+        "title": "Questo non è un indirizzo del portafoglio",
+        "message": "Non inviare token al tuo ID utente, andrebbero persi. Puoi visualizzare i tuoi indirizzi di deposito nel tuo portafoglio.",
+        "confirm": "Ho capito, copia"
+    },
     "userInfoHeader": "Pubblico",
     "userIsBlocked": "Sblocca l'utente per inviare messaggi",
     "userJoined": "{username} si è unito a {level}",

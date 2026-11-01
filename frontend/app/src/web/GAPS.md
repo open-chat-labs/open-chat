@@ -182,7 +182,9 @@ design export needs. Each entry says where it came up.
   does nothing without `onChit` (the app's `onChit` opens the CHIT dialog);
   `puzzleSetting`, so a host without a daily puzzle setting leaves it out; "Ways to earn more"
   only with `onEarn`; `onClaim`, the calendar's Claim made in place with a "Claiming…" state; a
-  day before `joined` isn't a missed one.
+  day before `joined` isn't a missed one; `onCopyUserId` (`CopyButton`'s `onPress`), so the app
+  can say the user id isn't a wallet address before it's copied, in `ConfirmDialog` (no design
+  for it: `TODO(design)`).
 - **`ProfileDialog` against the app** (8c):
   - the CHIT settings (`disableChit` and the others) are kept in each origin's browser storage,
     as the old UI keeps them, so turning CHIT off in the old UI doesn't reach the new one on

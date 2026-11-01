@@ -2643,6 +2643,11 @@
     "useAtOwnRisk": "השימוש על אחריותך בלבד",
     "userId": "תעודת זהות של המשתמש",
     "userIdCopiedToClipboard": "זיהוי המשתמש הועתק ללוח",
+    "userIdCopyWarning": {
+        "title": "זו אינה כתובת ארנק",
+        "message": "אל תשלח אסימונים למזהה המשתמש שלך, הם יאבדו. תוכל לראות את כתובות ההפקדה שלך בארנק שלך.",
+        "confirm": "הבנתי, העתק"
+    },
     "userInfoHeader": "פּוּמְבֵּי",
     "userIsBlocked": "בטל את חסימת המשתמש כדי לשלוח הודעות",
     "userJoined": "{username} הצטרף ל-{level}",

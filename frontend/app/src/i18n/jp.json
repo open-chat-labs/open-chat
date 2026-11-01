@@ -2643,6 +2643,11 @@
     "useAtOwnRisk": "自己責任",
     "userId": "ユーザーID",
     "userIdCopiedToClipboard": "ユーザーIDがクリップボードにコピーされました",
+    "userIdCopyWarning": {
+        "title": "これはウォレットアドレスではありません",
+        "message": "ユーザーIDにトークンを送らないでください。送ったトークンは失われます。入金アドレスはウォレットで確認できます。",
+        "confirm": "理解しました、コピーする"
+    },
     "userInfoHeader": "パブリック",
     "userIsBlocked": "メッセージ送信のブロックを解除する",
     "userJoined": "{username} が {level} に参加しました",

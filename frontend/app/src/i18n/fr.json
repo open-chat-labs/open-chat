@@ -2643,6 +2643,11 @@
     "useAtOwnRisk": "À utiliser à vos risques et périls",
     "userId": "identifiant d'utilisateur",
     "userIdCopiedToClipboard": "ID utilisateur copié dans le presse-papiers",
+    "userIdCopyWarning": {
+        "title": "Ce n'est pas une adresse de portefeuille",
+        "message": "N'envoyez pas de jetons à votre ID utilisateur, ils seraient perdus. Vous pouvez voir vos adresses de dépôt dans votre portefeuille.",
+        "confirm": "J'ai compris, copier"
+    },
     "userInfoHeader": "Public",
     "userIsBlocked": "Débloquer l'utilisateur pour envoyer des messages",
     "userJoined": "{username} a rejoint le {level}",

@@ -2643,6 +2643,11 @@
     "useAtOwnRisk": "使用风险自负",
     "userId": "用户身份",
     "userIdCopiedToClipboard": "用户 ID 已复制到剪贴板",
+    "userIdCopyWarning": {
+        "title": "这不是钱包地址",
+        "message": "请勿向您的用户 ID 发送代币，否则代币将会丢失。您可以在钱包中查看您的充值地址。",
+        "confirm": "我已了解，复制"
+    },
     "userInfoHeader": "公开",
     "userIsBlocked": "将该用户移出黑名单以便发送消息",
     "userJoined": "{username} 加入了 {level}",

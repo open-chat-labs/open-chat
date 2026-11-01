@@ -80,7 +80,7 @@
             {/if}
         {/if}
 
-        <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
+        <Container wrap gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
             <CommonButton disabled={inProgress} onClick={() => onClick(false)} size={"medium"}>
                 {#snippet icon(color, size)}
                     <Close {color} {size} />

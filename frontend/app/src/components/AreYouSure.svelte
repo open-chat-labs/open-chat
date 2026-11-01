@@ -14,6 +14,7 @@
     interface Props {
         message?: ResourceKey | undefined;
         action: (yes: boolean) => Promise<void>;
+        dismiss?: () => void;
         doubleCheck?: { challenge: ResourceKey; response: ResourceKey } | undefined;
         title?: ResourceKey | undefined;
         yesLabel?: ResourceKey | undefined;
@@ -24,6 +25,7 @@
     let {
         message,
         action,
+        dismiss,
         doubleCheck,
         title = i18nKey("areYouSure"),
         yesLabel = i18nKey("yesPlease"),
@@ -50,7 +52,7 @@
     }
 </script>
 
-<Overlay>
+<Overlay onClose={dismiss}>
     <ModalContent hideBody={message === undefined && children === undefined}>
         {#snippet header()}
             {#if title !== undefined}

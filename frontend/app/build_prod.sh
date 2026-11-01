@@ -1,3 +1,6 @@
+# Non OC env variables
+export NODE_OPTIONS="--max-old-space-size=8192"
+
 export OC_BUILD_ENV=production
 export OC_NODE_ENV=$NODE_ENV
 export OC_WEBAUTHN_ORIGIN=oc.app
