@@ -11,7 +11,7 @@
     import type { MiniAppActions } from "@src/logic/miniApp/miniAppActions.svelte";
     import { MiniAppFullScreen } from "@src/logic/miniApp/miniAppFrame.svelte";
     import { MiniAppHost, type HostedMiniApp } from "@src/logic/miniApp/miniAppHost.svelte";
-    import { MINI_APP_SANDBOX } from "@src/utils/miniApp";
+    import { MINI_APP_SANDBOX, miniAppFrameUrl } from "@src/utils/miniApp";
     import Translatable from "@shared_components/Translatable.svelte";
     import { getContext, tick, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
@@ -210,11 +210,13 @@ app (MiniAppFullScreen) -->
                     {/if}
                 </div>
             {/if}
+            <!-- Framed in the theme it's opened in: the app's told of a change after, rather than
+                 reloaded -->
             {#if showApp && active}
                 <iframe
                     title={botName}
                     bind:this={iframe}
-                    src={url.href}
+                    src={miniAppFrameUrl(url, untrack(() => darkMode))}
                     sandbox={MINI_APP_SANDBOX}
                     referrerpolicy="no-referrer"
                     onload={() => (loaded = true)}></iframe>

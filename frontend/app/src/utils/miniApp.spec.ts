@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { miniAppMessage, miniAppUrl } from "./miniApp";
+import { miniAppFrameUrl, miniAppMessage, miniAppUrl } from "./miniApp";
 
 const OPENCHAT = "https://oc.app";
 
@@ -31,6 +31,15 @@ describe("miniAppUrl", () => {
     // A frame allowed scripts and its own origin could reach into OpenChat's pages
     test("refuses OpenChat's own origin", () => {
         expect(miniAppUrl("https://oc.app/bots/uno", OPENCHAT)).toBeUndefined();
+    });
+});
+
+describe("miniAppFrameUrl", () => {
+    test("is the app's URL with the user's theme in the fragment", () => {
+        const app = new URL("https://uno.example.com/app");
+        expect(miniAppFrameUrl(app, true)).toBe("https://uno.example.com/app#oc_theme=dark");
+        expect(miniAppFrameUrl(app, false)).toBe("https://uno.example.com/app#oc_theme=light");
+        expect(app.hash).toBe("");
     });
 });
 
