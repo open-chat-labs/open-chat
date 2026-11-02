@@ -13478,6 +13478,27 @@ export class OpenChat {
         return () => localUpdates.deleteUnconfirmed(context, msgId);
     }
 
+    /**
+     * Whether a command's message, the one its placeholder stood in for, has already come from the
+     * chat, which removes the placeholder: eg. one the bot posted before answering, which a chat
+     * update can bring before the answer. The answer, with the same message, isn't shown then, or
+     * it'd be added again, as a message which never arrives.
+     */
+    #commandMessageArrived(
+        scope: BotActionScope,
+        placeholderId: bigint | undefined,
+        messageId: bigint,
+    ): boolean {
+        return (
+            scope.kind === "chat_scope" &&
+            messageId === placeholderId &&
+            !localUpdates.isUnconfirmed(
+                { chatId: scope.chatId, threadRootMessageIndex: scope.threadRootMessageIndex },
+                messageId,
+            )
+        );
+    }
+
     executeBotCommand(
         scope: BotActionScope,
         bot: BotCommandInstance,
@@ -13495,10 +13516,13 @@ export class OpenChat {
                   },
               } as BotMessageContext);
         let removePlaceholder: (() => void) | undefined = undefined;
+        // the command's message, which the placeholder stands in for until it arrives
+        let placeholderId: bigint | undefined = undefined;
         switch (bot.kind) {
             case "external_bot":
                 return this.#getAuthTokenForBotCommand(scope, bot)
                     .then(([token, msgId]) => {
+                        placeholderId = msgId;
                         removePlaceholder = this.sendPlaceholderBotMessage(
                             scope,
                             botContext,
@@ -13533,7 +13557,13 @@ export class OpenChat {
                                         botId: bot.id,
                                         commandName: bot.command.name,
                                     });
-                                } else {
+                                } else if (
+                                    !this.#commandMessageArrived(
+                                        scope,
+                                        placeholderId,
+                                        resp.message.messageId,
+                                    )
+                                ) {
                                     this.sendPlaceholderBotMessage(
                                         scope,
                                         botContext === undefined
