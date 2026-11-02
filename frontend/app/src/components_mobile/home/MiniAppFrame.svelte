@@ -237,9 +237,6 @@ app (MiniAppFullScreen) -->
 </dialog>
 
 <style lang="scss">
-    // the widest a card shows its app, as wide as a P2P swap's card
-    $card-width: 350px;
-
     .frame {
         // in place in the card, rather than where a dialog puts itself
         position: static;
@@ -288,19 +285,10 @@ app (MiniAppFullScreen) -->
     }
 
     .app {
-        // At the app's aspect ratio, no wider than a card or the app itself, and no taller than
-        // most of the screen. The width mustn't depend on what's in the box, as the message is only
-        // as wide as its content: the artwork, which is only there until the app's loaded, would
-        // make the card wider until then.
+        // at the app's aspect ratio, as wide as the card, which is sized for it (MiniAppContent)
         position: relative;
-        width: min(
-            calc(var(--app-w) * 1px),
-            #{$card-width},
-            calc(75dvh * var(--app-w) / var(--app-h))
-        );
-        max-width: 100%;
+        width: 100%;
         aspect-ratio: var(--app-w) / var(--app-h);
-        margin: 0 auto;
 
         .full-screen & {
             flex: auto;

@@ -73,6 +73,9 @@
     let view = $derived(miniAppCardView(content, live, $currentUserIdStore));
     let usersKey = $derived(view.users.join());
     // the app, where the game's shown and played, from the card itself
+    // The card's sized for its app's frame wherever it has one, even before the bot's known, which
+    // the frame needs
+    let framed = $derived(!reply && !pinned && !preview);
     let hosted = $derived<HostedMiniApp | undefined>(
         !reply &&
             !pinned &&
@@ -133,7 +136,12 @@
 {#if reply}
     <Markdown text={content.text} oneLine suppressLinks />
 {:else}
-    <div bind:this={card}>
+    <div
+    bind:this={card}
+    class:framed
+    style={framed
+        ? `--app-w: ${content.appSize.width}; --app-h: ${content.appSize.height};`
+        : undefined}>
         <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} text={content.text} />
         {#if hosted !== undefined && actions !== undefined}
             <MiniAppFrame
@@ -224,6 +232,18 @@
 {/if}
 
 <style lang="scss">
+    // The widest a card is
+    $card-width: 350px;
+
+    // A card with an app is as wide as its frame, so its rows wrap to the app rather than widen the
+    // message, which is only as wide as what's in it. Its width mustn't depend on what's in the
+    // frame either: the artwork, which is only there until the app's loaded, would make the card
+    // wider until then. No taller than most of the screen at the app's aspect ratio.
+    .framed {
+        width: min(#{$card-width}, calc(75dvh * var(--app-w) / var(--app-h)));
+        max-width: 100%;
+    }
+
     .players {
         display: flex;
         flex-wrap: wrap;
