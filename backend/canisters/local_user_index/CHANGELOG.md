@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2207](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2207-local_user_index)] - 2026-11-02
+
 ### Added
 
 - Add MiniApp messages, which only bots post: a card for a bot's app, eg. a game, whose players, status and result the MiniApp service keeps up to date ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300), [#10340](https://github.com/open-chat-labs/open-chat/pull/10340))
