@@ -203,6 +203,12 @@ fn validate(args: &Args, state: &RuntimeState) -> Result<(), Response> {
             return Err(TooManyCommands);
         }
 
+        for command in &definition.commands {
+            if let Err(message) = command.validate_conditions() {
+                return Err(Error(OCErrorCode::InvalidRequest.with_message(message)));
+            }
+        }
+
         if definition.data_encoding == Some(BotDataEncoding::Json) {
             return Err(Error(
                 OCErrorCode::InvalidRequest.with_message(JSON_DATA_ENCODING_NOT_SUPPORTED),

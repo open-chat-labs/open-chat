@@ -704,6 +704,7 @@ export function apiCustomParamFields(param: CommandParam): ApiCommandParamType {
                     choices: param.choices.map((c) => ({
                         name: c.name,
                         value: c.value,
+                        visible_when: c.visible_when,
                     })),
                 },
             };

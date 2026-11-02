@@ -1,7 +1,13 @@
 <script lang="ts">
     import { BodySmall, Button, Column, Form, Sheet, Subtitle } from "component-lib";
     import { botState, OpenChat } from "@client";
-    import { random64, type FlattenedCommand, type MessageContext } from "@shared";
+    import {
+        clearHiddenChoices,
+        random64,
+        shownParams,
+        type FlattenedCommand,
+        type MessageContext,
+    } from "@shared";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
@@ -19,6 +25,13 @@
     let { command, onCancel, onCommandSent, messageContext }: Props = $props();
     let commandName = $derived(`/${command.name}`);
     let busy = $state(false);
+    // The params the form shows, each with the choices it shows, as their conditions have them
+    let shown = $derived(shownParams(command.params, botState.selectedCommandArgs));
+
+    // A choice the form stops showing, eg. once another param changes, is no longer chosen
+    $effect(() => {
+        clearHiddenChoices(shown, botState.selectedCommandArgs);
+    });
 
     function onSubmit(e: Event) {
         e.preventDefault();
@@ -58,8 +71,10 @@
                 </BodySmall>
             {/if}
             {#if botState.selectedCommandArgs.length === command?.params?.length}
-                {#each command?.params ?? [] as param, i}
-                    <CommandArg arg={botState.selectedCommandArgs[i]} {param} />
+                {#each shown as param, i}
+                    {#if param !== undefined}
+                        <CommandArg arg={botState.selectedCommandArgs[i]} {param} />
+                    {/if}
                 {/each}
             {/if}
         </Form>

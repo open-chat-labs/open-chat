@@ -3194,6 +3194,7 @@ export function customParamFields(paramType: ApiCommandParamType): CommandParamT
             choices: paramType.IntegerParam.choices.map((c) => ({
                 name: c.name,
                 value: c.value,
+                visible_when: c.visible_when,
             })),
         };
     } else if ("DecimalParam" in paramType) {

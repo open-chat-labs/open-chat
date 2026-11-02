@@ -60,6 +60,14 @@ export type CommandParamCommon = {
     description?: string;
     placeholder?: string;
     required: boolean;
+    // shown only while an earlier param has one of the condition's values (see `shownParams`)
+    visible_when?: CommandParamCondition;
+};
+
+// While an earlier param, a string param with choices, has one of `values`
+export type CommandParamCondition = {
+    param: string;
+    values: string[];
 };
 
 export type UserParam = {
@@ -100,6 +108,7 @@ export type DateTimeParam = {
 export type CommandOptionChoice<T> = {
     name: string;
     value: T;
+    visible_when?: CommandParamCondition;
 };
 
 export type CommandParam = CommandParamCommon & CommandParamType;
@@ -110,6 +119,7 @@ function defaultCommonParam(param?: CommandParam): CommandParamCommon {
         description: param?.description ?? "",
         placeholder: param?.placeholder ?? "",
         required: param?.required ?? true,
+        visible_when: param?.visible_when,
     };
 }
 
@@ -477,55 +487,153 @@ function singleStringParam(params: CommandParam[]): boolean {
     return params.length === 1 && params[0].kind === "string";
 }
 
+/**
+ * The params a command's form shows given its args, each with the choices it shows, or undefined
+ * for a param it hides. A param or a choice with a condition is shown while the earlier param the
+ * condition names is shown, with one of the condition's values among its shown choices: eg. a
+ * game's settings once that game is chosen. Each param's condition only looks at earlier params,
+ * so `args` can stop short, at the param whose turn it is.
+ */
+export function shownParams(
+    params: CommandParam[],
+    args: CommandArg[],
+): (CommandParam | undefined)[] {
+    const shown: (CommandParam | undefined)[] = [];
+    const holds = (condition: CommandParamCondition | undefined): boolean => {
+        if (condition === undefined) return true;
+        const index = params.findIndex((p) => p.name === condition.param);
+        // undefined for a param which isn't earlier, as well as for one which is hidden
+        const param = shown[index];
+        const arg = args[index];
+        return (
+            param?.kind === "string" &&
+            arg?.kind === "string" &&
+            arg.value !== undefined &&
+            condition.values.includes(arg.value) &&
+            param.choices.some((c) => c.value === arg.value)
+        );
+    };
+    for (const param of params) {
+        shown.push(holds(param.visible_when) ? withShownChoices(param, holds) : undefined);
+    }
+    return shown;
+}
+
+function withShownChoices(
+    param: CommandParam,
+    holds: (condition: CommandParamCondition | undefined) => boolean,
+): CommandParam {
+    // the same param when none of its choices has a condition, so the form keeps what it has
+    switch (param.kind) {
+        case "string":
+            return param.choices.some((c) => c.visible_when !== undefined)
+                ? { ...param, choices: param.choices.filter((c) => holds(c.visible_when)) }
+                : param;
+        case "integer":
+            return param.choices.some((c) => c.visible_when !== undefined)
+                ? { ...param, choices: param.choices.filter((c) => holds(c.visible_when)) }
+                : param;
+        case "decimal":
+            return param.choices.some((c) => c.visible_when !== undefined)
+                ? { ...param, choices: param.choices.filter((c) => holds(c.visible_when)) }
+                : param;
+        default:
+            return param;
+    }
+}
+
+/**
+ * Clears each arg whose value is a choice its param no longer shows, eg. a time limit only one
+ * game has, once another game is chosen, so the form asks for it again
+ */
+export function clearHiddenChoices(shown: (CommandParam | undefined)[], args: CommandArg[]) {
+    shown.forEach((param, i) => {
+        const arg = args[i];
+        if (param === undefined || arg === undefined) return;
+        if (param.kind === "string" && arg.kind === "string" && param.choices.length > 0) {
+            if (arg.value && !param.choices.some((c) => c.value === arg.value)) {
+                arg.value = "";
+            }
+        } else if (
+            (param.kind === "integer" && arg.kind === "integer") ||
+            (param.kind === "decimal" && arg.kind === "decimal")
+        ) {
+            const choices: CommandOptionChoice<bigint | number>[] = param.choices;
+            if (
+                choices.length > 0 &&
+                arg.value !== null &&
+                !choices.some((c) => c.value === arg.value)
+            ) {
+                arg.value = null;
+            }
+        }
+    });
+}
+
+/** The args of the params the form shows: a hidden param's arg isn't sent, nor checked */
+export function shownArgs(params: CommandParam[], args: CommandArg[]): CommandArg[] {
+    const shown = shownParams(params, args);
+    return args.filter((_, i) => shown[i] !== undefined);
+}
+
 export function createArgsFromSchema(params: CommandParam[], maybeArgs: string[]): CommandArg[] {
     if (singleStringParam(params)) {
         return [{ kind: "string", name: params[0].name, value: maybeArgs.join(" ") }];
     }
-    return params.map((p, i) => {
-        switch (p.kind) {
-            case "user":
-                return { kind: "user", name: p.name };
-            case "boolean": {
-                const boolVal = (maybeArgs[i] ?? "false").toLocaleLowerCase() === "true";
-                return { kind: "boolean", name: p.name, value: boolVal };
-            }
-            case "integer": {
-                let value: bigint | null = parseBigInt(maybeArgs[i]) ?? null;
-                if (p.choices.length > 0) {
-                    value = p.choices.find((c) => c.value === value)?.value ?? null;
-                }
-                return { kind: p.kind, name: p.name, value };
-            }
-            case "decimal": {
-                const numParam = Number(maybeArgs[i]);
-                let value = isNaN(numParam) ? null : numParam;
-                if (p.choices.length > 0) {
-                    value = p.choices.find((c) => c.value === value)?.value ?? null;
-                }
-                return { kind: p.kind, name: p.name, value };
-            }
-            case "string": {
-                let strParam = maybeArgs[i] ?? "";
-                if (p.choices.length > 0) {
-                    strParam =
-                        p.choices.find(
-                            (c) =>
-                                c.name.toLocaleLowerCase() === strParam.toLocaleLowerCase() ||
-                                c.value.toLocaleLowerCase() === strParam.toLocaleLowerCase(),
-                        )?.value ?? "";
-                }
-                return { kind: "string", name: p.name, value: strParam };
-            }
-            case "dateTime": {
-                const arg = maybeArgs[i];
-                return {
-                    name: p.name,
-                    kind: "dateTime",
-                    value: parseBigInt(arg) ?? parseDateTime(arg),
-                };
-            }
+    // The typed values go to the params shown, in order: a param which the values typed before it
+    // hide takes none
+    const args: CommandArg[] = [];
+    let typed = 0;
+    for (const p of params) {
+        const shown = shownParams(params, args)[args.length];
+        args.push(createArg(shown ?? p, shown !== undefined ? maybeArgs[typed++] : undefined));
+    }
+    return args;
+}
+
+function createArg(p: CommandParam, typed: string | undefined): CommandArg {
+    switch (p.kind) {
+        case "user":
+            return { kind: "user", name: p.name };
+        case "boolean": {
+            const boolVal = (typed ?? "false").toLocaleLowerCase() === "true";
+            return { kind: "boolean", name: p.name, value: boolVal };
         }
-    });
+        case "integer": {
+            let value: bigint | null = parseBigInt(typed ?? null) ?? null;
+            if (p.choices.length > 0) {
+                value = p.choices.find((c) => c.value === value)?.value ?? null;
+            }
+            return { kind: p.kind, name: p.name, value };
+        }
+        case "decimal": {
+            const numParam = Number(typed);
+            let value = isNaN(numParam) ? null : numParam;
+            if (p.choices.length > 0) {
+                value = p.choices.find((c) => c.value === value)?.value ?? null;
+            }
+            return { kind: p.kind, name: p.name, value };
+        }
+        case "string": {
+            let strParam = typed ?? "";
+            if (p.choices.length > 0) {
+                strParam =
+                    p.choices.find(
+                        (c) =>
+                            c.name.toLocaleLowerCase() === strParam.toLocaleLowerCase() ||
+                            c.value.toLocaleLowerCase() === strParam.toLocaleLowerCase(),
+                    )?.value ?? "";
+            }
+            return { kind: "string", name: p.name, value: strParam };
+        }
+        case "dateTime": {
+            return {
+                name: p.name,
+                kind: "dateTime",
+                value: typed === undefined ? null : (parseBigInt(typed) ?? parseDateTime(typed)),
+            };
+        }
+    }
 }
 
 // chrono-node reads a date typed in words ("tomorrow at 9") as the argument of a bot command.

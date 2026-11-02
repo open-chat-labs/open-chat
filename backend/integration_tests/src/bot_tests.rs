@@ -1533,6 +1533,7 @@ fn send_direct_message() {
                         multi_line: true,
                     }),
                     placeholder: None,
+                    visible_when: None,
                 }],
                 permissions: BotPermissions::text_only(),
                 default_role: None,
