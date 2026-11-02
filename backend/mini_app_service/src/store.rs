@@ -135,3 +135,14 @@ impl Store for MemoryStore {
         Ok(self.games.lock().unwrap().keys().copied().collect())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // ElastiCache with encryption in transit takes `rediss://`: a client built without TLS refuses
+    // the URL, saying the feature isn't enabled
+    #[test]
+    fn takes_a_tls_url() {
+        assert!(redis::Client::open("rediss://:token@cache.example.com:6379").is_ok());
+        assert!(redis::Client::open("redis://127.0.0.1:6379").is_ok());
+    }
+}

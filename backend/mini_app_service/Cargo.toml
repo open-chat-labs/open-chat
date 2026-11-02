@@ -18,7 +18,7 @@ oc_error_codes = { path = "../libraries/error_codes" }
 p256 = { workspace = true, features = ["pem", "pkcs8"] }
 p256_key_pair = { path = "../libraries/p256_key_pair" }
 rand = { workspace = true }
-redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
+redis = { workspace = true, features = ["tokio-comp", "connection-manager", "tokio-rustls-comp", "tls-rustls-webpki-roots"] }
 reqwest = { workspace = true, features = ["json"] }
 rustls = { workspace = true, features = ["ring"] }
 serde = { workspace = true }

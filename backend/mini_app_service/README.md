@@ -30,7 +30,7 @@ The script:
 | `IC_IDENTITY_PEM` | The service's identity on the IC, an Ed25519 or secp256k1 key. A platform operator must set its principal on the UserIndex with `set_mini_app_service_principal`, from the website's admin page; `mini_app_service principal` prints it. |
 | `USER_INDEX_CANISTER_ID` | Where OpenChat's public key is fetched from. The tokens the service takes are signed with it. |
 | `MINI_APP_SERVICE_KEY_PEM` | The key the service signs its own tokens with: a P-256 key in PKCS#8 PEM. Bots fetch its public key from `GET /public_key`. |
-| `REDIS_URL` | Where games are kept. Without one they're kept in memory, so they end when the service does. |
+| `REDIS_URL` | Where games are kept: `redis://`, or `rediss://` over TLS, eg. ElastiCache with encryption in transit, `rediss://:<auth token>@<primary endpoint>:6379`, its certificate checked against the public roots the service carries. Without one they're kept in memory, so they end when the service does. |
 | `PORT` | 8095 if not set. |
 | `IS_PRODUCTION` | Whether the IC is mainnet, so its root key isn't fetched. |
 
