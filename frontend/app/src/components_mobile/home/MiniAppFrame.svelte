@@ -307,10 +307,12 @@ app (MiniAppFullScreen) -->
         height: 100%;
         width: 100%;
 
-        // Drawn, but unseen and out of the pointer's way. Not hidden or undisplayed, which can stop
-        // the browser drawing it, or running its animation frames, so it'd have nothing to show.
+        // Drawn, but unseen over the artwork at 1%, and out of the pointer's way. Not transparent,
+        // hidden, undisplayed or under the artwork: the browser doesn't draw a frame no one can see,
+        // and Chrome then gives an app that keeps changing, eg. with a spinner, a frame a second,
+        // so it'd take that long to draw what it's for and say so.
         &.unrevealed {
-            opacity: 0;
+            opacity: 0.01;
             pointer-events: none;
         }
     }
