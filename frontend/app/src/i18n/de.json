@@ -300,6 +300,7 @@
             "errors": {
                 "alphaOnly": "Darf nur alphanumerische Zeichen und Unterstriche enthalten",
                 "botNameInvalid": "Dieser Botname ist ungültig",
+                "condition": "Die Bedingung für „{param}“ muss einen früheren Parameter mit Auswahlmöglichkeiten nennen und nur Werte aus diesen Auswahlmöglichkeiten angeben",
                 "duplicateCommands": "Bot enthält doppelte Befehle",
                 "duplicateName": "Dieser Botname ist bereits vergeben",
                 "duplicateParams": "Befehl enthält doppelte Parameter",

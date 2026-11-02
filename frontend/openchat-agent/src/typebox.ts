@@ -451,12 +451,6 @@ export const OCError = /* @__PURE__ */ Type.Tuple([
     Type.Union([Type.String(), Type.Null()]),
 ]);
 
-export type BotCommandOptionChoiceF64 = Static<typeof BotCommandOptionChoiceF64>;
-export const BotCommandOptionChoiceF64 = /* @__PURE__ */ Type.Object({
-    name: Type.String(),
-    value: Type.Number(),
-});
-
 export type SubscriptionKeys = Static<typeof SubscriptionKeys>;
 export const SubscriptionKeys = /* @__PURE__ */ Type.Object({
     p256dh: Type.String(),
@@ -917,6 +911,12 @@ export const Achievement = /* @__PURE__ */ Type.Union([
     Type.Literal("ChangedTheme"),
 ]);
 
+export type BotCommandParamCondition = Static<typeof BotCommandParamCondition>;
+export const BotCommandParamCondition = /* @__PURE__ */ Type.Object({
+    param: Type.String(),
+    values: Type.Array(Type.String()),
+});
+
 export type Empty = Static<typeof Empty>;
 export const Empty = /* @__PURE__ */ Type.Record(Type.String(), Type.Never());
 
@@ -1117,6 +1117,7 @@ export type BotCommandOptionChoiceI128 = Static<typeof BotCommandOptionChoiceI12
 export const BotCommandOptionChoiceI128 = /* @__PURE__ */ Type.Object({
     name: Type.String(),
     value: Type.BigInt(),
+    visible_when: Type.Optional(BotCommandParamCondition),
 });
 
 export type CommunityId = Static<typeof CommunityId>;
@@ -1420,6 +1421,7 @@ export type BotCommandOptionChoiceString = Static<typeof BotCommandOptionChoiceS
 export const BotCommandOptionChoiceString = /* @__PURE__ */ Type.Object({
     name: Type.String(),
     value: Type.String(),
+    visible_when: Type.Optional(BotCommandParamCondition),
 });
 
 export type CommunityMember = Static<typeof CommunityMember>;
@@ -1513,13 +1515,6 @@ export const CallFacts = /* @__PURE__ */ Type.Object({
     st: Type.BigInt(),
     pb: Type.Boolean(),
     mc: Type.Number(),
-});
-
-export type DecimalParam = Static<typeof DecimalParam>;
-export const DecimalParam = /* @__PURE__ */ Type.Object({
-    min_value: Type.Number(),
-    max_value: Type.Number(),
-    choices: Type.Array(BotCommandOptionChoiceF64),
 });
 
 export type ModerationReferralConfig = Static<typeof ModerationReferralConfig>;
@@ -5387,6 +5382,13 @@ export const GiphyContent = /* @__PURE__ */ Type.Object({
     mobile: GiphyImageVariant,
 });
 
+export type BotCommandOptionChoiceF64 = Static<typeof BotCommandOptionChoiceF64>;
+export const BotCommandOptionChoiceF64 = /* @__PURE__ */ Type.Object({
+    name: Type.String(),
+    value: Type.Number(),
+    visible_when: Type.Optional(BotCommandParamCondition),
+});
+
 export type P2PSwapReserved = Static<typeof P2PSwapReserved>;
 export const P2PSwapReserved = /* @__PURE__ */ Type.Object({
     reserved_by: UserId,
@@ -6599,24 +6601,6 @@ export const GroupMembershipUpdates = /* @__PURE__ */ Type.Object({
     lapsed: Type.Optional(Type.Boolean()),
 });
 
-export type BotCommandParamType = Static<typeof BotCommandParamType>;
-export const BotCommandParamType = /* @__PURE__ */ Type.Union([
-    Type.Literal("UserParam"),
-    Type.Literal("BooleanParam"),
-    Type.Object({
-        StringParam: StringParam,
-    }),
-    Type.Object({
-        IntegerParam: IntegerParam,
-    }),
-    Type.Object({
-        DecimalParam: DecimalParam,
-    }),
-    Type.Object({
-        DateTimeParam: DateTimeParam,
-    }),
-]);
-
 export type ActiveProposalTalliesResponse = Static<typeof ActiveProposalTalliesResponse>;
 export const ActiveProposalTalliesResponse = /* @__PURE__ */ Type.Union([
     Type.Object({
@@ -6759,6 +6743,13 @@ export const PriceChartContent = /* @__PURE__ */ Type.Object({
     end: Type.BigInt(),
     series: Type.Array(PriceChartSeries),
     sources: Type.Array(PriceChartSource),
+});
+
+export type DecimalParam = Static<typeof DecimalParam>;
+export const DecimalParam = /* @__PURE__ */ Type.Object({
+    min_value: Type.Number(),
+    max_value: Type.Number(),
+    choices: Type.Array(BotCommandOptionChoiceF64),
 });
 
 export type OptionUpdateGroupSubtype = Static<typeof OptionUpdateGroupSubtype>;
@@ -8435,14 +8426,23 @@ export const ProposalContent = /* @__PURE__ */ Type.Object({
     my_vote: Type.Optional(Type.Boolean()),
 });
 
-export type BotCommandParam = Static<typeof BotCommandParam>;
-export const BotCommandParam = /* @__PURE__ */ Type.Object({
-    name: Type.String(),
-    description: Type.Optional(Type.String()),
-    placeholder: Type.Optional(Type.String()),
-    required: Type.Boolean(),
-    param_type: BotCommandParamType,
-});
+export type BotCommandParamType = Static<typeof BotCommandParamType>;
+export const BotCommandParamType = /* @__PURE__ */ Type.Union([
+    Type.Literal("UserParam"),
+    Type.Literal("BooleanParam"),
+    Type.Object({
+        StringParam: StringParam,
+    }),
+    Type.Object({
+        IntegerParam: IntegerParam,
+    }),
+    Type.Object({
+        DecimalParam: DecimalParam,
+    }),
+    Type.Object({
+        DateTimeParam: DateTimeParam,
+    }),
+]);
 
 export type ChannelDeleted = Static<typeof ChannelDeleted>;
 export const ChannelDeleted = /* @__PURE__ */ Type.Object({
@@ -9131,17 +9131,6 @@ export const BotCommandInitial = /* @__PURE__ */ Type.Object({
     meta: Type.Optional(BotCommandMeta),
 });
 
-export type BotCommandDefinition = Static<typeof BotCommandDefinition>;
-export const BotCommandDefinition = /* @__PURE__ */ Type.Object({
-    name: Type.String(),
-    description: Type.Optional(Type.String()),
-    placeholder: Type.Optional(Type.String()),
-    params: Type.Array(BotCommandParam),
-    permissions: BotPermissions,
-    default_role: Type.Optional(GroupRole),
-    direct_messages: Type.Optional(Type.Boolean()),
-});
-
 export type CompositeGate = Static<typeof CompositeGate>;
 export const CompositeGate = /* @__PURE__ */ Type.Object({
     inner: Type.Array(AccessGateNonComposite),
@@ -9231,24 +9220,21 @@ export const SenderContext = /* @__PURE__ */ Type.Union([
     Type.Literal("Webhook"),
 ]);
 
-export type BotMatch = Static<typeof BotMatch>;
-export const BotMatch = /* @__PURE__ */ Type.Object({
-    id: UserId,
-    score: Type.Number(),
-    name: Type.String(),
-    description: Type.String(),
-    endpoint: Type.String(),
-    owner: UserId,
-    avatar_id: Type.Optional(Type.BigInt()),
-    commands: Type.Array(BotCommandDefinition),
-    autonomous_config: Type.Optional(AutonomousConfig),
-});
-
 export type BotActionByCommandArgs = Static<typeof BotActionByCommandArgs>;
 export const BotActionByCommandArgs = /* @__PURE__ */ Type.Object({
     bot_id: UserId,
     command: BotCommandInitial,
     scope: BotActionScope,
+});
+
+export type BotCommandParam = Static<typeof BotCommandParam>;
+export const BotCommandParam = /* @__PURE__ */ Type.Object({
+    name: Type.String(),
+    description: Type.Optional(Type.String()),
+    placeholder: Type.Optional(Type.String()),
+    required: Type.Boolean(),
+    param_type: BotCommandParamType,
+    visible_when: Type.Optional(BotCommandParamCondition),
 });
 
 export type AccessGate = Static<typeof AccessGate>;
@@ -9278,33 +9264,6 @@ export const AccessGate = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
-export type BotDefinition = Static<typeof BotDefinition>;
-export const BotDefinition = /* @__PURE__ */ Type.Object({
-    description: Type.String(),
-    commands: Type.Array(BotCommandDefinition),
-    autonomous_config: Type.Optional(AutonomousConfig),
-    default_subscriptions: Type.Optional(BotSubscriptions),
-    data_encoding: Type.Optional(BotDataEncoding),
-    restricted_locations: Type.Optional(Type.Array(BotInstallationLocationType)),
-    mini_apps: Type.Optional(Type.Array(MiniAppDefinition)),
-});
-
-export type UserIndexBotUpdatesBotDetails = Static<typeof UserIndexBotUpdatesBotDetails>;
-export const UserIndexBotUpdatesBotDetails = /* @__PURE__ */ Type.Object({
-    id: UserId,
-    owner: UserId,
-    name: Type.String(),
-    avatar_id: Type.Optional(Type.BigInt()),
-    endpoint: Type.String(),
-    description: Type.String(),
-    commands: Type.Array(BotCommandDefinition),
-    autonomous_config: Type.Optional(AutonomousConfig),
-    last_updated: Type.BigInt(),
-    registration_status: BotRegistrationStatus,
-    restricted_locations: Type.Optional(Type.Array(BotInstallationLocationType)),
-    mini_apps: Type.Optional(Type.Array(MiniAppDefinition)),
-});
-
 export type UserIndexUsersResult = Static<typeof UserIndexUsersResult>;
 export const UserIndexUsersResult = /* @__PURE__ */ Type.Object({
     users: Type.Optional(Type.Array(UserSummaryV2)),
@@ -9329,49 +9288,6 @@ export const UserIndexBotInstallationEventsResponse = /* @__PURE__ */ Type.Union
         Error: OCError,
     }),
 ]);
-
-export type UserIndexExploreBotsSuccessResult = Static<typeof UserIndexExploreBotsSuccessResult>;
-export const UserIndexExploreBotsSuccessResult = /* @__PURE__ */ Type.Object({
-    matches: Type.Array(BotMatch),
-    total: Type.Number(),
-});
-
-export type UserIndexExploreBotsResponse = Static<typeof UserIndexExploreBotsResponse>;
-export const UserIndexExploreBotsResponse = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        Success: UserIndexExploreBotsSuccessResult,
-    }),
-    Type.Object({
-        TermTooShort: Type.Number(),
-    }),
-    Type.Object({
-        TermTooLong: Type.Number(),
-    }),
-    Type.Literal("InvalidTerm"),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
-export type UserIndexUpdateBotArgs = Static<typeof UserIndexUpdateBotArgs>;
-export const UserIndexUpdateBotArgs = /* @__PURE__ */ Type.Object({
-    bot_id: UserId,
-    owner: Type.Optional(UserId),
-    principal: Type.Optional(TSPrincipal),
-    avatar: OptionUpdateString,
-    endpoint: Type.Optional(Type.String()),
-    definition: Type.Optional(BotDefinition),
-});
-
-export type UserIndexRegisterBotArgs = Static<typeof UserIndexRegisterBotArgs>;
-export const UserIndexRegisterBotArgs = /* @__PURE__ */ Type.Object({
-    principal: TSPrincipal,
-    name: Type.String(),
-    avatar: Type.Optional(Type.String()),
-    endpoint: Type.String(),
-    definition: BotDefinition,
-    permitted_install_location: Type.Optional(BotInstallationLocation),
-});
 
 export type LocalUserIndexChatEventsArgs = Static<typeof LocalUserIndexChatEventsArgs>;
 export const LocalUserIndexChatEventsArgs = /* @__PURE__ */ Type.Object({
@@ -9429,6 +9345,17 @@ export const ProposalsBotSubmitProposalArgs = /* @__PURE__ */ Type.Object({
     governance_canister_id: TSPrincipal,
     proposal: ProposalsBotProposalToSubmit,
     transaction: PendingCryptoTransactionICRC2,
+});
+
+export type BotCommandDefinition = Static<typeof BotCommandDefinition>;
+export const BotCommandDefinition = /* @__PURE__ */ Type.Object({
+    name: Type.String(),
+    description: Type.Optional(Type.String()),
+    placeholder: Type.Optional(Type.String()),
+    params: Type.Array(BotCommandParam),
+    permissions: BotPermissions,
+    default_role: Type.Optional(GroupRole),
+    direct_messages: Type.Optional(Type.Boolean()),
 });
 
 export type CryptoContent = Static<typeof CryptoContent>;
@@ -9521,6 +9448,19 @@ export const MessageContent = /* @__PURE__ */ Type.Union([
         MiniApp: MiniAppContent,
     }),
 ]);
+
+export type BotMatch = Static<typeof BotMatch>;
+export const BotMatch = /* @__PURE__ */ Type.Object({
+    id: UserId,
+    score: Type.Number(),
+    name: Type.String(),
+    description: Type.String(),
+    endpoint: Type.String(),
+    owner: UserId,
+    avatar_id: Type.Optional(Type.BigInt()),
+    commands: Type.Array(BotCommandDefinition),
+    autonomous_config: Type.Optional(AutonomousConfig),
+});
 
 export type GroupMatch = Static<typeof GroupMatch>;
 export const GroupMatch = /* @__PURE__ */ Type.Object({
@@ -9616,6 +9556,17 @@ export const GroupGateUpdated = /* @__PURE__ */ Type.Object({
     new_gate_config: Type.Optional(AccessGateConfig),
 });
 
+export type BotDefinition = Static<typeof BotDefinition>;
+export const BotDefinition = /* @__PURE__ */ Type.Object({
+    description: Type.String(),
+    commands: Type.Array(BotCommandDefinition),
+    autonomous_config: Type.Optional(AutonomousConfig),
+    default_subscriptions: Type.Optional(BotSubscriptions),
+    data_encoding: Type.Optional(BotDataEncoding),
+    restricted_locations: Type.Optional(Type.Array(BotInstallationLocationType)),
+    mini_apps: Type.Optional(Type.Array(MiniAppDefinition)),
+});
+
 export type GroupIndexExploreGroupsSuccessResult = Static<
     typeof GroupIndexExploreGroupsSuccessResult
 >;
@@ -9642,20 +9593,64 @@ export const GroupIndexExploreGroupsResponse = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
-export type UserIndexBotUpdatesSuccessResult = Static<typeof UserIndexBotUpdatesSuccessResult>;
-export const UserIndexBotUpdatesSuccessResult = /* @__PURE__ */ Type.Object({
-    added_or_updated: Type.Array(UserIndexBotUpdatesBotDetails),
-    removed: Type.Array(UserId),
-    timestamp: Type.BigInt(),
+export type UserIndexBotUpdatesBotDetails = Static<typeof UserIndexBotUpdatesBotDetails>;
+export const UserIndexBotUpdatesBotDetails = /* @__PURE__ */ Type.Object({
+    id: UserId,
+    owner: UserId,
+    name: Type.String(),
+    avatar_id: Type.Optional(Type.BigInt()),
+    endpoint: Type.String(),
+    description: Type.String(),
+    commands: Type.Array(BotCommandDefinition),
+    autonomous_config: Type.Optional(AutonomousConfig),
+    last_updated: Type.BigInt(),
+    registration_status: BotRegistrationStatus,
+    restricted_locations: Type.Optional(Type.Array(BotInstallationLocationType)),
+    mini_apps: Type.Optional(Type.Array(MiniAppDefinition)),
 });
 
-export type UserIndexBotUpdatesResponse = Static<typeof UserIndexBotUpdatesResponse>;
-export const UserIndexBotUpdatesResponse = /* @__PURE__ */ Type.Union([
+export type UserIndexExploreBotsSuccessResult = Static<typeof UserIndexExploreBotsSuccessResult>;
+export const UserIndexExploreBotsSuccessResult = /* @__PURE__ */ Type.Object({
+    matches: Type.Array(BotMatch),
+    total: Type.Number(),
+});
+
+export type UserIndexExploreBotsResponse = Static<typeof UserIndexExploreBotsResponse>;
+export const UserIndexExploreBotsResponse = /* @__PURE__ */ Type.Union([
     Type.Object({
-        Success: UserIndexBotUpdatesSuccessResult,
+        Success: UserIndexExploreBotsSuccessResult,
     }),
-    Type.Literal("SuccessNoUpdates"),
+    Type.Object({
+        TermTooShort: Type.Number(),
+    }),
+    Type.Object({
+        TermTooLong: Type.Number(),
+    }),
+    Type.Literal("InvalidTerm"),
+    Type.Object({
+        Error: OCError,
+    }),
 ]);
+
+export type UserIndexUpdateBotArgs = Static<typeof UserIndexUpdateBotArgs>;
+export const UserIndexUpdateBotArgs = /* @__PURE__ */ Type.Object({
+    bot_id: UserId,
+    owner: Type.Optional(UserId),
+    principal: Type.Optional(TSPrincipal),
+    avatar: OptionUpdateString,
+    endpoint: Type.Optional(Type.String()),
+    definition: Type.Optional(BotDefinition),
+});
+
+export type UserIndexRegisterBotArgs = Static<typeof UserIndexRegisterBotArgs>;
+export const UserIndexRegisterBotArgs = /* @__PURE__ */ Type.Object({
+    principal: TSPrincipal,
+    name: Type.String(),
+    avatar: Type.Optional(Type.String()),
+    endpoint: Type.String(),
+    definition: BotDefinition,
+    permitted_install_location: Type.Optional(BotInstallationLocation),
+});
 
 export type LocalUserIndexBotCreateChannelArgs = Static<typeof LocalUserIndexBotCreateChannelArgs>;
 export const LocalUserIndexBotCreateChannelArgs = /* @__PURE__ */ Type.Object({
@@ -10243,6 +10238,21 @@ export const GroupIndexExploreCommunitiesResponse = /* @__PURE__ */ Type.Union([
     Type.Object({
         Error: OCError,
     }),
+]);
+
+export type UserIndexBotUpdatesSuccessResult = Static<typeof UserIndexBotUpdatesSuccessResult>;
+export const UserIndexBotUpdatesSuccessResult = /* @__PURE__ */ Type.Object({
+    added_or_updated: Type.Array(UserIndexBotUpdatesBotDetails),
+    removed: Type.Array(UserId),
+    timestamp: Type.BigInt(),
+});
+
+export type UserIndexBotUpdatesResponse = Static<typeof UserIndexBotUpdatesResponse>;
+export const UserIndexBotUpdatesResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: UserIndexBotUpdatesSuccessResult,
+    }),
+    Type.Literal("SuccessNoUpdates"),
 ]);
 
 export type LocalUserIndexBotCommunitySummaryResponse = Static<

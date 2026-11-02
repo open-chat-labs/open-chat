@@ -79,6 +79,19 @@ pub struct BotCommandParam {
     pub placeholder: Option<String>,
     pub required: bool,
     pub param_type: BotCommandParamType,
+    // Shown only while an earlier param has one of the condition's values; shown always if absent
+    pub visible_when: Option<BotCommandParamCondition>,
+}
+
+/// When a command's form shows a param, or one of a param's choices: while an earlier param, a
+/// `StringParam` with choices, has one of `values`, eg. a game's settings once that game is chosen.
+/// A hidden param's arg isn't sent. A client which doesn't read conditions shows every param and
+/// choice, as it did before they existed, so a bot still checks the args it's given.
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct BotCommandParamCondition {
+    pub param: String,
+    pub values: Vec<String>,
 }
 
 #[ts_export]
@@ -131,6 +144,66 @@ pub struct DateTimeParam {
 pub struct BotCommandOptionChoice<T> {
     pub name: String,
     pub value: T,
+    pub visible_when: Option<BotCommandParamCondition>,
+}
+
+impl BotCommandDefinition {
+    /// Checks each condition, on a param or on a choice, names an earlier param, a `StringParam`
+    /// with choices, and gives only values among those choices
+    pub fn validate_conditions(&self) -> Result<(), String> {
+        for (index, param) in self.params.iter().enumerate() {
+            let earlier = &self.params[..index];
+            if let Some(condition) = &param.visible_when {
+                validate_condition(condition, earlier)
+                    .map_err(|e| format!("command \"{}\" param \"{}\": {e}", self.name, param.name))?;
+            }
+            for (choice, condition) in param.param_type.choice_conditions() {
+                validate_condition(condition, earlier)
+                    .map_err(|e| format!("command \"{}\" param \"{}\" choice \"{choice}\": {e}", self.name, param.name))?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl BotCommandParamType {
+    /// The name of each choice which has a condition, with its condition
+    fn choice_conditions(&self) -> Vec<(&str, &BotCommandParamCondition)> {
+        fn conditions<T>(choices: &[BotCommandOptionChoice<T>]) -> Vec<(&str, &BotCommandParamCondition)> {
+            choices
+                .iter()
+                .filter_map(|c| c.visible_when.as_ref().map(|w| (c.name.as_str(), w)))
+                .collect()
+        }
+        match self {
+            BotCommandParamType::StringParam(p) => conditions(&p.choices),
+            BotCommandParamType::IntegerParam(p) => conditions(&p.choices),
+            BotCommandParamType::DecimalParam(p) => conditions(&p.choices),
+            _ => Vec::new(),
+        }
+    }
+}
+
+fn validate_condition(condition: &BotCommandParamCondition, earlier: &[BotCommandParam]) -> Result<(), String> {
+    let name = &condition.param;
+    let Some(param) = earlier.iter().find(|p| &p.name == name) else {
+        return Err(format!("its condition names \"{name}\", which isn't an earlier param"));
+    };
+    let choices = match &param.param_type {
+        BotCommandParamType::StringParam(p) if !p.choices.is_empty() => &p.choices,
+        _ => {
+            return Err(format!(
+                "its condition names \"{name}\", which isn't a string param with choices"
+            ));
+        }
+    };
+    if condition.values.is_empty() {
+        return Err("its condition has no values".to_string());
+    }
+    if let Some(value) = condition.values.iter().find(|v| !choices.iter().any(|c| &c.value == *v)) {
+        return Err(format!("its condition's value \"{value}\" isn't one of \"{name}\"'s choices"));
+    }
+    Ok(())
 }
 
 #[ts_export]
@@ -355,6 +428,7 @@ macro_rules! slash_command_option_choice {
         struct $name {
             pub name: String,
             pub value: $value_type,
+            pub visible_when: Option<BotCommandParamCondition>,
         }
     };
 }
@@ -646,6 +720,188 @@ impl BotDefinitionUpdate {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn choice(value: &str, visible_when: Option<BotCommandParamCondition>) -> BotCommandOptionChoice<String> {
+        BotCommandOptionChoice {
+            name: value.to_string(),
+            value: value.to_string(),
+            visible_when,
+        }
+    }
+
+    fn string_param(name: &str, choices: Vec<BotCommandOptionChoice<String>>) -> BotCommandParam {
+        BotCommandParam {
+            name: name.to_string(),
+            description: None,
+            placeholder: None,
+            required: false,
+            param_type: BotCommandParamType::StringParam(StringParam {
+                min_length: 1,
+                max_length: 10,
+                choices,
+                multi_line: false,
+            }),
+            visible_when: None,
+        }
+    }
+
+    fn when(param: &str, values: &[&str]) -> Option<BotCommandParamCondition> {
+        Some(BotCommandParamCondition {
+            param: param.to_string(),
+            values: values.iter().map(|v| v.to_string()).collect(),
+        })
+    }
+
+    fn command(params: Vec<BotCommandParam>) -> BotCommandDefinition {
+        BotCommandDefinition {
+            name: "play".to_string(),
+            description: None,
+            placeholder: None,
+            params,
+            permissions: BotPermissions::default(),
+            default_role: None,
+            direct_messages: None,
+        }
+    }
+
+    fn game() -> BotCommandParam {
+        string_param("game", vec![choice("chess", None), choice("maze", None)])
+    }
+
+    #[test]
+    fn a_param_without_a_condition_reads_as_it_was_written_before_conditions() {
+        // As a param and a choice were stored before they had `visible_when`
+        #[derive(Serialize)]
+        struct OldChoice {
+            name: String,
+            value: String,
+        }
+        #[derive(Serialize)]
+        struct OldStringParam {
+            min_length: u16,
+            max_length: u16,
+            choices: Vec<OldChoice>,
+            multi_line: bool,
+        }
+        #[derive(Serialize)]
+        enum OldParamType {
+            StringParam(OldStringParam),
+        }
+        #[derive(Serialize)]
+        struct OldParam {
+            name: String,
+            required: bool,
+            param_type: OldParamType,
+        }
+        let old = OldParam {
+            name: "game".to_string(),
+            required: true,
+            param_type: OldParamType::StringParam(OldStringParam {
+                min_length: 1,
+                max_length: 10,
+                choices: vec![OldChoice {
+                    name: "Chess".to_string(),
+                    value: "chess".to_string(),
+                }],
+                multi_line: false,
+            }),
+        };
+        let bytes = msgpack::serialize_to_vec(&old).unwrap();
+        let param: BotCommandParam = msgpack::deserialize_then_unwrap(&bytes);
+        assert!(param.visible_when.is_none());
+        let BotCommandParamType::StringParam(string) = param.param_type else {
+            panic!("not a string param");
+        };
+        assert!(string.choices[0].visible_when.is_none());
+        // And one without a condition is written as before, without the field
+        assert_eq!(msgpack::serialize_to_vec(game()).unwrap(), {
+            let game = OldParam {
+                name: "game".to_string(),
+                required: false,
+                param_type: OldParamType::StringParam(OldStringParam {
+                    min_length: 1,
+                    max_length: 10,
+                    choices: ["chess", "maze"]
+                        .map(|v| OldChoice {
+                            name: v.to_string(),
+                            value: v.to_string(),
+                        })
+                        .into(),
+                    multi_line: false,
+                }),
+            };
+            msgpack::serialize_to_vec(game).unwrap()
+        });
+    }
+
+    #[test]
+    fn conditions_on_an_earlier_params_choices_are_valid() {
+        let size = BotCommandParam {
+            visible_when: when("game", &["maze"]),
+            ..string_param("size", vec![choice("small", None), choice("large", None)])
+        };
+        // A choice's condition, and a chain: "speed" shows for chess, and its "bullet" for chess too
+        let speed = string_param(
+            "speed",
+            vec![choice("rapid", None), choice("bullet", when("game", &["chess"]))],
+        );
+        let colour = BotCommandParam {
+            visible_when: when("speed", &["bullet"]),
+            ..string_param("colour", vec![choice("white", None)])
+        };
+        assert_eq!(command(vec![game(), size, speed, colour]).validate_conditions(), Ok(()));
+        assert_eq!(command(vec![game()]).validate_conditions(), Ok(()));
+    }
+
+    #[test]
+    fn a_condition_must_name_an_earlier_string_param_with_choices() {
+        let size = BotCommandParam {
+            visible_when: when("game", &["maze"]),
+            ..string_param("size", vec![choice("small", None)])
+        };
+        // Later, not earlier
+        let err = command(vec![size.clone(), game()]).validate_conditions().unwrap_err();
+        assert!(err.contains("isn't an earlier param"), "{err}");
+        // Missing
+        let err = command(vec![size.clone()]).validate_conditions().unwrap_err();
+        assert!(err.contains("isn't an earlier param"), "{err}");
+        // A string param without choices
+        let err = command(vec![string_param("game", vec![]), size.clone()])
+            .validate_conditions()
+            .unwrap_err();
+        assert!(err.contains("isn't a string param with choices"), "{err}");
+        // Not a string param
+        let boolean = BotCommandParam {
+            param_type: BotCommandParamType::BooleanParam,
+            ..game()
+        };
+        let err = command(vec![boolean, size]).validate_conditions().unwrap_err();
+        assert!(err.contains("isn't a string param with choices"), "{err}");
+    }
+
+    #[test]
+    fn a_conditions_values_must_be_among_the_params_choices() {
+        let size = |values: &[&str]| BotCommandParam {
+            visible_when: when("game", values),
+            ..string_param("size", vec![choice("small", None)])
+        };
+        let err = command(vec![game(), size(&["maze", "go"])])
+            .validate_conditions()
+            .unwrap_err();
+        assert_eq!(
+            err,
+            "command \"play\" param \"size\": its condition's value \"go\" isn't one of \"game\"'s choices"
+        );
+        let err = command(vec![game(), size(&[])]).validate_conditions().unwrap_err();
+        assert!(err.contains("has no values"), "{err}");
+        // On a choice too
+        let speed = string_param("speed", vec![choice("bullet", when("game", &["go"]))]);
+        let err = command(vec![game(), speed]).validate_conditions().unwrap_err();
+        assert!(
+            err.starts_with("command \"play\" param \"speed\" choice \"bullet\": "),
+            "{err}"
+        );
+    }
 
     #[test]
     fn mini_app_names_are_1_to_50_lowercase_letters_digits_hyphens_or_underscores() {

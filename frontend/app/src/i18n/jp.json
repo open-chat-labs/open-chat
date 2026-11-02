@@ -300,6 +300,7 @@
             "errors": {
                 "alphaOnly": "英数字とアンダースコアのみを含める必要があります",
                 "botNameInvalid": "このボット名は無効です",
+                "condition": "「{param}」の条件には、選択肢のある前のパラメータを指定し、その選択肢の値だけを指定する必要があります",
                 "duplicateCommands": "ボットに重複したコマンドが含まれています",
                 "duplicateName": "そのボット名はすでに使用されています",
                 "duplicateParams": "コマンドに重複したパラメータが含まれています",

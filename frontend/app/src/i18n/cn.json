@@ -300,6 +300,7 @@
             "errors": {
                 "alphaOnly": "只能包含字母数字和下划线",
                 "botNameInvalid": "此机器人名称无效",
+                "condition": "\"{param}\" 的条件必须指向前面一个带选项的参数，并且只能给出这些选项中的值",
                 "duplicateCommands": "机器人包含重复的命令",
                 "duplicateName": "该机器人名称已被占用",
                 "duplicateParams": "命令包含重复参数",

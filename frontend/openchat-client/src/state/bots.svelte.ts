@@ -1,13 +1,13 @@
 import {
-    argIsValid,
     chatIdentifiersEqual,
     createArgsFromSchema,
     installationLocationsEqual,
+    shownArgs,
+    shownArgsAreValid,
     type BotCommandInstance,
     type BotInstallationLocation,
     type ChatSummary,
     type CommandArg,
-    type CommandParam,
     type CommunitySummary,
     type DirectChatSummary,
     type EnhancedExternalBot,
@@ -257,7 +257,7 @@ export class BotState {
                     endpoint: command.botEndpoint,
                     command: {
                         name: command.name,
-                        arguments: this.#selectedCommandArgs,
+                        arguments: shownArgs(command.params, this.#selectedCommandArgs),
                         placeholder: command.placeholder,
                     },
                 };
@@ -266,7 +266,7 @@ export class BotState {
                     kind: "internal_bot",
                     command: {
                         name: command.name,
-                        arguments: this.#selectedCommandArgs,
+                        arguments: shownArgs(command.params, this.#selectedCommandArgs),
                     },
                 };
         }
@@ -276,8 +276,7 @@ export class BotState {
         if (params.length !== command.params.length) {
             return false;
         }
-        const pairs: [CommandParam, CommandArg][] = command.params.map((p, i) => [p, params[i]]);
-        return pairs.every(([p, i]) => argIsValid(p, i));
+        return shownArgsAreValid(command.params, params);
     }
 
     public get externalBots() {

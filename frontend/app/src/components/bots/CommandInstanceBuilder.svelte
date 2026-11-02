@@ -1,6 +1,6 @@
 <script lang="ts">
     import { botState, mobileWidth, OpenChat } from "@client";
-    import { random64, type FlattenedCommand, type MessageContext } from "@shared";
+    import { random64, shownParams, type FlattenedCommand, type MessageContext } from "@shared";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
@@ -22,6 +22,8 @@
     let commandName = $derived(`/${command.name}`);
     let form: HTMLFormElement;
     let busy = $state(false);
+    // The params the form shows, each with the choices it shows, as their conditions have them
+    let shown = $derived(shownParams(command.params, botState.selectedCommandArgs));
 
     onMount(() => {
         setTimeout(() => focusFirstInput(), 100);
@@ -94,8 +96,10 @@
                     <p><Translatable resourceKey={i18nKey(command.description)} /></p>
                 {/if}
                 {#if botState.selectedCommandArgs.length === command?.params?.length}
-                    {#each command?.params ?? [] as param, i}
-                        <CommandArg arg={botState.selectedCommandArgs[i]} {param} />
+                    {#each shown as param, i}
+                        {#if param !== undefined}
+                            <CommandArg arg={botState.selectedCommandArgs[i]} {param} />
+                        {/if}
                     {/each}
                 {/if}
             </form>

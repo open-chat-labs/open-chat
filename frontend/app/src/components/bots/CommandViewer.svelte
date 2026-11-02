@@ -29,6 +29,11 @@
     }
 
     let { command, errors, errorPath, onNext, onPrevious, onClose }: Props = $props();
+    // Errors about the command's params as a whole, shown under them
+    let commandErrors = $derived([
+        ...errors.get(`${errorPath}_duplicate_params`),
+        ...errors.get(`${errorPath}_conditions`),
+    ]);
 
     let selectedParam = $state<CommandParam | undefined>(undefined);
     let selectedParamIndex = $state<number | undefined>(undefined);
@@ -134,9 +139,9 @@
                 </section>
             {/if}
 
-            {#if errors.has(`${errorPath}_duplicate_params`)}
-                <ErrorMessage>{errors.get(`${errorPath}_duplicate_params`)}</ErrorMessage>
-            {/if}
+            {#each commandErrors as error}
+                <ErrorMessage><Translatable resourceKey={error} /></ErrorMessage>
+            {/each}
         {/snippet}
 
         {#snippet footer()}

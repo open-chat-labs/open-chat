@@ -62,7 +62,17 @@ const context = { chatId };
 function command(directMessages: boolean): CommandDefinition {
     return {
         name: "ask",
-        params: [{ kind: "string", name: "prompt", required: true }],
+        params: [
+            {
+                kind: "string",
+                name: "prompt",
+                required: true,
+                minLength: 1,
+                maxLength: 1000,
+                choices: [],
+                multi_line: false,
+            },
+        ],
         directMessages,
     } as unknown as CommandDefinition;
 }

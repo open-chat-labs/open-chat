@@ -1990,6 +1990,12 @@ type BotCommandParam = record {
     placeholder : opt text;
     required : bool;
     param_type : BotCommandParamType;
+    visible_when : opt BotCommandParamCondition;
+};
+
+type BotCommandParamCondition = record {
+    param : text;
+    values : vec text;
 };
 
 type BotCommandParamType = variant {
@@ -2011,6 +2017,7 @@ type StringParam = record {
 type StringParamChoice = record {
     name : text;
     value : text;
+    visible_when : opt BotCommandParamCondition;
 };
 
 type IntegerParam = record {
@@ -2022,6 +2029,7 @@ type IntegerParam = record {
 type IntegerParamChoice = record {
     name : text;
     value : int;
+    visible_when : opt BotCommandParamCondition;
 };
 
 type DecimalParam = record {
@@ -2033,6 +2041,7 @@ type DecimalParam = record {
 type DecimalParamChoice = record {
     name : text;
     value : float64;
+    visible_when : opt BotCommandParamCondition;
 };
 
 type DateTimeParam = record {

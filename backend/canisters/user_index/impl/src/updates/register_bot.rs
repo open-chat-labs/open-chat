@@ -147,6 +147,10 @@ fn validate_request(args: &Args, owner_id: UserId, state: &RuntimeState) -> Resu
         return Err("too many commands".to_string());
     }
 
+    for command in &args.definition.commands {
+        command.validate_conditions()?;
+    }
+
     if args.definition.data_encoding == Some(BotDataEncoding::Json) {
         return Err(JSON_DATA_ENCODING_NOT_SUPPORTED.to_string());
     }

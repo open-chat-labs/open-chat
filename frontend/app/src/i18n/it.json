@@ -300,6 +300,7 @@
             "errors": {
                 "alphaOnly": "Deve contenere solo caratteri alfanumerici e caratteri di sottolineatura",
                 "botNameInvalid": "Il nome di questo bot non è valido",
+                "condition": "La condizione su \"{param}\" deve indicare un parametro precedente con delle scelte e fornire solo valori tra quelle scelte",
                 "duplicateCommands": "Il bot contiene comandi duplicati",
                 "duplicateName": "Quel nome bot è già stato preso",
                 "duplicateParams": "Il comando contiene parametri duplicati",
