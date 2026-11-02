@@ -1,0 +1,105 @@
+# Deploys the MiniApp service to its EC2 host, which it shares with the Discord and Twitch bridges:
+# pushes its image to ECR as `latest`, then restarts the host's service, which pulls `latest` as it
+# starts. Only the image: the service's config, including its keys, stays as it is in SSM Parameter
+# Store. The host's setup is in backend/mini_app_service/README.md.
+on:
+  workflow_dispatch:
+  # Builds it, without deploying, when this workflow, the service or the toolchain changes
+  pull_request:
+    branches:
+      - master
+    paths:
+      - .github/workflows/deploy-mini-app-service.yaml
+      - backend/mini_app_service/**
+      - rust-toolchain.toml
+
+name: Deploy MiniApp service
+
+# Deploys queue behind each other, apart from a PR's builds, which a newer push to the PR cancels
+concurrency:
+  group: deploy-mini-app-service-${{ github.event_name == 'workflow_dispatch' && 'deploy' || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  IMAGE: 253040722768.dkr.ecr.us-east-1.amazonaws.com/oc-mini-app-service
+  INSTANCE_ID: i-0198f9d466e519454
+
+jobs:
+  deploy:
+    name: Deploy MiniApp service
+    # The host is arm64, so this builds its image natively rather than under emulation
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      # The deploy role can only be assumed from master, so this fails early with a clearer error
+      - name: Ensure on master
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/master'
+        run: |
+          echo "Deploy from master, not ${GITHUB_REF}"
+          exit 1
+      - uses: actions/checkout@v4
+      # The Dockerfile pins the Rust version and builds with --locked
+      - name: Build
+        run: docker build --platform linux/arm64 -f backend/mini_app_service/Dockerfile -t "$IMAGE:${GITHUB_SHA::10}" -t "$IMAGE:latest" .
+      - name: Configure AWS credentials
+        if: github.event_name == 'workflow_dispatch'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::253040722768:role/GitHubActions-DeployMiniAppService
+          aws-region: us-east-1
+      # The service's public url is in its own config, so it's kept in one place. It's read before
+      # anything's pushed, so a missing parameter or permission stops the deploy there.
+      - name: Read the public url
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          public_url=$(aws ssm get-parameter --name /oc-mini-app-service/PUBLIC_URL --with-decryption --query Parameter.Value --output text)
+          echo "PUBLIC_URL=${public_url%/}" >> "$GITHUB_ENV"
+      - name: Push
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin "${IMAGE%%/*}"
+          docker push "$IMAGE:${GITHUB_SHA::10}"
+          docker push "$IMAGE:latest"
+      # A restart drops the website's connections, which reconnect, and games carry on from Redis.
+      # The deploy fails if the service doesn't start and stay up; systemd keeps restarting it.
+      - name: Restart the service
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          script='set -eu
+          fail() {
+            echo "The MiniApp service $1. systemd keeps restarting it. Its logs are in CloudWatch, in /oc/mini-app-service."
+            exit 1
+          }
+          systemctl restart oc-mini-app-service || fail "did not start"
+          pid=$(systemctl show -p MainPID --value oc-mini-app-service)
+          sleep 30
+          if ! systemctl is-active -q oc-mini-app-service || [ "$(systemctl show -p MainPID --value oc-mini-app-service)" != "$pid" ]; then
+            fail "did not stay up"
+          fi
+          docker inspect --format "Running {{.Config.Image}} ({{.Image}})" oc-mini-app-service
+          # The previous image, which each deploy leaves untagged. Pruning fails while a bridge
+          # deploy prunes the same host, which is no reason to fail this one.
+          docker image prune -f || true'
+          # A command the host doesn't pick up within 60s is dropped, rather than restarting the
+          # service later, after this run has given up on it
+          id=$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
+            --timeout-seconds 60 --comment "Deploy the MiniApp service at ${GITHUB_SHA::10}" \
+            --parameters "$(jq -n --arg script "$script" '{commands: [$script]}')" \
+            --query Command.CommandId --output text)
+          # Up to 5 minutes, for the pull and the 30s check. The invocation may not exist at first.
+          for _ in $(seq 60); do
+            sleep 5
+            status=$(aws ssm get-command-invocation --command-id "$id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null) || status=Pending
+            case "$status" in Pending|InProgress|Delayed) ;; *) break ;; esac
+          done
+          aws ssm get-command-invocation --command-id "$id" --instance-id "$INSTANCE_ID" \
+            --query '[StandardOutputContent, StandardErrorContent]' --output text
+          echo "Restart: $status"
+          [ "$status" = Success ]
+      - name: Check it's up
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          curl -fsS --retry 5 --retry-delay 5 --retry-all-errors "$PUBLIC_URL/health" > /dev/null
+          echo "Deployed ${GITHUB_SHA} and it's serving ${PUBLIC_URL}"
