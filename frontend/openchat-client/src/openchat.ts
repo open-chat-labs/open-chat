@@ -13479,19 +13479,15 @@ export class OpenChat {
     }
 
     /**
-     * Whether a command's message, the one its placeholder stood in for, has already come from the
-     * chat, which removes the placeholder: eg. one the bot posted before answering, which a chat
-     * update can bring before the answer. The answer, with the same message, isn't shown then, or
-     * it'd be added again, as a message which never arrives.
+     * Whether an answer's message is the command's, whose placeholder has gone. A chat update which
+     * brings the message removes it: eg. one the bot posted before answering. The answer isn't
+     * shown then, or it'd be added again, as a message which never arrives. The placeholder also
+     * goes after 90 seconds, and an answer slower than that then waits for the message too.
      */
-    #commandMessageArrived(
-        scope: BotActionScope,
-        placeholderId: bigint | undefined,
-        messageId: bigint,
-    ): boolean {
+    #placeholderGone(scope: BotActionScope, messageId: bigint): boolean {
         return (
             scope.kind === "chat_scope" &&
-            messageId === placeholderId &&
+            messageId === scope.messageId &&
             !localUpdates.isUnconfirmed(
                 { chatId: scope.chatId, threadRootMessageIndex: scope.threadRootMessageIndex },
                 messageId,
@@ -13516,13 +13512,10 @@ export class OpenChat {
                   },
               } as BotMessageContext);
         let removePlaceholder: (() => void) | undefined = undefined;
-        // the command's message, which the placeholder stands in for until it arrives
-        let placeholderId: bigint | undefined = undefined;
         switch (bot.kind) {
             case "external_bot":
                 return this.#getAuthTokenForBotCommand(scope, bot)
                     .then(([token, msgId]) => {
-                        placeholderId = msgId;
                         removePlaceholder = this.sendPlaceholderBotMessage(
                             scope,
                             botContext,
@@ -13557,13 +13550,7 @@ export class OpenChat {
                                         botId: bot.id,
                                         commandName: bot.command.name,
                                     });
-                                } else if (
-                                    !this.#commandMessageArrived(
-                                        scope,
-                                        placeholderId,
-                                        resp.message.messageId,
-                                    )
-                                ) {
+                                } else if (!this.#placeholderGone(scope, resp.message.messageId)) {
                                     this.sendPlaceholderBotMessage(
                                         scope,
                                         botContext === undefined

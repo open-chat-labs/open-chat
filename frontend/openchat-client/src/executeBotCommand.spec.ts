@@ -118,11 +118,11 @@ describe("a command's answer", () => {
         return { outcome };
     }
 
-    function answerWithCard() {
+    function answerWithCard(id: bigint = messageId) {
         answer({
             kind: "success",
             message: {
-                messageId,
+                messageId: id,
                 messageContent: card,
                 finalised: true,
                 blockLevelMarkdown: false,
@@ -149,12 +149,25 @@ describe("a command's answer", () => {
 
     test("isn't shown once the message has come, as it would be added again", async () => {
         const { outcome } = await run();
-        // A chat update brings the bot's message, which confirms it, before the bot answers
+        // A chat update brings the bot's message before the bot answers, which removes the
+        // placeholder, as the client does when it confirms a message
         localUpdates.deleteUnconfirmed(context, messageId);
 
         answerWithCard();
 
         expect(await outcome).toBe("success");
         expect(localUpdates.unconfirmedMessages(context)).toHaveLength(0);
+    });
+
+    test("for another message is shown, whether or not the placeholder's gone", async () => {
+        const { outcome } = await run();
+        localUpdates.deleteUnconfirmed(context, messageId);
+
+        answerWithCard(8n);
+
+        expect(await outcome).toBe("success");
+        const shown = localUpdates.unconfirmedMessages(context);
+        expect(shown).toHaveLength(1);
+        expect(shown[0].event.messageId).toBe(8n);
     });
 });
