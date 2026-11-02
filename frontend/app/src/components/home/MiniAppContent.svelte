@@ -73,8 +73,8 @@
     let view = $derived(miniAppCardView(content, live, $currentUserIdStore));
     let usersKey = $derived(view.users.join());
     // the app, where the game's shown and played, from the card itself
-    // The card's sized for its app's frame wherever it has one, even before the bot's known, which
-    // the frame needs
+    // A card is sized for its app wherever it shows one, ie. unless it's pinned or a preview. That's
+    // before the bot's definition has loaded too, though the frame waits for it.
     let framed = $derived(!reply && !pinned && !preview);
     let hosted = $derived<HostedMiniApp | undefined>(
         !reply &&
