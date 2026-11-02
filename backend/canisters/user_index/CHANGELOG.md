@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- A bot command's param, or one of a param's choices, can be shown only while an earlier param has one of a set of values (`visible_when`); `register_bot` and `update_bot` check the condition names an earlier string param with choices ([#10350](https://github.com/open-chat-labs/open-chat/pull/10350))
+
 ## [[2.0.2203](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2203-user_index)] - 2026-11-02
 
 ### Added

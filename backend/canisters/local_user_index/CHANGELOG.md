@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Keep a bot command param's `visible_when` condition, and its choices', with the bot's commands ([#10350](https://github.com/open-chat-labs/open-chat/pull/10350))
+
 ## [[2.0.2207](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2207-local_user_index)] - 2026-11-02
 
 ### Added
