@@ -54,7 +54,9 @@
                 translate: (key) => interpolate($_, key),
             }),
     );
-    let url = $derived(app.url);
+    // as a string, which is the same when the bot's refreshed, while its URL is a new object which
+    // would frame the app again
+    let href = $derived(app.url.href);
     let botName = $derived(app.botName);
     // the size the app's designed for, which gives the frame its aspect ratio
     let size = $derived(app.content.appSize);
@@ -216,7 +218,7 @@ app (MiniAppFullScreen) -->
                 <iframe
                     title={botName}
                     bind:this={iframe}
-                    src={miniAppFrameUrl(url, untrack(() => darkMode))}
+                    src={miniAppFrameUrl(href, untrack(() => darkMode))}
                     sandbox={MINI_APP_SANDBOX}
                     referrerpolicy="no-referrer"
                     onload={() => (loaded = true)}></iframe>

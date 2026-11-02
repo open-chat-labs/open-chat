@@ -36,10 +36,9 @@ describe("miniAppUrl", () => {
 
 describe("miniAppFrameUrl", () => {
     test("is the app's URL with the user's theme in the fragment", () => {
-        const app = new URL("https://uno.example.com/app");
+        const app = "https://uno.example.com/app";
         expect(miniAppFrameUrl(app, true)).toBe("https://uno.example.com/app#oc_theme=dark");
         expect(miniAppFrameUrl(app, false)).toBe("https://uno.example.com/app#oc_theme=light");
-        expect(app.hash).toBe("");
     });
 });
 

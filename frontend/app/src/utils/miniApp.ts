@@ -29,7 +29,7 @@ function isLocal(hostname: string): boolean {
 
 // The app's URL as it's framed, with the user's theme in the fragment, which the app can draw itself
 // in before it's initialised. The fragment never reaches the bot's server.
-export function miniAppFrameUrl(app: URL, darkMode: boolean): string {
+export function miniAppFrameUrl(app: string, darkMode: boolean): string {
     const url = new URL(app);
     url.hash = `oc_theme=${darkMode ? "dark" : "light"}`;
     return url.href;
