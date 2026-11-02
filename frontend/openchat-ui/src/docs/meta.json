@@ -17947,7 +17947,7 @@
       },
       {
         "name": "onQuote",
-        "type": "(r: SwapRequest) => Promise<SwapQuote>",
+        "type": "ComponentProps<typeof WalletSwap>['onQuote']",
         "default": null,
         "editor": null,
         "options": null,
@@ -17958,7 +17958,7 @@
       },
       {
         "name": "onSwap",
-        "type": "(r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void }) => Promise<{ out?: number } | void>",
+        "type": "ComponentProps<typeof WalletSwap>['onSwap']",
         "default": null,
         "editor": null,
         "options": null,
@@ -17966,6 +17966,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "See WalletSwap.onSwap."
+      },
+      {
+        "name": "swapOptions",
+        "type": "Pick<ComponentProps<typeof WalletSwap>, 'payable' | 'targets' | 'onPay' | 'restricted'>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Swap: the host's tokens to pay with and buy, its pick of the token paid with, and a restriction (see WalletSwap's payable, targets, onPay and restricted)."
       },
       {
         "name": "chats",
@@ -19049,29 +19060,29 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Symbol to pay with; falls back to ICP."
+        "doc": "Token to pay with, by its id (WalletToken.id) or symbol; falls back to ICP."
       },
       {
         "name": "onQuote",
-        "type": "(r: SwapRequest) => Promise<SwapQuote>",
+        "type": "(r: SwapRequest, progress?: (quotes: DexQuoteRow[]) => void) => Promise<SwapQuote>",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Find the best quote (dex, dexFee, out, impactPct, networkFeeUsd, expiresAt). Reject to go back to the form with an error. Without it, no quote can be fetched."
+        "doc": "Find the best quote, telling `progress` of each DEX's answer as it comes in. Reject to go back to the form with an error. Without it, no quote can be fetched."
       },
       {
         "name": "onSwap",
-        "type": "(r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void }) => Promise<{ out?: number } | void>",
+        "type": "(r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void; warningConfirmed: boolean }) => Promise<{ out?: number } | void | false>",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Run the swap, calling onStep(0–2) as each on-chain step (approve, swap, withdraw) starts. Resolve when it is in the wallet; reject to show an error."
+        "doc": "Run the swap; call onStep(i) as each of the 3 on-chain steps (0 approve, 1 swap, 2 withdraw) starts. `warningConfirmed`: the user confirmed the quote's `warning`. Resolve (optionally with the actual output) when it's in the wallet; resolve `false` when nothing was sent and there's nothing to say (the host's PIN prompt was dismissed): back to the quote; reject to show an error."
       },
       {
         "name": "onClose",
@@ -19094,6 +19105,50 @@
         "required": false,
         "componentDefault": null,
         "doc": "After a completed swap, when the user leaves with Done."
+      },
+      {
+        "name": "payable",
+        "type": "string[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The tokens that can be paid with (ids): held ones among them. Without it, any held token with a price."
+      },
+      {
+        "name": "targets",
+        "type": "string[] | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The tokens the one paid with can be swapped for (ids); null while the host finds out. Without it, any token with a price."
+      },
+      {
+        "name": "onPay",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The token paid with (its id), as it's chosen and at the start: for the host to find its `targets`."
+      },
+      {
+        "name": "restricted",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Swapping isn't allowed where the user is: a notice, and no quote."
       }
     ],
     "group": "features"

@@ -8,12 +8,23 @@
      approve + pull), so Max is the whole balance and an amount of 3 fees or less is too small to swap. -->
 <script lang="ts" module>
   export interface SwapRequest {
+    /** The tokens' ids (WalletToken.id, else the symbol). */
     from: string;
     to: string;
     /** Everything taken from the wallet, ledger fees included (the host swaps it less those fees). */
     amount: number;
+    /** `amount` as the digits typed (or picked), for the host to turn into ledger units exactly. */
+    amountText: string;
     /** Max slippage, in percent. */
     slippagePct: number;
+  }
+
+  /** One DEX's answer while quoting, and alongside the quote: its output, or why there's none. */
+  export interface DexQuoteRow {
+    dex: string;
+    state: 'quoting' | 'quoted' | 'none' | 'failed';
+    /** What it would pay out, in `to` (for `quoted`). */
+    out?: number;
   }
 
   export interface SwapQuote {
@@ -21,14 +32,19 @@
     id?: string;
     /** DEX that gave the best rate. */
     dex: string;
-    /** e.g. "0.30%". */
-    dexFee: string;
+    /** e.g. "0.30%". The fees row shows only with this or `networkFeeUsd`. */
+    dexFee?: string;
     /** Amount of `to` received at the quoted rate. */
     out: number;
-    impactPct: number;
-    networkFeeUsd: number;
-    /** When the quote stops being valid (ms epoch). */
-    expiresAt: number;
+    /** The price impact row shows only with it. */
+    impactPct?: number;
+    networkFeeUsd?: number;
+    /** When the quote stops being valid (ms epoch): a countdown, and Swap only until then. None: no countdown. */
+    expiresAt?: number;
+    /** Every DEX's answer, the best among them. */
+    quotes?: DexQuoteRow[];
+    /** Something to confirm before swapping (e.g. the quote is worth much less than what goes in): literal text. */
+    warning?: string;
   }
 </script>
 
@@ -51,6 +67,7 @@
   import StepIndicator from '../../lib/components/StepIndicator.svelte';
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
   import TokenPicker from '../../lib/components/TokenPicker.svelte';
+  import Toggle from '../../lib/components/Toggle.svelte';
   const i18n = getI18n(); // number formatting follows the host locale
 
   const SLIPS = [0.1, 0.5, 1, 3];
@@ -68,30 +85,49 @@
 
   interface Props {
     tokens: WalletToken[];
-    /** Symbol to pay with; falls back to ICP. */
+    /** Token to pay with, by its id (WalletToken.id) or symbol; falls back to ICP. */
     token?: string;
-    /** Find the best quote. Reject to go back to the form with an error. Without it, no quote can be fetched. */
-    onQuote?: (r: SwapRequest) => Promise<SwapQuote>;
+    /** Find the best quote, telling `progress` of each DEX's answer as it comes in. Reject to go back to the form
+     *  with an error. Without it, no quote can be fetched. */
+    onQuote?: (r: SwapRequest, progress?: (quotes: DexQuoteRow[]) => void) => Promise<SwapQuote>;
     /** Run the swap; call onStep(i) as each of the 3 on-chain steps (0 approve, 1 swap, 2 withdraw) starts.
-     *  Resolve (optionally with the actual output) when it's in the wallet; reject to show an error. */
-    onSwap?: (r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void }) => Promise<{ out?: number } | void>;
+     *  `warningConfirmed`: the user confirmed the quote's `warning`. Resolve (optionally with the actual output) when
+     *  it's in the wallet; resolve `false` when nothing was sent and there's nothing to say (the host's PIN prompt was
+     *  dismissed): back to the quote; reject to show an error. */
+    onSwap?: (r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void; warningConfirmed: boolean }) => Promise<{ out?: number } | void | false>;
+    /** The tokens that can be paid with (ids): held ones among them. Without it, any held token with a price. */
+    payable?: string[];
+    /** The tokens the one paid with can be swapped for (ids); null while the host finds out. Without it, any token
+     *  with a price. */
+    targets?: string[] | null;
+    /** The token paid with (its id), as it's chosen and at the start: for the host to find its `targets`. */
+    onPay?: (id: string) => void;
+    /** Swapping isn't allowed where the user is: a notice, and no quote. */
+    restricted?: boolean;
     onClose?: () => void;
     /** After a completed swap, when the user leaves with Done. */
     onSwapped?: (s: { from: string; to: string; amount: number; out: number; fiat: number; fromDp: number; toDp: number }) => void;
   }
 
-  let { tokens, token, onQuote, onSwap, onClose, onSwapped }: Props = $props();
+  let { tokens, token, onQuote, onSwap, onClose, onSwapped, payable, targets, onPay, restricted = false }: Props = $props();
   // `t` is the receiving token below, so the translator is `tr`
   const tr = useT();
 
-  // swappable tokens, the ones you hold first
-  const list = $derived(tokens.filter((t) => t.price > 0).sort((x, y) => Number(y.held > 0) - Number(x.held > 0)));
-  const find = (sym: string | undefined, fallback: string) => list.find((x) => x.symbol === sym) ?? list.find((x) => x.symbol === fallback) ?? list[0];
+  // a token is its id (`id`, else the symbol): two can share a symbol
+  const idOf = (x: WalletToken) => x.id ?? x.symbol;
+  // swappable tokens, the ones you hold first: the host's (payable / targets), else any with a price
+  const hostLists = $derived(!!payable || targets !== undefined);
+  const list = $derived([...(hostLists ? tokens : tokens.filter((t) => t.price > 0))].sort((x, y) => Number(y.held > 0) - Number(x.held > 0)));
+  const find = (id: string | undefined, fallback: string) =>
+    list.find((x) => idOf(x) === id) ?? list.find((x) => x.symbol === id) ?? list.find((x) => x.symbol === fallback) ?? list[0];
 
   const start = find(token, 'ICP');
   const usdt = find('USDT', 'USDT');
-  let from = $state(start?.symbol ?? '');
-  let to = $state((start === usdt ? find('ICP', 'ICP') : usdt)?.symbol ?? '');
+  let from = $state(start ? idOf(start) : '');
+  let chosenTo = $state((start === usdt ? find('ICP', 'ICP') : usdt) ? idOf((start === usdt ? find('ICP', 'ICP') : usdt)!) : '');
+  // the host's targets decide what can be bought: a pick it doesn't list becomes its first
+  const to = $derived(targets === undefined ? chosenTo : targets === null ? '' : targets.includes(chosenTo) ? chosenTo : (targets[0] ?? ''));
+  $effect(() => onPay?.(from));
   let amt = $state('');
   let slipIdx = $state(1);
   let stage = $state<Stage>('form');
@@ -118,8 +154,15 @@
   });
 
   const narrow = $derived(width > 0 && width < 760);
-  const f = $derived(list.find((x) => x.symbol === from) ?? list[0]);
-  const t = $derived(list.find((x) => x.symbol === to) ?? list[0]);
+  const f = $derived(list.find((x) => idOf(x) === from) ?? list[0]);
+  // nothing to buy yet (the host's targets loading, or none): a blank stands in for `t`
+  const NONE: WalletToken = { symbol: '', name: '', mark: '', grad: 'transparent', held: 0, price: 0, dp: 0 };
+  const hasTarget = $derived(list.some((x) => idOf(x) === to));
+  const t = $derived(list.find((x) => idOf(x) === to) ?? NONE);
+  // the user confirmed the quote's warning
+  let warningConfirmed = $state(false);
+  // each DEX's answer as it comes in, then alongside the quote
+  let dexRows = $state<DexQuoteRow[]>([]);
   const n = $derived(parseAmount(amt));
   const usdIn = $derived(f ? n * f.price : 0);
   const impactPct = $derived(quote?.impactPct ?? 0);
@@ -129,14 +172,16 @@
   const over = $derived(!!f && toUnits(n, f.dp) > toUnits(f.held, f.dp));
   // the approve and pull fees come out of the amount, and what's left must still be more than a fee
   const tooSmall = $derived(!!f && n > 0 && toUnits(n, f.dp) <= 3n * toUnits(f.fee ?? 0, f.dp));
-  const ok = $derived(n > 0 && !over && !tooSmall && !!onQuote);
+  const ok = $derived(n > 0 && !over && !tooSmall && !!onQuote && !restricted && hasTarget);
   const dexName = $derived(quote?.dex ?? '');
   const quoting = $derived(stage === 'quoting');
   const quoted = $derived(stage === 'quoted');
   const done = $derived(stage === 'done');
   const busy = $derived(stage === 'progress' || done);
   const showOut = $derived(quoted || busy);
-  const live = $derived(quoted && left > 0);
+  // a quote without an expiry stays live until it's dropped
+  const expires = $derived(quote?.expiresAt !== undefined);
+  const live = $derived(quoted && (!expires || left > 0) && (!quote?.warning || warningConfirmed));
   const amtIn = $derived(`${n > 0 ? fmt(n, f.dp) : '0'} ${f?.symbol}`);
   const amtOut = $derived(`${n > 0 ? fmt(out, t.dp) : '0'} ${t?.symbol}`);
 
@@ -156,10 +201,13 @@
   const quoteRows = $derived.by(() => {
     const impact = `${impactPct < 0.01 ? '<0.01' : impactPct.toFixed(2)}%`;
     const impactInk = impactPct > 3 ? 'var(--status-danger)' : impactPct > 1 ? 'var(--status-warning)' : 'var(--status-online)';
+    // the fees and impact rows only when the host knows them
     const all = [
       { k: tr('ui.walletSwap.row.minimumReceived'), v: `${fmt(out * (1 - slip / 100), t.dp)} ${t.symbol}`, ink: 'var(--ink)' },
-      { k: tr('ui.walletSwap.row.fees'), v: tr('ui.walletSwap.feesValue', { dexFee: quote?.dexFee ?? '', network: usd(quote?.networkFeeUsd ?? 0) }), ink: 'var(--ink)' },
-      { k: tr('ui.walletSwap.row.priceImpact'), v: impact, ink: impactInk },
+      ...(quote?.dexFee !== undefined || quote?.networkFeeUsd !== undefined
+        ? [{ k: tr('ui.walletSwap.row.fees'), v: tr('ui.walletSwap.feesValue', { dexFee: quote?.dexFee ?? '', network: usd(quote?.networkFeeUsd ?? 0) }), ink: 'var(--ink)' }]
+        : []),
+      ...(quote?.impactPct !== undefined ? [{ k: tr('ui.walletSwap.row.priceImpact'), v: impact, ink: impactInk }] : []),
     ];
     return all.map((r, i) => ({ ...r, rule: (i < all.length - 1 ? 'bottom' : 'none') as 'bottom' | 'none' }));
   });
@@ -190,12 +238,18 @@
   );
   const elapsed = $derived(times[0] == null ? '' : done ? tr('ui.walletSwap.took', { time: clock((times[STEPS] ?? now) - times[0]) }) : clock(now - times[0]));
 
+  // Pay: held tokens (the host's payable among them); Get: the host's targets, never the token paid with
   const pickTokens = $derived(
     !pick
       ? []
       : list
-          .filter((x) => pick === 'to' || x.held > 0)
+          .filter((x) =>
+            pick === 'from'
+              ? x.held > 0 && (!payable || payable.includes(idOf(x)))
+              : idOf(x) !== from && (targets === undefined || (targets ?? []).includes(idOf(x))),
+          )
           .map((x) => ({
+            id: idOf(x),
             symbol: x.symbol,
             name: x.name,
             mark: x.mark,
@@ -217,7 +271,8 @@
     }
   }
 
-  const request = (): SwapRequest => ({ from: f.symbol, to: t.symbol, amount: n, slippagePct: slip });
+  // the digits as typed (cut to the token's decimals as they're typed), for the host's exact units
+  const request = (): SwapRequest => ({ from: idOf(f), to: idOf(t), amount: n, amountText: cleanAmount(amt).replace(',', '.'), slippagePct: slip });
 
   // "Get quote", the refresh button on a live quote and "Get new quote" on an expired one
   async function getQuote() {
@@ -226,9 +281,13 @@
     clearInterval(countdown);
     error = '';
     stage = 'quoting';
+    dexRows = [];
+    warningConfirmed = false;
     let q: SwapQuote;
     try {
-      q = await onQuote(request());
+      q = await onQuote(request(), (rows) => {
+        if (mine === run) dexRows = rows;
+      });
     } catch {
       if (mine !== run) return;
       quote = null;
@@ -238,11 +297,14 @@
     }
     if (mine !== run) return;
     quote = q;
+    if (q.quotes) dexRows = q.quotes;
     received = null;
     stage = 'quoted';
-    // counts down to expiry, then stops
+    // counts down to expiry, then stops (a quote without one has no countdown)
+    const expiresAt = q.expiresAt;
+    if (expiresAt === undefined) return;
     const tickLeft = () => {
-      left = Math.max(0, Math.ceil((q.expiresAt - Date.now()) / 1000));
+      left = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
       if (left === 0) clearInterval(countdown);
     };
     countdown = setInterval(tickLeft, 1000);
@@ -251,7 +313,7 @@
 
   async function swap() {
     // only from a live quote: a second press (even before the next render) can't start another swap
-    if (stage !== 'quoted' || !quote || !onSwap || left <= 0) return;
+    if (stage !== 'quoted' || !quote || !onSwap || !live) return;
     const q = quote;
     const mine = ++run;
     clearInterval(countdown);
@@ -274,8 +336,15 @@
         times = nextTimes;
         prog = next;
       };
-      const res = await onSwap({ request: request(), quote: q, onStep });
+      const res = await onSwap({ request: request(), quote: q, onStep, warningConfirmed });
       if (mine !== run) return;
+      // nothing was sent (the host's PIN prompt was dismissed): back to the quote, as it was
+      if (res === false) {
+        prog = 0;
+        times = [];
+        stage = 'quoted';
+        return;
+      }
       if (res && typeof res.out === 'number') received = res.out;
       const at = Date.now();
       const nextTimes = [...times];
@@ -301,25 +370,26 @@
   }
 
   // picking the other side's token flips the pair; paying with a token you don't hold keeps the pay side
-  function picked(sym: string) {
+  function picked(id: string) {
     if (stage === 'quoting' || busy) return;
-    const chosen = list.find((x) => x.symbol === sym);
+    const chosen = list.find((x) => idOf(x) === id);
     if (!chosen) return;
     const other = pick === 'from' ? to : from;
     let nextFrom = from,
       nextTo = to;
-    if (sym === other) [nextFrom, nextTo] = [to, from];
-    else if (pick === 'from') nextFrom = sym;
-    else nextTo = sym;
-    if ((list.find((x) => x.symbol === nextFrom)?.held ?? 0) <= 0) {
-      nextTo = sym === from ? to : sym;
+    if (id === other) [nextFrom, nextTo] = [to, from];
+    else if (pick === 'from') nextFrom = id;
+    else nextTo = id;
+    if ((list.find((x) => idOf(x) === nextFrom)?.held ?? 0) <= 0) {
+      nextTo = id === from ? to : id;
       nextFrom = from;
     }
     drop();
     from = nextFrom;
-    to = nextTo;
+    chosenTo = nextTo;
     pick = null;
   }
+
 
   // the swap in progress can't be left: its result (or failure) has to be shown here
   function back() {
@@ -346,6 +416,26 @@
   }
 </script>
 
+<!-- each DEX's answer, as it comes in and then alongside the quote, the best marked -->
+{#snippet dexQuotes()}
+  {#if dexRows.length > 1}
+    <div class="dex-quotes">
+      <ListSectionLabel label={tr('ui.walletSwap.dexQuotesLabel')} />
+      {#each dexRows as d, i}
+        <DetailRow
+          label={d.dex}
+          value={d.state === 'quoted'
+            ? `${fmt(d.out ?? 0, t.dp)} ${t.symbol}${quoted && quote?.dex === d.dex ? ` · ${tr('ui.walletSwap.best')}` : ''}`
+            : tr(d.state === 'quoting' ? 'ui.walletSwap.dexQuoting' : d.state === 'failed' ? 'ui.walletSwap.dexFailed' : 'ui.walletSwap.dexNoQuote')}
+          valueColor={quoted && quote?.dex === d.dex ? 'var(--accent)' : d.state === 'quoted' ? 'var(--ink)' : 'var(--ink-3)'}
+          size="sm"
+          rule={i === dexRows.length - 1 ? 'none' : 'bottom'}
+        />
+      {/each}
+    </div>
+  {/if}
+{/snippet}
+
 <div class="swap" bind:clientWidth={width} data-screen-label="Wallet swap">
   {#if f && t}
     <PageHeader title={tr('ui.walletSwap.titleToken', { symbol: f.symbol })} onBack={back} avatarMark={f.mark} avatarGradient={f.grad}
@@ -355,6 +445,7 @@
       <div class="column" class:narrow>
         {#if !busy}
           <div class="form" class:quoting inert={quoting}>
+            {#if restricted}<Banner tone="danger" text={tr('ui.walletSwap.restricted')} actionLabel="" />{/if}
             <div class="cards">
               <AmountCard
                 label={tr('ui.walletSwap.youPay')}
@@ -379,7 +470,11 @@
                 label={tr(quoted ? 'ui.walletSwap.youGetQuoted' : 'ui.walletSwap.youGet')}
                 meta={tr('ui.walletSwap.balance', { amount: fmt(t.held, t.dp), symbol: t.symbol })}
                 value={showOut ? (n > 0 ? fmt(out, t.dp) : '0') : ''}
-                note={showOut ? `≈ ${usd(out * t.price)}` : tr('ui.walletSwap.getQuoteToSee')}
+                note={!hasTarget
+                  ? tr(targets === null ? 'ui.walletSwap.findingTargets' : 'ui.walletSwap.noTargets', { symbol: f.symbol })
+                  : showOut
+                    ? `≈ ${usd(out * t.price)}`
+                    : tr('ui.walletSwap.getQuoteToSee')}
                 muted={true}
                 symbol={t.symbol}
                 mark={t.mark}
@@ -400,19 +495,29 @@
               <div class="quote">
                 <div class="quote-head">
                   <span class="rate">1 {f.symbol} ≈ {fmt(n > 0 ? out / n : 0, t.dp)} {t.symbol}</span>
-                  <Pill size="md" label={left > 0 ? `0:${String(left).padStart(2, '0')}` : tr('ui.walletSwap.expired')} tone={left > 10 ? 'neutral' : left > 0 ? 'warning' : 'danger'} />
-                  {#if live}<IconButton icon="refresh" label="ui.walletSwap.refreshQuote" variant="ghost" onClick={getQuote} />{/if}
+                  {#if expires}<Pill size="md" label={left > 0 ? `0:${String(left).padStart(2, '0')}` : tr('ui.walletSwap.expired')} tone={left > 10 ? 'neutral' : left > 0 ? 'warning' : 'danger'} />{/if}
+                  {#if !expires || left > 0}<IconButton icon="refresh" label="ui.walletSwap.refreshQuote" variant="ghost" onClick={getQuote} />{/if}
                 </div>
                 <div class="quote-rows">
                   {#each quoteRows as r}<DetailRow label={r.k} value={r.v} valueColor={r.ink} size="sm" rule={r.rule} />{/each}
                 </div>
               </div>
+              {@render dexQuotes()}
+              {#if quote?.warning}
+                <div class="warning">
+                  <Banner tone="warning" text={quote.warning} actionLabel="" />
+                  <Toggle on={warningConfirmed} label="ui.walletSwap.confirmWarning" onChange={(on) => (warningConfirmed = on)} />
+                </div>
+              {/if}
               {#if live}
                 <span class="cta" onclick={swap} tabindex="0" role="button">{tr('ui.walletSwap.swapCta')}</span>
-              {:else}
+              {:else if expires && left <= 0}
                 <span class="cta" onclick={getQuote} tabindex="0" role="button"><span class="cta-icon"></span>{tr('ui.walletSwap.getNewQuote')}</span>
+              {:else}
+                <span class="cta disabled" role="button" tabindex="0" aria-disabled="true">{tr('ui.walletSwap.swapCta')}</span>
               {/if}
             {:else}
+              {#if quoting}{@render dexQuotes()}{/if}
               <span class="cta" class:disabled={!ok || quoting} onclick={getQuote} tabindex="0" role="button" aria-disabled={!ok || quoting} aria-busy={quoting || undefined}
                 >{#if quoting}<Spinner size={16} tone="ink" label="ui.walletSwap.gettingQuote" />{/if}{ctaText}</span
               >
@@ -501,6 +606,13 @@
 
   .form.quoting {
     pointer-events: none;
+  }
+
+  .dex-quotes,
+  .warning {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .cards {

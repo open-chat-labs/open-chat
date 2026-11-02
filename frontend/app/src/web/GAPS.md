@@ -669,9 +669,20 @@ design export needs. Each entry says where it came up.
     - switching to hand-picked starts from the tokens the minimum showed (the dialog's toggle and
       "take over"), or the default tokens when it showed none; the old settings always start from
       the default tokens.
-  - Swap (6c): the app passes `flows` without it. Its buttons show as designed and do nothing; the
-    menus and the token picker leave it out; `/wallet/swap` shows the token's page (or All
-    activity).
+  - Swap (6c) is built: `/wallet/swap?token=<ledger>`, from the token page, the menus and the
+    balance card. `SwapForm` (shared with both old trees) drives it: every DEX's quote as it comes
+    in, then the best; the swap's steps; and the location check (a restricted location gets a
+    notice and no quote; a check that fails counts as restricted). Pay offers held, swappable
+    tokens and Get only those a DEX has a pool for with it (`canPayWith` / `canSwapTo`, by ledger).
+    The slippage chosen is honoured: the minimum output is the quote less it (`swapMinimumOut`).
+    By hand in the library: `payable`, `targets`, `onPay`, `restricted`, each DEX's answer
+    (`DexQuoteRow`, `onQuote`'s `progress`), a value warning to confirm, exact amount text, and a
+    dismissed PIN prompt going back to the quote. Not yet:
+    - no countdown: the client's quotes have no expiry (`expiresAt` is optional); the minimum
+      output protects a quote that's gone stale.
+    - no fees or price impact rows: the client doesn't know them.
+    - every DEX's quote is listed under the best one; the design shows one DEX (ICPSwap).
+    - the local replica has no DEXes or swappable tokens, so Swap there finds nothing to buy.
   - the total is what the panel lists (Your tokens and small balances); the old wallets' total is
     `walletTokensSorted`'s (in automatic mode, the default tokens plus those worth the minimum).
   - the display currency is kept on this device (`walletCurrency`, a local storage store), shared

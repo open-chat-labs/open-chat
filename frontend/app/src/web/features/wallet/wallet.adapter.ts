@@ -53,8 +53,7 @@ export function displayDecimals(decimals: number, price: number): number {
 }
 
 /**
- * The library's actions from the wallet's (tokenActions): Remove is the panel's Hide. Swap isn't
- * offered until its flow is built (6c).
+ * The library's actions from the wallet's (tokenActions): Remove is the panel's Hide.
  */
 export function walletTokenActions(actions: TokenAction[]): WalletTokenAction[] {
     return actions.flatMap((a): WalletTokenAction[] => {
@@ -63,6 +62,8 @@ export function walletTokenActions(actions: TokenAction[]): WalletTokenAction[] 
                 return ["refresh"];
             case "send":
                 return ["send"];
+            case "swap":
+                return ["swap"];
             case "receive":
                 return ["receive"];
             case "remove":

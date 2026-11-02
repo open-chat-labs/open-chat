@@ -167,7 +167,8 @@ export class SwapForm {
         this.#clearQuotes();
     }
 
-    async getQuote() {
+    /** Asks every DEX for a quote; `onQuotes` hears each DEX's answer too, as `quotes` does. */
+    async getQuote(onQuotes?: (quotes: [DexId, DexQuote][]) => void) {
         if (!this.#canQuote) return;
 
         const request = ++this.#quoteRequest;
@@ -185,7 +186,9 @@ export class SwapForm {
             this.#outToken!.ledger,
             this.#inToken.draftAmount,
             (quotes) => {
-                if (request === this.#quoteRequest) this.#quotes = quotes;
+                if (request !== this.#quoteRequest) return;
+                this.#quotes = quotes;
+                onQuotes?.(quotes);
             },
         );
         if (request !== this.#quoteRequest) return;
@@ -202,9 +205,9 @@ export class SwapForm {
 
     /**
      * Swaps at the quote, accepting `slippagePct` below it (2% when not given: the swap pays out at
-     * least the quote less that).
+     * least the quote less that). `onStep` hears each step as `step` does.
      */
-    async swap(slippagePct?: number) {
+    async swap(slippagePct?: number, onStep?: (step: SwapFromWalletStep) => void) {
         if (!this.#canSwap) return;
 
         this.#stage = "swapping";
@@ -214,7 +217,10 @@ export class SwapForm {
         const outcome = await this.#client.swapTokens(
             this.#quote!,
             this.warningConfirmed,
-            (step) => (this.#step = step),
+            (step) => {
+                this.#step = step;
+                onStep?.(step);
+            },
             slippagePct,
         );
 

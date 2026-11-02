@@ -4,8 +4,7 @@
      Each token's menu is tokenActions', plus Copy ledger ID; "View all" and Copy ledger ID are asks
      of WalletMain (walletRequests). A token opens its page (/wallet/:ledger), All activity /wallet.
      The wallet's balances refresh as the list first shows them (a recent one is kept), Refresh all
-     one ledger at a time. Send and Receive open in WalletMain; the card's Swap does nothing until
-     its flow is built (6c). The ⋯ menu's Settings opens the settings dialog and Manage recipients
+     one ledger at a time. Send, Receive and Swap open in WalletMain. The ⋯ menu's Settings opens the settings dialog and Manage recipients
      the saved recipients (6d); the display currency is kept on this device (walletCurrency). -->
 <script lang="ts">
     import {
@@ -71,9 +70,12 @@
         // the ⋯ menu: the settings dialog, and the saved recipients in the wallet's middle (6d)
         else if (kind === "settings") context.dialogs.open({ kind: "wallet_settings" });
         else if (kind === "recipients") navigate("/wallet/recipients");
-        // Send and Receive: the token's, or the picker first (the balance card's)
-        else if (kind === "send" || kind === "receive") walletRequests.send({ view: kind });
-        else if (kind.startsWith("send:")) {
+        // Send, Receive and Swap: the token's, or the picker first (the balance card's)
+        else if (kind === "send" || kind === "receive" || kind === "swap") {
+            walletRequests.send({ view: kind });
+        } else if (kind.startsWith("swap:")) {
+            walletRequests.send({ view: "swap", token: kind.slice("swap:".length) });
+        } else if (kind.startsWith("send:")) {
             walletRequests.send({ view: "send", token: kind.slice("send:".length) });
         } else if (kind.startsWith("receive:")) {
             walletRequests.send({ view: "receive", token: kind.slice("receive:".length) });

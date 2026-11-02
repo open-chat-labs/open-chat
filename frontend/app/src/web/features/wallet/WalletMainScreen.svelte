@@ -8,8 +8,9 @@
      a transfer in their DM; to an address, a withdrawal over the ledger or, for BTC, Bitcoin's own
      network. The client asks for the PIN (S3), so Send has no PIN step of its own. Recipients
      (6d) is /wallet/recipients: the address book (namedAccountsStore), saved through the client
-     under the old address book's rules (logic/wallet/addressBook). Swap isn't built yet (6c): its
-     path shows the token's page, or All activity. -->
+     under the old address book's rules (logic/wallet/addressBook). Swap (6c) is
+     /wallet/swap?token=<ledger>: SwapForm (every DEX's quote, the steps, the location check), at
+     the slippage the user chooses. -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -89,6 +90,15 @@
         walletToken,
     } from "./wallet.adapter";
     import { walletCatalogue } from "./walletCatalogue.svelte";
+    import type {
+        DexQuoteRow,
+        SwapQuote as SwapQuoteView,
+        SwapRequest,
+    } from "@openchat/ui/src/features/components/WalletSwap.svelte";
+    import { canPayWith, canSwapTo, SwapForm } from "@src/logic/wallet/swapForm.svelte";
+    import { TokenState } from "@src/logic/wallet/walletState.svelte";
+    import { amountUnits } from "@src/logic/wallet/walletSend";
+    import { dexQuoteRows, swapAnswer, swapQuoteView, swapStepIndex } from "./swap.adapter";
     import QrScanDialog from "./QrScanDialog.svelte";
     import SavedAddressPicker from "./SavedAddressPicker.svelte";
     import { walletRequests } from "./walletRequests.svelte";
@@ -124,7 +134,10 @@
     let reported: { view: string; token: string | null } | undefined;
     $effect(() => {
         const view =
-            region.view === "receive" || region.view === "send" || region.view === "recipients"
+            region.view === "receive" ||
+            region.view === "send" ||
+            region.view === "swap" ||
+            region.view === "recipients"
                 ? region.view
                 : ledger === undefined
                   ? "all"
@@ -246,7 +259,7 @@
         if (!stillReceiving) receiveAccount.selectedNetwork = undefined;
         reported = { view, token: id };
         const path =
-            view === "receive" || view === "send"
+            view === "receive" || view === "send" || view === "swap"
                 ? `/wallet/${view}${id !== null ? `?token=${id}` : ""}`
                 : view === "token" && id !== null
                   ? `/wallet/${id}`
@@ -555,6 +568,86 @@
         scanning = undefined;
     }
 
+    // Swap (6c): SwapForm (the shared form: every DEX's quote, the swap's steps, the location check)
+    // drives it. It's made when Swap first opens, for the token paid with
+    let swapForm = $state<SwapForm>();
+
+    function payWith(id: string): void {
+        const token = enhancedCryptoLookup.value.get(id);
+        if (token === undefined) return;
+        if (swapForm === undefined) swapForm = new SwapForm(client, new TokenState(token, "usd"));
+        else if (swapForm.inToken.ledger !== id) swapForm.selectIn(token);
+    }
+
+    // pay with a held, swappable token; buy one a DEX has a pool for with it (null while loading)
+    const swapPayable = $derived(
+        [...$enhancedCryptoLookup.values()]
+            .filter((t) => canPayWith(t, $swappableTokensStore, undefined))
+            .map((t) => t.ledger),
+    );
+    const swapTargets = $derived.by((): string[] | null => {
+        const form = swapForm;
+        if (form === undefined || form.swapsFor !== form.inToken.ledger) return null;
+        return Object.keys(form.swaps).filter((ledger) =>
+            canSwapTo({ ledger }, form.swaps, form.inToken.ledger),
+        );
+    });
+
+    // the amount as the user typed it, in the input's units exactly (6c invariant 4), quoted by
+    // every DEX, each DEX's answer passed on as it comes in
+    async function quoteSwap(
+        request: SwapRequest,
+        progress?: (quotes: DexQuoteRow[]) => void,
+    ): Promise<SwapQuoteView> {
+        const form = swapForm;
+        const tokenIn = enhancedCryptoLookup.value.get(request.from);
+        const tokenOut = enhancedCryptoLookup.value.get(request.to);
+        if (form === undefined || tokenIn === undefined || tokenOut === undefined) {
+            throw new Error("nothing to swap");
+        }
+        if (form.inToken.ledger !== tokenIn.ledger) form.selectIn(tokenIn);
+        if (form.outToken?.ledger !== tokenOut.ledger) form.selectOut(tokenOut);
+        form.inToken.draftAmount = amountUnits(request.amountText, tokenIn.decimals);
+        form.validAmount = form.inToken.draftAmount > 0n;
+        await form.getQuote((quotes) => progress?.(dexQuoteRows(quotes, tokenOut.decimals)));
+        if (form.quote !== undefined) {
+            return swapQuoteView(form.quote, form.quotes, tokenOut.decimals, (key, values) =>
+                $_(key, { values }),
+            );
+        }
+        if (form.error !== undefined) toastStore.showFailureToast(form.error);
+        throw new Error("no quote");
+    }
+
+    // the swap at the slippage the user chose, each step passed on; a dismissed PIN prompt goes
+    // back to the quote, a refusal says why
+    async function runSwap({
+        request,
+        onStep,
+        warningConfirmed,
+    }: {
+        request: SwapRequest;
+        onStep: (step: number) => void;
+        warningConfirmed: boolean;
+    }): Promise<{ out: number } | false> {
+        const form = swapForm;
+        const tokenOut = enhancedCryptoLookup.value.get(request.to);
+        if (form === undefined || tokenOut === undefined) throw new Error("nothing to swap");
+        form.warningConfirmed = warningConfirmed;
+        await form.swap(request.slippagePct, (step) => onStep(swapStepIndex(step)));
+        if (form.stage === "confirm") return false;
+        const answer = swapAnswer(form.outcome, tokenOut.decimals);
+        switch (answer.kind) {
+            case "swapped":
+                return { out: answer.out };
+            case "not_sent":
+                return false;
+            case "failed":
+                toastStore.showFailureToast(answer.message ?? i18nKey("tokenSwap.progress.error"));
+                throw new Error("swap failed");
+        }
+    }
+
     // "View in chat": the DM the tokens went to
     function openDm({ userId }: { userId: string }): void {
         navigate(routeForChatIdentifier("chats", { kind: "direct_chat", userId }));
@@ -574,7 +667,15 @@
     onViewChange={viewChanged}
     onBalanceHiddenChange={(hidden) => hideTokenBalances.set(hidden)}
     handle={$currentUserStore.username ? `@${$currentUserStore.username}` : undefined}
-    flows={["send", "receive"]}
+    flows={["send", "receive", "swap"]}
+    onQuote={quoteSwap}
+    onSwap={runSwap}
+    swapOptions={{
+        payable: swapPayable,
+        targets: swapTargets,
+        onPay: payWith,
+        restricted: swapForm?.restricted === true,
+    }}
     {contacts}
     {btcFees}
     btcRoutes={["btc"]}

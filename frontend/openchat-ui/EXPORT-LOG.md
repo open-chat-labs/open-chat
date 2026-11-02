@@ -473,3 +473,14 @@
 - `BalanceCard`: `loading`, a small spinner by the label while the balances load. `WalletPanel`: `balancesLoading`, passed to it; while it's on, the panel doesn't take the empty wallet's layout. `ratesLoading` shows the same spinner without holding the layout.
 - `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-02 — WalletSwap for the app's swaps, by hand
+- Tokens by id (`token` is an id or a symbol; `SwapRequest.from` / `to` are ids), so two tokens sharing a symbol stay apart. `SwapRequest.amountText`: the digits typed, for exact ledger units.
+- `payable` (the tokens that can be paid with), `targets` (what the token paid with can be bought with; null while the host finds out, and the Get card says so) and `onPay` (the token paid with, as it's chosen): the host's lists in place of "any token with a price".
+- `onQuote(request, progress)`: each DEX's answer (`DexQuoteRow`) shows as it comes in and stays under the quote, the best marked. `SwapQuote.quotes`, `SwapQuote.warning` (to confirm with a toggle before Swap; `onSwap` gets `warningConfirmed`).
+- `SwapQuote.expiresAt`, `dexFee`, `impactPct` and `networkFeeUsd` are optional: no countdown without an expiry, and no fees or price impact row without them.
+- `onSwap` resolving `false`: nothing was sent (the host's PIN prompt was dismissed), back to the quote.
+- `restricted`: a notice, and no quote.
+- `WalletMain`: `swapOptions` (payable, targets, onPay, restricted) passed to Swap, which is given the token's id.
+- Strings `ui.walletSwap.restricted`, `findingTargets`, `noTargets`, `dexQuotesLabel`, `dexQuoting`, `dexNoQuote`, `dexFailed`, `best`, `confirmWarning`; `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

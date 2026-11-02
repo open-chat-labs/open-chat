@@ -3434,7 +3434,16 @@
         "withdraw": "Receive {amount} in your wallet",
         "withdrawHint": "{dex} is sending your {symbol} back"
       },
-      "took": "Took {time}"
+      "took": "Took {time}",
+      "restricted": "To comply with local laws, swaps aren't allowed where you are.",
+      "findingTargets": "Finding what {symbol} swaps for…",
+      "noTargets": "Nothing can be bought with {symbol} here",
+      "dexQuotesLabel": "Each DEX's quote",
+      "dexQuoting": "Quoting…",
+      "dexNoQuote": "No quote",
+      "dexFailed": "Didn't answer",
+      "best": "best",
+      "confirmWarning": "I understand, swap anyway"
     },
     "waveform": {
       "label": "Waveform"
