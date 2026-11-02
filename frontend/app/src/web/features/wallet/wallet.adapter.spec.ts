@@ -64,10 +64,11 @@ describe("the wallet's tokens", () => {
         expect(t.grad).toMatch(/^linear-gradient/);
     });
 
-    test("Remove is the panel's Hide; Swap waits for its flow", () => {
+    test("Remove is the panel's Hide", () => {
         expect(walletTokenActions(["send", "receive", "swap", "refresh", "remove"])).toEqual([
             "send",
             "receive",
+            "swap",
             "refresh",
             "hide",
         ]);

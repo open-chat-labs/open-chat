@@ -34,7 +34,7 @@
     import TokenCard from "./TokenCard.svelte";
     import TokenSelector from "./TokenSelector.svelte";
     import type { TokenState } from "@src/logic/wallet/walletState.svelte";
-    import { SwapForm } from "@src/logic/wallet/swapForm.svelte";
+    import { canPayWith, canSwapTo, SwapForm } from "@src/logic/wallet/swapForm.svelte";
 
     interface Props {
         inToken: TokenState;
@@ -75,9 +75,7 @@
                 tokenSelector = undefined;
             },
             extraFilter: (token: EnhancedTokenDetails) =>
-                $swappableTokensStore.has(token.ledger) &&
-                token.symbol !== form.outToken?.symbol &&
-                token.balance > 0n,
+                canPayWith(token, $swappableTokensStore, form.outToken?.ledger),
         };
     }
 
@@ -89,7 +87,8 @@
                 tokenSelector = undefined;
             },
             // Only the tokens the DEXes have a pool for with the input token
-            extraFilter: (token: EnhancedTokenDetails) => token.ledger in form.swaps,
+            extraFilter: (token: EnhancedTokenDetails) =>
+                canSwapTo(token, form.swaps, form.inToken.ledger),
         };
     }
 </script>
@@ -329,6 +328,12 @@
                 />
             </Body>
         </Container>
+        <!-- swapping is restricted where the user is: no quote can be asked for (SwapForm) -->
+        {#if form.restricted}
+            <Body colour={"validationError"}>
+                <Translatable resourceKey={i18nKey("restricted.swap")} />
+            </Body>
+        {/if}
 
         <!-- Content -->
         <Column gap="sm">

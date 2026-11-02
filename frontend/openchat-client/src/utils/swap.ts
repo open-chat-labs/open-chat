@@ -10,6 +10,25 @@ import {
 } from "@shared";
 import { calculateDollarAmount, formatTokens } from "./cryptoFormatter";
 
+/** The slippage a swap allows when the user hasn't chosen one: it pays out at least 98% of the quote. */
+export const DEFAULT_SWAP_SLIPPAGE_PCT = 2;
+
+/**
+ * The least a swap may pay out: the quoted output less the slippage the user accepts, in percent
+ * (kept between 0.01% and 50%; `DEFAULT_SWAP_SLIPPAGE_PCT` when none was chosen). Worked in basis
+ * points, so the bigint result never rounds up past what the user agreed to.
+ */
+export function swapMinimumOut(
+    amountOut: bigint,
+    slippagePct: number = DEFAULT_SWAP_SLIPPAGE_PCT,
+): bigint {
+    const pct = Number.isFinite(slippagePct)
+        ? Math.min(Math.max(slippagePct, 0.01), 50)
+        : DEFAULT_SWAP_SLIPPAGE_PCT;
+    const bps = BigInt(Math.round(pct * 100));
+    return (amountOut * (10_000n - bps)) / 10_000n;
+}
+
 export function dexName(dex: DexId): string {
     switch (dex) {
         case "icpswap":

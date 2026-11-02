@@ -66,7 +66,7 @@
   import WalletRecipients, { type Recipient, type RecipientDraft } from './WalletRecipients.svelte';
   import WalletSend, { type SendContact, type WalletSendRequest } from './WalletSend.svelte';
   import { flowReturn, pickedFlow, txIdOf, type WalletPlace } from '../../lib/wallet';
-  import WalletSwap, { type SwapQuote, type SwapRequest } from './WalletSwap.svelte';
+  import WalletSwap from './WalletSwap.svelte';
   const i18n = getI18n(); // number formatting follows the host locale
 
   type View = 'all' | 'token' | 'send' | 'receive' | 'swap' | 'recipients';
@@ -166,8 +166,11 @@
     sendHostPin?: boolean;
     checkAddress?: (address: string, symbol: string) => boolean;
     /** Swap: quote and execution (see WalletSwap). */
-    onQuote?: (r: SwapRequest) => Promise<SwapQuote>;
-    onSwap?: (r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void }) => Promise<{ out?: number } | void>;
+    onQuote?: ComponentProps<typeof WalletSwap>['onQuote'];
+    onSwap?: ComponentProps<typeof WalletSwap>['onSwap'];
+    /** Swap: the host's tokens to pay with and buy, its pick of the token paid with, and a restriction (see
+     *  WalletSwap's payable, targets, onPay and restricted). */
+    swapOptions?: Pick<ComponentProps<typeof WalletSwap>, 'payable' | 'targets' | 'onPay' | 'restricted'>;
     /** Receive: chats to share to, sharing, and the QR renderer (see WalletReceive). */
     chats?: ShareChat[];
     onShare?: (v: { chatId: string; message: string; symbol: string; network: string; address: string }) => Promise<unknown> | void;
@@ -225,6 +228,7 @@
     checkAddress,
     onQuote,
     onSwap,
+    swapOptions,
     chats,
     onShare,
     qr,
@@ -284,7 +288,6 @@
     const tk = tokens.find((t) => t.symbol === symbol);
     return tk ? idOf(tk) : symbol;
   };
-  const symbolOf = (id: string) => tokens.find((t) => idOf(t) === id)?.symbol ?? id;
   const pct = (v: number) => (total ? `${((v / total) * 100).toFixed(1)}%` : '0%');
 
   function report() {
@@ -563,7 +566,6 @@
   // `rows`, and keying on that would remount a send or swap the host is still working on
   const flowSym = $derived(sym || (raw ? idOf(raw) : ''));
   const flowKey = $derived(`${view}:${fromAll ? '-' : flowSym}:${flowNonce}`);
-  const flowToken = $derived(fromAll ? '' : symbolOf(flowSym));
   // Receive also offers tokens you don't hold yet, on their own networks
   const receiveTokens = $derived<WalletToken[]>([
     ...tokens,
@@ -679,7 +681,7 @@
         onNetwork={onReceiveNetwork}
         onClose={leaveFlow}
       />{/key}{/if}
-  {#if view === 'swap'}{#key flowKey}<WalletSwap {tokens} token={flowToken} {onQuote} onSwap={swapPinned} onClose={leaveFlow} />{/key}{/if}
+  {#if view === 'swap'}{#key flowKey}<WalletSwap {tokens} token={fromAll ? '' : flowSym} {onQuote} onSwap={swapPinned} onClose={leaveFlow} {...swapOptions} />{/key}{/if}
   {#if view === 'recipients'}
     <WalletRecipients
       {tokens}
