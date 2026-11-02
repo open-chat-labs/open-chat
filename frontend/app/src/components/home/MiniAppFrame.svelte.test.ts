@@ -108,4 +108,46 @@ describe.each([
         flushSync();
         expect(writes).toEqual(["https://dos.example.com/app#oc_theme=light"]);
     });
+
+    test("keeps the artwork over the app, drawn unseen, until the app says it has drawn", () => {
+        const props = $state({
+            app: hosted(),
+            actions: new MiniAppActions(client as never, GAME),
+            fullScreen: new MiniAppFullScreen(),
+            active: true,
+            view: miniAppCardView(CONTENT, undefined, "me"),
+            imageUrl: "https://uno.example.com/art.png",
+        });
+        target = document.body.appendChild(document.createElement("div"));
+        app = mount(Frame, { target, props, context: new Map([["client", client]]) });
+        flushSync();
+        const frame = () => target!.querySelector("iframe")!;
+        const artwork = () => target!.querySelector(".cover img");
+        const drawn = () => {
+            window.dispatchEvent(
+                new MessageEvent("message", {
+                    data: { kind: "mini_app_drawn" },
+                    origin: "https://uno.example.com",
+                    source: frame().contentWindow,
+                }),
+            );
+            flushSync();
+        };
+        expect(artwork()).not.toBeNull();
+        expect(frame().classList).toContain("unrevealed");
+
+        drawn();
+        expect(artwork()).toBeNull();
+        expect(frame().classList).not.toContain("unrevealed");
+
+        // Off screen and back, the app's in a new frame, which is unseen until it has drawn again
+        props.active = false;
+        flushSync();
+        props.active = true;
+        flushSync();
+        expect(artwork()).not.toBeNull();
+        expect(frame().classList).toContain("unrevealed");
+        drawn();
+        expect(artwork()).toBeNull();
+    });
 });

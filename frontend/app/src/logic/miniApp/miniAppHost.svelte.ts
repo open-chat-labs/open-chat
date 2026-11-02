@@ -6,6 +6,10 @@
 //
 // A finished game whose card records how it ended doesn't go through the service, which has forgotten
 // it: the app's shown that end state instead, as a player if the user was one.
+//
+// The frame shows the app's artwork until the app says it has drawn what it's for, so the card goes
+// straight from the artwork to the game, or how it ended, without the placeholder the app draws while
+// it waits for them (`revealed`).
 
 import type {
     MiniAppContent,
@@ -40,6 +44,12 @@ type MiniAppGames = Pick<
     OpenChat,
     "openMiniApp" | "closeMiniApp" | "miniAppPlayerToken" | "startMiniApp"
 >;
+
+// How long after its page has loaded an app is shown if it hasn't said it has drawn what it's for. An
+// app that never says, eg. as it's from an older SDK, is shown only this much later than its page
+// loads, and one that's slow to get its state shows its own loading view rather than an artwork that
+// looks like nothing's happening.
+export const MINI_APP_REVEAL_MS = 1000;
 
 export type MiniAppHostOptions = {
     userId: string;
@@ -77,6 +87,10 @@ export function miniAppSettings(content: MiniAppContent): unknown {
 
 export class MiniAppHost {
     status = $state<MiniAppFrameStatus>({ kind: "opening" });
+    // Whether the app's shown in place of its artwork: once it says it has drawn what it's for
+    // (`mini_app_drawn`), or a moment after its page has loaded if it hasn't said by then. Until
+    // then it's drawn unseen under the artwork.
+    revealed = $state(false);
     #games: MiniAppGames;
     #app: HostedMiniApp;
     #content: MiniAppContent;
@@ -91,6 +105,8 @@ export class MiniAppHost {
     #ready = false;
     // the latest state, which is held until the app's ready
     #state: MiniAppState | undefined;
+    // shows the app a moment after its page has loaded, unless it says it has drawn first
+    #revealTimer: ReturnType<typeof setTimeout> | undefined;
 
     constructor(games: MiniAppGames, app: HostedMiniApp, options: MiniAppHostOptions) {
         this.#games = games;
@@ -117,6 +133,7 @@ export class MiniAppHost {
             window.removeEventListener("message", listener);
             this.#frame = undefined;
             this.#closeListener();
+            this.#hide();
         };
     }
 
@@ -125,6 +142,14 @@ export class MiniAppHost {
         this.#ready = false;
         this.#playerToken = undefined;
         this.status = { kind: "opening" };
+        this.#hide();
+    }
+
+    // The frame's page has loaded, again if the app reloads itself: the app's shown a moment later if
+    // it hasn't said it has drawn what it's for by then
+    loaded(): void {
+        if (this.revealed || this.#revealTimer !== undefined) return;
+        this.#revealTimer = setTimeout(() => this.#reveal(), MINI_APP_REVEAL_MS);
     }
 
     // The card as it now is. Once it records how the game ended, the app's shown that: one open
@@ -194,6 +219,19 @@ export class MiniAppHost {
         this.#initialise(true);
     }
 
+    #reveal(): void {
+        clearTimeout(this.#revealTimer);
+        this.#revealTimer = undefined;
+        this.revealed = true;
+    }
+
+    // Back under the artwork, until the next frame's app is drawn
+    #hide(): void {
+        clearTimeout(this.#revealTimer);
+        this.#revealTimer = undefined;
+        this.revealed = false;
+    }
+
     #closeListener(): void {
         if (this.#listener !== undefined) {
             this.#games.closeMiniApp(this.#app.game, this.#listener);
@@ -247,6 +285,11 @@ export class MiniAppHost {
     async #onMessage(ev: MessageEvent): Promise<void> {
         const message = miniAppMessage(ev, this.#frame?.contentWindow, this.#app.url.origin);
         switch (message?.kind) {
+            // Shown in place of its artwork. Sending it again changes nothing.
+            case "mini_app_drawn":
+                this.#reveal();
+                return;
+
             // Sent again if the app reloads itself
             case "mini_app_ready":
                 this.#ready = true;

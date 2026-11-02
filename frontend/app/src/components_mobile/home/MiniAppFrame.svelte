@@ -71,7 +71,8 @@
     let finished = $derived(view.status === "finished");
     // The app's shown while the user may open the game, and once it's over if the card records how
     // it ended, which the app shows. Otherwise the frame shows the app's artwork instead. The
-    // artwork's also under the app until it's loaded, and while the card's off screen.
+    // artwork's also over the app until it has drawn what it's for (`host.revealed`), and while the
+    // card's off screen.
     let showApp = $derived(view.showsApp);
     // over the app, or its artwork, once the game's over
     let label = $derived(
@@ -80,8 +81,6 @@
     // the user's taken the label off the finished game's app, to look through it, until the card's
     // shown afresh
     let dismissed = $state(false);
-    // whether the app in the frame has loaded, when it's shown in place of the artwork
-    let loaded = $state(false);
     // an image which couldn't be loaded, so the box is left plain
     let failedImage: string | undefined = $state();
 
@@ -114,14 +113,7 @@
         // null once the frame's removed, when the game's closed
         const frame = iframe;
         if (!frame) return;
-        return untrack(() => {
-            const close = host.open(frame);
-            return () => {
-                close();
-                // the next frame starts unloaded
-                loaded = false;
-            };
-        });
+        return untrack(() => host.open(frame));
     });
     $effect(() => host.setContent(app.content));
     $effect(() => host.setDarkMode(darkMode));
@@ -201,8 +193,8 @@ app (MiniAppFullScreen) -->
                 <Translatable resourceKey={host.status.message} />
             </div>
         {:else}
-            <!-- The artwork, whenever there's no loaded app over it -->
-            {#if !showApp || !active || !loaded}
+            <!-- The artwork, whenever the app isn't shown in its place -->
+            {#if !showApp || !active || !host.revealed}
                 <div class="cover">
                     {#if imageUrl !== undefined && imageUrl !== failedImage}
                         <img src={imageUrl} alt="" onerror={() => (failedImage = imageUrl)} />
@@ -218,10 +210,11 @@ app (MiniAppFullScreen) -->
                 <iframe
                     title={botName}
                     bind:this={iframe}
+                    class:unrevealed={!host.revealed}
                     src={miniAppFrameUrl(href, untrack(() => darkMode))}
                     sandbox={MINI_APP_SANDBOX}
                     referrerpolicy="no-referrer"
-                    onload={() => (loaded = true)}></iframe>
+                    onload={() => host.loaded()}></iframe>
             {/if}
             {#if showApp && label !== undefined && !dismissed}
                 {@render overlay(true)}
@@ -305,7 +298,7 @@ app (MiniAppFullScreen) -->
         }
     }
 
-    // over the artwork, which shows through until the app's loaded
+    // over the artwork, which shows through until the app's revealed
     iframe {
         position: absolute;
         inset: 0;
@@ -313,6 +306,13 @@ app (MiniAppFullScreen) -->
         border: none;
         height: 100%;
         width: 100%;
+
+        // Drawn, but unseen and out of the pointer's way. Not hidden or undisplayed, which can stop
+        // the browser drawing it, or running its animation frames, so it'd have nothing to show.
+        &.unrevealed {
+            opacity: 0;
+            pointer-events: none;
+        }
     }
 
     .closed {
