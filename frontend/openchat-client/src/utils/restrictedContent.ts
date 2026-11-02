@@ -37,11 +37,19 @@ export function chatRestricted(chat: ChatSummary): boolean {
     return false;
 }
 
-// Messages are hidden in the app store build if they have been flagged in any moderation
-// category. Unlike community/group flags, message flags are OpenAI moderation category bits
-// where every category indicates policy-violating content, so any non-zero value restricts.
+// Message flags are the classifier's category bits (see MODERATION_CATEGORY_NAMES). The store
+// build hides only what the store guidelines treat as objectionable: sexual content, graphic
+// violence and threats. The classifier's plain violence, harassment, illicit and self-harm
+// categories fire at its default thresholds on ordinary criticism, figures of speech, talk about
+// scams and people discussing their own struggles, so they don't hide anything.
+const RESTRICTED_MESSAGE_FLAGS =
+    1 | // sexual
+    2 | // sexual/minors
+    8 | // violence/graphic
+    32; // harassment/threatening (includes hate/threatening)
+
 export function messageFlagsRestricted(moderationFlags: number | undefined): boolean {
-    return appStoreBuild && (moderationFlags ?? 0) !== 0;
+    return appStoreBuild && ((moderationFlags ?? 0) & RESTRICTED_MESSAGE_FLAGS) !== 0;
 }
 
 export function messageRestricted(message: Message): boolean {
