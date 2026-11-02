@@ -8057,7 +8057,7 @@ dependencies = [
 [[package]]
 name = "oc_bots_sdk"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/open-chat-bots?rev=fdc7464f27f3401e7f1d95568235081246782342#fdc7464f27f3401e7f1d95568235081246782342"
+source = "git+https://github.com/open-chat-labs/open-chat-bots?rev=07b1671f0317734ae5f1c09ae2417b11479afe10#07b1671f0317734ae5f1c09ae2417b11479afe10"
 dependencies = [
  "async-trait",
  "base64 0.22.1",

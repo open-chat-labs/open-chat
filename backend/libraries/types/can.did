@@ -1545,7 +1545,6 @@ type MiniAppStatus = variant {
 
 type MiniAppActive = record {
     players : vec UserId;
-    waiting_for : vec UserId;
     settings : opt text;
 };
 

@@ -3,6 +3,7 @@ use crate::{
     Achievement, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, EncryptionKey,
     MessageId, MessageIndex, MessagePermission, Milliseconds, MiniAppDefinition, ModerationInput, P2PSwapStatus,
     PendingCryptoTransaction, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType, icrc1,
+    is_valid_mini_app_name,
 };
 use candid::CandidType;
 use oc_error_codes::{OCError, OCErrorCode};
@@ -1109,10 +1110,11 @@ impl PriceChartContent {
 
 /// A bot's card for a game, or another app, it hosts. Its text, app, player limit and whether others
 /// can watch are set when it's posted and never change. Its status is written only by the MiniApp
-/// service (`update_mini_app` on the LocalUserIndex, with a `MiniAppStatusUpdate`): the players the
-/// game starts with, who joined through the service and were accepted by the bot, its settings, fixed
-/// then, whose turn it is, and then its result. Who's joined so far, while the game's taking players,
-/// is shown live by the service. Everything else the app shows, its board
+/// service (`update_mini_app` on the LocalUserIndex, with a `MiniAppStatusUpdate`), and records who
+/// started the game and how it ended: the players it starts with, who joined through the service and
+/// were accepted by the bot, its settings, fixed then, and then its result and end state. Who's joined
+/// so far, while the game's taking players, and whose turn it is are shown live by the service.
+/// Everything else the app shows, its board
 /// and buttons, is the bot's own page, which OpenChat opens from the card in a frame. The app's image,
 /// from the bot's definition, is shown whenever there's no app to show. Only a bot can send one,
 /// needing the MiniApp permission. It can't be forwarded, edited, or sent in a direct chat.
@@ -1122,7 +1124,8 @@ pub struct MiniAppContent {
     // markdown, eg. "**Uno** · 2 to 4 players": the message's text in notifications, previews and
     // search
     pub text: String,
-    // which of the bot's apps, by its name in the bot's definition, eg. "chess"
+    // which of the bot's apps, by its name in the bot's definition, eg. "chess": see
+    // `is_valid_mini_app_name`
     pub app: String,
     // the most who can play, if there's a limit, so the card can show eg. "2 of 4"
     pub max_players: Option<u32>,
@@ -1159,8 +1162,6 @@ pub enum MiniAppStatus {
 pub struct MiniAppActive {
     // who the game started with, in the order they joined
     pub players: Vec<UserId>,
-    // the players whose turn it is, or no one in particular, eg. in a game without turns
-    pub waiting_for: Vec<UserId>,
     // the game's settings, fixed when it started, as JSON the bot chose, which its app reads: eg. the
     // winning tile and the time limit. None if the bot gave none. OpenChat never reads or shows them.
     pub settings: Option<String>,
@@ -1181,13 +1182,12 @@ pub struct MiniAppFinished {
     pub settings: Option<String>,
 }
 
-/// What the MiniApp service writes to a card as its game goes on
+/// What the MiniApp service writes to a card: who the game started with, and how it ended. Whose turn
+/// it is in between is only shown live, by the service.
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum MiniAppStatusUpdate {
     // The game started, with its players
     Started(MiniAppStarted),
-    // Whose turn it is now
-    Turn(MiniAppTurn),
     // The game finished, with the players it started with, if it did
     Ended(MiniAppEnded),
 }
@@ -1195,14 +1195,8 @@ pub enum MiniAppStatusUpdate {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct MiniAppStarted {
     pub players: Vec<UserId>,
-    pub waiting_for: Vec<UserId>,
     // JSON the bot chose, which the card records for the game's life
     pub settings: Option<String>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct MiniAppTurn {
-    pub waiting_for: Vec<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -1246,7 +1240,6 @@ impl MiniAppContent {
     pub const MAX_APP_SIZE: u32 = 10_000;
     pub const MAX_APP_SIZE_RATIO: u32 = 3;
     pub const MAX_RESULT_CHARS: usize = 200;
-    pub const MAX_APP_NAME_CHARS: usize = MiniAppDefinition::MAX_NAME_CHARS;
     // an end state is JSON of at most this many bytes
     pub const MAX_END_STATE_BYTES: usize = 16 * 1024;
     // a game's settings are JSON of at most this many bytes
@@ -1262,7 +1255,12 @@ impl MiniAppContent {
 
     pub fn validate(&self) -> Result<(), String> {
         check_chars("text", &self.text, Self::MAX_TEXT_CHARS)?;
-        check_chars("app", &self.app, Self::MAX_APP_NAME_CHARS)?;
+        if !is_valid_mini_app_name(&self.app) {
+            return Err(format!(
+                "The app's name must be 1 to {} lowercase letters, digits, hyphens or underscores",
+                MiniAppDefinition::MAX_NAME_CHARS
+            ));
+        }
         if self
             .max_players
             .is_some_and(|max| max == 0 || max as usize > Self::MAX_PLAYERS)
@@ -1283,14 +1281,6 @@ impl MiniAppContent {
         }
         if players.iter().collect::<HashSet<_>>().len() < players.len() {
             return Err("A player is listed twice".to_string());
-        }
-        if let MiniAppStatus::Active(active) = &self.status {
-            if active.waiting_for.iter().any(|user_id| !players.contains(user_id)) {
-                return Err("Only players can be waited for".to_string());
-            }
-            if active.waiting_for.iter().collect::<HashSet<_>>().len() < active.waiting_for.len() {
-                return Err("A player is waited for twice".to_string());
-            }
         }
         if let Some(result) = self.status.result() {
             check_chars("result", result, Self::MAX_RESULT_CHARS)?;
@@ -1314,10 +1304,9 @@ impl MiniAppContent {
     }
 
     // The status the MiniApp service's update leaves: a game starts with its players and its settings,
-    // its turns pass between them, and it ends with them, its settings and its result, or ends without
-    // starting. A finished game never changes. An update the card already reflects changes nothing,
-    // so the service can retry a write whose outcome it didn't learn: a repeated start carries the
-    // players and settings the card holds, whatever turns have passed since.
+    // and ends with them, its settings and its result, or ends without starting. A finished game never
+    // changes. An update the card already reflects changes nothing, so the service can retry a write
+    // whose outcome it didn't learn.
     pub fn next_status(&self, update: MiniAppStatusUpdate) -> Result<MiniAppStatus, String> {
         use MiniAppStatus::*;
         use MiniAppStatusUpdate::*;
@@ -1325,24 +1314,12 @@ impl MiniAppContent {
         match (&self.status, update) {
             (Open, Started(started)) => Ok(Active(MiniAppActive {
                 players: started.players,
-                waiting_for: started.waiting_for,
                 settings: started.settings,
             })),
-            // A retried start carries the turn as the service knows it now, which may have passed
-            // since the write it's retrying
             (Active(active), Started(started)) if active.players == started.players && active.settings == started.settings => {
-                Ok(Active(MiniAppActive {
-                    waiting_for: started.waiting_for,
-                    ..active.clone()
-                }))
+                Ok(self.status.clone())
             }
             (Active(_), Started(_)) => Err("The game has already started".to_string()),
-            (Active(active), Turn(turn)) => Ok(Active(MiniAppActive {
-                players: active.players.clone(),
-                waiting_for: turn.waiting_for,
-                settings: active.settings.clone(),
-            })),
-            (Open, Turn(_)) => Err("The game hasn't started".to_string()),
             (Open, Ended(ended)) => Ok(Finished(MiniAppFinished {
                 players: Vec::new(),
                 result: ended.result,

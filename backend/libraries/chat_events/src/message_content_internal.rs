@@ -2326,8 +2326,6 @@ pub enum MiniAppStatusInternal {
 pub struct MiniAppActiveInternal {
     #[serde(rename = "p")]
     pub players: Vec<UserId>,
-    #[serde(rename = "w", default, skip_serializing_if = "Vec::is_empty")]
-    pub waiting_for: Vec<UserId>,
     #[serde(rename = "s", default, skip_serializing_if = "Option::is_none")]
     pub settings: Option<String>,
 }
@@ -2359,7 +2357,6 @@ impl From<MiniAppStatus> for MiniAppStatusInternal {
             MiniAppStatus::Open => MiniAppStatusInternal::Open,
             MiniAppStatus::Active(active) => MiniAppStatusInternal::Active(MiniAppActiveInternal {
                 players: active.players,
-                waiting_for: active.waiting_for,
                 settings: active.settings,
             }),
             MiniAppStatus::Finished(finished) => MiniAppStatusInternal::Finished(MiniAppFinishedInternal {
@@ -2378,7 +2375,6 @@ impl From<MiniAppStatusInternal> for MiniAppStatus {
             MiniAppStatusInternal::Open => MiniAppStatus::Open,
             MiniAppStatusInternal::Active(active) => MiniAppStatus::Active(MiniAppActive {
                 players: active.players,
-                waiting_for: active.waiting_for,
                 settings: active.settings,
             }),
             MiniAppStatusInternal::Finished(finished) => MiniAppStatus::Finished(MiniAppFinished {
@@ -2895,7 +2891,7 @@ mod with_text_tests {
 #[cfg(test)]
 mod mini_app_tests {
     use super::*;
-    use types::{MiniAppActive, MiniAppEnded, MiniAppFinished, MiniAppSize, MiniAppStarted, MiniAppTurn};
+    use types::{MiniAppActive, MiniAppDefinition, MiniAppEnded, MiniAppFinished, MiniAppSize, MiniAppStarted};
 
     fn card(text: &str) -> MiniAppContent {
         MiniAppContent {
@@ -2916,10 +2912,9 @@ mod mini_app_tests {
         ns.iter().map(|&n| user(n)).collect()
     }
 
-    fn active(players: &[u8], waiting_for: &[u8]) -> MiniAppStatus {
+    fn active(players: &[u8]) -> MiniAppStatus {
         MiniAppStatus::Active(MiniAppActive {
             players: users(players),
-            waiting_for: users(waiting_for),
             settings: None,
         })
     }
@@ -2933,21 +2928,14 @@ mod mini_app_tests {
         })
     }
 
-    fn started(players: &[u8], waiting_for: &[u8]) -> MiniAppStatusUpdate {
-        started_with(players, waiting_for, None)
+    fn started(players: &[u8]) -> MiniAppStatusUpdate {
+        started_with(players, None)
     }
 
-    fn started_with(players: &[u8], waiting_for: &[u8], settings: Option<&str>) -> MiniAppStatusUpdate {
+    fn started_with(players: &[u8], settings: Option<&str>) -> MiniAppStatusUpdate {
         MiniAppStatusUpdate::Started(MiniAppStarted {
             players: users(players),
-            waiting_for: users(waiting_for),
             settings: settings.map(|s| s.to_string()),
-        })
-    }
-
-    fn turn(waiting_for: &[u8]) -> MiniAppStatusUpdate {
-        MiniAppStatusUpdate::Turn(MiniAppTurn {
-            waiting_for: users(waiting_for),
         })
     }
 
@@ -3030,26 +3018,43 @@ mod mini_app_tests {
         assert!(!invalid(card(&"é".repeat(MiniAppContent::MAX_TEXT_CHARS))));
     }
 
-    // The name of one of the bot's apps in its definition, which the LocalUserIndex checks it is
+    // The name of one of the bot's apps in its definition, which the LocalUserIndex checks it is: 1 to
+    // 50 lowercase letters, digits, hyphens or underscores
     #[test]
-    fn a_card_names_an_app_in_1_to_50_characters() {
+    fn a_card_names_an_app_by_a_slug() {
         for app in [
             String::new(),
             "  ".to_string(),
-            "x".repeat(MiniAppContent::MAX_APP_NAME_CHARS + 1),
+            "Uno".to_string(),
+            "my game".to_string(),
+            "a/b".to_string(),
+            "é".to_string(),
+            "x".repeat(MiniAppDefinition::MAX_NAME_CHARS + 1),
         ] {
             assert!(
-                invalid(MiniAppContent {
+                matches!(
+                    validate(MiniAppContent { app: app.clone(), ..card("Uno") }, false, UserType::BotV2, false),
+                    ValidateNewMessageContentResult::Error(ContentValidationError::InvalidMiniApp(reason))
+                        if reason == "The app's name must be 1 to 50 lowercase letters, digits, hyphens or underscores"
+                ),
+                "{app:?}"
+            );
+        }
+        for app in [
+            "chess".to_string(),
+            "2048".to_string(),
+            "press_counter".to_string(),
+            "a-b".to_string(),
+            "x".repeat(MiniAppDefinition::MAX_NAME_CHARS),
+        ] {
+            assert!(
+                !invalid(MiniAppContent {
                     app: app.clone(),
                     ..card("Uno")
                 }),
                 "{app:?}"
             );
         }
-        assert!(!invalid(MiniAppContent {
-            app: "x".repeat(MiniAppContent::MAX_APP_NAME_CHARS),
-            ..card("Uno")
-        }));
     }
 
     #[test]
@@ -3099,26 +3104,23 @@ mod mini_app_tests {
     // Only the MiniApp service writes the status, as players join through it
     #[test]
     fn a_game_is_posted_open() {
-        for status in [active(&[1], &[1]), finished(&[], Some("Bob won"))] {
+        for status in [active(&[1]), finished(&[], Some("Bob won"))] {
             assert!(invalid(MiniAppContent { status, ..card("Uno") }));
         }
     }
 
+    // Whose turn it is in between is only shown live, by the MiniApp service
     #[test]
-    fn a_game_starts_with_its_players_takes_turns_then_ends_with_them() {
+    fn a_game_starts_with_its_players_then_ends_with_them() {
         let mut stored: MiniAppContentInternal = MiniAppContent {
             max_players: Some(4),
             ..card("Uno")
         }
         .into();
 
-        stored.update(started(&[1, 2], &[1])).unwrap();
-        assert_eq!(stored.status(), active(&[1, 2], &[1]));
+        stored.update(started(&[1, 2])).unwrap();
+        assert_eq!(stored.status(), active(&[1, 2]));
         assert_eq!(stored.max_players, Some(4));
-
-        stored.update(turn(&[2])).unwrap();
-        stored.update(turn(&[])).unwrap();
-        assert_eq!(stored.status(), active(&[1, 2], &[]));
 
         stored.update(ended(Some("Bob won"))).unwrap();
         assert_eq!(stored.status(), finished(&[1, 2], Some("Bob won")));
@@ -3128,34 +3130,26 @@ mod mini_app_tests {
     #[test]
     fn a_game_can_end_without_starting_or_a_result() {
         let mut stored: MiniAppContentInternal = card("Uno").into();
-        assert!(stored.update(turn(&[1])).is_err());
-
         stored.update(ended(None)).unwrap();
         assert_eq!(stored.status(), finished(&[], None));
     }
 
     #[test]
-    fn a_game_starts_once_and_only_waits_for_its_players() {
+    fn a_game_starts_once_with_distinct_players_within_its_limit() {
         let mut stored: MiniAppContentInternal = MiniAppContent {
             max_players: Some(2),
             ..card("Uno")
         }
         .into();
 
-        for update in [
-            started(&[1, 2, 3], &[]),
-            started(&[1, 1], &[]),
-            started(&[1, 2], &[3]),
-            started(&[1, 2], &[1, 1]),
-        ] {
+        for update in [started(&[1, 2, 3]), started(&[1, 1])] {
             assert!(stored.update(update.clone()).is_err(), "{update:?}");
             assert_eq!(stored.status(), MiniAppStatus::Open);
         }
 
-        stored.update(started(&[1, 2], &[1])).unwrap();
-        assert!(stored.update(started(&[1], &[1])).is_err());
-        assert!(stored.update(turn(&[3])).is_err());
-        assert_eq!(stored.status(), active(&[1, 2], &[1]));
+        stored.update(started(&[1, 2])).unwrap();
+        assert!(stored.update(started(&[1])).is_err());
+        assert_eq!(stored.status(), active(&[1, 2]));
     }
 
     // A finished game's card never changes, but the service can retry the write which started it, or
@@ -3163,17 +3157,13 @@ mod mini_app_tests {
     #[test]
     fn a_finished_card_never_changes_but_a_write_can_be_retried() {
         let mut stored: MiniAppContentInternal = card("Uno").into();
-        stored.update(started(&[1, 2], &[1])).unwrap();
-        stored.update(turn(&[2])).unwrap();
-        // A retried start carries the turn as it is now, which a turn passing meanwhile may have
-        // moved on: the card takes it, so it never shows a turn the service has moved past
-        stored.update(started(&[1, 2], &[2])).unwrap();
-        assert_eq!(stored.status(), active(&[1, 2], &[2]));
-        stored.update(started(&[1, 2], &[1])).unwrap();
-        assert_eq!(stored.status(), active(&[1, 2], &[1]));
+        stored.update(started(&[1, 2])).unwrap();
+        // A retried start carries the players and settings the card holds, so changes nothing
+        stored.update(started(&[1, 2])).unwrap();
+        assert_eq!(stored.status(), active(&[1, 2]));
 
         stored.update(ended(Some("Bob won"))).unwrap();
-        for update in [started(&[1, 2], &[1]), turn(&[1]), ended(Some("Alice won")), ended(None)] {
+        for update in [started(&[1, 2]), ended(Some("Alice won")), ended(None)] {
             assert!(stored.update(update.clone()).is_err(), "{update:?}");
         }
         stored.update(ended(Some("Bob won"))).unwrap();
@@ -3184,7 +3174,7 @@ mod mini_app_tests {
     #[test]
     fn a_game_ends_with_its_end_state() {
         let mut stored: MiniAppContentInternal = card("Uno").into();
-        stored.update(started(&[1, 2], &[1])).unwrap();
+        stored.update(started(&[1, 2])).unwrap();
         stored.update(ended_with(Some("Bob won"), Some("{\"fen\":\"8/8\"}"))).unwrap();
         assert_eq!(
             stored.status(),
@@ -3210,10 +3200,10 @@ mod mini_app_tests {
     #[test]
     fn an_end_state_is_at_most_16kb() {
         let mut stored: MiniAppContentInternal = card("Uno").into();
-        stored.update(started(&[1, 2], &[1])).unwrap();
+        stored.update(started(&[1, 2])).unwrap();
         let too_long = format!("{{\"moves\":\"{}\"}}", "x".repeat(MiniAppContent::MAX_END_STATE_BYTES));
         assert!(stored.update(ended_with(Some("Bob won"), Some(&too_long))).is_err());
-        assert_eq!(stored.status(), active(&[1, 2], &[1]));
+        assert_eq!(stored.status(), active(&[1, 2]));
 
         let longest = "x".repeat(MiniAppContent::MAX_END_STATE_BYTES);
         stored.update(ended_with(None, Some(&longest))).unwrap();
@@ -3224,28 +3214,24 @@ mod mini_app_tests {
     }
 
     // The game's settings, as JSON the bot chose, are fixed when it starts and kept for the card's life:
-    // through its turns and into its end, with the end state
+    // into its end, with the end state
     #[test]
     fn a_game_starts_with_its_settings_and_keeps_them() {
         let settings = "{\"target\":2048,\"seconds\":120}";
         let mut stored: MiniAppContentInternal = card("2048").into();
-        stored.update(started_with(&[1, 2], &[1], Some(settings))).unwrap();
+        stored.update(started_with(&[1, 2], Some(settings))).unwrap();
         assert_eq!(
             stored.status(),
             MiniAppStatus::Active(MiniAppActive {
                 players: users(&[1, 2]),
-                waiting_for: users(&[1]),
                 settings: Some(settings.to_string()),
             })
         );
 
-        stored.update(turn(&[2])).unwrap();
-        assert_eq!(stored.status().settings(), Some(settings));
-
         // A retry carries the same settings; different ones are a change to a started game
-        stored.update(started_with(&[1, 2], &[1], Some(settings))).unwrap();
-        assert!(stored.update(started(&[1, 2], &[1])).is_err());
-        assert!(stored.update(started_with(&[1, 2], &[1], Some("{}"))).is_err());
+        stored.update(started_with(&[1, 2], Some(settings))).unwrap();
+        assert!(stored.update(started(&[1, 2])).is_err());
+        assert!(stored.update(started_with(&[1, 2], Some("{}"))).is_err());
         assert_eq!(stored.status().settings(), Some(settings));
 
         stored.update(ended_with(Some("Bob won"), Some("{\"boards\":[]}"))).unwrap();
@@ -3272,11 +3258,11 @@ mod mini_app_tests {
     fn settings_are_at_most_4kb() {
         let mut stored: MiniAppContentInternal = card("Uno").into();
         let too_long = format!("{{\"seed\":\"{}\"}}", "x".repeat(MiniAppContent::MAX_SETTINGS_BYTES));
-        assert!(stored.update(started_with(&[1, 2], &[1], Some(&too_long))).is_err());
+        assert!(stored.update(started_with(&[1, 2], Some(&too_long))).is_err());
         assert_eq!(stored.status(), MiniAppStatus::Open);
 
         let longest = "x".repeat(MiniAppContent::MAX_SETTINGS_BYTES);
-        stored.update(started_with(&[1, 2], &[1], Some(&longest))).unwrap();
+        stored.update(started_with(&[1, 2], Some(&longest))).unwrap();
         assert_eq!(stored.status().settings(), Some(longest.as_str()));
     }
 
@@ -3314,12 +3300,11 @@ mod mini_app_tests {
         assert_eq!(read.app_size.width, 440);
         assert_eq!(read.status, MiniAppStatus::Open);
 
-        stored.update(started_with(&[1, 2], &[2], Some("{\"minutes\":10}"))).unwrap();
+        stored.update(started_with(&[1, 2], Some("{\"minutes\":10}"))).unwrap();
         assert_eq!(
             round_trip(&stored).status,
             MiniAppStatus::Active(MiniAppActive {
                 players: users(&[1, 2]),
-                waiting_for: users(&[2]),
                 settings: Some("{\"minutes\":10}".to_string()),
             })
         );
@@ -3339,16 +3324,7 @@ mod mini_app_tests {
     fn round_trip(stored: &MiniAppContentInternal) -> MiniAppContent {
         let content = MessageContentInternal::MiniApp(stored.clone());
         let bytes = msgpack::serialize_then_unwrap(&content);
-        for name in [
-            "Open",
-            "Active",
-            "Finished",
-            "players",
-            "waiting_for",
-            "result",
-            "end_state",
-            "settings",
-        ] {
+        for name in ["Open", "Active", "Finished", "players", "result", "end_state", "settings"] {
             assert!(
                 !bytes.windows(name.len()).any(|w| w == name.as_bytes()),
                 "The stored card carries the name {name:?}"

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
     CanisterId, MiniAppActive, MiniAppContent, MiniAppEnded, MiniAppFinished, MiniAppGame, MiniAppPostClaims, MiniAppStarted,
-    MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, TimestampMillis, UserId,
+    MiniAppStatus, MiniAppStatusUpdate, TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -27,7 +27,8 @@ pub struct Game {
     pub players: Vec<UserId>,
     // Who the game started with, which its card records
     pub started_with: Vec<UserId>,
-    // Whose turn it is, as the bot last said
+    // Whose turn it is, as the bot last said, which only the live card shows: the card in the chat
+    // never records it
     pub waiting_for: Vec<UserId>,
     pub result: Option<String>,
     // How the game ended, as JSON the bot gave with Finished, which its card's app shows
@@ -50,7 +51,7 @@ pub struct Game {
 pub struct Applied {
     // The players, status, turn or result changed, so the live card did
     pub card_changed: bool,
-    // The game started or finished, or its turn passed, so the card in the chat needs writing
+    // The game finished, so the card in the chat needs writing
     pub write_card: bool,
     // A newer state, for everyone with the game open
     pub new_state: bool,
@@ -212,7 +213,6 @@ impl Game {
         {
             self.waiting_for = waiting_for;
             applied.card_changed = true;
-            applied.write_card = true;
         }
         if status != self.status {
             if status == GameStatus::Finished {
@@ -336,24 +336,18 @@ impl Game {
     }
 
     // The update the card in the chat needs next, to catch up with the game: the game starting with
-    // its players and settings, whose turn it now is, or its ending. Nothing's written while the game's
-    // taking players.
+    // its players and settings, or its ending. Nothing's written while the game's taking players, nor
+    // while it's being played: whose turn it is is only shown live.
     pub fn next_card_update(&self) -> Option<MiniAppStatusUpdate> {
         let started = || {
             MiniAppStatusUpdate::Started(MiniAppStarted {
                 players: self.started_with.clone(),
-                waiting_for: self.card_waiting_for(),
                 settings: self.settings.clone(),
             })
         };
         match (&self.card, self.status) {
-            (MiniAppStatus::Finished(_), _) | (_, GameStatus::Open) => None,
+            (MiniAppStatus::Finished(_), _) | (_, GameStatus::Open) | (MiniAppStatus::Active(_), GameStatus::Active) => None,
             (MiniAppStatus::Open, GameStatus::Active) => Some(started()),
-            (MiniAppStatus::Active(active), GameStatus::Active) => (active.waiting_for != self.card_waiting_for()).then(|| {
-                MiniAppStatusUpdate::Turn(MiniAppTurn {
-                    waiting_for: self.card_waiting_for(),
-                })
-            }),
             // The card records who played before it records the result, unless the bot's been
             // uninstalled, when only ending the game goes through
             (MiniAppStatus::Open, GameStatus::Finished) if !self.started_with.is_empty() && !self.bot_uninstalled => {
@@ -371,17 +365,8 @@ impl Game {
         self.card = match update {
             MiniAppStatusUpdate::Started(started) => MiniAppStatus::Active(MiniAppActive {
                 players: started.players.clone(),
-                waiting_for: started.waiting_for.clone(),
                 settings: started.settings.clone(),
             }),
-            MiniAppStatusUpdate::Turn(turn) => match &self.card {
-                MiniAppStatus::Active(active) => MiniAppStatus::Active(MiniAppActive {
-                    players: active.players.clone(),
-                    waiting_for: turn.waiting_for.clone(),
-                    settings: active.settings.clone(),
-                }),
-                card => card.clone(),
-            },
             MiniAppStatusUpdate::Ended(ended) => MiniAppStatus::Finished(MiniAppFinished {
                 players: self.card.players().to_vec(),
                 result: ended.result.clone(),
@@ -394,15 +379,6 @@ impl Game {
     // The game's over and its card says so, so the service can forget it
     pub fn is_done(&self) -> bool {
         self.status == GameStatus::Finished && matches!(self.card, MiniAppStatus::Finished(_))
-    }
-
-    // Whose turn the card shows: only players the game started with, whom the card lists
-    fn card_waiting_for(&self) -> Vec<UserId> {
-        self.waiting_for
-            .iter()
-            .filter(|user_id| self.started_with.contains(user_id))
-            .copied()
-            .collect()
     }
 }
 
@@ -541,8 +517,8 @@ mod tests {
         assert_eq!(game.leave(user(1)), Err(Refusal::NotOpen));
     }
 
-    // The card in the chat is written when the game starts, with its players and whose turn it is, as
-    // each turn passes, and when it ends
+    // The card in the chat is written when the game starts, with its players, and when it ends. Whose
+    // turn it is in between only changes the live card.
     #[test]
     fn the_card_follows_the_game_from_its_start_to_its_end() {
         let mut game = game(None);
@@ -565,25 +541,24 @@ mod tests {
             catch_up(&mut game),
             vec![MiniAppStatusUpdate::Started(MiniAppStarted {
                 players: vec![user(1), user(2)],
-                waiting_for: vec![user(1)],
                 settings: None,
             })]
         );
+        assert_eq!(game.waiting_for, vec![user(1)]);
 
-        game.apply(
-            BotUpdate {
-                waiting_for: Some(vec![user(2)]),
-                ..Default::default()
-            },
-            2,
-        )
-        .unwrap();
-        assert_eq!(
-            catch_up(&mut game),
-            vec![MiniAppStatusUpdate::Turn(MiniAppTurn {
-                waiting_for: vec![user(2)]
-            })]
-        );
+        let applied = game
+            .apply(
+                BotUpdate {
+                    waiting_for: Some(vec![user(2)]),
+                    ..Default::default()
+                },
+                2,
+            )
+            .unwrap();
+        assert!(applied.card_changed);
+        assert!(!applied.write_card);
+        assert_eq!(game.card(0).waiting_for, vec![user(2)]);
+        assert!(catch_up(&mut game).is_empty());
 
         // A player knocked out leaves the live card, but not the one in the chat, and isn't waited for
         let applied = game
@@ -596,11 +571,11 @@ mod tests {
             )
             .unwrap();
         assert!(applied.card_changed);
+        assert!(!applied.write_card);
         assert_eq!(game.players, vec![user(1)]);
-        assert_eq!(
-            catch_up(&mut game),
-            vec![MiniAppStatusUpdate::Turn(MiniAppTurn { waiting_for: vec![] })]
-        );
+        assert!(game.waiting_for.is_empty());
+        assert!(catch_up(&mut game).is_empty());
+        assert_eq!(game.card.players(), [user(1), user(2)]);
 
         game.apply(
             BotUpdate {
@@ -884,7 +859,7 @@ mod tests {
     }
 
     // The settings the bot started the game with are kept with the game and written to the card with
-    // the players, and the card keeps them through its turns and into its end
+    // the players, and the card keeps them into its end
     #[test]
     fn a_games_settings_go_to_the_card_with_its_players_and_stay() {
         let mut game = game(None);
@@ -907,7 +882,6 @@ mod tests {
             catch_up(&mut game),
             vec![MiniAppStatusUpdate::Started(MiniAppStarted {
                 players: vec![user(1)],
-                waiting_for: vec![user(1)],
                 settings: Some(settings.clone()),
             })]
         );
@@ -922,8 +896,7 @@ mod tests {
             2,
         )
         .unwrap();
-        assert!(matches!(catch_up(&mut game)[0], MiniAppStatusUpdate::Turn(_)));
-        assert_eq!(game.card.settings(), Some(settings.as_str()));
+        assert_eq!(game.settings, Some(settings.clone()));
 
         game.apply(status(GameStatus::Finished), 3).unwrap();
         assert!(matches!(catch_up(&mut game)[0], MiniAppStatusUpdate::Ended(_)));

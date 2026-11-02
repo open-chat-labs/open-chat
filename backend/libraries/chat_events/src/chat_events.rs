@@ -890,9 +890,9 @@ impl ChatEvents {
         Ok((content, sender))
     }
 
-    // The MiniApp service updating a card's status: the game starting with its players, whose turn it
-    // is, then its finishing with its result. The rest of the card never changes, and nor does any of
-    // it once the game is finished. Unlike an edit, the message isn't marked as edited.
+    // The MiniApp service updating a card's status: the game starting with its players and settings,
+    // then its finishing with its result and end state. The rest of the card never changes, and nor
+    // does any of it once the game is finished. Unlike an edit, the message isn't marked as edited.
     pub fn update_mini_app(&mut self, args: UpdateMiniAppArgs) -> OCResult {
         match self.update_message(
             args.thread_root_message_index,

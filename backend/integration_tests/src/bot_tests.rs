@@ -2699,7 +2699,8 @@ fn json_data_encoding_rejected() {
     );
 }
 
-// A bot's apps, which its MiniApp cards name, have unique names and http(s) or relative image urls
+// A bot's apps, which its MiniApp cards name, have unique slugs for names and http(s) or relative image
+// urls
 #[test]
 fn mini_apps_with_duplicate_names_or_bad_image_urls_rejected() {
     let mut wrapper = ENV.deref().get();
@@ -2720,6 +2721,7 @@ fn mini_apps_with_duplicate_names_or_bad_image_urls_rejected() {
         vec![app("chess", "ftp://my.bot.xyz/chess.png")],
         vec![app("chess", "javascript:alert(1)")],
         vec![app(" ", "app/chess.svg")],
+        vec![app("My Game", "app/game.svg")],
     ];
 
     for mini_apps in bad_definitions.iter() {

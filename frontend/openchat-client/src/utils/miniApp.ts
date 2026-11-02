@@ -38,6 +38,8 @@ export type MiniAppCardView = {
     players: string[];
     // everyone the card names, so the ones to load: the players, and anyone the result mentions
     users: string[];
+    // whose turn it is, which only the service shows, live: no one without the live card, or once the
+    // game's finished
     waitingFor: string[];
     // how many are watching, which only the service knows
     watching: number | undefined;
@@ -63,10 +65,7 @@ export function miniAppCardView(
     const stored = content.status;
     const status = live?.status ?? stored.kind;
     const players = live?.players ?? (stored.kind === "open" ? [] : stored.players);
-    const waitingFor =
-        status === "finished"
-            ? []
-            : (live?.waitingFor ?? (stored.kind === "active" ? stored.waitingFor : []));
+    const waitingFor = status === "finished" ? [] : (live?.waitingFor ?? []);
     const result =
         live !== undefined ? live.result : stored.kind === "finished" ? stored.result : undefined;
     return {

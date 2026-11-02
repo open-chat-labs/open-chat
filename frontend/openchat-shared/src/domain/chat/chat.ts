@@ -169,13 +169,13 @@ export type MiniAppSize = {
     height: number;
 };
 
-// As the card in the chat records it. Who's joined a game that's taking players is only shown live.
+// As the card in the chat records it: who started the game and how it ended. Who's joined a game
+// that's taking players, and whose turn it is, are only shown live.
 export type MiniAppStatus =
     | { kind: "open" }
-    // who the game started with, the players whose turn it is, if anyone's in particular, and the
-    // game's settings, fixed when it started, as JSON the bot chose: handed to its app, never read or
-    // shown by OpenChat
-    | { kind: "active"; players: string[]; waitingFor: string[]; settings: string | undefined }
+    // who the game started with, and the game's settings, fixed when it started, as JSON the bot
+    // chose: handed to its app, never read or shown by OpenChat
+    | { kind: "active"; players: string[]; settings: string | undefined }
     // who the game started with, or no one if it never started, and eg. "Bob won", unless it was
     // abandoned. The end state is how the game ended, as JSON the bot chose, which its app shows in
     // the card; without one the card shows the app's image instead. The settings are as the card
