@@ -2,8 +2,9 @@
 # Starts the MiniApp service on its EC2 host, for the systemd unit `oc-mini-app-service`, installed as
 # /usr/local/bin/oc-mini-app-service-start: pulls the image `oc-mini-app-service:latest` from ECR,
 # writes the config from SSM Parameter Store's /oc-mini-app-service/* to /run, readable only by root,
-# and runs the image with it. Its port, 8095 in the container, is 8082 on the host, as the Discord and
-# Twitch bridges have 8080 and 8081. Logs go to CloudWatch, in /oc/mini-app-service.
+# and runs the image with it. Its port, 8095 in the container, is 8083 on the host, as 8080 to 8082
+# are the Discord and Twitch bridges' and the price service's. Logs go to CloudWatch, in
+# /oc/mini-app-service, which is made beforehand, as the bridges' are.
 set -eu
 umask 077
 REGION=us-east-1
@@ -35,9 +36,8 @@ exec docker run --rm --name oc-mini-app-service \
     --env-file "$DIR/env" \
     -e IC_IDENTITY_PEM="$(cat "$DIR/IC_IDENTITY_PEM")" \
     -e MINI_APP_SERVICE_KEY_PEM="$(cat "$DIR/MINI_APP_SERVICE_KEY_PEM")" \
-    -p 8082:8095 \
+    -p 8083:8095 \
     --log-driver awslogs \
     --log-opt awslogs-region="$REGION" \
     --log-opt awslogs-group=/oc/mini-app-service \
-    --log-opt awslogs-create-group=true \
     "$IMAGE"

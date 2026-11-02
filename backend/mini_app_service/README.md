@@ -63,12 +63,12 @@ Once, by hand, before the first deploy:
    - `REDIS_URL` (SecureString): the ElastiCache cluster `oc-mini-app-service`'s, over TLS, `rediss://:<auth token>@<primary endpoint>:6379`. It's set already, as is its token, `REDIS_AUTH_TOKEN`;
    - `PUBLIC_URL`: where the service is served, the CloudFront distribution's url (step 5), which the deploy checks.
 3. **The host:**
-   - copy [`aws/oc-mini-app-service-start`](aws/oc-mini-app-service-start) to `/usr/local/bin/`, executable, and [`aws/oc-mini-app-service.service`](aws/oc-mini-app-service.service) to `/etc/systemd/system/`, then `systemctl enable --now oc-mini-app-service`. The script pulls the image, writes the config to `/run/oc-mini-app-service`, readable only by root, and runs the container with the service's port on the host's 8082, as 8080 and 8081 are the bridges';
-   - the instance's role also needs `ssm:GetParameter` on `/oc-mini-app-service/*` (and `kms:Decrypt` for SecureStrings under a key of your own), to pull from the `oc-mini-app-service` ECR repository, and `logs:CreateLogGroup`, `CreateLogStream` and `PutLogEvents` on `/oc/mini-app-service`, where its logs go;
-   - the instance's security group admits 8082 only from CloudFront, as it does the bridges' ports. The Redis's security group, `sg-0288199ed2cae3ece`, admits this instance's.
+   - copy [`aws/oc-mini-app-service-start`](aws/oc-mini-app-service-start) to `/usr/local/bin/`, executable, and [`aws/oc-mini-app-service.service`](aws/oc-mini-app-service.service) to `/etc/systemd/system/`, then `systemctl enable --now oc-mini-app-service`. The script pulls the image, writes the config to `/run/oc-mini-app-service`, readable only by root, and runs the container with the service's port on the host's 8083, as 8080 to 8082 are the bridges' and the price service's;
+   - the instance's role, `oc-discord-bridge`, also needs [`aws/instance-role-policy.json`](aws/instance-role-policy.json), as a policy of its own beside the bridges' and the price service's: `ssm:GetParameter` on `/oc-mini-app-service/*`, pulling from the `oc-mini-app-service` ECR repository, and writing to the log group `/oc/mini-app-service`, which is made beforehand, with 30 days' retention. With a key of your own for its SecureStrings, `kms:Decrypt` on the key too;
+   - the instance's security group, `oc-discord-bridge`, admits 8083 only from CloudFront, as it does 8080 to 8082: CloudFront's origin-facing prefix list, `pl-3b927c52`. The Redis's security group, `sg-0288199ed2cae3ece`, admits this instance's.
 4. **The service's principal:** a platform operator sets it on the UserIndex from the website's admin page (`/admin`), with `set_mini_app_service_principal`. With the config in step 2, `mini_app_service principal` prints it.
-5. **Public URL:** a CloudFront distribution of its own in front of the host's port 8082, over HTTPS:
-   - origin: the instance's public DNS name, HTTP on 8082, with a 60s read timeout;
+5. **Public URL:** a CloudFront distribution of its own in front of the host's port 8083, over HTTPS, set up as the Twitch bridge's is:
+   - origin: the instance's public DNS name, HTTP on 8083, with a 60s read timeout;
    - viewers: HTTPS only, every method allowed, as bots `POST`;
    - caching disabled (`CachingDisabled`), and all the viewer's headers but `Host` forwarded (`AllViewerExceptHostHeader`), which carries the WebSocket upgrade of `GET /ws` through.
 6. **The deploy role,** `GitHubActions-DeployMiniAppService`, which GitHub can assume only from `master`:
