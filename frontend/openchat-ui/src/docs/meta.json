@@ -19071,7 +19071,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Find the best quote, telling `progress` of each DEX's answer as it comes in. Reject to go back to the form with an error. Without it, no quote can be fetched."
+        "doc": "Find the best quote, telling `progress` of each DEX's answer as it comes in. Reject to go back to the form with an error: an Error's message (text) is shown, else Swap's own. Without it, no quote can be fetched."
       },
       {
         "name": "onSwap",
@@ -19082,7 +19082,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Run the swap; call onStep(i) as each of the 3 on-chain steps (0 approve, 1 swap, 2 withdraw) starts. `warningConfirmed`: the user confirmed the quote's `warning`. Resolve (optionally with the actual output) when it's in the wallet; resolve `false` when nothing was sent and there's nothing to say (the host's PIN prompt was dismissed): back to the quote; reject to show an error."
+        "doc": "Run the swap; call onStep(i) as each of the 3 on-chain steps (0 approve, 1 swap, 2 withdraw) starts. `warningConfirmed`: the user confirmed the quote's `warning`. Resolve (optionally with the actual output) when it's in the wallet; resolve `false` when nothing was sent and there's nothing to say (the host's PIN prompt was dismissed): back to the quote; reject to show an error (an Error's message, text, else Swap's own)."
       },
       {
         "name": "onClose",

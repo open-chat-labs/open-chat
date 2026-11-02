@@ -51,7 +51,7 @@
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { amountText, cleanAmount, floorTo, parseAmount, toUnits } from '../../lib/amount';
-  import { onDestroy } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import AmountCard from '../../lib/components/AmountCard.svelte';
   import Banner from '../../lib/components/Banner.svelte';
@@ -88,12 +88,12 @@
     /** Token to pay with, by its id (WalletToken.id) or symbol; falls back to ICP. */
     token?: string;
     /** Find the best quote, telling `progress` of each DEX's answer as it comes in. Reject to go back to the form
-     *  with an error. Without it, no quote can be fetched. */
+     *  with an error: an Error's message (text) is shown, else Swap's own. Without it, no quote can be fetched. */
     onQuote?: (r: SwapRequest, progress?: (quotes: DexQuoteRow[]) => void) => Promise<SwapQuote>;
     /** Run the swap; call onStep(i) as each of the 3 on-chain steps (0 approve, 1 swap, 2 withdraw) starts.
      *  `warningConfirmed`: the user confirmed the quote's `warning`. Resolve (optionally with the actual output) when
      *  it's in the wallet; resolve `false` when nothing was sent and there's nothing to say (the host's PIN prompt was
-     *  dismissed): back to the quote; reject to show an error. */
+     *  dismissed): back to the quote; reject to show an error (an Error's message, text, else Swap's own). */
     onSwap?: (r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void; warningConfirmed: boolean }) => Promise<{ out?: number } | void | false>;
     /** The tokens that can be paid with (ids): held ones among them. Without it, any held token with a price. */
     payable?: string[];
@@ -124,10 +124,18 @@
   const start = find(token, 'ICP');
   const usdt = find('USDT', 'USDT');
   let from = $state(start ? idOf(start) : '');
-  let chosenTo = $state((start === usdt ? find('ICP', 'ICP') : usdt) ? idOf((start === usdt ? find('ICP', 'ICP') : usdt)!) : '');
+  const startTo = start === usdt ? find('ICP', 'ICP') : usdt;
+  let chosenTo = $state(startTo ? idOf(startTo) : '');
   // the host's targets decide what can be bought: a pick it doesn't list becomes its first
-  const to = $derived(targets === undefined ? chosenTo : targets === null ? '' : targets.includes(chosenTo) ? chosenTo : (targets[0] ?? ''));
-  $effect(() => onPay?.(from));
+  const listed = (id: string) => list.some((x) => idOf(x) === id);
+  const to = $derived(
+    targets === undefined ? chosenTo : targets === null ? '' : targets.includes(chosenTo) && listed(chosenTo) ? chosenTo : (targets.find(listed) ?? ''),
+  );
+  // only the token paid with is tracked: whatever the host reads when told isn't
+  $effect(() => {
+    const id = from;
+    untrack(() => onPay?.(id));
+  });
   let amt = $state('');
   let slipIdx = $state(1);
   let stage = $state<Stage>('form');
@@ -139,6 +147,9 @@
   let quote = $state<SwapQuote | null>(null);
   let received = $state<number | null>(null);
   let error = $state<'' | 'quote' | 'swap'>('');
+  // the host's reason, when its rejection gives one (an Error's message), in place of Swap's own
+  let errorText = $state('');
+  const reasonOf = (e: unknown) => (e instanceof Error ? e.message : '');
   // a newer quote request (or an edit) makes an older pending one stale
   let run = 0;
   let pick = $state<'from' | 'to' | null>(null);
@@ -263,6 +274,7 @@
   // editing amount or tokens drops a pending or live quote
   function drop() {
     error = '';
+    errorText = '';
     if (stage === 'quoted' || stage === 'quoting') {
       run++;
       clearInterval(countdown);
@@ -280,6 +292,7 @@
     const mine = ++run;
     clearInterval(countdown);
     error = '';
+    errorText = '';
     stage = 'quoting';
     dexRows = [];
     warningConfirmed = false;
@@ -288,10 +301,11 @@
       q = await onQuote(request(), (rows) => {
         if (mine === run) dexRows = rows;
       });
-    } catch {
+    } catch (e) {
       if (mine !== run) return;
       quote = null;
       error = 'quote';
+      errorText = reasonOf(e);
       stage = 'form';
       return;
     }
@@ -300,7 +314,12 @@
     if (q.quotes) dexRows = q.quotes;
     received = null;
     stage = 'quoted';
-    // counts down to expiry, then stops (a quote without one has no countdown)
+    startCountdown(q);
+  }
+
+  // counts down to the quote's expiry, then stops (a quote without one has no countdown)
+  function startCountdown(q: SwapQuote) {
+    clearInterval(countdown);
     const expiresAt = q.expiresAt;
     if (expiresAt === undefined) return;
     const tickLeft = () => {
@@ -318,6 +337,7 @@
     const mine = ++run;
     clearInterval(countdown);
     error = '';
+    errorText = '';
     stage = 'progress';
     prog = 0;
     times = [Date.now()];
@@ -343,6 +363,8 @@
         prog = 0;
         times = [];
         stage = 'quoted';
+        // the quote's countdown carries on from where it is
+        startCountdown(q);
         return;
       }
       if (res && typeof res.out === 'number') received = res.out;
@@ -352,11 +374,12 @@
       times = nextTimes;
       prog = STEPS;
       stage = 'done';
-    } catch {
+    } catch (e) {
       if (mine !== run) return;
       // the quote is spent either way; the amount stays for a fresh quote
       quote = null;
       error = 'swap';
+      errorText = reasonOf(e);
       stage = 'form';
     } finally {
       if (mine === run) clearInterval(ticker);
@@ -407,6 +430,7 @@
     times = [];
     amt = '';
     error = '';
+    errorText = '';
     stage = 'form';
   }
 
@@ -490,7 +514,7 @@
               <SegmentedTabs labels={SLIPS.map((v) => `${v}%`)} selectedIndex={slipIdx} onSelect={(i) => (slipIdx = i)} dotOnLast={false} />
             </div>
             {#if quoted}<Banner tone="info" text={tr('ui.walletSwap.quoteDropNote')} actionLabel="" />{/if}
-            {#if error}<span class="swap-error" role="alert">{tr(error === 'quote' ? 'ui.walletSwap.quoteFailed' : 'ui.walletSwap.swapFailed')}</span>{/if}
+            {#if error}<span class="swap-error" role="alert">{errorText || tr(error === 'quote' ? 'ui.walletSwap.quoteFailed' : 'ui.walletSwap.swapFailed')}</span>{/if}
             {#if quoted}
               <div class="quote">
                 <div class="quote-head">

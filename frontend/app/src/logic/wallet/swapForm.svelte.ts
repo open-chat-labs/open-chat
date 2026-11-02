@@ -52,6 +52,7 @@ export class SwapForm {
     // Whether swapping is restricted where the user is (undefined until known): no quote is asked
     // for and no swap sent there
     #restricted = $state<boolean>();
+    #restrictionCheck: Promise<boolean>;
     #stage = $state<Stage>("quote");
     #quoting = $state(false);
     #error = $state<ResourceKey>();
@@ -90,13 +91,18 @@ export class SwapForm {
     constructor(client: OpenChat, inToken: TokenState) {
         this.#client = client;
         this.#inToken = $state(inToken);
-        this.#checkRestricted();
+        this.#restrictionCheck = this.#checkRestricted();
         this.#loadSwaps();
     }
 
     /** Swapping is restricted where the user is (undefined while that's being checked). */
     get restricted(): boolean | undefined {
         return this.#restricted;
+    }
+
+    /** Whether swapping is restricted where the user is, once that's been checked. */
+    whenChecked(): Promise<boolean> {
+        return this.#restrictionCheck;
     }
 
     /** The input ledger `swaps` are for (they're still loading while it differs from the input's). */
@@ -261,7 +267,7 @@ export class SwapForm {
         this.#client.refreshSwappableTokens();
     }
 
-    async #checkRestricted() {
+    async #checkRestricted(): Promise<boolean> {
         try {
             this.#restricted = await this.#client.swapRestricted();
         } catch {
@@ -269,5 +275,6 @@ export class SwapForm {
             // wallet never opened Swap either)
             this.#restricted = true;
         }
+        return this.#restricted;
     }
 }

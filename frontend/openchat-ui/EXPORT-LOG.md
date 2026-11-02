@@ -481,6 +481,7 @@
 - `SwapQuote.expiresAt`, `dexFee`, `impactPct` and `networkFeeUsd` are optional: no countdown without an expiry, and no fees or price impact row without them.
 - `onSwap` resolving `false`: nothing was sent (the host's PIN prompt was dismissed), back to the quote.
 - `restricted`: a notice, and no quote.
+- A rejected `onQuote` / `onSwap` shows its Error's message (text) in the error line, else Swap's own. `onPay` is called with only the token paid with tracked. After a dismissed PIN, an expiring quote's countdown carries on. A fallback target is one Swap can list.
 - `WalletMain`: `swapOptions` (payable, targets, onPay, restricted) passed to Swap, which is given the token's id.
 - Strings `ui.walletSwap.restricted`, `findingTargets`, `noTargets`, `dexQuotesLabel`, `dexQuoting`, `dexNoQuote`, `dexFailed`, `best`, `confirmWarning`; `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).

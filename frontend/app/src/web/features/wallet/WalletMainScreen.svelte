@@ -32,6 +32,7 @@
         walletTokensSorted,
         type NamedAccount,
         type OpenChat,
+        type ResourceKey,
     } from "@client";
     import WalletMain from "@openchat/ui/src/features/components/WalletMain.svelte";
     import type { ComponentProps } from "svelte";
@@ -76,7 +77,7 @@
     import { navigate } from "@src/utils/navigation";
     import { getContext, onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { i18nKey } from "@src/i18n/i18n";
+    import { i18nKey, interpolate } from "@src/i18n/i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import {
         addressNetworkName,
@@ -95,7 +96,7 @@
         SwapQuote as SwapQuoteView,
         SwapRequest,
     } from "@openchat/ui/src/features/components/WalletSwap.svelte";
-    import { canPayWith, canSwapTo, SwapForm } from "@src/logic/wallet/swapForm.svelte";
+    import { canPayWith, SwapForm } from "@src/logic/wallet/swapForm.svelte";
     import { TokenState } from "@src/logic/wallet/walletState.svelte";
     import { amountUnits } from "@src/logic/wallet/walletSend";
     import { dexQuoteRows, swapAnswer, swapQuoteView, swapStepIndex } from "./swap.adapter";
@@ -569,15 +570,26 @@
     }
 
     // Swap (6c): SwapForm (the shared form: every DEX's quote, the swap's steps, the location check)
-    // drives it. It's made when Swap first opens, for the token paid with
+    // drives it. It's made when Swap first opens, for the token paid with, and kept while the
+    // wallet is
     let swapForm = $state<SwapForm>();
 
+    // WalletSwap reports the token paid with from an effect, which ends when Swap closes. The form
+    // and the token states it makes outlive Swap, so they're made and changed outside it (in a
+    // microtask), where they belong to no effect
     function payWith(id: string): void {
-        const token = enhancedCryptoLookup.value.get(id);
-        if (token === undefined) return;
-        if (swapForm === undefined) swapForm = new SwapForm(client, new TokenState(token, "usd"));
-        else if (swapForm.inToken.ledger !== id) swapForm.selectIn(token);
+        queueMicrotask(() => {
+            const token = enhancedCryptoLookup.value.get(id);
+            if (token === undefined) return;
+            if (swapForm === undefined) {
+                swapForm = new SwapForm(client, new TokenState(token, "usd"));
+            } else if (swapForm.inToken.ledger !== id) swapForm.selectIn(token);
+        });
     }
+
+    // a reason Swap shows in place of its own (a rejection's message is shown as it is)
+    const swapFailure = (key: ResourceKey | undefined): Error =>
+        new Error(key === undefined ? "" : interpolate($_, key));
 
     // pay with a held, swappable token; buy one a DEX has a pool for with it (null while loading)
     const swapPayable = $derived(
@@ -588,9 +600,8 @@
     const swapTargets = $derived.by((): string[] | null => {
         const form = swapForm;
         if (form === undefined || form.swapsFor !== form.inToken.ledger) return null;
-        return Object.keys(form.swaps).filter((ledger) =>
-            canSwapTo({ ledger }, form.swaps, form.inToken.ledger),
-        );
+        // never the input itself (6c invariant 5)
+        return Object.keys(form.swaps).filter((ledger) => ledger !== form.inToken.ledger);
     });
 
     // the amount as the user typed it, in the input's units exactly (6c invariant 4), quoted by
@@ -603,8 +614,12 @@
         const tokenIn = enhancedCryptoLookup.value.get(request.from);
         const tokenOut = enhancedCryptoLookup.value.get(request.to);
         if (form === undefined || tokenIn === undefined || tokenOut === undefined) {
-            throw new Error("nothing to swap");
+            throw swapFailure(undefined);
         }
+        // a quote still coming from an earlier visit is dropped; and none is asked for until the
+        // location check is in (6c invariant 1)
+        form.backToQuote();
+        if (await form.whenChecked()) throw swapFailure(i18nKey("restricted.swap"));
         if (form.inToken.ledger !== tokenIn.ledger) form.selectIn(tokenIn);
         if (form.outToken?.ledger !== tokenOut.ledger) form.selectOut(tokenOut);
         form.inToken.draftAmount = amountUnits(request.amountText, tokenIn.decimals);
@@ -615,12 +630,11 @@
                 $_(key, { values }),
             );
         }
-        if (form.error !== undefined) toastStore.showFailureToast(form.error);
-        throw new Error("no quote");
+        throw swapFailure(form.error);
     }
 
     // the swap at the slippage the user chose, each step passed on; a dismissed PIN prompt goes
-    // back to the quote, a refusal says why
+    // back to the quote, a refusal says why (in Swap's error line)
     async function runSwap({
         request,
         onStep,
@@ -632,7 +646,7 @@
     }): Promise<{ out: number } | false> {
         const form = swapForm;
         const tokenOut = enhancedCryptoLookup.value.get(request.to);
-        if (form === undefined || tokenOut === undefined) throw new Error("nothing to swap");
+        if (form === undefined || tokenOut === undefined) throw swapFailure(undefined);
         form.warningConfirmed = warningConfirmed;
         await form.swap(request.slippagePct, (step) => onStep(swapStepIndex(step)));
         if (form.stage === "confirm") return false;
@@ -643,8 +657,7 @@
             case "not_sent":
                 return false;
             case "failed":
-                toastStore.showFailureToast(answer.message ?? i18nKey("tokenSwap.progress.error"));
-                throw new Error("swap failed");
+                throw swapFailure(answer.message);
         }
     }
 

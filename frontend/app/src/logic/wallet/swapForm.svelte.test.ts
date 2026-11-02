@@ -212,6 +212,22 @@ describe("quoting a swap from the wallet", () => {
         expect(client.swapTokens).not.toHaveBeenCalled();
     });
 
+    test("whenChecked answers once the location check is in", async () => {
+        let answer!: (restricted: boolean) => void;
+        vi.mocked(client.swapRestricted).mockImplementationOnce(
+            () => new Promise((resolve) => (answer = resolve)),
+        );
+        let form!: SwapForm;
+        dispose = $effect.root(() => {
+            form = new SwapForm(client, new TokenState(icp));
+        });
+        expect(form.restricted).toBeUndefined();
+        const checked = form.whenChecked();
+        answer(true);
+        expect(await checked).toBe(true);
+        expect(form.restricted).toBe(true);
+    });
+
     test("a location that can't be checked counts as restricted", async () => {
         vi.mocked(client.swapRestricted).mockRejectedValueOnce(new Error("offline"));
         let form!: SwapForm;
