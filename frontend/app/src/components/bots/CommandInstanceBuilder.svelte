@@ -1,12 +1,6 @@
 <script lang="ts">
     import { botState, mobileWidth, OpenChat } from "@client";
-    import {
-        clearHiddenChoices,
-        random64,
-        shownParams,
-        type FlattenedCommand,
-        type MessageContext,
-    } from "@shared";
+    import { random64, shownParams, type FlattenedCommand, type MessageContext } from "@shared";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
@@ -30,11 +24,6 @@
     let busy = $state(false);
     // The params the form shows, each with the choices it shows, as their conditions have them
     let shown = $derived(shownParams(command.params, botState.selectedCommandArgs));
-
-    // A choice the form stops showing, eg. once another param changes, is no longer chosen
-    $effect(() => {
-        clearHiddenChoices(shown, botState.selectedCommandArgs);
-    });
 
     onMount(() => {
         setTimeout(() => focusFirstInput(), 100);

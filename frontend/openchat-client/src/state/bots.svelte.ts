@@ -1,10 +1,9 @@
 import {
-    argIsValid,
     chatIdentifiersEqual,
     createArgsFromSchema,
     installationLocationsEqual,
     shownArgs,
-    shownParams,
+    shownArgsAreValid,
     type BotCommandInstance,
     type BotInstallationLocation,
     type ChatSummary,
@@ -277,9 +276,7 @@ export class BotState {
         if (params.length !== command.params.length) {
             return false;
         }
-        // only the params the form shows, each against the choices it shows
-        const shown = shownParams(command.params, params);
-        return shown.every((p, i) => p === undefined || argIsValid(p, params[i]));
+        return shownArgsAreValid(command.params, params);
     }
 
     public get externalBots() {

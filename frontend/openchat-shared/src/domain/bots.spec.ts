@@ -1,10 +1,13 @@
 import {
-    clearHiddenChoices,
     commandSupportsDirectMessages,
     createArgsFromSchema,
+    directMessageCommandInstance,
+    emptyBotInstance,
     permissionsToGrant,
     shownArgs,
+    shownArgsAreValid,
     shownParams,
+    validateBot,
     type BotDefinition,
     type CommandArg,
     type CommandDefinition,
@@ -258,16 +261,41 @@ describe("params shown only while an earlier param has a value", () => {
         expect(names(shownParams([later, handicap], []))).toEqual([undefined, undefined]);
     });
 
-    test("a chosen value the param no longer shows is cleared", () => {
+    test("a param with choices, none of them shown, is hidden", () => {
+        const onlyChess: CommandParam = {
+            ...minutes,
+            choices: [{ name: "60", value: 60n, visible_when: when("game", ["chess"]) }],
+        };
+        expect(names(shownParams([game, onlyChess], args("chess", null)))).toEqual([
+            "game",
+            "minutes",
+        ]);
+        expect(names(shownParams([game, onlyChess], args("maze", null)))).toEqual([
+            "game",
+            undefined,
+        ]);
+    });
+
+    test("a chosen value the param no longer shows is sent unset, and kept for later", () => {
         const chosen = args("maze", 60n, "host");
-        clearHiddenChoices(shownParams(params, chosen), chosen);
-        expect(chosen[1]).toMatchObject({ value: null });
-        // a hidden param keeps its value, for when it's shown again
+        expect(shownArgs(params, chosen)[1]).toMatchObject({ name: "minutes", value: null });
+        // the arg keeps it, for when it's shown again, as a hidden param keeps its value
+        expect(chosen[1]).toMatchObject({ value: 60n });
         expect(chosen[2]).toMatchObject({ value: "host" });
 
-        const shown = args("chess", 60n);
-        clearHiddenChoices(shownParams(params, shown), shown);
-        expect(shown[1]).toMatchObject({ value: 60n });
+        expect(shownArgs(params, args("chess", 60n))[1]).toMatchObject({ value: 60n });
+    });
+
+    test("a value that's a hidden choice counts as unset", () => {
+        // optional, so valid without it
+        expect(shownArgsAreValid(params, args("maze", 60n))).toBe(true);
+        // required, so not
+        const required = [game, { ...minutes, required: true }];
+        expect(shownArgsAreValid(required, args("maze", 60n))).toBe(false);
+        expect(shownArgsAreValid(required, args("maze", 1n))).toBe(true);
+        // and a hidden required param isn't asked for
+        expect(shownArgsAreValid(params, args("chess", null, "random"))).toBe(true);
+        expect(shownArgsAreValid(params, args("chess", null, ""))).toBe(false);
     });
 
     test("only the shown params' args are sent", () => {
@@ -293,5 +321,44 @@ describe("params shown only while an earlier param has a value", () => {
         // of the maze's choices
         expect(typed(["maze", "1"])).toEqual(["maze", "", 1n]);
         expect(typed(["maze", "60"])).toEqual(["maze", "", null]);
+        // a game which isn't one leaves the rest unassigned, as which params they're for hangs on it
+        expect(typed(["chesss", "host", "5"])).toEqual(["", "", null]);
+    });
+
+    test("a direct message sends only the shown params' args", () => {
+        const bot = emptyBotInstance("owner");
+        const text: CommandParam = { ...choiceParam("text", true), choices: [] };
+        const verbose: CommandParam = {
+            kind: "boolean",
+            name: "verbose",
+            required: false,
+            visible_when: when("text", ["never"]),
+        };
+        bot.definition.commands = [{ ...command, params: [text, verbose], directMessages: true }];
+        const instance = directMessageCommandInstance(bot, "hello");
+        expect(
+            instance?.kind === "external_bot" && instance.command.arguments.map((a) => a.name),
+        ).toEqual(["text"]);
+    });
+
+    test("the bot builder refuses a condition the UserIndex would", () => {
+        const errors = (conditioned: CommandParam) => {
+            const bot = emptyBotInstance("owner");
+            bot.definition.commands = [{ ...command, params: [game, conditioned] }];
+            return validateBot("", bot, "update").get("command_0_conditions");
+        };
+        expect(errors(white)).toEqual([]);
+        expect(errors(minutes)).toEqual([]);
+        for (const condition of [
+            when("games", ["chess"]),
+            when("game", ["go"]),
+            when("game", []),
+            when("white", ["host"]),
+        ]) {
+            expect(errors({ ...white, visible_when: condition })).toHaveLength(1);
+        }
+        // on a choice too
+        const bullet = { name: "60", value: 60n, visible_when: when("game", ["go"]) };
+        expect(errors({ ...minutes, choices: [bullet] })).toHaveLength(1);
     });
 });

@@ -491,8 +491,9 @@ function singleStringParam(params: CommandParam[]): boolean {
  * The params a command's form shows given its args, each with the choices it shows, or undefined
  * for a param it hides. A param or a choice with a condition is shown while the earlier param the
  * condition names is shown, with one of the condition's values among its shown choices: eg. a
- * game's settings once that game is chosen. Each param's condition only looks at earlier params,
- * so `args` can stop short, at the param whose turn it is.
+ * game's settings once that game is chosen. A param with choices, none of them shown, is hidden.
+ * Each param's condition only looks at earlier params, so `args` can stop short, at the param
+ * whose turn it is.
  */
 export function shownParams(
     params: CommandParam[],
@@ -519,61 +520,92 @@ export function shownParams(
     return shown;
 }
 
+// The param with only the choices whose conditions hold, or undefined when none of them does
 function withShownChoices(
     param: CommandParam,
     holds: (condition: CommandParamCondition | undefined) => boolean,
-): CommandParam {
-    // the same param when none of its choices has a condition, so the form keeps what it has
+): CommandParam | undefined {
     switch (param.kind) {
-        case "string":
-            return param.choices.some((c) => c.visible_when !== undefined)
-                ? { ...param, choices: param.choices.filter((c) => holds(c.visible_when)) }
-                : param;
-        case "integer":
-            return param.choices.some((c) => c.visible_when !== undefined)
-                ? { ...param, choices: param.choices.filter((c) => holds(c.visible_when)) }
-                : param;
-        case "decimal":
-            return param.choices.some((c) => c.visible_when !== undefined)
-                ? { ...param, choices: param.choices.filter((c) => holds(c.visible_when)) }
-                : param;
+        case "string": {
+            const choices = shownChoices(param.choices, holds);
+            return choices === param.choices ? param : choices && { ...param, choices };
+        }
+        case "integer": {
+            const choices = shownChoices(param.choices, holds);
+            return choices === param.choices ? param : choices && { ...param, choices };
+        }
+        case "decimal": {
+            const choices = shownChoices(param.choices, holds);
+            return choices === param.choices ? param : choices && { ...param, choices };
+        }
         default:
             return param;
     }
 }
 
+// The same list when no choice has a condition, so the form keeps what it has
+function shownChoices<T>(
+    choices: CommandOptionChoice<T>[],
+    holds: (condition: CommandParamCondition | undefined) => boolean,
+): CommandOptionChoice<T>[] | undefined {
+    if (!choices.some((c) => c.visible_when !== undefined)) return choices;
+    const shown = choices.filter((c) => holds(c.visible_when));
+    return shown.length > 0 ? shown : undefined;
+}
+
 /**
- * Clears each arg whose value is a choice its param no longer shows, eg. a time limit only one
- * game has, once another game is chosen, so the form asks for it again
+ * The arg as its shown param takes it: unset when its value is a choice the param doesn't show,
+ * eg. a time limit only one game has, once another game is chosen. The arg itself keeps the
+ * value, for when the choice is shown again.
  */
-export function clearHiddenChoices(shown: (CommandParam | undefined)[], args: CommandArg[]) {
-    shown.forEach((param, i) => {
-        const arg = args[i];
-        if (param === undefined || arg === undefined) return;
-        if (param.kind === "string" && arg.kind === "string" && param.choices.length > 0) {
-            if (arg.value && !param.choices.some((c) => c.value === arg.value)) {
-                arg.value = "";
-            }
-        } else if (
-            (param.kind === "integer" && arg.kind === "integer") ||
-            (param.kind === "decimal" && arg.kind === "decimal")
-        ) {
-            const choices: CommandOptionChoice<bigint | number>[] = param.choices;
-            if (
-                choices.length > 0 &&
-                arg.value !== null &&
-                !choices.some((c) => c.value === arg.value)
-            ) {
-                arg.value = null;
-            }
-        }
+function unsetIfHiddenChoice(param: CommandParam, arg: CommandArg): CommandArg {
+    if (param.kind === "string" && arg.kind === "string") {
+        // "" is how the form has a choice not yet made
+        const hidden =
+            param.choices.length > 0 &&
+            !!arg.value &&
+            !param.choices.some((c) => c.value === arg.value);
+        return hidden ? { ...arg, value: undefined } : arg;
+    }
+    if (
+        (param.kind === "integer" && arg.kind === "integer") ||
+        (param.kind === "decimal" && arg.kind === "decimal")
+    ) {
+        const choices: CommandOptionChoice<bigint | number>[] = param.choices;
+        const hidden =
+            choices.length > 0 && arg.value !== null && !choices.some((c) => c.value === arg.value);
+        return hidden ? { ...arg, value: null } : arg;
+    }
+    return arg;
+}
+
+/** Whether the args are valid for the params the form shows, against the choices it shows */
+export function shownArgsAreValid(params: CommandParam[], args: CommandArg[]): boolean {
+    const shown = shownParams(params, args);
+    return shown.every((p, i) => p === undefined || argIsValid(p, unsetIfHiddenChoice(p, args[i])));
+}
+
+/**
+ * The args to send: those of the params the form shows, with a value that's a choice its param
+ * doesn't show unset. A hidden param's arg isn't sent.
+ */
+export function shownArgs(params: CommandParam[], args: CommandArg[]): CommandArg[] {
+    const shown = shownParams(params, args);
+    return args.flatMap((arg, i) => {
+        const param = shown[i];
+        return param === undefined ? [] : [unsetIfHiddenChoice(param, arg)];
     });
 }
 
-/** The args of the params the form shows: a hidden param's arg isn't sent, nor checked */
-export function shownArgs(params: CommandParam[], args: CommandArg[]): CommandArg[] {
-    const shown = shownParams(params, args);
-    return args.filter((_, i) => shown[i] !== undefined);
+// A param's condition and its choices' conditions
+function conditionsOf(param: CommandParam): CommandParamCondition[] {
+    const choices: CommandOptionChoice<unknown>[] =
+        param.kind === "string" || param.kind === "integer" || param.kind === "decimal"
+            ? param.choices
+            : [];
+    return [param.visible_when, ...choices.map((c) => c.visible_when)].filter(
+        (c): c is CommandParamCondition => c !== undefined,
+    );
 }
 
 export function createArgsFromSchema(params: CommandParam[], maybeArgs: string[]): CommandArg[] {
@@ -581,12 +613,20 @@ export function createArgsFromSchema(params: CommandParam[], maybeArgs: string[]
         return [{ kind: "string", name: params[0].name, value: maybeArgs.join(" ") }];
     }
     // The typed values go to the params shown, in order: a param which the values typed before it
-    // hide takes none
+    // hide takes none. Which params are shown hangs on the values of the params conditions name,
+    // so once one of those isn't one of its choices, the rest are left for the form to ask for.
+    const named = new Set(params.flatMap(conditionsOf).map((c) => c.param));
     const args: CommandArg[] = [];
     let typed = 0;
+    let stopped = false;
     for (const p of params) {
         const shown = shownParams(params, args)[args.length];
-        args.push(createArg(shown ?? p, shown !== undefined ? maybeArgs[typed++] : undefined));
+        const value = shown !== undefined && !stopped ? maybeArgs[typed++] : undefined;
+        const arg = createArg(shown ?? p, value);
+        if (value !== undefined && named.has(p.name) && arg.kind === "string" && !arg.value) {
+            stopped = true;
+        }
+        args.push(arg);
     }
     return args;
 }
@@ -824,8 +864,27 @@ function validateCommand(
             errors.addErrors(paramPath, i18nKey("Parameter has errors"));
             valid = false;
         }
+        // as the UserIndex checks them, which refuses the definition otherwise
+        const earlier = command.params.slice(0, i);
+        if (!conditionsOf(p).every((c) => conditionIsValid(c, earlier))) {
+            const error = i18nKey("bots.builder.errors.condition", { param: p.name });
+            errors.addErrors(paramPath, error);
+            errors.addErrors(`${errorPath}_conditions`, error);
+            valid = false;
+        }
     });
     return valid;
+}
+
+// Whether a condition names an earlier string param with choices, and gives only its choices' values
+function conditionIsValid(condition: CommandParamCondition, earlier: CommandParam[]): boolean {
+    const param = earlier.find((p) => p.name === condition.param);
+    return (
+        param?.kind === "string" &&
+        param.choices.length > 0 &&
+        condition.values.length > 0 &&
+        condition.values.every((v) => param.choices.some((c) => c.value === v))
+    );
 }
 
 function containsDuplicateCommands(commands: CommandDefinition[]): boolean {
@@ -1029,7 +1088,7 @@ export function directMessageCommandInstance(
             endpoint: bot.endpoint,
             command: {
                 name: command.name,
-                arguments: createArgsFromSchema(command.params, [text]),
+                arguments: shownArgs(command.params, createArgsFromSchema(command.params, [text])),
                 placeholder: command.placeholder,
             },
         };

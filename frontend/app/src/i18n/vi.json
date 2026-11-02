@@ -300,6 +300,7 @@
             "errors": {
                 "alphaOnly": "Chỉ được chứa chữ và số và dấu gạch dưới",
                 "botNameInvalid": "Tên bot này không hợp lệ",
+                "condition": "Điều kiện của \"{param}\" phải chỉ đến một tham số trước đó có các lựa chọn, và chỉ đưa ra giá trị trong các lựa chọn đó",
                 "duplicateCommands": "Bot chứa các lệnh trùng lặp",
                 "duplicateName": "Tên bot đó đã được sử dụng rồi",
                 "duplicateParams": "Lệnh chứa các tham số trùng lặp",
