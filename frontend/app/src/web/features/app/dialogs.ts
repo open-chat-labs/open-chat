@@ -93,7 +93,9 @@ export type LocalDialog =
           communityId: CommunityIdentifier;
           mode: "create" | "edit" | "delete";
           userGroupId?: number;
-      };
+      }
+    // the wallet's settings: its token list, the transfer PIN and the display currency (6d)
+    | { kind: "wallet_settings" };
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";
@@ -178,6 +180,9 @@ export const dialogs: Dialogs = {
 
     // picking a chat to share into (4d)
     share: () => import("../share/ShareDialogScreen.svelte"),
+
+    // the wallet's settings (6d)
+    wallet_settings: () => import("../wallet/WalletSettingsDialogScreen.svelte"),
 };
 
 // each linked dialog's query param; the CHIT dialog's views share its param, told apart by its value

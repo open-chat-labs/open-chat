@@ -15,6 +15,8 @@ import type { WalletActivity } from "@openchat/ui/src/features/components/Wallet
 import type { ReceiveNetwork } from "@openchat/ui/src/features/components/WalletReceive.svelte";
 import type { SendContact } from "@openchat/ui/src/features/components/WalletSend.svelte";
 import type { DepositNote } from "@src/logic/wallet/receiveAccount.svelte";
+import type { Recipient } from "@openchat/ui/src/features/components/WalletRecipients.svelte";
+import { addressNetwork, type AddressNetwork } from "@src/utils/cryptoAddress";
 import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
 import type { WalletToken, WalletTokenAction } from "@openchat/ui/src/lib/types";
 import {
@@ -166,7 +168,8 @@ export function tokenActivity(
         const direction = transactionDirection(tx, ctx.me);
         const amount = wholeTokens(tx.amount, token.decimals);
         return {
-            id: tx.id.toString(),
+            // a block index is only unique within its ledger, and All activity lists several
+            id: activityId(token.ledger, tx.id),
             symbol: token.symbol,
             token: token.ledger,
             kind: direction === "own" ? "own" : direction === "out" ? "send" : "receive",
@@ -265,4 +268,70 @@ export function sendContacts(users: UserSummary[]): SendContact[] {
         handle: `@${u.username}`,
         grad: AVATAR_GRADIENTS[swatchFor(u.userId)],
     }));
+}
+
+/** The ledgers Send can open on for a saved address: ICP's, and BTC's and ckSOL's when the app has them. */
+export type RecipientLedgers = { icp: string; btc?: string; sol?: string };
+
+/** An activity row's id: its ledger and the transaction's block index there. */
+export function activityId(ledger: string, blockIndex: bigint): string {
+    return `${ledger}:${blockIndex}`;
+}
+
+/** The ledger and block index an activity row's id names (`activityId`). */
+export function parseActivityId(id: string): { ledger: string; blockIndex: bigint } | undefined {
+    const at = id.lastIndexOf(":");
+    if (at <= 0) return undefined;
+    try {
+        return { ledger: id.slice(0, at), blockIndex: BigInt(id.slice(at + 1)) };
+    } catch {
+        return undefined;
+    }
+}
+
+/**
+ * The address book as WalletRecipients lists it: each saved account, keyed by its account (the
+ * canister's key; a recipient has no id of its own), with its network's name and the token Send
+ * opens on: BTC for a Bitcoin address, ckSOL for a Solana one, else ICP.
+ */
+export function walletRecipients(accounts: NamedAccount[], ledgers: RecipientLedgers): Recipient[] {
+    return accounts.map((a) => {
+        const network = addressNetwork(a.account);
+        const sendToken =
+            network === "btc" ? ledgers.btc : network === "sol" ? ledgers.sol : undefined;
+        return {
+            id: a.account,
+            name: a.name,
+            address: a.account,
+            networkName: network === undefined ? undefined : addressNetworkName(network),
+            sendToken: sendToken ?? ledgers.icp,
+        };
+    });
+}
+
+/**
+ * Send's user search: the people it offers (`sendContacts`, the users already DM'd) whose name or
+ * handle has the query in it, ignoring case and a leading "@".
+ */
+export function searchContacts(contacts: SendContact[], query: string): SendContact[] {
+    const needle = query.trim().replace(/^@/, "").toLowerCase();
+    if (needle === "") return [];
+    return contacts.filter(
+        (c) =>
+            c.name.toLowerCase().includes(needle) ||
+            c.handle.replace(/^@/, "").toLowerCase().includes(needle),
+    );
+}
+
+const ADDRESS_NETWORK_NAMES: Record<AddressNetwork, string> = {
+    icrc: "Internet Computer",
+    icp: "Internet Computer",
+    btc: "Bitcoin",
+    eth: "Ethereum",
+    sol: "Solana",
+};
+
+/** The name of the network an address is on, as the recipients' rows show it. */
+export function addressNetworkName(network: AddressNetwork): string {
+    return ADDRESS_NETWORK_NAMES[network];
 }

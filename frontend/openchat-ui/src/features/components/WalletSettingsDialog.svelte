@@ -22,7 +22,7 @@
     /** Show every held token worth at least minBalance (USD); off = only `tokens`. */
     autoConfig: boolean;
     minBalance: string;
-    /** Hand-picked token symbols. */
+    /** Hand-picked tokens: their ids (`id`, else the symbol). */
     tokens: string[];
     currency: 'USD' | 'BTC' | 'ETH' | 'ICP';
     recipients: SavedRecipient[];
@@ -87,7 +87,8 @@
   const t = useT();
 
   // values in USD, matching the wallet panel's holdings
-  const held = $derived(tokens.filter((t) => t.held > 0).map((t) => ({ symbol: t.symbol, mark: t.mark, grad: t.grad, value: Math.round(t.price * t.held) })));
+  // a token is its id (`id`, else the symbol): two can share a symbol
+  const held = $derived(tokens.filter((t) => t.held > 0).map((t) => ({ id: t.id ?? t.symbol, symbol: t.symbol, mark: t.mark, grad: t.grad, value: Math.round(t.price * t.held) })));
 
   let tabOverride = $state<Section | null>(null);
   // the dialog's own exit (the sheets' host calls block it, see `pending`)
@@ -135,7 +136,7 @@
     pinOn: value?.pinOn ?? false,
     autoConfig: value?.autoConfig ?? true,
     minBalance: value?.minBalance ?? '',
-    tokens: value?.tokens ?? held.map((t) => t.symbol),
+    tokens: value?.tokens ?? held.map((t) => t.id),
     currency: value?.currency ?? 'USD',
     recipients: value?.recipients ?? [],
     ...local,
@@ -144,7 +145,7 @@
   const floor = $derived(parseAmount(settings.minBalance || '0'));
   const picked = $derived(settings.tokens);
   const autoOn = $derived(settings.autoConfig !== false);
-  const shown = $derived(autoOn ? held.filter((t) => t.value >= floor) : held.filter((t) => picked.includes(t.symbol)));
+  const shown = $derived(autoOn ? held.filter((t) => t.value >= floor) : held.filter((t) => picked.includes(t.id)));
   const q = $derived(query.trim().toLowerCase());
   const filtered = $derived(q ? held.filter((t) => t.symbol.toLowerCase().includes(q)) : held);
 
@@ -346,7 +347,7 @@
               <Toggle
                 on={autoOn}
                 ariaLabel="ui.walletSettingsDialog.autoConfig"
-                onChange={(on) => apply({ autoConfig: on, tokens: on ? picked : held.filter((t) => t.value >= floor).map((t) => t.symbol) })}
+                onChange={(on) => apply({ autoConfig: on, tokens: on ? picked : held.filter((t) => t.value >= floor).map((t) => t.id) })}
               />
             </div>
           </div>
@@ -556,7 +557,7 @@
             {#if autoOn}
               <div class="take-over">
                 <span class="take-over-text">{t('ui.walletSettingsDialog.takeOverText')}</span>
-                <span class="take-over-button" onclick={() => apply({ autoConfig: false, tokens: held.filter((t) => t.value >= floor).map((t) => t.symbol) })} role="button" tabindex="0"
+                <span class="take-over-button" onclick={() => apply({ autoConfig: false, tokens: held.filter((t) => t.value >= floor).map((t) => t.id) })} role="button" tabindex="0"
                   >{t('ui.walletSettingsDialog.takeOver')}</span
                 >
               </div>
@@ -564,13 +565,13 @@
 
             <div class="token-rows">
               {#each filtered as tk}
-                {@const on = autoOn ? tk.value >= floor : picked.includes(tk.symbol)}
+                {@const on = autoOn ? tk.value >= floor : picked.includes(tk.id)}
                 <div
                   class="token-row"
                   class:on
                   class:locked={autoOn}
                   class:dimmed={autoOn && !on}
-                  onclick={autoOn ? undefined : () => apply({ tokens: on ? picked.filter((x) => x !== tk.symbol) : [...picked, tk.symbol] })}
+                  onclick={autoOn ? undefined : () => apply({ tokens: on ? picked.filter((x) => x !== tk.id) : [...picked, tk.id] })}
                   role="button"
                   tabindex="0"
                 >

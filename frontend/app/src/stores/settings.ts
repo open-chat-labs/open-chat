@@ -31,10 +31,7 @@ export const verificationSectionOpen = new LocalStorageBoolStore(
     configKeys.verificationSectionOpen,
     false,
 );
-export const accountsSectionOpen = new LocalStorageBoolStore(
-    configKeys.accountsSectionOpen,
-    false,
-);
+export const accountsSectionOpen = new LocalStorageBoolStore(configKeys.accountsSectionOpen, false);
 export const bridgedAccountsSectionOpen = new LocalStorageBoolStore(
     configKeys.bridgedAccountsSectionOpen,
     false,
@@ -67,6 +64,8 @@ export const exploreGroupsDismissed = new LocalStorageBoolStore(
 );
 export const browseChannels = new LocalStorageBoolStore(configKeys.browseChannels, true);
 export const hideTokenBalances = new LocalStorageBoolStore(configKeys.hideTokenBalances, false);
+// the web wallet's display currency (USD, BTC, ETH or ICP), kept on this device
+export const walletCurrency = new LocalStorageStore<string>(configKeys.walletCurrency, "USD");
 
 export const communityVisibilityOpen = new LocalStorageBoolStore(
     configKeys.communityVisibilitySection,

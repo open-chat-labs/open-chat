@@ -54,6 +54,10 @@
   interface Props {
     tokens: WalletToken[];
     loading?: boolean;
+    /** The balances are still loading: a small spinner by the total's label, and no empty wallet's layout yet. */
+    balancesLoading?: boolean;
+    /** The prices the total is worked out with are still loading: the same spinner, the layout as the balances say. */
+    ratesLoading?: boolean;
     /** Wallet settings when a host owns them (currency, which tokens are listed). */
     settings?: WalletPanelSettings;
     onSettingsChange?: (settings: WalletPanelSettings) => void;
@@ -91,6 +95,8 @@
   let {
     tokens,
     loading = false,
+    balancesLoading = false,
+    ratesLoading = false,
     settings = {},
     onSettingsChange,
     onRefresh,
@@ -208,7 +214,8 @@
   // what's listed counts towards the total, small balances included
   const total = $derived([...held, ...small].reduce((sum, t) => sum + t.value, 0));
   // nothing owned yet: the supported tokens lead, Receive is the primary action
-  const empty = $derived(!loading && tokens.every((t) => !(t.held > 0)));
+  // not while the balances are still loading: an empty wallet's layout would flash before them
+  const empty = $derived(!loading && !balancesLoading && tokens.every((t) => !(t.held > 0)));
   const supported = $derived(tokens.slice(0, 5));
   const supportedTotal = $derived(supportedCount ?? tokens.length);
   const listed = $derived(
@@ -417,6 +424,7 @@
       {spinning}
       {allocation}
       {empty}
+      loading={balancesLoading || ratesLoading}
       onToggleVeil={() => (onBalanceHiddenChange ? onBalanceHiddenChange(!veiled) : (localVeil = !veiled))}
       onRefresh={onRefresh ? () => refresh() : undefined}
       onSend={() => onAction?.('send')}

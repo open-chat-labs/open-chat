@@ -161,6 +161,7 @@
         "name": "名称",
         "namePlaceholder": "输入此地址的名称",
         "nameTaken": "您已有一个以此名称保存的地址",
+        "noneForToken": "您保存的地址都无法接收 {token}",
         "rename": "重命名",
         "saveFailed": "抱歉，我们无法保存此地址",
         "title": "地址簿"
@@ -700,6 +701,9 @@
         "comingSoon": "（快来了）",
         "configureWallet": "配置您的钱包",
         "configureWalletFailure": "抱歉，我们无法保存您的钱包配置",
+        "invalidMinimum": "钱包设置未保存：最低余额必须是数字",
+        "cameraUnavailable": "无法使用摄像头。请允许访问摄像头后重试。",
+        "scanHint": "将摄像头对准地址的二维码",
         "failedToFetchDepositFee": "提取存款费用失败",
         "failedToGenerateAddress": "生成地址失败",
         "fetchingDepositFee": "正在获取存款费用...",

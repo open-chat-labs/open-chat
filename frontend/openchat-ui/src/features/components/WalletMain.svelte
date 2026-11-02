@@ -61,7 +61,7 @@
   import TokenPicker from '../../lib/components/TokenPicker.svelte';
   import TransactionRow from '../../lib/components/TransactionRow.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
-  import type { Snippet } from 'svelte';
+  import type { ComponentProps, Snippet } from 'svelte';
   import WalletReceive, { type ReceiveNetwork, type ShareChat } from './WalletReceive.svelte';
   import WalletRecipients, { type Recipient, type RecipientDraft } from './WalletRecipients.svelte';
   import WalletSend, { type SendContact, type WalletSendRequest } from './WalletSend.svelte';
@@ -139,7 +139,7 @@
     /** People to pick from on Send. */
     contacts?: SendContact[];
     /** Send's saved-address picker and QR scanner (see WalletSend). */
-    onPickSaved?: () => Promise<string | null | undefined>;
+    onPickSaved?: (token: string) => Promise<string | null | undefined>;
     onScanQr?: () => Promise<string | null | undefined>;
     /** Make the transfer; reject (e.g. wrong PIN) to keep Send open with an error. Resolve with the transaction's { id }
      *  to show a pending row until `activity` lists it. */
@@ -155,6 +155,9 @@
     onAddRecipient?: (r: RecipientDraft) => Promise<Recipient>;
     onUpdateRecipient?: (r: Recipient) => Promise<unknown> | void;
     onRemoveRecipient?: (id: string) => Promise<unknown> | void;
+    /** Recipients: the host's rules and what it keeps (see WalletRecipients' checkAddress, checkName, editAddress,
+     *  tokenLocks, lastSent and maxNameLength). */
+    recipientOptions?: Pick<ComponentProps<typeof WalletRecipients>, 'checkAddress' | 'checkName' | 'editAddress' | 'tokenLocks' | 'lastSent' | 'maxNameLength'>;
     /** Send: user search and BTC route fees (see WalletSend). */
     onSearchUsers?: (query: string) => Promise<SendContact[]>;
     btcFees?: Partial<Record<'btc' | 'ckbtc', number>>;
@@ -183,7 +186,10 @@
     onActivity?: (id: string) => void;
     /** In place of All activity's list, when the host can't list activity across tokens: resource keys (or text). */
     allActivityNote?: { title: string; body: string };
-    /** The host is still loading `tokens`: a token's page waits (neither the page nor "Token not found" yet). */
+    /** The host is still loading `activity` for All activity: it shows a skeleton until there's something to list. */
+    allActivityLoading?: boolean;
+    /** The host is still loading `tokens` (and their balances): All activity and a token's page wait, showing a skeleton
+     *  (not the welcome, an empty list, a balance of 0 or "Token not found"). */
     tokensLoading?: boolean;
     /** The token page's eye: the shared wallet veil. Without it there's no eye. */
     onBalanceHiddenChange?: (hidden: boolean) => void;
@@ -211,6 +217,7 @@
     onAddRecipient,
     onUpdateRecipient,
     onRemoveRecipient,
+    recipientOptions,
     onSearchUsers,
     btcFees,
     btcRoutes,
@@ -229,6 +236,7 @@
     onRetryHistory,
     onActivity,
     allActivityNote,
+    allActivityLoading = false,
     onBalanceHiddenChange,
     flows = ['send', 'receive', 'swap'],
     tokensLoading = false,
@@ -379,10 +387,10 @@
     report();
   }
 
-  // a saved recipient's own token lock wins; otherwise the network's native token
+  // the host's token for the recipient first; then its own token lock; then the network's native token
   function sendToRecipient(r: Recipient & { network: string | null }) {
     const native: Record<string, string> = { BTC: 'BTC', ETH: 'ETH', XRP: 'XRP' };
-    sym = idForSymbol(r.token || (r.network ? native[r.network] : undefined) || 'ICP');
+    sym = r.sendToken ?? idForSymbol(r.token || (r.network ? native[r.network] : undefined) || 'ICP');
     view = 'send';
     fromAll = false;
     backToRecipients = true;
@@ -566,8 +574,9 @@
   const swapPinned = $derived(onSwap ? (r: Parameters<NonNullable<typeof onSwap>>[0]) => pinned(() => onSwap(r)) : undefined);
   const showToken = $derived(view === 'token' && !!raw && !missing);
   const notFound = $derived(view === 'token' && missing);
-  // a token's page asked for while the host is loading the tokens (a reload of it): neither the page nor "not found" yet
-  const pending = $derived(view === 'token' && !!sym && tokensLoading && !valued.some((t) => idOf(t) === sym));
+  // the host is loading the tokens (a reload): All activity and a token's page wait, rather than show the welcome, an
+  // empty list, a balance of 0 or "not found" until the tokens are in
+  const pending = $derived(tokensLoading && (view === 'all' || (view === 'token' && !!sym)));
 
   // sending: the tokens you hold. Receiving or browsing: yours first, then the rest of the catalogue, then the extra
   // receivable tokens (only while Receive is offered), no symbol twice
@@ -680,6 +689,7 @@
       onRemove={onRemoveRecipient}
       onSend={sendToRecipient}
       onClose={() => go({ view: 'all' })}
+      {...recipientOptions}
     />
   {/if}
   {#if view === 'all' || view === 'token'}
@@ -696,7 +706,7 @@
     <div class="scroll">
       <div class="column">
         {#if pending}
-          <div class="history-note"><Skeleton variant="token" count={3} /></div>
+          <div class="history-note"><Skeleton variant="token" count={3} delay={500} /></div>
         {:else if notFound}
           <EmptyState icon="search" title={t('ui.walletMain.tokenNotFoundTitle')} body={t('ui.walletMain.tokenNotFoundBody')} actionLabel="" />
         {:else if !showToken && empty}
@@ -751,7 +761,11 @@
               </div>
             </div>
           {/each}
-          {#if allGroups.length === 0}<span class="none">{t('ui.walletMain.noneOfType')}</span>{/if}
+          {#if allGroups.length === 0 && allActivityLoading}
+            <div class="history-note"><Skeleton variant="token" count={4} delay={500} /></div>
+          {:else if allGroups.length === 0 && filter === 0}
+            <EmptyState icon="receive" title={t('ui.walletMain.emptyTitle')} body={t('ui.walletMain.emptyAllBody')} actionLabel="" />
+          {:else if allGroups.length === 0}<span class="none">{t('ui.walletMain.noneOfType')}</span>{/if}
         {:else}
           {@const tokenEmpty = EMPTY[tokFilter]}
           <div class="token-page">
@@ -825,7 +839,7 @@
                 </div>
               {/each}
               {#if history?.state === 'loading'}
-                <div class="history-note"><Skeleton variant="token" count={4} /></div>
+                <div class="history-note"><Skeleton variant="token" count={4} delay={500} /></div>
               {:else if history?.state === 'unavailable'}
                 <EmptyState icon="receive" title={t('ui.walletMain.noHistoryTitle')} body={t('ui.walletMain.noHistoryBody', { symbol: raw.symbol })} actionLabel="" />
               {:else if history?.state === 'failed'}

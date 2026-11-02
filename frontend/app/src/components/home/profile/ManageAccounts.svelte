@@ -1,16 +1,12 @@
 <script lang="ts">
     import {
-        cloneWalletConfig,
         cryptoTokensSorted as accountsSorted,
         cryptoLookup,
-        DEFAULT_TOKENS,
+        defaultWalletLedgers,
         OpenChat,
-        walletConfigForMode,
         walletConfigStore,
-        type CryptocurrencyDetails,
-        type ReadonlyMap,
-        type WalletConfig,
     } from "@client";
+    import { WalletSettingsForm } from "@src/logic/wallet/walletSettingsForm.svelte";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
@@ -37,63 +33,31 @@
     let searchTerm = $state("");
     let searching = $state(false);
 
-    let config: WalletConfig = $state({ ...$walletConfigStore });
+    // the settings form (logic/wallet), shared with the other trees: edits a copy of the stored
+    // config, saved on close only if it differs
+    const form = new WalletSettingsForm(
+        client,
+        () => walletConfigStore.value,
+        () => defaultWalletLedgers($cryptoLookup.values()),
+    );
 
     onMount(() => {
-        config = cloneWalletConfig($walletConfigStore);
-
-        if (config.kind === "manual_wallet") {
+        if (form.config.kind === "manual_wallet") {
             // Refresh balances of disabled tokens so that we discover which
             // ones have non-zero balances are therefore should be searchable
             refreshDisabledTokenBalances();
         }
 
-        return () => {
-            if (client.walletConfigChanged($walletConfigStore, config)) {
-                client.setWalletConfig(config).then((success) => {
-                    if (!success) {
-                        toastStore.showFailureToast(
-                            i18nKey("cryptoAccount.configureWalletFailure"),
-                        );
-                    }
-                });
-            }
-        };
+        return () => void saveOnClose();
     });
 
-    function getDefaultLedgers(
-        ledgerLookup: ReadonlyMap<string, CryptocurrencyDetails>,
-    ): Set<string> {
-        const lookup = [...ledgerLookup.entries()].reduce(
-            (bySymbol, [k, v]) => {
-                bySymbol[v.symbol] = k;
-                return bySymbol;
-            },
-            {} as Record<string, string>,
-        );
-        return new Set<string>(DEFAULT_TOKENS.map((t) => lookup[t]).filter((l) => l !== undefined));
-    }
-
-    function toggle(ledger: string) {
-        if (config.kind === "manual_wallet") {
-            if (config.tokens.has(ledger)) {
-                config.tokens.delete(ledger);
-            } else {
-                config.tokens.add(ledger);
-            }
+    async function saveOnClose(): Promise<void> {
+        const outcome = await form.save();
+        if (outcome === "failed") {
+            toastStore.showFailureToast(i18nKey("cryptoAccount.configureWalletFailure"));
+        } else if (outcome === "invalid") {
+            toastStore.showFailureToast(i18nKey("cryptoAccount.invalidMinimum"));
         }
-    }
-
-    function toggleMode() {
-        if (config.kind === "auto_wallet") {
-            selectMode("manual_wallet");
-        } else {
-            selectMode("auto_wallet");
-        }
-    }
-
-    function selectMode(kind: WalletConfig["kind"]) {
-        config = walletConfigForMode(kind, $walletConfigStore, defaultLedgers);
     }
 
     function refreshDisabledTokenBalances() {
@@ -104,8 +68,6 @@
         }
     }
 
-    let valid = $derived(config.kind === "manual_wallet" || !isNaN(Number(config.minDollarValue)));
-    let defaultLedgers = $derived(getDefaultLedgers($cryptoLookup));
     let searchTermLower = $derived(searchTerm.toLowerCase());
     let filteredTokens = $derived(
         $accountsSorted.filter(
@@ -128,36 +90,36 @@
             <div>
                 <div class="select-mode">
                     <div
-                        onclick={() => selectMode("manual_wallet")}
+                        onclick={() => form.selectMode("manual_wallet")}
                         class="mode-label"
-                        class:selected={config.kind === "manual_wallet"}>
+                        class:selected={form.config.kind === "manual_wallet"}>
                         <Translatable resourceKey={i18nKey("cryptoAccount.manual")} />
                     </div>
                     <Toggle
-                        checked={config.kind === "auto_wallet"}
-                        onChange={toggleMode}
+                        checked={form.config.kind === "auto_wallet"}
+                        onChange={() => form.toggleMode()}
                         small
                         bottomMargin={false}
                         id={"wallet-mode-select"}></Toggle>
                     <div
-                        onclick={() => selectMode("auto_wallet")}
+                        onclick={() => form.selectMode("auto_wallet")}
                         class="mode-label"
-                        class:selected={config.kind === "auto_wallet"}>
+                        class:selected={form.config.kind === "auto_wallet"}>
                         <Translatable resourceKey={i18nKey("cryptoAccount.auto")} />
                     </div>
                 </div>
-                {#if config.kind === "auto_wallet"}
+                {#if form.config.kind === "auto_wallet"}
                     <div class="auto-mode">
                         <div class="info">
                             <Translatable resourceKey={i18nKey("cryptoAccount.autoInfo")} />
                         </div>
                         <Legend label={i18nKey("cryptoAccount.minDollarPlaceholder")} />
                         <Input
-                            invalid={!valid}
-                            bind:value={config.minDollarValue}
+                            invalid={!form.valid}
+                            bind:value={form.config.minDollarValue}
                             placeholder={i18nKey("cryptoAccount.minDollarPlaceholder")} />
                     </div>
-                {:else if config.kind === "manual_wallet"}
+                {:else if form.config.kind === "manual_wallet"}
                     <div class="info">
                         <Translatable resourceKey={i18nKey("cryptoAccount.manualInfo")} />
                     </div>
@@ -192,8 +154,8 @@
                                         allowCached={true}
                                         conversion={selectedConversion} />
                                     <Toggle
-                                        checked={config.tokens.has(token.ledger)}
-                                        onChange={() => toggle(token.ledger)}
+                                        checked={form.config.tokens.has(token.ledger)}
+                                        onChange={() => form.toggleToken(token.ledger)}
                                         small
                                         bottomMargin={false}
                                         id={`token_${token.symbol}_toggle`}></Toggle>

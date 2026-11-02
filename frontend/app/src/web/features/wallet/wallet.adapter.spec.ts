@@ -4,6 +4,7 @@ import {
     displayDecimals,
     receiveNetworks,
     panelSettings,
+    searchContacts,
     sendContacts,
     sendTokenNets,
     supportedCount,
@@ -11,6 +12,10 @@ import {
     walletToken,
     walletTokenActions,
     walletTokens,
+    walletRecipients,
+    addressNetworkName,
+    activityId,
+    parseActivityId,
 } from "./wallet.adapter";
 
 function token(over: Partial<EnhancedTokenDetails> = {}): EnhancedTokenDetails {
@@ -111,7 +116,7 @@ describe("a token's activity", () => {
         );
         expect(rows.map((r) => r.kind)).toEqual(["own", "send", "receive"]);
         expect(rows[1]).toMatchObject({
-            id: "2",
+            id: "chat-ledger:2",
             token: "chat-ledger",
             party: "Exchange",
             amount: 2,
@@ -271,5 +276,59 @@ describe("Send's people", () => {
         expect(a).toMatchObject({ userId: "u1", name: "alice", handle: "@alice" });
         expect(b).toMatchObject({ userId: "u2", name: "Bob" });
         expect(a.grad).toMatch(/gradient/);
+    });
+});
+
+describe("the address book", () => {
+    test("each saved account is a recipient keyed by its account, with its network's name and the token Send opens on", () => {
+        const ledgers = { icp: "icp-ledger", btc: "ckbtc-ledger" };
+        const [ic, btc, sol] = walletRecipients(
+            [
+                { name: "Exchange", account: "ryjl3-tyaaa-aaaaa-aaaba-cai" },
+                { name: "Cold", account: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" },
+                { name: "Phantom", account: "7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV" },
+            ],
+            ledgers,
+        );
+        expect(ic).toEqual({
+            id: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+            name: "Exchange",
+            address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+            networkName: "Internet Computer",
+            sendToken: "icp-ledger",
+        });
+        expect(btc).toMatchObject({ networkName: "Bitcoin", sendToken: "ckbtc-ledger" });
+        // no ckSOL in the app: ICP, which Send then says can't reach the address
+        expect(sol).toMatchObject({ networkName: "Solana", sendToken: "icp-ledger" });
+        expect(addressNetworkName("icrc")).toBe("Internet Computer");
+        expect(addressNetworkName("sol")).toBe("Solana");
+    });
+});
+
+describe("Send's user search", () => {
+    test("finds the DM'd users by name or handle, ignoring case and a leading @", () => {
+        const contacts = [
+            { userId: "u1", name: "Alice", handle: "@alice" },
+            { userId: "u2", name: "Bob Smith", handle: "@bobby" },
+        ];
+        expect(searchContacts(contacts, "ALI").map((c) => c.userId)).toEqual(["u1"]);
+        expect(searchContacts(contacts, "@bob").map((c) => c.userId)).toEqual(["u2"]);
+        expect(searchContacts(contacts, "smith").map((c) => c.userId)).toEqual(["u2"]);
+        expect(searchContacts(contacts, "  ")).toEqual([]);
+    });
+});
+
+describe("activity ids", () => {
+    test("a row's id holds its ledger, as a block index is only unique within one", () => {
+        expect(activityId("ryjl3-tyaaa-aaaaa-aaaba-cai", 42n)).toBe(
+            "ryjl3-tyaaa-aaaaa-aaaba-cai:42",
+        );
+        expect(parseActivityId("ryjl3-tyaaa-aaaaa-aaaba-cai:42")).toEqual({
+            ledger: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+            blockIndex: 42n,
+        });
+        expect(activityId("a", 1n)).not.toBe(activityId("b", 1n));
+        expect(parseActivityId("42")).toBeUndefined();
+        expect(parseActivityId("ledger:x")).toBeUndefined();
     });
 });

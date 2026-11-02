@@ -15,19 +15,15 @@
         Switch,
     } from "component-lib";
     import {
-        cloneWalletConfig,
         cryptoLookup,
         cryptoTokensSorted,
-        DEFAULT_TOKENS,
+        defaultWalletLedgers,
         OpenChat,
         pinNumberRequiredStore,
-        walletConfigForMode,
         walletConfigStore,
-        type CryptocurrencyDetails,
         type EnhancedTokenDetails,
-        type ReadonlyMap,
-        type WalletConfig,
     } from "@client";
+    import { WalletSettingsForm } from "@src/logic/wallet/walletSettingsForm.svelte";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -41,61 +37,28 @@
     const client = getContext<OpenChat>("client");
 
     let showTokenSelector = $state(false);
-    let config: WalletConfig = $state({ ...$walletConfigStore });
-    let valid = $derived(config.kind === "manual_wallet" || !isNaN(Number(config.minDollarValue)));
-    let defaultLedgers = $derived(getDefaultLedgers($cryptoLookup));
+    // the settings form (logic/wallet), shared with the other trees: edits a copy of the stored
+    // config, saved on close only if it differs
+    const form = new WalletSettingsForm(
+        client,
+        () => walletConfigStore.value,
+        () => defaultWalletLedgers($cryptoLookup.values()),
+    );
     let pinAction = $state<PinOperation>();
 
-    function getDefaultLedgers(
-        ledgerLookup: ReadonlyMap<string, CryptocurrencyDetails>,
-    ): Set<string> {
-        const lookup = [...ledgerLookup.entries()].reduce(
-            (bySymbol, [k, v]) => {
-                bySymbol[v.symbol] = k;
-                return bySymbol;
-            },
-            {} as Record<string, string>,
-        );
-        return new Set<string>(DEFAULT_TOKENS.map((t) => lookup[t]).filter((l) => l !== undefined));
-    }
+    onMount(() => () => void saveOnClose());
 
-    function toggleMode() {
-        if (config.kind === "auto_wallet") {
-            selectMode("manual_wallet");
-        } else {
-            selectMode("auto_wallet");
+    async function saveOnClose(): Promise<void> {
+        const outcome = await form.save();
+        if (outcome === "failed") {
+            toastStore.showFailureToast(i18nKey("cryptoAccount.configureWalletFailure"));
+        } else if (outcome === "invalid") {
+            toastStore.showFailureToast(i18nKey("cryptoAccount.invalidMinimum"));
         }
-    }
-
-    onMount(() => {
-        config = cloneWalletConfig($walletConfigStore);
-
-        return () => {
-            if (client.walletConfigChanged($walletConfigStore, config)) {
-                client.setWalletConfig(config).then((success) => {
-                    if (!success) {
-                        toastStore.showFailureToast(
-                            i18nKey("cryptoAccount.configureWalletFailure"),
-                        );
-                    }
-                });
-            }
-        };
-    });
-
-    function selectMode(kind: WalletConfig["kind"]) {
-        config = walletConfigForMode(kind, $walletConfigStore, defaultLedgers);
     }
 
     function selectToken(token: EnhancedTokenDetails) {
-        if (config.kind === "manual_wallet") {
-            if (config.tokens.has(token.ledger)) {
-                config.tokens.delete(token.ledger);
-            } else {
-                config.tokens.add(token.ledger);
-            }
-            config = cloneWalletConfig(config);
-        }
+        form.toggleToken(token.ledger);
     }
 
     function togglePin() {
@@ -134,25 +97,25 @@
                 {/if}
             </Container>
             <Setting
-                toggle={toggleMode}
+                toggle={() => form.toggleMode()}
                 info={[
                     "When enabled, your wallet will be organised automatically, and any token with a non-zero balance, or with dollar value greater than the minimum provided, will be displayed.",
                     "Otherwise, you may configure your wallet manually, by selecting tokens which should appear in the wallet.",
                 ]}>
                 <Switch
-                    onChange={toggleMode}
+                    onChange={() => form.toggleMode()}
                     width={"fill"}
                     reverse
-                    checked={config.kind === "auto_wallet"}>
+                    checked={form.config.kind === "auto_wallet"}>
                     <Translatable resourceKey={i18nKey("Automatic configuration")} />
                 </Switch>
             </Setting>
         </Container>
 
-        {#if config.kind === "auto_wallet"}
+        {#if form.config.kind === "auto_wallet"}
             <Input
-                error={!valid}
-                bind:value={config.minDollarValue}
+                error={!form.valid}
+                bind:value={form.config.minDollarValue}
                 placeholder={interpolate($_, i18nKey("cryptoAccount.minDollarPlaceholder"))}>
                 {#snippet subtext()}
                     <Translatable
@@ -172,7 +135,7 @@
                         size={"small_text"}
                         onClick={() => (showTokenSelector = true)}>Configure</CommonButton>
                 </Container>
-                {@const tokens = config.tokens}
+                {@const tokens = form.config.tokens}
                 {@const selected = $cryptoTokensSorted.filter((a) => tokens.has(a.ledger))}
                 <Container wrap gap={"sm"}>
                     {#each selected as token}
@@ -182,10 +145,10 @@
             </Container>
         {/if}
 
-        {#if config.kind === "manual_wallet"}
+        {#if form.config.kind === "manual_wallet"}
             {#if showTokenSelector}
                 <TokenSelector
-                    selected={config.tokens}
+                    selected={form.config.tokens}
                     onSelect={selectToken}
                     placeholder={i18nKey("Filter tokens...")}
                     onDismiss={() => (showTokenSelector = false)}

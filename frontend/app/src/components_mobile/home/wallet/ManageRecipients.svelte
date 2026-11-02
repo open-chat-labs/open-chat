@@ -34,10 +34,8 @@
 
     async function deleteAccount({ name, account }: NamedAccount) {
         deleting = account;
-        const res = await client.deleteCryptoAccount(name);
-        if (res.kind === "success") {
-            await client.loadSavedCryptoAccounts();
-        }
+        // the client takes it out of namedAccountsStore once it's deleted
+        await client.deleteCryptoAccount(name);
         deleting = undefined;
     }
 

@@ -143,6 +143,8 @@ export const nervousSystemLookup = writable<ReadonlyMap<GovernanceCanister, Nerv
     undefined,
     notEq,
 );
+// whether the first attempt to load the exchange rates has finished (they may still have failed)
+export const exchangeRatesTriedStore = writable<boolean>(false);
 export const exchangeRatesLookupStore = writable<ReadonlyMap<LedgerCanister, TokenExchangeRates>>(
     new SafeMap(),
     undefined,
