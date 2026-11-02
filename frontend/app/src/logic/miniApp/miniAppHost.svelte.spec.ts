@@ -144,7 +144,7 @@ describe("MiniAppHost", () => {
     function active(players: string[], settings: string | undefined): MiniAppContent {
         return {
             ...APP.content,
-            status: { kind: "active", players, waitingFor: [], settings },
+            status: { kind: "active", players, settings },
         };
     }
 

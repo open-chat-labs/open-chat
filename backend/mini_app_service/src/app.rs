@@ -1282,8 +1282,8 @@ mod tests {
         assert_eq!(*test.bot.left.lock().unwrap(), vec![user(1)]);
     }
 
-    // The card in the chat records the players the game started with, whose turn it is, then its
-    // result, after which the service forgets the game, and doesn't let its bot post its card again
+    // The card in the chat records the players the game started with, then its result, after which the
+    // service forgets the game, and doesn't let its bot post its card again
     #[tokio::test]
     async fn the_card_follows_the_game_from_its_start_to_its_end() {
         let test = Test::new();
@@ -1297,7 +1297,6 @@ mod tests {
             test.card(),
             MiniAppStatus::Active(MiniAppActive {
                 players: vec![user(1), user(2)],
-                waiting_for: vec![user(1)],
                 settings: None,
             })
         );
@@ -1308,15 +1307,6 @@ mod tests {
                 ..
             }
         ));
-
-        test.update(UpdateArgs {
-            waiting_for: Some(vec![user(2)]),
-            ..update(None)
-        })
-        .await
-        .unwrap();
-        test.settle().await;
-        assert!(matches!(&test.card(), MiniAppStatus::Active(active) if active.waiting_for == vec![user(2)]));
 
         test.update(UpdateArgs {
             result: Some("Bob won".to_string()),
@@ -1343,6 +1333,41 @@ mod tests {
             409
         );
         assert!(test.stored().await.is_none());
+    }
+
+    // Whose turn it is is only shown live: the bot's turn changes go to everyone following the card,
+    // and nothing's written to the card in the chat
+    #[tokio::test]
+    async fn a_bots_turn_change_updates_the_live_card_and_writes_nothing_to_the_chat() {
+        let test = Test::new();
+        test.post(None, true).await;
+        test.join(user(1)).await;
+        test.join(user(2)).await;
+        let (follower, mut follower_messages) = test.connect(user(3));
+        test.app
+            .follow(follower, user(3), 1, &test.chat_token(user(3), false), vec![game()])
+            .await;
+
+        assert_eq!(test.start(user(1)).await, ServerMessage::Ok { id: 1 });
+        test.settle().await;
+        assert_eq!(cards(&mut follower_messages).last().unwrap().waiting_for, vec![user(1)]);
+        let written = test.cards.written.lock().unwrap().clone();
+        assert!(matches!(written.as_slice(), [MiniAppStatusUpdate::Started(_)]));
+        let card = test.card();
+
+        test.update(UpdateArgs {
+            waiting_for: Some(vec![user(2)]),
+            ..update(None)
+        })
+        .await
+        .unwrap();
+        test.settle().await;
+        let live = cards(&mut follower_messages);
+        assert_eq!(live.len(), 1);
+        assert_eq!(live[0].waiting_for, vec![user(2)]);
+        assert_eq!(test.stored().await.unwrap().waiting_for, vec![user(2)]);
+        assert_eq!(*test.cards.written.lock().unwrap(), written);
+        assert_eq!(test.card(), card);
     }
 
     // The game finishing while its start is still being written: the card records who played, then the
@@ -1441,7 +1466,6 @@ mod tests {
             test.card(),
             MiniAppStatus::Active(MiniAppActive {
                 players: vec![user(1), user(2)],
-                waiting_for: vec![user(1)],
                 settings: Some(settings.clone()),
             })
         );

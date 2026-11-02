@@ -31,7 +31,7 @@ pub struct BotDefinition {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct MiniAppDefinition {
-    // what a card names it by, eg. "chess"
+    // what a card names it by, eg. "chess": see `is_valid_mini_app_name`
     pub name: String,
     // an absolute http(s) URL, or a path relative to the bot's endpoint, eg. "app/chess.svg"
     pub image_url: String,
@@ -40,6 +40,17 @@ pub struct MiniAppDefinition {
 impl MiniAppDefinition {
     pub const MAX_NAME_CHARS: usize = 50;
     pub const MAX_IMAGE_URL_CHARS: usize = 500;
+}
+
+/// An app's name is a slug, eg. "chess" or "press_counter": 1 to 50 characters, each a lowercase ASCII
+/// letter, a digit, a hyphen or an underscore. A bot's definition declares its apps by these names, and
+/// a card names its app by one.
+pub fn is_valid_mini_app_name(name: &str) -> bool {
+    !name.is_empty()
+        && name.len() <= MiniAppDefinition::MAX_NAME_CHARS
+        && name
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-' || b == b'_')
 }
 
 #[ts_export]
@@ -629,5 +640,22 @@ impl BotDefinitionUpdate {
         self.command_permissions.has_update()
             || self.autonomous_permissions.has_update()
             || self.default_subscriptions.has_update()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mini_app_names_are_1_to_50_lowercase_letters_digits_hyphens_or_underscores() {
+        let longest = "x".repeat(MiniAppDefinition::MAX_NAME_CHARS);
+        for name in ["chess", "2048", "press_counter", "a-b", longest.as_str()] {
+            assert!(is_valid_mini_app_name(name), "{name:?}");
+        }
+        let too_long = "x".repeat(MiniAppDefinition::MAX_NAME_CHARS + 1);
+        for name in ["", "Chess", "my game", "a/b", "é", " chess", too_long.as_str()] {
+            assert!(!is_valid_mini_app_name(name), "{name:?}");
+        }
     }
 }

@@ -19,7 +19,7 @@ use types::{
     CLAIM_TYPE_MINI_APP_POST, CanisterId, ChannelId, Chat, ChatEvent, ChatPermission, CommunityId, Empty, EventIndex,
     MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePermission, Milliseconds, MiniAppActive,
     MiniAppBotClaims, MiniAppChatClaims, MiniAppContent, MiniAppDefinition, MiniAppEnded, MiniAppFinished, MiniAppGame,
-    MiniAppPostClaims, MiniAppSize, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, MiniAppTurn, UnitResult, UserId,
+    MiniAppPostClaims, MiniAppSize, MiniAppStarted, MiniAppStatus, MiniAppStatusUpdate, UnitResult, UserId,
 };
 
 // How long a command's token, and so the post token of a command's card, lasts
@@ -261,7 +261,7 @@ fn a_card_is_posted_open() {
         None,
         random_from_u128(),
         MiniAppContent {
-            status: active(vec![member.user_id], Vec::new()),
+            status: active(vec![member.user_id]),
             ..card()
         },
     );
@@ -427,7 +427,7 @@ fn a_game_ends_with_its_end_state() {
         chat,
         None,
         message_id,
-        started(players.clone(), Vec::new()),
+        started(players.clone()),
     );
     assert!(matches!(response, UnitResult::Success), "{response:?}");
 
@@ -445,7 +445,7 @@ fn a_game_ends_with_its_end_state() {
         matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent)),
         "Expected the end state to be refused: {response:?}"
     );
-    assert_eq!(read(env), active(players.clone(), Vec::new()));
+    assert_eq!(read(env), active(players.clone()));
 
     let end_state = "{\"fen\":\"8/8\",\"moves\":[\"e4\",\"e5\"]}";
     let response = write_card(
@@ -470,8 +470,8 @@ fn a_game_ends_with_its_end_state() {
 }
 
 // The game's settings, as JSON the bot chose, are written to the card with the players when the game
-// starts, and the card keeps them through its turns and into its end, with the end state. Over 4 KB
-// they're refused, leaving the card as it was.
+// starts, and the card keeps them into its end, with the end state. Over 4 KB they're refused, leaving
+// the card as it was.
 #[test]
 fn a_game_starts_with_its_settings() {
     let mut wrapper = ENV.deref().get();
@@ -522,7 +522,7 @@ fn a_game_starts_with_its_settings() {
     let players = vec![member.user_id, owner.user_id];
 
     let too_long = format!("{{\"seed\":\"{}\"}}", "x".repeat(MiniAppContent::MAX_SETTINGS_BYTES));
-    let response = write(env, started_with(players.clone(), Vec::new(), Some(&too_long)));
+    let response = write(env, started_with(players.clone(), Some(&too_long)));
     assert!(
         matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent)),
         "Expected the settings to be refused: {response:?}"
@@ -530,20 +530,15 @@ fn a_game_starts_with_its_settings() {
     assert_eq!(read(env), MiniAppStatus::Open);
 
     let settings = "{\"target\":2048,\"seconds\":120}";
-    let response = write(env, started_with(players.clone(), vec![member.user_id], Some(settings)));
+    let response = write(env, started_with(players.clone(), Some(settings)));
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     assert_eq!(
         read(env),
         MiniAppStatus::Active(MiniAppActive {
             players: players.clone(),
-            waiting_for: vec![member.user_id],
             settings: Some(settings.to_string()),
         })
     );
-
-    let response = write(env, turn(vec![owner.user_id]));
-    assert!(matches!(response, UnitResult::Success), "{response:?}");
-    assert_eq!(read(env).settings(), Some(settings));
 
     let end_state = "{\"boards\":[[2,4],[8,2048]]}";
     let response = write(env, ended_with(Some("Bob won"), Some(end_state)));
@@ -559,9 +554,9 @@ fn a_game_starts_with_its_settings() {
     );
 }
 
-// The game starts with its players, its turns pass between them, then it ends with them and its result.
-// The message isn't marked as edited, the game starts once, and once it's finished the card never
-// changes, though the service can retry a write.
+// The game starts with its players, then it ends with them and its result. Whose turn it is in between
+// is only shown live, by the service. The message isn't marked as edited, the game starts once, and
+// once it's finished the card never changes, though the service can retry a write.
 #[test]
 fn the_mini_app_service_starts_a_game_then_ends_it() {
     let mut wrapper = ENV.deref().get();
@@ -613,29 +608,25 @@ fn the_mini_app_service_starts_a_game_then_ends_it() {
     };
     let players = vec![member.user_id, owner.user_id];
 
-    let response = write(env, started(players.clone(), vec![member.user_id]));
+    let response = write(env, started(players.clone()));
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     let card = read(env);
-    assert_eq!(card.status, active(players.clone(), vec![member.user_id]));
+    assert_eq!(card.status, active(players.clone()));
     assert_eq!(card.max_players, Some(4));
     assert_eq!(card.text, self::card().text);
 
-    let response = write(env, turn(vec![owner.user_id]));
-    assert!(matches!(response, UnitResult::Success), "{response:?}");
-    assert_eq!(read(env).status, active(players.clone(), vec![owner.user_id]));
-
-    let response = write(env, started(vec![member.user_id], Vec::new()));
+    // A retried start changes nothing; any other start is refused
+    let response = write(env, started(players.clone()));
+    assert!(
+        matches!(response, UnitResult::Success),
+        "Expected a retry to succeed: {response:?}"
+    );
+    let response = write(env, started(vec![member.user_id]));
     assert!(
         matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "Expected the game not to start again: {response:?}"
     );
-    let outsider = client::register_user(env, canister_ids);
-    let response = write(env, turn(vec![outsider.user_id]));
-    assert!(
-        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent)),
-        "Expected only players to be waited for: {response:?}"
-    );
-    assert_eq!(read(env).status, active(players.clone(), vec![owner.user_id]));
+    assert_eq!(read(env).status, active(players.clone()));
 
     let response = write(env, ended(Some("Bob won")));
     assert!(matches!(response, UnitResult::Success), "{response:?}");
@@ -688,15 +679,23 @@ fn only_the_mini_app_service_writes_a_card() {
     let local_user_index_canister::bot_send_message::Response::Success(sent) = response else {
         panic!("'send_mini_app_message' error: {response:?}");
     };
-    // Once the LocalUserIndex knows the service, so the refusals below aren't for want of one. A turn
-    // before the game's started is refused, but by the card, not the LocalUserIndex.
-    let response = write_card(env, service, local_user_index, chat, None, message_id, turn(Vec::new()));
+    // Once the LocalUserIndex knows the service, so the refusals below aren't for want of one. A start
+    // listing a player twice is refused, but by the card, not the LocalUserIndex.
+    let response = write_card(
+        env,
+        service,
+        local_user_index,
+        chat,
+        None,
+        message_id,
+        started(vec![member.user_id, member.user_id]),
+    );
     assert!(
-        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent)),
         "{response:?}"
     );
 
-    let update = started(vec![member.user_id], Vec::new());
+    let update = started(vec![member.user_id]);
     let token = post_token(
         env,
         bot_principal,
@@ -794,6 +793,7 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
     };
     let (message_id, event_index) = post(env);
     let (other_message_id, _) = post(env);
+    let (third_message_id, _) = post(env);
     let write = |env: &mut PocketIc, message_id| {
         write_card(
             env,
@@ -802,7 +802,7 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
             chat,
             thread,
             message_id,
-            started(vec![owner.user_id, member.user_id], Vec::new()),
+            started(vec![owner.user_id, member.user_id]),
         )
     };
 
@@ -843,7 +843,27 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
             _ => None,
         })
         .unwrap();
-    assert_eq!(card.status, active(vec![owner.user_id, member.user_id], Vec::new()));
+    assert_eq!(card.status, active(vec![owner.user_id, member.user_id]));
+
+    // A retry of the write, which went through, changes nothing, so members don't sync the message again
+    let since = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+    let response = write(env, message_id);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    env.tick();
+    let updated = client::group::happy_path::summary_updates(env, member.principal, group_id, since)
+        .map(|u| u.updated_events)
+        .unwrap_or_default();
+    assert!(
+        !updated
+            .iter()
+            .any(|(root, index, _)| *root == thread && *index == event_index),
+        "{updated:?}"
+    );
+
+    // A third game, under way when its bot is uninstalled below
+    let response = write(env, third_message_id);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
 
     client::group::happy_path::delete_messages(env, owner.principal, group_id, thread, vec![message_id]);
     let response = write(env, message_id);
@@ -868,6 +888,43 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
     // Then writes the game as finished, so its card doesn't look like it's still being played
     let response = write_card(env, service, local_user_index, chat, thread, other_message_id, ended(None));
     assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    // A game under way when its bot was uninstalled ends, but without what the bot wrote, and a retry of
+    // that changes nothing
+    for _ in 0..2 {
+        let response = write_card(
+            env,
+            service,
+            local_user_index,
+            chat,
+            thread,
+            third_message_id,
+            ended_with(Some("Alice won"), Some("{\"fen\":\"8/8\"}")),
+        );
+        assert!(matches!(response, UnitResult::Success), "{response:?}");
+    }
+    let events = client::group::happy_path::thread_events(
+        env,
+        &member,
+        group_id,
+        root.message_index,
+        EventIndex::default(),
+        true,
+        10,
+        10,
+    );
+    let third = events
+        .events
+        .iter()
+        .find_map(|e| match &e.event {
+            ChatEvent::Message(m) if m.message_id == third_message_id => match &m.content {
+                MessageContent::MiniApp(c) => Some(c.clone()),
+                _ => None,
+            },
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(third.status, finished(vec![owner.user_id, member.user_id], None));
 }
 
 // That a card can't be forwarded either is in chat_events' unit tests: a member would be refused as
@@ -1625,12 +1682,8 @@ fn card() -> MiniAppContent {
     }
 }
 
-fn active(players: Vec<UserId>, waiting_for: Vec<UserId>) -> MiniAppStatus {
-    MiniAppStatus::Active(MiniAppActive {
-        players,
-        waiting_for,
-        settings: None,
-    })
+fn active(players: Vec<UserId>) -> MiniAppStatus {
+    MiniAppStatus::Active(MiniAppActive { players, settings: None })
 }
 
 fn finished(players: Vec<UserId>, result: Option<&str>) -> MiniAppStatus {
@@ -1642,20 +1695,15 @@ fn finished(players: Vec<UserId>, result: Option<&str>) -> MiniAppStatus {
     })
 }
 
-fn started(players: Vec<UserId>, waiting_for: Vec<UserId>) -> MiniAppStatusUpdate {
-    started_with(players, waiting_for, None)
+fn started(players: Vec<UserId>) -> MiniAppStatusUpdate {
+    started_with(players, None)
 }
 
-fn started_with(players: Vec<UserId>, waiting_for: Vec<UserId>, settings: Option<&str>) -> MiniAppStatusUpdate {
+fn started_with(players: Vec<UserId>, settings: Option<&str>) -> MiniAppStatusUpdate {
     MiniAppStatusUpdate::Started(MiniAppStarted {
         players,
-        waiting_for,
         settings: settings.map(|s| s.to_string()),
     })
-}
-
-fn turn(waiting_for: Vec<UserId>) -> MiniAppStatusUpdate {
-    MiniAppStatusUpdate::Turn(MiniAppTurn { waiting_for })
 }
 
 fn ended(result: Option<&str>) -> MiniAppStatusUpdate {

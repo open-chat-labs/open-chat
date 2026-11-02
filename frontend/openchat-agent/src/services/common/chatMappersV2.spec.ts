@@ -315,7 +315,6 @@ describe("mini app content mapping", () => {
                 status: {
                     Active: {
                         players: [alice.toUint8Array(), bob.toUint8Array()],
-                        waiting_for: [bob.toUint8Array()],
                         settings: '{"target":2048}',
                     },
                 },
@@ -332,7 +331,6 @@ describe("mini app content mapping", () => {
             status: {
                 kind: "active",
                 players: [alice.toText(), bob.toText()],
-                waitingFor: [bob.toText()],
                 settings: '{"target":2048}',
             },
         });

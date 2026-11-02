@@ -34,14 +34,14 @@ function live(change: Partial<MiniAppLiveCard> = {}): MiniAppLiveCard {
 }
 
 describe("miniAppCardView", () => {
-    test("shows the card stored in the chat when the service isn't showing it live, with nothing to do", () => {
+    // The stored card doesn't record whose turn it is, which only the service shows, live
+    test("shows the card stored in the chat when the service isn't showing it live, with nothing to do and no one's turn", () => {
         expect(
             miniAppCardView(
                 card({
                     status: {
                         kind: "active",
                         players: ["alice", "bob"],
-                        waitingFor: ["bob"],
                         settings: undefined,
                     },
                 }),
@@ -52,10 +52,10 @@ describe("miniAppCardView", () => {
             status: "active",
             players: ["alice", "bob"],
             users: ["alice", "bob"],
-            waitingFor: ["bob"],
+            waitingFor: [],
             watching: undefined,
             result: undefined,
-            yourTurn: true,
+            yourTurn: false,
             showsApp: true,
             actions: [],
         });
@@ -88,7 +88,6 @@ describe("miniAppCardView", () => {
                 status: {
                     kind: "active",
                     players: ["alice", "bob"],
-                    waitingFor: ["bob"],
                     settings: undefined,
                 },
             }),
@@ -113,6 +112,26 @@ describe("miniAppCardView", () => {
             yourTurn: false,
             showsApp: false,
             actions: [],
+        });
+    });
+
+    test("whose turn it is is only shown live", () => {
+        const stored = card({
+            status: { kind: "active", players: ["alice", "bob"], settings: undefined },
+        });
+        const active = live({ status: "active", players: ["alice", "bob"], waitingFor: ["bob"] });
+
+        expect(miniAppCardView(stored, active, "bob")).toMatchObject({
+            waitingFor: ["bob"],
+            yourTurn: true,
+        });
+        expect(miniAppCardView(stored, active, "alice")).toMatchObject({
+            waitingFor: ["bob"],
+            yourTurn: false,
+        });
+        expect(miniAppCardView(stored, undefined, "bob")).toMatchObject({
+            waitingFor: [],
+            yourTurn: false,
         });
     });
 
@@ -163,7 +182,6 @@ describe("miniAppCardView", () => {
                     status: {
                         kind: "active",
                         players: ["alice"],
-                        waitingFor: ["alice"],
                         settings: undefined,
                     },
                 }),
@@ -218,7 +236,6 @@ describe("miniAppCardView", () => {
                     status: {
                         kind: "active",
                         players: ["alice"],
-                        waitingFor: ["alice"],
                         settings: undefined,
                     },
                 }),
@@ -286,8 +303,14 @@ describe("miniAppCardView's users", () => {
     });
 
     test("are just the players when there's no result, or it mentions no one", () => {
-        expect(miniAppCardView(finished(undefined), undefined, "bob").users).toEqual(["alice", "bob"]);
-        expect(miniAppCardView(finished("Bob won"), undefined, "bob").users).toEqual(["alice", "bob"]);
+        expect(miniAppCardView(finished(undefined), undefined, "bob").users).toEqual([
+            "alice",
+            "bob",
+        ]);
+        expect(miniAppCardView(finished("Bob won"), undefined, "bob").users).toEqual([
+            "alice",
+            "bob",
+        ]);
     });
 
     test("take the result from the live card while the service is showing it", () => {

@@ -890,10 +890,23 @@ impl ChatEvents {
         Ok((content, sender))
     }
 
-    // The MiniApp service updating a card's status: the game starting with its players, whose turn it
-    // is, then its finishing with its result. The rest of the card never changes, and nor does any of
-    // it once the game is finished. Unlike an edit, the message isn't marked as edited.
+    // The MiniApp service updating a card's status: the game starting with its players and settings,
+    // then its finishing with its result and end state. The rest of the card never changes, and nor
+    // does any of it once the game is finished. Unlike an edit, the message isn't marked as edited.
     pub fn update_mini_app(&mut self, args: UpdateMiniAppArgs) -> OCResult {
+        // A retry of a write which went through, which the card already says, changes nothing, so the
+        // message isn't marked updated for every member to sync again
+        if let Some((message, _)) =
+            self.message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
+            && message.deleted_by.is_none()
+            && let MessageContentInternal::MiniApp(card) = &message.content
+        {
+            let mut updated = card.clone();
+            updated.update(args.update.clone())?;
+            if updated.status == card.status {
+                return Ok(());
+            }
+        }
         match self.update_message(
             args.thread_root_message_index,
             args.message_id.into(),

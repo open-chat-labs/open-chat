@@ -25,7 +25,7 @@ pub mod user;
 pub mod user_map;
 
 use std::collections::HashSet;
-use types::MiniAppDefinition;
+use types::{MiniAppDefinition, is_valid_mini_app_name};
 use url::Url;
 
 pub const MAX_AVATAR_SIZE: usize = 250_000;
@@ -36,9 +36,9 @@ pub const MAX_MINI_APPS: usize = 100;
 // The LocalUserIndexes no longer send bots their notifications as JSON
 pub const JSON_DATA_ENCODING_NOT_SUPPORTED: &str = "JSON data encoding is not supported, use MsgPack or Candid";
 
-/// The apps a bot's definition declares, which its MiniApp cards name: each has a name, unique within
-/// the definition, and an image URL which is either absolute (http or https) or a path relative to the
-/// bot's endpoint, eg. "app/chess.svg"
+/// The apps a bot's definition declares, which its MiniApp cards name: each has a name, a slug unique
+/// within the definition (see `is_valid_mini_app_name`), and an image URL which is either absolute
+/// (http or https) or a path relative to the bot's endpoint, eg. "app/chess.svg"
 pub fn validate_mini_apps(mini_apps: &[MiniAppDefinition]) -> Result<(), String> {
     if mini_apps.len() > MAX_MINI_APPS {
         return Err(format!("too many mini apps, the most is {MAX_MINI_APPS}"));
@@ -46,12 +46,9 @@ pub fn validate_mini_apps(mini_apps: &[MiniAppDefinition]) -> Result<(), String>
     let base = Url::parse("https://example.com/").unwrap();
     let mut names = HashSet::new();
     for app in mini_apps {
-        if app.name.trim().is_empty() {
-            return Err("mini app name is blank".to_string());
-        }
-        if app.name.chars().count() > MiniAppDefinition::MAX_NAME_CHARS {
+        if !is_valid_mini_app_name(&app.name) {
             return Err(format!(
-                "mini app name \"{}\" is longer than {} characters",
+                "mini app name \"{}\" must be 1 to {} lowercase letters, digits, hyphens or underscores",
                 app.name,
                 MiniAppDefinition::MAX_NAME_CHARS
             ));
@@ -122,10 +119,25 @@ mod tests {
     }
 
     #[test]
-    fn names_are_non_blank_at_most_50_characters_and_unique() {
-        for name in ["", "  ", &"x".repeat(MiniAppDefinition::MAX_NAME_CHARS + 1)] {
-            assert!(validate_mini_apps(&[app(name, "app.svg")]).is_err(), "{name:?}");
+    fn names_are_unique_slugs_of_1_to_50_characters() {
+        for name in [
+            "",
+            "  ",
+            "Chess",
+            "my game",
+            "a/b",
+            "é",
+            &"x".repeat(MiniAppDefinition::MAX_NAME_CHARS + 1),
+        ] {
+            assert_eq!(
+                validate_mini_apps(&[app(name, "app.svg")]),
+                Err(format!(
+                    "mini app name \"{name}\" must be 1 to 50 lowercase letters, digits, hyphens or underscores"
+                )),
+                "{name:?}"
+            );
         }
+        assert!(validate_mini_apps(&[app("2048", "a.svg"), app("press_counter", "b.svg"), app("a-b", "c.svg")]).is_ok());
         assert!(validate_mini_apps(&[app("chess", "a.svg"), app("chess", "b.svg")]).is_err());
     }
 
