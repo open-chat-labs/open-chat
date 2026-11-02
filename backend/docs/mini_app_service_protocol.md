@@ -309,7 +309,7 @@ The service doesn't follow redirects from a bot's endpoint.
 
 ## App ↔ website: postMessage
 
-The website loads `<endpoint>/app` in a sandboxed iframe. It sends messages only to the app's origin, and takes them only from the app's frame and origin.
+The website loads `<endpoint>/app#oc_theme=dark` (or `light`, the user's theme as the frame's made) in a sandboxed iframe. It shows the app once the frame's loaded, which can be before it's initialised, so the app can draw itself in the user's theme from the start; a later change comes as `set_dark_mode`. It sends messages only to the app's origin, and takes them only from the app's frame and origin.
 
 **App → website:**
 - `{ kind: "mini_app_ready" }`

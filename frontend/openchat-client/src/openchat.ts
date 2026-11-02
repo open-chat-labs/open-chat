@@ -13478,6 +13478,23 @@ export class OpenChat {
         return () => localUpdates.deleteUnconfirmed(context, msgId);
     }
 
+    /**
+     * Whether an answer's message is the command's, whose placeholder has gone. A chat update which
+     * brings the message removes it: eg. one the bot posted before answering. The answer isn't
+     * shown then, or it'd be added again, as a message which never arrives. The placeholder also
+     * goes after 90 seconds, and an answer slower than that then waits for the message too.
+     */
+    #placeholderGone(scope: BotActionScope, messageId: bigint): boolean {
+        return (
+            scope.kind === "chat_scope" &&
+            messageId === scope.messageId &&
+            !localUpdates.isUnconfirmed(
+                { chatId: scope.chatId, threadRootMessageIndex: scope.threadRootMessageIndex },
+                messageId,
+            )
+        );
+    }
+
     executeBotCommand(
         scope: BotActionScope,
         bot: BotCommandInstance,
@@ -13533,7 +13550,7 @@ export class OpenChat {
                                         botId: bot.id,
                                         commandName: bot.command.name,
                                     });
-                                } else {
+                                } else if (!this.#placeholderGone(scope, resp.message.messageId)) {
                                     this.sendPlaceholderBotMessage(
                                         scope,
                                         botContext === undefined
