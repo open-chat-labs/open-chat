@@ -37,17 +37,16 @@ export function chatRestricted(chat: ChatSummary): boolean {
     return false;
 }
 
-// Message flags are the classifier's category bits (see MODERATION_CATEGORY_NAMES). Only the
-// severe categories hide a message: the classifier's plain violence, harassment and illicit
-// categories fire at its default thresholds on ordinary criticism, figures of speech and talk
-// about scams, which hid benign messages. Plain sexual content stays hidden because Adult content
-// is what the store build must not show.
+// Message flags are the classifier's category bits (see MODERATION_CATEGORY_NAMES). The store
+// build hides only what the store guidelines treat as objectionable: sexual content, graphic
+// violence and threats. The classifier's plain violence, harassment, illicit and self-harm
+// categories fire at its default thresholds on ordinary criticism, figures of speech, talk about
+// scams and people discussing their own struggles, so they don't hide anything.
 const RESTRICTED_MESSAGE_FLAGS =
     1 | // sexual
     2 | // sexual/minors
     8 | // violence/graphic
-    32 | // harassment/threatening
-    64; // self-harm
+    32; // harassment/threatening (includes hate/threatening)
 
 export function messageFlagsRestricted(moderationFlags: number | undefined): boolean {
     return appStoreBuild && ((moderationFlags ?? 0) & RESTRICTED_MESSAGE_FLAGS) !== 0;

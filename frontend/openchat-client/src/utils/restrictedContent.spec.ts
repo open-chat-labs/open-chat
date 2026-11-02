@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
+// The real stores module pulls in most of the client, which makes each fresh import slow
+vi.mock("../state/app/stores", () => ({ communitiesStore: { value: new Map() } }));
+
 async function load(appStore: boolean) {
     vi.resetModules();
     vi.stubEnv("OC_APP_STORE", appStore ? "true" : "false");
@@ -28,13 +31,7 @@ describe("messageFlagsRestricted", () => {
 
     test("hides severe categories in the app store build", async () => {
         const { messageFlagsRestricted } = await load(true);
-        for (const flag of [
-            sexual,
-            sexualMinors,
-            violenceGraphic,
-            harassmentThreatening,
-            selfHarm,
-        ]) {
+        for (const flag of [sexual, sexualMinors, violenceGraphic, harassmentThreatening]) {
             expect(messageFlagsRestricted(flag)).toBe(true);
         }
     });
@@ -44,8 +41,9 @@ describe("messageFlagsRestricted", () => {
         expect(messageFlagsRestricted(harassment)).toBe(false);
         expect(messageFlagsRestricted(violence)).toBe(false);
         expect(messageFlagsRestricted(illicit)).toBe(false);
-        expect(messageFlagsRestricted(harassment | violence | illicit)).toBe(false);
-        expect(messageFlagsRestricted(harassment | selfHarm)).toBe(true);
+        expect(messageFlagsRestricted(selfHarm)).toBe(false);
+        expect(messageFlagsRestricted(harassment | violence | illicit | selfHarm)).toBe(false);
+        expect(messageFlagsRestricted(harassment | harassmentThreatening)).toBe(true);
         expect(messageFlagsRestricted(undefined)).toBe(false);
     });
 });
