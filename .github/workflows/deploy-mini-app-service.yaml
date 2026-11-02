@@ -1,7 +1,8 @@
-# Deploys the MiniApp service to its EC2 host, which it shares with the Discord and Twitch bridges:
-# pushes its image to ECR as `latest`, then restarts the host's service, which pulls `latest` as it
-# starts. Only the image: the service's config, including its keys, stays as it is in SSM Parameter
-# Store. The host's setup is in backend/mini_app_service/README.md.
+# Deploys the MiniApp service to its EC2 host, which it shares with the Discord and Twitch bridges and
+# the price service: pushes its image to ECR as `latest`, installs the host's systemd unit and start
+# script from backend/mini_app_service/aws as they are in this commit, then restarts the service,
+# which pulls `latest` as it starts. The service's config, including its keys, stays as it is in SSM
+# Parameter Store. The rest of the setup is in backend/mini_app_service/README.md.
 on:
   workflow_dispatch:
   # Builds it, without deploying, when this workflow, the service or the toolchain changes
@@ -62,12 +63,23 @@ jobs:
           aws ecr get-login-password | docker login --username AWS --password-stdin "${IMAGE%%/*}"
           docker push "$IMAGE:${GITHUB_SHA::10}"
           docker push "$IMAGE:latest"
-      # A restart drops the website's connections, which reconnect, and games carry on from Redis.
-      # The deploy fails if the service doesn't start and stay up; systemd keeps restarting it.
-      - name: Restart the service
+      # The host runs the unit and start script in this commit: they're written to it before each
+      # restart, as base64, so their quotes and newlines arrive as they are. A restart drops the
+      # website's connections, which reconnect, and games carry on from Redis. The deploy fails if
+      # the service doesn't start and stay up; systemd keeps restarting it.
+      - name: Install and restart the service
         if: github.event_name == 'workflow_dispatch'
         run: |
-          script='set -eu
+          start=$(base64 -w0 backend/mini_app_service/aws/oc-mini-app-service-start)
+          unit=$(base64 -w0 backend/mini_app_service/aws/oc-mini-app-service.service)
+          install="set -eu
+          echo $start | base64 -d > /usr/local/bin/oc-mini-app-service-start.new
+          chmod 755 /usr/local/bin/oc-mini-app-service-start.new
+          mv /usr/local/bin/oc-mini-app-service-start.new /usr/local/bin/oc-mini-app-service-start
+          echo $unit | base64 -d > /etc/systemd/system/oc-mini-app-service.service
+          systemctl daemon-reload
+          systemctl enable -q oc-mini-app-service"
+          restart='set -eu
           fail() {
             echo "The MiniApp service $1. systemd keeps restarting it. Its logs are in CloudWatch, in /oc/mini-app-service."
             exit 1
@@ -82,6 +94,8 @@ jobs:
           # The previous image, which each deploy leaves untagged. Pruning fails while a bridge
           # deploy prunes the same host, which is no reason to fail this one.
           docker image prune -f || true'
+          script="$install
+          $restart"
           # A command the host doesn't pick up within 60s is dropped, rather than restarting the
           # service later, after this run has given up on it
           id=$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
