@@ -1,0 +1,19 @@
+# The MiniApp service's systemd unit on its EC2 host: /etc/systemd/system/oc-mini-app-service.service.
+# It runs `oc-mini-app-service-start`, which pulls the image `oc-mini-app-service:latest` from ECR,
+# writes the config from SSM Parameter Store and runs the container. The deploy workflow pushes a new
+# `latest` and restarts this unit.
+[Unit]
+Description=OpenChat MiniApp service
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+ExecStartPre=-/usr/bin/docker rm -f oc-mini-app-service
+ExecStart=/usr/local/bin/oc-mini-app-service-start
+ExecStop=/usr/bin/docker stop -t 20 oc-mini-app-service
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

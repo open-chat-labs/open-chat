@@ -1,0 +1,43 @@
+#!/bin/sh
+# Starts the MiniApp service on its EC2 host, for the systemd unit `oc-mini-app-service`, installed as
+# /usr/local/bin/oc-mini-app-service-start: pulls the image `oc-mini-app-service:latest` from ECR,
+# writes the config from SSM Parameter Store's /oc-mini-app-service/* to /run, readable only by root,
+# and runs the image with it. Its port, 8095 in the container, is 8083 on the host, as 8080 to 8082
+# are the Discord and Twitch bridges' and the price service's. Logs go to CloudWatch, in
+# /oc/mini-app-service, which is made beforehand, as the bridges' are.
+set -eu
+umask 077
+REGION=us-east-1
+IMAGE=253040722768.dkr.ecr.us-east-1.amazonaws.com/oc-mini-app-service:latest
+DIR=/run/oc-mini-app-service
+
+aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${IMAGE%%/*}"
+docker pull "$IMAGE"
+
+get() {
+    aws ssm get-parameter --region "$REGION" --with-decryption --name "/oc-mini-app-service/$1" \
+        --query Parameter.Value --output text
+}
+mkdir -p "$DIR"
+# The keys span lines, so they're passed as values of their own rather than in the env file
+get IC_IDENTITY_PEM > "$DIR/IC_IDENTITY_PEM"
+get MINI_APP_SERVICE_KEY_PEM > "$DIR/MINI_APP_SERVICE_KEY_PEM"
+{
+    echo "IC_URL=https://icp-api.io"
+    echo "IS_PRODUCTION=true"
+    echo "USER_INDEX_CANISTER_ID=$(get USER_INDEX_CANISTER_ID)"
+    echo "REDIS_URL=$(get REDIS_URL)"
+    echo "RUST_LOG=info"
+    # Plain logs, for CloudWatch, without a terminal's colours
+    echo "NO_COLOR=1"
+} > "$DIR/env"
+
+exec docker run --rm --name oc-mini-app-service \
+    --env-file "$DIR/env" \
+    -e IC_IDENTITY_PEM="$(cat "$DIR/IC_IDENTITY_PEM")" \
+    -e MINI_APP_SERVICE_KEY_PEM="$(cat "$DIR/MINI_APP_SERVICE_KEY_PEM")" \
+    -p 8083:8095 \
+    --log-driver awslogs \
+    --log-opt awslogs-region="$REGION" \
+    --log-opt awslogs-group=/oc/mini-app-service \
+    "$IMAGE"
