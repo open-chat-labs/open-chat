@@ -19,6 +19,9 @@
     slippagePct: number;
   }
 
+  /** A host's rejection of onQuote / onSwap that says why, in words to show (text); any other rejection shows Swap's own. */
+  export class SwapFailed extends Error {}
+
   /** One DEX's answer while quoting, and alongside the quote: its output, or why there's none. */
   export interface DexQuoteRow {
     dex: string;
@@ -88,12 +91,12 @@
     /** Token to pay with, by its id (WalletToken.id) or symbol; falls back to ICP. */
     token?: string;
     /** Find the best quote, telling `progress` of each DEX's answer as it comes in. Reject to go back to the form
-     *  with an error: an Error's message (text) is shown, else Swap's own. Without it, no quote can be fetched. */
+     *  with an error: a SwapFailed's message (text) is shown, else Swap's own. Without it, no quote can be fetched. */
     onQuote?: (r: SwapRequest, progress?: (quotes: DexQuoteRow[]) => void) => Promise<SwapQuote>;
     /** Run the swap; call onStep(i) as each of the 3 on-chain steps (0 approve, 1 swap, 2 withdraw) starts.
      *  `warningConfirmed`: the user confirmed the quote's `warning`. Resolve (optionally with the actual output) when
      *  it's in the wallet; resolve `false` when nothing was sent and there's nothing to say (the host's PIN prompt was
-     *  dismissed): back to the quote; reject to show an error (an Error's message, text, else Swap's own). */
+     *  dismissed): back to the quote; reject to show an error (a SwapFailed's message, text, else Swap's own). */
     onSwap?: (r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void; warningConfirmed: boolean }) => Promise<{ out?: number } | void | false>;
     /** The tokens that can be paid with (ids): held ones among them. Without it, any held token with a price. */
     payable?: string[];
@@ -147,9 +150,9 @@
   let quote = $state<SwapQuote | null>(null);
   let received = $state<number | null>(null);
   let error = $state<'' | 'quote' | 'swap'>('');
-  // the host's reason, when its rejection gives one (an Error's message), in place of Swap's own
+  // the host's reason, when its rejection gives one (a SwapFailed's message), in place of Swap's own
   let errorText = $state('');
-  const reasonOf = (e: unknown) => (e instanceof Error ? e.message : '');
+  const reasonOf = (e: unknown) => (e instanceof SwapFailed ? e.message : '');
   // a newer quote request (or an edit) makes an older pending one stale
   let run = 0;
   let pick = $state<'from' | 'to' | null>(null);

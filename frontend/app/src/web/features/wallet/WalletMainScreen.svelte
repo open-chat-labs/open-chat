@@ -91,10 +91,11 @@
         walletToken,
     } from "./wallet.adapter";
     import { walletCatalogue } from "./walletCatalogue.svelte";
-    import type {
-        DexQuoteRow,
-        SwapQuote as SwapQuoteView,
-        SwapRequest,
+    import {
+        SwapFailed,
+        type DexQuoteRow,
+        type SwapQuote as SwapQuoteView,
+        type SwapRequest,
     } from "@openchat/ui/src/features/components/WalletSwap.svelte";
     import { canPayWith, SwapForm } from "@src/logic/wallet/swapForm.svelte";
     import { TokenState } from "@src/logic/wallet/walletState.svelte";
@@ -587,9 +588,9 @@
         });
     }
 
-    // a reason Swap shows in place of its own (a rejection's message is shown as it is)
+    // a reason Swap shows in place of its own (SwapFailed's message); without one, Swap's own
     const swapFailure = (key: ResourceKey | undefined): Error =>
-        new Error(key === undefined ? "" : interpolate($_, key));
+        key === undefined ? new Error("nothing to say") : new SwapFailed(interpolate($_, key));
 
     // pay with a held, swappable token; buy one a DEX has a pool for with it (null while loading)
     const swapPayable = $derived(
