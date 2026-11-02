@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2203](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2203-user_index)] - 2026-11-02
+
 ### Added
 
 - Add support for the new MiniApp message content type ([#10300](https://github.com/open-chat-labs/open-chat/pull/10300))
