@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2202](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2202-cycles_dispenser)] - 2026-10-29
+
 ### Added
 
 - Record the cycles balance hourly, and before and after each top-up, ICP burn and upgrade ([#10289](https://github.com/open-chat-labs/open-chat/pull/10289))
