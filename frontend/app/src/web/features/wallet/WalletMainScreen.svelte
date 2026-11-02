@@ -617,10 +617,11 @@
         if (form === undefined || tokenIn === undefined || tokenOut === undefined) {
             throw swapFailure(undefined);
         }
-        // a quote still coming from an earlier visit is dropped; and none is asked for until the
-        // location check is in (6c invariant 1)
-        form.backToQuote();
+        // none is asked for until the location check is in (6c invariant 1); then a quote still
+        // coming (from an earlier visit, or a request made while the check ran) is dropped, after
+        // the wait, so the newest request is the last to drop the one before it
         if (await form.whenChecked()) throw swapFailure(i18nKey("restricted.swap"));
+        form.backToQuote();
         if (form.inToken.ledger !== tokenIn.ledger) form.selectIn(tokenIn);
         if (form.outToken?.ledger !== tokenOut.ledger) form.selectOut(tokenOut);
         form.inToken.draftAmount = amountUnits(request.amountText, tokenIn.decimals);
