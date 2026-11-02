@@ -159,7 +159,7 @@ export { quantiseWaveform, waveformLevels, type Dimensions } from "./utils/media
 export * from "./utils/permissions";
 export { Poller } from "./utils/poller";
 export * from "./utils/routes";
-export { dexName } from "./utils/swap";
+export { DEFAULT_SWAP_SLIPPAGE_PCT, dexName, swapMinimumOut } from "./utils/swap";
 export { formatTimeRemaining } from "./utils/time";
 export {
     allowsVoteChange,

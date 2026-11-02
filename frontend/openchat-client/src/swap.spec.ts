@@ -154,6 +154,13 @@ describe("swapping from the wallet", () => {
         ]);
     });
 
+    // 6c invariant 2: the minimum output is never below what the user agreed to: the quote less the
+    // slippage they chose
+    test("6c invariant 2: a chosen slippage sets the minimum output, never below it", async () => {
+        await client.swapTokens(quote, false, undefined, 0.5);
+        expect(swapsSent()).toEqual([expect.objectContaining({ minAmountOut: 4_975_000_000n })]);
+    });
+
     // Invariant: a quote with a value warning is only swapped once the user has confirmed it
     test("a quote with a value warning the user hasn't confirmed sends nothing", async () => {
         const warned: SwapQuote = { ...quote, valueWarning: "dropped" };

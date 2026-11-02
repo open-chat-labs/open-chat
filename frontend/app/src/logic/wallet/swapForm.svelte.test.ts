@@ -10,7 +10,7 @@ import {
     type SwapQuoteOutcome,
 } from "@client";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { SwapForm } from "./swapForm.svelte";
+import { canPayWith, canSwapTo, SwapForm } from "./swapForm.svelte";
 import { TokenState } from "./walletState.svelte";
 
 const icp: EnhancedTokenDetails = {
@@ -65,6 +65,7 @@ let answer: (outcome: SwapQuoteOutcome) => void;
 const client = {
     getTokenSwaps: vi.fn(() => Promise.resolve({ [chat.ledger]: ["icpswap", "taco"] })),
     refreshSwappableTokens: vi.fn(),
+    swapRestricted: vi.fn(() => Promise.resolve(false)),
     swapTokens: vi.fn(),
     getSwapQuotes: vi.fn(
         (
@@ -88,6 +89,7 @@ async function newForm(): Promise<SwapForm> {
         form = new SwapForm(client, new TokenState(icp));
     });
     await vi.waitFor(() => expect(form.loaded).toBe(true));
+    await vi.waitFor(() => expect(form.restricted).toBe(false));
     form.selectOut(chat);
     form.inToken.draftAmount = 100_000_000n;
     form.validAmount = true;
@@ -190,5 +192,83 @@ describe("quoting a swap from the wallet", () => {
         expect(form.quotes).toEqual([]);
         expect(form.stage).toBe("quote");
         expect(form.quote).toBeUndefined();
+    });
+
+    test("6c invariant 1: in a restricted location no quote is asked for and no swap is sent", async () => {
+        vi.mocked(client.swapRestricted).mockResolvedValueOnce(true);
+        let form!: SwapForm;
+        dispose = $effect.root(() => {
+            form = new SwapForm(client, new TokenState(icp));
+        });
+        await vi.waitFor(() => expect(form.restricted).toBe(true));
+        await vi.waitFor(() => expect(form.loaded).toBe(true));
+        form.selectOut(chat);
+        form.inToken.draftAmount = 100_000_000n;
+        form.validAmount = true;
+        expect(form.canQuote).toBe(false);
+        await form.getQuote();
+        await form.swap();
+        expect(client.getSwapQuotes).not.toHaveBeenCalled();
+        expect(client.swapTokens).not.toHaveBeenCalled();
+    });
+
+    test("a location that can't be checked counts as restricted", async () => {
+        vi.mocked(client.swapRestricted).mockRejectedValueOnce(new Error("offline"));
+        let form!: SwapForm;
+        dispose = $effect.root(() => {
+            form = new SwapForm(client, new TokenState(icp));
+        });
+        await vi.waitFor(() => expect(form.restricted).toBe(true));
+    });
+
+    test("the swap goes out with the slippage the user chose", async () => {
+        const form = await newForm();
+        const quoting = form.getQuote();
+        answer(tacoQuote);
+        await quoting;
+        vi.mocked(client.swapTokens).mockResolvedValueOnce({ kind: "swapped", amountOut: 1n });
+        await form.swap(0.5);
+        expect(client.swapTokens).toHaveBeenCalledWith(
+            tacoQuote.kind === "quoted" ? tacoQuote.quote : undefined,
+            false,
+            expect.any(Function),
+            0.5,
+        );
+    });
+
+    test("no quote with another token's swaps: they're for the token they were loaded for", async () => {
+        const form = await newForm();
+        let release!: () => void;
+        vi.mocked(client.getTokenSwaps).mockImplementationOnce(
+            () =>
+                new Promise((resolve) => (release = () => resolve({ [icp.ledger]: ["icpswap"] }))),
+        );
+        form.selectIn(chat);
+        form.selectOut(icp);
+        form.inToken.draftAmount = 100_000_000n;
+        form.validAmount = true;
+        // CHAT's swaps are still loading: ICP's don't count for it
+        expect(form.swapsFor).toBe(icp.ledger);
+        expect(form.canQuote).toBe(false);
+        release();
+        await vi.waitFor(() => expect(form.swapsFor).toBe(chat.ledger));
+    });
+});
+
+describe("the tokens a swap offers", () => {
+    test("6c invariant 5: 'from' and 'to' are never the same ledger", () => {
+        const swappable = new Set([icp.ledger, chat.ledger]);
+        expect(canPayWith(icp, swappable, chat.ledger)).toBe(true);
+        expect(canPayWith(icp, swappable, icp.ledger)).toBe(false);
+        expect(canSwapTo(chat, { [chat.ledger]: ["icpswap"] }, icp.ledger)).toBe(true);
+        expect(canSwapTo(icp, { [icp.ledger]: ["icpswap"] }, icp.ledger)).toBe(false);
+    });
+
+    test("pay with a held, swappable token; get one a DEX has a pool for, by ledger not symbol", () => {
+        const swappable = new Set([icp.ledger]);
+        expect(canPayWith({ ...icp, balance: 0n }, swappable, undefined)).toBe(false);
+        expect(canPayWith(chat, swappable, undefined)).toBe(false);
+        const twin = { ...chat, ledger: "another-chat" };
+        expect(canSwapTo(twin, { [chat.ledger]: ["taco"] }, icp.ledger)).toBe(false);
     });
 });

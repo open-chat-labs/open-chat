@@ -24,7 +24,7 @@
     import SwapProgress from "./SwapProgress.svelte";
     import SwapQuotes from "./SwapQuotes.svelte";
     import { TokenState } from "@src/logic/wallet/walletState.svelte";
-    import { SwapForm } from "@src/logic/wallet/swapForm.svelte";
+    import { canPayWith, canSwapTo, SwapForm } from "@src/logic/wallet/swapForm.svelte";
 
     interface Props {
         ledgerIn: string;
@@ -121,7 +121,7 @@
                             <div class="inner">
                                 <CryptoSelector
                                     filter={(t) =>
-                                        t.balance > 0 && $swappableTokensStore.has(t.ledger)}
+                                        canPayWith(t, $swappableTokensStore, form.outToken?.ledger)}
                                     ledger={form.inToken.ledger}
                                     onSelect={selectIn}
                                 />
@@ -140,7 +140,7 @@
                             <Legend label={i18nKey("cryptoAccount.transactionHeaders.to")} />
                             <div class="inner">
                                 <CryptoSelector
-                                    filter={(t) => t.ledger in form.swaps}
+                                    filter={(t) => canSwapTo(t, form.swaps, form.inToken.ledger)}
                                     bind:ledger={() => form.outToken?.ledger, selectOut}
                                 />
                             </div>

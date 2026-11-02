@@ -683,6 +683,7 @@ import {
     swapQuoteResult,
     swapResult,
     swapUnconfirmed,
+    swapMinimumOut,
 } from "./utils/swap";
 import { joinGroupFailureMessage } from "./utils/join";
 import { currentTip, tipResult } from "./utils/tip";
@@ -10739,14 +10740,15 @@ export class OpenChat {
 
     /**
      * Swaps the quoted amount straight from the user's wallet, provided the wallet still holds it and
-     * the output is at least 98% of the quote. A quote with a value warning is only swapped once the
-     * user has confirmed it. `onStep` is told of each step of the swap as it starts (see
+     * the output is at least the quote less `slippagePct` (2% when not given: 98% of the quote). A
+     * quote with a value warning is only swapped once the user has confirmed it. `onStep` is told of each step of the swap as it starts (see
      * `SwapFromWalletStep`). Both balances are refreshed once the swap has been sent.
      */
     async swapTokens(
         quote: SwapQuote,
         warningConfirmed: boolean,
         onStep?: (step: SwapFromWalletStep) => void,
+        slippagePct?: number,
     ): Promise<SwapOutcome> {
         if (quote.valueWarning !== undefined && !warningConfirmed) {
             return { kind: "failed", message: i18nKey("tokenSwap.confirmUnderstanding") };
@@ -10771,7 +10773,7 @@ export class OpenChat {
                 quote.ledgerIn,
                 quote.ledgerOut,
                 quote.amountIn,
-                (quote.amountOut * 98n) / 100n,
+                swapMinimumOut(quote.amountOut, slippagePct),
                 quote.dex,
                 onStep,
             );
