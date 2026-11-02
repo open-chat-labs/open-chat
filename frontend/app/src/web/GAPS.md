@@ -164,7 +164,7 @@ design export needs. Each entry says where it came up.
     a full screen button, while the card's on screen (`logic/miniApp/miniAppFrame.svelte.ts`), for a
     player or, if the game allows spectators, anyone, who's then watching it;
     `logic/miniApp/miniAppHost.svelte.ts` relays between the app and the service, and says when the
-    app, drawn unseen under its image until then, is shown in its place (`revealed`). The library
+    app, drawn unseen until then, is shown in place of its image (`revealed`). The library
     has no bubble for it, so the new UI shows its text (`contentText`) without the rest; the old
     UI's are `MiniAppContent.svelte` and `MiniAppFrame.svelte`.
 - **`ProfileDialog`, by hand** (8c, to go back to the design export): `sections`, the sections

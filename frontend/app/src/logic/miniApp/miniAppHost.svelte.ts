@@ -89,7 +89,7 @@ export class MiniAppHost {
     status = $state<MiniAppFrameStatus>({ kind: "opening" });
     // Whether the app's shown in place of its artwork: once it says it has drawn what it's for
     // (`mini_app_drawn`), or a moment after its page has loaded if it hasn't said by then. Until
-    // then it's drawn unseen under the artwork.
+    // then it's drawn unseen.
     revealed = $state(false);
     #games: MiniAppGames;
     #app: HostedMiniApp;
