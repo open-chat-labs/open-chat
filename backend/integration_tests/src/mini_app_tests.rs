@@ -793,6 +793,7 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
     };
     let (message_id, event_index) = post(env);
     let (other_message_id, _) = post(env);
+    let (third_message_id, _) = post(env);
     let write = |env: &mut PocketIc, message_id| {
         write_card(
             env,
@@ -844,6 +845,26 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
         .unwrap();
     assert_eq!(card.status, active(vec![owner.user_id, member.user_id]));
 
+    // A retry of the write, which went through, changes nothing, so members don't sync the message again
+    let since = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+    let response = write(env, message_id);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    env.tick();
+    let updated = client::group::happy_path::summary_updates(env, member.principal, group_id, since)
+        .map(|u| u.updated_events)
+        .unwrap_or_default();
+    assert!(
+        !updated
+            .iter()
+            .any(|(root, index, _)| *root == thread && *index == event_index),
+        "{updated:?}"
+    );
+
+    // A third game, under way when its bot is uninstalled below
+    let response = write(env, third_message_id);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
     client::group::happy_path::delete_messages(env, owner.principal, group_id, thread, vec![message_id]);
     let response = write(env, message_id);
     assert!(
@@ -867,6 +888,43 @@ fn the_mini_app_service_writes_a_card_in_a_groups_thread() {
     // Then writes the game as finished, so its card doesn't look like it's still being played
     let response = write_card(env, service, local_user_index, chat, thread, other_message_id, ended(None));
     assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    // A game under way when its bot was uninstalled ends, but without what the bot wrote, and a retry of
+    // that changes nothing
+    for _ in 0..2 {
+        let response = write_card(
+            env,
+            service,
+            local_user_index,
+            chat,
+            thread,
+            third_message_id,
+            ended_with(Some("Alice won"), Some("{\"fen\":\"8/8\"}")),
+        );
+        assert!(matches!(response, UnitResult::Success), "{response:?}");
+    }
+    let events = client::group::happy_path::thread_events(
+        env,
+        &member,
+        group_id,
+        root.message_index,
+        EventIndex::default(),
+        true,
+        10,
+        10,
+    );
+    let third = events
+        .events
+        .iter()
+        .find_map(|e| match &e.event {
+            ChatEvent::Message(m) if m.message_id == third_message_id => match &m.content {
+                MessageContent::MiniApp(c) => Some(c.clone()),
+                _ => None,
+            },
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(third.status, finished(vec![owner.user_id, member.user_id], None));
 }
 
 // That a card can't be forwarded either is in chat_events' unit tests: a member would be refused as

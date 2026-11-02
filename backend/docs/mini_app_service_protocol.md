@@ -343,6 +343,6 @@ A player's app sends the player token, in `x-oc-jwt`, with each request to the b
   - The service ends a game:
     - after 24 hours with no update from its bot, ending the card with no result;
     - when an update fails because the card was deleted (`MessageNotFound`);
-    - when an update fails because the bot was uninstalled (`BotNotFound`). It then ends the card with no result, which is let through, so the card doesn't look like it's still being played;
+    - when an update fails because the bot was uninstalled (`BotNotFound`), which only a start can, as a game under way only writes its card again when it ends. It then ends the card with no result, which is let through, so the card doesn't look like it's still being played. A game which ends after its bot was uninstalled is ended too, but without its result and end state, so nothing an uninstalled bot wrote reaches the chat;
     - when updates keep failing for a day.
   - A game which ended stays ended: posting its token again is refused.
