@@ -11,7 +11,7 @@
     import type { MiniAppActions } from "@src/logic/miniApp/miniAppActions.svelte";
     import { MiniAppFullScreen } from "@src/logic/miniApp/miniAppFrame.svelte";
     import { MiniAppHost, type HostedMiniApp } from "@src/logic/miniApp/miniAppHost.svelte";
-    import { MINI_APP_SANDBOX } from "@src/utils/miniApp";
+    import { MINI_APP_SANDBOX, miniAppFrameUrl } from "@src/utils/miniApp";
     import Translatable from "@shared_components/Translatable.svelte";
     import { BodySmall, Button, IconButton } from "component-lib";
     import { getContext, tick, untrack } from "svelte";
@@ -53,7 +53,9 @@
                 translate: (key) => interpolate($_, key),
             }),
     );
-    let url = $derived(app.url);
+    // as a string, which is the same when the bot's refreshed, while its URL is a new object which
+    // would frame the app again
+    let href = $derived(app.url.href);
     let botName = $derived(app.botName);
     // the size the app's designed for, which gives the frame its aspect ratio
     let size = $derived(app.content.appSize);
@@ -210,11 +212,13 @@ app (MiniAppFullScreen) -->
                     {/if}
                 </div>
             {/if}
+            <!-- Framed in the theme it's opened in: the app's told of a change after, rather than
+                 reloaded -->
             {#if showApp && active}
                 <iframe
                     title={botName}
                     bind:this={iframe}
-                    src={url.href}
+                    src={miniAppFrameUrl(href, untrack(() => darkMode))}
                     sandbox={MINI_APP_SANDBOX}
                     referrerpolicy="no-referrer"
                     onload={() => (loaded = true)}></iframe>

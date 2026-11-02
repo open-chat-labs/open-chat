@@ -27,6 +27,14 @@ function isLocal(hostname: string): boolean {
     return hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".localhost");
 }
 
+// The app's URL as it's framed, with the user's theme in the fragment, which the app can draw itself
+// in before it's initialised. The fragment never reaches the bot's server.
+export function miniAppFrameUrl(app: string, darkMode: boolean): string {
+    const url = new URL(app);
+    url.hash = `oc_theme=${darkMode ? "dark" : "light"}`;
+    return url.href;
+}
+
 // What OpenChat sends the app (backend/docs/mini_app_service_protocol.md, "App ↔ website")
 export type MiniAppHostMessage =
     // once the app says it's ready, and again whenever the user's role changes. Only a player gets a
