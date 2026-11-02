@@ -290,11 +290,10 @@ app (MiniAppFullScreen) -->
     }
 
     .app {
-        // at the app's aspect ratio, no taller than most of the screen
+        // at the app's aspect ratio, as wide as the card, which is sized for it (MiniAppContent)
         position: relative;
-        width: min(100%, calc(75dvh * var(--app-w) / var(--app-h)));
+        width: 100%;
         aspect-ratio: var(--app-w) / var(--app-h);
-        margin: 0 auto;
 
         .full-screen & {
             flex: auto;
