@@ -468,7 +468,7 @@ export class OpenChatAgent extends EventTarget {
         this._logger = config.logger;
         console.log("url", config.icUrl);
         this._agent = createHttpAgentSync(identity, config.icUrl);
-        this._chatsDb = new ChatsDb(this.principal);
+        this._chatsDb = new ChatsDb(this.principal, config.websiteVersion);
         this._userDb = new UserDb();
         this._registryDb = new RegistryDb();
         this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);

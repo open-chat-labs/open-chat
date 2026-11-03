@@ -4,6 +4,7 @@ import { beforeAll, describe, expect, test } from "vitest";
 import { ChatsDb, createCacheKey } from "./chatsDb";
 
 const chatId: GroupChatIdentifier = { kind: "group_chat", groupId: "gid" };
+const WEBSITE_VERSION = "2.0.2210";
 
 beforeAll(() => {
     // jsdom has no IndexedDB, so provide just enough of IDBKeyRange for the code under test.
@@ -65,7 +66,7 @@ function fakeDb(entries: Record<string, any>, byMessageIdx: Record<string, any> 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function chatsDbWith(entries: Record<string, any>, byMessageIdx: Record<string, any> = {}) {
     const { db, state } = fakeDb(entries, byMessageIdx);
-    const chatsDb = new ChatsDb({ toString: () => "principal" } as Principal);
+    const chatsDb = new ChatsDb({ toString: () => "principal" } as Principal, WEBSITE_VERSION);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (chatsDb as any).getDb = () => Promise.resolve(db);
     return { chatsDb, state };
@@ -166,6 +167,58 @@ describe("loadMessagesByMessageIndex", () => {
     });
 });
 
+describe("message content another version couldn't read", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function unsupported(index: number, messageIndex: number, unsupportedIn?: string): any {
+        const ev = messageEvent(index, messageIndex);
+        return {
+            ...ev,
+            event: { ...ev.event, content: { kind: "unsupported_content" } },
+            unsupportedIn,
+        };
+    }
+
+    const context = { chatId: chatId as ChatIdentifier, threadRootMessageIndex: undefined };
+
+    // 1 was cached by an older version, 2 by this one, and 3 before the version was noted
+    const cached = {
+        [key(1)]: unsupported(1, 1, "2.0.2209"),
+        [key(2)]: unsupported(2, 2, WEBSITE_VERSION),
+        [key(3)]: unsupported(3, 3),
+    };
+
+    test("is fetched again when read by event index", async () => {
+        const { chatsDb } = chatsDbWith(cached);
+
+        const [result, missing, dirty] = await chatsDb.getCachedEventsByIndex([1, 2, 3], context);
+        expect(result.events.map((e) => e.index)).toEqual([1, 2, 3]);
+        expect([...missing]).toEqual([]);
+        expect([...dirty]).toEqual([1, 3]);
+
+        const [notDirty, missingNotDirty] = await chatsDb.getCachedEventsByIndex(
+            [1, 2, 3],
+            context,
+            false,
+        );
+        expect(notDirty.events.map((e) => e.index)).toEqual([2]);
+        expect([...missingNotDirty]).toEqual([1, 3]);
+    });
+
+    test("is fetched again when read by message index", async () => {
+        const { chatsDb } = chatsDbWith({}, cached);
+
+        const { messageEvents, missing, dirty } = await chatsDb.loadMessagesByMessageIndex(
+            chatId as ChatIdentifier,
+            undefined,
+            [1, 2, 3],
+        );
+
+        expect(messageEvents.map((m) => m.index)).toEqual([1, 2, 3]);
+        expect([...missing]).toEqual([]);
+        expect([...dirty]).toEqual([1, 3]);
+    });
+});
+
 describe("the timestamps of cached details", () => {
     function chatsDbWithDetails() {
         const stores: Record<string, Map<string, unknown>> = {
@@ -179,7 +232,7 @@ describe("the timestamps of cached details", () => {
                 return Promise.resolve(key);
             },
         };
-        const chatsDb = new ChatsDb({ toString: () => "principal" } as Principal);
+        const chatsDb = new ChatsDb({ toString: () => "principal" } as Principal, WEBSITE_VERSION);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (chatsDb as any).getDb = () => Promise.resolve(db);
         return { chatsDb, stores };
