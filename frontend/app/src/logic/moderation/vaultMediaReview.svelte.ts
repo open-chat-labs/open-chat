@@ -28,12 +28,9 @@ export type ReviewOutcome = "viewed" | "not_authorized" | "not_found" | "error";
 // gate shut and the report unresolvable. A timeout is treated as a transient "error".
 export const REQUEST_TIMEOUT_MS = 60_000;
 
-function withTimeout<T>(promise: Promise<T>, ms: number, onTimeout?: () => void): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-        const timer = setTimeout(() => {
-            onTimeout?.();
-            reject(new Error(`Timed out after ${ms}ms`));
-        }, ms);
+        const timer = setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms);
         promise.then(
             (value) => {
                 clearTimeout(timer);
@@ -79,31 +76,47 @@ export class VaultMediaReview {
     }
 
     async #fetchDirect(ref: BlobReference): Promise<LoadedMedia | "error" | "not_found"> {
-        // One controller per fetch so a timeout aborts only that fetch; disposal aborts it too
+        // One controller per fetch so a stall aborts only that fetch; disposal aborts it too.
+        // The timeout is on progress, not on the whole download: a large live video on a slow
+        // link must still be reviewable, so the clock restarts with every chunk received
         const controller = new AbortController();
         const onDispose = () => controller.abort();
         this.#abort.signal.addEventListener("abort", onDispose);
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const touch = () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => controller.abort(), this.#timeoutMs);
+        };
         try {
-            return await withTimeout(
-                this.#fetchDirectInner(ref, controller.signal),
-                this.#timeoutMs,
-                () => controller.abort(),
-            );
+            touch();
+            const resp = await fetch(this.#client.reportedMediaUrl(ref), {
+                cache: "no-store",
+                signal: controller.signal,
+            });
+            // 404: the blob no longer exists - permanently gone. Anything else (including 403,
+            // which can come from a boundary node or proxy, not just deletion) is transient and
+            // must NOT complete the review gate
+            if (resp.status === 404) return "not_found";
+            if (!resp.ok) return "error";
+            const mimeType = resp.headers.get("content-type") ?? "application/octet-stream";
+            const parts: Uint8Array[] = [];
+            if (resp.body !== null) {
+                const reader = resp.body.getReader();
+                for (;;) {
+                    touch();
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    parts.push(value);
+                }
+            }
+            return {
+                url: URL.createObjectURL(new Blob(parts as BlobPart[], { type: mimeType })),
+                mimeType,
+            };
         } finally {
+            clearTimeout(timer);
             this.#abort.signal.removeEventListener("abort", onDispose);
         }
-    }
-
-    async #fetchDirectInner(ref: BlobReference, signal: AbortSignal): Promise<LoadedMedia | "error" | "not_found"> {
-        const resp = await fetch(this.#client.reportedMediaUrl(ref), { cache: "no-store", signal });
-        // 404: the blob no longer exists - permanently gone. Anything else (including 403,
-        // which can come from a boundary node or proxy, not just deletion) is transient and
-        // must NOT complete the review gate
-        if (resp.status === 404) return "not_found";
-        if (!resp.ok) return "error";
-        const bytes = await resp.arrayBuffer();
-        const mimeType = resp.headers.get("content-type") ?? "application/octet-stream";
-        return { url: URL.createObjectURL(new Blob([bytes], { type: mimeType })), mimeType };
     }
 
     async #fetchVault(ref: BlobReference): Promise<LoadedMedia | "error" | "not_authorized" | "not_found"> {
@@ -111,6 +124,10 @@ export class VaultMediaReview {
         let mimeType = "application/octet-stream";
         let chunkIndex = 0;
         let chunkCount = 1;
+        // A timed-out chunk call still runs on the canister and can land after a retry has
+        // started a new session, moving the session cursor past us. One restart from chunk 0
+        // (a fresh, logged session) recovers from that rather than failing the retry too
+        let restarted = false;
         while (chunkIndex < chunkCount) {
             const resp = await withTimeout(
                 this.#client.vaultFileChunk(ref.canisterId, ref.blobId, chunkIndex),
@@ -119,6 +136,13 @@ export class VaultMediaReview {
             if (this.#cancelled) return "error";
             if (resp.kind === "not_authorized") return "not_authorized";
             if (resp.kind === "not_found") return "not_found";
+            if (resp.kind === "session_required" && chunkIndex > 0 && !restarted) {
+                restarted = true;
+                chunks.length = 0;
+                chunkIndex = 0;
+                chunkCount = 1;
+                continue;
+            }
             if (resp.kind !== "success") return "error";
             chunks.push(resp.bytes);
             mimeType = resp.mimeType;

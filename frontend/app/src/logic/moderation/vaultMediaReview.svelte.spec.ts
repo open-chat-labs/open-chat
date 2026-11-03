@@ -64,6 +64,74 @@ describe("VaultMediaReview", () => {
         expect(review.stage).toBe("error");
     });
 
+    test("a slow download that keeps making progress is not cut off", async () => {
+        let reads = 0;
+        const body = {
+            getReader: () => ({
+                read: () =>
+                    new Promise<ReadableStreamReadResult<Uint8Array>>((resolve) =>
+                        setTimeout(
+                            () =>
+                                resolve(
+                                    ++reads <= 3
+                                        ? { done: false, value: new Uint8Array([reads]) }
+                                        : { done: true, value: undefined },
+                                ),
+                            800,
+                        ),
+                    ),
+            }),
+        };
+        vi.stubGlobal("fetch", () =>
+            Promise.resolve({
+                status: 200,
+                ok: true,
+                headers: new Headers({ "content-type": "video/mp4" }),
+                body,
+            }),
+        );
+        const review = new VaultMediaReview(
+            clientWith(() => new Promise(() => {})),
+            [ref],
+            false,
+            undefined,
+            1000,
+        );
+        const fetching = review.fetchAll();
+        // Four reads at 800ms each: 3.2s in total, well past the 1s stall timeout
+        await vi.advanceTimersByTimeAsync(3200);
+        await fetching;
+        expect(review.stage).toBe("view");
+        expect(review.items[0]?.mimeType).toBe("video/mp4");
+    });
+
+    test("a session knocked out of order by a stale call restarts once from chunk 0", async () => {
+        const requested: number[] = [];
+        const chunk = (chunkIndex: number): VaultFileChunkResponse => ({
+            kind: "success",
+            bytes: new Uint8Array([chunkIndex]),
+            chunkIndex,
+            chunkCount: 2,
+            totalSize: 2n,
+            mimeType: "image/png",
+        });
+        let firstChunkOne = true;
+        const client = {
+            vaultFileChunk: (_c: string, _b: bigint, chunkIndex: number) => {
+                requested.push(chunkIndex);
+                if (chunkIndex === 1 && firstChunkOne) {
+                    firstChunkOne = false;
+                    return Promise.resolve({ kind: "session_required" } as VaultFileChunkResponse);
+                }
+                return Promise.resolve(chunk(chunkIndex));
+            },
+        } as Partial<OpenChat> as OpenChat;
+        const review = new VaultMediaReview(client, [ref], true, undefined, 1000);
+        await review.fetchAll();
+        expect(requested).toEqual([0, 1, 0, 1]);
+        expect(review.stage).toBe("view");
+    });
+
     test("a vault chunk that arrives in time is shown", async () => {
         const outcomes: ReviewOutcome[] = [];
         const review = new VaultMediaReview(

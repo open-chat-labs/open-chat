@@ -118,6 +118,9 @@
     function onReviewResult(outcome: "viewed" | "not_authorized" | "not_found" | "error") {
         if (outcome === "viewed") {
             mediaReviewed = true;
+            // A later successful review supersedes an earlier skip or failure
+            mediaSkipped = false;
+            mediaFetchFailed = false;
         } else if (outcome === "not_authorized") {
             reviewerRequired = true;
         } else if (outcome === "not_found") {
@@ -491,7 +494,7 @@
                 <Translatable resourceKey={i18nKey("moderationReport.mediaUnavailable")} />
             </Body>
         {/if}
-        {#if needsMediaReview && mediaFetchFailed}
+        {#if needsMediaReview && mediaFetchFailed && !reviewerRequired}
             <Body colour="validationError">
                 <Translatable resourceKey={i18nKey("moderationReport.mediaFetchFailed")} />
             </Body>

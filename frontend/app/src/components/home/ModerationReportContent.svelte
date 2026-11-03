@@ -125,6 +125,9 @@
     function onReviewResult(outcome: "viewed" | "not_authorized" | "not_found" | "error") {
         if (outcome === "viewed") {
             mediaReviewed = true;
+            // A later successful review supersedes an earlier skip or failure
+            mediaSkipped = false;
+            mediaFetchFailed = false;
         } else if (outcome === "not_authorized") {
             reviewerRequired = true;
         } else if (outcome === "not_found") {
