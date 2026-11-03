@@ -283,6 +283,7 @@ import type {
 } from "../../typebox";
 import type { ChatsDb } from "../../utils/chatsDb";
 import { toRecord2 } from "../../utils/list";
+import { UNSUPPORTED_CUSTOM_CONTENT_KIND } from "../../utils/unsupportedContent";
 import {
     bigintToBytes,
     bytesToBigint,
@@ -868,7 +869,10 @@ export function messageContent(value: TMessageContent, sender: string): MessageC
             kind: "encrypted_content",
         };
     }
-    throw new UnsupportedValueError("Unexpected ApiMessageContent type received", value);
+    // Validation has already replaced any type it doesn't know, so this is only reached if the
+    // schema knows a type these mappers don't
+    console.warn("Unexpected ApiMessageContent type received", Object.keys(value));
+    return { kind: "unsupported_content" };
 }
 
 function moderationReportContent(value: TModerationReportContent): ModerationReportContent {
@@ -1018,7 +1022,11 @@ function customContent(value: TCustomContent): MessageContent {
         };
     }
 
-    throw new Error(`Unknown custom content kind received: ${value.kind}`);
+    // Includes UNSUPPORTED_CUSTOM_CONTENT_KIND, which stands in for content of an unknown type
+    if (value.kind !== UNSUPPORTED_CUSTOM_CONTENT_KIND) {
+        console.warn(`Unknown custom content kind received: ${value.kind}`);
+    }
+    return { kind: "unsupported_content" };
 }
 
 function messageReminderCreated(
@@ -1949,6 +1957,7 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
         case "p2p_swap_content":
         case "encrypted_content":
         case "restricted_content":
+        case "unsupported_content":
         case "mini_app_content": // only bots post them, and they can't be forwarded
             throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);
     }

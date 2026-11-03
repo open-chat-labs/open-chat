@@ -22,6 +22,7 @@
     import P2PSwapContent from "./P2PSwapContent.svelte";
     import PlaceholderContent from "@shared_components/home/PlaceholderContent.svelte";
     import RestrictedMessageContent from "@shared_components/home/RestrictedMessageContent.svelte";
+    import UnsupportedContent from "@shared_components/home/UnsupportedContent.svelte";
     import PollContent from "./PollContent.svelte";
     import PrizeContent from "./PrizeContent.svelte";
     import PrizeWinnerContent from "@shared_components/home/PrizeWinnerContent.svelte";
@@ -102,6 +103,8 @@
 
 {#if content.kind === "restricted_content"}
     <RestrictedMessageContent />
+{:else if content.kind === "unsupported_content"}
+    <UnsupportedContent />
 {:else if content.kind === "text_content"}
     <TextContent
         {me}

@@ -3,6 +3,7 @@ import { Kind, type Static, type TSchema } from "@sinclair/typebox";
 import { deepRemoveNullishFields } from "./nullish";
 import { TypeboxValidationError } from "@shared/domain/error";
 import { redactSecrets } from "@shared/utils/redact";
+import { replaceUnsupportedContent } from "./unsupportedContent";
 
 // Whether a schema or anything beneath it carries a `default` annotation. Value.Default is
 // deep-identity on a subtree with no defaults, so such subtrees can be skipped entirely.
@@ -120,6 +121,12 @@ function applyDefaults(schema: TSchema, value: unknown): unknown {
     }
 }
 
+function parse<T extends TSchema>(value: unknown, validator: T): Static<T> {
+    const converted = Value.Convert(validator, applyDefaults(validator, value));
+    Value.Assert(validator, converted);
+    return converted as Static<T>;
+}
+
 // Equivalent to Value.Parse(["Default", "Convert", "Assert"], schema, value), with the
 // Default step replaced by applyDefaults above. Convert is kept as-is (it is what turns
 // msgpack numbers/strings into bigints) and Value.Assert is the Parse "Assert" step.
@@ -129,14 +136,23 @@ export function typeboxValidate<T extends TSchema>(
     validator: T,
     methodName?: string,
 ): Static<T> {
+    const withoutNullish = deepRemoveNullishFields(value);
     try {
-        const converted = Value.Convert(
-            validator,
-            applyDefaults(validator, deepRemoveNullishFields(value)),
-        );
-        Value.Assert(validator, converted);
-        return converted as Static<T>;
+        return parse(withoutNullish, validator);
     } catch (err) {
+        // Only looked for once validation fails, so that valid responses pay nothing for it
+        if (replaceUnsupportedContent(validator, withoutNullish)) {
+            try {
+                const parsed = parse(withoutNullish, validator);
+                console.warn(
+                    "Received message content of a type this version doesn't support",
+                    methodName,
+                );
+                return parsed;
+            } catch {
+                // Report the original failure below
+            }
+        }
         // Not `err` itself: an AssertError holds the value which failed, PIN and all
         const error = withPath(err);
         console.error("Typebox validation failed: ", redactSecrets(value, methodName), error);

@@ -116,7 +116,13 @@ export type MessageContent =
     | VideoCallContent
     | EncryptedContent
     | PriceChartContent
-    | MiniAppContent;
+    | MiniAppContent
+    | UnsupportedContent;
+
+// Content of a type this version of the app doesn't know, because the backend was released first
+export type UnsupportedContent = {
+    kind: "unsupported_content";
+};
 
 export type VideoCallParticipant = {
     userId: string;

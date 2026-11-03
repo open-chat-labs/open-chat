@@ -1574,6 +1574,7 @@
     "membersAreTyping": "Учасники {number} пишуть",
     "membersHeader": "{level} учасників",
     "messageBlocked": "Повідомлення приховано",
+    "messageUnsupported": "Для цього повідомлення потрібна новіша версія OpenChat",
     "messageDeleted": "Повідомлення видалено {username} {timestamp}",
     "messageDeletedByOpenChatBot": "Про це повідомлення спочатку повідомив користувач OpenChat, потім було надіслано до [Modclub]({modclub}), де було вирішено, що повідомлення порушує [правило платформи]({rules}), і зрештою видалено {username} {xyz }",
     "messages": "Повідомлення",

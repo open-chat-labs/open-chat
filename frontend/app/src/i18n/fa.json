@@ -1574,6 +1574,7 @@
     "membersAreTyping": "اعضای {number} در حال تایپ هستند",
     "membersHeader": "اعضای {level}",
     "messageBlocked": "پیام پنهان شد",
+    "messageUnsupported": "این پیام به نسخه جدیدتری از OpenChat نیاز دارد",
     "messageDeleted": "پیام توسط {username} در {timestamp} حذف شد",
     "messageDeletedByOpenChatBot": "این پیام ابتدا توسط یک کاربر OpenChat گزارش شد، سپس به [Modclub]({modclub}) ارسال شد، جایی که تصمیم بر این شد که پیام [قانون پلتفرم] ({rules}) را زیر پا گذاشته و در نهایت توسط {username} در {xyz حذف شد. }",
     "messages": "پیام ها",

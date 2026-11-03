@@ -1574,6 +1574,7 @@
     "membersAreTyping": "חברי {number} מקלידים",
     "membersHeader": "חברי {level}",
     "messageBlocked": "הודעה מוסתרת",
+    "messageUnsupported": "הודעה זו דורשת גרסה חדשה יותר של OpenChat",
     "messageDeleted": "ההודעה נמחקה על ידי {username} ב-{timestamp}",
     "messageDeletedByOpenChatBot": "הודעה זו דווחה לראשונה על ידי משתמש OpenChat, לאחר מכן נשלחה אל [Modclub]({modclub}), שם הוחלט שההודעה מפרה [כלל פלטפורמה]({rules}), ולבסוף נמחקה על ידי {username} ב-{xyz }",
     "messages": "הודעות",

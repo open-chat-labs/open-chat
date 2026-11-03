@@ -1565,6 +1565,7 @@
     "membersAreTyping": "{number} members are typing",
     "membersHeader": "{level} members",
     "messageBlocked": "Message hidden",
+    "messageUnsupported": "This message needs a newer version of OpenChat",
     "messageDeleted": "Message deleted by {username} on {timestamp}",
     "messageDeletedByOpenChatBot": "This message was removed by {username} for breaking a [platform rule]({rules}) on {timestamp}",
     "messages": "Messages",
