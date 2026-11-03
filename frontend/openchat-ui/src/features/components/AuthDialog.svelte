@@ -218,6 +218,8 @@
   // the referrer field takes a search, or (with resolveReferrer) a pasted invite link
   let refPaste = $state(false);
   let refProblem = $state<'no_referrer' | 'unknown' | null>(null);
+  // a link waiting to be looked up, or being looked up: Continue waits for it, so the referral isn't left out
+  let refPending = $state(false);
   let pasteTimer: ReturnType<typeof setTimeout> | undefined;
   let pasteRun = 0;
 
@@ -225,39 +227,45 @@
     refPaste = !refPaste;
     refQuery = '';
     refProblem = null;
+    refPending = false;
     pasteRun++;
     clearTimeout(pasteTimer);
   }
 
-  // the link as typed or pasted, looked up once it stops changing (a link typed out isn't looked up per keystroke);
+  // the link as typed or pasted: a paste is looked up at once, typing once it stops changing (not per keystroke);
   // only the latest text's answer is kept
-  function pastedLink(text: string) {
+  function pastedLink(text: string, pasted: boolean) {
     refQuery = text;
     refProblem = null;
     const mine = ++pasteRun;
     clearTimeout(pasteTimer);
-    pasteTimer = setTimeout(() => void lookUpLink(text, mine), CHECK_MS);
+    if (referralCode(text) === undefined && text.trim().length <= 6) {
+      // a few characters in, it's still being typed
+      refPending = false;
+      return;
+    }
+    refPending = true;
+    if (pasted) void lookUpLink(text, mine);
+    else pasteTimer = setTimeout(() => void lookUpLink(text, mine), CHECK_MS);
   }
 
   async function lookUpLink(text: string, mine: number) {
     const code = referralCode(text);
-    if (code === undefined) {
-      // a few characters in it's still being typed; past that it isn't a link with a referrer
-      if (text.trim().length > 6) refProblem = 'no_referrer';
-      return;
-    }
     let person: Person | undefined;
-    try {
-      person = await resolveReferrer?.(code);
-    } catch {
-      person = undefined;
+    if (code !== undefined) {
+      try {
+        person = await resolveReferrer?.(code);
+      } catch {
+        person = undefined;
+      }
     }
     if (mine !== pasteRun) return;
+    refPending = false;
     if (person) {
       pickReferrer(person);
       refQuery = '';
       refPaste = false;
-    } else refProblem = 'unknown';
+    } else refProblem = code === undefined ? 'no_referrer' : 'unknown';
   }
 
   let checkTimer: ReturnType<typeof setTimeout> | undefined;
@@ -406,7 +414,7 @@
   let agreed = $state(false);
 
   function submitSignup() {
-    if (!free || recoveryBad || !agreed || !onSignup) return;
+    if (!free || recoveryBad || !agreed || refPending || !onSignup) return;
     attempt('signup', () =>
       onSignup({ username, email: isEmail(recovery) ? recovery.trim() : undefined, referrer: referrer?.handle, referrerId: referrer?.userId, termsAccepted: agreed }),
     );
@@ -633,7 +641,7 @@
               <span class="field" class:bad={refProblem !== null}>
                 <span class="search-icon" class:link={refPaste}></span>
                 {#if refPaste}
-                  <input data-auth-input="" value={refQuery} oninput={(e) => pastedLink(e.currentTarget.value)} placeholder={t('ui.authDialog.referrerPaste')} aria-label={t('ui.authDialog.referrer')} />
+                  <input data-auth-input="" value={refQuery} oninput={(e) => pastedLink(e.currentTarget.value, e instanceof InputEvent && e.inputType === 'insertFromPaste')} placeholder={t('ui.authDialog.referrerPaste')} aria-label={t('ui.authDialog.referrer')} />
                 {:else}
                   <input data-auth-input="" bind:value={refQuery} placeholder={t('ui.authDialog.referrerSearch')} aria-label={t('ui.authDialog.referrer')} />
                 {/if}
@@ -671,7 +679,7 @@
                 ></label
               >{#if failed === 'signup'}<span class="signup-error" role="alert">{t(failReason ?? 'ui.authDialog.signupFailed')}</span>{/if}</span
             >
-            <button class="continue" class:ready={free && !recoveryBad && agreed && !waiting} type="submit" disabled={!free || recoveryBad || !agreed || !!waiting}>{t(waiting === 'signup' ? 'ui.authDialog.creating' : 'ui.common.continue')}</button>
+            <button class="continue" class:ready={free && !recoveryBad && agreed && !refPending && !waiting} type="submit" disabled={!free || recoveryBad || !agreed || refPending || !!waiting}>{t(waiting === 'signup' ? 'ui.authDialog.creating' : 'ui.common.continue')}</button>
           </div>
         </form>
       {/if}
