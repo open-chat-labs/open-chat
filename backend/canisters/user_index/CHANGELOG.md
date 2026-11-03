@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- A text classifier CSAM flag no longer suspends the sender before a moderator's verdict; media hash matches still do, and upgrade an open report on the same message ([#10361](https://github.com/open-chat-labs/open-chat/pull/10361))
+
 ### Added
 
 - Support bot command args that are only visible when a condition is met (eg. when game is "chess") ([#10350](https://github.com/open-chat-labs/open-chat/pull/10350))
