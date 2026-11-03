@@ -91,8 +91,9 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
                 {
                     if is_csam {
                         // Notify the user_index (via the local_user_index) which applies the CSAM
-                        // auto-sanction: delete the message, suspend the sender, and post an
-                        // alert to the internal moderation channel
+                        // auto-sanction: delete the message, quarantine its media, and post an
+                        // alert to the internal moderation channel. A text flag does not suspend
+                        // the sender; that waits for a moderator's verdict
                         let args = local_user_index_canister::CsamDetected {
                             channel_id: Some(channel_id),
                             thread_root_message_index: ev.thread_root_message_index,

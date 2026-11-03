@@ -83,17 +83,19 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
         }
     };
 
-    // Reports which were auto-sanctioned had the sanction (deletion + indefinite suspension +
-    // quarantine) applied at detection time; the verdict confirms or reverses it. Escalated
-    // reports had no sanction applied, so an upholding verdict applies one now.
+    // Reports which were auto-sanctioned had the protection (deletion + quarantine) applied at
+    // detection time, plus an indefinite suspension for media hash matches only; the verdict
+    // confirms or reverses it. Escalated reports had nothing applied, so an upholding verdict
+    // applies the sanction now.
     let was_auto_sanctioned = matches!(reported_message.automated_action(), Some(ModerationAction::AutoSanctioned));
 
     match args.verdict {
         ModerationVerdict::UpheldAsCsam => {
             if was_auto_sanctioned {
-                // The suspension becomes (or stays) indefinite: reporter-asserted sanctions
-                // deliberately defer suspension to this verdict, and for classifier detections
-                // the call is a no-op since the sender is already indefinitely suspended. The
+                // The suspension becomes (or stays) indefinite: reporter assertions and text
+                // classifier detections deliberately defer suspension to this verdict, and for
+                // hash matches the call is a no-op since the sender is already indefinitely
+                // suspended. The
                 // chat-canister copy is permanently removed; the vault copy persists with the
                 // retention clock started, and an authority report becomes due.
                 moderation::suspend_sender(reported_message.sender, None, now, state);
@@ -167,8 +169,9 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
         }
         ModerationVerdict::Upheld => {
             if was_auto_sanctioned {
-                // A rules violation but not CSAM: the indefinite CSAM suspension is downgraded
-                // to the standard severity, the chat copy is removed, and the vault releases
+                // A rules violation but not CSAM: the sender gets the standard severity (an
+                // indefinite hash-match suspension is downgraded to it), the chat copy is
+                // removed, and the vault releases
                 // the media (no preservation duty applies to non-CSAM content)
                 moderation::hard_delete_message(
                     reported_message.chat_id,

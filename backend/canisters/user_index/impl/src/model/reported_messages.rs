@@ -388,31 +388,52 @@ impl ReportedMessages {
         }
     }
 
-    // Records a proactive (pipeline) CSAM detection. Returns the report index and whether a
-    // new report was created (vs filling in an unresolved user report - already recorded
-    // against the sender), or None if an outcome already exists (duplicate event - the
-    // sanction must not re-apply).
-    pub fn add_proactive_detection(&mut self, args: AddProactiveDetectionArgs) -> Option<(u64, bool)> {
+    // Records a proactive (pipeline) detection: a CSAM detection or a moderation referral.
+    // See ProactiveDetectionResult for what the caller must apply in each case.
+    pub fn add_proactive_detection(&mut self, args: AddProactiveDetectionArgs) -> ProactiveDetectionResult {
         let key = (args.chat_id, args.thread_root_message_index, args.message_index);
         let outcome = ReportOutcome::Automated(AutomatedOutcome {
             timestamp: args.timestamp,
             flagged_categories: args.flags,
             action: args.action,
-            // Pipeline CSAM detections suspend at detection time; referrals never do
-            sanctioned: matches!(args.action, ModerationAction::AutoSanctioned),
+            // Only a media hash match suspends at detection time. A text classifier flag (a
+            // single message judged without context) protects and escalates but never
+            // suspends before a verdict; referrals never do either.
+            sanctioned: args.suspend_sender,
             classification_failed: false,
             human_verdict: None,
         });
 
         if let Some(&index) = self.lookup.get(&key) {
             let message = self.messages.get_mut(index).unwrap();
-            if message.outcome.is_some() {
-                // The sanction must not re-apply, but hash-match provenance arriving after a
-                // classifier-first detection still belongs on the report's audit trail
+            if let Some(existing) = message.outcome.as_mut() {
+                // Hash-match provenance arriving after a classifier-first detection belongs on
+                // the report's audit trail
                 if !args.media_matches.is_empty() && message.media_matches.is_empty() {
                     message.media_matches = args.media_matches;
                 }
-                None
+                // A hash match arriving after an outcome which did not suspend (a text flag, a
+                // reporter assertion or a referral) and is still awaiting its verdict: the
+                // stronger evidence upgrades it to a sanctioned CSAM detection. Recorded here,
+                // once, so that a redelivered event finds it sanctioned and applies nothing.
+                if args.suspend_sender
+                    && let ReportOutcome::Automated(a) = existing
+                    && !a.sanctioned
+                    && a.human_verdict.is_none()
+                {
+                    a.sanctioned = true;
+                    a.action = ModerationAction::AutoSanctioned;
+                    a.flagged_categories |= args.flags;
+                    // The quarantine must cover the blobs which actually matched
+                    for blob in args.blob_references {
+                        if !message.blob_references.iter().any(|b| b.blob_id == blob.blob_id) {
+                            message.blob_references.push(blob);
+                        }
+                    }
+                    return ProactiveDetectionResult::UpgradedToSanction(index as u64);
+                }
+                // Otherwise a duplicate: the outcome's actions must not re-apply
+                ProactiveDetectionResult::OutcomeExists
             } else {
                 message.outcome = Some(outcome);
                 message.blob_references = args.blob_references;
@@ -421,7 +442,7 @@ impl ReportedMessages {
                     message.content_excerpt = args.content_excerpt;
                 }
                 self.pending_classifications.remove(&(index as u64));
-                Some((index as u64, false))
+                ProactiveDetectionResult::FilledUserReport(index as u64)
             }
         } else {
             let new_index = self.messages.len();
@@ -449,7 +470,7 @@ impl ReportedMessages {
                 repeat_attempts: Vec::new(),
                 unrecorded_repeat_attempts: 0,
             });
-            Some((new_index as u64, true))
+            ProactiveDetectionResult::New(new_index as u64)
         }
     }
 
@@ -627,7 +648,8 @@ pub struct AddReportArgs {
 
 #[derive(Clone)]
 pub struct AddProactiveDetectionArgs {
-    // AutoSanctioned for CSAM detections, EscalatedForHumanReview for moderation referrals
+    // AutoSanctioned for CSAM detections (the message is deleted and its media quarantined),
+    // EscalatedForHumanReview for moderation referrals
     pub action: ModerationAction,
     pub chat_id: Chat,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -638,7 +660,22 @@ pub struct AddProactiveDetectionArgs {
     pub blob_references: Vec<BlobReference>,
     pub media_matches: Vec<types::MediaScanMatch>,
     pub content_excerpt: Option<String>,
+    // True only for media hash matches: the one detection trusted to suspend before a verdict
+    pub suspend_sender: bool,
     pub timestamp: TimestampMillis,
+}
+
+pub enum ProactiveDetectionResult {
+    // A new report was created (and must be recorded against the sender)
+    New(u64),
+    // An unresolved user report awaiting classification was filled in (already recorded
+    // against the sender)
+    FilledUserReport(u64),
+    // A hash match landed on a report whose outcome did not suspend: the sanction applies now,
+    // and the report's existing alert is updated rather than a second one posted
+    UpgradedToSanction(u64),
+    // The report already has an outcome (a duplicate event): nothing may re-apply
+    OutcomeExists,
 }
 
 #[derive(PartialEq, Debug)]
@@ -861,9 +898,10 @@ pub struct AutomatedOutcome {
     pub timestamp: TimestampMillis,
     pub flagged_categories: u32,
     pub action: ModerationAction,
-    // True only when a suspension was actually applied without a verdict (classifier
-    // detections). A reporter-asserted quarantine sets AutoSanctioned action but NOT this:
-    // an unverified assertion must never count as a strike nor block an unsuspension.
+    // True only when a suspension was actually applied without a verdict (media hash matches;
+    // text classifier detections recorded before that rule also set it). A text classifier
+    // flag or a reporter-asserted quarantine sets AutoSanctioned action but NOT this: neither
+    // must count as a strike, block an unsuspension, or suspend third-party re-posters.
     #[serde(default)]
     pub sanctioned: bool,
     // True if the OpenAI classification could not be completed (even after retries), in which
@@ -884,7 +922,8 @@ pub struct HumanVerdict {
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ModerationAction {
-    // CSAM: the message was deleted and the sender suspended, then escalated to the moderators
+    // Suspected CSAM: the message was deleted and its media quarantined, then escalated to the
+    // moderators. The sender is also suspended only when `AutomatedOutcome::sanctioned` is set
     AutoSanctioned,
     // Escalated to the internal moderation channel for human review
     EscalatedForHumanReview,
@@ -916,8 +955,15 @@ pub fn build_message_to_reporter(reported_message: &ReportedMessage, reporter: U
             }
             let link = build_message_link(reported_message);
             match outcome.action {
-                ModerationAction::AutoSanctioned => format!(
+                ModerationAction::AutoSanctioned if outcome.sanctioned => format!(
                     "You reported [this message]({link}) for breaking [the platform rules](https://oc.app/guidelines?section=3). Automated moderation determined that it contained prohibited content, so the message has been removed and the sender suspended."
+                ),
+                // Direct chat messages are never deleted by moderation
+                ModerationAction::AutoSanctioned if matches!(reported_message.chat_id, Chat::Direct(_)) => format!(
+                    "You reported [this message]({link}) for breaking [the platform rules](https://oc.app/guidelines?section=3). It has been referred to the OpenChat moderation team for review."
+                ),
+                ModerationAction::AutoSanctioned => format!(
+                    "You reported [this message]({link}) for breaking [the platform rules](https://oc.app/guidelines?section=3). The message has been removed and referred to the OpenChat moderation team for review."
                 ),
                 ModerationAction::EscalatedForHumanReview => format!(
                     "You reported [this message]({link}) for breaking [the platform rules](https://oc.app/guidelines?section=3). It has been referred to the OpenChat moderation team for review."

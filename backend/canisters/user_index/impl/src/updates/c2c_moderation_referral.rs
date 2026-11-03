@@ -1,6 +1,6 @@
 use crate::RuntimeState;
 use crate::model::moderation::{self, ModerationAlert};
-use crate::model::reported_messages::{AddProactiveDetectionArgs, ModerationAction, latest_chat};
+use crate::model::reported_messages::{AddProactiveDetectionArgs, ModerationAction, ProactiveDetectionResult, latest_chat};
 use tracing::info;
 use types::ModerationCategories;
 use user_index_canister::ModerationReferral as Args;
@@ -17,7 +17,7 @@ pub(crate) fn c2c_moderation_referral_impl(mut args: Args, state: &mut RuntimeSt
         return;
     };
 
-    let Some((report_index, is_new_report)) = state
+    let report_index = match state
         .data
         .reported_messages
         .add_proactive_detection(AddProactiveDetectionArgs {
@@ -31,18 +31,22 @@ pub(crate) fn c2c_moderation_referral_impl(mut args: Args, state: &mut RuntimeSt
             blob_references: args.blob_references.clone(),
             media_matches: Vec::new(),
             content_excerpt: args.content_excerpt.clone(),
+            suspend_sender: false,
             timestamp: now,
-        })
-    else {
-        info!("Moderation referral ignored: report already has an outcome");
-        return;
+        }) {
+        ProactiveDetectionResult::New(report_index) => {
+            // Record the report against the sender's user record (feeds the repeat-offender
+            // count, which only counts reports once a human upholds them)
+            state.data.users.push_reported_message(args.sender, report_index);
+            report_index
+        }
+        ProactiveDetectionResult::FilledUserReport(report_index) => report_index,
+        // A referral never suspends, so it can never upgrade an outcome
+        ProactiveDetectionResult::UpgradedToSanction(_) | ProactiveDetectionResult::OutcomeExists => {
+            info!("Moderation referral ignored: report already has an outcome");
+            return;
+        }
     };
-
-    // Record the report against the sender's user record (feeds the repeat-offender count,
-    // which only counts reports once a human upholds them)
-    if is_new_report {
-        state.data.users.push_reported_message(args.sender, report_index);
-    }
 
     moderation::post_moderation_alert(
         ModerationAlert {
