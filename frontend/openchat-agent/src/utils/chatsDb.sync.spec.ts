@@ -23,6 +23,7 @@ afterAll(() => {
 });
 
 const chatId: GroupChatIdentifier = { kind: "group_chat", groupId: "gid" };
+const WEBSITE_VERSION = "2.0.2210";
 
 /**
  * A stand-in for the idb database with one key/value map per store. Every read and write is
@@ -118,10 +119,13 @@ function fakeDb(initial: Record<string, Record<string, any>> = {}) {
     return { db, stores, log, failing };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function chatsDbWith(initial: Record<string, Record<string, any>> = {}) {
+function chatsDbWith(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    initial: Record<string, Record<string, any>> = {},
+    websiteVersion = WEBSITE_VERSION,
+) {
     const fake = fakeDb(initial);
-    const chatsDb = new ChatsDb({ toString: () => "principal" } as Principal);
+    const chatsDb = new ChatsDb({ toString: () => "principal" } as Principal, websiteVersion);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (chatsDb as any).getDb = () => Promise.resolve(fake.db);
     return { chatsDb, ...fake };
@@ -485,6 +489,99 @@ describe("across a 30 day wipe", () => {
         const { chats } = await chatsDb.getChatsForSync(1);
         expect(chats?.state.groupChats.map((g) => g.id.groupId)).toEqual(["a"]);
         expect(chats?.removed.groupChats).toEqual(["gone"]);
+    });
+});
+
+describe("message content this version couldn't read", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function message(index: number, kind: string): any {
+        return {
+            index,
+            timestamp: BigInt(index),
+            expiresAt: undefined,
+            event: {
+                kind: "message",
+                messageIndex: index,
+                messageId: BigInt(index),
+                content: { kind },
+            },
+        };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function asCachedBy(stores: Record<string, Map<string, any>>, websiteVersion: string) {
+        return chatsDbWith(
+            {
+                chats: Object.fromEntries(stores.chats),
+                chat_rows: Object.fromEntries(stores.chat_rows),
+            },
+            websiteVersion,
+        );
+    }
+
+    test("is cached with the version that couldn't read it", async () => {
+        const { chatsDb, stores } = chatsDbWith();
+
+        await chatsDb.setCachedEvents(
+            chatId,
+            {
+                events: [message(1, "unsupported_content"), message(2, "text_content")],
+                expiredEventRanges: [],
+                latestEventIndex: 2,
+            },
+            undefined,
+        );
+
+        expect(stores.chat_events.get(key(1)).unsupportedIn).toBe(WEBSITE_VERSION);
+        expect(stores.chat_events.get(key(2)).unsupportedIn).toBeUndefined();
+    });
+
+    test("as a chat's latest message, loads the chats in full in a newer version", async () => {
+        const { chatsDb, stores } = chatsDbWith();
+        const chat = { ...group("a"), latestMessage: message(5, "unsupported_content") };
+        await chatsDb.setCachedChats(state({ groupChats: [chat] }), emptyTouched());
+
+        expect(stores.chat_rows.get("group_chat|a").summary.latestMessage.unsupportedIn).toBe(
+            WEBSITE_VERSION,
+        );
+        expect((await chatsDb.getCachedChats())?.groupChats).toHaveLength(1);
+
+        const newer = asCachedBy(stores, "2.0.2211");
+        expect(await newer.chatsDb.getCachedChats()).toBeUndefined();
+        // as for an unusable row, the rows stay for the full load to tombstone
+        expect(newer.stores.chats.size).toBe(0);
+        expect(newer.stores.chat_rows.size).toBe(1);
+    });
+
+    test("as a chat's latest message, is left alone by an older version, as in an older tab", async () => {
+        const { chatsDb, stores } = chatsDbWith();
+        const chat = { ...group("a"), latestMessage: message(5, "unsupported_content") };
+        await chatsDb.setCachedChats(state({ groupChats: [chat] }), emptyTouched());
+
+        const older = asCachedBy(stores, "2.0.2209");
+        expect((await older.chatsDb.getCachedChats())?.groupChats).toHaveLength(1);
+        expect(older.stores.chats.size).toBe(1);
+    });
+
+    test("as a channel's latest message, loads the chats in full in a newer version", async () => {
+        const channel = {
+            kind: "channel",
+            id: { kind: "channel", communityId: "c1", channelId: 7 },
+            latestMessage: { ...message(5, "unsupported_content"), unsupportedIn: "2.0.2209" },
+        };
+        const { chatsDb, stores } = chatsDbWith({
+            chats: { principal: globals() },
+            chat_rows: {
+                "community|c1": {
+                    kind: "community",
+                    version: 1,
+                    summary: { kind: "community", id: { communityId: "c1" }, channels: [channel] },
+                },
+            },
+        });
+
+        expect(await chatsDb.getCachedChats()).toBeUndefined();
+        expect(stores.chats.size).toBe(0);
     });
 });
 

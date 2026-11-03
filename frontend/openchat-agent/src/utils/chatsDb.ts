@@ -53,6 +53,7 @@ import {
     emptyEventsResponse,
     isSuccessfulEventsResponse,
     updateCreatedUser,
+    Version,
 } from "@shared";
 import { IndexedDbConnectionManager } from "./indexedDb";
 import {
@@ -82,6 +83,8 @@ type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
     chatId: ChatIdentifier;
     messageKey: string | undefined;
     dirty?: boolean;
+    // The website version that couldn't read the content, when it couldn't
+    unsupportedIn?: string;
 };
 
 interface ChatSchema extends DBSchema {
@@ -229,6 +232,7 @@ async function readSyncStamps(store: SyncStoreReader): Promise<SyncStamps | unde
 export class ChatsDb {
     private readonly connectionManager: IndexedDbConnectionManager<ChatSchema>;
     private readonly principalString: string;
+    private readonly websiteVersion: string;
     private expiredEventSweeperJob: NodeJS.Timeout | undefined;
     // The timestamps of the cached details of each chat and community, as they were when last read
     // or written here. Reading the details themselves is expensive for a large chat or community,
@@ -236,8 +240,9 @@ export class ChatsDb {
     private readonly groupDetailsTimestamps = new Map<string, bigint>();
     private readonly communityDetailsTimestamps = new Map<string, bigint>();
 
-    constructor(principal: Principal) {
+    constructor(principal: Principal, websiteVersion: string) {
         this.principalString = principal.toString();
+        this.websiteVersion = websiteVersion;
         this.connectionManager = IndexedDbConnectionManager.create<ChatSchema>(
             `openchat_db_${this.principalString}`,
             [
@@ -322,7 +327,10 @@ export class ChatsDb {
         await tx.done;
 
         const chats = stateFromRows(globals, rows);
-        if (!cachedChatsAreUsable(chats)) {
+        if (
+            !cachedChatsAreUsable(chats) ||
+            hasLatestMessageUnsupportedByOlderVersion(chats, this.websiteVersion)
+        ) {
             // Only the globals go. The rows stay so the full load that follows can tombstone
             // whatever it no longer finds, and it rewrites every row because the globals are gone.
             await resolvedDb.clear("chats");
@@ -356,7 +364,7 @@ export class ChatsDb {
         const rows = chatRowsToWrite(chatState, touched, cachedKeys, !globalsCached);
 
         const rowRequests = rows.put.flatMap(({ key, isNew, summary }) => {
-            const row = serialisableRow(summary, version);
+            const row = serialisableRow(summary, version, this.websiteVersion);
             const put = rowsStore.put(row, key);
             // a chat that is back no longer needs its tombstone
             return isNew ? [put, tombstonesStore.delete(key)] : [put];
@@ -525,6 +533,7 @@ export class ChatsDb {
             maxMessages,
             maxMissing,
             allowDirty,
+            this.websiteVersion,
             () => this.tryStartExpiredEventSweeper(),
         );
 
@@ -605,6 +614,7 @@ export class ChatsDb {
                     maxMessages / 2,
                     maxMissing / 2,
                     allowDirty,
+                    this.websiteVersion,
                     () => this.tryStartExpiredEventSweeper(),
                 ),
             );
@@ -621,6 +631,7 @@ export class ChatsDb {
                     maxMessages / 2,
                     maxMissing / 2,
                     allowDirty,
+                    this.websiteVersion,
                     () => this.tryStartExpiredEventSweeper(),
                 ),
             );
@@ -661,8 +672,14 @@ export class ChatsDb {
         const store = tx.store;
         const fromCache = await Promise.all(
             eventIndexes.map((idx) =>
-                getCachedEventByIndex(store, idx, context, now, allowDirty, () =>
-                    this.tryStartExpiredEventSweeper(),
+                getCachedEventByIndex(
+                    store,
+                    idx,
+                    context,
+                    now,
+                    allowDirty,
+                    this.websiteVersion,
+                    () => this.tryStartExpiredEventSweeper(),
                 ),
             ),
         );
@@ -673,7 +690,7 @@ export class ChatsDb {
                 missing.add(eventIndexes[i]);
             } else if (evt.kind === "event") {
                 events.push(convertCachedEvent(evt));
-                if (evt.dirty) {
+                if (isDirty(evt, this.websiteVersion)) {
                     dirty.add(evt.index);
                 }
             } else {
@@ -771,7 +788,13 @@ export class ChatsDb {
         await db.put(
             store,
             {
-                ...makeSerialisable<T>(event, chatId, false, threadRootMessageIndex),
+                ...makeSerialisable<T>(
+                    event,
+                    chatId,
+                    false,
+                    this.websiteVersion,
+                    threadRootMessageIndex,
+                ),
                 messageKey: key,
             },
             key,
@@ -811,7 +834,13 @@ export class ChatsDb {
         const promises: Promise<void>[] = resp.events.map((event) =>
             eventStore
                 .put(
-                    makeSerialisable<ChatEvent>(event, chatId, true, threadRootMessageIndex),
+                    makeSerialisable<ChatEvent>(
+                        event,
+                        chatId,
+                        true,
+                        this.websiteVersion,
+                        threadRootMessageIndex,
+                    ),
                     createCacheKey({ chatId, threadRootMessageIndex }, event.index),
                 )
                 .then((_) => {}),
@@ -934,7 +963,13 @@ export class ChatsDb {
         const eventStore = tx.objectStore(store);
         if ((await eventStore.count(key)) === 0) {
             await eventStore.add(
-                makeSerialisable<Message>(messageEvent, chatId, true, threadRootMessageIndex),
+                makeSerialisable<Message>(
+                    messageEvent,
+                    chatId,
+                    true,
+                    this.websiteVersion,
+                    threadRootMessageIndex,
+                ),
                 key,
             );
         }
@@ -1005,14 +1040,12 @@ export class ChatsDb {
     ): Promise<{
         messageEvents: EventWrapper<Message>[];
         missing: Set<number>;
-        dirty: Set<number>;
     }> {
         const storeName = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
         const resolvedDb = await this.getDb();
 
         const messages: EventWrapper<Message>[] = [];
         const missing: Set<number> = new Set();
-        const dirty: Set<number> = new Set();
 
         // one transaction for the whole batch - getFromIndex would open one per message index
         const tx = resolvedDb.transaction(storeName, "readonly");
@@ -1026,11 +1059,14 @@ export class ChatsDb {
 
         for (let i = 0; i < messagesIndexes.length; i++) {
             const evt = fromCache[i];
-            if (evt?.kind === "event" && evt.event.kind === "message") {
+            // A dirty message is fetched again with the missing ones. The caller resolves once,
+            // so it has no use for the cached copy.
+            if (
+                evt?.kind === "event" &&
+                evt.event.kind === "message" &&
+                !isDirty(evt, this.websiteVersion)
+            ) {
                 messages.push(convertCachedEvent(evt as EnhancedWrapper<Message>));
-                if (evt.dirty) {
-                    dirty.add(evt.index);
-                }
             } else {
                 missing.add(messagesIndexes[i]);
             }
@@ -1039,7 +1075,6 @@ export class ChatsDb {
         return {
             messageEvents: messages,
             missing,
-            dirty,
         };
     }
 
@@ -1219,6 +1254,7 @@ function makeSerialisable<T extends ChatEvent>(
     ev: EventWrapper<T>,
     chatId: ChatIdentifier,
     removeBlobs: boolean,
+    websiteVersion: string,
     threadRootMessageIndex?: number,
 ): EnhancedWrapper<T> {
     if (ev.event.kind !== "message") {
@@ -1235,7 +1271,30 @@ function makeSerialisable<T extends ChatEvent>(
             content: removeBlobs ? removeBlobData(ev.event.content) : ev.event.content,
             repliesTo: removeReplyContent(ev.event.repliesTo, chatId),
         },
+        unsupportedIn: ev.event.content.kind === "unsupported_content" ? websiteVersion : undefined,
     };
+}
+
+type MaybeUnsupported = EventWrapper<ChatEvent> & { unsupportedIn?: string };
+
+// The backend can be released before the website, so a message can arrive whose content this
+// version can't read. It is cached with the version that couldn't read it, and a later version
+// fetches it again, since it may know the type, rather than showing it as unsupported for good.
+// Only a later one: tabs on different versions share the cache, and each fetching again what the
+// other cached would never stop. One cached before versions were noted counts as older.
+function unsupportedByOlderVersion(ev: MaybeUnsupported, websiteVersion: string): boolean {
+    return (
+        ev.event.kind === "message" &&
+        ev.event.content.kind === "unsupported_content" &&
+        (ev.unsupportedIn === undefined ||
+            Version.parse(websiteVersion).isGreaterThan(Version.parse(ev.unsupportedIn)))
+    );
+}
+
+// A dirty event is fetched again. Depending on the caller, the cached copy is shown meanwhile or
+// treated as missing.
+function isDirty(ev: EnhancedWrapper<ChatEvent>, websiteVersion: string): boolean {
+    return ev.dirty === true || unsupportedByOlderVersion(ev, websiteVersion);
 }
 
 function dataToBlobUrl(data: Uint8Array, type?: string): string {
@@ -1349,8 +1408,11 @@ function messageToEvent(
     };
 }
 
-function makeCommunitySerializable(community: CommunitySummary): CommunitySummary {
-    const channels = community.channels.map(makeChatSummarySerializable);
+function makeCommunitySerializable(
+    community: CommunitySummary,
+    websiteVersion: string,
+): CommunitySummary {
+    const channels = community.channels.map((c) => makeChatSummarySerializable(c, websiteVersion));
     const avatar = removeBlobData(community.avatar);
     const banner = removeBlobData(community.banner);
 
@@ -1417,23 +1479,56 @@ function directChatIsUsable(c: DirectChatSummary): boolean {
     return c?.id?.userId !== undefined && c?.them !== undefined && c?.membership !== undefined;
 }
 
-function serialisableRow(summary: ChatRow["summary"], version: number): ChatRow {
+// A chat's latest message only arrives again with the chat's next update, so one that an older
+// version couldn't read would stay unsupported until then. The full load fetches it again.
+function hasLatestMessageUnsupportedByOlderVersion(
+    chats: ChatStateFull,
+    websiteVersion: string,
+): boolean {
+    return [
+        ...chats.directChats,
+        ...chats.groupChats,
+        ...chats.communities.flatMap((c) => c.channels),
+    ].some(
+        (c) =>
+            c.latestMessage !== undefined &&
+            unsupportedByOlderVersion(c.latestMessage, websiteVersion),
+    );
+}
+
+function serialisableRow(
+    summary: ChatRow["summary"],
+    version: number,
+    websiteVersion: string,
+): ChatRow {
     switch (summary.kind) {
         case "direct_chat":
-            return { kind: summary.kind, version, summary: makeChatSummarySerializable(summary) };
+            return {
+                kind: summary.kind,
+                version,
+                summary: makeChatSummarySerializable(summary, websiteVersion),
+            };
         case "group_chat":
-            return { kind: summary.kind, version, summary: makeChatSummarySerializable(summary) };
+            return {
+                kind: summary.kind,
+                version,
+                summary: makeChatSummarySerializable(summary, websiteVersion),
+            };
         case "community":
-            return { kind: summary.kind, version, summary: makeCommunitySerializable(summary) };
+            return {
+                kind: summary.kind,
+                version,
+                summary: makeCommunitySerializable(summary, websiteVersion),
+            };
     }
 }
 
-function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
+function makeChatSummarySerializable<T extends ChatSummary>(chat: T, websiteVersion: string): T {
     if (chat.latestMessage === undefined) return chat;
 
     return {
         ...chat,
-        latestMessage: makeSerialisable<Message>(chat.latestMessage, chat.id, true),
+        latestMessage: makeSerialisable<Message>(chat.latestMessage, chat.id, true, websiteVersion),
     };
 }
 
@@ -1467,6 +1562,7 @@ async function getCachedEventByIndex(
     context: MessageContext,
     now: number,
     allowDirty: boolean,
+    websiteVersion: string,
     onExpiry: () => void,
 ): Promise<EnhancedWrapper<ChatEvent> | ExpiredEventsRange | undefined> {
     const key = createCacheKey(context, eventIndex);
@@ -1479,7 +1575,9 @@ async function getCachedEventByIndex(
     );
 
     if (
-        (event?.kind === "event" && event.index === eventIndex && (!event.dirty || allowDirty)) ||
+        (event?.kind === "event" &&
+            event.index === eventIndex &&
+            (allowDirty || !isDirty(event, websiteVersion))) ||
         (event?.kind === "expired_events_range" && event.start <= eventIndex)
     ) {
         return event;
@@ -1497,6 +1595,7 @@ async function iterateCachedEvents(
     maxMessages: number,
     maxMissing: number,
     allowDirty: boolean,
+    websiteVersion: string,
     onExpiry: () => void,
 ): Promise<[EventWrapper<ChatEvent>[], ExpiredEventsRange[], Set<number>, Set<number>]> {
     const bound = ascending ? eventIndexRange[1] : eventIndexRange[0];
@@ -1564,7 +1663,7 @@ async function iterateCachedEvents(
         }
 
         if (next.kind === "event") {
-            if (next.dirty) {
+            if (isDirty(next, websiteVersion)) {
                 if (allowDirty) {
                     dirty.add(next.index);
                 } else {

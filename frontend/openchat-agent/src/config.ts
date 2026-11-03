@@ -31,4 +31,5 @@ export type AgentConfig = {
     groupInvite?: GroupInvite;
     logger: Logger;
     accountLinkingCodesEnabled: boolean;
+    websiteVersion: string;
 };
