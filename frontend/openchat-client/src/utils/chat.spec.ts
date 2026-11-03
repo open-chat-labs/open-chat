@@ -12,11 +12,14 @@ import {
     type BridgedUserId,
     type BridgedUserSummary,
     type CandidateGroupChat,
+    type ChannelIdentifier,
     type ChannelSummary,
     type ChatEvent,
     type ChatIdentifier,
     type CommunitySummary,
+    type CreateGroupSuccess,
     type EventWrapper,
+    type GroupChatIdentifier,
     type GroupChatSummary,
     type Message,
     type MultiUserChatIdentifier,
@@ -520,9 +523,15 @@ describe("where archiving the open chat goes", () => {
     });
 });
 
-describe("a new chat's member count", () => {
-    const channelId: MultiUserChatIdentifier = { kind: "channel", communityId: "c", channelId: 1 };
-    const groupId: MultiUserChatIdentifier = { kind: "group_chat", groupId: "g" };
+describe("a new chat", () => {
+    const channelId: ChannelIdentifier = { kind: "channel", communityId: "c", channelId: 1 };
+    const groupId: GroupChatIdentifier = { kind: "group_chat", groupId: "g" };
+    const newChannel: CreateGroupSuccess = { kind: "success", canisterId: channelId };
+    const newGroup: CreateGroupSuccess = {
+        kind: "success",
+        canisterId: groupId,
+        localUserIndex: "lui",
+    };
 
     function candidate(
         id: MultiUserChatIdentifier,
@@ -550,7 +559,7 @@ describe("a new chat's member count", () => {
 
     test("a public channel with no gate starts with all the community's members", () => {
         const chat = groupChatFromCandidate(
-            channelId,
+            newChannel,
             candidate(channelId, true, { kind: "no_gate" }),
             4,
         );
@@ -561,13 +570,13 @@ describe("a new chat's member count", () => {
     test("a gated or private channel starts with just its creator", () => {
         const gated = candidate(channelId, true, { kind: "diamond_gate" });
         const unlisted = candidate(channelId, false, { kind: "no_gate" });
-        expect(groupChatFromCandidate(channelId, gated, 4).memberCount).toEqual(1);
-        expect(groupChatFromCandidate(channelId, unlisted, 4).memberCount).toEqual(1);
+        expect(groupChatFromCandidate(newChannel, gated, 4).memberCount).toEqual(1);
+        expect(groupChatFromCandidate(newChannel, unlisted, 4).memberCount).toEqual(1);
     });
 
     test("a group starts with just its creator", () => {
         const group = groupChatFromCandidate(
-            groupId,
+            newGroup,
             candidate(groupId, true, { kind: "no_gate" }),
             undefined,
         );
@@ -577,7 +586,18 @@ describe("a new chat's member count", () => {
 
     test("an unknown community's channel starts with just its creator", () => {
         const channel = candidate(channelId, true, { kind: "no_gate" });
-        expect(groupChatFromCandidate(channelId, channel, undefined).memberCount).toEqual(1);
+        expect(groupChatFromCandidate(newChannel, channel, undefined).memberCount).toEqual(1);
+    });
+
+    // Invariant: a new group has its LocalUserIndex before its first sync. Without it, a bot command
+    // or video call in the group failed for its first minute.
+    test("a group has the LocalUserIndex it was created on", () => {
+        const group = groupChatFromCandidate(
+            newGroup,
+            candidate(groupId, true, { kind: "no_gate" }),
+            undefined,
+        );
+        expect(group.kind === "group_chat" && group.localUserIndex).toEqual("lui");
     });
 });
 

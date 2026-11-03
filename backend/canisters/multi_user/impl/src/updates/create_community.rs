@@ -30,6 +30,7 @@ async fn create_community_impl(args: Args) -> Response {
                 Success(SuccessResult {
                     community_id: r.community_id,
                     channels: r.channels,
+                    local_user_index_canister_id: r.local_user_index_canister_id,
                 })
             }
             c2c_create_community::Response::NameTaken => Error(OCErrorCode::NameTaken.into()),

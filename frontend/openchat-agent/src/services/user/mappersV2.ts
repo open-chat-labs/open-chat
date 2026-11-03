@@ -466,6 +466,7 @@ export function createCommunitySuccess(
             } as ChannelIdentifier;
             return [channelId, name];
         }),
+        localUserIndex: principalBytesToString(value.local_user_index_canister_id),
     };
 }
 

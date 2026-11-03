@@ -177,7 +177,7 @@ export type CreateCommunityResponse =
     | Offline
     | Failure
     | OCError
-    | (Success & { id: string; channels: [ChannelIdentifier, string][] });
+    | (Success & { id: string; channels: [ChannelIdentifier, string][]; localUserIndex: string });
 
 export type JoinCommunityResponse =
     | Failure

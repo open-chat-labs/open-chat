@@ -8686,7 +8686,7 @@ export class OpenChat {
                 ? communitiesStore.value.get({ kind: "community", communityId: chatId.communityId })
                       ?.memberCount
                 : undefined;
-        localUpdates.addChat(groupChatFromCandidate(chatId, candidate, communityMemberCount));
+        localUpdates.addChat(groupChatFromCandidate(resp, candidate, communityMemberCount));
 
         if (invitees.length > 0) {
             const invited = await this.inviteUsers(chatId, invitees).catch((err) => {
@@ -12706,6 +12706,7 @@ export class OpenChat {
             ...candidate,
             id,
             channels: resp.channels.map(([id, name]) => newDefaultChannel(id, name)),
+            localUserIndex: resp.localUserIndex,
         });
 
         if (invitees.length > 0) {

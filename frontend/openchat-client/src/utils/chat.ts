@@ -12,10 +12,12 @@ import type {
     ChatEvent,
     ChatIdentifier,
     ChatListScope,
+    ChatMembership,
     ChatPermissions,
     ChatSummary,
     CommunityMap,
     CommunitySummary,
+    CreateGroupSuccess,
     CreatedUser,
     CryptocurrencyContent,
     CryptocurrencyDetails,
@@ -39,7 +41,6 @@ import type {
     MessagePermissions,
     Metrics,
     MultiUserChat,
-    MultiUserChatIdentifier,
     NewUnconfirmedMessage,
     OptionalChatPermissions,
     OptionalMessagePermissions,
@@ -74,6 +75,7 @@ import {
     getContentAsFormattedText,
     getContentAsText,
     isAttachmentContent,
+    isCreatedGroup,
     messageContextsEqual,
     MessageMap,
     messagePermissionsList,
@@ -1094,19 +1096,23 @@ export function serialiseMessageForRtc(message: NewUnconfirmedMessage): NewUncon
 // gate as it's created, so that starts with the community's member count. Any other chat starts with
 // just its creator.
 export function groupChatFromCandidate(
-    chatId: MultiUserChatIdentifier,
+    created: CreateGroupSuccess,
     candidate: CandidateGroupChat,
     communityMemberCount: number | undefined,
 ): MultiUserChat {
     const joinedByCommunity =
-        chatId.kind === "channel" &&
+        created.canisterId.kind === "channel" &&
         candidate.public &&
         candidate.gateConfig.gate.kind === "no_gate";
-    const chat = {
-        kind: chatId.kind,
-        id: chatId,
+    const membership: ChatMembership = {
+        ...nullMembership(),
+        joined: BigInt(Date.now()),
+        role: ROLE_OWNER,
+    };
+    const common = {
         latestEventIndex: 0,
         latestMessage: undefined,
+        latestMessageIndex: undefined,
         name: candidate.name,
         description: candidate.description,
         public: candidate.public,
@@ -1119,25 +1125,36 @@ export function groupChatFromCandidate(
         permissions: candidate.permissions,
         metrics: emptyChatMetrics(),
         subtype: undefined,
-        previewed: false,
         frozen: false,
         dateLastPinned: undefined,
         dateReadPinned: undefined,
         gateConfig: candidate.gateConfig,
         level: candidate.level,
-        membership: {
-            ...nullMembership(),
-            joined: BigInt(Date.now()),
-            role: ROLE_OWNER,
-        },
+        membership,
         eventsTTL: candidate.eventsTTL,
-    } as MultiUserChat;
+        eventsTtlLastUpdated: BigInt(0),
+        isInvited: false,
+        messagesVisibleToNonMembers: candidate.messagesVisibleToNonMembers ?? false,
+    };
 
-    if (chat.kind === "channel") {
-        chat.externalUrl = candidate.externalUrl;
+    if (isCreatedGroup(created)) {
+        const group: GroupChatSummary = {
+            ...common,
+            kind: "group_chat",
+            id: created.canisterId,
+            previewed: false,
+            localUserIndex: created.localUserIndex,
+            verified: false,
+        };
+        return group;
     }
-
-    return chat;
+    const channel: ChannelSummary = {
+        ...common,
+        kind: "channel",
+        id: created.canisterId,
+        externalUrl: candidate.externalUrl,
+    };
+    return channel;
 }
 
 function updatePollContent(content: PollContent, votes: LocalPollVote[]): PollContent {

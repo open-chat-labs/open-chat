@@ -1,7 +1,7 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{AccessGateConfig, ChannelId, CommunityId, CommunityPermissions, Document, Rules};
+use types::{AccessGateConfig, CanisterId, ChannelId, CommunityId, CommunityPermissions, Document, Rules};
 
 #[ts_export(user, create_community)]
 #[derive(Serialize, Deserialize, Debug)]
@@ -32,4 +32,5 @@ pub enum Response {
 pub struct SuccessResult {
     pub community_id: CommunityId,
     pub channels: Vec<(ChannelId, String)>,
+    pub local_user_index_canister_id: CanisterId,
 }

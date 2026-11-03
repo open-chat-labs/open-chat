@@ -12,7 +12,6 @@ import type {
     BridgedUserId,
     BridgedUserSummary,
     ChangeRoleResponse,
-    ChannelIdentifier,
     ChannelSummary,
     ChatEvent,
     ChatIdentifier,
@@ -26,7 +25,8 @@ import type {
     CommunityPermissions,
     CommunitySummary,
     CompletedCryptocurrencyTransfer,
-    CreateGroupSuccess,
+    CreatedChannel,
+    CreatedGroup,
     CryptocurrencyContent,
     CryptocurrencyTransfer,
     DeletedContent,
@@ -44,7 +44,6 @@ import type {
     GiphyImage,
     GroupChatDetails,
     GroupChatDetailsUpdatesResponse,
-    GroupChatIdentifier,
     GroupChatSummary,
     GroupInviteCodeChange,
     GroupSubtype,
@@ -2729,26 +2728,26 @@ export function updateGroupSuccess(
     };
 }
 
-export function createGroupSuccess(
-    value: UserCreateGroupSuccessResult | CommunityCreateChannelSuccessResult,
-    id: MultiUserChatIdentifier,
-): CreateGroupSuccess {
-    if ("channel_id" in value && id.kind === "channel") {
-        const canisterId: ChannelIdentifier = {
+export function createGroupSuccess(value: UserCreateGroupSuccessResult): CreatedGroup {
+    return {
+        kind: "success",
+        canisterId: { kind: "group_chat", groupId: principalBytesToString(value.chat_id) },
+        localUserIndex: principalBytesToString(value.local_user_index_canister_id),
+    };
+}
+
+export function createChannelSuccess(
+    value: CommunityCreateChannelSuccessResult,
+    communityId: string,
+): CreatedChannel {
+    return {
+        kind: "success",
+        canisterId: {
             kind: "channel",
-            communityId: id.communityId,
+            communityId,
             channelId: Number(toBigInt32(value.channel_id)),
-        };
-        return { kind: "success", canisterId };
-    }
-    if ("chat_id" in value && id.kind === "group_chat") {
-        const canisterId: GroupChatIdentifier = {
-            kind: "group_chat",
-            groupId: principalBytesToString(value.chat_id),
-        };
-        return { kind: "success", canisterId };
-    }
-    throw new Error("Unexpected CreateGroup success response: " + value);
+        },
+    };
 }
 
 export function pushEventSuccess(value: PushEventResult): PinMessageResponse {

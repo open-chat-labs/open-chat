@@ -16,6 +16,7 @@ import {
     apiExternalBotPermissions,
     apiMaybeAccessGate,
     apiMessageContent,
+    createGroupSuccess,
     groupDetailsUpdatesResponse,
     apiPendingCryptoTransaction,
     externalBotPermissions,
@@ -401,5 +402,21 @@ describe("bot permission bits", () => {
 
         expect(permissions.messagePermissions).toEqual(["p2pSwap", "videoCall", "miniApp"]);
         expect(apiExternalBotPermissions(permissions).message).toBe(message);
+    });
+});
+
+describe("a new group", () => {
+    // Invariant: a new group comes with its LocalUserIndex, so it can be used before its first sync
+    test("comes with the LocalUserIndex it's on", () => {
+        expect(
+            createGroupSuccess({
+                chat_id: Principal.fromText(recipient).toUint8Array(),
+                local_user_index_canister_id: Principal.fromText(ledger).toUint8Array(),
+            }),
+        ).toEqual({
+            kind: "success",
+            canisterId: { kind: "group_chat", groupId: recipient },
+            localUserIndex: ledger,
+        });
     });
 });
