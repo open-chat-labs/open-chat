@@ -2175,17 +2175,9 @@ export type CandidateChannel = CandidateGroupChat;
 
 export type CreateGroupResponse = CreateGroupSuccess | OCError | Offline;
 
-export type CreateGroupSuccess = {
-    kind: "success";
-    canisterId: MultiUserChatIdentifier;
-};
-
-export type CreateGroupChatResponse = CreatedGroupChat | OCError | Offline;
-
-// A new group or channel, as the worker returns it. The client shows it before its first sync, so a
-// group comes with its LocalUserIndex, which access tokens are requested from. A channel uses its
-// community's.
-export type CreatedGroupChat = CreatedGroup | CreatedChannel;
+// A new group or channel. The client shows it before its first sync, so a group comes with its
+// LocalUserIndex, which access tokens are requested from. A channel uses its community's.
+export type CreateGroupSuccess = CreatedGroup | CreatedChannel;
 
 export type CreatedGroup = {
     kind: "success";
@@ -2196,7 +2188,7 @@ export type CreatedGroup = {
 export type CreatedChannel = { kind: "success"; canisterId: ChannelIdentifier };
 
 // By the new chat's id, which a worker of any version returns
-export function isCreatedGroup(created: CreatedGroupChat): created is CreatedGroup {
+export function isCreatedGroup(created: CreateGroupSuccess): created is CreatedGroup {
     return created.canisterId.kind === "group_chat";
 }
 

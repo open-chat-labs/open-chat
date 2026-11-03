@@ -17,7 +17,7 @@ import type {
     ChatSummary,
     CommunityMap,
     CommunitySummary,
-    CreatedGroupChat,
+    CreateGroupSuccess,
     CreatedUser,
     CryptocurrencyContent,
     CryptocurrencyDetails,
@@ -1096,7 +1096,7 @@ export function serialiseMessageForRtc(message: NewUnconfirmedMessage): NewUncon
 // gate as it's created, so that starts with the community's member count. Any other chat starts with
 // just its creator.
 export function groupChatFromCandidate(
-    created: CreatedGroupChat,
+    created: CreateGroupSuccess,
     candidate: CandidateGroupChat,
     communityMemberCount: number | undefined,
 ): MultiUserChat {

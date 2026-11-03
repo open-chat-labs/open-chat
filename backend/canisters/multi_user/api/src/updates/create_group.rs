@@ -1,7 +1,7 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{AccessGateConfig, ChatId, Document, GroupPermissions, Milliseconds, Rules};
+use types::{AccessGateConfig, CanisterId, ChatId, Document, GroupPermissions, Milliseconds, Rules};
 
 #[ts_export(user, create_group)]
 #[derive(Serialize, Deserialize, Debug)]
@@ -29,4 +29,5 @@ pub enum Response {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub chat_id: ChatId,
+    pub local_user_index_canister_id: CanisterId,
 }

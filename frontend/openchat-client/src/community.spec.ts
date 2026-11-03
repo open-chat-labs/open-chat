@@ -31,7 +31,7 @@ import {
 } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
-import { currentUserStore } from "./state";
+import { communitiesStore, currentUserStore } from "./state";
 import { WorkerAgent } from "./workerAgent";
 import en from "../../app/src/i18n/en.json";
 
@@ -105,6 +105,7 @@ describe("editing and creating a community", () => {
                         kind: "success",
                         id: "rrkah-fqaaa-aaaaa-aaaaq-cai",
                         channels: [],
+                        localUserIndex: "lui",
                     });
                 case "inviteUsers":
                     return Promise.resolve(invited);
@@ -181,6 +182,17 @@ describe("editing and creating a community", () => {
             kind: "success",
         });
         expect(updatesSent()).toEqual([expect.objectContaining({ isPublic: true })]);
+    });
+
+    // Invariant: a new community can be used straight away. Before its first sync it had no
+    // LocalUserIndex, so a bot command or video call in its channels failed for its first minute.
+    test("a new community has its LocalUserIndex before its first sync", async () => {
+        const id = { kind: "community" as const, communityId: "rrkah-fqaaa-aaaaa-aaaaq-cai" };
+        expect(await client.createCommunity(community(), ["General"], [])).toEqual({
+            kind: "created",
+            id,
+        });
+        expect(communitiesStore.value.get(id)?.localUserIndex).toEqual("lui");
     });
 
     // Invariant: a new community whose invites fail still opens, and the user is told the invites

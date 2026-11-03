@@ -344,7 +344,7 @@ export class UserClient
                 events_ttl: group.eventsTTL,
                 messages_visible_to_non_members: group.messagesVisibleToNonMembers,
             },
-            (resp) => mapResult(resp, (value) => createGroupSuccess(value, group.id)),
+            (resp) => mapResult(resp, createGroupSuccess),
             UserCreateGroupArgs,
             UserCreateGroupResponse,
         );

@@ -17,7 +17,7 @@ import {
     type ChatEvent,
     type ChatIdentifier,
     type CommunitySummary,
-    type CreatedGroupChat,
+    type CreateGroupSuccess,
     type EventWrapper,
     type GroupChatIdentifier,
     type GroupChatSummary,
@@ -526,8 +526,8 @@ describe("where archiving the open chat goes", () => {
 describe("a new chat", () => {
     const channelId: ChannelIdentifier = { kind: "channel", communityId: "c", channelId: 1 };
     const groupId: GroupChatIdentifier = { kind: "group_chat", groupId: "g" };
-    const newChannel: CreatedGroupChat = { kind: "success", canisterId: channelId };
-    const newGroup: CreatedGroupChat = {
+    const newChannel: CreateGroupSuccess = { kind: "success", canisterId: channelId };
+    const newGroup: CreateGroupSuccess = {
         kind: "success",
         canisterId: groupId,
         localUserIndex: "lui",

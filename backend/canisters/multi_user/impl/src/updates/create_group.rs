@@ -28,7 +28,10 @@ async fn create_group_impl(args: Args) -> Response {
         Ok(response) => match response {
             c2c_create_group::Response::Success(r) => {
                 mutate_state(|state| commit(my_index, r.chat_id, r.local_user_index_canister_id, state));
-                Success(SuccessResult { chat_id: r.chat_id })
+                Success(SuccessResult {
+                    chat_id: r.chat_id,
+                    local_user_index_canister_id: r.local_user_index_canister_id,
+                })
             }
             c2c_create_group::Response::NameTaken => Error(OCErrorCode::NameTaken.into()),
             c2c_create_group::Response::Error(error) => Error(error),

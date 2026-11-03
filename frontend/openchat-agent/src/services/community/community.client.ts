@@ -211,7 +211,7 @@ import {
     apiUser as apiUserV2,
     apiVideoCallPresence,
     changeRoleResult,
-    createGroupSuccess,
+    createChannelSuccess,
     deletedMessageSuccess,
     enableOrResetInviteCodeSuccess,
     getEventsSuccess,
@@ -403,7 +403,7 @@ export class CommunityClient
                 gate_config: apiMaybeAccessGateConfig(channel.gateConfig),
                 messages_visible_to_non_members: channel.messagesVisibleToNonMembers,
             },
-            (resp) => mapResult(resp, (value) => createGroupSuccess(value, channel.id)),
+            (resp) => mapResult(resp, (value) => createChannelSuccess(value, communityId)),
             CommunityCreateChannelArgs,
             CommunityCreateChannelResponse,
         );

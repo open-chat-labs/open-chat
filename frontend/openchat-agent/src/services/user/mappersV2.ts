@@ -466,6 +466,7 @@ export function createCommunitySuccess(
             } as ChannelIdentifier;
             return [channelId, name];
         }),
+        localUserIndex: principalBytesToString(value.local_user_index_canister_id),
     };
 }
 
@@ -493,10 +494,13 @@ function userCanisterChannelSummary(
         },
         readByMeUpTo: value.read_by_me_up_to,
         dateReadPinned: value.date_read_pinned,
-        threadsRead: Object.entries(value.threads_read).reduce((curr, next) => {
-            curr[Number(next[0])] = next[1];
-            return curr;
-        }, {} as Record<number, number>),
+        threadsRead: Object.entries(value.threads_read).reduce(
+            (curr, next) => {
+                curr[Number(next[0])] = next[1];
+                return curr;
+            },
+            {} as Record<number, number>,
+        ),
         archived: value.archived,
     };
 }
@@ -654,10 +658,13 @@ export function userCanisterChannelSummaryUpdates(
         id: { kind: "channel", communityId, channelId: Number(toBigInt32(value.channel_id)) },
         readByMeUpTo: value.read_by_me_up_to,
         dateReadPinned: value.date_read_pinned,
-        threadsRead: Object.entries(value.threads_read).reduce((curr, next) => {
-            curr[Number(next[0])] = next[1];
-            return curr;
-        }, {} as Record<number, number>),
+        threadsRead: Object.entries(value.threads_read).reduce(
+            (curr, next) => {
+                curr[Number(next[0])] = next[1];
+                return curr;
+            },
+            {} as Record<number, number>,
+        ),
         archived: value.archived,
     };
 }
@@ -767,10 +774,13 @@ function userCanisterGroupSummary(summary: UserGroupChatSummary): UserCanisterGr
     return {
         id: { kind: "group_chat", groupId: principalBytesToString(summary.chat_id) },
         readByMeUpTo: summary.read_by_me_up_to,
-        threadsRead: Object.entries(summary.threads_read).reduce((curr, next) => {
-            curr[Number(next[0])] = next[1];
-            return curr;
-        }, {} as Record<number, number>),
+        threadsRead: Object.entries(summary.threads_read).reduce(
+            (curr, next) => {
+                curr[Number(next[0])] = next[1];
+                return curr;
+            },
+            {} as Record<number, number>,
+        ),
         archived: summary.archived,
         dateReadPinned: summary.date_read_pinned,
         localUserIndex: principalBytesToString(summary.local_user_index_canister_id),
@@ -783,10 +793,13 @@ function userCanisterGroupSummaryUpdates(
     return {
         id: { kind: "group_chat", groupId: principalBytesToString(summary.chat_id) },
         readByMeUpTo: summary.read_by_me_up_to,
-        threadsRead: Object.entries(summary.threads_read).reduce((curr, next) => {
-            curr[Number(next[0])] = next[1];
-            return curr;
-        }, {} as Record<number, number>),
+        threadsRead: Object.entries(summary.threads_read).reduce(
+            (curr, next) => {
+                curr[Number(next[0])] = next[1];
+                return curr;
+            },
+            {} as Record<number, number>,
+        ),
         archived: summary.archived,
         dateReadPinned: summary.date_read_pinned,
     };

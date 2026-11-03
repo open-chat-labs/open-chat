@@ -5149,6 +5149,7 @@ export type UserCreateCommunitySuccessResult = Static<typeof UserCreateCommunity
 export const UserCreateCommunitySuccessResult = /* @__PURE__ */ Type.Object({
     community_id: CommunityId,
     channels: Type.Array(Type.Tuple([ChannelId, Type.String()])),
+    local_user_index_canister_id: TSPrincipal,
 });
 
 export type UserCreateCommunityResponse = Static<typeof UserCreateCommunityResponse>;
@@ -7755,6 +7756,7 @@ export const UserMessageActivityEvent = /* @__PURE__ */ Type.Object({
 export type UserCreateGroupSuccessResult = Static<typeof UserCreateGroupSuccessResult>;
 export const UserCreateGroupSuccessResult = /* @__PURE__ */ Type.Object({
     chat_id: ChatId,
+    local_user_index_canister_id: TSPrincipal,
 });
 
 export type UserCommunitySummary = Static<typeof UserCommunitySummary>;

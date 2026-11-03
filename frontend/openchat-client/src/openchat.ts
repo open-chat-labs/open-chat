@@ -177,7 +177,7 @@ import {
     type CreateCommunityResponse,
     type CreateGroupOutcome,
     type GroupMoveOutcome,
-    type CreateGroupChatResponse,
+    type CreateGroupResponse,
     type CreateMultiUserCanisterResponse,
     type FinaliseAccountLinkingResponse,
     type FundsInPreviousWallet,
@@ -8668,7 +8668,7 @@ export class OpenChat {
         invitees: string[],
         toAdd: string[] = [],
     ): Promise<CreateGroupOutcome> {
-        let resp: CreateGroupChatResponse;
+        let resp: CreateGroupResponse;
         try {
             resp = await this.#worker.send({ kind: "createGroupChat", candidate });
         } catch (err) {
@@ -12706,6 +12706,7 @@ export class OpenChat {
             ...candidate,
             id,
             channels: resp.channels.map(([id, name]) => newDefaultChannel(id, name)),
+            localUserIndex: resp.localUserIndex,
         });
 
         if (invitees.length > 0) {
