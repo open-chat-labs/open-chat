@@ -53,6 +53,7 @@ import {
     emptyEventsResponse,
     isSuccessfulEventsResponse,
     updateCreatedUser,
+    Version,
 } from "@shared";
 import { IndexedDbConnectionManager } from "./indexedDb";
 import {
@@ -328,7 +329,7 @@ export class ChatsDb {
         const chats = stateFromRows(globals, rows);
         if (
             !cachedChatsAreUsable(chats) ||
-            hasLatestMessageUnsupportedByAnotherVersion(chats, this.websiteVersion)
+            hasLatestMessageUnsupportedByOlderVersion(chats, this.websiteVersion)
         ) {
             // Only the globals go. The rows stay so the full load that follows can tombstone
             // whatever it no longer finds, and it rewrites every row because the globals are gone.
@@ -1039,14 +1040,12 @@ export class ChatsDb {
     ): Promise<{
         messageEvents: EventWrapper<Message>[];
         missing: Set<number>;
-        dirty: Set<number>;
     }> {
         const storeName = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
         const resolvedDb = await this.getDb();
 
         const messages: EventWrapper<Message>[] = [];
         const missing: Set<number> = new Set();
-        const dirty: Set<number> = new Set();
 
         // one transaction for the whole batch - getFromIndex would open one per message index
         const tx = resolvedDb.transaction(storeName, "readonly");
@@ -1060,11 +1059,14 @@ export class ChatsDb {
 
         for (let i = 0; i < messagesIndexes.length; i++) {
             const evt = fromCache[i];
-            if (evt?.kind === "event" && evt.event.kind === "message") {
+            // A dirty message is fetched again with the missing ones. The caller resolves once,
+            // so it has no use for the cached copy.
+            if (
+                evt?.kind === "event" &&
+                evt.event.kind === "message" &&
+                !isDirty(evt, this.websiteVersion)
+            ) {
                 messages.push(convertCachedEvent(evt as EnhancedWrapper<Message>));
-                if (isDirty(evt, this.websiteVersion)) {
-                    dirty.add(evt.index);
-                }
             } else {
                 missing.add(messagesIndexes[i]);
             }
@@ -1073,7 +1075,6 @@ export class ChatsDb {
         return {
             messageEvents: messages,
             missing,
-            dirty,
         };
     }
 
@@ -1279,18 +1280,21 @@ type MaybeUnsupported = EventWrapper<ChatEvent> & { unsupportedIn?: string };
 // The backend can be released before the website, so a message can arrive whose content this
 // version can't read. It is cached with the version that couldn't read it, and a later version
 // fetches it again, since it may know the type, rather than showing it as unsupported for good.
-function unsupportedByAnotherVersion(ev: MaybeUnsupported, websiteVersion: string): boolean {
+// Only a later one: tabs on different versions share the cache, and each fetching again what the
+// other cached would never stop. One cached before versions were noted counts as older.
+function unsupportedByOlderVersion(ev: MaybeUnsupported, websiteVersion: string): boolean {
     return (
         ev.event.kind === "message" &&
         ev.event.content.kind === "unsupported_content" &&
-        ev.unsupportedIn !== websiteVersion
+        (ev.unsupportedIn === undefined ||
+            Version.parse(websiteVersion).isGreaterThan(Version.parse(ev.unsupportedIn)))
     );
 }
 
-// A dirty event is still shown while it is fetched again, or treated as missing if the caller
-// doesn't allow dirty events
+// A dirty event is fetched again. Depending on the caller, the cached copy is shown meanwhile or
+// treated as missing.
 function isDirty(ev: EnhancedWrapper<ChatEvent>, websiteVersion: string): boolean {
-    return ev.dirty === true || unsupportedByAnotherVersion(ev, websiteVersion);
+    return ev.dirty === true || unsupportedByOlderVersion(ev, websiteVersion);
 }
 
 function dataToBlobUrl(data: Uint8Array, type?: string): string {
@@ -1475,9 +1479,9 @@ function directChatIsUsable(c: DirectChatSummary): boolean {
     return c?.id?.userId !== undefined && c?.them !== undefined && c?.membership !== undefined;
 }
 
-// A chat's latest message only arrives again with the chat's next update, so one that another
+// A chat's latest message only arrives again with the chat's next update, so one that an older
 // version couldn't read would stay unsupported until then. The full load fetches it again.
-function hasLatestMessageUnsupportedByAnotherVersion(
+function hasLatestMessageUnsupportedByOlderVersion(
     chats: ChatStateFull,
     websiteVersion: string,
 ): boolean {
@@ -1488,7 +1492,7 @@ function hasLatestMessageUnsupportedByAnotherVersion(
     ].some(
         (c) =>
             c.latestMessage !== undefined &&
-            unsupportedByAnotherVersion(c.latestMessage, websiteVersion),
+            unsupportedByOlderVersion(c.latestMessage, websiteVersion),
     );
 }
 

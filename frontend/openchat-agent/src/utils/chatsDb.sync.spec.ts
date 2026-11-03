@@ -536,7 +536,7 @@ describe("message content this version couldn't read", () => {
         expect(stores.chat_events.get(key(2)).unsupportedIn).toBeUndefined();
     });
 
-    test("as a chat's latest message, loads the chats in full in another version only", async () => {
+    test("as a chat's latest message, loads the chats in full in a newer version", async () => {
         const { chatsDb, stores } = chatsDbWith();
         const chat = { ...group("a"), latestMessage: message(5, "unsupported_content") };
         await chatsDb.setCachedChats(state({ groupChats: [chat] }), emptyTouched());
@@ -553,7 +553,17 @@ describe("message content this version couldn't read", () => {
         expect(newer.stores.chat_rows.size).toBe(1);
     });
 
-    test("as a channel's latest message, loads the chats in full in another version", async () => {
+    test("as a chat's latest message, is left alone by an older version, as in an older tab", async () => {
+        const { chatsDb, stores } = chatsDbWith();
+        const chat = { ...group("a"), latestMessage: message(5, "unsupported_content") };
+        await chatsDb.setCachedChats(state({ groupChats: [chat] }), emptyTouched());
+
+        const older = asCachedBy(stores, "2.0.2209");
+        expect((await older.chatsDb.getCachedChats())?.groupChats).toHaveLength(1);
+        expect(older.stores.chats.size).toBe(1);
+    });
+
+    test("as a channel's latest message, loads the chats in full in a newer version", async () => {
         const channel = {
             kind: "channel",
             id: { kind: "channel", communityId: "c1", channelId: 7 },

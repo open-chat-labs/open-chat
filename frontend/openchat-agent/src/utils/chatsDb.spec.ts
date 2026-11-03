@@ -138,7 +138,7 @@ describe("loadMessagesByMessageIndex", () => {
             },
         );
 
-        const { messageEvents, missing, dirty } = await chatsDb.loadMessagesByMessageIndex(
+        const { messageEvents, missing } = await chatsDb.loadMessagesByMessageIndex(
             chatId as ChatIdentifier,
             undefined,
             [10, 11, 12],
@@ -146,28 +146,27 @@ describe("loadMessagesByMessageIndex", () => {
 
         expect(messageEvents.map((m) => m.index)).toEqual([100, 102]);
         expect([...missing]).toEqual([11]);
-        expect([...dirty]).toEqual([]);
         expect(state.transactions).toBe(1);
     });
 
-    test("collects dirty message indexes", async () => {
+    test("counts a dirty message as missing, by its message index, so it is fetched again", async () => {
         const { chatsDb } = chatsDbWith(
             {},
             { [key(10)]: { ...messageEvent(100, 10), dirty: true } },
         );
 
-        const { missing, dirty } = await chatsDb.loadMessagesByMessageIndex(
+        const { messageEvents, missing } = await chatsDb.loadMessagesByMessageIndex(
             chatId as ChatIdentifier,
             undefined,
             [10],
         );
 
-        expect([...missing]).toEqual([]);
-        expect([...dirty]).toEqual([100]);
+        expect(messageEvents).toEqual([]);
+        expect([...missing]).toEqual([10]);
     });
 });
 
-describe("message content another version couldn't read", () => {
+describe("message content an older version couldn't read", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function unsupported(index: number, messageIndex: number, unsupportedIn?: string): any {
         const ev = messageEvent(index, messageIndex);
@@ -180,42 +179,50 @@ describe("message content another version couldn't read", () => {
 
     const context = { chatId: chatId as ChatIdentifier, threadRootMessageIndex: undefined };
 
-    // 1 was cached by an older version, 2 by this one, and 3 before the version was noted
-    const cached = {
-        [key(1)]: unsupported(1, 1, "2.0.2209"),
-        [key(2)]: unsupported(2, 2, WEBSITE_VERSION),
-        [key(3)]: unsupported(3, 3),
-    };
+    // Message 1 was cached by an older version, 2 by this one, 3 before versions were noted and 4
+    // by a newer one, in another tab
+    const messages = [
+        unsupported(101, 1, "2.0.2209"),
+        unsupported(102, 2, WEBSITE_VERSION),
+        unsupported(103, 3),
+        unsupported(104, 4, "2.0.2211"),
+    ];
 
     test("is fetched again when read by event index", async () => {
-        const { chatsDb } = chatsDbWith(cached);
+        const { chatsDb } = chatsDbWith(Object.fromEntries(messages.map((m) => [key(m.index), m])));
+        const eventIndexes = [101, 102, 103, 104];
 
-        const [result, missing, dirty] = await chatsDb.getCachedEventsByIndex([1, 2, 3], context);
-        expect(result.events.map((e) => e.index)).toEqual([1, 2, 3]);
+        const [result, missing, dirty] = await chatsDb.getCachedEventsByIndex(
+            eventIndexes,
+            context,
+        );
+        expect(result.events.map((e) => e.index)).toEqual(eventIndexes);
         expect([...missing]).toEqual([]);
-        expect([...dirty]).toEqual([1, 3]);
+        expect([...dirty]).toEqual([101, 103]);
 
         const [notDirty, missingNotDirty] = await chatsDb.getCachedEventsByIndex(
-            [1, 2, 3],
+            eventIndexes,
             context,
             false,
         );
-        expect(notDirty.events.map((e) => e.index)).toEqual([2]);
-        expect([...missingNotDirty]).toEqual([1, 3]);
+        expect(notDirty.events.map((e) => e.index)).toEqual([102, 104]);
+        expect([...missingNotDirty]).toEqual([101, 103]);
     });
 
     test("is fetched again when read by message index", async () => {
-        const { chatsDb } = chatsDbWith({}, cached);
-
-        const { messageEvents, missing, dirty } = await chatsDb.loadMessagesByMessageIndex(
-            chatId as ChatIdentifier,
-            undefined,
-            [1, 2, 3],
+        const { chatsDb } = chatsDbWith(
+            {},
+            Object.fromEntries(messages.map((m) => [key(m.event.messageIndex), m])),
         );
 
-        expect(messageEvents.map((m) => m.index)).toEqual([1, 2, 3]);
-        expect([...missing]).toEqual([]);
-        expect([...dirty]).toEqual([1, 3]);
+        const { messageEvents, missing } = await chatsDb.loadMessagesByMessageIndex(
+            chatId as ChatIdentifier,
+            undefined,
+            [1, 2, 3, 4],
+        );
+
+        expect(messageEvents.map((m) => m.index)).toEqual([102, 104]);
+        expect([...missing]).toEqual([1, 3]);
     });
 });
 
