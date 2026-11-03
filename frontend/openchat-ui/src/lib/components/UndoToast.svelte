@@ -191,7 +191,7 @@
   }
 
   .lg .action:hover {
-    background: var(--overlay-3, rgba(255, 255, 255, 0.14));
+    background: var(--overlay-3);
   }
 
   .close {

@@ -536,6 +536,25 @@ design export needs. Each entry says where it came up.
   - by hand: `MemberRow` stops a click on its ⋮, action button or icon reaching the row. The
     user group row's ⋮ opened the group instead of its Edit / Delete menu.
 
+- **Design pass 6** (2026-11-03, with the native export): ported by hand (EXPORT-LOG). In the app:
+  a forwarded latest message puts the forward icon before a chat row's preview
+  (`latestForwarded`), the chat list's second section is "Chats", the composer's typing line is a
+  strip resting on it (two names: "A and B are typing"), sign-up takes a pasted invite link
+  (`resolveReferrer`: its `ref` is the referrer's user id) and says "Invited by" for the link's
+  referrer, and Swap shows only the best quote. Not yet:
+  - `NavRail` pins take a `menu` (right-click, Shift+F10), but the rail adapter gives the
+    community pins none: the community menu's actions live in the chat list header for now.
+  - `ChatPicker`'s multi-select (forward to several chats, 5b), `ChatListPanel`'s grouped search
+    (people and messages need search in the app), the design's `MediaViewer` (replacing
+    `features/conversation/MediaViewer.svelte`) and `PuzzleDialog`'s screen layout (native) are
+    separate pieces of work.
+  - `AccessGates` no longer offers credential gates (retired by the design; one already set still
+    shows) and has no NFT gate. The app doesn't pass `types` (`OFFERED_GATE_TYPES` is unused), so
+    unique-person gates are still offered though suspended.
+  - the design's typing line in the conversation header is left out (not used).
+  - a saved recipient's token lock should win over the host's `sendToken` (design order: lock,
+    then the network's token); the app sets no locks, so it doesn't show.
+
 ## App
 
 ### Data the design shows that the backend doesn't have
@@ -548,8 +567,7 @@ design export needs. Each entry says where it came up.
     BTC/EVM/SOL-side transfers aren't shown;
   - saved recipients have no id, token lock or "last sent", and an edit only renames (the canister
     keys a saved address by its account);
-  - no native ETH deposit address;
-  - swaps quote across several DEXes, while the design says ICPSwap only.
+  - no native ETH deposit address.
 - **Explore**:
   - one server ranking, so no featured vs popular lists and no sort by active or newest;
   - results have no created date, activity metric or channel list.
@@ -671,18 +689,17 @@ design export needs. Each entry says where it came up.
       "take over"), or the default tokens when it showed none; the old settings always start from
       the default tokens.
   - Swap (6c) is built: `/wallet/swap?token=<ledger>`, from the token page, the menus and the
-    balance card. `SwapForm` (shared with both old trees) drives it: every DEX's quote as it comes
-    in, then the best; the swap's steps; and the location check (a restricted location gets a
+    balance card. `SwapForm` (shared with both old trees) drives it: every DEX is asked and the best
+    quote shown, with how many were checked ("ICPSwap · of 2 checked", `dexesChecked`, as the
+    design's pass 6 has it); the swap's steps; and the location check (a restricted location gets a
     notice and no quote; a check that fails counts as restricted). Pay offers held, swappable
     tokens and Get only those a DEX has a pool for with it (`canPayWith` / `canSwapTo`, by ledger).
     The slippage chosen is honoured: the minimum output is the quote less it (`swapMinimumOut`).
-    By hand in the library: `payable`, `targets`, `onPay`, `restricted`, each DEX's answer
-    (`DexQuoteRow`, `onQuote`'s `progress`), a value warning to confirm, exact amount text, and a
-    dismissed PIN prompt going back to the quote. Not yet:
+    By hand in the library: `payable`, `targets`, `onPay`, `restricted`, a value warning to
+    confirm, exact amount text, and a dismissed PIN prompt going back to the quote. Not yet:
     - no countdown: the client's quotes have no expiry (`expiresAt` is optional); the minimum
       output protects a quote that's gone stale.
     - no fees or price impact rows: the client doesn't know them.
-    - every DEX's quote is listed under the best one; the design shows one DEX (ICPSwap).
     - the local replica has no DEXes or swappable tokens, so Swap there finds nothing to buy.
   - the total is what the panel lists (Your tokens and small balances); the old wallets' total is
     `walletTokensSorted`'s (in automatic mode, the default tokens plus those worth the minimum).

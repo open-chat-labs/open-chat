@@ -285,8 +285,8 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-6);
-    margin-top: 2px;
-    padding: var(--space-10) var(--pad-x) var(--space-18) var(--pad-x);
+    margin-top: var(--space-12);
+    padding: var(--space-16) var(--pad-x) var(--space-18) var(--pad-x);
     border-top: 1px dashed var(--line-1);
   }
 

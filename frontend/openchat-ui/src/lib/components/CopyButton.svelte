@@ -106,7 +106,7 @@
   }
 
   .soft:hover {
-    background: var(--overlay-3, rgba(255, 255, 255, 0.12));
+    background: var(--overlay-3);
   }
 
   .soft .icon {

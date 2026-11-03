@@ -136,6 +136,7 @@ function fakeClient() {
         getReferringUser: vi.fn(async () => undefined as unknown),
         checkUsername: vi.fn(async () => "success"),
         searchUsers: vi.fn(async () => []),
+        getUser: vi.fn(async (_userId: string) => undefined as unknown),
         handleMagicLink: vi.fn(async () => ({ kind: "success" })),
         logout: vi.fn(async () => set({ kind: "anon" })),
         updateIdentityState: vi.fn((state: IdentityState) => set(state)),
@@ -231,6 +232,23 @@ describe("the sign-in callbacks", () => {
         await auth.onSignup({ username: "newperson", termsAccepted: true });
         expect(client.clearReferralCode).toHaveBeenCalled();
         expect(client.setReferralCode).not.toHaveBeenCalled();
+    });
+
+    test("a pasted invite link's code is looked up as the referrer's user id", async () => {
+        client.getUser.mockResolvedValueOnce({
+            userId: "r2",
+            username: "lucy",
+            displayName: "Lucy",
+        });
+        await expect(auth.resolveReferrer("r2")).resolves.toMatchObject({
+            userId: "r2",
+            name: "Lucy",
+            handle: "lucy",
+        });
+        expect(client.getUser).toHaveBeenCalledWith("r2");
+        await expect(auth.resolveReferrer("nobody")).resolves.toBeUndefined();
+        client.getUser.mockRejectedValueOnce(new Error("not a principal"));
+        await expect(auth.resolveReferrer("???")).resolves.toBeUndefined();
     });
 
     test("a referrer that can't be looked up is no referrer", async () => {

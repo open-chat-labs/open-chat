@@ -40,6 +40,7 @@
   import { modal } from '../../lib/behaviours/modal';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { useT } from '../../lib/i18n';
+  import { LANGUAGES, languageFlag } from '../../lib/languages';
   import Translate from '../../lib/components/Translate.svelte';
   import { cssUrl } from '../../lib/cssUrl';
 
@@ -111,26 +112,6 @@
   const permDef = (p: (typeof PERMS)[number], community: boolean) => (community && p.communityDef) || p.def;
   const PERM_GROUPS = ['Members', 'Moderation', 'Channels'];
   const PERM_GROUP_KEYS: Record<string, string> = { Members: CG + 'permGroups.members', Moderation: CG + 'permGroups.moderation', Channels: CG + 'permGroups.channels' };
-  // fallback list when the host doesn't pass `languages`; codes are what reach the host
-  const LANGUAGES = [
-    { code: 'en', label: 'English' },
-    { code: 'fr', label: 'Français' },
-    { code: 'de', label: 'Deutsch' },
-    { code: 'it', label: 'Italiano' },
-    { code: 'es', label: 'Español' },
-    { code: 'pt', label: 'Português' },
-    { code: 'tr', label: 'Türkçe' },
-    { code: 'pl', label: 'Polski' },
-    { code: 'nl', label: 'Nederlands' },
-    { code: 'ru', label: 'Русский' },
-    { code: 'uk', label: 'Українська' },
-    { code: 'ja', label: '日本語' },
-    { code: 'ko', label: '한국어' },
-    { code: 'zh', label: '中文' },
-    { code: 'hi', label: 'हिन्दी' },
-    { code: 'vi', label: 'Tiếng Việt' },
-    { code: 'id', label: 'Bahasa Indonesia' },
-  ];
   // messages and threads share this list; each type inherits the master unless set
   const CONTENT = [
     { key: 'text', label: CG + 'content.text' },
@@ -184,8 +165,8 @@
     onSearchPeople?: (query: string, scope: 'members' | 'invite') => Promise<Person[]>;
     /** Is this name free? Checked as the user types (debounced); a taken or invalid name blocks Create. */
     checkName?: (name: string, kind: 'group' | 'community' | 'channel' | 'embedded') => Promise<NameCheck>;
-    /** Communities: the languages offered (codes reach the host). */
-    languages?: { code: string; label: string }[];
+    /** Communities: the languages offered (codes reach the host); each shows a flag (its own, else its code's). */
+    languages?: { code: string; label: string; flag?: string }[];
     /** Communities: the language picked at first, e.g. the user's locale. */
     defaultLanguage?: string;
     /** Create it. The dialog closes when this resolves; a rejection keeps it open with an error. */
@@ -262,9 +243,13 @@
   let chanEditValue = $state('');
   let chanMenu = $state<number | null>(null);
   let chanTried = $state(false);
-  const languageList = $derived(languagesProp?.length ? languagesProp : LANGUAGES);
+  // without the host's list, the library's; codes are what reach the host
+  const languageList = $derived<{ code: string; label: string; flag?: string }[]>(languagesProp?.length ? languagesProp : LANGUAGES);
+  const flagOf = (l: { code: string; flag?: string }) => l.flag ?? languageFlag(l.code);
   let lang = $state(untrack(() => defaultLanguage));
-  const langLabel = $derived(languageList.find((l) => l.code === lang)?.label ?? lang);
+  const langPicked = $derived(languageList.find((l) => l.code === lang));
+  const langLabel = $derived(langPicked?.label ?? lang);
+  const langFlag = $derived(langPicked ? flagOf(langPicked) : languageFlag(lang));
   let langOpen = $state(false);
   let langQuery = $state('');
   let publicOn = $state(untrack(() => kindProp === 'embedded'));
@@ -842,6 +827,7 @@
                     role="button"
                     tabindex="0"
                   >
+                    <span class="lang-flag" aria-hidden="true">{langFlag}</span>
                     <span class="select-value">{langLabel}</span>
                     <span class="select-chevron" class:open={langOpen}></span>
                   </div>
@@ -863,6 +849,7 @@
                             role="option"
                             aria-selected={l.code === lang}
                           >
+                            <span class="option-flag" aria-hidden="true">{flagOf(l)}</span>
                             <span class="option-label">{l.label}</span>
                             <span class="option-check"></span>
                           </div>
@@ -1334,7 +1321,7 @@
     <div class="menu-layer">
       <div class="menu-catch" onclick={() => (permMenu = null)} aria-hidden="true"></div>
       <!-- hidden for the one frame between mount and measurement, so it never paints mis-placed -->
-      <div class="perm-menu" bind:this={permPanel} style:top={permMenu.top} style:left={permMenu.left} style:visibility={permMenu.measured ? 'visible' : 'hidden'} role="menu" aria-label={t(CG + 'permMenu.label')}>
+      <div class="perm-menu" data-oc-menu bind:this={permPanel} style:top={permMenu.top} style:left={permMenu.left} style:visibility={permMenu.measured ? 'visible' : 'hidden'} role="menu" aria-label={t(CG + 'permMenu.label')}>
         <span class="perm-menu-hint">{t(permMenu.allowInherit ? CG + 'permMenu.whoCanSend' : CG + 'permMenu.lowestRole')}</span>
         {#each permOptions as o}
           <div class="perm-option" class:selected={o.key === selected} onclick={() => permMenu && setPerm(permMenu.scope, permMenu.key, o.key)} role="button" tabindex="0">
@@ -1781,6 +1768,18 @@
     flex-direction: column;
     gap: var(--space-8);
     min-width: 0;
+  }
+
+  .lang-flag {
+    flex: none;
+    font: 400 19px/1 var(--font-sans);
+  }
+
+  .option-flag {
+    flex: none;
+    width: 22px;
+    text-align: center;
+    font: 400 17px/1 var(--font-sans);
   }
 
   .field-block.language {
@@ -2790,6 +2789,7 @@
   }
 
   .perm-menu {
+    animation: oc-menu-pop 0.14s ease-out;
     position: absolute;
     width: 238px;
     display: flex;

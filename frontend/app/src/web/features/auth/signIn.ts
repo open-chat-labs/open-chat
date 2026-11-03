@@ -92,6 +92,7 @@ export type Auth = Required<
         | "onCancelEmailLink"
         | "checkUsername"
         | "searchReferrers"
+        | "resolveReferrer"
     >
 > & {
     wallets: NonNullable<PageAuth["wallets"]>;
@@ -294,6 +295,16 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
 
         async searchReferrers(query) {
             return (await client.searchUsers(query, 20)).map(person);
+        },
+
+        // an invite link's `ref` is the referrer's user id, as the link this browser came in on
+        async resolveReferrer(code) {
+            try {
+                const user = await client.getUser(code);
+                return user === undefined ? undefined : person(user);
+            } catch {
+                return undefined;
+            }
         },
 
         async onLinkCode(querystring, code) {

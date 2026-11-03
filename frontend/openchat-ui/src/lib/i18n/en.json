@@ -3,14 +3,14 @@
     "accessGates": {
       "addRequirement": "Add requirement",
       "addTitle": "Add a requirement",
-      "all": "All",
+      "allGates": "All gates",
       "allSystems": "ALL NERVOUS SYSTEMS · {count}",
       "allTokens": "ALL TOKENS · {count}",
       "alreadyAdded": "Already added",
       "alreadyGated": "{name} — already gated",
       "amount": "Amount",
       "and": "AND",
-      "any": "Any",
+      "anyGate": "Any one gate",
       "assetUsed": "{name} (used)",
       "balanceDesc": "Hold a minimum amount of a token.",
       "balanceLabel": "Minimum token balance",
@@ -38,6 +38,9 @@
       "exampleNote": "A holders' group: only people with 500 CHAT and a verified unique identity can join.",
       "intro": "Gates are conditions people must meet before they can join. OpenChat checks them automatically, so you don't have to screen members by hand.",
       "inUse": "IN USE",
+      "joinerAllHelp": "Every gate has to be met to join.",
+      "joinerAnyHelp": "Meeting one gate is enough to join.",
+      "joinerNeedsTwo": "Applies when 2 or more gates are on.",
       "lifetimeDesc": "Holders of a lifetime membership.",
       "lifetimeLabel": "Lifetime diamond membership",
       "lifetimeRule": "must hold a lifetime diamond membership",
@@ -45,6 +48,8 @@
       "lockedLabel": "Locked",
       "lockedRule": "must be invited — the group is locked",
       "members": "Members {rule}",
+      "membership": "MEMBERSHIP",
+      "membersMustMeet": "Members must meet",
       "minBalance": "Minimum balance",
       "minChip": "min {amount}",
       "minDissolveDelay": "Minimum dissolve delay (optional)",
@@ -57,9 +62,6 @@
       "neuronLabel": "Neuron holder",
       "neuronPickerSub": "Members must stake a neuron in this nervous system.",
       "neuronRule": "must stake a neuron",
-      "nftDesc": "Hold a specific NFT.",
-      "nftLabel": "NFT holder",
-      "nftRule": "must hold a specific NFT",
       "noMatch": "Nothing matches “{query}”",
       "onceBody": "Members don't need to keep meeting these requirements after they've joined.",
       "or": "OR",
@@ -157,8 +159,6 @@
         "lockedDesc": "Invited users only; not open to the public.",
         "neuron": "Neuron holder",
         "neuronDesc": "Users must stake a neuron with specific criteria.",
-        "nft": "NFT holder",
-        "nftDesc": "Must hold a specific NFT.",
         "payment": "Payment",
         "paymentDesc": "Access is granted after a one-time or recurring entry fee.",
         "unique": "Unique person",
@@ -293,11 +293,17 @@
       "emailInvalid": "Enter a full email address, or leave it empty",
       "emailNote": "optional, only used for account recovery",
       "emailPlaceholder": "Sign in with email",
+      "fromInviteLink": "Picked up from the invite link you opened.",
       "haveAccount": "Already have an account?",
+      "haveLink": "Got an invite link?",
+      "haveName": "Have a name instead?",
+      "invitedBy": "Invited by",
       "linkExpired": "This link has expired. Links last 5 minutes, so ask for a new one.",
       "linkFailed": "Couldn’t send the link. Try again.",
+      "linkHasNoReferrer": "That link has no referrer in it.",
       "linkInvalid": "That didn’t work. Check the code, or ask for a new link.",
       "linkReason": "Enter the code shown where you asked for the link.",
+      "linkReferrerUnknown": "We couldn't find who sent that link.",
       "linkTitle": "Sign in with an email link",
       "linkedElsewhere": "Close this page and carry on where you asked for the link.",
       "linkedTitle": "You’re signed in",
@@ -308,11 +314,14 @@
       "onlyLetters": "Only letters, numbers and underscores",
       "or": "OR",
       "orContinueWith": "OR CONTINUE WITH",
+      "pasteLink": "Paste it",
       "referredQuestion": "Did someone refer you?",
       "referrer": "Referrer",
+      "referrerPaste": "Paste an invite link, e.g. oc.app/?ref=…",
       "referrerSearch": "Search for the person who referred you",
       "removeReferrer": "Remove referrer",
       "resendLink": "Send the link again",
+      "searchPeople": "Search people",
       "sendLink": "Send sign-in link",
       "sending": "Sending…",
       "sent": "We sent a sign-in link to {address}. Open it on this device to continue.",
@@ -494,6 +503,7 @@
       "newChannel": "New channel"
     },
     "chatListPanel": {
+      "chats": "Chats",
       "filters": {
         "all": "All",
         "direct": "Direct",
@@ -501,7 +511,6 @@
         "unread": "Unread"
       },
       "pinned": "Pinned",
-      "recent": "Recent",
       "searchPlaceholder": "Search conversations",
       "threadReplies": "Thread replies"
     },
@@ -519,6 +528,7 @@
       "title": "Share to chat"
     },
     "chatRow": {
+      "forwarded": "Forwarded",
       "muted": "Notifications muted",
       "private": "Private",
       "videoCallLive": "Video call in progress",
@@ -2110,6 +2120,7 @@
       "sendHint": "Send (Enter)",
       "sendMessage": "Send message",
       "sendVoice": "Send voice message",
+      "showKeyboard": "Show keyboard",
       "showOriginal": "Show original message",
       "stopHint": "Stop and review",
       "stopRecording": "Stop recording",
@@ -2967,7 +2978,7 @@
       "viewTransaction": "View transaction"
     },
     "typingIndicator": {
-      "typing": "{count, plural, one {{name} is typing} other {# people are typing}}"
+      "typing": "{count, plural, one {{name} is typing} =2 {{name} and {second} are typing} other {# people are typing}}"
     },
     "unreadDivider": {
       "today": "Today",
@@ -3380,6 +3391,7 @@
     },
     "walletSwap": {
       "balance": "Balance {amount} {symbol}",
+      "bestRateValue": "{dex} · of {count} checked",
       "completeLabel": "SWAP COMPLETE",
       "amountTooSmall": "Amount too small",
       "enterAmount": "Enter an amount",
@@ -3395,6 +3407,7 @@
       "quoteDropNote": "Changing the amount or tokens drops this quote.",
       "quoteFailed": "Couldn't get a quote. Try again.",
       "row": {
+        "bestRate": "Best rate",
         "priceImpact": "Price impact",
         "fees": "Fees",
         "minimumReceived": "Minimum received"
@@ -3438,11 +3451,6 @@
       "restricted": "To comply with local laws, swaps aren't allowed where you are.",
       "findingTargets": "Finding what {symbol} swaps for…",
       "noTargets": "Nothing can be bought with {symbol} here",
-      "dexQuotesLabel": "Each DEX's quote",
-      "dexQuoting": "Quoting…",
-      "dexNoQuote": "No quote",
-      "dexFailed": "Didn't answer",
-      "best": "best",
       "confirmWarning": "I understand, swap anyway"
     },
     "waveform": {

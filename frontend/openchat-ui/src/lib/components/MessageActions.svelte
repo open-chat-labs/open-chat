@@ -370,7 +370,7 @@
     gap: 2px;
     padding: 0 6px;
     border-radius: 26px;
-    background: var(--surface-3, #24242e);
+    background: var(--surface-3);
     box-shadow:
       inset 0 0 0 1px var(--line-2),
       0 12px 30px rgba(0, 0, 0, 0.5);
@@ -449,7 +449,7 @@
     gap: 2px;
     padding: 6px;
     border-radius: 16px;
-    background: var(--surface-3, #24242e);
+    background: var(--surface-3);
     box-shadow:
       inset 0 0 0 1px var(--line-2),
       0 16px 40px rgba(0, 0, 0, 0.5);
@@ -521,7 +521,7 @@
     width: 340px;
     height: 380px;
     border-radius: 16px;
-    background: var(--surface-3, #24242e);
+    background: var(--surface-3);
     box-shadow:
       inset 0 0 0 1px var(--line-2),
       0 16px 40px rgba(0, 0, 0, 0.5);

@@ -62,7 +62,7 @@
         ><span class="more-icon"></span></span
       >{/if}
       {#if menuOpen && items.length > 0}
-        <div class="menu" role="menu">
+        <div class="menu" data-oc-menu role="menu">
           {#each items as item}<span
               class="item"
               onclick={() => {
@@ -223,6 +223,7 @@
   }
 
   .menu {
+    animation: oc-menu-pop 0.14s ease-out;
     position: absolute;
     z-index: 3;
     inset-inline-end: 8px;
@@ -230,7 +231,7 @@
     width: 230px;
     padding: 6px;
     border-radius: var(--radius-md);
-    background: var(--surface-3, #24242e);
+    background: var(--surface-3);
     box-shadow:
       inset 0 0 0 1px var(--line-2),
       0 12px 30px rgba(0, 0, 0, 0.45);

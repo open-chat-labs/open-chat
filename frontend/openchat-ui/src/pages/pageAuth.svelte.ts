@@ -18,6 +18,7 @@ export type PageAuth = Pick<
   | 'variant'
   | 'referrers'
   | 'searchReferrers'
+  | 'resolveReferrer'
   | 'checkUsername'
   | 'termsUrl'
   | 'onRequestEmailLink'

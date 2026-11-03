@@ -47,6 +47,17 @@ export function unreadCount(chat: ChatSummary, ctx: Pick<RowContext, "unread">, 
     return latestMessageExpired(chat, now) ? 0 : ctx.unread(chat);
 }
 
+/** Whether the preview gets the forward icon: the latest message, still there, was forwarded. */
+export function latestForwarded(chat: ChatSummary, now = Date.now()): boolean {
+    const latest = chat.latestMessage?.event;
+    return (
+        latest !== undefined &&
+        latest.forwarded &&
+        latest.content.kind !== "deleted_content" &&
+        !latestMessageExpired(chat, now)
+    );
+}
+
 export function chatRow(chat: ChatSummary, ctx: RowContext, now = Date.now()): ChatListRow {
     const id = chatIdentifierToString(chat.id);
     const pinned = ctx.pinned.has(id);
@@ -54,6 +65,7 @@ export function chatRow(chat: ChatSummary, ctx: RowContext, now = Date.now()): C
         id,
         title: chatTitle(chat, ctx),
         preview: ctx.preview(chat),
+        previewIcon: latestForwarded(chat, now) ? "forward" : undefined,
         time: ctx.date(getDisplayDate(chat)),
         kind:
             chat.kind === "direct_chat" ? "user" : chat.kind === "group_chat" ? "group" : "channel",
@@ -63,7 +75,7 @@ export function chatRow(chat: ChatSummary, ctx: RowContext, now = Date.now()): C
         unreadCount: unreadCount(chat, ctx, now),
         muted: chat.membership.notificationsMuted,
         pinned,
-        section: pinned ? "Pinned" : "Recent",
+        section: pinned ? "Pinned" : "Chats",
         liveCall: chat.videoCallInProgress !== undefined ? "video" : "",
         selected: ctx.selected === id,
     };

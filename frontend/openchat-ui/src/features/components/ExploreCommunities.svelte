@@ -19,6 +19,7 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import { useT } from '../../lib/i18n';
+  import { languageFlag } from '../../lib/languages';
   import Translate from '../../lib/components/Translate.svelte';
   import Logo from '../../lib/components/Logo.svelte';
 
@@ -235,6 +236,7 @@
           {@const on = langs.includes(l.label)}
           <div class="lang-option" onclick={() => toggleLang(l.label)} tabindex="0" role="option" aria-selected={on}>
             <span class="lang-box" class:on><span class="lang-check" class:on></span></span>
+            <span class="lang-flag" aria-hidden="true">{languageFlag(l.label)}</span>
             <span class="lang-label">{t(l.label)}</span>
             {#if l.count != null}<span class="lang-count">{l.count}</span>{/if}
           </div>
@@ -682,6 +684,13 @@
     position: fixed;
     inset: 0;
     z-index: 19;
+  }
+
+  .lang-flag {
+    flex: none;
+    width: 22px;
+    text-align: center;
+    font: 400 17px/1 var(--font-sans);
   }
 
   .lang-menu {
@@ -1371,7 +1380,7 @@
   }
 
   .preview:hover {
-    background: var(--overlay-3, rgba(255, 255, 255, 0.14));
+    background: var(--overlay-3);
   }
 
   .more {
@@ -1391,7 +1400,7 @@
   }
 
   .load-more:hover {
-    background: var(--overlay-3, rgba(255, 255, 255, 0.13));
+    background: var(--overlay-3);
   }
 
   .shown {

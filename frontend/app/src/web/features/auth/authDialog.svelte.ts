@@ -52,6 +52,7 @@ export class AuthDialogProps {
             termsUrl: auth.termsUrl,
             checkUsername: auth.checkUsername,
             searchReferrers: auth.searchReferrers,
+            resolveReferrer: auth.resolveReferrer,
             onMethod: auth.onMethod,
             onRequestEmailLink: auth.onRequestEmailLink,
             onCancelEmailLink: auth.onCancelEmailLink,

@@ -35,7 +35,7 @@
 
 <svelte:window bind:innerWidth={vw} />
 
-<div class="menu" style:min-width={minWidth} role="menu" aria-label={heading ? t(heading) : undefined} onkeydown={(e) => rove(e, '[role="menuitem"]', 'v')}>
+<div class="menu" data-oc-menu style:min-width={minWidth} role="menu" aria-label={heading ? t(heading) : undefined} onkeydown={(e) => rove(e, '[role="menuitem"]', 'v')}>
   {#if heading}
     <span class="heading">{t(heading)}</span>
   {/if}
@@ -46,6 +46,7 @@
 
 <style>
   .menu {
+    animation: oc-menu-pop 0.14s ease-out;
     padding: var(--space-6);
     box-sizing: border-box;
     border-radius: var(--radius-lg);

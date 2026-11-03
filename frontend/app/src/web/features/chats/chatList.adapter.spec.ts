@@ -92,9 +92,36 @@ describe("a chat list row", () => {
         });
         expect(chatRow(dm("alice"), ctx)).toMatchObject({
             pinned: false,
-            section: "Recent",
+            section: "Chats",
             selected: false,
         });
+    });
+
+    test("marks a forwarded latest message, unless it was deleted or has expired", () => {
+        const forwarded = (deleted: boolean, expiresAt?: number): ChatSummary => {
+            const chat = dm("alice", { sender: "alice", text: "hi", at: 7n });
+            const latest = chat.latestMessage!;
+            return {
+                ...chat,
+                latestMessage: {
+                    ...latest,
+                    expiresAt,
+                    event: {
+                        ...latest.event,
+                        forwarded: true,
+                        content: deleted
+                            ? { kind: "deleted_content", deletedBy: "alice", timestamp: 8n }
+                            : latest.event.content,
+                    },
+                },
+            };
+        };
+        expect(chatRow(forwarded(false), ctx).previewIcon).toBe("forward");
+        expect(chatRow(dm("alice", { sender: "alice", text: "hi", at: 7n }), ctx).previewIcon).toBe(
+            undefined,
+        );
+        expect(chatRow(forwarded(true), ctx).previewIcon).toBe(undefined);
+        expect(chatRow(forwarded(false, 5), ctx, 10).previewIcon).toBe(undefined);
     });
 
     test("shows a call going on and muted notifications", () => {

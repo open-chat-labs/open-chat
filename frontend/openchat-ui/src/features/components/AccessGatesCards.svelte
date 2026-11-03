@@ -25,6 +25,8 @@
     fields?: Field[];
     chips?: (g: AccessGateRule) => ({ label: string; dot?: boolean } | false | '')[];
     soon?: boolean;
+    /** No longer offered to add; one already in `value` still shows. */
+    retired?: boolean;
   };
 
   const DOTS: Record<string, string> = {
@@ -79,7 +81,7 @@
       fields: [{ key: 'a', placeholder: 'ui.accessGatesCards.fields.minBalance', unit: 'ui.accessGatesCards.units.tokens', required: true }],
       chips: (g) => [g.asset && { label: assetText(g), dot: true }, g.a && { label: t('ui.accessGatesCards.chips.min', { amount: g.a }) }],
     },
-    credential: { label: 'ui.accessGatesCards.types.credential', icon: 'credential', desc: 'ui.accessGatesCards.types.credentialDesc' },
+    credential: { label: 'ui.accessGatesCards.types.credential', icon: 'credential', desc: 'ui.accessGatesCards.types.credentialDesc', retired: true },
     unique: { label: 'ui.accessGatesCards.types.unique', icon: 'person', desc: 'ui.accessGatesCards.types.uniqueDesc' },
     locked: { label: 'ui.accessGatesCards.types.locked', icon: 'lock', desc: 'ui.accessGatesCards.types.lockedDesc' },
     chit: {
@@ -89,7 +91,6 @@
       fields: [{ key: 'a', placeholder: 'ui.accessGatesCards.fields.minChit', unit: 'CHIT', required: true }],
       chips: (g) => [g.a && { label: t('ui.accessGatesCards.chips.chit', { amount: g.a }) }],
     },
-    nft: { label: 'ui.accessGatesCards.types.nft', icon: 'nft', desc: 'ui.accessGatesCards.types.nftDesc', soon: true },
   };
 
   const MODES = ['All', 'Any'] as const;
@@ -130,7 +131,7 @@
   function assetText(g: AccessGateRule) {
     return labelOf(TYPES[g.type]?.assets, g.asset);
   }
-  const offered = (type: GateType) => !type.assets || dirFor(type.assets).length > 0;
+  const offered = (type: GateType) => !type.retired && (!type.assets || dirFor(type.assets).length > 0);
 
   const initial = untrack(() => value) ?? {};
   let gates = $state<AccessGateRule[]>(Array.isArray(initial.gates) ? initial.gates : []);
