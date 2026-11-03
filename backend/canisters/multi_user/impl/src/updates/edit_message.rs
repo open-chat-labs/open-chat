@@ -4,8 +4,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
 use constants::OPENCHAT_BOT_USER_ID;
-use multi_user_canister::{EditMessageArgs as C2CEditMessageArgs, UserCanisterEvent};
 use multi_user_canister::edit_message_text;
+use multi_user_canister::{EditMessageArgs as C2CEditMessageArgs, UserCanisterEvent};
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, EventIndex, OCResult};
 
