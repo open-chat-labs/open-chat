@@ -1233,7 +1233,7 @@ fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
     );
 
     // A message can only be edited by its sender
-    let not_sender = client::user::edit_message_v2(
+    let not_sender = client::user::edit_message_text(
         env,
         b_principal,
         canister_id,
@@ -1564,12 +1564,12 @@ fn edit_message_args(
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
     text: &str,
-) -> multi_user_canister::edit_message_v2::Args {
-    multi_user_canister::edit_message_v2::Args {
+) -> multi_user_canister::edit_message_text::Args {
+    multi_user_canister::edit_message_text::Args {
         user_id,
         thread_root_message_index,
         message_id,
-        content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
+        text: Some(text.to_string()),
         block_level_markdown: None,
         og_previews: Vec::new(),
     }
@@ -1585,7 +1585,7 @@ fn edit_message(
     text: &str,
 ) {
     let args = edit_message_args(user_id, thread_root_message_index, message_id, text);
-    let response = client::user::edit_message_v2(env, sender, canister_id, &args);
+    let response = client::user::edit_message_text(env, sender, canister_id, &args);
     assert!(matches!(response, UnitResult::Success), "{response:?}");
 }
 
