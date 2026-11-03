@@ -52,7 +52,7 @@ import type {
     CommunitySummary,
     CommunitySummaryResponse,
     ConvertToCommunityResponse,
-    CreateGroupResponse,
+    CreateGroupChatResponse,
     CreateUserGroupResponse,
     CreatedUser,
     CryptocurrencyDetails,
@@ -1151,13 +1151,24 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
-        if (offline()) return Promise.resolve(CommonResponses.offline());
+    async createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupChatResponse> {
+        if (offline()) return CommonResponses.offline();
 
-        if (candidate.id.kind === "channel") {
-            return this._communityClient.createChannel(candidate.id.communityId, candidate);
-        } else {
-            return this.userClient.createGroup(candidate);
+        const resp =
+            candidate.id.kind === "channel"
+                ? await this._communityClient.createChannel(candidate.id.communityId, candidate)
+                : await this.userClient.createGroup(candidate);
+        if (resp.kind !== "success") return resp;
+
+        switch (resp.canisterId.kind) {
+            case "channel":
+                return { kind: "success", canisterId: resp.canisterId };
+            case "group_chat":
+                return {
+                    kind: "success",
+                    canisterId: resp.canisterId,
+                    localUserIndex: await this._groupClient.localUserIndex(resp.canisterId.groupId),
+                };
         }
     }
 

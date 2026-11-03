@@ -177,7 +177,7 @@ import {
     type CreateCommunityResponse,
     type CreateGroupOutcome,
     type GroupMoveOutcome,
-    type CreateGroupResponse,
+    type CreateGroupChatResponse,
     type CreateMultiUserCanisterResponse,
     type FinaliseAccountLinkingResponse,
     type FundsInPreviousWallet,
@@ -8668,7 +8668,7 @@ export class OpenChat {
         invitees: string[],
         toAdd: string[] = [],
     ): Promise<CreateGroupOutcome> {
-        let resp: CreateGroupResponse;
+        let resp: CreateGroupChatResponse;
         try {
             resp = await this.#worker.send({ kind: "createGroupChat", candidate });
         } catch (err) {
@@ -8686,7 +8686,7 @@ export class OpenChat {
                 ? communitiesStore.value.get({ kind: "community", communityId: chatId.communityId })
                       ?.memberCount
                 : undefined;
-        localUpdates.addChat(groupChatFromCandidate(chatId, candidate, communityMemberCount));
+        localUpdates.addChat(groupChatFromCandidate(resp, candidate, communityMemberCount));
 
         if (invitees.length > 0) {
             const invited = await this.inviteUsers(chatId, invitees).catch((err) => {

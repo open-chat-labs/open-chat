@@ -81,7 +81,11 @@ describe("editing and creating a group", () => {
                 case "updateGroup":
                     return Promise.resolve({ kind: "success", rulesVersion: undefined });
                 case "createGroupChat":
-                    return Promise.resolve({ kind: "success", canisterId: original.id });
+                    return Promise.resolve({
+                        kind: "success",
+                        canisterId: original.id,
+                        localUserIndex: "lui",
+                    });
                 case "inviteUsers":
                     return Promise.resolve(invited);
                 case "addMembersToChannel":
@@ -174,6 +178,17 @@ describe("editing and creating a group", () => {
         if (outcome.kind === "created_without_invites") {
             expect(english(outcome.message.key)).toEqual(expect.any(String));
         }
+    });
+
+    // Invariant: a new group can be used straight away. Before its first sync it lacked its
+    // LocalUserIndex, so a bot command or video call in it failed for its first minute.
+    test("a new group has its LocalUserIndex before its first sync", async () => {
+        expect(await client.createGroup(original, [])).toEqual({
+            kind: "created",
+            chatId: original.id,
+        });
+        const group = client.lookupChatSummary(original.id);
+        expect(group?.kind === "group_chat" && group.localUserIndex).toEqual("lui");
     });
 
     // 4b: a new channel's community members picked to join are added, not invited, and people

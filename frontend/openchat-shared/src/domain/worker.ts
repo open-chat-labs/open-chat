@@ -40,7 +40,7 @@ import type {
     ChatEventsResponse,
     ChatIdentifier,
     ClaimPrizeResponse,
-    CreateGroupResponse,
+    CreateGroupChatResponse,
     DeclineInvitationResponse,
     DeletedDirectMessageResponse,
     DeletedGroupMessageResponse,
@@ -2190,7 +2190,7 @@ export type WorkerResponseInner =
     | [number, number]
     | SetAuthIdentityResponse
     | CreateOpenChatIdentityResponse
-    | CreateGroupResponse
+    | CreateGroupChatResponse
     | DisableInviteCodeResponse
     | EnableInviteCodeResponse
     | ResetInviteCodeResponse
@@ -2746,7 +2746,7 @@ export type WorkerResults = ResultsByKind<{
     enableInviteCode: EnableInviteCodeResponse;
     disableInviteCode: DisableInviteCodeResponse;
     resetInviteCode: ResetInviteCodeResponse;
-    createGroupChat: CreateGroupResponse;
+    createGroupChat: CreateGroupChatResponse;
     setCachedMessageFromNotification: void;
     freezeGroup: FreezeGroupResponse;
     unfreezeGroup: UnfreezeGroupResponse;
