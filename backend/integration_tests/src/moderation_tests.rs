@@ -64,15 +64,18 @@ fn csam_pipeline_detection_triggers_auto_sanction() {
     assert_eq!(handled, 1);
 
     // Flags route back to the group, which escalates to user_index (via group_index), which
-    // deletes the message, suspends the sender and posts an alert to the moderation channel
+    // deletes the message and posts an alert to the moderation channel. A text classifier flag
+    // never suspends the sender before a verdict.
     tick_many(env, 10);
 
     let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
     assert!(matches!(message_content, MessageContent::Deleted(_)), "{message_content:?}");
 
     let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
-    let suspension_details = sender_state.suspension_details.expect("sender should be suspended");
-    assert!(matches!(suspension_details.action, SuspensionAction::Delete(_)));
+    assert!(
+        sender_state.suspension_details.is_none(),
+        "a text classifier flag must not suspend the sender before a verdict"
+    );
 
     let reports = get_moderation_reports(env, &test_data);
     assert_eq!(reports.len(), 1);
@@ -100,7 +103,7 @@ fn csam_pipeline_detection_triggers_auto_sanction() {
         "{deleted_message_response:?}"
     );
 
-    // The sanctioned sender contests the automated decision (the Art 22 safeguard)
+    // The sender contests the automated decision (the Art 22 safeguard)
     let contest_response = client::user_index::contest_moderation_sanction(
         env,
         test_data.sender.principal,
@@ -118,8 +121,7 @@ fn csam_pipeline_detection_triggers_auto_sanction() {
     );
     assert!(matches!(second_contest, UnitResult::Error(_)));
 
-    // A Dismissed verdict reverses the sanction: the sender is unsuspended and the report is
-    // resolved. (Message restoration is asserted once the chat-canister receivers land.)
+    // A Dismissed verdict reverses the takedown and resolves the report
     let resolve_response = client::user_index::resolve_moderation_report(
         env,
         test_data.moderator.principal,
@@ -134,7 +136,7 @@ fn csam_pipeline_detection_triggers_auto_sanction() {
     tick_many(env, 10);
 
     let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
-    assert!(sender_state.suspension_details.is_none(), "sender should be unsuspended");
+    assert!(sender_state.suspension_details.is_none(), "sender should not be suspended");
 
     // The false positive is fully reversed: the message is restored for everyone
     let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
@@ -701,8 +703,8 @@ fn proactive_detection_upheld_downgrades_suspension() {
     let reports = get_moderation_reports(env, &test_data);
     let report_index = reports[0].report_index.expect("proactive detection should carry an index");
 
-    // Upheld (a rules violation but not CSAM): the indefinite suspension downgrades to the
-    // standard severity, and the content is permanently removed
+    // Upheld (a rules violation but not CSAM): the sender, unsuspended until now, gets the
+    // standard timed severity, and the content is permanently removed
     let resolve_response = client::user_index::resolve_moderation_report(
         env,
         test_data.moderator.principal,
@@ -717,10 +719,10 @@ fn proactive_detection_upheld_downgrades_suspension() {
     tick_many(env, 10);
 
     let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
-    let suspension_details = sender_state.suspension_details.expect("sender should remain suspended");
+    let suspension_details = sender_state.suspension_details.expect("sender should be suspended");
     assert!(
         matches!(suspension_details.action, SuspensionAction::Unsuspend(_)),
-        "suspension should be downgraded to a timed one: {:?}",
+        "the suspension should be a timed one: {:?}",
         suspension_details.action
     );
 
@@ -1466,9 +1468,25 @@ fn timed_suspension_expiry_never_lifts_a_later_csam_suspension() {
     );
     tick_many(env, 5);
 
-    // ...and only then does the classification land, replacing it with an indefinite one
+    // ...and only then does the classification land and a moderator uphold it as CSAM,
+    // replacing it with an indefinite one (a text flag alone no longer suspends)
     env.advance_time(Duration::from_secs(10));
     mock_moderation_outcalls(env, &message_text, &[CSAM_CATEGORY], 1);
+    tick_many(env, 10);
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report_index = reports[0].report_index.expect("proactive detection should carry an index");
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::UpheldAsCsam,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
     tick_many(env, 10);
 
     let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
@@ -1809,11 +1827,10 @@ fn upheld_verdict_does_not_downgrade_while_another_sanction_stands() {
 
     let test_data = init_test_data(env, canister_ids, *controller);
 
-    // Two separate CSAM detections against the same sender, each auto-sanctioning indefinitely.
-    // Both messages are sent before either classification lands: the first sanction suspends
-    // the sender, and a suspended user cannot send. They share a random token so that a single
-    // mocked response flags both - the broker batches pending messages into one classify
-    // request, whose `input` array carries them together.
+    // Two separate CSAM detections against the same sender. A text flag no longer suspends, so
+    // the indefinite sanction comes from a moderator upholding one of them as CSAM. They share a
+    // random token so that a single mocked response flags both - the broker batches pending
+    // messages into one classify request, whose `input` array carries them together.
     let token = random_string();
     let message_text = format!("{TEST_MESSAGE_TEXT} {token}");
     let message_ids: Vec<_> = (0..2)
@@ -1839,6 +1856,12 @@ fn upheld_verdict_does_not_downgrade_while_another_sanction_stands() {
     mock_moderation_outcalls(env, &token, &[CSAM_CATEGORY], 0);
     tick_many(env, 10);
 
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    assert!(
+        sender_state.suspension_details.is_none(),
+        "text classifier flags must not suspend before a verdict"
+    );
+
     let reports = get_moderation_reports(env, &test_data);
     let report_indexes: Vec<u64> = message_ids
         .iter()
@@ -1851,15 +1874,14 @@ fn upheld_verdict_does_not_downgrade_while_another_sanction_stands() {
         })
         .collect();
 
-    // Upholding one as a non-CSAM violation must not downgrade the indefinite suspension while
-    // the other, still unresolved, CSAM sanction stands
+    // The first is upheld as CSAM: the sender is suspended indefinitely
     let resolve_response = client::user_index::resolve_moderation_report(
         env,
         test_data.moderator.principal,
         canister_ids.user_index,
         &user_index_canister::resolve_moderation_report::Args {
             report_index: report_indexes[0],
-            verdict: ModerationVerdict::Upheld,
+            verdict: ModerationVerdict::UpheldAsCsam,
             urgent: None,
         },
     );
@@ -1867,15 +1889,15 @@ fn upheld_verdict_does_not_downgrade_while_another_sanction_stands() {
     tick_many(env, 10);
 
     let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
-    let suspension_details = sender_state.suspension_details.expect("sender should remain suspended");
+    let suspension_details = sender_state.suspension_details.expect("sender should be suspended");
     assert!(
         matches!(suspension_details.action, SuspensionAction::Delete(_)),
-        "the suspension must stay indefinite: {:?}",
+        "{:?}",
         suspension_details.action
     );
 
-    // Resolving the second report as a non-CSAM violation too: nothing is left standing, so the
-    // downgrade to the standard severity now applies
+    // Upholding the other as a non-CSAM violation must not downgrade the indefinite suspension
+    // while the upheld-as-CSAM sanction stands
     let resolve_response = client::user_index::resolve_moderation_report(
         env,
         test_data.moderator.principal,
@@ -1892,8 +1914,8 @@ fn upheld_verdict_does_not_downgrade_while_another_sanction_stands() {
     let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
     let suspension_details = sender_state.suspension_details.expect("sender should remain suspended");
     assert!(
-        matches!(suspension_details.action, SuspensionAction::Unsuspend(_)),
-        "{:?}",
+        matches!(suspension_details.action, SuspensionAction::Delete(_)),
+        "the suspension must stay indefinite: {:?}",
         suspension_details.action
     );
 }
@@ -2405,6 +2427,17 @@ fn establish_pending_hash_match_report_for_transcode(
     source_hash: Option<Hash>,
     poster: Option<&User>,
 ) -> (BlobReference, u64) {
+    enable_media_scanning(env, canister_ids, test_data, scanner);
+
+    let poster = poster.unwrap_or(&test_data.sender);
+    let (blob_reference, message_id) = post_image_for_scan(env, canister_ids, test_data, file, source_hash, poster);
+    let report_index = submit_hash_match(env, canister_ids, test_data, scanner, poster, message_id, &blob_reference);
+    (blob_reference, report_index)
+}
+
+// Turns media scanning on with `scanner` as its only scanner, and makes the moderator a vault
+// reviewer
+fn enable_media_scanning(env: &mut PocketIc, canister_ids: &CanisterIds, test_data: &TestData, scanner: Principal) {
     client::user_index::happy_path::execute_protected_action(
         env,
         test_data.moderator.principal,
@@ -2427,8 +2460,18 @@ fn establish_pending_hash_match_report_for_transcode(
         }),
     );
     tick_many(env, 5);
+}
 
-    let poster = poster.unwrap_or(&test_data.sender);
+// Uploads `file` as `poster` and posts it as an image message in the test group, where the
+// media scan pipeline queues it for scanning (enable scanning first)
+fn post_image_for_scan(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    test_data: &TestData,
+    file: &[u8],
+    source_hash: Option<Hash>,
+    poster: &User,
+) -> (BlobReference, types::MessageId) {
     let bucket = client::storage_index::happy_path::allocated_bucket(env, poster.principal, canister_ids.storage_index, file);
     client::storage_bucket::happy_path::upload_file_with_source_hash(
         env,
@@ -2447,7 +2490,19 @@ fn establish_pending_hash_match_report_for_transcode(
     let message_id = random_from_u128();
     send_image_message(env, poster, test_data.group_id, message_id, blob_reference.clone());
     tick_many(env, 3);
+    (blob_reference, message_id)
+}
 
+// Submits a hash-match verdict for the scan job of `message_id`, returning the report it creates
+fn submit_hash_match(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    test_data: &TestData,
+    scanner: Principal,
+    poster: &User,
+    message_id: types::MessageId,
+    blob_reference: &BlobReference,
+) -> u64 {
     let local_user_index = canister_ids.local_user_index(env, test_data.group_id);
     let local_user_index_canister::media_scan_jobs::Response::Success(jobs_result) = client::local_user_index::media_scan_jobs(
         env,
@@ -2483,12 +2538,11 @@ fn establish_pending_hash_match_report_for_transcode(
     );
     tick_many(env, 10);
 
-    let report_index = get_moderation_reports(env, test_data)
+    get_moderation_reports(env, test_data)
         .iter()
         .find(|r| r.sender == poster.user_id && !r.is_blocked_attempt)
         .and_then(|r| r.report_index)
-        .expect("the match should create a moderation report");
-    (blob_reference, report_index)
+        .expect("the match should create a moderation report")
 }
 
 // Attempts to upload `file` as `uploader`, asserting the bucket refuses it (I13), then ticks
@@ -3488,26 +3542,16 @@ fn unrelated_dismissal_never_lifts_an_attempt_sanction() {
 
     let test_data = init_test_data(env, canister_ids, *controller);
 
-    // The attempter first earns their own unrelated CSAM report (classifier-detected text)
-    let unrelated_message_id = random_from_u128();
-    let unrelated_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
-    client::group::happy_path::send_text_message(
+    // The attempter first earns their own unrelated CSAM report and suspension (a media hash
+    // match - a text classifier flag no longer suspends before a verdict)
+    let (_, unrelated_report_index) = establish_pending_hash_match_report_from(
         env,
-        &test_data.reporter,
-        test_data.group_id,
-        None,
-        &unrelated_text,
-        Some(unrelated_message_id),
+        canister_ids,
+        &test_data,
+        random_principal(),
+        &random_file(),
+        Some(&test_data.reporter),
     );
-    tick_many(env, 3);
-    env.advance_time(Duration::from_secs(10));
-    mock_moderation_outcalls(env, &unrelated_text, &[CSAM_CATEGORY], 1);
-    tick_many(env, 10);
-    let unrelated_report_index = get_moderation_reports(env, &test_data)
-        .iter()
-        .find(|r| r.sender == test_data.reporter.user_id)
-        .and_then(|r| r.report_index)
-        .expect("the classifier detection should create a report");
 
     // Then a blocked attempt on someone else's pending content
     let file = random_file();
@@ -4054,6 +4098,119 @@ fn machine_detection_in_user_report_still_sanctions_attempts() {
         "a machine-backed pin must sanction attempts even inside a user report"
     );
     assert_eq!(attempt_reports_for(env, &test_data, &test_data.group_owner).len(), 1);
+}
+
+// A text classifier flag protects and escalates without suspending; a media hash match on the
+// same message then upgrades the open report and suspends the sender, without a second report
+#[test]
+fn hash_match_after_text_flag_upgrades_to_a_suspension() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let scanner = random_principal();
+    enable_media_scanning(env, canister_ids, &test_data, scanner);
+
+    let file = random_file();
+    let bucket =
+        client::storage_index::happy_path::allocated_bucket(env, test_data.sender.principal, canister_ids.storage_index, &file);
+    client::storage_bucket::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        bucket.canister_id,
+        bucket.file_id,
+        file.clone(),
+        vec![test_data.sender.canister()],
+        None,
+    );
+    let blob_reference = BlobReference {
+        canister_id: bucket.canister_id,
+        blob_id: bucket.file_id,
+    };
+    let message_id = random_from_u128();
+    let caption = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+    send_captioned_image_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        message_id,
+        blob_reference.clone(),
+        &caption,
+    );
+    tick_many(env, 3);
+
+    // The caption is flagged: the message is taken down and reported, the sender is not
+    // suspended
+    env.advance_time(Duration::from_secs(10));
+    mock_moderation_outcalls(env, &caption, &[CSAM_CATEGORY], 1);
+    tick_many(env, 10);
+
+    let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
+    assert!(matches!(message_content, MessageContent::Deleted(_)), "{message_content:?}");
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    assert!(
+        sender_state.suspension_details.is_none(),
+        "a text classifier flag must not suspend the sender before a verdict"
+    );
+    let reports = get_moderation_reports(env, &test_data);
+    let text_report_index = reports
+        .iter()
+        .find(|r| r.message_id == message_id)
+        .and_then(|r| r.report_index)
+        .expect("the text flag should create a report");
+
+    // Then the image matches by hash: the same report now carries a suspension
+    let report_index = submit_hash_match(
+        env,
+        canister_ids,
+        &test_data,
+        scanner,
+        &test_data.sender,
+        message_id,
+        &blob_reference,
+    );
+    assert_eq!(report_index, text_report_index);
+    assert_eq!(
+        get_moderation_reports(env, &test_data)
+            .iter()
+            .filter(|r| r.message_id == message_id)
+            .count(),
+        1,
+        "the upgrade must not post a second report"
+    );
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state
+        .suspension_details
+        .expect("the hash match should suspend the sender");
+    assert!(matches!(suspension_details.action, SuspensionAction::Delete(_)));
+    assert!(
+        moderation_notices(env, &test_data)
+            .iter()
+            .any(|t| t.contains(&format!("Report #{report_index}")) && t.contains("matched known CSAM by hash")),
+        "the moderators should be told why the report changed"
+    );
+
+    // Dismissing it reverses the suspension the upgrade applied
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    assert!(sender_state.suspension_details.is_none(), "sender should be unsuspended");
 }
 
 // I14 (throttle): repeated unsanctioned attempts against an assertion pin produce one notice
@@ -4827,28 +4984,25 @@ fn in_flight_detection_suspension_never_overwrites_an_upheld_downgrade() {
 
     let test_data = init_test_data_with_sender_alone(env, canister_ids, *controller, *platform_operator);
 
-    let message_id = random_from_u128();
-    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
-    client::group::happy_path::send_text_message(
-        env,
-        &test_data.sender,
-        test_data.group_id,
-        None,
-        &message_text,
-        Some(message_id),
-    );
-    tick_many(env, 3);
+    // A media hash match: the one detection which suspends before a verdict
+    let scanner = random_principal();
+    enable_media_scanning(env, canister_ids, &test_data, scanner);
+    let (blob_reference, message_id) =
+        post_image_for_scan(env, canister_ids, &test_data, &random_file(), None, &test_data.sender);
 
     // Stop the sender's canister so the detection suspension cannot commit and sits in its retry
     // loop
     stop_canister(env, test_data.sender.local_user_index, test_data.sender.canister());
 
-    env.advance_time(Duration::from_secs(10));
-    mock_moderation_outcalls(env, &message_text, &[CSAM_CATEGORY], 1);
-    tick_many(env, 10);
-
-    let reports = get_moderation_reports(env, &test_data);
-    let report_index = reports[0].report_index.expect("proactive detection should carry an index");
+    let report_index = submit_hash_match(
+        env,
+        canister_ids,
+        &test_data,
+        scanner,
+        &test_data.sender,
+        message_id,
+        &blob_reference,
+    );
 
     // The verdict lands while the detection suspension is still in flight
     let resolve_response = client::user_index::resolve_moderation_report(
@@ -4895,26 +5049,22 @@ fn in_flight_detection_suspension_never_lands_after_a_dismissal() {
 
     let test_data = init_test_data_with_sender_alone(env, canister_ids, *controller, *platform_operator);
 
-    let message_id = random_from_u128();
-    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
-    client::group::happy_path::send_text_message(
-        env,
-        &test_data.sender,
-        test_data.group_id,
-        None,
-        &message_text,
-        Some(message_id),
-    );
-    tick_many(env, 3);
+    let scanner = random_principal();
+    enable_media_scanning(env, canister_ids, &test_data, scanner);
+    let (blob_reference, message_id) =
+        post_image_for_scan(env, canister_ids, &test_data, &random_file(), None, &test_data.sender);
 
     stop_canister(env, test_data.sender.local_user_index, test_data.sender.canister());
 
-    env.advance_time(Duration::from_secs(10));
-    mock_moderation_outcalls(env, &message_text, &[CSAM_CATEGORY], 1);
-    tick_many(env, 10);
-
-    let reports = get_moderation_reports(env, &test_data);
-    let report_index = reports[0].report_index.expect("proactive detection should carry an index");
+    let report_index = submit_hash_match(
+        env,
+        canister_ids,
+        &test_data,
+        scanner,
+        &test_data.sender,
+        message_id,
+        &blob_reference,
+    );
 
     let resolve_response = client::user_index::resolve_moderation_report(
         env,
