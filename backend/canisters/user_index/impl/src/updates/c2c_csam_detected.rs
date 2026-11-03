@@ -131,7 +131,34 @@ fn apply_upgraded_sanction(
         state,
     );
     moderation::suspend_sender(args.sender, Some(report_index), now, state);
-    moderation::update_moderation_alert_quarantined(&reported_message, state);
+    if reported_message.moderation_channel_message_id.is_some() {
+        moderation::update_moderation_alert_quarantined(&reported_message, state);
+    } else {
+        // A legacy FlaggedOnly outcome never posted an alert: post one now so that the
+        // suspension has a card a moderator can resolve
+        moderation::post_moderation_alert(
+            ModerationAlert {
+                report_index: Some(report_index),
+                chat_id: reported_message.chat_id,
+                thread_root_message_index: reported_message.thread_root_message_index,
+                message_index: reported_message.message_index,
+                message_id: reported_message.message_id,
+                sender: reported_message.sender,
+                reporters: reported_message.reports.keys().copied().collect(),
+                categories,
+                classification_failed: false,
+                auto_sanctioned: true,
+                content_excerpt: reported_message.content_excerpt.clone(),
+                blob_references: reported_message.blob_references.clone(),
+                media_matches: reported_message.media_matches.clone(),
+                timestamp: now,
+                authority_report: None,
+                is_blocked_attempt: false,
+                status: types::ModerationReportStatus::Pending,
+            },
+            state,
+        );
+    }
     moderation::post_moderation_notice(
         format!(
             "Report #{report_index}: the message's media has now matched known CSAM by hash, so the sender has been suspended pending your verdict."

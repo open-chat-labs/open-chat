@@ -1920,6 +1920,71 @@ fn upheld_verdict_does_not_downgrade_while_another_sanction_stands() {
     );
 }
 
+// The unverdicted arm of the same rule: a pending hash-match sanction keeps the suspension
+// indefinite while another report is upheld as a non-CSAM violation
+#[test]
+fn upheld_verdict_does_not_downgrade_while_a_pending_hash_match_stands() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // A text flag first (it does not suspend, so the sender can still post the image after it)
+    let text_message_id = random_from_u128();
+    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+    client::group::happy_path::send_text_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        None,
+        &message_text,
+        Some(text_message_id),
+    );
+    tick_many(env, 3);
+    env.advance_time(Duration::from_secs(10));
+    mock_moderation_outcalls(env, &message_text, &[CSAM_CATEGORY], 1);
+    tick_many(env, 10);
+    let text_report_index = get_moderation_reports(env, &test_data)
+        .iter()
+        .find(|r| r.message_id == text_message_id)
+        .and_then(|r| r.report_index)
+        .expect("the text flag should create a report");
+
+    // Then a hash match, which suspends indefinitely and stays unverdicted
+    establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &random_file());
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state
+        .suspension_details
+        .expect("the hash match should suspend the sender");
+    assert!(matches!(suspension_details.action, SuspensionAction::Delete(_)));
+
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: text_report_index,
+            verdict: ModerationVerdict::Upheld,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state.suspension_details.expect("sender should remain suspended");
+    assert!(
+        matches!(suspension_details.action, SuspensionAction::Delete(_)),
+        "the pending hash-match sanction must keep the suspension indefinite: {:?}",
+        suspension_details.action
+    );
+}
+
 #[test]
 fn accept_terms_records_version_and_never_downgrades() {
     let mut wrapper = ENV.deref().get();

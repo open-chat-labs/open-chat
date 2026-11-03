@@ -27,7 +27,17 @@ fn contest_moderation_sanction_impl(state: &mut RuntimeState) -> OCResult {
         .get_by_principal(&caller)
         .ok_or(OCErrorCode::InitiatorNotFound)?;
     let user_id = user.user_id;
-    let report_indexes: Vec<u64> = user.reported_messages.iter().rev().copied().collect();
+    // Newest first, but a report which actually suspended the user comes before any which only
+    // took the message down (a text classifier flag or a reporter assertion), so that the
+    // contest lands on the decision the user is most likely contesting
+    let mut report_indexes: Vec<u64> = user.reported_messages.iter().rev().copied().collect();
+    report_indexes.sort_by_key(|i| {
+        !state
+            .data
+            .reported_messages
+            .get(*i)
+            .is_some_and(|r| r.suspension_applied_without_verdict())
+    });
 
     // One active contest per REPORT: an already-contested report is skipped so that a user
     // with multiple unresolved sanctions can contest each of them

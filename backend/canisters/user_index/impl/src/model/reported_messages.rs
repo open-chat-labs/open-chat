@@ -958,6 +958,10 @@ pub fn build_message_to_reporter(reported_message: &ReportedMessage, reporter: U
                 ModerationAction::AutoSanctioned if outcome.sanctioned => format!(
                     "You reported [this message]({link}) for breaking [the platform rules](https://oc.app/guidelines?section=3). Automated moderation determined that it contained prohibited content, so the message has been removed and the sender suspended."
                 ),
+                // Direct chat messages are never deleted by moderation
+                ModerationAction::AutoSanctioned if matches!(reported_message.chat_id, Chat::Direct(_)) => format!(
+                    "You reported [this message]({link}) for breaking [the platform rules](https://oc.app/guidelines?section=3). It has been referred to the OpenChat moderation team for review."
+                ),
                 ModerationAction::AutoSanctioned => format!(
                     "You reported [this message]({link}) for breaking [the platform rules](https://oc.app/guidelines?section=3). The message has been removed and referred to the OpenChat moderation team for review."
                 ),
