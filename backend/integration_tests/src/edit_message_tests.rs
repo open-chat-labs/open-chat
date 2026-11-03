@@ -140,25 +140,20 @@ fn edit_thread_reply_in_direct_chat_succeeds() {
     tick_many(env, 10);
 
     let new_text = "REPLY!";
-    let response = client::user::edit_message_v2(
+    let response = client::user::edit_message_text(
         env,
         user1.principal,
         user1.canister(),
-        &multi_user_canister::edit_message_v2::Args {
+        &multi_user_canister::edit_message_text::Args {
             user_id: user2.user_id,
             thread_root_message_index: Some(root.message_index),
             message_id,
-            content: MessageContentInitial::Text(TextContent {
-                text: new_text.to_string(),
-            }),
+            text: Some(new_text.to_string()),
             block_level_markdown: None,
             og_previews: Vec::new(),
         },
     );
-    assert!(
-        matches!(response, multi_user_canister::edit_message_v2::Response::Success),
-        "{response:?}"
-    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
 
     tick_many(env, 10);
 
@@ -248,75 +243,6 @@ fn edits_to_anything_but_text_are_refused() {
             "{response:?}"
         );
         assert!(!group_message(env, &user, group_id, sent.event_index).edited);
-    }
-}
-
-// An older client sends the whole content, of which only the text is taken
-#[test]
-fn an_older_clients_edit_only_changes_the_text() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
-
-    let user = client::register_user(env, canister_ids);
-    let group_id = client::user::happy_path::create_group(env, &user, &random_string(), false, true);
-    let message_id = random_from_u128();
-    let sent = client::group::happy_path::send_message(env, &user, group_id, None, image(Some("old")), None, Some(message_id));
-
-    let response = client::group::edit_message_v2(
-        env,
-        user.principal,
-        group_id.into(),
-        &group_canister::edit_message_v2::Args {
-            thread_root_message_index: None,
-            message_id,
-            content: MessageContentInitial::Text(TextContent { text: "new".to_string() }),
-            block_level_markdown: None,
-            new_achievement: false,
-            og_previews: Vec::new(),
-        },
-    );
-    assert!(matches!(response, UnitResult::Success), "{response:?}");
-
-    assert_image(&group_message(env, &user, group_id, sent.event_index).content, Some("new"));
-}
-
-#[test]
-fn an_older_clients_edit_in_a_direct_chat_only_changes_the_text_in_both_copies() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
-
-    let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
-    let message_id = random_from_u128();
-    let sent = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));
-
-    let response = client::user::edit_message_v2(
-        env,
-        user1.principal,
-        user1.canister(),
-        &multi_user_canister::edit_message_v2::Args {
-            user_id: user2.user_id,
-            thread_root_message_index: None,
-            message_id,
-            content: image(Some("new")),
-            block_level_markdown: None,
-            og_previews: Vec::new(),
-        },
-    );
-    assert!(matches!(response, UnitResult::Success), "{response:?}");
-
-    tick_until(env, |env| {
-        direct_message(env, &user2, user1.user_id, sent.event_index).content.text() == Some("new")
-    });
-
-    for (user, them) in [(&user1, user2.user_id), (&user2, user1.user_id)] {
-        let message = direct_message(env, user, them, sent.event_index);
-        assert!(message.edited);
-        assert!(
-            matches!(&message.content, MessageContent::Text(t) if t.text == "new"),
-            "{:?}",
-            message.content
-        );
     }
 }
 

@@ -4,29 +4,14 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
 use constants::OPENCHAT_BOT_USER_ID;
+use multi_user_canister::edit_message_text;
 use multi_user_canister::{EditMessageArgs as C2CEditMessageArgs, UserCanisterEvent};
-use multi_user_canister::{edit_message_text, edit_message_v2};
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, EventIndex, OCResult};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn edit_message_text(args: edit_message_text::Args) -> edit_message_text::Response {
-    execute_update(|state| edit_message_text_impl(args, state)).into()
-}
-
-// Older clients send the whole content, of which only the text is taken
-#[update(guard = "caller_is_hosted_user", msgpack = true)]
-#[trace]
-fn edit_message_v2(args: edit_message_v2::Args) -> edit_message_v2::Response {
-    let args = edit_message_text::Args {
-        user_id: args.user_id,
-        thread_root_message_index: args.thread_root_message_index,
-        message_id: args.message_id,
-        text: args.content.text().map(|t| t.to_string()),
-        block_level_markdown: args.block_level_markdown,
-        og_previews: args.og_previews,
-    };
     execute_update(|state| edit_message_text_impl(args, state)).into()
 }
 

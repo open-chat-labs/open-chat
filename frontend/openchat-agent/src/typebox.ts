@@ -9755,17 +9755,6 @@ export const CommunityCreateChannelArgs = /* @__PURE__ */ Type.Object({
     external_url: Type.Optional(Type.String()),
 });
 
-export type CommunityEditMessageArgs = Static<typeof CommunityEditMessageArgs>;
-export const CommunityEditMessageArgs = /* @__PURE__ */ Type.Object({
-    channel_id: ChannelId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_id: MessageId,
-    content: MessageContentInitial,
-    block_level_markdown: Type.Optional(Type.Boolean()),
-    new_achievement: Type.Boolean(),
-    og_previews: Type.Array(OgPreview),
-});
-
 export type CommunityUpdateChannelArgs = Static<typeof CommunityUpdateChannelArgs>;
 export const CommunityUpdateChannelArgs = /* @__PURE__ */ Type.Object({
     channel_id: ChannelId,
@@ -9812,16 +9801,6 @@ export const GroupSendMessageArgs = /* @__PURE__ */ Type.Object({
     block_level_markdown: Type.Boolean(),
     rules_accepted: Type.Optional(Version),
     message_filter_failed: Type.Optional(Type.BigInt()),
-    new_achievement: Type.Boolean(),
-    og_previews: Type.Array(OgPreview),
-});
-
-export type GroupEditMessageArgs = Static<typeof GroupEditMessageArgs>;
-export const GroupEditMessageArgs = /* @__PURE__ */ Type.Object({
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_id: MessageId,
-    content: MessageContentInitial,
-    block_level_markdown: Type.Optional(Type.Boolean()),
     new_achievement: Type.Boolean(),
     og_previews: Type.Array(OgPreview),
 });
@@ -9883,16 +9862,6 @@ export const UserCreateCommunityArgs = /* @__PURE__ */ Type.Object({
     default_channels: Type.Array(Type.String()),
     default_channel_rules: Type.Optional(Rules),
     primary_language: Type.String(),
-});
-
-export type UserEditMessageArgs = Static<typeof UserEditMessageArgs>;
-export const UserEditMessageArgs = /* @__PURE__ */ Type.Object({
-    user_id: UserId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_id: MessageId,
-    content: MessageContentInitial,
-    block_level_markdown: Type.Optional(Type.Boolean()),
-    og_previews: Type.Array(OgPreview),
 });
 
 export type ChatSummaryGroup = Static<typeof ChatSummaryGroup>;

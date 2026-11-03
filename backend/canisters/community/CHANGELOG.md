@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove `edit_message`, which `edit_message_text` replaced ([#10360](https://github.com/open-chat-labs/open-chat/pull/10360))
+
 ## [[2.0.2205](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2205-community)] - 2026-11-02
 
 ### Added

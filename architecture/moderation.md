@@ -97,7 +97,7 @@ sequenceDiagram
     participant G as group / community canister
     participant L as local_user_index (broker)
     participant O as OpenAI /v1/moderations
-    U->>G: send_message / edit_message (public chat)
+    U->>G: send_message / edit_message_text (public chat)
     G-)L: ClassifyMessageRequest (batched event sync)
     Note over L: per-source fair queue<br/>dedup by message id, caps 2k/source, 20k total
     loop timer, every 10s (backs off to 5 min while failing)
