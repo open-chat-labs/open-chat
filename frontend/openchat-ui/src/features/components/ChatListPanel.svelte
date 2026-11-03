@@ -29,7 +29,7 @@
   interface Row extends RowProps {
     /** The chat's id, reported by onSelect. */
     id: string;
-    /** Section heading; "Pinned" also pins the row. Defaults to Chats ("Recent" is read as Chats). */
+    /** Section heading; "Pinned" also pins the row. Defaults to Chats. */
     section?: string;
     /** Row menu. */
     menu?: MenuItem[];
@@ -131,7 +131,7 @@
   const groups = $derived.by(() => {
     const order: { label: string; rows: typeof shown }[] = [];
     for (const r of shown) {
-      const key = showLabels ? (!r.section || r.section === 'Recent' ? 'Chats' : r.section) : '';
+      const key = showLabels ? (r.section ?? 'Chats') : '';
       let g = order.find((o) => o.label === key);
       if (!g) order.push((g = { label: key, rows: [] }));
       g.rows.push(r);

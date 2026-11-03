@@ -218,6 +218,7 @@
   // the referrer field takes a search, or (with resolveReferrer) a pasted invite link
   let refPaste = $state(false);
   let refProblem = $state<'no_referrer' | 'unknown' | null>(null);
+  let pasteTimer: ReturnType<typeof setTimeout> | undefined;
   let pasteRun = 0;
 
   function toggleRefMode() {
@@ -225,12 +226,20 @@
     refQuery = '';
     refProblem = null;
     pasteRun++;
+    clearTimeout(pasteTimer);
   }
 
-  async function pastedLink(text: string) {
+  // the link as typed or pasted, looked up once it stops changing (a link typed out isn't looked up per keystroke);
+  // only the latest text's answer is kept
+  function pastedLink(text: string) {
     refQuery = text;
     refProblem = null;
     const mine = ++pasteRun;
+    clearTimeout(pasteTimer);
+    pasteTimer = setTimeout(() => void lookUpLink(text, mine), CHECK_MS);
+  }
+
+  async function lookUpLink(text: string, mine: number) {
     const code = referralCode(text);
     if (code === undefined) {
       // a few characters in it's still being typed; past that it isn't a link with a referrer
@@ -464,6 +473,8 @@
       flow.destroy();
       clearTimeout(checkTimer);
       clearTimeout(searchTimer);
+      clearTimeout(pasteTimer);
+      pasteRun++;
     };
   });
 </script>

@@ -60,14 +60,15 @@
   }: Props = $props();
   const t = useT();
 
-  // the strip keeps the last names while it fades out
-  let lastTyping = '';
-  const typingText = $derived.by(() => {
-    if (typingNames.length > 0) {
-      lastTyping = t('ui.typingIndicator.typing', { count: typingNames.length, name: typingNames[0], second: typingNames[1] ?? '' });
-    }
-    return lastTyping;
+  // the strip keeps the last names while it fades out (their text follows the locale like any other)
+  let lastNames = $state<string[]>([]);
+  $effect(() => {
+    if (typingNames.length > 0) lastNames = typingNames;
   });
+  const shownNames = $derived(typingNames.length > 0 ? typingNames : lastNames);
+  const typingText = $derived(
+    shownNames.length > 0 ? t('ui.typingIndicator.typing', { count: shownNames.length, name: shownNames[0], second: shownNames[1] ?? '' }) : '',
+  );
 </script>
 
 <div class="bar">

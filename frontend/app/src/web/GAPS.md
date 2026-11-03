@@ -540,7 +540,7 @@ design export needs. Each entry says where it came up.
   a forwarded latest message puts the forward icon before a chat row's preview
   (`latestForwarded`), the chat list's second section is "Chats", the composer's typing line is a
   strip resting on it (two names: "A and B are typing"), sign-up takes a pasted invite link
-  (`resolveReferrer`: its `ref` is the referrer's user id) and says "Invited by" for the link's
+  (`resolveReferrer`: its `ref` is the referrer's user id; bots and suspended users, whose referral the sign-up refuses, are neither found nor searched for, `canRefer`) and says "Invited by" for the link's
   referrer, and Swap shows only the best quote. Not yet:
   - `NavRail` pins take a `menu` (right-click, Shift+F10), but the rail adapter gives the
     community pins none: the community menu's actions live in the chat list header for now.

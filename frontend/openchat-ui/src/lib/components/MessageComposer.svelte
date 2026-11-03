@@ -18,6 +18,7 @@
   import TokenAvatar from './TokenAvatar.svelte';
   import { useT } from '../i18n';
   import { cssUrl } from '../cssUrl';
+  import { deleteBackward, insertAt, type TextEdit } from '../textEdit';
 
   type AttachKind = 'media' | 'file' | 'poll' | 'prize' | 'crypto' | 'swap' | 'memeFighter';
 
@@ -218,16 +219,22 @@
     el.style.overflowY = h > 160 ? 'auto' : 'hidden';
   }
 
-  async function insert(text: string) {
+  // an edit at the selection (the end of the draft without a field): the caret moves with it; `focus` takes focus too
+  async function editDraft(edit: (text: string, start: number, end: number) => TextEdit, focus: boolean) {
     const el = input;
-    const a = el ? el.selectionStart : draft.length, b = el ? el.selectionEnd : draft.length;
-    draft = draft.slice(0, a) + text + draft.slice(b);
+    const next = edit(draft, el ? el.selectionStart : draft.length, el ? el.selectionEnd : draft.length);
+    draft = next.text;
     await tick();
     if (el) {
-      el.focus();
-      el.selectionStart = el.selectionEnd = a + text.length;
-      grow();
+      if (focus) el.focus();
+      el.selectionStart = el.selectionEnd = next.caret;
     }
+    grow();
+  }
+
+  // the composer's own emoji picker: at the caret, focusing the field
+  function insert(text: string) {
+    void editDraft((d, a, b) => insertAt(d, a, b, text), true);
   }
 
   // the host's typing (its emoji panel): at the caret, without focusing the field (focus would raise the keyboard)
@@ -236,33 +243,9 @@
     const next = hostInsert;
     if (!next || next.key === lastInsert) return;
     lastInsert = next.key;
-    untrack(() => typeFromHost(next.text));
+    // "\b" deletes the selection, or the whole character (an emoji with its skin tone, a flag) before the caret
+    untrack(() => void editDraft(next.text === '\b' ? deleteBackward : (d, a, b) => insertAt(d, a, b, next.text), false));
   });
-
-  async function typeFromHost(text: string) {
-    const el = input;
-    const a = el ? el.selectionStart : draft.length, b = el ? el.selectionEnd : draft.length;
-    let caret: number;
-    if (text === '\b') {
-      if (a !== b) {
-        draft = draft.slice(0, a) + draft.slice(b);
-        caret = a;
-      } else {
-        // one character back, a whole emoji (code point) at a time
-        const before = Array.from(draft.slice(0, a));
-        before.pop();
-        const head = before.join('');
-        draft = head + draft.slice(b);
-        caret = head.length;
-      }
-    } else {
-      draft = draft.slice(0, a) + text + draft.slice(b);
-      caret = a + text.length;
-    }
-    await tick();
-    if (el) el.selectionStart = el.selectionEnd = caret;
-    grow();
-  }
 
   async function send() {
     if (editing) {

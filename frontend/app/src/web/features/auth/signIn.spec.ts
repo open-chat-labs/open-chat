@@ -5,7 +5,7 @@ import {
     type SignInMethod,
     type SignInOutcome,
 } from "@client";
-import { configKeys } from "@shared";
+import { configKeys, type UserSummary } from "@shared";
 import { createAuth, signInAbandoned } from "./signIn";
 
 const eth = vi.hoisted(() => ({ signals: [] as (AbortSignal | undefined)[] }));
@@ -135,7 +135,9 @@ function fakeClient() {
         clearReferralCode: vi.fn(),
         getReferringUser: vi.fn(async () => undefined as unknown),
         checkUsername: vi.fn(async () => "success"),
-        searchUsers: vi.fn(async () => []),
+        searchUsers: vi.fn(
+            async (_term: string, _max?: number): Promise<Partial<UserSummary>[]> => [],
+        ),
         getUser: vi.fn(async (_userId: string) => undefined as unknown),
         handleMagicLink: vi.fn(async () => ({ kind: "success" })),
         logout: vi.fn(async () => set({ kind: "anon" })),
@@ -239,6 +241,8 @@ describe("the sign-in callbacks", () => {
             userId: "r2",
             username: "lucy",
             displayName: "Lucy",
+            kind: "user",
+            suspended: false,
         });
         await expect(auth.resolveReferrer("r2")).resolves.toMatchObject({
             userId: "r2",
@@ -247,8 +251,28 @@ describe("the sign-in callbacks", () => {
         });
         expect(client.getUser).toHaveBeenCalledWith("r2");
         await expect(auth.resolveReferrer("nobody")).resolves.toBeUndefined();
+        // a bot or a suspended user would have the sign-up refused
+        client.getUser.mockResolvedValueOnce({ userId: "b1", username: "bot", kind: "bot" });
+        await expect(auth.resolveReferrer("b1")).resolves.toBeUndefined();
+        client.getUser.mockResolvedValueOnce({
+            userId: "s1",
+            username: "gone",
+            kind: "user",
+            suspended: true,
+        });
+        await expect(auth.resolveReferrer("s1")).resolves.toBeUndefined();
         client.getUser.mockRejectedValueOnce(new Error("not a principal"));
         await expect(auth.resolveReferrer("???")).resolves.toBeUndefined();
+    });
+
+    test("the referrers searched for leave out bots and suspended users", async () => {
+        client.searchUsers.mockResolvedValueOnce([
+            { userId: "u1", username: "lucy", displayName: "Lucy", kind: "user", suspended: false },
+            { userId: "b1", username: "helper", kind: "bot", suspended: false },
+            { userId: "s1", username: "gone", kind: "user", suspended: true },
+        ]);
+        const found = await auth.searchReferrers("l");
+        expect(found.map((p) => p.userId)).toEqual(["u1"]);
     });
 
     test("a referrer that can't be looked up is no referrer", async () => {
