@@ -1574,6 +1574,7 @@
     "membersAreTyping": "{number} membri stanno digitando",
     "membersHeader": "{level} membri",
     "messageBlocked": "Messaggio nascosto",
+    "messageUnsupported": "Questo messaggio richiede una versione più recente di OpenChat",
     "messageDeleted": "Messaggio eliminato da {username} il {timestamp}",
     "messageDeletedByOpenChatBot": "Questo messaggio è stato segnalato per la prima volta da un utente OpenChat, quindi inviato a [Modclub]({modclub}) dove è stato deciso che il messaggio violava una [regola della piattaforma]({rules}) e infine eliminato da {username} su {xyz }",
     "messages": "Messaggi",

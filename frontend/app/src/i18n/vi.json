@@ -1574,6 +1574,7 @@
     "membersAreTyping": "{number} thành viên đang nhập",
     "membersHeader": "{level} thành viên",
     "messageBlocked": "Tin nhắn bị ẩn",
+    "messageUnsupported": "Tin nhắn này cần phiên bản OpenChat mới hơn",
     "messageDeleted": "Tin nhắn được xóa bởi {username} vào lúc {timestamp}",
     "messageDeletedByOpenChatBot": "Tin nhắn này lần đầu tiên được báo cáo bởi một người dùng OpenChat, sau đó được gửi đến [Modclub]({modclub}), nơi người ta quyết định rằng tin nhắn này đã vi phạm [quy tắc nền tảng]({rules}) và cuối cùng bị xóa bởi {username} trên {xyz }",
     "messages": "Tin nhắn",

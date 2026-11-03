@@ -1574,6 +1574,7 @@
     "membersAreTyping": "أعضاء {number} يكتبون",
     "membersHeader": "أعضاء {level}",
     "messageBlocked": "الرسالة مخفية",
+    "messageUnsupported": "تتطلب هذه الرسالة إصدارًا أحدث من OpenChat",
     "messageDeleted": "تم حذف الرسالة بواسطة {username} في {timestamp}",
     "messageDeletedByOpenChatBot": "تم الإبلاغ عن هذه الرسالة أولاً بواسطة مستخدم OpenChat، ثم تم إرسالها إلى [Modclub]({modclub}) حيث تم تحديد أن الرسالة انتهكت [قاعدة النظام الأساسي]({rules})، وأخيرًا تم حذفها بواسطة {username} على {timestamp}",
     "messages": "رسائل",

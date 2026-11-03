@@ -14,6 +14,7 @@
     import DeletedContent from "./DeletedContent.svelte";
     import ModerationReportContent from "./ModerationReportContent.svelte";
     import RestrictedMessageContent from "@shared_components/home/RestrictedMessageContent.svelte";
+    import UnsupportedContent from "@shared_components/home/UnsupportedContent.svelte";
     import FileContent from "./FileContent.svelte";
     import GiphyContent from "./GiphyContent.svelte";
     import ImageContent from "./ImageContent.svelte";
@@ -130,6 +131,8 @@
     <DeletedContent {content} {undeleting} />
 {:else if content.kind === "restricted_content"}
     <RestrictedMessageContent />
+{:else if content.kind === "unsupported_content"}
+    <UnsupportedContent />
 {:else if content.kind === "blocked_content"}
     <BlockedContent />
 {:else if content.kind === "crypto_content"}

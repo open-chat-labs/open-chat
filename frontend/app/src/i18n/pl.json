@@ -1574,6 +1574,7 @@
     "membersAreTyping": "Użytkownicy {number} piszą",
     "membersHeader": "{level} członków",
     "messageBlocked": "Wiadomość ukryta",
+    "messageUnsupported": "Ta wiadomość wymaga nowszej wersji OpenChat",
     "messageDeleted": "Wiadomość usunięta przez {username} w dniu {timestamp}",
     "messageDeletedByOpenChatBot": "Ta wiadomość została najpierw zgłoszona przez użytkownika OpenChat, następnie wysłana do [Modclub]({modclub}), gdzie zdecydowano, że wiadomość złamała [zasadę platformy]({rules}), a ostatecznie usunięta przez {username} w dniu {xyz }",
     "messages": "Wiadomości",

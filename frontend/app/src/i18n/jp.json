@@ -1574,6 +1574,7 @@
     "membersAreTyping": "{number}メンバーが入力しています",
     "membersHeader": "{level} メンバー",
     "messageBlocked": "メッセージが隠されています",
+    "messageUnsupported": "このメッセージを表示するには新しいバージョンの OpenChat が必要です",
     "messageDeleted": "このメッセージは{timestamp}に、{username}によって消去されました",
     "messageDeletedByOpenChatBot": "このメッセージは最初に OpenChat ユーザーによって報告され、その後 [Modclub]({modclub}) に送信され、そこでメッセージが [プラットフォーム ルール]({rules}) に違反していると判断され、最終的には {username} によって {timestamp} によって削除されました。 }",
     "messages": "メッセージ",

@@ -236,6 +236,8 @@ export function getContentAsFormattedText(
         text = content.title;
     } else if (content.kind === "mini_app_content") {
         text = content.text;
+    } else if (content.kind === "unsupported_content") {
+        text = "Unsupported message";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
