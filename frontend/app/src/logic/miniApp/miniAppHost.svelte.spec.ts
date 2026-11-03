@@ -7,7 +7,7 @@ import type {
     ResourceKey,
 } from "@client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { MiniAppHost, type HostedMiniApp } from "./miniAppHost.svelte";
+import { MINI_APP_REVEAL_MS, MiniAppHost, type HostedMiniApp } from "./miniAppHost.svelte";
 
 const APP: HostedMiniApp = {
     url: new URL("https://uno.example.com/app"),
@@ -604,5 +604,84 @@ describe("MiniAppHost", () => {
         await settle();
         expect(host.status).toEqual({ kind: "open", role: "spectator" });
         second.remove();
+    });
+
+    describe("showing the app in place of its artwork", () => {
+        afterEach(() => vi.useRealTimers());
+
+        test("waits for the app to say it has drawn what it's for", async () => {
+            await opened("player", "player");
+            host.loaded();
+            await fromApp({ kind: "mini_app_ready" });
+            games.listener!.onState(state(1));
+            expect(host.revealed).toBe(false);
+
+            await fromApp({ kind: "mini_app_drawn" });
+            expect(host.revealed).toBe(true);
+        });
+
+        test("even before its page has finished loading", async () => {
+            await fromApp({ kind: "mini_app_drawn" });
+            expect(host.revealed).toBe(true);
+        });
+
+        test("shows an app which doesn't say a moment after its page has loaded", () => {
+            vi.useFakeTimers();
+            vi.advanceTimersByTime(MINI_APP_REVEAL_MS);
+            expect(host.revealed).toBe(false);
+
+            host.loaded();
+            vi.advanceTimersByTime(MINI_APP_REVEAL_MS - 1);
+            expect(host.revealed).toBe(false);
+            vi.advanceTimersByTime(1);
+            expect(host.revealed).toBe(true);
+        });
+
+        test("from its page's first load, if it reloads itself", () => {
+            vi.useFakeTimers();
+            host.loaded();
+            vi.advanceTimersByTime(MINI_APP_REVEAL_MS - 100);
+            host.loaded();
+            vi.advanceTimersByTime(100);
+            expect(host.revealed).toBe(true);
+        });
+
+        test("ignores anything but the app's frame and origin saying so", async () => {
+            await fromApp({ kind: "mini_app_drawn" }, "https://evil.example.com");
+            await fromApp({ kind: "mini_app_drawn" }, ORIGIN, window);
+            expect(host.revealed).toBe(false);
+        });
+
+        test("hides it again until a new frame's app has drawn, or its page has loaded", async () => {
+            await fromApp({ kind: "mini_app_drawn" });
+            close();
+            expect(host.revealed).toBe(false);
+
+            const second = document.createElement("iframe");
+            document.body.appendChild(second);
+            close = host.open(second);
+            // the first frame's app, which is gone
+            await fromApp({ kind: "mini_app_drawn" });
+            expect(host.revealed).toBe(false);
+
+            await fromApp({ kind: "mini_app_drawn" }, ORIGIN, second.contentWindow);
+            expect(host.revealed).toBe(true);
+            second.remove();
+        });
+
+        test("forgets a page that loaded in a frame since closed", () => {
+            vi.useFakeTimers();
+            host.loaded();
+            close();
+            close = host.open(frame);
+            vi.runAllTimers();
+            expect(host.revealed).toBe(false);
+        });
+
+        test("hides it again when it's reset, as the card goes off screen", async () => {
+            await fromApp({ kind: "mini_app_drawn" });
+            host.reset();
+            expect(host.revealed).toBe(false);
+        });
     });
 });

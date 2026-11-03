@@ -68,7 +68,10 @@ export type MiniAppMessage =
     // the player's token is running out
     | { kind: "mini_app_token_request" }
     // the player asks to start the game
-    | { kind: "mini_app_start" };
+    | { kind: "mini_app_start" }
+    // the app has drawn what it's for, eg. the game rather than a spinner while it waits for the
+    // state, so it's shown in place of its artwork
+    | { kind: "mini_app_drawn" };
 
 // The app's message, if `ev` is one from the frame. Anything else posted to the window (other
 // frames, popups, the parent when OpenChat is itself framed) is ignored.
@@ -82,7 +85,8 @@ export function miniAppMessage(
     const kind = (ev.data as { kind?: unknown }).kind;
     return kind === "mini_app_ready" ||
         kind === "mini_app_token_request" ||
-        kind === "mini_app_start"
+        kind === "mini_app_start" ||
+        kind === "mini_app_drawn"
         ? { kind }
         : undefined;
 }

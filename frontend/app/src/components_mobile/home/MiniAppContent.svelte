@@ -242,7 +242,7 @@
 
     // A card with an app is as wide as its frame, so its rows wrap to the app rather than widen the
     // message, which is only as wide as what's in it. Its width mustn't depend on what's in the
-    // frame either: the artwork, which is only there until the app's loaded, would make the card
+    // frame either: the artwork, which is only there until the app's drawn, would make the card
     // wider until then. No taller than most of the screen at the app's aspect ratio.
     .framed {
         width: min(#{$card-width}, calc(75dvh * var(--app-w) / var(--app-h)));

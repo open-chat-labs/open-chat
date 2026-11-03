@@ -188,7 +188,7 @@ A bot declares the apps it hosts in its definition, each with its artwork, and a
 - `name` is 1 to 50 characters, each a lowercase letter (`a` to `z`), a digit, `-` or `_`, eg. `chess` or `press_counter`. It's what a card's `app` names, unique within the definition. The UserIndex refuses a definition with any other name, and the LocalUserIndex refuses a card whose app isn't in the bot's definition.
 - `image_url` is an absolute http(s) URL, or a path relative to the bot's endpoint, eg. `app/chess.svg`.
 
-The website shows the image in the card's frame box whenever there's no app to show: before the app loads, to someone who can't open it, and when the game is over with no end state, with the result, or "Game over", over it.
+The website shows the image in the card's frame box whenever there's no app to show: until the app has drawn what it's for (see "App ↔ website"), to someone who can't open it, and when the game is over with no end state, with the result, or "Game over", over it.
 
 ## Bot → service: HTTPS
 
@@ -309,12 +309,15 @@ The service doesn't follow redirects from a bot's endpoint.
 
 ## App ↔ website: postMessage
 
-The website loads `<endpoint>/app#oc_theme=dark` (or `light`, the user's theme as the frame's made) in a sandboxed iframe. It shows the app once the frame's loaded, which can be before it's initialised, so the app can draw itself in the user's theme from the start; a later change comes as `set_dark_mode`. It sends messages only to the app's origin, and takes them only from the app's frame and origin.
+The website loads `<endpoint>/app#oc_theme=dark` (or `light`, the user's theme as the frame's made) in a sandboxed iframe. It sends messages only to the app's origin, and takes them only from the app's frame and origin.
+
+The website shows the app's image in the frame's box, with the app drawn unseen meanwhile, until the app says it has drawn what it's for (`mini_app_drawn`), and then the app in its place. So a card goes straight from the image to the game, or how it ended, without the placeholder the app shows while it waits for them. An app which hasn't said by a second after its page has loaded is shown then, eg. one from an older SDK, or one still waiting for its first state, which is shown with its own loading view. That can be before it's initialised, so the app draws itself in the user's theme from the start, from the fragment; a later change comes as `set_dark_mode`. Each time the card comes back on screen the app is in a new frame, unseen again until it says so.
 
 **App → website:**
 - `{ kind: "mini_app_ready" }`
 - `{ kind: "mini_app_token_request" }`: a player's token is running out.
 - `{ kind: "mini_app_start" }`: the player asks to start the game. The website sends `start`.
+- `{ kind: "mini_app_drawn" }`: the app has drawn what it's for, eg. the game as it is, its lobby, how it ended, or why it can't show them, rather than a placeholder such as a spinner. The website shows it in place of its image. Sending it again changes nothing.
 
 **Website → app:**
 - `{ kind: "initialise_mini_app", role: "player" | "spectator", user_id, token, dark_mode, locale, finished, settings }`
