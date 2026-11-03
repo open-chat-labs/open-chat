@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2208](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2208-multi_user)] - 2026-11-03
+
 ### Changed
 
 - Return a new group's or community's LocalUserIndex, so the website can use it before its first sync ([#10356](https://github.com/open-chat-labs/open-chat/pull/10356))
