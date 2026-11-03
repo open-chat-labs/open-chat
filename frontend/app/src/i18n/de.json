@@ -1599,6 +1599,8 @@
         "filingSubmit": "Erfassen",
         "linkUnavailable": "Nachrichtenlink bei CSAM-Meldungen nicht verfügbar",
         "mediaFetchFailed": "Abrufen der Medien fehlgeschlagen - prüfen Sie Ihre Verbindung und versuchen Sie es erneut über „Medien prüfen“",
+        "decideWithoutMedia": "Ohne die Medien entscheiden",
+        "mediaSkipped": "Die Medien konnten nicht geprüft werden - diese Entscheidung stützt sich auf die übrigen Beweise",
         "mediaUnavailable": "Die Medien konnten nicht abgerufen werden (möglicherweise wurden sie vor der Quarantäne gelöscht) - entscheiden Sie anhand der übrigen Beweise",
         "ncaDue": "Behördenmeldung erforderlich - bei der NCA (CSEA-IRP) einreichen, dann die Referenz erfassen",
         "ncaDueUrgent": "DRINGEND: unmittelbare Gefahr - zuerst die NCA/999 anrufen, dann über das Portal einreichen",

@@ -1599,6 +1599,8 @@
         "filingSubmit": "记录",
         "linkUnavailable": "CSAM 举报不提供消息链接",
         "mediaFetchFailed": "获取媒体失败，请检查网络连接并使用“审阅媒体”重试",
+        "decideWithoutMedia": "不查看媒体直接裁定",
+        "mediaSkipped": "无法审查该媒体 - 此裁定基于其余证据",
         "mediaUnavailable": "无法获取该媒体（可能在隔离前已被删除），请根据其余证据作出裁决",
         "ncaDue": "需向主管机关报告：向 NCA (CSEA-IRP) 提交，然后记录参考编号",
         "ncaDueUrgent": "紧急：存在紧迫威胁，请先致电 NCA/999，然后通过门户提交",

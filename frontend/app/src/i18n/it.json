@@ -1599,6 +1599,8 @@
         "filingSubmit": "Registra",
         "linkUnavailable": "Link al messaggio non disponibile per le segnalazioni CSAM",
         "mediaFetchFailed": "Recupero del media non riuscito - controlla la connessione e usa Esamina media per riprovare",
+        "decideWithoutMedia": "Decidi senza i contenuti multimediali",
+        "mediaSkipped": "Non è stato possibile esaminare i contenuti multimediali: questo verdetto si basa sulle prove restanti",
         "mediaUnavailable": "Non è stato possibile recuperare il media (potrebbe essere stato eliminato prima della quarantena) - decidi in base alle prove rimanenti",
         "ncaDue": "Segnalazione all'autorità dovuta - presentala all'NCA (CSEA-IRP), poi registra il riferimento",
         "ncaDueUrgent": "URGENTE: minaccia imminente - chiama prima l'NCA/999, poi presenta la segnalazione dal portale",

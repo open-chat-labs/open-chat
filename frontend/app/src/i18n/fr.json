@@ -1599,6 +1599,8 @@
         "filingSubmit": "Enregistrer",
         "linkUnavailable": "Lien du message indisponible pour les signalements CSAM",
         "mediaFetchFailed": "Échec de la récupération du média - vérifiez votre connexion et utilisez « Examiner le média » pour réessayer",
+        "decideWithoutMedia": "Décider sans le média",
+        "mediaSkipped": "Le média n'a pas pu être examiné - ce verdict repose sur les autres éléments de preuve",
         "mediaUnavailable": "Le média n'a pas pu être récupéré (il a peut-être été supprimé avant la mise en quarantaine) - statuez sur la base des autres éléments de preuve",
         "ncaDue": "Signalement aux autorités à effectuer - déposez-le auprès de la NCA (CSEA-IRP), puis enregistrez la référence",
         "ncaDueUrgent": "URGENT : menace imminente - appelez d'abord la NCA/999, puis déposez le signalement via le portail",

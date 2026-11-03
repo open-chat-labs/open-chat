@@ -1599,6 +1599,8 @@
         "filingSubmit": "Ghi nhận",
         "linkUnavailable": "Không có liên kết tin nhắn cho báo cáo CSAM",
         "mediaFetchFailed": "Tải phương tiện thất bại - hãy kiểm tra kết nối và dùng 'Xem xét phương tiện' để thử lại",
+        "decideWithoutMedia": "Quyết định mà không có phương tiện",
+        "mediaSkipped": "Không thể xem xét phương tiện - phán quyết này dựa trên các bằng chứng còn lại",
         "mediaUnavailable": "Không thể tải phương tiện (có thể đã bị xóa trước khi cách ly) - hãy quyết định dựa trên bằng chứng còn lại",
         "ncaDue": "Cần báo cáo cơ quan chức năng - nộp cho NCA (CSEA-IRP), sau đó ghi lại mã tham chiếu",
         "ncaDueUrgent": "KHẨN CẤP: nguy hiểm tức thời - gọi điện cho NCA/999 trước, sau đó nộp qua cổng thông tin",

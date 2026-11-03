@@ -22,12 +22,39 @@ export type ReviewOutcome = "viewed" | "not_authorized" | "not_found" | "error";
 // chunks are session-ordered); non-quarantined media (an escalated report whose content is
 // still live) is fetched from its ordinary blob url with no-store. Media is assembled into
 // object URLs which are revoked on disposal and never written to any cache.
+//
+// Every request is bounded by a timeout: a call which never settles (a wedged update call, a
+// stalled blob fetch) would otherwise leave the viewer on "loading" forever with the review
+// gate shut and the report unresolvable. A timeout is treated as a transient "error".
+export const REQUEST_TIMEOUT_MS = 60_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, onTimeout?: () => void): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        const timer = setTimeout(() => {
+            onTimeout?.();
+            reject(new Error(`Timed out after ${ms}ms`));
+        }, ms);
+        promise.then(
+            (value) => {
+                clearTimeout(timer);
+                resolve(value);
+            },
+            (err) => {
+                clearTimeout(timer);
+                reject(err);
+            },
+        );
+    });
+}
+
 export class VaultMediaReview {
     stage = $state<ReviewStage>("interstitial");
     items = $state<LoadedMedia[]>([]);
     // Disposal mid-fetch must stop pulling the material: checked after every await, and any
     // object URLs already created are revoked immediately
     #cancelled = false;
+    // Aborts an in-flight direct fetch on disposal or timeout, so the bytes stop downloading
+    #abort = new AbortController();
     #outcome: ReviewOutcome | undefined = undefined;
     #notified = false;
 
@@ -35,21 +62,40 @@ export class VaultMediaReview {
     #blobReferences: BlobReference[];
     #quarantined: boolean;
     #onResult: ((outcome: ReviewOutcome) => void) | undefined;
+    #timeoutMs: number;
 
     constructor(
         client: OpenChat,
         blobReferences: BlobReference[],
         quarantined: boolean,
         onResult?: (outcome: ReviewOutcome) => void,
+        timeoutMs: number = REQUEST_TIMEOUT_MS,
     ) {
         this.#client = client;
         this.#blobReferences = blobReferences;
         this.#quarantined = quarantined;
         this.#onResult = onResult;
+        this.#timeoutMs = timeoutMs;
     }
 
     async #fetchDirect(ref: BlobReference): Promise<LoadedMedia | "error" | "not_found"> {
-        const resp = await fetch(this.#client.reportedMediaUrl(ref), { cache: "no-store" });
+        // One controller per fetch so a timeout aborts only that fetch; disposal aborts it too
+        const controller = new AbortController();
+        const onDispose = () => controller.abort();
+        this.#abort.signal.addEventListener("abort", onDispose);
+        try {
+            return await withTimeout(
+                this.#fetchDirectInner(ref, controller.signal),
+                this.#timeoutMs,
+                () => controller.abort(),
+            );
+        } finally {
+            this.#abort.signal.removeEventListener("abort", onDispose);
+        }
+    }
+
+    async #fetchDirectInner(ref: BlobReference, signal: AbortSignal): Promise<LoadedMedia | "error" | "not_found"> {
+        const resp = await fetch(this.#client.reportedMediaUrl(ref), { cache: "no-store", signal });
         // 404: the blob no longer exists - permanently gone. Anything else (including 403,
         // which can come from a boundary node or proxy, not just deletion) is transient and
         // must NOT complete the review gate
@@ -66,7 +112,10 @@ export class VaultMediaReview {
         let chunkIndex = 0;
         let chunkCount = 1;
         while (chunkIndex < chunkCount) {
-            const resp = await this.#client.vaultFileChunk(ref.canisterId, ref.blobId, chunkIndex);
+            const resp = await withTimeout(
+                this.#client.vaultFileChunk(ref.canisterId, ref.blobId, chunkIndex),
+                this.#timeoutMs,
+            );
             if (this.#cancelled) return "error";
             if (resp.kind === "not_authorized") return "not_authorized";
             if (resp.kind === "not_found") return "not_found";
@@ -132,6 +181,7 @@ export class VaultMediaReview {
 
     dispose(): void {
         this.#cancelled = true;
+        this.#abort.abort();
         this.items.forEach((item) => URL.revokeObjectURL(item.url));
         this.items = [];
         // The outcome only counts once the viewer is closed: notifying at load time would

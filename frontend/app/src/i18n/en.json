@@ -1647,6 +1647,8 @@
         "reviewerRequired": "Only a designated vault reviewer can decide this report - ask a platform operator for the designation",
         "mediaUnavailable": "The media could not be fetched (it may have been deleted before quarantine) - decide on the remaining evidence",
         "mediaFetchFailed": "Fetching the media failed - check your connection and use Review media to try again",
+        "decideWithoutMedia": "Decide without the media",
+        "mediaSkipped": "The media could not be reviewed - this verdict rests on the remaining evidence",
         "ncaDue": "Authority report due - file with the NCA (CSEA-IRP), then record the reference",
         "ncaDueUrgent": "URGENT: imminent threat - phone the NCA/999 first, then file via the portal",
         "ncaFiled": "Authority report filed",

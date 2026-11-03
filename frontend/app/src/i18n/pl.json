@@ -1599,6 +1599,8 @@
         "filingSubmit": "Zapisz",
         "linkUnavailable": "Link do wiadomości niedostępny dla zgłoszeń CSAM",
         "mediaFetchFailed": "Pobieranie multimediów nie powiodło się - sprawdź połączenie i użyj opcji Przejrzyj media, aby spróbować ponownie",
+        "decideWithoutMedia": "Zdecyduj bez multimediów",
+        "mediaSkipped": "Nie udało się przejrzeć multimediów - ten werdykt opiera się na pozostałych dowodach",
         "mediaUnavailable": "Nie udało się pobrać multimediów (mogły zostać usunięte przed kwarantanną) - zdecyduj na podstawie pozostałych dowodów",
         "ncaDue": "Wymagane zgłoszenie do organu - złóż je do NCA (CSEA-IRP), a następnie zapisz numer referencyjny",
         "ncaDueUrgent": "PILNE: bezpośrednie zagrożenie - najpierw zadzwoń do NCA/999, potem złóż zgłoszenie przez portal",

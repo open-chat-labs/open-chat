@@ -112,6 +112,15 @@
     let reviewerRequired = $state(false);
     let mediaUnavailable = $state(false);
     let mediaFetchFailed = $state(false);
+    // A fetch that keeps failing must not leave the report unresolvable: after a failure the
+    // moderator may explicitly decide without the media, and the card says so alongside the
+    // verdict buttons
+    let mediaSkipped = $state(false);
+
+    function skipMediaReview() {
+        mediaSkipped = true;
+        mediaReviewed = true;
+    }
 
     function onReviewResult(outcome: "viewed" | "not_authorized" | "not_found" | "error") {
         if (outcome === "viewed") {
@@ -694,10 +703,19 @@
         <Body colour="validationError">
             <Translatable resourceKey={i18nKey("moderationReport.mediaFetchFailed")} />
         </Body>
+        <Row>
+            <Button secondary onClick={skipMediaReview}>
+                <Translatable resourceKey={i18nKey("moderationReport.decideWithoutMedia")} />
+            </Button>
+        </Row>
     {:else if canResolve && !needsMediaReview}
         {#if mediaUnavailable}
             <Body colour="validationError">
                 <Translatable resourceKey={i18nKey("moderationReport.mediaUnavailable")} />
+            </Body>
+        {:else if mediaSkipped}
+            <Body colour="validationError">
+                <Translatable resourceKey={i18nKey("moderationReport.mediaSkipped")} />
             </Body>
         {/if}
         {@render actions()}
