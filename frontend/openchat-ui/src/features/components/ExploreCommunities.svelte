@@ -29,6 +29,7 @@
   import { useT } from '../../lib/i18n';
   import { languageFlag } from '../../lib/languages';
   import { cssUrl } from '../../lib/cssUrl';
+  import { askedFor, type ExploreAsk } from '../../lib/exploreAsk';
   import Translate from '../../lib/components/Translate.svelte';
   import Logo from '../../lib/components/Logo.svelte';
 
@@ -186,19 +187,20 @@
   // every change asks the host for the first page again; typing waits for a pause
   let queryTimer: ReturnType<typeof setTimeout> | undefined;
   let firstQuery = true;
-  // what the host was last asked for: until it has answered for the current text the search shows "Searching…",
-  // never the previous text's results. An initialQuery counts as asked, and `communities` as its answer
-  let lastAsk = $state<{ text: string; offset: number } | null>(untrack(() => (initialQuery.trim() ? { text: initialQuery.trim(), offset: 0 } : null)));
+  // what the host was last asked for: until it has answered for the search as it stands (text, languages, sort) the
+  // search shows "Searching…", never the previous search's results. The search it opens with (initialQuery,
+  // initialLanguages) counts as asked, and `communities` as its answer
+  let lastAsk = $state<ExploreAsk>(untrack(() => ({ text: initialQuery.trim(), languages: [...initialLanguages], sort: 0, offset: 0 })));
   // the page shown when a first page was asked for: until `communities` is a new page the host hasn't answered yet
   let askedOn = $state.raw<ExploreCommunity[] | null>(null);
   // the host reported loading after the ask: once it stops, the ask is answered even if the page didn't change
   // (e.g. a failed fetch that keeps the old page), so the loading state can't get stuck
   let sawLoading = $state(false);
   $effect.pre(() => {
-    if (loading && lastAsk) untrack(() => (sawLoading = true));
+    if (loading) untrack(() => (sawLoading = true));
   });
   const ask = (offset: number) => {
-    lastAsk = { text: query.trim(), offset };
+    lastAsk = { text: query.trim(), languages: [...langs], sort, offset };
     if (offset === 0) {
       askedOn = communities;
       sawLoading = false;
@@ -225,16 +227,18 @@
   // onQuery: the shown page belongs to an older text (debounce not fired yet, or the first page still loading)
   // the shown page belongs to an older ask: a different text, or the first page asked for and not answered (still the
   // same `communities`, or the host says it's loading)
-  const firstPagePending = $derived(!!lastAsk && lastAsk.offset === 0 && (loading || (communities === askedOn && !sawLoading)));
-  const searching = $derived(remote && !!q && (lastAsk?.text !== query.trim() || firstPagePending));
+  const firstPagePending = $derived(lastAsk.offset === 0 && (loading || (communities === askedOn && !sawLoading)));
+  // the last ask is for the search as it stands: the same text, languages and sort
+  const askedAsShown = $derived(askedFor(lastAsk, { text: query.trim(), languages: langs, sort }));
+  const searching = $derived(remote && !!q && (!askedAsShown || firstPagePending));
   // onQuery: the home list still holds an older query's page (just after clearing the search, or a sort / language
   // change the host hasn't answered yet); it shows a loading state instead of passing that page off as "All communities"
-  const homeStale = $derived(remote && !q && !!lastAsk && (lastAsk.text !== query.trim() || firstPagePending));
-  // onQuery: the host couldn't load the page last asked for (`failed`). A first page leaves the page before it, which
-  // mustn't pass as its answer: an error with a retry shows in its place. A later page keeps the list, and Load more
-  // becomes the retry
-  const firstPageFailed = $derived(remote && failed && !loading && !!lastAsk && lastAsk.offset === 0 && lastAsk.text === query.trim());
-  const moreFailed = $derived(remote && failed && !loading && !!lastAsk && lastAsk.offset > 0);
+  const homeStale = $derived(remote && !q && (!askedAsShown || firstPagePending));
+  // onQuery: the host couldn't load the page last asked for (`failed`), for the search as it stands. A first page leaves
+  // the page before it, which mustn't pass as its answer: an error with a retry shows in its place. A later page keeps
+  // the list, and Load more becomes the retry
+  const firstPageFailed = $derived(remote && failed && !loading && askedAsShown && lastAsk.offset === 0);
+  const moreFailed = $derived(remote && failed && !loading && askedAsShown && lastAsk.offset > 0);
 
   const isJoined = (c: ExploreCommunity) => joinedKeys.includes(c.key);
   const isPrivate = (c: ExploreCommunity) => c.visibility === 'Private';
@@ -435,7 +439,13 @@
     <div class="hero">
       <div class="hero-text">
         <span class="hero-title">{t('ui.exploreCommunities.heroTitle')}</span>
-        <span class="hero-sub">{t('ui.exploreCommunities.heroSub', { count: remote ? totalCount : communities.length })}</span>
+        <span class="hero-sub"
+          >{homeStale
+            ? t('ui.exploreCommunities.loading')
+            : firstPageFailed
+              ? t('ui.exploreCommunities.loadFailed')
+              : t('ui.exploreCommunities.heroSub', { count: remote ? totalCount : communities.length })}</span
+        >
       </div>
       <div class="search large" class:focused>
         {@render icon('search', 18, 'var(--ink-3)')}
