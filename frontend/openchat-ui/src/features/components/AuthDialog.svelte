@@ -65,7 +65,7 @@
   import Logo from '../../lib/components/Logo.svelte';
   import CopyButton from '../../lib/components/CopyButton.svelte';
   import { onMount, untrack } from 'svelte';
-  import { referralCode } from '../../lib/referral';
+  import { ReferralLookup } from '../../lib/referralLookup.svelte';
 
   type Method = AuthMethod;
 
@@ -206,6 +206,8 @@
       if (referrerEdited) return;
       referrer = given ?? null;
       referrerFromLink = !!given;
+      // a referrer from the host replaces the paste field, and a link lookup still going with it
+      if (given) refLink.stop();
     });
   });
 
@@ -213,59 +215,25 @@
     referrerEdited = true;
     referrer = person;
     referrerFromLink = false;
+    if (person) refLink.stop();
   }
 
-  // the referrer field takes a search, or (with resolveReferrer) a pasted invite link
+  // the referrer field takes a search, or (with resolveReferrer) a pasted invite link, which Continue waits on
   let refPaste = $state(false);
-  let refProblem = $state<'no_referrer' | 'unknown' | null>(null);
-  // a link waiting to be looked up, or being looked up: Continue waits for it, so the referral isn't left out
-  let refPending = $state(false);
-  let pasteTimer: ReturnType<typeof setTimeout> | undefined;
-  let pasteRun = 0;
+  const refLink = new ReferralLookup<Person>(
+    () => resolveReferrer,
+    (person) => {
+      pickReferrer(person);
+      refQuery = '';
+      refPaste = false;
+    },
+    { settleMs: CHECK_MS },
+  );
 
   function toggleRefMode() {
     refPaste = !refPaste;
     refQuery = '';
-    refProblem = null;
-    refPending = false;
-    pasteRun++;
-    clearTimeout(pasteTimer);
-  }
-
-  // the link as typed or pasted: a paste is looked up at once, typing once it stops changing (not per keystroke);
-  // only the latest text's answer is kept
-  function pastedLink(text: string, pasted: boolean) {
-    refQuery = text;
-    refProblem = null;
-    const mine = ++pasteRun;
-    clearTimeout(pasteTimer);
-    if (referralCode(text) === undefined && text.trim().length <= 6) {
-      // a few characters in, it's still being typed
-      refPending = false;
-      return;
-    }
-    refPending = true;
-    if (pasted) void lookUpLink(text, mine);
-    else pasteTimer = setTimeout(() => void lookUpLink(text, mine), CHECK_MS);
-  }
-
-  async function lookUpLink(text: string, mine: number) {
-    const code = referralCode(text);
-    let person: Person | undefined;
-    if (code !== undefined) {
-      try {
-        person = await resolveReferrer?.(code);
-      } catch {
-        person = undefined;
-      }
-    }
-    if (mine !== pasteRun) return;
-    refPending = false;
-    if (person) {
-      pickReferrer(person);
-      refQuery = '';
-      refPaste = false;
-    } else refProblem = code === undefined ? 'no_referrer' : 'unknown';
+    refLink.reset();
   }
 
   let checkTimer: ReturnType<typeof setTimeout> | undefined;
@@ -414,7 +382,7 @@
   let agreed = $state(false);
 
   function submitSignup() {
-    if (!free || recoveryBad || !agreed || refPending || !onSignup) return;
+    if (!free || recoveryBad || !agreed || refLink.pending || !onSignup) return;
     attempt('signup', () =>
       onSignup({ username, email: isEmail(recovery) ? recovery.trim() : undefined, referrer: referrer?.handle, referrerId: referrer?.userId, termsAccepted: agreed }),
     );
@@ -481,8 +449,7 @@
       flow.destroy();
       clearTimeout(checkTimer);
       clearTimeout(searchTimer);
-      clearTimeout(pasteTimer);
-      pasteRun++;
+      refLink.stop();
     };
   });
 </script>
@@ -638,17 +605,32 @@
                 <button class="clear" type="button" onclick={() => pickReferrer(null)} aria-label={t('ui.authDialog.removeReferrer')}><span class="head-icon close small"></span></button>
               </span>
             {:else}
-              <span class="field" class:bad={refProblem !== null}>
+              <span class="field" class:bad={refLink.problem !== null}>
                 <span class="search-icon" class:link={refPaste}></span>
                 {#if refPaste}
-                  <input data-auth-input="" value={refQuery} oninput={(e) => pastedLink(e.currentTarget.value, e instanceof InputEvent && e.inputType === 'insertFromPaste')} placeholder={t('ui.authDialog.referrerPaste')} aria-label={t('ui.authDialog.referrer')} />
+                  <input data-auth-input="" value={refQuery} oninput={(e) => {
+                      refQuery = e.currentTarget.value;
+                      refLink.input(refQuery, e instanceof InputEvent && e.inputType === 'insertFromPaste');
+                    }} placeholder={t('ui.authDialog.referrerPaste')} aria-label={t('ui.authDialog.referrer')} />
                 {:else}
                   <input data-auth-input="" bind:value={refQuery} placeholder={t('ui.authDialog.referrerSearch')} aria-label={t('ui.authDialog.referrer')} />
                 {/if}
               </span>
               {#if resolveReferrer}
-                <span class="ref-hint" class:bad={refProblem !== null}
-                  ><span>{t(refProblem === 'no_referrer' ? 'ui.authDialog.linkHasNoReferrer' : refProblem === 'unknown' ? 'ui.authDialog.linkReferrerUnknown' : refPaste ? 'ui.authDialog.haveName' : 'ui.authDialog.haveLink')}</span
+                <!-- while a link is looked up, Continue waits: the hint says why (and "Search people" gives up on it) -->
+                <span class="ref-hint" class:bad={refLink.problem !== null} aria-live="polite"
+                  ><span
+                    >{t(
+                      refLink.pending
+                        ? 'ui.authDialog.checkingLink'
+                        : refLink.problem === 'no_referrer'
+                          ? 'ui.authDialog.linkHasNoReferrer'
+                          : refLink.problem === 'unknown'
+                            ? 'ui.authDialog.linkReferrerUnknown'
+                            : refPaste
+                              ? 'ui.authDialog.haveName'
+                              : 'ui.authDialog.haveLink',
+                    )}</span
                   ><button class="ref-mode" type="button" onclick={toggleRefMode}>{t(refPaste ? 'ui.authDialog.searchPeople' : 'ui.authDialog.pasteLink')}</button></span
                 >
               {/if}
@@ -679,7 +661,7 @@
                 ></label
               >{#if failed === 'signup'}<span class="signup-error" role="alert">{t(failReason ?? 'ui.authDialog.signupFailed')}</span>{/if}</span
             >
-            <button class="continue" class:ready={free && !recoveryBad && agreed && !refPending && !waiting} type="submit" disabled={!free || recoveryBad || !agreed || refPending || !!waiting}>{t(waiting === 'signup' ? 'ui.authDialog.creating' : 'ui.common.continue')}</button>
+            <button class="continue" class:ready={free && !recoveryBad && agreed && !refLink.pending && !waiting} type="submit" disabled={!free || recoveryBad || !agreed || refLink.pending || !!waiting}>{t(waiting === 'signup' ? 'ui.authDialog.creating' : 'ui.common.continue')}</button>
           </div>
         </form>
       {/if}
