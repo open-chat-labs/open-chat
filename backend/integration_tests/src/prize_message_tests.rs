@@ -477,7 +477,8 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
                 lifetime_diamond_only: false,
                 unique_person_only: false,
                 streak_only: 0,
-                requires_captcha: false,
+                // So the final claim, made without signing in again, shows a passed token stands in for it
+                requires_captcha: true,
                 min_chit_earned: 0,
             }),
             sender_name: user1.username(),
@@ -521,16 +522,27 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
 
     // A token Cloudflare passes, but which was issued for another prize
     let other_message_id: MessageId = random_from_u128();
-    let response = claim_prize_with_token(env, &user2, local_user_index, chat_id, message_id, |custom_data| {
-        assert_eq!(custom_data, format!("{}_{message_id}", user2.user_id));
-        format!("{}_{other_message_id}", user2.user_id)
-    });
+    let response = claim_prize_with_token(
+        env,
+        &user2,
+        local_user_index,
+        chat_id,
+        message_id,
+        &format!("{}_{other_message_id}", user2.user_id),
+    );
     assert!(
         matches!(&response, local_user_index_canister::claim_prize::Response::Error(e) if e.matches_code(OCErrorCode::HumanVerificationFailed)),
         "{response:?}"
     );
 
-    let response = claim_prize_with_token(env, &user2, local_user_index, chat_id, message_id, |custom_data| custom_data);
+    let response = claim_prize_with_token(
+        env,
+        &user2,
+        local_user_index,
+        chat_id,
+        message_id,
+        &format!("{}_{message_id}", user2.user_id),
+    );
     assert!(
         matches!(response, local_user_index_canister::claim_prize::Response::Success),
         "{response:?}"
@@ -544,14 +556,14 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
 }
 
 // Claims with a new token, answering the LocalUserIndex's call to Cloudflare as Cloudflare would for
-// a passed token issued for the custom data `issued_for` returns, given what the claim expects
+// a passed token issued with the custom data `issued_for`
 fn claim_prize_with_token(
     env: &mut PocketIc,
     user: &User,
     local_user_index: CanisterId,
     chat_id: MultiUserChat,
     message_id: MessageId,
-    issued_for: impl FnOnce(String) -> String,
+    issued_for: &str,
 ) -> local_user_index_canister::claim_prize::Response {
     let token = random_string();
     let call_id = env
@@ -581,14 +593,13 @@ fn claim_prize_with_token(
     let body: serde_json::Value = serde_json::from_slice(&request.body).unwrap();
     assert_eq!(body["secret"], "secret");
 
-    let expected_custom_data = format!("{}_{message_id}", user.user_id);
     let reply = serde_json::json!({
         "success": true,
         "challenge_ts": "2026-11-04T15:00:00.000Z",
         "hostname": "oc.app",
         "error-codes": [],
         "action": "claim_prize",
-        "cdata": issued_for(expected_custom_data),
+        "cdata": issued_for,
     });
     env.mock_canister_http_response(MockCanisterHttpResponse {
         subnet_id: request.subnet_id,

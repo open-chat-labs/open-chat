@@ -3,6 +3,7 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{TurnstileConfig, UserIndexEvent};
+use oc_error_codes::OCErrorCode;
 use tracing::info;
 use user_index_canister::set_turnstile_config::*;
 
@@ -15,6 +16,11 @@ fn set_turnstile_config(args: Args) -> Response {
 }
 
 fn set_turnstile_config_impl(args: Args, state: &mut RuntimeState) -> Response {
+    // Tokens can only be checked with the key, so requiring them without it would check nothing
+    if args.required && args.secret_key.is_none() {
+        return Response::Error(OCErrorCode::InvalidRequest.with_message("A token can't be required without a secret key"));
+    }
+
     let config = TurnstileConfig {
         secret_key: args.secret_key,
         required: args.required,
