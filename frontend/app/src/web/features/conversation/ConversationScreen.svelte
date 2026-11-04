@@ -118,6 +118,7 @@
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import HumanCheckFrame from "@src/core/HumanCheckFrame.svelte";
     import { HumanCheck } from "@src/logic/prize/humanCheck.svelte";
+    import { claimPrizeWithHumanCheck } from "@src/logic/prize/prizeClaim";
     import { interpolate } from "@i18n/i18n";
     import { VoicePlayer, type VoiceSpeed } from "./voicePlayer.svelte";
     import { RowCache } from "./rowCache";
@@ -656,13 +657,14 @@
     // the prize's human check
     async function claim(msg: Message, e: MouseEvent) {
         if (chat === undefined || chat.kind === "direct_chat") return;
-        const token = await humanCheckFor(msg.messageId).take();
-        if (token === undefined) {
-            toastStore.showFailureToast(i18nKey("prizes.humanCheckFailed"));
-            return;
-        }
-        const claimed = await client.claimPrize(chat.id, msg.messageId, e, token);
-        if (!claimed) toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
+        const failure = await claimPrizeWithHumanCheck(
+            client,
+            humanCheckFor(msg.messageId),
+            chat.id,
+            msg.messageId,
+            e,
+        );
+        if (failure !== undefined) toastStore.showFailureToast(failure);
     }
 
     // accepting someone's swap offer (Diamond only: anyone else is offered the upgrade, as in the

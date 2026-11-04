@@ -184,32 +184,34 @@
     // Sets how prize claims are checked for a human, on the user index, which passes it on to every
     // LocalUserIndex. The secret key goes with every change, so Required is set with it; turning the
     // check off has its own button.
-    function setTurnstileConfig(secretKey: string | undefined, required: boolean): Promise<void> {
+    async function setTurnstileConfig(
+        secretKey: string | undefined,
+        required: boolean,
+    ): Promise<void> {
         busy.add(24);
-        return client
-            .setTurnstileConfig(secretKey, required)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    toastStore.showSuccessToast(
-                        i18nKey(
-                            secretKey === undefined
-                                ? "Turnstile turned off"
-                                : required
-                                  ? "Turnstile set, and required"
-                                  : "Turnstile set, not yet required",
-                        ),
-                    );
-                    turnstileSecretKey = "";
-                } else {
-                    toastStore.showFailureToast(
-                        i18nKey(
-                            `Failed to set Turnstile: ${resp.message ?? `code ${resp.code}`}`,
-                        ),
-                    );
-                }
-            })
-            .catch((err) => toastStore.showFailureToast(i18nKey("Failed to set Turnstile"), err))
-            .finally(() => busy.delete(24));
+        try {
+            const resp = await client.setTurnstileConfig(secretKey, required);
+            if (resp.kind === "success") {
+                toastStore.showSuccessToast(
+                    i18nKey(
+                        secretKey === undefined
+                            ? "Turnstile turned off"
+                            : required
+                              ? "Turnstile set, and required"
+                              : "Turnstile set, not yet required",
+                    ),
+                );
+                turnstileSecretKey = "";
+            } else {
+                toastStore.showFailureToast(
+                    i18nKey(`Failed to set Turnstile: ${resp.message ?? `code ${resp.code}`}`),
+                );
+            }
+        } catch (err) {
+            toastStore.showFailureToast(i18nKey("Failed to set Turnstile"), err);
+        } finally {
+            busy.delete(24);
+        }
     }
 
     // Sets the MiniApp service's principal on the user index, which passes it on to every

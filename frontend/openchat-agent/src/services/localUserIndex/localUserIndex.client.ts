@@ -84,6 +84,7 @@ import {
     apiMultiUserChat,
     isSuccess,
     joinGroupResponse,
+    ocError,
     unitResult,
 } from "../common/chatMappersV2";
 import {
@@ -681,8 +682,9 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                 turnstile_token: turnstileToken,
             },
             (resp) => {
-                console.log("Resp: ", resp);
-                return resp === "Success" ? { kind: "success" } : { kind: "failure" };
+                if (resp === "Success") return { kind: "success" };
+                if ("Error" in resp) return ocError(resp.Error);
+                return { kind: "failure" };
             },
             LocalUserIndexClaimPrizeArgs,
             LocalUserIndexClaimPrizeResponse,

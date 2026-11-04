@@ -179,6 +179,7 @@ export {
     type PollView,
 } from "./utils/polls";
 export {
+    claimPrizeFailureReason,
     isTrustedClick,
     prizeClaimCustomData,
     prizeView,

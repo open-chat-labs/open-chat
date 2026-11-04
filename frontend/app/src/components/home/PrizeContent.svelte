@@ -32,6 +32,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import HumanCheckFrame from "@src/core/HumanCheckFrame.svelte";
     import { HumanCheck } from "@src/logic/prize/humanCheck.svelte";
+    import { claimPrizeWithHumanCheck } from "@src/logic/prize/prizeClaim";
     import Diamond from "../icons/Diamond.svelte";
     import SpinningToken from "@shared_components/icons/SpinningToken.svelte";
     import SecureButton from "../SecureButton.svelte";
@@ -61,15 +62,14 @@
 
         claimsStore.add(messageId);
         try {
-            const token = await humanCheck.take();
-            if (token === undefined) {
-                toastStore.showFailureToast(i18nKey("prizes.humanCheckFailed"));
-                return;
-            }
-            const success = await client.claimPrize(chatId, messageId, e, token);
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
-            }
+            const failure = await claimPrizeWithHumanCheck(
+                client,
+                humanCheck,
+                chatId,
+                messageId,
+                e,
+            );
+            if (failure !== undefined) toastStore.showFailureToast(failure);
         } finally {
             claimsStore.delete(messageId);
         }

@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { HumanCheck, isHumanCheckMessage } from "./humanCheck.svelte";
+import { HUMAN_CHECK_WAIT_MS, HumanCheck, isHumanCheckMessage } from "./humanCheck.svelte";
 
 describe("a prize's human check", () => {
     test("a claim takes the token of a check that has passed, and the check runs again", async () => {
@@ -58,6 +58,38 @@ describe("a prize's human check", () => {
         const claim = check.take();
         check.receive({ kind: "turnstile_token", token: "t2" });
         await expect(claim).resolves.toBe("t2");
+    });
+
+    test("a check that says nothing fails the claim after a while, and runs again", async () => {
+        vi.useFakeTimers();
+        vi.spyOn(console, "warn").mockImplementation(() => undefined);
+        try {
+            const check = new HumanCheck();
+            const claim = check.take();
+            vi.advanceTimersByTime(HUMAN_CHECK_WAIT_MS);
+
+            await expect(claim).resolves.toBeUndefined();
+            expect(check.run).toBe(1);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("doesn't give up on a check while the reader is asked to tick its box", async () => {
+        vi.useFakeTimers();
+        try {
+            const check = new HumanCheck();
+            let token: string | undefined;
+            void check.take().then((t) => (token = t));
+            check.receive({ kind: "turnstile_interactive" });
+            vi.advanceTimersByTime(HUMAN_CHECK_WAIT_MS * 2);
+            check.receive({ kind: "turnstile_token", token: "t1" });
+            await vi.runAllTimersAsync();
+
+            expect(token).toBe("t1");
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     test("reads only the frame's messages", () => {

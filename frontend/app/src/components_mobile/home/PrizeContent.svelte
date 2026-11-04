@@ -55,6 +55,7 @@
     import { TokenState } from "@src/logic/wallet/walletState.svelte";
     import HumanCheckFrame from "@src/core/HumanCheckFrame.svelte";
     import { HumanCheck } from "@src/logic/prize/humanCheck.svelte";
+    import { claimPrizeWithHumanCheck } from "@src/logic/prize/prizeClaim";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import TextContent from "./TextContent.svelte";
 
@@ -110,15 +111,14 @@
 
         claimsStore.add(messageId);
         try {
-            const token = await humanCheck.take();
-            if (token === undefined) {
-                toastStore.showFailureToast(i18nKey("prizes.humanCheckFailed"));
-                return;
-            }
-            const success = await client.claimPrize(chatId, messageId, e, token);
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
-            }
+            const failure = await claimPrizeWithHumanCheck(
+                client,
+                humanCheck,
+                chatId,
+                messageId,
+                e,
+            );
+            if (failure !== undefined) toastStore.showFailureToast(failure);
         } finally {
             claimsStore.delete(messageId);
         }

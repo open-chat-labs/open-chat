@@ -2798,6 +2798,8 @@ export type SetGroupModerationFlagsResponse =
 
 export type MarkPinnedMessagesReadResponse = Success | OCError | Offline;
 export type ClaimPrizeResponse = Success | OCError | Failure | Offline;
+/** What claiming a prize came to, with what to tell the user if it failed. */
+export type ClaimPrizeOutcome = Success | { kind: "failed"; message: ResourceKey };
 export type DeclineInvitationResponse = Success | OCError | Offline;
 
 export type PublicGroupSummaryResponse =

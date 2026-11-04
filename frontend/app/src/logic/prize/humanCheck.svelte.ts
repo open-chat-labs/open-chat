@@ -20,6 +20,11 @@ export function isHumanCheckMessage(data: unknown): data is HumanCheckMessage {
     }
 }
 
+// How long a claim waits for a check which says nothing (its frame didn't load, say), before
+// going ahead without it and running the check again. Not while the reader is asked to tick
+// Cloudflare's box: Turnstile times that out itself.
+export const HUMAN_CHECK_WAIT_MS = 30_000;
+
 type HumanCheckState =
     | { kind: "running" }
     | { kind: "interactive" }
@@ -36,6 +41,7 @@ export class HumanCheck {
     #state = $state<HumanCheckState>({ kind: "running" });
     #run = $state(0);
     #waiting: ((token: string | undefined) => void)[] = [];
+    #deadline: ReturnType<typeof setTimeout> | undefined;
 
     /** Changes each time the check starts again. */
     get run(): number {
@@ -50,10 +56,12 @@ export class HumanCheck {
     receive(message: HumanCheckMessage): void {
         switch (message.kind) {
             case "turnstile_token": {
+                this.#clearDeadline();
                 const waiting = this.#waiting.shift();
                 if (waiting !== undefined) {
                     this.#restart();
                     waiting(message.token);
+                    this.#startDeadline();
                 } else {
                     this.#state = { kind: "passed", token: message.token };
                 }
@@ -64,19 +72,21 @@ export class HumanCheck {
                 this.#state = { kind: "running" };
                 break;
             case "turnstile_interactive":
+                this.#clearDeadline();
                 this.#state = { kind: "interactive" };
                 break;
             case "turnstile_error":
                 console.warn("Human check failed", message.code);
+                this.#clearDeadline();
                 this.#state = { kind: "failed" };
-                this.#settleWaiting(undefined);
+                this.#settleWaiting();
                 break;
         }
     }
 
     /**
      * The token for a claim: at once if the check has passed, else once it does, running it again
-     * if it had failed. Undefined if it fails.
+     * if it had failed. Undefined if it fails, or says nothing for HUMAN_CHECK_WAIT_MS.
      */
     take(): Promise<string | undefined> {
         const state = this.#state;
@@ -87,7 +97,10 @@ export class HumanCheck {
         if (state.kind === "failed") {
             this.#restart();
         }
-        return new Promise((resolve) => this.#waiting.push(resolve));
+        return new Promise((resolve) => {
+            this.#waiting.push(resolve);
+            this.#startDeadline();
+        });
     }
 
     #restart() {
@@ -95,9 +108,30 @@ export class HumanCheck {
         this.#run += 1;
     }
 
-    #settleWaiting(token: string | undefined) {
+    #settleWaiting() {
         const waiting = this.#waiting;
         this.#waiting = [];
-        waiting.forEach((resolve) => resolve(token));
+        waiting.forEach((resolve) => resolve(undefined));
+    }
+
+    #startDeadline() {
+        if (
+            this.#deadline !== undefined ||
+            this.#waiting.length === 0 ||
+            this.#state.kind === "interactive"
+        ) {
+            return;
+        }
+        this.#deadline = setTimeout(() => {
+            this.#deadline = undefined;
+            console.warn("Human check timed out");
+            this.#restart();
+            this.#settleWaiting();
+        }, HUMAN_CHECK_WAIT_MS);
+    }
+
+    #clearDeadline() {
+        clearTimeout(this.#deadline);
+        this.#deadline = undefined;
     }
 }

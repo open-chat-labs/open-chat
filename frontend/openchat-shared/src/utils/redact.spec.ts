@@ -50,11 +50,6 @@ describe("redactSecrets", () => {
             chat_id: "abc",
             sign_in_proof_jwt: REDACTED,
         });
-        expect(redactSecrets({ kind: "claimPrize", messageId: 1n, signInProof: "jwt" })).toEqual({
-            kind: "claimPrize",
-            messageId: 1n,
-            signInProof: REDACTED,
-        });
         expect(
             redactSecrets({ secret_key: "0x4AAA", required: true }, "set_turnstile_config"),
         ).toEqual({ secret_key: REDACTED, required: true });

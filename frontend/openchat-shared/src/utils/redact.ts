@@ -13,9 +13,8 @@ export const SECRET_KEYS: readonly string[] = [
     // The setPinNumber worker request
     "newPin",
     "signInProofJwt",
-    // claim_prize, and the claimPrize worker request
+    // claim_prize's sign-in proof, which older clients send
     "sign_in_proof_jwt",
-    "signInProof",
     // The Turnstile secret key, in set_turnstile_config and the setTurnstileConfig worker request
     "secret_key",
     "secretKey",
