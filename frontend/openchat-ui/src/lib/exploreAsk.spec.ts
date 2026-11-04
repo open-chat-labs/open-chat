@@ -42,9 +42,9 @@ describe('askTiming', () => {
     expect(askTiming(asked, { text: 'rust', languages: ['en', 'fr'], sort: 0 })).toBe('now');
   });
 
-  test('a change of text waits for typing to pause, but an emptied text (leaving the search) is asked at once', () => {
+  test('a change of text waits for typing to pause, an emptied one too (it may be typed over)', () => {
     expect(askTiming(asked, { text: 'rus', languages: ['en'], sort: 0 })).toBe('debounced');
-    expect(askTiming(asked, { text: '', languages: ['en'], sort: 0 })).toBe('now');
+    expect(askTiming(asked, { text: '', languages: ['en'], sort: 0 })).toBe('debounced');
   });
 
   test('the search already asked for is not asked again', () => {

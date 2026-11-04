@@ -178,7 +178,9 @@
   // the filter compares these values; they render through t(), so keys and plain names both work
   const langOf = (c: ExploreCommunity) => c.language || 'ui.exploreCommunities.english';
   const q = $derived(query.trim().toLowerCase());
-  const searchShown = $derived(searchViewShown(query, searchOpen));
+  // an IME composing in the hero's search: the view waits for the word before it swaps (and takes the focus over)
+  let heroComposing = $state(false);
+  const searchShown = $derived(searchViewShown(query, searchOpen) && !heroComposing);
 
   // opens the search view from the hero's search and moves the focus to its input in the same event, so a phone keeps its
   // keyboard; the hero's input itself never opens it on focus, so Tab goes past it to Popular and the list
@@ -186,11 +188,19 @@
     searchOpen = true;
     flushSync();
     searchInput?.focus();
+    // text already typed (a paste, an IME's word, an AltGr character …) keeps the caret after it
+    searchInput?.setSelectionRange(query.length, query.length);
   }
 
+  // Back or Esc: the search left, the home list asked for at once (nobody is typing); the input is blurred before it
+  // goes, so its focus doesn't outlive it
   function leaveSearch(): void {
+    searchInput?.blur();
+    focused = false;
     searchOpen = false;
     query = '';
+    clearTimeout(queryTimer);
+    if (onQuery && !askedFor(lastAsk, { text: '', languages: langs, sort })) ask(0);
   }
   const SORTS: ((a: ExploreCommunity, b: ExploreCommunity) => number)[] = [
     (a, b) => b.members - a.members,
@@ -541,6 +551,15 @@
           onclick={openSearch}
           onkeydown={(e) => {
             if (e.key === 'Enter' || (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey)) openSearch();
+          }}
+          oninput={(e) => {
+            // text from anywhere else (AltGr or Option characters, a paste, a drop, autofill) opens it too
+            if (!(e instanceof InputEvent && e.isComposing) && !heroComposing) openSearch();
+          }}
+          oncompositionstart={() => (heroComposing = true)}
+          oncompositionend={() => {
+            heroComposing = false;
+            openSearch();
           }}
           placeholder={t('ui.exploreCommunities.searchPlaceholder')}
         />

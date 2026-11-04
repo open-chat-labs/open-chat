@@ -26,11 +26,11 @@ export function askedFor(ask: ExploreAsk | null, shown: ExploreSearch): boolean 
 }
 
 /** When to ask the host for the search shown, given the one last asked: `none` (already asked), `now` (a sort or a
- *  language picked, or the text emptied, e.g. leaving the search: nobody is typing) or `debounced` (the text changed:
- *  wait for typing to pause). */
+ *  language picked) or `debounced` (the text changed, emptied too: it may be typed over; wait for typing to pause).
+ *  Leaving the search (Back, Esc) asks at once itself. */
 export function askTiming(asked: ExploreAsk, shown: ExploreSearch): 'none' | 'now' | 'debounced' {
   if (askedFor(asked, shown)) return 'none';
-  return asked.text === shown.text || shown.text === '' ? 'now' : 'debounced';
+  return asked.text === shown.text ? 'now' : 'debounced';
 }
 
 /** Whether the search view shows (rather than the home view): while there's text, or once the user has opened it (a
