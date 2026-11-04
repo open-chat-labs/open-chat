@@ -792,7 +792,10 @@ design export needs. Each entry says where it came up.
   dialog over Explore open. Results set outside the search step (a proposal's community finder,
   the mobile welcome page) answer no Explore search (`CommunitySearchState.held`), so Explore
   searches again rather than show them. A guest gets the component's sign-in banner. Kept from the desktop
-  tree: Load more (the library's own, 6 a page). Not carried over:
+  tree: Load more (the library's own, 6 a page). By hand in the library: a sort or language change
+  refreshes the list in place (dimmed rows, a spinner by the table's title) instead of emptying the page,
+  focusing the search opens the search view, which stays open (emptied too, or with a click elsewhere)
+  until Back or Esc (EXPORT-LOG 2026-11-04). Not carried over:
   - bots: the old mobile Explore's Communities / Bots switch, its bot cards and filters, and
     Register a bot (desktop lists bots elsewhere; see Bots).
   - `/welcome`'s own page (mobile's `WelcomePage`: three top communities and the OpenChat

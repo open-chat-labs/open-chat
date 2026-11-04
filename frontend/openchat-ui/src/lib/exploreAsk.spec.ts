@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { askedFor } from './exploreAsk';
+import { askAtOnce, askedFor, homeRefresh, sameLanguages } from './exploreAsk';
 
 const ask = { text: 'rust', languages: ['en', 'fr'], sort: 0, offset: 0 };
 
@@ -22,5 +22,43 @@ describe('askedFor', () => {
 
   test('nothing asked yet', () => {
     expect(askedFor(null, { text: '', languages: [], sort: 0 })).toBe(false);
+  });
+});
+
+describe('sameLanguages', () => {
+  test('the same languages in any order, duplicates not counted twice', () => {
+    expect(sameLanguages(['en', 'fr'], ['fr', 'en'])).toBe(true);
+    expect(sameLanguages([], [])).toBe(true);
+    expect(sameLanguages(['en'], ['en', 'fr'])).toBe(false);
+    expect(sameLanguages(['en', 'en'], ['en', 'fr'])).toBe(false);
+  });
+});
+
+describe('askAtOnce', () => {
+  test('a sort or a language change is asked at once; a change of text waits for typing to pause', () => {
+    const asked = { text: 'rust', languages: ['en'], sort: 0 };
+    expect(askAtOnce(asked, { ...asked, sort: 2 })).toBe(true);
+    expect(askAtOnce(asked, { ...asked, languages: ['en', 'fr'] })).toBe(true);
+    expect(askAtOnce(asked, { ...asked, text: 'rus' })).toBe(false);
+  });
+});
+
+describe('homeRefresh', () => {
+  const page = { text: '', languages: ['en'], sort: 0 };
+
+  test('a new sort refreshes only the list, in place: the hero and Popular stay as they are', () => {
+    expect(homeRefresh(page, { ...page, sort: 1 }, true)).toEqual({ list: 'refreshing', top: false });
+  });
+
+  test('other languages refresh the list in place, and the hero and Popular wait', () => {
+    expect(homeRefresh(page, { ...page, languages: ['fr'] }, true)).toEqual({ list: 'refreshing', top: true });
+  });
+
+  test("a page left from a search is never shown as the home list: it all waits", () => {
+    expect(homeRefresh({ ...page, text: 'rust' }, page, true)).toEqual({ list: 'loading', top: true });
+  });
+
+  test('nothing waits once the host has answered', () => {
+    expect(homeRefresh(page, { ...page, languages: ['fr'] }, false)).toEqual({ list: 'ready', top: false });
   });
 });

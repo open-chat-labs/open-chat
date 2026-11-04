@@ -545,3 +545,8 @@
 - `lib/languages.ts`: `languageFlag` reads the older codes a host may still use (`cn`, `jp`, `iw`: the app's own), spec'd.
 - `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-04 — ExploreCommunities: the list refreshes in place, and the search stays open while focused, by hand
+- A sort or a language picked is asked of the host at once; only typing waits for a pause (`askAtOnce`). A sort no longer empties the home view: until the host answers, a small spinner shows by the table's title, the rows stay (dimmed) for a new sort or languages, and the hero's count and Popular stay for a new sort. For other languages the hero's count waits ("Loading…") and Popular stays, dimmed, until the answer: it's never mounted again, so its intro animation doesn't replay when filters are applied or cleared. A page left from a search is still never shown as "All communities": its rows wait too (`homeRefresh`, `HomeList`, `sameLanguages`; `lib/exploreAsk.ts`, spec'd).
+- Focusing the hero's search (or any text in it) opens the search view, and it stays open, even emptied (a prompt, `ui.exploreCommunities.typeToSearch`, in place of results) or when something else on the screen is clicked. Only Back or Esc (which clears it) goes back to the home view. The clear button keeps the input focused. The existing spec for leaving a cleared search now leaves with Back before checking the home view.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

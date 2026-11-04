@@ -29,7 +29,8 @@
   import { useT } from '../../lib/i18n';
   import { languageFlag } from '../../lib/languages';
   import { cssUrl } from '../../lib/cssUrl';
-  import { askedFor, type ExploreAsk } from '../../lib/exploreAsk';
+  import { askAtOnce, askedFor, homeRefresh, type ExploreAsk, type ExploreSearch } from '../../lib/exploreAsk';
+  import Spinner from '../../lib/components/Spinner.svelte';
   import Translate from '../../lib/components/Translate.svelte';
   import Logo from '../../lib/components/Logo.svelte';
 
@@ -142,6 +143,10 @@
   let query = $state(untrack(() => initialQuery));
   let sort = $state(0);
   let focused = $state(false);
+  // the search view: open once the search is focused or has text, and left only with Back or Esc (an emptied search
+  // stays open, and so does a click elsewhere on the screen)
+  let searchOpen = $state(untrack(() => !!initialQuery.trim()));
+  let searchInput = $state<HTMLInputElement>();
   let langs = $state<string[]>(untrack(() => [...initialLanguages]));
   let langOpen = $state(false);
   let shown = $state(PAGE);
@@ -170,6 +175,10 @@
   // the filter compares these values; they render through t(), so keys and plain names both work
   const langOf = (c: ExploreCommunity) => c.language || 'ui.exploreCommunities.english';
   const q = $derived(query.trim().toLowerCase());
+  // any text opens the search (however it got there: typed, pasted, or set by the host)
+  $effect.pre(() => {
+    if (q) untrack(() => (searchOpen = true));
+  });
   const SORTS: ((a: ExploreCommunity, b: ExploreCommunity) => number)[] = [
     (a, b) => b.members - a.members,
     (a, b) => (b.active || 0) - (a.active || 0),
@@ -193,6 +202,14 @@
   let lastAsk = $state<ExploreAsk>(untrack(() => ({ text: initialQuery.trim(), languages: [...initialLanguages], sort: 0, offset: 0 })));
   // the page shown when a first page was asked for: until `communities` is a new page the host hasn't answered yet
   let askedOn = $state.raw<ExploreCommunity[] | null>(null);
+  // the search the page shown answers: the home view keeps what doesn't depend on a new sort while the list refreshes
+  let pageSearch = $state<ExploreSearch>(untrack(() => ({ text: initialQuery.trim(), languages: [...initialLanguages], sort: 0 })));
+  $effect.pre(() => {
+    const page = communities;
+    untrack(() => {
+      if (lastAsk.offset === 0 && page !== askedOn) pageSearch = { text: lastAsk.text, languages: [...lastAsk.languages], sort: lastAsk.sort };
+    });
+  });
   // the host reported loading after the ask: once it stops, the ask is answered even if the page didn't change
   // (e.g. a failed fetch that keeps the old page), so the loading state can't get stuck
   let sawLoading = $state(false);
@@ -218,7 +235,9 @@
       }
       if (!onQuery) return;
       clearTimeout(queryTimer);
-      queryTimer = setTimeout(() => ask(0), 250);
+      // a sort or a language is asked for at once; typing waits for a pause
+      if (askAtOnce(lastAsk, { text: query.trim(), languages: langs, sort })) ask(0);
+      else queryTimer = setTimeout(() => ask(0), 250);
     });
   });
   // search ranks name matches above description matches, then by size
@@ -234,6 +253,8 @@
   // onQuery: the home list still holds an older query's page (just after clearing the search, or a sort / language
   // change the host hasn't answered yet); it shows a loading state instead of passing that page off as "All communities"
   const homeStale = $derived(remote && !q && (!askedAsShown || firstPagePending));
+  // while it is: the list refreshes in place; the hero's count and Popular wait only for other languages or text
+  const home = $derived(homeRefresh(pageSearch, { text: query.trim(), languages: langs, sort }, homeStale));
   // onQuery: the host couldn't load the page last asked for (`failed`), for the search as it stands. A first page leaves
   // the page before it, which mustn't pass as its answer: an error with a retry shows in its place. A later page keeps
   // the list, and Load more becomes the retry
@@ -252,7 +273,9 @@
   };
 
   // popular: biggest public communities you haven't joined
-  const top = $derived(q || homeStale || firstPageFailed ? [] : list.filter((c) => !isJoined(c) && !isPrivate(c)).sort((a, b) => b.members - a.members).slice(0, 4));
+  // kept while the list refreshes for a new sort or languages (dimmed until the answer, so it isn't mounted again and its
+  // intro doesn't replay); never from a page left by a search
+  const top = $derived(q || home.list === 'loading' || firstPageFailed ? [] : list.filter((c) => !isJoined(c) && !isPrivate(c)).sort((a, b) => b.members - a.members).slice(0, 4));
   // per-language counts only mean something when the whole list is here; when the host pages the results they're hidden
   // the host's options are picked by code and shown by label; the communities' own languages are both
   const languages = $derived.by(() => {
@@ -376,26 +399,74 @@
 {/snippet}
 
 <div class="explore" data-screen-label="Explore communities" bind:this={root} onscroll={() => root && onScroll?.(root.scrollTop)}>
-  {#if q}
+  {#if q || searchOpen}
     <div class="search-bar">
       <div class="search-row">
-        <span class="back" onclick={() => (query = '')} role="button" tabindex="0">{@render icon('back', 15, 'var(--ink-3)')}{t('ui.exploreCommunities.explore')}</span>
+        <span
+          class="back"
+          onclick={() => {
+            searchOpen = false;
+            query = '';
+          }}
+          role="button"
+          tabindex="0">{@render icon('back', 15, 'var(--ink-3)')}{t('ui.exploreCommunities.explore')}</span
+        >
         <div class="search small" class:focused>
           {@render icon('search', 16, 'var(--ink-3)')}
           <!-- svelte-ignore a11y_autofocus -->
-          <input bind:value={query} onfocus={() => (focused = true)} onblur={() => (focused = false)} autofocus placeholder={t('ui.exploreCommunities.searchPlaceholder')} />
-          <span class="clear" onclick={() => (query = '')} aria-label={t('ui.exploreCommunities.clear')} role="button" tabindex="0" title={t('ui.exploreCommunities.clear')}>{@render icon('close', 12, 'var(--ink-3)')}</span>
+          <input
+            bind:this={searchInput}
+            bind:value={query}
+            onfocus={() => (focused = true)}
+            onblur={() => (focused = false)}
+            onkeydown={(e) => {
+              // Esc leaves the search: cleared and blurred, back to the home view
+              if (e.key !== 'Escape') return;
+              e.preventDefault();
+              searchOpen = false;
+              query = '';
+              searchInput?.blur();
+            }}
+            autofocus
+            placeholder={t('ui.exploreCommunities.searchPlaceholder')}
+          />
+          {#if query}
+            <!-- clearing keeps the search open: the input keeps its focus -->
+            <span
+              class="clear"
+              onclick={() => {
+                query = '';
+                searchInput?.focus();
+              }}
+              aria-label={t('ui.exploreCommunities.clear')}
+              role="button"
+              tabindex="0"
+              title={t('ui.exploreCommunities.clear')}>{@render icon('close', 12, 'var(--ink-3)')}</span
+            >
+          {/if}
         </div>
       </div>
       <div class="results-row">
-        <span class="result-count">{searching ? t('ui.exploreCommunities.searching') : firstPageFailed ? t('ui.exploreCommunities.loadFailed') : t('ui.exploreCommunities.results', { count: remote ? totalCount : found.length })}</span>
+        <span class="result-count"
+          >{!q
+            ? ''
+            : searching
+              ? t('ui.exploreCommunities.searching')
+              : firstPageFailed
+                ? t('ui.exploreCommunities.loadFailed')
+                : t('ui.exploreCommunities.results', { count: remote ? totalCount : found.length })}</span
+        >
         {@render langPicker(false)}
       </div>
     </div>
 
     <div class="results-wrap">
       <div class="results">
-        {#if searching}
+        {#if !q}
+          <div class="empty" role="status">
+            <span class="empty-title">{t('ui.exploreCommunities.typeToSearch')}</span>
+          </div>
+        {:else if searching}
           <div class="empty" role="status" aria-busy="true">
             <span class="empty-title">{t('ui.exploreCommunities.searching')}</span>
           </div>
@@ -440,7 +511,7 @@
       <div class="hero-text">
         <span class="hero-title">{t('ui.exploreCommunities.heroTitle')}</span>
         <span class="hero-sub"
-          >{homeStale
+          >{home.top
             ? t('ui.exploreCommunities.loading')
             : firstPageFailed
               ? t('ui.exploreCommunities.loadFailed')
@@ -449,7 +520,16 @@
       </div>
       <div class="search large" class:focused>
         {@render icon('search', 18, 'var(--ink-3)')}
-        <input bind:value={query} onfocus={() => (focused = true)} onblur={() => (focused = false)} placeholder={t('ui.exploreCommunities.searchPlaceholder')} />
+        <!-- focusing the search opens the search view, which takes the focus over -->
+        <input
+          bind:value={query}
+          onfocus={() => {
+            focused = true;
+            searchOpen = true;
+          }}
+          onblur={() => (focused = false)}
+          placeholder={t('ui.exploreCommunities.searchPlaceholder')}
+        />
         {#if query}
           <span class="clear large" onclick={() => (query = '')} aria-label={t('ui.exploreCommunities.clear')} role="button" tabindex="0" title={t('ui.exploreCommunities.clear')}>{@render icon('close', 13, 'var(--ink-3)')}</span>
         {/if}
@@ -463,7 +543,7 @@
     </div>
 
     {#if top.length > 0}
-      <div class="popular-wrap">
+      <div class="popular-wrap" class:refreshing={home.top}>
         <div class="popular">
           <div class="popular-head">
             <span class="popular-title">{langs.length === 1 ? t('ui.exploreCommunities.popularIn', { language: langName(langs[0]) }) : t('ui.exploreCommunities.popularOnOpenChat')}</span>
@@ -482,7 +562,11 @@
     <div class="table-wrap">
       <div class="table">
         <div class="table-head">
-          <span class="table-title">{t(langs.length ? 'ui.exploreCommunities.filtered' : 'ui.exploreCommunities.allCommunities')} <span class="table-count">· {homeStale ? t('ui.exploreCommunities.loading') : firstPageFailed ? '–' : totalCount}</span></span>
+          <span class="table-title"
+            >{t(langs.length ? 'ui.exploreCommunities.filtered' : 'ui.exploreCommunities.allCommunities')}
+            {#if !home.top}<span class="table-count">· {firstPageFailed ? '–' : totalCount}</span>{/if}
+            {#if home.list !== 'ready'}<span class="table-spinner"><Spinner size={14} tone="ink" label="ui.exploreCommunities.loading" /></span>{/if}</span
+          >
           {#if langs.length}
             <span class="clear-filters" onclick={() => (langs = [])} role="button" tabindex="0">{t('ui.exploreCommunities.clearFilters')}</span>
           {/if}
@@ -504,10 +588,10 @@
         <div class="row columns" data-ex-row="">
           <span>{t('ui.exploreCommunities.colCommunity')}</span><span>{t('ui.exploreCommunities.colMembers')}</span><span data-ex-col="">{t('ui.exploreCommunities.colChannels')}</span><span data-ex-col="">{t('ui.exploreCommunities.colLanguage')}</span><span></span>
         </div>
-        {#each homeStale || firstPageFailed ? [] : rows as c}
+        {#each firstPageFailed || home.list === 'loading' ? [] : rows as c}
           {@const joined = isJoined(c)}
           {@const priv = isPrivate(c)}
-          <div class="row entry" class:locked={priv && !joined} data-ex-row="" onclick={() => open(c)} role="button" tabindex="0">
+          <div class="row entry" class:locked={priv && !joined} class:refreshing={home.list === 'refreshing'} data-ex-row="" onclick={() => open(c)} role="button" tabindex="0">
             <div class="entry-name">
               <span class="entry-avatar" style:background={avatarOf(c)}></span>
               <div class="entry-text">
@@ -549,7 +633,7 @@
             <span class="shown" role={moreFailed ? 'alert' : undefined}>{moreFailed ? t('ui.exploreCommunities.loadMoreFailed') : t('ui.exploreCommunities.showing', { shown: rows.length, total: totalCount })}</span>
           </div>
         {/if}
-        {#if homeStale}
+        {#if home.list === 'loading' || (home.list === 'refreshing' && rows.length === 0)}
           <div class="table-empty" role="status" aria-busy="true">
             <span class="table-empty-title">{t('ui.exploreCommunities.loading')}</span>
           </div>
@@ -1234,6 +1318,12 @@
     justify-content: center;
     padding: 0 var(--space-32) var(--space-26);
     animation: ex-rise 380ms 60ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    transition: opacity var(--duration-fast);
+  }
+
+  /* other languages asked for: Popular stays, dimmed, until the host answers */
+  .popular-wrap.refreshing {
+    opacity: 0.5;
   }
 
   .popular {
@@ -1314,6 +1404,12 @@
     color: var(--ink-4);
   }
 
+  .table-spinner {
+    display: inline-flex;
+    margin-inline-start: var(--space-8);
+    vertical-align: -2px;
+  }
+
   .clear-filters {
     flex: none;
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
@@ -1371,10 +1467,16 @@
     box-sizing: border-box;
     border-block-start: 1px solid var(--line-1);
     cursor: pointer;
+    transition: opacity var(--duration-fast);
   }
 
   .entry:hover {
     background: var(--overlay-1);
+  }
+
+  /* the list refreshing for a new sort or languages: the rows stay, dimmed, until the host answers */
+  .entry.refreshing {
+    opacity: 0.5;
   }
 
   .entry-name {
