@@ -191,6 +191,7 @@
 			buildConfigurationList = 2B4DEFC9589C88FC890303C3 /* Build configuration list for PBXNativeTarget "open-chat_iOS" */;
 			buildPhases = (
 				763DA0549F94CD84882899B2 /* Build Rust Code */,
+				070833190F37F93564097F56 /* Copy entitlements for the Tauri signer */,
 				EBF011291B42231A0FADF59A /* Sources */,
 				8D3B7554BE2106DF144666CA /* Resources */,
 				CFEFF00C0F862704F81F8490 /* Frameworks */,
@@ -255,6 +256,27 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		070833190F37F93564097F56 /* Copy entitlements for the Tauri signer */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/open-chat_iOS/OpenChat.entitlements",
+			);
+			name = "Copy entitlements for the Tauri signer";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/open-chat_iOS/open-chat_iOS.entitlements",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp \"${SRCROOT}/open-chat_iOS/OpenChat.entitlements\" \"${SRCROOT}/open-chat_iOS/open-chat_iOS.entitlements\"";
+		};
 		763DA0549F94CD84882899B2 /* Build Rust Code */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;

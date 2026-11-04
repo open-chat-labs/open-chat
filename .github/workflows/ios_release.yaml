@@ -191,6 +191,10 @@ jobs:
 
                   ENT=$(codesign -d --entitlements :- "$APP" 2>/dev/null)
                   echo "$ENT"
+                  # Passkeys need it. See the entitlements copy phase in project.yml.
+                  if ! echo "$ENT" | grep -q '<string>webcredentials:oc.app</string>'; then
+                    echo "::error::Associated domains lack webcredentials:oc.app"; FAIL=1
+                  fi
                   if echo "$ENT" | grep -q 'mode=developer'; then
                     echo "::error::Associated domains use ?mode=developer"; FAIL=1
                   fi
