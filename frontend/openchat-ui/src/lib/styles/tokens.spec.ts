@@ -17,21 +17,21 @@ const sources = {
   ...stylesheets,
 };
 
-/** The tokens defined on :root (the dark default), which every theme starts from. */
-export function rootTokens(css: string): Set<string> {
+/** The tokens tokens.css defines: on :root (the dark default, which every theme starts from), and the native
+ *  platform's and the always-dark scope's own. */
+export function definedTokens(css: string): Set<string> {
   const names = new Set<string>();
-  for (const [, selector, body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-    if (selector.includes(':root')) for (const [, name] of body.matchAll(/(--[\w-]+)\s*:/g)) names.add(name);
-  }
+  for (const [, body] of css.matchAll(/[^{}]+\{([^{}]*)\}/g)) for (const [, name] of body.matchAll(/(--[\w-]+)\s*:/g)) names.add(name);
   return names;
 }
 
-/** Invariant: no var() gives a fallback for a token tokens.css defines on :root. */
+/** Invariant: no var() gives a fallback for a token tokens.css defines. */
 describe('token fallbacks', () => {
-  const defined = rootTokens(tokens);
+  const defined = definedTokens(tokens);
 
   test('the token list and the stylesheets are read', () => {
     expect(defined.has('--ink')).toBe(true);
+    expect(defined.has('--hero-base')).toBe(true);
     expect(stylesheets['lib/styles/global.css']).toContain('.oc-veil');
   });
 

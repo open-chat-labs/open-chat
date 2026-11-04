@@ -11,6 +11,30 @@ design export needs. Each entry says where it came up.
   library's `--text-*` tokens yet (L4). Profile's control writes it (8c): the design's four sizes
   are the store's steps 1 to 4 (`logic/profile/appearance.ts`), and a stored 0 shows as Small and
   stays until another size is picked. The store's fifth step has no size in the design.
+- **Native platform tokens** (native N1, #10364): the library has the native layer
+  (`[data-platform="native"]`: native light surfaces, `--hero-base`, `--tint-row`, `--tint-pill`,
+  `--safe-*`, `--scroll-end`, `--text-scale`; `[data-always-dark]` for calls; EXPORT-LOG
+  2026-11-04), and `textScaleOf` (`logic/profile/appearance.ts`) gives `--text-scale` from the font
+  size setting and the platform's font scale. Left for N3, which builds the native root and entry:
+  - Put `data-platform="native"`, `data-mode` and `data-accent` on the native root, from the same
+    stored mode and accent the web uses (light / dark / system), and `--text-scale` from
+    `textScaleOf`, on the same element. The platform font scale needs a native bridge (iOS
+    dynamic type's content size category, Android's `Configuration.fontScale`, read again when it
+    changes); mobile web passes 1.
+  - `viewport-fit=cover` on the native entry, or `env(safe-area-inset-*)` reports 0 and `--safe-*`
+    stay 0.
+  - Status-bar glyphs: light on the call screen and the minimised call (N14), following the
+    theme elsewhere, through the Tauri plugin.
+  - For the design: the prototype's Appearance setting is "Chat text size" (Small / Default /
+    Large) and only resizes messages (`--text-xs` / `--text-sm` / `--text-base` in the
+    conversation: 9 / 10.5 / 12.5, 10 / 11.5 / 13.5 and 11.5 / 13 / 15.5px), while the brief and the
+    issue ask for an interface size wired to dynamic type. N1 scales every `--text-*` size by the
+    app's four steps (0.875–1.25) times the platform's scale, kept within 0.75–2; N12 settles
+    which one the setting is. The light theme's `--tint-row` / `--tint-pill` (black at 5% / 8%) are
+    ours: the export only has the dark values (as fallbacks), and its light theme had no
+    `--hero-base` either. The prototype pads the bottom by a fixed 34px on iOS (the home
+    indicator) and 12px on Android; `--safe-bottom` is the device's inset alone, so N2's bars
+    decide whether they need a minimum.
 - **Shell breakpoints vs layout tokens**: the shell's breakpoints and widths (Fix Brief - App
   Shell Layout: 768 / 1200 / 1476 / 1876 / 2476px, chat list `clamp(350px, 30cqw, 550px)`, right
   column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*` 1280–2500px,

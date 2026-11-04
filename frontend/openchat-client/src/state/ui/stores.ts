@@ -18,7 +18,8 @@ import { LocalStorageStore } from "../localStorageStore";
 import { routeStore } from "../path/stores";
 import { notEq } from "../utils";
 
-function translateScale(scale: FontScale): number {
+/** How much the font size setting scales text by: its five steps, 0.75 to 1.25. */
+export function fontScaleFactor(scale: FontScale): number {
     if (scale === 0) return 0.75;
     if (scale === 1) return 0.875;
     if (scale === 2) return 1;
@@ -103,7 +104,7 @@ export const fontScaleStore = new LocalStorageStore<FontScale>(
 );
 
 export const fontSize = derived([baseFontSize, fontScaleStore], ([baseFontSize, fontScale]) => {
-    return baseFontSize * translateScale(fontScale);
+    return baseFontSize * fontScaleFactor(fontScale);
 });
 function someHomeRoute(route: RouteParams["kind"]): boolean {
     return (

@@ -39,6 +39,7 @@ export const foundations: SectionMeta[] = [
   { id: 'layout', title: 'Layout', meta: 'tokens.css · --bp-* · --panel-*' },
   { id: 'i18n', title: 'Internationalisation', meta: 'src/lib/i18n · Translate · useT · en.json' },
   { id: 'accessibility', title: 'Accessibility', meta: 'a11y.js · modal.ts · rove.ts · tooltip.js · tokens.css' },
+  { id: 'native', title: 'Native platform', meta: 'tokens.css · data-platform="native" · native light · hero · safe areas · text scale · data-always-dark' },
 ];
 
 export const general: SectionMeta[] = [

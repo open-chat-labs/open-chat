@@ -247,7 +247,7 @@
         <p>{info.intro}</p>
       </header>
       {#if group === 'foundations'}
-        <Foundations theme={mode + accent} />
+        <Foundations theme={mode + accent} {accent} />
       {:else if group === 'general'}
         <General />
       {:else if group === 'features'}
