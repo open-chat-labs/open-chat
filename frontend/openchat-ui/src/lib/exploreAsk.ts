@@ -25,10 +25,19 @@ export function askedFor(ask: ExploreAsk | null, shown: ExploreSearch): boolean 
   return ask !== null && ask.text === shown.text && ask.sort === shown.sort && sameLanguages(ask.languages, shown.languages);
 }
 
-/** Whether a change from one search to another can be asked at once (a sort or a language picked) or waits for typing
- *  to pause (the text changed). */
-export function askAtOnce(asked: ExploreSearch, shown: ExploreSearch): boolean {
-  return asked.text === shown.text;
+/** When to ask the host for the search shown, given the one last asked: `none` (already asked), `now` (a sort or a
+ *  language picked, or the text emptied, e.g. leaving the search: nobody is typing) or `debounced` (the text changed:
+ *  wait for typing to pause). */
+export function askTiming(asked: ExploreAsk, shown: ExploreSearch): 'none' | 'now' | 'debounced' {
+  if (askedFor(asked, shown)) return 'none';
+  return asked.text === shown.text || shown.text === '' ? 'now' : 'debounced';
+}
+
+/** Whether the search view shows (rather than the home view): while there's text, or once the user has opened it (a
+ *  click or a key in the hero's search, or focusing the search's own input) until they leave it (Back, Esc). Text that
+ *  arrives without the user opening it (the host's, from a URL) shows it only while it's there. */
+export function searchViewShown(text: string, openedByUser: boolean): boolean {
+  return text.trim() !== '' || openedByUser;
 }
 
 /** The home list while the host hasn't answered: `ready` (answered), `refreshing` (a new sort or languages for the same

@@ -95,7 +95,7 @@ describe('ExploreCommunities with onQuery', () => {
     expect(searching()).toBe(true);
   });
 
-  test('leaving a cleared search shows a loading state, not the old results as "All communities", until the host answers', async () => {
+  test('clearing the search shows a loading state, not the old results as "All communities", until the host answers', async () => {
     const { props, onQuery } = open();
     type('rust');
     await vi.advanceTimersByTimeAsync(250);
@@ -103,10 +103,6 @@ describe('ExploreCommunities with onQuery', () => {
     props.total = 2;
     flushSync();
     type('');
-    // emptied, the search stays open; Back leaves it for the home view
-    expect(target.querySelector('.search-bar')).not.toBeNull();
-    target.querySelector<HTMLElement>('.search-row .back')!.click();
-    flushSync();
     const homeLoading = () => !!target.querySelector('.table [role=status][aria-busy=true]');
     expect(homeLoading()).toBe(true);
     expect(text()).not.toContain('Rust community');

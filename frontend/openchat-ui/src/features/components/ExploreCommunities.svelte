@@ -25,11 +25,11 @@
 </script>
 
 <script lang="ts">
-  import { onMount, untrack } from 'svelte';
+  import { flushSync, onMount, untrack } from 'svelte';
   import { useT } from '../../lib/i18n';
   import { languageFlag } from '../../lib/languages';
   import { cssUrl } from '../../lib/cssUrl';
-  import { askAtOnce, askedFor, homeRefresh, type ExploreAsk, type ExploreSearch } from '../../lib/exploreAsk';
+  import { askTiming, askedFor, homeRefresh, searchViewShown, type ExploreAsk, type ExploreSearch } from '../../lib/exploreAsk';
   import Spinner from '../../lib/components/Spinner.svelte';
   import Translate from '../../lib/components/Translate.svelte';
   import Logo from '../../lib/components/Logo.svelte';
@@ -146,9 +146,9 @@
   let query = $state(untrack(() => initialQuery));
   let sort = $state(0);
   let focused = $state(false);
-  // the search view: open once the search is focused or has text, and left only with Back or Esc (an emptied search
-  // stays open, and so does a click elsewhere on the screen)
-  let searchOpen = $state(untrack(() => !!initialQuery.trim()));
+  // the user opened the search (a click or a key in the hero's search, or focusing the search's input): it stays open,
+  // emptied too or with a click elsewhere, until they leave it with Back or Esc (searchViewShown)
+  let searchOpen = $state(false);
   let searchInput = $state<HTMLInputElement>();
   let langs = $state<string[]>(untrack(() => [...initialLanguages]));
   let langOpen = $state(false);
@@ -178,10 +178,20 @@
   // the filter compares these values; they render through t(), so keys and plain names both work
   const langOf = (c: ExploreCommunity) => c.language || 'ui.exploreCommunities.english';
   const q = $derived(query.trim().toLowerCase());
-  // any text opens the search (however it got there: typed, pasted, or set by the host)
-  $effect.pre(() => {
-    if (q) untrack(() => (searchOpen = true));
-  });
+  const searchShown = $derived(searchViewShown(query, searchOpen));
+
+  // opens the search view from the hero's search and moves the focus to its input in the same event, so a phone keeps its
+  // keyboard; the hero's input itself never opens it on focus, so Tab goes past it to Popular and the list
+  function openSearch(): void {
+    searchOpen = true;
+    flushSync();
+    searchInput?.focus();
+  }
+
+  function leaveSearch(): void {
+    searchOpen = false;
+    query = '';
+  }
   const SORTS: ((a: ExploreCommunity, b: ExploreCommunity) => number)[] = [
     (a, b) => b.members - a.members,
     (a, b) => (b.active || 0) - (a.active || 0),
@@ -238,9 +248,11 @@
       }
       if (!onQuery) return;
       clearTimeout(queryTimer);
-      // a sort or a language is asked for at once; typing waits for a pause
-      if (askAtOnce(lastAsk, { text: query.trim(), languages: langs, sort })) ask(0);
-      else queryTimer = setTimeout(() => ask(0), 250);
+      // a sort, a language or leaving the search is asked for at once; typing waits for a pause; the search already
+      // asked for isn't asked again
+      const timing = askTiming(lastAsk, { text: query.trim(), languages: langs, sort });
+      if (timing === 'now') ask(0);
+      else if (timing === 'debounced') queryTimer = setTimeout(() => ask(0), 250);
     });
   });
   // search ranks name matches above description matches, then by size
@@ -275,6 +287,8 @@
     if (isJoined(c) || !isPrivate(c)) onOpen?.(c.key);
   };
 
+  // Popular's languages: the page's while the list refreshes for other ones (it still shows that page, dimmed)
+  const popularLangs = $derived(home.top ? pageSearch.languages : langs);
   // popular: biggest public communities you haven't joined
   // kept while the list refreshes for a new sort or languages (dimmed until the answer, so it isn't mounted again and its
   // intro doesn't replay); never from a page left by a search
@@ -402,35 +416,31 @@
 {/snippet}
 
 <div class="explore" data-screen-label="Explore communities" bind:this={root} onscroll={() => root && onScroll?.(root.scrollTop)}>
-  {#if q || searchOpen}
+  {#if searchShown}
     <div class="search-bar">
       <div class="search-row">
         <span
           class="back"
-          onclick={() => {
-            searchOpen = false;
-            query = '';
-          }}
+          onclick={leaveSearch}
           role="button"
           tabindex="0">{@render icon('back', 15, 'var(--ink-3)')}{t('ui.exploreCommunities.explore')}</span
         >
         <div class="search small" class:focused>
           {@render icon('search', 16, 'var(--ink-3)')}
-          <!-- svelte-ignore a11y_autofocus -->
           <input
             bind:this={searchInput}
             bind:value={query}
-            onfocus={() => (focused = true)}
+            onfocus={() => {
+              focused = true;
+              searchOpen = true;
+            }}
             onblur={() => (focused = false)}
             onkeydown={(e) => {
-              // Esc leaves the search: cleared and blurred, back to the home view
-              if (e.key !== 'Escape') return;
+              // Esc leaves the search (cleared, back to the home view); with the language menu open it only closes that
+              if (e.key !== 'Escape' || langOpen) return;
               e.preventDefault();
-              searchOpen = false;
-              query = '';
-              searchInput?.blur();
+              leaveSearch();
             }}
-            autofocus
             placeholder={t('ui.exploreCommunities.searchPlaceholder')}
           />
           {#if query}
@@ -523,19 +533,17 @@
       </div>
       <div class="search large" class:focused>
         {@render icon('search', 18, 'var(--ink-3)')}
-        <!-- focusing the search opens the search view, which takes the focus over -->
+        <!-- a click or a key opens the search view, which takes the focus over; focus alone (Tab) doesn't -->
         <input
           bind:value={query}
-          onfocus={() => {
-            focused = true;
-            searchOpen = true;
-          }}
+          onfocus={() => (focused = true)}
           onblur={() => (focused = false)}
+          onclick={openSearch}
+          onkeydown={(e) => {
+            if (e.key === 'Enter' || (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey)) openSearch();
+          }}
           placeholder={t('ui.exploreCommunities.searchPlaceholder')}
         />
-        {#if query}
-          <span class="clear large" onclick={() => (query = '')} aria-label={t('ui.exploreCommunities.clear')} role="button" tabindex="0" title={t('ui.exploreCommunities.clear')}>{@render icon('close', 13, 'var(--ink-3)')}</span>
-        {/if}
       </div>
       <div class="hero-filters">
         <span class="hero-note">{t('ui.exploreCommunities.showingIn')}</span>
@@ -549,7 +557,9 @@
       <div class="popular-wrap" class:refreshing={home.top}>
         <div class="popular">
           <div class="popular-head">
-            <span class="popular-title">{langs.length === 1 ? t('ui.exploreCommunities.popularIn', { language: langName(langs[0]) }) : t('ui.exploreCommunities.popularOnOpenChat')}</span>
+            <span class="popular-title"
+              >{popularLangs.length === 1 ? t('ui.exploreCommunities.popularIn', { language: langName(popularLangs[0]) }) : t('ui.exploreCommunities.popularOnOpenChat')}</span
+            >
             <span class="popular-sub">{t('ui.exploreCommunities.popularSub')}</span>
           </div>
           {@render bigCard(top[0], 'ui.exploreCommunities.featured')}
@@ -797,10 +807,6 @@
     cursor: pointer;
   }
 
-  .clear.large {
-    width: 28px;
-    height: 28px;
-  }
 
   .results-row {
     display: flex;

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { askAtOnce, askedFor, homeRefresh, sameLanguages } from './exploreAsk';
+import { askTiming, askedFor, homeRefresh, sameLanguages, searchViewShown } from './exploreAsk';
 
 const ask = { text: 'rust', languages: ['en', 'fr'], sort: 0, offset: 0 };
 
@@ -34,12 +34,34 @@ describe('sameLanguages', () => {
   });
 });
 
-describe('askAtOnce', () => {
-  test('a sort or a language change is asked at once; a change of text waits for typing to pause', () => {
-    const asked = { text: 'rust', languages: ['en'], sort: 0 };
-    expect(askAtOnce(asked, { ...asked, sort: 2 })).toBe(true);
-    expect(askAtOnce(asked, { ...asked, languages: ['en', 'fr'] })).toBe(true);
-    expect(askAtOnce(asked, { ...asked, text: 'rus' })).toBe(false);
+describe('askTiming', () => {
+  const asked = { text: 'rust', languages: ['en'], sort: 0, offset: 0 };
+
+  test('a sort or a language change is asked at once', () => {
+    expect(askTiming(asked, { text: 'rust', languages: ['en'], sort: 2 })).toBe('now');
+    expect(askTiming(asked, { text: 'rust', languages: ['en', 'fr'], sort: 0 })).toBe('now');
+  });
+
+  test('a change of text waits for typing to pause, but an emptied text (leaving the search) is asked at once', () => {
+    expect(askTiming(asked, { text: 'rus', languages: ['en'], sort: 0 })).toBe('debounced');
+    expect(askTiming(asked, { text: '', languages: ['en'], sort: 0 })).toBe('now');
+  });
+
+  test('the search already asked for is not asked again', () => {
+    expect(askTiming(asked, { text: 'rust', languages: ['en'], sort: 0 })).toBe('none');
+    expect(askTiming({ ...asked, offset: 6 }, { text: 'rust', languages: ['en'], sort: 0 })).toBe('none');
+  });
+});
+
+describe('searchViewShown', () => {
+  test('shows while there is text', () => {
+    expect(searchViewShown('rust', false)).toBe(true);
+    expect(searchViewShown('  ', false)).toBe(false);
+  });
+
+  test('once the user opened it, it stays open emptied, until they leave it', () => {
+    expect(searchViewShown('', true)).toBe(true);
+    expect(searchViewShown('', false)).toBe(false);
   });
 });
 
