@@ -244,7 +244,7 @@ export class MiniAppHost {
     // send it.
     // Only a player is named to the app. A spectator is anyone the card's on screen for, and the app
     // is the bot's page, so naming them would tell the bot who's looking at the chat. Their id is
-    // empty rather than left out, as apps built with older SDKs ignore an initialise without one.
+    // empty rather than left out, as apps built with the SDK ignore an initialise without one.
     #initialise(withState: boolean): void {
         if (!this.#ready || this.status.kind !== "open") return;
         const role = this.status.role;
