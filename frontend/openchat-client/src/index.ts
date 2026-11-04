@@ -68,7 +68,11 @@ export {
     groupDescription,
     hasAccessGateChanged,
 } from "./utils/group.svelte";
-export { communityChanges, isPrivateCommunityPreview } from "./utils/community";
+export {
+    communityChanges,
+    isCommunityMember,
+    isPrivateCommunityPreview,
+} from "./utils/community";
 export { userMessagePermissionFor } from "./utils/botMessagePermissions";
 export {
     miniAppCardView,
@@ -101,7 +105,7 @@ export {
     mergeChitEvents,
 } from "./utils/chit";
 export { inviteLinkUrl } from "./utils/inviteLink";
-export { postLoginJoin } from "./utils/join";
+export { postLoginCreateCommunity, postLoginJoin } from "./utils/join";
 export { muteNotificationsFailureMessage, pinChatFailureMessage } from "./utils/pinAndMute";
 export { editableGates, gateWithHidden, type EditableGates } from "./utils/accessGates";
 export {

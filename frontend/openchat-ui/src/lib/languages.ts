@@ -59,15 +59,22 @@ const BY_NAME: Record<string, string> = {
   'ไทย': 'th',
 };
 
+// older or non-standard codes a host may still use for a language (OpenChat's own: cn, jp, iw)
+const ALIASES: Record<string, string> = {
+  cn: 'zh',
+  jp: 'ja',
+  iw: 'he',
+};
+
 /** The white flag, for a language without one of its own. */
 export const NO_FLAG = '🏳️';
 
 /**
- * A language's flag, from its code ("pt", "pt-BR", "zh_CN"), its own name ("Português") or the library's English key;
- * the white flag when it has none.
+ * A language's flag, from its code ("pt", "pt-BR", "zh_CN", or an older code such as "iw"), its own name ("Português")
+ * or the library's English key; the white flag when it has none.
  */
 export function languageFlag(language: string): string {
   const value = language.trim().toLowerCase();
   const code = BY_NAME[value] ?? value.split(/[-_]/)[0];
-  return FLAGS[code] ?? NO_FLAG;
+  return FLAGS[ALIASES[code] ?? code] ?? NO_FLAG;
 }

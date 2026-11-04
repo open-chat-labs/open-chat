@@ -14,12 +14,21 @@
     offset: number;
     limit: number;
   }
+
+  /** A language the filter offers (onQuery mode): its code is what `ExploreQuery.languages` carries. */
+  export interface ExploreLanguage {
+    code: string;
+    label: string;
+    /** Defaults to the code's flag. */
+    flag?: string;
+  }
 </script>
 
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import { useT } from '../../lib/i18n';
   import { languageFlag } from '../../lib/languages';
+  import { cssUrl } from '../../lib/cssUrl';
   import Translate from '../../lib/components/Translate.svelte';
   import Logo from '../../lib/components/Logo.svelte';
 
@@ -64,6 +73,10 @@
     pin?: Swatch;
     color?: Swatch;
     cover?: Swatch;
+    /** Avatar image; the colour shows without it. */
+    avatarUrl?: string;
+    /** Cover (banner) image; the colour shows without it. */
+    coverUrl?: string;
     channels?: { title: string; visibility?: 'Public' | 'Private' }[];
     /** Overrides channels.length. */
     channelCount?: number;
@@ -85,25 +98,52 @@
     total?: number;
     /** A page is being fetched (onQuery mode). */
     loading?: boolean;
-    /** Languages to offer in the filter (onQuery mode); defaults to the languages of the loaded communities. */
-    languageOptions?: string[];
+    /** Languages to offer in the filter (onQuery mode), by code; defaults to the languages of the loaded communities. */
+    languageOptions?: ExploreLanguage[];
+    /** The search text it opens with (e.g. from the host's URL). Read once; later changes come from the user. */
+    initialQuery?: string;
+    /** The languages picked when it opens (codes in onQuery mode, as `ExploreQuery.languages`). Read once. */
+    initialLanguages?: string[];
+    /** Where its list is scrolled to when it opens (from `onScroll` on an earlier visit). Read once. */
+    initialScroll?: number;
+    /** The list was scrolled, to this offset from the top. */
+    onScroll?: (top: number) => void;
     onCreate?: () => void;
     onSignIn?: () => void;
     /** Defaults to onSignIn. */
     onCreateAccount?: () => void;
   }
 
-  let { communities, joinedKeys = [], guest = false, onOpen, onPreview, onQuery, total, loading = false, languageOptions, onCreate, onSignIn, onCreateAccount }: Props = $props();
+  let {
+    communities,
+    joinedKeys = [],
+    guest = false,
+    onOpen,
+    onPreview,
+    onQuery,
+    total,
+    loading = false,
+    languageOptions,
+    initialQuery = '',
+    initialLanguages = [],
+    initialScroll = 0,
+    onScroll,
+    onCreate,
+    onSignIn,
+    onCreateAccount,
+  }: Props = $props();
   const t = useT();
 
-  let query = $state('');
+  let query = $state(untrack(() => initialQuery));
   let sort = $state(0);
   let focused = $state(false);
-  let langs = $state<string[]>([]);
+  let langs = $state<string[]>(untrack(() => [...initialLanguages]));
   let langOpen = $state(false);
   let shown = $state(PAGE);
+  let root = $state<HTMLElement>();
 
   onMount(() => {
+    if (root && initialScroll > 0) root.scrollTop = initialScroll;
     // the in-menu backdrop only covers this component; presses anywhere else close it too
     const away = (e: PointerEvent) => {
       if (langOpen && !(e.target as Element).closest?.('[data-ex-lang]')) langOpen = false;
@@ -143,8 +183,8 @@
   let queryTimer: ReturnType<typeof setTimeout> | undefined;
   let firstQuery = true;
   // what the host was last asked for: until it has answered for the current text the search shows "Searching…",
-  // never the previous text's results
-  let lastAsk = $state<{ text: string; offset: number } | null>(null);
+  // never the previous text's results. An initialQuery counts as asked, and `communities` as its answer
+  let lastAsk = $state<{ text: string; offset: number } | null>(untrack(() => (initialQuery.trim() ? { text: initialQuery.trim(), offset: 0 } : null)));
   // the page shown when a first page was asked for: until `communities` is a new page the host hasn't answered yet
   let askedOn = $state.raw<ExploreCommunity[] | null>(null);
   // the host reported loading after the ask: once it stops, the ask is answered even if the page didn't change
@@ -190,8 +230,10 @@
   const isJoined = (c: ExploreCommunity) => joinedKeys.includes(c.key);
   const isPrivate = (c: ExploreCommunity) => c.visibility === 'Private';
   const channelCount = (c: ExploreCommunity) => c.channelCount ?? (c.channels ?? []).length;
-  const avatarOf = (c: ExploreCommunity) => (c.pin && GRAD[c.pin]) || (c.color && GRAD[c.color]) || GRAD.teal;
-  const coverOf = (c: ExploreCommunity) => (c.cover && COVER[c.cover]) || (c.pin && COVER[c.pin]) || COVER.plum;
+  const avatarOf = (c: ExploreCommunity) =>
+    c.avatarUrl ? `center/cover no-repeat ${cssUrl(c.avatarUrl)}` : (c.pin && GRAD[c.pin]) || (c.color && GRAD[c.color]) || GRAD.teal;
+  const coverOf = (c: ExploreCommunity) =>
+    c.coverUrl ? `center/cover no-repeat ${cssUrl(c.coverUrl)}` : (c.cover && COVER[c.cover]) || (c.pin && COVER[c.pin]) || COVER.plum;
   const open = (c: ExploreCommunity) => {
     if (isJoined(c) || !isPrivate(c)) onOpen?.(c.key);
   };
@@ -199,12 +241,16 @@
   // popular: biggest public communities you haven't joined
   const top = $derived(q || homeStale ? [] : list.filter((c) => !isJoined(c) && !isPrivate(c)).sort((a, b) => b.members - a.members).slice(0, 4));
   // per-language counts only mean something when the whole list is here; when the host pages the results they're hidden
+  // the host's options are picked by code and shown by label; the communities' own languages are both
   const languages = $derived.by(() => {
-    const opts = Array.from(new Set(languageOptions ?? communities.map(langOf)));
-    if (remote) return opts.map((l) => ({ label: l, count: null as number | null }));
-    return opts.map((l) => ({ label: l, count: communities.filter((c) => langOf(c) === l).length as number | null })).sort((a, b) => (b.count ?? 0) - (a.count ?? 0));
+    const opts = languageOptions
+      ? languageOptions.map((l) => ({ value: l.code, label: l.label, flag: l.flag ?? languageFlag(l.code) }))
+      : Array.from(new Set(communities.map(langOf))).map((l) => ({ value: l, label: l, flag: languageFlag(l) }));
+    if (remote) return opts.map((o) => ({ ...o, count: null as number | null }));
+    return opts.map((o) => ({ ...o, count: communities.filter((c) => langOf(c) === o.value).length as number | null })).sort((a, b) => (b.count ?? 0) - (a.count ?? 0));
   });
-  const langLabel = $derived(!langs.length ? t('ui.exploreCommunities.anyLanguage') : langs.length === 1 ? t(langs[0]) : t('ui.exploreCommunities.languagesCount', { count: langs.length }));
+  const langName = (value: string) => t(languages.find((l) => l.value === value)?.label ?? value);
+  const langLabel = $derived(!langs.length ? t('ui.exploreCommunities.anyLanguage') : langs.length === 1 ? langName(langs[0]) : t('ui.exploreCommunities.languagesCount', { count: langs.length }));
   const emptyTitle = $derived(q ? t('ui.exploreCommunities.noMatch', { query }) : t('ui.exploreCommunities.noneInLanguages'));
   const rows = $derived(remote ? list : list.slice(0, shown));
   const hasMore = $derived(remote ? list.length < totalCount : list.length > shown);
@@ -233,10 +279,10 @@
       <div class="lang-scrim" onclick={() => (langOpen = false)} role="presentation"></div>
       <div class="lang-menu" class:centered>
         {#each languages as l}
-          {@const on = langs.includes(l.label)}
-          <div class="lang-option" onclick={() => toggleLang(l.label)} tabindex="0" role="option" aria-selected={on}>
+          {@const on = langs.includes(l.value)}
+          <div class="lang-option" onclick={() => toggleLang(l.value)} tabindex="0" role="option" aria-selected={on}>
             <span class="lang-box" class:on><span class="lang-check" class:on></span></span>
-            <span class="lang-flag" aria-hidden="true">{languageFlag(l.label)}</span>
+            <span class="lang-flag" aria-hidden="true">{l.flag}</span>
             <span class="lang-label">{t(l.label)}</span>
             {#if l.count != null}<span class="lang-count">{l.count}</span>{/if}
           </div>
@@ -311,7 +357,7 @@
   </div>
 {/snippet}
 
-<div class="explore" data-screen-label="Explore communities">
+<div class="explore" data-screen-label="Explore communities" bind:this={root} onscroll={() => root && onScroll?.(root.scrollTop)}>
   {#if q}
     <div class="search-bar">
       <div class="search-row">
@@ -390,7 +436,7 @@
       <div class="popular-wrap">
         <div class="popular">
           <div class="popular-head">
-            <span class="popular-title">{langs.length === 1 ? t('ui.exploreCommunities.popularIn', { language: t(langs[0]) }) : t('ui.exploreCommunities.popularOnOpenChat')}</span>
+            <span class="popular-title">{langs.length === 1 ? t('ui.exploreCommunities.popularIn', { language: langName(langs[0]) }) : t('ui.exploreCommunities.popularOnOpenChat')}</span>
             <span class="popular-sub">{t('ui.exploreCommunities.popularSub')}</span>
           </div>
           {@render bigCard(top[0], 'ui.exploreCommunities.featured')}

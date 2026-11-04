@@ -65,6 +65,14 @@ export function isCommunityLapsed({ membership }: CommunitySummary): boolean {
     return membership.lapsed;
 }
 
+/**
+ * Whether the user has joined a community. The communities the client holds include those being
+ * previewed, which have no role in them.
+ */
+export function isCommunityMember({ membership }: HasMembershipRole): boolean {
+    return membership.role !== ROLE_NONE;
+}
+
 // A community the user hasn't joined (or whose membership has lapsed) hides its channels'
 // messages unless it is public and ungated (a suspended unique person gate counts as no gate)
 export function isPrivateCommunityPreview(

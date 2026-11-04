@@ -32,7 +32,7 @@
         type Regions,
     } from "../../router/regions";
     import { DialogStack } from "../../shell/dialogStack.svelte";
-    import { startCommunityCreation } from "@src/logic/groupOrCommunity/community.svelte";
+    import { openCommunityCreation } from "./createCommunity";
     import { RailState } from "../../shell/railState.svelte";
     import { RightColumnState } from "../../shell/rightColumn.svelte";
     import Shell from "../../shell/Shell.svelte";
@@ -70,17 +70,10 @@
     // the dialogs the app opens itself, shown by DialogHost with the ones the URL opens
     const dialogStack = new DialogStack<LocalDialog>();
 
-    // only Diamond members can create one; a guest is sent to sign in (the community isn't started
-    // after, GAPS.md)
+    // only Diamond members can create one; a guest is sent to sign in (the community is started
+    // after only where Explore is open, GAPS.md)
     function createCommunity() {
-        switch (startCommunityCreation(client)) {
-            case "ready":
-                dialogStack.open({ kind: "create_group", level: "community" });
-                break;
-            case "needs_diamond":
-                publish("upgrade");
-                break;
-        }
+        openCommunityCreation(client, dialogStack);
     }
 
     // the activity feed opened over a page is Notifications' too

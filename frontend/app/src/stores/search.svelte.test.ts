@@ -1,6 +1,11 @@
-import type { CommunityMatch } from "@client";
-import { describe, expect, test } from "vitest";
-import { communitySearchState } from "./search.svelte";
+import type { CommunityMatch, ExploreCommunitiesResponse, OpenChat } from "@client";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import {
+    communitySearchState,
+    heldCommunitySearch,
+    sameCommunitySearch,
+    searchCommunities,
+} from "./search.svelte";
 
 function match(communityId: string): CommunityMatch {
     return { id: { kind: "community", communityId } } as CommunityMatch;
@@ -21,5 +26,119 @@ describe("SearchState.appendResults", () => {
         communitySearchState.results = [match("a")];
         communitySearchState.results = [match("a"), match("b")];
         expect(communitySearchState.results).toHaveLength(2);
+    });
+});
+
+type Explore = OpenChat["exploreCommunities"];
+
+function client(...answers: (ExploreCommunitiesResponse | Promise<ExploreCommunitiesResponse>)[]) {
+    const exploreCommunities = vi.fn<Explore>();
+    answers.forEach((a) => exploreCommunities.mockImplementationOnce(() => Promise.resolve(a)));
+    return { exploreCommunities };
+}
+
+const page = (ids: string[], total: number): ExploreCommunitiesResponse => ({
+    kind: "success",
+    matches: ids.map(match),
+    total,
+});
+
+const ids = () => communitySearchState.results.map((c) => c.id.communityId);
+
+const search = {
+    term: "",
+    languages: ["fr"],
+    flags: 3,
+    pageSize: 2,
+};
+
+describe("searchCommunities", () => {
+    beforeEach(() => {
+        communitySearchState.results = [];
+        communitySearchState.total = 0;
+        communitySearchState.index = 0;
+    });
+
+    test("asks for the first page with the filters given, sending an empty term as none", async () => {
+        const c = client(page(["a", "b"], 5));
+        expect(await searchCommunities(c, { ...search, page: "first" })).toBe("success");
+        expect(c.exploreCommunities).toHaveBeenCalledWith(undefined, 0, 2, 3, ["fr"]);
+        expect(ids()).toEqual(["a", "b"]);
+        expect(communitySearchState.total).toBe(5);
+        expect(heldCommunitySearch()).toEqual({ term: "", languages: ["fr"], flags: 3 });
+    });
+
+    test("the next page is the one after the last held, and adds to the results", async () => {
+        const c = client(page(["a", "b"], 5), page(["c", "d"], 5));
+        await searchCommunities(c, { ...search, term: "rust", page: "first" });
+        await searchCommunities(c, { ...search, term: "rust", page: "next" });
+        expect(c.exploreCommunities).toHaveBeenLastCalledWith("rust", 1, 2, 3, ["fr"]);
+        expect(ids()).toEqual(["a", "b", "c", "d"]);
+    });
+
+    // Invariant 2: a later page never adds a community already in the list
+    test("a later page never adds a community already in the list", async () => {
+        const c = client(page(["a", "b"], 5), page(["b", "c"], 5));
+        await searchCommunities(c, { ...search, page: "first" });
+        await searchCommunities(c, { ...search, page: "next" });
+        expect(ids()).toEqual(["a", "b", "c"]);
+    });
+
+    test("a page shorter than asked for is the last, so nothing more is offered", async () => {
+        const c = client(page(["a", "b"], 5), page(["b"], 5));
+        await searchCommunities(c, { ...search, page: "first" });
+        await searchCommunities(c, { ...search, page: "next" });
+        expect(communitySearchState.total).toBe(2);
+    });
+
+    test("a failed page keeps the results, and Load more asks for the same page again", async () => {
+        const c = client(page(["a", "b"], 5), { kind: "offline" }, page(["c", "d"], 5));
+        await searchCommunities(c, { ...search, page: "first" });
+        expect(await searchCommunities(c, { ...search, page: "next" })).toBe("failed");
+        expect(ids()).toEqual(["a", "b"]);
+        await searchCommunities(c, { ...search, page: "next" });
+        expect(c.exploreCommunities).toHaveBeenLastCalledWith(undefined, 1, 2, 3, ["fr"]);
+    });
+
+    test("a request that throws is a failure", async () => {
+        const c = { exploreCommunities: vi.fn<Explore>(() => Promise.reject(new Error("x"))) };
+        expect(await searchCommunities(c, { ...search, page: "first" })).toBe("failed");
+    });
+
+    test("only the latest search's answer is kept", async () => {
+        let answerOld: (r: ExploreCommunitiesResponse) => void = () => undefined;
+        const c = {
+            exploreCommunities: vi
+                .fn<Explore>()
+                .mockImplementationOnce(() => new Promise((resolve) => (answerOld = resolve)))
+                .mockImplementationOnce(() => Promise.resolve(page(["new"], 1))),
+        };
+        const old = searchCommunities(c, { ...search, term: "o", page: "first" });
+        expect(await searchCommunities(c, { ...search, term: "ne", page: "first" })).toBe(
+            "success",
+        );
+        answerOld(page(["old"], 1));
+        expect(await old).toBe("superseded");
+        expect(ids()).toEqual(["new"]);
+        expect(heldCommunitySearch()?.term).toBe("ne");
+    });
+});
+
+describe("sameCommunitySearch", () => {
+    test("the same term, flags and languages in any order", () => {
+        expect(
+            sameCommunitySearch(
+                { term: "a", flags: 1, languages: ["en", "fr"] },
+                { term: "a", flags: 1, languages: ["fr", "en"] },
+            ),
+        ).toBe(true);
+    });
+
+    test("a different term, flags or languages", () => {
+        const key = { term: "a", flags: 1, languages: ["en"] };
+        expect(sameCommunitySearch(key, { ...key, term: "b" })).toBe(false);
+        expect(sameCommunitySearch(key, { ...key, flags: 0 })).toBe(false);
+        expect(sameCommunitySearch(key, { ...key, languages: [] })).toBe(false);
+        expect(sameCommunitySearch(key, { ...key, languages: ["fr"] })).toBe(false);
     });
 });
