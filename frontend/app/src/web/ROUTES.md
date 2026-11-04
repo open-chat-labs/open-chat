@@ -144,8 +144,12 @@ it from showing: a desktop window shrunk after load scrolls the shell sideways i
 Not in the URL (brief §4): open menus, the hover toolbar, drafts, swipe state, the minimised call
 position, and whether the right sidebar is open (persisted in localStorage).
 
-**Explore query.** The brief puts the explore search in the URL. Today it's local
-(`communitySearchState`). The new UI adds `/communities?q=&lang=`, which the existing tree ignores.
+**Explore query.** The brief puts the explore search in the URL. In the old trees it's local
+(`communitySearchState`). The new UI adds `/communities?q=&lang=` (8a), which the existing tree
+ignores: `q` is the search text, `lang` the language codes picked, comma-separated (without it,
+the languages saved on this device; `lang=` with nothing is none). Explore writes it as the query
+changes, replacing the history entry, and keeps the URL's other params; a URL changed from outside
+(the rail's Explore) starts the search afresh.
 
 ## Marketing routes (outside the shell)
 

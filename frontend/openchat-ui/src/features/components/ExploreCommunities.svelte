@@ -14,12 +14,22 @@
     offset: number;
     limit: number;
   }
+
+  /** A language the filter offers (onQuery mode): its code is what `ExploreQuery.languages` carries. */
+  export interface ExploreLanguage {
+    code: string;
+    label: string;
+    /** Defaults to the code's flag. */
+    flag?: string;
+  }
 </script>
 
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import { useT } from '../../lib/i18n';
   import { languageFlag } from '../../lib/languages';
+  import { cssUrl } from '../../lib/cssUrl';
+  import { askedFor, type ExploreAsk } from '../../lib/exploreAsk';
   import Translate from '../../lib/components/Translate.svelte';
   import Logo from '../../lib/components/Logo.svelte';
 
@@ -64,6 +74,10 @@
     pin?: Swatch;
     color?: Swatch;
     cover?: Swatch;
+    /** Avatar image; the colour shows without it. */
+    avatarUrl?: string;
+    /** Cover (banner) image; the colour shows without it. */
+    coverUrl?: string;
     channels?: { title: string; visibility?: 'Public' | 'Private' }[];
     /** Overrides channels.length. */
     channelCount?: number;
@@ -85,25 +99,56 @@
     total?: number;
     /** A page is being fetched (onQuery mode). */
     loading?: boolean;
-    /** Languages to offer in the filter (onQuery mode); defaults to the languages of the loaded communities. */
-    languageOptions?: string[];
+    /** The page last asked for couldn't be loaded (onQuery mode): a first page shows an error with a retry in place of
+     *  the page before it, a later one a retry on Load more. The host clears it as it takes the next ask. */
+    failed?: boolean;
+    /** Languages to offer in the filter (onQuery mode), by code; defaults to the languages of the loaded communities. */
+    languageOptions?: ExploreLanguage[];
+    /** The search text it opens with (e.g. from the host's URL). Read once; later changes come from the user. */
+    initialQuery?: string;
+    /** The languages picked when it opens (codes in onQuery mode, as `ExploreQuery.languages`). Read once. */
+    initialLanguages?: string[];
+    /** Where its list is scrolled to when it opens (from `onScroll` on an earlier visit). Read once. */
+    initialScroll?: number;
+    /** The list was scrolled, to this offset from the top. */
+    onScroll?: (top: number) => void;
     onCreate?: () => void;
     onSignIn?: () => void;
     /** Defaults to onSignIn. */
     onCreateAccount?: () => void;
   }
 
-  let { communities, joinedKeys = [], guest = false, onOpen, onPreview, onQuery, total, loading = false, languageOptions, onCreate, onSignIn, onCreateAccount }: Props = $props();
+  let {
+    communities,
+    joinedKeys = [],
+    guest = false,
+    onOpen,
+    onPreview,
+    onQuery,
+    total,
+    loading = false,
+    failed = false,
+    languageOptions,
+    initialQuery = '',
+    initialLanguages = [],
+    initialScroll = 0,
+    onScroll,
+    onCreate,
+    onSignIn,
+    onCreateAccount,
+  }: Props = $props();
   const t = useT();
 
-  let query = $state('');
+  let query = $state(untrack(() => initialQuery));
   let sort = $state(0);
   let focused = $state(false);
-  let langs = $state<string[]>([]);
+  let langs = $state<string[]>(untrack(() => [...initialLanguages]));
   let langOpen = $state(false);
   let shown = $state(PAGE);
+  let root = $state<HTMLElement>();
 
   onMount(() => {
+    if (root && initialScroll > 0) root.scrollTop = initialScroll;
     // the in-menu backdrop only covers this component; presses anywhere else close it too
     const away = (e: PointerEvent) => {
       if (langOpen && !(e.target as Element).closest?.('[data-ex-lang]')) langOpen = false;
@@ -142,19 +187,20 @@
   // every change asks the host for the first page again; typing waits for a pause
   let queryTimer: ReturnType<typeof setTimeout> | undefined;
   let firstQuery = true;
-  // what the host was last asked for: until it has answered for the current text the search shows "Searching…",
-  // never the previous text's results
-  let lastAsk = $state<{ text: string; offset: number } | null>(null);
+  // what the host was last asked for: until it has answered for the search as it stands (text, languages, sort) the
+  // search shows "Searching…", never the previous search's results. The search it opens with (initialQuery,
+  // initialLanguages) counts as asked, and `communities` as its answer
+  let lastAsk = $state<ExploreAsk>(untrack(() => ({ text: initialQuery.trim(), languages: [...initialLanguages], sort: 0, offset: 0 })));
   // the page shown when a first page was asked for: until `communities` is a new page the host hasn't answered yet
   let askedOn = $state.raw<ExploreCommunity[] | null>(null);
   // the host reported loading after the ask: once it stops, the ask is answered even if the page didn't change
   // (e.g. a failed fetch that keeps the old page), so the loading state can't get stuck
   let sawLoading = $state(false);
   $effect.pre(() => {
-    if (loading && lastAsk) untrack(() => (sawLoading = true));
+    if (loading) untrack(() => (sawLoading = true));
   });
   const ask = (offset: number) => {
-    lastAsk = { text: query.trim(), offset };
+    lastAsk = { text: query.trim(), languages: [...langs], sort, offset };
     if (offset === 0) {
       askedOn = communities;
       sawLoading = false;
@@ -181,30 +227,43 @@
   // onQuery: the shown page belongs to an older text (debounce not fired yet, or the first page still loading)
   // the shown page belongs to an older ask: a different text, or the first page asked for and not answered (still the
   // same `communities`, or the host says it's loading)
-  const firstPagePending = $derived(!!lastAsk && lastAsk.offset === 0 && (loading || (communities === askedOn && !sawLoading)));
-  const searching = $derived(remote && !!q && (lastAsk?.text !== query.trim() || firstPagePending));
+  const firstPagePending = $derived(lastAsk.offset === 0 && (loading || (communities === askedOn && !sawLoading)));
+  // the last ask is for the search as it stands: the same text, languages and sort
+  const askedAsShown = $derived(askedFor(lastAsk, { text: query.trim(), languages: langs, sort }));
+  const searching = $derived(remote && !!q && (!askedAsShown || firstPagePending));
   // onQuery: the home list still holds an older query's page (just after clearing the search, or a sort / language
   // change the host hasn't answered yet); it shows a loading state instead of passing that page off as "All communities"
-  const homeStale = $derived(remote && !q && !!lastAsk && (lastAsk.text !== query.trim() || firstPagePending));
+  const homeStale = $derived(remote && !q && (!askedAsShown || firstPagePending));
+  // onQuery: the host couldn't load the page last asked for (`failed`), for the search as it stands. A first page leaves
+  // the page before it, which mustn't pass as its answer: an error with a retry shows in its place. A later page keeps
+  // the list, and Load more becomes the retry
+  const firstPageFailed = $derived(remote && failed && !loading && askedAsShown && lastAsk.offset === 0);
+  const moreFailed = $derived(remote && failed && !loading && askedAsShown && lastAsk.offset > 0);
 
   const isJoined = (c: ExploreCommunity) => joinedKeys.includes(c.key);
   const isPrivate = (c: ExploreCommunity) => c.visibility === 'Private';
   const channelCount = (c: ExploreCommunity) => c.channelCount ?? (c.channels ?? []).length;
-  const avatarOf = (c: ExploreCommunity) => (c.pin && GRAD[c.pin]) || (c.color && GRAD[c.color]) || GRAD.teal;
-  const coverOf = (c: ExploreCommunity) => (c.cover && COVER[c.cover]) || (c.pin && COVER[c.pin]) || COVER.plum;
+  const avatarOf = (c: ExploreCommunity) =>
+    c.avatarUrl ? `center/cover no-repeat ${cssUrl(c.avatarUrl)}` : (c.pin && GRAD[c.pin]) || (c.color && GRAD[c.color]) || GRAD.teal;
+  const coverOf = (c: ExploreCommunity) =>
+    c.coverUrl ? `center/cover no-repeat ${cssUrl(c.coverUrl)}` : (c.cover && COVER[c.cover]) || (c.pin && COVER[c.pin]) || COVER.plum;
   const open = (c: ExploreCommunity) => {
     if (isJoined(c) || !isPrivate(c)) onOpen?.(c.key);
   };
 
   // popular: biggest public communities you haven't joined
-  const top = $derived(q || homeStale ? [] : list.filter((c) => !isJoined(c) && !isPrivate(c)).sort((a, b) => b.members - a.members).slice(0, 4));
+  const top = $derived(q || homeStale || firstPageFailed ? [] : list.filter((c) => !isJoined(c) && !isPrivate(c)).sort((a, b) => b.members - a.members).slice(0, 4));
   // per-language counts only mean something when the whole list is here; when the host pages the results they're hidden
+  // the host's options are picked by code and shown by label; the communities' own languages are both
   const languages = $derived.by(() => {
-    const opts = Array.from(new Set(languageOptions ?? communities.map(langOf)));
-    if (remote) return opts.map((l) => ({ label: l, count: null as number | null }));
-    return opts.map((l) => ({ label: l, count: communities.filter((c) => langOf(c) === l).length as number | null })).sort((a, b) => (b.count ?? 0) - (a.count ?? 0));
+    const opts = languageOptions
+      ? languageOptions.map((l) => ({ value: l.code, label: l.label, flag: l.flag ?? languageFlag(l.code) }))
+      : Array.from(new Set(communities.map(langOf))).map((l) => ({ value: l, label: l, flag: languageFlag(l) }));
+    if (remote) return opts.map((o) => ({ ...o, count: null as number | null }));
+    return opts.map((o) => ({ ...o, count: communities.filter((c) => langOf(c) === o.value).length as number | null })).sort((a, b) => (b.count ?? 0) - (a.count ?? 0));
   });
-  const langLabel = $derived(!langs.length ? t('ui.exploreCommunities.anyLanguage') : langs.length === 1 ? t(langs[0]) : t('ui.exploreCommunities.languagesCount', { count: langs.length }));
+  const langName = (value: string) => t(languages.find((l) => l.value === value)?.label ?? value);
+  const langLabel = $derived(!langs.length ? t('ui.exploreCommunities.anyLanguage') : langs.length === 1 ? langName(langs[0]) : t('ui.exploreCommunities.languagesCount', { count: langs.length }));
   const emptyTitle = $derived(q ? t('ui.exploreCommunities.noMatch', { query }) : t('ui.exploreCommunities.noneInLanguages'));
   const rows = $derived(remote ? list : list.slice(0, shown));
   const hasMore = $derived(remote ? list.length < totalCount : list.length > shown);
@@ -213,6 +272,11 @@
     if (remote) {
       if (!loading) ask(list.length);
     } else shown += PAGE;
+  }
+
+  // a first page that failed, asked for again as things stand
+  function retryFirstPage() {
+    if (!loading) ask(0);
   }
 
   function toggleLang(l: string) {
@@ -233,10 +297,10 @@
       <div class="lang-scrim" onclick={() => (langOpen = false)} role="presentation"></div>
       <div class="lang-menu" class:centered>
         {#each languages as l}
-          {@const on = langs.includes(l.label)}
-          <div class="lang-option" onclick={() => toggleLang(l.label)} tabindex="0" role="option" aria-selected={on}>
+          {@const on = langs.includes(l.value)}
+          <div class="lang-option" onclick={() => toggleLang(l.value)} tabindex="0" role="option" aria-selected={on}>
             <span class="lang-box" class:on><span class="lang-check" class:on></span></span>
-            <span class="lang-flag" aria-hidden="true">{languageFlag(l.label)}</span>
+            <span class="lang-flag" aria-hidden="true">{l.flag}</span>
             <span class="lang-label">{t(l.label)}</span>
             {#if l.count != null}<span class="lang-count">{l.count}</span>{/if}
           </div>
@@ -311,7 +375,7 @@
   </div>
 {/snippet}
 
-<div class="explore" data-screen-label="Explore communities">
+<div class="explore" data-screen-label="Explore communities" bind:this={root} onscroll={() => root && onScroll?.(root.scrollTop)}>
   {#if q}
     <div class="search-bar">
       <div class="search-row">
@@ -324,7 +388,7 @@
         </div>
       </div>
       <div class="results-row">
-        <span class="result-count">{searching ? t('ui.exploreCommunities.searching') : t('ui.exploreCommunities.results', { count: remote ? totalCount : found.length })}</span>
+        <span class="result-count">{searching ? t('ui.exploreCommunities.searching') : firstPageFailed ? t('ui.exploreCommunities.loadFailed') : t('ui.exploreCommunities.results', { count: remote ? totalCount : found.length })}</span>
         {@render langPicker(false)}
       </div>
     </div>
@@ -334,6 +398,12 @@
         {#if searching}
           <div class="empty" role="status" aria-busy="true">
             <span class="empty-title">{t('ui.exploreCommunities.searching')}</span>
+          </div>
+        {:else if firstPageFailed}
+          <div class="empty" role="alert">
+            <span class="empty-title">{t('ui.exploreCommunities.loadFailed')}</span>
+            <span class="empty-body">{t('ui.exploreCommunities.loadFailedBody')}</span>
+            <span class="create" onclick={retryFirstPage} role="button" tabindex="0">{t('ui.common.retry')}</span>
           </div>
         {:else}
         {#if found.length > 0}
@@ -357,9 +427,9 @@
         {#if remote && hasMore && found.length > 0}
           <div class="more">
             <span class="load-more" onclick={loadMore} role="button" tabindex="0" aria-busy={loading}
-              >{loading ? t('ui.exploreCommunities.loading') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - found.length) })}{@render icon('chevron-down', 13, 'var(--ink)')}</span
+              >{loading ? t('ui.exploreCommunities.loading') : moreFailed ? t('ui.common.retry') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - found.length) })}{@render icon('chevron-down', 13, 'var(--ink)')}</span
             >
-            <span class="shown">{t('ui.exploreCommunities.showing', { shown: found.length, total: totalCount })}</span>
+            <span class="shown" role={moreFailed ? 'alert' : undefined}>{moreFailed ? t('ui.exploreCommunities.loadMoreFailed') : t('ui.exploreCommunities.showing', { shown: found.length, total: totalCount })}</span>
           </div>
         {/if}
         {/if}
@@ -369,7 +439,13 @@
     <div class="hero">
       <div class="hero-text">
         <span class="hero-title">{t('ui.exploreCommunities.heroTitle')}</span>
-        <span class="hero-sub">{t('ui.exploreCommunities.heroSub', { count: remote ? totalCount : communities.length })}</span>
+        <span class="hero-sub"
+          >{homeStale
+            ? t('ui.exploreCommunities.loading')
+            : firstPageFailed
+              ? t('ui.exploreCommunities.loadFailed')
+              : t('ui.exploreCommunities.heroSub', { count: remote ? totalCount : communities.length })}</span
+        >
       </div>
       <div class="search large" class:focused>
         {@render icon('search', 18, 'var(--ink-3)')}
@@ -390,7 +466,7 @@
       <div class="popular-wrap">
         <div class="popular">
           <div class="popular-head">
-            <span class="popular-title">{langs.length === 1 ? t('ui.exploreCommunities.popularIn', { language: t(langs[0]) }) : t('ui.exploreCommunities.popularOnOpenChat')}</span>
+            <span class="popular-title">{langs.length === 1 ? t('ui.exploreCommunities.popularIn', { language: langName(langs[0]) }) : t('ui.exploreCommunities.popularOnOpenChat')}</span>
             <span class="popular-sub">{t('ui.exploreCommunities.popularSub')}</span>
           </div>
           {@render bigCard(top[0], 'ui.exploreCommunities.featured')}
@@ -406,7 +482,7 @@
     <div class="table-wrap">
       <div class="table">
         <div class="table-head">
-          <span class="table-title">{t(langs.length ? 'ui.exploreCommunities.filtered' : 'ui.exploreCommunities.allCommunities')} <span class="table-count">· {homeStale ? t('ui.exploreCommunities.loading') : totalCount}</span></span>
+          <span class="table-title">{t(langs.length ? 'ui.exploreCommunities.filtered' : 'ui.exploreCommunities.allCommunities')} <span class="table-count">· {homeStale ? t('ui.exploreCommunities.loading') : firstPageFailed ? '–' : totalCount}</span></span>
           {#if langs.length}
             <span class="clear-filters" onclick={() => (langs = [])} role="button" tabindex="0">{t('ui.exploreCommunities.clearFilters')}</span>
           {/if}
@@ -428,7 +504,7 @@
         <div class="row columns" data-ex-row="">
           <span>{t('ui.exploreCommunities.colCommunity')}</span><span>{t('ui.exploreCommunities.colMembers')}</span><span data-ex-col="">{t('ui.exploreCommunities.colChannels')}</span><span data-ex-col="">{t('ui.exploreCommunities.colLanguage')}</span><span></span>
         </div>
-        {#each homeStale ? [] : rows as c}
+        {#each homeStale || firstPageFailed ? [] : rows as c}
           {@const joined = isJoined(c)}
           {@const priv = isPrivate(c)}
           <div class="row entry" class:locked={priv && !joined} data-ex-row="" onclick={() => open(c)} role="button" tabindex="0">
@@ -465,17 +541,23 @@
             </div>
           </div>
         {/each}
-        {#if hasMore && !homeStale}
+        {#if hasMore && !homeStale && !firstPageFailed}
           <div class="more">
             <span class="load-more" onclick={loadMore} role="button" tabindex="0" aria-busy={loading}
-              >{loading ? t('ui.exploreCommunities.loading') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - rows.length) })}{@render icon('chevron-down', 13, 'var(--ink)')}</span
+              >{loading ? t('ui.exploreCommunities.loading') : moreFailed ? t('ui.common.retry') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - rows.length) })}{@render icon('chevron-down', 13, 'var(--ink)')}</span
             >
-            <span class="shown">{t('ui.exploreCommunities.showing', { shown: rows.length, total: totalCount })}</span>
+            <span class="shown" role={moreFailed ? 'alert' : undefined}>{moreFailed ? t('ui.exploreCommunities.loadMoreFailed') : t('ui.exploreCommunities.showing', { shown: rows.length, total: totalCount })}</span>
           </div>
         {/if}
         {#if homeStale}
           <div class="table-empty" role="status" aria-busy="true">
             <span class="table-empty-title">{t('ui.exploreCommunities.loading')}</span>
+          </div>
+        {:else if firstPageFailed}
+          <div class="table-empty" role="alert">
+            <span class="table-empty-title">{t('ui.exploreCommunities.loadFailed')}</span>
+            <span class="table-empty-body">{t('ui.exploreCommunities.loadFailedBody')}</span>
+            <span class="load-more" onclick={retryFirstPage} role="button" tabindex="0">{t('ui.common.retry')}</span>
           </div>
         {:else if list.length === 0}
           <div class="table-empty">

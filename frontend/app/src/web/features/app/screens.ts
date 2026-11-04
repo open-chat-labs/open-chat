@@ -64,8 +64,8 @@ export const middleScreens: Screens<MiddleRegion> = {
     // the selected conversation (phase 3b)
     conversation: () => import("../conversation/ConversationScreen.svelte"),
 
-    // explore communities
-    explore: undefined,
+    // explore communities (8a)
+    explore: () => import("../explore/ExploreScreen.svelte"),
 
     // the wallet's page: All activity, a token's page (6a)
     wallet: () => import("../wallet/WalletMainScreen.svelte"),
@@ -114,7 +114,8 @@ export const rightScreens: Screens<RightRegion> = {
     // a proposals group's filters (phase 4, 4a)
     proposal_filters: undefined,
 
-    // explore's filters (phase 8, 8a)
+    // the old desktop Explore's filters. Not used: Explore (8a) is full width, with its language
+    // filter in place
     community_filters: undefined,
 
     // who's in the call (phase 7, 7b)

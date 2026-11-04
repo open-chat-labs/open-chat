@@ -9,6 +9,13 @@ describe('languageFlag', () => {
     expect(languageFlag('EN')).toBe('🇬🇧');
   });
 
+  test('reads the older codes a host may still use', () => {
+    expect(languageFlag('cn')).toBe(languageFlag('zh'));
+    expect(languageFlag('jp')).toBe(languageFlag('ja'));
+    expect(languageFlag('iw')).toBe(languageFlag('he'));
+    expect(languageFlag('iw')).not.toBe(NO_FLAG);
+  });
+
   test("reads a language's own name and the library's English key", () => {
     expect(languageFlag('Português')).toBe('🇵🇹');
     expect(languageFlag('日本語')).toBe('🇯🇵');

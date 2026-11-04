@@ -50,3 +50,13 @@ export function postLoginJoin(
             return undefined;
     }
 }
+
+/**
+ * Whether an anonymous user who asked to create a community has now logged in, so creating it
+ * picks up where it left off. The caller clears the post-login state first, so it runs once.
+ */
+export function postLoginCreateCommunity(identityState: IdentityState): boolean {
+    return (
+        identityState.kind === "logged_in" && identityState.postLogin?.kind === "create_community"
+    );
+}

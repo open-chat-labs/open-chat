@@ -44,6 +44,7 @@
     import {
         botSearchState,
         communitySearchState,
+        searchCommunities as searchCommunitiesPage,
         SearchState,
     } from "../../../../stores/search.svelte";
     import FancyLoader from "../../../icons/FancyLoader.svelte";
@@ -99,37 +100,21 @@
         }
     }
 
-    function searchCommunities(
+    async function searchCommunities(
         filters: {
             languages: string[];
             flags: number;
         },
         reset = false,
     ) {
-        if (reset) {
-            communitySearchState.reset();
-        } else {
-            communitySearchState.nextPage();
-        }
-        client
-            .exploreCommunities(
-                communitySearchState.term === "" ? undefined : communitySearchState.term,
-                communitySearchState.index,
-                32,
-                disableRestrictedContent ? 0 : filters.flags ?? 0,
-                filters.languages,
-            )
-            .then((results) => {
-                if (results.kind === "success") {
-                    if (reset) {
-                        communitySearchState.results = results.matches;
-                    } else {
-                        communitySearchState.appendResults(results.matches);
-                    }
-                    communitySearchState.total = results.total;
-                }
-            })
-            .finally(() => (searching = false));
+        const outcome = await searchCommunitiesPage(client, {
+            term: communitySearchState.term,
+            page: reset ? "first" : "next",
+            pageSize: 32,
+            flags: disableRestrictedContent ? 0 : filters.flags ?? 0,
+            languages: filters.languages,
+        });
+        if (outcome !== "superseded") searching = false;
     }
 
     function searchBots(showUnpublished: boolean) {

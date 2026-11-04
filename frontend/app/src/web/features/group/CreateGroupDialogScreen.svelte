@@ -36,7 +36,9 @@
     import { navigate } from "@src/utils/navigation";
     import { getContext, tick } from "svelte";
     import { locale } from "svelte-i18n";
+    import { supportedLanguages } from "@i18n/i18n";
     import { gateAssets } from "../access/gates.adapter";
+    import { exploreLanguageOptions } from "../explore/explore.adapter";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
     import { invitePerson } from "./group.adapter";
     import {
@@ -50,6 +52,8 @@
     const client = getContext<OpenChat>("client");
 
     const lookups = $derived({ tokens: $cryptoLookup, nervousSystems: $nervousSystemLookup });
+    // a community's language is one of the app's, by the app's code, as Explore's filter offers them
+    const communityLanguages = exploreLanguageOptions(supportedLanguages);
     const assets = $derived(gateAssets(lookups));
 
     const person = (user: UserSummary): CreateGroupPerson => {
@@ -156,6 +160,7 @@
     onUpgrade={() => publish("upgrade")}
     gateTokens={assets.tokens}
     gateSystems={assets.nervousSystems}
+    languages={communityLanguages}
     defaultLanguage={($locale ?? "en").split("-")[0]}
     communityDefaults={communityPermissionsValue(newCommunity().permissions).general}
     {checkName}

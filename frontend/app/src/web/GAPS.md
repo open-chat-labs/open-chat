@@ -455,12 +455,17 @@ design export needs. Each entry says where it came up.
   as an edit is (`candidateFromCreate`, `candidateCommunityFromCreate`), created through
   `UpdateGroupState` / `UpdateCommunityState`, and then opened.
   - a community needs Diamond: without it the rail opens the Diamond dialog. A guest is sent to
-    sign in, but the community isn't started after signing in (the old Home did that; 10a).
+    sign in (from the rail or Explore), and creating carries on once signed in, wherever they
+    are: AppScreen resumes it (`postLoginCreateCommunity`, as the old desktop Explore and mobile
+    Home did).
   - by hand: `CreateGroupDialog`'s community defaults are all admin (the app's and the backend's),
     and a community shows no message permissions or Messages / Threads tabs.
   - by hand: the form is locked (inert, dimmed) while the create is in flight.
   - the invite list starts empty: people are found by searching (no frequent contacts).
-  - Explore's create (8a) isn't wired.
+  - Explore's create (8a) opens it too (`openCommunityCreation`, shared with the rail).
+  - a community's language is one of the app's (`supportedLanguages`, by the app's code, the
+    codes the old editors and Explore's filter use); the dialog's own list (`ja`, `zh`, `pt` …)
+    isn't offered, so a new community can always be found by its language.
   - a failed community create (e.g. the 10-community limit) says only "Sorry we were unable to
     create your community", and that toast showed twice in one headless run though the app shows
     it once.
@@ -584,6 +589,28 @@ design export needs. Each entry says where it came up.
   - the design's typing line in the conversation header is left out (not used).
   - a saved recipient's token lock should win over the host's `sendToken` (design order: lock,
     then the network's token); the app sets no locks, so it doesn't show.
+- **`ExploreCommunities`, by hand** (8a, to take back to the design export): a community's
+  `avatarUrl` and `coverUrl` (images over the swatches, as `NavRail`'s pins); `languageOptions`
+  as `{ code, label }` (the filter picks by code, shows the label and the code's flag; the app's
+  old codes `cn`, `jp`, `iw` have flags); `initialQuery` / `initialLanguages` (the URL's
+  `?q=&lang=`, or the saved filter, on opening; an initial text shows the results passed, not
+  "Searching…"); `initialScroll` / `onScroll` (the scroll position kept across visits); `failed`
+  (a page the component asked for couldn't be loaded: an error with Retry in place of the page
+  before it, or Retry on Load more, with the component left as it was; no design for it).
+  Not asked for (no design yet):
+  - the sorts (Most members / Most active / Newest) are shown though there's one ranking (see
+    Explore under the data the backend doesn't have): a change of sort asks for nothing (the
+    results held already answer it, `exploreQueryAnswered`).
+  - no place for a community's moderation flags (the old cards labelled adult and offensive
+    ones, `serialiseFlags` in both old `CommunityCard`s); when the design has one, it moves to
+    `@client`, returning `ResourceKey`s.
+  - no offline state of its own: with nothing loaded and the app offline, the screen shows the
+    library's offline `EmptyState` (Retry) in the component's place, as the old Explores did. A
+    first page the screen asks for itself that fails (on opening, after the viewer's flags
+    change, for a URL changed from outside) shows the error one (the offline one when offline),
+    and Retry asks for it again. One the component asks for (typing, a language, a sort) fails
+    inside it (`failed`, by hand), so it isn't torn down mid-interaction.
+  - no scroll-to-top button (both old Explores had one).
 
 ## App
 
@@ -599,8 +626,11 @@ design export needs. Each entry says where it came up.
     keys a saved address by its account);
   - no native ETH deposit address.
 - **Explore**:
-  - one server ranking, so no featured vs popular lists and no sort by active or newest;
-  - results have no created date, activity metric or channel list.
+  - one server ranking, so no featured vs popular lists and no sort by active or newest: the
+    component cuts Featured and Popular from the page it has (the biggest public communities not
+    joined), and a change of sort shows the same page;
+  - results have no created date, activity metric or channel list (the big cards' channel line is
+    empty).
 - **Activity**:
   - read state is a single timestamp, so per-item "mark read" can only move the high-water mark;
   - seven message-only kinds (`poll_vote` and `p2p_swap_accepted` have no design type);
@@ -744,6 +774,36 @@ design export needs. Each entry says where it came up.
     names it in the request (`token`), with the amount as exact text (`amountText`, `max`), the
     user fee (`WalletToken.userFee`), `hostPin` and `checkAddress`; an ICRC-1 account with a
     subaccount is an IC address. Swap still picks its token by symbol (6c).
+
+- **Explore** (8a #10127, `features/explore`): `ExploreCommunities`, full width, on `/communities`
+  and `/welcome`. The component asks for pages and the client searches through the step both old
+  Explores now share (`searchCommunities` beside `communitySearchState`): an empty text is sent as
+  none, the page after the last one held for Load more, no community twice, only the latest
+  search's answer kept, the viewer's moderation flags on every request. The query is in the URL
+  (`/communities?q=&lang=`, written as it changes, replacing the entry); the languages picked are
+  saved on this device as the old filters saved them (`toggleCommunityFilterLanguage`), and a URL
+  without `lang` opens on them. The results and the scroll position are kept across visits:
+  coming back to the same query shows them at once, and Explore searches again only with none
+  held or for another query (or when the viewer's flags change). A community joined opens; one
+  not joined opens as a preview, whose cancel comes back to Explore with its query
+  (`communityPreviewState.setOrigin`, mobile's way; the preview's Join / Leave and cancel are
+  8b's). Create community: the create dialog, the Diamond upgrade, or a guest's sign-in, after
+  which creating carries on (AppScreen). Writing the query to the URL (`replaceQuery`) leaves any
+  dialog over Explore open. Results set outside the search step (a proposal's community finder,
+  the mobile welcome page) answer no Explore search (`CommunitySearchState.held`), so Explore
+  searches again rather than show them. A guest gets the component's sign-in banner. Kept from the desktop
+  tree: Load more (the library's own, 6 a page). Not carried over:
+  - bots: the old mobile Explore's Communities / Bots switch, its bot cards and filters, and
+    Register a bot (desktop lists bots elsewhere; see Bots).
+  - `/welcome`'s own page (mobile's `WelcomePage`: three top communities and the OpenChat
+    community): `/welcome` is Explore, as ROUTES.md has it.
+  - mobile's sheet with the card and "View community" before opening one: a card opens it.
+  - the old desktop's filters panel in the right column (`community_filters`): the language
+    filter is the component's own menu.
+  - a gated community's card says how many requirements it has, not which (the old cards' gate
+    chips).
+  - Back and forward don't step through searches (each replaces the entry), and Back from a
+    community lands on Explore with the query it was opened from.
 
 - **Diamond** (`?diamond`, `features/diamond`, 8e #10131): paid through the shared payment
   (`logic/diamond`, which both legacy `Payment.svelte`s use too), in CHAT or ICP at the backend's

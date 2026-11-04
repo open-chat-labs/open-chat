@@ -35,6 +35,7 @@
         localUpdates,
         offlineStore,
         pinNumberResolverStore,
+        postLoginCreateCommunity,
         postLoginJoin,
         publish,
         querystringStore,
@@ -417,10 +418,7 @@
                     ? groupPreviewState.joinGroup(client, join.group)
                     : communityPreviewState.joinCommunity(client, join.community),
             );
-        } else if (
-            $identityStateStore.kind === "logged_in" &&
-            $identityStateStore.postLogin?.kind === "create_community"
-        ) {
+        } else if (postLoginCreateCommunity($identityStateStore)) {
             client.clearPostLoginState();
             tick().then(() => openCommunityCreation(client));
         }

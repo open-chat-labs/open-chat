@@ -7,6 +7,7 @@
         ipadWidth,
         mobileWidth,
         offlineStore,
+        postLoginCreateCommunity,
         publish,
         ScreenWidth,
         screenWidth,
@@ -18,7 +19,7 @@
     import Plus from "svelte-material-icons/Plus.svelte";
     import Tune from "svelte-material-icons/Tune.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
-    import { communitySearchState } from "../../../../stores/search.svelte";
+    import { communitySearchState, searchCommunities } from "../../../../stores/search.svelte";
     import { startCommunityCreation } from "@src/logic/groupOrCommunity/community.svelte";
     import Search from "../../..//Search.svelte";
     import Button from "../../../Button.svelte";
@@ -60,33 +61,16 @@
         }
     }
 
-    function search(filters: { languages: string[]; flags: number }, reset = false) {
+    async function search(filters: { languages: string[]; flags: number }, reset = false) {
         searching = true;
-        if (reset) {
-            communitySearchState.reset();
-        } else {
-            communitySearchState.nextPage();
-        }
-
-        client
-            .exploreCommunities(
-                communitySearchState.term === "" ? undefined : communitySearchState.term,
-                communitySearchState.index,
-                pageSize,
-                filters.flags ?? 0,
-                filters.languages,
-            )
-            .then((results) => {
-                if (results.kind === "success") {
-                    if (reset) {
-                        communitySearchState.results = results.matches;
-                    } else {
-                        communitySearchState.appendResults(results.matches);
-                    }
-                    communitySearchState.total = results.total;
-                }
-            })
-            .finally(() => (searching = false));
+        const outcome = await searchCommunities(client, {
+            term: communitySearchState.term,
+            page: reset ? "first" : "next",
+            pageSize,
+            flags: filters.flags ?? 0,
+            languages: filters.languages,
+        });
+        if (outcome !== "superseded") searching = false;
     }
 
     function showFilters() {
@@ -130,10 +114,7 @@
     let loading = $derived(searching && communitySearchState.results.length === 0);
 
     $effect(() => {
-        if (
-            $identityStateStore.kind === "logged_in" &&
-            $identityStateStore.postLogin?.kind === "create_community"
-        ) {
+        if (postLoginCreateCommunity($identityStateStore)) {
             client.clearPostLoginState();
             tick().then(() => createCommunity());
         }

@@ -1,6 +1,6 @@
 import { ROLE_MEMBER, ROLE_NONE, type AccessGate, type MemberRole } from "@shared";
 import { describe, expect, test } from "vitest";
-import { isPrivateCommunityPreview } from "./community";
+import { isCommunityMember, isPrivateCommunityPreview } from "./community";
 
 function community(joined: boolean, isPublic: boolean, gate: AccessGate, lapsed = false) {
     return {
@@ -40,5 +40,15 @@ describe("isPrivateCommunityPreview", () => {
     test("a suspended unique person gate counts as no gate", () => {
         const gate = { kind: "unique_person_gate" } as AccessGate;
         expect(isPrivateCommunityPreview(community(false, true, gate))).toBe(false);
+    });
+});
+
+describe("isCommunityMember", () => {
+    test("a community being previewed has no role in it, so isn't joined", () => {
+        expect(isCommunityMember(community(false, true, { kind: "no_gate" }))).toBe(false);
+    });
+
+    test("any role counts as joined", () => {
+        expect(isCommunityMember(community(true, true, { kind: "no_gate" }))).toBe(true);
     });
 });

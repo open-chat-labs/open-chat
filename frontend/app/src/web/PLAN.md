@@ -22,7 +22,8 @@ every workstream.
   - Landing, Learn and sign-in;
   - phase 3 (the brief's step 4): the chat list, reading a conversation, the text composer, the
     activity feed over the open page (`?panel=activity`);
-  - the rail labels and `?threads`.
+  - the rail labels and `?threads`;
+  - Explore (8a): what's left of it is in GAPS.md ("Explore").
 - **Still to check on a real environment** (the local replica can't show them): live incoming
   messages, read ticks turning double, the typing indicator, a preview's read-only banner.
 

@@ -80,7 +80,7 @@ export type { GateAsset } from './components/AccessGates.svelte';
 export type { BotDefinition, BotInstall, BotPerm, BotColor } from './components/BotDialog.svelte';
 export type { WebhookSave, WebhookColour } from './components/WebhookDialog.svelte';
 export type { InvitePerson } from './components/InviteDialog.svelte';
-export type { ExploreQuery } from './components/ExploreCommunities.svelte';
+export type { ExploreLanguage, ExploreQuery } from './components/ExploreCommunities.svelte';
 export type { AuthPerson } from './components/AuthDialog.svelte';
 export type { ClaimDay } from './components/ClaimCalendar.svelte';
 export type { ProfileCommunity } from './components/ProfileDialog.svelte';

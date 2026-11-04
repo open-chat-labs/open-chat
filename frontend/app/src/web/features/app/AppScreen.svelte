@@ -7,8 +7,10 @@
         currentUserStore,
         dailyPuzzleStore,
         favouritesStore,
+        identityStateStore,
         latestSuccessfulUpdatesLoop,
         OpenChat,
+        postLoginCreateCommunity,
         publish,
         routeStore,
         sortedCommunitiesStore,
@@ -21,7 +23,7 @@
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { addQueryStringParam, withQueryStringFlag } from "@src/utils/urls";
-    import { getContext } from "svelte";
+    import { getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import {
         activityOverPage,
@@ -32,7 +34,7 @@
         type Regions,
     } from "../../router/regions";
     import { DialogStack } from "../../shell/dialogStack.svelte";
-    import { startCommunityCreation } from "@src/logic/groupOrCommunity/community.svelte";
+    import { openCommunityCreation } from "./createCommunity";
     import { RailState } from "../../shell/railState.svelte";
     import { RightColumnState } from "../../shell/rightColumn.svelte";
     import Shell from "../../shell/Shell.svelte";
@@ -70,17 +72,23 @@
     // the dialogs the app opens itself, shown by DialogHost with the ones the URL opens
     const dialogStack = new DialogStack<LocalDialog>();
 
-    // only Diamond members can create one; a guest is sent to sign in (the community isn't started
-    // after, GAPS.md)
+    // only Diamond members can create one; a guest is sent to sign in (from the rail or Explore)
     function createCommunity() {
-        switch (startCommunityCreation(client)) {
-            case "ready":
-                dialogStack.open({ kind: "create_group", level: "community" });
-                break;
-            case "needs_diamond":
-                publish("upgrade");
-                break;
+        openCommunityCreation(client, dialogStack);
+    }
+
+    // a guest who chose to create a community carries on once signed in, wherever they are; the
+    // post-login state is cleared first, so it runs once
+    $effect(() => {
+        if (postLoginCreateCommunity($identityStateStore)) {
+            void resumeCreatingCommunity();
         }
+    });
+
+    async function resumeCreatingCommunity() {
+        client.clearPostLoginState();
+        await tick();
+        createCommunity();
     }
 
     // the activity feed opened over a page is Notifications' too
