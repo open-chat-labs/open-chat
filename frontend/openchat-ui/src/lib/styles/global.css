@@ -32,10 +32,6 @@ a:hover{color:var(--accent-bright)}
 @keyframes oc-tip-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
 @keyframes oc-pz-pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
 @keyframes oc-pz-shake{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 4px))}75%{transform:translateX(calc(-50% + 4px))}}
-/* standalone preview only: the rail itself is transparent in the app. The outermost theme root in the body decides, not a
-   themed preview inside it (the docs show native light and dark side by side) */
-body:has([data-mode="dark"]:not(body [data-mode] *)){background:#07070a}
-body:has([data-mode="light"]:not(body [data-mode] *)){background:#E7E5E0}
 @keyframes ocCoinSpin{0%{transform:rotateX(-8deg) rotateY(0deg)}100%{transform:rotateX(-8deg) rotateY(360deg)}}
 @media (prefers-reduced-motion:reduce){[data-oc-motion]{animation:none !important}}
 @keyframes ocActsIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}

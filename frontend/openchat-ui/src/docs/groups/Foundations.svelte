@@ -180,11 +180,13 @@ t('ui.duration.hours', { count: 12 });`;
   type NativeMode = 'light' | 'dark';
   const nativeModes: NativeMode[] = ['light', 'dark'];
   const nativeColours = ['surface-0', 'surface-1', 'surface-2', 'field', 'hero-base', 'tint-row', 'tint-pill'];
-  const nativeLayout = ['safe-top', 'safe-right', 'safe-bottom', 'safe-left', 'scroll-end', 'text-scale'];
+  const nativeLayout = ['safe-top', 'safe-right', 'safe-bottom', 'safe-left', 'scroll-end'];
   const nativeText = ['text-2xs', 'text-xs', 'text-sm', 'text-md', 'text-base', 'text-lg', 'text-xl', 'text-2xl', 'text-3xl'];
   const callColours = ['call-bg', 'call-ink', 'call-ink-2', 'call-chip', 'call-control', 'call-control-on', 'call-control-on-ink', 'call-tile', 'call-tile-mix', 'call-pill', 'call-badge', 'call-label'];
-  // the app's four font sizes (the store's steps 1 to 4) at the platform's default scale; the app computes the
-  // real value with textScaleOf (app/src/logic/profile/appearance.ts), which also takes the platform's font scale
+  // The app's four font sizes (its font scale store's steps 1 to 4) at the platform's default scale. These factors
+  // are the client's fontScaleFactor (openchat-client/src/state/ui/stores.ts), which the library can't import;
+  // the app sets the real --text-scale with textScaleOf (app/src/logic/profile/appearance.ts), which also takes
+  // the platform's font scale. A demo only: change them with fontScaleFactor.
   const textSizes: { label: string; scale: number }[] = [
     { label: 'Small', scale: 0.875 },
     { label: 'Default', scale: 1 },
@@ -195,7 +197,9 @@ t('ui.duration.hours', { count: 12 });`;
 
   const previews: Partial<Record<NativeMode, HTMLElement>> = {};
   const calls: Partial<Record<NativeMode, HTMLElement>> = {};
+  let probe = $state<HTMLElement>();
   let nativeValues = $state<Partial<Record<NativeMode, Record<string, string>>>>({});
+  let lengthValues = $state<Record<string, string>>({});
   let callValues = $state<Record<string, string>>({});
 
   const read = (el: HTMLElement | undefined, tokens: string[]): Record<string, string> => {
@@ -204,9 +208,21 @@ t('ui.duration.hours', { count: 12 });`;
     return Object.fromEntries(tokens.map((t) => [t, pretty(cs.getPropertyValue('--' + t))]));
   };
 
+  // a token that holds a calc() or env() reads back as written; a property set to it computes to px
+  const readLengths = (el: HTMLElement | undefined, tokens: string[]): Record<string, string> => {
+    if (!el) return {};
+    return Object.fromEntries(
+      tokens.map((t) => {
+        el.style.paddingLeft = `var(--${t})`;
+        return [t, getComputedStyle(el).paddingLeft];
+      }),
+    );
+  };
+
   async function readNative(): Promise<void> {
     await tick();
-    nativeValues = Object.fromEntries(nativeModes.map((m) => [m, read(previews[m], [...nativeColours, ...nativeLayout, ...nativeText])]));
+    nativeValues = Object.fromEntries(nativeModes.map((m) => [m, read(previews[m], nativeColours)]));
+    lengthValues = readLengths(probe, [...nativeLayout, ...nativeText]);
     callValues = read(calls.light, callColours);
   }
 
@@ -413,6 +429,7 @@ t('ui.duration.hours', { count: 12 });`;
       {#each nativeModes as m (m)}
         <div class="native-preview" data-platform="native" data-mode={m} data-accent={accent} style:--text-scale={textScale} bind:this={previews[m]}>
           <span class="np-label">data-platform="native" · data-mode="{m}"</span>
+          {#if m === 'dark'}<span class="probe" aria-hidden="true" bind:this={probe}></span>{/if}
           <div class="hero">
             <div class="hero-top">
               <span class="hero-tile" aria-hidden="true"><span class="hero-bolt"></span></span>
@@ -444,7 +461,7 @@ t('ui.duration.hours', { count: 12 });`;
       <Frame label="Safe areas · read on this device" style="flex-direction: column; flex-wrap: nowrap">
         <div class="rows">
           {#each nativeLayout as t}
-            <div class="scale-row"><span class="name">--{t}</span><span class="val">{nativeValues.dark?.[t] ?? ''}</span></div>
+            <div class="scale-row"><span class="name">--{t}</span><span class="val">{lengthValues[t] ?? ''}</span></div>
           {/each}
         </div>
         <p class="note">The device's insets through <code>env(safe-area-inset-*)</code>, 0 without any (as here, on a desktop browser). They replace the prototype's fixed status-bar and home-indicator paddings; the native entry needs <code>viewport-fit=cover</code>. <code>--scroll-end</code> is the end padding of a pushed screen's scrolling list.</p>
@@ -456,11 +473,12 @@ t('ui.duration.hours', { count: 12 });`;
           {/each}
         </div>
         <div class="rows">
+          <div class="scale-row"><span class="name">--text-scale</span><span class="val">{textScale}</span></div>
           {#each nativeText as t}
-            <div class="scale-row"><span class="name">--{t}</span><span class="val">{nativeValues.dark?.[t] ?? ''}</span></div>
+            <div class="scale-row"><span class="name">--{t}</span><span class="val">{lengthValues[t] ?? ''}</span></div>
           {/each}
         </div>
-        <p class="note">Under <code>data-platform="native"</code> each <code>--text-*</code> size is the web's size times <code>--text-scale</code>, which the app sets on the same root: the font size setting times the platform's font scale (dynamic type, Android's font scale). The web's sizes never change.</p>
+        <p class="note">Each <code>--text-*</code> size is its designed size times <code>--text-scale</code>, which is 1 on the web. The native app sets it on the native root: the font size setting times the platform's font scale (dynamic type, Android's font scale).</p>
       </Frame>
       <Frame label="Always dark · calls" style="flex-direction: column; flex-wrap: nowrap">
         <div class="swatches">
@@ -472,7 +490,7 @@ t('ui.duration.hours', { count: 12 });`;
             </div>
           {/each}
         </div>
-        <p class="note"><code>data-always-dark</code> on the call screen's and the minimised call's root gives them the dark tokens, with the root's accent, in both themes, plus the call colours above. The in-chat live pill and the header call strip follow the theme.</p>
+        <p class="note"><code>data-always-dark</code> on the call screen's and the minimised call's root gives them the dark tokens in both themes, with the accent of the nearest <code>data-accent</code> root (or their own), plus the call colours above. The in-chat live pill and the header call strip follow the theme.</p>
       </Frame>
     </div>
   </Section>
@@ -542,6 +560,7 @@ t('ui.duration.hours', { count: 12 });`;
   // native previews: each is a theme root, so everything inside reads that root's tokens
   .native-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)); gap: 16px; margin-bottom: 16px; }
   .native-preview {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -552,6 +571,7 @@ t('ui.duration.hours', { count: 12 });`;
     box-shadow: inset 0 0 0 1px var(--line-2);
     font-family: var(--font-sans);
   }
+  .probe { position: absolute; visibility: hidden; pointer-events: none; }
   .np-label { font: 500 10px/1 var(--font-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); }
   .hero {
     display: flex;

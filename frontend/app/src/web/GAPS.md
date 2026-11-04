@@ -12,9 +12,9 @@ design export needs. Each entry says where it came up.
   are the store's steps 1 to 4 (`logic/profile/appearance.ts`), and a stored 0 shows as Small and
   stays until another size is picked. The store's fifth step has no size in the design.
 - **Native platform tokens** (native N1, #10364): the library has the native layer
-  (`[data-platform="native"]`: native light surfaces, `--hero-base`, `--tint-row`, `--tint-pill`,
-  `--safe-*`, `--scroll-end`, `--text-scale`; `[data-always-dark]` for calls; EXPORT-LOG
-  2026-11-04), and `textScaleOf` (`logic/profile/appearance.ts`) gives `--text-scale` from the font
+  (`[data-platform="native"]`: native light surfaces, `--hero-base`, `--tint-row`, `--tint-pill`;
+  `--safe-*`, `--scroll-end` and `--text-scale` on `:root`; `[data-always-dark]` for calls;
+  EXPORT-LOG 2026-11-04), and `textScaleOf` (`logic/profile/appearance.ts`) gives `--text-scale` from the font
   size setting and the platform's font scale. Left for N3, which builds the native root and entry:
   - Put `data-platform="native"`, `data-mode` and `data-accent` on the native root, from the same
     stored mode and accent the web uses (light / dark / system), and `--text-scale` from

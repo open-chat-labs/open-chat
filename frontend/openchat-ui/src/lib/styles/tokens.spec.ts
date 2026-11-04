@@ -17,21 +17,25 @@ const sources = {
   ...stylesheets,
 };
 
-/** The tokens tokens.css defines: on :root (the dark default, which every theme starts from), and the native
- *  platform's and the always-dark scope's own. */
-export function definedTokens(css: string): Set<string> {
+/** The tokens defined on :root (the dark default, which every theme starts from), so defined everywhere. The
+ *  native platform's and the always-dark scope's own (--hero-base, --tint-*, --call-*) exist only inside their
+ *  scope, so they aren't here: a component that can render outside it may give them a fallback. */
+export function rootTokens(css: string): Set<string> {
   const names = new Set<string>();
-  for (const [, body] of css.matchAll(/[^{}]+\{([^{}]*)\}/g)) for (const [, name] of body.matchAll(/(--[\w-]+)\s*:/g)) names.add(name);
+  for (const [, selector, body] of css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    if (selector.includes(':root')) for (const [, name] of body.matchAll(/(--[\w-]+)\s*:/g)) names.add(name);
+  }
   return names;
 }
 
-/** Invariant: no var() gives a fallback for a token tokens.css defines. */
+/** Invariant: no var() gives a fallback for a token tokens.css defines on :root. */
 describe('token fallbacks', () => {
-  const defined = definedTokens(tokens);
+  const defined = rootTokens(tokens);
 
   test('the token list and the stylesheets are read', () => {
     expect(defined.has('--ink')).toBe(true);
-    expect(defined.has('--hero-base')).toBe(true);
+    expect(defined.has('--safe-bottom')).toBe(true);
+    expect(defined.has('--hero-base')).toBe(false);
     expect(stylesheets['lib/styles/global.css']).toContain('.oc-veil');
   });
 
