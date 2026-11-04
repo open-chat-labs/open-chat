@@ -52,6 +52,12 @@ export OC_ONESEC_FORWARDER_CANISTER="${OC_ONESEC_FORWARDER_CANISTER:-this-is-a-f
 export OC_ONESEC_MINTER_CANISTER="${OC_ONESEC_MINTER_CANISTER:-this-is-a-fake-canister-id}"
 export OC_BASE_ORIGIN=https://oc.app
 
+# iOS has only the store channel: patch releases over the air, minor and major
+# through App Store review (tauri-plugin-oc/OTA_UPDATES.md). Set here rather than
+# in the release workflow so every release build of the shell gets them.
+export OC_APP_STORE=true
+export OC_OTA_UPDATES=patch
+
 echo "DEBUG: OC_APP_STORE is set to: '$OC_APP_STORE'"
 
 npx rollup -c

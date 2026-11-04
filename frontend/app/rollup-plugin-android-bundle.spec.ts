@@ -73,4 +73,13 @@ describe("OTA bundle CSP", () => {
             expect(config).toBeLessThan(html.indexOf('http-equiv="Content-Security-Policy"'));
         }
     });
+
+    // The zip's value governs every install from its first OTA on, and the iOS shell,
+    // like the Android store build, downloads the store zip.
+    test("#10398 invariant 17: store zips take patch updates only, sideload zips take minor", () => {
+        const strategy = (store: boolean) =>
+            withOcConfig(indexHtml(otaCsp()), store).match(/OC_OTA_UPDATES: "(\w+)"/)?.[1];
+        expect(strategy(true)).toBe("patch");
+        expect(strategy(false)).toBe("minor");
+    });
 });

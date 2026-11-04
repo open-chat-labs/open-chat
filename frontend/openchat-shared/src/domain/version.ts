@@ -2,6 +2,16 @@ export type VersionPart = "patch" | "minor" | "major";
 
 export type OTAUpdateStrategy = "none" | VersionPart;
 
+const OTA_STRATEGIES: readonly OTAUpdateStrategy[] = ["none", "patch", "minor", "major"];
+
+// A build's OTA strategy. A missing or unknown value turns OTA off rather than reaching
+// canUpdateTo's "major" default, which would take bundles the shell cannot run.
+export function otaStrategy(value: unknown): OTAUpdateStrategy {
+    return OTA_STRATEGIES.includes(value as OTAUpdateStrategy)
+        ? (value as OTAUpdateStrategy)
+        : "none";
+}
+
 // see ./version.spec.ts to get an idea for how this works
 export class Version {
     constructor(

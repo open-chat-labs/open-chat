@@ -162,11 +162,8 @@ jobs:
               env:
                   APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
                   APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-                  OC_APP_STORE: 'true'
-                  # Same as the Android store build: patch releases over the
-                  # air, minor and major through App Store review. See
-                  # tauri-plugin-oc/OTA_UPDATES.md.
-                  OC_OTA_UPDATES: 'patch'
+                  # OC_APP_STORE and OC_OTA_UPDATES are set by app/build_ios.sh,
+                  # the beforeBuildCommand, since iOS has only the store channel.
 
             - name: Verify IPA
               run: |
@@ -188,6 +185,9 @@ jobs:
                   if /usr/libexec/PlistBuddy -c "Print :NSAppTransportSecurity:NSAllowsArbitraryLoads" "$PLIST" >/dev/null 2>&1; then
                     echo "::error::NSAllowsArbitraryLoads is still set"; FAIL=1
                   fi
+                  [ "$(/usr/libexec/PlistBuddy -c "Print :ITSAppUsesNonExemptEncryption" "$PLIST" 2>/dev/null)" == "false" ] \
+                    || { echo "::error::ITSAppUsesNonExemptEncryption is not false"; FAIL=1; }
+                  [ -f "$APP/PrivacyInfo.xcprivacy" ] || { echo "::error::PrivacyInfo.xcprivacy missing from the app bundle"; FAIL=1; }
 
                   ENT=$(codesign -d --entitlements :- "$APP" 2>/dev/null)
                   echo "$ENT"

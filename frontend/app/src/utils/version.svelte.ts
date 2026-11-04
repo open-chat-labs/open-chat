@@ -6,7 +6,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { Poller, Version, type OTAUpdateStrategy } from "@client";
+import { otaStrategy, Poller, Version, type OTAUpdateStrategy } from "@client";
 import { isAndroidTauriApp, isIosTauriApp } from "@shared";
 
 const VERSION_INTERVAL = 60 * 1000;
@@ -34,7 +34,7 @@ export type VersionState =
 export class VersionChecker {
     #clientVersion = Version.parse(import.meta.env.OC_WEBSITE_VERSION);
     #versionState = $state<VersionState>({ kind: "unknown" });
-    #strategy: OTAUpdateStrategy = import.meta.env.OC_OTA_UPDATES;
+    #strategy: OTAUpdateStrategy = otaStrategy(import.meta.env.OC_OTA_UPDATES);
     // stop() can land while download_update is still awaiting, and the finally
     // below would then start a fresh poller that nothing is left to stop.
     #stopped = false;
