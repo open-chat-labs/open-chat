@@ -154,8 +154,8 @@ design export needs. Each entry says where it came up.
     `features/cashtag/PriceChart.svelte`. On a phone the chart has to shrink to fit the bubble: the
     mobile tree's was a fixed 22rem, wider than the bubble, so its end was cut off.
   - **MiniApp message**: a bot's card for a game, or another app, it hosts (`mini_app_content`): its
-    image, markdown text, the bot's app, players (avatars and names, "2 of 4 playing", whose turn it
-    is), how many are watching, the result once finished, as markdown with links turned off so that
+    image, in the user's theme (`miniAppImageSrc`), markdown text, the bot's app, players (avatars
+    and names, "2 of 4 playing", whose turn it is), how many are watching, the result once finished, as markdown with links turned off so that
     `@UserId` shows a user's name as it is now, and Join / Leave buttons, from
     `miniAppCardView`, which shows the MiniApp service's live card (`miniAppCardsStore`, followed with
     `client.followMiniApp` once the card's in view) or else the one stored in the chat. Join and leave
