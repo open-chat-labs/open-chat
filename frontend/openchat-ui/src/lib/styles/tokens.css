@@ -97,9 +97,10 @@
   --safe-bottom:env(safe-area-inset-bottom,0px); --safe-left:env(safe-area-inset-left,0px);
   --scroll-end:calc(var(--safe-bottom) + 48px);
 }
-/* Type sizes, times --text-scale: 1 (the sizes as designed) unless the native root sets it, from the interface
-   size setting and the platform's font scale (the app's textScaleOf). They're declared on the native root as well,
-   so they follow a scale set there; after the :root block above, so this wins when that root is <html>. */
+/* Type sizes, times --text-scale: 1 (the sizes as designed) unless the native app sets it, from the interface
+   size setting and the platform's font scale (the app's textScaleOf). The app sets it on <html>, so everything
+   follows, a portal to <body> (the call screen) included. They're declared on the native root as well, so a scale
+   set on a subtree's own native root still reaches it. */
 :root,[data-platform="native"]{
   --text-2xs:calc(9.5px * var(--text-scale)); --text-xs:calc(10px * var(--text-scale)); --text-sm:calc(11.5px * var(--text-scale));
   --text-md:calc(12.5px * var(--text-scale)); --text-base:calc(13.5px * var(--text-scale)); --text-lg:calc(15.5px * var(--text-scale));
@@ -117,7 +118,8 @@
 }
 
 /* Native platform layer (native design notes §1). The native tree's root carries data-platform="native" beside
-   data-mode and data-accent (and --text-scale, above); the web never sets it, so none of this reaches the web. */
+   data-mode and data-accent (--text-scale goes on <html>, above); the web never sets it, so none of this reaches the
+   web. */
 /* Accent hero cards (CHIT, Diamond …) blend the accent into --hero-base; rows and pills inside them use the tints. */
 [data-platform="native"],[data-always-dark]{
   --hero-base:#14141a; --tint-row:rgba(0,0,0,.22); --tint-pill:rgba(0,0,0,.28);

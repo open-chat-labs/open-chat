@@ -196,6 +196,14 @@ describe('data-always-dark', () => {
     expect(inside.get('--bubble-text')).toBe('#FFFFFF');
   });
 
+  test('portalled to <body>, beside the native root, follows a --text-scale set on <html>', () => {
+    const html = root({ 'data-mode': 'light', 'data-accent': 'blue' }, { '--text-scale': '1.25' });
+    const body: Element = { attrs: {} };
+    const inside = resolve([html, body, call]);
+    expect(inside.get('--text-sm')).toBe('calc(11.5px * 1.25)');
+    expect(inside.get('--accent')).toBe('#3D9BFF');
+  });
+
   test('the call colours exist only inside the scope', () => {
     expect(resolve([root({ 'data-mode': 'light', 'data-accent': 'pink', 'data-platform': 'native' })]).has('--call-bg')).toBe(false);
   });

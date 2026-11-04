@@ -31,7 +31,8 @@ export function fontScaleFor(size: FontSize, stored: FontScale): FontScale {
     return fontSizeOf(stored) === size ? stored : SCALES[size];
 }
 
-// The native tree's text scale: tokens.css's --text-scale, set on the native root, which the --text-* sizes follow.
+// The native tree's text scale: tokens.css's --text-scale, which the --text-* sizes follow. The native app sets it
+// on <html>, so it reaches what's portalled to <body> as well (the call screen).
 // It's the font size setting's factor times the platform's own font scale (dynamic type on iOS, the font scale
 // on Android, 1 on mobile web), kept between TEXT_SCALE_MIN and TEXT_SCALE_MAX so screens stay usable at the
 // extremes, and rounded to 3 places so the style it's written to only changes when the scale does.

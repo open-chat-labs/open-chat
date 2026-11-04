@@ -159,6 +159,20 @@ t('ui.duration.hours', { count: 12 });`;
   }
 
   const all = [...colours.flatMap((g) => g.tokens), ...scales.flatMap((g) => g.tokens), ...ladder.flatMap((r) => [r.bp, r.list, r.info]), 'panel-chat-min', 'island-min'];
+  const typeTokens = scales.filter((g) => g.kind === 'text').flatMap((g) => g.tokens);
+
+  // a token that holds a calc() or env() (the type sizes, the safe areas) reads back as written; a property set to
+  // it on a hidden probe computes to px
+  const readLengths = (el: HTMLElement | undefined, tokens: string[]): Record<string, string> => {
+    if (!el) return {};
+    return Object.fromEntries(
+      tokens.map((t) => {
+        el.style.paddingLeft = `var(--${t})`;
+        return [t, getComputedStyle(el).paddingLeft];
+      }),
+    );
+  };
+  let typeProbe = $state<HTMLElement>();
 
   $effect(() => {
     void theme;
@@ -168,7 +182,7 @@ t('ui.duration.hours', { count: 12 });`;
       const cs = getComputedStyle(root);
       const out: Record<string, string> = {};
       for (const t of all) if (t) out[t] = pretty(cs.getPropertyValue('--' + t));
-      values = out;
+      values = { ...out, ...readLengths(typeProbe, typeTokens) };
       contrasts = contrastPairs.flatMap((p) => {
         const fg = parseColour(cs.getPropertyValue('--' + p.fg)), bg = parseColour(cs.getPropertyValue('--' + p.bg));
         return fg && bg ? [{ ...p, ratio: contrast(fg, bg) }] : [];
@@ -208,17 +222,6 @@ t('ui.duration.hours', { count: 12 });`;
     return Object.fromEntries(tokens.map((t) => [t, pretty(cs.getPropertyValue('--' + t))]));
   };
 
-  // a token that holds a calc() or env() reads back as written; a property set to it computes to px
-  const readLengths = (el: HTMLElement | undefined, tokens: string[]): Record<string, string> => {
-    if (!el) return {};
-    return Object.fromEntries(
-      tokens.map((t) => {
-        el.style.paddingLeft = `var(--${t})`;
-        return [t, getComputedStyle(el).paddingLeft];
-      }),
-    );
-  };
-
   async function readNative(): Promise<void> {
     await tick();
     nativeValues = Object.fromEntries(nativeModes.map((m) => [m, read(previews[m], nativeColours)]));
@@ -235,6 +238,7 @@ t('ui.duration.hours', { count: 12 });`;
 </script>
 
 <div class="foundations" bind:this={host}>
+  <span class="probe" aria-hidden="true" bind:this={typeProbe}></span>
   <Section {...sec(foundations, 'colour')}>
     <div class="grid3">
       {#each colours as g}

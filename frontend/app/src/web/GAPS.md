@@ -18,7 +18,9 @@ design export needs. Each entry says where it came up.
   size setting and the platform's font scale. Left for N3, which builds the native root and entry:
   - Put `data-platform="native"`, `data-mode` and `data-accent` on the native root, from the same
     stored mode and accent the web uses (light / dark / system), and `--text-scale` from
-    `textScaleOf`, on the same element. The platform font scale needs a native bridge (iOS
+    `textScaleOf` on `<html>` (so what's portalled to `<body>`, the call screen, follows it
+    too; the accent there comes from `<html>`'s `data-accent`, so the native root should be
+    `<html>` or `<html>` carry the same attributes). The platform font scale needs a native bridge (iOS
     dynamic type's content size category, Android's `Configuration.fontScale`, read again when it
     changes); mobile web passes 1.
   - `viewport-fit=cover` on the native entry, or `env(safe-area-inset-*)` reports 0 and `--safe-*`
