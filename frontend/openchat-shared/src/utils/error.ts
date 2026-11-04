@@ -144,6 +144,9 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     // the site's storage from under an open connection
     /internal error was encountered in the indexed database server/i,
     /database deleted by request of the user/i,
+    // Safari's IndexedDB failing to open its files, or running out of memory (#2163, #15839)
+    /unable to open database file on disk/i,
+    /operation failed for an unknown transient reason/i,
     // Chrome's form of the same: the site's storage was deleted under an open connection, by the
     // user clearing site data or the browser evicting it (#29538)
     /force close delete origin/i,

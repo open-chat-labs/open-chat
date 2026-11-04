@@ -322,6 +322,25 @@ describe("shouldReportError", () => {
         }
     });
 
+    test("silences Safari's IndexedDB failing to open its files or out of memory (#2163, #15839)", () => {
+        for (const message of [
+            "Unable to open database file on disk",
+            "The operation failed for an unknown transient reason (e.g. out of memory).",
+        ]) {
+            expect(shouldReportError({ name: "UnknownError", message })).toBe(false);
+            expect(shouldReportMessage("UnknownError", message)).toBe(false);
+        }
+    });
+
+    test("still reports other IndexedDB UnknownErrors (#2163, #15839)", () => {
+        for (const message of [
+            "Unable to open database",
+            "The operation failed because the requested database object could not be found.",
+        ]) {
+            expect(shouldReportError({ name: "UnknownError", message })).toBe(true);
+        }
+    });
+
     test("silences an external wallet approval the account can't fund (#32090)", () => {
         expect(
             shouldReportError(new Error('Approval failed: InsufficientFunds {"balance":"0"}')),
