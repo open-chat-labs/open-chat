@@ -206,8 +206,8 @@
       if (referrerEdited) return;
       referrer = given ?? null;
       referrerFromLink = !!given;
-      // a referrer from the host replaces the paste field, and a link lookup still going with it
-      if (given) refLink.stop();
+      // a referrer from the host replaces the field: whatever was typed or pasted there goes, a lookup with it
+      if (given) clearRefField();
     });
   });
 
@@ -215,18 +215,22 @@
     referrerEdited = true;
     referrer = person;
     referrerFromLink = false;
-    if (person) refLink.stop();
+    if (person) clearRefField();
+  }
+
+  // the field a referrer replaces starts empty (search mode) if the referrer is removed again: a link left in it would
+  // never be looked up, and the sign-up would go out without the referral it names
+  function clearRefField() {
+    refQuery = '';
+    refPaste = false;
+    refLink.reset();
   }
 
   // the referrer field takes a search, or (with resolveReferrer) a pasted invite link, which Continue waits on
   let refPaste = $state(false);
   const refLink = new ReferralLookup<Person>(
     () => resolveReferrer,
-    (person) => {
-      pickReferrer(person);
-      refQuery = '';
-      refPaste = false;
-    },
+    (person) => pickReferrer(person),
     { settleMs: CHECK_MS },
   );
 
