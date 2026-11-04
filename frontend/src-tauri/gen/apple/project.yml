@@ -124,3 +124,15 @@ targets:
         outputFiles:
           - $(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a
           - $(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a
+      # With an App Store Connect API key, `tauri ios build` archives unsigned and then
+      # signs the app itself with entitlements read from open-chat_iOS.entitlements, a
+      # path it hard-codes, before the export re-signs it. tauri-plugin-deep-link strips
+      # associated domains from that same file while Rust builds (the step above), so it
+      # is a generated copy of OpenChat.entitlements, refreshed after every Rust build.
+      - script: cp "${SRCROOT}/open-chat_iOS/OpenChat.entitlements" "${SRCROOT}/open-chat_iOS/open-chat_iOS.entitlements"
+        name: Copy entitlements for the Tauri signer
+        basedOnDependencyAnalysis: false
+        inputFiles:
+          - $(SRCROOT)/open-chat_iOS/OpenChat.entitlements
+        outputFiles:
+          - $(SRCROOT)/open-chat_iOS/open-chat_iOS.entitlements

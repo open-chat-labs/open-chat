@@ -67,12 +67,11 @@ group's automatic distribution. Plan: #10398, milestone #10399.
 
 ## Blocked on the real Apple Developer account / oc.app changes
 
-- [ ] **apple-app-site-association**: LIVE on oc.app since 2026-08-25
-      (v2.0.2041 + follow-up release; #9241, #9242), listing
-      `A468T66XSK.com.oclabs.openchat.dev`. The file now also lists
-      `N59KSS69AU.com.oclabs.openchat`; that is live only after the next
-      website release. Drop the Computism entry once a new-team build has
-      signed in with a passkey on a device. Passkeys verified end-to-end on a
+- [x] **apple-app-site-association**: LIVE on oc.app since 2026-08-25
+      (v2.0.2041 + follow-up release; #9241, #9242). It lists only
+      `N59KSS69AU.com.oclabs.openchat`: TestFlight build 2.0.2209 (4) signed
+      in with a passkey on 2026-11-04, so the Computism entry
+      (`A468T66XSK.com.oclabs.openchat.dev`) was dropped. Passkeys verified end-to-end on a
       physical iPhone against production. User passkeys are bound to the
       domain, not the team, so they survive the swap. Two gotchas learned
       the hard way: the AASA is fetched even in `?mode=developer` (it only

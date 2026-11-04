@@ -1,3 +1,6 @@
+# Same heap as the other release builds: rollup runs out of the default
+# heap on the 7 GB macOS runner.
+export NODE_OPTIONS="--max-old-space-size=8192"
 export NODE_ENV=production
 
 # pull in the .env file first
