@@ -42,8 +42,10 @@ description: OpenChat release train runbook — tagging components, prod-test (i
 
    A **shell-only release** — native dependency removed, permission dropped, Kotlin fix nothing calls yet — is a **patch**, because no web code behaves differently and there is no compatibility signal to send. Tag `v2.0.NNNN-android` with no matching `-website` tag, and the website's next release takes NNNN+1. Website versions do not have to be contiguous.
 
-   **The trap:** never let a website release reuse a number an Android build has claimed. Apps bundling that version see `server == client` and silently refuse a genuine update, permanently. Before picking a website number, check the android tags too:
-   `git tag --list "v2.0.*-android" | sort -t. -k3 -n | tail -3`
+   **iOS is the same.** Publishing a `v2.0.NNNN-ios` release runs `ios_release.yaml`, which builds the web assets at that version and uploads to TestFlight. `CFBundleVersion` is the workflow run number, so it never needs picking. An iOS build bundling the same web code as an existing `-android` or `-website` tag reuses that number. A shell-only iOS release takes the next free number, like Android.
+
+   **The trap:** never let a website release reuse a number a native build has claimed. Apps bundling that version see `server == client` and silently refuse a genuine update, permanently. Before picking a website number, check the android and ios tags too:
+   `git tag --list "v2.0.*-android" "v2.0.*-ios" | sort -t. -k3 -n | tail -3`
 
 4. Release order is dependency-driven, decided per train. Rule of thumb: a canister must accept a new candid field before anything starts sending it (e.g. video transcode train: storage_bucket → storage_index → website). Website last.
 5. Every push to master runs the "Push canister wasms" workflow, which builds the wasms and uploads them to S3 keyed by COMMIT id (`https://openchat-canister-wasms.s3.amazonaws.com/<commit>/<canister>.wasm.gz`). The pre-release tests a tag triggers wait for it. Both the prod-test deploys and the prod proposals download from there, so confirm the run finished at the tag commit before prod test.
