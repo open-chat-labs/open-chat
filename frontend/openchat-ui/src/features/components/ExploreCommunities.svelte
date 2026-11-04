@@ -98,6 +98,9 @@
     total?: number;
     /** A page is being fetched (onQuery mode). */
     loading?: boolean;
+    /** The page last asked for couldn't be loaded (onQuery mode): a first page shows an error with a retry in place of
+     *  the page before it, a later one a retry on Load more. The host clears it as it takes the next ask. */
+    failed?: boolean;
     /** Languages to offer in the filter (onQuery mode), by code; defaults to the languages of the loaded communities. */
     languageOptions?: ExploreLanguage[];
     /** The search text it opens with (e.g. from the host's URL). Read once; later changes come from the user. */
@@ -123,6 +126,7 @@
     onQuery,
     total,
     loading = false,
+    failed = false,
     languageOptions,
     initialQuery = '',
     initialLanguages = [],
@@ -226,6 +230,11 @@
   // onQuery: the home list still holds an older query's page (just after clearing the search, or a sort / language
   // change the host hasn't answered yet); it shows a loading state instead of passing that page off as "All communities"
   const homeStale = $derived(remote && !q && !!lastAsk && (lastAsk.text !== query.trim() || firstPagePending));
+  // onQuery: the host couldn't load the page last asked for (`failed`). A first page leaves the page before it, which
+  // mustn't pass as its answer: an error with a retry shows in its place. A later page keeps the list, and Load more
+  // becomes the retry
+  const firstPageFailed = $derived(remote && failed && !loading && !!lastAsk && lastAsk.offset === 0 && lastAsk.text === query.trim());
+  const moreFailed = $derived(remote && failed && !loading && !!lastAsk && lastAsk.offset > 0);
 
   const isJoined = (c: ExploreCommunity) => joinedKeys.includes(c.key);
   const isPrivate = (c: ExploreCommunity) => c.visibility === 'Private';
@@ -239,7 +248,7 @@
   };
 
   // popular: biggest public communities you haven't joined
-  const top = $derived(q || homeStale ? [] : list.filter((c) => !isJoined(c) && !isPrivate(c)).sort((a, b) => b.members - a.members).slice(0, 4));
+  const top = $derived(q || homeStale || firstPageFailed ? [] : list.filter((c) => !isJoined(c) && !isPrivate(c)).sort((a, b) => b.members - a.members).slice(0, 4));
   // per-language counts only mean something when the whole list is here; when the host pages the results they're hidden
   // the host's options are picked by code and shown by label; the communities' own languages are both
   const languages = $derived.by(() => {
@@ -259,6 +268,11 @@
     if (remote) {
       if (!loading) ask(list.length);
     } else shown += PAGE;
+  }
+
+  // a first page that failed, asked for again as things stand
+  function retryFirstPage() {
+    if (!loading) ask(0);
   }
 
   function toggleLang(l: string) {
@@ -370,7 +384,7 @@
         </div>
       </div>
       <div class="results-row">
-        <span class="result-count">{searching ? t('ui.exploreCommunities.searching') : t('ui.exploreCommunities.results', { count: remote ? totalCount : found.length })}</span>
+        <span class="result-count">{searching ? t('ui.exploreCommunities.searching') : firstPageFailed ? t('ui.exploreCommunities.loadFailed') : t('ui.exploreCommunities.results', { count: remote ? totalCount : found.length })}</span>
         {@render langPicker(false)}
       </div>
     </div>
@@ -380,6 +394,12 @@
         {#if searching}
           <div class="empty" role="status" aria-busy="true">
             <span class="empty-title">{t('ui.exploreCommunities.searching')}</span>
+          </div>
+        {:else if firstPageFailed}
+          <div class="empty" role="alert">
+            <span class="empty-title">{t('ui.exploreCommunities.loadFailed')}</span>
+            <span class="empty-body">{t('ui.exploreCommunities.loadFailedBody')}</span>
+            <span class="create" onclick={retryFirstPage} role="button" tabindex="0">{t('ui.common.retry')}</span>
           </div>
         {:else}
         {#if found.length > 0}
@@ -403,9 +423,9 @@
         {#if remote && hasMore && found.length > 0}
           <div class="more">
             <span class="load-more" onclick={loadMore} role="button" tabindex="0" aria-busy={loading}
-              >{loading ? t('ui.exploreCommunities.loading') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - found.length) })}{@render icon('chevron-down', 13, 'var(--ink)')}</span
+              >{loading ? t('ui.exploreCommunities.loading') : moreFailed ? t('ui.common.retry') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - found.length) })}{@render icon('chevron-down', 13, 'var(--ink)')}</span
             >
-            <span class="shown">{t('ui.exploreCommunities.showing', { shown: found.length, total: totalCount })}</span>
+            <span class="shown" role={moreFailed ? 'alert' : undefined}>{moreFailed ? t('ui.exploreCommunities.loadMoreFailed') : t('ui.exploreCommunities.showing', { shown: found.length, total: totalCount })}</span>
           </div>
         {/if}
         {/if}
@@ -452,7 +472,7 @@
     <div class="table-wrap">
       <div class="table">
         <div class="table-head">
-          <span class="table-title">{t(langs.length ? 'ui.exploreCommunities.filtered' : 'ui.exploreCommunities.allCommunities')} <span class="table-count">· {homeStale ? t('ui.exploreCommunities.loading') : totalCount}</span></span>
+          <span class="table-title">{t(langs.length ? 'ui.exploreCommunities.filtered' : 'ui.exploreCommunities.allCommunities')} <span class="table-count">· {homeStale ? t('ui.exploreCommunities.loading') : firstPageFailed ? '–' : totalCount}</span></span>
           {#if langs.length}
             <span class="clear-filters" onclick={() => (langs = [])} role="button" tabindex="0">{t('ui.exploreCommunities.clearFilters')}</span>
           {/if}
@@ -474,7 +494,7 @@
         <div class="row columns" data-ex-row="">
           <span>{t('ui.exploreCommunities.colCommunity')}</span><span>{t('ui.exploreCommunities.colMembers')}</span><span data-ex-col="">{t('ui.exploreCommunities.colChannels')}</span><span data-ex-col="">{t('ui.exploreCommunities.colLanguage')}</span><span></span>
         </div>
-        {#each homeStale ? [] : rows as c}
+        {#each homeStale || firstPageFailed ? [] : rows as c}
           {@const joined = isJoined(c)}
           {@const priv = isPrivate(c)}
           <div class="row entry" class:locked={priv && !joined} data-ex-row="" onclick={() => open(c)} role="button" tabindex="0">
@@ -511,17 +531,23 @@
             </div>
           </div>
         {/each}
-        {#if hasMore && !homeStale}
+        {#if hasMore && !homeStale && !firstPageFailed}
           <div class="more">
             <span class="load-more" onclick={loadMore} role="button" tabindex="0" aria-busy={loading}
-              >{loading ? t('ui.exploreCommunities.loading') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - rows.length) })}{@render icon('chevron-down', 13, 'var(--ink)')}</span
+              >{loading ? t('ui.exploreCommunities.loading') : moreFailed ? t('ui.common.retry') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - rows.length) })}{@render icon('chevron-down', 13, 'var(--ink)')}</span
             >
-            <span class="shown">{t('ui.exploreCommunities.showing', { shown: rows.length, total: totalCount })}</span>
+            <span class="shown" role={moreFailed ? 'alert' : undefined}>{moreFailed ? t('ui.exploreCommunities.loadMoreFailed') : t('ui.exploreCommunities.showing', { shown: rows.length, total: totalCount })}</span>
           </div>
         {/if}
         {#if homeStale}
           <div class="table-empty" role="status" aria-busy="true">
             <span class="table-empty-title">{t('ui.exploreCommunities.loading')}</span>
+          </div>
+        {:else if firstPageFailed}
+          <div class="table-empty" role="alert">
+            <span class="table-empty-title">{t('ui.exploreCommunities.loadFailed')}</span>
+            <span class="table-empty-body">{t('ui.exploreCommunities.loadFailedBody')}</span>
+            <span class="load-more" onclick={retryFirstPage} role="button" tabindex="0">{t('ui.common.retry')}</span>
           </div>
         {:else if list.length === 0}
           <div class="table-empty">

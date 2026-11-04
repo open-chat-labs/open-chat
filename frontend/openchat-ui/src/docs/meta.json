@@ -9822,6 +9822,17 @@
         "doc": "A page is being fetched (onQuery mode)."
       },
       {
+        "name": "failed",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The page last asked for couldn't be loaded (onQuery mode): a first page shows an error with a retry in place of the page before it, a later one a retry on Load more. The host clears it as it takes the next ask."
+      },
+      {
         "name": "languageOptions",
         "type": "ExploreLanguage[]",
         "default": null,

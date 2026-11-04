@@ -7,7 +7,7 @@ import {
     exploreQueryAnswered,
     exploreQueryFromUrl,
     exploreSearch,
-    exploreStatusAfter,
+    exploreAfterSearch,
     exploreUrl,
     isExploreRoute,
     languageToggles,
@@ -162,19 +162,36 @@ describe("what explore shows once a search answers", () => {
     const ready = { kind: "ready" } as const;
 
     test("a page that arrived shows", () => {
-        expect(exploreStatusAfter({ kind: "loading" }, "first", "success")).toEqual(ready);
-        expect(exploreStatusAfter({ kind: "failed" }, "first", "success")).toEqual(ready);
-    });
-
-    test("a failed first page shows the failure, not the last query's results as its answer", () => {
-        expect(exploreStatusAfter(ready, "first", "failed")).toEqual({ kind: "failed" });
-        expect(exploreStatusAfter({ kind: "loading" }, "first", "failed")).toEqual({
-            kind: "failed",
+        expect(exploreAfterSearch({ kind: "loading" }, "first", "success", "screen")).toEqual({
+            status: ready,
+            failed: false,
+        });
+        expect(exploreAfterSearch(ready, "first", "success", "component")).toEqual({
+            status: ready,
+            failed: false,
         });
     });
 
-    test("a failed later page keeps the list as it was", () => {
-        expect(exploreStatusAfter(ready, "next", "failed")).toEqual(ready);
+    test("a page the component asked for that failed stays inside it, which stays up", () => {
+        expect(exploreAfterSearch(ready, "first", "failed", "component")).toEqual({
+            status: ready,
+            failed: true,
+        });
+        expect(exploreAfterSearch(ready, "next", "failed", "component")).toEqual({
+            status: ready,
+            failed: true,
+        });
+    });
+
+    test("a first page the screen asked for that failed shows the error screen", () => {
+        expect(exploreAfterSearch({ kind: "loading" }, "first", "failed", "screen")).toEqual({
+            status: { kind: "failed" },
+            failed: false,
+        });
+        expect(exploreAfterSearch(ready, "first", "failed", "screen")).toEqual({
+            status: { kind: "failed" },
+            failed: false,
+        });
     });
 });
 

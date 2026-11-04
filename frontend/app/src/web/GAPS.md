@@ -594,7 +594,9 @@ design export needs. Each entry says where it came up.
   as `{ code, label }` (the filter picks by code, shows the label and the code's flag; the app's
   old codes `cn`, `jp`, `iw` have flags); `initialQuery` / `initialLanguages` (the URL's
   `?q=&lang=`, or the saved filter, on opening; an initial text shows the results passed, not
-  "Searching…"); `initialScroll` / `onScroll` (the scroll position kept across visits).
+  "Searching…"); `initialScroll` / `onScroll` (the scroll position kept across visits); `failed`
+  (a page the component asked for couldn't be loaded: an error with Retry in place of the page
+  before it, or Retry on Load more, with the component left as it was; no design for it).
   Not asked for (no design yet):
   - the sorts (Most members / Most active / Newest) are shown though there's one ranking (see
     Explore under the data the backend doesn't have): a change of sort asks for nothing (the
@@ -603,10 +605,11 @@ design export needs. Each entry says where it came up.
     ones, `serialiseFlags` in both old `CommunityCard`s); when the design has one, it moves to
     `@client`, returning `ResourceKey`s.
   - no offline state of its own: with nothing loaded and the app offline, the screen shows the
-    library's offline `EmptyState` (Retry) in the component's place, as the old Explores did; a
-    first page that fails (on opening, or for a new text or languages) shows the error one (the
-    offline one when offline) rather than the last query's results as its answer, and Retry asks
-    for it again.
+    library's offline `EmptyState` (Retry) in the component's place, as the old Explores did. A
+    first page the screen asks for itself that fails (on opening, after the viewer's flags
+    change, for a URL changed from outside) shows the error one (the offline one when offline),
+    and Retry asks for it again. One the component asks for (typing, a language, a sort) fails
+    inside it (`failed`, by hand), so it isn't torn down mid-interaction.
   - no scroll-to-top button (both old Explores had one).
 
 ## App

@@ -99,13 +99,14 @@ export function exploreNeedsSearch(
     wanted: CommunitySearchKey,
     resultsHeld: number,
 ): boolean {
-    return held === undefined || resultsHeld === 0 || !sameCommunitySearch(held, wanted);
+    return resultsHeld === 0 || !exploreQueryAnswered(held, wanted);
 }
 
 /**
- * Whether the results held already answer a first page the component asks for: only its sort
+ * Whether the results held already answer a query: one the component asks for where only its sort
  * changed (the backend has one ranking, so every sort is the same page), or the text was changed
- * and changed back before the ask went out. Asking again would fetch the same page.
+ * and changed back before the ask went out; or one the URL changes to (Back, a link) whose results
+ * are still held. Asking again would fetch the same page.
  */
 export function exploreQueryAnswered(
     held: CommunitySearchKey | undefined,
@@ -130,17 +131,28 @@ export function languageToggles(saved: Iterable<string>, picked: string[]): stri
 export type ExploreStatus = { kind: "loading" } | { kind: "ready" } | { kind: "failed" };
 
 /**
- * What Explore shows once a search has answered. A first page that failed leaves the results of
- * the query before it, so they mustn't stand as its answer: the failure shows (with a retry). A
- * later page that failed keeps the list as it was, and Load more asks for it again.
+ * Who asked for a page: the component (typing, a language, a sort, Load more, its own retry), or
+ * the screen itself (on opening, when the viewer's flags change, a URL changed from outside, the
+ * error screen's retry).
  */
-export function exploreStatusAfter(
+export type ExploreAsker = "component" | "screen";
+
+/**
+ * What Explore shows once a search has answered: its status, and whether the component is told
+ * the page it asked for failed (its `failed`, shown in place of the page before it, or on Load
+ * more). A failure the component asked for stays inside it, so it isn't torn down mid-interaction
+ * (the search box keeps its focus, the sort its choice). A first page the screen asked for that
+ * failed has no list of its own to show it in: the error screen, with a retry.
+ */
+export function exploreAfterSearch(
     status: ExploreStatus,
     page: CommunitySearch["page"],
     outcome: Exclude<CommunitySearchOutcome, "superseded">,
-): ExploreStatus {
-    if (outcome === "success") return { kind: "ready" };
-    return page === "first" ? { kind: "failed" } : status;
+    askedBy: ExploreAsker,
+): { status: ExploreStatus; failed: boolean } {
+    if (outcome === "success") return { status: { kind: "ready" }, failed: false };
+    if (askedBy === "component") return { status, failed: true };
+    return { status: page === "first" ? { kind: "failed" } : status, failed: false };
 }
 
 export type CommunityOpening =

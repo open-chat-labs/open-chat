@@ -53,11 +53,12 @@
         exploreQueryFromUrl,
         exploreSearch,
         exploreSearchKey,
-        exploreStatusAfter,
+        exploreAfterSearch,
         exploreUrl,
         isExploreRoute,
         languageToggles,
         sameExploreQuery,
+        type ExploreAsker,
         type ExploreStatus,
         type ExploreUrlQuery,
     } from "./exploreQuery";
@@ -84,6 +85,8 @@
     let query = $state<ExploreUrlQuery>(opening);
     let status = $state<ExploreStatus>(reusing ? { kind: "ready" } : { kind: "loading" });
     let loading = $state(false);
+    // the page the component last asked for couldn't be loaded: it shows so itself
+    let failed = $state(false);
     // a query the URL changes to from outside (the rail's Explore …) starts the component afresh
     let generation = $state(0);
     // where the component opens scrolled to: where the last visit left the same results, else the top
@@ -111,42 +114,55 @@
         communitySearchState.scrollPos = scrollTop;
     });
 
-    async function search(page: CommunitySearch["page"], pageSize = EXPLORE_PAGE_SIZE) {
+    async function search(
+        page: CommunitySearch["page"],
+        askedBy: ExploreAsker,
+        pageSize = EXPLORE_PAGE_SIZE,
+    ) {
         loading = true;
+        failed = false;
         const outcome = await searchCommunities(
             client,
             exploreSearch(query, flags, page, pageSize),
         );
         if (outcome === "superseded") return;
         loading = false;
-        status = exploreStatusAfter(status, page, outcome);
+        const after = exploreAfterSearch(status, page, outcome, askedBy);
+        status = after.status;
+        failed = after.failed;
     }
 
-    // a first page the screen asks for itself, opened at the top
-    function searchAfresh() {
-        initialScroll = 0;
-        scrollTop = 0;
-        void search("first");
+    // the results held answer the query: no search, and any still in flight is for another one
+    function answeredAlready() {
+        communitySearchState.cancel();
+        loading = false;
+        failed = false;
     }
 
+    // the first page again, with the component (re)opening on it at the top once it arrives
     function retry() {
         status = { kind: "loading" };
-        searchAfresh();
+        initialScroll = 0;
+        scrollTop = 0;
+        void search("first", "screen");
     }
 
     // on opening, and when the viewer's moderation flags change, unless the results held answer
-    // the query as it is
+    // the query as it is. A component already showing keeps its scroll
     $effect(() => {
         const viewerFlags = flags;
         untrack(() => {
             const wanted = exploreSearchKey(query, viewerFlags);
             const held = communitySearchState.results.length;
-            if (exploreNeedsSearch(heldCommunitySearch(), wanted, held)) searchAfresh();
+            if (exploreNeedsSearch(heldCommunitySearch(), wanted, held)) {
+                void search("first", "screen");
+            }
         });
     });
 
-    // the URL changed: a query written here (now or a moment ago) is already shown; any other is
-    // shown from the first page
+    // the URL changed: a query written here (now or a moment ago) is already shown; any other
+    // reopens the component on it, from the results held when they answer it (Back to a query
+    // still held), else from its first page
     $effect(() => {
         void $querystringStore;
         untrack(() => {
@@ -159,7 +175,13 @@
             if (written.has(JSON.stringify(wanted))) return;
             query = wanted;
             generation += 1;
-            retry();
+            if (exploreQueryAnswered(heldCommunitySearch(), exploreSearchKey(wanted, flags))) {
+                answeredAlready();
+                status = { kind: "ready" };
+                initialScroll = scrollTop;
+            } else {
+                retry();
+            }
         });
     });
 
@@ -174,14 +196,12 @@
             saveLanguages(q.languages);
             writeUrl(query);
             if (exploreQueryAnswered(heldCommunitySearch(), exploreSearchKey(query, flags))) {
-                // nothing to ask for; a search still in flight is for another query
-                communitySearchState.cancel();
-                loading = false;
+                answeredAlready();
                 answered += 1;
                 return;
             }
         }
-        void search(page, q.limit);
+        void search(page, "component", q.limit);
     }
 
     function saveLanguages(languages: string[]) {
@@ -193,8 +213,11 @@
     function writeUrl(shown: ExploreUrlQuery) {
         const to = exploreUrl(urlParams(), shown);
         if (to === `${window.location.pathname}${window.location.search}`) return;
-        written.add(JSON.stringify(shown));
-        replaceQuery(to);
+        // kept only once it's written: one that never reached the URL mustn't hide the URL's
+        // later change to it
+        const key = JSON.stringify(shown);
+        written.add(key);
+        if (!replaceQuery(to)) written.delete(key);
     }
 
     function openCommunity(communityId: string) {
@@ -223,6 +246,7 @@
                 {communities}
                 total={communitySearchState.total}
                 {loading}
+                {failed}
                 {joinedKeys}
                 {languageOptions}
                 initialQuery={query.text}
