@@ -3,8 +3,8 @@ use crate::{
     guards::caller_is_multi_user_canister_or_group_index,
     model::moderation::{self, ModerationAlert},
     model::reported_messages::{
-        AddReportArgs, AddReportResult, AutomatedOutcome, ModerationAction, RecordOutcomeResult, build_message_to_reporter,
-        build_message_to_sender, latest_chat,
+        AddReportArgs, AddReportResult, AutomatedOutcome, ModerationAction, RecordOutcomeResult, ReportedMessage,
+        build_message_to_reporter, build_message_to_sender, latest_chat,
     },
     mutate_state, read_state,
     timer_job_types::{ProcessReportClassification, TimerJob},
@@ -14,7 +14,7 @@ use canister_tracing_macros::trace;
 use constants::MINUTE_IN_MS;
 use group_community_common::openai_moderation;
 use tracing::{error, warn};
-use types::ModerationCategories;
+use types::{ModerationCategories, TimestampMillis};
 use user_index_canister::c2c_report_message::{Response::*, *};
 
 // How many times classification is attempted before the failure is recorded on the outcome and
@@ -181,28 +181,32 @@ fn apply_csam_assertion_protection(report_index: u64, state: &mut RuntimeState) 
     } else {
         // A FlaggedOnly outcome never posted an alert; the assertion escalated it (see
         // assert_csam_if_unverdicted) and the alert is posted now so a verdict can happen
-        moderation::post_moderation_alert(
-            ModerationAlert {
-                report_index: Some(report_index),
-                chat_id: report.chat_id,
-                thread_root_message_index: report.thread_root_message_index,
-                message_index: report.message_index,
-                message_id: report.message_id,
-                sender: report.sender,
-                reporters: report.reports.keys().copied().collect(),
-                categories: ModerationCategories::SEXUAL_MINORS,
-                classification_failed: false,
-                auto_sanctioned: true,
-                content_excerpt: None,
-                blob_references: report.blob_references.clone(),
-                media_matches: Vec::new(),
-                authority_report: None,
-                is_blocked_attempt: false,
-                status: types::ModerationReportStatus::Pending,
-                timestamp: state.env.now(),
-            },
-            state,
-        );
+        let alert = csam_assertion_alert(report_index, &report, state.env.now());
+        moderation::post_moderation_alert(alert, state);
+    }
+}
+
+// The first alert for a report a CSAM assertion escalated. The message has been deleted by now,
+// so the excerpt stored when it was classified is all the moderator has to judge
+fn csam_assertion_alert(report_index: u64, report: &ReportedMessage, now: TimestampMillis) -> ModerationAlert {
+    ModerationAlert {
+        report_index: Some(report_index),
+        chat_id: report.chat_id,
+        thread_root_message_index: report.thread_root_message_index,
+        message_index: report.message_index,
+        message_id: report.message_id,
+        sender: report.sender,
+        reporters: report.reports.keys().copied().collect(),
+        categories: ModerationCategories::SEXUAL_MINORS,
+        classification_failed: false,
+        auto_sanctioned: true,
+        content_excerpt: report.content_excerpt.clone(),
+        blob_references: report.blob_references.clone(),
+        media_matches: Vec::new(),
+        authority_report: None,
+        is_blocked_attempt: false,
+        status: types::ModerationReportStatus::Pending,
+        timestamp: now,
     }
 }
 
@@ -416,4 +420,54 @@ fn human_review_categories() -> ModerationCategories {
         | ModerationCategories::VIOLENCE_GRAPHIC
         | ModerationCategories::SELF_HARM
         | ModerationCategories::ILLICIT
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::reported_messages::ReportedMessages;
+    use candid::Principal;
+    use types::{Chat, MessageContent, TextContent};
+
+    // Invariant 2 of #10393: the alert posted when a CSAM assertion escalates a report that has no
+    // alert (a legacy FlaggedOnly outcome) includes the excerpt stored when it was classified
+    #[test]
+    fn csam_assertion_alert_includes_the_stored_excerpt() {
+        let mut reported_messages = ReportedMessages::default();
+        let AddReportResult::New(index) = reported_messages.add_report(AddReportArgs {
+            chat_id: Chat::Group(Principal::from_slice(&[1; 10]).into()),
+            thread_root_message_index: None,
+            message_index: 1.into(),
+            message_id: 1u64.into(),
+            sender: Principal::from_slice(&[2; 10]).into(),
+            reporter: Principal::from_slice(&[3; 10]).into(),
+            already_deleted: false,
+            csam: false,
+            timestamp: 1,
+        }) else {
+            panic!("Expected AddReportResult::New");
+        };
+        reported_messages.add_pending_classification(
+            index,
+            MessageContent::Text(TextContent {
+                text: "the reported text".to_string(),
+            }),
+            true,
+        );
+        reported_messages.record_outcome(
+            index,
+            AutomatedOutcome {
+                timestamp: 2,
+                flagged_categories: ModerationCategories::SEXUAL.bits(),
+                action: ModerationAction::FlaggedOnly,
+                sanctioned: false,
+                classification_failed: false,
+                human_verdict: None,
+            },
+        );
+
+        let alert = csam_assertion_alert(index, reported_messages.get(index).unwrap(), 3);
+
+        assert_eq!(alert.content_excerpt.as_deref(), Some("the reported text"));
+    }
 }

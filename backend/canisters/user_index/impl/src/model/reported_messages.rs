@@ -120,7 +120,13 @@ impl ReportedMessages {
                 RecordOutcomeResult::OutcomeExists(report_index)
             } else {
                 message.outcome = Some(ReportOutcome::Automated(outcome));
-                self.pending_classifications.remove(&report_index);
+                // The classified text is kept whatever the outcome: the content is deleted later,
+                // and a CSAM assertion's alert and an authority filing both read it from here
+                if let Some(pending) = self.pending_classifications.remove(&report_index)
+                    && message.content_excerpt.is_none()
+                {
+                    message.content_excerpt = pending.content.moderation_input().text;
+                }
                 RecordOutcomeResult::Success(Box::new(message.clone()))
             }
         } else {
@@ -1157,6 +1163,37 @@ mod tests {
         let result = reported_messages.add_report(args);
 
         assert_eq!(result, AddReportResult::AlreadyReportedByUser);
+    }
+
+    // Invariant 1 of #10393: a report keeps the content excerpt that was classified, whatever the
+    // outcome. FlaggedOnly is the outcome that posts no alert, so nothing else would carry the text
+    #[test]
+    fn recording_an_outcome_keeps_the_classified_excerpt() {
+        let mut reported_messages = ReportedMessages::default();
+        let AddReportResult::New(index) = reported_messages.add_report(dummy_report_args()) else {
+            panic!("Expected AddReportResult::New");
+        };
+        reported_messages.add_pending_classification(
+            index,
+            MessageContent::Text(TextContent {
+                text: "the reported text".to_string(),
+            }),
+            true,
+        );
+
+        let outcome = AutomatedOutcome {
+            action: ModerationAction::FlaggedOnly,
+            ..dummy_outcome()
+        };
+        assert!(matches!(
+            reported_messages.record_outcome(index, outcome),
+            RecordOutcomeResult::Success(_)
+        ));
+
+        assert_eq!(
+            reported_messages.get(index).unwrap().content_excerpt.as_deref(),
+            Some("the reported text")
+        );
     }
 
     #[test]

@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Support bot command args that are only visible when a condition is met (eg. when game is "chess") ([#10350](https://github.com/open-chat-labs/open-chat/pull/10350))
 
+### Fixed
+
+- A reported message's classified text is kept on the report for every outcome, so authority filings and the alert a CSAM assertion posts on a flagged-only report include it ([#10394](https://github.com/open-chat-labs/open-chat/pull/10394))
+
 ## [[2.0.2203](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2203-user_index)] - 2026-11-02
 
 ### Added
