@@ -1,16 +1,14 @@
 // @vitest-environment node
-// Every src/web component styles in SCSS, so @openchat/ui's mixins (prepended by app/svelte.config.js) and nesting
-// work in all of them.
+// Every src/web component styles in SCSS, so nesting and @openchat/ui's mixins work in all of them.
+import { hasPlainStyle } from "@openchat/ui/src/lib/styles/styleBlocks";
 import { readdirSync, readFileSync } from "node:fs";
 import { expect, test } from "vitest";
 
 const web = new URL("./", import.meta.url);
 
-test('every style block in src/web is <style lang="scss">', () => {
+test("every style block in src/web is SCSS", () => {
     const plain = readdirSync(web, { recursive: true, encoding: "utf8" })
         .filter((path) => path.endsWith(".svelte"))
-        .filter((path) =>
-            /<style(?![^>]*lang="scss")[^>]*>/.test(readFileSync(new URL(path, web), "utf8")),
-        );
+        .filter((path) => hasPlainStyle(readFileSync(new URL(path, web), "utf8")));
     expect(plain).toEqual([]);
 });

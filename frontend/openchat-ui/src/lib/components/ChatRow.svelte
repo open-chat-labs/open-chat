@@ -256,6 +256,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .menu-host {
     display: contents;
   }

@@ -1,7 +1,8 @@
-// Mixins every component's <style lang="scss"> can use without importing anything: the library's own build
-// (vite.config.ts) and the app's (app/svelte.config.js) put `@use` of this file in front of each style block.
-// Mixins only: nothing here may output CSS by itself, or every component would repeat it. Colours, spacing and type
-// stay CSS custom properties (tokens.css), so themes switch at runtime.
+// The library's shared mixins. A component that uses them says so in its style block, so it compiles anywhere:
+//   @use '../styles/mixins' as *;                         (a library component, relative)
+//   @use '@openchat/ui/src/lib/styles/mixins' as *;       (src/web; app/svelte.config.js resolves the alias)
+// Mixins only: nothing here may output CSS by itself (scss.spec.ts compiles it to check). Colours, spacing and type stay
+// CSS custom properties (tokens.css), so themes switch at runtime.
 
 /// One line, cut with an ellipsis.
 @mixin truncate {
