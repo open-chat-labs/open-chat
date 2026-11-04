@@ -136,6 +136,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .timed {
     --pad-x: var(--space-16);
     display: flex;
@@ -155,33 +157,33 @@
     padding: var(--space-12) var(--space-16);
     box-sizing: border-box;
     cursor: pointer;
-  }
 
-  .regular .row {
-    align-items: flex-start;
-    gap: var(--space-16);
-    min-height: 0px;
-    padding: var(--space-16);
-  }
+    .regular & {
+      align-items: flex-start;
+      gap: var(--space-16);
+      min-height: 0px;
+      padding: var(--space-16);
+    }
 
-  .flush .row {
-    align-items: flex-start;
-    gap: var(--space-16);
-    min-height: 0px;
-    padding: 0px;
-  }
+    .flush & {
+      align-items: flex-start;
+      gap: var(--space-16);
+      min-height: 0px;
+      padding: 0px;
+    }
 
-  .row:hover {
-    background: var(--overlay-1);
-  }
+    &:hover {
+      background: var(--overlay-1);
+    }
 
-  .row.readonly {
-    cursor: default;
-  }
+    &.readonly {
+      cursor: default;
+    }
 
-  .row.readonly:hover,
-  .flush .row:hover {
-    background: transparent;
+    &.readonly:hover,
+    .flush &:hover {
+      background: transparent;
+    }
   }
 
   .icon {
@@ -197,21 +199,21 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
-  }
 
-  .regular .text,
-  .flush .text {
-    gap: 3px;
+    .regular &,
+    .flush & {
+      gap: 3px;
+    }
   }
 
   .label {
     font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
     color: var(--ink);
-  }
 
-  .regular .label,
-  .flush .label {
-    font-size: var(--text-base);
+    .regular &,
+    .flush & {
+      font-size: var(--text-base);
+    }
   }
 
   .sub {
@@ -221,23 +223,19 @@
     font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
     color: var(--ink-4);
     text-wrap: pretty;
-  }
 
-  .sub.on {
-    color: var(--accent-bright);
+    &.on {
+      color: var(--accent-bright);
+    }
   }
 
   .caret {
-    flex: none;
-    width: 12px;
-    height: 12px;
-    background: currentColor;
-    mask: var(--icon-chevron-down) center/contain no-repeat;
+    @include icon(chevron-down, 12px);
     transition: transform 0.15s;
-  }
 
-  .caret.open {
-    transform: rotate(180deg);
+    &.open {
+      transform: rotate(180deg);
+    }
   }
 
   .switch {
@@ -249,10 +247,10 @@
     background: var(--overlay-2);
     cursor: pointer;
     transition: background 0.15s;
-  }
 
-  .switch.on {
-    background: var(--accent);
+    &.on {
+      background: var(--accent);
+    }
   }
 
   .knob {
@@ -265,11 +263,11 @@
     background: var(--ink-4);
     transform: translateX(0);
     transition: transform 0.15s;
-  }
 
-  .on .knob {
-    background: #fff;
-    transform: translateX(calc(var(--oc-dir) * 18px));
+    .on & {
+      background: #fff;
+      transform: translateX(calc(var(--oc-dir) * 18px));
+    }
   }
 
   .status {
@@ -288,16 +286,14 @@
     margin-top: var(--space-12);
     padding: var(--space-16) var(--pad-x) var(--space-18) var(--pad-x);
     border-top: 1px dashed var(--line-1);
-  }
 
-  .has-icon .choices {
-    padding-left: calc(var(--pad-x) + 31px);
+    .has-icon & {
+      padding-left: calc(var(--pad-x) + 31px);
+    }
   }
 
   .choice {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     height: 34px;
     padding: 0 var(--space-6);
     border-radius: var(--radius-sm);
@@ -307,15 +303,15 @@
     white-space: nowrap;
     cursor: pointer;
     user-select: none;
-  }
 
-  .choice.selected {
-    background: var(--accent-soft);
-    box-shadow: inset 0 0 0 1px var(--accent);
-    color: var(--accent-bright);
-  }
+    &.selected {
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1px var(--accent);
+      color: var(--accent-bright);
+    }
 
-  .choice:hover {
-    background: var(--overlay-2);
+    &:hover {
+      background: var(--overlay-2);
+    }
   }
 </style>

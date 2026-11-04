@@ -25,6 +25,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .steps {
     flex: none;
     display: flex;
@@ -39,27 +41,25 @@
     font: var(--weight-semibold) 12px/1 var(--font-sans);
     color: var(--ink-4);
     white-space: nowrap;
-  }
 
-  .step.current {
-    color: var(--ink);
+    &.current {
+      color: var(--ink);
+    }
   }
 
   .num {
     width: 20px;
     height: 20px;
     border-radius: var(--radius-pill);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     background: var(--overlay-2);
     font: 700 11px/1 var(--font-mono);
     color: var(--ink-3);
-  }
 
-  .num.on {
-    background: var(--accent);
-    color: var(--on-accent);
+    &.on {
+      background: var(--accent);
+      color: var(--on-accent);
+    }
   }
 
   .sep {

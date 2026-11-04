@@ -77,6 +77,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .row {
     width: 100%;
     display: flex;
@@ -98,15 +100,15 @@
     border-start-end-radius: var(--radius-xl);
     border-end-end-radius: var(--radius-xl);
     padding: var(--space-10) var(--space-14) var(--space-10) var(--space-12);
-  }
 
-  .bubble.sent {
-    border-start-start-radius: var(--radius-xl);
-    border-start-end-radius: var(--radius-xs);
-  }
+    &.sent {
+      border-start-start-radius: var(--radius-xl);
+      border-start-end-radius: var(--radius-xs);
 
-  .bubble.sent.last {
-    border-end-end-radius: var(--radius-lg);
+      &.last {
+        border-end-end-radius: var(--radius-lg);
+      }
+    }
   }
 
   .controls {
@@ -121,14 +123,12 @@
     height: 30px;
     border-radius: var(--radius-pill);
     background: var(--overlay-2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     cursor: pointer;
-  }
 
-  .play:hover {
-    background: var(--btn-hover);
+    &:hover {
+      background: var(--btn-hover);
+    }
   }
 
   .play-icon {
@@ -137,11 +137,11 @@
     margin-left: 2px;
     background: var(--ink);
     mask: var(--icon-play-filled) center/contain no-repeat;
-  }
 
-  .playing .play-icon {
-    margin-left: 0;
-    mask: var(--icon-pause-filled) center/contain no-repeat;
+    .playing & {
+      margin-left: 0;
+      mask: var(--icon-pause-filled) center/contain no-repeat;
+    }
   }
 
   .wave {
@@ -165,10 +165,10 @@
     color: var(--ink-2);
     cursor: pointer;
     user-select: none;
-  }
 
-  .speed:hover {
-    background: var(--btn-hover);
+    &:hover {
+      background: var(--btn-hover);
+    }
   }
 
   .meta {

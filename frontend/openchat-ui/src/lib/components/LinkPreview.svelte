@@ -53,29 +53,22 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .shell {
     --msg-ink: var(--bubble-recv-text);
     --msg-soft: var(--ink-3);
     --msg-link: var(--accent-bright);
     width: 320px;
-    max-width: 100%;
-    padding: 4px;
-    box-sizing: border-box;
-    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
-    background: var(--bubble-recv-bg);
-    box-shadow: inset 0 0 0 1px var(--line-1);
-  }
+    @include message-shell(var(--bubble-recv-bg));
 
-  .shell.last {
-    border-bottom-left-radius: 22px;
-  }
-
-  .shell.sent {
-    --msg-ink: var(--bubble-text);
-    --msg-soft: var(--bubble-text-soft);
-    --msg-link: var(--bubble-text);
-    background: var(--bubble-send-bg);
-    box-shadow: none;
+    &.sent {
+      --msg-ink: var(--bubble-text);
+      --msg-soft: var(--bubble-text-soft);
+      --msg-link: var(--bubble-text);
+      background: var(--bubble-send-bg);
+      box-shadow: none;
+    }
   }
 
   .text {
@@ -110,9 +103,9 @@
     height: 13px;
     background: var(--bubble-tick);
     mask: var(--icon-check-double) center/contain no-repeat;
-  }
 
-  .sent .tick {
-    display: block;
+    .sent & {
+      display: block;
+    }
   }
 </style>

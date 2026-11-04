@@ -73,6 +73,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .wrap {
     display: inline-flex;
     width: auto;
@@ -98,18 +100,18 @@
     user-select: none;
     box-shadow: var(--ring);
     --icon-size: 16px;
-  }
 
-  .button.lg {
-    height: 52px;
-    border-radius: 14px;
-    --icon-size: 18px;
-  }
+    &.lg {
+      height: 52px;
+      border-radius: 14px;
+      --icon-size: 18px;
+    }
 
-  .button.icon-only {
-    gap: 0;
-    padding: 0;
-    aspect-ratio: 1;
+    &.icon-only {
+      gap: 0;
+      padding: 0;
+      aspect-ratio: 1;
+    }
   }
 
   .icon {
@@ -121,9 +123,7 @@
 
   .label {
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    @include truncate;
   }
 
   .full,
@@ -143,55 +143,55 @@
   .primary {
     color: var(--on-accent);
     background: var(--accent);
-  }
 
-  .primary:hover,
-  .primary.hover {
-    background: var(--accent-hover);
+    &:hover,
+    &.hover {
+      background: var(--accent-hover);
+    }
   }
 
   .secondary {
     color: var(--ink);
     background: var(--overlay-1);
     box-shadow: inset 0 0 0 1px var(--line-2), var(--ring);
-  }
 
-  .secondary.default,
-  .secondary.hover {
-    box-shadow: inset 0 0 0 1px var(--line-2);
-  }
+    &.default,
+    &.hover {
+      box-shadow: inset 0 0 0 1px var(--line-2);
+    }
 
-  .secondary:hover,
-  .secondary.hover {
-    background: var(--btn-hover);
+    &:hover,
+    &.hover {
+      background: var(--btn-hover);
+    }
   }
 
   .ghost {
     padding: 0 var(--space-14);
     color: var(--ink-2);
     background: transparent;
-  }
 
-  .ghost:hover,
-  .ghost.hover,
-  .ghost.active {
-    background: var(--overlay-1);
+    &:hover,
+    &.hover,
+    &.active {
+      background: var(--overlay-1);
+    }
   }
 
   .danger {
     color: var(--status-danger);
     background: var(--btn-danger-bg);
     box-shadow: inset 0 0 0 1px var(--btn-danger-line), var(--ring);
-  }
 
-  .danger.default,
-  .danger.hover {
-    box-shadow: inset 0 0 0 1px var(--btn-danger-line);
-  }
+    &.default,
+    &.hover {
+      box-shadow: inset 0 0 0 1px var(--btn-danger-line);
+    }
 
-  .danger:hover,
-  .danger.hover {
-    background: var(--btn-danger-bg-hover);
+    &:hover,
+    &.hover {
+      background: var(--btn-danger-bg-hover);
+    }
   }
 
   .disabled {

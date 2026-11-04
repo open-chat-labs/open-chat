@@ -71,6 +71,8 @@
 {/if}
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .toast {
     display: flex;
     align-items: center;
@@ -84,11 +86,11 @@
       inset 0 0 0 1px var(--line-2),
       0 14px 34px rgba(0, 0, 0, 0.45);
     animation: oc-toast-in 160ms var(--ease-out) both;
-  }
 
-  .toast.out {
-    pointer-events: none;
-    animation: oc-toast-out 190ms var(--ease-standard) both;
+    &.out {
+      pointer-events: none;
+      animation: oc-toast-out 190ms var(--ease-standard) both;
+    }
   }
 
   .lg {
@@ -112,9 +114,7 @@
     width: 15px;
     height: 15px;
     border-radius: var(--radius-pill);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     background: transparent;
   }
 
@@ -124,26 +124,28 @@
     background: var(--ink-4);
   }
 
-  .success .badge {
-    width: 24px;
-    height: 24px;
-    background: rgba(46, 230, 168, 0.16);
-  }
+  .success {
+    .badge {
+      width: 24px;
+      height: 24px;
+      background: rgba(46, 230, 168, 0.16);
+    }
 
-  .success .icon {
-    width: 13px;
-    height: 13px;
-    background: var(--status-online);
-  }
+    .icon {
+      width: 13px;
+      height: 13px;
+      background: var(--status-online);
+    }
 
-  .success.lg .badge {
-    width: 32px;
-    height: 32px;
-  }
+    &.lg .badge {
+      width: 32px;
+      height: 32px;
+    }
 
-  .success.lg .icon {
-    width: 16px;
-    height: 16px;
+    &.lg .icon {
+      width: 16px;
+      height: 16px;
+    }
   }
 
   .message {
@@ -152,15 +154,15 @@
     font: var(--weight-medium) var(--text-sm) / 1.35 var(--font-sans);
     color: var(--ink-2);
     text-wrap: pretty;
-  }
 
-  .lg .message {
-    font: var(--weight-semibold) var(--text-md) / 1.35 var(--font-sans);
-  }
+    .lg & {
+      font: var(--weight-semibold) var(--text-md) / 1.35 var(--font-sans);
+    }
 
-  .success .message,
-  .lg .message {
-    color: var(--ink);
+    .success &,
+    .lg & {
+      color: var(--ink);
+    }
   }
 
   .action {
@@ -176,42 +178,40 @@
     color: var(--accent);
     cursor: pointer;
     user-select: none;
-  }
 
-  .action:hover {
-    background: var(--accent-soft);
-  }
+    &:hover {
+      background: var(--accent-soft);
+    }
 
-  .lg .action {
-    height: 36px;
-    padding: 0 var(--space-14);
-    background: var(--overlay-2);
-    font: var(--weight-bold) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink);
-  }
+    .lg & {
+      height: 36px;
+      padding: 0 var(--space-14);
+      background: var(--overlay-2);
+      font: var(--weight-bold) var(--text-md) / 1 var(--font-sans);
+      color: var(--ink);
 
-  .lg .action:hover {
-    background: var(--overlay-3);
+      &:hover {
+        background: var(--overlay-3);
+      }
+    }
   }
 
   .close {
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     width: 22px;
     height: 22px;
     border-radius: var(--radius-sm);
     cursor: pointer;
-  }
 
-  .lg .close {
-    width: 32px;
-    height: 32px;
-  }
+    .lg & {
+      width: 32px;
+      height: 32px;
+    }
 
-  .close:hover {
-    background: var(--overlay-2);
+    &:hover {
+      background: var(--overlay-2);
+    }
   }
 
   .close-icon {
@@ -219,10 +219,10 @@
     height: 11px;
     background: var(--ink-4);
     mask: var(--icon-close) center/contain no-repeat;
-  }
 
-  .lg .close-icon {
-    width: 13px;
-    height: 13px;
+    .lg & {
+      width: 13px;
+      height: 13px;
+    }
   }
 </style>

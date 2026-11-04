@@ -41,10 +41,10 @@
 >
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .coin-wrap {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center(inline-flex);
   }
 
   .stage {
@@ -66,9 +66,7 @@
   }
 
   .face {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     font-weight: 800;
     line-height: 1;
     font-family: var(--font-sans);

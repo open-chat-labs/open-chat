@@ -916,6 +916,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .composer {
     position: relative;
     width: 100%;
@@ -970,11 +972,7 @@
   }
 
   .search-icon {
-    flex: none;
-    width: 15px;
-    height: 15px;
-    background: var(--ink-4);
-    mask: var(--icon-search) center/contain no-repeat;
+    @include icon(search, 15px, var(--ink-4));
   }
 
   .search input {
@@ -1008,11 +1006,11 @@
     color: var(--ink-2);
     cursor: pointer;
     user-select: none;
-  }
 
-  .cat.on {
-    background: var(--ink);
-    color: var(--surface-1);
+    &.on {
+      background: var(--ink);
+      color: var(--surface-1);
+    }
   }
 
   .gif-scroll {
@@ -1035,10 +1033,10 @@
     border-radius: var(--radius-md);
     overflow: hidden;
     cursor: pointer;
-  }
 
-  .gif:hover {
-    filter: brightness(1.12);
+    &:hover {
+      filter: brightness(1.12);
+    }
   }
 
   .gif-label {
@@ -1066,14 +1064,14 @@
     /* the ring is drawn outside, so the reply / edit card and the send button never sit on it */
     box-shadow: 0 0 0 1px var(--line-2);
     transition: box-shadow var(--duration-fast);
-  }
 
-  .bar.recording {
-    box-shadow: 0 0 0 1px var(--status-danger-line);
-  }
+    &.recording {
+      box-shadow: 0 0 0 1px var(--status-danger-line);
+    }
 
-  .bar.focused {
-    box-shadow: 0 0 0 1px var(--line-3);
+    &.focused {
+      box-shadow: 0 0 0 1px var(--line-3);
+    }
   }
 
   .tray {
@@ -1092,13 +1090,13 @@
     height: 72px;
     border-radius: max(8px, calc(var(--composer-radius, var(--radius-xl)) - var(--composer-pad, var(--space-8)) - 10px));
     overflow: hidden;
-  }
 
-  .thumb video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
   }
 
   .duration {
@@ -1116,10 +1114,7 @@
   }
 
   .duration-icon {
-    width: 8px;
-    height: 8px;
-    background: #fff;
-    mask: var(--icon-play) center/contain no-repeat;
+    @include icon(play, 8px, #fff, $flex: null);
   }
 
   .thumb-remove {
@@ -1128,42 +1123,32 @@
     right: 4px;
     width: 22px;
     height: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.6);
     cursor: pointer;
   }
 
   .thumb-remove-icon {
-    width: 10px;
-    height: 10px;
-    background: #fff;
-    mask: var(--icon-close) center/contain no-repeat;
+    @include icon(close, 10px, #fff, $flex: null);
   }
 
   .tray-add {
     flex: none;
     width: 72px;
     height: 72px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     border-radius: max(8px, calc(var(--composer-radius, var(--radius-xl)) - var(--composer-pad, var(--space-8)) - 10px));
     box-shadow: inset 0 0 0 1.5px var(--line-2);
     cursor: pointer;
-  }
 
-  .tray-add:hover {
-    background: var(--overlay-1);
+    &:hover {
+      background: var(--overlay-1);
+    }
   }
 
   .tray-add-icon {
-    width: 20px;
-    height: 20px;
-    background: var(--ink-3);
-    mask: var(--icon-plus) center/contain no-repeat;
+    @include icon(plus, 20px, var(--ink-3), $flex: null);
   }
 
   .context {
@@ -1203,23 +1188,21 @@
     height: 32px;
     border-radius: 50%;
     background: color-mix(in oklch, var(--accent) 18%, transparent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+    @include flex-center;
 
-  .context-icon.editing {
-    background: var(--overlay-2);
+    &.editing {
+      background: var(--overlay-2);
+    }
   }
 
   .context-glyph {
     width: 15px;
     height: 15px;
     background: var(--accent-bright);
-  }
 
-  .editing .context-glyph {
-    background: var(--ink-2);
+    .editing & {
+      background: var(--ink-2);
+    }
   }
 
   .context-text {
@@ -1233,21 +1216,17 @@
   .context-label {
     font: 600 12.5px/1.1 var(--font-sans);
     color: var(--accent-bright);
-  }
 
-  .context-label.editing {
-    color: var(--ink-2);
+    &.editing {
+      color: var(--ink-2);
+    }
   }
 
   /* the quoted message wraps up to three lines, then ends in an ellipsis (same as the bubble's reply quote) */
   .context-quote {
     font: 400 13px/1.3 var(--font-sans);
     color: var(--ink-3);
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    overflow: hidden;
+    @include line-clamp(2);
     overflow-wrap: anywhere;
   }
 
@@ -1255,22 +1234,17 @@
     width: 32px;
     height: 32px;
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     border-radius: 50%;
     cursor: pointer;
-  }
 
-  .round-close:hover {
-    background: var(--overlay-2);
+    &:hover {
+      background: var(--overlay-2);
+    }
   }
 
   .close-icon {
-    width: 13px;
-    height: 13px;
-    background: var(--ink-2);
-    mask: var(--icon-close) center/contain no-repeat;
+    @include icon(close, 13px, var(--ink-2), $flex: null);
   }
 
   .chip {
@@ -1291,17 +1265,12 @@
     width: 32px;
     height: 32px;
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     border-radius: 50%;
   }
 
   .file-icon {
-    width: 15px;
-    height: 15px;
-    background: #fff;
-    mask: var(--icon-file) center/contain no-repeat;
+    @include icon(file, 15px, #fff, $flex: null);
   }
 
   .pair {
@@ -1328,9 +1297,7 @@
     min-width: 0;
     font: var(--weight-medium) 13px/1 var(--font-sans);
     color: var(--ink-3);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    @include truncate;
   }
 
   .chip-edit {
@@ -1340,10 +1307,10 @@
     font: var(--weight-semibold) 13px/1 var(--font-sans);
     color: var(--accent-bright);
     cursor: pointer;
-  }
 
-  .chip-edit:hover {
-    background: var(--overlay-1);
+    &:hover {
+      background: var(--overlay-1);
+    }
   }
 
   .tools {
@@ -1353,39 +1320,37 @@
   }
 
   .tool {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     width: var(--composer-btn, 36px);
     height: var(--composer-btn, 36px);
     border-radius: var(--composer-btn-radius, var(--radius-md));
     background: transparent;
     cursor: pointer;
-  }
 
-  .tool:hover,
-  .tool.open {
-    background: var(--overlay-2);
+    &:hover,
+    &.open {
+      background: var(--overlay-2);
+    }
   }
 
   .tool-icon {
     width: 18px;
     height: 18px;
     background: var(--ink-3);
-  }
 
-  .open .tool-icon,
-  .active .tool-icon {
-    background: var(--ink);
-  }
+    .open &,
+    .active & {
+      background: var(--ink);
+    }
 
-  .tool-icon.plus {
-    mask: var(--icon-plus) center/contain no-repeat;
-    transition: transform var(--duration-base);
-  }
+    &.plus {
+      mask: var(--icon-plus) center/contain no-repeat;
+      transition: transform var(--duration-base);
 
-  .open .tool-icon.plus {
-    transform: rotate(45deg);
+      .open & {
+        transform: rotate(45deg);
+      }
+    }
   }
 
   .input-wrap {
@@ -1416,35 +1381,32 @@
 
   .action {
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     width: var(--composer-btn, 36px);
     height: var(--composer-btn, 36px);
     border-radius: var(--composer-btn-radius, var(--radius-md));
     cursor: pointer;
-  }
 
-  .action.send {
-    background: var(--accent);
-  }
+    &.send {
+      background: var(--accent);
 
-  .action.send:hover {
-    filter: brightness(1.08);
-  }
+      &:hover {
+        filter: brightness(1.08);
+      }
+    }
 
-  .action.mic,
-  .action.stop {
-    background: var(--overlay-1);
-  }
+    &.mic,
+    &.stop {
+      background: var(--overlay-1);
 
-  .action.mic:hover,
-  .action.stop:hover {
-    background: var(--btn-hover);
-  }
+      &:hover {
+        background: var(--btn-hover);
+      }
+    }
 
-  .action.delete:hover {
-    background: var(--status-danger-soft);
+    &.delete:hover {
+      background: var(--status-danger-soft);
+    }
   }
 
   .send-icon {
@@ -1454,17 +1416,11 @@
   }
 
   .mic-icon {
-    width: 18px;
-    height: 18px;
-    background: var(--ink-2);
-    mask: var(--icon-mic) center/contain no-repeat;
+    @include icon(mic, 18px, var(--ink-2), $flex: null);
   }
 
   .delete-icon {
-    width: 18px;
-    height: 18px;
-    background: var(--status-danger);
-    mask: var(--icon-trash) center/contain no-repeat;
+    @include icon(trash, 18px, var(--status-danger), $flex: null);
   }
 
   .stop-icon {
@@ -1483,8 +1439,7 @@
   .thumb-remove:focus-visible,
   .tray-add:focus-visible,
   .gif:focus-visible {
-    box-shadow: var(--focus-ring);
-    outline: none;
+    @include focus-ring;
   }
 
   .voice {
@@ -1508,18 +1463,16 @@
 
   .play {
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     width: 28px;
     height: 28px;
     border-radius: 50%;
     background: var(--overlay-2);
     cursor: pointer;
-  }
 
-  .play:hover {
-    background: var(--btn-hover);
+    &:hover {
+      background: var(--btn-hover);
+    }
   }
 
   .play-icon {
@@ -1535,10 +1488,10 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     color: var(--ink-2);
-  }
 
-  .timer.recording {
-    color: var(--status-danger);
+    &.recording {
+      color: var(--status-danger);
+    }
   }
 
   .wave {
@@ -1555,14 +1508,14 @@
     outline: none;
     cursor: default;
     touch-action: none;
-  }
 
-  .wave.seekable {
-    cursor: pointer;
-  }
+    &.seekable {
+      cursor: pointer;
+    }
 
-  .wave:focus-visible {
-    box-shadow: var(--focus-ring);
+    &:focus-visible {
+      box-shadow: var(--focus-ring);
+    }
   }
 
   .wave-bar {
@@ -1572,18 +1525,18 @@
     background: var(--ink-2);
     transition: height 0.12s;
     pointer-events: none;
-  }
 
-  .wave-bar.idle {
-    background: var(--overlay-3);
-  }
+    &.idle {
+      background: var(--overlay-3);
+    }
 
-  .wave-bar.review {
-    background: var(--ink-4);
-  }
+    &.review {
+      background: var(--ink-4);
 
-  .wave-bar.review.played {
-    background: var(--accent-bright);
+      &.played {
+        background: var(--accent-bright);
+      }
+    }
   }
 
   .handle {
@@ -1617,10 +1570,10 @@
       0 0 0 2px var(--field),
       0 1px 4px rgba(0, 0, 0, 0.4);
     transition: transform var(--duration-fast);
-  }
 
-  .handle-knob.seeking {
-    transform: scale(1.25);
+    &.seeking {
+      transform: scale(1.25);
+    }
   }
 
   .rec-hint {
@@ -1631,10 +1584,10 @@
     text-align: center;
     font: var(--weight-regular) var(--text-xs) / 1 var(--font-sans);
     color: var(--ink-4);
-  }
 
-  .rec-hint.failure {
-    color: var(--status-danger);
+    &.failure {
+      color: var(--status-danger);
+    }
   }
 
   .action.delete[aria-disabled='true'] {

@@ -72,34 +72,27 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .shell {
     --msg-bg: var(--bubble-recv-bg);
     --msg-ink: var(--bubble-recv-text);
     --msg-soft: var(--ink-4);
     --msg-seg: var(--overlay-1);
     width: 300px;
-    max-width: 100%;
-    padding: 4px;
-    box-sizing: border-box;
-    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
-    background: var(--msg-bg);
-    box-shadow: inset 0 0 0 1px var(--line-1);
-  }
+    @include message-shell;
 
-  .shell.last {
-    border-bottom-left-radius: 22px;
-  }
+    &.sent {
+      --msg-bg: var(--bubble-send-bg);
+      --msg-ink: var(--bubble-text);
+      --msg-soft: var(--bubble-text-soft);
+      --msg-seg: rgba(0, 0, 0, 0.18);
+      box-shadow: none;
+    }
 
-  .shell.sent {
-    --msg-bg: var(--bubble-send-bg);
-    --msg-ink: var(--bubble-text);
-    --msg-soft: var(--bubble-text-soft);
-    --msg-seg: rgba(0, 0, 0, 0.18);
-    box-shadow: none;
-  }
-
-  .shell.expired {
-    opacity: 0.65;
+    &.expired {
+      opacity: 0.65;
+    }
   }
 
   .stack {
@@ -121,10 +114,7 @@
   }
 
   .swap-icon {
-    width: 12px;
-    height: 12px;
-    background: currentColor;
-    mask: var(--icon-swap) center/contain no-repeat;
+    @include icon(swap, 12px, $flex: null);
   }
 
   .grow {
@@ -165,10 +155,10 @@
     font: 700 18px/1 var(--font-sans);
     letter-spacing: -0.01em;
     color: var(--msg-ink);
-  }
 
-  .shell:not(.sent) .amount.incoming {
-    color: var(--status-online);
+    .shell:not(.sent) &.incoming {
+      color: var(--status-online);
+    }
   }
 
   .usd {
@@ -186,23 +176,16 @@
     border-radius: 50%;
     background: var(--msg-bg);
     box-shadow: 0 0 0 3px var(--msg-bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
   }
 
   .arrow-icon {
-    width: 14px;
-    height: 14px;
-    background: var(--msg-ink);
-    mask: var(--icon-arrow-down) center/contain no-repeat;
+    @include icon(arrow-down, 14px, var(--msg-ink), $flex: null);
   }
 
   .action,
   .done {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     height: 44px;
     border-radius: 6px;
   }
@@ -212,15 +195,15 @@
     font: 600 13.5px/1 var(--font-sans);
     color: var(--on-accent);
     cursor: pointer;
-  }
 
-  .sent .action {
-    background: rgba(0, 0, 0, 0.18);
-    color: var(--bubble-text);
-  }
+    .sent & {
+      background: rgba(0, 0, 0, 0.18);
+      color: var(--bubble-text);
+    }
 
-  .action:hover {
-    filter: brightness(1.08);
+    &:hover {
+      filter: brightness(1.08);
+    }
   }
 
   .done {
@@ -228,17 +211,14 @@
     background: var(--msg-seg);
     font: 600 12.5px/1 var(--font-sans);
     color: var(--status-online);
-  }
 
-  .done.pending {
-    color: var(--msg-soft);
+    &.pending {
+      color: var(--msg-soft);
+    }
   }
 
   .check {
-    width: 13px;
-    height: 13px;
-    background: currentColor;
-    mask: var(--icon-check) center/contain no-repeat;
+    @include icon(check, 13px, $flex: null);
   }
 
   .caption {

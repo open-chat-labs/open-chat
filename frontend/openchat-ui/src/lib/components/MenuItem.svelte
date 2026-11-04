@@ -71,14 +71,14 @@
     white-space: nowrap;
     font: var(--weight-medium) var(--text-md) / 1 var(--font-sans);
     color: var(--ink-2);
-  }
 
-  .item.danger {
-    color: var(--status-danger);
-  }
+    &.danger {
+      color: var(--status-danger);
+    }
 
-  .item:hover {
-    background: var(--overlay-1);
+    &:hover {
+      background: var(--overlay-1);
+    }
   }
 
   .icon {

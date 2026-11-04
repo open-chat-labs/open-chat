@@ -127,6 +127,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .timeline {
     --dot: 26px;
     --row-pad: 4px 0 16px;
@@ -168,14 +170,14 @@
     transition:
       width 0.4s var(--ease-out),
       background 0.2s;
-  }
 
-  .bar-fill.done {
-    background: var(--status-online);
-  }
+    &.done {
+      background: var(--status-online);
+    }
 
-  .bar-fill.failed {
-    background: var(--status-danger);
+    &.failed {
+      background: var(--status-danger);
+    }
   }
 
   .funds {
@@ -192,9 +194,7 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     background: var(--accent-soft);
   }
 
@@ -204,20 +204,24 @@
     background: var(--accent-bright);
   }
 
-  .funds.done .funds-badge {
-    background: rgba(46, 230, 168, 0.14);
+  .funds.done {
+    .funds-badge {
+      background: rgba(46, 230, 168, 0.14);
+    }
+
+    .funds-icon {
+      background: var(--status-online);
+    }
   }
 
-  .funds.done .funds-icon {
-    background: var(--status-online);
-  }
+  .funds.warn {
+    .funds-badge {
+      background: rgba(255, 176, 61, 0.16);
+    }
 
-  .funds.warn .funds-badge {
-    background: rgba(255, 176, 61, 0.16);
-  }
-
-  .funds.warn .funds-icon {
-    background: var(--status-warning);
+    .funds-icon {
+      background: var(--status-warning);
+    }
   }
 
   .funds-text {
@@ -251,41 +255,35 @@
     height: var(--dot);
     box-sizing: border-box;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     font: 600 11px/1 var(--font-mono);
     color: var(--ink-4);
     box-shadow: inset 0 0 0 1.5px var(--line-2);
+
+    .done & {
+      background: rgba(46, 230, 168, 0.14);
+      box-shadow: none;
+    }
+
+    .failed & {
+      background: rgba(245, 73, 61, 0.14);
+      box-shadow: none;
+    }
+
+    .active & {
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1.5px var(--accent);
+    }
   }
 
-  .done .dot {
-    background: rgba(46, 230, 168, 0.14);
-    box-shadow: none;
-  }
+  .mark {
+    &.check {
+      @include icon(check, 12px, var(--status-online), $flex: null);
+    }
 
-  .failed .dot {
-    background: rgba(245, 73, 61, 0.14);
-    box-shadow: none;
-  }
-
-  .active .dot {
-    background: var(--accent-soft);
-    box-shadow: inset 0 0 0 1.5px var(--accent);
-  }
-
-  .mark.check {
-    width: 12px;
-    height: 12px;
-    background: var(--status-online);
-    mask: var(--icon-check) center/contain no-repeat;
-  }
-
-  .mark.cross {
-    width: 11px;
-    height: 11px;
-    background: var(--status-danger);
-    mask: var(--icon-close) center/contain no-repeat;
+    &.cross {
+      @include icon(close, 11px, var(--status-danger), $flex: null);
+    }
   }
 
   .line {
@@ -295,14 +293,14 @@
     margin: 3px 0;
     border-radius: 1px;
     background: var(--line-2);
-  }
 
-  .done .line {
-    background: var(--status-online);
-  }
+    .done & {
+      background: var(--status-online);
+    }
 
-  .line.last {
-    opacity: 0;
+    &.last {
+      opacity: 0;
+    }
   }
 
   .body {
@@ -325,10 +323,10 @@
     min-width: 0;
     font: 600 13.5px/1.35 var(--font-sans);
     color: var(--ink);
-  }
 
-  .todo .label {
-    color: var(--ink-4);
+    .todo & {
+      color: var(--ink-4);
+    }
   }
 
   .meta {
@@ -341,9 +339,9 @@
     font: 400 12px/1.45 var(--font-sans);
     color: var(--ink-3);
     text-wrap: pretty;
-  }
 
-  .failed .note {
-    color: var(--status-danger);
+    .failed & {
+      color: var(--status-danger);
+    }
   }
 </style>

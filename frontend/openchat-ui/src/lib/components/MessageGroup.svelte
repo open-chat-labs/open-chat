@@ -507,6 +507,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .group {
     position: relative;
     z-index: 0;
@@ -550,14 +552,14 @@
     padding: 0 var(--space-4);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
     color: var(--ink-3);
+
+    &.sender:hover {
+      text-decoration: underline;
+    }
   }
 
   .sender {
     cursor: pointer;
-  }
-
-  .name.sender:hover {
-    text-decoration: underline;
   }
 
   .message {
@@ -568,10 +570,10 @@
     -webkit-touch-callout: none;
     touch-action: pan-y;
     z-index: auto;
-  }
 
-  .message.marked {
-    z-index: 0;
+    &.marked {
+      z-index: 0;
+    }
   }
 
   /* row tint while this message is the menu / reply / edit target */
@@ -587,10 +589,10 @@
     opacity: 0;
     transition: opacity 0.2s ease-out;
     pointer-events: none;
-  }
 
-  .marked .mark {
-    opacity: 1;
+    .marked & {
+      opacity: 1;
+    }
   }
 
   /* swipe hints: shown and painted from script while a swipe is in progress */
@@ -610,14 +612,14 @@
     justify-content: center;
     opacity: 0;
     pointer-events: none;
-  }
 
-  .hint.start {
-    inset-inline-start: -48px;
-  }
+    &.start {
+      inset-inline-start: -48px;
+    }
 
-  .hint.end {
-    inset-inline-end: -34px;
+    &.end {
+      inset-inline-end: -34px;
+    }
   }
 
   .hint-icon {
@@ -648,9 +650,7 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     cursor: pointer;
   }
 
@@ -660,35 +660,34 @@
     user-select: none;
     background: transparent;
     transition: transform 0.12s;
-  }
 
-  .quick.on {
-    background: var(--accent-soft);
-  }
+    &.on {
+      background: var(--accent-soft);
+    }
 
-  .quick:hover {
-    background: var(--overlay-2);
-    transform: scale(1.14);
+    &:hover {
+      background: var(--overlay-2);
+      transform: scale(1.14);
+    }
   }
 
   .tool {
     background: transparent;
     color: var(--ink-2);
-  }
 
-  .tool.active {
-    background: var(--overlay-2);
-  }
+    &.active {
+      background: var(--overlay-2);
+    }
 
-  .tool:hover {
-    background: var(--overlay-2);
-    color: var(--ink);
+    &:hover {
+      background: var(--overlay-2);
+      color: var(--ink);
+    }
   }
 
   .quick:focus-visible,
   .tool:focus-visible {
-    box-shadow: var(--focus-ring);
-    outline: none;
+    @include focus-ring;
   }
 
   .tool-icon {

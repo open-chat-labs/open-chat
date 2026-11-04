@@ -40,6 +40,8 @@
 </span>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .token-avatar {
     --badge: 18px;
     --badge-icon: 10px;
@@ -48,9 +50,7 @@
     width: var(--size);
     height: var(--size);
     border-radius: var(--radius-pill);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center(inline-flex);
     font-weight: 700;
     line-height: 1;
     font-family: var(--font-sans);
@@ -76,9 +76,7 @@
     width: var(--badge);
     height: var(--badge);
     border-radius: var(--radius-pill);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     background: var(--surface-3);
     box-shadow: 0 0 0 2px var(--surface-1);
   }

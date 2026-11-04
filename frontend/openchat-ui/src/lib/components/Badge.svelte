@@ -33,15 +33,15 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .badge {
     display: inline-flex;
     flex: none;
   }
 
   .count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center(inline-flex);
     min-width: 18px;
     height: 18px;
     padding: 0 var(--space-4);
@@ -53,9 +53,7 @@
   }
 
   .chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center(inline-flex);
     height: 22px;
     padding: 0 var(--space-8);
     border-radius: var(--radius-pill);
@@ -85,11 +83,7 @@
   }
 
   .verified {
-    flex: none;
-    width: 17px;
-    height: 17px;
-    background: var(--status-verified);
-    mask: var(--icon-verified) center/contain no-repeat;
+    @include icon(verified, 17px, var(--status-verified));
   }
 
   .dot {

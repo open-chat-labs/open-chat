@@ -62,6 +62,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .cover {
     position: relative;
     height: 118px;
@@ -92,14 +94,12 @@
     border-radius: var(--radius-sm);
     background: var(--card-2);
     box-shadow: inset 0 0 0 1px var(--line-2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     cursor: pointer;
-  }
 
-  .action:hover {
-    background: var(--btn-hover);
+    &:hover {
+      background: var(--btn-hover);
+    }
   }
 
   .icon {

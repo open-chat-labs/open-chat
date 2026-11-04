@@ -42,6 +42,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .page-header {
     flex: none;
     width: 100%;
@@ -75,9 +77,7 @@
     min-width: 0;
     font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
     color: var(--ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    @include truncate;
   }
 
   .tag {

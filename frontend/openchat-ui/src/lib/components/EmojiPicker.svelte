@@ -105,6 +105,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .picker {
     width: 100%;
     height: 100%;
@@ -129,29 +131,23 @@
     width: 38px;
     height: 38px;
     border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     cursor: pointer;
     color: var(--ink-2);
-  }
 
-  .back:hover {
-    background: var(--overlay-2);
-    color: var(--ink);
+    &:hover {
+      background: var(--overlay-2);
+      color: var(--ink);
+    }
   }
 
   .back:focus-visible,
   .cell:focus-visible {
-    box-shadow: var(--focus-ring);
-    outline: none;
+    @include focus-ring;
   }
 
   .back-icon {
-    width: 16px;
-    height: 16px;
-    background: currentColor;
-    mask: var(--icon-back) center/contain no-repeat;
+    @include icon(back, 16px, $flex: null);
   }
 
   .search {
@@ -168,11 +164,7 @@
   }
 
   .search-icon {
-    flex: none;
-    width: 15px;
-    height: 15px;
-    background: var(--ink-4);
-    mask: var(--icon-search) center/contain no-repeat;
+    @include icon(search, 15px, var(--ink-4));
   }
 
   input {
@@ -218,24 +210,22 @@
 
   .cell {
     aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     border-radius: var(--radius-sm);
     background: transparent;
     font-size: 22px;
     line-height: 1;
     cursor: pointer;
     user-select: none;
-  }
 
-  .cell.on {
-    background: var(--accent-soft);
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 50%, transparent);
-  }
+    &.on {
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 50%, transparent);
+    }
 
-  .cell:hover {
-    background: var(--overlay-2);
+    &:hover {
+      background: var(--overlay-2);
+    }
   }
 
   .none {

@@ -41,6 +41,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .detail-row {
     display: flex;
     align-items: center;
@@ -69,11 +71,11 @@
     flex: none;
     font: var(--weight-medium) 13.5px/1 var(--font-sans);
     color: var(--ink-3);
-  }
 
-  .strong .label {
-    font: 700 14.5px/1 var(--font-sans);
-    color: var(--ink);
+    .strong & {
+      font: 700 14.5px/1 var(--font-sans);
+      color: var(--ink);
+    }
   }
 
   .value {
@@ -82,13 +84,11 @@
     text-align: end;
     font: 600 13px/1.3 var(--font-mono);
     color: var(--ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+    @include truncate;
 
-  .strong .value {
-    font: 700 15px/1.3 var(--font-mono);
+    .strong & {
+      font: 700 15px/1.3 var(--font-mono);
+    }
   }
 
   .positive {

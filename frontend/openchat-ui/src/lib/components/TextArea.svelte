@@ -68,6 +68,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .field {
     width: 100%;
     display: flex;
@@ -85,10 +87,10 @@
     border-radius: var(--radius-lg);
     background: var(--field);
     box-shadow: inset 0 0 0 1px var(--line-2);
-  }
 
-  .box.error {
-    box-shadow: inset 0 0 0 1px var(--status-danger);
+    &.error {
+      box-shadow: inset 0 0 0 1px var(--status-danger);
+    }
   }
 
   textarea {
@@ -107,10 +109,10 @@
     flex: none;
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
     color: var(--ink-4);
-  }
 
-  .count.low {
-    color: var(--status-warning);
+    &.low {
+      color: var(--status-warning);
+    }
   }
 
   .note {
@@ -122,11 +124,7 @@
   }
 
   .alert {
-    flex: none;
-    width: 13px;
-    height: 13px;
-    background: var(--status-danger);
-    mask: var(--icon-warning) center/contain no-repeat;
+    @include icon(warning, 13px, var(--status-danger));
   }
 
   .note-text {
@@ -135,10 +133,10 @@
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
     color: var(--ink-4);
     text-wrap: pretty;
-  }
 
-  .note.error .note-text {
-    font-weight: var(--weight-medium);
-    color: var(--status-danger);
+    .note.error & {
+      font-weight: var(--weight-medium);
+      color: var(--status-danger);
+    }
   }
 </style>

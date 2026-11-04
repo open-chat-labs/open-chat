@@ -124,6 +124,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .row {
     display: flex;
     justify-content: center;
@@ -147,20 +149,20 @@
     border-radius: 31px;
     background: var(--surface-2);
     box-shadow: inset 0 0 0 1px var(--line-1);
-  }
 
-  .pill.actionable {
-    padding-right: 12px;
-  }
+    &.actionable {
+      padding-right: 12px;
+    }
 
-  .pill.live {
-    background: color-mix(in oklch, var(--status-online) 10%, var(--surface-2));
-    box-shadow: inset 0 0 0 1.5px color-mix(in oklch, var(--status-online) 45%, transparent);
-  }
+    &.live {
+      background: color-mix(in oklch, var(--status-online) 10%, var(--surface-2));
+      box-shadow: inset 0 0 0 1.5px color-mix(in oklch, var(--status-online) 45%, transparent);
+    }
 
-  .pill.missed {
-    background: color-mix(in oklch, var(--status-danger) 8%, var(--surface-2));
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--status-danger) 30%, transparent);
+    &.missed {
+      background: color-mix(in oklch, var(--status-danger) 8%, var(--surface-2));
+      box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--status-danger) 30%, transparent);
+    }
   }
 
   .badge {
@@ -169,9 +171,7 @@
     height: 38px;
     border-radius: 50%;
     background: var(--overlay-2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
   }
 
   .badge-icon {
@@ -193,10 +193,10 @@
   .badge.pulse {
     background: color-mix(in oklch, var(--status-online) 22%, transparent);
     animation: ocCallPulse 2.4s ease-out infinite;
-  }
 
-  .badge.pulse .badge-icon {
-    background: var(--status-online);
+    .badge-icon {
+      background: var(--status-online);
+    }
   }
 
   .text {
@@ -210,25 +210,21 @@
   .title {
     font: 600 14px/1.1 var(--font-sans);
     color: var(--ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+    @include truncate;
 
-  .pill.missed .title {
-    color: var(--status-danger);
+    .pill.missed & {
+      color: var(--status-danger);
+    }
   }
 
   .sub {
     font: 500 12px/1 var(--font-mono);
     color: var(--ink-4);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+    @include truncate;
 
-  .pill.live .sub {
-    color: var(--status-online);
+    .pill.live & {
+      color: var(--status-online);
+    }
   }
 
   .faces {
@@ -250,20 +246,20 @@
     color: var(--ink);
     cursor: pointer;
     white-space: nowrap;
-  }
 
-  .action.join {
-    background: var(--accent);
-    color: var(--on-accent);
-  }
+    &.join {
+      background: var(--accent);
+      color: var(--on-accent);
+    }
 
-  .action.leave {
-    background: var(--status-danger);
-    color: #fff;
-  }
+    &.leave {
+      background: var(--status-danger);
+      color: #fff;
+    }
 
-  .action:hover {
-    filter: brightness(1.08);
+    &:hover {
+      filter: brightness(1.08);
+    }
   }
 
   .action-icon {
@@ -284,27 +280,23 @@
 
   .summary {
     cursor: pointer;
-  }
 
-  .summary:hover {
-    background: var(--overlay-1);
-  }
+    &:hover {
+      background: var(--overlay-1);
+    }
 
-  .summary .sub {
-    overflow: visible;
+    .sub {
+      overflow: visible;
+    }
   }
 
   .chevron {
-    flex: none;
-    width: 16px;
-    height: 16px;
-    background: var(--ink-3);
-    mask: var(--icon-chevron-down) center/contain no-repeat;
+    @include icon(chevron-down, 16px, var(--ink-3));
     transition: transform 0.2s;
-  }
 
-  .chevron.open {
-    transform: rotate(180deg);
+    &.open {
+      transform: rotate(180deg);
+    }
   }
 
   .rows {
@@ -333,17 +325,17 @@
     min-width: 0;
     font: 500 13px/1.2 var(--font-sans);
     color: var(--ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    @include truncate;
   }
 
-  .call-row.missed .row-icon {
-    background: var(--status-danger);
-  }
+  .call-row.missed {
+    .row-icon {
+      background: var(--status-danger);
+    }
 
-  .call-row.missed .row-title {
-    color: var(--status-danger);
+    .row-title {
+      color: var(--status-danger);
+    }
   }
 
   .row-time {
@@ -369,16 +361,13 @@
     font: 600 12.5px/1 var(--font-sans);
     color: var(--ink);
     cursor: pointer;
-  }
 
-  .call-back:hover {
-    filter: brightness(1.15);
+    &:hover {
+      filter: brightness(1.15);
+    }
   }
 
   .call-back-icon {
-    width: 14px;
-    height: 14px;
-    background: currentColor;
-    mask: var(--icon-phone) center/contain no-repeat;
+    @include icon(phone, 14px, $flex: null);
   }
 </style>

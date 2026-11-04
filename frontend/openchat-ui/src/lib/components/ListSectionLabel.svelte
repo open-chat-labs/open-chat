@@ -20,6 +20,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .section-label {
     display: flex;
     align-items: center;
@@ -38,9 +40,7 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-4);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    @include truncate;
   }
 
   .meta {

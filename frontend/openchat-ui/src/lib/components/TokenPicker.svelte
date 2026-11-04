@@ -118,6 +118,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .picker {
     display: flex;
     flex-direction: column;
@@ -178,17 +180,15 @@
 
   .clear {
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     width: 22px;
     height: 22px;
     border-radius: var(--radius-sm);
     cursor: pointer;
-  }
 
-  .clear:hover {
-    background: var(--overlay-2);
+    &:hover {
+      background: var(--overlay-2);
+    }
   }
 
   .list {
@@ -234,23 +234,21 @@
     background: transparent;
     cursor: pointer;
     user-select: none;
-  }
 
-  .row:hover,
-  .row.current {
-    background: var(--overlay-1);
-  }
+    &:hover,
+    &.current {
+      background: var(--overlay-1);
+    }
 
-  .row.disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+    &.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
   }
 
   .mark {
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     width: 34px;
     height: 34px;
     border-radius: var(--radius-pill);
@@ -274,9 +272,7 @@
   .name {
     font: var(--weight-regular) var(--text-sm) / 1.2 var(--font-sans);
     color: var(--ink-4);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    @include truncate;
   }
 
   .held {

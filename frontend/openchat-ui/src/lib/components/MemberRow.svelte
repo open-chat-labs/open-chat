@@ -177,6 +177,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .member {
     --row-hover: var(--overlay-1);
     width: 100%;
@@ -188,28 +190,26 @@
     border-radius: var(--radius-md);
     background: transparent;
     cursor: pointer;
-  }
 
-  .member.picked {
-    --row-hover: color-mix(in srgb, var(--accent) 12%, transparent);
-    background: color-mix(in srgb, var(--accent) 8%, transparent);
-  }
+    &.picked {
+      --row-hover: color-mix(in srgb, var(--accent) 12%, transparent);
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+    }
 
-  .member.disabled {
-    --row-hover: transparent;
-    opacity: 0.55;
-    cursor: default;
-  }
+    &.disabled {
+      --row-hover: transparent;
+      opacity: 0.55;
+      cursor: default;
+    }
 
-  .member:hover {
-    background: var(--row-hover);
+    &:hover {
+      background: var(--row-hover);
+    }
   }
 
   .invite-tile {
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     width: 38px;
     height: 38px;
     border-radius: var(--radius-md);
@@ -234,14 +234,14 @@
     width: 38px;
     height: 38px;
     border-radius: var(--radius-pill);
-  }
 
-  .avatar.square {
-    border-radius: var(--radius-md);
-  }
+    &.square {
+      border-radius: var(--radius-md);
+    }
 
-  .avatar.muted {
-    opacity: 0.7;
+    &.muted {
+      opacity: 0.7;
+    }
   }
 
   .photo {
@@ -264,9 +264,7 @@
     position: absolute;
     inset-inline-end: -5px;
     inset-block-end: -5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     width: 18px;
     height: 18px;
     border-radius: var(--radius-pill);
@@ -275,10 +273,7 @@
   }
 
   .hook-icon {
-    width: 11px;
-    height: 11px;
-    background: var(--accent);
-    mask: var(--icon-hook) center/contain no-repeat;
+    @include icon(hook, 11px, var(--accent), $flex: null);
   }
 
   .body {
@@ -299,17 +294,15 @@
   .name {
     font: var(--weight-semibold) var(--text-base) / 1.25 var(--font-sans);
     color: var(--ink);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+    @include truncate;
 
-  .name.muted {
-    color: var(--ink-2);
-  }
+    &.muted {
+      color: var(--ink-2);
+    }
 
-  .name.invite {
-    color: var(--accent);
+    &.invite {
+      color: var(--accent);
+    }
   }
 
   .chip {
@@ -320,29 +313,27 @@
     font: var(--weight-semibold) var(--text-2xs) / 1.3 var(--font-mono);
     letter-spacing: var(--tracking-wide);
     color: var(--ink-3);
-  }
 
-  .chip.you {
-    background: var(--accent-soft);
-    color: var(--accent-bright);
+    &.you {
+      background: var(--accent-soft);
+      color: var(--accent-bright);
+    }
   }
 
   /* members show a handle in mono; bots describe themselves in prose */
   .subtitle {
     font: var(--weight-regular) var(--text-xs) / 1.4 var(--font-mono);
     color: var(--ink-4);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+    @include truncate;
 
-  .subtitle.prose {
-    font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    white-space: normal;
+    &.prose {
+      font-family: var(--font-sans);
+      font-size: var(--text-sm);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      white-space: normal;
+    }
   }
 
   .action {
@@ -353,10 +344,10 @@
     padding: var(--space-6) var(--space-8);
     border-radius: var(--radius-sm);
     cursor: pointer;
-  }
 
-  .action:hover {
-    background: var(--accent-soft);
+    &:hover {
+      background: var(--accent-soft);
+    }
   }
 
   .action-icon {
@@ -394,11 +385,11 @@
     flex: none;
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
     color: var(--ink-4);
-  }
 
-  .activity.now {
-    font-weight: var(--weight-semibold);
-    color: var(--status-online);
+    &.now {
+      font-weight: var(--weight-semibold);
+      color: var(--status-online);
+    }
   }
 
   .badge {
@@ -413,19 +404,17 @@
 
   .toggle {
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     width: 26px;
     height: 26px;
     border-radius: var(--radius-pill);
     background: var(--overlay-2);
     box-shadow: inset 0 0 0 1px var(--line-2);
-  }
 
-  .toggle.selected {
-    background: var(--accent);
-    box-shadow: inset 0 0 0 1px var(--accent);
+    &.selected {
+      background: var(--accent);
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
   }
 
   .toggle-icon {
@@ -433,61 +422,54 @@
     height: 14px;
     background: var(--ink-2);
     mask: var(--icon-plus) center/contain no-repeat;
-  }
 
-  .toggle.selected .toggle-icon {
-    background: var(--on-accent);
-    mask: var(--icon-check) center/contain no-repeat;
+    .toggle.selected & {
+      background: var(--on-accent);
+      mask: var(--icon-check) center/contain no-repeat;
+    }
   }
 
   .icon-button {
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     width: 28px;
     height: 28px;
     border-radius: var(--radius-sm);
     background: transparent;
     cursor: pointer;
-  }
 
-  .icon-button.selected {
-    background: var(--accent);
-  }
+    &.selected {
+      background: var(--accent);
+    }
 
-  .icon-button:hover {
-    background: var(--overlay-2);
+    &:hover {
+      background: var(--overlay-2);
+    }
   }
 
   .icon {
     width: 16px;
     height: 16px;
     background: var(--ink-3);
-  }
 
-  .icon-button.selected .icon {
-    background: var(--on-accent);
+    .icon-button.selected & {
+      background: var(--on-accent);
+    }
   }
 
   .kebab {
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     width: 26px;
     height: 26px;
     border-radius: var(--radius-sm);
-  }
 
-  .kebab:hover {
-    background: var(--overlay-2);
+    &:hover {
+      background: var(--overlay-2);
+    }
   }
 
   .kebab-icon {
-    width: 15px;
-    height: 15px;
-    background: var(--ink-3);
-    mask: var(--icon-kebab) center/contain no-repeat;
+    @include icon(kebab, 15px, var(--ink-3), $flex: null);
   }
 </style>

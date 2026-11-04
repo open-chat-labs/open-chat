@@ -511,3 +511,13 @@
 - The app's `svelte.config.js` gives the legacy trees (and component-lib) their own `src/styles/mixins.scss` prelude and nothing else gets one, so the library and new trees (`src/web`, a future `src/native`) never see the legacy mixins. Rollup's production build now uses that config too.
 - `sass` is a dev dependency of the library itself.
 - `ChatRow`'s preview text uses `truncate`. Using nesting and the mixins across the components is a follow-up.
+
+## 2026-11-04 — nesting and mixins in the library primitives' styles, by hand
+- The style blocks of 63 components in `src/lib/components` and `src/lib/virtual` use nesting: states (`&:hover`, `&:focus-visible`), modifiers (`&.sent`, `&.last`), children that were already descendants or compounds of their parent, and the context a rule depends on written from the element (`.sent & {}` for `.sent .bubble`). Selectors that stood alone stay top-level; `:global(...)` rules and grouped selector lists stay as they were. `src/features`, `src/pages` and `src/docs` are a later batch.
+- Mixins across them: `truncate`, `line-clamp`, `flex-center`, `icon`, `reduced-motion`, and new in `_mixins.scss`:
+  - `focus-ring`: the keyboard ring as a shadow, in place of the outline.
+  - `message-shell($bg)`: a message card's bubble (poll, prize, proposal, transfer, swap offer, file, media, link preview), with the `.last` tail corner.
+  - `flex-center($display)`: takes `inline-flex`.
+  - `icon(…, $flex)`: `$flex: null` leaves `flex` unset, for the icons that had no `flex: none`.
+- A pure refactor. Each changed file's compiled CSS was compared with origin/master's, rule by rule in order. The only differences are declarations reordered within a rule where none overrides another (`truncate`'s order; `flex-center`'s `display` and `icon`'s `flex` first), and a few nested modifiers and `reduced-motion` blocks moving ahead of neighbouring rules that set none of the same properties. The docs build's CSS has the same 5712 rules, with those differences and no others.
+- Left as they were: components with nothing to nest and no repeated pattern (Banner, Confetti, ContextMenu, Countdown, Icon, Logo, Menu, Pill, RequirementChip, ShareBar, SideCard, SnapFloat, StatCard, Tooltip, VirtualList), and hand-written clamps without the `line-clamp` property, which the mixin would add.

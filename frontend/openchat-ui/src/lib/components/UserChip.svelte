@@ -50,6 +50,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .chip {
     --chip-tint: var(--accent);
     display: inline-flex;
@@ -90,10 +92,10 @@
 
   .pressable {
     cursor: pointer;
-  }
 
-  .pressable:hover {
-    background: var(--overlay-2);
+    &:hover {
+      background: var(--overlay-2);
+    }
   }
 
   .avatar {
@@ -102,16 +104,16 @@
     width: 26px;
     height: 26px;
     border-radius: var(--radius-pill);
-  }
 
-  .sm .avatar {
-    width: 20px;
-    height: 20px;
-  }
+    .sm & {
+      width: 20px;
+      height: 20px;
+    }
 
-  .lg .avatar {
-    width: 32px;
-    height: 32px;
+    .lg & {
+      width: 32px;
+      height: 32px;
+    }
   }
 
   .dot {
@@ -123,11 +125,11 @@
     border-radius: var(--radius-pill);
     background: var(--status-online);
     box-shadow: 0 0 0 2px var(--surface-2);
-  }
 
-  .accent .dot,
-  .danger .dot {
-    box-shadow: 0 0 0 2px var(--surface-1);
+    .accent &,
+    .danger & {
+      box-shadow: 0 0 0 2px var(--surface-1);
+    }
   }
 
   .label {
@@ -135,25 +137,23 @@
     min-width: 0;
     font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
     color: var(--ink);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+    @include truncate;
 
-  .sm .label {
-    font-size: var(--text-sm);
-  }
+    .sm & {
+      font-size: var(--text-sm);
+    }
 
-  .lg .label {
-    font-size: var(--text-base);
-  }
+    .lg & {
+      font-size: var(--text-base);
+    }
 
-  .accent .label {
-    color: var(--accent-bright);
-  }
+    .accent & {
+      color: var(--accent-bright);
+    }
 
-  .danger .label {
-    color: var(--status-danger);
+    .danger & {
+      color: var(--status-danger);
+    }
   }
 
   .tag {
@@ -168,27 +168,25 @@
 
   .remove {
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     width: 20px;
     height: 20px;
     border-radius: var(--radius-pill);
     cursor: pointer;
-  }
 
-  .sm .remove {
-    width: 17px;
-    height: 17px;
-  }
+    .sm & {
+      width: 17px;
+      height: 17px;
+    }
 
-  .lg .remove {
-    width: 24px;
-    height: 24px;
-  }
+    .lg & {
+      width: 24px;
+      height: 24px;
+    }
 
-  .remove:hover {
-    background: var(--overlay-2);
+    &:hover {
+      background: var(--overlay-2);
+    }
   }
 
   .remove-icon {
@@ -196,23 +194,23 @@
     height: 11px;
     background: var(--ink-3);
     mask: var(--icon-close) center/contain no-repeat;
-  }
 
-  .sm .remove-icon {
-    width: 9px;
-    height: 9px;
-  }
+    .sm & {
+      width: 9px;
+      height: 9px;
+    }
 
-  .lg .remove-icon {
-    width: 12px;
-    height: 12px;
-  }
+    .lg & {
+      width: 12px;
+      height: 12px;
+    }
 
-  .accent .remove-icon {
-    background: var(--accent-bright);
-  }
+    .accent & {
+      background: var(--accent-bright);
+    }
 
-  .danger .remove-icon {
-    background: var(--status-danger);
+    .danger & {
+      background: var(--status-danger);
+    }
   }
 </style>

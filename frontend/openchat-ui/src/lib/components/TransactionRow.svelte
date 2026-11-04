@@ -79,6 +79,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .row {
     display: flex;
     align-items: center;
@@ -119,9 +121,7 @@
     width: 40px;
     height: 40px;
     border-radius: var(--radius-pill);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     background: var(--overlay-2);
   }
 
@@ -142,9 +142,7 @@
   .title {
     font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
     color: var(--ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    @include truncate;
   }
 
   .sub {
@@ -158,9 +156,7 @@
 
   .sub-text {
     min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    @include truncate;
   }
 
   .figures {
@@ -174,10 +170,10 @@
   .amount {
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-mono);
     color: var(--ink);
-  }
 
-  .amount.positive {
-    color: var(--status-online);
+    &.positive {
+      color: var(--status-online);
+    }
   }
 
   .fiat {

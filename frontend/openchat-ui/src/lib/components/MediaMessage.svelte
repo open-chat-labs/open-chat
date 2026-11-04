@@ -120,6 +120,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .media-message {
     --msg-bg: var(--bubble-recv-bg);
     --msg-ink: var(--bubble-recv-text);
@@ -130,34 +132,25 @@
     align-items: flex-start;
     gap: 6px;
     max-width: 100%;
-  }
 
-  .media-message.sent {
-    --msg-bg: var(--bubble-send-bg);
-    --msg-ink: var(--bubble-text);
-    --msg-soft: var(--bubble-text-soft);
-    --msg-tick: var(--bubble-tick);
+    &.sent {
+      --msg-bg: var(--bubble-send-bg);
+      --msg-ink: var(--bubble-text);
+      --msg-soft: var(--bubble-text-soft);
+      --msg-tick: var(--bubble-tick);
+    }
   }
 
   .shell {
-    max-width: 100%;
-    padding: 4px;
-    box-sizing: border-box;
-    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
-    background: var(--msg-bg);
-    box-shadow: inset 0 0 0 1px var(--line-1);
-  }
+    @include message-shell;
 
-  .shell.last {
-    border-bottom-left-radius: 22px;
-  }
+    .sent & {
+      box-shadow: none;
+    }
 
-  .sent .shell {
-    box-shadow: none;
-  }
-
-  .shell.failed {
-    opacity: 0.85;
+    &.failed {
+      opacity: 0.85;
+    }
   }
 
   .media {
@@ -166,32 +159,30 @@
     gap: 2px;
     border-radius: 2px 18px 18px 2px;
     overflow: hidden;
-  }
 
-  .last .media {
-    border-bottom-left-radius: 18px;
-  }
+    .last & {
+      border-bottom-left-radius: 18px;
+    }
 
-  .media.captioned {
-    border-radius: 2px 18px 6px 6px;
+    &.captioned {
+      border-radius: 2px 18px 6px 6px;
+    }
   }
 
   .tile {
     position: relative;
     cursor: zoom-in;
-  }
 
-  .tile:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
   }
 
   .more {
     position: absolute;
     inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     background: rgba(0, 0, 0, 0.5);
     font: 700 24px/1 var(--font-sans);
     color: #fff;
@@ -207,18 +198,13 @@
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.55);
     backdrop-filter: blur(6px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     cursor: pointer;
   }
 
   .play-icon {
-    width: 20px;
-    height: 20px;
+    @include icon(play, 20px, #fff, $flex: null);
     margin-left: 3px;
-    background: #fff;
-    mask: var(--icon-play) center/contain no-repeat;
   }
 
   .chip {
@@ -240,10 +226,7 @@
   }
 
   .video-icon {
-    width: 11px;
-    height: 11px;
-    background: #fff;
-    mask: var(--icon-video) center/contain no-repeat;
+    @include icon(video, 11px, #fff, $flex: null);
   }
 
   .on-media {
@@ -271,22 +254,18 @@
     position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+    @include flex-center;
 
-  .veil.dark {
-    background: rgba(0, 0, 0, 0.45);
+    &.dark {
+      background: rgba(0, 0, 0, 0.45);
+    }
   }
 
   .progress {
     position: relative;
     width: 48px;
     height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
   }
 
   .ring {
@@ -297,10 +276,7 @@
   }
 
   .cancel {
-    width: 14px;
-    height: 14px;
-    background: #fff;
-    mask: var(--icon-close) center/contain no-repeat;
+    @include icon(close, 14px, #fff, $flex: null);
     cursor: pointer;
   }
 
@@ -318,10 +294,7 @@
   }
 
   .retry-icon {
-    width: 14px;
-    height: 14px;
-    background: #fff;
-    mask: var(--icon-refresh) center/contain no-repeat;
+    @include icon(refresh, 14px, #fff, $flex: null);
   }
 
   .tick {
@@ -330,14 +303,14 @@
     height: 13px;
     background: var(--msg-tick);
     mask: var(--icon-check) center/contain no-repeat;
-  }
 
-  .tick.double {
-    mask: var(--icon-check-double) center/contain no-repeat;
-  }
+    &.double {
+      mask: var(--icon-check-double) center/contain no-repeat;
+    }
 
-  .on-media .tick {
-    background: #fff;
+    .on-media & {
+      background: #fff;
+    }
   }
 
   .caption {
@@ -379,10 +352,7 @@
   }
 
   .failed-icon {
-    width: 13px;
-    height: 13px;
-    background: currentColor;
-    mask: var(--icon-failed) center/contain no-repeat;
+    @include icon(failed, 13px, $flex: null);
   }
 
   .delete {

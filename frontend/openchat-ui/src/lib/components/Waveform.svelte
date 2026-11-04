@@ -126,10 +126,10 @@
     cursor: default;
     touch-action: none;
     user-select: none;
-  }
 
-  .wave.seek {
-    cursor: pointer;
+    &.seek {
+      cursor: pointer;
+    }
   }
 
   .bar {

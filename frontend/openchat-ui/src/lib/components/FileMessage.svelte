@@ -97,6 +97,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .file {
     --msg-bg: var(--bubble-recv-bg);
     --msg-ink: var(--bubble-recv-text);
@@ -110,34 +112,25 @@
     align-items: flex-start;
     gap: 6px;
     max-width: 100%;
-  }
 
-  .file.sent {
-    --msg-bg: var(--bubble-send-bg);
-    --msg-ink: var(--bubble-text);
-    --msg-soft: var(--bubble-text-soft);
-    --msg-tick: var(--bubble-tick);
-    --msg-seg: rgba(0, 0, 0, 0.18);
-    --msg-btn: rgba(0, 0, 0, 0.2);
-    --msg-track: rgba(255, 255, 255, 0.22);
+    &.sent {
+      --msg-bg: var(--bubble-send-bg);
+      --msg-ink: var(--bubble-text);
+      --msg-soft: var(--bubble-text-soft);
+      --msg-tick: var(--bubble-tick);
+      --msg-seg: rgba(0, 0, 0, 0.18);
+      --msg-btn: rgba(0, 0, 0, 0.2);
+      --msg-track: rgba(255, 255, 255, 0.22);
+    }
   }
 
   .shell {
     width: 320px;
-    max-width: 100%;
-    padding: 4px;
-    box-sizing: border-box;
-    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
-    background: var(--msg-bg);
-    box-shadow: inset 0 0 0 1px var(--line-1);
-  }
+    @include message-shell;
 
-  .shell.last {
-    border-bottom-left-radius: 22px;
-  }
-
-  .sent .shell {
-    box-shadow: none;
+    .sent & {
+      box-shadow: none;
+    }
   }
 
   .row {
@@ -154,9 +147,7 @@
     width: 40px;
     height: 40px;
     border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     font: 800 10px/1 var(--font-sans);
   }
 
@@ -165,9 +156,7 @@
     position: relative;
     width: 40px;
     height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
   }
 
   .ring {
@@ -178,10 +167,7 @@
   }
 
   .cancel {
-    width: 14px;
-    height: 14px;
-    background: var(--msg-ink);
-    mask: var(--icon-close) center/contain no-repeat;
+    @include icon(close, 14px, var(--msg-ink), $flex: null);
     cursor: pointer;
   }
 
@@ -201,9 +187,7 @@
   }
 
   .head {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    @include truncate;
   }
 
   .tail {
@@ -221,9 +205,7 @@
     height: 34px;
     border-radius: 50%;
     background: var(--msg-btn);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     cursor: pointer;
   }
 
@@ -232,17 +214,11 @@
   }
 
   .download-icon {
-    width: 16px;
-    height: 16px;
-    background: var(--msg-ink);
-    mask: var(--icon-download) center/contain no-repeat;
+    @include icon(download, 16px, var(--msg-ink), $flex: null);
   }
 
   .retry-icon {
-    width: 15px;
-    height: 15px;
-    background: var(--msg-ink);
-    mask: var(--icon-refresh) center/contain no-repeat;
+    @include icon(refresh, 15px, var(--msg-ink), $flex: null);
   }
 
   .caption {
@@ -284,10 +260,7 @@
 
   .tick {
     display: block;
-    width: 13px;
-    height: 13px;
-    background: var(--msg-tick);
-    mask: var(--icon-check-double) center/contain no-repeat;
+    @include icon(check-double, 13px, var(--msg-tick), $flex: null);
   }
 
   .failed {
@@ -299,9 +272,6 @@
   }
 
   .failed-icon {
-    width: 13px;
-    height: 13px;
-    background: currentColor;
-    mask: var(--icon-failed) center/contain no-repeat;
+    @include icon(failed, 13px, $flex: null);
   }
 </style>

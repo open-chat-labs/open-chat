@@ -110,12 +110,12 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .layer {
     position: fixed;
     inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     padding: 24px;
   }
 
@@ -153,6 +153,11 @@
     box-sizing: border-box;
     padding: 0 var(--space-12) 0 var(--space-22);
     border-bottom: 1px solid var(--line-1);
+
+    /* the arrow sits where the title's padding was */
+    &.back {
+      padding-inline-start: var(--space-12);
+    }
   }
 
   .title {
@@ -160,9 +165,7 @@
     min-width: 0;
     font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
     color: var(--ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    @include truncate;
   }
 
   .close,
@@ -171,20 +174,15 @@
     display: flex;
   }
 
-  /* the arrow sits where the title's padding was */
-  .header.back {
-    padding-inline-start: var(--space-12);
-  }
-
   .body {
     flex: 1;
     min-height: 0;
     display: grid;
     grid-template-rows: minmax(0, 1fr);
     padding: var(--space-16);
-  }
 
-  .body.flush {
-    padding: 0;
+    &.flush {
+      padding: 0;
+    }
   }
 </style>

@@ -59,11 +59,11 @@
     gap: var(--space-14);
     width: 42px;
     height: 24px;
-  }
 
-  .toggle.labelled {
-    width: 100%;
-    height: auto;
+    &.labelled {
+      width: 100%;
+      height: auto;
+    }
   }
 
   .text {
@@ -96,15 +96,15 @@
     cursor: pointer;
     transition: background var(--duration-base) var(--ease-out);
     background: var(--overlay-2);
-  }
 
-  .track.on {
-    background: var(--accent);
-  }
+    &.on {
+      background: var(--accent);
+    }
 
-  .track.disabled {
-    cursor: not-allowed;
-    opacity: 0.4;
+    &.disabled {
+      cursor: not-allowed;
+      opacity: 0.4;
+    }
   }
 
   .knob {
@@ -117,10 +117,10 @@
       background var(--duration-base) var(--ease-out);
     transform: translateX(0);
     background: var(--ink-4);
-  }
 
-  .on .knob {
-    transform: translateX(calc(var(--oc-dir) * 16px));
-    background: #fff;
+    .on & {
+      transform: translateX(calc(var(--oc-dir) * 16px));
+      background: #fff;
+    }
   }
 </style>

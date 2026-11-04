@@ -39,10 +39,10 @@
     color: var(--ink-2);
     cursor: pointer;
     user-select: none;
-  }
 
-  .chip:hover {
-    background: var(--overlay-2);
+    &:hover {
+      background: var(--overlay-2);
+    }
   }
 
   .md {
