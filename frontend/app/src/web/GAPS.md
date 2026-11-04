@@ -598,9 +598,10 @@ design export needs. Each entry says where it came up.
   (a page the component asked for couldn't be loaded: an error with Retry in place of the page
   before it, or Retry on Load more, with the component left as it was; no design for it).
   Not asked for (no design yet):
-  - the sorts (Most members / Most active / Newest) are shown though there's one ranking (see
-    Explore under the data the backend doesn't have): a change of sort asks for nothing (the
-    results held already answer it, `exploreQueryAnswered`).
+  - the sorts (Most members / Most active / Newest) are hidden (`showSort={false}`): there's one
+    ranking (see Explore under the data the backend doesn't have). #10405 adds a sort to
+    `explore_communities`; then the screen shows them and asks again on a change (today a change
+    of sort would be answered from the results held, `exploreQueryAnswered`).
   - no place for a community's moderation flags (the old cards labelled adult and offensive
     ones, `serialiseFlags` in both old `CommunityCard`s); when the design has one, it moves to
     `@client`, returning `ResourceKey`s.
@@ -626,9 +627,9 @@ design export needs. Each entry says where it came up.
     keys a saved address by its account);
   - no native ETH deposit address.
 - **Explore**:
-  - one server ranking, so no featured vs popular lists and no sort by active or newest: the
-    component cuts Featured and Popular from the page it has (the biggest public communities not
-    joined), and a change of sort shows the same page;
+  - one server ranking, so no featured vs popular lists and no sort by members, activity or
+    newest (#10405; the sorts are hidden until then): the component cuts Featured and Popular
+    from the page it has (the biggest public communities not joined);
   - results have no created date, activity metric or channel list (the big cards' channel line is
     empty).
 - **Activity**:

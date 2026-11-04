@@ -103,6 +103,8 @@
     /** The page last asked for couldn't be loaded (onQuery mode): a first page shows an error with a retry in place of
      *  the page before it, a later one a retry on Load more. The host clears it as it takes the next ask. */
     failed?: boolean;
+    /** Show the home list's sorts (Most members, Most active, Newest). A host whose search can't sort hides them. */
+    showSort?: boolean;
     /** Languages to offer in the filter (onQuery mode), by code; defaults to the languages of the loaded communities. */
     languageOptions?: ExploreLanguage[];
     /** The search text it opens with (e.g. from the host's URL). Read once; later changes come from the user. */
@@ -128,6 +130,7 @@
     onQuery,
     total,
     loading = false,
+    showSort = true,
     failed = false,
     languageOptions,
     initialQuery = '',
@@ -570,20 +573,22 @@
           {#if langs.length}
             <span class="clear-filters" onclick={() => (langs = [])} role="button" tabindex="0">{t('ui.exploreCommunities.clearFilters')}</span>
           {/if}
-          <div class="sorts">
-            {#each ['ui.exploreCommunities.sortMembers', 'ui.exploreCommunities.sortActive', 'ui.exploreCommunities.sortNewest'] as label, i}
-              <span
-                class="sort"
-                class:on={sort === i}
-                onclick={() => {
-                  sort = i;
-                  shown = PAGE;
-                }}
-                role="button"
-                tabindex="0">{t(label)}</span
-              >
-            {/each}
-          </div>
+          {#if showSort}
+            <div class="sorts">
+              {#each ['ui.exploreCommunities.sortMembers', 'ui.exploreCommunities.sortActive', 'ui.exploreCommunities.sortNewest'] as label, i}
+                <span
+                  class="sort"
+                  class:on={sort === i}
+                  onclick={() => {
+                    sort = i;
+                    shown = PAGE;
+                  }}
+                  role="button"
+                  tabindex="0">{t(label)}</span
+                >
+              {/each}
+            </div>
+          {/if}
         </div>
         <div class="row columns" data-ex-row="">
           <span>{t('ui.exploreCommunities.colCommunity')}</span><span>{t('ui.exploreCommunities.colMembers')}</span><span data-ex-col="">{t('ui.exploreCommunities.colChannels')}</span><span data-ex-col="">{t('ui.exploreCommunities.colLanguage')}</span><span></span>
