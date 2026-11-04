@@ -20,7 +20,10 @@ design export needs. Each entry says where it came up.
     stored mode and accent the web uses (light / dark / system), and `--text-scale` from
     `textScaleOf` on `<html>` (so what's portalled to `<body>`, the call screen, follows it
     too; the accent there comes from `<html>`'s `data-accent`, so the native root should be
-    `<html>` or `<html>` carry the same attributes). The platform font scale needs a native bridge (iOS
+    `<html>` or `<html>` carry the same attributes). The native tree owns `--text-scale` on `<html>`:
+    it sets it only while it's mounted and removes it in the native root's teardown, so the web tree
+    never inherits a scale. The layout is chosen once per load and switching is a reload (#10366), but
+    the teardown removes it regardless. The platform font scale needs a native bridge (iOS
     dynamic type's content size category, Android's `Configuration.fontScale`, read again when it
     changes); mobile web passes 1.
   - `viewport-fit=cover` on the native entry, or `env(safe-area-inset-*)` reports 0 and `--safe-*`

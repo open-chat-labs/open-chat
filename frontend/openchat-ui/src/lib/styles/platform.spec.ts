@@ -204,6 +204,12 @@ describe('data-always-dark', () => {
     expect(inside.get('--accent')).toBe('#3D9BFF');
   });
 
+  test('once the native tree takes --text-scale off <html> again, the web tree has the sizes as designed', () => {
+    const web = resolve([root({ 'data-mode': 'dark', 'data-accent': 'pink' })]);
+    expect(web.get('--text-scale')).toBe('1');
+    expect(web.get('--text-sm')).toBe('calc(11.5px * 1)');
+  });
+
   test('the call colours exist only inside the scope', () => {
     expect(resolve([root({ 'data-mode': 'light', 'data-accent': 'pink', 'data-platform': 'native' })]).has('--call-bg')).toBe(false);
   });
