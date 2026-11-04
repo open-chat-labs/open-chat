@@ -170,6 +170,7 @@
     document.addEventListener('keydown', esc);
     return () => {
       clearTimeout(queryTimer);
+      clearTimeout(composedTimer);
       document.removeEventListener('pointerdown', away, true);
       document.removeEventListener('keydown', esc);
     };
@@ -177,10 +178,15 @@
 
   // the filter compares these values; they render through t(), so keys and plain names both work
   const langOf = (c: ExploreCommunity) => c.language || 'ui.exploreCommunities.english';
-  const q = $derived(query.trim().toLowerCase());
-  // an IME composing in the hero's search: the view waits for the word before it swaps (and takes the focus over)
+  // an IME composing a word in the hero's search: until it's composed there's no text yet, for the view (it doesn't
+  // swap) or the host (nothing is asked for the partial word)
   let heroComposing = $state(false);
-  const searchShown = $derived(searchViewShown(query, searchOpen) && !heroComposing);
+  let heroInput = $state<HTMLInputElement>();
+  let composedTimer: ReturnType<typeof setTimeout> | undefined;
+  // the search text as it stands
+  const text = $derived(heroComposing ? '' : query.trim());
+  const q = $derived(text.toLowerCase());
+  const searchShown = $derived(searchViewShown(text, searchOpen));
 
   // opens the search view from the hero's search and moves the focus to its input in the same event, so a phone keeps its
   // keyboard; the hero's input itself never opens it on focus, so Tab goes past it to Popular and the list
@@ -240,15 +246,15 @@
     if (loading) untrack(() => (sawLoading = true));
   });
   const ask = (offset: number) => {
-    lastAsk = { text: query.trim(), languages: [...langs], sort, offset };
+    lastAsk = { text, languages: [...langs], sort, offset };
     if (offset === 0) {
       askedOn = communities;
       sawLoading = false;
     }
-    onQuery?.({ text: query.trim(), languages: [...langs], sort: SORT_KEYS[sort], offset, limit: PAGE });
+    onQuery?.({ text, languages: [...langs], sort: SORT_KEYS[sort], offset, limit: PAGE });
   };
   $effect(() => {
-    void query;
+    void text;
     void langs;
     void sort;
     untrack(() => {
@@ -260,7 +266,7 @@
       clearTimeout(queryTimer);
       // a sort, a language or leaving the search is asked for at once; typing waits for a pause; the search already
       // asked for isn't asked again
-      const timing = askTiming(lastAsk, { text: query.trim(), languages: langs, sort });
+      const timing = askTiming(lastAsk, { text, languages: langs, sort });
       if (timing === 'now') ask(0);
       else if (timing === 'debounced') queryTimer = setTimeout(() => ask(0), 250);
     });
@@ -273,13 +279,13 @@
   // same `communities`, or the host says it's loading)
   const firstPagePending = $derived(lastAsk.offset === 0 && (loading || (communities === askedOn && !sawLoading)));
   // the last ask is for the search as it stands: the same text, languages and sort
-  const askedAsShown = $derived(askedFor(lastAsk, { text: query.trim(), languages: langs, sort }));
+  const askedAsShown = $derived(askedFor(lastAsk, { text, languages: langs, sort }));
   const searching = $derived(remote && !!q && (!askedAsShown || firstPagePending));
   // onQuery: the home list still holds an older query's page (just after clearing the search, or a sort / language
   // change the host hasn't answered yet); it shows a loading state instead of passing that page off as "All communities"
   const homeStale = $derived(remote && !q && (!askedAsShown || firstPagePending));
   // while it is: the list refreshes in place; the hero's count and Popular wait only for other languages or text
-  const home = $derived(homeRefresh(pageSearch, { text: query.trim(), languages: langs, sort }, homeStale));
+  const home = $derived(homeRefresh(pageSearch, { text, languages: langs, sort }, homeStale));
   // onQuery: the host couldn't load the page last asked for (`failed`), for the search as it stands. A first page leaves
   // the page before it, which mustn't pass as its answer: an error with a retry shows in its place. A later page keeps
   // the list, and Load more becomes the retry
@@ -545,21 +551,46 @@
         {@render icon('search', 18, 'var(--ink-3)')}
         <!-- a click or a key opens the search view, which takes the focus over; focus alone (Tab) doesn't -->
         <input
+          bind:this={heroInput}
           bind:value={query}
+          autocomplete="off"
           onfocus={() => (focused = true)}
           onblur={() => (focused = false)}
           onclick={openSearch}
           onkeydown={(e) => {
             if (e.key === 'Enter' || (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey)) openSearch();
           }}
-          oninput={(e) => {
-            // text from anywhere else (AltGr or Option characters, a paste, a drop, autofill) opens it too
-            if (!(e instanceof InputEvent && e.isComposing) && !heroComposing) openSearch();
-          }}
-          oncompositionstart={() => (heroComposing = true)}
-          oncompositionend={() => {
-            heroComposing = false;
+          onbeforeinput={(e) => {
+            // text from anywhere else (AltGr or Option characters, a paste, a drop) opens the search with it, before
+            // the hero's input can take it: text in the hero would swap the view and take the input (and its focus)
+            // away mid-keystroke. An IME's word waits for compositionend
+            if (heroComposing || e.isComposing || e.inputType === 'insertCompositionText') return;
+            const data = e.data ?? e.dataTransfer?.getData('text/plain') ?? '';
+            if (!data) return;
+            e.preventDefault();
+            query += data;
             openSearch();
+          }}
+          oncompositionstart={() => {
+            heroComposing = true;
+            clearTimeout(queryTimer);
+            clearTimeout(composedTimer);
+          }}
+          oncompositionend={() => {
+            // a word composed in the search opens it; a composition ended by leaving the input (a click elsewhere) or
+            // cancelled leaves nothing behind, so the view doesn't swap under the user's click. A click elsewhere ends
+            // the composition while the input still has the focus and blurs it right after, in the same task, so
+            // which one it was is only known once that task is done; until then the word stays uncomposed
+            clearTimeout(composedTimer);
+            composedTimer = setTimeout(() => {
+              if (document.activeElement === heroInput && query.trim()) {
+                heroComposing = false;
+                openSearch();
+              } else {
+                query = '';
+                heroComposing = false;
+              }
+            });
           }}
           placeholder={t('ui.exploreCommunities.searchPlaceholder')}
         />
