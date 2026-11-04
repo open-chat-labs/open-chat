@@ -3,7 +3,6 @@
         chatListScopeStore,
         isLocked,
         ROLE_NONE,
-        routeForScope,
         selectedCommunitySummaryStore,
         type ChatListScope,
         type OpenChat,
@@ -14,14 +13,23 @@
     import Button from "../Button.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import CommunityCard from "./communities/explore/CommunityCard.svelte";
-    import { communityPreviewState } from "@src/utils/preview.svelte";
+    import { communityJoin } from "@src/logic/join/joinFlow.svelte";
+    import { showJoinStep } from "@src/utils/join";
 
     const client = getContext<OpenChat>("client");
 
     function cancelPreview() {
         if ($selectedCommunitySummaryStore) {
-            client.removeCommunity($selectedCommunitySummaryStore.id);
-            navigate(routeForScope(client.getDefaultScope()));
+            navigate(client.cancelPreview($selectedCommunitySummaryStore.id));
+        }
+    }
+
+    async function joinCommunity() {
+        if ($selectedCommunitySummaryStore) {
+            showJoinStep(
+                await communityJoin.join(client, $selectedCommunitySummaryStore),
+                "community",
+            );
         }
     }
 
@@ -60,9 +68,9 @@
             verified={$selectedCommunitySummaryStore.verified} />
         <div class="join">
             <Button
-                loading={communityPreviewState.joining}
-                disabled={locked || communityPreviewState.joining}
-                onClick={() => communityPreviewState.joinCommunity(client)}
+                loading={communityJoin.joining !== undefined}
+                disabled={locked || communityJoin.joining !== undefined}
+                onClick={joinCommunity}
                 ><Translatable
                     resourceKey={locked
                         ? i18nKey("access.lockedGate", undefined, "community", true)

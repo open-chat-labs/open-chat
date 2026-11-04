@@ -168,6 +168,8 @@ import {
     type ClientJoinGroupResponse,
     type GateCheckSucceeded,
     type JoinOutcome,
+    type JoinCommunity,
+    type JoinGroup,
     type CommunitiesRoute,
     type CommunityDetailsResponse,
     type CommunityIdentifier,
@@ -687,7 +689,8 @@ import {
     swapUnconfirmed,
     swapMinimumOut,
 } from "./utils/swap";
-import { joinGroupFailureMessage } from "./utils/join";
+import { joinGroupFailureMessage, postLoginJoin } from "./utils/join";
+import { communityPreviewOriginStore } from "./stores/previewOrigin";
 import { currentTip, tipResult } from "./utils/tip";
 import { cryptoTransferResult } from "./utils/cryptoTransfer";
 import {
@@ -1169,6 +1172,18 @@ export class OpenChat {
 
     clearPostLoginState() {
         identityStateStore.update((state) => ({ ...state, postLogin: undefined }));
+    }
+
+    /**
+     * The group or community a guest asked to join, once they've signed in and their chats have
+     * loaded; handed out once, as the post-login state is cleared with it, so the join is replayed
+     * once whichever tree asks. Call it again whenever the identity state or `chatsInitialisedStore`
+     * changes, and join what it returns.
+     */
+    takePostLoginJoin(): JoinGroup | JoinCommunity | undefined {
+        const join = postLoginJoin(identityStateStore.value, chatsInitialisedStore.value);
+        if (join !== undefined) this.clearPostLoginState();
+        return join;
     }
 
     updateIdentityState(newState: IdentityState) {
@@ -4782,6 +4797,51 @@ export class OpenChat {
 
     removeCommunity(id: CommunityIdentifier): void {
         localUpdates.removeCommunity(id);
+    }
+
+    /**
+     * Where cancelling a community's preview goes back to, if not the default scope (Explore or
+     * `/welcome`, which opened it). Kept until that preview is cancelled, or another is opened.
+     */
+    setCommunityPreviewOrigin(communityId: string, path: string): void {
+        communityPreviewOriginStore.set({ communityId, path });
+    }
+
+    /**
+     * Stops previewing a group, channel or community, and returns the path to go to. A channel of
+     * a community being previewed cancels the community's preview: the community is dropped, and
+     * the path is where its preview was opened from (`setCommunityPreviewOrigin`), else the default
+     * scope. A group or channel is dropped from the list, a private group's invitation declined
+     * first, and the path is the current scope's.
+     */
+    cancelPreview(id: MultiUserChatIdentifier | CommunityIdentifier): string {
+        const communityId: CommunityIdentifier | undefined =
+            id.kind === "community"
+                ? id
+                : id.kind === "channel"
+                  ? { kind: "community", communityId: id.communityId }
+                  : undefined;
+        const community =
+            communityId === undefined ? undefined : communitiesStore.value.get(communityId);
+        if (
+            community !== undefined &&
+            (community.membership.role === ROLE_NONE || community.membership.lapsed)
+        ) {
+            const origin = communityPreviewOriginStore.value;
+            communityPreviewOriginStore.set(undefined);
+            this.removeCommunity(community.id);
+            return origin?.communityId === community.id.communityId
+                ? origin.path
+                : routeForScope(this.getDefaultScope());
+        }
+        if (id.kind === "community") return routeForScope(this.getDefaultScope());
+
+        const chat = allChatsStore.value.get(id);
+        if (chat !== undefined && chat.kind !== "direct_chat" && !chat.public) {
+            void this.declineInvitation(id);
+        }
+        this.removePreviewedChat(id);
+        return routeForScope(chatListScopeStore.value);
     }
 
     // Called when the selected community changes. If we were only previewing the

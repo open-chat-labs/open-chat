@@ -173,7 +173,7 @@ until there's a setting (`GAPS.md`). Signed-in users on `/` go to the app as tod
 | `?open=true` | thread panel open for `:mi` |
 | `?code=` | private group / community invite code |
 | `?ref=` | referral; captured, then dropped from the URL |
-| `?autojoin` | join after preview |
+| `?autojoin` | join after preview (the client's `joinGroup` event, a `join` outcome of `subscribeAppEvents`; AppScreen joins as the preview bar's Join does, 8b) |
 | `?explore` | no auto-select of a default chat |
 | `?threads` **(new)** | `ThreadList` (All / Unread) in the left column, in place of the chat list; the middle is unchanged (the list's default chat when nothing is selected, decision 7) |
 | `?profile` **(new)** | `ProfileDialog`, over the current page |
@@ -204,7 +204,10 @@ Not a URL, wired as today:
   scope.
 - **Threads.** Closing a thread strips `/:tmi` and `?open`. `/:mi/:tmi` opens the thread on a cold
   load even without `?open`.
-- **Previews.** Navigating away from a previewed community drops the preview.
+- **Previews.** Navigating away from a previewed community drops the preview. The preview bar's
+  Back (8b) cancels it through `cancelPreview`: back to Explore (or `/welcome`) when the preview was
+  opened from there (`setCommunityPreviewOrigin`), else the default scope; a group or channel goes
+  back to the scope's list, a private group's invitation declined first.
 - **Navigation.** It goes through `utils/navigation.ts` (`navigate(to, intent)`), which waits for
   the modal stack to close. The new shell has to handle `closeModalStack` the way `Home.svelte`
   does, or navigations sit pending.
@@ -247,8 +250,8 @@ that isn't joined shows no messages, as before.
 
 **Composer (phase 3c).** Under the messages, `ComposerBar` sends text with its mentions and
 markdown as the old composer did, keeps a draft per chat and says who's typing. Where the reader
-can't send (frozen, blocked, a preview, lapsed, signed out, no permission) the old footer's reason
-shows instead.
+can't send (frozen, blocked, lapsed, signed out, no permission) the old footer's reason shows
+instead; a preview shows `CommunityPreviewBar` with Join and Back (8b).
 
 **Activity (phase 3d).** Notifications shows the activity feed (`features/activity`). Over a
 chat or a wallet page it opens as `?panel=activity` on that page's path, from the rail, leaving

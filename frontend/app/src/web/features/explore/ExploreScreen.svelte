@@ -35,7 +35,6 @@
         type CommunitySearch,
     } from "@src/stores/search.svelte";
     import { navigate, replaceQuery } from "@src/utils/navigation";
-    import { communityPreviewState } from "@src/utils/preview.svelte";
     import { getContext, onDestroy, untrack } from "svelte";
     import { openCommunityCreation } from "../app/createCommunity";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
@@ -223,7 +222,7 @@
     function openCommunity(communityId: string) {
         const target = communityOpening(communityId, joinedKeys.includes(communityId), query);
         if (target.kind === "preview") {
-            communityPreviewState.setOrigin(communityId, target.origin);
+            client.setCommunityPreviewOrigin(communityId, target.origin);
         }
         navigate(target.path);
     }

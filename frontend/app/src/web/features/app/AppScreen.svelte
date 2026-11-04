@@ -3,6 +3,7 @@
 <script lang="ts">
     import {
         anonUserStore,
+        chatsInitialisedStore,
         chitStateStore,
         currentUserStore,
         dailyPuzzleStore,
@@ -46,6 +47,8 @@
         subscribeAppEvents,
         type AppEventDialog,
     } from "@src/logic/appEvents/appEvents";
+    import { postLoginTarget, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
+    import { join } from "../join/join";
     import { pinsFor } from "../rail/rail.adapter";
     import { chitRailProps } from "../chit/chit.adapter";
     import AchievementToastHost from "../chit/AchievementToastHost.svelte";
@@ -89,6 +92,20 @@
         client.clearPostLoginState();
         await tick();
         createCommunity();
+    }
+
+    // a guest who chose to join a group, channel or community joins it once signed in and their
+    // chats have loaded; the client hands the join out once (8b)
+    $effect(() => {
+        void $identityStateStore;
+        void $chatsInitialisedStore;
+        const postLogin = client.takePostLoginJoin();
+        if (postLogin !== undefined) void resumeJoining(postLoginTarget(postLogin));
+    });
+
+    async function resumeJoining(target: JoinTarget) {
+        await tick();
+        await join(client, target, dialogStack);
     }
 
     // the activity feed opened over a page is Notifications' too
@@ -146,6 +163,9 @@
         subscribeAppEvents(client, (outcome) => {
             if (outcome.kind === "show") {
                 appDialog = outcome.dialog;
+            } else if (outcome.kind === "join") {
+                // ?autojoin, once the preview has loaded
+                void join(client, { kind: "group", chat: outcome.chat }, dialogStack);
             } else {
                 if (outcome.closeDialogs) publish("closeModalStack");
                 navigate(outcome.path);

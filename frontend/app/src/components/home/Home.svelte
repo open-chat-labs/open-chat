@@ -12,10 +12,8 @@
         CommunityIdentifier,
         CommunitySummary,
         DirectChatIdentifier,
-        EnhancedAccessGate,
         EnhancedReplyContext,
         FullWebhookDetails,
-        GateCheckSucceeded,
         GroupChatSummary,
         LeaveOrDelete,
         Level,
@@ -49,7 +47,6 @@
         offlineStore,
         pinNumberResolverStore,
         querystringStore,
-        postLoginJoin,
         routeForChatIdentifier,
         routeForScope,
         routeStore,
@@ -103,7 +100,13 @@
     import TermsUpdatedModal from "../TermsUpdatedModal.svelte";
     import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
-    import { communityPreviewState } from "@src/utils/preview.svelte";
+    import {
+        communityJoin,
+        groupJoin,
+        postLoginTarget,
+        type JoinTarget,
+    } from "@src/logic/join/joinFlow.svelte";
+    import { showJoinStep } from "@src/utils/join";
     import AnonFooter from "./AnonFooter.svelte";
     import ChitEarned from "./ChitEarned.svelte";
     import HallOfFame from "./ChitHallOfFame.svelte";
@@ -190,7 +193,6 @@
         | { kind: "no_access" }
         | { kind: "new_group"; embeddedContent: boolean; candidate: CandidateGroupChat }
         | { kind: "wallet" }
-        | { kind: "gate_check_failed"; gates: EnhancedAccessGate[] }
         | { kind: "hall_of_fame" }
         | { kind: "edit_community"; community: CommunitySummary; communityRules: Rules }
         | { kind: "make_proposal"; chat: MultiUserChat; nervousSystem: NervousSystemDetails }
@@ -200,22 +202,12 @@
         | { kind: "restricted_content" }
         | { kind: "claim_daily_chit" }
         | { kind: "daily_puzzle"; gameId?: string }
-        | { kind: "challenge" }
-        | {
-              kind: "evaluating_access_gates";
-              group: MultiUserChat;
-              gates: EnhancedAccessGate[];
-              level: Level;
-          };
+        | { kind: "challenge" };
 
     let modal: ModalType = $state({ kind: "none" });
     let confirmActionEvent: ConfirmActionEvent | undefined = $state();
-    let joinInFlight: MultiUserChat | undefined = $state(undefined);
-    // Derived rather than set and cleared by hand, because the Overlay's teardown calls closeModal
-    // after the next join has started
-    let joining: MultiUserChat | undefined = $derived.by(() =>
-        modal.kind === "evaluating_access_gates" ? modal.group : joinInFlight,
-    );
+    // the group or channel being joined: on its way, or while its gates are evaluated (logic/join)
+    let joining: MultiUserChat | undefined = $derived(groupJoin.joining ?? groupJoin.evaluating);
     let showUpgrade: boolean = $state(false);
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
@@ -226,6 +218,8 @@
             subscribeAppEvents(client, (outcome) => {
                 if (outcome.kind === "show") {
                     modal = outcome.dialog;
+                } else if (outcome.kind === "join") {
+                    join({ kind: "group", chat: outcome.chat });
                 } else {
                     if (outcome.closeDialogs) publish("closeModalStack");
                     navigate(outcome.path);
@@ -253,7 +247,6 @@
                 attachmentToShare = content;
                 modal = { kind: "select_chat", excludeCurrent: false };
             }),
-            subscribe("joinGroup", (group) => joinGroup(group)),
             subscribe("createCommunity", createCommunity),
             subscribe("unarchiveChatFailed", unarchiveChatFailed),
             subscribe("forward", forwardMessage),
@@ -540,39 +533,13 @@
         }
     }
 
-    async function joinGroup(group: MultiUserChat, gateCheck?: GateCheckSucceeded): Promise<void> {
-        joinInFlight = group;
-        const outcome = await client.joinGroup(group, gateCheck).catch(() => undefined);
-        joinInFlight = undefined;
-        if (outcome === undefined) return;
-        switch (outcome.kind) {
-            case "needs_gate_evaluation":
-                modal = {
-                    kind: "evaluating_access_gates",
-                    group,
-                    gates: outcome.gates,
-                    level: group.level,
-                };
-                break;
-            case "gate_check_failed":
-                modal = { kind: "gate_check_failed", gates: outcome.gates };
-                break;
-            case "failed":
-                toastStore.showFailureToast(outcome.message);
-                break;
-            case "success":
-            case "skipped":
-                break;
-            default:
-                outcome satisfies never;
-        }
-    }
-
-    function accessGatesEvaluated(success: GateCheckSucceeded) {
-        if (modal.kind === "evaluating_access_gates") {
-            const { group } = modal;
-            closeModal();
-            joinGroup(group, success);
+    // a group, channel or community joined (logic/join): its gates show in the evaluators below,
+    // the gates it didn't meet in the gate check failures
+    async function join(target: JoinTarget): Promise<void> {
+        if (target.kind === "group") {
+            showJoinStep(await groupJoin.join(client, target.chat), "group");
+        } else {
+            showJoinStep(await communityJoin.join(client, target.community), "community");
         }
     }
 
@@ -751,14 +718,12 @@
             console.log("We are now logged in so we are closing the register modal");
             closeModal();
         }
-        const join = postLoginJoin($identityStateStore, $chatsInitialisedStore);
-        if (join !== undefined) {
-            client.clearPostLoginState();
-            tick().then(() =>
-                join.kind === "join_group"
-                    ? joinGroup(join.group)
-                    : communityPreviewState.joinCommunity(client, join.community),
-            );
+        // a guest's join, replayed once they've signed in and their chats have loaded (the client
+        // hands it out once)
+        void $chatsInitialisedStore;
+        const postLogin = client.takePostLoginJoin();
+        if (postLogin !== undefined) {
+            tick().then(() => join(postLoginTarget(postLogin)));
         }
     });
 
@@ -895,13 +860,6 @@
                 onClose={closeNoAccess}
                 titleKey={"appStore.notAvailableTitle"}
                 textKey={"appStore.notAvailable"} />
-        {:else if modal.kind === "gate_check_failed"}
-            <GateCheckFailed onClose={closeModal} gates={modal.gates} />
-        {:else if modal.kind === "evaluating_access_gates"}
-            <AccessGateEvaluator
-                gates={modal.gates}
-                onClose={closeModal}
-                onSuccess={accessGatesEvaluated} />
         {:else if modal.kind === "new_group"}
             <CreateOrUpdateGroup
                 embeddedContent={modal.embeddedContent}
@@ -953,22 +911,23 @@
 
 <EditLabel />
 
-{#if communityPreviewState.gatesToEvaluate.length > 0}
-    <Overlay dismissible onClose={() => communityPreviewState.reset()}>
-        <AccessGateEvaluator
-            gates={communityPreviewState.gatesToEvaluate}
-            onClose={() => communityPreviewState.reset()}
-            onSuccess={(gateCheck) => communityPreviewState.doJoinCommunity(client, gateCheck)} />
-    </Overlay>
-{/if}
+{#each [{ flow: groupJoin, level: "group" as const }, { flow: communityJoin, level: "community" as const }] as { flow, level }}
+    {#if flow.gatesToEvaluate.length > 0}
+        <Overlay dismissible onClose={() => flow.reset()}>
+            <AccessGateEvaluator
+                gates={flow.gatesToEvaluate}
+                onClose={() => flow.reset()}
+                onSuccess={async (gateCheck) =>
+                    showJoinStep(await flow.continueJoin(client, gateCheck), level)} />
+        </Overlay>
+    {/if}
 
-{#if communityPreviewState.gateCheckFailed.length > 0}
-    <Overlay dismissible onClose={() => communityPreviewState.reset()}>
-        <GateCheckFailed
-            onClose={() => communityPreviewState.reset()}
-            gates={communityPreviewState.gateCheckFailed} />
-    </Overlay>
-{/if}
+    {#if flow.gateCheckFailed.length > 0}
+        <Overlay dismissible onClose={() => flow.reset()}>
+            <GateCheckFailed onClose={() => flow.reset()} gates={flow.gateCheckFailed} />
+        </Overlay>
+    {/if}
+{/each}
 
 <!-- Not shown while the suspension notice is up: the two would stack, and the notice
      (which also carries the contest affordance) explains the account state first. The gate

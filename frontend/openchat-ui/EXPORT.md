@@ -95,6 +95,7 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **ChitDialog** — from source hash `cc2471e7` (passes 4–6, ported by hand).
 - **ClaimCalendar** — from source hash `2c7b2905` (ported by hand).
 - **ClaimHistoryDialog** — from source hash `3cf4cc94` (ported by hand).
+- **CommunityPreviewBar** — from source hash `61a2b9f0` (ported by hand).
 - **ComposerBar** — from source hash `a0452287` (passes 4–6, ported by hand).
 - **Confetti** — from source hash `3d14ff10` (passes 4–6, ported by hand).
 - **ContextMenu** — from source hash `c325b36b`.
@@ -294,7 +295,7 @@ Every component was hand-converted after export, so **do not re-export**: regene
 | VoiceMessage | `lib/VoiceMessage.dc.html` | `e210f6a8` | 2026-10-13 |
 | Waveform | `lib/Waveform.dc.html` | `d43e3c8e` | 2026-10-13 |
 
-## Features (55)
+## Features (56)
 | Component | Source | Source hash | Exported |
 |---|---|---|---|
 | AccessGates | `lib/AccessGates.dc.html` | `fceffeb8` | 2026-10-13 |
@@ -309,6 +310,7 @@ Every component was hand-converted after export, so **do not re-export**: regene
 | ChatListHeader | `lib/ChatListHeader.dc.html` | `aa5b1850` | 2026-10-13 |
 | ChatListPanel | `lib/ChatListPanel.dc.html` | `1eb60abb` | 2026-10-13 |
 | ChitDialog | `lib/ChitDialog.dc.html` | `556edac8` | 2026-10-13 |
+| CommunityPreviewBar | `lib/CommunityPreviewBar.dc.html` | `61a2b9f0` | 2026-11-04 |
 | ConversationHeader | `lib/ConversationHeader.dc.html` | `ccaba540` | 2026-10-13 |
 | ConvertToCommunityDialog | `lib/ConvertToCommunityDialog.dc.html` | `a749f89a` | 2026-10-13 |
 | CreateGroupDialog | `lib/CreateGroupDialog.dc.html` | `eedb6471` | 2026-10-13 |

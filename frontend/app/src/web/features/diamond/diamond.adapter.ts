@@ -23,7 +23,8 @@ export function planDuration(plan: PlanKey): DiamondMembershipDuration {
     return PLAN_DURATIONS[plan];
 }
 
-function units(e8s: bigint, decimals: number): number {
+/** An amount in a token's smallest units as whole tokens, for a component that takes numbers. */
+export function units(e8s: bigint, decimals: number): number {
     return Number(e8s) / 10 ** decimals;
 }
 

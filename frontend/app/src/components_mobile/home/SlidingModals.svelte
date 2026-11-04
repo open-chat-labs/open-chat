@@ -2,7 +2,8 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { activeVideoCall } from "@src/stores/video";
     import { onPopstate, pushDummyHistoryState } from "@src/utils/history";
-    import { communityPreviewState, groupPreviewState } from "@src/utils/preview.svelte";
+    import { communityJoin, groupJoin } from "@src/logic/join/joinFlow.svelte";
+    import { showJoinStep } from "@src/utils/join";
     import { removeQueryStringParam, stripThreadFromUrl } from "@src/utils/urls";
     import { pendingShareStore } from "@stores/pendingShare";
     import { navigate, parentRoute } from "@utils/navigation";
@@ -899,25 +900,27 @@
                 onClose={pop} />
         {:else if page.kind === "evaluate_community_access_gate"}
             <AccessGatesEvaluator
-                gates={communityPreviewState.gatesToEvaluate}
+                gates={communityJoin.gatesToEvaluate}
                 onClose={() => {
-                    communityPreviewState.reset();
+                    communityJoin.reset();
                     pop();
                 }}
-                onSuccess={(res) => {
-                    communityPreviewState.doJoinCommunity(client, res);
+                onSuccess={async (res) => {
+                    const step = communityJoin.continueJoin(client, res);
                     pop();
+                    showJoinStep(await step, "community");
                 }} />
         {:else if page.kind === "evaluate_group_access_gate"}
             <AccessGatesEvaluator
-                gates={groupPreviewState.gatesToEvaluate}
+                gates={groupJoin.gatesToEvaluate}
                 onClose={() => {
-                    groupPreviewState.reset();
+                    groupJoin.reset();
                     pop();
                 }}
-                onSuccess={(res) => {
-                    groupPreviewState.doJoinGroup(client, res);
+                onSuccess={async (res) => {
+                    const step = groupJoin.continueJoin(client, res);
                     pop();
+                    showJoinStep(await step, "group");
                 }} />
         {:else if page.kind === "architecture"}
             {#await import("./landing/Architecture.svelte") then { default: Architecture }}

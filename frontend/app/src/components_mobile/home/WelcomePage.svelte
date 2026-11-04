@@ -20,7 +20,6 @@
         type CommunitySummary,
         type OpenChat,
     } from "@client";
-    import { communityPreviewState } from "@src/utils/preview.svelte";
     import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -61,7 +60,7 @@
         });
     }
     function goToCommunity(id: CommunityIdentifier) {
-        communityPreviewState.setOrigin(id.communityId, "/welcome");
+        client.setCommunityPreviewOrigin(id.communityId, "/welcome");
         navigate(`/community/${id.communityId}`);
     }
 </script>

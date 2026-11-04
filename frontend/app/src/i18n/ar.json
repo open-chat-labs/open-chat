@@ -52,6 +52,7 @@
         "gateCheckFailed": "لم يتم الوصول إلى بوابة الدخول",
         "gateInvalid": "بوابة الدخول غير صالحة",
         "join": "ينضم",
+        "joined": "لقد انضممت إلى {name}",
         "lapsed": {
             "label": "انتهت العضوية",
             "rejoin": "إعادة الانضمام إلى {level}",
@@ -87,6 +88,8 @@
         "paymentDistributionMessage": "من هذا، 98% تذهب إلى مالكي {level} و2% إلى خزانة OpenChat SNS.",
         "paymentFailed": "فشل الدفع",
         "predefinedCredentialIssuer": "جهة إصدار بيانات الاعتماد المحددة مسبقًا",
+        "previewGatedHint": "للانضمام {count, plural, one {متطلب واحد} other {# متطلبات}}؛ ستراها قبل أن يُخصم أي شيء.",
+        "previewHint": "انضم لإرسال الرسائل.",
         "private": "خاص",
         "public": "عام",
         "readonlyTitle": "بوابة الوصول",
@@ -104,6 +107,7 @@
         "uniquePersonInfo1": "ماذا لو لم يكن لدي بيانات اعتماد قابلة للتحقق؟",
         "uniquePersonInfo2": "إذا لم تقم بذلك، فما عليك سوى التوجه إلى <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>، وتسجيل الدخول باستخدام نفس هوية الإنترنت التي استخدمتها للوصول إلى OpenChat واتبع التعليمات لإثبات شخصيتك الفريدة.",
         "uniquePersonInfo3": "إن القيام بذلك أمر بسيط، ولا يستغرق سوى بضع دقائق ولا يلزم القيام به إلا مرة واحدة. عند الانتهاء من العملية، ارجع إلى هنا وانقر على \"التحقق\".",
+        "unknownTokenPayment": "لا يتعرّف OpenChat على هذا الرمز، لذا لا يمكن التحقق منه أو الدفع به هنا.",
         "verify": "يؤكد",
         "visibility": "وصول"
     },

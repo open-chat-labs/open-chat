@@ -52,6 +52,7 @@
         "gateCheckFailed": "Porte d'accès non rencontrée",
         "gateInvalid": "La porte d'accès n'est pas valide",
         "join": "Rejoindre",
+        "joined": "Vous avez rejoint {name}",
         "lapsed": {
             "label": "Adhésion expirée",
             "rejoin": "Rejoindre {level}",
@@ -87,6 +88,8 @@
         "paymentDistributionMessage": "Sur cette somme, 98 % vont au(x) propriétaire(s) {level} et 2 % à la trésorerie d&#39;OpenChat SNS.",
         "paymentFailed": "Paiement échoué",
         "predefinedCredentialIssuer": "Émetteur d'identifiants prédéfini",
+        "previewGatedHint": "Rejoindre a {count, plural, one {# condition} other {# conditions}} ; vous les verrez avant tout prélèvement.",
+        "previewHint": "Rejoignez pour envoyer des messages.",
         "private": "Privé",
         "public": "Public",
         "readonlyTitle": "Porte d'accès",
@@ -104,6 +107,7 @@
         "uniquePersonInfo1": "Que faire si je n'ai pas encore vérifié ?",
         "uniquePersonInfo2": "Si vous ne l'avez pas fait, rendez-vous simplement sur <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, connectez-vous en utilisant la même identité Internet que celle que vous avez utilisée pour accéder. OuvrezChat et suivez les instructions pour prouver votre personnalité unique.",
         "uniquePersonInfo3": "C'est simple à faire, ne prend que quelques minutes et ne doit être effectué qu'une seule fois. Lorsque vous avez terminé le processus, revenez ici et cliquez sur « Vérifier ».",
+        "unknownTokenPayment": "OpenChat ne reconnaît pas ce jeton, il ne peut donc pas être vérifié ni payé ici.",
         "verify": "Vérifier",
         "visibility": "Accès"
     },

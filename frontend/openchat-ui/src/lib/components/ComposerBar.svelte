@@ -24,6 +24,8 @@
     bannerTone?: 'info' | 'warning' | 'danger' | 'offline';
     /** Resource key (or literal text). */
     bannerAction?: string;
+    /** Called when the banner's action (`bannerAction`) is pressed. */
+    onBannerAction?: () => void;
     onSend?: ComposerProps['onSend'];
     onAttach?: ComposerProps['onAttach'];
     onGif?: ComposerProps['onGif'];
@@ -54,6 +56,7 @@
     bannerText = '',
     bannerTone = 'offline',
     bannerAction = '',
+    onBannerAction,
     attachment = null,
     context = null,
     ...composer
@@ -73,7 +76,7 @@
 
 <div class="bar">
   {#if bannerText}
-    <Banner tone={bannerTone} text={bannerText} actionLabel={bannerAction} />
+    <Banner tone={bannerTone} text={bannerText} actionLabel={bannerAction} actionHandler={onBannerAction} />
   {/if}
   <div class="typing" class:shown={typingNames.length > 0} style:background={ringColor} aria-live="polite" aria-hidden={typingNames.length > 0 ? undefined : 'true'}>
     <span class="dots" aria-hidden="true"><span class="dot" data-oc-dot></span><span class="dot" data-oc-dot></span><span class="dot" data-oc-dot></span></span>

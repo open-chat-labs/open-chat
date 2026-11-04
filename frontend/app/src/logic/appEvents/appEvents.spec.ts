@@ -1,4 +1,10 @@
-import { publish, type ChatListScope, type ChatSummary, type Notification } from "@client";
+import {
+    publish,
+    type ChatListScope,
+    type ChatSummary,
+    type MultiUserChat,
+    type Notification,
+} from "@client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
     chatWithRoute,
@@ -111,8 +117,20 @@ describe("app events", () => {
         expect(stopRinging).toHaveBeenCalledWith(7n);
     });
 
+    // 8b invariant 6: ?autojoin on a preview starts a join (the client publishes joinGroup once
+    // the preview loads), in src/web as in the old trees
+    test("?autojoin on a preview starts a join", () => {
+        const chat = {
+            kind: "group_chat",
+            id: { kind: "group_chat", groupId: "g" },
+        } as MultiUserChat;
+        publish("joinGroup", chat);
+        expect(outcomes).toEqual([{ kind: "join", chat }]);
+    });
+
     test("unsubscribing stops every handler", () => {
         unsubscribe();
+        publish("joinGroup", { kind: "group_chat" } as MultiUserChat);
         publish("notFound");
         publish("notification", { kind: "direct_notification" } as Notification);
         expect(outcomes).toEqual([]);

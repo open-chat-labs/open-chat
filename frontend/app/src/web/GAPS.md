@@ -103,8 +103,9 @@ design export needs. Each entry says where it came up.
   `userCanDeleteMessage`, as the old menus do: the user's own messages, a bot's response to a
   command they used, and anyone's where they can delete other users' messages.
 - **Thread replies**: `ThreadPanel` renders replies with no react / menu / reply / edit handlers.
-- **Composer banner**: `ComposerBar` takes `bannerAction` as a label but doesn't pass a handler
-  through to `Banner`.
+- **Composer banner** (by hand, 8b): `ComposerBar` takes `onBannerAction`, passed to `Banner`'s
+  `actionHandler` with `bannerAction` as its label (it had the label but no handler). Nothing in
+  the app uses it yet.
 - **Calls**: `CallPanel` / `VideoTile` render `MediaStream`s. The app uses Daily's prebuilt
   iframe, which doesn't expose them; it needs Daily's call-object mode (phase 7 decision).
   The call's menu must cope with its chat going away while the menu is open: the legacy desktop
@@ -590,6 +591,43 @@ design export needs. Each entry says where it came up.
   - the design's typing line in the conversation header is left out (not used).
   - a saved recipient's token lock should win over the host's `sendToken` (design order: lock,
     then the network's token); the app sets no locks, so it doesn't show.
+- **`CommunityPreviewBar`** (8b, ported by hand from the design's 2026-11-04 export, source hash
+  `61a2b9f0`): replaces the composer while previewing. By hand on top of the design (to take back
+  to it): `avatarUrl` (the community's avatar over the gradient, as `ExploreCommunities`), `busy`
+  (a join on its way: a spinner in Join, which takes no clicks; the design has no in-progress
+  state) and `joinDisabled` (a locked gate: Join greyed). The app also uses it for a group or a
+  channel of a joined community (the design only has a community's): the group's name, "Join
+  group" / "Join channel" (`joinGroup`), and the app's own hints ("Join to send messages.", and
+  for a gated one "Joining has N requirements …", `access.previewHint` / `access.previewGatedHint`),
+  since the bar's copy speaks of channels. A lapsed member gets "Re-join …" (`access.lapsed.rejoin`)
+  with "Membership lapsed" as the hint and no Back, under the design's "You're previewing {name}"
+  title; a locked one "Locked" (`access.lockedGate`) with Join disabled and `access.lockedGateInfo`
+  as the hint. Both need the design's say.
+- **`JoinGateDialog`, by hand** (8b, to take back to the design export): a gate's `id`, handed
+  back with its payment in `onJoin`'s `paid` (so the app approves the gate's own `bigint` amount and
+  knows which branch of an "any" gate was paid; added only when the gate has one, so the export's
+  own spec is unchanged); `lifetime: false` on a diamond gate (any Diamond membership: "Diamond
+  member", met for any member, "Get Diamond"); and kind `other` (`label`, `detail`, `met`, `icon`), a
+  requirement the app checked itself, for the gates the dialog has no row for: CHIT earned, a
+  credential, locked, referred by a member, an NFT, and a payment or balance on a ledger the
+  registry doesn't carry. `Gate` moved to the module script so the app can import it. Not asked for
+  (no design yet):
+  - a credential gate can't be verified in the dialog (the old desktop's Internet Identity
+    popup, `verifyAccessGate`): it shows as an unmet requirement, so a chat that needs one can't be
+    joined from `src/web` yet;
+  - no level indicator: a gated channel in a gated community shows the community's requirements,
+    then the channel's, in a dialog each, both titled "Join community" and named by the level's
+    `collectionName`;
+  - amounts are `number`s (display only: the app approves the gates' own `bigint`s), tokens are
+    picked by symbol (two ledgers with one symbol would share a balance), and the owner / treasury
+    split is shown as `amount × ownerShare` in floats (the app's split is `paymentGateSplit`);
+  - a balance gate on the ledger of a payment in the same gate doesn't count the payment against
+    the balance (the old evaluators did, `balanceAfterCurrentCommitments`);
+  - the neuron confirmation is one toggle: an "any" gate with two neuron branches can't say which
+    one was meant (the app confirms the first);
+  - the Lifetime Diamond pitch ("60 CHAT, once") is the library's own copy;
+  - nothing says which gates the backend found unmet (the old `AccessGateCheckFailed`): the app
+    toasts "Access gate not met".
 - **`ExploreCommunities`, by hand** (8a, to take back to the design export): a community's
   `avatarUrl` and `coverUrl` (images over the swatches, as `NavRail`'s pins); `languageOptions`
   as `{ code, label }` (the filter picks by code, shows the label and the code's flag; the app's
@@ -657,9 +695,7 @@ design export needs. Each entry says where it came up.
   - the guidelines shown in a popup at sign-up (`AuthDialog` links to `/terms`, a placeholder
     until the legal pages exist);
   - the onboarding dialog's language picker and Logout link (closing sign-up logs out instead);
-  - the Solana adapters' own icons (Phantom has none here);
-  - joining the group or community a guest picked once they've signed in (`postLoginJoin` in
-    `Home.svelte`), for the guest pass (phase 10).
+  - the Solana adapters' own icons (Phantom has none here).
 - **Learn content** (`features/marketing/learn`): converted from the existing pages, verbatim
   (their typos included), with what Learn's shapes can't hold dropped or flattened:
   - **Whitepaper**: the old page's outline (2.1, 3.4.1 …) comes from its section ids, which
@@ -788,8 +824,8 @@ design export needs. Each entry says where it came up.
   coming back to the same query shows them at once, and Explore searches again only with none
   held or for another query (or when the viewer's flags change). A community joined opens; one
   not joined opens as a preview, whose cancel comes back to Explore with its query
-  (`communityPreviewState.setOrigin`, mobile's way; the preview's Join / Leave and cancel are
-  8b's). Create community: the create dialog, the Diamond upgrade, or a guest's sign-in, after
+  (`client.setCommunityPreviewOrigin`, mobile's way; the preview's Join and Back are 8b's, see
+  "Join gate"). Create community: the create dialog, the Diamond upgrade, or a guest's sign-in, after
   which creating carries on (AppScreen). Writing the query to the URL (`replaceQuery`) leaves any
   dialog over Explore open. Results set outside the search step (a proposal's community finder,
   the mobile welcome page) answer no Explore search (`CommunitySearchState.held`), so Explore
@@ -810,6 +846,29 @@ design export needs. Each entry says where it came up.
   - Back and forward don't step through searches (each replaces the entry), and Back from a
     community lands on Explore with the query it was opened from.
 
+- **Join gate** (8b #10128, `features/join`, `logic/join`): a preview's composer is
+  `CommunityPreviewBar` (`previewBar`): the community's while the community is previewed (or
+  lapsed), else the group's or channel's; guest, gated (with how many requirements the user doesn't
+  meet yet) or plain; Join, Back (to Explore or `/welcome` when the preview was opened from there,
+  else the list). Join runs the shared flow (`logic/join/joinFlow`, the old
+  `utils/preview.svelte.ts`, which both old trees now use too): a guest's join is recorded and opens
+  sign-in, and replays once after it (`takePostLoginJoin`, AppScreen); gates the client can't check
+  open `JoinGateDialog`, a level at a time; "Pay and join" approves the payments (asking for the
+  PIN) and joins; "You joined …" on success, the failure's own message otherwise, "Access gate
+  not met" for a backend gate check failure. `?autojoin` joins the same way once the preview has
+  loaded. Desktop and mobile differed (A4): Back on a lapsed preview is hidden (desktop: a lapsed
+  member is still a member), and cancelling a community preview goes back to where it was opened
+  (mobile). Not carried over:
+  - the platform moderator's Freeze / Unfreeze on a preview (desktop footer only);
+  - the gate icons (desktop) and "Access gates enabled" (mobile) in the footer: the bar's gated
+    state says how many requirements there are instead;
+  - "Get Diamond" in the dialog closes it for the Diamond dialog (a dialog replaces another, never
+    stacks), so after buying the user presses Join again; the design has Diamond over the join
+    dialog, its row turning Met;
+  - the design's preview mode around the bar (its rail entry for the previewed community, the
+    reduced menus, the user's own messages hidden): not 8b's;
+  - the Back from a channel preview of a joined community goes to the list, not to the next chat
+    (the old desktop's `selectDefaultChat`; the router picks the list's default chat).
 - **Diamond** (`?diamond`, `features/diamond`, 8e #10131): paid through the shared payment
   (`logic/diamond`, which both legacy `Payment.svelte`s use too), in CHAT or ICP at the backend's
   own prices (CHAT in production, ICP elsewhere, by default), auto-renew on, a timed member opening
@@ -821,8 +880,6 @@ design export needs. Each entry says where it came up.
   handing off to the dialog it came from. Not yet:
   - paying from an external wallet (the old source wallet selector and its approval popup): only
     the OpenChat wallet pays (`DiamondPayment.pay` takes a `fromAccount` for when it can);
-  - the join gate's "Get Diamond" (8b's `JoinGateDialog` `onGetDiamond`): publish `upgrade` once
-    8b lands; group settings already does;
   - the limits and the feature table are the library's own (`DEFAULT_LIMITS`), as the old
     `Features.svelte`'s were written into it;
   - app store builds hide paying (`disableDiamondPaymentFeature`: no `onUpgrade`), with no
@@ -1001,8 +1058,7 @@ design export needs. Each entry says where it came up.
   composer for a minute, or until it's closed, paused while the app is hidden. A chat's rules are asked for in a plain dialog
   (`RulesDialog`, the old modal's words; no design for it), and the throttle countdown shows as the
   composer's banner. Enter follows the app's Enter-to-send setting (`enterSends`). A preview
-  shows "This chat is read-only" where the old footer had Join and Leave (the join gate is
-  phase 8).
+  shows `CommunityPreviewBar` (8b, "Join gate").
 - **Composer draft and input** (by hand, phase 3c): `MessageComposer` kept its draft to itself.
   It now takes `text` (the draft to start from) and `onInput` (the draft as it changes), so the
   app keeps a draft per chat and tells the others someone is typing.

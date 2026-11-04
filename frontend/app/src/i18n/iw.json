@@ -52,6 +52,7 @@
         "gateCheckFailed": "שער הגישה לא נפגש",
         "gateInvalid": "שער הגישה אינו חוקי",
         "join": "לְהִצְטַרֵף",
+        "joined": "הצטרפת ל-{name}",
         "lapsed": {
             "label": "החברות פג",
             "rejoin": "הצטרף מחדש ל-{level}",
@@ -87,6 +88,8 @@
         "paymentDistributionMessage": "מתוכם, 98% הולכים לבעלים של {level} ו-2% לאוצר OpenChat SNS.",
         "paymentFailed": "התשלום נכשל",
         "predefinedCredentialIssuer": "מנפיק אישור מוגדר מראש",
+        "previewGatedHint": "להצטרפות יש {count, plural, one {דרישה אחת} other {# דרישות}}; תראו אותן לפני שמשהו יחויב.",
+        "previewHint": "הצטרפו כדי לשלוח הודעות.",
         "private": "פְּרָטִי",
         "public": "פּוּמְבֵּי",
         "readonlyTitle": "שער גישה",
@@ -104,6 +107,7 @@
         "uniquePersonInfo1": "מה אם עדיין לא ביצעתי אימות?",
         "uniquePersonInfo2": "אם לא עשית זאת, פשוט עבור אל <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> , היכנס באמצעות אותה זהות אינטרנט שבה השתמשת כדי לגשת ל-OpenChat ופעל לפי ההוראות כדי להוכיח את אישיותך הייחודית.",
         "uniquePersonInfo3": "זה פשוט לביצוע, לוקח רק כמה דקות וצריך לעשות זאת פעם אחת בלבד. לאחר שתסיים את התהליך, חזור לכאן והקש על &#39;אמת&#39;.",
+        "unknownTokenPayment": "OpenChat לא מזהה את האסימון הזה, ולכן לא ניתן לבדוק או לשלם בו כאן.",
         "verify": "תאשר",
         "visibility": "גִישָׁה"
     },

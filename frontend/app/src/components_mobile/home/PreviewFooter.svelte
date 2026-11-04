@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { groupPreviewState } from "@src/utils/preview.svelte";
+    import { groupJoin } from "@src/logic/join/joinFlow.svelte";
+    import { previewingCommunity, requirementCount } from "@src/logic/join/previewBar";
+    import { showJoinStep } from "@src/utils/join";
+    import { navigate } from "@utils/navigation";
     import { Caption, ColourVars, CommonButton, Container, Sheet } from "component-lib";
     import {
-        type EnhancedAccessGate,
-        isCompositeGate,
-        isLeafGate,
         isLocked,
-        isUniquePersonGate,
         type MultiUserChat,
         type OpenChat,
+        selectedCommunitySummaryStore,
     } from "@client";
     import { getContext } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
@@ -27,27 +27,24 @@
     let { chat, lapsed }: Props = $props();
 
     let gates = $derived(client.accessGatesForChat(chat));
-    let flattenedGates = $derived.by<EnhancedAccessGate[]>(() => {
-        return gates.flatMap((g) => {
-            if (isCompositeGate(g)) {
-                // Unique person (DecideAI) verification is suspended - drop it from the join flow.
-                return g.gates
-                    .filter((l) => !isUniquePersonGate(l))
-                    .map((l) => ({
-                        ...l,
-                        level: g.level,
-                        expiry: g.expiry,
-                        collectionName: g.collectionName,
-                    }));
-            }
-            if (isLeafGate(g)) {
-                return isUniquePersonGate(g) ? [] : [g];
-            }
-            return [];
-        });
-    });
-    let hasGates = $derived(flattenedGates.length > 0);
+    // the suspended unique-person gate is no requirement
+    let hasGates = $derived(requirementCount(gates) > 0);
     let locked = $derived(gates.some((g) => isLocked(g)));
+    let joining = $derived(groupJoin.joining !== undefined);
+
+    async function join() {
+        showJoinStep(await groupJoin.join(client, chat), "group");
+    }
+
+    // Back from a channel of a community being previewed goes up to the community, whose own
+    // preview has Back and Join (PreviewWrapper); otherwise it cancels the chat's preview
+    function back() {
+        if (chat.kind === "channel" && previewingCommunity($selectedCommunitySummaryStore)) {
+            navigate(`/community/${chat.id.communityId}`);
+        } else {
+            navigate(client.cancelPreview(chat.id));
+        }
+    }
 </script>
 
 <!-- TODO check this section, in designs it was from edge to edge, but it's not rendered as such -->
@@ -60,7 +57,7 @@
     <Container crossAxisAlignment={"center"}>
         <Container>
             <CommonButton
-                onClick={() => groupPreviewState.cancelPreview(client)}
+                onClick={back}
                 size={"small_text"}>
                 {#snippet icon(color, size)}
                     <ArrowLeft {color} {size} />
@@ -70,9 +67,9 @@
         </Container>
         <CommonButton
             mode={"active"}
-            loading={groupPreviewState.joining !== undefined}
-            disabled={locked || groupPreviewState.joining !== undefined}
-            onClick={() => groupPreviewState.joinGroup(client)}>
+            loading={joining}
+            disabled={locked || joining}
+            onClick={join}>
             {#snippet icon(color, size)}
                 <Enter {color} {size} />
             {/snippet}
@@ -93,8 +90,8 @@
     {/if}
 </Container>
 
-{#if groupPreviewState.gateCheckFailed.length > 0}
-    <Sheet onDismiss={() => groupPreviewState.reset()}>
-        <GateCheckFailed onClose={() => groupPreviewState.reset()} />
+{#if groupJoin.gateCheckFailed.length > 0}
+    <Sheet onDismiss={() => groupJoin.reset()}>
+        <GateCheckFailed onClose={() => groupJoin.reset()} />
     </Sheet>
 {/if}

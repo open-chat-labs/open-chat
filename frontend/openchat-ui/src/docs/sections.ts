@@ -110,7 +110,7 @@ export const features: SectionMeta[] = [
   { id: 'features-wallet-dialogs', title: 'Wallet dialogs', meta: 'WalletSettingsDialog · SendCryptoDialog · SwapOfferDialog · DiamondDialog · PrizeBuilderDialog' },
   { id: 'features-activity', title: 'Activity', meta: 'ActivityPanel.dc.html' },
   { id: 'features-access-gates', title: 'Access gates', meta: 'AccessGates · AccessGatesCards · UpgradeBanner' },
-  { id: 'features-explore', title: 'Explore & sign-in', meta: 'ExploreCommunities · AuthDialog' },
+  { id: 'features-explore', title: 'Explore & sign-in', meta: 'ExploreCommunities · CommunityPreviewBar · AuthDialog' },
   { id: 'features-people', title: 'People & profile', meta: 'DmChatSettings · ProfileDialog · UserDialog' },
   { id: 'features-group-dialogs', title: 'Group & community dialogs', meta: 'CreateGroupDialog · GroupSettingsDialog · NewChannelDialog · ConvertToCommunityDialog · ImportToCommunityDialog · ManageDialog · ManageChannels · UserGroupDialog · InviteDialog · WebhookDialog · BotDialog · LeaveGroupDialog · DeleteGroupDialog' },
   { id: 'features-rewards', title: 'Rewards & games', meta: 'AchievementToast · AchievementsDialog · ChitDialog · ClaimHistoryDialog · ClaimCalendar · StreakInsuranceDialog · LeaderboardDialog · MemeFighterDialog' },

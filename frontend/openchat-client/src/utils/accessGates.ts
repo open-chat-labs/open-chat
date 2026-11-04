@@ -46,3 +46,16 @@ export function gateWithHidden(
     if (gates.length === 1) return gates[0];
     return { kind: "composite_gate", gates, operator };
 }
+
+/** The share of a payment gate's amount that goes to the group's or community's owner, in percent. */
+export const PAYMENT_GATE_OWNER_PERCENT = 98;
+
+/**
+ * How a payment gate's amount is split: 98% to the owner, the remainder to the OpenChat treasury,
+ * as the canister splits it. Integer arithmetic, so the two always sum to the amount (multiplying
+ * `Number(amount)` by 0.98 isn't an integer for most amounts, and `BigInt` of it throws).
+ */
+export function paymentGateSplit(amount: bigint): { owner: bigint; treasury: bigint } {
+    const owner = (amount * BigInt(PAYMENT_GATE_OWNER_PERCENT)) / 100n;
+    return { owner, treasury: amount - owner };
+}

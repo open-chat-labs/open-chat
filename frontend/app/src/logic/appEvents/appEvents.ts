@@ -7,6 +7,7 @@ import {
     type ChatListScope,
     type ChatSummary,
     type DirectChatIdentifier,
+    type MultiUserChat,
     type OpenChat,
 } from "@client";
 import { ringForRemoteCall, stopRingingForRemoteCall } from "@src/stores/video";
@@ -26,7 +27,10 @@ export type AppEventOutcome =
     // closeDialogs: close whatever is open first (publish "closeModalStack"), as for a DM opened
     // from a profile
     | { kind: "navigate"; path: string; closeDialogs: boolean }
-    | { kind: "show"; dialog: AppEventDialog };
+    | { kind: "show"; dialog: AppEventDialog }
+    // join this group or channel (`?autojoin`, once its preview has loaded): each tree passes it to
+    // its join flow (logic/join)
+    | { kind: "join"; chat: MultiUserChat };
 
 /** Where a DM opens: in the current scope if it's already in the list there, else under chats. */
 export function chatWithRoute(
@@ -74,6 +78,7 @@ export function subscribeAppEvents(
                 window.location.reload();
             }
         }),
+        subscribe("joinGroup", (chat) => onOutcome({ kind: "join", chat })),
         subscribe("notification", (n) => client.notificationReceived(n)),
         subscribe("remoteVideoCallStarted", (ev) => ringForRemoteCall(ev)),
         subscribe("remoteVideoCallEnded", stopRingingForRemoteCall),
