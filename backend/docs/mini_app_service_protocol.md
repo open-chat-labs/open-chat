@@ -190,6 +190,8 @@ A bot declares the apps it hosts in its definition, each with its artwork, and a
 
 The website shows the image in the card's frame box whenever there's no app to show: until the app has drawn what it's for (see "App ↔ website"), to someone who can't open it, and when the game is over with no end state, with the result, or "Game over", over it.
 
+It loads the image with the user's theme in the fragment, as it does the app, eg. `app/chess.svg#oc_theme=dark` (or `light`), unless `image_url` has a fragment of its own. An SVG can draw itself in either theme with an element whose id is the fragment, eg. `oc_theme=dark`, and rules under `:root:has([id="oc_theme=dark"]:target)` (or `light`); without a fragment, or in a browser without `:has()`, it's as it's drawn. Other images ignore the fragment. It's the same file in either theme, so the bot's server never sees which.
+
 ## Bot → service: HTTPS
 
 Every call has `Authorization: Bearer <bot token>`.
