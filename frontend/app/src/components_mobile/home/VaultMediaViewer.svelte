@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { BlobReference, OpenChat } from "@client";
+    import { formatFileSize, type BlobReference, type OpenChat } from "@client";
     import {
         VaultMediaReview,
         type ReviewOutcome,
@@ -62,14 +62,6 @@
                     <Translatable resourceKey={i18nKey("vaultViewer.cancel")} />
                 </Button>
             </Column>
-        {:else if review.stage === "loading"}
-            <Body>
-                <Translatable
-                    resourceKey={i18nKey(
-                        quarantined ? "vaultViewer.loading" : "vaultViewer.loadingLive",
-                    )}
-                />
-            </Body>
         {:else if review.stage === "not_authorized"}
             <Body><Translatable resourceKey={i18nKey("vaultViewer.notAuthorized")} /></Body>
         {:else if review.stage === "not_found"}
@@ -77,22 +69,70 @@
         {:else if review.stage === "error"}
             <Body><Translatable resourceKey={i18nKey("vaultViewer.error")} /></Body>
         {:else}
-            {#each review.items as item}
+            {#each review.items as item, i}
                 <Column gap={"sm"}>
                     {#if item.mimeType.startsWith("image/")}
                         <img class="media" src={item.url} alt="" />
                     {:else if item.mimeType.startsWith("video/")}
                         <!-- svelte-ignore a11y_media_has_caption -->
-                        <video class="media" src={item.url} controls preload="none"></video>
+                        <video
+                            class="media"
+                            src={item.url}
+                            controls
+                            preload="none"
+                            onerror={() => review.markUnplayable(i)}></video>
                     {:else if item.mimeType.startsWith("audio/")}
-                        <audio src={item.url} controls preload="none"></audio>
+                        <audio
+                            src={item.url}
+                            controls
+                            preload="none"
+                            onerror={() => review.markUnplayable(i)}></audio>
                     {:else}
                         <Body>{item.mimeType}</Body>
                     {/if}
+                    {#if item.unplayable}
+                        <Body colour="validationError">
+                            <Translatable
+                                resourceKey={i18nKey("vaultViewer.unplayable", {
+                                    mimeType: item.mimeType,
+                                    size: formatFileSize(item.size),
+                                })}
+                            />
+                        </Body>
+                    {/if}
                 </Column>
             {/each}
+            {#if review.stage === "loading"}
+                <Body>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            quarantined ? "vaultViewer.loading" : "vaultViewer.loadingLive",
+                        )}
+                    />
+                </Body>
+                {#if review.progress !== undefined}
+                    <Body>
+                        <Translatable
+                            resourceKey={review.progress.total === undefined
+                                ? i18nKey("vaultViewer.progressUnsized", {
+                                      file: review.progress.file,
+                                      files: review.progress.files,
+                                  })
+                                : i18nKey("vaultViewer.progress", {
+                                      file: review.progress.file,
+                                      files: review.progress.files,
+                                      received: formatFileSize(review.progress.received),
+                                      total: formatFileSize(review.progress.total),
+                                  })}
+                        />
+                    </Body>
+                {/if}
+                <Body colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("vaultViewer.closeCancels")} />
+                </Body>
+            {/if}
         {/if}
-        {#if review.stage !== "interstitial" && review.stage !== "loading"}
+        {#if review.stage !== "interstitial"}
             <Button secondary onClick={close}>
                 <Translatable resourceKey={i18nKey("vaultViewer.close")} />
             </Button>

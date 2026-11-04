@@ -19,6 +19,7 @@
     import { ncaReporterUrl } from "../../utils/ncaFiling";
     import VaultAccessLog from "./VaultAccessLog.svelte";
     import VaultMediaViewer from "./VaultMediaViewer.svelte";
+    import { MediaReviewGate } from "@src/logic/moderation/vaultMediaReview.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -101,25 +102,7 @@
     );
     // A verdict on a media report requires the media to have been reviewed first: deciding
     // without looking is exactly what this system exists to prevent
-    let mediaReviewed = $state(false);
-    let reviewerRequired = $state(false);
-    let mediaUnavailable = $state(false);
-    let mediaFetchFailed = $state(false);
-
-    function onReviewResult(outcome: "viewed" | "not_authorized" | "not_found" | "error") {
-        if (outcome === "viewed") {
-            mediaReviewed = true;
-        } else if (outcome === "not_authorized") {
-            reviewerRequired = true;
-        } else if (outcome === "not_found") {
-            // The media genuinely no longer exists, so the review requirement is satisfied
-            // with an advisory note; a transient fetch failure keeps the gate shut instead
-            mediaUnavailable = true;
-            mediaReviewed = true;
-        } else {
-            mediaFetchFailed = true;
-        }
-    }
+    const gate = new MediaReviewGate();
 
     let moderatorId = $derived(
         content.status.kind !== "pending" && content.status.kind !== "contested"
@@ -165,7 +148,7 @@
                   content.messageIndex,
               ),
     );
-    let needsMediaReview = $derived(content.blobReferences.length > 0 && !mediaReviewed);
+    let needsMediaReview = $derived(content.blobReferences.length > 0 && !gate.reviewed);
     // Assembles the hash lines for the NCA report: the vault sha256 per quarantined blob
     // (reviewer-gated query) plus the scanner's perceptual hash per match
     let hashCopyState = $state<"idle" | "copied" | "failed">("idle");
@@ -472,22 +455,27 @@
                 {/if}
             </Row>
         {/if}
-        {#if reviewerRequired}
+        {#if gate.reviewerRequired}
             <Body colour="validationError" fontWeight="bold">
                 <Translatable resourceKey={i18nKey("moderationReport.reviewerRequired")} />
             </Body>
         {/if}
-        {#if mediaUnavailable}
+        {#if gate.unavailable}
             <Body colour="validationError">
                 <Translatable resourceKey={i18nKey("moderationReport.mediaUnavailable")} />
             </Body>
         {/if}
-        {#if needsMediaReview && mediaFetchFailed}
+        {#if gate.unplayable}
+            <Body colour="validationError">
+                <Translatable resourceKey={i18nKey("moderationReport.mediaUnplayable")} />
+            </Body>
+        {/if}
+        {#if needsMediaReview && gate.fetchFailed}
             <Body colour="validationError">
                 <Translatable resourceKey={i18nKey("moderationReport.mediaFetchFailed")} />
             </Body>
         {/if}
-        {#if !needsMediaReview && !reviewerRequired}
+        {#if !needsMediaReview && !gate.reviewerRequired}
             <Row gap="sm">
                 <Switch bind:checked={urgent}>
                     <Body width={"hug"} colour={"textSecondary"}>
@@ -567,7 +555,7 @@
     <VaultMediaViewer
         blobReferences={content.blobReferences}
         quarantined={content.autoSanctioned}
-        onResult={onReviewResult}
+        onResult={(outcome) => gate.apply(outcome)}
         onClose={() => (showViewer = false)}
     />
 {/if}

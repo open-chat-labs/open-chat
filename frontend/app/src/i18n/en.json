@@ -1646,6 +1646,7 @@
         "urgentHint": "Escalates urgently. Only applies to \"Uphold as CSAM\"",
         "reviewerRequired": "Only a designated vault reviewer can decide this report - ask a platform operator for the designation",
         "mediaUnavailable": "The media could not be fetched (it may have been deleted before quarantine) - decide on the remaining evidence",
+        "mediaUnplayable": "Some of the media couldn't be played in your browser - decide on what you could see, or review it again in another browser",
         "mediaFetchFailed": "Fetching the media failed - check your connection and use Review media to try again",
         "ncaDue": "Authority report due - file with the NCA (CSEA-IRP), then record the reference",
         "ncaDueUrgent": "URGENT: imminent threat - phone the NCA/999 first, then file via the portal",
@@ -1702,9 +1703,13 @@
         "cancel": "Cancel",
         "close": "Close",
         "loading": "Fetching from the vault...",
+        "progress": "File {file} of {files}: {received} of {total}",
+        "progressUnsized": "File {file} of {files}",
+        "closeCancels": "Closing now cancels the review. The verdict stays locked until every file has loaded.",
         "notAuthorized": "You are not a designated vault reviewer",
         "notFound": "The media no longer exists - it was removed before it could be preserved",
-        "error": "Failed to fetch the media - check your connection and try again"
+        "error": "Failed to fetch the media - check your connection and try again",
+        "unplayable": "This browser can't play this file ({mimeType}, {size}). Try another browser, or decide on what you could see."
     },
     "termsUpdated": {
         "title": "Our terms have changed",

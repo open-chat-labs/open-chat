@@ -23,6 +23,7 @@
     import { ncaReporterUrl } from "../../utils/ncaFiling";
     import VaultAccessLog from "./VaultAccessLog.svelte";
     import VaultMediaViewer from "./VaultMediaViewer.svelte";
+    import { MediaReviewGate } from "@src/logic/moderation/vaultMediaReview.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -106,27 +107,10 @@
     // A verdict on a media report requires the media to have been reviewed first: deciding
     // without looking is exactly what this system exists to prevent. Two exceptions surface
     // explicitly rather than silently locking the card: the caller not being a designated
-    // vault reviewer, and the media being unavailable (in which case the verdict proceeds on
-    // the remaining evidence).
-    let mediaReviewed = $state(false);
-    let reviewerRequired = $state(false);
-    let mediaUnavailable = $state(false);
-    let mediaFetchFailed = $state(false);
+    // vault reviewer, and the media being unavailable or fetched but unplayable in this browser
+    // (in which case the verdict proceeds on the remaining evidence).
+    const gate = new MediaReviewGate();
 
-    function onReviewResult(outcome: "viewed" | "not_authorized" | "not_found" | "error") {
-        if (outcome === "viewed") {
-            mediaReviewed = true;
-        } else if (outcome === "not_authorized") {
-            reviewerRequired = true;
-        } else if (outcome === "not_found") {
-            // The media genuinely no longer exists, so the review requirement is satisfied
-            // with an advisory note; a transient fetch failure keeps the gate shut instead
-            mediaUnavailable = true;
-            mediaReviewed = true;
-        } else {
-            mediaFetchFailed = true;
-        }
-    }
     let moderatorId = $derived(
         content.status.kind !== "pending" && content.status.kind !== "contested"
             ? content.status.moderator
@@ -225,7 +209,7 @@
         return `/csea-reporting?${params}`;
     });
     let hasMedia = $derived(content.blobReferences.length > 0);
-    let needsMediaReview = $derived(hasMedia && !mediaReviewed);
+    let needsMediaReview = $derived(hasMedia && !gate.reviewed);
 
     function resolve(verdict: ModerationVerdict) {
         if (content.reportIndex === undefined || busy || resolved) return;
@@ -686,18 +670,23 @@
 
     {@render authReport()}
 
-    {#if canResolve && reviewerRequired}
+    {#if canResolve && gate.reviewerRequired}
         <Body colour="validationError">
             <Translatable resourceKey={i18nKey("moderationReport.reviewerRequired")} />
         </Body>
-    {:else if canResolve && needsMediaReview && mediaFetchFailed}
+    {:else if canResolve && needsMediaReview && gate.fetchFailed}
         <Body colour="validationError">
             <Translatable resourceKey={i18nKey("moderationReport.mediaFetchFailed")} />
         </Body>
     {:else if canResolve && !needsMediaReview}
-        {#if mediaUnavailable}
+        {#if gate.unavailable}
             <Body colour="validationError">
                 <Translatable resourceKey={i18nKey("moderationReport.mediaUnavailable")} />
+            </Body>
+        {/if}
+        {#if gate.unplayable}
+            <Body colour="validationError">
+                <Translatable resourceKey={i18nKey("moderationReport.mediaUnplayable")} />
             </Body>
         {/if}
         {@render actions()}
@@ -738,7 +727,7 @@
     <VaultMediaViewer
         blobReferences={content.blobReferences}
         quarantined={content.autoSanctioned}
-        onResult={onReviewResult}
+        onResult={(outcome) => gate.apply(outcome)}
         onClose={() => (showViewer = false)}
     />
 {/if}

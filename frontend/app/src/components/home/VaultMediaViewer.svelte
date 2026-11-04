@@ -6,7 +6,7 @@
     } from "@src/logic/moderation/vaultMediaReview.svelte";
     import { getContext, onDestroy } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import { mobileWidth } from "@client";
+    import { formatFileSize, mobileWidth } from "@client";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -62,14 +62,6 @@
                             )}
                         />
                     </p>
-                {:else if review.stage === "loading"}
-                    <p>
-                        <Translatable
-                            resourceKey={i18nKey(
-                                quarantined ? "vaultViewer.loading" : "vaultViewer.loadingLive",
-                            )}
-                        />
-                    </p>
                 {:else if review.stage === "not_authorized"}
                     <p><Translatable resourceKey={i18nKey("vaultViewer.notAuthorized")} /></p>
                 {:else if review.stage === "not_found"}
@@ -77,20 +69,66 @@
                 {:else if review.stage === "error"}
                     <p><Translatable resourceKey={i18nKey("vaultViewer.error")} /></p>
                 {:else}
-                    {#each review.items as item}
+                    {#each review.items as item, i}
                         <div class="item">
                             {#if item.mimeType.startsWith("image/")}
                                 <img class="media" src={item.url} alt="" />
                             {:else if item.mimeType.startsWith("video/")}
                                 <!-- svelte-ignore a11y_media_has_caption -->
-                                <video class="media" src={item.url} controls preload="none"></video>
+                                <video
+                                    class="media"
+                                    src={item.url}
+                                    controls
+                                    preload="none"
+                                    onerror={() => review.markUnplayable(i)}></video>
                             {:else if item.mimeType.startsWith("audio/")}
-                                <audio src={item.url} controls preload="none"></audio>
+                                <audio
+                                    src={item.url}
+                                    controls
+                                    preload="none"
+                                    onerror={() => review.markUnplayable(i)}></audio>
                             {:else}
                                 <p>{item.mimeType}</p>
                             {/if}
+                            {#if item.unplayable}
+                                <p class="unplayable">
+                                    <Translatable
+                                        resourceKey={i18nKey("vaultViewer.unplayable", {
+                                            mimeType: item.mimeType,
+                                            size: formatFileSize(item.size),
+                                        })}
+                                    />
+                                </p>
+                            {/if}
                         </div>
                     {/each}
+                    {#if review.stage === "loading"}
+                        <p>
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    quarantined ? "vaultViewer.loading" : "vaultViewer.loadingLive",
+                                )}
+                            />
+                        </p>
+                        {#if review.progress !== undefined}
+                            <p>
+                                <Translatable
+                                    resourceKey={review.progress.total === undefined
+                                        ? i18nKey("vaultViewer.progressUnsized", {
+                                              file: review.progress.file,
+                                              files: review.progress.files,
+                                          })
+                                        : i18nKey("vaultViewer.progress", {
+                                              file: review.progress.file,
+                                              files: review.progress.files,
+                                              received: formatFileSize(review.progress.received),
+                                              total: formatFileSize(review.progress.total),
+                                          })}
+                                />
+                            </p>
+                        {/if}
+                        <p><Translatable resourceKey={i18nKey("vaultViewer.closeCancels")} /></p>
+                    {/if}
                 {/if}
             </div>
         {/snippet}
@@ -127,6 +165,9 @@
         display: flex;
         flex-direction: column;
         gap: $sp2;
+    }
+    .unplayable {
+        color: var(--error);
     }
     .media {
         // The flex column stretches children by default, which breaks the aspect ratio once
