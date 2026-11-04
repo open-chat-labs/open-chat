@@ -4,8 +4,10 @@ import {
     EXPLORE_PAGE_SIZE,
     explorePage,
     exploreNeedsSearch,
+    exploreQueryAnswered,
     exploreQueryFromUrl,
     exploreSearch,
+    exploreStatusAfter,
     exploreUrl,
     isExploreRoute,
     languageToggles,
@@ -66,6 +68,21 @@ describe("the explore query in the URL", () => {
         );
     });
 
+    test("languages compare as sets: one listed twice isn't two", () => {
+        expect(
+            sameExploreQuery(
+                { text: "a", languages: ["en", "en"] },
+                { text: "a", languages: ["en", "fr"] },
+            ),
+        ).toBe(false);
+        expect(
+            sameExploreQuery(
+                { text: "a", languages: ["en", "en"] },
+                { text: "a", languages: ["en"] },
+            ),
+        ).toBe(true);
+    });
+
     test("/communities and /welcome show explore", () => {
         const route = (kind: RouteParams["kind"]) => ({ kind }) as RouteParams;
         expect(isExploreRoute(route("communities_route"))).toBe(true);
@@ -113,6 +130,51 @@ describe("searching on opening", () => {
         expect(exploreNeedsSearch(wanted, wanted, 0)).toBe(true);
         expect(exploreNeedsSearch({ ...wanted, term: "go" }, wanted, 6)).toBe(true);
         expect(exploreNeedsSearch({ ...wanted, flags: 0 }, wanted, 6)).toBe(true);
+    });
+
+    test("a URL listing a language twice still asks for other languages than the held ones", () => {
+        expect(
+            exploreNeedsSearch(
+                { ...wanted, languages: ["en", "fr"] },
+                { ...wanted, languages: ["en", "en"] },
+                6,
+            ),
+        ).toBe(true);
+    });
+});
+
+describe("a first page the component asks for", () => {
+    const held = { term: "rust", languages: ["fr"], flags: 1 };
+
+    test("is already answered when only the sort changed", () => {
+        expect(exploreQueryAnswered(held, { ...held })).toBe(true);
+    });
+
+    test("is asked for with nothing held, or for another text, languages or flags", () => {
+        expect(exploreQueryAnswered(undefined, held)).toBe(false);
+        expect(exploreQueryAnswered(held, { ...held, term: "go" })).toBe(false);
+        expect(exploreQueryAnswered(held, { ...held, languages: [] })).toBe(false);
+        expect(exploreQueryAnswered(held, { ...held, flags: 0 })).toBe(false);
+    });
+});
+
+describe("what explore shows once a search answers", () => {
+    const ready = { kind: "ready" } as const;
+
+    test("a page that arrived shows", () => {
+        expect(exploreStatusAfter({ kind: "loading" }, "first", "success")).toEqual(ready);
+        expect(exploreStatusAfter({ kind: "failed" }, "first", "success")).toEqual(ready);
+    });
+
+    test("a failed first page shows the failure, not the last query's results as its answer", () => {
+        expect(exploreStatusAfter(ready, "first", "failed")).toEqual({ kind: "failed" });
+        expect(exploreStatusAfter({ kind: "loading" }, "first", "failed")).toEqual({
+            kind: "failed",
+        });
+    });
+
+    test("a failed later page keeps the list as it was", () => {
+        expect(exploreStatusAfter(ready, "next", "failed")).toEqual(ready);
     });
 });
 

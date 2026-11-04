@@ -2,22 +2,21 @@
      /welcome. The library asks for pages (onQuery) and the client searches
      (`searchCommunities`, shared with both old Explores), filtered by the languages picked and the
      viewer's moderation flags. The query is in the URL (/communities?q=&lang=, ROUTES.md): read
-     when the screen opens or the URL changes from outside, and written (replacing the entry) as it
-     changes. The languages picked are also saved on this device (`communityFiltersStore`), which
-     a URL without `lang` opens on. The results and their scroll position outlive the screen
-     (`communitySearchState`): coming back shows them again, and searches only when there are none
-     or they answer another query. Featured and Popular are cut from the one ranking the backend
-     has, and its sorts all ask for that ranking (GAPS.md). A community the viewer hasn't joined
-     opens as a preview, whose cancel comes back here. -->
+     when the screen opens or the URL changes from outside, and written (replacing the entry, with
+     any dialog over Explore left open) as it changes. The languages picked are also saved on this
+     device (`communityFiltersStore`), which a URL without `lang` opens on. The results and their
+     scroll position outlive the screen (`communitySearchState`): coming back shows them again, and
+     searches only when there are none or they answer another query. Featured and Popular are cut
+     from the one ranking the backend has, so a change of sort asks for nothing (GAPS.md). A
+     community the viewer hasn't joined opens as a preview, whose cancel comes back here. A guest's
+     Create community carries on after signing in in AppScreen, wherever they are by then. -->
 <script lang="ts">
     import {
         anonUserStore,
         communitiesStore,
         communityFiltersStore,
         exploreCommunitiesFiltersStore,
-        identityStateStore,
         offlineStore,
-        postLoginCreateCommunity,
         querystringStore,
         routeStore,
         type CommunityMatch,
@@ -35,9 +34,9 @@
         searchCommunities,
         type CommunitySearch,
     } from "@src/stores/search.svelte";
-    import { navigate } from "@src/utils/navigation";
+    import { navigate, replaceQuery } from "@src/utils/navigation";
     import { communityPreviewState } from "@src/utils/preview.svelte";
-    import { getContext, tick, untrack } from "svelte";
+    import { getContext, onDestroy, untrack } from "svelte";
     import { openCommunityCreation } from "../app/createCommunity";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import {
@@ -50,22 +49,22 @@
         EXPLORE_PAGE_SIZE,
         explorePage,
         exploreNeedsSearch,
+        exploreQueryAnswered,
         exploreQueryFromUrl,
         exploreSearch,
         exploreSearchKey,
+        exploreStatusAfter,
         exploreUrl,
         isExploreRoute,
         languageToggles,
         sameExploreQuery,
+        type ExploreStatus,
         type ExploreUrlQuery,
     } from "./exploreQuery";
 
     let { context }: ScreenProps<Extract<MiddleRegion, { kind: "explore" }>> = $props();
 
     const client = getContext<OpenChat>("client");
-
-    // waiting for the first answer to the query shown; or showing it; or that answer failed
-    type Status = { kind: "loading" } | { kind: "ready" } | { kind: "failed" };
 
     // the URL's own query: querystringStore is built from page.js's decoded query string, where a
     // search text with an "&" in it has already been split apart (as the Router reads it)
@@ -83,23 +82,34 @@
     );
 
     let query = $state<ExploreUrlQuery>(opening);
-    let status = $state<Status>(reusing ? { kind: "ready" } : { kind: "loading" });
+    let status = $state<ExploreStatus>(reusing ? { kind: "ready" } : { kind: "loading" });
     let loading = $state(false);
     // a query the URL changes to from outside (the rail's Explore …) starts the component afresh
     let generation = $state(0);
+    // where the component opens scrolled to: where the last visit left the same results, else the top
     let initialScroll = $state(untrack(() => (reusing ? communitySearchState.scrollPos : 0)));
+    // where it's scrolled to now: a plain field, kept in communitySearchState as the screen goes
+    let scrollTop = untrack(() => initialScroll);
+    // a first page the results held already answer (a change of sort): the component is told so by
+    // a new list of the same communities
+    let answered = $state(0);
     // the queries written to the URL that it may not show yet
     const written = new Set<string>();
 
-    const communities = $derived(
-        exploreCommunities(
+    const communities = $derived.by(() => {
+        void answered;
+        return exploreCommunities(
             communitySearchState.results,
             (m: CommunityMatch) => client.communityAvatarUrl(m.id.communityId, m.avatar),
             supportedLanguagesByCode,
-        ),
-    );
+        );
+    });
     const joinedKeys = $derived(joinedCommunityKeys($communitiesStore.values()));
     const languageOptions = exploreLanguageOptions(supportedLanguages);
+
+    onDestroy(() => {
+        communitySearchState.scrollPos = scrollTop;
+    });
 
     async function search(page: CommunitySearch["page"], pageSize = EXPLORE_PAGE_SIZE) {
         loading = true;
@@ -109,16 +119,19 @@
         );
         if (outcome === "superseded") return;
         loading = false;
-        if (outcome === "success") {
-            status = { kind: "ready" };
-        } else if (status.kind === "loading") {
-            status = { kind: "failed" };
-        }
+        status = exploreStatusAfter(status, page, outcome);
+    }
+
+    // a first page the screen asks for itself, opened at the top
+    function searchAfresh() {
+        initialScroll = 0;
+        scrollTop = 0;
+        void search("first");
     }
 
     function retry() {
         status = { kind: "loading" };
-        void search("first");
+        searchAfresh();
     }
 
     // on opening, and when the viewer's moderation flags change, unless the results held answer
@@ -128,7 +141,7 @@
         untrack(() => {
             const wanted = exploreSearchKey(query, viewerFlags);
             const held = communitySearchState.results.length;
-            if (exploreNeedsSearch(heldCommunitySearch(), wanted, held)) void search("first");
+            if (exploreNeedsSearch(heldCommunitySearch(), wanted, held)) searchAfresh();
         });
     });
 
@@ -145,24 +158,10 @@
             }
             if (written.has(JSON.stringify(wanted))) return;
             query = wanted;
-            initialScroll = 0;
             generation += 1;
             retry();
         });
     });
-
-    // a guest who chose to create a community carries on once signed in
-    $effect(() => {
-        if (postLoginCreateCommunity($identityStateStore)) {
-            void resumeCreating();
-        }
-    });
-
-    async function resumeCreating() {
-        client.clearPostLoginState();
-        await tick();
-        createCommunity();
-    }
 
     function createCommunity() {
         openCommunityCreation(client, context.dialogs);
@@ -174,6 +173,13 @@
             query = { text: q.text, languages: q.languages };
             saveLanguages(q.languages);
             writeUrl(query);
+            if (exploreQueryAnswered(heldCommunitySearch(), exploreSearchKey(query, flags))) {
+                // nothing to ask for; a search still in flight is for another query
+                communitySearchState.cancel();
+                loading = false;
+                answered += 1;
+                return;
+            }
         }
         void search(page, q.limit);
     }
@@ -188,7 +194,7 @@
         const to = exploreUrl(urlParams(), shown);
         if (to === `${window.location.pathname}${window.location.search}`) return;
         written.add(JSON.stringify(shown));
-        navigate(to, "auto");
+        replaceQuery(to);
     }
 
     function openCommunity(communityId: string) {
@@ -209,7 +215,7 @@
         <div class="state"><Spinner /></div>
     {:else if status.kind === "failed"}
         <div class="state">
-            <EmptyState preset="error" actionHandler={retry} />
+            <EmptyState preset={$offlineStore ? "offline" : "error"} actionHandler={retry} />
         </div>
     {:else}
         {#key generation}
@@ -222,7 +228,7 @@
                 initialQuery={query.text}
                 initialLanguages={query.languages}
                 {initialScroll}
-                onScroll={(top) => (communitySearchState.scrollPos = top)}
+                onScroll={(top) => (scrollTop = top)}
                 {onQuery}
                 onOpen={openCommunity}
                 onPreview={openCommunity}

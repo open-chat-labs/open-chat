@@ -5,8 +5,8 @@ import type { LocalDialog } from "./dialogs";
 
 /**
  * Creating a community, from the rail or Explore (4b's `CreateGroupDialog`). Only Diamond members
- * can create one: anyone else gets the upgrade. A guest is sent to sign in, and the creation picks
- * up after it where a screen resumes it (`postLoginCreateCommunity`: Explore does).
+ * can create one: anyone else gets the upgrade. A guest is sent to sign in, and AppScreen picks the
+ * creation up after it (`postLoginCreateCommunity`).
  */
 export function openCommunityCreation(client: OpenChat, dialogs: DialogStack<LocalDialog>): void {
     switch (startCommunityCreation(client)) {

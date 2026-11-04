@@ -7,8 +7,10 @@
         currentUserStore,
         dailyPuzzleStore,
         favouritesStore,
+        identityStateStore,
         latestSuccessfulUpdatesLoop,
         OpenChat,
+        postLoginCreateCommunity,
         publish,
         routeStore,
         sortedCommunitiesStore,
@@ -21,7 +23,7 @@
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { addQueryStringParam, withQueryStringFlag } from "@src/utils/urls";
-    import { getContext } from "svelte";
+    import { getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import {
         activityOverPage,
@@ -70,10 +72,23 @@
     // the dialogs the app opens itself, shown by DialogHost with the ones the URL opens
     const dialogStack = new DialogStack<LocalDialog>();
 
-    // only Diamond members can create one; a guest is sent to sign in (the community is started
-    // after only where Explore is open, GAPS.md)
+    // only Diamond members can create one; a guest is sent to sign in (from the rail or Explore)
     function createCommunity() {
         openCommunityCreation(client, dialogStack);
+    }
+
+    // a guest who chose to create a community carries on once signed in, wherever they are; the
+    // post-login state is cleared first, so it runs once
+    $effect(() => {
+        if (postLoginCreateCommunity($identityStateStore)) {
+            void resumeCreatingCommunity();
+        }
+    });
+
+    async function resumeCreatingCommunity() {
+        client.clearPostLoginState();
+        await tick();
+        createCommunity();
     }
 
     // the activity feed opened over a page is Notifications' too

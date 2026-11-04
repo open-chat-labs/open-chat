@@ -455,9 +455,9 @@ design export needs. Each entry says where it came up.
   as an edit is (`candidateFromCreate`, `candidateCommunityFromCreate`), created through
   `UpdateGroupState` / `UpdateCommunityState`, and then opened.
   - a community needs Diamond: without it the rail opens the Diamond dialog. A guest is sent to
-    sign in, and the community is started after signing in only while Explore is open (which
-    resumes it, `postLoginCreateCommunity`, as the old desktop Explore did); from elsewhere it
-    isn't (the old mobile Home did that; 10a).
+    sign in (from the rail or Explore), and creating carries on once signed in, wherever they
+    are: AppScreen resumes it (`postLoginCreateCommunity`, as the old desktop Explore and mobile
+    Home did).
   - by hand: `CreateGroupDialog`'s community defaults are all admin (the app's and the backend's),
     and a community shows no message permissions or Messages / Threads tabs.
   - by hand: the form is locked (inert, dimmed) while the create is in flight.
@@ -597,13 +597,16 @@ design export needs. Each entry says where it came up.
   "Searching…"); `initialScroll` / `onScroll` (the scroll position kept across visits).
   Not asked for (no design yet):
   - the sorts (Most members / Most active / Newest) are shown though there's one ranking (see
-    Explore under the data the backend doesn't have): each asks for the same results again.
+    Explore under the data the backend doesn't have): a change of sort asks for nothing (the
+    results held already answer it, `exploreQueryAnswered`).
   - no place for a community's moderation flags (the old cards labelled adult and offensive
     ones, `serialiseFlags` in both old `CommunityCard`s); when the design has one, it moves to
     `@client`, returning `ResourceKey`s.
   - no offline state of its own: with nothing loaded and the app offline, the screen shows the
     library's offline `EmptyState` (Retry) in the component's place, as the old Explores did; a
-    first load that fails shows the error one.
+    first page that fails (on opening, or for a new text or languages) shows the error one (the
+    offline one when offline) rather than the last query's results as its answer, and Retry asks
+    for it again.
   - no scroll-to-top button (both old Explores had one).
 
 ## App
@@ -622,7 +625,7 @@ design export needs. Each entry says where it came up.
 - **Explore**:
   - one server ranking, so no featured vs popular lists and no sort by active or newest: the
     component cuts Featured and Popular from the page it has (the biggest public communities not
-    joined), and its sorts all ask for that ranking;
+    joined), and a change of sort shows the same page;
   - results have no created date, activity metric or channel list (the big cards' channel line is
     empty).
 - **Activity**:
@@ -782,7 +785,10 @@ design export needs. Each entry says where it came up.
   not joined opens as a preview, whose cancel comes back to Explore with its query
   (`communityPreviewState.setOrigin`, mobile's way; the preview's Join / Leave and cancel are
   8b's). Create community: the create dialog, the Diamond upgrade, or a guest's sign-in, after
-  which creating carries on. A guest gets the component's sign-in banner. Kept from the desktop
+  which creating carries on (AppScreen). Writing the query to the URL (`replaceQuery`) leaves any
+  dialog over Explore open. Results set outside the search step (a proposal's community finder,
+  the mobile welcome page) answer no Explore search (`CommunitySearchState.held`), so Explore
+  searches again rather than show them. A guest gets the component's sign-in banner. Kept from the desktop
   tree: Load more (the library's own, 6 a page). Not carried over:
   - bots: the old mobile Explore's Communities / Bots switch, its bot cards and filters, and
     Register a bot (desktop lists bots elsewhere; see Bots).

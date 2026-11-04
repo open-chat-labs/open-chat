@@ -2,8 +2,10 @@ import type { RouteParams } from "@client";
 import type { ExploreQuery } from "@openchat/ui/src/features/components/ExploreCommunities.svelte";
 import {
     sameCommunitySearch,
+    sameLanguages,
     type CommunitySearch,
     type CommunitySearchKey,
+    type CommunitySearchOutcome,
 } from "@src/stores/search.svelte";
 
 // Explore's query in the URL (ROUTES.md, "Explore query"): /communities?q=<text>&lang=<codes>, and
@@ -55,7 +57,7 @@ export function exploreUrl(params: URLSearchParams, query: ExploreUrlQuery): str
 
 /** Whether two queries show the same communities (the languages in any order). */
 export function sameExploreQuery(a: ExploreUrlQuery, b: ExploreUrlQuery): boolean {
-    return sameCommunitySearch(exploreSearchKey(a, 0), exploreSearchKey(b, 0));
+    return a.text === b.text && sameLanguages(a.languages, b.languages);
 }
 
 /**
@@ -101,6 +103,18 @@ export function exploreNeedsSearch(
 }
 
 /**
+ * Whether the results held already answer a first page the component asks for: only its sort
+ * changed (the backend has one ranking, so every sort is the same page), or the text was changed
+ * and changed back before the ask went out. Asking again would fetch the same page.
+ */
+export function exploreQueryAnswered(
+    held: CommunitySearchKey | undefined,
+    wanted: CommunitySearchKey,
+): boolean {
+    return held !== undefined && sameCommunitySearch(held, wanted);
+}
+
+/**
  * The languages to toggle in the saved filter (`toggleCommunityFilterLanguage`) so that it holds
  * exactly those picked, and Explore opens on them next time.
  */
@@ -110,6 +124,23 @@ export function languageToggles(saved: Iterable<string>, picked: string[]): stri
         ...before.filter((l) => !picked.includes(l)),
         ...picked.filter((l, i) => !before.includes(l) && picked.indexOf(l) === i),
     ];
+}
+
+/** Waiting for the first answer to the query shown; showing it; or its first page failed. */
+export type ExploreStatus = { kind: "loading" } | { kind: "ready" } | { kind: "failed" };
+
+/**
+ * What Explore shows once a search has answered. A first page that failed leaves the results of
+ * the query before it, so they mustn't stand as its answer: the failure shows (with a retry). A
+ * later page that failed keeps the list as it was, and Load more asks for it again.
+ */
+export function exploreStatusAfter(
+    status: ExploreStatus,
+    page: CommunitySearch["page"],
+    outcome: Exclude<CommunitySearchOutcome, "superseded">,
+): ExploreStatus {
+    if (outcome === "success") return { kind: "ready" };
+    return page === "first" ? { kind: "failed" } : status;
 }
 
 export type CommunityOpening =

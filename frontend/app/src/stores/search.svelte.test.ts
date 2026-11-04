@@ -4,6 +4,7 @@ import {
     communitySearchState,
     heldCommunitySearch,
     sameCommunitySearch,
+    sameLanguages,
     searchCommunities,
 } from "./search.svelte";
 
@@ -15,11 +16,7 @@ describe("SearchState.appendResults", () => {
     test("drops items a previous page already delivered", () => {
         communitySearchState.results = [match("a"), match("b")];
         communitySearchState.appendResults([match("b"), match("c"), match("c")]);
-        expect(communitySearchState.results.map((c) => c.id.communityId)).toEqual([
-            "a",
-            "b",
-            "c",
-        ]);
+        expect(communitySearchState.results.map((c) => c.id.communityId)).toEqual(["a", "b", "c"]);
     });
 
     test("replacing the results does not dedupe against the old page", () => {
@@ -140,5 +137,57 @@ describe("sameCommunitySearch", () => {
         expect(sameCommunitySearch(key, { ...key, flags: 0 })).toBe(false);
         expect(sameCommunitySearch(key, { ...key, languages: [] })).toBe(false);
         expect(sameCommunitySearch(key, { ...key, languages: ["fr"] })).toBe(false);
+    });
+});
+
+describe("sameLanguages", () => {
+    test("compares the languages picked as sets", () => {
+        expect(sameLanguages(["en", "fr"], ["fr", "en", "en"])).toBe(true);
+        expect(sameLanguages(["en", "en"], ["en", "fr"])).toBe(false);
+        expect(sameLanguages(["en", "fr"], ["en", "en"])).toBe(false);
+        expect(sameLanguages([], [])).toBe(true);
+    });
+});
+
+describe("results set outside searchCommunities", () => {
+    beforeEach(() => {
+        communitySearchState.results = [];
+    });
+
+    test("answer no search, so explore doesn't take them for its own", async () => {
+        await searchCommunities(client(page(["a"], 1)), { ...search, page: "first" });
+        expect(heldCommunitySearch()).toBeDefined();
+        // a proposal's community finder, searching for its own term with no flags
+        communitySearchState.results = [match("finder")];
+        expect(heldCommunitySearch()).toBeUndefined();
+    });
+
+    test("drop the answer of a search still in flight", async () => {
+        let answer: (r: ExploreCommunitiesResponse) => void = () => undefined;
+        const c = {
+            exploreCommunities: vi.fn<Explore>(
+                () => new Promise<ExploreCommunitiesResponse>((resolve) => (answer = resolve)),
+            ),
+        };
+        const pending = searchCommunities(c, { ...search, page: "first" });
+        communitySearchState.results = [match("finder")];
+        answer(page(["explore"], 1));
+        expect(await pending).toBe("superseded");
+        expect(ids()).toEqual(["finder"]);
+        expect(heldCommunitySearch()).toBeUndefined();
+    });
+
+    test("cancel drops the answer of a search still in flight", async () => {
+        let answer: (r: ExploreCommunitiesResponse) => void = () => undefined;
+        const c = {
+            exploreCommunities: vi.fn<Explore>(
+                () => new Promise<ExploreCommunitiesResponse>((resolve) => (answer = resolve)),
+            ),
+        };
+        const pending = searchCommunities(c, { ...search, page: "first" });
+        communitySearchState.cancel();
+        answer(page(["late"], 1));
+        expect(await pending).toBe("superseded");
+        expect(ids()).toEqual([]);
     });
 });

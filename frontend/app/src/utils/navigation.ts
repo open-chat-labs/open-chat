@@ -462,6 +462,17 @@ export function navigate(to: string, intent: NavigationIntent = "in-app") {
 }
 
 /**
+ * Replaces the current history entry's URL with another for the same page (a screen keeping its
+ * own state in the query, as Explore's search), leaving open whatever dialogs are over it: unlike
+ * navigate(), the modal stack isn't closed first. Nothing happens while a navigation is waiting
+ * on the modal stack, as the page is about to change.
+ */
+export function replaceQuery(to: string) {
+    if (pendingNavigation !== null) return;
+    doNavigate(to, "auto");
+}
+
+/**
  * Called by Modals.svelte when the modal stack has fully drained.
  * Fires any navigation that was deferred by navigate().
  */
