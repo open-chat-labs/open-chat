@@ -66,6 +66,7 @@ pub enum UserIndexEvent {
     SetAlchemyApiKey(SetAlchemyApiKey),
     BridgedUserLinked(BridgedUserLinked),
     SetMiniAppServicePrincipal(Principal),
+    SetTurnstileConfig(TurnstileConfig),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -580,6 +581,24 @@ impl std::fmt::Debug for SetAlchemyApiKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SetAlchemyApiKey")
             .field("api_key_set", &self.api_key.is_some())
+            .finish()
+    }
+}
+
+// How prize claims are checked for a human with Cloudflare Turnstile. With a secret key, a claim
+// carrying a token is verified with it; `required` then rejects a claim without one.
+#[derive(Serialize, Deserialize, Clone, Default)]
+pub struct TurnstileConfig {
+    pub secret_key: Option<String>,
+    pub required: bool,
+}
+
+// Written by hand so that `#[trace]` doesn't record the key
+impl std::fmt::Debug for TurnstileConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TurnstileConfig")
+            .field("secret_key_set", &self.secret_key.is_some())
+            .field("required", &self.required)
             .finish()
     }
 }

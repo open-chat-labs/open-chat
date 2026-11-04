@@ -1,16 +1,19 @@
 use crate::env::ENV;
-use crate::utils::{now_millis, now_nanos, tick_many};
-use crate::{TestEnv, client};
+use crate::utils::{now_millis, now_nanos, tick_many, try_metrics};
+use crate::{CanisterIds, TestEnv, User, client};
+use candid::Principal;
 use constants::{HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE, MINUTE_IN_MS, PRIZE_FEE_PERCENT};
 use oc_error_codes::OCErrorCode;
+use pocket_ic::PocketIc;
+use pocket_ic::common::rest::{CanisterHttpReply, CanisterHttpResponse, MockCanisterHttpResponse};
 use rand::random;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    CanisterId, ChatEvent, CryptoTransaction, EventIndex, MessageContent, MessageContentInitial, MultiUserChat, OptionUpdate,
-    PendingCryptoTransaction, PrizeContentInitial, icrc1,
+    CanisterId, ChatEvent, CryptoTransaction, EventIndex, MessageContent, MessageContentInitial, MessageId, MultiUserChat,
+    OptionUpdate, PendingCryptoTransaction, PrizeContentInitial, UnitResult, icrc1,
 };
 
 #[test]
@@ -205,6 +208,7 @@ fn prize_message_requiring_reauthentication() {
             chat_id: MultiUserChat::Group(group_id),
             message_id,
             sign_in_proof_jwt: None,
+            turnstile_token: None,
         },
     );
 
@@ -425,6 +429,217 @@ fn old_transactions_fixed_by_updating_created_date() {
     // The unclaimed prize was refunded, less the fee for refunding it
     let user_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user);
     assert_eq!(user_balance, starting_balance + 180_000 - ICP_TRANSFER_FEE);
+}
+
+// Once Turnstile is required, a claim must carry a token which Cloudflare passes, issued for that
+// user's claim of that prize
+#[test]
+fn prize_claims_are_checked_for_a_human_with_turnstile() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        platform_operator,
+        ..
+    } = wrapper.env();
+
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
+    let user2 = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &user1, random_string().as_str(), true, true);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user1, 1_000_000_000);
+
+    let prizes = [100000, 200000];
+    let fee = ICP_TRANSFER_FEE;
+    let message_id = random_from_u128();
+    let send_message_response = client::group::send_message_with_transfer(
+        env,
+        &user1,
+        group_id,
+        group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::Prize(PrizeContentInitial {
+                prizes_v2: prizes.into_iter().map(u128::from).collect(),
+                transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+                    ledger: canister_ids.icp_ledger,
+                    token_symbol: ICP_SYMBOL.to_string(),
+                    amount: prize_amount(&prizes, fee),
+                    to: CanisterId::from(group_id).into(),
+                    fee,
+                    memo: None,
+                    created: now_nanos(env),
+                })),
+                end_date: now_millis(env) + HOUR_IN_MS,
+                caption: None,
+                diamond_only: false,
+                lifetime_diamond_only: false,
+                unique_person_only: false,
+                streak_only: 0,
+                requires_captcha: false,
+                min_chit_earned: 0,
+            }),
+            sender_name: user1.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            forwarding: false,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(send_message_response, group_canister::send_message_v2::Response::Success(_)),
+        "{send_message_response:?}"
+    );
+
+    set_turnstile_config(env, *platform_operator, canister_ids.user_index, Some("secret"), true);
+    wait_for_turnstile_config(env, canister_ids, true);
+
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+    let chat_id = MultiUserChat::Group(group_id);
+
+    let response = client::local_user_index::claim_prize(
+        env,
+        user2.principal,
+        local_user_index,
+        &local_user_index_canister::claim_prize::Args {
+            chat_id,
+            message_id,
+            sign_in_proof_jwt: None,
+            turnstile_token: None,
+        },
+    );
+    assert!(
+        matches!(&response, local_user_index_canister::claim_prize::Response::Error(e) if e.matches_code(OCErrorCode::HumanVerificationFailed)),
+        "{response:?}"
+    );
+
+    // A token Cloudflare passes, but which was issued for another prize
+    let other_message_id: MessageId = random_from_u128();
+    let response = claim_prize_with_token(env, &user2, local_user_index, chat_id, message_id, |custom_data| {
+        assert_eq!(custom_data, format!("{}_{message_id}", user2.user_id));
+        format!("{}_{other_message_id}", user2.user_id)
+    });
+    assert!(
+        matches!(&response, local_user_index_canister::claim_prize::Response::Error(e) if e.matches_code(OCErrorCode::HumanVerificationFailed)),
+        "{response:?}"
+    );
+
+    let response = claim_prize_with_token(env, &user2, local_user_index, chat_id, message_id, |custom_data| custom_data);
+    assert!(
+        matches!(response, local_user_index_canister::claim_prize::Response::Success),
+        "{response:?}"
+    );
+    let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user2);
+    assert_eq!(user2_balance, 200000);
+
+    // Test envs are pooled, so Turnstile is turned off again
+    set_turnstile_config(env, *platform_operator, canister_ids.user_index, None, false);
+    wait_for_turnstile_config(env, canister_ids, false);
+}
+
+// Claims with a new token, answering the LocalUserIndex's call to Cloudflare as Cloudflare would for
+// a passed token issued for the custom data `issued_for` returns, given what the claim expects
+fn claim_prize_with_token(
+    env: &mut PocketIc,
+    user: &User,
+    local_user_index: CanisterId,
+    chat_id: MultiUserChat,
+    message_id: MessageId,
+    issued_for: impl FnOnce(String) -> String,
+) -> local_user_index_canister::claim_prize::Response {
+    let token = random_string();
+    let call_id = env
+        .submit_call(
+            local_user_index,
+            user.principal,
+            "claim_prize_msgpack",
+            msgpack::serialize_then_unwrap(local_user_index_canister::claim_prize::Args {
+                chat_id,
+                message_id,
+                sign_in_proof_jwt: None,
+                turnstile_token: Some(token.clone()),
+            }),
+        )
+        .unwrap();
+
+    // Other tests' outcalls may still be pending in a pooled env, so only this token's is answered
+    let request = (0..20)
+        .find_map(|_| {
+            env.tick();
+            env.get_canister_http().into_iter().find(|request| {
+                request.url == "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+                    && String::from_utf8_lossy(&request.body).contains(&token)
+            })
+        })
+        .expect("No call to siteverify");
+    let body: serde_json::Value = serde_json::from_slice(&request.body).unwrap();
+    assert_eq!(body["secret"], "secret");
+
+    let expected_custom_data = format!("{}_{message_id}", user.user_id);
+    let reply = serde_json::json!({
+        "success": true,
+        "challenge_ts": "2026-11-04T15:00:00.000Z",
+        "hostname": "oc.app",
+        "error-codes": [],
+        "action": "claim_prize",
+        "cdata": issued_for(expected_custom_data),
+    });
+    env.mock_canister_http_response(MockCanisterHttpResponse {
+        subnet_id: request.subnet_id,
+        request_id: request.request_id,
+        response: CanisterHttpResponse::CanisterHttpReply(CanisterHttpReply {
+            status: 200,
+            headers: Vec::new(),
+            body: serde_json::to_vec(&reply).unwrap(),
+        }),
+        additional_responses: Vec::new(),
+    });
+
+    msgpack::deserialize_then_unwrap(&env.await_call(call_id).unwrap())
+}
+
+fn set_turnstile_config(
+    env: &mut PocketIc,
+    platform_operator: Principal,
+    user_index: CanisterId,
+    secret_key: Option<&str>,
+    required: bool,
+) {
+    let response = client::user_index::set_turnstile_config(
+        env,
+        platform_operator,
+        user_index,
+        &user_index_canister::set_turnstile_config::Args {
+            secret_key: secret_key.map(|k| k.to_string()),
+            required,
+        },
+    );
+    assert!(matches!(response, UnitResult::Success));
+}
+
+// Ticks until the UserIndex and every LocalUserIndex report Turnstile as on (or off), since the
+// config is passed on over the UserIndex's event queue
+fn wait_for_turnstile_config(env: &mut PocketIc, canister_ids: &CanisterIds, on: bool) {
+    let mut canisters = vec![canister_ids.user_index];
+    canisters.extend(canister_ids.subnets.iter().map(|s| s.local_user_index));
+
+    let is_on = |env: &PocketIc, canister_id: CanisterId| {
+        try_metrics(env, canister_id)
+            .map(|m| m["turnstile_secret_key_set"].as_bool() == Some(on) && m["turnstile_required"].as_bool() == Some(on))
+    };
+    for _ in 0..50 {
+        if canisters.iter().all(|c| is_on(env, *c) == Some(true)) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("Turnstile config not passed on to every LocalUserIndex");
 }
 
 // What a prize message's transfer must hold: the prizes, a transfer fee for paying out each one and

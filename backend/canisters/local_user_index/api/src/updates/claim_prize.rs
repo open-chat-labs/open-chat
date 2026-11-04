@@ -10,6 +10,8 @@ pub struct Args {
     pub chat_id: MultiUserChat,
     pub message_id: MessageId,
     pub sign_in_proof_jwt: Option<String>,
+    // A Cloudflare Turnstile token, issued for this user and message (see turnstile.rs)
+    pub turnstile_token: Option<String>,
 }
 
 #[ts_export(local_user_index, claim_prize)]
