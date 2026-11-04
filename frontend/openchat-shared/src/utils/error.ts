@@ -144,12 +144,13 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     // the site's storage from under an open connection
     /internal error was encountered in the indexed database server/i,
     /database deleted by request of the user/i,
-    // Safari's IndexedDB failing to open its files, or running out of memory (#2163, #15839)
-    /unable to open database file on disk/i,
-    /operation failed for an unknown transient reason/i,
     // Chrome's form of the same: the site's storage was deleted under an open connection, by the
     // user clearing site data or the browser evicting it (#29538)
     /force close delete origin/i,
+    // Safari's IndexedDB failing to open its files (#2163), and WebKit's default text for any
+    // bare UnknownError, seen from the worker's IndexedDB (#15839)
+    /unable to open database file on disk/i,
+    /operation failed for an unknown transient reason/i,
     // Safari's in-app browser bridge complaining about its own injected script
     /wkwebview api client did not respond to this postmessage/i,
     // The client's clock is wrong, so the replica certificate looks like it is from the future;
