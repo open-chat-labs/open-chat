@@ -124,11 +124,13 @@ describe("the vault media review", () => {
             vaultFileInfo: async () => info(1),
             vaultFileChunk: async () => chunk(0, 1),
         };
-        const review = new VaultMediaReview(client as OpenChat, [BIG], true, (o) =>
+        // A thumbnail that plays beside a video that doesn't must still raise the advisory
+        const review = new VaultMediaReview(client as OpenChat, [BIG, SMALL], true, (o) =>
             results.push(o),
         );
         await review.fetchAll();
-        review.markUnplayable(0);
+        expect(review.items).toHaveLength(2);
+        review.markUnplayable(1);
         review.dispose();
         expect(results).toEqual(["unplayable"]);
 
