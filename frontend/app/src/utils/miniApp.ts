@@ -51,11 +51,12 @@ function themeFragment(darkMode: boolean): string {
 
 // What OpenChat sends the app (backend/docs/mini_app_service_protocol.md, "App ↔ website")
 export type MiniAppHostMessage =
-    // once the app says it's ready, and again whenever the user's role changes. Only a player gets a
-    // token, which the app sends with each request to its bot. A finished game is shown from how it
-    // ended (`mini_app_end_state` follows), without the service or a token. The settings are the
-    // game's, as its card records them from its start, parsed from the bot's JSON: undefined while
-    // the card has none, or if they don't parse.
+    // once the app says it's ready, and again whenever the user's role changes. Only a player is
+    // named, and a spectator's id is empty. Only a player gets a token, which the app sends with
+    // each request to its bot. A finished game is shown from how it ended (`mini_app_end_state`
+    // follows), without the service or a token. The settings are the game's, as its card records
+    // them from its start, parsed from the bot's JSON: undefined while the card has none, or if
+    // they don't parse.
     | {
           kind: "initialise_mini_app";
           role: MiniAppRole;

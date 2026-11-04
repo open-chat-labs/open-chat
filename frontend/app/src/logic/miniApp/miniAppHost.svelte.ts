@@ -1,8 +1,8 @@
 // OpenChat's side of a game's app, shared by the frames in both trees. Showing the app opens the game
-// through the MiniApp service, and closing it closes the game. In between it relays: the user's role
-// and player token, and the game's state, to the app, and the app's requests for a fresh token and to
-// start the game to the service (backend/docs/mini_app_service_protocol.md, "App ↔ website"). Nothing
-// else about the user is shared with the app.
+// through the MiniApp service, and closing it closes the game. In between it relays: the user's role,
+// and a player's id and token, and the game's state, to the app, and the app's requests for a fresh
+// token and to start the game to the service (backend/docs/mini_app_service_protocol.md, "App ↔
+// website"). Nothing else about the user is shared with the app.
 //
 // A finished game whose card records how it ended doesn't go through the service, which has forgotten
 // it: the app's shown that end state instead, as a player if the user was one.
@@ -241,13 +241,17 @@ export class MiniAppHost {
 
     // Tells the app the user's role, and the game's settings if its card records them yet, once it's
     // ready, and then how the game ended, or else the latest state, unless the service is about to
-    // send it
+    // send it.
+    // Only a player is named to the app. A spectator is anyone the card's on screen for, and the app
+    // is the bot's page, so naming them would tell the bot who's looking at the chat. Their id is
+    // empty rather than left out, as apps built with the SDK ignore an initialise without one.
     #initialise(withState: boolean): void {
         if (!this.#ready || this.status.kind !== "open") return;
+        const role = this.status.role;
         this.#send({
             kind: "initialise_mini_app",
-            role: this.status.role,
-            user_id: this.#options.userId,
+            role,
+            user_id: role === "player" ? this.#options.userId : "",
             token: this.#playerToken,
             dark_mode: this.#options.darkMode,
             locale: this.#options.locale(),

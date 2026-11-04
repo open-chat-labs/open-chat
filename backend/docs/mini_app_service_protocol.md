@@ -2,7 +2,7 @@
 
 The MiniApp service is run by OpenChat. It sits between the website and the game servers (bots), so that:
 - a user is on a game's card only if they asked to join through OpenChat and the bot accepted them;
-- spectators watch through the service and never reach the bot;
+- spectators get the game through the service, never from the bot, and OpenChat doesn't tell the bot who they are. Their browser still loads the bot's app and artwork, and anything the app fetches, from the bot's servers;
 - a card exists only if the service knows its game, as bots post cards through the service.
 
 This document is the contract between the website, the service, bots and their apps.
@@ -324,6 +324,7 @@ The website shows the app's image in the frame's box, with the app drawn unseen 
 **Website → app:**
 - `{ kind: "initialise_mini_app", role: "player" | "spectator", user_id, token, dark_mode, locale, finished, settings }`
   - The website sends it again when the user's role changes.
+  - `user_id` is the user's id if they're a player, and empty for a spectator. A spectator is anyone the card's on screen for, so naming them would tell the bot who's looking at the chat. It's empty rather than left out, as apps built with the SDK ignore an initialise without one. A finished card's past players are named whenever it's on screen, so the app can show them their side.
   - `token` is the player token, and only players get one.
   - `finished` is true when the game is over and the card holds how it ended. Then there's no token, `role` is "player" if the user was one of the game's players and "spectator" otherwise, and no `mini_app_state` follows: a `mini_app_end_state` does.
   - `settings` are the game's settings as the card records them, parsed from the JSON the bot started the game with, and absent (`undefined`) while the card has none, or if they don't parse. They come with every initialise, a finished card's included. The card's copy arrives with the next initialise only, so an app that's open when the game starts learns the settings from the bot's state, as it does everything else about the game.
@@ -343,6 +344,7 @@ A player's app sends the player token, in `x-oc-jwt`, with each request to the b
 - **Starting goes through OpenChat,** so the card records exactly who the game started with. An app asks for its player, and the bot decides. Moves go straight to the bot.
 - **A bot checks its own player list on every request.** A player token outlives a removal by up to an hour.
 - **Spectators get only the shared state,** which every player sees too, so watching can't leak a player's hand.
+- **Spectators aren't named.** Neither the service nor the website tells the bot or its app who's watching, since anyone with the card on screen is. The app is the bot's own page, though, with storage of its own, so a bot can still recognise a browser that has played its games before.
 - **Only the service posts a card, and only it writes the card's status.** So every card is a game the service knows from the moment it exists. The status holds the game's players and settings once it starts, and its result and end state once it finishes. Whose turn it is is only shown live.
   - A bot can take players off but never put them on.
   - The service ends a game:

@@ -119,7 +119,8 @@ describe("MiniAppHost", () => {
         return {
             kind: "initialise_mini_app",
             role,
-            user_id: "me",
+            // only a player is named to the app
+            user_id: role === "player" ? "me" : "",
             token,
             dark_mode: true,
             locale: "fr",
@@ -191,6 +192,15 @@ describe("MiniAppHost", () => {
         ]);
         expect(origins).toEqual(new Set([ORIGIN]));
         expect(host.status).toEqual({ kind: "open", role: "player" });
+    });
+
+    test("names the user to the app only while they're playing", async () => {
+        await opened("spectator");
+        await fromApp({ kind: "mini_app_ready" });
+        games.listener!.onRole("player", "player");
+        games.listener!.onRole("spectator", undefined);
+
+        expect(sent.map((m) => (m as { user_id: unknown }).user_id)).toEqual(["", "me", ""]);
     });
 
     test("holds only the latest state until the app's ready, dropping older ones", async () => {
