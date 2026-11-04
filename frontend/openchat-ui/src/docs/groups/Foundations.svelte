@@ -7,13 +7,16 @@
   import { foundations, sec } from '../sections';
   import { Button, Translate } from '../../lib/index';
   import { messages } from '../../lib/i18n';
+  import type { PageAccent } from '../../pages/types';
 
   interface Props {
     /** Changes whenever mode or accent changes; triggers a re-read of the computed token values. */
     theme: string;
+    /** The docs' accent, for the native previews (each is its own theme root). */
+    accent: PageAccent;
   }
 
-  let { theme }: Props = $props();
+  let { theme, accent }: Props = $props();
 
   const colours: { title: string; tokens: string[] }[] = [
     { title: 'Surfaces', tokens: ['bg', 'surface-0', 'surface-1', 'surface-2', 'field', 'scrim', 'on-cover-bg'] },
@@ -156,6 +159,20 @@ t('ui.duration.hours', { count: 12 });`;
   }
 
   const all = [...colours.flatMap((g) => g.tokens), ...scales.flatMap((g) => g.tokens), ...ladder.flatMap((r) => [r.bp, r.list, r.info]), 'panel-chat-min', 'island-min'];
+  const typeTokens = scales.filter((g) => g.kind === 'text').flatMap((g) => g.tokens);
+
+  // a token that holds a calc() or env() (the type sizes, the safe areas) reads back as written; a property set to
+  // it on a hidden probe computes to px
+  const readLengths = (el: HTMLElement | undefined, tokens: string[]): Record<string, string> => {
+    if (!el) return {};
+    return Object.fromEntries(
+      tokens.map((t) => {
+        el.style.paddingLeft = `var(--${t})`;
+        return [t, getComputedStyle(el).paddingLeft];
+      }),
+    );
+  };
+  let typeProbe = $state<HTMLElement>();
 
   $effect(() => {
     void theme;
@@ -165,16 +182,63 @@ t('ui.duration.hours', { count: 12 });`;
       const cs = getComputedStyle(root);
       const out: Record<string, string> = {};
       for (const t of all) if (t) out[t] = pretty(cs.getPropertyValue('--' + t));
-      values = out;
+      values = { ...out, ...readLengths(typeProbe, typeTokens) };
       contrasts = contrastPairs.flatMap((p) => {
         const fg = parseColour(cs.getPropertyValue('--' + p.fg)), bg = parseColour(cs.getPropertyValue('--' + p.bg));
         return fg && bg ? [{ ...p, ratio: contrast(fg, bg) }] : [];
       });
     });
   });
+
+  // ── native platform: two previews (light, dark) as their own theme roots, read live like the rest ──
+  type NativeMode = 'light' | 'dark';
+  const nativeModes: NativeMode[] = ['light', 'dark'];
+  const nativeColours = ['surface-0', 'surface-1', 'surface-2', 'field', 'hero-base', 'tint-row', 'tint-pill'];
+  const nativeLayout = ['safe-top', 'safe-right', 'safe-bottom', 'safe-left', 'scroll-end'];
+  const nativeText = ['text-2xs', 'text-xs', 'text-sm', 'text-md', 'text-base', 'text-lg', 'text-xl', 'text-2xl', 'text-3xl'];
+  const callColours = ['call-bg', 'call-ink', 'call-ink-2', 'call-chip', 'call-control', 'call-control-on', 'call-control-on-ink', 'call-tile', 'call-tile-mix', 'call-pill', 'call-badge', 'call-label'];
+  // The app's four font sizes (its font scale store's steps 1 to 4) at the platform's default scale. These factors
+  // are the client's fontScaleFactor (openchat-client/src/state/ui/stores.ts), which the library can't import;
+  // the app sets the real --text-scale with textScaleOf (app/src/logic/profile/appearance.ts), which also takes
+  // the platform's font scale. A demo only: change them with fontScaleFactor.
+  const textSizes: { label: string; scale: number }[] = [
+    { label: 'Small', scale: 0.875 },
+    { label: 'Default', scale: 1 },
+    { label: 'Large', scale: 1.125 },
+    { label: 'Larger', scale: 1.25 },
+  ];
+  let textScale = $state(1);
+
+  const previews: Partial<Record<NativeMode, HTMLElement>> = {};
+  const calls: Partial<Record<NativeMode, HTMLElement>> = {};
+  let probe = $state<HTMLElement>();
+  let nativeValues = $state<Partial<Record<NativeMode, Record<string, string>>>>({});
+  let lengthValues = $state<Record<string, string>>({});
+  let callValues = $state<Record<string, string>>({});
+
+  const read = (el: HTMLElement | undefined, tokens: string[]): Record<string, string> => {
+    if (!el) return {};
+    const cs = getComputedStyle(el);
+    return Object.fromEntries(tokens.map((t) => [t, pretty(cs.getPropertyValue('--' + t))]));
+  };
+
+  async function readNative(): Promise<void> {
+    await tick();
+    nativeValues = Object.fromEntries(nativeModes.map((m) => [m, read(previews[m], nativeColours)]));
+    lengthValues = readLengths(probe, [...nativeLayout, ...nativeText]);
+    callValues = read(calls.light, callColours);
+  }
+
+  $effect(() => {
+    void theme;
+    void accent;
+    void textScale;
+    void readNative();
+  });
 </script>
 
 <div class="foundations" bind:this={host}>
+  <span class="probe" aria-hidden="true" bind:this={typeProbe}></span>
   <Section {...sec(foundations, 'colour')}>
     <div class="grid3">
       {#each colours as g}
@@ -363,9 +427,82 @@ t('ui.duration.hours', { count: 12 });`;
       </ul>
     </Frame>
   </Section>
+
+  <Section {...sec(foundations, 'native')}>
+    <div class="native-grid">
+      {#each nativeModes as m (m)}
+        <div class="native-preview" data-platform="native" data-mode={m} data-accent={accent} style:--text-scale={textScale} bind:this={previews[m]}>
+          <span class="np-label">data-platform="native" · data-mode="{m}"</span>
+          {#if m === 'dark'}<span class="probe" aria-hidden="true" bind:this={probe}></span>{/if}
+          <div class="hero">
+            <div class="hero-top">
+              <span class="hero-tile" aria-hidden="true"><span class="hero-bolt"></span></span>
+              <span class="hero-balance"><b>12,450</b> CHIT</span>
+              <span class="pill">7 day streak</span>
+            </div>
+            <div class="hero-row"><span>Daily claim</span><span class="pill">Claim 500</span></div>
+          </div>
+          <span class="field-sample">Search</span>
+          <div class="call" data-always-dark bind:this={calls[m]}>
+            <span class="call-text"><b>Voice call</b><span>12:45 · 3 people</span></span>
+            <span class="call-btn" aria-hidden="true"></span>
+            <span class="call-btn on" aria-hidden="true"></span>
+          </div>
+          <div class="swatches">
+            {#each nativeColours as t}
+              <div class="swatch-item">
+                <span class="swatch" style:background="var(--{t})"></span>
+                <span class="name">--{t}</span>
+                <span class="val">{nativeValues[m]?.[t] ?? ''}</span>
+              </div>
+            {/each}
+          </div>
+        </div>
+      {/each}
+    </div>
+
+    <div class="grid3">
+      <Frame label="Safe areas · read on this device" style="flex-direction: column; flex-wrap: nowrap">
+        <div class="rows">
+          {#each nativeLayout as t}
+            <div class="scale-row"><span class="name">--{t}</span><span class="val">{lengthValues[t] ?? ''}</span></div>
+          {/each}
+        </div>
+        <p class="note">The device's insets through <code>env(safe-area-inset-*)</code>, 0 without any (as here, on a desktop browser). They replace the prototype's fixed status-bar and home-indicator paddings; the native entry needs <code>viewport-fit=cover</code>. <code>--scroll-end</code> is the end padding of a pushed screen's scrolling list.</p>
+      </Frame>
+      <Frame label="Text scale · the interface size setting" style="flex-direction: column; flex-wrap: nowrap">
+        <div class="demo-row">
+          {#each textSizes as s (s.label)}
+            <Button variant={textScale === s.scale ? 'primary' : 'ghost'} label={s.label} onClick={() => (textScale = s.scale)} />
+          {/each}
+        </div>
+        <div class="rows">
+          <div class="scale-row"><span class="name">--text-scale</span><span class="val">{textScale}</span></div>
+          {#each nativeText as t}
+            <div class="scale-row"><span class="name">--{t}</span><span class="val">{lengthValues[t] ?? ''}</span></div>
+          {/each}
+        </div>
+        <p class="note">Each <code>--text-*</code> size is its designed size times <code>--text-scale</code>, which is 1 on the web. The native app sets it on the native root: the font size setting times the platform's font scale (dynamic type, Android's font scale).</p>
+      </Frame>
+      <Frame label="Always dark · calls" style="flex-direction: column; flex-wrap: nowrap">
+        <div class="swatches">
+          {#each callColours as t}
+            <div class="swatch-item">
+              <span class="swatch" data-always-dark style:background="var(--{t})"></span>
+              <span class="name">--{t}</span>
+              <span class="val">{callValues[t] ?? ''}</span>
+            </div>
+          {/each}
+        </div>
+        <p class="note"><code>data-always-dark</code> on the call screen's and the minimised call's root gives them the dark tokens in both themes, with the accent of the nearest <code>data-accent</code> root (or their own), plus the call colours above. The in-chat live pill and the header call strip follow the theme.</p>
+      </Frame>
+    </div>
+  </Section>
 </div>
 
 <style lang="scss">
+  @use '../../lib/styles/mixins' as *;
+
   .foundations { display: flex; flex-direction: column; gap: 56px; }
   .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
   /* token names and values are code: keep them LTR inside an RTL page */
@@ -423,4 +560,42 @@ t('ui.duration.hours', { count: 12 });`;
   .lrow.head { padding-top: 0; font: 500 10px/1 var(--font-mono); letter-spacing: 0.09em; color: var(--ink-4); }
   .lrow em { font-style: normal; color: var(--ink-4); }
   .note { font-family: var(--font-sans); color: var(--ink-3); }
+
+  // native previews: each is a theme root, so everything inside reads that root's tokens
+  .native-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)); gap: 16px; margin-bottom: 16px; }
+  .native-preview {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 22px 16px;
+    border-radius: 20px;
+    background: var(--surface-0);
+    color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--line-2);
+    font-family: var(--font-sans);
+  }
+  .probe { position: absolute; visibility: hidden; pointer-events: none; }
+  .np-label { font: 500 10px/1 var(--font-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); }
+  .hero {
+    display: flex;
+    flex-direction: column;
+    border-radius: 20px;
+    overflow: hidden;
+    background: linear-gradient(150deg, color-mix(in oklch, var(--accent) 26%, var(--hero-base)) 0%, var(--hero-base) 75%);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 30%, transparent);
+  }
+  .hero-top { display: flex; align-items: center; gap: 12px; padding: 18px; }
+  .hero-tile { @include flex-center; flex: none; width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--tint-pill); }
+  .hero-bolt { @include icon(zap, 22px, var(--status-chit)); }
+  .hero-balance { flex: 1; min-width: 0; font-size: var(--text-sm); color: var(--ink-3); b { margin-inline-end: 4px; font-size: var(--text-2xl); font-weight: 800; color: var(--ink); } }
+  .hero-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 18px; background: var(--tint-row); font-size: var(--text-base); font-weight: 600; }
+  .pill { flex: none; display: inline-flex; align-items: center; height: 28px; padding: 0 10px; border-radius: 14px; background: var(--tint-pill); font-size: var(--text-md); font-weight: 600; color: var(--ink-2); }
+  .field-sample { display: flex; align-items: center; height: var(--control-xl); padding: 0 14px; border-radius: var(--radius-md); background: var(--field); font-size: var(--text-base); color: var(--ink-4); }
+  .call { display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 16px; border-radius: 22px; background: var(--call-bg); color: var(--call-ink); }
+  .call-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; font-size: var(--text-sm); color: var(--call-ink-2); b { font-size: var(--text-base); color: var(--call-ink); } }
+  .call-btn { @include flex-center; flex: none; width: 40px; height: 40px; border-radius: var(--radius-circle); background: var(--call-control); }
+  .call-btn::before { content: ''; @include icon(mic, 18px, var(--call-ink)); }
+  .call-btn.on { background: var(--call-control-on); }
+  .call-btn.on::before { @include icon(volume, 18px, var(--call-control-on-ink)); }
 </style>

@@ -57,6 +57,7 @@ the text. Copy that stays plain English in either mode is hard-coded and needs a
 
 ## Conventions (same as the prototype)
 - Theme on the app root only: `data-mode="dark|light"` + `data-accent="pink|orange|blue|green"`. Components take no theme props.
+- The native tree's root adds `data-platform="native"` (native light surfaces, hero tints) and the app sets `--text-scale` on `<html>` (the `--text-*` sizes follow it, portals included); the call screen and minimised call put `data-always-dark` on their own root to stay dark in both themes, with the nearest root's accent. Safe areas (`--safe-*`) are on `:root` (tokens.css, Foundations › Native platform).
 - Colours only through tokens. Callbacks: `onClick` activate · `onSelect(value)` pick · `onChange(value)` primary value · `onInput` text · `onClose` dismiss.
 - Sizes `sm | md | lg`; numeric px only on Avatar, TokenAvatar, Icon, Spinner.
 

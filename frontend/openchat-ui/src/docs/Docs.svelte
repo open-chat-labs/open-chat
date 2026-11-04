@@ -81,6 +81,12 @@
   $effect(() => save('accent', accent));
   $effect(() => save('dir', dir));
   $effect(() => save('lang', lang));
+  // The theme on <html> as well, as the app puts its own there, so the page behind the docs (the body's
+  // var(--surface-0), seen past the ends of a scroll) follows the mode picked here.
+  $effect(() => {
+    document.documentElement.dataset.mode = mode;
+    document.documentElement.dataset.accent = accent;
+  });
 
   // Scroll spy: the active link is the last section whose top is within 140px of the viewport top.
   // While a restore is in flight the stored section isn't overwritten by intermediate scroll positions.
@@ -247,7 +253,7 @@
         <p>{info.intro}</p>
       </header>
       {#if group === 'foundations'}
-        <Foundations theme={mode + accent} />
+        <Foundations theme={mode + accent} {accent} />
       {:else if group === 'general'}
         <General />
       {:else if group === 'features'}

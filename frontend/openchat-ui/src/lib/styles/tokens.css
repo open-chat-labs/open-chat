@@ -1,9 +1,10 @@
 @import "./icons.css";
-/* OpenChat design tokens. Theme is set once, on the app root ([data-mode][data-accent]);
-   :where(:root) supplies dark + pink so a component previewed on its own still paints.
+/* OpenChat design tokens. Theme is set once, on the app root ([data-mode][data-accent], plus [data-platform="native"]
+   on the native tree: see the native platform layer below); :where(:root) supplies dark + pink so a component
+   previewed on its own still paints.
    Components read them as plain var(--x), with no literal fallback: both hosts load this file. */
 
-:where(:root),[data-mode="dark"]{
+:where(:root),[data-mode="dark"],[data-always-dark]{
   --skeleton-base:rgba(255,255,255,.06); --skeleton-sheen:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.06) 50%,transparent 100%);
   --cover-plum:repeating-linear-gradient(115deg,#1d1424 0 10px,#241a2d 10px 20px); --cover-teal:linear-gradient(120deg,#0f3330,#143049); --cover-violet:linear-gradient(120deg,#271a3c,#3b1e39); --cover-amber:linear-gradient(120deg,#3a2716,#42301b); --cover-slate:linear-gradient(120deg,#1a1c22,#24272f);
   --on-cover-bg:rgba(7,7,10,.55); --on-cover-bg-hover:rgba(7,7,10,.75); --on-cover-ink:#ECECF1;
@@ -45,11 +46,14 @@
   --status-online:#12A87B; --status-warning:#A2650B;
 }
 
-/* Accent families. Each defines the accent ramp plus the sent-bubble family. */
-:where(:root),[data-mode="dark"][data-accent="pink"]{--accent:#FF5672;--accent-hover:#ff6d85;--accent-soft:rgba(255,86,114,.09);--accent-mid:rgba(255,86,114,.6);--accent-dim:rgba(255,86,114,.35);--accent-bright:#FF8298;--on-accent:#2E0512;--bubble-send-bg:#B83E52;--bubble-reply:#8C2A3D}
-[data-mode="dark"][data-accent="orange"]{--accent:#FF8A3D;--accent-hover:#ffa15e;--accent-soft:rgba(255,138,61,.09);--accent-mid:rgba(255,138,61,.6);--accent-dim:rgba(255,138,61,.35);--accent-bright:#FFA366;--on-accent:#331705;--bubble-send-bg:#9E5624;--bubble-reply:#7A4119}
-[data-mode="dark"][data-accent="blue"]{--accent:#3D9BFF;--accent-hover:#5fb0ff;--accent-soft:rgba(61,155,255,.1);--accent-mid:rgba(61,155,255,.6);--accent-dim:rgba(61,155,255,.35);--accent-bright:#7DBBFF;--on-accent:#06182F;--bubble-send-bg:#2A5FA8;--bubble-reply:#1F477E}
-[data-mode="dark"][data-accent="green"]{--accent:#2EE6A8;--accent-hover:#5aeebc;--accent-soft:rgba(46,230,168,.1);--accent-mid:rgba(46,230,168,.6);--accent-dim:rgba(46,230,168,.35);--accent-bright:#6BF0C4;--on-accent:#04241A;--bubble-send-bg:#1B7A5B;--bubble-reply:#145742}
+/* Accent families. Each defines the accent ramp plus the sent-bubble family. A [data-accent] element declares its
+   dark family as --dark-*, and a dark root (or a [data-always-dark] element below) reads it from there, so an
+   always-dark element takes the accent of its nearest [data-accent] root, or its own data-accent. */
+:where(:root),[data-accent="pink"]{--dark-accent:#FF5672;--dark-accent-hover:#ff6d85;--dark-accent-soft:rgba(255,86,114,.09);--dark-accent-mid:rgba(255,86,114,.6);--dark-accent-dim:rgba(255,86,114,.35);--dark-accent-bright:#FF8298;--dark-on-accent:#2E0512;--dark-bubble-send-bg:#B83E52;--dark-bubble-reply:#8C2A3D}
+[data-accent="orange"]{--dark-accent:#FF8A3D;--dark-accent-hover:#ffa15e;--dark-accent-soft:rgba(255,138,61,.09);--dark-accent-mid:rgba(255,138,61,.6);--dark-accent-dim:rgba(255,138,61,.35);--dark-accent-bright:#FFA366;--dark-on-accent:#331705;--dark-bubble-send-bg:#9E5624;--dark-bubble-reply:#7A4119}
+[data-accent="blue"]{--dark-accent:#3D9BFF;--dark-accent-hover:#5fb0ff;--dark-accent-soft:rgba(61,155,255,.1);--dark-accent-mid:rgba(61,155,255,.6);--dark-accent-dim:rgba(61,155,255,.35);--dark-accent-bright:#7DBBFF;--dark-on-accent:#06182F;--dark-bubble-send-bg:#2A5FA8;--dark-bubble-reply:#1F477E}
+[data-accent="green"]{--dark-accent:#2EE6A8;--dark-accent-hover:#5aeebc;--dark-accent-soft:rgba(46,230,168,.1);--dark-accent-mid:rgba(46,230,168,.6);--dark-accent-dim:rgba(46,230,168,.35);--dark-accent-bright:#6BF0C4;--dark-on-accent:#04241A;--dark-bubble-send-bg:#1B7A5B;--dark-bubble-reply:#145742}
+:where(:root),[data-mode="dark"][data-accent="pink"],[data-mode="dark"][data-accent="orange"],[data-mode="dark"][data-accent="blue"],[data-mode="dark"][data-accent="green"],[data-always-dark]{--accent:var(--dark-accent);--accent-hover:var(--dark-accent-hover);--accent-soft:var(--dark-accent-soft);--accent-mid:var(--dark-accent-mid);--accent-dim:var(--dark-accent-dim);--accent-bright:var(--dark-accent-bright);--on-accent:var(--dark-on-accent);--bubble-send-bg:var(--dark-bubble-send-bg);--bubble-reply:var(--dark-bubble-reply)}
 
 [data-mode="light"][data-accent="pink"]{--accent:#FF5672;--accent-hover:#ff6d85;--accent-soft:rgba(255,86,114,.1);--accent-mid:rgba(255,86,114,.6);--accent-dim:rgba(255,86,114,.35);--accent-bright:#C8244A;--on-accent:#FFFFFF;--bubble-send-bg:#FFE0E5;--bubble-reply:#FFC9D2;--bubble-text:#5C0F1E;--bubble-text-soft:rgba(92,15,30,.72);--bubble-tick:#B3335E}
 [data-mode="light"][data-accent="orange"]{--accent:#FF8A3D;--accent-hover:#ffa15e;--accent-soft:rgba(255,138,61,.12);--accent-mid:rgba(255,138,61,.6);--accent-dim:rgba(255,138,61,.4);--accent-bright:#A85413;--on-accent:#FFFFFF;--bubble-send-bg:#FFEBDD;--bubble-reply:#FFD8BE;--bubble-text:#5A2E0C;--bubble-text-soft:rgba(90,46,12,.72);--bubble-tick:#A85E1E}
@@ -78,16 +82,32 @@
   --z-base:1; --z-sticky:10; --z-backdrop:55; --z-modal:60;
 
   --font-sans:'Plus Jakarta Sans',system-ui,sans-serif; --font-mono:'JetBrains Mono',monospace;
-  --text-2xs:9.5px; --text-xs:10px; --text-sm:11.5px; --text-md:12.5px; --text-base:13.5px;
-  --text-lg:15.5px; --text-xl:17px; --text-2xl:19px; --text-3xl:34px;
+  --text-scale:1;
   --weight-regular:400; --weight-medium:500; --weight-semibold:600; --weight-bold:700;
   --leading-none:1; --leading-tight:1.2; --leading-snug:1.35; --leading-normal:1.5;
   --tracking-tight:-.02em; --tracking-normal:0; --tracking-wide:.06em; --tracking-caps:.12em;
 
   --duration-fast:120ms; --duration-base:200ms; --duration-slow:280ms;
   --ease-out:cubic-bezier(.2,.8,.2,1); --ease-standard:cubic-bezier(.4,0,.2,1);
+
+  /* Safe areas: the device's insets, 0 where there are none (and on a page without viewport-fit=cover). The
+     native shell pads with them in place of the prototype's fixed status-bar and home-indicator paddings.
+     --scroll-end is a pushed screen's end padding under its scrolling list. */
+  --safe-top:env(safe-area-inset-top,0px); --safe-right:env(safe-area-inset-right,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px); --safe-left:env(safe-area-inset-left,0px);
+  --scroll-end:calc(var(--safe-bottom) + 48px);
 }
-:where(:root),[data-mode="dark"]{
+/* Type sizes, times --text-scale: 1 (the sizes as designed) unless the native app sets it, from the interface
+   size setting and the platform's font scale (the app's textScaleOf). The app sets it on <html>, so everything
+   follows, a portal to <body> (the call screen) included. They're declared on the native root as well, so a scale
+   set on a subtree's own native root still reaches it. The native tree owns the property on <html>: it sets it only
+   while it's mounted and removes it when it unmounts, so the web tree never inherits a scale. */
+:root,[data-platform="native"]{
+  --text-2xs:calc(9.5px * var(--text-scale)); --text-xs:calc(10px * var(--text-scale)); --text-sm:calc(11.5px * var(--text-scale));
+  --text-md:calc(12.5px * var(--text-scale)); --text-base:calc(13.5px * var(--text-scale)); --text-lg:calc(15.5px * var(--text-scale));
+  --text-xl:calc(17px * var(--text-scale)); --text-2xl:calc(19px * var(--text-scale)); --text-3xl:calc(34px * var(--text-scale));
+}
+:where(:root),[data-mode="dark"],[data-always-dark]{
   --shadow-raised:0 1px 2px rgba(0,0,0,.16);
   --shadow-panel:0 8px 24px rgba(0,0,0,.28);
   --shadow-modal:0 30px 70px rgba(0,0,0,.45);
@@ -96,6 +116,28 @@
   --shadow-raised:0 1px 2px rgba(0,0,0,.08);
   --shadow-panel:0 8px 24px rgba(0,0,0,.1);
   --shadow-modal:0 30px 70px rgba(0,0,0,.18);
+}
+
+/* Native platform layer (native design notes §1). The native tree's root carries data-platform="native" beside
+   data-mode and data-accent (--text-scale goes on <html>, above); the web never sets it, so none of this reaches the
+   web. */
+/* Accent hero cards (CHIT, Diamond …) blend the accent into --hero-base; rows and pills inside them use the tints. */
+[data-platform="native"],[data-always-dark]{
+  --hero-base:#14141a; --tint-row:rgba(0,0,0,.22); --tint-pill:rgba(0,0,0,.28);
+}
+/* Native light: white pages. */
+[data-platform="native"][data-mode="light"]{
+  --surface-0:#FFFFFF; --surface-1:#FFFFFF; --surface-2:#F4F3EF; --field:#F4F3EF;
+  --hero-base:#FFFFFF; --tint-row:rgba(0,0,0,.05); --tint-pill:rgba(0,0,0,.08);
+}
+/* Always dark: calls (the call screen and the minimised call) stay dark in both themes (native notes §1, §3.5).
+   data-always-dark on an element gives it and its children the dark tokens (the selectors above list it beside
+   data-mode="dark") with the accent of its nearest [data-accent] root, plus the call's own colours. Mounted outside
+   the themed root (a portal to <body>), it takes <html>'s accent, or carries data-accent itself. */
+[data-always-dark]{
+  --call-bg:#050507; --call-ink:#FFFFFF; --call-ink-2:rgba(255,255,255,.65); --call-chip:rgba(255,255,255,.08);
+  --call-control:rgba(255,255,255,.12); --call-control-on:#FFFFFF; --call-control-on-ink:#0b0b10;
+  --call-tile:#0b0b10; --call-tile-mix:#101016; --call-pill:#15151b; --call-badge:#2a2a33; --call-label:rgba(0,0,0,.45);
 }
 
 /* Writing direction. --oc-dir flips JS-computed offsets (knob travel, nudges);
