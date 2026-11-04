@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { miniAppFrameUrl, miniAppMessage, miniAppUrl } from "./miniApp";
+import { miniAppFrameUrl, miniAppImageSrc, miniAppMessage, miniAppUrl } from "./miniApp";
 
 const OPENCHAT = "https://oc.app";
 
@@ -39,6 +39,23 @@ describe("miniAppFrameUrl", () => {
         const app = "https://uno.example.com/app";
         expect(miniAppFrameUrl(app, true)).toBe("https://uno.example.com/app#oc_theme=dark");
         expect(miniAppFrameUrl(app, false)).toBe("https://uno.example.com/app#oc_theme=light");
+    });
+});
+
+describe("miniAppImageSrc", () => {
+    test("is the artwork's URL with the user's theme in the fragment", () => {
+        const image = "https://uno.example.com/app/uno.svg";
+        expect(miniAppImageSrc(image, true)).toBe(
+            "https://uno.example.com/app/uno.svg#oc_theme=dark",
+        );
+        expect(miniAppImageSrc(image, false)).toBe(
+            "https://uno.example.com/app/uno.svg#oc_theme=light",
+        );
+    });
+
+    test("leaves a fragment the bot gave it", () => {
+        const image = "https://uno.example.com/app/uno.svg#small";
+        expect(miniAppImageSrc(image, true)).toBe(image);
     });
 });
 

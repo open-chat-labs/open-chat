@@ -31,8 +31,22 @@ function isLocal(hostname: string): boolean {
 // in before it's initialised. The fragment never reaches the bot's server.
 export function miniAppFrameUrl(app: string, darkMode: boolean): string {
     const url = new URL(app);
-    url.hash = `oc_theme=${darkMode ? "dark" : "light"}`;
+    url.hash = themeFragment(darkMode);
     return url.href;
+}
+
+// The app's artwork as the card shows it, with the user's theme in the fragment as in the frame's
+// URL, so an SVG can draw itself in it (with `:target`) while it's over the app until the app has
+// drawn. Other images ignore it, and it's the same file, cached once, in either theme. A fragment
+// the bot gave the image, eg. an SVG view's, is left as it is.
+export function miniAppImageSrc(image: string, darkMode: boolean): string {
+    const url = new URL(image);
+    if (url.hash === "") url.hash = themeFragment(darkMode);
+    return url.href;
+}
+
+function themeFragment(darkMode: boolean): string {
+    return `oc_theme=${darkMode ? "dark" : "light"}`;
 }
 
 // What OpenChat sends the app (backend/docs/mini_app_service_protocol.md, "App ↔ website")

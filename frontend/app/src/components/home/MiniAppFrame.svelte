@@ -11,7 +11,7 @@
     import type { MiniAppActions } from "@src/logic/miniApp/miniAppActions.svelte";
     import { MiniAppFullScreen } from "@src/logic/miniApp/miniAppFrame.svelte";
     import { MiniAppHost, type HostedMiniApp } from "@src/logic/miniApp/miniAppHost.svelte";
-    import { MINI_APP_SANDBOX, miniAppFrameUrl } from "@src/utils/miniApp";
+    import { MINI_APP_SANDBOX, miniAppFrameUrl, miniAppImageSrc } from "@src/utils/miniApp";
     import Translatable from "@shared_components/Translatable.svelte";
     import { getContext, tick, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
@@ -197,7 +197,11 @@ app (MiniAppFullScreen) -->
             {#if !showApp || !active || !host.revealed}
                 <div class="cover">
                     {#if imageUrl !== undefined && imageUrl !== failedImage}
-                        <img src={imageUrl} alt="" onerror={() => (failedImage = imageUrl)} />
+                        <!-- In the theme as it is: the same file, so a change only draws it afresh -->
+                        <img
+                            src={miniAppImageSrc(imageUrl, darkMode)}
+                            alt=""
+                            onerror={() => (failedImage = imageUrl)} />
                     {/if}
                     {#if !showApp && label !== undefined}
                         {@render overlay(false)}
