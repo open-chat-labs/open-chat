@@ -10,6 +10,9 @@ on:
 
 jobs:
     build-android:
+        # Releases are tagged per platform (vX.Y.Z-android, vX.Y.Z-ios), and a
+        # published release of either kind fires every release workflow.
+        if: github.event_name != 'release' || endsWith(github.ref_name, '-android')
         runs-on: ubuntu-latest
         defaults:
             run:

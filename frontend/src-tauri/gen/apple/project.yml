@@ -43,6 +43,9 @@ targets:
         buildPhase: resources
         type: folder
       - path: LaunchScreen.storyboard
+      # Required-reason API declarations. Must sit at the bundle root.
+      - path: PrivacyInfo.xcprivacy
+        buildPhase: resources
     info:
       path: open-chat_iOS/Info.plist
       properties:
@@ -68,8 +71,12 @@ targets:
         CFBundleURLTypes:
           - CFBundleURLName: openchat
             CFBundleURLSchemes: [openchat]
+        # Only OpenChat's own standard encryption (TLS, request signing,
+        # passkeys), which is exempt, so uploads skip the export question.
+        ITSAppUsesNonExemptEncryption: false
         # Dev only: the app loads the vite dev server and talks to a local dfx
-        # replica over plain http on the LAN. Tighten before any release build.
+        # replica over plain http on the LAN. The iOS release workflow deletes
+        # this key before building, so store builds keep ATS on.
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
     entitlements:
@@ -79,12 +86,11 @@ targets:
       path: open-chat_iOS/OpenChat.entitlements
       properties:
         # Native passkeys (RP id oc.app). oc.app serves an
-        # apple-app-site-association file listing this app id. The
-        # ?mode=developer suffix keeps local/simulator testing working (it
-        # requires Settings > Developer > Associated Domains Development on
-        # devices); drop it for production builds (see IOS_PORT_STATUS.md).
+        # apple-app-site-association file listing this app id, so devices and
+        # simulators fetch it through Apple's CDN. No ?mode=developer suffix:
+        # store builds ignore developer-mode entries.
         com.apple.developer.associated-domains:
-          - webcredentials:oc.app?mode=developer
+          - webcredentials:oc.app
     scheme:
       environmentVariables:
         RUST_BACKTRACE: full

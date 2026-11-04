@@ -19,16 +19,18 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleURLName</key>
+			<string>openchat</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>openchat</string>
 			</array>
-			<key>CFBundleURLName</key>
-			<string>openchat</string>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>0.1.0</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>

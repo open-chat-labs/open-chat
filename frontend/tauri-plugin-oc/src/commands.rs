@@ -57,7 +57,9 @@ pub(crate) async fn minimize_app<R: Runtime>(app: AppHandle<R>) {
 
 #[command]
 pub(crate) async fn restart_app<R: Runtime>(app: AppHandle<R>) {
-    #[cfg(mobile)]
+    #[cfg(target_os = "ios")]
+    crate::bundle_manager::reload_webviews(&app);
+    #[cfg(target_os = "android")]
     app.oc().restart_app();
     #[cfg(not(mobile))]
     app.restart();

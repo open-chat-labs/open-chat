@@ -41,11 +41,15 @@ impl<R: Runtime> UpdateManager<R> {
     }
 
     pub fn get_cache_dir(&self) -> Option<PathBuf> {
-        self.app_handle
-            .path()
-            .app_data_dir()
-            .ok()
-            .map(|p| p.join("updates"))
+        // iOS backs up the app data directory, and Apple's storage rules keep
+        // data that can be downloaded again out of backups. Caches is never
+        // backed up. If iOS purges it the shell serves its bundled assets and
+        // downloads the update again.
+        #[cfg(target_os = "ios")]
+        let dir = self.app_handle.path().app_cache_dir();
+        #[cfg(not(target_os = "ios"))]
+        let dir = self.app_handle.path().app_data_dir();
+        dir.ok().map(|p| p.join("updates"))
     }
 
     pub fn get_cached_version(&self) -> Option<Version> {

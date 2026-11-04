@@ -7,7 +7,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { Poller, Version, type OTAUpdateStrategy } from "@client";
-import { isAndroidTauriApp } from "@shared";
+import { isAndroidTauriApp, isIosTauriApp } from "@shared";
 
 const VERSION_INTERVAL = 60 * 1000;
 
@@ -46,8 +46,8 @@ export class VersionChecker {
 
     #startPoller(immediate: boolean) {
         if (this.#stopped) return;
-        // this should only operate if we are in the android app and the ota strategy is not set to none
-        if (!isAndroidTauriApp() || this.#strategy === "none") {
+        // this should only operate in the native apps and when the ota strategy is not set to none
+        if (!(isAndroidTauriApp() || isIosTauriApp()) || this.#strategy === "none") {
             this.#versionState = { kind: "up_to_date" };
             return;
         }
@@ -78,7 +78,7 @@ export class VersionChecker {
                         }
                     });
 
-                    console.log("About to tell the android shell to update itself");
+                    console.log("About to tell the native shell to update itself");
                     const updated = await invoke?.("plugin:oc|download_update");
                     if (!updated) {
                         this.#versionState = {

@@ -1,9 +1,9 @@
 use crate::update_manager;
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, Mutex};
 use tauri::http::{Request, Response};
-use tauri::{Runtime, UriSchemeContext};
+use tauri::{AppHandle, Manager, Runtime, UriSchemeContext};
 
 const ORIGIN: &str = "http://tauri.localhost";
 
@@ -12,7 +12,29 @@ pub struct CachedAsset {
     mime_type: String,
 }
 
-pub type BundleMemoryCache = Arc<OnceLock<HashMap<String, CachedAsset>>>;
+// Filled from disk on the first request after launch or after a reload.
+pub type BundleMemoryCache = Arc<Mutex<Option<Arc<HashMap<String, CachedAsset>>>>>;
+
+/// The cache the scheme handler serves from, managed so a reload can drop it.
+pub struct BundleCache(pub BundleMemoryCache);
+
+/// Reload the webviews in place so they pick up the newest bundle on disk.
+///
+/// iOS has no supported way for an app to relaunch itself: exit() looks like a
+/// crash to the user and Apple discourages it. So after an OTA download the
+/// shell forgets the bundle it has in memory and reloads the page, and the next
+/// request loads whatever is on disk.
+#[allow(unused)]
+pub fn reload_webviews<R: Runtime>(app: &AppHandle<R>) {
+    if let Some(cache) = app.try_state::<BundleCache>() {
+        *cache.0.lock().unwrap_or_else(|e| e.into_inner()) = None;
+    }
+    for webview in app.webview_windows().values() {
+        if let Err(e) = webview.reload() {
+            eprintln!("Failed to reload webview: {e}");
+        }
+    }
+}
 
 // Resolve release bundle
 //
@@ -39,16 +61,22 @@ where
     };
 
     // Lazily load cached assets into memory on first request
-    let cache = memory_cache.get_or_init(|| {
-        let um = update_manager::UpdateManager::new(handle.clone());
-        // Before anything is loaded: a cache left behind by a store update is
-        // older than the assets this binary ships with, and serving it would
-        // pin the webview to the previous release. See discard_cache_if_stale.
-        um.discard_cache_if_stale();
-        um.get_cache_dir()
-            .map(|dir| load_cache_into_memory(&dir))
-            .unwrap_or_default()
-    });
+    let cache = memory_cache
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .get_or_insert_with(|| {
+            let um = update_manager::UpdateManager::new(handle.clone());
+            // Before anything is loaded: a cache left behind by a store update is
+            // older than the assets this binary ships with, and serving it would
+            // pin the webview to the previous release. See discard_cache_if_stale.
+            um.discard_cache_if_stale();
+            Arc::new(
+                um.get_cache_dir()
+                    .map(|dir| load_cache_into_memory(&dir))
+                    .unwrap_or_default(),
+            )
+        })
+        .clone();
 
     // Serve from in-memory cache
     if let Some(asset) = cache.get(path) {

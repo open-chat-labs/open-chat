@@ -62,16 +62,21 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 
     // Only register the custom protocol handler when not in debug mode
     #[cfg(not(debug_assertions))]
+    let memory_cache = bundle_manager::BundleMemoryCache::default();
+    #[cfg(not(debug_assertions))]
     {
-        let memory_cache = std::sync::Arc::new(std::sync::OnceLock::new());
+        let handler_cache = memory_cache.clone();
         builder = builder.register_uri_scheme_protocol("tauri", move |ctx, request| {
             // If not debug mode, we resolve the local bundle!
-            return fetch_app_bundle_from_device(memory_cache.clone(), ctx, request);
+            fetch_app_bundle_from_device(handler_cache.clone(), ctx, request)
         });
     }
 
     builder
-        .setup(|app, api| {
+        .setup(move |app, api| {
+            // Lets restart_app drop the bundle the handler holds in memory.
+            #[cfg(not(debug_assertions))]
+            app.manage(bundle_manager::BundleCache(memory_cache));
             #[cfg(mobile)]
             let oc = mobile::init(app, api)?;
             #[cfg(desktop)]
