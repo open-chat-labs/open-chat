@@ -537,7 +537,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .layer {
     position: fixed;
     inset: 0;

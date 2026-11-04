@@ -1838,7 +1838,7 @@
     {/if}
 </div>
 
-<style>
+<style lang="scss">
     .vcl-viewport {
         display: flex;
         flex-direction: column-reverse;

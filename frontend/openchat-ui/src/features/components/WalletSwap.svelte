@@ -560,7 +560,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .swap {
     position: absolute;
     inset: 0;

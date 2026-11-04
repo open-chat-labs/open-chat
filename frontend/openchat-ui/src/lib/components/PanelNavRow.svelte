@@ -25,7 +25,7 @@
   <span class="chevron"></span>
 </div>
 
-<style>
+<style lang="scss">
   .nav-row {
     width: 100%;
     box-sizing: border-box;

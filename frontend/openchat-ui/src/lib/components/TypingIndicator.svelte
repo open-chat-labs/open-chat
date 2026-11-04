@@ -40,7 +40,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .typing {
     display: flex;
     align-items: center;

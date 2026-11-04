@@ -1,0 +1,43 @@
+// Mixins every component's <style lang="scss"> can use without importing anything: the library's own build
+// (vite.config.ts) and the app's (app/svelte.config.js) put `@use` of this file in front of each style block.
+// Mixins only: nothing here may output CSS by itself, or every component would repeat it. Colours, spacing and type
+// stay CSS custom properties (tokens.css), so themes switch at runtime.
+
+/// One line, cut with an ellipsis.
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/// At most `$lines` lines, the last cut with an ellipsis.
+@mixin line-clamp($lines) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: $lines;
+  line-clamp: $lines;
+  overflow: hidden;
+}
+
+/// Children centred both ways.
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/// An icon from icons.css: a `$size` square painted `$colour` through the icon's mask.
+@mixin icon($name, $size, $colour: currentColor) {
+  flex: none;
+  width: $size;
+  height: $size;
+  background: $colour;
+  mask: var(--icon-#{$name}) center/contain no-repeat;
+}
+
+/// Rules for people who asked for less motion (turn an animation or transition off).
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}

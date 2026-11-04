@@ -715,7 +715,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .backdrop {
     position: fixed;
     inset: 0;

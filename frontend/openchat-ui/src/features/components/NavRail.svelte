@@ -350,7 +350,7 @@
   <ContextMenu open={pinMenuItems.length > 0} point={pinMenu?.point} anchor={pinMenu?.anchor} align="start" items={pinMenuItems} onClose={() => (pinMenu = null)} />
 </div>
 
-<style>
+<style lang="scss">
   .rail {
     position: relative;
     height: 100%;

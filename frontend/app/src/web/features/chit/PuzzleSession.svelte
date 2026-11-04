@@ -160,7 +160,7 @@
     {/if}
 </div>
 
-<style>
+<style lang="scss">
     .puzzle {
         display: flex;
         flex-direction: column;

@@ -601,7 +601,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
 
   .pricing-note {
     display: flex;

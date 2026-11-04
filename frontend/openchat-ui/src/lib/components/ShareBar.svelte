@@ -32,7 +32,7 @@
   ></span>
 </span>
 
-<style>
+<style lang="scss">
   .track {
     display: block;
     width: 100%;

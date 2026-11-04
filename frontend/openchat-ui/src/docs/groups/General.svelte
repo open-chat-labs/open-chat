@@ -648,7 +648,7 @@
   </div>
 </Section>
 
-<style>
+<style lang="scss">
   .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 16px; }
   .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 16px; }
   .mono { font: 400 11px/1.3 var(--font-mono); color: var(--ink-3); }

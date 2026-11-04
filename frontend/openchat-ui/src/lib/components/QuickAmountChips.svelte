@@ -20,7 +20,7 @@
   {/each}
 </div>
 
-<style>
+<style lang="scss">
   .chips {
     display: flex;
     align-items: center;

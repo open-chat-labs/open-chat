@@ -259,7 +259,7 @@
   </main>
 </div>
 
-<style>
+<style lang="scss">
   :global(html), :global(body) { margin: 0; padding: 0; }
   :global(body) { -webkit-font-smoothing: antialiased; }
   :global(*) { scrollbar-width: thin; scrollbar-color: rgba(128, 128, 140, 0.35) transparent; }

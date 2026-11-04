@@ -164,7 +164,7 @@
             : undefined} />
 {/if}
 
-<style>
+<style lang="scss">
     .failed {
         display: grid;
         place-items: center;

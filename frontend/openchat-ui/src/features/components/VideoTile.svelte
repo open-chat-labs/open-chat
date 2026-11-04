@@ -68,7 +68,7 @@
   >
 </div>
 
-<style>
+<style lang="scss">
   .tile {
     position: relative;
     width: 100%;

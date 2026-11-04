@@ -19,7 +19,7 @@
   <span class="upgrade" onclick={onUpgrade} role="button" tabindex="0">{t(actionLabel)}</span>
 </div>
 
-<style>
+<style lang="scss">
   .banner {
     display: flex;
     align-items: center;

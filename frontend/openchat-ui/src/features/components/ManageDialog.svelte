@@ -154,7 +154,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .layer {
     z-index: 65;
     padding: var(--space-24);

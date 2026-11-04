@@ -82,7 +82,7 @@
   <MessageComposer {...composer} {attachment} {context} />
 </div>
 
-<style>
+<style lang="scss">
   .bar {
     position: relative;
     width: 100%;

@@ -375,7 +375,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .recipients {
     position: relative;
     width: 100%;

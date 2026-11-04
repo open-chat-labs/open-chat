@@ -44,7 +44,7 @@
   {/each}
 </div>
 
-<style>
+<style lang="scss">
   .menu {
     animation: oc-menu-pop 0.14s ease-out;
     padding: var(--space-6);

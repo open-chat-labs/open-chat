@@ -75,7 +75,7 @@
 
 <time datetime={valid ? new Date(end).toISOString() : undefined} aria-live="off" title={valid ? new Date(end).toLocaleString(i18n.locale) : undefined}>{text}</time>
 
-<style>
+<style lang="scss">
   time {
     font: inherit;
     color: inherit;

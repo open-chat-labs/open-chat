@@ -565,7 +565,7 @@
   <ContextMenu open={!!menu} items={menu?.items ?? []} point={menu?.point} anchor={menu?.anchor} align={menu?.align} onClose={() => (menu = null)} />
 </div>
 
-<style>
+<style lang="scss">
   .panel {
     position: relative;
     width: 100%;

@@ -45,7 +45,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .row {
     width: 100%;
     box-sizing: border-box;

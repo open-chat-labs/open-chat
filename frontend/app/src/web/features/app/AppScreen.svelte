@@ -272,7 +272,7 @@
 <DialogHost stack={dialogStack} {appDialog} onCloseAppDialog={closeAppDialog} />
 <AchievementToastHost />
 
-<style>
+<style lang="scss">
     .toolbar {
         position: absolute;
         inset-block-start: var(--space-12);

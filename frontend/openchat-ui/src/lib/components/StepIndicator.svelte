@@ -24,7 +24,7 @@
   {/each}
 </div>
 
-<style>
+<style lang="scss">
   .steps {
     flex: none;
     display: flex;

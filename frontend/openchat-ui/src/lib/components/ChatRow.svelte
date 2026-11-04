@@ -255,7 +255,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .menu-host {
     display: contents;
   }
@@ -435,9 +435,8 @@
   }
 
   .preview-text {
+    @include truncate;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .preview.unread {

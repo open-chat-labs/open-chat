@@ -158,7 +158,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .error {
     font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
     color: var(--status-danger);

@@ -197,7 +197,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .pill {
     position: absolute;
     left: 50%;

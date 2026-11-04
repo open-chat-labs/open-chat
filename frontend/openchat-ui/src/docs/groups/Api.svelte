@@ -18,6 +18,6 @@
   {/each}
 </div>
 
-<style>
+<style lang="scss">
   .api { display: flex; flex-direction: column; gap: 56px; }
 </style>

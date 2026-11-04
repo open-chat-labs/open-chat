@@ -84,7 +84,7 @@
     {/if}
 </DialogShell>
 
-<style>
+<style lang="scss">
     .text {
         margin: 0;
         text-align: center;

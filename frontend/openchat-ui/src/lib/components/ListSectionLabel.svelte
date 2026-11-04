@@ -19,7 +19,7 @@
   {#if meta}<span class="meta">{t(meta)}</span>{/if}
 </div>
 
-<style>
+<style lang="scss">
   .section-label {
     display: flex;
     align-items: center;

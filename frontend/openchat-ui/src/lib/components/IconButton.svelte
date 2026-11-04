@@ -31,7 +31,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .box {
     flex: none;
     width: 34px;

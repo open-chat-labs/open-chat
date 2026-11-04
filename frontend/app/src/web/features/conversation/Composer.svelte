@@ -107,7 +107,7 @@
         onSend={send} />
 {/if}
 
-<style>
+<style lang="scss">
     .blocked {
         padding: var(--space-12) var(--space-14);
     }

@@ -29,7 +29,7 @@
   data-oc-flip={flip ? '' : undefined}
 ></span>
 
-<style>
+<style lang="scss">
   .icon {
     flex: none;
     display: inline-block;

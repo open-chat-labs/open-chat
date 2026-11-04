@@ -49,7 +49,7 @@
   {/if}
 </span>
 
-<style>
+<style lang="scss">
   .stack {
     display: inline-flex;
     align-items: center;

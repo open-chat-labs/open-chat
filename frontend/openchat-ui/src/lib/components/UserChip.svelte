@@ -49,7 +49,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .chip {
     --chip-tint: var(--accent);
     display: inline-flex;

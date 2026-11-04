@@ -325,7 +325,7 @@
   </div>
 {/if}
 
-<style>
+<style lang="scss">
   .scrim {
     position: fixed;
     inset: 0;

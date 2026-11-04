@@ -18,7 +18,7 @@ import execute from "rollup-plugin-shell";
 import svelte from "rollup-plugin-svelte";
 import { visualizer } from "rollup-plugin-visualizer";
 import styles from "rollup-styles";
-import { sveltePreprocess } from "svelte-preprocess";
+import svelteConfig from "./svelte.config.js";
 import { sourcemapNewline } from "../sourcemapNewline.mjs";
 import { androidBundlePlugin } from "./rollup-plugin-android-bundle.mjs";
 import { ocPackageAliases } from "./oc-package-aliases.mjs";
@@ -126,12 +126,8 @@ export default {
         resetManualChunksCache(),
         clean(),
         svelte({
-            preprocess: sveltePreprocess({
-                sourceMap: true,
-                scss: {
-                    prependData: `@use 'sass:math'; @use 'src/styles/mixins.scss' as *;`,
-                },
-            }),
+            // the same as Vite's and vitest's: the legacy trees' scss with the app's mixins, the new UI's with the library's
+            preprocess: svelteConfig.preprocess,
             compilerOptions: {
                 // runes: true,
             },

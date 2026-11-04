@@ -55,7 +55,7 @@
   </DialogShell>
 {/if}
 
-<style>
+<style lang="scss">
   .section { scroll-margin-top: 92px; /* clears the floating theme bar */ display: flex; flex-direction: column; gap: 20px; }
   .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line-1); }
   h2 { margin: 0; font: 700 17px/1 var(--font-sans); letter-spacing: -0.015em; color: var(--ink); }

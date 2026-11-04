@@ -32,7 +32,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .badge {
     display: inline-flex;
     flex: none;

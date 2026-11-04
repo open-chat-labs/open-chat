@@ -1602,7 +1602,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .panel {
     position: relative;
     width: 100%;

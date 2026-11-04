@@ -145,7 +145,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .stats {
     width: 100%;
     box-sizing: border-box;

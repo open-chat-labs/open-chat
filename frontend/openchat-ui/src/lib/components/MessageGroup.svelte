@@ -506,7 +506,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .group {
     position: relative;
     z-index: 0;

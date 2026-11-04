@@ -71,7 +71,7 @@
     {/if}
 </div>
 
-<style>
+<style lang="scss">
     .screen {
         display: contents;
     }

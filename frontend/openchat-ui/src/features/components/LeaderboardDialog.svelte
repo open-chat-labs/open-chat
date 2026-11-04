@@ -115,7 +115,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .layer {
     z-index: 73;
   }

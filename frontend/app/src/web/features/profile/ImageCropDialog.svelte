@@ -51,7 +51,7 @@
     </div>
 </DialogShell>
 
-<style>
+<style lang="scss">
     .cropper {
         position: relative;
         height: 400px;

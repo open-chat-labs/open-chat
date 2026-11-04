@@ -33,7 +33,7 @@
   </svg>
 </div>
 
-<style>
+<style lang="scss">
   .spinner {
     display: inline-flex;
     align-items: center;

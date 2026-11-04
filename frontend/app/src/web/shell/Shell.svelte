@@ -146,7 +146,7 @@
     </div>
 </div>
 
-<style>
+<style lang="scss">
     .frame {
         position: fixed;
         inset: 0;

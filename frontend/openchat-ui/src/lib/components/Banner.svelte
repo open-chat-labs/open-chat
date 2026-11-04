@@ -25,7 +25,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .banner {
     --tint: var(--accent);
     width: 100%;

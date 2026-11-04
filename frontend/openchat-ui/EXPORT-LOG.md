@@ -504,3 +504,8 @@
 - Not taken (left out on purpose): `ConversationHeader`'s `typingNames` (not used); `Menu`'s `color: 'danger'` alias; `ChatRow`'s `fav` (always off in the export).
 - Still to port: `ChatPicker`'s `multi` (forward to several chats), `ChatListPanel`'s grouped search (people, messages, search tabs), `MediaViewer` (new), `MessageGroup`'s `onMediaOpen`, `PuzzleDialog`'s `layout="screen"` (`topInset`, `backIcon`, `backFlip`).
 - `meta.json`, the docs' samples and the strings updated; `export-manifest.json` and EXPORT.md carry the source hashes of everything now ported (passes 4–6).
+
+## 2026-11-04 — component styles in SCSS, by hand
+- Every component's `<style>` is `<style lang="scss">` (149 in the library, and `src/web`'s 32), checked by `scss.spec.ts` in each. Plain CSS is valid SCSS: the compiled CSS is the same, apart from Sass's own equivalent rewrites (double quotes, unquoted attribute values, a `calc()` inside `min()` / `max()` unwrapped).
+- `src/lib/styles/_mixins.scss`: `truncate`, `line-clamp($lines)`, `flex-center`, `icon($name, $size, $colour)`, `reduced-motion`. `scss.mjs` holds the `@use` put in front of every block, by `vite.config.ts` (the docs build) and `svelte.config.js` (svelte-check). The app's `svelte.config.js` gives the library and `src/web` this one and the legacy trees their own `src/styles/mixins.scss`, so the library never depends on the legacy styles; Rollup's production build now uses that config too.
+- `ChatRow`'s preview text uses `truncate`. Using nesting and the mixins across the components is a follow-up.

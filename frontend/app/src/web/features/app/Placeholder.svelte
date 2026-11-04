@@ -11,7 +11,7 @@
     <EmptyState preset="no-results" {title} body={detail || " "} actionLabel="" />
 </div>
 
-<style>
+<style lang="scss">
     .placeholder {
         display: grid;
         place-items: center;

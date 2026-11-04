@@ -40,7 +40,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .detail-row {
     display: flex;
     align-items: center;

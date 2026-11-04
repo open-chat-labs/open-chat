@@ -146,7 +146,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .card {
     display: flex;
     flex-direction: column;

@@ -149,7 +149,7 @@
   </div>
 </DialogShell>
 
-<style>
+<style lang="scss">
   .picker {
     min-height: 0;
     /* the shell's grid column would otherwise grow to a long unbroken line (a link) */

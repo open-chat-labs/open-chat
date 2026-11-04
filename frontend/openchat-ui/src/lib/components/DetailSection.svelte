@@ -45,7 +45,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .section {
     padding: var(--space-14) var(--space-16);
     border-radius: var(--radius-lg);

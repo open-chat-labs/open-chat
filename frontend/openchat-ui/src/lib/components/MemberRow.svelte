@@ -176,7 +176,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .member {
     --row-hover: var(--overlay-1);
     width: 100%;

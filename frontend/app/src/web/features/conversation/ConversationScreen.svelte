@@ -1059,7 +1059,7 @@
     <MediaViewer content={viewing} onClose={() => (viewing = undefined)} />
 {/if}
 
-<style>
+<style lang="scss">
     .conversation {
         display: flex;
         flex-direction: column;

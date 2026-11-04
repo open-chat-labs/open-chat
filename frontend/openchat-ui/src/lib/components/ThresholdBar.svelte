@@ -57,7 +57,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .threshold-bar {
     display: flex;
     flex-direction: column;

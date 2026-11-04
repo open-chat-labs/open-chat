@@ -70,7 +70,7 @@
   </div>
 {/if}
 
-<style>
+<style lang="scss">
   .toast {
     display: flex;
     align-items: center;

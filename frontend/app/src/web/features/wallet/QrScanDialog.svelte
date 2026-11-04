@@ -29,7 +29,7 @@
     </div>
 </DialogShell>
 
-<style>
+<style lang="scss">
     .scan {
         display: flex;
         flex-direction: column;

@@ -58,7 +58,7 @@
     </div>
 {/if}
 
-<style>
+<style lang="scss">
     .anchor {
         position: fixed;
         left: 50%;

@@ -126,7 +126,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .timeline {
     --dot: 26px;
     --row-pad: 4px 0 16px;

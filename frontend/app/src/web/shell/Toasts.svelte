@@ -31,7 +31,7 @@
     </div>
 {/if}
 
-<style>
+<style lang="scss">
     .toast {
         position: fixed;
         inset-block-end: var(--space-24);

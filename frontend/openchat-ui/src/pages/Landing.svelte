@@ -544,7 +544,7 @@
   {#if authState.kind}<AuthDialog {...authState.dialog} />{/if}
 </div>
 
-<style>
+<style lang="scss">
   /* the header's section links (#landing-features …) glide to their section, unless motion is reduced */
   @media (prefers-reduced-motion: no-preference) {
     :global(html:has([data-oc-page='landing'])) {

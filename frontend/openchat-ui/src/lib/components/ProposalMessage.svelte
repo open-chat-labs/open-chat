@@ -120,7 +120,7 @@
   <div class="time">{time}</div>
 </div>
 
-<style>
+<style lang="scss">
   .shell {
     width: 340px;
     max-width: 100%;
