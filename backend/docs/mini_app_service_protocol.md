@@ -2,7 +2,7 @@
 
 The MiniApp service is run by OpenChat. It sits between the website and the game servers (bots), so that:
 - a user is on a game's card only if they asked to join through OpenChat and the bot accepted them;
-- spectators get the game through the service, never from the bot, and OpenChat doesn't tell the bot who they are. Their browser still loads the bot's app and artwork from the bot's servers;
+- spectators get the game through the service, never from the bot, and OpenChat doesn't tell the bot who they are. Their browser still loads the bot's app and artwork, and anything the app fetches, from the bot's servers;
 - a card exists only if the service knows its game, as bots post cards through the service.
 
 This document is the contract between the website, the service, bots and their apps.
