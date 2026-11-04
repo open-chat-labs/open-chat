@@ -513,7 +513,7 @@
 - `ChatRow`'s preview text uses `truncate`. Using nesting and the mixins across the components is a follow-up.
 
 ## 2026-11-04 — nesting and mixins in the library primitives' styles, by hand
-- The style blocks of 63 components in `src/lib/components` and `src/lib/virtual` use nesting: states (`&:hover`, `&:focus-visible`), modifiers (`&.sent`, `&.last`), children that were already descendants or compounds of their parent, and the context a rule depends on written from the element (`.sent & {}` for `.sent .bubble`). Selectors that stood alone stay top-level; `:global(...)` rules and grouped selector lists stay as they were. `src/features`, `src/pages` and `src/docs` are a later batch.
+- The style blocks of 64 components in `src/lib/components` and `src/lib/virtual` use nesting: states (`&:hover`, `&:focus-visible`), modifiers (`&.sent`, `&.last`), children that were already descendants or compounds of their parent, and the context a rule depends on written from the element (`.sent & {}` for `.sent .bubble`). Selectors that stood alone stay top-level; `:global(...)` rules and grouped selector lists stay as they were. `src/features`, `src/pages` and `src/docs` are a later batch.
 - Mixins across them: `truncate`, `line-clamp`, `flex-center`, `icon`, `reduced-motion`, and new in `_mixins.scss`:
   - `focus-ring`: the keyboard ring as a shadow, in place of the outline.
   - `message-shell($bg)`: a message card's bubble (poll, prize, proposal, transfer, swap offer, file, media, link preview), with the `.last` tail corner.
