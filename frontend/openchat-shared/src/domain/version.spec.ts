@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { Version } from "./version";
+import { otaStrategy, Version } from "./version";
 
 describe("Version", () => {
     describe("parse", () => {
@@ -263,6 +263,22 @@ describe("Version", () => {
             expect(current.canUpdateTo(Version.parse("2.1.0"), "minor")).toBe(true);
             expect(current.canUpdateTo(Version.parse("2.5.3"), "minor")).toBe(true);
             expect(current.canUpdateTo(Version.parse("3.0.0"), "minor")).toBe(false);
+        });
+    });
+
+    describe("otaStrategy", () => {
+        // A shell whose build lost its strategy would otherwise reach canUpdateTo's
+        // "major" default and take bundles it cannot run.
+        test("#10398 invariant 17: a build with no or an unknown OTA strategy takes no over-the-air updates", () => {
+            for (const value of [undefined, "", "pach", "Patch"]) {
+                expect(otaStrategy(value)).toBe("none");
+            }
+        });
+
+        test("keeps a known strategy", () => {
+            for (const value of ["none", "patch", "minor", "major"] as const) {
+                expect(otaStrategy(value)).toBe(value);
+            }
         });
     });
 });

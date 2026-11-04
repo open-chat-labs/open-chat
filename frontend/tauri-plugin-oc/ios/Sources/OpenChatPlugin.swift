@@ -226,13 +226,6 @@ class OpenChatPlugin: Plugin {
     // iOS cannot relaunch itself. Exiting at least guarantees the next launch
     // is fresh (used after an OTA update download). Review before store
     // submission — see IOS_PORT_STATUS.md.
-    @objc func restartApp(_ invoke: Invoke) {
-        invoke.resolve()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            exit(0)
-        }
-    }
-
     @objc func loadRecentMedia(_ invoke: Invoke) throws {
         try recentMedia.handleLoad(invoke)
     }

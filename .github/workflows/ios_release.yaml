@@ -1,0 +1,218 @@
+name: iOS Release
+
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: 'App version, e.g. 2.0.2130 (the website version the bundled web assets report)'
+                required: true
+    release:
+        types: [published]
+
+jobs:
+    build-ios:
+        # Releases are tagged per platform (vX.Y.Z-ios, vX.Y.Z-android), and a
+        # published release of either kind fires every release workflow.
+        if: github.event_name != 'release' || endsWith(github.ref_name, '-ios')
+        # App Store Connect only accepts builds made with the current Xcode SDK.
+        runs-on: macos-26
+        defaults:
+            run:
+                working-directory: frontend
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Extract Version
+              env:
+                  INPUT_VERSION: ${{ inputs.version }}
+              run: |
+                  if [ "$GITHUB_EVENT_NAME" == "release" ]; then
+                    # vX.Y.Z-ios -> X.Y.Z
+                    VERSION=${GITHUB_REF_NAME#v}
+                    VERSION=${VERSION%%-*}
+                  else
+                    VERSION="$INPUT_VERSION"
+                  fi
+                  if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                    echo "::error::Version '$VERSION' is not X.Y.Z"
+                    exit 1
+                  fi
+                  # CFBundleVersion: App Store Connect rejects an upload whose
+                  # build number is not higher than the last one, and the run
+                  # number only ever goes up, also when a version is rebuilt.
+                  echo "VERSION=$VERSION" >> $GITHUB_ENV
+                  echo "BUILD_NUMBER=$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+                  echo "Version $VERSION, build $GITHUB_RUN_NUMBER"
+                  xcodebuild -version
+
+            - name: Setup Rust
+              uses: ./.github/workflows/setup-rust
+              with:
+                  cache: 'write'
+                  shared-key: 'ios-release'
+
+            - name: Add iOS target
+              run: rustup target add aarch64-apple-ios
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '20.20.0'
+                  cache: 'npm'
+                  cache-dependency-path: frontend/package-lock.json
+
+            - name: Install frontend dependencies
+              run: npm ci
+
+            - name: Install Tauri CLI
+              uses: baptiste0928/cargo-install@v3
+              with:
+                  crate: tauri-cli
+                  version: '2.10.0'
+
+            - name: Setup App Store Connect API key
+              run: |
+                  # Secrets arrive through env, never through expression
+                  # interpolation into the script body (see android_release.yaml).
+                  MISSING=""
+                  [ -z "$APPLE_API_ISSUER" ] && MISSING="$MISSING APPLE_API_ISSUER"
+                  [ -z "$APPLE_API_KEY" ] && MISSING="$MISSING APPLE_API_KEY"
+                  [ -z "$APPLE_API_KEY_P8" ] && MISSING="$MISSING APPLE_API_KEY_P8"
+                  if [ -n "$MISSING" ]; then
+                    echo "::error::Missing repository secrets:$MISSING"
+                    exit 1
+                  fi
+
+                  # altool looks for AuthKey_<key id>.p8 here; the Tauri CLI
+                  # takes the path from APPLE_API_KEY_PATH for automatic signing.
+                  KEY_DIR="$HOME/.appstoreconnect/private_keys"
+                  mkdir -p "$KEY_DIR"
+                  KEY_PATH="$KEY_DIR/AuthKey_$APPLE_API_KEY.p8"
+                  printf '%s' "$APPLE_API_KEY_P8" > "$KEY_PATH"
+                  chmod 600 "$KEY_PATH"
+                  echo "APPLE_API_KEY_PATH=$KEY_PATH" >> $GITHUB_ENV
+              env:
+                  APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+                  APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+                  APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+
+            - name: Create Env File
+              run: |
+                  # Same values as android_release.yaml, with the iOS app type.
+                  echo "OC_DFX_NETWORK=ic" >> .env
+                  echo "OC_APP_TYPE=ios" >> .env
+                  echo "OC_WEBSITE_VERSION=$VERSION" >> .env
+                  echo "OC_APP_KLIPY_APIKEY=${KLIPY:-dummy_klipy_key}" >> .env
+                  echo "OC_TRANSLATE_PROXY_URL=https://5rabdwftr36yvlgf5xmr34swb40nxsgs.lambda-url.eu-west-2.on.aws" >> .env
+                  echo "OC_ROLLBAR_ACCESS_TOKEN=${ROLLBAR:-dummy_rollbar_token}" >> .env
+                  echo "OC_USERGEEK_APIKEY=${USERGEEK:-dummy_usergeek_key}" >> .env
+                  echo "OC_METERED_APIKEY=${METERED:-dummy_metered_key}" >> .env
+                  echo "OC_VAPID_PUBLIC_KEY=${VAPID:-dummy_vapid_key}" >> .env
+
+                  CANISTERS_JSON="../canister_ids.json"
+                  if [ ! -f "$CANISTERS_JSON" ]; then
+                    echo "::error::canister_ids.json not found at $CANISTERS_JSON"
+                    exit 1
+                  fi
+                  echo "OC_IDENTITY_CANISTER=$(jq -r '.identity.ic' $CANISTERS_JSON)" >> .env
+                  echo "OC_USER_INDEX_CANISTER=$(jq -r '.user_index.ic' $CANISTERS_JSON)" >> .env
+                  echo "OC_GROUP_INDEX_CANISTER=$(jq -r '.group_index.ic' $CANISTERS_JSON)" >> .env
+                  echo "OC_NOTIFICATIONS_CANISTER=$(jq -r '.notifications_index.ic' $CANISTERS_JSON)" >> .env
+                  echo "OC_ONLINE_CANISTER=$(jq -r '.online_users.ic' $CANISTERS_JSON)" >> .env
+                  echo "OC_TRANSLATIONS_CANISTER=$(jq -r '.translations.ic' $CANISTERS_JSON)" >> .env
+                  echo "OC_REGISTRY_CANISTER=$(jq -r '.registry.ic' $CANISTERS_JSON)" >> .env
+                  echo "OC_STORAGE_INDEX_CANISTER=$(jq -r '.storage_index.ic' $CANISTERS_JSON)" >> .env
+                  echo "OC_PROPOSALS_BOT_CANISTER=$(jq -r '.proposals_bot.ic' $CANISTERS_JSON)" >> .env
+                  echo "OC_SIGN_IN_WITH_EMAIL_CANISTER=$(jq -r '.sign_in_with_email.ic' $CANISTERS_JSON)" >> .env
+                  echo "OC_SIGN_IN_WITH_ETHEREUM_CANISTER=$(jq -r '.sign_in_with_ethereum.ic' $CANISTERS_JSON)" >> .env
+                  echo "OC_SIGN_IN_WITH_SOLANA_CANISTER=$(jq -r '.sign_in_with_solana.ic' $CANISTERS_JSON)" >> .env
+                  echo "OC_AIRDROP_BOT_CANISTER=$(jq -r '.airdrop_bot.ic' $CANISTERS_JSON)" >> .env
+                  echo "OC_ONESEC_FORWARDER_CANISTER=lsoct-pyaaa-aaaar-boahq-cai" >> .env
+                  echo "OC_ONESEC_MINTER_CANISTER=5okwm-giaaa-aaaar-qbn6a-cai" >> .env
+              env:
+                  KLIPY: ${{ secrets.GH_KLIPY_API_KEY }}
+                  ROLLBAR: ${{ secrets.GH_ROLLBAR_ACCESS_TOKEN }}
+                  USERGEEK: ${{ secrets.GH_USERGEEK_APIKEY }}
+                  METERED: ${{ secrets.GH_METERED_APIKEY }}
+                  VAPID: ${{ secrets.GH_VAPID_PUBLIC_KEY }}
+
+            - name: Store build settings
+              run: |
+                  # Dev builds load the vite dev server and a local replica over
+                  # plain http, so the checked-in Info.plist turns ATS off. A
+                  # store build has no use for that and App Review rejects it.
+                  /usr/libexec/PlistBuddy -c "Delete :NSAppTransportSecurity" \
+                    src-tauri/gen/apple/open-chat_iOS/Info.plist
+
+            - name: Build iOS IPA (Store)
+              run: |
+                  CONFIG=$(jq -nc --arg v "$VERSION" --arg b "$BUILD_NUMBER" \
+                    '{version: $v, bundle: {iOS: {bundleVersion: $b}}}')
+                  cargo tauri ios build --ci --verbose --export-method app-store-connect \
+                    --features store --config "$CONFIG"
+
+                  IPAS=$(find src-tauri/gen/apple/build -name '*.ipa' | sort)
+                  COUNT=$(printf '%s\n' "$IPAS" | grep -c . || true)
+                  if [ "$COUNT" -ne 1 ]; then
+                    echo "::error::Expected exactly one .ipa, found $COUNT"
+                    exit 1
+                  fi
+                  mv "$IPAS" "./openchat_${VERSION}_${BUILD_NUMBER}.ipa"
+              env:
+                  APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+                  APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+                  # OC_APP_STORE and OC_OTA_UPDATES are set by app/build_ios.sh,
+                  # the beforeBuildCommand, since iOS has only the store channel.
+
+            - name: Verify IPA
+              run: |
+                  # Catches the mistakes App Store Connect would bounce, or
+                  # worse accept: a wrong version, ATS left off, a debug
+                  # entitlement, a developer-mode associated domain.
+                  WORK=$(mktemp -d)
+                  unzip -q "./openchat_${VERSION}_${BUILD_NUMBER}.ipa" -d "$WORK"
+                  APP=$(find "$WORK/Payload" -maxdepth 1 -name '*.app' | head -1)
+                  PLIST="$APP/Info.plist"
+                  FAIL=0
+
+                  SHORT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$PLIST")
+                  BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST")
+                  echo "CFBundleShortVersionString=$SHORT CFBundleVersion=$BUILD"
+                  [ "$SHORT" == "$VERSION" ] || { echo "::error::Version is $SHORT, expected $VERSION"; FAIL=1; }
+                  [ "$BUILD" == "$BUILD_NUMBER" ] || { echo "::error::Build is $BUILD, expected $BUILD_NUMBER"; FAIL=1; }
+
+                  if /usr/libexec/PlistBuddy -c "Print :NSAppTransportSecurity:NSAllowsArbitraryLoads" "$PLIST" >/dev/null 2>&1; then
+                    echo "::error::NSAllowsArbitraryLoads is still set"; FAIL=1
+                  fi
+                  [ "$(/usr/libexec/PlistBuddy -c "Print :ITSAppUsesNonExemptEncryption" "$PLIST" 2>/dev/null)" == "false" ] \
+                    || { echo "::error::ITSAppUsesNonExemptEncryption is not false"; FAIL=1; }
+                  [ -f "$APP/PrivacyInfo.xcprivacy" ] || { echo "::error::PrivacyInfo.xcprivacy missing from the app bundle"; FAIL=1; }
+
+                  ENT=$(codesign -d --entitlements :- "$APP" 2>/dev/null)
+                  echo "$ENT"
+                  if echo "$ENT" | grep -q 'mode=developer'; then
+                    echo "::error::Associated domains use ?mode=developer"; FAIL=1
+                  fi
+                  if echo "$ENT" | grep -A1 'get-task-allow' | grep -q '<true/>'; then
+                    echo "::error::Build is signed for development"; FAIL=1
+                  fi
+                  exit $FAIL
+
+            - name: Upload build artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ios-release-artifacts
+                  path: frontend/openchat_${{ env.VERSION }}_${{ env.BUILD_NUMBER }}.ipa
+                  if-no-files-found: error
+
+            # Builds then reach internal testers through the TestFlight group's
+            # automatic distribution, set up in App Store Connect.
+            - name: Upload to App Store Connect
+              run: |
+                  xcrun altool --upload-app --type ios \
+                    --file "./openchat_${VERSION}_${BUILD_NUMBER}.ipa" \
+                    --apiKey "$APPLE_API_KEY" --apiIssuer "$APPLE_API_ISSUER"
+              env:
+                  APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+                  APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		24C1D01D42F7C40FE2C3AED2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 334E76AC4421AF3AF2C426ED /* PrivacyInfo.xcprivacy */; };
 		2C2AE878C73D710C6B28B451 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 24DEDD57D1B3A43C924DDC93 /* MetalKit.framework */; };
 		38E4F6C109C0052E8864402E /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C587610A2DF92B55D48C524 /* WebKit.framework */; };
 		3B922DD4B66E7C6B8FDA7617 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1AE857753D46B3772C2BF7CF /* UIKit.framework */; };
@@ -24,10 +25,10 @@
 /* Begin PBXFileReference section */
 		160E4D624C0A31D73CA143E7 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
 		1AE857753D46B3772C2BF7CF /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
-		1C65736F262CFB9DB78D48B0 /* OpenChat.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "OpenChat.entitlements"; sourceTree = "<group>"; };
 		1CCCA00313E7D4E302B2E8BE /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		24DEDD57D1B3A43C924DDC93 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		2D92B8DD2AA1394245FB960A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		334E76AC4421AF3AF2C426ED /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		4B18BA153B601D70E13E9072 /* main.rs */ = {isa = PBXFileReference; path = main.rs; sourceTree = "<group>"; };
 		4B6B1E39C65E95078C66A009 /* lib.rs */ = {isa = PBXFileReference; path = lib.rs; sourceTree = "<group>"; };
 		4DA1E4FB25E07EDAA38E6AFE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -39,6 +40,7 @@
 		72A37ADB07A0BB20592A4855 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		8C998F2F19550A405797239B /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
 		AC1D9E4D7E290ADAB5972E64 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		C481738E47826B0400924994 /* OpenChat.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenChat.entitlements; sourceTree = "<group>"; };
 		CEBEF42C76BC4563962C64E7 /* navigation.rs */ = {isa = PBXFileReference; path = navigation.rs; sourceTree = "<group>"; };
 		D23C0E057AF1F8158C05DFB6 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		E9305D0D0E5E8936FF1D7CC5 /* open-chat_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "open-chat_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -137,6 +139,7 @@
 				F131D4B434CEDC3FB5E08244 /* assets */,
 				2D92B8DD2AA1394245FB960A /* Assets.xcassets */,
 				1CCCA00313E7D4E302B2E8BE /* LaunchScreen.storyboard */,
+				334E76AC4421AF3AF2C426ED /* PrivacyInfo.xcprivacy */,
 				932B20DE2A6C2E0E4CB53736 /* Externals */,
 				ABDFB6459EC88F3D66DC5352 /* open-chat_iOS */,
 				91516C999DAF29F0FA3EF3D7 /* Sources */,
@@ -175,16 +178,9 @@
 			isa = PBXGroup;
 			children = (
 				4DA1E4FB25E07EDAA38E6AFE /* Info.plist */,
-				1C65736F262CFB9DB78D48B0 /* OpenChat.entitlements */,
+				C481738E47826B0400924994 /* OpenChat.entitlements */,
 			);
 			path = "open-chat_iOS";
-			sourceTree = "<group>";
-		};
-		"TEMP_DA8D559C-F50C-49AB-ADF7-113D3AFE3A6B" /* x86_64 */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = x86_64;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -251,6 +247,7 @@
 			files = (
 				F3D245EACD514A1EF9C6282C /* Assets.xcassets in Resources */,
 				4036922C4AE61287744AFBF4 /* LaunchScreen.storyboard in Resources */,
+				24C1D01D42F7C40FE2C3AED2 /* PrivacyInfo.xcprivacy in Resources */,
 				F4A18A187F4AA227A29B96CE /* assets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -367,7 +364,7 @@
 				CODE_SIGN_ENTITLEMENTS = "open-chat_iOS/OpenChat.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "N59KSS69AU";
+				DEVELOPMENT_TEAM = N59KSS69AU;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -382,7 +379,7 @@
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.oclabs.openchat;
-				PRODUCT_NAME = "OpenChat";
+				PRODUCT_NAME = OpenChat;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
@@ -400,7 +397,7 @@
 				CODE_SIGN_ENTITLEMENTS = "open-chat_iOS/OpenChat.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "N59KSS69AU";
+				DEVELOPMENT_TEAM = N59KSS69AU;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -415,7 +412,7 @@
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.oclabs.openchat;
-				PRODUCT_NAME = "OpenChat";
+				PRODUCT_NAME = OpenChat;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
