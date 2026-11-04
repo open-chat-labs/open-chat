@@ -50,6 +50,8 @@
 </span>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .stack {
     display: inline-flex;
     align-items: center;
@@ -61,9 +63,7 @@
     height: var(--size);
     margin-left: var(--overlap);
     box-shadow: 0 0 0 2px var(--ring);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
   }
 
   .face {

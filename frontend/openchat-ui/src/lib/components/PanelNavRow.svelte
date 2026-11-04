@@ -26,6 +26,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .nav-row {
     width: 100%;
     box-sizing: border-box;
@@ -36,10 +38,10 @@
     padding: var(--space-8) var(--space-12);
     border-radius: var(--radius-md);
     cursor: pointer;
-  }
 
-  .nav-row:hover {
-    background: var(--overlay-1);
+    &:hover {
+      background: var(--overlay-1);
+    }
   }
 
   .text {
@@ -58,9 +60,7 @@
   .hint {
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
     color: var(--ink-4);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    @include truncate;
   }
 
   .value {
@@ -74,10 +74,6 @@
   }
 
   .chevron {
-    flex: none;
-    width: 16px;
-    height: 16px;
-    background: var(--ink-4);
-    mask: var(--icon-chevron-right) center/contain no-repeat;
+    @include icon(chevron-right, 16px, var(--ink-4));
   }
 </style>

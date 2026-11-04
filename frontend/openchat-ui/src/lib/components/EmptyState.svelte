@@ -59,15 +59,15 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .empty {
     width: 100%;
     height: 100%;
     min-height: 220px;
     box-sizing: border-box;
-    display: flex;
+    @include flex-center;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
     gap: var(--space-14);
     padding: var(--space-32) var(--space-26);
     text-align: center;
@@ -75,9 +75,7 @@
 
   .tile {
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     width: 56px;
     height: 56px;
     border-radius: var(--radius-xl);
@@ -92,18 +90,18 @@
 
   .warning {
     background: var(--status-chit-soft);
-  }
 
-  .warning .icon {
-    background: var(--status-chit);
+    .icon {
+      background: var(--status-chit);
+    }
   }
 
   .danger {
     background: var(--btn-danger-bg);
-  }
 
-  .danger .icon {
-    background: var(--status-danger);
+    .icon {
+      background: var(--status-danger);
+    }
   }
 
   .copy {
@@ -139,9 +137,9 @@
     color: var(--ink);
     cursor: pointer;
     user-select: none;
-  }
 
-  .action:hover {
-    background: var(--btn-hover);
+    &:hover {
+      background: var(--btn-hover);
+    }
   }
 </style>

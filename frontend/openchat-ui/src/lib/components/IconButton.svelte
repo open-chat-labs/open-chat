@@ -32,24 +32,24 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .box {
     flex: none;
     width: 34px;
     height: 34px;
     display: inline-flex;
-  }
 
-  .box.accent {
-    width: 36px;
-    height: 36px;
+    &.accent {
+      width: 36px;
+      height: 36px;
+    }
   }
 
   .button {
     --ring: none;
-    display: flex;
+    @include flex-center;
     flex: none;
-    align-items: center;
-    justify-content: center;
     width: 34px;
     height: 34px;
     border-radius: var(--radius-md);
@@ -79,11 +79,11 @@
 
   .ghost {
     background: transparent;
-  }
 
-  .ghost.hover .icon,
-  .ghost.pressed .icon {
-    background: var(--ink);
+    &.hover .icon,
+    &.pressed .icon {
+      background: var(--ink);
+    }
   }
 
   .surface:hover,
@@ -98,15 +98,15 @@
     width: 36px;
     height: 36px;
     background: var(--accent);
-  }
 
-  .button.accent .icon {
-    background: var(--on-accent);
-  }
+    .icon {
+      background: var(--on-accent);
+    }
 
-  .button.accent:hover,
-  .button.accent.hover {
-    background: var(--accent-hover);
+    &:hover,
+    &.hover {
+      background: var(--accent-hover);
+    }
   }
 
   .overlay {
@@ -116,22 +116,22 @@
     border-radius: var(--radius-sm);
     background: var(--card-2);
     box-shadow: inset 0 0 0 1px var(--line-2), var(--ring);
-  }
 
-  .overlay.default,
-  .overlay.hover {
-    box-shadow: inset 0 0 0 1px var(--line-2);
-  }
+    &.default,
+    &.hover {
+      box-shadow: inset 0 0 0 1px var(--line-2);
+    }
 
-  .overlay:hover,
-  .overlay.hover {
-    background: var(--btn-hover);
-  }
+    &:hover,
+    &.hover {
+      background: var(--btn-hover);
+    }
 
-  .overlay .icon {
-    flex: initial;
-    width: 16px;
-    height: 16px;
-    background: var(--ink-3);
+    .icon {
+      flex: initial;
+      width: 16px;
+      height: 16px;
+      background: var(--ink-3);
+    }
   }
 </style>

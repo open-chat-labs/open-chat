@@ -50,18 +50,20 @@
 {/if}
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .card {
     --card-ink: var(--bubble-recv-text);
     --card-soft: var(--ink-3);
     text-decoration: none;
     border-radius: 6px 6px 18px 18px;
     background: var(--overlay-1);
-  }
 
-  .card.sent {
-    --card-ink: var(--bubble-text);
-    --card-soft: var(--bubble-text-soft);
-    background: var(--bubble-reply);
+    &.sent {
+      --card-ink: var(--bubble-text);
+      --card-soft: var(--bubble-text-soft);
+      background: var(--bubble-reply);
+    }
   }
 
   .large {
@@ -84,10 +86,10 @@
   .domain {
     font: 600 11.5px/1 var(--font-sans);
     color: var(--accent-bright);
-  }
 
-  .sent .domain {
-    color: var(--bubble-text-soft);
+    .sent & {
+      color: var(--bubble-text-soft);
+    }
   }
 
   .title {
@@ -109,6 +111,11 @@
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
+
+    .title {
+      font: 600 13.5px/1.25 var(--font-sans);
+      @include truncate;
+    }
   }
 
   .thumb {
@@ -124,12 +131,5 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-  }
-
-  .compact .title {
-    font: 600 13.5px/1.25 var(--font-sans);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 </style>

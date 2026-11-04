@@ -146,6 +146,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .list {
     display: flex;
     flex-direction: column;
@@ -165,39 +167,36 @@
     transition: transform 180ms var(--ease-out);
     position: relative;
     z-index: auto;
-  }
 
-  .row.dragging {
-    box-shadow:
-      0 8px 24px rgba(0, 0, 0, 0.4),
-      inset 0 0 0 1px var(--line-2);
-    transition: none;
-    z-index: 2;
-  }
+    &.dragging {
+      box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.4),
+        inset 0 0 0 1px var(--line-2);
+      transition: none;
+      z-index: 2;
+    }
 
-  .row.dup {
-    box-shadow: inset 0 0 0 1px var(--status-warning);
+    &.dup {
+      box-shadow: inset 0 0 0 1px var(--status-warning);
+    }
   }
 
   .handle {
     flex: none;
     width: 22px;
     height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     cursor: grab;
     touch-action: none;
     border-radius: 6px;
-  }
 
-  .handle.trailing {
-    opacity: 0.3;
-  }
+    &.trailing {
+      opacity: 0.3;
+    }
 
-  .handle:focus-visible {
-    box-shadow: var(--focus-ring);
-    outline: none;
+    &:focus-visible {
+      @include focus-ring;
+    }
   }
 
   .grip {
@@ -230,23 +229,18 @@
 
   .remove {
     flex: none;
-    display: flex;
+    @include flex-center;
     width: 30px;
     height: 30px;
     border-radius: 8px;
-    align-items: center;
-    justify-content: center;
     cursor: pointer;
-  }
 
-  .remove:hover {
-    background: var(--overlay-2);
+    &:hover {
+      background: var(--overlay-2);
+    }
   }
 
   .remove-icon {
-    width: 12px;
-    height: 12px;
-    background: var(--ink-3);
-    mask: var(--icon-close) center/contain no-repeat;
+    @include icon(close, 12px, var(--ink-3), $flex: null);
   }
 </style>

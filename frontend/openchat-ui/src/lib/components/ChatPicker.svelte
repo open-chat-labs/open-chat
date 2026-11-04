@@ -150,6 +150,8 @@
 </DialogShell>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .picker {
     min-height: 0;
     /* the shell's grid column would otherwise grow to a long unbroken line (a link) */
@@ -184,15 +186,13 @@
     flex: none;
     width: 32px;
     height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     font: 700 14px/1 var(--font-sans);
     color: var(--ink-2);
-  }
 
-  .item-tile.graded {
-    color: #0b0b10;
+    &.graded {
+      color: #0b0b10;
+    }
   }
 
   .item-icon {
@@ -222,9 +222,7 @@
   }
 
   .clip {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    @include truncate;
   }
 
   .wrap {
@@ -259,10 +257,10 @@
     padding: 0 var(--space-10);
     border-radius: var(--radius-md);
     cursor: pointer;
-  }
 
-  .chat:hover {
-    background: var(--overlay-1);
+    &:hover {
+      background: var(--overlay-1);
+    }
   }
 
   .face {
@@ -274,9 +272,7 @@
   .chat-name {
     font: var(--weight-semibold) var(--text-md) / 1.1 var(--font-sans);
     color: var(--ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    @include truncate;
   }
 
   .chat-kind,
@@ -286,11 +282,7 @@
   }
 
   .chevron {
-    flex: none;
-    width: 16px;
-    height: 16px;
-    background: var(--ink-4);
-    mask: var(--icon-chevron-right) center/contain no-repeat;
+    @include icon(chevron-right, 16px, var(--ink-4));
   }
 
   .empty {

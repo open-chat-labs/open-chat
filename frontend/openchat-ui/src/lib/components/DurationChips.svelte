@@ -68,10 +68,10 @@
   .inset {
     padding-inline-start: var(--space-4);
     padding-inline-end: var(--space-16);
-  }
 
-  .branch .inset {
-    padding-inline-start: calc(var(--oc-trunk) + var(--oc-stub) + var(--oc-clear));
+    .branch & {
+      padding-inline-start: calc(var(--oc-trunk) + var(--oc-stub) + var(--oc-clear));
+    }
   }
 
   .head {
@@ -106,11 +106,11 @@
     color: var(--ink-3);
     cursor: pointer;
     user-select: none;
-  }
 
-  .chip.selected {
-    background: var(--accent-soft);
-    box-shadow: inset 0 0 0 1px var(--accent-dim);
-    color: var(--accent-bright);
+    &.selected {
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1px var(--accent-dim);
+      color: var(--accent-bright);
+    }
   }
 </style>

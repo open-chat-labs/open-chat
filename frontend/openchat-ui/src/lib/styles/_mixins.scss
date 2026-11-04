@@ -20,20 +20,42 @@
   overflow: hidden;
 }
 
-/// Children centred both ways.
-@mixin flex-center {
-  display: flex;
+/// Children centred both ways (`$display: inline-flex` for an inline box).
+@mixin flex-center($display: flex) {
+  display: $display;
   align-items: center;
   justify-content: center;
 }
 
-/// An icon from icons.css: a `$size` square painted `$colour` through the icon's mask.
-@mixin icon($name, $size, $colour: currentColor) {
-  flex: none;
+/// An icon from icons.css: a `$size` square painted `$colour` through the icon's mask. It doesn't shrink in a flex
+/// row; `$flex: null` leaves `flex` unset.
+@mixin icon($name, $size, $colour: currentColor, $flex: none) {
+  flex: $flex;
   width: $size;
   height: $size;
   background: $colour;
   mask: var(--icon-#{$name}) center/contain no-repeat;
+}
+
+/// The keyboard focus ring, drawn as a shadow in place of the outline (inside a `:focus-visible` rule).
+@mixin focus-ring {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+/// A message card's bubble (poll, prize, transfer, file …): 4px in from a `$bg` bubble with the received-message
+/// corners, ringed by a hairline; `.last` (the group's last message) rounds its tail corner.
+@mixin message-shell($bg: var(--msg-bg)) {
+  max-width: 100%;
+  padding: 4px;
+  box-sizing: border-box;
+  border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
+  background: $bg;
+  box-shadow: inset 0 0 0 1px var(--line-1);
+
+  &.last {
+    border-bottom-left-radius: 22px;
+  }
 }
 
 /// Rules for people who asked for less motion (turn an animation or transition off).

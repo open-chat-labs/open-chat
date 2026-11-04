@@ -53,6 +53,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .field {
     width: 100%;
   }
@@ -70,11 +72,7 @@
   }
 
   .search-icon {
-    width: 15px;
-    height: 15px;
-    flex: none;
-    background: var(--ink-4);
-    mask: var(--icon-search) center/contain no-repeat;
+    @include icon(search, 15px, var(--ink-4));
   }
 
   .placeholder {
@@ -82,9 +80,7 @@
     min-width: 0;
     font: var(--weight-regular) var(--text-base) / 1 var(--font-sans);
     color: var(--ink-4);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    @include truncate;
   }
 
   input {
@@ -99,25 +95,20 @@
 
   .clear {
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     width: 22px;
     height: 22px;
     border-radius: var(--radius-pill);
     background: var(--overlay-2);
     cursor: pointer;
-  }
 
-  .clear:hover {
-    background: var(--btn-hover);
+    &:hover {
+      background: var(--btn-hover);
+    }
   }
 
   .clear-icon {
-    width: 11px;
-    height: 11px;
-    background: var(--ink-3);
-    mask: var(--icon-close) center/contain no-repeat;
+    @include icon(close, 11px, var(--ink-3), $flex: null);
   }
 
   .shortcut {

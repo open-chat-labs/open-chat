@@ -246,6 +246,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .wrap {
     width: 100%;
     display: flex;
@@ -262,24 +264,20 @@
     box-sizing: border-box;
     border-radius: var(--radius-xs) var(--radius-xl) var(--radius-xl) var(--radius-xl);
     box-shadow: inset 0 0 0 1px var(--line-2);
-  }
 
-  .deleted.sent {
-    border-radius: var(--radius-xl) var(--radius-xs) var(--radius-xl) var(--radius-xl);
-  }
+    &.sent {
+      border-radius: var(--radius-xl) var(--radius-xs) var(--radius-xl) var(--radius-xl);
+    }
 
-  /* mirrored, like the bubble: the grouped corner on the inline-end side */
-  .deleted.mirror {
-    border-radius: var(--radius-xl);
-    border-start-end-radius: var(--radius-xs);
+    /* mirrored, like the bubble: the grouped corner on the inline-end side */
+    &.mirror {
+      border-radius: var(--radius-xl);
+      border-start-end-radius: var(--radius-xs);
+    }
   }
 
   .trash {
-    flex: none;
-    width: 14px;
-    height: 14px;
-    background: var(--ink-4);
-    mask: var(--icon-trash) center/contain no-repeat;
+    @include icon(trash, 14px, var(--ink-4));
   }
 
   .deleted-text {
@@ -304,12 +302,12 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-  }
 
-  .column.sent {
-    --msg-ink: var(--bubble-text);
-    --msg-soft: var(--bubble-text-soft);
-    --msg-stamp: var(--bubble-text-soft);
+    &.sent {
+      --msg-ink: var(--bubble-text);
+      --msg-soft: var(--bubble-text-soft);
+      --msg-stamp: var(--bubble-text-soft);
+    }
   }
 
   /* every bubble is left-aligned, so the avatar-facing edge is inline-start for both sides */
@@ -325,26 +323,26 @@
     border-end-end-radius: var(--radius-xl);
     border-end-start-radius: var(--radius-xs);
     padding: var(--space-12) var(--space-14);
-  }
 
-  .bubble.last {
-    border-end-start-radius: var(--radius-xl);
-  }
+    &.last {
+      border-end-start-radius: var(--radius-xl);
+    }
 
-  .bubble.mirror {
-    border-start-start-radius: var(--radius-xl);
-    border-start-end-radius: var(--radius-xs);
-    border-end-end-radius: var(--radius-xs);
-    border-end-start-radius: var(--radius-xl);
-  }
+    &.mirror {
+      border-start-start-radius: var(--radius-xl);
+      border-start-end-radius: var(--radius-xs);
+      border-end-end-radius: var(--radius-xs);
+      border-end-start-radius: var(--radius-xl);
 
-  .bubble.mirror.last {
-    border-end-end-radius: var(--radius-xl);
-  }
+      &.last {
+        border-end-end-radius: var(--radius-xl);
+      }
+    }
 
-  .sent .bubble {
-    background: var(--bubble-send-bg);
-    box-shadow: none;
+    .sent & {
+      background: var(--bubble-send-bg);
+      box-shadow: none;
+    }
   }
 
   /* received: a tinted panel with an accent bar; sent: the bubble's own reply shade */
@@ -359,13 +357,13 @@
     border-radius: var(--radius-md);
     background: var(--quote-bg);
     margin: -5px -6px 8px;
-  }
 
-  .sent .quote {
-    --quote-bg: var(--bubble-reply);
-    --quote-bar: var(--bubble-text-soft);
-    --quote-name: var(--bubble-text);
-    --quote-text: var(--bubble-text-soft);
+    .sent & {
+      --quote-bg: var(--bubble-reply);
+      --quote-bar: var(--bubble-text-soft);
+      --quote-name: var(--bubble-text);
+      --quote-text: var(--bubble-text-soft);
+    }
   }
 
   .quote-bar {
@@ -382,20 +380,14 @@
   .quote-name {
     font: var(--weight-bold) var(--text-sm) / 1.3 var(--font-sans);
     color: var(--quote-name);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    @include truncate;
   }
 
   /* quoted text wraps up to three lines, then ends in an ellipsis */
   .quote-text {
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
     color: var(--quote-text);
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    overflow: hidden;
+    @include line-clamp(3);
     overflow-wrap: anywhere;
   }
 
@@ -407,11 +399,7 @@
   }
 
   .forward-icon {
-    flex: none;
-    width: 12px;
-    height: 12px;
-    background: var(--msg-soft);
-    mask: var(--icon-forward) center/contain no-repeat;
+    @include icon(forward, 12px, var(--msg-soft));
   }
 
   .forward-label {
@@ -431,10 +419,10 @@
     overflow-wrap: anywhere;
     font: var(--weight-regular) var(--text-sm) / 1.55 var(--font-mono);
     color: var(--status-online);
-  }
 
-  .sent .code {
-    color: var(--bubble-text);
+    .sent & {
+      color: var(--bubble-text);
+    }
   }
 
   .text {
@@ -474,22 +462,24 @@
     padding: var(--space-4);
   }
 
-  .carded > .quote {
-    margin: 0 0 var(--space-8);
-  }
+  .carded {
+    > .quote {
+      margin: 0 0 var(--space-8);
+    }
 
-  .carded > .forwarded,
-  .carded > .code,
-  .carded > .text {
-    margin-inline: var(--space-10);
-  }
+    > .forwarded,
+    > .code,
+    > .text {
+      margin-inline: var(--space-10);
+    }
 
-  .carded > :is(.forwarded, .code, .text):first-child {
-    margin-top: var(--space-8);
-  }
+    > :is(.forwarded, .code, .text):first-child {
+      margin-top: var(--space-8);
+    }
 
-  .carded > .text {
-    padding-bottom: var(--space-10);
+    > .text {
+      padding-bottom: var(--space-10);
+    }
   }
 
   .previews {
@@ -517,27 +507,25 @@
     background: var(--bubble-recv-bg);
     cursor: pointer;
     opacity: 0;
-  }
 
-  .remove::before {
-    content: '';
-    position: absolute;
-    inset: 6px;
-    background: var(--msg-ink);
-    mask: var(--icon-close) center/contain no-repeat;
-  }
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      background: var(--msg-ink);
+      mask: var(--icon-close) center/contain no-repeat;
+    }
 
-  .sent .remove {
-    background: var(--bubble-send-bg);
-  }
+    .sent & {
+      background: var(--bubble-send-bg);
+    }
 
-  .preview:hover .remove,
-  .remove:focus-visible {
-    opacity: 1;
-  }
+    .preview:hover &,
+    &:focus-visible {
+      opacity: 1;
+    }
 
-  @media (hover: none) {
-    .remove {
+    @media (hover: none) {
       opacity: 1;
     }
   }
@@ -553,10 +541,10 @@
     align-items: flex-end;
     font: var(--weight-regular) var(--text-xs) / 1 var(--font-mono);
     color: var(--msg-stamp);
-  }
 
-  .sent .stamp {
-    gap: var(--space-4);
+    .sent & {
+      gap: var(--space-4);
+    }
   }
 
   /* invisible copy reserves room on the last line so the stamp never overlaps text */
@@ -586,11 +574,11 @@
     gap: var(--space-6);
     margin-top: var(--space-6);
     padding-inline-start: var(--space-14);
-  }
 
-  .sent .failed {
-    padding-inline-start: 0;
-    padding-inline-end: var(--space-14);
+    .sent & {
+      padding-inline-start: 0;
+      padding-inline-end: var(--space-14);
+    }
   }
 
   .failed-text,
@@ -616,18 +604,14 @@
     border-radius: var(--radius-sm);
     cursor: pointer;
     align-self: flex-start;
-  }
 
-  .thread:hover {
-    background: var(--overlay-1);
+    &:hover {
+      background: var(--overlay-1);
+    }
   }
 
   .thread-icon {
-    flex: none;
-    width: 14px;
-    height: 14px;
-    background: var(--accent);
-    mask: var(--icon-reply) center/contain no-repeat;
+    @include icon(reply, 14px, var(--accent));
   }
 
   .thread-count,
@@ -654,10 +638,10 @@
     margin-top: -9px;
     position: relative;
     z-index: 2;
-  }
 
-  .reactions.after-thread {
-    margin-top: var(--space-6);
+    &.after-thread {
+      margin-top: var(--space-6);
+    }
   }
 
   /* chips overlap the bubble's bottom edge, so their backgrounds are opaque */
@@ -673,21 +657,20 @@
     color: var(--ink-2);
     cursor: pointer;
     user-select: none;
-  }
 
-  .chip.mine {
-    background: color-mix(in oklch, var(--accent) 20%, var(--card-2));
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 55%, transparent);
-    color: var(--ink);
-  }
+    &.mine {
+      background: color-mix(in oklch, var(--accent) 20%, var(--card-2));
+      box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 55%, transparent);
+      color: var(--ink);
+    }
 
-  .chip:hover {
-    filter: brightness(1.15);
-  }
+    &:hover {
+      filter: brightness(1.15);
+    }
 
-  .chip:focus-visible {
-    box-shadow: var(--focus-ring);
-    outline: none;
+    &:focus-visible {
+      @include focus-ring;
+    }
   }
 
   .chip-more,
@@ -720,9 +703,6 @@
   }
 
   .collapse-icon {
-    width: 10px;
-    height: 10px;
-    background: var(--ink-2);
-    mask: var(--icon-close) center/contain no-repeat;
+    @include icon(close, 10px, var(--ink-2), $flex: null);
   }
 </style>

@@ -86,10 +86,10 @@
     gap: 7px;
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
     color: var(--ink);
-  }
 
-  .value.highlight {
-    color: var(--accent-bright);
+    &.highlight {
+      color: var(--accent-bright);
+    }
   }
 
   .dot {

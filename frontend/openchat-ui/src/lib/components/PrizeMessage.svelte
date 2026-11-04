@@ -106,22 +106,15 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .shell {
     width: 320px;
-    max-width: 100%;
-    padding: 4px;
-    box-sizing: border-box;
-    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
-    background: var(--bubble-recv-bg);
-    box-shadow: inset 0 0 0 1px var(--line-1);
-  }
+    @include message-shell(var(--bubble-recv-bg));
 
-  .shell.last {
-    border-bottom-left-radius: 22px;
-  }
-
-  .shell.ended {
-    opacity: 0.7;
+    &.ended {
+      opacity: 0.7;
+    }
   }
 
   .stack {
@@ -145,9 +138,7 @@
   .coin {
     width: 96px;
     height: 96px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
   }
 
   .kicker {
@@ -182,10 +173,10 @@
     display: flex;
     align-items: center;
     gap: 4px;
-  }
 
-  .ends.soon {
-    color: var(--status-warning);
+    &.soon {
+      color: var(--status-warning);
+    }
   }
 
   .clock,
@@ -266,9 +257,7 @@
 
   .claim,
   .outcome {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     gap: 8px;
     height: 52px;
     border-radius: 6px;
@@ -280,14 +269,14 @@
     color: var(--on-accent);
     cursor: pointer;
     user-select: none;
-  }
 
-  .claim:hover {
-    filter: brightness(1.07);
-  }
+    &:hover {
+      filter: brightness(1.07);
+    }
 
-  .claim:active {
-    transform: scale(0.98);
+    &:active {
+      transform: scale(0.98);
+    }
   }
 
   .gift {
@@ -300,12 +289,12 @@
     background: var(--overlay-2);
     font: 600 13px/1 var(--font-sans);
     color: var(--ink-3);
-  }
 
-  .outcome.won {
-    background: color-mix(in oklch, var(--status-online) 13%, transparent);
-    font-size: 13.5px;
-    color: var(--status-online);
+    &.won {
+      background: color-mix(in oklch, var(--status-online) 13%, transparent);
+      font-size: 13.5px;
+      color: var(--status-online);
+    }
   }
 
   .outcome-icon {

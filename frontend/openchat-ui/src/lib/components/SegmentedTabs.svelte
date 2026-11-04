@@ -52,6 +52,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .wrap {
     width: 100%;
   }
@@ -70,16 +72,14 @@
   .tab {
     flex: 1;
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     gap: var(--space-4);
     border-radius: var(--radius-sm);
     cursor: pointer;
-  }
 
-  .tab:hover {
-    background: var(--overlay-1);
+    &:hover {
+      background: var(--overlay-1);
+    }
   }
 
   .plate {
@@ -96,10 +96,10 @@
     position: relative;
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
     color: var(--ink-3);
-  }
 
-  .selected .label {
-    color: var(--ink);
+    .selected & {
+      color: var(--ink);
+    }
   }
 
   .count {
@@ -112,11 +112,11 @@
     background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-2xs) / 1.35 var(--font-mono);
     color: var(--ink-3);
-  }
 
-  .selected .count {
-    background: var(--accent);
-    color: var(--on-accent);
+    .selected & {
+      background: var(--accent);
+      color: var(--on-accent);
+    }
   }
 
   .dot {

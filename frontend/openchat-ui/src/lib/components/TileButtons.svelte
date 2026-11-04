@@ -77,34 +77,34 @@
     background: var(--overlay-1);
     cursor: pointer;
     user-select: none;
-  }
 
-  .tile.on {
-    background: color-mix(in srgb, var(--accent) 14%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 38%, transparent);
-  }
+    &.on {
+      background: color-mix(in srgb, var(--accent) 14%, transparent);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 38%, transparent);
+    }
 
-  .tile:hover {
-    background: var(--overlay-2);
+    &:hover {
+      background: var(--overlay-2);
+    }
   }
 
   .icon {
     width: 16px;
     height: 16px;
     background: var(--ink-2);
+
+    .on & {
+      background: var(--accent-bright);
+    }
   }
 
   .label {
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-sans);
     color: var(--ink-2);
     white-space: nowrap;
-  }
 
-  .on .icon {
-    background: var(--accent-bright);
-  }
-
-  .on .label {
-    color: var(--accent-bright);
+    .on & {
+      color: var(--accent-bright);
+    }
   }
 </style>

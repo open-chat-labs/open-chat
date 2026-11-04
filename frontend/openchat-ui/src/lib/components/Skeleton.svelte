@@ -50,16 +50,22 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .skeleton {
     display: flex;
     flex-direction: column;
     gap: 4px;
     width: 100%;
-  }
 
-  /* invisible for the delay, then a short fade in */
-  .skeleton.delayed {
-    animation: skeleton-in 220ms ease-out var(--skeleton-delay) both;
+    /* invisible for the delay, then a short fade in */
+    &.delayed {
+      animation: skeleton-in 220ms ease-out var(--skeleton-delay) both;
+
+      @include reduced-motion {
+        animation-duration: 1ms;
+      }
+    }
   }
 
   @keyframes skeleton-in {
@@ -68,12 +74,6 @@
     }
     to {
       opacity: 1;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .skeleton.delayed {
-      animation-duration: 1ms;
     }
   }
 
@@ -150,45 +150,47 @@
 
   .token {
     gap: 8px;
+
+    .row {
+      gap: 14px;
+      min-height: 68px;
+      padding: var(--space-12) var(--space-14);
+      background: var(--overlay-1);
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+    }
+
+    .meta1 {
+      width: 56px;
+    }
   }
 
-  .token .row {
-    gap: 14px;
-    min-height: 68px;
-    padding: var(--space-12) var(--space-14);
-    background: var(--overlay-1);
-  }
+  .activity {
+    .row {
+      min-height: 56px;
+      padding: 0 var(--space-8);
+    }
 
-  .token .avatar {
-    width: 40px;
-    height: 40px;
-  }
-
-  .token .meta1 {
-    width: 56px;
-  }
-
-  .activity .row {
-    min-height: 56px;
-    padding: 0 var(--space-8);
-  }
-
-  .activity .avatar {
-    width: 40px;
-    height: 40px;
+    .avatar {
+      width: 40px;
+      height: 40px;
+    }
   }
 
   .member {
     gap: 2px;
-  }
 
-  .member .row {
-    min-height: 52px;
-    padding: 0 var(--space-8);
-  }
+    .row {
+      min-height: 52px;
+      padding: 0 var(--space-8);
+    }
 
-  .member .avatar {
-    width: 36px;
-    height: 36px;
+    .avatar {
+      width: 36px;
+      height: 36px;
+    }
   }
 </style>

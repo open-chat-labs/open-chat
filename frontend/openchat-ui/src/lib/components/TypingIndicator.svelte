@@ -56,10 +56,10 @@
     width: 24px;
     height: 24px;
     border-radius: var(--radius-pill);
-  }
 
-  .face + .face {
-    margin-inline-start: -9px;
+    & + & {
+      margin-inline-start: -9px;
+    }
   }
 
   .status {

@@ -326,6 +326,8 @@
 {/if}
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .scrim {
     position: fixed;
     inset: 0;
@@ -356,11 +358,11 @@
     gap: 0px;
     width: auto;
     animation: ocMaIn 0.14s ease-out;
-  }
 
-  .box.focus {
-    gap: 10px;
-    width: min(360px, calc(100vw - 16px));
+    &.focus {
+      gap: 10px;
+      width: min(360px, calc(100vw - 16px));
+    }
   }
 
   .strip {
@@ -386,9 +388,7 @@
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     cursor: pointer;
   }
 
@@ -404,42 +404,38 @@
     user-select: none;
     background: transparent;
     transition: transform 0.12s;
-  }
 
-  .emoji.big {
-    font-size: 22px;
-  }
+    &.big {
+      font-size: 22px;
+    }
 
-  .emoji.on {
-    background: var(--accent-soft);
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 50%, transparent);
-  }
+    &.on {
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 50%, transparent);
+    }
 
-  .emoji:hover {
-    background: var(--overlay-2);
-    transform: scale(1.12);
+    &:hover {
+      background: var(--overlay-2);
+      transform: scale(1.12);
+    }
   }
 
   .more {
     color: var(--ink-2);
-  }
 
-  .more:hover {
-    background: var(--overlay-2);
-    color: var(--ink);
+    &:hover {
+      background: var(--overlay-2);
+      color: var(--ink);
+    }
   }
 
   .emoji:focus-visible,
   .more:focus-visible {
-    box-shadow: var(--focus-ring);
-    outline: none;
+    @include focus-ring;
   }
 
   .more-icon {
-    width: 18px;
-    height: 18px;
-    background: currentColor;
-    mask: var(--icon-emoji) center/contain no-repeat;
+    @include icon(emoji, 18px, $flex: null);
   }
 
   .rows {
@@ -456,10 +452,10 @@
     align-self: flex-start;
     width: 252px;
     box-sizing: border-box;
-  }
 
-  .focus .rows {
-    width: min(240px, 100%);
+    .focus & {
+      width: min(240px, 100%);
+    }
   }
 
   .inline-strip {
@@ -488,20 +484,20 @@
     color: var(--ink);
     cursor: pointer;
     user-select: none;
-  }
 
-  .focus .row {
-    height: 42px;
-  }
+    .focus & {
+      height: 42px;
+    }
 
-  .row.danger {
-    color: var(--status-danger);
-  }
+    &.danger {
+      color: var(--status-danger);
+    }
 
-  .row:hover,
-  .row:focus-visible {
-    background: var(--overlay-2);
-    outline: none;
+    &:hover,
+    &:focus-visible {
+      background: var(--overlay-2);
+      outline: none;
+    }
   }
 
   .row-icon {
@@ -529,11 +525,11 @@
     grid-template-rows: minmax(0, 1fr);
     grid-template-columns: minmax(0, 1fr);
     overflow: hidden;
-  }
 
-  .focus .picker {
-    width: min(340px, calc(100vw - 16px));
-    height: min(390px, 60vh);
+    .focus & {
+      width: min(340px, calc(100vw - 16px));
+      height: min(390px, 60vh);
+    }
   }
 
   .picker-fill {

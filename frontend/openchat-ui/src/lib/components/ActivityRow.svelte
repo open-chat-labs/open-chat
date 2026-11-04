@@ -46,6 +46,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .row {
     width: 100%;
     box-sizing: border-box;
@@ -55,10 +57,10 @@
     border-radius: var(--radius-md);
     background: transparent;
     cursor: pointer;
-  }
 
-  .row:hover {
-    background: var(--overlay-1);
+    &:hover {
+      background: var(--overlay-1);
+    }
   }
 
   .avatar {
@@ -85,9 +87,7 @@
 
   .context,
   .preview {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    @include truncate;
   }
 
   .context {
@@ -107,9 +107,7 @@
   }
 
   .reaction {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     min-width: 24px;
     height: 24px;
     padding: 0 var(--space-6);

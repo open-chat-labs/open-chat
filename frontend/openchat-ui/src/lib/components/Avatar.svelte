@@ -36,6 +36,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .avatar {
     display: inline-flex;
     flex: none;
@@ -46,9 +48,7 @@
     flex: none;
     width: 100%;
     height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
   }
 
   .dot {
@@ -60,12 +60,12 @@
     border-radius: var(--radius-pill);
     background: var(--status-online);
     box-shadow: 0 0 0 3px var(--card);
-  }
 
-  .dot.big {
-    bottom: 2px;
-    inset-inline-end: 2px;
-    width: 14px;
-    height: 14px;
+    &.big {
+      bottom: 2px;
+      inset-inline-end: 2px;
+      width: 14px;
+      height: 14px;
+    }
   }
 </style>

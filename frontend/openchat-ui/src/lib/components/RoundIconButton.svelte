@@ -58,15 +58,15 @@
     transition:
       background 160ms,
       filter 160ms;
-  }
 
-  .round-button:hover {
-    filter: brightness(1.15);
-  }
+    &:hover {
+      filter: brightness(1.15);
+    }
 
-  .round-button:focus {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
+    &:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
   }
 
   .md {

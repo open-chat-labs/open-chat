@@ -68,29 +68,29 @@
   .marks {
     position: relative;
     height: 14px;
-  }
 
-  .marks .strong {
-    position: absolute;
-    top: 0;
-    width: 0;
-    height: 0;
-    margin-left: -5px;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 6px solid var(--ink);
-  }
+    .strong {
+      position: absolute;
+      top: 0;
+      width: 0;
+      height: 0;
+      margin-left: -5px;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid var(--ink);
+    }
 
-  .marks .soft {
-    position: absolute;
-    top: -2px;
-    width: 7px;
-    height: 7px;
-    margin-left: -4.5px;
-    box-sizing: border-box;
-    border-right: 2px solid var(--ink-2);
-    border-bottom: 2px solid var(--ink-2);
-    transform: rotate(45deg);
+    .soft {
+      position: absolute;
+      top: -2px;
+      width: 7px;
+      height: 7px;
+      margin-left: -4.5px;
+      box-sizing: border-box;
+      border-right: 2px solid var(--ink-2);
+      border-bottom: 2px solid var(--ink-2);
+      transform: rotate(45deg);
+    }
   }
 
   .bar {
@@ -126,9 +126,9 @@
     margin-left: -1px;
     border-radius: 1px;
     background: var(--ink-2);
-  }
 
-  .line.strong {
-    background: var(--ink);
+    &.strong {
+      background: var(--ink);
+    }
   }
 </style>

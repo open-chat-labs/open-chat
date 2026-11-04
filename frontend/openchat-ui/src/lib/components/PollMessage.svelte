@@ -114,6 +114,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .shell {
     --msg-bg: var(--bubble-recv-bg);
     --msg-ink: var(--bubble-recv-text);
@@ -127,31 +129,22 @@
     --msg-idle: var(--ink-4);
     --msg-ring: var(--line-3);
     width: 330px;
-    max-width: 100%;
-    padding: 4px;
-    box-sizing: border-box;
-    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
-    background: var(--msg-bg);
-    box-shadow: inset 0 0 0 1px var(--line-1);
-  }
+    @include message-shell;
 
-  .shell.last {
-    border-bottom-left-radius: 22px;
-  }
-
-  .shell.sent {
-    --msg-bg: var(--bubble-send-bg);
-    --msg-ink: var(--bubble-text);
-    --msg-soft: var(--bubble-text-soft);
-    --msg-seg: rgba(0, 0, 0, 0.18);
-    --msg-chip: rgba(0, 0, 0, 0.2);
-    --msg-track: rgba(0, 0, 0, 0.25);
-    --msg-link: var(--bubble-text);
-    --msg-on-mark: var(--bubble-send-bg);
-    --msg-fill: #fff;
-    --msg-idle: rgba(255, 255, 255, 0.45);
-    --msg-ring: rgba(255, 255, 255, 0.6);
-    box-shadow: none;
+    &.sent {
+      --msg-bg: var(--bubble-send-bg);
+      --msg-ink: var(--bubble-text);
+      --msg-soft: var(--bubble-text-soft);
+      --msg-seg: rgba(0, 0, 0, 0.18);
+      --msg-chip: rgba(0, 0, 0, 0.2);
+      --msg-track: rgba(0, 0, 0, 0.25);
+      --msg-link: var(--bubble-text);
+      --msg-on-mark: var(--bubble-send-bg);
+      --msg-fill: #fff;
+      --msg-idle: rgba(255, 255, 255, 0.45);
+      --msg-ring: rgba(255, 255, 255, 0.6);
+      box-shadow: none;
+    }
   }
 
   .stack {
@@ -182,10 +175,7 @@
   }
 
   .poll-icon {
-    width: 13px;
-    height: 13px;
-    background: currentColor;
-    mask: var(--icon-poll) center/contain no-repeat;
+    @include icon(poll, 13px, $flex: null);
   }
 
   .question {
@@ -231,15 +221,15 @@
     gap: 7px;
     cursor: pointer;
     outline: none;
-  }
 
-  .option.locked {
-    cursor: default;
-  }
+    &.locked {
+      cursor: default;
+    }
 
-  .option:focus-visible {
-    box-shadow: var(--focus-ring);
-    border-radius: 6px;
+    &:focus-visible {
+      box-shadow: var(--focus-ring);
+      border-radius: 6px;
+    }
   }
 
   .line {
@@ -255,18 +245,16 @@
     border-radius: 50%;
     box-shadow: inset 0 0 0 1.5px var(--msg-ring);
     background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+    @include flex-center;
 
-  .mark.multiple {
-    border-radius: 5px;
-  }
+    &.multiple {
+      border-radius: 5px;
+    }
 
-  .on .mark {
-    box-shadow: none;
-    background: var(--msg-fill);
+    .on & {
+      box-shadow: none;
+      background: var(--msg-fill);
+    }
   }
 
   .mark-tick {
@@ -275,10 +263,10 @@
     height: 11px;
     background: var(--msg-on-mark);
     mask: var(--icon-check) center/contain no-repeat;
-  }
 
-  .on .mark-tick {
-    display: block;
+    .on & {
+      display: block;
+    }
   }
 
   .label {
@@ -286,10 +274,10 @@
     min-width: 0;
     font: 500 14px/1.3 var(--font-sans);
     color: var(--msg-ink);
-  }
 
-  .on .label {
-    font-weight: 600;
+    .on & {
+      font-weight: 600;
+    }
   }
 
   .voters {
@@ -316,10 +304,10 @@
     border-radius: 3px;
     background: var(--msg-idle);
     transition: width 0.45s cubic-bezier(0.2, 0.7, 0.3, 1);
-  }
 
-  .on .bar {
-    background: var(--msg-fill);
+    .on & {
+      background: var(--msg-fill);
+    }
   }
 
   .foot {

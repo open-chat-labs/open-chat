@@ -85,6 +85,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .stats {
     width: 100%;
     box-sizing: border-box;
@@ -138,10 +140,8 @@
     inset: 30px;
     border-radius: var(--radius-circle);
     background: var(--surface-1);
-    display: flex;
+    @include flex-center;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
     gap: var(--space-8);
   }
 
@@ -201,8 +201,6 @@
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
     color: var(--ink-4);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    @include truncate;
   }
 </style>

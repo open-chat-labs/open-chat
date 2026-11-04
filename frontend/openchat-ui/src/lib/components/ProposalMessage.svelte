@@ -121,22 +121,15 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .shell {
     width: 340px;
-    max-width: 100%;
-    padding: 4px;
-    box-sizing: border-box;
-    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
-    background: var(--bubble-recv-bg);
-    box-shadow: inset 0 0 0 1px var(--line-1);
-  }
+    @include message-shell(var(--bubble-recv-bg));
 
-  .shell.last {
-    border-bottom-left-radius: 22px;
-  }
-
-  .shell.expired {
-    opacity: 0.75;
+    &.expired {
+      opacity: 0.75;
+    }
   }
 
   .stack {
@@ -212,10 +205,7 @@
   }
 
   .shield {
-    width: 11px;
-    height: 11px;
-    background: currentColor;
-    mask: var(--icon-shield) center/contain no-repeat;
+    @include icon(shield, 11px, $flex: null);
   }
 
   .title {
@@ -304,17 +294,14 @@
     gap: 6px;
     font: 500 12px/1 var(--font-sans);
     color: var(--ink-4);
-  }
 
-  .when.open {
-    color: var(--ink-2);
+    &.open {
+      color: var(--ink-2);
+    }
   }
 
   .clock {
-    width: 12px;
-    height: 12px;
-    background: currentColor;
-    mask: var(--icon-clock) center/contain no-repeat;
+    @include icon(clock, 12px, $flex: null);
   }
 
   .votes {
@@ -324,32 +311,30 @@
   }
 
   .vote {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     gap: 8px;
     height: 44px;
     border-radius: 6px;
     font: 700 13.5px/1 var(--font-sans);
     cursor: pointer;
-  }
 
-  .vote.adopt {
-    background: color-mix(in oklch, var(--status-online) 16%, transparent);
-    color: var(--status-online);
-  }
+    &.adopt {
+      background: color-mix(in oklch, var(--status-online) 16%, transparent);
+      color: var(--status-online);
 
-  .vote.adopt:hover {
-    background: color-mix(in oklch, var(--status-online) 24%, transparent);
-  }
+      &:hover {
+        background: color-mix(in oklch, var(--status-online) 24%, transparent);
+      }
+    }
 
-  .vote.reject {
-    background: var(--status-danger-soft);
-    color: var(--status-danger);
-  }
+    &.reject {
+      background: var(--status-danger-soft);
+      color: var(--status-danger);
 
-  .vote.reject:hover {
-    background: color-mix(in oklch, var(--status-danger) 20%, transparent);
+      &:hover {
+        background: color-mix(in oklch, var(--status-danger) 20%, transparent);
+      }
+    }
   }
 
   .vote-icon {
@@ -380,10 +365,7 @@
   }
 
   .external {
-    width: 12px;
-    height: 12px;
-    background: currentColor;
-    mask: var(--icon-external) center/contain no-repeat;
+    @include icon(external, 12px, $flex: null);
   }
 
   .time {

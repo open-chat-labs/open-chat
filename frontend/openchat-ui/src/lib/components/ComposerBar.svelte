@@ -83,6 +83,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .bar {
     position: relative;
     width: 100%;
@@ -114,11 +116,15 @@
     transition:
       opacity 0.2s ease,
       transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
 
-  .typing.shown {
-    opacity: 1;
-    transform: none;
+    &.shown {
+      opacity: 1;
+      transform: none;
+    }
+
+    @include reduced-motion {
+      transition: none;
+    }
   }
 
   .dots {
@@ -135,26 +141,18 @@
     border-radius: 50%;
     background: currentColor;
     animation: oc-typing 1.2s infinite;
-  }
 
-  .dot:nth-child(2) {
-    animation-delay: 0.15s;
-  }
+    &:nth-child(2) {
+      animation-delay: 0.15s;
+    }
 
-  .dot:nth-child(3) {
-    animation-delay: 0.3s;
+    &:nth-child(3) {
+      animation-delay: 0.3s;
+    }
   }
 
   .typing-text {
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .typing {
-      transition: none;
-    }
+    @include truncate;
   }
 </style>

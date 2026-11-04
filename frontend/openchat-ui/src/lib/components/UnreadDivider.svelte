@@ -22,11 +22,11 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .divider {
     width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     gap: var(--space-12);
   }
 

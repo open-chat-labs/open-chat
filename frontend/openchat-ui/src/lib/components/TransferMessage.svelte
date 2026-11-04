@@ -64,29 +64,22 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .shell {
     --msg-ink: var(--bubble-recv-text);
     --msg-soft: var(--ink-4);
     --msg-line: var(--line-1);
     width: 280px;
-    max-width: 100%;
-    padding: 4px;
-    box-sizing: border-box;
-    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
-    background: var(--bubble-recv-bg);
-    box-shadow: inset 0 0 0 1px var(--line-1);
-  }
+    @include message-shell(var(--bubble-recv-bg));
 
-  .shell.last {
-    border-bottom-left-radius: 22px;
-  }
-
-  .shell.sent {
-    --msg-ink: var(--bubble-text);
-    --msg-soft: var(--bubble-text-soft);
-    --msg-line: rgba(255, 255, 255, 0.14);
-    background: var(--bubble-send-bg);
-    box-shadow: none;
+    &.sent {
+      --msg-ink: var(--bubble-text);
+      --msg-soft: var(--bubble-text-soft);
+      --msg-line: rgba(255, 255, 255, 0.14);
+      background: var(--bubble-send-bg);
+      box-shadow: none;
+    }
   }
 
   .card {
@@ -95,10 +88,10 @@
     border-radius: 2px 18px 6px 6px;
     background: var(--overlay-1);
     overflow: hidden;
-  }
 
-  .sent .card {
-    background: rgba(0, 0, 0, 0.18);
+    .sent & {
+      background: rgba(0, 0, 0, 0.18);
+    }
   }
 
   .head {
@@ -121,14 +114,14 @@
     font: 700 19px/1 var(--font-sans);
     letter-spacing: -0.01em;
     color: var(--msg-ink);
-  }
 
-  .amount.in {
-    color: var(--status-online);
-  }
+    &.in {
+      color: var(--status-online);
+    }
 
-  .sent .amount {
-    color: var(--bubble-text);
+    .sent & {
+      color: var(--bubble-text);
+    }
   }
 
   .usd {
@@ -146,17 +139,14 @@
     font: 600 12.5px/1 var(--font-sans);
     color: var(--msg-soft);
     cursor: pointer;
-  }
 
-  .open:hover {
-    color: var(--msg-ink);
+    &:hover {
+      color: var(--msg-ink);
+    }
   }
 
   .chevron {
-    width: 12px;
-    height: 12px;
-    background: currentColor;
-    mask: var(--icon-chevron-right) center/contain no-repeat;
+    @include icon(chevron-right, 12px, $flex: null);
   }
 
   .caption {

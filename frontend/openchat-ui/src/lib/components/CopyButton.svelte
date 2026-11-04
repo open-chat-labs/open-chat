@@ -52,6 +52,8 @@
 {/if}
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .copy {
     flex: none;
     width: 26px;
@@ -62,18 +64,14 @@
     justify-content: center;
     cursor: pointer;
     user-select: none;
-  }
 
-  .copy:hover {
-    background: var(--overlay-2);
+    &:hover {
+      background: var(--overlay-2);
+    }
   }
 
   .icon {
-    flex: none;
-    width: 13px;
-    height: 13px;
-    background: var(--ink-3);
-    mask: var(--icon-copy) center/contain no-repeat;
+    @include icon(copy, 13px, var(--ink-3));
   }
 
   .md {
@@ -95,35 +93,35 @@
 
   .outline {
     box-shadow: inset 0 0 0 1px var(--line-2);
-  }
 
-  .outline .icon {
-    background: var(--ink-2);
+    .icon {
+      background: var(--ink-2);
+    }
   }
 
   .soft {
     background: var(--overlay-2);
-  }
 
-  .soft:hover {
-    background: var(--overlay-3);
-  }
+    &:hover {
+      background: var(--overlay-3);
+    }
 
-  .soft .icon {
-    background: var(--ink);
+    .icon {
+      background: var(--ink);
+    }
   }
 
   .filled {
     background: var(--accent);
-  }
 
-  .filled:hover {
-    background: var(--accent);
-    filter: brightness(1.08);
-  }
+    &:hover {
+      background: var(--accent);
+      filter: brightness(1.08);
+    }
 
-  .filled .icon {
-    background: var(--on-accent);
+    .icon {
+      background: var(--on-accent);
+    }
   }
 
   .soft.done,
@@ -142,12 +140,12 @@
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
     color: var(--ink);
     white-space: nowrap;
-  }
 
-  .text .icon {
-    width: 14px;
-    height: 14px;
-    background: var(--ink-2);
+    .icon {
+      width: 14px;
+      height: 14px;
+      background: var(--ink-2);
+    }
   }
 
   .primary {
@@ -158,21 +156,21 @@
     background: var(--accent);
     font: 600 13px/1 var(--font-sans);
     color: var(--on-accent);
-  }
 
-  .primary:hover {
-    background: var(--accent);
-    filter: brightness(1.08);
-  }
+    &:hover {
+      background: var(--accent);
+      filter: brightness(1.08);
+    }
 
-  .primary .icon {
-    background: currentColor;
-  }
+    .icon {
+      background: currentColor;
+    }
 
-  .primary.done {
-    background: rgba(46, 230, 168, 0.14);
-    filter: none;
-    color: var(--status-online);
+    &.done {
+      background: rgba(46, 230, 168, 0.14);
+      filter: none;
+      color: var(--status-online);
+    }
   }
 
   .done .icon {

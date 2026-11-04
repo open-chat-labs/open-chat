@@ -1850,10 +1850,10 @@
            viewportClass — the viewport must be constrained by its parent for
            virtualisation to work at all */
         box-sizing: border-box;
-    }
 
-    .vcl-viewport.interrupt {
-        overflow-y: hidden;
+        &.interrupt {
+            overflow-y: hidden;
+        }
     }
 
     .vcl-spacer {

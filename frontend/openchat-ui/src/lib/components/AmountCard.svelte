@@ -75,6 +75,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .amount-card {
     display: flex;
     flex-direction: column;
@@ -104,6 +106,14 @@
     min-width: 0;
     font: 700 32px/1 var(--font-sans);
     color: var(--ink);
+
+    &.muted {
+      color: var(--ink-5, #6e6e7c);
+    }
+
+    &.danger {
+      color: var(--status-danger);
+    }
   }
 
   input.amount {
@@ -114,17 +124,7 @@
   }
 
   .shown {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .amount.muted {
-    color: var(--ink-5, #6e6e7c);
-  }
-
-  .amount.danger {
-    color: var(--status-danger);
+    @include truncate;
   }
 
   .token {
@@ -138,10 +138,10 @@
     background: var(--overlay-2);
     cursor: pointer;
     user-select: none;
-  }
 
-  .token:hover {
-    background: var(--btn-hover);
+    &:hover {
+      background: var(--btn-hover);
+    }
   }
 
   .symbol {
@@ -150,10 +150,7 @@
   }
 
   .caret {
-    width: 12px;
-    height: 12px;
-    background: var(--ink-3);
-    mask: var(--icon-chevron-down) center/contain no-repeat;
+    @include icon(chevron-down, 12px, var(--ink-3), $flex: null);
   }
 
   .foot {
@@ -168,9 +165,9 @@
     min-width: 120px;
     font: 500 12.5px/1 var(--font-mono);
     color: var(--ink-3);
-  }
 
-  .note.danger {
-    color: var(--status-danger);
+    &.danger {
+      color: var(--status-danger);
+    }
   }
 </style>

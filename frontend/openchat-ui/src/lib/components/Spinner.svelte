@@ -34,10 +34,10 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .spinner {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center(inline-flex);
     line-height: 0;
   }
 
