@@ -40,6 +40,8 @@ export OC_NODE_ENV=$NODE_ENV
 export OC_PREVIEW_PROXY_URL=https://dy7sqxe9if6te.cloudfront.net
 export OC_TRANSLATE_PROXY_URL=https://5rabdwftr36yvlgf5xmr34swb40nxsgs.lambda-url.eu-west-2.on.aws
 export OC_PRICE_SERVICE_URL=https://d2r0806cxz8193.cloudfront.net
+# Cloudflare Turnstile's testing site key, which passes every prize claim human check
+export OC_TURNSTILE_SITE_KEY=1x00000000000000000000AA
 export OC_MINI_APP_SERVICE_URL=http://$(ipconfig getifaddr en0):8095
 export OC_VAPID_PUBLIC_KEY=BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv+iV3A=
 export OC_VIDEO_BRIDGE_URL=http://$(ipconfig getifaddr en0):5050

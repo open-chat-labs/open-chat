@@ -38,6 +38,7 @@
         messageIndexStore,
         messagesRead,
         pollVoteChange,
+        prizeClaimCustomData,
         publish,
         screenWidth,
         selectedChatDraftMessageStore,
@@ -65,7 +66,6 @@
         type OpenChat,
         type P2PSwapContent,
         type PollContent,
-        type PrizeContent,
     } from "@client";
     import ConversationHeader from "@openchat/ui/src/features/components/ConversationHeader.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
@@ -116,9 +116,8 @@
     import MediaViewer from "./MediaViewer.svelte";
     import ConfirmDialog from "./ConfirmDialog.svelte";
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
-    import SignInAgainDialog from "../auth/SignInAgainDialog.svelte";
-    import { SignInAgain } from "../auth/signInAgain.svelte";
-    import { prizeClaimStep } from "@src/logic/prize/prizeClaim";
+    import HumanCheckFrame from "@src/core/HumanCheckFrame.svelte";
+    import { HumanCheck } from "@src/logic/prize/humanCheck.svelte";
     import { interpolate } from "@i18n/i18n";
     import { VoicePlayer, type VoiceSpeed } from "./voicePlayer.svelte";
     import { RowCache } from "./rowCache";
@@ -555,7 +554,7 @@
         if (content.kind === "prize_content") {
             return {
                 ...row.message,
-                onClaim: (e: MouseEvent) => claim(msg, content, e),
+                onClaim: (e: MouseEvent) => claim(msg, e),
             } as GroupMessage;
         }
         if (content.kind === "poll_content") {
@@ -641,48 +640,29 @@
         if (!voted) toastStore.showFailureToast(i18nKey("poll.voteFailed"));
     }
 
-    // a prize claim, from the reader's own click (claimPrize refuses any other); a captcha prize
-    // asks them to sign in again first and claims with that sign-in's proof (prizeClaimStep, 5a
-    // invariant 2)
-    let claiming = $state<{ msg: Message; content: PrizeContent; e: MouseEvent }>();
-    const prizeSignIn = new SignInAgain(
-        client,
-        (key) => interpolate($_, key),
-        async (outcome) => {
-            const waiting = claiming;
-            claiming = undefined;
-            if (waiting !== undefined) {
-                await claim(waiting.msg, waiting.content, waiting.e, {
-                    proof: outcome.signInProofJwt,
-                });
-            }
-            return undefined;
-        },
-    );
-
-    async function claim(
-        msg: Message,
-        content: PrizeContent,
-        e: MouseEvent,
-        signIn?: { proof: string | undefined },
-    ) {
-        if (chat === undefined || chat.kind === "direct_chat") return;
-        const step = prizeClaimStep(content.requiresCaptcha, signIn);
-        if (step.kind === "authenticate") {
-            claiming = { msg, content, e };
-            return;
+    // each claimable prize's human check, run as it shows (HumanCheckFrame, under its card) so a
+    // claim needn't wait for it
+    const humanChecks = new Map<bigint, HumanCheck>();
+    function humanCheckFor(messageId: bigint): HumanCheck {
+        let check = humanChecks.get(messageId);
+        if (check === undefined) {
+            check = new HumanCheck();
+            humanChecks.set(messageId, check);
         }
-        if (step.kind === "failed") {
-            toastStore.showFailureToast(step.message);
-            return;
-        }
-        const claimed = await client.claimPrize(chat.id, msg.messageId, e, step.signInProof);
-        if (!claimed) toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
+        return check;
     }
 
-    function stopClaiming() {
-        prizeSignIn.dispose();
-        claiming = undefined;
+    // a prize claim, from the reader's own click (claimPrize refuses any other), with the token of
+    // the prize's human check
+    async function claim(msg: Message, e: MouseEvent) {
+        if (chat === undefined || chat.kind === "direct_chat") return;
+        const token = await humanCheckFor(msg.messageId).take();
+        if (token === undefined) {
+            toastStore.showFailureToast(i18nKey("prizes.humanCheckFailed"));
+            return;
+        }
+        const claimed = await client.claimPrize(chat.id, msg.messageId, e, token);
+        if (!claimed) toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
     }
 
     // accepting someone's swap offer (Diamond only: anyone else is offered the upgrade, as in the
@@ -900,6 +880,12 @@
                                             evt,
                                         )}
                                     />
+                                    {#if row.message.kind === "prize" && row.message.canClaim}
+                                        <HumanCheckFrame
+                                            check={humanCheckFor(msg.messageId)}
+                                            customData={prizeClaimCustomData(me, msg.messageId)}
+                                        />
+                                    {/if}
                                 </div>
                             {:else if evt.event.kind === "aggregate_common_events"}
                                 {@const text = aggregateEventText(evt.event, eventCtx)}
@@ -994,13 +980,6 @@
     </div>
 {/if}
 
-{#if claiming !== undefined}
-    <SignInAgainDialog
-        flow={prizeSignIn}
-        reason={$_("prizes.authRequiredMessage")}
-        onClose={stopClaiming}
-    />
-{/if}
 {#if removingPreview !== undefined}
     <ConfirmDialog
         title={$_("removePreviewQuestion")}

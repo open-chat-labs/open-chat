@@ -670,7 +670,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         localUserIndex: string,
         id: MultiUserChatIdentifier,
         messageId: bigint,
-        signInProof: string | undefined,
+        turnstileToken: string | undefined,
     ): Promise<ClaimPrizeResponse> {
         return this.update(
             localUserIndex,
@@ -678,7 +678,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
             {
                 chat_id: apiMultiUserChat(id),
                 message_id: messageId,
-                sign_in_proof_jwt: signInProof,
+                turnstile_token: turnstileToken,
             },
             (resp) => {
                 console.log("Resp: ", resp);

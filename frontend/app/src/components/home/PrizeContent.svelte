@@ -1,17 +1,17 @@
 <script lang="ts">
-    import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import {
         allChatsStore,
-        AuthProvider,
         chitBands,
         chitStateStore,
         communitiesStore,
         cryptoLookup,
+        currentUserIdStore,
         isDiamondStore,
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
         isTrustedClick,
         mobileWidth,
+        prizeClaimCustomData,
         prizeView,
         publish,
         type ChatIdentifier,
@@ -30,14 +30,14 @@
     import { now500 } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { prizeClaimStep } from "@src/logic/prize/prizeClaim";
+    import HumanCheckFrame from "@src/core/HumanCheckFrame.svelte";
+    import { HumanCheck } from "@src/logic/prize/humanCheck.svelte";
     import Diamond from "../icons/Diamond.svelte";
     import SpinningToken from "@shared_components/icons/SpinningToken.svelte";
     import SecureButton from "../SecureButton.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import Badges from "./profile/Badges.svelte";
     import ChitEarnedBadge from "./profile/ChitEarnedBadge.svelte";
-    import ReAuthenticateModal from "./profile/ReAuthenticateModal.svelte";
     import Streak from "./profile/Streak.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -53,35 +53,25 @@
     let { content, chatId, messageId, me, intersecting }: Props = $props();
 
     let progressWidth = $state(0);
-    let mouseEvent = $state<MouseEvent>();
+    const humanCheck = new HumanCheck();
 
-    async function claim(e: MouseEvent, auth: { signInProofJwt: string | undefined } | undefined) {
-        const step = prizeClaimStep(
-            content.requiresCaptcha,
-            auth !== undefined ? { proof: auth.signInProofJwt } : undefined,
-        );
-        if (step.kind === "authenticate") {
-            mouseEvent = e;
-            showAuthentication = true;
-            return;
-        }
+    // Claims with the token of the prize's human check, which runs as the prize shows
+    async function claim(e: MouseEvent) {
+        if (!isTrustedClick(e) || chatId.kind === "direct_chat" || !view.canClaim) return;
 
-        showAuthentication = false;
-        if (step.kind === "failed") {
-            toastStore.showFailureToast(step.message);
-            return;
-        }
-
-        if (isTrustedClick(e) && chatId.kind !== "direct_chat" && view.canClaim) {
-            claimsStore.add(messageId);
-            client
-                .claimPrize(chatId, messageId, e, step.signInProof)
-                .then((success) => {
-                    if (!success) {
-                        toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
-                    }
-                })
-                .finally(() => claimsStore.delete(messageId));
+        claimsStore.add(messageId);
+        try {
+            const token = await humanCheck.take();
+            if (token === undefined) {
+                toastStore.showFailureToast(i18nKey("prizes.humanCheckFailed"));
+                return;
+            }
+            const success = await client.claimPrize(chatId, messageId, e, token);
+            if (!success) {
+                toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
+            }
+        } finally {
+            claimsStore.delete(messageId);
         }
     }
 
@@ -138,29 +128,9 @@
             content.requiresCaptcha ||
             content.minChitEarned > 0,
     );
-    let showAuthentication = $state(false);
     let spin = $derived(intersecting && !finished && !allClaimed);
     let mirror = $derived(intersecting && !$mobileWidth);
-
-    function reauthenticated(detail: {
-        key: ECDSAKeyIdentity;
-        delegation: DelegationChain;
-        provider: AuthProvider;
-        signInProofJwt: string | undefined;
-    }) {
-        if (mouseEvent !== undefined) {
-            claim(mouseEvent, detail);
-        }
-    }
 </script>
-
-{#if showAuthentication}
-    <ReAuthenticateModal
-        onCancel={() => (showAuthentication = false)}
-        onSuccess={reauthenticated}
-        title={i18nKey("prizes.authRequiredTitle")}
-        message={i18nKey("prizes.authRequiredMessage")} />
-{/if}
 
 <div class={`prize ${content.token}`}>
     <div class="top">
@@ -284,7 +254,7 @@
                     <SecureButton
                         label={"Prize message clicked"}
                         loading={$claimsStore.has(messageId)}
-                        onClick={(e) => claim(e, undefined)}
+                        onClick={claim}
                         {disabled}
                         hollow
                         ><Translatable
@@ -298,6 +268,11 @@
                                         : "prizes.claim",
                             )} /></SecureButton>
                 </ButtonGroup>
+                {#if view.canClaim}
+                    <HumanCheckFrame
+                        check={humanCheck}
+                        customData={prizeClaimCustomData($currentUserIdStore, messageId)} />
+                {/if}
             {/if}
         </div>
     </div>

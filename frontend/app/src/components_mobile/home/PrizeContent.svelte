@@ -1,5 +1,4 @@
 <script lang="ts">
-    import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import { disableClaimPrizeFeature } from "@src/utils/features";
 
     import type { TextContent as TextContentType } from "@client";
@@ -16,16 +15,17 @@
     } from "component-lib";
     import {
         allChatsStore,
-        AuthProvider,
         chitBands,
         chitStateStore,
         communitiesStore,
         cryptoLookup,
+        currentUserIdStore,
         enhancedCryptoLookup,
         isDiamondStore,
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
         isTrustedClick,
+        prizeClaimCustomData,
         prizeView,
         type ChatIdentifier,
         type DiamondMembershipStatus,
@@ -50,11 +50,11 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import Badges from "./profile/Badges.svelte";
     import ChitEarnedBadge from "./profile/ChitEarnedBadge.svelte";
-    import ReAuthenticateModal from "./profile/ReAuthenticateModal.svelte";
     import Streak from "./profile/Streak.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
     import { TokenState } from "@src/logic/wallet/walletState.svelte";
-    import { prizeClaimStep } from "@src/logic/prize/prizeClaim";
+    import HumanCheckFrame from "@src/core/HumanCheckFrame.svelte";
+    import { HumanCheck } from "@src/logic/prize/humanCheck.svelte";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import TextContent from "./TextContent.svelte";
 
@@ -92,7 +92,7 @@
 
     let progressWidth = $state(0);
     let showRestrictionDetails = $state(false);
-    let mouseEvent = $state<MouseEvent>();
+    const humanCheck = new HumanCheck();
     let normalisedTextContent = $derived.by<TextContentType | undefined>(() => {
         if (content.caption && content.caption.length > 0) {
             return {
@@ -103,39 +103,24 @@
     });
     let hasTextContent = $derived(normalisedTextContent !== undefined);
 
-    async function claim(
-        e: MouseEvent,
-        auth: { key: ECDSAKeyIdentity; delegation: DelegationChain } | undefined,
-    ) {
+    // Claims with the token of the prize's human check, which runs as the prize shows
+    async function claim(e: MouseEvent) {
         if (!chatId || !messageId) return;
+        if (!isTrustedClick(e) || chatId.kind === "direct_chat" || !view?.canClaim) return;
 
-        const signIn =
-            content.requiresCaptcha && auth !== undefined
-                ? { proof: await client.getSignInProof(auth.key, auth.delegation) }
-                : undefined;
-        const step = prizeClaimStep(content.requiresCaptcha, signIn);
-        if (step.kind === "authenticate") {
-            mouseEvent = e;
-            showAuthentication = true;
-            return;
-        }
-
-        showAuthentication = false;
-        if (step.kind === "failed") {
-            toastStore.showFailureToast(step.message);
-            return;
-        }
-
-        if (isTrustedClick(e) && chatId.kind !== "direct_chat" && view?.canClaim) {
-            claimsStore.add(messageId);
-            client
-                .claimPrize(chatId, messageId, e, step.signInProof)
-                .then((success) => {
-                    if (!success) {
-                        toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
-                    }
-                })
-                .finally(() => claimsStore.delete(messageId));
+        claimsStore.add(messageId);
+        try {
+            const token = await humanCheck.take();
+            if (token === undefined) {
+                toastStore.showFailureToast(i18nKey("prizes.humanCheckFailed"));
+                return;
+            }
+            const success = await client.claimPrize(chatId, messageId, e, token);
+            if (!success) {
+                toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
+            }
+        } finally {
+            claimsStore.delete(messageId);
         }
     }
 
@@ -196,7 +181,6 @@
             content.requiresCaptcha ||
             content.minChitEarned > 0,
     );
-    let showAuthentication = $state(false);
     let spin = $derived(intersecting && !finished && !allClaimed);
 
     let initialTokenState = $derived(
@@ -204,16 +188,6 @@
             ? new TokenState($enhancedCryptoLookup.get(content.transfer.ledger))
             : undefined,
     );
-
-    function reauthenticated(detail: {
-        key: ECDSAKeyIdentity;
-        delegation: DelegationChain;
-        provider: AuthProvider;
-    }) {
-        if (mouseEvent !== undefined) {
-            claim(mouseEvent, detail);
-        }
-    }
 </script>
 
 {#snippet replyView(textContent?: Snippet)}
@@ -283,13 +257,6 @@
 <!-- TODO allow prize message to be edited - to update their text caption -->
 {#snippet regularView()}
     {#if content.kind === "prize_content"}
-        {#if showAuthentication}
-            <ReAuthenticateModal
-                onCancel={() => (showAuthentication = false)}
-                onSuccess={reauthenticated}
-                title={i18nKey("prizes.authRequiredTitle")}
-                message={i18nKey("prizes.authRequiredMessage")} />
-        {/if}
         <Column
             gap="xxs"
             minWidth="62vw"
@@ -384,7 +351,7 @@
                         width="fill"
                         label={"Prize message clicked"}
                         loading={$claimsStore.has(messageId)}
-                        onClick={(e) => claim(e, undefined)}
+                        onClick={claim}
                         {disabled}>
                         <Body>
                             <Translatable
@@ -399,6 +366,11 @@
                                 )} />
                         </Body>
                     </SecureButton>
+                    {#if view?.canClaim}
+                        <HumanCheckFrame
+                            check={humanCheck}
+                            customData={prizeClaimCustomData($currentUserIdStore, messageId)} />
+                    {/if}
                 {/if}
             </Column>
         </Column>

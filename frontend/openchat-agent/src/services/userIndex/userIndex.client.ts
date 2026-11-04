@@ -89,6 +89,7 @@ import {
     UserIndexModerationConfigResponse,
     UserIndexCallPushEnabledResponse,
     UserIndexSetAlchemyApiKeyArgs,
+    UserIndexSetTurnstileConfigArgs,
     UserIndexBridgedUsersArgs,
     UserIndexBridgedUsersResponse,
     UserIndexLinkedBridgedUsersResponse,
@@ -479,6 +480,21 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             { api_key: apiKey },
             unitResult,
             UserIndexSetAlchemyApiKeyArgs,
+            UnitResult,
+        );
+    }
+
+    // A platform operator only. The user index passes it on to every LocalUserIndex, which checks
+    // prize claims with it.
+    setTurnstileConfig(
+        secretKey: string | undefined,
+        required: boolean,
+    ): Promise<Success | OCError> {
+        return this.update(
+            "set_turnstile_config",
+            { secret_key: secretKey, required },
+            unitResult,
+            UserIndexSetTurnstileConfigArgs,
             UnitResult,
         );
     }

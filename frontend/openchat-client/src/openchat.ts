@@ -9627,18 +9627,20 @@ export class OpenChat {
         }
     }
 
+    // `turnstileToken` is the prize's human check's (Cloudflare Turnstile), issued for this user's
+    // claim of this prize (prizeClaimCustomData)
     claimPrize(
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
         e: MouseEvent,
-        signInProof: string | undefined,
+        turnstileToken: string | undefined,
     ): Promise<boolean> {
         if (!isTrustedClick(e)) {
             return Promise.resolve(false);
         }
 
         return this.#worker
-            .send({ kind: "claimPrize", chatId, messageId, signInProof })
+            .send({ kind: "claimPrize", chatId, messageId, turnstileToken })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     return false;
@@ -14041,6 +14043,13 @@ export class OpenChat {
 
     setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "setAlchemyApiKey", apiKey });
+    }
+
+    setTurnstileConfig(
+        secretKey: string | undefined,
+        required: boolean,
+    ): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "setTurnstileConfig", secretKey, required });
     }
 
     setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {

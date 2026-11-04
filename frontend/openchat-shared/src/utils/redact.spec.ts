@@ -55,6 +55,12 @@ describe("redactSecrets", () => {
             messageId: 1n,
             signInProof: REDACTED,
         });
+        expect(
+            redactSecrets({ secret_key: "0x4AAA", required: true }, "set_turnstile_config"),
+        ).toEqual({ secret_key: REDACTED, required: true });
+        expect(
+            redactSecrets({ kind: "setTurnstileConfig", secretKey: "0x4AAA", required: true }),
+        ).toEqual({ kind: "setTurnstileConfig", secretKey: REDACTED, required: true });
     });
 
     test("only redacts `new` for set_pin_number", () => {

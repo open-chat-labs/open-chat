@@ -16,6 +16,9 @@ export const SECRET_KEYS: readonly string[] = [
     // claim_prize, and the claimPrize worker request
     "sign_in_proof_jwt",
     "signInProof",
+    // The Turnstile secret key, in set_turnstile_config and the setTurnstileConfig worker request
+    "secret_key",
+    "secretKey",
 ];
 
 const secretKeys = new Set(SECRET_KEYS);

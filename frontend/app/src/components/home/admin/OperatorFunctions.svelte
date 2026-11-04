@@ -48,6 +48,8 @@
     let tokenEnabled = $state(true);
     let openAiApiKey = $state("");
     let alchemyApiKey = $state("");
+    let turnstileSecretKey = $state("");
+    let turnstileRequired = $state(false);
     let miniAppServicePrincipal = $state("");
     const bridgeBotIds = $state<Record<BridgePlatform, string>>({
         discord: "",
@@ -177,6 +179,37 @@
                 toastStore.showFailureToast(i18nKey("Failed to set the Alchemy API key"), err),
             )
             .finally(() => busy.delete(21));
+    }
+
+    // Sets how prize claims are checked for a human, on the user index, which passes it on to every
+    // LocalUserIndex. The secret key goes with every change, so Required is set with it; turning the
+    // check off has its own button.
+    function setTurnstileConfig(secretKey: string | undefined, required: boolean): Promise<void> {
+        busy.add(24);
+        return client
+            .setTurnstileConfig(secretKey, required)
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    toastStore.showSuccessToast(
+                        i18nKey(
+                            secretKey === undefined
+                                ? "Turnstile turned off"
+                                : required
+                                  ? "Turnstile set, and required"
+                                  : "Turnstile set, not yet required",
+                        ),
+                    );
+                    turnstileSecretKey = "";
+                } else {
+                    toastStore.showFailureToast(
+                        i18nKey(
+                            `Failed to set Turnstile: ${resp.message ?? `code ${resp.code}`}`,
+                        ),
+                    );
+                }
+            })
+            .catch((err) => toastStore.showFailureToast(i18nKey("Failed to set Turnstile"), err))
+            .finally(() => busy.delete(24));
     }
 
     // Sets the MiniApp service's principal on the user index, which passes it on to every
@@ -969,6 +1002,31 @@
                 loading={busy.has(21)}
                 disabled={busy.has(21)}
                 onClick={() => setAlchemyApiKey(undefined)}>Unset</Button>
+        </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Turnstile (prize claim human check)</div>
+        <Input bind:value={turnstileSecretKey} placeholder={i18nKey("Secret key")} />
+        <div class="name-value">
+            <div class="label">Required:</div>
+            <div class="value">
+                <Toggle small id="turnstile-required" bind:checked={turnstileRequired} />
+            </div>
+        </div>
+        <ButtonGroup align="fill">
+            <Button
+                tiny
+                loading={busy.has(24)}
+                disabled={busy.has(24) || turnstileSecretKey.trim() === ""}
+                onClick={() => setTurnstileConfig(turnstileSecretKey.trim(), turnstileRequired)}
+                >Set</Button>
+            <Button
+                tiny
+                secondary
+                loading={busy.has(24)}
+                disabled={busy.has(24)}
+                onClick={() => setTurnstileConfig(undefined, false)}>Turn off</Button>
         </ButtonGroup>
     </section>
 

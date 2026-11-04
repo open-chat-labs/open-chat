@@ -4307,7 +4307,7 @@ export class OpenChatAgent extends EventTarget {
     async claimPrize(
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
-        signInProof: string | undefined,
+        turnstileToken: string | undefined,
     ): Promise<ClaimPrizeResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -4319,7 +4319,7 @@ export class OpenChatAgent extends EventTarget {
             localUserIndex,
             chatId,
             messageId,
-            signInProof,
+            turnstileToken,
         );
     }
 
@@ -6089,6 +6089,13 @@ export class OpenChatAgent extends EventTarget {
 
     setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
         return this._userIndexClient.setAlchemyApiKey(apiKey);
+    }
+
+    setTurnstileConfig(
+        secretKey: string | undefined,
+        required: boolean,
+    ): Promise<Success | OCError> {
+        return this._userIndexClient.setTurnstileConfig(secretKey, required);
     }
 
     setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {
