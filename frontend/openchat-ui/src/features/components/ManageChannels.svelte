@@ -76,7 +76,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .page {
     min-width: 0;
     min-height: 0;

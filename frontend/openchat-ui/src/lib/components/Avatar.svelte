@@ -35,7 +35,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .avatar {
     display: inline-flex;
     flex: none;

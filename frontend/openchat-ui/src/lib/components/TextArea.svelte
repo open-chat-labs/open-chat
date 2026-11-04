@@ -67,7 +67,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .field {
     width: 100%;
     display: flex;

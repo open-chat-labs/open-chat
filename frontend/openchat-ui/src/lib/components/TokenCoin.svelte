@@ -40,7 +40,7 @@
   </span></span
 >
 
-<style>
+<style lang="scss">
   .coin-wrap {
     display: inline-flex;
     align-items: center;

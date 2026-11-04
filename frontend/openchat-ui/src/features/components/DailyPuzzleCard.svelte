@@ -89,7 +89,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .wrap {
     display: flex;
     flex-direction: column;

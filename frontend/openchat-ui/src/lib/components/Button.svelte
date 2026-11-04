@@ -72,7 +72,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .wrap {
     display: inline-flex;
     width: auto;

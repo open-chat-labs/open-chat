@@ -103,7 +103,7 @@
   {@render children?.()}
 </div>
 
-<style>
+<style lang="scss">
   .float {
     position: absolute;
     touch-action: none;

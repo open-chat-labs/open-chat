@@ -703,7 +703,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .send {
     position: absolute;
     inset: 0;

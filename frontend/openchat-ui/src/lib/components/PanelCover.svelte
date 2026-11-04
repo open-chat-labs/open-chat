@@ -61,7 +61,7 @@
   {@render group(trailActions, 'trail')}
 </div>
 
-<style>
+<style lang="scss">
   .cover {
     position: relative;
     height: 118px;

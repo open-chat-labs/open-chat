@@ -8,7 +8,7 @@ const src = new URL('../../', import.meta.url);
 const tokens = readFileSync(new URL('lib/styles/tokens.css', src), 'utf8');
 const stylesheets = Object.fromEntries(
   readdirSync(src, { recursive: true, encoding: 'utf8' })
-    .filter((path) => path.endsWith('.css'))
+    .filter((path) => path.endsWith('.css') || path.endsWith('.scss'))
     .map((path) => [path, readFileSync(new URL(path, src), 'utf8')]),
 );
 

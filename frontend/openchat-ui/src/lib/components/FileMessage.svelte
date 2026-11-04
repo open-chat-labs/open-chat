@@ -96,7 +96,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .file {
     --msg-bg: var(--bubble-recv-bg);
     --msg-ink: var(--bubble-recv-text);

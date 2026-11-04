@@ -21,7 +21,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .divider {
     width: 100%;
     display: flex;

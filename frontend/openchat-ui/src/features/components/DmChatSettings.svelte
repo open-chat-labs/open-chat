@@ -100,7 +100,7 @@
   {#if failed}<span class="error" role="alert">{t('ui.dmChatSettings.saveFailed')}</span>{/if}
 </div>
 
-<style>
+<style lang="scss">
   .error {
     padding: 0 var(--space-16) var(--space-12);
     font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);

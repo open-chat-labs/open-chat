@@ -758,7 +758,7 @@
         onClose={() => (copyUserId = undefined)} />
 {/if}
 
-<style>
+<style lang="scss">
     .qr-state {
         display: grid;
         place-items: center;

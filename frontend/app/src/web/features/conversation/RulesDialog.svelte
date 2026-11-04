@@ -22,7 +22,7 @@
     </div>
 </DialogShell>
 
-<style>
+<style lang="scss">
     .rules {
         max-height: 50vh;
         overflow-y: auto;

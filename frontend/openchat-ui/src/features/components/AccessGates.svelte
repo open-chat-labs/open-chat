@@ -608,7 +608,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .gates {
     width: 100%;
     box-sizing: border-box;

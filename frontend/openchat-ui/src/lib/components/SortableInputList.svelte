@@ -145,7 +145,7 @@
   {/each}
 </div>
 
-<style>
+<style lang="scss">
   .list {
     display: flex;
     flex-direction: column;

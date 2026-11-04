@@ -98,7 +98,7 @@
     </DialogShell>
 {/if}
 
-<style>
+<style lang="scss">
     .token {
         display: flex;
         align-items: center;

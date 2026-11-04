@@ -18,7 +18,7 @@
   {#if dot}<span class="dot"></span>{/if}<span class="label">{t(label)}</span>
 </span>
 
-<style>
+<style lang="scss">
   .pill {
     flex: none;
     width: max-content;

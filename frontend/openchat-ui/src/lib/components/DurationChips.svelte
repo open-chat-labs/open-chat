@@ -36,7 +36,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .chips {
     --oc-trunk: var(--space-22);
     --oc-stub: var(--space-10);

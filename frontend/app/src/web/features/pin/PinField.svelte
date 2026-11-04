@@ -25,7 +25,7 @@
     maxlength={PIN_LENGTH}
     aria-label={label} />
 
-<style>
+<style lang="scss">
     .digits {
         inline-size: 100%;
         box-sizing: border-box;

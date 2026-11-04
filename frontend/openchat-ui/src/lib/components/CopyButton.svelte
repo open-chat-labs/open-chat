@@ -51,7 +51,7 @@
   <span class="copy {size} {variant}" class:done={copied} onclick={press} role="button" tabindex="0" title={tip} aria-label={tip}><span class="icon"></span></span>
 {/if}
 
-<style>
+<style lang="scss">
   .copy {
     flex: none;
     width: 26px;

@@ -297,7 +297,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .layer.closing {
     pointer-events: none;
   }

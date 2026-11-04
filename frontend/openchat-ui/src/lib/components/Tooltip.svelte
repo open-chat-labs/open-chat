@@ -16,7 +16,7 @@
   <span role="tooltip">{t(label)}</span>
 </div>
 
-<style>
+<style lang="scss">
   .tooltip {
     display: inline-flex;
     flex-direction: column;

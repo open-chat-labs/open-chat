@@ -374,7 +374,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .call {
     position: relative;
     width: 100%;

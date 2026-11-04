@@ -46,7 +46,7 @@
   </defs>
 </svg>
 
-<style>
+<style lang="scss">
   .logo {
     flex: none;
     display: block;

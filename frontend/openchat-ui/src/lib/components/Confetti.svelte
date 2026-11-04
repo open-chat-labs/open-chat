@@ -129,7 +129,7 @@
 
 <span class="anchor" bind:this={anchor} aria-hidden="true"></span>
 
-<style>
+<style lang="scss">
   .anchor {
     position: absolute;
     left: 0;

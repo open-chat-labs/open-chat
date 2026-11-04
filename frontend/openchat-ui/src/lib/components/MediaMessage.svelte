@@ -119,7 +119,7 @@
   {#if failed}<span class="failed-line"><span class="failed-icon"></span>{t(failedText)}{#if onDelete} · <span class="delete" onclick={onDelete} role="button" tabindex="0">{t('ui.common.delete')}</span>{/if}</span>{/if}
 </div>
 
-<style>
+<style lang="scss">
   .media-message {
     --msg-bg: var(--bubble-recv-bg);
     --msg-ink: var(--bubble-recv-text);

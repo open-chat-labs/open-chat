@@ -74,7 +74,7 @@
     {/if}
 </DialogShell>
 
-<style>
+<style lang="scss">
     .top {
         padding: var(--space-16) var(--space-16) var(--space-8);
     }

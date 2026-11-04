@@ -18,7 +18,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .stat-card {
     width: 100%;
   }

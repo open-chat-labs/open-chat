@@ -915,7 +915,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .composer {
     position: relative;
     width: 100%;

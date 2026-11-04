@@ -116,7 +116,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .wave {
     position: relative;
     width: 100%;

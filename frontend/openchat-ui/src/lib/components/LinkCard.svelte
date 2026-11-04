@@ -49,7 +49,7 @@
   </a>
 {/if}
 
-<style>
+<style lang="scss">
   .card {
     --card-ink: var(--bubble-recv-text);
     --card-soft: var(--ink-3);

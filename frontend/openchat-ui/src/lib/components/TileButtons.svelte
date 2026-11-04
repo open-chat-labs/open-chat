@@ -59,7 +59,7 @@
   {/each}
 </div>
 
-<style>
+<style lang="scss">
   .tiles {
     display: grid;
     gap: var(--space-6);

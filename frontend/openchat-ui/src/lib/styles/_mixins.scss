@@ -1,0 +1,44 @@
+// The library's shared mixins. A component that uses them says so in its style block, so it compiles anywhere:
+//   @use '../styles/mixins' as *;                         (a library component, relative)
+//   @use '@openchat/ui/src/lib/styles/mixins' as *;       (src/web; app/svelte.config.js resolves the alias)
+// Mixins only: nothing here may output CSS by itself (scss.spec.ts compiles it to check). Colours, spacing and type stay
+// CSS custom properties (tokens.css), so themes switch at runtime.
+
+/// One line, cut with an ellipsis.
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/// At most `$lines` lines, the last cut with an ellipsis.
+@mixin line-clamp($lines) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: $lines;
+  line-clamp: $lines;
+  overflow: hidden;
+}
+
+/// Children centred both ways.
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/// An icon from icons.css: a `$size` square painted `$colour` through the icon's mask.
+@mixin icon($name, $size, $colour: currentColor) {
+  flex: none;
+  width: $size;
+  height: $size;
+  background: $colour;
+  mask: var(--icon-#{$name}) center/contain no-repeat;
+}
+
+/// Rules for people who asked for less motion (turn an animation or transition off).
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}

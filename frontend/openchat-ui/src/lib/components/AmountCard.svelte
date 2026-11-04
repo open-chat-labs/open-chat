@@ -74,7 +74,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .amount-card {
     display: flex;
     flex-direction: column;

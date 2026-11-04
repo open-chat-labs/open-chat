@@ -1334,7 +1334,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .root {
     position: fixed;
     inset: 0;

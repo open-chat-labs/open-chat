@@ -128,7 +128,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .search { position: relative; min-width: 0; display: flex; align-items: center; gap: 10px; height: 44px; padding-inline: 14px 10px; border-radius: var(--radius-md); background: var(--field); box-shadow: inset 0 0 0 1px var(--line-1); }
   .search:focus-within { box-shadow: inset 0 0 0 1px var(--accent-dim); }
   .glyph { flex: none; width: 16px; height: 16px; background: var(--ink-4); mask: var(--icon-search) center/contain no-repeat; }

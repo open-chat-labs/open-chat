@@ -51,7 +51,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .toggle {
     display: flex;
     flex: none;

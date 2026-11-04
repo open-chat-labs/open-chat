@@ -25,7 +25,7 @@
   <span class="glyph" style:mask="var(--icon-{glyph}) center/contain no-repeat" aria-hidden="true"></span>{t(label)}
 </span>
 
-<style>
+<style lang="scss">
   .chip {
     flex: none;
     display: inline-flex;

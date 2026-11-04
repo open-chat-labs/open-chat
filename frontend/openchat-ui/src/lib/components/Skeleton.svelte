@@ -49,7 +49,7 @@
   {/each}
 </div>
 
-<style>
+<style lang="scss">
   .skeleton {
     display: flex;
     flex-direction: column;

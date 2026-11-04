@@ -113,7 +113,7 @@
   <div class="time">{time}</div>
 </div>
 
-<style>
+<style lang="scss">
   .shell {
     --msg-bg: var(--bubble-recv-bg);
     --msg-ink: var(--bubble-recv-text);

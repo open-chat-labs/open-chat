@@ -43,7 +43,7 @@
     </div>
 </DialogShell>
 
-<style>
+<style lang="scss">
     .text {
         font: var(--weight-regular) var(--text-base) / 1.5 var(--font-sans);
         color: var(--ink-2);

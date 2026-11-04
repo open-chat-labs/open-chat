@@ -91,7 +91,7 @@
     </DialogShell>
 {/if}
 
-<style>
+<style lang="scss">
     .loading {
         display: grid;
         place-items: center;

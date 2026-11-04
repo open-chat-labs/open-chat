@@ -85,7 +85,7 @@
     </div>
 </div>
 
-<style>
+<style lang="scss">
     .viewer {
         position: fixed;
         inset: 0;

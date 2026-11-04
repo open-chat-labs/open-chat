@@ -58,7 +58,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .empty {
     width: 100%;
     height: 100%;

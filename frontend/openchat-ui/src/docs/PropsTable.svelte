@@ -28,7 +28,7 @@
   {/each}
 </div>
 
-<style>
+<style lang="scss">
   .table { display: flex; flex-direction: column; width: 100%; }
   .row { display: grid; grid-template-columns: 1.1fr 1.6fr 1.1fr 0.8fr; gap: 14px; padding: 8px 0; border-bottom: 1px solid var(--line-1); font: 400 11.5px/1.4 var(--font-mono); color: var(--ink-2); }
   .row:last-child { border-bottom: 0; }

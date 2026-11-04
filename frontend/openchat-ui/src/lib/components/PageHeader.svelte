@@ -41,7 +41,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .page-header {
     flex: none;
     width: 100%;

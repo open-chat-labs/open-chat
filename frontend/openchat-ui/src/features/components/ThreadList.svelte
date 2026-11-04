@@ -75,7 +75,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .threads {
     width: 100%;
     height: 100%;

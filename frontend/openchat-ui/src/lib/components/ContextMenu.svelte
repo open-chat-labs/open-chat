@@ -155,7 +155,7 @@
   </div>
 {/if}
 
-<style>
+<style lang="scss">
   .context {
     position: fixed;
     z-index: 95;

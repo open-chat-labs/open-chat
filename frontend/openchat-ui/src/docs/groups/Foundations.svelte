@@ -365,7 +365,7 @@ t('ui.duration.hours', { count: 12 });`;
   </Section>
 </div>
 
-<style>
+<style lang="scss">
   .foundations { display: flex; flex-direction: column; gap: 56px; }
   .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
   /* token names and values are code: keep them LTR inside an RTL page */

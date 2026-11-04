@@ -72,6 +72,10 @@ such as `ChatEventList` and `Markdown`).
   `src/components_mobile` or `src/components_shared`: if something there is needed, it moves to
   `core` or `logic` first (`frontend/CLAUDE.md`, "Reuse before writing").
 - Colours and font sizes come from the library's tokens only. No hex.
+- Styles are `<style lang="scss">` (`scss.spec.ts`), with nesting and the library's mixins: a
+  block that uses them starts with `@use '@openchat/ui/src/lib/styles/mixins' as *;`. Never the
+  legacy `src/styles/mixins.scss`, which `app/svelte.config.js` gives the legacy trees only.
+  Values stay CSS custom properties.
 - The URL holds the selected chat / community / channel, the message deep link, the open thread,
   the wallet view and token, and the explore query. Everything else is local UI state.
 - Where the design has nothing yet, keep the existing app's behaviour and leave a

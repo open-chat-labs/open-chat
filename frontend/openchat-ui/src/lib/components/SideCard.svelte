@@ -17,7 +17,7 @@
 
 <div class="side-card" class:fill style:min-height={minHeight} style:gap style:padding={pad}>{@render children?.()}</div>
 
-<style>
+<style lang="scss">
   .side-card {
     position: relative;
     width: 100%;

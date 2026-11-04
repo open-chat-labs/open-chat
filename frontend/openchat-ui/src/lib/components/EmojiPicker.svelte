@@ -104,7 +104,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .picker {
     width: 100%;
     height: 100%;

@@ -51,7 +51,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .wrap {
     width: 100%;
   }

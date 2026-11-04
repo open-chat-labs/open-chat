@@ -67,7 +67,7 @@
     {/if}
 {/key}
 
-<style>
+<style lang="scss">
     .state {
         position: relative;
         height: 100%;

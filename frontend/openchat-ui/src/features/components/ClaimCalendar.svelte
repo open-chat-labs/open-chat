@@ -273,7 +273,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .claim-calendar {
     display: flex;
     flex-direction: column;

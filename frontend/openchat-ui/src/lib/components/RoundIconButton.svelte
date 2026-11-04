@@ -40,7 +40,7 @@
   <span class="glyph" style:mask="var(--icon-{icon}) center/contain no-repeat"></span>
 </span>
 
-<style>
+<style lang="scss">
   .round-button {
     --px: 34px;
     --icon-px: 14px;

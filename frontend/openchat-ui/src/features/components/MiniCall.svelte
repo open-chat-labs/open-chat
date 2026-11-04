@@ -100,7 +100,7 @@
   </SnapFloat>
 </div>
 
-<style>
+<style lang="scss">
   .layer {
     position: absolute;
     inset: 0;

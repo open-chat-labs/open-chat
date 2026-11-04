@@ -123,7 +123,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .row {
     display: flex;
     justify-content: center;

@@ -638,7 +638,7 @@
   </svelte:boundary>
 {/if}
 
-<style>
+<style lang="scss">
   .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .stack { display: flex; flex-direction: column; gap: 6px; width: 100%; min-width: 0; }
   .fill { width: 100%; min-width: 0; }

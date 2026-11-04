@@ -26,7 +26,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .frame { box-sizing: border-box; min-width: 0; display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 20px; background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--line-1); }
   .label { font: 500 10px/1 var(--font-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); }
   .content { min-width: 0; display: flex; flex-wrap: wrap; gap: 18px; }

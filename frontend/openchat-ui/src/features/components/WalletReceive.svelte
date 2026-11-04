@@ -296,7 +296,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .receive {
     position: absolute;
     inset: 0;

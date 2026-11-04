@@ -135,7 +135,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .timed {
     --pad-x: var(--space-16);
     display: flex;

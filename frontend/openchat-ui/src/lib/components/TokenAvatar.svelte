@@ -39,7 +39,7 @@
   {/if}
 </span>
 
-<style>
+<style lang="scss">
   .token-avatar {
     --badge: 18px;
     --badge-icon: 10px;

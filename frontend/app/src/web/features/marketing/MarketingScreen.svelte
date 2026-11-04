@@ -198,7 +198,7 @@
     </div>
 {/if}
 
-<style>
+<style lang="scss">
     .page {
         display: grid;
         place-items: center;

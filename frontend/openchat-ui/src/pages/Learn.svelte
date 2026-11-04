@@ -578,7 +578,7 @@
   {#if authState.kind}<AuthDialog {...authState.dialog} />{/if}
 </div>
 
-<style>
+<style lang="scss">
   .page {
     min-height: 100vh;
     display: flex;

@@ -105,7 +105,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .shell {
     width: 320px;
     max-width: 100%;

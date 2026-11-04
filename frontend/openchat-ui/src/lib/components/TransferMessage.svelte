@@ -63,7 +63,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .shell {
     --msg-ink: var(--bubble-recv-text);
     --msg-soft: var(--ink-4);

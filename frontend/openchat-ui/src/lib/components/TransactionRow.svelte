@@ -78,7 +78,7 @@
   </span>
 </div>
 
-<style>
+<style lang="scss">
   .row {
     display: flex;
     align-items: center;

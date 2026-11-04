@@ -39,7 +39,7 @@
     </div>
 </DialogShell>
 
-<style>
+<style lang="scss">
     .message {
         margin: 0 0 var(--space-16);
         font: var(--weight-regular) var(--text-base) / 1.45 var(--font-sans);

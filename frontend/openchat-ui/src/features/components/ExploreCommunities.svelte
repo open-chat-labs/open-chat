@@ -504,7 +504,7 @@
   {/if}
 </div>
 
-<style>
+<style lang="scss">
   .explore {
     width: 100%;
     height: 100%;

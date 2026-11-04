@@ -33,7 +33,7 @@
     </div>
 </DialogShell>
 
-<style>
+<style lang="scss">
     .pin {
         display: flex;
         flex-direction: column;

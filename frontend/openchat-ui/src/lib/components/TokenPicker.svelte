@@ -117,7 +117,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .picker {
     display: flex;
     flex-direction: column;

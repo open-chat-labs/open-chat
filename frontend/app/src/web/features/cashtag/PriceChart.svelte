@@ -146,7 +146,7 @@
     {/if}
 </div>
 
-<style>
+<style lang="scss">
     .price-chart {
         position: relative;
         width: 100%;

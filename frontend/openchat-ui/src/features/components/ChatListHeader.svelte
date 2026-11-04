@@ -133,7 +133,7 @@
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .header {
     width: 100%;
     box-sizing: border-box;

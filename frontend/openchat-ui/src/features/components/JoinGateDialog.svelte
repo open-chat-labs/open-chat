@@ -313,7 +313,7 @@
   </div>
 </DialogShell>
 
-<style>
+<style lang="scss">
   .content {
     min-height: 0;
     overflow-y: auto;
