@@ -198,7 +198,8 @@ jobs:
                   if echo "$ENT" | grep -q 'mode=developer'; then
                     echo "::error::Associated domains use ?mode=developer"; FAIL=1
                   fi
-                  if echo "$ENT" | grep -A1 'get-task-allow' | grep -q '<true/>'; then
+                  # codesign prints the plist on one line, so match the key and its value together.
+                  if echo "$ENT" | tr -d ' \t\n' | grep -q '<key>get-task-allow</key><true/>'; then
                     echo "::error::Build is signed for development"; FAIL=1
                   fi
                   exit $FAIL
