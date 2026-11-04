@@ -2,11 +2,14 @@
      the CHIT streak button, profile and a collapse toggle. Collapsed it is an icon column; expanded it shows labels.
      When the host says so (`floating`), or gives the rail a fixed slot ([data-rail-slot] narrower than 200px), the
      expanded rail floats over the content, so it closes again on an outside press or a pick. Guests get Home and Sign in instead of their own items.
-     Pins (communities) are identified by `id`; onSelectPin reports it. Pin and profile images come from avatarUrl. -->
+     Pins (communities) are identified by `id`; onSelectPin reports it. Pin and profile images come from avatarUrl.
+     A pin with a `menu` opens it on right-click (at the pointer) or Shift+F10 / the Menu key (under the pin). -->
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import { useT } from '../../lib/i18n';
   import { cssUrl } from '../../lib/cssUrl';
+  import ContextMenu from '../../lib/components/ContextMenu.svelte';
+  import type { MenuItem } from '../../lib/types';
 
   // nav item keys → canonical names in lib/icons.js
   const ICONS = { messages: 'messages', bell: 'bell', wallet: 'wallet', chit: 'zap', heart: 'heart' };
@@ -42,6 +45,8 @@
     dot?: boolean;
     /** Previewing a community you haven't joined: dashed outline and an eye badge. */
     preview?: boolean;
+    /** The community's menu (mute, mark read, leave …), opened by right-click or Shift+F10. */
+    menu?: MenuItem[];
   }
 
   interface Props {
@@ -125,6 +130,9 @@
     return undefined;
   });
 
+  // the open pin menu: which pin, and where (the pointer, or under the pin from the keyboard)
+  let pinMenu = $state<{ id: string; point: { x: number; y: number } | null; anchor: { left: number; right: number; top: number; bottom: number } | null } | null>(null);
+  const pinMenuItems = $derived(pinMenu ? (pins.find((p) => p.id === pinMenu?.id)?.menu ?? []) : []);
   const pinIndex = $derived(activePin !== undefined ? activePin : (localPin ?? null));
   const active = $derived(pinIndex !== null ? -1 : (localActive ?? activeIndex));
 
@@ -222,6 +230,7 @@
   <div class="pins">
     {#each pins as pin, i (pin.id)}
       {@const selected = i === pinIndex}
+      {@const hasMenu = (pin.menu?.length ?? 0) > 0}
       <div
         class="row"
         class:active={selected}
@@ -231,8 +240,22 @@
           localPin = i;
           onSelectPin?.(pin.id, pin);
         }}
+        oncontextmenu={(e) => {
+          if (!hasMenu) return;
+          e.preventDefault();
+          pinMenu = { id: pin.id, point: { x: e.clientX, y: e.clientY }, anchor: null };
+        }}
+        onkeydown={(e) => {
+          if (!hasMenu || e.target !== e.currentTarget) return;
+          if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
+            e.preventDefault();
+            const r = e.currentTarget.getBoundingClientRect();
+            pinMenu = { id: pin.id, point: null, anchor: { left: r.left, right: r.right, top: r.top, bottom: r.bottom } };
+          }
+        }}
         role="button"
         tabindex="0"
+        aria-haspopup={hasMenu ? 'menu' : undefined}
         aria-label={pin.label ? t(pin.label) : pin.name || t('ui.navRail.communityN', { n: i + 1 })}
         aria-current={selected ? 'page' : undefined}
       >
@@ -324,6 +347,7 @@
     <span class="collapse-icon"></span>
     <span class="label collapse-label">{t('ui.navRail.collapse')}</span>
   </div>
+  <ContextMenu open={pinMenuItems.length > 0} point={pinMenu?.point} anchor={pinMenu?.anchor} align="start" items={pinMenuItems} onClose={() => (pinMenu = null)} />
 </div>
 
 <style>

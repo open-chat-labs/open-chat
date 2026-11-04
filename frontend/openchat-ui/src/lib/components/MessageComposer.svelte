@@ -4,7 +4,11 @@
      reply/edit, or deletes a recording. `demo` forces a state for docs/screenshots; otherwise fully interactive.
      Sending: when onSend returns a promise the draft stays until it resolves (and stays, with an error, if it rejects).
      Voice is real: the mic records with MediaRecorder (live levels from the microphone) and onVoice gets the audio Blob;
-     the mic only shows with onVoice and a browser that can record. Forced demo states are visual only and never send. -->
+     the mic only shows with onVoice and a browser that can record. Forced demo states are visual only and never send.
+     Native hosts: the + and emoji buttons can sit after the text (plusPlacement / emojiPlacement), the host can own the
+     + and emoji surfaces (onPlus / plusActive, onEmoji / emojiActive: keyboard-area panels instead of the popovers), type
+     into the draft without focusing it (insert), and size the bar with --composer-radius, --composer-min-h,
+     --composer-pad, --composer-btn and --composer-btn-radius. -->
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
   import type { ComposerAttachment, ComposerContext, MenuItem } from '../types';
@@ -14,6 +18,7 @@
   import TokenAvatar from './TokenAvatar.svelte';
   import { useT } from '../i18n';
   import { cssUrl } from '../cssUrl';
+  import { deleteBackward, insertAt, type TextEdit } from '../textEdit';
 
   type AttachKind = 'media' | 'file' | 'poll' | 'prize' | 'crypto' | 'swap' | 'memeFighter';
 
@@ -69,6 +74,23 @@
     onCancelContext?: () => void;
     onSubmitEdit?: (text: string) => void;
     onJumpContext?: () => void;
+    /** Where the + button sits: before the text (web, iOS) or after it, before mic / send (Android). */
+    plusPlacement?: 'start' | 'end';
+    /** Where the emoji button sits: before the text (web, Android) or after it (iOS). */
+    emojiPlacement?: 'start' | 'end';
+    /** The host owns the + surface (e.g. a keyboard-area panel): + calls this instead of opening the menu. */
+    onPlus?: () => void;
+    /** With onPlus: the host's + surface is showing (the button turns, as when the menu is open). */
+    plusActive?: boolean;
+    /** The host owns the emoji / GIF surface: the emoji button calls this instead of opening the picker. */
+    onEmoji?: () => void;
+    /** With onEmoji: the host's emoji surface is showing (the button offers the keyboard back). */
+    emojiActive?: boolean;
+    /** A text box inside the composer took focus (a native host closes its panels as the keyboard opens). */
+    onInputFocus?: () => void;
+    /** Typing from the host (its emoji panel): each new `key` puts `text` in at the caret without focusing the field,
+     *  so no keyboard opens. "\b" deletes the selection, or the character before the caret. */
+    insert?: { key: string | number; text: string };
   }
 
   let {
@@ -91,6 +113,14 @@
     onCancelContext,
     onSubmitEdit,
     onJumpContext,
+    plusPlacement = 'start',
+    emojiPlacement = 'start',
+    onPlus,
+    plusActive = false,
+    onEmoji,
+    emojiActive = false,
+    onInputFocus,
+    insert: hostInsert,
   }: Props = $props();
   const t = useT();
 
@@ -128,6 +158,18 @@
   let endSeek: (() => void) | null = null;
 
   const editing = $derived(context?.mode === 'edit');
+  // + and emoji: the composer's own menu / picker, or the host's surface
+  const plusOn = $derived(onPlus ? plusActive : menu === 'plus');
+  const hostEmojiOn = $derived(!!onEmoji && emojiActive);
+  const emojiOn = $derived(onEmoji ? emojiActive : menu === 'picker');
+  const showPlus = $derived(!editing && (!!onAttach || !!onPlus || demo !== 'interactive'));
+
+  function togglePlus() {
+    if (onPlus) {
+      menu = null;
+      onPlus();
+    } else menu = menu === 'plus' ? null : 'plus';
+  }
 
   // the host hears the draft as it changes, not the text it started from or an edit's
   let reported = untrack(() => draft);
@@ -177,17 +219,33 @@
     el.style.overflowY = h > 160 ? 'auto' : 'hidden';
   }
 
-  async function insert(text: string) {
+  // an edit at the selection (the end of the draft without a field): the caret moves with it; `focus` takes focus too
+  async function editDraft(edit: (text: string, start: number, end: number) => TextEdit, focus: boolean) {
     const el = input;
-    const a = el ? el.selectionStart : draft.length, b = el ? el.selectionEnd : draft.length;
-    draft = draft.slice(0, a) + text + draft.slice(b);
+    const next = edit(draft, el ? el.selectionStart : draft.length, el ? el.selectionEnd : draft.length);
+    draft = next.text;
     await tick();
     if (el) {
-      el.focus();
-      el.selectionStart = el.selectionEnd = a + text.length;
-      grow();
+      if (focus) el.focus();
+      el.selectionStart = el.selectionEnd = next.caret;
     }
+    grow();
   }
+
+  // the composer's own emoji picker: at the caret, focusing the field
+  function insert(text: string) {
+    void editDraft((d, a, b) => insertAt(d, a, b, text), true);
+  }
+
+  // the host's typing (its emoji panel): at the caret, without focusing the field (focus would raise the keyboard)
+  let lastInsert = untrack(() => hostInsert?.key);
+  $effect(() => {
+    const next = hostInsert;
+    if (!next || next.key === lastInsert) return;
+    lastInsert = next.key;
+    // "\b" deletes the selection, or the whole character (an emoji with its skin tone, a flag) before the caret
+    untrack(() => void editDraft(next.text === '\b' ? deleteBackward : (d, a, b) => insertAt(d, a, b, next.text), false));
+  });
 
   async function send() {
     if (editing) {
@@ -409,6 +467,11 @@
   }
 
   async function togglePicker() {
+    if (onEmoji) {
+      menu = null;
+      onEmoji();
+      return;
+    }
     const opening = menu !== 'picker';
     menu = opening ? 'picker' : null;
     query = '';
@@ -603,7 +666,16 @@
   });
 </script>
 
-<div class="composer" bind:this={root} onkeydown={rootKey} role="group">
+<div
+  class="composer"
+  bind:this={root}
+  onkeydown={rootKey}
+  onfocusin={(e) => {
+    const tag = (e.target as HTMLElement | null)?.tagName;
+    if (tag === 'TEXTAREA' || tag === 'INPUT') onInputFocus?.();
+  }}
+  role="group"
+>
   {#if menu === 'plus'}
     <div class="popup">
       <Menu heading={t('ui.messageComposer.addHeading')} minWidth="232px" items={plusItems} />
@@ -670,7 +742,36 @@
     </div>
   {/if}
 
-  <div class="bar" class:focused={focused || !!menu} class:recording={voice === 'recording'} class:editing>
+  {#snippet plusTool()}
+    <span
+      class="tool"
+      class:open={plusOn}
+      onclick={togglePlus}
+      role="button"
+      tabindex="0"
+      aria-label={t('ui.messageComposer.addToMessage')}
+      aria-expanded={plusOn}
+      aria-haspopup="menu"
+      title={t('ui.messageComposer.addToMessageHint')}><span class="tool-icon plus"></span></span
+    >
+  {/snippet}
+  {#snippet emojiTool()}
+    <span
+      class="tool"
+      class:open={emojiOn && !onEmoji}
+      class:active={emojiOn}
+      onclick={togglePicker}
+      role="button"
+      tabindex="0"
+      aria-label={t(hostEmojiOn ? 'ui.messageComposer.showKeyboard' : 'ui.messageComposer.emojiAndGifs')}
+      aria-expanded={emojiOn}
+      aria-haspopup="dialog"
+      title={t(hostEmojiOn ? 'ui.messageComposer.showKeyboard' : 'ui.messageComposer.emojiAndGifs')}
+      ><span class="tool-icon" style:mask="var(--icon-{hostEmojiOn ? 'keyboard' : 'emoji'}) center/contain no-repeat"></span></span
+    >
+  {/snippet}
+
+  <div class="bar" class:focused={(focused || !!menu) && !editing} class:recording={voice === 'recording'}>
     {#if att?.type === 'media'}
       <div class="tray">
         {#each att.items as item, i}
@@ -723,25 +824,13 @@
       </div>
     {/if}
     {#if !voice}
-      <div class="tools">
-        <!-- the + menu only offers attachments a host takes -->
-        {#if !editing && (onAttach || demo !== 'interactive')}
-          <span
-            class="tool"
-            class:open={menu === 'plus'}
-            onclick={() => (menu = menu === 'plus' ? null : 'plus')}
-            role="button"
-            tabindex="0"
-            aria-label={t('ui.messageComposer.addToMessage')}
-            aria-expanded={menu === 'plus'}
-            aria-haspopup="menu"
-            title={t('ui.messageComposer.addToMessageHint')}><span class="tool-icon plus"></span></span
-          >
-        {/if}
-        <span class="tool" class:open={menu === 'picker'} onclick={togglePicker} role="button" tabindex="0" aria-label={t('ui.messageComposer.emojiAndGifs')} aria-expanded={menu === 'picker'} aria-haspopup="dialog" title={t('ui.messageComposer.emojiAndGifs')}
-          ><span class="tool-icon emoji"></span></span
-        >
-      </div>
+      {#if (showPlus && plusPlacement === 'start') || emojiPlacement === 'start'}
+        <div class="tools">
+          <!-- the + menu only offers attachments a host takes -->
+          {#if showPlus && plusPlacement === 'start'}{@render plusTool()}{/if}
+          {#if emojiPlacement === 'start'}{@render emojiTool()}{/if}
+        </div>
+      {/if}
       <div class="input-wrap">
         <textarea
           bind:this={input}
@@ -763,6 +852,8 @@
           aria-label={t(att ? 'ui.messageComposer.addCaption' : placeholder)}
         ></textarea>
       </div>
+      {#if emojiPlacement === 'end'}{@render emojiTool()}{/if}
+      {#if showPlus && plusPlacement === 'end'}{@render plusTool()}{/if}
       {#if hasContent || editing || !canRecord}
         <span class="action send" onclick={send} role="button" tabindex="0" aria-disabled={editing ? !draft.trim() : !hasContent || sending} aria-label={t(editing ? 'ui.messageComposer.saveEdit' : 'ui.messageComposer.sendMessage')} title={t(editing ? 'ui.messageComposer.saveHint' : 'ui.messageComposer.sendHint')}
           ><span class="send-icon" style:mask="var(--icon-{editing ? 'check' : 'send'}) center/contain no-repeat"></span></span
@@ -966,26 +1057,23 @@
     flex-wrap: wrap;
     align-items: flex-end;
     gap: var(--space-8);
-    row-gap: var(--space-12);
-    min-height: 52px;
+    row-gap: var(--space-6);
+    min-height: var(--composer-min-h, 52px);
     box-sizing: border-box;
-    padding: var(--space-8);
-    border-radius: var(--radius-xl);
+    padding: var(--composer-pad, var(--space-8));
+    border-radius: var(--composer-radius, var(--radius-xl));
     background: var(--field);
-    box-shadow: inset 0 0 0 1px var(--line-2);
+    /* the ring is drawn outside, so the reply / edit card and the send button never sit on it */
+    box-shadow: 0 0 0 1px var(--line-2);
     transition: box-shadow var(--duration-fast);
   }
 
   .bar.recording {
-    box-shadow: inset 0 0 0 1px var(--status-danger-line);
+    box-shadow: 0 0 0 1px var(--status-danger-line);
   }
 
   .bar.focused {
-    box-shadow: inset 0 0 0 1px var(--line-3);
-  }
-
-  .bar.editing {
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 55%, transparent);
+    box-shadow: 0 0 0 1px var(--line-3);
   }
 
   .tray {
@@ -994,7 +1082,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-8);
-    padding: 2px;
+    padding: 6px 6px 0;
   }
 
   .thumb {
@@ -1002,7 +1090,7 @@
     flex: none;
     width: 72px;
     height: 72px;
-    border-radius: var(--radius-md);
+    border-radius: max(8px, calc(var(--composer-radius, var(--radius-xl)) - var(--composer-pad, var(--space-8)) - 10px));
     overflow: hidden;
   }
 
@@ -1062,7 +1150,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-md);
+    border-radius: max(8px, calc(var(--composer-radius, var(--radius-xl)) - var(--composer-pad, var(--space-8)) - 10px));
     box-shadow: inset 0 0 0 1.5px var(--line-2);
     cursor: pointer;
   }
@@ -1087,7 +1175,8 @@
     min-height: 44px;
     box-sizing: border-box;
     padding: 4px 4px 4px 6px;
-    border-radius: 16px;
+    /* concentric with the bar */
+    border-radius: max(10px, calc(var(--composer-radius, var(--radius-xl)) - var(--composer-pad, var(--space-8))));
     background: var(--surface-2);
   }
 
@@ -1156,8 +1245,8 @@
     color: var(--ink-3);
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
     overflow-wrap: anywhere;
   }
@@ -1267,9 +1356,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-md);
+    width: var(--composer-btn, 36px);
+    height: var(--composer-btn, 36px);
+    border-radius: var(--composer-btn-radius, var(--radius-md));
     background: transparent;
     cursor: pointer;
   }
@@ -1285,7 +1374,8 @@
     background: var(--ink-3);
   }
 
-  .open .tool-icon {
+  .open .tool-icon,
+  .active .tool-icon {
     background: var(--ink);
   }
 
@@ -1298,16 +1388,12 @@
     transform: rotate(45deg);
   }
 
-  .tool-icon.emoji {
-    mask: var(--icon-emoji) center/contain no-repeat;
-  }
-
   .input-wrap {
     flex: 1;
     min-width: 0;
     display: flex;
     align-items: center;
-    min-height: 36px;
+    min-height: var(--composer-btn, 36px);
     padding: 0 var(--space-4);
   }
 
@@ -1333,9 +1419,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-md);
+    width: var(--composer-btn, 36px);
+    height: var(--composer-btn, 36px);
+    border-radius: var(--composer-btn-radius, var(--radius-md));
     cursor: pointer;
   }
 
@@ -1489,7 +1575,7 @@
   }
 
   .wave-bar.idle {
-    background: var(--overlay-3, rgba(255, 255, 255, 0.14));
+    background: var(--overlay-3);
   }
 
   .wave-bar.review {

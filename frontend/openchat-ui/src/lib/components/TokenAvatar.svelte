@@ -79,7 +79,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--surface-3, #1b1b22);
+    background: var(--surface-3);
     box-shadow: 0 0 0 2px var(--surface-1);
   }
 

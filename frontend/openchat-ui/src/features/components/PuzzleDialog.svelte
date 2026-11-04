@@ -803,7 +803,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--surface-3, #24242e);
+    background: var(--surface-3);
     box-shadow: inset 0 0 0 1.5px var(--line-3);
     color: var(--ink);
     font-family: var(--font-sans);
@@ -904,7 +904,7 @@
     width: 6px;
     height: 6px;
     border-radius: 3px;
-    background: var(--overlay-3, rgba(255, 255, 255, 0.16));
+    background: var(--overlay-3);
     transition:
       width 200ms var(--ease-out),
       background 200ms;
@@ -930,7 +930,7 @@
   }
 
   .nav-button:hover {
-    background: var(--overlay-3, rgba(255, 255, 255, 0.13));
+    background: var(--overlay-3);
   }
 
   .nav-button.primary {
@@ -1086,7 +1086,7 @@
   }
 
   .action:hover {
-    background: var(--overlay-3, rgba(255, 255, 255, 0.13));
+    background: var(--overlay-3);
   }
 
   .action-icon {
@@ -1322,7 +1322,7 @@
   }
 
   .finish-button:hover {
-    background: var(--overlay-3, rgba(255, 255, 255, 0.13));
+    background: var(--overlay-3);
   }
 
   .share-icon {

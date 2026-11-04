@@ -1,5 +1,5 @@
 <!-- The chat list column: optional header (dms or community), search, All / Direct / Groups / Unread filter, a "Thread replies"
-     entry, then rows grouped into sections (Pinned, Recent). Section order is fixed, never inherited from row order.
+     entry, then rows grouped into sections (Pinned, Chats). Section order is fixed, never inherited from row order.
      Rows are identified by `id` (titles repeat: two DMs with "Alex"). Search filters `rows` by title; with onSearch the host
      searches instead (users and groups not loaded yet) and supplies the rows. -->
 <script lang="ts">
@@ -14,9 +14,9 @@
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import Skeleton from '../../lib/components/Skeleton.svelte';
 
-  const SECTION_ORDER = ['', 'Pinned', 'Recent'];
+  const SECTION_ORDER = ['', 'Pinned', 'Chats'];
   // sections and filters are identified by their English names (rows and logic use them); these keys are for display
-  const SECTION_KEYS: Record<string, string> = { Pinned: 'ui.chatListPanel.pinned', Recent: 'ui.chatListPanel.recent' };
+  const SECTION_KEYS: Record<string, string> = { Pinned: 'ui.chatListPanel.pinned', Chats: 'ui.chatListPanel.chats' };
   const FILTER_KEYS: Record<string, string> = {
     All: 'ui.chatListPanel.filters.all',
     Direct: 'ui.chatListPanel.filters.direct',
@@ -29,7 +29,7 @@
   interface Row extends RowProps {
     /** The chat's id, reported by onSelect. */
     id: string;
-    /** Section heading; "Pinned" also pins the row. Defaults to Recent. */
+    /** Section heading; "Pinned" also pins the row. Defaults to Chats. */
     section?: string;
     /** Row menu. */
     menu?: MenuItem[];
@@ -131,7 +131,7 @@
   const groups = $derived.by(() => {
     const order: { label: string; rows: typeof shown }[] = [];
     for (const r of shown) {
-      const key = showLabels ? (r.section ?? 'Recent') : '';
+      const key = showLabels ? (r.section ?? 'Chats') : '';
       let g = order.find((o) => o.label === key);
       if (!g) order.push((g = { label: key, rows: [] }));
       g.rows.push(r);
@@ -199,6 +199,7 @@
                   title={row.title}
                   kind={row.kind}
                   preview={row.preview}
+                  previewIcon={row.previewIcon}
                   time={row.time}
                   unreadCount={row.unreadCount}
                   color={row.color}
@@ -301,7 +302,7 @@
   }
 
   .section.first {
-    padding-top: 0px;
+    padding-top: var(--space-10);
   }
 
   .section-label {

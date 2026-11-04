@@ -874,7 +874,7 @@
   }
 
   .invite-instead:hover {
-    background: var(--overlay-3, rgba(255, 255, 255, 0.13));
+    background: var(--overlay-3);
   }
 
   .no-people {

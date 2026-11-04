@@ -13,6 +13,8 @@
   interface Props {
     title: string;
     preview: string;
+    /** An icon before the preview, e.g. `forward` when the last message was forwarded. */
+    previewIcon?: string;
     time: string;
     kind?: 'user' | 'group' | 'channel';
     color?: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
@@ -35,6 +37,7 @@
   let {
     title,
     preview,
+    previewIcon,
     time,
     kind = 'user',
     color = 'violet',
@@ -206,7 +209,14 @@
         {:else if liveCall}
           <span class="call"><span class="call-icon" style:mask="var(--icon-{liveCall === 'video' ? 'video' : 'phone'}) center/contain no-repeat"></span><span class="call-label">{t(liveCall === 'video' ? 'ui.chatRow.videoCallLive' : 'ui.chatRow.voiceCallLive')}</span></span>
         {:else}
-          <span class="preview" class:unread={unreadCount > 0}>{preview}</span>
+          <span class="preview" class:unread={unreadCount > 0}
+            >{#if previewIcon}<span
+                class="preview-icon"
+                style:mask="var(--icon-{previewIcon}) center/contain no-repeat"
+                role={previewIcon === 'forward' ? 'img' : undefined}
+                aria-label={previewIcon === 'forward' ? t('ui.chatRow.forwarded') : undefined}
+                aria-hidden={previewIcon === 'forward' ? undefined : 'true'}></span
+              >{/if}<span class="preview-text">{preview}</span></span>
         {/if}
         {#if unreadCount > 0}
           <span class="count">{unreadCount}</span>
@@ -411,7 +421,22 @@
   }
 
   .preview {
+    display: flex;
+    align-items: center;
+    gap: 5px;
     color: var(--ink-3);
+  }
+
+  .preview-icon {
+    flex: none;
+    width: 13px;
+    height: 13px;
+    background: currentColor;
+  }
+
+  .preview-text {
+    min-width: 0;
+    overflow: hidden;
     text-overflow: ellipsis;
   }
 

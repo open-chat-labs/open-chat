@@ -21,7 +21,7 @@
   let { names, colors = ['violet', 'teal'], ringColor = 'var(--card)', label = '' }: Props = $props();
   const t = useT();
 
-  const text = $derived(label ? t(label) : t('ui.typingIndicator.typing', { count: names.length, name: names[0] }));
+  const text = $derived(label ? t(label) : t('ui.typingIndicator.typing', { count: names.length, name: names[0], second: names[1] ?? '' }));
 </script>
 
 <div class="typing">

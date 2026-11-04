@@ -65,6 +65,7 @@
   import Logo from '../../lib/components/Logo.svelte';
   import CopyButton from '../../lib/components/CopyButton.svelte';
   import { onMount, untrack } from 'svelte';
+  import { ReferralLookup } from '../../lib/referralLookup.svelte';
 
   type Method = AuthMethod;
 
@@ -90,6 +91,9 @@
     referrers?: Person[];
     /** Search referrers on the server; replaces the local `referrers` filter when given. */
     searchReferrers?: (query: string) => Promise<Person[]>;
+    /** Who an invite link's referral code (its `ref`) names, if anyone. With it, sign-up offers to paste an invite link
+     *  in place of searching. */
+    resolveReferrer?: (code: string) => Promise<Person | undefined>;
     /** Sign-up: whether a well-formed username is free. Without it no availability is shown (the host checks on signup). */
     checkUsername?: (username: string) => boolean | Promise<boolean>;
     /** Terms and conditions page; without it the words aren't a link. */
@@ -130,6 +134,7 @@
     reason = '',
     referrers = [],
     searchReferrers,
+    resolveReferrer,
     checkUsername,
     termsUrl,
     methods,
@@ -191,18 +196,48 @@
   let searchRun = 0;
   let refQuery = $state('');
   let referrer = $state<Person | null>(null);
+  // the referrer is the one the host passed (the invite link this browser came in on), not one picked here
+  let referrerFromLink = $state(false);
   // once the person has picked or removed a referrer, one the host passes late doesn't undo it
   let referrerEdited = false;
   $effect(() => {
     const given = initialReferrer;
     untrack(() => {
-      if (!referrerEdited) referrer = given ?? null;
+      if (referrerEdited) return;
+      referrer = given ?? null;
+      referrerFromLink = !!given;
+      // a referrer from the host replaces the field: whatever was typed or pasted there goes, a lookup with it
+      if (given) clearRefField();
     });
   });
 
   function pickReferrer(person: Person | null) {
     referrerEdited = true;
     referrer = person;
+    referrerFromLink = false;
+    if (person) clearRefField();
+  }
+
+  // the field a referrer replaces starts empty (search mode) if the referrer is removed again: a link left in it would
+  // never be looked up, and the sign-up would go out without the referral it names
+  function clearRefField() {
+    refQuery = '';
+    refPaste = false;
+    refLink.reset();
+  }
+
+  // the referrer field takes a search, or (with resolveReferrer) a pasted invite link, which Continue waits on
+  let refPaste = $state(false);
+  const refLink = new ReferralLookup<Person>(
+    () => resolveReferrer,
+    (person) => pickReferrer(person),
+    { settleMs: CHECK_MS },
+  );
+
+  function toggleRefMode() {
+    refPaste = !refPaste;
+    refQuery = '';
+    refLink.reset();
   }
 
   let checkTimer: ReturnType<typeof setTimeout> | undefined;
@@ -228,14 +263,14 @@
   const recoveryBad = $derived(!!recovery.trim() && !isEmail(recovery));
   const results = $derived.by(() => {
     const q = refQuery.trim().toLowerCase();
-    if (!q) return [];
+    if (!q || refPaste) return [];
     if (searchReferrers) return (remoteResults ?? []).slice(0, 4);
     return referrers.filter((p) => p.name.toLowerCase().includes(q) || p.handle.includes(q)).slice(0, 4);
   });
 
   // server-side referrer search, debounced; only the latest query's answer is kept
   $effect(() => {
-    const q = refQuery.trim();
+    const q = refPaste ? '' : refQuery.trim();
     if (!searchReferrers) return;
     untrack(() => {
       clearTimeout(searchTimer);
@@ -351,7 +386,7 @@
   let agreed = $state(false);
 
   function submitSignup() {
-    if (!free || recoveryBad || !agreed || !onSignup) return;
+    if (!free || recoveryBad || !agreed || refLink.pending || !onSignup) return;
     attempt('signup', () =>
       onSignup({ username, email: isEmail(recovery) ? recovery.trim() : undefined, referrer: referrer?.handle, referrerId: referrer?.userId, termsAccepted: agreed }),
     );
@@ -418,6 +453,7 @@
       flow.destroy();
       clearTimeout(checkTimer);
       clearTimeout(searchTimer);
+      refLink.stop();
     };
   });
 </script>
@@ -565,7 +601,7 @@
             {#if recoveryBad}<span class="user-msg bad">{t('ui.authDialog.emailInvalid')}</span>{/if}
           </label>
           <div class="referral">
-            <span class="field-label">{t('ui.authDialog.referredQuestion')}</span>
+            <span class="field-label">{t(referrerFromLink && referrer ? 'ui.authDialog.invitedBy' : 'ui.authDialog.referredQuestion')}</span>
             {#if referrer}
               <span class="field picked">
                 <span class="face" style:background={referrer.grad}></span>
@@ -573,11 +609,37 @@
                 <button class="clear" type="button" onclick={() => pickReferrer(null)} aria-label={t('ui.authDialog.removeReferrer')}><span class="head-icon close small"></span></button>
               </span>
             {:else}
-              <span class="field">
-                <span class="search-icon"></span>
-                <input data-auth-input="" bind:value={refQuery} placeholder={t('ui.authDialog.referrerSearch')} aria-label={t('ui.authDialog.referrer')} />
+              <span class="field" class:bad={refLink.problem !== null}>
+                <span class="search-icon" class:link={refPaste}></span>
+                {#if refPaste}
+                  <input data-auth-input="" value={refQuery} oninput={(e) => {
+                      refQuery = e.currentTarget.value;
+                      refLink.input(refQuery, e instanceof InputEvent && e.inputType === 'insertFromPaste');
+                    }} placeholder={t('ui.authDialog.referrerPaste')} aria-label={t('ui.authDialog.referrer')} />
+                {:else}
+                  <input data-auth-input="" bind:value={refQuery} placeholder={t('ui.authDialog.referrerSearch')} aria-label={t('ui.authDialog.referrer')} />
+                {/if}
               </span>
+              {#if resolveReferrer}
+                <!-- while a link is looked up, Continue waits: the hint says why (and "Search people" gives up on it) -->
+                <span class="ref-hint" class:bad={refLink.problem !== null} aria-live="polite"
+                  ><span
+                    >{t(
+                      refLink.pending
+                        ? 'ui.authDialog.checkingLink'
+                        : refLink.problem === 'no_referrer'
+                          ? 'ui.authDialog.linkHasNoReferrer'
+                          : refLink.problem === 'unknown'
+                            ? 'ui.authDialog.linkReferrerUnknown'
+                            : refPaste
+                              ? 'ui.authDialog.haveName'
+                              : 'ui.authDialog.haveLink',
+                    )}</span
+                  ><button class="ref-mode" type="button" onclick={toggleRefMode}>{t(refPaste ? 'ui.authDialog.searchPeople' : 'ui.authDialog.pasteLink')}</button></span
+                >
+              {/if}
             {/if}
+            {#if referrerFromLink && referrer}<span class="ref-hint">{t('ui.authDialog.fromInviteLink')}</span>{/if}
             {#if results.length}
               <div class="results" role="listbox">
                 {#each results as person}
@@ -603,7 +665,7 @@
                 ></label
               >{#if failed === 'signup'}<span class="signup-error" role="alert">{t(failReason ?? 'ui.authDialog.signupFailed')}</span>{/if}</span
             >
-            <button class="continue" class:ready={free && !recoveryBad && agreed && !waiting} type="submit" disabled={!free || recoveryBad || !agreed || !!waiting}>{t(waiting === 'signup' ? 'ui.authDialog.creating' : 'ui.common.continue')}</button>
+            <button class="continue" class:ready={free && !recoveryBad && agreed && !refLink.pending && !waiting} type="submit" disabled={!free || recoveryBad || !agreed || refLink.pending || !!waiting}>{t(waiting === 'signup' ? 'ui.authDialog.creating' : 'ui.common.continue')}</button>
           </div>
         </form>
       {/if}
@@ -1207,6 +1269,27 @@
     gap: 8px;
   }
 
+  .ref-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-4);
+  }
+
+  .ref-hint.bad {
+    color: var(--status-error, #f5493d);
+  }
+
+  .ref-mode {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: var(--weight-semibold) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--accent);
+    cursor: pointer;
+  }
+
   .face {
     flex: none;
     width: 28px;
@@ -1237,6 +1320,10 @@
     height: 17px;
     background: var(--ink-3);
     mask: var(--icon-search) center/contain no-repeat;
+  }
+
+  .search-icon.link {
+    mask: var(--icon-link) center/contain no-repeat;
   }
 
   .results {

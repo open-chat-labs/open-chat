@@ -1,5 +1,5 @@
-// The client's swaps in WalletSwap's shapes: each DEX's answer, the quote, the steps and how a swap
-// went.
+// The client's swaps in WalletSwap's shapes: the best quote and how many DEXes it was the best of,
+// the steps and how a swap went.
 import {
     dexName,
     type DexId,
@@ -9,31 +9,17 @@ import {
     type SwapOutcome,
     type SwapQuote,
 } from "@client";
-import type {
-    DexQuoteRow,
-    SwapQuote as SwapQuoteView,
-} from "@openchat/ui/src/features/components/WalletSwap.svelte";
+import type { SwapQuote as SwapQuoteView } from "@openchat/ui/src/features/components/WalletSwap.svelte";
 import { wholeTokens } from "./wallet.adapter";
 
-/** Each DEX's answer, by its name: its output in whole tokens, or why it has none. */
-export function dexQuoteRows(quotes: [DexId, DexQuote][], decimalsOut: number): DexQuoteRow[] {
-    return quotes.map(([dex, q]): DexQuoteRow => {
-        const name = dexName(dex);
-        switch (q.kind) {
-            case "quoting":
-                return { dex: name, state: "quoting" };
-            case "quoted":
-                return { dex: name, state: "quoted", out: wholeTokens(q.amountOut, decimalsOut) };
-            case "failed":
-                return { dex: name, state: "failed" };
-            default:
-                return { dex: name, state: "none" };
-        }
-    });
+/** How many DEXes were checked for a quote: every one asked that swaps the pair at all. */
+export function dexesChecked(quotes: [DexId, DexQuote][]): number {
+    return quotes.filter(([, q]) => q.kind !== "unsupported").length;
 }
 
 /**
- * The best quote as Swap shows it, with every DEX's answer, and the value warning to confirm in the
+ * The best quote as Swap shows it (only the winner, and how many DEXes were checked, as the old
+ * swap shows it), and the value warning to confirm in the
  * app's words (`translate` fills in the quote's values). The fees and price impact aren't known, so
  * those rows don't show, and there's no expiry: the minimum output protects a quote that's gone
  * stale.
@@ -48,7 +34,7 @@ export function swapQuoteView(
     return {
         dex: dexName(quote.dex),
         out: wholeTokens(quote.amountOut, decimalsOut),
-        quotes: dexQuoteRows(quotes, decimalsOut),
+        checked: dexesChecked(quotes),
         warning:
             quote.valueWarning === undefined
                 ? undefined

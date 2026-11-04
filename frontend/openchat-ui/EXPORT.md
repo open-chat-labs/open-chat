@@ -1,6 +1,6 @@
 # OpenChat UI — Svelte 5 export
 
-Last export **2026-10-13** (pass 2: library + app components + docs). First export 2026-10-07 (pass 1: library).
+Last export ported **2026-11-03** (pass 6, by hand; see EXPORT-LOG). First export 2026-10-07 (pass 1: library).
 Package name: `@openchat/ui` (change in package.json if needed).
 
 ## Run
@@ -68,38 +68,40 @@ The converted components no longer follow this; it describes the generated code 
 
 ## Converted to plain Svelte 5
 No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, styles as scoped classes, typed props. Do not re-export these; port design changes by hand.
-- **AccessGates** — from source hash `fceffeb8`.
-- **AccessGatesCards** — from source hash `7f4effa4`.
-- **AchievementToast** — from source hash `f37efbac`.
+- **AccessGates** — from source hash `d40691cd` (passes 4–6, ported by hand).
+- **AccessGatesCards** — from source hash `0e6b020c` (passes 4–6, ported by hand).
+- **AchievementToast** — from source hash `c4b802de` (passes 4–6, ported by hand).
 - **AchievementsDialog** — from source hash `0faa1b00`.
 - **ActivityPanel** — from source hash `937a1630`.
-- **ActivityRow** — from source hash `ada8248e`.
+- **ActivityRow** — from source hash `994f86f2` (passes 4–6, ported by hand).
 - **AmountCard** — from source hash `39ed836c`.
-- **AuthDialog** — from source hash `f22ab84b`.
+- **AuthDialog** — from source hash `186d660b` (passes 4–6, ported by hand).
 - **Avatar** — from source hash `1f9bbb41`.
 - **AvatarStack** — from source hash `5c9166f0`.
 - **Badge** — from source hash `ac70dfd9`.
-- **BalanceCard** — from source hash `34499a8e`.
+- **BalanceCard** — from source hash `4d3b9d2f` (passes 4–6, ported by hand).
 - **Banner** — from source hash `0beff5f6`.
 - **BotDialog** — from source hash `dccd49b7`.
-- **Button** — from source hash `8b5cf575`.
+- **Button** — from source hash `10a0cae1` (passes 4–6, ported by hand).
 - **CallEvent** — from source hash `229acee3`.
 - **CallPanel** — from source hash `956d6791`.
-- **ChatBubble** — from source hash `1c51c112`.
+- **ChatBubble** — from source hash `98c2e988` (passes 4–6, ported by hand).
 - **ChatListHeader** — from source hash `aa5b1850`.
 - **ChatListPanel** — from source hash `1eb60abb`.
 - **ChatPicker** — from source hash `3d01a726`.
-- **ChatRow** — from source hash `d9730629`.
-- **ChitDialog** — from source hash `556edac8`.
-- **ComposerBar** — from source hash `6f9180bd`.
-- **Confetti** — from source hash `29b4b5be`.
+- **ChatRow** — from source hash `90d843a4` (passes 4–6, ported by hand).
+- **ChitDialog** — from source hash `cc2471e7` (passes 4–6, ported by hand).
+- **ClaimCalendar** — from source hash `2c7b2905` (ported by hand).
+- **ClaimHistoryDialog** — from source hash `3cf4cc94` (ported by hand).
+- **ComposerBar** — from source hash `a0452287` (passes 4–6, ported by hand).
+- **Confetti** — from source hash `3d14ff10` (passes 4–6, ported by hand).
 - **ContextMenu** — from source hash `c325b36b`.
-- **ConversationHeader** — from source hash `ccaba540`.
+- **ConversationHeader** — from source hash `edb15fcb` (passes 4–6, ported by hand).
 - **ConvertToCommunityDialog** — from source hash `a749f89a`.
 - **CopyButton** — from source hash `454e21c1`.
 - **Countdown** — from source hash `4ac813fd`.
-- **CreateGroupDialog** — from source hash `eedb6471`.
-- **DailyPuzzleCard** — from source hash `022361e6`.
+- **CreateGroupDialog** — from source hash `e5efd641` (passes 4–6, ported by hand).
+- **DailyPuzzleCard** — from source hash `89591030` (passes 4–6, ported by hand).
 - **DeleteGroupDialog** — from source hash `e8ca1d1b`.
 - **DetailRow** — from source hash `10ca55c5`.
 - **DetailSection** — from source hash `e0ad49a0`.
@@ -110,11 +112,11 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **DurationChips** — from source hash `f945e31c`.
 - **EmojiPicker** — from source hash `20d1754a`.
 - **EmptyState** — from source hash `824a4c25`.
-- **ExploreCommunities** — from source hash `8685dae7`.
+- **ExploreCommunities** — from source hash `055bf6f1` (passes 4–6, ported by hand).
 - **Field** — from source hash `5b2c7160`.
 - **FileMessage** — from source hash `1e982d63`.
 - **GroupPanel** — from source hash `dba9b54f`.
-- **GroupSettingsDialog** — from source hash `68b6847a`.
+- **GroupSettingsDialog** — from source hash `920904c0` (passes 4–6, ported by hand).
 - **GroupStats** — from source hash `def7d7a1`.
 - **Icon** — from source hash `88fc81a7`.
 - **IconButton** — from source hash `f00be3d6`.
@@ -129,15 +131,15 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **MediaMessage** — from source hash `67e8474e`.
 - **MemberRow** — from source hash `d9f8023f`.
 - **MemeFighterDialog** — from source hash `a1fc291c`.
-- **Menu** — from source hash `fd3b9a33`.
+- **Menu** — from source hash `bb465679` (passes 4–6, ported by hand).
 - **MenuItem** — from source hash `81252d62`.
 - **MessageActions** — from source hash `b8b56d84`.
-- **MessageComposer** — from source hash `4f18c46b`.
+- **MessageComposer** — from source hash `8fc1f20e` (passes 4–6, ported by hand).
 - **MessageGroup** — from source hash `39508894`.
 - **MiniCall** — from source hash `e6c8db6f`.
-- **NavRail** — from source hash `42bdb472`.
+- **NavRail** — from source hash `0aa6890d` (passes 4–6, ported by hand).
 - **NewChannelDialog** — from source hash `01911d9c`.
-- **PageHeader** — from source hash `5a474f84`.
+- **PageHeader** — from source hash `edd4f915` (passes 4–6, ported by hand).
 - **PanelCover** — from source hash `8d024aca`.
 - **PanelNavRow** — from source hash `f29bf4af`.
 - **Pill** — from source hash `594a3b26`.
@@ -145,7 +147,7 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **PollMessage** — from source hash `19377bd9`.
 - **PrizeBuilderDialog** — from source hash `5169413b`.
 - **PrizeMessage** — from source hash `44eff81b`.
-- **ProfileDialog** — from source hash `3f17d9eb`.
+- **ProfileDialog** — from source hash `0bc687d8` (passes 4–6, ported by hand).
 - **ProgressTimeline** — from source hash `d566367a` (pass 3, ported by hand).
 - **ProposalMessage** — from source hash `e4139d49`.
 - **PuzzleDialog** — from source hash `f417539c`.
@@ -171,7 +173,7 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **ThreadPanel** — from source hash `e35352d5`.
 - **ThresholdBar** — from source hash `3a0c0b95`.
 - **TileButtons** — from source hash `58a09cd3`.
-- **TimedToggle** — from source hash `3ee63b57`.
+- **TimedToggle** — from source hash `02eec7ed` (passes 4–6, ported by hand).
 - **Toggle** — from source hash `4b90cec2`.
 - **TokenAvatar** — from source hash `362ee2f9`.
 - **TokenCoin** — from source hash `8398db54`.
@@ -188,13 +190,13 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **UserGroupDialog** — from source hash `2c0cc062`.
 - **VideoTile** — from source hash `3d3f0853`.
 - **VoiceMessage** — from source hash `e210f6a8`.
-- **WalletMain** — from source hash `c74f96f3` (pass 3, ported by hand).
-- **WalletPanel** — from source hash `464ebf46`.
+- **WalletMain** — from source hash `3988c4dc` (passes 4–6, ported by hand).
+- **WalletPanel** — from source hash `036d533e` (passes 4–6, ported by hand).
 - **WalletReceive** — from source hash `27cf3447` (pass 3, ported by hand).
-- **WalletRecipients** — from source hash `8d8543ca`.
+- **WalletRecipients** — from source hash `774429dc` (passes 4–6, ported by hand).
 - **WalletSend** — from source hash `a9dbde40` (pass 3, ported by hand).
 - **WalletSettingsDialog** — from source hash `a69b5e15`.
-- **WalletSwap** — from source hash `5e438702` (pass 3, ported by hand).
+- **WalletSwap** — from source hash `ee6d8107` (passes 4–6, ported by hand).
 - **Waveform** — from source hash `d43e3c8e`.
 - **WebhookDialog** — from source hash `af5a6630`.
 

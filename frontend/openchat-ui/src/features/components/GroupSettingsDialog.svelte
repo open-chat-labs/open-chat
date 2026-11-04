@@ -1063,7 +1063,7 @@
     {@const current = perms[permMenu.scope][permMenu.key]}
     <div class="menu-layer">
       <div class="menu-catch" onclick={() => (permMenu = null)} aria-hidden="true"></div>
-      <div class="perm-menu" bind:this={permPanel} style:top={permMenu.top} style:left={permMenu.left} style:visibility={permMenu.measured ? 'visible' : 'hidden'} role="menu" aria-label={t('ui.groupSettingsDialog.whoCanDoThis')}>
+      <div class="perm-menu" data-oc-menu bind:this={permPanel} style:top={permMenu.top} style:left={permMenu.left} style:visibility={permMenu.measured ? 'visible' : 'hidden'} role="menu" aria-label={t('ui.groupSettingsDialog.whoCanDoThis')}>
         <span class="perm-menu-hint">{t(permMenu.allowInherit ? 'ui.groupSettingsDialog.whoCanSend' : 'ui.groupSettingsDialog.lowestRole')}</span>
         {#each permOptions as o}
           {@const sel = o.key === current}
@@ -2149,6 +2149,7 @@
   }
 
   .perm-menu {
+    animation: oc-menu-pop 0.14s ease-out;
     position: absolute;
     width: 238px;
     display: flex;

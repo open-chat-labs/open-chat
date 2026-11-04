@@ -124,7 +124,7 @@ const swapDemo = {
     await wait(1200);
     const usdIn = r.amount * priceOf(r.from);
     const impactPct = Math.min(9, (usdIn / 40000) * 100);
-    return { dex: 'ICPSwap', dexFee: '0.30%', out: (usdIn / priceOf(r.to)) * (1 - impactPct / 100) * 0.997, impactPct, networkFeeUsd: 0.01, expiresAt: Date.now() + 30000 };
+    return { dex: 'ICPSwap', checked: 3, dexFee: '0.30%', out: (usdIn / priceOf(r.to)) * (1 - impactPct / 100) * 0.997, impactPct, networkFeeUsd: 0.01, expiresAt: Date.now() + 30000 };
   },
   // pass3-swap: the app's three steps (approve, swap, withdraw), unevenly paced like real ledger calls
   onSwap: async (r: { onStep: (step: number) => void }) => {
@@ -335,7 +335,7 @@ const activityItems = [
 const chatListRows = [
   { id: 'dm-danielle', title: 'Danielle Moreau', section: 'Pinned', preview: 'Pushed the updated flow', time: '10:42', unreadCount: 3, color: 'violet', online: true, verified: false, selected: true },
   { id: 'g-awesome', title: 'The Awesome Group', kind: 'group', section: 'Pinned', preview: 'Priya: see you at 4', time: '09:18', unreadCount: 0, color: 'teal', online: true, verified: true, selected: false },
-  { id: 'dm-marcus', title: 'Marcus Webb', preview: 'Okay mate, that sounds good', time: 'Yest', unreadCount: 0, color: 'amber', online: false, verified: false, selected: false },
+  { id: 'dm-marcus', title: 'Marcus Webb', preview: 'Okay mate, that sounds good', previewIcon: 'forward', time: 'Yest', unreadCount: 0, color: 'amber', online: false, verified: false, selected: false },
 ];
 
 // CreateGroupDialog's built-in demo people from the export
@@ -1065,7 +1065,7 @@ export const patternRows = [
   { id: 'dm-danielle', title: 'Danielle Moreau', section: 'Pinned', preview: 'Pushed the updated flow', time: '10:42', unreadCount: 3, color: 'violet', online: true, selected: true },
   { id: 'g-awesome', title: 'The Awesome Group', kind: 'group', section: 'Pinned', preview: 'Priya: see you at 4', time: '09:18', color: 'teal', typing: true },
   { id: 'g-release', title: 'Release Train', kind: 'group', preview: 'Julian: v2.0.2054 is on prod test', time: '08:02', unreadCount: 12, color: 'amber', muted: true },
-  { id: 'dm-marcus', title: 'Marcus Webb', preview: 'Okay mate, that sounds good', time: 'Yest', color: 'blue', verified: true },
+  { id: 'dm-marcus', title: 'Marcus Webb', preview: 'Okay mate, that sounds good', previewIcon: 'forward', time: 'Yest', color: 'blue', verified: true },
   { id: 'dm-lucy', title: 'Lucy Linden', preview: 'Voice message · 0:14', time: 'Mon', color: 'plum', liveCall: 'voice' },
   { id: 'ch-announcements', title: '#announcements', kind: 'channel', preview: 'Diamond members get early access', time: 'Sun', color: 'teal' },
 ] as const;

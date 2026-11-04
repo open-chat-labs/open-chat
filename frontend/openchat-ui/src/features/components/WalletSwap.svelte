@@ -22,19 +22,13 @@
   /** A host's rejection of onQuote / onSwap that says why, in words to show (text); any other rejection shows Swap's own. */
   export class SwapFailed extends Error {}
 
-  /** One DEX's answer while quoting, and alongside the quote: its output, or why there's none. */
-  export interface DexQuoteRow {
-    dex: string;
-    state: 'quoting' | 'quoted' | 'none' | 'failed';
-    /** What it would pay out, in `to` (for `quoted`). */
-    out?: number;
-  }
-
   export interface SwapQuote {
     /** Host's handle for this quote, passed back to onSwap. */
     id?: string;
-    /** DEX that gave the best rate. */
+    /** DEX that gave the best rate; only the winner is shown. */
     dex: string;
+    /** How many DEXes were asked: "ICPSwap · of 3 checked" (just the DEX's name with one, or without it). */
+    checked?: number;
     /** e.g. "0.30%". The fees row shows only with this or `networkFeeUsd`. */
     dexFee?: string;
     /** Amount of `to` received at the quoted rate. */
@@ -44,8 +38,6 @@
     networkFeeUsd?: number;
     /** When the quote stops being valid (ms epoch): a countdown, and Swap only until then. None: no countdown. */
     expiresAt?: number;
-    /** Every DEX's answer, the best among them. */
-    quotes?: DexQuoteRow[];
     /** Something to confirm before swapping (e.g. the quote is worth much less than what goes in): literal text. */
     warning?: string;
   }
@@ -90,9 +82,9 @@
     tokens: WalletToken[];
     /** Token to pay with, by its id (WalletToken.id) or symbol; falls back to ICP. */
     token?: string;
-    /** Find the best quote, telling `progress` of each DEX's answer as it comes in. Reject to go back to the form
-     *  with an error: a SwapFailed's message (text) is shown, else Swap's own. Without it, no quote can be fetched. */
-    onQuote?: (r: SwapRequest, progress?: (quotes: DexQuoteRow[]) => void) => Promise<SwapQuote>;
+    /** Find the best quote of every DEX the host asks. Reject to go back to the form with an error: a SwapFailed's
+     *  message (text) is shown, else Swap's own. Without it, no quote can be fetched. */
+    onQuote?: (r: SwapRequest) => Promise<SwapQuote>;
     /** Run the swap; call onStep(i) as each of the 3 on-chain steps (0 approve, 1 swap, 2 withdraw) starts.
      *  `warningConfirmed`: the user confirmed the quote's `warning`. Resolve (optionally with the actual output) when
      *  it's in the wallet; resolve `false` when nothing was sent and there's nothing to say (the host's PIN prompt was
@@ -175,8 +167,6 @@
   const t = $derived(list.find((x) => idOf(x) === to) ?? NONE);
   // the user confirmed the quote's warning
   let warningConfirmed = $state(false);
-  // each DEX's answer as it comes in, then alongside the quote
-  let dexRows = $state<DexQuoteRow[]>([]);
   const n = $derived(parseAmount(amt));
   const usdIn = $derived(f ? n * f.price : 0);
   const impactPct = $derived(quote?.impactPct ?? 0);
@@ -211,12 +201,14 @@
             : tr('ui.walletSwap.enterAmount'),
   );
 
-  // the quote in three lines: what you'll get at least, what it costs, how much the price moves
+  // the quote in four lines: the winning DEX, what you'll get at least, what it costs, how much the price moves
   const quoteRows = $derived.by(() => {
     const impact = `${impactPct < 0.01 ? '<0.01' : impactPct.toFixed(2)}%`;
     const impactInk = impactPct > 3 ? 'var(--status-danger)' : impactPct > 1 ? 'var(--status-warning)' : 'var(--status-online)';
     // the fees and impact rows only when the host knows them
+    const checked = quote?.checked ?? 0;
     const all = [
+      { k: tr('ui.walletSwap.row.bestRate'), v: checked > 1 ? tr('ui.walletSwap.bestRateValue', { dex: dexName, count: checked }) : dexName, ink: 'var(--ink)' },
       { k: tr('ui.walletSwap.row.minimumReceived'), v: `${fmt(out * (1 - slip / 100), t.dp)} ${t.symbol}`, ink: 'var(--ink)' },
       ...(quote?.dexFee !== undefined || quote?.networkFeeUsd !== undefined
         ? [{ k: tr('ui.walletSwap.row.fees'), v: tr('ui.walletSwap.feesValue', { dexFee: quote?.dexFee ?? '', network: usd(quote?.networkFeeUsd ?? 0) }), ink: 'var(--ink)' }]
@@ -297,13 +289,10 @@
     error = '';
     errorText = '';
     stage = 'quoting';
-    dexRows = [];
     warningConfirmed = false;
     let q: SwapQuote;
     try {
-      q = await onQuote(request(), (rows) => {
-        if (mine === run) dexRows = rows;
-      });
+      q = await onQuote(request());
     } catch (e) {
       if (mine !== run) return;
       quote = null;
@@ -314,7 +303,6 @@
     }
     if (mine !== run) return;
     quote = q;
-    if (q.quotes) dexRows = q.quotes;
     received = null;
     stage = 'quoted';
     startCountdown(q);
@@ -443,26 +431,6 @@
   }
 </script>
 
-<!-- each DEX's answer, as it comes in and then alongside the quote, the best marked -->
-{#snippet dexQuotes()}
-  {#if dexRows.length > 1}
-    <div class="dex-quotes">
-      <ListSectionLabel label={tr('ui.walletSwap.dexQuotesLabel')} />
-      {#each dexRows as d, i}
-        <DetailRow
-          label={d.dex}
-          value={d.state === 'quoted'
-            ? `${fmt(d.out ?? 0, t.dp)} ${t.symbol}${quoted && quote?.dex === d.dex ? ` · ${tr('ui.walletSwap.best')}` : ''}`
-            : tr(d.state === 'quoting' ? 'ui.walletSwap.dexQuoting' : d.state === 'failed' ? 'ui.walletSwap.dexFailed' : 'ui.walletSwap.dexNoQuote')}
-          valueColor={quoted && quote?.dex === d.dex ? 'var(--accent)' : d.state === 'quoted' ? 'var(--ink)' : 'var(--ink-3)'}
-          size="sm"
-          rule={i === dexRows.length - 1 ? 'none' : 'bottom'}
-        />
-      {/each}
-    </div>
-  {/if}
-{/snippet}
-
 <div class="swap" bind:clientWidth={width} data-screen-label="Wallet swap">
   {#if f && t}
     <PageHeader title={tr('ui.walletSwap.titleToken', { symbol: f.symbol })} onBack={back} avatarMark={f.mark} avatarGradient={f.grad}
@@ -529,7 +497,6 @@
                   {#each quoteRows as r}<DetailRow label={r.k} value={r.v} valueColor={r.ink} size="sm" rule={r.rule} />{/each}
                 </div>
               </div>
-              {@render dexQuotes()}
               {#if quote?.warning}
                 <div class="warning">
                   <Banner tone="warning" text={quote.warning} actionLabel="" />
@@ -544,7 +511,6 @@
                 <span class="cta disabled" role="button" tabindex="0" aria-disabled="true">{tr('ui.walletSwap.swapCta')}</span>
               {/if}
             {:else}
-              {#if quoting}{@render dexQuotes()}{/if}
               <span class="cta" class:disabled={!ok || quoting} onclick={getQuote} tabindex="0" role="button" aria-disabled={!ok || quoting} aria-busy={quoting || undefined}
                 >{#if quoting}<Spinner size={16} tone="ink" label="ui.walletSwap.gettingQuote" />{/if}{ctaText}</span
               >
@@ -635,7 +601,6 @@
     pointer-events: none;
   }
 
-  .dex-quotes,
   .warning {
     display: flex;
     flex-direction: column;
@@ -740,7 +705,7 @@
   }
 
   .cta:hover {
-    filter: brightness(1.08);
+    background: var(--accent-hover);
   }
 
   .cta.disabled {

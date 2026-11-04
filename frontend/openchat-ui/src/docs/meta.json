@@ -917,6 +917,17 @@
         "doc": ""
       },
       {
+        "name": "previewIcon",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "An icon before the preview, e.g. `forward` when the last message was forwarded."
+      },
+      {
         "name": "time",
         "type": "string",
         "default": "10:48",
@@ -1636,6 +1647,94 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "plusPlacement",
+        "type": "ComposerProps['plusPlacement']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Native hosts: passed to the composer (see MessageComposer)."
+      },
+      {
+        "name": "emojiPlacement",
+        "type": "ComposerProps['emojiPlacement']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Passed to the composer."
+      },
+      {
+        "name": "onPlus",
+        "type": "ComposerProps['onPlus']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Passed to the composer."
+      },
+      {
+        "name": "plusActive",
+        "type": "ComposerProps['plusActive']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Passed to the composer."
+      },
+      {
+        "name": "onEmoji",
+        "type": "ComposerProps['onEmoji']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Passed to the composer."
+      },
+      {
+        "name": "emojiActive",
+        "type": "ComposerProps['emojiActive']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Passed to the composer."
+      },
+      {
+        "name": "onInputFocus",
+        "type": "ComposerProps['onInputFocus']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Passed to the composer."
+      },
+      {
+        "name": "insert",
+        "type": "ComposerProps['insert']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Passed to the composer."
       }
     ],
     "group": "library"
@@ -6253,6 +6352,17 @@
         "doc": "Search referrers on the server; replaces the local `referrers` filter."
       },
       {
+        "name": "resolveReferrer",
+        "type": "(code: string) => Promise<Person | undefined>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Who an invite link's referral code (its `ref`) names, if anyone. With it, sign-up offers to paste an invite link in place of searching."
+      },
+      {
         "name": "termsUrl",
         "type": "string",
         "default": null,
@@ -8627,14 +8737,14 @@
       },
       {
         "name": "languages",
-        "type": "{ code: string; label: string }[]",
+        "type": "{ code: string; label: string; flag?: string }[]",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Communities: the languages offered; codes reach the host."
+        "doc": "Communities: the languages offered (codes reach the host); each shows a flag (its own, else its code's)."
       },
       {
         "name": "defaultLanguage",
@@ -13343,6 +13453,100 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "plusPlacement",
+        "type": "'start' | 'end'",
+        "default": "start",
+        "editor": "enum",
+        "options": [
+          "start",
+          "end"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'start'",
+        "doc": "Where the + button sits: before the text (web, iOS) or after it, before mic / send (Android)."
+      },
+      {
+        "name": "emojiPlacement",
+        "type": "'start' | 'end'",
+        "default": "start",
+        "editor": "enum",
+        "options": [
+          "start",
+          "end"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'start'",
+        "doc": "Where the emoji button sits: before the text (web, Android) or after it (iOS)."
+      },
+      {
+        "name": "onPlus",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host owns the + surface (e.g. a keyboard-area panel): + calls this instead of opening the menu."
+      },
+      {
+        "name": "plusActive",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "With onPlus: the host's + surface is showing (the button turns, as when the menu is open)."
+      },
+      {
+        "name": "onEmoji",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host owns the emoji / GIF surface: the emoji button calls this instead of opening the picker."
+      },
+      {
+        "name": "emojiActive",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "With onEmoji: the host's emoji surface is showing (the button offers the keyboard back)."
+      },
+      {
+        "name": "onInputFocus",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A text box inside the composer took focus (a native host closes its panels as the keyboard opens)."
+      },
+      {
+        "name": "insert",
+        "type": "{ key: string | number; text: string }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Typing from the host (its emoji panel): each new `key` puts `text` in at the caret without focusing the field. \"\\b\" deletes the selection, or the character before the caret."
       }
     ],
     "group": "library"
@@ -13556,7 +13760,7 @@
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": "Pinned communities; each needs an `id` (reported by onSelectPin) and may have an avatarUrl."
+        "doc": "Pinned communities; each needs an `id` (reported by onSelectPin) and may have an avatarUrl, and a `menu` opened by right-click or Shift+F10."
       },
       {
         "name": "expanded",
@@ -19064,7 +19268,7 @@
       },
       {
         "name": "onQuote",
-        "type": "(r: SwapRequest, progress?: (quotes: DexQuoteRow[]) => void) => Promise<SwapQuote>",
+        "type": "(r: SwapRequest) => Promise<SwapQuote>",
         "default": null,
         "editor": null,
         "options": null,

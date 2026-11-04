@@ -21,7 +21,7 @@
       typeof x === 'string'
         ? { bg: x, initial: '' }
         : {
-            bg: x.src ? `center/cover ${cssUrl(x.src)}` : x.grad || x.color || 'var(--surface-3,#24242e)',
+            bg: x.src ? `center/cover ${cssUrl(x.src)}` : x.grad || x.color || 'var(--surface-3)',
             initial: initials ? x.initial || '' : '',
           },
     ),
@@ -78,7 +78,7 @@
     box-sizing: border-box;
     padding: 0 6px;
     border-radius: 999px;
-    background: var(--surface-3, #24242e);
+    background: var(--surface-3);
     font: 600 var(--font-size) / 1 var(--font-mono);
     color: var(--ink);
   }

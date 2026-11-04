@@ -1,7 +1,7 @@
 import { i18nKey, type SwapQuote } from "@client";
 import { amountUnits } from "@src/logic/wallet/walletSend";
 import { describe, expect, test } from "vitest";
-import { dexQuoteRows, swapAnswer, swapQuoteView, swapStepIndex } from "./swap.adapter";
+import { dexesChecked, swapAnswer, swapQuoteView, swapStepIndex } from "./swap.adapter";
 
 const quote: SwapQuote = {
     ledgerIn: "icp",
@@ -14,28 +14,20 @@ const quote: SwapQuote = {
 };
 
 describe("a swap's quote as Swap shows it", () => {
-    test("each DEX's answer by name: its output, or why there's none", () => {
+    test("the DEXes checked: every one asked that swaps the pair, answered or not", () => {
         expect(
-            dexQuoteRows(
-                [
-                    ["icpswap", { kind: "quoting" }],
-                    ["taco", { kind: "quoted", amountOut: 150_000_000n }],
-                ],
-                8,
-            ),
-        ).toEqual([
-            { dex: "ICPSwap", state: "quoting" },
-            { dex: "TACO", state: "quoted", out: 1.5 },
-        ]);
+            dexesChecked([
+                ["icpswap", { kind: "declined" }],
+                ["taco", { kind: "failed" }],
+            ]),
+        ).toBe(2);
         expect(
-            dexQuoteRows(
-                [
-                    ["icpswap", { kind: "unsupported" }],
-                    ["taco", { kind: "failed" }],
-                ],
-                8,
-            ).map((r) => r.state),
-        ).toEqual(["none", "failed"]);
+            dexesChecked([
+                ["icpswap", { kind: "quoted", amountOut: 1n }],
+                ["taco", { kind: "unsupported" }],
+            ]),
+        ).toBe(1);
+        expect(dexesChecked([])).toBe(0);
     });
 
     test("the best quote, no expiry, and a value warning in the app's words", () => {
@@ -43,8 +35,20 @@ describe("a swap's quote as Swap shows it", () => {
         expect(swapQuoteView(quote, [], 8, words)).toMatchObject({
             dex: "TACO",
             out: 50,
+            checked: 0,
             warning: undefined,
         });
+        expect(
+            swapQuoteView(
+                quote,
+                [
+                    ["icpswap", { kind: "quoted", amountOut: 1n }],
+                    ["taco", { kind: "quoted", amountOut: 5_000_000_000n }],
+                ],
+                8,
+                words,
+            ).checked,
+        ).toBe(2);
         expect(swapQuoteView(quote, [], 8, words).expiresAt).toBeUndefined();
         expect(swapQuoteView({ ...quote, valueWarning: "dropped" }, [], 8, words).warning).toBe(
             "tokenSwap.warningValueDropped",

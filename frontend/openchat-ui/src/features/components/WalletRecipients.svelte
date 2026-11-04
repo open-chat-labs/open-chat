@@ -281,7 +281,7 @@
               {/if}
               {#if open}
                 <div class="menu-away" onclick={() => (menuFor = null)} role="presentation"></div>
-                <div class="menu" role="menu">
+                <div class="menu" data-oc-menu role="menu">
                   {#if onUpdate}<span
                       class="menu-item"
                       onclick={() => {
@@ -606,7 +606,7 @@
   }
 
   .send:hover {
-    background: var(--overlay-3, rgba(255, 255, 255, 0.14));
+    background: var(--overlay-3);
   }
 
   .send-icon {
@@ -682,6 +682,7 @@
   }
 
   .menu {
+    animation: oc-menu-pop 0.14s ease-out;
     position: absolute;
     z-index: 5;
     inset-inline-end: 10px;
@@ -689,7 +690,7 @@
     width: 200px;
     padding: 6px;
     border-radius: var(--radius-md);
-    background: var(--surface-3, #24242e);
+    background: var(--surface-3);
     box-shadow:
       inset 0 0 0 1px var(--line-2),
       0 12px 30px rgba(0, 0, 0, 0.45);

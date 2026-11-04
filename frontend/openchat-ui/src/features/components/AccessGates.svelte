@@ -44,6 +44,8 @@
     fields?: Field[];
     chips?: (r: AccessGateRule) => Chip[];
     soon?: boolean;
+    /** No longer offered to add; one already in `value` still shows. */
+    retired?: boolean;
   };
 
   const DOTS: Record<string, string> = {
@@ -139,7 +141,7 @@
           ? [{ label: t('ui.accessGates.minChip', { amount: `${r.a} ${assetText(r)}` }), dot: assetText(r) }]
           : nonEmpty([r.asset && { label: assetText(r), dot: assetText(r) }, r.a && { label: t('ui.accessGates.minChip', { amount: r.a }) }]),
     },
-    credential: { label: 'ui.accessGates.credentialLabel', icon: 'credential', desc: 'ui.accessGates.credentialDesc', sentence: 'ui.accessGates.credentialRule' },
+    credential: { label: 'ui.accessGates.credentialLabel', icon: 'credential', desc: 'ui.accessGates.credentialDesc', sentence: 'ui.accessGates.credentialRule', retired: true },
     unique: { label: 'ui.accessGates.uniqueLabel', icon: 'person', desc: 'ui.accessGates.uniqueDesc', sentence: 'ui.accessGates.uniqueRule' },
     locked: { label: 'ui.accessGates.lockedLabel', icon: 'lock', desc: 'ui.accessGates.lockedDesc', sentence: 'ui.accessGates.lockedRule' },
     chit: {
@@ -150,12 +152,11 @@
       sentence: 'ui.accessGates.chitRule',
       chips: (r) => (r.a ? [{ label: `${r.a} CHIT` }] : []),
     },
-    nft: { label: 'ui.accessGates.nftLabel', icon: 'nft', desc: 'ui.accessGates.nftDesc', soon: true, sentence: 'ui.accessGates.nftRule' },
   };
 
   // stored values (emitted in AccessGatesState); shown through JOINER_LABELS
   const JOINERS = ['All', 'Any'];
-  const JOINER_LABELS = ['ui.accessGates.all', 'ui.accessGates.any'];
+  const JOINER_LABELS = ['ui.accessGates.allGates', 'ui.accessGates.anyGate'];
   // stored values (emitted as `every`) and shown as-is by TimedToggle — not translated until it takes labels apart from values;
   // `everyDays` gives the host the same interval as a number
   const INTERVALS = ['1 day', '1 week', '2 weeks', '1 month', '3 months', '6 months'];
@@ -208,7 +209,7 @@
     return labelOf(TYPES[r.type]?.picker, r.asset);
   }
   const featuredFor = (gt: GateType) => dirFor(gt.picker).filter((a) => a.featured).map((a) => a.id);
-  const offered = (key: string, gt: GateType) => (!types || types.includes(key)) && (!gt.assets || dirFor(gt.picker).length > 0);
+  const offered = (key: string, gt: GateType) => !gt.retired && (!types || types.includes(key)) && (!gt.assets || dirFor(gt.picker).length > 0);
 
 
   // the host can hand back the state it was last given, so gates survive the tab being unmounted and remounted
@@ -360,19 +361,6 @@
         <span class="label">{t('ui.accessGates.whoCanJoin')}</span>
         <span class="summary">{summary}</span>
       </div>
-      {#if canEdit && rules.length > 0}
-        <div class="joiners">
-          <SegmentedTabs
-            labels={JOINER_LABELS.map((k) => t(k))}
-            selectedIndex={JOINERS.indexOf(joiner)}
-            dotIndexes={[]}
-            onSelect={(i) => {
-              joiner = JOINERS[i];
-              emit();
-            }}
-          />
-        </div>
-      {/if}
     </div>
 
     <div class="rules">
@@ -492,7 +480,26 @@
         </div>
       </div>
     {:else}
-      <div class="recheck-edit">
+      <div class="membership">
+        <span class="label">{t('ui.accessGates.membership')}</span>
+        <!-- all / any sits with the other membership settings: always there, dimmed until two gates make it matter -->
+        <div class="joiner-row" class:inactive={rules.length < 2} aria-disabled={rules.length < 2 ? 'true' : undefined}>
+          <div class="joiner-text">
+            <span class="joiner-title">{t('ui.accessGates.membersMustMeet')}</span>
+            <span class="joiner-help">{t(rules.length < 2 ? 'ui.accessGates.joinerNeedsTwo' : joiner === 'Any' ? 'ui.accessGates.joinerAnyHelp' : 'ui.accessGates.joinerAllHelp')}</span>
+          </div>
+          <div class="joiners">
+            <SegmentedTabs
+              labels={JOINER_LABELS.map((k) => t(k))}
+              selectedIndex={JOINERS.indexOf(joiner)}
+              dotIndexes={[]}
+              onSelect={(i) => {
+                joiner = JOINERS[i];
+                emit();
+              }}
+            />
+          </div>
+        </div>
         <div class="cell">
           <TimedToggle
             density="flush"
@@ -838,11 +845,50 @@
     gap: var(--space-6);
   }
 
+  .membership {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+    min-width: 0;
+  }
+
+  .joiner-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-8) var(--space-16);
+    min-width: 0;
+    transition: opacity var(--duration-base) ease;
+  }
+
+  .joiner-row.inactive {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .joiner-text {
+    flex: 1 1 220px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .joiner-title {
+    font: var(--weight-semibold) var(--text-base) / 1.3 var(--font-sans);
+    color: var(--ink);
+  }
+
+  .joiner-help {
+    font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
+    color: var(--ink-4);
+  }
+
   .joiners {
     flex: none;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    width: 190px;
+    width: 230px;
   }
 
   .rules,
@@ -1128,12 +1174,6 @@
     text-wrap: pretty;
   }
 
-  .recheck-edit {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-12);
-    min-width: 0;
-  }
 
   .cell {
     display: grid;

@@ -173,8 +173,8 @@ export class SwapForm {
         this.#clearQuotes();
     }
 
-    /** Asks every DEX for a quote; `onQuotes` hears each DEX's answer too, as `quotes` does. */
-    async getQuote(onQuotes?: (quotes: [DexId, DexQuote][]) => void) {
+    /** Asks every DEX for a quote; `quotes` follows each DEX's answer as it comes in. */
+    async getQuote() {
         if (!this.#canQuote) return;
 
         const request = ++this.#quoteRequest;
@@ -194,7 +194,6 @@ export class SwapForm {
             (quotes) => {
                 if (request !== this.#quoteRequest) return;
                 this.#quotes = quotes;
-                onQuotes?.(quotes);
             },
         );
         if (request !== this.#quoteRequest) return;

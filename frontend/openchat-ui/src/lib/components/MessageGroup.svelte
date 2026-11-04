@@ -637,7 +637,7 @@
     height: 34px;
     padding: 0 3px;
     border-radius: 17px;
-    background: var(--surface-3, #24242e);
+    background: var(--surface-3);
     box-shadow:
       inset 0 0 0 1px var(--line-2),
       0 8px 20px rgba(0, 0, 0, 0.4);

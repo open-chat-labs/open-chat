@@ -93,14 +93,13 @@
     import { walletCatalogue } from "./walletCatalogue.svelte";
     import {
         SwapFailed,
-        type DexQuoteRow,
         type SwapQuote as SwapQuoteView,
         type SwapRequest,
     } from "@openchat/ui/src/features/components/WalletSwap.svelte";
     import { canPayWith, SwapForm } from "@src/logic/wallet/swapForm.svelte";
     import { TokenState } from "@src/logic/wallet/walletState.svelte";
     import { amountUnits } from "@src/logic/wallet/walletSend";
-    import { dexQuoteRows, swapAnswer, swapQuoteView, swapStepIndex } from "./swap.adapter";
+    import { swapAnswer, swapQuoteView, swapStepIndex } from "./swap.adapter";
     import QrScanDialog from "./QrScanDialog.svelte";
     import SavedAddressPicker from "./SavedAddressPicker.svelte";
     import { walletRequests } from "./walletRequests.svelte";
@@ -606,11 +605,8 @@
     });
 
     // the amount as the user typed it, in the input's units exactly (6c invariant 4), quoted by
-    // every DEX, each DEX's answer passed on as it comes in
-    async function quoteSwap(
-        request: SwapRequest,
-        progress?: (quotes: DexQuoteRow[]) => void,
-    ): Promise<SwapQuoteView> {
+    // every DEX, the best of them shown
+    async function quoteSwap(request: SwapRequest): Promise<SwapQuoteView> {
         const form = swapForm;
         const tokenIn = enhancedCryptoLookup.value.get(request.from);
         const tokenOut = enhancedCryptoLookup.value.get(request.to);
@@ -626,7 +622,7 @@
         if (form.outToken?.ledger !== tokenOut.ledger) form.selectOut(tokenOut);
         form.inToken.draftAmount = amountUnits(request.amountText, tokenIn.decimals);
         form.validAmount = form.inToken.draftAmount > 0n;
-        await form.getQuote((quotes) => progress?.(dexQuoteRows(quotes, tokenOut.decimals)));
+        await form.getQuote();
         if (form.quote !== undefined) {
             return swapQuoteView(form.quote, form.quotes, tokenOut.decimals, (key, values) =>
                 $_(key, { values }),
