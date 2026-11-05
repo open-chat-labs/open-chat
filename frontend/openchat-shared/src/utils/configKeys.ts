@@ -67,4 +67,7 @@ export const configKeys = {
     webRailExpanded: "openchat_web_rail_expanded",
     unrulyColours: "openchat_unruly_colours",
     webAccent: "openchat_web_accent",
+    // "Switch to desktop site / mobile site": read by selectLayout (main.ts) and, by its literal
+    // value, by the startup script in index.html (rollup.extras.mjs)
+    layoutOverride: "openchat_layout_override",
 };

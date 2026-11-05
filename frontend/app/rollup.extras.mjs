@@ -176,6 +176,8 @@ const MOBILE_APP_ROOT = "/src/components_mobile/App.svelte";
 // replaces the desktop tree, its dependencies should not grow the vendor chunk that
 // every user of the existing trees downloads.
 const WEB_APP_ROOT = "/src/web/App.svelte";
+// The native tree (OC_NATIVE_LAYOUT=v4) is left out for the same reason until the cutover.
+const NATIVE_APP_ROOT = "/src/native/App.svelte";
 const APP_ROOTS = [DESKTOP_APP_ROOT, MOBILE_APP_ROOT];
 function isAppRoot(id) {
     return APP_ROOTS.some((root) => id.endsWith(root));
@@ -268,6 +270,26 @@ const IS_NATIVE_APP = `("__TAURI_INTERNALS__" in window || location.protocol ===
 // globals yet. A wrong guess costs a wasted download, since main.ts goes by its own reading.
 const MOUNTS_WEB_LAYOUT = `(window.innerWidth >= 768 && !${IS_NATIVE_APP})`;
 
+// Whether a build with the native tree mounts it (`selectLayout` in utils/layout.ts, the v4 branch):
+// always in the apps, then the user's stored "desktop site / mobile site", then a touch-first viewport
+// below tablet-landscape width or a narrow one that isn't a desktop pointer's. Like the web layout's,
+// only a guess: main.ts goes by its own reading.
+const MOUNTS_NATIVE_LAYOUT = `(function () {
+        if (${IS_NATIVE_APP}) return true;
+        var override;
+        try {
+            override = localStorage.getItem("openchat_layout_override");
+        } catch (e) {}
+        if (override === "mobile" || override === "desktop") return override === "mobile";
+        var media = function (query) {
+            return !!(window.matchMedia && window.matchMedia(query).matches);
+        };
+        var coarse = media("(pointer: coarse)");
+        var hover = media("(hover: hover)");
+        var width = window.innerWidth;
+        return (coarse && !hover && width < 1024) || (width < 768 && !(!coarse && hover));
+    })()`;
+
 // The fonts of the existing App trees and of the new web UI (src/web). Built in as
 // import.meta.env.OC_APP_FONTS_URL / OC_WEB_FONTS_URL for main.ts.
 export const APP_FONTS_URL =
@@ -275,11 +297,11 @@ export const APP_FONTS_URL =
 export const WEB_FONTS_URL =
     "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
 
-// index.html's font stylesheet. A build with the new web UI (`webLayout`) only knows in the browser
-// which App tree it gets, so the startup script asks for the likely one and main.ts makes sure of
-// the one it mounts (utils/fonts.ts).
-export function fontsLink(webLayout) {
-    return webLayout ? "" : `<link href="${APP_FONTS_URL}" rel="stylesheet" />`;
+// index.html's font stylesheet. A build with the new web UI or the native tree (`newLayouts`) only
+// knows in the browser which App tree it gets, so the startup script asks for the likely one and
+// main.ts makes sure of the one it mounts (utils/fonts.ts). Both new trees use the web fonts.
+export function fontsLink(newLayouts) {
+    return newLayouts ? "" : `<link href="${APP_FONTS_URL}" rel="stylesheet" />`;
 }
 
 // OC_WEB_LAYOUT as the build sees it. Native builds leave the new web UI out whatever it says: the
@@ -287,6 +309,12 @@ export function fontsLink(webLayout) {
 export function webLayoutFlag() {
     const nativeBuild = process.env.OC_APP_TYPE === "android" || process.env.OC_APP_TYPE === "ios";
     return nativeBuild ? "" : (process.env.OC_WEB_LAYOUT ?? "");
+}
+
+// OC_NATIVE_LAYOUT as the build sees it: "v4" builds in the native tree (src/native), for the apps
+// (native builds and the web build they take over the air) and phones' browsers alike.
+export function nativeLayoutFlag() {
+    return process.env.OC_NATIVE_LAYOUT ?? "";
 }
 
 // What index.html paints behind a dark theme until the app's own styles arrive: the background of
@@ -307,9 +335,15 @@ export const STARTUP_DARK_BACKGROUND = "#1b1c21";
 // is only known in the browser. Both choices mirror what the app goes on to do (`selectLayout` in
 // utils/layout.ts and `getStoredLocale` in i18n/i18n.ts); if they ever disagree the cost is a
 // wasted download, not a broken page.
-// `webLayout` is whether the build has the new web UI (OC_WEB_LAYOUT=v3); without it there is no
-// web chunk to preload.
-export function generateStartupScript({ chunks, version, mobileLayout, webLayout = false }) {
+// `webLayout` is whether the build has the new web UI (OC_WEB_LAYOUT=v3) and `nativeLayout` whether
+// it has the native tree (OC_NATIVE_LAYOUT=v4); without them there is no such chunk to preload.
+export function generateStartupScript({
+    chunks,
+    version,
+    mobileLayout,
+    webLayout = false,
+    nativeLayout = false,
+}) {
     const chunksByFileName = new Map(chunks.map((c) => [c.fileName, c]));
     const entry = chunks.find((c) => c.isEntry);
     // The entry's own imports are preloaded by <link> tags, which the preload scanner can see
@@ -341,13 +375,28 @@ export function generateStartupScript({ chunks, version, mobileLayout, webLayout
     // early as the static link of a build without the new UI. main.ts links the right ones anyway.
     const fontsHint = `var fonts = document.createElement("link");
     fonts.rel = "stylesheet";
-    fonts.href = web ? ${JSON.stringify(WEB_FONTS_URL)} : ${JSON.stringify(APP_FONTS_URL)};
+    fonts.href = web || native ? ${JSON.stringify(WEB_FONTS_URL)} : ${JSON.stringify(APP_FONTS_URL)};
     document.head.appendChild(fonts);`;
+
+    // The trees as selectLayout picks them: with the native tree in the build, a browser that doesn't
+    // get it gets the desktop site (the new web UI if the build has it), whatever its width
+    const mounts = nativeLayout
+        ? {
+              native: MOUNTS_NATIVE_LAYOUT,
+              mobile: "false",
+              web: `!native && ${webLayout}`,
+          }
+        : {
+              native: "false",
+              mobile: `${mobileLayout} === "v2" && narrow`,
+              web: webLayout ? MOUNTS_WEB_LAYOUT : "false",
+          };
 
     return `(function () {
     var narrow = window.innerWidth < 768;
-    var mobile = ${mobileLayout} === "v2" && narrow;
-    var web = ${webLayout ? MOUNTS_WEB_LAYOUT : "false"};
+    var native = ${mounts.native};
+    var mobile = ${mounts.mobile};
+    var web = ${mounts.web};
     var mode;
     try {
         mode = localStorage.getItem("openchat_startup_theme_mode");
@@ -361,7 +410,7 @@ export function generateStartupScript({ chunks, version, mobileLayout, webLayout
         link.href = "/" + file;
         document.head.appendChild(link);
     }
-    (mobile ? ${JSON.stringify(appChunks(MOBILE_APP_ROOT))} : web ? ${JSON.stringify(webLayout ? appChunks(WEB_APP_ROOT) : [])} : ${JSON.stringify(appChunks(DESKTOP_APP_ROOT))}).forEach(preload);
+    (native ? ${JSON.stringify(nativeLayout ? appChunks(NATIVE_APP_ROOT) : [])} : mobile ? ${JSON.stringify(appChunks(MOBILE_APP_ROOT))} : web ? ${JSON.stringify(webLayout ? appChunks(WEB_APP_ROOT) : [])} : ${JSON.stringify(appChunks(DESKTOP_APP_ROOT))}).forEach(preload);
     var locales = ${JSON.stringify(locales)};
     var locale;
     try {
@@ -370,7 +419,7 @@ export function generateStartupScript({ chunks, version, mobileLayout, webLayout
     locale = (locale || navigator.language || "en").split("-")[0];
     preload(locales.en);
     if (locale !== "en" && locales[locale]) preload(locales[locale]);
-    ${webLayout ? fontsHint : ""}
+    ${webLayout || nativeLayout ? fontsHint : ""}
     try {
         window.OC_PRESTARTED_WORKER = new Worker(${JSON.stringify(`/worker.js?v=${version}`)}, { type: "module" });
     } catch (e) {}

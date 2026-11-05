@@ -18,7 +18,9 @@ this tree and `@openchat/ui` out of the bundle altogether.
 Native builds leave it out for now (see `GAPS.md`).
 
 `selectLayout` (`utils/layout.ts`) mounts it on viewports of 768px and up. Narrower viewports keep
-getting the existing apps until the narrow layouts are designed.
+getting the existing apps until the narrow layouts are designed. In a build that also has the native
+tree (`OC_NATIVE_LAYOUT=v4`, `src/native`), it's every browser that doesn't get the native tree,
+narrow desktop windows included; phones and tablets in portrait get the native tree.
 
 ## Layout
 
