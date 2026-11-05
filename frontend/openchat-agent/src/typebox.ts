@@ -2545,6 +2545,11 @@ export const UserIndexSetAuthorityReporterArgs = /* @__PURE__ */ Type.Object({
     principal: Type.Optional(TSPrincipal),
 });
 
+export type UserIndexSetTurnstileConfigArgs = Static<typeof UserIndexSetTurnstileConfigArgs>;
+export const UserIndexSetTurnstileConfigArgs = /* @__PURE__ */ Type.Object({
+    secret_key: Type.Optional(Type.String()),
+});
+
 export type UserIndexClearAuthorityReportAttemptAuthorityReportFailure = Static<
     typeof UserIndexClearAuthorityReportAttemptAuthorityReportFailure
 >;
@@ -7124,6 +7129,7 @@ export const LocalUserIndexClaimPrizeArgs = /* @__PURE__ */ Type.Object({
     chat_id: MultiUserChat,
     message_id: MessageId,
     sign_in_proof_jwt: Type.Optional(Type.String()),
+    turnstile_token: Type.Optional(Type.String()),
 });
 
 export type LocalUserIndexInstallBotArgs = Static<typeof LocalUserIndexInstallBotArgs>;

@@ -178,7 +178,14 @@ export {
     type PollReader,
     type PollView,
 } from "./utils/polls";
-export { isTrustedClick, prizeView, type PrizeReader, type PrizeView } from "./utils/prizes";
+export {
+    claimPrizeFailureReason,
+    isTrustedClick,
+    prizeClaimCustomData,
+    prizeView,
+    type PrizeReader,
+    type PrizeView,
+} from "./utils/prizes";
 export {
     swapAcceptCost,
     swapActions,

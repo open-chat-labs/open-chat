@@ -1,4 +1,10 @@
-import { i18nKey, type PrizeContent, type ResourceKey } from "@shared";
+import {
+    ErrorCode,
+    i18nKey,
+    type ClaimPrizeResponse,
+    type PrizeContent,
+    type ResourceKey,
+} from "@shared";
 
 /** Who is looking at a prize, and what they hold that its requirements ask about. */
 export type PrizeReader = {
@@ -72,6 +78,21 @@ export function prizeView(content: PrizeContent, reader: PrizeReader): PrizeView
             eligible,
         gates,
     };
+}
+
+/**
+ * The custom data a prize's human check (Cloudflare Turnstile) is run with. The LocalUserIndex
+ * checks the token it issues was for this, so it serves only this user's claim of this prize.
+ */
+export function prizeClaimCustomData(userId: string, messageId: bigint): string {
+    return `${userId}_${messageId}`;
+}
+
+/** What to tell the user when a prize claim fails: a human check the backend refused can be retried. */
+export function claimPrizeFailureReason(response: ClaimPrizeResponse): ResourceKey {
+    return response.kind === "error" && response.code === ErrorCode.HumanVerificationFailed
+        ? i18nKey("prizes.humanCheckFailed")
+        : i18nKey("prizes.claimFailed");
 }
 
 /** A click the user made: a script's synthetic click can't claim a prize (claimPrize). */

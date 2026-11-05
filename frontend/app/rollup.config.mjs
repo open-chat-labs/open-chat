@@ -290,6 +290,9 @@ export default {
             "import.meta.env.OC_PRICE_SERVICE_URL": JSON.stringify(
                 process.env.OC_PRICE_SERVICE_URL ?? "",
             ),
+            "import.meta.env.OC_TURNSTILE_SITE_KEY": JSON.stringify(
+                process.env.OC_TURNSTILE_SITE_KEY ?? "",
+            ),
             "import.meta.env.OC_MINI_APP_SERVICE_URL": JSON.stringify(
                 process.env.OC_MINI_APP_SERVICE_URL ?? "",
             ),

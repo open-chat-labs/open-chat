@@ -151,6 +151,7 @@ import {
     type ChitEventsResponse,
     type ChitLeaderboardResponse,
     type ChitState,
+    type ClaimPrizeOutcome,
     type CkbtcMinterDepositInfo,
     type CkbtcMinterWithdrawalInfo,
     type CksolMinterDepositInfo,
@@ -414,7 +415,7 @@ import type { OpenChatConfig } from "./config";
 import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
 import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import { blockOutcome, type BlockContext, type BlockOutcome } from "./utils/profileBlock";
-import { isTrustedClick } from "./utils/prizes";
+import { claimPrizeFailureReason, isTrustedClick } from "./utils/prizes";
 import { savedAccountName, withoutAccountsNamed, withSavedAccount } from "./utils/namedAccounts";
 import {
     FilteredProposals,
@@ -9627,27 +9628,34 @@ export class OpenChat {
         }
     }
 
-    claimPrize(
+    // `turnstileToken` is the prize's human check's (Cloudflare Turnstile), issued for this user's
+    // claim of this prize (prizeClaimCustomData). A claim without one is for the backend to refuse,
+    // once it requires one.
+    async claimPrize(
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
         e: MouseEvent,
-        signInProof: string | undefined,
-    ): Promise<boolean> {
+        turnstileToken: string | undefined,
+    ): Promise<ClaimPrizeOutcome> {
         if (!isTrustedClick(e)) {
-            return Promise.resolve(false);
+            return { kind: "failed", message: i18nKey("prizes.claimFailed") };
         }
 
-        return this.#worker
-            .send({ kind: "claimPrize", chatId, messageId, signInProof })
-            .then((resp) => {
-                if (resp.kind !== "success") {
-                    return false;
-                } else {
-                    localUpdates.markPrizeClaimed(messageId);
-                    return true;
-                }
-            })
-            .catch(() => false);
+        try {
+            const resp = await this.#worker.send({
+                kind: "claimPrize",
+                chatId,
+                messageId,
+                turnstileToken,
+            });
+            if (resp.kind !== "success") {
+                return { kind: "failed", message: claimPrizeFailureReason(resp) };
+            }
+            localUpdates.markPrizeClaimed(messageId);
+            return { kind: "success" };
+        } catch {
+            return { kind: "failed", message: i18nKey("prizes.claimFailed") };
+        }
     }
 
     // `token1` and `token1Amount` are what accepting the swap costs, as the swap's message has them
@@ -14041,6 +14049,10 @@ export class OpenChat {
 
     setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "setAlchemyApiKey", apiKey });
+    }
+
+    setTurnstileConfig(secretKey: string | undefined): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "setTurnstileConfig", secretKey });
     }
 
     setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {

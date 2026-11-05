@@ -1,25 +1,27 @@
-import type { ResourceKey } from "@client";
-import { i18nKey } from "@src/i18n/i18n";
-
-export type PrizeClaimStep =
-    | { kind: "authenticate" }
-    | { kind: "claim"; signInProof: string | undefined }
-    | { kind: "failed"; message: ResourceKey };
+import {
+    isTrustedClick,
+    type MultiUserChatIdentifier,
+    type OpenChat,
+    type ResourceKey,
+} from "@client";
+import type { HumanCheck } from "./humanCheck.svelte";
 
 /**
- * What to do when the user claims a prize. A prize that needs a captcha needs proof that the user
- * has just signed in: `signIn` is undefined until they have, and its `proof` is undefined when the
- * sign-in gave none. A claim without the proof can't succeed, so say so rather than ask the user
- * to sign in again.
+ * Claims a prize from the reader's click, with the token of the prize's human check (waiting for
+ * it if the check is still running). A check that fails still claims, without a token, for the
+ * backend to refuse once it requires one. What to tell the reader, if anything: a script's click
+ * claims nothing and says nothing, and takes no token.
  */
-export function prizeClaimStep(
-    requiresCaptcha: boolean,
-    signIn: { proof: string | undefined } | undefined,
-): PrizeClaimStep {
-    if (!requiresCaptcha) return { kind: "claim", signInProof: undefined };
-    if (signIn === undefined) return { kind: "authenticate" };
-    if (signIn.proof === undefined) {
-        return { kind: "failed", message: i18nKey("identity.failure.unexpectedError") };
-    }
-    return { kind: "claim", signInProof: signIn.proof };
+export async function claimPrizeWithHumanCheck(
+    client: Pick<OpenChat, "claimPrize">,
+    check: HumanCheck,
+    chatId: MultiUserChatIdentifier,
+    messageId: bigint,
+    e: MouseEvent,
+): Promise<ResourceKey | undefined> {
+    if (!isTrustedClick(e)) return undefined;
+
+    const token = await check.take();
+    const outcome = await client.claimPrize(chatId, messageId, e, token);
+    return outcome.kind === "success" ? undefined : outcome.message;
 }
