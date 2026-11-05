@@ -32,6 +32,7 @@ function fakeClient() {
         deleteMessage: vi.fn(async () => true),
         getContentAsText: vi.fn(() => "hi"),
         pinMessage: vi.fn(async () => true),
+        replyPrivately: vi.fn(async () => undefined),
         retrySendMessage: vi.fn(async () => ({ kind: "failure" as const })),
         revealBlockedMessage: vi.fn(),
         revealDeletedMessage: vi.fn(async () => true),
@@ -82,6 +83,13 @@ describe("a message's actions in the conversation", () => {
         const straight = fakeClient();
         await runMessageAction("delete_for_me", target(straight));
         expect(straight.deleteMessage).toHaveBeenCalledWith(chatId, undefined, 42n);
+    });
+
+    test("forwarding asks where to first", async () => {
+        expect(await runMessageAction("forward", target(fakeClient()))).toEqual({
+            kind: "forward",
+            evt,
+        });
     });
 
     test("retrying resends the failed message itself", async () => {

@@ -685,6 +685,8 @@ type MessageMenuEntry = { action: MessageMenuAction; label: string; icon: string
 const MESSAGE_MENU: MessageMenuEntry[] = [
     { action: "reply", label: "quoteReply", icon: "reply" },
     { action: "edit", label: "editMessage", icon: "edit" },
+    { action: "forward", label: "forward", icon: "forward" },
+    { action: "reply_privately", label: "replyPrivately", icon: "dm" },
     { action: "copy", label: "copy", icon: "copy" },
     { action: "copy_url", label: "copyMessageUrl", icon: "link" },
     { action: "share", label: "share", icon: "share" },

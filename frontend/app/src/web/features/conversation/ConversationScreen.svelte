@@ -100,6 +100,7 @@
         enterSend,
         lowBandwidth,
     } from "@src/stores/settings";
+    import { messageToForwardStore } from "@src/stores/messageToForward";
     import { quickReactions } from "@src/stores/quickReactions";
     import { disableTipsFeature } from "@src/utils/features";
     import { messageSwipeLeft } from "@src/utils/messageSwipe";
@@ -679,11 +680,9 @@
         failed: boolean,
         offered: MessageMenu,
     ): RowOffers {
-        const swipeLeft = messageSwipeLeft(evt.event.sender === me, offered.actions);
         return {
             menu: offered.menu,
-            // TODO(phase 5, 5b): forwarding
-            swipeLeft: swipeLeft === "forward" ? undefined : swipeLeft,
+            swipeLeft: messageSwipeLeft(evt.event.sender === me, offered.actions),
             retry: offered.actions.has("retry") ? () => run("retry", evt, failed) : undefined,
         };
     }
@@ -771,7 +770,24 @@
             confirmDelete: $confirmMessageDeletion,
         });
         if (dialog?.kind === "delete") deleting = dialog.evt;
+        if (dialog?.kind === "forward") {
+            screen.dialogs.open({ kind: "forward", message: dialog.evt.event });
+        }
     }
+
+    // a message forwarded here (ForwardDialogScreen) goes out as the chat opens, as in the old
+    // trees, so the client can ask for its rules first
+    $effect(() => {
+        const current = chat;
+        void chatKey;
+        if (current === undefined) return;
+        untrack(() => {
+            const forwarding = $messageToForwardStore;
+            if (forwarding === undefined) return;
+            messageToForwardStore.set(undefined);
+            client.forwardMessage({ chatId: current.id }, forwarding);
+        });
+    });
 
     function confirmDelete() {
         const evt = deleting;

@@ -4,6 +4,7 @@ import {
     localUpdates,
     messageReplyContext,
     publish,
+    routeForChatIdentifier,
     type ChatIdentifier,
     type EventWrapper,
     type Message,
@@ -15,6 +16,7 @@ import {
 import { translateMessage } from "@src/logic/conversation/translateMessage";
 import { toastStore } from "@src/stores/toast";
 import { copyMessageUrl, shareMessage } from "@src/utils/share";
+import { navigate } from "@src/utils/navigation";
 import { copyToClipboard } from "@src/utils/urls";
 
 // What each of a message's actions does in the conversation (MessageActions, the hover bar and
@@ -30,6 +32,7 @@ export type MessageMenuClient = Pick<
     | "deleteMessage"
     | "getContentAsText"
     | "pinMessage"
+    | "replyPrivately"
     | "retrySendMessage"
     | "revealBlockedMessage"
     | "revealDeletedMessage"
@@ -54,8 +57,10 @@ export type MessageMenuTarget = {
     confirmDelete: boolean;
 };
 
-/** A dialog an action needs before it's done. */
-export type MessageMenuDialog = { kind: "delete"; evt: EventWrapper<Message> };
+/** A dialog an action needs before it's done: confirming a delete, or picking where to forward to. */
+export type MessageMenuDialog =
+    | { kind: "delete"; evt: EventWrapper<Message> }
+    | { kind: "forward"; evt: EventWrapper<Message> };
 
 /**
  * Does what the action says to the message, or says which dialog to show first. Each action is
@@ -78,6 +83,20 @@ export async function runMessageAction(
         case "edit":
             localUpdates.draftMessages.setEditing(context, evt, target.users);
             return;
+        case "forward":
+            return { kind: "forward", evt };
+        case "reply_privately": {
+            // the sender's DM, made if there's none, with the reply set
+            const dm = await client.replyPrivately(
+                messageReplyContext(evt, target.users.get(msg.sender), context),
+            );
+            if (dm === undefined) {
+                publish("notFound");
+            } else {
+                navigate(routeForChatIdentifier("chats", dm));
+            }
+            return;
+        }
         case "copy":
             void copyToClipboard(client.getContentAsText(target.formatter, msg.content));
             return;

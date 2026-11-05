@@ -560,7 +560,8 @@ design export needs. Each entry says where it came up.
   - by hand: `ChatPicker` takes `filter` (the host's search), `emptyLabel`, and each chat's `sub`
     and `group` (the sections); `InviteDialog` takes `filterChats`, and its `onShareToChat` may
     resolve `false`; `Avatar` exports `AVATAR_GRADIENTS` for the picker's faces.
-  - not yet: Receive's "Share to chat" (6b, with `SharePicker`), forward (5b), a daily puzzle
+  - forwarding a message uses it too (5b, `ForwardDialogScreen`), one chat at a time;
+  - not yet: Receive's "Share to chat" (6b, with `SharePicker`), a daily puzzle
     result (#10236). The picker has no recent chats order (the design's "Recent chats"): sections
     are sorted by name, as the old pickers did.
 
@@ -587,7 +588,8 @@ design export needs. Each entry says where it came up.
   referrer, and Swap shows only the best quote. Not yet:
   - `NavRail` pins take a `menu` (right-click, Shift+F10), but the rail adapter gives the
     community pins none: the community menu's actions live in the chat list header for now.
-  - `ChatPicker`'s multi-select (forward to several chats, 5b), `ChatListPanel`'s grouped search
+  - `ChatPicker`'s multi-select (forward to several chats; the old trees forwarded to one, as 5b
+    does), `ChatListPanel`'s grouped search
     (people and messages need search in the app), the design's `MediaViewer` (replacing
     `features/conversation/MediaViewer.svelte`) and `PuzzleDialog`'s screen layout (native) are
     separate pieces of work.
@@ -1097,9 +1099,12 @@ design export needs. Each entry says where it came up.
   reply and edit (the composer's strip), copy, copy link, share (where the browser can), translate
   / untranslate (Diamond, else the upgrade), pin / unpin, cancel a reminder, block the sender,
   delete (asking first, with "don't show me this again", `confirmMessageDeletion`; a failed
-  message only goes from this device), reveal, undelete, retry (`retrySendMessage`). Each runs in
-  `features/conversation/messageMenu.ts`. Not yet:
-  - forward, reply privately, remind, report and tip (5b's next parts);
+  message only goes from this device), reveal, undelete, retry (`retrySendMessage`), forward (the
+  chat picker, `ForwardDialogScreen`: the message goes out as the chosen chat opens, as in the old
+  trees, through `messageToForwardStore`; a note written in the picker waits in that chat's draft,
+  where the old pickers had no note) and reply privately (`replyPrivately`: the sender's DM, made
+  if missing, with the reply set). Each runs in `features/conversation/messageMenu.ts`. Not yet:
+  - remind, report and tip (5b's next parts);
   - the thread's items (reply in thread, follow / unfollow) wait for the thread (4c), and a
     proposal's collapse for proposals;
   - the mobile app's "download media" (native save) is left to the narrow pass;

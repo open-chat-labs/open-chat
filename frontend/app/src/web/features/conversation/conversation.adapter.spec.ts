@@ -409,9 +409,12 @@ describe("a message's menu", () => {
     const offers = (...actions: MessageMenuAction[]) => new Set<MessageMenuAction>(actions);
 
     test("lists what the message offers in the menu's order, with what removes it last, apart", () => {
-        const items = messageMenuItems(offers("delete", "copy", "reply", "pin", "block_user"));
+        const items = messageMenuItems(
+            offers("delete", "copy", "forward", "reply", "pin", "block_user"),
+        );
         expect(items.map((i) => i.action)).toEqual([
             "reply",
+            "forward",
             "copy",
             "pin",
             "separator",
