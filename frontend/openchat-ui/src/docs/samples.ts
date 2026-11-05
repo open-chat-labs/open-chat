@@ -1,6 +1,7 @@
 import { createRawSnippet } from 'svelte';
 // Demo-only data for the docs page (components carry no sample data of their own).
 import type { GroupMessage, MenuItem, MessageGroupItem, TokenOption } from '../lib/types';
+import type { NativeTab } from '../native/types';
 
 const icon = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
 
@@ -1304,3 +1305,21 @@ Object.assign(samples, {
   },
   Learn: { ...pageLinks, auth: samples.AuthDialog, onEnterApp: () => {} },
 });
+
+// ── Native shell kit (groups/Native.svelte) ──
+
+// the user's photo: the prototype's violet gradient, as an image (a host passes a real photo's URL)
+const nativePhoto =
+  'data:image/svg+xml,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 26"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B48CFF"/><stop offset="1" stop-color="#6A5CFF"/></linearGradient></defs><rect width="26" height="26" fill="url(#g)"/></svg>',
+  );
+
+export const nativeTabsNoPhoto: NativeTab[] = [
+  { id: 'chats', label: 'docs.native.tabs.chats', icon: 'chat', count: 3 },
+  { id: 'communities', label: 'docs.native.tabs.communities', icon: 'community' },
+  { id: 'wallet', label: 'docs.native.tabs.wallet', icon: 'wallet' },
+  { id: 'activity', label: 'docs.native.tabs.activity', icon: 'bell', dot: true },
+  { id: 'you', label: 'docs.native.tabs.you', icon: 'user' },
+];
+export const nativeTabs: NativeTab[] = nativeTabsNoPhoto.map((t) => (t.id === 'you' ? { ...t, avatarUrl: nativePhoto } : t));

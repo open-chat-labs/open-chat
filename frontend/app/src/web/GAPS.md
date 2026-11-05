@@ -40,6 +40,16 @@ design export needs. Each entry says where it came up.
     `--hero-base` either. The prototype pads the bottom by a fixed 34px on iOS (the home
     indicator) and 12px on Android; `--safe-bottom` is the device's inset alone, so N2's bars
     decide whether they need a minimum.
+- **Native shell kit** (native N2, #10365; `@openchat/ui/src/native`, EXPORT-LOG 2026-11-05). Left
+  for N3:
+  - Put `data-os="ios"` or `"android"` on the native root beside `data-platform="native"`: the touch
+    targets (`--touch-target`, 44 / 48px), the back arrow and the kebab follow it. Mobile web picks
+    by the user agent.
+  - Install the device's haptics once with `setHaptics` (the Tauri plugin's light impact); without
+    it the kit vibrates 10ms where the browser can (Android's mobile web) and does nothing on iOS.
+  - The bars at the bottom pad by `--bar-end`, the safe area but at least 12px (the prototype's
+    Android value; on iOS the home indicator's inset is 34px, its value). The prototype's top padding
+    (iOS 54px, Android 4px) is `--safe-top` alone, on both.
 - **Shell breakpoints vs layout tokens**: the shell's breakpoints and widths (Fix Brief - App
   Shell Layout: 768 / 1200 / 1476 / 1876 / 2476px, chat list `clamp(350px, 30cqw, 550px)`, right
   column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*` 1280–2500px,

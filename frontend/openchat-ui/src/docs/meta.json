@@ -19858,6 +19858,222 @@
     "group": "features"
   },
   {
+    "name": "NativePageHeader",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "The native page header: back (a chevron on iOS, an arrow on Android), a title or an avatar + name + sub line, trailing icon buttons and the kebab (horizontal on iOS, vertical on Android). size=\"lg\" is a tab root's title row.",
+    "preview": {
+      "width": 402,
+      "height": 64
+    },
+    "props": [
+      {
+        "name": "title",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): the page title, or the name beside the avatar."
+      },
+      {
+        "name": "sub",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the line under the name (a status, a member count)."
+      },
+      {
+        "name": "size",
+        "type": "'md' | 'lg'",
+        "default": "md",
+        "editor": "enum",
+        "options": [
+          "md",
+          "lg"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'md'",
+        "doc": "md: a pushed page's 17px title. lg: a tab root's 21px title, without back."
+      },
+      {
+        "name": "avatar",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The avatar before the name (the conversation's header): an Avatar or TokenAvatar, about 36px."
+      },
+      {
+        "name": "onBack",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "backLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.common.back'",
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "onTitleClick",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Makes the title (with its avatar and sub line) a button: the conversation's details."
+      },
+      {
+        "name": "titleLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the title button's accessible name, when it says more than the title."
+      },
+      {
+        "name": "actions",
+        "type": "NativeHeaderAction[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Trailing icon buttons, before the kebab."
+      },
+      {
+        "name": "onMore",
+        "type": "(anchor: HTMLElement) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Shows the kebab last; gets the button, to anchor a menu to."
+      },
+      {
+        "name": "moreLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.common.moreOptions'",
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "divider",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A hairline under the header."
+      },
+      {
+        "name": "children",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Trailing content before the icon buttons (a custom button, a badge)."
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "TabBar",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "The native tab bar: icon-only tabs in touch-target cells, an unread count, a dot, the user's photo (ringed when selected); a tap bounces the icon (not with reduced motion) and gives a light haptic.",
+    "preview": {
+      "width": 402,
+      "height": 80
+    },
+    "props": [
+      {
+        "name": "tabs",
+        "type": "NativeTab[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "selected",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The selected tab's id."
+      },
+      {
+        "name": "onSelect",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Every tap, the selected tab's included."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.native.tabBar.label'",
+        "doc": "Resource key (or literal text): the bar's accessible name."
+      }
+    ],
+    "group": "native"
+  },
+  {
     "name": "Landing",
     "source": "OpenChat Landing.dc.html",
     "hash": "e700433f",

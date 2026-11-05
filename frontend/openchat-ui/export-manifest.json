@@ -1229,5 +1229,28 @@
         "src/pages/types.ts"
       ]
     }
+  },
+  "native": {
+    "NativePageHeader": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the pushed screens' and the conversation's headers (`v.back`, `v.backMask`, `v.kebabRot`), the tab titles",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/NativePageHeader.svelte"
+      ]
+    },
+    "TabBar": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the tab bar (`v.tabs`, `bounceTab`)",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/TabBar.svelte",
+        "src/native/haptics.ts"
+      ]
+    }
   }
 }

@@ -1,0 +1,24 @@
+{
+  "docs": {
+    "native": {
+      "ios": "iOS",
+      "android": "Android",
+      "tabs": {
+        "chats": "Chats",
+        "communities": "Communities",
+        "wallet": "Wallet",
+        "activity": "Activity",
+        "you": "You"
+      },
+      "header": {
+        "chats": "Chats",
+        "members": "Members",
+        "online": "online",
+        "details": "Chat details",
+        "video": "Video call",
+        "voice": "Voice call",
+        "long": "Disappearing messages and read receipts"
+      }
+    }
+  }
+}

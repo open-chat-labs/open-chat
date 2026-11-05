@@ -3,7 +3,7 @@
 import meta from './meta.json';
 
 export type SectionMeta = { id: string; title: string; meta: string };
-export type GroupId = 'foundations' | 'general' | 'features' | 'api';
+export type GroupId = 'foundations' | 'general' | 'features' | 'native' | 'api';
 
 export const groups: { id: GroupId; label: string; title: string; intro: string }[] = [
   {
@@ -23,6 +23,12 @@ export const groups: { id: GroupId; label: string; title: string; intro: string 
     label: 'Features',
     title: 'Features',
     intro: 'Components that only make sense in OpenChat: chat rows, messages, the composer, navigation, panels, wallet blocks, and the patterns they assemble into.',
+  },
+  {
+    id: 'native',
+    label: 'Native',
+    title: 'Native shell kit',
+    intro: "The iOS and Android apps' own pieces (src/native): tab bar, page header, sheet, anchored and long-press menus, settings rows, code tiles and toasts. Each demo is a native root (data-platform=\"native\" with data-os), so it shows the native light surfaces, the platform's touch targets, back arrow and kebab. Switch the platform above the demos.",
   },
   {
     id: 'api',
@@ -118,6 +124,11 @@ export const features: SectionMeta[] = [
   { id: 'pages-learn', title: 'Page · Learn', meta: 'Learn · src/pages · learnContent.ts' },
 ];
 
+export const native: SectionMeta[] = [
+  { id: 'native-tab-bar', title: 'Tab bar', meta: 'TabBar · haptics.ts' },
+  { id: 'native-page-header', title: 'Page header', meta: 'NativePageHeader' },
+];
+
 type Meta = { name: string; source: string; props: unknown[] };
 export const apiComponents = (meta as Meta[]).filter((m) => m.props.length).sort((a, b) => a.name.localeCompare(b.name));
 export const api: SectionMeta[] = apiComponents.map((m) => ({
@@ -126,7 +137,7 @@ export const api: SectionMeta[] = apiComponents.map((m) => ({
   meta: `${m.source.split('/').pop()} · ${m.props.length} props`,
 }));
 
-export const sectionsFor: Record<GroupId, SectionMeta[]> = { foundations, general, features, api };
+export const sectionsFor: Record<GroupId, SectionMeta[]> = { foundations, general, features, native, api };
 
 /** Section header props by id, for `<Section {...sec(general, 'icons')}>`. */
 export const sec = (list: SectionMeta[], id: string): SectionMeta => {
