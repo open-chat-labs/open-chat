@@ -183,6 +183,10 @@
   let heroComposing = $state(false);
   let heroInput = $state<HTMLInputElement>();
   let composedTimer: ReturnType<typeof setTimeout> | undefined;
+  function endHeroComposing(): void {
+    clearTimeout(composedTimer);
+    heroComposing = false;
+  }
   // the search text as it stands
   const text = $derived(heroComposing ? '' : query.trim());
   const q = $derived(text.toLowerCase());
@@ -191,6 +195,9 @@
   // opens the search view from the hero's search and moves the focus to its input in the same event, so a phone keeps its
   // keyboard; the hero's input itself never opens it on focus, so Tab goes past it to Popular and the list
   function openSearch(): void {
+    // a word the hero was composing is the search's now (Safari's Enter or a click in the hero right after it's
+    // composed, before compositionend's timer), and no composition outlives the hero
+    endHeroComposing();
     searchOpen = true;
     flushSync();
     searchInput?.focus();
@@ -201,6 +208,7 @@
   // Back or Esc: the search left, the home list asked for at once (nobody is typing); the input is blurred before it
   // goes, so its focus doesn't outlive it
   function leaveSearch(): void {
+    endHeroComposing();
     searchInput?.blur();
     focused = false;
     searchOpen = false;
@@ -560,6 +568,11 @@
           onkeydown={(e) => {
             if (e.key === 'Enter' || (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey)) openSearch();
           }}
+          oninput={(e) => {
+            // text that comes without a beforeinput (autofill, a password manager or an extension, some dictation)
+            // has reached `query` and swapped the view already: the search takes it, and the focus, as above
+            if (!heroComposing && !(e instanceof InputEvent && e.isComposing) && query.trim()) openSearch();
+          }}
           onbeforeinput={(e) => {
             // text from anywhere else (AltGr or Option characters, a paste, a drop) opens the search with it, before
             // the hero's input can take it: text in the hero would swap the view and take the input (and its focus)
@@ -583,10 +596,8 @@
             // which one it was is only known once that task is done; until then the word stays uncomposed
             clearTimeout(composedTimer);
             composedTimer = setTimeout(() => {
-              if (document.activeElement === heroInput && query.trim()) {
-                heroComposing = false;
-                openSearch();
-              } else {
+              if (document.activeElement === heroInput && query.trim()) openSearch();
+              else {
                 query = '';
                 heroComposing = false;
               }
