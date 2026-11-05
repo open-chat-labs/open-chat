@@ -20,7 +20,7 @@
     import { currentThemeMode, themeType } from "@theme/themes";
     import { supportedLanguagesByCode } from "@i18n/i18n";
     import { navigate } from "@src/utils/navigation";
-    import { ANDROID_APK_URL, ANDROID_PLAY_TEST_URL } from "@src/utils/urls";
+    import { ANDROID_APK_URL, ANDROID_PLAY_STORE_URL } from "@src/utils/urls";
     import { getContext, onDestroy, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Placeholder from "../app/Placeholder.svelte";
@@ -30,7 +30,13 @@
     import { LazyModule } from "../../lazyModule.svelte";
     import { exploreCommunities } from "../explore/explore.adapter";
     import { FeaturedCommunities } from "./featuredCommunities.svelte";
-    import { isEmailLinkPage, landingCommunities, learnPageFor, learnPath } from "./marketing";
+    import {
+        isEmailLinkPage,
+        landingCommunities,
+        learnPageFor,
+        learnPath,
+        pinnedLandingCommunity,
+    } from "./marketing";
 
     let { route }: { route: RouteParams } = $props();
 
@@ -110,22 +116,26 @@
             route.kind === "features_route",
     );
 
-    // Landing's featured communities: Explore's top ones, as Explore shows them, asked for once the
-    // client can answer (FeaturedCommunities)
+    // Landing's featured communities: the OpenChat community, then Explore's top ones as Explore
+    // shows them, asked for once the client can answer (FeaturedCommunities)
     const featured = new FeaturedCommunities(client);
     $effect(() => {
         const ready = $chatsInitialisedStore;
         if (landing) untrack(() => void featured.want(ready));
     });
-    const communities = $derived(
-        landingCommunities(
+    const communities = $derived.by(() => {
+        const { pinned, ranked } = featured.featured;
+        const ranking = landingCommunities(
             exploreCommunities(
-                featured.matches,
+                ranked,
                 (m) => client.communityAvatarUrl(m.id.communityId, m.avatar),
                 supportedLanguagesByCode,
             ),
-        ),
-    );
+        );
+        if (pinned === undefined) return ranking;
+        const avatar = client.communityAvatarUrl(pinned.id.communityId, pinned.avatar);
+        return [pinnedLandingCommunity(pinned, avatar), ...ranking];
+    });
 
     // The page a sign-in link opens: its query (?auth&m=…&s1=…&s2=…) is kept to go with the
     // code, and taken out of the URL straight away, as the old UI does
@@ -171,7 +181,7 @@
         exploreHref="/communities"
         learnPageHref={(page: LearnPage) => learnPath(page)}
         {communities}
-        playStoreHref={ANDROID_PLAY_TEST_URL}
+        playStoreHref={ANDROID_PLAY_STORE_URL}
         apkHref={ANDROID_APK_URL}
         termsHref="/terms"
         privacyHref="/privacy"

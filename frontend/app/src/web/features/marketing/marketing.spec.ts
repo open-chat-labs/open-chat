@@ -1,5 +1,11 @@
-import type { RouteParams } from "@client";
-import { isEmailLinkPage, landingCommunities, learnPageFor, learnPath } from "./marketing";
+import type { CommunitySummary, RouteParams } from "@client";
+import {
+    isEmailLinkPage,
+    landingCommunities,
+    learnPageFor,
+    learnPath,
+    pinnedLandingCommunity,
+} from "./marketing";
 
 const route = (r: object) => ({ scope: { kind: "none" }, ...r }) as RouteParams;
 
@@ -76,5 +82,23 @@ describe("Landing's featured communities", () => {
                 href: "/community/x",
             },
         ]);
+    });
+
+    test("the pinned OpenChat community's card from its summary, as Explore's from a match", () => {
+        const openChat = {
+            id: { kind: "community", communityId: "oc" },
+            name: "OpenChat",
+            description: "News",
+            memberCount: 62504,
+            banner: { blobUrl: "/banner/oc" },
+        } as CommunitySummary;
+        expect(pinnedLandingCommunity(openChat, "/avatar/oc")).toEqual({
+            name: "OpenChat",
+            about: "News",
+            members: 62504,
+            avatarUrl: "/avatar/oc",
+            coverUrl: "/banner/oc",
+            href: "/community/oc",
+        });
     });
 });

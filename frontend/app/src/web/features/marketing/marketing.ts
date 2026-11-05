@@ -1,4 +1,4 @@
-import type { RouteParams } from "@client";
+import type { CommunitySummary, RouteParams } from "@client";
 import type { ExploreCommunity } from "@openchat/ui/src/features/components/ExploreCommunities.svelte";
 import type { LearnPage } from "@openchat/ui/src/pages/learnContent";
 import type { LandingCommunity } from "@openchat/ui/src/pages/types";
@@ -43,6 +43,28 @@ export function landingCommunities(communities: ExploreCommunity[]): LandingComm
         members: c.members,
         avatarUrl: c.avatarUrl,
         coverUrl: c.coverUrl,
-        href: `/community/${c.key}`,
+        href: communityPreviewPath(c.key),
     }));
+}
+
+/**
+ * The pinned OpenChat community's card, from its summary (it isn't one of Explore's matches),
+ * with what Explore's cards take from a match: its banner as the cover, its preview as the link.
+ */
+export function pinnedLandingCommunity(
+    community: CommunitySummary,
+    avatarUrl: string,
+): LandingCommunity {
+    return {
+        name: community.name,
+        about: community.description,
+        members: community.memberCount,
+        avatarUrl,
+        coverUrl: community.banner.blobUrl,
+        href: communityPreviewPath(community.id.communityId),
+    };
+}
+
+function communityPreviewPath(communityId: string): string {
+    return `/community/${communityId}`;
 }
