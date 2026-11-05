@@ -25,11 +25,12 @@
 </script>
 
 <script lang="ts">
-  import { onMount, untrack } from 'svelte';
+  import { flushSync, onMount, untrack } from 'svelte';
   import { useT } from '../../lib/i18n';
   import { languageFlag } from '../../lib/languages';
   import { cssUrl } from '../../lib/cssUrl';
-  import { askedFor, type ExploreAsk } from '../../lib/exploreAsk';
+  import { askTiming, askedFor, homeRefresh, searchViewShown, type ExploreAsk, type ExploreSearch } from '../../lib/exploreAsk';
+  import Spinner from '../../lib/components/Spinner.svelte';
   import Translate from '../../lib/components/Translate.svelte';
   import Logo from '../../lib/components/Logo.svelte';
 
@@ -102,6 +103,8 @@
     /** The page last asked for couldn't be loaded (onQuery mode): a first page shows an error with a retry in place of
      *  the page before it, a later one a retry on Load more. The host clears it as it takes the next ask. */
     failed?: boolean;
+    /** Show the home list's sorts (Most members, Most active, Newest). A host whose search can't sort hides them. */
+    showSort?: boolean;
     /** Languages to offer in the filter (onQuery mode), by code; defaults to the languages of the loaded communities. */
     languageOptions?: ExploreLanguage[];
     /** The search text it opens with (e.g. from the host's URL). Read once; later changes come from the user. */
@@ -127,6 +130,7 @@
     onQuery,
     total,
     loading = false,
+    showSort = true,
     failed = false,
     languageOptions,
     initialQuery = '',
@@ -142,6 +146,10 @@
   let query = $state(untrack(() => initialQuery));
   let sort = $state(0);
   let focused = $state(false);
+  // the user opened the search (a click or a key in the hero's search, or focusing the search's input): it stays open,
+  // emptied too or with a click elsewhere, until they leave it with Back or Esc (searchViewShown)
+  let searchOpen = $state(false);
+  let searchInput = $state<HTMLInputElement>();
   let langs = $state<string[]>(untrack(() => [...initialLanguages]));
   let langOpen = $state(false);
   let shown = $state(PAGE);
@@ -162,6 +170,7 @@
     document.addEventListener('keydown', esc);
     return () => {
       clearTimeout(queryTimer);
+      clearTimeout(composedTimer);
       document.removeEventListener('pointerdown', away, true);
       document.removeEventListener('keydown', esc);
     };
@@ -169,7 +178,44 @@
 
   // the filter compares these values; they render through t(), so keys and plain names both work
   const langOf = (c: ExploreCommunity) => c.language || 'ui.exploreCommunities.english';
-  const q = $derived(query.trim().toLowerCase());
+  // an IME composing a word in the hero's search: until it's composed there's no text yet, for the view (it doesn't
+  // swap) or the host (nothing is asked for the partial word)
+  let heroComposing = $state(false);
+  let heroInput = $state<HTMLInputElement>();
+  let composedTimer: ReturnType<typeof setTimeout> | undefined;
+  function endHeroComposing(): void {
+    clearTimeout(composedTimer);
+    heroComposing = false;
+  }
+  // the search text as it stands
+  const text = $derived(heroComposing ? '' : query.trim());
+  const q = $derived(text.toLowerCase());
+  const searchShown = $derived(searchViewShown(text, searchOpen));
+
+  // opens the search view from the hero's search and moves the focus to its input in the same event, so a phone keeps its
+  // keyboard; the hero's input itself never opens it on focus, so Tab goes past it to Popular and the list
+  function openSearch(): void {
+    // a word the hero was composing is the search's now (Safari's Enter or a click in the hero right after it's
+    // composed, before compositionend's timer), and no composition outlives the hero
+    endHeroComposing();
+    searchOpen = true;
+    flushSync();
+    searchInput?.focus();
+    // text already typed (a paste, an IME's word, an AltGr character …) keeps the caret after it
+    searchInput?.setSelectionRange(query.length, query.length);
+  }
+
+  // Back or Esc: the search left, the home list asked for at once (nobody is typing); the input is blurred before it
+  // goes, so its focus doesn't outlive it
+  function leaveSearch(): void {
+    endHeroComposing();
+    searchInput?.blur();
+    focused = false;
+    searchOpen = false;
+    query = '';
+    clearTimeout(queryTimer);
+    if (onQuery && !askedFor(lastAsk, { text: '', languages: langs, sort })) ask(0);
+  }
   const SORTS: ((a: ExploreCommunity, b: ExploreCommunity) => number)[] = [
     (a, b) => b.members - a.members,
     (a, b) => (b.active || 0) - (a.active || 0),
@@ -193,6 +239,14 @@
   let lastAsk = $state<ExploreAsk>(untrack(() => ({ text: initialQuery.trim(), languages: [...initialLanguages], sort: 0, offset: 0 })));
   // the page shown when a first page was asked for: until `communities` is a new page the host hasn't answered yet
   let askedOn = $state.raw<ExploreCommunity[] | null>(null);
+  // the search the page shown answers: the home view keeps what doesn't depend on a new sort while the list refreshes
+  let pageSearch = $state<ExploreSearch>(untrack(() => ({ text: initialQuery.trim(), languages: [...initialLanguages], sort: 0 })));
+  $effect.pre(() => {
+    const page = communities;
+    untrack(() => {
+      if (lastAsk.offset === 0 && page !== askedOn) pageSearch = { text: lastAsk.text, languages: [...lastAsk.languages], sort: lastAsk.sort };
+    });
+  });
   // the host reported loading after the ask: once it stops, the ask is answered even if the page didn't change
   // (e.g. a failed fetch that keeps the old page), so the loading state can't get stuck
   let sawLoading = $state(false);
@@ -200,15 +254,15 @@
     if (loading) untrack(() => (sawLoading = true));
   });
   const ask = (offset: number) => {
-    lastAsk = { text: query.trim(), languages: [...langs], sort, offset };
+    lastAsk = { text, languages: [...langs], sort, offset };
     if (offset === 0) {
       askedOn = communities;
       sawLoading = false;
     }
-    onQuery?.({ text: query.trim(), languages: [...langs], sort: SORT_KEYS[sort], offset, limit: PAGE });
+    onQuery?.({ text, languages: [...langs], sort: SORT_KEYS[sort], offset, limit: PAGE });
   };
   $effect(() => {
-    void query;
+    void text;
     void langs;
     void sort;
     untrack(() => {
@@ -218,7 +272,11 @@
       }
       if (!onQuery) return;
       clearTimeout(queryTimer);
-      queryTimer = setTimeout(() => ask(0), 250);
+      // a sort, a language or leaving the search is asked for at once; typing waits for a pause; the search already
+      // asked for isn't asked again
+      const timing = askTiming(lastAsk, { text, languages: langs, sort });
+      if (timing === 'now') ask(0);
+      else if (timing === 'debounced') queryTimer = setTimeout(() => ask(0), 250);
     });
   });
   // search ranks name matches above description matches, then by size
@@ -229,11 +287,13 @@
   // same `communities`, or the host says it's loading)
   const firstPagePending = $derived(lastAsk.offset === 0 && (loading || (communities === askedOn && !sawLoading)));
   // the last ask is for the search as it stands: the same text, languages and sort
-  const askedAsShown = $derived(askedFor(lastAsk, { text: query.trim(), languages: langs, sort }));
+  const askedAsShown = $derived(askedFor(lastAsk, { text, languages: langs, sort }));
   const searching = $derived(remote && !!q && (!askedAsShown || firstPagePending));
   // onQuery: the home list still holds an older query's page (just after clearing the search, or a sort / language
   // change the host hasn't answered yet); it shows a loading state instead of passing that page off as "All communities"
   const homeStale = $derived(remote && !q && (!askedAsShown || firstPagePending));
+  // while it is: the list refreshes in place; the hero's count and Popular wait only for other languages or text
+  const home = $derived(homeRefresh(pageSearch, { text, languages: langs, sort }, homeStale));
   // onQuery: the host couldn't load the page last asked for (`failed`), for the search as it stands. A first page leaves
   // the page before it, which mustn't pass as its answer: an error with a retry shows in its place. A later page keeps
   // the list, and Load more becomes the retry
@@ -251,8 +311,12 @@
     if (isJoined(c) || !isPrivate(c)) onOpen?.(c.key);
   };
 
+  // Popular's languages: the page's while the list refreshes for other ones (it still shows that page, dimmed)
+  const popularLangs = $derived(home.top ? pageSearch.languages : langs);
   // popular: biggest public communities you haven't joined
-  const top = $derived(q || homeStale || firstPageFailed ? [] : list.filter((c) => !isJoined(c) && !isPrivate(c)).sort((a, b) => b.members - a.members).slice(0, 4));
+  // kept while the list refreshes for a new sort or languages (dimmed until the answer, so it isn't mounted again and its
+  // intro doesn't replay); never from a page left by a search
+  const top = $derived(q || home.list === 'loading' || firstPageFailed ? [] : list.filter((c) => !isJoined(c) && !isPrivate(c)).sort((a, b) => b.members - a.members).slice(0, 4));
   // per-language counts only mean something when the whole list is here; when the host pages the results they're hidden
   // the host's options are picked by code and shown by label; the communities' own languages are both
   const languages = $derived.by(() => {
@@ -376,26 +440,70 @@
 {/snippet}
 
 <div class="explore" data-screen-label="Explore communities" bind:this={root} onscroll={() => root && onScroll?.(root.scrollTop)}>
-  {#if q}
+  {#if searchShown}
     <div class="search-bar">
       <div class="search-row">
-        <span class="back" onclick={() => (query = '')} role="button" tabindex="0">{@render icon('back', 15, 'var(--ink-3)')}{t('ui.exploreCommunities.explore')}</span>
+        <span
+          class="back"
+          onclick={leaveSearch}
+          role="button"
+          tabindex="0">{@render icon('back', 15, 'var(--ink-3)')}{t('ui.exploreCommunities.explore')}</span
+        >
         <div class="search small" class:focused>
           {@render icon('search', 16, 'var(--ink-3)')}
-          <!-- svelte-ignore a11y_autofocus -->
-          <input bind:value={query} onfocus={() => (focused = true)} onblur={() => (focused = false)} autofocus placeholder={t('ui.exploreCommunities.searchPlaceholder')} />
-          <span class="clear" onclick={() => (query = '')} aria-label={t('ui.exploreCommunities.clear')} role="button" tabindex="0" title={t('ui.exploreCommunities.clear')}>{@render icon('close', 12, 'var(--ink-3)')}</span>
+          <input
+            bind:this={searchInput}
+            bind:value={query}
+            onfocus={() => {
+              focused = true;
+              searchOpen = true;
+            }}
+            onblur={() => (focused = false)}
+            onkeydown={(e) => {
+              // Esc leaves the search (cleared, back to the home view); with the language menu open it only closes that
+              if (e.key !== 'Escape' || langOpen) return;
+              e.preventDefault();
+              leaveSearch();
+            }}
+            placeholder={t('ui.exploreCommunities.searchPlaceholder')}
+          />
+          {#if query}
+            <!-- clearing keeps the search open: the input keeps its focus -->
+            <span
+              class="clear"
+              onclick={() => {
+                query = '';
+                searchInput?.focus();
+              }}
+              aria-label={t('ui.exploreCommunities.clear')}
+              role="button"
+              tabindex="0"
+              title={t('ui.exploreCommunities.clear')}>{@render icon('close', 12, 'var(--ink-3)')}</span
+            >
+          {/if}
         </div>
       </div>
       <div class="results-row">
-        <span class="result-count">{searching ? t('ui.exploreCommunities.searching') : firstPageFailed ? t('ui.exploreCommunities.loadFailed') : t('ui.exploreCommunities.results', { count: remote ? totalCount : found.length })}</span>
+        <span class="result-count"
+          >{!q
+            ? ''
+            : searching
+              ? t('ui.exploreCommunities.searching')
+              : firstPageFailed
+                ? t('ui.exploreCommunities.loadFailed')
+                : t('ui.exploreCommunities.results', { count: remote ? totalCount : found.length })}</span
+        >
         {@render langPicker(false)}
       </div>
     </div>
 
     <div class="results-wrap">
       <div class="results">
-        {#if searching}
+        {#if !q}
+          <div class="empty" role="status">
+            <span class="empty-title">{t('ui.exploreCommunities.typeToSearch')}</span>
+          </div>
+        {:else if searching}
           <div class="empty" role="status" aria-busy="true">
             <span class="empty-title">{t('ui.exploreCommunities.searching')}</span>
           </div>
@@ -440,7 +548,7 @@
       <div class="hero-text">
         <span class="hero-title">{t('ui.exploreCommunities.heroTitle')}</span>
         <span class="hero-sub"
-          >{homeStale
+          >{home.top
             ? t('ui.exploreCommunities.loading')
             : firstPageFailed
               ? t('ui.exploreCommunities.loadFailed')
@@ -449,10 +557,57 @@
       </div>
       <div class="search large" class:focused>
         {@render icon('search', 18, 'var(--ink-3)')}
-        <input bind:value={query} onfocus={() => (focused = true)} onblur={() => (focused = false)} placeholder={t('ui.exploreCommunities.searchPlaceholder')} />
-        {#if query}
-          <span class="clear large" onclick={() => (query = '')} aria-label={t('ui.exploreCommunities.clear')} role="button" tabindex="0" title={t('ui.exploreCommunities.clear')}>{@render icon('close', 13, 'var(--ink-3)')}</span>
-        {/if}
+        <!-- a click or a key opens the search view, which takes the focus over; focus alone (Tab) doesn't -->
+        <input
+          bind:this={heroInput}
+          bind:value={query}
+          autocomplete="off"
+          onfocus={() => (focused = true)}
+          onblur={() => (focused = false)}
+          onclick={openSearch}
+          onkeydown={(e) => {
+            if (e.key === 'Enter' || (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey)) openSearch();
+          }}
+          oninput={(e) => {
+            // text that comes without a beforeinput (autofill, a password manager or an extension, some dictation)
+            // has reached `query` and swapped the view already: the search takes it, and the focus, as above
+            if (!heroComposing && !(e instanceof InputEvent && e.isComposing) && query.trim()) openSearch();
+          }}
+          onbeforeinput={(e) => {
+            // text from anywhere else (AltGr or Option characters, a paste, a drop) opens the search with it, before
+            // the hero's input can take it: text in the hero would swap the view and take the input (and its focus)
+            // away mid-keystroke. An IME's word waits for compositionend
+            if (heroComposing || e.isComposing || e.inputType === 'insertCompositionText') return;
+            const data = e.data ?? e.dataTransfer?.getData('text/plain') ?? '';
+            if (!data) return;
+            e.preventDefault();
+            query += data;
+            openSearch();
+          }}
+          oncompositionstart={() => {
+            heroComposing = true;
+            clearTimeout(queryTimer);
+            clearTimeout(composedTimer);
+          }}
+          oncompositionend={() => {
+            // a word composed in the search opens it; a composition ended by leaving the input (a click elsewhere) or
+            // cancelled leaves nothing behind, so the view doesn't swap under the user's click. A click elsewhere ends
+            // the composition while the input still has the focus and blurs it right after, in the same task, so
+            // which one it was is only known once that task is done; until then the word stays uncomposed
+            // one that comes after the search opened (a browser committing on the hero's blur or removal) is
+            // ignored: the word is the search's already
+            if (searchOpen || !heroInput?.isConnected) return;
+            clearTimeout(composedTimer);
+            composedTimer = setTimeout(() => {
+              if (document.activeElement === heroInput && query.trim()) openSearch();
+              else {
+                query = '';
+                heroComposing = false;
+              }
+            });
+          }}
+          placeholder={t('ui.exploreCommunities.searchPlaceholder')}
+        />
       </div>
       <div class="hero-filters">
         <span class="hero-note">{t('ui.exploreCommunities.showingIn')}</span>
@@ -463,10 +618,12 @@
     </div>
 
     {#if top.length > 0}
-      <div class="popular-wrap">
+      <div class="popular-wrap" class:refreshing={home.top}>
         <div class="popular">
           <div class="popular-head">
-            <span class="popular-title">{langs.length === 1 ? t('ui.exploreCommunities.popularIn', { language: langName(langs[0]) }) : t('ui.exploreCommunities.popularOnOpenChat')}</span>
+            <span class="popular-title"
+              >{popularLangs.length === 1 ? t('ui.exploreCommunities.popularIn', { language: langName(popularLangs[0]) }) : t('ui.exploreCommunities.popularOnOpenChat')}</span
+            >
             <span class="popular-sub">{t('ui.exploreCommunities.popularSub')}</span>
           </div>
           {@render bigCard(top[0], 'ui.exploreCommunities.featured')}
@@ -482,32 +639,38 @@
     <div class="table-wrap">
       <div class="table">
         <div class="table-head">
-          <span class="table-title">{t(langs.length ? 'ui.exploreCommunities.filtered' : 'ui.exploreCommunities.allCommunities')} <span class="table-count">· {homeStale ? t('ui.exploreCommunities.loading') : firstPageFailed ? '–' : totalCount}</span></span>
+          <span class="table-title"
+            >{t(langs.length ? 'ui.exploreCommunities.filtered' : 'ui.exploreCommunities.allCommunities')}
+            {#if !home.top}<span class="table-count">· {firstPageFailed ? '–' : totalCount}</span>{/if}
+            {#if home.list !== 'ready'}<span class="table-spinner"><Spinner size={14} tone="ink" label="ui.exploreCommunities.loading" /></span>{/if}</span
+          >
           {#if langs.length}
             <span class="clear-filters" onclick={() => (langs = [])} role="button" tabindex="0">{t('ui.exploreCommunities.clearFilters')}</span>
           {/if}
-          <div class="sorts">
-            {#each ['ui.exploreCommunities.sortMembers', 'ui.exploreCommunities.sortActive', 'ui.exploreCommunities.sortNewest'] as label, i}
-              <span
-                class="sort"
-                class:on={sort === i}
-                onclick={() => {
-                  sort = i;
-                  shown = PAGE;
-                }}
-                role="button"
-                tabindex="0">{t(label)}</span
-              >
-            {/each}
-          </div>
+          {#if showSort}
+            <div class="sorts">
+              {#each ['ui.exploreCommunities.sortMembers', 'ui.exploreCommunities.sortActive', 'ui.exploreCommunities.sortNewest'] as label, i}
+                <span
+                  class="sort"
+                  class:on={sort === i}
+                  onclick={() => {
+                    sort = i;
+                    shown = PAGE;
+                  }}
+                  role="button"
+                  tabindex="0">{t(label)}</span
+                >
+              {/each}
+            </div>
+          {/if}
         </div>
         <div class="row columns" data-ex-row="">
           <span>{t('ui.exploreCommunities.colCommunity')}</span><span>{t('ui.exploreCommunities.colMembers')}</span><span data-ex-col="">{t('ui.exploreCommunities.colChannels')}</span><span data-ex-col="">{t('ui.exploreCommunities.colLanguage')}</span><span></span>
         </div>
-        {#each homeStale || firstPageFailed ? [] : rows as c}
+        {#each firstPageFailed || home.list === 'loading' ? [] : rows as c}
           {@const joined = isJoined(c)}
           {@const priv = isPrivate(c)}
-          <div class="row entry" class:locked={priv && !joined} data-ex-row="" onclick={() => open(c)} role="button" tabindex="0">
+          <div class="row entry" class:locked={priv && !joined} class:refreshing={home.list === 'refreshing'} data-ex-row="" onclick={() => open(c)} role="button" tabindex="0">
             <div class="entry-name">
               <span class="entry-avatar" style:background={avatarOf(c)}></span>
               <div class="entry-text">
@@ -549,7 +712,7 @@
             <span class="shown" role={moreFailed ? 'alert' : undefined}>{moreFailed ? t('ui.exploreCommunities.loadMoreFailed') : t('ui.exploreCommunities.showing', { shown: rows.length, total: totalCount })}</span>
           </div>
         {/if}
-        {#if homeStale}
+        {#if home.list === 'loading' || (home.list === 'refreshing' && rows.length === 0)}
           <div class="table-empty" role="status" aria-busy="true">
             <span class="table-empty-title">{t('ui.exploreCommunities.loading')}</span>
           </div>
@@ -708,10 +871,6 @@
     cursor: pointer;
   }
 
-  .clear.large {
-    width: 28px;
-    height: 28px;
-  }
 
   .results-row {
     display: flex;
@@ -1234,6 +1393,12 @@
     justify-content: center;
     padding: 0 var(--space-32) var(--space-26);
     animation: ex-rise 380ms 60ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    transition: opacity var(--duration-fast);
+  }
+
+  /* other languages asked for: Popular stays, dimmed, until the host answers */
+  .popular-wrap.refreshing {
+    opacity: 0.5;
   }
 
   .popular {
@@ -1314,6 +1479,12 @@
     color: var(--ink-4);
   }
 
+  .table-spinner {
+    display: inline-flex;
+    margin-inline-start: var(--space-8);
+    vertical-align: -2px;
+  }
+
   .clear-filters {
     flex: none;
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
@@ -1371,10 +1542,16 @@
     box-sizing: border-box;
     border-block-start: 1px solid var(--line-1);
     cursor: pointer;
+    transition: opacity var(--duration-fast);
   }
 
   .entry:hover {
     background: var(--overlay-1);
+  }
+
+  /* the list refreshing for a new sort or languages: the rows stay, dimmed, until the host answers */
+  .entry.refreshing {
+    opacity: 0.5;
   }
 
   .entry-name {

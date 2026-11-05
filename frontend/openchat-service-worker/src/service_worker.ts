@@ -51,9 +51,16 @@ const FILE_ICON =
 const isDevServer = process.env.NODE_ENV === "development";
 const STATIC_CACHE_NAME = "openchat_stale_while_revalidate";
 
+function isHumanCheckResource(url: URL): boolean {
+    return url.hostname === "challenges.cloudflare.com" || url.pathname === "/turnstile.js";
+}
+
 function registerStaticResourceCache() {
     staticResourceCache({
-        matchCallback: ({ request }) => {
+        matchCallback: ({ request, url }) => {
+            // The prize claim human check's script, and Cloudflare's, which Cloudflare says mustn't
+            // be cached, are left to the browser so a change reaches everyone at once
+            if (isHumanCheckResource(url)) return false;
             // Video is deliberately excluded: media elements fetch it via sequential range requests
             // (206) which are never cached here anyway, so routing them through the service worker
             // adds a hop and a body clone per chunk for no benefit.

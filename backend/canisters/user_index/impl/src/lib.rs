@@ -24,7 +24,7 @@ use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use identity_canister::UserIdentity;
 use identity_canister::UserIndexEvent as IdentityEvent;
 use local_user_index_canister::UserIndexEvent as LocalUserIndexEvent;
-use local_user_index_canister::{BridgedUserLinked, OpenChatBotMessageV2};
+use local_user_index_canister::{BridgedUserLinked, OpenChatBotMessageV2, TurnstileConfig};
 use model::authority_reports::{AuthorityReportMetrics, AuthorityReports};
 use model::chit_leaderboard::ChitLeaderboard;
 use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
@@ -559,6 +559,7 @@ impl RuntimeState {
             vault_reviewers: self.data.vault_reviewers.len() as u32,
             openai_api_key_set: self.data.openai_api_key.is_some(),
             alchemy_api_key_set: self.data.alchemy_api_key.is_some(),
+            turnstile_secret_key_set: self.data.turnstile_config.secret_key.is_some(),
             internal_moderation_channel_set: self.data.internal_moderation_channel.is_some(),
             // Presence and size only: the metrics endpoint is public and the per-category
             // thresholds must not be readable by people tuning content to sit under them.
@@ -756,6 +757,10 @@ struct Data {
     // MultiUser canisters
     #[serde(default)]
     pub alchemy_api_key: Option<String>,
+    // How prize claims are checked for a human with Cloudflare Turnstile. Set by a platform operator
+    // and fanned out to the LocalUserIndexes, including any added later, which check the claims.
+    #[serde(default)]
+    pub turnstile_config: TurnstileConfig,
 }
 
 impl Data {
@@ -867,6 +872,7 @@ impl Data {
             registry_tokens: RegistryTokens::default(),
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
+            turnstile_config: TurnstileConfig::default(),
         };
 
         // Register the ProposalsBot
@@ -986,6 +992,7 @@ impl Default for Data {
             registry_tokens: RegistryTokens::default(),
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
+            turnstile_config: TurnstileConfig::default(),
         }
     }
 }
@@ -1036,6 +1043,7 @@ pub struct Metrics {
     pub protected_action_metrics: ProtectedActionMetrics,
     pub openai_api_key_set: bool,
     pub alchemy_api_key_set: bool,
+    pub turnstile_secret_key_set: bool,
     pub internal_moderation_channel_set: bool,
     pub moderation_referral_config_set: bool,
     pub moderation_referral_categories: u32,

@@ -567,6 +567,7 @@ export type WorkerRequest = Cloneable<
     | SetCallPushEnabled
     | SetMiniAppServicePrincipal
     | SetAlchemyApiKey
+    | SetTurnstileConfig
     | SetBridgeBot
     | GetBridgedUsers
     | StartBridgedUserLink
@@ -718,6 +719,11 @@ type SetMiniAppServicePrincipal = {
 type SetAlchemyApiKey = {
     kind: "setAlchemyApiKey";
     apiKey: string | undefined;
+};
+// Platform operators only
+type SetTurnstileConfig = {
+    kind: "setTurnstileConfig";
+    secretKey: string | undefined;
 };
 // Platform operators only
 type SetBridgeBot = {
@@ -2425,7 +2431,7 @@ type DeleteFailedMessage = {
 type ClaimPrize = {
     chatId: MultiUserChatIdentifier;
     messageId: bigint;
-    signInProof: string | undefined;
+    turnstileToken: string | undefined;
     kind: "claimPrize";
 };
 
@@ -2935,6 +2941,7 @@ export type WorkerResults = ResultsByKind<{
     setCallPushEnabled: Success | OCError;
     setMiniAppServicePrincipal: Success | OCError;
     setAlchemyApiKey: Success | OCError;
+    setTurnstileConfig: Success | OCError;
     setBridgeBot: Success | OCError;
     getBridgedUsers: BridgedUserSummary[];
     startBridgedUserLink: BridgedUserLinkCode | OCError;

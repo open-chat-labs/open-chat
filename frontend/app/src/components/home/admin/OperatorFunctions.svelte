@@ -48,6 +48,7 @@
     let tokenEnabled = $state(true);
     let openAiApiKey = $state("");
     let alchemyApiKey = $state("");
+    let turnstileSecretKey = $state("");
     let miniAppServicePrincipal = $state("");
     const bridgeBotIds = $state<Record<BridgePlatform, string>>({
         discord: "",
@@ -177,6 +178,29 @@
                 toastStore.showFailureToast(i18nKey("Failed to set the Alchemy API key"), err),
             )
             .finally(() => busy.delete(21));
+    }
+
+    // Sets the secret key for checking prize claims for a human, on the user index, which passes it
+    // on to every LocalUserIndex. Once it's set, every prize claim must pass the check.
+    async function setTurnstileConfig(secretKey: string | undefined): Promise<void> {
+        busy.add(24);
+        try {
+            const resp = await client.setTurnstileConfig(secretKey);
+            if (resp.kind === "success") {
+                toastStore.showSuccessToast(
+                    i18nKey(secretKey === undefined ? "Turnstile turned off" : "Turnstile turned on"),
+                );
+                turnstileSecretKey = "";
+            } else {
+                toastStore.showFailureToast(
+                    i18nKey(`Failed to set Turnstile: ${resp.message ?? `code ${resp.code}`}`),
+                );
+            }
+        } catch (err) {
+            toastStore.showFailureToast(i18nKey("Failed to set Turnstile"), err);
+        } finally {
+            busy.delete(24);
+        }
     }
 
     // Sets the MiniApp service's principal on the user index, which passes it on to every
@@ -969,6 +993,24 @@
                 loading={busy.has(21)}
                 disabled={busy.has(21)}
                 onClick={() => setAlchemyApiKey(undefined)}>Unset</Button>
+        </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Turnstile (prize claim human check)</div>
+        <Input bind:value={turnstileSecretKey} placeholder={i18nKey("Secret key")} />
+        <ButtonGroup align="fill">
+            <Button
+                tiny
+                loading={busy.has(24)}
+                disabled={busy.has(24) || turnstileSecretKey.trim() === ""}
+                onClick={() => setTurnstileConfig(turnstileSecretKey.trim())}>Set</Button>
+            <Button
+                tiny
+                secondary
+                loading={busy.has(24)}
+                disabled={busy.has(24)}
+                onClick={() => setTurnstileConfig(undefined)}>Turn off</Button>
         </ButtonGroup>
     </section>
 

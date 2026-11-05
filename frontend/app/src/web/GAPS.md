@@ -598,9 +598,10 @@ design export needs. Each entry says where it came up.
   (a page the component asked for couldn't be loaded: an error with Retry in place of the page
   before it, or Retry on Load more, with the component left as it was; no design for it).
   Not asked for (no design yet):
-  - the sorts (Most members / Most active / Newest) are shown though there's one ranking (see
-    Explore under the data the backend doesn't have): a change of sort asks for nothing (the
-    results held already answer it, `exploreQueryAnswered`).
+  - the sorts (Most members / Most active / Newest) are hidden (`showSort={false}`): there's one
+    ranking (see Explore under the data the backend doesn't have). #10405 adds a sort to
+    `explore_communities`; then the screen shows them and asks again on a change (today a change
+    of sort would be answered from the results held, `exploreQueryAnswered`).
   - no place for a community's moderation flags (the old cards labelled adult and offensive
     ones, `serialiseFlags` in both old `CommunityCard`s); when the design has one, it moves to
     `@client`, returning `ResourceKey`s.
@@ -626,9 +627,9 @@ design export needs. Each entry says where it came up.
     keys a saved address by its account);
   - no native ETH deposit address.
 - **Explore**:
-  - one server ranking, so no featured vs popular lists and no sort by active or newest: the
-    component cuts Featured and Popular from the page it has (the biggest public communities not
-    joined), and a change of sort shows the same page;
+  - one server ranking, so no featured vs popular lists and no sort by members, activity or
+    newest (#10405; the sorts are hidden until then): the component cuts Featured and Popular
+    from the page it has (the biggest public communities not joined);
   - results have no created date, activity metric or channel list (the big cards' channel line is
     empty).
 - **Activity**:
@@ -792,7 +793,10 @@ design export needs. Each entry says where it came up.
   dialog over Explore open. Results set outside the search step (a proposal's community finder,
   the mobile welcome page) answer no Explore search (`CommunitySearchState.held`), so Explore
   searches again rather than show them. A guest gets the component's sign-in banner. Kept from the desktop
-  tree: Load more (the library's own, 6 a page). Not carried over:
+  tree: Load more (the library's own, 6 a page). By hand in the library: a sort or language change
+  refreshes the list in place (dimmed rows, a spinner by the table's title) instead of emptying the page,
+  a click or a key in the hero's search opens the search view, which stays open (emptied too, or with a
+  click elsewhere) until Back or Esc (EXPORT-LOG 2026-11-04). Not carried over:
   - bots: the old mobile Explore's Communities / Bots switch, its bot cards and filters, and
     Register a bot (desktop lists bots elsewhere; see Bots).
   - `/welcome`'s own page (mobile's `WelcomePage`: three top communities and the OpenChat

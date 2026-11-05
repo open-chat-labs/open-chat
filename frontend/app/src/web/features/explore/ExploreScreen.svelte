@@ -247,6 +247,7 @@
                 total={communitySearchState.total}
                 {loading}
                 {failed}
+                showSort={false}
                 {joinedKeys}
                 {languageOptions}
                 initialQuery={query.text}

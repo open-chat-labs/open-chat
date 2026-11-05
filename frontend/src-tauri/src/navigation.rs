@@ -48,10 +48,23 @@ fn is_allowed_url(app_handle: &AppHandle, url_str: &str) -> bool {
         return true;
     }
 
+    // iOS asks about every frame's navigations, not just the page's, and
+    // Turnstile's iframe starts at about:blank
+    if url.scheme() == "about" {
+        return true;
+    }
+
     let host = match url.host_str() {
         Some(h) => h.to_lowercase(),
         None => return false,
     };
+
+    // The prize claim human check, which the app frames from the website
+    // (HumanCheckFrame.svelte). Only that page, so a link to the website still
+    // opens outside the webview.
+    if host == "oc.app" && url.path() == "/turnstile.html" {
+        return true;
+    }
 
     // In debug the webview loads the vite dev server (and iOS invokes this
     // handler for the initial load too), so its host must be navigable.
@@ -68,5 +81,5 @@ fn is_allowed_url(app_handle: &AppHandle, url_str: &str) -> bool {
 
     // We only allow local webview navigation, everything else must open an
     // external app or a browser.
-    host == "tauri.localhost"
+    host == "tauri.localhost" || host == "challenges.cloudflare.com"
 }
