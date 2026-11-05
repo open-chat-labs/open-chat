@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Push each bot's notifications from its own queue, with timeouts and retries for up to 5 minutes, so a slow or unreachable bot only delays its own ([#10065](https://github.com/open-chat-labs/open-chat/pull/10065))
-- A bad APNs key is logged and the pusher runs without iOS pushes, instead of failing to start ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- A bad APNs key is logged and the pusher runs without iOS pushes, instead of failing to start ([#10411](https://github.com/open-chat-labs/open-chat/pull/10411))
 
 ### Fixed
 
