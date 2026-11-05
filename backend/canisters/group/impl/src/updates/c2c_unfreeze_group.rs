@@ -20,6 +20,8 @@ pub(crate) fn c2c_unfreeze_group_impl(user_id: UserId, state: &mut RuntimeState)
         state.data.frozen = Timestamped::new(None, now);
         state.data.community_being_imported_into = None;
         state.push_bot_notification(push_event_result.bot_notification);
+        // Its last owner may have deleted their account while it was frozen
+        state.data.assign_owner_if_none(now);
         handle_activity_notification(state);
 
         Success(EventWrapper {

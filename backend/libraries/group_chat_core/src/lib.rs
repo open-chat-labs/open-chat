@@ -1303,9 +1303,10 @@ impl GroupChatCore {
     }
 
     // Makes the member next in line owner if the chat has no owner, as when its last owner deletes
-    // their account, returning the new owner
+    // their account, returning the new owner. A frozen chat can't take the event, so it's given one
+    // when it's unfrozen.
     pub fn assign_owner_if_none(&mut self, now: TimestampMillis) -> Option<UserId> {
-        if !self.members.owners().is_empty() {
+        if !self.members.owners().is_empty() || self.events.is_frozen() {
             return None;
         }
 
@@ -2669,6 +2670,20 @@ mod tests {
 
         assert!(chat.pinned_messages(MessageIndex::default()).is_empty());
         assert_eq!(chat.events.main_events_list().latest_event_index(), event_count);
+    }
+
+    #[test]
+    fn a_frozen_chat_is_given_an_owner_once_unfrozen() {
+        let (mut chat, owner, member) = setup();
+        chat.events.freeze(owner, None, 10);
+        chat.members.remove(owner, 20);
+
+        assert_eq!(chat.assign_owner_if_none(20), None);
+        assert!(chat.members.owners().is_empty());
+
+        chat.events.unfreeze(owner, 30);
+        assert_eq!(chat.assign_owner_if_none(30), Some(member));
+        assert_eq!(chat.members.owners().iter().copied().collect::<Vec<_>>(), vec![member]);
     }
 
     #[test]
