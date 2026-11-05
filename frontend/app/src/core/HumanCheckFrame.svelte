@@ -7,7 +7,7 @@
     import type { OpenChat } from "@client";
     import { isHumanCheckMessage, type HumanCheck } from "@src/logic/prize/humanCheck.svelte";
     import { baseOrigin, turnstileSiteKey } from "@src/utils/openchatClient";
-    import { getContext } from "svelte";
+    import { getContext, onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
 
     interface Props {
@@ -25,6 +25,10 @@
     let src = $derived(
         `${origin}/turnstile.html#${new URLSearchParams({ sitekey: turnstileSiteKey, cdata: customData })}`,
     );
+
+    // A check whose frame goes (the reader leaves the chat, say) can't finish, so its claim goes on
+    // without it rather than waiting forever
+    onDestroy(() => check.stop());
 
     function onMessage(e: MessageEvent) {
         if (

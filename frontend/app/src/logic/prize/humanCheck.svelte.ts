@@ -41,7 +41,7 @@ type HumanCheckState = { kind: "idle" } | { kind: "running" } | { kind: "interac
 export class HumanCheck {
     #state = $state<HumanCheckState>({ kind: "idle" });
     #run = $state(0);
-    #waiting: ((pass: TurnstilePass | undefined) => void)[] = [];
+    #waiting: ((pass: TurnstilePass | undefined) => void) | undefined;
     #deadline: ReturnType<typeof setTimeout> | undefined;
 
     /** Changes each time the check starts. */
@@ -62,15 +62,7 @@ export class HumanCheck {
     receive(message: HumanCheckMessage): void {
         switch (message.kind) {
             case "turnstile_token":
-                this.#clearDeadline();
-                this.#waiting.shift()?.({ token: message.token, salt: message.salt });
-                // A claim made while that one waited needs a token of its own
-                if (this.#waiting.length > 0) {
-                    this.#start();
-                    this.#startDeadline();
-                } else {
-                    this.#state = { kind: "idle" };
-                }
+                this.#finish({ token: message.token, salt: message.salt });
                 break;
             case "turnstile_interactive":
                 this.#clearDeadline();
@@ -78,52 +70,40 @@ export class HumanCheck {
                 break;
             case "turnstile_error":
                 console.warn("Human check failed", message.code);
-                this.#stop();
+                this.#finish(undefined);
                 break;
         }
     }
 
     /**
      * Runs the check for a claim, and gives its token (and salt) once it passes. Undefined if it
-     * fails, or says nothing for HUMAN_CHECK_WAIT_MS.
+     * fails, is stopped, or says nothing for HUMAN_CHECK_WAIT_MS. One claim at a time
+     * (claimPrizeWithHumanCheck sees to that): a run still going is stopped.
      */
     take(): Promise<TurnstilePass | undefined> {
-        if (this.#state.kind === "idle") {
-            this.#start();
-        }
+        this.stop();
+        this.#state = { kind: "running" };
+        this.#run += 1;
         return new Promise((resolve) => {
-            this.#waiting.push(resolve);
-            this.#startDeadline();
+            this.#waiting = resolve;
+            this.#deadline = setTimeout(() => {
+                console.warn("Human check timed out");
+                this.#finish(undefined);
+            }, HUMAN_CHECK_WAIT_MS);
         });
     }
 
-    #start() {
-        this.#state = { kind: "running" };
-        this.#run += 1;
+    /** Ends the check if it's running, failing its claim: its frame has gone, say. */
+    stop(): void {
+        this.#finish(undefined);
     }
 
-    // Ends the check, failing the claims waiting for it
-    #stop() {
+    #finish(pass: TurnstilePass | undefined) {
         this.#clearDeadline();
         this.#state = { kind: "idle" };
         const waiting = this.#waiting;
-        this.#waiting = [];
-        waiting.forEach((resolve) => resolve(undefined));
-    }
-
-    #startDeadline() {
-        if (
-            this.#deadline !== undefined ||
-            this.#waiting.length === 0 ||
-            this.#state.kind === "interactive"
-        ) {
-            return;
-        }
-        this.#deadline = setTimeout(() => {
-            this.#deadline = undefined;
-            console.warn("Human check timed out");
-            this.#stop();
-        }, HUMAN_CHECK_WAIT_MS);
+        this.#waiting = undefined;
+        waiting?.(pass);
     }
 
     #clearDeadline() {

@@ -60,19 +60,8 @@
     async function claim(e: MouseEvent) {
         if (!isTrustedClick(e) || chatId.kind === "direct_chat" || !view.canClaim) return;
 
-        claimsStore.add(messageId);
-        try {
-            const failure = await claimPrizeWithHumanCheck(
-                client,
-                humanCheck,
-                chatId,
-                messageId,
-                e,
-            );
-            if (failure !== undefined) toastStore.showFailureToast(failure);
-        } finally {
-            claimsStore.delete(messageId);
-        }
+        const failure = await claimPrizeWithHumanCheck(client, humanCheck, chatId, messageId, e);
+        if (failure !== undefined) toastStore.showFailureToast(failure);
     }
 
     function onDiamondClick() {

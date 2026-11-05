@@ -61,6 +61,28 @@ describe("claiming a prize", () => {
         await expect(claim).resolves.toEqual(message);
     });
 
+    test("a click while the prize's claim is in flight claims nothing", async () => {
+        const c = client({ kind: "success" });
+        const check = new HumanCheck();
+
+        const claim = claimPrizeWithHumanCheck(c, check, chatId, 1n, trustedClick());
+        await expect(
+            claimPrizeWithHumanCheck(c, check, chatId, 1n, trustedClick()),
+        ).resolves.toBeUndefined();
+        expect(check.run).toBe(1);
+
+        check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
+        await claim;
+        expect(c.claimPrize).toHaveBeenCalledTimes(1);
+
+        // Once it's settled, the reader can claim again
+        const retry = claimPrizeWithHumanCheck(c, check, chatId, 1n, trustedClick());
+        expect(check.run).toBe(2);
+        check.receive({ kind: "turnstile_token", token: "t2", salt: "s2" });
+        await retry;
+        expect(c.claimPrize).toHaveBeenCalledTimes(2);
+    });
+
     // 5a invariant 2: a prize claim is sent only from a trusted click
     test("a script's click claims nothing, and doesn't start the check", async () => {
         const c = client({ kind: "success" });

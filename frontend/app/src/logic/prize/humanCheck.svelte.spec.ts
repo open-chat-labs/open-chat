@@ -29,21 +29,13 @@ describe("a prize's human check", () => {
         await expect(retry).resolves.toEqual({ token: "t2", salt: "s2" });
     });
 
-    test("a claim made while the check runs gets a token of its own", async () => {
+    test("stopping the check (its frame has gone) fails its claim", async () => {
         const check = new HumanCheck();
-        const first = check.take();
-        let second: TurnstilePass | undefined;
-        void check.take().then((pass) => (second = pass));
-        expect(check.run).toBe(1);
+        const claim = check.take();
+        check.receive({ kind: "turnstile_interactive" });
+        check.stop();
 
-        check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
-        await expect(first).resolves.toEqual({ token: "t1", salt: "s1" });
-        expect(second).toBeUndefined();
-        expect(check.run).toBe(2);
-
-        check.receive({ kind: "turnstile_token", token: "t2", salt: "s2" });
-        await Promise.resolve();
-        expect(second).toEqual({ token: "t2", salt: "s2" });
+        await expect(claim).resolves.toBeUndefined();
         expect(check.running).toBe(false);
     });
 
@@ -67,6 +59,8 @@ describe("a prize's human check", () => {
         expect(check.interactive).toBe(false);
         check.receive({ kind: "turnstile_interactive" });
         expect(check.interactive).toBe(true);
+        // The box is in the frame, which is there only while the check runs
+        expect(check.running).toBe(true);
         check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
         expect(check.interactive).toBe(false);
     });
