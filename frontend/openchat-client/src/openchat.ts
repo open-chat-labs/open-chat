@@ -1,3 +1,4 @@
+import type { ApnsDevice } from "@shared";
 /* eslint-disable no-case-declarations */
 import { AuthClient, type AuthClientLoginOptions } from "@icp-sdk/auth/client";
 import { AnonymousIdentity, DER_COSE_OID, unwrapDER, type SignIdentity } from "@icp-sdk/core/agent";
@@ -7435,6 +7436,14 @@ export class OpenChat {
 
     removeFcmToken(fcmToken: string): Promise<void> {
         return this.#worker.send({ kind: "removeFcmToken", fcmToken });
+    }
+
+    addApnsDevice(device: ApnsDevice): Promise<void> {
+        return this.#worker.send({ kind: "addApnsDevice", device });
+    }
+
+    removeApnsDevice(device: ApnsDevice): Promise<void> {
+        return this.#worker.send({ kind: "removeApnsDevice", device });
     }
 
     inviteUsers(

@@ -23,7 +23,11 @@ describe("apple-app-site-association", () => {
         expect(teams.length).toBe(bundleIds.length);
 
         for (let i = 0; i < teams.length; i++) {
-            expect(aasaApps()).toContain(`${teams[i]}.${bundleIds[i]}`);
+            // An app extension's id is nested under the app's, and extensions don't sign in
+            const extension = bundleIds.some((id) => bundleIds[i].startsWith(`${id}.`));
+            if (!extension) {
+                expect(aasaApps()).toContain(`${teams[i]}.${bundleIds[i]}`);
+            }
         }
     });
 

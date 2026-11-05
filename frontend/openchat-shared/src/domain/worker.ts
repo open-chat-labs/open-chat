@@ -200,7 +200,7 @@ import type {
 } from "./identity";
 import type { CommunityInvite, GroupInvite } from "./inviteCodes";
 import type { LogLevel } from "./logging";
-import type { ToggleMuteNotificationResponse } from "./notifications";
+import type { ApnsDevice, ToggleMuteNotificationResponse } from "./notifications";
 import type {
     OneSecForwardingStatus,
     OneSecTransferFees,
@@ -545,6 +545,8 @@ export type WorkerRequest = Cloneable<
     | FcmTokenExists
     | AddFcmToken
     | RemoveFcmToken
+    | AddApnsDevice
+    | RemoveApnsDevice
     | CreateAccountLinkingCode
     | ReinstateMissedDailyClaims
     | VerifyAccountLinkingCode
@@ -1474,6 +1476,16 @@ type AddFcmToken = {
 type RemoveFcmToken = {
     kind: "removeFcmToken";
     fcmToken: string;
+};
+
+type AddApnsDevice = {
+    kind: "addApnsDevice";
+    device: ApnsDevice;
+};
+
+type RemoveApnsDevice = {
+    kind: "removeApnsDevice";
+    device: ApnsDevice;
 };
 
 type RegisterUser = {
@@ -2943,6 +2955,8 @@ export type WorkerResults = ResultsByKind<{
     addFcmToken: void;
     fcmTokenExists: boolean;
     removeFcmToken: void;
+    addApnsDevice: void;
+    removeApnsDevice: void;
     groupInvite: void;
     communityInvite: void;
     setModerationFlags: boolean;

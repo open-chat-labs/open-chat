@@ -202,6 +202,16 @@ jobs:
                   if echo "$ENT" | tr -d ' \t\n' | grep -q '<key>get-task-allow</key><true/>'; then
                     echo "::error::Build is signed for development"; FAIL=1
                   fi
+                  # The app tags its APNs token for the sandbox only when its profile says
+                  # development, so a store build must be production (#10398 invariant 4).
+                  if ! echo "$ENT" | tr -d ' \t\n' | grep -q '<key>aps-environment</key><string>production</string>'; then
+                    echo "::error::aps-environment is not production"; FAIL=1
+                  fi
+                  if ! echo "$ENT" | tr -d ' \t\n' | grep -q '<key>com.apple.developer.usernotifications.communication</key><true/>'; then
+                    echo "::error::The communication notifications entitlement is missing"; FAIL=1
+                  fi
+                  [ -d "$APP/PlugIns/OpenChatNotificationService.appex" ] \
+                    || { echo "::error::The Notification Service Extension is missing"; FAIL=1; }
                   exit $FAIL
 
             - name: Upload build artifact

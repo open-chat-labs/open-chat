@@ -603,6 +603,8 @@ const handlers: Handlers = {
     fcmTokenExists: (payload, agent) => agent.fcmTokenExists(payload.fcmToken),
     addFcmToken: (payload, agent) => agent.addFcmToken(payload.fcmToken),
     removeFcmToken: (payload, agent) => agent.removeFcmToken(payload.fcmToken),
+    addApnsDevice: (payload, agent) => agent.addApnsDevice(payload.device),
+    removeApnsDevice: (payload, agent) => agent.removeApnsDevice(payload.device),
     markNotificationSubscriptionActive: (payload, agent) =>
         agent.markNotificationSubscriptionActive(payload.endpoint),
     inviteUsers: (payload, agent) => agent.inviteUsers(payload.id, payload.userIds),

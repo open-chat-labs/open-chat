@@ -52,6 +52,14 @@ class ShowNotificationArgs: Decodable {
     let notificationId: Int?
 }
 
+class ReleaseNotificationsArgs: Decodable {
+    let senderId: String?
+    let groupId: String?
+    let communityId: String?
+    let channelId: String?
+    let threadIndex: String?
+}
+
 class OpenChatPlugin: Plugin {
     private let passkeyAuth = PasskeyAuth()
     private let recentMedia = RecentMedia()
@@ -63,6 +71,7 @@ class OpenChatPlugin: Plugin {
     @objc public override func load(webview: WKWebView) {
         self.webview = webview
         OCCompanion.shared.plugin = self
+        Push.shared.install()
 
         hideKeyboardAccessoryBar(webview)
 
@@ -181,16 +190,24 @@ class OpenChatPlugin: Plugin {
         try passkeyAuth.handleSignIn(invoke)
     }
 
-    // No FCM on iOS (yet): remote push waits for the real Apple Developer
-    // account. A null token tells the frontend there is nothing to register.
+    // iOS pushes go through APNs, not FCM, so there is never an FCM token
     @objc func getFcmToken(_ invoke: Invoke) {
         invoke.resolve(["fcmToken": NSNull()])
     }
 
-    // On Android this re-displays a notification previously saved by the FCM
-    // service. There is no push pipeline on iOS yet, so there is never a saved
-    // notification to show.
+    // The APNs alert token, prefixed for the sandbox by a development build. Null if APNs gives
+    // none, e.g. without a network connection.
+    @objc func getApnsDevice(_ invoke: Invoke) {
+        Push.shared.requestAlertToken { token in
+            invoke.resolve(["alertToken": token ?? NSNull()])
+        }
+    }
+
+    // The web layer found a foreground push's chat isn't on screen, so it is shown
     @objc func showNotification(_ invoke: Invoke) {
+        if let id = (try? invoke.parseArgs(ShowNotificationArgs.self))?.notificationId {
+            Push.shared.present(id: id)
+        }
         invoke.resolve()
     }
 
@@ -200,9 +217,15 @@ class OpenChatPlugin: Plugin {
         invoke.resolve()
     }
 
-    // No push pipeline on iOS yet, so there are no per-conversation
-    // notifications to release. Success keeps shared frontend code happy.
+    // A chat was opened, so its delivered notifications go
     @objc func releaseNotifications(_ invoke: Invoke) {
+        if let args = try? invoke.parseArgs(ReleaseNotificationsArgs.self) {
+            let request = [
+                "senderId": args.senderId, "groupId": args.groupId, "communityId": args.communityId,
+                "channelId": args.channelId, "threadIndex": args.threadIndex,
+            ].compactMapValues { $0 }
+            Push.shared.release(request)
+        }
         invoke.resolve()
     }
 
@@ -347,5 +370,7 @@ class OpenChatPlugin: Plugin {
 
 @_cdecl("init_plugin_oc")
 func initPluginOc() -> Plugin {
+    // As early as possible, so a tap that launched the app reaches the delegate
+    Push.shared.install()
     return OpenChatPlugin()
 }

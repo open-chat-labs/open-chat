@@ -4,6 +4,10 @@ options:
   deploymentTarget:
     iOS: 16.0
 fileGroups: [../../src]
+packages:
+  # Push logic the app's plugin and the Notification Service Extension share
+  PushCore:
+    path: ../../../tauri-plugin-oc/ios/PushCore
 configs:
   debug: debug
   release: release
@@ -74,6 +78,8 @@ targets:
         # Only OpenChat's own standard encryption (TLS, request signing,
         # passkeys), which is exempt, so uploads skip the export question.
         ITSAppUsesNonExemptEncryption: false
+        # Lets the Notification Service Extension make communication notifications
+        NSUserActivityTypes: [INSendMessageIntent]
         # Dev only: the app loads the vite dev server and talks to a local dfx
         # replica over plain http on the LAN. The iOS release workflow deletes
         # this key before building, so store builds keep ATS on.
@@ -91,6 +97,10 @@ targets:
         # store builds ignore developer-mode entries.
         com.apple.developer.associated-domains:
           - webcredentials:oc.app
+        # APNs. Exporting for App Store Connect switches it to production.
+        aps-environment: development
+        # Message notifications show the sender like a messaging app
+        com.apple.developer.usernotifications.communication: true
     scheme:
       environmentVariables:
         RUST_BACKTRACE: full
@@ -108,6 +118,8 @@ targets:
         EXCLUDED_ARCHS[sdk=iphoneos*]: x86_64
       groups: [app]
     dependencies:
+      - target: OpenChatNotificationService
+        embed: true
       - framework: libapp.a
         embed: false
       - sdk: CoreGraphics.framework
@@ -136,3 +148,57 @@ targets:
           - $(SRCROOT)/open-chat_iOS/OpenChat.entitlements
         outputFiles:
           - $(SRCROOT)/open-chat_iOS/open-chat_iOS.entitlements
+    # #10398 invariant 18: every extension carries the app's version and build number
+    postBuildScripts:
+      - script: |
+          APP="${TARGET_BUILD_DIR}/${CONTENTS_FOLDER_PATH}"
+          for EXTENSION in "$APP"/PlugIns/*.appex; do
+            for KEY in CFBundleShortVersionString CFBundleVersion; do
+              EXPECTED=$(/usr/libexec/PlistBuddy -c "Print :$KEY" "$APP/Info.plist")
+              ACTUAL=$(/usr/libexec/PlistBuddy -c "Print :$KEY" "$EXTENSION/Info.plist")
+              if [ "$EXPECTED" != "$ACTUAL" ]; then
+                echo "error: $(basename "$EXTENSION") has $KEY $ACTUAL, the app has $EXPECTED"
+                exit 1
+              fi
+            done
+          done
+        name: Check extension versions
+        basedOnDependencyAnalysis: false
+  OpenChatNotificationService:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: NotificationService
+    info:
+      path: NotificationService/Info.plist
+      properties:
+        CFBundleDisplayName: OpenChat
+        # Replaced with the app's at build time, see the post-build script
+        CFBundleShortVersionString: 0.1.0
+        CFBundleVersion: "0.1.0"
+        # Where avatars are fetched, %@ being the canister id
+        OCAvatarBaseUrl: https://%@.raw.icp0.io
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.usernotifications.service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationService
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.oclabs.openchat.NotificationService
+        DEVELOPMENT_TEAM: N59KSS69AU
+        CODE_SIGN_STYLE: Automatic
+        ARCHS: [arm64]
+        SKIP_INSTALL: true
+    dependencies:
+      - package: PushCore
+    postBuildScripts:
+      # Sets the version and build number from the app's Info.plist, which the tauri CLI writes
+      # before building. Done to the built Info.plist, before the extension is signed.
+      - script: |
+          for KEY in CFBundleShortVersionString CFBundleVersion; do
+            VALUE=$(/usr/libexec/PlistBuddy -c "Print :$KEY" "${SRCROOT}/open-chat_iOS/Info.plist")
+            /usr/libexec/PlistBuddy -c "Set :$KEY $VALUE" "${TARGET_BUILD_DIR}/${INFOPLIST_PATH}"
+          done
+        name: Set the app's version
+        basedOnDependencyAnalysis: false
+        inputFiles:
+          - $(SRCROOT)/open-chat_iOS/Info.plist

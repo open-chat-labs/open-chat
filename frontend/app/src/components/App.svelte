@@ -11,7 +11,6 @@
     import { currentTheme } from "@theme/themes";
     import "@utils/markdown";
     import {
-        expectNewFcmToken,
         expectNotificationTap,
         expectPushNotifications,
     } from "@utils/native/notification_channels";
@@ -53,11 +52,11 @@
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading, locale } from "svelte-i18n";
     import {
-        clearAllNotifications,
-        deleteFcmToken,
-        getFcmToken,
-        svelteReady,
-    } from "tauri-plugin-oc-api";
+        expectPushDeviceRefresh,
+        registerPushDevice,
+        unregisterPushDevice,
+    } from "@utils/native/push_device";
+    import { clearAllNotifications, svelteReady } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
     import Profiler from "./Profiler.svelte";
     import Router from "./Router.svelte";
@@ -193,30 +192,14 @@
 
     // Sets up push notifications and FCM token management for native apps
     function setupNativeApp() {
-        const addFcmToken = (token: string) => {
-            client
-                .addFcmToken(token)
-                .then(() => console.info("FCM token updated successfully"))
-                .catch(console.error);
-        };
-
         if (!client.isNativeApp()) {
             return;
         }
 
-        // Ask for the current FCM token and register it unconditionally on every
-        // login. Registration is last-login-wins on the backend, so this also
-        // reclaims a token still bound to a previous account on this device (a
-        // fcm_token_exists pre-check would wrongly skip that).
-        getFcmToken().then((token) => {
-            if (!token) {
-                // TODO do we handle this somehow? Debounce, try again?
-                console.error("No FCM token received");
-                return;
-            }
-
-            addFcmToken(token);
-        });
+        // Register this device's push token on every login (FCM on Android,
+        // APNs on iOS). Registration is last-login-wins on the backend, so this
+        // also reclaims a token still bound to a previous account on this device.
+        registerPushDevice(client);
 
         // Everything below registers session-scoped handlers and must run once.
         if (nativeSetupDone) {
@@ -231,8 +214,8 @@
         // Listen for notifications user has tapped on
         expectNotificationTap().catch(console.error);
 
-        // Expect FCM token refreshes
-        expectNewFcmToken(addFcmToken);
+        // Expect push token refreshes
+        expectPushDeviceRefresh(client).catch(console.error);
 
         // Best-effort push hygiene on sign-out, while the identity is
         // still valid: unbind this device's token from the account,
@@ -240,11 +223,7 @@
         // and the next login mints + registers a fresh one), and empty
         // the tray so nothing from this account lingers.
         client.onLogout(async () => {
-            const token = await getFcmToken().catch(() => null);
-            if (token) {
-                await client.removeFcmToken(token).catch(console.error);
-            }
-            await deleteFcmToken().catch(console.error);
+            await unregisterPushDevice(client);
             await clearAllNotifications().catch(console.error);
         });
     }

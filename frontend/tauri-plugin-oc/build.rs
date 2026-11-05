@@ -5,6 +5,7 @@ const COMMANDS: &[&str] = &[
     "sign_up",
     "sign_in",
     "get_fcm_token",
+    "get_apns_device",
     "show_notification",
     "svelte_ready",
     "release_notifications",

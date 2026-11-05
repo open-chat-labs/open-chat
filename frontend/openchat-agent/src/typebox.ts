@@ -1291,6 +1291,9 @@ export const OptionalCommunityPermissions = /* @__PURE__ */ Type.Object({
     manage_user_groups: Type.Optional(CommunityPermissionRole),
 });
 
+export type ApnsToken = Static<typeof ApnsToken>;
+export const ApnsToken = /* @__PURE__ */ Type.String();
+
 export type PrimaryLanguageChanged = Static<typeof PrimaryLanguageChanged>;
 export const PrimaryLanguageChanged = /* @__PURE__ */ Type.Object({
     previous: Type.String(),
@@ -5816,6 +5819,12 @@ export const MembersResult = /* @__PURE__ */ Type.Object({
     timestamp: Type.BigInt(),
 });
 
+export type ApnsDevice = Static<typeof ApnsDevice>;
+export const ApnsDevice = /* @__PURE__ */ Type.Object({
+    alert_token: Type.Optional(ApnsToken),
+    voip_token: Type.Optional(ApnsToken),
+});
+
 export type CommunityMemberJoined = Static<typeof CommunityMemberJoined>;
 export const CommunityMemberJoined = /* @__PURE__ */ Type.Object({
     user_id: UserId,
@@ -7529,6 +7538,20 @@ export const CommunityUpdateChannelResponse = /* @__PURE__ */ Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type NotificationsIndexAddApnsDeviceArgs = Static<
+    typeof NotificationsIndexAddApnsDeviceArgs
+>;
+export const NotificationsIndexAddApnsDeviceArgs = /* @__PURE__ */ Type.Object({
+    device: ApnsDevice,
+});
+
+export type NotificationsIndexRemoveApnsDeviceArgs = Static<
+    typeof NotificationsIndexRemoveApnsDeviceArgs
+>;
+export const NotificationsIndexRemoveApnsDeviceArgs = /* @__PURE__ */ Type.Object({
+    device: ApnsDevice,
+});
 
 export type StorageBucketVaultLogSuccessResult = Static<typeof StorageBucketVaultLogSuccessResult>;
 export const StorageBucketVaultLogSuccessResult = /* @__PURE__ */ Type.Object({

@@ -141,6 +141,13 @@ export type CryptoTransferDetails = {
 
 export type SubscriptionExistsResponse = boolean;
 
+// An iOS install's APNs tokens, each prefixed `sandbox:` by a development build. The VoIP token
+// arrives with native call ringing.
+export type ApnsDevice = {
+    alertToken?: string;
+    voipToken?: string;
+};
+
 export type NotificationStatus =
     | "pending-init"
     | "unsupported"

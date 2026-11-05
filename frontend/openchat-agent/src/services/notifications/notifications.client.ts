@@ -1,11 +1,14 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
+import type { ApnsDevice } from "@shared";
 import {
+    NotificationsIndexAddApnsDeviceArgs,
     NotificationsIndexAddFcmTokenArgs,
     NotificationsIndexFcmTokenExistsArgs,
     NotificationsIndexFcmTokenExistsResponse,
     NotificationsIndexMarkSubscriptionActiveArgs,
     NotificationsIndexPushSubscriptionArgs,
     NotificationsIndexPushSubscriptionResponse,
+    NotificationsIndexRemoveApnsDeviceArgs,
     NotificationsIndexRemoveFcmTokenArgs,
     NotificationsIndexRemoveSubscriptionArgs,
     NotificationsIndexSubscriptionExistsArgs,
@@ -96,6 +99,31 @@ export class NotificationsClient extends SingleCanisterMsgpackAgent {
         );
     }
 
+    addApnsDevice(device: ApnsDevice): Promise<void> {
+        return this.update(
+            "add_apns_device",
+            { device: apnsDevice(device) },
+            (response) => {
+                if (response !== "Success") {
+                    const [_, msg] = response.Error;
+                    console.warn("Unable to add APNs device", msg);
+                }
+            },
+            NotificationsIndexAddApnsDeviceArgs,
+            UnitResult,
+        );
+    }
+
+    removeApnsDevice(device: ApnsDevice): Promise<void> {
+        return this.update(
+            "remove_apns_device",
+            { device: apnsDevice(device) },
+            toVoid,
+            NotificationsIndexRemoveApnsDeviceArgs,
+            UnitResult,
+        );
+    }
+
     markSubscriptionActive(endpoint: string): Promise<void> {
         return this.update(
             "mark_subscription_active",
@@ -105,4 +133,8 @@ export class NotificationsClient extends SingleCanisterMsgpackAgent {
             SuccessOnly,
         );
     }
+}
+
+function apnsDevice({ alertToken, voipToken }: ApnsDevice) {
+    return { alert_token: alertToken, voip_token: voipToken };
 }
