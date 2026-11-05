@@ -14051,11 +14051,8 @@ export class OpenChat {
         return this.#worker.send({ kind: "setAlchemyApiKey", apiKey });
     }
 
-    setTurnstileConfig(
-        secretKey: string | undefined,
-        required: boolean,
-    ): Promise<Success | OCError> {
-        return this.#worker.send({ kind: "setTurnstileConfig", secretKey, required });
+    setTurnstileConfig(secretKey: string | undefined): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "setTurnstileConfig", secretKey });
     }
 
     setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {

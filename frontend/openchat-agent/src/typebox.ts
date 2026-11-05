@@ -2548,7 +2548,6 @@ export const UserIndexSetAuthorityReporterArgs = /* @__PURE__ */ Type.Object({
 export type UserIndexSetTurnstileConfigArgs = Static<typeof UserIndexSetTurnstileConfigArgs>;
 export const UserIndexSetTurnstileConfigArgs = /* @__PURE__ */ Type.Object({
     secret_key: Type.Optional(Type.String()),
-    required: Type.Boolean(),
 });
 
 export type UserIndexClearAuthorityReportAttemptAuthorityReportFailure = Static<

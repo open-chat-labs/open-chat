@@ -484,15 +484,12 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    // A platform operator only. The user index passes it on to every LocalUserIndex, which checks
-    // prize claims with it.
-    setTurnstileConfig(
-        secretKey: string | undefined,
-        required: boolean,
-    ): Promise<Success | OCError> {
+    // A platform operator only. The user index passes it on to every LocalUserIndex, which then
+    // checks every prize claim with it.
+    setTurnstileConfig(secretKey: string | undefined): Promise<Success | OCError> {
         return this.update(
             "set_turnstile_config",
-            { secret_key: secretKey, required },
+            { secret_key: secretKey },
             unitResult,
             UserIndexSetTurnstileConfigArgs,
             UnitResult,

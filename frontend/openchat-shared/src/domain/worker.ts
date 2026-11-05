@@ -722,7 +722,6 @@ type SetAlchemyApiKey = {
 type SetTurnstileConfig = {
     kind: "setTurnstileConfig";
     secretKey: string | undefined;
-    required: boolean;
 };
 // Platform operators only
 type SetBridgeBot = {

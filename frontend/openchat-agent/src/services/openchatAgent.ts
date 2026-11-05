@@ -6091,11 +6091,8 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setAlchemyApiKey(apiKey);
     }
 
-    setTurnstileConfig(
-        secretKey: string | undefined,
-        required: boolean,
-    ): Promise<Success | OCError> {
-        return this._userIndexClient.setTurnstileConfig(secretKey, required);
+    setTurnstileConfig(secretKey: string | undefined): Promise<Success | OCError> {
+        return this._userIndexClient.setTurnstileConfig(secretKey);
     }
 
     setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {

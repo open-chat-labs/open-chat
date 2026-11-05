@@ -49,7 +49,6 @@
     let openAiApiKey = $state("");
     let alchemyApiKey = $state("");
     let turnstileSecretKey = $state("");
-    let turnstileRequired = $state(false);
     let miniAppServicePrincipal = $state("");
     const bridgeBotIds = $state<Record<BridgePlatform, string>>({
         discord: "",
@@ -181,25 +180,15 @@
             .finally(() => busy.delete(21));
     }
 
-    // Sets how prize claims are checked for a human, on the user index, which passes it on to every
-    // LocalUserIndex. The secret key goes with every change, so Required is set with it; turning the
-    // check off has its own button.
-    async function setTurnstileConfig(
-        secretKey: string | undefined,
-        required: boolean,
-    ): Promise<void> {
+    // Sets the secret key for checking prize claims for a human, on the user index, which passes it
+    // on to every LocalUserIndex. Once it's set, every prize claim must pass the check.
+    async function setTurnstileConfig(secretKey: string | undefined): Promise<void> {
         busy.add(24);
         try {
-            const resp = await client.setTurnstileConfig(secretKey, required);
+            const resp = await client.setTurnstileConfig(secretKey);
             if (resp.kind === "success") {
                 toastStore.showSuccessToast(
-                    i18nKey(
-                        secretKey === undefined
-                            ? "Turnstile turned off"
-                            : required
-                              ? "Turnstile set, and required"
-                              : "Turnstile set, not yet required",
-                    ),
+                    i18nKey(secretKey === undefined ? "Turnstile turned off" : "Turnstile turned on"),
                 );
                 turnstileSecretKey = "";
             } else {
@@ -1010,25 +999,18 @@
     <section class="operator-function">
         <div class="title">Turnstile (prize claim human check)</div>
         <Input bind:value={turnstileSecretKey} placeholder={i18nKey("Secret key")} />
-        <div class="name-value">
-            <div class="label">Required:</div>
-            <div class="value">
-                <Toggle small id="turnstile-required" bind:checked={turnstileRequired} />
-            </div>
-        </div>
         <ButtonGroup align="fill">
             <Button
                 tiny
                 loading={busy.has(24)}
                 disabled={busy.has(24) || turnstileSecretKey.trim() === ""}
-                onClick={() => setTurnstileConfig(turnstileSecretKey.trim(), turnstileRequired)}
-                >Set</Button>
+                onClick={() => setTurnstileConfig(turnstileSecretKey.trim())}>Set</Button>
             <Button
                 tiny
                 secondary
                 loading={busy.has(24)}
                 disabled={busy.has(24)}
-                onClick={() => setTurnstileConfig(undefined, false)}>Turn off</Button>
+                onClick={() => setTurnstileConfig(undefined)}>Turn off</Button>
         </ButtonGroup>
     </section>
 

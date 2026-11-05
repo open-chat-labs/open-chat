@@ -57,12 +57,13 @@ describe("redactSecrets", () => {
         expect(
             redactSecrets({ kind: "claimPrize", messageId: 1n, turnstileToken: "0.abc" }),
         ).toEqual({ kind: "claimPrize", messageId: 1n, turnstileToken: REDACTED });
-        expect(
-            redactSecrets({ secret_key: "0x4AAA", required: true }, "set_turnstile_config"),
-        ).toEqual({ secret_key: REDACTED, required: true });
-        expect(
-            redactSecrets({ kind: "setTurnstileConfig", secretKey: "0x4AAA", required: true }),
-        ).toEqual({ kind: "setTurnstileConfig", secretKey: REDACTED, required: true });
+        expect(redactSecrets({ secret_key: "0x4AAA" }, "set_turnstile_config")).toEqual({
+            secret_key: REDACTED,
+        });
+        expect(redactSecrets({ kind: "setTurnstileConfig", secretKey: "0x4AAA" })).toEqual({
+            kind: "setTurnstileConfig",
+            secretKey: REDACTED,
+        });
     });
 
     test("only redacts `new` for set_pin_number", () => {

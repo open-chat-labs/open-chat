@@ -1185,8 +1185,7 @@ const handlers: Handlers = {
     setMiniAppServicePrincipal: (payload, agent) =>
         agent.setMiniAppServicePrincipal(payload.principal),
     setAlchemyApiKey: (payload, agent) => agent.setAlchemyApiKey(payload.apiKey),
-    setTurnstileConfig: (payload, agent) =>
-        agent.setTurnstileConfig(payload.secretKey, payload.required),
+    setTurnstileConfig: (payload, agent) => agent.setTurnstileConfig(payload.secretKey),
     setBridgeBot: (payload, agent) => agent.setBridgeBot(payload.platform, payload.botId),
     getBridgedUsers: (payload, agent) => agent.getBridgedUsers(payload.ids),
     startBridgedUserLink: (payload, agent) => agent.startBridgedUserLink(payload.platform),
