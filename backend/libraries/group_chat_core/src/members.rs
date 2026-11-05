@@ -618,6 +618,24 @@ impl GroupMembers {
         &self.moderators
     }
 
+    // The member next in line to be owner when the chat has none: the earliest joined admin, else the
+    // earliest joined moderator, else the earliest joined member. Bots and suspended members are
+    // passed over.
+    pub fn next_owner(&self) -> Option<UserId> {
+        self.earliest_joined_of(&self.admins)
+            .or_else(|| self.earliest_joined_of(&self.moderators))
+            .or_else(|| self.members_map.earliest_joined(|m| m.can_become_owner()))
+    }
+
+    fn earliest_joined_of(&self, user_ids: &BTreeSet<UserId>) -> Option<UserId> {
+        user_ids
+            .iter()
+            .filter_map(|user_id| self.get(user_id))
+            .filter(|m| m.can_become_owner())
+            .min_by_key(|m| m.date_added)
+            .map(|m| m.user_id)
+    }
+
     pub fn role(&self, user_id: &UserId) -> Option<GroupRole> {
         if self.owners.contains(user_id) {
             Some(GroupRole::Owner)
@@ -866,6 +884,10 @@ impl GroupMemberInternal {
 
     pub fn role(&self) -> &Timestamped<GroupRoleInternal> {
         &self.role
+    }
+
+    fn can_become_owner(&self) -> bool {
+        !self.user_type.is_bot() && !self.suspended.value
     }
 
     pub fn user_type(&self) -> UserType {

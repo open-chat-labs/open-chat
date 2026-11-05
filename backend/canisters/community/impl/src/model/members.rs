@@ -282,6 +282,17 @@ impl CommunityMembers {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
+        self.change_role_inner(Some(initiator.role), target_user_id, new_role, now)
+    }
+
+    // `changed_by_role` is None when OpenChat makes the change rather than a member
+    fn change_role_inner(
+        &mut self,
+        changed_by_role: Option<CommunityRole>,
+        target_user_id: UserId,
+        new_role: CommunityRole,
+        now: TimestampMillis,
+    ) -> OCResult<ChangeRoleSuccess> {
         let mut result: OCResult<CommunityRole> = Err(OCErrorCode::TargetUserNotInCommunity.into());
         let mut unlapsed = false;
 
@@ -289,7 +300,7 @@ impl CommunityMembers {
         self.members_map.update(&target_user_id, |member| {
             // The initiator must be the same or senior to the target's current role, otherwise eg. an
             // admin could demote an owner
-            if !initiator.role.is_same_or_senior(member.role) {
+            if changed_by_role.is_some_and(|role| !role.is_same_or_senior(member.role)) {
                 result = Err(OCErrorCode::InitiatorNotAuthorized.into());
                 return false;
             }
@@ -603,6 +614,30 @@ impl CommunityMembers {
 
     pub fn admins(&self) -> &BTreeSet<UserId> {
         &self.admins
+    }
+
+    // Makes the member next in line owner if the community has no owner, as when its last owner deletes
+    // their account, returning the new owner and their previous role
+    pub fn assign_owner_if_none(&mut self, now: TimestampMillis) -> Option<(UserId, CommunityRole)> {
+        if !self.owners.is_empty() {
+            return None;
+        }
+
+        let user_id = self.next_owner()?;
+        let success = self.change_role_inner(None, user_id, CommunityRole::Owner, now).ok()?;
+        Some((user_id, success.prev_role))
+    }
+
+    // The member next in line to be owner: the earliest joined admin, else the earliest joined member.
+    // Bots and suspended members are passed over.
+    fn next_owner(&self) -> Option<UserId> {
+        self.admins
+            .iter()
+            .filter_map(|user_id| self.get_by_user_id(user_id))
+            .filter(|m| m.can_become_owner())
+            .min_by_key(|m| m.date_added)
+            .map(|m| m.user_id)
+            .or_else(|| self.members_map.earliest_joined(|m| m.can_become_owner()))
     }
 
     pub fn bots(&self) -> &BTreeMap<UserId, UserType> {
@@ -966,6 +1001,10 @@ impl CommunityMemberInternal {
 
     pub fn role(&self) -> CommunityRole {
         self.role
+    }
+
+    fn can_become_owner(&self) -> bool {
+        !self.user_type.is_bot() && !self.suspended.value
     }
 
     pub fn display_name(&self) -> &Timestamped<Option<String>> {

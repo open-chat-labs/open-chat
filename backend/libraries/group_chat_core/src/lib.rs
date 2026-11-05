@@ -6,6 +6,7 @@ use chat_events::{
     RemoveEventsResult, ReservePrizeSuccess, TipMessageArgs, UndeleteMessageSuccess, UpdateMessageSuccess, UpdateMiniAppArgs,
     UpdateUnfinalisedBotMessageArgs,
 };
+use constants::OPENCHAT_BOT_USER_ID;
 use group_community_common::MemberUpdate;
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -1299,6 +1300,29 @@ impl GroupChatCore {
         }
 
         results
+    }
+
+    // Makes the member next in line owner if the chat has no owner, as when its last owner deletes
+    // their account, returning the new owner
+    pub fn assign_owner_if_none(&mut self, now: TimestampMillis) -> Option<UserId> {
+        if !self.members.owners().is_empty() {
+            return None;
+        }
+
+        let user_id = self.members.next_owner()?;
+        let prev_role = self.members.change_role(user_id, None, GroupRoleInternal::Owner, now).ok()?;
+
+        self.events.push_main_event(
+            ChatEventInternal::RoleChanged(Box::new(RoleChanged {
+                user_ids: vec![user_id],
+                old_role: prev_role.into(),
+                new_role: GroupRole::Owner,
+                changed_by: OPENCHAT_BOT_USER_ID,
+            })),
+            now,
+        );
+
+        Some(user_id)
     }
 
     pub fn pin_message(

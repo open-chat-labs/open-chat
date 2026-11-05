@@ -8,7 +8,7 @@ use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{Empty, Milliseconds};
+use types::{CommunityRole, DiamondMembershipPlanDuration, Empty, GroupRole, Milliseconds};
 
 #[test_case(0, true)]
 #[test_case(299_999, true)]
@@ -127,6 +127,61 @@ fn deleted_user_removed_from_groups_and_communities() {
 
     assert!(group_summary.basic_members.is_empty());
     assert!(community_summary.basic_members.is_empty());
+}
+
+#[test]
+fn next_in_line_becomes_owner_when_the_last_owner_is_deleted() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let (owner, owner_auth) = register_user_and_include_auth(env, canister_ids);
+    client::upgrade_user(
+        &owner,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::OneMonth,
+        false,
+    );
+    let user2 = client::register_user(env, canister_ids);
+    let user3 = client::register_user(env, canister_ids);
+
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    let community_id = client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
+    let channel_id = client::community::happy_path::summary(env, owner.principal, community_id)
+        .channels
+        .first()
+        .unwrap()
+        .channel_id;
+
+    // user2 joins before user3, and so joins the community's channel first too
+    for user in [&user2, &user3] {
+        client::group::happy_path::join_group(env, user.principal, group_id);
+        client::community::happy_path::join_community(env, user.principal, community_id);
+        env.advance_time(Duration::from_millis(1));
+    }
+    tick_many(env, 3);
+
+    // In the group the admin is next in line, whereas the community and its channel have no admins
+    client::group::happy_path::change_role(env, owner.principal, group_id, user3.user_id, GroupRole::Admin);
+
+    client::identity::happy_path::delete_user(env, &owner_auth, canister_ids.identity);
+
+    tick_many(env, 20);
+
+    let group_summary = client::group::happy_path::summary(env, user3.principal, group_id);
+    assert!(matches!(group_summary.membership.unwrap().role, GroupRole::Owner));
+
+    let community_summary = client::community::happy_path::summary(env, user2.principal, community_id);
+    assert!(matches!(community_summary.membership.unwrap().role, CommunityRole::Owner));
+
+    let channel_summary = client::community::happy_path::channel_summary(env, &user2, community_id, channel_id);
+    assert!(matches!(channel_summary.membership.unwrap().role, GroupRole::Owner));
 }
 
 #[test]

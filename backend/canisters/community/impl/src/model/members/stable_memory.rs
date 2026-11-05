@@ -44,6 +44,19 @@ impl MembersStableStorage {
         with_map_mut(|m| m.insert_many(entries));
     }
 
+    // The earliest joined of the members matching `filter`, found in a single pass over the map
+    pub fn earliest_joined(&self, filter: impl Fn(&CommunityMemberInternal) -> bool) -> Option<UserId> {
+        with_map(|m| {
+            m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)
+                .take_while(|(k, _)| k.matches_prefix(&self.prefix))
+                .map(|(k, v)| bytes_to_member(&v).hydrate(k.user_id()))
+                .filter(|member| filter(member))
+                .map(|member| (member.date_added, member.user_id))
+                .min()
+                .map(|(_, user_id)| user_id)
+        })
+    }
+
     // The key and value of each member as stored
     #[cfg(test)]
     pub fn all_entries(&self) -> Vec<(Vec<u8>, Vec<u8>)> {
