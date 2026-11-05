@@ -87,8 +87,11 @@ pub struct BotUpdate {
 }
 
 impl Game {
-    // A game whose card is being posted, with the bot's post token
+    // A game whose card is being posted, with the bot's post token. The user whose command it answers
+    // is playing from the start if the bot asked, as only they can be: the token, which OpenChat
+    // signed, names them.
     pub fn posting(claims: MiniAppPostClaims, post: PostArgs, now: TimestampMillis) -> Game {
+        let players = claims.initiator.user().filter(|_| post.join_initiator).into_iter().collect();
         Game {
             game: claims.game,
             bot: claims.bot,
@@ -98,7 +101,7 @@ impl Game {
             spectators: post.card.spectators,
             pending_post: Some(post),
             status: GameStatus::Open,
-            players: Vec::new(),
+            players,
             started_with: Vec::new(),
             waiting_for: Vec::new(),
             result: None,
@@ -432,6 +435,7 @@ mod tests {
                 },
                 block_level_markdown: false,
                 replies_to: None,
+                join_initiator: false,
             },
             0,
         );

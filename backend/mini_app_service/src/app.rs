@@ -859,8 +859,8 @@ mod tests {
     use tokio::sync::mpsc::{Receiver, channel};
     use types::MiniAppSize;
     use types::{
-        BotInitiator, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_POST, CanisterId, Chat, EventIndex, MiniAppActive,
-        MiniAppContent, MiniAppFinished, MiniAppPostClaims, MiniAppStatus, MiniAppStatusUpdate,
+        BotCommand, BotInitiator, CLAIM_TYPE_MINI_APP_CHAT, CLAIM_TYPE_MINI_APP_POST, CanisterId, Chat, EventIndex,
+        MiniAppActive, MiniAppContent, MiniAppFinished, MiniAppPostClaims, MiniAppStatus, MiniAppStatusUpdate,
     };
 
     const HOUR: Milliseconds = 60 * 60 * 1000;
@@ -1077,6 +1077,20 @@ mod tests {
             oc_token(&self.oc, CLAIM_TYPE_MINI_APP_POST, post_claims(bot), now_millis() + HOUR)
         }
 
+        // The bot's permission to post the test's game in answer to the user's command
+        fn command_post_token(&self, user_id: UserId) -> String {
+            let claims = MiniAppPostClaims {
+                initiator: BotInitiator::Command(BotCommand {
+                    name: "play".to_string(),
+                    args: Vec::new(),
+                    initiator: user_id,
+                    meta: None,
+                }),
+                ..post_claims(user(BOT))
+            };
+            oc_token(&self.oc, CLAIM_TYPE_MINI_APP_POST, claims, now_millis() + HOUR)
+        }
+
         fn post_args(&self, max_players: Option<u32>, spectators: bool) -> PostArgs {
             PostArgs {
                 token: self.post_token(),
@@ -1089,6 +1103,7 @@ mod tests {
                 },
                 block_level_markdown: false,
                 replies_to: None,
+                join_initiator: false,
             }
         }
 
@@ -1777,6 +1792,62 @@ mod tests {
         assert_eq!(test.app.leave(user(1), 1, game()).await, ServerMessage::Ok { id: 1 });
         assert!(test.stored().await.unwrap().players.is_empty());
         assert_eq!(*test.bot.left.lock().unwrap(), vec![user(1)]);
+    }
+
+    // The bot has the command's user playing already, so it isn't asked, and they leave like anyone else
+    #[tokio::test]
+    async fn the_commands_user_plays_from_the_cards_post_if_the_bot_asks() {
+        let test = Test::new();
+        let args = PostArgs {
+            token: test.command_post_token(user(1)),
+            join_initiator: true,
+            ..test.post_args(Some(4), true)
+        };
+        assert_eq!(test.app.post(user(BOT), args).await, Ok(game()));
+        assert_eq!(test.stored().await.unwrap().players, vec![user(1)]);
+        assert!(test.bot.joined.lock().unwrap().is_empty());
+
+        let (follower, mut follower_messages) = test.connect(user(3));
+        test.app
+            .follow(follower, user(3), 1, &test.chat_token(user(3), false), vec![game()])
+            .await;
+        assert_eq!(cards(&mut follower_messages)[0].players, vec![user(1)]);
+        let (player, mut player_messages) = test.connect(user(1));
+        test.app
+            .open(player, user(1), 1, &test.chat_token(user(1), true), game())
+            .await;
+        assert!(matches!(
+            messages(&mut player_messages)[0],
+            ServerMessage::Opened {
+                role: Role::Player,
+                player_token: Some(_),
+                ..
+            }
+        ));
+
+        assert_eq!(test.app.leave(user(1), 1, game()).await, ServerMessage::Ok { id: 1 });
+        assert!(test.stored().await.unwrap().players.is_empty());
+        assert_eq!(*test.bot.left.lock().unwrap(), vec![user(1)]);
+    }
+
+    // Unless the bot asks, and the card answers a command, no one's playing as it's posted
+    #[tokio::test]
+    async fn no_one_plays_from_the_cards_post_unless_the_bot_asks_for_its_commands_user() {
+        let test = Test::new();
+        let args = PostArgs {
+            token: test.command_post_token(user(1)),
+            ..test.post_args(None, true)
+        };
+        assert_eq!(test.app.post(user(BOT), args).await, Ok(game()));
+        assert!(test.stored().await.unwrap().players.is_empty());
+
+        let test = Test::new();
+        let args = PostArgs {
+            join_initiator: true,
+            ..test.post_args(None, true)
+        };
+        assert_eq!(test.app.post(user(BOT), args).await, Ok(game()));
+        assert!(test.stored().await.unwrap().players.is_empty());
     }
 
     // Only a player starts it, and only once, as the bot agrees

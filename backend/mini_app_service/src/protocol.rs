@@ -171,6 +171,10 @@ pub struct PostArgs {
     pub block_level_markdown: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub replies_to: Option<EventIndex>,
+    // Whether the user whose command the card answers joins it as it's posted, its first player. The
+    // bot has them playing already, so it isn't asked. A card posted autonomously has no such user.
+    #[serde(default)]
+    pub join_initiator: bool,
 }
 
 // A card as a bot posts it. Its status is Open, so isn't sent.
@@ -388,9 +392,20 @@ mod tests {
         assert_eq!(content.app, "uno");
         assert_eq!(content.max_players, Some(4));
         assert_eq!(content.status, MiniAppStatus::Open);
+        assert!(!args.join_initiator);
 
         let mut card = args.card.clone();
         card.app = String::new();
         assert!(card.to_content().is_err());
+    }
+
+    // As the bots' SDK sends it, asking for the command's user to be playing from the post
+    #[test]
+    fn a_card_is_posted_with_its_commands_user_playing_if_the_bot_asks() {
+        let args: PostArgs = serde_json::from_str(
+            r#"{"token":"token","card":{"text":"Uno","app":"uno","spectators":false,"app_size":{"width":440,"height":740}},"block_level_markdown":false,"replies_to":null,"join_initiator":true}"#,
+        )
+        .unwrap();
+        assert!(args.join_initiator);
     }
 }

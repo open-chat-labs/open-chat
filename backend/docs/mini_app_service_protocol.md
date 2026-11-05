@@ -1,7 +1,7 @@
 # The MiniApp service protocol
 
 The MiniApp service is run by OpenChat. It sits between the website and the game servers (bots), so that:
-- a user is on a game's card only if they asked to join through OpenChat and the bot accepted them;
+- a user is on a game's card only if they asked to join through OpenChat and the bot accepted them, or ran the command the card answers and the bot asked for them;
 - spectators get the game through the service, never from the bot, and OpenChat doesn't tell the bot who they are. Their browser still loads the bot's app and artwork, and anything the app fetches, from the bot's servers;
 - a card exists only if the service knows its game, as bots post cards through the service.
 
@@ -209,12 +209,14 @@ Every call has `Authorization: Bearer <bot token>`.
     "app_size": { "width": 440, "height": 720 }
   },
   "block_level_markdown": false,
-  "replies_to": null
+  "replies_to": null,
+  "join_initiator": false
 }
 ```
 - The bot gets the token from the LocalUserIndex's `bot_mini_app_post_token`, with the same context it would send a message with: a command's token or an autonomous chat, the channel for a community command, the thread, and the message id it chose, unless a chat command's token fixes it. The token must be the bot's own.
-- `card` is the card as the bot posts it: `max_players` and `replies_to` are optional, and `block_level_markdown` is false if left out. `app` names one of the bot's apps, as its definition declares them (see "The bot's apps"): the LocalUserIndex refuses a card whose app isn't in the bot's definition. The card shows the app's image, from the definition, whenever there's no app to show. `app_size` is the size the app's designed for, in CSS pixels, each 1 to 10,000 and neither more than three times the other: the card shows the app at that aspect ratio, sized before it loads. Its status is Open.
+- `card` is the card as the bot posts it: `max_players` and `replies_to` are optional, and `block_level_markdown` and `join_initiator` are false if left out. `app` names one of the bot's apps, as its definition declares them (see "The bot's apps"): the LocalUserIndex refuses a card whose app isn't in the bot's definition. The card shows the app's image, from the definition, whenever there's no app to show. `app_size` is the size the app's designed for, in CSS pixels, each 1 to 10,000 and neither more than three times the other: the card shows the app at that aspect ratio, sized before it loads. Its status is Open.
 - The service posts the card as the bot, through the LocalUserIndex, and answers `{ "game": game }` once it's in the chat. The game is in the token, so the bot knows it before the card is posted.
+- **`join_initiator`** has the user who ran the command the card answers playing from the moment it's posted, its first player, as if they'd joined, eg. a game's host. The token names them, as OpenChat signed it, so it's only ever them. The bot has them playing already, so it isn't asked; they leave like anyone else. A card posted autonomously has no such user, so no one's playing.
 - **Posting again with the same token** answers `{ "game": game }` too, without posting another card: the chat answers a bot's repeated card with the card it holds. So a bot which doesn't get an answer, eg. as the service restarted, sends the same token again. Any other message at the card's message id is a refusal, so a command answered with a card isn't answered with anything else at its id first, except an unfinalised placeholder, which the card replaces.
 - Until the service has posted a card, it doesn't know the game: no one can follow, join or open it, and `/bot/update` answers 404.
 
@@ -340,13 +342,13 @@ A player's app sends the player token, in `x-oc-jwt`, with each request to the b
 
 ## Rules
 
-- **Joining and leaving** only happen through OpenChat's own buttons on the card and around the frame. Nothing lets an app join or leave for its user. Otherwise an app could sign up everyone who opens it.
+- **Joining and leaving** only happen through OpenChat's own buttons on the card and around the frame, or, for the user who ran the command a card answers, by running it, if the bot asks. Nothing lets an app join or leave for its user. Otherwise an app could sign up everyone who opens it.
 - **Starting goes through OpenChat,** so the card records exactly who the game started with. An app asks for its player, and the bot decides. Moves go straight to the bot.
 - **A bot checks its own player list on every request.** A player token outlives a removal by up to an hour.
 - **Spectators get only the shared state,** which every player sees too, so watching can't leak a player's hand.
 - **Spectators aren't named.** Neither the service nor the website tells the bot or its app who's watching, since anyone with the card on screen is. The app is the bot's own page, though, with storage of its own, so a bot can still recognise a browser that has played its games before.
 - **Only the service posts a card, and only it writes the card's status.** So every card is a game the service knows from the moment it exists. The status holds the game's players and settings once it starts, and its result and end state once it finishes. Whose turn it is is only shown live.
-  - A bot can take players off but never put them on.
+  - A bot can take players off but never put them on, except the user whose command its card answers, as it posts the card (`join_initiator`).
   - The service ends a game:
     - after 24 hours with no update from its bot, ending the card with no result;
     - when an update fails because the card was deleted (`MessageNotFound`);
