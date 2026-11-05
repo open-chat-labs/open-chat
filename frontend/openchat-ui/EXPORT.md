@@ -368,6 +368,7 @@ Built by hand (N2, #10365) from the patterns the native prototype builds inline:
 |---|---|---|
 | AnchoredMenu | the kebab and value menus (`openXMenu`, `openAM`, `v.xm*`, `v.am*`) | 2026-11-05 |
 | BottomSheet | the pick, poll-settings and referrer sheets (`grabSheet`, `closeSheet`, `v.sheetTy`, `v.sheetVeilOp`) | 2026-11-05 |
+| CodeTiles | the linking code tiles (`v.au.codeBoxes`, `onCode`) | 2026-11-05 |
 | LongPressMenu | the row long-press menu (`lpH`, `openRowMenu`, `v.rm*`) | 2026-11-05 |
 | NativeMenu | the menus' rows (`menuItems`: icon, label, tick, chevron, back row, dividers) | 2026-11-05 |
 | NativePageHeader | the pushed screens' and the conversation's headers (`v.back`, `v.backMask`, `v.kebabRot`), the tab titles | 2026-11-05 |
@@ -381,3 +382,4 @@ Built by hand (N2, #10365) from the patterns the native prototype builds inline:
 | SettingsSwitch | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
 | SettingsValue | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
 | TabBar | the tab bar (`v.tabs`, `bounceTab`) | 2026-11-05 |
+| Toasts | the toast (`toast`, `v.toast*`, `v.toastBottom`) | 2026-11-05 |

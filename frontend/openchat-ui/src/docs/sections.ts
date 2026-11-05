@@ -131,6 +131,8 @@ export const native: SectionMeta[] = [
   { id: 'native-anchored-menu', title: 'Anchored menu', meta: 'AnchoredMenu · NativeMenu · menuPlacement.ts' },
   { id: 'native-long-press-menu', title: 'Long-press menu', meta: 'LongPressMenu · NativeMenu · longPress.ts · menuPlacement.ts' },
   { id: 'native-settings', title: 'Settings rows', meta: 'SettingsGroup · SettingsSwitch · SettingsValue · SettingsLink · SettingsCopy · SettingsSegmented · SettingsSwatches · SettingsMeter · SettingsAction' },
+  { id: 'native-code-tiles', title: 'Code tiles', meta: 'CodeTiles · codeTiles.ts' },
+  { id: 'native-toasts', title: 'Toasts', meta: 'Toasts · toastQueue.svelte.ts · UndoToast' },
 ];
 
 type Meta = { name: string; source: string; props: unknown[] };

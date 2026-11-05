@@ -105,6 +105,24 @@
         "clearCache": "Clear cached data",
         "reset": "Reset to defaults",
         "cacheNote": "Clearing the cache doesn't delete messages. Media downloads again when you open it."
+      },
+      "code": {
+        "onThisPhone": "ON THIS PHONE",
+        "label": "Linking code",
+        "hint": "6 letters and numbers. Not case sensitive.",
+        "refused": "That code didn't work. Check it hasn't expired and try again.",
+        "paste": "Paste"
+      },
+      "toasts": {
+        "tabBar": "Tab bar",
+        "footer": "Footer",
+        "none": "Safe area",
+        "read": "Mark all as read",
+        "readDone": "All chats marked as read",
+        "archive": "Archive a chat",
+        "archived": "Chat archived",
+        "count": "{count, plural, =0 {Nothing archived} one {# chat archived} other {# chats archived}}",
+        "pinned": "Publish poll"
       }
     }
   }

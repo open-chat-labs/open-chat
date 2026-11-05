@@ -2189,6 +2189,9 @@
       },
       "settings": {
         "copy": "Copy {label}"
+      },
+      "codeTiles": {
+        "label": "Code"
       }
     },
     "navRail": {

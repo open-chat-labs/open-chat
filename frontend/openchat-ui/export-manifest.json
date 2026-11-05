@@ -1254,6 +1254,17 @@
         "src/native/presence.svelte.ts"
       ]
     },
+    "CodeTiles": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the linking code tiles (`v.au.codeBoxes`, `onCode`)",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/CodeTiles.svelte",
+        "src/native/codeTiles.ts"
+      ]
+    },
     "LongPressMenu": {
       "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
       "sourceHash": "db4b562b",
@@ -1385,6 +1396,17 @@
       "files": [
         "src/native/TabBar.svelte",
         "src/native/haptics.ts"
+      ]
+    },
+    "Toasts": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the toast (`toast`, `v.toast*`, `v.toastBottom`)",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/Toasts.svelte",
+        "src/native/toastQueue.svelte.ts"
       ]
     }
   }

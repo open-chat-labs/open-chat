@@ -7,9 +7,10 @@
   import { nativeAccents, nativeChats, nativeCommunities, nativePeople, nativeTabs, nativeTabsNoPhoto } from '../samples';
   import { Avatar, Button, ChatRow, Field, SegmentedTabs, Toggle } from '../../lib/index';
   import {
-    AnchoredMenu, BottomSheet, LongPressMenu, NativePageHeader, SettingsAction, SettingsCopy, SettingsGroup, SettingsLink, SettingsMeter,
-    SettingsSegmented, SettingsSwatches, SettingsSwitch, SettingsValue, TabBar, longPress, type NativeMenuItem,
+    AnchoredMenu, BottomSheet, CodeTiles, LongPressMenu, NativePageHeader, SettingsAction, SettingsCopy, SettingsGroup, SettingsLink, SettingsMeter,
+    SettingsSegmented, SettingsSwatches, SettingsSwitch, SettingsValue, TabBar, ToastQueue, Toasts, longPress, type NativeMenuItem,
   } from '../../native/index';
+  import { onDestroy } from 'svelte';
   import { useT } from '../../lib/i18n';
 
   interface Props {
@@ -100,6 +101,18 @@
   // settings rows: one screen with every kind
   const settings = $state({ mode: 1, accent: 'pink', size: 1, notify: true, preview: true, sound: 'chime', download: 'wifi', cleared: false });
   let settingsLog = $state('');
+
+  // code tiles: K7Q2XM links; any other full code is refused
+  const GOOD_CODE = 'K7Q2XM';
+  let code = $state('');
+  let codeError = $state(false);
+
+  // toasts: one at a time, Undo on the destructive one, above the tab bar, a footer or the safe area
+  const toasts = new ToastQueue();
+  onDestroy(() => toasts.dispose());
+  const ABOVE = ['tabBar', 'footer', 'none'] as const;
+  let above = $state<(typeof ABOVE)[number]>('tabBar');
+  let archived = $state(0);
 </script>
 
 <div class="native">
@@ -326,6 +339,38 @@
     </div>
     <p class="note">Last: <code>{settingsLog || '—'}</code></p>
   </Section>
+
+  <Section {...sec(native, 'native-code-tiles')}>
+    <div class="grid2">
+      <NativeFrame {os} {mode} {accent} label="Six tiles over one input · one-time-code autofill" height={260}>
+        <div class="code-screen">
+          <span class="code-label">{t('docs.native.code.onThisPhone')}</span>
+          <CodeTiles value={code} error={codeError} label="docs.native.code.label" onInput={(c) => ((code = c), (codeError = false))} onComplete={(c) => (codeError = c !== GOOD_CODE)} />
+          <span class="code-hint" class:error={codeError}>
+            <span>{t(codeError ? 'docs.native.code.refused' : 'docs.native.code.hint')}</span>
+            <button type="button" class="code-paste" onclick={() => ((code = GOOD_CODE), (codeError = false))}>{t('docs.native.code.paste')}</button>
+          </span>
+        </div>
+      </NativeFrame>
+    </div>
+    <p class="note">Type or paste: lower case comes out as capitals, other characters are dropped. Any full code but <code>{GOOD_CODE}</code> is refused.</p>
+  </Section>
+
+  <Section {...sec(native, 'native-toasts')}>
+    <div class="grid2">
+      <NativeFrame {os} {mode} {accent} label="Above the tab bar, a footer or the safe area" height={480}>
+        <div class="screen column">
+          <div class="toast-above"><SegmentedTabs size="sm" labels={['docs.native.toasts.tabBar', 'docs.native.toasts.footer', 'docs.native.toasts.none']} selectedIndex={ABOVE.indexOf(above)} dotOnLast={false} onSelect={(i) => (above = ABOVE[i])} /></div>
+          <Button label="docs.native.toasts.read" variant="secondary" onClick={() => toasts.show('docs.native.toasts.readDone')} />
+          <Button label="docs.native.toasts.archive" variant="secondary" onClick={() => ((archived += 1), toasts.show('docs.native.toasts.archived', () => (archived -= 1)))} />
+          <span class="screen-note">{t('docs.native.toasts.count', { count: archived })}</span>
+        </div>
+        {#if above === 'tabBar'}<TabBar tabs={nativeTabsNoPhoto} selected="chats" onSelect={() => {}} />{/if}
+        {#if above === 'footer'}<div class="footer-demo"><Button label="docs.native.toasts.pinned" size="lg" fullWidth onClick={() => {}} /></div>{/if}
+        <Toasts toast={toasts.current} {above} onUndo={() => toasts.undo()} onDismiss={() => toasts.dismiss()} />
+      </NativeFrame>
+    </div>
+  </Section>
 </div>
 
 <style lang="scss">
@@ -368,5 +413,13 @@
   .strip-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
   .strip-card-text b { font: 700 15px/1.2 var(--font-sans); @include truncate; }
   .strip-card-text span { font: 500 12.5px/1 var(--font-sans); color: var(--ink-4); }
+  .code-screen { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 16px; }
+  .code-label { padding: 0 6px; font: 600 11.5px/1 var(--font-mono); letter-spacing: 0.08em; color: var(--ink-4); }
+  .code-hint { display: flex; align-items: center; gap: 8px; padding: 2px 6px 0; font: 500 12.5px/1.4 var(--font-sans); color: var(--ink-4); }
+  .code-hint span { flex: 1; }
+  .code-hint.error { color: var(--status-warning); }
+  .code-paste { flex: none; height: 32px; padding: 0; border: 0; background: none; font: 600 13px/1 var(--font-sans); color: var(--accent-bright); cursor: pointer; }
+  .toast-above { width: 300px; }
+  .footer-demo { flex: none; padding: 8px 16px var(--bar-end); }
   .settings-screen { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 22px; padding: 8px 16px var(--scroll-end); }
 </style>

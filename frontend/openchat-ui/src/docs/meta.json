@@ -20038,6 +20038,85 @@
     "group": "native"
   },
   {
+    "name": "CodeTiles",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "One-time code tiles: six 68px tiles over one hidden input, so the platform's one-time-code autofill, paste and the keyboard go through a single field. Capitals and digits only; the next tile ringed in the accent with a caret; a refused code rings them all in the warning colour.",
+    "preview": {
+      "width": 370,
+      "height": 80
+    },
+    "props": [
+      {
+        "name": "value",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The code so far."
+      },
+      {
+        "name": "length",
+        "type": "number",
+        "default": 6,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "6",
+        "doc": "How many characters."
+      },
+      {
+        "name": "error",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The code was refused: the tiles turn the warning colour until it changes."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.native.codeTiles.label'",
+        "doc": "Resource key (or literal text): the field's accessible name."
+      },
+      {
+        "name": "onInput",
+        "type": "(code: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The code as typed, pasted or autofilled: capitals and digits only, at most `length`."
+      },
+      {
+        "name": "onComplete",
+        "type": "(code: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The code is complete."
+      }
+    ],
+    "group": "native"
+  },
+  {
     "name": "LongPressMenu",
     "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
     "hash": "",
@@ -20945,6 +21024,67 @@
         "required": false,
         "componentDefault": "'ui.native.tabBar.label'",
         "doc": "Resource key (or literal text): the bar's accessible name."
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "Toasts",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "Native toasts: the library's UndoToast 12px from the sides, above the tab bar (over the FAB), a footer, or the safe area; Undo on a destructive action's. ToastQueue keeps the timing (2.6s, 5s with Undo) for a host without its own.",
+    "preview": {
+      "width": 402,
+      "height": 480
+    },
+    "props": [
+      {
+        "name": "toast",
+        "type": "NativeToast | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The toast showing, or null."
+      },
+      {
+        "name": "above",
+        "type": "'tabBar' | 'footer' | 'none'",
+        "default": "tabBar",
+        "editor": "enum",
+        "options": [
+          "tabBar",
+          "footer",
+          "none"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'tabBar'",
+        "doc": "What it sits above: the tab bar (a tab's root), a footer (a conversation's composer, a pinned button), or nothing but the safe area."
+      },
+      {
+        "name": "onUndo",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Undo on an undoable toast."
+      },
+      {
+        "name": "onDismiss",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Its ×."
       }
     ],
     "group": "native"
