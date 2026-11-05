@@ -974,11 +974,23 @@ impl Data {
         false
     }
 
-    // Removes a user who has deleted their account, returning whether they were a member
+    // Removes a user who has deleted their account, returning whether they were a member. If they were
+    // the last owner, the member next in line is made owner.
     pub fn remove_deleted_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
         let removed = self.chat.members.remove(user_id, now).is_some();
         self.remove_user(user_id, None);
+        if removed {
+            self.assign_owner_if_none(now);
+        }
         removed
+    }
+
+    // Makes the member next in line owner if the group has no owner
+    pub fn assign_owner_if_none(&mut self, now: TimestampMillis) -> Option<UserId> {
+        let new_owner = self.chat.assign_owner_if_none(now)?;
+        // Owners can't lapse
+        self.expiring_members.remove_member(new_owner, None);
+        Some(new_owner)
     }
 
     // Removes a user found to have deleted their account, unless they're a bot, returning whether they
@@ -1341,16 +1353,17 @@ fn new_user_events_queue() -> GroupedTimerJobQueue<UserEventBatch> {
 #[cfg(test)]
 mod deleted_user_tests {
     use super::*;
+    use group_chat_core::GroupRoleInternal;
 
     fn canister_id(i: u8) -> CanisterId {
         CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, i, 1, 1])
     }
 
-    fn add_member(data: &mut Data, user_id: UserId, user_type: UserType) {
+    fn add_member(data: &mut Data, user_id: UserId, user_type: UserType, joined: TimestampMillis) {
         data.chat.members.add(
             user_id,
             None,
-            0,
+            joined,
             EventIndex::default(),
             MessageIndex::default(),
             false,
@@ -1365,8 +1378,8 @@ mod deleted_user_tests {
         // A user's old id, which was their User canister's id, and a bot's
         let deleted: UserId = canister_id(102).into();
         let bot: UserId = canister_id(50).into();
-        add_member(&mut data, deleted, UserType::User);
-        add_member(&mut data, bot, UserType::Bot);
+        add_member(&mut data, deleted, UserType::User, 0);
+        add_member(&mut data, bot, UserType::Bot, 0);
 
         assert!(data.remove_deleted_user_unless_bot(deleted, 1));
         assert!(data.chat.members.get(&deleted).is_none());
@@ -1376,5 +1389,52 @@ mod deleted_user_tests {
         assert!(!data.remove_deleted_user_unless_bot(bot, 3));
         assert!(data.chat.members.get(&bot).is_some());
         assert!(data.chat.members.get(&owner).is_some());
+    }
+
+    #[test]
+    fn the_next_in_line_becomes_owner_when_the_last_owner_is_deleted() {
+        let user = |i| UserId::new_indexed(canister_id(1), i);
+        let owner = user(1);
+        let mut data = Data::new_for_tests(owner, Principal::from_slice(&[1]), String::new());
+        let bot: UserId = canister_id(50).into();
+        // The earlier joining admin has the higher id, so comes after the later one in the set of admins
+        let (member, suspended_admin, moderator, earlier_admin, later_admin) = (user(2), user(3), user(4), user(6), user(5));
+
+        // They join in this order
+        add_member(&mut data, bot, UserType::Bot, 1);
+        add_member(&mut data, member, UserType::User, 2);
+        add_member(&mut data, suspended_admin, UserType::User, 3);
+        add_member(&mut data, moderator, UserType::User, 4);
+        add_member(&mut data, earlier_admin, UserType::User, 5);
+        add_member(&mut data, later_admin, UserType::User, 6);
+
+        // The later joiner is made admin first, but it's when they joined that counts
+        for (user_id, role, now) in [
+            (later_admin, GroupRoleInternal::Admin, 7),
+            (earlier_admin, GroupRoleInternal::Admin, 8),
+            (moderator, GroupRoleInternal::Moderator, 9),
+            (suspended_admin, GroupRoleInternal::Admin, 10),
+            (bot, GroupRoleInternal::Admin, 11),
+        ] {
+            data.chat.members.change_role(user_id, None, role, now).unwrap();
+        }
+        data.chat.members.set_suspended(suspended_admin, true, 12);
+
+        let owners = |data: &Data| data.chat.members.owners().iter().copied().collect::<Vec<_>>();
+
+        // Bots and suspended members are passed over
+        for (deleted, next_owner, now) in [
+            (owner, earlier_admin, 20),
+            (earlier_admin, later_admin, 21),
+            (later_admin, moderator, 22),
+            (moderator, member, 23),
+        ] {
+            assert!(data.remove_deleted_user(deleted, now));
+            assert_eq!(owners(&data), vec![next_owner]);
+        }
+
+        // Nobody is left who can be owner
+        assert!(data.remove_deleted_user(member, 24));
+        assert!(owners(&data).is_empty());
     }
 }

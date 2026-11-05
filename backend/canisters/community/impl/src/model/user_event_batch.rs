@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs};
 use multi_user_canister::CommunityCanisterEvent;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
@@ -74,6 +75,8 @@ impl TimerJobItem for UserEventBatch {
                                 let now = state.env.now();
                                 if state.data.remove_deleted_user_unless_bot(user_id, now) {
                                     info!(%user_id, "Removed a member whose account has been deleted");
+                                    // So that members' clients pick up the change, eg. a new owner
+                                    handle_activity_notification(state);
                                 }
                             });
                             return Ok(());

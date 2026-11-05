@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- When the last owner of a community or channel deletes their account, make the next in line owner ([#10416](https://github.com/open-chat-labs/open-chat/pull/10416))
+
 ### Removed
 
 - Remove `edit_message`, which `edit_message_text` replaced ([#10360](https://github.com/open-chat-labs/open-chat/pull/10360))

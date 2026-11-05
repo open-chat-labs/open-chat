@@ -38,9 +38,10 @@ use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BlobReference, BotCommunityEvent, BotDefinitionUpdate, BotEventsCaller,
     BotInitiator, BotNotification, BotPermissions, BotUpdated, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId,
     ChannelUserNotificationPayload, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
-    CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
-    IdempotentEnvelope, MembersAdded, MessageId, MessageIndex, Milliseconds, Notification, OCResult, PendingCryptoTransaction,
-    Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType, icrc1,
+    CommunityMembership, CommunityPermissions, CommunityRole, CommunityRoleChanged, Cycles, Document, EventIndex, EventsCaller,
+    FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, MessageId, MessageIndex, Milliseconds, Notification,
+    OCResult, PendingCryptoTransaction, Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification,
+    UserType, icrc1,
 };
 use types::{BotSubscriptions, CommunityId};
 use utils::canister::trap_if_frozen;
@@ -1303,16 +1304,50 @@ impl Data {
     }
 
     // Removes a user who has deleted their account from the community and its channels, returning
-    // whether they were a member
+    // whether they were a member of either. They may be left in a channel they were the only owner of
+    // when removed from the community. Wherever they were the last owner, the member next in line is
+    // made owner.
     pub fn remove_deleted_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        let mut removed = false;
         for channel in self.channels.iter_mut() {
-            channel.chat.members.remove(user_id, now);
+            removed |= channel.chat.members.remove(user_id, now).is_some();
         }
         self.expiring_members.remove_member(user_id, None);
         self.expiring_member_actions.remove_member(user_id, None);
         self.achievements.remove_user(&user_id);
         self.user_cache.delete(user_id);
-        self.members.remove(user_id, None, now).is_some()
+        removed |= self.members.remove(user_id, None, now).is_some();
+        if removed {
+            self.assign_owners_if_none(now);
+        }
+        removed
+    }
+
+    // Makes the member next in line owner of the community, and of each of its channels, where there
+    // is no owner. Returns how many were given one.
+    pub fn assign_owners_if_none(&mut self, now: TimestampMillis) -> usize {
+        let mut assigned = 0;
+        if let Some((new_owner, prev_role)) = self.members.assign_owner_if_none(now) {
+            // Owners can't lapse
+            self.expiring_members.remove_member(new_owner, None);
+            self.events.push_event(
+                CommunityEventInternal::RoleChanged(Box::new(CommunityRoleChanged {
+                    user_ids: vec![new_owner],
+                    old_role: prev_role,
+                    new_role: CommunityRole::Owner,
+                    changed_by: OPENCHAT_BOT_USER_ID,
+                })),
+                now,
+            );
+            assigned += 1;
+        }
+        for channel in self.channels.iter_mut() {
+            if let Some(new_owner) = channel.chat.assign_owner_if_none(now) {
+                self.expiring_members.remove_member(new_owner, Some(channel.id));
+                assigned += 1;
+            }
+        }
+        assigned
     }
 
     // Removes a user found to have deleted their account, unless they're a bot, returning whether they
@@ -1602,6 +1637,72 @@ mod tests {
         assert!(!data.remove_deleted_user_unless_bot(bot, 3));
         assert!(data.members.contains(&bot));
         assert!(data.members.contains(&owner));
+    }
+
+    #[test]
+    fn the_next_in_line_becomes_owner_of_the_community_and_its_channels_when_the_last_owner_is_deleted() {
+        let owner = new_user_id(1);
+        let channel_id = ChannelId::from(1u32);
+        let mut data = Data::new_for_tests(
+            owner,
+            Principal::from_slice(&[1]),
+            String::new(),
+            vec![(channel_id, "channel".to_string())],
+        );
+        let bot: UserId = canister_id(50).into();
+        // The earlier joining admin has the higher id, so comes after the later one in the set of admins
+        let (suspended_admin, member, earlier_admin, later_admin) =
+            (new_user_id(2), new_user_id(3), new_user_id(5), new_user_id(4));
+
+        // They join the community in this order
+        for (i, (user_id, user_type)) in [
+            (bot, UserType::Bot),
+            (suspended_admin, UserType::User),
+            (member, UserType::User),
+            (earlier_admin, UserType::User),
+            (later_admin, UserType::User),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            data.members
+                .add(user_id, Principal::from_slice(&[i as u8 + 2]), user_type, None, i as u64 + 1);
+        }
+        for user_id in [bot, suspended_admin, later_admin, earlier_admin] {
+            data.members
+                .change_role(owner, user_id, CommunityRole::Admin, &CommunityPermissions::default(), 6)
+                .unwrap();
+        }
+        // Bots and suspended members are passed over
+        data.members.set_suspended(suspended_admin, true, 7);
+        // The channel has no admins, so its earliest joined member is next in line
+        let channel = data.channels.get_mut(&channel_id).unwrap();
+        for (user_id, now) in [(later_admin, 8), (member, 9)] {
+            channel.chat.members.add(
+                user_id,
+                None,
+                now,
+                EventIndex::default(),
+                MessageIndex::default(),
+                false,
+                UserType::User,
+            );
+        }
+
+        assert!(data.remove_deleted_user(owner, 10));
+
+        let channel_owners: Vec<_> = data
+            .channels
+            .get(&channel_id)
+            .unwrap()
+            .chat
+            .members
+            .owners()
+            .iter()
+            .copied()
+            .collect();
+        assert_eq!(data.members.owners().iter().copied().collect::<Vec<_>>(), vec![earlier_admin]);
+        assert_eq!(channel_owners, vec![later_admin]);
     }
 
     #[test]
