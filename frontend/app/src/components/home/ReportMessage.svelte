@@ -1,5 +1,14 @@
 <script lang="ts">
-    import { iconSize, mobileWidth, type ChatIdentifier, type OpenChat } from "@client";
+    import {
+        iconSize,
+        isCsamReport,
+        mobileWidth,
+        REPORT_REASONS,
+        reportReasonText,
+        type ChatIdentifier,
+        type OpenChat,
+        type ReportReason,
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Flag from "svelte-material-icons/Flag.svelte";
@@ -30,35 +39,25 @@
     let deleteMessage = $state(false);
     const busy = false;
     let selectedReasonIndex = $state(-1);
-    const reasons = [
-        "report.pleaseSelect",
-        "report.threat",
-        "report.child",
-        "report.nonConsensual",
-        "report.sexual",
-        "report.selfHarm",
-        "report.violence",
-        "report.scam",
-    ];
+    let reason = $derived(REPORT_REASONS[selectedReasonIndex]);
 
-    // Index 1 is "child sexual content": the report is treated like a classifier detection
-    // and the auto-sanction applies immediately, so it gets an explicit warning
-    let csam = $derived(selectedReasonIndex === 1);
-    let valid = $derived(selectedReasonIndex > -1);
+    // "child sexual content": the report is treated like a classifier detection and the
+    // auto-sanction applies immediately, so it gets an explicit warning
+    let csam = $derived(isCsamReport(reason));
 
     function createReport() {
-        report();
+        if (reason !== undefined) report(reason);
         onClose();
     }
 
-    function report() {
+    function report(reason: ReportReason) {
         client
             .reportMessage(
                 chatId,
                 threadRootMessageIndex,
                 messageId,
                 canDelete && deleteMessage,
-                csam,
+                reason,
             )
             .then((success) => {
                 if (success) {
@@ -83,9 +82,12 @@
                 <div class="reason">
                     <Legend label={i18nKey("report.reason")} />
                     <Select bind:value={selectedReasonIndex}>
-                        {#each reasons as reason, i}
-                            <option disabled={i === 0} value={i - 1}
-                                ><Translatable resourceKey={i18nKey(reason)} /></option
+                        <option disabled value={-1}
+                            ><Translatable resourceKey={i18nKey("report.pleaseSelect")} /></option
+                        >
+                        {#each REPORT_REASONS as reason, i}
+                            <option value={i}
+                                ><Translatable resourceKey={reportReasonText(reason)} /></option
                             >
                         {/each}
                     </Select>
@@ -120,7 +122,7 @@
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button
                     >
                     <Button
-                        disabled={busy || !valid}
+                        disabled={busy || reason === undefined}
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}

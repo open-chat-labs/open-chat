@@ -57,10 +57,15 @@ export type MessageMenuTarget = {
     confirmDelete: boolean;
 };
 
-/** A dialog an action needs before it's done: confirming a delete, or picking where to forward to. */
+/**
+ * A dialog an action needs before it's done: confirming a delete, picking where to forward to,
+ * why it's reported or when to be reminded.
+ */
 export type MessageMenuDialog =
     | { kind: "delete"; evt: EventWrapper<Message> }
-    | { kind: "forward"; evt: EventWrapper<Message> };
+    | { kind: "forward"; evt: EventWrapper<Message> }
+    | { kind: "report"; evt: EventWrapper<Message> }
+    | { kind: "remind"; evt: EventWrapper<Message> };
 
 /**
  * Does what the action says to the message, or says which dialog to show first. Each action is
@@ -85,6 +90,10 @@ export async function runMessageAction(
             return;
         case "forward":
             return { kind: "forward", evt };
+        case "report":
+            return { kind: "report", evt };
+        case "remind":
+            return { kind: "remind", evt };
         case "reply_privately": {
             // the sender's DM, made if there's none, with the reply set
             const dm = await client.replyPrivately(

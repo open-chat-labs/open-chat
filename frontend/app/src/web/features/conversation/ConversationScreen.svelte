@@ -773,6 +773,21 @@
         if (dialog?.kind === "forward") {
             screen.dialogs.open({ kind: "forward", message: dialog.evt.event });
         }
+        if (dialog?.kind === "report") {
+            screen.dialogs.open({
+                kind: "report_message",
+                chatId: chat.id,
+                messageId: dialog.evt.event.messageId,
+                canDelete: client.canDeleteOtherUsersMessages(chat.id),
+            });
+        }
+        if (dialog?.kind === "remind") {
+            screen.dialogs.open({
+                kind: "remind_message",
+                chatId: chat.id,
+                eventIndex: dialog.evt.index,
+            });
+        }
     }
 
     // a message forwarded here (ForwardDialogScreen) goes out as the chat opens, as in the old

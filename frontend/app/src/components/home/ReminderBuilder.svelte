@@ -1,5 +1,12 @@
 <script lang="ts">
-    import { mobileWidth, type ChatIdentifier, type OpenChat } from "@client";
+    import {
+        mobileWidth,
+        REMINDER_PRESETS,
+        reminderPresetText,
+        reminderTime,
+        type ChatIdentifier,
+        type OpenChat,
+    } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { now } from "../../stores/time";
@@ -28,73 +35,22 @@
     let busy = $state(false);
     let note: string = $state("");
     let selectedIntervalIndex = $state(0);
+    // the presets (reminderTime), then a custom time
+    const CUSTOM = REMINDER_PRESETS.length;
     const intervals = [
-        {
-            label: i18nKey("reminders.twentyMinutes"),
-            index: 0,
-        },
-        {
-            label: i18nKey("reminders.oneHour"),
-            index: 1,
-        },
-        {
-            label: i18nKey("reminders.threeHours"),
-            index: 2,
-        },
-        {
-            label: i18nKey("reminders.tomorrow"),
-            index: 3,
-        },
-        {
-            label: i18nKey("reminders.nextWeek"),
-            index: 4,
-        },
-        {
-            label: i18nKey("reminders.custom"),
-            index: 5,
-        },
+        ...REMINDER_PRESETS.map((preset, index) => ({ label: reminderPresetText(preset), index })),
+        { label: i18nKey("reminders.custom"), index: CUSTOM },
     ];
 
     function deriveRemindAt(now: number, interval: number): number {
-        if (interval === 0) {
-            return now + 20 * 60 * 1000;
+        const preset = REMINDER_PRESETS[interval];
+        if (preset !== undefined) {
+            return reminderTime(preset, now);
         }
-        if (interval === 1) {
-            return now + 60 * 60 * 1000;
-        }
-        if (interval === 2) {
-            return now + 180 * 60 * 1000;
-        }
-        if (interval === 3) {
-            return tomorrow(now);
-        }
-        if (interval === 4) {
-            return nextWeek(now);
-        }
-        if (interval === 5 && customTimestamp != null) {
+        if (interval === CUSTOM && customTimestamp != null) {
             return Number(customTimestamp);
         }
         return now;
-    }
-
-    function nextWeek(now: number) {
-        const date = new Date(now);
-        date.setDate(date.getDate() + ((1 + 7 - date.getDay()) % 7));
-        return toNine(date).getTime();
-    }
-
-    function tomorrow(now: number) {
-        const date = new Date(now);
-        date.setDate(date.getDate() + 1);
-        return toNine(date).getTime();
-    }
-
-    function toNine(date: Date): Date {
-        date.setHours(9);
-        date.setMinutes(0);
-        date.setSeconds(0);
-        date.setMilliseconds(0);
-        return date;
     }
 
     function createReminder() {
@@ -132,7 +88,7 @@
                     {/each}
                 </Select>
             </div>
-            {#if selectedIntervalIndex === 5}
+            {#if selectedIntervalIndex === CUSTOM}
                 <div class="custom">
                     <DateInput
                         futureOnly

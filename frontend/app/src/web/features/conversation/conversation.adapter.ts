@@ -694,6 +694,7 @@ const MESSAGE_MENU: MessageMenuEntry[] = [
     { action: "untranslate", label: "untranslateMessage", icon: "lang" },
     { action: "pin", label: "pinMessage", icon: "pin" },
     { action: "unpin", label: "unpinMessage", icon: "pin" },
+    { action: "remind", label: "reminders.menu", icon: "clock" },
     { action: "cancel_reminder", label: "reminders.cancel", icon: "clock" },
     { action: "retry", label: "retryMessage", icon: "refresh" },
     { action: "reveal", label: "revealDeletedMessage", icon: "eye" },
@@ -702,6 +703,7 @@ const MESSAGE_MENU: MessageMenuEntry[] = [
 
 const MESSAGE_MENU_DANGER: MessageMenuEntry[] = [
     { action: "block_user", label: "blockUser", icon: "ban" },
+    { action: "report", label: "report.menu", icon: "flag" },
     { action: "delete", label: "deleteMessage", icon: "trash" },
     { action: "delete_for_me", label: "deleteMessageForMe", icon: "trash" },
 ];

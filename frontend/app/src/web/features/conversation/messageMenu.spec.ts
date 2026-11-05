@@ -85,6 +85,17 @@ describe("a message's actions in the conversation", () => {
         expect(straight.deleteMessage).toHaveBeenCalledWith(chatId, undefined, 42n);
     });
 
+    test("reporting and setting a reminder ask why and when first", async () => {
+        expect(await runMessageAction("report", target(fakeClient()))).toEqual({
+            kind: "report",
+            evt,
+        });
+        expect(await runMessageAction("remind", target(fakeClient()))).toEqual({
+            kind: "remind",
+            evt,
+        });
+    });
+
     test("forwarding asks where to first", async () => {
         expect(await runMessageAction("forward", target(fakeClient()))).toEqual({
             kind: "forward",

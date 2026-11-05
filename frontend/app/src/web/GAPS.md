@@ -1103,8 +1103,13 @@ design export needs. Each entry says where it came up.
   chat picker, `ForwardDialogScreen`: the message goes out as the chosen chat opens, as in the old
   trees, through `messageToForwardStore`; a note written in the picker waits in that chat's draft,
   where the old pickers had no note) and reply privately (`replyPrivately`: the sender's DM, made
-  if missing, with the reply set). Each runs in `features/conversation/messageMenu.ts`. Not yet:
-  - remind, report and tip (5b's next parts);
+  if missing, with the reply set), report (`ReportMessageDialogScreen`: a reason from
+  `REPORT_REASONS`, child sexual content with its warning, the client sending `csam` for it
+  alone; delete it too where the reader can delete others' messages) and remind
+  (`ReminderDialogScreen`: the old desktop dialog's presets, `reminderTime`, or the browser's date
+  and time field for a custom time, and a note; no design for either: `TODO(design)`, the reasons
+  and presets as `DurationChips`). Each runs in `features/conversation/messageMenu.ts`. Not yet:
+  - tip (5b's next part);
   - the thread's items (reply in thread, follow / unfollow) wait for the thread (4c), and a
     proposal's collapse for proposals;
   - the mobile app's "download media" (native save) is left to the narrow pass;

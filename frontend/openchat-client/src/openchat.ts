@@ -421,6 +421,7 @@ import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from
 import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import { blockOutcome, type BlockContext, type BlockOutcome } from "./utils/profileBlock";
 import { claimPrizeFailureReason, isTrustedClick } from "./utils/prizes";
+import { isCsamReport, type ReportReason } from "./utils/report";
 import { savedAccountName, withoutAccountsNamed, withSavedAccount } from "./utils/namedAccounts";
 import {
     FilteredProposals,
@@ -10265,12 +10266,16 @@ export class OpenChat {
             });
     }
 
+    /**
+     * Reports a message to the platform's moderators, and deletes it if asked. A report of child
+     * sexual content is treated as a classifier's detection: the auto-sanction applies at once.
+     */
     reportMessage(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         deleteMessage: boolean,
-        csam: boolean,
+        reason: ReportReason,
     ): Promise<boolean> {
         return this.#worker
             .send({
@@ -10279,7 +10284,7 @@ export class OpenChat {
                 threadRootMessageIndex,
                 messageId,
                 deleteMessage,
-                csam,
+                csam: isCsamReport(reason),
             })
             .catch(() => false);
     }
