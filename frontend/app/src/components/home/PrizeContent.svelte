@@ -56,23 +56,12 @@
     let progressWidth = $state(0);
     const humanCheck = new HumanCheck();
 
-    // Claims with the token of the prize's human check, which runs as the prize shows
+    // Claims with the token of the prize's human check, which the click starts
     async function claim(e: MouseEvent) {
         if (!isTrustedClick(e) || chatId.kind === "direct_chat" || !view.canClaim) return;
 
-        claimsStore.add(messageId);
-        try {
-            const failure = await claimPrizeWithHumanCheck(
-                client,
-                humanCheck,
-                chatId,
-                messageId,
-                e,
-            );
-            if (failure !== undefined) toastStore.showFailureToast(failure);
-        } finally {
-            claimsStore.delete(messageId);
-        }
+        const failure = await claimPrizeWithHumanCheck(client, humanCheck, chatId, messageId, e);
+        if (failure !== undefined) toastStore.showFailureToast(failure);
     }
 
     function onDiamondClick() {
@@ -268,7 +257,8 @@
                                         : "prizes.claim",
                             )} /></SecureButton>
                 </ButtonGroup>
-                {#if view.canClaim}
+                <!-- Kept while a claim's check runs, even if the prize runs out meanwhile -->
+                {#if view.canClaim || humanCheck.running}
                     <HumanCheckFrame
                         check={humanCheck}
                         customData={prizeClaimCustomData($currentUserIdStore, messageId)} />

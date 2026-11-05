@@ -22,13 +22,16 @@ function client(outcome: ClaimPrizeOutcome) {
 }
 
 describe("claiming a prize", () => {
-    test("claims with the token of the prize's human check", async () => {
+    test("runs the prize's human check, and claims with its token", async () => {
         const c = client({ kind: "success" });
         const check = new HumanCheck();
+        const e = trustedClick();
+
+        const claim = claimPrizeWithHumanCheck(c, check, chatId, 1n, e);
+        expect(check.running).toBe(true);
         check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
 
-        const e = trustedClick();
-        await expect(claimPrizeWithHumanCheck(c, check, chatId, 1n, e)).resolves.toBeUndefined();
+        await expect(claim).resolves.toBeUndefined();
         expect(c.claimPrize).toHaveBeenCalledWith(chatId, 1n, e, { token: "t1", salt: "s1" });
     });
 
@@ -36,7 +39,6 @@ describe("claiming a prize", () => {
         vi.spyOn(console, "warn").mockImplementation(() => undefined);
         const c = client({ kind: "success" });
         const check = new HumanCheck();
-        check.receive({ kind: "turnstile_error", code: "600010" });
 
         const claim = claimPrizeWithHumanCheck(c, check, chatId, 1n, trustedClick());
         check.receive({ kind: "turnstile_error", code: "600010" });
@@ -47,29 +49,50 @@ describe("claiming a prize", () => {
     test("says why a claim failed", async () => {
         const message = i18nKey("prizes.humanCheckFailed");
         const check = new HumanCheck();
-        check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
 
+        const claim = claimPrizeWithHumanCheck(
+            client({ kind: "failed", message }),
+            check,
+            chatId,
+            1n,
+            trustedClick(),
+        );
+        check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
+        await expect(claim).resolves.toEqual(message);
+    });
+
+    test("a click while the prize's claim is in flight claims nothing", async () => {
+        const c = client({ kind: "success" });
+        const check = new HumanCheck();
+
+        const claim = claimPrizeWithHumanCheck(c, check, chatId, 1n, trustedClick());
         await expect(
-            claimPrizeWithHumanCheck(
-                client({ kind: "failed", message }),
-                check,
-                chatId,
-                1n,
-                trustedClick(),
-            ),
-        ).resolves.toEqual(message);
+            claimPrizeWithHumanCheck(c, check, chatId, 1n, trustedClick()),
+        ).resolves.toBeUndefined();
+        expect(check.run).toBe(1);
+
+        check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
+        await claim;
+        expect(c.claimPrize).toHaveBeenCalledTimes(1);
+
+        // Once it's settled, the reader can claim again
+        const retry = claimPrizeWithHumanCheck(c, check, chatId, 1n, trustedClick());
+        expect(check.run).toBe(2);
+        check.receive({ kind: "turnstile_token", token: "t2", salt: "s2" });
+        await retry;
+        expect(c.claimPrize).toHaveBeenCalledTimes(2);
     });
 
     // 5a invariant 2: a prize claim is sent only from a trusted click
-    test("a script's click claims nothing, and leaves the token for the reader's", async () => {
+    test("a script's click claims nothing, and doesn't start the check", async () => {
         const c = client({ kind: "success" });
         const check = new HumanCheck();
-        check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
 
         await expect(
             claimPrizeWithHumanCheck(c, check, chatId, 1n, new MouseEvent("click")),
         ).resolves.toBeUndefined();
         expect(c.claimPrize).not.toHaveBeenCalled();
-        await expect(check.take()).resolves.toEqual({ token: "t1", salt: "s1" });
+        expect(check.running).toBe(false);
+        expect(check.run).toBe(0);
     });
 });

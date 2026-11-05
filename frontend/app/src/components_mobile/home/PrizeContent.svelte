@@ -104,24 +104,13 @@
     });
     let hasTextContent = $derived(normalisedTextContent !== undefined);
 
-    // Claims with the token of the prize's human check, which runs as the prize shows
+    // Claims with the token of the prize's human check, which the click starts
     async function claim(e: MouseEvent) {
         if (!chatId || !messageId) return;
         if (!isTrustedClick(e) || chatId.kind === "direct_chat" || !view?.canClaim) return;
 
-        claimsStore.add(messageId);
-        try {
-            const failure = await claimPrizeWithHumanCheck(
-                client,
-                humanCheck,
-                chatId,
-                messageId,
-                e,
-            );
-            if (failure !== undefined) toastStore.showFailureToast(failure);
-        } finally {
-            claimsStore.delete(messageId);
-        }
+        const failure = await claimPrizeWithHumanCheck(client, humanCheck, chatId, messageId, e);
+        if (failure !== undefined) toastStore.showFailureToast(failure);
     }
 
     let logo = $derived(
@@ -366,7 +355,8 @@
                                 )} />
                         </Body>
                     </SecureButton>
-                    {#if view?.canClaim}
+                    <!-- Kept while a claim's check runs, even if the prize runs out meanwhile -->
+                    {#if view?.canClaim || humanCheck.running}
                         <HumanCheckFrame
                             check={humanCheck}
                             customData={prizeClaimCustomData($currentUserIdStore, messageId)} />
