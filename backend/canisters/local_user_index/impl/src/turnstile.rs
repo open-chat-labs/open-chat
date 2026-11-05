@@ -1,6 +1,4 @@
-use candid::Principal;
-use ic_cdk::call::Call;
-use ic_cdk_management_canister::{HttpHeader, HttpMethod, HttpRequestArgs, HttpRequestResult};
+use ic_cdk_management_canister::{HttpMethod, HttpRequest};
 use oc_error_codes::{OCError, OCErrorCode};
 use serde::Deserialize;
 use types::{MessageId, UserId};
@@ -28,37 +26,15 @@ pub async fn verify(secret_key: &str, token: &str, expected_custom_data: &str) -
         "response": token,
     });
 
-    let args = HttpRequestArgs {
-        url: SITEVERIFY_URL.to_string(),
-        max_response_bytes: Some(MAX_RESPONSE_BYTES),
-        method: HttpMethod::POST,
-        headers: vec![HttpHeader {
-            name: "content-type".to_string(),
-            value: "application/json".to_string(),
-        }],
-        body: Some(serde_json::to_vec(&body).unwrap()),
-        transform: None,
-        is_replicated: Some(false),
-        // The legacy pricing model, which is what `cost_http_request` prices below
-        pricing_version: Some(1),
-    };
-
-    // This computes the cost of a fully replicated call which is an overestimate for a
-    // single-replica call, but any excess is refunded
-    let request_size = (args.url.len()
-        + args.headers.iter().map(|h| h.name.len() + h.value.len()).sum::<usize>()
-        + args.body.as_ref().map_or(0, |b| b.len())) as u64;
-    let cycles = ic_cdk::api::cost_http_request(request_size, MAX_RESPONSE_BYTES);
-
-    let response: HttpRequestResult = Call::unbounded_wait(Principal::management_canister(), "http_request")
-        .with_arg(&args)
-        .with_cycles(cycles)
+    let response = HttpRequest::new(SITEVERIFY_URL)
+        .with_method(HttpMethod::POST)
+        .with_header("content-type", "application/json")
+        .with_body(serde_json::to_vec(&body).unwrap())
+        .with_max_response_bytes(MAX_RESPONSE_BYTES)
+        .non_replicated()
+        .send()
         .await
-        .map_err(|error| OCErrorCode::HumanVerificationFailed.with_message(format!("HTTPS outcall failed: {error:?}")))?
-        .candid()
-        .map_err(|error| {
-            OCErrorCode::HumanVerificationFailed.with_message(format!("Failed to decode outcall response: {error:?}"))
-        })?;
+        .map_err(|error| OCErrorCode::HumanVerificationFailed.with_message(format!("HTTPS outcall failed: {error:?}")))?;
 
     let status = u32::try_from(response.status.0).unwrap_or_default();
     if status != 200 {
@@ -107,6 +83,7 @@ fn check(body: &[u8], expected_custom_data: &str) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use candid::Principal;
 
     const CUSTOM_DATA: &str = "46qm5-fiaaa-aaaaf-br7x6-xca_12525619536623022000";
 
