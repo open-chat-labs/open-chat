@@ -13,10 +13,11 @@ npm run check    # svelte-check (types)
 ## Layout
 - `src/lib/components/X.svelte` — **library** (app-agnostic) components. Markup + scoped CSS for hover/active/focus states, typed `Props`.
 - `src/features/components/X.svelte` — **feature** components: OpenChat screens, panels, dialogs and flows, built on the library. Entry: `src/features/index.ts`. Library components never import from here.
+- `src/native/X.svelte` — the **native shell kit** (iOS, Android, narrow mobile web): the patterns the native prototype (`NativeApp.svelte`) built inline, as components (tab bar, page header …). Entry: `src/native/index.ts`. App-agnostic like `src/lib` (lint), built on it; they expect a native root above them (see Conventions). Docs: the Native group, each demo a phone-sized native root.
 - Every component is plain Svelte 5: typed `Props` via `$props()`, state in runes, scoped CSS. The export's `.logic.js` classes and the `useLogic` runtime are gone (see "Converted to plain Svelte 5").
 - `src/lib/types.ts` — shared prop types (menu items, messages, wallet tokens, prizes / transfers / swaps, group settings, composer attachments …), exported from `src/lib/index.ts`.
 - `src/lib/styles/tokens.css` (+ generated `icons.css`), `global.css` (keyframes and global rules collected from components).
-- Component styles are `<style lang="scss">` (`scss.spec.ts`): nesting, and the mixins in `src/lib/styles/_mixins.scss` (`truncate`, `line-clamp`, `flex-center` (`inline-flex` too), `icon` (`$flex: null` leaves `flex` unset), `focus-ring`, `message-shell`, `reduced-motion`). A component that uses them imports them itself (`@use '../styles/mixins' as *;`, relative), so it compiles in any host with no extra configuration. Mixins output no CSS of their own (the spec compiles the file to check). Colours, spacing and type stay CSS custom properties.
+- Component styles are `<style lang="scss">` (`scss.spec.ts`): nesting, and the mixins in `src/lib/styles/_mixins.scss` (`truncate`, `line-clamp`, `flex-center` (`inline-flex` too), `icon` (`$flex: null` leaves `flex` unset), `focus-ring`, `message-shell`, `reduced-motion`; the function `text-size($px)`, a type size with no `--text-*` token, times `--text-scale`). A component that uses them imports them itself (`@use '../styles/mixins' as *;`, relative), so it compiles in any host with no extra configuration. Mixins output no CSS of their own (the spec compiles the file to check). Colours, spacing and type stay CSS custom properties.
 - `src/lib/icons.js` — canonical icon set; `Icon.svelte` or `mask: var(--icon-<name>)`.
 - `src/lib/behaviours/a11y.js` and `tooltip.js` — installed by `installBehaviours()`. Importing `src/lib/index.ts` calls it; hosts that deep-import component files call it once at startup (the docs do in `main.ts`). Without it, Enter/Space on `role="button"` spans, modal focus trapping and themed tooltips don't work.
 - `src/lib/behaviours/modal.ts` — `use:modal={onEscape}` for hand-built dialogs: Esc closes only the topmost dialog (shared stack with DialogShell).
@@ -57,7 +58,7 @@ the text. Copy that stays plain English in either mode is hard-coded and needs a
 
 ## Conventions (same as the prototype)
 - Theme on the app root only: `data-mode="dark|light"` + `data-accent="pink|orange|blue|green"`. Components take no theme props.
-- The native tree's root adds `data-platform="native"` (native light surfaces, hero tints) and the app sets `--text-scale` on `<html>` (the `--text-*` sizes follow it, portals included); the call screen and minimised call put `data-always-dark` on their own root to stay dark in both themes, with the nearest root's accent. Safe areas (`--safe-*`) are on `:root` (tokens.css, Foundations › Native platform).
+- The native tree's root adds `data-platform="native"` (native light surfaces, hero tints, the shell kit's touch target, bar padding, veils and shadows) and `data-os="ios|android"` (44 / 48px touch targets, the back arrow, the kebab) and the app sets `--text-scale` on `<html>` (the `--text-*` sizes follow it, portals included); the call screen and minimised call put `data-always-dark` on their own root to stay dark in both themes, with the nearest root's accent. Safe areas (`--safe-*`) are on `:root` (tokens.css, Foundations › Native platform).
 - Colours only through tokens. Callbacks: `onClick` activate · `onSelect(value)` pick · `onChange(value)` primary value · `onInput` text · `onClose` dismiss.
 - Sizes `sm | md | lg`; numeric px only on Avatar, TokenAvatar, Icon, Spinner.
 
@@ -360,3 +361,25 @@ Every component was hand-converted after export, so **do not re-export**: regene
 |---|---|---|---|
 | Landing | `OpenChat Landing.dc.html` | `e700433f` | 2026-10-15 |
 | Learn | `OpenChat Learn.dc.html` | `15db4213` | 2026-10-15 |
+
+## Native shell kit
+Built by hand (N2, #10365) from the patterns the native prototype builds inline: `src/native/NativeApp.svelte (Native Prototype.dc.html)`, source hash `db4b562b` (2026-11-03 export). Plain Svelte 5 in `src/native`; compare against that hash when the prototype changes.
+| Component | Built from | Ported |
+|---|---|---|
+| AnchoredMenu | the kebab and value menus (`openXMenu`, `openAM`, `v.xm*`, `v.am*`) | 2026-11-05 |
+| BottomSheet | the pick, poll-settings and referrer sheets (`grabSheet`, `closeSheet`, `v.sheetTy`, `v.sheetVeilOp`) | 2026-11-05 |
+| CodeTiles | the linking code tiles (`v.au.codeBoxes`, `onCode`) | 2026-11-05 |
+| LongPressMenu | the row long-press menu (`lpH`, `openRowMenu`, `v.rm*`) | 2026-11-05 |
+| NativeMenu | the menus' rows (`menuItems`: icon, label, tick, chevron, back row, dividers) | 2026-11-05 |
+| NativePageHeader | the pushed screens' and the conversation's headers (`v.back`, `v.backMask`, `v.kebabRot`), the tab titles | 2026-11-05 |
+| SettingsAction | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsCopy | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsGroup | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsLink | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsMeter | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsSegmented | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsSwatches | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsSwitch | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsValue | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| TabBar | the tab bar (`v.tabs`, `bounceTab`) | 2026-11-05 |
+| Toasts | the toast (`toast`, `v.toast*`, `v.toastBottom`) | 2026-11-05 |

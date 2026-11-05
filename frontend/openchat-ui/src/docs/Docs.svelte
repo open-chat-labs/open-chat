@@ -7,6 +7,7 @@
   import Foundations from './groups/Foundations.svelte';
   import General from './groups/General.svelte';
   import Features from './groups/Features.svelte';
+  import Native from './groups/Native.svelte';
   import Api from './groups/Api.svelte';
   import Search from './Search.svelte';
   import type { Target } from './search';
@@ -32,7 +33,7 @@
   // a deep link (#<section id>) opens that section's group and lands on it, whatever was stored last
   const linked = sectionFromHash(location.hash);
   if (linked) save('section-' + linked.group, linked.id);
-  let group = $state<GroupId>(linked?.group ?? pick(load('group'), ['foundations', 'general', 'features', 'api'], 'foundations'));
+  let group = $state<GroupId>(linked?.group ?? pick(load('group'), ['foundations', 'general', 'features', 'native', 'api'], 'foundations'));
   let mode = $state(pick(load('mode'), MODES, 'dark'));
   let accent = $state(pick(load('accent'), ACCENTS, 'pink'));
   let dir = $state(pick(load('dir'), DIRS, 'ltr'));
@@ -258,6 +259,8 @@
         <General />
       {:else if group === 'features'}
         <Features {mode} {accent} />
+      {:else if group === 'native'}
+        <Native {mode} {accent} />
       {:else}
         <Api />
       {/if}

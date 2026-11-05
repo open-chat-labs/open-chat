@@ -1,5 +1,6 @@
 <!-- Segmented tab bar. Left/Right/Home/End move and select (automatic activation), RTL-aware.
-     With onSelect the parent owns the selection; without, it keeps its own. counts are index-aligned (null = no pill). -->
+     With onSelect the parent owns the selection; without, it keeps its own. counts are index-aligned (null = no pill).
+     size="sm" is the compact bar (40px, 3px inset): native's chat filter and settings rows. -->
 <script lang="ts">
   import { useT } from '../i18n';
   import { rove } from '../behaviours/rove';
@@ -12,10 +13,12 @@
     /** Tabs that show an accent dot; overrides dotOnLast. */
     dotIndexes?: number[] | null;
     dotOnLast?: boolean;
+    /** md: 44px. sm: the compact 40px bar with a 3px inset (native). */
+    size?: 'md' | 'sm';
     onSelect?: (i: number) => void;
   }
 
-  let { labels, counts = [], selectedIndex = 0, dotIndexes = null, dotOnLast = true, onSelect }: Props = $props();
+  let { labels, counts = [], selectedIndex = 0, dotIndexes = null, dotOnLast = true, size = 'md', onSelect }: Props = $props();
   const t = useT();
 
   let own = $state<number | null>(null);
@@ -32,7 +35,7 @@
 </script>
 
 <div class="wrap">
-  <div class="tabs" role="tablist" onkeydown={keyNav}>
+  <div class="tabs" class:sm={size === 'sm'} role="tablist" onkeydown={keyNav}>
     {#each labels as label, i}
       {@const selected = i === active}
       <div class="tab" class:selected onclick={() => select(i)} role="tab" aria-selected={selected} tabindex={selected ? 0 : -1}>
@@ -67,6 +70,13 @@
     background: var(--overlay-1);
     box-shadow: inset 0 0 0 1px var(--line-1);
     border-radius: var(--radius-md);
+
+    // the compact bar: what the native prototype set per screen (--control-xl: 40px; --space-4: 3px)
+    &.sm {
+      gap: 3px;
+      height: var(--control-lg);
+      padding: 3px;
+    }
   }
 
   .tab {
@@ -76,6 +86,10 @@
     gap: var(--space-4);
     border-radius: var(--radius-sm);
     cursor: pointer;
+
+    .sm & {
+      gap: 3px;
+    }
 
     &:hover {
       background: var(--overlay-1);

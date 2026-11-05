@@ -58,6 +58,12 @@
   }
 }
 
+/// A type size with no `--text-*` token of its own (the native prototype's 15px, 14.5px …), times `--text-scale` as the
+/// tokens are, so it follows the native interface size too.
+@function text-size($px) {
+  @return calc(#{$px} * var(--text-scale));
+}
+
 /// Rules for people who asked for less motion (turn an animation or transition off).
 @mixin reduced-motion {
   @media (prefers-reduced-motion: reduce) {

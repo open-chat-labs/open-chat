@@ -125,6 +125,17 @@
 [data-platform="native"],[data-always-dark]{
   --hero-base:#14141a; --tint-row:rgba(0,0,0,.22); --tint-pill:rgba(0,0,0,.28);
 }
+/* The native shell kit (src/native, native notes §1 and §2). The root also carries data-os="ios" or "android": touch
+   targets are 44pt on iOS and 48dp on Android. Bars at the bottom (the tab bar, a pinned footer) pad by the safe
+   area, at least 12px (the prototype's Android gesture bar); --tab-bar-h is the tab bar's height, which toasts and
+   the FAB sit above. Veils and shadows are the prototype's, the same in both themes. */
+[data-platform="native"]{
+  --touch-target:44px; --bar-end:max(var(--safe-bottom),12px);
+  --tab-bar-h:calc(10px + var(--touch-target) + var(--bar-end));
+  --veil-sheet:rgba(0,0,0,.55); --veil-lift:rgba(0,0,0,.42);
+  --shadow-sheet:0 -12px 40px rgba(0,0,0,.45); --shadow-menu:0 12px 36px rgba(0,0,0,.55); --shadow-lift:0 14px 40px rgba(0,0,0,.55);
+}
+[data-platform="native"][data-os="android"]{--touch-target:48px}
 /* Native light: white pages. */
 [data-platform="native"][data-mode="light"]{
   --surface-0:#FFFFFF; --surface-1:#FFFFFF; --surface-2:#F4F3EF; --field:#F4F3EF;

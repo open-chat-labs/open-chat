@@ -1229,5 +1229,185 @@
         "src/pages/types.ts"
       ]
     }
+  },
+  "native": {
+    "AnchoredMenu": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the kebab and value menus (`openXMenu`, `openAM`, `v.xm*`, `v.am*`)",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/AnchoredMenu.svelte",
+        "src/native/menuPlacement.ts"
+      ]
+    },
+    "BottomSheet": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the pick, poll-settings and referrer sheets (`grabSheet`, `closeSheet`, `v.sheetTy`, `v.sheetVeilOp`)",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/BottomSheet.svelte",
+        "src/native/sheetDrag.ts",
+        "src/native/presence.svelte.ts"
+      ]
+    },
+    "CodeTiles": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the linking code tiles (`v.au.codeBoxes`, `onCode`)",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/CodeTiles.svelte",
+        "src/native/codeTiles.ts"
+      ]
+    },
+    "LongPressMenu": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the row long-press menu (`lpH`, `openRowMenu`, `v.rm*`)",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/LongPressMenu.svelte",
+        "src/native/longPress.ts",
+        "src/native/menuPlacement.ts"
+      ]
+    },
+    "NativeMenu": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the menus' rows (`menuItems`: icon, label, tick, chevron, back row, dividers)",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/NativeMenu.svelte"
+      ]
+    },
+    "NativePageHeader": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the pushed screens' and the conversation's headers (`v.back`, `v.backMask`, `v.kebabRot`), the tab titles",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/NativePageHeader.svelte"
+      ]
+    },
+    "SettingsAction": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsAction.svelte"
+      ]
+    },
+    "SettingsCopy": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsCopy.svelte"
+      ]
+    },
+    "SettingsGroup": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsGroup.svelte"
+      ]
+    },
+    "SettingsLink": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsLink.svelte"
+      ]
+    },
+    "SettingsMeter": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsMeter.svelte"
+      ]
+    },
+    "SettingsSegmented": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsSegmented.svelte"
+      ]
+    },
+    "SettingsSwatches": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsSwatches.svelte"
+      ]
+    },
+    "SettingsSwitch": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsSwitch.svelte"
+      ]
+    },
+    "SettingsValue": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsValue.svelte"
+      ]
+    },
+    "TabBar": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the tab bar (`v.tabs`, `bounceTab`)",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/TabBar.svelte",
+        "src/native/haptics.ts"
+      ]
+    },
+    "Toasts": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the toast (`toast`, `v.toast*`, `v.toastBottom`)",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/Toasts.svelte",
+        "src/native/toastQueue.svelte.ts"
+      ]
+    }
   }
 }

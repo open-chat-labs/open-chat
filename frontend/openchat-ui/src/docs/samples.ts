@@ -1,6 +1,7 @@
 import { createRawSnippet } from 'svelte';
 // Demo-only data for the docs page (components carry no sample data of their own).
 import type { GroupMessage, MenuItem, MessageGroupItem, TokenOption } from '../lib/types';
+import type { NativeTab } from '../native/types';
 
 const icon = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
 
@@ -1304,3 +1305,60 @@ Object.assign(samples, {
   },
   Learn: { ...pageLinks, auth: samples.AuthDialog, onEnterApp: () => {} },
 });
+
+// ── Native shell kit (groups/Native.svelte) ──
+
+// the user's photo: the prototype's violet gradient, as an image (a host passes a real photo's URL)
+const nativePhoto =
+  'data:image/svg+xml,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 26"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B48CFF"/><stop offset="1" stop-color="#6A5CFF"/></linearGradient></defs><rect width="26" height="26" fill="url(#g)"/></svg>',
+  );
+
+export const nativeTabsNoPhoto: NativeTab[] = [
+  { id: 'chats', label: 'docs.native.tabs.chats', icon: 'chat', count: 3 },
+  { id: 'communities', label: 'docs.native.tabs.communities', icon: 'community' },
+  { id: 'wallet', label: 'docs.native.tabs.wallet', icon: 'wallet' },
+  { id: 'activity', label: 'docs.native.tabs.activity', icon: 'bell', dot: true },
+  { id: 'you', label: 'docs.native.tabs.you', icon: 'user' },
+];
+export const nativeTabs: NativeTab[] = nativeTabsNoPhoto.map((t) => (t.id === 'you' ? { ...t, avatarUrl: nativePhoto } : t));
+export const nativePeople: { name: string; handle: string; color: 'violet' | 'blue' | 'teal' | 'amber' | 'plum' }[] = [
+  { name: 'Lucy Linden', handle: '@lucy', color: 'plum' },
+  { name: 'Julian Jelfs', handle: '@julian_jelfs', color: 'blue' },
+  { name: 'Matt Grogan', handle: '@matt', color: 'amber' },
+  { name: 'Hamish', handle: '@hamish', color: 'teal' },
+  { name: 'Priya Raman', handle: '@priya_raman', color: 'violet' },
+  { name: 'Otto Lindqvist', handle: '@otto_l', color: 'blue' },
+];
+export const nativeChats: {
+  id: string;
+  title: string;
+  preview: string;
+  time: string;
+  kind: 'user' | 'group';
+  color: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
+  unreadCount?: number;
+  pinned?: boolean;
+  online?: boolean;
+}[] = [
+  { id: 'devs', title: 'OpenChat Devs', preview: 'Matt: The native tab bar is in', time: '10:42', kind: 'group', color: 'violet', unreadCount: 4, pinned: true },
+  { id: 'julian', title: 'Julian Jelfs', preview: 'Release is out 🎉', time: '09:58', kind: 'user', color: 'blue', online: true },
+  { id: 'awesome', title: 'The Awesome Group', preview: 'Lucy: Which tab bar do we prefer?', time: '09:31', kind: 'group', color: 'teal', unreadCount: 12 },
+  { id: 'lucy', title: 'Lucy Linden', preview: 'Menu feels great', time: 'Yesterday', kind: 'user', color: 'plum', online: true },
+  { id: 'hamish', title: 'Hamish', preview: 'Backend, mostly.', time: 'Mon', kind: 'user', color: 'amber' },
+  { id: 'design', title: 'Design Crit', preview: 'Priya: Icon-only for me', time: 'Sun', kind: 'group', color: 'blue' },
+];
+export const nativeCommunities: { name: string; members: string; grad: string }[] = [
+  { name: 'OpenChat Labs', members: '12.9k members', grad: 'linear-gradient(140deg,#ff5f9e,#6a2bff)' },
+  { name: 'Weekend Climbers', members: '3.2k members', grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
+  { name: 'SNS Launchpad', members: '15.8k members', grad: 'linear-gradient(140deg,#B4C3FF,#5B6FE0)' },
+  { name: 'Gamers Lounge', members: '44.3k members', grad: 'linear-gradient(140deg,#ffb03d,#ff4d4d)' },
+];
+// Appearance's accent swatches: each accent's colour (the host reads them from its theme)
+export const nativeAccents: { id: string; label: string; colour: string }[] = [
+  { id: 'pink', label: 'docs.native.settings.pink', colour: '#FF5672' },
+  { id: 'orange', label: 'docs.native.settings.orange', colour: '#FF8A3D' },
+  { id: 'blue', label: 'docs.native.settings.blue', colour: '#3D9BFF' },
+  { id: 'green', label: 'docs.native.settings.green', colour: '#2EE6A8' },
+];

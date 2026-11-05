@@ -215,7 +215,12 @@ export default defineConfig([
     },
     // The library is app-agnostic: the app passes in what it needs (frontend/CLAUDE.md).
     {
-        files: ["openchat-ui/src/lib/**/*.ts", "openchat-ui/src/lib/**/*.svelte"],
+        files: [
+            "openchat-ui/src/lib/**/*.ts",
+            "openchat-ui/src/lib/**/*.svelte",
+            "openchat-ui/src/native/**/*.ts",
+            "openchat-ui/src/native/**/*.svelte",
+        ],
         rules: restrictAppImports({
             regex: "^@(src|client|shared|agent|worker|utils|stores|i18n|actions|theme|styles|shared_components|webcomponents)($|[/?])|(^|/)(app|openchat-client|openchat-shared|openchat-agent|openchat-worker)/",
             message: "@openchat/ui is app-agnostic: take what it needs as props.",

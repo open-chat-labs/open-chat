@@ -4125,6 +4125,20 @@
         "doc": ""
       },
       {
+        "name": "size",
+        "type": "'md' | 'sm'",
+        "default": "md",
+        "editor": "enum",
+        "options": [
+          "md",
+          "sm"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'md'",
+        "doc": "md: 44px. sm: the compact 40px bar with a 3px inset (native)."
+      },
+      {
         "name": "onSelect",
         "type": "(i: number) => void",
         "default": null,
@@ -19842,6 +19856,1238 @@
       }
     ],
     "group": "features"
+  },
+  {
+    "name": "AnchoredMenu",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "The native anchored menu: a short list opening from the kebab or row that asked for it, 4px under it with its end edge 4px inside the anchor's (over it near the bottom), scaling in from that corner. Submenus replace the rows in place. A tap outside or Esc closes it.",
+    "preview": {
+      "width": 402,
+      "height": 520
+    },
+    "props": [
+      {
+        "name": "anchor",
+        "type": "HTMLElement | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "What opened it (the kebab, the row); null keeps it closed."
+      },
+      {
+        "name": "items",
+        "type": "NativeMenuItem[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): the menu's accessible name."
+      },
+      {
+        "name": "onSelect",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "A row was picked; the menu has asked to close (onClose) just before."
+      },
+      {
+        "name": "onClose",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "A tap outside, Esc, or a pick."
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "BottomSheet",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "The native bottom sheet: a 48 × 4px handle, surface-1 with a 22px top radius over a dim veil, sliding up in 320ms and down in 280ms. Its handle and header drag it: past 30% or a flick down closes it, otherwise it springs back; pulled up it rubber-bands 24px. One fixed `height` across content states.",
+    "preview": {
+      "width": 402,
+      "height": 560
+    },
+    "props": [
+      {
+        "name": "open",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onClose",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The veil, Esc, a drag or a flick down. The sheet plays its way out once `open` turns false."
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the header's label, and the sheet's accessible name."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the accessible name when there's no title."
+      },
+      {
+        "name": "actionLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): a button at the header's end (Done)."
+      },
+      {
+        "name": "onAction",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "height",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A fixed height (a CSS length), for a sheet whose content changes; otherwise it fits its content, up to 82%."
+      },
+      {
+        "name": "header",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "More of the drag area, under the title (a step's heading)."
+      },
+      {
+        "name": "children",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "CodeTiles",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "One-time code tiles: six 68px tiles over one hidden input, so the platform's one-time-code autofill, paste and the keyboard go through a single field. Capitals and digits only; the next tile ringed in the accent with a caret; a refused code rings them all in the warning colour.",
+    "preview": {
+      "width": 370,
+      "height": 80
+    },
+    "props": [
+      {
+        "name": "value",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The code so far."
+      },
+      {
+        "name": "length",
+        "type": "number",
+        "default": 6,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "6",
+        "doc": "How many characters."
+      },
+      {
+        "name": "error",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The code was refused: the tiles turn the warning colour until it changes."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.native.codeTiles.label'",
+        "doc": "Resource key (or literal text): the field's accessible name."
+      },
+      {
+        "name": "onInput",
+        "type": "(code: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The code as typed, pasted or autofilled: capitals and digits only, at most `length`."
+      },
+      {
+        "name": "onComplete",
+        "type": "(code: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The code is complete."
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "LongPressMenu",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "The native long-press menu for rows: the screen dims and blurs, a copy of the row lifts in place (the row hides) and the menu opens under it, or over it near the bottom; a small target lifts as a 240px card. Rows open it with `use:longPress`.",
+    "preview": {
+      "width": 402,
+      "height": 560
+    },
+    "props": [
+      {
+        "name": "open",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "target",
+        "type": "HTMLElement | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The pressed row (what `use:longPress` hands back): where the copy lifts, hidden while the menu is open."
+      },
+      {
+        "name": "items",
+        "type": "NativeMenuItem[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): the menu's accessible name (\"Lucy Linden options\")."
+      },
+      {
+        "name": "onSelect",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "A row was picked; the menu has asked to close (onClose) just before."
+      },
+      {
+        "name": "onClose",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "A tap outside, Esc, or a pick. The menu fades out once `open` turns false."
+      },
+      {
+        "name": "row",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The lifted copy (the same row component, not interactive); without it, a clone of the target."
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "NativeMenu",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "The native menus' card, which AnchoredMenu and LongPressMenu place: surface-2, 16px radius, 48px rows of icon + label, a divider above the destructive rows, the current value ticked; a submenu replaces the rows in place, under a back row.",
+    "preview": {
+      "width": 260,
+      "height": 320
+    },
+    "props": [
+      {
+        "name": "items",
+        "type": "NativeMenuItem[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): the menu's accessible name."
+      },
+      {
+        "name": "onSelect",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "A row without a submenu was picked."
+      },
+      {
+        "name": "autofocus",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Take focus when it opens, and when a submenu replaces the rows."
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "NativePageHeader",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "The native page header: back (a chevron on iOS, an arrow on Android), a title or an avatar + name + sub line, trailing icon buttons and the kebab (horizontal on iOS, vertical on Android). size=\"lg\" is a tab root's title row.",
+    "preview": {
+      "width": 402,
+      "height": 64
+    },
+    "props": [
+      {
+        "name": "title",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): the page title, or the name beside the avatar."
+      },
+      {
+        "name": "sub",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the line under the name (a status, a member count)."
+      },
+      {
+        "name": "size",
+        "type": "'md' | 'lg'",
+        "default": "md",
+        "editor": "enum",
+        "options": [
+          "md",
+          "lg"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'md'",
+        "doc": "md: a pushed page's 17px title. lg: a tab root's 21px title, without back."
+      },
+      {
+        "name": "avatar",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The avatar before the name (the conversation's header): an Avatar or TokenAvatar, about 36px."
+      },
+      {
+        "name": "onBack",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "backLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.common.back'",
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "onTitleClick",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Makes the title (with its avatar and sub line) a button: the conversation's details."
+      },
+      {
+        "name": "titleLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the title button's accessible name, when it says more than the title."
+      },
+      {
+        "name": "actions",
+        "type": "NativeHeaderAction[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Trailing icon buttons, before the kebab."
+      },
+      {
+        "name": "onMore",
+        "type": "(anchor: HTMLElement) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Shows the kebab last; gets the button, to anchor a menu to."
+      },
+      {
+        "name": "moreLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.common.moreOptions'",
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "divider",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A hairline under the header."
+      },
+      {
+        "name": "children",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Trailing content before the icon buttons (a custom button, a badge)."
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "SettingsAction",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "A settings row that does something at once: an icon and a label in the accent, or in the danger colour for a destructive one (the host offers Undo in a toast). At least 52px.",
+    "preview": {
+      "width": 370,
+      "height": 52
+    },
+    "props": [
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "icon",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "An icons.js name."
+      },
+      {
+        "name": "danger",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": ""
+      },
+      {
+        "name": "onClick",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "SettingsCopy",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "A settings row for a value to copy: a small mono label over the value in mono, and a copy button that turns into a green tick for 1.6s once it's on the clipboard.",
+    "preview": {
+      "width": 370,
+      "height": 64
+    },
+    "props": [
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "value",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "What's shown and copied."
+      },
+      {
+        "name": "nowrap",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Keep the value on one line (it wraps anywhere otherwise: keys, URLs)."
+      },
+      {
+        "name": "onCopy",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The value is on the clipboard."
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "SettingsGroup",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "A native settings card: an optional section label (4px in), the Settings* rows on overlay-1 with a 16px radius and full-width dividers, and an optional note under it.",
+    "preview": {
+      "width": 370,
+      "height": 220
+    },
+    "props": [
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the section label above the card."
+      },
+      {
+        "name": "note",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): a note under the card."
+      },
+      {
+        "name": "children",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The rows."
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "SettingsLink",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "A settings row that opens a screen (a chevron right) or a value menu (a chevron down, as SettingsValue uses it): an optional icon, the label with optional help, the current value at the end. At least 60px.",
+    "preview": {
+      "width": 370,
+      "height": 60
+    },
+    "props": [
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "help",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "value",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the current value, at the end (\"Saved\", \"Kai Moreno\")."
+      },
+      {
+        "name": "icon",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "An icons.js name, before the label (the You tab's lists)."
+      },
+      {
+        "name": "chevron",
+        "type": "'right' | 'down'",
+        "default": "right",
+        "editor": "enum",
+        "options": [
+          "right",
+          "down"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'right'",
+        "doc": "right: opens a screen. down: opens a menu of values."
+      },
+      {
+        "name": "onClick",
+        "type": "(row: HTMLElement) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Gets the row, to anchor a menu to."
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "SettingsMeter",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "A settings row with a meter: the label and the amount in mono, a 6px bar filled in the accent, and optional help.",
+    "preview": {
+      "width": 370,
+      "height": 80
+    },
+    "props": [
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "value",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): the amount as shown (\"3.4 of 10 GB\")."
+      },
+      {
+        "name": "fraction",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "How full, 0 to 1."
+      },
+      {
+        "name": "help",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text)."
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "SettingsSegmented",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "A settings row with a segmented choice: the label over the compact (40px) SegmentedTabs.",
+    "preview": {
+      "width": 370,
+      "height": 90
+    },
+    "props": [
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "options",
+        "type": "string[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The choices: resource keys (or literal text)."
+      },
+      {
+        "name": "selected",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onSelect",
+        "type": "(i: number) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "SettingsSwatches",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "A settings row with colour swatches: the label, then 30px circles; the picked one gets a 2px ring of its colour, 3px out.",
+    "preview": {
+      "width": 370,
+      "height": 64
+    },
+    "props": [
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "swatches",
+        "type": "{ id: string; label: string; colour: string }[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "`colour` is any CSS colour the host gives (a swatch shows its own colour, not the theme's)."
+      },
+      {
+        "name": "selected",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The picked swatch's id."
+      },
+      {
+        "name": "onSelect",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "SettingsSwitch",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "A settings row with a switch, its label and help (what the setting is; it never changes with the switch). At least 72px; a tap anywhere on the row flips it.",
+    "preview": {
+      "width": 370,
+      "height": 72
+    },
+    "props": [
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "help",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): what the setting is."
+      },
+      {
+        "name": "on",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "disabled",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": ""
+      },
+      {
+        "name": "onChange",
+        "type": "(on: boolean) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "SettingsValue",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "A settings row for a value picked from a few: the label, the current value and a chevron down; a tap opens an AnchoredMenu of the options from the row, the current one ticked.",
+    "preview": {
+      "width": 370,
+      "height": 60
+    },
+    "props": [
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "help",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "options",
+        "type": "{ id: string; label: string }[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The options: ids and labels (resource keys or literal text)."
+      },
+      {
+        "name": "value",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The current option's id."
+      },
+      {
+        "name": "onChange",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "TabBar",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "The native tab bar: icon-only tabs in touch-target cells, an unread count, a dot, the user's photo (ringed when selected); a tap bounces the icon (not with reduced motion) and gives a light haptic.",
+    "preview": {
+      "width": 402,
+      "height": 80
+    },
+    "props": [
+      {
+        "name": "tabs",
+        "type": "NativeTab[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "selected",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The selected tab's id."
+      },
+      {
+        "name": "onSelect",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Every tap, the selected tab's included."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.native.tabBar.label'",
+        "doc": "Resource key (or literal text): the bar's accessible name."
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "Toasts",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "Native toasts: the library's UndoToast 12px from the sides, above the tab bar (over the FAB), a footer, or the safe area; Undo on a destructive action's. ToastQueue keeps the timing (2.6s, 5s with Undo) for a host without its own.",
+    "preview": {
+      "width": 402,
+      "height": 480
+    },
+    "props": [
+      {
+        "name": "toast",
+        "type": "NativeToast | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The toast showing, or null."
+      },
+      {
+        "name": "above",
+        "type": "'tabBar' | 'footer' | 'none'",
+        "default": "tabBar",
+        "editor": "enum",
+        "options": [
+          "tabBar",
+          "footer",
+          "none"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'tabBar'",
+        "doc": "What it sits above: the tab bar (a tab's root), a footer (a conversation's composer, a pinned button), or nothing but the safe area."
+      },
+      {
+        "name": "onUndo",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Undo on an undoable toast."
+      },
+      {
+        "name": "onDismiss",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Its ×."
+      }
+    ],
+    "group": "native"
   },
   {
     "name": "Landing",

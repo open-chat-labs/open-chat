@@ -2181,6 +2181,19 @@
       "unmute": "Unmute notifications",
       "untilOn": "Until I turn it back on"
     },
+    "native": {
+      "tabBar": {
+        "label": "Tabs",
+        "unread": "{label}, {count} unread",
+        "new": "{label}, new"
+      },
+      "settings": {
+        "copy": "Copy {label}"
+      },
+      "codeTiles": {
+        "label": "Code"
+      }
+    },
     "navRail": {
       "backHome": "Back to oc.app",
       "chats": "Chats",

@@ -213,6 +213,10 @@
       <SegmentedTabs labels={['docs.general.tabs.all', 'docs.general.tabs.direct', 'docs.general.tabs.groups', 'docs.general.tabs.unread']} selectedIndex={tab} onSelect={(i) => (tab = i)} />
       <SegmentedTabs labels={['docs.general.tabs.members', 'docs.general.tabs.bots', 'docs.general.tabs.invited']} counts={[112, 3, 8]} selectedIndex={0} dotOnLast />
     </Frame></div>
+    <div class="span"><Frame label="SegmentedTabs · size=sm · compact, 40px (native)" style="flex-direction: column; flex-wrap: nowrap" align="stretch">
+      <SegmentedTabs size="sm" labels={['docs.general.tabs.all', 'docs.general.tabs.direct', 'docs.general.tabs.groups', 'docs.general.tabs.unread']} selectedIndex={tab} onSelect={(i) => (tab = i)} />
+      <SegmentedTabs size="sm" labels={['docs.general.tabs.members', 'docs.general.tabs.bots', 'docs.general.tabs.invited']} counts={[112, 3, 8]} selectedIndex={0} dotOnLast={false} />
+    </Frame></div>
   </div>
 </Section>
 
