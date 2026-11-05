@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
+import android.view.HapticFeedbackConstants
 import android.webkit.WebView
 import app.tauri.annotation.Command
 import app.tauri.annotation.InvokeArg
@@ -79,6 +80,16 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     // What Play offers this install, so a store build announces an update only
     // once it can be installed. Resolves without a versionCode when Play offers
     // nothing or cannot be asked; the caller treats both as no update.
+    // A light tap where the native design asks for one (a tab tap, a long-press menu opening). It
+    // follows the system's own touch feedback setting.
+    @Command
+    fun haptic(invoke: Invoke) {
+        activity.runOnUiThread {
+            activity.window.decorView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        }
+        invoke.resolve()
+    }
+
     @Command
     fun getStoreUpdate(invoke: Invoke) {
         AppUpdateManagerFactory.create(activity).appUpdateInfo

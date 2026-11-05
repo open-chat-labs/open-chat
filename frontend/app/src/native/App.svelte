@@ -40,6 +40,7 @@
     } from "@client";
     import { onMount, setContext } from "svelte";
     import { _, isLoading, json, locale } from "svelte-i18n";
+    import { hostHaptics } from "./haptics";
     import { nativeOs } from "./platform";
     import Router from "./router/Router.svelte";
     import Shell from "./shell/Shell.svelte";
@@ -59,8 +60,8 @@
         },
     });
 
-    // No haptics on mobile web (#10366); the apps' come from the Tauri plugin.
-    setHaptics(() => {});
+    // the apps' light tap through the Tauri plugin; none on mobile web
+    setHaptics(hostHaptics(client.isNativeApp()));
 
     const os = nativeOs(
         isIosTauriApp() ? "ios" : isAndroidTauriApp() ? "android" : undefined,

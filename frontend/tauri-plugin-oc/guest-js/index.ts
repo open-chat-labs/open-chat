@@ -3,6 +3,7 @@ export { deleteFcmToken } from "./commands/deleteFcmToken";
 export { getApnsDevice } from "./commands/getApnsDevice";
 export { getFcmToken } from "./commands/getFcmToken";
 export { getShellVersion } from "./commands/getShellVersion";
+export { haptic } from "./commands/haptic";
 export { minimizeApp } from "./commands/minimizeApp";
 export { openUrl } from "./commands/openUrl";
 export { releaseNotifications } from "./commands/releaseNotifications";

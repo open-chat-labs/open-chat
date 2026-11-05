@@ -38,6 +38,7 @@ Default permissions for the plugin
 - `allow-set-call-ringback`
 - `allow-set-call-end-token`
 - `allow-get-store-update`
+- `allow-haptic`
 
 ## Permission Table
 
@@ -486,6 +487,32 @@ Enables the get_store_update command without any pre-configured scope.
 <td>
 
 Denies the get_store_update command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-haptic`
+
+</td>
+<td>
+
+Enables the haptic command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-haptic`
+
+</td>
+<td>
+
+Denies the haptic command without any pre-configured scope.
 
 </td>
 </tr>

@@ -38,8 +38,11 @@ design export needs. Each entry says where it came up.
 - **Native shell kit** (native N2, #10365; `@openchat/ui/src/native`, EXPORT-LOG 2026-11-05). N3
   (#10366) put `data-os` on the native root (the app's platform, else the user agent's) and built
   the shell on it (`src/native/README.md`). Left:
-  - Haptics: the kit's `haptic()` gets none from the native root yet (`setHaptics` with nothing):
-    the Tauri plugin has no haptics command, and mobile web has none by design.
+  - Haptics: done. The native root installs the Tauri plugin's new `haptic` command (Android's
+    keyboard-tap feedback, iOS's light impact) in the apps, and nothing on mobile web
+    (`native/haptics.ts`). A shell built before the command rejects it, which means no haptics,
+    so a bundle taken over the air still runs on it: no major version bump needed for this alone.
+    Check the feel on both platforms.
   - Android's system back closes an open sheet or menu first (`shell/overlays.svelte.ts`: a screen
     registers its sheet's or menu's close with `useOverlay` while it's open). In a phone's browser,
     Back is the browser's history: an open sheet doesn't take a history entry, so Back leaves the

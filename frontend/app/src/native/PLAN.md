@@ -25,9 +25,12 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
 
 - **Done:** N1 platform tokens, theme and safe areas
   ([#10364](https://github.com/open-chat-labs/open-chat/issues/10364)); N2 the shell kit in
-  `@openchat/ui/src/native` ([#10365](https://github.com/open-chat-labs/open-chat/issues/10365)).
-- **In progress:** N3 the app tree, push stacks and entry
-  ([#10366](https://github.com/open-chat-labs/open-chat/issues/10366)).
+  `@openchat/ui/src/native` ([#10365](https://github.com/open-chat-labs/open-chat/issues/10365));
+  N3 the app tree, push stacks and entry
+  ([#10366](https://github.com/open-chat-labs/open-chat/issues/10366)): `src/native` behind
+  `OC_NATIVE_LAYOUT=v4`, with a placeholder for every screen (`features/app/screens.ts`). What it
+  left is in GAPS.md ("Native app tree").
+- **Next:** the screens. N4, N5a, N10a, N11, N12 and N13 need only N3.
 
 ## Workstreams
 
@@ -37,7 +40,7 @@ Foundations:
 |---|---|---|
 | [N1](https://github.com/open-chat-labs/open-chat/issues/10364) | Platform tokens, theme and safe areas | done |
 | [N2](https://github.com/open-chat-labs/open-chat/issues/10365) | Shell kit in `@openchat/ui/src/native` | done |
-| [N3](https://github.com/open-chat-labs/open-chat/issues/10366) | App tree, push stacks and entry | N1, N2 |
+| [N3](https://github.com/open-chat-labs/open-chat/issues/10366) | App tree, push stacks and entry | done |
 
 Screens:
 
