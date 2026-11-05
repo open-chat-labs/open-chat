@@ -752,14 +752,15 @@
                   .map((r) => r.reaction),
     );
 
-    // the message being deleted, once confirmed
-    let deleting = $state<EventWrapper<Message>>();
+    // the message being deleted, once confirmed, and its chat (another may be open by then)
+    let deleting = $state<{ chatId: ChatIdentifier; evt: EventWrapper<Message> }>();
 
     async function run(action: MessageMenuAction, evt: EventWrapper<Message>, failed: boolean) {
         if (chat === undefined) return;
+        const chatId = chat.id;
         const dialog = await runMessageAction(action, {
             client,
-            chatId: chat.id,
+            chatId,
             evt,
             failed,
             me,
@@ -769,22 +770,22 @@
             diamond: $isDiamondStore,
             confirmDelete: $confirmMessageDeletion,
         });
-        if (dialog?.kind === "delete") deleting = dialog.evt;
+        if (dialog?.kind === "delete") deleting = { chatId, evt: dialog.evt };
         if (dialog?.kind === "forward") {
             screen.dialogs.open({ kind: "forward", message: dialog.evt.event });
         }
         if (dialog?.kind === "report") {
             screen.dialogs.open({
                 kind: "report_message",
-                chatId: chat.id,
+                chatId,
                 messageId: dialog.evt.event.messageId,
-                canDelete: client.canDeleteOtherUsersMessages(chat.id),
+                canDelete: client.canDeleteOtherUsersMessages(chatId),
             });
         }
         if (dialog?.kind === "remind") {
             screen.dialogs.open({
                 kind: "remind_message",
-                chatId: chat.id,
+                chatId,
                 eventIndex: dialog.evt.index,
             });
         }
@@ -805,10 +806,10 @@
     });
 
     function confirmDelete() {
-        const evt = deleting;
+        const confirmed = deleting;
         deleting = undefined;
-        if (chat === undefined || evt === undefined) return;
-        void deleteMessage(client, chat.id, evt);
+        if (confirmed === undefined) return;
+        void deleteMessage(client, confirmed.chatId, confirmed.evt);
     }
 
     // a reaction added or taken off. The library's picker keeps no favourites of its own (the old
