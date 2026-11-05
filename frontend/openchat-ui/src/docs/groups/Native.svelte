@@ -4,9 +4,9 @@
   import Section from '../Section.svelte';
   import NativeFrame from '../NativeFrame.svelte';
   import { native, sec } from '../sections';
-  import { nativePeople, nativeTabs, nativeTabsNoPhoto } from '../samples';
-  import { Avatar, Button, Field, SegmentedTabs, Toggle } from '../../lib/index';
-  import { BottomSheet, NativePageHeader, TabBar } from '../../native/index';
+  import { nativeChats, nativeCommunities, nativePeople, nativeTabs, nativeTabsNoPhoto } from '../samples';
+  import { Avatar, Button, ChatRow, Field, SegmentedTabs, Toggle } from '../../lib/index';
+  import { AnchoredMenu, BottomSheet, LongPressMenu, NativePageHeader, TabBar, longPress, type NativeMenuItem } from '../../native/index';
   import { useT } from '../../lib/i18n';
 
   interface Props {
@@ -37,6 +37,62 @@
   let chosen = $state('');
   const pickerRows = $derived(nativePeople.filter((p) => !pickerQuery || p.name.toLowerCase().includes(pickerQuery.toLowerCase())));
   const openPicker = () => ((pickerQuery = ''), (picked = null), (pickerOpen = true));
+
+  // anchored menu: a header's kebab, and value rows (the lower one opens above)
+  let menuLog = $state('');
+  let kebabAnchor = $state<HTMLElement | null>(null);
+  const MUTE_FOR = ['1 hour', '8 hours', '1 week', 'docs.native.menu.forever'];
+  let muted = $state('');
+  const muteItems = (): NativeMenuItem[] => MUTE_FOR.map((d) => ({ id: 'mute:' + d, label: d, selected: muted === d }));
+  const kebabItems = $derived<NativeMenuItem[]>([
+    { id: 'search', label: 'docs.native.menu.search', icon: 'search' },
+    { id: 'details', label: 'docs.native.menu.details', icon: 'info' },
+    muted
+      ? { id: 'unmute', label: 'docs.native.menu.unmute', icon: 'bell' }
+      : { id: 'mute', label: 'docs.native.menu.mute', icon: 'bell-off', submenu: { title: 'docs.native.menu.muteFor', items: muteItems() } },
+    { id: 'favourite', label: 'docs.native.menu.favourite', icon: 'star' },
+    { id: 'disappearing', label: 'docs.native.menu.disappearing', icon: 'timer' },
+    { id: 'clear', label: 'docs.native.menu.clear', icon: 'trash', separator: true, danger: true },
+    { id: 'block', label: 'docs.native.menu.block', icon: 'ban', danger: true },
+  ]);
+  function onKebab(id: string) {
+    menuLog = id;
+    if (id.startsWith('mute:')) muted = id.slice(5);
+    if (id === 'unmute') muted = '';
+  }
+  const SOUNDS = ['Chime', 'Pop', 'Bell', 'None'];
+  const DOWNLOADS = ['docs.native.menu.never', 'docs.native.menu.wifi', 'docs.native.menu.always'];
+  let sound = $state(0);
+  let download = $state(1);
+  let valueMenu = $state<{ anchor: HTMLElement; which: 'sound' | 'download' } | null>(null);
+  const valueItems = $derived<NativeMenuItem[]>(
+    valueMenu?.which === 'sound'
+      ? SOUNDS.map((s, i) => ({ id: String(i), label: s, selected: i === sound }))
+      : DOWNLOADS.map((s, i) => ({ id: String(i), label: s, selected: i === download })),
+  );
+
+  // long-press: chat rows lift as themselves; a strip avatar lifts as a wider card
+  type DemoChat = (typeof nativeChats)[number];
+  let rowMenu = $state<{ open: boolean; el: HTMLElement | null; chat: DemoChat }>({ open: false, el: null, chat: nativeChats[0] });
+  const rowItems = $derived<NativeMenuItem[]>([
+    { id: 'pin', label: rowMenu.chat.pinned ? 'docs.native.menu.unpin' : 'docs.native.menu.pin', icon: 'pin' },
+    { id: 'favourite', label: 'docs.native.menu.favourite', icon: 'star' },
+    { id: 'mute', label: 'docs.native.menu.mute', icon: 'bell-off', submenu: { title: 'docs.native.menu.muteFor', items: MUTE_FOR.map((d) => ({ id: 'mute:' + d, label: d })) } },
+    { id: 'read', label: 'docs.native.menu.markRead', icon: 'check' },
+    { id: 'archive', label: 'docs.native.menu.archive', icon: 'layers' },
+    rowMenu.chat.kind === 'group'
+      ? { id: 'leave', label: 'docs.native.menu.leaveGroup', icon: 'exit', separator: true, danger: true }
+      : { id: 'delete', label: 'docs.native.menu.deleteChat', icon: 'trash', separator: true, danger: true },
+  ]);
+  type DemoCommunity = (typeof nativeCommunities)[number];
+  let stripMenu = $state<{ open: boolean; el: HTMLElement | null; community: DemoCommunity }>({ open: false, el: null, community: nativeCommunities[0] });
+  const stripItems: NativeMenuItem[] = [
+    { id: 'top', label: 'docs.native.menu.moveToTop', icon: 'pin' },
+    { id: 'mute', label: 'docs.native.menu.muteCommunity', icon: 'bell-off' },
+    { id: 'read', label: 'docs.native.menu.markAllRead', icon: 'check' },
+    { id: 'leave', label: 'docs.native.menu.leaveCommunity', icon: 'exit', separator: true, danger: true },
+  ];
+  let pressLog = $state('');
 </script>
 
 <div class="native">
@@ -141,6 +197,84 @@
     </div>
     <p class="note">Drag either by its handle or header: past 30% of its height, or a flick down, closes it; otherwise it springs back, and pulled up it gives 24px. The picker keeps its 72% height through both steps.</p>
   </Section>
+
+  <Section {...sec(native, 'native-anchored-menu')}>
+    <div class="grid2">
+      <NativeFrame {os} {mode} {accent} label="A header's kebab · submenu · destructive" height={520}>
+        <NativePageHeader title="Lucy Linden" sub="docs.native.header.online" onBack={() => {}} onMore={(a) => (kebabAnchor = a)}>
+          {#snippet avatar()}<Avatar size={36} color="plum" online />{/snippet}
+        </NativePageHeader>
+        <AnchoredMenu anchor={kebabAnchor} items={kebabItems} label="docs.native.menu.options" onSelect={onKebab} onClose={() => (kebabAnchor = null)} />
+      </NativeFrame>
+      <NativeFrame {os} {mode} {accent} label="Value rows · ticked · opens above near the bottom" height={520}>
+        <div class="value-screen">
+          <div class="value-card">
+            <button type="button" class="value-row" onclick={(e) => (valueMenu = { anchor: e.currentTarget, which: 'sound' })}><span>{t('docs.native.menu.sound')}</span><b>{SOUNDS[sound]}</b><i></i></button>
+          </div>
+          <div class="value-card">
+            <button type="button" class="value-row" onclick={(e) => (valueMenu = { anchor: e.currentTarget, which: 'download' })}><span>{t('docs.native.menu.autoDownload')}</span><b>{t(DOWNLOADS[download])}</b><i></i></button>
+          </div>
+        </div>
+        <AnchoredMenu
+          anchor={valueMenu?.anchor ?? null}
+          items={valueItems}
+          label={valueMenu?.which === 'sound' ? 'docs.native.menu.sound' : 'docs.native.menu.autoDownload'}
+          onSelect={(id) => (valueMenu?.which === 'sound' ? (sound = Number(id)) : (download = Number(id)))}
+          onClose={() => (valueMenu = null)}
+        />
+      </NativeFrame>
+    </div>
+    <p class="note">Last pick: <code>{menuLog || '—'}</code></p>
+  </Section>
+
+  <Section {...sec(native, 'native-long-press-menu')}>
+    <div class="grid2">
+      <NativeFrame {os} {mode} {accent} label="Hold a row (or right-click it)" height={560}>
+        <div class="press-rows">
+          {#each nativeChats as chat (chat.id)}
+            <div use:longPress={(el) => (rowMenu = { open: true, el, chat })}>
+              <ChatRow title={chat.title} preview={chat.preview} time={chat.time} kind={chat.kind} color={chat.color} unreadCount={chat.unreadCount} pinned={chat.pinned} online={chat.online} onClick={() => (pressLog = 'open ' + chat.title)} />
+            </div>
+          {/each}
+        </div>
+        <LongPressMenu
+          open={rowMenu.open}
+          target={rowMenu.el}
+          items={rowItems}
+          label={t('docs.native.menu.rowOptions', { name: rowMenu.chat.title })}
+          onSelect={(id) => (pressLog = id + ' · ' + rowMenu.chat.title)}
+          onClose={() => (rowMenu.open = false)}
+        >
+          {#snippet row()}
+            <ChatRow title={rowMenu.chat.title} preview={rowMenu.chat.preview} time={rowMenu.chat.time} kind={rowMenu.chat.kind} color={rowMenu.chat.color} unreadCount={rowMenu.chat.unreadCount} pinned={rowMenu.chat.pinned} online={rowMenu.chat.online} />
+          {/snippet}
+        </LongPressMenu>
+      </NativeFrame>
+      <NativeFrame {os} {mode} {accent} label="A small target lifts as a 240px card" height={560}>
+        <div class="strip">
+          {#each nativeCommunities as c (c.name)}
+            <button type="button" class="strip-avatar" style:background={c.grad} aria-label={c.name} use:longPress={(el) => (stripMenu = { open: true, el, community: c })} onclick={() => (pressLog = 'open ' + c.name)}></button>
+          {/each}
+        </div>
+        <LongPressMenu
+          open={stripMenu.open}
+          target={stripMenu.el}
+          items={stripItems}
+          label={t('docs.native.menu.rowOptions', { name: stripMenu.community.name })}
+          onSelect={(id) => (pressLog = id + ' · ' + stripMenu.community.name)}
+          onClose={() => (stripMenu.open = false)}
+        >
+          {#snippet row()}
+            <div class="strip-card">
+              <span class="strip-card-avatar" style:background={stripMenu.community.grad}></span>
+              <span class="strip-card-text"><b>{stripMenu.community.name}</b><span>{stripMenu.community.members}</span></span>
+            </div>
+          {/snippet}
+        </LongPressMenu>
+      </NativeFrame>
+    </div>
+    <p class="note">Last: <code>{pressLog || '—'}</code>. A tap still opens the row; the click that ends a long-press doesn't.</p>
+  </Section>
 </div>
 
 <style lang="scss">
@@ -169,4 +303,18 @@
   .sheet-name.small { margin: 0; font: 600 15px/1.2 var(--font-sans); }
   .sheet-handle { font: 500 13px/1 var(--font-sans); color: var(--ink-4); }
   .sheet-buttons { width: 100%; margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+  .value-screen { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 24px 16px; }
+  .value-card { border-radius: 16px; background: var(--overlay-1); overflow: hidden; }
+  .value-row { width: 100%; display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 10px 16px; border: 0; background: none; color: var(--ink); cursor: pointer; text-align: start; }
+  .value-row span { flex: 1; font: 500 15px/1.2 var(--font-sans); }
+  .value-row b { font: 500 13px/1.2 var(--font-sans); color: var(--ink-2); }
+  .value-row i { @include icon(chevron-down, 14px, var(--ink-4)); }
+  .press-rows { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 8px 6px; }
+  .strip { display: flex; gap: 12px; padding: 16px 18px; }
+  .strip-avatar { width: 42px; height: 42px; border: 0; border-radius: 12px; cursor: pointer; }
+  .strip-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+  .strip-card-avatar { flex: none; width: 42px; height: 42px; border-radius: 12px; }
+  .strip-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+  .strip-card-text b { font: 700 15px/1.2 var(--font-sans); @include truncate; }
+  .strip-card-text span { font: 500 12.5px/1 var(--font-sans); color: var(--ink-4); }
 </style>

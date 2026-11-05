@@ -19858,6 +19858,74 @@
     "group": "features"
   },
   {
+    "name": "AnchoredMenu",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "The native anchored menu: a short list opening from the kebab or row that asked for it, 4px under it with its end edge 4px inside the anchor's (over it near the bottom), scaling in from that corner. Submenus replace the rows in place. A tap outside or Esc closes it.",
+    "preview": {
+      "width": 402,
+      "height": 520
+    },
+    "props": [
+      {
+        "name": "anchor",
+        "type": "HTMLElement | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "What opened it (the kebab, the row); null keeps it closed."
+      },
+      {
+        "name": "items",
+        "type": "NativeMenuItem[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): the menu's accessible name."
+      },
+      {
+        "name": "onSelect",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "A row was picked; the menu has asked to close (onClose) just before."
+      },
+      {
+        "name": "onClose",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "A tap outside, Esc, or a pick."
+      }
+    ],
+    "group": "native"
+  },
+  {
     "name": "BottomSheet",
     "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
     "hash": "",
@@ -19965,6 +20033,153 @@
         "required": true,
         "componentDefault": null,
         "doc": ""
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "LongPressMenu",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "The native long-press menu for rows: the screen dims and blurs, a copy of the row lifts in place (the row hides) and the menu opens under it, or over it near the bottom; a small target lifts as a 240px card. Rows open it with `use:longPress`.",
+    "preview": {
+      "width": 402,
+      "height": 560
+    },
+    "props": [
+      {
+        "name": "open",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "target",
+        "type": "HTMLElement | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The pressed row (what `use:longPress` hands back): where the copy lifts, hidden while the menu is open."
+      },
+      {
+        "name": "items",
+        "type": "NativeMenuItem[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): the menu's accessible name (\"Lucy Linden options\")."
+      },
+      {
+        "name": "onSelect",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "A row was picked; the menu has asked to close (onClose) just before."
+      },
+      {
+        "name": "onClose",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "A tap outside, Esc, or a pick. The menu fades out once `open` turns false."
+      },
+      {
+        "name": "row",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The lifted copy (the same row component, not interactive); without it, a clone of the target."
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "NativeMenu",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "The native menus' card, which AnchoredMenu and LongPressMenu place: surface-2, 16px radius, 48px rows of icon + label, a divider above the destructive rows, the current value ticked; a submenu replaces the rows in place, under a back row.",
+    "preview": {
+      "width": 260,
+      "height": 320
+    },
+    "props": [
+      {
+        "name": "items",
+        "type": "NativeMenuItem[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): the menu's accessible name."
+      },
+      {
+        "name": "onSelect",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "A row without a submenu was picked."
+      },
+      {
+        "name": "autofocus",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Take focus when it opens, and when a submenu replaces the rows."
       }
     ],
     "group": "native"

@@ -1231,6 +1231,17 @@
     }
   },
   "native": {
+    "AnchoredMenu": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the kebab and value menus (`openXMenu`, `openAM`, `v.xm*`, `v.am*`)",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/AnchoredMenu.svelte",
+        "src/native/menuPlacement.ts"
+      ]
+    },
     "BottomSheet": {
       "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
       "sourceHash": "db4b562b",
@@ -1241,6 +1252,28 @@
         "src/native/BottomSheet.svelte",
         "src/native/sheetDrag.ts",
         "src/native/presence.svelte.ts"
+      ]
+    },
+    "LongPressMenu": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the row long-press menu (`lpH`, `openRowMenu`, `v.rm*`)",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/LongPressMenu.svelte",
+        "src/native/longPress.ts",
+        "src/native/menuPlacement.ts"
+      ]
+    },
+    "NativeMenu": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the menus' rows (`menuItems`: icon, label, tick, chevron, back row, dividers)",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/NativeMenu.svelte"
       ]
     },
     "NativePageHeader": {

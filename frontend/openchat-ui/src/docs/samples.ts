@@ -1331,3 +1331,27 @@ export const nativePeople: { name: string; handle: string; color: 'violet' | 'bl
   { name: 'Priya Raman', handle: '@priya_raman', color: 'violet' },
   { name: 'Otto Lindqvist', handle: '@otto_l', color: 'blue' },
 ];
+export const nativeChats: {
+  id: string;
+  title: string;
+  preview: string;
+  time: string;
+  kind: 'user' | 'group';
+  color: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
+  unreadCount?: number;
+  pinned?: boolean;
+  online?: boolean;
+}[] = [
+  { id: 'devs', title: 'OpenChat Devs', preview: 'Matt: The native tab bar is in', time: '10:42', kind: 'group', color: 'violet', unreadCount: 4, pinned: true },
+  { id: 'julian', title: 'Julian Jelfs', preview: 'Release is out 🎉', time: '09:58', kind: 'user', color: 'blue', online: true },
+  { id: 'awesome', title: 'The Awesome Group', preview: 'Lucy: Which tab bar do we prefer?', time: '09:31', kind: 'group', color: 'teal', unreadCount: 12 },
+  { id: 'lucy', title: 'Lucy Linden', preview: 'Menu feels great', time: 'Yesterday', kind: 'user', color: 'plum', online: true },
+  { id: 'hamish', title: 'Hamish', preview: 'Backend, mostly.', time: 'Mon', kind: 'user', color: 'amber' },
+  { id: 'design', title: 'Design Crit', preview: 'Priya: Icon-only for me', time: 'Sun', kind: 'group', color: 'blue' },
+];
+export const nativeCommunities: { name: string; members: string; grad: string }[] = [
+  { name: 'OpenChat Labs', members: '12.9k members', grad: 'linear-gradient(140deg,#ff5f9e,#6a2bff)' },
+  { name: 'Weekend Climbers', members: '3.2k members', grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
+  { name: 'SNS Launchpad', members: '15.8k members', grad: 'linear-gradient(140deg,#B4C3FF,#5B6FE0)' },
+  { name: 'Gamers Lounge', members: '44.3k members', grad: 'linear-gradient(140deg,#ffb03d,#ff4d4d)' },
+];

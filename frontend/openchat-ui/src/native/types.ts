@@ -24,3 +24,20 @@ export type NativeHeaderAction = {
   /** Gets the button, to anchor a menu to. */
   onClick: (anchor: HTMLElement) => void;
 };
+
+/** A row of the native menus (AnchoredMenu, LongPressMenu). */
+export type NativeMenuItem = {
+  id: string;
+  /** Resource key (or literal text). */
+  label: string;
+  /** An icons.js name. */
+  icon?: string;
+  /** Destructive (Leave, Delete …): in the danger colour. */
+  danger?: boolean;
+  /** A divider above it (the notes: only above the destructive ones). */
+  separator?: boolean;
+  /** The current value, ticked (a value menu, a mute duration). */
+  selected?: boolean;
+  /** Picking it replaces the menu's rows with these, under a back row titled `title`. */
+  submenu?: { title: string; items: NativeMenuItem[] };
+};

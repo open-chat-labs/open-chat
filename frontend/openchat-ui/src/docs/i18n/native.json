@@ -33,6 +33,35 @@
         "search": "Search people",
         "thatsThem": "That's them",
         "someoneElse": "Pick someone else"
+      },
+      "menu": {
+        "options": "Chat options",
+        "search": "Search in chat",
+        "details": "Chat details",
+        "mute": "Mute",
+        "unmute": "Unmute",
+        "muteFor": "Mute for",
+        "forever": "Until I turn it back on",
+        "favourite": "Favourite",
+        "disappearing": "Disappearing messages",
+        "clear": "Clear history",
+        "block": "Block",
+        "sound": "Sound",
+        "autoDownload": "Auto-download",
+        "never": "Never",
+        "wifi": "On Wi-Fi",
+        "always": "Always",
+        "pin": "Pin",
+        "unpin": "Unpin",
+        "markRead": "Mark as read",
+        "archive": "Archive",
+        "leaveGroup": "Leave group",
+        "deleteChat": "Delete chat",
+        "rowOptions": "{name} options",
+        "moveToTop": "Move to top",
+        "muteCommunity": "Mute community",
+        "markAllRead": "Mark all as read",
+        "leaveCommunity": "Leave community"
       }
     }
   }

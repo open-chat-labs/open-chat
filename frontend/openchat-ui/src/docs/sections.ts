@@ -128,6 +128,8 @@ export const native: SectionMeta[] = [
   { id: 'native-tab-bar', title: 'Tab bar', meta: 'TabBar · haptics.ts' },
   { id: 'native-page-header', title: 'Page header', meta: 'NativePageHeader' },
   { id: 'native-bottom-sheet', title: 'Bottom sheet', meta: 'BottomSheet · sheetDrag.ts · presence.svelte.ts' },
+  { id: 'native-anchored-menu', title: 'Anchored menu', meta: 'AnchoredMenu · NativeMenu · menuPlacement.ts' },
+  { id: 'native-long-press-menu', title: 'Long-press menu', meta: 'LongPressMenu · NativeMenu · longPress.ts · menuPlacement.ts' },
 ];
 
 type Meta = { name: string; source: string; props: unknown[] };
