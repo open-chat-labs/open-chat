@@ -1,9 +1,33 @@
 <!-- Join dialog for a gated community. Gates are a checklist; "all" shows progress, "any" turns rows into choices.
      Free checks (balance, neuron, Diamond) are resolved first; payments are charged together on "Pay and join".
+     By hand: a gate's `id` (the host's, handed back with its payment), any Diamond membership (`lifetime: false`),
+     and `other`, a requirement the host has checked itself (CHIT earned, a credential, locked …), shown met or not.
      Diamond is bought in the Diamond dialog (onGetDiamond) and never appears in this payment summary.
      Balances come from the host (tokens / chatBalance): pass fresh values to re-check, e.g. when the tab regains focus;
      "Check again" calls onRecheck. "Pay and join" calls onJoin with the ledger of every payment and waits: a rejection
      ends the spinner and shows an error, with everything left as it was. -->
+<script lang="ts" module>
+  export interface Gate {
+    kind: 'pay' | 'balance' | 'neuron' | 'diamond' | 'other';
+    /** The host's key for the gate, handed back with its payment in onJoin's `paid`. */
+    id?: string;
+    /** pay / balance: token, its ledger canister id and the amount. */
+    symbol?: string;
+    ledger?: string;
+    amount?: number;
+    /** neuron, other: title, detail and (neuron) the confirmation wording — resource keys (or literal text). */
+    label?: string;
+    detail?: string;
+    confirm?: string;
+    /** diamond: false when any Diamond membership will do (lifetime only by default). */
+    lifetime?: boolean;
+    /** other: whether the host found the requirement met. */
+    met?: boolean;
+    /** other: the row's icon (an icons.js name); `gate` without it. */
+    icon?: string;
+  }
+</script>
+
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
@@ -19,18 +43,6 @@
   const fmt = (n: number, dp?: number) => Number(n).toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: dp ?? 4 });
 
   type GateState = 'met' | 'pay' | 'todo' | 'short';
-
-  export interface Gate {
-    kind: 'pay' | 'balance' | 'neuron' | 'diamond';
-    /** pay / balance: token, its ledger canister id and the amount. */
-    symbol?: string;
-    ledger?: string;
-    amount?: number;
-    /** neuron: title, detail and the confirmation wording — resource keys (or literal text). */
-    label?: string;
-    detail?: string;
-    confirm?: string;
-  }
 
   interface Props {
     community: { name: string; members?: number; grad?: string };
@@ -50,7 +62,7 @@
     z?: number;
     onGetDiamond?: () => void;
     /** Join, paying `paid` (ledger + amount each). Reject to keep the dialog open with an error. */
-    onJoin?: (r: { paid: { ledger: string; symbol: string; amount: number }[]; neuronConfirmed: boolean }) => Promise<unknown> | void;
+    onJoin?: (r: { paid: { id?: string; ledger: string; symbol: string; amount: number }[]; neuronConfirmed: boolean }) => Promise<unknown> | void;
     /** Fetch fresh balances (the host then passes new `tokens` / `chatBalance`). "Check again" is hidden without it. */
     onRecheck?: () => Promise<unknown>;
     onClose?: () => void;
@@ -120,6 +132,28 @@
           short: 0,
           free: true,
         };
+      if (g.kind === 'other')
+        return {
+          gate: g,
+          token: null,
+          icon: 'other',
+          title: t(g.label ?? ''),
+          detail: g.detail ? t(g.detail) : '',
+          state: (g.met ? 'met' : 'todo') as GateState,
+          short: 0,
+          free: true,
+        };
+      if (g.lifetime === false)
+        return {
+          gate: g,
+          token: null,
+          icon: 'diamond',
+          title: t('ui.joinGateDialog.diamondMember'),
+          detail: t(isDiamond ? 'ui.joinGateDialog.isDiamond' : 'ui.joinGateDialog.notMember'),
+          state: (isDiamond ? 'met' : 'todo') as GateState,
+          short: 0,
+          free: true,
+        };
       return {
         gate: g,
         token: null,
@@ -183,7 +217,12 @@
 
   async function join() {
     if (!enabled || !onJoin) return;
-    const paid = pays.map((r) => ({ ledger: r.gate.ledger ?? '', symbol: r.gate.symbol ?? '', amount: r.gate.amount ?? 0 }));
+    const paid = pays.map((r) => ({
+      ...(r.gate.id === undefined ? {} : { id: r.gate.id }),
+      ledger: r.gate.ledger ?? '',
+      symbol: r.gate.symbol ?? '',
+      amount: r.gate.amount ?? 0,
+    }));
     // one join (and one payment) at a time; once joined the dialog leaves and hands back to the host
     const result = await flow.run(() => onJoin({ paid, neuronConfirmed: confirmed }));
     if (result.ok) flow.leave(onClose);
@@ -231,7 +270,7 @@
           <div class="gate-row">
             {#if any}<span class="radio" aria-hidden="true"><span class="radio-dot"></span></span>{/if}
             {#if r.token}<TokenAvatar symbol={r.token.symbol} mark={r.token.mark} gradient={r.token.grad} size={40} />{/if}
-            {#if r.icon}<span class="gate-icon"><span class="gate-glyph {r.icon}"></span></span>{/if}
+            {#if r.icon}<span class="gate-icon"><span class="gate-glyph {r.icon}" style:--glyph={r.gate.kind === 'other' ? `var(--icon-${r.gate.icon ?? 'gate'})` : undefined}></span></span>{/if}
             <span class="gate-text">
               <span class="gate-title">{r.title}</span>
               <span class="gate-detail" class:short={r.state === 'short'}>{skipped ? t('ui.joinGateDialog.notNeededQualify') : r.detail}</span>
@@ -279,8 +318,8 @@
           {/if}
           {#if active && r.gate.kind === 'diamond' && r.state === 'todo'}
             <div class="extra diamond">
-              <span class="diamond-text">{t('ui.joinGateDialog.diamondPitch')}</span>
-              <Button label={t('ui.joinGateDialog.getDiamond')} variant="secondary" onClick={() => onGetDiamond?.()} />
+              <span class="diamond-text">{t(r.gate.lifetime === false ? 'ui.joinGateDialog.diamondMemberPitch' : 'ui.joinGateDialog.diamondPitch')}</span>
+              <Button label={t(r.gate.lifetime === false ? 'ui.joinGateDialog.getDiamondMember' : 'ui.joinGateDialog.getDiamond')} variant="secondary" onClick={() => onGetDiamond?.()} />
             </div>
           {/if}
         </div>
@@ -509,6 +548,12 @@
   .gate-glyph.diamond {
     background: var(--status-chit);
     mask: var(--icon-diamond) center/contain no-repeat;
+  }
+
+  // a requirement the host checked: its own icon (--glyph)
+  .gate-glyph.other {
+    background: var(--ink-2);
+    mask: var(--glyph) center/contain no-repeat;
   }
 
   .gate-text {

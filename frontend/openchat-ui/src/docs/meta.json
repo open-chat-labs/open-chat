@@ -1378,6 +1378,166 @@
     "group": "features"
   },
   {
+    "name": "CommunityPreviewBar",
+    "source": "lib/CommunityPreviewBar.dc.html",
+    "hash": "61a2b9f0",
+    "description": "Replaces the composer while a signed-in user or a guest previews a community they haven't joined: \"You're previewing {name}\", a hint, Back to Explore and Join (Join community, Review and join when gated, Sign in to join for a guest).",
+    "preview": {
+      "width": 720,
+      "height": 90
+    },
+    "props": [
+      {
+        "name": "community",
+        "type": "string",
+        "default": "DAO Builders Guild",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The community's name (or a group's, previewed the same way)."
+      },
+      {
+        "name": "grad",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The avatar square's background, e.g. a gradient; the accent's gradient without it."
+      },
+      {
+        "name": "avatarUrl",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The community's avatar image, shown over `grad` (by hand)."
+      },
+      {
+        "name": "state",
+        "type": "'preview' | 'gated' | 'guest'",
+        "default": "preview",
+        "editor": "enum",
+        "options": [
+          "preview",
+          "gated",
+          "guest"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'preview'",
+        "doc": "preview: Join community; gated: Review and join (opens the requirements checklist); guest: Sign in to join."
+      },
+      {
+        "name": "requirements",
+        "type": "number",
+        "default": null,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "gated: how many requirements joining has (the hint says so)."
+      },
+      {
+        "name": "hint",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text) in place of the state's hint."
+      },
+      {
+        "name": "joinLabel",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text) in place of the state's Join label."
+      },
+      {
+        "name": "backLabel",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text); \"Back to Explore\" without it."
+      },
+      {
+        "name": "showBack",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Back shows when there's an `onBack`, or while this isn't false."
+      },
+      {
+        "name": "busy",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A join on its way: Join shows a spinner and takes no clicks (by hand)."
+      },
+      {
+        "name": "joinDisabled",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Join shows, but can't be pressed, e.g. a locked community (by hand)."
+      },
+      {
+        "name": "onBack",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onJoin",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "features"
+  },
+  {
     "name": "ComposerBar",
     "source": "lib/ComposerBar.dc.html",
     "hash": "6f9180bd",
@@ -1504,6 +1664,17 @@
         "required": false,
         "componentDefault": "''",
         "doc": ""
+      },
+      {
+        "name": "onBannerAction",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Called when the banner's action (`bannerAction`) is pressed (by hand)."
       },
       {
         "name": "onSend",
@@ -12040,7 +12211,7 @@
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": "Gates; pay / balance gates carry symbol, ledger (canister id) and amount."
+        "doc": "Gates; pay / balance gates carry symbol, ledger (canister id) and amount. By hand: an `id` (handed back in `paid`), `lifetime: false` on a diamond gate for any Diamond membership, and kind `other` (label, detail, met, icon) for a requirement the host checked itself."
       },
       {
         "name": "tokens",
@@ -12143,14 +12314,14 @@
       },
       {
         "name": "onJoin",
-        "type": "(r: { paid: { ledger: string; symbol: string; amount: number }[]; neuronConfirmed: boolean }) => Promise<unknown> | void",
+        "type": "(r: { paid: { id?: string; ledger: string; symbol: string; amount: number }[]; neuronConfirmed: boolean }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Join, paying `paid`. Reject to end the spinner and show an error with everything kept."
+        "doc": "Join, paying `paid` (each with its gate's `id`, when it has one). Reject to end the spinner and show an error with everything kept."
       },
       {
         "name": "onRecheck",

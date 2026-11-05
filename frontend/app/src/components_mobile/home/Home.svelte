@@ -36,7 +36,6 @@
         offlineStore,
         pinNumberResolverStore,
         postLoginCreateCommunity,
-        postLoginJoin,
         publish,
         querystringStore,
         routeForChatIdentifier,
@@ -49,7 +48,8 @@
     } from "@client";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { openCommunityCreation } from "./communities/createOrUpdate/createCommunity";
-    import { communityPreviewState, groupPreviewState } from "@src/utils/preview.svelte";
+    import { postLoginTarget, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
+    import { joinFromOldTree } from "@src/utils/join";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import { chitPopup, disableChit } from "../../stores/settings";
@@ -148,6 +148,8 @@
             subscribeAppEvents(client, (outcome) => {
                 if (outcome.kind === "show") {
                     modal = outcome.dialog;
+                } else if (outcome.kind === "join") {
+                    join({ kind: "group", chat: outcome.chat });
                 } else {
                     if (outcome.closeDialogs) publish("closeModalStack");
                     navigate(outcome.path);
@@ -162,7 +164,6 @@
             subscribe("leaveGroup", onTriggerConfirm),
             subscribe("deleteGroup", onTriggerConfirm),
             subscribe("unarchiveChatFailed", unarchiveChatFailed),
-            subscribe("joinGroup", (group) => groupPreviewState.joinGroup(client, group)),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
             subscribe("successfulImport", successfulImport),
             subscribe("clearSelection", () => navigate(routeForScope($chatListScopeStore))),
@@ -409,15 +410,20 @@
 
     let showOnboarding = $derived(client.isHomeRoute($routeStore) && $anonUserStore);
 
+    // a group, channel or community joined (logic/join): its gates' evaluator opens as a sliding
+    // page (SlidingModals)
+    function join(target: JoinTarget): Promise<void> {
+        return joinFromOldTree(client, target);
+    }
+
     trackedEffect("identity-state", () => {
-        const join = postLoginJoin($identityStateStore, $chatsInitialisedStore);
-        if (join !== undefined) {
-            client.clearPostLoginState();
-            tick().then(() =>
-                join.kind === "join_group"
-                    ? groupPreviewState.joinGroup(client, join.group)
-                    : communityPreviewState.joinCommunity(client, join.community),
-            );
+        // a guest's join, replayed once they've signed in and their chats have loaded (the client
+        // hands it out once)
+        void $identityStateStore;
+        void $chatsInitialisedStore;
+        const postLogin = client.takePostLoginJoin();
+        if (postLogin !== undefined) {
+            tick().then(() => join(postLoginTarget(postLogin)));
         } else if (postLoginCreateCommunity($identityStateStore)) {
             client.clearPostLoginState();
             tick().then(() => openCommunityCreation(client));

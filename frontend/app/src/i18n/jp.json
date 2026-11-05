@@ -52,6 +52,7 @@
         "gateCheckFailed": "アクセスゲートが満たされていません",
         "gateInvalid": "アクセスゲートが無効です",
         "join": "参加する",
+        "joined": "{name} に参加しました",
         "lapsed": {
             "label": "会員資格が失効しました",
             "rejoin": "{level} に再参加",
@@ -86,7 +87,10 @@
         "paymentApprovalMessage": "この {level} に参加するには、**{amount}** {token} トークンを支払う必要があります。",
         "paymentDistributionMessage": "このうち 98% は {level} の所有者に、2% は OpenChat SNS の財務省に寄付されます。",
         "paymentFailed": "支払いに失敗しました",
+        "paymentLeavesBalanceShort": "支払いは残高から差し引かれるため、必要な最低残高を下回ってしまいます。チャージしてもう一度お試しください。",
         "predefinedCredentialIssuer": "事前定義された認証情報発行者",
+        "previewGatedHint": "参加には {count} 件の条件があります。請求される前に確認できます。",
+        "previewHint": "参加するとメッセージを送信できます。",
         "private": "非公開",
         "public": "公開",
         "readonlyTitle": "アクセスゲート",
@@ -104,6 +108,7 @@
         "uniquePersonInfo1": "まだ確認していない場合はどうなりますか?",
         "uniquePersonInfo2": "まだ行っていない場合は、 <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>にアクセスし、OpenChat へのアクセスに使用したのと同じインターネット ID を使用してサインインし、指示に従って自分の固有の人物であることを証明してください。",
         "uniquePersonInfo3": "手順は簡単で、数分しかかからず、一度だけ実行すれば済みます。プロセスが完了したら、ここに戻って「確認」をクリックしてください。",
+        "unknownTokenPayment": "OpenChat はこのトークンを認識できないため、ここで確認や支払いはできません。",
         "verify": "確認する",
         "visibility": "アクセス"
     },

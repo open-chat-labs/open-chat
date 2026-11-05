@@ -22,7 +22,6 @@
         publish,
         ROLE_NONE,
         routeForChatIdentifier,
-        routeForScope,
         selectedChatIdStore,
         selectedCommunitySummaryStore,
         unreadCommunityChannelCountsStore,
@@ -44,7 +43,8 @@
     import BrowseChannels from "./communities/details/BrowseChannels.svelte";
     import DirectAndGroupChatsHeader from "./communities/DirectAndGroupChatsHeader.svelte";
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
-    import { communityPreviewState } from "@src/utils/preview.svelte";
+    import { communityJoin } from "@src/logic/join/joinFlow.svelte";
+    import { showJoinStep } from "@src/utils/join";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import Badges from "./profile/Badges.svelte";
     import SearchResult from "./SearchResult.svelte";
@@ -91,8 +91,16 @@
 
     function cancelPreview() {
         if ($selectedCommunitySummaryStore) {
-            client.removeCommunity($selectedCommunitySummaryStore.id);
-            navigate(routeForScope(client.getDefaultScope()));
+            navigate(client.cancelPreview($selectedCommunitySummaryStore.id));
+        }
+    }
+
+    async function joinCommunity() {
+        if ($selectedCommunitySummaryStore) {
+            showJoinStep(
+                await communityJoin.join(client, $selectedCommunitySummaryStore),
+                "community",
+            );
         }
     }
 
@@ -344,9 +352,9 @@
                     <Translatable resourceKey={i18nKey("leave")} />
                 </Button>
                 <Button
-                    loading={communityPreviewState.joining}
-                    disabled={communityPreviewState.joining}
-                    onClick={() => communityPreviewState.joinCommunity(client)}
+                    loading={communityJoin.joining !== undefined}
+                    disabled={communityJoin.joining !== undefined}
+                    onClick={joinCommunity}
                     ><Translatable resourceKey={i18nKey("communities.joinCommunity")} /></Button>
             </ButtonGroup>
         </div>

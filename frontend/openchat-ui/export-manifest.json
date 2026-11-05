@@ -624,6 +624,15 @@
       ],
       "group": "app"
     },
+    "CommunityPreviewBar": {
+      "source": "lib/CommunityPreviewBar.dc.html",
+      "sourceHash": "61a2b9f0",
+      "exportedAt": "2026-11-04",
+      "group": "features",
+      "files": [
+        "src/features/components/CommunityPreviewBar.svelte"
+      ]
+    },
     "Confetti": {
       "source": "lib/Confetti.dc.html",
       "sourceHash": "3d14ff10",

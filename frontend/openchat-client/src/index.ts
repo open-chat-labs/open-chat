@@ -71,6 +71,7 @@ export {
 export {
     communityChanges,
     isCommunityMember,
+    isPreviewingCommunity,
     isPrivateCommunityPreview,
 } from "./utils/community";
 export { userMessagePermissionFor } from "./utils/botMessagePermissions";
@@ -107,7 +108,13 @@ export {
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginCreateCommunity, postLoginJoin } from "./utils/join";
 export { muteNotificationsFailureMessage, pinChatFailureMessage } from "./utils/pinAndMute";
-export { editableGates, gateWithHidden, type EditableGates } from "./utils/accessGates";
+export {
+    editableGates,
+    gateWithHidden,
+    PAYMENT_GATE_OWNER_PERCENT,
+    paymentGateSplit,
+    type EditableGates,
+} from "./utils/accessGates";
 export {
     compareMembers,
     knownMembers,

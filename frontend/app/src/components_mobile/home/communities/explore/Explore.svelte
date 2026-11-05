@@ -1,6 +1,5 @@
 <script lang="ts">
     import { disableRestrictedContent } from "@src/utils/features";
-    import { communityPreviewState } from "@src/utils/preview.svelte";
     import {
         Body,
         Button,
@@ -200,7 +199,7 @@
     let loading = $derived(searching && searchState.results.length === 0);
 
     function goToCommunity(community: CommunityMatch) {
-        communityPreviewState.setOrigin(community.id.communityId, "/communities");
+        client.setCommunityPreviewOrigin(community.id.communityId, "/communities");
         navigate(`/community/${community.id.communityId}`);
     }
 

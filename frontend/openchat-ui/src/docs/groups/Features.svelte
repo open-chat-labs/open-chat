@@ -566,6 +566,12 @@
 
 <Section {...sec(features, 'features-explore')}>
   {@render live('ExploreCommunities', 'ExploreCommunities', 'auto')}
+  <Frame label="CommunityPreviewBar · preview · gated · guest · joining" style="flex-direction: column; flex-wrap: nowrap" align="stretch">
+    <F.CommunityPreviewBar {...demoProps('CommunityPreviewBar')} community="Motoko Devs" />
+    <F.CommunityPreviewBar {...demoProps('CommunityPreviewBar')} state="gated" requirements={4} />
+    <F.CommunityPreviewBar {...demoProps('CommunityPreviewBar')} community="Pixel Art Club" state="guest" />
+    <F.CommunityPreviewBar {...demoProps('CommunityPreviewBar')} community="Motoko Devs" busy />
+  </Frame>
   {@render openers(['AuthDialog'])}
 </Section>
 

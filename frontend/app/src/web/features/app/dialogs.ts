@@ -1,6 +1,7 @@
 import type {
     BotInstallationLocation,
     CommunityIdentifier,
+    EnhancedAccessGate,
     ExternalBotLike,
     GroupChatIdentifier,
     LeaveOrDelete,
@@ -9,6 +10,7 @@ import type {
 } from "@client";
 import type { DialogStack } from "../../shell/dialogStack.svelte";
 import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
+import type { JoinTarget } from "@src/logic/join/joinFlow.svelte";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
 import type { Component } from "svelte";
 
@@ -95,7 +97,10 @@ export type LocalDialog =
           userGroupId?: number;
       }
     // the wallet's settings: its token list, the transfer PIN and the display currency (6d)
-    | { kind: "wallet_settings" };
+    | { kind: "wallet_settings" }
+    // the requirements joining a group, channel or community has (`gates`, a level at a time),
+    // paid for and met before the join is carried on (8b); `name` is what "You joined …" names
+    | { kind: "join_gate"; target: JoinTarget; gates: EnhancedAccessGate[]; name: string };
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";
@@ -183,6 +188,9 @@ export const dialogs: Dialogs = {
 
     // the wallet's settings (6d)
     wallet_settings: () => import("../wallet/WalletSettingsDialogScreen.svelte"),
+
+    // the requirements to join a group, channel or community, paid for and met (8b)
+    join_gate: () => import("../join/JoinGateDialogScreen.svelte"),
 };
 
 // each linked dialog's query param; the CHIT dialog's views share its param, told apart by its value

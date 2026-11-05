@@ -1,17 +1,20 @@
 <!-- The conversation's composer (phase 3c, text): who's typing, and the message being written. The
      screen reads the chat's draft, typers, throttle and whether the reader can send, and does the
      sending (with mentions and markdown, as the old UI's MessageEntry did); the composer tells it
-     while the reader types. Where the reader can't send, the old footer's reason shows instead;
+     while the reader types. Where the reader can't send, the old footer's reason shows instead, and
+     for a preview its bar (CommunityPreviewBar: Join, Back; 8b);
      while sending is throttled, a countdown shows over it. Mount it once per chat (keyed). -->
 <script lang="ts">
+    import CommunityPreviewBar from "@openchat/ui/src/features/components/CommunityPreviewBar.svelte";
     import Banner from "@openchat/ui/src/lib/components/Banner.svelte";
     import ComposerBar from "@openchat/ui/src/lib/components/ComposerBar.svelte";
-    import { untrack } from "svelte";
+    import { untrack, type ComponentProps } from "svelte";
     import { _ } from "svelte-i18n";
     import { TypingNotifier, type EntryBlock } from "@src/logic/composer/composer";
 
     let {
         block,
+        preview,
         draft,
         typingNames,
         throttled,
@@ -24,6 +27,8 @@
     }: {
         // what stands in for the composer where the reader can't send
         block: EntryBlock | undefined;
+        // a preview's bar (Join, Back), shown for a "preview" block (8b)
+        preview: ComponentProps<typeof CommunityPreviewBar> | undefined;
         // the chat's draft, read once when the composer mounts
         draft: string;
         // the others in this chat who are typing
@@ -57,7 +62,7 @@
                 return { key: "chatFrozen", tone: "warning" };
             case "blocked":
                 return { key: "userIsBlocked", tone: "info" };
-            // TODO(phase 8, 8b): a preview's Join (and its access gates), as the old PreviewFooter
+            // the preview's bar shows instead (below); this only while it isn't known
             case "preview":
                 return { key: block.lapsed ? "access.lapsed.label" : "readOnlyChat", tone: "info" };
             case "external":
@@ -90,7 +95,12 @@
     }
 </script>
 
-{#if blocked !== undefined}
+{#if block?.kind === "preview" && preview !== undefined}
+    <!-- the gap above it the composer has (its top padding), off the messages -->
+    <div class="preview">
+        <CommunityPreviewBar {...preview} />
+    </div>
+{:else if blocked !== undefined}
     <div class="blocked">
         <Banner tone={blocked.tone} text={$_(blocked.key)} />
     </div>
@@ -108,6 +118,12 @@
 {/if}
 
 <style lang="scss">
+    .preview {
+        display: flex;
+        flex-direction: column;
+        padding-top: var(--space-12);
+    }
+
     .blocked {
         padding: var(--space-12) var(--space-14);
     }

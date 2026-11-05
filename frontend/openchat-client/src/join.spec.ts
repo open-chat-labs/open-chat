@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi, type MockInstance } from "vitest";
 
 // A store the client builds at import time reads the screen width through
 // matchMedia, which jsdom does not provide
@@ -36,11 +36,15 @@ import {
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import {
+    chatsInitialisedStore,
     currentUserStore,
     identityStateStore,
     serverCommunitiesStore,
     serverGroupChatsStore,
 } from "./state";
+import { communityPreviewOriginStore } from "./stores/previewOrigin";
+import { localUpdates } from "./state/localUpdates";
+import { paymentGateSplit } from "./utils/accessGates";
 import { postLoginJoin } from "./utils/join";
 import { MiniAppService } from "./utils/miniAppService";
 import { WorkerAgent } from "./workerAgent";
@@ -216,6 +220,98 @@ describe("joining a group or community", () => {
         expect(sent[1]).toMatchObject({ compositeGateIndex: 1 });
     });
 
+    // an approval made for a join that then failed stands for a few minutes: trying again doesn't
+    // approve the payment (and pay the approval fee) again, until it's about to expire
+    test("trying a failed join again doesn't approve its payment again while the approval stands", async () => {
+        const g = group(ROLE_NONE, paymentGate);
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) => {
+            sent.push(req);
+            return Promise.resolve(
+                req.kind === "joinGroup" ? { kind: "error", code: 0 } : { kind: "success" },
+            );
+        }) as never);
+        const gateCheck = {
+            credentials: [],
+            paymentApprovals: new Map([[ledger, { amount: 100_000n, approvalFee: 10_000n }]]),
+            compositeGateIndex: undefined,
+        };
+        const kinds = () => sent.splice(0).map((r) => r.kind);
+
+        expect((await client.joinGroup(g, gateCheck)).kind).toBe("failed");
+        expect(kinds()).toEqual(["approveAccessGatePayment", "joinGroup"]);
+        await client.joinGroup(g, gateCheck);
+        expect(kinds()).toEqual(["joinGroup"]);
+
+        // four and a half minutes on, too little is left for the join: approved again
+        const now = Date.now();
+        vi.spyOn(Date, "now").mockReturnValue(now + 4.5 * 60_000);
+        await client.joinGroup(g, gateCheck);
+        expect(kinds()).toEqual(["approveAccessGatePayment", "joinGroup"]);
+    });
+
+    // an approval replaces the allowance on its ledger: after approving another amount (another
+    // branch of an "any" gate, the community alone), the first one doesn't stand any more
+    test("an approval of another amount on the same ledger replaces the one standing", async () => {
+        const g = group(ROLE_NONE, paymentGate);
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) => {
+            sent.push(req);
+            return Promise.resolve(
+                req.kind === "joinGroup" ? { kind: "error", code: 0 } : { kind: "success" },
+            );
+        }) as never);
+        const paying = (amount: bigint) => ({
+            credentials: [],
+            paymentApprovals: new Map([[ledger, { amount, approvalFee: 10_000n }]]),
+            compositeGateIndex: undefined,
+        });
+        const approved = () =>
+            sent
+                .splice(0)
+                .flatMap((r) => (r.kind === "approveAccessGatePayment" ? [r.amount] : []));
+
+        await client.joinGroup(g, paying(150_000n));
+        await client.joinGroup(g, paying(100_000n));
+        expect(approved()).toEqual([140_000n, 90_000n]);
+
+        // 150 isn't allowed any more: approved again
+        await client.joinGroup(g, paying(150_000n));
+        expect(approved()).toEqual([140_000n]);
+    });
+
+    // an approval that fails without saying what the ledger did (a timeout, a dropped connection)
+    // may have replaced the allowance: what stood before isn't trusted any more
+    test("an approval whose outcome isn't known leaves nothing standing", async () => {
+        const g = group(ROLE_NONE, paymentGate);
+        let approvalTimesOut = false;
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) => {
+            sent.push(req);
+            if (req.kind === "approveAccessGatePayment" && approvalTimesOut) {
+                return Promise.reject(new Error("timed out"));
+            }
+            return Promise.resolve(
+                req.kind === "joinGroup" ? { kind: "error", code: 0 } : { kind: "success" },
+            );
+        }) as never);
+        const paying = (amount: bigint) => ({
+            credentials: [],
+            paymentApprovals: new Map([[ledger, { amount, approvalFee: 10_000n }]]),
+            compositeGateIndex: undefined,
+        });
+        const approved = () =>
+            sent
+                .splice(0)
+                .flatMap((r) => (r.kind === "approveAccessGatePayment" ? [r.amount] : []));
+
+        await client.joinGroup(g, paying(150_000n));
+        approvalTimesOut = true;
+        await client.joinGroup(g, paying(100_000n));
+        expect(approved()).toEqual([140_000n, 90_000n]);
+
+        approvalTimesOut = false;
+        await client.joinGroup(g, paying(150_000n));
+        expect(approved()).toEqual([140_000n]);
+    });
+
     // Invariant 2: no join request for a community the user is already a non-lapsed member of
     test("a community member's join is not sent", async () => {
         // the join replayed after login carries the community as it was before login
@@ -295,6 +391,153 @@ describe("joining a group or community", () => {
 
         expect(outcome).toMatchObject({ kind: "failed", message: { key: "joinGroupFailed" } });
         expect(joinRequests()).toHaveLength(1);
+    });
+
+    // 8b invariant 1: a guest's Join sends no join request, and after sign-in the recorded join is
+    // sent exactly once, in every tree
+    test("a guest's join is handed out once, after sign-in and once chats have loaded", async () => {
+        currentUserStore.set(anonymousUser());
+        const g = group(ROLE_NONE);
+        await client.joinGroup(g);
+        expect(sent).toEqual([]);
+
+        expect(client.takePostLoginJoin()).toBeUndefined();
+        identityStateStore.update((s) => ({ ...s, kind: "logged_in" }));
+        chatsInitialisedStore.set(false);
+        expect(client.takePostLoginJoin()).toBeUndefined();
+
+        chatsInitialisedStore.set(true);
+        expect(client.takePostLoginJoin()).toEqual({ kind: "join_group", group: g });
+        expect(client.takePostLoginJoin()).toBeUndefined();
+        expect(identityStateStore.value.postLogin).toBeUndefined();
+        chatsInitialisedStore.set(false);
+    });
+});
+
+describe("cancelling a preview", () => {
+    let client: OpenChat;
+    let sent: WorkerRequest[];
+    let removedCommunity: MockInstance<OpenChat["removeCommunity"]>;
+    let removedChat: MockInstance<OpenChat["removePreviewedChat"]>;
+
+    beforeEach(() => {
+        vi.stubGlobal("Worker", FakeWorker);
+        currentUserStore.set({ ...anonymousUser(), userId: "me" });
+        client = new OpenChat(config());
+        sent = [];
+        vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
+            sent.push(req);
+            return Promise.resolve({ kind: "success" });
+        }) as never);
+        // the local removals would outlive the test
+        removedCommunity = vi.spyOn(client, "removeCommunity").mockImplementation(() => {});
+        removedChat = vi.spyOn(client, "removePreviewedChat").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+        currentUserStore.set(anonymousUser());
+        serverGroupChatsStore.set(new ChatMap<GroupChatSummary>());
+        serverCommunitiesStore.set(new CommunityMap<CommunitySummary>());
+        communityPreviewOriginStore.set(undefined);
+    });
+
+    // 8b invariant 7: cancelling a private group's preview declines the invitation
+    test("cancelling a private group's preview declines the invitation", () => {
+        const g = { ...group(ROLE_NONE), public: false };
+        serverGroupChatsStore.set(new ChatMap<GroupChatSummary>().set(g.id, g));
+
+        client.cancelPreview(g.id);
+
+        expect(sent).toMatchObject([{ kind: "declineInvitation", chatId: g.id }]);
+        expect(removedChat).toHaveBeenCalledWith(g.id);
+    });
+
+    test("cancelling a public group's preview declines nothing", () => {
+        const g = group(ROLE_NONE);
+        serverGroupChatsStore.set(new ChatMap<GroupChatSummary>().set(g.id, g));
+
+        client.cancelPreview(g.id);
+
+        expect(sent).toEqual([]);
+    });
+
+    // cancelling a community preview entered from Explore goes back there, once; otherwise to the
+    // default scope
+    test("cancelling a community preview goes back where it was opened from", () => {
+        const c = community(ROLE_NONE);
+        serverCommunitiesStore.set(CommunityMap.fromList([c]));
+        const scope = client.cancelPreview({ kind: "community", communityId: "other" });
+
+        client.setCommunityPreviewOrigin(communityId.communityId, "/communities?q=cats");
+        expect(client.cancelPreview(communityId)).toBe("/communities?q=cats");
+        expect(removedCommunity).toHaveBeenCalledWith(communityId);
+
+        serverCommunitiesStore.set(CommunityMap.fromList([c]));
+        expect(client.cancelPreview(communityId)).toBe(scope);
+    });
+
+    test("a previewed community's origin isn't another community's", () => {
+        serverCommunitiesStore.set(CommunityMap.fromList([community(ROLE_NONE)]));
+        const scope = client.cancelPreview({ kind: "community", communityId: "other" });
+
+        client.setCommunityPreviewOrigin("other", "/communities");
+        expect(client.cancelPreview(communityId)).toBe(scope);
+    });
+
+    // leaving the community another way (the selected community changing), or joining it, ends
+    // its preview: a later preview of it doesn't go back to the old search
+    test("a community left or joined no longer goes back where its preview was opened from", async () => {
+        serverCommunitiesStore.set(CommunityMap.fromList([community(ROLE_NONE)]));
+
+        client.setCommunityPreviewOrigin(communityId.communityId, "/communities?q=cats");
+        client.removeCommunityIfPreviewing({ kind: "community", communityId: "other" });
+        expect(communityPreviewOriginStore.value?.communityId).toBe(communityId.communityId);
+        client.removeCommunityIfPreviewing(communityId);
+        expect(communityPreviewOriginStore.value).toBeUndefined();
+
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) =>
+            Promise.resolve(
+                req.kind === "joinCommunity"
+                    ? { kind: "success", community: { ...community(ROLE_MEMBER), channels: [] } }
+                    : { kind: "success" },
+            )) as never);
+        vi.spyOn(localUpdates, "addCommunity").mockImplementation(() => {});
+        client.setCommunityPreviewOrigin(communityId.communityId, "/communities?q=cats");
+        expect(await client.joinCommunity(community(ROLE_NONE))).toEqual({ kind: "success" });
+        expect(communityPreviewOriginStore.value).toBeUndefined();
+    });
+
+    // a channel of a community being previewed: the community's preview is the one cancelled
+    test("cancelling a channel's preview in a previewed community cancels the community's", () => {
+        serverCommunitiesStore.set(CommunityMap.fromList([community(ROLE_NONE)]));
+        client.setCommunityPreviewOrigin(communityId.communityId, "/welcome");
+
+        const path = client.cancelPreview({
+            kind: "channel",
+            communityId: communityId.communityId,
+            channelId: 1,
+        });
+
+        expect(path).toBe("/welcome");
+        expect(removedCommunity).toHaveBeenCalledWith(communityId);
+    });
+});
+
+describe("a payment gate's split", () => {
+    // 8b invariant 8: the owner and treasury shares of a payment gate sum to its amount, for any
+    // amount
+    test("the owner and treasury shares sum to the amount, for any amount", () => {
+        for (const amount of [0n, 1n, 49n, 50n, 12_345_678n, 100_000_000n, 2n ** 70n + 3n]) {
+            const { owner, treasury } = paymentGateSplit(amount);
+            expect(owner + treasury).toBe(amount);
+            expect(owner).toBe((amount * 98n) / 100n);
+        }
+        expect(paymentGateSplit(100_000_000n)).toEqual({
+            owner: 98_000_000n,
+            treasury: 2_000_000n,
+        });
     });
 });
 

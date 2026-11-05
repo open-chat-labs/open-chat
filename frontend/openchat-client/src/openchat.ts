@@ -168,6 +168,8 @@ import {
     type ClientJoinGroupResponse,
     type GateCheckSucceeded,
     type JoinOutcome,
+    type JoinCommunity,
+    type JoinGroup,
     type CommunitiesRoute,
     type CommunityDetailsResponse,
     type CommunityIdentifier,
@@ -687,7 +689,8 @@ import {
     swapUnconfirmed,
     swapMinimumOut,
 } from "./utils/swap";
-import { joinGroupFailureMessage } from "./utils/join";
+import { joinGroupFailureMessage, postLoginJoin } from "./utils/join";
+import { communityPreviewOriginStore } from "./stores/previewOrigin";
 import { currentTip, tipResult } from "./utils/tip";
 import { cryptoTransferResult } from "./utils/cryptoTransfer";
 import {
@@ -735,6 +738,7 @@ import {
     communityCreationFailure,
     communityUpdateResult,
     isCommunityLapsed,
+    isPreviewingCommunity,
 } from "./utils/community";
 import { verifyCredential } from "./utils/credentials";
 import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
@@ -822,6 +826,12 @@ const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); //
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
+// how long an access gate payment's approval lasts, for the join that uses it; one with less than
+// the margin left is made again rather than trusted to outlast the join call
+const GATE_APPROVAL_EXPIRY = 5 * ONE_MINUTE_MILLIS;
+const GATE_APPROVAL_MARGIN = ONE_MINUTE_MILLIS;
+// a canister has one allowance per ledger: a new approval replaces it, never adds to it
+const gateApprovalKey = (canisterId: string, ledger: string) => `${canisterId} ${ledger}`;
 const BOT_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 // A bridged account's profile is fetched again once it's this old, as messages are loaded
 const BRIDGED_USER_MAX_AGE = 10 * ONE_MINUTE_MILLIS;
@@ -915,6 +925,9 @@ type ReAuthIdentity = {
 export class OpenChat {
     // When each bridged account's profile was last fetched, keyed by `bridgedUserKey`
     #bridgedUsersFetchedAt = new Map<string, number>();
+    // the access gate allowance approved for a join that hasn't gone through yet, for each
+    // canister and ledger (`gateApprovalKey`): its amount, and when it expires
+    #standingGateApprovals = new Map<string, { amount: bigint; expiresAt: number }>();
     #bridgedUsersInFlight = new Set<string>();
     #mobileLayout: "v1" | "v2";
     #worker: WorkerAgent;
@@ -1169,6 +1182,18 @@ export class OpenChat {
 
     clearPostLoginState() {
         identityStateStore.update((state) => ({ ...state, postLogin: undefined }));
+    }
+
+    /**
+     * The group or community a guest asked to join, once they've signed in and their chats have
+     * loaded; handed out once, as the post-login state is cleared with it, so the join is replayed
+     * once whichever tree asks. Call it again whenever the identity state or `chatsInitialisedStore`
+     * changes, and join what it returns.
+     */
+    takePostLoginJoin(): JoinGroup | JoinCommunity | undefined {
+        const join = postLoginJoin(identityStateStore.value, chatsInitialisedStore.value);
+        if (join !== undefined) this.clearPostLoginState();
+        return join;
     }
 
     updateIdentityState(newState: IdentityState) {
@@ -2397,17 +2422,22 @@ export class OpenChat {
         entity: MultiUserChat | CommunitySummary,
         approvals: PaymentGateApprovals,
     ): Promise<ApproveAccessGatePaymentResponse> {
-        if (approvals.size === 0) return CommonResponses.success();
+        const canisterId = this.#gateCanisterId(entity);
+        // an approval still standing from an earlier try at this join (approved, then the join
+        // failed) isn't made, or its fee paid, again
+        const toApprove = [...approvals.entries()].filter(
+            ([ledger, approval]) =>
+                !this.#gateApprovalStanding(canisterId, ledger, approval.amount),
+        );
+        if (toApprove.length === 0) return CommonResponses.success();
 
         let pin: string | undefined = undefined;
         if (pinNumberRequiredStore.value) {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
-        const canisterId = entity.kind === "group_chat" ? entity.id.groupId : entity.id.communityId;
-
         const results = await Promise.all(
-            [...approvals.entries()].map(([ledger, approval]) =>
+            toApprove.map(([ledger, approval]) =>
                 this.approveAccessGatePayment(canisterId, ledger, approval, pin),
             ),
         );
@@ -2503,16 +2533,26 @@ export class OpenChat {
         { amount, approvalFee }: PaymentGateApproval,
         pin: string | undefined,
     ): Promise<ApproveAccessGatePaymentResponse> {
+        // whatever stood is replaced on the ledger, or may be (an approval that fails without
+        // saying what the ledger did): only this one, once it succeeds, is trusted
+        const key = gateApprovalKey(canisterId, ledger);
+        this.#standingGateApprovals.delete(key);
         return this.#worker
             .send({
                 kind: "approveAccessGatePayment",
                 canisterId,
                 ledger,
                 amount: amount - approvalFee, // The user should pay only the amount not amount+fee so it is a round number
-                expiresIn: BigInt(5 * ONE_MINUTE_MILLIS), // Allow 5 mins for the join_group call before the approval expires
+                expiresIn: BigInt(GATE_APPROVAL_EXPIRY), // Allow 5 mins for the join_group call before the approval expires
                 pin,
             })
             .then((response) => {
+                if (response.kind === "success") {
+                    this.#standingGateApprovals.set(key, {
+                        amount,
+                        expiresAt: Date.now() + GATE_APPROVAL_EXPIRY,
+                    });
+                }
                 if (response.kind === "error") {
                     const pinNumberFailure = pinNumberFailureFromError(response);
                     if (pinNumberFailure !== undefined) {
@@ -2525,6 +2565,29 @@ export class OpenChat {
                 return response;
             })
             .catch(CommonResponses.failure);
+    }
+
+    // the canister a join's gate payments are approved for: a channel's is its community's
+    #gateCanisterId(entity: MultiUserChat | CommunitySummary): string {
+        return entity.kind === "group_chat" ? entity.id.groupId : entity.id.communityId;
+    }
+
+    // the allowance standing for a join that hasn't gone through yet is this amount, with time
+    // left for the join to use it (any other amount was replaced by a later approval, or is one)
+    #gateApprovalStanding(canisterId: string, ledger: string, amount: bigint): boolean {
+        const standing = this.#standingGateApprovals.get(gateApprovalKey(canisterId, ledger));
+        return (
+            standing !== undefined &&
+            standing.amount === amount &&
+            standing.expiresAt - Date.now() > GATE_APPROVAL_MARGIN
+        );
+    }
+
+    // the join went through and used its approvals
+    #gateApprovalsUsed(canisterId: string): void {
+        for (const key of this.#standingGateApprovals.keys()) {
+            if (key.startsWith(`${canisterId} `)) this.#standingGateApprovals.delete(key);
+        }
     }
 
     /**
@@ -2572,7 +2635,15 @@ export class OpenChat {
         );
         switch (resp.kind) {
             case "success":
+                this.#gateApprovalsUsed(this.#gateCanisterId(chat));
                 this.#miniApps?.joinedChat(chat.id);
+                // a channel's join joins its community too
+                if (chat.id.kind === "channel") {
+                    this.#dropPreviewOrigin({
+                        kind: "community",
+                        communityId: chat.id.communityId,
+                    });
+                }
                 return resp;
             case "gate_check_failed": {
                 // With no gates to show the user would see nothing, so report a plain failure
@@ -4784,10 +4855,61 @@ export class OpenChat {
         localUpdates.removeCommunity(id);
     }
 
+    /**
+     * Where cancelling a community's preview goes back to, if not the default scope (Explore or
+     * `/welcome`, which opened it). Kept until that preview is cancelled, the community is joined
+     * or left, or another is opened.
+     */
+    setCommunityPreviewOrigin(communityId: string, path: string): void {
+        communityPreviewOriginStore.set({ communityId, path });
+    }
+
+    #dropPreviewOrigin(id: CommunityIdentifier): void {
+        if (communityPreviewOriginStore.value?.communityId === id.communityId) {
+            communityPreviewOriginStore.set(undefined);
+        }
+    }
+
+    /**
+     * Stops previewing a group, channel or community, and returns the path to go to. A channel of
+     * a community being previewed cancels the community's preview: the community is dropped, and
+     * the path is where its preview was opened from (`setCommunityPreviewOrigin`), else the default
+     * scope. A group or channel is dropped from the list, a private group's invitation declined
+     * first, and the path is the current scope's.
+     */
+    cancelPreview(id: MultiUserChatIdentifier | CommunityIdentifier): string {
+        const communityId: CommunityIdentifier | undefined =
+            id.kind === "community"
+                ? id
+                : id.kind === "channel"
+                  ? { kind: "community", communityId: id.communityId }
+                  : undefined;
+        const community =
+            communityId === undefined ? undefined : communitiesStore.value.get(communityId);
+        if (community !== undefined && isPreviewingCommunity(community)) {
+            const origin = communityPreviewOriginStore.value;
+            communityPreviewOriginStore.set(undefined);
+            this.removeCommunity(community.id);
+            return origin?.communityId === community.id.communityId
+                ? origin.path
+                : routeForScope(this.getDefaultScope());
+        }
+        if (id.kind === "community") return routeForScope(this.getDefaultScope());
+
+        const chat = allChatsStore.value.get(id);
+        if (chat !== undefined && chat.kind !== "direct_chat" && !chat.public) {
+            void this.declineInvitation(id);
+        }
+        this.removePreviewedChat(id);
+        return routeForScope(chatListScopeStore.value);
+    }
+
     // Called when the selected community changes. If we were only previewing the
     // community we just left, drop the preview (and any of its channels we were
     // previewing) so that leaving by any route behaves the same as cancelling.
     removeCommunityIfPreviewing(id: CommunityIdentifier): void {
+        // whichever way the community was left, Back no longer goes to where it was opened from
+        this.#dropPreviewOrigin(id);
         const preview = localUpdates.getPreviewingCommunity(id);
         if (preview === undefined) return;
         preview.channels.forEach((c) => localUpdates.removeGroupPreview(c.id));
@@ -6723,10 +6845,7 @@ export class OpenChat {
         const gates: EnhancedAccessGate[] = [];
         const community =
             chat.kind === "channel" ? this.getCommunityForChannel(chat.id) : undefined;
-        if (
-            community !== undefined &&
-            (community.membership.role === ROLE_NONE || community.membership.lapsed)
-        ) {
+        if (community !== undefined && isPreviewingCommunity(community)) {
             gates.push(...this.#accessGatesForCommunity(community, excludeInvited));
         }
         if (
@@ -12581,7 +12700,7 @@ export class OpenChat {
         // We may have got here by replaying a join captured before login, in which case we may
         // already be a member
         const current = communitiesStore.value.get(community.id) ?? community;
-        if (current.membership.role !== ROLE_NONE && !current.membership.lapsed) {
+        if (!isPreviewingCommunity(current)) {
             return { kind: "skipped" };
         }
 
@@ -12598,7 +12717,11 @@ export class OpenChat {
             gateCheck?.paymentApprovals ?? new Map(),
             gateCheck?.compositeGateIndex,
         );
-        if (resp.kind === "success") return resp;
+        if (resp.kind === "success") {
+            this.#gateApprovalsUsed(this.#gateCanisterId(community));
+            this.#dropPreviewOrigin(community.id);
+            return resp;
+        }
         if (resp.kind === "gate_check_failed") {
             // With no gates to show the user would see nothing, so report a plain failure
             const gates = this.#accessGatesForCommunity(community);

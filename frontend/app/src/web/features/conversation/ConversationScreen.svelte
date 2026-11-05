@@ -20,7 +20,9 @@
         chatsInitialisedStore,
         chitStateStore,
         communitiesStore,
+        communityPreviewOriginStore,
         cryptoBalanceStore,
+        currentUserStore,
         cryptoLookup,
         currentUserIdStore,
         eventsStore,
@@ -123,6 +125,11 @@
     import { VoicePlayer, type VoiceSpeed } from "./voicePlayer.svelte";
     import { RowCache } from "./rowCache";
     import { profileClickedEvent } from "@src/web-components/profileLink";
+    import { navigate } from "@src/utils/navigation";
+    import { isJoining, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
+    import { previewBar, type PreviewBar } from "@src/logic/join/previewBar";
+    import { join } from "../join/join";
+    import { previewBarProps } from "../join/previewBar.adapter";
 
     let { context: screen }: ScreenProps<Extract<MiddleRegion, { kind: "conversation" }>> =
         $props();
@@ -316,6 +323,47 @@
                   thread: false,
               }),
     );
+
+    // a preview's bar in place of the composer (8b): the community's while the community is
+    // previewed, else the group's or channel's (logic/join/previewBar)
+    const preview = $derived.by(() => {
+        if (block?.kind !== "preview" || chat === undefined || chat.kind === "direct_chat") {
+            return undefined;
+        }
+        const community = $selectedCommunitySummaryStore;
+        // what the client's calls below read through `.value`, so the bar follows it: a lapse or a
+        // join (the communities), Diamond bought or CHIT earned (the user), a top-up (balances)
+        void [$communitiesStore, $currentUserStore, $cryptoBalanceStore];
+        const bar = previewBar({
+            chat,
+            community,
+            lapsed: client.isLapsed(chat.id),
+            // as joining asks for them: those an invitation bypasses left out
+            gates: client.accessGatesForChat(chat, true),
+            guest: $anonUserStore,
+            originCommunityId: $communityPreviewOriginStore?.communityId,
+            meets: (gate) => client.doesUserMeetAccessGate(gate),
+        });
+        const avatarUrl =
+            bar.community !== undefined
+                ? client.communityAvatarUrl(bar.community.id.communityId, bar.community.avatar)
+                : client.groupAvatarUrl(chat, community);
+        return { bar, props: previewBarProps(bar, avatarUrl, (key) => interpolate($_, key)) };
+    });
+
+    // "You joined …" names what the bar does
+    function joinPreviewed(bar: PreviewBar) {
+        void join(client, bar.target, screen.dialogs, bar.name);
+    }
+
+    // cancels the preview: back where it was opened from (Explore), else the list
+    function leavePreview(target: JoinTarget) {
+        navigate(
+            client.cancelPreview(
+                target.kind === "community" ? target.community.id : target.chat.id,
+            ),
+        );
+    }
 
     // the others in this chat who are typing
     const typingNames = $derived(
@@ -967,6 +1015,17 @@
         {#key chatIdentifierToString(chat.id)}
             <Composer
                 {block}
+                preview={preview === undefined
+                    ? undefined
+                    : {
+                          ...preview.props,
+                          busy: isJoining(preview.bar.target),
+                          onJoin: () => joinPreviewed(preview.bar),
+                          // the bar shows Back whenever there's an onBack
+                          onBack: preview.props.showBack
+                              ? () => leavePreview(preview.bar.target)
+                              : undefined,
+                      }}
                 draft={$selectedChatDraftMessageStore?.textContent ?? ""}
                 {typingNames}
                 {throttled}

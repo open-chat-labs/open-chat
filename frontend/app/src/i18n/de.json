@@ -52,6 +52,7 @@
         "gateCheckFailed": "Zugangstor nicht erreicht",
         "gateInvalid": "Das Zugangstor ist ungültig",
         "join": "Verbinden",
+        "joined": "Du bist {name} beigetreten",
         "lapsed": {
             "label": "Mitgliedschaft erloschen",
             "rejoin": "Erneut beitreten {level}",
@@ -86,7 +87,10 @@
         "paymentApprovalMessage": "Um diesem {level} beizutreten, müssen Sie **{amount}** {token}-Token bezahlen.",
         "paymentDistributionMessage": "Davon gehen 98 % an den/die Eigentümer von {level} und 2 % an die Kasse von OpenChat SNS.",
         "paymentFailed": "Bezahlung fehlgeschlagen",
+        "paymentLeavesBalanceShort": "Die Zahlung wird von deinem Guthaben abgebucht, das danach unter dem erforderlichen Mindestguthaben läge. Lade auf und versuche es erneut.",
         "predefinedCredentialIssuer": "Vordefinierter Anmeldeinformationsaussteller",
+        "previewGatedHint": "Der Beitritt hat {count, plural, one {# Voraussetzung} other {# Voraussetzungen}}; du siehst sie, bevor etwas abgebucht wird.",
+        "previewHint": "Tritt bei, um Nachrichten zu senden.",
         "private": "Privatgelände",
         "public": "Öffentlich",
         "readonlyTitle": "Zugangstor",
@@ -104,6 +108,7 @@
         "uniquePersonInfo1": "Was ist, wenn ich mich noch nicht verifiziert habe?",
         "uniquePersonInfo2": "Wenn Sie dies noch nicht getan haben, gehen Sie einfach zu <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> , melden Sie sich mit derselben Internetidentität an, die Sie für den Zugriff auf OpenChat verwendet haben, und folgen Sie den Anweisungen, um Ihre einzigartige Identität nachzuweisen.",
         "uniquePersonInfo3": "Das geht ganz einfach, dauert nur wenige Minuten und muss nur einmal durchgeführt werden. Wenn Sie den Vorgang abgeschlossen haben, kehren Sie hierher zurück und klicken Sie auf „Bestätigen“.",
+        "unknownTokenPayment": "OpenChat kennt diesen Token nicht, daher kann er hier weder geprüft noch bezahlt werden.",
         "verify": "Verifizieren",
         "visibility": "Zugang"
     },

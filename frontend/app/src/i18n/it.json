@@ -52,6 +52,7 @@
         "gateCheckFailed": "Cancello di accesso non rispettato",
         "gateInvalid": "Il cancello di accesso non è valido",
         "join": "Giuntura",
+        "joined": "Ti sei unito a {name}",
         "lapsed": {
             "label": "L'iscrizione è scaduta",
             "rejoin": "Rientra in {level}",
@@ -86,7 +87,10 @@
         "paymentApprovalMessage": "Per unirti a questo {level} devi pagare i token **{amount}** {token}.",
         "paymentDistributionMessage": "Di questo, l&#39;98% va ai proprietari di {level} e il 2% alla tesoreria di OpenChat SNS.",
         "paymentFailed": "Pagamento fallito",
+        "paymentLeavesBalanceShort": "Il pagamento viene detratto dal tuo saldo, che scenderebbe sotto il saldo minimo richiesto. Ricarica e riprova.",
         "predefinedCredentialIssuer": "Emittente di credenziali predefinite",
+        "previewGatedHint": "Per unirti ci sono {count, plural, one {# requisito} other {# requisiti}}; li vedrai prima che venga addebitato qualcosa.",
+        "previewHint": "Unisciti per inviare messaggi.",
         "private": "Privato",
         "public": "Pubblico",
         "readonlyTitle": "Cancello di accesso",
@@ -104,6 +108,7 @@
         "uniquePersonInfo1": "Cosa succede se non ho ancora verificato?",
         "uniquePersonInfo2": "Se non lo hai fatto, vai semplicemente su <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> , accedi utilizzando la stessa identità Internet che hai utilizzato per accedere a OpenChat e segui le istruzioni per dimostrare la tua personalità unica.",
         "uniquePersonInfo3": "È semplice da fare, richiede solo pochi minuti e deve essere fatto solo una volta. Una volta completato il processo, torna qui e premi &quot;Verifica&quot;.",
+        "unknownTokenPayment": "OpenChat non riconosce questo token, quindi qui non può essere verificato né pagato.",
         "verify": "Verificare",
         "visibility": "Accesso"
     },

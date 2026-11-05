@@ -52,6 +52,7 @@
         "gateCheckFailed": "Cổng truy cập không được đáp ứng",
         "gateInvalid": "Cổng truy cập không hợp lệ",
         "join": "Tham gia",
+        "joined": "Bạn đã tham gia {name}",
         "lapsed": {
             "label": "Thành viên đã hết hạn",
             "rejoin": "Tham gia lại {level}",
@@ -86,7 +87,10 @@
         "paymentApprovalMessage": "Để tham gia {level} này, bạn phải thanh toán mã thông báo **{amount}** {token}.",
         "paymentDistributionMessage": "Trong số này, 98% thuộc về (các) chủ sở hữu {level} và 2% thuộc về kho bạc OpenChat SNS.",
         "paymentFailed": "Thanh toán không thành công",
+        "paymentLeavesBalanceShort": "Khoản thanh toán được trừ vào số dư của bạn, khiến số dư thấp hơn mức tối thiểu yêu cầu. Hãy nạp thêm và thử lại.",
         "predefinedCredentialIssuer": "Nhà phát hành thông tin xác thực được xác định trước",
+        "previewGatedHint": "Tham gia có {count} yêu cầu; bạn sẽ thấy chúng trước khi bị trừ bất kỳ khoản nào.",
+        "previewHint": "Tham gia để gửi tin nhắn.",
         "private": "Riêng tư",
         "public": "Công cộng",
         "readonlyTitle": "Cổng vào",
@@ -104,6 +108,7 @@
         "uniquePersonInfo1": "Nếu tôi chưa xác minh thì sao?",
         "uniquePersonInfo2": "Nếu bạn chưa làm như vậy, chỉ cần truy cập <a target='_blank' href='https://id.decideai.xyz'>DecisionAI</a> , đăng nhập bằng cùng một Nhận dạng Internet mà bạn đã sử dụng để truy cập OpenChat và làm theo hướng dẫn để chứng minh tư cách cá nhân độc đáo của mình.",
         "uniquePersonInfo3": "Việc thực hiện rất đơn giản, chỉ mất vài phút và chỉ cần thực hiện một lần. Khi bạn đã hoàn tất quá trình, hãy quay lại đây và nhấn &#39;Xác minh&#39;.",
+        "unknownTokenPayment": "OpenChat không nhận ra token này, nên không thể kiểm tra hoặc thanh toán ở đây.",
         "verify": "Xác minh",
         "visibility": "Truy cập"
     },

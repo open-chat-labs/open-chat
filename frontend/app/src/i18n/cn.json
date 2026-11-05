@@ -52,6 +52,7 @@
         "gateCheckFailed": "未满足访问门禁",
         "gateInvalid": "访问门无效",
         "join": "加入",
+        "joined": "你已加入 {name}",
         "lapsed": {
             "label": "会员资格已失效",
             "rejoin": "重新加入{level}",
@@ -86,7 +87,10 @@
         "paymentApprovalMessage": "为了加入此 {level}，您需要支付 **{amount}** {token} 代币。",
         "paymentDistributionMessage": "其中，98% 归 {level} 所有者所有，2% 归 OpenChat SNS 金库。",
         "paymentFailed": "支付失败",
+        "paymentLeavesBalanceShort": "付款将从您的余额中扣除，扣除后余额将低于所需的最低余额。请充值后重试。",
         "predefinedCredentialIssuer": "预定义凭证颁发者",
+        "previewGatedHint": "加入需要满足 {count} 项条件；在扣款之前你会看到它们。",
+        "previewHint": "加入后即可发送消息。",
         "private": "私密",
         "public": "公开",
         "readonlyTitle": "通道门",
@@ -104,6 +108,7 @@
         "uniquePersonInfo1": "如果我尚未验证怎么办？",
         "uniquePersonInfo2": "如果您还没有这样做，只需前往<a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> ，使用您用于访问 OpenChat 的相同互联网身份登录，然后按照说明证明您的独特身份。",
         "uniquePersonInfo3": "操作简单，只需几分钟，而且只需做一次。完成此过程后，返回此处并点击“验证”。",
+        "unknownTokenPayment": "OpenChat 无法识别此代币，因此无法在此检查或支付。",
         "verify": "核实",
         "visibility": "能见度"
     },

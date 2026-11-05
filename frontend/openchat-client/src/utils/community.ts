@@ -73,6 +73,15 @@ export function isCommunityMember({ membership }: HasMembershipRole): boolean {
     return membership.role !== ROLE_NONE;
 }
 
+/**
+ * Whether a community (or a group or channel) is being previewed: the user hasn't joined it, or
+ * their membership has lapsed. The one rule for it: cancelling a preview, the gates joining asks
+ * for and the preview bar all go by it.
+ */
+export function isPreviewingCommunity({ membership }: HasMembershipRole): boolean {
+    return membership.role === ROLE_NONE || membership.lapsed;
+}
+
 // A community the user hasn't joined (or whose membership has lapsed) hides its channels'
 // messages unless it is public and ungated (a suspended unique person gate counts as no gate)
 export function isPrivateCommunityPreview(
@@ -80,7 +89,7 @@ export function isPrivateCommunityPreview(
 ): boolean {
     return (
         community !== undefined &&
-        (community.membership.role === ROLE_NONE || community.membership.lapsed) &&
+        isPreviewingCommunity(community) &&
         (!community.public || stripSuspendedGate(community.gateConfig.gate).kind !== "no_gate")
     );
 }

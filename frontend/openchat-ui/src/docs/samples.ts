@@ -641,6 +641,7 @@ export const samples: Record<string, Record<string, unknown>> = {
   AccessGates: { isDiamond: true, tokens: gateTokens, nervousSystems: gateSystems },
   AccessGatesCards: { isDiamond: true, tokens: gateTokens, nervousSystems: gateSystems },
   ExploreCommunities: { communities: exploreCommunities, joinedKeys: ['oc'] },
+  CommunityPreviewBar: { community: 'DAO Builders Guild', onBack: () => {}, onJoin: () => {} },
   WalletSettingsDialog: {
     tokens: walletTokens,
     value: { recipients: walletRecipients.map(({ id, name, address, token }) => ({ id, name, address, token })) },

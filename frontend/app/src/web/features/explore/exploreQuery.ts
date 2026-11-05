@@ -157,7 +157,7 @@ export function exploreAfterSearch(
 
 export type CommunityOpening =
     | { kind: "open"; path: string }
-    /** `origin`: where cancelling the preview goes back to (`communityPreviewState.setOrigin`). */
+    /** `origin`: where cancelling the preview goes back to (`client.setCommunityPreviewOrigin`). */
     | { kind: "preview"; path: string; origin: string };
 
 /**

@@ -52,6 +52,7 @@
         "gateCheckFailed": "Brama dostępu nie została spełniona",
         "gateInvalid": "Brama dostępu jest nieprawidłowa",
         "join": "Dołączyć",
+        "joined": "Dołączyłeś do {name}",
         "lapsed": {
             "label": "Członkostwo wygasło",
             "rejoin": "Dołącz ponownie do {level}",
@@ -86,7 +87,10 @@
         "paymentApprovalMessage": "Aby dołączyć do tego {level}, musisz zapłacić **{amount}** {token} tokenów.",
         "paymentDistributionMessage": "Z tego 98% trafia do właścicieli {level}, a 2% do skarbca OpenChat SNS.",
         "paymentFailed": "Płatność nie powiodła się",
+        "paymentLeavesBalanceShort": "Płatność zostanie pobrana z Twojego salda, które spadnie wtedy poniżej wymaganego minimum. Doładuj konto i spróbuj ponownie.",
         "predefinedCredentialIssuer": "Predefiniowany wystawca danych uwierzytelniających",
+        "previewGatedHint": "Dołączenie ma {count, plural, one {# wymaganie} few {# wymagania} other {# wymagań}}; zobaczysz je, zanim cokolwiek zostanie pobrane.",
+        "previewHint": "Dołącz, aby wysyłać wiadomości.",
         "private": "Prywatny",
         "public": "Publiczny",
         "readonlyTitle": "Brama dostępowa",
@@ -104,6 +108,7 @@
         "uniquePersonInfo1": "Co się stanie, jeśli nie mam weryfikowalnego poświadczenia?",
         "uniquePersonInfo2": "Jeśli jeszcze tego nie zrobiłeś, po prostu udaj się do <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> , zaloguj się przy użyciu tej samej tożsamości internetowej, której użyłeś do uzyskania dostępu do OpenChat i postępuj zgodnie z instrukcjami, aby udowodnić swoją wyjątkową osobowość.",
         "uniquePersonInfo3": "Jest to proste do wykonania, zajmuje tylko kilka minut i wystarczy je wykonać tylko raz. Po zakończeniu procesu wróć tutaj i kliknij „Weryfikuj”.",
+        "unknownTokenPayment": "OpenChat nie rozpoznaje tego tokena, więc nie można go tu sprawdzić ani nim zapłacić.",
         "verify": "Zweryfikować",
         "visibility": "Dostęp"
     },
