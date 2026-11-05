@@ -46,6 +46,14 @@ jobs:
                   echo "Version $VERSION, build $GITHUB_RUN_NUMBER"
                   xcodebuild -version
 
+            # The push logic the app and its notification extension share
+            # (#10398 invariants 4 and 14). A broken deadline hangs rather
+            # than fails, hence the timeout.
+            - name: Test PushCore
+              working-directory: frontend/tauri-plugin-oc/ios/PushCore
+              timeout-minutes: 10
+              run: swift test
+
             - name: Setup Rust
               uses: ./.github/workflows/setup-rust
               with:

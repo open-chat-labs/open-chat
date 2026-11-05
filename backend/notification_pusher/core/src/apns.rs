@@ -68,7 +68,7 @@ impl ApnsClient {
     }
 
     pub async fn send_alert(&self, token: &ApnsToken, payload: String, collapse_id: &str) -> SendOutcome {
-        let url = format!("{}/3/device/{}", host(token), token.device_token());
+        let url = device_url(token);
         let now = now_secs();
 
         let response = self
@@ -119,8 +119,9 @@ struct ErrorBody {
 }
 
 // The sandbox prefix picks the host and never reaches Apple
-pub fn host(token: &ApnsToken) -> &'static str {
-    if token.is_sandbox() { SANDBOX_HOST } else { PRODUCTION_HOST }
+fn device_url(token: &ApnsToken) -> String {
+    let host = if token.is_sandbox() { SANDBOX_HOST } else { PRODUCTION_HOST };
+    format!("{host}/3/device/{}", token.device_token())
 }
 
 // Only a token APNs says is dead is removed. Anything else, a throttled push, a bad payload, a
@@ -320,10 +321,8 @@ mod tests {
         let sandbox = ApnsToken("sandbox:abc123".to_string());
         let production = ApnsToken("abc123".to_string());
 
-        assert_eq!(host(&sandbox), SANDBOX_HOST);
-        assert_eq!(sandbox.device_token(), "abc123");
-        assert_eq!(host(&production), PRODUCTION_HOST);
-        assert_eq!(production.device_token(), "abc123");
+        assert_eq!(device_url(&sandbox), "https://api.sandbox.push.apple.com/3/device/abc123");
+        assert_eq!(device_url(&production), "https://api.push.apple.com/3/device/abc123");
     }
 
     // #10398 invariant 5

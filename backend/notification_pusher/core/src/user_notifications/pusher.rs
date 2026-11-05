@@ -292,14 +292,21 @@ fn invariant_1_the_fcm_message_for_an_android_token_is_unchanged() {
             "name": null,
             "data": expected_data,
             "notification": null,
-            "android": actual["android"].clone(),
+            "android": {
+                "collapse_key": null,
+                "priority": "HIGH",
+                "ttl": null,
+                "restricted_package_name": null,
+                "notification": null,
+                "fcm_options": null,
+                "direct_boot_ok": null,
+            },
             "webpush": null,
             "apns": null,
             "fcm_options": null,
             "token": "android-token",
         });
         assert_eq!(actual, expected);
-        assert_eq!(actual["android"]["priority"], "HIGH");
     }
 }
 
