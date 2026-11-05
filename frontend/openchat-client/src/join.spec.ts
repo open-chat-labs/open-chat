@@ -249,6 +249,35 @@ describe("joining a group or community", () => {
         expect(kinds()).toEqual(["approveAccessGatePayment", "joinGroup"]);
     });
 
+    // an approval replaces the allowance on its ledger: after approving another amount (another
+    // branch of an "any" gate, the community alone), the first one doesn't stand any more
+    test("an approval of another amount on the same ledger replaces the one standing", async () => {
+        const g = group(ROLE_NONE, paymentGate);
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) => {
+            sent.push(req);
+            return Promise.resolve(
+                req.kind === "joinGroup" ? { kind: "error", code: 0 } : { kind: "success" },
+            );
+        }) as never);
+        const paying = (amount: bigint) => ({
+            credentials: [],
+            paymentApprovals: new Map([[ledger, { amount, approvalFee: 10_000n }]]),
+            compositeGateIndex: undefined,
+        });
+        const approved = () =>
+            sent
+                .splice(0)
+                .flatMap((r) => (r.kind === "approveAccessGatePayment" ? [r.amount] : []));
+
+        await client.joinGroup(g, paying(150_000n));
+        await client.joinGroup(g, paying(100_000n));
+        expect(approved()).toEqual([140_000n, 90_000n]);
+
+        // 150 isn't allowed any more: approved again
+        await client.joinGroup(g, paying(150_000n));
+        expect(approved()).toEqual([140_000n]);
+    });
+
     // Invariant 2: no join request for a community the user is already a non-lapsed member of
     test("a community member's join is not sent", async () => {
         // the join replayed after login carries the community as it was before login

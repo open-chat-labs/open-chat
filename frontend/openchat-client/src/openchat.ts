@@ -830,8 +830,8 @@ const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 // the margin left is made again rather than trusted to outlast the join call
 const GATE_APPROVAL_EXPIRY = 5 * ONE_MINUTE_MILLIS;
 const GATE_APPROVAL_MARGIN = ONE_MINUTE_MILLIS;
-const gateApprovalKey = (canisterId: string, ledger: string, amount: bigint) =>
-    `${canisterId} ${ledger} ${amount}`;
+// a canister has one allowance per ledger: a new approval replaces it, never adds to it
+const gateApprovalKey = (canisterId: string, ledger: string) => `${canisterId} ${ledger}`;
 const BOT_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 // A bridged account's profile is fetched again once it's this old, as messages are loaded
 const BRIDGED_USER_MAX_AGE = 10 * ONE_MINUTE_MILLIS;
@@ -925,9 +925,9 @@ type ReAuthIdentity = {
 export class OpenChat {
     // When each bridged account's profile was last fetched, keyed by `bridgedUserKey`
     #bridgedUsersFetchedAt = new Map<string, number>();
-    // access gate payments approved for a join that hasn't gone through yet (`gateApprovalKey`),
-    // and when each approval expires
-    #standingGateApprovals = new Map<string, number>();
+    // the access gate allowance approved for a join that hasn't gone through yet, for each
+    // canister and ledger (`gateApprovalKey`): its amount, and when it expires
+    #standingGateApprovals = new Map<string, { amount: bigint; expiresAt: number }>();
     #bridgedUsersInFlight = new Set<string>();
     #mobileLayout: "v1" | "v2";
     #worker: WorkerAgent;
@@ -2544,10 +2544,10 @@ export class OpenChat {
             })
             .then((response) => {
                 if (response.kind === "success") {
-                    this.#standingGateApprovals.set(
-                        gateApprovalKey(canisterId, ledger, amount),
-                        Date.now() + GATE_APPROVAL_EXPIRY,
-                    );
+                    this.#standingGateApprovals.set(gateApprovalKey(canisterId, ledger), {
+                        amount,
+                        expiresAt: Date.now() + GATE_APPROVAL_EXPIRY,
+                    });
                 }
                 if (response.kind === "error") {
                     const pinNumberFailure = pinNumberFailureFromError(response);
@@ -2568,13 +2568,15 @@ export class OpenChat {
         return entity.kind === "group_chat" ? entity.id.groupId : entity.id.communityId;
     }
 
-    // an approval made for a join that hasn't gone through yet, with time left for the join to
-    // use it
+    // the allowance standing for a join that hasn't gone through yet is this amount, with time
+    // left for the join to use it (any other amount was replaced by a later approval, or is one)
     #gateApprovalStanding(canisterId: string, ledger: string, amount: bigint): boolean {
-        const expiresAt = this.#standingGateApprovals.get(
-            gateApprovalKey(canisterId, ledger, amount),
+        const standing = this.#standingGateApprovals.get(gateApprovalKey(canisterId, ledger));
+        return (
+            standing !== undefined &&
+            standing.amount === amount &&
+            standing.expiresAt - Date.now() > GATE_APPROVAL_MARGIN
         );
-        return expiresAt !== undefined && expiresAt - Date.now() > GATE_APPROVAL_MARGIN;
     }
 
     // the join went through and used its approvals
