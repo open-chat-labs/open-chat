@@ -1304,17 +1304,19 @@ impl Data {
     }
 
     // Removes a user who has deleted their account from the community and its channels, returning
-    // whether they were a member. Wherever they were the last owner, the member next in line is made
-    // owner.
+    // whether they were a member of either. They may be left in a channel they were the only owner of
+    // when removed from the community. Wherever they were the last owner, the member next in line is
+    // made owner.
     pub fn remove_deleted_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        let mut removed = false;
         for channel in self.channels.iter_mut() {
-            channel.chat.members.remove(user_id, now);
+            removed |= channel.chat.members.remove(user_id, now).is_some();
         }
         self.expiring_members.remove_member(user_id, None);
         self.expiring_member_actions.remove_member(user_id, None);
         self.achievements.remove_user(&user_id);
         self.user_cache.delete(user_id);
-        let removed = self.members.remove(user_id, None, now).is_some();
+        removed |= self.members.remove(user_id, None, now).is_some();
         if removed {
             self.assign_owners_if_none(now);
         }
@@ -1647,27 +1649,35 @@ mod tests {
             String::new(),
             vec![(channel_id, "channel".to_string())],
         );
-        let (member, earlier_admin, later_admin) = (new_user_id(2), new_user_id(3), new_user_id(4));
+        let bot: UserId = canister_id(50).into();
+        // The earlier joining admin has the higher id, so comes after the later one in the set of admins
+        let (suspended_admin, member, earlier_admin, later_admin) =
+            (new_user_id(2), new_user_id(3), new_user_id(5), new_user_id(4));
 
         // They join the community in this order
-        for (i, user_id) in [member, earlier_admin, later_admin].into_iter().enumerate() {
-            data.members.add(
-                user_id,
-                Principal::from_slice(&[i as u8 + 2]),
-                UserType::User,
-                None,
-                i as u64 + 1,
-            );
-        }
-        // The later joiner is made admin first, but it's when they joined that counts
-        for (user_id, now) in [(later_admin, 4), (earlier_admin, 5)] {
+        for (i, (user_id, user_type)) in [
+            (bot, UserType::Bot),
+            (suspended_admin, UserType::User),
+            (member, UserType::User),
+            (earlier_admin, UserType::User),
+            (later_admin, UserType::User),
+        ]
+        .into_iter()
+        .enumerate()
+        {
             data.members
-                .change_role(owner, user_id, CommunityRole::Admin, &CommunityPermissions::default(), now)
+                .add(user_id, Principal::from_slice(&[i as u8 + 2]), user_type, None, i as u64 + 1);
+        }
+        for user_id in [bot, suspended_admin, later_admin, earlier_admin] {
+            data.members
+                .change_role(owner, user_id, CommunityRole::Admin, &CommunityPermissions::default(), 6)
                 .unwrap();
         }
+        // Bots and suspended members are passed over
+        data.members.set_suspended(suspended_admin, true, 7);
         // The channel has no admins, so its earliest joined member is next in line
         let channel = data.channels.get_mut(&channel_id).unwrap();
-        for (user_id, now) in [(later_admin, 6), (member, 7)] {
+        for (user_id, now) in [(later_admin, 8), (member, 9)] {
             channel.chat.members.add(
                 user_id,
                 None,

@@ -1397,7 +1397,8 @@ mod deleted_user_tests {
         let owner = user(1);
         let mut data = Data::new_for_tests(owner, Principal::from_slice(&[1]), String::new());
         let bot: UserId = canister_id(50).into();
-        let (member, suspended_admin, moderator, earlier_admin, later_admin) = (user(2), user(3), user(4), user(5), user(6));
+        // The earlier joining admin has the higher id, so comes after the later one in the set of admins
+        let (member, suspended_admin, moderator, earlier_admin, later_admin) = (user(2), user(3), user(4), user(6), user(5));
 
         // They join in this order
         add_member(&mut data, bot, UserType::Bot, 1);

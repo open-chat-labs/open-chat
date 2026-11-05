@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_stable_memory_map_small_entries_memory, get_upgrades_memory};
 use crate::{Data, mutate_state, read_state};
@@ -37,6 +38,8 @@ fn post_upgrade(args: Args) {
         let now = state.env.now();
         if let Some(new_owner) = state.data.assign_owner_if_none(now) {
             info!(%new_owner, "Assigned an owner to the group, which had none");
+            // So that members' clients pick up the change. This only queues the event.
+            handle_activity_notification(state);
         }
     });
 
