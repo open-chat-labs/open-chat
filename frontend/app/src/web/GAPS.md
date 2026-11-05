@@ -72,7 +72,16 @@ design export needs. Each entry says where it came up.
 - **Messages have no ids**: `GroupMessage`, `ChatBubble` and `MessageGroup`'s callbacks are
   index-based, and `ThreadList` threads carry closures. `GroupMessage` now takes an optional `id`
   (by hand, phase 3b): `MessageGroup` keys its rows by it and writes it to `data-msg`. The
-  callbacks are still by index.
+  callbacks are still by index (the app has one message per group, so each row's handlers close
+  over its message).
+- **Message menu, hover bar and swipes** (by hand, 5b): `GroupMessage.menu` says whether a message
+  has a menu (by default all but a deleted one; the app gives one to a deleted message it can
+  reveal or undelete, and none in a read-only chat). The hover bar shows the quick reactions and
+  the 🙂 only with `onReact` / `onReactPicker`, and Reply / Edit only with `onReply` / `onEdit`
+  (they did nothing without). `GroupMessage.swipeLeft` puts the app's say on a left swipe (the
+  mobile app's `messageSwipeAction`: right replies, left edits your own or forwards someone
+  else's), where the design's own text messages swiped right to edit. The bar's position still
+  assumes its full width (`BAR_W`).
 - **Message text** (by hand, phase 3b): `ChatBubble` shows its `text` as plain text, so markdown,
   links, mentions, custom emoji and spoilers were lost. It now takes a `body` snippet shown in its
   place; the app renders the old UI's `Markdown` there. A lone emoji stays the bubble's own (large).
@@ -99,9 +108,6 @@ design export needs. Each entry says where it came up.
   for it; it's asked for only on Claim. How long it has left is worked out when the row is made and
   doesn't count down. A prize still being sent (`prize_content_initial`), and one in a ledger the
   registry doesn't carry, stay text bubbles. No reactions, quote or thread yet.
-- **Deleting messages**: the message menu isn't wired yet (phase 5). Its Delete should go by
-  `userCanDeleteMessage`, as the old menus do: the user's own messages, a bot's response to a
-  command they used, and anyone's where they can delete other users' messages.
 - **Thread replies**: `ThreadPanel` renders replies with no react / menu / reply / edit handlers.
 - **Composer banner** (by hand, 8b): `ComposerBar` takes `onBannerAction`, passed to `Banner`'s
   `actionHandler` with `bannerAction` as its label (it had the label but no handler). Nothing in
@@ -554,7 +560,8 @@ design export needs. Each entry says where it came up.
   - by hand: `ChatPicker` takes `filter` (the host's search), `emptyLabel`, and each chat's `sub`
     and `group` (the sections); `InviteDialog` takes `filterChats`, and its `onShareToChat` may
     resolve `false`; `Avatar` exports `AVATAR_GRADIENTS` for the picker's faces.
-  - not yet: Receive's "Share to chat" (6b, with `SharePicker`), forward (5b), a daily puzzle
+  - forwarding a message uses it too (5b, `ForwardDialogScreen`), one chat at a time;
+  - not yet: Receive's "Share to chat" (6b, with `SharePicker`), a daily puzzle
     result (#10236). The picker has no recent chats order (the design's "Recent chats"): sections
     are sorted by name, as the old pickers did.
 
@@ -581,7 +588,8 @@ design export needs. Each entry says where it came up.
   referrer, and Swap shows only the best quote. Not yet:
   - `NavRail` pins take a `menu` (right-click, Shift+F10), but the rail adapter gives the
     community pins none: the community menu's actions live in the chat list header for now.
-  - `ChatPicker`'s multi-select (forward to several chats, 5b), `ChatListPanel`'s grouped search
+  - `ChatPicker`'s multi-select (forward to several chats; the old trees forwarded to one, as 5b
+    does), `ChatListPanel`'s grouped search
     (people and messages need search in the app), the design's `MediaViewer` (replacing
     `features/conversation/MediaViewer.svelte`) and `PuzzleDialog`'s screen layout (native) are
     separate pieces of work.
@@ -977,8 +985,8 @@ design export needs. Each entry says where it came up.
   dialogs later phases build.
 - **Conversation, first cut** (`features/conversation`, phase 3b): reading only (the composer is
   3c). Every message kind shows as a text bubble with its text (the rich kinds are phase 5), and
-  link previews, translations, tips, the message menu, reactions and swipes (phase 5) aren't
-  wired. Events other than messages show as a centred line in the old UI's words, names in bold
+  link previews, translations and tips (phase 5) aren't wired; the message menu, reactions and
+  swipes are 5b's ("Message actions"). Events other than messages show as a centred line in the old UI's words, names in bold
   (`logic/conversation/timelineEventText`, shared with the old trees; no design for them:
   `TODO(design)`), and "N messages deleted" expands them. The old lines' date and time under each
   event isn't shown yet (it's duplicated in both old `NonMessageEvent`s, to extract). The header has no back button (`ConversationHeader` has
@@ -1061,7 +1069,7 @@ design export needs. Each entry says where it came up.
   message offers a private reply, which would go to the bot. The client marks the viewer's own
   read (`isOwnMessage`), so that part needs nothing here.
 - **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text only.
-  Attachments, GIFs, voice, replies, edits and the "+" menu are phase 5 (`MessageComposer` hides
+  Attachments, GIFs, voice and the "+" menu are phase 5 (`MessageComposer` hides
   "+" and the GIF tab without their handlers). There's no @mention picker (typed @usernames are
   still sent as mentions), no rich-text editor (the old one showed markdown as it was typed) and
   no link-count warning. In a bot DM, what's typed goes to the bot as its direct-message command,
@@ -1072,6 +1080,52 @@ design export needs. Each entry says where it came up.
   (`RulesDialog`, the old modal's words; no design for it), and the throttle countdown shows as the
   composer's banner. Enter follows the app's Enter-to-send setting (`enterSends`). A preview
   shows `CommunityPreviewBar` (8b, "Join gate").
+- **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
+  edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
+  text (`composerContext`): who wrote it and its text, an edit starting from the message's text.
+  Its X drops a reply, or ends an edit; a click on it goes to the message when it's in this chat (a
+  private reply quotes another chat's: no jump, where the old UI opened that chat). An edit is
+  saved with `editMessage` (failure toast `errorEditingMessage`). Ending an edit, saved or
+  cancelled, puts back what the user was writing before it (`endEditing`, kept by `setEditing`;
+  the old trees dropped the whole draft, and now get it back too), also when the chat was left
+  mid-edit: the composer then mounts with that text to go back to (`composerStartText`;
+  `MessageComposer` takes `text` so mounted in edit mode, by hand). Not yet: a media reply's
+  thumbnail (`thumb`).
+- **Message actions** (`features/conversation`, 5b): every message's menu (`MessageActions`:
+  right-click, the hover bar's ⋯, Shift+F10, a long press on touch), its hover bar's quick
+  reactions (the app's `quickReactions`), the emoji picker, the reaction chips (text bubbles
+  only: the other kinds take no reactions yet), swipes, desktop's double-click to edit or reply
+  (the "double-click to reply" setting) and Retry on a failed message. What a message offers is
+  the old trees' (`messageMenu` in `@client`, which both old menus now read): no menu on an inert
+  message unless it can be revealed, in a read-only chat or on an ephemeral message. Done here:
+  reply and edit (the composer's strip), copy, copy link, share (where the browser can), translate
+  / untranslate (Diamond, else the upgrade), pin / unpin, cancel a reminder, block the sender,
+  delete (asking first, with "don't show me this again", `confirmMessageDeletion`; a failed
+  message only goes from this device), reveal, undelete, retry (`retrySendMessage`), forward (the
+  chat picker, `ForwardDialogScreen`: the message goes out as the chosen chat opens, as in the old
+  trees, through `messageToForwardStore`; a note written in the picker waits in that chat's draft,
+  where the old pickers had no note) and reply privately (`replyPrivately`: the sender's DM, made
+  if missing, with the reply set), report (`ReportMessageDialogScreen`: a reason from
+  `REPORT_REASONS`, child sexual content with its warning, the client sending `csam` for it
+  alone; delete it too where the reader can delete others' messages) and remind
+  (`ReminderDialogScreen`: the old desktop dialog's presets, `reminderTime`, or the browser's date
+  and time field for a custom time, and a note; no design for either: `TODO(design)`, the reasons
+  and presets as `DurationChips`). Each runs in `features/conversation/messageMenu.ts`. Not yet:
+  - tip (`TODO(phase 5, 5b)`): the old trees' `TipBuilder` (a token, $0.01 / $0.10 / $1 steps
+    or a custom amount, the fee, paying from an external wallet with its approval, the PIN; not in
+    the native apps, `disableTipsFeature`) has its logic in `logic/tip/TipForm`, but the design has
+    no tip dialog, and the menu doesn't offer Tip yet (`messageMenu`'s `tipRecipient` is left
+    out). The tips a message got (5a) aren't shown either;
+  - the thread's items (reply in thread, follow / unfollow) wait for the thread (4c), and a
+    proposal's collapse for proposals;
+  - the mobile app's "download media" (native save) is left to the narrow pass;
+  - the library's `EmojiPicker` has a fixed set of about 56 emoji: no search over all of them,
+    no custom emoji (`@CE(code)`, which the old pickers offered) and no skin tones. A custom
+    emoji someone else reacted with shows as its code on the chip, and it can't be picked;
+  - every reaction added counts towards the quick reactions (the library's picker keeps no
+    favourites of its own, where the old trees' picker counted its picks);
+  - the delete confirm and the "don't show again" toggle have no design (`TODO(design)`);
+  - a link preview is removed with its card's X (5a), not from the menu.
 - **Composer draft and input** (by hand, phase 3c): `MessageComposer` kept its draft to itself.
   It now takes `text` (the draft to start from) and `onInput` (the draft as it changes), so the
   app keeps a draft per chat and tells the others someone is typing.

@@ -33,7 +33,6 @@
         allUsersStore,
         candidateGroupFromChat,
         anonUserStore,
-        allChatsStore,
         chatListScopeStore,
         chatsInitialisedStore,
         ANON_USER_ID,
@@ -479,18 +478,13 @@
         }
     }
 
-    function replyPrivatelyTo(context: EnhancedReplyContext) {
-        if (context.sender === undefined) return;
-
-        const chatId: DirectChatIdentifier = { kind: "direct_chat", userId: context.sender.userId };
-        localUpdates.draftMessages.setTextContent({ chatId }, "");
-        localUpdates.draftMessages.setReplyingTo({ chatId }, context);
-        // Look the chat up across all scopes, since the message being replied to is usually in a
-        // group or channel, in which case the current scope won't include any direct chats
-        if ($allChatsStore.has(chatId)) {
-            navigate(routeForChatIdentifier("chats", chatId));
+    // the sender's DM, with the reply set (made if there's none yet)
+    async function replyPrivatelyTo(context: EnhancedReplyContext) {
+        const chatId = await client.replyPrivately(context);
+        if (chatId === undefined) {
+            modal = { kind: "not_found" };
         } else {
-            createDirectChat(chatId);
+            navigate(routeForChatIdentifier("chats", chatId));
         }
     }
 
@@ -615,17 +609,6 @@
             $_,
         );
         if (failed !== undefined) toastStore.showFailureToast(failed);
-    }
-
-    async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
-        const directChatId = await client.createDirectChat(chatId);
-        if (directChatId === undefined) {
-            modal = { kind: "not_found" };
-            return false;
-        }
-
-        navigate(routeForChatIdentifier("chats", directChatId));
-        return true;
     }
 
     function createCommunity() {

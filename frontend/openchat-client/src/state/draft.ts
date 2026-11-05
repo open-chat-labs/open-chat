@@ -12,11 +12,20 @@ import {
 import { writable, type Subscriber } from "../utils/stores";
 import { notEq } from "./utils";
 
+/** What the user was writing before starting an edit, put back once the edit is over. */
+export type DraftBeforeEdit = {
+    textContent?: string;
+    attachment?: AttachmentContent;
+    replyingTo?: EnhancedReplyContext;
+};
+
 export class DraftMessage {
     textContent?: string;
     attachment?: AttachmentContent;
     editingEvent?: EventWrapper<Message>;
     replyingTo?: EnhancedReplyContext;
+    // while editing: the draft as it was when the edit started
+    beforeEdit?: DraftBeforeEdit;
 }
 
 export function createDraftMessagesStore() {
@@ -58,6 +67,31 @@ export function createDraftMessagesStore() {
                 return map;
             });
         },
+        /**
+         * Ends an edit, saved or cancelled: the draft goes back to what the user was writing when
+         * it started (none if nothing was).
+         */
+        endEditing(key: MessageContext) {
+            store.update((map) => {
+                const before = map.get(key)?.beforeEdit;
+                if (
+                    before === undefined ||
+                    (before.textContent === undefined &&
+                        before.attachment === undefined &&
+                        before.replyingTo === undefined)
+                ) {
+                    map.delete(key);
+                } else {
+                    map.set(key, { ...before });
+                }
+                return map;
+            });
+        },
+        /**
+         * Starts editing a message: the draft holds its text, attachment and reply, and keeps
+         * what the user was writing (from before the first edit, if one is already going) for
+         * `endEditing` to put back.
+         */
         setEditing(
             key: MessageContext,
             editingEvent: EventWrapper<Message>,
@@ -66,6 +100,14 @@ export function createDraftMessagesStore() {
             updateDraft(key, (d) => {
                 return {
                     ...d,
+                    beforeEdit:
+                        d.editingEvent !== undefined
+                            ? d.beforeEdit
+                            : {
+                                  textContent: d.textContent,
+                                  attachment: d.attachment,
+                                  replyingTo: d.replyingTo,
+                              },
                     textContent: getContentAsText(editingEvent.event.content),
                     editingEvent: editingEvent,
                     attachment: isAttachmentContent(editingEvent.event.content)

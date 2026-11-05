@@ -5,6 +5,7 @@
 <script lang="ts">
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
+    import type { Snippet } from "svelte";
     import { _ } from "svelte-i18n";
 
     interface Props {
@@ -16,6 +17,8 @@
         disabled?: boolean;
         onConfirm: () => void;
         onClose: () => void;
+        /** More above the buttons (a "don't ask again" toggle, say). */
+        children?: Snippet;
     }
 
     let {
@@ -26,12 +29,16 @@
         disabled = false,
         onConfirm,
         onClose,
+        children,
     }: Props = $props();
 </script>
 
 <DialogShell {title} width={400} height="auto" {onClose}>
     {#if message}
         <p class="message">{message}</p>
+    {/if}
+    {#if children}
+        <div class="extra">{@render children()}</div>
     {/if}
     <div class="actions">
         <Button label={cancelLabel ?? $_("cancel")} variant="secondary" onClick={onClose} />
@@ -44,6 +51,10 @@
         margin: 0 0 var(--space-16);
         font: var(--weight-regular) var(--text-base) / 1.45 var(--font-sans);
         color: var(--ink-2);
+    }
+
+    .extra {
+        margin-bottom: var(--space-16);
     }
 
     .actions {

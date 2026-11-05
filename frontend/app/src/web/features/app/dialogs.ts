@@ -1,10 +1,12 @@
 import type {
     BotInstallationLocation,
+    ChatIdentifier,
     CommunityIdentifier,
     EnhancedAccessGate,
     ExternalBotLike,
     GroupChatIdentifier,
     LeaveOrDelete,
+    Message,
     MultiUserChatIdentifier,
     PriceSubject,
 } from "@client";
@@ -100,7 +102,25 @@ export type LocalDialog =
     | { kind: "wallet_settings" }
     // the requirements joining a group, channel or community has (`gates`, a level at a time),
     // paid for and met before the join is carried on (8b); `name` is what "You joined …" names
-    | { kind: "join_gate"; target: JoinTarget; gates: EnhancedAccessGate[]; name: string };
+    | { kind: "join_gate"; target: JoinTarget; gates: EnhancedAccessGate[]; name: string }
+    // picking a chat to forward a message to (5b)
+    | { kind: "forward"; message: Message }
+    // reporting a message to the platform's moderators, and deleting it too where the reader can
+    // delete others' messages (5b)
+    | {
+          kind: "report_message";
+          chatId: ChatIdentifier;
+          messageId: bigint;
+          threadRootMessageIndex?: number;
+          canDelete: boolean;
+      }
+    // setting a reminder about a message (5b)
+    | {
+          kind: "remind_message";
+          chatId: ChatIdentifier;
+          eventIndex: number;
+          threadRootMessageIndex?: number;
+      };
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";
@@ -191,6 +211,13 @@ export const dialogs: Dialogs = {
 
     // the requirements to join a group, channel or community, paid for and met (8b)
     join_gate: () => import("../join/JoinGateDialogScreen.svelte"),
+
+    // picking a chat to forward a message to (5b)
+    forward: () => import("../conversation/ForwardDialogScreen.svelte"),
+
+    // reporting a message, and setting a reminder about one (5b)
+    report_message: () => import("../conversation/ReportMessageDialogScreen.svelte"),
+    remind_message: () => import("../conversation/ReminderDialogScreen.svelte"),
 };
 
 // each linked dialog's query param; the CHIT dialog's views share its param, told apart by its value

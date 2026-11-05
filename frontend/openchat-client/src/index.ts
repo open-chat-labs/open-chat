@@ -32,6 +32,7 @@ export {
     disappearingMessagesUpdate,
     eventsTTLUpdate,
     getMembersString,
+    getMessageText,
     isPreviewingOrLapsed,
     subrangesCover,
     TimelineGrouper,
@@ -193,6 +194,26 @@ export {
     type PrizeReader,
     type PrizeView,
 } from "./utils/prizes";
+export {
+    emojiReaction,
+    messageMenu,
+    messageReplyContext,
+    type MessageMenuAction,
+    type MessageMenu,
+    type MessageMenuInput,
+} from "./utils/messageMenu";
+export {
+    REMINDER_PRESETS,
+    reminderPresetText,
+    reminderTime,
+    type ReminderPreset,
+} from "./utils/reminders";
+export {
+    REPORT_REASONS,
+    isCsamReport,
+    reportReasonText,
+    type ReportReason,
+} from "./utils/report";
 export {
     swapAcceptCost,
     swapActions,

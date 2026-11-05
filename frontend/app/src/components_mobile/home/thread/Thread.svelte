@@ -197,7 +197,7 @@
     }
 
     function cancelEditEvent() {
-        localUpdates.draftMessages.delete(messageContext);
+        localUpdates.draftMessages.endEditing(messageContext);
     }
 
     function onSetTextContent(txt?: string) {

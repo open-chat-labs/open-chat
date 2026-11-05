@@ -8,6 +8,8 @@
 
     interface Props extends OptionProps {
         deleted: boolean;
+        // Shown as the user's own: `me`, or relayed by a bridge bot from an account they've linked
+        showAsMe: boolean;
         canReact: boolean;
         selectQuickReaction: (unicode: string) => void;
         showEmojiPicker: () => void;

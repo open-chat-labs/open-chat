@@ -13513,7 +13513,7 @@
         "section": null,
         "required": false,
         "componentDefault": "''",
-        "doc": "The draft to start from, read when the composer mounts (key the composer to start another)."
+        "doc": "The draft to start from, read when the composer mounts (key the composer to start another). Mounted in edit mode, it's what the box goes back to when the edit ends."
       },
       {
         "name": "onInput",

@@ -12,8 +12,10 @@ import {
     votesForAnswer,
     waveformLevels,
     type CryptocurrencyContent,
+    type EnhancedReplyContext,
     type EventWrapper,
     type GiphyContent,
+    type MessageMenuAction,
     type ImageContent,
     type MemeFighterContent,
     type Message,
@@ -28,7 +30,7 @@ import {
     type VideoContent,
 } from "@client";
 import type ChatBubble from "@openchat/ui/src/lib/components/ChatBubble.svelte";
-import type { GroupMessage, MenuItem } from "@openchat/ui/src/lib/types";
+import type { ComposerContext, GroupMessage, MenuItem } from "@openchat/ui/src/lib/types";
 import type { ComponentProps } from "svelte";
 import type { ChatMenuAction } from "@src/logic/chats/chatMenu";
 import { pickById } from "../../pickById";
@@ -636,4 +638,112 @@ function actionItem(action: ChatMenuAction, state: HeaderMenuState): HeaderMenuI
         case "unblock":
             return { id: "unblock", label: state.unblockLabel, mask: icon("ban") };
     }
+}
+
+/**
+ * The text the composer starts from when it mounts (`MessageComposer`'s `text`): the chat's draft,
+ * or mid-edit what was being written before the edit (the edited message's text comes in the
+ * strip, and the composer goes back to this when the edit ends).
+ */
+export function composerStartText(
+    draft:
+        | {
+              editingEvent?: EventWrapper<Message>;
+              textContent?: string;
+              beforeEdit?: { textContent?: string };
+          }
+        | undefined,
+): string {
+    if (draft?.editingEvent !== undefined) return draft.beforeEdit?.textContent ?? "";
+    return draft?.textContent ?? "";
+}
+
+/**
+ * The composer's strip for the chat's draft: the message being edited (its text to start from),
+ * else the one being replied to, with who wrote it.
+ */
+export function composerContext(
+    draft:
+        | {
+              editingEvent?: EventWrapper<Message>;
+              replyingTo?: EnhancedReplyContext;
+              textContent?: string;
+          }
+        | undefined,
+    ctx: Pick<ConversationContext, "me" | "you" | "userName" | "contentText">,
+): ComposerContext | null {
+    const editing = draft?.editingEvent;
+    if (editing !== undefined) {
+        return {
+            key: `edit:${editing.event.messageId}`,
+            mode: "edit",
+            quote: messageText(editing.event.content, ctx),
+            text: draft?.textContent ?? "",
+        };
+    }
+    const reply = draft?.replyingTo;
+    if (reply === undefined) return null;
+    return {
+        key: `reply:${reply.messageId}`,
+        mode: "reply",
+        name: reply.senderId === ctx.me ? ctx.you : ctx.userName(reply.senderId),
+        quote: messageText(reply.content, ctx),
+    };
+}
+
+/** One of a message's actions as MessageActions lists it; `label` is the app's resource key. */
+export type MessageMenuItem =
+    | { action: MessageMenuAction; label: string; mask: string; variant: "regular" | "danger" }
+    | { action: "separator"; label: ""; variant: "separator" };
+
+type MessageMenuEntry = { action: MessageMenuAction; label: string; icon: string };
+
+// what a message's menu lists, in order: what's done with the message, then (after a separator)
+// what acts on its sender or removes it
+const MESSAGE_MENU: MessageMenuEntry[] = [
+    { action: "reply", label: "quoteReply", icon: "reply" },
+    { action: "edit", label: "editMessage", icon: "edit" },
+    { action: "forward", label: "forward", icon: "forward" },
+    { action: "reply_privately", label: "replyPrivately", icon: "dm" },
+    { action: "copy", label: "copy", icon: "copy" },
+    { action: "copy_url", label: "copyMessageUrl", icon: "link" },
+    { action: "share", label: "share", icon: "share" },
+    { action: "translate", label: "translateMessage", icon: "lang" },
+    { action: "untranslate", label: "untranslateMessage", icon: "lang" },
+    { action: "pin", label: "pinMessage", icon: "pin" },
+    { action: "unpin", label: "unpinMessage", icon: "pin" },
+    { action: "remind", label: "reminders.menu", icon: "clock" },
+    { action: "cancel_reminder", label: "reminders.cancel", icon: "clock" },
+    { action: "retry", label: "retryMessage", icon: "refresh" },
+    { action: "reveal", label: "revealDeletedMessage", icon: "eye" },
+    { action: "undelete", label: "undeleteMessage", icon: "rotate-back" },
+];
+
+const MESSAGE_MENU_DANGER: MessageMenuEntry[] = [
+    { action: "block_user", label: "blockUser", icon: "ban" },
+    { action: "report", label: "report.menu", icon: "flag" },
+    { action: "delete", label: "deleteMessage", icon: "trash" },
+    { action: "delete_for_me", label: "deleteMessageForMe", icon: "trash" },
+];
+
+/**
+ * A message's menu (MessageActions' items) for what it offers (`messageMenu`). Only the actions
+ * this screen carries out are listed (the thread's, a proposal's and the rest wait for theirs).
+ */
+export function messageMenuItems(actions: ReadonlySet<MessageMenuAction>): MessageMenuItem[] {
+    const item =
+        (variant: "regular" | "danger") =>
+        (entry: MessageMenuEntry): MessageMenuItem => ({
+            action: entry.action,
+            label: entry.label,
+            mask: `var(--icon-${entry.icon})`,
+            variant,
+        });
+    const regular = MESSAGE_MENU.filter((e) => actions.has(e.action)).map(item("regular"));
+    const danger = MESSAGE_MENU_DANGER.filter((e) => actions.has(e.action)).map(item("danger"));
+    const separator: MessageMenuItem[] =
+        regular.length > 0 && danger.length > 0
+            ? [{ action: "separator", label: "", variant: "separator" }]
+            : [];
+    return [...regular, ...separator, ...danger];
 }

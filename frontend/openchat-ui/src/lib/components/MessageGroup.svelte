@@ -2,7 +2,10 @@
      Message actions. Pointer: hover bar (3 recent reactions, 🙂, Reply/Edit, ⋯) + right-click. Keyboard: Shift+F10 / Menu key.
      Touch: long-press (onMessageMenu with touch:true → host shows focus mode). Swipe (touch, mouse drag, trackpad two-finger):
      toward start = onReply, toward end = onEdit (own text) / onSwipeLeft — rubber-banded past the threshold, accent + haptic there,
-     mirrored in RTL (host: edit own / forward others'). pos always carries el (the message node) and rect for the focus clone. -->
+     mirrored in RTL (host: edit own / forward others'). A message's `swipeLeft` puts the host's say on the left swipe (it then
+     calls onSwipeLeft, and the right one replies). pos always carries el (the message node) and rect for the focus clone.
+     A message's `menu` says whether it has a menu and hover bar (by default all but a deleted one); the bar offers reactions only
+     with onReact / onReactPicker, and Reply / Edit only with onReply / onEdit. -->
 <script lang="ts">
   import { useT } from '../i18n';
   import { onDestroy, type ComponentProps } from 'svelte';
@@ -112,7 +115,7 @@
 
   const quickReactions = $derived((recentReactions.length ? recentReactions : ['👍', '❤️', '😂']).slice(0, 3));
   const isText = (m: GroupMessage) => !m.kind || m.kind === 'text';
-  const menuable = (m: GroupMessage) => !!onMessageMenu && !m.deleted;
+  const menuable = (m: GroupMessage) => !!onMessageMenu && (m.menu ?? !m.deleted);
 
   function senderKey(e: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -160,15 +163,17 @@
     hover = i;
   }
 
-  // own text: right = edit, left = reply · everything else: right = reply, left = forward
+  // own text: right = edit, left = reply · everything else: right = reply, left = forward;
+  // with the host's `swipeLeft`: right = reply, left = what it says (through onSwipeLeft)
   function swipeMap(m: GroupMessage): { right: SwipeAction; left: SwipeAction } {
+    if (m.swipeLeft) return { right: 'reply', left: m.swipeLeft };
     return side === 'sent' && isText(m) && !!onEdit ? { right: 'edit', left: 'reply' } : { right: 'reply', left: 'forward' };
   }
 
   function swipeAllowed(m: GroupMessage) {
     const map = swipeMap(m);
     const has = (a: SwipeAction) => (a === 'edit' ? !!onEdit : a === 'reply' ? !!onReply : !!onSwipeLeft);
-    return { right: has(map.right), left: has(map.left) };
+    return { right: has(map.right), left: m.swipeLeft ? !!onSwipeLeft : has(map.left) };
   }
 
   // swipe: logical dx (+ = toward the reply side; flips for RTL), free up to the threshold then rubber-banded
@@ -221,6 +226,7 @@
       });
     }
     if (!g || Math.abs(g.d) < SWIPE_AT) return;
+    if (g.d < 0 && m.swipeLeft) return onSwipeLeft?.(i);
     const act = g.d > 0 ? swipeMap(m).right : swipeMap(m).left;
     if (act === 'edit') onEdit?.(i, el);
     else if (act === 'reply') onReply?.(i, el);
@@ -401,6 +407,7 @@
       {@const map = swipeMap(m)}
       {@const mine = (m.reactions ?? []).filter((r) => r.mine).map((r) => r.emoji)}
       {@const canEdit = side === 'sent' && isText(m) && !!onEdit}
+      {@const canReply = !!onReply}
       <div
         class="message"
         class:marked={marked === i}
@@ -446,7 +453,7 @@
         {/if}
         {#if menuable(m) && hover === i && !touch && activeMenu !== i}
           <span class="bar" style:left={barLeft} data-msg-acts="" role="toolbar" aria-label={t('ui.messageGroup.actions')}>
-            {#each quickReactions as c}
+            {#each onReact ? quickReactions : [] as c}
               {@const on = mine.includes(c)}
               <span
                 class="quick"
@@ -459,30 +466,36 @@
                 aria-pressed={on}>{c}</span
               >
             {/each}
-            <span
-              class="tool"
-              bind:this={emojis[i]}
-              onclick={(e) => {
-                e.stopPropagation();
-                reactPicker(i);
-              }}
-              onkeydown={onKeys(() => reactPicker(i))}
-              role="button"
-              tabindex="0"
-              aria-label={t('ui.messageGroup.moreReactions')}
-              aria-haspopup="dialog"
-              data-tip={t('ui.messageGroup.reactTip')}><span class="tool-icon" style:mask="var(--icon-emoji) center/contain no-repeat"></span></span
-            >
-            <span class="divider"></span>
-            <span
-              class="tool"
-              onclick={() => primary(i, m)}
-              onkeydown={onKeys(() => primary(i, m))}
-              role="button"
-              tabindex="0"
-              aria-label={t(canEdit ? 'ui.common.edit' : 'ui.common.reply')}
-              data-tip={t(canEdit ? 'ui.common.edit' : 'ui.common.reply')}><span class="tool-icon" style:mask="var(--icon-{canEdit ? 'edit' : 'reply'}) center/contain no-repeat"></span></span
-            >
+            {#if onReactPicker}
+              <span
+                class="tool"
+                bind:this={emojis[i]}
+                onclick={(e) => {
+                  e.stopPropagation();
+                  reactPicker(i);
+                }}
+                onkeydown={onKeys(() => reactPicker(i))}
+                role="button"
+                tabindex="0"
+                aria-label={t('ui.messageGroup.moreReactions')}
+                aria-haspopup="dialog"
+                data-tip={t('ui.messageGroup.reactTip')}><span class="tool-icon" style:mask="var(--icon-emoji) center/contain no-repeat"></span></span
+              >
+            {/if}
+            {#if onReact || onReactPicker}
+              <span class="divider"></span>
+            {/if}
+            {#if canEdit || canReply}
+              <span
+                class="tool"
+                onclick={() => primary(i, m)}
+                onkeydown={onKeys(() => primary(i, m))}
+                role="button"
+                tabindex="0"
+                aria-label={t(canEdit ? 'ui.common.edit' : 'ui.common.reply')}
+                data-tip={t(canEdit ? 'ui.common.edit' : 'ui.common.reply')}><span class="tool-icon" style:mask="var(--icon-{canEdit ? 'edit' : 'reply'}) center/contain no-repeat"></span></span
+              >
+            {/if}
             <span
               class="tool"
               class:active={activeMenu === i}

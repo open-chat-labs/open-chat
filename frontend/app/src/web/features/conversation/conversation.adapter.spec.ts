@@ -1,6 +1,9 @@
-import type { EventWrapper, Message } from "@client";
+import type { EventWrapper, Message, MessageMenuAction } from "@client";
 import {
+    composerContext,
+    composerStartText,
     mediaHeld,
+    messageMenuItems,
     messageRow,
     messageStatus,
     senderColor,
@@ -361,5 +364,101 @@ describe("media", () => {
         expect(mediaHeld(gif, 42n, media(true, false))).toBe(true);
         expect(mediaHeld(gif, 42n, media(true, true))).toBe(false);
         expect(mediaHeld(image, 42n, media(false, false))).toBe(false);
+    });
+});
+
+describe("the composer's reply or edit strip", () => {
+    const quoted = message().event;
+    const replyingTo = {
+        kind: "rehydrated_reply_context" as const,
+        senderId: "alice",
+        eventIndex: 3,
+        content: quoted.content,
+        messageId: 42n,
+        messageIndex: 2,
+        edited: false,
+        isThreadRoot: false,
+        sourceContext: { chatId: { kind: "group_chat" as const, groupId: "g" } },
+    };
+
+    test("is none without a reply or an edit", () => {
+        expect(composerContext(undefined, ctx)).toBeNull();
+        expect(composerContext({ textContent: "draft" }, ctx)).toBeNull();
+    });
+
+    test("quotes the message replied to, with who wrote it", () => {
+        expect(composerContext({ replyingTo }, ctx)).toEqual({
+            key: "reply:42",
+            mode: "reply",
+            name: "Alice",
+            quote: "hi",
+        });
+        expect(composerContext({ replyingTo: { ...replyingTo, senderId: "me" } }, ctx)?.name).toBe(
+            "You",
+        );
+    });
+
+    test("an edit starts from the draft's text and takes the place of the message's own reply", () => {
+        const editing = message({ sender: "me", content: { kind: "text_content", text: "old" } });
+        expect(
+            composerContext({ editingEvent: editing, replyingTo, textContent: "old" }, ctx),
+        ).toEqual({ key: "edit:42", mode: "edit", quote: "old", text: "old" });
+    });
+});
+
+describe("a message's menu", () => {
+    const offers = (...actions: MessageMenuAction[]) => new Set<MessageMenuAction>(actions);
+
+    test("lists what the message offers in the menu's order, with what removes it last, apart", () => {
+        const items = messageMenuItems(
+            offers("delete", "copy", "forward", "reply", "pin", "report", "remind", "block_user"),
+        );
+        expect(items.map((i) => i.action)).toEqual([
+            "reply",
+            "forward",
+            "copy",
+            "pin",
+            "remind",
+            "separator",
+            "block_user",
+            "report",
+            "delete",
+        ]);
+        expect(items.find((i) => i.action === "delete")).toEqual({
+            action: "delete",
+            label: "deleteMessage",
+            mask: "var(--icon-trash)",
+            variant: "danger",
+        });
+    });
+
+    test("has no separator when only one side has anything", () => {
+        expect(messageMenuItems(offers("copy")).map((i) => i.action)).toEqual(["copy"]);
+        expect(messageMenuItems(offers("delete_for_me")).map((i) => i.action)).toEqual([
+            "delete_for_me",
+        ]);
+    });
+
+    test("leaves out what this screen doesn't carry out", () => {
+        expect(messageMenuItems(offers("start_thread", "collapse_proposal"))).toEqual([]);
+    });
+});
+
+describe("the text the composer starts from", () => {
+    test("is the chat's draft", () => {
+        expect(composerStartText(undefined)).toBe("");
+        expect(composerStartText({ textContent: "hello" })).toBe("hello");
+    });
+
+    test("mid-edit, is what was being written before the edit, not the edited message", () => {
+        const editing = message({ sender: "me", content: { kind: "text_content", text: "old" } });
+        expect(
+            composerStartText({
+                editingEvent: editing,
+                textContent: "old",
+                beforeEdit: { textContent: "hello" },
+            }),
+        ).toBe("hello");
+        expect(composerStartText({ editingEvent: editing, textContent: "old" })).toBe("");
     });
 });

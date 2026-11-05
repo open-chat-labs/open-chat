@@ -10,7 +10,15 @@
         Subtitle,
         Switch,
     } from "component-lib";
-    import { iconSize, type ChatIdentifier, type OpenChat } from "@client";
+    import {
+        iconSize,
+        isCsamReport,
+        REPORT_REASONS,
+        reportReasonText,
+        type ChatIdentifier,
+        type OpenChat,
+        type ReportReason,
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Flag from "svelte-material-icons/Flag.svelte";
@@ -34,36 +42,26 @@
 
     let deleteMessage = $state(false);
     const busy = $state(false);
-    let selectedReason = $state<string>();
-    const reasons = [
-        "report.pleaseSelect",
-        "report.threat",
-        "report.child",
-        "report.nonConsensual",
-        "report.sexual",
-        "report.selfHarm",
-        "report.violence",
-        "report.scam",
-    ];
+    let selectedReason = $state<ReportReason>();
 
     // "child sexual content": the report is treated like a classifier detection and the
     // auto-sanction applies immediately, so it gets an explicit warning
-    let csam = $derived(selectedReason === "report.child");
+    let csam = $derived(isCsamReport(selectedReason));
     let valid = $derived(selectedReason !== undefined);
 
     function createReport() {
-        report();
+        if (selectedReason !== undefined) report(selectedReason);
         onClose();
     }
 
-    function report() {
+    function report(reason: ReportReason) {
         client
             .reportMessage(
                 chatId,
                 threadRootMessageIndex,
                 messageId,
                 canDelete && deleteMessage,
-                csam,
+                reason,
             )
             .then((success) => {
                 if (success) {
@@ -94,7 +92,7 @@
                     <Translatable resourceKey={i18nKey("Select a reason for your report")} />
                 {/snippet}
                 {#snippet selectedValue(reason)}
-                    <Translatable resourceKey={i18nKey(reason)} />
+                    <Translatable resourceKey={reportReasonText(reason)} />
                 {/snippet}
                 {#snippet selectOptions(onSelect)}
                     <Column
@@ -104,14 +102,14 @@
                         padding={"lg"}
                         gap={"lg"}
                     >
-                        {#each reasons as reason}
+                        {#each REPORT_REASONS as reason}
                             <Option
                                 padding={"xs"}
                                 selected={false}
                                 value={reason}
                                 onClick={onSelect}
                             >
-                                <Translatable resourceKey={i18nKey(reason)} />
+                                <Translatable resourceKey={reportReasonText(reason)} />
                             </Option>
                         {/each}
                     </Column>
