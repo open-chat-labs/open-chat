@@ -79,6 +79,9 @@
   }
 
   // focus moves into the sheet, and back to what had it once the sheet is gone
+  // At rest the sheet has no transform: one would make it the containing block of the fixed layers inside it (a
+  // SettingsValue's menu, toasts), confining them to the sheet, and a tap above it would reach the sheet's veil.
+
   function focusSheet(node: HTMLElement) {
     const returnTo = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     node.focus({ preventScroll: true });
@@ -99,7 +102,7 @@
       class="sheet"
       class:dragging
       style:height
-      style:transform={presence.leaving ? 'translateY(100%)' : `translateY(${offset}px)`}
+      style:transform={presence.leaving ? 'translateY(100%)' : offset || dragging ? `translateY(${offset}px)` : undefined}
       role="dialog"
       aria-modal="true"
       aria-label={t(title || label)}

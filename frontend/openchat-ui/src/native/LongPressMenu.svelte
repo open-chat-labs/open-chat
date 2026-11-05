@@ -85,26 +85,43 @@
     onSelect(id);
   }
 
+  // focus goes back to the row once it's visible again (its visibility comes back after this teardown)
   function returnFocus(_node: HTMLElement, to: HTMLElement | null) {
     return {
       destroy() {
-        if (to?.isConnected) to.focus({ preventScroll: true });
+        setTimeout(() => {
+          if (to?.isConnected) to.focus({ preventScroll: true });
+        }, 0);
       },
     };
+  }
+
+  // Tab leaves a menu (it closes, and focus goes back to the row), as menus do
+  function keydown(e: KeyboardEvent) {
+    if (e.key !== 'Tab' || presence.leaving) return;
+    e.preventDefault();
+    onClose();
   }
 </script>
 
 {#if presence.mounted && lifted}
-  <div class="layer" class:closing={presence.leaving} use:modal={presence.leaving ? undefined : onClose} use:returnFocus={lifted}>
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="layer" class:closing={presence.leaving} use:modal={presence.leaving ? undefined : onClose} use:returnFocus={lifted} onkeydown={keydown}>
     <!-- Esc closes it too -->
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div class="veil" onclick={onClose}></div>
     <div class="frame" bind:this={frame}>
       {#if placement}
-        <div class="card" style:top="{placement.card.top}px" style:inset-inline-start="{placement.card.inlineStart}px" style:width="{placement.card.width}px" aria-hidden="true">
+        <div class="card" style:top="{placement.card.top}px" style:inset-inline-start="{placement.card.inlineStart}px" style:width="{placement.card.width}px" aria-hidden="true" inert>
           {#if row}{@render row()}{:else}<div class="clone" use:clone={lifted}></div>{/if}
         </div>
-        <div class="pop" style:top="{placement.menu.top}px" style:inset-inline-start="{placement.menu.inlineStart}px" style:transform-origin={placement.origin}>
+        <div
+          class="pop"
+          style:top="{placement.menu.top}px"
+          style:inset-inline-start="{placement.menu.inlineStart}px"
+          style:max-height="{placement.menu.maxHeight}px"
+          style:transform-origin={placement.origin}
+        >
           <NativeMenu {items} {label} onSelect={pick} />
         </div>
       {/if}

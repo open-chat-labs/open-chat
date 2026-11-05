@@ -31,7 +31,8 @@ export type AnchoredPlacement =
 export type LiftPlacement = {
   /** The lifted copy of the row. */
   card: { top: number; inlineStart: number; width: number };
-  menu: { top: number; inlineStart: number };
+  /** The menu scrolls past maxHeight. */
+  menu: { top: number; inlineStart: number; maxHeight: number };
   side: 'below' | 'above';
   /** transform-origin of the menu: the corner nearest the row. */
   origin: string;
@@ -56,24 +57,30 @@ export function anchoredPlacement(anchor: Rect, frame: Rect, height: number, rtl
 }
 
 /** The long-press menu: the row lifts where it is (a small target as a wider card, kept on screen), and the menu opens
- *  8px under it, 8px in from its start, when there's room (BELOW_SPARE to spare), else 8px over it. */
+ *  8px under it, 8px in from its start, when there's room (BELOW_SPARE to spare), else 8px over it if it fits there;
+ *  fitting neither, it takes the roomier side and scrolls past `maxHeight`, never covering the row. */
 export function liftPlacement(row: Rect, frame: Rect, height: number, rtl: boolean): LiftPlacement {
   const start = rtl ? frame.left + frame.width - (row.left + row.width) : row.left - frame.left;
   const top = row.top - frame.top;
   const small = row.width < SMALL_TARGET;
-  const below = frame.height - (top + row.height) - BELOW_SPARE > height;
 
   const width = small ? LIFT_MENU_WIDTH : row.width;
   const cardHeight = small ? SMALL_CARD_HEIGHT : row.height;
-  const cardStart = small ? clamp(start, EDGE, frame.width - width - EDGE) : start;
-  const cardTop = small && !below ? Math.min(top, frame.height - cardHeight - EDGE) : top;
+  // over the row, a small target's card moves up to stay on screen
+  const cardTopAbove = small ? Math.min(top, frame.height - cardHeight - EDGE) : top;
+  const roomBelow = frame.height - (top + cardHeight + 8) - EDGE;
+  const roomAbove = cardTopAbove - 8 - EDGE;
+  const fitsBelow = frame.height - (top + row.height) - BELOW_SPARE > height;
+  const below = fitsBelow || (roomAbove < height && roomBelow > roomAbove);
 
+  const cardStart = small ? clamp(start, EDGE, frame.width - width - EDGE) : start;
+  const cardTop = below ? top : cardTopAbove;
   const menuStart = small ? cardStart : clamp(start + 8, EDGE, frame.width - LIFT_MENU_WIDTH - EDGE);
   const menuTop = below ? cardTop + cardHeight + 8 : Math.max(EDGE, cardTop - height - 8);
   const corner = rtl ? 'right' : 'left';
   return {
     card: { top: cardTop, inlineStart: cardStart, width },
-    menu: { top: menuTop, inlineStart: menuStart },
+    menu: { top: menuTop, inlineStart: menuStart, maxHeight: Math.max(0, below ? roomBelow : roomAbove) },
     side: below ? 'below' : 'above',
     origin: `${below ? 'top' : 'bottom'} ${corner}`,
   };

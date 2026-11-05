@@ -1,7 +1,8 @@
 <!-- Native anchored menu (native design notes §1 Sheets, menus): a short list (a header's kebab, a settings value)
      opening from the button or row that asked for it. It sits 4px under the anchor with its end edge 4px inside the
      anchor's, or over it near the bottom (menuPlacement.ts), and scales in from that corner in 160ms. Submenus
-     replace the rows in place, under a back row. A tap outside or Esc closes it, and focus goes back to the anchor.
+     replace the rows in place, under a back row. A tap outside, Esc or Tab closes it, and focus goes back to the
+     anchor.
      It's a fixed layer over the native root, kept clear of the safe areas. Reduced motion: it just appears. -->
 <script lang="ts">
   import { modal } from '../lib/behaviours/modal';
@@ -40,6 +41,13 @@
     onSelect(id);
   }
 
+  // Tab leaves a menu (it closes, and focus goes back to the anchor), as menus do
+  function keydown(e: KeyboardEvent) {
+    if (e.key !== 'Tab') return;
+    e.preventDefault();
+    onClose();
+  }
+
   // focus goes back to the anchor when the menu goes away
   function returnFocus(_node: HTMLElement, to: HTMLElement | null) {
     return {
@@ -51,7 +59,8 @@
 </script>
 
 {#if anchor}
-  <div class="layer" use:modal={onClose} use:returnFocus={anchor}>
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="layer" use:modal={onClose} use:returnFocus={anchor} onkeydown={keydown}>
     <!-- Esc closes it too -->
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div class="outside" onclick={onClose}></div>

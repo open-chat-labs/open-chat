@@ -35,6 +35,7 @@
   // bottom sheet: short settings that fit their content, and a picker whose steps keep one height
   let settingsOpen = $state(false);
   const pollSettings = $state({ publicVotes: true, multiple: false, lock: false });
+  let pollEnds = $state('1d');
   let pickerOpen = $state(false);
   let pickerQuery = $state('');
   let picked = $state<(typeof nativePeople)[number] | null>(null);
@@ -172,13 +173,18 @@
 
   <Section {...sec(native, 'native-bottom-sheet')}>
     <div class="grid2">
-      <NativeFrame {os} {mode} {accent} label="Fits its content · title · Done" height={560}>
+      <NativeFrame {os} {mode} {accent} label="Fits its content · title · Done · a value menu inside" height={560}>
         <div class="screen"><Button label="docs.native.sheet.openSettings" variant="secondary" onClick={() => (settingsOpen = true)} /></div>
         <BottomSheet open={settingsOpen} onClose={() => (settingsOpen = false)} title="docs.native.sheet.settings" onAction={() => (settingsOpen = false)}>
           <div class="sheet-settings">
             <Toggle label="docs.native.sheet.publicVotes" help="docs.native.sheet.publicVotesHelp" on={pollSettings.publicVotes} onChange={(on) => (pollSettings.publicVotes = on)} />
             <Toggle label="docs.native.sheet.multiple" help="docs.native.sheet.multipleHelp" on={pollSettings.multiple} onChange={(on) => (pollSettings.multiple = on)} />
             <Toggle label="docs.native.sheet.lock" help="docs.native.sheet.lockHelp" on={pollSettings.lock} onChange={(on) => (pollSettings.lock = on)} />
+          </div>
+          <div class="sheet-value">
+            <SettingsGroup>
+              <SettingsValue label="docs.native.sheet.endsAfter" options={[{ id: '1h', label: '1 hour' }, { id: '1d', label: '1 day' }, { id: '1w', label: '1 week' }]} value={pollEnds} onChange={(id) => (pollEnds = id)} />
+            </SettingsGroup>
           </div>
         </BottomSheet>
       </NativeFrame>
@@ -387,7 +393,8 @@
   .chit { width: var(--touch-target); height: var(--touch-target); @include flex-center; padding: 0; border: 0; background: none; cursor: pointer; }
   .chit-icon { @include icon(zap, 20px, var(--status-chit)); }
   .screen.column { flex-direction: column; gap: 12px; }
-  .sheet-settings { display: flex; flex-direction: column; gap: 32px; padding: 8px 20px 40px; }
+  .sheet-settings { display: flex; flex-direction: column; gap: 32px; padding: 8px 20px 24px; }
+  .sheet-value { padding: 0 16px 24px; }
   .sheet-heading { display: block; padding: 6px 20px 12px; font: 800 20px/1.2 var(--font-sans); }
   .sheet-search { flex: none; padding: 0 16px 10px; }
   .sheet-rows { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 0 16px 24px; }

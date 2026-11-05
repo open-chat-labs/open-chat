@@ -51,7 +51,7 @@ describe('liftPlacement', () => {
   test('a row lifts in place, and the menu opens 8px under it, 8px in from its start', () => {
     expect(liftPlacement(row, frame, 300, false)).toEqual({
       card: { top: 200, inlineStart: 6, width: 388 },
-      menu: { top: 280, inlineStart: 14 },
+      menu: { top: 280, inlineStart: 14, maxHeight: 508 },
       side: 'below',
       origin: 'top left',
     });
@@ -65,8 +65,21 @@ describe('liftPlacement', () => {
     expect(liftPlacement({ ...row, top: 404 }, frame, 300, false).side).toBe('above');
   });
 
-  test('over the row, the menu stays 12px from the top', () => {
-    expect(liftPlacement({ ...row, top: 150 }, { ...frame, height: 400 }, 300, false).menu.top).toBe(12);
+  test('fitting neither side, it takes the roomier one and scrolls, never covering the row', () => {
+    // 647px frame, a 72px row at 280, six rows (311px): 271px to spare below isn't enough, nor 260px above
+    const tall = { ...frame, height: 647 };
+    const mid = { ...row, top: 280 };
+    expect(liftPlacement(mid, tall, 311, false)).toMatchObject({ side: 'below', menu: { top: 360, maxHeight: 275 } });
+    // higher on the screen, more room below than above: below, scrolling
+    expect(liftPlacement({ ...row, top: 150 }, { ...frame, height: 400 }, 300, false)).toMatchObject({ side: 'below', menu: { top: 230, maxHeight: 158 } });
+    // lower, more room above: from 12px down to 8px over the row
+    const low = liftPlacement({ ...row, top: 250 }, { ...frame, height: 400 }, 300, false);
+    expect(low).toMatchObject({ side: 'above', menu: { top: 12, maxHeight: 230 } });
+    expect(low.menu.top + low.menu.maxHeight).toBe(250 - 8);
+  });
+
+  test('a menu that fits keeps its full height as the limit', () => {
+    expect(liftPlacement({ ...row, top: 600 }, frame, 300, false).menu).toMatchObject({ top: 292, maxHeight: 580 });
   });
 
   test('the menu keeps 12px from the frame end', () => {

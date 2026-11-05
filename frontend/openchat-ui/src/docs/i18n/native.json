@@ -32,7 +32,8 @@
         "who": "Who told you about OpenChat?",
         "search": "Search people",
         "thatsThem": "That's them",
-        "someoneElse": "Pick someone else"
+        "someoneElse": "Pick someone else",
+        "endsAfter": "Ends after"
       },
       "menu": {
         "options": "Chat options",

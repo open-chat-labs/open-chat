@@ -41,7 +41,6 @@
     class="input"
     value={code}
     oninput={input}
-    maxlength={length}
     autocapitalize="characters"
     autocomplete="one-time-code"
     autocorrect="off"
@@ -66,6 +65,7 @@
   }
 
   // the field the tiles stand for: invisible over them, so a tap anywhere focuses it. 16px, or iOS zooms in on focus.
+  // No maxlength: a pasted or autofilled code may carry spaces or a dash, which normaliseCode drops before it cuts.
   .input {
     position: absolute;
     inset: 0;

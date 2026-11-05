@@ -65,6 +65,30 @@ describe('LongPressGesture', () => {
     expect(fire).toHaveBeenCalledTimes(1);
   });
 
+  test("a keyboard context menu (the Menu key, Shift+F10) or a right click swallows no click: the next Enter opens the row", () => {
+    gesture.contextMenu();
+    expect(gesture.takeClick()).toBe(false);
+  });
+
+  test('each context menu outside a press opens it: a second right click, or the Menu key again', () => {
+    gesture.contextMenu();
+    gesture.contextMenu();
+    expect(fire).toHaveBeenCalledTimes(2);
+    gesture.down(100, 100);
+    vi.advanceTimersByTime(450);
+    gesture.up();
+    gesture.contextMenu();
+    expect(fire).toHaveBeenCalledTimes(4);
+  });
+
+  test("Android's long-press still swallows the click that ends it", () => {
+    gesture.down(100, 100);
+    vi.advanceTimersByTime(450);
+    gesture.contextMenu();
+    gesture.up();
+    expect(gesture.takeClick()).toBe(true);
+  });
+
   test("Android's context menu after its own long-press doesn't open it twice", () => {
     gesture.down(100, 100);
     vi.advanceTimersByTime(450);

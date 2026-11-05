@@ -20,6 +20,8 @@ export class LongPressGesture {
   #fired = false;
   /** The next click is this press's own: swallow it. */
   #swallow = false;
+  /** A pointer is down: what opens the menu now ends in a click. */
+  #pressing = false;
 
   constructor(fire: () => void, delay: number = LONG_PRESS_MS) {
     this.#fire = fire;
@@ -31,6 +33,7 @@ export class LongPressGesture {
     clearTimeout(this.#timer);
     this.#fired = false;
     this.#swallow = false;
+    this.#pressing = true;
     this.#x = x;
     this.#y = y;
     this.#timer = setTimeout(() => this.#trigger(), this.#delay);
@@ -41,15 +44,17 @@ export class LongPressGesture {
     if (Math.abs(x - this.#x) + Math.abs(y - this.#y) > MOVE_TOLERANCE) clearTimeout(this.#timer);
   }
 
-  /** The press ends (up or cancelled) before the delay: nothing opens. */
+  /** The press ends (up or cancelled): before the delay, nothing opens. */
   up(): void {
     clearTimeout(this.#timer);
+    this.#pressing = false;
   }
 
-  /** A context menu: opens the menu now, unless this press already did (Android fires one after its own delay). */
+  /** A context menu: opens the menu now, unless this press already did (Android fires one after its own delay). One
+   *  from the keyboard (the Menu key, Shift+F10) or a right click ends in no click, so nothing is swallowed. */
   contextMenu(): void {
     clearTimeout(this.#timer);
-    if (!this.#fired) this.#trigger();
+    if (!(this.#pressing && this.#fired)) this.#trigger();
   }
 
   /** Whether a click should be swallowed: the one that ends a press that opened the menu. Answers true once. */
@@ -66,7 +71,7 @@ export class LongPressGesture {
 
   #trigger(): void {
     this.#fired = true;
-    this.#swallow = true;
+    this.#swallow = this.#pressing;
     this.#fire();
   }
 }
