@@ -738,6 +738,7 @@ import {
     communityCreationFailure,
     communityUpdateResult,
     isCommunityLapsed,
+    isPreviewingCommunity,
 } from "./utils/community";
 import { verifyCredential } from "./utils/credentials";
 import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
@@ -2588,6 +2589,10 @@ export class OpenChat {
         switch (resp.kind) {
             case "success":
                 this.#miniApps?.joinedChat(chat.id);
+                // a channel's join joins its community too
+                if (chat.id.kind === "channel") {
+                    this.#dropPreviewOrigin({ kind: "community", communityId: chat.id.communityId });
+                }
                 return resp;
             case "gate_check_failed": {
                 // With no gates to show the user would see nothing, so report a plain failure
@@ -4801,10 +4806,17 @@ export class OpenChat {
 
     /**
      * Where cancelling a community's preview goes back to, if not the default scope (Explore or
-     * `/welcome`, which opened it). Kept until that preview is cancelled, or another is opened.
+     * `/welcome`, which opened it). Kept until that preview is cancelled, the community is joined
+     * or left, or another is opened.
      */
     setCommunityPreviewOrigin(communityId: string, path: string): void {
         communityPreviewOriginStore.set({ communityId, path });
+    }
+
+    #dropPreviewOrigin(id: CommunityIdentifier): void {
+        if (communityPreviewOriginStore.value?.communityId === id.communityId) {
+            communityPreviewOriginStore.set(undefined);
+        }
     }
 
     /**
@@ -4823,10 +4835,7 @@ export class OpenChat {
                   : undefined;
         const community =
             communityId === undefined ? undefined : communitiesStore.value.get(communityId);
-        if (
-            community !== undefined &&
-            (community.membership.role === ROLE_NONE || community.membership.lapsed)
-        ) {
+        if (community !== undefined && isPreviewingCommunity(community)) {
             const origin = communityPreviewOriginStore.value;
             communityPreviewOriginStore.set(undefined);
             this.removeCommunity(community.id);
@@ -4848,6 +4857,8 @@ export class OpenChat {
     // community we just left, drop the preview (and any of its channels we were
     // previewing) so that leaving by any route behaves the same as cancelling.
     removeCommunityIfPreviewing(id: CommunityIdentifier): void {
+        // whichever way the community was left, Back no longer goes to where it was opened from
+        this.#dropPreviewOrigin(id);
         const preview = localUpdates.getPreviewingCommunity(id);
         if (preview === undefined) return;
         preview.channels.forEach((c) => localUpdates.removeGroupPreview(c.id));
@@ -6783,10 +6794,7 @@ export class OpenChat {
         const gates: EnhancedAccessGate[] = [];
         const community =
             chat.kind === "channel" ? this.getCommunityForChannel(chat.id) : undefined;
-        if (
-            community !== undefined &&
-            (community.membership.role === ROLE_NONE || community.membership.lapsed)
-        ) {
+        if (community !== undefined && isPreviewingCommunity(community)) {
             gates.push(...this.#accessGatesForCommunity(community, excludeInvited));
         }
         if (
@@ -12641,7 +12649,7 @@ export class OpenChat {
         // We may have got here by replaying a join captured before login, in which case we may
         // already be a member
         const current = communitiesStore.value.get(community.id) ?? community;
-        if (current.membership.role !== ROLE_NONE && !current.membership.lapsed) {
+        if (!isPreviewingCommunity(current)) {
             return { kind: "skipped" };
         }
 
@@ -12658,7 +12666,10 @@ export class OpenChat {
             gateCheck?.paymentApprovals ?? new Map(),
             gateCheck?.compositeGateIndex,
         );
-        if (resp.kind === "success") return resp;
+        if (resp.kind === "success") {
+            this.#dropPreviewOrigin(community.id);
+            return resp;
+        }
         if (resp.kind === "gate_check_failed") {
             // With no gates to show the user would see nothing, so report a plain failure
             const gates = this.#accessGatesForCommunity(community);

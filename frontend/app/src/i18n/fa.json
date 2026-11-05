@@ -87,6 +87,7 @@
         "paymentApprovalMessage": "برای پیوستن به این {level} باید توکن های **{amount}** {token} را پرداخت کنید.",
         "paymentDistributionMessage": "از این میزان، 98٪ به مالک(های) {level} و 2٪ به خزانه OpenChat SNS تعلق می گیرد.",
         "paymentFailed": "پرداخت ناموفق",
+        "paymentLeavesBalanceShort": "پرداخت از موجودی شما کسر می‌شود و موجودی از حداقل لازم کمتر خواهد شد. موجودی را افزایش دهید و دوباره تلاش کنید.",
         "predefinedCredentialIssuer": "صادرکننده اعتبار از پیش تعریف شده",
         "previewGatedHint": "عضویت {count} شرط دارد؛ پیش از هر پرداختی آن‌ها را می‌بینید.",
         "previewHint": "برای ارسال پیام عضو شوید.",

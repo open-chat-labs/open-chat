@@ -99,6 +99,46 @@ describe("the join flow", () => {
         expect(join.joining).toBeUndefined();
     });
 
+    // a second join started while the first is on its way stays busy until it settles itself
+    test("one join settling leaves another still on its way joining", async () => {
+        const answers: ((outcome: JoinOutcome) => void)[] = [];
+        const request = vi.fn(() => new Promise<JoinOutcome>((resolve) => answers.push(resolve)));
+        const client: JoinClient = { joinGroup: request, joinCommunity: request };
+        const join = new JoinFlow<MultiUserChat>((c, target, check) => c.joinGroup(target, check));
+        const other = { ...chat, name: "other" };
+
+        const first = join.join(client, chat);
+        const second = join.join(client, other);
+        answers[0]({ kind: "success" });
+        await first;
+        expect(join.joining).toBe(other);
+
+        answers[1]({ kind: "success" });
+        await second;
+        expect(join.joining).toBeUndefined();
+    });
+
+    // the web's gate dialog stays open while the join doesn't go through, and sends it again
+    test("submitting the gates keeps the join while it doesn't go through", async () => {
+        const { join, client, request } = flow(
+            { kind: "needs_gate_evaluation", gates: [gate] },
+            new Error("PIN prompt dismissed"),
+            { kind: "failed", message: i18nKey("joinGroupFailed") },
+            { kind: "success" },
+        );
+        await join.join(client, chat);
+
+        expect(await join.submitGates(client, gateCheck)).toEqual({ kind: "cancelled" });
+        expect(join.evaluating).toBe(chat);
+        expect(await join.submitGates(client, gateCheck)).toMatchObject({ kind: "failed" });
+        expect(join.evaluating).toBe(chat);
+
+        expect(await join.submitGates(client, gateCheck)).toEqual({ kind: "joined" });
+        expect(request).toHaveBeenLastCalledWith(chat, gateCheck);
+        expect(join.evaluating).toBeUndefined();
+        expect(await join.submitGates(client, gateCheck)).toEqual({ kind: "not_sent" });
+    });
+
     test("a dismissed PIN prompt is a cancelled join, with nothing to say", async () => {
         const { join, client } = flow(new Error("PIN prompt dismissed"));
 

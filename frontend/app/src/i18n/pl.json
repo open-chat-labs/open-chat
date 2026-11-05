@@ -87,6 +87,7 @@
         "paymentApprovalMessage": "Aby dołączyć do tego {level}, musisz zapłacić **{amount}** {token} tokenów.",
         "paymentDistributionMessage": "Z tego 98% trafia do właścicieli {level}, a 2% do skarbca OpenChat SNS.",
         "paymentFailed": "Płatność nie powiodła się",
+        "paymentLeavesBalanceShort": "Płatność zostanie pobrana z Twojego salda, które spadnie wtedy poniżej wymaganego minimum. Doładuj konto i spróbuj ponownie.",
         "predefinedCredentialIssuer": "Predefiniowany wystawca danych uwierzytelniających",
         "previewGatedHint": "Dołączenie ma {count, plural, one {# wymaganie} few {# wymagania} other {# wymagań}}; zobaczysz je, zanim cokolwiek zostanie pobrane.",
         "previewHint": "Dołącz, aby wysyłać wiadomości.",

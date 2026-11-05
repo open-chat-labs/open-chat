@@ -71,6 +71,7 @@ export {
 export {
     communityChanges,
     isCommunityMember,
+    isPreviewingCommunity,
     isPrivateCommunityPreview,
 } from "./utils/community";
 export { userMessagePermissionFor } from "./utils/botMessagePermissions";

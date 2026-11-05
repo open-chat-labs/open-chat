@@ -87,6 +87,7 @@
         "paymentApprovalMessage": "为了加入此 {level}，您需要支付 **{amount}** {token} 代币。",
         "paymentDistributionMessage": "其中，98% 归 {level} 所有者所有，2% 归 OpenChat SNS 金库。",
         "paymentFailed": "支付失败",
+        "paymentLeavesBalanceShort": "付款将从您的余额中扣除，扣除后余额将低于所需的最低余额。请充值后重试。",
         "predefinedCredentialIssuer": "预定义凭证颁发者",
         "previewGatedHint": "加入需要满足 {count} 项条件；在扣款之前你会看到它们。",
         "previewHint": "加入后即可发送消息。",

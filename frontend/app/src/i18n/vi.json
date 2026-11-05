@@ -87,6 +87,7 @@
         "paymentApprovalMessage": "Để tham gia {level} này, bạn phải thanh toán mã thông báo **{amount}** {token}.",
         "paymentDistributionMessage": "Trong số này, 98% thuộc về (các) chủ sở hữu {level} và 2% thuộc về kho bạc OpenChat SNS.",
         "paymentFailed": "Thanh toán không thành công",
+        "paymentLeavesBalanceShort": "Khoản thanh toán được trừ vào số dư của bạn, khiến số dư thấp hơn mức tối thiểu yêu cầu. Hãy nạp thêm và thử lại.",
         "predefinedCredentialIssuer": "Nhà phát hành thông tin xác thực được xác định trước",
         "previewGatedHint": "Tham gia có {count} yêu cầu; bạn sẽ thấy chúng trước khi bị trừ bất kỳ khoản nào.",
         "previewHint": "Tham gia để gửi tin nhắn.",

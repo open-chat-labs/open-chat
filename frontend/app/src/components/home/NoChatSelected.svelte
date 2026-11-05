@@ -2,7 +2,7 @@
     import {
         chatListScopeStore,
         isLocked,
-        ROLE_NONE,
+        isPreviewingCommunity,
         selectedCommunitySummaryStore,
         type ChatListScope,
         type OpenChat,
@@ -44,8 +44,8 @@
         }
     }
     let previewingCommunity = $derived(
-        $selectedCommunitySummaryStore?.membership.role === ROLE_NONE ||
-            $selectedCommunitySummaryStore?.membership.lapsed,
+        $selectedCommunitySummaryStore !== undefined &&
+            isPreviewingCommunity($selectedCommunitySummaryStore),
     );
     let locked = $derived(isLocked($selectedCommunitySummaryStore?.gateConfig?.gate));
     let [title, message] = $derived(getMessageForScope($chatListScopeStore.kind));

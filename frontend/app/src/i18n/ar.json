@@ -87,6 +87,7 @@
         "paymentApprovalMessage": "لكي تتمكن من الانضمام إلى {level}، يتعين عليك دفع **{amount}** {token} من الرموز.",
         "paymentDistributionMessage": "من هذا، 98% تذهب إلى مالكي {level} و2% إلى خزانة OpenChat SNS.",
         "paymentFailed": "فشل الدفع",
+        "paymentLeavesBalanceShort": "تُخصم الدفعة من رصيدك، فيصبح أقل من الحد الأدنى المطلوب. اشحن رصيدك وحاول مرة أخرى.",
         "predefinedCredentialIssuer": "جهة إصدار بيانات الاعتماد المحددة مسبقًا",
         "previewGatedHint": "للانضمام {count, plural, one {متطلب واحد} other {# متطلبات}}؛ ستراها قبل أن يُخصم أي شيء.",
         "previewHint": "انضم لإرسال الرسائل.",

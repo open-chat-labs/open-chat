@@ -87,6 +87,7 @@
         "paymentApprovalMessage": "Щоб приєднатися до {level}, вам потрібно заплатити **{amount}** {token} токенів.",
         "paymentDistributionMessage": "З них 98% надходять власникам (власникам) {level}, а 2% — у скарбницю OpenChat SNS.",
         "paymentFailed": "Платіж не вдалося",
+        "paymentLeavesBalanceShort": "Платіж списується з вашого балансу, і він стане нижчим за потрібний мінімальний баланс. Поповніть баланс і спробуйте ще раз.",
         "predefinedCredentialIssuer": "Попередньо визначений видавець облікових даних",
         "previewGatedHint": "Для приєднання {count, plural, one {# вимога} few {# вимоги} many {# вимог} other {# вимоги}}; ви побачите їх до будь-якого списання.",
         "previewHint": "Приєднайтеся, щоб надсилати повідомлення.",

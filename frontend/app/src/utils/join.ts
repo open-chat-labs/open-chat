@@ -1,5 +1,5 @@
-import { publish } from "@client";
-import type { JoinStep } from "@src/logic/join/joinFlow.svelte";
+import { publish, type OpenChat } from "@client";
+import { startJoin, type JoinStep, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
 import { toastStore } from "@src/stores/toast";
 
 /**
@@ -24,4 +24,12 @@ export function showJoinStep(step: JoinStep, level: "group" | "community"): void
         default:
             step satisfies never;
     }
+}
+
+/** Joins a group, channel or community from the old trees, and shows what comes of it. */
+export async function joinFromOldTree(
+    client: Pick<OpenChat, "joinGroup" | "joinCommunity">,
+    target: JoinTarget,
+): Promise<void> {
+    showJoinStep(await startJoin(client, target), target.kind === "group" ? "group" : "community");
 }

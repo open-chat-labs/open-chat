@@ -96,7 +96,10 @@
 </script>
 
 {#if block?.kind === "preview" && preview !== undefined}
-    <CommunityPreviewBar {...preview} />
+    <!-- the gap above it the composer has (its top padding), off the messages -->
+    <div class="preview">
+        <CommunityPreviewBar {...preview} />
+    </div>
 {:else if blocked !== undefined}
     <div class="blocked">
         <Banner tone={blocked.tone} text={$_(blocked.key)} />
@@ -115,6 +118,12 @@
 {/if}
 
 <style lang="scss">
+    .preview {
+        display: flex;
+        flex-direction: column;
+        padding-top: var(--space-12);
+    }
+
     .blocked {
         padding: var(--space-12) var(--space-14);
     }

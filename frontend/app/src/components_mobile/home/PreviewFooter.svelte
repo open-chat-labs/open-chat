@@ -28,7 +28,7 @@
 
     let gates = $derived(client.accessGatesForChat(chat));
     // the suspended unique-person gate is no requirement
-    let hasGates = $derived(requirementCount(gates) > 0);
+    let hasGates = $derived(requirementCount(gates, () => false) > 0);
     let locked = $derived(gates.some((g) => isLocked(g)));
     let joining = $derived(groupJoin.joining !== undefined);
 

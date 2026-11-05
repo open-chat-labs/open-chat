@@ -99,8 +99,8 @@ export type LocalDialog =
     // the wallet's settings: its token list, the transfer PIN and the display currency (6d)
     | { kind: "wallet_settings" }
     // the requirements joining a group, channel or community has (`gates`, a level at a time),
-    // paid for and met before the join is carried on (8b)
-    | { kind: "join_gate"; target: JoinTarget; gates: EnhancedAccessGate[] };
+    // paid for and met before the join is carried on (8b); `name` is what "You joined …" names
+    | { kind: "join_gate"; target: JoinTarget; gates: EnhancedAccessGate[]; name: string };
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";

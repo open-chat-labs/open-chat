@@ -20,8 +20,9 @@ export type GateChoice = {
 };
 
 export type GateChoiceResult =
-    // the gate isn't met yet: nothing moves on
-    | { kind: "incomplete" }
+    // the gate isn't met yet: nothing moves on, and nothing of the choice is kept. `balanceShort`:
+    // a payment chosen comes out of a balance the gate also asks for, leaving it short
+    | { kind: "incomplete"; balanceShort: boolean }
     // this level's gate is met, and the next level's is up (a gated channel in a gated community)
     | { kind: "next_level" }
     // every level is met: join with this
@@ -39,9 +40,11 @@ export function recordGateChoice(
     approvalFee: (ledger: string) => bigint | undefined,
 ): GateChoiceResult {
     const gate = evaluation.gate;
-    if (gate === undefined) return { kind: "incomplete" };
+    if (gate === undefined) return { kind: "incomplete", balanceShort: false };
     const any = isCompositeGate(gate) && gate.operator === "or";
     const leaves = evaluation.leaves;
+    const rollBack = evaluation.checkpoint();
+    const paidLedgers = new Set<string>();
 
     for (const leaf of leaves) {
         if (leaf.kind !== "payment_gate" || !choice.paid.includes(leaf.originalIndex)) continue;
@@ -52,6 +55,7 @@ export function recordGateChoice(
             amount: leaf.amount,
             approvalFee: fee,
         });
+        paidLedgers.add(leaf.ledgerCanister);
     }
     if (choice.neuronConfirmed && !(any && choice.paid.length > 0)) {
         for (const leaf of leaves) {
@@ -59,7 +63,16 @@ export function recordGateChoice(
         }
     }
 
-    if (!evaluation.complete) return { kind: "incomplete" };
+    if (!evaluation.complete) {
+        const balanceShort = evaluation.leaves.some(
+            (l) =>
+                l.kind === "token_balance_gate" &&
+                !l.satisfied &&
+                paidLedgers.has(l.ledgerCanister),
+        );
+        rollBack();
+        return { kind: "incomplete", balanceShort };
+    }
     const gateCheck = evaluation.next();
     return gateCheck === undefined ? { kind: "next_level" } : { kind: "ready", gateCheck };
 }

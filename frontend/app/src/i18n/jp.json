@@ -87,6 +87,7 @@
         "paymentApprovalMessage": "この {level} に参加するには、**{amount}** {token} トークンを支払う必要があります。",
         "paymentDistributionMessage": "このうち 98% は {level} の所有者に、2% は OpenChat SNS の財務省に寄付されます。",
         "paymentFailed": "支払いに失敗しました",
+        "paymentLeavesBalanceShort": "支払いは残高から差し引かれるため、必要な最低残高を下回ってしまいます。チャージしてもう一度お試しください。",
         "predefinedCredentialIssuer": "事前定義された認証情報発行者",
         "previewGatedHint": "参加には {count} 件の条件があります。請求される前に確認できます。",
         "previewHint": "参加するとメッセージを送信できます。",

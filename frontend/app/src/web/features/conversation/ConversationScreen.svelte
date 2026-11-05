@@ -22,6 +22,7 @@
         communitiesStore,
         communityPreviewOriginStore,
         cryptoBalanceStore,
+        currentUserStore,
         cryptoLookup,
         currentUserIdStore,
         eventsStore,
@@ -126,7 +127,7 @@
     import { profileClickedEvent } from "@src/web-components/profileLink";
     import { navigate } from "@src/utils/navigation";
     import { isJoining, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
-    import { previewBar } from "@src/logic/join/previewBar";
+    import { previewBar, type PreviewBar } from "@src/logic/join/previewBar";
     import { join } from "../join/join";
     import { previewBarProps } from "../join/previewBar.adapter";
 
@@ -330,27 +331,29 @@
             return undefined;
         }
         const community = $selectedCommunitySummaryStore;
+        // what the client's calls below read through `.value`, so the bar follows it: a lapse or a
+        // join (the communities), Diamond bought or CHIT earned (the user), a top-up (balances)
+        void [$communitiesStore, $currentUserStore, $cryptoBalanceStore];
         const bar = previewBar({
             chat,
             community,
             lapsed: client.isLapsed(chat.id),
-            gates: client.accessGatesForChat(chat),
+            // as joining asks for them: those an invitation bypasses left out
+            gates: client.accessGatesForChat(chat, true),
             guest: $anonUserStore,
             originCommunityId: $communityPreviewOriginStore?.communityId,
             meets: (gate) => client.doesUserMeetAccessGate(gate),
         });
         const avatarUrl =
-            bar.target.kind === "community"
-                ? client.communityAvatarUrl(
-                      bar.target.community.id.communityId,
-                      bar.target.community.avatar,
-                  )
+            bar.community !== undefined
+                ? client.communityAvatarUrl(bar.community.id.communityId, bar.community.avatar)
                 : client.groupAvatarUrl(chat, community);
         return { bar, props: previewBarProps(bar, avatarUrl, (key) => interpolate($_, key)) };
     });
 
-    function joinPreviewed(target: JoinTarget) {
-        void join(client, target, screen.dialogs);
+    // "You joined …" names what the bar does
+    function joinPreviewed(bar: PreviewBar) {
+        void join(client, bar.target, screen.dialogs, bar.name);
     }
 
     // cancels the preview: back where it was opened from (Explore), else the list
@@ -1017,7 +1020,7 @@
                     : {
                           ...preview.props,
                           busy: isJoining(preview.bar.target),
-                          onJoin: () => joinPreviewed(preview.bar.target),
+                          onJoin: () => joinPreviewed(preview.bar),
                           // the bar shows Back whenever there's an onBack
                           onBack: preview.props.showBack
                               ? () => leavePreview(preview.bar.target)

@@ -87,6 +87,7 @@
         "paymentApprovalMessage": "Um diesem {level} beizutreten, müssen Sie **{amount}** {token}-Token bezahlen.",
         "paymentDistributionMessage": "Davon gehen 98 % an den/die Eigentümer von {level} und 2 % an die Kasse von OpenChat SNS.",
         "paymentFailed": "Bezahlung fehlgeschlagen",
+        "paymentLeavesBalanceShort": "Die Zahlung wird von deinem Guthaben abgebucht, das danach unter dem erforderlichen Mindestguthaben läge. Lade auf und versuche es erneut.",
         "predefinedCredentialIssuer": "Vordefinierter Anmeldeinformationsaussteller",
         "previewGatedHint": "Der Beitritt hat {count, plural, one {# Voraussetzung} other {# Voraussetzungen}}; du siehst sie, bevor etwas abgebucht wird.",
         "previewHint": "Tritt bei, um Nachrichten zu senden.",

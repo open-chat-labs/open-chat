@@ -48,13 +48,8 @@
     } from "@client";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { openCommunityCreation } from "./communities/createOrUpdate/createCommunity";
-    import {
-        communityJoin,
-        groupJoin,
-        postLoginTarget,
-        type JoinTarget,
-    } from "@src/logic/join/joinFlow.svelte";
-    import { showJoinStep } from "@src/utils/join";
+    import { postLoginTarget, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
+    import { joinFromOldTree } from "@src/utils/join";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import { chitPopup, disableChit } from "../../stores/settings";
@@ -417,12 +412,8 @@
 
     // a group, channel or community joined (logic/join): its gates' evaluator opens as a sliding
     // page (SlidingModals)
-    async function join(target: JoinTarget): Promise<void> {
-        if (target.kind === "group") {
-            showJoinStep(await groupJoin.join(client, target.chat), "group");
-        } else {
-            showJoinStep(await communityJoin.join(client, target.community), "community");
-        }
+    function join(target: JoinTarget): Promise<void> {
+        return joinFromOldTree(client, target);
     }
 
     trackedEffect("identity-state", () => {

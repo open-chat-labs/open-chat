@@ -10,6 +10,7 @@ function bar(over: Partial<PreviewBar>): PreviewBar {
     return {
         target: { kind: "group", chat },
         name: "Pixel Art",
+        community: undefined,
         state: "preview",
         requirements: 0,
         hint: undefined,

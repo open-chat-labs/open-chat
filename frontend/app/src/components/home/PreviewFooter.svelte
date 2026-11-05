@@ -1,7 +1,7 @@
 
 <script lang="ts">
     import { navigate } from "@utils/navigation";
-    import { isLocked, mobileWidth, type MultiUserChat, type OpenChat, platformModeratorStore, publish, ROLE_NONE, selectedCommunitySummaryStore } from "@client";
+    import { isLocked, mobileWidth, type MultiUserChat, type OpenChat, platformModeratorStore, publish, isPreviewingCommunity, selectedCommunitySummaryStore } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
@@ -22,8 +22,8 @@
 
     let isFrozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     let previewingCommunity = $derived(
-        $selectedCommunitySummaryStore?.membership.role === ROLE_NONE ||
-            $selectedCommunitySummaryStore?.membership.lapsed,
+        $selectedCommunitySummaryStore !== undefined &&
+            isPreviewingCommunity($selectedCommunitySummaryStore),
     );
     let gates = $derived(client.accessGatesForChat(chat));
     let locked = $derived(gates.some((g) => isLocked(g)));

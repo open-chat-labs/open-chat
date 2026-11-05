@@ -106,7 +106,7 @@
         postLoginTarget,
         type JoinTarget,
     } from "@src/logic/join/joinFlow.svelte";
-    import { showJoinStep } from "@src/utils/join";
+    import { joinFromOldTree, showJoinStep } from "@src/utils/join";
     import AnonFooter from "./AnonFooter.svelte";
     import ChitEarned from "./ChitEarned.svelte";
     import HallOfFame from "./ChitHallOfFame.svelte";
@@ -535,12 +535,8 @@
 
     // a group, channel or community joined (logic/join): its gates show in the evaluators below,
     // the gates it didn't meet in the gate check failures
-    async function join(target: JoinTarget): Promise<void> {
-        if (target.kind === "group") {
-            showJoinStep(await groupJoin.join(client, target.chat), "group");
-        } else {
-            showJoinStep(await communityJoin.join(client, target.community), "community");
-        }
+    function join(target: JoinTarget): Promise<void> {
+        return joinFromOldTree(client, target);
     }
 
     function upgrade() {

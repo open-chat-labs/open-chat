@@ -52,11 +52,13 @@ function input(over: Partial<PreviewBarInput>): PreviewBarInput {
 }
 
 describe("the preview bar", () => {
-    test("a community being previewed is the community's bar: joining joins the community", () => {
+    // the old footers joined the channel, and the backend joins its community with it
+    test("a channel of a community being previewed shows the community's bar, and Join joins the channel", () => {
         const c = community(ROLE_NONE);
         const bar = previewBar(input({ chat: channel, community: c }));
 
-        expect(bar.target).toEqual({ kind: "community", community: c });
+        expect(bar.target).toEqual({ kind: "group", chat: channel });
+        expect(bar.community).toBe(c);
         expect(bar.name).toBe("DAO Builders");
         expect(bar.state).toBe("preview");
         // the design's own copy: Join community, its hint
@@ -80,6 +82,7 @@ describe("the preview bar", () => {
         const bar = previewBar(input({ chat: channel, community: community(ROLE_MEMBER) }));
 
         expect(bar.target).toEqual({ kind: "group", chat: channel });
+        expect(bar.community).toBeUndefined();
         expect(bar.name).toBe("general");
         expect(bar.joinLabel).toMatchObject({ key: "joinGroup", level: "channel" });
         expect(bar.hint).toMatchObject({ key: "access.previewHint" });
@@ -99,9 +102,34 @@ describe("the preview bar", () => {
         ];
         const bar = previewBar(input({ chat: channel, community: community(ROLE_NONE), gates }));
 
-        // the community's level only, less the suspended unique-person gate
+        // both levels, as joining asks for both: the community's two, less the suspended
+        // unique-person gate, and the channel's one
         expect(bar.state).toBe("gated");
-        expect(bar.requirements).toBe(2);
+        expect(bar.requirements).toBe(3);
+    });
+
+    test("an any gate is one requirement, however many ways in it has", () => {
+        const any = enhanced(
+            { kind: "composite_gate", operator: "or", gates: [payment, diamond] },
+            "group",
+        );
+
+        expect(previewBar(input({ gates: [any] })).requirements).toBe(1);
+        // one way in met (Diamond): the client says the gate is met, so none
+        const diamondOnly = (g: AccessGate): boolean =>
+            g.kind === "diamond_gate" || (g.kind === "composite_gate" && g.gates.some(diamondOnly));
+        expect(previewBar(input({ gates: [any], meets: diamondOnly })).requirements).toBe(0);
+    });
+
+    test("an all gate counts only the leaves the user doesn't meet yet", () => {
+        const all = enhanced(
+            { kind: "composite_gate", operator: "and", gates: [payment, diamond] },
+            "group",
+        );
+        const bar = previewBar(input({ gates: [all], meets: (g) => g.kind === "diamond_gate" }));
+
+        expect(bar.state).toBe("gated");
+        expect(bar.requirements).toBe(1);
     });
 
     test("gates the user already meets leave it a plain preview", () => {
@@ -142,7 +170,7 @@ describe("the preview bar", () => {
     test("a lapsed member rejoins, with no Back", () => {
         const bar = previewBar(input({ chat: channel, community: community(ROLE_MEMBER, true) }));
 
-        expect(bar.target.kind).toBe("community");
+        expect(bar.community?.name).toBe("DAO Builders");
         expect(bar.joinLabel).toMatchObject({ key: "access.lapsed.rejoin", level: "community" });
         expect(bar.back).toBe("none");
 

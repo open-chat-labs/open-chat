@@ -110,6 +110,20 @@ export class JoinFlow<T> {
         return this.#send(client, target, gateCheck);
     }
 
+    /**
+     * As `continueJoin`, for an evaluator that stays open until the join goes through: the join is
+     * kept while it doesn't (a dismissed PIN prompt, a failed approval or join, a gate the backend
+     * found unmet), so the same `gateCheck` can be sent again; once joined (or not sent) it's
+     * dropped. Nothing if it was dropped meanwhile.
+     */
+    async submitGates(client: JoinClient, gateCheck: GateCheckSucceeded): Promise<JoinStep> {
+        const target = this.#evaluating;
+        if (target === undefined) return { kind: "not_sent" };
+        const step = await this.#send(client, target, gateCheck);
+        if (step.kind === "joined" || step.kind === "not_sent") this.reset();
+        return step;
+    }
+
     /** The gates' evaluation, or the gate check failure, was closed. */
     reset(): void {
         this.#evaluating = undefined;
@@ -126,7 +140,8 @@ export class JoinFlow<T> {
             // the client rejects only when the PIN prompt for a payment is dismissed
             step = { kind: "cancelled" };
         } finally {
-            this.#joining = undefined;
+            // another join may have started meanwhile: it stays busy until it settles itself
+            if (this.#joining === target) this.#joining = undefined;
         }
         if (step.kind === "evaluate_gates") {
             this.#evaluating = target;
@@ -164,6 +179,17 @@ export function continueJoin(
     return target.kind === "group"
         ? groupJoin.continueJoin(client, gateCheck)
         : communityJoin.continueJoin(client, gateCheck);
+}
+
+/** As `continueJoin`, keeping the join while it doesn't go through (`JoinFlow.submitGates`). */
+export function submitGates(
+    client: JoinClient,
+    target: JoinTarget,
+    gateCheck: GateCheckSucceeded,
+): Promise<JoinStep> {
+    return target.kind === "group"
+        ? groupJoin.submitGates(client, gateCheck)
+        : communityJoin.submitGates(client, gateCheck);
 }
 
 /** Drops a join whose gates were being evaluated (the evaluator was closed). */

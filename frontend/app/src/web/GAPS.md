@@ -847,16 +847,22 @@ design export needs. Each entry says where it came up.
     community lands on Explore with the query it was opened from.
 
 - **Join gate** (8b #10128, `features/join`, `logic/join`): a preview's composer is
-  `CommunityPreviewBar` (`previewBar`): the community's while the community is previewed (or
-  lapsed), else the group's or channel's; guest, gated (with how many requirements the user doesn't
-  meet yet) or plain; Join, Back (to Explore or `/welcome` when the preview was opened from there,
-  else the list). Join runs the shared flow (`logic/join/joinFlow`, the old
-  `utils/preview.svelte.ts`, which both old trees now use too): a guest's join is recorded and opens
-  sign-in, and replays once after it (`takePostLoginJoin`, AppScreen); gates the client can't check
-  open `JoinGateDialog`, a level at a time; "Pay and join" approves the payments (asking for the
-  PIN) and joins; "You joined …" on success, the failure's own message otherwise, "Access gate
-  not met" for a backend gate check failure. `?autojoin` joins the same way once the preview has
-  loaded. Desktop and mobile differed (A4): Back on a lapsed preview is hidden (desktop: a lapsed
+  `CommunityPreviewBar` (`previewBar`), 12px below the messages as the composer is: the
+  community's while the community is previewed (or lapsed), else the group's or channel's; guest,
+  gated (with how many requirements the user doesn't meet yet, both levels', an "any" gate counting
+  once, and none an invitation bypasses) or plain; Join, Back (to Explore or `/welcome` when the
+  preview was opened from there, else the list). Join on a channel joins the channel, as the old
+  footers did (the backend joins its community with it), even under the community's bar. Join runs
+  the shared flow (`logic/join/joinFlow`, the old `utils/preview.svelte.ts`, which both old trees
+  now use too): a guest's join is recorded and opens sign-in, and replays once after it
+  (`takePostLoginJoin`, AppScreen); gates the client can't check open `JoinGateDialog`, a level at
+  a time; "Pay and join" approves the payments (asking for the PIN) and joins; "You joined …" on
+  success (named as the bar named it), the failure's own message otherwise, "Access gate not met"
+  for a backend gate check failure. The dialog stays open while the join doesn't go through (the
+  PIN dismissed, the approval or the join failed, the backend's gate check), with a toast saying
+  why, and "Pay and join" sends the same again; a payment that would leave a balance the gate also
+  asks for short is refused before anything is approved, and says so. `?autojoin` joins the same
+  way once the preview has loaded. Desktop and mobile differed (A4): Back on a lapsed preview is hidden (desktop: a lapsed
   member is still a member), and cancelling a community preview goes back to where it was opened
   (mobile). Not carried over:
   - the platform moderator's Freeze / Unfreeze on a preview (desktop footer only);

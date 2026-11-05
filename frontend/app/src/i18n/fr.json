@@ -87,6 +87,7 @@
         "paymentApprovalMessage": "Pour rejoindre ce {level}, vous devez payer des jetons **{amount}** {token}.",
         "paymentDistributionMessage": "Sur cette somme, 98 % vont au(x) propriétaire(s) {level} et 2 % à la trésorerie d&#39;OpenChat SNS.",
         "paymentFailed": "Paiement échoué",
+        "paymentLeavesBalanceShort": "Le paiement est prélevé sur votre solde, qui passerait alors sous le solde minimum requis. Rechargez et réessayez.",
         "predefinedCredentialIssuer": "Émetteur d'identifiants prédéfini",
         "previewGatedHint": "Rejoindre a {count, plural, one {# condition} other {# conditions}} ; vous les verrez avant tout prélèvement.",
         "previewHint": "Rejoignez pour envoyer des messages.",

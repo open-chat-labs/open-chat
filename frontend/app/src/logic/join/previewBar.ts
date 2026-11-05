@@ -2,8 +2,8 @@ import {
     i18nKey,
     isCompositeGate,
     isLocked,
+    isPreviewingCommunity,
     isUniquePersonGate,
-    ROLE_NONE,
     stripSuspendedGate,
     type AccessGate,
     type CommunitySummary,
@@ -29,9 +29,12 @@ export type PreviewBack = "explore" | "back" | "none";
 
 export type PreviewBar = {
     target: JoinTarget;
+    /** What the bar names: the chat, or the community whose bar a channel of it shows. */
     name: string;
+    /** The community whose bar it is, for a channel of a community being previewed. */
+    community: CommunitySummary | undefined;
     state: PreviewBarState;
-    /** gated: how many requirements joining has. */
+    /** gated: how many requirements joining has that the user doesn't meet yet. */
     requirements: number;
     /** In place of the bar's own hint for its state; none keeps it. */
     hint: ResourceKey | undefined;
@@ -49,7 +52,10 @@ export type PreviewBarInput = {
     community: CommunitySummary | undefined;
     /** The chat, or its community, has lapsed (`client.isLapsed`). */
     lapsed: boolean;
-    /** The gates joining the chat has (`client.accessGatesForChat`): its community's, then its own. */
+    /**
+     * The gates joining the chat asks for (`client.accessGatesForChat(chat, true)`: those an
+     * invitation bypasses left out): its community's, then its own.
+     */
     gates: EnhancedAccessGate[];
     guest: boolean;
     /** The community whose preview was opened from Explore (`setCommunityPreviewOrigin`). */
@@ -58,12 +64,9 @@ export type PreviewBarInput = {
     meets: (gate: AccessGate) => boolean;
 };
 
-/** Whether a community is being previewed: not joined, or lapsed. */
+/** Whether a community is being previewed: not joined, or lapsed (`isPreviewingCommunity`). */
 export function previewingCommunity(community: CommunitySummary | undefined): boolean {
-    return (
-        community !== undefined &&
-        (community.membership.role === ROLE_NONE || community.membership.lapsed)
-    );
+    return community !== undefined && isPreviewingCommunity(community);
 }
 
 /**
@@ -79,45 +82,42 @@ export function communityGatesInEffect(community: CommunitySummary | undefined):
 }
 
 /**
- * How many requirements some gates have: each gate's leaves, less the suspended unique-person gate
- * (which joining never asks for).
+ * How many requirements some gates have that the user doesn't meet (`meets`; `() => false` counts
+ * them all). An "any" gate is one requirement however many ways in it has, and none once one is
+ * met; an "all" gate is each of its leaves not met yet. The suspended unique-person gate is never
+ * asked for, so it's none.
  */
-export function requirementCount(gates: AccessGate[]): number {
-    return gates
-        .map(stripSuspendedGate)
-        .reduce(
-            (n, g) =>
-                n +
-                (isCompositeGate(g)
-                    ? g.gates.filter((l) => !isUniquePersonGate(l)).length
-                    : g.kind === "no_gate"
-                      ? 0
-                      : 1),
-            0,
-        );
+export function requirementCount(
+    gates: AccessGate[],
+    meets: (gate: AccessGate) => boolean,
+): number {
+    return gates.map(stripSuspendedGate).reduce((n, g) => {
+        if (g.kind === "no_gate" || meets(g)) return n;
+        if (!isCompositeGate(g)) return n + 1;
+        if (g.operator === "or") return n + 1;
+        return n + g.gates.filter((l) => !isUniquePersonGate(l) && !meets(l)).length;
+    }, 0);
 }
 
 /**
- * The bar for a preview. A channel of a community being previewed (or lapsed) is the community's
- * preview: joining it joins the community (its gates, a level at a time, then the channel's own on
- * the channel's bar if it has any), and Back cancels the community's preview. Otherwise it's the
- * group's or channel's.
+ * The bar for a preview. A channel of a community being previewed (or lapsed) shows the
+ * community's bar (its name, "Join community", Back cancelling the community's preview), but Join
+ * joins the channel, as the old footers did: the backend joins the community with it, and the gate
+ * dialog asks for both levels' requirements, the community's first. Otherwise it's the group's or
+ * channel's.
  */
 export function previewBar(input: PreviewBarInput): PreviewBar {
-    const { chat, community, guest, meets } = input;
+    const { chat, community, guest, gates, meets } = input;
     const ofCommunity = chat.kind === "channel" && previewingCommunity(community);
     const level = ofCommunity ? "community" : chat.level;
     const lapsed = ofCommunity ? community?.membership.lapsed === true : input.lapsed;
-    const gates = ofCommunity ? input.gates.filter((g) => g.level === "community") : input.gates;
     const locked = gates.some((g) => isLocked(g));
-    const count = requirementCount(gates.filter((g) => !meets(g)));
+    const count = requirementCount(gates, meets);
     const state: PreviewBarState = guest ? "guest" : count > 0 && !locked ? "gated" : "preview";
 
-    const target: JoinTarget =
-        ofCommunity && community !== undefined
-            ? { kind: "community", community }
-            : { kind: "group", chat };
-    const name = target.kind === "community" ? target.community.name : chat.name;
+    const target: JoinTarget = { kind: "group", chat };
+    const barCommunity = ofCommunity ? community : undefined;
+    const name = barCommunity?.name ?? chat.name;
 
     const back: PreviewBack = lapsed
         ? "none"
@@ -143,5 +143,15 @@ export function previewBar(input: PreviewBarInput): PreviewBar {
                 : i18nKey("access.previewHint");
     }
 
-    return { target, name, state, requirements: count, hint, joinLabel, back, locked };
+    return {
+        target,
+        name,
+        community: barCommunity,
+        state,
+        requirements: count,
+        hint,
+        joinLabel,
+        back,
+        locked,
+    };
 }

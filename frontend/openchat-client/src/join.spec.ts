@@ -43,6 +43,7 @@ import {
     serverGroupChatsStore,
 } from "./state";
 import { communityPreviewOriginStore } from "./stores/previewOrigin";
+import { localUpdates } from "./state/localUpdates";
 import { paymentGateSplit } from "./utils/accessGates";
 import { postLoginJoin } from "./utils/join";
 import { MiniAppService } from "./utils/miniAppService";
@@ -391,6 +392,29 @@ describe("cancelling a preview", () => {
 
         client.setCommunityPreviewOrigin("other", "/communities");
         expect(client.cancelPreview(communityId)).toBe(scope);
+    });
+
+    // leaving the community another way (the selected community changing), or joining it, ends
+    // its preview: a later preview of it doesn't go back to the old search
+    test("a community left or joined no longer goes back where its preview was opened from", async () => {
+        serverCommunitiesStore.set(CommunityMap.fromList([community(ROLE_NONE)]));
+
+        client.setCommunityPreviewOrigin(communityId.communityId, "/communities?q=cats");
+        client.removeCommunityIfPreviewing({ kind: "community", communityId: "other" });
+        expect(communityPreviewOriginStore.value?.communityId).toBe(communityId.communityId);
+        client.removeCommunityIfPreviewing(communityId);
+        expect(communityPreviewOriginStore.value).toBeUndefined();
+
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) =>
+            Promise.resolve(
+                req.kind === "joinCommunity"
+                    ? { kind: "success", community: { ...community(ROLE_MEMBER), channels: [] } }
+                    : { kind: "success" },
+            )) as never);
+        vi.spyOn(localUpdates, "addCommunity").mockImplementation(() => {});
+        client.setCommunityPreviewOrigin(communityId.communityId, "/communities?q=cats");
+        expect(await client.joinCommunity(community(ROLE_NONE))).toEqual({ kind: "success" });
+        expect(communityPreviewOriginStore.value).toBeUndefined();
     });
 
     // a channel of a community being previewed: the community's preview is the one cancelled

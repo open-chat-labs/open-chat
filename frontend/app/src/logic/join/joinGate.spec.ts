@@ -1,5 +1,11 @@
-import type { AccessGate, EnhancedAccessGate, LeafGate, PaymentGate } from "@client";
-import { describe, expect, test } from "vitest";
+import {
+    cryptoBalanceStore,
+    type AccessGate,
+    type EnhancedAccessGate,
+    type LeafGate,
+    type PaymentGate,
+} from "@client";
+import { afterEach, describe, expect, test } from "vitest";
 import { GateEvaluation } from "../access/gateEvaluation.svelte";
 import { otherRequirement, recordGateChoice } from "./joinGate";
 
@@ -62,6 +68,7 @@ describe("recording the join gate dialog's choice", () => {
 
         expect(recordGateChoice(evaluation, { paid: [], neuronConfirmed: false }, fee)).toEqual({
             kind: "incomplete",
+            balanceShort: false,
         });
         expect(recordGateChoice(evaluation, { paid: [0], neuronConfirmed: false }, fee)).toEqual({
             kind: "next_level",
@@ -120,6 +127,45 @@ describe("recording the join gate dialog's choice", () => {
 
         expect(recordGateChoice(evaluation, { paid: [0], neuronConfirmed: false }, fee)).toEqual({
             kind: "incomplete",
+            balanceShort: false,
+        });
+    });
+
+    describe("a payment out of a balance the gate also asks for", () => {
+        afterEach(() => cryptoBalanceStore.setBalance(chat, 0n));
+
+        // pay 10 CHAT + hold 50 CHAT with 55: paying leaves 45, so the gate isn't met
+        test("leaves nothing approved, and says the balance is what falls short", () => {
+            cryptoBalanceStore.setBalance(chat, 55n);
+            const evaluation = new GateEvaluation(client, [
+                enhanced({
+                    kind: "composite_gate",
+                    operator: "and",
+                    gates: [
+                        payment(10n, chat),
+                        { kind: "token_balance_gate", ledgerCanister: chat, minBalance: 50n },
+                    ],
+                }),
+            ]);
+            const paid = [indexOf(evaluation, 10n)];
+
+            expect(recordGateChoice(evaluation, { paid, neuronConfirmed: false }, fee)).toEqual({
+                kind: "incomplete",
+                balanceShort: true,
+            });
+            // nothing kept: the balance counts in full again, and the payment is still to choose
+            expect(evaluation.balanceAfterCurrentCommitments(chat, 55n)).toBe(55n);
+            expect(evaluation.satisfiedCount).toBe(1);
+
+            // topped up, the same choice goes through, with the one payment approved
+            cryptoBalanceStore.setBalance(chat, 60n);
+            const result = recordGateChoice(evaluation, { paid, neuronConfirmed: false }, fee);
+            expect(result).toMatchObject({ kind: "ready" });
+            if (result.kind !== "ready") return;
+            expect(result.gateCheck.paymentApprovals.get(chat)).toEqual({
+                amount: 10n,
+                approvalFee: 100_000n,
+            });
         });
     });
 });

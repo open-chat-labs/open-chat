@@ -87,6 +87,7 @@
         "paymentApprovalMessage": "Para unirse a este {level}, debe pagar tokens **{amount}** {token}.",
         "paymentDistributionMessage": "De esto, el 98 % va a los propietarios de {level} y el 2 % a la tesorería de OpenChat SNS.",
         "paymentFailed": "Pago fallido",
+        "paymentLeavesBalanceShort": "El pago se descuenta de tu saldo, que quedaría por debajo del saldo mínimo requerido. Recarga e inténtalo de nuevo.",
         "predefinedCredentialIssuer": "Emisor de credenciales predefinido",
         "previewGatedHint": "Unirse tiene {count, plural, one {# requisito} other {# requisitos}}; los verás antes de que se cobre nada.",
         "previewHint": "Únete para enviar mensajes.",

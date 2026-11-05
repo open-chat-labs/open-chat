@@ -87,6 +87,7 @@
         "paymentApprovalMessage": "כדי להצטרף ל-{level} הזה, אתה נדרש לשלם אסימונים של **{amount}** {token}.",
         "paymentDistributionMessage": "מתוכם, 98% הולכים לבעלים של {level} ו-2% לאוצר OpenChat SNS.",
         "paymentFailed": "התשלום נכשל",
+        "paymentLeavesBalanceShort": "התשלום יורד מהיתרה שלך, שתהיה אז מתחת ליתרה המינימלית הנדרשת. הטען את היתרה ונסה שוב.",
         "predefinedCredentialIssuer": "מנפיק אישור מוגדר מראש",
         "previewGatedHint": "להצטרפות יש {count, plural, one {דרישה אחת} other {# דרישות}}; תראו אותן לפני שמשהו יחויב.",
         "previewHint": "הצטרפו כדי לשלוח הודעות.",

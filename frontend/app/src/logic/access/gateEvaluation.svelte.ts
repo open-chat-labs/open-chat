@@ -125,6 +125,23 @@ export class GateEvaluation {
     }
 
     /**
+     * What has been collected so far, to put back with the function returned: a choice that
+     * doesn't meet the gate leaves nothing behind (no approval, no leaf marked done).
+     */
+    checkpoint(): () => void {
+        const done = [...this.#done];
+        const credentials = [...this.#credentials];
+        const approvals = [...this.#paymentApprovals];
+        return () => {
+            this.#done.clear();
+            done.forEach((i) => this.#done.add(i));
+            this.#credentials = credentials;
+            this.#paymentApprovals.clear();
+            approvals.forEach(([ledger, approval]) => this.#paymentApprovals.set(ledger, approval));
+        };
+    }
+
+    /**
      * Moves on from the current gate once it is complete. Returns what to send with the join after the last gate,
      * otherwise undefined.
      */

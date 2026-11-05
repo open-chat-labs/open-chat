@@ -87,6 +87,7 @@
         "paymentApprovalMessage": "Чтобы присоединиться к этому {level}, вам необходимо заплатить токены **{amount}** {token}.",
         "paymentDistributionMessage": "Из них 98 % достаётся владельцам {level}, а 2 % — в казну OpenChat SNS.",
         "paymentFailed": "Платеж не прошел",
+        "paymentLeavesBalanceShort": "Платёж списывается с вашего баланса, и он станет ниже требуемого минимального баланса. Пополните баланс и попробуйте снова.",
         "predefinedCredentialIssuer": "Предопределенный эмитент учетных данных",
         "previewGatedHint": "Для вступления {count, plural, one {# требование} few {# требования} many {# требований} other {# требования}}; вы увидите их до любого списания.",
         "previewHint": "Вступите, чтобы отправлять сообщения.",

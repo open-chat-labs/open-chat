@@ -87,6 +87,7 @@
         "paymentApprovalMessage": "इस {level} में शामिल होने के लिए आपको **{amount}** {token} टोकन का भुगतान करना होगा।",
         "paymentDistributionMessage": "इसमें से 98% {level} मालिकों को जाता है और 2% OpenChat SNS खजाने को जाता है।",
         "paymentFailed": "भुगतान विफल रही",
+        "paymentLeavesBalanceShort": "भुगतान आपकी शेष राशि से कटेगा, जिसके बाद वह आवश्यक न्यूनतम शेष राशि से कम हो जाएगी। टॉप अप करें और फिर से प्रयास करें।",
         "predefinedCredentialIssuer": "पूर्वनिर्धारित क्रेडेंशियल जारीकर्ता",
         "previewGatedHint": "जुड़ने की {count} शर्तें हैं; कुछ भी चार्ज होने से पहले आप उन्हें देखेंगे।",
         "previewHint": "संदेश भेजने के लिए जुड़ें।",
