@@ -1109,7 +1109,11 @@ design export needs. Each entry says where it came up.
   (`ReminderDialogScreen`: the old desktop dialog's presets, `reminderTime`, or the browser's date
   and time field for a custom time, and a note; no design for either: `TODO(design)`, the reasons
   and presets as `DurationChips`). Each runs in `features/conversation/messageMenu.ts`. Not yet:
-  - tip (5b's next part);
+  - tip (`TODO(phase 5, 5b)`): the old trees' `TipBuilder` (a token, $0.01 / $0.10 / $1 steps
+    or a custom amount, the fee, paying from an external wallet with its approval, the PIN; not in
+    the native apps, `disableTipsFeature`) has its logic in `logic/tip/TipForm`, but the design has
+    no tip dialog, and the menu doesn't offer Tip yet (`messageMenu`'s `tipRecipient` is left
+    out). The tips a message got (5a) aren't shown either;
   - the thread's items (reply in thread, follow / unfollow) wait for the thread (4c), and a
     proposal's collapse for proposals;
   - the mobile app's "download media" (native save) is left to the narrow pass;
