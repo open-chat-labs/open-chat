@@ -641,6 +641,24 @@ function actionItem(action: ChatMenuAction, state: HeaderMenuState): HeaderMenuI
 }
 
 /**
+ * The text the composer starts from when it mounts (`MessageComposer`'s `text`): the chat's draft,
+ * or mid-edit what was being written before the edit (the edited message's text comes in the
+ * strip, and the composer goes back to this when the edit ends).
+ */
+export function composerStartText(
+    draft:
+        | {
+              editingEvent?: EventWrapper<Message>;
+              textContent?: string;
+              beforeEdit?: { textContent?: string };
+          }
+        | undefined,
+): string {
+    if (draft?.editingEvent !== undefined) return draft.beforeEdit?.textContent ?? "";
+    return draft?.textContent ?? "";
+}
+
+/**
  * The composer's strip for the chat's draft: the message being edited (its text to start from),
  * else the one being replied to, with who wrote it.
  */

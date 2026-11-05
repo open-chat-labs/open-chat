@@ -127,6 +127,7 @@
     import Composer from "./Composer.svelte";
     import {
         composerContext,
+        composerStartText,
         headerMenuItems,
         isMedia,
         mediaHeld,
@@ -1377,7 +1378,7 @@
                               ? () => leavePreview(preview.bar.target)
                               : undefined,
                       }}
-                draft={$selectedChatDraftMessageStore?.textContent ?? ""}
+                draft={composerStartText($selectedChatDraftMessageStore)}
                 {typingNames}
                 {throttled}
                 enterSends={$enterSend}

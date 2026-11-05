@@ -1087,7 +1087,9 @@ design export needs. Each entry says where it came up.
   private reply quotes another chat's: no jump, where the old UI opened that chat). An edit is
   saved with `editMessage` (failure toast `errorEditingMessage`). Ending an edit, saved or
   cancelled, puts back what the user was writing before it (`endEditing`, kept by `setEditing`;
-  the old trees dropped the whole draft, and now get it back too). Not yet: a media reply's
+  the old trees dropped the whole draft, and now get it back too), also when the chat was left
+  mid-edit: the composer then mounts with that text to go back to (`composerStartText`;
+  `MessageComposer` takes `text` so mounted in edit mode, by hand). Not yet: a media reply's
   thumbnail (`thumb`).
 - **Message actions** (`features/conversation`, 5b): every message's menu (`MessageActions`:
   right-click, the hover bar's ⋯, Shift+F10, a long press on touch), its hover bar's quick

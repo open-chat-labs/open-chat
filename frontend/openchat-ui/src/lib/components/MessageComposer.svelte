@@ -51,7 +51,8 @@
     demo?: 'interactive' | 'idle' | 'typing' | 'plus' | 'emoji' | 'gif' | 'recording' | 'review';
     /** Resource key (or literal text). */
     placeholder?: string;
-    /** The draft to start from, read when the composer mounts (key the composer to start another). */
+    /** The draft to start from, read when the composer mounts (key the composer to start another). Mounted in edit
+     *  mode, it's what the box goes back to when the edit ends. */
     text?: string;
     /** The draft as it changes while it's being written (typed, an emoji picked, cleared on send); not while editing. */
     onInput?: (text: string) => void;
@@ -589,7 +590,8 @@
   // reply/edit context: edit pre-fills the original text; leaving edit puts back whatever the user had been writing
   // before it (never the edited message's text); both move focus into the input
   let prevContext = untrack(() => context);
-  let savedDraft: string | null = null;
+  // mounted mid-edit, the host's draft (`text`) is what was being written before the edit
+  let savedDraft: string | null = untrack(() => (context?.mode === 'edit' ? text : null));
   $effect(() => {
     const next = context;
     untrack(async () => {

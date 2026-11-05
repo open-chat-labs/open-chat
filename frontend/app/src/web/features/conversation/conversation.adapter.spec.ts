@@ -1,6 +1,7 @@
 import type { EventWrapper, Message, MessageMenuAction } from "@client";
 import {
     composerContext,
+    composerStartText,
     mediaHeld,
     messageMenuItems,
     messageRow,
@@ -440,5 +441,24 @@ describe("a message's menu", () => {
 
     test("leaves out what this screen doesn't carry out", () => {
         expect(messageMenuItems(offers("start_thread", "collapse_proposal"))).toEqual([]);
+    });
+});
+
+describe("the text the composer starts from", () => {
+    test("is the chat's draft", () => {
+        expect(composerStartText(undefined)).toBe("");
+        expect(composerStartText({ textContent: "hello" })).toBe("hello");
+    });
+
+    test("mid-edit, is what was being written before the edit, not the edited message", () => {
+        const editing = message({ sender: "me", content: { kind: "text_content", text: "old" } });
+        expect(
+            composerStartText({
+                editingEvent: editing,
+                textContent: "old",
+                beforeEdit: { textContent: "hello" },
+            }),
+        ).toBe("hello");
+        expect(composerStartText({ editingEvent: editing, textContent: "old" })).toBe("");
     });
 });
