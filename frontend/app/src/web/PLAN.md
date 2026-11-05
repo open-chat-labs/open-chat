@@ -23,8 +23,23 @@ every workstream.
   - phase 3 (the brief's step 4): the chat list, reading a conversation, the text composer, the
     activity feed over the open page (`?panel=activity`);
   - the rail labels and `?threads`;
+  - the foundations S0–S3: the phase TODOs retagged, the right column host, the dialog host, the
+    PIN prompt; what's left is in GAPS.md ("Right column host", "PIN prompt");
+  - the details panels (4a): `GroupPanel`, `DmPanel`, `UserDialog`, the gates and user adapters;
+    GAPS.md ("Group panel", "DM panel", "User card", "Gates editor");
+  - Manage and the group dialogs (4b): GAPS.md ("Manage", "Create a group or community", "Group
+    and channel settings", "Community settings", "Invite", "User groups");
+  - `ChatPicker` (4d): GAPS.md ("Chat picker");
+  - the wallet (6a–6d): the panel and token page, Send and Receive, Swap, recipients and
+    settings; GAPS.md ("Wallet", "Address validation");
   - Explore (8a): what's left of it is in GAPS.md ("Explore");
-  - the join gate (8b): what's left of it is in GAPS.md ("Join gate").
+  - the join gate (8b): what's left of it is in GAPS.md ("Join gate");
+  - Profile (8c): GAPS.md ("`ProfileDialog` against the app");
+  - CHIT (8d): the daily result message and sharing a result are a follow-up,
+    [#10236](https://github.com/open-chat-labs/open-chat/issues/10236); GAPS.md ("CHIT dialog");
+  - Diamond (8e): GAPS.md ("Diamond").
+- **Calls come last:** 7a (the call-object decision), 7b and 7c wait until the rest of the web
+  work (5b–5d, 4c, 9a/9b, 10a/10b, L1–L7) is done, as native's calls (N14) wait in its epic.
 - **Still to check on a real environment** (the local replica can't show them): live incoming
   messages, read ticks turning double, the typing indicator.
 
@@ -90,7 +105,7 @@ any time.
 | Diamond (8e) | the `/diamond` page (9a) |
 | Explore (8a) | Landing's featured communities (9b) |
 | the call-mode decision (7a) | the call panel (7b), then `MiniCall` (7c) |
-| almost everything | the guest and narrow passes (10a, 10b), last |
+| almost everything | the guest and narrow passes (10a, 10b), then calls (7a–7c), last |
 
 A screen that opens something not built yet, such as "Get Diamond" in `CreateGroupDialog` or the
 join gate, waits for nothing. It opens the dialog by its query param or the dialog host, and gets a
