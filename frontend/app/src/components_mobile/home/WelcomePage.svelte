@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey, interpolate, supportedLanguagesByCode } from "@src/i18n/i18n";
-    import { communitySearchState } from "@src/stores/search.svelte";
+    import { communitySearchState, topCommunities } from "@src/stores/search.svelte";
     import {
         Body,
         BodySmall,
@@ -50,14 +50,13 @@
         openCommunityCreation(client);
     }
 
-    function searchCommunities() {
+    async function searchCommunities() {
         communitySearchState.reset();
-        client.exploreCommunities(undefined, 0, 3, 0, []).then((results) => {
-            if (results.kind === "success") {
-                communitySearchState.results = results.matches;
-                communitySearchState.total = results.total;
-            }
-        });
+        const top = await topCommunities(client, 3);
+        if (top !== undefined) {
+            communitySearchState.results = top.matches;
+            communitySearchState.total = top.total;
+        }
     }
     function goToCommunity(id: CommunityIdentifier) {
         client.setCommunityPreviewOrigin(id.communityId, "/welcome");

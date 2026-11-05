@@ -268,5 +268,30 @@ export async function searchCommunities(
     return "success";
 }
 
+/** The top of Explore's ranking, and how many communities the ranking holds in all. */
+export type TopCommunities = { matches: CommunityMatch[]; total: number };
+
+/**
+ * The top of Explore's ranking (its first page, with no search and no languages picked) for a
+ * short list outside Explore: Landing's featured communities, the mobile welcome page. These are
+ * shown to anyone, signed out included, so the moderation flags are 0, whatever the viewer's:
+ * never an adult or offensive community. Nothing is kept in communitySearchState, so Explore's
+ * own results are left alone. `undefined`: it couldn't be loaded.
+ */
+export async function topCommunities(
+    client: Pick<OpenChat, "exploreCommunities">,
+    count: number,
+): Promise<TopCommunities | undefined> {
+    try {
+        const response = await client.exploreCommunities(undefined, 0, count, 0, []);
+        return response.kind === "success"
+            ? { matches: response.matches, total: response.total }
+            : undefined;
+    } catch (err) {
+        console.warn("Top communities failed", err);
+        return undefined;
+    }
+}
+
 export const groupSearchState = createSearchState<GroupMatch>((g) => g.chatId.groupId);
 export const botSearchState = createSearchState<BotMatch>((b) => b.id);

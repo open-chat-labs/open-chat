@@ -1,5 +1,7 @@
 import type { RouteParams } from "@client";
+import type { ExploreCommunity } from "@openchat/ui/src/features/components/ExploreCommunities.svelte";
 import type { LearnPage } from "@openchat/ui/src/pages/learnContent";
+import type { LandingCommunity } from "@openchat/ui/src/pages/types";
 
 // Learn's sub-pages keep the existing marketing paths (ROUTES.md, decision 4)
 const LEARN_ROUTES: Partial<Record<RouteParams["kind"], LearnPage>> = {
@@ -28,4 +30,19 @@ export function isEmailLinkPage(query: URLSearchParams): boolean {
 /** A Learn sub-page's path: /roadmap, /faq … and /blog/<slug> for a post. */
 export function learnPath(page: LearnPage, post?: string): string {
     return page === "blog" && post ? `/blog/${encodeURIComponent(post)}` : `/${page}`;
+}
+
+/**
+ * Landing's featured communities from Explore's cards (`explore.adapter`), so a community shows
+ * the same in both: each card opens the community's preview, as Explore's do.
+ */
+export function landingCommunities(communities: ExploreCommunity[]): LandingCommunity[] {
+    return communities.map((c) => ({
+        name: c.name,
+        about: c.about ?? "",
+        members: c.members,
+        avatarUrl: c.avatarUrl,
+        coverUrl: c.coverUrl,
+        href: `/community/${c.key}`,
+    }));
 }

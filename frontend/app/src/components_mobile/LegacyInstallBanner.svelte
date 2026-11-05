@@ -11,13 +11,13 @@
     // Nothing on those devices can be changed from here. This is a message
     // riding the one channel still open to them.
     import { isAndroidTauriApp } from "@shared";
+    import { ANDROID_APK_URL } from "@src/utils/urls";
     import { BodySmall, Button, Column, Overview, Sheet } from "component-lib";
     import { onMount } from "svelte";
     import { getShellVersion, openUrl } from "tauri-plugin-oc-api";
     import { i18nKey } from "../i18n/i18n";
     import Translatable from "@shared_components/Translatable.svelte";
 
-    const DOWNLOAD_URL = "https://github.com/open-chat-labs/open-chat/releases/latest";
     const DISMISSED_KEY = "oc_legacy_install_dismissed_at";
     // Asked again rather than asked once: losing the app is severe enough to
     // keep raising, and a permanent dismissal would let someone forget until
@@ -83,7 +83,7 @@
                 <Translatable resourceKey={i18nKey("nativeUpdate.reinstallUninstallOld")} />
             </BodySmall>
 
-            <Button onClick={() => openUrl({ url: DOWNLOAD_URL })} secondary>
+            <Button onClick={() => openUrl({ url: ANDROID_APK_URL })} secondary>
                 <Translatable resourceKey={i18nKey("nativeUpdate.reinstallDownload")} />
             </Button>
         </Column>

@@ -8,6 +8,7 @@
         releasePath,
         shellUpdateFrom,
     } from "@src/utils/shellUpdate";
+    import { ANDROID_APK_URL, ANDROID_PLAY_STORE_URL } from "@src/utils/urls";
     import { VersionChecker } from "@src/utils/version.svelte";
     import { appStoreBuild } from "@utils/features";
     import { BodySmall, Button, ColourVars, Column, Overview, Sheet } from "component-lib";
@@ -16,9 +17,6 @@
     import { i18nKey } from "../i18n/i18n";
     import Progress from "./Progress.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-
-    const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.oclabs.openchat";
-    const DIRECT_DOWNLOAD_URL = "https://github.com/open-chat-labs/open-chat/releases/latest";
 
     const checker = new VersionChecker();
 
@@ -77,7 +75,7 @@
 
     // A store build can only be updated through the store it came from; a
     // sideloaded build has to fetch a new APK itself.
-    let upgradeUrl = $derived(appStoreBuild ? PLAY_STORE_URL : DIRECT_DOWNLOAD_URL);
+    let upgradeUrl = $derived(appStoreBuild ? ANDROID_PLAY_STORE_URL : ANDROID_APK_URL);
     let upgradeLabel = $derived(
         appStoreBuild ? "nativeUpdate.fromPlayStore" : "nativeUpdate.downloadLatest",
     );

@@ -735,10 +735,9 @@ design export needs. Each entry says where it came up.
     video calls post's sequence diagram are gone, though their text still mentions them.
     Subheadings are bold paragraphs, list items "•" paragraphs, and italics plain. The
     translations post shows "2 Mar 2024", as the old blog did (its date is written as 31 Feb).
-- **Landing's featured communities**: none are passed yet, so the section shows only its heading
-  and Browse link. The old landing page had no such list; explore's hot communities could feed it.
-- **Android APK link**: Landing's `apkHref` isn't passed yet, so that choice isn't a link. The
-  old landing page links GitHub releases (`MobileBeta.svelte`), which 9b can pass.
+- **Landing's featured communities**: no API returns a featured or hot list as such, so Landing
+  shows the top of Explore's one ranking (see "Explore" under Wiring). The OpenChat community
+  isn't pinned first: it shows where the ranking puts it.
 
 ### Wiring
 
@@ -903,6 +902,22 @@ design export needs. Each entry says where it came up.
     fee) can keep the wrong amount, as which approval the ledger applied last isn't known. Fix
     when parallel joins become possible: remember neither when two overlap, so the next try
     approves again. Not reachable from the UI yet.
+- **Landing** (9b #10133, `features/marketing`): the Communities section shows the top four of
+  Explore's ranking (`topCommunities` beside `searchCommunities`, which the mobile welcome page
+  uses too: the first page with no search and no languages, and moderation flags 0 whoever is
+  looking, so never an adult or offensive community), as Explore's cards show them
+  (`explore.adapter`, then `landingCommunities`). Explore's own results are left alone. They're
+  asked for once the identity has loaded (`chatsInitialisedStore`, signed out too: the worker
+  has no agent before), so they come in after the page; a failed load leaves the heading and
+  Browse link only. The Android card's full build links the latest GitHub release and its Play
+  Store build the testing page (`ANDROID_APK_URL`, `ANDROID_PLAY_TEST_URL` in `utils/urls.ts`,
+  shared with the old beta card and the native app's upgrade banners). Not carried over:
+  - the old beta card's first Play Store step, joining the testers' Google group
+    (`ANDROID_BETA_GROUP_URL`), without which the testing page doesn't let you in. Drop this item
+    if the Play listing is public now (an open question on #10133);
+  - a featured card is a plain link (`LandingCommunity` has only an `href`), so its preview's
+    cancel goes to the default page, not back to Landing as Explore's previews come back to
+    Explore (`setCommunityPreviewOrigin`).
 - **Diamond** (`?diamond`, `features/diamond`, 8e #10131): paid through the shared payment
   (`logic/diamond`, which both legacy `Payment.svelte`s use too), in CHAT or ICP at the backend's
   own prices (CHAT in production, ICP elsewhere, by default), auto-renew on, a timed member opening

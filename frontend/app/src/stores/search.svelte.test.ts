@@ -6,6 +6,7 @@ import {
     sameCommunitySearch,
     sameLanguages,
     searchCommunities,
+    topCommunities,
 } from "./search.svelte";
 
 function match(communityId: string): CommunityMatch {
@@ -189,5 +190,32 @@ describe("results set outside searchCommunities", () => {
         answer(page(["late"], 1));
         expect(await pending).toBe("superseded");
         expect(ids()).toEqual([]);
+    });
+});
+
+describe("topCommunities", () => {
+    beforeEach(() => {
+        communitySearchState.results = [];
+    });
+
+    test("Landing's featured communities are fetched with moderation flags 0", async () => {
+        const c = client(page(["a", "b", "c"], 40));
+        const top = await topCommunities(c, 3);
+        expect(top?.matches.map((m) => m.id.communityId)).toEqual(["a", "b", "c"]);
+        expect(top?.total).toBe(40);
+        // the ranking's first page: no search, no languages, and nothing adult or offensive
+        expect(c.exploreCommunities).toHaveBeenCalledWith(undefined, 0, 3, 0, []);
+    });
+
+    test("leaves explore's results alone", async () => {
+        communitySearchState.results = [match("explore")];
+        await topCommunities(client(page(["top"], 1)), 3);
+        expect(ids()).toEqual(["explore"]);
+    });
+
+    test("a failure, or a request that throws, is none", async () => {
+        expect(await topCommunities(client({ kind: "offline" }), 3)).toBeUndefined();
+        const throws = { exploreCommunities: vi.fn<Explore>(() => Promise.reject(new Error("x"))) };
+        expect(await topCommunities(throws, 3)).toBeUndefined();
     });
 });

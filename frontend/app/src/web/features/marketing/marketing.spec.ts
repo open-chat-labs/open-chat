@@ -1,5 +1,5 @@
 import type { RouteParams } from "@client";
-import { isEmailLinkPage, learnPageFor, learnPath } from "./marketing";
+import { isEmailLinkPage, landingCommunities, learnPageFor, learnPath } from "./marketing";
 
 const route = (r: object) => ({ scope: { kind: "none" }, ...r }) as RouteParams;
 
@@ -35,5 +35,46 @@ describe("the email sign-in link's page", () => {
     test("isn't ?auth on its own, which narrows the sign-in options", () => {
         expect(isEmailLinkPage(new URLSearchParams("auth"))).toBe(false);
         expect(isEmailLinkPage(new URLSearchParams("auth=II"))).toBe(false);
+    });
+});
+
+describe("Landing's featured communities", () => {
+    test("each of Explore's cards as Landing's, opening the community's preview", () => {
+        expect(
+            landingCommunities([
+                {
+                    key: "abc",
+                    name: "OpenChat",
+                    about: "News",
+                    members: 62504,
+                    channelCount: 4,
+                    language: "English",
+                    avatarUrl: "/avatar/abc",
+                    coverUrl: "/banner/abc",
+                },
+            ]),
+        ).toEqual([
+            {
+                name: "OpenChat",
+                about: "News",
+                members: 62504,
+                avatarUrl: "/avatar/abc",
+                coverUrl: "/banner/abc",
+                href: "/community/abc",
+            },
+        ]);
+    });
+
+    test("one with no description has none, and the design's colours stand in for its images", () => {
+        expect(landingCommunities([{ key: "x", name: "X", members: 1 }])).toEqual([
+            {
+                name: "X",
+                about: "",
+                members: 1,
+                avatarUrl: undefined,
+                coverUrl: undefined,
+                href: "/community/x",
+            },
+        ]);
     });
 });

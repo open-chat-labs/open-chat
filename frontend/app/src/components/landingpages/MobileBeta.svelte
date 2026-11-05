@@ -1,9 +1,10 @@
 <script lang="ts">
+    import {
+        ANDROID_APK_URL,
+        ANDROID_BETA_GROUP_URL,
+        ANDROID_PLAY_TEST_URL,
+    } from "@src/utils/urls";
     import Section from "./Section.svelte";
-
-    const GROUP_URL = "https://groups.google.com/g/openchatbeta";
-    const PLAY_TEST_URL = "https://play.google.com/apps/testing/com.oclabs.openchat";
-    const APK_URL = "https://github.com/open-chat-labs/open-chat/releases/latest";
 
     // Which build the reader has chosen. Deliberately not persisted: the choice is
     // cheap to make again and the two paths are mutually exclusive, so landing on
@@ -70,7 +71,7 @@
                             <span class="n">1</span>
                             <span>
                                 Join the testers group. This is what tells Google you're allowed in.
-                                <a class="btn" href={GROUP_URL} target="_blank" rel="noreferrer"
+                                <a class="btn" href={ANDROID_BETA_GROUP_URL} target="_blank" rel="noreferrer"
                                     >Join the testers group →</a
                                 >
                             </span>
@@ -81,7 +82,7 @@
                                 Accept the test on the Google Play testing page.
                                 <a
                                     class="btn outline"
-                                    href={PLAY_TEST_URL}
+                                    href={ANDROID_PLAY_TEST_URL}
                                     target="_blank"
                                     rel="noreferrer">Accept the test →</a
                                 >
@@ -114,7 +115,7 @@
                         Store.
                     </p>
 
-                    <a class="btn" href={APK_URL} target="_blank" rel="noreferrer"
+                    <a class="btn" href={ANDROID_APK_URL} target="_blank" rel="noreferrer"
                         >Download the latest APK →</a
                     >
 
