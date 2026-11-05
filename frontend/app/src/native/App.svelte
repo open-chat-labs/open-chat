@@ -7,7 +7,7 @@
     import "@openchat/ui/src/lib/styles/global.css";
 
     import "@i18n/i18n";
-    import { localeLoadFailed, reviewingTranslations } from "@i18n/i18n";
+    import { i18nKey, localeLoadFailed, reviewingTranslations } from "@i18n/i18n";
     import { addUiMessages, uiTranslate } from "@i18n/openchatUi";
     import { installBehaviours } from "@openchat/ui/src/lib/behaviours";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
@@ -40,8 +40,10 @@
     } from "@client";
     import { onMount, setContext } from "svelte";
     import { _, isLoading, json, locale } from "svelte-i18n";
+    import { toastStore } from "@src/stores/toast";
     import { hostHaptics } from "./haptics";
     import { nativeOs } from "./platform";
+    import { followAndroidSystemBars } from "./systemBars";
     import Router from "./router/Router.svelte";
     import Shell from "./shell/Shell.svelte";
 
@@ -69,8 +71,9 @@
     );
 
     // The native root is <html>, so what's portalled to <body> (sheets, menus, the call screen) is
-    // inside it too: the platform and OS (touch targets, back arrow, kebab, bar paddings), and the
-    // theme and accent the web uses, from the same stored settings. They go when the tree does.
+    // inside it too: the platform and OS (touch targets, back arrow, kebab, bar paddings), the
+    // theme and accent the web uses, from the same stored settings, and in the Android app the
+    // system bars (systemBars.ts). They all go when the tree does.
     const root = document.documentElement;
     root.dataset.platform = "native";
     root.dataset.os = os;
@@ -92,18 +95,33 @@
 
     followDocumentDirection();
 
+    // A share from another app for no chat in particular needs the chat picker, which isn't built
+    // yet (GAPS.md): say so rather than drop it. A Direct Share to a chat goes to its draft.
+    function shareUnavailable() {
+        toastStore.showFailureToast(i18nKey("native.shareUnavailable"));
+    }
+
+    function setUpNativeApp() {
+        setupNativeApp(client, videoBridgeUrl, shareUnavailable);
+    }
+
     onMount(() => {
         const unsubscribe = subscribeToSessionEvents(client, {
-            onLoggedIn: () => setupNativeApp(client, videoBridgeUrl),
+            onLoggedIn: setUpNativeApp,
             onUserIdChanged: () => startAgain(client),
         });
         clearChatShortcutsOnLogout(client);
+        // the Android app reports its system bars itself
+        const stopFollowingBars = isAndroidTauriApp() ? followAndroidSystemBars(root) : () => {};
         window.addEventListener("unhandledrejection", unhandledError);
         return () => {
             window.removeEventListener("unhandledrejection", unhandledError);
             unsubscribe();
+            stopFollowingBars();
             delete root.dataset.platform;
             delete root.dataset.os;
+            delete root.dataset.mode;
+            delete root.dataset.accent;
             root.style.removeProperty("--text-scale");
         };
     });
@@ -111,7 +129,7 @@
     // Already signed in: the native setup (listeners before svelteReady) starts now, as in
     // components_mobile; a later sign-in starts it from onLoggedIn.
     if ($identityStateStore.kind === "logged_in") {
-        setupNativeApp(client, videoBridgeUrl);
+        setUpNativeApp();
     }
 
     function unhandledError(ev: Event) {

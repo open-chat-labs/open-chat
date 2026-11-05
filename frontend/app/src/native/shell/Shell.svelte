@@ -105,7 +105,7 @@
             wallet: !disableWalletFeature,
         }),
     );
-    const tabIds = $derived(NATIVE_TABS.filter((id) => tabs.some((t) => t.id === id)));
+    const tabIds = $derived(tabs.map((t) => t.id));
     const tabIndex = $derived(Math.max(0, tabIds.indexOf(stacks.tab)));
 
     // Tapping a tab opens it where it was left (its root the first time); tapping the tab showing
@@ -135,7 +135,7 @@
         const action = backAction({
             overlayOpen: overlays.any,
             location,
-            steps: stacks.steps,
+            backUrl: stacks.backUrl(),
             chatsUrl: stacks.topUrl("chats") ?? tabRootUrl("chats", undefined),
         });
         switch (action.kind) {

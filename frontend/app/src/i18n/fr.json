@@ -1691,6 +1691,7 @@
                 "title": "Lien avec un compte existant"
             }
         },
+        "shareUnavailable": "Le partage vers OpenChat depuis d'autres applications n'est pas encore disponible dans cette version.",
         "tabs": {
             "activity": "Activité",
             "chats": "Discussions",

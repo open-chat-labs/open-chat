@@ -1691,6 +1691,7 @@
                 "title": "与现有帐户关联"
             }
         },
+        "shareUnavailable": "此版本暂不支持从其他应用分享到 OpenChat。",
         "tabs": {
             "activity": "动态",
             "chats": "聊天",

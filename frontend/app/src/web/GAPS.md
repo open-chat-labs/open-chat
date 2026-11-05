@@ -65,6 +65,19 @@ design export needs. Each entry says where it came up.
     (`configKeys.layoutOverride`), but no screen sets it yet (N12, and the web's settings). Nor does
     a resize offer a reload into the other layout.
   - **Outside the tabs**: the marketing pages and the signed-out start are a placeholder (N4).
+  - **Shares from other apps**: a Direct Share to a chat goes into that chat's draft, as in
+    components_mobile; a share for no chat in particular needs the chat picker
+    (components_mobile's goes through `pendingShareStore` to its SlidingModals), which the native
+    tree doesn't have yet, so it says so in a toast (`native.shareUnavailable`) and drops the share;
+    a `/share` link shows the Chats root. The picker comes with N5a or N5d.
+  - **The Android app's system bars**: done. Its WebView doesn't report `env(safe-area-inset-*)`
+    reliably, so the native root follows the shell's window-inset event into `--safe-top` /
+    `--safe-bottom` (`native/systemBars.ts`, through components_mobile's `androidInterfaceSizes`).
+    The keyboard's height, which the same event carries, is N5c's.
+  - **Cold starts**: what the shell parks (an answered call, a deep link, a notification tap) is
+    reactive now (`utils/native/coldStart.svelte.ts`), in both trees: it's opened when it lands, not
+    on the next visit to the chat list, and a cold start opens one of them (a call, else a deep
+    link, else a tap), the others dropped.
   - An app store build has no Wallet tab (`disableWalletFeature`), but a `/wallet` link still opens
     its stack, with no tab selected.
   - The tab bar's Chats count is the unmuted unread DMs and groups; the design doesn't say whether

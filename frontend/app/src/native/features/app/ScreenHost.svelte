@@ -74,8 +74,9 @@
     }
 </script>
 
-<!-- a new kind is a new screen: the old one goes before the new step reaches it -->
-{#key step.screen.kind}
+<!-- another screen (another kind, another community's root) is a new instance: the old one goes,
+     state and scroll included, before the new step reaches it -->
+{#key step.key}
     {#if load}
         {#await load()}
             <div class="state"><Spinner /></div>

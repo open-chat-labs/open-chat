@@ -9,10 +9,11 @@ const community = (communityId: string): CommunityIdentifier => ({
 });
 
 // The place a URL names, as the shell gets it
-function at(url: string, communityId = "c1"): TabsLocation {
+// `communityId` null: the user has no community
+function at(url: string, communityId: string | null = "c1"): TabsLocation {
     const location = locationFor(resolve(url), url, {
         signedOut: false,
-        community: community(communityId),
+        community: communityId === null ? undefined : community(communityId),
     });
     if (location.area !== "tabs") throw new Error(`${url} isn't in the tabs`);
     return location;
@@ -97,17 +98,27 @@ describe("a tab's stack arriving somewhere", () => {
         ]);
     });
 
-    test("starts again from the root when the tab's root changes", () => {
-        const { steps } = mergeStack(
+    test("starts again, as a replacement, when the tab's root changes", () => {
+        // not a pop: the channel doesn't slide out as if Back was pressed
+        const { steps, change } = mergeStack(
             walk("/community/c1", "/community/c1/channel/9"),
             at("/community/c2").steps,
         );
         expect(urls(steps)).toEqual(["/community/c2"]);
+        expect(change).toBe("replace");
         const channel = mergeStack(
             walk("/community/c1", "/community/c1/channel/9"),
             at("/community/c2/channel/4").steps,
         );
         expect(urls(channel.steps)).toEqual(["/community/c2", "/community/c2/channel/4"]);
+        expect(channel.change).toBe("replace");
+        // Explore as the root, then a community: another root too
+        const explore = mergeStack(at("/welcome", null).steps, at("/community/c1").steps);
+        expect(urls(explore.steps)).toEqual(["/community/c1"]);
+        expect(explore.change).toBe("replace");
+        // Favourites in place of the Chats list
+        const favourites = mergeStack(walk("/chats", "/chats/group/g1"), at("/favourite").steps);
+        expect(favourites.change).toBe("replace");
     });
 
     test("pushes Explore over the community the tab shows", () => {
@@ -166,6 +177,19 @@ describe("the tabs' stacks", () => {
         expect(stacks.topUrl("you")).toBeUndefined();
         expect(stacks.root("you")).toBeUndefined();
         expect(stacks.root("chats")?.url).toBe("/chats");
+    });
+
+    test("keep the stack a URL was entered with when only the data under it changes", () => {
+        // no communities yet: Explore is the root; joining one doesn't push Explore over it
+        const stacks = new TabStacks();
+        stacks.arrive(at("/welcome", null));
+        const steps = stacks.steps;
+        stacks.arrive(at("/welcome", "c1"));
+        expect(stacks.steps).toBe(steps);
+        expect(urls(stacks.steps)).toEqual(["/welcome"]);
+        // the next URL takes the new data in
+        stacks.arrive(at("/communities", "c1"));
+        expect(urls(stacks.steps)).toEqual(["/community/c1", "/communities"]);
     });
 
     test("don't change for the same place again", () => {

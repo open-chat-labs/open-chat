@@ -25,7 +25,10 @@ const ICONS: Record<NativeTabId, string> = {
     you: "user",
 };
 
-export function tabBarTabs(data: TabBarData): NativeTab[] {
+/** A tab of the bar, with its id as the tab it is. */
+export type TabBarTab = NativeTab & { id: NativeTabId };
+
+export function tabBarTabs(data: TabBarData): TabBarTab[] {
     return NATIVE_TABS.filter((id) => id !== "wallet" || data.wallet).map((id) => ({
         id,
         label: data.labels[id],

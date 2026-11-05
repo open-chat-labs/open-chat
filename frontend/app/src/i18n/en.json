@@ -1606,6 +1606,7 @@
                 "title": "Link with existing account"
             }
         },
+        "shareUnavailable": "Sharing to OpenChat from other apps isn't available in this version yet.",
         "tabs": {
             "activity": "Activity",
             "chats": "Chats",

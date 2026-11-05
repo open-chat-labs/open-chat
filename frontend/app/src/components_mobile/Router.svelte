@@ -2,7 +2,7 @@
 <script lang="ts">
     import { initNavigationHistoryTracking, navigate } from "@src/utils/navigation";
     import { runCallAction } from "@utils/native/call_bridge";
-    import { consumeColdStartIntent } from "@utils/native/nativeApp";
+    import { consumeColdStartIntent } from "@utils/native/coldStart.svelte";
     import { openDeepLink } from "@utils/native/notification_channels";
     import { handleLinkClick, removeQueryStringParam } from "@src/utils/urls";
     import type { TransitionType } from "component-lib";

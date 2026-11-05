@@ -1,4 +1,4 @@
-import type { NativeLocation, NativeTabId, StackStep } from "../router/locations";
+import type { NativeLocation, NativeTabId } from "../router/locations";
 
 // What Android's system back does in the native tree (native design notes §2): it closes an open
 // sheet or menu first, then pops the screen on top, then takes another tab back to Chats, the first
@@ -14,13 +14,13 @@ export type BackState = {
     /** A sheet or menu is open (Overlays). */
     overlayOpen: boolean;
     location: NativeLocation;
-    /** The stack showing (TabStacks.steps). */
-    steps: StackStep[];
+    /** The screen under the top, as the header's Back has it (TabStacks.backUrl); none at a root. */
+    backUrl: string | undefined;
     /** Where the Chats tab is: the screen it was left on, else its root. */
     chatsUrl: string;
 };
 
-export function backAction({ overlayOpen, location, steps, chatsUrl }: BackState): BackAction {
+export function backAction({ overlayOpen, location, backUrl, chatsUrl }: BackState): BackAction {
     if (overlayOpen) return { kind: "close_overlay" };
     switch (location.area) {
         case "marketing":
@@ -29,12 +29,12 @@ export function backAction({ overlayOpen, location, steps, chatsUrl }: BackState
         case "not_found":
             return { kind: "navigate", url: chatsUrl };
         case "tabs":
-            return tabsBack(location.tab, steps, chatsUrl);
+            return tabsBack(location.tab, backUrl, chatsUrl);
     }
 }
 
-function tabsBack(tab: NativeTabId, steps: StackStep[], chatsUrl: string): BackAction {
-    if (steps.length > 1) return { kind: "navigate", url: steps[steps.length - 2].url };
+function tabsBack(tab: NativeTabId, backUrl: string | undefined, chatsUrl: string): BackAction {
+    if (backUrl !== undefined) return { kind: "navigate", url: backUrl };
     if (tab !== "chats") return { kind: "navigate", url: chatsUrl };
     return { kind: "leave" };
 }

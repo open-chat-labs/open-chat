@@ -4,7 +4,7 @@
      each route is in the tabs is the child's (router/locations.ts, the shell).
      A native app's cold start: the native setup registers its listeners before svelteReady
      (utils/native/nativeApp), and what they park (an answered call, a deep link, a notification tap)
-     is opened here once there's a chat list to open it over, as in components_mobile. -->
+     is opened here as soon as it lands once the chats are in. -->
 <script lang="ts">
     import RouteEffects from "@src/core/RouteEffects.svelte";
     import {
@@ -15,15 +15,14 @@
     import { redirectTable, routeTable } from "@src/utils/routeTable";
     import { handleLinkClick } from "@src/utils/urls";
     import { runCallAction } from "@utils/native/call_bridge";
-    import { consumeColdStartIntent } from "@utils/native/nativeApp";
+    import { coldStartIntents, consumeColdStartIntent } from "@utils/native/coldStart.svelte";
     import { openDeepLink } from "@utils/native/notification_channels";
     import {
-        chatListScopeStore,
-        exploringStore,
+        chatsInitialisedStore,
         notFoundStore,
         OpenChat,
         routerReadyStore,
-        selectedChatIdStore,
+        routeStore,
         subscribe,
         type RouteParams,
     } from "@client";
@@ -74,14 +73,15 @@
         };
     });
 
-    // What a cold start parked, opened over the chat list it starts on (components_mobile's
-    // Router: an answered native ring beats a deep link, which beats a notification tap). The
-    // Chats tab's root is the list itself, so there's no default chat to open otherwise.
+    // What a cold start parked (an answered native ring, else a deep link, else a notification
+    // tap: coldStart.svelte.ts), opened as soon as it lands once the chats are in and "/" has gone
+    // to its chat list, whatever the user is looking at by then. The parked intents are reactive,
+    // so one that lands after this first looks is still opened at once, not on some later visit.
     $effect(() => {
         if (
-            $selectedChatIdStore === undefined &&
-            $chatListScopeStore.kind !== "none" &&
-            !$exploringStore
+            $chatsInitialisedStore &&
+            $routeStore.kind !== "home_route" &&
+            coldStartIntents.pending
         ) {
             untrack(openColdStartIntent);
         }

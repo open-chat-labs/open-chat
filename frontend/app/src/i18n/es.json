@@ -1691,6 +1691,7 @@
                 "title": "Vincular con cuenta existente"
             }
         },
+        "shareUnavailable": "Compartir en OpenChat desde otras aplicaciones aún no está disponible en esta versión.",
         "tabs": {
             "activity": "Actividad",
             "chats": "Chats",

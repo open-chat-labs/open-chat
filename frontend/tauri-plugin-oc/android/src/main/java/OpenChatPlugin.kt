@@ -77,9 +77,6 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         invoke.resolve(JSObject().put("fcmToken", OCPluginCompanion.fcmToken))
     }
 
-    // What Play offers this install, so a store build announces an update only
-    // once it can be installed. Resolves without a versionCode when Play offers
-    // nothing or cannot be asked; the caller treats both as no update.
     // A light tap where the native design asks for one (a tab tap, a long-press menu opening). It
     // follows the system's own touch feedback setting.
     @Command
@@ -90,6 +87,9 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         invoke.resolve()
     }
 
+    // What Play offers this install, so a store build announces an update only
+    // once it can be installed. Resolves without a versionCode when Play offers
+    // nothing or cannot be asked; the caller treats both as no update.
     @Command
     fun getStoreUpdate(invoke: Invoke) {
         AppUpdateManagerFactory.create(activity).appUpdateInfo

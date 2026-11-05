@@ -48,7 +48,8 @@ export type NativeScreen =
 /**
  * A screen in a stack, with the URL it shows at, which Back goes to from the screen above it.
  * `key` is the screen's identity: the same key is the same screen, whatever its URL's details (a
- * conversation scrolled to another message), and a tab's root has the tab's id.
+ * conversation scrolled to another message). A root showing something else is another root: the
+ * Chats list or Favourites, one community or another, or Explore without one.
  */
 export type StackStep = { key: string; screen: NativeScreen; url: string };
 
@@ -112,7 +113,7 @@ export function locationFor(
                 url,
                 context.community !== undefined
                     ? [communitiesRoot(context.community), exploreStep()]
-                    : [{ ...exploreStep(), key: "communities" }],
+                    : [exploreStep()],
             );
         case "wallet_route":
             return tabs("wallet", url, [walletRoot(), ...walletSteps(route)]);
@@ -174,11 +175,15 @@ function step(key: string, screen: NativeScreen, url: string): StackStep {
 function chatsRoot(scope: ChatListScope): StackStep {
     // the Chats tab lists DMs and groups, or favourites
     const listed: ChatListScope = scope.kind === "favourite" ? scope : { kind: "chats" };
-    return step("chats", { kind: "chats", scope: listed }, routeForScope(listed));
+    return step(`chats:${listed.kind}`, { kind: "chats", scope: listed }, routeForScope(listed));
 }
 
 function communitiesRoot(communityId: CommunityIdentifier): StackStep {
-    return step("communities", { kind: "communities", communityId }, communityUrl(communityId));
+    return step(
+        `communities:${communityId.communityId}`,
+        { kind: "communities", communityId },
+        communityUrl(communityId),
+    );
 }
 
 function communityUrl(communityId: CommunityIdentifier): string {

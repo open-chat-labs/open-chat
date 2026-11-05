@@ -1,19 +1,19 @@
 import { resolve } from "@src/utils/routeTable.testing";
-import { locationFor, type NativeLocation, type StackStep } from "../router/locations";
+import { locationFor, type NativeLocation } from "../router/locations";
 import { backAction } from "./back";
+import { TabStacks } from "./tabStacks.svelte";
 
 function at(url: string): NativeLocation {
     return locationFor(resolve(url), url, { signedOut: false, community: undefined });
 }
 
-function steps(location: NativeLocation): StackStep[] {
-    return location.area === "tabs" ? location.steps : [];
-}
-
-// What system back does on `url`, its stack as the URL has it
+// What system back does on `url`, its stack as the URL has it, going back where the header's Back
+// goes (TabStacks.backUrl)
 function back(url: string, overlayOpen = false, chatsUrl = "/chats") {
     const location = at(url);
-    return backAction({ overlayOpen, location, steps: steps(location), chatsUrl });
+    const stacks = new TabStacks();
+    if (location.area === "tabs") stacks.arrive(location);
+    return backAction({ overlayOpen, location, backUrl: stacks.backUrl(), chatsUrl });
 }
 
 describe("Android's system back", () => {

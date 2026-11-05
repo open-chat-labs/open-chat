@@ -1691,6 +1691,7 @@
                 "title": "Mit bestehendem Konto verknüpfen"
             }
         },
+        "shareUnavailable": "Das Teilen aus anderen Apps in OpenChat ist in dieser Version noch nicht verfügbar.",
         "tabs": {
             "activity": "Aktivität",
             "chats": "Chats",

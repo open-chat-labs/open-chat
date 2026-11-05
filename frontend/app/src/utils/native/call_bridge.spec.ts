@@ -93,7 +93,8 @@ describe("native call bridge", () => {
 
     test("invariant 11 a cold-start action is delivered exactly once, after the listener is registered", async () => {
         tauri.invoke.mockResolvedValueOnce({ payload: JSON.stringify(accept) });
-        const { expectCallActions, consumePendingCallAction } = await import("./call_bridge");
+        const { expectCallActions } = await import("./call_bridge");
+        const { consumeColdStartIntent } = await import("./coldStart.svelte");
         const onAction = vi.fn();
         await expectCallActions(onAction);
         expect(tauri.addPluginListener).toHaveBeenCalledWith(
@@ -104,20 +105,24 @@ describe("native call bridge", () => {
         expect(tauri.invoke).toHaveBeenCalledWith("plugin:oc|get_pending_call_action");
         // The warm handler is not used for the cold action: the router drains it.
         expect(onAction).not.toHaveBeenCalled();
-        expect(consumePendingCallAction()).toMatchObject({ kind: "accept", messageId: 77n });
-        expect(consumePendingCallAction()).toBeNull();
+        expect(consumeColdStartIntent()).toMatchObject({
+            kind: "call",
+            action: { kind: "accept", messageId: 77n },
+        });
+        expect(consumeColdStartIntent()).toBeUndefined();
     });
 
     test("invariant 11 a warm action reaches the handler once as a live event", async () => {
         tauri.invoke.mockResolvedValueOnce({});
-        const { expectCallActions, consumePendingCallAction } = await import("./call_bridge");
+        const { expectCallActions } = await import("./call_bridge");
+        const { consumeColdStartIntent } = await import("./coldStart.svelte");
         const onAction = vi.fn();
         await expectCallActions(onAction);
         const handler = tauri.addPluginListener.mock.calls[0][2] as (raw: unknown) => void;
         handler(accept);
         expect(onAction).toHaveBeenCalledTimes(1);
         expect(onAction.mock.calls[0][0]).toMatchObject({ kind: "accept", messageId: 77n });
-        expect(consumePendingCallAction()).toBeNull();
+        expect(consumeColdStartIntent()).toBeUndefined();
         // Garbage on the event is dropped, not delivered.
         handler({ kind: "accept" });
         expect(onAction).toHaveBeenCalledTimes(1);
@@ -160,10 +165,10 @@ describe("native call bridge", () => {
 
     test("invariant 16 a shell without native calls is a no-op", async () => {
         tauri.invoke.mockRejectedValue(new Error("plugin:oc|get_pending_call_action not found"));
-        const { expectCallActions, consumePendingCallAction, notifyCallJoined } =
-            await import("./call_bridge");
+        const { expectCallActions, notifyCallJoined } = await import("./call_bridge");
+        const { consumeColdStartIntent } = await import("./coldStart.svelte");
         await expect(expectCallActions(vi.fn())).resolves.toBeDefined();
-        expect(consumePendingCallAction()).toBeNull();
+        expect(consumeColdStartIntent()).toBeUndefined();
         // Rejection from the missing command is swallowed, never left unhandled.
         await expect(notifyCallJoined(1n)).resolves.toBeUndefined();
         expect(tauri.invoke).toHaveBeenCalledWith("plugin:oc|call_ring_handled", {

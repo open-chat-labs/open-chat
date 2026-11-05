@@ -16,13 +16,14 @@ export type StackChange = "push" | "pop" | "replace" | "same" | "switch";
  * The stack keeps what it had up to the deepest screen the two share, and takes the rest from
  * `next`: going deeper pushes onto what's there, going to a screen already in the stack pops back
  * to it, and going sideways (another conversation, another community) replaces what's above the
- * screen in common. Screens are matched by key, and a shared screen takes `next`'s URL.
+ * screen in common. Screens are matched by key, and a shared screen takes `next`'s URL. Another
+ * root (another community, Favourites for the list) is another stack: it replaces the old one.
  */
 export function mergeStack(
     current: StackStep[] | undefined,
     next: StackStep[],
 ): { steps: StackStep[]; change: StackChange } {
-    if (current === undefined || current.length === 0) {
+    if (current === undefined || current.length === 0 || current[0].key !== next[0]?.key) {
         return { steps: next, change: "replace" };
     }
     for (let j = next.length - 1; j >= 0; j--) {
@@ -48,6 +49,10 @@ function commonKeys(a: StackStep[], b: StackStep[]): number {
     let n = 0;
     while (n < a.length && n < b.length && a[n].key === b[n].key) n++;
     return n;
+}
+
+function topUrl(steps: StackStep[]): string | undefined {
+    return steps[steps.length - 1]?.url;
 }
 
 function sameSteps(a: StackStep[], b: StackStep[]): boolean {
@@ -80,11 +85,17 @@ export class TabStacks {
         return this.#stacks[tab];
     }
 
-    /** Takes in the place the URL names: that tab shows, and its stack goes there. */
+    /**
+     * Takes in the place the URL names: that tab shows, and its stack goes there. The URL showing
+     * keeps the stack it was entered with: the same URL again (its place worked out afresh after the
+     * user's communities changed, say) changes nothing, so nothing moves under the user.
+     */
     arrive(location: TabsLocation): void {
         const current = this.#stacks[location.tab];
-        const { steps, change } = mergeStack(current, location.steps);
         const switched = location.tab !== this.#tab;
+        if (!switched && current !== undefined && topUrl(current) === topUrl(location.steps))
+            return;
+        const { steps, change } = mergeStack(current, location.steps);
         if (!switched && current !== undefined && sameSteps(current, steps)) return;
         this.#stacks = { ...this.#stacks, [location.tab]: steps };
         this.#change = switched ? "switch" : change;

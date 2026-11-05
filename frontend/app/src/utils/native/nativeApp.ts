@@ -3,27 +3,18 @@ import { clearChatShortcuts, startChatShortcutPusher } from "@stores/chatShortcu
 import { activeVideoCall } from "@stores/video";
 import { invoke } from "@tauri-apps/api/core";
 import { clearAllNotifications, svelteReady } from "tauri-plugin-oc-api";
+import { expectCallActions, expectCallControls, runCallAction, setCallConfig } from "./call_bridge";
 import {
-    consumePendingCallAction,
-    expectCallActions,
-    expectCallControls,
-    runCallAction,
-    setCallConfig,
-    type NativeCallAction,
-} from "./call_bridge";
-import {
-    consumePendingDeepLink,
-    consumePendingNotificationTap,
     expectDeepLinks,
     expectNotificationTap,
     expectPushNotifications,
 } from "./notification_channels";
 import { expectPushDeviceRefresh, registerPushDevice, unregisterPushDevice } from "./push_device";
-import { expectShareTarget, handleShareTarget } from "./share_target";
+import { expectShareTarget, handleShareTarget, type PickShareChat } from "./share_target";
 
 // The native apps' (Tauri) setup, shared by the App trees that run in them (components_mobile
-// and src/native): the push device, the native event listeners and svelteReady, and the
-// cold-start intents the listeners park until the router can take them.
+// and src/native): the push device, the native event listeners and svelteReady. What the
+// listeners park during a cold start is in coldStart.svelte.ts.
 
 // Guards the one-time native setup (listeners, logout hook, svelteReady) so it runs once per page
 // session. setupNativeApp() itself runs again on every userLoggedIn (account switch), but only the
@@ -34,9 +25,14 @@ let nativeSetupDone = false;
 /**
  * Sets up push notifications and the native event listeners, then tells the shell the app is
  * ready. Call on every login in a native app (it does nothing elsewhere). `videoBridgeUrl` is the
- * build's (utils/openchatClient), if it has one.
+ * build's (utils/openchatClient), if it has one. `pickShareChat` is where a share from another app
+ * goes when it's for no chat in particular: components_mobile's picker by default.
  */
-export function setupNativeApp(client: OpenChat, videoBridgeUrl: string | undefined): void {
+export function setupNativeApp(
+    client: OpenChat,
+    videoBridgeUrl: string | undefined,
+    pickShareChat?: PickShareChat,
+): void {
     if (!client.isNativeApp()) {
         return;
     }
@@ -67,7 +63,7 @@ export function setupNativeApp(client: OpenChat, videoBridgeUrl: string | undefi
         // Listen for content shared into OpenChat from the system share sheet
         // (or via a Direct Share chat shortcut). Cold-start shares are queued
         // by the native side and delivered once svelteReady fires below.
-        expectShareTarget((share) => handleShareTarget(client, share)),
+        expectShareTarget((share) => handleShareTarget(client, share, pickShareChat)),
 
         // Listen for deep links (e.g. https://oc.app/group/xyz tapped from another app).
         // Cold-start deep links are queued by MainActivity and delivered once svelteReady fires.
@@ -77,7 +73,7 @@ export function setupNativeApp(client: OpenChat, videoBridgeUrl: string | undefi
         expectPushDeviceRefresh(client),
 
         // A call answered from the native ring, or a call log redial. Cold-start
-        // actions are parked by the shell and consumed by the router (consumeColdStartIntent).
+        // actions are parked by the shell and opened by the router (coldStart.svelte.ts).
         expectCallActions(runCallAction),
 
         // The shell reports a decline from the native ring to the bridge itself. A build
@@ -132,24 +128,4 @@ export function startAgain(client: OpenChat): void {
     } else {
         window.location.reload();
     }
-}
-
-/** Where a cold start should land instead of the app's usual start, parked by the native shell. */
-export type ColdStartIntent =
-    | { kind: "call"; action: NativeCallAction }
-    | { kind: "deep_link"; url: string }
-    | { kind: "notification"; path: string };
-
-/**
- * Takes the intent the native shell parked during a cold start, if there is one: an answered
- * native ring beats a deep link, which beats a notification tap. Each is taken once.
- */
-export function consumeColdStartIntent(): ColdStartIntent | undefined {
-    const action = consumePendingCallAction();
-    if (action !== null) return { kind: "call", action };
-    const url = consumePendingDeepLink();
-    if (url !== null) return { kind: "deep_link", url };
-    const path = consumePendingNotificationTap();
-    if (path !== null) return { kind: "notification", path };
-    return undefined;
 }

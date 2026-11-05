@@ -94,9 +94,6 @@ describe("where a URL is in the native tree", () => {
         expect(stack("/welcome", { signedOut: false, community: undefined })).toBe(
             "communities: explore@/welcome",
         );
-        const root = at("/communities", { signedOut: false, community: undefined });
-        // keyed as the tab's root, so a community taking its place replaces it
-        expect(root.area === "tabs" && root.steps[0].key).toBe("communities");
     });
 
     test("the wallet's pages are the Wallet tab's stack", () => {
@@ -148,8 +145,21 @@ describe("where a URL is in the native tree", () => {
         };
         expect(keys("/chats/group/g1/57")).toEqual(keys("/chats/group/g1"));
         expect(keys("/group/g1")).toEqual(keys("/chats/group/g1"));
-        expect(keys("/community/c2")).toEqual(keys("/community/c3"));
         expect(keys("/chats/user/u1")).not.toEqual(keys("/chats/user/u2"));
+    });
+
+    test("another root is another screen: a community or another, Explore, Favourites", () => {
+        const root = (url: string, context: LocationContext = signedIn) => {
+            const location = at(url, context);
+            return location.area === "tabs" ? location.steps[0].key : undefined;
+        };
+        expect(root("/community/c2")).not.toEqual(root("/community/c3"));
+        expect(root("/community/c2/channel/9")).toEqual(root("/community/c2"));
+        expect(root("/communities", { signedOut: false, community: undefined })).not.toEqual(
+            root("/community/c2"),
+        );
+        expect(root("/favourite")).not.toEqual(root("/chats"));
+        expect(root("/chats/group/g1")).toEqual(root("/chats"));
     });
 });
 

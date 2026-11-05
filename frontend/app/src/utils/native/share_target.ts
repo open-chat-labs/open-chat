@@ -1,6 +1,13 @@
 import { addPluginListener, convertFileSrc, type PluginListener } from "@tauri-apps/api/core";
 import { pendingShareStore } from "@stores/pendingShare";
-import { type ChatIdentifier, LazyFile, chatListScopeStore, localUpdates, OpenChat, routeForChatIdentifier } from "@client";
+import {
+    type ChatIdentifier,
+    LazyFile,
+    chatListScopeStore,
+    localUpdates,
+    OpenChat,
+    routeForChatIdentifier,
+} from "@client";
 import { get } from "svelte/store";
 import type { Share } from "../share";
 import { navigate } from "@utils/navigation";
@@ -123,12 +130,20 @@ export function shareToChat(
     navigate(routeForChatIdentifier(get(chatListScopeStore).kind, chatId));
 }
 
+/** Where a share for no chat in particular goes: the App tree's chat picker. */
+export type PickShareChat = (share: Share) => void;
+
 /**
  * Entry point for incoming share-target events. Routes to either the Direct
  * Share fast-path (when the share carries a known shortcut id) or the generic
- * "shareMessage" picker flow (reuses the in-app share infrastructure).
+ * picker flow: by default the in-app share infrastructure (pendingShareStore,
+ * which components_mobile's SlidingModals reads), else the tree's `pickChat`.
  */
-export function handleShareTarget(client: OpenChat, shareTarget: ShareTarget): void {
+export function handleShareTarget(
+    client: OpenChat,
+    shareTarget: ShareTarget,
+    pickChat: PickShareChat = (share) => pendingShareStore.set(share),
+): void {
     if (shareTarget.shortcutId) {
         const chatId = shortcutIdToChatId(shareTarget.shortcutId);
         if (chatId !== undefined) {
@@ -164,8 +179,8 @@ export function handleShareTarget(client: OpenChat, shareTarget: ShareTarget): v
         url: undefined,
         files: files as unknown as File[],
     };
-    // Use a writable store rather than publish() so cold-start shares that
-    // arrive before SlidingModals has subscribed don't get dropped. The
+    // By default a writable store rather than publish(), so cold-start shares
+    // that arrive before SlidingModals has subscribed don't get dropped. The
     // store retains the value; SlidingModals reads it on mount.
-    pendingShareStore.set(share);
+    pickChat(share);
 }
