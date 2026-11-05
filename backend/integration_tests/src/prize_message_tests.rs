@@ -7,13 +7,14 @@ use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use pocket_ic::common::rest::{CanisterHttpReply, CanisterHttpResponse, MockCanisterHttpResponse};
 use rand::random;
+use sha256::sha256_string;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
     CanisterId, ChatEvent, CryptoTransaction, EventIndex, MessageContent, MessageContentInitial, MessageId, MultiUserChat,
-    OptionUpdate, PendingCryptoTransaction, PrizeContentInitial, UnitResult, icrc1,
+    OptionUpdate, PendingCryptoTransaction, PrizeContentInitial, UnitResult, UserId, icrc1,
 };
 
 #[test]
@@ -528,7 +529,7 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
         local_user_index,
         chat_id,
         message_id,
-        &format!("{}_{other_message_id}", user2.user_id),
+        &custom_data(user2.user_id, other_message_id),
     );
     assert!(
         matches!(&response, local_user_index_canister::claim_prize::Response::Error(e) if e.matches_code(OCErrorCode::HumanVerificationFailed)),
@@ -541,7 +542,7 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
         local_user_index,
         chat_id,
         message_id,
-        &format!("{}_{message_id}", user2.user_id),
+        &custom_data(user2.user_id, message_id),
     );
     assert!(
         matches!(response, local_user_index_canister::claim_prize::Response::Success),
@@ -553,6 +554,11 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
     // Test envs are pooled, so Turnstile is turned off again
     set_turnstile_config(env, *platform_operator, canister_ids.user_index, None);
     wait_for_turnstile_config(env, canister_ids, false);
+}
+
+// The custom data the website's human check (turnstile.js) gives Cloudflare for this claim
+fn custom_data(user_id: UserId, message_id: MessageId) -> String {
+    sha256_string(format!("{user_id}_{message_id}").as_bytes())
 }
 
 // Claims with a new token, answering the LocalUserIndex's call to Cloudflare as Cloudflare would for

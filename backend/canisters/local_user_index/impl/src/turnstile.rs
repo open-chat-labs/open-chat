@@ -1,6 +1,7 @@
 use ic_cdk_management_canister::{HttpMethod, HttpRequest};
 use oc_error_codes::{OCError, OCErrorCode};
 use serde::Deserialize;
+use sha256::sha256_string;
 use types::{MessageId, UserId};
 
 const SITEVERIFY_URL: &str = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
@@ -8,10 +9,11 @@ const MAX_RESPONSE_BYTES: u64 = 4 * 1024;
 // The widget's action, so that a token issued for anything else is refused
 const ACTION: &str = "claim_prize";
 
-// The custom data the website gives the widget, so that a token only serves this user's claim of
-// this prize. Cloudflare allows up to 255 characters of [A-Za-z0-9_-].
+// The custom data the widget is run with, so that a token only serves this user's claim of this
+// prize. The website passes "<user id>_<message id>" to turnstile.js, which gives Cloudflare its
+// SHA-256 in hex rather than the user's id. Cloudflare allows up to 255 characters of [A-Za-z0-9_-].
 pub fn custom_data(user_id: UserId, message_id: MessageId) -> String {
-    format!("{user_id}_{message_id}")
+    sha256_string(format!("{user_id}_{message_id}").as_bytes())
 }
 
 // Asks Cloudflare whether the token shows a human, then that it was issued for this claim.
@@ -85,7 +87,7 @@ mod tests {
     use super::*;
     use candid::Principal;
 
-    const CUSTOM_DATA: &str = "46qm5-fiaaa-aaaaf-br7x6-xca_12525619536623022000";
+    const CUSTOM_DATA: &str = "ec6a61a38f47b65c0d29a2970be8338380b2049ef3ee6c340252d7473ac08267";
 
     #[test]
     fn passes_a_token_issued_for_this_claim() {
@@ -107,7 +109,13 @@ mod tests {
 
     #[test]
     fn refuses_a_token_issued_for_another_claim() {
-        let body = r#"{"success":true,"action":"claim_prize","cdata":"46qm5-fiaaa-aaaaf-br7x6-xca_1"}"#;
+        let body = r#"{"success":true,"action":"claim_prize","cdata":"0a9f02926754fc3ef92184908a9e75eded6a2b90834397cb3df0b1af2c892476"}"#;
+        assert!(check(body.as_bytes(), CUSTOM_DATA).is_err());
+    }
+
+    #[test]
+    fn refuses_unhashed_custom_data() {
+        let body = r#"{"success":true,"action":"claim_prize","cdata":"46qm5-fiaaa-aaaaf-br7x6-xca_12525619536623022000"}"#;
         assert!(check(body.as_bytes(), CUSTOM_DATA).is_err());
     }
 
@@ -124,7 +132,7 @@ mod tests {
     }
 
     #[test]
-    fn custom_data_joins_the_user_and_message() {
+    fn custom_data_hashes_the_user_and_message() {
         let user_id = UserId::from(Principal::from_text("46qm5-fiaaa-aaaaf-br7x6-xca").unwrap());
         let message_id = MessageId::from(12525619536623022000u128);
         assert_eq!(custom_data(user_id, message_id), CUSTOM_DATA);
