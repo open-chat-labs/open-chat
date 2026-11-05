@@ -50,6 +50,9 @@ design export needs. Each entry says where it came up.
   - The bars at the bottom pad by `--bar-end`, the safe area but at least 12px (the prototype's
     Android value; on iOS the home indicator's inset is 34px, its value). The prototype's top padding
     (iOS 54px, Android 4px) is `--safe-top` alone, on both.
+  - Android's system back closes an open sheet or menu before it pops the screen (notes §2): the
+    kit's `BottomSheet` takes `open` / `onClose`, so the native root's back handler closes what's
+    open first.
 - **Shell breakpoints vs layout tokens**: the shell's breakpoints and widths (Fix Brief - App
   Shell Layout: 768 / 1200 / 1476 / 1876 / 2476px, chat list `clamp(350px, 30cqw, 550px)`, right
   column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*` 1280–2500px,

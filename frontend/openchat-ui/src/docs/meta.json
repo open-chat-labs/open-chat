@@ -19858,6 +19858,118 @@
     "group": "features"
   },
   {
+    "name": "BottomSheet",
+    "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
+    "hash": "",
+    "description": "The native bottom sheet: a 48 × 4px handle, surface-1 with a 22px top radius over a dim veil, sliding up in 320ms and down in 280ms. Its handle and header drag it: past 30% or a flick down closes it, otherwise it springs back; pulled up it rubber-bands 24px. One fixed `height` across content states.",
+    "preview": {
+      "width": 402,
+      "height": 560
+    },
+    "props": [
+      {
+        "name": "open",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onClose",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The veil, Esc, a drag or a flick down. The sheet plays its way out once `open` turns false."
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the header's label, and the sheet's accessible name."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): the accessible name when there's no title."
+      },
+      {
+        "name": "actionLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): a button at the header's end (Done)."
+      },
+      {
+        "name": "onAction",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "height",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A fixed height (a CSS length), for a sheet whose content changes; otherwise it fits its content, up to 82%."
+      },
+      {
+        "name": "header",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "More of the drag area, under the title (a step's heading)."
+      },
+      {
+        "name": "children",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "native"
+  },
+  {
     "name": "NativePageHeader",
     "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
     "hash": "",

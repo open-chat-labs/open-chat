@@ -1231,6 +1231,18 @@
     }
   },
   "native": {
+    "BottomSheet": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the pick, poll-settings and referrer sheets (`grabSheet`, `closeSheet`, `v.sheetTy`, `v.sheetVeilOp`)",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/BottomSheet.svelte",
+        "src/native/sheetDrag.ts",
+        "src/native/presence.svelte.ts"
+      ]
+    },
     "NativePageHeader": {
       "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
       "sourceHash": "db4b562b",

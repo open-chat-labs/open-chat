@@ -4,9 +4,10 @@
   import Section from '../Section.svelte';
   import NativeFrame from '../NativeFrame.svelte';
   import { native, sec } from '../sections';
-  import { nativeTabs, nativeTabsNoPhoto } from '../samples';
-  import { Avatar, SegmentedTabs } from '../../lib/index';
-  import { NativePageHeader, TabBar } from '../../native/index';
+  import { nativePeople, nativeTabs, nativeTabsNoPhoto } from '../samples';
+  import { Avatar, Button, Field, SegmentedTabs, Toggle } from '../../lib/index';
+  import { BottomSheet, NativePageHeader, TabBar } from '../../native/index';
+  import { useT } from '../../lib/i18n';
 
   interface Props {
     mode: string;
@@ -14,6 +15,7 @@
   }
 
   let { mode, accent }: Props = $props();
+  const t = useT();
 
   const OSES = ['ios', 'android'] as const;
   let os = $state<(typeof OSES)[number]>('ios');
@@ -25,6 +27,16 @@
   // page header
   let headerLog = $state('');
   const log = (what: string) => () => (headerLog = what);
+
+  // bottom sheet: short settings that fit their content, and a picker whose steps keep one height
+  let settingsOpen = $state(false);
+  const pollSettings = $state({ publicVotes: true, multiple: false, lock: false });
+  let pickerOpen = $state(false);
+  let pickerQuery = $state('');
+  let picked = $state<(typeof nativePeople)[number] | null>(null);
+  let chosen = $state('');
+  const pickerRows = $derived(nativePeople.filter((p) => !pickerQuery || p.name.toLowerCase().includes(pickerQuery.toLowerCase())));
+  const openPicker = () => ((pickerQuery = ''), (picked = null), (pickerOpen = true));
 </script>
 
 <div class="native">
@@ -81,6 +93,54 @@
     </div>
     <p class="note">Last tap: <code>{headerLog || '—'}</code></p>
   </Section>
+
+  <Section {...sec(native, 'native-bottom-sheet')}>
+    <div class="grid2">
+      <NativeFrame {os} {mode} {accent} label="Fits its content · title · Done" height={560}>
+        <div class="screen"><Button label="docs.native.sheet.openSettings" variant="secondary" onClick={() => (settingsOpen = true)} /></div>
+        <BottomSheet open={settingsOpen} onClose={() => (settingsOpen = false)} title="docs.native.sheet.settings" onAction={() => (settingsOpen = false)}>
+          <div class="sheet-settings">
+            <Toggle label="docs.native.sheet.publicVotes" help="docs.native.sheet.publicVotesHelp" on={pollSettings.publicVotes} onChange={(on) => (pollSettings.publicVotes = on)} />
+            <Toggle label="docs.native.sheet.multiple" help="docs.native.sheet.multipleHelp" on={pollSettings.multiple} onChange={(on) => (pollSettings.multiple = on)} />
+            <Toggle label="docs.native.sheet.lock" help="docs.native.sheet.lockHelp" on={pollSettings.lock} onChange={(on) => (pollSettings.lock = on)} />
+          </div>
+        </BottomSheet>
+      </NativeFrame>
+      <NativeFrame {os} {mode} {accent} label="Search → confirm · one fixed height" height={560}>
+        <div class="screen column">
+          <Button label="docs.native.sheet.openPicker" variant="secondary" onClick={openPicker} />
+          {#if chosen}<span class="screen-note">{chosen}</span>{/if}
+        </div>
+        <BottomSheet open={pickerOpen} onClose={() => (pickerOpen = false)} label="docs.native.sheet.who" height="72%">
+          {#snippet header()}
+            {#if !picked}<span class="sheet-heading">{t('docs.native.sheet.who')}</span>{/if}
+          {/snippet}
+          {#if picked}
+            <div class="sheet-confirm">
+              <Avatar size={112} color={picked.color} />
+              <span class="sheet-name">{picked.name}</span>
+              <span class="sheet-handle">{picked.handle}</span>
+              <div class="sheet-buttons">
+                <Button label="docs.native.sheet.thatsThem" size="lg" fullWidth onClick={() => ((chosen = picked?.name ?? ''), (pickerOpen = false))} />
+                <Button label="docs.native.sheet.someoneElse" variant="ghost" size="lg" fullWidth onClick={() => (picked = null)} />
+              </div>
+            </div>
+          {:else}
+            <div class="sheet-search"><Field placeholder="docs.native.sheet.search" value={pickerQuery} onInput={(e) => (pickerQuery = e.currentTarget.value)} onClear={() => (pickerQuery = '')} /></div>
+            <div class="sheet-rows">
+              {#each pickerRows as p (p.handle)}
+                <button type="button" class="sheet-row" onclick={() => (picked = p)}>
+                  <Avatar size={40} color={p.color} />
+                  <span class="sheet-row-text"><span class="sheet-name small">{p.name}</span><span class="sheet-handle">{p.handle}</span></span>
+                </button>
+              {/each}
+            </div>
+          {/if}
+        </BottomSheet>
+      </NativeFrame>
+    </div>
+    <p class="note">Drag either by its handle or header: past 30% of its height, or a flick down, closes it; otherwise it springs back, and pulled up it gives 24px. The picker keeps its 72% height through both steps.</p>
+  </Section>
 </div>
 
 <style lang="scss">
@@ -96,4 +156,17 @@
   .note { margin: 0; font: 400 13px/1.5 var(--font-sans); color: var(--ink-3); }
   .chit { width: var(--touch-target); height: var(--touch-target); @include flex-center; padding: 0; border: 0; background: none; cursor: pointer; }
   .chit-icon { @include icon(zap, 20px, var(--status-chit)); }
+  .screen.column { flex-direction: column; gap: 12px; }
+  .sheet-settings { display: flex; flex-direction: column; gap: 32px; padding: 8px 20px 40px; }
+  .sheet-heading { display: block; padding: 6px 20px 12px; font: 800 20px/1.2 var(--font-sans); }
+  .sheet-search { flex: none; padding: 0 16px 10px; }
+  .sheet-rows { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 0 16px 24px; }
+  .sheet-row { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 10px; border: 0; border-radius: 14px; background: none; color: inherit; text-align: start; cursor: pointer; }
+  .sheet-row:active { background: var(--overlay-1); }
+  .sheet-row-text { display: flex; flex-direction: column; gap: 4px; }
+  .sheet-confirm { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 20px; }
+  .sheet-name { margin-top: 10px; font: 800 22px/1.2 var(--font-sans); }
+  .sheet-name.small { margin: 0; font: 600 15px/1.2 var(--font-sans); }
+  .sheet-handle { font: 500 13px/1 var(--font-sans); color: var(--ink-4); }
+  .sheet-buttons { width: 100%; margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
 </style>

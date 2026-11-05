@@ -18,6 +18,21 @@
         "video": "Video call",
         "voice": "Voice call",
         "long": "Disappearing messages and read receipts"
+      },
+      "sheet": {
+        "openSettings": "Open settings",
+        "settings": "Settings",
+        "publicVotes": "Public votes",
+        "publicVotesHelp": "Everyone sees who voted for what.",
+        "multiple": "Multiple answers",
+        "multipleHelp": "People can pick more than one answer.",
+        "lock": "Lock votes",
+        "lockHelp": "Votes can't be changed once cast.",
+        "openPicker": "Who referred you?",
+        "who": "Who told you about OpenChat?",
+        "search": "Search people",
+        "thatsThem": "That's them",
+        "someoneElse": "Pick someone else"
       }
     }
   }

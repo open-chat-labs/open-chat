@@ -366,5 +366,6 @@ Every component was hand-converted after export, so **do not re-export**: regene
 Built by hand (N2, #10365) from the patterns the native prototype builds inline: `src/native/NativeApp.svelte (Native Prototype.dc.html)`, source hash `db4b562b` (2026-11-03 export). Plain Svelte 5 in `src/native`; compare against that hash when the prototype changes.
 | Component | Built from | Ported |
 |---|---|---|
+| BottomSheet | the pick, poll-settings and referrer sheets (`grabSheet`, `closeSheet`, `v.sheetTy`, `v.sheetVeilOp`) | 2026-11-05 |
 | NativePageHeader | the pushed screens' and the conversation's headers (`v.back`, `v.backMask`, `v.kebabRot`), the tab titles | 2026-11-05 |
 | TabBar | the tab bar (`v.tabs`, `bounceTab`) | 2026-11-05 |

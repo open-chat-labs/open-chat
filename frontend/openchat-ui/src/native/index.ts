@@ -8,6 +8,10 @@ installBehaviours();
 
 export { default as TabBar } from './TabBar.svelte';
 export { default as NativePageHeader } from './NativePageHeader.svelte';
+export { default as BottomSheet } from './BottomSheet.svelte';
 export { haptic, setHaptics } from './haptics';
 export type { HapticStyle, Haptics } from './haptics';
+export { Presence } from './presence.svelte';
+export { CLOSE_FRACTION, RUBBER_BAND, releaseVelocity, sheetOffset, sheetRelease, veilOpacity } from './sheetDrag';
+export type { DragSample, SheetRelease } from './sheetDrag';
 export type { NativeHeaderAction, NativeTab } from './types';

@@ -1323,3 +1323,11 @@ export const nativeTabsNoPhoto: NativeTab[] = [
   { id: 'you', label: 'docs.native.tabs.you', icon: 'user' },
 ];
 export const nativeTabs: NativeTab[] = nativeTabsNoPhoto.map((t) => (t.id === 'you' ? { ...t, avatarUrl: nativePhoto } : t));
+export const nativePeople: { name: string; handle: string; color: 'violet' | 'blue' | 'teal' | 'amber' | 'plum' }[] = [
+  { name: 'Lucy Linden', handle: '@lucy', color: 'plum' },
+  { name: 'Julian Jelfs', handle: '@julian_jelfs', color: 'blue' },
+  { name: 'Matt Grogan', handle: '@matt', color: 'amber' },
+  { name: 'Hamish', handle: '@hamish', color: 'teal' },
+  { name: 'Priya Raman', handle: '@priya_raman', color: 'violet' },
+  { name: 'Otto Lindqvist', handle: '@otto_l', color: 'blue' },
+];
