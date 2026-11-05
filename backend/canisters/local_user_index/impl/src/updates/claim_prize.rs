@@ -35,20 +35,20 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
         (user, signed_in_again, state.data.turnstile_config.clone(), now)
     });
 
-    // A claim that passes Turnstile counts as the user having signed in again, which is what a
-    // prize requiring a captcha asks for. Without a secret key, tokens are ignored.
-    let passed_turnstile = match (turnstile_config.secret_key, args.turnstile_token) {
-        (Some(secret_key), Some(token)) => {
+    // With a secret key, every claim must pass Turnstile, which counts as the user having signed in
+    // again, as a prize requiring a captcha asks for. Without one, tokens are ignored.
+    let passed_turnstile = match turnstile_config.secret_key {
+        Some(secret_key) => {
+            let Some(token) = args.turnstile_token else {
+                return Error(OCErrorCode::HumanVerificationFailed.with_message("Turnstile token required"));
+            };
             let custom_data = turnstile::custom_data(user_id, args.message_id);
             if let Err(error) = turnstile::verify(&secret_key, &token, &custom_data).await {
                 return Error(error);
             }
             true
         }
-        (Some(_), None) if turnstile_config.required => {
-            return Error(OCErrorCode::HumanVerificationFailed.with_message("Turnstile token required"));
-        }
-        _ => false,
+        None => false,
     };
     let user_reauthenticated = passed_turnstile || signed_in_again;
 

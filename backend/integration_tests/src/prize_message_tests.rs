@@ -431,8 +431,8 @@ fn old_transactions_fixed_by_updating_created_date() {
     assert_eq!(user_balance, starting_balance + 180_000 - ICP_TRANSFER_FEE);
 }
 
-// Once Turnstile is required, a claim must carry a token which Cloudflare passes, issued for that
-// user's claim of that prize
+// With a Turnstile secret key set, a claim must carry a token which Cloudflare passes, issued for
+// that user's claim of that prize
 #[test]
 fn prize_claims_are_checked_for_a_human_with_turnstile() {
     let mut wrapper = ENV.deref().get();
@@ -498,7 +498,7 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
         "{send_message_response:?}"
     );
 
-    set_turnstile_config(env, *platform_operator, canister_ids.user_index, Some("secret"), true);
+    set_turnstile_config(env, *platform_operator, canister_ids.user_index, Some("secret"));
     wait_for_turnstile_config(env, canister_ids, true);
 
     let local_user_index = canister_ids.local_user_index(env, group_id);
@@ -551,7 +551,7 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
     assert_eq!(user2_balance, 200000);
 
     // Test envs are pooled, so Turnstile is turned off again
-    set_turnstile_config(env, *platform_operator, canister_ids.user_index, None, false);
+    set_turnstile_config(env, *platform_operator, canister_ids.user_index, None);
     wait_for_turnstile_config(env, canister_ids, false);
 }
 
@@ -615,20 +615,13 @@ fn claim_prize_with_token(
     msgpack::deserialize_then_unwrap(&env.await_call(call_id).unwrap())
 }
 
-fn set_turnstile_config(
-    env: &mut PocketIc,
-    platform_operator: Principal,
-    user_index: CanisterId,
-    secret_key: Option<&str>,
-    required: bool,
-) {
+fn set_turnstile_config(env: &mut PocketIc, platform_operator: Principal, user_index: CanisterId, secret_key: Option<&str>) {
     let response = client::user_index::set_turnstile_config(
         env,
         platform_operator,
         user_index,
         &user_index_canister::set_turnstile_config::Args {
             secret_key: secret_key.map(|k| k.to_string()),
-            required,
         },
     );
     assert!(matches!(response, UnitResult::Success));
@@ -641,8 +634,7 @@ fn wait_for_turnstile_config(env: &mut PocketIc, canister_ids: &CanisterIds, on:
     canisters.extend(canister_ids.subnets.iter().map(|s| s.local_user_index));
 
     let is_on = |env: &PocketIc, canister_id: CanisterId| {
-        try_metrics(env, canister_id)
-            .map(|m| m["turnstile_secret_key_set"].as_bool() == Some(on) && m["turnstile_required"].as_bool() == Some(on))
+        try_metrics(env, canister_id).map(|m| m["turnstile_secret_key_set"].as_bool() == Some(on))
     };
     for _ in 0..50 {
         if canisters.iter().all(|c| is_on(env, *c) == Some(true)) {

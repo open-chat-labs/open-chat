@@ -560,7 +560,6 @@ impl RuntimeState {
             openai_api_key_set: self.data.openai_api_key.is_some(),
             alchemy_api_key_set: self.data.alchemy_api_key.is_some(),
             turnstile_secret_key_set: self.data.turnstile_config.secret_key.is_some(),
-            turnstile_required: self.data.turnstile_config.required,
             internal_moderation_channel_set: self.data.internal_moderation_channel.is_some(),
             // Presence and size only: the metrics endpoint is public and the per-category
             // thresholds must not be readable by people tuning content to sit under them.
@@ -1045,7 +1044,6 @@ pub struct Metrics {
     pub openai_api_key_set: bool,
     pub alchemy_api_key_set: bool,
     pub turnstile_secret_key_set: bool,
-    pub turnstile_required: bool,
     pub internal_moderation_channel_set: bool,
     pub moderation_referral_config_set: bool,
     pub moderation_referral_categories: u32,
