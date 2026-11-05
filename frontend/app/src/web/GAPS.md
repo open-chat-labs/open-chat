@@ -1061,7 +1061,7 @@ design export needs. Each entry says where it came up.
   message offers a private reply, which would go to the bot. The client marks the viewer's own
   read (`isOwnMessage`), so that part needs nothing here.
 - **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text only.
-  Attachments, GIFs, voice, replies, edits and the "+" menu are phase 5 (`MessageComposer` hides
+  Attachments, GIFs, voice and the "+" menu are phase 5 (`MessageComposer` hides
   "+" and the GIF tab without their handlers). There's no @mention picker (typed @usernames are
   still sent as mentions), no rich-text editor (the old one showed markdown as it was typed) and
   no link-count warning. In a bot DM, what's typed goes to the bot as its direct-message command,
@@ -1072,6 +1072,15 @@ design export needs. Each entry says where it came up.
   (`RulesDialog`, the old modal's words; no design for it), and the throttle countdown shows as the
   composer's banner. Enter follows the app's Enter-to-send setting (`enterSends`). A preview
   shows `CommunityPreviewBar` (8b, "Join gate").
+- **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
+  edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
+  text (`composerContext`): who wrote it and its text, an edit starting from the message's text.
+  Its X drops a reply, or the whole draft for an edit (as the old composer did); a click on it goes
+  to the message when it's in this chat (a private reply quotes another chat's: no jump, where the
+  old UI opened that chat). An edit is saved with `editMessage` (failure toast
+  `errorEditingMessage`). Not yet: a media reply's thumbnail (`thumb`), and the draft the user had
+  before starting an edit isn't kept in the chat's draft (the composer puts it back in its box,
+  but `setEditing` replaced the draft's text, so leaving the chat loses it, as in the old trees).
 - **Composer draft and input** (by hand, phase 3c): `MessageComposer` kept its draft to itself.
   It now takes `text` (the draft to start from) and `onInput` (the draft as it changes), so the
   app keeps a draft per chat and tells the others someone is typing.

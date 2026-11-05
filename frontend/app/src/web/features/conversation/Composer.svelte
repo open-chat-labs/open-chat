@@ -8,6 +8,7 @@
     import CommunityPreviewBar from "@openchat/ui/src/features/components/CommunityPreviewBar.svelte";
     import Banner from "@openchat/ui/src/lib/components/Banner.svelte";
     import ComposerBar from "@openchat/ui/src/lib/components/ComposerBar.svelte";
+    import type { ComposerContext } from "@openchat/ui/src/lib/types";
     import { untrack, type ComponentProps } from "svelte";
     import { _ } from "svelte-i18n";
     import { TypingNotifier, type EntryBlock } from "@src/logic/composer/composer";
@@ -24,6 +25,10 @@
         onStartTyping,
         onStopTyping,
         onSend,
+        context,
+        onCancelContext,
+        onSubmitEdit,
+        onJumpContext,
     }: {
         // what stands in for the composer where the reader can't send
         block: EntryBlock | undefined;
@@ -45,6 +50,12 @@
         // settles once the message shows in the chat; rejects if it was refused, and the composer
         // keeps the draft and says it couldn't send
         onSend: (text: string) => Promise<void>;
+        // the message being replied to or edited (the draft's), shown above the text
+        context: ComposerContext | null;
+        onCancelContext: () => void;
+        onSubmitEdit: (text: string) => void;
+        // goes to the message replied to or edited; none where it isn't in this chat
+        onJumpContext: (() => void) | undefined;
     } = $props();
 
     const blocked = $derived(banner(block));
@@ -105,7 +116,7 @@
         <Banner tone={blocked.tone} text={$_(blocked.key)} />
     </div>
 {:else}
-    <!-- TODO(phase 5, 5c): attachments, GIFs, voice, replies and edits -->
+    <!-- TODO(phase 5, 5c): attachments, GIFs and voice -->
     <ComposerBar
         {text}
         {typingNames}
@@ -114,7 +125,11 @@
         {enterSends}
         {autofocus}
         {onInput}
-        onSend={send} />
+        onSend={send}
+        {context}
+        {onCancelContext}
+        {onSubmitEdit}
+        {onJumpContext} />
 {/if}
 
 <style lang="scss">

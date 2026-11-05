@@ -1,5 +1,6 @@
 import type { EventWrapper, Message } from "@client";
 import {
+    composerContext,
     mediaHeld,
     messageRow,
     messageStatus,
@@ -361,5 +362,44 @@ describe("media", () => {
         expect(mediaHeld(gif, 42n, media(true, false))).toBe(true);
         expect(mediaHeld(gif, 42n, media(true, true))).toBe(false);
         expect(mediaHeld(image, 42n, media(false, false))).toBe(false);
+    });
+});
+
+describe("the composer's reply or edit strip", () => {
+    const quoted = message().event;
+    const replyingTo = {
+        kind: "rehydrated_reply_context" as const,
+        senderId: "alice",
+        eventIndex: 3,
+        content: quoted.content,
+        messageId: 42n,
+        messageIndex: 2,
+        edited: false,
+        isThreadRoot: false,
+        sourceContext: { chatId: { kind: "group_chat" as const, groupId: "g" } },
+    };
+
+    test("is none without a reply or an edit", () => {
+        expect(composerContext(undefined, ctx)).toBeNull();
+        expect(composerContext({ textContent: "draft" }, ctx)).toBeNull();
+    });
+
+    test("quotes the message replied to, with who wrote it", () => {
+        expect(composerContext({ replyingTo }, ctx)).toEqual({
+            key: "reply:42",
+            mode: "reply",
+            name: "Alice",
+            quote: "hi",
+        });
+        expect(composerContext({ replyingTo: { ...replyingTo, senderId: "me" } }, ctx)?.name).toBe(
+            "You",
+        );
+    });
+
+    test("an edit starts from the draft's text and takes the place of the message's own reply", () => {
+        const editing = message({ sender: "me", content: { kind: "text_content", text: "old" } });
+        expect(
+            composerContext({ editingEvent: editing, replyingTo, textContent: "old" }, ctx),
+        ).toEqual({ key: "edit:42", mode: "edit", quote: "old", text: "old" });
     });
 });

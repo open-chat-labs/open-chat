@@ -12,6 +12,7 @@ import {
     votesForAnswer,
     waveformLevels,
     type CryptocurrencyContent,
+    type EnhancedReplyContext,
     type EventWrapper,
     type GiphyContent,
     type ImageContent,
@@ -28,7 +29,7 @@ import {
     type VideoContent,
 } from "@client";
 import type ChatBubble from "@openchat/ui/src/lib/components/ChatBubble.svelte";
-import type { GroupMessage, MenuItem } from "@openchat/ui/src/lib/types";
+import type { ComposerContext, GroupMessage, MenuItem } from "@openchat/ui/src/lib/types";
 import type { ComponentProps } from "svelte";
 import type { ChatMenuAction } from "@src/logic/chats/chatMenu";
 import { pickById } from "../../pickById";
@@ -636,4 +637,37 @@ function actionItem(action: ChatMenuAction, state: HeaderMenuState): HeaderMenuI
         case "unblock":
             return { id: "unblock", label: state.unblockLabel, mask: icon("ban") };
     }
+}
+
+/**
+ * The composer's strip for the chat's draft: the message being edited (its text to start from),
+ * else the one being replied to, with who wrote it.
+ */
+export function composerContext(
+    draft:
+        | {
+              editingEvent?: EventWrapper<Message>;
+              replyingTo?: EnhancedReplyContext;
+              textContent?: string;
+          }
+        | undefined,
+    ctx: Pick<ConversationContext, "me" | "you" | "userName" | "contentText">,
+): ComposerContext | null {
+    const editing = draft?.editingEvent;
+    if (editing !== undefined) {
+        return {
+            key: `edit:${editing.event.messageId}`,
+            mode: "edit",
+            quote: messageText(editing.event.content, ctx),
+            text: draft?.textContent ?? "",
+        };
+    }
+    const reply = draft?.replyingTo;
+    if (reply === undefined) return null;
+    return {
+        key: `reply:${reply.messageId}`,
+        mode: "reply",
+        name: reply.senderId === ctx.me ? ctx.you : ctx.userName(reply.senderId),
+        quote: messageText(reply.content, ctx),
+    };
 }

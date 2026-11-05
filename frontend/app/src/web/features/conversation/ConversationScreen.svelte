@@ -105,6 +105,7 @@
     import { chatMenuState, runChatMenuItem } from "./chatMenu";
     import Composer from "./Composer.svelte";
     import {
+        composerContext,
         headerMenuItems,
         isMedia,
         mediaHeld,
@@ -384,6 +385,44 @@
             ? $_("throttleMessage", { values: { time: countdown.seconds } })
             : "",
     );
+
+    // the message being replied to or edited, above the composer's text (the chat's draft, which
+    // the reply and the edit set)
+    const draft = $derived($selectedChatDraftMessageStore);
+    const composing = $derived(composerContext(draft, ctx));
+
+    // cancelling an edit drops the draft, as the old composer did; a reply just goes
+    function cancelComposing(chatId: ChatIdentifier) {
+        if (draft?.editingEvent !== undefined) {
+            localUpdates.draftMessages.delete({ chatId });
+        } else {
+            localUpdates.draftMessages.setReplyingTo({ chatId }, undefined);
+        }
+    }
+
+    // the client drops the draft as the edit goes out, and undoes the edit if it fails
+    async function submitEdit(chatId: ChatIdentifier, text: string) {
+        const editing = draft?.editingEvent;
+        if (editing === undefined) return;
+        const edited = await client.editMessage({ chatId }, text, detectMarkdown(text), editing);
+        if (!edited) toastStore.showFailureToast(i18nKey("errorEditingMessage"));
+    }
+
+    // the message replied to or edited, if it's in this chat (a private reply quotes another's)
+    const composingIndex = $derived.by(() => {
+        if (chat === undefined) return undefined;
+        if (draft?.editingEvent !== undefined) return draft.editingEvent.event.messageIndex;
+        const reply = draft?.replyingTo;
+        return reply !== undefined &&
+            chatIdentifiersEqual(reply.sourceContext.chatId, chat.id) &&
+            reply.sourceContext.threadRootMessageIndex === undefined
+            ? reply.messageIndex
+            : undefined;
+    });
+
+    function jumpToComposing(chatId: ChatIdentifier, index: number) {
+        list?.scrollToMessageIndex({ chatId }, index, false);
+    }
 
     // done once the message shows in the chat; refused (throttled, the rules or the PIN turned
     // down, a send already on its way, a bot that takes no direct messages), it rejects
@@ -1036,6 +1075,12 @@
                 onStartTyping={() => client.startTyping(chat.id, me)}
                 onStopTyping={() => client.stopTyping(chat.id, me)}
                 onSend={(text) => send(chat, text)}
+                context={composing}
+                onCancelContext={() => cancelComposing(chat.id)}
+                onSubmitEdit={(text) => submitEdit(chat.id, text)}
+                onJumpContext={composingIndex === undefined
+                    ? undefined
+                    : () => jumpToComposing(chat.id, composingIndex)}
             />
         {/key}
     </div>
