@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Push to iOS devices straight through APNs, with a token-based `.p8` key, and remove tokens APNs rejects ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Push to iOS devices straight through APNs, with a token-based `.p8` key, and remove tokens APNs rejects ([#10409](https://github.com/open-chat-labs/open-chat/pull/10409))
 
 ### Changed
 

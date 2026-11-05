@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Register iOS devices for APNs pushes, last login wins, and remove them on sign-out or when APNs rejects a token ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Register iOS devices for APNs pushes, last login wins, and remove them on sign-out or when APNs rejects a token ([#10409](https://github.com/open-chat-labs/open-chat/pull/10409))
 
 ### Fixed
 
