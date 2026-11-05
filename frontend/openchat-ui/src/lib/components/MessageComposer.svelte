@@ -73,6 +73,8 @@
     voiceMimeType?: string;
     /** The most a voice message may hold, in bytes: the recording stops there and says so. */
     voiceMaxBytes?: number;
+    /** A voice message is being recorded or reviewed (true), or that's over (false): sending it sends only it. */
+    onVoiceActive?: (active: boolean) => void;
     /** The "@word" being typed at the caret, without the "@" ("" just after it), as it changes; undefined once there's none. */
     onMentionQuery?: (query: string | undefined) => void;
     /** Who to offer for that word, in order: listed over the text box (↑ ↓ to move, Enter or Tab to pick, Esc to
@@ -120,6 +122,7 @@
     onVoice,
     voiceMimeType,
     voiceMaxBytes,
+    onVoiceActive,
     onMentionQuery,
     mentions = [],
     attachment = null,
@@ -171,6 +174,18 @@
   let failure = $state<'send' | 'voice' | 'mic' | null>(null);
   // the take reached voiceMaxBytes and was stopped there
   let capped = $state(false);
+
+  // the host hears when a take starts and when it's over (sent, deleted, or the composer gone)
+  let voiceReported = false;
+  $effect(() => {
+    const active = voice !== null;
+    if (active === voiceReported) return;
+    voiceReported = active;
+    untrack(() => onVoiceActive?.(active));
+  });
+  onMount(() => () => {
+    if (voiceReported) onVoiceActive?.(false);
+  });
   const canRecord = $derived(
     demo !== 'interactive' || (!!onVoice && typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined'),
   );

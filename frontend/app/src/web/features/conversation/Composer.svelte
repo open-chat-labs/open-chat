@@ -47,6 +47,7 @@
         voiceMaxBytes,
         onMentionQuery,
         mentions,
+        onVoiceActive,
     }: {
         // what stands in for the composer where the reader can't send
         block: EntryBlock | undefined;
@@ -91,6 +92,9 @@
         // the "@word" being typed, and who's offered for it
         onMentionQuery: (query: string | undefined) => void;
         mentions: ComposerMention[];
+        // a voice message is being recorded or reviewed, or that's over (nothing can be attached
+        // meanwhile: sending it posts the draft)
+        onVoiceActive: (active: boolean) => void;
     } = $props();
 
     let mediaInput = $state<HTMLInputElement>();
@@ -199,10 +203,12 @@
             onAttach={onFile === undefined ? undefined : pick}
             {attachKinds}
             {onRemoveAttachment}
+            onRemoveMediaItem={() => onRemoveAttachment()}
             onVoice={onVoice === undefined ? undefined : ({ blob }) => onVoice(blob)}
             {voiceMimeType}
             {voiceMaxBytes}
             {onMentionQuery}
+            {onVoiceActive}
             {mentions} />
     </div>
     {#if onFile !== undefined}

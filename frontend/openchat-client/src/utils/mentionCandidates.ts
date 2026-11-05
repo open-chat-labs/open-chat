@@ -19,7 +19,7 @@ export type MentionCandidateOptions = {
 
 /**
  * Who a mention picker offers for what's been typed after the "@" (`prefix`; all of them while
- * there's none): @everyone first, then user groups, then users and bots, each by the shortest name
+ * there's none): @everyone first, then user groups, then users, then bots, each by the shortest name
  * first, then alphabetically. A user matches on their username or display name, a group on its
  * name, @everyone on "everyone". The user picking is never offered unless `mentionSelf`.
  */
@@ -83,12 +83,12 @@ export function mentionName(candidate: UserOrUserGroup): string {
     }
 }
 
-// @everyone, then user groups, then users and bots
+// @everyone, then user groups, then users, then bots (as the old pickers had them)
 const RANK: Record<UserOrUserGroup["kind"], number> = {
     everyone: 0,
     user_group: 1,
     user: 2,
-    bot: 2,
+    bot: 3,
 };
 
 function isUser(candidate: UserOrUserGroup): boolean {

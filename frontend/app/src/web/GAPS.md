@@ -141,7 +141,8 @@ design export needs. Each entry says where it came up.
   the browser can (the app's mp4, which iOS plays, over the browser's own webm), and
   `voiceMaxBytes`: with it the audio comes in 200ms slices and the take stops for review once it
   holds that much, saying so ("Recording stopped at the size limit."). Without them it records
-  as before.
+  as before. `onVoiceActive` tells the host when a take starts and when it's over (sent,
+  deleted, or the composer gone), so it holds back attachments meanwhile.
 - **Composer mention list** (by hand, 5c, to take back to the design export, which has no mention
   picker): `MessageComposer` (and `ComposerBar`) take `onMentionQuery` (the "@word" at the caret as
   it changes, `mentionQuery.ts`, spec'd) and `mentions` (`ComposerMention`: the host's candidates
@@ -1149,12 +1150,20 @@ design export needs. Each entry says where it came up.
   for it: `TODO(design)`). One a message, as in the old trees (`AttachmentContent` holds one).
   Each goes through `attachFile` (the client, used by the old trees' pickers, drop and paste too):
   attached to the chat it was picked in even if the reader moves on while a video is prepared,
-  refused with the permission it needs where it can't be sent there (`attachRefusal`), a failure
+  refused with the permission it needs where it can't be sent there (`attachRefusal`; from the
+  file's type, before a video is transcoded, `filePermission`), a failure
   saying why (over the size limit, else `attachFileFailed`, where the old trees showed the raw
   error). A video's preparation shows over the composer (`videoProcessingPercent`). A photo,
   video or GIF is staged in the composer's media tray, a file or audio clip as a chip with its
-  size (`composerAttachment`), and the text becomes its caption. Not in a bot DM, which takes
-  text only. Not yet: 5d's prize, transfer and swap offer, and a puzzle result, aren't staged,
+  size (`composerAttachment`; its × removes it), and the text becomes its caption. Not in a bot
+  DM, which takes text only; not during an edit, which changes only the text (the old entries hid
+  their pickers; the edited message's own content isn't shown as an attachment either,
+  `draftAttachment`); not while a voice message is recorded or reviewed, since sending it posts
+  the draft (`canAttachNow`; the composer says when, `onVoiceActive`). A file dropped where
+  nothing can be attached is refused, never left to the browser to open in the app's place. What
+  the "+" menu and the mic offer follows the reader's permissions as they change
+  (`messagePermissionsForSelectedChatStore`), and the voice limit a Diamond membership bought
+  meanwhile (`maxMediaSizes($isDiamondStore)`). Not yet: 5d's prize, transfer and swap offer, and a puzzle result, aren't staged,
   and the composer doesn't send them (`TODO(phase 5, 5d)`); the mobile app's native recent-media
   strip waits for the narrow pass.
 - **Voice messages in the composer** (5c): the composer's own recorder (record, then review: play
@@ -1166,7 +1175,7 @@ design export needs. Each entry says where it came up.
   the browser records in `audioRecordingMimeType`'s format (mp4, which every device plays, else
   webm), the reader hasn't turned the microphone down (`microphoneDenied`, which both old
   recorders now use), not in a bot DM, and only while nothing is typed or attached. A take stops at
-  the size limit (`maxMediaSizes().audio`) and says so, where the old trees toasted `maxAudioSize`.
+  the size limit (`maxMediaSizes($isDiamondStore).audio`, following a Diamond membership bought meanwhile) and says so, where the old trees toasted `maxAudioSize`.
   The microphone is let go on leaving the chat (the composer is keyed per chat).
 - **The @mention picker** (5c): an "@word" typed at the caret lists who can be mentioned for it
   over the text box (`mentionCandidates`, `@client`, which both old pickers now use: never the
@@ -1177,8 +1186,8 @@ design export needs. Each entry says where it came up.
   click picks. A pick puts "@username " in the text, which the client mentions on sending (its
   typed mentions), where the old editor held a mention node. So a user group whose name has
   characters other than letters, digits and "_" (a "-", say) isn't mentioned when picked or typed:
-  the client's typed mentions stop at them. The old pickers' bots ordering was inconsistent (a bot
-  against a user compared "after" both ways); bots now sort with users by name. The list has no
+  the client's typed mentions stop at them. Bots come after the members, as in the old pickers,
+  whose comparator was inconsistent (a bot against a user compared "after" both ways). The list has no
   design (`TODO(design)`): it's drawn as the composer's other popups.
 - **Composer, not yet** (5c, left for later pieces of it):
   - bot commands: the old trees' `/` selector (the commands the reader's role, the chat's

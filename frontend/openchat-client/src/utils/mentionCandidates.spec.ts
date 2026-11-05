@@ -33,7 +33,7 @@ const me = user("me", "myself");
 const alice = user("a", "alice", "Ally");
 const al = user("b", "al");
 const bob = user("c", "bob");
-const bot = { ...user("d", "alfred"), kind: "bot" as const };
+const bot = { ...user("d", "ab"), kind: "bot" as const };
 const admins = group(1, "admins");
 const all = group(2, "all");
 
@@ -57,7 +57,7 @@ describe("who a mention picker offers", () => {
         expect(offered).not.toContain(me);
     });
 
-    test("then groups, then users and bots, each by the shortest name first", () => {
+    test("then groups, then users, then bots (as the old pickers), each by the shortest name first", () => {
         expect(names(mentionCandidates(pool, undefined, options))).toEqual([
             "everyone",
             "all",
@@ -65,17 +65,12 @@ describe("who a mention picker offers", () => {
             "al",
             "bob",
             "alice",
-            "alfred",
+            "ab",
         ]);
     });
 
     test("matches what's typed at the start of a username, display name or group name", () => {
-        expect(names(mentionCandidates(pool, "Al", options))).toEqual([
-            "all",
-            "al",
-            "alice",
-            "alfred",
-        ]);
+        expect(names(mentionCandidates(pool, "Al", options))).toEqual(["all", "al", "alice"]);
         expect(names(mentionCandidates(pool, "ally", options))).toEqual(["alice"]);
         expect(names(mentionCandidates(pool, "ev", options))).toEqual(["everyone"]);
         expect(mentionCandidates(pool, "zed", options)).toEqual([]);
@@ -89,11 +84,11 @@ describe("who a mention picker offers", () => {
         expect(names(mentionCandidates(pool, "a", { ...options, usersOnly: true }))).toEqual([
             "al",
             "alice",
-            "alfred",
+            "ab",
         ]);
         expect(
             names(mentionCandidates(pool, "a", { ...options, supportsUserGroups: false })),
-        ).toEqual(["al", "alice", "alfred"]);
+        ).toEqual(["al", "alice", "ab"]);
     });
 
     test("keeps users in the order given when asked to", () => {

@@ -201,11 +201,11 @@ export function attachRefusal(
  * pick, refused if audio can't be sent.
  */
 export function pickableAttachments(
-    permitted: ReadonlyMap<MessagePermission, boolean>,
+    permitted: ReadonlySet<MessagePermission>,
 ): ("media" | "file")[] {
     const kinds: ("media" | "file")[] = [];
-    if (permitted.get("image") || permitted.get("video")) kinds.push("media");
-    if (permitted.get("file")) kinds.push("file");
+    if (permitted.has("image") || permitted.has("video")) kinds.push("media");
+    if (permitted.has("file")) kinds.push("file");
     return kinds;
 }
 
@@ -254,6 +254,27 @@ export function canRecordVoice(state: {
         !state.micDenied &&
         !state.directBot
     );
+}
+
+/**
+ * Whether a file picked, pasted or dropped can be attached now. Not during an edit, which changes
+ * only the message's text (the old entries hid their pickers): a file attached then would take the
+ * edited message's place in the draft, be ignored by the edit, and be gone once the draft goes
+ * back to what it was before. Nor while a voice message is being recorded or reviewed: sending it
+ * posts the draft, so a file staged meanwhile would go with it, unseen.
+ */
+export function canAttachNow(state: { editing: boolean; voiceActive: boolean }): boolean {
+    return !state.editing && !state.voiceActive;
+}
+
+/**
+ * The draft's attachment, to stage and send with its text: none during an edit, when the draft
+ * holds the edited message's own content (`setEditing`), which isn't something being attached.
+ */
+export function draftAttachment<A>(
+    draft: { attachment?: A; editingEvent?: unknown } | undefined,
+): A | undefined {
+    return draft?.editingEvent === undefined ? draft?.attachment : undefined;
 }
 
 /** What the entry says above the text: one thing at a time, the most pressing first. */

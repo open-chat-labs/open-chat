@@ -473,6 +473,30 @@ async function handleRegularFiles(file: File): Promise<AttachmentContent> {
     };
 }
 
+/** The size limits on media for a Diamond member, or not. */
+export function maxMediaSizes(isDiamond: boolean): MaxMediaSizes {
+    return isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
+}
+
+/**
+ * The permission a file needs to be sent, from its type alone (what `messageContentFromFile`
+ * makes of it: an image, a GIF or an SVG is an image), so it can be refused before it's prepared.
+ */
+export function filePermission(mimeType: string): "image" | "video" | "audio" | "file" {
+    switch (mimeToMediaType(mimeType)) {
+        case "image":
+        case "gif":
+        case "svg":
+            return "image";
+        case "video":
+            return "video";
+        case "audio":
+            return "audio";
+        case "file":
+            return "file";
+    }
+}
+
 export async function messageContentFromFile(
     file: File | LazyFile,
     isDiamond: boolean,
@@ -480,7 +504,7 @@ export async function messageContentFromFile(
 ): Promise<AttachmentContent> {
     const dataSizeInBytes = file.size;
     const mediaType = mimeToMediaType(file.type);
-    const maxSizes = isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
+    const maxSizes = maxMediaSizes(isDiamond);
 
     switch (mediaType) {
         case "image":

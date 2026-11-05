@@ -93,8 +93,8 @@ describe("attaching a file", () => {
         expect(canSend).toHaveBeenCalledWith(picked.chatId, "message", "video");
     });
 
-    test("is refused, naming the permission, where its kind may not be sent", async () => {
-        vi.spyOn(client, "messageContentFromFile").mockResolvedValue(video);
+    test("is refused from its type, naming the permission, before it's prepared", async () => {
+        const prepare = vi.spyOn(client, "messageContentFromFile").mockResolvedValue(video);
         const canSend = vi.spyOn(client, "canSendMessage").mockReturnValue(false);
 
         expect(await client.attachFile(file, thread)).toEqual({
@@ -102,11 +102,27 @@ describe("attaching a file", () => {
             permission: "video",
         });
         expect(canSend).toHaveBeenCalledWith(picked.chatId, "thread", "video");
+        expect(prepare).not.toHaveBeenCalled();
         expect(localUpdates.draftMessages.value.get(thread)?.attachment).toBeUndefined();
+    });
+
+    test("is refused once prepared if it turned out to be another kind that may not be sent", async () => {
+        vi.spyOn(client, "messageContentFromFile").mockResolvedValue(video);
+        vi.spyOn(client, "canSendMessage").mockImplementation(
+            (_chatId, _mode, permission) => permission === "file",
+        );
+        const unlabelled = new File(["x"], "clip", { type: "" });
+
+        expect(await client.attachFile(unlabelled, picked)).toEqual({
+            kind: "not_permitted",
+            permission: "video",
+        });
+        expect(localUpdates.draftMessages.value.get(picked)?.attachment).toBeUndefined();
     });
 
     test("fails with the reason when the file can't be prepared", async () => {
         vi.spyOn(console, "warn").mockImplementation(() => {});
+        vi.spyOn(client, "canSendMessage").mockReturnValue(true);
         vi.spyOn(client, "messageContentFromFile").mockRejectedValue("maxVideoSize");
 
         const outcome = await client.attachFile(file, picked);

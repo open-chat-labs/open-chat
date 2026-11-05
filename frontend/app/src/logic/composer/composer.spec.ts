@@ -7,7 +7,9 @@ import {
 } from "@client";
 import {
     attachRefusal,
+    canAttachNow,
     canRecordVoice,
+    draftAttachment,
     editStartText,
     entryBlock,
     entryNotice,
@@ -258,15 +260,13 @@ describe("a file that wasn't attached", () => {
 });
 
 describe("what the entry offers to pick from the device", () => {
-    const permitted = (...ps: MessagePermission[]) =>
-        new Map<MessagePermission, boolean>(ps.map((p) => [p, true]));
+    const permitted = (...ps: MessagePermission[]) => new Set<MessagePermission>(ps);
 
     test("photos and videos where either may be sent, files where files may be", () => {
         expect(pickableAttachments(permitted("image", "video", "file"))).toEqual(["media", "file"]);
         expect(pickableAttachments(permitted("video"))).toEqual(["media"]);
         expect(pickableAttachments(permitted("file", "text"))).toEqual(["file"]);
         expect(pickableAttachments(permitted("text", "audio"))).toEqual([]);
-        expect(pickableAttachments(new Map([["image", false]]))).toEqual([]);
     });
 });
 
@@ -296,6 +296,30 @@ describe("looking for members to mention", () => {
         finder.cancel();
         vi.advanceTimersByTime(FIND_MEMBERS_DELAY_MS);
         expect(find).not.toHaveBeenCalled();
+    });
+});
+
+describe("attaching a file now", () => {
+    test("is possible while writing a message", () => {
+        expect(canAttachNow({ editing: false, voiceActive: false })).toBe(true);
+    });
+
+    test("isn't during an edit, or while a voice message is recorded or reviewed", () => {
+        expect(canAttachNow({ editing: true, voiceActive: false })).toBe(false);
+        expect(canAttachNow({ editing: false, voiceActive: true })).toBe(false);
+    });
+});
+
+describe("the draft's attachment", () => {
+    const photo = { kind: "photo" };
+
+    test("is staged and sent with the text", () => {
+        expect(draftAttachment({ attachment: photo })).toBe(photo);
+        expect(draftAttachment(undefined)).toBeUndefined();
+    });
+
+    test("is none during an edit, when the draft holds the edited message's content", () => {
+        expect(draftAttachment({ attachment: photo, editingEvent: {} })).toBeUndefined();
     });
 });
 

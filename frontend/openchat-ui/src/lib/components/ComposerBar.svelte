@@ -33,6 +33,7 @@
     onVoice?: ComposerProps['onVoice'];
     voiceMimeType?: ComposerProps['voiceMimeType'];
     voiceMaxBytes?: ComposerProps['voiceMaxBytes'];
+    onVoiceActive?: ComposerProps['onVoiceActive'];
     onMentionQuery?: ComposerProps['onMentionQuery'];
     mentions?: ComposerProps['mentions'];
     attachment?: ComposerProps['attachment'];

@@ -1754,6 +1754,17 @@
         "doc": ""
       },
       {
+        "name": "onVoiceActive",
+        "type": "ComposerProps['onVoiceActive']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
         "name": "onMentionQuery",
         "type": "ComposerProps['onMentionQuery']",
         "default": null,
@@ -13693,6 +13704,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "The most a voice message may hold, in bytes: the recording stops there and says so."
+      },
+      {
+        "name": "onVoiceActive",
+        "type": "(active: boolean) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A voice message is being recorded or reviewed (true), or that's over (false): sending it sends only it."
       },
       {
         "name": "onMentionQuery",

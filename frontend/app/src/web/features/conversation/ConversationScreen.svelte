@@ -43,7 +43,9 @@
         MAX_MENTION_CANDIDATES_SHOWN,
         mentionCandidates,
         messageContextsEqual,
+        maxMediaSizes,
         messageIndexStore,
+        messagePermissionsForSelectedChatStore,
         messageMenu,
         messagesRead,
         pollVoteChange,
@@ -99,7 +101,9 @@
     import type { GroupMessage } from "@openchat/ui/src/lib/types";
     import {
         attachRefusal,
+        canAttachNow,
         canRecordVoice,
+        draftAttachment,
         editStartText,
         entryBlock,
         entryNotice,
@@ -472,23 +476,27 @@
 
     // the draft's photo, video or file, staged above the text (only what the composer shows is
     // sent with it: 5d's contents wait for their builders)
-    const staged = $derived(composerAttachment(draft?.attachment, ctx));
+    // (none during an edit, when the draft holds the edited message's own content)
+    const staged = $derived(composerAttachment(draftAttachment(draft), ctx));
 
     // a direct chat with a bot takes text only (its direct-message command)
     const directBot = $derived(chat !== undefined && client.directChatWithBot(chat) !== undefined);
 
-    // what the + menu offers to pick from the device
+    // what the + menu offers to pick from the device (following the reader's permissions here)
     const attachKinds = $derived(
-        chat === undefined || directBot
-            ? []
-            : pickableAttachments(client.permittedMessages(chat.id, "message")),
+        directBot ? [] : pickableAttachments($messagePermissionsForSelectedChatStore),
     );
 
+    // nothing is attached during an edit, or while a voice message is recorded or reviewed
+    let voiceActive = $state(false);
+    const attachable = $derived(
+        !directBot &&
+            canAttachNow({ editing: draft?.editingEvent !== undefined, voiceActive }),
+    );
+
+    // (the composer says "Add a caption" itself while there's an attachment)
     const placeholder = $derived(
-        interpolate(
-            $_,
-            entryPlaceholder({ canEnterText: true, attached: staged !== null, directBot }),
-        ),
+        interpolate($_, entryPlaceholder({ canEnterText: true, attached: false, directBot })),
     );
 
     // a voice message is recorded in a format every device plays (no mic where the browser can't),
@@ -500,14 +508,15 @@
         micDenied = await microphoneDenied();
     });
     const canRecord = $derived(
-        chat !== undefined &&
-            canRecordVoice({
-                audioPermitted: client.permittedMessages(chat.id, "message").get("audio") ?? false,
-                recorderMimeType: voiceMimeType,
-                micDenied,
-                directBot,
-            }),
+        canRecordVoice({
+            audioPermitted: $messagePermissionsForSelectedChatStore.has("audio"),
+            recorderMimeType: voiceMimeType,
+            micDenied,
+            directBot,
+        }),
     );
+    // a Diamond member's voice messages may be longer
+    const voiceMaxBytes = $derived(maxMediaSizes($isDiamondStore).audio);
 
     // sent as a reply to the draft's reply, if any; refused, the take stays to send again
     async function sendVoice(chatId: ChatIdentifier, recording: Blob, mimeType: string) {
@@ -557,18 +566,25 @@
     // a file dragged over the conversation is attached when it's dropped (the old DropTarget),
     // where the composer takes files
     let dragging = $state(false);
-    const droppable = $derived(chat !== undefined && block === undefined && !directBot);
+    const droppable = $derived(chat !== undefined && block === undefined && attachable);
 
+    // a file held over the conversation is never left to the browser, which would open it in
+    // place of the app (as the old DropTarget): where nothing can be attached, it's refused
     function dragOver(e: DragEvent) {
-        if (!droppable || !e.dataTransfer?.types.includes("Files")) return;
+        if (!e.dataTransfer?.types.includes("Files")) return;
         e.preventDefault();
-        dragging = true;
+        if (droppable) {
+            dragging = true;
+        } else {
+            e.dataTransfer.dropEffect = "none";
+        }
     }
 
     function drop(chatId: ChatIdentifier, e: DragEvent) {
         dragging = false;
-        if (!droppable || e.dataTransfer === null) return;
+        if (e.dataTransfer === null || !e.dataTransfer.types.includes("Files")) return;
         e.preventDefault();
+        if (!droppable) return;
         const file = fileFromDataTransferItems([...e.dataTransfer.items]);
         if (file !== undefined) void attachFile(chatId, file);
     }
@@ -623,7 +639,7 @@
             context,
             text === "" ? undefined : text,
             detectMarkdown(text),
-            staged !== null ? draft?.attachment : undefined,
+            staged !== null ? draftAttachment(draft) : undefined,
         );
         if (outcome.kind !== "posted") throw new Error(outcome.kind);
     }
@@ -1573,15 +1589,16 @@
                     : () => jumpToComposing(chat.id, composingIndex)}
                 attachment={staged}
                 {attachKinds}
-                onFile={directBot ? undefined : (file) => attachFile(chat.id, file)}
+                onFile={attachable ? (file) => attachFile(chat.id, file) : undefined}
                 onRemoveAttachment={() =>
                     localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
                 onVoice={canRecord && voiceMimeType !== undefined
                     ? (recording) => sendVoice(chat.id, recording, voiceMimeType)
                     : undefined}
                 {voiceMimeType}
-                voiceMaxBytes={client.maxMediaSizes().audio}
+                {voiceMaxBytes}
                 onMentionQuery={mentionQueried}
+                onVoiceActive={(active) => (voiceActive = active)}
                 {mentions}
             />
         {/key}

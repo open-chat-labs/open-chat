@@ -768,14 +768,14 @@ import { calculateMediaDimensions } from "./utils/layout";
 import { chunk, groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
 import { getUserCountryCode } from "./utils/location";
 import {
-    DIAMOND_MAX_SIZES,
-    FREE_MAX_SIZES,
     attachFailureMessage,
     audioContent,
     audioRecordingMimeType,
     communityMessageRegex,
+    filePermission,
     fillMessage,
     groupMessageRegex,
+    maxMediaSizes,
     messageContentFromFile,
     type MaxMediaSizes,
 } from "./utils/media";
@@ -1618,7 +1618,7 @@ export class OpenChat {
     }
 
     maxMediaSizes(): MaxMediaSizes {
-        return isDiamondStore.value ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
+        return maxMediaSizes(isDiamondStore.value);
     }
 
     onRegisteredUser(user: CreatedUser) {
@@ -4994,6 +4994,12 @@ export class OpenChat {
      * may send there is attached; one that can't be prepared fails with the reason.
      */
     async attachFile(file: File | LazyFile, context: MessageContext): Promise<AttachFileOutcome> {
+        const mode = context.threadRootMessageIndex === undefined ? "message" : "thread";
+        // refused from its type before it's prepared (a video's transcode takes a while)
+        const needs = filePermission(file.type);
+        if (!this.canSendMessage(context.chatId, mode, needs)) {
+            return { kind: "not_permitted", permission: needs };
+        }
         let content: AttachmentContent;
         try {
             content = await this.messageContentFromFile(file, context);
@@ -5001,9 +5007,9 @@ export class OpenChat {
             console.warn("Unable to prepare a file to attach", err);
             return { kind: "failed", message: attachFailureMessage(err) };
         }
+        // what it was made into, in case that isn't what its type said
         const permission = contentTypeToPermission(content.kind);
-        const mode = context.threadRootMessageIndex === undefined ? "message" : "thread";
-        if (!this.canSendMessage(context.chatId, mode, permission)) {
+        if (permission !== needs && !this.canSendMessage(context.chatId, mode, permission)) {
             return { kind: "not_permitted", permission };
         }
         localUpdates.draftMessages.setAttachment(context, content);
