@@ -826,6 +826,12 @@ const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); //
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
+// how long an access gate payment's approval lasts, for the join that uses it; one with less than
+// the margin left is made again rather than trusted to outlast the join call
+const GATE_APPROVAL_EXPIRY = 5 * ONE_MINUTE_MILLIS;
+const GATE_APPROVAL_MARGIN = ONE_MINUTE_MILLIS;
+const gateApprovalKey = (canisterId: string, ledger: string, amount: bigint) =>
+    `${canisterId} ${ledger} ${amount}`;
 const BOT_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 // A bridged account's profile is fetched again once it's this old, as messages are loaded
 const BRIDGED_USER_MAX_AGE = 10 * ONE_MINUTE_MILLIS;
@@ -919,6 +925,9 @@ type ReAuthIdentity = {
 export class OpenChat {
     // When each bridged account's profile was last fetched, keyed by `bridgedUserKey`
     #bridgedUsersFetchedAt = new Map<string, number>();
+    // access gate payments approved for a join that hasn't gone through yet (`gateApprovalKey`),
+    // and when each approval expires
+    #standingGateApprovals = new Map<string, number>();
     #bridgedUsersInFlight = new Set<string>();
     #mobileLayout: "v1" | "v2";
     #worker: WorkerAgent;
@@ -2413,17 +2422,22 @@ export class OpenChat {
         entity: MultiUserChat | CommunitySummary,
         approvals: PaymentGateApprovals,
     ): Promise<ApproveAccessGatePaymentResponse> {
-        if (approvals.size === 0) return CommonResponses.success();
+        const canisterId = this.#gateCanisterId(entity);
+        // an approval still standing from an earlier try at this join (approved, then the join
+        // failed) isn't made, or its fee paid, again
+        const toApprove = [...approvals.entries()].filter(
+            ([ledger, approval]) =>
+                !this.#gateApprovalStanding(canisterId, ledger, approval.amount),
+        );
+        if (toApprove.length === 0) return CommonResponses.success();
 
         let pin: string | undefined = undefined;
         if (pinNumberRequiredStore.value) {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
-        const canisterId = entity.kind === "group_chat" ? entity.id.groupId : entity.id.communityId;
-
         const results = await Promise.all(
-            [...approvals.entries()].map(([ledger, approval]) =>
+            toApprove.map(([ledger, approval]) =>
                 this.approveAccessGatePayment(canisterId, ledger, approval, pin),
             ),
         );
@@ -2525,10 +2539,16 @@ export class OpenChat {
                 canisterId,
                 ledger,
                 amount: amount - approvalFee, // The user should pay only the amount not amount+fee so it is a round number
-                expiresIn: BigInt(5 * ONE_MINUTE_MILLIS), // Allow 5 mins for the join_group call before the approval expires
+                expiresIn: BigInt(GATE_APPROVAL_EXPIRY), // Allow 5 mins for the join_group call before the approval expires
                 pin,
             })
             .then((response) => {
+                if (response.kind === "success") {
+                    this.#standingGateApprovals.set(
+                        gateApprovalKey(canisterId, ledger, amount),
+                        Date.now() + GATE_APPROVAL_EXPIRY,
+                    );
+                }
                 if (response.kind === "error") {
                     const pinNumberFailure = pinNumberFailureFromError(response);
                     if (pinNumberFailure !== undefined) {
@@ -2541,6 +2561,27 @@ export class OpenChat {
                 return response;
             })
             .catch(CommonResponses.failure);
+    }
+
+    // the canister a join's gate payments are approved for: a channel's is its community's
+    #gateCanisterId(entity: MultiUserChat | CommunitySummary): string {
+        return entity.kind === "group_chat" ? entity.id.groupId : entity.id.communityId;
+    }
+
+    // an approval made for a join that hasn't gone through yet, with time left for the join to
+    // use it
+    #gateApprovalStanding(canisterId: string, ledger: string, amount: bigint): boolean {
+        const expiresAt = this.#standingGateApprovals.get(
+            gateApprovalKey(canisterId, ledger, amount),
+        );
+        return expiresAt !== undefined && expiresAt - Date.now() > GATE_APPROVAL_MARGIN;
+    }
+
+    // the join went through and used its approvals
+    #gateApprovalsUsed(canisterId: string): void {
+        for (const key of this.#standingGateApprovals.keys()) {
+            if (key.startsWith(`${canisterId} `)) this.#standingGateApprovals.delete(key);
+        }
     }
 
     /**
@@ -2588,10 +2629,14 @@ export class OpenChat {
         );
         switch (resp.kind) {
             case "success":
+                this.#gateApprovalsUsed(this.#gateCanisterId(chat));
                 this.#miniApps?.joinedChat(chat.id);
                 // a channel's join joins its community too
                 if (chat.id.kind === "channel") {
-                    this.#dropPreviewOrigin({ kind: "community", communityId: chat.id.communityId });
+                    this.#dropPreviewOrigin({
+                        kind: "community",
+                        communityId: chat.id.communityId,
+                    });
                 }
                 return resp;
             case "gate_check_failed": {
@@ -12667,6 +12712,7 @@ export class OpenChat {
             gateCheck?.compositeGateIndex,
         );
         if (resp.kind === "success") {
+            this.#gateApprovalsUsed(this.#gateCanisterId(community));
             this.#dropPreviewOrigin(community.id);
             return resp;
         }

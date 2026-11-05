@@ -103,19 +103,30 @@ export function requirementCount(
  * The bar for a preview. A channel of a community being previewed (or lapsed) shows the
  * community's bar (its name, "Join community", Back cancelling the community's preview), but Join
  * joins the channel, as the old footers did: the backend joins the community with it, and the gate
- * dialog asks for both levels' requirements, the community's first. Otherwise it's the group's or
- * channel's.
+ * dialog asks for both levels' requirements, the community's first. A locked channel in a
+ * community that isn't locked can't be joined, but its community can: Join joins the community
+ * alone, with the community's requirements. Otherwise it's the group's or channel's.
  */
 export function previewBar(input: PreviewBarInput): PreviewBar {
-    const { chat, community, guest, gates, meets } = input;
+    const { chat, community, guest, meets } = input;
     const ofCommunity = chat.kind === "channel" && previewingCommunity(community);
     const level = ofCommunity ? "community" : chat.level;
     const lapsed = ofCommunity ? community?.membership.lapsed === true : input.lapsed;
+    const communityLevel = input.gates.filter((g) => g.level === "community");
+    const communityOnly =
+        ofCommunity &&
+        community !== undefined &&
+        input.gates.some((g) => g.level !== "community" && isLocked(g)) &&
+        !communityLevel.some((g) => isLocked(g));
+    const gates = communityOnly ? communityLevel : input.gates;
     const locked = gates.some((g) => isLocked(g));
     const count = requirementCount(gates, meets);
     const state: PreviewBarState = guest ? "guest" : count > 0 && !locked ? "gated" : "preview";
 
-    const target: JoinTarget = { kind: "group", chat };
+    const target: JoinTarget =
+        communityOnly && community !== undefined
+            ? { kind: "community", community }
+            : { kind: "group", chat };
     const barCommunity = ofCommunity ? community : undefined;
     const name = barCommunity?.name ?? chat.name;
 

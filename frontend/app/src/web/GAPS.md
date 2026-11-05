@@ -852,7 +852,8 @@ design export needs. Each entry says where it came up.
   gated (with how many requirements the user doesn't meet yet, both levels', an "any" gate counting
   once, and none an invitation bypasses) or plain; Join, Back (to Explore or `/welcome` when the
   preview was opened from there, else the list). Join on a channel joins the channel, as the old
-  footers did (the backend joins its community with it), even under the community's bar. Join runs
+  footers did (the backend joins its community with it), even under the community's bar; a locked
+  channel in a community that isn't locked joins the community alone. Join runs
   the shared flow (`logic/join/joinFlow`, the old `utils/preview.svelte.ts`, which both old trees
   now use too): a guest's join is recorded and opens sign-in, and replays once after it
   (`takePostLoginJoin`, AppScreen); gates the client can't check open `JoinGateDialog`, a level at
@@ -860,7 +861,8 @@ design export needs. Each entry says where it came up.
   success (named as the bar named it), the failure's own message otherwise, "Access gate not met"
   for a backend gate check failure. The dialog stays open while the join doesn't go through (the
   PIN dismissed, the approval or the join failed, the backend's gate check), with a toast saying
-  why, and "Pay and join" sends the same again; a payment that would leave a balance the gate also
+  why, and "Pay and join" records the user's choice again (a payment approved for the failed try
+  isn't approved, or its fee paid, again while the approval stands); a payment that would leave a balance the gate also
   asks for short is refused before anything is approved, and says so. `?autojoin` joins the same
   way once the preview has loaded. Desktop and mobile differed (A4): Back on a lapsed preview is hidden (desktop: a lapsed
   member is still a member), and cancelling a community preview goes back to where it was opened

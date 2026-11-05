@@ -4,7 +4,7 @@
      join" records the user's choice (logic/join/joinGate: the gates' own amounts) and carries the join on through the
      client (the PIN, the approval, the join). The dialog leaves once joined; while the join doesn't go through (the
      PIN dismissed, the approval or the join failed, a gate the backend found unmet) it stays, with a toast saying
-     why, and "Pay and join" sends the same again. Closing drops the join. "Get Diamond" closes it for the Diamond dialog (a dialog replaces, never stacks); joining again after buying
+     why, and "Pay and join" records the user's choice again. Closing drops the join. "Get Diamond" closes it for the Diamond dialog (a dialog replaces, never stacks); joining again after buying
      finds that requirement met. -->
 <script lang="ts">
     import {
@@ -15,7 +15,6 @@
         PAYMENT_GATE_OWNER_PERCENT,
         i18nKey,
         publish,
-        type GateCheckSucceeded,
         type OpenChat,
         type ResourceKey,
     } from "@client";
@@ -30,7 +29,7 @@
     import { _ } from "svelte-i18n";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
     import { joinFailure, showJoinStep } from "./join";
-    import { joinGateProps, paidLeaves } from "./joinGate.adapter";
+    import { joinGateProps, paidLeaves, type JoinGateProps } from "./joinGate.adapter";
 
     let { dialog, onClose, dialogs }: DialogProps<Extract<LocalDialog, { kind: "join_gate" }>> =
         $props();
@@ -46,11 +45,14 @@
     let level = $state(0);
 
     const text = (key: ResourceKey) => interpolate($_, key);
-    const gateProps = $derived(
-        evaluation.gate === undefined
-            ? undefined
-            : joinGateProps(evaluation.gate, evaluation.leaves, $enhancedCryptoLookup, text),
-    );
+    // the last level's, kept while its join is on its way: the evaluation has moved past it then,
+    // and the dialog stays to show how the join went
+    let held: JoinGateProps | undefined;
+    const gateProps = $derived.by(() => {
+        if (evaluation.gate === undefined) return held;
+        held = joinGateProps(evaluation.gate, evaluation.leaves, $enhancedCryptoLookup, text);
+        return held;
+    });
     const depositAddress = $derived(
         userWalletAddress($currentUserIdStore, () => client.OcIdentityPrincipal),
     );
@@ -62,42 +64,39 @@
         onClose();
     }
 
-    // every level met: what the join is sent with, kept while it doesn't go through so "Pay and
-    // join" sends the same again (the evaluation has moved past the last level)
-    let gateCheck: GateCheckSucceeded | undefined;
-
     // resolves once this level is met (the dialog leaves, for the next level's or for good); a
     // choice that doesn't meet it, or a join that doesn't go through, rejects, and the dialog stays
-    // and says it couldn't join
+    // and says it couldn't join. A join that doesn't go through puts the last level back as it was
+    // before this choice, so "Pay and join" records the user's choice again, changed or not (the
+    // client doesn't approve, or charge the fee for, a payment it approved moments ago again)
     async function join(result: {
         paid: { id?: string }[];
         neuronConfirmed: boolean;
     }): Promise<void> {
-        if (gateCheck === undefined) {
-            const recorded = recordGateChoice(
-                evaluation,
-                { paid: paidLeaves(result.paid), neuronConfirmed: result.neuronConfirmed },
-                (ledger) => $enhancedCryptoLookup.get(ledger)?.transferFee,
-            );
-            switch (recorded.kind) {
-                case "incomplete":
-                    if (recorded.balanceShort) {
-                        toastStore.showFailureToast(i18nKey("access.paymentLeavesBalanceShort"));
-                    }
-                    throw new Error("the requirements aren't met");
-                case "next_level":
-                    level += 1;
-                    return;
-                case "ready":
-                    gateCheck = recorded.gateCheck;
-            }
+        const putBack = evaluation.checkpoint();
+        const recorded = recordGateChoice(
+            evaluation,
+            { paid: paidLeaves(result.paid), neuronConfirmed: result.neuronConfirmed },
+            (ledger) => $enhancedCryptoLookup.get(ledger)?.transferFee,
+        );
+        switch (recorded.kind) {
+            case "incomplete":
+                if (recorded.balanceShort) {
+                    toastStore.showFailureToast(i18nKey("access.paymentLeavesBalanceShort"));
+                }
+                throw new Error("the requirements aren't met");
+            case "next_level":
+                level += 1;
+                return;
         }
-        const step = await submitGates(client, dialog.target, gateCheck);
+        const step = await submitGates(client, dialog.target, recorded.gateCheck);
         switch (step.kind) {
             case "cancelled":
+                putBack();
                 throw new Error("the PIN prompt was dismissed");
             case "failed":
             case "gate_check_failed":
+                putBack();
                 toastStore.showFailureToast(joinFailure(step));
                 throw new Error("the join didn't go through");
             default:

@@ -166,6 +166,41 @@ describe("the preview bar", () => {
         expect(bar.joinLabel).toMatchObject({ key: "access.lockedGate" });
     });
 
+    // the user can join the community, just not this channel
+    test("a locked channel in a community that isn't locked joins the community alone", () => {
+        const c = community(ROLE_NONE);
+        const bar = previewBar(
+            input({
+                chat: channel,
+                community: c,
+                gates: [
+                    enhanced(payment, "community"),
+                    enhanced({ kind: "locked_gate" }, "channel"),
+                ],
+            }),
+        );
+
+        expect(bar.target).toEqual({ kind: "community", community: c });
+        expect(bar.locked).toBe(false);
+        expect(bar.joinLabel).toBeUndefined();
+        expect(bar.state).toBe("gated");
+        expect(bar.requirements).toBe(1);
+    });
+
+    test("a locked community is locked, whatever its channel", () => {
+        const bar = previewBar(
+            input({
+                chat: channel,
+                community: community(ROLE_NONE),
+                gates: [enhanced({ kind: "locked_gate" }, "community")],
+            }),
+        );
+
+        expect(bar.target).toEqual({ kind: "group", chat: channel });
+        expect(bar.locked).toBe(true);
+        expect(bar.joinLabel).toMatchObject({ key: "access.lockedGate", level: "community" });
+    });
+
     // lapsed labels it access.lapsed.rejoin; a lapsed member is still a member, so no Back
     test("a lapsed member rejoins, with no Back", () => {
         const bar = previewBar(input({ chat: channel, community: community(ROLE_MEMBER, true) }));

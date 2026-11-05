@@ -86,6 +86,28 @@ describe("recording the join gate dialog's choice", () => {
         });
     });
 
+    // a join that doesn't go through puts the last level back (the dialog's checkpoint), so the
+    // user's next choice is recorded afresh, not the one that failed
+    test("a checkpoint puts the evaluation back on the level it was taken on", () => {
+        const evaluation = new GateEvaluation(client, [
+            enhanced({ kind: "composite_gate", operator: "or", gates: [payment(100n), neuron] }),
+        ]);
+        const putBack = evaluation.checkpoint();
+
+        const neuronOnly = recordGateChoice(evaluation, { paid: [], neuronConfirmed: true }, fee);
+        expect(neuronOnly).toMatchObject({ kind: "ready" });
+        expect(evaluation.gate).toBeUndefined();
+
+        putBack();
+        expect(evaluation.gate?.kind).toBe("composite_gate");
+        expect(evaluation.satisfiedCount).toBe(0);
+        const paying = recordGateChoice(evaluation, { paid: [0], neuronConfirmed: false }, fee);
+        expect(paying).toMatchObject({ kind: "ready" });
+        if (paying.kind !== "ready") return;
+        expect(paying.gateCheck.compositeGateIndex).toBe(0);
+        expect(paying.gateCheck.paymentApprovals.get(icp)?.amount).toBe(100n);
+    });
+
     // never pays for a second branch of a met "or" gate; it sends the branch's original index
     test("an 'any' gate takes one payment, and sends that branch's index", () => {
         const evaluation = new GateEvaluation(client, [

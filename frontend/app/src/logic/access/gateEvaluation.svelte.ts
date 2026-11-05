@@ -125,14 +125,19 @@ export class GateEvaluation {
     }
 
     /**
-     * What has been collected so far, to put back with the function returned: a choice that
-     * doesn't meet the gate leaves nothing behind (no approval, no leaf marked done).
+     * Where the evaluation stands (the gate, and what has been collected so far), to put back with
+     * the function returned: a choice that doesn't meet the gate, or a join that doesn't go
+     * through, leaves nothing behind (no approval, no leaf marked done, no gate moved past).
      */
     checkpoint(): () => void {
+        const index = this.#index;
+        const compositeGateIndex = this.#compositeGateIndex;
         const done = [...this.#done];
         const credentials = [...this.#credentials];
         const approvals = [...this.#paymentApprovals];
         return () => {
+            this.#index = index;
+            this.#compositeGateIndex = compositeGateIndex;
             this.#done.clear();
             done.forEach((i) => this.#done.add(i));
             this.#credentials = credentials;

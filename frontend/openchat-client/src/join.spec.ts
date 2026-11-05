@@ -220,6 +220,35 @@ describe("joining a group or community", () => {
         expect(sent[1]).toMatchObject({ compositeGateIndex: 1 });
     });
 
+    // an approval made for a join that then failed stands for a few minutes: trying again doesn't
+    // approve the payment (and pay the approval fee) again, until it's about to expire
+    test("trying a failed join again doesn't approve its payment again while the approval stands", async () => {
+        const g = group(ROLE_NONE, paymentGate);
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) => {
+            sent.push(req);
+            return Promise.resolve(
+                req.kind === "joinGroup" ? { kind: "error", code: 0 } : { kind: "success" },
+            );
+        }) as never);
+        const gateCheck = {
+            credentials: [],
+            paymentApprovals: new Map([[ledger, { amount: 100_000n, approvalFee: 10_000n }]]),
+            compositeGateIndex: undefined,
+        };
+        const kinds = () => sent.splice(0).map((r) => r.kind);
+
+        expect((await client.joinGroup(g, gateCheck)).kind).toBe("failed");
+        expect(kinds()).toEqual(["approveAccessGatePayment", "joinGroup"]);
+        await client.joinGroup(g, gateCheck);
+        expect(kinds()).toEqual(["joinGroup"]);
+
+        // four and a half minutes on, too little is left for the join: approved again
+        const now = Date.now();
+        vi.spyOn(Date, "now").mockReturnValue(now + 4.5 * 60_000);
+        await client.joinGroup(g, gateCheck);
+        expect(kinds()).toEqual(["approveAccessGatePayment", "joinGroup"]);
+    });
+
     // Invariant 2: no join request for a community the user is already a non-lapsed member of
     test("a community member's join is not sent", async () => {
         // the join replayed after login carries the community as it was before login
