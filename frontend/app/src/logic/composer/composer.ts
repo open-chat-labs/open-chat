@@ -208,6 +208,27 @@ export function pickableAttachments(
     return kinds;
 }
 
+/**
+ * Whether the entry offers to record a voice message (as the old entries' mic): where audio may
+ * be sent, the browser can record in a format every device plays, the user hasn't turned the
+ * microphone down, and not to a bot (which takes text). The entry itself hides it while there's
+ * text, an attachment or an edit.
+ */
+export function canRecordVoice(state: {
+    audioPermitted: boolean;
+    /** What the browser records in (`audioRecordingMimeType`), if anything. */
+    recorderMimeType: string | undefined;
+    micDenied: boolean;
+    directBot: boolean;
+}): boolean {
+    return (
+        state.audioPermitted &&
+        state.recorderMimeType !== undefined &&
+        !state.micDenied &&
+        !state.directBot
+    );
+}
+
 /** What the entry says above the text: one thing at a time, the most pressing first. */
 export type EntryNotice =
     // too many messages a minute: sending resumes in this many seconds

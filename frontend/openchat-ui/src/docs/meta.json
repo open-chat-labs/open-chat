@@ -1732,6 +1732,28 @@
         "doc": ""
       },
       {
+        "name": "voiceMimeType",
+        "type": "ComposerProps['voiceMimeType']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "voiceMaxBytes",
+        "type": "ComposerProps['voiceMaxBytes']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
         "name": "attachment",
         "type": "ComposerProps['attachment']",
         "default": null,
@@ -13627,6 +13649,28 @@
         "required": false,
         "componentDefault": null,
         "doc": "A recorded voice message (real MediaRecorder audio, duration in seconds). The mic is hidden without it. Reject to keep the take."
+      },
+      {
+        "name": "voiceMimeType",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The mime type to record voice in, where the browser can (else its own)."
+      },
+      {
+        "name": "voiceMaxBytes",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The most a voice message may hold, in bytes: the recording stops there and says so."
       },
       {
         "name": "attachment",

@@ -6,6 +6,7 @@ import {
 } from "@client";
 import {
     attachRefusal,
+    canRecordVoice,
     editStartText,
     entryBlock,
     entryNotice,
@@ -264,6 +265,26 @@ describe("what the entry offers to pick from the device", () => {
         expect(pickableAttachments(permitted("file", "text"))).toEqual(["file"]);
         expect(pickableAttachments(permitted("text", "audio"))).toEqual([]);
         expect(pickableAttachments(new Map([["image", false]]))).toEqual([]);
+    });
+});
+
+describe("recording a voice message", () => {
+    const can = {
+        audioPermitted: true,
+        recorderMimeType: "audio/mp4",
+        micDenied: false,
+        directBot: false,
+    };
+
+    test("is offered where audio may be sent and the browser can record", () => {
+        expect(canRecordVoice(can)).toBe(true);
+    });
+
+    test("isn't where audio can't be sent, the browser can't record, the mic was turned down, or to a bot", () => {
+        expect(canRecordVoice({ ...can, audioPermitted: false })).toBe(false);
+        expect(canRecordVoice({ ...can, recorderMimeType: undefined })).toBe(false);
+        expect(canRecordVoice({ ...can, micDenied: true })).toBe(false);
+        expect(canRecordVoice({ ...can, directBot: true })).toBe(false);
     });
 });
 

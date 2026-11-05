@@ -627,3 +627,8 @@
 - `attachKinds` (`ComposerAttachKind[]`, now in `types.ts`): what the + menu offers, in its own order; all of them by default, as before, and no + button with none. The app offers photo / video and file until its builders for the others land, and only those the chat permits. `ComposerBar` passes it through.
 - The media tray's add tile shows only with `onAddMedia` (still under 10 items): a host that sends one photo or video a message gives none, and the tile did nothing. The docs' Preview demo passes one.
 - `meta.json` updated. Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-05 — MessageComposer's voice format and size limit for the app's voice messages (5c), by hand
+- `voiceMimeType`: what the recorder records in, where the browser supports it (`MediaRecorder.isTypeSupported`), else the browser's own as before. The app asks for mp4, which every device plays.
+- `voiceMaxBytes`: with it the recorder hands its audio over in 200ms slices, counts it, and stops the take for review once it holds that much, saying so under the bar (`ui.messageComposer.voiceCapped`, "Recording stopped at the size limit."). Without it, nothing changes.
+- `ComposerBar` passes both through. `meta.json` updated. Not in the design export: to go back to it (the app's `GAPS.md` lists it).

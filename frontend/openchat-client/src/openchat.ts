@@ -123,6 +123,7 @@ import {
     type ArchitectureRoute,
     type AttachFileOutcome,
     type AttachmentContent,
+    type AudioContent,
     type AuthenticationPrincipal,
     type BlogRoute,
     type BotActionScope,
@@ -770,6 +771,7 @@ import {
     DIAMOND_MAX_SIZES,
     FREE_MAX_SIZES,
     attachFailureMessage,
+    audioContent,
     audioRecordingMimeType,
     communityMessageRegex,
     fillMessage,
@@ -6548,6 +6550,26 @@ export class OpenChat {
         } finally {
             this.#sendsBeingPosted.delete(key);
         }
+    }
+
+    /**
+     * Sends a voice message recorded in the composer (its bytes, in the recorder's mime type), as
+     * `sendMessage` sends an attachment: replying to the draft's reply, settling once it shows in
+     * the chat. A recording that can't be read as audio fails.
+     */
+    async sendVoiceMessage(
+        messageContext: MessageContext,
+        data: ArrayBuffer,
+        mimeType: string,
+    ): Promise<SendMessageOutcome> {
+        let content: AudioContent;
+        try {
+            content = await audioContent(data, mimeType);
+        } catch (err) {
+            console.warn("Unable to read a voice message", err);
+            return { kind: "failed" };
+        }
+        return this.sendMessage(messageContext, undefined, false, content);
     }
 
     #throttleSendMessage(): boolean {

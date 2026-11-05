@@ -167,7 +167,13 @@ export {
 } from "./utils/walletConfig";
 export type { TrackingCategory } from "./utils/ga";
 export { toRecord } from "./utils/list";
-export { quantiseWaveform, waveformLevels, type Dimensions } from "./utils/media";
+export {
+    audioContent,
+    audioRecordingMimeType,
+    quantiseWaveform,
+    waveformLevels,
+    type Dimensions,
+} from "./utils/media";
 export * from "./utils/permissions";
 export { Poller } from "./utils/poller";
 export * from "./utils/routes";
@@ -208,12 +214,7 @@ export {
     reminderTime,
     type ReminderPreset,
 } from "./utils/reminders";
-export {
-    REPORT_REASONS,
-    isCsamReport,
-    reportReasonText,
-    type ReportReason,
-} from "./utils/report";
+export { REPORT_REASONS, isCsamReport, reportReasonText, type ReportReason } from "./utils/report";
 export {
     swapAcceptCost,
     swapActions,

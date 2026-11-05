@@ -1,11 +1,11 @@
 <!-- The conversation's composer: who's typing, and the message being written, with a photo, video
-     or file attached (picked from its + menu, pasted, or dropped on the conversation). The screen
-     reads the chat's draft, typers, throttle and whether the reader can send, and does the sending
-     (with mentions and markdown, as the old UI's MessageEntry did) and the attaching; the composer
-     tells it while the reader types, and hands it the files picked or pasted. Where the reader
-     can't send, the old footer's reason shows instead, and for a preview its bar
-     (CommunityPreviewBar: Join, Back; 8b); a notice (the throttle countdown, a video being
-     prepared) shows over it. Mount it once per chat (keyed). -->
+     or file attached (picked from its + menu, pasted, or dropped on the conversation), or a voice
+     message recorded. The screen reads the chat's draft, typers, throttle and whether the reader
+     can send, and does the sending (with mentions and markdown, as the old UI's MessageEntry did)
+     and the attaching; the composer tells it while the reader types, and hands it the files picked
+     or pasted and the voice recorded. Where the reader can't send, the old footer's reason shows
+     instead, and for a preview its bar (CommunityPreviewBar: Join, Back; 8b); a notice (the
+     throttle countdown, a video being prepared) shows over it. Mount it once per chat (keyed). -->
 <script lang="ts">
     import CommunityPreviewBar from "@openchat/ui/src/features/components/CommunityPreviewBar.svelte";
     import Banner from "@openchat/ui/src/lib/components/Banner.svelte";
@@ -41,6 +41,9 @@
         attachKinds,
         onFile,
         onRemoveAttachment,
+        onVoice,
+        voiceMimeType,
+        voiceMaxBytes,
     }: {
         // what stands in for the composer where the reader can't send
         block: EntryBlock | undefined;
@@ -76,6 +79,12 @@
         // a file picked, pasted or dropped; none where nothing can be attached
         onFile: ((file: File) => void) | undefined;
         onRemoveAttachment: () => void;
+        // sends a voice message recorded here; none where the reader can't record one (no mic
+        // then); rejects if it wasn't sent, and the take stays to send again
+        onVoice: ((recording: Blob) => Promise<void>) | undefined;
+        // what a recording is made in, and the most it may hold
+        voiceMimeType: string | undefined;
+        voiceMaxBytes: number;
     } = $props();
 
     let mediaInput = $state<HTMLInputElement>();
@@ -162,7 +171,7 @@
         <Banner tone={blocked.tone} text={$_(blocked.key)} />
     </div>
 {:else}
-    <!-- TODO(phase 5, 5c): GIFs, voice, the mention picker and bot commands -->
+    <!-- TODO(phase 5, 5c): GIFs, the mention picker and bot commands -->
     <div class="entry" onpaste={paste}>
         <ComposerBar
             {text}
@@ -181,7 +190,10 @@
             {attachment}
             onAttach={onFile === undefined ? undefined : pick}
             {attachKinds}
-            {onRemoveAttachment} />
+            {onRemoveAttachment}
+            onVoice={onVoice === undefined ? undefined : ({ blob }) => onVoice(blob)}
+            {voiceMimeType}
+            {voiceMaxBytes} />
     </div>
     {#if onFile !== undefined}
         <input

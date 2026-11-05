@@ -31,6 +31,8 @@
     attachKinds?: ComposerProps['attachKinds'];
     onGif?: ComposerProps['onGif'];
     onVoice?: ComposerProps['onVoice'];
+    voiceMimeType?: ComposerProps['voiceMimeType'];
+    voiceMaxBytes?: ComposerProps['voiceMaxBytes'];
     attachment?: ComposerProps['attachment'];
     onEditAttachment?: () => void;
     onRemoveAttachment?: () => void;

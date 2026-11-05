@@ -2148,6 +2148,7 @@
       "swapCrypto": "Swap crypto",
       "totalInclFees": "{summary} · {total} total incl. fees",
       "video": "Video",
+      "voiceCapped": "Recording stopped at the size limit.",
       "voiceFailed": "Couldn't send the voice message. Try again.",
       "withFee": "{summary} · +{fee} fee"
     },

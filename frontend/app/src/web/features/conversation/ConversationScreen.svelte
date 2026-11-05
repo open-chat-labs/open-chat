@@ -11,6 +11,7 @@
         webhookUserIdsStore,
         formatClock,
         anonUserStore,
+        audioRecordingMimeType,
         blockedUsersStore,
         botState,
         bridgedUsersStore,
@@ -94,6 +95,7 @@
     import type { GroupMessage } from "@openchat/ui/src/lib/types";
     import {
         attachRefusal,
+        canRecordVoice,
         editStartText,
         entryBlock,
         entryNotice,
@@ -115,7 +117,7 @@
     import { messageSwipeLeft } from "@src/utils/messageSwipe";
     import { canShareMessage } from "@src/utils/share";
     import { messageDoubleClickAction } from "@src/logic/conversation/messageDoubleClick";
-    import { getProxyAdjustedBlobUrl } from "@src/utils/media";
+    import { getProxyAdjustedBlobUrl, microphoneDenied } from "@src/utils/media";
     import { now500 } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
     import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
@@ -129,7 +131,7 @@
         timelineEventText,
         type EventTextContext,
     } from "@src/logic/conversation/timelineEventText";
-    import { getContext, untrack, type ComponentProps, type Snippet } from "svelte";
+    import { getContext, onMount, untrack, type ComponentProps, type Snippet } from "svelte";
     import { _, locale } from "svelte-i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import { chatMenuState, runChatMenuItem } from "./chatMenu";
@@ -482,6 +484,34 @@
             entryPlaceholder({ canEnterText: true, attached: staged !== null, directBot }),
         ),
     );
+
+    // a voice message is recorded in a format every device plays (no mic where the browser can't),
+    // and stops at the size limit; no mic once the reader has turned the microphone down
+    const voiceMimeType =
+        typeof MediaRecorder === "undefined" ? undefined : audioRecordingMimeType();
+    let micDenied = $state(false);
+    onMount(async () => {
+        micDenied = await microphoneDenied();
+    });
+    const canRecord = $derived(
+        chat !== undefined &&
+            canRecordVoice({
+                audioPermitted: client.permittedMessages(chat.id, "message").get("audio") ?? false,
+                recorderMimeType: voiceMimeType,
+                micDenied,
+                directBot,
+            }),
+    );
+
+    // sent as a reply to the draft's reply, if any; refused, the take stays to send again
+    async function sendVoice(chatId: ChatIdentifier, recording: Blob, mimeType: string) {
+        const outcome = await client.sendVoiceMessage(
+            { chatId },
+            await recording.arrayBuffer(),
+            mimeType,
+        );
+        if (outcome.kind !== "posted") throw new Error(outcome.kind);
+    }
 
     // a file picked, pasted or dropped goes to the chat it was picked in, if it may be sent there
     async function attachFile(chatId: ChatIdentifier, file: File) {
@@ -1513,6 +1543,11 @@
                 onFile={directBot ? undefined : (file) => attachFile(chat.id, file)}
                 onRemoveAttachment={() =>
                     localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
+                onVoice={canRecord && voiceMimeType !== undefined
+                    ? (recording) => sendVoice(chat.id, recording, voiceMimeType)
+                    : undefined}
+                {voiceMimeType}
+                voiceMaxBytes={client.maxMediaSizes().audio}
             />
         {/key}
     </div>

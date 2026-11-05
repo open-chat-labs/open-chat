@@ -68,6 +68,10 @@
     onGif?: (query: string) => void;
     /** A recorded voice message (duration in seconds). The mic is hidden without it. Reject to keep the take. */
     onVoice?: (r: { blob: Blob; duration: number; mimeType: string }) => Promise<unknown> | void;
+    /** The mime type to record voice in, where the browser can (else its own). */
+    voiceMimeType?: string;
+    /** The most a voice message may hold, in bytes: the recording stops there and says so. */
+    voiceMaxBytes?: number;
     attachment?: ComposerAttachment | null;
     onEditAttachment?: () => void;
     onRemoveAttachment?: () => void;
@@ -108,6 +112,8 @@
     attachKinds,
     onGif,
     onVoice,
+    voiceMimeType,
+    voiceMaxBytes,
     attachment = null,
     onEditAttachment,
     onRemoveAttachment,
@@ -155,6 +161,8 @@
   let audio: HTMLAudioElement | null = null;
   let sending = $state(false);
   let failure = $state<'send' | 'voice' | 'mic' | null>(null);
+  // the take reached voiceMaxBytes and was stopped there
+  let capped = $state(false);
   const canRecord = $derived(
     demo !== 'interactive' || (!!onVoice && typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined'),
   );
@@ -355,10 +363,19 @@
       return;
     }
     starting = false;
-    const recorder = new MediaRecorder(stream);
+    capped = false;
+    const recorder = new MediaRecorder(stream, voiceMimeType && MediaRecorder.isTypeSupported(voiceMimeType) ? { mimeType: voiceMimeType } : undefined);
     const chunks: Blob[] = [];
+    let bytes = 0;
     recorder.ondataavailable = (e) => {
-      if (e.data.size) chunks.push(e.data);
+      if (!e.data.size) return;
+      chunks.push(e.data);
+      bytes += e.data.size;
+      // at the host's limit the take stops for review, and says why
+      if (voiceMaxBytes && bytes >= voiceMaxBytes && take?.recorder === recorder && voice === 'recording') {
+        capped = true;
+        void stopRecording();
+      }
     };
     // live levels from the microphone for the waveform
     const ctx = new AudioContext();
@@ -368,7 +385,9 @@
     const buf = new Uint8Array(analyser.fftSize);
     const started = performance.now();
     take = { recorder, stream, ctx, chunks, started };
-    recorder.start();
+    // with a limit, the audio comes in slices (as the app's old recorder took it) so it's counted as it grows
+    if (voiceMaxBytes) recorder.start(200);
+    else recorder.start();
     voice = 'recording';
     secs = 0;
     levels = [];
@@ -429,6 +448,7 @@
     void finishTake(false);
     dropClip();
     voice = null;
+    capped = false;
     secs = 0;
     levels = [];
     playing = false;
@@ -923,6 +943,8 @@
     >
   {:else if voice === 'recording'}
     <span class="rec-hint">{t('ui.messageComposer.recordingHint')}</span>
+  {:else if voice === 'review' && capped}
+    <span class="rec-hint" role="status">{t('ui.messageComposer.voiceCapped')}</span>
   {/if}
 </div>
 

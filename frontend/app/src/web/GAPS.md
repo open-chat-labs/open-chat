@@ -131,6 +131,12 @@ design export needs. Each entry says where it came up.
   land, and only where the chat lets the reader send them. The media tray's "add more" tile shows
   only with `onAddMedia`: the app sends one photo or video a message (`AttachmentContent` holds
   one), so it gives none. The design's tray takes up to 10, which the backend has no message for.
+- **Composer voice format and limit** (by hand, 5c, to take back to the design export):
+  `MessageComposer` (and `ComposerBar`) take `voiceMimeType`, what the recorder records in where
+  the browser can (the app's mp4, which iOS plays, over the browser's own webm), and
+  `voiceMaxBytes`: with it the audio comes in 200ms slices and the take stops for review once it
+  holds that much, saying so ("Recording stopped at the size limit."). Without them it records
+  as before.
 - **Calls**: `CallPanel` / `VideoTile` render `MediaStream`s. The app uses Daily's prebuilt
   iframe, which doesn't expose them; it needs Daily's call-object mode (phase 7 decision).
   The call's menu must cope with its chat going away while the menu is open: the legacy desktop
@@ -1107,9 +1113,9 @@ design export needs. Each entry says where it came up.
   still go by the sender, the bot, and blocking or reporting its author is hidden. No relayed
   message offers a private reply, which would go to the bot. The client marks the viewer's own
   read (`isOwnMessage`), so that part needs nothing here.
-- **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text first; files
-  and media came with 5c (below). GIFs, voice and the "+" menu's builders are still to come
-  (`MessageComposer` hides the GIF tab and the mic without their handlers). There's no @mention
+- **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text first; files,
+  media and voice came with 5c (below). GIFs and the "+" menu's builders are still to come
+  (`MessageComposer` hides the GIF tab without its handler). There's no @mention
   picker (typed @usernames are still sent as mentions) and no rich-text editor (the old one showed
   markdown as it was typed). The old desktop entry's link-count note ("Link previews are hidden
   for messages with more than 5 links", `excessiveLinksNote`) isn't carried over: it can't show
@@ -1141,6 +1147,17 @@ design export needs. Each entry says where it came up.
   text only. Not yet: 5d's prize, transfer and swap offer, and a puzzle result, aren't staged,
   and the composer doesn't send them (`TODO(phase 5, 5d)`); the mobile app's native recent-media
   strip waits for the narrow pass.
+- **Voice messages in the composer** (5c): the composer's own recorder (record, then review: play
+  back, seek, delete or send), where the old trees' mic staged the clip as an attachment to send
+  with a caption: here it goes straight out (`sendVoiceMessage`: the client makes the audio
+  content, waveform and length, with `audioContent`, which both old recorders now use, and sends
+  it as `sendMessage` does, replying to the draft's reply), and a take that isn't sent stays to
+  send again. The mic shows as the old entries' did (`canRecordVoice`): where audio may be sent,
+  the browser records in `audioRecordingMimeType`'s format (mp4, which every device plays, else
+  webm), the reader hasn't turned the microphone down (`microphoneDenied`, which both old
+  recorders now use), not in a bot DM, and only while nothing is typed or attached. A take stops at
+  the size limit (`maxMediaSizes().audio`) and says so, where the old trees toasted `maxAudioSize`.
+  The microphone is let go on leaving the chat (the composer is keyed per chat).
 - **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
   edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text
