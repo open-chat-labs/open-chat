@@ -21216,7 +21216,7 @@
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": "Featured communities for the Communities section; without any, only its heading and Browse link show."
+        "doc": "Featured communities for the Communities section; without any, only its heading and Browse link show. A card with an href is a link, and calls its onOpen as it is followed."
       },
       {
         "name": "playStoreHref",

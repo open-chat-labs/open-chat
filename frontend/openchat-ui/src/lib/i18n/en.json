@@ -1884,9 +1884,9 @@
       "apps": {
         "kicker": "On your phone",
         "title": "Try the OpenChat native app",
-        "sub": "The Android app is in beta. Pick the build you want below — the iOS app is on its way.",
+        "sub": "The Android app is out now, in two builds. Pick the one you want below — the iOS app is on its way.",
         "android": "Android",
-        "betaOpen": "Beta open",
+        "available": "Available",
         "whichBuild": "There are two builds of the app. Which would you like?",
         "pickOne": "Pick one and stick with it — the two builds can’t be installed together.",
         "playStore": "Play Store version",

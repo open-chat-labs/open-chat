@@ -151,9 +151,8 @@ export type CommunitySearchOutcome = "success" | "failed" | "superseded";
 
 /**
  * Explore's results, with the search they answer (`held`) and the latest search asked for.
- * Results set any other way (a proposal's community finder, the mobile welcome page) answer no
- * search Explore knows of, so setting them forgets `held` and drops the answer of a search still in
- * flight.
+ * Results set any other way (a proposal's community finder) answer no search Explore knows of,
+ * so setting them forgets `held` and drops the answer of a search still in flight.
  */
 export class CommunitySearchState extends SearchState<CommunityMatch> {
     #held: CommunitySearchKey | undefined;

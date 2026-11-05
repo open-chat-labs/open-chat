@@ -41,6 +41,7 @@
     let { route }: { route: RouteParams } = $props();
 
     const client = getContext<OpenChat>("client");
+    const featured = new FeaturedCommunities(client);
 
     // the app's home: "/" goes on to the default chat list, as the router does for anyone signed in
     const enterApp = () => navigate("/");
@@ -95,6 +96,7 @@
     onDestroy(() => {
         if (pageSignIns.left()) auth.cancel();
         auth.dispose();
+        featured.dispose();
     });
 
     const signedIn = $derived($identityStateStore.kind === "logged_in");
@@ -118,11 +120,13 @@
 
     // Landing's featured communities: the OpenChat community, then Explore's top ones as Explore
     // shows them, asked for once the client can answer (FeaturedCommunities)
-    const featured = new FeaturedCommunities(client);
     $effect(() => {
         const ready = $chatsInitialisedStore;
         if (landing) untrack(() => void featured.want(ready));
     });
+    // a card opens the community's preview, whose cancel comes back here, as Explore's do to it
+    const openCommunity = (communityId: string) =>
+        client.setCommunityPreviewOrigin(communityId, window.location.pathname);
     const communities = $derived.by(() => {
         const { pinned, ranked } = featured.featured;
         const ranking = landingCommunities(
@@ -131,10 +135,11 @@
                 (m) => client.communityAvatarUrl(m.id.communityId, m.avatar),
                 supportedLanguagesByCode,
             ),
+            openCommunity,
         );
         if (pinned === undefined) return ranking;
         const avatar = client.communityAvatarUrl(pinned.id.communityId, pinned.avatar);
-        return [pinnedLandingCommunity(pinned, avatar), ...ranking];
+        return [pinnedLandingCommunity(pinned, avatar, openCommunity), ...ranking];
     });
 
     // The page a sign-in link opens: its query (?auth&m=…&s1=…&s2=…) is kept to go with the

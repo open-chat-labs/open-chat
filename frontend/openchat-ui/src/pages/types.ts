@@ -18,4 +18,6 @@ export interface LandingCommunity {
   coverUrl?: string;
   /** Where the card goes (e.g. the community's preview); without it the card isn't a link. */
   href?: string;
+  /** Called as the card's link is followed (e.g. for the host to remember where it was opened from). */
+  onOpen?: () => void;
 }

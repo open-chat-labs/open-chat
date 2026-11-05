@@ -34,9 +34,13 @@ export function learnPath(page: LearnPage, post?: string): string {
 
 /**
  * Landing's featured communities from Explore's cards (`explore.adapter`), so a community shows
- * the same in both: each card opens the community's preview, as Explore's do.
+ * the same in both: each card opens the community's preview, as Explore's do, calling `onOpen`
+ * (with its id) as it's opened, so the preview can come back to Landing.
  */
-export function landingCommunities(communities: ExploreCommunity[]): LandingCommunity[] {
+export function landingCommunities(
+    communities: ExploreCommunity[],
+    onOpen: (communityId: string) => void,
+): LandingCommunity[] {
     return communities.map((c) => ({
         name: c.name,
         about: c.about ?? "",
@@ -44,6 +48,7 @@ export function landingCommunities(communities: ExploreCommunity[]): LandingComm
         avatarUrl: c.avatarUrl,
         coverUrl: c.coverUrl,
         href: communityPreviewPath(c.key),
+        onOpen: () => onOpen(c.key),
     }));
 }
 
@@ -54,6 +59,7 @@ export function landingCommunities(communities: ExploreCommunity[]): LandingComm
 export function pinnedLandingCommunity(
     community: CommunitySummary,
     avatarUrl: string,
+    onOpen: (communityId: string) => void,
 ): LandingCommunity {
     return {
         name: community.name,
@@ -62,6 +68,7 @@ export function pinnedLandingCommunity(
         avatarUrl,
         coverUrl: community.banner.blobUrl,
         href: communityPreviewPath(community.id.communityId),
+        onOpen: () => onOpen(community.id.communityId),
     };
 }
 

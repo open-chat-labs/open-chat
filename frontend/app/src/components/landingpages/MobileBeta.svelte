@@ -12,7 +12,7 @@
     <div class="beta">
         <h2>Try the OpenChat native app</h2>
         <p class="sub">
-            The Android app is in beta. Pick the build you want below — the iOS app is on its way.
+            The Android app is out now, in two builds. Pick the one you want below — the iOS app is on its way.
         </p>
 
         <div class="cards">
@@ -25,7 +25,7 @@
                         />
                     </svg>
                     <h3>Android</h3>
-                    <span class="pill open">Beta open</span>
+                    <span class="pill open">Available</span>
                 </header>
 
                 {#if step === "choice"}
