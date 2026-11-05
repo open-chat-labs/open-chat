@@ -1,10 +1,11 @@
 use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::updates::c2c_verify_sign_in_proof::verify_sign_in_proof;
-use crate::{guards::caller_is_openchat_user, read_state};
+use crate::{guards::caller_is_openchat_user, read_state, turnstile};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::LIFETIME_DIAMOND_TIMESTAMP;
 use local_user_index_canister::{GlobalUser, claim_prize::*};
+use oc_error_codes::OCErrorCode;
 use types::{
     CanisterId, DiamondMembershipStatus, MultiUserChat,
     PrizeClaimResponse::{self, *},
@@ -21,17 +22,35 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
             unique_person_proof,
             ..
         },
-        user_reauthenticated,
+        signed_in_again,
+        turnstile_config,
         now,
     ) = read_state(|state| {
         let user = state.calling_user();
         let now = state.env.now();
-        let user_reauthenticated = args
+        let signed_in_again = args
             .sign_in_proof_jwt
             .is_some_and(|jwt| verify_sign_in_proof(&jwt, user.principal, state.data.oc_key_pair.public_key_pem(), now));
 
-        (user, user_reauthenticated, now)
+        (user, signed_in_again, state.data.turnstile_config.clone(), now)
     });
+
+    // With a secret key, every claim must pass Turnstile, which counts as the user having signed in
+    // again, as a prize requiring a captcha asks for. Without one, tokens are ignored.
+    let passed_turnstile = match turnstile_config.secret_key {
+        Some(secret_key) => {
+            let Some(token) = args.turnstile_token else {
+                return Error(OCErrorCode::HumanVerificationFailed.with_message("Turnstile token required"));
+            };
+            let custom_data = turnstile::custom_data(user_id, args.message_id);
+            if let Err(error) = turnstile::verify(&secret_key, &token, &custom_data).await {
+                return Error(error);
+            }
+            true
+        }
+        None => false,
+    };
+    let user_reauthenticated = passed_turnstile || signed_in_again;
 
     let is_unique_person = unique_person_proof.is_some();
     let diamond_status = match diamond_membership_expires_at {

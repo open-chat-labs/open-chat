@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Support bot command args that are only visible when a condition is met (eg. when game is "chess") ([#10350](https://github.com/open-chat-labs/open-chat/pull/10350))
+- Protect against bots making prize claims by using Cloudflare Turnstile ([#10395](https://github.com/open-chat-labs/open-chat/pull/10395))
 
 ### Fixed
 

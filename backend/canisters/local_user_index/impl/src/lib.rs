@@ -28,7 +28,7 @@ use event_store_utils::EventDeduper;
 use group_canister::LocalIndexEvent as GroupEvent;
 use group_index_canister::LocalIndexEvent as GroupIndexEvent;
 use jwt::{Claims, sign_and_encode_token, sign_bytes, verify_and_decode};
-use local_user_index_canister::{ChildCanisterType, GlobalUser};
+use local_user_index_canister::{ChildCanisterType, GlobalUser, TurnstileConfig};
 use model::bots_map::BotsMap;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
@@ -79,6 +79,7 @@ mod mini_app;
 mod model;
 mod no_inline_anchor;
 mod queries;
+mod turnstile;
 mod updates;
 
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
@@ -840,6 +841,7 @@ impl RuntimeState {
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             openai_api_key_set: self.data.openai_api_key.is_some(),
             alchemy_api_key_set: self.data.alchemy_api_key.is_some(),
+            turnstile_secret_key_set: self.data.turnstile_config.secret_key.is_some(),
             moderation_referral_config: self.data.moderation_referral_config.clone(),
             message_moderation_queue_len: self.data.message_moderation_queue.len() as u32,
             media_scanning_enabled: self.data.media_scan_config.enabled,
@@ -996,6 +998,9 @@ struct Data {
     // passed on to the MultiUser canisters, including any created later
     #[serde(default)]
     pub alchemy_api_key: Option<String>,
+    // Synced from the UserIndex: how prize claims are checked for a human
+    #[serde(default)]
+    pub turnstile_config: TurnstileConfig,
     // Rebuilt every 5 minutes (and on start) from the child canisters' top ups, so not persisted
     #[serde(skip)]
     pub top_up_leaderboards: TopUpLeaderboards,
@@ -1125,6 +1130,7 @@ impl Data {
             migrated_user_ids: MigratedUserIds::default(),
             registry_tokens: RegistryTokens::default(),
             alchemy_api_key,
+            turnstile_config: TurnstileConfig::default(),
             top_up_leaderboards: TopUpLeaderboards::default(),
         }
     }
@@ -1207,6 +1213,7 @@ pub struct Metrics {
     pub oc_secret_key_initialized: bool,
     pub openai_api_key_set: bool,
     pub alchemy_api_key_set: bool,
+    pub turnstile_secret_key_set: bool,
     pub moderation_referral_config: Option<ModerationReferralConfig>,
     pub message_moderation_queue_len: u32,
     pub media_scanning_enabled: bool,
