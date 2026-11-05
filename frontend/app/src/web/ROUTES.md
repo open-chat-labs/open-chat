@@ -214,9 +214,11 @@ Not a URL, wired as today:
 
 ## Built so far
 
-**Router (phase 2).** `router/routeTable.ts` registers every path above in this order, and
-`router/Router.svelte` runs the existing route effects. `router/regions.ts` maps each route onto
-the regions above, and the in-app regions are placeholders until their screens are built.
+**Router (phase 2).** `utils/routeTable.ts` (shared with the native tree) lists every path above
+in this order; `router/Router.svelte` registers them and runs the existing route effects
+(`core/RouteEffects.svelte`, shared with the native tree, and its own). `router/regions.ts` maps
+each route onto the regions above, and the in-app regions are placeholders until their screens are
+built.
 
 **Landing, Learn and sign-in (brought forward from phase 9).** `features/marketing` renders
 `Landing` on `/` (signed out), `/home` and `/features`, and `Learn` host-routed on its sub-pages'

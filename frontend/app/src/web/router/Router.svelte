@@ -1,33 +1,23 @@
-<!-- The new web UI's router: registers routeTable with page.js, keeps the route stores
-     (routeStore, selectedChatIdStore …) up to date through client.setRouteParams, and runs the
-     route effects the existing trees run, so the client sees the same calls. What each route
-     renders is decided by the child, from routeStore. -->
+<!-- The new web UI's router: registers the route table (utils/routeTable, shared with the native
+     tree) with page.js, keeps the route stores (routeStore, selectedChatIdStore …) up to date
+     through client.setRouteParams, and runs the route effects the existing trees run
+     (core/RouteEffects, shared with the native tree, and the web's own), so the client sees the
+     same calls. What each route renders is decided by the child, from routeStore. -->
 <script lang="ts">
     import {
-        anonUserStore,
-        chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
         chatSummariesListStore,
         lastSelectedChatByScopeStore,
-        communityIdentifiersEqual,
         exploringStore,
-        messageIndexStore,
         notFoundStore,
         OpenChat,
         querystringStore,
         routeForScope,
-        routeKindStore,
         routerReadyStore,
-        routeStore,
         selectedChatIdStore,
-        selectedCommunityIdStore,
         setRightPanelHistory,
         subscribe,
-        threadMessageIndexStore,
-        threadOpenStore,
-        type ChatIdentifier,
-        type CommunityIdentifier,
         type RouteParams,
     } from "@client";
     import {
@@ -35,19 +25,15 @@
         initNavigationHistoryTracking,
         navigate,
     } from "@src/utils/navigation";
-    import {
-        handleLinkClick,
-        inEditor,
-        removeQueryStringParam,
-        withoutQueryStringParams,
-    } from "@src/utils/urls";
+    import { handleLinkClick, inEditor, withoutQueryStringParams } from "@src/utils/urls";
     import page from "page";
     import { getContext, onMount, untrack, type Snippet } from "svelte";
     import { currentShellLayout } from "../shell/viewport.svelte";
     import { defaultChatRoute, defaultChatUrl } from "./defaultChat";
-    import { redirectTable, routeTable } from "./routeTable";
+    import { redirectTable, routeTable } from "@src/utils/routeTable";
     import { leftToBrowser } from "./links";
     import { shareQuery } from "../features/app/dialogs";
+    import RouteEffects from "@src/core/RouteEffects.svelte";
 
     let { children }: { children: Snippet } = $props();
 
@@ -105,70 +91,8 @@
         };
     });
 
-    // The rest are the existing desktop router's effects (components/Router.svelte) and
-    // Home.svelte's route handling, so the client sees the same calls in this tree.
-
-    // Drop a previewed community once we navigate away from it
-    let previousCommunityId: CommunityIdentifier | undefined = undefined;
-    $effect(() => {
-        const id = $selectedCommunityIdStore;
-        untrack(() => {
-            if (
-                previousCommunityId !== undefined &&
-                !communityIdentifiersEqual(previousCommunityId, id)
-            ) {
-                client.removeCommunityIfPreviewing(previousCommunityId);
-            }
-            previousCommunityId = id;
-        });
-    });
-
-    // Load the selected community
-    $effect(() => {
-        if ($chatsInitialisedStore && $selectedCommunityIdStore !== undefined) {
-            const id = $selectedCommunityIdStore;
-            untrack(() => loadCommunity(id));
-        }
-    });
-
-    async function loadCommunity(id: CommunityIdentifier) {
-        const preview = await client.setSelectedCommunity(id);
-        // a previewed community's first channel has to be selected by hand
-        if (preview && $selectedChatIdStore === undefined) {
-            selectDefaultChat();
-        }
-    }
-
-    $effect(() => {
-        if (client.captureReferralCode()) {
-            navigate(removeQueryStringParam("ref"));
-        }
-    });
-
-    // A thread opened from the URL in the chat that's already selected
-    let previousChatId: ChatIdentifier | undefined = undefined;
-    $effect(() => {
-        if (
-            $threadOpenStore &&
-            $messageIndexStore !== undefined &&
-            $selectedChatIdStore !== undefined &&
-            chatIdentifiersEqual(previousChatId, $selectedChatIdStore)
-        ) {
-            const chatId = $selectedChatIdStore;
-            const idx = $messageIndexStore;
-            const threadIdx = $threadMessageIndexStore;
-            untrack(() => client.openThreadFromMessageIndex(chatId, idx, threadIdx));
-        }
-        previousChatId = $selectedChatIdStore;
-    });
-
-    $effect(() => {
-        if (!$threadOpenStore) {
-            untrack(() =>
-                client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel"),
-            );
-        }
-    });
+    // The existing desktop router's effects, shared with the native tree, are core/RouteEffects;
+    // these are the web's own.
 
     // A chat list with nothing selected goes to its default chat (ROUTES.md, decision 7): the one
     // last opened in its scope, else its first, once there is one, with its thread list
@@ -200,60 +124,21 @@
         }
     }
 
-    // Select the chat the route names
-    $effect(() => {
-        if (
-            $chatsInitialisedStore &&
-            $selectedChatIdStore !== undefined &&
-            ($routeKindStore === "selected_channel_route" ||
-                $routeKindStore === "global_chat_selected_route")
-        ) {
-            untrack(() => {
-                const route = $routeStore;
-                if (
-                    route.kind === "selected_channel_route" ||
-                    route.kind === "global_chat_selected_route"
-                ) {
-                    const id = $selectedChatIdStore;
-                    if (id !== undefined) {
-                        client.setSelectedChat(id, route.messageIndex, route.threadMessageIndex);
-                    }
-                }
-            });
+    // What's left of Home.svelte's route handling (the rest is RouteEffects'), once the chats are in
+    function onRoute(route: RouteParams) {
+        if (route.kind === "profile_summary_route") {
+            // mobile's profile path: the profile is a dialog over the page here (?profile)
+            navigate(`${routeForScope(client.getDefaultScope())}?profile`, "auto");
+            return;
         }
-    });
-
-    // Home.svelte's route change handling
-    $effect(() => {
-        const initialised = $chatsInitialisedStore;
-        const route = $routeStore;
-        untrack(() => {
-            if (!initialised) return;
-            client.filterRightPanelHistory((panel) => panel.kind !== "community_filters");
-            if (
-                $anonUserStore &&
-                client.isChatListRoute(route) &&
-                route.scope.kind === "favourite"
-            ) {
-                client.updateIdentityState({ kind: "logging_in" });
-                navigate("/chats");
-                return;
-            }
-            if (client.setChatListScopeAndRedirect(route)) return;
-            if (route.kind === "profile_summary_route") {
-                // mobile's profile path: the profile is a dialog over the page here (?profile)
-                navigate(`${routeForScope(client.getDefaultScope())}?profile`, "auto");
-                return;
-            }
-            if (client.isHomeRoute(route)) {
-                client.filterRightPanelHistory((panel) => panel.kind === "user_profile");
-            } else if (client.isShareRoute(route)) {
-                // what another app shared: the chat picker over the default page (?share), which
-                // puts it in the chosen chat's draft
-                navigate(`${routeForScope(client.getDefaultScope())}${shareQuery(route)}`, "auto");
-            }
-        });
-    });
+        if (client.isHomeRoute(route)) {
+            client.filterRightPanelHistory((panel) => panel.kind === "user_profile");
+        } else if (client.isShareRoute(route)) {
+            // what another app shared: the chat picker over the default page (?share), which
+            // puts it in the chosen chat's draft
+            navigate(`${routeForScope(client.getDefaultScope())}${shareQuery(route)}`, "auto");
+        }
+    }
 
     // The query params that open something (ROUTES.md), handled once the chats are in, each on its
     // own as Home.svelte does, then the URL is tidied with a single navigation
@@ -289,5 +174,7 @@
         });
     });
 </script>
+
+<RouteEffects onPreviewWithoutChat={selectDefaultChat} {onRoute} />
 
 {@render children()}

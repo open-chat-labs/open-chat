@@ -174,7 +174,7 @@ export function scrollToSection(section: string): number | undefined {
 // content. The markdown renderer rewrites oc.app links to relative urls (see
 // utils/markdown.ts) so that links to chats/groups/users deep-link into the
 // app. In the native app these landing-page links should instead open in an
-// external browser tab. Every landing route in web/router/routeTable.ts has its
+// external browser tab. Every landing route in utils/routeTable.ts has its
 // path here (routeTable.spec.ts checks).
 const landingPagePaths = new Set([
     "home",

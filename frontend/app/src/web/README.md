@@ -25,13 +25,12 @@ getting the existing apps until the narrow layouts are designed.
 ```
 web/
   App.svelte     root: styles, behaviours, i18n bridge, theme on <html>, the client
-  i18n.ts        @openchat/ui's copy merged into svelte-i18n, and the translator it is given
   ROUTES.md      every URL and what each column shows for it
   DATA.md        where each screen's data and actions come from in the app
   GAPS.md        what the app or the library is missing
   PLAN.md        the work left: what has to come first, and a pool of workstreams to claim
-  router/        the route table (every path, in page.js order), the router and its route effects,
-                 and what each route shows (regions.ts)
+  router/        the router (page.js registration, web-only route effects) and what each route
+                 shows (regions.ts)
   shell/         nav rail, the three columns and the breakpoints, overlays
   features/      one folder per screen/feature (chats, conversation, wallet, …):
     XScreen.svelte   reads stores / the client, renders @openchat/ui components, calls the client
@@ -43,6 +42,11 @@ web/
 Outside this folder, and shared with the legacy trees while they live (`frontend/CLAUDE.md`, "Where
 code goes"): `app/src/logic` (flow state) and `app/src/core` (components with behaviour but no look,
 such as `ChatEventList` and `Markdown`).
+
+Shared with the native tree (`src/native`), which reads the same URLs: the route table
+(`utils/routeTable.ts`), the route effects every new tree runs (`core/RouteEffects.svelte`), the
+library's i18n bridge (`i18n/openchatUi.ts`: `@openchat/ui`'s copy merged into svelte-i18n, and the
+translator it is given) and the stored accent (`theme/accent.ts`).
 
 ## Rules
 

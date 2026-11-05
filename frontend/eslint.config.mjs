@@ -206,8 +206,8 @@ export default defineConfig([
         files: [
             "app/src/utils/navigation.ts",
             "openchat-client/src/state/path/stores.ts",
-            // checks the new web UI's route table with page.js's own matching
-            "app/src/web/router/routeTable.spec.ts",
+            // checks the route table (src/web and src/native) with page.js's own matching
+            "app/src/utils/routeTable.spec.ts",
         ],
         rules: {
             "local/no-pagejs-direct": "off",

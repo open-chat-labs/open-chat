@@ -9,6 +9,9 @@ export const websiteVersion: string = import.meta.env.OC_WEBSITE_VERSION!;
 /** Where the website is served from, which serves the apps the prize claim human check's page. */
 export const baseOrigin: string = import.meta.env.OC_BASE_ORIGIN!;
 
+/** The video bridge, which the native shell tells when the user declines a call from its ring. */
+export const videoBridgeUrl: string | undefined = import.meta.env.OC_VIDEO_BRIDGE_URL || undefined;
+
 /** Cloudflare Turnstile's site key, for the prize claim human check (public/turnstile.html). */
 export const turnstileSiteKey: string = import.meta.env.OC_TURNSTILE_SITE_KEY ?? "";
 

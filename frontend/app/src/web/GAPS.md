@@ -6,7 +6,7 @@ design export needs. Each entry says where it came up.
 ## Design / library
 
 - **Accent setting**: done. The accent picked on Landing's theme controls is kept in this browser
-  (`web/accent.ts`) and `App.svelte` puts it on `<html>`. The in-app control is Profile's (8c).
+  (`theme/accent.ts`) and `App.svelte` puts it on `<html>`. The in-app control is Profile's (8c).
 - **Font size setting**: the app's font size setting (`fontSize` store) isn't mapped onto the
   library's `--text-*` tokens yet (L4). Profile's control writes it (8c): the design's four sizes
   are the store's steps 1 to 4 (`logic/profile/appearance.ts`), and a stored 0 shows as Small and

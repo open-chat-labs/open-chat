@@ -18,9 +18,9 @@
     import { handleUnhandledError } from "@utils/unhandledError";
     import { botState, OpenChat } from "@client";
     import { onMount, setContext } from "svelte";
-    import { accentStore } from "./accent";
+    import { accentStore } from "@theme/accent";
     import { _, isLoading, json, locale } from "svelte-i18n";
-    import { addUiMessages, uiTranslate } from "./i18n";
+    import { addUiMessages, uiTranslate } from "@i18n/openchatUi";
     import RouteScreen from "./features/app/RouteScreen.svelte";
     import Toasts from "./shell/Toasts.svelte";
     import Router from "./router/Router.svelte";
@@ -42,7 +42,7 @@
 
     // The theme goes on <html> rather than a wrapper so that anything mounted outside the
     // app's own tree (dialogs, menus, tooltips) is themed too. The accent is the one picked on
-    // Landing (accent.ts).
+    // Landing (theme/accent.ts).
     $effect(() => {
         document.documentElement.dataset.mode = $currentThemeMode;
         document.documentElement.dataset.accent = $accentStore;

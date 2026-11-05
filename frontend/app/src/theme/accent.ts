@@ -2,8 +2,9 @@ import { LocalStorageStore } from "@client";
 import { PAGE_ACCENTS, type PageAccent } from "@openchat/ui/src/pages/types";
 import { configKeys } from "@shared";
 
-// The accent colour picked on Landing's theme controls, kept in this browser, for the whole of the
-// new web UI (App.svelte puts it on <html>; Landing and Learn are their own theme roots).
+// The accent colour picked on Landing's theme controls (or in Profile), kept in this browser, for the
+// whole of the new web UI and the native tree (each one's App.svelte puts it on <html>; Landing and
+// Learn are their own theme roots).
 
 /** A stored accent, or the design's default for none or one the design doesn't have (any more). */
 export function accentOf(stored: string | null | undefined): PageAccent {
