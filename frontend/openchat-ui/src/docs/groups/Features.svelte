@@ -247,7 +247,7 @@
     <Frame label="Reply"><div class="fill"><MessageComposer context={{ key: 'r', mode: 'reply', name: 'Lucy', quote: 'Moved the review to Thursday.' }} /></div></Frame>
     <Frame label="Edit"><div class="fill"><MessageComposer context={{ key: 'e', mode: 'edit', quote: 'Typo fixd', text: 'Typo fixd' }} /></div></Frame>
     <Frame label="Recording"><div class="fill"><MessageComposer demo="recording" /></div></Frame>
-    <Frame label="Preview"><div class="fill"><MessageComposer attachment={S.mediaTray} /></div></Frame>
+    <Frame label="Preview"><div class="fill"><MessageComposer attachment={S.mediaTray} onAddMedia={() => {}} /></div></Frame>
   </div>
 </Section>
 

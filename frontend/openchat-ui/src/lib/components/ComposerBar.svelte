@@ -28,6 +28,7 @@
     onBannerAction?: () => void;
     onSend?: ComposerProps['onSend'];
     onAttach?: ComposerProps['onAttach'];
+    attachKinds?: ComposerProps['attachKinds'];
     onGif?: ComposerProps['onGif'];
     onVoice?: ComposerProps['onVoice'];
     attachment?: ComposerProps['attachment'];

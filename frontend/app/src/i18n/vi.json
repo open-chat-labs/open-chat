@@ -241,6 +241,7 @@
     "archiveChatFailed": "Không lưu trữ được cuộc trò chuyện",
     "areYouSure": "Bạn có chắc chắn không?",
     "attachFile": "Đính kèm hình ảnh/video/tập tin",
+    "attachFileFailed": "Rất tiếc, không thể đính kèm tệp đó",
     "avatarTooBig": "Hình đại diện vượt quá kích cỡ cho phép",
     "avatarUpdated": "Đã cập nhật hình đại diện thành công",
     "avatarUpdateFailed": "Cập nhật hình đại diện không thành công",
@@ -1572,6 +1573,7 @@
         "watchOnTwitch": "Xem trên Twitch"
     },
     "videoProcessing": "Đang tối ưu hoá video…",
+    "videoProcessingPercent": "Đang tối ưu hoá video… {percent}%",
     "member": "hội viên",
     "memberCount": "{count} thành viên",
     "memberIsTyping": "{username} đang nhập",

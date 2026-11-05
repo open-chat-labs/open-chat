@@ -1699,6 +1699,17 @@
         "doc": ""
       },
       {
+        "name": "attachKinds",
+        "type": "ComposerProps['attachKinds']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
         "name": "onGif",
         "type": "ComposerProps['onGif']",
         "default": null,
@@ -13585,6 +13596,17 @@
         "doc": ""
       },
       {
+        "name": "attachKinds",
+        "type": "AttachKind[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "What the + menu offers (all by default); with none, there's no + button."
+      },
+      {
         "name": "onGif",
         "type": "(query: string) => void",
         "default": null,
@@ -13648,7 +13670,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Adds another photo or video to the staged media (its + tile shows only with this, under 10 items)."
       },
       {
         "name": "onRemoveMediaItem",

@@ -197,6 +197,7 @@
     "archiveChatFailed": "Failed to archive chat",
     "areYouSure": "Are you sure?",
     "attachFile": "Attach image/video/file",
+    "attachFileFailed": "Sorry, that file couldn't be attached",
     "autoTranslate": {
         "downloadPacks": "Download language packs ({count})",
         "turnOn": "Translate this chat",
@@ -1563,6 +1564,7 @@
         "watchOnTwitch": "Watch on Twitch"
     },
     "videoProcessing": "Optimising video…",
+    "videoProcessingPercent": "Optimising video… {percent}%",
     "member": "member",
     "memberCount": "{count} members",
     "memberIsTyping": "{username} is typing",

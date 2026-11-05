@@ -439,7 +439,7 @@
 
 <MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
-<DropTarget {messageContext} mode={"message"} {onFileSelected}>
+<DropTarget {messageContext}>
     <div class="wrapper">
         {#if showSearchHeader}
             <CurrentChatSearchHeader

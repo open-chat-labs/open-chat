@@ -35,7 +35,6 @@
         onAttachGif: (search: string) => void;
         onMakeMeme: () => void;
         messageContext: MessageContext;
-        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
     }
 
     let {
@@ -52,7 +51,6 @@
         onAttachGif,
         onMakeMeme,
         messageContext,
-        onFileSelected,
     }: Props = $props();
 
     let drawOpen = $state(false);
@@ -198,7 +196,7 @@
 
     {#if !editing && (permittedMessages.get("file") || permittedMessages.get("image") || permittedMessages.get("video"))}
         <div class="attach">
-            <FileAttacher {messageContext} {onFileSelected} onOpen={openFilePicker} />
+            <FileAttacher {messageContext} onOpen={openFilePicker} />
         </div>
     {/if}
 {/if}
@@ -228,7 +226,7 @@
     {#if !editing}
         {#if supportedActions.has("attach")}
             <div style={`${supportedActions.get("attach")}`} class="attach">
-                <FileAttacher {messageContext} {onFileSelected} onOpen={openFilePicker} />
+                <FileAttacher {messageContext} onOpen={openFilePicker} />
             </div>
         {/if}
         {#if supportedActions.has("crypto")}

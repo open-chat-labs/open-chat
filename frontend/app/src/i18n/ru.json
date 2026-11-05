@@ -241,6 +241,7 @@
     "archiveChatFailed": "Не удалось заархивировать чат",
     "areYouSure": "Вы уверены?",
     "attachFile": "Прикрепить изображение/видео/файл",
+    "attachFileFailed": "К сожалению, не удалось прикрепить этот файл",
     "avatarTooBig": "Выбранный аватар слишком большой",
     "avatarUpdated": "Аватар успешно обновлен",
     "avatarUpdateFailed": "Не удалось обновить аватар",
@@ -1572,6 +1573,7 @@
         "watchOnTwitch": "Смотреть на Twitch"
     },
     "videoProcessing": "Оптимизация видео…",
+    "videoProcessingPercent": "Оптимизация видео… {percent} %",
     "member": "член",
     "memberCount": "{count} участников",
     "memberIsTyping": "{username} печатает",

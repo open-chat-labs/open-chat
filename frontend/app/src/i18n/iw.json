@@ -241,6 +241,7 @@
     "archiveChatFailed": "העברת הצ'אט לארכיון נכשלה",
     "areYouSure": "האם אתה בטוח?",
     "attachFile": "צרף תמונה/סרטון/קובץ",
+    "attachFileFailed": "מצטערים, לא ניתן היה לצרף את הקובץ",
     "avatarTooBig": "הדמות שנבחרה גדולה מדי",
     "avatarUpdated": "האווטאר עודכן בהצלחה",
     "avatarUpdateFailed": "עדכון הדמות נכשל",
@@ -1572,6 +1573,7 @@
         "watchOnTwitch": "צפייה ב-Twitch"
     },
     "videoProcessing": "מייעל את הווידאו…",
+    "videoProcessingPercent": "מייעל את הווידאו… {percent}%",
     "member": "חבר",
     "memberCount": "{count} חברים",
     "memberIsTyping": "{username} מקליד",

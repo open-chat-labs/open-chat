@@ -1,5 +1,6 @@
 import type { EventWrapper, Message, MessageMenuAction } from "@client";
 import {
+    composerAttachment,
     composerContext,
     composerStartText,
     mediaHeld,
@@ -382,27 +383,135 @@ describe("the composer's reply or edit strip", () => {
     };
 
     test("is none without a reply or an edit", () => {
-        expect(composerContext(undefined, ctx)).toBeNull();
-        expect(composerContext({ textContent: "draft" }, ctx)).toBeNull();
+        expect(composerContext(undefined, ctx, undefined)).toBeNull();
+        expect(composerContext({}, ctx, undefined)).toBeNull();
     });
 
     test("quotes the message replied to, with who wrote it", () => {
-        expect(composerContext({ replyingTo }, ctx)).toEqual({
+        expect(composerContext({ replyingTo }, ctx, undefined)).toEqual({
             key: "reply:42",
             mode: "reply",
             name: "Alice",
             quote: "hi",
         });
-        expect(composerContext({ replyingTo: { ...replyingTo, senderId: "me" } }, ctx)?.name).toBe(
-            "You",
-        );
+        expect(
+            composerContext({ replyingTo: { ...replyingTo, senderId: "me" } }, ctx, undefined)
+                ?.name,
+        ).toBe("You");
     });
 
-    test("an edit starts from the draft's text and takes the place of the message's own reply", () => {
-        const editing = message({ sender: "me", content: { kind: "text_content", text: "old" } });
+    test("an edit starts from the text it's given and takes the place of the message's own reply", () => {
+        const editing = message({
+            sender: "me",
+            content: { kind: "text_content", text: "hi @UserId(alice)" },
+        });
+        expect(composerContext({ editingEvent: editing, replyingTo }, ctx, "hi @alice")).toEqual({
+            key: "edit:42",
+            mode: "edit",
+            quote: "hi @UserId(alice)",
+            text: "hi @alice",
+        });
+    });
+});
+
+describe("the composer's staged attachment", () => {
+    const data = { blobData: new Uint8Array(2048), blobUrl: "blob:x" };
+
+    test("a photo, video or GIF goes in the media tray, one to a message", () => {
         expect(
-            composerContext({ editingEvent: editing, replyingTo, textContent: "old" }, ctx),
-        ).toEqual({ key: "edit:42", mode: "edit", quote: "old", text: "old" });
+            composerAttachment(
+                {
+                    kind: "image_content",
+                    ...data,
+                    height: 1,
+                    width: 1,
+                    thumbnailData: "THUMB",
+                    mimeType: "image/jpeg",
+                },
+                ctx,
+            ),
+        ).toEqual({ type: "media", items: [{ kind: "image", src: "blob:x" }] });
+        expect(
+            composerAttachment(
+                {
+                    kind: "video_content",
+                    height: 1,
+                    width: 1,
+                    thumbnailData: "THUMB",
+                    mimeType: "video/mp4",
+                    imageData: {},
+                    videoData: { blobUrl: "blob:v" },
+                },
+                ctx,
+            ),
+        ).toEqual({ type: "media", items: [{ kind: "video", src: "blob:v" }] });
+        expect(
+            composerAttachment(
+                {
+                    kind: "giphy_content",
+                    title: "cat",
+                    desktop: {
+                        url: "https://g/full.mp4",
+                        width: 4,
+                        height: 3,
+                        mimeType: "video/mp4",
+                    },
+                    mobile: {
+                        url: "https://g/full.gif",
+                        width: 4,
+                        height: 3,
+                        mimeType: "image/gif",
+                    },
+                },
+                ctx,
+            ),
+        ).toEqual({ type: "media", items: [{ kind: "image", src: "https://g/full.gif" }] });
+    });
+
+    test("a file or an audio clip is a chip with its size", () => {
+        expect(
+            composerAttachment(
+                {
+                    kind: "file_content",
+                    ...data,
+                    name: "notes.pdf",
+                    mimeType: "application/pdf",
+                    fileSize: 2048,
+                },
+                ctx,
+            ),
+        ).toEqual({ type: "file", title: "notes.pdf", summary: "2.0 KB" });
+        expect(
+            composerAttachment(
+                {
+                    kind: "audio_content",
+                    ...data,
+                    mimeType: "audio/mp4",
+                    samples: new Uint8Array(),
+                    durationMs: 1000n,
+                },
+                ctx,
+            ),
+        ).toMatchObject({ type: "file", summary: "2.0 KB" });
+    });
+
+    test("is none without one, or for what the composer doesn't stage yet", () => {
+        expect(composerAttachment(undefined, ctx)).toBeNull();
+        expect(
+            composerAttachment(
+                {
+                    kind: "daily_result",
+                    gameId: "g",
+                    number: 1,
+                    userId: "me",
+                    solveTimeMs: 1,
+                    hintsUsed: 0,
+                    streak: 1,
+                    layout: "",
+                },
+                ctx,
+            ),
+        ).toBeNull();
     });
 });
 

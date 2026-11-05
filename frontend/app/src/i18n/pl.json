@@ -241,6 +241,7 @@
     "archiveChatFailed": "Nie udało się zarchiwizować czatu",
     "areYouSure": "Jesteś pewny?",
     "attachFile": "Załącz obraz/film/plik",
+    "attachFileFailed": "Niestety nie udało się załączyć tego pliku",
     "avatarTooBig": "Wybrany awatar jest za duży",
     "avatarUpdated": "Awatar został pomyślnie zaktualizowany",
     "avatarUpdateFailed": "Aktualizacja awatara nie powiodła się",
@@ -1572,6 +1573,7 @@
         "watchOnTwitch": "Oglądaj na Twitchu"
     },
     "videoProcessing": "Optymalizowanie wideo…",
+    "videoProcessingPercent": "Optymalizowanie wideo… {percent}%",
     "member": "członek",
     "memberCount": "{count} członków",
     "memberIsTyping": "{username} pisze",

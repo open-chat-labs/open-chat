@@ -241,6 +241,7 @@
     "archiveChatFailed": "チャットをアーカイブできませんでした",
     "areYouSure": "本当に？",
     "attachFile": "画像/動画/ファイルを添付する",
+    "attachFileFailed": "申し訳ありません。そのファイルを添付できませんでした",
     "avatarTooBig": "選択したアバターが大きすぎます",
     "avatarUpdated": "アバターが正常に更新されました",
     "avatarUpdateFailed": "アバターの更新に失敗しました",
@@ -1572,6 +1573,7 @@
         "watchOnTwitch": "Twitch で見る"
     },
     "videoProcessing": "動画を最適化しています…",
+    "videoProcessingPercent": "動画を最適化しています… {percent}%",
     "member": "メンバー",
     "memberCount": "{カウント}メンバー",
     "memberIsTyping": "{username}は入力中です",

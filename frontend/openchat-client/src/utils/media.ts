@@ -1,5 +1,5 @@
-import type { AttachmentContent, Message } from "@shared";
-import { LazyFile } from "@shared";
+import type { AttachmentContent, AudioContent, Message, ResourceKey } from "@shared";
+import { i18nKey, LazyFile } from "@shared";
 import { dataToBlobUrl } from "./blob";
 import { transcodeVideo, type VideoTranscodeOptions } from "./videoTranscode";
 
@@ -424,16 +424,36 @@ async function handleVideoFile(
 // TODO - blob data should be loaded lazyily for any content
 // TODO - should we be concerned about reducing audio size?
 async function handleAudioFiles(file: File): Promise<AttachmentContent> {
-    const data = await file.arrayBuffer();
-    const blobUrl = dataToBlobUrl(data, file.type);
+    return audioContent(await file.arrayBuffer(), file.type);
+}
+
+/**
+ * An audio message's content from its bytes: an audio file attached, or a voice message recorded
+ * in the composer (in the recorder's mime type), with its waveform and length worked out.
+ */
+export async function audioContent(data: ArrayBuffer, mimeType: string): Promise<AudioContent> {
+    const blobUrl = dataToBlobUrl(data, mimeType);
     const quantised = await quantiseWaveform(data.slice(0));
     return {
         kind: "audio_content",
-        mimeType: file.type,
+        mimeType,
         blobData: new Uint8Array(data),
         blobUrl: blobUrl,
         ...quantised,
     };
+}
+
+// what preparing a file throws when it's over the size limit for its kind
+const TOO_BIG = ["maxVideoSize", "maxAudioSize", "maxFileSize"];
+
+/**
+ * Why a file couldn't be prepared as an attachment: over the size limit for its kind (what
+ * `messageContentFromFile` throws), else a file that couldn't be read or processed.
+ */
+export function attachFailureMessage(err: unknown): ResourceKey {
+    return typeof err === "string" && TOO_BIG.includes(err)
+        ? i18nKey(err)
+        : i18nKey("attachFileFailed");
 }
 
 // Handle regular files

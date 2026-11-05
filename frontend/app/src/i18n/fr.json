@@ -241,6 +241,7 @@
     "archiveChatFailed": "Échec de l'archivage du chat",
     "areYouSure": "Es-tu sûr?",
     "attachFile": "Joindre image/vidéo/fichier",
+    "attachFileFailed": "Désolé, ce fichier n'a pas pu être joint",
     "avatarTooBig": "L'avatar sélectionné est trop grand",
     "avatarUpdated": "Avatar mis à jour avec succès",
     "avatarUpdateFailed": "La mise à jour de l'avatar a échoué",
@@ -1572,6 +1573,7 @@
         "watchOnTwitch": "Regarder sur Twitch"
     },
     "videoProcessing": "Optimisation de la vidéo…",
+    "videoProcessingPercent": "Optimisation de la vidéo… {percent} %",
     "member": "membre",
     "memberCount": "{count} membre(s)",
     "memberIsTyping": "{username} est en train de taper",

@@ -1,4 +1,20 @@
-import { scaleToFit } from "./media";
+import { attachFailureMessage, scaleToFit } from "./media";
+
+describe("attachFailureMessage", () => {
+    test("names the size limit a file is over", () => {
+        expect(attachFailureMessage("maxVideoSize").key).toBe("maxVideoSize");
+        expect(attachFailureMessage("maxAudioSize").key).toBe("maxAudioSize");
+        expect(attachFailureMessage("maxFileSize").key).toBe("maxFileSize");
+    });
+
+    test("anything else is a file that couldn't be attached", () => {
+        expect(attachFailureMessage(new Error("failed to load video")).key).toBe(
+            "attachFileFailed",
+        );
+        expect(attachFailureMessage("something else").key).toBe("attachFileFailed");
+        expect(attachFailureMessage(undefined).key).toBe("attachFileFailed");
+    });
+});
 
 describe("scaleToFit", () => {
     test("returns the original dimensions when already within bounds", () => {

@@ -24,6 +24,7 @@
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import { attachRefusal } from "@src/logic/composer/composer";
     import { toastStore } from "../../stores/toast";
     import EphemeralMessage from "../bots/EphemeralMessage.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -121,30 +122,19 @@
         ephemeralMessageEvent = ev;
     }
 
-    function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
+    async function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
         const file = fileFromDataTransferItems(items);
         if (file) {
-            // Captured now: preparing a video can take a while and the chat may change under it
-            const context = messageContext;
-            client
-                .messageContentFromFile(file, context)
-                .then((content) => {
-                    const permission = client.contentTypeToPermission(content.kind);
-                    if (client.canSendMessage(context.chatId, mode, permission)) {
-                        onFileSelected(content, context);
-                    } else {
-                        const errorMessage = i18nKey("permissions.notPermitted", {
-                            permission: $_(`permissions.threadPermissions.${permission}`),
-                        });
-                        toastStore.showFailureToast(errorMessage);
-                    }
-                })
-                .catch((err) => toastStore.showFailureToast(i18nKey(err)));
+            // the chat it was pasted in, whichever is open once the file is ready
+            const outcome = await client.attachFile(file, messageContext);
+            if (outcome.kind !== "attached") {
+                toastStore.showFailureToast(attachRefusal(outcome, $_));
+            }
         }
     }
 
     function onDataTransfer(data: DataTransfer): void {
-        messageContentFromDataTransferItemList([...data.items]);
+        void messageContentFromDataTransferItemList([...data.items]);
     }
 
     function onPaste(e: ClipboardEvent) {

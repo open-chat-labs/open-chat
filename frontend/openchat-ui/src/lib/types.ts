@@ -252,6 +252,9 @@ export interface MediaAttachment {
   items: { kind: 'image' | 'video'; src?: string; bg?: string; dur?: string }[];
 }
 
+/** What MessageComposer's + menu offers to attach. */
+export type ComposerAttachKind = 'media' | 'file' | 'poll' | 'prize' | 'crypto' | 'swap' | 'memeFighter';
+
 /** What MessageComposer can stage above the text: a prize, transfer or swap offer chip, a file chip or a media tray. */
 export type ComposerAttachment = (Prize & { type?: 'prize' }) | Transfer | SwapOffer | FileAttachment | MediaAttachment;
 

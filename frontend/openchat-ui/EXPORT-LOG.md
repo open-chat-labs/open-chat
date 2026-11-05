@@ -622,3 +622,8 @@
 ## 2026-11-05 — Landing: a featured card's onOpen, the Android card's copy (9b, #10133, PR #10419), by hand
 - **Landing**: `LandingCommunity` takes `onOpen`, called as a card's link is followed (a card with an `href` is an `<a>`, one without a `<div>`, the body shared as a snippet), so the host can remember where the community was opened from (the app sets the preview's origin, as Explore does). `meta.json`'s `communities` doc says so.
 - **Landing**'s Android card no longer says the app is in beta: `ui.landing.apps.sub` reads "The Android app is out now, in two builds. …" and the pill is `ui.landing.apps.available` ("Available", was `betaOpen`, "Beta open"), as the Play listing is public.
+
+## 2026-11-05 — MessageComposer's + menu and media tray for the app's attachments (5c), by hand
+- `attachKinds` (`ComposerAttachKind[]`, now in `types.ts`): what the + menu offers, in its own order; all of them by default, as before, and no + button with none. The app offers photo / video and file until its builders for the others land, and only those the chat permits. `ComposerBar` passes it through.
+- The media tray's add tile shows only with `onAddMedia` (still under 10 items): a host that sends one photo or video a message gives none, and the tile did nothing. The docs' Preview demo passes one.
+- `meta.json` updated. Not in the design export: to go back to it (the app's `GAPS.md` lists it).

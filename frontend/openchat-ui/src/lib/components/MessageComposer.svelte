@@ -11,7 +11,7 @@
      --composer-pad, --composer-btn and --composer-btn-radius. -->
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
-  import type { ComposerAttachment, ComposerContext, MenuItem } from '../types';
+  import type { ComposerAttachKind, ComposerAttachment, ComposerContext, MenuItem } from '../types';
   import EmojiPicker from './EmojiPicker.svelte';
   import Menu from './Menu.svelte';
   import SegmentedTabs from './SegmentedTabs.svelte';
@@ -20,7 +20,7 @@
   import { cssUrl } from '../cssUrl';
   import { deleteBackward, insertAt, type TextEdit } from '../textEdit';
 
-  type AttachKind = 'media' | 'file' | 'poll' | 'prize' | 'crypto' | 'swap' | 'memeFighter';
+  type AttachKind = ComposerAttachKind;
 
   const GIF_CATS = ['Trending', 'Reactions', 'Celebrate', 'Crypto', 'Thanks'] as const;
   // GIF_WORDS are placeholder GIF results (data), only the category names are UI copy.
@@ -63,6 +63,8 @@
     /** Send the text. Return a promise to keep the draft until it resolves (kept with an error if it rejects). */
     onSend?: (text: string) => Promise<unknown> | void;
     onAttach?: (kind: AttachKind) => void;
+    /** What the + menu offers (all by default); with none, there's no + button. */
+    attachKinds?: AttachKind[];
     onGif?: (query: string) => void;
     /** A recorded voice message (duration in seconds). The mic is hidden without it. Reject to keep the take. */
     onVoice?: (r: { blob: Blob; duration: number; mimeType: string }) => Promise<unknown> | void;
@@ -103,6 +105,7 @@
     autofocus = false,
     onSend,
     onAttach,
+    attachKinds,
     onGif,
     onVoice,
     attachment = null,
@@ -163,7 +166,7 @@
   const plusOn = $derived(onPlus ? plusActive : menu === 'plus');
   const hostEmojiOn = $derived(!!onEmoji && emojiActive);
   const emojiOn = $derived(onEmoji ? emojiActive : menu === 'picker');
-  const showPlus = $derived(!editing && (!!onAttach || !!onPlus || demo !== 'interactive'));
+  const showPlus = $derived(!editing && ((!!onAttach && attachKinds?.length !== 0) || !!onPlus || demo !== 'interactive'));
 
   function togglePlus() {
     if (onPlus) {
@@ -196,15 +199,21 @@
     return Array.from({ length: barCount }, (_, i) => (i < pad ? { h: 3, played: false, idle: true } : { h: Math.round(4 + tail[i - pad] * 22), played: false, idle: false }));
   });
 
-  const plusItems: MenuItem[] = $derived([
-    { label: t('ui.messageComposer.photoOrVideo'), mask: 'var(--icon-image) center/contain no-repeat', onSelect: () => attach('media') },
-    { label: t('ui.messageComposer.file'), mask: 'var(--icon-file) center/contain no-repeat', onSelect: () => attach('file') },
-    { label: t('ui.messageComposer.poll'), mask: 'var(--icon-poll) center/contain no-repeat', onSelect: () => attach('poll') },
-    { label: t('ui.messageComposer.prizeMessage'), mask: 'var(--icon-trophy) center/contain no-repeat', onSelect: () => attach('prize') },
-    { label: t('ui.messageComposer.sendCrypto'), mask: 'var(--icon-wallet-send) center/contain no-repeat', onSelect: () => attach('crypto') },
-    { label: t('ui.messageComposer.swapCrypto'), mask: 'var(--icon-swap) center/contain no-repeat', onSelect: () => attach('swap') },
-    { label: t('ui.messageComposer.memeFighter'), mask: 'var(--icon-joystick) center/contain no-repeat', onSelect: () => attach('memeFighter') },
-  ]);
+  const plusItems: MenuItem[] = $derived(
+    (
+      [
+        ['media', 'ui.messageComposer.photoOrVideo', 'image'],
+        ['file', 'ui.messageComposer.file', 'file'],
+        ['poll', 'ui.messageComposer.poll', 'poll'],
+        ['prize', 'ui.messageComposer.prizeMessage', 'trophy'],
+        ['crypto', 'ui.messageComposer.sendCrypto', 'wallet-send'],
+        ['swap', 'ui.messageComposer.swapCrypto', 'swap'],
+        ['memeFighter', 'ui.messageComposer.memeFighter', 'joystick'],
+      ] as const
+    )
+      .filter(([kind]) => !attachKinds || attachKinds.includes(kind))
+      .map(([kind, label, icon]) => ({ label: t(label), mask: `var(--icon-${icon}) center/contain no-repeat`, onSelect: () => attach(kind) })),
+  );
 
   function attach(kind: AttachKind) {
     menu = null;
@@ -785,7 +794,7 @@
             >
           </div>
         {/each}
-        {#if att.items.length < 10}
+        {#if onAddMedia && att.items.length < 10}
           <span class="tray-add" onclick={onAddMedia} role="button" tabindex="0" aria-label={t('ui.messageComposer.addMedia')} title={t('ui.messageComposer.addMore')}><span class="tray-add-icon"></span></span>
         {/if}
       </div>

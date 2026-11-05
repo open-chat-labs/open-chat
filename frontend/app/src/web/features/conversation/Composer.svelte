@@ -1,24 +1,32 @@
-<!-- The conversation's composer (phase 3c, text): who's typing, and the message being written. The
-     screen reads the chat's draft, typers, throttle and whether the reader can send, and does the
-     sending (with mentions and markdown, as the old UI's MessageEntry did); the composer tells it
-     while the reader types. Where the reader can't send, the old footer's reason shows instead, and
-     for a preview its bar (CommunityPreviewBar: Join, Back; 8b);
-     while sending is throttled, a countdown shows over it. Mount it once per chat (keyed). -->
+<!-- The conversation's composer: who's typing, and the message being written, with a photo, video
+     or file attached (picked from its + menu, pasted, or dropped on the conversation). The screen
+     reads the chat's draft, typers, throttle and whether the reader can send, and does the sending
+     (with mentions and markdown, as the old UI's MessageEntry did) and the attaching; the composer
+     tells it while the reader types, and hands it the files picked or pasted. Where the reader
+     can't send, the old footer's reason shows instead, and for a preview its bar
+     (CommunityPreviewBar: Join, Back; 8b); a notice (the throttle countdown, a video being
+     prepared) shows over it. Mount it once per chat (keyed). -->
 <script lang="ts">
     import CommunityPreviewBar from "@openchat/ui/src/features/components/CommunityPreviewBar.svelte";
     import Banner from "@openchat/ui/src/lib/components/Banner.svelte";
     import ComposerBar from "@openchat/ui/src/lib/components/ComposerBar.svelte";
-    import type { ComposerContext } from "@openchat/ui/src/lib/types";
+    import type {
+        ComposerAttachKind,
+        ComposerAttachment,
+        ComposerContext,
+    } from "@openchat/ui/src/lib/types";
     import { untrack, type ComponentProps } from "svelte";
     import { _ } from "svelte-i18n";
     import { TypingNotifier, type EntryBlock } from "@src/logic/composer/composer";
+    import { fileFromDataTransferItems } from "@src/utils/datatransfer";
 
     let {
         block,
         preview,
         draft,
         typingNames,
-        throttled,
+        notice,
+        placeholder,
         enterSends,
         autofocus,
         onDraft,
@@ -29,6 +37,10 @@
         onCancelContext,
         onSubmitEdit,
         onJumpContext,
+        attachment,
+        attachKinds,
+        onFile,
+        onRemoveAttachment,
     }: {
         // what stands in for the composer where the reader can't send
         block: EntryBlock | undefined;
@@ -38,8 +50,9 @@
         draft: string;
         // the others in this chat who are typing
         typingNames: string[];
-        // the throttle countdown's text, "" while sending isn't throttled
-        throttled: string;
+        // shown over the composer: the throttle countdown, a video being prepared
+        notice: { text: string; tone: "info" | "warning" } | undefined;
+        placeholder: string;
         enterSends: boolean;
         // the text box takes focus as the composer mounts (it's keyed by chat, so on each chat opened)
         autofocus: boolean;
@@ -56,7 +69,40 @@
         onSubmitEdit: (text: string) => void;
         // goes to the message replied to or edited; none where it isn't in this chat
         onJumpContext: (() => void) | undefined;
+        // the draft's attachment, staged above the text
+        attachment: ComposerAttachment | null;
+        // what the + menu offers to pick from the device
+        attachKinds: Extract<ComposerAttachKind, "media" | "file">[];
+        // a file picked, pasted or dropped; none where nothing can be attached
+        onFile: ((file: File) => void) | undefined;
+        onRemoveAttachment: () => void;
     } = $props();
+
+    let mediaInput = $state<HTMLInputElement>();
+    let fileInput = $state<HTMLInputElement>();
+
+    // the + menu's photo / video and file items open the device's picker
+    // TODO(phase 5, 5d): the "+" builders (poll, prize, crypto, swap, Meme Fighter)
+    function pick(kind: ComposerAttachKind) {
+        if (kind === "media") mediaInput?.click();
+        else if (kind === "file") fileInput?.click();
+    }
+
+    function picked(e: { currentTarget: HTMLInputElement }) {
+        const file = e.currentTarget.files?.[0];
+        // so picking the same file again is a change too
+        e.currentTarget.value = "";
+        if (file !== undefined) onFile?.(file);
+    }
+
+    // a file pasted into the text box is attached, not pasted as text
+    function paste(e: ClipboardEvent) {
+        if (onFile === undefined || e.clipboardData === null) return;
+        const file = fileFromDataTransferItems([...e.clipboardData.items]);
+        if (file === undefined) return;
+        e.preventDefault();
+        onFile(file);
+    }
 
     const blocked = $derived(banner(block));
 
@@ -116,20 +162,36 @@
         <Banner tone={blocked.tone} text={$_(blocked.key)} />
     </div>
 {:else}
-    <!-- TODO(phase 5, 5c): attachments, GIFs and voice -->
-    <ComposerBar
-        {text}
-        {typingNames}
-        bannerText={throttled}
-        bannerTone="warning"
-        {enterSends}
-        {autofocus}
-        {onInput}
-        onSend={send}
-        {context}
-        {onCancelContext}
-        {onSubmitEdit}
-        {onJumpContext} />
+    <!-- TODO(phase 5, 5c): GIFs, voice, the mention picker and bot commands -->
+    <div class="entry" onpaste={paste}>
+        <ComposerBar
+            {text}
+            {typingNames}
+            bannerText={notice?.text ?? ""}
+            bannerTone={notice?.tone ?? "info"}
+            {placeholder}
+            {enterSends}
+            {autofocus}
+            {onInput}
+            onSend={send}
+            {context}
+            {onCancelContext}
+            {onSubmitEdit}
+            {onJumpContext}
+            {attachment}
+            onAttach={onFile === undefined ? undefined : pick}
+            {attachKinds}
+            {onRemoveAttachment} />
+    </div>
+    {#if onFile !== undefined}
+        <input
+            bind:this={mediaInput}
+            hidden
+            type="file"
+            accept="image/*,video/*"
+            onchange={picked} />
+        <input bind:this={fileInput} hidden type="file" onchange={picked} />
+    {/if}
 {/if}
 
 <style lang="scss">
@@ -141,5 +203,10 @@
 
     .blocked {
         padding: var(--space-12) var(--space-14);
+    }
+
+    // only there to hear a paste: lays nothing out
+    .entry {
+        display: contents;
     }
 </style>

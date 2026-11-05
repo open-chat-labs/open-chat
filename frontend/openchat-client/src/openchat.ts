@@ -121,6 +121,7 @@ import {
     type ApproveAccessGatePaymentResponse,
     type ApproveTransferResponse,
     type ArchitectureRoute,
+    type AttachFileOutcome,
     type AttachmentContent,
     type AuthenticationPrincipal,
     type BlogRoute,
@@ -768,6 +769,7 @@ import { getUserCountryCode } from "./utils/location";
 import {
     DIAMOND_MAX_SIZES,
     FREE_MAX_SIZES,
+    attachFailureMessage,
     audioRecordingMimeType,
     communityMessageRegex,
     fillMessage,
@@ -4981,6 +4983,29 @@ export class OpenChat {
             onProgress: (p) =>
                 videoProcessingProgress.set(p === undefined ? undefined : { context, progress: p }),
         });
+    }
+
+    /**
+     * Attaches a file the user picked, dropped or pasted to the draft of the chat or thread it was
+     * picked in (`context`, taken before a video is prepared, which takes a while and shows its
+     * progress in `videoProcessingProgress`: the user may have moved on by then). Only one the user
+     * may send there is attached; one that can't be prepared fails with the reason.
+     */
+    async attachFile(file: File | LazyFile, context: MessageContext): Promise<AttachFileOutcome> {
+        let content: AttachmentContent;
+        try {
+            content = await this.messageContentFromFile(file, context);
+        } catch (err) {
+            console.warn("Unable to prepare a file to attach", err);
+            return { kind: "failed", message: attachFailureMessage(err) };
+        }
+        const permission = contentTypeToPermission(content.kind);
+        const mode = context.threadRootMessageIndex === undefined ? "message" : "thread";
+        if (!this.canSendMessage(context.chatId, mode, permission)) {
+            return { kind: "not_permitted", permission };
+        }
+        localUpdates.draftMessages.setAttachment(context, content);
+        return { kind: "attached" };
     }
 
     formatFileSize = formatFileSize;

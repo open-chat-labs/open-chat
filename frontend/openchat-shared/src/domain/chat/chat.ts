@@ -24,6 +24,7 @@ import type {
     ChatPermissions,
     HasMembershipRole,
     MemberRole,
+    MessagePermission,
     OptionalChatPermissions,
     Permissioned,
 } from "../permission";
@@ -2860,6 +2861,16 @@ export type SendMessageOutcome =
  * messages (or isn't known yet), so nothing was sent and the draft is the user's to keep.
  */
 export type DirectBotMessageOutcome = { kind: "sent" } | { kind: "no_direct_command" };
+
+/**
+ * How attaching a file the user picked, dropped or pasted went. `attached`: it's the draft's
+ * attachment. `not_permitted`: the user may not send that kind of content there (`permission`
+ * names it). `failed`: it couldn't be prepared (too big, unreadable), `message` says why.
+ */
+export type AttachFileOutcome =
+    | { kind: "attached" }
+    | { kind: "not_permitted"; permission: MessagePermission }
+    | { kind: "failed"; message: ResourceKey };
 
 /**
  * What toggling a reaction on a message did: added it, took the user's own off again, or neither

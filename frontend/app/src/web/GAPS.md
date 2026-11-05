@@ -125,6 +125,12 @@ design export needs. Each entry says where it came up.
 - **Composer banner** (by hand, 8b): `ComposerBar` takes `onBannerAction`, passed to `Banner`'s
   `actionHandler` with `bannerAction` as its label (it had the label but no handler). Nothing in
   the app uses it yet.
+- **Composer "+" menu and media tray** (by hand, 5c, to take back to the design export):
+  `MessageComposer` (and `ComposerBar`) take `attachKinds`, what the "+" menu offers (all by
+  default, no "+" with none): the app offers "Photo or video" and "File" until 5d's builders
+  land, and only where the chat lets the reader send them. The media tray's "add more" tile shows
+  only with `onAddMedia`: the app sends one photo or video a message (`AttachmentContent` holds
+  one), so it gives none. The design's tray takes up to 10, which the backend has no message for.
 - **Calls**: `CallPanel` / `VideoTile` render `MediaStream`s. The app uses Daily's prebuilt
   iframe, which doesn't expose them; it needs Daily's call-object mode (phase 7 decision).
   The call's menu must cope with its chat going away while the menu is open: the legacy desktop
@@ -1101,22 +1107,46 @@ design export needs. Each entry says where it came up.
   still go by the sender, the bot, and blocking or reporting its author is hidden. No relayed
   message offers a private reply, which would go to the bot. The client marks the viewer's own
   read (`isOwnMessage`), so that part needs nothing here.
-- **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text only.
-  Attachments, GIFs, voice and the "+" menu are phase 5 (`MessageComposer` hides
-  "+" and the GIF tab without their handlers). There's no @mention picker (typed @usernames are
-  still sent as mentions), no rich-text editor (the old one showed markdown as it was typed) and
-  no link-count warning. In a bot DM, what's typed goes to the bot as its direct-message command,
+- **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text first; files
+  and media came with 5c (below). GIFs, voice and the "+" menu's builders are still to come
+  (`MessageComposer` hides the GIF tab and the mic without their handlers). There's no @mention
+  picker (typed @usernames are still sent as mentions) and no rich-text editor (the old one showed
+  markdown as it was typed). The old desktop entry's link-count note ("Link previews are hidden
+  for messages with more than 5 links", `excessiveLinksNote`) isn't carried over: it can't show
+  any more, since `extractEnabledLinks` stops at the 3 links that get previews
+  (`MAX_LINK_PREVIEWS`) so it never counts past 5, and nothing hides a message's previews past 5
+  links; the first 3 get them. To drop from the desktop entry too, or to word again (say, "only
+  the first 3 links get previews") if the design wants one. In a bot DM, what's typed goes to the bot as its direct-message command,
   but there's no `/` command selector, and a bot that takes no direct messages gets the
   composer's error instead of the old warning. A bot's private (ephemeral) reply isn't shown:
   nothing here subscribes to `ephemeralMessage`, so it's dropped. The old trees show it above the
   composer for a minute, or until it's closed, paused while the app is hidden. A chat's rules are asked for in a plain dialog
   (`RulesDialog`, the old modal's words; no design for it), and the throttle countdown shows as the
   composer's banner. Enter follows the app's Enter-to-send setting (`enterSends`). A preview
-  shows `CommunityPreviewBar` (8b, "Join gate").
+  shows `CommunityPreviewBar` (8b, "Join gate"). A chat that takes photos or files but no text
+  shows "This chat is read-only" (`entryBlock` asks for the text permission), where the old
+  entries let the reader attach one and greyed the text out (`sendTextDisabled`).
+- **Files and media in the composer** (5c): the "+" menu's "Photo or video" (the device's picker,
+  `image/*,video/*`, the mobile app's) and "File" (anything), each offered where the chat lets the
+  reader send it (`pickableAttachments`); a file pasted into the text box; a file dropped anywhere
+  on the conversation (an overlay while it's held over it, the old `DropTarget`'s words; no design
+  for it: `TODO(design)`). One a message, as in the old trees (`AttachmentContent` holds one).
+  Each goes through `attachFile` (the client, used by the old trees' pickers, drop and paste too):
+  attached to the chat it was picked in even if the reader moves on while a video is prepared,
+  refused with the permission it needs where it can't be sent there (`attachRefusal`), a failure
+  saying why (over the size limit, else `attachFileFailed`, where the old trees showed the raw
+  error). A video's preparation shows over the composer (`videoProcessingPercent`). A photo,
+  video or GIF is staged in the composer's media tray, a file or audio clip as a chip with its
+  size (`composerAttachment`), and the text becomes its caption. Not in a bot DM, which takes
+  text only. Not yet: 5d's prize, transfer and swap offer, and a puzzle result, aren't staged,
+  and the composer doesn't send them (`TODO(phase 5, 5d)`); the mobile app's native recent-media
+  strip waits for the narrow pass.
 - **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
   edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
-  text (`composerContext`): who wrote it and its text, an edit starting from the message's text.
-  Its X drops a reply, or ends an edit; a click on it goes to the message when it's in this chat (a
+  text (`composerContext`): who wrote it and its text, an edit starting from the message's text
+  as the old entries started it (`editStartText`, logic/composer, which both old entries now
+  call: each `@UserId(…)` / `@UserGroup(…)` as the `@name` typed, the link-disabled marker taken
+  out, a caption for a captioned message; 5c). Its X drops a reply, or ends an edit; a click on it goes to the message when it's in this chat (a
   private reply quotes another chat's: no jump, where the old UI opened that chat). An edit is
   saved with `editMessage` (failure toast `errorEditingMessage`). Ending an edit, saved or
   cancelled, puts back what the user was writing before it (`endEditing`, kept by `setEditing`;

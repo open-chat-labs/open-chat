@@ -1,8 +1,23 @@
-import { ScreenWidth } from "@client";
+import {
+    isCaptionedContent,
+    ScreenWidth,
+    stripLinkDisabledMarker,
+    userGroupMentionRegex,
+    userIdMentionRegex,
+    type AttachFileOutcome,
+    type MessageContent,
+    type MessageFormatter,
+    type MessagePermission,
+    type ResourceKey,
+    type UserGroupDetails,
+    type UserLookup,
+} from "@client";
+import { i18nKey } from "@src/i18n/i18n";
 
 // The message entry's decisions, shared by every tree: why a message can't be sent, when the
-// others hear someone is typing, and when it takes focus. (What a typed message is sent as, its
-// mentions expanded, is up to the client's send.)
+// others hear someone is typing, and when it takes focus, what it starts an edit from, what it
+// says about a file it couldn't attach. (What a typed message is sent as, its mentions expanded,
+// is up to the client's send.)
 
 /** What the message entry knows about where it is. */
 export type EntryState = {
@@ -136,4 +151,94 @@ export function focusEntryOnOpen(width: ScreenWidth, touchOnly: boolean): boolea
         default:
             return false;
     }
+}
+
+/**
+ * The text an edit starts from: a text message's text with each `@UserId(…)` and `@UserGroup(…)`
+ * as the `@name` it was typed as (one not known stays as it is, and is mentioned again as it was
+ * on saving) and the link-disabled marker taken out; a captioned message's caption. Nothing for a
+ * message whose text can't be edited.
+ */
+export function editStartText(
+    content: MessageContent,
+    users: UserLookup,
+    userGroups: Pick<ReadonlyMap<number, UserGroupDetails>, "get">,
+): string | undefined {
+    if (content.kind === "text_content") {
+        return stripLinkDisabledMarker(content.text)
+            .replace(userIdMentionRegex, (match, userId: string) => {
+                const username = users.get(userId)?.username;
+                return username !== undefined ? `@${username}` : match;
+            })
+            .replace(userGroupMentionRegex, (match, id: string) => {
+                const group = userGroups.get(Number(id));
+                return group !== undefined ? `@${group.name}` : match;
+            });
+    }
+    if (isCaptionedContent(content)) return content.caption ?? "";
+    return undefined;
+}
+
+/** What to tell the user about a file that wasn't attached. */
+export function attachRefusal(
+    outcome: Exclude<AttachFileOutcome, { kind: "attached" }>,
+    formatter: MessageFormatter,
+): ResourceKey {
+    switch (outcome.kind) {
+        case "not_permitted":
+            return i18nKey("permissions.notPermitted", {
+                permission: formatter(`permissions.threadPermissions.${outcome.permission}`),
+            });
+        case "failed":
+            return outcome.message;
+    }
+}
+
+/**
+ * What the entry offers to pick from the device: photos and videos where either may be sent, any
+ * file where files may be (one a message: the content holds one). An audio file is a file to
+ * pick, refused if audio can't be sent.
+ */
+export function pickableAttachments(
+    permitted: ReadonlyMap<MessagePermission, boolean>,
+): ("media" | "file")[] {
+    const kinds: ("media" | "file")[] = [];
+    if (permitted.get("image") || permitted.get("video")) kinds.push("media");
+    if (permitted.get("file")) kinds.push("file");
+    return kinds;
+}
+
+/** What the entry says above the text: one thing at a time, the most pressing first. */
+export type EntryNotice =
+    // too many messages a minute: sending resumes in this many seconds
+    | { kind: "throttled"; seconds: number }
+    // a video picked here being made smaller to send
+    | { kind: "video_processing"; percent: number };
+
+export function entryNotice(state: {
+    throttledSeconds: number | undefined;
+    /** How far a video picked here is through being prepared (0–1). */
+    videoProgress: number | undefined;
+}): EntryNotice | undefined {
+    if (state.throttledSeconds !== undefined) {
+        return { kind: "throttled", seconds: state.throttledSeconds };
+    }
+    if (state.videoProgress !== undefined) {
+        return { kind: "video_processing", percent: Math.round(state.videoProgress * 100) };
+    }
+    return undefined;
+}
+
+/** The entry's placeholder: what the user can write there. */
+export function entryPlaceholder(state: {
+    /** Text can be sent here, or there's an attachment or an edit to write a caption or text for. */
+    canEnterText: boolean;
+    attached: boolean;
+    /** A direct chat with a bot: what's typed goes to the bot. */
+    directBot: boolean;
+}): ResourceKey {
+    if (!state.canEnterText) return i18nKey("sendTextDisabled");
+    if (state.attached) return i18nKey("enterCaption");
+    if (state.directBot) return i18nKey("bots.direct.placeholder");
+    return i18nKey("enterMessage");
 }

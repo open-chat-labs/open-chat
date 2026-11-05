@@ -39,6 +39,7 @@
         isPreviewingOrLapsed,
         isPrivateCommunityPreview,
         localUpdates,
+        messageContextsEqual,
         messageIndexStore,
         messageMenu,
         messagesRead,
@@ -54,6 +55,7 @@
         selectedChatWebhooksStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
+        selectedCommunityUserGroupsStore,
         suspendedUserStore,
         swapAcceptCost,
         swapActions,
@@ -65,6 +67,7 @@
         unconfirmedReadByThem,
         unconfirmedStore,
         undeletingMessagesStore,
+        videoProcessingProgress,
         type ChatEvent,
         type ChatIdentifier,
         type ChatSummary,
@@ -90,10 +93,16 @@
     import Markdown from "@src/core/Markdown.svelte";
     import type { GroupMessage } from "@openchat/ui/src/lib/types";
     import {
+        attachRefusal,
+        editStartText,
         entryBlock,
+        entryNotice,
+        entryPlaceholder,
         focusEntryOnOpen,
+        pickableAttachments,
         throttleCountdown,
     } from "@src/logic/composer/composer";
+    import { fileFromDataTransferItems } from "@src/utils/datatransfer";
     import {
         confirmMessageDeletion,
         dclickReply,
@@ -126,6 +135,7 @@
     import { chatMenuState, runChatMenuItem } from "./chatMenu";
     import Composer from "./Composer.svelte";
     import {
+        composerAttachment,
         composerContext,
         composerStartText,
         headerMenuItems,
@@ -404,16 +414,101 @@
     const countdown = $derived(
         $throttleDeadline > 0 ? throttleCountdown($throttleDeadline, $now500) : undefined,
     );
-    const throttled = $derived(
-        countdown !== undefined
-            ? $_("throttleMessage", { values: { time: countdown.seconds } })
-            : "",
-    );
 
     // the message being replied to or edited, above the composer's text (the chat's draft, which
-    // the reply and the edit set)
+    // the reply and the edit set); an edit starts from the message's text, with its mentions as
+    // they were typed
     const draft = $derived($selectedChatDraftMessageStore);
-    const composing = $derived(composerContext(draft, ctx));
+    const composing = $derived(
+        composerContext(
+            draft,
+            ctx,
+            draft?.editingEvent === undefined
+                ? undefined
+                : editStartText(
+                      draft.editingEvent.event.content,
+                      $allUsersStore,
+                      $selectedCommunityUserGroupsStore,
+                  ),
+        ),
+    );
+
+    // over the composer, the most pressing first: the throttle countdown, a video picked here
+    // being prepared
+    const notice = $derived.by(() => {
+        const progress = $videoProcessingProgress;
+        const shown = entryNotice({
+            throttledSeconds: countdown?.seconds,
+            videoProgress:
+                chat !== undefined &&
+                progress !== undefined &&
+                messageContextsEqual(progress.context, { chatId: chat.id })
+                    ? progress.progress
+                    : undefined,
+        });
+        switch (shown?.kind) {
+            case undefined:
+                return undefined;
+            case "throttled":
+                return {
+                    text: $_("throttleMessage", { values: { time: shown.seconds } }),
+                    tone: "warning" as const,
+                };
+            case "video_processing":
+                return {
+                    text: $_("videoProcessingPercent", { values: { percent: shown.percent } }),
+                    tone: "info" as const,
+                };
+        }
+    });
+
+    // the draft's photo, video or file, staged above the text (only what the composer shows is
+    // sent with it: 5d's contents wait for their builders)
+    const staged = $derived(composerAttachment(draft?.attachment, ctx));
+
+    // a direct chat with a bot takes text only (its direct-message command)
+    const directBot = $derived(chat !== undefined && client.directChatWithBot(chat) !== undefined);
+
+    // what the + menu offers to pick from the device
+    const attachKinds = $derived(
+        chat === undefined || directBot
+            ? []
+            : pickableAttachments(client.permittedMessages(chat.id, "message")),
+    );
+
+    const placeholder = $derived(
+        interpolate(
+            $_,
+            entryPlaceholder({ canEnterText: true, attached: staged !== null, directBot }),
+        ),
+    );
+
+    // a file picked, pasted or dropped goes to the chat it was picked in, if it may be sent there
+    async function attachFile(chatId: ChatIdentifier, file: File) {
+        const outcome = await client.attachFile(file, { chatId });
+        if (outcome.kind !== "attached") {
+            toastStore.showFailureToast(attachRefusal(outcome, $_));
+        }
+    }
+
+    // a file dragged over the conversation is attached when it's dropped (the old DropTarget),
+    // where the composer takes files
+    let dragging = $state(false);
+    const droppable = $derived(chat !== undefined && block === undefined && !directBot);
+
+    function dragOver(e: DragEvent) {
+        if (!droppable || !e.dataTransfer?.types.includes("Files")) return;
+        e.preventDefault();
+        dragging = true;
+    }
+
+    function drop(chatId: ChatIdentifier, e: DragEvent) {
+        dragging = false;
+        if (!droppable || e.dataTransfer === null) return;
+        e.preventDefault();
+        const file = fileFromDataTransferItems([...e.dataTransfer.items]);
+        if (file !== undefined) void attachFile(chatId, file);
+    }
 
     // cancelling an edit puts back what was being written before it; a reply just goes
     function cancelComposing(chatId: ChatIdentifier) {
@@ -460,8 +555,13 @@
             if (outcome.kind !== "sent") throw new Error(outcome.kind);
             return;
         }
-        // the client mentions those typed as @username
-        const outcome = await client.sendMessage(context, text, detectMarkdown(text), undefined);
+        // the client mentions those typed as @username; the text captions an attachment
+        const outcome = await client.sendMessage(
+            context,
+            text === "" ? undefined : text,
+            detectMarkdown(text),
+            staged !== null ? draft?.attachment : undefined,
+        );
         if (outcome.kind !== "posted") throw new Error(outcome.kind);
     }
 
@@ -1117,7 +1217,20 @@
 {#if chat === undefined}
     <div class="state"><Spinner /></div>
 {:else}
-    <div class="conversation">
+    <!-- svelte-ignore a11y_no_static_element_interactions (a file dropped anywhere on it) -->
+    <div
+        class="conversation"
+        ondragover={dragOver}
+        ondragleave={(e) => {
+            // leaving the conversation, not moving between its parts
+            const to = e.relatedTarget;
+            if (!(to instanceof Node && e.currentTarget.contains(to))) dragging = false;
+        }}
+        ondrop={(e) => drop(chat.id, e)}>
+        {#if dragging}
+            <!-- TODO(design): no drop state in the design; the old DropTarget's words -->
+            <div class="drop" aria-hidden="true">{$_("dropFile")}</div>
+        {/if}
         <ConversationHeader
             {title}
             kind={headerKind}
@@ -1380,7 +1493,8 @@
                       }}
                 draft={composerStartText($selectedChatDraftMessageStore)}
                 {typingNames}
-                {throttled}
+                {notice}
+                {placeholder}
                 enterSends={$enterSend}
                 autofocus={focusEntryOnOpen($screenWidth, isTouchOnlyDevice)}
                 onDraft={(text) =>
@@ -1394,6 +1508,11 @@
                 onJumpContext={composingIndex === undefined
                     ? undefined
                     : () => jumpToComposing(chat.id, composingIndex)}
+                attachment={staged}
+                {attachKinds}
+                onFile={directBot ? undefined : (file) => attachFile(chat.id, file)}
+                onRemoveAttachment={() =>
+                    localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
             />
         {/key}
     </div>
@@ -1491,10 +1610,26 @@
 
 <style lang="scss">
     .conversation {
+        position: relative;
         display: flex;
         flex-direction: column;
         height: 100%;
         min-height: 0;
+    }
+
+    // a file held over the conversation
+    .drop {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        display: grid;
+        place-items: center;
+        pointer-events: none;
+        background: var(--scrim);
+        border: 2px dashed var(--accent);
+        border-radius: var(--radius-lg);
+        font: var(--weight-semibold) var(--text-lg) / 1.4 var(--font-sans);
+        color: var(--ink);
     }
 
     .state {

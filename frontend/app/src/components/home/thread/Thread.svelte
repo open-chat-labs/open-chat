@@ -357,7 +357,7 @@
         onClose={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
-<DropTarget {messageContext} mode={"thread"} {onFileSelected}>
+<DropTarget {messageContext}>
     <ThreadHeader {threadRootMessageIndex} {onCloseThread} {rootEvent} chatSummary={chat} />
 
     {#if loading || rootEvent === undefined}
