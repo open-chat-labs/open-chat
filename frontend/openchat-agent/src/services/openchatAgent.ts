@@ -1,3 +1,4 @@
+import type { ApnsDevice } from "@shared";
 /* eslint-disable no-case-declarations */
 import { CanisterStatus, HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
@@ -3373,6 +3374,14 @@ export class OpenChatAgent extends EventTarget {
 
     removeFcmToken(fcmToken: string): Promise<void> {
         return this._notificationClient.removeFcmToken(fcmToken);
+    }
+
+    addApnsDevice(device: ApnsDevice): Promise<void> {
+        return this._notificationClient.addApnsDevice(device);
+    }
+
+    removeApnsDevice(device: ApnsDevice): Promise<void> {
+        return this._notificationClient.removeApnsDevice(device);
     }
 
     toggleMuteNotifications(

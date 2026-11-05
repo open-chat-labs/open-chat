@@ -11,7 +11,9 @@ fn main() {
     generate_ts_method!(notifications_index, fcm_token_exists);
     generate_ts_method!(notifications_index, subscription_exists);
 
+    generate_ts_method!(notifications_index, add_apns_device);
     generate_ts_method!(notifications_index, add_fcm_token);
+    generate_ts_method!(notifications_index, remove_apns_device);
     generate_ts_method!(notifications_index, remove_fcm_token);
     generate_ts_method!(notifications_index, mark_subscription_active);
     generate_ts_method!(notifications_index, push_subscription);

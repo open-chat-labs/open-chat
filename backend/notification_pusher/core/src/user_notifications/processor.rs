@@ -67,6 +67,14 @@ impl Processor {
                         .unwrap();
                     (metadata, false)
                 }
+                PushNotification::ApnsNotification(apns_notification) => {
+                    let metadata = apns_notification.metadata.clone();
+                    self.sender
+                        .send(NotificationToPush::ApnsNotificationToPush(apns_notification))
+                        .await
+                        .unwrap();
+                    (metadata, false)
+                }
             };
 
             let end = Instant::now();

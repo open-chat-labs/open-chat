@@ -17,6 +17,7 @@ local_user_index_canister_client = { path = "../../canisters/local_user_index/cl
 notifications_index_canister = { path = "../../canisters/notifications_index/api" }
 notifications_index_canister_client = { path = "../../canisters/notifications_index/client" }
 openssl = { workspace = true, features = ["vendored"] }
+p256 = { workspace = true, features = ["ecdsa", "pkcs8", "pem"] }
 prometheus = { workspace = true }
 reqwest = { workspace = true }
 rustls = { workspace = true }

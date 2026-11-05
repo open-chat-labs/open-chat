@@ -1,4 +1,4 @@
-use crate::FcmToken;
+use crate::{ApnsDevice, FcmToken};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -8,6 +8,7 @@ use ts_export::ts_export;
 pub enum NotificationSubscription {
     WebPush(SubscriptionInfo),
     FcmPush(FcmToken),
+    ApnsPush(ApnsDevice),
 }
 
 #[ts_export]

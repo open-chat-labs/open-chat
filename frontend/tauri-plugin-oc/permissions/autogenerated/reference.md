@@ -10,6 +10,7 @@ Default permissions for the plugin
 - `allow-registerListener`
 - `allow-removeListener`
 - `allow-get-fcm-token`
+- `allow-get-apns-device`
 - `allow-show-notification`
 - `allow-svelte-ready`
 - `allow-release-notifications`
@@ -277,6 +278,32 @@ Enables the export_media command without any pre-configured scope.
 <td>
 
 Denies the export_media command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-get-apns-device`
+
+</td>
+<td>
+
+Enables the get_apns_device command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-get-apns-device`
+
+</td>
+<td>
+
+Denies the get_apns_device command without any pre-configured scope.
 
 </td>
 </tr>

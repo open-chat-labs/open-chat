@@ -7,6 +7,7 @@ permissions = [
     "allow-registerListener",
     "allow-removeListener",
     "allow-get-fcm-token",
+    "allow-get-apns-device",
     "allow-show-notification",
     "allow-svelte-ready",
     "allow-release-notifications",

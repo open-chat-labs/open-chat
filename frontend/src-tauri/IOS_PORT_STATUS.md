@@ -80,13 +80,18 @@ group's automatic distribution. Plan: #10398, milestone #10399.
       `ASAuthorizationError 1004`). The entitlement no longer has the
       `?mode=developer` suffix: the AASA is live, and store builds ignore
       developer-mode entries.
-- [ ] **Push notifications (APNs)**: entire remote-push pipeline unimplemented on
-      iOS. Android uses FCM (`OpenChatNotificationService`, Room DB, avatars,
-      conversation shortcuts). iOS plan: APNs (possibly via FCM iOS SDK to reuse
-      the backend FCM sender). Until then these plugin commands are graceful
-      stubs on iOS: `getFcmToken` (null token), `deleteFcmToken`,
-      `showNotification`, `releaseNotifications` (no-op success).
-      `clearAllNotifications` genuinely clears delivered local notifications.
+- [ ] **Push notifications (APNs)**: built in #10400, waiting for device checks.
+      The pusher sends straight to APNs with a `.p8` key; there is no Firebase on
+      iOS. The app registers its alert token with the notifications index
+      (`add_apns_device`), `sandbox:`-prefixed when the embedded profile says
+      `aps-environment` is `development`. `Push.swift` in the plugin takes over
+      the notification delegate (passing local notifications on to
+      tauri-plugin-notification), hands foreground pushes to the web layer,
+      which shows them unless their chat is on screen, and routes taps. The
+      `OpenChatNotificationService` extension renders avatars and makes
+      communication notifications; its logic, shared with the plugin, is the
+      `PushCore` package (`swift test` in `tauri-plugin-oc/ios/PushCore`).
+      `getFcmToken` stays null and `deleteFcmToken` a no-op on iOS.
 - [ ] **Universal links**: only the `openchat://` custom scheme works for deep
       links in dev. `applinks:oc.app` entitlement + AASA needed for https links.
 

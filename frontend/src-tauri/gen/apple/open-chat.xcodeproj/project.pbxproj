@@ -13,20 +13,50 @@
 		3B922DD4B66E7C6B8FDA7617 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1AE857753D46B3772C2BF7CF /* UIKit.framework */; };
 		4036922C4AE61287744AFBF4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1CCCA00313E7D4E302B2E8BE /* LaunchScreen.storyboard */; };
 		420EEDDE4D7B1AD1575A8B62 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5CED8921299308465DD42F19 /* libapp.a */; };
+		66B26C12906CAD814B1028D2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E0090ED5309880BBBE55B08B /* PrivacyInfo.xcprivacy */; };
 		6712A73BF80908BC5B6103A5 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62D4FBF6929DC4DBE2564C09 /* Security.framework */; };
 		6C68F46ADB8840E2F4853638 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72A37ADB07A0BB20592A4855 /* Metal.framework */; };
+		8FC117455A54F8B946B815DA /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29D76D5D46F7055F81CB2842 /* NotificationService.swift */; };
 		B6D4D3E52790D5E4158C3F18 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AA8BEBA73EAD66C0011F051 /* CoreGraphics.framework */; };
+		BEA22C7D99672A1A86D992B6 /* PushCore in Frameworks */ = {isa = PBXBuildFile; productRef = BC2AF3EBF9E211DA709E9F4F /* PushCore */; };
 		D085E5D7EE3645A8224D74E5 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC1D9E4D7E290ADAB5972E64 /* QuartzCore.framework */; };
+		F1F4FE185940D6F3F497C416 /* OpenChatNotificationService.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = EEDA857DE077CD7CFD222D3E /* OpenChatNotificationService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F3D245EACD514A1EF9C6282C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2D92B8DD2AA1394245FB960A /* Assets.xcassets */; };
 		F4A18A187F4AA227A29B96CE /* assets in Resources */ = {isa = PBXBuildFile; fileRef = F131D4B434CEDC3FB5E08244 /* assets */; };
 		F55BBA8690CB685EEF187273 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = D23C0E057AF1F8158C05DFB6 /* main.mm */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		68842D4ACD1FC142C88D4FDC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 07923A346893A10779FCB9EC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3B3EEDEFC0EAA0F91F2D3098;
+			remoteInfo = OpenChatNotificationService;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9A061B4CD6CACCF6C35196F9 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				F1F4FE185940D6F3F497C416 /* OpenChatNotificationService.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		160E4D624C0A31D73CA143E7 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
 		1AE857753D46B3772C2BF7CF /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		1BF1C077855D8A113A972974 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		1CCCA00313E7D4E302B2E8BE /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		24DEDD57D1B3A43C924DDC93 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		29D76D5D46F7055F81CB2842 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		2D92B8DD2AA1394245FB960A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		334E76AC4421AF3AF2C426ED /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		4B18BA153B601D70E13E9072 /* main.rs */ = {isa = PBXFileReference; path = main.rs; sourceTree = "<group>"; };
@@ -39,15 +69,26 @@
 		6AA8BEBA73EAD66C0011F051 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		72A37ADB07A0BB20592A4855 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		8C998F2F19550A405797239B /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
+		A619DD738199AEAC42094B69 /* PushCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = PushCore; path = "../../../tauri-plugin-oc/ios/PushCore"; sourceTree = SOURCE_ROOT; };
 		AC1D9E4D7E290ADAB5972E64 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		C481738E47826B0400924994 /* OpenChat.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenChat.entitlements; sourceTree = "<group>"; };
 		CEBEF42C76BC4563962C64E7 /* navigation.rs */ = {isa = PBXFileReference; path = navigation.rs; sourceTree = "<group>"; };
 		D23C0E057AF1F8158C05DFB6 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		E0090ED5309880BBBE55B08B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		E9305D0D0E5E8936FF1D7CC5 /* open-chat_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "open-chat_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		EEDA857DE077CD7CFD222D3E /* OpenChatNotificationService.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = OpenChatNotificationService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F131D4B434CEDC3FB5E08244 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		16FAC06905205507516DADDC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BEA22C7D99672A1A86D992B6 /* PushCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CFEFF00C0F862704F81F8490 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -93,6 +134,7 @@
 			isa = PBXGroup;
 			children = (
 				E9305D0D0E5E8936FF1D7CC5 /* open-chat_iOS.app */,
+				EEDA857DE077CD7CFD222D3E /* OpenChatNotificationService.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -133,6 +175,16 @@
 			path = debug;
 			sourceTree = "<group>";
 		};
+		8862B9024BDF910368015FBF /* NotificationService */ = {
+			isa = PBXGroup;
+			children = (
+				1BF1C077855D8A113A972974 /* Info.plist */,
+				29D76D5D46F7055F81CB2842 /* NotificationService.swift */,
+				E0090ED5309880BBBE55B08B /* PrivacyInfo.xcprivacy */,
+			);
+			path = NotificationService;
+			sourceTree = "<group>";
+		};
 		8F50D6D7B1D9C1E8F62C915C = {
 			isa = PBXGroup;
 			children = (
@@ -141,7 +193,9 @@
 				1CCCA00313E7D4E302B2E8BE /* LaunchScreen.storyboard */,
 				334E76AC4421AF3AF2C426ED /* PrivacyInfo.xcprivacy */,
 				932B20DE2A6C2E0E4CB53736 /* Externals */,
+				8862B9024BDF910368015FBF /* NotificationService */,
 				ABDFB6459EC88F3D66DC5352 /* open-chat_iOS */,
+				93663503E93E316EC2301611 /* Packages */,
 				91516C999DAF29F0FA3EF3D7 /* Sources */,
 				676D53D5AEF7B83BE9263E46 /* src */,
 				56E581CDBD02C2EDA7AA323B /* Frameworks */,
@@ -165,6 +219,14 @@
 			path = Externals;
 			sourceTree = "<group>";
 		};
+		93663503E93E316EC2301611 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				A619DD738199AEAC42094B69 /* PushCore */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
 		9EF377468A688BB904B1ACDF /* open-chat */ = {
 			isa = PBXGroup;
 			children = (
@@ -186,6 +248,27 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		3B3EEDEFC0EAA0F91F2D3098 /* OpenChatNotificationService */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3AAE7B194D10E97F084BA1B6 /* Build configuration list for PBXNativeTarget "OpenChatNotificationService" */;
+			buildPhases = (
+				F24B490034219EA3EE6DB7FA /* Sources */,
+				41E05208CA8AE8980602ED01 /* Resources */,
+				16FAC06905205507516DADDC /* Frameworks */,
+				4D88D18DBA64CB1C00C996FB /* Set the app's version */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OpenChatNotificationService;
+			packageProductDependencies = (
+				BC2AF3EBF9E211DA709E9F4F /* PushCore */,
+			);
+			productName = OpenChatNotificationService;
+			productReference = EEDA857DE077CD7CFD222D3E /* OpenChatNotificationService.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		BF2067611E7328B686E5CA73 /* open-chat_iOS */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2B4DEFC9589C88FC890303C3 /* Build configuration list for PBXNativeTarget "open-chat_iOS" */;
@@ -195,10 +278,13 @@
 				EBF011291B42231A0FADF59A /* Sources */,
 				8D3B7554BE2106DF144666CA /* Resources */,
 				CFEFF00C0F862704F81F8490 /* Frameworks */,
+				9A061B4CD6CACCF6C35196F9 /* Embed Foundation Extensions */,
+				BBE1223273DEA12F89410F4C /* Check extension versions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				6CE8A4E536384B410124FB47 /* PBXTargetDependency */,
 			);
 			name = "open-chat_iOS";
 			packageProductDependencies = (
@@ -216,6 +302,10 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					3B3EEDEFC0EAA0F91F2D3098 = {
+						DevelopmentTeam = N59KSS69AU;
+						ProvisioningStyle = Automatic;
+					};
 					BF2067611E7328B686E5CA73 = {
 						DevelopmentTeam = N59KSS69AU;
 						ProvisioningStyle = Automatic;
@@ -231,17 +321,29 @@
 			);
 			mainGroup = 8F50D6D7B1D9C1E8F62C915C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				86453D4C76B76EBF5BF47305 /* XCLocalSwiftPackageReference "../../../tauri-plugin-oc/ios/PushCore" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5C7D63DB39FACAF1203C6C45 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				3B3EEDEFC0EAA0F91F2D3098 /* OpenChatNotificationService */,
 				BF2067611E7328B686E5CA73 /* open-chat_iOS */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		41E05208CA8AE8980602ED01 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				66B26C12906CAD814B1028D2 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8D3B7554BE2106DF144666CA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -277,6 +379,26 @@
 			shellPath = /bin/sh;
 			shellScript = "cp \"${SRCROOT}/open-chat_iOS/OpenChat.entitlements\" \"${SRCROOT}/open-chat_iOS/open-chat_iOS.entitlements\"";
 		};
+		4D88D18DBA64CB1C00C996FB /* Set the app's version */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/open-chat_iOS/Info.plist",
+			);
+			name = "Set the app's version";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "for KEY in CFBundleShortVersionString CFBundleVersion; do\n  VALUE=$(/usr/libexec/PlistBuddy -c \"Print :$KEY\" \"${SRCROOT}/open-chat_iOS/Info.plist\")\n  /usr/libexec/PlistBuddy -c \"Set :$KEY $VALUE\" \"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\ndone\n";
+		};
 		763DA0549F94CD84882899B2 /* Build Rust Code */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -298,6 +420,25 @@
 			shellPath = /bin/sh;
 			shellScript = "npm run -- tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}";
 		};
+		BBE1223273DEA12F89410F4C /* Check extension versions */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Check extension versions";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "APP=\"${TARGET_BUILD_DIR}/${CONTENTS_FOLDER_PATH}\"\nfor EXTENSION in \"$APP\"/PlugIns/*.appex; do\n  for KEY in CFBundleShortVersionString CFBundleVersion; do\n    EXPECTED=$(/usr/libexec/PlistBuddy -c \"Print :$KEY\" \"$APP/Info.plist\")\n    ACTUAL=$(/usr/libexec/PlistBuddy -c \"Print :$KEY\" \"$EXTENSION/Info.plist\")\n    if [ \"$EXPECTED\" != \"$ACTUAL\" ]; then\n      echo \"error: $(basename \"$EXTENSION\") has $KEY $ACTUAL, the app has $EXPECTED\"\n      exit 1\n    fi\n  done\ndone\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -309,7 +450,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F24B490034219EA3EE6DB7FA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8FC117455A54F8B946B815DA /* NotificationService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6CE8A4E536384B410124FB47 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3B3EEDEFC0EAA0F91F2D3098 /* OpenChatNotificationService */;
+			targetProxy = 68842D4ACD1FC142C88D4FDC /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		0A1C5E79CDED06992FE06ECB /* debug */ = {
@@ -441,6 +598,48 @@
 			};
 			name = release;
 		};
+		AC80B3F0BBCE65D40DBC3427 /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					arm64,
+				);
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = N59KSS69AU;
+				INFOPLIST_FILE = NotificationService/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.oclabs.openchat.NotificationService;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = debug;
+		};
+		B3498E56E94EEA2648C9C68B /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					arm64,
+				);
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = N59KSS69AU;
+				INFOPLIST_FILE = NotificationService/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.oclabs.openchat.NotificationService;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = release;
+		};
 		C9FAC2B4203709FC17D641E2 /* release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -509,6 +708,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = debug;
 		};
+		3AAE7B194D10E97F084BA1B6 /* Build configuration list for PBXNativeTarget "OpenChatNotificationService" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC80B3F0BBCE65D40DBC3427 /* debug */,
+				B3498E56E94EEA2648C9C68B /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
 		C84E8B5C79465795F9ECA244 /* Build configuration list for PBXProject "open-chat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -519,6 +727,20 @@
 			defaultConfigurationName = debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		86453D4C76B76EBF5BF47305 /* XCLocalSwiftPackageReference "../../../tauri-plugin-oc/ios/PushCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../tauri-plugin-oc/ios/PushCore";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		BC2AF3EBF9E211DA709E9F4F /* PushCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PushCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 07923A346893A10779FCB9EC /* Project object */;
 }

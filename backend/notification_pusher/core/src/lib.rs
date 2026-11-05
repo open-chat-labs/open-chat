@@ -10,9 +10,10 @@ use std::io::Write;
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tracing::info;
-use types::{BotEventPayload, CanisterId, FcmData, FcmToken, SubscriptionInfo, TimestampMillis, UserId};
+use types::{ApnsToken, BotEventPayload, CanisterId, FcmData, FcmToken, SubscriptionInfo, TimestampMillis, UserId};
 use web_push::WebPushMessage;
 
+mod apns;
 mod bot_notifications;
 pub mod config;
 pub mod ic_agent;
@@ -40,6 +41,7 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(config: Config<I>
         config.vapid_private_pem,
         config.pusher_count,
         config.fcm_service,
+        config.apns_client,
     );
 
     let bot_notifications_sender = start_bot_notifications_processor(config.is_production);
@@ -71,6 +73,16 @@ pub fn write_metrics<W: Write>(w: &mut W) {
 pub enum PushNotification {
     UserNotification(UserNotification),
     FcmNotification(Box<FcmNotification>),
+    ApnsNotification(Box<ApnsNotification>),
+}
+
+#[derive(Debug)]
+pub struct ApnsNotification {
+    token: ApnsToken,
+    // Built once per notification and shared by every recipient's device
+    payload: Arc<String>,
+    collapse_id: Arc<String>,
+    metadata: NotificationMetadata,
 }
 
 #[derive(Debug)]
@@ -101,6 +113,7 @@ pub struct NotificationMetadata {
 pub enum NotificationToPush {
     UserNotificationToPush(Box<UserNotificationToPush>),
     FcmNotificationToPush(Box<FcmNotification>),
+    ApnsNotificationToPush(Box<ApnsNotification>),
 }
 
 #[derive(Debug)]

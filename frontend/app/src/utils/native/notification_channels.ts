@@ -4,6 +4,7 @@ import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notif
 import { openUrl, showNotification } from "tauri-plugin-oc-api";
 import { navigate } from "@utils/navigation";
 import { isLandingPagePath } from "@utils/urls";
+import { chatOnScreen, type PushNotification } from "./push_notification";
 
 const TAURI_PLUGIN_NAME = "oc";
 const PUSH_NOTIFICATION_EVENT = "push-notification";
@@ -12,16 +13,6 @@ const NEW_FCM_TOKEN_EVENT = "fcm-token-refresh";
 const NOTIFICATION_TAP_EVENT = "notification-tap";
 const BACK_PRESS_EVENT = "back-pressed";
 const WINDOW_INSET_CHANGE_EVENT = "window-inset-change";
-
-type PushNotification = {
-    id: number;
-    type: "DM" | "GROUP" | "CHANNEL";
-    senderId?: string;
-    groupId?: string;
-    communityId?: string;
-    channelId?: number;
-    threadIndex?: number;
-};
 
 /**
  * Sets up a listener for push notifications. This function will ask for
@@ -58,50 +49,9 @@ export async function expectPushNotifications(): Promise<PluginListener> {
         TAURI_PLUGIN_NAME,
         PUSH_NOTIFICATION_EVENT,
         (notification: PushNotification) => {
-            const pathname = window.location.pathname;
-            switch (notification.type) {
-                case "DM": {
-                    // TODO handle threads, eventually, once supported by dm's
-                    const expectedPath = `/user/${notification.senderId}`;
-                    if (!pathname.startsWith(expectedPath)) {
-                        // We're not in the context of the user's chat, send
-                        // notification back to native code to be displayed!
-                        showNotification({ notificationId: notification.id });
-                    }
-                    break;
-                }
-                case "GROUP": {
-                    const expectedPath = `/group/${notification.groupId}`;
-                    const inThreadContext =
-                        notification.threadIndex !== undefined &&
-                        pathname.startsWith(`${expectedPath}/${notification.threadIndex}`);
-                    const inGroupContext = pathname.startsWith(expectedPath);
-
-                    // We're not in the context of the group or thread, send
-                    // notification back to native code to be displayed!
-                    if (!(inGroupContext || inThreadContext)) {
-                        showNotification({ notificationId: notification.id });
-                    }
-                    break;
-                }
-                case "CHANNEL": {
-                    const expectedPath = `/community/${notification.communityId}/channel/${notification.channelId}`;
-                    const inThreadContext =
-                        notification.threadIndex !== undefined &&
-                        pathname.startsWith(`${expectedPath}/${notification.threadIndex}`);
-                    const inChannelContext = pathname.startsWith(expectedPath);
-
-                    // We're not in the context of the channel or thread, send
-                    // notification back to native code to be displayed!
-                    if (!(inChannelContext || inThreadContext)) {
-                        showNotification({ notificationId: notification.id });
-                    }
-                    break;
-                }
-                default:
-                    console.error(
-                        "Not available or unknown notification type! I don't know how to handle it.",
-                    );
+            // Not shown when its chat is on screen, which renders the message itself
+            if (!chatOnScreen(notification, window.location.pathname)) {
+                showNotification({ notificationId: notification.id });
             }
         },
     );
