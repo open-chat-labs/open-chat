@@ -51,7 +51,9 @@ export function profileProps(
         streak: chit.streak,
         balance: chit.balance,
         isDiamond: user.diamondStatus !== "inactive",
-        isVerified: user.isUniquePerson,
+        // the unique-person gate and its badge are suspended: userBadges (@client) has no verified
+        // badge, whatever the user's isUniquePerson says, and no other screen shows one (#10193)
+        isVerified: false,
         avatar: cssImage(images.avatarUrl),
         cover: images.coverUrl === undefined ? undefined : cssImage(images.coverUrl),
     };

@@ -70,10 +70,20 @@ describe("the profile dialog's props", () => {
             streak: 3,
             balance: 900,
             isDiamond: true,
-            isVerified: true,
+            isVerified: false,
             avatar: 'url("/a.png") center / cover no-repeat',
             cover: undefined,
         });
+    });
+
+    // #10193 invariant 1: ProfileDialog never shows the verified badge while the gate is suspended
+    test("never marks the user verified, even one whose record says they're a unique person", () => {
+        const chit = { streak: 0, balance: 0 };
+        const images = { avatarUrl: "/a.png", coverUrl: undefined };
+        for (const isUniquePerson of [true, false]) {
+            const props = profileProps("me", { ...user, isUniquePerson }, profile, chit, images);
+            expect(props.isVerified).toBe(false);
+        }
     });
 
     test("the stats pane", () => {
