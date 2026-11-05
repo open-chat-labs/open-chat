@@ -566,3 +566,7 @@
 
 ## 2026-11-05 — MessageComposer mounted mid-edit (5b review), by hand
 - Mounted already in edit mode (`context.mode === 'edit'`), the composer takes `text` as what was being written before the edit, and puts it back in the box when the edit ends, as it does for an edit started while it's mounted. It started from an empty box, and reported that to `onInput`, wiping the draft the host had put back. `meta.json`'s `text` doc says so. Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-05 — SegmentedTabs compact size (native N2, #10365), by hand
+- `size` (`'md' | 'sm'`, default `'md'`): `sm` is the compact bar, 40px (`--control-lg`) with a 3px inset and gap, in place of the native prototype's per-screen override (`--control-xl: 40px; --space-4: 3px` on a wrapper, `NativeApp.svelte`: the Chats filter and the settings screens' segmented rows), as the native design notes' §5 Open asks. `md` is unchanged.
+- Docs: General › Inputs & controls shows the compact bar. `meta.json` updated.

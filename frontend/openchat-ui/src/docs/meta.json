@@ -4125,6 +4125,20 @@
         "doc": ""
       },
       {
+        "name": "size",
+        "type": "'md' | 'sm'",
+        "default": "md",
+        "editor": "enum",
+        "options": [
+          "md",
+          "sm"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'md'",
+        "doc": "md: 44px. sm: the compact 40px bar with a 3px inset (native)."
+      },
+      {
         "name": "onSelect",
         "type": "(i: number) => void",
         "default": null,
