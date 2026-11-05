@@ -877,6 +877,11 @@ design export needs. Each entry says where it came up.
     reduced menus, the user's own messages hidden): not 8b's;
   - the Back from a channel preview of a joined community goes to the list, not to the next chat
     (the old desktop's `selectDefaultChat`; the router picks the list's default chat).
+  - two joins at once on one canister and ledger (two channels of one gated community): the
+    client's standing gate approval (`#standingGateApprovals`, which spares a retry the approval
+    fee) can keep the wrong amount, as which approval the ledger applied last isn't known. Fix
+    when parallel joins become possible: remember neither when two overlap, so the next try
+    approves again. Not reachable from the UI yet.
 - **Diamond** (`?diamond`, `features/diamond`, 8e #10131): paid through the shared payment
   (`logic/diamond`, which both legacy `Payment.svelte`s use too), in CHAT or ICP at the backend's
   own prices (CHAT in production, ICP elsewhere, by default), auto-renew on, a timed member opening
