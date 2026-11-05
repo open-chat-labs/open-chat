@@ -278,6 +278,40 @@ describe("joining a group or community", () => {
         expect(approved()).toEqual([140_000n]);
     });
 
+    // an approval that fails without saying what the ledger did (a timeout, a dropped connection)
+    // may have replaced the allowance: what stood before isn't trusted any more
+    test("an approval whose outcome isn't known leaves nothing standing", async () => {
+        const g = group(ROLE_NONE, paymentGate);
+        let approvalTimesOut = false;
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) => {
+            sent.push(req);
+            if (req.kind === "approveAccessGatePayment" && approvalTimesOut) {
+                return Promise.reject(new Error("timed out"));
+            }
+            return Promise.resolve(
+                req.kind === "joinGroup" ? { kind: "error", code: 0 } : { kind: "success" },
+            );
+        }) as never);
+        const paying = (amount: bigint) => ({
+            credentials: [],
+            paymentApprovals: new Map([[ledger, { amount, approvalFee: 10_000n }]]),
+            compositeGateIndex: undefined,
+        });
+        const approved = () =>
+            sent
+                .splice(0)
+                .flatMap((r) => (r.kind === "approveAccessGatePayment" ? [r.amount] : []));
+
+        await client.joinGroup(g, paying(150_000n));
+        approvalTimesOut = true;
+        await client.joinGroup(g, paying(100_000n));
+        expect(approved()).toEqual([140_000n, 90_000n]);
+
+        approvalTimesOut = false;
+        await client.joinGroup(g, paying(150_000n));
+        expect(approved()).toEqual([140_000n]);
+    });
+
     // Invariant 2: no join request for a community the user is already a non-lapsed member of
     test("a community member's join is not sent", async () => {
         // the join replayed after login carries the community as it was before login

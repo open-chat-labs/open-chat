@@ -2533,6 +2533,10 @@ export class OpenChat {
         { amount, approvalFee }: PaymentGateApproval,
         pin: string | undefined,
     ): Promise<ApproveAccessGatePaymentResponse> {
+        // whatever stood is replaced on the ledger, or may be (an approval that fails without
+        // saying what the ledger did): only this one, once it succeeds, is trusted
+        const key = gateApprovalKey(canisterId, ledger);
+        this.#standingGateApprovals.delete(key);
         return this.#worker
             .send({
                 kind: "approveAccessGatePayment",
@@ -2544,7 +2548,7 @@ export class OpenChat {
             })
             .then((response) => {
                 if (response.kind === "success") {
-                    this.#standingGateApprovals.set(gateApprovalKey(canisterId, ledger), {
+                    this.#standingGateApprovals.set(key, {
                         amount,
                         expiresAt: Date.now() + GATE_APPROVAL_EXPIRY,
                     });
