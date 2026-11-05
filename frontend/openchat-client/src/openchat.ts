@@ -6683,9 +6683,10 @@ export class OpenChat {
             : undefined;
 
         if (textContent || captioned) {
-            // The draft, which holds the message being edited, is done with. (Done before looking up
-            // those mentioned, else a message sent meanwhile would be taken as another edit.)
-            localUpdates.draftMessages.delete(messageContext);
+            // The edit is done with: the draft goes back to what the user was writing before it.
+            // (Done before looking up those mentioned, else a message sent meanwhile would be
+            // taken as another edit.)
+            localUpdates.draftMessages.endEditing(messageContext);
             textContent = (await this.#expandTypedMentions(messageContext, textContent, [])).text;
 
             const msg: Message = {

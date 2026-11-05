@@ -1083,12 +1083,12 @@ design export needs. Each entry says where it came up.
 - **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
   edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text.
-  Its X drops a reply, or the whole draft for an edit (as the old composer did); a click on it goes
-  to the message when it's in this chat (a private reply quotes another chat's: no jump, where the
-  old UI opened that chat). An edit is saved with `editMessage` (failure toast
-  `errorEditingMessage`). Not yet: a media reply's thumbnail (`thumb`), and the draft the user had
-  before starting an edit isn't kept in the chat's draft (the composer puts it back in its box,
-  but `setEditing` replaced the draft's text, so leaving the chat loses it, as in the old trees).
+  Its X drops a reply, or ends an edit; a click on it goes to the message when it's in this chat (a
+  private reply quotes another chat's: no jump, where the old UI opened that chat). An edit is
+  saved with `editMessage` (failure toast `errorEditingMessage`). Ending an edit, saved or
+  cancelled, puts back what the user was writing before it (`endEditing`, kept by `setEditing`;
+  the old trees dropped the whole draft, and now get it back too). Not yet: a media reply's
+  thumbnail (`thumb`).
 - **Message actions** (`features/conversation`, 5b): every message's menu (`MessageActions`:
   right-click, the hover bar's ⋯, Shift+F10, a long press on touch), its hover bar's quick
   reactions (the app's `quickReactions`), the emoji picker, the reaction chips (text bubbles

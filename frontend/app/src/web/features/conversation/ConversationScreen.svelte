@@ -414,16 +414,16 @@
     const draft = $derived($selectedChatDraftMessageStore);
     const composing = $derived(composerContext(draft, ctx));
 
-    // cancelling an edit drops the draft, as the old composer did; a reply just goes
+    // cancelling an edit puts back what was being written before it; a reply just goes
     function cancelComposing(chatId: ChatIdentifier) {
         if (draft?.editingEvent !== undefined) {
-            localUpdates.draftMessages.delete({ chatId });
+            localUpdates.draftMessages.endEditing({ chatId });
         } else {
             localUpdates.draftMessages.setReplyingTo({ chatId }, undefined);
         }
     }
 
-    // the client drops the draft as the edit goes out, and undoes the edit if it fails
+    // the client puts the draft back as the edit goes out, and undoes the edit if it fails
     async function submitEdit(chatId: ChatIdentifier, text: string) {
         const editing = draft?.editingEvent;
         if (editing === undefined) return;
@@ -676,6 +676,7 @@
     }
 
     function rowOffers(
+        chatId: ChatIdentifier,
         evt: EventWrapper<Message>,
         failed: boolean,
         offered: MessageMenu,
@@ -683,7 +684,7 @@
         return {
             menu: offered.menu,
             swipeLeft: messageSwipeLeft(evt.event.sender === me, offered.actions),
-            retry: offered.actions.has("retry") ? () => run("retry", evt, failed) : undefined,
+            retry: offered.actions.has("retry") ? () => run(chatId, "retry", evt, failed) : undefined,
         };
     }
 
@@ -705,8 +706,10 @@
         }
     }
 
-    // the message whose menu (or emoji picker) is open
+    // the message whose menu (or emoji picker) is open, and its chat: what's picked acts there,
+    // and the menu closes when another chat opens
     let menu = $state<{
+        chatId: ChatIdentifier;
         evt: EventWrapper<Message>;
         failed: boolean;
         offered: MessageMenu;
@@ -724,13 +727,18 @@
     ) {
         const offered = offeredFor(current, evt, failed, confirmed);
         if (pickerOnly ? !offered.react : !offered.menu) return;
-        menu = { evt, failed, offered, pos, pickerOnly };
+        menu = { chatId: current.id, evt, failed, offered, pos, pickerOnly };
     }
+
+    $effect.pre(() => {
+        void chatKey;
+        untrack(() => (menu = undefined));
+    });
 
     // the open menu's items, in the app's words
     const messageItems = $derived.by(() => {
         if (menu === undefined) return [];
-        const { evt, failed } = menu;
+        const { chatId, evt, failed } = menu;
         return messageMenuItems(menu.offered.actions).map((item) =>
             item.action === "separator"
                 ? { label: "", variant: "separator" as const }
@@ -738,7 +746,7 @@
                       label: $_(item.label),
                       variant: item.variant,
                       mask: item.mask,
-                      onSelect: () => run(item.action, evt, failed),
+                      onSelect: () => run(chatId, item.action, evt, failed),
                   },
         );
     });
@@ -755,9 +763,13 @@
     // the message being deleted, once confirmed, and its chat (another may be open by then)
     let deleting = $state<{ chatId: ChatIdentifier; evt: EventWrapper<Message> }>();
 
-    async function run(action: MessageMenuAction, evt: EventWrapper<Message>, failed: boolean) {
-        if (chat === undefined) return;
-        const chatId = chat.id;
+    // an action on a message, in the chat it's in
+    async function run(
+        chatId: ChatIdentifier,
+        action: MessageMenuAction,
+        evt: EventWrapper<Message>,
+        failed: boolean,
+    ) {
         const dialog = await runMessageAction(action, {
             client,
             chatId,
@@ -814,9 +826,8 @@
 
     // a reaction added or taken off. The library's picker keeps no favourites of its own (the old
     // trees' picker counted its picks), so every reaction added counts towards the quick ones
-    async function react(evt: EventWrapper<Message>, emoji: string) {
-        if (chat === undefined) return;
-        const toggled = await client.toggleReaction({ chatId: chat.id }, evt.event, emoji);
+    async function react(chatId: ChatIdentifier, evt: EventWrapper<Message>, emoji: string) {
+        const toggled = await client.toggleReaction({ chatId }, evt.event, emoji);
         if (toggled === "added") {
             quickReactions.incrementFavourite(emoji);
             quickReactions.reload();
@@ -826,6 +837,7 @@
     // double-click to edit your own message or reply to someone else's (the "double-click to reply"
     // setting), not on the hover bar or a control in the message
     function doubleClick(
+        chatId: ChatIdentifier,
         e: MouseEvent,
         evt: EventWrapper<Message>,
         failed: boolean,
@@ -843,7 +855,7 @@
             { mine: evt.event.sender === me, deleted: evt.event.deleted },
             offered.actions,
         );
-        if (action !== undefined) void run(action, evt, failed);
+        if (action !== undefined) void run(chatId, action, evt, failed);
     }
 
     // the message replied to or edited, tinted in the list
@@ -1191,7 +1203,7 @@
                                 {@const confirmed = args.isConfirmed($unconfirmedStore, evt)}
                                 {@const offered = offeredFor(chat, evt, failed, confirmed)}
                                 {@const actions = offered.actions}
-                                {@const offers = rowOffers(evt, failed, offered)}
+                                {@const offers = rowOffers(chat.id, evt, failed, offered)}
                                 {@const swipeLeft = offers.swipeLeft}
                                 <!-- a text message's text as the old UI renders it: markdown, mentions,
                                      links, custom emoji (a lone emoji is the bubble's own, large) -->
@@ -1207,7 +1219,7 @@
                                 <div
                                     class="row"
                                     class:starts={item.first}
-                                    ondblclick={(e) => doubleClick(e, evt, failed, offered)}
+                                    ondblclick={(e) => doubleClick(chat.id, e, evt, failed, offered)}
                                     data-index={failed ? "" : msg.messageIndex}
                                     data-id={failed ? "" : msg.messageId}
                                     use:observeRead={{
@@ -1245,21 +1257,21 @@
                                                   openMenu(chat, evt, failed, confirmed, pos, false)
                                             : undefined}
                                         onReact={offered.react
-                                            ? (_, emoji) => react(evt, emoji)
+                                            ? (_, emoji) => react(chat.id, evt, emoji)
                                             : undefined}
                                         onReactPicker={offered.react && offered.menu
                                             ? (_, pos) =>
                                                   openMenu(chat, evt, failed, confirmed, pos, true)
                                             : undefined}
                                         onReply={actions.has("reply")
-                                            ? () => run("reply", evt, failed)
+                                            ? () => run(chat.id, "reply", evt, failed)
                                             : undefined}
                                         onEdit={actions.has("edit")
-                                            ? () => run("edit", evt, failed)
+                                            ? () => run(chat.id, "edit", evt, failed)
                                             : undefined}
                                         onSwipeLeft={swipeLeft === undefined
                                             ? undefined
-                                            : () => run(swipeLeft, evt, failed)}
+                                            : () => run(chat.id, swipeLeft, evt, failed)}
                                         messages={messagesFor(
                                             row,
                                             body,
@@ -1402,7 +1414,7 @@
         pickerOnly={menu.pickerOnly}
         recent={$quickReactions}
         selected={menuSelected}
-        onReact={(emoji) => menu !== undefined && react(menu.evt, emoji)}
+        onReact={(emoji) => menu !== undefined && react(menu.chatId, menu.evt, emoji)}
         onClose={() => (menu = undefined)} />
 {/if}
 {#if deleting !== undefined}
