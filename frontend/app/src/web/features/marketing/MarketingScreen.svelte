@@ -126,7 +126,7 @@
     });
     // a card opens the community's preview, whose cancel comes back here, as Explore's do to it
     const openCommunity = (communityId: string) =>
-        client.setCommunityPreviewOrigin(communityId, window.location.pathname);
+        client.setCommunityPreviewOrigin(communityId, window.location.pathname, "landing");
     const communities = $derived.by(() => {
         const { pinned, ranked } = featured.featured;
         const ranking = landingCommunities(

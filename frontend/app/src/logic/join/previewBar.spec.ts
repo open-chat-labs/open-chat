@@ -45,7 +45,7 @@ function input(over: Partial<PreviewBarInput>): PreviewBarInput {
         lapsed: false,
         gates: [],
         guest: false,
-        originCommunityId: undefined,
+        origin: undefined,
         meets: () => false,
         ...over,
     };
@@ -69,13 +69,25 @@ describe("the preview bar", () => {
     // cancelling a community preview entered from Explore goes back there
     test("Back says Back to Explore only for the community Explore opened", () => {
         const c = community(ROLE_NONE);
+        const explore = (communityId: string) => ({ communityId, from: "explore" as const });
+        expect(previewBar(input({ chat: channel, community: c, origin: explore("c") })).back).toBe(
+            "explore",
+        );
         expect(
-            previewBar(input({ chat: channel, community: c, originCommunityId: "c" })).back,
-        ).toBe("explore");
-        expect(
-            previewBar(input({ chat: channel, community: c, originCommunityId: "other" })).back,
+            previewBar(input({ chat: channel, community: c, origin: explore("other") })).back,
         ).toBe("back");
-        expect(previewBar(input({ chat: group, originCommunityId: "c" })).back).toBe("back");
+        expect(previewBar(input({ chat: group, origin: explore("c") })).back).toBe("back");
+    });
+
+    // Landing's featured communities set an origin too, so cancelling goes back to Landing: the
+    // bar mustn't call that Explore
+    test("a preview opened from Landing says plain Back", () => {
+        const c = community(ROLE_NONE);
+        const bar = previewBar(
+            input({ chat: channel, community: c, origin: { communityId: "c", from: "landing" } }),
+        );
+
+        expect(bar.back).toBe("back");
     });
 
     test("a channel of a joined community, or a group, is the chat's own bar", () => {

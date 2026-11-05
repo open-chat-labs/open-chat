@@ -6,6 +6,7 @@ import {
     isUniquePersonGate,
     stripSuspendedGate,
     type AccessGate,
+    type CommunityPreviewOrigin,
     type CommunitySummary,
     type EnhancedAccessGate,
     type MultiUserChat,
@@ -58,8 +59,11 @@ export type PreviewBarInput = {
      */
     gates: EnhancedAccessGate[];
     guest: boolean;
-    /** The community whose preview was opened from Explore (`setCommunityPreviewOrigin`). */
-    originCommunityId: string | undefined;
+    /**
+     * The community whose preview was opened from another page, and which page
+     * (`setCommunityPreviewOrigin`): only Explore's gets "Back to Explore".
+     */
+    origin: Pick<CommunityPreviewOrigin, "communityId" | "from"> | undefined;
     /** Whether the user meets a gate from what the client knows (`client.doesUserMeetAccessGate`). */
     meets: (gate: AccessGate) => boolean;
 };
@@ -132,7 +136,9 @@ export function previewBar(input: PreviewBarInput): PreviewBar {
 
     const back: PreviewBack = lapsed
         ? "none"
-        : ofCommunity && community?.id.communityId === input.originCommunityId
+        : ofCommunity &&
+            input.origin?.from === "explore" &&
+            community?.id.communityId === input.origin.communityId
           ? "explore"
           : "back";
 
