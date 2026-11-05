@@ -1355,3 +1355,10 @@ export const nativeCommunities: { name: string; members: string; grad: string }[
   { name: 'SNS Launchpad', members: '15.8k members', grad: 'linear-gradient(140deg,#B4C3FF,#5B6FE0)' },
   { name: 'Gamers Lounge', members: '44.3k members', grad: 'linear-gradient(140deg,#ffb03d,#ff4d4d)' },
 ];
+// Appearance's accent swatches: each accent's colour (the host reads them from its theme)
+export const nativeAccents: { id: string; label: string; colour: string }[] = [
+  { id: 'pink', label: 'docs.native.settings.pink', colour: '#FF5672' },
+  { id: 'orange', label: 'docs.native.settings.orange', colour: '#FF8A3D' },
+  { id: 'blue', label: 'docs.native.settings.blue', colour: '#3D9BFF' },
+  { id: 'green', label: 'docs.native.settings.green', colour: '#2EE6A8' },
+];

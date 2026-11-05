@@ -2186,6 +2186,9 @@
         "label": "Tabs",
         "unread": "{label}, {count} unread",
         "new": "{label}, new"
+      },
+      "settings": {
+        "copy": "Copy {label}"
       }
     },
     "navRail": {

@@ -1286,6 +1286,96 @@
         "src/native/NativePageHeader.svelte"
       ]
     },
+    "SettingsAction": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsAction.svelte"
+      ]
+    },
+    "SettingsCopy": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsCopy.svelte"
+      ]
+    },
+    "SettingsGroup": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsGroup.svelte"
+      ]
+    },
+    "SettingsLink": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsLink.svelte"
+      ]
+    },
+    "SettingsMeter": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsMeter.svelte"
+      ]
+    },
+    "SettingsSegmented": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsSegmented.svelte"
+      ]
+    },
+    "SettingsSwatches": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsSwatches.svelte"
+      ]
+    },
+    "SettingsSwitch": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsSwitch.svelte"
+      ]
+    },
+    "SettingsValue": {
+      "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
+      "sourceHash": "db4b562b",
+      "builtFrom": "the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists",
+      "portedAt": "2026-11-05",
+      "group": "native",
+      "files": [
+        "src/native/SettingsValue.svelte"
+      ]
+    },
     "TabBar": {
       "source": "src/native/NativeApp.svelte (Native Prototype.dc.html)",
       "sourceHash": "db4b562b",

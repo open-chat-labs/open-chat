@@ -1,12 +1,15 @@
 <!-- Native: the shell kit in src/native, one <Section> per entry in sections.ts `native`. Every demo is a phone-sized
-     native root (NativeFrame) on the docs' mode and accent, and the platform picked here. -->
+     native root (NativeFrame) on the docs' mode and accent, and the platform picked in the floating switch. -->
 <script lang="ts">
   import Section from '../Section.svelte';
   import NativeFrame from '../NativeFrame.svelte';
   import { native, sec } from '../sections';
-  import { nativeChats, nativeCommunities, nativePeople, nativeTabs, nativeTabsNoPhoto } from '../samples';
+  import { nativeAccents, nativeChats, nativeCommunities, nativePeople, nativeTabs, nativeTabsNoPhoto } from '../samples';
   import { Avatar, Button, ChatRow, Field, SegmentedTabs, Toggle } from '../../lib/index';
-  import { AnchoredMenu, BottomSheet, LongPressMenu, NativePageHeader, TabBar, longPress, type NativeMenuItem } from '../../native/index';
+  import {
+    AnchoredMenu, BottomSheet, LongPressMenu, NativePageHeader, SettingsAction, SettingsCopy, SettingsGroup, SettingsLink, SettingsMeter,
+    SettingsSegmented, SettingsSwatches, SettingsSwitch, SettingsValue, TabBar, longPress, type NativeMenuItem,
+  } from '../../native/index';
   import { useT } from '../../lib/i18n';
 
   interface Props {
@@ -93,6 +96,10 @@
     { id: 'leave', label: 'docs.native.menu.leaveCommunity', icon: 'exit', separator: true, danger: true },
   ];
   let pressLog = $state('');
+
+  // settings rows: one screen with every kind
+  const settings = $state({ mode: 1, accent: 'pink', size: 1, notify: true, preview: true, sound: 'chime', download: 'wifi', cleared: false });
+  let settingsLog = $state('');
 </script>
 
 <div class="native">
@@ -275,13 +282,57 @@
     </div>
     <p class="note">Last: <code>{pressLog || '—'}</code>. A tap still opens the row; the click that ends a long-press doesn't.</p>
   </Section>
+
+  <Section {...sec(native, 'native-settings')}>
+    <div class="grid2">
+      <NativeFrame {os} {mode} {accent} label="Segmented · swatches · switches · value" height={720}>
+        <NativePageHeader title="docs.native.settings.appearance" onBack={() => {}} />
+        <div class="settings-screen">
+          <SettingsGroup label="docs.native.settings.theme">
+            <SettingsSegmented label="docs.native.settings.mode" options={['docs.native.settings.light', 'docs.native.settings.dark', 'docs.native.settings.system']} selected={settings.mode} onSelect={(i) => (settings.mode = i)} />
+            <SettingsSwatches label="docs.native.settings.accent" swatches={nativeAccents} selected={settings.accent} onSelect={(id) => (settings.accent = id)} />
+          </SettingsGroup>
+          <SettingsGroup label="docs.native.settings.text" note="docs.native.settings.textNote">
+            <SettingsSegmented label="docs.native.settings.textSize" options={['docs.native.settings.small', 'docs.native.settings.default', 'docs.native.settings.large']} selected={settings.size} onSelect={(i) => (settings.size = i)} />
+          </SettingsGroup>
+          <SettingsGroup label="docs.native.settings.lockScreen">
+            <SettingsSwitch label="docs.native.settings.notifications" help="docs.native.settings.notificationsHelp" on={settings.notify} onChange={(on) => (settings.notify = on)} />
+            <SettingsSwitch label="docs.native.settings.preview" help="docs.native.settings.previewHelp" on={settings.preview && settings.notify} disabled={!settings.notify} onChange={(on) => (settings.preview = on)} />
+            <SettingsValue label="docs.native.settings.sound" options={[{ id: 'chime', label: 'Chime' }, { id: 'pop', label: 'Pop' }, { id: 'bell', label: 'Bell' }, { id: 'none', label: 'None' }]} value={settings.sound} onChange={(id) => (settings.sound = id)} />
+            <SettingsValue label="docs.native.settings.autoDownload" help="docs.native.settings.autoDownloadHelp" options={[{ id: 'never', label: 'docs.native.menu.never' }, { id: 'wifi', label: 'docs.native.menu.wifi' }, { id: 'always', label: 'docs.native.menu.always' }]} value={settings.download} onChange={(id) => (settings.download = id)} />
+          </SettingsGroup>
+        </div>
+      </NativeFrame>
+      <NativeFrame {os} {mode} {accent} label="Links · copy · meters · actions" height={720}>
+        <NativePageHeader title="docs.native.settings.you" onBack={() => {}} />
+        <div class="settings-screen">
+          <SettingsGroup label="docs.native.settings.account">
+            <SettingsLink icon="key" label="docs.native.settings.recovery" value="docs.native.settings.notBackedUp" onClick={() => (settingsLog = 'recovery')} />
+            <SettingsLink icon="bell" label="docs.native.settings.notifications" value="docs.native.settings.on" onClick={() => (settingsLog = 'notifications')} />
+            <SettingsLink icon="community" label="Weekend Climbers" help="docs.native.settings.nameHelp" value="Kai" onClick={() => (settingsLog = 'community name')} />
+          </SettingsGroup>
+          <SettingsGroup label="docs.native.settings.connection">
+            <SettingsCopy label="docs.native.settings.icHost" value="https://icp-api.io" onCopy={() => (settingsLog = 'copied the IC host URL')} />
+            <SettingsCopy label="docs.native.settings.publicKey" value="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEquEHzJr9605YTw2Eaw==" onCopy={() => (settingsLog = 'copied the public key')} />
+          </SettingsGroup>
+          <SettingsGroup label="docs.native.settings.onThisPhone" note="docs.native.settings.cacheNote">
+            <SettingsMeter label="docs.native.settings.cache" value={settings.cleared ? '0.4 GB' : '1.2 GB'} fraction={settings.cleared ? 0.04 : 0.12} />
+            <SettingsMeter label="docs.native.settings.remote" value="3.4 of 10 GB" fraction={0.34} help="docs.native.settings.remoteHelp" />
+            <SettingsAction icon="trash" label="docs.native.settings.clearCache" danger onClick={() => ((settings.cleared = !settings.cleared), (settingsLog = settings.cleared ? 'cleared 0.8 GB' : 'cache back (undo)'))} />
+            <SettingsAction icon="refresh" label="docs.native.settings.reset" onClick={() => (settingsLog = 'reset')} />
+          </SettingsGroup>
+        </div>
+      </NativeFrame>
+    </div>
+    <p class="note">Last: <code>{settingsLog || '—'}</code></p>
+  </Section>
 </div>
 
 <style lang="scss">
   @use '../../lib/styles/mixins' as *;
 
   .native { display: flex; flex-direction: column; gap: 56px; }
-  .platform { position: sticky; top: 92px; z-index: 5; align-self: flex-start; display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 14px; background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--line-1); }
+  .platform { position: fixed; right: 24px; bottom: 24px; z-index: 20; display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 14px; background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--line-2), var(--shadow-panel); }
   .platform-label { font: 500 10px/1 var(--font-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); }
   .platform-tabs { width: 220px; }
   .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 24px; }
@@ -317,4 +368,5 @@
   .strip-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
   .strip-card-text b { font: 700 15px/1.2 var(--font-sans); @include truncate; }
   .strip-card-text span { font: 500 12.5px/1 var(--font-sans); color: var(--ink-4); }
+  .settings-screen { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 22px; padding: 8px 16px var(--scroll-end); }
 </style>

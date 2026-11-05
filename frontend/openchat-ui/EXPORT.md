@@ -371,4 +371,13 @@ Built by hand (N2, #10365) from the patterns the native prototype builds inline:
 | LongPressMenu | the row long-press menu (`lpH`, `openRowMenu`, `v.rm*`) | 2026-11-05 |
 | NativeMenu | the menus' rows (`menuItems`: icon, label, tick, chevron, back row, dividers) | 2026-11-05 |
 | NativePageHeader | the pushed screens' and the conversation's headers (`v.back`, `v.backMask`, `v.kebabRot`), the tab titles | 2026-11-05 |
+| SettingsAction | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsCopy | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsGroup | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsLink | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsMeter | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsSegmented | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsSwatches | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsSwitch | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
+| SettingsValue | the settings screens' row kit (`settingsVals`: `sec`, `T`, `P`, `N`, `C`, `A`, `isSeg`, `isSwatch`, `isMeter`) and the You lists | 2026-11-05 |
 | TabBar | the tab bar (`v.tabs`, `bounceTab`) | 2026-11-05 |
