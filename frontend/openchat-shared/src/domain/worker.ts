@@ -95,6 +95,7 @@ import type {
     ThreadSyncDetails,
     TipMessageResponse,
     TokenInfo,
+    TurnstilePass,
     UnblockUserResponse,
     UndeleteMessageResponse,
     UnfreezeGroupResponse,
@@ -2431,7 +2432,7 @@ type DeleteFailedMessage = {
 type ClaimPrize = {
     chatId: MultiUserChatIdentifier;
     messageId: bigint;
-    turnstileToken: string | undefined;
+    turnstile: TurnstilePass | undefined;
     kind: "claimPrize";
 };
 

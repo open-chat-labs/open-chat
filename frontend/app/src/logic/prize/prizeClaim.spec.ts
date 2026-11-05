@@ -25,11 +25,11 @@ describe("claiming a prize", () => {
     test("claims with the token of the prize's human check", async () => {
         const c = client({ kind: "success" });
         const check = new HumanCheck();
-        check.receive({ kind: "turnstile_token", token: "t1" });
+        check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
 
         const e = trustedClick();
         await expect(claimPrizeWithHumanCheck(c, check, chatId, 1n, e)).resolves.toBeUndefined();
-        expect(c.claimPrize).toHaveBeenCalledWith(chatId, 1n, e, "t1");
+        expect(c.claimPrize).toHaveBeenCalledWith(chatId, 1n, e, { token: "t1", salt: "s1" });
     });
 
     test("a check that fails still claims, without a token, for the backend to decide", async () => {
@@ -47,7 +47,7 @@ describe("claiming a prize", () => {
     test("says why a claim failed", async () => {
         const message = i18nKey("prizes.humanCheckFailed");
         const check = new HumanCheck();
-        check.receive({ kind: "turnstile_token", token: "t1" });
+        check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
 
         await expect(
             claimPrizeWithHumanCheck(
@@ -64,12 +64,12 @@ describe("claiming a prize", () => {
     test("a script's click claims nothing, and leaves the token for the reader's", async () => {
         const c = client({ kind: "success" });
         const check = new HumanCheck();
-        check.receive({ kind: "turnstile_token", token: "t1" });
+        check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
 
         await expect(
             claimPrizeWithHumanCheck(c, check, chatId, 1n, new MouseEvent("click")),
         ).resolves.toBeUndefined();
         expect(c.claimPrize).not.toHaveBeenCalled();
-        await expect(check.take()).resolves.toBe("t1");
+        await expect(check.take()).resolves.toEqual({ token: "t1", salt: "s1" });
     });
 });

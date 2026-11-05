@@ -21,7 +21,7 @@ export async function claimPrizeWithHumanCheck(
 ): Promise<ResourceKey | undefined> {
     if (!isTrustedClick(e)) return undefined;
 
-    const token = await check.take();
-    const outcome = await client.claimPrize(chatId, messageId, e, token);
+    const pass = await check.take();
+    const outcome = await client.claimPrize(chatId, messageId, e, pass);
     return outcome.kind === "success" ? undefined : outcome.message;
 }

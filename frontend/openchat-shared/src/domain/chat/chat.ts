@@ -2800,6 +2800,12 @@ export type MarkPinnedMessagesReadResponse = Success | OCError | Offline;
 export type ClaimPrizeResponse = Success | OCError | Failure | Offline;
 /** What claiming a prize came to, with what to tell the user if it failed. */
 export type ClaimPrizeOutcome = Success | { kind: "failed"; message: ResourceKey };
+
+/**
+ * A prize claim's passed human check (Cloudflare Turnstile): its token, and the random salt hashed
+ * into the custom data it was issued for (see public/turnstile.js).
+ */
+export type TurnstilePass = { token: string; salt: string };
 export type DeclineInvitationResponse = Success | OCError | Offline;
 
 export type PublicGroupSummaryResponse =

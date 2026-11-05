@@ -12,6 +12,8 @@ pub struct Args {
     pub sign_in_proof_jwt: Option<String>,
     // A Cloudflare Turnstile token, issued for this user and message (see turnstile.rs)
     pub turnstile_token: Option<String>,
+    // The random salt hashed with this user and message into the token's custom data
+    pub turnstile_salt: Option<String>,
 }
 
 // Written by hand so that `#[trace]` doesn't record the sign-in proof or the token

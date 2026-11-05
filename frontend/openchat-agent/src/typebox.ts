@@ -7139,6 +7139,7 @@ export const LocalUserIndexClaimPrizeArgs = /* @__PURE__ */ Type.Object({
     message_id: MessageId,
     sign_in_proof_jwt: Type.Optional(Type.String()),
     turnstile_token: Type.Optional(Type.String()),
+    turnstile_salt: Type.Optional(Type.String()),
 });
 
 export type LocalUserIndexInstallBotArgs = Static<typeof LocalUserIndexInstallBotArgs>;

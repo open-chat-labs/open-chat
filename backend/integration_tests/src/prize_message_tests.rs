@@ -210,6 +210,7 @@ fn prize_message_requiring_reauthentication() {
             message_id,
             sign_in_proof_jwt: None,
             turnstile_token: None,
+            turnstile_salt: None,
         },
     );
 
@@ -514,6 +515,7 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
             message_id,
             sign_in_proof_jwt: None,
             turnstile_token: None,
+            turnstile_salt: None,
         },
     );
     assert!(
@@ -529,7 +531,23 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
         local_user_index,
         chat_id,
         message_id,
-        &custom_data(user2.user_id, other_message_id),
+        "salt",
+        &custom_data(user2.user_id, other_message_id, "salt"),
+    );
+    assert!(
+        matches!(&response, local_user_index_canister::claim_prize::Response::Error(e) if e.matches_code(OCErrorCode::HumanVerificationFailed)),
+        "{response:?}"
+    );
+
+    // One issued for this prize, but claimed with another salt
+    let response = claim_prize_with_token(
+        env,
+        &user2,
+        local_user_index,
+        chat_id,
+        message_id,
+        "other_salt",
+        &custom_data(user2.user_id, message_id, "salt"),
     );
     assert!(
         matches!(&response, local_user_index_canister::claim_prize::Response::Error(e) if e.matches_code(OCErrorCode::HumanVerificationFailed)),
@@ -542,7 +560,8 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
         local_user_index,
         chat_id,
         message_id,
-        &custom_data(user2.user_id, message_id),
+        "salt",
+        &custom_data(user2.user_id, message_id, "salt"),
     );
     assert!(
         matches!(response, local_user_index_canister::claim_prize::Response::Success),
@@ -557,18 +576,19 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
 }
 
 // The custom data the website's human check (turnstile.js) gives Cloudflare for this claim
-fn custom_data(user_id: UserId, message_id: MessageId) -> String {
-    sha256_string(format!("{user_id}_{message_id}").as_bytes())
+fn custom_data(user_id: UserId, message_id: MessageId, salt: &str) -> String {
+    sha256_string(format!("{user_id}_{message_id}_{salt}").as_bytes())
 }
 
-// Claims with a new token, answering the LocalUserIndex's call to Cloudflare as Cloudflare would for
-// a passed token issued with the custom data `issued_for`
+// Claims with a new token and `salt`, answering the LocalUserIndex's call to Cloudflare as
+// Cloudflare would for a passed token issued with the custom data `issued_for`
 fn claim_prize_with_token(
     env: &mut PocketIc,
     user: &User,
     local_user_index: CanisterId,
     chat_id: MultiUserChat,
     message_id: MessageId,
+    salt: &str,
     issued_for: &str,
 ) -> local_user_index_canister::claim_prize::Response {
     let token = random_string();
@@ -582,6 +602,7 @@ fn claim_prize_with_token(
                 message_id,
                 sign_in_proof_jwt: None,
                 turnstile_token: Some(token.clone()),
+                turnstile_salt: Some(salt.to_string()),
             }),
         )
         .unwrap();

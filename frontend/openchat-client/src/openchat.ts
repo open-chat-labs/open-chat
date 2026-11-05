@@ -351,6 +351,7 @@ import {
     type TipOutcome,
     type TokenInfo,
     type TransferSuccess,
+    type TurnstilePass,
     type GroupChangeConfirmation,
     type UpdateCommunityOutcome,
     type UpdateCommunityResponse,
@@ -9756,14 +9757,14 @@ export class OpenChat {
         }
     }
 
-    // `turnstileToken` is the prize's human check's (Cloudflare Turnstile), issued for this user's
-    // claim of this prize (prizeClaimCustomData). A claim without one is for the backend to refuse,
-    // once it requires one.
+    // `turnstile` is the prize's human check's (Cloudflare Turnstile) token, issued for this user's
+    // claim of this prize (prizeClaimCustomData), with its salt. A claim without one is for the
+    // backend to refuse, once it requires one.
     async claimPrize(
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
         e: MouseEvent,
-        turnstileToken: string | undefined,
+        turnstile: TurnstilePass | undefined,
     ): Promise<ClaimPrizeOutcome> {
         if (!isTrustedClick(e)) {
             return { kind: "failed", message: i18nKey("prizes.claimFailed") };
@@ -9774,7 +9775,7 @@ export class OpenChat {
                 kind: "claimPrize",
                 chatId,
                 messageId,
-                turnstileToken,
+                turnstile,
             });
             if (resp.kind !== "success") {
                 return { kind: "failed", message: claimPrizeFailureReason(resp) };

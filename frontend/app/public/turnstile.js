@@ -4,9 +4,10 @@
 // turnstile.html (HumanCheckFrame.svelte), which reads it as a HumanCheckMessage.
 //
 // The fragment carries the widget's site key and the claim's custom data (`sitekey`, `cdata`), which
-// is "<user id>_<message id>". Cloudflare is given its SHA-256 in hex rather than the user's id, and
-// the LocalUserIndex checks the hash, so a token only serves that claim. The fragment is cleared
-// before Cloudflare's script runs on this page.
+// is "<user id>_<message id>". Cloudflare is given the SHA-256 in hex of that and a random salt, so it
+// can't tie the check to the user. The salt goes back with each token, for the LocalUserIndex to
+// check the token was issued for that claim. The fragment is cleared before Cloudflare's script runs
+// on this page.
 // Messages only go to the website itself and the apps, so a page elsewhere which frames this one
 // can't collect tokens solved by its own visitors.
 (async () => {
@@ -24,13 +25,19 @@
         }
     }
 
+    function hex(bytes) {
+        return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    let salt;
     let cData;
     try {
+        salt = hex(crypto.getRandomValues(new Uint8Array(16)));
         const digest = await crypto.subtle.digest(
             "SHA-256",
-            new TextEncoder().encode(params.get("cdata") ?? ""),
+            new TextEncoder().encode(`${params.get("cdata") ?? ""}_${salt}`),
         );
-        cData = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+        cData = hex(new Uint8Array(digest));
     } catch {
         post({ kind: "turnstile_error", code: "hash_failed" });
         return;
@@ -43,7 +50,7 @@
             cData,
             appearance: "interaction-only",
             size: "flexible",
-            callback: (token) => post({ kind: "turnstile_token", token }),
+            callback: (token) => post({ kind: "turnstile_token", token, salt }),
             "expired-callback": () => post({ kind: "turnstile_expired" }),
             "before-interactive-callback": () => post({ kind: "turnstile_interactive" }),
             "error-callback": (code) => post({ kind: "turnstile_error", code: String(code) }),

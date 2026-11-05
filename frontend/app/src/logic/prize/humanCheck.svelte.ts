@@ -1,6 +1,8 @@
+import type { TurnstilePass } from "@client";
+
 /** What the human check's frame (public/turnstile.js) tells the page that framed it. */
 export type HumanCheckMessage =
-    | { kind: "turnstile_token"; token: string }
+    | { kind: "turnstile_token"; token: string; salt: string }
     | { kind: "turnstile_expired" }
     | { kind: "turnstile_interactive" }
     | { kind: "turnstile_error"; code: string };
@@ -9,7 +11,12 @@ export function isHumanCheckMessage(data: unknown): data is HumanCheckMessage {
     if (typeof data !== "object" || data === null || !("kind" in data)) return false;
     switch (data.kind) {
         case "turnstile_token":
-            return "token" in data && typeof data.token === "string";
+            return (
+                "token" in data &&
+                typeof data.token === "string" &&
+                "salt" in data &&
+                typeof data.salt === "string"
+            );
         case "turnstile_error":
             return "code" in data && typeof data.code === "string";
         case "turnstile_expired":
@@ -28,7 +35,7 @@ export const HUMAN_CHECK_WAIT_MS = 30_000;
 type HumanCheckState =
     | { kind: "running" }
     | { kind: "interactive" }
-    | { kind: "passed"; token: string }
+    | { kind: "passed"; pass: TurnstilePass }
     | { kind: "failed" };
 
 /**
@@ -40,7 +47,7 @@ type HumanCheckState =
 export class HumanCheck {
     #state = $state<HumanCheckState>({ kind: "running" });
     #run = $state(0);
-    #waiting: ((token: string | undefined) => void)[] = [];
+    #waiting: ((pass: TurnstilePass | undefined) => void)[] = [];
     #deadline: ReturnType<typeof setTimeout> | undefined;
 
     /** Changes each time the check starts again. */
@@ -57,13 +64,14 @@ export class HumanCheck {
         switch (message.kind) {
             case "turnstile_token": {
                 this.#clearDeadline();
+                const pass = { token: message.token, salt: message.salt };
                 const waiting = this.#waiting.shift();
                 if (waiting !== undefined) {
                     this.#restart();
-                    waiting(message.token);
+                    waiting(pass);
                     this.#startDeadline();
                 } else {
-                    this.#state = { kind: "passed", token: message.token };
+                    this.#state = { kind: "passed", pass };
                 }
                 break;
             }
@@ -85,14 +93,14 @@ export class HumanCheck {
     }
 
     /**
-     * The token for a claim: at once if the check has passed, else once it does, running it again
-     * if it had failed. Undefined if it fails, or says nothing for HUMAN_CHECK_WAIT_MS.
+     * The token (and salt) for a claim: at once if the check has passed, else once it does, running
+     * it again if it had failed. Undefined if it fails, or says nothing for HUMAN_CHECK_WAIT_MS.
      */
-    take(): Promise<string | undefined> {
+    take(): Promise<TurnstilePass | undefined> {
         const state = this.#state;
         if (state.kind === "passed") {
             this.#restart();
-            return Promise.resolve(state.token);
+            return Promise.resolve(state.pass);
         }
         if (state.kind === "failed") {
             this.#restart();

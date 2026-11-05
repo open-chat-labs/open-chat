@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Expect a hash of the prize claim as Turnstile's custom data, rather than the user's id ([#10417](https://github.com/open-chat-labs/open-chat/pull/10417))
+- Expect a salted hash of the prize claim as Turnstile's custom data, rather than the user's id ([#10417](https://github.com/open-chat-labs/open-chat/pull/10417))
 
 ## [[2.0.2207](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2207-local_user_index)] - 2026-11-02
 
