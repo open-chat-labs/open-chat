@@ -3,13 +3,15 @@
     import {
         allUsersStore,
         currentUserIdStore,
-        FIND_MEMBERS_DELAY_MS,
+        MAX_MENTION_CANDIDATES_SHOWN,
+        mentionCandidateKey,
+        mentionCandidates,
         selectedChatMembersStore,
         selectedCommunityMembersStore,
     } from "@client";
     import { getContext, type Snippet } from "svelte";
+    import { MemberFinder } from "@src/logic/composer/composer";
 
-    const MAX_USERS = 200;
 
     const client = getContext<OpenChat>("client");
 
@@ -58,84 +60,34 @@
     // Rebuilt when the members change, which they do when those which weren't held are found
     let usersAndGroups = $derived.by(() => {
         void [$selectedChatMembersStore, $selectedCommunityMembersStore, $allUsersStore];
-        return Object.values(client.getUserLookupForMentions()).sort(
-            (a: UserOrUserGroup, b: UserOrUserGroup) => {
-                const order = { everyone: 1, user_group: 2, user: 3, bot: 4 };
-                return order[a.kind] - order[b.kind];
-            },
-        );
+        return Object.values(client.getUserLookupForMentions());
     });
 
     // A chat which holds only some of its members is searched for those matching what has been
     // typed
+    const finder = new MemberFinder((searchFor) => client.findMembersToMention(searchFor));
     $effect(() => {
-        const searchFor = prefix;
-        if (searchFor === undefined || searchFor.length < 2) return;
-        const timer = setTimeout(
-            () => client.findMembersToMention(searchFor),
-            FIND_MEMBERS_DELAY_MS,
-        );
-        return () => clearTimeout(timer);
+        finder.typed(prefix);
+        return () => finder.cancel();
     });
 
     function mention(userOrGroup: UserOrUserGroup) {
         onMention($state.snapshot(userOrGroup));
     }
 
-    function compareMatchNames(a: string, b: string): number {
-        // Order by length, then alphabetically
-        if (a === b) return 0;
-        if (a.length === b.length) {
-            return a < b ? -1 : 1;
-        }
-        return a.length < b.length ? -1 : 1;
-    }
     const itemHeight = 48;
     const borderWidth = 0;
     let maxHeight = $derived<string>(
         direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)",
     );
-    let prefixLower = $derived(prefix?.toLowerCase());
     let filtered = $derived(
-        usersAndGroups
-            .filter((userOrGroup) => {
-                switch (userOrGroup.kind) {
-                    case "user_group":
-                        return (
-                            !usersOnly &&
-                            (prefixLower === undefined ||
-                                (supportsUserGroups &&
-                                    userOrGroup.name.toLowerCase().startsWith(prefixLower)))
-                        );
-                    case "everyone": {
-                        return (
-                            !usersOnly &&
-                            (prefixLower === undefined || userOrGroup.kind.startsWith(prefixLower))
-                        );
-                    }
-                    default:
-                        return (
-                            (mentionSelf || userOrGroup.userId !== $currentUserIdStore) &&
-                            (prefixLower === undefined ||
-                                userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
-                                userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))
-                        );
-                }
-            })
-            .sort((a, b) => {
-                // 'everyone' first, then user groups, then users
-                if (a.kind === "everyone") return -1;
-                if (b.kind === "everyone") return 1;
-
-                if (a.kind === "user_group" && b.kind === "user_group") {
-                    return compareMatchNames(a.name, b.name);
-                }
-                if (a.kind === "user" && b.kind === "user") {
-                    return compareMatchNames(a.username, b.username);
-                }
-                return a.kind === "user_group" ? -1 : 1;
-            })
-            .slice(0, MAX_USERS),
+        mentionCandidates(usersAndGroups, prefix, {
+            me: $currentUserIdStore,
+            mentionSelf,
+            supportsUserGroups,
+            usersOnly,
+            keepUserOrder: false,
+        }).slice(0, MAX_MENTION_CANDIDATES_SHOWN),
     );
     let height = $derived(filtered.length * itemHeight + borderWidth);
     let style = $derived(
@@ -144,16 +96,7 @@
             : `top: ${offset}px; height: ${height}px; max-height: ${maxHeight}`,
     );
 
-    function userOrGroupKey(u: UserOrUserGroup): string {
-        switch (u.kind) {
-            case "user_group":
-                return u.id.toString();
-            case "everyone":
-                return "everyone";
-            default:
-                return u.userId;
-        }
-    }
+    const userOrGroupKey = mentionCandidateKey;
 </script>
 
 {@render children(

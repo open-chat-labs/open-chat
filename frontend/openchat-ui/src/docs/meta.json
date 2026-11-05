@@ -1754,6 +1754,28 @@
         "doc": ""
       },
       {
+        "name": "onMentionQuery",
+        "type": "ComposerProps['onMentionQuery']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "mentions",
+        "type": "ComposerProps['mentions']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
         "name": "attachment",
         "type": "ComposerProps['attachment']",
         "default": null,
@@ -13671,6 +13693,28 @@
         "required": false,
         "componentDefault": null,
         "doc": "The most a voice message may hold, in bytes: the recording stops there and says so."
+      },
+      {
+        "name": "onMentionQuery",
+        "type": "(query: string | undefined) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The \"@word\" being typed at the caret, without the \"@\" (\"\" just after it), as it changes; undefined once there's none."
+      },
+      {
+        "name": "mentions",
+        "type": "ComposerMention[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Who to offer for that word, in order: listed over the text box (↑ ↓ to move, Enter or Tab to pick, Esc to close); a pick puts \"@handle \" in its place."
       },
       {
         "name": "attachment",

@@ -1,4 +1,5 @@
 import {
+    FIND_MEMBERS_DELAY_MS,
     ScreenWidth,
     type MessagePermission,
     type UserGroupDetails,
@@ -12,6 +13,7 @@ import {
     entryNotice,
     entryPlaceholder,
     focusEntryOnOpen,
+    MemberFinder,
     pickableAttachments,
     throttleCountdown,
     TypingNotifier,
@@ -265,6 +267,35 @@ describe("what the entry offers to pick from the device", () => {
         expect(pickableAttachments(permitted("file", "text"))).toEqual(["file"]);
         expect(pickableAttachments(permitted("text", "audio"))).toEqual([]);
         expect(pickableAttachments(new Map([["image", false]]))).toEqual([]);
+    });
+});
+
+describe("looking for members to mention", () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    test("waits for two characters and a pause in typing", () => {
+        const find = vi.fn();
+        const finder = new MemberFinder(find);
+        finder.typed("a");
+        vi.advanceTimersByTime(FIND_MEMBERS_DELAY_MS);
+        expect(find).not.toHaveBeenCalled();
+
+        finder.typed("al");
+        finder.typed("ali");
+        vi.advanceTimersByTime(FIND_MEMBERS_DELAY_MS);
+        expect(find.mock.calls).toEqual([["ali"]]);
+    });
+
+    test("forgets what was typed once the @word is gone, or it's cancelled", () => {
+        const find = vi.fn();
+        const finder = new MemberFinder(find);
+        finder.typed("alice");
+        finder.typed(undefined);
+        finder.typed("bob");
+        finder.cancel();
+        vi.advanceTimersByTime(FIND_MEMBERS_DELAY_MS);
+        expect(find).not.toHaveBeenCalled();
     });
 });
 

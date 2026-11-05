@@ -105,7 +105,12 @@ design export needs. Each entry says where it came up.
 - **Voice messages**: `VoiceMessage` draws a fixed waveform and has no `levels` prop, though every
   OpenChat voice note has one.
 - **GIFs**: `MessageComposer` shows placeholder GIF tiles (`GIF_WORDS`) and has no results prop;
-  only `onGif(query)` goes out. The app searches KLIPY today.
+  only `onGif(query)` goes out. The app searches KLIPY today. Still so at 5c (2026-11-05), so the
+  composer has no GIF tab yet: it needs results (with a preview URL and size each, and more as the
+  list scrolls) and a pick handing one back. The old `GiphySelector`s' KLIPY search (paging, the
+  dedupe, the 500ms / 3-character wait, the last-page fix `c1a618b9bf`) moves to a client method
+  then, and a pick stages the GIF as the draft's attachment with the text as its caption (the
+  mobile app's way; the composer's media tray already shows a staged GIF).
 - **Proposals**: `ProposalMessage` isn't in the `GroupMessage` union, so `MessageGroup` can't
   render proposal chats. When it can, a vote that comes back `neuron_votes_failed` should list each
   neuron with its reason, as the old UI does.
@@ -137,6 +142,11 @@ design export needs. Each entry says where it came up.
   `voiceMaxBytes`: with it the audio comes in 200ms slices and the take stops for review once it
   holds that much, saying so ("Recording stopped at the size limit."). Without them it records
   as before.
+- **Composer mention list** (by hand, 5c, to take back to the design export, which has no mention
+  picker): `MessageComposer` (and `ComposerBar`) take `onMentionQuery` (the "@word" at the caret as
+  it changes, `mentionQuery.ts`, spec'd) and `mentions` (`ComposerMention`: the host's candidates
+  for it), listed over the text box as a listbox the text box drives (`aria-activedescendant`):
+  ↑ ↓, Enter or Tab, Esc, a click; a pick puts "@handle " in place of the word.
 - **Calls**: `CallPanel` / `VideoTile` render `MediaStream`s. The app uses Daily's prebuilt
   iframe, which doesn't expose them; it needs Daily's call-object mode (phase 7 decision).
   The call's menu must cope with its chat going away while the menu is open: the legacy desktop
@@ -1114,9 +1124,9 @@ design export needs. Each entry says where it came up.
   message offers a private reply, which would go to the bot. The client marks the viewer's own
   read (`isOwnMessage`), so that part needs nothing here.
 - **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text first; files,
-  media and voice came with 5c (below). GIFs and the "+" menu's builders are still to come
-  (`MessageComposer` hides the GIF tab without its handler). There's no @mention
-  picker (typed @usernames are still sent as mentions) and no rich-text editor (the old one showed
+  media, voice and the @mention picker came with 5c (below). GIFs and the "+" menu's builders are
+  still to come (`MessageComposer` hides the GIF tab without its handler). There's no rich-text
+  editor (the old one showed
   markdown as it was typed). The old desktop entry's link-count note ("Link previews are hidden
   for messages with more than 5 links", `excessiveLinksNote`) isn't carried over: it can't show
   any more, since `extractEnabledLinks` stops at the 3 links that get previews
@@ -1158,6 +1168,34 @@ design export needs. Each entry says where it came up.
   recorders now use), not in a bot DM, and only while nothing is typed or attached. A take stops at
   the size limit (`maxMediaSizes().audio`) and says so, where the old trees toasted `maxAudioSize`.
   The microphone is let go on leaving the chat (the composer is keyed per chat).
+- **The @mention picker** (5c): an "@word" typed at the caret lists who can be mentioned for it
+  over the text box (`mentionCandidates`, `@client`, which both old pickers now use: never the
+  reader, @everyone first, then the community's user groups, then members, each by the shortest
+  name; at most 200), with their avatar, name and @username; a chat that holds only some of its
+  members is searched for those it doesn't hold once two characters are typed (`MemberFinder`,
+  which both old pickers use too). ↑ ↓ move, Enter or Tab picks, Esc closes it for that word, a
+  click picks. A pick puts "@username " in the text, which the client mentions on sending (its
+  typed mentions), where the old editor held a mention node. So a user group whose name has
+  characters other than letters, digits and "_" (a "-", say) isn't mentioned when picked or typed:
+  the client's typed mentions stop at them. The old pickers' bots ordering was inconsistent (a bot
+  against a user compared "after" both ways); bots now sort with users by name. The list has no
+  design (`TODO(design)`): it's drawn as the composer's other popups.
+- **Composer, not yet** (5c, left for later pieces of it):
+  - bot commands: the old trees' `/` selector (the commands the reader's role, the chat's
+    permissions and the bot's granted permissions allow, `restrictByBot` / `restrictByChat` /
+    `hasPermissionForCommand` in both `CommandSelector`s, to move to `@client`), the arguments'
+    dialog (`CommandInstanceBuilder` and `CommandArg`: text, numbers, choices, a user, a date), the
+    failure toasts (`bots.failed`, `bots.tooManyRequests`) and a bot's ephemeral reply (above);
+    in a bot DM, a bot that takes no direct messages gets the composer's "couldn't send", not the
+    old `bots.direct.warning`. The design has none of it;
+  - GIFs (the library's results, above);
+  - the "+" menu's builders (`TODO(phase 5, 5d)`): poll, prize, send crypto, swap offer, Meme
+    Fighter, hidden in the app-store builds as in the mobile app (`disableSendCryptoFeature`,
+    `disableP2PSwapFeature`, `disableCreatePrizeFeature`). A draft that pays from an external
+    wallet must be approved by that wallet before it's sent (the mobile entry's
+    `externalWalletDraft`, to move to `@client`, a swap offer's allowance being the amount plus
+    two fees); until then the composer neither stages nor sends a prize, transfer or swap offer;
+  - the emoji autocomplete (`:smile`) both old editors had (`EmojiAutocompleter`).
 - **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
   edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text

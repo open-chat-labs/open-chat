@@ -14,6 +14,7 @@
         ComposerAttachKind,
         ComposerAttachment,
         ComposerContext,
+        ComposerMention,
     } from "@openchat/ui/src/lib/types";
     import { untrack, type ComponentProps } from "svelte";
     import { _ } from "svelte-i18n";
@@ -44,6 +45,8 @@
         onVoice,
         voiceMimeType,
         voiceMaxBytes,
+        onMentionQuery,
+        mentions,
     }: {
         // what stands in for the composer where the reader can't send
         block: EntryBlock | undefined;
@@ -85,6 +88,9 @@
         // what a recording is made in, and the most it may hold
         voiceMimeType: string | undefined;
         voiceMaxBytes: number;
+        // the "@word" being typed, and who's offered for it
+        onMentionQuery: (query: string | undefined) => void;
+        mentions: ComposerMention[];
     } = $props();
 
     let mediaInput = $state<HTMLInputElement>();
@@ -148,6 +154,8 @@
     // leaving, "stopped typing" would go to the chat selected next, so the others' "typing" is left
     // to run out by itself
     $effect(() => () => typing.cancel());
+    // leaving, no "@word" is being typed here any more
+    $effect(() => () => untrack(() => onMentionQuery(undefined)));
 
     function onInput(text: string) {
         // an empty or blank draft is no draft (as the old composer)
@@ -171,7 +179,7 @@
         <Banner tone={blocked.tone} text={$_(blocked.key)} />
     </div>
 {:else}
-    <!-- TODO(phase 5, 5c): GIFs, the mention picker and bot commands -->
+    <!-- TODO(phase 5, 5c): GIFs and bot commands -->
     <div class="entry" onpaste={paste}>
         <ComposerBar
             {text}
@@ -193,7 +201,9 @@
             {onRemoveAttachment}
             onVoice={onVoice === undefined ? undefined : ({ blob }) => onVoice(blob)}
             {voiceMimeType}
-            {voiceMaxBytes} />
+            {voiceMaxBytes}
+            {onMentionQuery}
+            {mentions} />
     </div>
     {#if onFile !== undefined}
         <input

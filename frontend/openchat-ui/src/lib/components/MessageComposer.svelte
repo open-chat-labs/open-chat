@@ -11,7 +11,7 @@
      --composer-pad, --composer-btn and --composer-btn-radius. -->
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
-  import type { ComposerAttachKind, ComposerAttachment, ComposerContext, MenuItem } from '../types';
+  import type { ComposerAttachKind, ComposerAttachment, ComposerContext, ComposerMention, MenuItem } from '../types';
   import EmojiPicker from './EmojiPicker.svelte';
   import Menu from './Menu.svelte';
   import SegmentedTabs from './SegmentedTabs.svelte';
@@ -19,6 +19,7 @@
   import { useT } from '../i18n';
   import { cssUrl } from '../cssUrl';
   import { deleteBackward, insertAt, type TextEdit } from '../textEdit';
+  import { insertMention, mentionAt } from '../mentionQuery';
 
   type AttachKind = ComposerAttachKind;
 
@@ -72,6 +73,11 @@
     voiceMimeType?: string;
     /** The most a voice message may hold, in bytes: the recording stops there and says so. */
     voiceMaxBytes?: number;
+    /** The "@word" being typed at the caret, without the "@" ("" just after it), as it changes; undefined once there's none. */
+    onMentionQuery?: (query: string | undefined) => void;
+    /** Who to offer for that word, in order: listed over the text box (↑ ↓ to move, Enter or Tab to pick, Esc to
+     *  close); a pick puts "@handle " in its place. */
+    mentions?: ComposerMention[];
     attachment?: ComposerAttachment | null;
     onEditAttachment?: () => void;
     onRemoveAttachment?: () => void;
@@ -114,6 +120,8 @@
     onVoice,
     voiceMimeType,
     voiceMaxBytes,
+    onMentionQuery,
+    mentions = [],
     attachment = null,
     onEditAttachment,
     onRemoveAttachment,
@@ -247,7 +255,66 @@
       if (focus) el.focus();
       el.selectionStart = el.selectionEnd = next.caret;
     }
+    caret = next.caret;
     grow();
+  }
+
+  // mentions: the "@word" at the caret goes to the host, which offers who to mention for it
+  const uid = $props.id();
+  const mentionListId = `${uid}-mentions`;
+  let caret = $state(0);
+  let mentionIndex = $state(0);
+  // Esc closes the list for that "@word" (until it's gone)
+  let dismissedAt = $state<number | undefined>(undefined);
+  const mention = $derived(focused ? mentionAt(draft, Math.min(caret, draft.length)) : undefined);
+  const mentionOpen = $derived(!!mention && mentions.length > 0 && !menu && !voice && dismissedAt !== mention.start);
+  const activeMention = $derived(Math.min(mentionIndex, mentions.length - 1));
+
+  function syncCaret() {
+    if (input) caret = input.selectionEnd;
+  }
+
+  let reportedMention: string | undefined = undefined;
+  $effect(() => {
+    const query = mention?.query;
+    if (query === reportedMention) return;
+    reportedMention = query;
+    mentionIndex = 0;
+    if (query === undefined) dismissedAt = undefined;
+    untrack(() => onMentionQuery?.(query));
+  });
+
+  function pickMention(m: ComposerMention) {
+    const at = mention;
+    if (!at) return;
+    void editDraft((d, _start, end) => insertMention(d, at.start, end, m.handle), true);
+  }
+
+  // the list's keys, while it's open: true when the key was the list's
+  function mentionKey(e: KeyboardEvent): boolean {
+    if (!mentionOpen || !mention || e.isComposing) return false;
+    const n = mentions.length;
+    switch (e.key) {
+      case 'ArrowDown':
+      case 'ArrowUp':
+        mentionIndex = (activeMention + (e.key === 'ArrowDown' ? 1 : n - 1)) % n;
+        // the highlighted one stays in view
+        void tick().then(() => document.getElementById(`${mentionListId}-${activeMention}`)?.scrollIntoView({ block: 'nearest' }));
+        break;
+      case 'Enter':
+      case 'Tab':
+        if (e.shiftKey) return false;
+        pickMention(mentions[activeMention]);
+        break;
+      case 'Escape':
+        dismissedAt = mention.start;
+        e.stopPropagation();
+        break;
+      default:
+        return false;
+    }
+    e.preventDefault();
+    return true;
   }
 
   // the composer's own emoji picker: at the caret, focusing the field
@@ -712,6 +779,31 @@
       <Menu heading={t('ui.messageComposer.addHeading')} minWidth="232px" items={plusItems} />
     </div>
   {/if}
+  {#if mentionOpen}
+    <!-- TODO(design): no mention list in the design; drawn as the composer's other popups -->
+    <div class="popup mentions" id={mentionListId} role="listbox" aria-label={t('ui.messageComposer.mentions')}>
+      {#each mentions as m, i (m.key)}
+        <!-- the text box keeps the focus (and the keys: aria-activedescendant) -->
+        <div
+          class="mention"
+          class:on={i === activeMention}
+          id="{mentionListId}-{i}"
+          role="option"
+          tabindex="-1"
+          aria-selected={i === activeMention}
+          onmousedown={(e) => e.preventDefault()}
+          onmousemove={() => (mentionIndex = i)}
+          onclick={() => pickMention(m)}
+        >
+          <span class="mention-avatar" style:background={m.avatar ? `center/cover no-repeat ${cssUrl(m.avatar)}` : undefined}>
+            {#if !m.avatar}<span class="mention-icon" style:mask="var(--icon-{m.group ? 'users' : 'user'}) center/contain no-repeat"></span>{/if}
+          </span>
+          <span class="mention-name">{m.name}</span>
+          {#if m.handle !== m.name}<span class="mention-handle">@{m.handle}</span>{/if}
+        </div>
+      {/each}
+    </div>
+  {/if}
   {#if menu === 'picker'}
     <div class="popup picker" role="dialog" aria-label={t(tab ? 'ui.messageComposer.gifs' : 'ui.messageComposer.emoji')}>
       <!-- GIFs only for a host that takes them -->
@@ -869,16 +961,26 @@
           value={draft}
           oninput={(e) => {
             draft = e.currentTarget.value;
+            syncCaret();
             grow();
           }}
           onkeydown={(e) => {
+            if (mentionKey(e)) return;
             if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && (enterSends || e.ctrlKey || e.metaKey)) {
               e.preventDefault();
               send();
             }
           }}
-          onfocus={() => (focused = true)}
+          onkeyup={syncCaret}
+          onclick={syncCaret}
+          onfocus={() => {
+            focused = true;
+            syncCaret();
+          }}
           onblur={() => (focused = false)}
+          aria-autocomplete={onMentionQuery ? 'list' : undefined}
+          aria-controls={mentionOpen ? mentionListId : undefined}
+          aria-activedescendant={mentionOpen ? `${mentionListId}-${activeMention}` : undefined}
           placeholder={t(att ? 'ui.messageComposer.addCaption' : placeholder)}
           aria-label={t(att ? 'ui.messageComposer.addCaption' : placeholder)}
         ></textarea>
@@ -976,6 +1078,63 @@
     box-shadow:
       inset 0 0 0 1px var(--line-2),
       var(--shadow-panel);
+  }
+
+  .mentions {
+    width: min(320px, 100%);
+    max-height: 264px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    background: var(--surface-2);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2),
+      var(--shadow-panel);
+  }
+
+  .mention {
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    height: 40px;
+    padding: 0 var(--space-8);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+
+    &.on {
+      background: var(--overlay-1);
+    }
+  }
+
+  .mention-avatar {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--overlay-2);
+  }
+
+  .mention-icon {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-3);
+  }
+
+  .mention-name {
+    min-width: 0;
+    font: var(--weight-medium) var(--text-sm) / 1.2 var(--font-sans);
+    color: var(--ink);
+    @include truncate;
+  }
+
+  .mention-handle {
+    min-width: 0;
+    font: var(--weight-regular) var(--text-xs) / 1.2 var(--font-sans);
+    color: var(--ink-4);
+    @include truncate;
   }
 
   .emoji-area {

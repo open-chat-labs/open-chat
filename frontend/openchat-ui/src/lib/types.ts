@@ -252,6 +252,20 @@ export interface MediaAttachment {
   items: { kind: 'image' | 'video'; src?: string; bg?: string; dur?: string }[];
 }
 
+/** Someone (a user, a group, everyone) MessageComposer offers to mention for the "@word" being typed. */
+export interface ComposerMention {
+  /** The same while it's the same user or group. */
+  key: string;
+  /** What's put in after the "@": a username, a group's name. */
+  handle: string;
+  /** The name shown, with "@handle" beside it. */
+  name: string;
+  /** Avatar image URL (a user's); without one, a user or group icon. */
+  avatar?: string;
+  /** A group (or everyone): the group icon. */
+  group?: boolean;
+}
+
 /** What MessageComposer's + menu offers to attach. */
 export type ComposerAttachKind = 'media' | 'file' | 'poll' | 'prize' | 'crypto' | 'swap' | 'memeFighter';
 

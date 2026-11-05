@@ -1,4 +1,5 @@
 import {
+    FIND_MEMBERS_DELAY_MS,
     isCaptionedContent,
     ScreenWidth,
     stripLinkDisabledMarker,
@@ -206,6 +207,32 @@ export function pickableAttachments(
     if (permitted.get("image") || permitted.get("video")) kinds.push("media");
     if (permitted.get("file")) kinds.push("file");
     return kinds;
+}
+
+// as the old pickers: what's typed after the "@" is looked for once it's this long
+const FIND_MEMBERS_FROM = 2;
+
+/**
+ * Looks for the members a chat doesn't hold that match what's typed after an "@" (a big group
+ * holds only some of its members), once it's two characters long and typing has paused
+ * (`FIND_MEMBERS_DELAY_MS`). Every mention picker uses it.
+ */
+export class MemberFinder {
+    #timer: ReturnType<typeof setTimeout> | undefined;
+
+    constructor(private readonly find: (prefix: string) => void) {}
+
+    /** What's typed after the "@" changed; none once there's no "@word". */
+    typed(prefix: string | undefined): void {
+        this.cancel();
+        if (prefix === undefined || prefix.length < FIND_MEMBERS_FROM) return;
+        this.#timer = setTimeout(() => this.find(prefix), FIND_MEMBERS_DELAY_MS);
+    }
+
+    cancel(): void {
+        clearTimeout(this.#timer);
+        this.#timer = undefined;
+    }
 }
 
 /**

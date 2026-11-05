@@ -168,6 +168,13 @@ export {
 export type { TrackingCategory } from "./utils/ga";
 export { toRecord } from "./utils/list";
 export {
+    MAX_MENTION_CANDIDATES_SHOWN,
+    mentionCandidateKey,
+    mentionCandidates,
+    mentionName,
+    type MentionCandidateOptions,
+} from "./utils/mentionCandidates";
+export {
     audioContent,
     audioRecordingMimeType,
     quantiseWaveform,

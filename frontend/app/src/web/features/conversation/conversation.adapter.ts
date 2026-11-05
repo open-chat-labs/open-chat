@@ -4,6 +4,8 @@ import {
     formatFileSize,
     formatTokens,
     i18nKey,
+    mentionCandidateKey,
+    mentionName,
     ogPreviewCard,
     pollView,
     prizeView,
@@ -28,12 +30,15 @@ import {
     type PrizeReader,
     type ResourceKey,
     type TokenInfo,
+    type UserOrUserGroup,
+    type UserSummary,
     type VideoContent,
 } from "@client";
 import type ChatBubble from "@openchat/ui/src/lib/components/ChatBubble.svelte";
 import type {
     ComposerAttachment,
     ComposerContext,
+    ComposerMention,
     GroupMessage,
     MenuItem,
 } from "@openchat/ui/src/lib/types";
@@ -730,6 +735,29 @@ export function composerAttachment(
         // TODO(phase 5, 5d): the "+" builders' contents
         default:
             return null;
+    }
+}
+
+/**
+ * Someone (or a group, or everyone) the composer offers to mention: `mentionCandidates`' order,
+ * picked as `@` and the name typed to mention them (`mentionName`), shown by their display name.
+ */
+export function composerMention(
+    candidate: UserOrUserGroup,
+    avatarUrl: (user: UserSummary) => string | undefined,
+): ComposerMention {
+    const handle = mentionName(candidate);
+    switch (candidate.kind) {
+        case "user_group":
+        case "everyone":
+            return { key: mentionCandidateKey(candidate), handle, name: handle, group: true };
+        default:
+            return {
+                key: mentionCandidateKey(candidate),
+                handle,
+                name: candidate.displayName ?? candidate.username,
+                avatar: avatarUrl(candidate),
+            };
     }
 }
 

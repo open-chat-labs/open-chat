@@ -40,6 +40,8 @@
         isPreviewingOrLapsed,
         isPrivateCommunityPreview,
         localUpdates,
+        MAX_MENTION_CANDIDATES_SHOWN,
+        mentionCandidates,
         messageContextsEqual,
         messageIndexStore,
         messageMenu,
@@ -49,12 +51,14 @@
         publish,
         screenWidth,
         selectedChatBlockedUsersStore,
+        selectedChatMembersStore,
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
         selectedChatPinnedMessagesStore,
         selectedChatWebhooksStore,
         selectedChatSummaryStore,
+        selectedCommunityMembersStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
         suspendedUserStore,
@@ -101,6 +105,7 @@
         entryNotice,
         entryPlaceholder,
         focusEntryOnOpen,
+        MemberFinder,
         pickableAttachments,
         throttleCountdown,
     } from "@src/logic/composer/composer";
@@ -139,6 +144,7 @@
     import {
         composerAttachment,
         composerContext,
+        composerMention,
         composerStartText,
         headerMenuItems,
         isMedia,
@@ -512,6 +518,33 @@
         );
         if (outcome.kind !== "posted") throw new Error(outcome.kind);
     }
+
+    // the @mention picker: for the "@word" being typed, who in this chat can be mentioned (never
+    // the reader; @everyone first), and, in a chat that holds only some of its members, those it
+    // doesn't hold who match once two characters are typed
+    let mentionQuery = $state<string | undefined>(undefined);
+    const memberFinder = new MemberFinder((prefix) => client.findMembersToMention(prefix));
+    $effect(() => () => memberFinder.cancel());
+
+    function mentionQueried(query: string | undefined) {
+        mentionQuery = query;
+        memberFinder.typed(query);
+    }
+
+    const mentions = $derived.by(() => {
+        if (mentionQuery === undefined || chat === undefined) return [];
+        // what the lookup reads through `.value`: it changes as members not held are found
+        void [$selectedChatMembersStore, $selectedCommunityMembersStore, $allUsersStore];
+        return mentionCandidates(Object.values(client.getUserLookupForMentions()), mentionQuery, {
+            me,
+            mentionSelf: false,
+            supportsUserGroups: true,
+            usersOnly: false,
+            keepUserOrder: false,
+        })
+            .slice(0, MAX_MENTION_CANDIDATES_SHOWN)
+            .map((candidate) => composerMention(candidate, (user) => client.userAvatarUrl(user)));
+    });
 
     // a file picked, pasted or dropped goes to the chat it was picked in, if it may be sent there
     async function attachFile(chatId: ChatIdentifier, file: File) {
@@ -1548,6 +1581,8 @@
                     : undefined}
                 {voiceMimeType}
                 voiceMaxBytes={client.maxMediaSizes().audio}
+                onMentionQuery={mentionQueried}
+                {mentions}
             />
         {/key}
     </div>

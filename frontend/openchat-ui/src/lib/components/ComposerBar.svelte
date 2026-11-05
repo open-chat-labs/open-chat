@@ -33,6 +33,8 @@
     onVoice?: ComposerProps['onVoice'];
     voiceMimeType?: ComposerProps['voiceMimeType'];
     voiceMaxBytes?: ComposerProps['voiceMaxBytes'];
+    onMentionQuery?: ComposerProps['onMentionQuery'];
+    mentions?: ComposerProps['mentions'];
     attachment?: ComposerProps['attachment'];
     onEditAttachment?: () => void;
     onRemoveAttachment?: () => void;

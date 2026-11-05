@@ -2,6 +2,7 @@ import type { EventWrapper, Message, MessageMenuAction } from "@client";
 import {
     composerAttachment,
     composerContext,
+    composerMention,
     composerStartText,
     mediaHeld,
     messageMenuItems,
@@ -410,6 +411,47 @@ describe("the composer's reply or edit strip", () => {
             mode: "edit",
             quote: "hi @UserId(alice)",
             text: "hi @alice",
+        });
+    });
+});
+
+describe("someone the composer offers to mention", () => {
+    const avatar = (u: { userId: string }) => `https://avatar/${u.userId}`;
+    const alice = {
+        kind: "user" as const,
+        userId: "a",
+        username: "alice",
+        displayName: "Ally",
+        updated: 0n,
+        suspended: false,
+        diamondStatus: "inactive" as const,
+        chitBalance: 0,
+        totalChitEarned: 0,
+        streak: 0,
+        maxStreak: 0,
+        isUniquePerson: false,
+        hideOnlineStatus: false,
+    };
+
+    test("is picked by the name typed to mention them, and shown by their display name", () => {
+        expect(composerMention(alice, avatar)).toEqual({
+            key: "a",
+            handle: "alice",
+            name: "Ally",
+            avatar: "https://avatar/a",
+        });
+        expect(composerMention({ ...alice, displayName: undefined }, avatar).name).toBe("alice");
+    });
+
+    test("a group, or everyone, is its name with the group icon", () => {
+        expect(
+            composerMention({ kind: "user_group", id: 3, name: "devs", memberCount: 2 }, avatar),
+        ).toEqual({ key: "3", handle: "devs", name: "devs", group: true });
+        expect(composerMention({ kind: "everyone" }, avatar)).toEqual({
+            key: "everyone",
+            handle: "everyone",
+            name: "everyone",
+            group: true,
         });
     });
 });
