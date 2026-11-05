@@ -7,10 +7,10 @@ import {
 import type { HumanCheck } from "./humanCheck.svelte";
 
 /**
- * Claims a prize from the reader's click, with the token of the prize's human check (waiting for
- * it if the check is still running). A check that fails still claims, without a token, for the
- * backend to refuse once it requires one. What to tell the reader, if anything: a script's click
- * claims nothing and says nothing, and takes no token.
+ * Claims a prize from the reader's click, running the prize's human check and claiming with its
+ * token. A check that fails still claims, without a token, for the backend to refuse once it
+ * requires one. What to tell the reader, if anything: a script's click claims nothing and says
+ * nothing, and doesn't start the check.
  */
 export async function claimPrizeWithHumanCheck(
     client: Pick<OpenChat, "claimPrize">,

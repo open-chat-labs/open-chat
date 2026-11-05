@@ -1,7 +1,8 @@
-<!-- A prize's human check (HumanCheck), run in a frame from the website (public/turnstile.html). The
-     apps load it from the website too: Cloudflare fails every check run on the iOS app's tauri://
-     page, but passes one in a frame from a web origin. It takes no room unless Cloudflare asks the
-     reader to tick its box. -->
+<!-- A prize's human check (HumanCheck), run in a frame from the website (public/turnstile.html) once
+     the reader clicks Claim. The apps load it from the website too: Cloudflare fails every check run
+     on the iOS app's tauri:// page, but passes one in a frame from a web origin. There's no frame
+     until a claim runs the check, and it takes no room unless Cloudflare asks the reader to tick
+     its box. -->
 <script lang="ts">
     import type { OpenChat } from "@client";
     import { isHumanCheckMessage, type HumanCheck } from "@src/logic/prize/humanCheck.svelte";
@@ -38,13 +39,15 @@
 
 <svelte:window onmessage={onMessage} />
 
-{#key check.run}
-    <iframe
-        bind:this={frame}
-        {src}
-        title={$_("prizes.humanCheck")}
-        class:interactive={check.interactive}></iframe>
-{/key}
+{#if check.running}
+    {#key check.run}
+        <iframe
+            bind:this={frame}
+            {src}
+            title={$_("prizes.humanCheck")}
+            class:interactive={check.interactive}></iframe>
+    {/key}
+{/if}
 
 <style lang="scss">
     iframe {

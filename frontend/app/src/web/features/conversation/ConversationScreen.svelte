@@ -1006,8 +1006,7 @@
         if (!voted) toastStore.showFailureToast(i18nKey("poll.voteFailed"));
     }
 
-    // each claimable prize's human check, run as it shows (HumanCheckFrame, under its card) so a
-    // claim needn't wait for it
+    // each prize's human check, which a claim click starts (HumanCheckFrame, under its card)
     const humanChecks = new Map<bigint, HumanCheck>();
     function humanCheckFor(messageId: bigint): HumanCheck {
         let check = humanChecks.get(messageId);
@@ -1282,7 +1281,8 @@
                                             offers,
                                         )}
                                     />
-                                    {#if row.message.kind === "prize" && row.message.canClaim}
+                                    <!-- kept while a claim's check runs, even if the prize runs out meanwhile -->
+                                    {#if row.message.kind === "prize"}
                                         <HumanCheckFrame
                                             check={humanCheckFor(msg.messageId)}
                                             customData={prizeClaimCustomData(me, msg.messageId)}

@@ -51,7 +51,6 @@
             appearance: "interaction-only",
             size: "flexible",
             callback: (token) => post({ kind: "turnstile_token", token, salt }),
-            "expired-callback": () => post({ kind: "turnstile_expired" }),
             "before-interactive-callback": () => post({ kind: "turnstile_interactive" }),
             "error-callback": (code) => post({ kind: "turnstile_error", code: String(code) }),
             "timeout-callback": () => post({ kind: "turnstile_error", code: "timeout" }),

@@ -56,7 +56,7 @@
     let progressWidth = $state(0);
     const humanCheck = new HumanCheck();
 
-    // Claims with the token of the prize's human check, which runs as the prize shows
+    // Claims with the token of the prize's human check, which the click starts
     async function claim(e: MouseEvent) {
         if (!isTrustedClick(e) || chatId.kind === "direct_chat" || !view.canClaim) return;
 
@@ -268,11 +268,10 @@
                                         : "prizes.claim",
                             )} /></SecureButton>
                 </ButtonGroup>
-                {#if view.canClaim}
-                    <HumanCheckFrame
-                        check={humanCheck}
-                        customData={prizeClaimCustomData($currentUserIdStore, messageId)} />
-                {/if}
+                <!-- Kept while a claim's check runs, even if the prize runs out meanwhile -->
+                <HumanCheckFrame
+                    check={humanCheck}
+                    customData={prizeClaimCustomData($currentUserIdStore, messageId)} />
             {/if}
         </div>
     </div>

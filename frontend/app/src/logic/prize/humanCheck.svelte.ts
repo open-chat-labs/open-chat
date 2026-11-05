@@ -3,7 +3,6 @@ import type { TurnstilePass } from "@client";
 /** What the human check's frame (public/turnstile.js) tells the page that framed it. */
 export type HumanCheckMessage =
     | { kind: "turnstile_token"; token: string; salt: string }
-    | { kind: "turnstile_expired" }
     | { kind: "turnstile_interactive" }
     | { kind: "turnstile_error"; code: string };
 
@@ -19,7 +18,6 @@ export function isHumanCheckMessage(data: unknown): data is HumanCheckMessage {
             );
         case "turnstile_error":
             return "code" in data && typeof data.code === "string";
-        case "turnstile_expired":
         case "turnstile_interactive":
             return true;
         default:
@@ -28,31 +26,32 @@ export function isHumanCheckMessage(data: unknown): data is HumanCheckMessage {
 }
 
 // How long a claim waits for a check which says nothing (its frame didn't load, say), before
-// going ahead without it and running the check again. Not while the reader is asked to tick
-// Cloudflare's box: Turnstile times that out itself.
+// going ahead without it. Not while the reader is asked to tick Cloudflare's box: Turnstile times
+// that out itself.
 export const HUMAN_CHECK_WAIT_MS = 30_000;
 
-type HumanCheckState =
-    | { kind: "running" }
-    | { kind: "interactive" }
-    | { kind: "passed"; pass: TurnstilePass }
-    | { kind: "failed" };
+type HumanCheckState = { kind: "idle" } | { kind: "running" } | { kind: "interactive" };
 
 /**
- * A prize's check that the reader is human (Cloudflare Turnstile), run as the prize shows so a
- * claim needn't wait for it. Its token serves one claim of this prize by this reader, so each claim
- * takes it and the check runs again, ready for a retry. The frame (HumanCheckFrame) is keyed on
- * `run`, and passes on what the check says.
+ * A prize's check that the reader is human (Cloudflare Turnstile). It runs only once the reader
+ * clicks Claim, so Cloudflare hears nothing from anyone who doesn't. Its token serves one claim of
+ * this prize by this reader, so each claim runs it afresh. The frame (HumanCheckFrame) is there
+ * while it runs, keyed on `run`, and passes on what the check says.
  */
 export class HumanCheck {
-    #state = $state<HumanCheckState>({ kind: "running" });
+    #state = $state<HumanCheckState>({ kind: "idle" });
     #run = $state(0);
     #waiting: ((pass: TurnstilePass | undefined) => void)[] = [];
     #deadline: ReturnType<typeof setTimeout> | undefined;
 
-    /** Changes each time the check starts again. */
+    /** Changes each time the check starts. */
     get run(): number {
         return this.#run;
+    }
+
+    /** A claim is waiting for the check. */
+    get running(): boolean {
+        return this.#state.kind !== "idle";
     }
 
     /** Cloudflare wants the reader to tick its box. */
@@ -62,22 +61,16 @@ export class HumanCheck {
 
     receive(message: HumanCheckMessage): void {
         switch (message.kind) {
-            case "turnstile_token": {
+            case "turnstile_token":
                 this.#clearDeadline();
-                const pass = { token: message.token, salt: message.salt };
-                const waiting = this.#waiting.shift();
-                if (waiting !== undefined) {
-                    this.#restart();
-                    waiting(pass);
+                this.#waiting.shift()?.({ token: message.token, salt: message.salt });
+                // A claim made while that one waited needs a token of its own
+                if (this.#waiting.length > 0) {
+                    this.#start();
                     this.#startDeadline();
                 } else {
-                    this.#state = { kind: "passed", pass };
+                    this.#state = { kind: "idle" };
                 }
-                break;
-            }
-            // The widget renews an expired token itself
-            case "turnstile_expired":
-                this.#state = { kind: "running" };
                 break;
             case "turnstile_interactive":
                 this.#clearDeadline();
@@ -85,25 +78,18 @@ export class HumanCheck {
                 break;
             case "turnstile_error":
                 console.warn("Human check failed", message.code);
-                this.#clearDeadline();
-                this.#state = { kind: "failed" };
-                this.#settleWaiting();
+                this.#stop();
                 break;
         }
     }
 
     /**
-     * The token (and salt) for a claim: at once if the check has passed, else once it does, running
-     * it again if it had failed. Undefined if it fails, or says nothing for HUMAN_CHECK_WAIT_MS.
+     * Runs the check for a claim, and gives its token (and salt) once it passes. Undefined if it
+     * fails, or says nothing for HUMAN_CHECK_WAIT_MS.
      */
     take(): Promise<TurnstilePass | undefined> {
-        const state = this.#state;
-        if (state.kind === "passed") {
-            this.#restart();
-            return Promise.resolve(state.pass);
-        }
-        if (state.kind === "failed") {
-            this.#restart();
+        if (this.#state.kind === "idle") {
+            this.#start();
         }
         return new Promise((resolve) => {
             this.#waiting.push(resolve);
@@ -111,12 +97,15 @@ export class HumanCheck {
         });
     }
 
-    #restart() {
+    #start() {
         this.#state = { kind: "running" };
         this.#run += 1;
     }
 
-    #settleWaiting() {
+    // Ends the check, failing the claims waiting for it
+    #stop() {
+        this.#clearDeadline();
+        this.#state = { kind: "idle" };
         const waiting = this.#waiting;
         this.#waiting = [];
         waiting.forEach((resolve) => resolve(undefined));
@@ -133,8 +122,7 @@ export class HumanCheck {
         this.#deadline = setTimeout(() => {
             this.#deadline = undefined;
             console.warn("Human check timed out");
-            this.#restart();
-            this.#settleWaiting();
+            this.#stop();
         }, HUMAN_CHECK_WAIT_MS);
     }
 
