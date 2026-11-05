@@ -1,7 +1,7 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use types::{FcmToken, SubscriptionInfo, UserId};
+use types::{ApnsDevice, ApnsToken, FcmToken, SubscriptionInfo, UserId};
 
 mod lifecycle;
 mod queries;
@@ -23,6 +23,10 @@ pub enum NotificationsIndexEvent {
     BotRemoved(UserId),
     FcmTokenAdded(UserId, FcmToken),
     FcmTokenRemoved(UserId, FcmToken),
+    // Applied to `ApnsDeviceStore` in the same order on every local user index (#10398)
+    ApnsDeviceRegistered(UserId, ApnsDevice),
+    ApnsDeviceRemoved(UserId, ApnsDevice),
+    ApnsTokenRemoved(UserId, ApnsToken),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

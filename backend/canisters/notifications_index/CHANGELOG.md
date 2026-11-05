@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Register iOS devices for APNs pushes, last login wins, and remove them on sign-out or when APNs rejects a token ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+
 ### Fixed
 
 - Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))

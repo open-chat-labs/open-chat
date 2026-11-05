@@ -40,6 +40,10 @@ fn notify_local_index_added_impl(args: Args, state: &mut RuntimeState) -> Respon
         events.push(NotificationsIndexEvent::FcmTokenAdded(*user_id, fcm_token.clone()));
     }
 
+    for (user_id, device) in state.data.apns_device_store.iter() {
+        events.push(NotificationsIndexEvent::ApnsDeviceRegistered(*user_id, device.clone()));
+    }
+
     state.data.local_index_event_sync_queue.push_many(
         args.canister_id,
         events

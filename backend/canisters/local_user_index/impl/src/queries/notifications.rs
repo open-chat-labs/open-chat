@@ -35,6 +35,7 @@ pub(crate) fn notifications_impl(args: Args, state: &RuntimeState) -> Response {
                             .iter()
                             .map(|s| match s {
                                 NotificationSubscription::WebPush(web_push) => web_push.approx_size(),
+                                NotificationSubscription::ApnsPush(device) => device.approx_size(),
                                 // TODO add FCM push size calculation
                                 _ => 0,
                             })
@@ -103,5 +104,13 @@ fn get_notification_subscriptions(user_id: &UserId, state: &RuntimeState) -> Vec
         .collect();
 
     web_push_subs_for_user.extend(fcm_tokens_for_user);
+    web_push_subs_for_user.extend(
+        state
+            .data
+            .apns_device_store
+            .get_for_user(user_id)
+            .iter()
+            .map(|d| NotificationSubscription::ApnsPush(d.clone())),
+    );
     web_push_subs_for_user
 }

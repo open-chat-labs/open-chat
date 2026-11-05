@@ -1,10 +1,10 @@
 use ic_agent::identity::{BasicIdentity, Secp256k1Identity};
 use ic_agent::{Agent, Identity};
 use local_user_index_canister::{latest_notification_index, notifications, remove_notifications};
-use notifications_index_canister::{remove_fcm_tokens, remove_subscriptions};
+use notifications_index_canister::{remove_apns_tokens, remove_fcm_tokens, remove_subscriptions};
 use std::collections::HashMap;
 use tracing::trace;
-use types::{CanisterId, Empty, Error, FcmToken, UserId};
+use types::{ApnsToken, CanisterId, Empty, Error, FcmToken, UserId};
 
 #[derive(Clone)]
 pub struct IcAgent {
@@ -118,6 +118,25 @@ impl IcAgent {
         trace!(?args, "remove_fcm_tokens::args");
 
         notifications_index_canister_client::remove_fcm_tokens(&self.agent, index_canister_id, &args).await?;
+
+        Ok(())
+    }
+
+    pub async fn remove_apns_tokens(
+        &self,
+        index_canister_id: &CanisterId,
+        tokens_by_user: HashMap<UserId, Vec<ApnsToken>>,
+    ) -> Result<(), Error> {
+        let tokens_by_user = tokens_by_user
+            .into_iter()
+            .map(|(user_id, tokens)| remove_apns_tokens::UserApnsTokens { user_id, tokens })
+            .collect();
+
+        let args = remove_apns_tokens::Args { tokens_by_user };
+
+        trace!(?args, "remove_apns_tokens::args");
+
+        notifications_index_canister_client::remove_apns_tokens(&self.agent, index_canister_id, &args).await?;
 
         Ok(())
     }

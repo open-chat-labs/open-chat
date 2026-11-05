@@ -35,6 +35,10 @@
         {
           "name": "GCLOUD_SA_JSON",
           "valueFrom": "arn:aws:ssm:us-east-1:253040722768:parameter/notification-pusher/GCLOUD_SA_JSON"
+        },
+        {
+          "name": "APNS_KEY_P8",
+          "valueFrom": "arn:aws:ssm:us-east-1:253040722768:parameter/notification-pusher/APNS_KEY_P8"
         }
       ],
       "linuxParameters": {

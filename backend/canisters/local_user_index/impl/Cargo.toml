@@ -69,3 +69,6 @@ user_index_canister = { path = "../../user_index/api" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 utils = { path = "../../../libraries/utils" }
 x509-parser = { workspace = true }
+
+[dev-dependencies]
+rmpv = { workspace = true }

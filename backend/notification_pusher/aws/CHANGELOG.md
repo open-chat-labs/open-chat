@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Push to iOS devices straight through APNs, with a token-based `.p8` key, and remove tokens APNs rejects ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+
 ### Changed
 
 - Push each bot's notifications from its own queue, with timeouts and retries for up to 5 minutes, so a slow or unreachable bot only delays its own ([#10065](https://github.com/open-chat-labs/open-chat/pull/10065))

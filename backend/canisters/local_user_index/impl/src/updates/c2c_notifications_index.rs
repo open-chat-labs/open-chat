@@ -37,6 +37,15 @@ fn c2c_notifications_index_impl(args: Args, state: &mut RuntimeState) -> Respons
                 NotificationsIndexEvent::FcmTokenRemoved(user_id, fcm_token) => {
                     let _ = state.data.fcm_token_store.remove(&user_id, &fcm_token);
                 }
+                NotificationsIndexEvent::ApnsDeviceRegistered(user_id, device) => {
+                    state.data.apns_device_store.register(user_id, device);
+                }
+                NotificationsIndexEvent::ApnsDeviceRemoved(user_id, device) => {
+                    state.data.apns_device_store.remove_device(&user_id, &device);
+                }
+                NotificationsIndexEvent::ApnsTokenRemoved(user_id, token) => {
+                    state.data.apns_device_store.remove_token(&user_id, &token);
+                }
                 NotificationsIndexEvent::UserBlocked(..)
                 | NotificationsIndexEvent::UserUnblocked(..)
                 | NotificationsIndexEvent::BotEndpointUpdated(..)

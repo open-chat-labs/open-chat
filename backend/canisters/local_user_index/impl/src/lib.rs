@@ -57,6 +57,7 @@ use types::{
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
+use utils::apns_device_store::ApnsDeviceStore;
 use utils::canister;
 use utils::canister::{
     CanistersRequiringUpgrade, ChunkedWasmToInstall, FailedUpgradeCount, VersionedWasmToInstall, WasmToInstall,
@@ -543,7 +544,8 @@ impl RuntimeState {
                     .into_iter()
                     .filter(|u| {
                         (self.data.web_push_subscriptions.any_for_user(u)
-                            || !self.data.fcm_token_store.get_for_user(u).is_empty())
+                            || !self.data.fcm_token_store.get_for_user(u).is_empty()
+                            || self.data.apns_device_store.has_any(u))
                             && !users_who_have_blocked_sender.contains(u)
                     })
                     .collect();
@@ -836,6 +838,7 @@ impl RuntimeState {
             latest_notification_index: self.data.notifications.latest_event_index(),
             web_push_subscriptions: self.data.web_push_subscriptions.total(),
             fcm_token_count: self.data.fcm_token_store.len(),
+            apns_device_count: self.data.apns_device_store.len(),
             blocked_user_pairs: self.data.blocked_users.len() as u64,
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             openai_api_key_set: self.data.openai_api_key.is_some(),
@@ -946,6 +949,8 @@ struct Data {
     pub notifications: EventStream<NotificationEnvelope>,
     pub blocked_users: UserIdsSet,
     pub fcm_token_store: FcmTokenStore,
+    #[serde(default)]
+    pub apns_device_store: ApnsDeviceStore,
     pub premium_items: PremiumItems,
     pub blocked_username_patterns: Vec<String>,
     pub openai_api_key: Option<String>,
@@ -1106,6 +1111,7 @@ impl Data {
             notifications: EventStream::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             fcm_token_store: FcmTokenStore::default(),
+            apns_device_store: ApnsDeviceStore::default(),
             premium_items: PremiumItems::default(),
             blocked_username_patterns: Vec::new(),
             openai_api_key,
@@ -1203,6 +1209,7 @@ pub struct Metrics {
     pub latest_notification_index: u64,
     pub web_push_subscriptions: u64,
     pub fcm_token_count: usize,
+    pub apns_device_count: usize,
     pub blocked_user_pairs: u64,
     pub oc_secret_key_initialized: bool,
     pub openai_api_key_set: bool,
@@ -1275,6 +1282,82 @@ mod tests {
 
         assert_eq!(state.data.group_event_sync_queue.len(), 0);
         assert_eq!(state.data.community_event_sync_queue.len(), 0);
+    }
+
+    // #10398: a user whose only device is an iPhone still gets the message, and the pusher is
+    // handed the device to push it to
+    #[test]
+    fn a_message_for_a_user_with_an_ios_device_reaches_the_pusher_with_the_device() {
+        use crate::queries::notifications::notifications_impl;
+        use local_user_index_canister::notifications::{Args, Response};
+        use types::{ApnsDevice, ApnsToken, DirectMessageNotification, NotificationSubscription, UserNotification};
+
+        stable_memory_map::init(crate::memory::get_stable_memory_map_memory());
+        let mut state = setup_runtime_state();
+        let alice: UserId = Principal::from_slice(&[20]).into();
+        let bob: UserId = Principal::from_slice(&[21]).into();
+        let device = ApnsDevice {
+            alert_token: Some(ApnsToken("sandbox:abc".to_string())),
+            voip_token: None,
+        };
+        state.data.apns_device_store.register(bob, device.clone());
+
+        state.handle_notification(
+            Notification::User(UserNotification {
+                sender: Some(alice),
+                recipients: vec![bob],
+                notification: UserNotificationPayload::DirectMessage(DirectMessageNotification {
+                    sender: alice,
+                    thread_root_message_index: None,
+                    message_index: 0.into(),
+                    event_index: 0.into(),
+                    sender_name: "alice".to_string(),
+                    sender_display_name: None,
+                    message_type: "Text".to_string(),
+                    message_text: Some("hello".to_string()),
+                    image_url: None,
+                    file_name: None,
+                    sender_avatar_id: None,
+                    crypto_transfer: None,
+                    call: None,
+                }),
+            }),
+            Principal::from_slice(&[1]),
+            0,
+        );
+
+        let Response::Success(result) = notifications_impl(
+            Args {
+                from_notification_index: 0,
+            },
+            &state,
+        );
+        assert_eq!(result.notifications.len(), 1);
+        assert_eq!(result.subscriptions[&bob], vec![NotificationSubscription::ApnsPush(device)]);
+    }
+
+    // #10398 invariant 8: state saved by a wasm from before APNs devices has no device store
+    #[test]
+    fn invariant_8_state_saved_before_apns_devices_keeps_every_fcm_token() {
+        let mut data = setup_runtime_state().data;
+        let alice: UserId = Principal::from_slice(&[20]).into();
+        data.fcm_token_store.add(alice, types::FcmToken("android".to_string()));
+
+        let rmpv::Value::Map(mut fields) =
+            rmpv::decode::read_value(&mut msgpack::serialize_then_unwrap(&data).as_slice()).unwrap()
+        else {
+            panic!("state is a map");
+        };
+        fields.retain(|(k, _)| k.as_str() != Some("apns_device_store"));
+        let mut old_bytes = Vec::new();
+        rmpv::encode::write_value(&mut old_bytes, &rmpv::Value::Map(fields)).unwrap();
+
+        let upgraded: Data = msgpack::deserialize_then_unwrap(&old_bytes);
+        assert_eq!(
+            upgraded.fcm_token_store.get_for_user(&alice),
+            vec![&types::FcmToken("android".to_string())]
+        );
+        assert!(upgraded.apns_device_store.is_empty());
     }
 
     pub(crate) fn setup_runtime_state() -> RuntimeState {

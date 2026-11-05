@@ -1,7 +1,10 @@
+mod add_apns_device;
 mod add_fcm_token;
 mod mark_subscription_active;
 mod notify_local_index_added;
 mod push_subscription;
+mod remove_apns_device;
+mod remove_apns_tokens;
 mod remove_fcm_token;
 mod remove_fcm_tokens;
 mod remove_subscription;

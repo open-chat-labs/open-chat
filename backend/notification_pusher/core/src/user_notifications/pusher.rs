@@ -1,12 +1,14 @@
+use crate::apns::{ApnsClient, SendOutcome};
 use crate::metrics::write_metrics;
-use crate::{FcmNotification, NotificationToPush, UserNotificationToPush, timestamp};
+use crate::user_notifications::token_remover::DeadToken;
+use crate::{ApnsNotification, FcmNotification, NotificationToPush, UserNotificationToPush, timestamp};
 use async_channel::{Receiver, Sender};
 use fcm_service::{AndroidConfig, FcmMessage, FcmService, Target};
 use std::collections::{BinaryHeap, HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
-use tracing::{error, info};
-use types::{FcmToken, Milliseconds, TimestampMillis, UserId};
+use tracing::{error, info, warn};
+use types::{FcmData, FcmToken, Milliseconds, TimestampMillis, UserId};
 use web_push::{HyperWebPushClient, WebPushClient, WebPushError};
 
 const ONE_MINUTE: Milliseconds = 60 * 1000;
@@ -15,29 +17,32 @@ pub struct Pusher {
     receiver: Receiver<NotificationToPush>,
     web_push_client: HyperWebPushClient,
     subscriptions_to_remove_sender: Sender<(UserId, String)>,
-    fcm_tokens_to_remove_sender: Sender<(UserId, FcmToken)>,
+    tokens_to_remove_sender: Sender<(UserId, DeadToken)>,
     invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
     throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
     fcm_service: Arc<FcmService>,
+    apns_client: Option<Arc<ApnsClient>>,
 }
 
 impl Pusher {
     pub fn new(
         receiver: Receiver<NotificationToPush>,
         subscriptions_to_remove_sender: Sender<(UserId, String)>,
-        fcm_tokens_to_remove_sender: Sender<(UserId, FcmToken)>,
+        tokens_to_remove_sender: Sender<(UserId, DeadToken)>,
         invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
         throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
         fcm_service: Arc<FcmService>,
+        apns_client: Option<Arc<ApnsClient>>,
     ) -> Self {
         Self {
             receiver,
             web_push_client: HyperWebPushClient::new(),
             subscriptions_to_remove_sender,
-            fcm_tokens_to_remove_sender,
+            tokens_to_remove_sender,
             invalid_subscriptions,
             throttled_subscriptions,
             fcm_service,
+            apns_client,
         }
     }
 
@@ -62,6 +67,12 @@ impl Pusher {
                 NotificationToPush::FcmNotificationToPush(fcm_notification_to_push) => {
                     let metadata = fcm_notification_to_push.metadata.clone();
                     let success = self.process_fcm_notification_to_push(fcm_notification_to_push).await;
+
+                    (metadata, None, success)
+                }
+                NotificationToPush::ApnsNotificationToPush(apns_notification) => {
+                    let metadata = apns_notification.metadata.clone();
+                    let success = self.process_apns_notification(*apns_notification).await;
 
                     (metadata, None, success)
                 }
@@ -135,15 +146,7 @@ impl Pusher {
             metadata,
         } = *fcm_notification_to_push;
 
-        let mut message = FcmMessage::new();
-
-        // Should affect only android devices...
-        let mut android_config = AndroidConfig::new();
-        android_config.set_priority(Some(fcm_service::Priority::High));
-
-        message.set_data(fcm_data.map(|d| d.as_data()));
-        message.set_target(Target::Token(fcm_token.0.clone()));
-        message.set_android(Some(android_config));
+        let message = fcm_message(fcm_data, &fcm_token);
 
         let res = self.fcm_service.send_notification(message).await;
         if let Err(error) = &res {
@@ -154,7 +157,9 @@ impl Pusher {
             // rotated. Such tokens never become valid again, so queue them for removal to
             // stop wasting pushes on them (and to keep the store from filling with junk).
             if is_unregistered_token_error(&error.to_string())
-                && let Err(send_error) = self.fcm_tokens_to_remove_sender.try_send((metadata.recipient, fcm_token))
+                && let Err(send_error) = self
+                    .tokens_to_remove_sender
+                    .try_send((metadata.recipient, DeadToken::Fcm(fcm_token)))
             {
                 error!(?send_error, "Failed to queue FCM token for removal");
             }
@@ -162,6 +167,50 @@ impl Pusher {
 
         res.is_ok()
     }
+
+    async fn process_apns_notification(&self, notification: ApnsNotification) -> bool {
+        let Some(apns_client) = self.apns_client.as_ref() else {
+            return false;
+        };
+        let ApnsNotification {
+            token,
+            payload,
+            collapse_id,
+            metadata,
+        } = notification;
+
+        match apns_client.send_alert(&token, payload.to_string(), &collapse_id).await {
+            SendOutcome::Delivered => true,
+            SendOutcome::RemoveToken => {
+                info!(user_id = %metadata.recipient, "APNs token no longer valid, queued to be removed");
+                if let Err(send_error) = self
+                    .tokens_to_remove_sender
+                    .try_send((metadata.recipient, DeadToken::Apns(token)))
+                {
+                    error!(?send_error, "Failed to queue APNs token for removal");
+                }
+                false
+            }
+            SendOutcome::Failed(error) => {
+                warn!(error, "Failed to push APNs notification");
+                false
+            }
+        }
+    }
+}
+
+// Android phones get a data-only message at high priority, and render it themselves
+fn fcm_message(fcm_data: Option<FcmData>, fcm_token: &FcmToken) -> FcmMessage {
+    let mut message = FcmMessage::new();
+
+    // Should affect only android devices...
+    let mut android_config = AndroidConfig::new();
+    android_config.set_priority(Some(fcm_service::Priority::High));
+
+    message.set_data(fcm_data.map(|d| d.as_data()));
+    message.set_target(Target::Token(fcm_token.0.clone()));
+    message.set_android(Some(android_config));
+    message
 }
 
 // FCM surfaces a stale-token failure with the stable error code `UNREGISTERED`. The
@@ -191,6 +240,66 @@ fn prune_invalid_subscriptions(map: &mut HashMap<String, TimestampMillis>) {
 
     for (_, subscription) in heap {
         map.remove(&subscription);
+    }
+}
+
+// #10398 invariant 1: the message an Android phone gets is what it got before APNs. The
+// expected JSON is the FCM message as built before #10398, for a direct message and a ring.
+#[test]
+fn invariant_1_the_fcm_message_for_an_android_token_is_unchanged() {
+    use types::{CallFacts, CanisterId, MessageId, VideoCallType};
+
+    let alice = UserId::new(CanisterId::from_text("3skqk-iqaaa-aaaaf-aaa3q-cai").unwrap());
+    let message = FcmData::for_direct_chat(alice)
+        .set_sender_name(Some("Alice".to_string()), "alice".to_string())
+        .set_sender_avatar_id(Some(7))
+        .set_message(Some("hello".to_string()))
+        .set_message_type("Text".to_string());
+    let ring = message.clone().set_call(&CallFacts {
+        message_id: MessageId::from(9u64),
+        call_type: VideoCallType::Default,
+        audio_only: true,
+        started: 1000,
+        is_public: false,
+        member_count: 2,
+    });
+    let token = FcmToken("android-token".to_string());
+    let common = serde_json::json!({
+        "type": "direct",
+        "senderId": "3skqk-iqaaa-aaaaf-aaa3q-cai",
+        "senderName": "Alice",
+        "senderAvatarId": "7",
+        "messageType": "Text",
+        "body": "hello",
+        "bodyType": "message",
+    });
+    let mut ring_data = common.clone();
+    ring_data.as_object_mut().unwrap().extend(
+        serde_json::json!({
+            "callMessageId": "9",
+            "callType": "default",
+            "callAudioOnly": "true",
+            "callStarted": "1000",
+        })
+        .as_object()
+        .unwrap()
+        .clone(),
+    );
+
+    for (data, expected_data) in [(message, common), (ring, ring_data)] {
+        let actual = serde_json::to_value(fcm_message(Some(data), &token)).unwrap();
+        let expected = serde_json::json!({
+            "name": null,
+            "data": expected_data,
+            "notification": null,
+            "android": actual["android"].clone(),
+            "webpush": null,
+            "apns": null,
+            "fcm_options": null,
+            "token": "android-token",
+        });
+        assert_eq!(actual, expected);
+        assert_eq!(actual["android"]["priority"], "HIGH");
     }
 }
 

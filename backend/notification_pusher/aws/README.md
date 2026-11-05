@@ -8,6 +8,9 @@ The notification pusher runs as the ECS service `notification-pusher` in the `op
   - `/notification-pusher/ENV_FILE`: the pusher's `.env`, which `entrypoint.sh` writes out for it
     to read;
   - `/notification-pusher/GCLOUD_SA_JSON`: Firebase's service account.
+  - `/notification-pusher/APNS_KEY_P8`: the App Store Connect APNs key (`.p8` contents) for iOS
+    pushes, with `APNS_KEY_ID=<key id>` in `ENV_FILE`. Without `APNS_KEY_ID` the pusher skips iOS
+    devices.
   - The task role, `oc-notification-pusher`, gives it its AWS access, so `.env` has no AWS keys.
 
   To change a setting, update the parameter, then restart the task:

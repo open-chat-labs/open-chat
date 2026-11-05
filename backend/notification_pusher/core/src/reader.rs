@@ -1,7 +1,8 @@
+use crate::apns::alert_payload;
 use crate::bot_notifications::delivery_tracker::DeliveryTracker;
 use crate::ic_agent::IcAgent;
 use crate::metrics::write_metrics;
-use crate::{BotNotification, FcmNotification, NotificationMetadata, PushNotification, UserNotification};
+use crate::{ApnsNotification, BotNotification, FcmNotification, NotificationMetadata, PushNotification, UserNotification};
 use async_channel::Sender;
 use ct_codecs::{Base64NoPadding, Encoder};
 use index_store::IndexStore;
@@ -165,6 +166,12 @@ impl<I: IndexStore> Reader<I> {
                     // an open web client learns the same facts from chat updates.
                     let fcm_only = notification.fcm_data.as_ref().is_some_and(|d| d.is_call_dismissal());
 
+                    // None when the notification has no APNs alert form, so no APNs alert is sent
+                    let apns_payload = notification.fcm_data.as_ref().and_then(alert_payload).map(Arc::new);
+                    // A notification read again after a restart replaces the first one on the device
+                    let apns_collapse_id =
+                        Arc::new(format!("{}:{}", self.notifications_canister_id, indexed_notification.index));
+
                     for user_id in notification.recipients {
                         if let Some(subscriptions) = ic_response.subscriptions.get(&user_id) {
                             for subscription in subscriptions.iter().cloned() {
@@ -192,6 +199,17 @@ impl<I: IndexStore> Reader<I> {
                                         PushNotification::FcmNotification(Box::new(FcmNotification {
                                             fcm_data: notification.fcm_data.clone(),
                                             fcm_token,
+                                            metadata,
+                                        }))
+                                    }
+                                    types::NotificationSubscription::ApnsPush(device) => {
+                                        let (Some(token), Some(payload)) = (device.alert_token, apns_payload.clone()) else {
+                                            continue;
+                                        };
+                                        PushNotification::ApnsNotification(Box::new(ApnsNotification {
+                                            token,
+                                            payload,
+                                            collapse_id: apns_collapse_id.clone(),
                                             metadata,
                                         }))
                                     }

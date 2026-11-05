@@ -10,8 +10,10 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, Cycles, FcmToken, IdempotentEnvelope, SubscriptionInfo, TimestampMillis, Timestamped, UserId,
+    ApnsDevice, ApnsToken, BuildVersion, CanisterId, Cycles, FcmToken, IdempotentEnvelope, SubscriptionInfo, TimestampMillis,
+    Timestamped, UserId,
 };
+use utils::apns_device_store::ApnsDeviceStore;
 use utils::env::Environment;
 use utils::fcm_token_store::{FcmTokenAddResult, FcmTokenStore};
 
@@ -116,6 +118,28 @@ impl RuntimeState {
         })
     }
 
+    // Last login wins, so registering may take the device from another user. The local indexes
+    // apply the same registration and reach the same state.
+    pub fn register_apns_device(&mut self, user_id: UserId, device: ApnsDevice) {
+        if self.data.apns_device_store.register(user_id, device.clone()) {
+            self.push_event_to_local_indexes(NotificationsIndexEvent::ApnsDeviceRegistered(user_id, device), self.env.now());
+        }
+    }
+
+    // On sign-out: the whole device goes, both of its tokens
+    pub fn remove_apns_device(&mut self, user_id: UserId, device: ApnsDevice) {
+        if self.data.apns_device_store.remove_device(&user_id, &device) {
+            self.push_event_to_local_indexes(NotificationsIndexEvent::ApnsDeviceRemoved(user_id, device), self.env.now());
+        }
+    }
+
+    // When APNs rejects a token: only that token goes
+    pub fn remove_apns_token(&mut self, user_id: UserId, token: ApnsToken) {
+        if self.data.apns_device_store.remove_token(&user_id, &token) {
+            self.push_event_to_local_indexes(NotificationsIndexEvent::ApnsTokenRemoved(user_id, token), self.env.now());
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -126,6 +150,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: git_commit_id::git_commit_id().to_string(),
             subscriptions: self.data.subscriptions.total(),
+            apns_devices: self.data.apns_device_store.len() as u64,
             users: self.data.principal_to_user_id_map.len() as u64,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             push_service_principals: self.data.push_service_principals.iter().copied().collect(),
@@ -166,6 +191,8 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
     pub fcm_token_store: FcmTokenStore,
+    #[serde(default)]
+    pub apns_device_store: ApnsDeviceStore,
 }
 
 impl Data {
@@ -190,6 +217,7 @@ impl Data {
             rng_seed: [0; 32],
             test_mode,
             fcm_token_store: FcmTokenStore::default(),
+            apns_device_store: ApnsDeviceStore::default(),
         }
     }
 }
@@ -204,6 +232,7 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub subscriptions: u64,
+    pub apns_devices: u64,
     pub users: u64,
     pub governance_principals: Vec<Principal>,
     pub push_service_principals: Vec<Principal>,
@@ -216,4 +245,42 @@ pub struct Metrics {
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub cycles_dispenser: CanisterId,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // #10398 invariant 8: state saved by a wasm from before APNs devices has no device store
+    #[test]
+    fn invariant_8_state_saved_before_apns_devices_keeps_every_fcm_token() {
+        let canister = |text| CanisterId::from_text(text).unwrap();
+        let alice = UserId::new(canister("3skqk-iqaaa-aaaaf-aaa3q-cai"));
+        let mut data = Data::new(
+            Vec::new(),
+            Vec::new(),
+            canister("4bkt6-4aaaa-aaaaf-aaaiq-cai"),
+            canister("gonut-hqaaa-aaaaf-aby7a-cai"),
+            canister("cpi5u-yiaaa-aaaar-aqw5a-cai"),
+            true,
+        );
+        data.fcm_token_store.add(alice, FcmToken("android".to_string()));
+
+        let rmpv::Value::Map(mut fields) =
+            rmpv::decode::read_value(&mut msgpack::serialize_then_unwrap(&data).as_slice()).unwrap()
+        else {
+            panic!("state is a map");
+        };
+        fields.retain(|(k, _)| k.as_str() != Some("apns_device_store"));
+        let value = rmpv::Value::Map(fields);
+        let mut old_bytes = Vec::new();
+        rmpv::encode::write_value(&mut old_bytes, &value).unwrap();
+
+        let upgraded: Data = msgpack::deserialize_then_unwrap(&old_bytes);
+        assert_eq!(
+            upgraded.fcm_token_store.get_for_user(&alice),
+            vec![&FcmToken("android".to_string())]
+        );
+        assert!(upgraded.apns_device_store.is_empty());
+    }
 }
