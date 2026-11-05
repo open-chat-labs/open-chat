@@ -151,9 +151,8 @@ export type CommunitySearchOutcome = "success" | "failed" | "superseded";
 
 /**
  * Explore's results, with the search they answer (`held`) and the latest search asked for.
- * Results set any other way (a proposal's community finder, the mobile welcome page) answer no
- * search Explore knows of, so setting them forgets `held` and drops the answer of a search still in
- * flight.
+ * Results set any other way (a proposal's community finder) answer no search Explore knows of,
+ * so setting them forgets `held` and drops the answer of a search still in flight.
  */
 export class CommunitySearchState extends SearchState<CommunityMatch> {
     #held: CommunitySearchKey | undefined;
@@ -266,6 +265,31 @@ export async function searchCommunities(
     if (response.kind !== "success") return "failed";
     communitySearchState.answer(search, index, response.matches, response.total);
     return "success";
+}
+
+/** The top of Explore's ranking, and how many communities the ranking holds in all. */
+export type TopCommunities = { matches: CommunityMatch[]; total: number };
+
+/**
+ * The top of Explore's ranking (its first page, with no search and no languages picked) for a
+ * short list outside Explore: Landing's featured communities, the mobile welcome page. These are
+ * shown to anyone, signed out included, so the moderation flags are 0, whatever the viewer's:
+ * never an adult or offensive community. Nothing is kept in communitySearchState, so Explore's
+ * own results are left alone. `undefined`: it couldn't be loaded.
+ */
+export async function topCommunities(
+    client: Pick<OpenChat, "exploreCommunities">,
+    count: number,
+): Promise<TopCommunities | undefined> {
+    try {
+        const response = await client.exploreCommunities(undefined, 0, count, 0, []);
+        return response.kind === "success"
+            ? { matches: response.matches, total: response.total }
+            : undefined;
+    } catch (err) {
+        console.warn("Top communities failed", err);
+        return undefined;
+    }
 }
 
 export const groupSearchState = createSearchState<GroupMatch>((g) => g.chatId.groupId);

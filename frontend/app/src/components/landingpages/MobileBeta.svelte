@@ -1,9 +1,6 @@
 <script lang="ts">
+    import { ANDROID_APK_URL, ANDROID_PLAY_STORE_URL } from "@src/utils/urls";
     import Section from "./Section.svelte";
-
-    const GROUP_URL = "https://groups.google.com/g/openchatbeta";
-    const PLAY_TEST_URL = "https://play.google.com/apps/testing/com.oclabs.openchat";
-    const APK_URL = "https://github.com/open-chat-labs/open-chat/releases/latest";
 
     // Which build the reader has chosen. Deliberately not persisted: the choice is
     // cheap to make again and the two paths are mutually exclusive, so landing on
@@ -15,7 +12,7 @@
     <div class="beta">
         <h2>Try the OpenChat native app</h2>
         <p class="sub">
-            The Android app is in beta. Pick the build you want below — the iOS app is on its way.
+            The Android app is out now, in two builds. Pick the one you want below — the iOS app is on its way.
         </p>
 
         <div class="cards">
@@ -28,7 +25,7 @@
                         />
                     </svg>
                     <h3>Android</h3>
-                    <span class="pill open">Beta open</span>
+                    <span class="pill open">Available</span>
                 </header>
 
                 {#if step === "choice"}
@@ -59,42 +56,12 @@
                     >
 
                     <p class="preamble">
-                        The beta is open to everyone — there's just a little Google-imposed ceremony
-                        first. <strong
-                            >Use the same Google account your phone's Play Store is signed in to</strong
-                        >; Play matches testers by exact address.
+                        Install OpenChat from Google Play, which keeps it up to date.
                     </p>
 
-                    <ol>
-                        <li>
-                            <span class="n">1</span>
-                            <span>
-                                Join the testers group. This is what tells Google you're allowed in.
-                                <a class="btn" href={GROUP_URL} target="_blank" rel="noreferrer"
-                                    >Join the testers group →</a
-                                >
-                            </span>
-                        </li>
-                        <li>
-                            <span class="n">2</span>
-                            <span>
-                                Accept the test on the Google Play testing page.
-                                <a
-                                    class="btn outline"
-                                    href={PLAY_TEST_URL}
-                                    target="_blank"
-                                    rel="noreferrer">Accept the test →</a
-                                >
-                            </span>
-                        </li>
-                        <li>
-                            <span class="n">3</span>
-                            <span>
-                                Install OpenChat from the Play Store link that page gives you. The
-                                listing stays invisible until you've done steps 1 and 2.
-                            </span>
-                        </li>
-                    </ol>
+                    <a class="btn" href={ANDROID_PLAY_STORE_URL} target="_blank" rel="noreferrer"
+                        >Get it on Google Play →</a
+                    >
 
                     <aside>
                         <strong>Already running OpenChat from a downloaded APK?</strong> The Play version
@@ -114,7 +81,7 @@
                         Store.
                     </p>
 
-                    <a class="btn" href={APK_URL} target="_blank" rel="noreferrer"
+                    <a class="btn" href={ANDROID_APK_URL} target="_blank" rel="noreferrer"
                         >Download the latest APK →</a
                     >
 
@@ -301,36 +268,6 @@
         }
     }
 
-    ol {
-        list-style: none;
-        padding: 0;
-        margin: 0 0 $sp4 0;
-    }
-
-    li {
-        display: flex;
-        gap: $sp3;
-        margin-bottom: $sp4;
-        @include font(book, normal, fs-80, 24);
-
-        > span:last-child {
-            display: grid;
-            gap: $sp3;
-        }
-    }
-
-    .n {
-        flex: 0 0 auto;
-        width: toRem(22);
-        height: toRem(22);
-        border-radius: 50%;
-        background-color: rgba(255, 255, 255, 0.25);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        @include font(bold, normal, fs-60, 22);
-    }
-
     .btn {
         display: block;
         text-align: center;
@@ -342,17 +279,6 @@
 
         &:hover {
             background-color: #e8e8e8;
-        }
-
-        &.outline {
-            background-color: transparent;
-            color: #ffffff;
-            border: toRem(1) solid rgba(255, 255, 255, 0.6);
-
-            &:hover {
-                border-color: #ffffff;
-                background-color: rgba(255, 255, 255, 0.1);
-            }
         }
     }
 

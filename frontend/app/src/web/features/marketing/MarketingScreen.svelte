@@ -3,6 +3,7 @@
      (/home?auth&m=…), which asks for the link's code over Landing. -->
 <script lang="ts">
     import {
+        chatsInitialisedStore,
         identityStateStore,
         querystringStore,
         selectedAuthProviderStore,
@@ -17,7 +18,9 @@
     import CanisterMapFrame from "@src/core/CanisterMapFrame.svelte";
     import type { PageMode } from "@openchat/ui/src/pages/types";
     import { currentThemeMode, themeType } from "@theme/themes";
+    import { supportedLanguagesByCode } from "@i18n/i18n";
     import { navigate } from "@src/utils/navigation";
+    import { ANDROID_APK_URL, ANDROID_PLAY_STORE_URL } from "@src/utils/urls";
     import { getContext, onDestroy, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Placeholder from "../app/Placeholder.svelte";
@@ -25,11 +28,20 @@
     import { createAuth } from "../auth/signIn";
     import { accentStore } from "../../accent";
     import { LazyModule } from "../../lazyModule.svelte";
-    import { isEmailLinkPage, learnPageFor, learnPath } from "./marketing";
+    import { exploreCommunities } from "../explore/explore.adapter";
+    import { FeaturedCommunities } from "./featuredCommunities.svelte";
+    import {
+        isEmailLinkPage,
+        landingCommunities,
+        learnPageFor,
+        learnPath,
+        pinnedLandingCommunity,
+    } from "./marketing";
 
     let { route }: { route: RouteParams } = $props();
 
     const client = getContext<OpenChat>("client");
+    const featured = new FeaturedCommunities(client);
 
     // the app's home: "/" goes on to the default chat list, as the router does for anyone signed in
     const enterApp = () => navigate("/");
@@ -84,6 +96,7 @@
     onDestroy(() => {
         if (pageSignIns.left()) auth.cancel();
         auth.dispose();
+        featured.dispose();
     });
 
     const signedIn = $derived($identityStateStore.kind === "logged_in");
@@ -104,6 +117,30 @@
             route.kind === "home_landing_route" ||
             route.kind === "features_route",
     );
+
+    // Landing's featured communities: the OpenChat community, then Explore's top ones as Explore
+    // shows them, asked for once the client can answer (FeaturedCommunities)
+    $effect(() => {
+        const ready = $chatsInitialisedStore;
+        if (landing) untrack(() => void featured.want(ready));
+    });
+    // a card opens the community's preview, whose cancel comes back here, as Explore's do to it
+    const openCommunity = (communityId: string) =>
+        client.setCommunityPreviewOrigin(communityId, window.location.pathname, "landing");
+    const communities = $derived.by(() => {
+        const { pinned, ranked } = featured.featured;
+        const ranking = landingCommunities(
+            exploreCommunities(
+                ranked,
+                (m) => client.communityAvatarUrl(m.id.communityId, m.avatar),
+                supportedLanguagesByCode,
+            ),
+            openCommunity,
+        );
+        if (pinned === undefined) return ranking;
+        const avatar = client.communityAvatarUrl(pinned.id.communityId, pinned.avatar);
+        return [pinnedLandingCommunity(pinned, avatar, openCommunity), ...ranking];
+    });
 
     // The page a sign-in link opens: its query (?auth&m=…&s1=…&s2=…) is kept to go with the
     // code, and taken out of the URL straight away, as the old UI does
@@ -148,7 +185,9 @@
         appHref="/"
         exploreHref="/communities"
         learnPageHref={(page: LearnPage) => learnPath(page)}
-        playStoreHref="https://play.google.com/apps/testing/com.oclabs.openchat"
+        {communities}
+        playStoreHref={ANDROID_PLAY_STORE_URL}
+        apkHref={ANDROID_APK_URL}
         termsHref="/terms"
         privacyHref="/privacy"
         auth={pageAuth}

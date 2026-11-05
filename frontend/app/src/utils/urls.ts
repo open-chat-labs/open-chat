@@ -18,6 +18,14 @@ export const synonymousUrlRegex = new RegExp(
     `^(${import.meta.env.OC_BASE_ORIGIN!}|${openChatFriendlyUrl})`,
 );
 
+// The Android app's links, shared by every page that offers it (the old landing page's beta card,
+// Landing, the native app's upgrade banners), so they stay in step
+/** The full build: the latest GitHub release, whose assets include the APK. */
+export const ANDROID_APK_URL = "https://github.com/open-chat-labs/open-chat/releases/latest";
+/** The Play Store build's listing. */
+export const ANDROID_PLAY_STORE_URL =
+    "https://play.google.com/store/apps/details?id=com.oclabs.openchat";
+
 export function addQueryStringParam(name: string, val: string): string {
     const path = window.location.pathname;
     const qs = new URLSearchParams(window.location.search);

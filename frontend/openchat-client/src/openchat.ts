@@ -694,7 +694,7 @@ import {
     swapMinimumOut,
 } from "./utils/swap";
 import { joinGroupFailureMessage, postLoginJoin } from "./utils/join";
-import { communityPreviewOriginStore } from "./stores/previewOrigin";
+import { communityPreviewOriginStore, type CommunityPreviewFrom } from "./stores/previewOrigin";
 import { currentTip, tipResult } from "./utils/tip";
 import { cryptoTransferResult } from "./utils/cryptoTransfer";
 import {
@@ -4908,12 +4908,16 @@ export class OpenChat {
     }
 
     /**
-     * Where cancelling a community's preview goes back to, if not the default scope (Explore or
-     * `/welcome`, which opened it). Kept until that preview is cancelled, the community is joined
-     * or left, or another is opened.
+     * Where cancelling a community's preview goes back to, if not the default scope (Explore,
+     * `/welcome` or Landing, which opened it), and which page that is (`from`). Kept until that
+     * preview is cancelled, the community is joined or left, or another is opened.
      */
-    setCommunityPreviewOrigin(communityId: string, path: string): void {
-        communityPreviewOriginStore.set({ communityId, path });
+    setCommunityPreviewOrigin(
+        communityId: string,
+        path: string,
+        from: CommunityPreviewFrom = "explore",
+    ): void {
+        communityPreviewOriginStore.set({ communityId, path, from });
     }
 
     #dropPreviewOrigin(id: CommunityIdentifier): void {

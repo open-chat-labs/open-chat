@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey, interpolate, supportedLanguagesByCode } from "@src/i18n/i18n";
-    import { communitySearchState } from "@src/stores/search.svelte";
+    import { topCommunities } from "@src/stores/search.svelte";
     import {
         Body,
         BodySmall,
@@ -36,28 +36,23 @@
     const client = getContext<OpenChat>("client");
 
     let ocCommunity = $state<CommunitySummary>();
-    let highlightCommunity = $derived(ocCommunity ?? communitySearchState.results[0]);
+    // the top of explore's ranking, kept here: explore's own results (communitySearchState) are
+    // left alone
+    let topMatches = $state<CommunityMatch[]>([]);
+    let highlightCommunity = $derived(ocCommunity ?? topMatches[0]);
 
     onMount(() => {
         searchCommunities();
         client.getOpenChatCommunity().then((c) => (ocCommunity = c));
-        return () => {
-            communitySearchState.reset();
-        };
     });
 
     function createCommunity() {
         openCommunityCreation(client);
     }
 
-    function searchCommunities() {
-        communitySearchState.reset();
-        client.exploreCommunities(undefined, 0, 3, 0, []).then((results) => {
-            if (results.kind === "success") {
-                communitySearchState.results = results.matches;
-                communitySearchState.total = results.total;
-            }
-        });
+    async function searchCommunities() {
+        const top = await topCommunities(client, 3);
+        if (top !== undefined) topMatches = top.matches;
     }
     function goToCommunity(id: CommunityIdentifier) {
         client.setCommunityPreviewOrigin(id.communityId, "/welcome");
@@ -167,7 +162,7 @@
                 </Body>
             </Container>
             <Container direction={"vertical"} gap={"xs"}>
-                {#each communitySearchState.results as community}
+                {#each topMatches as community}
                     <CommunityMatchComponent
                         onClick={() => goToCommunity(community.id)}
                         {community} />

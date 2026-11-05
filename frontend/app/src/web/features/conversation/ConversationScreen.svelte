@@ -366,7 +366,7 @@
             // as joining asks for them: those an invitation bypasses left out
             gates: client.accessGatesForChat(chat, true),
             guest: $anonUserStore,
-            originCommunityId: $communityPreviewOriginStore?.communityId,
+            origin: $communityPreviewOriginStore,
             meets: (gate) => client.doesUserMeetAccessGate(gate),
         });
         const avatarUrl =

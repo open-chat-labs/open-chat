@@ -38,7 +38,9 @@ every workstream.
   - CHIT (8d): the daily result message and sharing a result are a follow-up,
     [#10236](https://github.com/open-chat-labs/open-chat/issues/10236); GAPS.md ("CHIT dialog");
   - Diamond (8e): GAPS.md ("Diamond");
-  - message actions (5b) but tipping: what's left is in GAPS.md ("Message actions").
+  - message actions (5b) but tipping: what's left is in GAPS.md ("Message actions");
+  - Landing's loose ends (9b): the featured communities and the Android links; GAPS.md
+    ("Landing").
 - **Calls come last:** 7a (the call-object decision), 7b and 7c wait until the rest of the web
   work (5a–5d, 4c, 9a/9b, 10a/10b, L1–L7) is done, as native's calls (N14) wait in its epic.
 - **Still to check on a real environment** (the local replica can't show them): live incoming

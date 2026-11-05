@@ -392,7 +392,7 @@
           <div class="app-head">
             <span class="app-icon"><Icon icon="smartphone" size={20} /></span>
             <span class="app-name">{t('ui.landing.apps.android')}</span>
-            <span class="app-pill">{t('ui.landing.apps.betaOpen')}</span>
+            <span class="app-pill">{t('ui.landing.apps.available')}</span>
           </div>
           <div class="app-copy">
             <span class="app-lead">{t('ui.landing.apps.whichBuild')}</span>
@@ -459,18 +459,23 @@
       {#if communities.length}
         <div class="community-wrap">
           <div class="community-grid">
+            {#snippet card(c: LandingCommunity, i: number)}
+              <span class="community-cover" style:background={c.coverUrl ? `center/cover ${cssUrl(c.coverUrl)}` : COVERS[i % COVERS.length]}></span>
+              <div class="community-body">
+                <span class="community-avatar">
+                  {#if c.avatarUrl}<img src={c.avatarUrl} alt="" width="48" height="48" />{:else}<Avatar size={48} shape="squircle" color={c.color ?? 'amber'} />{/if}
+                </span>
+                <span class="community-name">{c.name}</span>
+                <span class="community-about">{c.about}</span>
+                <span class="community-members"><Icon icon="users" size={14} color="var(--ink-3)" />{t('ui.landing.communities.members', { count: c.members, members: compact.format(c.members) })}</span>
+              </div>
+            {/snippet}
             {#each communities as c, i}
-              <svelte:element this={c.href ? 'a' : 'div'} class="community" class:link={!!c.href} href={c.href}>
-                <span class="community-cover" style:background={c.coverUrl ? `center/cover ${cssUrl(c.coverUrl)}` : COVERS[i % COVERS.length]}></span>
-                <div class="community-body">
-                  <span class="community-avatar">
-                    {#if c.avatarUrl}<img src={c.avatarUrl} alt="" width="48" height="48" />{:else}<Avatar size={48} shape="squircle" color={c.color ?? 'amber'} />{/if}
-                  </span>
-                  <span class="community-name">{c.name}</span>
-                  <span class="community-about">{c.about}</span>
-                  <span class="community-members"><Icon icon="users" size={14} color="var(--ink-3)" />{t('ui.landing.communities.members', { count: c.members, members: compact.format(c.members) })}</span>
-                </div>
-              </svelte:element>
+              {#if c.href}
+                <a class="community link" href={c.href} onclick={c.onOpen}>{@render card(c, i)}</a>
+              {:else}
+                <div class="community">{@render card(c, i)}</div>
+              {/if}
             {/each}
           </div>
         </div>

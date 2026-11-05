@@ -1,5 +1,12 @@
-import type { RouteParams } from "@client";
-import { isEmailLinkPage, learnPageFor, learnPath } from "./marketing";
+import type { CommunitySummary, RouteParams } from "@client";
+import { vi } from "vitest";
+import {
+    isEmailLinkPage,
+    landingCommunities,
+    learnPageFor,
+    learnPath,
+    pinnedLandingCommunity,
+} from "./marketing";
 
 const route = (r: object) => ({ scope: { kind: "none" }, ...r }) as RouteParams;
 
@@ -35,5 +42,81 @@ describe("the email sign-in link's page", () => {
     test("isn't ?auth on its own, which narrows the sign-in options", () => {
         expect(isEmailLinkPage(new URLSearchParams("auth"))).toBe(false);
         expect(isEmailLinkPage(new URLSearchParams("auth=II"))).toBe(false);
+    });
+});
+
+describe("Landing's featured communities", () => {
+    const noOpen = () => undefined;
+
+    test("each of Explore's cards as Landing's, opening the community's preview", () => {
+        expect(
+            landingCommunities(
+                [
+                    {
+                        key: "abc",
+                        name: "OpenChat",
+                        about: "News",
+                        members: 62504,
+                        channelCount: 4,
+                        language: "English",
+                        avatarUrl: "/avatar/abc",
+                        coverUrl: "/banner/abc",
+                    },
+                ],
+                noOpen,
+            ),
+        ).toEqual([
+            {
+                name: "OpenChat",
+                about: "News",
+                members: 62504,
+                avatarUrl: "/avatar/abc",
+                coverUrl: "/banner/abc",
+                href: "/community/abc",
+                onOpen: expect.any(Function),
+            },
+        ]);
+    });
+
+    test("one with no description has none, and the design's colours stand in for its images", () => {
+        expect(landingCommunities([{ key: "x", name: "X", members: 1 }], noOpen)).toEqual([
+            {
+                name: "X",
+                about: "",
+                members: 1,
+                avatarUrl: undefined,
+                coverUrl: undefined,
+                href: "/community/x",
+                onOpen: expect.any(Function),
+            },
+        ]);
+    });
+
+    const openChat = {
+        id: { kind: "community", communityId: "oc" },
+        name: "OpenChat",
+        description: "News",
+        memberCount: 62504,
+        banner: { blobUrl: "/banner/oc" },
+    } as CommunitySummary;
+
+    test("the pinned OpenChat community's card from its summary, as Explore's from a match", () => {
+        expect(pinnedLandingCommunity(openChat, "/avatar/oc", noOpen)).toEqual({
+            name: "OpenChat",
+            about: "News",
+            members: 62504,
+            avatarUrl: "/avatar/oc",
+            coverUrl: "/banner/oc",
+            href: "/community/oc",
+            onOpen: expect.any(Function),
+        });
+    });
+
+    test("opening a card says which community, so its preview can come back to Landing", () => {
+        const onOpen = vi.fn<(communityId: string) => void>();
+        const [ranked] = landingCommunities([{ key: "abc", name: "A", members: 1 }], onOpen);
+        ranked.onOpen?.();
+        pinnedLandingCommunity(openChat, "/avatar/oc", onOpen).onOpen?.();
+        expect(onOpen.mock.calls).toEqual([["abc"], ["oc"]]);
     });
 });

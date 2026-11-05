@@ -735,10 +735,9 @@ design export needs. Each entry says where it came up.
     video calls post's sequence diagram are gone, though their text still mentions them.
     Subheadings are bold paragraphs, list items "•" paragraphs, and italics plain. The
     translations post shows "2 Mar 2024", as the old blog did (its date is written as 31 Feb).
-- **Landing's featured communities**: none are passed yet, so the section shows only its heading
-  and Browse link. The old landing page had no such list; explore's hot communities could feed it.
-- **Android APK link**: Landing's `apkHref` isn't passed yet, so that choice isn't a link. The
-  old landing page links GitHub releases (`MobileBeta.svelte`), which 9b can pass.
+- **Landing's featured communities**: no API returns a featured or hot list as such, so after
+  the OpenChat community Landing shows the top of Explore's one ranking (see "Landing" under
+  Wiring).
 
 ### Wiring
 
@@ -848,9 +847,9 @@ design export needs. Each entry says where it came up.
   (`client.setCommunityPreviewOrigin`, mobile's way; the preview's Join and Back are 8b's, see
   "Join gate"). Create community: the create dialog, the Diamond upgrade, or a guest's sign-in, after
   which creating carries on (AppScreen). Writing the query to the URL (`replaceQuery`) leaves any
-  dialog over Explore open. Results set outside the search step (a proposal's community finder,
-  the mobile welcome page) answer no Explore search (`CommunitySearchState.held`), so Explore
-  searches again rather than show them. A guest gets the component's sign-in banner. Kept from the desktop
+  dialog over Explore open. Results set outside the search step (a proposal's community finder)
+  answer no Explore search (`CommunitySearchState.held`), so Explore searches again rather than
+  show them; the mobile welcome page keeps its own (`topCommunities`). A guest gets the component's sign-in banner. Kept from the desktop
   tree: Load more (the library's own, 6 a page). By hand in the library: a sort or language change
   refreshes the list in place (dimmed rows, a spinner by the table's title) instead of emptying the page,
   a click or a key in the hero's search opens the search view, which stays open (emptied too, or with a
@@ -903,6 +902,27 @@ design export needs. Each entry says where it came up.
     fee) can keep the wrong amount, as which approval the ledger applied last isn't known. Fix
     when parallel joins become possible: remember neither when two overlap, so the next try
     approves again. Not reachable from the UI yet.
+- **Landing** (9b #10133, `features/marketing`): the Communities section shows four: the OpenChat
+  community first (`getOpenChatCommunity`, as mobile's welcome page has it; production only, so
+  elsewhere there's none), then the top of Explore's ranking without it (`pinFirst`). The ranking
+  is `topCommunities` beside `searchCommunities`, which the mobile welcome page uses too: the
+  first page with no search and no languages, and moderation flags 0 whoever is looking, so never
+  an adult or offensive community. Explore's own results are left alone. The ranked cards are
+  Explore's (`explore.adapter`, then `landingCommunities`), the OpenChat community's is made from
+  its summary the same way (`pinnedLandingCommunity`). They're asked for once the identity has
+  loaded (`chatsInitialisedStore`, signed out too: the worker has no agent before), so they come
+  in after the page. Nothing shows until the ranking has loaded; a part that fails (the ranking
+  or the OpenChat community) is retried on its own, after 2s, doubling, five times, and what
+  loaded is kept. Meanwhile the ranking shows without the OpenChat community. A card opens the
+  community's preview and, as it's followed, sets where the preview's cancel goes back to
+  (`setCommunityPreviewOrigin`, the Landing path it was opened from), as Explore's cards do
+  (`LandingCommunity.onOpen`, by hand in the library). The Android card's full build links the
+  latest GitHub release and its Play Store build the public listing (`ANDROID_APK_URL`,
+  `ANDROID_PLAY_STORE_URL` in `utils/urls.ts`, shared with the old beta card and the native app's
+  upgrade banners). The listing is public, so the old beta card's testers' group and testing page
+  steps are gone from it too: its Play Store choice links the listing. Neither card says the app
+  is in beta any more ("out now, in two builds", "Available"; the library's `ui.landing.apps.sub`
+  and `ui.landing.apps.available` by hand).
 - **Diamond** (`?diamond`, `features/diamond`, 8e #10131): paid through the shared payment
   (`logic/diamond`, which both legacy `Payment.svelte`s use too), in CHAT or ICP at the backend's
   own prices (CHAT in production, ICP elsewhere, by default), auto-renew on, a timed member opening
