@@ -39,7 +39,7 @@ every workstream.
     [#10236](https://github.com/open-chat-labs/open-chat/issues/10236); GAPS.md ("CHIT dialog");
   - Diamond (8e): GAPS.md ("Diamond").
 - **Calls come last:** 7a (the call-object decision), 7b and 7c wait until the rest of the web
-  work (5b–5d, 4c, 9a/9b, 10a/10b, L1–L7) is done, as native's calls (N14) wait in its epic.
+  work (5a–5d, 4c, 9a/9b, 10a/10b, L1–L7) is done, as native's calls (N14) wait in its epic.
 - **Still to check on a real environment** (the local replica can't show them): live incoming
   messages, read ticks turning double, the typing indicator.
 
@@ -199,7 +199,7 @@ conversation screen.
 
 | Id | Workstream | Size | Needs | Touches |
 |---|---|---|---|---|
-| [7a](https://github.com/open-chat-labs/open-chat/issues/10124) | **Decision:** `CallPanel` / `VideoTile` need `MediaStream`s, and the app uses Daily's prebuilt iframe (GAPS, "Calls"). Agree on Daily's call-object mode. | – | | |
+| [7a](https://github.com/open-chat-labs/open-chat/issues/10124) | **Decision:** `CallPanel` / `VideoTile` need `MediaStream`s, and the app uses Daily's prebuilt iframe (GAPS, "Calls"). Agree on Daily's call-object mode. | – | the rest of the web work: calls come last (see "Where we are") | |
 | [7b](https://github.com/open-chat-labs/open-chat/issues/10125) | **Call panel and controls.** Start a voice or video call from the header, join and leave, the call view in the middle. Handle `startVideoCall`, `hangup` and `askToSpeak` (DATA.md). "Call in progress" in the chat list. The incoming call's ring (Accept / Decline). | L | 7a | `ConversationScreen`, `AppScreen` |
 | [7c](https://github.com/open-chat-labs/open-chat/issues/10126) | **`MiniCall`.** Minimise to a floating, draggable window that snaps to 8 positions, kept clear of the header and composer as measured live (`MiniCall`'s `safeTop` / `safeBottom`). It stays up while switching chats. | M | 7b | `Composer.svelte`, `ConversationScreen` |
 
