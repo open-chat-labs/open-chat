@@ -1690,6 +1690,13 @@
                 "note": "Le mot de passe à usage unique se trouve sous votre profil / avancé, sur un appareil sur lequel vous êtes actuellement connecté.",
                 "title": "Lien avec un compte existant"
             }
+        },
+        "tabs": {
+            "activity": "Activité",
+            "chats": "Discussions",
+            "communities": "Communautés",
+            "wallet": "Portefeuille",
+            "you": "Vous"
         }
     },
     "new": "Nouveau",

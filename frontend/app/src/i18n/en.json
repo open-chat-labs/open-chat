@@ -1605,6 +1605,13 @@
                 "note": "Account linking code can be found under your profile options, on a device where you are currently signed in.",
                 "title": "Link with existing account"
             }
+        },
+        "tabs": {
+            "activity": "Activity",
+            "chats": "Chats",
+            "communities": "Communities",
+            "wallet": "Wallet",
+            "you": "You"
         }
     },
     "new": "new",

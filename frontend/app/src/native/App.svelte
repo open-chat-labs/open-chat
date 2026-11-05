@@ -1,6 +1,7 @@
 <!-- The native tree's root (src/native): the iOS and Android apps and phones' browsers, mounted by
      main.ts behind OC_NATIVE_LAYOUT=v4. Styles, behaviours, the i18n bridge, the client, the native
-     root on <html> (platform, OS, theme, text scale), haptics, and the native apps' setup. -->
+     root on <html> (platform, OS, theme, text scale), haptics, and the native apps' setup; then the
+     router and, once it has a route, the shell. -->
 <script lang="ts">
     import "@openchat/ui/src/lib/styles/tokens.css";
     import "@openchat/ui/src/lib/styles/global.css";
@@ -35,10 +36,13 @@
         isAndroidTauriApp,
         isIosTauriApp,
         OpenChat,
+        routerReadyStore,
     } from "@client";
     import { onMount, setContext } from "svelte";
     import { _, isLoading, json, locale } from "svelte-i18n";
     import { nativeOs } from "./platform";
+    import Router from "./router/Router.svelte";
+    import Shell from "./shell/Shell.svelte";
 
     addUiMessages();
     installBehaviours();
@@ -129,23 +133,14 @@
             actionLabel="Reload"
             actionHandler={() => window.location.reload()} />
     {:else if ($locale && !$isLoading) || $reviewingTranslations}
-        <div class="native-app">
-            <EmptyState preset="no-results" title="OpenChat" body="The native tree (N3)." actionLabel="" />
-        </div>
+        <Router>
+            {#if $routerReadyStore}
+                <Shell />
+            {/if}
+        </Router>
     {/if}
 
     {#snippet failed(_error, reset)}
         <EmptyState preset="error" actionHandler={reset} />
     {/snippet}
 </svelte:boundary>
-
-<style lang="scss">
-    .native-app {
-        position: fixed;
-        inset: 0;
-        display: grid;
-        place-items: center;
-        background: var(--surface-0);
-        color: var(--ink);
-    }
-</style>

@@ -207,8 +207,8 @@ export default defineConfig([
         files: [
             "app/src/utils/navigation.ts",
             "openchat-client/src/state/path/stores.ts",
-            // checks the route table (src/web and src/native) with page.js's own matching
-            "app/src/utils/routeTable.spec.ts",
+            // for specs: resolves URLs with the route table (src/web, src/native) as page.js does
+            "app/src/utils/routeTable.testing.ts",
         ],
         rules: {
             "local/no-pagejs-direct": "off",
@@ -268,6 +268,7 @@ export default defineConfig([
             "app/src/components/Router.svelte",
             "app/src/components_mobile/Router.svelte",
             "app/src/web/router/Router.svelte",
+            "app/src/native/router/Router.svelte",
             "app/src/components_mobile/home/SlidingModals.svelte",
         ],
         languageOptions: {

@@ -1690,6 +1690,13 @@
                 "note": "Das Einmalkennwort finden Sie unter Ihrem Profil/Erweitert auf einem Gerät, auf dem Sie aktuell angemeldet sind.",
                 "title": "Mit bestehendem Konto verknüpfen"
             }
+        },
+        "tabs": {
+            "activity": "Aktivität",
+            "chats": "Chats",
+            "communities": "Communitys",
+            "wallet": "Wallet",
+            "you": "Du"
         }
     },
     "new": "Neu",

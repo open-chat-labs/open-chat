@@ -1690,6 +1690,13 @@
                 "note": "La password monouso si trova nella sezione \"Profilo\"/\"Avanzate\" del dispositivo su cui hai effettuato l'accesso.",
                 "title": "Collegamento con account esistente"
             }
+        },
+        "tabs": {
+            "activity": "Attività",
+            "chats": "Chat",
+            "communities": "Community",
+            "wallet": "Portafoglio",
+            "you": "Tu"
         }
     },
     "new": "nuovo",
