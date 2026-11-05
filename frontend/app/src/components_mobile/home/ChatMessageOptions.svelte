@@ -1,10 +1,8 @@
 <script lang="ts">
     import { confirmMessageDeletion } from "@src/stores/settings";
-    import { disableTipsFeature } from "@src/utils/features";
     import { urlForMediaContent } from "@src/utils/media";
     import { ColourVars, IconButton, MenuItem, type Padding } from "component-lib";
     import {
-        bridgedFrom,
         chatListScopeStore,
         cryptoLookup,
         currentUserIdStore,
@@ -14,13 +12,13 @@
         LEDGER_CANISTER_ICP,
         publish,
         routeForMessage,
-        threadsFollowedByMeStore,
-        userCanDeleteMessage,
         type ChatIdentifier,
         type Message,
+        type MessageMenuAction,
         type MessageReminderCreatedContent,
         type OpenChat,
     } from "@client";
+    import { translateMessage as translate } from "@src/logic/conversation/translateMessage";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _, locale } from "svelte-i18n";
@@ -48,8 +46,7 @@
     import TranslateIcon from "svelte-material-icons/Translate.svelte";
     import TranslateOff from "svelte-material-icons/TranslateOff.svelte";
     import VectorLink from "svelte-material-icons/VectorLink.svelte";
-    import { i18nKey, translationCodes } from "../../i18n/i18n";
-    import { now } from "../../stores/time";
+    import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
     import { copyToClipboard } from "../../utils/urls";
@@ -65,32 +62,11 @@
     export interface Props {
         menuType?: MenuType;
         chatId: ChatIdentifier;
-        isProposal: boolean;
-        inert: boolean;
-        publicGroup: boolean;
         confirmed: boolean;
         failed: boolean;
-        canShare: boolean;
-        me: boolean;
-        // Shown as the user's own: `me`, or relayed by a bridge bot from an account they've linked.
-        // Blocking and reporting the author go by this, as they'd act on the bridge bot.
-        showAsMe: boolean;
-        canPin: boolean;
-        canTip: boolean;
-        pinned: boolean;
-        supportsReply: boolean;
-        canQuoteReply: boolean;
-        canStartThread: boolean;
-        multiUserChat: boolean;
-        canForward: boolean;
-        canBlockUser: boolean;
-        canEdit: boolean;
-        canDelete: boolean;
-        canUndelete: boolean;
-        canRevealDeleted: boolean;
-        canRevealBlocked: boolean;
-        translatable: boolean;
-        translated: boolean;
+        inert: boolean;
+        // what the menu offers (messageMenu)
+        actions: ReadonlySet<MessageMenuAction>;
         msg: Message;
         threadRootMessage: Message | undefined;
         iconButtonSize?: "xs" | "sm" | "md" | "lg";
@@ -112,32 +88,12 @@
     let {
         menuType = "icon_buttons",
         chatId,
-        isProposal,
-        inert,
-        publicGroup,
         confirmed,
         failed,
-        canShare,
-        me,
-        showAsMe,
-        canPin,
-        pinned,
-        supportsReply,
-        canQuoteReply,
-        canStartThread,
-        multiUserChat,
-        canForward,
-        canBlockUser,
-        canEdit,
-        canDelete,
-        canUndelete,
-        canRevealDeleted,
-        canRevealBlocked,
-        translatable,
-        translated,
+        inert,
+        actions,
         msg,
         threadRootMessage,
-        canTip,
         iconButtonSize,
         onCollapseMessage,
         onRemindMe,
@@ -153,34 +109,14 @@
     }: Props = $props();
 
     let mediaUrl = $derived(urlForMediaContent(msg.content));
-    // A private reply goes to the sender, which for a message relayed from another platform is the
-    // bridge bot
-    let relayed = $derived(bridgedFrom(msg.senderContext) !== undefined);
-    let canRemind = $derived(
-        msg.content.kind !== "message_reminder_content" &&
-            msg.content.kind !== "message_reminder_created_content",
-    );
-    let canCancelRemind = $derived(
-        msg.content.kind === "message_reminder_created_content" && msg.content.remindAt > $now,
-    );
-    let canDeleteMessage = $derived(
-        userCanDeleteMessage(msg, confirmed, $currentUserIdStore, canDelete) && !inert,
-    );
-    let inThread = $derived(threadRootMessage !== undefined);
     let threadRootMessageIndex = $derived(
         msg.messageId === threadRootMessage?.messageId
             ? undefined
             : threadRootMessage?.messageIndex,
     );
-    let isFollowedByMe = $derived(
-        threadRootMessage !== undefined &&
-            ($threadsFollowedByMeStore.get(chatId)?.has(threadRootMessage.messageIndex) ?? false),
-    );
-    let canFollow = $derived(threadRootMessage !== undefined && !isFollowedByMe);
-    let canUnfollow = $derived(isFollowedByMe);
 
     function blockUser() {
-        if (!canBlockUser || chatId.kind !== "group_chat") return;
+        if (!actions.has("block_user") || chatId.kind !== "group_chat") return;
         client.blockUser(chatId, msg.sender).then((success) => {
             if (success) {
                 toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
@@ -342,7 +278,7 @@
     }
 
     function pinMessage() {
-        if (!canPin || inThread || chatId.kind === "direct_chat") return;
+        if (!actions.has("pin") || chatId.kind === "direct_chat") return;
         client.pinMessage(chatId, msg.messageIndex).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("pinMessageFailed"));
@@ -351,7 +287,7 @@
     }
 
     function unpinMessage() {
-        if (!canPin || inThread || chatId.kind === "direct_chat") return;
+        if (!actions.has("unpin") || chatId.kind === "direct_chat") return;
         client.unpinMessage(chatId, msg.messageIndex).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("unpinMessageFailed"));
@@ -364,7 +300,7 @@
     }
 
     function undeleteMessage() {
-        if (!canUndelete) return;
+        if (!actions.has("undelete")) return;
         client.undeleteMessage(chatId, threadRootMessageIndex, msg).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("undeleteMessageFailed"));
@@ -373,10 +309,11 @@
     }
 
     function revealDeletedMessage() {
-        if (canRevealDeleted) {
-            client.revealDeletedMessage(chatId, msg.messageId, threadRootMessageIndex);
-        } else if (canRevealBlocked) {
+        if (!actions.has("reveal")) return;
+        if (msg.content.kind === "blocked_content") {
             client.revealBlockedMessage(msg.messageId);
+        } else {
+            client.revealDeletedMessage(chatId, msg.messageId, threadRootMessageIndex);
         }
     }
 
@@ -384,29 +321,20 @@
         client.untranslate(msg.messageId);
     }
 
-    function translateMessage() {
-        if (!$isDiamondStore) {
+    async function translateMessage() {
+        const outcome = await translate(client, msg, {
+            diamond: $isDiamondStore,
+            locale: $locale,
+        });
+        if (outcome === "upgrade") {
             publish("upgrade");
-        } else {
-            const text = client.getMessageText(msg.content);
-            if (text !== undefined) {
-                getTranslation(text, msg.messageId);
-            }
+        } else if (outcome === "failed") {
+            toastStore.showFailureToast(i18nKey("unableToTranslate"));
         }
     }
 
-    function getTranslation(text: string, messageId: bigint) {
-        client
-            .translateMessage(messageId, text, translationCodes[$locale || "en"] || "en")
-            .then((success) => {
-                if (!success) {
-                    toastStore.showFailureToast(i18nKey("unableToTranslate"));
-                }
-            });
-    }
-
     function followThread(follow: boolean) {
-        if ((follow && !canFollow) || (!follow && !canUnfollow)) {
+        if (!actions.has(follow ? "follow_thread" : "unfollow_thread")) {
             return;
         }
 
@@ -675,119 +603,117 @@
 {/snippet}
 
 <!-- Proposal -->
-{#if isProposal && !inert}
+{#if actions.has("collapse_proposal")}
     {@render renderMenuItem("proposalCollapse")}
 {/if}
 
 <!-- Edit a messge -->
-{#if canEdit && !inert && !failed}
+{#if actions.has("edit")}
     {@render renderMenuItem("editMessage")}
 {/if}
 
 <!-- Quote reply & Start thread -->
-{#if confirmed && supportsReply && !inert && !failed}
-    {#if canQuoteReply}
-        {@render renderMenuItem("quoteReply")}
-    {/if}
-    {#if !inThread && canStartThread}
-        {@render renderMenuItem("threadMenu")}
-    {/if}
+{#if actions.has("reply")}
+    {@render renderMenuItem("quoteReply")}
+{/if}
+{#if actions.has("start_thread")}
+    {@render renderMenuItem("threadMenu")}
 {/if}
 
 <!-- Forward a message -->
-{#if canForward && !inThread && !inert && !failed}
+{#if actions.has("forward")}
     {@render renderMenuItem("forward")}
 {/if}
 
 <!-- Copy message -->
-{@render renderMenuItem("copy")}
+{#if actions.has("copy")}
+    {@render renderMenuItem("copy")}
+{/if}
 
-{#if confirmed && !inert && !failed}
-    <!-- Copy message URL -->
+<!-- Copy message URL -->
+{#if actions.has("copy_url")}
     {@render renderMenuItem("copyMessageUrl")}
+{/if}
 
-    <!-- Share message -->
-    {#if publicGroup && canShare}
-        {@render renderMenuItem("share")}
-    {/if}
+<!-- Share message -->
+{#if actions.has("share")}
+    {@render renderMenuItem("share")}
+{/if}
 
-    <!-- Follow message thread -->
-    {#if canFollow}
-        {@render renderMenuItem("followThread")}
-    {:else if canUnfollow}
-        {@render renderMenuItem("unfollowThread")}
-    {/if}
+<!-- Follow message thread -->
+{#if actions.has("follow_thread")}
+    {@render renderMenuItem("followThread")}
+{:else if actions.has("unfollow_thread")}
+    {@render renderMenuItem("unfollowThread")}
+{/if}
 
-    <!-- Download message media -->
-    {#if mediaUrl !== undefined}
-        {@render renderMenuItem("downloadMedia")}
-    {/if}
+<!-- Download message media (mobile only) -->
+{#if confirmed && !inert && !failed && mediaUrl !== undefined}
+    {@render renderMenuItem("downloadMedia")}
 {/if}
 
 <!-- Set reminder -->
-{#if canRemind && confirmed && !inert && !failed}
+{#if actions.has("remind")}
     {@render renderMenuItem("remindersMenu")}
 {/if}
 
 <!-- Cancel Reminder -->
-{#if canCancelRemind && confirmed && !inert && !failed}
+{#if actions.has("cancel_reminder")}
     {@render renderMenuItem("remindersCancel")}
 {/if}
 
 <!-- Pin & Un-pin a message -->
-{#if confirmed && canPin && !inThread && !inert && !failed}
-    {#if pinned}
-        {@render renderMenuItem("unpinMessage")}
-    {:else}
-        {@render renderMenuItem("pinMessage")}
-    {/if}
+{#if actions.has("unpin")}
+    {@render renderMenuItem("unpinMessage")}
+{:else if actions.has("pin")}
+    {@render renderMenuItem("pinMessage")}
 {/if}
 
 <!-- Reply privately to a message -->
-{#if confirmed && multiUserChat && !inThread && !me && !relayed && !isProposal && !inert && !failed}
+{#if actions.has("reply_privately")}
     {@render renderMenuItem("replyPrivately")}
 {/if}
 
 <!-- Translations -->
-{#if !me && translatable && !failed}
-    {#if translated}
-        {@render renderMenuItem("untranslateMessage")}
-    {:else}
-        {@render renderMenuItem("translateMessage")}
-    {/if}
+{#if actions.has("untranslate")}
+    {@render renderMenuItem("untranslateMessage")}
+{:else if actions.has("translate")}
+    {@render renderMenuItem("translateMessage")}
 {/if}
 
 <!-- Tip sender -->
-{#if canTip && !disableTipsFeature}
+{#if actions.has("tip")}
     {@render renderMenuItem("tipMenu")}
 {/if}
 
 <!-- Block sender -->
-{#if confirmed && multiUserChat && !showAsMe && canBlockUser && !failed}
+{#if actions.has("block_user")}
     {@render renderMenuItem("blockUser")}
 {/if}
 
 <!-- Retry message send -->
-{#if failed}
+{#if actions.has("retry")}
     {@render renderMenuItem("retryMessage")}
 {/if}
 
 <!-- Delete message -->
-{#if canDeleteMessage}
-    {@render renderMenuItem(multiUserChat || me ? "deleteMessage" : "deleteMessageForMe")}
+{#if actions.has("delete")}
+    {@render renderMenuItem("deleteMessage")}
+{:else if actions.has("delete_for_me")}
+    {@render renderMenuItem("deleteMessageForMe")}
 {/if}
 
 <!-- Report message (moderation) -->
-{#if confirmed && !showAsMe && !inert}
+{#if actions.has("report")}
     {@render renderMenuItem("reportMenu")}
 {/if}
 
 <!-- Reveal deleted message -->
-{#if canRevealDeleted || canRevealBlocked}
+{#if actions.has("reveal")}
     {@render renderMenuItem("revealDeletedMessage")}
 {/if}
 
 <!-- Un-delete a message -->
-{#if canUndelete}
+{#if actions.has("undelete")}
     {@render renderMenuItem("undeleteMessage")}
 {/if}

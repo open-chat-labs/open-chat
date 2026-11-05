@@ -314,6 +314,8 @@ import {
     type SelectedChannelRoute,
     type SelectedCommunityRoute,
     type DirectBotMessageOutcome,
+    type EnhancedReplyContext,
+    type ReactionToggled,
     type SendMessageOutcome,
     type SignInMethod,
     type SignUpOutcome,
@@ -3451,7 +3453,35 @@ export class OpenChat {
         localUpdates.markBlockedMessageRevealed(messageId);
     }
 
-    selectReaction(
+    /**
+     * Adds the user's `reaction` to the message, or takes it off if they've already reacted with
+     * it. Shows at once, and is undone if it fails.
+     */
+    async toggleReaction(
+        messageContext: MessageContext,
+        message: Pick<Message, "messageId" | "reactions">,
+        reaction: string,
+    ): Promise<ReactionToggled> {
+        const userId = currentUserIdStore.value;
+        const kind = containsReaction(userId, reaction, message.reactions) ? "remove" : "add";
+        const user = currentUserStore.value;
+        const done = await this.#selectReaction(
+            messageContext.chatId,
+            userId,
+            messageContext.threadRootMessageIndex,
+            message.messageId,
+            reaction,
+            user.username,
+            user.displayName,
+            kind,
+        );
+        if (!done) return "failed";
+        if (kind === "remove") return "removed";
+        trackEvent("reacted_to_message");
+        return "added";
+    }
+
+    #selectReaction(
         chatId: ChatIdentifier,
         userId: string,
         threadRootMessageIndex: number | undefined,
@@ -4464,6 +4494,26 @@ export class OpenChat {
         if (!serverDirectChatsStore.value.has(directChatId)) {
             localUpdates.addUninitialisedDirectChat(directChatId);
         }
+        return directChatId;
+    }
+
+    /**
+     * Starts a private reply to a message in a group or channel: the DM with its sender, made if
+     * there's none yet (looked up across all scopes, as the reply is usually from a group or
+     * channel, whose scope holds no DMs), with an empty draft replying to the message. Returns the
+     * DM to go to, or undefined if there's no such user.
+     */
+    async replyPrivately(
+        replyingTo: EnhancedReplyContext,
+    ): Promise<DirectChatIdentifier | undefined> {
+        const senderId = replyingTo.sender?.userId ?? replyingTo.senderId;
+        const chatId: DirectChatIdentifier = { kind: "direct_chat", userId: senderId };
+        const directChatId = allChatsStore.value.has(chatId)
+            ? chatId
+            : await this.createDirectChat(chatId);
+        if (directChatId === undefined) return undefined;
+        localUpdates.draftMessages.setTextContent({ chatId: directChatId }, "");
+        localUpdates.draftMessages.setReplyingTo({ chatId: directChatId }, replyingTo);
         return directChatId;
     }
 
@@ -5827,6 +5877,44 @@ export class OpenChat {
             messageId,
             threadRootMessageIndex,
         });
+    }
+
+    /**
+     * Sends a failed message again under its own id, so it takes the failed one's place rather
+     * than adding another: its content, its reply, whether it was forwarded and its link
+     * previews. Not its mentions, which a message doesn't keep.
+     */
+    retrySendMessage(
+        messageContext: MessageContext,
+        failed: EventWrapper<Message>,
+    ): Promise<SendMessageResponse> {
+        const chat = allChatsStore.value.get(messageContext.chatId);
+        if (chat === undefined) {
+            return Promise.resolve(CommonResponses.failure());
+        }
+        const msg = failed.event;
+        const timestamp = Date.now();
+        return this.#sendMessageCommon(
+            chat,
+            messageContext,
+            {
+                timestamp: BigInt(timestamp),
+                expiresAt:
+                    messageContext.threadRootMessageIndex === undefined
+                        ? this.eventExpiry(chat, timestamp)
+                        : undefined,
+                messageId: msg.messageId,
+                sender: currentUserIdStore.value,
+                content: msg.content,
+                repliesTo: msg.repliesTo,
+                forwarded: msg.forwarded,
+                blockLevelMarkdown: msg.blockLevelMarkdown,
+                ogPreviews: [],
+            },
+            [],
+            true,
+            msg.ogPreviews.length > 0 ? Promise.resolve(msg.ogPreviews) : undefined,
+        );
     }
 
     async #sendMessageCommon(

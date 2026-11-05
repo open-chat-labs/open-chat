@@ -137,15 +137,7 @@
     }
 
     function retrySend() {
-        const message = event as EventWrapper<Message>;
-        client.sendMessageWithContent(
-            messageContext,
-            message.event.content,
-            message.event.blockLevelMarkdown,
-            [],
-            message.event.forwarded,
-            message.event.messageId,
-        );
+        client.retrySendMessage(messageContext, event as EventWrapper<Message>);
     }
 
     let sender = $derived(

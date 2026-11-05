@@ -2855,6 +2855,12 @@ export type SendMessageOutcome =
  */
 export type DirectBotMessageOutcome = { kind: "sent" } | { kind: "no_direct_command" };
 
+/**
+ * What toggling a reaction on a message did: added it, took the user's own off again, or neither
+ * (it was undone).
+ */
+export type ReactionToggled = "added" | "removed" | "failed";
+
 // What the app needs to enter a call's room
 export type VideoCallRoom = {
     token: string;

@@ -4,7 +4,7 @@
     import Typing from "@shared_components/Typing.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { allUsersStore, AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, currentUserStore, type EnhancedReplyContext, extractTwitchEmbeds, iconSize, linkedAuthor, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, shouldShowAsMe, tipRecipient, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
+    import { allUsersStore, AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, emojiReaction, type EnhancedReplyContext, extractTwitchEmbeds, iconSize, linkedAuthor, localUpdates, type Member, type Message, messageMenu, messageReplyContext, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, shouldShowAsMe, threadsFollowedByMeStore, tipRecipient, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -16,11 +16,13 @@
     import { quickReactions } from "../../stores/quickReactions";
     import { rtlStore } from "../../stores/rtl";
     import { dclickReply } from "../../stores/settings";
+    import { messageDoubleClickAction } from "@src/logic/conversation/messageDoubleClick";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
     import { isTouchOnlyDevice } from "../../utils/devices";
     import { reservedMediaWidth } from "../../utils/media";
     import { canShareMessage } from "../../utils/share";
+    import { disableTipsFeature } from "../../utils/features";
     import {
         autoTranslatableText,
         languageName as cachedLanguageName,
@@ -149,7 +151,7 @@
     }: Props = $props();
 
     let msgElement: HTMLElement | undefined;
-    let messageMenu: ChatMessageMenu | undefined;
+    let menuComponent: ChatMessageMenu | undefined;
 
     const multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = $state(false);
@@ -200,12 +202,8 @@
         }
     });
 
-    let inert = $derived(
-        msg.content.kind === "deleted_content" ||
-            msg.content.kind === "blocked_content" ||
-            msg.content.kind === "restricted_content" ||
-            collapsed,
-    );
+    // `offered` is worked out at the end, from what it reads
+    let inert = $derived.by(() => offered.inert);
     let autoTranslateText = $derived(
         autoTranslatableText(chatId, {
             mine: me,
@@ -259,19 +257,11 @@
     });
 
     function createReplyContext(): EnhancedReplyContext {
-        return {
-            kind: "rehydrated_reply_context",
-            senderId: msg.sender,
-            eventIndex: eventIndex,
-            content: msg.content,
+        return messageReplyContext(
+            { event: msg, index: eventIndex, timestamp },
             sender,
-            messageId: msg.messageId,
-            messageIndex: msg.messageIndex,
-            edited: msg.edited,
-            isThreadRoot: msg.thread !== undefined,
-            sourceContext: messageContext,
-            senderContext,
-        };
+            messageContext,
+        );
     }
 
     function reply() {
@@ -303,11 +293,14 @@
     }
 
     function doubleClickMessage() {
-        if (failed || msg.deleted || !$dclickReply) return;
-
-        if (me) {
+        const action = messageDoubleClickAction(
+            $dclickReply,
+            { mine: me, deleted: msg.deleted },
+            offered.actions,
+        );
+        if (action === "edit") {
             editMessage();
-        } else if (confirmed) {
+        } else if (action === "reply") {
             reply();
         }
     }
@@ -317,50 +310,25 @@
     }
 
     function selectReaction(selected: SelectedEmoji) {
-        if (selected.kind === "native") {
-            toggleReaction(false, selected.unicode);
-        } else {
-            toggleReaction(false, `@CE(${selected.code})`);
-        }
+        toggleReaction(false, emojiReaction(selected));
     }
 
     function selectQuickReaction(unicode: string) {
         toggleReaction(true, unicode);
     }
 
-    function toggleReaction(isQuickReaction: boolean, reaction: string) {
-        if (canReact) {
-            const kind = client.containsReaction($currentUserIdStore, reaction, msg.reactions)
-                ? "remove"
-                : "add";
-
-            client
-                .selectReaction(
-                    chatId,
-                    $currentUserIdStore,
-                    threadRootMessageIndex,
-                    msg.messageId,
-                    reaction,
-                    $currentUserStore.username,
-                    $currentUserStore.displayName,
-                    kind,
-                )
-                .then((success) => {
-                    if (success && kind === "add") {
-                        client.trackEvent("reacted_to_message");
-
-                        if (isQuickReaction) {
-                            // Note: Manually selected reactions do not increment
-                            // their fav counter by default, so we do it manually.
-                            // Also refresh loaded reactions.
-                            quickReactions.incrementFavourite(reaction);
-                        }
-
-                        quickReactions.reload();
-                    }
-                });
-        }
+    async function toggleReaction(isQuickReaction: boolean, reaction: string) {
         showEmojiPicker = false;
+        if (!canReact) return;
+        if ((await client.toggleReaction(messageContext, msg, reaction)) === "added") {
+            if (isQuickReaction) {
+                // Note: Manually selected reactions do not increment
+                // their fav counter by default, so we do it manually.
+                // Also refresh loaded reactions.
+                quickReactions.incrementFavourite(reaction);
+            }
+            quickReactions.reload();
+        }
     }
 
     function openUserProfile(ev: Event) {
@@ -448,27 +416,11 @@
     let isProposal = $derived(msg.content.kind === "proposal_content");
     let isPrize = $derived(msg.content.kind === "prize_content");
     let isP2PSwap = $derived(msg.content.kind === "p2p_swap_content");
-    let canEdit = $derived(
-        me && supportsEdit && !msg.deleted && client.contentTypeSupportsEdit(msg.content.kind),
-    );
+    let canEdit = $derived.by(() => offered.canEdit);
     let undeleting = $derived($undeletingMessagesStore.has(msg.messageId));
-    let deletedByMe = $derived(
-        msg.content.kind === "deleted_content" && msg.content.deletedBy == $currentUserIdStore,
-    );
-    let permanentlyDeleted = $derived(
-        deletedByMe &&
-            me &&
-            msg.content.kind === "deleted_content" &&
-            Number(msg.content.timestamp) < $now - 5 * 60 * 1000,
-    );
-    let canRevealDeleted = $derived(deletedByMe && !undeleting && !permanentlyDeleted);
-    let canRevealBlocked = $derived(msg.content.kind === "blocked_content");
     let messageContext = $derived({ chatId, threadRootMessageIndex });
     let ephemeral = $derived(localUpdates.isEphemeral(messageContext, msg.messageId));
-    let showChatMenu = $derived(
-        (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
-    );
-    let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
+    let showChatMenu = $derived.by(() => offered.menu);
     let senderDisplayName = $derived(
         bridged !== undefined && linkedUser === undefined
             ? (bridgedAuthorName(bridgedUser) ??
@@ -494,17 +446,8 @@
     let tipTo = $derived(
         tipRecipient(msg, sender, $bridgedUsersStore, (userId) => chatMembers.has(userId)),
     );
-    let canTip = $derived(
-        canTipMessages &&
-            !me &&
-            confirmed &&
-            !inert &&
-            !failed &&
-            tipTo !== undefined &&
-            tipTo !== $currentUserIdStore,
-    );
+    let canTip = $derived.by(() => offered.canTip);
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
-    let canBlockUser = $derived(canBlockUsers && !$selectedChatBlockedUsersStore.has(msg.sender));
     // A bot finalises a message it streams by editing it, so that isn't shown as an edit. A bridge
     // bot sends its messages finalised, and only edits them to relay an edit made on the other
     // platform.
@@ -512,9 +455,49 @@
         msg.edited &&
             (senderContext?.kind !== "bot" || !senderContext.finalised || bridged !== undefined),
     );
-    let canShare = $derived(canShareMessage(msg.content));
-    let canForward = $derived(client.canForward(msg.content));
-    let canTranslate = $derived((client.getMessageText(msg.content) ?? "").length > 0);
+
+    // what the message offers: its menu, reactions, edit and tip (messageMenu)
+    let offered = $derived(
+        messageMenu({
+            message: msg,
+            userId: $currentUserIdStore,
+            showAsMe,
+            chatKind: chatType,
+            publicGroup,
+            confirmed,
+            failed,
+            collapsed,
+            readonly,
+            ephemeral,
+            pinned,
+            translated,
+            undeleting,
+            now: $now,
+            thread:
+                threadRootMessage === undefined
+                    ? undefined
+                    : {
+                          following:
+                              $threadsFollowedByMeStore
+                                  .get(chatId)
+                                  ?.has(threadRootMessage.messageIndex) ?? false,
+                      },
+            supportsEdit,
+            supportsReply,
+            shareable: canShareMessage(msg.content),
+            tipRecipient: tipTo,
+            tipsEnabled: !disableTipsFeature,
+            permissions: {
+                send: canQuoteReply,
+                react: canReact,
+                pin: canPin,
+                tip: canTipMessages,
+                deleteOthers: canDelete,
+                blockSender: canBlockUsers && !$selectedChatBlockedUsersStore.has(msg.sender),
+                startThread: canStartThread,
+            },
+        }),
+    );
 </script>
 
 
@@ -630,7 +613,7 @@
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <div
                             ondblclick={doubleClickMessage}
-                            use:longpress={() => messageMenu?.showMenu()}
+                            use:longpress={() => menuComponent?.showMenu()}
                             class="message-bubble"
                             class:focused
                             class:editing
@@ -815,8 +798,6 @@
                                 <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
                                 <pre>senderContext: {JSON.stringify(senderContext, null, 4)}</pre>
                                 <pre>inert: {inert}</pre>
-                                <pre>canRevealDeleted: {canRevealDeleted}</pre>
-                                <pre>canlRevealBlocked: {canRevealBlocked}</pre>
                                 <pre>readonly: {readonly}</pre>
                                 <pre>showChatMenu: {showChatMenu}</pre>
                                 <pre>intersecting: {intersecting}</pre>
@@ -826,34 +807,14 @@
 
                         {#if showChatMenu && intersecting}
                             <ChatMessageMenu
-                                bind:this={messageMenu}
+                                bind:this={menuComponent}
                                 {chatId}
-                                {isProposal}
                                 {inert}
-                                {publicGroup}
-                                {confirmed}
                                 {failed}
-                                {canShare}
                                 {me}
-                                {showAsMe}
-                                {canPin}
-                                {canTip}
-                                {pinned}
-                                {supportsReply}
-                                {canQuoteReply}
+                                actions={offered.actions}
                                 {threadRootMessage}
-                                {canStartThread}
-                                {multiUserChat}
                                 {msg}
-                                {canForward}
-                                {canBlockUser}
-                                {canEdit}
-                                {canDelete}
-                                {canUndelete}
-                                {canRevealDeleted}
-                                {canRevealBlocked}
-                                translatable={canTranslate}
-                                {translated}
                                 {selectQuickReaction}
                                 showEmojiPicker={() => {
                                     showEmojiPicker = true;
