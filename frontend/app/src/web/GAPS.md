@@ -191,8 +191,9 @@ design export needs. Each entry says where it came up.
     `client.followMiniApp` once the card's in view) or else the one stored in the chat. Join and leave
     go through `logic/miniApp/miniAppActions.svelte.ts`. The app (the bot's endpoint + `/app`, from
     `utils/miniApp.ts`) is shown in the card, in a sandboxed frame with a bar naming the app's host and
-    a full screen button, while the card's on screen (`logic/miniApp/miniAppFrame.svelte.ts`), for a
-    player or, if the game allows spectators, anyone, who's then watching it;
+    a full screen button (about 30px across, as a smaller one was hard to hit on a phone's card),
+    while the card's on screen (`logic/miniApp/miniAppFrame.svelte.ts`), for a player or, if the
+    game allows spectators, anyone, who's then watching it;
     `logic/miniApp/miniAppHost.svelte.ts` relays between the app and the service, and says when the
     app, drawn unseen until then, is shown in place of its image (`revealed`). The library
     has no bubble for it, so the new UI shows its text (`contentText`) without the rest; the old

@@ -231,7 +231,7 @@ app (MiniAppFullScreen) -->
                 class="corner"
                 title={$_("bots.miniApp.fullScreen")}
                 onclick={() => fullScreen.enter()}>
-                <Fullscreen size={"1.2em"} color={"currentColor"} />
+                <Fullscreen size={"1.6em"} color={"currentColor"} />
             </button>
         {/if}
     </div>
@@ -408,9 +408,11 @@ app (MiniAppFullScreen) -->
         border: 2px solid var(--modal-bg);
     }
 
+    // big enough to hit with a thumb on a phone's card
     .corner {
         top: $sp2;
         right: $sp2;
+        padding: $sp2;
     }
 
     // over the app, out of its way in a corner, and out of sight until the pointer's over the frame
