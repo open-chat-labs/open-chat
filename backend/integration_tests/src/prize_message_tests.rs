@@ -209,8 +209,7 @@ fn prize_message_requiring_reauthentication() {
             chat_id: MultiUserChat::Group(group_id),
             message_id,
             sign_in_proof_jwt: None,
-            turnstile_token: None,
-            turnstile_salt: None,
+            turnstile: None,
         },
     );
 
@@ -514,8 +513,7 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
             chat_id,
             message_id,
             sign_in_proof_jwt: None,
-            turnstile_token: None,
-            turnstile_salt: None,
+            turnstile: None,
         },
     );
     assert!(
@@ -601,8 +599,10 @@ fn claim_prize_with_token(
                 chat_id,
                 message_id,
                 sign_in_proof_jwt: None,
-                turnstile_token: Some(token.clone()),
-                turnstile_salt: Some(salt.to_string()),
+                turnstile: Some(local_user_index_canister::claim_prize::TurnstilePass {
+                    token: token.clone(),
+                    salt: salt.to_string(),
+                }),
             }),
         )
         .unwrap();

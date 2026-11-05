@@ -680,8 +680,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
             {
                 chat_id: apiMultiUserChat(id),
                 message_id: messageId,
-                turnstile_token: turnstile?.token,
-                turnstile_salt: turnstile?.salt,
+                turnstile,
             },
             (resp) => {
                 if (resp === "Success") return { kind: "success" };

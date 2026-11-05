@@ -52,14 +52,10 @@ describe("redactSecrets", () => {
         });
         expect(
             redactSecrets(
-                { chat_id: "abc", turnstile_token: "0.abc", turnstile_salt: "0123" },
+                { chat_id: "abc", turnstile: { token: "0.abc", salt: "0123" } },
                 "claim_prize",
             ),
-        ).toEqual({
-            chat_id: "abc",
-            turnstile_token: REDACTED,
-            turnstile_salt: REDACTED,
-        });
+        ).toEqual({ chat_id: "abc", turnstile: REDACTED });
         expect(
             redactSecrets({
                 kind: "claimPrize",

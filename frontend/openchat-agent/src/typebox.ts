@@ -2838,6 +2838,14 @@ export const LocalUserIndexDailyPuzzleSubmitArgs = /* @__PURE__ */ Type.Object({
     grid: TSBytes,
 });
 
+export type LocalUserIndexClaimPrizeTurnstilePass = Static<
+    typeof LocalUserIndexClaimPrizeTurnstilePass
+>;
+export const LocalUserIndexClaimPrizeTurnstilePass = /* @__PURE__ */ Type.Object({
+    token: Type.String(),
+    salt: Type.String(),
+});
+
 export type LocalUserIndexDailyPuzzleHintArgs = Static<typeof LocalUserIndexDailyPuzzleHintArgs>;
 export const LocalUserIndexDailyPuzzleHintArgs = /* @__PURE__ */ Type.Object({
     game_id: Type.String(),
@@ -7138,8 +7146,7 @@ export const LocalUserIndexClaimPrizeArgs = /* @__PURE__ */ Type.Object({
     chat_id: MultiUserChat,
     message_id: MessageId,
     sign_in_proof_jwt: Type.Optional(Type.String()),
-    turnstile_token: Type.Optional(Type.String()),
-    turnstile_salt: Type.Optional(Type.String()),
+    turnstile: Type.Optional(LocalUserIndexClaimPrizeTurnstilePass),
 });
 
 export type LocalUserIndexInstallBotArgs = Static<typeof LocalUserIndexInstallBotArgs>;

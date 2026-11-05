@@ -375,8 +375,7 @@ pub mod happy_path {
                 chat_id,
                 message_id,
                 sign_in_proof_jwt,
-                turnstile_token: None,
-                turnstile_salt: None,
+                turnstile: None,
             },
         );
 
