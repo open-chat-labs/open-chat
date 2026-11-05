@@ -15,6 +15,7 @@ import {
     type EnhancedReplyContext,
     type EventWrapper,
     type GiphyContent,
+    type MessageMenuAction,
     type ImageContent,
     type MemeFighterContent,
     type Message,
@@ -670,4 +671,57 @@ export function composerContext(
         name: reply.senderId === ctx.me ? ctx.you : ctx.userName(reply.senderId),
         quote: messageText(reply.content, ctx),
     };
+}
+
+/** One of a message's actions as MessageActions lists it; `label` is the app's resource key. */
+export type MessageMenuItem =
+    | { action: MessageMenuAction; label: string; mask: string; variant: "regular" | "danger" }
+    | { action: "separator"; label: ""; variant: "separator" };
+
+type MessageMenuEntry = { action: MessageMenuAction; label: string; icon: string };
+
+// what a message's menu lists, in order: what's done with the message, then (after a separator)
+// what acts on its sender or removes it
+const MESSAGE_MENU: MessageMenuEntry[] = [
+    { action: "reply", label: "quoteReply", icon: "reply" },
+    { action: "edit", label: "editMessage", icon: "edit" },
+    { action: "copy", label: "copy", icon: "copy" },
+    { action: "copy_url", label: "copyMessageUrl", icon: "link" },
+    { action: "share", label: "share", icon: "share" },
+    { action: "translate", label: "translateMessage", icon: "lang" },
+    { action: "untranslate", label: "untranslateMessage", icon: "lang" },
+    { action: "pin", label: "pinMessage", icon: "pin" },
+    { action: "unpin", label: "unpinMessage", icon: "pin" },
+    { action: "cancel_reminder", label: "reminders.cancel", icon: "clock" },
+    { action: "retry", label: "retryMessage", icon: "refresh" },
+    { action: "reveal", label: "revealDeletedMessage", icon: "eye" },
+    { action: "undelete", label: "undeleteMessage", icon: "rotate-back" },
+];
+
+const MESSAGE_MENU_DANGER: MessageMenuEntry[] = [
+    { action: "block_user", label: "blockUser", icon: "ban" },
+    { action: "delete", label: "deleteMessage", icon: "trash" },
+    { action: "delete_for_me", label: "deleteMessageForMe", icon: "trash" },
+];
+
+/**
+ * A message's menu (MessageActions' items) for what it offers (`messageMenu`). Only the actions
+ * this screen carries out are listed (the thread's, a proposal's and the rest wait for theirs).
+ */
+export function messageMenuItems(actions: ReadonlySet<MessageMenuAction>): MessageMenuItem[] {
+    const item =
+        (variant: "regular" | "danger") =>
+        (entry: MessageMenuEntry): MessageMenuItem => ({
+            action: entry.action,
+            label: entry.label,
+            mask: `var(--icon-${entry.icon})`,
+            variant,
+        });
+    const regular = MESSAGE_MENU.filter((e) => actions.has(e.action)).map(item("regular"));
+    const danger = MESSAGE_MENU_DANGER.filter((e) => actions.has(e.action)).map(item("danger"));
+    const separator: MessageMenuItem[] =
+        regular.length > 0 && danger.length > 0
+            ? [{ action: "separator", label: "", variant: "separator" }]
+            : [];
+    return [...regular, ...separator, ...danger];
 }

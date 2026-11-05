@@ -31,8 +31,13 @@ interface GroupMessageBase {
   /** The message's id: keeps its row when messages are added before it, and is written to the row's data-msg. */
   id?: string;
   time: string;
-  /** Deleted messages render as a tombstone and get no menu. */
+  /** Deleted messages render as a tombstone and get no menu (unless `menu`). */
   deleted?: boolean;
+  /** Whether it has a menu and hover bar (with the group's onMessageMenu); by default all but a deleted message. */
+  menu?: boolean;
+  /** What a left swipe does, as the host decides it: it calls onSwipeLeft, and a right swipe replies. Unset, the
+   *  group decides (own text: right edits, left replies; else right replies, left forwards). */
+  swipeLeft?: 'edit' | 'reply' | 'forward';
   reactions?: { emoji: string; count: number; mine?: boolean }[];
 }
 

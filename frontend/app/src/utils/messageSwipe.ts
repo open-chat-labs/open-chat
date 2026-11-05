@@ -1,3 +1,5 @@
+import type { MessageMenuAction } from "@client";
+
 export type MessageSwipeAction = "edit" | "forward" | "reply";
 
 /**
@@ -14,4 +16,17 @@ export function messageSwipeAction(
         if (canEdit) return "edit";
     }
     return "reply";
+}
+
+/**
+ * What a left swipe does on a message, as far as its menu offers it (`messageMenu`): undefined
+ * where it offers no such thing (someone else's message that can't be forwarded, say), so the
+ * swipe isn't taken.
+ */
+export function messageSwipeLeft(
+    mine: boolean,
+    actions: ReadonlySet<MessageMenuAction>,
+): MessageSwipeAction | undefined {
+    const action = messageSwipeAction("left", mine, actions.has("edit"));
+    return actions.has(action) ? action : undefined;
 }

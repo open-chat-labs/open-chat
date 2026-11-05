@@ -13,6 +13,7 @@
         anonUserStore,
         blockedUsersStore,
         botState,
+        bridgedUsersStore,
         buildTransactionUrl,
         byContext as typersByContext,
         chatIdentifiersEqual,
@@ -34,15 +35,18 @@
         i18nKey,
         isDiamondStore,
         isLifetimeDiamondStore,
+        isOwnMessage,
         isPreviewingOrLapsed,
         isPrivateCommunityPreview,
         localUpdates,
         messageIndexStore,
+        messageMenu,
         messagesRead,
         pollVoteChange,
         prizeClaimCustomData,
         publish,
         screenWidth,
+        selectedChatBlockedUsersStore,
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
@@ -57,14 +61,18 @@
         threadOpenStore,
         throttleDeadline,
         TimelineGrouper,
+        translationsStore,
         unconfirmedReadByThem,
         unconfirmedStore,
+        undeletingMessagesStore,
         type ChatEvent,
         type ChatIdentifier,
         type ChatSummary,
         type EventWrapper,
         type FileContent,
         type Message,
+        type MessageMenu,
+        type MessageMenuAction,
         type OpenChat,
         type P2PSwapContent,
         type PollContent,
@@ -72,8 +80,10 @@
     import ConversationHeader from "@openchat/ui/src/features/components/ConversationHeader.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
+    import MessageActions from "@openchat/ui/src/lib/components/MessageActions.svelte";
     import MessageGroup from "@openchat/ui/src/lib/components/MessageGroup.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
+    import Toggle from "@openchat/ui/src/lib/components/Toggle.svelte";
     import UnreadDivider from "@openchat/ui/src/lib/components/UnreadDivider.svelte";
     import ChatEventList, { type ChatEventListArgs } from "@src/core/ChatEventList.svelte";
     import { TimelineFlattener, type FlatChatItem } from "@src/core/flatChatItems";
@@ -84,7 +94,17 @@
         focusEntryOnOpen,
         throttleCountdown,
     } from "@src/logic/composer/composer";
-    import { enterSend, lowBandwidth } from "@src/stores/settings";
+    import {
+        confirmMessageDeletion,
+        dclickReply,
+        enterSend,
+        lowBandwidth,
+    } from "@src/stores/settings";
+    import { quickReactions } from "@src/stores/quickReactions";
+    import { disableTipsFeature } from "@src/utils/features";
+    import { messageSwipeLeft } from "@src/utils/messageSwipe";
+    import { canShareMessage } from "@src/utils/share";
+    import { messageDoubleClickAction } from "@src/logic/conversation/messageDoubleClick";
     import { getProxyAdjustedBlobUrl } from "@src/utils/media";
     import { now500 } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
@@ -99,8 +119,8 @@
         timelineEventText,
         type EventTextContext,
     } from "@src/logic/conversation/timelineEventText";
-    import { getContext, untrack, type Snippet } from "svelte";
-    import { _ } from "svelte-i18n";
+    import { getContext, untrack, type ComponentProps, type Snippet } from "svelte";
+    import { _, locale } from "svelte-i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import { chatMenuState, runChatMenuItem } from "./chatMenu";
     import Composer from "./Composer.svelte";
@@ -109,6 +129,7 @@
         headerMenuItems,
         isMedia,
         mediaHeld,
+        messageMenuItems,
         messageStatus,
         senderColor,
         untilNextDay,
@@ -118,6 +139,7 @@
     } from "./conversation.adapter";
     import MediaViewer from "./MediaViewer.svelte";
     import ConfirmDialog from "./ConfirmDialog.svelte";
+    import { deleteMessage, runMessageAction } from "./messageMenu";
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import HumanCheckFrame from "@src/core/HumanCheckFrame.svelte";
     import { HumanCheck } from "@src/logic/prize/humanCheck.svelte";
@@ -545,7 +567,7 @@
     // rows kept per event (RowCache), and their messages with them, so user and other chat
     // updates don't redo every bubble; started again for a new chat, wording or day
     const rows = new RowCache();
-    const groupMessages = new WeakMap<MessageRow, GroupMessage[]>();
+    const groupMessages = new WeakMap<MessageRow, { offers: string; messages: GroupMessage[] }>();
     // bumped when a revealed image needs its row redone
     let rowsVersion = $state(0);
     $effect.pre(() => {
@@ -574,17 +596,228 @@
         body: Snippet,
         withBody: boolean,
         evt: EventWrapper<Message>,
+        offers: RowOffers,
     ): GroupMessage[] {
-        let messages = groupMessages.get(row);
-        if (messages === undefined) {
-            const message = withBody
-                ? ({ ...row.message, body } as GroupMessage)
-                : withActions(row, evt.event);
-            messages = [{ ...message, ...previewRemoval(evt) } as GroupMessage];
-            groupMessages.set(row, messages);
-        }
+        const key = `${offers.menu}|${offers.swipeLeft}|${offers.retry !== undefined}`;
+        const kept = groupMessages.get(row);
+        if (kept?.offers === key) return kept.messages;
+        const message = withBody
+            ? ({ ...row.message, body } as GroupMessage)
+            : withActions(row, evt.event);
+        const messages = [
+            {
+                ...message,
+                ...previewRemoval(evt),
+                ...retryFor(row.message, offers.retry),
+                menu: offers.menu,
+                swipeLeft: offers.swipeLeft,
+            } as GroupMessage,
+        ];
+        groupMessages.set(row, { offers: key, messages });
         return messages;
     }
+
+    // ── message actions ──
+
+    type MenuPos = Parameters<NonNullable<ComponentProps<typeof MessageGroup>["onMessageMenu"]>>[1];
+
+    // what a row's message offers that's part of how it shows (its menu, its swipe, Retry)
+    type RowOffers = {
+        menu: boolean;
+        swipeLeft: "edit" | "reply" | "forward" | undefined;
+        retry: (() => void) | undefined;
+    };
+
+    // what a message offers (messageMenu, as the old trees decide it): read as it renders, so a
+    // row follows the chat's permissions and the message's state
+    function offeredFor(
+        current: ChatSummary,
+        evt: EventWrapper<Message>,
+        failed: boolean,
+        confirmed: boolean,
+    ): MessageMenu {
+        const msg = evt.event;
+        const chatId = current.id;
+        return messageMenu({
+            message: msg,
+            userId: me,
+            showAsMe: isOwnMessage(msg, me, $bridgedUsersStore),
+            chatKind: current.kind,
+            publicGroup: current.kind !== "direct_chat" && current.public,
+            confirmed,
+            failed,
+            collapsed: false,
+            readonly,
+            ephemeral: localUpdates.isEphemeral({ chatId }, msg.messageId),
+            pinned: $selectedChatPinnedMessagesStore.has(msg.messageIndex),
+            translated: $translationsStore.has(msg.messageId),
+            undeleting: $undeletingMessagesStore.has(msg.messageId),
+            now: Date.now(),
+            // TODO(4c): the thread's own list
+            thread: undefined,
+            supportsEdit: true,
+            supportsReply: true,
+            shareable: canShareMessage(msg.content),
+            // TODO(phase 5, 5b): tipping
+            tipRecipient: undefined,
+            tipsEnabled: !disableTipsFeature,
+            permissions: {
+                send: client.canSendMessage(chatId, "message"),
+                react: client.canReactToMessages(chatId),
+                pin: client.canPinMessages(chatId),
+                tip: client.canTipMessages(chatId),
+                deleteOthers: client.canDeleteOtherUsersMessages(chatId),
+                blockSender:
+                    client.canBlockUsers(chatId) && !$selectedChatBlockedUsersStore.has(msg.sender),
+                startThread: client.canSendMessage(chatId, "thread"),
+            },
+        });
+    }
+
+    function rowOffers(
+        evt: EventWrapper<Message>,
+        failed: boolean,
+        offered: MessageMenu,
+    ): RowOffers {
+        const swipeLeft = messageSwipeLeft(evt.event.sender === me, offered.actions);
+        return {
+            menu: offered.menu,
+            // TODO(phase 5, 5b): forwarding
+            swipeLeft: swipeLeft === "forward" ? undefined : swipeLeft,
+            retry: offered.actions.has("retry") ? () => run("retry", evt, failed) : undefined,
+        };
+    }
+
+    // a failed message's Retry, where its kind has one (a text bubble's line, a file or media
+    // tile's button)
+    function retryFor(message: GroupMessage, retry: (() => void) | undefined) {
+        if (retry === undefined) return {};
+        switch (message.kind) {
+            case undefined:
+            case "text":
+                return { retryAction: retry };
+            case "image":
+            case "video":
+            case "gif":
+            case "file":
+                return { onRetry: retry };
+            default:
+                return {};
+        }
+    }
+
+    // the message whose menu (or emoji picker) is open
+    let menu = $state<{
+        evt: EventWrapper<Message>;
+        failed: boolean;
+        offered: MessageMenu;
+        pos: MenuPos;
+        pickerOnly: boolean;
+    }>();
+
+    function openMenu(
+        current: ChatSummary,
+        evt: EventWrapper<Message>,
+        failed: boolean,
+        confirmed: boolean,
+        pos: MenuPos,
+        pickerOnly: boolean,
+    ) {
+        const offered = offeredFor(current, evt, failed, confirmed);
+        if (pickerOnly ? !offered.react : !offered.menu) return;
+        menu = { evt, failed, offered, pos, pickerOnly };
+    }
+
+    // the open menu's items, in the app's words
+    const messageItems = $derived.by(() => {
+        if (menu === undefined) return [];
+        const { evt, failed } = menu;
+        return messageMenuItems(menu.offered.actions).map((item) =>
+            item.action === "separator"
+                ? { label: "", variant: "separator" as const }
+                : {
+                      label: $_(item.label),
+                      variant: item.variant,
+                      mask: item.mask,
+                      onSelect: () => run(item.action, evt, failed),
+                  },
+        );
+    });
+
+    // the user's own reactions on the message whose menu is open
+    const menuSelected = $derived(
+        menu === undefined
+            ? []
+            : menu.evt.event.reactions
+                  .filter((r) => r.userIds.has(me))
+                  .map((r) => r.reaction),
+    );
+
+    // the message being deleted, once confirmed
+    let deleting = $state<EventWrapper<Message>>();
+
+    async function run(action: MessageMenuAction, evt: EventWrapper<Message>, failed: boolean) {
+        if (chat === undefined) return;
+        const dialog = await runMessageAction(action, {
+            client,
+            chatId: chat.id,
+            evt,
+            failed,
+            me,
+            users: $allUsersStore,
+            formatter: $_,
+            locale: $locale,
+            diamond: $isDiamondStore,
+            confirmDelete: $confirmMessageDeletion,
+        });
+        if (dialog?.kind === "delete") deleting = dialog.evt;
+    }
+
+    function confirmDelete() {
+        const evt = deleting;
+        deleting = undefined;
+        if (chat === undefined || evt === undefined) return;
+        void deleteMessage(client, chat.id, evt);
+    }
+
+    // a reaction added or taken off. The library's picker keeps no favourites of its own (the old
+    // trees' picker counted its picks), so every reaction added counts towards the quick ones
+    async function react(evt: EventWrapper<Message>, emoji: string) {
+        if (chat === undefined) return;
+        const toggled = await client.toggleReaction({ chatId: chat.id }, evt.event, emoji);
+        if (toggled === "added") {
+            quickReactions.incrementFavourite(emoji);
+            quickReactions.reload();
+        }
+    }
+
+    // double-click to edit your own message or reply to someone else's (the "double-click to reply"
+    // setting), not on the hover bar or a control in the message
+    function doubleClick(
+        e: MouseEvent,
+        evt: EventWrapper<Message>,
+        failed: boolean,
+        offered: MessageMenu,
+    ) {
+        const target = e.target;
+        if (
+            target instanceof Element &&
+            target.closest("[data-msg-acts],a,button,input,textarea,[role=button]") !== null
+        ) {
+            return;
+        }
+        const action = messageDoubleClickAction(
+            $dclickReply,
+            { mine: evt.event.sender === me, deleted: evt.event.deleted },
+            offered.actions,
+        );
+        if (action !== undefined) void run(action, evt, failed);
+    }
+
+    // the message replied to or edited, tinted in the list
+    const composingId = $derived(
+        draft?.editingEvent?.event.messageId ?? draft?.replyingTo?.messageId,
+    );
 
     // ── link previews ──
 
@@ -923,6 +1156,11 @@
                                     ctx,
                                 )}
                                 {@const content = msg.content}
+                                {@const confirmed = args.isConfirmed($unconfirmedStore, evt)}
+                                {@const offered = offeredFor(chat, evt, failed, confirmed)}
+                                {@const actions = offered.actions}
+                                {@const offers = rowOffers(evt, failed, offered)}
+                                {@const swipeLeft = offers.swipeLeft}
                                 <!-- a text message's text as the old UI renders it: markdown, mentions,
                                      links, custom emoji (a lone emoji is the bubble's own, large) -->
                                 {#snippet body()}
@@ -933,9 +1171,11 @@
                                         />
                                     {/if}
                                 {/snippet}
+                                <!-- svelte-ignore a11y_no_static_element_interactions -->
                                 <div
                                     class="row"
                                     class:starts={item.first}
+                                    ondblclick={(e) => doubleClick(e, evt, failed, offered)}
                                     data-index={failed ? "" : msg.messageIndex}
                                     data-id={failed ? "" : msg.messageId}
                                     use:observeRead={{
@@ -958,15 +1198,43 @@
                                         endsRun={item.last}
                                         onSenderClick={(el) =>
                                             el.dispatchEvent(profileClickedEvent(msg.sender))}
-                                        marked={args.focusIndex === msg.messageIndex && !failed
+                                        marked={(args.focusIndex === msg.messageIndex && !failed) ||
+                                        menu?.evt.event.messageId === msg.messageId ||
+                                        composingId === msg.messageId
                                             ? 0
                                             : -1}
+                                        activeMenu={menu !== undefined &&
+                                        menu.evt.event.messageId === msg.messageId
+                                            ? 0
+                                            : -1}
+                                        recentReactions={$quickReactions}
+                                        onMessageMenu={offered.menu
+                                            ? (_, pos) =>
+                                                  openMenu(chat, evt, failed, confirmed, pos, false)
+                                            : undefined}
+                                        onReact={offered.react
+                                            ? (_, emoji) => react(evt, emoji)
+                                            : undefined}
+                                        onReactPicker={offered.react && offered.menu
+                                            ? (_, pos) =>
+                                                  openMenu(chat, evt, failed, confirmed, pos, true)
+                                            : undefined}
+                                        onReply={actions.has("reply")
+                                            ? () => run("reply", evt, failed)
+                                            : undefined}
+                                        onEdit={actions.has("edit")
+                                            ? () => run("edit", evt, failed)
+                                            : undefined}
+                                        onSwipeLeft={swipeLeft === undefined
+                                            ? undefined
+                                            : () => run(swipeLeft, evt, failed)}
                                         messages={messagesFor(
                                             row,
                                             body,
                                             content.kind === "text_content" &&
                                                 withMarkdown(content.text),
                                             evt,
+                                            offers,
                                         )}
                                     />
                                     {#if row.message.kind === "prize" && row.message.canClaim}
@@ -1086,6 +1354,38 @@
     </div>
 {/if}
 
+{#if menu !== undefined}
+    {@const pos = menu.pos}
+    <MessageActions
+        open
+        items={messageItems}
+        point={pos.point ?? null}
+        anchor={pos.anchor ?? null}
+        align={pos.align ?? "end"}
+        focus={pos.touch ?? false}
+        focusRect={pos.rect}
+        focusEl={pos.el ?? null}
+        focusFirst={pos.keyboard ?? false}
+        reactions={menu.offered.react && !pos.fromBar}
+        pickerOnly={menu.pickerOnly}
+        recent={$quickReactions}
+        selected={menuSelected}
+        onReact={(emoji) => menu !== undefined && react(menu.evt, emoji)}
+        onClose={() => (menu = undefined)} />
+{/if}
+{#if deleting !== undefined}
+    <!-- TODO(design): no delete confirm in the design; the old one's words -->
+    <ConfirmDialog
+        title={$_("deleteMessageConfirm")}
+        confirmLabel={$_("deleteMessage")}
+        onConfirm={confirmDelete}
+        onClose={() => (deleting = undefined)}>
+        <Toggle
+            label={$_("install.dontShow")}
+            on={!$confirmMessageDeletion}
+            onChange={(on) => confirmMessageDeletion.set(!on)} />
+    </ConfirmDialog>
+{/if}
 {#if removingPreview !== undefined}
     <ConfirmDialog
         title={$_("removePreviewQuestion")}

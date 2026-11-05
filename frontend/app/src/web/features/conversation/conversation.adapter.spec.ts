@@ -1,7 +1,8 @@
-import type { EventWrapper, Message } from "@client";
+import type { EventWrapper, Message, MessageMenuAction } from "@client";
 import {
     composerContext,
     mediaHeld,
+    messageMenuItems,
     messageRow,
     messageStatus,
     senderColor,
@@ -401,5 +402,38 @@ describe("the composer's reply or edit strip", () => {
         expect(
             composerContext({ editingEvent: editing, replyingTo, textContent: "old" }, ctx),
         ).toEqual({ key: "edit:42", mode: "edit", quote: "old", text: "old" });
+    });
+});
+
+describe("a message's menu", () => {
+    const offers = (...actions: MessageMenuAction[]) => new Set<MessageMenuAction>(actions);
+
+    test("lists what the message offers in the menu's order, with what removes it last, apart", () => {
+        const items = messageMenuItems(offers("delete", "copy", "reply", "pin", "block_user"));
+        expect(items.map((i) => i.action)).toEqual([
+            "reply",
+            "copy",
+            "pin",
+            "separator",
+            "block_user",
+            "delete",
+        ]);
+        expect(items.find((i) => i.action === "delete")).toEqual({
+            action: "delete",
+            label: "deleteMessage",
+            mask: "var(--icon-trash)",
+            variant: "danger",
+        });
+    });
+
+    test("has no separator when only one side has anything", () => {
+        expect(messageMenuItems(offers("copy")).map((i) => i.action)).toEqual(["copy"]);
+        expect(messageMenuItems(offers("delete_for_me")).map((i) => i.action)).toEqual([
+            "delete_for_me",
+        ]);
+    });
+
+    test("leaves out what this screen doesn't carry out", () => {
+        expect(messageMenuItems(offers("start_thread", "collapse_proposal"))).toEqual([]);
     });
 });

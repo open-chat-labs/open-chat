@@ -1,4 +1,5 @@
-import { messageSwipeAction } from "./messageSwipe";
+import type { MessageMenuAction } from "@client";
+import { messageSwipeAction, messageSwipeLeft } from "./messageSwipe";
 
 describe("messageSwipeAction", () => {
     // Invariant: one swipe triggers exactly one of edit or reply. Swiping your own editable
@@ -18,5 +19,21 @@ describe("messageSwipeAction", () => {
     test("swiping any message right replies", () => {
         expect(messageSwipeAction("right", true, true)).toBe("reply");
         expect(messageSwipeAction("right", false, false)).toBe("reply");
+    });
+});
+
+describe("messageSwipeLeft", () => {
+    const offers = (...actions: MessageMenuAction[]) => new Set<MessageMenuAction>(actions);
+
+    // invariant 3 (#10117)
+    test("swiping your own editable message edits it and never also sets a reply; swiping another person's message forwards it if forwardable", () => {
+        expect(messageSwipeLeft(true, offers("edit", "reply"))).toBe("edit");
+        expect(messageSwipeLeft(false, offers("forward", "reply"))).toBe("forward");
+        expect(messageSwipeLeft(false, offers("reply"))).toBeUndefined();
+    });
+
+    test("isn't taken where the message doesn't offer what it would do", () => {
+        expect(messageSwipeLeft(true, offers("reply"))).toBe("reply");
+        expect(messageSwipeLeft(true, offers())).toBeUndefined();
     });
 });
