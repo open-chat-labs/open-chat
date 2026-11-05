@@ -594,6 +594,9 @@
             // cancelled leaves nothing behind, so the view doesn't swap under the user's click. A click elsewhere ends
             // the composition while the input still has the focus and blurs it right after, in the same task, so
             // which one it was is only known once that task is done; until then the word stays uncomposed
+            // one that comes after the search opened (a browser committing on the hero's blur or removal) is
+            // ignored: the word is the search's already
+            if (searchOpen || !heroInput?.isConnected) return;
             clearTimeout(composedTimer);
             composedTimer = setTimeout(() => {
               if (document.activeElement === heroInput && query.trim()) openSearch();
