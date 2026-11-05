@@ -50,9 +50,15 @@ describe("redactSecrets", () => {
             chat_id: "abc",
             sign_in_proof_jwt: REDACTED,
         });
-        expect(redactSecrets({ chat_id: "abc", turnstile_token: "0.abc" }, "claim_prize")).toEqual({
+        expect(
+            redactSecrets(
+                { chat_id: "abc", turnstile_token: "0.abc", turnstile_salt: "0123" },
+                "claim_prize",
+            ),
+        ).toEqual({
             chat_id: "abc",
             turnstile_token: REDACTED,
+            turnstile_salt: REDACTED,
         });
         expect(
             redactSecrets({
