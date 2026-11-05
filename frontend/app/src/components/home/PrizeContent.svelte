@@ -258,9 +258,11 @@
                             )} /></SecureButton>
                 </ButtonGroup>
                 <!-- Kept while a claim's check runs, even if the prize runs out meanwhile -->
-                <HumanCheckFrame
-                    check={humanCheck}
-                    customData={prizeClaimCustomData($currentUserIdStore, messageId)} />
+                {#if view.canClaim || humanCheck.running}
+                    <HumanCheckFrame
+                        check={humanCheck}
+                        customData={prizeClaimCustomData($currentUserIdStore, messageId)} />
+                {/if}
             {/if}
         </div>
     </div>

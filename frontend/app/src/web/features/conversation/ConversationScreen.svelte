@@ -1282,7 +1282,7 @@
                                         )}
                                     />
                                     <!-- kept while a claim's check runs, even if the prize runs out meanwhile -->
-                                    {#if row.message.kind === "prize"}
+                                    {#if row.message.kind === "prize" && (row.message.canClaim || humanChecks.get(msg.messageId)?.running)}
                                         <HumanCheckFrame
                                             check={humanCheckFor(msg.messageId)}
                                             customData={prizeClaimCustomData(me, msg.messageId)}
