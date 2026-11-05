@@ -7,13 +7,14 @@ use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use pocket_ic::common::rest::{CanisterHttpReply, CanisterHttpResponse, MockCanisterHttpResponse};
 use rand::random;
+use sha256::sha256_string;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
     CanisterId, ChatEvent, CryptoTransaction, EventIndex, MessageContent, MessageContentInitial, MessageId, MultiUserChat,
-    OptionUpdate, PendingCryptoTransaction, PrizeContentInitial, UnitResult, icrc1,
+    OptionUpdate, PendingCryptoTransaction, PrizeContentInitial, UnitResult, UserId, icrc1,
 };
 
 #[test]
@@ -208,7 +209,7 @@ fn prize_message_requiring_reauthentication() {
             chat_id: MultiUserChat::Group(group_id),
             message_id,
             sign_in_proof_jwt: None,
-            turnstile_token: None,
+            turnstile: None,
         },
     );
 
@@ -512,7 +513,7 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
             chat_id,
             message_id,
             sign_in_proof_jwt: None,
-            turnstile_token: None,
+            turnstile: None,
         },
     );
     assert!(
@@ -528,7 +529,23 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
         local_user_index,
         chat_id,
         message_id,
-        &format!("{}_{other_message_id}", user2.user_id),
+        "salt",
+        &custom_data(user2.user_id, other_message_id, "salt"),
+    );
+    assert!(
+        matches!(&response, local_user_index_canister::claim_prize::Response::Error(e) if e.matches_code(OCErrorCode::HumanVerificationFailed)),
+        "{response:?}"
+    );
+
+    // One issued for this prize, but claimed with another salt
+    let response = claim_prize_with_token(
+        env,
+        &user2,
+        local_user_index,
+        chat_id,
+        message_id,
+        "other_salt",
+        &custom_data(user2.user_id, message_id, "salt"),
     );
     assert!(
         matches!(&response, local_user_index_canister::claim_prize::Response::Error(e) if e.matches_code(OCErrorCode::HumanVerificationFailed)),
@@ -541,7 +558,8 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
         local_user_index,
         chat_id,
         message_id,
-        &format!("{}_{message_id}", user2.user_id),
+        "salt",
+        &custom_data(user2.user_id, message_id, "salt"),
     );
     assert!(
         matches!(response, local_user_index_canister::claim_prize::Response::Success),
@@ -555,14 +573,20 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
     wait_for_turnstile_config(env, canister_ids, false);
 }
 
-// Claims with a new token, answering the LocalUserIndex's call to Cloudflare as Cloudflare would for
-// a passed token issued with the custom data `issued_for`
+// The custom data the website's human check (turnstile.js) gives Cloudflare for this claim
+fn custom_data(user_id: UserId, message_id: MessageId, salt: &str) -> String {
+    sha256_string(format!("{user_id}_{message_id}_{salt}").as_bytes())
+}
+
+// Claims with a new token and `salt`, answering the LocalUserIndex's call to Cloudflare as
+// Cloudflare would for a passed token issued with the custom data `issued_for`
 fn claim_prize_with_token(
     env: &mut PocketIc,
     user: &User,
     local_user_index: CanisterId,
     chat_id: MultiUserChat,
     message_id: MessageId,
+    salt: &str,
     issued_for: &str,
 ) -> local_user_index_canister::claim_prize::Response {
     let token = random_string();
@@ -575,7 +599,10 @@ fn claim_prize_with_token(
                 chat_id,
                 message_id,
                 sign_in_proof_jwt: None,
-                turnstile_token: Some(token.clone()),
+                turnstile: Some(local_user_index_canister::claim_prize::TurnstilePass {
+                    token: token.clone(),
+                    salt: salt.to_string(),
+                }),
             }),
         )
         .unwrap();

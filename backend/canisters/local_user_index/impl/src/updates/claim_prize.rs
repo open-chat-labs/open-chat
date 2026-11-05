@@ -39,11 +39,11 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
     // again, as a prize requiring a captcha asks for. Without one, tokens are ignored.
     let passed_turnstile = match turnstile_config.secret_key {
         Some(secret_key) => {
-            let Some(token) = args.turnstile_token else {
+            let Some(pass) = args.turnstile else {
                 return Error(OCErrorCode::HumanVerificationFailed.with_message("Turnstile token required"));
             };
-            let custom_data = turnstile::custom_data(user_id, args.message_id);
-            if let Err(error) = turnstile::verify(&secret_key, &token, &custom_data).await {
+            let custom_data = turnstile::custom_data(user_id, args.message_id, &pass.salt);
+            if let Err(error) = turnstile::verify(&secret_key, &pass.token, &custom_data).await {
                 return Error(error);
             }
             true

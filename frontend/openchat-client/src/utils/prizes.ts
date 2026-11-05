@@ -81,8 +81,10 @@ export function prizeView(content: PrizeContent, reader: PrizeReader): PrizeView
 }
 
 /**
- * The custom data a prize's human check (Cloudflare Turnstile) is run with. The LocalUserIndex
- * checks the token it issues was for this, so it serves only this user's claim of this prize.
+ * The claim a prize's human check (Cloudflare Turnstile) is run for. Its frame (turnstile.js) gives
+ * Cloudflare the SHA-256 of this and a random salt as the custom data, so Cloudflare can't tie it to
+ * the user, and passes the salt back with the token. The LocalUserIndex checks the token was issued
+ * for that, so it serves only this user's claim of this prize.
  */
 export function prizeClaimCustomData(userId: string, messageId: bigint): string {
     return `${userId}_${messageId}`;

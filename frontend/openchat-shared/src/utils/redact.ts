@@ -15,9 +15,9 @@ export const SECRET_KEYS: readonly string[] = [
     "signInProofJwt",
     // claim_prize's sign-in proof, which older clients send
     "sign_in_proof_jwt",
-    // claim_prize's Turnstile token, and the claimPrize worker request's
-    "turnstile_token",
-    "turnstileToken",
+    // claim_prize's and the claimPrize worker request's passed Turnstile check: its token, and its
+    // salt, which isn't a secret but with the claim gives the custom data Cloudflare saw
+    "turnstile",
     // The Turnstile secret key, in set_turnstile_config and the setTurnstileConfig worker request
     "secret_key",
     "secretKey",

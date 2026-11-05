@@ -29,6 +29,7 @@ import type {
     RegisterUserResponse,
     Success,
     Tally,
+    TurnstilePass,
     VerifiedCredentialArgs,
 } from "@shared";
 import { MAX_MISSING, premiumPrices, toBigInt32, UnsupportedValueError } from "@shared";
@@ -671,7 +672,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         localUserIndex: string,
         id: MultiUserChatIdentifier,
         messageId: bigint,
-        turnstileToken: string | undefined,
+        turnstile: TurnstilePass | undefined,
     ): Promise<ClaimPrizeResponse> {
         return this.update(
             localUserIndex,
@@ -679,7 +680,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
             {
                 chat_id: apiMultiUserChat(id),
                 message_id: messageId,
-                turnstile_token: turnstileToken,
+                turnstile,
             },
             (resp) => {
                 if (resp === "Success") return { kind: "success" };

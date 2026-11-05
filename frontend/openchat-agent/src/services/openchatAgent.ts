@@ -196,6 +196,7 @@ import type {
     TokenPrices,
     TokenSwapPool,
     TopUpNeuronResponse,
+    TurnstilePass,
     UnblockUserResponse,
     UndeleteMessageResponse,
     UnfinishedTokenSwap,
@@ -4316,7 +4317,7 @@ export class OpenChatAgent extends EventTarget {
     async claimPrize(
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
-        turnstileToken: string | undefined,
+        turnstile: TurnstilePass | undefined,
     ): Promise<ClaimPrizeResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -4324,12 +4325,7 @@ export class OpenChatAgent extends EventTarget {
             ? this._groupClient.localUserIndex(chatId.groupId)
             : this._communityClient.localUserIndex(chatId.communityId));
 
-        return this._localUserIndexClient.claimPrize(
-            localUserIndex,
-            chatId,
-            messageId,
-            turnstileToken,
-        );
+        return this._localUserIndexClient.claimPrize(localUserIndex, chatId, messageId, turnstile);
     }
 
     async payForDiamondMembership(

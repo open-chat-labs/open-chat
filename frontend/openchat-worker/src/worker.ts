@@ -750,7 +750,7 @@ const handlers: Handlers = {
             .deleteFailedMessage(payload.chatId, payload.messageId, payload.threadRootMessageIndex)
             .then(() => undefined),
     claimPrize: (payload, agent) =>
-        agent.claimPrize(payload.chatId, payload.messageId, payload.turnstileToken),
+        agent.claimPrize(payload.chatId, payload.messageId, payload.turnstile),
     payForDiamondMembership: (payload, agent) =>
         agent.payForDiamondMembership(
             payload.userId,

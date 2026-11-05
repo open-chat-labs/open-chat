@@ -50,13 +50,19 @@ describe("redactSecrets", () => {
             chat_id: "abc",
             sign_in_proof_jwt: REDACTED,
         });
-        expect(redactSecrets({ chat_id: "abc", turnstile_token: "0.abc" }, "claim_prize")).toEqual({
-            chat_id: "abc",
-            turnstile_token: REDACTED,
-        });
         expect(
-            redactSecrets({ kind: "claimPrize", messageId: 1n, turnstileToken: "0.abc" }),
-        ).toEqual({ kind: "claimPrize", messageId: 1n, turnstileToken: REDACTED });
+            redactSecrets(
+                { chat_id: "abc", turnstile: { token: "0.abc", salt: "0123" } },
+                "claim_prize",
+            ),
+        ).toEqual({ chat_id: "abc", turnstile: REDACTED });
+        expect(
+            redactSecrets({
+                kind: "claimPrize",
+                messageId: 1n,
+                turnstile: { token: "0.abc", salt: "0123" },
+            }),
+        ).toEqual({ kind: "claimPrize", messageId: 1n, turnstile: REDACTED });
         expect(redactSecrets({ secret_key: "0x4AAA" }, "set_turnstile_config")).toEqual({
             secret_key: REDACTED,
         });
