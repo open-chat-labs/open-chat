@@ -72,8 +72,8 @@ class MainActivity : TauriActivity() {
     private fun interceptBack() {
         Log.d(LOG_TAG, "Back pressed/swiped intercepted in MainActivity")
 
-        // Raise back pressed, but send no data!
-        OCPluginCompanion.triggerRef("back-pressed", JSObject())
+        // Raise back pressed, but send no data! Never queued for svelteReady (triggerBackPressed).
+        OCPluginCompanion.triggerBackPressed()
     }
 
     override fun onNewIntent(intent: Intent) {

@@ -445,6 +445,14 @@ object OCPluginCompanion {
         pluginRef?.trigger("window-inset-change", payload)
     }
 
+    // The system back is a gesture for the screen showing, not an intent to keep: signed-out
+    // screens need it before svelteReady (which only comes once someone is signed in), and a press
+    // held back until then would replay on whatever shows after sign-in. So it skips the queue: sent
+    // at once to whoever listens, and dropped when no one does.
+    fun triggerBackPressed() {
+        pluginRef?.trigger("back-pressed", JSObject())
+    }
+
     fun setTriggerRef(plugin: OpenChatPlugin) {
         pluginRef = plugin
         triggerRef = { event, payload ->

@@ -79,11 +79,17 @@ design export needs. Each entry says where it came up.
     (`configKeys.layoutOverride`), but no screen sets it yet (N12, and the web's settings). Nor does
     a resize offer a reload into the other layout.
   - **Outside the tabs**: the marketing pages and the signed-out start are a placeholder (N4).
-  - **Signed out, the shell's events wait**: the Android app queues its events until `svelteReady`,
-    which both trees send only once someone is signed in (`setupNativeApp`). The window insets don't
-    wait any more (`followWindowInsets`: sent at once, and `get_window_insets` for the current
-    ones), but Android's system back does, so it does nothing before sign-in. N4, with the
-    signed-out start, decides which of the shell's events a signed-out screen needs.
+  - **Signed out, the shell's events**: done (N4). The Android app queues its events until
+    `svelteReady`, which both trees send only once someone is signed in (`setupNativeApp`). What a
+    signed-out screen needs is the screen's own: the window insets (`followWindowInsets`, sent at
+    once, and `get_window_insets` for the current ones) and, since N4, the system back, which skips
+    the queue too (`triggerBackPressed`): sent at once to whoever listens and dropped when no one
+    does, so a press is never replayed on whatever shows after sign-in (components_mobile, which
+    listens only once signed in, used to get every press made on its sign-in screens then). The
+    intents stay queued until sign-in: deep links, notification taps, shares, calls and token
+    refreshes. A bundle taken over the air by a shell from before this still queues back until
+    sign-in, and replays it then (in the native tree, on Chats' root, which leaves the app): the
+    native tree should only ship (N15) with a shell that has it.
   - **Shares from other apps**: a Direct Share to a chat goes into that chat's draft, as in
     components_mobile; a share for no chat in particular needs the chat picker
     (components_mobile's goes through `pendingShareStore` to its SlidingModals), which the native
