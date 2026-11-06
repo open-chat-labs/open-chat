@@ -312,6 +312,31 @@ describe("sending from the composer", () => {
             expect(req.kind === "sendMessage" && req.event.event.content).toEqual(meme);
         });
 
+        test("replies to the draft's reply, and leaves the rest of the draft as it was", async () => {
+            localUpdates.draftMessages.setTextContent(context, "a caption");
+            localUpdates.draftMessages.setAttachment(context, transfer);
+            localUpdates.draftMessages.setReplyingTo(context, {
+                kind: "rehydrated_reply_context",
+                senderId: "them",
+                eventIndex: 0,
+                content: { kind: "text_content", text: "quoted" },
+                messageId: 9n,
+                messageIndex: 0,
+                edited: false,
+                isThreadRoot: false,
+                sourceContext: context,
+            });
+            expect(await settled(client.sendContent(context, meme))).toEqual({ kind: "posted" });
+            const req = sent[0];
+            expect(req.kind === "sendMessage" && req.event.event.repliesTo).toMatchObject({
+                messageId: 9n,
+            });
+            const draft = localUpdates.draftMessages.value.get(context);
+            expect(draft?.textContent).toBe("a caption");
+            expect(draft?.attachment).toBe(transfer);
+            expect(draft?.replyingTo).toBeUndefined();
+        });
+
         test("waits for a send already on its way from the chat", async () => {
             pinNumberRequiredStore.set(true);
             const first = send(transfer);

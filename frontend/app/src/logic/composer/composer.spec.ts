@@ -6,7 +6,6 @@ import {
     type UserSummary,
 } from "@client";
 import {
-    attachesToDraft,
     attachRefusal,
     canAttachNow,
     canRecordVoice,
@@ -286,14 +285,6 @@ describe("the builders the entry offers", () => {
         expect(
             composerBuilders(permitted("memeFighter", "crypto", "p2pSwap", "prize", "poll"), none),
         ).toEqual(["poll", "prize", "crypto", "swap", "memeFighter"]);
-    });
-
-    test("payments attach to the draft, to be taken when it's sent; a poll is sent from its dialog", () => {
-        expect(attachesToDraft("crypto")).toBe(true);
-        expect(attachesToDraft("prize")).toBe(true);
-        expect(attachesToDraft("swap")).toBe(true);
-        expect(attachesToDraft("poll")).toBe(false);
-        expect(attachesToDraft("memeFighter")).toBe(false);
     });
 
     test("none this build turns off (the app store builds' payments)", () => {

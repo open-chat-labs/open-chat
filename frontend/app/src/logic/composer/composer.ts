@@ -233,23 +233,6 @@ export function composerBuilders(
     );
 }
 
-/**
- * Whether a builder's content is attached to the draft, to go with its caption when it's sent (a
- * payment: it's taken when the message is sent), rather than sent from its dialog (a poll). One
- * that attaches is offered only while something can be attached (`canAttachNow`).
- */
-export function attachesToDraft(builder: ComposerBuilder): boolean {
-    switch (builder) {
-        case "prize":
-        case "crypto":
-        case "swap":
-            return true;
-        case "poll":
-        case "memeFighter":
-            return false;
-    }
-}
-
 // as the old pickers: what's typed after the "@" is looked for once it's this long
 const FIND_MEMBERS_FROM = 2;
 

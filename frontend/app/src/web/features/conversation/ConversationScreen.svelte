@@ -107,7 +107,6 @@
         GroupMessage,
     } from "@openchat/ui/src/lib/types";
     import {
-        attachesToDraft,
         attachRefusal,
         canAttachNow,
         canRecordVoice,
@@ -548,14 +547,15 @@
     );
 
     // what the + menu offers (following the reader's permissions here): to pick from the device and
-    // the builders that attach (while something can be attached), and the ones that send
+    // the builders, all while something can be attached (`canAttachNow`), the ones that send (a
+    // poll, a meme) too: one sent mid-edit would reply to the edited message's reply
     const attachKinds = $derived.by((): ComposerAttachKind[] => {
-        if (directBot) return [];
+        if (!attachable) return [];
         const permitted = $messagePermissionsForSelectedChatStore;
-        const builders = composerBuilders(permitted, composerBuildersOff).filter(
-            (b) => attachable || !attachesToDraft(b),
-        );
-        return [...(attachable ? pickableAttachments(permitted) : []), ...builders];
+        return [
+            ...pickableAttachments(permitted),
+            ...composerBuilders(permitted, composerBuildersOff),
+        ];
     });
 
     // a builder picked from the + menu opens its dialog
