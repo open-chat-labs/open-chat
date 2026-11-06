@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2212](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2212-notifications_index)] - 2026-11-05
+
 ### Added
 
 - Register iOS devices for APNs pushes, last login wins, and remove them on sign-out or when APNs rejects a token ([#10409](https://github.com/open-chat-labs/open-chat/pull/10409))
