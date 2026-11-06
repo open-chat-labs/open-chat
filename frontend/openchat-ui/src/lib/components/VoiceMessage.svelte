@@ -143,13 +143,36 @@
   }
 
   .play {
+    position: relative;
     flex: none;
     width: 30px;
     height: 30px;
     border-radius: var(--radius-pill);
     background: var(--overlay-2);
 
+    /* while it plays, a halo spreads from the button and fades, again and again (by hand) */
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: 0 0 0 2px var(--voice-halo, var(--accent));
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &.playing::after {
+      animation: voiceHalo 1.44s ease-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      &.playing::after {
+        animation: none;
+      }
+    }
+
     .sent & {
+      --voice-halo: var(--bubble-text);
       background: color-mix(in oklch, var(--bubble-text) 12%, transparent);
     }
     @include flex-center;
@@ -251,6 +274,21 @@
 
     .sent & {
       color: var(--bubble-text-soft);
+    }
+  }
+
+  @keyframes voiceHalo {
+    0% {
+      opacity: 0.55;
+      transform: scale(1);
+    }
+    /* gone well before it's spread all the way */
+    65% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.7);
     }
   }
 </style>

@@ -1062,7 +1062,8 @@ design export needs. Each entry says where it came up.
 - **Voice bubble and hover bar, by hand** (2026-11-06, EXPORT-LOG): a sent voice message has the
   sent bubble's colours and the received shape (bubbles are all left-aligned; `mirror` is for
   right-aligned layouts), which the design export didn't have; and a message's hover bar comes
-  in front of the message before it (`MessageGroup` `.raised`). To take back to the design.
+  in front of the message before it (`MessageGroup` `.raised`); a playing voice message's button
+  sends out a fading halo. To take back to the design.
 - **Voice and file messages** (`features/conversation`, 5a): a voice message plays through the
   screen's `VoicePlayer` (one audio element, so one at a time), with the recording's waveform
   (`VoiceMessage` takes `levels` by hand: the design's bars are made up). Unlike the mobile app,
