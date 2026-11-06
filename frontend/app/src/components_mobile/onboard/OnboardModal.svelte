@@ -16,7 +16,6 @@
         Title,
     } from "component-lib";
     import { identityStateStore, OpenChat } from "@client";
-    import { ErrorCode } from "@shared";
     import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -71,35 +70,17 @@
         step = "new-user";
     }
 
-    function errorCodeToi18nKey(code: number | string): string {
-        switch (code) {
-            case ErrorCode.AlreadyRegistered:
-                return "alreadyRegistered";
-            case ErrorCode.LinkingCodeNotFound:
-                return "linkingCodeNotFound";
-            case ErrorCode.MaxLinkedIdentitiesLimitReached:
-                return "maxLinkedIdentitiesLimitReached";
-            default:
-                // TODO add error strings for the codes returned by the android code
-                return "string" === typeof code ? code : "default";
-        }
-    }
-
-    function linkAccount() {
+    async function linkAccount() {
         if (!linkingInProgress && accountLinkingCode.length === ALC_LENGTH) {
             linkingInProgress = true;
             error = undefined;
-            client.linkAccountsWithAndroidWebAuthn(accountLinkingCode).catch((err) => {
-                console.error(err);
-                linkingInProgress = false;
-                if (err && "object" === typeof err && "code" in err) {
-                    error = errorCodeToi18nKey(err.code);
-                } else {
-                    error = "default";
-                }
-            });
+            // the client's sign-in with a linking code: why it failed comes back translated
+            // (linkingCodeFailure), and a dismissed passkey prompt is no error
+            const outcome = await client.signIn({ kind: "linking_code", code: accountLinkingCode });
+            if (outcome.kind === "failed") error = outcome.reason.key;
+            if (outcome.kind !== "logged_in") linkingInProgress = false;
         } else {
-            error = "codeInvalid";
+            error = "native.auth.errors.codeInvalid";
         }
     }
 

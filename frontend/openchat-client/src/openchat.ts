@@ -704,6 +704,7 @@ import {
     isOwnPrincipal,
     linkedPrincipalProvider,
     linkedSignInProviders,
+    linkingCodeFailure,
     markCurrentSignIn,
     signInOutcome,
     signInProvider,
@@ -1501,6 +1502,11 @@ export class OpenChat {
                     if (resp.kind !== "success") {
                         return { kind: "failed", reason: i18nKey("loginDialog.unexpectedError") };
                     }
+                    break;
+                }
+                case "linking_code": {
+                    const stopped = await this.#signInWithLinkingCode(method.code);
+                    if (stopped !== undefined) return stopped;
                     break;
                 }
             }
@@ -12089,64 +12095,58 @@ export class OpenChat {
         return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity);
     }
 
-    async linkAccountsWithAndroidWebAuthn(accountLinkingCode: string): Promise<void> {
+    /**
+     * Links a new passkey on this device (the native app's, else the browser's) to the account
+     * whose linking code this is, and signs in with it: the code is checked, the passkey made for
+     * the account's username, the link finalised, then the identity loads. Resolves undefined once
+     * it's signed in, or how it stopped (`linkingCodeFailure`): a dismissed passkey prompt is a
+     * cancel. A failure once the identity is loading is the caller's (#signIn) to report.
+     */
+    async #signInWithLinkingCode(code: string): Promise<SignInOutcome | undefined> {
+        // also the session's key
+        const tempKey = await ECDSAKeyIdentity.generate();
+        const verified = await this.verifyAccountLinkingCode(code.toUpperCase(), tempKey);
+        if (verified.kind === "error") return linkingCodeFailure(verified);
+
+        let webAuthnIdentity: WebAuthnIdentity;
+        let webAuthnKey: WebAuthnKeyFull | undefined;
+        const cacheKey = (key: WebAuthnKeyFull) => {
+            webAuthnKey = key;
+            return this.#storeWebAuthnKeyInCache(key);
+        };
         try {
-            // Also used as session key
-            const tempKey = await ECDSAKeyIdentity.generate();
-
-            // Verify code
-            const verificationRes = await this.verifyAccountLinkingCode(
-                accountLinkingCode,
-                tempKey,
-            );
-
-            // Error should be of type AccountLinkingError
-            if ("error" === verificationRes.kind) {
-                return Promise.reject(verificationRes);
+            if (this.isNativeApp()) {
+                webAuthnIdentity = await createAndroidWebAuthnPasskeyIdentity(
+                    verified.username,
+                    cacheKey,
+                );
+            } else {
+                const webAuthnOrigin = this.config.webAuthnOrigin;
+                if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
+                webAuthnIdentity = await createWebAuthnIdentity(
+                    webAuthnOrigin,
+                    cacheKey,
+                    verified.username,
+                );
             }
-
-            // Create passkey
-            let cachedWebAuthnKey: WebAuthnKeyFull | undefined;
-            const webAuthnIdentity = await createAndroidWebAuthnPasskeyIdentity(
-                verificationRes.username,
-                (key) => {
-                    cachedWebAuthnKey = key;
-                    return this.#storeWebAuthnKeyInCache(key);
-                },
-            );
-
-            if (!cachedWebAuthnKey) {
-                return Promise.reject({
-                    code: AndroidWebAuthnErrorCode.FailedToCacheWebAuthnKey,
-                    msg: "failed to cache webauthn key",
-                });
-            }
-
-            // Finalise linking and get the delegated identity
-            await this.finaliseAccountLinkingWithCode(
-                tempKey,
-                webAuthnIdentity.getPrincipal().toString(),
-                webAuthnIdentity.getPublicKey().toDer(),
-                cachedWebAuthnKey,
-            );
-
-            await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, true);
-
-            return Promise.resolve();
-        } catch (e) {
-            if (typeof e === "object") {
-                // Either android webauthn error, or account linking error
-                return Promise.reject(e);
-            }
-
-            // Unknown error!
-            console.error(e);
-            return Promise.reject({
-                kind: "error",
-                code: ErrorCode.Unknown,
-                msg: e ? e.toString() : undefined,
-            });
+        } catch (err) {
+            console.warn("Couldn't make a passkey to link: ", err);
+            return linkingCodeFailure(err);
         }
+        if (webAuthnKey === undefined) {
+            return linkingCodeFailure({ code: AndroidWebAuthnErrorCode.FailedToCacheWebAuthnKey });
+        }
+
+        const linked = await this.finaliseAccountLinkingWithCode(
+            tempKey,
+            webAuthnIdentity.getPrincipal().toString(),
+            webAuthnIdentity.getPublicKey().toDer(),
+            webAuthnKey,
+        );
+        if (linked.kind === "error") return linkingCodeFailure(linked);
+
+        await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, true);
+        return undefined;
     }
 
     async signInWithWebAuthn() {

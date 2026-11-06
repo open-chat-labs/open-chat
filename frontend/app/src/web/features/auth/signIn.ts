@@ -142,14 +142,15 @@ export const AUTH_WALLETS: NonNullable<PageAuth["wallets"]> = {
 
 /**
  * The client's sign-in method for one AuthDialog picked: a wallet signs the backend's sign-in
- * message here first; the rest is the client's.
+ * message here first; the rest is the client's. (AuthDialog has no linking code: that's the
+ * native tree's.)
  */
 export async function signInMethod(
     client: OpenChat,
     method: AuthMethod,
     wallet: string | undefined,
     signal: AbortSignal,
-): Promise<SignInMethod> {
+): Promise<Exclude<SignInMethod, { kind: "linking_code" }>> {
     switch (method) {
         case "passkey":
             return { kind: "passkey" };

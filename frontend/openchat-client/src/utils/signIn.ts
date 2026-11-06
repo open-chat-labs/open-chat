@@ -17,6 +17,7 @@ import { toDayString } from "./date";
 export function signInProvider(method: SignInMethod): AuthProvider {
     switch (method.kind) {
         case "passkey":
+        case "linking_code":
             return AuthProvider.PASSKEY;
         case "auth_client":
             return method.provider === "ii" ? AuthProvider.II : AuthProvider.NFID;
@@ -34,6 +35,45 @@ export function emailLinkFailure(kind: string): ResourceKey {
             return i18nKey("loginDialog.failedToSendEmail");
         default:
             return i18nKey("loginDialog.unexpectedError");
+    }
+}
+
+/**
+ * How a sign-in with a linking code (`{ kind: "linking_code" }`) that didn't go through ended, from
+ * what stopped it: the backend's error for the code (not found, expired, too many linked sign-ins),
+ * the native app's passkey error, or the browser's (a dismissed prompt is NotAllowedError).
+ * Dismissing the passkey prompt is a cancel; anything else says why, in the app's words.
+ */
+export function linkingCodeFailure(
+    err: unknown,
+): Exclude<SignInOutcome, { kind: "logged_in" | "needs_account" }> {
+    const failed = (key: string) => ({ kind: "failed", reason: i18nKey(key) }) as const;
+    if (typeof DOMException !== "undefined" && err instanceof DOMException) {
+        return err.name === "NotAllowedError" || err.name === "AbortError"
+            ? { kind: "cancelled" }
+            : failed("native.auth.errors.createPasskeyFail");
+    }
+    if (typeof err !== "object" || err === null || !("code" in err)) {
+        return failed("native.auth.errors.default");
+    }
+    switch (err.code) {
+        case ErrorCode.LinkingCodeNotFound:
+            return failed("native.auth.errors.linkingCodeNotFound");
+        case ErrorCode.MaxLinkedIdentitiesLimitReached:
+            return failed("native.auth.errors.maxLinkedIdentitiesLimitReached");
+        case ErrorCode.AlreadyRegistered:
+            return failed("native.auth.errors.alreadyRegistered");
+        // the native app's passkey errors (tauri-plugin-oc's AndroidWebAuthnErrorCode)
+        case "userCancelled":
+            return { kind: "cancelled" };
+        case "noProviders":
+            return failed("native.auth.errors.noProviders");
+        case "passkeyCreateFailed":
+        case "passkeyAlreadyExists":
+        case "failedToCacheWebAuthnKey":
+            return failed("native.auth.errors.createPasskeyFail");
+        default:
+            return failed("native.auth.errors.default");
     }
 }
 
