@@ -4,6 +4,7 @@ import {
     updateAndroidInterfaceSizes,
 } from "@stores/androidInterfaceSizes";
 import { followWindowInsets } from "@utils/native/notification_channels";
+import { followThemeInSystemBars } from "@utils/native/systemBarsStyle";
 
 // The safe areas in the Android app. Its edge-to-edge WebView doesn't report
 // env(safe-area-inset-*) reliably, so the shell reports the status and navigation bars' heights
@@ -22,6 +23,8 @@ export function followAndroidSystemBars(root: HTMLElement): () => void {
     setStatusAndNavBarSizesForNativeApp();
     root.style.setProperty("--safe-top", ANDROID_SAFE_TOP);
     root.style.setProperty("--safe-bottom", ANDROID_SAFE_BOTTOM);
+    // their icons, dark over the light theme
+    const stopFollowingTheme = followThemeInSystemBars();
 
     let listener: PluginListener | undefined;
     let following = true;
@@ -29,6 +32,7 @@ export function followAndroidSystemBars(root: HTMLElement): () => void {
 
     return () => {
         following = false;
+        stopFollowingTheme();
         void listener?.unregister();
         root.style.removeProperty("--safe-top");
         root.style.removeProperty("--safe-bottom");

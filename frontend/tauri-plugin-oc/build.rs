@@ -1,6 +1,8 @@
 const COMMANDS: &[&str] = &[
     "registerListener",
     "removeListener",
+    // what @tauri-apps/api's PluginListener.unregister() calls
+    "remove_listener",
     "open_url",
     "sign_up",
     "sign_in",
@@ -35,6 +37,7 @@ const COMMANDS: &[&str] = &[
     "get_store_update",
     "haptic",
     "get_window_insets",
+    "set_system_bars_style",
 ];
 
 fn main() {
