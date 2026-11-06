@@ -4,6 +4,7 @@ import {
     showsTabBar,
     locationFor,
     NATIVE_TABS,
+    tabRootStep,
     tabRootUrl,
     type LocationContext,
     type NativeLocation,
@@ -225,6 +226,21 @@ describe("where a tab opens without a stack", () => {
             const location = at(tabRootUrl(tab, community("c1")));
             expect(location.area === "tabs" && location.tab, tab).toBe(tab);
             expect(location.area === "tabs" && location.steps.length, tab).toBe(1);
+        }
+    });
+});
+
+describe("a tab's root before it's opened", () => {
+    // a swipe draws it with this; the tab then opens on the same screen, not a new one
+    test.each([
+        ["with a community", community("c1")],
+        ["without one", undefined],
+    ])("is the root the tab opens on (%s)", (_, inCommunity) => {
+        const context: LocationContext = { signedOut: false, community: inCommunity };
+        for (const tab of NATIVE_TABS) {
+            const location = at(tabRootUrl(tab, inCommunity), context);
+            if (location.area !== "tabs") throw new Error(`${tab}'s root isn't in the tabs`);
+            expect(tabRootStep(tab, inCommunity)).toEqual(location.steps[0]);
         }
     });
 });

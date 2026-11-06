@@ -41,6 +41,7 @@
         showsTabBar,
         locationFor,
         NATIVE_TABS,
+        tabRootStep,
         tabRootUrl,
         type LocalScreen,
         type NativeLocation,
@@ -281,7 +282,10 @@
                 gesture = undefined;
                 return;
             }
-            if (gesture.axis === "sideways") e.currentTarget.setPointerCapture(e.pointerId);
+            if (gesture.axis === "sideways") {
+                e.currentTarget.setPointerCapture(e.pointerId);
+                primeNeighbours();
+            }
         }
         if (gesture.axis !== "sideways") return;
         // the samples' y is the pointer's x: releaseVelocity reads one axis
@@ -320,6 +324,14 @@
             selectTab(to);
         } else if (shown !== undefined) {
             springBack(shown.offset, shown.neighbour, ended.width, dx);
+        }
+    }
+
+    // the tabs either side, drawn while the swipe drags one in, a tab not opened yet included
+    function primeNeighbours() {
+        const community = communityShown() ?? defaultCommunityId;
+        for (const tab of [tabIds[tabIndex - 1], tabIds[tabIndex + 1]]) {
+            if (tab !== undefined) stacks.prime(tab, tabRootStep(tab, community));
         }
     }
 

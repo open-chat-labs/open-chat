@@ -260,3 +260,32 @@ describe("a screen with no URL", () => {
         expect(stacks.popLocals()).toBe(false);
     });
 });
+
+describe("a tab given its root before it's opened", () => {
+    test("gets it without showing it", () => {
+        const stacks = new TabStacks();
+        stacks.arrive(at("/chats"));
+        stacks.prime("wallet", at("/wallet").steps[0]);
+        expect(stacks.tab).toBe("chats");
+        expect(stacks.root("wallet")?.url).toBe("/wallet");
+    });
+
+    test("keeps the stack of a tab already opened", () => {
+        const stacks = new TabStacks();
+        stacks.arrive(at("/wallet"));
+        stacks.arrive(at("/chats/user/u1"));
+        stacks.prime("chats", at("/chats").steps[0]);
+        expect(urls(stacks.stackOf("chats"))).toEqual(["/chats", "/chats/user/u1"]);
+    });
+
+    test("opens on the same root when it's then shown", () => {
+        const stacks = new TabStacks();
+        stacks.arrive(at("/chats"));
+        const root = at("/wallet").steps[0];
+        stacks.prime("wallet", root);
+        stacks.arrive(at("/wallet"));
+        expect(stacks.tab).toBe("wallet");
+        expect(stacks.root("wallet")?.key).toBe(root.key);
+        expect(urls(stacks.steps)).toEqual(["/wallet"]);
+    });
+});

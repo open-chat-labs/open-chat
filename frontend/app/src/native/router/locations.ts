@@ -167,6 +167,30 @@ export function showsTabBar(steps: readonly StackStep[]): boolean {
     return steps.length <= 1;
 }
 
+/**
+ * A tab's root screen, as the tab opens on it (`tabRootUrl`'s step): for drawing a tab not opened
+ * yet while a swipe drags it in.
+ */
+export function tabRootStep(tab: NativeTabId, community: CommunityIdentifier | undefined): StackStep {
+    // at the URL the tab opens on, as a location's top step is (`tabs`)
+    return { ...rootScreen(tab, community), url: tabRootUrl(tab, community) };
+}
+
+function rootScreen(tab: NativeTabId, community: CommunityIdentifier | undefined): StackStep {
+    switch (tab) {
+        case "chats":
+            return chatsRoot({ kind: "chats" });
+        case "communities":
+            return community !== undefined ? communitiesRoot(community) : exploreStep();
+        case "wallet":
+            return walletRoot();
+        case "activity":
+            return step("activity", { kind: "activity" }, "/notifications");
+        case "you":
+            return youRoot();
+    }
+}
+
 /** Where a tab opens when it has no stack yet: its root. */
 export function tabRootUrl(tab: NativeTabId, community: CommunityIdentifier | undefined): string {
     switch (tab) {

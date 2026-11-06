@@ -166,6 +166,15 @@ export class TabStacks {
         return steps?.[steps.length - 1]?.url;
     }
 
+    /**
+     * Gives a tab not opened yet its root, without showing it: a swipe draws the tab it drags in.
+     * A tab already opened keeps its stack.
+     */
+    prime(tab: NativeTabId, root: StackStep): void {
+        if (this.#stacks[tab] !== undefined) return;
+        this.#stacks = { ...this.#stacks, [tab]: [root] };
+    }
+
     /** A tab's root, once it's been opened. */
     root(tab: NativeTabId): StackStep | undefined {
         return this.#stacks[tab]?.[0];
