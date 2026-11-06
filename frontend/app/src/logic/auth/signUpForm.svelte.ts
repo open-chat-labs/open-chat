@@ -1,10 +1,11 @@
 // The sign-up form, in every tree that has one of its own (the native tree's Pick a username, and
 // the old UIs' SignUp): the username checked as it's typed, an optional recovery email, the
-// referrer (the referral link's, or one picked), and the account made through the shared signUp
-// (the client's operation). src/web's AuthDialog keeps its form in the library and calls the same
+// referrer (the referral link's, or one picked), an optional photo (the native tree's), and the
+// account made through the shared signUp (the client's operation, which uploads the photo once
+// the account is made). src/web's AuthDialog keeps its form in the library and calls the same
 // signUp (features/auth/signIn.ts).
 
-import type { OpenChat, SignUpOutcome, UserSummary } from "@client";
+import type { OpenChat, SignUpAvatar, SignUpOutcome, UserSummary } from "@client";
 import EmailValidator from "email-validator";
 import { UsernameCheck } from "../profile/usernameCheck.svelte";
 import { Referral, signUp } from "./signUp";
@@ -38,6 +39,8 @@ export class SignUpForm {
     /** The recovery email: optional, used only to recover the account. */
     email = $state("");
     referrer = $state<FormReferrer | undefined>(undefined);
+    /** The account's photo (the picked image, cropped), if one was picked. */
+    avatar = $state.raw<SignUpAvatar | undefined>(undefined);
     busy = $state(false);
     /** Why the last try failed, as an i18n key. */
     error = $state<string | undefined>(undefined);
@@ -84,7 +87,7 @@ export class SignUpForm {
 
     /**
      * Makes the account, if the form is ready and the terms are agreed to: the referrer goes with
-     * it (or a code nobody wants any more is cleared), then the shared signUp. Resolves its
+     * it (or a code nobody wants any more is cleared), then the shared signUp, with the photo. Resolves its
      * outcome, or undefined when the form wasn't sent.
      */
     async submit(termsAccepted: boolean, signal?: AbortSignal): Promise<SignUpOutcome | undefined> {
@@ -103,6 +106,7 @@ export class SignUpForm {
                 email.length > 0 ? email : undefined,
                 termsAccepted,
                 signal,
+                this.avatar,
             );
         } finally {
             this.busy = false;

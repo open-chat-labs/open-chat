@@ -129,9 +129,15 @@ design export needs. Each entry says where it came up.
     first; the prototype fakes it.
   - **Getting started card** (new accounts, top of Chats): not built. It goes on the Chats root
     (N5a), and its last step, backing up the recovery phrase, waits for the phrase.
-  - **A photo on Pick a username**: the avatar is the name's initial, without the camera badge.
-    A photo needs the crop step and an upload once the account exists (the client's `signUp`
-    taking it, so the screen doesn't string the two together).
+  - **A photo on Pick a username**: the avatar (the name's initial until a photo) is a button with
+    the camera badge; it opens the OS image picker, then a round crop in a sheet
+    (`AvatarCropSheet`, the shared `utils/imageCrop` and `svelte-easy-crop`, as src/web's
+    `ImageCropDialog`), and the photo shows in the circle. With a photo, the avatar opens a menu:
+    Choose another photo, Remove photo. The photo goes with the sign-up (`SignUpForm.avatar`), and
+    the client's `signUp` uploads it once the account is made (`setUserAvatar`), without holding the
+    sign-up up; a failed upload is logged and leaves the account without a photo.
+    TODO(design): the native design has no crop step (the sheet, its "Drag to move it, pinch to
+    zoom" hint) nor the photo's menu; confirm with design.
   - **The passkey prompt** comes on Continue (the client's `signUp` makes the passkey, named after
     the username), not on Welcome's Create account as the issue reads it.
   - **Appearance**: the design's menu (`AppearanceMenu`, under the pill at the trailing edge): Theme

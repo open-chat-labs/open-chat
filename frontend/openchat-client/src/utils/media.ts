@@ -171,7 +171,8 @@ export async function changeDimensions(
     };
 }
 
-function dataUrlToArrayBuffer(dataUrl: string): ArrayBuffer {
+/** A base64 data URL's bytes (a canvas's `toDataURL`, which is fast where `toBlob` isn't). */
+export function dataUrlToArrayBuffer(dataUrl: string): ArrayBuffer {
     const commaIdx = dataUrl.indexOf(",");
     if (commaIdx < 0) throw new Error("Malformed data URL");
     const binaryString = atob(dataUrl.slice(commaIdx + 1));

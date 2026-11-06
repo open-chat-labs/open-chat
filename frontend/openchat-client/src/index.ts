@@ -178,6 +178,7 @@ export {
 export {
     audioContent,
     audioRecordingMimeType,
+    dataUrlToArrayBuffer,
     maxMediaSizes,
     quantiseWaveform,
     waveformLevels,

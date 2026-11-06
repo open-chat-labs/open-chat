@@ -64,7 +64,23 @@ describe("the sign-up form", () => {
         form.pickReferrer(lucy, "search");
         await expect(form.submit(true)).resolves.toEqual({ kind: "success" });
         expect(client.setReferralCode).toHaveBeenCalledWith("r1");
-        expect(client.signUp).toHaveBeenCalledWith("newperson", "me@example.com", true, undefined);
+        expect(client.signUp).toHaveBeenCalledWith(
+            "newperson",
+            "me@example.com",
+            true,
+            undefined,
+            undefined,
+        );
+    });
+
+    test("makes the account with the photo picked", async () => {
+        const client = fakeClient();
+        const form = formFor(client);
+        await named(form, "newperson");
+        const avatar = { data: new Uint8Array([1]), url: "data:image/png;base64,AQ==" };
+        form.avatar = avatar;
+        await form.submit(true);
+        expect(client.signUp).toHaveBeenCalledWith("newperson", undefined, true, undefined, avatar);
     });
 
     test("the link's referrer is the referrer, unless one was picked first", async () => {

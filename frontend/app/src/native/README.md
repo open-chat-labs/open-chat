@@ -50,8 +50,9 @@ native/
     app/screens.ts   which screen shows for each kind; a new screen sets its entry there
     app/ScreenHost.svelte  loads it, or shows a placeholder until it's built
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
-                     Link to your account, Pick a username and the referrer sheet, on a stack of
-                     their own (startStack.svelte.ts), loaded when someone's signed out
+                     Link to your account, Pick a username (its photo's crop sheet, the referrer
+                     sheet), on a stack of their own (startStack.svelte.ts), loaded when
+                     someone's signed out
 ```
 
 Shared with the web tree rather than copied: the route table (`utils/routeTable.ts`), the route

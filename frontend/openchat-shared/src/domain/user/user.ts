@@ -214,6 +214,12 @@ export type SignUpOutcome =
     | { kind: "failed"; reason: ResourceKey };
 
 /**
+ * A photo for the account a sign-up makes (the picked image, cropped to the avatar's size): its
+ * bytes to upload, and a URL to show it by until the upload is through.
+ */
+export type SignUpAvatar = { data: Uint8Array; url: string };
+
+/**
  * Asking for an emailed sign-in link. Sent: the code the email shows (so the person can tell it's
  * this request's link), and `signedIn`, which settles once the link is followed and this browser
  * has the identity, or `cancelled` when the request is given up. Given up while it was being sent,

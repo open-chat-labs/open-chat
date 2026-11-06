@@ -1,4 +1,10 @@
-import { identityStateStore, type OpenChat, type SignUpOutcome, type UserSummary } from "@client";
+import {
+    identityStateStore,
+    type OpenChat,
+    type SignUpAvatar,
+    type SignUpOutcome,
+    type UserSummary,
+} from "@client";
 import { afterAbandoned, referralCode, type ReferralLookup } from "./authFlow";
 
 // Sign-up and the sign-ins around it, for every tree that signs people in: src/web's AuthDialog
@@ -75,8 +81,8 @@ async function signOutIfLeftWithoutAccount(
 
 /**
  * Makes the account (client.signUp: the passkey unless the identity has no account already, then
- * the account). Once the account is asked for it's made even if the host goes: a walk-away
- * (abandonSignIn) waits for it.
+ * the account, and its photo uploaded when there's one). Once the account is asked for it's made
+ * even if the host goes: a walk-away (abandonSignIn) waits for it.
  */
 export async function signUp(
     client: Pick<OpenChat, "signUp">,
@@ -84,9 +90,10 @@ export async function signUp(
     email: string | undefined,
     termsAccepted: boolean,
     signal?: AbortSignal,
+    avatar?: SignUpAvatar,
 ): Promise<SignUpOutcome> {
     resumeSignIn();
-    const signingUp = client.signUp(username, email, termsAccepted, signal);
+    const signingUp = client.signUp(username, email, termsAccepted, signal, avatar);
     registration = signingUp;
     return signingUp.finally(() => {
         if (registration === signingUp) registration = undefined;

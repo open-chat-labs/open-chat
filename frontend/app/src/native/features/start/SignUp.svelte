@@ -1,22 +1,29 @@
 <!-- Pick a username (native design notes §3.1, Pick Username Options 2a): back to Welcome; the
-     avatar (the name's initial), "What should we call you?", the @ field with its live check, and an
-     optional recovery email (one that isn't an address blocks Continue). At the bottom the inviter
-     card when the person came in on someone's link, else "Did someone refer you?" (the referrer
-     sheet), then Continue. The form is the shared one (logic/auth/signUpForm) and Continue is the
-     client's sign-up: the OS asks to make the passkey for the name, then the account is made. With
-     a referrer, the app opens on a chat with them. Going back gives up a sign-up in flight and signs
+     avatar (the name's initial until a photo; a camera badge): tapping it picks a photo (the OS
+     picker, then a round crop in a sheet), and with a photo it's a menu (another, or none). The
+     photo goes with the sign-up, which uploads it once the account is made. "What should we call
+     you?", the @ field with its live check, and an optional recovery email (one that isn't an
+     address blocks Continue). At the bottom the inviter card when the person came in on someone's
+     link, else "Did someone refer you?" (the referrer sheet), then Continue. The form is the shared
+     one (logic/auth/signUpForm) and Continue is the client's sign-up: the OS asks to make the
+     passkey for the name, then the account is made. With a referrer, the app opens on a chat with
+     them. Going back gives up a sign-up in flight and signs
      out an identity it left without an account (abandonSignIn). -->
 <script lang="ts">
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
+    import AnchoredMenu from "@openchat/ui/src/native/AnchoredMenu.svelte";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
     import { abandonSignIn } from "@src/logic/auth/signUp";
     import { SignUpForm } from "@src/logic/auth/signUpForm.svelte";
     import { navigate } from "@src/utils/navigation";
-    import { routeForChatIdentifier, type OpenChat, type UserSummary } from "@client";
+    import { i18nKey, routeForChatIdentifier, type OpenChat, type UserSummary } from "@client";
+    import { toastStore } from "@src/stores/toast";
+    import { AVATAR_SIZE, cropImage, readImageFile, type CropArea } from "@src/utils/imageCrop";
     import { keyboard } from "@stores/keyboard.svelte";
     import { getContext, onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { useOverlay, type Overlays } from "../../shell/overlays.svelte";
+    import AvatarCropSheet from "./AvatarCropSheet.svelte";
     import ReferrerSheet from "./ReferrerSheet.svelte";
     import { blobUrlPattern } from "@src/utils/openchatClient";
     import type { ReferrerSource } from "@src/logic/auth/signUpForm.svelte";
@@ -39,6 +46,11 @@
     let signedUp = false;
 
     let picking = $state(false);
+    let fileInput = $state<HTMLInputElement>();
+    // the image picked for the photo, being cropped; kept while its sheet plays its way out
+    let crop = $state<{ source: string; open: boolean }>();
+    // the photo's menu, open from the avatar
+    let photoMenu = $state<HTMLElement | null>(null);
 
     // the keyboard covers the bottom of the page (the referrer row, Continue) rather than the page
     // shrinking above it and pushing them up; the referrer sheet, whose search it would hide,
@@ -48,10 +60,22 @@
         else keyboard.disableViewportResize();
     });
     onDestroy(() => keyboard.enableViewportResize());
+    // the shell's, for the screen's lifetime
+    const shellOverlays = untrack(() => overlays);
     useOverlay(
-        untrack(() => overlays), // the shell's, for the screen's lifetime
+        shellOverlays,
         () => picking,
         () => (picking = false),
+    );
+    useOverlay(
+        shellOverlays,
+        () => crop?.open === true,
+        () => closeCrop(),
+    );
+    useOverlay(
+        shellOverlays,
+        () => photoMenu !== null,
+        () => (photoMenu = null),
     );
 
     onMount(() => {
@@ -72,6 +96,15 @@
     const mailNote = $derived(emailNote(form.email, form.emailValid));
     const card = $derived(form.referrer !== undefined ? referrerCard(form.referrer) : undefined);
     const initial = $derived(username.slice(0, 1).toUpperCase());
+    const photoMenuItems = $derived([
+        { id: "choose", label: $_("native.start.signUp.choosePhoto"), icon: "image" },
+        {
+            id: "remove",
+            label: $_("native.start.signUp.removePhoto"),
+            icon: "trash",
+            danger: true,
+        },
+    ]);
 
     function text(note: FieldNote): string {
         return $_(note.key, { values: note.values });
@@ -87,6 +120,48 @@
     function picked(user: UserSummary, source: ReferrerSource) {
         form.pickReferrer(user, source);
         picking = false;
+    }
+
+    function tapAvatar(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
+        if (form.avatar === undefined) fileInput?.click();
+        else photoMenu = e.currentTarget;
+    }
+
+    function photoMenuPick(id: string) {
+        if (id === "choose") fileInput?.click();
+        else form.avatar = undefined;
+    }
+
+    async function pickedFile(e: Event & { currentTarget: HTMLInputElement }) {
+        const file = e.currentTarget.files?.[0];
+        // the same file picked again is a change too
+        e.currentTarget.value = "";
+        if (file === undefined) return;
+        try {
+            crop = { source: await readImageFile(file), open: true };
+        } catch (err) {
+            console.warn("Unable to read the picked image", err);
+            toastStore.showFailureToast(i18nKey("native.start.signUp.photoFailed"));
+        }
+    }
+
+    function closeCrop() {
+        if (crop !== undefined) crop = { ...crop, open: false };
+    }
+
+    async function cropped(area: CropArea) {
+        if (crop === undefined) return;
+        const source = crop.source;
+        closeCrop();
+        try {
+            // a file that isn't an image after all (a corrupt one, HEIC named .jpg) fails here
+            const image = await cropImage(source, area, AVATAR_SIZE);
+            if (image === undefined) throw new Error("the cropped image couldn't be encoded");
+            form.avatar = image;
+        } catch (err) {
+            console.warn("Unable to crop the picked image", err);
+            toastStore.showFailureToast(i18nKey("native.start.signUp.photoFailed"));
+        }
     }
 
     async function submit() {
@@ -106,7 +181,24 @@
 
 <NativePageHeader title="" onBack={back} />
 <div class="body">
-    <span class="avatar" aria-hidden="true">{initial}</span>
+    <button
+        type="button"
+        class="avatar"
+        aria-label={$_(
+            form.avatar === undefined
+                ? "native.start.signUp.addPhoto"
+                : "native.start.signUp.changePhoto",
+        )}
+        aria-haspopup={form.avatar === undefined ? undefined : "menu"}
+        disabled={form.busy}
+        onclick={tapAvatar}>
+        {#if form.avatar !== undefined}
+            <img class="photo-shown" src={form.avatar.url} alt="" />
+        {:else}
+            <span aria-hidden="true">{initial}</span>
+        {/if}
+        <span class="badge" aria-hidden="true"></span>
+    </button>
     <div class="intro">
         <h1>{$_("native.start.signUp.title")}</h1>
         <p>{$_("native.start.signUp.sub")}</p>
@@ -190,6 +282,25 @@
 
 <ReferrerSheet open={picking} onClose={() => (picking = false)} onPick={picked} />
 
+<input hidden type="file" accept="image/*" onchange={pickedFile} bind:this={fileInput} />
+
+{#if crop !== undefined}
+    {#key crop.source}
+        <AvatarCropSheet
+            open={crop.open}
+            source={crop.source}
+            onCrop={cropped}
+            onClose={closeCrop} />
+    {/key}
+{/if}
+
+<AnchoredMenu
+    anchor={photoMenu}
+    items={photoMenuItems}
+    label={$_("native.start.signUp.photoTitle")}
+    onSelect={photoMenuPick}
+    onClose={() => (photoMenu = null)} />
+
 <style lang="scss">
     @use "@openchat/ui/src/lib/styles/mixins" as *;
 
@@ -214,14 +325,53 @@
     }
 
     .avatar {
+        position: relative;
         flex: none;
         width: var(--avatar);
         height: var(--avatar);
+        padding: 0;
+        border: 0;
         border-radius: var(--radius-circle);
         @include flex-center;
         background: var(--overlay-1);
         color: var(--ink-3);
         font: 800 calc(var(--avatar) * 0.365) / 1 var(--font-sans);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+
+        &:active:not(:disabled) {
+            opacity: 0.85;
+        }
+
+        &:focus-visible {
+            @include focus-ring;
+        }
+    }
+
+    .photo-shown {
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        object-fit: cover;
+    }
+
+    // bottom-trailing on the circle, ringed with the page's background; in proportion to it
+    .badge {
+        --badge: calc(var(--avatar) * 0.27);
+        position: absolute;
+        inset-block-end: calc(var(--avatar) * 0.01);
+        inset-inline-end: calc(var(--avatar) * 0.01);
+        width: var(--badge);
+        height: var(--badge);
+        border-radius: var(--radius-circle);
+        @include flex-center;
+        background: var(--accent);
+        box-shadow: 0 0 0 calc(var(--avatar) * 0.027) var(--surface-0);
+
+        &::after {
+            content: "";
+            @include icon(camera, calc(var(--badge) * 0.48), var(--on-accent));
+        }
     }
 
     .intro {

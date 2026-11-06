@@ -570,6 +570,48 @@ describe("signing in", () => {
             expect(await client.getReferringUser()).toBeUndefined();
         });
 
+        describe("with a photo", () => {
+            const avatar = { data: new Uint8Array([1, 2, 3]), url: "data:image/png;base64,AQID" };
+            let upload: ReturnType<typeof vi.fn>;
+
+            beforeEach(() => {
+                upload = vi.fn(async () => 42n);
+                vi.spyOn(client, "setUserAvatar").mockImplementation(upload as never);
+                vi.spyOn(console, "warn").mockImplementation(() => {});
+            });
+
+            test("uploads it once the account is made", async () => {
+                expect(
+                    await client.signUp("newperson", undefined, true, undefined, avatar),
+                ).toEqual({ kind: "success" });
+                expect(upload).toHaveBeenCalledWith(avatar.data, avatar.url);
+                expect(handedOver.mock.invocationCallOrder[0]).toBeLessThan(
+                    upload.mock.invocationCallOrder[0],
+                );
+            });
+
+            test("an upload that fails still leaves the sign-up a success", async () => {
+                upload.mockResolvedValueOnce(undefined);
+                expect(
+                    await client.signUp("newperson", undefined, true, undefined, avatar),
+                ).toEqual({ kind: "success" });
+                upload.mockRejectedValueOnce(new Error("worker gone"));
+                set({ kind: "registering" });
+                expect(
+                    await client.signUp("newperson", undefined, true, undefined, avatar),
+                ).toEqual({ kind: "success" });
+                await vi.waitFor(() => expect(console.warn).toHaveBeenCalledTimes(2));
+            });
+
+            test("isn't uploaded when the account isn't made", async () => {
+                set({ kind: "registering" });
+                register.mockResolvedValueOnce({ kind: "username_taken" });
+                const outcome = await client.signUp("taken1", undefined, true, undefined, avatar);
+                expect(outcome.kind).toBe("failed");
+                expect(upload).not.toHaveBeenCalled();
+            });
+        });
+
         test("a refused account says why in the app's words", async () => {
             set({ kind: "registering" });
             register.mockResolvedValueOnce({ kind: "username_taken" });

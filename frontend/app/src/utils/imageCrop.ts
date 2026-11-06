@@ -1,7 +1,7 @@
 // Cropping an image the user picked (an avatar, a banner, a profile background), in every tree: the
 // file read, and the area they chose scaled to the size it's saved at.
 
-import type { Dimensions } from "@client";
+import { dataUrlToArrayBuffer, type Dimensions } from "@client";
 
 // in the source image's pixels
 export type CropArea = { x: number; y: number; width: number; height: number };
@@ -41,12 +41,13 @@ export async function cropImage(
     canvas
         .getContext("2d")
         ?.drawImage(image, area.x, area.y, area.width, area.height, 0, 0, size.width, size.height);
-    // as the old wrappers asked for it ("image/jpg" isn't a type the canvas knows, so it's a PNG)
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpg"));
-    if (blob === null) return undefined;
-    // the URL from the bytes already encoded, not a second encode of the canvas
-    const [url, bytes] = await Promise.all([readAsDataUrl(blob), blob.arrayBuffer()]);
-    return { url, data: new Uint8Array(bytes) };
+    // a PNG, as the old wrappers' "image/jpg" (not a type the canvas knows) made it. Encoded once
+    // with toDataURL, the bytes taken from its URL: Android's WebView takes about 4s over each
+    // toBlob, whatever the canvas's size (as changeDimensions in the client's media found)
+    const url = canvas.toDataURL("image/png");
+    // a canvas that couldn't be drawn (too big, out of memory) encodes as "data:,"
+    if (!url.startsWith("data:image/png")) return undefined;
+    return { url, data: new Uint8Array(dataUrlToArrayBuffer(url)) };
 }
 
 /**

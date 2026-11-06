@@ -320,6 +320,7 @@ import {
     type ReactionToggled,
     type SendMessageOutcome,
     type SignInMethod,
+    type SignUpAvatar,
     type SignUpOutcome,
     type EmailSignInRequest,
     type SignInOutcome,
@@ -7580,12 +7581,15 @@ export class OpenChat {
      * referral code set (setReferralCode) goes with it, unless it was turned down before. No
      * account is made unless the person has agreed to the terms (`termsAccepted`).
      * `signal` gives the sign-up up before the account is asked for; once asked for, it's made.
+     * An `avatar` is uploaded once the account is made, without holding the sign-up up: an upload
+     * that fails leaves the account without a photo, and the sign-up still a success.
      */
     async signUp(
         username: string,
         email: string | undefined,
         termsAccepted: boolean,
         signal?: AbortSignal,
+        avatar?: SignUpAvatar,
     ): Promise<SignUpOutcome> {
         // the forms only offer sign-up once the terms are agreed to; this is the backstop
         if (!termsAccepted) return { kind: "failed", reason: i18nKey("unexpectedError") };
@@ -7627,6 +7631,7 @@ export class OpenChat {
         if (resp.kind === "success") {
             this.#passkeyMadeForSignUp = false;
             this.onRegisteredUser(createdUserFrom(username, resp));
+            if (avatar !== undefined) void this.#uploadSignUpAvatar(avatar);
             return { kind: "success" };
         }
         if (referralCodeRefused(resp.kind)) {
@@ -7636,6 +7641,16 @@ export class OpenChat {
             kind: "failed",
             reason: i18nKey(registerFailureKey(resp.kind) ?? "unexpectedError"),
         };
+    }
+
+    // the new account's photo: the person can set another later, so a failure is only logged
+    async #uploadSignUpAvatar(avatar: SignUpAvatar): Promise<void> {
+        try {
+            const blobId = await this.setUserAvatar(avatar.data, avatar.url);
+            if (blobId === undefined) console.warn("Unable to upload the new account's avatar");
+        } catch (err) {
+            console.warn("Unable to upload the new account's avatar", err);
+        }
     }
 
     registerUser(username: string, email: string | undefined): Promise<RegisterUserResponse> {
