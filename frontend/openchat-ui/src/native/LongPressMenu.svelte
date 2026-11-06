@@ -31,6 +31,11 @@
 
   let { open, target, items, label, onSelect, onClose, row }: Props = $props();
 
+  // A tap outside closes it: a click on the veil whose press started there too. The press that opened the menu
+  // started on the row, under where the veil now is, and its release can end in a click on the veil (Chrome's
+  // touch emulation sends one after a long hold), which mustn't close the menu it has just opened.
+  let pressedVeil = false;
+
   const presence = new Presence(LEAVE_MS);
   // the row it opened on, kept while it fades out
   let lifted = $state<HTMLElement | null>(null);
@@ -38,7 +43,11 @@
     const now = open && !!target;
     const el = target;
     untrack(() => {
-      if (now) lifted = el;
+      if (now) {
+        lifted = el;
+        // a press on the veil that ended in no click (a drag, a cancel) doesn't count for this opening
+        pressedVeil = false;
+      }
       presence.set(now);
     });
   });
@@ -96,11 +105,6 @@
     };
   }
 
-  // A tap outside closes it: a click on the veil whose press started there too. The press that opened the menu
-  // started on the row, under where the veil now is, and its release can end in a click on the veil (Chrome's
-  // touch emulation sends one after a long hold), which mustn't close the menu it has just opened.
-  let pressedVeil = false;
-
   function veilClick() {
     if (pressedVeil) onClose();
     pressedVeil = false;
@@ -119,7 +123,7 @@
   <div class="layer" class:closing={presence.leaving} use:modal={presence.leaving ? undefined : onClose} use:returnFocus={lifted} onkeydown={keydown}>
     <!-- Esc closes it too -->
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div class="veil" onpointerdown={() => (pressedVeil = true)} onclick={veilClick}></div>
+    <div class="veil" onpointerdown={() => (pressedVeil = true)} onpointercancel={() => (pressedVeil = false)} onclick={veilClick}></div>
     <div class="frame" bind:this={frame}>
       {#if placement}
         <div class="card" style:top="{placement.card.top}px" style:inset-inline-start="{placement.card.inlineStart}px" style:width="{placement.card.width}px" aria-hidden="true" inert>
