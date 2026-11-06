@@ -18,7 +18,11 @@
     } from "@openchat/ui/src/lib/types";
     import { untrack, type ComponentProps } from "svelte";
     import { _ } from "svelte-i18n";
-    import { TypingNotifier, type EntryBlock } from "@src/logic/composer/composer";
+    import {
+        TypingNotifier,
+        type ComposerBuilder,
+        type EntryBlock,
+    } from "@src/logic/composer/composer";
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
 
     let {
@@ -41,6 +45,7 @@
         attachment,
         attachKinds,
         onFile,
+        onBuild,
         onRemoveAttachment,
         onVoice,
         voiceMimeType,
@@ -78,10 +83,12 @@
         onJumpContext: (() => void) | undefined;
         // the draft's attachment, staged above the text
         attachment: ComposerAttachment | null;
-        // what the + menu offers to pick from the device
-        attachKinds: Extract<ComposerAttachKind, "media" | "file">[];
+        // what the + menu offers: to pick from the device, and the builders (no + with none)
+        attachKinds: ComposerAttachKind[];
         // a file picked, pasted or dropped; none where nothing can be attached
         onFile: ((file: File) => void) | undefined;
+        // a builder picked from the + menu (a poll, a prize …)
+        onBuild: (builder: ComposerBuilder) => void;
         onRemoveAttachment: () => void;
         // sends a voice message recorded here; none where the reader can't record one (no mic
         // then); rejects if it wasn't sent, and the take stays to send again
@@ -100,11 +107,11 @@
     let mediaInput = $state<HTMLInputElement>();
     let fileInput = $state<HTMLInputElement>();
 
-    // the + menu's photo / video and file items open the device's picker
-    // TODO(phase 5, 5d): the "+" builders (poll, prize, crypto, swap, Meme Fighter)
+    // the + menu's photo / video and file items open the device's picker, the others their builder
     function pick(kind: ComposerAttachKind) {
         if (kind === "media") mediaInput?.click();
         else if (kind === "file") fileInput?.click();
+        else onBuild(kind);
     }
 
     function picked(e: { currentTarget: HTMLInputElement }) {
@@ -200,7 +207,7 @@
             {onSubmitEdit}
             {onJumpContext}
             {attachment}
-            onAttach={onFile === undefined ? undefined : pick}
+            onAttach={attachKinds.length === 0 ? undefined : pick}
             {attachKinds}
             {onRemoveAttachment}
             onRemoveMediaItem={() => onRemoveAttachment()}

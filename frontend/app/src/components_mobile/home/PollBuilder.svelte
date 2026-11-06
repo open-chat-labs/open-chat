@@ -13,12 +13,15 @@
     } from "component-lib";
     import {
         allowsVoteChange,
+        MAX_POLL_ANSWER_LENGTH as MAX_ANSWER_LENGTH,
+        MAX_POLL_ANSWERS as MAX_ANSWERS,
+        MAX_POLL_QUESTION_LENGTH as MAX_QUESTION_LENGTH,
+        newPollContent,
         ONE_DAY,
         OpenChat,
+        pollAnswers,
         publish,
         type MessageContext,
-        type PollContent,
-        type TotalPollVotes,
     } from "@client";
     import { dragHandle, dragHandleZone, type DndEvent } from "svelte-dnd-action";
     import { getContext, onMount } from "svelte";
@@ -34,10 +37,6 @@
     import SlidingPageContent from "./SlidingPageContent.svelte";
     import { keyboard } from "@stores/keyboard.svelte";
     import { flip } from "svelte/animate";
-
-    const MAX_QUESTION_LENGTH = 250;
-    const MAX_ANSWER_LENGTH = 75;
-    const MAX_ANSWERS = 10;
 
     const client = getContext<OpenChat>("client");
     const flipDurationMs = 100;
@@ -70,13 +69,8 @@
 
     let anchoredSheet: AnchoredSheet;
     let poll: CandidatePoll = $state(emptyPoll());
-    let enoughAnswers = $derived(poll.pollAnswers.filter((a) => !isAnswerEmpty(a)).length >= 2);
-    let uniqueAnswers = $derived.by(() => {
-        const a = poll.pollAnswers.map((a) => a.value.toUpperCase());
-        return a.length === new Set(a).size;
-    });
     let validQuestion = $derived(poll.pollQuestion.length > 0);
-    let validAnswers = $derived(enoughAnswers && uniqueAnswers);
+    let validAnswers = $derived(pollAnswers(poll.pollAnswers.map((a) => a.value)).valid);
     let valid = $derived(validQuestion && validAnswers);
 
     type ShortStatusKeys = {
@@ -181,47 +175,21 @@
         poll.pollAnswers = e.detail.items;
     }
 
-    function createPollVotes(): TotalPollVotes {
-        if (poll.anonymous) {
-            return { kind: "anonymous_poll_votes", votes: {} };
-        } else if (poll.showVotesBeforeEndDate) {
-            return { kind: "visible_poll_votes", votes: {} };
-        } else {
-            return { kind: "hidden_poll_votes", votes: 0 };
-        }
-    }
-
-    function createPollContent(): PollContent | undefined {
-        return {
-            kind: "poll_content",
-            votes: {
-                total: createPollVotes(),
-                user: [],
-            },
-            config: {
-                allowMultipleVotesPerUser: poll.allowMultipleVotesPerUser,
-                allowUserToChangeVote: allowsVoteChange(poll),
-                text: poll.pollQuestion === "" ? undefined : poll.pollQuestion,
-                showVotesBeforeEndDate: poll.showVotesBeforeEndDate,
-                endDate: BigInt(+new Date()) + poll.duration,
-                anonymous: poll.anonymous,
-                options: [
-                    ...poll.pollAnswers
-                        .filter(({ value }) => value.length > 0)
-                        .map((a) => a.value)
-                        .values(),
-                ],
-            },
-            ended: false,
-        };
-    }
-
     function start() {
-        const poll = createPollContent();
-        if (poll) {
-            client.sendMessageWithContent(messageContext, poll, false);
-            onClose();
-        }
+        const content = newPollContent(
+            {
+                question: poll.pollQuestion,
+                answers: poll.pollAnswers.map((a) => a.value),
+                anonymous: poll.anonymous,
+                showVotesBeforeEndDate: poll.showVotesBeforeEndDate,
+                allowMultipleVotesPerUser: poll.allowMultipleVotesPerUser,
+                allowUserToChangeVote: poll.allowUserToChangeVote,
+                durationMs: Number(poll.duration),
+            },
+            Date.now(),
+        );
+        client.sendMessageWithContent(messageContext, content, false);
+        onClose();
     }
 
     function back() {

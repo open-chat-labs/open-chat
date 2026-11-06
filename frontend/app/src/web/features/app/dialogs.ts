@@ -120,7 +120,9 @@ export type LocalDialog =
           chatId: ChatIdentifier;
           eventIndex: number;
           threadRootMessageIndex?: number;
-      };
+      }
+    // the composer's "+" builders (5d): a poll, published from the dialog
+    | { kind: "poll_builder"; chatId: ChatIdentifier };
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";
@@ -218,6 +220,9 @@ export const dialogs: Dialogs = {
     // reporting a message, and setting a reminder about one (5b)
     report_message: () => import("../conversation/ReportMessageDialogScreen.svelte"),
     remind_message: () => import("../conversation/ReminderDialogScreen.svelte"),
+
+    // the composer's "+" builders (5d)
+    poll_builder: () => import("../builders/PollBuilderDialogScreen.svelte"),
 };
 
 // each linked dialog's query param; the CHIT dialog's views share its param, told apart by its value

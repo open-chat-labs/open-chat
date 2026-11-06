@@ -209,6 +209,19 @@ export function pickableAttachments(
     return kinds;
 }
 
+/** What the entry's builders make: a poll, a prize, a transfer, a swap offer, a Meme Fighter meme. */
+export type ComposerBuilder = "poll" | "prize" | "crypto" | "swap" | "memeFighter";
+
+/**
+ * The builders the entry offers, each where the chat lets the reader send what it makes (polls
+ * aren't sent in a DM).
+ */
+export function composerBuilders(permitted: ReadonlySet<MessagePermission>): ComposerBuilder[] {
+    const builders: ComposerBuilder[] = [];
+    if (permitted.has("poll")) builders.push("poll");
+    return builders;
+}
+
 // as the old pickers: what's typed after the "@" is looked for once it's this long
 const FIND_MEMBERS_FROM = 2;
 

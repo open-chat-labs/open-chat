@@ -98,11 +98,12 @@
     import ChatEventList, { type ChatEventListArgs } from "@src/core/ChatEventList.svelte";
     import { TimelineFlattener, type FlatChatItem } from "@src/core/flatChatItems";
     import Markdown from "@src/core/Markdown.svelte";
-    import type { GroupMessage } from "@openchat/ui/src/lib/types";
+    import type { ComposerAttachKind, GroupMessage } from "@openchat/ui/src/lib/types";
     import {
         attachRefusal,
         canAttachNow,
         canRecordVoice,
+        composerBuilders,
         draftAttachment,
         editStartText,
         entryBlock,
@@ -112,6 +113,7 @@
         MemberFinder,
         pickableAttachments,
         throttleCountdown,
+        type ComposerBuilder,
     } from "@src/logic/composer/composer";
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
     import {
@@ -483,17 +485,32 @@
     // a direct chat with a bot takes text only (its direct-message command)
     const directBot = $derived(chat !== undefined && client.directChatWithBot(chat) !== undefined);
 
-    // what the + menu offers to pick from the device (following the reader's permissions here)
-    const attachKinds = $derived(
-        directBot ? [] : pickableAttachments($messagePermissionsForSelectedChatStore),
-    );
-
     // nothing is attached during an edit, or while a voice message is recorded or reviewed
     let voiceActive = $state(false);
     const attachable = $derived(
         !directBot &&
             canAttachNow({ editing: draft?.editingEvent !== undefined, voiceActive }),
     );
+
+    // what the + menu offers (following the reader's permissions here): to pick from the device
+    // (while something can be attached), and the builders
+    const attachKinds = $derived.by((): ComposerAttachKind[] => {
+        if (directBot) return [];
+        const permitted = $messagePermissionsForSelectedChatStore;
+        return [
+            ...(attachable ? pickableAttachments(permitted) : []),
+            ...composerBuilders(permitted),
+        ];
+    });
+
+    // a builder picked from the + menu opens its dialog
+    function build(chatId: ChatIdentifier, builder: ComposerBuilder) {
+        switch (builder) {
+            case "poll":
+                screen.dialogs.open({ kind: "poll_builder", chatId });
+                break;
+        }
+    }
 
     // (the composer says "Add a caption" itself while there's an attachment)
     const placeholder = $derived(
@@ -1592,6 +1609,7 @@
                 attachment={staged}
                 {attachKinds}
                 onFile={attachable ? (file) => attachFile(chat.id, file) : undefined}
+                onBuild={(builder) => build(chat.id, builder)}
                 onRemoveAttachment={() =>
                     localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
                 onVoice={canRecord && voiceMimeType !== undefined

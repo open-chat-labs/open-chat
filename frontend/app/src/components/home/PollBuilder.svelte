@@ -2,10 +2,12 @@
     import {
         allowsVoteChange,
         iconSize,
+        MAX_POLL_ANSWERS as MAX_ANSWERS,
+        MAX_POLL_QUESTION_LENGTH as MAX_QUESTION_LENGTH,
         mobileWidth,
+        newPollContent,
         type PollContent,
         type ResourceKey,
-        type TotalPollVotes,
     } from "@client";
     import { _ } from "svelte-i18n";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
@@ -22,9 +24,8 @@
     import Toggle from "../Toggle.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
 
-    const MAX_QUESTION_LENGTH = 250;
+    // the old desktop builder's own limit; the shared one (the mobile app's) is 75
     const MAX_ANSWER_LENGTH = 50;
-    const MAX_ANSWERS = 10;
     const durations: Duration[] = ["oneHour", "oneDay", "oneWeek"];
 
     type Duration = "oneHour" | "oneDay" | "oneWeek";
@@ -100,26 +101,20 @@
         poll.pollAnswers = new Map(poll.pollAnswers);
     }
 
-    function createPollVotes(): TotalPollVotes {
-        if (poll.anonymous) {
-            return { kind: "anonymous_poll_votes", votes: {} };
-        } else if (poll.showVotesBeforeEndDate) {
-            return { kind: "visible_poll_votes", votes: {} };
-        } else {
-            return { kind: "hidden_poll_votes", votes: 0 };
-        }
-    }
-
     const ONE_HOUR = 1000 * 60 * 60;
     const ONE_DAY = ONE_HOUR * 24;
     const ONE_WEEK = ONE_DAY * 7;
 
-    function createPollEndDate() {
+    function pollDuration(): number | undefined {
         if (!poll.limitedDuration) return undefined;
-        const now = Date.now();
-        if (selectedDuration === "oneHour") return BigInt(now + ONE_HOUR);
-        if (selectedDuration === "oneDay") return BigInt(now + ONE_DAY);
-        if (selectedDuration === "oneWeek") return BigInt(now + ONE_WEEK);
+        switch (selectedDuration) {
+            case "oneHour":
+                return ONE_HOUR;
+            case "oneDay":
+                return ONE_DAY;
+            case "oneWeek":
+                return ONE_WEEK;
+        }
     }
 
     function createPollContent(): PollContent | undefined {
@@ -128,23 +123,18 @@
                 return undefined;
             }
         }
-        return {
-            kind: "poll_content",
-            votes: {
-                total: createPollVotes(),
-                user: [],
-            },
-            config: {
-                allowMultipleVotesPerUser: poll.allowMultipleVotesPerUser,
-                allowUserToChangeVote: allowsVoteChange(poll),
-                text: poll.pollQuestion === "" ? undefined : poll.pollQuestion,
-                showVotesBeforeEndDate: poll.showVotesBeforeEndDate,
-                endDate: createPollEndDate(),
+        return newPollContent(
+            {
+                question: poll.pollQuestion,
+                answers: [...poll.pollAnswers.values()],
                 anonymous: poll.anonymous,
-                options: [...poll.pollAnswers.values()],
+                showVotesBeforeEndDate: poll.showVotesBeforeEndDate,
+                allowMultipleVotesPerUser: poll.allowMultipleVotesPerUser,
+                allowUserToChangeVote: poll.allowUserToChangeVote,
+                durationMs: pollDuration(),
             },
-            ended: false,
-        };
+            Date.now(),
+        );
     }
 
     function start() {

@@ -29,6 +29,7 @@ import {
     anonymousUser,
     publish,
     type AttachmentContent,
+    type MessageContent,
     type ChannelIdentifier,
     type ChannelSummary,
     type CommunityIdentifier,
@@ -294,6 +295,39 @@ describe("sending from the composer", () => {
         expect(sent).toHaveLength(1);
         // and once it's posted, the chat can send again
         expect(await settled(send())).toEqual({ kind: "posted" });
+    });
+
+    describe("a builder's content (a poll, a meme)", () => {
+        const meme: MessageContent = {
+            kind: "meme_fighter_content",
+            url: "https://maker.memefighter.app/meme.png",
+            width: 400,
+            height: 300,
+        };
+
+        test("is posted once it shows, as it was built", async () => {
+            expect(await settled(client.sendContent(context, meme))).toEqual({ kind: "posted" });
+            expect(sent).toHaveLength(1);
+            const req = sent[0];
+            expect(req.kind === "sendMessage" && req.event.event.content).toEqual(meme);
+        });
+
+        test("waits for a send already on its way from the chat", async () => {
+            pinNumberRequiredStore.set(true);
+            const first = send(transfer);
+            expect(await settled(client.sendContent(context, meme))).toEqual({ kind: "busy" });
+            pinNumberResolverStore.value?.resolve("1234");
+            expect(await settled(first)).toEqual({ kind: "posted" });
+        });
+
+        test("the rules turned down send nothing", async () => {
+            withRules();
+            const result = client.sendContent(context, meme);
+            await vi.advanceTimersByTimeAsync(0);
+            rulesPrompt()?.resolve(false);
+            expect(await settled(result)).toEqual({ kind: "rules_declined" });
+            expect(sent).toHaveLength(0);
+        });
     });
 
     describe("a link to another message", () => {

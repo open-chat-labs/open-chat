@@ -1,5 +1,13 @@
 import type { PollContent } from "@shared";
-import { percentageOfVote, pollVoteChange, type PollReader } from "./polls";
+import {
+    MAX_POLL_ANSWER_LENGTH,
+    newPollContent,
+    percentageOfVote,
+    pollAnswers,
+    pollVoteChange,
+    type NewPoll,
+    type PollReader,
+} from "./polls";
 
 function poll(
     fields: { user?: number[]; ended?: boolean; canChange?: boolean; multiple?: boolean } = {},
@@ -57,5 +65,73 @@ describe("a poll vote", () => {
 
     test("a poll with no votes shows 0%, not NaN", () => {
         expect(percentageOfVote(poll(), 0)).toBe(0);
+    });
+});
+
+describe("a new poll", () => {
+    const built: NewPoll = {
+        question: "  Lunch?  ",
+        answers: [" Pizza ", "", "Tacos", " "],
+        anonymous: true,
+        showVotesBeforeEndDate: true,
+        allowMultipleVotesPerUser: false,
+        allowUserToChangeVote: true,
+        durationMs: 3_600_000,
+    };
+
+    test("its answers are trimmed and the empty ones dropped", () => {
+        expect(newPollContent(built, 0).config.options).toEqual(["Pizza", "Tacos"]);
+        expect(newPollContent(built, 0).config.text).toBe("Lunch?");
+    });
+
+    test("it takes 2 to 10 answers, each unique ignoring case and at most 75 characters", () => {
+        expect(pollAnswers(["a"]).valid).toBe(false);
+        expect(pollAnswers(["a", "b"]).valid).toBe(true);
+        expect(pollAnswers(["a", " A "]).valid).toBe(false);
+        expect(pollAnswers(Array.from({ length: 10 }, (_, i) => `${i}`)).valid).toBe(true);
+        expect(pollAnswers(Array.from({ length: 11 }, (_, i) => `${i}`)).valid).toBe(false);
+        expect(pollAnswers(["a", "b".repeat(MAX_POLL_ANSWER_LENGTH)]).valid).toBe(true);
+        expect(pollAnswers(["a", "b".repeat(MAX_POLL_ANSWER_LENGTH + 1)]).valid).toBe(false);
+    });
+
+    test("its end is stamped from when it's sent; one with no duration never ends", () => {
+        expect(newPollContent(built, 1000).config.endDate).toBe(3_601_000n);
+        expect(newPollContent({ ...built, durationMs: undefined }, 1000).config.endDate).toBe(
+            undefined,
+        );
+    });
+
+    test("a blank question is no question", () => {
+        expect(newPollContent({ ...built, question: "  " }, 0).config.text).toBeUndefined();
+    });
+
+    // 5d invariant 6
+    test("a poll's vote kind follows its settings: anonymous, visible, or hidden until it ends", () => {
+        expect(newPollContent(built, 0).votes.total.kind).toBe("anonymous_poll_votes");
+        // anonymous whether or not it shows its results before the end
+        expect(
+            newPollContent({ ...built, showVotesBeforeEndDate: false }, 0).votes.total.kind,
+        ).toBe("anonymous_poll_votes");
+        expect(newPollContent({ ...built, anonymous: false }, 0).votes.total).toEqual({
+            kind: "visible_poll_votes",
+            votes: {},
+        });
+        expect(
+            newPollContent({ ...built, anonymous: false, showVotesBeforeEndDate: false }, 0).votes
+                .total,
+        ).toEqual({ kind: "hidden_poll_votes", votes: 0 });
+    });
+
+    test("a multiple-choice poll always lets its voters change their votes", () => {
+        const multiple = {
+            ...built,
+            allowMultipleVotesPerUser: true,
+            allowUserToChangeVote: false,
+        };
+        expect(newPollContent(multiple, 0).config.allowUserToChangeVote).toBe(true);
+        expect(
+            newPollContent({ ...built, allowUserToChangeVote: false }, 0).config
+                .allowUserToChangeVote,
+        ).toBe(false);
     });
 });

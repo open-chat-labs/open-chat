@@ -180,8 +180,8 @@ design export needs. Each entry says where it came up.
   the app uses it yet.
 - **Composer "+" menu and media tray** (by hand, 5c, to take back to the design export):
   `MessageComposer` (and `ComposerBar`) take `attachKinds`, what the "+" menu offers (all by
-  default, no "+" with none): the app offers "Photo or video" and "File" until 5d's builders
-  land, and only where the chat lets the reader send them. The media tray's "add more" tile shows
+  default, no "+" with none): the app offers "Photo or video", "File" and the builders it has
+  (5d), each only where the chat lets the reader send what it makes. The media tray's "add more" tile shows
   only with `onAddMedia`: the app sends one photo or video a message (`AttachmentContent` holds
   one), so it gives none. The design's tray takes up to 10, which the backend has no message for.
 - **Composer voice format and limit** (by hand, 5c, to take back to the design export):
@@ -1152,9 +1152,9 @@ design export needs. Each entry says where it came up.
   public poll shows no voters' avatars and has no "View votes" list yet (the old mobile
   `PollPublicVotes`). How long it has left is worked out when the row is made (3d, 5h, 12m), and
   doesn't count down. No tick, reactions, quote or thread yet, and polls in threads aren't wired.
-  The library's `PollBuilderDialog` (5b's composer) still offers "lock votes" with multiple
-  choice, which the backend ignores; when it's wired, send `allowsVoteChange` as the old builders
-  do.
+  The library's `PollBuilderDialog` still offers "lock votes" with multiple choice, which the
+  backend ignores: the poll is sent with `allowsVoteChange` (`newPollContent`, 5d), as the old
+  builders send it, so a multiple-choice poll's votes can always change whatever was picked.
 - **Swap offers** (`features/conversation`, 5a): a swap offer shows as `SwapOffer`, read from the
   reader's side. `SwapOffer` takes `pending` and `cancelled` states by hand (the design had only
   open, done and expired). Its sender can Cancel and anyone else Accept, only while it's open
@@ -1252,13 +1252,26 @@ design export needs. Each entry says where it came up.
     in a bot DM, a bot that takes no direct messages gets the composer's "couldn't send", not the
     old `bots.direct.warning`. The design has none of it;
   - GIFs (the library's results, above);
-  - the "+" menu's builders (`TODO(phase 5, 5d)`): poll, prize, send crypto, swap offer, Meme
-    Fighter, hidden in the app-store builds as in the mobile app (`disableSendCryptoFeature`,
-    `disableP2PSwapFeature`, `disableCreatePrizeFeature`). A draft that pays from an external
-    wallet must be approved by that wallet before it's sent (the mobile entry's
-    `externalWalletDraft`, to move to `@client`, a swap offer's allowance being the amount plus
-    two fees); until then the composer neither stages nor sends a prize, transfer or swap offer;
+  - the "+" menu's builders not built yet (5d, "The '+' builders" below): prize, send crypto,
+    swap offer, Meme Fighter, hidden in the app-store builds as in the mobile app
+    (`disableSendCryptoFeature`, `disableP2PSwapFeature`, `disableCreatePrizeFeature`). A draft
+    that pays from an external wallet must be approved by that wallet before it's sent (the
+    mobile entry's `externalWalletDraft`, to move to `@client`, a swap offer's allowance being the
+    amount plus two fees); until then the composer neither stages nor sends a prize, transfer or
+    swap offer;
   - the emoji autocomplete (`:smile`) both old editors had (`EmojiAutocompleter`).
+- **The "+" builders** (5d, `features/builders`): each a local dialog the composer's "+" menu
+  opens (`build` in the conversation), offered where the chat lets the reader send what it makes
+  (`composerBuilders`, `@src/logic/composer`), and not in a bot DM.
+  - **Poll** (`PollBuilderDialog`, `poll_builder`): published from the dialog, as both old
+    builders did, through `sendContent` (the client: settles once the poll shows in the chat,
+    replying to the draft's reply; a refusal keeps the dialog open with its error). The poll is
+    made by `newPollContent` (`@client`, which both old builders now use too): the question and
+    up to 10 answers of up to 75 characters (the mobile app's; the old desktop builder kept its
+    own 50), unique ignoring case (`pollAnswers`), the vote kind from its settings
+    (`newPollVotes`), the end stamped as it's sent. The design's "Poll sent · Undo" toast isn't
+    shown: a sent poll can't be taken back. As in the old trees, sending it clears the chat's
+    draft (`sendMessageWithContent`), while the composer's text box keeps what it showed.
 - **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
   edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text

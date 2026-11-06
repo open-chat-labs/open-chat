@@ -9,6 +9,7 @@ import {
     attachRefusal,
     canAttachNow,
     canRecordVoice,
+    composerBuilders,
     draftAttachment,
     editStartText,
     entryBlock,
@@ -267,6 +268,15 @@ describe("what the entry offers to pick from the device", () => {
         expect(pickableAttachments(permitted("video"))).toEqual(["media"]);
         expect(pickableAttachments(permitted("file", "text"))).toEqual(["file"]);
         expect(pickableAttachments(permitted("text", "audio"))).toEqual([]);
+    });
+});
+
+describe("the builders the entry offers", () => {
+    const permitted = (...ps: MessagePermission[]) => new Set<MessagePermission>(ps);
+
+    test("a poll where polls may be sent (never in a DM, whose permissions leave it out)", () => {
+        expect(composerBuilders(permitted("text", "poll"))).toEqual(["poll"]);
+        expect(composerBuilders(permitted("text"))).toEqual([]);
     });
 });
 
