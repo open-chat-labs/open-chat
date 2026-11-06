@@ -30,6 +30,23 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
     },
 }));
 
+// The browser's passkey prompt, when a test makes one (a linking code's new passkey)
+const browserPasskey = vi.hoisted(() => ({
+    create: undefined as
+        | undefined
+        | ((origin: string, cache: (key: never) => Promise<void>) => Promise<unknown>),
+}));
+vi.mock("./utils/webAuthn", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("./utils/webAuthn")>();
+    return {
+        ...actual,
+        createWebAuthnIdentity: ((...args: Parameters<typeof actual.createWebAuthnIdentity>) =>
+            browserPasskey.create
+                ? browserPasskey.create(args[0], args[1] as never)
+                : actual.createWebAuthnIdentity(...args)) as typeof actual.createWebAuthnIdentity,
+    };
+});
+
 import { DelegationChain, DelegationIdentity, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
 import { AuthProvider, IdentityStorage, type IdentityState } from "@shared";
 import type { OpenChat as OpenChatType } from "./openchat";
@@ -174,6 +191,44 @@ describe("signing in", () => {
         });
         expect(outcome.kind).toBe("failed");
         expect(selectedAuthProviderStore.value).toBe(AuthProvider.ETH);
+    });
+
+    describe("with a linking code", () => {
+        afterEach(() => (browserPasskey.create = undefined));
+
+        /** Invariant 1: the backend unreachable while the code is checked (offline, the worker
+         * gone) fails with a reason to show, rather than looking like a dismissed prompt. */
+        test("a code that couldn't be checked fails", async () => {
+            vi.spyOn(console, "warn").mockImplementation(() => {});
+            vi.spyOn(client, "verifyAccountLinkingCode").mockRejectedValue({ message: "offline" });
+            const outcome = await client.signIn({ kind: "linking_code", code: "abc123" });
+            expect(outcome.kind === "failed" && outcome.reason.key).toBe(
+                "native.auth.errors.default",
+            );
+            expect(selectedAuthProviderStore.value).toBe(AuthProvider.PASSKEY);
+        });
+
+        /** Invariant 1: the same once the passkey is made, while the link is being finalised. */
+        test("a passkey that couldn't be linked fails", async () => {
+            vi.spyOn(console, "warn").mockImplementation(() => {});
+            vi.spyOn(client, "verifyAccountLinkingCode").mockResolvedValue({
+                kind: "success",
+                username: "me",
+            });
+            browserPasskey.create = async (_origin, cache) => {
+                // cached by the worker, which this test hasn't got
+                void cache({} as never);
+                return ECDSAKeyIdentity.generate();
+            };
+            const finalise = vi
+                .spyOn(client, "finaliseAccountLinkingWithCode")
+                .mockRejectedValue(new Error("worker gone"));
+            const outcome = await client.signIn({ kind: "linking_code", code: "abc123" });
+            expect(finalise).toHaveBeenCalledOnce();
+            expect(outcome.kind === "failed" && outcome.reason.key).toBe(
+                "native.auth.errors.default",
+            );
+        });
     });
 
     describe("by an emailed link", () => {

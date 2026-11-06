@@ -269,5 +269,9 @@ describe("a sign-in with a linking code that didn't go through", () => {
             reason("native.auth.errors.default"),
         );
         expect(linkingCodeFailure(undefined)).toMatchObject(reason("native.auth.errors.default"));
+        // a worker call's rejection: the error, parsed back from JSON
+        expect(linkingCodeFailure({ message: "offline" })).toMatchObject(
+            reason("native.auth.errors.default"),
+        );
     });
 });

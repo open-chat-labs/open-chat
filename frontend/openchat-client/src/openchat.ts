@@ -12115,12 +12115,20 @@ export class OpenChat {
      * whose linking code this is, and signs in with it: the code is checked, the passkey made for
      * the account's username, the link finalised, then the identity loads. Resolves undefined once
      * it's signed in, or how it stopped (`linkingCodeFailure`): a dismissed passkey prompt is a
-     * cancel. A failure once the identity is loading is the caller's (#signIn) to report.
+     * cancel, and the backend unreachable (offline, the worker gone) fails with the default reason.
+     * A failure once the identity is loading is the caller's (#signIn) to report.
      */
     async #signInWithLinkingCode(code: string): Promise<SignInOutcome | undefined> {
-        // also the session's key
-        const tempKey = await ECDSAKeyIdentity.generate();
-        const verified = await this.verifyAccountLinkingCode(code.toUpperCase(), tempKey);
+        let tempKey: ECDSAKeyIdentity;
+        let verified: VerifyAccountLinkingCodeResponse;
+        try {
+            // also the session's key
+            tempKey = await ECDSAKeyIdentity.generate();
+            verified = await this.verifyAccountLinkingCode(code.toUpperCase(), tempKey);
+        } catch (err) {
+            console.warn("Couldn't check the linking code: ", err);
+            return linkingCodeFailure(err);
+        }
         if (verified.kind === "error") return linkingCodeFailure(verified);
 
         let webAuthnIdentity: WebAuthnIdentity;
@@ -12152,12 +12160,18 @@ export class OpenChat {
             return linkingCodeFailure({ code: AndroidWebAuthnErrorCode.FailedToCacheWebAuthnKey });
         }
 
-        const linked = await this.finaliseAccountLinkingWithCode(
-            tempKey,
-            webAuthnIdentity.getPrincipal().toString(),
-            webAuthnIdentity.getPublicKey().toDer(),
-            webAuthnKey,
-        );
+        let linked: FinaliseAccountLinkingResponse;
+        try {
+            linked = await this.finaliseAccountLinkingWithCode(
+                tempKey,
+                webAuthnIdentity.getPrincipal().toString(),
+                webAuthnIdentity.getPublicKey().toDer(),
+                webAuthnKey,
+            );
+        } catch (err) {
+            console.warn("Couldn't link the passkey: ", err);
+            return linkingCodeFailure(err);
+        }
         if (linked.kind === "error") return linkingCodeFailure(linked);
 
         await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, true);
