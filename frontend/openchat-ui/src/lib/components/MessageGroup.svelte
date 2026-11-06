@@ -12,6 +12,7 @@
   import type { GroupMessage } from '../types';
   import Avatar from './Avatar.svelte';
   import ChatBubble from './ChatBubble.svelte';
+  import ReactionChips from './ReactionChips.svelte';
   import FileMessage from './FileMessage.svelte';
   import LinkPreview from './LinkPreview.svelte';
   import MediaMessage from './MediaMessage.svelte';
@@ -382,7 +383,7 @@
   }
 </script>
 
-<div class="group">
+<div class="group" class:raised={hover >= 0}>
   {#if showAvatar}
     {#if onSenderClick}
       <span class="avatar sender" onclick={(e) => onSenderClick(e.currentTarget)} onkeydown={(e) => senderKey(e)} role="button" tabindex="0" aria-label={senderName}
@@ -450,6 +451,10 @@
           <PrizeMessage {...m} lastInGroup={last} />
         {:else if !m.kind || m.kind === 'text'}
           <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} onToggleReaction={(c) => onReact?.(i, c)} />
+        {/if}
+        <!-- every other kind's reactions, under it as under a text bubble (ChatBubble draws its own) -->
+        {#if m.kind && m.kind !== 'text' && m.reactions?.length}
+          <ReactionChips reactions={m.reactions} onToggle={(c) => onReact?.(i, c)} />
         {/if}
         {#if menuable(m) && hover === i && !touch && activeMenu !== i}
           <span class="bar" style:left={barLeft} data-msg-acts="" role="toolbar" aria-label={t('ui.messageGroup.actions')}>
@@ -525,6 +530,13 @@
   .group {
     position: relative;
     z-index: 0;
+
+    /* a message's hover bar sits over the message before it, which a chat list laid out newest
+       first (column-reverse: VirtualChatList) puts after it in the document, in its own group's
+       stacking context: the group showing a bar comes forward so nothing paints over it */
+    &.raised {
+      z-index: 1;
+    }
     width: 100%;
     box-sizing: border-box;
     display: flex;

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { IconButton } from "component-lib";
-    import { quantiseWaveform, type AudioContent, type OpenChat } from "@client";
+    import { audioContent, type AudioContent, type OpenChat } from "@client";
+    import { microphoneDenied } from "@src/utils/media";
     import { getContext, onDestroy, onMount } from "svelte";
     import Microphone from "svelte-material-icons/MicrophoneOutline.svelte";
     import RadioboxMarked from "svelte-material-icons/RadioboxMarked.svelte";
@@ -25,25 +26,10 @@
 
     let mediaRecorder: MediaRecorder | undefined;
 
-    onMount(() => {
-        if (supported) {
-            // TODO - there are problems with this whole thing on safari.
-            // in particular, there is no access to the permissions api
-            if ("permissions" in navigator) {
-                navigator.permissions
-                    .query({ name: "microphone" })
-                    .then(function (result) {
-                        if (result.state === "denied") {
-                            // if they already said no, don't be rude
-                            supported = false;
-                        }
-                    })
-                    .catch((_err) => {
-                        console.log(
-                            "unable to check microphone permissions (probably unsupported)",
-                        );
-                    });
-            }
+    onMount(async () => {
+        // if they already said no, don't be rude
+        if (supported && (await microphoneDenied())) {
+            supported = false;
         }
     });
 
@@ -98,14 +84,7 @@
                                 // let the user know if we stopped recording prematurely
                                 toastStore.showFailureToast(i18nKey("maxAudioSize"));
                             }
-                            const quantised = await quantiseWaveform(data.slice(0));
-                            onAudioCaptured({
-                                kind: "audio_content",
-                                mimeType: mimeType,
-                                blobData: new Uint8Array(data),
-                                blobUrl: client.dataToBlobUrl(data, mimeType),
-                                ...quantised,
-                            });
+                            onAudioCaptured(await audioContent(data, mimeType));
                         } finally {
                             mediaRecorder = undefined;
                             stream.getTracks().forEach((track) => track.stop());

@@ -11,7 +11,7 @@
      --composer-pad, --composer-btn and --composer-btn-radius. -->
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
-  import type { ComposerAttachment, ComposerContext, MenuItem } from '../types';
+  import type { ComposerAttachKind, ComposerAttachment, ComposerContext, ComposerMention, MenuItem } from '../types';
   import EmojiPicker from './EmojiPicker.svelte';
   import Menu from './Menu.svelte';
   import SegmentedTabs from './SegmentedTabs.svelte';
@@ -19,8 +19,9 @@
   import { useT } from '../i18n';
   import { cssUrl } from '../cssUrl';
   import { deleteBackward, insertAt, type TextEdit } from '../textEdit';
+  import { insertMention, mentionAt } from '../mentionQuery';
 
-  type AttachKind = 'media' | 'file' | 'poll' | 'prize' | 'crypto' | 'swap' | 'memeFighter';
+  type AttachKind = ComposerAttachKind;
 
   const GIF_CATS = ['Trending', 'Reactions', 'Celebrate', 'Crypto', 'Thanks'] as const;
   // GIF_WORDS are placeholder GIF results (data), only the category names are UI copy.
@@ -63,9 +64,22 @@
     /** Send the text. Return a promise to keep the draft until it resolves (kept with an error if it rejects). */
     onSend?: (text: string) => Promise<unknown> | void;
     onAttach?: (kind: AttachKind) => void;
+    /** What the + menu offers (all by default); with none, there's no + button. */
+    attachKinds?: AttachKind[];
     onGif?: (query: string) => void;
     /** A recorded voice message (duration in seconds). The mic is hidden without it. Reject to keep the take. */
     onVoice?: (r: { blob: Blob; duration: number; mimeType: string }) => Promise<unknown> | void;
+    /** The mime type to record voice in, where the browser can (else its own). */
+    voiceMimeType?: string;
+    /** The most a voice message may hold, in bytes: the recording stops there and says so. */
+    voiceMaxBytes?: number;
+    /** A voice message is being recorded or reviewed (true), or that's over (false): sending it sends only it. */
+    onVoiceActive?: (active: boolean) => void;
+    /** The "@word" being typed at the caret, without the "@" ("" just after it), as it changes; undefined once there's none. */
+    onMentionQuery?: (query: string | undefined) => void;
+    /** Who to offer for that word, in order: listed over the text box (↑ ↓ to move, Enter or Tab to pick, Esc to
+     *  close); a pick puts "@handle " in its place. */
+    mentions?: ComposerMention[];
     attachment?: ComposerAttachment | null;
     onEditAttachment?: () => void;
     onRemoveAttachment?: () => void;
@@ -103,8 +117,14 @@
     autofocus = false,
     onSend,
     onAttach,
+    attachKinds,
     onGif,
     onVoice,
+    voiceMimeType,
+    voiceMaxBytes,
+    onVoiceActive,
+    onMentionQuery,
+    mentions = [],
     attachment = null,
     onEditAttachment,
     onRemoveAttachment,
@@ -152,6 +172,20 @@
   let audio: HTMLAudioElement | null = null;
   let sending = $state(false);
   let failure = $state<'send' | 'voice' | 'mic' | null>(null);
+  // the take reached voiceMaxBytes and was stopped there
+  let capped = $state(false);
+
+  // the host hears when a take starts and when it's over (sent, deleted, or the composer gone)
+  let voiceReported = false;
+  $effect(() => {
+    const active = voice !== null;
+    if (active === voiceReported) return;
+    voiceReported = active;
+    untrack(() => onVoiceActive?.(active));
+  });
+  onMount(() => () => {
+    if (voiceReported) onVoiceActive?.(false);
+  });
   const canRecord = $derived(
     demo !== 'interactive' || (!!onVoice && typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined'),
   );
@@ -163,7 +197,7 @@
   const plusOn = $derived(onPlus ? plusActive : menu === 'plus');
   const hostEmojiOn = $derived(!!onEmoji && emojiActive);
   const emojiOn = $derived(onEmoji ? emojiActive : menu === 'picker');
-  const showPlus = $derived(!editing && (!!onAttach || !!onPlus || demo !== 'interactive'));
+  const showPlus = $derived(!editing && ((!!onAttach && attachKinds?.length !== 0) || !!onPlus || demo !== 'interactive'));
 
   function togglePlus() {
     if (onPlus) {
@@ -196,15 +230,21 @@
     return Array.from({ length: barCount }, (_, i) => (i < pad ? { h: 3, played: false, idle: true } : { h: Math.round(4 + tail[i - pad] * 22), played: false, idle: false }));
   });
 
-  const plusItems: MenuItem[] = $derived([
-    { label: t('ui.messageComposer.photoOrVideo'), mask: 'var(--icon-image) center/contain no-repeat', onSelect: () => attach('media') },
-    { label: t('ui.messageComposer.file'), mask: 'var(--icon-file) center/contain no-repeat', onSelect: () => attach('file') },
-    { label: t('ui.messageComposer.poll'), mask: 'var(--icon-poll) center/contain no-repeat', onSelect: () => attach('poll') },
-    { label: t('ui.messageComposer.prizeMessage'), mask: 'var(--icon-trophy) center/contain no-repeat', onSelect: () => attach('prize') },
-    { label: t('ui.messageComposer.sendCrypto'), mask: 'var(--icon-wallet-send) center/contain no-repeat', onSelect: () => attach('crypto') },
-    { label: t('ui.messageComposer.swapCrypto'), mask: 'var(--icon-swap) center/contain no-repeat', onSelect: () => attach('swap') },
-    { label: t('ui.messageComposer.memeFighter'), mask: 'var(--icon-joystick) center/contain no-repeat', onSelect: () => attach('memeFighter') },
-  ]);
+  const plusItems: MenuItem[] = $derived(
+    (
+      [
+        ['media', 'ui.messageComposer.photoOrVideo', 'image'],
+        ['file', 'ui.messageComposer.file', 'file'],
+        ['poll', 'ui.messageComposer.poll', 'poll'],
+        ['prize', 'ui.messageComposer.prizeMessage', 'trophy'],
+        ['crypto', 'ui.messageComposer.sendCrypto', 'wallet-send'],
+        ['swap', 'ui.messageComposer.swapCrypto', 'swap'],
+        ['memeFighter', 'ui.messageComposer.memeFighter', 'joystick'],
+      ] as const
+    )
+      .filter(([kind]) => !attachKinds || attachKinds.includes(kind))
+      .map(([kind, label, icon]) => ({ label: t(label), mask: `var(--icon-${icon}) center/contain no-repeat`, onSelect: () => attach(kind) })),
+  );
 
   function attach(kind: AttachKind) {
     menu = null;
@@ -230,7 +270,66 @@
       if (focus) el.focus();
       el.selectionStart = el.selectionEnd = next.caret;
     }
+    caret = next.caret;
     grow();
+  }
+
+  // mentions: the "@word" at the caret goes to the host, which offers who to mention for it
+  const uid = $props.id();
+  const mentionListId = `${uid}-mentions`;
+  let caret = $state(0);
+  let mentionIndex = $state(0);
+  // Esc closes the list for that "@word" (until it's gone)
+  let dismissedAt = $state<number | undefined>(undefined);
+  const mention = $derived(focused ? mentionAt(draft, Math.min(caret, draft.length)) : undefined);
+  const mentionOpen = $derived(!!mention && mentions.length > 0 && !menu && !voice && dismissedAt !== mention.start);
+  const activeMention = $derived(Math.min(mentionIndex, mentions.length - 1));
+
+  function syncCaret() {
+    if (input) caret = input.selectionEnd;
+  }
+
+  let reportedMention: string | undefined = undefined;
+  $effect(() => {
+    const query = mention?.query;
+    if (query === reportedMention) return;
+    reportedMention = query;
+    mentionIndex = 0;
+    if (query === undefined) dismissedAt = undefined;
+    untrack(() => onMentionQuery?.(query));
+  });
+
+  function pickMention(m: ComposerMention) {
+    const at = mention;
+    if (!at) return;
+    void editDraft((d, _start, end) => insertMention(d, at.start, end, m.handle), true);
+  }
+
+  // the list's keys, while it's open: true when the key was the list's
+  function mentionKey(e: KeyboardEvent): boolean {
+    if (!mentionOpen || !mention || e.isComposing) return false;
+    const n = mentions.length;
+    switch (e.key) {
+      case 'ArrowDown':
+      case 'ArrowUp':
+        mentionIndex = (activeMention + (e.key === 'ArrowDown' ? 1 : n - 1)) % n;
+        // the highlighted one stays in view
+        void tick().then(() => document.getElementById(`${mentionListId}-${activeMention}`)?.scrollIntoView({ block: 'nearest' }));
+        break;
+      case 'Enter':
+      case 'Tab':
+        if (e.shiftKey) return false;
+        pickMention(mentions[activeMention]);
+        break;
+      case 'Escape':
+        dismissedAt = mention.start;
+        e.stopPropagation();
+        break;
+      default:
+        return false;
+    }
+    e.preventDefault();
+    return true;
   }
 
   // the composer's own emoji picker: at the caret, focusing the field
@@ -346,10 +445,19 @@
       return;
     }
     starting = false;
-    const recorder = new MediaRecorder(stream);
+    capped = false;
+    const recorder = new MediaRecorder(stream, voiceMimeType && MediaRecorder.isTypeSupported(voiceMimeType) ? { mimeType: voiceMimeType } : undefined);
     const chunks: Blob[] = [];
+    let bytes = 0;
     recorder.ondataavailable = (e) => {
-      if (e.data.size) chunks.push(e.data);
+      if (!e.data.size) return;
+      chunks.push(e.data);
+      bytes += e.data.size;
+      // at the host's limit the take stops for review, and says why
+      if (voiceMaxBytes && bytes >= voiceMaxBytes && take?.recorder === recorder && voice === 'recording') {
+        capped = true;
+        void stopRecording();
+      }
     };
     // live levels from the microphone for the waveform
     const ctx = new AudioContext();
@@ -359,7 +467,9 @@
     const buf = new Uint8Array(analyser.fftSize);
     const started = performance.now();
     take = { recorder, stream, ctx, chunks, started };
-    recorder.start();
+    // with a limit, the audio comes in slices (as the app's old recorder took it) so it's counted as it grows
+    if (voiceMaxBytes) recorder.start(200);
+    else recorder.start();
     voice = 'recording';
     secs = 0;
     levels = [];
@@ -420,6 +530,7 @@
     void finishTake(false);
     dropClip();
     voice = null;
+    capped = false;
     secs = 0;
     levels = [];
     playing = false;
@@ -683,6 +794,31 @@
       <Menu heading={t('ui.messageComposer.addHeading')} minWidth="232px" items={plusItems} />
     </div>
   {/if}
+  {#if mentionOpen}
+    <!-- TODO(design): no mention list in the design; drawn as the composer's other popups -->
+    <div class="popup mentions" id={mentionListId} role="listbox" aria-label={t('ui.messageComposer.mentions')}>
+      {#each mentions as m, i (m.key)}
+        <!-- the text box keeps the focus (and the keys: aria-activedescendant) -->
+        <div
+          class="mention"
+          class:on={i === activeMention}
+          id="{mentionListId}-{i}"
+          role="option"
+          tabindex="-1"
+          aria-selected={i === activeMention}
+          onmousedown={(e) => e.preventDefault()}
+          onmousemove={() => (mentionIndex = i)}
+          onclick={() => pickMention(m)}
+        >
+          <span class="mention-avatar" style:background={m.avatar ? `center/cover no-repeat ${cssUrl(m.avatar)}` : undefined}>
+            {#if !m.avatar}<span class="mention-icon" style:mask="var(--icon-{m.group ? 'users' : 'user'}) center/contain no-repeat"></span>{/if}
+          </span>
+          <span class="mention-name">{m.name}</span>
+          {#if m.handle !== m.name}<span class="mention-handle">@{m.handle}</span>{/if}
+        </div>
+      {/each}
+    </div>
+  {/if}
   {#if menu === 'picker'}
     <div class="popup picker" role="dialog" aria-label={t(tab ? 'ui.messageComposer.gifs' : 'ui.messageComposer.emoji')}>
       <!-- GIFs only for a host that takes them -->
@@ -785,7 +921,7 @@
             >
           </div>
         {/each}
-        {#if att.items.length < 10}
+        {#if onAddMedia && att.items.length < 10}
           <span class="tray-add" onclick={onAddMedia} role="button" tabindex="0" aria-label={t('ui.messageComposer.addMedia')} title={t('ui.messageComposer.addMore')}><span class="tray-add-icon"></span></span>
         {/if}
       </div>
@@ -840,16 +976,26 @@
           value={draft}
           oninput={(e) => {
             draft = e.currentTarget.value;
+            syncCaret();
             grow();
           }}
           onkeydown={(e) => {
+            if (mentionKey(e)) return;
             if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && (enterSends || e.ctrlKey || e.metaKey)) {
               e.preventDefault();
               send();
             }
           }}
-          onfocus={() => (focused = true)}
+          onkeyup={syncCaret}
+          onclick={syncCaret}
+          onfocus={() => {
+            focused = true;
+            syncCaret();
+          }}
           onblur={() => (focused = false)}
+          aria-autocomplete={onMentionQuery ? 'list' : undefined}
+          aria-controls={mentionOpen ? mentionListId : undefined}
+          aria-activedescendant={mentionOpen ? `${mentionListId}-${activeMention}` : undefined}
           placeholder={t(att ? 'ui.messageComposer.addCaption' : placeholder)}
           aria-label={t(att ? 'ui.messageComposer.addCaption' : placeholder)}
         ></textarea>
@@ -914,6 +1060,8 @@
     >
   {:else if voice === 'recording'}
     <span class="rec-hint">{t('ui.messageComposer.recordingHint')}</span>
+  {:else if voice === 'review' && capped}
+    <span class="rec-hint" role="status">{t('ui.messageComposer.voiceCapped')}</span>
   {/if}
 </div>
 
@@ -945,6 +1093,63 @@
     box-shadow:
       inset 0 0 0 1px var(--line-2),
       var(--shadow-panel);
+  }
+
+  .mentions {
+    width: min(320px, 100%);
+    max-height: 264px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    background: var(--surface-2);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2),
+      var(--shadow-panel);
+  }
+
+  .mention {
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    height: 40px;
+    padding: 0 var(--space-8);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+
+    &.on {
+      background: var(--overlay-1);
+    }
+  }
+
+  .mention-avatar {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--overlay-2);
+  }
+
+  .mention-icon {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-3);
+  }
+
+  .mention-name {
+    min-width: 0;
+    font: var(--weight-medium) var(--text-sm) / 1.2 var(--font-sans);
+    color: var(--ink);
+    @include truncate;
+  }
+
+  .mention-handle {
+    min-width: 0;
+    font: var(--weight-regular) var(--text-xs) / 1.2 var(--font-sans);
+    color: var(--ink-4);
+    @include truncate;
   }
 
   .emoji-area {

@@ -2113,6 +2113,7 @@
       "gifTrending": "Trending",
       "gifs": "GIFs",
       "memeFighter": "Meme Fighter",
+      "mentions": "People to mention",
       "micUnavailable": "The microphone isn't available. Check the browser's permission.",
       "pause": "Pause",
       "photoOrVideo": "Photo or video",
@@ -2148,6 +2149,7 @@
       "swapCrypto": "Swap crypto",
       "totalInclFees": "{summary} · {total} total incl. fees",
       "video": "Video",
+      "voiceCapped": "Recording stopped at the size limit.",
       "voiceFailed": "Couldn't send the voice message. Try again.",
       "withFee": "{summary} · +{fee} fee"
     },

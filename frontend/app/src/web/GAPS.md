@@ -105,7 +105,12 @@ design export needs. Each entry says where it came up.
 - **Voice messages**: `VoiceMessage` draws a fixed waveform and has no `levels` prop, though every
   OpenChat voice note has one.
 - **GIFs**: `MessageComposer` shows placeholder GIF tiles (`GIF_WORDS`) and has no results prop;
-  only `onGif(query)` goes out. The app searches KLIPY today.
+  only `onGif(query)` goes out. The app searches KLIPY today. Still so at 5c (2026-11-05), so the
+  composer has no GIF tab yet: it needs results (with a preview URL and size each, and more as the
+  list scrolls) and a pick handing one back. The old `GiphySelector`s' KLIPY search (paging, the
+  dedupe, the 500ms / 3-character wait, the last-page fix `c1a618b9bf`) moves to a client method
+  then, and a pick stages the GIF as the draft's attachment with the text as its caption (the
+  mobile app's way; the composer's media tray already shows a staged GIF).
 - **Proposals**: `ProposalMessage` isn't in the `GroupMessage` union, so `MessageGroup` can't
   render proposal chats. When it can, a vote that comes back `neuron_votes_failed` should list each
   neuron with its reason, as the old UI does.
@@ -123,6 +128,24 @@ design export needs. Each entry says where it came up.
 - **Composer banner** (by hand, 8b): `ComposerBar` takes `onBannerAction`, passed to `Banner`'s
   `actionHandler` with `bannerAction` as its label (it had the label but no handler). Nothing in
   the app uses it yet.
+- **Composer "+" menu and media tray** (by hand, 5c, to take back to the design export):
+  `MessageComposer` (and `ComposerBar`) take `attachKinds`, what the "+" menu offers (all by
+  default, no "+" with none): the app offers "Photo or video" and "File" until 5d's builders
+  land, and only where the chat lets the reader send them. The media tray's "add more" tile shows
+  only with `onAddMedia`: the app sends one photo or video a message (`AttachmentContent` holds
+  one), so it gives none. The design's tray takes up to 10, which the backend has no message for.
+- **Composer voice format and limit** (by hand, 5c, to take back to the design export):
+  `MessageComposer` (and `ComposerBar`) take `voiceMimeType`, what the recorder records in where
+  the browser can (the app's mp4, which iOS plays, over the browser's own webm), and
+  `voiceMaxBytes`: with it the audio comes in 200ms slices and the take stops for review once it
+  holds that much, saying so ("Recording stopped at the size limit."). Without them it records
+  as before. `onVoiceActive` tells the host when a take starts and when it's over (sent,
+  deleted, or the composer gone), so it holds back attachments meanwhile.
+- **Composer mention list** (by hand, 5c, to take back to the design export, which has no mention
+  picker): `MessageComposer` (and `ComposerBar`) take `onMentionQuery` (the "@word" at the caret as
+  it changes, `mentionQuery.ts`, spec'd) and `mentions` (`ComposerMention`: the host's candidates
+  for it), listed over the text box as a listbox the text box drives (`aria-activedescendant`):
+  ↑ ↓, Enter or Tab, Esc, a click; a pick puts "@handle " in place of the word.
 - **Calls**: `CallPanel` / `VideoTile` render `MediaStream`s. The app uses Daily's prebuilt
   iframe, which doesn't expose them; it needs Daily's call-object mode (phase 7 decision).
   The call's menu must cope with its chat going away while the menu is open: the legacy desktop
@@ -1034,6 +1057,11 @@ design export needs. Each entry says where it came up.
   viewer (pan and zoom from `core/zoom`, shared with `ZoomedImage`; no design for it:
   `TODO(design)`). It has none of the old desktop viewer's arrows between a chat's images. A
   failed send shows the tile's own failed state, with no retry yet.
+- **Voice bubble and hover bar, by hand** (2026-11-06, EXPORT-LOG): a sent voice message has the
+  sent bubble's colours and the received shape (bubbles are all left-aligned; `mirror` is for
+  right-aligned layouts), which the design export didn't have; and a message's hover bar comes
+  in front of the message before it (`MessageGroup` `.raised`); a playing voice message's button
+  sends out a fading halo. To take back to the design.
 - **Voice and file messages** (`features/conversation`, 5a): a voice message plays through the
   screen's `VoicePlayer` (one audio element, so one at a time), with the recording's waveform
   (`VoiceMessage` takes `levels` by hand: the design's bars are made up). Unlike the mobile app,
@@ -1099,22 +1127,93 @@ design export needs. Each entry says where it came up.
   still go by the sender, the bot, and blocking or reporting its author is hidden. No relayed
   message offers a private reply, which would go to the bot. The client marks the viewer's own
   read (`isOwnMessage`), so that part needs nothing here.
-- **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text only.
-  Attachments, GIFs, voice and the "+" menu are phase 5 (`MessageComposer` hides
-  "+" and the GIF tab without their handlers). There's no @mention picker (typed @usernames are
-  still sent as mentions), no rich-text editor (the old one showed markdown as it was typed) and
-  no link-count warning. In a bot DM, what's typed goes to the bot as its direct-message command,
+- **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text first; files,
+  media, voice and the @mention picker came with 5c (below). GIFs and the "+" menu's builders are
+  still to come (`MessageComposer` hides the GIF tab without its handler). There's no rich-text
+  editor (the old one showed
+  markdown as it was typed). The old desktop entry's link-count note ("Link previews are hidden
+  for messages with more than 5 links", `excessiveLinksNote`) isn't carried over: it can't show
+  any more, since `extractEnabledLinks` stops at the 3 links that get previews
+  (`MAX_LINK_PREVIEWS`) so it never counts past 5, and nothing hides a message's previews past 5
+  links; the first 3 get them. To drop from the desktop entry too, or to word again (say, "only
+  the first 3 links get previews") if the design wants one. In a bot DM, what's typed goes to the bot as its direct-message command,
   but there's no `/` command selector, and a bot that takes no direct messages gets the
   composer's error instead of the old warning. A bot's private (ephemeral) reply isn't shown:
   nothing here subscribes to `ephemeralMessage`, so it's dropped. The old trees show it above the
   composer for a minute, or until it's closed, paused while the app is hidden. A chat's rules are asked for in a plain dialog
   (`RulesDialog`, the old modal's words; no design for it), and the throttle countdown shows as the
   composer's banner. Enter follows the app's Enter-to-send setting (`enterSends`). A preview
-  shows `CommunityPreviewBar` (8b, "Join gate").
+  shows `CommunityPreviewBar` (8b, "Join gate"). A chat that takes photos or files but no text
+  shows "This chat is read-only" (`entryBlock` asks for the text permission), where the old
+  entries let the reader attach one and greyed the text out (`sendTextDisabled`).
+- **Files and media in the composer** (5c): the "+" menu's "Photo or video" (the device's picker,
+  `image/*,video/*`, the mobile app's) and "File" (anything), each offered where the chat lets the
+  reader send it (`pickableAttachments`); a file pasted into the text box; a file dropped anywhere
+  on the conversation (an overlay while it's held over it, the old `DropTarget`'s words; no design
+  for it: `TODO(design)`). One a message, as in the old trees (`AttachmentContent` holds one).
+  Each goes through `attachFile` (the client, used by the old trees' pickers, drop and paste too):
+  attached to the chat it was picked in even if the reader moves on while a video is prepared,
+  refused with the permission it needs where it can't be sent there (`attachRefusal`; from the
+  file's type, before a video is transcoded, `filePermission`), a failure
+  saying why (over the size limit, else `attachFileFailed`, where the old trees showed the raw
+  error). A video's preparation shows over the composer (`videoProcessingPercent`). A photo,
+  video or GIF is staged in the composer's media tray, a file or audio clip as a chip with its
+  size (`composerAttachment`; its × removes it), and the text becomes its caption. Not in a bot
+  DM, which takes text only; not during an edit, which changes only the text (the old entries hid
+  their pickers; the edited message's own content isn't shown as an attachment either,
+  `draftAttachment`); not while a voice message is recorded or reviewed, since sending it posts
+  the draft (`canAttachNow`; the composer says when, `onVoiceActive`). A file dropped where
+  nothing can be attached is refused, never left to the browser to open in the app's place. What
+  the "+" menu and the mic offer follows the reader's permissions as they change
+  (`messagePermissionsForSelectedChatStore`), and the voice limit a Diamond membership bought
+  meanwhile (`maxMediaSizes($isDiamondStore)`). Not yet: 5d's prize, transfer and swap offer, and a puzzle result, aren't staged,
+  and the composer doesn't send them (`TODO(phase 5, 5d)`); the mobile app's native recent-media
+  strip waits for the narrow pass.
+- **Voice messages in the composer** (5c): the composer's own recorder (record, then review: play
+  back, seek, delete or send), where the old trees' mic staged the clip as an attachment to send
+  with a caption: here it goes straight out (`sendVoiceMessage`: the client makes the audio
+  content, waveform and length, with `audioContent`, which both old recorders now use, and sends
+  it as `sendMessage` does, replying to the draft's reply), and a take that isn't sent stays to
+  send again. The mic shows as the old entries' did (`canRecordVoice`): where audio may be sent,
+  the browser records in `audioRecordingMimeType`'s format (mp4, which every device plays, else
+  webm), the reader hasn't turned the microphone down (`microphoneDenied`, which both old
+  recorders now use), not in a bot DM, and only while nothing is typed or attached. A take stops at
+  the size limit (`maxMediaSizes($isDiamondStore).audio`, following a Diamond membership bought meanwhile) and says so, where the old trees toasted `maxAudioSize`.
+  The microphone is let go on leaving the chat (the composer is keyed per chat).
+- **The @mention picker** (5c): an "@word" typed at the caret lists who can be mentioned for it
+  over the text box (`mentionCandidates`, `@client`, which both old pickers now use: never the
+  reader, @everyone first, then the community's user groups, then members, each by the shortest
+  name; at most 200), with their avatar, name and @username; a chat that holds only some of its
+  members is searched for those it doesn't hold once two characters are typed (`MemberFinder`,
+  which both old pickers use too). ↑ ↓ move, Enter or Tab picks, Esc closes it for that word, a
+  click picks. A pick puts "@username " in the text, which the client mentions on sending (its
+  typed mentions), where the old editor held a mention node. So a user group whose name has
+  characters other than letters, digits and "_" (a "-", say) isn't mentioned when picked or typed:
+  the client's typed mentions stop at them. Bots come after the members, as in the old pickers,
+  whose comparator was inconsistent (a bot against a user compared "after" both ways). The list has no
+  design (`TODO(design)`): it's drawn as the composer's other popups.
+- **Composer, not yet** (5c, left for later pieces of it):
+  - bot commands: the old trees' `/` selector (the commands the reader's role, the chat's
+    permissions and the bot's granted permissions allow, `restrictByBot` / `restrictByChat` /
+    `hasPermissionForCommand` in both `CommandSelector`s, to move to `@client`), the arguments'
+    dialog (`CommandInstanceBuilder` and `CommandArg`: text, numbers, choices, a user, a date), the
+    failure toasts (`bots.failed`, `bots.tooManyRequests`) and a bot's ephemeral reply (above);
+    in a bot DM, a bot that takes no direct messages gets the composer's "couldn't send", not the
+    old `bots.direct.warning`. The design has none of it;
+  - GIFs (the library's results, above);
+  - the "+" menu's builders (`TODO(phase 5, 5d)`): poll, prize, send crypto, swap offer, Meme
+    Fighter, hidden in the app-store builds as in the mobile app (`disableSendCryptoFeature`,
+    `disableP2PSwapFeature`, `disableCreatePrizeFeature`). A draft that pays from an external
+    wallet must be approved by that wallet before it's sent (the mobile entry's
+    `externalWalletDraft`, to move to `@client`, a swap offer's allowance being the amount plus
+    two fees); until then the composer neither stages nor sends a prize, transfer or swap offer;
+  - the emoji autocomplete (`:smile`) both old editors had (`EmojiAutocompleter`).
 - **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
   edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
-  text (`composerContext`): who wrote it and its text, an edit starting from the message's text.
-  Its X drops a reply, or ends an edit; a click on it goes to the message when it's in this chat (a
+  text (`composerContext`): who wrote it and its text, an edit starting from the message's text
+  as the old entries started it (`editStartText`, logic/composer, which both old entries now
+  call: each `@UserId(…)` / `@UserGroup(…)` as the `@name` typed, the link-disabled marker taken
+  out, a caption for a captioned message; 5c). Its X drops a reply, or ends an edit; a click on it goes to the message when it's in this chat (a
   private reply quotes another chat's: no jump, where the old UI opened that chat). An edit is
   saved with `editMessage` (failure toast `errorEditingMessage`). Ending an edit, saved or
   cancelled, puts back what the user was writing before it (`endEditing`, kept by `setEditing`;
@@ -1124,8 +1223,8 @@ design export needs. Each entry says where it came up.
   thumbnail (`thumb`).
 - **Message actions** (`features/conversation`, 5b): every message's menu (`MessageActions`:
   right-click, the hover bar's ⋯, Shift+F10, a long press on touch), its hover bar's quick
-  reactions (the app's `quickReactions`), the emoji picker, the reaction chips (text bubbles
-  only: the other kinds take no reactions yet), swipes, desktop's double-click to edit or reply
+  reactions (the app's `quickReactions`), the emoji picker, the reaction chips (under every
+  kind of message: `ReactionChips`, by hand, EXPORT-LOG 2026-11-06), swipes, desktop's double-click to edit or reply
   (the "double-click to reply" setting) and Retry on a failed message. What a message offers is
   the old trees' (`messageMenu` in `@client`, which both old menus now read): no menu on an inert
   message unless it can be revealed, in a read-only chat or on an ephemeral message. Done here:

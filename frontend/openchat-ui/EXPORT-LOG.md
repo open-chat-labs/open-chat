@@ -622,3 +622,27 @@
 ## 2026-11-05 — Landing: a featured card's onOpen, the Android card's copy (9b, #10133, PR #10419), by hand
 - **Landing**: `LandingCommunity` takes `onOpen`, called as a card's link is followed (a card with an `href` is an `<a>`, one without a `<div>`, the body shared as a snippet), so the host can remember where the community was opened from (the app sets the preview's origin, as Explore does). `meta.json`'s `communities` doc says so.
 - **Landing**'s Android card no longer says the app is in beta: `ui.landing.apps.sub` reads "The Android app is out now, in two builds. …" and the pill is `ui.landing.apps.available` ("Available", was `betaOpen`, "Beta open"), as the Play listing is public.
+
+## 2026-11-05 — MessageComposer's + menu and media tray for the app's attachments (5c), by hand
+- `attachKinds` (`ComposerAttachKind[]`, now in `types.ts`): what the + menu offers, in its own order; all of them by default, as before, and no + button with none. The app offers photo / video and file until its builders for the others land, and only those the chat permits. `ComposerBar` passes it through.
+- The media tray's add tile shows only with `onAddMedia` (still under 10 items): a host that sends one photo or video a message gives none, and the tile did nothing. The docs' Preview demo passes one.
+- `meta.json` updated. Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-05 — MessageComposer's voice format and size limit for the app's voice messages (5c), by hand
+- `voiceMimeType`: what the recorder records in, where the browser supports it (`MediaRecorder.isTypeSupported`), else the browser's own as before. The app asks for mp4, which every device plays.
+- `voiceMaxBytes`: with it the recorder hands its audio over in 200ms slices, counts it, and stops the take for review once it holds that much, saying so under the bar (`ui.messageComposer.voiceCapped`, "Recording stopped at the size limit."). Without it, nothing changes.
+- `ComposerBar` passes both through. `meta.json` updated. Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-05 — MessageComposer's mention list for the app's @mention picker (5c), by hand
+- `onMentionQuery(query)`: the "@word" that ends at the caret ("@" at the start or after a space, then no space or "@"), without its "@", as it changes, and undefined once there's none (`lib/mentionQuery.ts`, `mentionAt`, spec'd). The caret is followed on input, key up, click and focus.
+- `mentions` (`ComposerMention[]`, `types.ts`: `key`, `handle`, `name`, `avatar`, `group`): the host's candidates for it, listed over the text box (where the + menu opens, up to 264px then scrolling) while the text box has focus and neither the + menu, the picker nor a recording is open. A listbox the text box drives (`aria-autocomplete`, `aria-controls`, `aria-activedescendant`): ↑ ↓ move (the highlighted row stays in view), Enter or Tab pick, Esc closes it for that word (until the word is gone), a click picks without taking focus from the text box. A pick puts "@handle " in place of the word (`insertMention`, a space after it not doubled). A row: a 28px avatar (the image, else the user or group icon), the name, and "@handle" when it differs. New copy: `ui.messageComposer.mentions`.
+- The design has no mention list: drawn as the composer's other popups (`--surface-2`, `--shadow-panel`, `--radius-lg`), rows 40px on `--overlay-1` when highlighted. `meta.json` updated. To go back to the design export (the app's `GAPS.md` lists it).
+
+## 2026-11-05 — MessageComposer: the voice take's state for the host (5c review, PR #10420), by hand
+- `onVoiceActive(active)`: true when a take starts (recording, then its review), false once it's over (sent, deleted, or the composer unmounted mid-take). The app holds back attachments meanwhile, since sending the take posts the draft. `ComposerBar` passes it through. `meta.json` updated. Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-06 — VoiceMessage's sent look and MessageGroup's hover bar, by hand
+- `VoiceMessage`: `side="sent"` was the received bubble with mirrored corners. It's now the sent bubble's colours (`--bubble-send-bg`, `--bubble-text` / `--bubble-text-soft` for the clock, the play button, the speed chip and the waveform's played bars) with the same shape as a received one, as ChatBubble's: every bubble is left-aligned. `mirror` (new) flips the corners for a right-aligned layout (mobile, native). The design export has no sent variant for it. `meta.json` updated.
+- `MessageGroup`: the group showing a message's hover bar comes forward (`.raised`, z-index 1). The bar sits over the message before it, which a chat list laid out newest first (`VirtualChatList`, column-reverse) puts later in the document, in its own group's stacking context, so it painted over the bar.
+- `VoiceMessage`: while it plays, a halo spreads from the play/pause button and fades (gone by two thirds of the way), every 1.44s (`::after`, `--voice-halo`: the accent, the bubble's text colour on a sent one); none with reduced motion. Not in the design.
+- `ReactionChips` (new): ChatBubble's reaction chips as their own component (the same markup, fitting to `maxRows` with "+N", and styles), which ChatBubble now renders. `MessageGroup` puts it under every other kind of message (voice, media, file, link, transfer, swap, poll, prize), whose components take no reactions, so reacting to them now shows. In `lib/index.ts` and `meta.json`.

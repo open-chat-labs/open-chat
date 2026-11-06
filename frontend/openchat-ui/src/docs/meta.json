@@ -885,6 +885,74 @@
     "group": "library"
   },
   {
+    "name": "ReactionChips",
+    "source": "lib/ChatBubble.dc.html (its reaction chips), by hand (2026-11-06)",
+    "hash": "",
+    "description": "A message's reaction chips, overlapping the bottom edge of the bubble above them: limited to maxRows, the rest folded into a \"+N\" chip that expands them. ChatBubble's chips as their own component, so MessageGroup shows every kind of message's reactions.",
+    "preview": {
+      "width": 360,
+      "height": 60
+    },
+    "props": [
+      {
+        "name": "reactions",
+        "type": "Reaction[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Emoji, count and whether they're the viewer's (mine)."
+      },
+      {
+        "name": "maxRows",
+        "type": "number",
+        "default": 1,
+        "editor": "number",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "1",
+        "doc": "Rows of chips before the rest fold into \"+N\"."
+      },
+      {
+        "name": "afterThread",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Under a thread summary rather than a bubble's edge: a gap instead of the overlap."
+      },
+      {
+        "name": "onToggle",
+        "type": "(emoji: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A chip clicked: add or remove that reaction."
+      },
+      {
+        "name": "onShowAll",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The \"+N\" chip clicked."
+      }
+    ],
+    "group": "library"
+  },
+  {
     "name": "ChatRow",
     "source": "lib/ChatRow.dc.html",
     "hash": "d9730629",
@@ -1699,6 +1767,17 @@
         "doc": ""
       },
       {
+        "name": "attachKinds",
+        "type": "ComposerProps['attachKinds']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
         "name": "onGif",
         "type": "ComposerProps['onGif']",
         "default": null,
@@ -1712,6 +1791,61 @@
       {
         "name": "onVoice",
         "type": "ComposerProps['onVoice']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "voiceMimeType",
+        "type": "ComposerProps['voiceMimeType']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "voiceMaxBytes",
+        "type": "ComposerProps['voiceMaxBytes']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onVoiceActive",
+        "type": "ComposerProps['onVoiceActive']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onMentionQuery",
+        "type": "ComposerProps['onMentionQuery']",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "mentions",
+        "type": "ComposerProps['mentions']",
         "default": null,
         "editor": null,
         "options": null,
@@ -5708,7 +5842,18 @@
         "section": null,
         "required": false,
         "componentDefault": "'received'",
-        "doc": ""
+        "doc": "Sent is the sent bubble's colours only; every bubble is left-aligned, so the shape is the same for both sides."
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Right-aligned layouts (mobile, native): the grouped / tail corners go on the inline-end side, as ChatBubble's."
       },
       {
         "name": "lastInGroup",
@@ -13585,6 +13730,17 @@
         "doc": ""
       },
       {
+        "name": "attachKinds",
+        "type": "AttachKind[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "What the + menu offers (all by default); with none, there's no + button."
+      },
+      {
         "name": "onGif",
         "type": "(query: string) => void",
         "default": null,
@@ -13605,6 +13761,61 @@
         "required": false,
         "componentDefault": null,
         "doc": "A recorded voice message (real MediaRecorder audio, duration in seconds). The mic is hidden without it. Reject to keep the take."
+      },
+      {
+        "name": "voiceMimeType",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The mime type to record voice in, where the browser can (else its own)."
+      },
+      {
+        "name": "voiceMaxBytes",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The most a voice message may hold, in bytes: the recording stops there and says so."
+      },
+      {
+        "name": "onVoiceActive",
+        "type": "(active: boolean) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A voice message is being recorded or reviewed (true), or that's over (false): sending it sends only it."
+      },
+      {
+        "name": "onMentionQuery",
+        "type": "(query: string | undefined) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The \"@word\" being typed at the caret, without the \"@\" (\"\" just after it), as it changes; undefined once there's none."
+      },
+      {
+        "name": "mentions",
+        "type": "ComposerMention[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Who to offer for that word, in order: listed over the text box (↑ ↓ to move, Enter or Tab to pick, Esc to close); a pick puts \"@handle \" in its place."
       },
       {
         "name": "attachment",
@@ -13648,7 +13859,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Adds another photo or video to the staged media (its + tile shows only with this, under 10 items)."
       },
       {
         "name": "onRemoveMediaItem",

@@ -241,6 +241,7 @@
     "archiveChatFailed": "گپ بایگانی نشد",
     "areYouSure": "مطمئنی؟",
     "attachFile": "تصویر/فیلم/فایل را پیوست کنید",
+    "attachFileFailed": "متأسفیم، پیوست کردن این فایل ممکن نشد",
     "avatarTooBig": "آواتار انتخاب شده خیلی بزرگ است",
     "avatarUpdated": "آواتار با موفقیت به روز شد",
     "avatarUpdateFailed": "به‌روزرسانی آواتار انجام نشد",
@@ -1572,6 +1573,7 @@
         "watchOnTwitch": "تماشا در Twitch"
     },
     "videoProcessing": "در حال بهینه‌سازی ویدیو…",
+    "videoProcessingPercent": "در حال بهینه‌سازی ویدیو… {percent}%",
     "member": "عضو",
     "memberCount": "اعضای {count}",
     "memberIsTyping": "{username} در حال تایپ است",

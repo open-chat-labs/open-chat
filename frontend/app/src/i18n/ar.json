@@ -241,6 +241,7 @@
     "archiveChatFailed": "فشل في أرشفة الدردشة",
     "areYouSure": "هل أنت متأكد؟",
     "attachFile": "إرفاق صورة/فيديو/ملف",
+    "attachFileFailed": "عذرًا، تعذّر إرفاق هذا الملف",
     "avatarTooBig": "الصورة الرمزية المحددة كبيرة جدًا",
     "avatarUpdated": "تم تحديث الصورة الرمزية بنجاح",
     "avatarUpdateFailed": "فشل تحديث الصورة الرمزية",
@@ -1572,6 +1573,7 @@
         "watchOnTwitch": "شاهد على Twitch"
     },
     "videoProcessing": "جارٍ تحسين الفيديو…",
+    "videoProcessingPercent": "جارٍ تحسين الفيديو… {percent}%",
     "member": "عضو",
     "memberCount": "أعضاء {count}",
     "memberIsTyping": "{username} يكتب",

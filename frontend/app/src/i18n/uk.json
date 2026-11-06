@@ -241,6 +241,7 @@
     "archiveChatFailed": "Не вдалося заархівувати чат",
     "areYouSure": "Ти впевнений?",
     "attachFile": "Додайте зображення/відео/файл",
+    "attachFileFailed": "На жаль, не вдалося прикріпити цей файл",
     "avatarTooBig": "Вибраний аватар завеликий",
     "avatarUpdated": "Аватар успішно оновлено",
     "avatarUpdateFailed": "Не вдалося оновити аватар",
@@ -1572,6 +1573,7 @@
         "watchOnTwitch": "Дивитися на Twitch"
     },
     "videoProcessing": "Оптимізація відео…",
+    "videoProcessingPercent": "Оптимізація відео… {percent} %",
     "member": "член",
     "memberCount": "{count} учасників",
     "memberIsTyping": "{username} друкує",

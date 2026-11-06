@@ -4,18 +4,17 @@
     import { toastStore } from "../../stores/toast";
     import { getContext } from "svelte";
     import Paperclip from "./Paperclip.svelte";
-    import type { AttachmentContent, MessageContext, OpenChat } from "@client";
-    import { i18nKey } from "../../i18n/i18n";
+    import type { MessageContext, OpenChat } from "@client";
+    import { attachRefusal } from "@src/logic/composer/composer";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         onOpen: () => void;
         messageContext: MessageContext;
-        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
     }
 
-    let { onOpen, messageContext, onFileSelected }: Props = $props();
+    let { onOpen, messageContext }: Props = $props();
 
     let fileinput: HTMLInputElement | undefined = $state();
 
@@ -24,23 +23,15 @@
         fileinput?.click();
     }
 
-    function fileSelected(e: { currentTarget: HTMLInputElement }) {
-        if (e.currentTarget) {
-            const target = e.currentTarget;
-            if (target.files && target.files[0]) {
-                // Captured now: preparing a video can take a while and the chat may change under it
-                const context = messageContext;
-                client
-                    .messageContentFromFile(target.files[0], context)
-                    .then((content) => {
-                        onFileSelected(content, context);
-                    })
-                    .catch((err) => {
-                        toastStore.showFailureToast(i18nKey(err));
-                    });
-
-                e.currentTarget.value = "";
-            }
+    async function fileSelected(e: { currentTarget: HTMLInputElement }) {
+        const target = e.currentTarget;
+        const file = target.files?.[0];
+        if (file === undefined) return;
+        target.value = "";
+        // the chat it was picked in, whichever is open once the file is ready
+        const outcome = await client.attachFile(file, messageContext);
+        if (outcome.kind !== "attached") {
+            toastStore.showFailureToast(attachRefusal(outcome, $_));
         }
     }
 </script>

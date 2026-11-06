@@ -28,8 +28,14 @@
     onBannerAction?: () => void;
     onSend?: ComposerProps['onSend'];
     onAttach?: ComposerProps['onAttach'];
+    attachKinds?: ComposerProps['attachKinds'];
     onGif?: ComposerProps['onGif'];
     onVoice?: ComposerProps['onVoice'];
+    voiceMimeType?: ComposerProps['voiceMimeType'];
+    voiceMaxBytes?: ComposerProps['voiceMaxBytes'];
+    onVoiceActive?: ComposerProps['onVoiceActive'];
+    onMentionQuery?: ComposerProps['onMentionQuery'];
+    mentions?: ComposerProps['mentions'];
     attachment?: ComposerProps['attachment'];
     onEditAttachment?: () => void;
     onRemoveAttachment?: () => void;

@@ -1,5 +1,7 @@
 <!-- Voice note bubble: play/pause button, seekable waveform, speed toggle (1x → 1.5x → 2x), elapsed / total and time.
-     cornerBottomLeft (px or any CSS length) overrides the tail corner, e.g. to sit flush against a reply strip. -->
+     cornerBottomLeft (px or any CSS length) overrides the tail corner, e.g. to sit flush against a reply strip.
+     By hand: `side` 'sent' is the sent bubble's colours only, as ChatBubble's (every bubble is left-aligned, so the
+     shape is the same for both sides); `mirror` flips the corners for a right-aligned layout (mobile, native). -->
 <script lang="ts">
   import { useT } from '../i18n';
   import Waveform from './Waveform.svelte';
@@ -18,6 +20,8 @@
     total: string;
     speed?: Speed;
     side?: 'received' | 'sent';
+    /** A right-aligned layout (mobile, native): the grouped corners on the inline-end side, as ChatBubble's. */
+    mirror?: boolean;
     lastInGroup?: boolean;
     time: string;
     cornerBottomLeft?: number | string | null;
@@ -28,7 +32,7 @@
     onSeek?: (fraction: number) => void;
   }
 
-  let { progress = 0, levels, elapsed, total, speed = '1x', side = 'received', lastInGroup = true, time, cornerBottomLeft = null, playing = false, onPlay, onPause, onSpeedChange, onSeek }: Props = $props();
+  let { progress = 0, levels, elapsed, total, speed = '1x', side = 'received', mirror = false, lastInGroup = true, time, cornerBottomLeft = null, playing = false, onPlay, onPause, onSpeedChange, onSeek }: Props = $props();
   const t = useT();
 
   // play state, seeking and speed changes stick locally until the parent sends new values
@@ -37,9 +41,15 @@
   let speedIndex = $derived(Math.max(0, SPEEDS.indexOf(speed)));
 
   const sent = $derived(side === 'sent');
+  // on the sent bubble's own shade the accent wouldn't show: the bubble's text colours instead
+  const SENT_WAVE = {
+    playedColor: 'var(--bubble-text)',
+    restColor: 'color-mix(in oklch, var(--bubble-text) 32%, transparent)',
+    ring: 'var(--bubble-send-bg)',
+  };
   const bottomLeft = $derived(
     cornerBottomLeft == null || cornerBottomLeft === ''
-      ? sent ? 'var(--radius-xl)' : lastInGroup ? 'var(--radius-lg)' : 'var(--radius-xl)'
+      ? mirror ? 'var(--radius-xl)' : lastInGroup ? 'var(--radius-lg)' : 'var(--radius-xl)'
       : /[a-z%]/i.test(String(cornerBottomLeft)) ? String(cornerBottomLeft) : `${cornerBottomLeft}px`,
   );
 
@@ -61,12 +71,22 @@
 </script>
 
 <div class="row">
-  <div class="bubble" class:sent class:last={lastInGroup} style:border-end-start-radius={bottomLeft}>
+  <div class="bubble" class:sent class:mirror class:last={lastInGroup} style:border-end-start-radius={bottomLeft}>
     <div class="controls">
       <div class="play" class:playing={isPlaying} onclick={togglePlay} role="button" tabindex="0" aria-label={t(isPlaying ? 'ui.voiceMessage.pause' : 'ui.voiceMessage.play')}>
         <span class="play-icon"></span>
       </div>
-      <div class="wave"><Waveform levels={levels?.length ? levels : LEVELS} progress={at} seekable={true} onSeek={seek} height={22} label={t('ui.voiceMessage.seek')} /></div>
+      <div class="wave">
+        <Waveform
+          levels={levels?.length ? levels : LEVELS}
+          progress={at}
+          seekable={true}
+          onSeek={seek}
+          height={22}
+          label={t('ui.voiceMessage.seek')}
+          {...sent ? SENT_WAVE : {}}
+        />
+      </div>
       <div class="speed" onclick={cycleSpeed} role="button" tabindex="0">{SPEEDS[speedIndex]}</div>
     </div>
     <div class="meta">
@@ -102,6 +122,11 @@
     padding: var(--space-10) var(--space-14) var(--space-10) var(--space-12);
 
     &.sent {
+      background: var(--bubble-send-bg);
+      box-shadow: none;
+    }
+
+    &.mirror {
       border-start-start-radius: var(--radius-xl);
       border-start-end-radius: var(--radius-xs);
 
@@ -118,11 +143,38 @@
   }
 
   .play {
+    position: relative;
     flex: none;
     width: 30px;
     height: 30px;
     border-radius: var(--radius-pill);
     background: var(--overlay-2);
+
+    /* while it plays, a halo spreads from the button and fades, again and again (by hand) */
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: 0 0 0 2px var(--voice-halo, var(--accent));
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &.playing::after {
+      animation: voiceHalo 1.44s ease-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      &.playing::after {
+        animation: none;
+      }
+    }
+
+    .sent & {
+      --voice-halo: var(--bubble-text);
+      background: color-mix(in oklch, var(--bubble-text) 12%, transparent);
+    }
     @include flex-center;
     cursor: pointer;
 
@@ -137,6 +189,10 @@
     margin-left: 2px;
     background: var(--ink);
     mask: var(--icon-play-filled) center/contain no-repeat;
+
+    .sent & {
+      background: var(--bubble-text);
+    }
 
     .playing & {
       margin-left: 0;
@@ -166,6 +222,12 @@
     cursor: pointer;
     user-select: none;
 
+    .sent & {
+      color: var(--bubble-text);
+      background: color-mix(in oklch, var(--bubble-text) 8%, transparent);
+      box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--bubble-text) 16%, transparent);
+    }
+
     &:hover {
       background: var(--btn-hover);
     }
@@ -183,19 +245,50 @@
     flex: none;
     font: var(--weight-medium) var(--text-xs) / 1 var(--font-mono);
     color: var(--accent);
+
+    .sent & {
+      color: var(--bubble-text);
+    }
   }
 
   .slash {
     color: var(--ink-3);
+
+    .sent & {
+      color: var(--bubble-text-soft);
+    }
   }
 
   .total {
     color: var(--ink);
+
+    .sent & {
+      color: var(--bubble-text);
+    }
   }
 
   .time {
     flex: none;
     font: var(--weight-regular) var(--text-xs) / 1 var(--font-mono);
     color: var(--meta);
+
+    .sent & {
+      color: var(--bubble-text-soft);
+    }
+  }
+
+  @keyframes voiceHalo {
+    0% {
+      opacity: 0.55;
+      transform: scale(1);
+    }
+    /* gone well before it's spread all the way */
+    65% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.7);
+    }
   }
 </style>

@@ -241,6 +241,7 @@
     "archiveChatFailed": "चैट संग्रहित करने में विफल",
     "areYouSure": "क्या आपको यकीन है?",
     "attachFile": "छवि/वीडियो/फ़ाइल संलग्न करें",
+    "attachFileFailed": "क्षमा करें, वह फ़ाइल संलग्न नहीं की जा सकी",
     "avatarTooBig": "चयनित अवतार बहुत बड़ा है",
     "avatarUpdated": "अवतार सफलतापूर्वक अपडेट किया गया",
     "avatarUpdateFailed": "अवतार अद्यतन विफल रहा",
@@ -1572,6 +1573,7 @@
         "watchOnTwitch": "Twitch पर देखें"
     },
     "videoProcessing": "वीडियो अनुकूलित किया जा रहा है…",
+    "videoProcessingPercent": "वीडियो अनुकूलित किया जा रहा है… {percent}%",
     "member": "सदस्य",
     "memberCount": "{count} सदस्य",
     "memberIsTyping": "{username} टाइप कर रहा है",

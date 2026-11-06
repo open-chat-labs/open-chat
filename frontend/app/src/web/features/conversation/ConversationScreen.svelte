@@ -11,6 +11,7 @@
         webhookUserIdsStore,
         formatClock,
         anonUserStore,
+        audioRecordingMimeType,
         blockedUsersStore,
         botState,
         bridgedUsersStore,
@@ -39,7 +40,12 @@
         isPreviewingOrLapsed,
         isPrivateCommunityPreview,
         localUpdates,
+        MAX_MENTION_CANDIDATES_SHOWN,
+        mentionCandidates,
+        messageContextsEqual,
+        maxMediaSizes,
         messageIndexStore,
+        messagePermissionsForSelectedChatStore,
         messageMenu,
         messagesRead,
         pollVoteChange,
@@ -47,13 +53,16 @@
         publish,
         screenWidth,
         selectedChatBlockedUsersStore,
+        selectedChatMembersStore,
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
         selectedChatPinnedMessagesStore,
         selectedChatWebhooksStore,
         selectedChatSummaryStore,
+        selectedCommunityMembersStore,
         selectedCommunitySummaryStore,
+        selectedCommunityUserGroupsStore,
         suspendedUserStore,
         swapAcceptCost,
         swapActions,
@@ -65,6 +74,7 @@
         unconfirmedReadByThem,
         unconfirmedStore,
         undeletingMessagesStore,
+        videoProcessingProgress,
         type ChatEvent,
         type ChatIdentifier,
         type ChatSummary,
@@ -90,10 +100,20 @@
     import Markdown from "@src/core/Markdown.svelte";
     import type { GroupMessage } from "@openchat/ui/src/lib/types";
     import {
+        attachRefusal,
+        canAttachNow,
+        canRecordVoice,
+        draftAttachment,
+        editStartText,
         entryBlock,
+        entryNotice,
+        entryPlaceholder,
         focusEntryOnOpen,
+        MemberFinder,
+        pickableAttachments,
         throttleCountdown,
     } from "@src/logic/composer/composer";
+    import { fileFromDataTransferItems } from "@src/utils/datatransfer";
     import {
         confirmMessageDeletion,
         dclickReply,
@@ -106,7 +126,7 @@
     import { messageSwipeLeft } from "@src/utils/messageSwipe";
     import { canShareMessage } from "@src/utils/share";
     import { messageDoubleClickAction } from "@src/logic/conversation/messageDoubleClick";
-    import { getProxyAdjustedBlobUrl } from "@src/utils/media";
+    import { getProxyAdjustedBlobUrl, microphoneDenied } from "@src/utils/media";
     import { now500 } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
     import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
@@ -120,13 +140,15 @@
         timelineEventText,
         type EventTextContext,
     } from "@src/logic/conversation/timelineEventText";
-    import { getContext, untrack, type ComponentProps, type Snippet } from "svelte";
+    import { getContext, onMount, untrack, type ComponentProps, type Snippet } from "svelte";
     import { _, locale } from "svelte-i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import { chatMenuState, runChatMenuItem } from "./chatMenu";
     import Composer from "./Composer.svelte";
     import {
+        composerAttachment,
         composerContext,
+        composerMention,
         composerStartText,
         headerMenuItems,
         isMedia,
@@ -135,6 +157,7 @@
         messageStatus,
         senderColor,
         untilNextDay,
+        withFields,
         type ConversationContext,
         type MediaContent,
         type MessageRow,
@@ -404,16 +427,168 @@
     const countdown = $derived(
         $throttleDeadline > 0 ? throttleCountdown($throttleDeadline, $now500) : undefined,
     );
-    const throttled = $derived(
-        countdown !== undefined
-            ? $_("throttleMessage", { values: { time: countdown.seconds } })
-            : "",
-    );
 
     // the message being replied to or edited, above the composer's text (the chat's draft, which
-    // the reply and the edit set)
+    // the reply and the edit set); an edit starts from the message's text, with its mentions as
+    // they were typed
     const draft = $derived($selectedChatDraftMessageStore);
-    const composing = $derived(composerContext(draft, ctx));
+    const composing = $derived(
+        composerContext(
+            draft,
+            ctx,
+            draft?.editingEvent === undefined
+                ? undefined
+                : editStartText(
+                      draft.editingEvent.event.content,
+                      $allUsersStore,
+                      $selectedCommunityUserGroupsStore,
+                  ),
+        ),
+    );
+
+    // over the composer, the most pressing first: the throttle countdown, a video picked here
+    // being prepared
+    const notice = $derived.by(() => {
+        const progress = $videoProcessingProgress;
+        const shown = entryNotice({
+            throttledSeconds: countdown?.seconds,
+            videoProgress:
+                chat !== undefined &&
+                progress !== undefined &&
+                messageContextsEqual(progress.context, { chatId: chat.id })
+                    ? progress.progress
+                    : undefined,
+        });
+        switch (shown?.kind) {
+            case undefined:
+                return undefined;
+            case "throttled":
+                return {
+                    text: $_("throttleMessage", { values: { time: shown.seconds } }),
+                    tone: "warning" as const,
+                };
+            case "video_processing":
+                return {
+                    text: $_("videoProcessingPercent", { values: { percent: shown.percent } }),
+                    tone: "info" as const,
+                };
+        }
+    });
+
+    // the draft's photo, video or file, staged above the text (only what the composer shows is
+    // sent with it: 5d's contents wait for their builders)
+    // (none during an edit, when the draft holds the edited message's own content)
+    const staged = $derived(composerAttachment(draftAttachment(draft), ctx));
+
+    // a direct chat with a bot takes text only (its direct-message command)
+    const directBot = $derived(chat !== undefined && client.directChatWithBot(chat) !== undefined);
+
+    // what the + menu offers to pick from the device (following the reader's permissions here)
+    const attachKinds = $derived(
+        directBot ? [] : pickableAttachments($messagePermissionsForSelectedChatStore),
+    );
+
+    // nothing is attached during an edit, or while a voice message is recorded or reviewed
+    let voiceActive = $state(false);
+    const attachable = $derived(
+        !directBot &&
+            canAttachNow({ editing: draft?.editingEvent !== undefined, voiceActive }),
+    );
+
+    // (the composer says "Add a caption" itself while there's an attachment)
+    const placeholder = $derived(
+        interpolate($_, entryPlaceholder({ canEnterText: true, attached: false, directBot })),
+    );
+
+    // a voice message is recorded in a format every device plays (no mic where the browser can't),
+    // and stops at the size limit; no mic once the reader has turned the microphone down
+    const voiceMimeType =
+        typeof MediaRecorder === "undefined" ? undefined : audioRecordingMimeType();
+    let micDenied = $state(false);
+    onMount(async () => {
+        micDenied = await microphoneDenied();
+    });
+    const canRecord = $derived(
+        canRecordVoice({
+            audioPermitted: $messagePermissionsForSelectedChatStore.has("audio"),
+            recorderMimeType: voiceMimeType,
+            micDenied,
+            directBot,
+        }),
+    );
+    // a Diamond member's voice messages may be longer
+    const voiceMaxBytes = $derived(maxMediaSizes($isDiamondStore).audio);
+
+    // sent as a reply to the draft's reply, if any; refused, the take stays to send again
+    async function sendVoice(chatId: ChatIdentifier, recording: Blob, mimeType: string) {
+        const outcome = await client.sendVoiceMessage(
+            { chatId },
+            await recording.arrayBuffer(),
+            mimeType,
+        );
+        if (outcome.kind !== "posted") throw new Error(outcome.kind);
+    }
+
+    // the @mention picker: for the "@word" being typed, who in this chat can be mentioned (never
+    // the reader; @everyone first), and, in a chat that holds only some of its members, those it
+    // doesn't hold who match once two characters are typed
+    let mentionQuery = $state<string | undefined>(undefined);
+    const memberFinder = new MemberFinder((prefix) => client.findMembersToMention(prefix));
+    $effect(() => () => memberFinder.cancel());
+
+    function mentionQueried(query: string | undefined) {
+        mentionQuery = query;
+        memberFinder.typed(query);
+    }
+
+    const mentions = $derived.by(() => {
+        if (mentionQuery === undefined || chat === undefined) return [];
+        // what the lookup reads through `.value`: it changes as members not held are found
+        void [$selectedChatMembersStore, $selectedCommunityMembersStore, $allUsersStore];
+        return mentionCandidates(Object.values(client.getUserLookupForMentions()), mentionQuery, {
+            me,
+            mentionSelf: false,
+            supportsUserGroups: true,
+            usersOnly: false,
+            keepUserOrder: false,
+        })
+            .slice(0, MAX_MENTION_CANDIDATES_SHOWN)
+            .map((candidate) => composerMention(candidate, (user) => client.userAvatarUrl(user)));
+    });
+
+    // a file picked, pasted or dropped goes to the chat it was picked in, if it may be sent there
+    async function attachFile(chatId: ChatIdentifier, file: File) {
+        const outcome = await client.attachFile(file, { chatId });
+        if (outcome.kind !== "attached") {
+            toastStore.showFailureToast(attachRefusal(outcome, $_));
+        }
+    }
+
+    // a file dragged over the conversation is attached when it's dropped (the old DropTarget),
+    // where the composer takes files
+    let dragging = $state(false);
+    const droppable = $derived(chat !== undefined && block === undefined && attachable);
+
+    // a file held over the conversation is never left to the browser, which would open it in
+    // place of the app (as the old DropTarget): where nothing can be attached, it's refused
+    function dragOver(e: DragEvent) {
+        if (!e.dataTransfer?.types.includes("Files")) return;
+        e.preventDefault();
+        if (droppable) {
+            dragging = true;
+        } else {
+            e.dataTransfer.dropEffect = "none";
+        }
+    }
+
+    function drop(chatId: ChatIdentifier, e: DragEvent) {
+        dragging = false;
+        if (e.dataTransfer === null || !e.dataTransfer.types.includes("Files")) return;
+        e.preventDefault();
+        if (!droppable) return;
+        const file = fileFromDataTransferItems([...e.dataTransfer.items]);
+        if (file !== undefined) void attachFile(chatId, file);
+    }
 
     // cancelling an edit puts back what was being written before it; a reply just goes
     function cancelComposing(chatId: ChatIdentifier) {
@@ -460,8 +635,13 @@
             if (outcome.kind !== "sent") throw new Error(outcome.kind);
             return;
         }
-        // the client mentions those typed as @username
-        const outcome = await client.sendMessage(context, text, detectMarkdown(text), undefined);
+        // the client mentions those typed as @username; the text captions an attachment
+        const outcome = await client.sendMessage(
+            context,
+            text === "" ? undefined : text,
+            detectMarkdown(text),
+            staged !== null ? draftAttachment(draft) : undefined,
+        );
         if (outcome.kind !== "posted") throw new Error(outcome.kind);
     }
 
@@ -606,14 +786,15 @@
         const message = withBody
             ? ({ ...row.message, body } as GroupMessage)
             : withActions(row, evt.event);
+        // kept between renders, so composed without reading a voice message's live fields
+        // (withFields): a spread would freeze its playback
         const messages = [
-            {
-                ...message,
+            withFields(message, {
                 ...previewRemoval(evt),
                 ...retryFor(row.message, offers.retry),
                 menu: offers.menu,
                 swipeLeft: offers.swipeLeft,
-            } as GroupMessage,
+            }),
         ];
         groupMessages.set(row, { offers: key, messages });
         return messages;
@@ -1117,7 +1298,20 @@
 {#if chat === undefined}
     <div class="state"><Spinner /></div>
 {:else}
-    <div class="conversation">
+    <!-- svelte-ignore a11y_no_static_element_interactions (a file dropped anywhere on it) -->
+    <div
+        class="conversation"
+        ondragover={dragOver}
+        ondragleave={(e) => {
+            // leaving the conversation, not moving between its parts
+            const to = e.relatedTarget;
+            if (!(to instanceof Node && e.currentTarget.contains(to))) dragging = false;
+        }}
+        ondrop={(e) => drop(chat.id, e)}>
+        {#if dragging}
+            <!-- TODO(design): no drop state in the design; the old DropTarget's words -->
+            <div class="drop" aria-hidden="true">{$_("dropFile")}</div>
+        {/if}
         <ConversationHeader
             {title}
             kind={headerKind}
@@ -1380,7 +1574,8 @@
                       }}
                 draft={composerStartText($selectedChatDraftMessageStore)}
                 {typingNames}
-                {throttled}
+                {notice}
+                {placeholder}
                 enterSends={$enterSend}
                 autofocus={focusEntryOnOpen($screenWidth, isTouchOnlyDevice)}
                 onDraft={(text) =>
@@ -1394,6 +1589,19 @@
                 onJumpContext={composingIndex === undefined
                     ? undefined
                     : () => jumpToComposing(chat.id, composingIndex)}
+                attachment={staged}
+                {attachKinds}
+                onFile={attachable ? (file) => attachFile(chat.id, file) : undefined}
+                onRemoveAttachment={() =>
+                    localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
+                onVoice={canRecord && voiceMimeType !== undefined
+                    ? (recording) => sendVoice(chat.id, recording, voiceMimeType)
+                    : undefined}
+                {voiceMimeType}
+                {voiceMaxBytes}
+                onMentionQuery={mentionQueried}
+                onVoiceActive={(active) => (voiceActive = active)}
+                {mentions}
             />
         {/key}
     </div>
@@ -1491,10 +1699,26 @@
 
 <style lang="scss">
     .conversation {
+        position: relative;
         display: flex;
         flex-direction: column;
         height: 100%;
         min-height: 0;
+    }
+
+    // a file held over the conversation
+    .drop {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        display: grid;
+        place-items: center;
+        pointer-events: none;
+        background: var(--scrim);
+        border: 2px dashed var(--accent);
+        border-radius: var(--radius-lg);
+        font: var(--weight-semibold) var(--text-lg) / 1.4 var(--font-sans);
+        color: var(--ink);
     }
 
     .state {

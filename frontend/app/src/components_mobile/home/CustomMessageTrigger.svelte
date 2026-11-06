@@ -12,7 +12,6 @@
         i18nKey,
         publish,
         LazyFile,
-        type AttachmentContent,
         type MessageContext,
         type MessagePermission,
         type OpenChat,
@@ -37,6 +36,8 @@
     import ShieldAlertOutline from "svelte-material-icons/ShieldAlertOutline.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import { toastStore } from "../../stores/toast";
+    import { attachRefusal } from "@src/logic/composer/composer";
+    import { _ } from "svelte-i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -47,7 +48,6 @@
         onCreatePrizeMessage?: () => void;
         onCreateP2PSwapMessage: () => void;
         onMakeMeme: () => void;
-        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
         messageContext: MessageContext;
     }
 
@@ -55,7 +55,6 @@
         permittedMessages,
         open = $bindable(),
         onTokenTransfer,
-        onFileSelected,
         onCreatePrizeMessage,
         onCreateP2PSwapMessage,
         onMakeMeme,
@@ -87,16 +86,21 @@
         const { filename, mimeType, size } = media;
         // Captured now: preparing a video can take a while and the chat may change under it
         const context = messageContext;
+        let lazyFile: LazyFile;
         try {
             // iOS photo-library items have no file path until the asset is
             // exported to a temp file (media.uri is the PHAsset identifier).
             const filePath = media.filePath || (await exportMedia(media.uri));
             const assetUrl = convertFileSrc(filePath);
-            const lazyFile = LazyFile.fromUrl(assetUrl, filename, mimeType, size);
-            const content = await client.messageContentFromFile(lazyFile, context);
-            onFileSelected(content, context);
+            lazyFile = LazyFile.fromUrl(assetUrl, filename, mimeType, size);
         } catch (err) {
-            toastStore.showFailureToast(i18nKey(err as string));
+            console.warn("Unable to export the picked media", err);
+            toastStore.showFailureToast(i18nKey("attachFileFailed"));
+            return;
+        }
+        const outcome = await client.attachFile(lazyFile, context);
+        if (outcome.kind !== "attached") {
+            toastStore.showFailureToast(attachRefusal(outcome, $_));
         }
     }
 </script>
@@ -180,7 +184,7 @@
         <div class="attach-buttons">
             <!-- Open Gallery -->
             {#if mediaPermitted}
-                <FileAttacher accept="image/*,video/*" {messageContext} {onFileSelected}>
+                <FileAttacher accept="image/*,video/*" {messageContext}>
                     {#snippet children(onClick)}
                         {@render attachOption(
                             "Open Gallery",
@@ -194,7 +198,7 @@
 
             <!-- Send File -->
             {#if permittedMessages.get("file")}
-                <FileAttacher {messageContext} {onFileSelected}>
+                <FileAttacher {messageContext}>
                     {#snippet children(onClick)}
                         {@render attachOption(
                             "Send File",

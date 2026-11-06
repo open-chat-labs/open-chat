@@ -108,3 +108,18 @@ export function getProxyAdjustedBlobUrl(blobUrl: string | undefined): string | u
 
     return blobUrl;
 }
+
+/**
+ * Whether the user has turned the microphone down for this site, as far as the browser can say (some
+ * can't be asked: then it isn't known to be). The message entries hide their mic once it has been.
+ */
+export async function microphoneDenied(): Promise<boolean> {
+    if (!("permissions" in navigator)) return false;
+    try {
+        const status = await navigator.permissions.query({ name: "microphone" });
+        return status.state === "denied";
+    } catch (err) {
+        console.log("Unable to check the microphone permission (probably unsupported)", err);
+        return false;
+    }
+}

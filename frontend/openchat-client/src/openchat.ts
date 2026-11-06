@@ -121,7 +121,9 @@ import {
     type ApproveAccessGatePaymentResponse,
     type ApproveTransferResponse,
     type ArchitectureRoute,
+    type AttachFileOutcome,
     type AttachmentContent,
+    type AudioContent,
     type AuthenticationPrincipal,
     type BlogRoute,
     type BotActionScope,
@@ -766,12 +768,14 @@ import { calculateMediaDimensions } from "./utils/layout";
 import { chunk, groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
 import { getUserCountryCode } from "./utils/location";
 import {
-    DIAMOND_MAX_SIZES,
-    FREE_MAX_SIZES,
+    attachFailureMessage,
+    audioContent,
     audioRecordingMimeType,
     communityMessageRegex,
+    filePermission,
     fillMessage,
     groupMessageRegex,
+    maxMediaSizes,
     messageContentFromFile,
     type MaxMediaSizes,
 } from "./utils/media";
@@ -1614,7 +1618,7 @@ export class OpenChat {
     }
 
     maxMediaSizes(): MaxMediaSizes {
-        return isDiamondStore.value ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
+        return maxMediaSizes(isDiamondStore.value);
     }
 
     onRegisteredUser(user: CreatedUser) {
@@ -4983,6 +4987,35 @@ export class OpenChat {
         });
     }
 
+    /**
+     * Attaches a file the user picked, dropped or pasted to the draft of the chat or thread it was
+     * picked in (`context`, taken before a video is prepared, which takes a while and shows its
+     * progress in `videoProcessingProgress`: the user may have moved on by then). Only one the user
+     * may send there is attached; one that can't be prepared fails with the reason.
+     */
+    async attachFile(file: File | LazyFile, context: MessageContext): Promise<AttachFileOutcome> {
+        const mode = context.threadRootMessageIndex === undefined ? "message" : "thread";
+        // refused from its type before it's prepared (a video's transcode takes a while)
+        const needs = filePermission(file.type);
+        if (!this.canSendMessage(context.chatId, mode, needs)) {
+            return { kind: "not_permitted", permission: needs };
+        }
+        let content: AttachmentContent;
+        try {
+            content = await this.messageContentFromFile(file, context);
+        } catch (err) {
+            console.warn("Unable to prepare a file to attach", err);
+            return { kind: "failed", message: attachFailureMessage(err) };
+        }
+        // what it was made into, in case that isn't what its type said
+        const permission = contentTypeToPermission(content.kind);
+        if (permission !== needs && !this.canSendMessage(context.chatId, mode, permission)) {
+            return { kind: "not_permitted", permission };
+        }
+        localUpdates.draftMessages.setAttachment(context, content);
+        return { kind: "attached" };
+    }
+
     formatFileSize = formatFileSize;
 
     getTokenDetailsForAccessGate(gate: AccessGate): CryptocurrencyDetails | undefined {
@@ -6523,6 +6556,26 @@ export class OpenChat {
         } finally {
             this.#sendsBeingPosted.delete(key);
         }
+    }
+
+    /**
+     * Sends a voice message recorded in the composer (its bytes, in the recorder's mime type), as
+     * `sendMessage` sends an attachment: replying to the draft's reply, settling once it shows in
+     * the chat. A recording that can't be read as audio fails.
+     */
+    async sendVoiceMessage(
+        messageContext: MessageContext,
+        data: ArrayBuffer,
+        mimeType: string,
+    ): Promise<SendMessageOutcome> {
+        let content: AudioContent;
+        try {
+            content = await audioContent(data, mimeType);
+        } catch (err) {
+            console.warn("Unable to read a voice message", err);
+            return { kind: "failed" };
+        }
+        return this.sendMessage(messageContext, undefined, false, content);
     }
 
     #throttleSendMessage(): boolean {

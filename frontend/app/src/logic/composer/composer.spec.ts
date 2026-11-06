@@ -1,7 +1,22 @@
-import { ScreenWidth } from "@client";
 import {
+    FIND_MEMBERS_DELAY_MS,
+    ScreenWidth,
+    type MessagePermission,
+    type UserGroupDetails,
+    type UserSummary,
+} from "@client";
+import {
+    attachRefusal,
+    canAttachNow,
+    canRecordVoice,
+    draftAttachment,
+    editStartText,
     entryBlock,
+    entryNotice,
+    entryPlaceholder,
     focusEntryOnOpen,
+    MemberFinder,
+    pickableAttachments,
     throttleCountdown,
     TypingNotifier,
     type EntryState,
@@ -160,5 +175,198 @@ describe("the entry taking focus when a chat or thread opens", () => {
         expect(focusEntryOnOpen(ScreenWidth.Large, true)).toBe(false);
         expect(focusEntryOnOpen(ScreenWidth.ExtraLarge, true)).toBe(false);
         expect(focusEntryOnOpen(ScreenWidth.ExtraExtraLarge, true)).toBe(false);
+    });
+});
+
+/**
+ * 5c invariant 3: an edit starts with each `@UserId(…)` / `@UserGroup(…)` as the `@name` it was
+ * typed as and no link-disabled marker (saving expands them back: the client's typed mentions).
+ */
+describe("the text an edit starts from", () => {
+    const user = (userId: string, username: string): UserSummary => ({
+        kind: "user",
+        userId,
+        username,
+        displayName: undefined,
+        updated: 0n,
+        suspended: false,
+        diamondStatus: "inactive",
+        chitBalance: 0,
+        totalChitEarned: 0,
+        streak: 0,
+        maxStreak: 0,
+        isUniquePerson: false,
+        hideOnlineStatus: false,
+    });
+    const users = new Map([
+        ["u1", user("u1", "alice")],
+        ["u2", user("u2", "bob")],
+    ]);
+    const groups = new Map<number, UserGroupDetails>([
+        [7, { kind: "user_group", id: 7, name: "devs", members: new Set() }],
+    ]);
+    const edit = (text: string) => editStartText({ kind: "text_content", text }, users, groups);
+
+    test("names each mentioned user and group as it was typed", () => {
+        expect(edit("hi @UserId(u1) and @UserId(u2), @UserGroup(7)")).toBe(
+            "hi @alice and @bob, @devs",
+        );
+    });
+
+    test("leaves a mention it can't name as it is", () => {
+        expect(edit("hi @UserId(nobody) @UserGroup(9)")).toBe("hi @UserId(nobody) @UserGroup(9)");
+    });
+
+    test("takes out the link-disabled marker", () => {
+        expect(edit("see https://example.com#LINK_REMOVED")).toBe("see https://example.com");
+    });
+
+    test("is a captioned message's caption, and nothing for what has no text", () => {
+        const image = {
+            kind: "image_content",
+            height: 1,
+            width: 1,
+            thumbnailData: "",
+            mimeType: "image/png",
+        } as const;
+        expect(editStartText({ ...image, caption: "nice" }, users, groups)).toBe("nice");
+        expect(editStartText(image, users, groups)).toBe("");
+        expect(
+            editStartText(
+                { kind: "deleted_content", deletedBy: "u1", timestamp: 0n },
+                users,
+                groups,
+            ),
+        ).toBeUndefined();
+    });
+});
+
+describe("a file that wasn't attached", () => {
+    const formatter = (key: string) => `<${key}>`;
+
+    test("names the permission it needs where it may not be sent", () => {
+        expect(attachRefusal({ kind: "not_permitted", permission: "video" }, formatter)).toEqual(
+            expect.objectContaining({
+                key: "permissions.notPermitted",
+                params: { permission: "<permissions.threadPermissions.video>" },
+            }),
+        );
+    });
+
+    test("says why it couldn't be prepared", () => {
+        const message = { kind: "resource_key", key: "maxVideoSize", lowercase: false } as const;
+        expect(attachRefusal({ kind: "failed", message }, formatter)).toBe(message);
+    });
+});
+
+describe("what the entry offers to pick from the device", () => {
+    const permitted = (...ps: MessagePermission[]) => new Set<MessagePermission>(ps);
+
+    test("photos and videos where either may be sent, files where files may be", () => {
+        expect(pickableAttachments(permitted("image", "video", "file"))).toEqual(["media", "file"]);
+        expect(pickableAttachments(permitted("video"))).toEqual(["media"]);
+        expect(pickableAttachments(permitted("file", "text"))).toEqual(["file"]);
+        expect(pickableAttachments(permitted("text", "audio"))).toEqual([]);
+    });
+});
+
+describe("looking for members to mention", () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    test("waits for two characters and a pause in typing", () => {
+        const find = vi.fn();
+        const finder = new MemberFinder(find);
+        finder.typed("a");
+        vi.advanceTimersByTime(FIND_MEMBERS_DELAY_MS);
+        expect(find).not.toHaveBeenCalled();
+
+        finder.typed("al");
+        finder.typed("ali");
+        vi.advanceTimersByTime(FIND_MEMBERS_DELAY_MS);
+        expect(find.mock.calls).toEqual([["ali"]]);
+    });
+
+    test("forgets what was typed once the @word is gone, or it's cancelled", () => {
+        const find = vi.fn();
+        const finder = new MemberFinder(find);
+        finder.typed("alice");
+        finder.typed(undefined);
+        finder.typed("bob");
+        finder.cancel();
+        vi.advanceTimersByTime(FIND_MEMBERS_DELAY_MS);
+        expect(find).not.toHaveBeenCalled();
+    });
+});
+
+describe("attaching a file now", () => {
+    test("is possible while writing a message", () => {
+        expect(canAttachNow({ editing: false, voiceActive: false })).toBe(true);
+    });
+
+    test("isn't during an edit, or while a voice message is recorded or reviewed", () => {
+        expect(canAttachNow({ editing: true, voiceActive: false })).toBe(false);
+        expect(canAttachNow({ editing: false, voiceActive: true })).toBe(false);
+    });
+});
+
+describe("the draft's attachment", () => {
+    const photo = { kind: "photo" };
+
+    test("is staged and sent with the text", () => {
+        expect(draftAttachment({ attachment: photo })).toBe(photo);
+        expect(draftAttachment(undefined)).toBeUndefined();
+    });
+
+    test("is none during an edit, when the draft holds the edited message's content", () => {
+        expect(draftAttachment({ attachment: photo, editingEvent: {} })).toBeUndefined();
+    });
+});
+
+describe("recording a voice message", () => {
+    const can = {
+        audioPermitted: true,
+        recorderMimeType: "audio/mp4",
+        micDenied: false,
+        directBot: false,
+    };
+
+    test("is offered where audio may be sent and the browser can record", () => {
+        expect(canRecordVoice(can)).toBe(true);
+    });
+
+    test("isn't where audio can't be sent, the browser can't record, the mic was turned down, or to a bot", () => {
+        expect(canRecordVoice({ ...can, audioPermitted: false })).toBe(false);
+        expect(canRecordVoice({ ...can, recorderMimeType: undefined })).toBe(false);
+        expect(canRecordVoice({ ...can, micDenied: true })).toBe(false);
+        expect(canRecordVoice({ ...can, directBot: true })).toBe(false);
+    });
+});
+
+describe("what the entry says above the text", () => {
+    test("is the throttle countdown first, then a video being prepared", () => {
+        expect(entryNotice({ throttledSeconds: 12, videoProgress: 0.5 })).toEqual({
+            kind: "throttled",
+            seconds: 12,
+        });
+        expect(entryNotice({ throttledSeconds: undefined, videoProgress: 0.456 })).toEqual({
+            kind: "video_processing",
+            percent: 46,
+        });
+        expect(entryNotice({ throttledSeconds: undefined, videoProgress: undefined })).toBe(
+            undefined,
+        );
+    });
+});
+
+describe("the entry's placeholder", () => {
+    const placeholder = (canEnterText: boolean, attached: boolean, directBot: boolean) =>
+        entryPlaceholder({ canEnterText, attached, directBot }).key;
+
+    test("says what can be written there", () => {
+        expect(placeholder(false, true, true)).toBe("sendTextDisabled");
+        expect(placeholder(true, true, true)).toBe("enterCaption");
+        expect(placeholder(true, false, true)).toBe("bots.direct.placeholder");
+        expect(placeholder(true, false, false)).toBe("enterMessage");
     });
 });

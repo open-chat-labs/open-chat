@@ -12,6 +12,9 @@ export class VoicePlayer {
     #key = $state<string>();
     #playing = $state(false);
     #time = $state(0);
+    // while playing, the time is read every frame: timeupdate comes a few times a second (in a
+    // WebView about once), which moves the waveform's handle in jumps
+    #frame: number | undefined;
     speed = $state<VoiceSpeed>("1x");
 
     #element(): HTMLAudioElement {
@@ -21,15 +24,36 @@ export class VoicePlayer {
             audio.addEventListener("play", () => {
                 this.#playing = true;
                 setPlayingMedia(audio);
+                this.#follow(audio);
             });
-            audio.addEventListener("pause", () => (this.#playing = false));
+            audio.addEventListener("pause", () => {
+                this.#playing = false;
+                this.#stopFollowing();
+                this.#time = audio.currentTime;
+            });
             audio.addEventListener("ended", () => {
+                this.#stopFollowing();
                 audio.currentTime = 0;
                 this.#time = 0;
             });
             this.#audio = audio;
         }
         return this.#audio;
+    }
+
+    // the time, each frame while it plays
+    #follow(audio: HTMLAudioElement): void {
+        this.#stopFollowing();
+        const step = () => {
+            this.#time = audio.currentTime;
+            this.#frame = requestAnimationFrame(step);
+        };
+        this.#frame = requestAnimationFrame(step);
+    }
+
+    #stopFollowing(): void {
+        if (this.#frame !== undefined) cancelAnimationFrame(this.#frame);
+        this.#frame = undefined;
     }
 
     // the audio element, holding this message's recording
@@ -80,6 +104,7 @@ export class VoicePlayer {
     }
 
     stop(): void {
+        this.#stopFollowing();
         this.#audio?.pause();
         this.#audio?.removeAttribute("src");
         this.#key = undefined;

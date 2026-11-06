@@ -1,4 +1,46 @@
-import { scaleToFit } from "./media";
+import {
+    attachFailureMessage,
+    DIAMOND_MAX_SIZES,
+    filePermission,
+    FREE_MAX_SIZES,
+    maxMediaSizes,
+    scaleToFit,
+} from "./media";
+
+describe("the permission a file needs", () => {
+    test("is the kind its type makes it", () => {
+        expect(filePermission("image/jpeg")).toBe("image");
+        expect(filePermission("image/gif")).toBe("image");
+        expect(filePermission("image/svg+xml")).toBe("image");
+        expect(filePermission("video/mp4")).toBe("video");
+        expect(filePermission("audio/mpeg")).toBe("audio");
+        expect(filePermission("application/pdf")).toBe("file");
+        expect(filePermission("")).toBe("file");
+    });
+});
+
+describe("the media size limits", () => {
+    test("are a Diamond member's or everyone else's", () => {
+        expect(maxMediaSizes(true)).toBe(DIAMOND_MAX_SIZES);
+        expect(maxMediaSizes(false)).toBe(FREE_MAX_SIZES);
+    });
+});
+
+describe("attachFailureMessage", () => {
+    test("names the size limit a file is over", () => {
+        expect(attachFailureMessage("maxVideoSize").key).toBe("maxVideoSize");
+        expect(attachFailureMessage("maxAudioSize").key).toBe("maxAudioSize");
+        expect(attachFailureMessage("maxFileSize").key).toBe("maxFileSize");
+    });
+
+    test("anything else is a file that couldn't be attached", () => {
+        expect(attachFailureMessage(new Error("failed to load video")).key).toBe(
+            "attachFileFailed",
+        );
+        expect(attachFailureMessage("something else").key).toBe("attachFileFailed");
+        expect(attachFailureMessage(undefined).key).toBe("attachFileFailed");
+    });
+});
 
 describe("scaleToFit", () => {
     test("returns the original dimensions when already within bounds", () => {

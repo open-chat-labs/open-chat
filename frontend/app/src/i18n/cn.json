@@ -241,6 +241,7 @@
     "archiveChatFailed": "无法存档聊天",
     "areYouSure": "确定吗？",
     "attachFile": "附加图像/视频/文件",
+    "attachFileFailed": "抱歉，无法附加该文件",
     "avatarTooBig": "头像文件太大",
     "avatarUpdated": "头像编辑成功",
     "avatarUpdateFailed": "头像编辑失败",
@@ -1572,6 +1573,7 @@
         "watchOnTwitch": "在 Twitch 上观看"
     },
     "videoProcessing": "正在优化视频…",
+    "videoProcessingPercent": "正在优化视频… {percent}%",
     "member": "成员",
     "memberCount": "{count} 个成员",
     "memberIsTyping": "{username} 正在输入",

@@ -32,13 +32,13 @@
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
         throttleDeadline,
-        userGroupMentionRegex,
-        userIdMentionRegex,
         type SendMessageOutcome,
     } from "@client";
     import { getContext, tick, untrack } from "svelte";
     import {
+        editStartText,
         entryBlock,
+        entryPlaceholder,
         focusEntryOnOpen,
         TypingNotifier,
     } from "@src/logic/composer/composer";
@@ -260,27 +260,6 @@
         }
     }
 
-    function formatUserMentions(text: string): string {
-        return text.replace(userIdMentionRegex, (match, p1) => {
-            const u = $allUsersStore.get(p1);
-            if (u?.username !== undefined) {
-                const username = u.username;
-                return `@${username}`;
-            }
-            return match;
-        });
-    }
-
-    function formatUserGroupMentions(text: string): string {
-        return text.replace(userGroupMentionRegex, (match, p1) => {
-            const u = $selectedCommunityUserGroupsStore.get(Number(p1));
-            if (u !== undefined) {
-                return `@${u.name}`;
-            }
-            return match;
-        });
-    }
-
     function parseCommands(txt: string): boolean {
         if (/snow|xmas|christmas|noel/.test(txt)) {
             $snowing = true;
@@ -364,17 +343,13 @@
                 lastMarkdown = editor.getMarkdown();
             }
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
-                if (editingEvent.event.content.kind === "text_content") {
-                    setEditorContent(
-                        editor,
-                        formatUserGroupMentions(
-                            formatUserMentions(
-                                client.stripLinkDisabledMarker(editingEvent.event.content.text),
-                            ),
-                        ),
-                    );
-                } else if ("caption" in editingEvent.event.content) {
-                    setEditorContent(editor, editingEvent.event.content.caption ?? "");
+                const startText = editStartText(
+                    editingEvent.event.content,
+                    $allUsersStore,
+                    $selectedCommunityUserGroupsStore,
+                );
+                if (startText !== undefined) {
+                    setEditorContent(editor, startText);
                 }
                 previousEditingEvent = editingEvent;
             } else {
@@ -429,13 +404,11 @@
         }
     });
     let placeholder = $derived(
-        !canEnterText
-            ? i18nKey("sendTextDisabled")
-            : attachment !== undefined
-              ? i18nKey("enterCaption")
-              : directChatBotId
-                ? i18nKey("bots.direct.placeholder")
-                : i18nKey("enterMessage"),
+        entryPlaceholder({
+            canEnterText,
+            attached: attachment !== undefined,
+            directBot: directChatBotId !== undefined,
+        }),
     );
 </script>
 
@@ -577,8 +550,7 @@
                         {onMakeMeme}
                         {onCreatePoll}
                         {onClearAttachment}
-                        {messageContext}
-                        {onFileSelected} />
+                        {messageContext} />
                 {:else}
                     <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
                     <div class="send" onclick={sendMessage}>

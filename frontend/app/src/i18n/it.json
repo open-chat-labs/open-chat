@@ -241,6 +241,7 @@
     "archiveChatFailed": "Impossibile archiviare la chat",
     "areYouSure": "Sei sicuro?",
     "attachFile": "Allega immagine/video/file",
+    "attachFileFailed": "Spiacenti, non è stato possibile allegare il file",
     "avatarTooBig": "L'avatar selezionato è troppo grande",
     "avatarUpdated": "Avatar aggiornato correttamente",
     "avatarUpdateFailed": "Aggiornamento dell'avatar non riuscito",
@@ -1572,6 +1573,7 @@
         "watchOnTwitch": "Guarda su Twitch"
     },
     "videoProcessing": "Ottimizzazione del video…",
+    "videoProcessingPercent": "Ottimizzazione del video… {percent}%",
     "member": "membro",
     "memberCount": "{count} membro/i",
     "memberIsTyping": "{username} sta digitando",

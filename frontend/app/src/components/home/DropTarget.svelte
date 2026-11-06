@@ -1,8 +1,9 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
+    import { attachRefusal } from "@src/logic/composer/composer";
     import { toastStore } from "@src/stores/toast";
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
-    import type { AttachmentContent, MessageContext, OpenChat } from "@client";
+    import type { MessageContext, OpenChat } from "@client";
     import { getContext, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import PlusCircle from "svelte-material-icons/PlusCircle.svelte";
@@ -13,40 +14,27 @@
 
     interface Props {
         children: Snippet;
-        mode: "thread" | "message";
         messageContext: MessageContext;
-        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
     }
 
-    let { children, mode = "message", onFileSelected, messageContext }: Props = $props();
+    let { children, messageContext }: Props = $props();
     let dragging: boolean = $state(false);
 
-    function onDataTransfer(data: DataTransfer): void {
+    async function onDataTransfer(data: DataTransfer): Promise<void> {
         const file = fileFromDataTransferItems([...data.items]);
         if (file) {
-            // Captured now: preparing a video can take a while and the chat may change under it
-            const context = messageContext;
-            client
-                .messageContentFromFile(file, context)
-                .then((content) => {
-                    const permission = client.contentTypeToPermission(content.kind);
-                    if (client.canSendMessage(context.chatId, mode, permission)) {
-                        onFileSelected(content, context);
-                    } else {
-                        const errorMessage = i18nKey("permissions.notPermitted", {
-                            permission: $_(`permissions.threadPermissions.${permission}`),
-                        });
-                        toastStore.showFailureToast(errorMessage);
-                    }
-                })
-                .catch((err) => toastStore.showFailureToast(i18nKey(err)));
+            // the chat it was dropped in, whichever is open once the file is ready
+            const outcome = await client.attachFile(file, messageContext);
+            if (outcome.kind !== "attached") {
+                toastStore.showFailureToast(attachRefusal(outcome, $_));
+            }
         }
     }
 
     function drop(e: DragEvent) {
         dragging = false;
         if (e.dataTransfer) {
-            onDataTransfer(e.dataTransfer);
+            void onDataTransfer(e.dataTransfer);
             e.preventDefault();
         }
     }
