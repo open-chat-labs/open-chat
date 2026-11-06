@@ -16,7 +16,8 @@ if [ $? -eq 0 ]; then
     echo "npm deploy script succeeded - proceeding with dfx deploy"
 
     # Register the built maps with Rollbar before the assets go live, so traces from this
-    # version demangle. A failed upload stops the deploy: fix it (usually the token) and rerun.
+    # version demangle. A failed upload stops the deploy: fix it (usually the token), then rerun
+    # just the upload and the dfx deploy below, as the build is still there.
     node ./scripts/upload-source-maps.mjs $OC_WEBSITE_VERSION || exit 1
 
     dfx --identity $IDENTITY deploy --network ic --by-proposal website
