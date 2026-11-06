@@ -205,7 +205,7 @@
   .title {
     flex: 1;
     min-width: 0;
-    font: var(--weight-semibold) text-size(14px) / 1 var(--font-sans);
+    font: var(--weight-semibold) text-size(14px) / 1.25 var(--font-sans);
     color: var(--ink-3);
     @include truncate;
   }

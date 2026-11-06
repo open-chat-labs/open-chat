@@ -1357,8 +1357,8 @@ export const nativeCommunities: { name: string; members: string; grad: string }[
 ];
 // Appearance's accent swatches: each accent's colour (the host reads them from its theme)
 export const nativeAccents: { id: string; label: string; colour: string }[] = [
-  { id: 'pink', label: 'docs.native.settings.pink', colour: '#FF5672' },
-  { id: 'orange', label: 'docs.native.settings.orange', colour: '#FF8A3D' },
-  { id: 'blue', label: 'docs.native.settings.blue', colour: '#3D9BFF' },
-  { id: 'green', label: 'docs.native.settings.green', colour: '#2EE6A8' },
+  { id: 'pink', label: 'docs.native.settings.pink', colour: 'var(--swatch-pink)' },
+  { id: 'orange', label: 'docs.native.settings.orange', colour: 'var(--swatch-orange)' },
+  { id: 'blue', label: 'docs.native.settings.blue', colour: 'var(--swatch-blue)' },
+  { id: 'green', label: 'docs.native.settings.green', colour: 'var(--swatch-green)' },
 ];
