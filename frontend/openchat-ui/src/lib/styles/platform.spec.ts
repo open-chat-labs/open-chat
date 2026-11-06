@@ -88,7 +88,7 @@ const MODES = ['dark', 'light'] as const;
 const ACCENTS = ['pink', 'orange', 'blue', 'green'] as const;
 const HERO = ['--hero-base', '--tint-row', '--tint-pill'];
 // the shell kit's (src/native): touch target, bar padding, tab bar height, veils, shadows
-const SHELL = ['--touch-target', '--bar-end', '--tab-bar-h', '--veil-sheet', '--veil-lift', '--shadow-sheet', '--shadow-menu', '--shadow-lift'];
+const SHELL = ['--touch-target', '--bar-end', '--tab-bar-h', '--veil-sheet', '--veil-lift', '--shadow-sheet', '--shadow-menu', '--shadow-lift', '--shadow-push'];
 const TEXT = ['--text-2xs', '--text-xs', '--text-sm', '--text-md', '--text-base', '--text-lg', '--text-xl', '--text-2xl', '--text-3xl'];
 const NATIVE_LIGHT_SURFACES = { '--surface-0': '#FFFFFF', '--surface-1': '#FFFFFF', '--surface-2': '#F4F3EF', '--field': '#F4F3EF' };
 const call: Element = { attrs: { 'data-always-dark': '' } };
@@ -152,6 +152,13 @@ describe('data-platform="native"', () => {
     expect(ios.get('--bar-end')).toBe('max(env(safe-area-inset-bottom,0px),12px)');
     expect(ios.get('--tab-bar-h')).toBe('calc(10px + 44px + max(env(safe-area-inset-bottom,0px),12px))');
     expect(android.get('--tab-bar-h')).toBe('calc(10px + 48px + max(env(safe-area-inset-bottom,0px),12px))');
+  });
+
+  test("a pushed screen's shadow falls on its start side, mirrored in RTL", () => {
+    const ltr = resolve([root({ 'data-mode': 'dark', 'data-platform': 'native', dir: 'ltr' })]);
+    const rtl = resolve([root({ 'data-mode': 'dark', 'data-platform': 'native', dir: 'rtl' })]);
+    expect(ltr.get('--shadow-push')).toBe('-12px 0 32px rgba(0,0,0,.35)');
+    expect(rtl.get('--shadow-push')).toBe('12px 0 32px rgba(0,0,0,.35)');
   });
 
   test('native light has white pages and a white hero base; dark keeps the dark ones', () => {

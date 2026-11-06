@@ -4,7 +4,6 @@
     import "@i18n/i18n";
     import { localeLoadFailed } from "@i18n/i18n";
     import Reload from "@shared_components/Reload.svelte";
-    import { invoke } from "@tauri-apps/api/core";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { detectNeedsSafeInset, setupKeyboardTracking } from "@src/utils/safe_area";
     import {
@@ -12,22 +11,15 @@
         updateAndroidInterfaceSizes,
     } from "@stores/androidInterfaceSizes";
     import { snowing } from "@stores/snow";
-    import { activeVideoCall, incomingVideoCall } from "@stores/video";
+    import { incomingVideoCall } from "@stores/video";
     import "@utils/markdown";
+    import { followWindowInsets } from "@utils/native/notification_channels";
+    import { notifyCallJoined } from "@utils/native/call_bridge";
     import {
-        expectDeepLinks,
-        expectNotificationTap,
-        expectPushNotifications,
-        expectWindowInsetChange,
-    } from "@utils/native/notification_channels";
-    import {
-        expectCallActions,
-        expectCallControls,
-        notifyCallJoined,
-        runCallAction,
-        setCallConfig,
-    } from "@utils/native/call_bridge";
-    import { expectShareTarget, handleShareTarget } from "@utils/native/share_target";
+        clearChatShortcutsOnLogout,
+        setupNativeApp,
+        startAgain,
+    } from "@utils/native/nativeApp";
     import { portalState } from "component-lib";
     import {
         type ChatIdentifier,
@@ -49,18 +41,11 @@
         initialiseAppLogger,
         subscribeToSessionEvents,
     } from "@utils/appRoot.svelte";
-    import { createOpenChatClient } from "@utils/openchatClient";
+    import { createOpenChatClient, videoBridgeUrl } from "@utils/openchatClient";
     import { handleUnhandledError } from "@utils/unhandledError";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading, locale } from "svelte-i18n";
-    import {
-        expectPushDeviceRefresh,
-        registerPushDevice,
-        unregisterPushDevice,
-    } from "@utils/native/push_device";
-    import { clearAllNotifications, svelteReady } from "tauri-plugin-oc-api";
-    import { clearChatShortcuts, startChatShortcutPusher } from "@stores/chatShortcuts";
     import Head from "./Head.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import ActiveCall from "./home/video/ActiveCall.svelte";
@@ -100,21 +85,10 @@
             subscribe("askToSpeak", askToSpeak),
             subscribeToSessionEvents(client, {
                 onLoggedIn: onUserLoggedIn,
-                onUserIdChanged: () => {
-                    if (client.isNativeApp()) {
-                        invoke("plugin:oc|restart_app");
-                    } else {
-                        window.location.reload();
-                    }
-                },
+                onUserIdChanged: () => startAgain(client),
             }),
         ];
-        // Registered rather than called at each logout site: an expired session logs out from
-        // the worker agent now, not just from the handler below, and the previous user's
-        // shortcuts must not survive on the device either way.
-        client.onLogout(async () => {
-            if (client.isNativeApp()) clearChatShortcuts();
-        });
+        clearChatShortcutsOnLogout(client);
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
         // visualViewport.resize fires when the iOS virtual keyboard appears/disappears
@@ -139,7 +113,8 @@
     });
 
     if (client.isNativeApp()) {
-        expectWindowInsetChange((data) => {
+        // the current insets at once, signed in or not, then each change (followWindowInsets)
+        followWindowInsets((data) => {
             // Setting these values in store should also set the CSS vars!
             // Gated so identical status/nav sizes don't re-write localStorage and
             // CSS vars on every keyboard-animation frame.
@@ -165,101 +140,13 @@
         setStatusAndNavBarSizesForNativeApp();
     }
 
-    // Guards the one-time native setup (listeners, logout hook, svelteReady)
-    // so it runs once per page session. setupNativeApp() itself runs again on
-    // every userLoggedIn (account switch), but only the FCM token registration
-    // should repeat — re-registering listeners or the logout hook would stack
-    // duplicate handlers (e.g. a single warm tap firing multiple times).
-    let nativeSetupDone = false;
-
-    // Sets up push notifications and FCM token management for native apps
-    function setupNativeApp() {
-        if (!client.isNativeApp()) {
-            return;
-        }
-
-        // Register this device's push token on every login (FCM on Android,
-        // APNs on iOS). Registration is last-login-wins on the backend, so this
-        // also reclaims a token still bound to a previous account on this device.
-        registerPushDevice(client);
-
-        // Everything below registers session-scoped handlers and must run once.
-        if (nativeSetupDone) {
-            return;
-        }
-        nativeSetupDone = true;
-
-        // Register every native event listener BEFORE signalling svelteReady:
-        // the native side flushes its queued events the moment svelteReady
-        // fires, and a flush that beats an in-flight listener registration
-        // silently drops the event (e.g. a cold-start notification tap).
-        const listenersRegistered = Promise.allSettled([
-            // Listen for incoming push notifications from Firebase; also asks
-            // for permission to show notifications if not already granted.
-            expectPushNotifications(),
-
-            // Listen for notifications user has tapped on
-            expectNotificationTap(),
-
-            // Listen for content shared into OpenChat from the system share sheet
-            // (or via a Direct Share chat shortcut). Cold-start shares are queued
-            // by the native side and delivered once svelteReady fires below.
-            expectShareTarget((share) => handleShareTarget(client, share)),
-
-            // Listen for deep links (e.g. https://oc.app/group/xyz tapped from another app).
-            // Cold-start deep links are queued by MainActivity and delivered once svelteReady fires.
-            expectDeepLinks(),
-
-            // Expect push token refreshes
-            expectPushDeviceRefresh(client),
-
-            // A call answered from the native ring, or a call log redial. Cold-start
-            // actions are parked by the shell and consumed by Router.svelte.
-            expectCallActions(runCallAction),
-
-            // The shell reports a decline from the native ring to the bridge itself. A build
-            // without the URL leaves whatever the shell already holds.
-            import.meta.env.OC_VIDEO_BRIDGE_URL
-                ? setCallConfig(import.meta.env.OC_VIDEO_BRIDGE_URL)
-                : Promise.resolve(),
-
-            // Hang-up, mute and route changes from the phone's own call surfaces
-            expectCallControls(activeVideoCall.applyNativeControl),
-        ]);
-        listenersRegistered.then((results) => {
-            results
-                .filter((r): r is PromiseRejectedResult => r.status === "rejected")
-                .forEach((r) => console.error("Native listener setup failed", r.reason));
-        });
-
-        // Best-effort push hygiene on sign-out, while the identity is
-        // still valid: unbind this device's token from the account,
-        // delete the device token (pushes to it then dead-end at FCM,
-        // and the next login mints + registers a fresh one), and empty
-        // the tray so nothing from this account lingers.
-        client.onLogout(async () => {
-            await unregisterPushDevice(client);
-            await clearAllNotifications().catch(console.error);
-        });
-
-        // Push the top recent chats to the Android Sharing Shortcuts API
-        // so they appear directly in the system share sheet (like
-        // WhatsApp's per-chat tiles).
-        startChatShortcutPusher(client);
-
-        // Inform the native android app that svelte code is ready — but only
-        // once all the listeners above are registered, so the native event
-        // queue flushes into handlers that actually exist.
-        listenersRegistered.then(() => svelteReady());
-    }
-
     if ($identityStateStore.kind === "logged_in") {
-        setupNativeApp();
+        setupNativeApp(client, videoBridgeUrl);
         warmRichTextEditor();
     }
 
     function onUserLoggedIn() {
-        setupNativeApp();
+        setupNativeApp(client, videoBridgeUrl);
         warmRichTextEditor();
     }
 

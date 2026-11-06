@@ -34,10 +34,12 @@ export const redirectTable: { path: string; to: (params: Record<string, string>)
 const page = (kind: Extract<RouteParams, { scope: { kind: "none" } }>["kind"]) => () =>
     ({ kind, scope: { kind: "none" } }) as RouteParams;
 
-// Every path the new web UI routes, in the order page.js tries them: the first match wins.
-// ROUTES.md says what each one renders. It's the existing desktop router's table (every current
-// path stays) plus the paths the new UI adds, which have to come before the legacy
-// /:chatId/... route, as that takes any one to three segment path as a group id.
+// Every path the new trees route, the web one (src/web) and the native one (src/native), in the
+// order page.js tries them: the first match wins. One table for both, so the same URL opens the same
+// place in either tree. src/web/ROUTES.md says what each one renders on the web, and
+// src/native/router/locations.ts which tab and stack it is on native. It's the existing desktop
+// router's table (every current path stays) plus the paths the new UI adds, which have to come
+// before the legacy /:chatId/... route, as that takes any one to three segment path as a group id.
 export const routeTable: RouteEntry[] = [
     // marketing pages, outside the shell
     { path: "/home", parse: page("home_landing_route") },

@@ -26,7 +26,7 @@
     import Placeholder from "../app/Placeholder.svelte";
     import { AuthDialogProps, pageSignIns } from "../auth/authDialog.svelte";
     import { createAuth } from "../auth/signIn";
-    import { accentStore } from "../../accent";
+    import { accentStore } from "@theme/accent";
     import { LazyModule } from "../../lazyModule.svelte";
     import { exploreCommunities } from "../explore/explore.adapter";
     import { FeaturedCommunities } from "./featuredCommunities.svelte";

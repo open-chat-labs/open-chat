@@ -1690,6 +1690,14 @@
                 "note": "La password monouso si trova nella sezione \"Profilo\"/\"Avanzate\" del dispositivo su cui hai effettuato l'accesso.",
                 "title": "Collegamento con account esistente"
             }
+        },
+        "shareUnavailable": "La condivisione su OpenChat da altre app non è ancora disponibile in questa versione.",
+        "tabs": {
+            "activity": "Attività",
+            "chats": "Chat",
+            "communities": "Community",
+            "wallet": "Portafoglio",
+            "you": "Tu"
         }
     },
     "new": "nuovo",

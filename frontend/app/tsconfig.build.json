@@ -1,8 +1,8 @@
 {
     // The program rollup's typescript plugin compiles (rollup.config.mjs). It only emits files in its
     // program and can't follow imports from .svelte files, so @openchat/ui's TypeScript, which the
-    // new web UI's components import, is added here. Kept out of tsconfig.json so the app's type
-    // check doesn't take on the library (it has its own tsconfig).
+    // new web UI's and the native tree's components import, is added here. Kept out of
+    // tsconfig.json so the app's type check doesn't take on the library (it has its own tsconfig).
     "extends": "./tsconfig.json",
     "include": [
         "./src/**/*",
@@ -11,7 +11,8 @@
         "../node_modules/component-lib/src/**/*.ts",
         "../openchat-ui/src/lib/**/*.ts",
         "../openchat-ui/src/features/**/*.ts",
-        "../openchat-ui/src/pages/**/*.ts"
+        "../openchat-ui/src/pages/**/*.ts",
+        "../openchat-ui/src/native/**/*.ts"
     ],
     // the package barrels re-export types from .svelte files, which this program can't read
     "exclude": [
@@ -20,6 +21,7 @@
         "../openchat-ui/src/**/*.spec.ts",
         "../openchat-ui/src/lib/index.ts",
         "../openchat-ui/src/features/index.ts",
-        "../openchat-ui/src/pages/index.ts"
+        "../openchat-ui/src/pages/index.ts",
+        "../openchat-ui/src/native/index.ts"
     ]
 }

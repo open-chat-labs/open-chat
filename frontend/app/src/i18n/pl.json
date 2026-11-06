@@ -1690,6 +1690,14 @@
                 "note": "Jednorazowe hasło znajdziesz w swoim profilu / w zaawansowanych opcjach na urządzeniu, na którym jesteś aktualnie zalogowany.",
                 "title": "Połącz z istniejącym kontem"
             }
+        },
+        "shareUnavailable": "Udostępnianie do OpenChat z innych aplikacji nie jest jeszcze dostępne w tej wersji.",
+        "tabs": {
+            "activity": "Aktywność",
+            "chats": "Czaty",
+            "communities": "Społeczności",
+            "wallet": "Portfel",
+            "you": "Ty"
         }
     },
     "new": "nowy",

@@ -1,6 +1,6 @@
 import { _, addMessages, init, json, locale, waitLocale } from "svelte-i18n";
 import type { I18nParams } from "@openchat/ui/src/lib/i18n";
-import { addUiMessages, uiTranslate } from "./i18n";
+import { addUiMessages, uiTranslate } from "./openchatUi";
 
 // The current value of one of svelte-i18n's stores
 function read<T>(store: { subscribe(run: (value: T) => void): () => void }): T {

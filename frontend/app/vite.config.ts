@@ -15,6 +15,7 @@ import {
     generateCspForScripts,
     initEnv,
     sassModulesAndMixins,
+    nativeLayoutFlag,
     WEB_FONTS_URL,
     webLayoutFlag,
 } from "./rollup.extras.mjs";
@@ -27,6 +28,7 @@ process.env.OC_WEBSITE_VERSION = version;
 initEnv();
 
 const webLayout = webLayoutFlag() === "v3";
+const nativeLayout = nativeLayoutFlag() === "v4";
 
 const isNativeIos = process.env.OC_APP_TYPE === "ios";
 const isNativeAndroid = process.env.OC_APP_TYPE === "android";
@@ -191,6 +193,7 @@ export default defineConfig({
         "import.meta.env.OC_SERVICE_WORKER_PATH": JSON.stringify(serviceWorkerPath),
         // A build-time constant (see rollup.config.mjs)
         "import.meta.env.OC_WEB_LAYOUT": JSON.stringify(webLayoutFlag()),
+        "import.meta.env.OC_NATIVE_LAYOUT": JSON.stringify(nativeLayoutFlag()),
         "import.meta.env.OC_APP_FONTS_URL": JSON.stringify(APP_FONTS_URL),
         "import.meta.env.OC_WEB_FONTS_URL": JSON.stringify(WEB_FONTS_URL),
         "import.meta.env.OC_CANISTER_MAP_PATH": JSON.stringify(canisterMapPath),
@@ -243,7 +246,7 @@ export default defineConfig({
             entry: "./src/main.ts",
             inject: {
                 data: {
-                    fonts: fontsLink(webLayout),
+                    fonts: fontsLink(webLayout || nativeLayout),
                     injectScript: inlineScripts.map((s) => `<script>${s}</script>`).join(""),
                     csp: `<meta http-equiv="Content-Security-Policy" content="${generateCspForScripts(
                         inlineScripts,

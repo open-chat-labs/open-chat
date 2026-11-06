@@ -743,6 +743,7 @@ import {
     communityChanges,
     communityCreationFailure,
     communityUpdateResult,
+    defaultCommunity,
     isCommunityLapsed,
     isPreviewingCommunity,
 } from "./utils/community";
@@ -12723,34 +12724,17 @@ export class OpenChat {
         return preview;
     }
 
-    #selectLastSelectedCommunity(): boolean {
-        const mostRecentId = lastSelectedCommunityIdStore.value;
-        const mostRecentCommunity = mostRecentId
-            ? communitiesStore.value.get(mostRecentId)
-            : undefined;
-        if (mostRecentCommunity !== undefined) {
-            publish("navigateTo", {
-                url: `/community/${mostRecentCommunity.id.communityId}`,
-            });
-            return true;
-        }
-        return false;
-    }
-
-    #selectFirstCommunity(): boolean {
-        const first = sortedCommunitiesStore.value?.find((c) => !c.membership.archived);
-        if (first !== undefined) {
-            publish("navigateTo", { url: `/community/${first.id.communityId}` });
-            return true;
-        }
-        return false;
-    }
-
     selectDefaultCommunity(): boolean {
-        if (!this.#selectLastSelectedCommunity()) {
-            return this.#selectFirstCommunity();
+        const community = defaultCommunity(
+            lastSelectedCommunityIdStore.value,
+            (id) => communitiesStore.value.get(id),
+            sortedCommunitiesStore.value ?? [],
+        );
+        if (community !== undefined) {
+            publish("navigateTo", { url: `/community/${community.id.communityId}` });
+            return true;
         }
-        return true;
+        return false;
     }
 
     selectDefaultChat(desktopOnly: boolean = true): boolean {

@@ -1,9 +1,10 @@
 import { addPluginListener, invoke, PluginListener } from "@tauri-apps/api/core";
 import { isIosTauriApp } from "@shared";
 import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
-import { openUrl, showNotification } from "tauri-plugin-oc-api";
+import { getWindowInsets, openUrl, showNotification, type WindowInsets } from "tauri-plugin-oc-api";
 import { navigate } from "@utils/navigation";
 import { isLandingPagePath } from "@utils/urls";
+import { coldStartIntents } from "./coldStart.svelte";
 import { chatOnScreen, type PushNotification } from "./push_notification";
 
 const TAURI_PLUGIN_NAME = "oc";
@@ -67,9 +68,7 @@ function notificationPath(notification: PushNotification): string | null {
         case "DM":
             return notification.senderId ? `/user/${notification.senderId}` : null;
         case "GROUP":
-            return notification.groupId
-                ? `/group/${notification.groupId}${threadIndexPath}`
-                : null;
+            return notification.groupId ? `/group/${notification.groupId}${threadIndexPath}` : null;
         case "CHANNEL":
             return notification.communityId && notification.channelId
                 ? `/community/${notification.communityId}/channel/${notification.channelId}${threadIndexPath}`
@@ -77,18 +76,6 @@ function notificationPath(notification: PushNotification): string | null {
         default:
             return null;
     }
-}
-
-// Holds the route of a notification tapped during cold start (delivered before
-// the tap listener was registered). Consumed by Router.svelte's auto-selection
-// effect so it navigates to the tapped chat instead of the default chat —
-// same pattern as pendingColdStartUrl below.
-let pendingColdStartTapPath: string | null = null;
-
-export function consumePendingNotificationTap(): string | null {
-    const path = pendingColdStartTapPath;
-    pendingColdStartTapPath = null;
-    return path;
 }
 
 /**
@@ -129,7 +116,8 @@ export async function expectNotificationTap(): Promise<PluginListener> {
             const path = notificationPath(JSON.parse(pending.payload) as PushNotification);
             if (path) {
                 console.log("Notification tap: cold-start pending path stored", path);
-                pendingColdStartTapPath = path;
+                // parked for the router, which opens it once it can (coldStart.svelte.ts)
+                coldStartIntents.parkNotificationTap(path);
             }
         } catch (e) {
             console.error("Notification tap: failed to parse pending payload", pending.payload, e);
@@ -165,9 +153,7 @@ async function askForPermission(): Promise<boolean> {
  * @param handler the function to call when a new FCM token is received.
  * @returns
  */
-export async function expectNewFcmToken(
-    handler: (token: string) => void,
-): Promise<PluginListener> {
+export async function expectNewFcmToken(handler: (token: string) => void): Promise<PluginListener> {
     // Set up the listener for new FCM tokens! The native side sends
     // { fcmToken: "..." }, the handler wants the bare token.
     return addPluginListener(
@@ -201,15 +187,8 @@ export async function expectBackPress(handler: () => void): Promise<PluginListen
  * navigation type that the Android app is using, and if the software keyboard
  * is open/visible.
  */
-export interface WindowInsetChange {
-    isKeyboardOpen: boolean;
-    isGestureNavigation: boolean;
-    navHeightDp: number;
-    statusBarHeightDp: number;
-    keyboardHeightDp: number;
-    apiLevel: number;
-    osVersion: string;
-}
+/** The window-inset-change event's payload (Android). */
+export type WindowInsetChange = WindowInsets;
 
 /**
  * Use this function to detect keyboard open/close, or device nav type (buttons
@@ -224,6 +203,27 @@ export async function expectWindowInsetChange(
     return addPluginListener(TAURI_PLUGIN_NAME, WINDOW_INSET_CHANGE_EVENT, handler);
 }
 
+/**
+ * Follows the Android app's window insets: each change, and the current ones at once
+ * (`getWindowInsets`), since the app reports them as they happen and a listener that starts later
+ * would otherwise wait for the next change. They aren't held back for svelteReady, so this works
+ * before sign-in too. A shell older than `getWindowInsets` only has the changes.
+ */
+export async function followWindowInsets(
+    handler: (data: WindowInsetChange) => void,
+): Promise<PluginListener> {
+    // listening first, so a change between the two can't be missed; the current ones are at least
+    // as new as anything sent before
+    const listener = await expectWindowInsetChange(handler);
+    try {
+        const current = await getWindowInsets();
+        if (current !== undefined) handler(current);
+    } catch {
+        // an older shell: the next change brings them
+    }
+    return listener;
+}
+
 const DEEP_LINK_EVENT = "deep-link";
 
 /**
@@ -235,17 +235,6 @@ const DEEP_LINK_EVENT = "deep-link";
  * before handing it to tao and fires a "deep-link" event via OCPluginCompanion,
  * which we listen for here.
  */
-// Holds a deep link URL received during cold start. Set early in the app lifecycle
-// (before chats load); consumed by Router.svelte's auto-selection effect so it
-// navigates to the deep link instead of the default chat.
-let pendingColdStartUrl: string | null = null;
-
-export function consumePendingDeepLink(): string | null {
-    const url = pendingColdStartUrl;
-    pendingColdStartUrl = null;
-    return url;
-}
-
 /**
  * Opens a deep link, warm or cold start alike. Returns whether it navigated inside the app.
  */
@@ -301,7 +290,8 @@ export async function expectDeepLinks(): Promise<PluginListener> {
         const pending = await invoke<{ url?: string }>("plugin:oc|get_pending_deep_link");
         if (pending?.url) {
             console.log("Deep link: cold-start pending URL stored", pending.url);
-            pendingColdStartUrl = pending.url;
+            // parked for the router, which opens it once it can (coldStart.svelte.ts)
+            coldStartIntents.parkDeepLink(pending.url);
         }
     } catch (e) {
         console.error("Deep link: get_pending_deep_link invoke failed", e);

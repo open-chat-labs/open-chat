@@ -35,4 +35,6 @@ permissions = [
     "allow-set-call-ringback",
     "allow-set-call-end-token",
     "allow-get-store-update",
+    "allow-haptic",
+    "allow-get-window-insets",
 ]

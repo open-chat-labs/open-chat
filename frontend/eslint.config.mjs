@@ -38,11 +38,12 @@ function restrictAppImports(...patterns) {
 }
 
 // app/src/logic holds view-agnostic flow state shared by every tree (see frontend/CLAUDE.md).
-// Components are PascalCase .svelte files; the rune modules are imported as "x.svelte".
+// Components are PascalCase .svelte files; the rune modules are imported as "x.svelte". The native
+// tree is matched by its own paths only, as utils/native (the Tauri bridges) is shared.
 const logicMessage =
     "app/src/logic is view-agnostic: return an outcome and let the view navigate, toast or publish.";
 const logicViews = {
-    regex: "(^|/)[A-Z][^/]*\\.svelte$|^@shared_components/|(^|/)(components|components_mobile|components_shared|web)/",
+    regex: "(^|/)[A-Z][^/]*\\.svelte$|^@shared_components/|(^|/)(components|components_mobile|components_shared|web)/|^@src/native/|(^|/)\\.\\./native/",
     message: "app/src/logic must not import components or the view trees.",
 };
 const logicSideEffects = [
@@ -206,8 +207,8 @@ export default defineConfig([
         files: [
             "app/src/utils/navigation.ts",
             "openchat-client/src/state/path/stores.ts",
-            // checks the new web UI's route table with page.js's own matching
-            "app/src/web/router/routeTable.spec.ts",
+            // for specs: resolves URLs with the route table (src/web, src/native) as page.js does
+            "app/src/utils/routeTable.testing.ts",
         ],
         rules: {
             "local/no-pagejs-direct": "off",
@@ -267,6 +268,7 @@ export default defineConfig([
             "app/src/components/Router.svelte",
             "app/src/components_mobile/Router.svelte",
             "app/src/web/router/Router.svelte",
+            "app/src/native/router/Router.svelte",
             "app/src/components_mobile/home/SlidingModals.svelte",
         ],
         languageOptions: {

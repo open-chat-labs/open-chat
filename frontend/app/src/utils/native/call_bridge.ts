@@ -7,6 +7,7 @@ import {
     type VideoCallType,
 } from "@shared";
 import { navigate } from "@utils/navigation";
+import { coldStartIntents } from "./coldStart.svelte";
 
 // The only file that knows the native call event and command names.
 //
@@ -76,15 +77,6 @@ function videoCallType(kind: string | undefined): VideoCallType {
     }
 }
 
-// Set by the cold-start drain, consumed once by Router.svelte's auto-selection effect.
-let pendingColdStartAction: NativeCallAction | null = null;
-
-export function consumePendingCallAction(): NativeCallAction | null {
-    const action = pendingColdStartAction;
-    pendingColdStartAction = null;
-    return action;
-}
-
 // Registers the warm listener, then drains the action the shell parked while the WebView
 // was starting. Resolves to undefined on a shell without native calls.
 export async function expectCallActions(
@@ -110,7 +102,8 @@ export async function expectCallActions(
     if (pending?.payload) {
         try {
             const action = parseCallAction(JSON.parse(pending.payload));
-            if (action) pendingColdStartAction = action;
+            // parked for the router, which opens it once it can (coldStart.svelte.ts)
+            if (action) coldStartIntents.parkCall(action);
         } catch (e) {
             console.error("Call action: failed to parse pending payload", pending.payload, e);
         }

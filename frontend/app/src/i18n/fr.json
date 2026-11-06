@@ -1690,6 +1690,14 @@
                 "note": "Le mot de passe à usage unique se trouve sous votre profil / avancé, sur un appareil sur lequel vous êtes actuellement connecté.",
                 "title": "Lien avec un compte existant"
             }
+        },
+        "shareUnavailable": "Le partage vers OpenChat depuis d'autres applications n'est pas encore disponible dans cette version.",
+        "tabs": {
+            "activity": "Activité",
+            "chats": "Discussions",
+            "communities": "Communautés",
+            "wallet": "Portefeuille",
+            "you": "Vous"
         }
     },
     "new": "Nouveau",

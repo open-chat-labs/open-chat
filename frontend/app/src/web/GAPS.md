@@ -6,7 +6,7 @@ design export needs. Each entry says where it came up.
 ## Design / library
 
 - **Accent setting**: done. The accent picked on Landing's theme controls is kept in this browser
-  (`web/accent.ts`) and `App.svelte` puts it on `<html>`. The in-app control is Profile's (8c).
+  (`theme/accent.ts`) and `App.svelte` puts it on `<html>`. The in-app control is Profile's (8c).
 - **Font size setting**: the app's font size setting (`fontSize` store) isn't mapped onto the
   library's `--text-*` tokens yet (L4). Profile's control writes it (8c): the design's four sizes
   are the store's steps 1 to 4 (`logic/profile/appearance.ts`), and a stored 0 shows as Small and
@@ -14,20 +14,14 @@ design export needs. Each entry says where it came up.
 - **Native platform tokens** (native N1, #10364): the library has the native layer
   (`[data-platform="native"]`: native light surfaces, `--hero-base`, `--tint-row`, `--tint-pill`;
   `--safe-*`, `--scroll-end` and `--text-scale` on `:root`; `[data-always-dark]` for calls;
-  EXPORT-LOG 2026-11-04), and `textScaleOf` (`logic/profile/appearance.ts`) gives `--text-scale` from the font
-  size setting and the platform's font scale. Left for N3, which builds the native root and entry:
-  - Put `data-platform="native"`, `data-mode` and `data-accent` on the native root, from the same
-    stored mode and accent the web uses (light / dark / system), and `--text-scale` from
-    `textScaleOf` on `<html>` (so what's portalled to `<body>`, the call screen, follows it
-    too; the accent there comes from `<html>`'s `data-accent`, so the native root should be
-    `<html>` or `<html>` carry the same attributes). The native tree owns `--text-scale` on `<html>`:
-    it sets it only while it's mounted and removes it in the native root's teardown, so the web tree
-    never inherits a scale. The layout is chosen once per load and switching is a reload (#10366), but
-    the teardown removes it regardless. The platform font scale needs a native bridge (iOS
-    dynamic type's content size category, Android's `Configuration.fontScale`, read again when it
-    changes); mobile web passes 1.
-  - `viewport-fit=cover` on the native entry, or `env(safe-area-inset-*)` reports 0 and `--safe-*`
-    stay 0.
+  EXPORT-LOG 2026-11-04), and `textScaleOf` (`logic/profile/appearance.ts`) gives `--text-scale`
+  from the font size setting and the platform's font scale. N3 (#10366) put them on the native
+  root, `<html>`: `data-platform="native"`, `data-mode` and `data-accent` from the same stored mode
+  and accent the web uses, `--text-scale` (removed when the tree goes), and `viewport-fit=cover`
+  (main.ts). Left:
+  - The platform font scale needs a native bridge (iOS dynamic type's content size category,
+    Android's `Configuration.fontScale`, read again when it changes); until then the native tree
+    passes 1, as mobile web does.
   - Status-bar glyphs: light on the call screen and the minimised call (N14), following the
     theme elsewhere, through the Tauri plugin.
   - For the design: the prototype's Appearance setting is "Chat text size" (Small / Default /
@@ -39,20 +33,76 @@ design export needs. Each entry says where it came up.
     ours: the export only has the dark values (as fallbacks), and its light theme had no
     `--hero-base` either. The prototype pads the bottom by a fixed 34px on iOS (the home
     indicator) and 12px on Android; `--safe-bottom` is the device's inset alone, so N2's bars
-    decide whether they need a minimum.
-- **Native shell kit** (native N2, #10365; `@openchat/ui/src/native`, EXPORT-LOG 2026-11-05). Left
-  for N3:
-  - Put `data-os="ios"` or `"android"` on the native root beside `data-platform="native"`: the touch
-    targets (`--touch-target`, 44 / 48px), the back arrow and the kebab follow it. Mobile web picks
-    by the user agent.
-  - Install the device's haptics once with `setHaptics` (the Tauri plugin's light impact); without
-    it the kit vibrates 10ms where the browser can (Android's mobile web) and does nothing on iOS.
-  - The bars at the bottom pad by `--bar-end`, the safe area but at least 12px (the prototype's
-    Android value; on iOS the home indicator's inset is 34px, its value). The prototype's top padding
-    (iOS 54px, Android 4px) is `--safe-top` alone, on both.
-  - Android's system back closes an open sheet or menu before it pops the screen (notes §2): the
-    kit's `BottomSheet` takes `open` / `onClose`, so the native root's back handler closes what's
-    open first.
+    pad by `--bar-end`, the safe area but at least 12px. The prototype's top padding (iOS 54px,
+    Android 4px) is `--safe-top` alone, on both.
+- **Native shell kit** (native N2, #10365; `@openchat/ui/src/native`, EXPORT-LOG 2026-11-05). N3
+  (#10366) put `data-os` on the native root (the app's platform, else the user agent's) and built
+  the shell on it (`src/native/README.md`). Left:
+  - Haptics: done. The native root installs the Tauri plugin's new `haptic` command (Android's
+    keyboard-tap feedback, iOS's light impact) in the apps, and nothing on mobile web
+    (`native/haptics.ts`). A shell built before the command rejects it, which means no haptics,
+    so a bundle taken over the air still runs on it: no major version bump needed for this alone.
+    Check the feel on both platforms.
+  - Android's system back closes an open sheet or menu first (`shell/overlays.svelte.ts`: a screen
+    registers its sheet's or menu's close with `useOverlay` while it's open). In a phone's browser,
+    Back is the browser's history: an open sheet doesn't take a history entry, so Back leaves the
+    screen with it rather than closing it first.
+- **Native app tree** (native N3, #10366; `src/native`). Built: the entry behind
+  `OC_NATIVE_LAYOUT=v4`, the five tabs with their own push stacks, the push motion, Android's back,
+  the cold start's parked intents, and placeholders for every screen. Left, or decided against the
+  prototype:
+  - **The tab bar shows only on a tab's root** (decided 2026-11-06, as the prototype has it; the
+    Design Notes and the issue only said it hides inside a conversation): every pushed screen has
+    the whole window (`showsTabBar`, `router/locations.ts`). A tab's stack is still kept, for a link
+    from another tab or a deep link to land in.
+  - **Local pushes**: screens without a URL on the web (details, members, settings pages, builders)
+    need `TabStacks` to push without changing the URL, as the web opens a local dialog. With the
+    first screen that needs it (N6, N9 or N12).
+  - **iOS edge swipe back** (notes §2): not built; the chevron is the only Back on iOS for now.
+  - **Swiping between tabs** (asked for in review, #10421; the design has no swipe between tabs):
+    on a tab's root, a sideways drag follows the finger with the neighbouring tab beside it, and
+    switches past 30% of the width or on a flick faster than 0.45px/ms over 24px (the Communities
+    strip's flick speed); otherwise it springs back (240ms). Past the first or last tab it
+    rubber-bands, a quarter of the pull up to 56px. It's decided after 10px, sideways only if
+    further across than up or down; drags starting 16px from the sides are left to the system
+    (iOS's edge swipe), and so are ones starting in something that scrolls sideways, an input, or
+    `[data-tab-swipe="off"]`. Touch and pen only. A tab not opened yet shows its empty surface
+    while it's dragged in (its root mounts when it's switched to). With reduced motion the screen
+    doesn't follow; letting go past the threshold switches. Confirm with design.
+  - **Switching tabs** (a tap, a swipe, a link to another tab): only the old screen and the new
+    one move (320ms, `--ease-out`), the new one in from the inline end when it's further along the
+    bar, from the start when it's before; none with reduced motion. The Design Notes say nothing
+    about it; the prototype slid the whole row of tabs past, through the ones in between.
+  - **Another tab's pushed screens** are unmounted while the tab isn't showing (as the prototype):
+    the stack comes back, its view state (scroll) doesn't. Tab roots stay mounted once opened.
+  - **"Switch to desktop site / mobile site"**: `selectLayout` reads the stored choice
+    (`configKeys.layoutOverride`), but no screen sets it yet (N12, and the web's settings). Nor does
+    a resize offer a reload into the other layout.
+  - **Outside the tabs**: the marketing pages and the signed-out start are a placeholder (N4).
+  - **Signed out, the shell's events wait**: the Android app queues its events until `svelteReady`,
+    which both trees send only once someone is signed in (`setupNativeApp`). The window insets don't
+    wait any more (`followWindowInsets`: sent at once, and `get_window_insets` for the current
+    ones), but Android's system back does, so it does nothing before sign-in. N4, with the
+    signed-out start, decides which of the shell's events a signed-out screen needs.
+  - **Shares from other apps**: a Direct Share to a chat goes into that chat's draft, as in
+    components_mobile; a share for no chat in particular needs the chat picker
+    (components_mobile's goes through `pendingShareStore` to its SlidingModals), which the native
+    tree doesn't have yet, so it says so in a toast (`native.shareUnavailable`) and drops the share;
+    a `/share` link shows the Chats root. The picker comes with N5a or N5d.
+  - **The Android app's system bars**: done. Its WebView doesn't report `env(safe-area-inset-*)`
+    reliably, so the native root follows the shell's window-inset event into `--safe-top` /
+    `--safe-bottom` (`native/systemBars.ts`, through components_mobile's `androidInterfaceSizes`).
+    The keyboard's height, which the same event carries, is N5c's.
+  - **Cold starts**: what the shell parks (an answered call, a deep link, a notification tap) is in
+    `utils/native/coldStart.svelte.ts`, shared by both trees; a cold start opens one of them (a
+    call, else a deep link, else a tap), the others dropped. The native router reads its reactive
+    `pending`, so one that lands after it first looked is opened when it lands. components_mobile
+    keeps its rule: it takes one when its chat list shows, untracked, so taking it never runs its
+    effect again into the default chat.
+  - An app store build has no Wallet tab (`disableWalletFeature`), but a `/wallet` link still opens
+    its stack, with no tab selected.
+  - The tab bar's Chats count is the unmuted unread DMs and groups; the design doesn't say whether
+    favourites or mentions count (N5a).
 - **Shell breakpoints vs layout tokens**: the shell's breakpoints and widths (Fix Brief - App
   Shell Layout: 768 / 1200 / 1476 / 1876 / 2476px, chat list `clamp(350px, 30cqw, 550px)`, right
   column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*` 1280–2500px,

@@ -38,6 +38,8 @@ Default permissions for the plugin
 - `allow-set-call-ringback`
 - `allow-set-call-end-token`
 - `allow-get-store-update`
+- `allow-haptic`
+- `allow-get-window-insets`
 
 ## Permission Table
 
@@ -486,6 +488,58 @@ Enables the get_store_update command without any pre-configured scope.
 <td>
 
 Denies the get_store_update command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-get-window-insets`
+
+</td>
+<td>
+
+Enables the get_window_insets command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-get-window-insets`
+
+</td>
+<td>
+
+Denies the get_window_insets command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-haptic`
+
+</td>
+<td>
+
+Enables the haptic command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-haptic`
+
+</td>
+<td>
+
+Denies the haptic command without any pre-configured scope.
 
 </td>
 </tr>

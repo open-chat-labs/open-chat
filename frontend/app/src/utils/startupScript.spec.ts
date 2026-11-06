@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { selectLayout } from "./layout";
+import { selectLayout, type LayoutInputs } from "./layout";
 
 // vitest resolves with the "browser" condition, which maps the bare "url" import in
 // rollup.extras.mjs to a polyfill without fileURLToPath.
@@ -9,15 +9,21 @@ import {
     APP_FONTS_URL,
     fontsLink,
     generateStartupScript,
+    nativeLayoutFlag,
     WEB_FONTS_URL,
     webLayoutFlag,
 } from "../../rollup.extras.mjs";
 
 // jsdom has no matchMedia, which the startup script reads as it runs
 const osPrefersDark = { dark: false };
+// the primary pointer: a mouse unless a test says otherwise
+const pointer = { coarse: false, hover: true };
 window.matchMedia = ((query: string) =>
     ({
-        matches: query === "(prefers-color-scheme: dark)" && osPrefersDark.dark,
+        matches:
+            (query === "(prefers-color-scheme: dark)" && osPrefersDark.dark) ||
+            (query === "(pointer: coarse)" && pointer.coarse) ||
+            (query === "(hover: hover)" && pointer.hover),
     }) as MediaQueryList) as typeof window.matchMedia;
 
 type Chunk = { fileName: string; moduleIds: string[]; imports: string[]; isEntry: boolean };
@@ -34,6 +40,7 @@ const chunks: Chunk[] = [
     chunk("desktop.js", [`${root}/src/components/App.svelte`], ["vendor.js", "shared.js"]),
     chunk("mobile.js", [`${root}/src/components_mobile/App.svelte`], ["main.js", "shared.js"]),
     chunk("web.js", [`${root}/src/web/App.svelte`], ["vendor.js", "deep.js"]),
+    chunk("native.js", [`${root}/src/native/App.svelte`], ["vendor.js", "deep.js"]),
     chunk("shared.js", [`${root}/src/utils/urls.ts`], ["vendor.js", "deep.js"]),
     chunk("deep.js", [`${root}/src/utils/share.ts`]),
     chunk("lazy.js", [`${root}/src/components/Admin.svelte`], ["desktop.js"]),
@@ -73,6 +80,30 @@ function configure(flag: string | undefined, width: number, native = false) {
 const withWebLayout = () =>
     generateStartupScript({ chunks, version: "1.2.3", mobileLayout, webLayout: true });
 
+const withLayouts = (webLayout: boolean, nativeLayout: boolean) =>
+    generateStartupScript({ chunks, version: "1.2.3", mobileLayout, webLayout, nativeLayout });
+
+// What selectLayout gets in main.ts for what configure() and `pointer` set up
+function layoutInputs(
+    flag: string | undefined,
+    web: boolean,
+    native: boolean,
+    width: number,
+    nativeApp: boolean,
+    override?: LayoutInputs["override"],
+): LayoutInputs {
+    return {
+        mobileLayoutFlag: flag,
+        webLayoutFlag: web ? "v3" : "",
+        nativeLayoutFlag: native ? "v4" : "",
+        width,
+        coarsePointer: pointer.coarse,
+        canHover: pointer.hover,
+        nativeApp,
+        override,
+    };
+}
+
 describe("the startup script in index.html", () => {
     beforeEach(() => {
         vi.stubGlobal("Worker", FakeWorker);
@@ -86,6 +117,8 @@ describe("the startup script in index.html", () => {
         document.head.innerHTML = "";
         document.documentElement.style.removeProperty("background-color");
         osPrefersDark.dark = false;
+        pointer.coarse = false;
+        pointer.hover = true;
         localStorage.clear();
         window.OC_PRESTARTED_WORKER = undefined;
     });
@@ -130,22 +163,65 @@ describe("the startup script in index.html", () => {
         expect(run(withWebLayout())).toEqual(["/web.js", "/deep.js", "/en.js"]);
     });
 
+    test("preloads the native App chunk in a v4 build in the apps and on a phone", () => {
+        configure("v2", 1200, true);
+        expect(run(withLayouts(true, true))).toEqual(["/native.js", "/deep.js", "/en.js"]);
+        configure("v2", 390);
+        pointer.coarse = true;
+        pointer.hover = false;
+        expect(run(withLayouts(true, true))[0]).toBe("/native.js");
+    });
+
     test("preloads the App tree which selectLayout goes on to pick", () => {
-        const trees = { v1: "desktop", v2: "mobile", v3: "web" };
+        const trees = { v1: "desktop", v2: "mobile", v3: "web", v4: "native" };
+        const pointers = [
+            { coarse: false, hover: true },
+            { coarse: true, hover: false },
+            { coarse: true, hover: true },
+        ];
         for (const web of [false, true]) {
-            for (const flag of ["v2", undefined]) {
-                for (const width of [767, 768]) {
-                    for (const native of [false, true]) {
-                        document.head.innerHTML = "";
-                        configure(flag, width, native);
-                        const app = trees[selectLayout(flag, web ? "v3" : "", width < 768, native)];
-                        const script = web ? withWebLayout() : undefined;
-                        expect(
-                            run(script)[0],
-                            `${flag}, web ${web}, ${width}px, native ${native}`,
-                        ).toBe(`/${app}.js`);
+            for (const nativeLayout of [false, true]) {
+                for (const flag of ["v2", undefined]) {
+                    for (const width of [767, 768, 1024]) {
+                        for (const nativeApp of [false, true]) {
+                            for (const p of pointers) {
+                                document.head.innerHTML = "";
+                                configure(flag, width, nativeApp);
+                                Object.assign(pointer, p);
+                                const inputs = layoutInputs(
+                                    flag,
+                                    web,
+                                    nativeLayout,
+                                    width,
+                                    nativeApp,
+                                );
+                                const app = trees[selectLayout(inputs)];
+                                expect(
+                                    run(withLayouts(web, nativeLayout))[0],
+                                    JSON.stringify(inputs),
+                                ).toBe(`/${app}.js`);
+                            }
+                        }
                     }
                 }
+            }
+        }
+    });
+
+    test("goes by the stored layout override, as selectLayout does", () => {
+        const trees = { v1: "desktop", v2: "mobile", v3: "web", v4: "native" };
+        for (const override of ["mobile", "desktop"] as const) {
+            for (const width of [390, 1200]) {
+                document.head.innerHTML = "";
+                localStorage.setItem("openchat_layout_override", override);
+                configure(undefined, width);
+                const app =
+                    trees[
+                        selectLayout(layoutInputs(undefined, true, true, width, false, override))
+                    ];
+                expect(run(withLayouts(true, true))[0], `${override}, ${width}px`).toBe(
+                    `/${app}.js`,
+                );
             }
         }
     });
@@ -200,6 +276,9 @@ describe("the startup script in index.html", () => {
         expect(() => generateStartupScript(without("desktop.js"))).toThrow(/App\.svelte/);
         expect(() => generateStartupScript(without("mobile.js"))).toThrow(/App\.svelte/);
         expect(() => generateStartupScript(without("web.js"))).toThrow(/App\.svelte/);
+        expect(() =>
+            generateStartupScript({ ...without("native.js"), nativeLayout: true }),
+        ).toThrow(/App\.svelte/);
         expect(() => generateStartupScript(without("en.js"))).toThrow(/en locale/);
     });
 });
@@ -212,6 +291,8 @@ describe("the font stylesheet in index.html", () => {
     afterEach(() => {
         vi.unstubAllGlobals();
         document.head.innerHTML = "";
+        pointer.coarse = false;
+        pointer.hover = true;
     });
 
     function stylesheets(script: string): string[] {
@@ -234,11 +315,25 @@ describe("the font stylesheet in index.html", () => {
             for (const native of [false, true]) {
                 document.head.innerHTML = "";
                 configure(undefined, width, native);
-                const web = selectLayout(undefined, "v3", width < 768, native) === "v3";
+                const web =
+                    selectLayout(layoutInputs(undefined, true, false, width, native)) === "v3";
                 expect(stylesheets(withWebLayout()), `${width}px, native ${native}`).toEqual([
                     web ? WEB_FONTS_URL : APP_FONTS_URL,
                 ]);
             }
+        }
+    });
+
+    test("is the web fonts for the native tree too", () => {
+        // a phone
+        pointer.coarse = true;
+        pointer.hover = false;
+        for (const nativeApp of [false, true]) {
+            document.head.innerHTML = "";
+            configure(undefined, 390, nativeApp);
+            expect(stylesheets(withLayouts(false, true)), `native app ${nativeApp}`).toEqual([
+                WEB_FONTS_URL,
+            ]);
         }
     });
 });
@@ -259,6 +354,20 @@ describe("the OC_WEB_LAYOUT a build sees", () => {
         for (const appType of ["android", "ios"]) {
             vi.stubEnv("OC_APP_TYPE", appType);
             expect(webLayoutFlag(), appType).toBe("");
+        }
+    });
+});
+
+describe("the OC_NATIVE_LAYOUT a build sees", () => {
+    afterEach(() => {
+        vi.unstubAllEnvs();
+    });
+
+    test("is the flag, in a web build and a native one alike", () => {
+        vi.stubEnv("OC_NATIVE_LAYOUT", "v4");
+        for (const appType of ["", "android", "ios"]) {
+            vi.stubEnv("OC_APP_TYPE", appType);
+            expect(nativeLayoutFlag(), appType).toBe("v4");
         }
     });
 });

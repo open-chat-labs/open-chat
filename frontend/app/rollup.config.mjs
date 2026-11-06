@@ -32,6 +32,7 @@ import {
     initEnv,
     manualChunks,
     maybeStringify,
+    nativeLayoutFlag,
     resetManualChunksCache,
     WEB_FONTS_URL,
     webLayoutFlag,
@@ -210,6 +211,8 @@ export default {
             // A build-time constant, not overridable at runtime: a build without the flag (or a
             // native build) leaves the new web UI (src/web, @openchat/ui) out of the bundle.
             "import.meta.env.OC_WEB_LAYOUT": JSON.stringify(webLayoutFlag()),
+            // The same for the native tree (src/native): a build without it leaves it out.
+            "import.meta.env.OC_NATIVE_LAYOUT": JSON.stringify(nativeLayoutFlag()),
             "import.meta.env.OC_CANISTER_MAP_PATH": JSON.stringify(`/${canisterMapFileName}`),
             "import.meta.env.OC_APP_FONTS_URL": JSON.stringify(APP_FONTS_URL),
             "import.meta.env.OC_WEB_FONTS_URL": JSON.stringify(WEB_FONTS_URL),
@@ -385,6 +388,7 @@ export default {
                 // stylesheet does not run until that stylesheet has loaded, but behind the
                 // entry's preloads, so that what has to run first is asked for first.
                 const webLayout = webLayoutFlag() === "v3";
+                const nativeLayout = nativeLayoutFlag() === "v4";
                 const startupScript = generateStartupScript({
                     chunks: files.js.filter((f) => f.type === "chunk"),
                     version,
@@ -393,6 +397,7 @@ export default {
                         JSON.stringify(process.env.OC_MOBILE_LAYOUT),
                     ),
                     webLayout,
+                    nativeLayout,
                 });
                 const inlineScripts = [
                     `window.OC_WEBSITE_VERSION = "${version}";`,
@@ -439,7 +444,7 @@ export default {
                                 <script>${startupScript}</script>
                                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-                                ${fontsLink(webLayout)}
+                                ${fontsLink(webLayout || nativeLayout)}
                                 <script type="module" defer src="/${jsEntryFile}"></script>
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>

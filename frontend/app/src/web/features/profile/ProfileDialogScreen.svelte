@@ -70,7 +70,7 @@
     import { getContext, onDestroy, onMount } from "svelte";
     import { SvelteMap } from "svelte/reactivity";
     import { _, locale } from "svelte-i18n";
-    import { accentOf, accentStore } from "../../accent";
+    import { accentOf, accentStore } from "@theme/accent";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { canGoBack, goBack, openFromDialog } from "../app/linkedDialogs.svelte";
     import { calendarDay } from "@src/logic/chit/claimDays";

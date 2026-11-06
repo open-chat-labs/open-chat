@@ -1690,6 +1690,14 @@
                 "note": "La contraseña de un solo uso se puede encontrar en su perfil/avanzado, en el dispositivo en el que haya iniciado sesión actualmente.",
                 "title": "Vincular con cuenta existente"
             }
+        },
+        "shareUnavailable": "Compartir en OpenChat desde otras aplicaciones aún no está disponible en esta versión.",
+        "tabs": {
+            "activity": "Actividad",
+            "chats": "Chats",
+            "communities": "Comunidades",
+            "wallet": "Cartera",
+            "you": "Tú"
         }
     },
     "new": "nuevo",

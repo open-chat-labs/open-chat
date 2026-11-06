@@ -213,8 +213,8 @@ class MainActivity : TauriActivity() {
                         .put("apiLevel", Build.VERSION.SDK_INT)
                         .put("osVersion", Build.VERSION.RELEASE)
 
-                // Report inset changes to Svelte...
-                OCPluginCompanion.triggerRef("window-inset-change", insetData)
+                // Report inset changes to Svelte, signed in or not (not queued for svelteReady)
+                OCPluginCompanion.triggerWindowInsets(insetData)
             }
 
             // We handle every one of these insets ourselves: the keyboard and nav bar as padding

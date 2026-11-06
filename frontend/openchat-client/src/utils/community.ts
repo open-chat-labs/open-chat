@@ -2,6 +2,7 @@ import {
     type AccessControlled,
     type CommunityAndRules,
     type CommunityChanges,
+    type CommunityIdentifier,
     type CommunitySummary,
     type CreateCommunityResponse,
     ErrorCode,
@@ -203,4 +204,18 @@ export function communityCreationFailure(
     resp: Exclude<CreateCommunityResponse, { kind: "success" }>,
 ): ResourceKey {
     return communityFailure(resp, "communities.errors.failure");
+}
+
+/**
+ * The community to open when none is chosen (the mobile bottom bar's and the native tree's
+ * Communities tab): the one last selected, while the user still has it, else their first one (as
+ * sorted) that isn't archived.
+ */
+export function defaultCommunity<C extends { membership: { archived: boolean } }>(
+    lastSelected: CommunityIdentifier | undefined,
+    lookup: (id: CommunityIdentifier) => C | undefined,
+    sorted: C[],
+): C | undefined {
+    const recent = lastSelected !== undefined ? lookup(lastSelected) : undefined;
+    return recent ?? sorted.find((c) => !c.membership.archived);
 }

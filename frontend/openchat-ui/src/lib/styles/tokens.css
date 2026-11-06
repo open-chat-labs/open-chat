@@ -134,8 +134,11 @@
   --tab-bar-h:calc(10px + var(--touch-target) + var(--bar-end));
   --veil-sheet:rgba(0,0,0,.55); --veil-lift:rgba(0,0,0,.42);
   --shadow-sheet:0 -12px 40px rgba(0,0,0,.45); --shadow-menu:0 12px 36px rgba(0,0,0,.55); --shadow-lift:0 14px 40px rgba(0,0,0,.55);
+  --shadow-push:-12px 0 32px rgba(0,0,0,.35);
 }
 [data-platform="native"][data-os="android"]{--touch-target:48px}
+/* A pushed screen comes in from the inline end, so its shadow falls on the start side. */
+[data-platform="native"][dir="rtl"]{--shadow-push:12px 0 32px rgba(0,0,0,.35)}
 /* Native light: white pages. */
 [data-platform="native"][data-mode="light"]{
   --surface-0:#FFFFFF; --surface-1:#FFFFFF; --surface-2:#F4F3EF; --field:#F4F3EF;

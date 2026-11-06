@@ -240,6 +240,15 @@ class OpenChatPlugin: Plugin {
         invoke.resolve()
     }
 
+    // A light tap where the native design asks for one (a tab tap, a
+    // long-press menu opening): UIKit's light impact.
+    @objc func haptic(_ invoke: Invoke) {
+        DispatchQueue.main.async {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
+        invoke.resolve()
+    }
+
     // Programmatic backgrounding is forbidden on iOS; the closest honest
     // behaviour is a no-op.
     @objc func minimizeApp(_ invoke: Invoke) {

@@ -1,12 +1,9 @@
 
 <script lang="ts">
     import { initNavigationHistoryTracking, navigate } from "@src/utils/navigation";
-    import { consumePendingCallAction, runCallAction } from "@utils/native/call_bridge";
-    import {
-        consumePendingDeepLink,
-        consumePendingNotificationTap,
-        openDeepLink,
-    } from "@utils/native/notification_channels";
+    import { runCallAction } from "@utils/native/call_bridge";
+    import { consumeColdStartIntent } from "@utils/native/coldStart.svelte";
+    import { openDeepLink } from "@utils/native/notification_channels";
     import { handleLinkClick, removeQueryStringParam } from "@src/utils/urls";
     import type { TransitionType } from "component-lib";
     import { type ChatIdentifier, type CommunityIdentifier, OpenChat, type RouteParams, adminRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, communitiesStore, communityIdentifiersEqual, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, isMessageIndexRoute, messageIndexStore, notFoundStore, notificationsRoute, profileSummaryRoute, publish, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, shareRoute, threadMessageIndexStore, threadOpenStore, walletRoute, welcomeRoute } from "@client";
@@ -339,20 +336,18 @@
             $chatListScopeStore.kind !== "none" &&
             !$exploringStore
         ) {
-            // An answered native ring beats any other cold-start intent.
-            const callAction = consumePendingCallAction();
-            const deepLink = callAction === null ? consumePendingDeepLink() : null;
-            const tapPath =
-                callAction === null && deepLink === null ? consumePendingNotificationTap() : null;
-            if (callAction) {
-                untrack(() => runCallAction(callAction));
-            } else if (deepLink) {
+            // An answered native ring beats any other cold-start intent. Taken untracked, so taking
+            // it doesn't run this again and fall through to the default chat.
+            const intent = untrack(consumeColdStartIntent);
+            if (intent?.kind === "call") {
+                untrack(() => runCallAction(intent.action));
+            } else if (intent?.kind === "deep_link") {
                 untrack(() => {
                     // a landing page link opens outside the app, so show the default chat here
-                    if (!openDeepLink(deepLink)) client.selectDefaultChat();
+                    if (!openDeepLink(intent.url)) client.selectDefaultChat();
                 });
-            } else if (tapPath) {
-                untrack(() => navigate(tapPath, "notification"));
+            } else if (intent?.kind === "notification") {
+                untrack(() => navigate(intent.path, "notification"));
             } else {
                 client.selectDefaultChat();
             }

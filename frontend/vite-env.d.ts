@@ -9,6 +9,9 @@ interface ImportMetaEnv {
     readonly OC_MOBILE_LAYOUT: "v1" | "v2";
     // "v3" builds in the new web UI (src/web); anything else leaves it out. A build-time constant.
     readonly OC_WEB_LAYOUT: string;
+    // "v4" builds in the native tree (src/native) for the apps and phones; anything else leaves it
+    // out. A build-time constant.
+    readonly OC_NATIVE_LAYOUT: string;
     // The font stylesheets of the existing App trees and of the new web UI (rollup.extras.mjs)
     readonly OC_APP_FONTS_URL: string;
     readonly OC_WEB_FONTS_URL: string;

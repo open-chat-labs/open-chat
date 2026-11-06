@@ -71,6 +71,7 @@ export {
 } from "./utils/group.svelte";
 export {
     communityChanges,
+    defaultCommunity,
     isCommunityMember,
     isPreviewingCommunity,
     isPrivateCommunityPreview,
