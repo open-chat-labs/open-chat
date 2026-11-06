@@ -10,6 +10,7 @@ import {
     canAttachNow,
     canRecordVoice,
     composerBuilders,
+    attachmentToSend,
     draftAttachment,
     editStartText,
     entryBlock,
@@ -345,6 +346,28 @@ describe("the draft's attachment", () => {
 
     test("is none during an edit, when the draft holds the edited message's content", () => {
         expect(draftAttachment({ attachment: photo, editingEvent: {} })).toBeUndefined();
+    });
+});
+
+describe("what a send takes from the draft", () => {
+    const photo = { kind: "photo" };
+
+    test("an attachment the composer shows", () => {
+        expect(attachmentToSend(photo, true)).toEqual({ kind: "send", attachment: photo });
+        expect(attachmentToSend(undefined, false)).toEqual({ kind: "send", attachment: undefined });
+    });
+
+    test("not one it doesn't show", () => {
+        expect(attachmentToSend({ kind: "puzzle" }, false)).toEqual({
+            kind: "send",
+            attachment: undefined,
+        });
+    });
+
+    test("never the text without a payment it can't show (its token gone from the registry)", () => {
+        for (const kind of ["crypto_content", "prize_content_initial", "p2p_swap_content_initial"]) {
+            expect(attachmentToSend({ kind }, false)).toEqual({ kind: "payment_not_shown" });
+        }
     });
 });
 

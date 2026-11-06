@@ -107,6 +107,7 @@
         GroupMessage,
     } from "@openchat/ui/src/lib/types";
     import {
+        attachmentToSend,
         attachRefusal,
         canAttachNow,
         canRecordVoice,
@@ -745,7 +746,9 @@
             if (outcome.kind !== "sent") throw new Error(outcome.kind);
             return;
         }
-        const attachment = staged !== null ? draftAttachment(draft) : undefined;
+        const taken = attachmentToSend(draftAttachment(draft), staged !== null);
+        if (taken.kind === "payment_not_shown") throw new Error(taken.kind);
+        const attachment = taken.attachment;
         // a payment from an external wallet would need that wallet's approval first, which this
         // tree doesn't ask for (its builders pay from the OpenChat wallet): never send it without,
         // which would take the funds from the OpenChat wallet instead (GAPS.md)

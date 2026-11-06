@@ -301,6 +301,28 @@ export function draftAttachment<A>(
     return draft?.editingEvent === undefined ? draft?.attachment : undefined;
 }
 
+/**
+ * What a send takes from the draft's attachment (`draftAttachment`), given whether the composer
+ * shows it: an attachment shown goes with the text; one it doesn't show isn't sent (a puzzle
+ * result, not yet), except a payment (a transfer, a prize, a swap offer), which can go unshown
+ * when its token has left the registry: the send is refused rather than the text going without
+ * it, and the draft that holds it with it.
+ */
+export function attachmentToSend<A extends { kind: string }>(
+    attachment: A | undefined,
+    shown: boolean,
+): { kind: "send"; attachment: A | undefined } | { kind: "payment_not_shown" } {
+    if (attachment === undefined || shown) return { kind: "send", attachment };
+    switch (attachment.kind) {
+        case "crypto_content":
+        case "prize_content_initial":
+        case "p2p_swap_content_initial":
+            return { kind: "payment_not_shown" };
+        default:
+            return { kind: "send", attachment: undefined };
+    }
+}
+
 /** What the entry says above the text: one thing at a time, the most pressing first. */
 export type EntryNotice =
     // too many messages a minute: sending resumes in this many seconds

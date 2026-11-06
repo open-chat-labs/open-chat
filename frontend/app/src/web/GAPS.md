@@ -1288,7 +1288,8 @@ design export needs. Each entry says where it came up.
     only while something can be attached (`canAttachNow`: not during an edit or a voice take), the
     ones that send too, since one sent mid-edit would reply to the edited message's reply. The
     composer stages each as its chip (`composerTransfer` …), whose Edit opens its builder again
-    on it, and × drops it. They pay from the OpenChat wallet only: the old
+    on it, and × drops it. One whose token has left the registry has no chip: its send is refused
+    (`attachmentToSend`) rather than the caption going without it. They pay from the OpenChat wallet only: the old
     builders' external wallet picker (`SourceWalletSelector`, and the approval at send) has no
     design and isn't offered. A draft that does carry an external wallet (`fromWallet`) is never
     sent from here without that wallet's approval: the composer says it couldn't send
