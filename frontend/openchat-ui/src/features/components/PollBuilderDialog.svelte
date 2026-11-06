@@ -70,6 +70,7 @@
   // publish / after-publish lock: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
   const flow = new DialogFlow();
   onDestroy(() => flow.destroy());
+  const close = () => flow.dismiss(onClose);
   let vw = $state(typeof window === 'undefined' ? 1200 : window.innerWidth);
 
   let box: HTMLDivElement;
@@ -157,7 +158,7 @@
   function requestClose() {
     if (flow.locked) return;
     if (question.trim() || filled.length) confirming = true;
-    else onClose?.();
+    else close();
   }
 
   function onKey(e: KeyboardEvent) {
@@ -246,16 +247,18 @@
             <span class="settings-text"><span class="settings-title">{t('ui.common.settings')}</span><span class="settings-summary">{summary}</span></span>
             <span class="chevron" class:open={settingsOpen}></span>
           </span>
-          {#if settingsOpen}
-            <div class="settings-list">
-              {#each settings as s}
-                <div class="setting">
-                  <span class="setting-text"><span class="setting-label">{t(s.label)}</span><span class="setting-help">{t(s.help)}</span></span>
-                  <Toggle on={s.on} ariaLabel={s.label} onChange={s.toggle} />
-                </div>
-              {/each}
+          <div class="settings-body" class:open={settingsOpen}>
+            <div class="settings-clip">
+              <div class="settings-list">
+                {#each settings as s}
+                  <div class="setting">
+                    <span class="setting-text"><span class="setting-label">{t(s.label)}</span><span class="setting-help">{t(s.help)}</span></span>
+                    <Toggle on={s.on} ariaLabel={s.label} onChange={s.toggle} />
+                  </div>
+                {/each}
+              </div>
             </div>
-          {/if}
+          </div>
         </div>
       </div>
       {#if wide}
@@ -289,7 +292,7 @@
           <span class="confirm-text">{t('ui.pollBuilderDialog.discardText')}</span>
           <div class="confirm-actions">
             <Button label="ui.pollBuilderDialog.keepEditing" variant="ghost" onClick={() => (confirming = false)} />
-            <Button label="ui.pollBuilderDialog.discard" variant="danger" onClick={() => !flow.locked && onClose?.()} />
+            <Button label="ui.pollBuilderDialog.discard" variant="danger" onClick={() => !flow.locked && close()} />
           </div>
         </div>
       </div>
@@ -522,6 +525,29 @@
     transform: rotate(180deg);
   }
 
+  /* the settings grow open and shrink closed; hidden once closed, so they leave the tab order */
+  .settings-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    transition:
+      grid-template-rows var(--duration-base) var(--ease-out),
+      visibility 0s linear var(--duration-base);
+
+    &.open {
+      grid-template-rows: 1fr;
+      visibility: visible;
+      transition:
+        grid-template-rows var(--duration-base) var(--ease-out),
+        visibility 0s;
+    }
+  }
+
+  .settings-clip {
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .settings-list {
     display: flex;
     flex-direction: column;
@@ -652,5 +678,27 @@
     display: flex;
     justify-content: flex-end;
     gap: 8px;
+  }
+
+  /* the library's shared dialog motion (global.css): the veil fades and the card rises in, and both play the
+     exit while the flow is closing (by hand: the export's builders had none) */
+  .scrim {
+    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
+  }
+
+  .dialog {
+    animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
+  }
+
+  .layer.closing {
+    pointer-events: none;
+
+    .scrim {
+      animation: oc-veil-out 170ms var(--ease-standard) both;
+    }
+
+    .dialog {
+      animation: oc-dlg-out 170ms var(--ease-standard) both;
+    }
   }
 </style>

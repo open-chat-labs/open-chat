@@ -875,6 +875,11 @@ type SendHooks = {
     rulesDeclined(): void;
 };
 
+// What a message posted does to the chat's draft: one sent from it clears it; a forwarded one
+// leaves it for the user to carry on with; a builder's (a poll, a meme), which took only the
+// draft's reply, clears just that.
+type DraftAfterSend = "clear" | "keep" | "clear_reply";
+
 // The links in a message to other OpenChat messages, whose previews are shown on it
 function linkedMessageUrls(content: MessageContent): string[] {
     return content.kind === "text_content"
@@ -5965,6 +5970,7 @@ export class OpenChat {
         retrying: boolean,
         ogPreviewsPromise?: Promise<OgPreview[]>,
         hooks?: SendHooks,
+        draftAfterSend: DraftAfterSend = "clear",
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -6005,7 +6011,7 @@ export class OpenChat {
                 : undefined;
 
         if (!retrying) {
-            this.#postSendMessage(chat, messageEvent, threadRootMessageIndex);
+            this.#postSendMessage(chat, messageEvent, threadRootMessageIndex, draftAfterSend);
             hooks?.posted();
         } else {
             // remove the *original* event from the failed store
@@ -6459,16 +6465,42 @@ export class OpenChat {
         ogPreviewsPromise?: Promise<OgPreview[]>,
         hooks?: SendHooks,
     ): Promise<SendMessageResponse> {
+        // A forwarded message isn't the chat's draft, which is left for the user to carry on with
+        return this.#sendWithContent(
+            messageContext,
+            content,
+            blockLevelMarkdown,
+            mentioned,
+            forwarded,
+            messageIdIfRetrying,
+            ogPreviewsPromise,
+            hooks,
+            forwarded ? "keep" : "clear",
+        );
+    }
+
+    // replies to the draft's reply unless the draft is kept
+    async #sendWithContent(
+        messageContext: MessageContext,
+        content: MessageContent,
+        blockLevelMarkdown: boolean,
+        mentioned: User[],
+        forwarded: boolean,
+        messageIdIfRetrying: bigint | undefined,
+        ogPreviewsPromise: Promise<OgPreview[]> | undefined,
+        hooks: SendHooks | undefined,
+        draftAfterSend: DraftAfterSend,
+    ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = allChatsStore.value.get(chatId);
         if (chat === undefined) {
             return Promise.resolve(CommonResponses.failure());
         }
 
-        // A forwarded message isn't the chat's draft, which is left for the user to carry on with
-        const draftMessage = forwarded
-            ? undefined
-            : localUpdates.draftMessages.value.get(messageContext);
+        const draftMessage =
+            draftAfterSend === "keep"
+                ? undefined
+                : localUpdates.draftMessages.value.get(messageContext);
         const timestamp = Date.now();
         const msg = {
             timestamp: BigInt(timestamp),
@@ -6490,6 +6522,7 @@ export class OpenChat {
             messageIdIfRetrying !== undefined,
             ogPreviewsPromise,
             hooks,
+            draftAfterSend,
         );
     }
 
@@ -6510,33 +6543,68 @@ export class OpenChat {
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
     ): Promise<SendMessageOutcome> {
-        const key = messageContextToString(messageContext);
-        if (this.#sendsBeingPosted.has(key)) return { kind: "busy" };
-        this.#sendsBeingPosted.add(key);
-        try {
+        return this.#postOnce(messageContext, async (hooks) => {
             const expanded = await this.#expandTypedMentions(
                 messageContext,
                 textContent,
                 mentioned,
             );
+            return this.sendMessageWithContent(
+                messageContext,
+                this.#getMessageContent(expanded.text, attachment),
+                blockLevelMarkdown,
+                expanded.mentioned,
+                false,
+                undefined,
+                fetchOgPreviews(
+                    extractEnabledLinks(expanded.text),
+                    import.meta.env.OC_PREVIEW_PROXY_URL,
+                ),
+                hooks,
+            );
+        });
+    }
+
+    /**
+     * Sends a message whose content a builder made (a poll, a Meme Fighter meme), replying to the
+     * draft's reply, and settles as `sendMessage` does: once it shows in the chat, or when it's
+     * refused before that. The rest of the draft (its text, a payment staged) is left as it was.
+     */
+    sendContent(
+        messageContext: MessageContext,
+        content: MessageContent,
+    ): Promise<SendMessageOutcome> {
+        return this.#postOnce(messageContext, async (hooks) =>
+            this.#sendWithContent(
+                messageContext,
+                content,
+                false,
+                [],
+                false,
+                undefined,
+                undefined,
+                hooks,
+                "clear_reply",
+            ),
+        );
+    }
+
+    // One send at a time from a chat or thread (a second is `busy`), settled as soon as the message
+    // shows in the chat, or when it's refused before that. Never rejects.
+    async #postOnce(
+        messageContext: MessageContext,
+        send: (hooks: SendHooks) => Promise<SendMessageResponse>,
+    ): Promise<SendMessageOutcome> {
+        const key = messageContextToString(messageContext);
+        if (this.#sendsBeingPosted.has(key)) return { kind: "busy" };
+        this.#sendsBeingPosted.add(key);
+        try {
             return await new Promise<SendMessageOutcome>((settle) => {
                 let rulesDeclined = false;
-                this.sendMessageWithContent(
-                    messageContext,
-                    this.#getMessageContent(expanded.text, attachment),
-                    blockLevelMarkdown,
-                    expanded.mentioned,
-                    false,
-                    undefined,
-                    fetchOgPreviews(
-                        extractEnabledLinks(expanded.text),
-                        import.meta.env.OC_PREVIEW_PROXY_URL,
-                    ),
-                    {
-                        posted: () => settle({ kind: "posted" }),
-                        rulesDeclined: () => (rulesDeclined = true),
-                    },
-                ).then(
+                send({
+                    posted: () => settle({ kind: "posted" }),
+                    rulesDeclined: () => (rulesDeclined = true),
+                }).then(
                     // settled already if it was posted; otherwise it was refused before posting
                     (resp) =>
                         settle(
@@ -6638,6 +6706,7 @@ export class OpenChat {
         chat: ChatSummary,
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
+        draftAfterSend: DraftAfterSend,
     ) {
         const context = { chatId: chat.id, threadRootMessageIndex };
         publish("sendingMessage", context);
@@ -6666,8 +6735,17 @@ export class OpenChat {
                 }
 
                 // The user may have typed into the draft while a forwarded message waited to be sent
-                if (!messageEvent.event.forwarded) {
-                    localUpdates.draftMessages.delete(context);
+                switch (draftAfterSend) {
+                    case "clear":
+                        localUpdates.draftMessages.delete(context);
+                        break;
+                    case "clear_reply":
+                        if (localUpdates.draftMessages.value.get(context)?.replyingTo) {
+                            localUpdates.draftMessages.setReplyingTo(context, undefined);
+                        }
+                        break;
+                    case "keep":
+                        break;
                 }
             });
             publish("sentMessage", { context, event: messageEvent });

@@ -205,6 +205,9 @@
         "unlink": "Verknüpfung aufheben",
         "unlinkFailed": "Die Verknüpfung des Kontos konnte nicht aufgehoben werden"
     },
+    "builders": {
+        "paymentRefused": "Das kann nicht angehängt werden. Prüfe den Betrag und dein Guthaben und versuche es erneut."
+    },
     "cashtag": {
         "chartLabel": "{symbol}-Preis in den letzten 7 Tagen",
         "change7d": "{change} in 7 Tagen",

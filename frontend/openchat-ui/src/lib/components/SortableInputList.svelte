@@ -2,7 +2,7 @@
      Rows past `min` get ×; drag the handle (or Alt+↑/↓ on it) to reorder; duplicates are flagged. onChange(values) gets the non-empty values. -->
 <script lang="ts">
   import { useT } from '../i18n';
-  import { untrack } from 'svelte';
+  import { tick, untrack } from 'svelte';
 
   interface Props {
     values?: string[];
@@ -49,6 +49,10 @@
   const noun = $derived(item.toLowerCase());
 
   let drag = $state<{ i: number; dy: number; to: number; step: number } | null>(null);
+  // a drop: the rows take their new order at once (no transition), the dropped row starting where it was let go
+  // (`dy` from its new slot), and only it then glides the rest of the way in
+  let settle = $state<{ i: number; dy: number } | null>(null);
+  let instant = $state(false);
   let list: HTMLDivElement;
 
   function commit(r: string[]) {
@@ -75,18 +79,26 @@
       const dy = ev.clientY - y0;
       drag = { i, dy, to: Math.max(0, Math.min(els.length - 1, i + Math.round(dy / step))), step };
     };
-    const up = () => {
+    const up = async () => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', up);
       const d = drag;
+      if (!d) return;
+      instant = true;
+      settle = { i: d.to, dy: d.dy - (d.to - d.i) * d.step };
       drag = null;
-      if (d) move(d.i, d.to);
+      move(d.i, d.to);
+      await tick();
+      void list.offsetHeight; // the new order painted where it was let go, before the glide starts
+      instant = false;
+      settle = null;
     };
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', up);
   }
 
   function shift(i: number) {
+    if (settle?.i === i) return `translateY(${settle.dy}px)`;
     const d = drag;
     if (!d) return 'none';
     if (d.i === i) return `translateY(${d.dy}px)`;
@@ -102,7 +114,7 @@
   }
 </script>
 
-<div class="list" bind:this={list} role="list" aria-label={label ? t(label) : t('ui.sortableInputList.listLabel', { item })}>
+<div class="list" class:instant bind:this={list} role="list" aria-label={label ? t(label) : t('ui.sortableInputList.listLabel', { item })}>
   {#each rows as value, i}
     {@const trailing = i === rows.length - 1 && !value.trim() && i >= min}
     {@const dup = !!lower[i] && lower.indexOf(lower[i]) !== i}
@@ -167,6 +179,10 @@
     transition: transform 180ms var(--ease-out);
     position: relative;
     z-index: auto;
+
+    .instant & {
+      transition: none;
+    }
 
     &.dragging {
       box-shadow:

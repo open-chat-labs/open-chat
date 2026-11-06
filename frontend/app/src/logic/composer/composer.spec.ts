@@ -9,6 +9,8 @@ import {
     attachRefusal,
     canAttachNow,
     canRecordVoice,
+    composerBuilders,
+    attachmentToSend,
     draftAttachment,
     editStartText,
     entryBlock,
@@ -19,6 +21,7 @@ import {
     pickableAttachments,
     throttleCountdown,
     TypingNotifier,
+    type ComposerBuilder,
     type EntryState,
 } from "./composer";
 
@@ -270,6 +273,29 @@ describe("what the entry offers to pick from the device", () => {
     });
 });
 
+describe("the builders the entry offers", () => {
+    const permitted = (...ps: MessagePermission[]) => new Set<MessagePermission>(ps);
+
+    const none = new Set<ComposerBuilder>();
+
+    test("each where the chat lets the reader send what it makes", () => {
+        expect(composerBuilders(permitted("text", "poll"), none)).toEqual(["poll"]);
+        expect(composerBuilders(permitted("text", "crypto"), none)).toEqual(["crypto"]);
+        expect(composerBuilders(permitted("text"), none)).toEqual([]);
+        // the + menu's order: the design's
+        expect(
+            composerBuilders(permitted("memeFighter", "crypto", "p2pSwap", "prize", "poll"), none),
+        ).toEqual(["poll", "prize", "crypto", "swap", "memeFighter"]);
+    });
+
+    test("none this build turns off (the app store builds' payments)", () => {
+        const all = permitted("poll", "prize", "crypto");
+        expect(composerBuilders(all, new Set<ComposerBuilder>(["crypto", "prize"]))).toEqual([
+            "poll",
+        ]);
+    });
+});
+
 describe("looking for members to mention", () => {
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());
@@ -320,6 +346,28 @@ describe("the draft's attachment", () => {
 
     test("is none during an edit, when the draft holds the edited message's content", () => {
         expect(draftAttachment({ attachment: photo, editingEvent: {} })).toBeUndefined();
+    });
+});
+
+describe("what a send takes from the draft", () => {
+    const photo = { kind: "photo" };
+
+    test("an attachment the composer shows", () => {
+        expect(attachmentToSend(photo, true)).toEqual({ kind: "send", attachment: photo });
+        expect(attachmentToSend(undefined, false)).toEqual({ kind: "send", attachment: undefined });
+    });
+
+    test("not one it doesn't show", () => {
+        expect(attachmentToSend({ kind: "puzzle" }, false)).toEqual({
+            kind: "send",
+            attachment: undefined,
+        });
+    });
+
+    test("never the text without a payment it can't show (its token gone from the registry)", () => {
+        for (const kind of ["crypto_content", "prize_content_initial", "p2p_swap_content_initial"]) {
+            expect(attachmentToSend({ kind }, false)).toEqual({ kind: "payment_not_shown" });
+        }
     });
 });
 

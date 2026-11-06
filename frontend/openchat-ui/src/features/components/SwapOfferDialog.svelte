@@ -5,7 +5,8 @@
      numeric amounts and the expiry in ms alongside the display strings.
      Esc closes the token picker, then the dialog; Cmd/Ctrl+Enter attaches. -->
 <script lang="ts">
-  import { onMount, untrack } from 'svelte';
+  import { onDestroy, onMount, untrack } from 'svelte';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import type { SwapOffer } from '../../lib/types';
   import type { CryptoToken } from './SendCryptoDialog.svelte';
   import AmountCard from '../../lib/components/AmountCard.svelte';
@@ -42,11 +43,18 @@
     tokens: CryptoToken[];
     z?: number;
     initial?: SwapOffer | null;
+    /** What an offer of a token costs on top of the amount offered (the escrow deposit's fees): two of its fees
+     *  without it. */
+    depositFees?: (token: CryptoToken) => number;
     onAttach?: (offer: SwapOffer) => void;
     onClose?: () => void;
   }
 
-  let { tokens, z = 80, initial = null, onAttach, onClose }: Props = $props();
+  let { tokens, z = 80, initial = null, depositFees, onAttach, onClose }: Props = $props();
+  // closing plays the shared exit before the host unmounts it
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
+  const close = () => flow.dismiss(onClose);
   const t = useT();
   const durLabel = (i: number) => durationText(t, DURS[i].id);
   const durShort = (i: number) => t('ui.swapOfferDialog.durationShort', { count: DURS[i].count, unit: DURS[i].unit });
@@ -76,7 +84,7 @@
   const R = $derived(lookup(get));
   const a = $derived(parseAmount(amt));
   const w = $derived(parseAmount(want));
-  const fees = $derived(G.fee * 2);
+  const fees = $derived(depositFees ? depositFees(G) : G.fee * 2);
   const lock = $derived(a + fees);
   const max = $derived(Math.max(0, G.bal - fees));
   // no market rate without both prices
@@ -134,7 +142,7 @@
     if (e.key === 'Escape') {
       e.stopPropagation();
       if (picker) picker = null;
-      else onClose?.();
+      else close();
     } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       attach();
@@ -170,12 +178,12 @@
   );
 </script>
 
-<div class="layer" style:z-index={z}>
-  <div class="scrim" onclick={() => onClose?.()} aria-hidden="true"></div>
+<div class="layer" class:closing={flow.closing} style:z-index={z}>
+  <div class="scrim" onclick={() => close()} aria-hidden="true"></div>
   <div class="dialog" bind:this={box} data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label={title} onkeydown={onKey}>
     <div class="header">
       <span class="title">{title}</span>
-      <IconButton variant="ghost" icon="close" label="ui.common.close" onClick={() => onClose?.()} />
+      <IconButton variant="ghost" icon="close" label="ui.common.close" onClick={() => close()} />
     </div>
     <div class="body">
       <div class="cards">
@@ -536,5 +544,27 @@
   .picker-abs {
     position: absolute;
     inset: 0;
+  }
+
+  /* the library's shared dialog motion (global.css): the veil fades and the card rises in, and both play the
+     exit while the flow is closing (by hand: the export's builders had none) */
+  .scrim {
+    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
+  }
+
+  .dialog {
+    animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
+  }
+
+  .layer.closing {
+    pointer-events: none;
+
+    .scrim {
+      animation: oc-veil-out 170ms var(--ease-standard) both;
+    }
+
+    .dialog {
+      animation: oc-dlg-out 170ms var(--ease-standard) both;
+    }
   }
 </style>

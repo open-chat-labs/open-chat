@@ -25,8 +25,10 @@ import {
     type MessageContent,
     type OgPreview,
     type P2PSwapContent,
+    type P2PSwapContentInitial,
     type PollContent,
     type PrizeContent,
+    type PrizeContentInitial,
     type PrizeReader,
     type ResourceKey,
     type TokenInfo,
@@ -348,8 +350,18 @@ function kindMessage(
             return pollMessage(msg.sender, content, ctx, base);
         case "prize_content":
             return prizeMessage(msg.sender, content, ctx, base);
+        case "prize_content_initial":
+            // still on its way: the card as it will land; a failed one stays text, which says so
+            return status === "failed"
+                ? undefined
+                : prizeMessage(msg.sender, sendingPrize(content), ctx, base, true);
         case "p2p_swap_content":
             return swapMessage(msg.sender, content, ctx, base);
+        case "p2p_swap_content_initial":
+            // still on its way: the card as it will land; a failed one stays text, which says so
+            return status === "failed"
+                ? undefined
+                : swapMessage(msg.sender, sendingSwap(content, ctx.now), ctx, base, true);
         case "file_content":
             return {
                 ...base,
@@ -439,6 +451,7 @@ function prizeMessage(
     content: PrizeContent,
     ctx: ConversationContext,
     base: KindBase,
+    sending = false,
 ): GroupMessage | undefined {
     const token = ctx.token(content.ledger);
     if (token === undefined) return undefined;
@@ -459,8 +472,29 @@ function prizeMessage(
         endingSoon: left < 3_600_000,
         gates: view.gates.map((g) => ({ label: ctx.text(g.label), met: g.met })),
         state: view.claimedByYou ? "claimed" : view.finished ? "ended" : "open",
-        canClaim: view.canClaim,
+        canClaim: view.canClaim && !sending,
+        sending,
         note: content.caption ?? "",
+    };
+}
+
+/** A prize still being sent, as it will land: every prize left, none claimed yet. */
+export function sendingPrize(content: PrizeContentInitial): PrizeContent {
+    return {
+        kind: "prize_content",
+        prizesRemaining: content.prizes.length,
+        prizesPending: 0,
+        winnerCount: 0,
+        userIsWinner: false,
+        diamondOnly: content.diamondOnly,
+        lifetimeDiamondOnly: content.lifetimeDiamondOnly,
+        uniquePersonOnly: content.uniquePersonOnly,
+        streakOnly: content.streakOnly,
+        minChitEarned: content.minChitEarned,
+        token: content.transfer.token,
+        ledger: content.transfer.ledger,
+        endDate: content.endDate,
+        caption: content.caption,
     };
 }
 
@@ -475,6 +509,7 @@ function swapMessage(
     content: P2PSwapContent,
     ctx: ConversationContext,
     base: KindBase,
+    sending = false,
 ): GroupMessage | undefined {
     const token0 = ctx.token(content.token0.ledger);
     const token1 = ctx.token(content.token1.ledger);
@@ -522,7 +557,24 @@ function swapMessage(
         expiresIn: state === "open" ? timeLeft(Number(content.expiresAt) - ctx.now) : "",
         doneText: ctx.text(i18nKey(doneKey)),
         caption: content.caption ?? "",
-        canAct: canAccept || canCancel,
+        canAct: (canAccept || canCancel) && !sending,
+        sending,
+    };
+}
+
+/** A swap offer still being sent, as it will land: open, for as long as it was given from now. */
+export function sendingSwap(content: P2PSwapContentInitial, now: number): P2PSwapContent {
+    return {
+        kind: "p2p_swap_content",
+        token0: content.token0,
+        token1: content.token1,
+        token0Amount: content.token0Amount,
+        token1Amount: content.token1Amount,
+        caption: content.caption,
+        expiresAt: BigInt(now) + content.expiresIn,
+        status: { kind: "p2p_swap_open" },
+        swapId: 0,
+        token0TxnIn: 0n,
     };
 }
 

@@ -2,11 +2,14 @@
      The amount is revealed on claim ("You won 6.2 ICP"). 3D spinning coin with the token mark (paused with reduced motion); confetti bursts from Claim.
      state: open | claimed | ended. gates: [{ label, met }]. Any unmet gate → "Requirements not met".
      Without onClaim it marks itself claimed; onClaim gets the click (a claim needs a trusted one). canClaim false offers no Claim
-     (the sender, a DM, all claimed). -->
+     (the sender, a DM, all claimed). sending: still on its way (its own, before it lands), the card as it will be with
+     "Sending prize…" where Claim would go.
+     By hand: `side` (the sent bubble's colours, as PollMessage) and `sending`. -->
 <script lang="ts">
   import { useT } from '../i18n';
   import Confetti from './Confetti.svelte';
   import RequirementChip from './RequirementChip.svelte';
+  import Spinner from './Spinner.svelte';
   import TokenCoin from './TokenCoin.svelte';
 
   interface Props {
@@ -22,7 +25,10 @@
     wonAmount?: string;
     /** Whether Claim is offered when the prize is open and its requirements met. */
     canClaim?: boolean;
+    /** Still being sent: no Claim, "Sending prize…" in its place. */
+    sending?: boolean;
     note?: string;
+    side?: 'received' | 'sent';
     time: string;
     lastInGroup?: boolean;
     onClaim?: (e: MouseEvent) => void;
@@ -38,7 +44,9 @@
     state: status = 'open',
     wonAmount = '',
     canClaim = true,
+    sending = false,
     note = '',
+    side = 'received',
     time,
     lastInGroup = true,
     onClaim,
@@ -60,7 +68,7 @@
   }
 </script>
 
-<div class="shell" class:last={lastInGroup} class:ended>
+<div class="shell" class:sent={side === 'sent'} class:last={lastInGroup} class:ended>
   <div class="stack">
     <div class="hero">
       <span class="coin">
@@ -88,7 +96,9 @@
       </div>
     {/if}
     <div class="confetti-anchor" aria-hidden="true"><div class="confetti-box"><Confetti fire={burst} /></div></div>
-    {#if won}
+    {#if sending}
+      <span class="outcome" role="status"><Spinner size={16} tone="ink" label="ui.prizeMessage.sending" />{t('ui.prizeMessage.sending')}</span>
+    {:else if won}
       <span class="outcome won"><span class="outcome-icon check"></span>{wonAmount ? t('ui.prizeMessage.youWon', { amount: wonAmount }) : t('ui.prizeMessage.youWonIt')}</span>
     {:else if ended}
       <span class="outcome"><span class="outcome-icon clock"></span>{t('ui.prizeMessage.hasEnded')}</span>
@@ -109,8 +119,32 @@
   @use '../styles/mixins' as *;
 
   .shell {
+    --msg-bg: var(--bubble-recv-bg);
+    --msg-ink: var(--ink);
+    --msg-text: var(--bubble-recv-text);
+    --msg-soft: var(--ink-3);
+    --msg-faint: var(--ink-4);
+    --msg-kicker: var(--accent-bright);
+    --msg-seg: var(--overlay-1);
+    --msg-track: var(--overlay-2);
+    --msg-fill: var(--accent);
+    --msg-glow: color-mix(in oklch, var(--accent) 28%, transparent);
     width: 320px;
-    @include message-shell(var(--bubble-recv-bg));
+    @include message-shell;
+
+    &.sent {
+      --msg-bg: var(--bubble-send-bg);
+      --msg-ink: var(--bubble-text);
+      --msg-text: var(--bubble-text);
+      --msg-soft: var(--bubble-text-soft);
+      --msg-faint: var(--bubble-text-soft);
+      --msg-kicker: var(--bubble-text);
+      --msg-seg: rgba(0, 0, 0, 0.18);
+      --msg-track: rgba(0, 0, 0, 0.25);
+      --msg-fill: #fff;
+      --msg-glow: rgba(255, 255, 255, 0.16);
+      box-shadow: none;
+    }
 
     &.ended {
       opacity: 0.7;
@@ -131,8 +165,8 @@
     padding: 22px 16px 18px;
     border-radius: 2px 18px 6px 6px;
     background:
-      radial-gradient(120% 120% at 50% 0%, color-mix(in oklch, var(--accent) 28%, transparent), transparent 65%),
-      var(--overlay-1);
+      radial-gradient(120% 120% at 50% 0%, var(--msg-glow), transparent 65%),
+      var(--msg-seg);
   }
 
   .coin {
@@ -144,13 +178,13 @@
   .kicker {
     margin-top: 6px;
     font: 600 11.5px/1 var(--font-sans);
-    color: var(--accent-bright);
+    color: var(--msg-kicker);
   }
 
   .headline {
     font: 700 26px/1 var(--font-sans);
     letter-spacing: -0.02em;
-    color: var(--ink);
+    color: var(--msg-ink);
   }
 
   .facts {
@@ -158,7 +192,7 @@
     align-items: center;
     gap: 6px;
     font: 500 12.5px/1 var(--font-sans);
-    color: var(--ink-3);
+    color: var(--msg-soft);
   }
 
   .sep {
@@ -200,14 +234,14 @@
     gap: 8px;
     padding: 12px 14px;
     border-radius: 6px;
-    background: var(--overlay-1);
+    background: var(--msg-seg);
   }
 
   .tally {
     display: flex;
     justify-content: space-between;
     font: 500 12px/1 var(--font-sans);
-    color: var(--ink-3);
+    color: var(--msg-soft);
   }
 
   .mono {
@@ -217,7 +251,7 @@
   .track {
     height: 6px;
     border-radius: 3px;
-    background: var(--overlay-2);
+    background: var(--msg-track);
     overflow: hidden;
   }
 
@@ -225,14 +259,14 @@
     display: block;
     height: 100%;
     border-radius: 3px;
-    background: var(--accent);
+    background: var(--msg-fill);
     transition: width 0.5s;
   }
 
   .gates-title {
     font: 600 10.5px/1 var(--font-mono);
     letter-spacing: 0.06em;
-    color: var(--ink-4);
+    color: var(--msg-faint);
   }
 
   .gates {
@@ -286,9 +320,9 @@
   }
 
   .outcome {
-    background: var(--overlay-2);
+    background: var(--msg-track);
     font: 600 13px/1 var(--font-sans);
-    color: var(--ink-3);
+    color: var(--msg-soft);
 
     &.won {
       background: color-mix(in oklch, var(--status-online) 13%, transparent);
@@ -312,7 +346,7 @@
 
   .time {
     font: 400 11px/1 var(--font-mono);
-    color: var(--ink-4);
+    color: var(--msg-faint);
   }
 
   .foot {
@@ -326,7 +360,7 @@
     margin: 0;
     padding: 10px 10px 8px;
     font: var(--weight-regular) var(--text-base) / 1.45 var(--font-sans);
-    color: var(--bubble-recv-text);
+    color: var(--msg-text);
   }
 
   /* invisible copy reserves room on the last line so the stamp never overlaps text */

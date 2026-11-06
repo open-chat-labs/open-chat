@@ -14841,6 +14841,39 @@
         "doc": "A previous onAttach value, to edit it."
       },
       {
+        "name": "defaults",
+        "type": "Partial<PrizeDraft>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "What a new prize starts from (e.g. the settings last used); `initial` wins when editing."
+      },
+      {
+        "name": "restrictions",
+        "type": "PrizeGateKind[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The claim restrictions offered, in the dialog's order (all by default)."
+      },
+      {
+        "name": "pricing",
+        "type": "(token: PrizeToken, amount: number, winners: number) => { fees: number; min: number }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's prices for `amount` among `winners`: every fee on top of the amount, and the least the amount can be. Without it a fee per winner plus one for the fund, and `minPer` a winner."
+      },
+      {
         "name": "onAttach",
         "type": "(prize: Prize) => void",
         "default": null,
@@ -14979,6 +15012,17 @@
         "doc": "Whether Claim is offered when the prize is open and its requirements met."
       },
       {
+        "name": "sending",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Still being sent: no Claim, \"Sending prize…\" in its place."
+      },
+      {
         "name": "note",
         "type": "string",
         "default": "Celebrating 50k members, good luck!",
@@ -14987,6 +15031,20 @@
         "section": null,
         "required": false,
         "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "side",
+        "type": "'received' | 'sent'",
+        "default": "received",
+        "editor": "enum",
+        "options": [
+          "received",
+          "sent"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'received'",
         "doc": ""
       },
       {
@@ -16554,6 +16612,17 @@
         "doc": "Pickable recipients (a group), when there is no fixed one; each has the user id."
       },
       {
+        "name": "to",
+        "type": "string | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "null",
+        "doc": "The member picked to start with (by id), for a new transfer: e.g. the one being replied to."
+      },
+      {
         "name": "initial",
         "type": "Transfer | null",
         "default": null,
@@ -17045,6 +17114,17 @@
         "doc": "Whether an open offer offers its action (Accept / Cancel offer) to this reader."
       },
       {
+        "name": "sending",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Still being sent: no action, \"Sending offer…\" in its place."
+      },
+      {
         "name": "time",
         "type": "string",
         "default": "11:15",
@@ -17133,6 +17213,17 @@
         "required": false,
         "componentDefault": "null",
         "doc": ""
+      },
+      {
+        "name": "depositFees",
+        "type": "(token: CryptoToken) => number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "What an offer of a token costs on top of the amount offered (the escrow deposit's fees): two of its fees without it."
       },
       {
         "name": "onAttach",

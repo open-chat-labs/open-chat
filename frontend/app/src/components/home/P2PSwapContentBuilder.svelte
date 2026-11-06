@@ -1,13 +1,16 @@
 <script lang="ts">
-    import type { MessageContext, OpenChat, P2PSwapContentInitial, SignerWallet } from "@client";
+    import type { MessageContext, OpenChat, SignerWallet } from "@client";
     import {
         enhancedCryptoLookup as cryptoLookup,
         isDiamondStore,
+        MAX_SWAP_OFFER_EXPIRY_MS,
         mobileWidth,
-        ONE_DAY,
+        newSwapOfferContent,
         P2P_SWAP_MAX_EXPIRY_DAYS,
         publish,
-        walletApprovalFee,
+        swapOfferConfirmation,
+        swapOfferCosts,
+        swapOfferStep,
     } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -61,11 +64,10 @@
     let fromDetails = $derived($cryptoLookup.get(fromLedger)!);
     let toDetails = $derived($cryptoLookup.get(toLedger)!);
     // The offer is deposited in the escrow canister along with the fee for paying it out, so the
-    // deposit costs two fees
-    let depositFees = $derived(fromDetails.transferFee * BigInt(2));
-    // The wallet also pays for the approval it makes before the deposit is pulled from it
-    let approvalFee = $derived(walletApprovalFee(fromDetails.transferFee));
-    let totalFees = $derived(depositFees + approvalFee);
+    // deposit costs two fees, and the wallet also pays for the approval it makes before the
+    // deposit is pulled from it (swapOfferCosts)
+    let costs = $derived(swapOfferCosts(fromDetails.transferFee));
+    let totalFees = $derived(costs.totalFees);
     let remainingBalance = $state(0n);
     $effect(() => {
         remainingBalance =
@@ -76,7 +78,7 @@
     // What the user is able to offer, or undefined when that is the external wallet's business
     // rather than ours
     let spendingLimit = $derived(payFromWallet ? undefined : fromDetails.balance - totalFees);
-    let minAmount = $derived(fromDetails.transferFee * BigInt(10));
+    let minAmount = $derived(costs.minAmount);
     let valid = $derived(error === undefined && fromAmountValid && toAmountValid && durationValid);
     let errorMessage = $derived(error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore);
 
@@ -94,16 +96,14 @@
     });
 
     function onSend() {
-        if (!$isDiamondStore) {
-            publish("upgrade");
-            return;
+        switch (swapOfferStep($isDiamondStore, valid)) {
+            case "upgrade":
+                publish("upgrade");
+                return;
+            case "confirm":
+                confirming = true;
+                return;
         }
-
-        if (!valid) {
-            return;
-        }
-
-        confirming = true;
     }
 
     function send(yes: boolean): Promise<void> {
@@ -135,8 +135,7 @@
     // `fromAccount` is an external wallet which has just approved the transfer. Without it the
     // offer is funded from the user's own OpenChat account, as it always has been.
     function sendSwap(fromAccount?: string): Promise<void> {
-        const content: P2PSwapContentInitial = {
-            kind: "p2p_swap_content_initial",
+        const content = newSwapOfferContent({
             token0: {
                 ledger: fromLedger,
                 symbol: fromDetails.symbol,
@@ -149,12 +148,16 @@
                 fee: toDetails.transferFee,
                 decimals: toDetails.decimals,
             },
-            token0Amount: fromAmount,
-            token1Amount: toAmount,
+            amount0: fromAmount,
+            amount1: toAmount,
             caption: message === "" ? undefined : message,
-            expiresIn,
-            fromAccount,
-        };
+            expiresInMs: Number(expiresIn),
+            from: { fromAccount },
+        });
+        if (content === undefined) {
+            sending = false;
+            return Promise.resolve();
+        }
 
         return client
             .sendMessageWithContent(messageContext, content, false)
@@ -200,10 +203,10 @@
 
 {#if confirming}
     <AreYouSure
-        message={i18nKey("p2pSwap.confirmSend", {
-            amount: client.formatTokens(fromAmount + totalFees, fromDetails.decimals),
-            token: fromDetails.symbol,
-            fees: approvalFee > 0n ? 3 : 2,
+        message={swapOfferConfirmation(fromAmount, {
+            symbol: fromDetails.symbol,
+            decimals: fromDetails.decimals,
+            fee: fromDetails.transferFee,
         })}
         action={send} />
 {/if}
@@ -276,7 +279,7 @@
                         label={i18nKey("p2pSwap.expiryTime")}
                         rules={i18nKey("p2pSwap.maxExpiry", { days: P2P_SWAP_MAX_EXPIRY_DAYS })} />
                     <DurationPicker
-                        maxMilliseconds={BigInt(P2P_SWAP_MAX_EXPIRY_DAYS * ONE_DAY)}
+                        maxMilliseconds={BigInt(MAX_SWAP_OFFER_EXPIRY_MS)}
                         bind:valid={durationValid}
                         bind:milliseconds={expiresIn} />
                 </div>
@@ -302,7 +305,7 @@
                         wallet={sourceWallet}
                         ledger={fromLedger}
                         amount={fromAmount}
-                        fees={depositFees}
+                        fees={costs.depositFees}
                         chatId={messageContext.chatId} />
                 {/if}
             </form>

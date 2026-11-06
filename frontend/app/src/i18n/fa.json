@@ -205,6 +205,9 @@
         "unlink": "لغو پیوند",
         "unlinkFailed": "لغو پیوند حساب ممکن نشد"
     },
+    "builders": {
+        "paymentRefused": "این قابل پیوست نیست. مبلغ و موجودی خود را بررسی کنید و دوباره تلاش کنید."
+    },
     "cashtag": {
         "chartLabel": "قیمت {symbol} در ۷ روز گذشته",
         "change7d": "{change} در ۷ روز",

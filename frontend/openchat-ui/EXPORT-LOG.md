@@ -649,3 +649,30 @@
 
 ## 2026-11-05 — native: the push shadow (native N3, #10366), by hand
 - tokens.css, the native layer: `--shadow-push`, the shadow a pushed screen casts on the screen it slides over (the prototype's stack screens: `-12px 0 32px rgba(0,0,0,.35)`, the same in both themes), on its start side: `[data-platform="native"][dir="rtl"]` mirrors it, as the native root (`<html>`) carries `dir` too. `platform.spec.ts` lists it with the shell's tokens and checks the mirroring.
+
+## 2026-11-06 — the composer's "+" builders for the app (5d, #10119), by hand
+- `SendCryptoDialog`: `to`, the member picked to start with (by id) for a new transfer, e.g. the one being replied to in a group; an `initial` transfer's own recipient still wins. `meta.json` updated. Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+- `PrizeBuilderDialog`: `pricing(token, amount, winners)` → `{ fees, min }`, the host's fees on top of the amount and its minimum (the export priced `fee × (winners + 1)` and `minPer × winners`, which stay the default); the amount's hint then reads `ui.prizeBuilderDialog.feesAdded` ("Fees of {fee} {symbol} are added on top", new). `defaults` (a `Partial<PrizeDraft>` a new prize starts from; `initial` still wins) and `restrictions` (the `PrizeGateKind`s offered, all by default). `meta.json` updated. Not in the design export.
+- `SwapOfferDialog`: `depositFees(token)`, what an offer costs on top of its amount (the export priced two of the token's fees, still the default); `ui.swapOfferDialog.hint` and `locks` say "incl. fees" where they said "incl. 2 fees", since the host's may be more (the app's include the approval's). `meta.json` updated. Not in the design export.
+
+## 2026-11-06 — the "+" builders' dialogs animate in and out (5d testing), by hand
+- `PollBuilderDialog`, `PrizeBuilderDialog`, `SendCryptoDialog`, `SwapOfferDialog`: the library's shared dialog motion (global.css), which the export's builders lacked: the veil fades in (`oc-veil-in`) and the card rises in (`oc-dlg-in`); closing (×, Cancel, the backdrop, Esc, Discard) goes through a `DialogFlow` (`flow.dismiss(onClose)`, which Poll already had for publishing), so both play the exit (`oc-veil-out`, `oc-dlg-out`) before the host unmounts them. No prop changes.
+
+## 2026-11-06 — sortable rows settle from the drop; the poll builder's settings grow and shrink (5d testing), by hand
+- `SortableInputList`: letting go of a dragged row no longer snaps it back to its old slot and animates every row from there. On drop the rows take their new order with no transition, the dropped row starting where it was let go, and only it glides the rest of the way into its slot.
+- `PollBuilderDialog`: the settings list grows open and shrinks closed (grid rows 0fr ↔ 1fr, as Learn's contents do) instead of appearing and vanishing; hidden once closed, so its toggles leave the tab order.
+
+## 2026-11-06 — a poll answer doesn't rewrap when you vote (5d testing), by hand
+- `PollMessage`: the percentage only appeared once the results showed, so voting narrowed every label and a long answer broke onto a second line. The percentage is now always laid out, as wide as "100%" (hidden until the results show), so the labels keep their width.
+
+## 2026-11-06 — the prize builder's option rows grow and shrink (5d testing), by hand
+- `PrizeBuilderDialog`: Winners, Ends after and Who can claim open in place by growing and close by shrinking (grid rows 0fr ↔ 1fr, as the poll builder's settings do), so moving from one row to another closes one while the other opens; the CHIT / streak picker under Who can claim does the same, keeping its chips while it shrinks. Closed panels are hidden, so they leave the tab order.
+
+## 2026-11-06 — the prize card's sent look and its sending state (5d testing), by hand
+- `PrizeMessage`: takes `side` (MessageGroup passes it, as for the other cards); a sent prize takes the sent bubble's colours through `--msg-*` variables, as `PollMessage` does, rather than always the received one. `sending` shows the card with "Sending prize…" and a spinner where Claim would go (`ui.prizeMessage.sending`). Both in meta.json.
+
+## 2026-11-06 — swiping a run's first message takes its avatar and name along (5d testing), by hand
+- `MessageGroup`: the avatar and name (`data-group-head`) follow the first message's swipe and spring back with it, rather than staying put while it slides away; that row's reply hint sits past the avatar (`past-avatar`), where before it came out over it.
+
+## 2026-11-06 — the swap offer card's sending state (5d testing), by hand
+- `SwapOffer`: `sending` shows the card with "Sending offer…" and a spinner where Cancel offer / Accept swap would go (`ui.swapOffer.sending`), as `PrizeMessage` does. In meta.json.

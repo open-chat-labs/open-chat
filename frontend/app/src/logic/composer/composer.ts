@@ -209,6 +209,30 @@ export function pickableAttachments(
     return kinds;
 }
 
+/** What the entry's builders make: a poll, a prize, a transfer, a swap offer, a Meme Fighter meme. */
+export type ComposerBuilder = "poll" | "prize" | "crypto" | "swap" | "memeFighter";
+
+/**
+ * The builders the entry offers, each where the chat lets the reader send what it makes (polls
+ * aren't sent in a DM, nor tokens to a bot) and this build doesn't turn it off (`off`: the app
+ * store builds take payments out, `utils/features`).
+ */
+export function composerBuilders(
+    permitted: ReadonlySet<MessagePermission>,
+    off: ReadonlySet<ComposerBuilder>,
+): ComposerBuilder[] {
+    const builders: [ComposerBuilder, MessagePermission][] = [
+        ["poll", "poll"],
+        ["prize", "prize"],
+        ["crypto", "crypto"],
+        ["swap", "p2pSwap"],
+        ["memeFighter", "memeFighter"],
+    ];
+    return builders.flatMap(([builder, permission]) =>
+        permitted.has(permission) && !off.has(builder) ? [builder] : [],
+    );
+}
+
 // as the old pickers: what's typed after the "@" is looked for once it's this long
 const FIND_MEMBERS_FROM = 2;
 
@@ -275,6 +299,28 @@ export function draftAttachment<A>(
     draft: { attachment?: A; editingEvent?: unknown } | undefined,
 ): A | undefined {
     return draft?.editingEvent === undefined ? draft?.attachment : undefined;
+}
+
+/**
+ * What a send takes from the draft's attachment (`draftAttachment`), given whether the composer
+ * shows it: an attachment shown goes with the text; one it doesn't show isn't sent (a puzzle
+ * result, not yet), except a payment (a transfer, a prize, a swap offer), which can go unshown
+ * when its token has left the registry: the send is refused rather than the text going without
+ * it, and the draft that holds it with it.
+ */
+export function attachmentToSend<A extends { kind: string }>(
+    attachment: A | undefined,
+    shown: boolean,
+): { kind: "send"; attachment: A | undefined } | { kind: "payment_not_shown" } {
+    if (attachment === undefined || shown) return { kind: "send", attachment };
+    switch (attachment.kind) {
+        case "crypto_content":
+        case "prize_content_initial":
+        case "p2p_swap_content_initial":
+            return { kind: "payment_not_shown" };
+        default:
+            return { kind: "send", attachment: undefined };
+    }
 }
 
 /** What the entry says above the text: one thing at a time, the most pressing first. */

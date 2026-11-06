@@ -1,7 +1,10 @@
 <!-- Swap offer, read from the viewer's side: what leaves your wallet (−) on top, what arrives (+) below, joined by an arrow.
-     state: open | pending (taken, not yet settled) | done | cancelled | expired. Your own offer (side 'sent') shows Cancel offer as a quiet segment; others' offers show accent Accept swap. -->
+     state: open | pending (taken, not yet settled) | done | cancelled | expired. Your own offer (side 'sent') shows Cancel offer as a quiet segment; others' offers show accent Accept swap.
+     sending: still on its way (your own, before it lands), the card as it will be with "Sending offer…" where the action would go.
+     By hand: `sending`. -->
 <script lang="ts">
   import { useT } from '../i18n';
+  import Spinner from './Spinner.svelte';
   import TokenAvatar from './TokenAvatar.svelte';
 
   interface Leg {
@@ -29,13 +32,15 @@
     caption?: string;
     /** Whether an open offer offers its action (Accept / Cancel offer) to this reader. */
     canAct?: boolean;
+    /** Still being sent: no action, "Sending offer…" in its place. */
+    sending?: boolean;
     time: string;
     lastInGroup?: boolean;
     onAccept?: () => void;
     onCancel?: () => void;
   }
 
-  let { side = 'received', state = 'open', give, get, expiresIn = '', doneText = 'ui.swapOffer.swapped', caption = '', canAct = true, time, lastInGroup = true, onAccept, onCancel }: Props = $props();
+  let { side = 'received', state = 'open', give, get, expiresIn = '', doneText = 'ui.swapOffer.swapped', caption = '', canAct = true, sending = false, time, lastInGroup = true, onAccept, onCancel }: Props = $props();
   const t = useT();
 
   const sent = $derived(side === 'sent');
@@ -59,7 +64,9 @@
       {/each}
       <span class="arrow" aria-hidden="true"><span class="arrow-icon"></span></span>
     </div>
-    {#if state === 'open' && canAct}
+    {#if sending}
+      <span class="done pending" role="status"><Spinner size={14} tone="ink" label="ui.swapOffer.sending" />{t('ui.swapOffer.sending')}</span>
+    {:else if state === 'open' && canAct}
       <span class="action" onclick={sent ? onCancel : onAccept} role="button" tabindex="0">{t(sent ? 'ui.swapOffer.cancelOffer' : 'ui.swapOffer.acceptSwap')}</span>
     {:else if state === 'done'}
       <span class="done"><span class="check"></span>{t(doneText)}</span>

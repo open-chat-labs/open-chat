@@ -2,13 +2,16 @@ import type {
     BotInstallationLocation,
     ChatIdentifier,
     CommunityIdentifier,
+    CryptocurrencyContent,
     EnhancedAccessGate,
     ExternalBotLike,
     GroupChatIdentifier,
     LeaveOrDelete,
     Message,
     MultiUserChatIdentifier,
+    P2PSwapContentInitial,
     PriceSubject,
+    PrizeContentInitial,
 } from "@client";
 import type { DialogStack } from "../../shell/dialogStack.svelte";
 import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
@@ -120,7 +123,23 @@ export type LocalDialog =
           chatId: ChatIdentifier;
           eventIndex: number;
           threadRootMessageIndex?: number;
-      };
+      }
+    // the composer's "+" builders (5d): a poll, published from the dialog
+    | { kind: "poll_builder"; chatId: ChatIdentifier }
+    // a transfer, attached to the chat's draft: `defaultReceiver` is who it goes to unless the user
+    // picks someone else (the one being replied to), `editing` the staged one to change
+    | {
+          kind: "send_crypto";
+          chatId: ChatIdentifier;
+          defaultReceiver?: string;
+          editing?: CryptocurrencyContent;
+      }
+    // a prize, attached to the chat's draft; `editing` the staged one to change
+    | { kind: "prize_builder"; chatId: ChatIdentifier; editing?: PrizeContentInitial }
+    // a swap offer, confirmed and attached to the chat's draft; `editing` the staged one
+    | { kind: "swap_offer"; chatId: ChatIdentifier; editing?: P2PSwapContentInitial }
+    // a Meme Fighter meme, made in the maker's frame and sent from the dialog
+    | { kind: "meme_fighter"; chatId: ChatIdentifier };
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";
@@ -218,6 +237,13 @@ export const dialogs: Dialogs = {
     // reporting a message, and setting a reminder about one (5b)
     report_message: () => import("../conversation/ReportMessageDialogScreen.svelte"),
     remind_message: () => import("../conversation/ReminderDialogScreen.svelte"),
+
+    // the composer's "+" builders (5d)
+    poll_builder: () => import("../builders/PollBuilderDialogScreen.svelte"),
+    send_crypto: () => import("../builders/SendCryptoDialogScreen.svelte"),
+    prize_builder: () => import("../builders/PrizeBuilderDialogScreen.svelte"),
+    swap_offer: () => import("../builders/SwapOfferDialogScreen.svelte"),
+    meme_fighter: () => import("../builders/MemeFighterDialogScreen.svelte"),
 };
 
 // each linked dialog's query param; the CHIT dialog's views share its param, told apart by its value

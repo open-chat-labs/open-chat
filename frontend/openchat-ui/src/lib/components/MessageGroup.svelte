@@ -108,6 +108,7 @@
   let gesture: { x: number; y: number; i: number; swiping: boolean; id: number; type: string } | null = null;
   let swipe: { i: number; d: number; past: boolean } | null = null;
   let wheel: { i: number; dx: number } | null = null;
+  let group = $state<HTMLDivElement>();
   onDestroy(() => {
     clearTimeout(hoverTimer);
     clearTimeout(pressTimer);
@@ -177,6 +178,11 @@
     return { right: has(map.right), left: m.swipeLeft ? !!onSwipeLeft : has(map.left) };
   }
 
+  // the run's avatar and name, which go with its first message when that's swiped
+  function head(i: number): HTMLElement[] {
+    return i === 0 && group ? [...group.querySelectorAll<HTMLElement>('[data-group-head]')] : [];
+  }
+
   // swipe: logical dx (+ = toward the reply side; flips for RTL), free up to the threshold then rubber-banded
   function swipeTo(i: number, raw: number, m: GroupMessage) {
     const el = rows[i];
@@ -189,8 +195,10 @@
     d = Math.sign(d) * (a <= SWIPE_AT ? a : Math.min(SWIPE_MAX, SWIPE_AT + (a - SWIPE_AT) * 0.6));
     const g = swipe && swipe.i === i ? swipe : (swipe = { i, d: 0, past: false });
     g.d = d;
-    el.style.transition = 'none';
-    el.style.transform = `translateX(${rtl ? -d : d}px)`;
+    for (const n of [el, ...head(i)]) {
+      n.style.transition = 'none';
+      n.style.transform = `translateX(${rtl ? -d : d}px)`;
+    }
     const past = Math.abs(d) >= SWIPE_AT;
     const crossed = past && !g.past;
     if (crossed) navigator.vibrate?.(10);
@@ -218,8 +226,10 @@
     const g = swipe && swipe.i === i ? swipe : null;
     swipe = null;
     if (el) {
-      el.style.transition = 'transform .22s cubic-bezier(.2,.8,.3,1.2)';
-      el.style.transform = '';
+      for (const n of [el, ...head(i)]) {
+        n.style.transition = 'transform .22s cubic-bezier(.2,.8,.3,1.2)';
+        n.style.transform = '';
+      }
       el.querySelectorAll<HTMLElement>('[data-swipe-hint],[data-swipe-hint-end]').forEach((n) => {
         n.style.opacity = '0';
         n.style.display = 'none';
@@ -383,14 +393,14 @@
   }
 </script>
 
-<div class="group" class:raised={hover >= 0}>
+<div class="group" class:raised={hover >= 0} bind:this={group}>
   {#if showAvatar}
     {#if onSenderClick}
-      <span class="avatar sender" onclick={(e) => onSenderClick(e.currentTarget)} onkeydown={(e) => senderKey(e)} role="button" tabindex="0" aria-label={senderName}
+      <span class="avatar sender" data-group-head onclick={(e) => onSenderClick(e.currentTarget)} onkeydown={(e) => senderKey(e)} role="button" tabindex="0" aria-label={senderName}
         ><Avatar size={34} {color} online={false} /></span
       >
     {:else}
-      <span class="avatar"><Avatar size={34} {color} online={false} /></span>
+      <span class="avatar" data-group-head><Avatar size={34} {color} online={false} /></span>
     {/if}
   {:else if avatarSpace}
     <span class="avatar-space" aria-hidden="true"></span>
@@ -398,9 +408,9 @@
   <div class="column">
     {#if showName}
       {#if onSenderClick}
-        <span class="name sender" onclick={(e) => onSenderClick(e.currentTarget)} onkeydown={(e) => senderKey(e)} role="button" tabindex="0">{senderName}</span>
+        <span class="name sender" data-group-head onclick={(e) => onSenderClick(e.currentTarget)} onkeydown={(e) => senderKey(e)} role="button" tabindex="0">{senderName}</span>
       {:else}
-        <span class="name">{senderName}</span>
+        <span class="name" data-group-head>{senderName}</span>
       {/if}
     {/if}
     {#each messages as m, i (m.id ?? i)}
@@ -431,7 +441,7 @@
         role="group"
       >
         <span class="mark" aria-hidden="true" data-msg-mark=""></span>
-        <span class="hint start" aria-hidden="true" data-swipe-hint=""><span class="hint-icon" style:mask="var(--icon-{map.right}) center/contain no-repeat"></span></span>
+        <span class="hint start" class:past-avatar={i === 0 && showAvatar} aria-hidden="true" data-swipe-hint=""><span class="hint-icon" style:mask="var(--icon-{map.right}) center/contain no-repeat"></span></span>
         <span class="hint end" aria-hidden="true" data-swipe-hint-end=""><span class="hint-icon" style:mask="var(--icon-{map.left}) center/contain no-repeat"></span></span>
         {#if m.kind === 'voice'}
           <VoiceMessage {...m} {side} lastInGroup={last} />
@@ -448,7 +458,7 @@
         {:else if m.kind === 'poll'}
           <PollMessage {...m} {side} lastInGroup={last} />
         {:else if m.kind === 'prize'}
-          <PrizeMessage {...m} lastInGroup={last} />
+          <PrizeMessage {...m} {side} lastInGroup={last} />
         {:else if !m.kind || m.kind === 'text'}
           <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} onToggleReaction={(c) => onReact?.(i, c)} />
         {/if}
@@ -640,6 +650,11 @@
 
     &.start {
       inset-inline-start: -48px;
+    }
+
+    /* the first message takes the avatar along, so its hint shows past it */
+    &.start.past-avatar {
+      inset-inline-start: calc(-48px - 34px - var(--space-10));
     }
 
     &.end {

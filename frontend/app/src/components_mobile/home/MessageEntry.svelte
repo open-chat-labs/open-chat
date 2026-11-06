@@ -29,6 +29,7 @@
         allUsersStore,
         anonUserStore,
         botState,
+        externalWalletPayment,
         localUpdates,
         messageContextsEqual,
         screenWidth,
@@ -485,51 +486,10 @@
     // wallet as `fromWallet`. The wallet has not yet approved anything - the approval waits for
     // the send, whose tap is the one that consumes it. Each kind knows what the ledger will
     // charge against the allowance (`amount` + `fees`) and how to absorb the approved account
-    // into the content once it is granted.
+    // into the content once it is granted (`externalWalletPayment`).
     let externalWalletDraft = $derived.by(() => {
-        const draft = attachment;
-        if (draft === undefined) return undefined;
-
-        let details;
-        switch (draft.kind) {
-            case "crypto_content":
-            case "prize_content_initial": {
-                const transfer = draft.transfer;
-                if (transfer.kind !== "pending" || transfer.fromAccount !== undefined)
-                    return undefined;
-                details = {
-                    fromWallet: transfer.fromWallet,
-                    ledger: transfer.ledger,
-                    amount: transfer.amountE8s,
-                    fees: transfer.feeE8s,
-                    approved: (fromAccount: string): AttachmentContent => ({
-                        ...draft,
-                        transfer: { ...transfer, fromWallet: undefined, fromAccount },
-                    }),
-                };
-                break;
-            }
-            case "p2p_swap_content_initial": {
-                if (draft.fromAccount !== undefined) return undefined;
-                details = {
-                    fromWallet: draft.fromWallet,
-                    ledger: draft.token0.ledger,
-                    amount: draft.token0Amount,
-                    // The escrowed amount funds the swap's outbound transfer as well, so the
-                    // ledger charges the offer's amount plus two fees against the allowance
-                    fees: draft.token0.fee * 2n,
-                    approved: (fromAccount: string): AttachmentContent => ({
-                        ...draft,
-                        fromWallet: undefined,
-                        fromAccount,
-                    }),
-                };
-                break;
-            }
-            default:
-                return undefined;
-        }
-
+        const details = externalWalletPayment(attachment);
+        if (details === undefined) return undefined;
         const wallet = SIGNER_WALLETS.find((w) => w.id === details.fromWallet);
         if (wallet === undefined) return undefined;
         return { ...details, wallet };

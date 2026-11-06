@@ -1,0 +1,449 @@
+// The composer's "+" builders (5d) in the library's shapes, and back: what a builder dialog hands
+// over, as the client's builders take it, and what the composer stages, as the library shows it.
+import {
+    formatTokens,
+    generatePrizes,
+    ONE_DAY,
+    ONE_HOUR,
+    ONE_WEEK,
+    prizeCosts,
+    swapOfferCosts,
+    walletApprovalFee,
+    type CryptocurrencyContent,
+    type CryptocurrencyDetails,
+    type EnhancedTokenDetails,
+    type NewPoll,
+    type P2PSwapContentInitial,
+    type PrizeContentInitial,
+    type PrizeDiamond,
+    type PrizeDistribution,
+    type TokenExchangeRates,
+    type UserSummary,
+} from "@client";
+import type { PollDraft } from "@openchat/ui/src/features/components/PollBuilderDialog.svelte";
+import type { PrizeToken } from "@openchat/ui/src/features/components/PrizeBuilderDialog.svelte";
+import type {
+    CryptoMember,
+    CryptoToken,
+} from "@openchat/ui/src/features/components/SendCryptoDialog.svelte";
+import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
+import type { Prize, PrizeDraft, SwapOffer, TokenRef, Transfer } from "@openchat/ui/src/lib/types";
+import type { PrizeConfig } from "@src/logic/prize/prizeForm.svelte";
+import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
+import { swatchFor } from "../chats/chatList.adapter";
+import { displayDecimals, wholeTokens } from "../wallet/wallet.adapter";
+
+/** A library resource key (or the app's) with its values, in the app's language. */
+export type Translate = (key: string, values?: Record<string, string | number>) => string;
+
+/**
+ * A poll as `PollBuilderDialog` publishes it, as `newPollContent` takes it: public votes are a poll
+ * that isn't anonymous, hidden results one that doesn't show its votes before it ends, and "lock
+ * votes" a poll that doesn't let its voters change them (a multiple-choice poll always does).
+ */
+export function newPoll(draft: PollDraft): NewPoll {
+    return {
+        question: draft.question,
+        answers: draft.options.map((o) => o.label),
+        anonymous: !draft.publicVotes,
+        showVotesBeforeEndDate: !draft.hideResults,
+        allowMultipleVotesPerUser: draft.multiple,
+        allowUserToChangeVote: draft.canChange,
+        durationMs: draft.durationMs,
+    };
+}
+
+/** A token as a builder lists it, and the ledger it stands for (the library knows it by symbol). */
+export type BuilderToken = { ledger: string; token: CryptoToken };
+
+/** A token's face: its symbol's first letter on the swatch its ledger picks (as the wallet's). */
+export function tokenRef(token: Pick<EnhancedTokenDetails, "symbol" | "ledger">): TokenRef {
+    return {
+        symbol: token.symbol,
+        mark: token.symbol.slice(0, 1),
+        gradient: AVATAR_GRADIENTS[swatchFor(token.ledger)],
+    };
+}
+
+/**
+ * The tokens a payment builder offers, `first` first (the token last sent, as the old builders
+ * start from), in the wallet's order after it. One per symbol, since the library tells tokens
+ * apart by their symbol: the first listed is kept. A payment pulled from the wallet costs the
+ * transfer's fee and its approval's (`fee`); the least it can be is 10 transfer fees (`min`, the
+ * old builders' `minAmount`).
+ */
+export function builderTokens(
+    tokens: EnhancedTokenDetails[],
+    rates: { get(ledger: string): TokenExchangeRates | undefined },
+    first: string | undefined,
+): BuilderToken[] {
+    const ordered = [
+        ...tokens.filter((t) => t.ledger === first),
+        ...tokens.filter((t) => t.ledger !== first),
+    ];
+    const symbols = new Set<string>();
+    return ordered.flatMap((t) => {
+        if (symbols.has(t.symbol)) return [];
+        symbols.add(t.symbol);
+        const usd = rates.get(t.ledger)?.toUSD ?? 0;
+        return [
+            {
+                ledger: t.ledger,
+                token: {
+                    ...tokenRef(t),
+                    name: t.name,
+                    bal: wholeTokens(t.balance, t.decimals),
+                    fee: wholeTokens(t.transferFee + walletApprovalFee(t.transferFee), t.decimals),
+                    min: wholeTokens(t.transferFee * 10n, t.decimals),
+                    usd,
+                    dp: displayDecimals(t.decimals, usd),
+                },
+            },
+        ];
+    });
+}
+
+/** Someone a transfer can go to, as `SendCryptoDialog` lists them. */
+export function cryptoMember(user: UserSummary): CryptoMember {
+    return {
+        id: user.userId,
+        name: user.displayName ?? user.username,
+        handle: `@${user.username}`,
+    };
+}
+
+/** What a staged payment's chip needs to know of its token (the registry's). */
+export type TokenFacts = Pick<
+    CryptocurrencyDetails,
+    "symbol" | "ledger" | "decimals" | "transferFee"
+>;
+
+/** An amount in a token, as the composer's chip says it: "1.5 ICP". */
+function tokenAmount(amount: bigint, token: TokenFacts): string {
+    return `${formatTokens(amount, token.decimals)} ${token.symbol}`;
+}
+
+/** An amount as a builder's field holds it: its digits with a "." (no grouping), in full. */
+export function typedAmount(amount: bigint, decimals: number): string {
+    return formatTokens(amount, decimals, ".", true);
+}
+
+/**
+ * A transfer staged in the composer, as the composer's chip shows it and as `SendCryptoDialog`
+ * edits it again: the amount, who it goes to and its dollar value, and what it costs with the fees
+ * (the transfer's and its approval's). None for a transfer that isn't pending.
+ */
+export function composerTransfer(
+    content: CryptocurrencyContent,
+    token: TokenFacts,
+    price: number | undefined,
+    recipient: UserSummary | undefined,
+    t: Translate,
+): Transfer | undefined {
+    const transfer = content.transfer;
+    if (transfer.kind !== "pending") return undefined;
+    const fee = (transfer.feeE8s ?? token.transferFee) + walletApprovalFee(token.transferFee);
+    const usd = price === undefined ? 0 : wholeTokens(transfer.amountE8s, token.decimals) * price;
+    const usdText = price === undefined ? "" : formatConvertedValue("usd", usd);
+    const member: CryptoMember =
+        recipient === undefined
+            ? { id: transfer.recipient, name: transfer.recipient, handle: "" }
+            : cryptoMember(recipient);
+    const amountText = tokenAmount(transfer.amountE8s, token);
+    return {
+        type: "transfer",
+        token: tokenRef(token),
+        amount: wholeTokens(transfer.amountE8s, token.decimals),
+        amountText,
+        usd,
+        usdText,
+        recipient: { id: member.id, name: member.name, handle: member.handle },
+        fee: wholeTokens(fee, token.decimals),
+        feeText: tokenAmount(fee, token),
+        totalText: tokenAmount(transfer.amountE8s + fee, token),
+        title: amountText,
+        summary: t("ui.sendCryptoDialog.summary", { handle: member.handle, usd: usdText }),
+        draft: {
+            tok: token.symbol,
+            amt: typedAmount(transfer.amountE8s, token.decimals),
+            to: transfer.recipient,
+        },
+    };
+}
+
+// SwapOfferDialog's expiries, in its order (its `dur` is an index into them)
+const SWAP_EXPIRIES: [ms: number, count: number, unit: "h" | "d"][] = [
+    [ONE_HOUR, 1, "h"],
+    [6 * ONE_HOUR, 6, "h"],
+    [ONE_DAY, 1, "d"],
+    [ONE_WEEK, 7, "d"],
+    [30 * ONE_DAY, 30, "d"],
+    [90 * ONE_DAY, 90, "d"],
+];
+
+function nearest(list: number[], ms: number): number {
+    let best = 0;
+    list.forEach((d, i) => {
+        if (Math.abs(d - ms) < Math.abs(list[best] - ms)) best = i;
+    });
+    return best;
+}
+
+/**
+ * What an offer of a token costs on top of the amount offered, as `SwapOfferDialog` prices it
+ * (`swapOfferCosts`: the deposit's two fees and the approval's).
+ */
+export function swapDepositFees(token: TokenFacts): number {
+    return wholeTokens(swapOfferCosts(token.transferFee).totalFees, token.decimals);
+}
+
+/** A side of a staged offer, as the composer's chip shows it. */
+function swapSide(token: TokenFacts, amount: bigint, price: number | undefined): SwapOffer["give"] {
+    const usd = price === undefined ? 0 : wholeTokens(amount, token.decimals) * price;
+    return {
+        ...tokenRef(token),
+        amount: formatTokens(amount, token.decimals),
+        usd: price === undefined ? "" : `≈ ${formatConvertedValue("usd", usd)}`,
+    };
+}
+
+/**
+ * A swap offer staged in the composer, as the composer's chip shows it and as `SwapOfferDialog`
+ * edits it again: what's offered for what, how long it stays open, and what it takes from the
+ * wallet with its fees.
+ */
+export function composerSwapOffer(
+    content: P2PSwapContentInitial,
+    give: TokenFacts,
+    get: TokenFacts,
+    prices: { give: number | undefined; get: number | undefined },
+    t: Translate,
+): SwapOffer {
+    const dur = nearest(
+        SWAP_EXPIRIES.map(([ms]) => ms),
+        Number(content.expiresIn),
+    );
+    const [ms, count, unit] = SWAP_EXPIRIES[dur];
+    const giveSide = swapSide(give, content.token0Amount, prices.give);
+    const getSide = swapSide(get, content.token1Amount, prices.get);
+    const lock = formatTokens(
+        content.token0Amount + swapOfferCosts(give.transferFee).totalFees,
+        give.decimals,
+    );
+    const short = t("ui.swapOfferDialog.durationShort", { count, unit });
+    const label = t(unit === "h" ? "ui.duration.hours" : "ui.duration.days", { count });
+    return {
+        type: "swap",
+        give: giveSide,
+        get: getSide,
+        pair: [tokenRef(give), tokenRef(get)],
+        giveAmount: wholeTokens(content.token0Amount, give.decimals),
+        getAmount: wholeTokens(content.token1Amount, get.decimals),
+        expiresIn: `${count}${unit}`,
+        expiresInMs: ms,
+        title: `${giveSide.amount} ${give.symbol} → ${getSide.amount} ${get.symbol}`,
+        summary: t("ui.swapOfferDialog.summary", {
+            expires: short,
+            amount: lock,
+            symbol: give.symbol,
+        }),
+        hint: t("ui.swapOfferDialog.hint", { duration: label, amount: lock, symbol: give.symbol }),
+        draft: {
+            give: give.symbol,
+            get: get.symbol,
+            amt: typedAmount(content.token0Amount, give.decimals),
+            want: typedAmount(content.token1Amount, get.decimals),
+            dur,
+            prem: null,
+        },
+    };
+}
+
+// PrizeBuilderDialog's durations, in its order (its `dur` is an index into them), with their labels
+const PRIZE_DURATIONS: [ms: number, key: string][] = [
+    [ONE_HOUR, "oneHour"],
+    [6 * ONE_HOUR, "sixHours"],
+    [ONE_DAY, "oneDay"],
+    [ONE_WEEK, "sevenDays"],
+    [30 * ONE_DAY, "thirtyDays"],
+    [90 * ONE_DAY, "ninetyDays"],
+];
+
+/** The index of the dialog's duration nearest `ms`. */
+export function prizeDurationIndex(ms: number): number {
+    return nearest(
+        PRIZE_DURATIONS.map(([d]) => d),
+        ms,
+    );
+}
+
+/** A token a prize can be paid in, as `PrizeBuilderDialog` lists it (`builderTokens`' order). */
+export function prizeTokens(
+    tokens: EnhancedTokenDetails[],
+    rates: { get(ledger: string): TokenExchangeRates | undefined },
+    first: string | undefined,
+): { ledger: string; token: PrizeToken }[] {
+    return builderTokens(tokens, rates, first).flatMap(({ ledger, token }) => {
+        const details = tokens.find((t) => t.ledger === ledger);
+        if (details === undefined) return [];
+        return [
+            {
+                ledger,
+                token: {
+                    symbol: token.symbol,
+                    mark: token.mark,
+                    gradient: token.gradient,
+                    bal: token.bal,
+                    fee: wholeTokens(details.transferFee, details.decimals),
+                    minPer: wholeTokens(details.transferFee * 100n, details.decimals),
+                    dp: token.dp,
+                },
+            },
+        ];
+    });
+}
+
+/**
+ * What a prize of `amount` (whole tokens, as the dialog holds it) among `winners` costs, as the
+ * dialog shows it (`prizeCosts`): every fee on top of the fund, and the least the fund can be.
+ * The amount is rounded to the token's smallest unit (0.29 is 28999999.999… units in floating
+ * point), so it's priced as the typed amount is charged.
+ */
+export function prizePricing(
+    token: TokenFacts,
+    amount: number,
+    winners: number,
+): { fees: number; min: number } {
+    const units =
+        Number.isFinite(amount) && amount > 0
+            ? BigInt(Math.round(amount * 10 ** token.decimals))
+            : 0n;
+    const costs = prizeCosts(units, winners, token.transferFee);
+    return {
+        fees: wholeTokens(costs.totalFees, token.decimals),
+        min: wholeTokens(costs.minAmount, token.decimals),
+    };
+}
+
+/** The restrictions a prize has, as the dialog's draft holds them. */
+function prizeGates(
+    diamond: PrizeDiamond,
+    minStreak: number,
+    minChitEarned: number,
+): PrizeDraft["gates"] {
+    return {
+        ...(diamond === "standard" ? { diamond: true } : {}),
+        ...(diamond === "lifetime" ? { lifetime: true } : {}),
+        ...(minStreak > 0 ? { streak: true } : {}),
+        ...(minChitEarned > 0 ? { chit: true } : {}),
+    };
+}
+
+/** A new prize's starting point in the dialog: the split, duration and restrictions last used. */
+export function prizeDefaults(config: PrizeConfig): Partial<PrizeDraft> {
+    return {
+        even: config.distribution === "equal",
+        dur: prizeDurationIndex(config.durationMs),
+        gates: prizeGates(config.diamond, config.minStreak, config.minChitEarned),
+        ...(config.minStreak > 0 ? { streak: config.minStreak } : {}),
+        ...(config.minChitEarned > 0 ? { chit: config.minChitEarned } : {}),
+    };
+}
+
+/** What `PrizeBuilderDialog`'s prize asks for, as `PrizeForm` holds it (its amount aside). */
+export function prizeChoices(prize: Prize): PrizeConfig & { winners: number } {
+    const rule = (kind: string) => prize.rules.find((r) => r.kind === kind);
+    const distribution: PrizeDistribution = prize.even ? "equal" : "random";
+    return {
+        winners: prize.winners,
+        distribution,
+        durationMs: prize.durationMs,
+        diamond: rule("lifetime") ? "lifetime" : rule("diamond") ? "standard" : "none",
+        minStreak: rule("streak")?.min ?? 0,
+        minChitEarned: rule("chit")?.min ?? 0,
+    };
+}
+
+/**
+ * How a prize's fund was split, from its prizes: even when they're the equal split of its fund
+ * (`generatePrizes`'). A prize of one winner can't tell, and is read as `unknown`.
+ */
+export function prizeDistribution(
+    content: PrizeContentInitial,
+    unknown: PrizeDistribution,
+): PrizeDistribution {
+    const winners = content.prizes.length;
+    if (winners < 2) return unknown;
+    const equal = generatePrizes(content.amount, winners, "equal", content.transfer.feeE8s ?? 0n);
+    return content.prizes.every((p, i) => p === equal[i]) ? "equal" : "random";
+}
+
+/**
+ * A prize staged in the composer, as the composer's chip shows it and as `PrizeBuilderDialog`
+ * edits it again: its fund, winners, how long it runs and how many restrictions it has, and what
+ * it costs with the fees. Its split is `prizeDistribution`'s, a prize of one winner's read as
+ * `distribution` (the one the builder remembers). None for one whose transfer isn't pending.
+ */
+export function composerPrize(
+    content: PrizeContentInitial,
+    token: TokenFacts,
+    t: Translate,
+    distribution: PrizeDistribution = "random",
+): Prize | undefined {
+    const transfer = content.transfer;
+    if (transfer.kind !== "pending") return undefined;
+    const winners = content.prizes.length;
+    const durationMs = Number(content.endDate) - Number(transfer.createdAtNanos / 1_000_000n);
+    const dur = prizeDurationIndex(durationMs);
+    const [ms, key] = PRIZE_DURATIONS[dur];
+    const even = prizeDistribution(content, distribution) === "equal";
+    const diamond: PrizeDiamond = content.lifetimeDiamondOnly
+        ? "lifetime"
+        : content.diamondOnly
+          ? "standard"
+          : "none";
+    const gates = prizeGates(diamond, content.streakOnly, content.minChitEarned);
+    const rules: Prize["rules"] = [
+        ...(diamond === "standard" ? [{ kind: "diamond" as const }] : []),
+        ...(diamond === "lifetime" ? [{ kind: "lifetime" as const }] : []),
+        ...(content.minChitEarned > 0
+            ? [{ kind: "chit" as const, min: content.minChitEarned }]
+            : []),
+        ...(content.streakOnly > 0 ? [{ kind: "streak" as const, min: content.streakOnly }] : []),
+    ];
+    const short = t(`ui.prizeBuilderDialog.durations.${key}Short`);
+    const amountText = tokenAmount(content.amount, token);
+    return {
+        token: tokenRef(token),
+        amount: wholeTokens(content.amount, token.decimals),
+        amountText,
+        winners,
+        even,
+        endsIn: short,
+        endsInLabel: t(`ui.prizeBuilderDialog.durations.${key}`),
+        endsAt: Number(content.endDate),
+        durationMs: ms,
+        gates: [],
+        rules,
+        fee: wholeTokens(content.fees, token.decimals),
+        feeText: tokenAmount(content.fees, token),
+        totalText: tokenAmount(content.amount + content.fees, token),
+        summary: [
+            t("ui.prizeBuilderDialog.summaryWinners", { count: winners }),
+            short,
+            ...(rules.length > 0
+                ? [t("ui.prizeBuilderDialog.summaryRules", { count: rules.length })]
+                : []),
+        ].join(" · "),
+        draft: {
+            tok: token.symbol,
+            amt: typedAmount(content.amount, token.decimals),
+            win: String(winners),
+            dur,
+            even,
+            gates,
+            streak: content.streakOnly > 0 ? content.streakOnly : 7,
+            chit: content.minChitEarned > 0 ? content.minChitEarned : 10000,
+        },
+    };
+}

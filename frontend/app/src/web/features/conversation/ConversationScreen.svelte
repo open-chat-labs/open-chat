@@ -29,6 +29,7 @@
         currentUserIdStore,
         eventsStore,
         exchangeRatesLookupStore,
+        externalWalletPayment,
         failedMessagesStore,
         favouritesStore,
         formatTokens,
@@ -67,6 +68,7 @@
         swapAcceptCost,
         swapActions,
         swapFailureMessage,
+        swapOfferStep,
         threadOpenStore,
         throttleDeadline,
         TimelineGrouper,
@@ -75,6 +77,7 @@
         unconfirmedStore,
         undeletingMessagesStore,
         videoProcessingProgress,
+        type AttachmentContent,
         type ChatEvent,
         type ChatIdentifier,
         type ChatSummary,
@@ -98,11 +101,17 @@
     import ChatEventList, { type ChatEventListArgs } from "@src/core/ChatEventList.svelte";
     import { TimelineFlattener, type FlatChatItem } from "@src/core/flatChatItems";
     import Markdown from "@src/core/Markdown.svelte";
-    import type { GroupMessage } from "@openchat/ui/src/lib/types";
+    import type {
+        ComposerAttachKind,
+        ComposerAttachment,
+        GroupMessage,
+    } from "@openchat/ui/src/lib/types";
     import {
+        attachmentToSend,
         attachRefusal,
         canAttachNow,
         canRecordVoice,
+        composerBuilders,
         draftAttachment,
         editStartText,
         entryBlock,
@@ -112,6 +121,7 @@
         MemberFinder,
         pickableAttachments,
         throttleCountdown,
+        type ComposerBuilder,
     } from "@src/logic/composer/composer";
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
     import {
@@ -122,7 +132,13 @@
     } from "@src/stores/settings";
     import { messageToForwardStore } from "@src/stores/messageToForward";
     import { quickReactions } from "@src/stores/quickReactions";
-    import { disableTipsFeature } from "@src/utils/features";
+    import { composerBuildersOff, disableTipsFeature } from "@src/utils/features";
+    import {
+        composerPrize,
+        composerSwapOffer,
+        composerTransfer,
+        type Translate,
+    } from "../builders/builders.adapter";
     import { messageSwipeLeft } from "@src/utils/messageSwipe";
     import { canShareMessage } from "@src/utils/share";
     import { messageDoubleClickAction } from "@src/logic/conversation/messageDoubleClick";
@@ -475,18 +491,54 @@
         }
     });
 
-    // the draft's photo, video or file, staged above the text (only what the composer shows is
-    // sent with it: 5d's contents wait for their builders)
+    // the draft's photo, video or file, or a builder's payment (5d), staged above the text (only
+    // what the composer shows is sent with it: a puzzle result isn't yet)
     // (none during an edit, when the draft holds the edited message's own content)
-    const staged = $derived(composerAttachment(draftAttachment(draft), ctx));
+    const staged = $derived(
+        composerAttachment(draftAttachment(draft), ctx) ?? stagedPayment(draftAttachment(draft)),
+    );
+
+    // a transfer, prize or swap offer as the composer's chip shows it, in tokens the registry
+    // carries
+    function stagedPayment(content: AttachmentContent | undefined): ComposerAttachment | null {
+        const t: Translate = (key, values) => $_(key, { values });
+        switch (content?.kind) {
+            case "crypto_content": {
+                const transfer = content.transfer;
+                const token =
+                    transfer.kind === "pending" ? $cryptoLookup.get(transfer.ledger) : undefined;
+                if (transfer.kind !== "pending" || token === undefined) return null;
+                return (
+                    composerTransfer(
+                        content,
+                        token,
+                        $exchangeRatesLookupStore.get(transfer.ledger)?.toUSD,
+                        $allUsersStore.get(transfer.recipient),
+                        t,
+                    ) ?? null
+                );
+            }
+            case "prize_content_initial": {
+                const token = $cryptoLookup.get(content.transfer.ledger);
+                return token === undefined ? null : (composerPrize(content, token, t) ?? null);
+            }
+            case "p2p_swap_content_initial": {
+                const give = $cryptoLookup.get(content.token0.ledger);
+                const get = $cryptoLookup.get(content.token1.ledger);
+                if (give === undefined || get === undefined) return null;
+                const prices = {
+                    give: $exchangeRatesLookupStore.get(give.ledger)?.toUSD,
+                    get: $exchangeRatesLookupStore.get(get.ledger)?.toUSD,
+                };
+                return composerSwapOffer(content, give, get, prices, t);
+            }
+            default:
+                return null;
+        }
+    }
 
     // a direct chat with a bot takes text only (its direct-message command)
     const directBot = $derived(chat !== undefined && client.directChatWithBot(chat) !== undefined);
-
-    // what the + menu offers to pick from the device (following the reader's permissions here)
-    const attachKinds = $derived(
-        directBot ? [] : pickableAttachments($messagePermissionsForSelectedChatStore),
-    );
 
     // nothing is attached during an edit, or while a voice message is recorded or reviewed
     let voiceActive = $state(false);
@@ -494,6 +546,65 @@
         !directBot &&
             canAttachNow({ editing: draft?.editingEvent !== undefined, voiceActive }),
     );
+
+    // what the + menu offers (following the reader's permissions here): to pick from the device and
+    // the builders, all while something can be attached (`canAttachNow`), the ones that send (a
+    // poll, a meme) too: one sent mid-edit would reply to the edited message's reply
+    const attachKinds = $derived.by((): ComposerAttachKind[] => {
+        if (!attachable) return [];
+        const permitted = $messagePermissionsForSelectedChatStore;
+        return [
+            ...pickableAttachments(permitted),
+            ...composerBuilders(permitted, composerBuildersOff),
+        ];
+    });
+
+    // a builder picked from the + menu opens its dialog
+    function build(chatId: ChatIdentifier, builder: ComposerBuilder) {
+        switch (builder) {
+            case "poll":
+                screen.dialogs.open({ kind: "poll_builder", chatId });
+                break;
+            case "prize":
+                screen.dialogs.open({ kind: "prize_builder", chatId });
+                break;
+            case "swap":
+                // only a Diamond member makes an offer: anyone else gets the Diamond dialog
+                if (swapOfferStep($isDiamondStore, true) === "upgrade") {
+                    publish("upgrade");
+                } else {
+                    screen.dialogs.open({ kind: "swap_offer", chatId });
+                }
+                break;
+            case "memeFighter":
+                screen.dialogs.open({ kind: "meme_fighter", chatId });
+                break;
+            case "crypto":
+                // to the one being replied to, unless the user picks someone else
+                screen.dialogs.open({
+                    kind: "send_crypto",
+                    chatId,
+                    defaultReceiver: draft?.replyingTo?.sender?.userId,
+                });
+                break;
+        }
+    }
+
+    // the chip's Edit opens the staged payment's builder again, to change it
+    function editStaged(chatId: ChatIdentifier) {
+        const content = draftAttachment(draft);
+        switch (content?.kind) {
+            case "crypto_content":
+                screen.dialogs.open({ kind: "send_crypto", chatId, editing: content });
+                break;
+            case "prize_content_initial":
+                screen.dialogs.open({ kind: "prize_builder", chatId, editing: content });
+                break;
+            case "p2p_swap_content_initial":
+                screen.dialogs.open({ kind: "swap_offer", chatId, editing: content });
+                break;
+        }
+    }
 
     // (the composer says "Add a caption" itself while there's an attachment)
     const placeholder = $derived(
@@ -635,12 +746,19 @@
             if (outcome.kind !== "sent") throw new Error(outcome.kind);
             return;
         }
+        const taken = attachmentToSend(draftAttachment(draft), staged !== null);
+        if (taken.kind === "payment_not_shown") throw new Error(taken.kind);
+        const attachment = taken.attachment;
+        // a payment from an external wallet would need that wallet's approval first, which this
+        // tree doesn't ask for (its builders pay from the OpenChat wallet): never send it without,
+        // which would take the funds from the OpenChat wallet instead (GAPS.md)
+        if (externalWalletPayment(attachment) !== undefined) throw new Error("external_wallet");
         // the client mentions those typed as @username; the text captions an attachment
         const outcome = await client.sendMessage(
             context,
             text === "" ? undefined : text,
             detectMarkdown(text),
-            staged !== null ? draftAttachment(draft) : undefined,
+            attachment,
         );
         if (outcome.kind !== "posted") throw new Error(outcome.kind);
     }
@@ -1592,6 +1710,8 @@
                 attachment={staged}
                 {attachKinds}
                 onFile={attachable ? (file) => attachFile(chat.id, file) : undefined}
+                onBuild={(builder) => build(chat.id, builder)}
+                onEditAttachment={() => editStaged(chat.id)}
                 onRemoveAttachment={() =>
                     localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
                 onVoice={canRecord && voiceMimeType !== undefined

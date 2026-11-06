@@ -267,6 +267,50 @@ describe("prizes", () => {
             text: "[prize_content]",
         });
     });
+
+    const sending = () =>
+        message({
+            content: {
+                kind: "prize_content_initial",
+                diamondOnly: true,
+                lifetimeDiamondOnly: false,
+                uniquePersonOnly: false,
+                streakOnly: 0,
+                minChitEarned: 0,
+                endDate: BigInt(Date.now() + 86_400_000),
+                caption: "Good luck",
+                transfer: {
+                    kind: "pending",
+                    ledger: "icp",
+                    token: "ICP",
+                    recipient: "escrow",
+                    amountE8s: 30_000n,
+                    createdAtNanos: 0n,
+                },
+                prizes: [10_000n, 10_000n, 10_000n],
+                fees: 0n,
+                amount: 30_000n,
+            },
+        } as Partial<Message>);
+
+    // until it lands, the card as it will be, with nothing to claim yet
+    test("still being sent, show as the card it will be", () => {
+        expect(messageRow(sending(), "sending", ctx).message).toMatchObject({
+            kind: "prize",
+            sending: true,
+            canClaim: false,
+            winners: 3,
+            claimed: 0,
+            state: "open",
+            note: "Good luck",
+            token: { symbol: "ICP" },
+            gates: [{ label: expect.any(String) }],
+        });
+    });
+
+    test("that failed to send, show as text, which says so", () => {
+        expect(messageRow(sending(), "failed", ctx).message).toMatchObject({ kind: "text" });
+    });
 });
 
 describe("swap offers", () => {
@@ -312,6 +356,37 @@ describe("swap offers", () => {
             kind: "text",
             text: "[p2p_swap_content]",
         });
+    });
+
+    const sending = () =>
+        message({
+            sender: "me",
+            content: {
+                kind: "p2p_swap_content_initial",
+                token0: { symbol: "ICP", ledger: "icp", decimals: 8, fee: 10_000n },
+                token1: { symbol: "ICP", ledger: "icp", decimals: 8, fee: 10_000n },
+                token0Amount: 100_000_000n,
+                token1Amount: 300_000_000n,
+                caption: "Anyone?",
+                expiresIn: 86_400_000n,
+            },
+        } as Partial<Message>);
+
+    // until it lands, the card as it will be, with nothing to do yet
+    test("still being sent, show as the card it will be", () => {
+        expect(messageRow(sending(), "sending", ctx).message).toMatchObject({
+            kind: "swap",
+            sending: true,
+            canAct: false,
+            state: "open",
+            give: { amount: "1.00" },
+            get: { amount: "3.00" },
+            caption: "Anyone?",
+        });
+    });
+
+    test("that failed to send, show as text, which says so", () => {
+        expect(messageRow(sending(), "failed", ctx).message).toMatchObject({ kind: "text" });
     });
 });
 

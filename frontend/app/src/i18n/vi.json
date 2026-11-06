@@ -205,6 +205,9 @@
         "unlink": "Hủy liên kết",
         "unlinkFailed": "Không thể hủy liên kết tài khoản"
     },
+    "builders": {
+        "paymentRefused": "Không thể đính kèm. Hãy kiểm tra số tiền và số dư của bạn rồi thử lại."
+    },
     "cashtag": {
         "chartLabel": "Giá {symbol} trong 7 ngày qua",
         "change7d": "{change} trong 7 ngày",

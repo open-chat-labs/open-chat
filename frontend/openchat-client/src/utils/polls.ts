@@ -1,4 +1,4 @@
-import type { PollConfig, PollContent } from "@shared";
+import type { PollConfig, PollContent, TotalPollVotes } from "@shared";
 
 export function totalVotes(content: PollContent): number {
     if (content.votes.total.kind === "anonymous_poll_votes") {
@@ -112,4 +112,79 @@ export function pollVoteChange(
     const removed = current.find((i) => !next.includes(i));
     if (removed !== undefined) return { type: "delete", answerIndex: removed };
     return undefined;
+}
+
+/** The most answers a poll can have. */
+export const MAX_POLL_ANSWERS = 10;
+/** The longest a poll's question can be. */
+export const MAX_POLL_QUESTION_LENGTH = 250;
+/** The longest a poll's answer can be (the mobile app's, and the new UI's). */
+export const MAX_POLL_ANSWER_LENGTH = 75;
+
+/**
+ * A poll's answers as they'll be sent: trimmed, with the empty ones dropped. They're valid when
+ * there are 2 to 10 of them, none too long, and no two the same ignoring case.
+ */
+export function pollAnswers(answers: string[]): { answers: string[]; valid: boolean } {
+    const filled = answers.map((a) => a.trim()).filter((a) => a !== "");
+    const unique = new Set(filled.map((a) => a.toUpperCase()));
+    return {
+        answers: filled,
+        valid:
+            filled.length >= 2 &&
+            filled.length <= MAX_POLL_ANSWERS &&
+            filled.every((a) => a.length <= MAX_POLL_ANSWER_LENGTH) &&
+            unique.size === filled.length,
+    };
+}
+
+/**
+ * The votes a new poll starts with, which follow its settings: an anonymous poll's are counted per
+ * answer, a public one's name their voters, and a public one that hides its results until it ends
+ * holds only a total.
+ */
+export function newPollVotes(settings: {
+    anonymous: boolean;
+    showVotesBeforeEndDate: boolean;
+}): TotalPollVotes {
+    if (settings.anonymous) return { kind: "anonymous_poll_votes", votes: {} };
+    if (settings.showVotesBeforeEndDate) return { kind: "visible_poll_votes", votes: {} };
+    return { kind: "hidden_poll_votes", votes: 0 };
+}
+
+/** A poll as a builder holds it. */
+export type NewPoll = {
+    /** None (or blank) for a poll with no question (the old desktop builder allows one). */
+    question: string | undefined;
+    /** As typed: `pollAnswers` keeps the ones sent. */
+    answers: string[];
+    anonymous: boolean;
+    showVotesBeforeEndDate: boolean;
+    allowMultipleVotesPerUser: boolean;
+    allowUserToChangeVote: boolean;
+    /** How long it runs once it's sent; none for a poll that never ends. */
+    durationMs: number | undefined;
+};
+
+/**
+ * The poll to send, its end stamped from `now` (when it's sent, not when its duration was picked)
+ * and its answers as `pollAnswers` keeps them. A multiple-choice poll always lets its voters
+ * change their votes (`allowsVoteChange`).
+ */
+export function newPollContent(poll: NewPoll, now: number): PollContent {
+    const question = poll.question?.trim();
+    return {
+        kind: "poll_content",
+        votes: { total: newPollVotes(poll), user: [] },
+        config: {
+            allowMultipleVotesPerUser: poll.allowMultipleVotesPerUser,
+            allowUserToChangeVote: allowsVoteChange(poll),
+            text: question === undefined || question === "" ? undefined : question,
+            showVotesBeforeEndDate: poll.showVotesBeforeEndDate,
+            endDate: poll.durationMs === undefined ? undefined : BigInt(now + poll.durationMs),
+            anonymous: poll.anonymous,
+            options: pollAnswers(poll.answers).answers,
+        },
+        ended: false,
+    };
 }

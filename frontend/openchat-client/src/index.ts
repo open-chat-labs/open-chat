@@ -191,13 +191,20 @@ export { formatTimeRemaining } from "./utils/time";
 export {
     allowsVoteChange,
     getVotersForAnswer,
+    MAX_POLL_ANSWER_LENGTH,
+    MAX_POLL_ANSWERS,
+    MAX_POLL_QUESTION_LENGTH,
+    newPollContent,
+    newPollVotes,
     percentageOfVote,
+    pollAnswers,
     pollVoteChange,
     pollView,
     totalVotes,
     voteCount,
     votedFor,
     votesForAnswer,
+    type NewPoll,
     type PollReader,
     type PollView,
 } from "./utils/polls";
@@ -231,5 +238,32 @@ export {
     swapLabels,
     swapTakenBy,
 } from "./utils/swaps";
+export { externalWalletPayment, type ExternalWalletPayment } from "./utils/draftPayment";
+export {
+    generatePrizes,
+    MAX_PRIZE_WINNERS,
+    newPrizeContent,
+    PRIZE_FEE_PERCENT,
+    prizeCosts,
+    prizeMaximum,
+    prizeRecipient,
+    validPrizeWinners,
+    type NewPrize,
+    type PrizeCosts,
+    type PrizeDiamond,
+    type PrizeDistribution,
+} from "./utils/prizeBuilder";
+export {
+    MAX_SWAP_OFFER_EXPIRY_MS,
+    newSwapOfferContent,
+    swapOfferConfirmation,
+    swapOfferCosts,
+    swapOfferExpiry,
+    swapOfferMaximum,
+    swapOfferStep,
+    type NewSwapOffer,
+    type SwapOfferCosts,
+    type SwapOfferStep,
+} from "./utils/swapOffer";
 export { toDateString, toDatetimeString, toDayString, toMonthString } from "./utils/date";
 export * from "./utils/url";

@@ -21,8 +21,9 @@
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { cleanAmount, parseAmount } from '../../lib/amount';
-  import { onMount } from 'svelte';
-  import type { Prize, PrizeDraft } from '../../lib/types';
+  import { onDestroy, onMount, untrack } from 'svelte';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
+  import type { Prize, PrizeDraft, PrizeGateKind } from '../../lib/types';
   import Button from '../../lib/components/Button.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
   import PrizeMessage from '../../lib/components/PrizeMessage.svelte';
@@ -61,16 +62,28 @@
     z?: number;
     /** A previous onAttach value, to edit it. */
     initial?: Prize | null;
+    /** What a new prize starts from (e.g. the settings last used); `initial` wins when editing. */
+    defaults?: Partial<PrizeDraft>;
+    /** The claim restrictions offered, in the dialog's order (all by default). */
+    restrictions?: PrizeGateKind[];
+    /** The host's prices for `amount` among `winners`: every fee on top of the amount, and the least the amount
+     *  can be. Without it a fee per winner plus one for the fund, and `minPer` a winner. */
+    pricing?: (token: PrizeToken, amount: number, winners: number) => { fees: number; min: number };
     onAttach?: (prize: Prize) => void;
     onClose?: () => void;
   }
 
-  let { tokens, z = 80, initial = null, onAttach, onClose }: Props = $props();
+  let { tokens, z = 80, initial = null, defaults, restrictions, pricing, onAttach, onClose }: Props = $props();
+  // closing plays the shared exit before the host unmounts it
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
+  const close = () => flow.dismiss(onClose);
   const t = useT();
   const i18n = getI18n();
   const K = 'ui.prizeBuilderDialog.';
 
-  const start: PrizeDraft = { tok: tokens[0].symbol, amt: '', win: '20', dur: 2, even: false, gates: {}, streak: 7, chit: 10000, ...initial?.draft };
+  const start: PrizeDraft = untrack(() => ({ tok: tokens[0].symbol, amt: '', win: '20', dur: 2, even: false, gates: {}, streak: 7, chit: 10000, ...defaults, ...initial?.draft }));
+  const offered = $derived(restrictions ? GATES.filter((g) => restrictions.includes(g.k)) : GATES);
   let tok = $state(start.tok);
   let amt = $state(start.amt);
   let win = $state(start.win);
@@ -80,6 +93,8 @@
   let streak = $state(start.streak);
   let chit = $state(start.chit);
   let pick = $state<'chit' | 'streak' | null>(null);
+  // the picker last opened, so its chips stay in place while it shrinks closed
+  let shownPick = $state<'chit' | 'streak' | null>(null);
   let tokOpen = $state(false);
   let row = $state<'win' | 'dur' | 'who' | null>(null);
   let vw = $state(typeof window === 'undefined' ? 1200 : window.innerWidth);
@@ -88,8 +103,9 @@
   const T = $derived(tokens.find((t) => t.symbol === tok) ?? tokens[0]);
   const a = $derived(parseAmount(amt));
   const w = $derived(parseInt(win, 10) || 0);
-  const fee = $derived(T.fee * (Math.max(w, 1) + 1));
-  const min = $derived(T.minPer * Math.max(w, 1));
+  const priced = $derived(pricing?.(T, a, Math.max(w, 1)));
+  const fee = $derived(priced ? priced.fees : T.fee * (Math.max(w, 1) + 1));
+  const min = $derived(priced ? priced.min : T.minPer * Math.max(w, 1));
   const max = $derived(Math.max(0, T.bal - fee));
   const F = (n: number) => fmt(n, T.dp);
   const pickAmount = (p: 'chit' | 'streak', n: number) => t(PICKS[p].amount, { count: n, n: PICKS[p].short(n) });
@@ -107,7 +123,7 @@
   );
   const reasonText = $derived(reason ? t(K + reason, { count: w, min: F(min), max: F(max), symbol: T.symbol }) : '');
   const ok = $derived(!reason);
-  const gateOn = $derived(GATES.filter((g) => gates[g.k]));
+  const gateOn = $derived(offered.filter((g) => gates[g.k]));
   const gateLabel = (g: (typeof GATES)[number]) =>
     g.k === 'streak'
       ? t(K + 'gateStreak', { count: streak })
@@ -146,6 +162,7 @@
     }
     if (g.pick) {
       pick = pick === g.pick ? null : g.pick;
+      if (pick) shownPick = pick;
       return;
     }
     const n: Record<string, boolean | number> = { ...gates, [g.k]: true };
@@ -191,7 +208,7 @@
     if (e.key === 'Escape') {
       e.stopPropagation();
       if (tokOpen) tokOpen = false;
-      else onClose?.();
+      else close();
     } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       attach();
@@ -206,12 +223,12 @@
 
 <svelte:window bind:innerWidth={vw} />
 
-<div class="layer" style:z-index={z}>
-  <div class="scrim" onclick={() => onClose?.()} aria-hidden="true"></div>
+<div class="layer" class:closing={flow.closing} style:z-index={z}>
+  <div class="scrim" onclick={() => close()} aria-hidden="true"></div>
   <div class="dialog" class:wide data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label={t(initial ? K + 'editTitle' : K + 'title')} onkeydown={onKey}>
     <div class="head">
       <span class="title">{t(initial ? K + 'editTitle' : K + 'title')}</span>
-      <IconButton variant="ghost" icon="close" label="ui.common.close" onClick={() => onClose?.()} />
+      <IconButton variant="ghost" icon="close" label="ui.common.close" onClick={() => close()} />
     </div>
     <div class="body">
       <div class="form">
@@ -231,7 +248,9 @@
             placeholder="0"
             aria-label={t(K + 'totalAmount')}
           />
-          <span class="amount-hint" class:warn={!quiet}>{ok ? t(K + 'feeAdded', { fee: F(fee), symbol: T.symbol, count: Math.max(w, 1) + 1 }) : reasonText}</span>
+          <span class="amount-hint" class:warn={!quiet}
+            >{ok ? (priced ? t(K + 'feesAdded', { fee: F(fee), symbol: T.symbol }) : t(K + 'feeAdded', { fee: F(fee), symbol: T.symbol, count: Math.max(w, 1) + 1 })) : reasonText}</span
+          >
           <QuickAmountChips size="sm" onSelect={(f) => (amt = String(Number((max * f).toFixed(T.dp))))} />
         </div>
         <div class="rows">
@@ -252,50 +271,66 @@
                 <span class="row-value">{r.value}</span>
                 <span class="row-chevron" class:open={row === r.k}></span>
               </div>
-              {#if row === r.k && r.k === 'win'}
-                <div class="panel column">
-                  <div class="stepper">
-                    <button class="step" onclick={() => (win = String(Math.max(1, w - 1)))} aria-label={t(K + 'fewerWinners')}>−</button>
-                    <input value={win} oninput={(e) => (win = e.currentTarget.value.replace(/\D/g, '').slice(0, 4))} inputmode="numeric" aria-label={t(K + 'numberOfWinners')} />
-                    <button class="step" onclick={() => (win = String(Math.min(1000, w + 1)))} aria-label={t(K + 'moreWinners')}>+</button>
+              {#if r.k === 'win'}
+                <div class="grow" class:open={row === r.k}>
+                  <div class="clip">
+                    <div class="panel column">
+                      <div class="stepper">
+                        <button class="step" onclick={() => (win = String(Math.max(1, w - 1)))} aria-label={t(K + 'fewerWinners')}>−</button>
+                        <input value={win} oninput={(e) => (win = e.currentTarget.value.replace(/\D/g, '').slice(0, 4))} inputmode="numeric" aria-label={t(K + 'numberOfWinners')} />
+                        <button class="step" onclick={() => (win = String(Math.min(1000, w + 1)))} aria-label={t(K + 'moreWinners')}>+</button>
+                      </div>
+                      <span class="range">{t(K + 'winnersRangeHint')}</span>
+                      <Toggle label={t(K + 'splitEvenly')} help={t(K + 'splitEvenlyHelp')} on={even} onChange={(v) => (even = v)} />
+                    </div>
                   </div>
-                  <span class="range">{t(K + 'winnersRangeHint')}</span>
-                  <Toggle label={t(K + 'splitEvenly')} help={t(K + 'splitEvenlyHelp')} on={even} onChange={(v) => (even = v)} />
                 </div>
               {/if}
-              {#if row === r.k && r.k === 'dur'}
-                <div class="panel wrap">
-                  {#each DURS as d, j}
-                    <button class="choice" class:on={j === dur} onclick={() => (dur = j)} aria-pressed={j === dur}>{t(d[0])}</button>
-                  {/each}
+              {#if r.k === 'dur'}
+                <div class="grow" class:open={row === r.k}>
+                  <div class="clip">
+                    <div class="panel wrap">
+                      {#each DURS as d, j}
+                        <button class="choice" class:on={j === dur} onclick={() => (dur = j)} aria-pressed={j === dur}>{t(d[0])}</button>
+                      {/each}
+                    </div>
+                  </div>
                 </div>
               {/if}
-              {#if row === r.k && r.k === 'who'}
-                <div class="panel column gap10">
-                  <div class="chips">
-                    {#each GATES as g}
-                      {@const on = !!gates[g.k]}
-                      <button class="choice gate" class:on onclick={() => toggleGate(g)} aria-pressed={on}>
-                        <span class="gate-icon" style:mask="var(--icon-{g.icon}) center/contain no-repeat" style:-webkit-mask="var(--icon-{g.icon}) center/contain no-repeat"></span>{on
-                          ? gateLabel(g)
-                          : t(g.label)}<span
-                          class="gate-trail"
-                          style:mask="var(--icon-{on ? 'close' : g.pick ? 'chevron-down' : 'plus'}) center/contain no-repeat"
-                          style:-webkit-mask="var(--icon-{on ? 'close' : g.pick ? 'chevron-down' : 'plus'}) center/contain no-repeat"
-                        ></span>
-                      </button>
-                    {/each}
-                  </div>
-                  {#if pick}
-                    <div class="picker">
-                      <span class="picker-title">{t(PICKS[pick].title)}</span>
+              {#if r.k === 'who'}
+                <div class="grow" class:open={row === r.k}>
+                  <div class="clip">
+                    <div class="panel column gap10">
                       <div class="chips">
-                        {#each PICKS[pick].opts as n}
-                          <button class="choice small" class:on={n === (pick === 'chit' ? chit : streak)} onclick={() => choose(n)}>{t(K + 'orMore', { amount: pickAmount(pick, n) })}</button>
+                        {#each offered as g}
+                          {@const on = !!gates[g.k]}
+                          <button class="choice gate" class:on onclick={() => toggleGate(g)} aria-pressed={on}>
+                            <span class="gate-icon" style:mask="var(--icon-{g.icon}) center/contain no-repeat" style:-webkit-mask="var(--icon-{g.icon}) center/contain no-repeat"></span>{on
+                              ? gateLabel(g)
+                              : t(g.label)}<span
+                              class="gate-trail"
+                              style:mask="var(--icon-{on ? 'close' : g.pick ? 'chevron-down' : 'plus'}) center/contain no-repeat"
+                              style:-webkit-mask="var(--icon-{on ? 'close' : g.pick ? 'chevron-down' : 'plus'}) center/contain no-repeat"
+                            ></span>
+                          </button>
                         {/each}
                       </div>
+                      <div class="grow picker-grow" class:open={!!pick}>
+                        <div class="clip">
+                          {#if shownPick}
+                            <div class="picker">
+                              <span class="picker-title">{t(PICKS[shownPick].title)}</span>
+                              <div class="chips">
+                                {#each PICKS[shownPick].opts as n}
+                                  <button class="choice small" class:on={n === (shownPick === 'chit' ? chit : streak)} onclick={() => choose(n)}>{t(K + 'orMore', { amount: pickAmount(shownPick, n) })}</button>
+                                {/each}
+                              </div>
+                            </div>
+                          {/if}
+                        </div>
+                      </div>
                     </div>
-                  {/if}
+                  </div>
                 </div>
               {/if}
             </div>
@@ -330,7 +365,7 @@
     </div>
     <div class="foot">
       <span class="foot-text" class:quiet={reason === 'enterAmount'} class:warn={!quiet}>{ok ? t(K + 'totalInclFees', { total: F(total), symbol: T.symbol }) : reasonText}</span>
-      <Button label="ui.common.cancel" variant="ghost" onClick={() => onClose?.()} />
+      <Button label="ui.common.cancel" variant="ghost" onClick={() => close()} />
       <Button label={initial ? K + 'update' : K + 'attach'} disabled={!ok} onClick={attach} />
     </div>
     {#if tokOpen}
@@ -581,6 +616,38 @@
 
   .row-chevron.open {
     transform: rotate(180deg);
+  }
+
+  /* a row's panel (and the gate picker) grows open and shrinks closed; hidden once closed, so it leaves the tab order */
+  .grow {
+    display: grid;
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    transition:
+      grid-template-rows var(--duration-base) var(--ease-out),
+      visibility 0s linear var(--duration-base);
+
+    &.open {
+      grid-template-rows: 1fr;
+      visibility: visible;
+      transition:
+        grid-template-rows var(--duration-base) var(--ease-out),
+        visibility 0s;
+    }
+  }
+
+  .clip {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* the panel's gap above the picker goes inside it, so a closed picker takes no room */
+  .picker-grow {
+    margin-top: -10px;
+  }
+
+  .picker-grow .picker {
+    margin-top: 10px;
   }
 
   .panel {
@@ -860,5 +927,27 @@
   .sheet-bal {
     font: 500 13px/1 var(--font-mono);
     color: var(--ink-3);
+  }
+
+  /* the library's shared dialog motion (global.css): the veil fades and the card rises in, and both play the
+     exit while the flow is closing (by hand: the export's builders had none) */
+  .scrim {
+    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
+  }
+
+  .dialog {
+    animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
+  }
+
+  .layer.closing {
+    pointer-events: none;
+
+    .scrim {
+      animation: oc-veil-out 170ms var(--ease-standard) both;
+    }
+
+    .dialog {
+      animation: oc-dlg-out 170ms var(--ease-standard) both;
+    }
   }
 </style>

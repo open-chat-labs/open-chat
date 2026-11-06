@@ -205,6 +205,9 @@
         "unlink": "Scollega",
         "unlinkFailed": "Impossibile scollegare l'account"
     },
+    "builders": {
+        "paymentRefused": "Impossibile allegarlo. Controlla l'importo e il tuo saldo, poi riprova."
+    },
     "cashtag": {
         "chartLabel": "Prezzo di {symbol} negli ultimi 7 giorni",
         "change7d": "{change} in 7 giorni",

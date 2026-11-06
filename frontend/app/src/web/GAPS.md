@@ -172,7 +172,9 @@ design export needs. Each entry says where it came up.
   amount, so a win says "You won". There's no spinner while a claim is on its way (the old trees'
   `claimsStore`), and `PrizeMessage`'s confetti fires on the click, before the claim lands. How long
   it has left is worked out when the row is made and doesn't count down. A prize still being sent
-  (`prize_content_initial`), and one in a ledger the registry doesn't carry, stay text bubbles. No
+  (`prize_content_initial`) shows as the card it will be, with "Sending prize…" where Claim would
+  go (a failed one stays a text bubble, which shows the failure); one in a ledger the registry
+  doesn't carry stays a text bubble. No
   reactions, quote or thread yet.
 - **Thread replies**: `ThreadPanel` renders replies with no react / menu / reply / edit handlers.
 - **Composer banner** (by hand, 8b): `ComposerBar` takes `onBannerAction`, passed to `Banner`'s
@@ -180,8 +182,8 @@ design export needs. Each entry says where it came up.
   the app uses it yet.
 - **Composer "+" menu and media tray** (by hand, 5c, to take back to the design export):
   `MessageComposer` (and `ComposerBar`) take `attachKinds`, what the "+" menu offers (all by
-  default, no "+" with none): the app offers "Photo or video" and "File" until 5d's builders
-  land, and only where the chat lets the reader send them. The media tray's "add more" tile shows
+  default, no "+" with none): the app offers "Photo or video", "File" and the builders it has
+  (5d), each only where the chat lets the reader send what it makes. The media tray's "add more" tile shows
   only with `onAddMedia`: the app sends one photo or video a message (`AttachmentContent` holds
   one), so it gives none. The design's tray takes up to 10, which the backend has no message for.
 - **Composer voice format and limit** (by hand, 5c, to take back to the design export):
@@ -191,6 +193,26 @@ design export needs. Each entry says where it came up.
   holds that much, saying so ("Recording stopped at the size limit."). Without them it records
   as before. `onVoiceActive` tells the host when a take starts and when it's over (sent,
   deleted, or the composer gone), so it holds back attachments meanwhile.
+- **The "+" builders, by hand** (5d, to take back to the design export):
+  - `SendCryptoDialog` takes `to`, the member picked to start with (the one being replied to),
+    where the design starts with no one picked.
+  - `PrizeBuilderDialog` takes `pricing` (the host's fees and minimum for an amount among its
+    winners: the design priced `fee x (winners + 1)`, with no 5% and no approval fee, and its hint
+    then says "Fees of … are added on top", `feesAdded`), `defaults` (what a new prize starts
+    from: the settings last used) and `restrictions` (those offered: the app leaves out
+    "Authenticated", which the backend no longer has).
+  - `SwapOfferDialog` takes `depositFees` (the design priced two fees, with no approval fee), and
+    its "locks … incl. 2 fees" lines now say "incl. fees" (`hint`, `locks`). It has no review
+    step: the app confirms in a `DialogShell` of its own.
+  - To look into (5d testing): the swap offer's UI, from `SwapOfferDialog` to the confirmation it
+    hands over to before the offer is attached, could be nicer. The confirmation in particular is a
+    plain `DialogShell` of the app's own (the design has no review step), and the two don't read
+    as one flow yet. A design pass on both.
+  - Not done by hand, for the design export: `MemeFighterDialog` builds memes from templates
+    the app doesn't have (the app keeps the Meme Fighter maker's frame); none of the payment
+    dialogs has an external wallet picker (the old `SourceWalletSelector`, and the approval fee
+    it shows); the dialogs' amounts are `number`s, so a balance past 2^53 units shows rounded
+    (what's attached is read from the typed text); their tokens are told apart by symbol.
 - **Composer mention list** (by hand, 5c, to take back to the design export, which has no mention
   picker): `MessageComposer` (and `ComposerBar`) take `onMentionQuery` (the "@word" at the caret as
   it changes, `mentionQuery.ts`, spec'd) and `mentions` (`ComposerMention`: the host's candidates
@@ -1152,9 +1174,9 @@ design export needs. Each entry says where it came up.
   public poll shows no voters' avatars and has no "View votes" list yet (the old mobile
   `PollPublicVotes`). How long it has left is worked out when the row is made (3d, 5h, 12m), and
   doesn't count down. No tick, reactions, quote or thread yet, and polls in threads aren't wired.
-  The library's `PollBuilderDialog` (5b's composer) still offers "lock votes" with multiple
-  choice, which the backend ignores; when it's wired, send `allowsVoteChange` as the old builders
-  do.
+  The library's `PollBuilderDialog` still offers "lock votes" with multiple choice, which the
+  backend ignores: the poll is sent with `allowsVoteChange` (`newPollContent`, 5d), as the old
+  builders send it, so a multiple-choice poll's votes can always change whatever was picked.
 - **Swap offers** (`features/conversation`, 5a): a swap offer shows as `SwapOffer`, read from the
   reader's side. `SwapOffer` takes `pending` and `cancelled` states by hand (the design had only
   open, done and expired). Its sender can Cancel and anyone else Accept, only while it's open
@@ -1165,7 +1187,9 @@ design export needs. Each entry says where it came up.
   (an approval popup) and a MultiUser user's own wallet aren't offered yet. The old trees' details
   view (the escrow transfers, `P2PSwapProgress`) and who took it aren't shown. The offer's message
   shows as plain text under the card (`SwapOffer` takes `caption` and `canAct` by hand: no action
-  while previewing). Time left is worked out when the row is made. No tick, reactions, quote or thread yet, and swaps in threads aren't
+  while previewing). An offer still being sent (`p2p_swap_content_initial`) shows as the card it
+  will be, with "Sending offer…" where the action would go (`sending`, by hand; a failed one stays
+  a text bubble, which shows the failure). Time left is worked out when the row is made. No tick, reactions, quote or thread yet, and swaps in threads aren't
   wired.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
@@ -1179,8 +1203,8 @@ design export needs. Each entry says where it came up.
   message offers a private reply, which would go to the bot. The client marks the viewer's own
   read (`isOwnMessage`), so that part needs nothing here.
 - **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text first; files,
-  media, voice and the @mention picker came with 5c (below). GIFs and the "+" menu's builders are
-  still to come (`MessageComposer` hides the GIF tab without its handler). There's no rich-text
+  media, voice and the @mention picker came with 5c, the "+" menu's builders with 5d (below).
+  GIFs are still to come (`MessageComposer` hides the GIF tab without its handler). There's no rich-text
   editor (the old one showed
   markdown as it was typed). The old desktop entry's link-count note ("Link previews are hidden
   for messages with more than 5 links", `excessiveLinksNote`) isn't carried over: it can't show
@@ -1217,9 +1241,9 @@ design export needs. Each entry says where it came up.
   nothing can be attached is refused, never left to the browser to open in the app's place. What
   the "+" menu and the mic offer follows the reader's permissions as they change
   (`messagePermissionsForSelectedChatStore`), and the voice limit a Diamond membership bought
-  meanwhile (`maxMediaSizes($isDiamondStore)`). Not yet: 5d's prize, transfer and swap offer, and a puzzle result, aren't staged,
-  and the composer doesn't send them (`TODO(phase 5, 5d)`); the mobile app's native recent-media
-  strip waits for the narrow pass.
+  meanwhile (`maxMediaSizes($isDiamondStore)`). The "+" builders' payments are staged too (5d,
+  below). Not yet: a puzzle result isn't staged, and the composer doesn't send it; the mobile
+  app's native recent-media strip waits for the narrow pass.
 - **Voice messages in the composer** (5c): the composer's own recorder (record, then review: play
   back, seek, delete or send), where the old trees' mic staged the clip as an attachment to send
   with a caption: here it goes straight out (`sendVoiceMessage`: the client makes the audio
@@ -1252,13 +1276,86 @@ design export needs. Each entry says where it came up.
     in a bot DM, a bot that takes no direct messages gets the composer's "couldn't send", not the
     old `bots.direct.warning`. The design has none of it;
   - GIFs (the library's results, above);
-  - the "+" menu's builders (`TODO(phase 5, 5d)`): poll, prize, send crypto, swap offer, Meme
-    Fighter, hidden in the app-store builds as in the mobile app (`disableSendCryptoFeature`,
-    `disableP2PSwapFeature`, `disableCreatePrizeFeature`). A draft that pays from an external
-    wallet must be approved by that wallet before it's sent (the mobile entry's
-    `externalWalletDraft`, to move to `@client`, a swap offer's allowance being the amount plus
-    two fees); until then the composer neither stages nor sends a prize, transfer or swap offer;
   - the emoji autocomplete (`:smile`) both old editors had (`EmojiAutocompleter`).
+- **The "+" builders** (5d, `features/builders`): each a local dialog the composer's "+" menu
+  opens (`build` in the conversation), offered where the chat lets the reader send what it makes
+  (`composerBuilders`, `@src/logic/composer`), not in a bot DM, and not the payments in the
+  app-store builds (`composerBuildersOff`: `disableSendCryptoFeature`, `disableP2PSwapFeature`,
+  `disableCreatePrizeFeature`), as in the mobile app.
+  - **Payments** (a transfer, a prize, a swap offer) are attached to the chat's draft, the mobile
+    app's way, and taken when the message is sent with its caption (`sendMessage`, which asks
+    for the PIN then): an approval isn't spent on a draft the user drops. Every builder is offered
+    only while something can be attached (`canAttachNow`: not during an edit or a voice take), the
+    ones that send too, since one sent mid-edit would reply to the edited message's reply. The
+    composer stages each as its chip (`composerTransfer` …), whose Edit opens its builder again
+    on it, and × drops it. One whose token has left the registry has no chip: its send is refused
+    (`attachmentToSend`) rather than the caption going without it. They pay from the OpenChat wallet only: the old
+    builders' external wallet picker (`SourceWalletSelector`, and the approval at send) has no
+    design and isn't offered. A draft that does carry an external wallet (`fromWallet`) is never
+    sent from here without that wallet's approval: the composer says it couldn't send
+    (`externalWalletPayment`, `@client`, which the mobile entry now uses to ask for it). With no
+    token held, a builder lists none, where the old ones offered to top up.
+  - **Poll** (`PollBuilderDialog`, `poll_builder`): published from the dialog, as both old
+    builders did, through `sendContent` (the client: settles once the poll shows in the chat,
+    replying to the draft's reply, which it clears, and leaving the rest of the draft, its text
+    and any payment staged; a refusal keeps the dialog open with its error). The poll is
+    made by `newPollContent` (`@client`, which both old builders now use too): the question and
+    up to 10 answers of up to 75 characters (the mobile app's; the old desktop builder kept its
+    own 50), unique ignoring case (`pollAnswers`), the vote kind from its settings
+    (`newPollVotes`), the end stamped as it's sent. The design's "Poll sent · Undo" toast isn't
+    shown: a sent poll can't be taken back. As in the old trees, sending it clears the chat's
+    draft (`sendMessageWithContent`), while the composer's text box keeps what it showed.
+  - **Send crypto** (`SendCryptoDialog`, `send_crypto`): the tokens held, the one last sent first
+    (else ICP, as the old builders start), each costing the transfer's fee and its approval's,
+    at least 10 transfer fees (`builderTokens`). In a DM it goes to the other user; in a group the
+    one being replied to is picked to start with (`SendCryptoDialog`'s `to`, by hand), else the
+    user picks from the chat's members, never themselves or a bot (`CryptoTransferForm`, shared
+    with both old builders, invariant 5). What was typed is read with `validateTokenInput`
+    (`attachTyped`: exactly the typed amount, in a token the registry carries, within the
+    balance less the fees) and refused with a toast where the library's own check let through
+    what the app's doesn't (`builders.paymentRefused`). The members offered are those the chat
+    holds (a big group or channel holds some), with no avatar: `SendCryptoDialog` draws an
+    initial. The library tells tokens apart by symbol, so of two sharing one only the first is
+    offered.
+  - **Prize** (`PrizeBuilderDialog`, `prize_builder`; not in a DM): the tokens held, the one last
+    sent first. It costs what both old builders charged (`prizeCosts`, `@client`, which they now
+    use: the fund's transfer and its approval, a transfer fee per winner and OpenChat's 5%), at
+    least 100 transfer fees a winner, within the balance less those (`prizeMaximum`), shown
+    through the dialog's `pricing` (by hand). 1 to 1000 winners. The fund is split by
+    `newPrizeContent` (`@client`, from both old builders: equal or random shares adding up to the
+    fund exactly, rounding to the first, none below the transfer fee), its end stamped when it's
+    attached, as the mobile app stamps it (the old desktop builder sent at once). The split,
+    duration and restrictions start from the last prize's (`PrizeForm`, `logic/prize`, which both
+    old builders now use: `openchat_prize_config`, read however a tree wrote it, `parsePrizeConfig`
+    — the mobile builder's remembered duration was a bigint written as a string, which then ran
+    into the end date's digits). Unique-person gating stays off; "Authenticated" isn't offered
+    (`restrictions`, by hand: a prize can't require signing in again since #10425). Durations:
+    the dialog's 1h to 90d (the mobile app's range), where the old desktop builder offered 1h,
+    1d, 1w (it now starts at a day for another). With no token held the dialog lists none and
+    can't attach (`TODO(design)`).
+  - **Swap offer** (`SwapOfferDialog`, `swap_offer`): for Diamond members; anyone else picking it
+    gets the Diamond dialog (`swapOfferStep`, `@client`, which both old builders now use). Any
+    token can be asked for, one held offered. It costs the deposit's two transfer fees and the
+    approval's (`swapOfferCosts`, `@client`, both old builders' too), through the dialog's
+    `depositFees` (by hand; the design priced two fees), at least 10 fees, within the balance
+    less those, open for at most 90 days (`swapOfferExpiry`, `P2P_SWAP_MAX_EXPIRY_DAYS`). As in
+    the mobile app it's confirmed before it's attached, with the old builders' words
+    (`swapOfferConfirmation`: what it takes from the wallet, fees and all): the confirmation
+    (`DialogShell`, `TODO(design)`: the design has no review step) takes the builder's place over
+    the same backdrop, its back arrow returning to the offer as it was filled in, × or the
+    backdrop closing both (`SwapOfferForm`, `logic/wallet`, which reads what was typed with
+    `validateTokenInput`). Then it's attached (`newSwapOfferContent`).
+  - **Meme Fighter** (`meme_fighter`): the Meme Fighter maker in a frame, as both old builders
+    have it (`startMemeMaker`: only the maker's origin, from its own frame, is listened to),
+    styled with the theme's surface, ink and accent (`memeMakerStyle`); the meme made is shown,
+    to send or to start again from, and sent from the dialog (`sendContent`) at the size it shows
+    at (`memeFighterContent`, which both old builders now use). The library's
+    `MemeFighterDialog` isn't used: it renders a PNG from host `templates`, which the app doesn't
+    have (the maker has its own), and hands back an image to stage in the media tray, where a
+    Meme Fighter meme is sent by its URL. The frame sits in a `DialogShell` (`TODO(design)`: the
+    design has no frame for the maker).
+  - Not yet: paying from an external wallet (above); a thread's composer offers no builders
+    (threads aren't wired); the design's "Poll sent · Undo" toast.
 - **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
   edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text
