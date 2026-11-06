@@ -382,7 +382,7 @@
   }
 </script>
 
-<div class="group">
+<div class="group" class:raised={hover >= 0}>
   {#if showAvatar}
     {#if onSenderClick}
       <span class="avatar sender" onclick={(e) => onSenderClick(e.currentTarget)} onkeydown={(e) => senderKey(e)} role="button" tabindex="0" aria-label={senderName}
@@ -525,6 +525,13 @@
   .group {
     position: relative;
     z-index: 0;
+
+    /* a message's hover bar sits over the message before it, which a chat list laid out newest
+       first (column-reverse: VirtualChatList) puts after it in the document, in its own group's
+       stacking context: the group showing a bar comes forward so nothing paints over it */
+    &.raised {
+      z-index: 1;
+    }
     width: 100%;
     box-sizing: border-box;
     display: flex;

@@ -10,6 +10,7 @@ import {
     messageStatus,
     senderColor,
     untilNextDay,
+    withFields,
     type ConversationContext,
 } from "./conversation.adapter";
 
@@ -611,5 +612,32 @@ describe("the text the composer starts from", () => {
             }),
         ).toBe("hello");
         expect(composerStartText({ editingEvent: editing, textContent: "old" })).toBe("");
+    });
+});
+
+// a row's messages are kept between renders: a voice message's playback must stay live in them
+describe("composing a message with more fields", () => {
+    test("keeps its getters live, and adds the fields", () => {
+        let seconds = 0;
+        const voice = {
+            id: "m1",
+            get progress() {
+                return seconds / 10;
+            },
+        };
+
+        const composed = withFields(voice, { id: "m2" });
+        expect(composed.id).toBe("m2");
+        expect(composed.progress).toBe(0);
+        seconds = 5;
+        expect(composed.progress).toBe(0.5);
+    });
+
+    test("doesn't change the message it's given", () => {
+        const message = { id: "m1", menu: false };
+        const composed = withFields(message, { menu: true });
+
+        expect(composed.menu).toBe(true);
+        expect(message.menu).toBe(false);
     });
 });

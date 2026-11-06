@@ -157,6 +157,7 @@
         messageStatus,
         senderColor,
         untilNextDay,
+        withFields,
         type ConversationContext,
         type MediaContent,
         type MessageRow,
@@ -785,14 +786,15 @@
         const message = withBody
             ? ({ ...row.message, body } as GroupMessage)
             : withActions(row, evt.event);
+        // kept between renders, so composed without reading a voice message's live fields
+        // (withFields): a spread would freeze its playback
         const messages = [
-            {
-                ...message,
+            withFields(message, {
                 ...previewRemoval(evt),
                 ...retryFor(row.message, offers.retry),
                 menu: offers.menu,
                 swipeLeft: offers.swipeLeft,
-            } as GroupMessage,
+            }),
         ];
         groupMessages.set(row, { offers: key, messages });
         return messages;

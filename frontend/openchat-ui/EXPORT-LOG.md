@@ -640,3 +640,7 @@
 
 ## 2026-11-05 — MessageComposer: the voice take's state for the host (5c review, PR #10420), by hand
 - `onVoiceActive(active)`: true when a take starts (recording, then its review), false once it's over (sent, deleted, or the composer unmounted mid-take). The app holds back attachments meanwhile, since sending the take posts the draft. `ComposerBar` passes it through. `meta.json` updated. Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-06 — VoiceMessage's sent look and MessageGroup's hover bar, by hand
+- `VoiceMessage`: `side="sent"` was the received bubble with mirrored corners. It's now the sent bubble's colours (`--bubble-send-bg`, `--bubble-text` / `--bubble-text-soft` for the clock, the play button, the speed chip and the waveform's played bars) with the same shape as a received one, as ChatBubble's: every bubble is left-aligned. `mirror` (new) flips the corners for a right-aligned layout (mobile, native). The design export has no sent variant for it. `meta.json` updated.
+- `MessageGroup`: the group showing a message's hover bar comes forward (`.raised`, z-index 1). The bar sits over the message before it, which a chat list laid out newest first (`VirtualChatList`, column-reverse) puts later in the document, in its own group's stacking context, so it painted over the bar.

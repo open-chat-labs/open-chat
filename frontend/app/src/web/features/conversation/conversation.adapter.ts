@@ -817,3 +817,17 @@ export function messageMenuItems(actions: ReadonlySet<MessageMenuAction>): Messa
             : [];
     return [...regular, ...separator, ...danger];
 }
+
+/**
+ * A message with more fields set, keeping its live fields live: a voice message's playback
+ * (`playing`, `progress`, `elapsed`, `speed`) are getters onto the screen's player, which a spread
+ * would read once and freeze, as the row's messages are kept between renders.
+ */
+export function withFields<T extends object>(message: T, fields: Partial<T>): T {
+    const composed = {} as T;
+    Object.defineProperties(composed, {
+        ...Object.getOwnPropertyDescriptors(message),
+        ...Object.getOwnPropertyDescriptors(fields),
+    });
+    return composed;
+}

@@ -5774,7 +5774,18 @@
         "section": null,
         "required": false,
         "componentDefault": "'received'",
-        "doc": ""
+        "doc": "Sent is the sent bubble's colours only; every bubble is left-aligned, so the shape is the same for both sides."
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Right-aligned layouts (mobile, native): the grouped / tail corners go on the inline-end side, as ChatBubble's."
       },
       {
         "name": "lastInGroup",
