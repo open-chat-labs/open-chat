@@ -253,5 +253,17 @@ export {
     type PrizeDiamond,
     type PrizeDistribution,
 } from "./utils/prizeBuilder";
+export {
+    MAX_SWAP_OFFER_EXPIRY_MS,
+    newSwapOfferContent,
+    swapOfferConfirmation,
+    swapOfferCosts,
+    swapOfferExpiry,
+    swapOfferMaximum,
+    swapOfferStep,
+    type NewSwapOffer,
+    type SwapOfferCosts,
+    type SwapOfferStep,
+} from "./utils/swapOffer";
 export { toDateString, toDatetimeString, toDayString, toMonthString } from "./utils/date";
 export * from "./utils/url";

@@ -1,14 +1,17 @@
 <script lang="ts">
     import { Body, Subtitle, Column, CommonButton2, Row, ColourVars } from "component-lib";
-    import type { MessageContext, OpenChat, P2PSwapContentInitial, SignerWallet } from "@client";
+    import type { MessageContext, OpenChat, SignerWallet } from "@client";
     import {
         enhancedCryptoLookup as cryptoLookup,
         isDiamondStore,
         localUpdates,
+        MAX_SWAP_OFFER_EXPIRY_MS,
+        newSwapOfferContent,
         ONE_DAY,
-        P2P_SWAP_MAX_EXPIRY_DAYS,
         publish,
-        walletApprovalFee,
+        swapOfferConfirmation,
+        swapOfferCosts,
+        swapOfferStep,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -56,10 +59,10 @@
 
     // The offer is deposited in the escrow canister along with the fee for paying it out, so the
     // deposit costs two fees. The wallet also pays for the approval it makes before the deposit is
-    // pulled from it.
-    let approvalFee = $derived(walletApprovalFee(fromDetails.transferFee));
-    let totalFees = $derived(fromDetails.transferFee * BigInt(2) + approvalFee);
-    let minAmount = $derived(fromDetails.transferFee * BigInt(10));
+    // pulled from it (swapOfferCosts).
+    let costs = $derived(swapOfferCosts(fromDetails.transferFee));
+    let totalFees = $derived(costs.totalFees);
+    let minAmount = $derived(costs.minAmount);
     let valid = $derived(error === undefined && fromAmountValid && toAmountValid);
 
     let wasViewportResizeEnabled = $state(false);
@@ -104,16 +107,14 @@
     });
 
     function onSend() {
-        if (!$isDiamondStore) {
-            publish("upgrade");
-            return;
+        switch (swapOfferStep($isDiamondStore, valid)) {
+            case "upgrade":
+                publish("upgrade");
+                return;
+            case "confirm":
+                confirming = true;
+                return;
         }
-
-        if (!valid) {
-            return;
-        }
-
-        confirming = true;
     }
 
     function send(yes: boolean): Promise<void> {
@@ -123,8 +124,7 @@
             return Promise.resolve();
         }
 
-        const content: P2PSwapContentInitial = {
-            kind: "p2p_swap_content_initial",
+        const content = newSwapOfferContent({
             token0: {
                 ledger: fromLedger,
                 symbol: fromDetails.symbol,
@@ -137,17 +137,17 @@
                 fee: toDetails.transferFee,
                 decimals: toDetails.decimals,
             },
-            token0Amount: fromAmount,
-            token1Amount: toAmount,
-            caption: undefined,
-            expiresIn,
+            amount0: fromAmount,
+            amount1: toAmount,
+            expiresInMs: Number(expiresIn),
             // This only attaches a draft - the offer is funded when the user sends the message.
             // An external wallet's approval is not asked for here: it would spend a tap on an
             // allowance the user may abandon without sending. Instead the draft carries the
             // chosen wallet, and the send itself asks for the approval, from the tap which
             // consumes it.
-            fromWallet: sourceWallet?.id,
-        };
+            from: { fromWallet: sourceWallet?.id },
+        });
+        if (content === undefined) return Promise.resolve();
 
         localUpdates.draftMessages.setAttachment(messageContext, content);
         onClose();
@@ -173,10 +173,10 @@
 
 {#if confirming}
     <AreYouSure
-        message={i18nKey("p2pSwap.confirmSend", {
-            amount: client.formatTokens(fromAmount + totalFees, fromDetails.decimals),
-            token: fromDetails.symbol,
-            fees: approvalFee > 0n ? 3 : 2,
+        message={swapOfferConfirmation(fromAmount, {
+            symbol: fromDetails.symbol,
+            decimals: fromDetails.decimals,
+            fee: fromDetails.transferFee,
         })}
         action={send} />
 {/if}
@@ -256,7 +256,7 @@
         <!-- Duration selection -->
         <Column padding={["zero", "lg"]}>
             <DurationSelector
-                maxMilliseconds={BigInt(P2P_SWAP_MAX_EXPIRY_DAYS * ONE_DAY)}
+                maxMilliseconds={BigInt(MAX_SWAP_OFFER_EXPIRY_MS)}
                 bind:duration={expiresIn}>
                 {#snippet title()}
                     <Subtitle fontWeight={"bold"}>

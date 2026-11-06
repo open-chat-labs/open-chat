@@ -68,6 +68,7 @@
         swapAcceptCost,
         swapActions,
         swapFailureMessage,
+        swapOfferStep,
         threadOpenStore,
         throttleDeadline,
         TimelineGrouper,
@@ -134,6 +135,7 @@
     import { composerBuildersOff, disableTipsFeature } from "@src/utils/features";
     import {
         composerPrize,
+        composerSwapOffer,
         composerTransfer,
         type Translate,
     } from "../builders/builders.adapter";
@@ -496,7 +498,8 @@
         composerAttachment(draftAttachment(draft), ctx) ?? stagedPayment(draftAttachment(draft)),
     );
 
-    // a transfer or prize as the composer's chip shows it, in a token the registry carries
+    // a transfer, prize or swap offer as the composer's chip shows it, in tokens the registry
+    // carries
     function stagedPayment(content: AttachmentContent | undefined): ComposerAttachment | null {
         const t: Translate = (key, values) => $_(key, { values });
         switch (content?.kind) {
@@ -518,6 +521,16 @@
             case "prize_content_initial": {
                 const token = $cryptoLookup.get(content.transfer.ledger);
                 return token === undefined ? null : (composerPrize(content, token, t) ?? null);
+            }
+            case "p2p_swap_content_initial": {
+                const give = $cryptoLookup.get(content.token0.ledger);
+                const get = $cryptoLookup.get(content.token1.ledger);
+                if (give === undefined || get === undefined) return null;
+                const prices = {
+                    give: $exchangeRatesLookupStore.get(give.ledger)?.toUSD,
+                    get: $exchangeRatesLookupStore.get(get.ledger)?.toUSD,
+                };
+                return composerSwapOffer(content, give, get, prices, t);
             }
             default:
                 return null;
@@ -554,6 +567,14 @@
             case "prize":
                 screen.dialogs.open({ kind: "prize_builder", chatId });
                 break;
+            case "swap":
+                // only a Diamond member makes an offer: anyone else gets the Diamond dialog
+                if (swapOfferStep($isDiamondStore, true) === "upgrade") {
+                    publish("upgrade");
+                } else {
+                    screen.dialogs.open({ kind: "swap_offer", chatId });
+                }
+                break;
             case "crypto":
                 // to the one being replied to, unless the user picks someone else
                 screen.dialogs.open({
@@ -574,6 +595,9 @@
                 break;
             case "prize_content_initial":
                 screen.dialogs.open({ kind: "prize_builder", chatId, editing: content });
+                break;
+            case "p2p_swap_content_initial":
+                screen.dialogs.open({ kind: "swap_offer", chatId, editing: content });
                 break;
         }
     }

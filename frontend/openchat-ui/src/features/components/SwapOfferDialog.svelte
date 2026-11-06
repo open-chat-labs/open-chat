@@ -42,11 +42,14 @@
     tokens: CryptoToken[];
     z?: number;
     initial?: SwapOffer | null;
+    /** What an offer of a token costs on top of the amount offered (the escrow deposit's fees): two of its fees
+     *  without it. */
+    depositFees?: (token: CryptoToken) => number;
     onAttach?: (offer: SwapOffer) => void;
     onClose?: () => void;
   }
 
-  let { tokens, z = 80, initial = null, onAttach, onClose }: Props = $props();
+  let { tokens, z = 80, initial = null, depositFees, onAttach, onClose }: Props = $props();
   const t = useT();
   const durLabel = (i: number) => durationText(t, DURS[i].id);
   const durShort = (i: number) => t('ui.swapOfferDialog.durationShort', { count: DURS[i].count, unit: DURS[i].unit });
@@ -76,7 +79,7 @@
   const R = $derived(lookup(get));
   const a = $derived(parseAmount(amt));
   const w = $derived(parseAmount(want));
-  const fees = $derived(G.fee * 2);
+  const fees = $derived(depositFees ? depositFees(G) : G.fee * 2);
   const lock = $derived(a + fees);
   const max = $derived(Math.max(0, G.bal - fees));
   // no market rate without both prices

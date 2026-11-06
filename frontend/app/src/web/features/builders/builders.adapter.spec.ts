@@ -2,6 +2,7 @@ import {
     formatTokens,
     newPollContent,
     newPrizeContent,
+    newSwapOfferContent,
     validateTokenInput,
     type CryptocurrencyContent,
     type EnhancedTokenDetails,
@@ -11,12 +12,14 @@ import type { PollDraft } from "@openchat/ui/src/features/components/PollBuilder
 import {
     builderTokens,
     composerPrize,
+    composerSwapOffer,
     composerTransfer,
     newPoll,
     prizeChoices,
     prizeDefaults,
     prizeDurationIndex,
     prizePricing,
+    swapDepositFees,
     typedAmount,
     type Translate,
 } from "./builders.adapter";
@@ -139,6 +142,51 @@ describe("a poll from the builder", () => {
             newPollContent(newPoll({ ...draft, ...d }), 0).config;
         expect(config({ canChange: false }).allowUserToChangeVote).toBe(false);
         expect(config({ canChange: false, multiple: true }).allowUserToChangeVote).toBe(true);
+    });
+});
+
+describe("a swap offer in the builder", () => {
+    const content = newSwapOfferContent({
+        token0: { ledger: "icp-ledger", symbol: "ICP", fee: 10_000n, decimals: 8 },
+        token1: { ledger: "chat-ledger", symbol: "CHAT", fee: 10_000n, decimals: 8 },
+        amount0: 129_000_000n,
+        amount1: 5_000_000_000n,
+        expiresInMs: 7 * 24 * 60 * 60 * 1000,
+    });
+    if (content === undefined) throw new Error("no offer");
+
+    // 5d invariant 2, as the dialog prices it
+    test("costs two transfer fees and the approval fee on top of what's offered", () => {
+        expect(swapDepositFees(icp)).toBe(0.0003);
+    });
+
+    test("staged, shows what's offered for what, how long it's open and what it takes", () => {
+        expect(composerSwapOffer(content, icp, chat, { give: 5, get: undefined }, t)).toMatchObject(
+            {
+                type: "swap",
+                title: "1.29 ICP → 50.00 CHAT",
+                give: { amount: "1.29", usd: "≈ $6.45" },
+                get: { amount: "50.00", usd: "" },
+                expiresIn: "7d",
+                expiresInMs: 7 * 24 * 60 * 60 * 1000,
+                summary:
+                    'ui.swapOfferDialog.summary{"expires":"ui.swapOfferDialog.durationShort{\\"count\\":7,\\"unit\\":\\"d\\"}","amount":"1.2903","symbol":"ICP"}',
+            },
+        );
+    });
+
+    // 5d invariant 3: edited again, the amounts read back exactly
+    test("is edited from what it holds", () => {
+        const offer = composerSwapOffer(content, icp, chat, { give: 5, get: 1 }, t);
+        expect(offer.draft).toEqual({
+            give: "ICP",
+            get: "CHAT",
+            amt: "1.29",
+            want: "50.00",
+            dur: 3,
+            prem: null,
+        });
+        expect(validateTokenInput(offer.draft.amt, 8).amount).toBe(129_000_000n);
     });
 });
 

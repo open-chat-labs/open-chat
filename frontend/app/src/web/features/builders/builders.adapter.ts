@@ -3,11 +3,13 @@
 import {
     formatTokens,
     prizeCosts,
+    swapOfferCosts,
     walletApprovalFee,
     type CryptocurrencyContent,
     type CryptocurrencyDetails,
     type EnhancedTokenDetails,
     type NewPoll,
+    type P2PSwapContentInitial,
     type PrizeContentInitial,
     type PrizeDiamond,
     type PrizeDistribution,
@@ -21,7 +23,7 @@ import type {
     CryptoToken,
 } from "@openchat/ui/src/features/components/SendCryptoDialog.svelte";
 import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
-import type { Prize, PrizeDraft, TokenRef, Transfer } from "@openchat/ui/src/lib/types";
+import type { Prize, PrizeDraft, SwapOffer, TokenRef, Transfer } from "@openchat/ui/src/lib/types";
 import type { PrizeConfig } from "@src/logic/prize/prizeForm.svelte";
 import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
 import { swatchFor } from "../chats/chatList.adapter";
@@ -165,6 +167,94 @@ export function composerTransfer(
     };
 }
 
+// SwapOfferDialog's expiries, in its order (its `dur` is an index into them)
+const SWAP_EXPIRIES: [ms: number, count: number, unit: "h" | "d"][] = [
+    [60 * 60 * 1000, 1, "h"],
+    [6 * 60 * 60 * 1000, 6, "h"],
+    [24 * 60 * 60 * 1000, 1, "d"],
+    [7 * 24 * 60 * 60 * 1000, 7, "d"],
+    [30 * 24 * 60 * 60 * 1000, 30, "d"],
+    [90 * 24 * 60 * 60 * 1000, 90, "d"],
+];
+
+function nearest(list: number[], ms: number): number {
+    let best = 0;
+    list.forEach((d, i) => {
+        if (Math.abs(d - ms) < Math.abs(list[best] - ms)) best = i;
+    });
+    return best;
+}
+
+/**
+ * What an offer of a token costs on top of the amount offered, as `SwapOfferDialog` prices it
+ * (`swapOfferCosts`: the deposit's two fees and the approval's).
+ */
+export function swapDepositFees(token: TokenFacts): number {
+    return wholeTokens(swapOfferCosts(token.transferFee).totalFees, token.decimals);
+}
+
+/** A side of a staged offer, as the composer's chip shows it. */
+function swapSide(token: TokenFacts, amount: bigint, price: number | undefined): SwapOffer["give"] {
+    const usd = price === undefined ? 0 : wholeTokens(amount, token.decimals) * price;
+    return {
+        ...tokenRef(token),
+        amount: formatTokens(amount, token.decimals),
+        usd: price === undefined ? "" : `≈ ${formatConvertedValue("usd", usd)}`,
+    };
+}
+
+/**
+ * A swap offer staged in the composer, as the composer's chip shows it and as `SwapOfferDialog`
+ * edits it again: what's offered for what, how long it stays open, and what it takes from the
+ * wallet with its fees.
+ */
+export function composerSwapOffer(
+    content: P2PSwapContentInitial,
+    give: TokenFacts,
+    get: TokenFacts,
+    prices: { give: number | undefined; get: number | undefined },
+    t: Translate,
+): SwapOffer {
+    const dur = nearest(
+        SWAP_EXPIRIES.map(([ms]) => ms),
+        Number(content.expiresIn),
+    );
+    const [ms, count, unit] = SWAP_EXPIRIES[dur];
+    const giveSide = swapSide(give, content.token0Amount, prices.give);
+    const getSide = swapSide(get, content.token1Amount, prices.get);
+    const lock = formatTokens(
+        content.token0Amount + swapOfferCosts(give.transferFee).totalFees,
+        give.decimals,
+    );
+    const short = t("ui.swapOfferDialog.durationShort", { count, unit });
+    const label = t(unit === "h" ? "ui.duration.hours" : "ui.duration.days", { count });
+    return {
+        type: "swap",
+        give: giveSide,
+        get: getSide,
+        pair: [tokenRef(give), tokenRef(get)],
+        giveAmount: wholeTokens(content.token0Amount, give.decimals),
+        getAmount: wholeTokens(content.token1Amount, get.decimals),
+        expiresIn: `${count}${unit}`,
+        expiresInMs: ms,
+        title: `${giveSide.amount} ${give.symbol} → ${getSide.amount} ${get.symbol}`,
+        summary: t("ui.swapOfferDialog.summary", {
+            expires: short,
+            amount: lock,
+            symbol: give.symbol,
+        }),
+        hint: t("ui.swapOfferDialog.hint", { duration: label, amount: lock, symbol: give.symbol }),
+        draft: {
+            give: give.symbol,
+            get: get.symbol,
+            amt: typedAmount(content.token0Amount, give.decimals),
+            want: typedAmount(content.token1Amount, get.decimals),
+            dur,
+            prem: null,
+        },
+    };
+}
+
 // PrizeBuilderDialog's durations, in its order (its `dur` is an index into them), with their labels
 const PRIZE_DURATIONS: [ms: number, key: string][] = [
     [60 * 60 * 1000, "oneHour"],
@@ -177,11 +267,10 @@ const PRIZE_DURATIONS: [ms: number, key: string][] = [
 
 /** The index of the dialog's duration nearest `ms`. */
 export function prizeDurationIndex(ms: number): number {
-    let best = 0;
-    PRIZE_DURATIONS.forEach(([d], i) => {
-        if (Math.abs(d - ms) < Math.abs(PRIZE_DURATIONS[best][0] - ms)) best = i;
-    });
-    return best;
+    return nearest(
+        PRIZE_DURATIONS.map(([d]) => d),
+        ms,
+    );
 }
 
 /** A token a prize can be paid in, as `PrizeBuilderDialog` lists it (`builderTokens`' order). */

@@ -17179,6 +17179,17 @@
         "doc": ""
       },
       {
+        "name": "depositFees",
+        "type": "(token: CryptoToken) => number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "What an offer of a token costs on top of the amount offered (the escrow deposit's fees): two of its fees without it."
+      },
+      {
         "name": "onAttach",
         "type": "(offer: SwapOffer) => void",
         "default": null,

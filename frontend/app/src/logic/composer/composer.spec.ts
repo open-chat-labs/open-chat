@@ -283,10 +283,11 @@ describe("the builders the entry offers", () => {
         expect(composerBuilders(permitted("text", "crypto"), none)).toEqual(["crypto"]);
         expect(composerBuilders(permitted("text"), none)).toEqual([]);
         // the + menu's order: the design's
-        expect(composerBuilders(permitted("crypto", "prize", "poll"), none)).toEqual([
+        expect(composerBuilders(permitted("crypto", "p2pSwap", "prize", "poll"), none)).toEqual([
             "poll",
             "prize",
             "crypto",
+            "swap",
         ]);
     });
 

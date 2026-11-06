@@ -199,6 +199,9 @@ design export needs. Each entry says where it came up.
     then says "Fees of … are added on top", `feesAdded`), `defaults` (what a new prize starts
     from: the settings last used) and `restrictions` (those offered: the app leaves out
     "Authenticated", which the backend no longer has).
+  - `SwapOfferDialog` takes `depositFees` (the design priced two fees, with no approval fee), and
+    its "locks … incl. 2 fees" lines now say "incl. fees" (`hint`, `locks`). It has no review
+    step: the app confirms in a `DialogShell` of its own.
 - **Composer mention list** (by hand, 5c, to take back to the design export, which has no mention
   picker): `MessageComposer` (and `ComposerBar`) take `onMentionQuery` (the "@word" at the caret as
   it changes, `mentionQuery.ts`, spec'd) and `mentions` (`ComposerMention`: the host's candidates
@@ -1260,8 +1263,7 @@ design export needs. Each entry says where it came up.
     in a bot DM, a bot that takes no direct messages gets the composer's "couldn't send", not the
     old `bots.direct.warning`. The design has none of it;
   - GIFs (the library's results, above);
-  - the "+" menu's builders not built yet (5d, "The '+' builders" below): swap offer, Meme
-    Fighter;
+  - the "+" menu's builders not built yet (5d, "The '+' builders" below): Meme Fighter;
   - the emoji autocomplete (`:smile`) both old editors had (`EmojiAutocompleter`).
 - **The "+" builders** (5d, `features/builders`): each a local dialog the composer's "+" menu
   opens (`build` in the conversation), offered where the chat lets the reader send what it makes
@@ -1316,6 +1318,18 @@ design export needs. Each entry says where it came up.
     the dialog's 1h to 90d (the mobile app's range), where the old desktop builder offered 1h,
     1d, 1w (it now starts at a day for another). With no token held the dialog lists none and
     can't attach (`TODO(design)`).
+  - **Swap offer** (`SwapOfferDialog`, `swap_offer`): for Diamond members; anyone else picking it
+    gets the Diamond dialog (`swapOfferStep`, `@client`, which both old builders now use). Any
+    token can be asked for, one held offered. It costs the deposit's two transfer fees and the
+    approval's (`swapOfferCosts`, `@client`, both old builders' too), through the dialog's
+    `depositFees` (by hand; the design priced two fees), at least 10 fees, within the balance
+    less those, open for at most 90 days (`swapOfferExpiry`, `P2P_SWAP_MAX_EXPIRY_DAYS`). As in
+    the mobile app it's confirmed before it's attached, with the old builders' words
+    (`swapOfferConfirmation`: what it takes from the wallet, fees and all): the confirmation
+    (`DialogShell`, `TODO(design)`: the design has no review step) takes the builder's place over
+    the same backdrop, its back arrow returning to the offer as it was filled in, × or the
+    backdrop closing both (`SwapOfferForm`, `logic/wallet`, which reads what was typed with
+    `validateTokenInput`). Then it's attached (`newSwapOfferContent`).
 - **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
   edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text

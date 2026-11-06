@@ -9,6 +9,7 @@ import type {
     LeaveOrDelete,
     Message,
     MultiUserChatIdentifier,
+    P2PSwapContentInitial,
     PriceSubject,
     PrizeContentInitial,
 } from "@client";
@@ -134,7 +135,9 @@ export type LocalDialog =
           editing?: CryptocurrencyContent;
       }
     // a prize, attached to the chat's draft; `editing` the staged one to change
-    | { kind: "prize_builder"; chatId: ChatIdentifier; editing?: PrizeContentInitial };
+    | { kind: "prize_builder"; chatId: ChatIdentifier; editing?: PrizeContentInitial }
+    // a swap offer, confirmed and attached to the chat's draft; `editing` the staged one
+    | { kind: "swap_offer"; chatId: ChatIdentifier; editing?: P2PSwapContentInitial };
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";
@@ -237,6 +240,7 @@ export const dialogs: Dialogs = {
     poll_builder: () => import("../builders/PollBuilderDialogScreen.svelte"),
     send_crypto: () => import("../builders/SendCryptoDialogScreen.svelte"),
     prize_builder: () => import("../builders/PrizeBuilderDialogScreen.svelte"),
+    swap_offer: () => import("../builders/SwapOfferDialogScreen.svelte"),
 };
 
 // each linked dialog's query param; the CHIT dialog's views share its param, told apart by its value

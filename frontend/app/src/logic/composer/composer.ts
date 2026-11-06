@@ -225,6 +225,7 @@ export function composerBuilders(
         ["poll", "poll"],
         ["prize", "prize"],
         ["crypto", "crypto"],
+        ["swap", "p2pSwap"],
     ];
     return builders.flatMap(([builder, permission]) =>
         permitted.has(permission) && !off.has(builder) ? [builder] : [],
