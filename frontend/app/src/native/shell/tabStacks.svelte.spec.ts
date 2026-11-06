@@ -200,3 +200,63 @@ describe("the tabs' stacks", () => {
         expect(stacks.steps).toBe(steps);
     });
 });
+
+describe("a screen with no URL", () => {
+    const kinds = (stacks: TabStacks) => stacks.steps.map((s) => s.screen.kind);
+
+    test("is pushed over the screen showing, at its URL, and Back takes it off", () => {
+        const stacks = new TabStacks();
+        stacks.arrive(at("/chats"));
+        stacks.push({ kind: "new_chat" });
+        expect(kinds(stacks)).toEqual(["chats", "new_chat"]);
+        expect(urls(stacks.steps)).toEqual(["/chats", "/chats"]);
+        expect(stacks.change).toBe("push");
+        expect(stacks.localTop).toBe(true);
+        expect(stacks.popLocal()).toBe(true);
+        expect(kinds(stacks)).toEqual(["chats"]);
+        expect(stacks.change).toBe("pop");
+        // a screen with a URL isn't popped locally
+        expect(stacks.popLocal()).toBe(false);
+    });
+
+    test("stays while the URL does (its place worked out again)", () => {
+        const stacks = new TabStacks();
+        stacks.arrive(at("/chats"));
+        stacks.push({ kind: "new_chat" });
+        stacks.arrive(at("/chats"));
+        expect(kinds(stacks)).toEqual(["chats", "new_chat"]);
+    });
+
+    test("gives way to where it goes: picking someone in New chat opens the chat in its place", () => {
+        const stacks = new TabStacks();
+        stacks.arrive(at("/chats"));
+        stacks.push({ kind: "new_chat" });
+        stacks.arrive(at("/chats/user/u1"));
+        expect(kinds(stacks)).toEqual(["chats", "conversation"]);
+        expect(stacks.change).toBe("replace");
+    });
+
+    test("is still there after another tab", () => {
+        const stacks = new TabStacks();
+        stacks.arrive(at("/chats"));
+        stacks.push({ kind: "new_chat" });
+        stacks.arrive(at("/wallet"));
+        stacks.arrive(at(stacks.topUrl("chats") ?? ""));
+        expect(stacks.tab).toBe("chats");
+        expect(stacks.change).toBe("switch");
+        expect(kinds(stacks)).toEqual(["chats", "new_chat"]);
+    });
+
+    test("pushed again, is popped back to; the tab tapped again takes them all off", () => {
+        const stacks = new TabStacks();
+        stacks.arrive(at("/chats"));
+        stacks.push({ kind: "new_chat" });
+        stacks.push({ kind: "new_group" });
+        stacks.push({ kind: "new_chat" });
+        expect(kinds(stacks)).toEqual(["chats", "new_chat"]);
+        stacks.push({ kind: "new_group" });
+        expect(stacks.popLocals()).toBe(true);
+        expect(kinds(stacks)).toEqual(["chats"]);
+        expect(stacks.popLocals()).toBe(false);
+    });
+});

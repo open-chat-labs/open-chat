@@ -43,7 +43,15 @@ export type NativeScreen =
     | { kind: "token"; ledger: string }
     | { kind: "wallet_flow"; view: WalletFlow["view"]; ledger?: string }
     | { kind: "recipients" }
-    | { kind: "admin" };
+    | { kind: "admin" }
+    // pushed without a URL of their own (LocalScreen)
+    | LocalScreen;
+
+/**
+ * A screen with no URL on the web (New chat, a builder, a settings page): pushed over the screen
+ * showing without changing the URL, as the web opens a local dialog (TabStacks.push).
+ */
+export type LocalScreen = { kind: "new_chat" } | { kind: "new_group" } | { kind: "chit" };
 
 /**
  * A screen in a stack, with the URL it shows at, which Back goes to from the screen above it.
@@ -51,7 +59,13 @@ export type NativeScreen =
  * conversation scrolled to another message). A root showing something else is another root: the
  * Chats list or Favourites, one community or another, or Explore without one.
  */
-export type StackStep = { key: string; screen: NativeScreen; url: string };
+export type StackStep = {
+    key: string;
+    screen: NativeScreen;
+    url: string;
+    /** Pushed without a URL (a LocalScreen): it shows at the URL of the screen under it. */
+    local?: true;
+};
 
 /** A tab and its stack, from its root (`steps[0]`) to the screen showing. */
 export type TabsLocation = { area: "tabs"; tab: NativeTabId; steps: StackStep[] };

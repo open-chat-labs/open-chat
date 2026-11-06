@@ -1,8 +1,11 @@
-import type { NativeTabId, StackStep, TabsLocation } from "../router/locations";
+import type { LocalScreen, NativeTabId, StackStep, TabsLocation } from "../router/locations";
 
 // The five tabs' push stacks (native design notes §1 Structure 2): each tab keeps its own, so a tab
 // comes back as it was left. The URL names the screen showing (router/locations.ts); a stack is
-// that screen and the ones under it, which Back goes through.
+// that screen and the ones under it, which Back goes through. A screen with no URL (New chat, a
+// builder) is pushed over it locally (`push`), showing at the URL under it, and taken off by Back
+// (`popLocal`) or by the URL moving on: going to another screen from it replaces it, as picking
+// someone in New chat opens the chat in its place.
 
 /**
  * How a tab's stack changed, for the push motion: `push` adds screens over the old top, `pop`
@@ -93,13 +96,62 @@ export class TabStacks {
     arrive(location: TabsLocation): void {
         const current = this.#stacks[location.tab];
         const switched = location.tab !== this.#tab;
-        if (!switched && current !== undefined && topUrl(current) === topUrl(location.steps))
+        if (current !== undefined && topUrl(current) === topUrl(location.steps)) {
+            // back to a tab left as it was, local screens and all
+            if (switched) {
+                this.#change = "switch";
+                this.#tab = location.tab;
+            }
             return;
+        }
         const { steps, change } = mergeStack(current, location.steps);
         if (!switched && current !== undefined && sameSteps(current, steps)) return;
         this.#stacks = { ...this.#stacks, [location.tab]: steps };
         this.#change = switched ? "switch" : change;
         this.#tab = location.tab;
+    }
+
+    /**
+     * Pushes a screen with no URL over the one showing. It shows at that one's URL; one already in
+     * the stack is popped back to instead.
+     */
+    push(screen: LocalScreen): void {
+        const steps = this.steps;
+        const top = steps[steps.length - 1];
+        if (top === undefined) return;
+        const key = `local:${screen.kind}`;
+        const at = steps.findIndex((s) => s.key === key);
+        if (at >= 0) {
+            this.#set(steps.slice(0, at + 1), "pop");
+            return;
+        }
+        this.#set([...steps, { key, screen, url: top.url, local: true }], "push");
+    }
+
+    /** Back from a screen with no URL: takes it off. Whether the top was one. */
+    popLocal(): boolean {
+        const steps = this.steps;
+        if (steps.length < 2 || !steps[steps.length - 1].local) return false;
+        this.#set(steps.slice(0, -1), "pop");
+        return true;
+    }
+
+    /** Takes every screen with no URL off the top (the tab tapped again). Whether there were any. */
+    popLocals(): boolean {
+        let popped = false;
+        while (this.popLocal()) popped = true;
+        return popped;
+    }
+
+    /** Whether the screen showing has no URL of its own. */
+    get localTop(): boolean {
+        const steps = this.steps;
+        return steps[steps.length - 1]?.local === true;
+    }
+
+    #set(steps: StackStep[], change: StackChange): void {
+        this.#stacks = { ...this.#stacks, [this.#tab]: steps };
+        this.#change = change;
     }
 
     /** Where Back goes: the screen under the top, or none at a tab's root. */

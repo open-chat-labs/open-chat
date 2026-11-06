@@ -42,10 +42,13 @@
         locationFor,
         NATIVE_TABS,
         tabRootUrl,
+        type LocalScreen,
         type NativeLocation,
         type NativeTabId,
     } from "../router/locations";
     import { releaseVelocity, type DragSample } from "@openchat/ui/src/native/sheetDrag";
+    import { ToastQueue } from "@openchat/ui/src/native/toastQueue.svelte";
+    import { toastStore } from "@src/stores/toast";
     import { backAction } from "./back";
     import { openOnWeb } from "./onWeb";
     import { popOut, pushIn } from "./motion";
@@ -67,6 +70,9 @@
 
     const stacks = new TabStacks();
     const overlays = new Overlays();
+    // the screens' own toasts (Undo), in place of the app's (Toasts)
+    const toasts = new ToastQueue();
+    onMount(() => () => toasts.dispose());
 
     // The Communities tab's community when a URL doesn't name one (Explore): the one the tab shows,
     // else the default (the last selected, else the first)
@@ -373,6 +379,7 @@
         const tab = NATIVE_TABS.find((t) => t === id);
         if (tab === undefined) return;
         if (tab === stacks.tab && location.area === "tabs") {
+            stacks.popLocals();
             const root = stacks.root(tab);
             if (root !== undefined && stacks.steps.length > 1) navigate(root.url, "dismiss");
             return;
@@ -383,16 +390,24 @@
     // The header's back: the screen under the top, going back to where it was in the history
     // when it's there (navigation.ts, "dismiss")
     function back() {
+        if (stacks.popLocal()) return;
         const url = stacks.backUrl();
         if (url !== undefined) navigate(url, "dismiss");
     }
 
-    const rootContext: ScreenContext = { back: undefined, overlays };
-    const pushedContext: ScreenContext = { back, overlays };
+    function showToast(message: string, undo?: () => void) {
+        toastStore.hideToast();
+        toasts.show(message, undo);
+    }
+
+    const shared = { overlays, push: (screen: LocalScreen) => stacks.push(screen), toast: showToast };
+    const rootContext: ScreenContext = { back: undefined, ...shared };
+    const pushedContext: ScreenContext = { back, ...shared };
 
     function systemBack() {
         const action = backAction({
             overlayOpen: overlays.any,
+            localTop: stacks.localTop,
             location,
             backUrl: stacks.backUrl(),
             chatsUrl: stacks.topUrl("chats") ?? tabRootUrl("chats", undefined),
@@ -401,6 +416,9 @@
         switch (action.kind) {
             case "close_overlay":
                 overlays.closeTop();
+                break;
+            case "pop_local":
+                stacks.popLocal();
                 break;
             case "navigate":
                 navigate(action.url, "dismiss");
@@ -503,7 +521,7 @@
             <TabBar {tabs} selected={stacks.tab} onSelect={selectTab} />
         </div>
 
-        <Toasts above={barShown ? "tabBar" : "none"} />
+        <Toasts above={barShown ? "tabBar" : "none"} queue={toasts} />
     </div>
 {:else if location.area === "signed_out"}
     <div class="outside">
