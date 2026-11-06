@@ -59,6 +59,20 @@ design export needs. Each entry says where it came up.
     need `TabStacks` to push without changing the URL, as the web opens a local dialog. With the
     first screen that needs it (N6, N9 or N12).
   - **iOS edge swipe back** (notes §2): not built; the chevron is the only Back on iOS for now.
+  - **Swiping between tabs** (asked for in review, #10421; the design has no swipe between tabs):
+    on a tab's root, a sideways drag follows the finger with the neighbouring tab beside it, and
+    switches past 30% of the width or on a flick faster than 0.45px/ms over 24px (the Communities
+    strip's flick speed); otherwise it springs back (240ms). Past the first or last tab it
+    rubber-bands, a quarter of the pull up to 56px. It's decided after 10px, sideways only if
+    further across than up or down; drags starting 16px from the sides are left to the system
+    (iOS's edge swipe), and so are ones starting in something that scrolls sideways, an input, or
+    `[data-tab-swipe="off"]`. Touch and pen only. A tab not opened yet shows its empty surface
+    while it's dragged in (its root mounts when it's switched to). With reduced motion the screen
+    doesn't follow; letting go past the threshold switches. Confirm with design.
+  - **Switching tabs** (a tap, a swipe, a link to another tab): only the old screen and the new
+    one move (320ms, `--ease-out`), the new one in from the inline end when it's further along the
+    bar, from the start when it's before; none with reduced motion. The Design Notes say nothing
+    about it; the prototype slid the whole row of tabs past, through the ones in between.
   - **Another tab's pushed screens** are unmounted while the tab isn't showing (as the prototype):
     the stack comes back, its view state (scroll) doesn't. Tab roots stay mounted once opened.
   - **"Switch to desktop site / mobile site"**: `selectLayout` reads the stored choice

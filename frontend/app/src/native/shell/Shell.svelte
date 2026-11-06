@@ -3,7 +3,8 @@
      it comes back as it was left. The tab bar shows only on a tab's root; a pushed screen has the
      whole window (showsTabBar). A pushed screen slides in from the inline end while the one under it moves out to
      the other side (.34s, motion.ts), and Back reverses it. Android's system back closes an open
-     sheet or menu first, then pops (back.ts). -->
+     sheet or menu first, then pops (back.ts). On a tab's root, a sideways drag swipes to the
+     neighbouring tab (tabSwipe.ts); switching tabs slides only the two screens, old and new. -->
 <script lang="ts">
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import TabBar from "@openchat/ui/src/native/TabBar.svelte";
@@ -39,11 +40,21 @@
         type NativeLocation,
         type NativeTabId,
     } from "../router/locations";
+    import { releaseVelocity, type DragSample } from "@openchat/ui/src/native/sheetDrag";
     import { backAction } from "./back";
     import { popOut, pushIn } from "./motion";
     import { Overlays } from "./overlays.svelte";
     import { tabBarTabs } from "./tabBar.adapter";
     import { TabStacks } from "./tabStacks.svelte";
+    import {
+        startsSwipe,
+        swipeAxis,
+        swipeOffset,
+        swipeRelease,
+        swipeStep,
+        tabSlide,
+        type SwipeAxis,
+    } from "./tabSwipe";
     import Toasts from "./Toasts.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -107,6 +118,221 @@
     );
     const tabIds = $derived(tabs.map((t) => t.id));
     const tabIndex = $derived(Math.max(0, tabIds.indexOf(stacks.tab)));
+
+    // ---- Switching tabs: only the old screen and the new one move (tabSlide), whichever tabs lie
+    // between them in the bar. The design says nothing about it (its prototype slides the whole row
+    // of tabs past), so this is ours. After a swipe, the screens carry on from where the drag left
+    // them (`handoff`).
+
+    const SLIDE_MS = 320;
+    const panes: Partial<Record<NativeTabId, HTMLElement>> = $state({});
+    let handoff: { from: NativeTabId; to: NativeTabId; fromX: number; toX: number } | undefined;
+    let shownTab: NativeTabId = untrack(() => stacks.tab);
+
+    $effect(() => {
+        const tab = stacks.tab;
+        untrack(() => {
+            if (tab !== shownTab) slideTabs(shownTab, tab);
+            shownTab = tab;
+            handoff = undefined;
+        });
+    });
+
+    function reducedMotion(): boolean {
+        return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    }
+
+    function rtl(): boolean {
+        return document.documentElement.dir === "rtl";
+    }
+
+    function ease(): string {
+        return getComputedStyle(document.documentElement).getPropertyValue("--ease-out").trim() || "ease-out";
+    }
+
+    function slideTabs(from: NativeTabId, to: NativeTabId) {
+        const outgoing = panes[from];
+        const incoming = panes[to];
+        if (outgoing === undefined || incoming === undefined || reducedMotion()) return;
+        const width = incoming.clientWidth;
+        let start: { outgoing: [string, string]; incoming: string; duration: number };
+        if (handoff?.from === from && handoff.to === to && width > 0) {
+            // carry on from the drag: both move the rest of the way together
+            start = {
+                outgoing: [`${handoff.fromX}px`, `${handoff.fromX - handoff.toX}px`],
+                incoming: `${handoff.toX}px`,
+                duration: Math.max(120, SLIDE_MS * (Math.abs(handoff.toX) / width)),
+            };
+        } else {
+            const slide = tabSlide(tabIds.indexOf(from), tabIds.indexOf(to), rtl());
+            start = {
+                outgoing: ["0%", `${slide.outgoingTo * 100}%`],
+                incoming: `${slide.incomingFrom * 100}%`,
+                duration: SLIDE_MS,
+            };
+        }
+        const options = { duration: start.duration, easing: ease() };
+        incoming.animate(
+            [{ transform: `translateX(${start.incoming})` }, { transform: "translateX(0)" }],
+            options,
+        );
+        // the old screen is hidden once the new one shows: it stays visible while it goes
+        outgoing.animate(
+            [
+                { transform: `translateX(${start.outgoing[0]})`, visibility: "visible" },
+                { transform: `translateX(${start.outgoing[1]})`, visibility: "visible" },
+            ],
+            options,
+        );
+    }
+
+    // ---- Swiping between tabs on a tab's root (tabSwipe.ts). Touch and pen only: a mouse drag
+    // selects text. A drag that starts mostly vertical is the content's scroll, and one starting in
+    // something that scrolls sideways itself, an input or [data-tab-swipe="off"] is left to it.
+
+    type Gesture = {
+        pointerId: number;
+        x0: number;
+        y0: number;
+        width: number;
+        axis: SwipeAxis;
+        samples: DragSample[];
+    };
+    let gesture: Gesture | undefined;
+    // the drag showing: the root's screen `offset` px across, and the neighbouring tab's beside it
+    let drag = $state<{ offset: number; neighbour: NativeTabId | undefined } | undefined>();
+    // a sideways drag ends on a click, which isn't one
+    let swallowClick = false;
+
+    function leftToContent(target: EventTarget | null, root: HTMLElement): boolean {
+        for (let el = target instanceof Element ? target : null; el && el !== root; el = el.parentElement) {
+            if (el instanceof HTMLElement) {
+                if (el.dataset.tabSwipe === "off" || el.isContentEditable) return true;
+                if (el.matches("input, textarea, select")) return true;
+                const overflow = getComputedStyle(el).overflowX;
+                if ((overflow === "auto" || overflow === "scroll") && el.scrollWidth > el.clientWidth) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function onPointerDown(e: PointerEvent & { currentTarget: HTMLElement }) {
+        if (e.pointerType === "mouse" || !e.isPrimary || pushed.length > 0) return;
+        const root = e.currentTarget.getBoundingClientRect();
+        if (!startsSwipe(e.clientX - root.left, root.width)) return;
+        if (leftToContent(e.target, e.currentTarget)) return;
+        gesture = {
+            pointerId: e.pointerId,
+            x0: e.clientX,
+            y0: e.clientY,
+            width: root.width,
+            axis: "undecided",
+            samples: [{ t: e.timeStamp, y: e.clientX }],
+        };
+    }
+
+    function onPointerMove(e: PointerEvent & { currentTarget: HTMLElement }) {
+        if (gesture === undefined || e.pointerId !== gesture.pointerId) return;
+        const dx = e.clientX - gesture.x0;
+        if (gesture.axis === "undecided") {
+            gesture.axis = swipeAxis(dx, e.clientY - gesture.y0);
+            if (gesture.axis === "vertical") {
+                gesture = undefined;
+                return;
+            }
+            if (gesture.axis === "sideways") e.currentTarget.setPointerCapture(e.pointerId);
+        }
+        if (gesture.axis !== "sideways") return;
+        // the samples' y is the pointer's x: releaseVelocity reads one axis
+        gesture.samples.push({ t: e.timeStamp, y: e.clientX });
+        const neighbour = tabIds[tabIndex + swipeStep(dx, rtl())];
+        drag = {
+            offset: reducedMotion() ? 0 : swipeOffset(dx, tabIndex, tabIds.length, rtl()),
+            neighbour: neighbour !== stacks.tab ? neighbour : undefined,
+        };
+    }
+
+    function onPointerUp(e: PointerEvent) {
+        const ended = gesture;
+        if (ended === undefined || e.pointerId !== ended.pointerId) return;
+        gesture = undefined;
+        if (ended.axis !== "sideways") return;
+        swallowClick = true;
+        setTimeout(() => (swallowClick = false));
+        const dx = e.clientX - ended.x0;
+        const velocity = releaseVelocity(ended.samples, e.timeStamp);
+        const target =
+            e.type === "pointerup"
+                ? swipeRelease(dx, ended.width, velocity, tabIndex, tabIds.length, rtl())
+                : undefined;
+        const shown = drag;
+        drag = undefined;
+        const to = target !== undefined ? tabIds[target] : undefined;
+        if (to !== undefined) {
+            const offset = shown?.offset ?? 0;
+            handoff = {
+                from: stacks.tab,
+                to,
+                fromX: offset,
+                toX: offset - Math.sign(dx) * ended.width,
+            };
+            selectTab(to);
+        } else if (shown !== undefined) {
+            springBack(shown.offset, shown.neighbour, ended.width, dx);
+        }
+    }
+
+    function springBack(offset: number, neighbour: NativeTabId | undefined, width: number, dx: number) {
+        if (offset === 0) return;
+        const options = { duration: 240, easing: ease() };
+        panes[stacks.tab]?.animate(
+            [{ transform: `translateX(${offset}px)` }, { transform: "translateX(0)" }],
+            options,
+        );
+        if (neighbour !== undefined) {
+            const beside = -Math.sign(dx) * width;
+            panes[neighbour]?.animate(
+                [
+                    { transform: `translateX(${offset + beside}px)`, visibility: "visible" },
+                    { transform: `translateX(${beside}px)`, visibility: "visible" },
+                ],
+                options,
+            );
+        }
+    }
+
+    function paneTransform(tab: NativeTabId): string | undefined {
+        if (drag === undefined) return undefined;
+        if (tab === stacks.tab) return `translateX(${drag.offset}px)`;
+        if (tab === drag.neighbour) {
+            const dx = drag.offset;
+            return `translateX(calc(${dx}px + ${dx < 0 ? 100 : -100}%))`;
+        }
+        return undefined;
+    }
+
+    // Once a drag is sideways, the browser mustn't pan whatever scrolls under it (a screen's list:
+    // touch-action on the root doesn't reach inside a scroller), which would cancel the pointer.
+    // A touchmove listener can only stop that when it isn't passive, which Svelte's are.
+    let rootEl: HTMLElement | undefined = $state();
+    $effect(() => {
+        const el = rootEl;
+        if (el === undefined) return;
+        const holdPan = (e: TouchEvent) => {
+            if (gesture?.axis === "sideways" && e.cancelable) e.preventDefault();
+        };
+        el.addEventListener("touchmove", holdPan, { passive: false });
+        return () => el.removeEventListener("touchmove", holdPan);
+    });
+
+    function onClickCapture(e: MouseEvent) {
+        if (!swallowClick) return;
+        swallowClick = false;
+        e.stopPropagation();
+        e.preventDefault();
+    }
 
     // Tapping a tab opens it where it was left (its root the first time); tapping the tab showing
     // takes its stack back to the root
@@ -178,21 +404,36 @@
 {#if location.area === "tabs"}
     <div class="shell" class:bar-hidden={!barShown}>
         <div class="stage">
-            <div class="root" class:covered={pushed.length > 0} inert={pushed.length > 0}>
-                <div class="track" style:--tab-index={tabIndex}>
-                    {#each tabIds as tab (tab)}
-                        {@const root = stacks.root(tab)}
-                        <section class="pane" inert={tab !== stacks.tab}>
-                            <!-- a tab's root is mounted the first time it shows, then kept -->
-                            {#if root !== undefined}
-                                <ScreenHost
-                                    step={root}
-                                    root={{ title: labels[tab] }}
-                                    context={rootContext} />
-                            {/if}
-                        </section>
-                    {/each}
-                </div>
+            <!-- the swipe is a touch shortcut for the tab bar, which keyboards and screen readers use -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div
+                class="root"
+                class:covered={pushed.length > 0}
+                inert={pushed.length > 0}
+                onpointerdown={onPointerDown}
+                onpointermove={onPointerMove}
+                onpointerup={onPointerUp}
+                onpointercancel={onPointerUp}
+                onclickcapture={onClickCapture}
+                bind:this={rootEl}>
+                {#each tabIds as tab (tab)}
+                    {@const root = stacks.root(tab)}
+                    <section
+                        class="pane"
+                        class:current={tab === stacks.tab}
+                        class:neighbour={tab === drag?.neighbour}
+                        inert={tab !== stacks.tab}
+                        style:transform={paneTransform(tab)}
+                        bind:this={panes[tab]}>
+                        <!-- a tab's root is mounted the first time it shows, then kept -->
+                        {#if root !== undefined}
+                            <ScreenHost
+                                step={root}
+                                root={{ title: labels[tab] }}
+                                context={rootContext} />
+                        {/if}
+                    </section>
+                {/each}
             </div>
 
             <!-- another tab's stack shows as it was, without the push motion -->
@@ -268,11 +509,13 @@
         }
     }
 
-    // a tab's root: covered by a pushed screen, moved out to the other side
+    // a tab's root: covered by a pushed screen, moved out to the other side. Sideways drags are
+    // ours (the swipe between tabs), up-and-down ones the content's scroll
     .root {
         position: absolute;
         inset: 0;
         overflow: hidden;
+        touch-action: pan-y;
         transition: transform 0.34s var(--ease-out);
 
         &.covered {
@@ -284,24 +527,18 @@
         }
     }
 
-    // the tabs' roots side by side, the one showing in view
-    .track {
-        display: flex;
-        height: 100%;
-        transform: translateX(calc(var(--tab-index) * -100%));
-        transition: transform 0.32s var(--ease-out);
-
-        :global([dir="rtl"]) & {
-            transform: translateX(calc(var(--tab-index) * 100%));
-        }
-    }
-
+    // the tabs' roots, one over the other: the one showing, and while a swipe drags, its neighbour
     .pane {
-        flex: none;
-        width: 100%;
-        height: 100%;
-        min-height: 0;
+        position: absolute;
+        inset: 0;
         overflow: hidden;
+        visibility: hidden;
+        background: var(--surface-0);
+
+        &.current,
+        &.neighbour {
+            visibility: visible;
+        }
     }
 
     .pushed {
@@ -326,7 +563,6 @@
     @include reduced-motion {
         .bar,
         .root,
-        .track,
         .pushed {
             transition: none;
         }
