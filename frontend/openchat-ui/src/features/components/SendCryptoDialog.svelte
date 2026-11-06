@@ -35,7 +35,8 @@
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { cleanAmount, parseAmount } from '../../lib/amount';
-  import { onMount, untrack } from 'svelte';
+  import { onDestroy, onMount, untrack } from 'svelte';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import type { Transfer } from '../../lib/types';
   import Button from '../../lib/components/Button.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
@@ -66,6 +67,10 @@
   }
 
   let { tokens, z = 80, recipient = null, members = [], to: startTo = null, initial = null, onAttach, onClose }: Props = $props();
+  // closing plays the shared exit before the host unmounts it
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
+  const close = () => flow.dismiss(onClose);
   const t = useT();
   const i18n = getI18n();
 
@@ -133,7 +138,7 @@
       e.stopPropagation();
       if (toOpen) toOpen = false;
       else if (tokOpen) tokOpen = false;
-      else onClose?.();
+      else close();
     } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       attach();
@@ -150,12 +155,12 @@
   const initialOf = (name: string) => (name || '?')[0];
 </script>
 
-<div class="layer" style:z-index={z}>
-  <div class="scrim" onclick={() => onClose?.()} aria-hidden="true"></div>
+<div class="layer" class:closing={flow.closing} style:z-index={z}>
+  <div class="scrim" onclick={() => close()} aria-hidden="true"></div>
   <div class="dialog" data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label={title} onkeydown={onKey}>
     <div class="header">
       <span class="title">{title}</span>
-      <IconButton variant="ghost" icon="close" label="ui.common.close" onClick={() => onClose?.()} />
+      <IconButton variant="ghost" icon="close" label="ui.common.close" onClick={() => close()} />
     </div>
     <div class="body">
       <div class="recipient">
@@ -616,5 +621,27 @@
   .token-row:focus-visible {
     box-shadow: var(--focus-ring);
     outline: none;
+  }
+
+  /* the library's shared dialog motion (global.css): the veil fades and the card rises in, and both play the
+     exit while the flow is closing (by hand: the export's builders had none) */
+  .scrim {
+    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
+  }
+
+  .dialog {
+    animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
+  }
+
+  .layer.closing {
+    pointer-events: none;
+
+    .scrim {
+      animation: oc-veil-out 170ms var(--ease-standard) both;
+    }
+
+    .dialog {
+      animation: oc-dlg-out 170ms var(--ease-standard) both;
+    }
   }
 </style>

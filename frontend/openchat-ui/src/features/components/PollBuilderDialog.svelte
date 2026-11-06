@@ -70,6 +70,7 @@
   // publish / after-publish lock: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
   const flow = new DialogFlow();
   onDestroy(() => flow.destroy());
+  const close = () => flow.dismiss(onClose);
   let vw = $state(typeof window === 'undefined' ? 1200 : window.innerWidth);
 
   let box: HTMLDivElement;
@@ -157,7 +158,7 @@
   function requestClose() {
     if (flow.locked) return;
     if (question.trim() || filled.length) confirming = true;
-    else onClose?.();
+    else close();
   }
 
   function onKey(e: KeyboardEvent) {
@@ -289,7 +290,7 @@
           <span class="confirm-text">{t('ui.pollBuilderDialog.discardText')}</span>
           <div class="confirm-actions">
             <Button label="ui.pollBuilderDialog.keepEditing" variant="ghost" onClick={() => (confirming = false)} />
-            <Button label="ui.pollBuilderDialog.discard" variant="danger" onClick={() => !flow.locked && onClose?.()} />
+            <Button label="ui.pollBuilderDialog.discard" variant="danger" onClick={() => !flow.locked && close()} />
           </div>
         </div>
       </div>
@@ -652,5 +653,27 @@
     display: flex;
     justify-content: flex-end;
     gap: 8px;
+  }
+
+  /* the library's shared dialog motion (global.css): the veil fades and the card rises in, and both play the
+     exit while the flow is closing (by hand: the export's builders had none) */
+  .scrim {
+    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
+  }
+
+  .dialog {
+    animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
+  }
+
+  .layer.closing {
+    pointer-events: none;
+
+    .scrim {
+      animation: oc-veil-out 170ms var(--ease-standard) both;
+    }
+
+    .dialog {
+      animation: oc-dlg-out 170ms var(--ease-standard) both;
+    }
   }
 </style>
