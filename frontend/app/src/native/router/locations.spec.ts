@@ -1,7 +1,7 @@
 import type { CommunityIdentifier } from "@client";
 import { resolve } from "@src/utils/routeTable.testing";
 import {
-    hidesTabBar,
+    showsTabBar,
     locationFor,
     NATIVE_TABS,
     tabRootUrl,
@@ -166,24 +166,30 @@ describe("where a URL is in the native tree", () => {
 describe("the tab bar", () => {
     const shown = (url: string) => {
         const location = at(url);
-        return location.area === "tabs" && !location.steps.some((s) => hidesTabBar(s.screen));
+        return location.area === "tabs" && showsTabBar(location.steps);
     };
 
-    test("hides inside a conversation and what's over it", () => {
-        expect(shown("/chats/user/u1")).toBe(false);
-        expect(shown("/community/c2/channel/9")).toBe(false);
-        expect(shown("/chats/group/g1/57?open=true")).toBe(false);
-    });
-
-    test("stays on the tabs' roots and their other screens", () => {
+    test("shows on the tabs' roots", () => {
         for (const url of [
             "/chats",
-            "/chats?threads",
-            "/communities",
-            "/wallet/ledger1",
-            "/admin",
+            "/favourite",
+            "/wallet",
+            "/notifications",
+            "/profile_summary",
         ]) {
             expect(shown(url), url).toBe(true);
+        }
+    });
+
+    test("hides on every pushed screen, not only a conversation", () => {
+        for (const url of [
+            "/chats/user/u1",
+            "/community/c2/channel/9",
+            "/chats/group/g1/57?open=true",
+            "/chats?threads",
+            "/wallet/ledger1",
+        ]) {
+            expect(shown(url), url).toBe(false);
         }
     });
 });

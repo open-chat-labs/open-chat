@@ -135,13 +135,12 @@ export function locationFor(
 }
 
 /**
- * Whether the tab bar goes while this screen is in the stack: inside a conversation (native design
- * notes §1 Structure 2), so a conversation and everything pushed over it have the whole window.
- * Everywhere else it stays under the screens, so another tab is a tap away and each tab's stack is
- * there to come back to.
+ * Whether the tab bar shows over this stack: only on a tab's root (the five pages the bar names),
+ * as the prototype has it. Every pushed screen (a conversation, a thread, Followed threads, a
+ * token page …) has the whole window, and Back is the way out of it.
  */
-export function hidesTabBar(screen: NativeScreen): boolean {
-    return screen.kind === "conversation" || screen.kind === "thread";
+export function showsTabBar(steps: readonly StackStep[]): boolean {
+    return steps.length <= 1;
 }
 
 /** Where a tab opens when it has no stack yet: its root. */

@@ -1,7 +1,7 @@
 <!-- The native shell (native design notes §1 Structure): five tabs, each with its own push stack.
      The URL names the screen showing (router/locations.ts); each tab keeps its stack (TabStacks), so
-     it comes back as it was left. Screens sit over the tab bar, which hides inside a conversation
-     (hidesTabBar). A pushed screen slides in from the inline end while the one under it moves out to
+     it comes back as it was left. The tab bar shows only on a tab's root; a pushed screen has the
+     whole window (showsTabBar). A pushed screen slides in from the inline end while the one under it moves out to
      the other side (.34s, motion.ts), and Back reverses it. Android's system back closes an open
      sheet or menu first, then pops (back.ts). -->
 <script lang="ts">
@@ -32,7 +32,7 @@
     import ScreenHost from "../features/app/ScreenHost.svelte";
     import type { ScreenContext } from "../features/app/screens";
     import {
-        hidesTabBar,
+        showsTabBar,
         locationFor,
         NATIVE_TABS,
         tabRootUrl,
@@ -85,7 +85,7 @@
 
     const pushed = $derived(stacks.steps.slice(1));
     // the tab bar stays under pushed screens, but not inside a conversation
-    const barShown = $derived(!stacks.steps.some((step) => hidesTabBar(step.screen)));
+    const barShown = $derived(showsTabBar(stacks.steps));
 
     const labels: Record<NativeTabId, string> = $derived({
         chats: $_("native.tabs.chats"),

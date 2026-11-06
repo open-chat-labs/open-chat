@@ -70,7 +70,7 @@ accent (`theme/accent.ts`), and the native apps' setup (`utils/native/nativeApp.
   and the stores, as in `src/web`.
 - **Sheets and menus** register while they're open (`useOverlay(context.overlays, …)`), so Android's
   system back closes them before it pops the screen.
-- **The tab bar** stays under the screens, except inside a conversation (`hidesTabBar`).
+- **The tab bar** shows only on a tab's root; every pushed screen has the whole window (`showsTabBar`).
 - **Platform differences** are only the Design Notes' §2 ones, through `data-os` on `<html>` (the
   kit's back arrow, kebab and touch targets read it). Don't add others.
 - **Haptics** go through the kit's `haptic()`; the root installs the device's (`setHaptics`), and

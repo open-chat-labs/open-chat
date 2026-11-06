@@ -51,10 +51,10 @@ design export needs. Each entry says where it came up.
   `OC_NATIVE_LAYOUT=v4`, the five tabs with their own push stacks, the push motion, Android's back,
   the cold start's parked intents, and placeholders for every screen. Left, or decided against the
   prototype:
-  - **The tab bar stays under pushed screens**, except inside a conversation (the Design Notes §1
-    and the issue: "the tab bar hides inside a conversation"). The prototype's pushed screens cover
-    it everywhere, which leaves a tab's stack reachable only by a link from another tab. Confirm
-    with design; it's `hidesTabBar` (`router/locations.ts`).
+  - **The tab bar shows only on a tab's root** (decided 2026-11-06, as the prototype has it; the
+    Design Notes and the issue only said it hides inside a conversation): every pushed screen has
+    the whole window (`showsTabBar`, `router/locations.ts`). A tab's stack is still kept, for a link
+    from another tab or a deep link to land in.
   - **Local pushes**: screens without a URL on the web (details, members, settings pages, builders)
     need `TabStacks` to push without changing the URL, as the web opens a local dialog. With the
     first screen that needs it (N6, N9 or N12).
