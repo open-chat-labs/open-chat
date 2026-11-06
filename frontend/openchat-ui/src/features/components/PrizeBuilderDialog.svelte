@@ -93,6 +93,8 @@
   let streak = $state(start.streak);
   let chit = $state(start.chit);
   let pick = $state<'chit' | 'streak' | null>(null);
+  // the picker last opened, so its chips stay in place while it shrinks closed
+  let shownPick = $state<'chit' | 'streak' | null>(null);
   let tokOpen = $state(false);
   let row = $state<'win' | 'dur' | 'who' | null>(null);
   let vw = $state(typeof window === 'undefined' ? 1200 : window.innerWidth);
@@ -160,6 +162,7 @@
     }
     if (g.pick) {
       pick = pick === g.pick ? null : g.pick;
+      if (pick) shownPick = pick;
       return;
     }
     const n: Record<string, boolean | number> = { ...gates, [g.k]: true };
@@ -268,50 +271,66 @@
                 <span class="row-value">{r.value}</span>
                 <span class="row-chevron" class:open={row === r.k}></span>
               </div>
-              {#if row === r.k && r.k === 'win'}
-                <div class="panel column">
-                  <div class="stepper">
-                    <button class="step" onclick={() => (win = String(Math.max(1, w - 1)))} aria-label={t(K + 'fewerWinners')}>−</button>
-                    <input value={win} oninput={(e) => (win = e.currentTarget.value.replace(/\D/g, '').slice(0, 4))} inputmode="numeric" aria-label={t(K + 'numberOfWinners')} />
-                    <button class="step" onclick={() => (win = String(Math.min(1000, w + 1)))} aria-label={t(K + 'moreWinners')}>+</button>
+              {#if r.k === 'win'}
+                <div class="grow" class:open={row === r.k}>
+                  <div class="clip">
+                    <div class="panel column">
+                      <div class="stepper">
+                        <button class="step" onclick={() => (win = String(Math.max(1, w - 1)))} aria-label={t(K + 'fewerWinners')}>−</button>
+                        <input value={win} oninput={(e) => (win = e.currentTarget.value.replace(/\D/g, '').slice(0, 4))} inputmode="numeric" aria-label={t(K + 'numberOfWinners')} />
+                        <button class="step" onclick={() => (win = String(Math.min(1000, w + 1)))} aria-label={t(K + 'moreWinners')}>+</button>
+                      </div>
+                      <span class="range">{t(K + 'winnersRangeHint')}</span>
+                      <Toggle label={t(K + 'splitEvenly')} help={t(K + 'splitEvenlyHelp')} on={even} onChange={(v) => (even = v)} />
+                    </div>
                   </div>
-                  <span class="range">{t(K + 'winnersRangeHint')}</span>
-                  <Toggle label={t(K + 'splitEvenly')} help={t(K + 'splitEvenlyHelp')} on={even} onChange={(v) => (even = v)} />
                 </div>
               {/if}
-              {#if row === r.k && r.k === 'dur'}
-                <div class="panel wrap">
-                  {#each DURS as d, j}
-                    <button class="choice" class:on={j === dur} onclick={() => (dur = j)} aria-pressed={j === dur}>{t(d[0])}</button>
-                  {/each}
+              {#if r.k === 'dur'}
+                <div class="grow" class:open={row === r.k}>
+                  <div class="clip">
+                    <div class="panel wrap">
+                      {#each DURS as d, j}
+                        <button class="choice" class:on={j === dur} onclick={() => (dur = j)} aria-pressed={j === dur}>{t(d[0])}</button>
+                      {/each}
+                    </div>
+                  </div>
                 </div>
               {/if}
-              {#if row === r.k && r.k === 'who'}
-                <div class="panel column gap10">
-                  <div class="chips">
-                    {#each offered as g}
-                      {@const on = !!gates[g.k]}
-                      <button class="choice gate" class:on onclick={() => toggleGate(g)} aria-pressed={on}>
-                        <span class="gate-icon" style:mask="var(--icon-{g.icon}) center/contain no-repeat" style:-webkit-mask="var(--icon-{g.icon}) center/contain no-repeat"></span>{on
-                          ? gateLabel(g)
-                          : t(g.label)}<span
-                          class="gate-trail"
-                          style:mask="var(--icon-{on ? 'close' : g.pick ? 'chevron-down' : 'plus'}) center/contain no-repeat"
-                          style:-webkit-mask="var(--icon-{on ? 'close' : g.pick ? 'chevron-down' : 'plus'}) center/contain no-repeat"
-                        ></span>
-                      </button>
-                    {/each}
-                  </div>
-                  {#if pick}
-                    <div class="picker">
-                      <span class="picker-title">{t(PICKS[pick].title)}</span>
+              {#if r.k === 'who'}
+                <div class="grow" class:open={row === r.k}>
+                  <div class="clip">
+                    <div class="panel column gap10">
                       <div class="chips">
-                        {#each PICKS[pick].opts as n}
-                          <button class="choice small" class:on={n === (pick === 'chit' ? chit : streak)} onclick={() => choose(n)}>{t(K + 'orMore', { amount: pickAmount(pick, n) })}</button>
+                        {#each offered as g}
+                          {@const on = !!gates[g.k]}
+                          <button class="choice gate" class:on onclick={() => toggleGate(g)} aria-pressed={on}>
+                            <span class="gate-icon" style:mask="var(--icon-{g.icon}) center/contain no-repeat" style:-webkit-mask="var(--icon-{g.icon}) center/contain no-repeat"></span>{on
+                              ? gateLabel(g)
+                              : t(g.label)}<span
+                              class="gate-trail"
+                              style:mask="var(--icon-{on ? 'close' : g.pick ? 'chevron-down' : 'plus'}) center/contain no-repeat"
+                              style:-webkit-mask="var(--icon-{on ? 'close' : g.pick ? 'chevron-down' : 'plus'}) center/contain no-repeat"
+                            ></span>
+                          </button>
                         {/each}
                       </div>
+                      <div class="grow picker-grow" class:open={!!pick}>
+                        <div class="clip">
+                          {#if shownPick}
+                            <div class="picker">
+                              <span class="picker-title">{t(PICKS[shownPick].title)}</span>
+                              <div class="chips">
+                                {#each PICKS[shownPick].opts as n}
+                                  <button class="choice small" class:on={n === (shownPick === 'chit' ? chit : streak)} onclick={() => choose(n)}>{t(K + 'orMore', { amount: pickAmount(shownPick, n) })}</button>
+                                {/each}
+                              </div>
+                            </div>
+                          {/if}
+                        </div>
+                      </div>
                     </div>
-                  {/if}
+                  </div>
                 </div>
               {/if}
             </div>
@@ -597,6 +616,38 @@
 
   .row-chevron.open {
     transform: rotate(180deg);
+  }
+
+  /* a row's panel (and the gate picker) grows open and shrinks closed; hidden once closed, so it leaves the tab order */
+  .grow {
+    display: grid;
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    transition:
+      grid-template-rows var(--duration-base) var(--ease-out),
+      visibility 0s linear var(--duration-base);
+
+    &.open {
+      grid-template-rows: 1fr;
+      visibility: visible;
+      transition:
+        grid-template-rows var(--duration-base) var(--ease-out),
+        visibility 0s;
+    }
+  }
+
+  .clip {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* the panel's gap above the picker goes inside it, so a closed picker takes no room */
+  .picker-grow {
+    margin-top: -10px;
+  }
+
+  .picker-grow .picker {
+    margin-top: 10px;
   }
 
   .panel {

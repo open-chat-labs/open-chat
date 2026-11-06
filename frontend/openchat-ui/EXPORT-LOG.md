@@ -664,3 +664,6 @@
 
 ## 2026-11-06 — a poll answer doesn't rewrap when you vote (5d testing), by hand
 - `PollMessage`: the percentage only appeared once the results showed, so voting narrowed every label and a long answer broke onto a second line. The percentage is now always laid out, as wide as "100%" (hidden until the results show), so the labels keep their width.
+
+## 2026-11-06 — the prize builder's option rows grow and shrink (5d testing), by hand
+- `PrizeBuilderDialog`: Winners, Ends after and Who can claim open in place by growing and close by shrinking (grid rows 0fr ↔ 1fr, as the poll builder's settings do), so moving from one row to another closes one while the other opens; the CHIT / streak picker under Who can claim does the same, keeping its chips while it shrinks. Closed panels are hidden, so they leave the tab order.
