@@ -1,6 +1,6 @@
 import { miniAppCardView, type MiniAppContent } from "@client";
 import { flushSync, mount, unmount } from "svelte";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, onTestFinished, test, vi } from "vitest";
 
 // utils/devices.ts and the theme query matchMedia when imported, and jsdom has none
 vi.hoisted(() => {
@@ -17,6 +17,7 @@ import { MiniAppActions } from "@src/logic/miniApp/miniAppActions.svelte";
 import { MiniAppFullScreen } from "@src/logic/miniApp/miniAppFrame.svelte";
 import type { HostedMiniApp } from "@src/logic/miniApp/miniAppHost.svelte";
 import MobileMiniAppFrame from "../../components_mobile/home/MiniAppFrame.svelte";
+import { i18nKey } from "../../i18n/i18n";
 import { themeType } from "../../theme/themes";
 import MiniAppFrame from "./MiniAppFrame.svelte";
 
@@ -61,6 +62,25 @@ function recordSrcWrites(): string[] {
         return original.call(this, name, value);
     });
     return writes;
+}
+
+// jsdom has no modal dialogs, so a frame can't go full screen. These only open and close it, as
+// jsdom draws nothing, so there's no top layer to put it in.
+function stubDialogs(): void {
+    const proto = HTMLDialogElement.prototype;
+    function show(this: HTMLDialogElement) {
+        this.open = true;
+    }
+    Object.assign(proto, {
+        show,
+        showModal: show,
+        close(this: HTMLDialogElement) {
+            this.open = false;
+        },
+    });
+    onTestFinished(() => {
+        for (const name of ["show", "showModal", "close"]) Reflect.deleteProperty(proto, name);
+    });
 }
 
 describe.each([
@@ -149,5 +169,70 @@ describe.each([
         expect(frame().classList).toContain("unrevealed");
         drawn();
         expect(artwork()).toBeNull();
+    });
+
+    test("puts focus in the app going full screen and back, so the game's keys don't press buttons", async () => {
+        stubDialogs();
+        const props = {
+            app: hosted(),
+            actions: new MiniAppActions(client as never, GAME),
+            fullScreen: new MiniAppFullScreen(),
+            active: true,
+            view: miniAppCardView(CONTENT, undefined, "me"),
+            imageUrl: undefined,
+        };
+        target = document.body.appendChild(document.createElement("div"));
+        app = mount(Frame, { target, props, context: new Map([["client", client]]) });
+        flushSync();
+        const frame = target.querySelector("iframe")!;
+
+        const corner = target.querySelector<HTMLButtonElement>(".corner")!;
+        corner.focus();
+        corner.click();
+        flushSync();
+        expect(props.fullScreen.on).toBe(true);
+        await vi.waitFor(() => expect(document.activeElement).toBe(frame));
+
+        const exit = target.querySelector<HTMLElement>(".exit button, .exit [role='button']")!;
+        exit.focus();
+        exit.click();
+        flushSync();
+        expect(props.fullScreen.on).toBe(false);
+        await vi.waitFor(() => expect(document.activeElement).toBe(frame));
+    });
+
+    test("without an app, puts focus on the exit button, and on the corner button once back", async () => {
+        stubDialogs();
+        // the game can't be opened, so the frame says so in place of the app
+        const failing = {
+            ...client,
+            openMiniApp: async () => ({
+                kind: "failed",
+                message: i18nKey("bots.miniApp.finished"),
+            }),
+        };
+        const props = {
+            app: hosted(),
+            actions: new MiniAppActions(failing as never, GAME),
+            fullScreen: new MiniAppFullScreen(),
+            active: true,
+            view: miniAppCardView(CONTENT, undefined, "me"),
+            imageUrl: undefined,
+        };
+        target = document.body.appendChild(document.createElement("div"));
+        app = mount(Frame, { target, props, context: new Map([["client", failing]]) });
+        flushSync();
+        await vi.waitFor(() => expect(target!.querySelector("iframe")).toBeNull());
+
+        target.querySelector<HTMLButtonElement>(".corner")!.click();
+        flushSync();
+        const exit = target.querySelector<HTMLElement>(".exit button, .exit [role='button']")!;
+        await vi.waitFor(() => expect(document.activeElement).toBe(exit));
+
+        exit.click();
+        flushSync();
+        await vi.waitFor(() =>
+            expect(document.activeElement).toBe(target!.querySelector(".corner")),
+        );
     });
 });

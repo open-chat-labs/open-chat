@@ -87,16 +87,20 @@
     let dialog: HTMLDialogElement | undefined = $state();
     let iframe: HTMLIFrameElement | undefined = $state();
     let corner: HTMLButtonElement | undefined = $state();
-    // Going full screen unmounts the corner button, and coming back unmounts the bar's exit
-    // button, so a keyboard user's focus is put where they'd expect: on the exit button once the
-    // bar's in, and back on the corner button once the card's back
+    // Going full screen, and coming back, puts focus in the app, as its keys are the game's: left on
+    // OpenChat's buttons they'd press them, eg. a jump on Space would leave full screen. Escape's
+    // the game's then too, so it's the exit button which leaves. Without an app, as the button the
+    // user pressed is gone, a keyboard user's focus is put where they'd expect: on the exit button
+    // once the bar's in, and back on the corner button once the card's back.
     let wasFullScreen = fullScreen.on;
     $effect(() => {
         const on = fullScreen.on;
         if (on === wasFullScreen) return;
         wasFullScreen = on;
         void tick().then(() => {
-            if (on) {
+            if (iframe) {
+                iframe.focus();
+            } else if (on) {
                 dialog?.querySelector<HTMLElement>(".exit button, .exit [role='button']")?.focus();
             } else {
                 corner?.focus();
