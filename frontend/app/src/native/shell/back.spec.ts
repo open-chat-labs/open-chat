@@ -3,8 +3,8 @@ import { locationFor, type NativeLocation } from "../router/locations";
 import { backAction } from "./back";
 import { TabStacks } from "./tabStacks.svelte";
 
-function at(url: string): NativeLocation {
-    return locationFor(resolve(url), url, { signedOut: false, community: undefined });
+function at(url: string, signedOut = false): NativeLocation {
+    return locationFor(resolve(url), url, { signedOut, community: undefined });
 }
 
 // What system back does on `url`, its stack as the URL has it, going back where the header's Back
@@ -13,7 +13,13 @@ function back(url: string, overlayOpen = false, chatsUrl = "/chats") {
     const location = at(url);
     const stacks = new TabStacks();
     if (location.area === "tabs") stacks.arrive(location);
-    return backAction({ overlayOpen, location, backUrl: stacks.backUrl(), chatsUrl });
+    return backAction({
+        overlayOpen,
+        location,
+        backUrl: stacks.backUrl(),
+        chatsUrl,
+        startBack: false,
+    });
 }
 
 describe("Android's system back", () => {
@@ -51,7 +57,21 @@ describe("Android's system back", () => {
         expect(back("/a/b/c/d/e")).toEqual({ kind: "navigate", url: "/chats" });
     });
 
-    test("leaves the app from outside the tabs, signed out", () => {
-        expect(back("/home")).toEqual({ kind: "leave" });
+    test("goes from a marketing page to the start, or the chats", () => {
+        expect(back("/home")).toEqual({ kind: "navigate", url: "/" });
+    });
+
+    test("signed out, goes back through the start, then leaves the app from Welcome", () => {
+        const signedOut = (startBack: boolean, overlayOpen = false) =>
+            backAction({
+                overlayOpen,
+                location: at("/", true),
+                backUrl: undefined,
+                chatsUrl: "/chats",
+                startBack,
+            });
+        expect(signedOut(true, true)).toEqual({ kind: "close_overlay" });
+        expect(signedOut(true)).toEqual({ kind: "start_back" });
+        expect(signedOut(false)).toEqual({ kind: "leave" });
     });
 });

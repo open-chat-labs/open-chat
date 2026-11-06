@@ -37,7 +37,8 @@ native/
                      and opens what a cold start parked (a call, a deep link, a notification tap)
     locations.ts     where each URL is: its tab and the stack on it
   shell/
-    Shell.svelte     the tabs' roots, the pushed screens and their motion, the tab bar, Back
+    Shell.svelte     the tabs' roots, the pushed screens and their motion, the tab bar, Back;
+                     signed out, the start (features/start); the marketing pages
     tabStacks.svelte.ts  each tab's stack, kept across tab switches
     overlays.svelte.ts   open sheets and menus, which Android's back closes first
     back.ts          what Android's system back does
@@ -48,12 +49,18 @@ native/
   features/      one folder per screen/feature, as in src/web:
     app/screens.ts   which screen shows for each kind; a new screen sets its entry there
     app/ScreenHost.svelte  loads it, or shows a placeholder until it's built
+    start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
+                     Link to your account, Pick a username and the referrer sheet, on a stack of
+                     their own (startStack.svelte.ts), loaded when someone's signed out
 ```
 
 Shared with the web tree rather than copied: the route table (`utils/routeTable.ts`), the route
 effects (`core/RouteEffects.svelte`), the library's i18n bridge (`i18n/openchatUi.ts`), the stored
-accent (`theme/accent.ts`), and the native apps' setup (`utils/native/nativeApp.ts`, shared with
-`components_mobile`).
+accent (`theme/accent.ts`), the native apps' setup (`utils/native/nativeApp.ts`, shared with
+`components_mobile`), sign-in and sign-up (`logic/auth`: the flow's decisions, the sign-up with
+its referrer, the sign-up form and the referrer picker, shared with `src/web` and the old UIs), and
+the marketing pages, which are the web tree's own screen (`web/features/marketing`), as the design
+has no native version.
 
 ## Rules
 
@@ -69,6 +76,11 @@ accent (`theme/accent.ts`), and the native apps' setup (`utils/native/nativeApp.
 - **Screens.** A screen is plugged in by setting its entry in `features/app/screens.ts`; it gets
   `{ screen, context }`, `context.back` being a pushed screen's Back. Only screens touch the client
   and the stores, as in `src/web`.
+- **Signed out** there are no tabs: every URL but a marketing page is the signed-out start
+  (`features/start`), with no guest mode, and the URL stays as it is for after sign-in. Its
+  screens have no URLs (the web's are a dialog), so they're a stack of their own
+  (`StartStack`), which Android's back goes through. Signing in and up are the client's
+  (`signIn`, `signUp` through `logic/auth`), never steps a screen strings together.
 - **Sheets and menus** register while they're open (`useOverlay(context.overlays, …)`), so Android's
   system back closes them before it pops the screen.
 - **The tab bar** shows only on a tab's root; every pushed screen has the whole window (`showsTabBar`).

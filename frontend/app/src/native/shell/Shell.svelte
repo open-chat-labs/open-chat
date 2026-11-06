@@ -4,9 +4,12 @@
      whole window (showsTabBar). A pushed screen slides in from the inline end while the one under it moves out to
      the other side (.34s, motion.ts), and Back reverses it. Android's system back closes an open
      sheet or menu first, then pops (back.ts). On a tab's root, a sideways drag swipes to the
-     neighbouring tab (tabSwipe.ts); switching tabs slides only the two screens, old and new. -->
+     neighbouring tab (tabSwipe.ts); switching tabs slides only the two screens, old and new.
+     Signed out, it's the signed-out start instead (features/start), whatever the URL; the
+     marketing pages are the web tree's, outside the tabs. -->
 <script lang="ts">
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
+    import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import TabBar from "@openchat/ui/src/native/TabBar.svelte";
     import { disableWalletFeature } from "@src/utils/features";
     import { navigate } from "@src/utils/navigation";
@@ -17,6 +20,7 @@
         communitiesStore,
         currentUserIdStore,
         defaultCommunity,
+        identityStateStore,
         lastSelectedCommunityIdStore,
         messageActivitySummaryStore,
         OpenChat,
@@ -32,6 +36,7 @@
     import { minimizeApp } from "tauri-plugin-oc-api";
     import ScreenHost from "../features/app/ScreenHost.svelte";
     import type { ScreenContext } from "../features/app/screens";
+    import { StartStack, startEntry, startStepFor } from "../features/start/startStack.svelte";
     import {
         showsTabBar,
         locationFor,
@@ -81,9 +86,24 @@
         $pathContextStore?.path ?? `${window.location.pathname}${window.location.search}`,
     );
 
+    // Signed out, the signed-out start shows (features/start): from someone signed out until
+    // there's a user, a sign-in or sign-up started there included; a spinner while a session from
+    // before loads. It starts again each time it shows (after a sign-out, at Welcome; for an
+    // identity without an account, at Pick a username).
+    const start = new StartStack();
+    let onStart = $state(false);
+    const entry = $derived(startEntry($identityStateStore, $anonUserStore, onStart));
+    $effect(() => {
+        const now = entry;
+        untrack(() => {
+            if (now === "start" && !onStart) start.reset(startStepFor($identityStateStore));
+            if (now !== "loading") onStart = now === "start";
+        });
+    });
+
     const location: NativeLocation = $derived(
         locationFor($routeStore, url, {
-            signedOut: $anonUserStore,
+            signedOut: entry !== "app",
             // what the tab shows is the stacks' own state, not something to recompute on
             community: untrack(communityShown) ?? defaultCommunityId,
         }),
@@ -363,6 +383,7 @@
             location,
             backUrl: stacks.backUrl(),
             chatsUrl: stacks.topUrl("chats") ?? tabRootUrl("chats", undefined),
+            startBack: start.canGoBack,
         });
         switch (action.kind) {
             case "close_overlay":
@@ -370,6 +391,9 @@
                 break;
             case "navigate":
                 navigate(action.url, "dismiss");
+                break;
+            case "start_back":
+                start.back();
                 break;
             case "leave":
                 minimizeApp().catch(console.error);
@@ -400,6 +424,17 @@
         }
     });
 </script>
+
+<!-- a chunk that didn't load (a flaky network, or a deploy since the page loaded) stays failed for
+     the page's lifetime, so the retry reloads, as ScreenHost's -->
+{#snippet chunkFailed()}
+    <EmptyState
+        preset="error"
+        title={$_("unexpectedError")}
+        body={$_("regionLoadFailed")}
+        actionLabel="ui.common.retry"
+        actionHandler={() => window.location.reload()} />
+{/snippet}
 
 {#if location.area === "tabs"}
     <div class="shell" class:bar-hidden={!barShown}>
@@ -457,12 +492,34 @@
 
         <Toasts above={barShown ? "tabBar" : "none"} />
     </div>
+{:else if location.area === "signed_out"}
+    <div class="outside">
+        {#if entry === "loading"}
+            <Spinner />
+        {:else}
+            {#await import("../features/start/SignedOutStart.svelte") then { default: SignedOutStart }}
+                <SignedOutStart {start} {overlays} />
+            {:catch}
+                {@render chunkFailed()}
+            {/await}
+        {/if}
+        <Toasts above="none" />
+    </div>
+{:else if location.area === "marketing"}
+    <!-- the marketing pages (Landing, Learn): the web tree's, which have no native design -->
+    <div class="marketing">
+        {#await import("@src/web/features/marketing/MarketingScreen.svelte") then { default: MarketingScreen }}
+            <MarketingScreen route={location.route} />
+        {:catch}
+            <div class="outside">{@render chunkFailed()}</div>
+        {/await}
+    </div>
 {:else}
-    <!-- outside the tabs: the marketing pages and the signed-out start (N4), and not found -->
+    <!-- not found -->
     <div class="outside">
         <EmptyState
             preset="no-results"
-            title={location.area === "marketing" ? location.route.kind : "not_found"}
+            title="not_found"
             body={window.location.pathname}
             actionLabel="Chats"
             actionHandler={() => navigate("/chats")} />
@@ -485,6 +542,11 @@
     .outside {
         display: grid;
         place-items: center;
+    }
+
+    // the web's marketing pages scroll the document
+    .marketing {
+        min-height: 100%;
     }
 
     // the screens, over the tab bar, or the whole window inside a conversation, where the bar

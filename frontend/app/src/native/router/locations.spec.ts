@@ -128,10 +128,21 @@ describe("where a URL is in the native tree", () => {
         expect(stack("/")).toBe("chats: chats@/");
     });
 
-    test("the marketing pages, and / signed out, are outside the tabs", () => {
+    test("the marketing pages are outside the tabs, signed in or out", () => {
+        const signedOut = { signedOut: true, community: undefined };
         expect(stack("/home")).toBe("marketing");
         expect(stack("/blog/some-post")).toBe("marketing");
-        expect(stack("/", { signedOut: true, community: undefined })).toBe("marketing");
+        expect(stack("/home", signedOut)).toBe("marketing");
+        expect(stack("/faq", signedOut)).toBe("marketing");
+    });
+
+    test("signed out, anything else is the signed-out start: no guest mode", () => {
+        const signedOut = { signedOut: true, community: undefined };
+        expect(stack("/", signedOut)).toBe("signed_out");
+        expect(stack("/chats", signedOut)).toBe("signed_out");
+        expect(stack("/group/g1", signedOut)).toBe("signed_out");
+        expect(stack("/communities", signedOut)).toBe("signed_out");
+        expect(stack("/a/b/c/d/e", signedOut)).toBe("signed_out");
     });
 
     test("a path the table doesn't know is not found", () => {

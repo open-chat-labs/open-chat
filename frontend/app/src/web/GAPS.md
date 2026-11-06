@@ -78,7 +78,11 @@ design export needs. Each entry says where it came up.
   - **"Switch to desktop site / mobile site"**: `selectLayout` reads the stored choice
     (`configKeys.layoutOverride`), but no screen sets it yet (N12, and the web's settings). Nor does
     a resize offer a reload into the other layout.
-  - **Outside the tabs**: the marketing pages and the signed-out start are a placeholder (N4).
+  - **Outside the tabs**: done (N4). Signed out, every URL but a marketing page is the signed-out
+    start (no guest mode, notes §3.1), the URL kept for after sign-in; a session from before shows a
+    spinner while it loads, so Welcome doesn't flash (`startEntry`). The marketing pages (Landing,
+    Learn) are the web tree's `MarketingScreen`, loaded when one shows: the design has no native
+    version. Android's back from one goes to "/" (the start, or the chats).
   - **Signed out, the shell's events**: done (N4). The Android app queues its events until
     `svelteReady`, which both trees send only once someone is signed in (`setupNativeApp`). What a
     signed-out screen needs is the screen's own: the window insets (`followWindowInsets`, sent at
@@ -109,6 +113,49 @@ design export needs. Each entry says where it came up.
     its stack, with no tab selected.
   - The tab bar's Chats count is the unmuted unread DMs and groups; the design doesn't say whether
     favourites or mentions count (N5a).
+- **Native sign in and onboarding** (native N4, #10367; `src/native/features/start`). Built: Welcome
+  (the lockup, the Appearance | language pill, the headline, the proof cards, Create account / I
+  already have an account, the terms), Pick a username (the live check, the recovery email, the
+  inviter card or the referrer row, Continue), the referrer sheet (search, Scan their QR code,
+  Paste their invite link, the confirm step), Welcome back (passkey, Link with existing account) and
+  Link to your account (CodeTiles, Paste, Link this phone), on the client's operations: `signIn`
+  (a passkey, or a linking code: `{ kind: "linking_code" }`, new), `signUp` through the shared form
+  (`logic/auth/signUpForm`), the shared referrer (`logic/auth/signUp`, `referrerPicker`). Left, or
+  decided against the prototype:
+  - **Recovery phrase**: the backend has none (no phrase is made at sign-up, and nothing signs in
+    with one), so there's no Recover account screen, no "Recover with phrase" on Welcome back, no
+    Recovery phrase screen (reveal, copy, "I've written it down"). The design needs the backend
+    first; the prototype fakes it.
+  - **Getting started card** (new accounts, top of Chats): not built. It goes on the Chats root
+    (N5a), and its last step, backing up the recovery phrase, waits for the phrase.
+  - **A photo on Pick a username**: the avatar is the name's initial, without the camera badge.
+    A photo needs the crop step and an upload once the account exists (the client's `signUp`
+    taking it, so the screen doesn't string the two together).
+  - **The passkey prompt** comes on Continue (the client's `signUp` makes the passkey, named after
+    the username), not on Welcome's Create account as the issue reads it.
+  - **Appearance**: a sheet of the kit's settings rows (Theme segmented, Accent swatches), where
+    the design has an anchored menu of radio rows and swatches; the kit's AnchoredMenu has rows
+    only. The You tab's Appearance (N12) can share it.
+  - **After sign-in**: the apps' system notifications prompt is the push setup's
+    (`setupNativeApp` after sign-in, as in components_mobile; check iOS asks too); mobile web
+    asks for none. Then the URL the person was on, "/" going to Chats.
+  - **The referrer's chat**: "you'll start in a chat with them" is the app opening a DM with the
+    referrer after the sign-up; the backend makes no chat for a referral. Confirm with design.
+  - **An invite link opened in the apps while signed out** waits for sign-in with the other
+    intents, so its `ref` isn't there for the inviter card; mobile web takes it from the URL
+    (`captureReferralCode`). The shell would have to hand over a pending link's `ref` before
+    sign-in.
+  - **Mobile web**: the start's screens are a stack of their own, not history entries, so the
+    browser's Back leaves the start rather than going back a screen. Signing in there is a passkey
+    or a linking code only, as in the apps; an Internet Identity, email or wallet account signs in
+    from Landing (/home), whose sign-in is the web's AuthDialog. A linking code there makes the
+    browser's passkey (new in the client, alongside the native app's): try it with a real code.
+  - **Terms and Privacy** open outside the app in the apps (landing paths); on mobile web they're
+    the web's pages, which are a placeholder there too (ROUTES.md decision 5).
+  - **Small phones** are taken as no taller than 700px (the notes' 375 × 667): the proof cards at
+    78% and a 32px headline, a 104px avatar on Pick a username.
+  - **The proof cards' text** is fixed sample copy, translated, with the vote's question on one
+    line, so the community card in front leaves the vote's numbers showing in every language.
 - **Shell breakpoints vs layout tokens**: the shell's breakpoints and widths (Fix Brief - App
   Shell Layout: 768 / 1200 / 1476 / 1876 / 2476px, chat list `clamp(350px, 30cqw, 550px)`, right
   column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*` 1280–2500px,
