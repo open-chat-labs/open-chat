@@ -24,6 +24,8 @@
     /** A private channel or group: a lock before the title. */
     locked?: boolean;
     pinned?: boolean;
+    /** A favourite: a heart before the time (native). */
+    fav?: boolean;
     muted?: boolean;
     selected?: boolean;
     /** Users only. */
@@ -46,6 +48,7 @@
     typing = false,
     locked = false,
     pinned = false,
+    fav = false,
     muted = false,
     selected = false,
     verified = false,
@@ -193,6 +196,9 @@
         <div class="grow"></div>
         {#if pinned}
           <span class="flag pin"></span>
+        {/if}
+        {#if fav}
+          <span class="flag fav" role="img" aria-label={t('ui.chatRow.favourite')} title={t('ui.chatRow.favourite')}></span>
         {/if}
         {#if muted}
           <span class="flag mute" title={t('ui.chatRow.muted')}></span>
@@ -345,6 +351,13 @@
   .pin {
     background: var(--accent);
     mask: var(--icon-pin) center/contain no-repeat;
+  }
+
+  .fav {
+    width: 11px;
+    height: 11px;
+    background: var(--accent);
+    mask: var(--icon-heart-filled) center/contain no-repeat;
   }
 
   .lock {

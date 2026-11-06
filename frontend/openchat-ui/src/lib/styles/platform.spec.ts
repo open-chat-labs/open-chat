@@ -88,7 +88,7 @@ const MODES = ['dark', 'light'] as const;
 const ACCENTS = ['pink', 'orange', 'blue', 'green'] as const;
 const HERO = ['--hero-base', '--tint-row', '--tint-pill'];
 // the shell kit's (src/native): touch target, bar padding, tab bar height, veils, shadows
-const SHELL = ['--touch-target', '--bar-end', '--tab-bar-h', '--veil-sheet', '--veil-lift', '--shadow-sheet', '--shadow-menu', '--shadow-lift', '--shadow-push'];
+const SHELL = ['--touch-target', '--bar-end', '--tab-bar-h', '--veil-sheet', '--veil-lift', '--shadow-sheet', '--shadow-menu', '--shadow-lift', '--shadow-push', '--shadow-fab'];
 const TEXT = ['--text-2xs', '--text-xs', '--text-sm', '--text-md', '--text-base', '--text-lg', '--text-xl', '--text-2xl', '--text-3xl'];
 const NATIVE_LIGHT_SURFACES = { '--surface-0': '#FFFFFF', '--surface-1': '#FFFFFF', '--surface-2': '#F4F3EF', '--field': '#F4F3EF' };
 const call: Element = { attrs: { 'data-always-dark': '' } };

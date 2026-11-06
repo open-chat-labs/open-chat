@@ -684,3 +684,9 @@
 ## 2026-11-06 — native: the swatches in each mode's shade, and a menu's pop (native N4, #10367), by hand
 - tokens.css: the light mode's `--swatch-blue` and `--swatch-green` are the light accents (#3D8BFF, #16B583), so a swatch is the colour picking it gives; dark areas (`[data-always-dark]`) keep the dark ones. Pink and orange are the same in both.
 - global.css: `oc-menu-pop` (from opacity 0, 4px down, 98%), a menu opening from its anchor: the native start's Appearance menu.
+
+## 2026-11-06 — native Chats tab: ChatRow's favourite, the FAB's shadow, LongPressMenu's opening press (native N5a, #10368), by hand
+- `ChatRow`: `fav`, an 11px accent heart (`heart-filled`) after the pin, before the muted bell, as the design's Component Changes have it ("`fav`, `muted`: row status icons"; the export's `ChatRow` has it, always off there). "Favourite" to screen readers (`ui.chatRow.favourite`). Off by default, so the web's rows don't change. `meta.json` updated.
+- tokens.css, the native layer: `--shadow-fab`, the Chats tab's FAB's shadow (the prototype's `0 8px 24px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.3)`, the same in both themes); `platform.spec.ts` lists it with the shell's.
+- `LongPressMenu`: a tap outside (Esc as before) closes it only when the press started on the veil. The press that opened the menu started on the row, under where the veil now is, and its release could end in a click on the veil (Chrome's touch emulation sends one after a long hold), which closed the menu as it opened.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
