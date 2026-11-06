@@ -1,5 +1,5 @@
 <!-- Welcome (native design notes §3.1, Welcome Options 1k): the lockup, and one split pill for
-     Appearance (theme icon and accent dot: a sheet with the theme and accent) and the language (its
+     Appearance (theme icon and accent dot: a menu with the theme and accent) and the language (its
      code: a sheet with search), each half a 44px target; the headline, three floating proof cards
      (a community vote, a community to join, a chat cheering news that shipped); Create account and
      I already have an account; the terms. No Explore, guest mode, crypto or wallet here. On a small
@@ -15,7 +15,7 @@
     import { _, locale } from "svelte-i18n";
     import { openOnWeb } from "../../shell/onWeb";
     import { useOverlay, type Overlays } from "../../shell/overlays.svelte";
-    import AppearanceSheet from "./AppearanceSheet.svelte";
+    import AppearanceMenu from "./AppearanceMenu.svelte";
     import LanguageSheet from "./LanguageSheet.svelte";
     import { messageParts } from "./start.adapter";
     import type { StartStack } from "./startStack.svelte";
@@ -25,7 +25,9 @@
     let { start, overlays }: Props = $props();
     const client = getContext<OpenChat>("client");
 
+    // the Appearance menu or the language sheet: one at a time
     let sheet = $state<"appearance" | "language" | undefined>(undefined);
+    let appearanceButton = $state<HTMLButtonElement>();
     useOverlay(
         untrack(() => overlays), // the shell's, for the screen's lifetime
         () => sheet !== undefined,
@@ -34,7 +36,7 @@
 
     const code = $derived(languageCode($locale).toUpperCase());
     const modeIcon = $derived(
-        $themeType === "system" ? "device" : $currentThemeMode === "light" ? "sun" : "moon",
+        $themeType === "system" ? "smartphone" : $currentThemeMode === "light" ? "sun" : "moon",
     );
 
     const terms = $derived(
@@ -60,12 +62,15 @@
                 type="button"
                 class="half appearance"
                 aria-label={$_("native.start.appearance.title")}
-                aria-haspopup="dialog"
-                onclick={() => (sheet = "appearance")}>
+                aria-haspopup="menu"
+                aria-expanded={sheet === "appearance"}
+                bind:this={appearanceButton}
+                onclick={() => (sheet = sheet === "appearance" ? undefined : "appearance")}
+            >
                 <span class="mode" style:mask="var(--icon-{modeIcon}) center/contain no-repeat"
                 ></span>
                 <span class="dot"></span>
-                <span class="chevron"></span>
+                <span class="chevron" class:open={sheet === "appearance"}></span>
             </button>
             <span class="divider" aria-hidden="true"></span>
             <button
@@ -73,7 +78,8 @@
                 class="half language"
                 aria-label={$_("native.start.welcome.language", { values: { language: code } })}
                 aria-haspopup="dialog"
-                onclick={() => (sheet = "language")}>
+                onclick={() => (sheet = "language")}
+            >
                 <span class="globe"></span>
                 <span class="code">{code}</span>
                 <span class="chevron"></span>
@@ -91,11 +97,15 @@
         <div class="cards" role="img" aria-label={$_("native.start.welcome.proofLabel")}>
             <div class="scale">
                 <div class="card vote">
-                    <span class="kicker"><span class="poll"></span>{$_("native.start.welcome.voteKicker")}</span>
+                    <span class="kicker"
+                        ><span class="poll"></span>{$_("native.start.welcome.voteKicker")}</span
+                    >
                     <span class="question">{$_("native.start.welcome.voteQuestion")}</span>
                     <span class="bar"><span class="fill"></span></span>
                     <span class="stats">
-                        <span>{$_("native.start.welcome.voteYes", { values: { percent: 72 } })}</span>
+                        <span
+                            >{$_("native.start.welcome.voteYes", { values: { percent: 72 } })}</span
+                        >
                         <span>{$_("native.start.welcome.voteLeft")}</span>
                     </span>
                 </div>
@@ -127,13 +137,15 @@
             icon="passkey"
             size="lg"
             fullWidth
-            onClick={() => start.go("sign_up")} />
+            onClick={() => start.go("sign_up")}
+        />
         <Button
             label={$_("native.start.welcome.haveAccount")}
             variant="secondary"
             size="lg"
             fullWidth
-            onClick={() => start.go("welcome_back")} />
+            onClick={() => start.go("welcome_back")}
+        />
         <p class="terms">
             {#each terms as part, i (i)}
                 {#if part.kind === "link"}
@@ -143,7 +155,8 @@
                             // the website's, in the browser (shell/onWeb)
                             e.preventDefault();
                             openOnWeb(LINKS[part.name].href, client.canonicalOrigin());
-                        }}>{$_(LINKS[part.name].key)}</a>
+                        }}>{$_(LINKS[part.name].key)}</a
+                    >
                 {:else}
                     {part.text}
                 {/if}
@@ -152,7 +165,9 @@
     </div>
 </div>
 
-<AppearanceSheet open={sheet === "appearance"} onClose={() => (sheet = undefined)} />
+{#if sheet === "appearance"}
+    <AppearanceMenu trigger={appearanceButton} onClose={() => (sheet = undefined)} />
+{/if}
 <LanguageSheet open={sheet === "language"} onClose={() => (sheet = undefined)} />
 
 <style lang="scss">
@@ -222,6 +237,7 @@
 
     .appearance {
         gap: 7px;
+        padding-inline: 9px var(--space-10);
     }
 
     .language {
@@ -243,6 +259,11 @@
 
     .chevron {
         @include icon(chevron-down, 12px, var(--ink-3));
+        transition: transform 200ms var(--ease-out);
+
+        &.open {
+            transform: rotate(180deg);
+        }
     }
 
     .globe {

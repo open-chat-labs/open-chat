@@ -134,9 +134,14 @@ design export needs. Each entry says where it came up.
     taking it, so the screen doesn't string the two together).
   - **The passkey prompt** comes on Continue (the client's `signUp` makes the passkey, named after
     the username), not on Welcome's Create account as the issue reads it.
-  - **Appearance**: a sheet of the kit's settings rows (Theme segmented, Accent swatches), where
-    the design has an anchored menu of radio rows and swatches; the kit's AnchoredMenu has rows
-    only. The You tab's Appearance (N12) can share it.
+  - **Appearance**: the design's menu (`AppearanceMenu`, under the pill at the trailing edge): Theme
+    rows (Light / Dark / System, a check on the one picked) and four Accent swatches, live, the menu
+    staying open. Not the kit's `AnchoredMenu`, which takes rows only. It writes the stored theme
+    and accent the whole app uses, so You → Appearance (N12) shows the same; System follows the
+    OS live, and stays the default (the prototype starts on Dark). Its rows and swatches are
+    `menuitemradio`s in two groups, valid inside a `menu` (the brief has radiogroups of radios). Its
+    shadow is the kit's menu one (`--shadow-menu`, 0 12px 36px at .55) rather than the
+    prototype's 0 16px 40px at .35, which no token has.
   - **After sign-in**: the apps' system notifications prompt is the push setup's
     (`setupNativeApp` after sign-in, as in components_mobile; check iOS asks too); mobile web
     asks for none. Then the URL the person was on, "/" going to Chats.
