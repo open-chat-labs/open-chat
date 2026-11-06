@@ -3,7 +3,7 @@ import {
     setStatusAndNavBarSizesForNativeApp,
     updateAndroidInterfaceSizes,
 } from "@stores/androidInterfaceSizes";
-import { expectWindowInsetChange } from "@utils/native/notification_channels";
+import { followWindowInsets } from "@utils/native/notification_channels";
 
 // The safe areas in the Android app. Its edge-to-edge WebView doesn't report
 // env(safe-area-inset-*) reliably, so the shell reports the status and navigation bars' heights
@@ -36,7 +36,7 @@ export function followAndroidSystemBars(root: HTMLElement): () => void {
 
     async function listen() {
         try {
-            const registered = await expectWindowInsetChange((data) =>
+            const registered = await followWindowInsets((data) =>
                 updateAndroidInterfaceSizes(data.statusBarHeightDp, data.navHeightDp),
             );
             if (following) listener = registered;

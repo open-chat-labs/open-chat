@@ -34,6 +34,7 @@ const COMMANDS: &[&str] = &[
     "set_call_end_token",
     "get_store_update",
     "haptic",
+    "get_window_insets",
 ];
 
 fn main() {

@@ -13,7 +13,7 @@
     import { snowing } from "@stores/snow";
     import { incomingVideoCall } from "@stores/video";
     import "@utils/markdown";
-    import { expectWindowInsetChange } from "@utils/native/notification_channels";
+    import { followWindowInsets } from "@utils/native/notification_channels";
     import { notifyCallJoined } from "@utils/native/call_bridge";
     import {
         clearChatShortcutsOnLogout,
@@ -113,7 +113,8 @@
     });
 
     if (client.isNativeApp()) {
-        expectWindowInsetChange((data) => {
+        // the current insets at once, signed in or not, then each change (followWindowInsets)
+        followWindowInsets((data) => {
             // Setting these values in store should also set the CSS vars!
             // Gated so identical status/nav sizes don't re-write localStorage and
             // CSS vars on every keyboard-animation frame.

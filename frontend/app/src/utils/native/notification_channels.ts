@@ -1,7 +1,7 @@
 import { addPluginListener, invoke, PluginListener } from "@tauri-apps/api/core";
 import { isIosTauriApp } from "@shared";
 import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
-import { openUrl, showNotification } from "tauri-plugin-oc-api";
+import { getWindowInsets, openUrl, showNotification, type WindowInsets } from "tauri-plugin-oc-api";
 import { navigate } from "@utils/navigation";
 import { isLandingPagePath } from "@utils/urls";
 import { coldStartIntents } from "./coldStart.svelte";
@@ -187,15 +187,8 @@ export async function expectBackPress(handler: () => void): Promise<PluginListen
  * navigation type that the Android app is using, and if the software keyboard
  * is open/visible.
  */
-export interface WindowInsetChange {
-    isKeyboardOpen: boolean;
-    isGestureNavigation: boolean;
-    navHeightDp: number;
-    statusBarHeightDp: number;
-    keyboardHeightDp: number;
-    apiLevel: number;
-    osVersion: string;
-}
+/** The window-inset-change event's payload (Android). */
+export type WindowInsetChange = WindowInsets;
 
 /**
  * Use this function to detect keyboard open/close, or device nav type (buttons
@@ -208,6 +201,27 @@ export async function expectWindowInsetChange(
     handler: (data: WindowInsetChange) => void,
 ): Promise<PluginListener> {
     return addPluginListener(TAURI_PLUGIN_NAME, WINDOW_INSET_CHANGE_EVENT, handler);
+}
+
+/**
+ * Follows the Android app's window insets: each change, and the current ones at once
+ * (`getWindowInsets`), since the app reports them as they happen and a listener that starts later
+ * would otherwise wait for the next change. They aren't held back for svelteReady, so this works
+ * before sign-in too. A shell older than `getWindowInsets` only has the changes.
+ */
+export async function followWindowInsets(
+    handler: (data: WindowInsetChange) => void,
+): Promise<PluginListener> {
+    // listening first, so a change between the two can't be missed; the current ones are at least
+    // as new as anything sent before
+    const listener = await expectWindowInsetChange(handler);
+    try {
+        const current = await getWindowInsets();
+        if (current !== undefined) handler(current);
+    } catch {
+        // an older shell: the next change brings them
+    }
+    return listener;
 }
 
 const DEEP_LINK_EVENT = "deep-link";

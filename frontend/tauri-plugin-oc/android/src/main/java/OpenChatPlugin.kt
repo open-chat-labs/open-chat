@@ -87,6 +87,14 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         invoke.resolve()
     }
 
+    // The window insets as last reported (MainActivity), for a WebView that starts listening after
+    // they were sent. Empty until the activity has reported any. Insets aren't held back for
+    // svelteReady (see triggerWindowInsets), so this answers before sign-in too.
+    @Command
+    fun getWindowInsets(invoke: Invoke) {
+        invoke.resolve(OCPluginCompanion.lastWindowInsets ?: JSObject())
+    }
+
     // What Play offers this install, so a store build announces an update only
     // once it can be installed. Resolves without a versionCode when Play offers
     // nothing or cannot be asked; the caller treats both as no update.
@@ -422,7 +430,23 @@ object OCPluginCompanion {
         eventQueue.add(Pair(event, payload.toString()))
     }
 
+    // The last window insets reported (MainActivity), which getWindowInsets answers with.
+    var lastWindowInsets: JSObject? = null
+
+    // The plugin, once loaded, which window insets go to straight away.
+    private var pluginRef: OpenChatPlugin? = null
+
+    // Window insets are the screen's state, not an intent like a deep link or a notification tap:
+    // the UI needs them whether or not anyone is signed in, and svelteReady only comes once
+    // someone is. So they skip the queue: sent at once to whoever listens, and kept for
+    // getWindowInsets, which a listener that arrives later asks for the current ones.
+    fun triggerWindowInsets(payload: JSObject) {
+        lastWindowInsets = payload
+        pluginRef?.trigger("window-inset-change", payload)
+    }
+
     fun setTriggerRef(plugin: OpenChatPlugin) {
+        pluginRef = plugin
         triggerRef = { event, payload ->
             if (svelteReady) {
                 Log.d(LOG_TAG, "FIRE EVENT: $event, $payload")
