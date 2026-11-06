@@ -46,10 +46,6 @@ describe("redactSecrets", () => {
                 "set_pin_number",
             ),
         ).toEqual({ new: REDACTED, verification: { Reauthenticated: REDACTED } });
-        expect(redactSecrets({ chat_id: "abc", sign_in_proof_jwt: "jwt" }, "claim_prize")).toEqual({
-            chat_id: "abc",
-            sign_in_proof_jwt: REDACTED,
-        });
         expect(
             redactSecrets(
                 { chat_id: "abc", turnstile: { token: "0.abc", salt: "0123" } },

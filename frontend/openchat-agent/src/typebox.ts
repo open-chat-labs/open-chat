@@ -5697,7 +5697,6 @@ export const PrizeContent = /* @__PURE__ */ Type.Object({
     lifetime_diamond_only: Type.Boolean(),
     unique_person_only: Type.Boolean(),
     streak_only: Type.Number(),
-    requires_captcha: Type.Boolean(),
     min_chit_earned: Type.Number(),
 });
 
@@ -7145,7 +7144,6 @@ export type LocalUserIndexClaimPrizeArgs = Static<typeof LocalUserIndexClaimPriz
 export const LocalUserIndexClaimPrizeArgs = /* @__PURE__ */ Type.Object({
     chat_id: MultiUserChat,
     message_id: MessageId,
-    sign_in_proof_jwt: Type.Optional(Type.String()),
     turnstile: Type.Optional(LocalUserIndexClaimPrizeTurnstilePass),
 });
 
@@ -9414,7 +9412,6 @@ export const PrizeContentInitial = /* @__PURE__ */ Type.Object({
     lifetime_diamond_only: Type.Boolean(),
     unique_person_only: Type.Boolean(),
     streak_only: Type.Number(),
-    requires_captcha: Type.Boolean(),
     min_chit_earned: Type.Number(),
 });
 

@@ -4,7 +4,6 @@
         diamond: "none" | "standard" | "lifetime";
         uniquePersonOnly: boolean;
         minStreak: number;
-        requiresAuth: boolean;
         distribution: "equal" | "random";
         duration: bigint;
     };
@@ -13,7 +12,6 @@
         diamond: "none",
         uniquePersonOnly: false,
         minStreak: 0,
-        requiresAuth: false,
         distribution: "random",
         duration: BigInt(ONE_DAY),
     };
@@ -46,7 +44,6 @@
     import { onMount } from "svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
-    import Fingerprint from "svelte-material-icons/Fingerprint.svelte";
     import Flash from "svelte-material-icons/FlashOutline.svelte";
     import Gift from "svelte-material-icons/GiftOutline.svelte";
     import LightningBolt from "svelte-material-icons/LightningBoltCircle.svelte";
@@ -98,7 +95,6 @@
     let minStreak = $state<number>($prizeConfig.minStreak);
     let minChitEarned = $state<number>($prizeConfig.minChitEarned);
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
-    let requiresAuth = $state($prizeConfig.requiresAuth);
     // The external wallet the prize fund will come from, or undefined for the user's own OpenChat
     // account. Paying from an external wallet spends that wallet's balance rather than the user's
     // OpenChat one, so none of the limits derived from the latter apply while one is selected.
@@ -207,7 +203,6 @@
             amount: draftAmount,
             fees: totalFees,
             prizes,
-            requiresCaptcha: requiresAuth,
         };
 
         prizeConfig.set({
@@ -215,7 +210,6 @@
             diamond: diamondType,
             uniquePersonOnly,
             minStreak,
-            requiresAuth,
             distribution,
             duration: selectedDuration,
         });
@@ -435,15 +429,6 @@
                 </Body>
             </Column>
             <Row wrap gap={"sm"}>
-                <Chip
-                    onClick={() => (requiresAuth = !requiresAuth)}
-                    onRemove={requiresAuth ? () => (requiresAuth = false) : undefined}
-                    mode={requiresAuth ? "filter" : "default"}>
-                    {#snippet icon(color)}
-                        <Fingerprint {color} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("Requires authentication")} />
-                </Chip>
                 <Chip
                     onClick={() => onDiamondChanged("standard")}
                     onRemove={diamondType === "standard" ? () => (diamondType = "none") : undefined}

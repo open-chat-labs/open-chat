@@ -1983,7 +1983,6 @@
     "prizes": {
         "allClaimed": "נתבע במלואו",
         "anyone": "כל משתמש",
-        "authRequiredLabel": "דורש אימות",
         "claim": "תְבִיעָה",
         "claimed": "הַצלָחָה!",
         "claimFailed": "מצטער שהטענה שלך לא צלחה! בהצלחה בפעם הבאה.",
@@ -2012,7 +2011,6 @@
         "onlyUniquePerson": "רק בני אדם ייחודיים",
         "prizeFinished": "הודעת הפרס שלך הסתיימה כעת",
         "randomDistribution": "הפצה אקראית",
-        "requiresCaptcha": "דורש CAPTCHA",
         "restrictedMessage": "לפרס זה יש את ההגבלות הבאות",
         "restrictions": "הגבלות תביעה",
         "standardDiamond": "תֶקֶן",

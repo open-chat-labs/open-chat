@@ -54,7 +54,6 @@ const prize: PrizeContentInitial = {
     caption: "a prize",
     transfer: { ...transfer, recipient: CANISTER },
     prizes: [40_000_000n, 60_000_000n],
-    requiresCaptcha: false,
     fees: 20_000n,
     amount: 100_000_000n,
 };

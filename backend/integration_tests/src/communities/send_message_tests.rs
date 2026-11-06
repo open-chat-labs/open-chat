@@ -173,7 +173,6 @@ fn send_prize_in_channel() {
                 lifetime_diamond_only: false,
                 unique_person_only: false,
                 streak_only: 0,
-                requires_captcha: false,
                 min_chit_earned: 0,
             }),
             sender_name: user1.username(),

@@ -1983,7 +1983,6 @@
     "prizes": {
         "allClaimed": "Полностью заявлено",
         "anyone": "Любой пользователь",
-        "authRequiredLabel": "Требуется аутентификация",
         "claim": "Требовать",
         "claimed": "Успех!",
         "claimFailed": "Сожалеем, что ваша претензия не была удовлетворена! Повезет в следующий раз.",
@@ -2012,7 +2011,6 @@
         "onlyUniquePerson": "Только уникальные люди",
         "prizeFinished": "Ваше призовое сообщение завершено",
         "randomDistribution": "Случайное распределение",
-        "requiresCaptcha": "Требуется CAPTCHA",
         "restrictedMessage": "Этот приз имеет следующие ограничения:",
         "restrictions": "Ограничения по претензиям",
         "standardDiamond": "Стандарт",

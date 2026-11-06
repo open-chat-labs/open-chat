@@ -1076,7 +1076,6 @@ function prizeContent(value: TPrizeContent): PrizeContent {
         ledger: principalBytesToString(value.ledger),
         endDate: value.end_date,
         caption: value.caption,
-        requiresCaptcha: value.requires_captcha,
         minChitEarned: value.min_chit_earned,
     };
 }
@@ -2313,7 +2312,6 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): TPrizeConte
         streak_only: domain.streakOnly,
         min_chit_earned: domain.minChitEarned,
         prizes_v2: domain.prizes,
-        requires_captcha: domain.requiresCaptcha,
     };
 }
 

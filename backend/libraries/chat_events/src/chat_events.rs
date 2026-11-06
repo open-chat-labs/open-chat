@@ -1516,7 +1516,6 @@ impl ChatEvents {
         total_chit_earned: u32,
         streak: u16,
         streak_ends: TimestampMillis,
-        user_reauthenticated: bool,
     ) -> OCResult<ReservePrizeSuccess> {
         match self.update_message(
             None,
@@ -1535,7 +1534,6 @@ impl ChatEvents {
                     total_chit_earned,
                     streak,
                     streak_ends,
-                    user_reauthenticated,
                 )
             },
         ) {
@@ -1555,7 +1553,6 @@ impl ChatEvents {
         total_chit_earned: u32,
         streak: u16,
         streak_ends: TimestampMillis,
-        user_reauthenticated: bool,
     ) -> Result<ReservePrizeSuccess, UpdateEventError<OCErrorCode>> {
         let MessageContentInternal::Prize(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
@@ -1576,10 +1573,6 @@ impl ChatEvents {
         // Unique person verification (DecideAI) is suspended - every user is eligible.
 
         if content.min_chit_earned > total_chit_earned {
-            return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));
-        }
-
-        if content.requires_captcha && !user_reauthenticated {
             return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));
         }
 

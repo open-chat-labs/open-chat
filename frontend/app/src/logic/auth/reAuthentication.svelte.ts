@@ -1,5 +1,4 @@
-// Signing in again to prove it's the user (resetting a forgotten pin, claiming a prize, deleting
-// the account), as the old trees' ReAuthenticate shows it: pick a way to sign in, then a wallet or
+// Signing in again to prove it's the user (resetting a forgotten pin, deleting the account), as the old trees' ReAuthenticate shows it: pick a way to sign in, then a wallet or
 // an emailed link where that needs one. The client does the signing in and refuses another
 // account (reAuthenticate); this holds the steps between. Only the ways linked to the account are
 // offered, as any of them proves it's the user and none other can.

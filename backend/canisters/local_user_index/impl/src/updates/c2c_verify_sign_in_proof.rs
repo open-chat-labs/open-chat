@@ -34,7 +34,7 @@ fn c2c_verify_sign_in_proof_impl(args: Args, state: &RuntimeState) -> Response {
     }
 }
 
-pub(crate) fn verify_sign_in_proof(jwt: &str, user_principal: Principal, public_key_pem: &str, now: TimestampMillis) -> bool {
+fn verify_sign_in_proof(jwt: &str, user_principal: Principal, public_key_pem: &str, now: TimestampMillis) -> bool {
     jwt::verify_and_decode::<UserSignedInClaims>(jwt, public_key_pem, CLAIM_TYPE_USER_SIGNED_IN)
         .is_ok_and(|claims| claims.exp_ms() > now && claims.custom().principal == user_principal)
 }

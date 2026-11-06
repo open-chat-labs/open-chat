@@ -381,7 +381,6 @@ fn pending_prizes_transferred_to_community() {
                 lifetime_diamond_only: false,
                 unique_person_only: false,
                 streak_only: 0,
-                requires_captcha: false,
                 min_chit_earned: 0,
             }),
             sender_name: user1.username(),
@@ -426,7 +425,6 @@ fn pending_prizes_transferred_to_community() {
         local_user_index,
         MultiUserChat::Channel(community_id, channel_id),
         message_id,
-        None,
     );
     client::local_user_index::happy_path::claim_prize(
         env,
@@ -434,7 +432,6 @@ fn pending_prizes_transferred_to_community() {
         local_user_index,
         MultiUserChat::Channel(community_id, channel_id),
         message_id,
-        None,
     );
 
     let community_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));

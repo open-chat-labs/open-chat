@@ -23,7 +23,6 @@
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
-    import Fingerprint from "svelte-material-icons/Fingerprint.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { claimsStore } from "../../stores/claims";
     import { rtlStore } from "../../stores/rtl";
@@ -114,7 +113,6 @@
         content.diamondOnly ||
             content.lifetimeDiamondOnly ||
             content.streakOnly > 0 ||
-            content.requiresCaptcha ||
             content.minChitEarned > 0,
     );
     let spin = $derived(intersecting && !finished && !allClaimed);
@@ -156,20 +154,6 @@
             {#if restrictedPrize}
                 <div class="restricted">
                     <Translatable resourceKey={i18nKey("prizes.restrictedMessage")} />
-                    {#if content.requiresCaptcha}
-                        <div class="captcha">
-                            <span class="fingerprint-icon">
-                                <Fingerprint
-                                    viewBox={"0 -1 24 24"}
-                                    size={"1.2em"}
-                                    color={"var(--accent)"} />
-                            </span>
-                            <Translatable
-                                resourceKey={i18nKey("prizes.authRequiredLabel", {
-                                    n: content.streakOnly,
-                                })} />
-                        </div>
-                    {/if}
                     {#if content.minChitEarned > 0}
                         <div class="chit_earned">
                             <span class="chit_icon">
@@ -415,10 +399,6 @@
                 width: $sp5;
             }
         }
-    }
-
-    .fingerprint-icon {
-        text-align: center;
     }
 
     .chit_icon {

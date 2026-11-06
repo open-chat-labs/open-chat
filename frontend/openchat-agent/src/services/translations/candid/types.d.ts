@@ -1371,7 +1371,6 @@ export interface PrizeContent {
 export interface PrizeContentInitial {
   'prizes_v2' : Array<bigint>,
   'streak_only' : number,
-  'requires_captcha' : boolean,
   'lifetime_diamond_only' : boolean,
   'end_date' : TimestampMillis,
   'caption' : [] | [string],

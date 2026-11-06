@@ -1983,7 +1983,6 @@
     "prizes": {
         "allClaimed": "पूर्णतः दावा किया गया",
         "anyone": "कोई भी उपयोगकर्ता",
-        "authRequiredLabel": "प्रमाणीकरण आवश्यक है",
         "claim": "दावा",
         "claimed": "सफलता!",
         "claimFailed": "क्षमा करें आपका दावा असफल रहा! अगली बार किस्मत तुम्हारा साथ देगी।",
@@ -2012,7 +2011,6 @@
         "onlyUniquePerson": "केवल अद्वितीय मनुष्य",
         "prizeFinished": "आपका पुरस्कार संदेश अब समाप्त हो गया है",
         "randomDistribution": "यादृच्छिक वितरण",
-        "requiresCaptcha": "कैप्चा आवश्यक है",
         "restrictedMessage": "इस पुरस्कार पर निम्नलिखित प्रतिबंध हैं",
         "restrictions": "दावा प्रतिबंध",
         "standardDiamond": "मानक",

@@ -1,19 +1,17 @@
 <script lang="ts">
     import { disableChit } from "@src/stores/settings";
-    import { ColourVars, Container } from "component-lib";
+    import { Container } from "component-lib";
     import { userBadges, type DiamondMembershipStatus } from "@client";
     import Diamond from "../../icons/Diamond.svelte";
     import ChitEarnedBadge from "./ChitEarnedBadge.svelte";
     import Streak from "./Streak.svelte";
-    import BadgeContainer, { type BadgeSize } from "./BadgeContainer.svelte";
-    import Fingerprint from "svelte-material-icons/Fingerprint.svelte";
+    import type { BadgeSize } from "./BadgeContainer.svelte";
 
     interface Props {
         diamondStatus?: DiamondMembershipStatus["kind"] | undefined;
         streak?: number;
         uniquePerson?: boolean;
         chitEarned?: number;
-        withFingerprint?: boolean;
         size?: BadgeSize;
         borderColor?: string;
         forceStreakBadge?: boolean;
@@ -24,7 +22,6 @@
         diamondStatus = undefined,
         streak = 0,
         chitEarned = 0,
-        withFingerprint = false,
         size = "default",
         borderColor,
         forceStreakBadge = false,
@@ -35,21 +32,12 @@
     );
 </script>
 
-{#snippet fingerprint()}
-    <BadgeContainer {borderColor} {size} backgroundColor={ColourVars.surface2}>
-        <Fingerprint size={size === "large" ? "1.25rem" : "0.85rem"} />
-    </BadgeContainer>
-{/snippet}
-
 <Container
     supplementalClass={`badges ${size === "large" ? "large" : ""}`}
     crossAxisAlignment={"center"}
     gap={"xs"}
     width={"hug"}
     padding={["xxs", "zero"]}>
-    {#if withFingerprint}
-        {@render fingerprint()}
-    {/if}
     <Diamond {size} {borderColor} status={badges.diamond} />
     <!-- Verified user (DecideAI) badge is suspended - not rendered. -->
     {#if badges.chit !== undefined}

@@ -6,7 +6,6 @@ use constants::{HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE, MINUTE_IN_MS, PRIZE_FE
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use pocket_ic::common::rest::{CanisterHttpReply, CanisterHttpResponse, MockCanisterHttpResponse};
-use rand::random;
 use sha256::sha256_string;
 use std::ops::Deref;
 use std::time::Duration;
@@ -65,7 +64,6 @@ fn prize_messages_can_be_claimed_successfully() {
                 lifetime_diamond_only: false,
                 unique_person_only: false,
                 streak_only: 0,
-                requires_captcha: false,
                 min_chit_earned: 0,
             }),
             sender_name: user1.username(),
@@ -94,7 +92,6 @@ fn prize_messages_can_be_claimed_successfully() {
             local_user_index,
             MultiUserChat::Group(group_id),
             message_id,
-            None,
         );
         let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user2);
         assert_eq!(user2_balance, 200000);
@@ -105,7 +102,6 @@ fn prize_messages_can_be_claimed_successfully() {
             local_user_index,
             MultiUserChat::Group(group_id),
             message_id,
-            None,
         );
         let user3_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user3);
         assert_eq!(user3_balance, 100000);
@@ -130,107 +126,6 @@ fn prize_messages_can_be_claimed_successfully() {
 
         assert_eq!(prize_claimed_events, 2);
     }
-}
-
-#[test]
-fn prize_message_requiring_reauthentication() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let (user2, user2_auth) = client::register_user_and_include_auth(env, canister_ids);
-    let group_id = client::user::happy_path::create_group(env, &user1, random_string().as_str(), true, true);
-    client::group::happy_path::join_group(env, user2.principal, group_id);
-
-    // Send user1 some ICP
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user1, 1_000_000_000);
-
-    let prizes = [100000, 200000];
-    let fee = ICP_TRANSFER_FEE;
-    let message_id = random_from_u128();
-
-    let send_message_response = client::group::send_message_with_transfer(
-        env,
-        &user1,
-        group_id,
-        group_canister::send_message_v2::Args {
-            thread_root_message_index: None,
-            message_id,
-            content: MessageContentInitial::Prize(PrizeContentInitial {
-                prizes_v2: prizes.into_iter().map(u128::from).collect(),
-                transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
-                    ledger: canister_ids.icp_ledger,
-                    token_symbol: ICP_SYMBOL.to_string(),
-                    amount: prize_amount(&prizes, fee),
-                    to: CanisterId::from(group_id).into(),
-                    fee,
-                    memo: None,
-                    created: now_nanos(env),
-                })),
-                end_date: now_millis(env) + HOUR_IN_MS,
-                caption: None,
-                diamond_only: false,
-                lifetime_diamond_only: false,
-                unique_person_only: false,
-                streak_only: 0,
-                requires_captcha: true,
-                min_chit_earned: 0,
-            }),
-            sender_name: user1.username(),
-            sender_display_name: None,
-            replies_to: None,
-            mentioned: Vec::new(),
-            block_level_markdown: false,
-            rules_accepted: None,
-            message_filter_failed: None,
-            forwarding: false,
-            new_achievement: false,
-            og_previews: Vec::new(),
-        },
-    );
-
-    assert!(
-        matches!(send_message_response, group_canister::send_message_v2::Response::Success(_)),
-        "{send_message_response:?}"
-    );
-
-    let local_user_index = canister_ids.local_user_index(env, group_id);
-
-    let response = client::local_user_index::claim_prize(
-        env,
-        user2.principal,
-        local_user_index,
-        &local_user_index_canister::claim_prize::Args {
-            chat_id: MultiUserChat::Group(group_id),
-            message_id,
-            sign_in_proof_jwt: None,
-            turnstile: None,
-        },
-    );
-
-    assert!(
-        matches!(response, local_user_index_canister::claim_prize::Response::Error(e) if e.matches_code(OCErrorCode::PrizeUserNotElligible))
-    );
-
-    let session_key = random::<[u8; 32]>().to_vec();
-    let prepare_delegation_response =
-        client::identity::happy_path::prepare_delegation(env, user2_auth.auth_principal(), canister_ids.identity, session_key);
-
-    client::local_user_index::happy_path::claim_prize(
-        env,
-        user2.principal,
-        local_user_index,
-        MultiUserChat::Group(group_id),
-        message_id,
-        Some(prepare_delegation_response.proof_jwt),
-    );
-    let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user2);
-    assert_eq!(user2_balance, 200000);
 }
 
 #[test_case(1; "Prize expires")]
@@ -297,7 +192,6 @@ fn unclaimed_prizes_get_refunded(case: u32) {
                 lifetime_diamond_only: false,
                 unique_person_only: false,
                 streak_only: 0,
-                requires_captcha: false,
                 min_chit_earned: 0,
             }),
             sender_name: user1.username(),
@@ -320,7 +214,6 @@ fn unclaimed_prizes_get_refunded(case: u32) {
         local_user_index,
         MultiUserChat::Group(group_id),
         message_id,
-        None,
     );
 
     let interval = match case {
@@ -394,7 +287,6 @@ fn old_transactions_fixed_by_updating_created_date() {
                 lifetime_diamond_only: false,
                 unique_person_only: false,
                 streak_only: 0,
-                requires_captcha: false,
                 min_chit_earned: 0,
             }),
             sender_name: user.username(),
@@ -478,8 +370,6 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
                 lifetime_diamond_only: false,
                 unique_person_only: false,
                 streak_only: 0,
-                // So the final claim, made without signing in again, shows a passed token stands in for it
-                requires_captcha: true,
                 min_chit_earned: 0,
             }),
             sender_name: user1.username(),
@@ -512,7 +402,6 @@ fn prize_claims_are_checked_for_a_human_with_turnstile() {
         &local_user_index_canister::claim_prize::Args {
             chat_id,
             message_id,
-            sign_in_proof_jwt: None,
             turnstile: None,
         },
     );
@@ -598,7 +487,6 @@ fn claim_prize_with_token(
             msgpack::serialize_then_unwrap(local_user_index_canister::claim_prize::Args {
                 chat_id,
                 message_id,
-                sign_in_proof_jwt: None,
                 turnstile: Some(local_user_index_canister::claim_prize::TurnstilePass {
                     token: token.clone(),
                     salt: salt.to_string(),

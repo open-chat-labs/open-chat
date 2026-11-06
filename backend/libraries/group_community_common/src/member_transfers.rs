@@ -197,7 +197,6 @@ mod tests {
             lifetime_diamond_only: false,
             unique_person_only: false,
             streak_only: 0,
-            requires_captcha: false,
             min_chit_earned: 0,
         }
     }

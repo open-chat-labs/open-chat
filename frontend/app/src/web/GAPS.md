@@ -112,15 +112,13 @@ design export needs. Each entry says where it came up.
 - **Prizes** (`features/conversation`, 5a): a prize shows as `PrizeMessage`. `PrizeMessage` takes
   `canClaim` and passes the click to `onClaim` by hand: the design offers Claim to everyone and
   gives no click, which `claimPrize` refuses. Claim shows only where `prizeView` (`@client`, shared
-  with the old trees) offers it: not the sender's, not in a DM, not while previewing or lapsed,
-  not once claimed, ended or all taken, not to a reader who misses a requirement. A captcha prize
-  asks the reader to sign in again (`SignInAgainDialog`) and claims with its proof. A prize
-  carries no amount, so a win says "You won". There's no spinner while a claim is on its way
-  (the old trees' `claimsStore`), and `PrizeMessage`'s confetti fires on the click, before the claim
-  lands (behind the sign-in dialog for a captcha prize). A captcha prize shows no requirement chip
-  for it; it's asked for only on Claim. How long it has left is worked out when the row is made and
-  doesn't count down. A prize still being sent (`prize_content_initial`), and one in a ledger the
-  registry doesn't carry, stay text bubbles. No reactions, quote or thread yet.
+  with the old trees) offers it: not the sender's, not in a DM, not while previewing or lapsed, not
+  once claimed, ended or all taken, not to a reader who misses a requirement. A prize carries no
+  amount, so a win says "You won". There's no spinner while a claim is on its way (the old trees'
+  `claimsStore`), and `PrizeMessage`'s confetti fires on the click, before the claim lands. How long
+  it has left is worked out when the row is made and doesn't count down. A prize still being sent
+  (`prize_content_initial`), and one in a ledger the registry doesn't carry, stay text bubbles. No
+  reactions, quote or thread yet.
 - **Thread replies**: `ThreadPanel` renders replies with no react / menu / reply / edit handlers.
 - **Composer banner** (by hand, 8b): `ComposerBar` takes `onBannerAction`, passed to `Banner`'s
   `actionHandler` with `bannerAction` as its label (it had the label but no handler). Nothing in

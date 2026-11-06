@@ -104,7 +104,6 @@ fn send_prize_directly_succeeds(in_channel: bool) {
         lifetime_diamond_only: false,
         unique_person_only: false,
         streak_only: 0,
-        requires_captcha: false,
         min_chit_earned: 0,
     });
     let event_index = chat.send_message_with_transfer(env, &user1, content).unwrap();
