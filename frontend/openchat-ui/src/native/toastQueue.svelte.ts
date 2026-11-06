@@ -22,12 +22,19 @@ export class ToastQueue {
   #timer: ReturnType<typeof setTimeout> | undefined;
   #nextId = 1;
 
-  /** Shows a toast in place of the current one; with `undo`, it offers Undo, which runs it. */
-  show(message: string, undo?: () => void): void {
+  /**
+   * Shows a toast in place of the current one; with `undo`, it offers Undo, which runs it. Returns what takes this
+   * toast down early (an Undo that can't work any more), and leaves a toast that has taken its place alone.
+   */
+  show(message: string, undo?: () => void): () => void {
     clearTimeout(this.#timer);
     this.#undo = undo ?? null;
-    this.current = { id: this.#nextId++, message, undoable: !!undo };
+    const id = this.#nextId++;
+    this.current = { id, message, undoable: !!undo };
     this.#timer = setTimeout(() => this.dismiss(), undo ? UNDO_TOAST_MS : TOAST_MS);
+    return () => {
+      if (this.current?.id === id) this.dismiss();
+    };
   }
 
   /** Undo: runs the toast's undo (once) and dismisses it. */

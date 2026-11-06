@@ -69,4 +69,18 @@ describe('ToastQueue', () => {
     vi.advanceTimersByTime(10_000);
     expect(undo).not.toHaveBeenCalled();
   });
+
+  test("a toast's own dismiss takes it down, and leaves one that has taken its place", () => {
+    const undo = vi.fn();
+    const dismissFirst = toasts.show('Chat deleted', undo);
+    dismissFirst();
+    expect(toasts.current).toBeNull();
+    toasts.undo();
+    expect(undo).not.toHaveBeenCalled();
+
+    const dismissSecond = toasts.show('You left OpenChat Labs', () => {});
+    toasts.show('Pinned');
+    dismissSecond();
+    expect(toasts.current?.message).toBe('Pinned');
+  });
 });

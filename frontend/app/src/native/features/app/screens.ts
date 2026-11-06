@@ -19,9 +19,10 @@ export type ScreenContext = {
     push: (screen: LocalScreen) => void;
     /**
      * Shows a toast (text, translated) in place of the one showing; with `undo`, it offers Undo,
-     * which runs it (a destructive action, notes §1 Sheets, menus, toasts).
+     * which runs it (a destructive action, notes §1 Sheets, menus, toasts). Returns what takes it
+     * down early, as when its Undo can't work any more (and not a toast that has replaced it).
      */
-    toast: (message: string, undo?: () => void) => void;
+    toast: (message: string, undo?: () => void) => () => void;
 };
 
 export type ScreenProps<S> = { screen: S; context: ScreenContext };

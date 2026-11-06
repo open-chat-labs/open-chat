@@ -407,9 +407,9 @@
         if (url !== undefined) navigate(url, "dismiss");
     }
 
-    function showToast(message: string, undo?: () => void) {
+    function showToast(message: string, undo?: () => void): () => void {
         toastStore.hideToast();
-        toasts.show(message, undo);
+        return toasts.show(message, undo);
     }
 
     const shared = { overlays, push: (screen: LocalScreen) => stacks.push(screen), toast: showToast };

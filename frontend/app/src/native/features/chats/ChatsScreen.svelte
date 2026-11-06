@@ -92,7 +92,8 @@
     const scope = $derived(screen.scope);
 
     // Leaving a group or deleting a DM can't be undone by the backend, so it waits for the Undo
-    // (PendingRemovals); anything still waiting goes when the screen does
+    // (PendingRemovals); anything still waiting goes when the screen does, and its Undo toast with
+    // it
     const removals = new PendingRemovals(UNDO_TOAST_MS);
     onDestroy(() => removals.flush());
 
@@ -314,8 +315,13 @@
     }
 
     function removeWithUndo(key: string, action: LeaveOrDelete, message: string) {
-        removals.remove(key, async () => toastStore.showOutcome(await client.leaveOrDelete(action)));
-        context.toast(message, () => removals.undo(key));
+        const dismiss = context.toast(message, () => removals.undo(key));
+        removals.remove(
+            key,
+            async () => toastStore.showOutcome(await client.leaveOrDelete(action)),
+            // sent, or taken back: the toast's Undo has nothing left to undo
+            dismiss,
+        );
     }
 
     async function unarchive(chat: ChatSummary) {
