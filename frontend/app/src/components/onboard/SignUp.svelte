@@ -1,8 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { createLocalStorageStore } from "@src/utils/store";
-    import EmailValidator from "email-validator";
-    import type { OpenChat, SignUpOutcome, UserOrUserGroup, UserSummary } from "@client";
+    import type { OpenChat, UserOrUserGroup, UserSummary } from "@client";
     import { mobileWidth } from "@client";
     import { getContext, onDestroy, onMount } from "svelte";
     import AlertBox from "../AlertBox.svelte";
@@ -18,7 +16,7 @@
     import Overlay from "../Overlay.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import UsernameInput from "../UsernameInput.svelte";
-    import { UsernameCheck } from "@src/logic/profile/usernameCheck.svelte";
+    import { SignUpForm } from "@src/logic/auth/signUpForm.svelte";
     import UserPill from "../UserPill.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -32,18 +30,18 @@
     let { error = $bindable(), onSignedUp }: Props = $props();
 
     let showGuidelines = $state(false);
-    const usernameStore = createLocalStorageStore("openchat_candidate_username", "");
-    // the name last tried, if sign-up didn't finish, is where it starts
-    const usernameCheck = new UsernameCheck(client, () => $usernameStore ?? "", { ownName: false });
-    onDestroy(() => usernameCheck.destroy());
+    // the form (logic/auth/signUpForm): the name last tried, if sign-up didn't finish, is where it
+    // starts; the referral link's referrer, or one picked
+    const form = new SignUpForm(client);
+    const usernameCheck = form.username;
+    onDestroy(() => form.destroy());
     // sign-up's own failure, else why the name can't be used
     let shownError = $derived(error ?? usernameCheck.error);
-    let email = $state("");
-    let emailValid = $derived(email.length === 0 || EmailValidator.validate(email));
-    let busy = $state(false);
-    let badCode = $state(false);
+    let emailValid = $derived(form.emailValid);
+    let busy = $derived(form.busy);
+    let badCode = $derived(form.referralRefused);
     let termsAccepted = $state(false);
-    let referringUser: UserSummary | undefined = $state(undefined);
+    let referringUser = $derived(form.referrer?.user);
 
     let TermsContent: typeof import("../landingpages/TermsContent.svelte").default | undefined =
         $state(undefined);
@@ -65,43 +63,27 @@
 
     async function register(e: Event) {
         e.preventDefault();
-        if (!usernameCheck.valid || !emailValid || !termsAccepted || busy) return;
-        const username = usernameCheck.value;
-        usernameStore.set(username);
-        busy = true;
-        let outcome: SignUpOutcome;
-        try {
-            // a refused referral code isn't sent again, so "proceed" signs up without it
-            outcome = await client.signUp(
-                username,
-                email.length > 0 ? email : undefined,
-                termsAccepted,
-            );
-        } finally {
-            busy = false;
-        }
-        badCode = outcome.kind === "referral_refused";
-        switch (outcome.kind) {
+        // Enter submits the form too, so the terms are checked here as well as on the button; a
+        // refused referral code isn't sent again, so "proceed" signs up without it
+        const outcome = await form.submit(termsAccepted);
+        switch (outcome?.kind) {
             case "success":
                 error = undefined;
-                usernameStore.set("");
                 onSignedUp();
                 break;
             case "referral_refused":
             case "failed":
-                error = outcome.reason.key;
+                error = form.error;
                 break;
         }
     }
 
     function deleteUser(_: UserOrUserGroup) {
-        referringUser = undefined;
-        client.clearReferralCode();
+        form.removeReferrer();
     }
 
     function selectUser(user: UserSummary) {
-        referringUser = user;
-        client.setReferralCode(user.userId);
+        form.pickReferrer(user, "search");
     }
 
     function userLookup(searchTerm: string): Promise<[UserSummary[], UserSummary[]]> {
@@ -113,8 +95,8 @@
         client.logout();
     }
 
-    onMount(async () => {
-        referringUser = await client.getReferringUser();
+    onMount(() => {
+        form.loadLinkReferrer();
     });
 </script>
 
@@ -179,7 +161,7 @@
                 invalid={!emailValid}
                 disabled={busy}
                 placeholder={i18nKey("register.emailPlaceholder")}
-                bind:value={email}
+                bind:value={form.email}
                 minlength={0}
                 maxlength={254} />
         </div>
