@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Stop taking a sign-in proof with prize claims, as prizes can no longer require one ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Stop taking a sign-in proof with prize claims, as prizes can no longer require one ([#10425](https://github.com/open-chat-labs/open-chat/pull/10425))
 
 ## [[2.0.2211](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2211-local_user_index)] - 2026-11-05
 

@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove `edit_message_v2`, which `edit_message_text` replaced ([#10360](https://github.com/open-chat-labs/open-chat/pull/10360))
-- Remove the option for a prize to require its claimers to sign in again ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Remove the option for a prize to require its claimers to sign in again ([#10425](https://github.com/open-chat-labs/open-chat/pull/10425))
 
 ## [[2.0.2208](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2208-multi_user)] - 2026-11-03
 
