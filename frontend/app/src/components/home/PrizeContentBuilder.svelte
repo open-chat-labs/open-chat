@@ -9,6 +9,9 @@
         cryptoBalanceStore,
         cryptoLookup,
         mobileWidth,
+        ONE_DAY,
+        ONE_HOUR,
+        ONE_WEEK,
         prizeCosts,
         prizeMaximum,
         walletApprovalFee,
@@ -40,9 +43,6 @@
     import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
 
-    const ONE_HOUR = 1000 * 60 * 60;
-    const ONE_DAY = ONE_HOUR * 24;
-    const ONE_WEEK = ONE_DAY * 7;
     const DURATION_MS: Record<Duration, number> = {
         oneHour: ONE_HOUR,
         oneDay: ONE_DAY,

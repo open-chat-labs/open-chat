@@ -7,6 +7,8 @@ import {
     localUpdates,
     newPrizeContent,
     ONE_DAY,
+    ONE_HOUR,
+    ONE_WEEK,
     prizeCosts,
     prizeMaximum,
     validateTokenInput,
@@ -41,9 +43,9 @@ const PRIZE_CONFIG_KEY = "openchat_prize_config";
 
 // the old desktop builder stored its duration by name
 const NAMED_DURATIONS: Record<string, number> = {
-    oneHour: 60 * 60 * 1000,
+    oneHour: ONE_HOUR,
     oneDay: ONE_DAY,
-    oneWeek: 7 * ONE_DAY,
+    oneWeek: ONE_WEEK,
 };
 
 function field(raw: object, key: string): unknown {

@@ -2,6 +2,9 @@
 // over, as the client's builders take it, and what the composer stages, as the library shows it.
 import {
     formatTokens,
+    ONE_DAY,
+    ONE_HOUR,
+    ONE_WEEK,
     prizeCosts,
     swapOfferCosts,
     walletApprovalFee,
@@ -169,12 +172,12 @@ export function composerTransfer(
 
 // SwapOfferDialog's expiries, in its order (its `dur` is an index into them)
 const SWAP_EXPIRIES: [ms: number, count: number, unit: "h" | "d"][] = [
-    [60 * 60 * 1000, 1, "h"],
-    [6 * 60 * 60 * 1000, 6, "h"],
-    [24 * 60 * 60 * 1000, 1, "d"],
-    [7 * 24 * 60 * 60 * 1000, 7, "d"],
-    [30 * 24 * 60 * 60 * 1000, 30, "d"],
-    [90 * 24 * 60 * 60 * 1000, 90, "d"],
+    [ONE_HOUR, 1, "h"],
+    [6 * ONE_HOUR, 6, "h"],
+    [ONE_DAY, 1, "d"],
+    [ONE_WEEK, 7, "d"],
+    [30 * ONE_DAY, 30, "d"],
+    [90 * ONE_DAY, 90, "d"],
 ];
 
 function nearest(list: number[], ms: number): number {
@@ -257,12 +260,12 @@ export function composerSwapOffer(
 
 // PrizeBuilderDialog's durations, in its order (its `dur` is an index into them), with their labels
 const PRIZE_DURATIONS: [ms: number, key: string][] = [
-    [60 * 60 * 1000, "oneHour"],
-    [6 * 60 * 60 * 1000, "sixHours"],
-    [24 * 60 * 60 * 1000, "oneDay"],
-    [7 * 24 * 60 * 60 * 1000, "sevenDays"],
-    [30 * 24 * 60 * 60 * 1000, "thirtyDays"],
-    [90 * 24 * 60 * 60 * 1000, "ninetyDays"],
+    [ONE_HOUR, "oneHour"],
+    [6 * ONE_HOUR, "sixHours"],
+    [ONE_DAY, "oneDay"],
+    [ONE_WEEK, "sevenDays"],
+    [30 * ONE_DAY, "thirtyDays"],
+    [90 * ONE_DAY, "ninetyDays"],
 ];
 
 /** The index of the dialog's duration nearest `ms`. */
