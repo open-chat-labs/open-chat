@@ -336,8 +336,9 @@
             $chatListScopeStore.kind !== "none" &&
             !$exploringStore
         ) {
-            // An answered native ring beats any other cold-start intent.
-            const intent = consumeColdStartIntent();
+            // An answered native ring beats any other cold-start intent. Taken untracked, so taking
+            // it doesn't run this again and fall through to the default chat.
+            const intent = untrack(consumeColdStartIntent);
             if (intent?.kind === "call") {
                 untrack(() => runCallAction(intent.action));
             } else if (intent?.kind === "deep_link") {

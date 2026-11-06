@@ -79,10 +79,12 @@ design export needs. Each entry says where it came up.
     reliably, so the native root follows the shell's window-inset event into `--safe-top` /
     `--safe-bottom` (`native/systemBars.ts`, through components_mobile's `androidInterfaceSizes`).
     The keyboard's height, which the same event carries, is N5c's.
-  - **Cold starts**: what the shell parks (an answered call, a deep link, a notification tap) is
-    reactive now (`utils/native/coldStart.svelte.ts`), in both trees: it's opened when it lands, not
-    on the next visit to the chat list, and a cold start opens one of them (a call, else a deep
-    link, else a tap), the others dropped.
+  - **Cold starts**: what the shell parks (an answered call, a deep link, a notification tap) is in
+    `utils/native/coldStart.svelte.ts`, shared by both trees; a cold start opens one of them (a
+    call, else a deep link, else a tap), the others dropped. The native router reads its reactive
+    `pending`, so one that lands after it first looked is opened when it lands. components_mobile
+    keeps its rule: it takes one when its chat list shows, untracked, so taking it never runs its
+    effect again into the default chat.
   - An app store build has no Wallet tab (`disableWalletFeature`), but a `/wallet` link still opens
     its stack, with no tab selected.
   - The tab bar's Chats count is the unmuted unread DMs and groups; the design doesn't say whether
