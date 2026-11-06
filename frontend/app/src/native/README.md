@@ -90,6 +90,7 @@ to one do.
 - **Sheets and menus** register while they're open (`useOverlay(context.overlays, …)`), so Android's
   system back closes them before it pops the screen.
 - **The tab bar** shows only on a tab's root; every pushed screen has the whole window (`showsTabBar`).
+  A pushed screen slides in over the root and the tab bar, which stay put, and Back slides it off.
 - **Between tabs**: on a tab's root, a sideways drag swipes to the neighbouring tab in the bar's
   order (touch and pen; `tabSwipe.ts`), through the same navigation as a tap. A tab switch slides
   only the old screen and the new one. A tab root with something that scrolls sideways leaves drags

@@ -55,6 +55,10 @@ design export needs. Each entry says where it came up.
     Design Notes and the issue only said it hides inside a conversation): every pushed screen has
     the whole window (`showsTabBar`, `router/locations.ts`). A tab's stack is still kept, for a link
     from another tab or a deep link to land in.
+  - **A push slides over what's under it** (decided 2026-11-06; the Design Notes' §3.1 Transitions
+    have the screen under it slide out to the left and the bar go down): the pushed screen slides
+    in from the inline end over the tab's root and the tab bar, which both stay where they are, and
+    Back slides it off again (`Shell`, `motion.ts`). A screen pushed over another works the same.
   - **Local pushes**: done (N5a). A screen without a URL on the web (New chat, New group, CHIT for
     now; details, settings pages and builders to come) is pushed with `context.push`
     (`TabStacks.push`, a `LocalScreen`): it shows at the URL of the screen under it, Back (the

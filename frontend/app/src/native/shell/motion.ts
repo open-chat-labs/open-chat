@@ -1,10 +1,9 @@
 import type { TransitionConfig } from "svelte/transition";
 
-// The push stack's motion (native design notes §3.1 Transitions): going deeper, the new screen
-// slides in from the right while the one under it slides out to the left (to -28%, as the
-// prototype); going back reverses it; .34s on tokens.css's --ease-out. The screen under it moves by
-// CSS (Shell); the screen coming or going by these transitions. Mirrored in RTL. None with reduced
-// motion.
+// The push stack's motion: going deeper, the new screen slides in from the right over the one
+// under it and the tab bar, which stay put (decided 2026-11-06: the design notes' §3.1 had the one
+// under it slide out to -28% and the bar go down); going back slides it off again; .34s on
+// tokens.css's --ease-out. Mirrored in RTL. None with reduced motion.
 
 export const PUSH_MS = 340;
 
