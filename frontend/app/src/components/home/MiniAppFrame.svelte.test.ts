@@ -17,6 +17,7 @@ import { MiniAppActions } from "@src/logic/miniApp/miniAppActions.svelte";
 import { MiniAppFullScreen } from "@src/logic/miniApp/miniAppFrame.svelte";
 import type { HostedMiniApp } from "@src/logic/miniApp/miniAppHost.svelte";
 import MobileMiniAppFrame from "../../components_mobile/home/MiniAppFrame.svelte";
+import { i18nKey } from "../../i18n/i18n";
 import { themeType } from "../../theme/themes";
 import MiniAppFrame from "./MiniAppFrame.svelte";
 
@@ -198,5 +199,40 @@ describe.each([
         flushSync();
         expect(props.fullScreen.on).toBe(false);
         await vi.waitFor(() => expect(document.activeElement).toBe(frame));
+    });
+
+    test("without an app, puts focus on the exit button, and on the corner button once back", async () => {
+        stubDialogs();
+        // the game can't be opened, so the frame says so in place of the app
+        const failing = {
+            ...client,
+            openMiniApp: async () => ({
+                kind: "failed",
+                message: i18nKey("bots.miniApp.finished"),
+            }),
+        };
+        const props = {
+            app: hosted(),
+            actions: new MiniAppActions(failing as never, GAME),
+            fullScreen: new MiniAppFullScreen(),
+            active: true,
+            view: miniAppCardView(CONTENT, undefined, "me"),
+            imageUrl: undefined,
+        };
+        target = document.body.appendChild(document.createElement("div"));
+        app = mount(Frame, { target, props, context: new Map([["client", failing]]) });
+        flushSync();
+        await vi.waitFor(() => expect(target!.querySelector("iframe")).toBeNull());
+
+        target.querySelector<HTMLButtonElement>(".corner")!.click();
+        flushSync();
+        const exit = target.querySelector<HTMLElement>(".exit button, .exit [role='button']")!;
+        await vi.waitFor(() => expect(document.activeElement).toBe(exit));
+
+        exit.click();
+        flushSync();
+        await vi.waitFor(() =>
+            expect(document.activeElement).toBe(target!.querySelector(".corner")),
+        );
     });
 });

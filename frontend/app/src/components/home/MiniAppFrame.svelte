@@ -100,8 +100,7 @@
         wasFullScreen = on;
         void tick().then(() => {
             if (iframe) {
-                // without scrolling the chat to the card, back in place
-                iframe.focus({ preventScroll: true });
+                iframe.focus();
             } else if (on) {
                 dialog?.querySelector<HTMLElement>(".exit button, .exit [role='button']")?.focus();
             } else {
