@@ -204,6 +204,10 @@ design export needs. Each entry says where it came up.
   - `SwapOfferDialog` takes `depositFees` (the design priced two fees, with no approval fee), and
     its "locks … incl. 2 fees" lines now say "incl. fees" (`hint`, `locks`). It has no review
     step: the app confirms in a `DialogShell` of its own.
+  - To look into (5d testing): the swap offer's UI, from `SwapOfferDialog` to the confirmation it
+    hands over to before the offer is attached, could be nicer. The confirmation in particular is a
+    plain `DialogShell` of the app's own (the design has no review step), and the two don't read
+    as one flow yet. A design pass on both.
   - Not done by hand, for the design export: `MemeFighterDialog` builds memes from templates
     the app doesn't have (the app keeps the Meme Fighter maker's frame); none of the payment
     dialogs has an external wallet picker (the old `SourceWalletSelector`, and the approval fee
