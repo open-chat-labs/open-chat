@@ -478,7 +478,7 @@ fn tally() -> Tally {
     }
 }
 
-// `winners` is deprecated, but OpenChat still sends it
+// `winners` and `requires_captcha` are deprecated, but OpenChat still sends them
 #[allow(deprecated)]
 fn prize() -> PrizeContent {
     PrizeContent {
