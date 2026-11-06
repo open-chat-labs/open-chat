@@ -670,3 +670,6 @@
 
 ## 2026-11-06 — the prize card's sent look and its sending state (5d testing), by hand
 - `PrizeMessage`: takes `side` (MessageGroup passes it, as for the other cards); a sent prize takes the sent bubble's colours through `--msg-*` variables, as `PollMessage` does, rather than always the received one. `sending` shows the card with "Sending prize…" and a spinner where Claim would go (`ui.prizeMessage.sending`). Both in meta.json.
+
+## 2026-11-06 — swiping a run's first message takes its avatar and name along (5d testing), by hand
+- `MessageGroup`: the avatar and name (`data-group-head`) follow the first message's swipe and spring back with it, rather than staying put while it slides away; that row's reply hint sits past the avatar (`past-avatar`), where before it came out over it.
