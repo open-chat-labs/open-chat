@@ -657,3 +657,7 @@
 
 ## 2026-11-06 — the "+" builders' dialogs animate in and out (5d testing), by hand
 - `PollBuilderDialog`, `PrizeBuilderDialog`, `SendCryptoDialog`, `SwapOfferDialog`: the library's shared dialog motion (global.css), which the export's builders lacked: the veil fades in (`oc-veil-in`) and the card rises in (`oc-dlg-in`); closing (×, Cancel, the backdrop, Esc, Discard) goes through a `DialogFlow` (`flow.dismiss(onClose)`, which Poll already had for publishing), so both play the exit (`oc-veil-out`, `oc-dlg-out`) before the host unmounts them. No prop changes.
+
+## 2026-11-06 — sortable rows settle from the drop; the poll builder's settings grow and shrink (5d testing), by hand
+- `SortableInputList`: letting go of a dragged row no longer snaps it back to its old slot and animates every row from there. On drop the rows take their new order with no transition, the dropped row starting where it was let go, and only it glides the rest of the way into its slot.
+- `PollBuilderDialog`: the settings list grows open and shrinks closed (grid rows 0fr ↔ 1fr, as Learn's contents do) instead of appearing and vanishing; hidden once closed, so its toggles leave the tab order.
