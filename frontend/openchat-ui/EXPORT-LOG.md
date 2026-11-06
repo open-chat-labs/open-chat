@@ -661,3 +661,6 @@
 ## 2026-11-06 — sortable rows settle from the drop; the poll builder's settings grow and shrink (5d testing), by hand
 - `SortableInputList`: letting go of a dragged row no longer snaps it back to its old slot and animates every row from there. On drop the rows take their new order with no transition, the dropped row starting where it was let go, and only it glides the rest of the way into its slot.
 - `PollBuilderDialog`: the settings list grows open and shrinks closed (grid rows 0fr ↔ 1fr, as Learn's contents do) instead of appearing and vanishing; hidden once closed, so its toggles leave the tab order.
+
+## 2026-11-06 — a poll answer doesn't rewrap when you vote (5d testing), by hand
+- `PollMessage`: the percentage only appeared once the results showed, so voting narrowed every label and a long answer broke onto a second line. The percentage is now always laid out, as wide as "100%" (hidden until the results show), so the labels keep their width.

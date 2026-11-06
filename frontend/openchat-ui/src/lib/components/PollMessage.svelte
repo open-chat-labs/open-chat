@@ -99,7 +99,7 @@
             {#if show && publicVotes && option.voters?.length}
               <span class="voters"><AvatarStack people={option.voters.slice(0, 3)} size={20} max={4} ring={sent ? 'var(--bubble-send-bg)' : 'var(--bubble-recv-bg)'} /></span>
             {/if}
-            {#if show}<span class="pct">{pct}%</span>{/if}
+            <span class="pct" class:hidden={!show} aria-hidden={!show}>{show ? pct : 0}%</span>
           </div>
           <div class="track"><span class="bar" style:width="{show ? pct : 0}%"></span></div>
         </div>
@@ -285,9 +285,17 @@
     margin-right: 2px;
   }
 
+  /* as wide as "100%" whether or not the results show, so voting doesn't rewrap the label */
   .pct {
+    flex: none;
+    min-width: 4ch;
+    text-align: right;
     font: 700 12.5px/1 var(--font-mono);
     color: var(--msg-ink);
+
+    &.hidden {
+      visibility: hidden;
+    }
   }
 
   .track {
