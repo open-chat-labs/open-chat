@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2210](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2210-notification_pusher)] - 2026-11-05
+
 ### Added
 
 - Push to iOS devices straight through APNs, with a token-based `.p8` key, and remove tokens APNs rejects ([#10409](https://github.com/open-chat-labs/open-chat/pull/10409))

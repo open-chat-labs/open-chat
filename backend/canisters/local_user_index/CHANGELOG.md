@@ -6,15 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Expect a salted hash of the prize claim as Turnstile's custom data, rather than the user's id ([#10417](https://github.com/open-chat-labs/open-chat/pull/10417))
+
+## [[2.0.2211](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2211-local_user_index)] - 2026-11-05
+
 ### Added
 
 - Support bot command args that are only visible when a condition is met (eg. when game is "chess") ([#10350](https://github.com/open-chat-labs/open-chat/pull/10350))
 - Protect against bots making prize claims by using Cloudflare Turnstile ([#10395](https://github.com/open-chat-labs/open-chat/pull/10395))
 - Keep the iOS devices registered for APNs pushes and hand them to the pusher with each notification ([#10409](https://github.com/open-chat-labs/open-chat/pull/10409))
-
-### Changed
-
-- Expect a salted hash of the prize claim as Turnstile's custom data, rather than the user's id ([#10417](https://github.com/open-chat-labs/open-chat/pull/10417))
 
 ## [[2.0.2207](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2207-local_user_index)] - 2026-11-02
 
