@@ -15,7 +15,7 @@
 // post_client_item token and the endpoint rejects it. Read from the environment, falling back
 // to frontend/.env, which the build loads via dotenv but the deploy shell scripts never export.
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { openAsBlob, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -40,13 +40,23 @@ if (!version) {
     process.exit(1);
 }
 
+// The deploy scripts run this between the build and the dfx deploy, and the build is still there
+// when it fails, so a rerun needn't build the whole site again
+function exitWithRerunHint() {
+    console.error(
+        `  Once fixed, to finish without building again, rerun "node scripts/upload-source-maps.mjs ${version}",\n` +
+            "  then the deploy script's dfx deploy command.",
+    );
+    process.exit(1);
+}
+
 // Fatal. This once warned and exited 0, and the warning scrolled past unread on the first real
 // deploy, leaving 2.0.2054 minified. The deploy scripts stop on a non-zero exit here.
 if (!token) {
     console.error(
         "upload-source-maps: OC_ROLLBAR_SERVER_TOKEN is not set in the environment or in frontend/.env",
     );
-    process.exit(1);
+    exitWithRerunHint();
 }
 
 function findMaps(dir) {
@@ -71,10 +81,9 @@ if (maps.length === 0) {
 console.log(`upload-source-maps: uploading ${maps.length} maps for ${version}`);
 
 // A lazy chunk per route means well over a hundred uploads, so run a few at a time. The maps add up
-// to ~40MB, the largest ~5MB, so on a slow uplink (a few hundred KB/s) every upload running splits
-// it. With 8 at once the largest maps ran past fetch's 5 minutes, and new connections queued
-// behind the uploads timed out after 10s, so every retry failed too. With 3, a fast link still
-// uploads the lot in well under a minute.
+// to ~40MB, the largest ~5MB. With 8 at once on a slow uplink (a few hundred KB/s), new
+// connections queued behind the uploads already running and timed out after 10s, so every retry
+// failed too. With 3, a fast link still uploads the lot in well under a minute.
 const CONCURRENCY = 3;
 
 // A bad token fails all of them identically. Stop on the first one rather than printing the same
@@ -91,7 +100,8 @@ function redact(text) {
 // a map again just replaces it, so those failures are retried after a growing delay rather than
 // stopping the deploy, which would mean building the whole site again to rerun it. A connection
 // which stalls is given up on by fetch itself after 5 minutes, and retried the same way. The last
-// delays give a congested link or a struggling Rollbar a couple of minutes to recover.
+// delays give a link slowed by something else, or a struggling Rollbar, a couple of minutes to
+// recover.
 const RETRY_DELAYS_MS = [2_000, 5_000, 15_000, 30_000, 60_000];
 
 // Returns undefined once the map is uploaded, or else why not and whether that's worth retrying
@@ -100,7 +110,10 @@ async function attemptUpload(mapPath, minifiedUrl) {
     form.append("access_token", token);
     form.append("version", version);
     form.append("minified_url", minifiedUrl);
-    form.append("source_map", new Blob([readFileSync(mapPath)]), path.basename(mapPath));
+    // A file-backed Blob is sent in 64KB chunks, each of which resets fetch's 5 minute headers
+    // timeout. An in-memory one goes in a single write, so on a slow link a 5MB map that was
+    // still moving timed out once it took over 5 minutes to send.
+    form.append("source_map", await openAsBlob(mapPath), path.basename(mapPath));
 
     let response;
     try {
@@ -162,17 +175,12 @@ try {
 } catch (err) {
     if (!(err instanceof FatalUploadError)) throw err;
     console.error(`upload-source-maps: ${err.message}`);
-    process.exit(1);
+    exitWithRerunHint();
 }
 
 if (failed > 0) {
     const skipped = queue.length > 0 ? `, and ${queue.length} were not tried` : "";
     console.error(`upload-source-maps: ${failed} of ${maps.length} uploads failed${skipped}`);
-    // The build is still there, so a rerun needn't build the whole site again
-    console.error(
-        `  To finish without building again, rerun "node scripts/upload-source-maps.mjs ${version}",\n` +
-            "  then the deploy script's dfx deploy command.",
-    );
-    process.exit(1);
+    exitWithRerunHint();
 }
 console.log(`upload-source-maps: all ${maps.length} maps uploaded for ${version}`);
