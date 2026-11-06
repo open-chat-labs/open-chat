@@ -214,12 +214,37 @@ export type ComposerBuilder = "poll" | "prize" | "crypto" | "swap" | "memeFighte
 
 /**
  * The builders the entry offers, each where the chat lets the reader send what it makes (polls
- * aren't sent in a DM).
+ * aren't sent in a DM, nor tokens to a bot) and this build doesn't turn it off (`off`: the app
+ * store builds take payments out, `utils/features`).
  */
-export function composerBuilders(permitted: ReadonlySet<MessagePermission>): ComposerBuilder[] {
-    const builders: ComposerBuilder[] = [];
-    if (permitted.has("poll")) builders.push("poll");
-    return builders;
+export function composerBuilders(
+    permitted: ReadonlySet<MessagePermission>,
+    off: ReadonlySet<ComposerBuilder>,
+): ComposerBuilder[] {
+    const builders: [ComposerBuilder, MessagePermission][] = [
+        ["poll", "poll"],
+        ["crypto", "crypto"],
+    ];
+    return builders.flatMap(([builder, permission]) =>
+        permitted.has(permission) && !off.has(builder) ? [builder] : [],
+    );
+}
+
+/**
+ * Whether a builder's content is attached to the draft, to go with its caption when it's sent (a
+ * payment: it's taken when the message is sent), rather than sent from its dialog (a poll). One
+ * that attaches is offered only while something can be attached (`canAttachNow`).
+ */
+export function attachesToDraft(builder: ComposerBuilder): boolean {
+    switch (builder) {
+        case "prize":
+        case "crypto":
+        case "swap":
+            return true;
+        case "poll":
+        case "memeFighter":
+            return false;
+    }
 }
 
 // as the old pickers: what's typed after the "@" is looked for once it's this long

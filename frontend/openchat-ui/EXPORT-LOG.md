@@ -649,3 +649,6 @@
 
 ## 2026-11-05 — native: the push shadow (native N3, #10366), by hand
 - tokens.css, the native layer: `--shadow-push`, the shadow a pushed screen casts on the screen it slides over (the prototype's stack screens: `-12px 0 32px rgba(0,0,0,.35)`, the same in both themes), on its start side: `[data-platform="native"][dir="rtl"]` mirrors it, as the native root (`<html>`) carries `dir` too. `platform.spec.ts` lists it with the shell's tokens and checks the mirroring.
+
+## 2026-11-06 — the composer's "+" builders for the app (5d, #10119), by hand
+- `SendCryptoDialog`: `to`, the member picked to start with (by id) for a new transfer, e.g. the one being replied to in a group; an `initial` transfer's own recipient still wins. `meta.json` updated. Not in the design export: to go back to it (the app's `GAPS.md` lists it).

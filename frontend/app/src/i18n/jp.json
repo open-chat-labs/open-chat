@@ -205,6 +205,9 @@
         "unlink": "連携を解除",
         "unlinkFailed": "アカウントの連携を解除できませんでした"
     },
+    "builders": {
+        "paymentRefused": "添付できません。金額と残高を確認して、もう一度お試しください。"
+    },
     "cashtag": {
         "chartLabel": "過去7日間の{symbol}の価格",
         "change7d": "7日間で{change}",

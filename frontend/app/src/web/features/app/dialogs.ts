@@ -2,6 +2,7 @@ import type {
     BotInstallationLocation,
     ChatIdentifier,
     CommunityIdentifier,
+    CryptocurrencyContent,
     EnhancedAccessGate,
     ExternalBotLike,
     GroupChatIdentifier,
@@ -122,7 +123,15 @@ export type LocalDialog =
           threadRootMessageIndex?: number;
       }
     // the composer's "+" builders (5d): a poll, published from the dialog
-    | { kind: "poll_builder"; chatId: ChatIdentifier };
+    | { kind: "poll_builder"; chatId: ChatIdentifier }
+    // a transfer, attached to the chat's draft: `defaultReceiver` is who it goes to unless the user
+    // picks someone else (the one being replied to), `editing` the staged one to change
+    | {
+          kind: "send_crypto";
+          chatId: ChatIdentifier;
+          defaultReceiver?: string;
+          editing?: CryptocurrencyContent;
+      };
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";
@@ -223,6 +232,7 @@ export const dialogs: Dialogs = {
 
     // the composer's "+" builders (5d)
     poll_builder: () => import("../builders/PollBuilderDialogScreen.svelte"),
+    send_crypto: () => import("../builders/SendCryptoDialogScreen.svelte"),
 };
 
 // each linked dialog's query param; the CHIT dialog's views share its param, told apart by its value

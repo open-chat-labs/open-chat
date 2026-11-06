@@ -205,6 +205,9 @@
         "unlink": "Rozłącz",
         "unlinkFailed": "Nie udało się rozłączyć konta"
     },
+    "builders": {
+        "paymentRefused": "Nie można tego dołączyć. Sprawdź kwotę i saldo, a potem spróbuj ponownie."
+    },
     "cashtag": {
         "chartLabel": "Cena {symbol} w ciągu ostatnich 7 dni",
         "change7d": "{change} w ciągu 7 dni",

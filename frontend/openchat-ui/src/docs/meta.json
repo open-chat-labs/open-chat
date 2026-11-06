@@ -16554,6 +16554,17 @@
         "doc": "Pickable recipients (a group), when there is no fixed one; each has the user id."
       },
       {
+        "name": "to",
+        "type": "string | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "null",
+        "doc": "The member picked to start with (by id), for a new transfer: e.g. the one being replied to."
+      },
+      {
         "name": "initial",
         "type": "Transfer | null",
         "default": null,

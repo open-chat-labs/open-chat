@@ -22,6 +22,17 @@ export const disableP2PSwapFeature = disableCryptoPaymentsFeature;
 
 export const disableSwapFeature = disableCryptoPaymentsFeature;
 
+/** The composer's "+" builders this build turns off (`composerBuilders`' `off`). */
+export const composerBuildersOff: ReadonlySet<"crypto" | "prize" | "swap"> = new Set(
+    (
+        [
+            ["crypto", disableSendCryptoFeature],
+            ["prize", disableCreatePrizeFeature],
+            ["swap", disableP2PSwapFeature],
+        ] as const
+    ).flatMap(([builder, off]) => (off ? [builder] : [])),
+);
+
 /** The wallet's token actions this build turns off (`tokenActions`' `disabled`). */
 export const walletActionsDisabled = {
     send: disableSendCryptoFeature,

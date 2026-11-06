@@ -238,5 +238,6 @@ export {
     swapLabels,
     swapTakenBy,
 } from "./utils/swaps";
+export { externalWalletPayment, type ExternalWalletPayment } from "./utils/draftPayment";
 export { toDateString, toDatetimeString, toDayString, toMonthString } from "./utils/date";
 export * from "./utils/url";

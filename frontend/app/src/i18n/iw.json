@@ -205,6 +205,9 @@
         "unlink": "ביטול קישור",
         "unlinkFailed": "לא ניתן לבטל את קישור החשבון"
     },
+    "builders": {
+        "paymentRefused": "לא ניתן לצרף זאת. בדקו את הסכום ואת היתרה ונסו שוב."
+    },
     "cashtag": {
         "chartLabel": "המחיר של {symbol} ב-7 הימים האחרונים",
         "change7d": "{change} ב-7 ימים",

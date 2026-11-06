@@ -46,6 +46,7 @@
         attachKinds,
         onFile,
         onBuild,
+        onEditAttachment,
         onRemoveAttachment,
         onVoice,
         voiceMimeType,
@@ -89,6 +90,8 @@
         onFile: ((file: File) => void) | undefined;
         // a builder picked from the + menu (a poll, a prize …)
         onBuild: (builder: ComposerBuilder) => void;
+        // the staged payment's chip's Edit: its builder again
+        onEditAttachment: () => void;
         onRemoveAttachment: () => void;
         // sends a voice message recorded here; none where the reader can't record one (no mic
         // then); rejects if it wasn't sent, and the take stays to send again
@@ -209,6 +212,7 @@
             {attachment}
             onAttach={attachKinds.length === 0 ? undefined : pick}
             {attachKinds}
+            {onEditAttachment}
             {onRemoveAttachment}
             onRemoveMediaItem={() => onRemoveAttachment()}
             onVoice={onVoice === undefined ? undefined : ({ blob }) => onVoice(blob)}

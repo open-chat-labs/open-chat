@@ -35,7 +35,7 @@
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { cleanAmount, parseAmount } from '../../lib/amount';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import type { Transfer } from '../../lib/types';
   import Button from '../../lib/components/Button.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
@@ -58,19 +58,21 @@
     recipient?: Member | null;
     /** Pickable recipients (a group), when there is no fixed one. */
     members?: Member[];
+    /** The member picked to start with (by id), for a new transfer: e.g. the one being replied to. */
+    to?: string | null;
     initial?: Transfer | null;
     onAttach?: (transfer: Transfer) => void;
     onClose?: () => void;
   }
 
-  let { tokens, z = 80, recipient = null, members = [], initial = null, onAttach, onClose }: Props = $props();
+  let { tokens, z = 80, recipient = null, members = [], to: startTo = null, initial = null, onAttach, onClose }: Props = $props();
   const t = useT();
   const i18n = getI18n();
 
-  const draft = initial?.draft;
+  const draft = untrack(() => initial?.draft);
   let tok = $state(draft?.tok ?? '');
   let amt = $state(draft?.amt ?? '');
-  let to = $state<string | null>(draft?.to ?? null);
+  let to = $state<string | null>(draft?.to ?? untrack(() => startTo));
   let toOpen = $state(false);
   let tokOpen = $state(false);
   let query = $state('');

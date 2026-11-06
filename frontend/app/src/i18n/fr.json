@@ -205,6 +205,9 @@
         "unlink": "Dissocier",
         "unlinkFailed": "Impossible de dissocier le compte"
     },
+    "builders": {
+        "paymentRefused": "Impossible de joindre ceci. Vérifiez le montant et votre solde, puis réessayez."
+    },
     "cashtag": {
         "chartLabel": "Prix de {symbol} sur les 7 derniers jours",
         "change7d": "{change} sur 7 jours",

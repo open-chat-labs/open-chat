@@ -29,6 +29,7 @@
         currentUserIdStore,
         eventsStore,
         exchangeRatesLookupStore,
+        externalWalletPayment,
         failedMessagesStore,
         favouritesStore,
         formatTokens,
@@ -75,6 +76,7 @@
         unconfirmedStore,
         undeletingMessagesStore,
         videoProcessingProgress,
+        type AttachmentContent,
         type ChatEvent,
         type ChatIdentifier,
         type ChatSummary,
@@ -98,8 +100,13 @@
     import ChatEventList, { type ChatEventListArgs } from "@src/core/ChatEventList.svelte";
     import { TimelineFlattener, type FlatChatItem } from "@src/core/flatChatItems";
     import Markdown from "@src/core/Markdown.svelte";
-    import type { ComposerAttachKind, GroupMessage } from "@openchat/ui/src/lib/types";
+    import type {
+        ComposerAttachKind,
+        ComposerAttachment,
+        GroupMessage,
+    } from "@openchat/ui/src/lib/types";
     import {
+        attachesToDraft,
         attachRefusal,
         canAttachNow,
         canRecordVoice,
@@ -124,7 +131,8 @@
     } from "@src/stores/settings";
     import { messageToForwardStore } from "@src/stores/messageToForward";
     import { quickReactions } from "@src/stores/quickReactions";
-    import { disableTipsFeature } from "@src/utils/features";
+    import { composerBuildersOff, disableTipsFeature } from "@src/utils/features";
+    import { composerTransfer, type Translate } from "../builders/builders.adapter";
     import { messageSwipeLeft } from "@src/utils/messageSwipe";
     import { canShareMessage } from "@src/utils/share";
     import { messageDoubleClickAction } from "@src/logic/conversation/messageDoubleClick";
@@ -477,10 +485,36 @@
         }
     });
 
-    // the draft's photo, video or file, staged above the text (only what the composer shows is
-    // sent with it: 5d's contents wait for their builders)
+    // the draft's photo, video or file, or a builder's payment (5d), staged above the text (only
+    // what the composer shows is sent with it: a puzzle result isn't yet)
     // (none during an edit, when the draft holds the edited message's own content)
-    const staged = $derived(composerAttachment(draftAttachment(draft), ctx));
+    const staged = $derived(
+        composerAttachment(draftAttachment(draft), ctx) ?? stagedPayment(draftAttachment(draft)),
+    );
+
+    // a transfer as the composer's chip shows it, in a token the registry carries
+    function stagedPayment(content: AttachmentContent | undefined): ComposerAttachment | null {
+        const t: Translate = (key, values) => $_(key, { values });
+        switch (content?.kind) {
+            case "crypto_content": {
+                const transfer = content.transfer;
+                const token =
+                    transfer.kind === "pending" ? $cryptoLookup.get(transfer.ledger) : undefined;
+                if (transfer.kind !== "pending" || token === undefined) return null;
+                return (
+                    composerTransfer(
+                        content,
+                        token,
+                        $exchangeRatesLookupStore.get(transfer.ledger)?.toUSD,
+                        $allUsersStore.get(transfer.recipient),
+                        t,
+                    ) ?? null
+                );
+            }
+            default:
+                return null;
+        }
+    }
 
     // a direct chat with a bot takes text only (its direct-message command)
     const directBot = $derived(chat !== undefined && client.directChatWithBot(chat) !== undefined);
@@ -492,15 +526,15 @@
             canAttachNow({ editing: draft?.editingEvent !== undefined, voiceActive }),
     );
 
-    // what the + menu offers (following the reader's permissions here): to pick from the device
-    // (while something can be attached), and the builders
+    // what the + menu offers (following the reader's permissions here): to pick from the device and
+    // the builders that attach (while something can be attached), and the ones that send
     const attachKinds = $derived.by((): ComposerAttachKind[] => {
         if (directBot) return [];
         const permitted = $messagePermissionsForSelectedChatStore;
-        return [
-            ...(attachable ? pickableAttachments(permitted) : []),
-            ...composerBuilders(permitted),
-        ];
+        const builders = composerBuilders(permitted, composerBuildersOff).filter(
+            (b) => attachable || !attachesToDraft(b),
+        );
+        return [...(attachable ? pickableAttachments(permitted) : []), ...builders];
     });
 
     // a builder picked from the + menu opens its dialog
@@ -508,6 +542,24 @@
         switch (builder) {
             case "poll":
                 screen.dialogs.open({ kind: "poll_builder", chatId });
+                break;
+            case "crypto":
+                // to the one being replied to, unless the user picks someone else
+                screen.dialogs.open({
+                    kind: "send_crypto",
+                    chatId,
+                    defaultReceiver: draft?.replyingTo?.sender?.userId,
+                });
+                break;
+        }
+    }
+
+    // the chip's Edit opens the staged payment's builder again, to change it
+    function editStaged(chatId: ChatIdentifier) {
+        const content = draftAttachment(draft);
+        switch (content?.kind) {
+            case "crypto_content":
+                screen.dialogs.open({ kind: "send_crypto", chatId, editing: content });
                 break;
         }
     }
@@ -652,12 +704,17 @@
             if (outcome.kind !== "sent") throw new Error(outcome.kind);
             return;
         }
+        const attachment = staged !== null ? draftAttachment(draft) : undefined;
+        // a payment from an external wallet would need that wallet's approval first, which this
+        // tree doesn't ask for (its builders pay from the OpenChat wallet): never send it without,
+        // which would take the funds from the OpenChat wallet instead (GAPS.md)
+        if (externalWalletPayment(attachment) !== undefined) throw new Error("external_wallet");
         // the client mentions those typed as @username; the text captions an attachment
         const outcome = await client.sendMessage(
             context,
             text === "" ? undefined : text,
             detectMarkdown(text),
-            staged !== null ? draftAttachment(draft) : undefined,
+            attachment,
         );
         if (outcome.kind !== "posted") throw new Error(outcome.kind);
     }
@@ -1610,6 +1667,7 @@
                 {attachKinds}
                 onFile={attachable ? (file) => attachFile(chat.id, file) : undefined}
                 onBuild={(builder) => build(chat.id, builder)}
+                onEditAttachment={() => editStaged(chat.id)}
                 onRemoveAttachment={() =>
                     localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
                 onVoice={canRecord && voiceMimeType !== undefined

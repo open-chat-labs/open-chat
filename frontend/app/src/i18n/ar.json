@@ -205,6 +205,9 @@
         "unlink": "إلغاء الربط",
         "unlinkFailed": "تعذّر إلغاء ربط الحساب"
     },
+    "builders": {
+        "paymentRefused": "لا يمكن إرفاق ذلك. تحقق من المبلغ ورصيدك، ثم حاول مرة أخرى."
+    },
     "cashtag": {
         "chartLabel": "سعر {symbol} خلال آخر 7 أيام",
         "change7d": "{change} خلال 7 أيام",

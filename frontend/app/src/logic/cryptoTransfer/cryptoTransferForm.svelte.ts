@@ -6,6 +6,7 @@ import {
     currentUserIdStore,
     localUpdates,
     nowNanos,
+    validateTokenInput,
     type ChatSummary,
     type CryptoTransferOutcome,
     type MessageContext,
@@ -146,6 +147,37 @@ export class CryptoTransferForm extends TransferForm {
                 { fromWallet: this.sourceWallet?.id },
             ),
         });
+    }
+
+    /**
+     * Attaches the transfer a builder that keeps its own form asks for (the new UI's
+     * `SendCryptoDialog`): `amountText` as typed, in `ledger`'s token (read with
+     * `validateTokenInput`, so it's exactly what was typed in the token's smallest unit), to
+     * `recipientId`. Only where it's valid here: in a token the registry carries, at least the
+     * minimum and within what the OpenChat account can pay with the fees, to someone other than
+     * the user who can be paid. Otherwise nothing is attached.
+     */
+    attachTyped(
+        messageContext: MessageContext,
+        ledger: string,
+        amountText: string,
+        recipientId: string,
+    ): "attached" | "invalid" {
+        this.ledger = ledger;
+        // an unknown ledger falls back to ICP: never send ICP for what was typed in another token
+        if (this.ledger !== ledger) return "invalid";
+        this.balanceChecked();
+        this.tokenState.draftAmount = validateTokenInput(
+            amountText,
+            this.tokenState.decimals,
+        ).amount;
+        this.receiver =
+            recipientId === currentUserIdStore.value
+                ? undefined
+                : allUsersStore.value.get(recipientId);
+        if (!this.valid) return "invalid";
+        this.attach(messageContext);
+        return "attached";
     }
 
     /**

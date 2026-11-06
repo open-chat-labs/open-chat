@@ -502,6 +502,9 @@
         "unlink": "Unlink",
         "unlinkFailed": "Couldn't unlink the account"
     },
+    "builders": {
+        "paymentRefused": "That can't be attached. Check the amount and your balance, then try again."
+    },
     "cashtag": {
         "chartLabel": "{symbol} price over the last 7 days",
         "change7d": "{change} over 7 days",

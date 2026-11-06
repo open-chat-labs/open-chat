@@ -191,6 +191,9 @@ design export needs. Each entry says where it came up.
   holds that much, saying so ("Recording stopped at the size limit."). Without them it records
   as before. `onVoiceActive` tells the host when a take starts and when it's over (sent,
   deleted, or the composer gone), so it holds back attachments meanwhile.
+- **The "+" builders, by hand** (5d, to take back to the design export):
+  - `SendCryptoDialog` takes `to`, the member picked to start with (the one being replied to),
+    where the design starts with no one picked.
 - **Composer mention list** (by hand, 5c, to take back to the design export, which has no mention
   picker): `MessageComposer` (and `ComposerBar`) take `onMentionQuery` (the "@word" at the caret as
   it changes, `mentionQuery.ts`, spec'd) and `mentions` (`ComposerMention`: the host's candidates
@@ -1217,9 +1220,9 @@ design export needs. Each entry says where it came up.
   nothing can be attached is refused, never left to the browser to open in the app's place. What
   the "+" menu and the mic offer follows the reader's permissions as they change
   (`messagePermissionsForSelectedChatStore`), and the voice limit a Diamond membership bought
-  meanwhile (`maxMediaSizes($isDiamondStore)`). Not yet: 5d's prize, transfer and swap offer, and a puzzle result, aren't staged,
-  and the composer doesn't send them (`TODO(phase 5, 5d)`); the mobile app's native recent-media
-  strip waits for the narrow pass.
+  meanwhile (`maxMediaSizes($isDiamondStore)`). The "+" builders' payments are staged too (5d,
+  below). Not yet: a puzzle result isn't staged, and the composer doesn't send it; the mobile
+  app's native recent-media strip waits for the narrow pass.
 - **Voice messages in the composer** (5c): the composer's own recorder (record, then review: play
   back, seek, delete or send), where the old trees' mic staged the clip as an attachment to send
   with a caption: here it goes straight out (`sendVoiceMessage`: the client makes the audio
@@ -1252,17 +1255,25 @@ design export needs. Each entry says where it came up.
     in a bot DM, a bot that takes no direct messages gets the composer's "couldn't send", not the
     old `bots.direct.warning`. The design has none of it;
   - GIFs (the library's results, above);
-  - the "+" menu's builders not built yet (5d, "The '+' builders" below): prize, send crypto,
-    swap offer, Meme Fighter, hidden in the app-store builds as in the mobile app
-    (`disableSendCryptoFeature`, `disableP2PSwapFeature`, `disableCreatePrizeFeature`). A draft
-    that pays from an external wallet must be approved by that wallet before it's sent (the
-    mobile entry's `externalWalletDraft`, to move to `@client`, a swap offer's allowance being the
-    amount plus two fees); until then the composer neither stages nor sends a prize, transfer or
-    swap offer;
+  - the "+" menu's builders not built yet (5d, "The '+' builders" below): prize, swap offer,
+    Meme Fighter;
   - the emoji autocomplete (`:smile`) both old editors had (`EmojiAutocompleter`).
 - **The "+" builders** (5d, `features/builders`): each a local dialog the composer's "+" menu
   opens (`build` in the conversation), offered where the chat lets the reader send what it makes
-  (`composerBuilders`, `@src/logic/composer`), and not in a bot DM.
+  (`composerBuilders`, `@src/logic/composer`), not in a bot DM, and not the payments in the
+  app-store builds (`composerBuildersOff`: `disableSendCryptoFeature`, `disableP2PSwapFeature`,
+  `disableCreatePrizeFeature`), as in the mobile app.
+  - **Payments** (a transfer, a prize, a swap offer) are attached to the chat's draft, the mobile
+    app's way, and taken when the message is sent with its caption (`sendMessage`, which asks
+    for the PIN then): an approval isn't spent on a draft the user drops. They're offered only
+    while something can be attached (`attachesToDraft`, `canAttachNow`: not during an edit or a
+    voice take). The composer stages each as its chip (`composerTransfer` …), whose Edit opens
+    its builder again on it, and × drops it. They pay from the OpenChat wallet only: the old
+    builders' external wallet picker (`SourceWalletSelector`, and the approval at send) has no
+    design and isn't offered. A draft that does carry an external wallet (`fromWallet`) is never
+    sent from here without that wallet's approval: the composer says it couldn't send
+    (`externalWalletPayment`, `@client`, which the mobile entry now uses to ask for it). With no
+    token held, a builder lists none, where the old ones offered to top up.
   - **Poll** (`PollBuilderDialog`, `poll_builder`): published from the dialog, as both old
     builders did, through `sendContent` (the client: settles once the poll shows in the chat,
     replying to the draft's reply; a refusal keeps the dialog open with its error). The poll is
@@ -1272,6 +1283,18 @@ design export needs. Each entry says where it came up.
     (`newPollVotes`), the end stamped as it's sent. The design's "Poll sent · Undo" toast isn't
     shown: a sent poll can't be taken back. As in the old trees, sending it clears the chat's
     draft (`sendMessageWithContent`), while the composer's text box keeps what it showed.
+  - **Send crypto** (`SendCryptoDialog`, `send_crypto`): the tokens held, the one last sent first
+    (else ICP, as the old builders start), each costing the transfer's fee and its approval's,
+    at least 10 transfer fees (`builderTokens`). In a DM it goes to the other user; in a group the
+    one being replied to is picked to start with (`SendCryptoDialog`'s `to`, by hand), else the
+    user picks from the chat's members, never themselves or a bot (`CryptoTransferForm`, shared
+    with both old builders, invariant 5). What was typed is read with `validateTokenInput`
+    (`attachTyped`: exactly the typed amount, in a token the registry carries, within the
+    balance less the fees) and refused with a toast where the library's own check let through
+    what the app's doesn't (`builders.paymentRefused`). The members offered are those the chat
+    holds (a big group or channel holds some), with no avatar: `SendCryptoDialog` draws an
+    initial. The library tells tokens apart by symbol, so of two sharing one only the first is
+    offered.
 - **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
   edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text

@@ -205,6 +205,9 @@
         "unlink": "Desvincular",
         "unlinkFailed": "No se pudo desvincular la cuenta"
     },
+    "builders": {
+        "paymentRefused": "No se puede adjuntar. Comprueba el importe y tu saldo e inténtalo de nuevo."
+    },
     "cashtag": {
         "chartLabel": "Precio de {symbol} en los últimos 7 días",
         "change7d": "{change} en 7 días",

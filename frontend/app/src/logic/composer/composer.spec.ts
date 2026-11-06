@@ -6,6 +6,7 @@ import {
     type UserSummary,
 } from "@client";
 import {
+    attachesToDraft,
     attachRefusal,
     canAttachNow,
     canRecordVoice,
@@ -20,6 +21,7 @@ import {
     pickableAttachments,
     throttleCountdown,
     TypingNotifier,
+    type ComposerBuilder,
     type EntryState,
 } from "./composer";
 
@@ -274,9 +276,22 @@ describe("what the entry offers to pick from the device", () => {
 describe("the builders the entry offers", () => {
     const permitted = (...ps: MessagePermission[]) => new Set<MessagePermission>(ps);
 
-    test("a poll where polls may be sent (never in a DM, whose permissions leave it out)", () => {
-        expect(composerBuilders(permitted("text", "poll"))).toEqual(["poll"]);
-        expect(composerBuilders(permitted("text"))).toEqual([]);
+    const none = new Set<ComposerBuilder>();
+
+    test("each where the chat lets the reader send what it makes", () => {
+        expect(composerBuilders(permitted("text", "poll"), none)).toEqual(["poll"]);
+        expect(composerBuilders(permitted("text", "crypto"), none)).toEqual(["crypto"]);
+        expect(composerBuilders(permitted("text"), none)).toEqual([]);
+    });
+
+    test("payments attach to the draft, to be taken when it's sent; a poll is sent from its dialog", () => {
+        expect(attachesToDraft("crypto")).toBe(true);
+        expect(attachesToDraft("poll")).toBe(false);
+    });
+
+    test("none this build turns off (the app store builds' payments)", () => {
+        const all = permitted("poll", "crypto");
+        expect(composerBuilders(all, new Set<ComposerBuilder>(["crypto"]))).toEqual(["poll"]);
     });
 });
 

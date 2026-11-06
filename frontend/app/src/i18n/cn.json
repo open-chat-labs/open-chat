@@ -205,6 +205,9 @@
         "unlink": "取消关联",
         "unlinkFailed": "无法取消关联该账号"
     },
+    "builders": {
+        "paymentRefused": "无法附加。请检查金额和余额，然后重试。"
+    },
     "cashtag": {
         "chartLabel": "{symbol} 过去 7 天的价格",
         "change7d": "7 天内 {change}",
