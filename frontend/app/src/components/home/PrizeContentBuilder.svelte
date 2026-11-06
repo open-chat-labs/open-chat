@@ -67,26 +67,22 @@
         onClose,
     }: Props = $props();
 
-    // the split, duration and restrictions last used (the prize builders' shared state), which
-    // this builder's own controls start from and hand back to it when the prize is sent
+    // the split, duration and restrictions (the prize builders' shared state), which this
+    // builder's controls change in place: they start from the last prize's
     const form = new PrizeForm();
 
     let numberOfWinners = $state(20);
-    let distribution: "equal" | "random" = $state(form.distribution);
     const durations: Duration[] = ["oneHour", "oneDay", "oneWeek"];
     // a duration this builder doesn't offer (from another tree's) starts it at a day
-    let selectedDuration: Duration = $state(
-        durations.find((d) => DURATION_MS[d] === form.durationMs) ?? "oneDay",
-    );
-    let diamondType: "none" | "standard" | "lifetime" = $state(form.diamond);
-    let diamondOnly = $derived(diamondType !== "none");
+    if (!durations.some((d) => DURATION_MS[d] === form.durationMs)) {
+        form.durationMs = DURATION_MS.oneDay;
+    }
+    let diamondOnly = $derived(form.diamond !== "none");
     // Unique-person ("verified user") gating is suspended: always off (the restriction control is
     // removed)
     const uniquePersonOnly = false;
-    let minStreak = $state<number>(form.minStreak);
-    let minChitEarned = $state<number>(form.minChitEarned);
-    let streakOnly = $derived(minStreak > 0);
-    let chitOnly = $derived(minChitEarned > 0);
+    let streakOnly = $derived(form.minStreak > 0);
+    let chitOnly = $derived(form.minChitEarned > 0);
     const refreshing = false;
     let error: string | undefined = $state(undefined);
     let message = $state("");
@@ -152,7 +148,7 @@
     }
 
     function onDiamondChanged() {
-        diamondType = diamondOnly ? "standard" : "none";
+        form.diamond = diamondOnly ? "standard" : "none";
     }
 
     function send() {
@@ -179,11 +175,6 @@
     // prize is funded from the user's own OpenChat account, as it always has been.
     function sendPrize(fromAccount?: string) {
         form.winners = numberOfWinners;
-        form.distribution = distribution;
-        form.durationMs = DURATION_MS[selectedDuration];
-        form.diamond = diamondType;
-        form.minStreak = minStreak;
-        form.minChitEarned = minChitEarned;
         const prize = form.content(
             context.chatId,
             { ledger, symbol, decimals: tokenDetails.decimals, transferFee },
@@ -237,17 +228,17 @@
     }
 
     function onAnyUserChecked() {
-        diamondType = "none";
-        minStreak = 0;
-        minChitEarned = 0;
+        form.diamond = "none";
+        form.minStreak = 0;
+        form.minChitEarned = 0;
     }
 
     function onStreakChanged() {
-        minStreak = streakOnly ? 3 : 0;
+        form.minStreak = streakOnly ? 3 : 0;
     }
 
     function onChitChanged() {
-        minChitEarned = chitOnly ? 10_000 : 0;
+        form.minChitEarned = chitOnly ? 10_000 : 0;
     }
 </script>
 
@@ -337,9 +328,9 @@
                             <div
                                 role="button"
                                 tabindex="0"
-                                onclick={() => (distribution = "random")}
+                                onclick={() => (form.distribution = "random")}
                                 class="distribution">
-                                <div class:selected={distribution === "random"} class="dist-icon">
+                                <div class:selected={form.distribution === "random"} class="dist-icon">
                                     <RandomDistribution size={"100%"} color={"var(--icon-txt)"} />
                                 </div>
                                 <div class="dist-label">
@@ -351,9 +342,9 @@
                             <div
                                 role="button"
                                 tabindex="0"
-                                onclick={() => (distribution = "equal")}
+                                onclick={() => (form.distribution = "equal")}
                                 class="distribution">
-                                <div class:selected={distribution === "equal"} class="dist-icon">
+                                <div class:selected={form.distribution === "equal"} class="dist-icon">
                                     <EqualDistribution size={"100%"} color={"var(--icon-txt)"} />
                                 </div>
                                 <div class="dist-label">
@@ -367,9 +358,9 @@
                                 <Legend label={i18nKey("prizes.duration")} />
                                 {#each durations as d}
                                     <Radio
-                                        onChange={() => (selectedDuration = d)}
+                                        onChange={() => (form.durationMs = DURATION_MS[d])}
                                         value={d}
-                                        checked={selectedDuration === d}
+                                        checked={form.durationMs === DURATION_MS[d]}
                                         id={`duration_${d}`}
                                         label={i18nKey(`poll.${d}`)}
                                         group={"prize_duration"} />
@@ -391,14 +382,14 @@
                                     <div class="diamond-choice">
                                         <Radio
                                             id={"standard-diamond"}
-                                            onChange={() => (diamondType = "standard")}
-                                            checked={diamondType === "standard"}
+                                            onChange={() => (form.diamond = "standard")}
+                                            checked={form.diamond === "standard"}
                                             label={i18nKey(`prizes.standardDiamond`)}
                                             group={"diamond"} />
                                         <Radio
                                             id={"lifetime-diamond"}
-                                            onChange={() => (diamondType = "lifetime")}
-                                            checked={diamondType === "lifetime"}
+                                            onChange={() => (form.diamond = "lifetime")}
+                                            checked={form.diamond === "lifetime"}
                                             label={i18nKey(`prizes.lifetimeDiamond`)}
                                             group={"diamond"} />
                                     </div>
@@ -410,7 +401,7 @@
                                     onChange={onStreakChanged}
                                     bind:checked={streakOnly} />
                                 {#if streakOnly}
-                                    <Select bind:value={minStreak}>
+                                    <Select bind:value={form.minStreak}>
                                         {#each streaks as streak}
                                             <option value={streak}>
                                                 <Translatable
@@ -427,7 +418,7 @@
                                     onChange={onChitChanged}
                                     bind:checked={chitOnly} />
                                 {#if chitOnly}
-                                    <Select bind:value={minChitEarned}>
+                                    <Select bind:value={form.minChitEarned}>
                                         {#each chitBands.entries() as [value, name]}
                                             <option {value}>
                                                 <Translatable
