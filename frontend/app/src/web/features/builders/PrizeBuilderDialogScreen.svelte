@@ -61,7 +61,9 @@
     const initial = $derived.by((): Prize | null => {
         const token = editedLedger === undefined ? undefined : $cryptoLookup.get(editedLedger);
         if (editing === undefined || token === undefined) return null;
-        return composerPrize(editing, token, (key, values) => $_(key, { values })) ?? null;
+        const t = (key: string, values?: Record<string, string | number>) => $_(key, { values });
+        // a prize of one winner doesn't show its split: the one remembered
+        return composerPrize(editing, token, t, form.distribution) ?? null;
     });
 
     // what the prize costs, in the token picked

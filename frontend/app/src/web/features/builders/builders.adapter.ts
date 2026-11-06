@@ -2,6 +2,7 @@
 // over, as the client's builders take it, and what the composer stages, as the library shows it.
 import {
     formatTokens,
+    generatePrizes,
     ONE_DAY,
     ONE_HOUR,
     ONE_WEEK,
@@ -364,15 +365,30 @@ export function prizeChoices(prize: Prize): PrizeConfig & { winners: number } {
 }
 
 /**
+ * How a prize's fund was split, from its prizes: even when they're the equal split of its fund
+ * (`generatePrizes`'). A prize of one winner can't tell, and is read as `unknown`.
+ */
+export function prizeDistribution(
+    content: PrizeContentInitial,
+    unknown: PrizeDistribution,
+): PrizeDistribution {
+    const winners = content.prizes.length;
+    if (winners < 2) return unknown;
+    const equal = generatePrizes(content.amount, winners, "equal", content.transfer.feeE8s ?? 0n);
+    return content.prizes.every((p, i) => p === equal[i]) ? "equal" : "random";
+}
+
+/**
  * A prize staged in the composer, as the composer's chip shows it and as `PrizeBuilderDialog`
  * edits it again: its fund, winners, how long it runs and how many restrictions it has, and what
- * it costs with the fees. Its split shows as even when every prize after the first is the same
- * (rounding goes to the first). None for one whose transfer isn't pending.
+ * it costs with the fees. Its split is `prizeDistribution`'s, a prize of one winner's read as
+ * `distribution` (the one the builder remembers). None for one whose transfer isn't pending.
  */
 export function composerPrize(
     content: PrizeContentInitial,
     token: TokenFacts,
     t: Translate,
+    distribution: PrizeDistribution = "random",
 ): Prize | undefined {
     const transfer = content.transfer;
     if (transfer.kind !== "pending") return undefined;
@@ -380,7 +396,7 @@ export function composerPrize(
     const durationMs = Number(content.endDate) - Number(transfer.createdAtNanos / 1_000_000n);
     const dur = prizeDurationIndex(durationMs);
     const [ms, key] = PRIZE_DURATIONS[dur];
-    const even = content.prizes.slice(1).every((p) => p === content.prizes[1]);
+    const even = prizeDistribution(content, distribution) === "equal";
     const diamond: PrizeDiamond = content.lifetimeDiamondOnly
         ? "lifetime"
         : content.diamondOnly

@@ -19,6 +19,7 @@ import {
     prizeChoices,
     prizeDefaults,
     prizeDurationIndex,
+    prizeDistribution,
     prizePricing,
     swapDepositFees,
     typedAmount,
@@ -235,6 +236,33 @@ describe("a prize in the builder", () => {
         expect(prizeDurationIndex(60 * 60 * 1000)).toBe(0);
         // one the dialog doesn't offer: the nearest
         expect(prizeDurationIndex(2 * 24 * 60 * 60 * 1000)).toBe(2);
+    });
+
+    test("reads its split from its prizes, which a prize of one winner can't tell", () => {
+        const prize = (winners: number, distribution: "equal" | "random", draws: number[]) =>
+            newPrizeContent(
+                {
+                    chatId: { kind: "group_chat", groupId: "g" },
+                    ledger: "icp-ledger",
+                    symbol: "ICP",
+                    transferFee: 10_000n,
+                    amount: 100_000_001n,
+                    winners,
+                    distribution,
+                    durationMs: 60 * 60 * 1000,
+                    diamond: "none",
+                    minStreak: 0,
+                    minChitEarned: 0,
+                },
+                1_000,
+                () => draws.shift() ?? 0.5,
+            ) ?? content;
+        // two winners: the prizes after the first are just one, so they can't show the split
+        expect(prizeDistribution(prize(2, "random", [0.2, 0.7]), "equal")).toBe("random");
+        expect(prizeDistribution(prize(2, "equal", []), "random")).toBe("equal");
+        expect(prizeDistribution(prize(1, "random", []), "equal")).toBe("equal");
+        expect(prizeDistribution(prize(1, "equal", []), "random")).toBe("random");
+        expect(composerPrize(prize(2, "random", [0.2, 0.7]), icp, t, "equal")?.even).toBe(false);
     });
 
     test("staged, shows its fund, winners, duration and restrictions, and what it costs", () => {
