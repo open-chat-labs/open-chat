@@ -70,9 +70,12 @@ if (maps.length === 0) {
 
 console.log(`upload-source-maps: uploading ${maps.length} maps for ${version}`);
 
-// A lazy chunk per route means well over a hundred uploads, so run a few at a time. Small enough
-// not to look like abuse, large enough that the whole set finishes in seconds rather than minutes.
-const CONCURRENCY = 8;
+// A lazy chunk per route means well over a hundred uploads, so run a few at a time. The maps add up
+// to ~40MB, the largest ~5MB, so on a slow uplink (a few hundred KB/s) every upload running splits
+// it. With 8 at once the largest maps ran past fetch's 5 minutes, and new connections queued
+// behind the uploads timed out after 10s, so every retry failed too. With 3, a fast link still
+// uploads the lot in well under a minute.
+const CONCURRENCY = 3;
 
 // A bad token fails all of them identically. Stop on the first one rather than printing the same
 // 403 a hundred and seventy times.
@@ -87,8 +90,9 @@ function redact(text) {
 // Rollbar's API now and then times out (a 504 from its nginx) or drops the connection. Uploading
 // a map again just replaces it, so those failures are retried after a growing delay rather than
 // stopping the deploy, which would mean building the whole site again to rerun it. A connection
-// which stalls is given up on by fetch itself after 5 minutes, and retried the same way.
-const RETRY_DELAYS_MS = [2_000, 5_000, 15_000];
+// which stalls is given up on by fetch itself after 5 minutes, and retried the same way. The last
+// delays give a congested link or a struggling Rollbar a couple of minutes to recover.
+const RETRY_DELAYS_MS = [2_000, 5_000, 15_000, 30_000, 60_000];
 
 // Returns undefined once the map is uploaded, or else why not and whether that's worth retrying
 async function attemptUpload(mapPath, minifiedUrl) {
@@ -164,6 +168,11 @@ try {
 if (failed > 0) {
     const skipped = queue.length > 0 ? `, and ${queue.length} were not tried` : "";
     console.error(`upload-source-maps: ${failed} of ${maps.length} uploads failed${skipped}`);
+    // The build is still there, so a rerun needn't build the whole site again
+    console.error(
+        `  To finish without building again, rerun "node scripts/upload-source-maps.mjs ${version}",\n` +
+            "  then the deploy script's dfx deploy command.",
+    );
     process.exit(1);
 }
 console.log(`upload-source-maps: all ${maps.length} maps uploaded for ${version}`);
