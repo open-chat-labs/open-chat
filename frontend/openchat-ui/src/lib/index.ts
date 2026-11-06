@@ -19,6 +19,7 @@ export { default as Banner } from './components/Banner.svelte';
 export { default as Button } from './components/Button.svelte';
 export { default as CallEvent } from './components/CallEvent.svelte';
 export { default as ChatBubble } from './components/ChatBubble.svelte';
+export { default as ReactionChips } from './components/ReactionChips.svelte';
 export { default as ChatPicker } from './components/ChatPicker.svelte';
 export { default as ChatRow } from './components/ChatRow.svelte';
 export { default as ComposerBar } from './components/ComposerBar.svelte';

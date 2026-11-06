@@ -12,6 +12,7 @@
   import type { GroupMessage } from '../types';
   import Avatar from './Avatar.svelte';
   import ChatBubble from './ChatBubble.svelte';
+  import ReactionChips from './ReactionChips.svelte';
   import FileMessage from './FileMessage.svelte';
   import LinkPreview from './LinkPreview.svelte';
   import MediaMessage from './MediaMessage.svelte';
@@ -450,6 +451,10 @@
           <PrizeMessage {...m} lastInGroup={last} />
         {:else if !m.kind || m.kind === 'text'}
           <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} onToggleReaction={(c) => onReact?.(i, c)} />
+        {/if}
+        <!-- every other kind's reactions, under it as under a text bubble (ChatBubble draws its own) -->
+        {#if m.kind && m.kind !== 'text' && m.reactions?.length}
+          <ReactionChips reactions={m.reactions} onToggle={(c) => onReact?.(i, c)} />
         {/if}
         {#if menuable(m) && hover === i && !touch && activeMenu !== i}
           <span class="bar" style:left={barLeft} data-msg-acts="" role="toolbar" aria-label={t('ui.messageGroup.actions')}>

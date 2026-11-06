@@ -885,6 +885,74 @@
     "group": "library"
   },
   {
+    "name": "ReactionChips",
+    "source": "lib/ChatBubble.dc.html (its reaction chips), by hand (2026-11-06)",
+    "hash": "",
+    "description": "A message's reaction chips, overlapping the bottom edge of the bubble above them: limited to maxRows, the rest folded into a \"+N\" chip that expands them. ChatBubble's chips as their own component, so MessageGroup shows every kind of message's reactions.",
+    "preview": {
+      "width": 360,
+      "height": 60
+    },
+    "props": [
+      {
+        "name": "reactions",
+        "type": "Reaction[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Emoji, count and whether they're the viewer's (mine)."
+      },
+      {
+        "name": "maxRows",
+        "type": "number",
+        "default": 1,
+        "editor": "number",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "1",
+        "doc": "Rows of chips before the rest fold into \"+N\"."
+      },
+      {
+        "name": "afterThread",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Under a thread summary rather than a bubble's edge: a gap instead of the overlap."
+      },
+      {
+        "name": "onToggle",
+        "type": "(emoji: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A chip clicked: add or remove that reaction."
+      },
+      {
+        "name": "onShowAll",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The \"+N\" chip clicked."
+      }
+    ],
+    "group": "library"
+  },
+  {
     "name": "ChatRow",
     "source": "lib/ChatRow.dc.html",
     "hash": "d9730629",

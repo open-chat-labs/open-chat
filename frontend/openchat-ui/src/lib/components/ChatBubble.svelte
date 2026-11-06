@@ -5,8 +5,9 @@
      Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
 <script lang="ts">
   import { useT } from '../i18n';
-  import { untrack, type ComponentProps, type Snippet } from 'svelte';
+  import type { ComponentProps, Snippet } from 'svelte';
   import LinkCard from './LinkCard.svelte';
+  import ReactionChips, { type Reaction } from './ReactionChips.svelte';
 
   // count grapheme clusters so flags, skin tones and ZWJ families read as one emoji
   const SEG = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
@@ -22,12 +23,6 @@
   }
 
   const STATUS: Record<string, string> = { sending: 'clock', sent: 'check', delivered: 'check-double', failed: 'failed' };
-
-  interface Reaction {
-    emoji: string;
-    count: number;
-    mine?: boolean;
-  }
 
   interface Props {
     text: string;
@@ -100,46 +95,9 @@
     emojiCount === 1 ? { size: '42px', leading: '1.15' } : emojiCount === 2 ? { size: '32px', leading: '1.2' } : { size: 'var(--text-base)', leading: '1.5' },
   );
 
-  // fit === null renders every chip so their rows can be measured
-  let fit = $state<number | null>(null);
-  let expanded = $state(false);
-  let chips = $state<HTMLDivElement>();
-  let bubble = $state<HTMLDivElement>();
   // the stamp's width, for a body ending in a list to keep its room (below)
   let stampWidth = $state(0);
 
-  const shown = $derived(fit === null || expanded ? reactions : reactions.slice(0, fit));
-  const hidden = $derived(reactions.length - shown.length);
-
-  // no arithmetic: let the browser wrap, read how many rows it actually used,
-  // and drop one chip per pass until it fits. Monotonic, so it always terminates.
-  $effect(() => {
-    void shown;
-    const el = chips;
-    if (!el || untrack(() => expanded)) return;
-    const kids = [...el.children];
-    if (!kids.length) return;
-    const rows = new Set(kids.map((k) => Math.round(k.getBoundingClientRect().top))).size;
-    if (rows <= Math.max(1, maxReactionRows)) return;
-    const count = untrack(() => (fit === null ? reactions.length : fit));
-    if (count > 1) fit = count - 1;
-  });
-
-  // the bubble's width is set by the message text, so it is a stable trigger:
-  // observing the chip row instead would feed the chip count back into its own constraint
-  $effect(() => {
-    const el = bubble;
-    if (!el) return;
-    let last = el.getBoundingClientRect().width;
-    const ro = new ResizeObserver(() => {
-      const w = el.getBoundingClientRect().width;
-      if (!w || Math.abs(w - last) < 1) return;
-      last = w;
-      if (!untrack(() => expanded)) fit = null; // show all, then converge down again
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  });
 </script>
 
 {#snippet stamp()}{edited ? t('ui.chatBubble.edited') + ' · ' : ''}{time}{#if sent}<span class="tick" style:mask="var(--icon-{STATUS[status] ?? 'check-double'}) center/contain no-repeat"></span>{/if}{/snippet}
@@ -153,7 +111,7 @@
     </div>
   {:else}
     <div class="column" class:sent>
-      <div class="bubble" class:last={lastInGroup} class:mirror class:carded bind:this={bubble} data-oc-bubble>
+      <div class="bubble" class:last={lastInGroup} class:mirror class:carded data-oc-bubble>
         {#if quoteName}
           <div class="quote">
             <span class="quote-bar"></span>
@@ -201,46 +159,13 @@
           <span class="thread-meta">{threadLastAt ? t('ui.chatBubble.lastReply', { when: threadLastAt }) : ''}</span>
         </div>
       {/if}
-      {#if reactions.length > 0}
-        <div class="reactions" class:after-thread={threadCount > 0} bind:this={chips}>
-          {#each shown as r}
-            <span
-              class="chip"
-              class:mine={r.mine}
-              data-oc-chip
-              onclick={() => onToggleReaction?.(r.emoji)}
-              role="button"
-              tabindex="0"
-              aria-pressed={!!r.mine}
-              aria-label={t(r.mine ? 'ui.chatBubble.removeReaction' : 'ui.chatBubble.addReaction', { emoji: r.emoji, count: r.count })}>{r.emoji} {r.count}</span
-            >
-          {/each}
-          {#if hidden > 0}
-            <span
-              class="chip-more"
-              data-oc-more
-              onclick={() => {
-                onShowAllReactions?.();
-                expanded = true;
-                fit = null;
-              }}
-              role="button"
-              tabindex="0">+{hidden}</span
-            >
-          {/if}
-          {#if expanded}
-            <span
-              class="collapse"
-              onclick={() => {
-                expanded = false;
-                fit = null;
-              }}
-              role="button"
-              tabindex="0"><span class="collapse-icon"></span></span
-            >
-          {/if}
-        </div>
-      {/if}
+      <ReactionChips
+        {reactions}
+        maxRows={maxReactionRows}
+        afterThread={threadCount > 0}
+        onToggle={onToggleReaction}
+        onShowAll={onShowAllReactions}
+      />
     </div>
   {/if}
 </div>
@@ -624,85 +549,5 @@
   .thread-meta {
     font-weight: var(--weight-regular);
     color: var(--ink-3);
-  }
-
-  .reactions {
-    width: 0;
-    min-width: 100%;
-    box-sizing: border-box;
-    padding-inline-start: 8px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: var(--space-4);
-    margin-top: -9px;
-    position: relative;
-    z-index: 2;
-
-    &.after-thread {
-      margin-top: var(--space-6);
-    }
-  }
-
-  /* chips overlap the bubble's bottom edge, so their backgrounds are opaque */
-  .chip {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-    padding: var(--space-6) var(--space-8);
-    border-radius: var(--radius-pill);
-    background: var(--card-2);
-    box-shadow: inset 0 0 0 1px var(--line-2);
-    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-2);
-    cursor: pointer;
-    user-select: none;
-
-    &.mine {
-      background: color-mix(in oklch, var(--accent) 20%, var(--card-2));
-      box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 55%, transparent);
-      color: var(--ink);
-    }
-
-    &:hover {
-      filter: brightness(1.15);
-    }
-
-    &:focus-visible {
-      @include focus-ring;
-    }
-  }
-
-  .chip-more,
-  .collapse {
-    display: flex;
-    align-items: center;
-    border-radius: var(--radius-pill);
-    background: var(--card-2);
-    box-shadow: inset 0 0 0 1px var(--line-2);
-    cursor: pointer;
-  }
-
-  .chip-more {
-    padding: var(--space-6) var(--space-8);
-    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-2);
-    white-space: nowrap;
-  }
-
-  .collapse {
-    justify-content: center;
-    height: 24px;
-    min-width: 24px;
-    box-sizing: border-box;
-  }
-
-  .chip-more:hover,
-  .collapse:hover {
-    background: var(--overlay-2);
-  }
-
-  .collapse-icon {
-    @include icon(close, 10px, var(--ink-2), $flex: null);
   }
 </style>

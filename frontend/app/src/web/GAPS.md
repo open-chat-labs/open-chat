@@ -1225,8 +1225,8 @@ design export needs. Each entry says where it came up.
   thumbnail (`thumb`).
 - **Message actions** (`features/conversation`, 5b): every message's menu (`MessageActions`:
   right-click, the hover bar's ⋯, Shift+F10, a long press on touch), its hover bar's quick
-  reactions (the app's `quickReactions`), the emoji picker, the reaction chips (text bubbles
-  only: the other kinds take no reactions yet), swipes, desktop's double-click to edit or reply
+  reactions (the app's `quickReactions`), the emoji picker, the reaction chips (under every
+  kind of message: `ReactionChips`, by hand, EXPORT-LOG 2026-11-06), swipes, desktop's double-click to edit or reply
   (the "double-click to reply" setting) and Retry on a failed message. What a message offers is
   the old trees' (`messageMenu` in `@client`, which both old menus now read): no menu on an inert
   message unless it can be revealed, in a read-only chat or on an ephemeral message. Done here:
