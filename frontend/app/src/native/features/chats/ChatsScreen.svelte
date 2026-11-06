@@ -28,6 +28,7 @@
         routeForChatIdentifier,
         translationsStore,
         type ChatSummary,
+        type DirectChatIdentifier,
         type LeaveOrDelete,
         type OpenChat,
     } from "@client";
@@ -120,14 +121,16 @@
         });
     });
 
+    // a chat waiting to be left or deleted is gone already, from the list and the search alike
+    const kept = $derived(chats.filter((chat) => !removals.has(chatIdentifierToString(chat.id))));
+
     type Listed = { chat: ChatSummary; row: ChatListRow; key: string };
 
     const listed = $derived(
-        chats.flatMap((chat): Listed[] => {
-            const key = chatIdentifierToString(chat.id);
-            // archived chats show only in a search; one being left or deleted is gone already
-            if (chat.membership.archived || removals.has(key)) return [];
-            return [{ chat, row: chatRow(chat, rowCtx), key }];
+        kept.flatMap((chat): Listed[] => {
+            // archived chats show only in a search
+            if (chat.membership.archived) return [];
+            return [{ chat, row: chatRow(chat, rowCtx), key: chatIdentifierToString(chat.id) }];
         }),
     );
 
@@ -367,11 +370,11 @@
     const CHATS_SHOWN = 3;
     const PEOPLE_SHOWN = 3;
 
-    const chatResults = $derived(searchOpen ? matchingChats(chats, term, $allUsersStore) : []);
+    const chatResults = $derived(searchOpen ? matchingChats(kept, term, $allUsersStore) : []);
     const peopleFound = $derived.by(() => {
         const results = people.results;
         return results.kind === "found" && results.term === term
-            ? newPeople(results.people, chats, $currentUserIdStore)
+            ? newPeople(results.people, kept, $currentUserIdStore)
             : [];
     });
 
@@ -428,8 +431,12 @@
             closeSearch();
             open(chat);
         } else {
+            // someone whose DM is waiting to be deleted: picking them takes the delete back, or
+            // it would go while they're in the chat
+            const chatId: DirectChatIdentifier = { kind: "direct_chat", userId: rowId };
+            removals.undo(chatIdentifierToString(chatId));
             closeSearch();
-            navigate(chatWithRoute({ kind: "direct_chat", userId: rowId }, chats, scope));
+            navigate(chatWithRoute(chatId, chats, scope));
         }
     }
 
