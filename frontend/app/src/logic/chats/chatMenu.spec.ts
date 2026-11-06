@@ -1,6 +1,6 @@
 import { OPENCHAT_BOT_USER_ID, ROLE_MEMBER, ROLE_NONE, type ChatSummary } from "@client";
 import { describe, expect, test } from "vitest";
-import { chatMenuActions, chatRowMenu } from "./chatMenu";
+import { chatMenuActions, chatRowActionLabel, chatRowMenu } from "./chatMenu";
 
 function dm(userId: string): ChatSummary {
     return { kind: "direct_chat", id: { kind: "direct_chat", userId } } as ChatSummary;
@@ -93,5 +93,30 @@ describe("chatRowMenu", () => {
         expect(actions).not.toContain("archive");
         expect(actions).not.toContain("leave");
         expect(actions).toContain("remove");
+    });
+});
+
+describe("chatRowActionLabel", () => {
+    const channel = {
+        kind: "channel",
+        id: { kind: "channel", communityId: "c", channelId: 1 },
+        level: "channel",
+    } as ChatSummary;
+
+    test("each item in the app's words", () => {
+        expect(chatRowActionLabel("pin", dm("them")).key).toBe("pinChat.menuItem");
+        expect(chatRowActionLabel("unfavourite", dm("them")).key).toBe(
+            "communities.removeFromFavourites",
+        );
+        expect(chatRowActionLabel("mark_read", dm("them")).key).toBe("markAllRead");
+        expect(chatRowActionLabel("delete", dm("them")).key).toBe("deleteChat");
+    });
+
+    test("leaving names the chat's level, lower case", () => {
+        expect(chatRowActionLabel("leave", channel)).toMatchObject({
+            key: "leaveGroup",
+            level: "channel",
+            lowercase: true,
+        });
     });
 });

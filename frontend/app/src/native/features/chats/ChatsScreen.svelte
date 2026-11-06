@@ -43,7 +43,11 @@
     import { longPress } from "@openchat/ui/src/native/longPress";
     import { UNDO_TOAST_MS } from "@openchat/ui/src/native/toastQueue.svelte";
     import { chatWithRoute } from "@src/logic/appEvents/appEvents";
-    import { chatRowMenu, type ChatRowAction } from "@src/logic/chats/chatMenu";
+    import {
+        chatRowActionLabel,
+        chatRowMenu,
+        type ChatRowAction,
+    } from "@src/logic/chats/chatMenu";
     import {
         CHAT_LIST_FILTERS,
         chatListFilterFrom,
@@ -219,39 +223,18 @@
         });
     });
 
-    const pressedItems = $derived(
-        rowMenuItems(pressedActions, (action) => actionLabel(action, pressed?.listed.chat)),
-    );
+    const pressedItems = $derived.by(() => {
+        const chat = pressed?.listed.chat;
+        return chat === undefined
+            ? []
+            : rowMenuItems(pressedActions, (action) => actionLabel(action, chat));
+    });
 
-    function actionLabel(action: ChatRowAction, chat: ChatSummary | undefined): string {
-        switch (action) {
-            case "pin":
-                return $_("pinChat.menuItem");
-            case "unpin":
-                return $_("pinChat.unpinMenuItem");
-            case "favourite":
-                return $_("communities.addToFavourites");
-            case "unfavourite":
-                return $_("communities.removeFromFavourites");
-            case "mute":
-                return $_("muteNotifications");
-            case "unmute":
-                return $_("unmuteNotifications");
-            case "mark_read":
-                return $_("native.chats.markRead");
-            case "archive":
-                return $_("archiveChat");
-            case "unarchive":
-                return $_("unarchiveChat");
-            case "leave": {
-                const level = chat !== undefined && chat.kind !== "direct_chat" ? chat.level : "group";
-                return interpolate($_, i18nKey("leaveGroup", undefined, level, true));
-            }
-            case "delete":
-                return $_("deleteChat");
-            case "remove":
-                return $_("removeChat");
-        }
+    // the words every tree's row menu has (chatRowActionLabel), but native's own "Mark as read"
+    function actionLabel(action: ChatRowAction, chat: ChatSummary): string {
+        return action === "mark_read"
+            ? $_("native.chats.markRead")
+            : interpolate($_, chatRowActionLabel(action, chat));
     }
 
     function onRowMenu(id: string) {

@@ -1,7 +1,11 @@
 <!-- The left column's chat list (region "chats"): DMs and groups, favourites, or a community's channels,
      as the route's scope says (DATA.md, ChatListPanel rows). Picking a chat routes to it. -->
 <script lang="ts">
-    import { chatRowMenu, type ChatRowAction } from "@src/logic/chats/chatMenu";
+    import {
+        chatRowActionLabel,
+        chatRowMenu,
+        type ChatRowAction,
+    } from "@src/logic/chats/chatMenu";
     import { muteChat } from "@src/logic/chats/muteChat";
     import {
         communityDetailsPermissions,
@@ -105,69 +109,44 @@
     }
 
     function menuItem(action: ChatRowAction, chat: ChatSummary, row: ChatListRow): MenuItem {
+        const label = interpolate($_, chatRowActionLabel(action, chat));
         switch (action) {
             case "favourite":
-                return {
-                    label: $_("communities.addToFavourites"),
-                    onSelect: () => client.addToFavourites(chat.id),
-                };
+                return { label, onSelect: () => client.addToFavourites(chat.id) };
             case "unfavourite":
-                return {
-                    label: $_("communities.removeFromFavourites"),
-                    onSelect: () => client.removeFromFavourites(chat.id),
-                };
+                return { label, onSelect: () => client.removeFromFavourites(chat.id) };
             case "pin":
-                return { label: $_("pinChat.menuItem"), onSelect: () => setPinned(chat.id, true) };
+                return { label, onSelect: () => setPinned(chat.id, true) };
             case "unpin":
-                return {
-                    label: $_("pinChat.unpinMenuItem"),
-                    onSelect: () => setPinned(chat.id, false),
-                };
+                return { label, onSelect: () => setPinned(chat.id, false) };
             case "mute":
             case "unmute":
-                return {
-                    label: $_(action === "unmute" ? "unmuteNotifications" : "muteNotifications"),
-                    onSelect: () => toggleMute(chat.id, action === "mute"),
-                };
+                return { label, onSelect: () => toggleMute(chat.id, action === "mute") };
             case "mark_read":
-                return { label: $_("markAllRead"), onSelect: () => client.markAllRead(chat) };
+                return { label, onSelect: () => client.markAllRead(chat) };
             case "archive":
-                return { label: $_("archiveChat"), onSelect: () => archive(chat) };
+                return { label, onSelect: () => archive(chat) };
             case "unarchive":
                 // opening an archived chat un-archives it
-                return { label: $_("unarchiveChat"), onSelect: () => select(row.id) };
+                return { label, onSelect: () => select(row.id) };
             case "leave":
             case "delete":
-                return leaveOrDeleteItem(chat, row.title);
+                return { label, variant: "danger", onSelect: () => leaveOrDelete(chat, row.title) };
             case "remove":
-                return { label: $_("removeChat"), onSelect: () => client.removeFromList(chat) };
+                return { label, onSelect: () => client.removeFromList(chat) };
         }
     }
 
     // leaving a group or channel, or deleting a DM, asks first
-    function leaveOrDeleteItem(chat: ChatSummary, name: string): MenuItem {
-        if (chat.kind === "direct_chat") {
-            return {
-                label: $_("deleteChat"),
-                variant: "danger",
-                onSelect: () =>
-                    screen.dialogs.open({
-                        kind: "leave_or_delete",
-                        action: { kind: "delete_direct_chat", chatId: chat.id, blockUser: false },
-                        name,
-                    }),
-            };
-        }
-        return {
-            label: interpolate($_, i18nKey("leaveGroup", undefined, chat.level, true)),
-            variant: "danger",
-            onSelect: () =>
-                screen.dialogs.open({
-                    kind: "leave_or_delete",
-                    action: { kind: "leave", chatId: chat.id },
-                    name,
-                }),
-        };
+    function leaveOrDelete(chat: ChatSummary, name: string) {
+        screen.dialogs.open({
+            kind: "leave_or_delete",
+            action:
+                chat.kind === "direct_chat"
+                    ? { kind: "delete_direct_chat", chatId: chat.id, blockUser: false }
+                    : { kind: "leave", chatId: chat.id },
+            name,
+        });
     }
 
     async function archive(chat: ChatSummary) {

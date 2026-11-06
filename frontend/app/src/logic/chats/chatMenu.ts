@@ -1,4 +1,4 @@
-import { ROLE_NONE, type ChatSummary } from "@client";
+import { i18nKey, ROLE_NONE, type ChatSummary, type ResourceKey } from "@client";
 import { canDeleteDirectChat } from "@src/utils/directChat";
 
 /** The leave, delete and block items a chat's menus offer, in the header and on its list row. */
@@ -74,4 +74,42 @@ export function chatRowMenu(chat: ChatSummary, state: ChatRowMenuState): ChatRow
     if (leaveOrDelete.includes("delete")) actions.push("delete");
     if (state.canRemove) actions.push("remove");
     return actions;
+}
+
+/**
+ * A row menu item's words, the same in every tree: "Leave group" names the chat's level (group,
+ * channel). A tree may still word one of its own (native says "Mark as read").
+ */
+export function chatRowActionLabel(action: ChatRowAction, chat: ChatSummary): ResourceKey {
+    switch (action) {
+        case "pin":
+            return i18nKey("pinChat.menuItem");
+        case "unpin":
+            return i18nKey("pinChat.unpinMenuItem");
+        case "favourite":
+            return i18nKey("communities.addToFavourites");
+        case "unfavourite":
+            return i18nKey("communities.removeFromFavourites");
+        case "mute":
+            return i18nKey("muteNotifications");
+        case "unmute":
+            return i18nKey("unmuteNotifications");
+        case "mark_read":
+            return i18nKey("markAllRead");
+        case "archive":
+            return i18nKey("archiveChat");
+        case "unarchive":
+            return i18nKey("unarchiveChat");
+        case "leave":
+            return i18nKey(
+                "leaveGroup",
+                undefined,
+                chat.kind === "direct_chat" ? "group" : chat.level,
+                true,
+            );
+        case "delete":
+            return i18nKey("deleteChat");
+        case "remove":
+            return i18nKey("removeChat");
+    }
 }
