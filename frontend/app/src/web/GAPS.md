@@ -202,6 +202,11 @@ design export needs. Each entry says where it came up.
   - `SwapOfferDialog` takes `depositFees` (the design priced two fees, with no approval fee), and
     its "locks … incl. 2 fees" lines now say "incl. fees" (`hint`, `locks`). It has no review
     step: the app confirms in a `DialogShell` of its own.
+  - Not done by hand, for the design export: `MemeFighterDialog` builds memes from templates
+    the app doesn't have (the app keeps the Meme Fighter maker's frame); none of the payment
+    dialogs has an external wallet picker (the old `SourceWalletSelector`, and the approval fee
+    it shows); the dialogs' amounts are `number`s, so a balance past 2^53 units shows rounded
+    (what's attached is read from the typed text); their tokens are told apart by symbol.
 - **Composer mention list** (by hand, 5c, to take back to the design export, which has no mention
   picker): `MessageComposer` (and `ComposerBar`) take `onMentionQuery` (the "@word" at the caret as
   it changes, `mentionQuery.ts`, spec'd) and `mentions` (`ComposerMention`: the host's candidates
@@ -1190,8 +1195,8 @@ design export needs. Each entry says where it came up.
   message offers a private reply, which would go to the bot. The client marks the viewer's own
   read (`isOwnMessage`), so that part needs nothing here.
 - **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text first; files,
-  media, voice and the @mention picker came with 5c (below). GIFs and the "+" menu's builders are
-  still to come (`MessageComposer` hides the GIF tab without its handler). There's no rich-text
+  media, voice and the @mention picker came with 5c, the "+" menu's builders with 5d (below).
+  GIFs are still to come (`MessageComposer` hides the GIF tab without its handler). There's no rich-text
   editor (the old one showed
   markdown as it was typed). The old desktop entry's link-count note ("Link previews are hidden
   for messages with more than 5 links", `excessiveLinksNote`) isn't carried over: it can't show
@@ -1263,7 +1268,6 @@ design export needs. Each entry says where it came up.
     in a bot DM, a bot that takes no direct messages gets the composer's "couldn't send", not the
     old `bots.direct.warning`. The design has none of it;
   - GIFs (the library's results, above);
-  - the "+" menu's builders not built yet (5d, "The '+' builders" below): Meme Fighter;
   - the emoji autocomplete (`:smile`) both old editors had (`EmojiAutocompleter`).
 - **The "+" builders** (5d, `features/builders`): each a local dialog the composer's "+" menu
   opens (`build` in the conversation), offered where the chat lets the reader send what it makes
@@ -1330,6 +1334,17 @@ design export needs. Each entry says where it came up.
     the same backdrop, its back arrow returning to the offer as it was filled in, × or the
     backdrop closing both (`SwapOfferForm`, `logic/wallet`, which reads what was typed with
     `validateTokenInput`). Then it's attached (`newSwapOfferContent`).
+  - **Meme Fighter** (`meme_fighter`): the Meme Fighter maker in a frame, as both old builders
+    have it (`startMemeMaker`: only the maker's origin, from its own frame, is listened to),
+    styled with the theme's surface, ink and accent (`memeMakerStyle`); the meme made is shown,
+    to send or to start again from, and sent from the dialog (`sendContent`) at the size it shows
+    at (`memeFighterContent`, which both old builders now use). The library's
+    `MemeFighterDialog` isn't used: it renders a PNG from host `templates`, which the app doesn't
+    have (the maker has its own), and hands back an image to stage in the media tray, where a
+    Meme Fighter meme is sent by its URL. The frame sits in a `DialogShell` (`TODO(design)`: the
+    design has no frame for the maker).
+  - Not yet: paying from an external wallet (above); a thread's composer offers no builders
+    (threads aren't wired); the design's "Poll sent · Undo" toast.
 - **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
   edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text

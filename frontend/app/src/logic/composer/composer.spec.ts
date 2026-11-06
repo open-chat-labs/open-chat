@@ -283,17 +283,17 @@ describe("the builders the entry offers", () => {
         expect(composerBuilders(permitted("text", "crypto"), none)).toEqual(["crypto"]);
         expect(composerBuilders(permitted("text"), none)).toEqual([]);
         // the + menu's order: the design's
-        expect(composerBuilders(permitted("crypto", "p2pSwap", "prize", "poll"), none)).toEqual([
-            "poll",
-            "prize",
-            "crypto",
-            "swap",
-        ]);
+        expect(
+            composerBuilders(permitted("memeFighter", "crypto", "p2pSwap", "prize", "poll"), none),
+        ).toEqual(["poll", "prize", "crypto", "swap", "memeFighter"]);
     });
 
     test("payments attach to the draft, to be taken when it's sent; a poll is sent from its dialog", () => {
         expect(attachesToDraft("crypto")).toBe(true);
+        expect(attachesToDraft("prize")).toBe(true);
+        expect(attachesToDraft("swap")).toBe(true);
         expect(attachesToDraft("poll")).toBe(false);
+        expect(attachesToDraft("memeFighter")).toBe(false);
     });
 
     test("none this build turns off (the app store builds' payments)", () => {

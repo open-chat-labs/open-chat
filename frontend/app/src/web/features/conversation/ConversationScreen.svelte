@@ -575,6 +575,9 @@
                     screen.dialogs.open({ kind: "swap_offer", chatId });
                 }
                 break;
+            case "memeFighter":
+                screen.dialogs.open({ kind: "meme_fighter", chatId });
+                break;
             case "crypto":
                 // to the one being replied to, unless the user picks someone else
                 screen.dialogs.open({

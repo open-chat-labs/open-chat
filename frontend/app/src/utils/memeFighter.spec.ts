@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { MEME_MAKER_ORIGIN, startMemeMaker } from "./memeFighter";
+import {
+    MEME_MAKER_ORIGIN,
+    memeFighterContent,
+    memeMakerStyle,
+    startMemeMaker,
+} from "./memeFighter";
 
 const style = { "--background-color": "#1b1c21", "--button-color": "#22a7f2" };
 
@@ -114,5 +119,30 @@ describe("startMemeMaker", () => {
         fromMaker({ messageType: "MEME_CREATED", payload: "https://memefighter.app/meme.png" });
         expect(postToMaker).not.toHaveBeenCalled();
         expect(onMemeCreated).not.toHaveBeenCalled();
+    });
+});
+
+describe("the maker's look and the meme it makes", () => {
+    test("the maker takes the theme's surface, ink and accent, leaving out one that reads empty", () => {
+        const tokens: Record<string, string> = {
+            "--surface-1": " #0e0e12",
+            "--ink": "rgb(240, 240, 245)",
+            "--accent": "",
+        };
+        expect(memeMakerStyle((name) => tokens[name] ?? "")).toEqual({
+            "--background-color": "#0e0e12",
+            "--foreground-color": "rgb(240, 240, 245)",
+        });
+    });
+
+    test("a meme is sent at the size it shows at", () => {
+        expect(
+            memeFighterContent("https://memefighter.app/meme.png", { width: 400, height: 300 }),
+        ).toEqual({
+            kind: "meme_fighter_content",
+            url: "https://memefighter.app/meme.png",
+            width: 400,
+            height: 300,
+        });
     });
 });

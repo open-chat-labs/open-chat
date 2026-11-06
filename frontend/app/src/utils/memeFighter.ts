@@ -1,3 +1,5 @@
+import type { MemeFighterContent } from "@client";
+
 const MEME_MAKER_URL = "https://maker.memefighter.app";
 export const MEME_MAKER_ORIGIN = new URL(MEME_MAKER_URL).origin;
 
@@ -7,6 +9,31 @@ export type MemeMakerStyle = {
     "--foreground-color"?: string;
     "--button-color"?: string;
 };
+
+/**
+ * The maker's look from the new UI's theme: its surface, ink and accent, as `token` reads each
+ * (the computed colour, since the maker's frame can't read the app's variables). One that reads
+ * empty is left to the maker's own.
+ */
+export function memeMakerStyle(token: (name: string) => string): MemeMakerStyle {
+    const style: MemeMakerStyle = {};
+    const set = (key: keyof MemeMakerStyle, name: string) => {
+        const value = token(name).trim();
+        if (value !== "") style[key] = value;
+    };
+    set("--background-color", "--surface-1");
+    set("--foreground-color", "--ink");
+    set("--button-color", "--accent");
+    return style;
+}
+
+/** The meme the maker made, at the size it shows at (as the old builders send it). */
+export function memeFighterContent(
+    url: string,
+    shown: { width: number; height: number },
+): MemeFighterContent {
+    return { kind: "meme_fighter_content", url, width: shown.width, height: shown.height };
+}
 
 // Loads the Meme Fighter maker into `iframe` and calls `onMemeCreated` with the url of the meme
 // the user makes there. Returns the function which stops listening for it.

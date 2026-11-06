@@ -2,7 +2,7 @@
     import { Column, CommonButton, Row, Sheet, Subtitle } from "component-lib";
     import { iconSize, type MemeFighterContent as MemeFighterContentType } from "@client";
     import { onDestroy, tick } from "svelte";
-    import { startMemeMaker } from "@src/utils/memeFighter";
+    import { memeFighterContent, startMemeMaker } from "@src/utils/memeFighter";
     import { i18nKey } from "../../i18n/i18n";
     import { currentTheme } from "../../theme/themes";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -51,13 +51,7 @@
     function send() {
         if (memeUrl !== undefined && img !== undefined) {
             const rect = img.getBoundingClientRect();
-            const content: MemeFighterContentType = {
-                kind: "meme_fighter_content",
-                url: memeUrl,
-                width: rect.width,
-                height: rect.height,
-            };
-            onSend(content);
+            onSend(memeFighterContent(memeUrl, rect));
             open = false;
         }
     }
