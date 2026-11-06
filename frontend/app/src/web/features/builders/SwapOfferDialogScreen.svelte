@@ -117,7 +117,8 @@
     }
 </script>
 
-<!-- kept while the confirmation shows, so going back finds the offer as it was filled in -->
+<!-- kept while the confirmation shows, so going back finds the offer as it was filled in; kept
+     laid out too (hidden, not taken out), so its veil and card don't play their entrance again -->
 <div class="offer" class:hidden={form.stage.kind === "confirming"}>
     <SwapOfferDialog
         tokens={tokens.map((t) => t.token)}
@@ -150,7 +151,7 @@
     }
 
     .offer.hidden {
-        display: none;
+        visibility: hidden;
     }
 
     .handoff > :global(.layer > .scrim) {
