@@ -138,6 +138,9 @@ design export needs. Each entry says where it came up.
     sign-up up; a failed upload is logged and leaves the account without a photo.
     TODO(design): the native design has no crop step (the sheet, its "Drag to move it, pinch to
     zoom" hint) nor the photo's menu; confirm with design.
+    The cropper itself is still rough around the edges (found testing on Android, 2026-11-06):
+    `svelte-easy-crop` in a sheet as it comes, with no native look or feel of its own. A design pass
+    on the crop step, then a native cropper to match.
   - **The passkey prompt** comes on Continue (the client's `signUp` makes the passkey, named after
     the username), not on Welcome's Create account as the issue reads it.
   - **Appearance**: the design's menu (`AppearanceMenu`, under the pill at the trailing edge): Theme
