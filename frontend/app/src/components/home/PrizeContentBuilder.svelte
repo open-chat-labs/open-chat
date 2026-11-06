@@ -1,40 +1,19 @@
 <script lang="ts" module>
     type Duration = "oneHour" | "oneDay" | "oneWeek";
-    type PrizeConfig = {
-        minChitEarned: number;
-        diamond: "none" | "standard" | "lifetime";
-        uniquePersonOnly: boolean;
-        minStreak: number;
-        distribution: "equal" | "random";
-        duration: Duration;
-    };
-    const defaultPrizeRestrictions: PrizeConfig = {
-        minChitEarned: 0,
-        diamond: "none",
-        uniquePersonOnly: false,
-        minStreak: 0,
-        distribution: "random",
-        duration: "oneDay",
-    };
 </script>
 
 <script lang="ts">
-    import type {
-        ChatSummary,
-        MessageContext,
-        OpenChat,
-        PrizeContentInitial,
-        SignerWallet,
-    } from "@client";
+    import type { ChatSummary, MessageContext, OpenChat, SignerWallet } from "@client";
     import {
-        bigIntMax,
         chitBands,
         cryptoBalanceStore,
         cryptoLookup,
-        LocalStorageStore,
         mobileWidth,
+        prizeCosts,
+        prizeMaximum,
         walletApprovalFee,
     } from "@client";
+    import { PrizeForm } from "@src/logic/prize/prizeForm.svelte";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -64,7 +43,11 @@
     const ONE_HOUR = 1000 * 60 * 60;
     const ONE_DAY = ONE_HOUR * 24;
     const ONE_WEEK = ONE_DAY * 7;
-    const OC_FEE_PERCENTAGE = 5n;
+    const DURATION_MS: Record<Duration, number> = {
+        oneHour: ONE_HOUR,
+        oneDay: ONE_DAY,
+        oneWeek: ONE_WEEK,
+    };
     const client = getContext<OpenChat>("client");
     const streaks = [3, 7, 14, 30, 100, 365];
 
@@ -84,25 +67,24 @@
         onClose,
     }: Props = $props();
 
-    const prizeConfig = new LocalStorageStore(
-        "openchat_prize_config",
-        defaultPrizeRestrictions,
-        JSON.stringify,
-        (s) => JSON.parse(s),
-        (_a, _b) => false,
-    );
+    // the split, duration and restrictions last used (the prize builders' shared state), which
+    // this builder's own controls start from and hand back to it when the prize is sent
+    const form = new PrizeForm();
 
     let numberOfWinners = $state(20);
-    let distribution: "equal" | "random" = $state($prizeConfig.distribution);
+    let distribution: "equal" | "random" = $state(form.distribution);
     const durations: Duration[] = ["oneHour", "oneDay", "oneWeek"];
-    let selectedDuration: Duration = $state($prizeConfig.duration);
-    let diamondType: "none" | "standard" | "lifetime" = $state($prizeConfig.diamond);
+    // a duration this builder doesn't offer (from another tree's) starts it at a day
+    let selectedDuration: Duration = $state(
+        durations.find((d) => DURATION_MS[d] === form.durationMs) ?? "oneDay",
+    );
+    let diamondType: "none" | "standard" | "lifetime" = $state(form.diamond);
     let diamondOnly = $derived(diamondType !== "none");
-    // Unique-person ("verified user") gating is suspended - force off so a value persisted from a
-    // previous session can't be silently reapplied (the restriction control is removed).
+    // Unique-person ("verified user") gating is suspended: always off (the restriction control is
+    // removed)
     const uniquePersonOnly = false;
-    let minStreak = $state<number>($prizeConfig.minStreak);
-    let minChitEarned = $state<number>($prizeConfig.minChitEarned);
+    let minStreak = $state<number>(form.minStreak);
+    let minChitEarned = $state<number>(form.minChitEarned);
     let streakOnly = $derived(minStreak > 0);
     let chitOnly = $derived(minChitEarned > 0);
     const refreshing = false;
@@ -124,12 +106,13 @@
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
     let transferFee = $derived(tokenDetails.transferFee);
-    let transferFees = $derived(transferFee * BigInt(numberOfWinners ?? 0));
-    let prizeFees = $derived(transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n);
-    // What the transfer of the prize's fund costs in fees, which includes the approval the wallet
-    // makes before the fund is pulled from it
+    // what the prize costs on top of its fund (prizeCosts): a transfer fee per winner and
+    // OpenChat's 5%, and the fund's own transfer, which includes the approval the wallet makes
+    // before the fund is pulled from it
+    let costs = $derived(prizeCosts(draftAmount, numberOfWinners ?? 0, transferFee));
+    let prizeFees = $derived(costs.prizeFees);
     let fundFees = $derived(transferFee + walletApprovalFee(transferFee));
-    let totalFees = $derived(fundFees + prizeFees);
+    let totalFees = $derived(costs.totalFees);
     let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
     let remainingBalance = $state(0n);
     $effect(() => {
@@ -138,11 +121,13 @@
                 ? cryptoBalance - draftAmount - totalFees
                 : cryptoBalance;
     });
-    let minAmount = $derived(100n * BigInt(numberOfWinners ?? 0) * transferFee);
+    let minAmount = $derived(costs.minAmount);
     // What the user is able to spend, or undefined when that is the external wallet's business
     // rather than ours
     let maxAmount = $derived(
-        payFromWallet ? undefined : bigIntMax(cryptoBalance - totalFees, BigInt(0)),
+        payFromWallet
+            ? undefined
+            : prizeMaximum(cryptoBalance, draftAmount, numberOfWinners ?? 0, transferFee),
     );
     let valid = $derived(error === undefined && tokenInputState === "ok" && !tokenChanging);
     // An empty OpenChat account is only a dead end while the user is paying from it
@@ -170,29 +155,6 @@
         diamondType = diamondOnly ? "standard" : "none";
     }
 
-    function recipientFromContext({ chatId }: MessageContext) {
-        switch (chatId.kind) {
-            case "channel":
-                return chatId.communityId;
-            case "group_chat":
-                return chatId.groupId;
-            default:
-                throw new Error("We can't create prizes in direct chats");
-        }
-    }
-
-    function getEndDate() {
-        const now = Date.now();
-        switch (selectedDuration) {
-            case "oneHour":
-                return BigInt(now + ONE_HOUR);
-            case "oneDay":
-                return BigInt(now + ONE_DAY);
-            case "oneWeek":
-                return BigInt(now + ONE_WEEK);
-        }
-    }
-
     function send() {
         sending = true;
         error = undefined;
@@ -216,41 +178,24 @@
     // `fromAccount` is an external wallet which has just approved the transfer. Without it the
     // prize is funded from the user's own OpenChat account, as it always has been.
     function sendPrize(fromAccount?: string) {
-        const prizes = generatePrizes();
-        const amountE8s = prizes.reduce((total, p) => total + p) + prizeFees;
-
-        const content: PrizeContentInitial = {
-            kind: "prize_content_initial",
-            caption: message === "" ? undefined : message,
-            endDate: getEndDate(),
-            diamondOnly: diamondType === "standard",
-            lifetimeDiamondOnly: diamondType === "lifetime",
-            uniquePersonOnly,
-            streakOnly: minStreak,
-            minChitEarned: minChitEarned,
-            transfer: {
-                kind: "pending",
-                ledger,
-                token: symbol,
-                recipient: recipientFromContext(context),
-                amountE8s,
-                feeE8s: transferFee,
-                createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
-                fromAccount,
-            },
-            amount: draftAmount,
-            fees: totalFees,
-            prizes,
-        };
-
-        prizeConfig.set({
-            minChitEarned,
-            diamond: diamondType,
-            uniquePersonOnly,
-            minStreak,
-            distribution,
-            duration: selectedDuration,
-        });
+        form.winners = numberOfWinners;
+        form.distribution = distribution;
+        form.durationMs = DURATION_MS[selectedDuration];
+        form.diamond = diamondType;
+        form.minStreak = minStreak;
+        form.minChitEarned = minChitEarned;
+        const prize = form.content(
+            context.chatId,
+            { ledger, symbol, decimals: tokenDetails.decimals, transferFee },
+            draftAmount,
+            { fromAccount },
+        );
+        if (prize === undefined) {
+            sending = false;
+            return;
+        }
+        const content = { ...prize, caption: message === "" ? undefined : message };
+        form.remember();
 
         client
             .sendMessageWithContent(context, content, false)
@@ -289,76 +234,6 @@
                 draftAmount = BigInt(0);
             }
         }
-    }
-
-    function generatePrizes(): bigint[] {
-        if (!numberOfWinners) return [];
-
-        const share = Math.round(Number(draftAmount) / numberOfWinners);
-        switch (distribution) {
-            case "equal":
-                return generateEquallyDistributedPrizes(draftAmount, share);
-            case "random":
-                return generateRandomlyDistributedPrizes(draftAmount, share);
-        }
-    }
-
-    // make sure that any rounding errors are corrected for
-    function compensateRounding(prizes: bigint[], fund: bigint): bigint[] {
-        const total = prizes.reduce((agg, p) => agg + p, 0n);
-        const diff = fund - total;
-        if (diff !== 0n) {
-            prizes[0] = prizes[0] + diff;
-        }
-        return prizes;
-    }
-
-    function generateEquallyDistributedPrizes(fund: bigint, share: number): bigint[] {
-        const prizes = Array.from({ length: numberOfWinners }).map(() => BigInt(share));
-        return compensateRounding(prizes, fund);
-    }
-
-    function generateRandomlyDistributedPrizes(fund: bigint, share: number): bigint[] {
-        const min = share * 0.1;
-        const max = share * 2;
-
-        const intermediate = Array.from({ length: numberOfWinners }).map(() => random(min, max));
-        const total = intermediate.reduce((agg, p) => agg + p, 0);
-
-        // we might have more prizes than the total so let's scale
-        const scale = total / Number(fund);
-        const scaled = intermediate.map((p) => BigInt(Math.round(p / scale)));
-
-        const prizes = compensateRounding(scaled, fund);
-
-        return ensureMinPrizeAtLeastTransferFee(prizes);
-    }
-
-    function ensureMinPrizeAtLeastTransferFee(prizes: bigint[]): bigint[] {
-        let totalAdded = 0n;
-        let max = 0n;
-        let maxIndex = 0;
-        for (let i = 0; i < prizes.length; i++) {
-            const prize = prizes[i];
-            if (prize < transferFee) {
-                prizes[i] = transferFee;
-                totalAdded += transferFee - prize;
-            } else if (prize > max) {
-                max = prize;
-                maxIndex = i;
-            }
-        }
-
-        if (totalAdded > 0n) {
-            prizes[maxIndex] = max - totalAdded;
-        }
-
-        return prizes;
-    }
-
-    function random(min: number, max: number): number {
-        const range = max - min;
-        return Math.floor(min + Math.random() * range);
     }
 
     function onAnyUserChecked() {

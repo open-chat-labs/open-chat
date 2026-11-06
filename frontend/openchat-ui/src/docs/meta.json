@@ -14841,6 +14841,39 @@
         "doc": "A previous onAttach value, to edit it."
       },
       {
+        "name": "defaults",
+        "type": "Partial<PrizeDraft>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "What a new prize starts from (e.g. the settings last used); `initial` wins when editing."
+      },
+      {
+        "name": "restrictions",
+        "type": "PrizeGateKind[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The claim restrictions offered, in the dialog's order (all by default)."
+      },
+      {
+        "name": "pricing",
+        "type": "(token: PrizeToken, amount: number, winners: number) => { fees: number; min: number }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's prices for `amount` among `winners`: every fee on top of the amount, and the least the amount can be. Without it a fee per winner plus one for the fund, and `minPer` a winner."
+      },
+      {
         "name": "onAttach",
         "type": "(prize: Prize) => void",
         "default": null,

@@ -1,22 +1,3 @@
-<script lang="ts" module>
-    type PrizeConfig = {
-        minChitEarned: number;
-        diamond: "none" | "standard" | "lifetime";
-        uniquePersonOnly: boolean;
-        minStreak: number;
-        distribution: "equal" | "random";
-        duration: bigint;
-    };
-    const defaultPrizeRestrictions: PrizeConfig = {
-        minChitEarned: 0,
-        diamond: "none",
-        uniquePersonOnly: false,
-        minStreak: 0,
-        distribution: "random",
-        duration: BigInt(ONE_DAY),
-    };
-</script>
-
 <script lang="ts">
     import {
         Body,
@@ -28,19 +9,16 @@
         Row,
         Switch,
     } from "component-lib";
-    import type { MessageContext, PrizeContentInitial, SignerWallet } from "@client";
+    import type { MessageContext, SignerWallet } from "@client";
     import {
-        bigIntMax,
         chitBands,
         cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
-        LocalStorageStore,
-        localUpdates,
-        ONE_DAY,
-        walletApprovalFee,
+        prizeMaximum,
     } from "@client";
+    import { PrizeForm } from "@src/logic/prize/prizeForm.svelte";
     import { onMount } from "svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
@@ -61,7 +39,6 @@
     import { TokenState } from "@src/logic/wallet/walletState.svelte";
     import { keyboard } from "@stores/keyboard.svelte";
 
-    const OC_FEE_PERCENTAGE = 5n;
     const streaks = [3, 7, 14, 30, 100, 365];
 
     interface Props {
@@ -74,26 +51,9 @@
     let draftAmount = $state(0n);
     let ledger = $state($lastCryptoSent ?? LEDGER_CANISTER_ICP);
 
-    const prizeConfig = new LocalStorageStore(
-        "openchat_prize_config",
-        defaultPrizeRestrictions,
-        JSON.stringify,
-        (s) => JSON.parse(s),
-        (_a, _b) => false,
-    );
-
-    let numberOfWinners = $state<number | undefined>(20);
-    let numberOfWinnersValid = $derived(
-        numberOfWinners !== undefined && numberOfWinners >= 1 && numberOfWinners <= 1000,
-    );
-    let distribution: "equal" | "random" = $state($prizeConfig.distribution);
-    let selectedDuration = $state($prizeConfig.duration);
-    let diamondType: "none" | "standard" | "lifetime" = $state($prizeConfig.diamond);
-    // Unique-person ("verified user") gating is suspended - force off so a value persisted from a
-    // previous session can't be silently reapplied (there is no UI to clear it).
-    const uniquePersonOnly = false;
-    let minStreak = $state<number>($prizeConfig.minStreak);
-    let minChitEarned = $state<number>($prizeConfig.minChitEarned);
+    // the winners, split, duration and restrictions, remembered for the next prize (unique-person
+    // gating is suspended, so it's always off)
+    const form = new PrizeForm();
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
     // The external wallet the prize fund will come from, or undefined for the user's own OpenChat
     // account. Paying from an external wallet spends that wallet's balance rather than the user's
@@ -104,18 +64,19 @@
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let tokenState = $derived(new TokenState(tokenDetails));
     let transferFee = $derived(tokenDetails.transferFee);
-    let transferFees = $derived(transferFee * BigInt(numberOfWinners ?? 0));
-    let prizeFees = $derived(transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n);
     // What the prize costs in fees: the transfer of its fund, which includes the approval the wallet
-    // makes before the fund is pulled from it, and the prize's fees
-    let totalFees = $derived(transferFee + walletApprovalFee(transferFee) + prizeFees);
-    let minAmount = $derived(100n * BigInt(numberOfWinners ?? 0) * transferFee);
+    // makes before the fund is pulled from it, and the prize's fees (prizeCosts)
+    let costs = $derived(form.costs(draftAmount, transferFee));
+    let totalFees = $derived(costs.totalFees);
+    let minAmount = $derived(costs.minAmount);
     // What the user is able to spend, or undefined when that is the external wallet's business
     // rather than ours
     let maxAmount = $derived(
-        payFromWallet ? undefined : bigIntMax(cryptoBalance - totalFees, BigInt(0)),
+        payFromWallet
+            ? undefined
+            : prizeMaximum(cryptoBalance, draftAmount, form.winners ?? 0, transferFee),
     );
-    let valid = $derived(numberOfWinnersValid && tokenInputState === "ok");
+    let valid = $derived(form.validWinners && tokenInputState === "ok");
     let selectMinChitEarned = $state(false);
     let selectMinStreak = $state(false);
 
@@ -131,184 +92,31 @@
         };
     });
 
-    function onDiamondChanged(t: "standard" | "lifetime") {
-        switch (t) {
-            case "standard":
-                switch (diamondType) {
-                    case "lifetime":
-                    case "none":
-                        diamondType = "standard";
-                        break;
-                    case "standard":
-                        diamondType = "none";
-                        break;
-                }
-                break;
-            case "lifetime":
-                switch (diamondType) {
-                    case "standard":
-                    case "none":
-                        diamondType = "lifetime";
-                        break;
-                    case "lifetime":
-                        diamondType = "none";
-                        break;
-                }
-                break;
-        }
-    }
-
-    function recipientFromContext({ chatId }: MessageContext) {
-        switch (chatId.kind) {
-            case "channel":
-                return chatId.communityId;
-            case "group_chat":
-                return chatId.groupId;
-            default:
-                throw new Error("We can't create prizes in direct chats");
-        }
-    }
-
-    function getEndDate() {
-        return BigInt(BigInt(Date.now()) + selectedDuration);
-    }
-
     // This only attaches a draft - the prize fund is taken when the user sends the message. An
     // external wallet's approval is not asked for here: it would spend a tap on an allowance the
     // user may abandon without sending. Instead the draft carries the chosen wallet as
     // `fromWallet`, and the send itself asks for the approval, from the tap which consumes it.
     function attach() {
-        const prizes = generatePrizes();
-        const amountE8s = prizes.reduce((total, p) => total + p) + prizeFees;
-
-        const content: PrizeContentInitial = {
-            kind: "prize_content_initial",
-            caption: undefined,
-            endDate: getEndDate(),
-            diamondOnly: diamondType === "standard",
-            lifetimeDiamondOnly: diamondType === "lifetime",
-            uniquePersonOnly,
-            streakOnly: minStreak,
-            minChitEarned: minChitEarned,
-            transfer: {
-                kind: "pending",
-                ledger,
-                token: tokenState.symbol,
-                recipient: recipientFromContext(context),
-                amountE8s,
-                feeE8s: transferFee,
-                createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
-                fromWallet: sourceWallet?.id,
-            },
-            amount: draftAmount,
-            fees: totalFees,
-            prizes,
-        };
-
-        prizeConfig.set({
-            minChitEarned,
-            diamond: diamondType,
-            uniquePersonOnly,
-            minStreak,
-            distribution,
-            duration: selectedDuration,
-        });
-
-        localUpdates.draftMessages.setAttachment(context, content);
-
+        form.attach(
+            context,
+            { ledger, symbol: tokenState.symbol, decimals: tokenState.decimals, transferFee },
+            draftAmount,
+            sourceWallet?.id,
+        );
         onClose();
     }
 
-    function generatePrizes(): bigint[] {
-        if (!numberOfWinners) return [];
-
-        const share = Math.round(Number(draftAmount) / numberOfWinners);
-        switch (distribution) {
-            case "equal":
-                return generateEquallyDistributedPrizes(draftAmount, share);
-            case "random":
-                return generateRandomlyDistributedPrizes(draftAmount, share);
-        }
-    }
-
-    // make sure that any rounding errors are corrected for
-    function compensateRounding(prizes: bigint[], fund: bigint): bigint[] {
-        const total = prizes.reduce((agg, p) => agg + p, 0n);
-        const diff = fund - total;
-        if (diff !== 0n) {
-            prizes[0] = prizes[0] + diff;
-        }
-        return prizes;
-    }
-
-    function generateEquallyDistributedPrizes(fund: bigint, share: number): bigint[] {
-        const prizes = Array.from({ length: numberOfWinners ?? 0 }).map(() => BigInt(share));
-        return compensateRounding(prizes, fund);
-    }
-
-    function generateRandomlyDistributedPrizes(fund: bigint, share: number): bigint[] {
-        const min = share * 0.1;
-        const max = share * 2;
-
-        const intermediate = Array.from({ length: numberOfWinners ?? 0 }).map(() =>
-            random(min, max),
-        );
-        const total = intermediate.reduce((agg, p) => agg + p, 0);
-
-        // we might have more prizes than the total so let's scale
-        const scale = total / Number(fund);
-        const scaled = intermediate.map((p) => BigInt(Math.round(p / scale)));
-
-        const prizes = compensateRounding(scaled, fund);
-
-        return ensureMinPrizeAtLeastTransferFee(prizes);
-    }
-
-    function ensureMinPrizeAtLeastTransferFee(prizes: bigint[]): bigint[] {
-        let totalAdded = 0n;
-        let max = 0n;
-        let maxIndex = 0;
-        for (let i = 0; i < prizes.length; i++) {
-            const prize = prizes[i];
-            if (prize < transferFee) {
-                prizes[i] = transferFee;
-                totalAdded += transferFee - prize;
-            } else if (prize > max) {
-                max = prize;
-                maxIndex = i;
-            }
-        }
-
-        if (totalAdded > 0n) {
-            prizes[maxIndex] = max - totalAdded;
-        }
-
-        return prizes;
-    }
-
-    function random(min: number, max: number): number {
-        const range = max - min;
-        return Math.floor(min + Math.random() * range);
-    }
-
     function toggleDistribution() {
-        switch (distribution) {
-            case "equal":
-                distribution = "random";
-                break;
-            case "random":
-                distribution = "equal";
-                break;
-        }
+        form.distribution = form.distribution === "equal" ? "random" : "equal";
     }
 </script>
 
 {#if selectMinChitEarned}
     <SelectChitEarned
-        min={minChitEarned}
+        min={form.minChitEarned}
         onClose={() => (selectMinChitEarned = false)}
         onSelect={(min: number) => {
-            minChitEarned = min;
+            form.minChitEarned = min;
             selectMinChitEarned = false;
         }} />
 {/if}
@@ -316,10 +124,10 @@
 {#if selectMinStreak}
     <SelectMinStreak
         {streaks}
-        min={minStreak}
+        min={form.minStreak}
         onClose={() => (selectMinStreak = false)}
         onSelect={(min: number) => {
-            minStreak = min;
+            form.minStreak = min;
             selectMinStreak = false;
         }} />
 {/if}
@@ -380,16 +188,16 @@
         <Column gap="md">
             {@render sectionTitle("Number of winners")}
             <NumberInput
-                error={!numberOfWinnersValid}
+                error={!form.validWinners}
                 min={1}
                 max={1000}
-                bind:value={numberOfWinners}>
+                bind:value={form.winners}>
                 {#snippet subtext()}
                     <Translatable
                         resourceKey={i18nKey("Please enter a number between 1 and 1000")} />
                 {/snippet}
                 {#snippet textButtons()}
-                    <InputTextButton onClick={() => (numberOfWinners = 1000)}>
+                    <InputTextButton onClick={() => (form.winners = 1000)}>
                         <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
                     </InputTextButton>
                 {/snippet}
@@ -399,7 +207,8 @@
         <!-- Prize expiry -->
         <Column gap="md">
             {@render sectionTitle("Prize expiry time")}
-            <DurationSelector bind:duration={selectedDuration} />
+            <DurationSelector
+                bind:duration={() => BigInt(form.durationMs), (d) => (form.durationMs = Number(d))} />
         </Column>
 
         <!-- Distribution -->
@@ -411,7 +220,7 @@
                     onChange={toggleDistribution}
                     width={"fill"}
                     reverse
-                    checked={distribution === "equal"}>
+                    checked={form.distribution === "equal"}>
                     <Translatable resourceKey={i18nKey("Distribute evenly")} />
                 </Switch>
             </Setting>
@@ -430,18 +239,18 @@
             </Column>
             <Row wrap gap={"sm"}>
                 <Chip
-                    onClick={() => onDiamondChanged("standard")}
-                    onRemove={diamondType === "standard" ? () => (diamondType = "none") : undefined}
-                    mode={diamondType === "standard" ? "filter" : "default"}>
+                    onClick={() => form.toggleDiamond("standard")}
+                    onRemove={form.diamond === "standard" ? () => (form.diamond = "none") : undefined}
+                    mode={form.diamond === "standard" ? "filter" : "default"}>
                     {#snippet icon(color)}
                         <Diamond {color} />
                     {/snippet}
                     <Translatable resourceKey={i18nKey("Diamond membership")} />
                 </Chip>
                 <Chip
-                    onClick={() => onDiamondChanged("lifetime")}
-                    onRemove={diamondType === "lifetime" ? () => (diamondType = "none") : undefined}
-                    mode={diamondType === "lifetime" ? "filter" : "default"}>
+                    onClick={() => form.toggleDiamond("lifetime")}
+                    onRemove={form.diamond === "lifetime" ? () => (form.diamond = "none") : undefined}
+                    mode={form.diamond === "lifetime" ? "filter" : "default"}>
                     {#snippet icon(color)}
                         <Lifetime {color} />
                     {/snippet}
@@ -450,27 +259,27 @@
                 <!-- Unique person ("verified user") gating is suspended -->
                 <Chip
                     onClick={() => (selectMinChitEarned = true)}
-                    onRemove={minChitEarned > 0 ? () => (minChitEarned = 0) : undefined}
-                    mode={minChitEarned > 0 ? "filter" : "default"}>
+                    onRemove={form.minChitEarned > 0 ? () => (form.minChitEarned = 0) : undefined}
+                    mode={form.minChitEarned > 0 ? "filter" : "default"}>
                     {#snippet icon(color)}
                         <Flash {color} />
                     {/snippet}
-                    {#if minChitEarned > 0}
+                    {#if form.minChitEarned > 0}
                         <Translatable
-                            resourceKey={i18nKey(`CHIT earned: ${chitBands.get(minChitEarned)}`)} />
+                            resourceKey={i18nKey(`CHIT earned: ${chitBands.get(form.minChitEarned)}`)} />
                     {:else}
                         <Translatable resourceKey={i18nKey(`CHIT earned`)} />
                     {/if}
                 </Chip>
                 <Chip
                     onClick={() => (selectMinStreak = true)}
-                    onRemove={minStreak > 0 ? () => (minStreak = 0) : undefined}
-                    mode={minStreak > 0 ? "filter" : "default"}>
+                    onRemove={form.minStreak > 0 ? () => (form.minStreak = 0) : undefined}
+                    mode={form.minStreak > 0 ? "filter" : "default"}>
                     {#snippet icon(color)}
                         <LightningBolt {color} />
                     {/snippet}
-                    {#if minStreak > 0}
-                        <Translatable resourceKey={i18nKey(`Users with streak: ${minStreak}d`)} />
+                    {#if form.minStreak > 0}
+                        <Translatable resourceKey={i18nKey(`Users with streak: ${form.minStreak}d`)} />
                     {:else}
                         <Translatable resourceKey={i18nKey(`Users with streak`)} />
                     {/if}

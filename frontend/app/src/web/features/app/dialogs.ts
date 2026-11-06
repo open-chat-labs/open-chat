@@ -10,6 +10,7 @@ import type {
     Message,
     MultiUserChatIdentifier,
     PriceSubject,
+    PrizeContentInitial,
 } from "@client";
 import type { DialogStack } from "../../shell/dialogStack.svelte";
 import type { ManageSection } from "@src/logic/groupOrCommunity/manage.svelte";
@@ -131,7 +132,9 @@ export type LocalDialog =
           chatId: ChatIdentifier;
           defaultReceiver?: string;
           editing?: CryptocurrencyContent;
-      };
+      }
+    // a prize, attached to the chat's draft; `editing` the staged one to change
+    | { kind: "prize_builder"; chatId: ChatIdentifier; editing?: PrizeContentInitial };
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";
@@ -233,6 +236,7 @@ export const dialogs: Dialogs = {
     // the composer's "+" builders (5d)
     poll_builder: () => import("../builders/PollBuilderDialogScreen.svelte"),
     send_crypto: () => import("../builders/SendCryptoDialogScreen.svelte"),
+    prize_builder: () => import("../builders/PrizeBuilderDialogScreen.svelte"),
 };
 
 // each linked dialog's query param; the CHIT dialog's views share its param, told apart by its value

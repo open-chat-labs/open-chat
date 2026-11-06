@@ -194,6 +194,11 @@ design export needs. Each entry says where it came up.
 - **The "+" builders, by hand** (5d, to take back to the design export):
   - `SendCryptoDialog` takes `to`, the member picked to start with (the one being replied to),
     where the design starts with no one picked.
+  - `PrizeBuilderDialog` takes `pricing` (the host's fees and minimum for an amount among its
+    winners: the design priced `fee x (winners + 1)`, with no 5% and no approval fee, and its hint
+    then says "Fees of … are added on top", `feesAdded`), `defaults` (what a new prize starts
+    from: the settings last used) and `restrictions` (those offered: the app leaves out
+    "Authenticated", which the backend no longer has).
 - **Composer mention list** (by hand, 5c, to take back to the design export, which has no mention
   picker): `MessageComposer` (and `ComposerBar`) take `onMentionQuery` (the "@word" at the caret as
   it changes, `mentionQuery.ts`, spec'd) and `mentions` (`ComposerMention`: the host's candidates
@@ -1255,8 +1260,8 @@ design export needs. Each entry says where it came up.
     in a bot DM, a bot that takes no direct messages gets the composer's "couldn't send", not the
     old `bots.direct.warning`. The design has none of it;
   - GIFs (the library's results, above);
-  - the "+" menu's builders not built yet (5d, "The '+' builders" below): prize, swap offer,
-    Meme Fighter;
+  - the "+" menu's builders not built yet (5d, "The '+' builders" below): swap offer, Meme
+    Fighter;
   - the emoji autocomplete (`:smile`) both old editors had (`EmojiAutocompleter`).
 - **The "+" builders** (5d, `features/builders`): each a local dialog the composer's "+" menu
   opens (`build` in the conversation), offered where the chat lets the reader send what it makes
@@ -1295,6 +1300,22 @@ design export needs. Each entry says where it came up.
     holds (a big group or channel holds some), with no avatar: `SendCryptoDialog` draws an
     initial. The library tells tokens apart by symbol, so of two sharing one only the first is
     offered.
+  - **Prize** (`PrizeBuilderDialog`, `prize_builder`; not in a DM): the tokens held, the one last
+    sent first. It costs what both old builders charged (`prizeCosts`, `@client`, which they now
+    use: the fund's transfer and its approval, a transfer fee per winner and OpenChat's 5%), at
+    least 100 transfer fees a winner, within the balance less those (`prizeMaximum`), shown
+    through the dialog's `pricing` (by hand). 1 to 1000 winners. The fund is split by
+    `newPrizeContent` (`@client`, from both old builders: equal or random shares adding up to the
+    fund exactly, rounding to the first, none below the transfer fee), its end stamped when it's
+    attached, as the mobile app stamps it (the old desktop builder sent at once). The split,
+    duration and restrictions start from the last prize's (`PrizeForm`, `logic/prize`, which both
+    old builders now use: `openchat_prize_config`, read however a tree wrote it, `parsePrizeConfig`
+    — the mobile builder's remembered duration was a bigint written as a string, which then ran
+    into the end date's digits). Unique-person gating stays off; "Authenticated" isn't offered
+    (`restrictions`, by hand: a prize can't require signing in again since #10425). Durations:
+    the dialog's 1h to 90d (the mobile app's range), where the old desktop builder offered 1h,
+    1d, 1w (it now starts at a day for another). With no token held the dialog lists none and
+    can't attach (`TODO(design)`).
 - **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
   edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text

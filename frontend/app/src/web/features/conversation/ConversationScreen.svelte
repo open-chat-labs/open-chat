@@ -132,7 +132,11 @@
     import { messageToForwardStore } from "@src/stores/messageToForward";
     import { quickReactions } from "@src/stores/quickReactions";
     import { composerBuildersOff, disableTipsFeature } from "@src/utils/features";
-    import { composerTransfer, type Translate } from "../builders/builders.adapter";
+    import {
+        composerPrize,
+        composerTransfer,
+        type Translate,
+    } from "../builders/builders.adapter";
     import { messageSwipeLeft } from "@src/utils/messageSwipe";
     import { canShareMessage } from "@src/utils/share";
     import { messageDoubleClickAction } from "@src/logic/conversation/messageDoubleClick";
@@ -492,7 +496,7 @@
         composerAttachment(draftAttachment(draft), ctx) ?? stagedPayment(draftAttachment(draft)),
     );
 
-    // a transfer as the composer's chip shows it, in a token the registry carries
+    // a transfer or prize as the composer's chip shows it, in a token the registry carries
     function stagedPayment(content: AttachmentContent | undefined): ComposerAttachment | null {
         const t: Translate = (key, values) => $_(key, { values });
         switch (content?.kind) {
@@ -510,6 +514,10 @@
                         t,
                     ) ?? null
                 );
+            }
+            case "prize_content_initial": {
+                const token = $cryptoLookup.get(content.transfer.ledger);
+                return token === undefined ? null : (composerPrize(content, token, t) ?? null);
             }
             default:
                 return null;
@@ -543,6 +551,9 @@
             case "poll":
                 screen.dialogs.open({ kind: "poll_builder", chatId });
                 break;
+            case "prize":
+                screen.dialogs.open({ kind: "prize_builder", chatId });
+                break;
             case "crypto":
                 // to the one being replied to, unless the user picks someone else
                 screen.dialogs.open({
@@ -560,6 +571,9 @@
         switch (content?.kind) {
             case "crypto_content":
                 screen.dialogs.open({ kind: "send_crypto", chatId, editing: content });
+                break;
+            case "prize_content_initial":
+                screen.dialogs.open({ kind: "prize_builder", chatId, editing: content });
                 break;
         }
     }

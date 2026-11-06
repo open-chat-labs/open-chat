@@ -2344,6 +2344,7 @@
       "enterAmount": "Enter an amount",
       "evenSplit": "even split",
       "feeAdded": "Fee {fee} {symbol} ({count} transfers) is added on top",
+      "feesAdded": "Fees of {fee} {symbol} are added on top",
       "fewerWinners": "Fewer winners",
       "gateAuth": "Authenticated users",
       "gateChit": "{amount}+",

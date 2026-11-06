@@ -2,21 +2,27 @@
 // over, as the client's builders take it, and what the composer stages, as the library shows it.
 import {
     formatTokens,
+    prizeCosts,
     walletApprovalFee,
     type CryptocurrencyContent,
     type CryptocurrencyDetails,
     type EnhancedTokenDetails,
     type NewPoll,
+    type PrizeContentInitial,
+    type PrizeDiamond,
+    type PrizeDistribution,
     type TokenExchangeRates,
     type UserSummary,
 } from "@client";
 import type { PollDraft } from "@openchat/ui/src/features/components/PollBuilderDialog.svelte";
+import type { PrizeToken } from "@openchat/ui/src/features/components/PrizeBuilderDialog.svelte";
 import type {
     CryptoMember,
     CryptoToken,
 } from "@openchat/ui/src/features/components/SendCryptoDialog.svelte";
 import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
-import type { TokenRef, Transfer } from "@openchat/ui/src/lib/types";
+import type { Prize, PrizeDraft, TokenRef, Transfer } from "@openchat/ui/src/lib/types";
+import type { PrizeConfig } from "@src/logic/prize/prizeForm.svelte";
 import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
 import { swatchFor } from "../chats/chatList.adapter";
 import { displayDecimals, wholeTokens } from "../wallet/wallet.adapter";
@@ -155,6 +161,179 @@ export function composerTransfer(
             tok: token.symbol,
             amt: typedAmount(transfer.amountE8s, token.decimals),
             to: transfer.recipient,
+        },
+    };
+}
+
+// PrizeBuilderDialog's durations, in its order (its `dur` is an index into them), with their labels
+const PRIZE_DURATIONS: [ms: number, key: string][] = [
+    [60 * 60 * 1000, "oneHour"],
+    [6 * 60 * 60 * 1000, "sixHours"],
+    [24 * 60 * 60 * 1000, "oneDay"],
+    [7 * 24 * 60 * 60 * 1000, "sevenDays"],
+    [30 * 24 * 60 * 60 * 1000, "thirtyDays"],
+    [90 * 24 * 60 * 60 * 1000, "ninetyDays"],
+];
+
+/** The index of the dialog's duration nearest `ms`. */
+export function prizeDurationIndex(ms: number): number {
+    let best = 0;
+    PRIZE_DURATIONS.forEach(([d], i) => {
+        if (Math.abs(d - ms) < Math.abs(PRIZE_DURATIONS[best][0] - ms)) best = i;
+    });
+    return best;
+}
+
+/** A token a prize can be paid in, as `PrizeBuilderDialog` lists it (`builderTokens`' order). */
+export function prizeTokens(
+    tokens: EnhancedTokenDetails[],
+    rates: { get(ledger: string): TokenExchangeRates | undefined },
+    first: string | undefined,
+): { ledger: string; token: PrizeToken }[] {
+    return builderTokens(tokens, rates, first).flatMap(({ ledger, token }) => {
+        const details = tokens.find((t) => t.ledger === ledger);
+        if (details === undefined) return [];
+        return [
+            {
+                ledger,
+                token: {
+                    symbol: token.symbol,
+                    mark: token.mark,
+                    gradient: token.gradient,
+                    bal: token.bal,
+                    fee: wholeTokens(details.transferFee, details.decimals),
+                    minPer: wholeTokens(details.transferFee * 100n, details.decimals),
+                    dp: token.dp,
+                },
+            },
+        ];
+    });
+}
+
+/**
+ * What a prize of `amount` (whole tokens, as the dialog holds it) among `winners` costs, as the
+ * dialog shows it (`prizeCosts`): every fee on top of the fund, and the least the fund can be.
+ */
+export function prizePricing(
+    token: TokenFacts,
+    amount: number,
+    winners: number,
+): { fees: number; min: number } {
+    const units =
+        Number.isFinite(amount) && amount > 0
+            ? BigInt(Math.floor(amount * 10 ** token.decimals))
+            : 0n;
+    const costs = prizeCosts(units, winners, token.transferFee);
+    return {
+        fees: wholeTokens(costs.totalFees, token.decimals),
+        min: wholeTokens(costs.minAmount, token.decimals),
+    };
+}
+
+/** The restrictions a prize has, as the dialog's draft holds them. */
+function prizeGates(
+    diamond: PrizeDiamond,
+    minStreak: number,
+    minChitEarned: number,
+): PrizeDraft["gates"] {
+    return {
+        ...(diamond === "standard" ? { diamond: true } : {}),
+        ...(diamond === "lifetime" ? { lifetime: true } : {}),
+        ...(minStreak > 0 ? { streak: true } : {}),
+        ...(minChitEarned > 0 ? { chit: true } : {}),
+    };
+}
+
+/** A new prize's starting point in the dialog: the split, duration and restrictions last used. */
+export function prizeDefaults(config: PrizeConfig): Partial<PrizeDraft> {
+    return {
+        even: config.distribution === "equal",
+        dur: prizeDurationIndex(config.durationMs),
+        gates: prizeGates(config.diamond, config.minStreak, config.minChitEarned),
+        ...(config.minStreak > 0 ? { streak: config.minStreak } : {}),
+        ...(config.minChitEarned > 0 ? { chit: config.minChitEarned } : {}),
+    };
+}
+
+/** What `PrizeBuilderDialog`'s prize asks for, as `PrizeForm` holds it (its amount aside). */
+export function prizeChoices(prize: Prize): PrizeConfig & { winners: number } {
+    const rule = (kind: string) => prize.rules.find((r) => r.kind === kind);
+    const distribution: PrizeDistribution = prize.even ? "equal" : "random";
+    return {
+        winners: prize.winners,
+        distribution,
+        durationMs: prize.durationMs,
+        diamond: rule("lifetime") ? "lifetime" : rule("diamond") ? "standard" : "none",
+        minStreak: rule("streak")?.min ?? 0,
+        minChitEarned: rule("chit")?.min ?? 0,
+    };
+}
+
+/**
+ * A prize staged in the composer, as the composer's chip shows it and as `PrizeBuilderDialog`
+ * edits it again: its fund, winners, how long it runs and how many restrictions it has, and what
+ * it costs with the fees. Its split shows as even when every prize after the first is the same
+ * (rounding goes to the first). None for one whose transfer isn't pending.
+ */
+export function composerPrize(
+    content: PrizeContentInitial,
+    token: TokenFacts,
+    t: Translate,
+): Prize | undefined {
+    const transfer = content.transfer;
+    if (transfer.kind !== "pending") return undefined;
+    const winners = content.prizes.length;
+    const durationMs = Number(content.endDate) - Number(transfer.createdAtNanos / 1_000_000n);
+    const dur = prizeDurationIndex(durationMs);
+    const [ms, key] = PRIZE_DURATIONS[dur];
+    const even = content.prizes.slice(1).every((p) => p === content.prizes[1]);
+    const diamond: PrizeDiamond = content.lifetimeDiamondOnly
+        ? "lifetime"
+        : content.diamondOnly
+          ? "standard"
+          : "none";
+    const gates = prizeGates(diamond, content.streakOnly, content.minChitEarned);
+    const rules: Prize["rules"] = [
+        ...(diamond === "standard" ? [{ kind: "diamond" as const }] : []),
+        ...(diamond === "lifetime" ? [{ kind: "lifetime" as const }] : []),
+        ...(content.minChitEarned > 0
+            ? [{ kind: "chit" as const, min: content.minChitEarned }]
+            : []),
+        ...(content.streakOnly > 0 ? [{ kind: "streak" as const, min: content.streakOnly }] : []),
+    ];
+    const short = t(`ui.prizeBuilderDialog.durations.${key}Short`);
+    const amountText = tokenAmount(content.amount, token);
+    return {
+        token: tokenRef(token),
+        amount: wholeTokens(content.amount, token.decimals),
+        amountText,
+        winners,
+        even,
+        endsIn: short,
+        endsInLabel: t(`ui.prizeBuilderDialog.durations.${key}`),
+        endsAt: Number(content.endDate),
+        durationMs: ms,
+        gates: [],
+        rules,
+        fee: wholeTokens(content.fees, token.decimals),
+        feeText: tokenAmount(content.fees, token),
+        totalText: tokenAmount(content.amount + content.fees, token),
+        summary: [
+            t("ui.prizeBuilderDialog.summaryWinners", { count: winners }),
+            short,
+            ...(rules.length > 0
+                ? [t("ui.prizeBuilderDialog.summaryRules", { count: rules.length })]
+                : []),
+        ].join(" · "),
+        draft: {
+            tok: token.symbol,
+            amt: typedAmount(content.amount, token.decimals),
+            win: String(winners),
+            dur,
+            even,
+            gates,
+            streak: content.streakOnly > 0 ? content.streakOnly : 7,
+            chit: content.minChitEarned > 0 ? content.minChitEarned : 10000,
         },
     };
 }

@@ -21,8 +21,8 @@
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { cleanAmount, parseAmount } from '../../lib/amount';
-  import { onMount } from 'svelte';
-  import type { Prize, PrizeDraft } from '../../lib/types';
+  import { onMount, untrack } from 'svelte';
+  import type { Prize, PrizeDraft, PrizeGateKind } from '../../lib/types';
   import Button from '../../lib/components/Button.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
   import PrizeMessage from '../../lib/components/PrizeMessage.svelte';
@@ -61,16 +61,24 @@
     z?: number;
     /** A previous onAttach value, to edit it. */
     initial?: Prize | null;
+    /** What a new prize starts from (e.g. the settings last used); `initial` wins when editing. */
+    defaults?: Partial<PrizeDraft>;
+    /** The claim restrictions offered, in the dialog's order (all by default). */
+    restrictions?: PrizeGateKind[];
+    /** The host's prices for `amount` among `winners`: every fee on top of the amount, and the least the amount
+     *  can be. Without it a fee per winner plus one for the fund, and `minPer` a winner. */
+    pricing?: (token: PrizeToken, amount: number, winners: number) => { fees: number; min: number };
     onAttach?: (prize: Prize) => void;
     onClose?: () => void;
   }
 
-  let { tokens, z = 80, initial = null, onAttach, onClose }: Props = $props();
+  let { tokens, z = 80, initial = null, defaults, restrictions, pricing, onAttach, onClose }: Props = $props();
   const t = useT();
   const i18n = getI18n();
   const K = 'ui.prizeBuilderDialog.';
 
-  const start: PrizeDraft = { tok: tokens[0].symbol, amt: '', win: '20', dur: 2, even: false, gates: {}, streak: 7, chit: 10000, ...initial?.draft };
+  const start: PrizeDraft = untrack(() => ({ tok: tokens[0].symbol, amt: '', win: '20', dur: 2, even: false, gates: {}, streak: 7, chit: 10000, ...defaults, ...initial?.draft }));
+  const offered = $derived(restrictions ? GATES.filter((g) => restrictions.includes(g.k)) : GATES);
   let tok = $state(start.tok);
   let amt = $state(start.amt);
   let win = $state(start.win);
@@ -88,8 +96,9 @@
   const T = $derived(tokens.find((t) => t.symbol === tok) ?? tokens[0]);
   const a = $derived(parseAmount(amt));
   const w = $derived(parseInt(win, 10) || 0);
-  const fee = $derived(T.fee * (Math.max(w, 1) + 1));
-  const min = $derived(T.minPer * Math.max(w, 1));
+  const priced = $derived(pricing?.(T, a, Math.max(w, 1)));
+  const fee = $derived(priced ? priced.fees : T.fee * (Math.max(w, 1) + 1));
+  const min = $derived(priced ? priced.min : T.minPer * Math.max(w, 1));
   const max = $derived(Math.max(0, T.bal - fee));
   const F = (n: number) => fmt(n, T.dp);
   const pickAmount = (p: 'chit' | 'streak', n: number) => t(PICKS[p].amount, { count: n, n: PICKS[p].short(n) });
@@ -107,7 +116,7 @@
   );
   const reasonText = $derived(reason ? t(K + reason, { count: w, min: F(min), max: F(max), symbol: T.symbol }) : '');
   const ok = $derived(!reason);
-  const gateOn = $derived(GATES.filter((g) => gates[g.k]));
+  const gateOn = $derived(offered.filter((g) => gates[g.k]));
   const gateLabel = (g: (typeof GATES)[number]) =>
     g.k === 'streak'
       ? t(K + 'gateStreak', { count: streak })
@@ -231,7 +240,9 @@
             placeholder="0"
             aria-label={t(K + 'totalAmount')}
           />
-          <span class="amount-hint" class:warn={!quiet}>{ok ? t(K + 'feeAdded', { fee: F(fee), symbol: T.symbol, count: Math.max(w, 1) + 1 }) : reasonText}</span>
+          <span class="amount-hint" class:warn={!quiet}
+            >{ok ? (priced ? t(K + 'feesAdded', { fee: F(fee), symbol: T.symbol }) : t(K + 'feeAdded', { fee: F(fee), symbol: T.symbol, count: Math.max(w, 1) + 1 })) : reasonText}</span
+          >
           <QuickAmountChips size="sm" onSelect={(f) => (amt = String(Number((max * f).toFixed(T.dp))))} />
         </div>
         <div class="rows">
@@ -273,7 +284,7 @@
               {#if row === r.k && r.k === 'who'}
                 <div class="panel column gap10">
                   <div class="chips">
-                    {#each GATES as g}
+                    {#each offered as g}
                       {@const on = !!gates[g.k]}
                       <button class="choice gate" class:on onclick={() => toggleGate(g)} aria-pressed={on}>
                         <span class="gate-icon" style:mask="var(--icon-{g.icon}) center/contain no-repeat" style:-webkit-mask="var(--icon-{g.icon}) center/contain no-repeat"></span>{on

@@ -282,6 +282,12 @@ describe("the builders the entry offers", () => {
         expect(composerBuilders(permitted("text", "poll"), none)).toEqual(["poll"]);
         expect(composerBuilders(permitted("text", "crypto"), none)).toEqual(["crypto"]);
         expect(composerBuilders(permitted("text"), none)).toEqual([]);
+        // the + menu's order: the design's
+        expect(composerBuilders(permitted("crypto", "prize", "poll"), none)).toEqual([
+            "poll",
+            "prize",
+            "crypto",
+        ]);
     });
 
     test("payments attach to the draft, to be taken when it's sent; a poll is sent from its dialog", () => {
@@ -290,8 +296,10 @@ describe("the builders the entry offers", () => {
     });
 
     test("none this build turns off (the app store builds' payments)", () => {
-        const all = permitted("poll", "crypto");
-        expect(composerBuilders(all, new Set<ComposerBuilder>(["crypto"]))).toEqual(["poll"]);
+        const all = permitted("poll", "prize", "crypto");
+        expect(composerBuilders(all, new Set<ComposerBuilder>(["crypto", "prize"]))).toEqual([
+            "poll",
+        ]);
     });
 });
 

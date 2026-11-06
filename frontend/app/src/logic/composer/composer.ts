@@ -223,6 +223,7 @@ export function composerBuilders(
 ): ComposerBuilder[] {
     const builders: [ComposerBuilder, MessagePermission][] = [
         ["poll", "poll"],
+        ["prize", "prize"],
         ["crypto", "crypto"],
     ];
     return builders.flatMap(([builder, permission]) =>

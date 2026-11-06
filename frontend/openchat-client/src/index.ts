@@ -239,5 +239,19 @@ export {
     swapTakenBy,
 } from "./utils/swaps";
 export { externalWalletPayment, type ExternalWalletPayment } from "./utils/draftPayment";
+export {
+    generatePrizes,
+    MAX_PRIZE_WINNERS,
+    newPrizeContent,
+    PRIZE_FEE_PERCENT,
+    prizeCosts,
+    prizeMaximum,
+    prizeRecipient,
+    validPrizeWinners,
+    type NewPrize,
+    type PrizeCosts,
+    type PrizeDiamond,
+    type PrizeDistribution,
+} from "./utils/prizeBuilder";
 export { toDateString, toDatetimeString, toDayString, toMonthString } from "./utils/date";
 export * from "./utils/url";

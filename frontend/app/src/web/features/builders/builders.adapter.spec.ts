@@ -1,5 +1,7 @@
 import {
+    formatTokens,
     newPollContent,
+    newPrizeContent,
     validateTokenInput,
     type CryptocurrencyContent,
     type EnhancedTokenDetails,
@@ -8,8 +10,13 @@ import {
 import type { PollDraft } from "@openchat/ui/src/features/components/PollBuilderDialog.svelte";
 import {
     builderTokens,
+    composerPrize,
     composerTransfer,
     newPoll,
+    prizeChoices,
+    prizeDefaults,
+    prizeDurationIndex,
+    prizePricing,
     typedAmount,
     type Translate,
 } from "./builders.adapter";
@@ -132,5 +139,83 @@ describe("a poll from the builder", () => {
             newPollContent(newPoll({ ...draft, ...d }), 0).config;
         expect(config({ canChange: false }).allowUserToChangeVote).toBe(false);
         expect(config({ canChange: false, multiple: true }).allowUserToChangeVote).toBe(true);
+    });
+});
+
+describe("a prize in the builder", () => {
+    const content = newPrizeContent(
+        {
+            chatId: { kind: "group_chat", groupId: "g" },
+            ledger: "icp-ledger",
+            symbol: "ICP",
+            transferFee: 10_000n,
+            amount: 229_000_000n,
+            winners: 4,
+            distribution: "equal",
+            durationMs: 7 * 24 * 60 * 60 * 1000,
+            diamond: "lifetime",
+            minStreak: 30,
+            minChitEarned: 0,
+        },
+        1_000,
+    );
+    if (content === undefined) throw new Error("no prize");
+
+    test("is priced as prizeCosts prices it: every fee on top of the fund, and its least", () => {
+        // 1 ICP among 4: the fund's transfer and approval, 4 transfer fees and 5%
+        expect(prizePricing(icp, 1, 4)).toEqual({ fees: 0.0506, min: 0.04 });
+        expect(prizePricing(icp, Number.NaN, 4).fees).toBe(0.0006);
+    });
+
+    test("starts from the split, duration and restrictions last used", () => {
+        expect(
+            prizeDefaults({
+                distribution: "equal",
+                durationMs: 30 * 24 * 60 * 60 * 1000,
+                diamond: "standard",
+                minStreak: 0,
+                minChitEarned: 5000,
+            }),
+        ).toEqual({ even: true, dur: 4, gates: { diamond: true, chit: true }, chit: 5000 });
+        expect(prizeDurationIndex(60 * 60 * 1000)).toBe(0);
+        // one the dialog doesn't offer: the nearest
+        expect(prizeDurationIndex(2 * 24 * 60 * 60 * 1000)).toBe(2);
+    });
+
+    test("staged, shows its fund, winners, duration and restrictions, and what it costs", () => {
+        expect(composerPrize(content, icp, t)).toMatchObject({
+            amountText: "2.29 ICP",
+            winners: 4,
+            even: true,
+            durationMs: 7 * 24 * 60 * 60 * 1000,
+            rules: [{ kind: "lifetime" }, { kind: "streak", min: 30 }],
+            feeText: `${formatTokens(content.fees, 8)} ICP`,
+            summary:
+                'ui.prizeBuilderDialog.summaryWinners{"count":4} · ui.prizeBuilderDialog.durations.sevenDaysShort{} · ui.prizeBuilderDialog.summaryRules{"count":2}',
+        });
+    });
+
+    // 5d invariant 3: edited again, the fund reads back exactly, and the choices are kept
+    test("is edited from what it holds", () => {
+        const prize = composerPrize(content, icp, t);
+        expect(prize?.draft).toEqual({
+            tok: "ICP",
+            amt: "2.29",
+            win: "4",
+            dur: 3,
+            even: true,
+            gates: { lifetime: true, streak: true },
+            streak: 30,
+            chit: 10000,
+        });
+        expect(validateTokenInput(prize?.draft.amt ?? "", 8).amount).toBe(229_000_000n);
+        expect(prize === undefined ? undefined : prizeChoices(prize)).toEqual({
+            winners: 4,
+            distribution: "equal",
+            durationMs: 7 * 24 * 60 * 60 * 1000,
+            diamond: "lifetime",
+            minStreak: 30,
+            minChitEarned: 0,
+        });
     });
 });
