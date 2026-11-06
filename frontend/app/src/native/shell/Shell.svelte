@@ -47,6 +47,7 @@
     } from "../router/locations";
     import { releaseVelocity, type DragSample } from "@openchat/ui/src/native/sheetDrag";
     import { backAction } from "./back";
+    import { openOnWeb } from "./onWeb";
     import { popOut, pushIn } from "./motion";
     import { Overlays } from "./overlays.svelte";
     import { tabBarTabs } from "./tabBar.adapter";
@@ -112,6 +113,18 @@
     $effect(() => {
         const at = location;
         if (at.area === "tabs") untrack(() => stacks.arrive(at));
+    });
+
+    // the marketing pages (Landing, Learn, the terms …) are the website's: one the app is sent to
+    // opens in the browser, and the app goes back where it was (the start or the chats when it was
+    // the first page)
+    $effect(() => {
+        if (location.area !== "marketing") return;
+        untrack(() => {
+            openOnWeb(url, client.canonicalOrigin());
+            if (history.length > 1) history.back();
+            else navigate("/", "auto");
+        });
     });
 
     const pushed = $derived(stacks.steps.slice(1));
@@ -506,14 +519,7 @@
         <Toasts above="none" />
     </div>
 {:else if location.area === "marketing"}
-    <!-- the marketing pages (Landing, Learn): the web tree's, which have no native design -->
-    <div class="marketing">
-        {#await import("@src/web/features/marketing/MarketingScreen.svelte") then { default: MarketingScreen }}
-            <MarketingScreen route={location.route} />
-        {:catch}
-            <div class="outside">{@render chunkFailed()}</div>
-        {/await}
-    </div>
+    <!-- a marketing page, which has opened in the browser: nothing while the app steps back -->
 {:else}
     <!-- not found -->
     <div class="outside">
@@ -545,10 +551,6 @@
     }
 
     // the web's marketing pages scroll the document
-    .marketing {
-        min-height: 100%;
-    }
-
     // the screens, over the tab bar, or the whole window inside a conversation, where the bar
     // goes down out of the way
     .stage {

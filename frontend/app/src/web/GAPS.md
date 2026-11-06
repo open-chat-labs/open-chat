@@ -81,8 +81,9 @@ design export needs. Each entry says where it came up.
   - **Outside the tabs**: done (N4). Signed out, every URL but a marketing page is the signed-out
     start (no guest mode, notes §3.1), the URL kept for after sign-in; a session from before shows a
     spinner while it loads, so Welcome doesn't flash (`startEntry`). The marketing pages (Landing,
-    Learn) are the web tree's `MarketingScreen`, loaded when one shows: the design has no native
-    version. Android's back from one goes to "/" (the start, or the chats).
+    Learn, the terms and privacy policy) open on the website in the default browser (`openOnWeb`):
+    Welcome's links do, and the app sent to one opens it there and steps back (the start or the
+    chats when it was the first page), as a deep link to one already did.
   - **Signed out, the shell's events**: done (N4). The Android app queues its events until
     `svelteReady`, which both trees send only once someone is signed in (`setupNativeApp`). What a
     signed-out screen needs is the screen's own: the window insets (`followWindowInsets`, sent at

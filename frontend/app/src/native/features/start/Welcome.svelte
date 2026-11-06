@@ -9,9 +9,11 @@
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import Logo from "@openchat/ui/src/lib/components/Logo.svelte";
     import { languageCode } from "@i18n/i18n";
+    import type { OpenChat } from "@client";
     import { currentThemeMode, themeType } from "@theme/themes";
-    import { untrack } from "svelte";
+    import { getContext, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
+    import { openOnWeb } from "../../shell/onWeb";
     import { useOverlay, type Overlays } from "../../shell/overlays.svelte";
     import AppearanceSheet from "./AppearanceSheet.svelte";
     import LanguageSheet from "./LanguageSheet.svelte";
@@ -21,6 +23,7 @@
     type Props = { start: StartStack; overlays: Overlays };
 
     let { start, overlays }: Props = $props();
+    const client = getContext<OpenChat>("client");
 
     let sheet = $state<"appearance" | "language" | undefined>(undefined);
     useOverlay(
@@ -134,7 +137,13 @@
         <p class="terms">
             {#each terms as part, i (i)}
                 {#if part.kind === "link"}
-                    <a href={LINKS[part.name].href}>{$_(LINKS[part.name].key)}</a>
+                    <a
+                        href={LINKS[part.name].href}
+                        onclick={(e) => {
+                            // the website's, in the browser (shell/onWeb)
+                            e.preventDefault();
+                            openOnWeb(LINKS[part.name].href, client.canonicalOrigin());
+                        }}>{$_(LINKS[part.name].key)}</a>
                 {:else}
                     {part.text}
                 {/if}

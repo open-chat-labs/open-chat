@@ -38,7 +38,7 @@ native/
     locations.ts     where each URL is: its tab and the stack on it
   shell/
     Shell.svelte     the tabs' roots, the pushed screens and their motion, the tab bar, Back;
-                     signed out, the start (features/start); the marketing pages
+                     signed out, the start (features/start); a marketing page opens in the browser
     tabStacks.svelte.ts  each tab's stack, kept across tab switches
     overlays.svelte.ts   open sheets and menus, which Android's back closes first
     back.ts          what Android's system back does
@@ -58,9 +58,10 @@ Shared with the web tree rather than copied: the route table (`utils/routeTable.
 effects (`core/RouteEffects.svelte`), the library's i18n bridge (`i18n/openchatUi.ts`), the stored
 accent (`theme/accent.ts`), the native apps' setup (`utils/native/nativeApp.ts`, shared with
 `components_mobile`), sign-in and sign-up (`logic/auth`: the flow's decisions, the sign-up with
-its referrer, the sign-up form and the referrer picker, shared with `src/web` and the old UIs), and
-the marketing pages, which are the web tree's own screen (`web/features/marketing`), as the design
-has no native version.
+its referrer, the sign-up form and the referrer picker, shared with `src/web` and the old UIs). The
+marketing pages (Landing, Learn, the terms and privacy policy) aren't the app's: they open on the
+website in the default browser (`shell/onWeb.ts`), as the old native app's About and a deep link
+to one do.
 
 ## Rules
 

@@ -38,7 +38,8 @@ export function backAction({
         case "signed_out":
             return startBack ? { kind: "start_back" } : { kind: "leave" };
         case "marketing":
-            // a page outside the app: back to it ("/" is the signed-out start, or the chats)
+            // a marketing page opens in the browser and the app steps back at once (Shell); should
+            // Back come first, "/" is the signed-out start, or the chats
             return { kind: "navigate", url: "/" };
         case "not_found":
             return { kind: "navigate", url: chatsUrl };

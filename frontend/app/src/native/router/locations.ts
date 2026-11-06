@@ -61,7 +61,8 @@ export type NativeLocation =
     // no one signed in: the signed-out start (Welcome, sign in, sign up: features/start), whatever
     // the URL, which stays as it is for after sign-in (a link someone opened lands there then)
     | { area: "signed_out" }
-    // the marketing pages (Landing, Learn): outside the tabs, signed in or out
+    // the marketing pages (Landing, Learn, the terms …), signed in or out: the website's, opened
+    // in the browser (shell/onWeb), never shown in the app
     | { area: "marketing"; route: RouteParams }
     | { area: "not_found" };
 
