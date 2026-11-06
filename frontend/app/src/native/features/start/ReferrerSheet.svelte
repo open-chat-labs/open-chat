@@ -286,7 +286,12 @@
         padding: 0 var(--space-16) var(--space-10);
     }
 
+    // the results scroll under the search, which stays put (the sheet's body doesn't scroll)
     .list {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
         display: flex;
         flex-direction: column;
         gap: var(--space-6);

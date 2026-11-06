@@ -80,7 +80,12 @@
         padding: 0 var(--space-16) var(--space-10);
     }
 
+    // the languages scroll under the search, which stays put (the sheet's body doesn't scroll)
     .rows {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
         display: flex;
         flex-direction: column;
         gap: var(--space-6);

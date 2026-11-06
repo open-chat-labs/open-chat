@@ -13,6 +13,7 @@
     import { SignUpForm } from "@src/logic/auth/signUpForm.svelte";
     import { navigate } from "@src/utils/navigation";
     import { routeForChatIdentifier, type OpenChat, type UserSummary } from "@client";
+    import { keyboard } from "@stores/keyboard.svelte";
     import { getContext, onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { useOverlay, type Overlays } from "../../shell/overlays.svelte";
@@ -38,6 +39,15 @@
     let signedUp = false;
 
     let picking = $state(false);
+
+    // the keyboard covers the bottom of the page (the referrer row, Continue) rather than the page
+    // shrinking above it and pushing them up; the referrer sheet, whose search it would hide,
+    // shrinks above it as usual
+    $effect(() => {
+        if (picking) keyboard.enableViewportResize();
+        else keyboard.disableViewportResize();
+    });
+    onDestroy(() => keyboard.enableViewportResize());
     useOverlay(
         untrack(() => overlays), // the shell's, for the screen's lifetime
         () => picking,
