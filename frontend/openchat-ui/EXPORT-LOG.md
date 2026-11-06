@@ -673,3 +673,6 @@
 
 ## 2026-11-06 — swiping a run's first message takes its avatar and name along (5d testing), by hand
 - `MessageGroup`: the avatar and name (`data-group-head`) follow the first message's swipe and spring back with it, rather than staying put while it slides away; that row's reply hint sits past the avatar (`past-avatar`), where before it came out over it.
+
+## 2026-11-06 — the swap offer card's sending state (5d testing), by hand
+- `SwapOffer`: `sending` shows the card with "Sending offer…" and a spinner where Cancel offer / Accept swap would go (`ui.swapOffer.sending`), as `PrizeMessage` does. In meta.json.

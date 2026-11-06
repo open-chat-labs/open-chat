@@ -357,6 +357,37 @@ describe("swap offers", () => {
             text: "[p2p_swap_content]",
         });
     });
+
+    const sending = () =>
+        message({
+            sender: "me",
+            content: {
+                kind: "p2p_swap_content_initial",
+                token0: { symbol: "ICP", ledger: "icp", decimals: 8, fee: 10_000n },
+                token1: { symbol: "ICP", ledger: "icp", decimals: 8, fee: 10_000n },
+                token0Amount: 100_000_000n,
+                token1Amount: 300_000_000n,
+                caption: "Anyone?",
+                expiresIn: 86_400_000n,
+            },
+        } as Partial<Message>);
+
+    // until it lands, the card as it will be, with nothing to do yet
+    test("still being sent, show as the card it will be", () => {
+        expect(messageRow(sending(), "sending", ctx).message).toMatchObject({
+            kind: "swap",
+            sending: true,
+            canAct: false,
+            state: "open",
+            give: { amount: "1.00" },
+            get: { amount: "3.00" },
+            caption: "Anyone?",
+        });
+    });
+
+    test("that failed to send, show as text, which says so", () => {
+        expect(messageRow(sending(), "failed", ctx).message).toMatchObject({ kind: "text" });
+    });
 });
 
 describe("the time until the next day", () => {

@@ -1187,7 +1187,9 @@ design export needs. Each entry says where it came up.
   (an approval popup) and a MultiUser user's own wallet aren't offered yet. The old trees' details
   view (the escrow transfers, `P2PSwapProgress`) and who took it aren't shown. The offer's message
   shows as plain text under the card (`SwapOffer` takes `caption` and `canAct` by hand: no action
-  while previewing). Time left is worked out when the row is made. No tick, reactions, quote or thread yet, and swaps in threads aren't
+  while previewing). An offer still being sent (`p2p_swap_content_initial`) shows as the card it
+  will be, with "Sending offer…" where the action would go (`sending`, by hand; a failed one stays
+  a text bubble, which shows the failure). Time left is worked out when the row is made. No tick, reactions, quote or thread yet, and swaps in threads aren't
   wired.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so

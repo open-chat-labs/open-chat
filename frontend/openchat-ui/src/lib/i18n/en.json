@@ -2921,6 +2921,7 @@
       "expired": "Expired",
       "finished": "Finished",
       "inProgress": "In progress",
+      "sending": "Sending offer…",
       "swapped": "Swapped",
       "timeLeft": "{time} left",
       "title": "Swap offer"

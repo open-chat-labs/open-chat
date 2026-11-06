@@ -25,6 +25,7 @@ import {
     type MessageContent,
     type OgPreview,
     type P2PSwapContent,
+    type P2PSwapContentInitial,
     type PollContent,
     type PrizeContent,
     type PrizeContentInitial,
@@ -356,6 +357,11 @@ function kindMessage(
                 : prizeMessage(msg.sender, sendingPrize(content), ctx, base, true);
         case "p2p_swap_content":
             return swapMessage(msg.sender, content, ctx, base);
+        case "p2p_swap_content_initial":
+            // still on its way: the card as it will land; a failed one stays text, which says so
+            return status === "failed"
+                ? undefined
+                : swapMessage(msg.sender, sendingSwap(content, ctx.now), ctx, base, true);
         case "file_content":
             return {
                 ...base,
@@ -503,6 +509,7 @@ function swapMessage(
     content: P2PSwapContent,
     ctx: ConversationContext,
     base: KindBase,
+    sending = false,
 ): GroupMessage | undefined {
     const token0 = ctx.token(content.token0.ledger);
     const token1 = ctx.token(content.token1.ledger);
@@ -550,7 +557,24 @@ function swapMessage(
         expiresIn: state === "open" ? timeLeft(Number(content.expiresAt) - ctx.now) : "",
         doneText: ctx.text(i18nKey(doneKey)),
         caption: content.caption ?? "",
-        canAct: canAccept || canCancel,
+        canAct: (canAccept || canCancel) && !sending,
+        sending,
+    };
+}
+
+/** A swap offer still being sent, as it will land: open, for as long as it was given from now. */
+export function sendingSwap(content: P2PSwapContentInitial, now: number): P2PSwapContent {
+    return {
+        kind: "p2p_swap_content",
+        token0: content.token0,
+        token1: content.token1,
+        token0Amount: content.token0Amount,
+        token1Amount: content.token1Amount,
+        caption: content.caption,
+        expiresAt: BigInt(now) + content.expiresIn,
+        status: { kind: "p2p_swap_open" },
+        swapId: 0,
+        token0TxnIn: 0n,
     };
 }
 

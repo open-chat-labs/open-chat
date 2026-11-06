@@ -17114,6 +17114,17 @@
         "doc": "Whether an open offer offers its action (Accept / Cancel offer) to this reader."
       },
       {
+        "name": "sending",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Still being sent: no action, \"Sending offer…\" in its place."
+      },
+      {
         "name": "time",
         "type": "string",
         "default": "11:15",
