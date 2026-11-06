@@ -1375,7 +1375,6 @@ function messageToEvent(
                     lifetimeDiamondOnly: message.content.lifetimeDiamondOnly,
                     uniquePersonOnly: message.content.uniquePersonOnly,
                     streakOnly: message.content.streakOnly,
-                    requiresCaptcha: message.content.requiresCaptcha,
                     minChitEarned: message.content.minChitEarned,
                 };
                 break;

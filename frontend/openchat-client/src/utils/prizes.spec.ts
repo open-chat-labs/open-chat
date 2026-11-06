@@ -15,7 +15,6 @@ const prize: PrizeContent = {
     token: "ICP",
     ledger: "icp",
     endDate: 1000n,
-    requiresCaptcha: false,
     minChitEarned: 0,
 };
 

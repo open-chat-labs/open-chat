@@ -246,7 +246,6 @@ describe("prizes", () => {
                 token: "ICP",
                 ledger,
                 endDate: 1n,
-                requiresCaptcha: false,
                 minChitEarned: 0,
             },
         } as Partial<Message>);

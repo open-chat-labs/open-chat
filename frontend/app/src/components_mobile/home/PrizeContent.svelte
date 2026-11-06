@@ -37,7 +37,6 @@
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/ClockOutline.svelte";
-    import Fingerprint from "svelte-material-icons/Fingerprint.svelte";
     import Gift from "svelte-material-icons/GiftOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { claimsStore } from "../../stores/claims";
@@ -167,7 +166,6 @@
         content.diamondOnly ||
             content.lifetimeDiamondOnly ||
             content.streakOnly > 0 ||
-            content.requiresCaptcha ||
             content.minChitEarned > 0,
     );
     let spin = $derived(intersecting && !finished && !allClaimed);
@@ -295,7 +293,6 @@
                             <Badges
                                 size="large"
                                 forceStreakBadge
-                                withFingerprint={content.requiresCaptcha}
                                 {diamondStatus}
                                 uniquePerson={false}
                                 chitEarned={content.minChitEarned}
@@ -417,28 +414,6 @@
                 </Column>
 
                 <Column gap="sm" padding={["zero", "xs", "md"]}>
-                    {#if content.requiresCaptcha}
-                        <Row gap="md">
-                            <Column
-                                borderRadius="circle"
-                                width={{ size: "1.375rem" }}
-                                height={{ size: "1.375rem" }}
-                                mainAxisAlignment="center"
-                                crossAxisAlignment="center"
-                                backgroundColor={ColourVars.surface2}>
-                                <Fingerprint
-                                    viewBox={"0 -1 24 24"}
-                                    size={"1rem"}
-                                    color={"var(--text-primary)"} />
-                            </Column>
-                            <Body>
-                                <Translatable
-                                    resourceKey={i18nKey("prizes.authRequiredLabel", {
-                                        n: content.streakOnly,
-                                    })} />
-                            </Body>
-                        </Row>
-                    {/if}
                     {#if content.diamondOnly || content.lifetimeDiamondOnly}
                         <Row gap="md">
                             <Diamond

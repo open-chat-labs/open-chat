@@ -11,6 +11,8 @@ import type {
     MessageContent as TMessageContent,
     MiniAppStatus as TMiniAppStatus,
 } from "../../typebox";
+import { MessageContent as MessageContentSchema } from "../../typebox";
+import { typeboxValidate } from "../../utils/typebox";
 import {
     addressToIcrcAccount,
     apiExternalBotPermissions,
@@ -158,31 +160,38 @@ describe("price chart content mapping", () => {
 describe("prize content mapping", () => {
     // One of the two ledgers whose symbol is TENDY
     const tendy = "kylwo-viaaa-aaaaq-aae7a-cai";
+    const prize = {
+        prizes_remaining: 2,
+        prizes_pending: 1,
+        winner_count: 3,
+        user_is_winner: false,
+        token_symbol: "TENDY",
+        ledger: Principal.fromText(tendy).toUint8Array(),
+        end_date: 1_000n,
+        caption: "a prize",
+        diamond_only: false,
+        lifetime_diamond_only: false,
+        unique_person_only: false,
+        streak_only: 0,
+        min_chit_earned: 0,
+    };
 
     test("keeps the prize's ledger as well as its symbol", () => {
-        const content = messageContent(
-            {
-                Prize: {
-                    prizes_remaining: 2,
-                    prizes_pending: 1,
-                    winner_count: 3,
-                    user_is_winner: false,
-                    token_symbol: "TENDY",
-                    ledger: Principal.fromText(tendy).toUint8Array(),
-                    end_date: 1_000n,
-                    caption: "a prize",
-                    diamond_only: false,
-                    lifetime_diamond_only: false,
-                    unique_person_only: false,
-                    streak_only: 0,
-                    requires_captcha: false,
-                    min_chit_earned: 0,
-                },
-            },
-            "user-1",
-        );
+        const content = messageContent({ Prize: prize }, "user-1");
 
         expect(content).toMatchObject({ kind: "prize_content", token: "TENDY", ledger: tendy });
+    });
+
+    test("parses a prize with the requires_captcha field the backend still sends to older clients", () => {
+        const api = typeboxValidate(
+            { Prize: { ...prize, requires_captcha: false } },
+            MessageContentSchema,
+        );
+
+        expect(messageContent(api, "user-1")).toMatchObject({
+            kind: "prize_content",
+            token: "TENDY",
+        });
     });
 });
 

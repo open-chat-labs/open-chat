@@ -5,7 +5,6 @@
         diamond: "none" | "standard" | "lifetime";
         uniquePersonOnly: boolean;
         minStreak: number;
-        requiresAuth: boolean;
         distribution: "equal" | "random";
         duration: Duration;
     };
@@ -14,7 +13,6 @@
         diamond: "none",
         uniquePersonOnly: false,
         minStreak: 0,
-        requiresAuth: false,
         distribution: "random",
         duration: "oneDay",
     };
@@ -121,7 +119,6 @@
     let sourceWallet = $state<SignerWallet | undefined>();
     let payFromWallet = $derived(sourceWallet !== undefined);
     let approval: ExternalWalletApproval | undefined = $state();
-    let requiresAuth = $state($prizeConfig.requiresAuth);
     let anyUser = $derived(!diamondOnly && !uniquePersonOnly && !streakOnly && !chitOnly);
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
@@ -244,7 +241,6 @@
             amount: draftAmount,
             fees: totalFees,
             prizes,
-            requiresCaptcha: requiresAuth,
         };
 
         prizeConfig.set({
@@ -252,7 +248,6 @@
             diamond: diamondType,
             uniquePersonOnly,
             minStreak,
-            requiresAuth,
             distribution,
             duration: selectedDuration,
         });
@@ -507,10 +502,6 @@
                             </div>
                             <div class="restrictions">
                                 <Legend label={i18nKey("prizes.restrictions")} />
-                                <Checkbox
-                                    id="captcha"
-                                    label={i18nKey(`prizes.authRequiredLabel`)}
-                                    bind:checked={requiresAuth} />
                                 <Checkbox
                                     id="any_user"
                                     label={i18nKey(`prizes.anyone`)}

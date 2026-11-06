@@ -2044,7 +2044,6 @@
     "prizes": {
         "allClaimed": "Fully claimed",
         "anyone": "Any user",
-        "authRequiredLabel": "Requires authentication",
         "claim": "Claim",
         "claimed": "Success!",
         "claimFailed": "Sorry, your claim was unsuccessful! Better luck next time.",
@@ -2073,7 +2072,6 @@
         "onlyUniquePerson": "Only Unique humans",
         "prizeFinished": "Your prize message has now finished",
         "randomDistribution": "Random distribution",
-        "requiresCaptcha": "Requires CAPTCHA",
         "restrictedMessage": "This prize has the following restrictions",
         "restrictions": "Claim restrictions",
         "standardDiamond": "Standard",

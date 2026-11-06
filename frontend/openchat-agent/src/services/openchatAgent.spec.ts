@@ -96,7 +96,6 @@ function prize(fromAccount?: string): PrizeContentInitial {
         endDate: 0n,
         transfer: transfer(fromAccount),
         prizes: [50n, 40n],
-        requiresCaptcha: false,
         fees: 10n,
         amount: 90n,
     };

@@ -1983,7 +1983,6 @@
     "prizes": {
         "allClaimed": "Повністю затребувана",
         "anyone": "Будь-який користувач",
-        "authRequiredLabel": "Потрібна автентифікація",
         "claim": "Претензія",
         "claimed": "Успіх!",
         "claimFailed": "Вибачте, ваша претензія не була задоволена! Пощастить наступного разу.",
@@ -2012,7 +2011,6 @@
         "onlyUniquePerson": "Тільки унікальні люди",
         "prizeFinished": "Ваше повідомлення про приз завершено",
         "randomDistribution": "Випадковий розподіл",
-        "requiresCaptcha": "Вимагає CAPTCHA",
         "restrictedMessage": "Цей приз має такі обмеження",
         "restrictions": "Обмеження претензій",
         "standardDiamond": "Стандартний",

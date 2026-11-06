@@ -1983,7 +1983,6 @@
     "prizes": {
         "allClaimed": "Entièrement revendiqué",
         "anyone": "Tout utilisateur",
-        "authRequiredLabel": "Nécessite une authentification",
         "claim": "Prétendre",
         "claimed": "Succès!",
         "claimFailed": "Désolé, votre réclamation n'a pas abouti ! Plus de chance la prochaine fois.",
@@ -2012,7 +2011,6 @@
         "onlyUniquePerson": "Seuls les humains uniques",
         "prizeFinished": "Votre message de récompense est maintenant terminé",
         "randomDistribution": "Distribution aléatoire",
-        "requiresCaptcha": "Nécessite un CAPTCHA",
         "restrictedMessage": "Ce prix comporte les restrictions suivantes",
         "restrictions": "Restrictions de réclamation",
         "standardDiamond": "Standard",

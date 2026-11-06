@@ -271,7 +271,6 @@ export interface PrizeContentInitial {
     caption?: string;
     transfer: PendingCryptocurrencyTransfer;
     prizes: bigint[];
-    requiresCaptcha: boolean;
     fees: bigint;
     amount: bigint;
 }
@@ -579,7 +578,6 @@ export const PrizeContentSchema = Type.Object({
     ledger: Type.String(),
     endDate: Type.BigInt(),
     caption: Type.Optional(Type.String()),
-    requiresCaptcha: Type.Boolean(),
     minChitEarned: Type.Number(),
 });
 export type PrizeContent = Static<typeof PrizeContentSchema>;

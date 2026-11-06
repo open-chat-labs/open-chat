@@ -1983,7 +1983,6 @@
     "prizes": {
         "allClaimed": "Całość odebrana",
         "anyone": "Dowolny użytkownik",
-        "authRequiredLabel": "Wymaga uwierzytelnienia",
         "claim": "Prawo",
         "claimed": "Odebrano",
         "claimFailed": "Przykro nam, że Twoja reklamacja zakończyła się niepowodzeniem! Więcej szczęścia następnym razem. ",
@@ -2012,7 +2011,6 @@
         "onlyUniquePerson": "Tylko wyjątkowi ludzie",
         "prizeFinished": "Twoja wiadomość z nagrodą została już ukończona",
         "randomDistribution": "Losowa dystrybucja",
-        "requiresCaptcha": "Wymaga CAPTCHA",
         "restrictedMessage": "Ta nagroda ma następujące ograniczenia",
         "restrictions": "Ograniczenia roszczeń",
         "standardDiamond": "Standard",

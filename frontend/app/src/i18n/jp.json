@@ -1983,7 +1983,6 @@
     "prizes": {
         "allClaimed": "全て請求済み",
         "anyone": "すべてのユーザー",
-        "authRequiredLabel": "認証が必要です",
         "claim": "請求",
         "claimed": "成功！",
         "claimFailed": "申し訳ありませんが、あなたの請求は失敗しました!次回は頑張ってください。",
@@ -2012,7 +2011,6 @@
         "onlyUniquePerson": "ユニークな人間だけ",
         "prizeFinished": "賞品メッセージが完成しました",
         "randomDistribution": "ランダム配分",
-        "requiresCaptcha": "CAPTCHAが必要です",
         "restrictedMessage": "この賞品には以下の制限があります",
         "restrictions": "請求制限",
         "standardDiamond": "標準",

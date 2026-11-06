@@ -526,7 +526,7 @@ impl From<MessageContentInitial> for MessageContent {
                 lifetime_diamond_only: c.lifetime_diamond_only,
                 unique_person_only: c.unique_person_only,
                 streak_only: c.streak_only,
-                requires_captcha: c.requires_captcha,
+                requires_captcha: false,
                 min_chit_earned: c.min_chit_earned,
             }),
             MessageContentInitial::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r),
@@ -770,7 +770,6 @@ pub struct PrizeContentInitial {
     pub lifetime_diamond_only: bool,
     pub unique_person_only: bool,
     pub streak_only: u16,
-    pub requires_captcha: bool,
     pub min_chit_earned: u32,
 }
 
@@ -792,6 +791,10 @@ pub struct PrizeContent {
     pub lifetime_diamond_only: bool,
     pub unique_person_only: bool,
     pub streak_only: u16,
+    // Always false. Prizes can no longer require signing in again, as every claim is checked for a
+    // human instead, but older websites, apps and bots still expect the field.
+    #[deprecated]
+    #[ts(skip)]
     pub requires_captcha: bool,
     pub min_chit_earned: u32,
 }

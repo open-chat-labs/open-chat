@@ -1983,7 +1983,6 @@
     "prizes": {
         "allClaimed": "Yêu cầu đầy đủ",
         "anyone": "Bất kỳ người dùng nào",
-        "authRequiredLabel": "Yêu cầu xác thực",
         "claim": "Yêu cầu",
         "claimed": "Sự thành công!",
         "claimFailed": "Rất tiếc, khiếu nại của bạn không thành công! Chúc may mắn lần sau.",
@@ -2012,7 +2011,6 @@
         "onlyUniquePerson": "Chỉ có con người độc nhất",
         "prizeFinished": "Tin nhắn giải thưởng của bạn hiện đã kết thúc",
         "randomDistribution": "Phân phối ngẫu nhiên",
-        "requiresCaptcha": "Yêu cầu CAPTCHA",
         "restrictedMessage": "Giải thưởng này có những hạn chế sau",
         "restrictions": "Yêu cầu hạn chế",
         "standardDiamond": "Tiêu chuẩn",

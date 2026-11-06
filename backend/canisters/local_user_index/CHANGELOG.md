@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Expect a salted hash of the prize claim as Turnstile's custom data, rather than the user's id ([#10417](https://github.com/open-chat-labs/open-chat/pull/10417))
 
+### Removed
+
+- Stop taking a sign-in proof with prize claims, as prizes can no longer require one ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+
 ## [[2.0.2211](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2211-local_user_index)] - 2026-11-05
 
 ### Added

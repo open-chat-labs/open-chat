@@ -481,7 +481,6 @@ impl MessageContentInternal {
                 lifetime_diamond_only: c.lifetime_diamond_only,
                 unique_person_only: c.unique_person_only,
                 streak_only: c.streak_only,
-                requires_captcha: c.requires_captcha,
                 min_chit_earned: c.min_chit_earned,
             }),
             MessageContentInternal::PrizeWinner(c) => MessageContentEventPayload::PrizeWinner(PrizeWinnerContentEventPayload {
@@ -1664,8 +1663,6 @@ pub struct PrizeContentInternal {
     pub prizes_paid: u128,
     #[serde(rename = "fp", default, skip_serializing_if = "is_default")]
     pub fee_percent: u8,
-    #[serde(rename = "rc", default, skip_serializing_if = "is_default")]
-    pub requires_captcha: bool,
     #[serde(rename = "mc", default, skip_serializing_if = "is_default")]
     pub min_chit_earned: u32,
     // The sender's principal, which along with their user id determines the wallet any refund is
@@ -1695,7 +1692,6 @@ impl PrizeContentInternal {
             ledger_error: false,
             prizes_paid: 0,
             fee_percent: PRIZE_FEE_PERCENT,
-            requires_captcha: content.requires_captcha,
             min_chit_earned: content.min_chit_earned,
             // Set by the chat from the sender's member record when the prize is sent
             principal: Principal::anonymous(),
@@ -1770,7 +1766,7 @@ impl MessageContentInternalSubtype for PrizeContentInternal {
             lifetime_diamond_only: self.lifetime_diamond_only,
             unique_person_only: self.unique_person_only,
             streak_only: self.streak_only,
-            requires_captcha: self.requires_captcha,
+            requires_captcha: false,
             min_chit_earned: self.min_chit_earned,
         }
     }
@@ -2705,7 +2701,6 @@ mod prize_tests {
             ledger_error: false,
             prizes_paid: 0,
             fee_percent: 0,
-            requires_captcha: false,
             min_chit_earned: 0,
             principal,
         }
