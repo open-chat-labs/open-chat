@@ -3,6 +3,7 @@ import {
     newPollContent,
     newPrizeContent,
     newSwapOfferContent,
+    prizeCosts,
     validateTokenInput,
     type CryptocurrencyContent,
     type EnhancedTokenDetails,
@@ -213,6 +214,12 @@ describe("a prize in the builder", () => {
         // 1 ICP among 4: the fund's transfer and approval, 4 transfer fees and 5%
         expect(prizePricing(icp, 1, 4)).toEqual({ fees: 0.0506, min: 0.04 });
         expect(prizePricing(icp, Number.NaN, 4).fees).toBe(0.0006);
+    });
+
+    test("is priced on the amount as typed, not as floating point holds it", () => {
+        // 0.29 * 10 ** 8 is 28999999.999999996: priced as 29000000 units, as attaching it charges
+        const charged = prizeCosts(validateTokenInput("0.29", 8).amount, 1, 10_000n);
+        expect(prizePricing(icp, 0.29, 1).fees).toBe(Number(charged.totalFees) / 10 ** 8);
     });
 
     test("starts from the split, duration and restrictions last used", () => {

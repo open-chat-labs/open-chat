@@ -305,6 +305,8 @@ export function prizeTokens(
 /**
  * What a prize of `amount` (whole tokens, as the dialog holds it) among `winners` costs, as the
  * dialog shows it (`prizeCosts`): every fee on top of the fund, and the least the fund can be.
+ * The amount is rounded to the token's smallest unit (0.29 is 28999999.999… units in floating
+ * point), so it's priced as the typed amount is charged.
  */
 export function prizePricing(
     token: TokenFacts,
@@ -313,7 +315,7 @@ export function prizePricing(
 ): { fees: number; min: number } {
     const units =
         Number.isFinite(amount) && amount > 0
-            ? BigInt(Math.floor(amount * 10 ** token.decimals))
+            ? BigInt(Math.round(amount * 10 ** token.decimals))
             : 0n;
     const costs = prizeCosts(units, winners, token.transferFee);
     return {
