@@ -27,6 +27,7 @@ import {
     type P2PSwapContent,
     type PollContent,
     type PrizeContent,
+    type PrizeContentInitial,
     type PrizeReader,
     type ResourceKey,
     type TokenInfo,
@@ -348,6 +349,11 @@ function kindMessage(
             return pollMessage(msg.sender, content, ctx, base);
         case "prize_content":
             return prizeMessage(msg.sender, content, ctx, base);
+        case "prize_content_initial":
+            // still on its way: the card as it will land; a failed one stays text, which says so
+            return status === "failed"
+                ? undefined
+                : prizeMessage(msg.sender, sendingPrize(content), ctx, base, true);
         case "p2p_swap_content":
             return swapMessage(msg.sender, content, ctx, base);
         case "file_content":
@@ -439,6 +445,7 @@ function prizeMessage(
     content: PrizeContent,
     ctx: ConversationContext,
     base: KindBase,
+    sending = false,
 ): GroupMessage | undefined {
     const token = ctx.token(content.ledger);
     if (token === undefined) return undefined;
@@ -459,8 +466,29 @@ function prizeMessage(
         endingSoon: left < 3_600_000,
         gates: view.gates.map((g) => ({ label: ctx.text(g.label), met: g.met })),
         state: view.claimedByYou ? "claimed" : view.finished ? "ended" : "open",
-        canClaim: view.canClaim,
+        canClaim: view.canClaim && !sending,
+        sending,
         note: content.caption ?? "",
+    };
+}
+
+/** A prize still being sent, as it will land: every prize left, none claimed yet. */
+export function sendingPrize(content: PrizeContentInitial): PrizeContent {
+    return {
+        kind: "prize_content",
+        prizesRemaining: content.prizes.length,
+        prizesPending: 0,
+        winnerCount: 0,
+        userIsWinner: false,
+        diamondOnly: content.diamondOnly,
+        lifetimeDiamondOnly: content.lifetimeDiamondOnly,
+        uniquePersonOnly: content.uniquePersonOnly,
+        streakOnly: content.streakOnly,
+        minChitEarned: content.minChitEarned,
+        token: content.transfer.token,
+        ledger: content.transfer.ledger,
+        endDate: content.endDate,
+        caption: content.caption,
     };
 }
 

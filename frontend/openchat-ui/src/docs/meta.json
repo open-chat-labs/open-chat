@@ -15012,6 +15012,17 @@
         "doc": "Whether Claim is offered when the prize is open and its requirements met."
       },
       {
+        "name": "sending",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Still being sent: no Claim, \"Sending prize…\" in its place."
+      },
+      {
         "name": "note",
         "type": "string",
         "default": "Celebrating 50k members, good luck!",
@@ -15020,6 +15031,20 @@
         "section": null,
         "required": false,
         "componentDefault": "''",
+        "doc": ""
+      },
+      {
+        "name": "side",
+        "type": "'received' | 'sent'",
+        "default": "received",
+        "editor": "enum",
+        "options": [
+          "received",
+          "sent"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'received'",
         "doc": ""
       },
       {

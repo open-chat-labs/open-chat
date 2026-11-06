@@ -448,7 +448,7 @@
         {:else if m.kind === 'poll'}
           <PollMessage {...m} {side} lastInGroup={last} />
         {:else if m.kind === 'prize'}
-          <PrizeMessage {...m} lastInGroup={last} />
+          <PrizeMessage {...m} {side} lastInGroup={last} />
         {:else if !m.kind || m.kind === 'text'}
           <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} onToggleReaction={(c) => onReact?.(i, c)} />
         {/if}

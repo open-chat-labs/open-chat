@@ -2395,6 +2395,7 @@
       "kicker": "Prize",
       "left": "{left} of {total} left",
       "requirementsNotMet": "Requirements not met",
+      "sending": "Sending prize…",
       "toClaim": "TO CLAIM",
       "winners": "{count, plural, one {# winner} other {# winners}}",
       "youWon": "You won {amount}",

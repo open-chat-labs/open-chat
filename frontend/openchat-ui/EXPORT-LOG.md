@@ -667,3 +667,6 @@
 
 ## 2026-11-06 — the prize builder's option rows grow and shrink (5d testing), by hand
 - `PrizeBuilderDialog`: Winners, Ends after and Who can claim open in place by growing and close by shrinking (grid rows 0fr ↔ 1fr, as the poll builder's settings do), so moving from one row to another closes one while the other opens; the CHIT / streak picker under Who can claim does the same, keeping its chips while it shrinks. Closed panels are hidden, so they leave the tab order.
+
+## 2026-11-06 — the prize card's sent look and its sending state (5d testing), by hand
+- `PrizeMessage`: takes `side` (MessageGroup passes it, as for the other cards); a sent prize takes the sent bubble's colours through `--msg-*` variables, as `PollMessage` does, rather than always the received one. `sending` shows the card with "Sending prize…" and a spinner where Claim would go (`ui.prizeMessage.sending`). Both in meta.json.

@@ -172,7 +172,9 @@ design export needs. Each entry says where it came up.
   amount, so a win says "You won". There's no spinner while a claim is on its way (the old trees'
   `claimsStore`), and `PrizeMessage`'s confetti fires on the click, before the claim lands. How long
   it has left is worked out when the row is made and doesn't count down. A prize still being sent
-  (`prize_content_initial`), and one in a ledger the registry doesn't carry, stay text bubbles. No
+  (`prize_content_initial`) shows as the card it will be, with "Sending prize…" where Claim would
+  go (a failed one stays a text bubble, which shows the failure); one in a ledger the registry
+  doesn't carry stays a text bubble. No
   reactions, quote or thread yet.
 - **Thread replies**: `ThreadPanel` renders replies with no react / menu / reply / edit handlers.
 - **Composer banner** (by hand, 8b): `ComposerBar` takes `onBannerAction`, passed to `Banner`'s
