@@ -7,7 +7,7 @@ import {
     type ShareTarget,
     type ShareTargets,
 } from "@client";
-import { swatchFor } from "../chats/chatList.adapter";
+import { swatchFor } from "@src/logic/chats/chatRow";
 
 // The chat picker's list (ChatPicker) from the chats something can be shared to (@client
 // shareTargets): sections, each chat's line and its avatar.

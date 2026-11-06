@@ -23,7 +23,7 @@
     import { _ } from "svelte-i18n";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
     import { botPermissions, commandNeeds, grantedFromDialog, grantedKeys } from "./bot.adapter";
-    import { pickById } from "../../pickById";
+    import { pickById } from "@src/utils/pickById";
 
     let { dialog, onClose }: DialogProps<Extract<LocalDialog, { kind: "bot" }>> = $props();
 

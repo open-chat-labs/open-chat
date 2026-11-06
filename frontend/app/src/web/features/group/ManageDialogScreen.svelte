@@ -32,7 +32,7 @@
     } from "@src/logic/groupOrCommunity/manage.svelte";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { pickById } from "../../pickById";
+    import { pickById } from "@src/utils/pickById";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
     import { dialogTarget } from "./dialogTarget";
     import { leaveOrDeleteFor, manageNavGroups, settingsPage } from "./manage.adapter";

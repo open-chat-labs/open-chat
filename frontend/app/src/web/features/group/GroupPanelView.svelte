@@ -64,7 +64,7 @@
     import type { LocalDialog } from "../app/dialogs";
     import type { MenuItem } from "@openchat/ui/src/lib/types";
     import { gateAssets, gatesState } from "../access/gates.adapter";
-    import { pickById } from "../../pickById";
+    import { pickById } from "@src/utils/pickById";
     import {
         appRole,
         memberPerson,

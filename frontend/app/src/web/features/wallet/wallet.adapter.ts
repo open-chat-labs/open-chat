@@ -31,7 +31,7 @@ import {
     type TokenActionsContext,
 } from "@src/logic/wallet/tokenActions";
 import { sendNetworks } from "@src/logic/wallet/walletSend";
-import { swatchFor } from "../chats/chatList.adapter";
+import { swatchFor } from "@src/logic/chats/chatRow";
 
 /** The standard the token page names: ICRC-2 when the ledger has it (approvals), else ICRC-1. */
 export function tokenStandard(standards: string[]): string | undefined {
