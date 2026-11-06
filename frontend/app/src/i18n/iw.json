@@ -1694,6 +1694,48 @@
                 "title": "קישור עם חשבון קיים"
             }
         },
+        "chats": {
+            "chit": "CHIT",
+            "chitClaimable": "CHIT: הפרס של היום מוכן",
+            "options": "אפשרויות צ'אטים",
+            "empty": "הצ'אטים שלך יופיעו כאן.",
+            "noneMatch": "אין צ'אטים תואמים",
+            "showAllChats": "הצג את כל הצ'אטים",
+            "markRead": "סמן כנקרא",
+            "rowOptions": "אפשרויות של {name}",
+            "search": {
+                "placeholder": "חיפוש צ'אטים ואנשים",
+                "clear": "ניקוי",
+                "searchFor": "חיפוש",
+                "chats": "צ'אטים",
+                "people": "אנשים",
+                "chatsCount": "צ'אטים · {count}",
+                "peopleCount": "אנשים · {count}",
+                "showAll": "הצג הכול",
+                "showLess": "הצג פחות",
+                "noResults": "אין תוצאות עבור „{query}”",
+                "noResultsHint": "נסו שם או @שם משתמש."
+            },
+            "toast": {
+                "allRead": "כל הצ'אטים סומנו כנקראו",
+                "caughtUp": "קראת הכול",
+                "pinned": "הוצמד למעלה",
+                "unpinned": "ההצמדה בוטלה",
+                "muted": "הושתק",
+                "unmuted": "ההשתקה בוטלה",
+                "archived": "הצ'אט הועבר לארכיון",
+                "left": "עזבת את {name}",
+                "deleted": "הצ'אט נמחק"
+            },
+            "newChat": {
+                "placeholder": "חיפוש שם או @שם משתמש",
+                "frequent": "אנשי קשר תכופים",
+                "results": "תוצאות",
+                "noOne": "אין התאמות. נסו את @שם המשתמש שלהם.",
+                "noContacts": "עדיין אין אנשי קשר",
+                "noContactsBody": "האנשים שאיתם הכי הרבה מדברים יופיעו כאן. חפשו לפי שם או @שם משתמש כדי להתחיל שיחה."
+            }
+        },
         "shareUnavailable": "שיתוף ל-OpenChat מאפליקציות אחרות עדיין אינו זמין בגרסה זו.",
         "start": {
             "welcome": {

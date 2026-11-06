@@ -34,7 +34,7 @@ export type Screens = {
 
 export const screens: Screens = {
     // the Chats tab: the list, search and New chat (N5a)
-    chats: undefined,
+    chats: () => import("../chats/ChatsScreen.svelte"),
 
     // the Communities tab: the switcher and a community's channels (N8a)
     communities: undefined,
@@ -73,7 +73,7 @@ export const screens: Screens = {
     admin: undefined,
 
     // New chat, from the Chats tab's FAB (N5a)
-    new_chat: undefined,
+    new_chat: () => import("../chats/NewChatScreen.svelte"),
 
     // New group, from the Chats tab's menu and New chat (N7)
     new_group: undefined,

@@ -1694,6 +1694,48 @@
                 "title": "与现有帐户关联"
             }
         },
+        "chats": {
+            "chit": "CHIT",
+            "chitClaimable": "CHIT：今天的奖励可以领取了",
+            "options": "聊天选项",
+            "empty": "你的聊天会显示在这里。",
+            "noneMatch": "没有匹配的聊天",
+            "showAllChats": "显示所有聊天",
+            "markRead": "标记为已读",
+            "rowOptions": "{name} 选项",
+            "search": {
+                "placeholder": "搜索聊天和用户",
+                "clear": "清除",
+                "searchFor": "搜索",
+                "chats": "聊天",
+                "people": "用户",
+                "chatsCount": "聊天 · {count}",
+                "peopleCount": "用户 · {count}",
+                "showAll": "显示全部",
+                "showLess": "收起",
+                "noResults": "没有找到“{query}”的结果",
+                "noResultsHint": "试试名字或 @用户名。"
+            },
+            "toast": {
+                "allRead": "所有聊天已标记为已读",
+                "caughtUp": "你已全部看完",
+                "pinned": "已置顶",
+                "unpinned": "已取消置顶",
+                "muted": "已静音",
+                "unmuted": "已取消静音",
+                "archived": "聊天已归档",
+                "left": "你已退出 {name}",
+                "deleted": "聊天已删除"
+            },
+            "newChat": {
+                "placeholder": "搜索名字或 @用户名",
+                "frequent": "常用联系人",
+                "results": "结果",
+                "noOne": "没有匹配的人。试试对方的 @用户名。",
+                "noContacts": "还没有联系人",
+                "noContactsBody": "你最常聊天的人会显示在这里。按名字或 @用户名搜索即可开始对话。"
+            }
+        },
         "shareUnavailable": "此版本暂不支持从其他应用分享到 OpenChat。",
         "start": {
             "welcome": {

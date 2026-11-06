@@ -55,9 +55,12 @@ design export needs. Each entry says where it came up.
     Design Notes and the issue only said it hides inside a conversation): every pushed screen has
     the whole window (`showsTabBar`, `router/locations.ts`). A tab's stack is still kept, for a link
     from another tab or a deep link to land in.
-  - **Local pushes**: screens without a URL on the web (details, members, settings pages, builders)
-    need `TabStacks` to push without changing the URL, as the web opens a local dialog. With the
-    first screen that needs it (N6, N9 or N12).
+  - **Local pushes**: done (N5a). A screen without a URL on the web (New chat, New group, CHIT for
+    now; details, settings pages and builders to come) is pushed with `context.push`
+    (`TabStacks.push`, a `LocalScreen`): it shows at the URL of the screen under it, Back (the
+    header's, or Android's) takes it off, tapping the tab takes them all off, and the URL moving on
+    replaces it, as picking someone in New chat opens the chat in its place. A browser's own Back
+    is the history, which a local screen doesn't add to: it leaves the screen under it too.
   - **iOS edge swipe back** (notes §2): not built; the chevron is the only Back on iOS for now.
   - **Swiping between tabs** (asked for in review, #10421; the design has no swipe between tabs):
     on a tab's root, a sideways drag follows the finger with the neighbouring tab beside it, and
@@ -99,7 +102,7 @@ design export needs. Each entry says where it came up.
     components_mobile; a share for no chat in particular needs the chat picker
     (components_mobile's goes through `pendingShareStore` to its SlidingModals), which the native
     tree doesn't have yet, so it says so in a toast (`native.shareUnavailable`) and drops the share;
-    a `/share` link shows the Chats root. The picker comes with N5a or N5d.
+    a `/share` link shows the Chats root. The picker comes with N5d (forward's chat picker).
   - **The Android app's system bars**: done. Its WebView doesn't report `env(safe-area-inset-*)`
     reliably, so the native root follows the shell's window-inset event into `--safe-top` /
     `--safe-bottom` (`native/systemBars.ts`, through components_mobile's `androidInterfaceSizes`).
@@ -112,8 +115,10 @@ design export needs. Each entry says where it came up.
     effect again into the default chat.
   - An app store build has no Wallet tab (`disableWalletFeature`), but a `/wallet` link still opens
     its stack, with no tab selected.
-  - The tab bar's Chats count is the unmuted unread DMs and groups; the design doesn't say whether
-    favourites or mentions count (N5a).
+  - The tab bar's Chats count is the unmuted unread DMs and groups, as the web's rail and
+    components_mobile count them (decided in N5a): a favourite DM or group is in it, a favourite
+    channel isn't (it counts on its community), and neither are mentions on their own. The design
+    doesn't say; confirm with design.
 - **Native sign in and onboarding** (native N4, #10367; `src/native/features/start`). Built: Welcome
   (the lockup, the Appearance | language pill, the headline, the proof cards, Create account / I
   already have an account, the terms), Pick a username (the live check, the recovery email, the
@@ -171,6 +176,49 @@ design export needs. Each entry says where it came up.
     78% and a 32px headline, a 104px avatar on Pick a username.
   - **The proof cards' text** is fixed sample copy, translated, with the vote's question on one
     line, so the community card in front leaves the vote's numbers showing in every language.
+- **Native Chats tab** (native N5a, #10368; `src/native/features/chats`). Built: the title row
+  (CHIT with its claimable dot, the kebab: New group, Mark all as read), the search, the filter
+  (All / Direct / Groups / Unread, kept as `chatListFilterStore` with components_mobile), the list
+  (`VirtualList`, pinned first, favourite / muted / pinned icons, the forward icon, live calls),
+  the row long-press menu, the FAB and New chat. It lists its own scope (`chatsInScope`), so it
+  stays right while another tab's route sets another scope (it's dragged into view by the swipe
+  between tabs). Left, or decided against the prototype:
+  - **Message search**: the backend has no search across chats, and a chat's own search
+    (`searchChat`) returns message indexes without their text, so the search has Chats and People
+    only ("Search chats and people"). Messages, and a result opening the chat in search mode on it,
+    need that search (the web's grouped search needs it too, `ChatListPanel` pass 6).
+  - **Search's People** are `searchUsers`' (bots included), less the user and anyone they already
+    have a DM with. components_mobile's search also listed public groups; the design's has none.
+  - **Mute for 1 hour / 8 hours / 1 week**: the backend mutes until unmuted, so the menu has Mute /
+    Unmute, as the web's row.
+  - **Mark as unread**: the backend can't, so the menu offers Mark as read only when something is
+    unread.
+  - **Leave group / Delete chat with Undo** (notes §1: destructive actions show Undo, no confirm):
+    the backend can't undo either, so the chat leaves the list at once and the leave or delete is
+    sent once the Undo toast has gone (5s, `PendingRemovals`); Undo sends nothing. One still
+    waiting when the screen goes is sent then; the app being killed in those 5s drops it. A group
+    owner who can't leave hears so when it's sent.
+  - **Archive with Undo**: archived at once; Undo un-archives. Archived chats aren't in the list
+    (the design has no archive view); search finds them.
+  - **Pin, Mute, Mark all as read** confirm with a toast, as the prototype does.
+  - **New group** and **CHIT** push placeholders until N7 and N11 build them. CHIT is a local push
+    (as the prototype's); N11 decides whether `?chit` (the web's) maps onto it.
+  - **The Getting started card** (notes §3.1, top of Chats for new accounts) isn't built (N4's
+    onboarding).
+  - **Avatars** are the design's swatches, as on the web (Swatches, below); no online dot and no
+    typing in rows (typing reaches peers only for the selected chat).
+  - **A live call** says "Video call in progress": the client doesn't say whether a call is voice
+    only.
+  - **Favourites** (`/favourite`) are the Chats tab's root titled Favourites, with the same list;
+    the design has no way there but a link.
+  - **No swipe actions on rows** (notes §1): a sideways drag on a row is the swipe between tabs
+    (rows don't scroll sideways), and moving more than 10px stops a long-press. The open search is
+    `data-tab-swipe="off"`.
+  - **By hand in the library** (EXPORT-LOG 2026-11-06, to take back to the design export):
+    `ChatRow`'s `fav` heart (the Component Changes list it; our port had left it out),
+    `--shadow-fab`, and `LongPressMenu`: the release of the press that opened it could end in a
+    click on the veil, which closed it at once (seen with Chrome's touch emulation); the veil now
+    closes it only for a press that started on it.
 - **Shell breakpoints vs layout tokens**: the shell's breakpoints and widths (Fix Brief - App
   Shell Layout: 768 / 1200 / 1476 / 1876 / 2476px, chat list `clamp(350px, 30cqw, 550px)`, right
   column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*` 1280–2500px,

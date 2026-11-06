@@ -30,13 +30,16 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   ([#10366](https://github.com/open-chat-labs/open-chat/issues/10366)): `src/native` behind
   `OC_NATIVE_LAYOUT=v4`, with a placeholder for every screen (`features/app/screens.ts`). What it
   left is in GAPS.md ("Native app tree").
-- **In review:** N4 sign in and onboarding
-  ([#10367](https://github.com/open-chat-labs/open-chat/issues/10367)): the signed-out start
-  (`features/start`), on the client's `signIn` (passkey, linking code) and `signUp`, and Android's
-  back before sign-in. What it left (the recovery phrase, which the backend doesn't have; the
-  Getting started card, for N5a's Chats root; a photo at sign-up) is in GAPS.md ("Native sign in
-  and onboarding").
-- **Next:** the screens. N5a, N10a, N11, N12 and N13 need only N3.
+- **Done:** N4 sign in and onboarding
+  ([#10367](https://github.com/open-chat-labs/open-chat/issues/10367), #10429): the signed-out
+  start (`features/start`), on the client's `signIn` (passkey, linking code) and `signUp`, and
+  Android's back before sign-in. What it left (the recovery phrase, which the backend doesn't
+  have; the Getting started card, for N5a's Chats root) is in GAPS.md ("Native sign in and
+  onboarding").
+- **Built:** N5a the Chats tab, its search and New chat
+  ([#10368](https://github.com/open-chat-labs/open-chat/issues/10368)), and local pushes for
+  screens without a URL. What it left is in GAPS.md ("Native Chats tab").
+- **Next:** the screens. N10a, N11, N12 and N13 need only N3; N5b (the conversation) needs N5a.
 
 ## Workstreams
 

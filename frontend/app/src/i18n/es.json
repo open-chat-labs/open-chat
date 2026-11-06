@@ -1694,6 +1694,48 @@
                 "title": "Vincular con cuenta existente"
             }
         },
+        "chats": {
+            "chit": "CHIT",
+            "chitClaimable": "CHIT: la recompensa de hoy está lista",
+            "options": "Opciones de chats",
+            "empty": "Tus chats aparecerán aquí.",
+            "noneMatch": "Ningún chat coincide",
+            "showAllChats": "Mostrar todos los chats",
+            "markRead": "Marcar como leído",
+            "rowOptions": "Opciones de {name}",
+            "search": {
+                "placeholder": "Buscar chats y personas",
+                "clear": "Borrar",
+                "searchFor": "Buscar",
+                "chats": "Chats",
+                "people": "Personas",
+                "chatsCount": "Chats · {count}",
+                "peopleCount": "Personas · {count}",
+                "showAll": "Mostrar todo",
+                "showLess": "Mostrar menos",
+                "noResults": "No hay resultados para «{query}»",
+                "noResultsHint": "Prueba con un nombre o un @usuario."
+            },
+            "toast": {
+                "allRead": "Todos los chats marcados como leídos",
+                "caughtUp": "Estás al día",
+                "pinned": "Fijado arriba",
+                "unpinned": "Desfijado",
+                "muted": "Silenciado",
+                "unmuted": "Sonido activado",
+                "archived": "Chat archivado",
+                "left": "Has salido de {name}",
+                "deleted": "Chat eliminado"
+            },
+            "newChat": {
+                "placeholder": "Buscar nombre o @usuario",
+                "frequent": "Contactos frecuentes",
+                "results": "Resultados",
+                "noOne": "Nadie coincide. Prueba con su @usuario.",
+                "noContacts": "Aún no hay contactos",
+                "noContactsBody": "Las personas con las que más chateas aparecerán aquí. Busca por nombre o @usuario para empezar una conversación."
+            }
+        },
         "shareUnavailable": "Compartir en OpenChat desde otras aplicaciones aún no está disponible en esta versión.",
         "start": {
             "welcome": {

@@ -1694,6 +1694,48 @@
                 "title": "既存のアカウントとリンク"
             }
         },
+        "chats": {
+            "chit": "CHIT",
+            "chitClaimable": "CHIT：今日の報酬を受け取れます",
+            "options": "チャットのオプション",
+            "empty": "チャットはここに表示されます。",
+            "noneMatch": "一致するチャットはありません",
+            "showAllChats": "すべてのチャットを表示",
+            "markRead": "既読にする",
+            "rowOptions": "{name} のオプション",
+            "search": {
+                "placeholder": "チャットとユーザーを検索",
+                "clear": "クリア",
+                "searchFor": "検索対象",
+                "chats": "チャット",
+                "people": "ユーザー",
+                "chatsCount": "チャット · {count}",
+                "peopleCount": "ユーザー · {count}",
+                "showAll": "すべて表示",
+                "showLess": "表示を減らす",
+                "noResults": "「{query}」の結果はありません",
+                "noResultsHint": "名前または @ユーザー名 で検索してください。"
+            },
+            "toast": {
+                "allRead": "すべてのチャットを既読にしました",
+                "caughtUp": "すべて既読です",
+                "pinned": "上部に固定しました",
+                "unpinned": "固定を解除しました",
+                "muted": "ミュートしました",
+                "unmuted": "ミュートを解除しました",
+                "archived": "チャットをアーカイブしました",
+                "left": "{name} から退出しました",
+                "deleted": "チャットを削除しました"
+            },
+            "newChat": {
+                "placeholder": "名前または @ユーザー名 で検索",
+                "frequent": "よく連絡する相手",
+                "results": "結果",
+                "noOne": "一致する人がいません。@ユーザー名 で試してください。",
+                "noContacts": "まだ連絡先がありません",
+                "noContactsBody": "よくチャットする相手がここに表示されます。名前または @ユーザー名 で検索して会話を始めましょう。"
+            }
+        },
         "shareUnavailable": "他のアプリから OpenChat への共有は、このバージョンではまだご利用いただけません。",
         "start": {
             "welcome": {
