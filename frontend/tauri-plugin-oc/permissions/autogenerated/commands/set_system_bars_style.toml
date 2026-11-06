@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-set-system-bars-style"
+description = "Enables the set_system_bars_style command without any pre-configured scope."
+commands.allow = ["set_system_bars_style"]
+
+[[permission]]
+identifier = "deny-set-system-bars-style"
+description = "Denies the set_system_bars_style command without any pre-configured scope."
+commands.deny = ["set_system_bars_style"]
