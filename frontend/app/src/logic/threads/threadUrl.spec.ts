@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { threadClosedPath, threadOpenPath } from "./threadUrl";
+import { isRouteThread, threadClosedPath, threadOpenPath } from "./threadUrl";
 
 describe("threadClosedPath", () => {
     test("4c invariant 4: drops /:tmi and ?open, keeping the rest of the query (?threads)", () => {
@@ -35,5 +35,19 @@ describe("threadOpenPath", () => {
 
     test("doesn't add ?threads when the list isn't showing, or carry other params", () => {
         expect(threadOpenPath("chats", chatId, 5, "?profile")).toBe("/chats/group/g1/5?open=true");
+    });
+});
+
+describe("isRouteThread", () => {
+    const chatId = { kind: "group_chat", groupId: "g1" } as const;
+    const other = { kind: "group_chat", groupId: "g2" } as const;
+
+    test("is the thread at the route's root in its selected chat, while it's open", () => {
+        const route = { open: true, chatId, messageIndex: 5 };
+        expect(isRouteThread(route, chatId, 5)).toBe(true);
+        expect(isRouteThread(route, chatId, 6)).toBe(false);
+        expect(isRouteThread(route, other, 5)).toBe(false);
+        // the route at the message without ?open: the chat at it, no thread
+        expect(isRouteThread({ ...route, open: false }, chatId, 5)).toBe(false);
     });
 });

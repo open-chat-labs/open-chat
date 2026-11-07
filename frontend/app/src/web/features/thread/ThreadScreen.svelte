@@ -59,7 +59,7 @@
         chat !== undefined && followsThread(root.event, $threadsFollowedByMeStore.get(chat.id)),
     );
 
-    // the panel shows the change at once, and rolls it back when this rejects
+    // the panel's Follow shows a spinner until this settles, and stays as it was when it rejects
     async function follow(on: boolean) {
         if (chat === undefined) return;
         if (!(await client.followThread(chat.id, root.event, on))) {
@@ -68,7 +68,8 @@
         }
     }
 
-    // docked, the column goes back to the chat's details; as a modal, it closes
+    // docked, the column goes back to the chat's details, or closes again if the thread opened it
+    // (columnChange); as a modal, it closes
     function close() {
         closeThread();
         if (modal) closeRightColumn(screen.rightColumn);

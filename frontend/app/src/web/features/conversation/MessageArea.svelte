@@ -125,7 +125,7 @@
         threadEventReadByMe,
         threadTimelineEvents,
     } from "@src/logic/conversation/threadTimeline";
-    import { threadOpenPath } from "@src/logic/threads/threadUrl";
+    import { openThreadInColumn } from "../app/rightPanel";
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
     import {
         confirmMessageDeletion,
@@ -904,16 +904,15 @@
         return messages;
     }
 
-    // a message's "N replies" opens its thread in the right column, keeping the list of threads
-    // open; inside a thread its root shows none (the old trees' `canReplyInThread`)
+    // a message's "N replies" opens its thread in the right column (shown even if it was closed),
+    // keeping the list of threads open; inside a thread its root shows none (the old trees'
+    // `canReplyInThread`)
     function threadLink(evt: EventWrapper<Message>): Partial<GroupMessage> {
         if (thread !== undefined) return { threadCount: 0 };
         const index = evt.event.messageIndex;
         return {
             onOpenThread: () =>
-                navigate(
-                    threadOpenPath($chatListScopeStore.kind, chat.id, index, location.search),
-                ),
+                openThreadInColumn(screen.rightColumn, $chatListScopeStore.kind, chat.id, index),
         };
     }
 
@@ -1044,7 +1043,8 @@
             client,
             context,
             threadRoot: thread?.event,
-            scope: $chatListScopeStore.kind,
+            openThread: (index) =>
+                openThreadInColumn(screen.rightColumn, $chatListScopeStore.kind, chat.id, index),
             evt,
             failed,
             me,

@@ -6,7 +6,6 @@
 <script lang="ts">
     import {
         allUsersStore,
-        chatIdentifiersEqual,
         chatsInitialisedStore,
         chatSummariesStore,
         messageIndexStore,
@@ -23,7 +22,8 @@
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { ThreadPreviews } from "@src/logic/threads/threadPreviews.svelte";
     import { threadUnreadCount } from "@src/logic/threads/threadRead";
-    import { threadOpenPath } from "@src/logic/threads/threadUrl";
+    import { isRouteThread } from "@src/logic/threads/threadUrl";
+    import { openThreadInColumn } from "../app/rightPanel";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { removeQueryStringParam } from "@src/utils/urls";
@@ -33,7 +33,7 @@
     import type { LeftRegion, ScreenProps } from "../app/screens";
     import { threadListGroups } from "./thread.adapter";
 
-    let { region }: ScreenProps<Extract<LeftRegion, { kind: "threads" }>> = $props();
+    let { region, context }: ScreenProps<Extract<LeftRegion, { kind: "threads" }>> = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -65,22 +65,21 @@
     });
 
     function selected(thread: ThreadPreview): boolean {
-        return (
-            $threadOpenStore &&
-            chatIdentifiersEqual($selectedChatIdStore, thread.chatId) &&
-            $messageIndexStore === thread.rootMessage.event.messageIndex
+        return isRouteThread(
+            { open: $threadOpenStore, chatId: $selectedChatIdStore, messageIndex: $messageIndexStore },
+            thread.chatId,
+            thread.rootMessage.event.messageIndex,
         );
     }
 
-    // opening a thread shows it at its root's own path, keeping the list (4c invariant 5)
+    // opening a thread shows it in the right column (even if it was closed) at its root's own
+    // path, keeping the list (4c invariant 5)
     function open(thread: ThreadPreview) {
-        navigate(
-            threadOpenPath(
-                scope.kind,
-                thread.chatId,
-                thread.rootMessage.event.messageIndex,
-                location.search,
-            ),
+        openThreadInColumn(
+            context.rightColumn,
+            scope.kind,
+            thread.chatId,
+            thread.rootMessage.event.messageIndex,
         );
     }
 

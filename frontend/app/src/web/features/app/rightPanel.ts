@@ -1,11 +1,16 @@
 import {
     lastRightPanelState,
+    messageIndexStore,
     rightPanelHistory,
+    selectedChatIdStore,
     setRightPanelHistory,
     threadMessageIndexStore,
+    threadOpenStore,
+    type ChatIdentifier,
+    type ChatListScope,
     type RightPanelContent,
 } from "@client";
-import { threadClosedPath } from "@src/logic/threads/threadUrl";
+import { isRouteThread, threadClosedPath, threadOpenPath } from "@src/logic/threads/threadUrl";
 import { navigate } from "@src/utils/navigation";
 import type { RightColumnState } from "../../shell/rightColumn.svelte";
 
@@ -37,16 +42,45 @@ export function openPanelOver(panel: RightPanelContent): void {
     setRightPanelHistory(historyWith(rightPanelHistory.value, panel));
 }
 
+/** What a change of the right column's panel does to the column (`openOnNewPanel`). */
+export type ColumnChange = "none" | "open" | "show_thread" | "thread_closed";
+
 /**
- * Opens the right column whenever a new panel is asked for (details, members, a thread …), as the
- * old UI shows its right panel whenever its history has one. What the history held when this
- * starts doesn't open it. Returns the unsubscribe.
+ * What the right column does when its panel changes from `previous` (undefined: what it held when
+ * this started, which doesn't open it) to `next`. A thread shows whether or not the column was
+ * open, and the column goes back to how the user had it when the thread goes; any other new panel
+ * opens it, as the old UI shows its right panel whenever its history has one (the old desktop's
+ * thread replaced the history, and its panel went with it).
+ */
+export function columnChange(
+    previous: RightPanelContent | undefined,
+    next: RightPanelContent,
+): ColumnChange {
+    if (previous === undefined || next === previous) return "none";
+    if (next.kind === "message_thread_panel") return "show_thread";
+    if (next.kind !== "no_panel") return "open";
+    // the thread went, and nothing was under it (opening one replaces the history)
+    return previous.kind === "message_thread_panel" ? "thread_closed" : "none";
+}
+
+/**
+ * Opens the right column whenever a new panel is asked for (details, members …), and shows it for
+ * a thread, docked or as the modal, even when the user had closed it, until the thread closes
+ * (`columnChange`). Returns the unsubscribe.
  */
 export function openOnNewPanel(column: RightColumnState): () => void {
     let last: RightPanelContent | undefined;
     return lastRightPanelState.subscribe((panel) => {
-        if (last !== undefined && panel !== last && panel.kind !== "no_panel") {
-            column.open = true;
+        switch (columnChange(last, panel)) {
+            case "open":
+                column.open = true;
+                break;
+            case "show_thread":
+                column.showThread();
+                break;
+            case "thread_closed":
+                column.threadClosed();
+                break;
         }
         last = panel;
     });
@@ -81,4 +115,27 @@ export function closeThread(): void {
         history.filter((panel) => panel.kind !== "message_thread_panel"),
     );
     navigate(threadClosedPath(location.pathname, location.search, threadMessageIndexStore.value));
+}
+
+/**
+ * Opens a thread in the right column: at its root's own path (`threadOpenPath`, keeping the list
+ * of threads), which shows the column (`openOnNewPanel`). The thread already open doesn't change
+ * the route, so the column is shown here: the user may have closed it over the thread.
+ */
+export function openThreadInColumn(
+    column: RightColumnState,
+    scope: ChatListScope["kind"],
+    chatId: ChatIdentifier,
+    threadRootMessageIndex: number,
+): void {
+    const route = {
+        open: threadOpenStore.value,
+        chatId: selectedChatIdStore.value,
+        messageIndex: messageIndexStore.value,
+    };
+    if (isRouteThread(route, chatId, threadRootMessageIndex)) {
+        column.showThread();
+        return;
+    }
+    navigate(threadOpenPath(scope, chatId, threadRootMessageIndex, location.search));
 }

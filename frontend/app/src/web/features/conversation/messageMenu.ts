@@ -4,7 +4,6 @@ import {
     messageReplyContext,
     publish,
     routeForChatIdentifier,
-    type ChatListScope,
     type EventWrapper,
     type Message,
     type MessageContext,
@@ -15,7 +14,6 @@ import {
 } from "@client";
 import { editMessage, replyToMessage } from "@src/logic/conversation/draftActions";
 import { translateMessage } from "@src/logic/conversation/translateMessage";
-import { threadOpenPath } from "@src/logic/threads/threadUrl";
 import { toastStore } from "@src/stores/toast";
 import { copyMessageUrl, shareMessage } from "@src/utils/share";
 import { navigate } from "@src/utils/navigation";
@@ -51,8 +49,8 @@ export type MessageMenuTarget = {
     context: MessageContext;
     /** In a thread, its root message (what following it follows). */
     threadRoot?: Message;
-    /** The chat list the chat is open in, for the thread a message starts. */
-    scope: ChatListScope["kind"];
+    /** Opens the message's thread (by its index) in the right column (`openThreadInColumn`). */
+    openThread: (threadRootMessageIndex: number) => void;
     evt: EventWrapper<Message>;
     failed: boolean;
     /** The signed-in user. */
@@ -113,7 +111,7 @@ export async function runMessageAction(
         }
         case "start_thread":
             // the message's thread, opened in the right column (a new one starts as it opens)
-            navigate(threadOpenPath(target.scope, chatId, msg.messageIndex, location.search));
+            target.openThread(msg.messageIndex);
             return;
         case "follow_thread":
         case "unfollow_thread": {

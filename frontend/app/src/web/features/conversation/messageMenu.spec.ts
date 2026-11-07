@@ -52,7 +52,7 @@ function target(
     return {
         client,
         context: { chatId },
-        scope: "chats",
+        openThread: vi.fn(),
         evt,
         failed: false,
         me: "me",
@@ -69,7 +69,10 @@ describe("a message's actions in the conversation", () => {
     // invariant 5
     test("deleting a failed message only removes it locally, never calls deleteMessage", async () => {
         const client = fakeClient();
-        const dialog = await runMessageAction("delete", target(client, { failed: true, confirmDelete: true }));
+        const dialog = await runMessageAction(
+            "delete",
+            target(client, { failed: true, confirmDelete: true }),
+        );
         expect(dialog).toBeUndefined();
         expect(client.deleteFailedMessage).toHaveBeenCalledWith(chatId, 42n, undefined);
         expect(client.deleteMessage).not.toHaveBeenCalled();
