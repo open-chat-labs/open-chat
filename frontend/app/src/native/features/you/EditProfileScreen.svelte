@@ -222,7 +222,7 @@
                         autocomplete="off"
                         autocapitalize="none"
                         spellcheck="false" />
-                    {#if form.username.status === "available"}<span class="ok"></span>{/if}
+                    {#if form.username.status === "available"}<span class="tick"></span>{/if}
                 </label>
                 <span class="note {usernameNote.tone}">
                     {$_(usernameNote.key, { values: usernameNote.values })}
@@ -502,7 +502,8 @@
         }
     }
 
-    .ok {
+    // the name is free (the note under the field says so in words)
+    .tick {
         @include icon(check, 16px, var(--status-online));
     }
 
