@@ -108,4 +108,52 @@ describe("a search in a chat", () => {
         search.dispose();
         expect(options.onGoTo).toHaveBeenLastCalledWith(-1);
     });
+
+    test("typing back to the last search drops the one waiting", async () => {
+        vi.useFakeTimers();
+        const { search, options } = setup();
+        await search.search("hello");
+        search.typed("hell");
+        search.typed("hello");
+        await vi.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS);
+        expect(options.search).toHaveBeenCalledTimes(1);
+        expect(search.searched("hello")).toBe(true);
+    });
+
+    test("ended and reopened, the same text is searched again", async () => {
+        vi.useFakeTimers();
+        const { search, options } = setup();
+        search.typed("hello");
+        await vi.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS);
+        search.dispose();
+        expect(search.searched("hello")).toBe(false);
+
+        search.typed("hell");
+        search.typed("hello");
+        await vi.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS);
+        expect(options.search).toHaveBeenCalledTimes(2);
+        expect(options.search).toHaveBeenLastCalledWith("hello", []);
+        expect(search.searched("hello")).toBe(true);
+        expect(search.matches.map((m) => m.messageIndex)).toEqual([7, 4, 1]);
+    });
+
+    test("a search still under way when it ends shows nothing", async () => {
+        let finish: (found: MessageMatch[]) => void = () => {};
+        const options = {
+            search: vi.fn(
+                () => new Promise<MessageMatch[] | undefined>((resolve) => (finish = resolve)),
+            ),
+            group: false,
+            lookup: () => undefined,
+            onGoTo: vi.fn(),
+        } satisfies ChatSearchOptions;
+        const search = new ChatSearch(options);
+        const searching = search.search("hello");
+        search.dispose();
+        finish([match(1, 4)]);
+        await searching;
+        expect(search.matches).toEqual([]);
+        expect(search.searching).toBe(false);
+        expect(options.onGoTo).toHaveBeenLastCalledWith(-1);
+    });
 });

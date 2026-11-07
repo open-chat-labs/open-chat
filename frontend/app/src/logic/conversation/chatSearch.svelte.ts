@@ -87,8 +87,9 @@ export class ChatSearch {
 
     /** What's typed, searched once typing pauses (SEARCH_DEBOUNCE_MS). */
     typed(text: string): void {
-        if (this.#searched === text) return;
+        // (a search waiting for a pause is for older text: typing back to the last search drops it)
         clearTimeout(this.#timer);
+        if (this.#searched === text) return;
         this.#timer = setTimeout(() => void this.search(text), SEARCH_DEBOUNCE_MS);
     }
 
@@ -135,9 +136,13 @@ export class ChatSearch {
         this.#step(-1, wrap);
     }
 
-    /** Ends the search: no matches shown, nothing waiting. */
+    /**
+     * Ends the search: no matches shown, nothing waiting, and a search still under way dropped.
+     * The same text searched again later (the search reopened) is searched afresh.
+     */
     dispose(): void {
         clearTimeout(this.#timer);
+        this.#searched = "";
         this.#clear();
     }
 
