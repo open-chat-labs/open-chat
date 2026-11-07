@@ -519,7 +519,10 @@ design export needs. Each entry says where it came up.
   panel's `MessageGroup`s and `MessageComposer` couldn't be (no paging, read marking, menus,
   attachments). The thread line under a message is `ThreadLink`, under every kind of message
   (`MessageGroup`, from the message's `threadCount` / `threadLastAt` / `onOpenThread`), where only
-  `ChatBubble` had it. `modal.ts` exports `dialogOpen()` for a page's own Esc.
+  `ChatBubble` had it: a card as wide as what it says, with the faces of those in the thread
+  (`threadFaces`, `AvatarStack`) and an accent outline while its thread is the one open
+  (`threadSelected`); not in the design. `modal.ts` exports `dialogOpen()` for a page's own Esc.
+  `ThreadPanel`'s Follow waits for the host (`Waited`, a spinner) where it flipped at once.
 - **Composer banner** (by hand, 8b): `ComposerBar` takes `onBannerAction`, passed to `Banner`'s
   `actionHandler` with `bannerAction` as its label (it had the label but no handler). Nothing in
   the app uses it yet.
@@ -1775,16 +1778,28 @@ design export needs. Each entry says where it came up.
 - **Threads** (4c: `features/thread`, the conversation's `MessageArea`): the open thread in the
   right column (`ThreadPanel`) and the list of threads (`?threads`, `ThreadList`). Left, or not
   as the old trees have it:
-  - **The root shows twice**: the panel's card shows the root (the design's), and the list of
-    replies is headed by the root too once it's loaded back to the first reply, as the old lists
-    are (4c invariant 3: it can be reacted to, opened in the menu, voted in). The design has the
-    card only. To decide: drop the list's root, or the card.
+  - **The root shows once, as the panel's card** (decided): the list of replies starts with the
+    first reply, under the card, as the design has it (`threadReplyEvents`, 4c invariant 3). The
+    old lists head the replies with the root once they're loaded back to the first one
+    (`threadTimelineEvents`, unchanged), where it can be reacted to, opened in the menu, voted in;
+    here those are done on the root in the conversation. Like the conversation, the list sits at
+    the bottom of the panel while it's shorter than the panel (the list's `column-reverse`).
+  - **Opening a thread shows the right column**, docked or as the modal, even when the user had
+    closed it; closing the thread puts the column back as the user had it (`columnChange`,
+    `RightColumnState.showThread`). The old desktop's thread replaced its right panel's history, so
+    its panel went with it. Clicking the open thread's "N replies" (or its row in the list) after
+    closing the column over it shows it again (`openThreadInColumn`).
+  - **Follow / Following** shows a spinner and takes no click while the call is in flight, then
+    the new state (`Waited`); a failure toasts and leaves it as it was. The old buttons flipped at
+    once.
   - **A cold load of `/:mi?open=true` on a message with no thread yet** (a "Reply in thread" link
     shared before anyone replied) shows an empty right column: the client opens a thread on a cold
     load only for a message that has one (`ChatEventList`), as in the old trees, where the panel
     stayed closed. Starting one from the menu works.
   - **No root**: while the root is gone from the chat's events (the event window replaced) the
     column shows nothing (`rightPanelView`), where the old desktop panel showed a spinner.
+  - **No "Mark all as read"** (decided, not built): a ⋯ menu in the list of threads' header with
+    one item, "Mark all as read". Opening a thread reads it, as now.
   - **The list of threads has no per-thread actions**: `ThreadList`'s rows have no unfollow (the
     old desktop card's eye) or mark-as-read (the mobile card's menu), and show no latest replies, so
     a row never marks its thread read on sight (`threadReadOnSight`, which the old cards use, needs
