@@ -241,13 +241,14 @@ design export needs. Each entry says where it came up.
   and delete). Left, or decided against the prototype:
   - **Appearance** is the stored theme and accent Welcome's menu and the web use (`themeType`,
     `accentStore`), so the three always agree; System stays the default and follows the phone live
-    in a browser. **Not in the Android app** (found testing N12 on the emulator, Android 16): its
-    WebView reports `prefers-color-scheme: light` whatever the phone's dark theme, at a cold start
-    as well as live, so System is always light there. The shell's theme (`Theme.open_chat`,
-    MaterialComponents DayNight) doesn't set `android:isLightTheme`, which the WebView reads for
-    it (targetSdk 36): a night variant with it false (API 29+), then a check that it follows live
-    with `configChanges="uiMode"` (else MainActivity reports the night mode to the web side). Needs
-    a shell build; old UIs have the same.
+    in a browser and in the Android app, at a cold start and live (checked on the emulator, Android
+    17, WebView 151, with `cmd uimode night`): the WebView takes `prefers-color-scheme` from the
+    activity's theme's `android:isLightTheme` (targetSdk 33+), which `Theme.open_chat`'s DayNight
+    parent inherits from the platform's `Theme.Material` / `Theme.Material.Light`, and with
+    `configChanges="uiMode"` the theme is rebased and the WebView told on a change, so no shell
+    change is needed. It once looked always light: Playwright's `connectOverCDP`, used to drive the
+    emulator's WebView, emulates `prefers-color-scheme: light` while it's attached (a check has to
+    call `page.emulateMedia({ colorScheme: null })`). iOS isn't checked yet.
   - **Text size**: decided as the interface size the Build Brief asks for, not the prototype's
     "Chat text size" (messages only, three sizes): the app's font size setting (`fontScaleStore`,
     the web profile's four sizes, Small / Default / Large / Larger), which scales every `--text-*`
