@@ -26,9 +26,11 @@
         $currentUserProfileStore.displayName ?? $currentUserProfileStore.username,
     );
 
-    // the community whose name is being set; kept while its sheet plays its way out
+    // the community whose name is being set; kept while its sheet plays its way out. The sheet is
+    // mounted again each time it opens (`sheetKey`), so what was typed and not saved goes with it.
     let editing = $state<CommunitySummary>();
     let open = $state(false);
+    let sheetKey = $state(0);
     useOverlay(
         overlays,
         () => open,
@@ -37,6 +39,7 @@
 
     function edit(community: CommunitySummary) {
         editing = community;
+        sheetKey++;
         open = true;
     }
 </script>
@@ -65,7 +68,7 @@
 {/if}
 
 {#if editing !== undefined}
-    {#key editing.id.communityId}
+    {#key sheetKey}
         <CommunityNameSheet
             {open}
             community={editing}

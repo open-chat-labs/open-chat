@@ -1,7 +1,7 @@
 <!-- Setting the name the user goes by in a community (You → Communities): a sheet with the name,
      Save, and, once they have one, going back to their display name. Saved as the web's profile
      saves it (logic/profile/communityName): a name the backend would turn down says why under the
-     field. The host mounts it again for each community. -->
+     field. The host mounts it again each time it opens. -->
 <script lang="ts">
     import { type CommunitySummary, type OpenChat } from "@client";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
