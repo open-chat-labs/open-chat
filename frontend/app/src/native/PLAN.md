@@ -90,6 +90,7 @@ After everything else (decided 2026-11-07):
 | What | Why it waits |
 |---|---|
 | The recovery phrase: Recover account (Welcome back's "Recover with phrase"), the Recovery phrase screen in You → Account, and the Getting started card's backup step | The backend has no recovery phrase yet (none is made at sign-up, nothing signs in with one). The native tree is finished and cut over without it; the design's screens wait for the backend (GAPS.md, "Native sign in and onboarding", "Native You tab") |
+| Clear history in a conversation's menu (the prototype has it) | The backend can't clear a chat's history; dropped from N5b's menu until it can (decided 2026-11-07) |
 
 ## Invariants
 
