@@ -195,6 +195,7 @@
     import ConfirmDialog from "./ConfirmDialog.svelte";
     import { deleteMessage, runMessageAction } from "./messageMenu";
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
+    import { claimsStore } from "@src/stores/claims";
     import HumanCheckFrame from "@src/core/HumanCheckFrame.svelte";
     import { HumanChecks } from "@src/logic/prize/humanCheck.svelte";
     import { claimPrizeWithHumanCheck } from "@src/logic/prize/prizeClaim";
@@ -1132,6 +1133,7 @@
         openUrl: (url) => window.open(url, "_blank", "noopener"),
         swap: startSwap,
         claim,
+        claiming: (messageId) => $claimsStore.has(messageId),
         vote,
         download,
         get voice() {

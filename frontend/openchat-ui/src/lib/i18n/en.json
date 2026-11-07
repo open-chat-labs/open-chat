@@ -2389,6 +2389,7 @@
     "prizeMessage": {
       "allClaimed": "All prizes claimed",
       "claim": "Claim prize",
+      "claiming": "Claiming…",
       "ended": "Ended",
       "endsIn": "Ends in {time}",
       "hasEnded": "This prize has ended",

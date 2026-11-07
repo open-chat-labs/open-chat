@@ -24,6 +24,7 @@ function handlers(fields: Partial<MessageHandlers> = {}): MessageHandlers {
         openMedia: vi.fn(),
         openUrl: vi.fn(),
         claim: vi.fn(),
+        claiming: () => false,
         vote: vi.fn(),
         download: vi.fn(),
         voice: {} as VoicePlayer,
@@ -78,6 +79,26 @@ describe("a message's controls", () => {
         expect((shown as { canAct: boolean }).canAct).toBe(true);
         (shown as { onAccept: () => void }).onAccept();
         expect(swap).toHaveBeenCalledWith(expect.anything(), content, "accept");
+    });
+
+    test("a prize claims through the conversation, and shows its claim on the way as it is now", () => {
+        const inFlight = new Set<bigint>();
+        const h = handlers({ claiming: (id) => inFlight.has(id) });
+        const shown = withHandlers(
+            row({ kind: "prize", time: "" } as GroupMessage),
+            msg({ kind: "prize_content" } as MessageContent),
+            h,
+            new Map(),
+        ) as { claiming: boolean; onClaim: (e: MouseEvent) => void };
+        const click = {} as MouseEvent;
+        shown.onClaim(click);
+        expect(h.claim).toHaveBeenCalledWith(expect.anything(), click);
+        // read each time, so the same row follows the claim
+        expect(shown.claiming).toBe(false);
+        inFlight.add(1n);
+        expect(shown.claiming).toBe(true);
+        inFlight.delete(1n);
+        expect(shown.claiming).toBe(false);
     });
 
     test("a text message is shown as it is", () => {

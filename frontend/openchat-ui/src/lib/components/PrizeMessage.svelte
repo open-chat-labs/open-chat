@@ -1,11 +1,13 @@
 <!-- Prize message. Built only on what a prize carries: token, winners, time left, claimed count and gates.
-     The amount is revealed on claim ("You won 6.2 ICP"). 3D spinning coin with the token mark (paused with reduced motion); confetti bursts from Claim.
+     The amount is revealed on claim ("You won 6.2 ICP"). 3D spinning coin with the token mark (paused with reduced motion); confetti bursts from
+     the claim area when the prize turns won while it shows (not on the click: the claim may fail).
      state: open | claimed | ended. gates: [{ label, met }]. Any unmet gate → "Requirements not met".
      Without onClaim it marks itself claimed; onClaim gets the click (a claim needs a trusted one). canClaim false offers no Claim
-     (the sender, a DM, all claimed). sending: still on its way (its own, before it lands), the card as it will be with
-     "Sending prize…" where Claim would go.
-     By hand: `side` (the sent bubble's colours, as PollMessage) and `sending`. -->
+     (the sender, a DM, all claimed). claiming: a claim is on its way, "Claiming…" with a spinner in place of Claim.
+     sending: still on its way (its own, before it lands), the card as it will be with "Sending prize…" where Claim would go.
+     By hand: `side` (the sent bubble's colours, as PollMessage), `sending` and `claiming`. -->
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { useT } from '../i18n';
   import Confetti from './Confetti.svelte';
   import RequirementChip from './RequirementChip.svelte';
@@ -27,6 +29,8 @@
     canClaim?: boolean;
     /** Still being sent: no Claim, "Sending prize…" in its place. */
     sending?: boolean;
+    /** A claim is on its way: no Claim, "Claiming…" with a spinner in its place. */
+    claiming?: boolean;
     note?: string;
     side?: 'received' | 'sent';
     time: string;
@@ -45,6 +49,7 @@
     wonAmount = '',
     canClaim = true,
     sending = false,
+    claiming = false,
     note = '',
     side = 'received',
     time,
@@ -61,8 +66,15 @@
   const blocked = $derived(gates.some((g) => !g.met));
   const taken = $derived(claimed + (claimedHere && status !== 'claimed' ? 1 : 0));
 
+  // confetti once the prize turns won while it shows; one that's already won when it mounts stays still
+  let wasWon = untrack(() => won);
+  $effect.pre(() => {
+    if (won && !wasWon) untrack(() => burst++);
+    wasWon = won;
+  });
+
   function claim(e: MouseEvent) {
-    burst++;
+    if (claiming) return;
     if (onClaim) onClaim(e);
     else claimedHere = true;
   }
@@ -100,6 +112,8 @@
       <span class="outcome" role="status"><Spinner size={16} tone="ink" label="ui.prizeMessage.sending" />{t('ui.prizeMessage.sending')}</span>
     {:else if won}
       <span class="outcome won"><span class="outcome-icon check"></span>{wonAmount ? t('ui.prizeMessage.youWon', { amount: wonAmount }) : t('ui.prizeMessage.youWonIt')}</span>
+    {:else if claiming}
+      <span class="outcome" role="status"><Spinner size={16} tone="ink" label="ui.prizeMessage.claiming" />{t('ui.prizeMessage.claiming')}</span>
     {:else if ended}
       <span class="outcome"><span class="outcome-icon clock"></span>{t('ui.prizeMessage.hasEnded')}</span>
     {:else if blocked}

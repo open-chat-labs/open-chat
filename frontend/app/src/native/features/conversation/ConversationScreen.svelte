@@ -125,6 +125,7 @@
     import { VoicePlayer } from "@src/logic/conversation/voicePlayer.svelte";
     import { HumanChecks } from "@src/logic/prize/humanCheck.svelte";
     import { claimPrizeWithHumanCheck } from "@src/logic/prize/prizeClaim";
+    import { claimsStore } from "@src/stores/claims";
     import { lowBandwidth } from "@src/stores/settings";
     import { now, now500 } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
@@ -912,6 +913,7 @@
         openMedia,
         openUrl: (url) => window.open(url, "_blank", "noopener"),
         claim,
+        claiming: (messageId) => $claimsStore.has(messageId),
         vote,
         download,
         voice,
