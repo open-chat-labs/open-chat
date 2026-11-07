@@ -1,5 +1,5 @@
-import type { P2PSwapContent } from "@shared";
-import { swapAcceptCost, swapActions } from "./swaps";
+import type { P2PSwapContent, P2PSwapStatus } from "@shared";
+import { swapAcceptCost, swapActions, swapStatusWithLocal } from "./swaps";
 
 const token = (symbol: string, fee: bigint) => ({
     symbol,
@@ -53,5 +53,42 @@ describe("a swap offer", () => {
             fees: 30_000n,
             total: 100_030_000n,
         });
+    });
+});
+
+describe("a swap's status with the one this client set", () => {
+    const open: P2PSwapStatus = { kind: "p2p_swap_open" };
+    const reserved: P2PSwapStatus = { kind: "p2p_swap_reserved", reservedBy: "me" };
+    const accepted: P2PSwapStatus = {
+        kind: "p2p_swap_accepted",
+        acceptedBy: "me",
+        token1TxnIn: 7n,
+    };
+    const completed: P2PSwapStatus = {
+        kind: "p2p_swap_completed",
+        acceptedBy: "me",
+        token1TxnIn: 7n,
+        token0TxnOut: 8n,
+        token1TxnOut: 9n,
+    };
+    const cancelled: P2PSwapStatus = { kind: "p2p_swap_cancelled" };
+
+    test("is the message's own when this client set none", () => {
+        expect(swapStatusWithLocal(open, undefined)).toBe(open);
+    });
+
+    test("is the local one while the message hasn't caught up with the accept or cancel", () => {
+        expect(swapStatusWithLocal(open, reserved)).toBe(reserved);
+        expect(swapStatusWithLocal(open, accepted)).toBe(accepted);
+        expect(swapStatusWithLocal(reserved, accepted)).toBe(accepted);
+        expect(swapStatusWithLocal(open, cancelled)).toBe(cancelled);
+    });
+
+    test("is the message's once it has got as far, so a settled swap doesn't stay pending", () => {
+        expect(swapStatusWithLocal(completed, accepted)).toBe(completed);
+        expect(swapStatusWithLocal(accepted, reserved)).toBe(accepted);
+        const theirs: P2PSwapStatus = { ...accepted, token1TxnIn: 11n };
+        expect(swapStatusWithLocal(theirs, accepted)).toBe(theirs);
+        expect(swapStatusWithLocal(cancelled, cancelled)).toBe(cancelled);
     });
 });

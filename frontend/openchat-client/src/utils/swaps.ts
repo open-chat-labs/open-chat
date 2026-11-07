@@ -17,6 +17,35 @@ export function swapTakenBy(status: P2PSwapStatus): string | undefined {
     }
 }
 
+/** How far a swap has got: open, reserved, accepted, then over (completed, cancelled or expired). */
+function swapProgress(status: P2PSwapStatus): number {
+    switch (status.kind) {
+        case "p2p_swap_open":
+            return 0;
+        case "p2p_swap_reserved":
+            return 1;
+        case "p2p_swap_accepted":
+            return 2;
+        case "p2p_swap_completed":
+        case "p2p_swap_cancelled":
+        case "p2p_swap_expired":
+            return 3;
+    }
+}
+
+/**
+ * A swap's status as it shows: the one this client set when the user accepted or cancelled it
+ * (`local`) while that's further along than the message's own, the message's after that. The
+ * message moves on as the swap settles (reserved, accepted, completed); a local status kept past
+ * it would hold the offer at "pending" until the local update lapses.
+ */
+export function swapStatusWithLocal(
+    status: P2PSwapStatus,
+    local: P2PSwapStatus | undefined,
+): P2PSwapStatus {
+    return local !== undefined && swapProgress(local) > swapProgress(status) ? local : status;
+}
+
 /**
  * A swap offer's labels as the mobile app words them: its button and its header. An open offer's
  * header is its time left, which the caller words (`headerLabelKey` is undefined then). Someone

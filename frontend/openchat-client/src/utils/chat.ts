@@ -116,6 +116,7 @@ import { formatTokens } from "./cryptoFormatter";
 import { hasOwnerRights, isPermitted } from "./permissions";
 import { messageFlagsRestricted, messageRestricted } from "./restrictedContent";
 import { routeForScope } from "./routes";
+import { swapStatusWithLocal } from "./swaps";
 import { compareUsername, nullUser, userAvatarUrl } from "./user";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
@@ -1920,10 +1921,10 @@ function mergeLocalUpdates(
     }
 
     if (localUpdates?.p2pSwapStatus !== undefined && message.content.kind === "p2p_swap_content") {
-        message.content = {
-            ...message.content,
-            status: localUpdates.p2pSwapStatus,
-        };
+        const status = swapStatusWithLocal(message.content.status, localUpdates.p2pSwapStatus);
+        if (status !== message.content.status) {
+            message.content = { ...message.content, status };
+        }
     }
 
     if (localUpdates?.reactions !== undefined) {
