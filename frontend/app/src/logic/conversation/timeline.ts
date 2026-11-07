@@ -1,8 +1,9 @@
 import { chatIdentifiersEqual, chatIdentifierToString, type ChatIdentifier } from "@client";
 
 // What a conversation's timeline decides around its list (core/ChatEventList), for every tree that
-// shows one with the library (src/web's, src/native's): where the unread divider goes, when the
-// route's message is gone to, and who is shown typing.
+// shows one with the library (src/web's, src/native's): where the unread divider goes and when it
+// goes, where a chat with unread messages opens, when the route's message is gone to, and who is
+// shown typing.
 
 /**
  * The first unread message when a chat was opened: the unread divider stays above it while the
@@ -19,6 +20,46 @@ export class FirstUnread {
             this.#for = { key, index: firstUnread() };
         }
         return this.#for.index;
+    }
+
+    /**
+     * Every message from the first unread on has been read: the divider goes for the rest of the
+     * visit (the screen lets it linger a moment first). Nothing for another chat.
+     */
+    seen(chatId: ChatIdentifier): void {
+        if (this.#for?.key === chatIdentifierToString(chatId)) {
+            this.#for = { key: this.#for.key, index: undefined };
+        }
+    }
+}
+
+/**
+ * Where a chat with unread messages opens, for a list put there after the chat is selected (the
+ * native conversation, pushed once the URL has changed). As the client selects a chat it loads
+ * the messages around the first unread and announces it (setSelectedChat, loadingMessageWindow),
+ * which a list already there goes to (ChatEventList); a list that comes after has missed it, so it
+ * goes there itself, once that message is among what it has. Once per chat, and never when the
+ * route names a message: a link goes to its own.
+ */
+export class OpenAtUnread {
+    #handled: string | undefined;
+
+    /** The message to go to now, if any. */
+    next(
+        chatId: ChatIdentifier,
+        firstUnread: number | undefined,
+        routeMessage: number | undefined,
+        has: (messageIndex: number) => boolean,
+    ): number | undefined {
+        const key = chatIdentifierToString(chatId);
+        if (this.#handled === key) return undefined;
+        if (routeMessage !== undefined || firstUnread === undefined) {
+            this.#handled = key;
+            return undefined;
+        }
+        if (!has(firstUnread)) return undefined;
+        this.#handled = key;
+        return firstUnread;
     }
 }
 

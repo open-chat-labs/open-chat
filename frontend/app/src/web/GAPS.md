@@ -394,6 +394,12 @@ design export needs. Each entry says where it came up.
     its first messages coming from the backend when the cache has none. Older messages loading as
     the list is scrolled up show none: ChatEventList doesn't say when it's loading them, and it
     loads them well before the top is reached.
+  - **Unread messages**: a chat with unread messages opens on the first of them, in the middle of
+    the list, as the old app's (`OpenAtUnread`: the client loads them as it selects the chat,
+    before the pushed screen's list is there to hear it), under an "Unread messages" divider. The
+    divider goes once every message after it has been read: it lingers 3s, then fades and folds
+    away (`FirstUnread.seen`), and isn't back that visit. Ours: the old app has no divider, the
+    web's stays for the visit, and the design doesn't show one in a conversation.
   - **Going back** keeps the messages showing until the screen is gone (`HeldWhileLeaving`, and
     ChatEventList's `loadedRange`, which the conversation holds with them), as it does when
     another chat replaces it.

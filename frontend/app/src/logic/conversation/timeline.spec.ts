@@ -1,6 +1,6 @@
 import type { ChatIdentifier } from "@client";
 import { describe, expect, test, vi } from "vitest";
-import { FirstUnread, MessageLink, othersTyping } from "./timeline";
+import { FirstUnread, MessageLink, OpenAtUnread, othersTyping } from "./timeline";
 
 const group = (groupId: string): ChatIdentifier => ({ kind: "group_chat", groupId });
 
@@ -18,6 +18,54 @@ describe("the first unread message", () => {
         first.of(group("a"), () => 5);
         expect(first.of(group("b"), () => undefined)).toBeUndefined();
         expect(first.of(group("a"), () => 7)).toBe(7);
+    });
+});
+
+describe("the unread divider, once everything after it is read", () => {
+    test("goes for the rest of the visit", () => {
+        const first = new FirstUnread();
+        expect(first.of(group("a"), () => 5)).toBe(5);
+        first.seen(group("a"));
+        expect(first.of(group("a"), () => 5)).toBeUndefined();
+    });
+
+    test("stays when it's another chat that was read", () => {
+        const first = new FirstUnread();
+        first.of(group("a"), () => 5);
+        first.seen(group("b"));
+        expect(first.of(group("a"), () => 9)).toBe(5);
+    });
+
+    test("is back on the next visit, if there's something unread then", () => {
+        const first = new FirstUnread();
+        first.of(group("a"), () => 5);
+        first.seen(group("a"));
+        first.of(group("b"), () => undefined);
+        expect(first.of(group("a"), () => 12)).toBe(12);
+    });
+});
+
+describe("a chat opened with unread messages", () => {
+    const has = (indexes: number[]) => (i: number) => indexes.includes(i);
+
+    test("goes to the first unread once it's among the list's messages, and only once", () => {
+        const open = new OpenAtUnread();
+        expect(open.next(group("a"), 8, undefined, has([20, 21]))).toBeUndefined();
+        expect(open.next(group("a"), 8, undefined, has([7, 8, 9]))).toBe(8);
+        expect(open.next(group("a"), 8, undefined, has([7, 8, 9]))).toBeUndefined();
+    });
+
+    test("leaves a link to go to its own message, and a chat with nothing unread at the bottom", () => {
+        const open = new OpenAtUnread();
+        expect(open.next(group("a"), 8, 3, has([3, 8]))).toBeUndefined();
+        expect(open.next(group("a"), 8, undefined, has([8]))).toBeUndefined();
+        expect(open.next(group("b"), undefined, undefined, has([1]))).toBeUndefined();
+    });
+
+    test("goes again for another chat", () => {
+        const open = new OpenAtUnread();
+        expect(open.next(group("a"), 8, undefined, has([8]))).toBe(8);
+        expect(open.next(group("b"), 2, undefined, has([2]))).toBe(2);
     });
 });
 

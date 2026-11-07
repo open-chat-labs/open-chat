@@ -115,7 +115,12 @@
         timelineEventText,
         type EventTextContext,
     } from "@src/logic/conversation/timelineEventText";
-    import { FirstUnread, MessageLink, othersTyping } from "@src/logic/conversation/timeline";
+    import {
+        FirstUnread,
+        MessageLink,
+        OpenAtUnread,
+        othersTyping,
+    } from "@src/logic/conversation/timeline";
     import { VoicePlayer } from "@src/logic/conversation/voicePlayer.svelte";
     import { HumanChecks } from "@src/logic/prize/humanCheck.svelte";
     import { claimPrizeWithHumanCheck } from "@src/logic/prize/prizeClaim";
@@ -600,9 +605,15 @@
     const heldLoaded = new HeldWhileLeaving($eventIndexesLoadedStore);
     const loaded = $derived(heldLoaded.of(selected, $eventIndexesLoadedStore));
 
-    // the unread divider stays above the first message unread when the chat opened
+    // the unread divider stays above the first message unread when the chat opened, until every
+    // message from there on has been read: then it lingers a moment and fades (FirstUnread.seen)
+    const DIVIDER_LINGER_MS = 3000;
+    const DIVIDER_FADE_MS = 300;
     const firstUnreadMarker = new FirstUnread();
+    let dividerSeen = $state(0);
+    let dividerFading = $state(false);
     const firstUnread = $derived.by(() => {
+        void dividerSeen;
         const current = chat;
         if (current === undefined) return undefined;
         return firstUnreadMarker.of(current.id, () =>
@@ -613,6 +624,49 @@
                 ),
             ),
         );
+    });
+
+    const unreadLeft = $derived.by(() => {
+        // follows the read state as messages are read
+        void $messagesRead;
+        if (chat === undefined || !selected) return 0;
+        return messagesRead.unreadMessageCount(chat.id, chat.latestMessage?.event.messageIndex);
+    });
+    $effect(() => {
+        const current = chat;
+        if (current === undefined || firstUnread === undefined || unreadLeft > 0) return;
+        const fade = setTimeout(() => (dividerFading = true), DIVIDER_LINGER_MS);
+        const gone = setTimeout(() => {
+            firstUnreadMarker.seen(current.id);
+            dividerFading = false;
+            dividerSeen += 1;
+        }, DIVIDER_LINGER_MS + DIVIDER_FADE_MS);
+        return () => {
+            clearTimeout(fade);
+            clearTimeout(gone);
+        };
+    });
+
+    // a chat opened with unread messages opens at the first of them, as the old UI's: the client
+    // loads them as it selects the chat, which happens before this list is there to hear it
+    // (OpenAtUnread), so the list is sent there once that message is in
+    const openAtUnread = new OpenAtUnread();
+    $effect(() => {
+        const current = list;
+        const here = chat;
+        if (current === undefined || here === undefined || !selected) return;
+        const shown = items;
+        const to = openAtUnread.next(here.id, firstUnread, $messageIndexStore, (index) =>
+            shown.some(
+                (item) =>
+                    item.kind === "event" &&
+                    item.event.event.kind === "message" &&
+                    item.event.event.messageIndex === index,
+            ),
+        );
+        if (to !== undefined) {
+            untrack(() => void current.scrollToMessageIndex({ chatId: here.id }, to, false));
+        }
     });
 
     // a new chat's list starts uninitialised, as the old UI's did, unless it has nothing to load
@@ -1040,7 +1094,11 @@
                                         read: args.isReadByMe($messagesRead, evt),
                                     }}>
                                     {#if firstUnread === msg.messageIndex && msg.sender !== me}
-                                        <div class="unread"><UnreadDivider /></div>
+                                        <div class="unread" class:fading={dividerFading}>
+                                            <div class="unread-inner">
+                                                <div class="unread-pad"><UnreadDivider /></div>
+                                            </div>
+                                        </div>
                                     {/if}
                                     <MessageGroup
                                         side={row.side}
@@ -1282,7 +1340,30 @@
         margin-block-end: 0;
     }
 
+    // fades and folds away once it has been read past
     .unread {
+        display: grid;
+        grid-template-rows: 1fr;
+        transition:
+            grid-template-rows 0.3s var(--ease-out),
+            opacity 0.3s ease;
+
+        &.fading {
+            grid-template-rows: 0fr;
+            opacity: 0;
+        }
+
+        @include reduced-motion {
+            transition: none;
+        }
+    }
+
+    .unread-inner {
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .unread-pad {
         padding-block-end: var(--space-12);
     }
 
