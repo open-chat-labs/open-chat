@@ -849,6 +849,28 @@
         "doc": ""
       },
       {
+        "name": "threadFaces",
+        "type": "string[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Those in the thread, as CSS backgrounds (ThreadLink's faces)."
+      },
+      {
+        "name": "threadSelected",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Its thread is the one open (ThreadLink's selected)."
+      },
+      {
         "name": "onOpenThread",
         "type": "() => void",
         "default": null,
@@ -967,7 +989,7 @@
     "name": "ThreadLink",
     "source": "lib/ChatBubble.dc.html (its thread line), by hand (4c)",
     "hash": "",
-    "description": "A message's thread: \"N replies\" and when the last came, opening the thread. ChatBubble's thread line as its own component, so MessageGroup shows it under every kind of message.",
+    "description": "A message's thread: a compact card under the message, as wide as what it says: who's in the thread (overlapping faces, \"+N\" past three), \"N replies\" and when the last came, opening the thread. Accent-outlined while it's the thread open beside the conversation. ChatBubble's thread line as its own component, so MessageGroup shows it under every kind of message.",
     "preview": {
       "width": 360,
       "height": 48
@@ -994,6 +1016,34 @@
         "required": false,
         "componentDefault": "''",
         "doc": "When the last reply came, e.g. \"2:14 pm\"; nothing shown without it."
+      },
+      {
+        "name": "faces",
+        "type": "string[]",
+        "default": [
+          "linear-gradient(140deg,#ff5f9e,#6a2bff)",
+          "linear-gradient(140deg,#2ee6a8,#1f8fbf)",
+          "linear-gradient(140deg,#ffb03d,#ff5f4d)",
+          "linear-gradient(140deg,#3d7bff,#7a3dff)",
+          "linear-gradient(140deg,#b04dff,#4d2dff)"
+        ],
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Those in the thread, as CSS backgrounds (AvatarStack's people); the reply icon shows without them."
+      },
+      {
+        "name": "selected",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "It's the thread open (beside the conversation): accent outline and tint."
       },
       {
         "name": "onOpen",

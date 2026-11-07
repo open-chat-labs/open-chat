@@ -42,6 +42,10 @@ interface GroupMessageBase {
   /** Replies in the message's thread: "N replies" under it (when the last came, `threadLastAt`), opening it (`onOpenThread`). */
   threadCount?: number;
   threadLastAt?: string;
+  /** Those in the thread, as CSS backgrounds: overlapping faces in "N replies". */
+  threadFaces?: string[];
+  /** Its thread is the one open: "N replies" outlined in the accent. */
+  threadSelected?: boolean;
   onOpenThread?: () => void;
 }
 

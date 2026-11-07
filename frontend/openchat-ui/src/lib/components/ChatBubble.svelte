@@ -55,6 +55,10 @@
     onShowAllReactions?: () => void;
     threadCount?: number;
     threadLastAt?: string;
+    /** Those in the thread, as CSS backgrounds (ThreadLink's faces). */
+    threadFaces?: string[];
+    /** Its thread is the one open (ThreadLink's selected). */
+    threadSelected?: boolean;
     onOpenThread?: () => void;
     /** Previews of the links in the text, a card each under it. */
     previews?: Omit<ComponentProps<typeof LinkCard>, 'side'>[];
@@ -86,6 +90,8 @@
     onShowAllReactions,
     threadCount = 0,
     threadLastAt = '',
+    threadFaces = [],
+    threadSelected = false,
     onOpenThread,
     previews = [],
     onRemovePreview,
@@ -179,7 +185,7 @@
         </div>
       {/if}
       {#if threadCount > 0}
-        <ThreadLink count={threadCount} lastAt={threadLastAt} onOpen={onOpenThread} />
+        <ThreadLink count={threadCount} lastAt={threadLastAt} faces={threadFaces} selected={threadSelected} onOpen={onOpenThread} />
       {/if}
       <ReactionChips
         {reactions}

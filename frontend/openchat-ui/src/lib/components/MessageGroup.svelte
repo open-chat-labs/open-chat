@@ -523,7 +523,7 @@
         {/if}
         <!-- every other kind's thread and reactions, under it as under a text bubble (ChatBubble draws its own) -->
         {#if m.kind && m.kind !== 'text' && (m.threadCount ?? 0) > 0}
-          <ThreadLink count={m.threadCount ?? 0} lastAt={m.threadLastAt} onOpen={m.onOpenThread} />
+          <ThreadLink count={m.threadCount ?? 0} lastAt={m.threadLastAt} faces={m.threadFaces} selected={m.threadSelected} onOpen={m.onOpenThread} />
         {/if}
         {#if m.kind && m.kind !== 'text' && m.reactions?.length}
           <ReactionChips reactions={m.reactions} afterThread={(m.threadCount ?? 0) > 0} onToggle={(c) => onReact?.(i, c)} />
