@@ -132,3 +132,13 @@ export function callEventProps(
         time,
     };
 }
+
+/**
+ * Whether the list shows its small spinner at the top (never one in the middle of the screen):
+ * its first messages are on their way from the backend, none being in the cache. (A chat still
+ * being selected, as a link opens a channel while its community loads, shows it in place of the
+ * list.) A chat with nothing to load starts initialised, so its empty list shows none.
+ */
+export function listWaiting(list: { initialised: boolean; items: number }): boolean {
+    return !list.initialised && list.items === 0;
+}

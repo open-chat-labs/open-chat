@@ -22,6 +22,7 @@
         cryptoLookup,
         currentUserIdStore,
         disappearingMessagesUpdate,
+        eventIndexesLoadedStore,
         eventsStore,
         exchangeRatesLookupStore,
         failedMessagesStore,
@@ -133,9 +134,11 @@
         callEventProps,
         disappearChoice,
         headerMenuItems,
+        listWaiting,
         type DisappearAfter,
         type HeaderMenuAction,
     } from "./conversation.adapter";
+    import { HeldWhileLeaving } from "./heldWhileLeaving";
     import SearchBar from "./SearchBar.svelte";
 
     let { screen, context }: ScreenProps<Extract<NativeScreen, { kind: "conversation" }>> =
@@ -145,14 +148,16 @@
     // the shell's, the same for the screen's life
     const overlays = untrack(() => context.overlays);
 
-    // the route's chat, once the client has selected it (RouteEffects: setSelectedChat); never
-    // another chat's, as the selection moves on while this screen slides away
-    const chat = $derived(
+    // whether the route's chat is the one the client has selected (RouteEffects: setSelectedChat).
+    // It isn't before it's first selected (a link opening the app, a community still loading), and
+    // isn't again from when Back changes the URL, while the screen slides away: what the screen
+    // showed of it is held until it's gone then (HeldWhileLeaving), never another chat's
+    const selected = $derived(
         $selectedChatSummaryStore !== undefined &&
-            chatIdentifiersEqual($selectedChatSummaryStore.id, screen.route.chatId)
-            ? $selectedChatSummaryStore
-            : undefined,
+            chatIdentifiersEqual($selectedChatSummaryStore.id, screen.route.chatId),
     );
+    const heldChat = new HeldWhileLeaving<ChatSummary | undefined>(undefined);
+    const chat = $derived(heldChat.of(selected, $selectedChatSummaryStore));
     const me = $derived($currentUserIdStore);
     const direct = $derived(chat?.kind === "direct_chat");
     const chatKey = $derived(chat && chatIdentifierToString(chat.id));
@@ -188,11 +193,12 @@
     // bumped when a revealed image needs its row redone
     let rowsVersion = $state(0);
 
+    const heldCtx = new HeldWhileLeaving<ConversationContext | undefined>(undefined);
     const ctx = $derived.by((): ConversationContext => {
         void day;
         void rowsVersion;
         void ratesLoaded;
-        return conversationContext({
+        const live = conversationContext({
             client,
             chat,
             me,
@@ -207,6 +213,8 @@
             tokens: $cryptoLookup,
             rates: () => exchangeRatesLookupStore.value,
         });
+        // the chat's webhooks and details go with the selection
+        return heldCtx.of(selected, live) ?? live;
     });
 
     const level = $derived(chat?.kind === "channel" ? "channel" : "group");
@@ -594,8 +602,9 @@
 
     const grouper = new TimelineGrouper();
     const flattener = new TimelineFlattener();
+    const heldItems = new HeldWhileLeaving<FlatChatItem[]>([]);
     const items = $derived.by((): FlatChatItem[] => {
-        if (chat === undefined) return [];
+        if (!selected || chat === undefined) return heldItems.of(false, []);
         const timeline = grouper.group(
             $eventsStore,
             me,
@@ -604,8 +613,11 @@
             undefined,
             true,
         );
-        return flattener.flatten(timeline);
+        return heldItems.of(true, flattener.flatten(timeline));
     });
+    // the ranges of events loaded, which the list splits its items by: held with them
+    const heldLoaded = new HeldWhileLeaving($eventIndexesLoadedStore);
+    const loaded = $derived(heldLoaded.of(selected, $eventIndexesLoadedStore));
 
     // the unread divider stays above the first message unread when the chat opened
     const firstUnreadMarker = new FirstUnread();
@@ -624,6 +636,9 @@
 
     // a new chat's list starts uninitialised, as the old UI's did, unless it has nothing to load
     let initialised = $state(false);
+    // a small spinner at the top of the list (never one in the middle of the screen) while its
+    // first messages are on their way (not in the cache); in its place while the chat is selected
+    const waiting = $derived(listWaiting({ initialised, items: items.length }));
     let initialisedFor: string | undefined;
     $effect.pre(() => {
         const key = chatKey;
@@ -877,9 +892,7 @@
         </button>
     {/if}
 
-    {#if chat === undefined}
-        <div class="state"><Spinner /></div>
-    {:else if privatePreview}
+    {#if privatePreview}
         <div class="state">
             <EmptyState
                 preset="no-conversations"
@@ -887,8 +900,13 @@
                 body={$_("group.privateGroupInfo", { values: { level: levelText } })}
                 actionLabel="" />
         </div>
+    {:else if chat === undefined}
+        <div class="messages"><div class="waiting"><Spinner size={20} /></div></div>
     {:else}
         <div class="messages" style:--group-gap="8px">
+            {#if waiting}
+                <div class="waiting"><Spinner size={20} /></div>
+            {/if}
             <ChatEventList
                 bind:this={list}
                 rootSelector="native-conversation"
@@ -896,6 +914,7 @@
                 threadRootEvent={undefined}
                 {items}
                 {readonly}
+                loadedRange={loaded}
                 maintainScroll
                 visible
                 bind:initialised
@@ -1155,6 +1174,22 @@
         min-height: 0;
         display: flex;
         flex-direction: column;
+    }
+
+    // over the top of the list, after a moment: a load from the cache is in before it shows
+    .waiting {
+        position: absolute;
+        z-index: 1;
+        inset-block-start: var(--space-12);
+        inset-inline: 0;
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+        animation: oc-veil-in 200ms 400ms both;
+
+        @media (prefers-reduced-motion: reduce) {
+            animation-duration: 1ms;
+        }
     }
 
     :global(.vcl-viewport.native-conversation-list) {

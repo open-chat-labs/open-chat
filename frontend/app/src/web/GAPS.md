@@ -382,6 +382,16 @@ design export needs. Each entry says where it came up.
   - **Clear history** (the prototype's menu): the backend has none, so it's dropped from the menu
     (decided 2026-11-07); it comes back after cutover once the backend can (native PLAN, "After
     everything else").
+  - **Opening a chat** shows its messages from the device's cache (CachePrimer keeps every chat's
+    latest events there) as the screen slides in, as the old UI does; the screen's chunk is
+    preloaded with the Chats tab's. What still waits gets a small spinner at the top of the list,
+    after 400ms: the chat being selected (a link opening a channel while its community loads), or
+    its first messages coming from the backend when the cache has none. Older messages loading as
+    the list is scrolled up show none: ChatEventList doesn't say when it's loading them, and it
+    loads them well before the top is reached.
+  - **Going back** keeps the messages showing until the screen is gone (`HeldWhileLeaving`, and
+    ChatEventList's `loadedRange`, which the conversation holds with them), as it does when
+    another chat replaces it.
   - **Mute** is Mute / Unmute (no durations, as on Chats' rows).
   - **Typing** couldn't be seen end to end here: typing reaches peers over WebRTC, which the browser
     check's environment didn't connect. The bubble and the strip were checked by setting the names.

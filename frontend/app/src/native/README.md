@@ -112,6 +112,10 @@ to one do.
   a pinned button stays down: the screen's scroller takes `aboveKeyboard` (`aboveKeyboard.svelte.ts`,
   `keyboard.ts`), which keeps the viewport resize off, makes room for the keyboard and scrolls the
   focused field above it.
+- **A screen leaving keeps what it shows** until it's gone. Back changes the URL as the pop starts,
+  and whatever the URL selected (a chat, a community) is cleared then, in the client's stores: a
+  screen that shows a selection holds what it last showed of it while it slides out (the
+  conversation: `HeldWhileLeaving`).
 - **Sheets and menus** register while they're open (`useOverlay(context.overlays, …)`), so Android's
   system back closes them before it pops the screen.
 - **The tab bar** shows only on a tab's root; every pushed screen has the whole window (`showsTabBar`).

@@ -4,6 +4,7 @@ import {
     disappearChoice,
     disappearItemId,
     headerMenuItems,
+    listWaiting,
     type HeaderMenuState,
 } from "./conversation.adapter";
 
@@ -82,5 +83,19 @@ describe("an ended or missed call", () => {
             duration: "4:12",
             time: "10:00",
         });
+    });
+});
+
+describe("the list's spinner", () => {
+    test("while its first messages are on their way, none being in the cache", () => {
+        expect(listWaiting({ initialised: false, items: 0 })).toBe(true);
+    });
+
+    test("none once there are messages to show, though the first load hasn't ended", () => {
+        expect(listWaiting({ initialised: false, items: 12 })).toBe(false);
+    });
+
+    test("none for a chat with nothing in it", () => {
+        expect(listWaiting({ initialised: true, items: 0 })).toBe(false);
     });
 });
