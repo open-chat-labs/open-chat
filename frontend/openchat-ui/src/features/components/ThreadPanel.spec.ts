@@ -50,32 +50,33 @@ describe('ThreadPanel follow', () => {
     flushSync();
   };
 
-  test('shows the change at once and keeps it when the host accepts', async () => {
+  const isBusy = () => button().getAttribute('aria-busy') === 'true';
+
+  test('shows a spinner while the host is asked, then the change once it accepts', async () => {
     const d = deferred();
     const onFollowChange = vi.fn(() => d.promise);
     open({ following: false, onFollowChange });
     press();
     expect(onFollowChange).toHaveBeenCalledWith(true);
-    expect(isOn()).toBe(true);
+    expect(isBusy()).toBe(true);
+    expect(isOn()).toBe(false);
     d.resolve();
     await settle();
+    expect(isBusy()).toBe(false);
     expect(isOn()).toBe(true);
   });
 
-  test('the latest change wins; a rejected latest change falls back to the host', async () => {
-    const a = deferred(), b = deferred();
-    const calls = [a, b];
-    const onFollowChange = vi.fn(() => calls.shift()!.promise);
+  test('takes no second press while the host is asked; a rejection keeps the state from before', async () => {
+    const d = deferred();
+    const onFollowChange = vi.fn(() => d.promise);
     open({ following: false, onFollowChange });
     press(); // follow
-    press(); // unfollow
-    expect(onFollowChange.mock.calls).toEqual([[true], [false]]);
-    a.reject(new Error('late')); // superseded
+    press(); // ignored
+    expect(onFollowChange.mock.calls).toEqual([[true]]);
+    d.reject(new Error('x'));
     await settle();
+    expect(isBusy()).toBe(false);
     expect(isOn()).toBe(false);
-    b.reject(new Error('x'));
-    await settle();
-    expect(isOn()).toBe(false); // the host's value
   });
 
   test('falls back to the value the host last accepted, not an earlier guess', async () => {

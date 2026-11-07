@@ -1,16 +1,18 @@
 <!-- An open thread: the root stays pinned as a compact card above the replies, with who's in it and a Follow toggle.
      Lives in the right side panel on wide windows (back arrow) and in a modal on narrow ones (asModal: close button).
      Scrolls to the newest reply on open, on a new threadKey and when replies arrive. Sends carry the threadKey; a send that
-     returns a promise keeps the draft until it resolves. Follow flips at once and rolls back if onFollowChange rejects.
+     returns a promise keeps the draft until it resolves. Follow shows a spinner (and takes no click) while onFollowChange
+     is in flight, then the new state; it stays as it was if that rejects.
      A host with its own message list and composer passes them (`list`, `composer`) in place of the panel's own: the list
      then scrolls itself, and `replyCount` says how many replies there are. -->
 <script lang="ts">
-  import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
+  import { Waited } from '../../lib/behaviours/waited.svelte';
   import { untrack, type Snippet } from 'svelte';
   import type { MessageGroupItem } from '../../lib/types';
   import IconButton from '../../lib/components/IconButton.svelte';
   import MessageComposer from '../../lib/components/MessageComposer.svelte';
   import MessageGroup from '../../lib/components/MessageGroup.svelte';
+  import Spinner from '../../lib/components/Spinner.svelte';
   import UnreadDivider from '../../lib/components/UnreadDivider.svelte';
   import { useT } from '../../lib/i18n';
 
@@ -81,9 +83,10 @@
 
   let scroller: HTMLDivElement | undefined = $state();
   let rootOpen = $state(false);
-  // optimistic follow (lib/behaviours/optimistic.svelte.ts); a new thread starts from the host's value
-  let followState = $state.raw(new Optimistic(() => following));
+  // follow, waited for (lib/behaviours/waited.svelte.ts); a new thread starts from the host's value
+  let followState = $state.raw(new Waited(() => following));
   const on = $derived(followState.current);
+  const busy = $derived(followState.pending);
 
   const total = $derived(replyCount ?? replies.length + newReplies.length);
   const firstName = $derived(root.author.split(' ')[0]);
@@ -102,7 +105,7 @@
       if (key !== lastKey) {
         lastKey = key;
         rootOpen = false;
-        followState = new Optimistic(() => following);
+        followState = new Waited(() => following);
       }
     });
   });
@@ -127,6 +130,7 @@
   });
 
   function follow() {
+    if (busy) return;
     const next = !on;
     followState.set(next, () => onFollowChange?.(next));
   }
@@ -157,10 +161,14 @@
       <span
         class="follow"
         class:on
+        class:busy
         onclick={follow}
         role="button"
         tabindex="0"
-        aria-pressed={on}><span class="bell"></span>{t(on ? 'ui.threadPanel.following' : 'ui.threadPanel.follow')}</span
+        aria-pressed={on}
+        aria-disabled={busy || undefined}
+        aria-busy={busy || undefined}
+        >{#if busy}<span class="wait"><Spinner size={13} tone={on ? 'accent' : 'ink'} /></span>{:else}<span class="bell"></span>{/if}{t(on ? 'ui.threadPanel.following' : 'ui.threadPanel.follow')}</span
       >
     </div>
   </div>
@@ -376,6 +384,16 @@
 
   .follow:hover {
     background: var(--overlay-2);
+  }
+
+  .follow.busy {
+    cursor: default;
+  }
+
+  .wait {
+    display: flex;
+    width: 13px;
+    height: 13px;
   }
 
   .bell {

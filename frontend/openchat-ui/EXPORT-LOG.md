@@ -738,6 +738,7 @@
 - `behaviours/modal.ts`: `dialogOpen()`, whether a dialog is on the stack `DialogShell` and `use:modal` share, so a page's own Esc (the app's docked thread panel closing) leaves an Esc to the dialog over it.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
-## 2026-11-07 — threads: "N replies" as a card with faces and a selected state (4c), by hand
+## 2026-11-07 — threads: "N replies" as a card with faces and a selected state; Follow waits (4c), by hand
 - `ThreadLink`: a card as wide as what it says (it stretched across a message's grid cell under the non-text kinds), aligned with the message's start, with the hairline border (`--line-2`) and pill corners. `faces` (CSS backgrounds) shows those in the thread as an `AvatarStack` (20px, "+N" past four) before "N replies" and "Last reply …"; without faces it keeps the reply icon. `selected` (its thread is the one open beside the conversation) outlines it in the accent over a 12% accent tint; `aria-current`. `ChatBubble` takes `threadFaces` / `threadSelected` for it and `MessageGroup` passes a message's `threadFaces` / `threadSelected` (both on `GroupMessage`). `meta.json` updated; the docs' Messages section shows one of each.
+- `ThreadPanel`: Follow / Following shows a spinner in place of the bell and takes no click while `onFollowChange` is in flight, then the new state; a rejection leaves it as it was. It flipped at once (`Optimistic`); now `behaviours/waited.svelte.ts` (`Waited`, spec'd), which also keeps a host that updates its own value as the call starts from showing through early. The panel's follow spec follows the new behaviour.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
