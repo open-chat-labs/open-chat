@@ -1,39 +1,33 @@
 <script lang="ts">
-    import { i18nKey } from "@src/i18n/i18n";
+    import { ThreadPreviews } from "@src/logic/threads/threadPreviews.svelte";
     import { toastStore } from "@src/stores/toast";
-    import { debouncedDerived, threadsByChatStore, type OpenChat } from "@client";
-    import { getContext } from "svelte";
+    import { threadsByChatStore, type OpenChat } from "@client";
+    import { getContext, untrack } from "svelte";
     import Loading from "@shared_components/Loading.svelte";
     import { default as ThreadPreviewComponent } from "./ThreadPreview.svelte";
 
     const client = getContext<OpenChat>("client");
 
     const observer: IntersectionObserver = new IntersectionObserver(() => {});
-    let loading = $state(false);
-    const initialised = $state(false);
 
-    let threads = $derived.by(
-        debouncedDerived(() => [$threadsByChatStore], loadThreadPreviews, 300, []),
-    );
-
-    async function loadThreadPreviews() {
-        loading = true;
-        try {
-            return client.threadPreviews($threadsByChatStore);
-        } catch (_) {
-            toastStore.showFailureToast(i18nKey("thread.previewFailure"));
-            return [];
-        } finally {
-            loading = false;
-        }
-    }
+    // loaded again as the followed threads change (logic/threads/threadPreviews); the list stays
+    // up while it reloads, so the spinner shows on the first load only
+    const previews = new ThreadPreviews((threadsByChat) => client.threadPreviews(threadsByChat));
+    $effect(() => {
+        const threadsByChat = $threadsByChatStore;
+        untrack(async () => {
+            const failure = await previews.set(threadsByChat);
+            if (failure !== undefined) toastStore.showFailureToast(failure);
+        });
+    });
+    $effect(() => () => previews.dispose());
 </script>
 
 <div class="threads">
-    {#if loading && !initialised}
+    {#if previews.previews.kind === "loading"}
         <Loading />
     {:else}
-        {#each threads as thread (`${thread.rootMessage.index}_${thread.rootMessage.event.messageId}`)}
+        {#each previews.previews.threads as thread (`${thread.rootMessage.index}_${thread.rootMessage.event.messageId}`)}
             <ThreadPreviewComponent {observer} {thread} />
         {/each}
     {/if}

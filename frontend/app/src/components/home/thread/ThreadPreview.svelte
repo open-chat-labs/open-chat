@@ -1,6 +1,7 @@
 <script lang="ts">
     import Spinner from "@src/components_shared/icons/Spinner.svelte";
     import Tooltip from "@src/components/tooltip/Tooltip.svelte";
+    import { threadReadOnSight } from "@src/logic/threads/threadRead";
     import { toastStore } from "@src/stores/toast";
     import {
         allUsersStore,
@@ -8,8 +9,6 @@
         chatListScopeStore,
         chatSummariesStore,
         currentUserIdStore,
-        type EventWrapper,
-        type Message,
         messagesRead,
         type MultiUserChat,
         OpenChat,
@@ -80,23 +79,11 @@
 
     let open = $state(false);
 
-    function lastMessageIndex(events: EventWrapper<Message>[]): number | undefined {
-        for (let i = events.length - 1; i >= 0; i--) {
-            const evt = events[i].event;
-            if (evt.kind === "message") {
-                return evt.messageIndex;
-            }
-        }
-        return undefined;
-    }
-
     function isIntersecting() {
         // if we can see *all* of the unread messages in this thread, then mark it as read.
-        if (unreadCount > 0 && unreadCount < thread.latestReplies.length + 1) {
-            const lastMsgIdx = lastMessageIndex(thread.latestReplies);
-            if (lastMsgIdx !== undefined && chat !== undefined) {
-                client.markThreadRead(chat.id, threadRootMessageIndex, lastMsgIdx);
-            }
+        const readUpTo = threadReadOnSight(unreadCount, thread.latestReplies);
+        if (readUpTo !== undefined && chat !== undefined) {
+            client.markThreadRead(chat.id, threadRootMessageIndex, readUpTo);
         }
     }
 

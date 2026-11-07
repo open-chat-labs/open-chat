@@ -1,6 +1,6 @@
 // https://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
 
-import { OpenChat, routeStore, type RouteParams, type RouteType } from "@client";
+import { OpenChat, type RouteParams, type RouteType } from "@client";
 import { isStandalonePagePath } from "@shared";
 import { openUrl } from "tauri-plugin-oc-api";
 import { i18nKey } from "../i18n/i18n";
@@ -31,22 +31,6 @@ export function addQueryStringParam(name: string, val: string): string {
     const qs = new URLSearchParams(window.location.search);
     qs.set(name, val);
     return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
-}
-
-export function stripThreadFromUrl(path: string) {
-    if (
-        (routeStore.value.kind === "global_chat_selected_route" ||
-            routeStore.value.kind === "selected_channel_route") &&
-        routeStore.value.threadMessageIndex !== undefined
-    ) {
-        return removeThreadMessageIndex(routeStore.value.threadMessageIndex, path);
-    }
-    return path;
-}
-
-export function removeThreadMessageIndex(threadMessageIndex: number, path: string): string {
-    const re = new RegExp(`(\\/${threadMessageIndex})(\\?.*)?$`);
-    return path.replace(re, "");
 }
 
 export function removeQueryStringParam(name: string): string {

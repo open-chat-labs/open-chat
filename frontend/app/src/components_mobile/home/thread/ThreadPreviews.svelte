@@ -1,10 +1,10 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
+    import { ThreadPreviews } from "@src/logic/threads/threadPreviews.svelte";
     import { toastStore } from "@src/stores/toast";
     import { Container } from "component-lib";
     import {
         chatListScopeStore,
-        debouncedDerived,
         emptyCombinedUnreadCounts,
         numberOfThreadsStore,
         threadsByChatStore,
@@ -13,7 +13,7 @@
         unreadFavouriteCountsStore,
         type OpenChat,
     } from "@client";
-    import { getContext } from "svelte";
+    import { getContext, untrack } from "svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
@@ -21,13 +21,18 @@
 
     const client = getContext<OpenChat>("client");
 
-    let loading = $state(true);
-    const initialised = $state(false);
-    let spinner = $derived(loading && !initialised);
-
-    let threads = $derived.by(
-        debouncedDerived(() => [$threadsByChatStore], loadThreadPreviews, 300, []),
-    );
+    // loaded again as the followed threads change (logic/threads/threadPreviews); the list stays
+    // up while it reloads, so the spinner shows on the first load only
+    const previews = new ThreadPreviews((threadsByChat) => client.threadPreviews(threadsByChat));
+    $effect(() => {
+        const threadsByChat = $threadsByChatStore;
+        untrack(async () => {
+            const failure = await previews.set(threadsByChat);
+            if (failure !== undefined) toastStore.showFailureToast(failure);
+        });
+    });
+    $effect(() => () => previews.dispose());
+    let spinner = $derived(previews.previews.kind === "loading");
 
     let unread = $derived.by(() => {
         switch ($chatListScopeStore.kind) {
@@ -56,17 +61,6 @@
             : i18nKey(`Messages in ${$numberOfThreadsStore} thread(s)`),
     );
 
-    async function loadThreadPreviews() {
-        loading = true;
-        try {
-            return client.threadPreviews($threadsByChatStore);
-        } catch (_) {
-            toastStore.showFailureToast(i18nKey("thread.previewFailure"));
-            return [];
-        } finally {
-            loading = false;
-        }
-    }
 </script>
 
 <SlidingPageContent title={i18nKey("Threads")} {subtitle}>
@@ -77,12 +71,12 @@
         width={"fill"}
         height={"fill"}
         direction={"vertical"}>
-        {#if loading && !initialised}
+        {#if previews.previews.kind === "loading"}
             <FancyLoader size={"3rem"} />
         {:else}
             <VirtualList
                 keyFn={(e) => `${e.rootMessage.index}_${e.rootMessage.event.messageId}`}
-                items={threads}>
+                items={previews.previews.threads}>
                 {#snippet children(thread)}
                     <ThreadPreviewComponent {thread} />
                 {/snippet}

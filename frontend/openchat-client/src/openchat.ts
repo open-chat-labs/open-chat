@@ -8405,7 +8405,10 @@ export class OpenChat {
             .catch(() => ({ kind: "failure" }));
     }
 
-    async threadPreviews(threadsByChat: ChatMap<ThreadSyncDetails[]>): Promise<ThreadPreview[]> {
+    /** The previews of the threads followed in each chat; undefined if they couldn't be loaded. */
+    async threadPreviews(
+        threadsByChat: ChatMap<ThreadSyncDetails[]>,
+    ): Promise<ThreadPreview[] | undefined> {
         const request: ChatMap<[ThreadSyncDetails[], bigint | undefined]> = threadsByChat.reduce(
             (map, [chatId, threads]) => {
                 if (chatId.kind === "group_chat" || chatId.kind === "channel") {
@@ -8433,7 +8436,10 @@ export class OpenChat {
                 void this.getBridgedUsers(bridgedUserIdsFromEvents(events));
                 return threads;
             })
-            .catch(() => []);
+            .catch((err) => {
+                console.warn("Unable to load thread previews", err);
+                return undefined;
+            });
     }
 
     // Fetches the profiles of the bridged accounts which haven't been fetched, or not recently.
