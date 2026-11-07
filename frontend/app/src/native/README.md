@@ -42,13 +42,15 @@ native/
     tabStacks.svelte.ts  each tab's stack, kept across tab switches
     overlays.svelte.ts   open sheets and menus, which Android's back closes first
     back.ts          what Android's system back does
+    systemBack.ts    where it comes from (Tauri's back button and MainActivity's)
     motion.ts        the push transitions
     tabBar.adapter.ts    the tab bar's tabs
     tabSwipe.ts      the swipe between tabs, and a tab switch's two-screen slide
     Toasts.svelte    the app's toast as the kit's
   features/      one folder per screen/feature, as in src/web:
     app/screens.ts   which screen shows for each kind; a new screen sets its entry there
-    app/ScreenHost.svelte  loads it, or shows a placeholder until it's built
+    app/screenModules.ts   the screens' chunks, loaded once and kept, preloaded while idle
+    app/ScreenHost.svelte  shows it, or a placeholder until it's built
     chats/           the Chats tab: the list, its search, New chat
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
@@ -94,6 +96,17 @@ to one do.
   screens have no URLs (the web's are a dialog), so they're a stack of their own
   (`StartStack`), which Android's back goes through. Signing in and up are the client's
   (`signIn`, `signUp` through `logic/auth`), never steps a screen strings together.
+- **No loaders in the middle of the screen.** A screen renders at once from the stores it already
+  has and fills in what's still on its way where it goes: the parts that need it disabled, or a
+  small spinner in the card or row that's waiting, never one in place of the screen. Whatever can
+  be fetched before the screen opens is (the You tab fetches what its settings pages show, as
+  `botConfig`). The screens' chunks are preloaded while the shell is idle (`screenModules`), and
+  the shell goes to a screen whose chunk isn't in yet only once it is, so the screen before stays
+  rather than a blank one; ScreenHost shows a small spinner only should a chunk take long.
+- **The keyboard** comes up over a screen with fields rather than the screen shrinking above it, so
+  a pinned button stays down: the screen's scroller takes `aboveKeyboard` (`aboveKeyboard.svelte.ts`,
+  `keyboard.ts`), which keeps the viewport resize off, makes room for the keyboard and scrolls the
+  focused field above it.
 - **Sheets and menus** register while they're open (`useOverlay(context.overlays, …)`), so Android's
   system back closes them before it pops the screen.
 - **The tab bar** shows only on a tab's root; every pushed screen has the whole window (`showsTabBar`).

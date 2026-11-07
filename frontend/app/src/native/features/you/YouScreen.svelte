@@ -47,6 +47,7 @@
     } from "../../router/locations";
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenProps } from "../app/screens";
+    import { botConfig } from "./settings/botConfig.svelte";
     import { isDiamond, youLists, type YouRowId } from "./you.adapter";
 
     let { context }: ScreenProps<Extract<NativeScreen, { kind: "you" }>> = $props();
@@ -54,8 +55,12 @@
     const client = getContext<OpenChat>("client");
     const overlays = untrack(() => context.overlays);
 
-    // as it may have changed on another device since sign-in
-    onMount(() => client.refreshCurrentUserProfile());
+    // as it may have changed on another device since sign-in; and what the settings pages show
+    // that has to be fetched, so they have it when they're opened (Bots)
+    onMount(() => {
+        client.refreshCurrentUserProfile();
+        void botConfig.load(client);
+    });
 
     const userId = $derived($currentUserIdStore);
     const user = $derived($allUsersStore.get(userId));

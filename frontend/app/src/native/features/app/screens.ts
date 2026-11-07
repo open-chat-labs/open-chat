@@ -2,9 +2,11 @@ import type { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
 import type { Component } from "svelte";
 import type { LocalScreen, NativeScreen } from "../../router/locations";
 import type { Overlays } from "../../shell/overlays.svelte";
+import { ScreenModules } from "./screenModules";
 
 // Which screen shows for each kind of native screen (router/locations.ts), a tab's root or one
-// pushed. A screen is loaded the first time it shows, so each is its own chunk.
+// pushed. Each is its own chunk, loaded once (screenModules): the shell loads them all while it's
+// idle, and a screen whose chunk isn't in yet keeps the one before it showing until it is.
 //
 // Every kind has an entry, undefined until its screen is built (a placeholder shows meanwhile), and
 // the entries are kept apart by blank lines: issues adding different screens then change different
@@ -98,8 +100,12 @@ export const screens: Screens = {
     settings: () => import("../you/SettingsScreen.svelte"),
 };
 
-/** The loader for a screen's kind, or none until it's built. */
-export function screenLoader(screen: NativeScreen): Loader<NativeScreen> | undefined {
-    // the entry for a kind takes that kind's screen, which `screen` is
-    return screens[screen.kind] as Loader<NativeScreen> | undefined;
-}
+/** The screens' chunks, loaded once and kept; the tabs' roots are preloaded first. */
+export const screenModules = new ScreenModules<
+    NativeScreen["kind"],
+    Component<ScreenProps<NativeScreen>>
+>(
+    // the entry for a kind takes that kind's screen
+    screens as Partial<Record<NativeScreen["kind"], Loader<NativeScreen>>>,
+    ["chats", "you", "communities", "wallet", "activity"],
+);
