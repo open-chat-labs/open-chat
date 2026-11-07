@@ -62,6 +62,25 @@ describe("Android's system back", () => {
         });
     });
 
+    // an open search in a conversation registers as an overlay (useOverlay) while it's open: back
+    // closes it (and with it the keyboard) and stays in the chat. The keyboard itself takes the first
+    // back while it's up (Android's), which never reaches the app
+    test("closes the search in a conversation rather than going back to the list", () => {
+        expect(back("/chats/user/u1", true)).toEqual({ kind: "close_overlay" });
+        expect(back("/community/c1/channel/9", true)).toEqual({ kind: "close_overlay" });
+        expect(back("/chats/user/u1")).toEqual({ kind: "navigate", url: "/chats" });
+    });
+
+    test("takes a chat's details off, back to the conversation", () => {
+        const details: LocalScreen = {
+            kind: "chat_details",
+            chatId: { kind: "direct_chat", userId: "u1" },
+        };
+        expect(back("/chats/user/u1", false, "/chats", false, details)).toEqual({
+            kind: "pop_local",
+        });
+    });
+
     test("pops the screen on top", () => {
         expect(back("/chats/group/g1")).toEqual({ kind: "navigate", url: "/chats" });
         expect(back("/chats/group/g1/5?open=true")).toEqual({
