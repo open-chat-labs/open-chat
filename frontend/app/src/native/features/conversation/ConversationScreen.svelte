@@ -1258,7 +1258,8 @@
         display: flex;
         align-items: center;
         gap: var(--space-10);
-        padding: 5px 5px 5px var(--space-14);
+        padding-block: 5px;
+        padding-inline: var(--space-14) 5px;
         border: 0;
         border-radius: var(--radius-pill);
         background: color-mix(in oklch, var(--status-online) 10%, var(--surface-2));

@@ -155,7 +155,7 @@
         align-items: center;
         gap: var(--space-8);
         height: 40px;
-        padding: 0 var(--space-10) 0 var(--space-12);
+        padding-inline: var(--space-12) var(--space-10);
         border-radius: var(--radius-md);
         background: var(--overlay-1);
     }
