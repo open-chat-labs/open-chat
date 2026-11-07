@@ -49,6 +49,7 @@ native/
   features/      one folder per screen/feature, as in src/web:
     app/screens.ts   which screen shows for each kind; a new screen sets its entry there
     app/ScreenHost.svelte  loads it, or shows a placeholder until it's built
+    chats/           the Chats tab: the list, its search, New chat
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when
@@ -69,15 +70,18 @@ to one do.
 - **One route table.** The native tree reads the web tree's URLs and never makes up its own:
   `router/locations.ts` maps each onto a tab and a stack (`/chats/user/x` is the Chats tab with the
   list, then the conversation), so the same URL opens the same place in either tree. A screen that
-  has no URL on the web (details, a settings page, a builder) will be pushed without one, as the web
-  opens a local dialog: `TabStacks` gets local pushes with the first screen that needs them (GAPS).
+  has no URL on the web (New chat, details, a settings page, a builder) is pushed without one, as
+  the web opens a local dialog: `context.push` (a `LocalScreen`, `TabStacks.push`) puts it over the screen
+  showing, at that screen's URL; Back takes it off, and the URL moving on replaces it.
 - **Navigate by URL.** Going deeper is `navigate(url)`; the stacks follow the URL (`TabStacks.arrive`):
   a screen already in the stack is popped back to, a deeper one is pushed, a sideways one replaces
   what's above the screen in common. Back is `navigate(stacks.backUrl(), "dismiss")`, which goes back
   through the history when the entry is there.
 - **Screens.** A screen is plugged in by setting its entry in `features/app/screens.ts`; it gets
-  `{ screen, context }`, `context.back` being a pushed screen's Back. Only screens touch the client
-  and the stores, as in `src/web`.
+  `{ screen, context }`, `context.back` being a pushed screen's Back, `context.push` a local push,
+  and `context.toast` the native toast (with Undo for a destructive action), which takes the
+  place of the app's (`toastStore`). Only screens touch the client and the stores, as in
+  `src/web`.
 - **Signed out** there are no tabs: every URL but a marketing page is the signed-out start
   (`features/start`), with no guest mode, and the URL stays as it is for after sign-in. Its
   screens have no URLs (the web's are a dialog), so they're a stack of their own
@@ -86,6 +90,7 @@ to one do.
 - **Sheets and menus** register while they're open (`useOverlay(context.overlays, …)`), so Android's
   system back closes them before it pops the screen.
 - **The tab bar** shows only on a tab's root; every pushed screen has the whole window (`showsTabBar`).
+  A pushed screen slides in over the root and the tab bar, which stay put, and Back slides it off.
 - **Between tabs**: on a tab's root, a sideways drag swipes to the neighbouring tab in the bar's
   order (touch and pen; `tabSwipe.ts`), through the same navigation as a tap. A tab switch slides
   only the old screen and the new one. A tab root with something that scrolls sideways leaves drags

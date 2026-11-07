@@ -11,7 +11,7 @@ import {
 } from "@client";
 import type { ActivityItem } from "@openchat/ui/src/features/components/ActivityPanel.svelte";
 import { activitySummary, isByRelayedAuthor } from "@src/logic/activity/activitySummary";
-import { pickById } from "../../pickById";
+import { pickById } from "@src/utils/pickById";
 
 // The activity feed's events to ActivityPanel's items (DATA.md, ActivityPanel), in the old feed's
 // words (ActivityEvent.svelte). The client's lookups and wording come in through ActivityContext,

@@ -1694,6 +1694,48 @@
                 "title": "Mit bestehendem Konto verknüpfen"
             }
         },
+        "chats": {
+            "chit": "CHIT",
+            "chitClaimable": "CHIT: Die heutige Belohnung ist bereit",
+            "options": "Chat-Optionen",
+            "empty": "Deine Chats erscheinen hier.",
+            "noneMatch": "Keine passenden Chats",
+            "showAllChats": "Alle Chats anzeigen",
+            "markRead": "Als gelesen markieren",
+            "rowOptions": "Optionen für {name}",
+            "search": {
+                "placeholder": "Chats und Personen suchen",
+                "clear": "Löschen",
+                "searchFor": "Suchen nach",
+                "chats": "Chats",
+                "people": "Personen",
+                "chatsCount": "Chats · {count}",
+                "peopleCount": "Personen · {count}",
+                "showAll": "Alle anzeigen",
+                "showLess": "Weniger anzeigen",
+                "noResults": "Keine Ergebnisse für „{query}“",
+                "noResultsHint": "Versuche es mit einem Namen oder einem @Benutzernamen."
+            },
+            "toast": {
+                "allRead": "Alle Chats als gelesen markiert",
+                "caughtUp": "Du bist auf dem neuesten Stand",
+                "pinned": "Oben angeheftet",
+                "unpinned": "Losgelöst",
+                "muted": "Stummgeschaltet",
+                "unmuted": "Stummschaltung aufgehoben",
+                "archived": "Chat archiviert",
+                "left": "Du hast {name} verlassen",
+                "deleted": "Chat gelöscht"
+            },
+            "newChat": {
+                "placeholder": "Name oder @Benutzername suchen",
+                "frequent": "Häufig kontaktiert",
+                "results": "Ergebnisse",
+                "noOne": "Niemand gefunden. Versuche es mit dem @Benutzernamen.",
+                "noContacts": "Noch keine Kontakte",
+                "noContactsBody": "Die Personen, mit denen du am meisten chattest, erscheinen hier. Suche nach Name oder @Benutzername, um eine Unterhaltung zu beginnen."
+            }
+        },
         "shareUnavailable": "Das Teilen aus anderen Apps in OpenChat ist in dieser Version noch nicht verfügbar.",
         "start": {
             "welcome": {

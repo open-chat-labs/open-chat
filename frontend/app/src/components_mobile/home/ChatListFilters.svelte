@@ -1,5 +1,6 @@
 <script module lang="ts">
-    export type ChatListFilter = "all" | "unread" | "groups" | "direct";
+    import type { ChatListFilter as Filter } from "@src/logic/chats/chatListFilter";
+    export type ChatListFilter = Filter;
 </script>
 
 <script lang="ts">

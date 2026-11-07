@@ -5,6 +5,7 @@ import type {
 import type ChitDialog from "@openchat/ui/src/features/components/ChitDialog.svelte";
 import type LeaderboardDialog from "@openchat/ui/src/features/components/LeaderboardDialog.svelte";
 import type NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
+import { chitButton, type ChitButtonInputs } from "@src/logic/chit/chitButton";
 import type { ComponentProps } from "svelte";
 import {
     CHAT_E8S,
@@ -15,12 +16,10 @@ import {
     CHIT_STREAK_MILESTONES,
     currentStreak,
     dailyChitAmount,
-    dailyChitClaimable,
     formatTimeRemaining,
     type Achievement,
     type AchievementEntry,
     type ChitLeaderboardResponse,
-    type ChitState,
     type ChitUserBalance,
     type StreakInsurance,
 } from "@client";
@@ -32,14 +31,7 @@ import {
 // is off.
 
 /** What the CHIT props are worked out from. */
-export type ChitInputs = {
-    chit: ChitState;
-    // when the last sync finished (latestSuccessfulUpdatesLoop), ms
-    lastSync: number;
-    // the user has turned CHIT off (disableChit)
-    disabled: boolean;
-    now: number;
-};
+export type ChitInputs = ChitButtonInputs;
 
 export type ChitDialogProps = Pick<
     ComponentProps<typeof ChitDialog>,
@@ -88,16 +80,13 @@ export function chitDialogProps(
     };
 }
 
-/** The rail's CHIT button: hidden while CHIT is off, and once claimed if the user hides it then. */
-export function chitRailProps(
-    { chit, lastSync, disabled, now }: ChitInputs,
-    hideOnceClaimed: boolean,
-): ChitRailProps {
-    const open = !disabled && dailyChitClaimable(chit.nextDailyChitClaim, now, lastSync);
+/** The rail's CHIT button (logic/chit/chitButton, as the native Chats header's). */
+export function chitRailProps(inputs: ChitInputs, hideOnceClaimed: boolean): ChitRailProps {
+    const button = chitButton(inputs, hideOnceClaimed);
     return {
-        chitShown: !disabled && (open || !hideOnceClaimed),
-        chitStreak: currentStreak(chit, now),
-        chitClaimable: open,
+        chitShown: button.shown,
+        chitStreak: button.streak,
+        chitClaimable: button.claimable,
     };
 }
 

@@ -1,5 +1,6 @@
+import type { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
 import type { Component } from "svelte";
-import type { NativeScreen } from "../../router/locations";
+import type { LocalScreen, NativeScreen } from "../../router/locations";
 import type { Overlays } from "../../shell/overlays.svelte";
 
 // Which screen shows for each kind of native screen (router/locations.ts), a tab's root or one
@@ -15,6 +16,19 @@ export type ScreenContext = {
     back: (() => void) | undefined;
     /** Where a screen registers an open sheet or menu, so Android's back closes it first. */
     overlays: Overlays;
+    /** Pushes a screen that has no URL (New chat, a builder) over this one (TabStacks.push). */
+    push: (screen: LocalScreen) => void;
+    /**
+     * Shows a toast (text, translated) in place of the one showing; with `undo`, it offers Undo,
+     * which runs it (a destructive action, notes §1 Sheets, menus, toasts). Returns what takes it
+     * down early, as when its Undo can't work any more (and not a toast that has replaced it).
+     */
+    toast: (message: string, undo?: () => void) => () => void;
+    /**
+     * Leaves and deletes waiting out their Undo (the shell's, one for the app): opening the chat
+     * by any way (search, New chat, a link) takes its wait back, and it lasts across tabs.
+     */
+    removals: PendingRemovals;
 };
 
 export type ScreenProps<S> = { screen: S; context: ScreenContext };
@@ -27,7 +41,7 @@ export type Screens = {
 
 export const screens: Screens = {
     // the Chats tab: the list, search and New chat (N5a)
-    chats: undefined,
+    chats: () => import("../chats/ChatsScreen.svelte"),
 
     // the Communities tab: the switcher and a community's channels (N8a)
     communities: undefined,
@@ -64,6 +78,15 @@ export const screens: Screens = {
 
     // the platform operator console: none on native yet
     admin: undefined,
+
+    // New chat, from the Chats tab's FAB (N5a)
+    new_chat: () => import("../chats/NewChatScreen.svelte"),
+
+    // New group, from the Chats tab's menu and New chat (N7)
+    new_group: undefined,
+
+    // CHIT, from the Chats tab's header (N11)
+    chit: undefined,
 };
 
 /** The loader for a screen's kind, or none until it's built. */

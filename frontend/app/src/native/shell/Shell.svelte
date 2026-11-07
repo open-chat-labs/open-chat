@@ -1,8 +1,8 @@
 <!-- The native shell (native design notes §1 Structure): five tabs, each with its own push stack.
      The URL names the screen showing (router/locations.ts); each tab keeps its stack (TabStacks), so
      it comes back as it was left. The tab bar shows only on a tab's root; a pushed screen has the
-     whole window (showsTabBar). A pushed screen slides in from the inline end while the one under it moves out to
-     the other side (.34s, motion.ts), and Back reverses it. Android's system back closes an open
+     whole window (showsTabBar). A pushed screen slides in from the inline end over everything under it, the tab
+     bar too, which stays where it is (.34s, motion.ts), and Back slides it off again. Android's system back closes an open
      sheet or menu first, then pops (back.ts). On a tab's root, a sideways drag swipes to the
      neighbouring tab (tabSwipe.ts); switching tabs slides only the two screens, old and new.
      Signed out, it's the signed-out start instead (features/start), whatever the URL; the
@@ -28,10 +28,13 @@
         routeStore,
         sortedCommunitiesStore,
         unreadDirectAndGroupCountsStore,
+        chatIdentifierToString,
         type CommunityIdentifier,
     } from "@client";
+    import { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
+    import { UNDO_TOAST_MS } from "@openchat/ui/src/native/toastQueue.svelte";
     import type { PluginListener } from "@tauri-apps/api/core";
-    import { getContext, onMount, untrack } from "svelte";
+    import { getContext, onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { minimizeApp } from "tauri-plugin-oc-api";
     import ScreenHost from "../features/app/ScreenHost.svelte";
@@ -41,11 +44,16 @@
         showsTabBar,
         locationFor,
         NATIVE_TABS,
+        openChat,
+        tabRootStep,
         tabRootUrl,
+        type LocalScreen,
         type NativeLocation,
         type NativeTabId,
     } from "../router/locations";
     import { releaseVelocity, type DragSample } from "@openchat/ui/src/native/sheetDrag";
+    import { ToastQueue } from "@openchat/ui/src/native/toastQueue.svelte";
+    import { toastStore } from "@src/stores/toast";
     import { backAction } from "./back";
     import { openOnWeb } from "./onWeb";
     import { popOut, pushIn } from "./motion";
@@ -66,7 +74,14 @@
     const client = getContext<OpenChat>("client");
 
     const stacks = new TabStacks();
+    // leaves and deletes waiting out their Undo, for the whole app (ScreenContext.removals);
+    // anything still waiting is sent when the shell goes (a sign-out)
+    const removals = new PendingRemovals(UNDO_TOAST_MS);
+    onDestroy(() => removals.flush());
     const overlays = new Overlays();
+    // the screens' own toasts (Undo), in place of the app's (Toasts)
+    const toasts = new ToastQueue();
+    onMount(() => () => toasts.dispose());
 
     // The Communities tab's community when a URL doesn't name one (Explore): the one the tab shows,
     // else the default (the last selected, else the first)
@@ -112,7 +127,14 @@
 
     $effect(() => {
         const at = location;
-        if (at.area === "tabs") untrack(() => stacks.arrive(at));
+        if (at.area === "tabs")
+            untrack(() => {
+                stacks.arrive(at);
+                // a chat opened while its leave or delete waits out the Undo: opening it takes
+                // that back, or it would go while they're in it (search, New chat, a link alike)
+                const chat = openChat(at);
+                if (chat !== undefined) removals.undo(chatIdentifierToString(chat));
+            });
     });
 
     // the marketing pages (Landing, Learn, the terms …) are the website's: one the app is sent to
@@ -275,7 +297,10 @@
                 gesture = undefined;
                 return;
             }
-            if (gesture.axis === "sideways") e.currentTarget.setPointerCapture(e.pointerId);
+            if (gesture.axis === "sideways") {
+                e.currentTarget.setPointerCapture(e.pointerId);
+                primeNeighbours();
+            }
         }
         if (gesture.axis !== "sideways") return;
         // the samples' y is the pointer's x: releaseVelocity reads one axis
@@ -314,6 +339,14 @@
             selectTab(to);
         } else if (shown !== undefined) {
             springBack(shown.offset, shown.neighbour, ended.width, dx);
+        }
+    }
+
+    // the tabs either side, drawn while the swipe drags one in, a tab not opened yet included
+    function primeNeighbours() {
+        const community = communityShown() ?? defaultCommunityId;
+        for (const tab of [tabIds[tabIndex - 1], tabIds[tabIndex + 1]]) {
+            if (tab !== undefined) stacks.prime(tab, tabRootStep(tab, community));
         }
     }
 
@@ -373,6 +406,7 @@
         const tab = NATIVE_TABS.find((t) => t === id);
         if (tab === undefined) return;
         if (tab === stacks.tab && location.area === "tabs") {
+            stacks.popLocals();
             const root = stacks.root(tab);
             if (root !== undefined && stacks.steps.length > 1) navigate(root.url, "dismiss");
             return;
@@ -383,16 +417,29 @@
     // The header's back: the screen under the top, going back to where it was in the history
     // when it's there (navigation.ts, "dismiss")
     function back() {
+        if (stacks.popLocal()) return;
         const url = stacks.backUrl();
         if (url !== undefined) navigate(url, "dismiss");
     }
 
-    const rootContext: ScreenContext = { back: undefined, overlays };
-    const pushedContext: ScreenContext = { back, overlays };
+    function showToast(message: string, undo?: () => void): () => void {
+        toastStore.hideToast();
+        return toasts.show(message, undo);
+    }
+
+    const shared = {
+        overlays,
+        push: (screen: LocalScreen) => stacks.push(screen),
+        toast: showToast,
+        removals,
+    };
+    const rootContext: ScreenContext = { back: undefined, ...shared };
+    const pushedContext: ScreenContext = { back, ...shared };
 
     function systemBack() {
         const action = backAction({
             overlayOpen: overlays.any,
+            localTop: stacks.localTop,
             location,
             backUrl: stacks.backUrl(),
             chatsUrl: stacks.topUrl("chats") ?? tabRootUrl("chats", undefined),
@@ -401,6 +448,9 @@
         switch (action.kind) {
             case "close_overlay":
                 overlays.closeTop();
+                break;
+            case "pop_local":
+                stacks.popLocal();
                 break;
             case "navigate":
                 navigate(action.url, "dismiss");
@@ -450,13 +500,12 @@
 {/snippet}
 
 {#if location.area === "tabs"}
-    <div class="shell" class:bar-hidden={!barShown}>
+    <div class="shell">
         <div class="stage">
             <!-- the swipe is a touch shortcut for the tab bar, which keyboards and screen readers use -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
                 class="root"
-                class:covered={pushed.length > 0}
                 inert={pushed.length > 0}
                 onpointerdown={onPointerDown}
                 onpointermove={onPointerMove}
@@ -503,7 +552,7 @@
             <TabBar {tabs} selected={stacks.tab} onSelect={selectTab} />
         </div>
 
-        <Toasts above={barShown ? "tabBar" : "none"} />
+        <Toasts above={barShown ? "tabBar" : "none"} queue={toasts} />
     </div>
 {:else if location.area === "signed_out"}
     <div class="outside">
@@ -516,7 +565,7 @@
                 {@render chunkFailed()}
             {/await}
         {/if}
-        <Toasts above="none" />
+        <Toasts above="none" queue={toasts} />
     </div>
 {:else if location.area === "marketing"}
     <!-- a marketing page, which has opened in the browser: nothing while the app steps back -->
@@ -550,45 +599,27 @@
         place-items: center;
     }
 
-    // the web's marketing pages scroll the document
-    // the screens, over the tab bar, or the whole window inside a conversation, where the bar
-    // goes down out of the way
+    // the whole window: the tabs' roots over the tab bar, the pushed screens over everything
     .stage {
-        position: absolute;
-        inset: 0 0 var(--tab-bar-h);
-        overflow: hidden;
-
-        .bar-hidden & {
-            inset-block-end: 0;
-        }
-    }
-
-    .bar {
-        position: absolute;
-        inset: auto 0 0;
-        transition: transform 0.34s var(--ease-out);
-
-        .bar-hidden & {
-            transform: translateY(100%);
-        }
-    }
-
-    // a tab's root: covered by a pushed screen, moved out to the other side. Sideways drags are
-    // ours (the swipe between tabs), up-and-down ones the content's scroll
-    .root {
         position: absolute;
         inset: 0;
         overflow: hidden;
+    }
+
+    // stays put under a pushed screen, which covers it (and is inert meanwhile)
+    .bar {
+        position: absolute;
+        inset: auto 0 0;
+        z-index: 1;
+    }
+
+    // a tab's root, over the tab bar; it stays put under a pushed screen. Sideways drags are ours
+    // (the swipe between tabs), up-and-down ones the content's scroll
+    .root {
+        position: absolute;
+        inset: 0 0 var(--tab-bar-h);
+        overflow: hidden;
         touch-action: pan-y;
-        transition: transform 0.34s var(--ease-out);
-
-        &.covered {
-            transform: translateX(-28%);
-
-            :global([dir="rtl"]) & {
-                transform: translateX(28%);
-            }
-        }
     }
 
     // the tabs' roots, one over the other: the one showing, and while a swipe drags, its neighbour
@@ -608,27 +639,16 @@
     .pushed {
         position: absolute;
         inset: 0;
+        z-index: 2;
         display: flex;
         flex-direction: column;
         background: var(--surface-0);
         box-shadow: var(--shadow-push);
-        transition: transform 0.34s var(--ease-out);
 
+        // one pushed over it stays put too
         &.below {
-            transform: translateX(-28%);
             box-shadow: none;
-
-            :global([dir="rtl"]) & {
-                transform: translateX(28%);
-            }
         }
     }
 
-    @include reduced-motion {
-        .bar,
-        .root,
-        .pushed {
-            transition: none;
-        }
-    }
 </style>

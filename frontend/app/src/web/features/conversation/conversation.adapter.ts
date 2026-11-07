@@ -46,7 +46,7 @@ import type {
 } from "@openchat/ui/src/lib/types";
 import type { ComponentProps } from "svelte";
 import type { ChatMenuAction } from "@src/logic/chats/chatMenu";
-import { pickById } from "../../pickById";
+import { pickById } from "@src/utils/pickById";
 
 // A conversation's messages to MessageGroup's messages (DATA.md, Conversation). The timeline's
 // other events are worded by logic/conversation/timelineEventText, as in the old trees. The

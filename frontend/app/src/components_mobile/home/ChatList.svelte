@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { chatListFilterFrom, passesChatListFilter } from "@src/logic/chats/chatListFilter";
     import { chatListFilterStore } from "@src/stores/settings";
     import { Container, FloatingButton } from "component-lib";
     import {
@@ -99,15 +100,16 @@
     let allChats = $derived($chatSummariesListStore);
     let filteredChats = $derived.by(() => {
         if ($chatListScopeStore.kind !== "chats") return allChats;
-        return allChats.filter((c) => {
-            return (
-                $chatListFilterStore === "all" ||
-                ($chatListFilterStore === "unread" &&
-                    client.unreadMessageCount(c.id, c.latestMessage?.event.messageIndex) > 0) ||
-                ($chatListFilterStore === "direct" && c.kind === "direct_chat") ||
-                ($chatListFilterStore === "groups" && c.kind === "group_chat")
-            );
-        });
+        const filter = chatListFilterFrom($chatListFilterStore);
+        return allChats.filter((c) =>
+            passesChatListFilter(
+                c,
+                filter,
+                filter === "unread"
+                    ? client.unreadMessageCount(c.id, c.latestMessage?.event.messageIndex)
+                    : 0,
+            ),
+        );
     });
 
     let chats = $derived(filteredChats.slice(0, chatsToShow));

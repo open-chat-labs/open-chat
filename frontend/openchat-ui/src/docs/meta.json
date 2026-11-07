@@ -1087,6 +1087,17 @@
         "doc": ""
       },
       {
+        "name": "fav",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A favourite: a heart before the time (native)."
+      },
+      {
         "name": "muted",
         "type": "boolean",
         "default": null,

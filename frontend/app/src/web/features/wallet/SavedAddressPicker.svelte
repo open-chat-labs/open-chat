@@ -7,7 +7,7 @@
     import MemberRow from "@openchat/ui/src/lib/components/MemberRow.svelte";
     import type { Recipient } from "@openchat/ui/src/features/components/WalletRecipients.svelte";
     import { _ } from "svelte-i18n";
-    import { swatchFor } from "../chats/chatList.adapter";
+    import { swatchFor } from "@src/logic/chats/chatRow";
 
     interface Props {
         /** The saved recipients the token can be sent to. */

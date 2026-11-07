@@ -9,12 +9,14 @@ function at(url: string, signedOut = false): NativeLocation {
 
 // What system back does on `url`, its stack as the URL has it, going back where the header's Back
 // goes (TabStacks.backUrl)
-function back(url: string, overlayOpen = false, chatsUrl = "/chats") {
+function back(url: string, overlayOpen = false, chatsUrl = "/chats", newChat = false) {
     const location = at(url);
     const stacks = new TabStacks();
     if (location.area === "tabs") stacks.arrive(location);
+    if (newChat) stacks.push({ kind: "new_chat" });
     return backAction({
         overlayOpen,
+        localTop: stacks.localTop,
         location,
         backUrl: stacks.backUrl(),
         chatsUrl,
@@ -26,6 +28,11 @@ describe("Android's system back", () => {
     test("closes an open sheet or menu first", () => {
         expect(back("/chats/group/g1", true)).toEqual({ kind: "close_overlay" });
         expect(back("/chats", true)).toEqual({ kind: "close_overlay" });
+    });
+
+    test("takes a screen with no URL off, after an open sheet or menu", () => {
+        expect(back("/chats", false, "/chats", true)).toEqual({ kind: "pop_local" });
+        expect(back("/chats", true, "/chats", true)).toEqual({ kind: "close_overlay" });
     });
 
     test("pops the screen on top", () => {
@@ -65,6 +72,7 @@ describe("Android's system back", () => {
         const signedOut = (startBack: boolean, overlayOpen = false) =>
             backAction({
                 overlayOpen,
+                localTop: false,
                 location: at("/", true),
                 backUrl: undefined,
                 chatsUrl: "/chats",

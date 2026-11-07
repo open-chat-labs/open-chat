@@ -3,7 +3,7 @@
      or over it near the bottom (menuPlacement.ts); a small target (a strip avatar) lifts as a 240px card. The copy is
      the `row` snippet, or a clone of the row. Rows open it with `use:longPress` (held 450ms, or a context menu, with a
      light haptic). A tap outside or Esc closes it, everything fading out together in 170ms. It's a fixed layer over
-     the native root. Reduced motion: no scale or fade. -->
+     the native root. The press that opened it ends without closing it. Reduced motion: no scale or fade. -->
 <script lang="ts">
   import { onDestroy, untrack, type Snippet } from 'svelte';
   import { modal } from '../lib/behaviours/modal';
@@ -31,6 +31,11 @@
 
   let { open, target, items, label, onSelect, onClose, row }: Props = $props();
 
+  // A tap outside closes it: a click on the veil whose press started there too. The press that opened the menu
+  // started on the row, under where the veil now is, and its release can end in a click on the veil (Chrome's
+  // touch emulation sends one after a long hold), which mustn't close the menu it has just opened.
+  let pressedVeil = false;
+
   const presence = new Presence(LEAVE_MS);
   // the row it opened on, kept while it fades out
   let lifted = $state<HTMLElement | null>(null);
@@ -38,7 +43,11 @@
     const now = open && !!target;
     const el = target;
     untrack(() => {
-      if (now) lifted = el;
+      if (now) {
+        lifted = el;
+        // a press on the veil that ended in no click (a drag, a cancel) doesn't count for this opening
+        pressedVeil = false;
+      }
       presence.set(now);
     });
   });
@@ -96,6 +105,11 @@
     };
   }
 
+  function veilClick() {
+    if (pressedVeil) onClose();
+    pressedVeil = false;
+  }
+
   // Tab leaves a menu (it closes, and focus goes back to the row), as menus do
   function keydown(e: KeyboardEvent) {
     if (e.key !== 'Tab' || presence.leaving) return;
@@ -109,7 +123,7 @@
   <div class="layer" class:closing={presence.leaving} use:modal={presence.leaving ? undefined : onClose} use:returnFocus={lifted} onkeydown={keydown}>
     <!-- Esc closes it too -->
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div class="veil" onclick={onClose}></div>
+    <div class="veil" onpointerdown={() => (pressedVeil = true)} onpointercancel={() => (pressedVeil = false)} onclick={veilClick}></div>
     <div class="frame" bind:this={frame}>
       {#if placement}
         <div class="card" style:top="{placement.card.top}px" style:inset-inline-start="{placement.card.inlineStart}px" style:width="{placement.card.width}px" aria-hidden="true" inert>

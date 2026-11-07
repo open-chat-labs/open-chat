@@ -18,7 +18,7 @@ import {
 import type { MemberRole as PanelRole } from "@openchat/ui/src/features/components/GroupPanel.svelte";
 import type { InvitePerson } from "@openchat/ui/src/features/components/InviteDialog.svelte";
 import type { UserGroupPerson } from "@openchat/ui/src/features/components/UserGroupDialog.svelte";
-import { pickById } from "../../pickById";
+import { pickById } from "@src/utils/pickById";
 
 // GroupPanel's people, pins and user groups from the app's members, pinned messages and user
 // groups. What a viewer may do to each member is decided before this (memberActions).

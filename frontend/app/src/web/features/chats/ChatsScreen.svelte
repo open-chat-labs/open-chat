@@ -1,7 +1,11 @@
 <!-- The left column's chat list (region "chats"): DMs and groups, favourites, or a community's channels,
      as the route's scope says (DATA.md, ChatListPanel rows). Picking a chat routes to it. -->
 <script lang="ts">
-    import { chatMenuActions } from "@src/logic/chats/chatMenu";
+    import {
+        chatRowActionLabel,
+        chatRowMenu,
+        type ChatRowAction,
+    } from "@src/logic/chats/chatMenu";
     import { muteChat } from "@src/logic/chats/muteChat";
     import {
         communityDetailsPermissions,
@@ -20,7 +24,6 @@
         messagesRead,
         pinChatFailureMessage,
         pinnedChatsStore,
-        ROLE_NONE,
         routeForChatIdentifier,
         selectedChatIdStore,
         translationsStore,
@@ -38,15 +41,14 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import type { LeftRegion, ScreenProps } from "../app/screens";
+    import { communityHeaderMenu, type ChatListPanelRow } from "./chatList.adapter";
     import {
         chatRow,
-        communityHeaderMenu,
         listed,
+        rowContext,
         type ChatListRow,
         type RowContext,
-    } from "./chatList.adapter";
-    import { latestMessagePreview } from "@src/logic/chats/latestMessagePreview";
-    import { buildDisplayName } from "@src/utils/user";
+    } from "@src/logic/chats/chatRow";
 
     let { region, context: screen }: ScreenProps<Extract<LeftRegion, { kind: "chats" }>> = $props();
 
@@ -61,26 +63,15 @@
     const context = $derived.by((): RowContext => {
         // read so unread counts follow messages being read
         void $messagesRead;
-        const users = $allUsersStore;
-        return {
-            userName: (userId) => client.displayName(users.get(userId)),
-            preview: (chat) =>
-                latestMessagePreview(chat, {
-                    formatter: $_,
-                    me: $currentUserIdStore,
-                    displayName: (userId, kind) => buildDisplayName(users, userId, kind, false),
-                    translations: $translationsStore,
-                    contentText: (content) => client.getContentAsText($_, content),
-                    bridgedUsers: { get: (key) => $bridgedUsersStore.get(key) },
-                    users,
-                }),
-            date: (timestamp) =>
-                client.formatMessageDate(timestamp, $_("today"), $_("yesterday"), true, true),
-            unread: (chat) =>
-                client.unreadMessageCount(chat.id, chat.latestMessage?.event.messageIndex),
-            pinned: new Set(($pinnedChatsStore.get(scope.kind) ?? []).map(chatIdentifierToString)),
-            selected: $selectedChatIdStore && chatIdentifierToString($selectedChatIdStore),
-        };
+        return rowContext(client, {
+            formatter: $_,
+            me: $currentUserIdStore,
+            users: $allUsersStore,
+            translations: $translationsStore,
+            bridgedUsers: { get: (key) => $bridgedUsersStore.get(key) },
+            pinned: $pinnedChatsStore.get(scope.kind) ?? [],
+            selected: $selectedChatIdStore,
+        });
     });
 
     const listedRows = $derived(
@@ -90,7 +81,9 @@
         }),
     );
     const rows = $derived(
-        listedRows.map(({ chat, row }): ChatListRow => ({ ...row, menu: menuFor(chat, row) })),
+        listedRows.map(
+            ({ chat, row }): ChatListPanelRow => ({ ...row, menu: menuFor(chat, row) }),
+        ),
     );
 
     async function setPinned(chatId: ChatSummary["id"], pin: boolean) {
@@ -103,73 +96,57 @@
         if (failed !== undefined) toastStore.showFailureToast(failed);
     }
 
-    // the row menu, in the app's words (the old row's menu)
+    // the row menu, in the app's words (chatRowMenu)
     function menuFor(chat: ChatSummary, row: ChatListRow): MenuItem[] {
-        const pinned = row.pinned;
-        const favourite = $favouritesStore.has(chat.id);
-        const muted = chat.membership.notificationsMuted;
-        const items: MenuItem[] = [
-            favourite
-                ? {
-                      label: $_("communities.removeFromFavourites"),
-                      onSelect: () => client.removeFromFavourites(chat.id),
-                  }
-                : {
-                      label: $_("communities.addToFavourites"),
-                      onSelect: () => client.addToFavourites(chat.id),
-                  },
-            pinned
-                ? { label: $_("pinChat.unpinMenuItem"), onSelect: () => setPinned(chat.id, false) }
-                : { label: $_("pinChat.menuItem"), onSelect: () => setPinned(chat.id, true) },
-            {
-                label: $_(muted ? "unmuteNotifications" : "muteNotifications"),
-                onSelect: () => toggleMute(chat.id, !muted),
-            },
-        ];
-        if ((row.unreadCount ?? 0) > 0) {
-            items.push({ label: $_("markAllRead"), onSelect: () => client.markAllRead(chat) });
-        }
-        if (chat.kind === "direct_chat" || chat.membership.role !== ROLE_NONE) {
-            items.push(
-                chat.membership.archived
-                    ? // opening an archived chat un-archives it
-                      { label: $_("unarchiveChat"), onSelect: () => select(row.id) }
-                    : { label: $_("archiveChat"), onSelect: () => archive(chat) },
-            );
-        }
-        const actions = chatMenuActions(chat, {
+        const actions = chatRowMenu(chat, {
+            pinned: row.pinned,
+            favourite: $favouritesStore.has(chat.id),
+            unread: row.unreadCount,
             canLeave: chat.kind !== "direct_chat" && client.canLeaveGroup(chat.id),
-            blocked: false,
-            isBot: false,
+            canRemove: canRemoveFromList(chat, chat.kind === "channel" ? community : undefined),
         });
-        if (actions.includes("leave") && chat.kind !== "direct_chat") {
-            items.push({
-                label: interpolate($_, i18nKey("leaveGroup", undefined, chat.level, true)),
-                variant: "danger",
-                onSelect: () =>
-                    screen.dialogs.open({
-                        kind: "leave_or_delete",
-                        action: { kind: "leave", chatId: chat.id },
-                        name: row.title,
-                    }),
-            });
+        return actions.map((action) => menuItem(action, chat, row));
+    }
+
+    function menuItem(action: ChatRowAction, chat: ChatSummary, row: ChatListRow): MenuItem {
+        const label = interpolate($_, chatRowActionLabel(action, chat));
+        switch (action) {
+            case "favourite":
+                return { label, onSelect: () => client.addToFavourites(chat.id) };
+            case "unfavourite":
+                return { label, onSelect: () => client.removeFromFavourites(chat.id) };
+            case "pin":
+                return { label, onSelect: () => setPinned(chat.id, true) };
+            case "unpin":
+                return { label, onSelect: () => setPinned(chat.id, false) };
+            case "mute":
+            case "unmute":
+                return { label, onSelect: () => toggleMute(chat.id, action === "mute") };
+            case "mark_read":
+                return { label, onSelect: () => client.markAllRead(chat) };
+            case "archive":
+                return { label, onSelect: () => archive(chat) };
+            case "unarchive":
+                // opening an archived chat un-archives it
+                return { label, onSelect: () => select(row.id) };
+            case "leave":
+            case "delete":
+                return { label, variant: "danger", onSelect: () => leaveOrDelete(chat, row.title) };
+            case "remove":
+                return { label, onSelect: () => client.removeFromList(chat) };
         }
-        if (actions.includes("delete") && chat.kind === "direct_chat") {
-            items.push({
-                label: $_("deleteChat"),
-                variant: "danger",
-                onSelect: () =>
-                    screen.dialogs.open({
-                        kind: "leave_or_delete",
-                        action: { kind: "delete_direct_chat", chatId: chat.id, blockUser: false },
-                        name: row.title,
-                    }),
-            });
-        }
-        if (canRemoveFromList(chat, chat.kind === "channel" ? community : undefined)) {
-            items.push({ label: $_("removeChat"), onSelect: () => client.removeFromList(chat) });
-        }
-        return items;
+    }
+
+    // leaving a group or channel, or deleting a DM, asks first
+    function leaveOrDelete(chat: ChatSummary, name: string) {
+        screen.dialogs.open({
+            kind: "leave_or_delete",
+            action:
+                chat.kind === "direct_chat"
+                    ? { kind: "delete_direct_chat", chatId: chat.id, blockUser: false }
+                    : { kind: "leave", chatId: chat.id },
+            name,
+        });
     }
 
     async function archive(chat: ChatSummary) {

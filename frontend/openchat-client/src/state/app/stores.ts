@@ -7,7 +7,6 @@ import {
     applyOptionUpdate,
     AuthProvider,
     chatIdentifiersEqual,
-    chatIdentifierToString,
     ChatListScopeMap,
     ChatMap,
     ChatSet,
@@ -15,7 +14,6 @@ import {
     DEFAULT_TOKENS,
     emptyChatMetrics,
     emptyDailyPuzzleState,
-    getDisplayDate,
     Immutable,
     LEDGER_CANISTER_CKBTC,
     LEDGER_CANISTER_CKETH,
@@ -79,6 +77,7 @@ import {
     mergePermissions,
     mergeUnconfirmedIntoSummary,
 } from "../../utils/chat";
+import { chatListOrder, chatsInScope } from "../../utils/chatList";
 import { enumFromStringValue } from "../../utils/enums";
 import { derived, writable, type Subscriber } from "../../utils/stores";
 import { nullProfile } from "../../utils/user";
@@ -1090,53 +1089,13 @@ export const favouritesStore = derived(
 // the final client view of chat summaries with all updates merged in
 export const chatSummariesStore = derived(
     [chatListScopeStore, allChatsStore, favouritesStore],
-    ([chatListScope, allChats, favourites]) => {
-        switch (chatListScope.kind) {
-            case "community": {
-                const communityId = chatListScope.id.communityId;
-                return allChats.filter(
-                    (c) => c.kind === "channel" && c.id.communityId === communityId,
-                );
-            }
-            case "chats":
-                return allChats.filter((c) => c.kind === "direct_chat" || c.kind === "group_chat");
-            case "favourite": {
-                return [...favourites.values()].reduce((favs, chatId) => {
-                    const chat = allChats.get(chatId);
-                    if (chat !== undefined) {
-                        favs.set(chat.id, chat);
-                    }
-                    return favs;
-                }, new ChatMap<ChatSummary>());
-            }
-            default:
-                return new ChatMap<ChatSummary>();
-        }
-    },
+    ([chatListScope, allChats, favourites]) => chatsInScope(chatListScope, allChats, favourites),
 );
 
 export const chatSummariesListStore = derived(
     [pinnedChatsStore, chatListScopeStore, chatSummariesStore],
-    ([pinnedChats, chatListScope, chatSummaries]) => {
-        const pinnedByScope = pinnedChats.get(chatListScope.kind) ?? [];
-        const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
-            const summary = chatSummaries.get(id);
-            if (summary !== undefined) {
-                result.push(summary);
-            }
-            return result;
-        }, []);
-        const pinnedIds = new Set(pinnedByScope.map(chatIdentifierToString));
-        // compute the (bigint) display date once per chat rather than twice per comparison
-        const unpinned: [bigint, ChatSummary][] = [];
-        for (const chat of chatSummaries.values()) {
-            if (!pinnedIds.has(chatIdentifierToString(chat.id))) {
-                unpinned.push([getDisplayDate(chat), chat]);
-            }
-        }
-        unpinned.sort(([a], [b]) => (a === b ? 0 : a < b ? 1 : -1));
-        return pinned.concat(unpinned.map(([, chat]) => chat));
-    },
+    ([pinnedChats, chatListScope, chatSummaries]) =>
+        chatListOrder(pinnedChats.get(chatListScope.kind) ?? [], chatSummaries),
 );
 
 export const selectedChatSummaryStore = derived(

@@ -1609,6 +1609,48 @@
                 "title": "Link with existing account"
             }
         },
+        "chats": {
+            "chit": "CHIT",
+            "chitClaimable": "CHIT: today's claim is ready",
+            "options": "Chats options",
+            "empty": "Your chats will show up here.",
+            "noneMatch": "No chats match",
+            "showAllChats": "Show all chats",
+            "markRead": "Mark as read",
+            "rowOptions": "{name} options",
+            "search": {
+                "placeholder": "Search chats and people",
+                "clear": "Clear",
+                "searchFor": "Search for",
+                "chats": "Chats",
+                "people": "People",
+                "chatsCount": "Chats · {count}",
+                "peopleCount": "People · {count}",
+                "showAll": "Show all",
+                "showLess": "Show less",
+                "noResults": "No results for “{query}”",
+                "noResultsHint": "Try a name or an @username."
+            },
+            "toast": {
+                "allRead": "All chats marked as read",
+                "caughtUp": "You're all caught up",
+                "pinned": "Pinned to top",
+                "unpinned": "Unpinned",
+                "muted": "Muted",
+                "unmuted": "Unmuted",
+                "archived": "Chat archived",
+                "left": "You left {name}",
+                "deleted": "Chat deleted"
+            },
+            "newChat": {
+                "placeholder": "Search name or @username",
+                "frequent": "Frequently contacted",
+                "results": "Results",
+                "noOne": "No one matches. Try their @username.",
+                "noContacts": "No contacts yet",
+                "noContactsBody": "People you chat with most will show up here. Search by name or @username to start a conversation."
+            }
+        },
         "shareUnavailable": "Sharing to OpenChat from other apps isn't available in this version yet.",
         "start": {
             "welcome": {

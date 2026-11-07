@@ -529,6 +529,7 @@
       "title": "Share to chat"
     },
     "chatRow": {
+      "favourite": "Favourite",
       "forwarded": "Forwarded",
       "muted": "Notifications muted",
       "private": "Private",

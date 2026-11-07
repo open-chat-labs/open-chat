@@ -28,9 +28,9 @@ import type {
 } from "@openchat/ui/src/features/components/SendCryptoDialog.svelte";
 import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
 import type { Prize, PrizeDraft, SwapOffer, TokenRef, Transfer } from "@openchat/ui/src/lib/types";
+import { swatchFor } from "@src/logic/chats/chatRow";
 import type { PrizeConfig } from "@src/logic/prize/prizeForm.svelte";
 import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
-import { swatchFor } from "../chats/chatList.adapter";
 import { displayDecimals, wholeTokens } from "../wallet/wallet.adapter";
 
 /** A library resource key (or the app's) with its values, in the app's language. */

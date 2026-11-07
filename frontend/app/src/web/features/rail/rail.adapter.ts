@@ -1,7 +1,7 @@
 import type { CommunitySummary } from "@client";
 import type NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
 import type { ComponentProps } from "svelte";
-import { pickById } from "../../pickById";
+import { pickById } from "@src/utils/pickById";
 
 type Pin = ComponentProps<typeof NavRail>["pins"][number];
 

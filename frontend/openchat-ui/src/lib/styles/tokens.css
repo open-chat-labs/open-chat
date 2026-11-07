@@ -138,7 +138,7 @@
   --tab-bar-h:calc(10px + var(--touch-target) + var(--bar-end));
   --veil-sheet:rgba(0,0,0,.55); --veil-lift:rgba(0,0,0,.42);
   --shadow-sheet:0 -12px 40px rgba(0,0,0,.45); --shadow-menu:0 12px 36px rgba(0,0,0,.55); --shadow-lift:0 14px 40px rgba(0,0,0,.55);
-  --shadow-push:-12px 0 32px rgba(0,0,0,.35);
+  --shadow-push:-12px 0 32px rgba(0,0,0,.35); --shadow-fab:0 8px 24px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.3);
 }
 [data-platform="native"][data-os="android"]{--touch-target:48px}
 /* A pushed screen comes in from the inline end, so its shadow falls on the start side. */

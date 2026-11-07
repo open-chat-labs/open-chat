@@ -1694,6 +1694,48 @@
                 "title": "Lien avec un compte existant"
             }
         },
+        "chats": {
+            "chit": "CHIT",
+            "chitClaimable": "CHIT : la récompense du jour est prête",
+            "options": "Options des discussions",
+            "empty": "Vos discussions apparaîtront ici.",
+            "noneMatch": "Aucune discussion ne correspond",
+            "showAllChats": "Afficher toutes les discussions",
+            "markRead": "Marquer comme lu",
+            "rowOptions": "Options de {name}",
+            "search": {
+                "placeholder": "Rechercher des discussions et des personnes",
+                "clear": "Effacer",
+                "searchFor": "Rechercher",
+                "chats": "Discussions",
+                "people": "Personnes",
+                "chatsCount": "Discussions · {count}",
+                "peopleCount": "Personnes · {count}",
+                "showAll": "Tout afficher",
+                "showLess": "Afficher moins",
+                "noResults": "Aucun résultat pour « {query} »",
+                "noResultsHint": "Essayez un nom ou un @nom d'utilisateur."
+            },
+            "toast": {
+                "allRead": "Toutes les discussions sont marquées comme lues",
+                "caughtUp": "Vous êtes à jour",
+                "pinned": "Épinglée en haut",
+                "unpinned": "Désépinglée",
+                "muted": "Son coupé",
+                "unmuted": "Son réactivé",
+                "archived": "Discussion archivée",
+                "left": "Vous avez quitté {name}",
+                "deleted": "Discussion supprimée"
+            },
+            "newChat": {
+                "placeholder": "Rechercher un nom ou un @nom d'utilisateur",
+                "frequent": "Contacts fréquents",
+                "results": "Résultats",
+                "noOne": "Personne ne correspond. Essayez son @nom d'utilisateur.",
+                "noContacts": "Pas encore de contacts",
+                "noContactsBody": "Les personnes avec qui vous discutez le plus apparaîtront ici. Recherchez un nom ou un @nom d'utilisateur pour commencer une conversation."
+            }
+        },
         "shareUnavailable": "Le partage vers OpenChat depuis d'autres applications n'est pas encore disponible dans cette version.",
         "start": {
             "welcome": {
