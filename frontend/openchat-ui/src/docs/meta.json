@@ -879,7 +879,7 @@
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": "Right-aligned layouts (native sent bubbles): the grouped / tail corners go on the inline-end side."
+        "doc": "Right-aligned layouts (native sent bubbles): the bubble (and its reactions) at the inline end, its grouped / tail corners on that side."
       }
     ],
     "group": "library"
@@ -3753,6 +3753,42 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Right-aligned sent messages (native): a sent run sits at the inline end, its bubbles' corners mirrored."
+      },
+      {
+        "name": "avatarSize",
+        "type": "number",
+        "default": 34,
+        "editor": "number",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "34",
+        "doc": "The avatar's size (px). Native groups use 28."
+      },
+      {
+        "name": "swipeStyle",
+        "type": "'gutter' | 'inset'",
+        "default": "gutter",
+        "editor": "enum",
+        "options": [
+          "gutter",
+          "inset"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'gutter'",
+        "doc": "How a swipe looks: gutter (web) or inset (native: the hint in the freed space, armed at 60px, stopping at 90px)."
       }
     ],
     "group": "library"
@@ -5864,7 +5900,7 @@
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": "Right-aligned layouts (mobile, native): the grouped / tail corners go on the inline-end side, as ChatBubble's."
+        "doc": "Right-aligned layouts (native sent bubbles): the bubble at the inline end, its corners mirrored."
       },
       {
         "name": "lastInGroup",
@@ -15551,7 +15587,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "The About pages the host has (`features`, `roadmap`, `metrics` \u2026), for one without them all; defaults to all."
+        "doc": "The About pages the host has (`features`, `roadmap`, `metrics` …), for one without them all; defaults to all."
       },
       {
         "name": "botDocsUrl",

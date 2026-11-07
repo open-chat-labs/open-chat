@@ -5,7 +5,10 @@
      mirrored in RTL (host: edit own / forward others'). A message's `swipeLeft` puts the host's say on the left swipe (it then
      calls onSwipeLeft, and the right one replies). pos always carries el (the message node) and rect for the focus clone.
      A message's `menu` says whether it has a menu and hover bar (by default all but a deleted one); the bar offers reactions only
-     with onReact / onReactPicker, and Reply / Edit only with onReply / onEdit. -->
+     with onReact / onReactPicker, and Reply / Edit only with onReply / onEdit.
+     Native (design notes §3.3): `mirror` puts a sent run at the inline end with mirrored corners, `avatarSize` 28, and
+     `swipeStyle="inset"` the native swipe (the hint in the freed space, armed at 60px). The host sets `--group-gap`
+     (the avatar's gap) and `--message-mark` (the marked row's tint) on it if it wants others. -->
 <script lang="ts">
   import { useT } from '../i18n';
   import { onDestroy, type ComponentProps } from 'svelte';
@@ -62,6 +65,16 @@
     onSwipeLeft?: (index: number) => void;
     /** The sender's avatar or name was clicked (or pressed with Enter / Space); gets the element clicked. Plain text without it. */
     onSenderClick?: (el: HTMLElement) => void;
+    /** Right-aligned sent messages (native): a sent run sits at the inline end, its bubbles' corners mirrored. */
+    mirror?: boolean;
+    /** The avatar's size (px). Native groups use 28. */
+    avatarSize?: number;
+    /**
+     * How a swipe looks. gutter (web): the hint waits outside the row, armed past 150px, rubber-banded after.
+     * inset (native, design notes §3.3): a 32px hint in the space the message frees, 4px in from the row's edge,
+     * growing in as it's pulled; armed at 60px (accent, two bounces, a haptic), and it stops at 90px.
+     */
+    swipeStyle?: 'gutter' | 'inset';
   }
 
   let {
@@ -83,11 +96,20 @@
     onReply,
     onEdit,
     onSwipeLeft,
+    mirror = false,
+    avatarSize = 34,
+    swipeStyle = 'gutter',
   }: Props = $props();
   const t = useT();
 
-  const SWIPE_AT = 150;
+  const inset = $derived(swipeStyle === 'inset');
+  const mirrored = $derived(mirror && side === 'sent');
+  const SWIPE_AT_GUTTER = 150;
+  const SWIPE_AT_INSET = 60;
   const SWIPE_MAX = 400;
+  const SWIPE_MAX_INSET = 90;
+  // the inset hint: its gap from the row's edge
+  const INSET_GAP = 4;
   const BAR_W = 196; // hover bar width (3 reactions, picker, divider, reply/edit, more)
 
   const rows: HTMLDivElement[] = $state([]);
@@ -192,33 +214,65 @@
     let d = rtl ? -raw : raw;
     if ((d > 0 && !ok.right) || (d < 0 && !ok.left)) d = 0;
     const a = Math.abs(d);
-    d = Math.sign(d) * (a <= SWIPE_AT ? a : Math.min(SWIPE_MAX, SWIPE_AT + (a - SWIPE_AT) * 0.6));
+    const at = inset ? SWIPE_AT_INSET : SWIPE_AT_GUTTER;
+    d = Math.sign(d) * (inset ? Math.min(a, SWIPE_MAX_INSET) : a <= at ? a : Math.min(SWIPE_MAX, at + (a - at) * 0.6));
     const g = swipe && swipe.i === i ? swipe : (swipe = { i, d: 0, past: false });
     g.d = d;
     for (const n of [el, ...head(i)]) {
       n.style.transition = 'none';
       n.style.transform = `translateX(${rtl ? -d : d}px)`;
     }
-    const past = Math.abs(d) >= SWIPE_AT;
+    const past = Math.abs(d) >= at;
     const crossed = past && !g.past;
     if (crossed) navigator.vibrate?.(10);
     g.past = past;
     const paint = (h: HTMLElement | null, on: boolean, amount: number) => {
       if (!h) return;
       h.style.display = on ? 'flex' : 'none';
-      h.style.opacity = String(Math.min(1, amount / SWIPE_AT));
-      h.style.transform = past && on ? 'scale(1.3)' : 'scale(1)';
-      if (crossed && on)
-        h.animate?.([{ transform: 'scale(1)' }, { transform: 'scale(1.55)' }, { transform: 'scale(1.2)' }, { transform: 'scale(1.38)' }, { transform: 'scale(1.3)' }], {
-          duration: 420,
-          easing: 'ease-out',
-        });
+      const p = Math.min(1, amount / at);
+      h.style.opacity = String(p);
+      if (inset) {
+        // in the space the message frees: the hint moves with the row, so it's set back by as far as the row has gone
+        if (h.hasAttribute('data-swipe-hint')) h.style.insetInlineStart = `${INSET_GAP - amount - leadOf(el)}px`;
+        else h.style.insetInlineEnd = `${INSET_GAP - amount - trailOf(el)}px`;
+        h.style.transform = `scale(${0.6 + 0.4 * p})`;
+        if (crossed && on && !reducedMotion())
+          h.animate?.([{ transform: 'scale(1)' }, { transform: 'scale(1.22)' }, { transform: 'scale(0.94)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], {
+            duration: 560,
+            easing: 'ease-out',
+          });
+      } else {
+        h.style.transform = past && on ? 'scale(1.3)' : 'scale(1)';
+        if (crossed && on)
+          h.animate?.([{ transform: 'scale(1)' }, { transform: 'scale(1.55)' }, { transform: 'scale(1.2)' }, { transform: 'scale(1.38)' }, { transform: 'scale(1.3)' }], {
+            duration: 420,
+            easing: 'ease-out',
+          });
+      }
       h.style.background = past && on ? 'var(--accent)' : 'var(--overlay-2)';
       const icon = h.firstElementChild as HTMLElement | null;
       if (icon) icon.style.background = past && on ? 'var(--on-accent)' : 'var(--ink)';
     };
     paint(el.querySelector('[data-swipe-hint]'), d > 0, Math.max(0, d));
     paint(el.querySelector('[data-swipe-hint-end]'), d < 0, Math.max(0, -d));
+  }
+
+  // how far a message's row starts in from the group's start edge (the avatar's column), and ends in from its end
+  // edge, untransformed: the inset hint sits that much further out, at the group's edge
+  function leadOf(el: HTMLElement): number {
+    if (!group) return 0;
+    const rtl = getComputedStyle(el).direction === 'rtl';
+    return rtl ? group.clientWidth - el.offsetLeft - el.offsetWidth : el.offsetLeft;
+  }
+
+  function trailOf(el: HTMLElement): number {
+    if (!group) return 0;
+    const rtl = getComputedStyle(el).direction === 'rtl';
+    return rtl ? el.offsetLeft : group.clientWidth - el.offsetLeft - el.offsetWidth;
+  }
+
+  function reducedMotion(): boolean {
+    return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
   }
 
   function swipeEnd(i: number, m: GroupMessage) {
@@ -234,9 +288,11 @@
         n.style.opacity = '0';
         n.style.display = 'none';
         n.style.transform = 'scale(1)';
+        n.style.insetInlineStart = '';
+        n.style.insetInlineEnd = '';
       });
     }
-    if (!g || Math.abs(g.d) < SWIPE_AT) return;
+    if (!g || Math.abs(g.d) < (inset ? SWIPE_AT_INSET : SWIPE_AT_GUTTER)) return;
     if (g.d < 0 && m.swipeLeft) return onSwipeLeft?.(i);
     const act = g.d > 0 ? swipeMap(m).right : swipeMap(m).left;
     if (act === 'edit') onEdit?.(i, el);
@@ -393,14 +449,14 @@
   }
 </script>
 
-<div class="group" class:raised={hover >= 0} bind:this={group}>
+<div class="group" class:raised={hover >= 0} class:mirrored class:inset bind:this={group} style:--group-avatar="{avatarSize}px">
   {#if showAvatar}
     {#if onSenderClick}
       <span class="avatar sender" data-group-head onclick={(e) => onSenderClick(e.currentTarget)} onkeydown={(e) => senderKey(e)} role="button" tabindex="0" aria-label={senderName}
-        ><Avatar size={34} {color} online={false} /></span
+        ><Avatar size={avatarSize} {color} online={false} /></span
       >
     {:else}
-      <span class="avatar" data-group-head><Avatar size={34} {color} online={false} /></span>
+      <span class="avatar" data-group-head><Avatar size={avatarSize} {color} online={false} /></span>
     {/if}
   {:else if avatarSpace}
     <span class="avatar-space" aria-hidden="true"></span>
@@ -444,7 +500,7 @@
         <span class="hint start" class:past-avatar={i === 0 && showAvatar} aria-hidden="true" data-swipe-hint=""><span class="hint-icon" style:mask="var(--icon-{map.right}) center/contain no-repeat"></span></span>
         <span class="hint end" aria-hidden="true" data-swipe-hint-end=""><span class="hint-icon" style:mask="var(--icon-{map.left}) center/contain no-repeat"></span></span>
         {#if m.kind === 'voice'}
-          <VoiceMessage {...m} {side} lastInGroup={last} />
+          <VoiceMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if m.kind === 'image' || m.kind === 'album' || m.kind === 'video' || m.kind === 'gif'}
           <MediaMessage {...m} {side} lastInGroup={last} />
         {:else if m.kind === 'file'}
@@ -460,7 +516,7 @@
         {:else if m.kind === 'prize'}
           <PrizeMessage {...m} {side} lastInGroup={last} />
         {:else if !m.kind || m.kind === 'text'}
-          <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} onToggleReaction={(c) => onReact?.(i, c)} />
+          <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} mirror={mirrored} onToggleReaction={(c) => onReact?.(i, c)} />
         {/if}
         <!-- every other kind's reactions, under it as under a text bubble (ChatBubble draws its own) -->
         {#if m.kind && m.kind !== 'text' && m.reactions?.length}
@@ -550,7 +606,7 @@
     width: 100%;
     box-sizing: border-box;
     display: flex;
-    gap: var(--space-10);
+    gap: var(--group-gap, var(--space-10));
     align-items: flex-start;
     flex-direction: row;
   }
@@ -559,8 +615,8 @@
     position: relative;
     z-index: 1;
     flex: none;
-    width: 34px;
-    height: 34px;
+    width: var(--group-avatar);
+    height: var(--group-avatar);
     display: grid;
     place-items: center;
     overflow: visible;
@@ -570,7 +626,7 @@
 
   .avatar-space {
     flex: none;
-    width: 34px;
+    width: var(--group-avatar);
   }
 
   .column {
@@ -620,7 +676,7 @@
     inset-inline-end: -24px;
     z-index: -1;
     border-radius: 0;
-    background: color-mix(in oklch, var(--ink) 2.5%, transparent);
+    background: var(--message-mark, color-mix(in oklch, var(--ink) 2.5%, transparent));
     opacity: 0;
     transition: opacity 0.2s ease-out;
     pointer-events: none;
@@ -654,7 +710,7 @@
 
     /* the first message takes the avatar along, so its hint shows past it */
     &.start.past-avatar {
-      inset-inline-start: calc(-48px - 34px - var(--space-10));
+      inset-inline-start: calc(-48px - var(--group-avatar) - var(--group-gap, var(--space-10)));
     }
 
     &.end {
@@ -666,6 +722,28 @@
     width: 14px;
     height: 14px;
     background: var(--ink);
+  }
+
+  /* the inset swipe (native): a larger hint in the space the message frees, placed from script */
+  .inset .hint {
+    width: 32px;
+    height: 32px;
+    margin-top: -16px;
+    transition: background 0.15s;
+  }
+
+  .inset .hint-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* right-aligned sent messages: every kind sits at the inline end (text and voice bubbles align themselves) */
+  .mirrored .message {
+    justify-items: end;
+  }
+
+  .mirrored .name {
+    align-self: flex-end;
   }
 
   .bar {

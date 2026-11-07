@@ -31,7 +31,7 @@
     time: string;
     side?: 'sent' | 'received';
     lastInGroup?: boolean;
-    /** Right-aligned layouts (native sent bubbles): the grouped / tail corners go on the inline-end side. */
+    /** Right-aligned layouts (native sent bubbles): the bubble (and its reactions) at the inline end, its grouped / tail corners on that side. */
     mirror?: boolean;
     status?: 'sending' | 'sent' | 'delivered' | 'failed';
     /** Shown under a failed message; defaults by side. */
@@ -102,7 +102,7 @@
 
 {#snippet stamp()}{edited ? t('ui.chatBubble.edited') + ' · ' : ''}{time}{#if sent}<span class="tick" style:mask="var(--icon-{STATUS[status] ?? 'check-double'}) center/contain no-repeat"></span>{/if}{/snippet}
 
-<div class="wrap">
+<div class="wrap" class:mirror>
   {#if deleted}
     <div class="deleted" class:mirror>
       <span class="trash"></span>
@@ -110,7 +110,7 @@
       <span class="deleted-time">{time}</span>
     </div>
   {:else}
-    <div class="column" class:sent>
+    <div class="column" class:sent class:mirror>
       <div class="bubble" class:last={lastInGroup} class:mirror class:carded data-oc-bubble>
         {#if quoteName}
           <div class="quote">
@@ -177,6 +177,11 @@
     width: 100%;
     display: flex;
     justify-content: flex-start;
+
+    /* a right-aligned layout (native sent bubbles): the bubble, and what's under it, at the inline end */
+    &.mirror {
+      justify-content: flex-end;
+    }
   }
 
   .deleted {
@@ -231,6 +236,10 @@
       --msg-ink: var(--bubble-text);
       --msg-soft: var(--bubble-text-soft);
       --msg-stamp: var(--bubble-text-soft);
+    }
+
+    &.mirror {
+      align-items: flex-end;
     }
   }
 
