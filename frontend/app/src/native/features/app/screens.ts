@@ -106,12 +106,15 @@ export const screens: Screens = {
     chat_details: undefined,
 };
 
-/** The screens' chunks, loaded once and kept; the tabs' roots are preloaded first. */
+/**
+ * The screens' chunks, loaded once and kept. The Chats tab and a conversation are preloaded first
+ * (a chat is what's opened most), then the other tabs' roots, then the rest.
+ */
 export const screenModules = new ScreenModules<
     NativeScreen["kind"],
     Component<ScreenProps<NativeScreen>>
 >(
     // the entry for a kind takes that kind's screen
     screens as Partial<Record<NativeScreen["kind"], Loader<NativeScreen>>>,
-    ["chats", "you", "communities", "wallet", "activity"],
+    ["chats", "conversation", "you", "communities", "wallet", "activity"],
 );
