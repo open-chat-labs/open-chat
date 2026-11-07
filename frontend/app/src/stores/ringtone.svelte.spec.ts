@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Ringtone } from "./ringtone.svelte";
+import { Ringtone, RINGTONE_KEYS, storedRingtoneKey } from "./ringtone.svelte";
 
 describe("Ringtone", () => {
     beforeEach(() => {
@@ -20,5 +20,13 @@ describe("Ringtone", () => {
         ringtone.stop();
 
         expect(ringtone.playing).toBe(false);
+    });
+});
+
+describe("the stored ringtone", () => {
+    it("is the one named, or the default for a name the app no longer has", () => {
+        expect(storedRingtoneKey("siren")).toBe("siren");
+        expect(storedRingtoneKey("twostep")).toBe("boring");
+        expect(RINGTONE_KEYS).toEqual(["boring", "pleasant", "boomboom", "garage", "siren"]);
     });
 });

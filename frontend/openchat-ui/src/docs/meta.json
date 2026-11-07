@@ -20520,6 +20520,118 @@
     "group": "native"
   },
   {
+    "name": "NativeAlert",
+    "source": "by hand (native N12, 2026-11-07): the design's \"Confirmations stay small alerts\" (Design Notes §1), which the prototype doesn't draw",
+    "hash": "",
+    "description": "A confirmation: a small card in the middle of the screen over the sheets' veil, with a title, an optional message and two buttons side by side, the dismiss one first; without an action (no confirmLabel), a notice with the dismiss button alone. The confirm button is the accent's, or in the danger colour for a destructive action. The veil, Esc and Cancel dismiss it; it scales and fades in and out (fades only with reduced motion).",
+    "preview": {
+      "width": 370,
+      "height": 260
+    },
+    "props": [
+      {
+        "name": "open",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text)."
+      },
+      {
+        "name": "message",
+        "type": "string",
+        "default": "",
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): what happens."
+      },
+      {
+        "name": "confirmLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): the action. None for a notice, with the dismiss button alone."
+      },
+      {
+        "name": "cancelLabel",
+        "type": "string",
+        "default": "ui.common.cancel",
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.common.cancel'",
+        "doc": "Resource key (or literal text): the dismiss button; Cancel by default."
+      },
+      {
+        "name": "danger",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A destructive action (Delete, Sign out): the confirm button in the danger colour."
+      },
+      {
+        "name": "busy",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The action is under way: the buttons wait."
+      },
+      {
+        "name": "onConfirm",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onClose",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Cancel, the veil or Esc. The alert plays its way out once `open` turns false."
+      }
+    ],
+    "group": "native"
+  },
+  {
     "name": "NativeMenu",
     "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
     "hash": "",

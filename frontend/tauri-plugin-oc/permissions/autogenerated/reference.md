@@ -42,6 +42,7 @@ Default permissions for the plugin
 - `allow-haptic`
 - `allow-get-window-insets`
 - `allow-set-system-bars-style`
+- `allow-share`
 
 ## Permission Table
 
@@ -906,6 +907,32 @@ Enables the set_system_bars_style command without any pre-configured scope.
 <td>
 
 Denies the set_system_bars_style command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-share`
+
+</td>
+<td>
+
+Enables the share command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-share`
+
+</td>
+<td>
+
+Denies the share command without any pre-configured scope.
 
 </td>
 </tr>

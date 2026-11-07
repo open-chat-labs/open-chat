@@ -694,3 +694,10 @@
 
 ## 2026-11-07 — your own deleted message's corners on the web, by hand
 - `ChatBubble`: the deleted placeholder took the right-aligned corners for your own message (`sent`) whatever the layout, so on the web, where every bubble sits on the inline-start side, yours looked mirrored. It now has the bubble's shape (the small corner at the start) whoever sent it, and the mirrored one only with `mirror` (your own on the inline-end side: mobile, native), as the bubble does. The corners are logical, so RTL follows.
+
+## 2026-11-07 — native: NativeAlert, the design's small confirmation (native N12, #10380), by hand
+- `NativeAlert` (src/native, exported from `native/index.ts`): the Design Notes' "Confirmations stay small alerts" (§1 Structure 4), which the prototype doesn't draw (it toasts instead). A card in the middle of the screen over the sheets' veil (`--veil-sheet`), `surface-1`, 20px radius, the menu's shadow: a title, an optional message, and Cancel and the action side by side (at least the touch target tall), the action in the accent or, with `danger`, in the library Button's danger look. The veil, Esc and Cancel dismiss it (`modal`; focus starts on Cancel and goes back after); `busy` holds both buttons while the action runs. It scales from 94% and fades in (220ms), and out in 180ms (`Presence`); it only fades with reduced motion. `meta.json` and the docs' Native group (Alert) have it.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-07 — native: NativeAlert as a notice (native N12 testing), by hand
+- `NativeAlert`: `confirmLabel` and `onConfirm` are optional. Without an action it's a notice with the dismiss button alone (labelled `cancelLabel`), as the You tab's Diamond button uses while buying Diamond waits for the wallet's PIN sheet. `meta.json` updated. Not in the design export: to go back to it (the app's `GAPS.md` lists it).

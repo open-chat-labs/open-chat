@@ -8,6 +8,14 @@ export const ringtoneUrls: Record<RingtoneKey, string> = {
 
 export type RingtoneKey = "boring" | "pleasant" | "boomboom" | "garage" | "siren";
 
+/** The ringtones, in the order the settings list them. */
+export const RINGTONE_KEYS = Object.keys(ringtoneUrls) as RingtoneKey[];
+
+/** The ringtone a stored name (selectedRingtone) plays: one the app no longer has is the default. */
+export function storedRingtoneKey(stored: string): RingtoneKey {
+    return RINGTONE_KEYS.find((key) => key === stored) ?? "boring";
+}
+
 export class Ringtone {
     audio: HTMLAudioElement;
     playing = $state(false);

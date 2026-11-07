@@ -1,7 +1,8 @@
-<!-- Cropping the photo picked for the account (Pick a username's avatar): the picked image in a
-     round crop the person drags and pinches, in a sheet of a fixed height, and Done in its header.
-     The crop is the shared one (utils/imageCrop, as src/web's ImageCropDialog and the old UIs'
-     EditableImageWrapper); the host scales the area to the avatar's size. -->
+<!-- Cropping the photo picked for the account (Pick a username's avatar, Edit profile's photo): the
+     picked image in a round crop the person drags and pinches, in a sheet of a fixed height, and
+     Done in its header; Edit profile's cover in a rectangle of the cover's shape (`aspect`, not
+     `round`). The crop is the shared one (utils/imageCrop, as src/web's ImageCropDialog and the old
+     UIs' EditableImageWrapper); the host scales the area to the image's size. -->
 <script lang="ts">
     import BottomSheet from "@openchat/ui/src/native/BottomSheet.svelte";
     import type { CropArea } from "@src/utils/imageCrop";
@@ -15,9 +16,15 @@
         /** Done, with the area picked in the image's pixels. */
         onCrop: (area: CropArea) => void;
         onClose: () => void;
+        /** The sheet's title; the photo's by default. */
+        title?: string;
+        /** The crop's width over its height. */
+        aspect?: number;
+        /** A round crop (a photo), else a rectangle (a cover). */
+        round?: boolean;
     };
 
-    let { open, source, onCrop, onClose }: Props = $props();
+    let { open, source, onCrop, onClose, title, aspect = 1, round = true }: Props = $props();
 
     // the host mounts it again for each image picked, so this is always this image's
     let area = $state<CropArea>();
@@ -35,7 +42,7 @@
 <BottomSheet
     {open}
     {onClose}
-    title={$_("native.start.signUp.photoTitle")}
+    title={title ?? $_("native.start.signUp.photoTitle")}
     onAction={done}
     height="min(560px, 82%)">
     <div class="cropper">
@@ -43,8 +50,8 @@
             image={source}
             crop={{ x: 0, y: 0 }}
             zoom={1}
-            aspect={1}
-            cropShape="round"
+            {aspect}
+            cropShape={round ? "round" : "rect"}
             showGrid={false}
             oncropcomplete={cropped} />
     </div>

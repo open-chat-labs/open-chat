@@ -32,13 +32,11 @@
         PremiumItem,
         premiumItemsStore,
         selectedAuthProviderStore,
-        isDisplayNameValid,
         signInLastUsed,
         toDayString,
         unlinkIdentityFailure,
         type LinkedAuthenticationPrincipal,
         type ResourceKey,
-        memberDisplayNameResult,
         referralLink,
         sortedCommunitiesStore,
         storageStore,
@@ -50,7 +48,12 @@
         type ProfileSection,
         type SigninMethod,
     } from "@openchat/ui/src/features/components/ProfileDialog.svelte";
-    import { fontScaleFor, fontSizeOf, isFontSize } from "@src/logic/profile/appearance";
+    import {
+        fontScaleFor,
+        fontSizeOf,
+        isFontSize,
+        themePrefOf,
+    } from "@src/logic/profile/appearance";
     import { ProfileForm } from "@src/logic/profile/profileForm.svelte";
     import {
         chitPopup,
@@ -80,15 +83,15 @@
         profileProps,
         ringtoneKeyOf,
         statsProps,
-        themePrefOf,
         type AppChatSettings,
         botConfigProps,
         communitiesProps,
         linkCodeProps,
         signinMethodsProps,
-        memberDisplayNameOf,
         storageProps,
     } from "./profile.adapter";
+    import { saveCommunityName } from "@src/logic/profile/communityName";
+    import { setNotifications } from "@src/logic/profile/notifications";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { deleteAccount } from "@src/logic/auth/deleteAccount";
     import { clearCacheAndRestart } from "@src/utils/clearCache";
@@ -107,13 +110,13 @@
     import { websiteVersion } from "@src/utils/openchatClient";
     import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
+    import { readImageFile, type CropArea } from "@src/utils/imageCrop";
     import {
-        AVATAR_SIZE,
-        cropImage,
-        PROFILE_BACKGROUND_SIZE,
-        readImageFile,
-        type CropArea,
-    } from "@src/utils/imageCrop";
+        PROFILE_IMAGE_FAILURES,
+        PROFILE_IMAGE_SIZES,
+        ProfileImages,
+        type ProfileImage,
+    } from "@src/logic/profile/profileImages.svelte";
     import ImageCropDialog from "./ImageCropDialog.svelte";
     import PremiumItemDialog from "./PremiumItemDialog.svelte";
 
@@ -168,9 +171,8 @@
     // as it may have changed on another device since sign-in
     onMount(() => client.refreshCurrentUserProfile());
 
-    // a cropped avatar or profile background, shown while it uploads
-    let avatarPreview = $state<string>();
-    let coverPreview = $state<string>();
+    // the avatar and profile background being changed, previewed while they upload
+    const images = new ProfileImages(client);
 
     const header = $derived(
         profileProps(
@@ -184,9 +186,10 @@
             },
             {
                 avatarUrl:
-                    avatarPreview ?? buildUserAvatarUrl(blobUrlPattern, userId, profile.avatarId),
+                    images.preview.avatar ??
+                    buildUserAvatarUrl(blobUrlPattern, userId, profile.avatarId),
                 coverUrl:
-                    coverPreview ??
+                    images.preview.cover ??
                     buildUserBackgroundUrl(blobUrlPattern, userId, profile.backgroundId),
             },
         ),
@@ -234,16 +237,12 @@
         return client.setModerationFlags($moderationFlagsEnabledStore ^ flag);
     }
 
-    // as the old UI: asking turns them on, off only stops showing them here. Where there are no
-    // notifications, asking would throw
-    async function setNotifications(on: boolean): Promise<void> {
-        if (!on) return setSoftDisabled(true);
-        if ($notificationStatus === "unsupported") return;
-        try {
-            await askForNotificationPermission();
-        } catch (err) {
-            console.warn("Unable to ask for notification permission", err);
-        }
+    // as the old UI: asking turns them on, off only stops showing them here (logic/profile)
+    function switchNotifications(on: boolean): Promise<void> {
+        return setNotifications(on, $notificationStatus, {
+            ask: askForNotificationPermission,
+            softDisable: setSoftDisabled,
+        });
     }
 
     // the dialog sends its settings for a change of one, and shows the change until this settles
@@ -258,7 +257,7 @@
                     dclickReply.set(next.doubleClick);
                     break;
                 case "notifications":
-                    pending.push(setNotifications(next.notifications));
+                    pending.push(switchNotifications(next.notifications));
                     break;
                 case "lowBandwidth":
                     lowBandwidth.set(next.lowBandwidth);
@@ -315,16 +314,7 @@
 
     // the dialog shows the name until this settles, and goes back to the saved one if it throws
     async function setCommunityName(communityId: string, name: string | null): Promise<void> {
-        const displayName = memberDisplayNameOf(name);
-        // a name the backend would turn down isn't sent, as the old screens' DisplayNameInput
-        if (displayName !== undefined && !isDisplayNameValid(displayName)) {
-            throw new Error("community name not valid");
-        }
-        const resp = await client.setMemberDisplayName(
-            { kind: "community", communityId },
-            displayName,
-        );
-        const result = memberDisplayNameResult(resp);
+        const result = await saveCommunityName(client, communityId, name);
         // TODO(design): the dialog says the name couldn't be saved, not why; GAPS.md
         if (result.kind !== "saved") throw new Error(`community name not saved: ${result.kind}`);
     }
@@ -550,27 +540,19 @@
     }
     onDestroy(() => signingInAgain?.signIn.dispose());
 
-    // ---- the avatar and the profile background ----
-    type ImageTarget = "avatar" | "cover";
+    // ---- the avatar and the profile background (logic/profile/profileImages) ----
     type ImageEdit =
         | { kind: "none" }
         // the profile background is a premium item, paid for with CHIT before its first use
         | { kind: "paying" }
-        | { kind: "cropping"; target: ImageTarget; source: string };
+        | { kind: "cropping"; target: ProfileImage; source: string };
 
     let imageEdit = $state<ImageEdit>({ kind: "none" });
     let fileInput = $state<HTMLInputElement>();
-    let picking: ImageTarget = "avatar";
-    // one upload at a time for each: another would race it to the store (and the preview)
-    const uploading = $state<Record<ImageTarget, boolean>>({ avatar: false, cover: false });
+    let picking: ProfileImage = "avatar";
 
-    const FAILURES: Record<ImageTarget, string> = {
-        avatar: "avatarUpdateFailed",
-        cover: "profile.backgroundUpdateFailed",
-    };
-
-    function pick(target: ImageTarget) {
-        if (uploading[target]) return;
+    function pick(target: ProfileImage) {
+        if (images.uploading[target]) return;
         picking = target;
         fileInput?.click();
     }
@@ -589,7 +571,7 @@
             imageEdit = { kind: "cropping", target, source: await readImageFile(file) };
         } catch (err) {
             console.warn("Unable to read the picked image", err);
-            toastStore.showFailureToast(i18nKey(FAILURES[target]));
+            toastStore.showFailureToast(i18nKey(PROFILE_IMAGE_FAILURES[target]));
         }
     }
 
@@ -597,30 +579,10 @@
         if (imageEdit.kind !== "cropping") return;
         const { target, source } = imageEdit;
         // its Apply waits while the same image uploads (ImageCropDialog's busy), so nothing's lost
-        if (uploading[target]) return;
+        if (images.uploading[target]) return;
         imageEdit = { kind: "none" };
-        const avatar = target === "avatar";
-        uploading[target] = true;
-        try {
-            // a file that isn't an image after all (a corrupt one, HEIC named .jpg) fails here
-            const size = avatar ? AVATAR_SIZE : PROFILE_BACKGROUND_SIZE;
-            const image = await cropImage(source, area, size);
-            if (image === undefined) throw new Error("the cropped image couldn't be encoded");
-            if (avatar) avatarPreview = image.url;
-            else coverPreview = image.url;
-            const blobId = avatar
-                ? await client.setUserAvatar(image.data, image.url)
-                : await client.setUserProfileBackground(image.data);
-            if (blobId === undefined) throw new Error("the upload failed");
-        } catch (err) {
-            console.warn(`Unable to save the ${target} image`, err);
-            toastStore.showFailureToast(i18nKey(FAILURES[target]));
-        } finally {
-            // the saved image's URL from now on (the client has its id), or what was there before
-            if (avatar) avatarPreview = undefined;
-            else coverPreview = undefined;
-            uploading[target] = false;
-        }
+        const outcome = await images.save(target, source, area);
+        if (outcome.kind === "failed") toastStore.showFailureToast(i18nKey(outcome.reason));
     }
 
     // opened from another dialog (the CHIT dialog's settings): its back arrow returns to it
@@ -731,9 +693,9 @@
 {:else if imageEdit.kind === "cropping"}
     <ImageCropDialog
         source={imageEdit.source}
-        size={imageEdit.target === "avatar" ? AVATAR_SIZE : PROFILE_BACKGROUND_SIZE}
+        size={PROFILE_IMAGE_SIZES[imageEdit.target]}
         round={imageEdit.target === "avatar"}
-        busy={uploading[imageEdit.target]}
+        busy={images.uploading[imageEdit.target]}
         onCrop={cropped}
         onClose={() => (imageEdit = { kind: "none" })} />
 {/if}

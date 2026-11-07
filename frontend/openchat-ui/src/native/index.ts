@@ -11,6 +11,7 @@ export { default as NativePageHeader } from './NativePageHeader.svelte';
 export { default as BottomSheet } from './BottomSheet.svelte';
 export { default as NativeMenu } from './NativeMenu.svelte';
 export { default as AnchoredMenu } from './AnchoredMenu.svelte';
+export { default as NativeAlert } from './NativeAlert.svelte';
 export { default as LongPressMenu } from './LongPressMenu.svelte';
 export { default as SettingsGroup } from './SettingsGroup.svelte';
 export { default as SettingsSwitch } from './SettingsSwitch.svelte';

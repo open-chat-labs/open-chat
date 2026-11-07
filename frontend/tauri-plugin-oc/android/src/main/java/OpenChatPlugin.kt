@@ -3,6 +3,7 @@ package com.ocplugin.app
 import android.app.Activity
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
 import android.view.HapticFeedbackConstants
@@ -86,6 +87,31 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
             activity.window.decorView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
         }
         invoke.resolve()
+    }
+
+    // The system share sheet for a link or some text (the WebView has no Web Share API). Resolves
+    // once the sheet is up; what the user picks there isn't reported.
+    @Command
+    fun share(invoke: Invoke) {
+        val args = invoke.parseArgs(ShareArgs::class.java)
+        val text = args.text
+        if (text.isNullOrEmpty()) {
+            invoke.reject("Nothing to share")
+            return
+        }
+        activity.runOnUiThread {
+            try {
+                val send = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, text)
+                    args.title?.let { putExtra(Intent.EXTRA_TITLE, it) }
+                }
+                activity.startActivity(Intent.createChooser(send, args.title))
+                invoke.resolve()
+            } catch (e: Exception) {
+                invoke.reject("Couldn't open the share sheet: ${e.message}")
+            }
+        }
     }
 
     // The window insets as last reported (MainActivity), for a WebView that starts listening after
@@ -311,6 +337,12 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         CallSession.ended(activity, CallId(CallChat(chatType, chatId, args.communityId), messageId))
         invoke.resolve()
     }
+}
+
+@InvokeArg
+class ShareArgs {
+    var text: String? = null
+    var title: String? = null
 }
 
 @InvokeArg

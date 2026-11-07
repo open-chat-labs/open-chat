@@ -1,4 +1,10 @@
-import type { LocalScreen, NativeTabId, StackStep, TabsLocation } from "../router/locations";
+import {
+    localKey,
+    type LocalScreen,
+    type NativeTabId,
+    type StackStep,
+    type TabsLocation,
+} from "../router/locations";
 
 // The five tabs' push stacks (native design notes §1 Structure 2): each tab keeps its own, so a tab
 // comes back as it was left. The URL names the screen showing (router/locations.ts); a stack is
@@ -119,7 +125,7 @@ export class TabStacks {
         const steps = this.steps;
         const top = steps[steps.length - 1];
         if (top === undefined) return;
-        const key = `local:${screen.kind}`;
+        const key = `local:${localKey(screen)}`;
         const at = steps.findIndex((s) => s.key === key);
         if (at >= 0) {
             this.#set(steps.slice(0, at + 1), "pop");

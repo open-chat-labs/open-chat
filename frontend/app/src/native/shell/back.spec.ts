@@ -1,5 +1,5 @@
 import { resolve } from "@src/utils/routeTable.testing";
-import { locationFor, type NativeLocation } from "../router/locations";
+import { locationFor, type LocalScreen, type NativeLocation } from "../router/locations";
 import { backAction } from "./back";
 import { TabStacks } from "./tabStacks.svelte";
 
@@ -9,11 +9,18 @@ function at(url: string, signedOut = false): NativeLocation {
 
 // What system back does on `url`, its stack as the URL has it, going back where the header's Back
 // goes (TabStacks.backUrl)
-function back(url: string, overlayOpen = false, chatsUrl = "/chats", newChat = false) {
+function back(
+    url: string,
+    overlayOpen = false,
+    chatsUrl = "/chats",
+    newChat = false,
+    local?: LocalScreen,
+) {
     const location = at(url);
     const stacks = new TabStacks();
     if (location.area === "tabs") stacks.arrive(location);
     if (newChat) stacks.push({ kind: "new_chat" });
+    if (local !== undefined) stacks.push(local);
     return backAction({
         overlayOpen,
         localTop: stacks.localTop,
@@ -33,6 +40,26 @@ describe("Android's system back", () => {
     test("takes a screen with no URL off, after an open sheet or menu", () => {
         expect(back("/chats", false, "/chats", true)).toEqual({ kind: "pop_local" });
         expect(back("/chats", true, "/chats", true)).toEqual({ kind: "close_overlay" });
+    });
+
+    // it went back to the Chats tab when the WebView's own back took the press (systemBack.ts)
+    test("takes a settings page off the You tab, back to the You tab", () => {
+        for (const page of ["chats", "appearance", "storage", "account"] as const) {
+            expect(
+                back("/profile_summary", false, "/chats", false, { kind: "settings", page }),
+            ).toEqual({ kind: "pop_local" });
+        }
+        expect(back("/profile_summary", false, "/chats", false, { kind: "edit_profile" })).toEqual({
+            kind: "pop_local",
+        });
+        expect(back("/profile_summary?diamond")).toEqual({
+            kind: "navigate",
+            url: "/profile_summary",
+        });
+        expect(back("/profile_summary?profile=chit")).toEqual({
+            kind: "navigate",
+            url: "/profile_summary",
+        });
     });
 
     test("pops the screen on top", () => {

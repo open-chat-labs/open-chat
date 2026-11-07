@@ -28,8 +28,8 @@ design export needs. Each entry says where it came up.
     Large) and only resizes messages (`--text-xs` / `--text-sm` / `--text-base` in the
     conversation: 9 / 10.5 / 12.5, 10 / 11.5 / 13.5 and 11.5 / 13 / 15.5px), while the brief and the
     issue ask for an interface size wired to dynamic type. N1 scales every `--text-*` size by the
-    app's four steps (0.875–1.25) times the platform's scale, kept within 0.75–2; N12 settles
-    which one the setting is. The light theme's `--tint-row` / `--tint-pill` (black at 5% / 8%) are
+    app's four steps (0.875–1.25) times the platform's scale, kept within 0.75–2; N12 settled
+    it as the interface size ("Native You tab", below). The light theme's `--tint-row` / `--tint-pill` (black at 5% / 8%) are
     ours: the export only has the dark values (as fallbacks), and its light theme had no
     `--hero-base` either. The prototype pads the bottom by a fixed 34px on iOS (the home
     indicator) and 12px on Android; `--safe-bottom` is the device's inset alone, so N2's bars
@@ -119,6 +119,14 @@ design export needs. Each entry says where it came up.
     effect again into the default chat.
   - An app store build has no Wallet tab (`disableWalletFeature`), but a `/wallet` link still opens
     its stack, with no tab selected.
+  - **Android's system back** comes from whichever of two callbacks on the activity takes it
+    (`shell/systemBack.ts`): Tauri's own (its `back-button` event), which otherwise took the
+    WebView back through its history, so a screen pushed without a URL (a settings page) went back
+    to the URL before it, often another tab (found testing N12), or MainActivity's
+    (`back-pressed`). The shell listens to both; one press sends one.
+  - **Screens' chunks** are preloaded while the shell is idle and kept (`screenModules`); the shell
+    goes to a screen only once its chunk is in, so there's no spinner in the middle of the screen
+    (README.md: native screens render at once and fill in what's still coming).
   - The tab bar's Chats count is the unmuted unread DMs and groups, as the web's rail and
     components_mobile count them (decided in N5a): a favourite DM or group is in it, a favourite
     channel isn't (it counts on its community), and neither are mentions on their own. The design
@@ -223,6 +231,117 @@ design export needs. Each entry says where it came up.
     `--shadow-fab`, and `LongPressMenu`: the release of the press that opened it could end in a
     click on the veil, which closed it at once (seen with Chrome's touch emulation); the veil now
     closes it only for a press that started on it.
+- **Native You tab** (native N12, #10380; `src/native/features/you`). Built: the You tab (the cover
+  with Share and Edit, the avatar, the name with the Diamond pill, the CHIT card with today's claim,
+  About with the user ID to copy and Member since, the Account and Settings lists, Sign out), Edit
+  profile, Diamond, and the settings pages on the kit's rows: Appearance, Notifications, Chats,
+  Communities, Storage, Bots, Account and CHIT's. On the shared logic the web's profile uses
+  (`logic/profile`: the form and username check, appearance, notifications, community names, the
+  photo and cover uploads; `logic/chit/dailyClaim`; `logic/premium`; `logic/auth`'s sign-in again
+  and delete). Left, or decided against the prototype:
+  - **Appearance** is the stored theme and accent Welcome's menu and the web use (`themeType`,
+    `accentStore`), so the three always agree; System stays the default and follows the phone live
+    in a browser and in the Android app, at a cold start and live (checked on the emulator, Android
+    17, WebView 151, with `cmd uimode night`): the WebView takes `prefers-color-scheme` from the
+    activity's theme's `android:isLightTheme` (targetSdk 33+), which `Theme.open_chat`'s DayNight
+    parent inherits from the platform's `Theme.Material` / `Theme.Material.Light`, and with
+    `configChanges="uiMode"` the theme is rebased and the WebView told on a change, so no shell
+    change is needed. It once looked always light: Playwright's `connectOverCDP`, used to drive the
+    emulator's WebView, emulates `prefers-color-scheme: light` while it's attached (a check has to
+    call `page.emulateMedia({ colorScheme: null })`). iOS isn't checked yet.
+  - **Text size**: decided as the interface size the Build Brief asks for, not the prototype's
+    "Chat text size" (messages only, three sizes): the app's font size setting (`fontScaleStore`,
+    the web profile's four sizes, Small / Default / Large / Larger), which scales every `--text-*`
+    size through `--text-scale`, on top of the platform's font scale (which still needs its native
+    bridge, above). Labelled "Text size", in a "Text" card. Confirm with design.
+  - **Sign out** asks first (found testing, 2026-11-07; the prototype and components_mobile sign out
+    at once), in the kit's `NativeAlert`, which waits while signing out. TODO(design): the
+    confirmation isn't in the design; its words and look need a design pass.
+  - **Copying the user ID** asks first (#10338: it's not a wallet address), in the kit's new
+    `NativeAlert`. **Confirmations** are that alert (notes §1: "small alerts"), which the design
+    doesn't draw. TODO(design): the warning (its words, the alert's look, whether copying the ID
+    belongs on the You tab at all) needs design work.
+  - **Share** opens the system share sheet in the apps (the WebViews have no Web Share API, so it
+    only copied the link): tauri-plugin-oc's new `share` command (Android's chooser, iOS's
+    `UIActivityViewController`), through every tree's `shareLink`. It needs a shell built with the
+    command: an older one rejects it and the link is copied, as before (checked on an older shell).
+    The share sheet opens on the Android emulator (Android's chooser, "Sharing link"); iOS's isn't
+    checked yet.
+  - **The CHIT card** shows the balance and the streak, and today's claim once the first sync is in
+    (`dailyClaim`), with the confetti on a claim and a spinner in Claim's place while it's on its
+    way; its head opens CHIT (N11's placeholder). The daily
+    puzzle row (only when opted in) isn't there: the app has no opt-in (the web's profile hides its
+    puzzle setting too), and the puzzle screen is N11's.
+  - **Diamond** (the web's `?diamond`, here a URL over the You tab): the membership (Lifetime, until
+    when, or none), what Diamond gives (the app's own `upgrade.*` list: the prototype's sample perks,
+    10 GB and unlimited groups, aren't what Diamond gives), the invite link to share, and a pinned
+    Upgrade to Diamond (Extend Diamond while one runs; none for lifetime). The You tab's row says
+    Not a member without it. Buying or extending isn't built: it's paid from the wallet with the PIN
+    (`payForDiamondMembership` asks for it whenever the user has one), which needs N10b's sheet, and
+    the design has no purchase step (length, token, price, auto-renew: the prototype only shows a
+    lifetime member). So the button says so in a small alert (NativeAlert as a notice) and points to
+    oc.app on a computer; the shared payment (`logic/diamond`) is ready for the real step. An app
+    store build has no Diamond payments (`disableDiamondPaymentFeature`), and no button.
+    TODO(design): the purchase step.
+  - **CHIT's settings** are at the web's URL (`?profile=chit`): CHIT on or off, achievement alerts,
+    hiding the CHIT button once claimed. The design's daily puzzle choice (Hidden / Show / Show +
+    remind) isn't a setting the app has.
+  - **Edit profile**: the display name, the username (live check, as sign-up's), the bio (the app's
+    2000 characters, not the prototype's 200), Save only when something changed (`ProfileForm`),
+    back to the You tab with "Profile updated". The photo and the cover are each picked, cropped in
+    the N4 crop sheet (now also a rectangle for the cover) and uploaded at once, outside Save, as on
+    the web. The cover is a premium item, paid in CHIT before the first one (a sheet on
+    `logic/premium`, as the web's dialog); it's saved as a banner (600 × 300, as components_mobile
+    saves it), where the web saves 600 × 800: both show cropped to fit. TODO(design): no crop step and
+    no premium payment in the native design; the CHIT buy sheet for the cover (what it costs, the
+    balance, Pay, and "keep collecting" when there's too little) needs design work.
+    The keyboard comes up over Save rather than pushing it up, and the field being typed in scrolls
+    above it (`aboveKeyboard`, as Pick a username's), so Save is behind the keyboard while it's up.
+  - **Notifications**: in a phone's browser, the master switch is web push's, as on the web (on asks
+    for the permission, off stops offering them; a browser that blocks them says so). The apps'
+    notifications are the phone's (FCM / APNs, registered on every sign-in), so there the switch is
+    off and disabled with a note that the phone's settings turn them off, and the You tab's row
+    shows no value (Off only when web push is blocked or switched off). Turning them off in the
+    app (unregistering the device, and not registering it again at sign-in) would change the shared
+    native setup (`utils/native/push_device.ts`); not done. The backend has no per-kind choices
+    (direct chats, groups, communities, mentions only) nor lock-screen options (preview, sound), so
+    those cards aren't here.
+  - **Chats**: the settings the app has (as components_mobile's Chats & video calls): low bandwidth,
+    hiding blocked users' messages, how calls start, the ringtone (a value menu; the one picked plays
+    for 3s), and restricted content (not in an app store build, `disableRestrictedContent`). The
+    design's read receipts, typing indicator, link previews, translation and auto-download aren't
+    settings the app has. Enter sends and double-click to reply (the web's) don't apply to touch.
+  - **Communities**: the user's communities, each with the name they go by there; a sheet sets it or
+    goes back to the display name (`logic/profile/communityName`). The design's "Use my display name
+    everywhere" switch isn't a setting the app has. Without a community, an empty state (the kit's
+    `EmptyState`) with Explore communities. TODO(design): the page with no communities isn't in the
+    design.
+  - **Storage**: the backend storage used against the allowance, the browser's estimate of what the
+    app keeps on the phone (`navigator.storage.estimate`, its share of the quota), and Clear cached
+    data with Undo: it waits out the Undo toast (5s), then clears and restarts the app (every tree's
+    `clearCacheAndRestart`). Leaving the page meanwhile doesn't stop it.
+  - **Account**: the sign-in methods linked to the account (read only: linking and unlinking are on
+    the website's profile for now; the design's rows open nothing yet either), Report an issue
+    (OpenChat's bug report channel, `utils/support.ts`, shared with the old toasts' "report a bug";
+    the channel opens in the Communities tab, N8a's), and Delete account: a pushed screen with the
+    steps the design's profile has (the export's `ProfileDialog`; the native prototype only toasts
+    "Deletion is a separate confirm screen in the real app"): the chats, the wallet and the CHIT,
+    each offering to stay, then the last, which takes the @username typed out before signing in
+    again in a sheet (`ReAuthentication`, new `cancelEmail` / `lastEmail`) with a passkey, Internet
+    Identity, NFID or an emailed link, then `deleteAccount`. A wallet's sign-in (Ethereum, Solana)
+    isn't offered there; such an account says to delete on the website. The design's CHIT step
+    offers a bribe ("we could even throw in a few more CHIT… I love a good bribe, I'll stay"): the
+    backend has nothing that gives CHIT for staying, so the words leave it out ("Okay, I'll keep my
+    CHIT"). TODO(design): the steps as a native screen (the design draws them as the web profile's
+    sub-dialog). A password manager may offer to save the typed username (NordPass did on the
+    emulator).
+  - **Recovery phrase**: not there (the backend has none, as in N4's entry above).
+  - **Bots**: the connection details to copy, loaded as the page opens.
+  - **"Switch to desktop site / mobile site"** (N3's entry above): still no screen sets it.
+  - **Android's back** doesn't close a `SettingsValue`'s menu (the kit's row keeps its anchored menu
+    to itself): it pops the page.
+  - **Strings**: the settings' help texts are new (`native.you.*`), translated; the library's
+    `ui.profileDialog.*` copy is English only.
 - **Shell breakpoints vs layout tokens**: the shell's breakpoints and widths (Fix Brief - App
   Shell Layout: 768 / 1200 / 1476 / 1876 / 2476px, chat list `clamp(350px, 30cqw, 550px)`, right
   column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*` 1280–2500px,

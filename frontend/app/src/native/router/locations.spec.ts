@@ -2,6 +2,7 @@ import type { CommunityIdentifier } from "@client";
 import { resolve } from "@src/utils/routeTable.testing";
 import {
     showsTabBar,
+    localKey,
     locationFor,
     NATIVE_TABS,
     openChat,
@@ -121,6 +122,29 @@ describe("where a URL is in the native tree", () => {
         // the web's profile dialog, over whatever page
         expect(stack("/chats/user/u1?profile")).toBe("you: you@/chats/user/u1?profile");
         expect(stack("/admin")).toBe("you: you@/profile_summary > admin@/admin");
+    });
+
+    test("the web's Diamond dialog and CHIT's settings are pushed over the You tab", () => {
+        expect(stack("/profile_summary?diamond")).toBe(
+            "you: you@/profile_summary > diamond@/profile_summary?diamond",
+        );
+        // over whatever page, as on the web
+        expect(stack("/chats/user/u1?diamond")).toBe(
+            "you: you@/profile_summary > diamond@/chats/user/u1?diamond",
+        );
+        expect(stack("/profile_summary?profile=chit")).toBe(
+            "you: you@/profile_summary > settings@/profile_summary?profile=chit",
+        );
+        // another section isn't a page here: the You tab
+        expect(stack("/profile_summary?profile=stats")).toBe(
+            "you: you@/profile_summary?profile=stats",
+        );
+    });
+
+    test("a local screen is one in its stack by its kind, a settings page by its page", () => {
+        expect(localKey({ kind: "edit_profile" })).toBe("edit_profile");
+        expect(localKey({ kind: "settings", page: "appearance" })).toBe("settings:appearance");
+        expect(localKey({ kind: "settings", page: "storage" })).toBe("settings:storage");
     });
 
     test("a share, and / signed in, are the Chats tab", () => {

@@ -39,4 +39,5 @@ permissions = [
     "allow-haptic",
     "allow-get-window-insets",
     "allow-set-system-bars-style",
+    "allow-share",
 ]

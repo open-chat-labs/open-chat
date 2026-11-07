@@ -52,6 +52,11 @@ class ShowNotificationArgs: Decodable {
     let notificationId: Int?
 }
 
+class ShareArgs: Decodable {
+    let text: String
+    let title: String?
+}
+
 class ReleaseNotificationsArgs: Decodable {
     let senderId: String?
     let groupId: String?
@@ -247,6 +252,27 @@ class OpenChatPlugin: Plugin {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         }
         invoke.resolve()
+    }
+
+    // The system share sheet for a link or some text. Resolves once it's up;
+    // what the user picks there isn't reported.
+    @objc func share(_ invoke: Invoke) throws {
+        let args = try invoke.parseArgs(ShareArgs.self)
+        DispatchQueue.main.async {
+            guard let presenter = self.manager.viewController else {
+                invoke.reject("No view to share from")
+                return
+            }
+            let sheet = UIActivityViewController(activityItems: [args.text], applicationActivities: nil)
+            // an iPad shows it as a popover, which needs somewhere to point
+            if let popover = sheet.popoverPresentationController {
+                popover.sourceView = presenter.view
+                popover.sourceRect = CGRect(x: presenter.view.bounds.midX, y: presenter.view.bounds.maxY, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            presenter.present(sheet, animated: true)
+            invoke.resolve()
+        }
     }
 
     // Programmatic backgrounding is forbidden on iOS; the closest honest

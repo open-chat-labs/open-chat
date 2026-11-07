@@ -16,7 +16,7 @@ import type {
     ProfileCommunity,
     SigninMethod,
 } from "@openchat/ui/src/features/components/ProfileDialog.svelte";
-import type { RingtoneKey } from "@src/stores/video";
+import { storedRingtoneKey, type RingtoneKey } from "@src/stores/ringtone.svelte";
 
 // ProfileDialog's props from the user's profile, metrics and settings.
 
@@ -97,13 +97,9 @@ export function ringtoneKeyOf(tone: ChatSettings["ringtone"]): RingtoneKey {
     return tone === "twostep" ? "garage" : tone;
 }
 
-function isRingtoneKey(name: string): name is RingtoneKey {
-    return Object.hasOwn(DESIGN_RINGTONES, name);
-}
-
 // a name the app no longer has shows as the app's default
 function designRingtoneOf(stored: string): ChatSettings["ringtone"] {
-    return isRingtoneKey(stored) ? DESIGN_RINGTONES[stored] : "boring";
+    return DESIGN_RINGTONES[storedRingtoneKey(stored)];
 }
 
 /** The settings the chats & calls pane shows, as the app keeps them. */
@@ -156,13 +152,6 @@ export function changedChatSettings(
     );
 }
 
-export type ThemePref = "system" | "dark" | "light";
-
-/** The theme the appearance pane shows: themeType, which may hold a name the design doesn't have. */
-export function themePrefOf(stored: string): ThemePref {
-    return stored === "dark" || stored === "light" ? stored : "system";
-}
-
 /** The communities pane: the user's communities, and the name they go by in each that has one. */
 export function communitiesProps(
     communities: CommunitySummary[],
@@ -181,15 +170,6 @@ export function communitiesProps(
         })),
         communityNames: names,
     };
-}
-
-/**
- * The name to set in a community, without the spaces around it: clearing it (no name, or a blank
- * one) sends none, removing it.
- */
-export function memberDisplayNameOf(name: string | null): string | undefined {
-    const trimmed = name?.trim() ?? "";
-    return trimmed === "" ? undefined : trimmed;
 }
 
 /** The storage pane, in MB. A limit of 0 (no allowance without Diamond) stays 0. */

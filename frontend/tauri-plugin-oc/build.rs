@@ -36,6 +36,7 @@ const COMMANDS: &[&str] = &[
     "set_call_end_token",
     "get_store_update",
     "haptic",
+    "share",
     "get_window_insets",
     "set_system_bars_style",
 ];

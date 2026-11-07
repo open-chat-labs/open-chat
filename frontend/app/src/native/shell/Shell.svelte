@@ -13,7 +13,6 @@
     import TabBar from "@openchat/ui/src/native/TabBar.svelte";
     import { disableWalletFeature } from "@src/utils/features";
     import { navigate } from "@src/utils/navigation";
-    import { expectBackPress } from "@utils/native/notification_channels";
     import {
         allUsersStore,
         anonUserStore,
@@ -33,12 +32,11 @@
     } from "@client";
     import { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
     import { UNDO_TOAST_MS } from "@openchat/ui/src/native/toastQueue.svelte";
-    import type { PluginListener } from "@tauri-apps/api/core";
     import { getContext, onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { minimizeApp } from "tauri-plugin-oc-api";
     import ScreenHost from "../features/app/ScreenHost.svelte";
-    import type { ScreenContext } from "../features/app/screens";
+    import { screenModules, type ScreenContext } from "../features/app/screens";
     import { StartStack, startEntry, startStepFor } from "../features/start/startStack.svelte";
     import {
         showsTabBar,
@@ -50,11 +48,13 @@
         type LocalScreen,
         type NativeLocation,
         type NativeTabId,
+        type TabsLocation,
     } from "../router/locations";
     import { releaseVelocity, type DragSample } from "@openchat/ui/src/native/sheetDrag";
     import { ToastQueue } from "@openchat/ui/src/native/toastQueue.svelte";
     import { toastStore } from "@src/stores/toast";
     import { backAction } from "./back";
+    import { listenForSystemBack } from "./systemBack";
     import { openOnWeb } from "./onWeb";
     import { popOut, pushIn } from "./motion";
     import { Overlays } from "./overlays.svelte";
@@ -125,16 +125,68 @@
         }),
     );
 
+    // The stacks go where the URL is once the screens it shows can show at once (their chunks in:
+    // screenModules), so the screen before stays until then rather than a blank one or a spinner.
+    // The shell preloads every screen's chunk when it's idle, so that's almost always at once.
+    let arrival = 0;
     $effect(() => {
-        const at = location;
-        if (at.area === "tabs")
-            untrack(() => {
-                stacks.arrive(at);
-                // a chat opened while its leave or delete waits out the Undo: opening it takes
-                // that back, or it would go while they're in it (search, New chat, a link alike)
-                const chat = openChat(at);
-                if (chat !== undefined) removals.undo(chatIdentifierToString(chat));
-            });
+        const here = location;
+        if (here.area !== "tabs") return;
+        const at: TabsLocation = here;
+        untrack(() => {
+            const mine = ++arrival;
+            const kinds = at.steps.map((s) => s.screen.kind);
+            if (screenModules.ready(kinds)) {
+                arriveAt(at);
+                return;
+            }
+            void ready();
+
+            async function ready() {
+                try {
+                    await screenModules.loadAll(kinds);
+                } catch (err) {
+                    // ScreenHost says it didn't load, with a retry
+                    console.warn("Couldn't load a screen", err);
+                }
+                // unless the URL has moved on meanwhile
+                if (mine === arrival) arriveAt(at);
+            }
+        });
+    });
+
+    function arriveAt(at: TabsLocation) {
+        stacks.arrive(at);
+        // a chat opened while its leave or delete waits out the Undo: opening it takes that back,
+        // or it would go while they're in it (search, New chat, a link alike)
+        const chat = openChat(at);
+        if (chat !== undefined) removals.undo(chatIdentifierToString(chat));
+    }
+
+    // A screen with no URL is pushed once its chunk is in, as one with a URL is, over the screen
+    // that's showing then: one the user has left meanwhile isn't
+    async function push(screen: LocalScreen) {
+        if (!screenModules.ready([screen.kind])) {
+            const steps = stacks.steps;
+            try {
+                await screenModules.load(screen.kind);
+            } catch (err) {
+                console.warn("Couldn't load a screen", err);
+            }
+            if (stacks.steps !== steps) return;
+        }
+        stacks.push(screen);
+    }
+
+    // every screen's chunk, loaded while nothing else is going on, the tabs' roots first
+    onMount(() => {
+        const preload = () => void screenModules.preload();
+        if ("requestIdleCallback" in window) {
+            const id = requestIdleCallback(preload, { timeout: 4000 });
+            return () => cancelIdleCallback(id);
+        }
+        const timer = setTimeout(preload, 1500);
+        return () => clearTimeout(timer);
     });
 
     // the marketing pages (Landing, Learn, the terms …) are the website's: one the app is sent to
@@ -429,7 +481,7 @@
 
     const shared = {
         overlays,
-        push: (screen: LocalScreen) => stacks.push(screen),
+        push: (screen: LocalScreen) => void push(screen),
         toast: showToast,
         removals,
     };
@@ -465,25 +517,21 @@
     }
 
     onMount(() => {
-        // Android's system back reaches the app as the plugin's event (MainActivity takes every
-        // press); iOS has none. A browser's back is its history, which the stacks follow.
+        // Android's system back reaches the app as a plugin event (systemBack.ts); iOS has none. A
+        // browser's back is its history, which the stacks follow.
         if (!client.isNativeApp()) return;
-        let listener: PluginListener | undefined;
+        let stop: (() => void) | undefined;
         let mounted = true;
-        void listenForBack();
+        void listen();
         return () => {
             mounted = false;
-            listener?.unregister();
+            stop?.();
         };
 
-        async function listenForBack() {
-            try {
-                const registered = await expectBackPress(systemBack);
-                if (mounted) listener = registered;
-                else registered.unregister();
-            } catch (err) {
-                console.error("Couldn't listen for the system back", err);
-            }
+        async function listen() {
+            const unlisten = await listenForSystemBack(systemBack);
+            if (mounted) stop = unlisten;
+            else unlisten();
         }
     });
 </script>

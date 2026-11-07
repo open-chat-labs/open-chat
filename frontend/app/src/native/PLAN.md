@@ -39,7 +39,14 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
 - **Built:** N5a the Chats tab, its search and New chat
   ([#10368](https://github.com/open-chat-labs/open-chat/issues/10368)), and local pushes for
   screens without a URL. What it left is in GAPS.md ("Native Chats tab").
-- **Next:** the screens. N10a, N11, N12 and N13 need only N3; N5b (the conversation) needs N5a.
+- **Built:** N12 the You tab and its settings
+  ([#10380](https://github.com/open-chat-labs/open-chat/issues/10380)): the You tab with its CHIT
+  card and Sign out, Edit profile, Diamond (`?diamond`), and the settings pages (Appearance on the
+  same stored theme and accent as Welcome's menu, Notifications, Chats, Communities, Storage, Bots,
+  Account, CHIT's at `?profile=chit`), on `logic/profile` shared with the web's profile, and the
+  kit's new `NativeAlert`. What it left (buying Diamond, the apps' notifications switch, the
+  recovery phrase …) is in GAPS.md ("Native You tab").
+- **Next:** the screens. N10a, N11 and N13 need only N3; N5b (the conversation) needs N5a.
 
 ## Workstreams
 
@@ -77,6 +84,13 @@ Last:
 | Id | What | Needs |
 |---|---|---|
 | [N15](https://github.com/open-chat-labs/open-chat/issues/10383) | Cutover: Tauri and mobile web switch to the native tree | all |
+
+After everything else (decided 2026-11-07):
+
+| What | Why it waits |
+|---|---|
+| The recovery phrase: Recover account (Welcome back's "Recover with phrase"), the Recovery phrase screen in You → Account, and the Getting started card's backup step | The backend has no recovery phrase yet (none is made at sign-up, nothing signs in with one). The native tree is finished and cut over without it; the design's screens wait for the backend (GAPS.md, "Native sign in and onboarding", "Native You tab") |
+| Clear history in a conversation's menu (the prototype has it) | The backend can't clear a chat's history; dropped from N5b's menu until it can (decided 2026-11-07) |
 
 ## Invariants
 
