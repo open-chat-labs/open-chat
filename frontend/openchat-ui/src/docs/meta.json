@@ -950,17 +950,6 @@
         "doc": "Rows of chips before the rest fold into \"+N\"."
       },
       {
-        "name": "afterThread",
-        "type": "boolean",
-        "default": false,
-        "editor": "boolean",
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": "false",
-        "doc": "Under a thread summary rather than a bubble's edge: a gap instead of the overlap."
-      },
-      {
         "name": "onToggle",
         "type": "(emoji: string) => void",
         "default": null,
@@ -989,7 +978,7 @@
     "name": "ThreadLink",
     "source": "lib/ChatBubble.dc.html (its thread line), by hand (4c)",
     "hash": "",
-    "description": "A message's thread: a compact card under the message, as wide as what it says: who's in the thread (overlapping faces, \"+N\" past three), \"N replies\" and when the last came, opening the thread. Accent-outlined while it's the thread open beside the conversation. ChatBubble's thread line as its own component, so MessageGroup shows it under every kind of message.",
+    "description": "A message's thread: a compact card under the message and its reactions, as wide as what it says: who's in the thread (overlapping faces, \"+N\" past three), \"N replies\" and when the last came, opening the thread. Accent-outlined while it's the thread open beside the conversation. ChatBubble's thread line as its own component, so MessageGroup shows it under every kind of message.",
     "preview": {
       "width": 360,
       "height": 48

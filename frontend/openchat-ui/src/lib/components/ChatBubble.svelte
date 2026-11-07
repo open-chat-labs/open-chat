@@ -184,16 +184,11 @@
           <span class="retry" onclick={retryAction} role="button" tabindex="0">{t('ui.common.retry')}</span>
         </div>
       {/if}
+      <ReactionChips {reactions} maxRows={maxReactionRows} onToggle={onToggleReaction} onShowAll={onShowAllReactions} />
+      <!-- the thread under the reactions, which overlap the bubble's edge -->
       {#if threadCount > 0}
         <ThreadLink count={threadCount} lastAt={threadLastAt} faces={threadFaces} selected={threadSelected} onOpen={onOpenThread} />
       {/if}
-      <ReactionChips
-        {reactions}
-        maxRows={maxReactionRows}
-        afterThread={threadCount > 0}
-        onToggle={onToggleReaction}
-        onShowAll={onShowAllReactions}
-      />
     </div>
   {/if}
 </div>

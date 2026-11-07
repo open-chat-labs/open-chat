@@ -1,7 +1,7 @@
-<!-- A message's thread: a compact card under the message, as wide as what it says: who's in the thread (overlapping
-     faces, "+N" past three), "N replies" and when the last came, opening the thread. Accent-outlined while it's the
-     thread open beside the conversation. ChatBubble's thread line as its own component, so MessageGroup shows it under
-     every kind of message. -->
+<!-- A message's thread: a compact card under the message and its reactions, as wide as what it says: who's in the
+     thread (overlapping faces, "+N" past three), "N replies" and when the last came, opening the thread. Accent-outlined
+     while it's the thread open beside the conversation. ChatBubble's thread line as its own component, so MessageGroup
+     shows it under every kind of message. -->
 <script lang="ts">
   import { useT } from '../i18n';
   import AvatarStack from './AvatarStack.svelte';

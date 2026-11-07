@@ -18,13 +18,11 @@
     reactions: Reaction[];
     /** Rows of chips before the rest fold into "+N". */
     maxRows?: number;
-    /** Under a thread summary rather than a bubble's edge: a gap instead of the overlap. */
-    afterThread?: boolean;
     onToggle?: (emoji: string) => void;
     onShowAll?: () => void;
   }
 
-  let { reactions, maxRows = 1, afterThread = false, onToggle, onShowAll }: Props = $props();
+  let { reactions, maxRows = 1, onToggle, onShowAll }: Props = $props();
   const t = useT();
 
   // fit === null renders every chip so their rows can be measured
@@ -67,7 +65,7 @@
 </script>
 
 {#if reactions.length > 0}
-  <div class="reactions" class:after-thread={afterThread} bind:this={chips}>
+  <div class="reactions" bind:this={chips}>
     {#each shown as r}
       <span
         class="chip"
@@ -122,10 +120,6 @@
     margin-top: -9px;
     position: relative;
     z-index: 2;
-
-    &.after-thread {
-      margin-top: var(--space-6);
-    }
   }
 
   /* chips overlap the bubble's bottom edge, so their backgrounds are opaque */

@@ -521,7 +521,8 @@ design export needs. Each entry says where it came up.
   (`MessageGroup`, from the message's `threadCount` / `threadLastAt` / `onOpenThread`), where only
   `ChatBubble` had it: a card as wide as what it says, with the faces of those in the thread
   (`threadFaces`, `AvatarStack`) and an accent outline while its thread is the one open
-  (`threadSelected`); not in the design. `modal.ts` exports `dialogOpen()` for a page's own Esc.
+  (`threadSelected`), under the message's reactions (which overlap the message's edge as
+  without a thread); not in the design. `modal.ts` exports `dialogOpen()` for a page's own Esc.
   `ThreadPanel`'s Follow waits for the host (`Waited`, a spinner) where it flipped at once.
 - **Composer banner** (by hand, 8b): `ComposerBar` takes `onBannerAction`, passed to `Banner`'s
   `actionHandler` with `bannerAction` as its label (it had the label but no handler). Nothing in
