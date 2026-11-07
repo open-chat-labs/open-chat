@@ -1,6 +1,6 @@
 <!-- A conversation (native design notes §3.3): pushed over the Chats (or a community's) root, with the
      whole window. The header (back, the avatar, name and status, video and voice, the kebab: Search
-     in chat, details, Mute, Favourite, a DM's disappearing messages, Leave group / Block / Delete),
+     in chat, details, Mute, Favourite, Leave group / Block / Delete),
      which turns into the in-chat search bar; the live call strip while the live call's item is off
      screen; the messages (core/ChatEventList: paging, deep links, read marking, keeping the scroll),
      received ones with their sender's avatar on a run's first in groups and none in DMs, sent ones
@@ -21,7 +21,6 @@
         communitiesStore,
         cryptoLookup,
         currentUserIdStore,
-        disappearingMessagesUpdate,
         eventIndexesLoadedStore,
         eventsStore,
         exchangeRatesLookupStore,
@@ -132,10 +131,8 @@
     import { removeWithUndo } from "../chats/removeWithUndo";
     import {
         callEventProps,
-        disappearChoice,
         headerMenuItems,
         listWaiting,
-        type DisappearAfter,
         type HeaderMenuAction,
     } from "./conversation.adapter";
     import { HeldWhileLeaving } from "./heldWhileLeaving";
@@ -338,15 +335,13 @@
                       muted: chat.membership.notificationsMuted,
                       favourite,
                       isBot,
-                      disappearAfter:
-                          chat.eventsTTL === undefined ? undefined : Number(chat.eventsTTL),
                       actions: menuActions,
                   },
                   menuLabel,
               ),
     );
 
-    function menuLabel(id: HeaderMenuAction | DisappearAfter): string {
+    function menuLabel(id: HeaderMenuAction): string {
         switch (id) {
             case "details":
                 return $_(
@@ -374,11 +369,6 @@
     function onMenu(id: string) {
         const current = chat;
         if (current === undefined) return;
-        const choice = disappearChoice(id);
-        if (choice !== undefined) {
-            void setDisappearing(current, choice.ms);
-            return;
-        }
         switch (id) {
             case "search":
                 openSearch();
@@ -429,21 +419,6 @@
             toastStore.showFailureToast(failed);
         } else {
             context.toast($_(muting ? "native.chats.toast.muted" : "native.chats.toast.unmuted"));
-        }
-    }
-
-    async function setDisappearing(current: ChatSummary, ms: number) {
-        if (current.kind !== "direct_chat") return;
-        const done = await client.updateDirectChatSettings(
-            current,
-            disappearingMessagesUpdate(ms > 0, ms, current.eventsTTL),
-        );
-        if (!done) {
-            context.toast($_("native.conversation.toast.disappearFailed"));
-        } else if (ms === 0) {
-            context.toast($_("native.conversation.toast.disappearOff"));
-        } else {
-            context.toast($_("native.conversation.toast.disappearOn"));
         }
     }
 

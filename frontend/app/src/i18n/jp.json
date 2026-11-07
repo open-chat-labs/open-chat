@@ -1751,11 +1751,6 @@
                 "unmute": "ミュート解除",
                 "favourite": "お気に入りに追加",
                 "unfavourite": "お気に入りから削除",
-                "disappearing": "消えるメッセージ",
-                "off": "オフ",
-                "hour": "1時間",
-                "day": "1日",
-                "week": "1週間",
                 "leaveGroup": "グループを退出",
                 "leaveChannel": "チャンネルを退出",
                 "block": "{name}をブロック",
@@ -1763,9 +1758,6 @@
                 "delete": "チャットを削除"
             },
             "toast": {
-                "disappearOn": "消えるメッセージをオンにしました",
-                "disappearOff": "消えるメッセージをオフにしました",
-                "disappearFailed": "消えるメッセージを変更できませんでした",
                 "blocked": "{name}をブロックしました",
                 "unblocked": "{name}のブロックを解除しました"
             },

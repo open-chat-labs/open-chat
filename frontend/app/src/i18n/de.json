@@ -1751,11 +1751,6 @@
                 "unmute": "Stummschaltung aufheben",
                 "favourite": "Zu Favoriten hinzufügen",
                 "unfavourite": "Aus Favoriten entfernen",
-                "disappearing": "Selbstlöschende Nachrichten",
-                "off": "Aus",
-                "hour": "1 Stunde",
-                "day": "1 Tag",
-                "week": "1 Woche",
                 "leaveGroup": "Gruppe verlassen",
                 "leaveChannel": "Kanal verlassen",
                 "block": "{name} blockieren",
@@ -1763,9 +1758,6 @@
                 "delete": "Chat löschen"
             },
             "toast": {
-                "disappearOn": "Selbstlöschende Nachrichten an",
-                "disappearOff": "Selbstlöschende Nachrichten aus",
-                "disappearFailed": "Selbstlöschende Nachrichten konnten nicht geändert werden",
                 "blocked": "{name} ist blockiert",
                 "unblocked": "{name} ist nicht mehr blockiert"
             },

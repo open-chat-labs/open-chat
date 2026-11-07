@@ -350,7 +350,7 @@ design export needs. Each entry says where it came up.
 - **Native conversation** (native N5b, #10369; `src/native/features/conversation`). Built: the
   header (back, the avatar, the name and its line: last online, a suspended account, or "Public ·
   5 members"; video and voice; the kebab), its menu (Search in chat, the details, Mute, Favourite,
-  a DM's disappearing messages, Leave / Block / Unblock / Delete with Undo), search in the chat,
+  Leave / Block / Unblock / Delete with Undo), search in the chat,
   the messages on `core/ChatEventList` with the web's mapping (moved to `logic/conversation`,
   which both trees now use), sent ones on the right, no avatars in DMs, the swipes, the typing
   bubble and strip, call items and the media viewer. Left, or decided against the prototype:
@@ -380,9 +380,10 @@ design export needs. Each entry says where it came up.
     @mention picker (the old headers' "@name" still searches for a sender); typing pauses 300ms
     before it searches, as the old ones did; up and down stop at the ends (the old headers went
     round). It takes the chat's own search (`searchChat`), up to 200 matches, the weak ones dropped.
-  - **Disappearing messages** are in the menu for a DM only (Off, 1 hour, 1 day, 1 week, the
-    prototype's): a group's or channel's are its settings (N6 / N7). The durations the web's DM
-    settings offer (`DmChatSettings`) are more; one set there that isn't in the list shows no tick.
+  - **Disappearing messages** aren't in the header's menu (decided 2026-11-07, against the design
+    notes' kebab and the prototype's submenu): a DM's are a switch on its details (N6, the design's
+    "This chat" card), as in the current app, which has them on a DM's details
+    (`DirectChatDetails`) and not in a menu; a group's or channel's are its settings (N6 / N7).
   - **Clear history** (the prototype's menu): the backend has none, so it's dropped from the menu
     (decided 2026-11-07); it comes back after cutover once the backend can (native PLAN, "After
     everything else").

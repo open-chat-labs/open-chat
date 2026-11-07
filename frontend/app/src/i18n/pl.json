@@ -1751,11 +1751,6 @@
                 "unmute": "Wyłącz wyciszenie",
                 "favourite": "Dodaj do ulubionych",
                 "unfavourite": "Usuń z ulubionych",
-                "disappearing": "Znikające wiadomości",
-                "off": "Wyłączone",
-                "hour": "1 godzina",
-                "day": "1 dzień",
-                "week": "1 tydzień",
                 "leaveGroup": "Opuść grupę",
                 "leaveChannel": "Opuść kanał",
                 "block": "Zablokuj {name}",
@@ -1763,9 +1758,6 @@
                 "delete": "Usuń czat"
             },
             "toast": {
-                "disappearOn": "Znikające wiadomości włączone",
-                "disappearOff": "Znikające wiadomości wyłączone",
-                "disappearFailed": "Nie udało się zmienić znikających wiadomości",
                 "blocked": "{name} jest zablokowany",
                 "unblocked": "{name} jest odblokowany"
             },

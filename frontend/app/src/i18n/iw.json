@@ -1751,11 +1751,6 @@
                 "unmute": "ביטול השתקה",
                 "favourite": "הוספה למועדפים",
                 "unfavourite": "הסרה מהמועדפים",
-                "disappearing": "הודעות נעלמות",
-                "off": "כבוי",
-                "hour": "שעה",
-                "day": "יום",
-                "week": "שבוע",
                 "leaveGroup": "יציאה מהקבוצה",
                 "leaveChannel": "יציאה מהערוץ",
                 "block": "חסימת {name}",
@@ -1763,9 +1758,6 @@
                 "delete": "מחיקת הצ'אט"
             },
             "toast": {
-                "disappearOn": "הודעות נעלמות מופעלות",
-                "disappearOff": "הודעות נעלמות כבויות",
-                "disappearFailed": "לא ניתן היה לשנות את ההודעות הנעלמות",
                 "blocked": "{name} חסום",
                 "unblocked": "החסימה של {name} בוטלה"
             },

@@ -1751,11 +1751,6 @@
                 "unmute": "Activar sonido",
                 "favourite": "Añadir a favoritos",
                 "unfavourite": "Quitar de favoritos",
-                "disappearing": "Mensajes temporales",
-                "off": "Desactivados",
-                "hour": "1 hora",
-                "day": "1 día",
-                "week": "1 semana",
                 "leaveGroup": "Salir del grupo",
                 "leaveChannel": "Salir del canal",
                 "block": "Bloquear a {name}",
@@ -1763,9 +1758,6 @@
                 "delete": "Eliminar chat"
             },
             "toast": {
-                "disappearOn": "Mensajes temporales activados",
-                "disappearOff": "Mensajes temporales desactivados",
-                "disappearFailed": "No se pudieron cambiar los mensajes temporales",
                 "blocked": "{name} está bloqueado",
                 "unblocked": "{name} ya no está bloqueado"
             },

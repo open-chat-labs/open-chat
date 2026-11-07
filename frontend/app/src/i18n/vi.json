@@ -1751,11 +1751,6 @@
                 "unmute": "Bật thông báo",
                 "favourite": "Thêm vào yêu thích",
                 "unfavourite": "Xóa khỏi yêu thích",
-                "disappearing": "Tin nhắn tự hủy",
-                "off": "Tắt",
-                "hour": "1 giờ",
-                "day": "1 ngày",
-                "week": "1 tuần",
                 "leaveGroup": "Rời nhóm",
                 "leaveChannel": "Rời kênh",
                 "block": "Chặn {name}",
@@ -1763,9 +1758,6 @@
                 "delete": "Xóa cuộc trò chuyện"
             },
             "toast": {
-                "disappearOn": "Đã bật tin nhắn tự hủy",
-                "disappearOff": "Đã tắt tin nhắn tự hủy",
-                "disappearFailed": "Không thể thay đổi tin nhắn tự hủy",
                 "blocked": "Đã chặn {name}",
                 "unblocked": "Đã bỏ chặn {name}"
             },

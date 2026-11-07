@@ -1751,11 +1751,6 @@
                 "unmute": "取消静音",
                 "favourite": "添加到收藏",
                 "unfavourite": "从收藏中移除",
-                "disappearing": "阅后即焚消息",
-                "off": "关闭",
-                "hour": "1 小时",
-                "day": "1 天",
-                "week": "1 周",
                 "leaveGroup": "退出群组",
                 "leaveChannel": "退出频道",
                 "block": "屏蔽 {name}",
@@ -1763,9 +1758,6 @@
                 "delete": "删除聊天"
             },
             "toast": {
-                "disappearOn": "阅后即焚消息已开启",
-                "disappearOff": "阅后即焚消息已关闭",
-                "disappearFailed": "无法更改阅后即焚消息",
                 "blocked": "已屏蔽 {name}",
                 "unblocked": "已取消屏蔽 {name}"
             },

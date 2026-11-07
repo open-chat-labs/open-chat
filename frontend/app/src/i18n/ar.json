@@ -1751,11 +1751,6 @@
                 "unmute": "إلغاء الكتم",
                 "favourite": "إضافة إلى المفضلة",
                 "unfavourite": "إزالة من المفضلة",
-                "disappearing": "الرسائل المؤقتة",
-                "off": "إيقاف",
-                "hour": "ساعة واحدة",
-                "day": "يوم واحد",
-                "week": "أسبوع واحد",
                 "leaveGroup": "مغادرة المجموعة",
                 "leaveChannel": "مغادرة القناة",
                 "block": "حظر {name}",
@@ -1763,9 +1758,6 @@
                 "delete": "حذف الدردشة"
             },
             "toast": {
-                "disappearOn": "تم تشغيل الرسائل المؤقتة",
-                "disappearOff": "تم إيقاف الرسائل المؤقتة",
-                "disappearFailed": "تعذّر تغيير الرسائل المؤقتة",
                 "blocked": "تم حظر {name}",
                 "unblocked": "تم إلغاء حظر {name}"
             },

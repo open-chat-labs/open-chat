@@ -1751,11 +1751,6 @@
                 "unmute": "Riattiva notifiche",
                 "favourite": "Aggiungi ai preferiti",
                 "unfavourite": "Rimuovi dai preferiti",
-                "disappearing": "Messaggi effimeri",
-                "off": "Disattivati",
-                "hour": "1 ora",
-                "day": "1 giorno",
-                "week": "1 settimana",
                 "leaveGroup": "Esci dal gruppo",
                 "leaveChannel": "Esci dal canale",
                 "block": "Blocca {name}",
@@ -1763,9 +1758,6 @@
                 "delete": "Elimina chat"
             },
             "toast": {
-                "disappearOn": "Messaggi effimeri attivati",
-                "disappearOff": "Messaggi effimeri disattivati",
-                "disappearFailed": "Impossibile modificare i messaggi effimeri",
                 "blocked": "{name} è bloccato",
                 "unblocked": "{name} è stato sbloccato"
             },

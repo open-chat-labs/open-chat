@@ -1666,11 +1666,6 @@
                 "unmute": "Unmute",
                 "favourite": "Add to favourites",
                 "unfavourite": "Remove from favourites",
-                "disappearing": "Disappearing messages",
-                "off": "Off",
-                "hour": "1 hour",
-                "day": "1 day",
-                "week": "1 week",
                 "leaveGroup": "Leave group",
                 "leaveChannel": "Leave channel",
                 "block": "Block {name}",
@@ -1678,9 +1673,6 @@
                 "delete": "Delete chat"
             },
             "toast": {
-                "disappearOn": "Disappearing messages on",
-                "disappearOff": "Disappearing messages off",
-                "disappearFailed": "Couldn't change disappearing messages",
                 "blocked": "{name} is blocked",
                 "unblocked": "{name} is unblocked"
             },
