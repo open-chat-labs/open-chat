@@ -1761,8 +1761,10 @@
                 "delete": "चैट हटाएँ"
             },
             "toast": {
-                "blocked": "{name} ब्लॉक है",
-                "unblocked": "{name} अनब्लॉक है"
+                "blocked": "{name} को ब्लॉक किया गया",
+                "unblocked": "{name} को अनब्लॉक किया गया",
+                "blocking": "{name} को ब्लॉक किया जा रहा है…",
+                "unblocking": "{name} को अनब्लॉक किया जा रहा है…"
             },
             "search": {
                 "placeholder": "इस चैट में खोजें",

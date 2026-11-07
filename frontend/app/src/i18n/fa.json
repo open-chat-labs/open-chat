@@ -1762,7 +1762,9 @@
             },
             "toast": {
                 "blocked": "{name} مسدود شد",
-                "unblocked": "{name} از مسدودی خارج شد"
+                "unblocked": "مسدودیت {name} برداشته شد",
+                "blocking": "در حال مسدود کردن {name}…",
+                "unblocking": "در حال رفع مسدودیت {name}…"
             },
             "search": {
                 "placeholder": "جستجو در این گفتگو",

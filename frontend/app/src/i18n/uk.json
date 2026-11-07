@@ -1762,7 +1762,9 @@
             },
             "toast": {
                 "blocked": "{name} заблоковано",
-                "unblocked": "{name} розблоковано"
+                "unblocked": "{name} розблоковано",
+                "blocking": "Блокування {name}…",
+                "unblocking": "Розблокування {name}…"
             },
             "search": {
                 "placeholder": "Пошук у цьому чаті",

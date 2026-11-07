@@ -1761,8 +1761,10 @@
                 "delete": "Usuń czat"
             },
             "toast": {
-                "blocked": "{name} jest zablokowany",
-                "unblocked": "{name} jest odblokowany"
+                "blocked": "Zablokowano {name}",
+                "unblocked": "Odblokowano {name}",
+                "blocking": "Blokowanie {name}…",
+                "unblocking": "Odblokowywanie {name}…"
             },
             "search": {
                 "placeholder": "Szukaj w tym czacie",

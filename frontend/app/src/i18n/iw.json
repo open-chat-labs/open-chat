@@ -1761,8 +1761,10 @@
                 "delete": "מחיקת הצ'אט"
             },
             "toast": {
-                "blocked": "{name} חסום",
-                "unblocked": "החסימה של {name} בוטלה"
+                "blocked": "{name} נחסם",
+                "unblocked": "החסימה של {name} בוטלה",
+                "blocking": "חוסם את {name}…",
+                "unblocking": "מבטל את החסימה של {name}…"
             },
             "search": {
                 "placeholder": "חיפוש בצ'אט הזה",

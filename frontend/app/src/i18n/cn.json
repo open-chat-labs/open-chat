@@ -1762,7 +1762,9 @@
             },
             "toast": {
                 "blocked": "已屏蔽 {name}",
-                "unblocked": "已取消屏蔽 {name}"
+                "unblocked": "已取消屏蔽 {name}",
+                "blocking": "正在屏蔽 {name}…",
+                "unblocking": "正在取消屏蔽 {name}…"
             },
             "search": {
                 "placeholder": "在此聊天中搜索",

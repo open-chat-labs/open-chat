@@ -1761,8 +1761,10 @@
                 "delete": "チャットを削除"
             },
             "toast": {
-                "blocked": "{name}をブロックしました",
-                "unblocked": "{name}のブロックを解除しました"
+                "blocked": "{name} をブロックしました",
+                "unblocked": "{name} のブロックを解除しました",
+                "blocking": "{name} をブロックしています…",
+                "unblocking": "{name} のブロックを解除しています…"
             },
             "search": {
                 "placeholder": "このチャット内を検索",

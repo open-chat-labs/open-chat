@@ -1761,8 +1761,10 @@
                 "delete": "Supprimer le chat"
             },
             "toast": {
-                "blocked": "{name} est bloqué",
-                "unblocked": "{name} est débloqué"
+                "blocked": "{name} bloqué",
+                "unblocked": "{name} débloqué",
+                "blocking": "Blocage de {name}…",
+                "unblocking": "Déblocage de {name}…"
             },
             "search": {
                 "placeholder": "Rechercher dans ce chat",

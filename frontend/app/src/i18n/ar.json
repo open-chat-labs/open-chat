@@ -1762,7 +1762,9 @@
             },
             "toast": {
                 "blocked": "تم حظر {name}",
-                "unblocked": "تم إلغاء حظر {name}"
+                "unblocked": "تم إلغاء حظر {name}",
+                "blocking": "جارٍ حظر {name}…",
+                "unblocking": "جارٍ إلغاء حظر {name}…"
             },
             "search": {
                 "placeholder": "البحث في هذه الدردشة",

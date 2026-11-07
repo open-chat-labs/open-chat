@@ -1,4 +1,4 @@
-import type { PendingToast } from "@openchat/ui/src/native/toastQueue.svelte";
+import type { PendingToast, ToastUndo } from "@openchat/ui/src/native/toastQueue.svelte";
 import type { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
 import type { Component } from "svelte";
 import type { LocalScreen, NativeScreen } from "../../router/locations";
@@ -23,10 +23,10 @@ export type ScreenContext = {
     push: (screen: LocalScreen) => void;
     /**
      * Shows a toast (text, translated) in place of the one showing; with `undo`, it offers Undo,
-     * which runs it (a destructive action, notes §1 Sheets, menus, toasts). Returns what takes it
+     * which runs it (an operation of its own keeps the toast, waiting, then saying how it went) (a destructive action, notes §1 Sheets, menus, toasts). Returns what takes it
      * down early, as when its Undo can't work any more (and not a toast that has replaced it).
      */
-    toast: (message: string, undo?: () => void) => () => void;
+    toast: (message: string, undo?: ToastUndo) => () => void;
     /**
      * Shows a toast in place of the one showing for an action still on its way (a block), with a
      * small loader in place of its buttons until it's settled: `done` (with Undo) or `failed`.

@@ -1762,7 +1762,9 @@
             },
             "toast": {
                 "blocked": "Đã chặn {name}",
-                "unblocked": "Đã bỏ chặn {name}"
+                "unblocked": "Đã bỏ chặn {name}",
+                "blocking": "Đang chặn {name}…",
+                "unblocking": "Đang bỏ chặn {name}…"
             },
             "search": {
                 "placeholder": "Tìm trong cuộc trò chuyện này",

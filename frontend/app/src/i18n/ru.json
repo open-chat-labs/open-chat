@@ -1762,7 +1762,9 @@
             },
             "toast": {
                 "blocked": "{name} заблокирован",
-                "unblocked": "{name} разблокирован"
+                "unblocked": "{name} разблокирован",
+                "blocking": "Блокировка {name}…",
+                "unblocking": "Разблокировка {name}…"
             },
             "search": {
                 "placeholder": "Поиск в этом чате",

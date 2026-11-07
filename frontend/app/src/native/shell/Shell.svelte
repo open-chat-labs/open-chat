@@ -57,7 +57,11 @@
         type TabsLocation,
     } from "../router/locations";
     import { releaseVelocity, type DragSample } from "@openchat/ui/src/native/sheetDrag";
-    import { ToastQueue, type PendingToast } from "@openchat/ui/src/native/toastQueue.svelte";
+    import {
+        ToastQueue,
+        type PendingToast,
+        type ToastUndo,
+    } from "@openchat/ui/src/native/toastQueue.svelte";
     import { toastStore } from "@src/stores/toast";
     import { backAction } from "./back";
     import { listenForSystemBack } from "./systemBack";
@@ -287,7 +291,10 @@
     }
 
     function ease(): string {
-        return getComputedStyle(document.documentElement).getPropertyValue("--ease-out").trim() || "ease-out";
+        return (
+            getComputedStyle(document.documentElement).getPropertyValue("--ease-out").trim() ||
+            "ease-out"
+        );
     }
 
     function slideTabs(from: NativeTabId, to: NativeTabId) {
@@ -345,12 +352,19 @@
     let swallowClick = false;
 
     function leftToContent(target: EventTarget | null, root: HTMLElement): boolean {
-        for (let el = target instanceof Element ? target : null; el && el !== root; el = el.parentElement) {
+        for (
+            let el = target instanceof Element ? target : null;
+            el && el !== root;
+            el = el.parentElement
+        ) {
             if (el instanceof HTMLElement) {
                 if (el.dataset.tabSwipe === "off" || el.isContentEditable) return true;
                 if (el.matches("input, textarea, select")) return true;
                 const overflow = getComputedStyle(el).overflowX;
-                if ((overflow === "auto" || overflow === "scroll") && el.scrollWidth > el.clientWidth) {
+                if (
+                    (overflow === "auto" || overflow === "scroll") &&
+                    el.scrollWidth > el.clientWidth
+                ) {
                     return true;
                 }
             }
@@ -435,7 +449,12 @@
         }
     }
 
-    function springBack(offset: number, neighbour: NativeTabId | undefined, width: number, dx: number) {
+    function springBack(
+        offset: number,
+        neighbour: NativeTabId | undefined,
+        width: number,
+        dx: number,
+    ) {
         if (offset === 0) return;
         const options = { duration: 240, easing: ease() };
         panes[stacks.tab]?.animate(
@@ -507,7 +526,7 @@
         if (url !== undefined) navigate(url, "dismiss");
     }
 
-    function showToast(message: string, undo?: () => void): () => void {
+    function showToast(message: string, undo?: ToastUndo): () => void {
         toastStore.hideToast();
         return toasts.show(message, undo);
     }
@@ -583,7 +602,8 @@
         title={$_("unexpectedError")}
         body={$_("regionLoadFailed")}
         actionLabel="ui.common.retry"
-        actionHandler={() => window.location.reload()} />
+        actionHandler={() => window.location.reload()}
+    />
 {/snippet}
 
 {#if location.area === "tabs"}
@@ -600,7 +620,8 @@
                 onpointerup={onPointerUp}
                 onpointercancel={onPointerUp}
                 onclickcapture={onClickCapture}
-                bind:this={rootEl}>
+                bind:this={rootEl}
+            >
                 {#each tabIds as tab (tab)}
                     {@const root = stacks.root(tab)}
                     <section
@@ -609,13 +630,15 @@
                         class:neighbour={tab === drag?.neighbour}
                         inert={tab !== stacks.tab}
                         style:transform={paneTransform(tab)}
-                        bind:this={panes[tab]}>
+                        bind:this={panes[tab]}
+                    >
                         <!-- a tab's root is mounted the first time it shows, then kept -->
                         {#if root !== undefined}
                             <ScreenHost
                                 step={root}
                                 root={{ title: labels[tab] }}
-                                context={rootContext} />
+                                context={rootContext}
+                            />
                         {/if}
                     </section>
                 {/each}
@@ -629,7 +652,8 @@
                         class:below={i < pushed.length - 1}
                         inert={i < pushed.length - 1}
                         in:pushIn={{ play: () => stacks.change !== "pop" }}
-                        out:popOut={{ play: () => stacks.change === "pop" }}>
+                        out:popOut={{ play: () => stacks.change === "pop" }}
+                    >
                         <ScreenHost {step} root={undefined} context={pushedContext} />
                     </section>
                 {/each}
@@ -665,7 +689,8 @@
             title="not_found"
             body={window.location.pathname}
             actionLabel="Chats"
-            actionHandler={() => navigate("/chats")} />
+            actionHandler={() => navigate("/chats")}
+        />
     </div>
 {/if}
 
@@ -765,5 +790,4 @@
             box-shadow: none;
         }
     }
-
 </style>

@@ -1676,8 +1676,10 @@
                 "delete": "Delete chat"
             },
             "toast": {
-                "blocked": "{name} is blocked",
-                "unblocked": "{name} is unblocked"
+                "blocked": "Blocked {name}",
+                "unblocked": "Unblocked {name}",
+                "blocking": "Blocking {name}…",
+                "unblocking": "Unblocking {name}…"
             },
             "search": {
                 "placeholder": "Search in this chat",
