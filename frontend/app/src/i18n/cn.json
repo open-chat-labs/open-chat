@@ -1961,7 +1961,8 @@
                 "useDisplayName": "使用我的显示名称",
                 "saved": "名字已保存",
                 "reset": "正在使用你的显示名称",
-                "failed": "无法保存名字，请重试。"
+                "failed": "无法保存名字，请重试。",
+                "noneBody": "加入社区后，你就可以设置在那里使用的名字。"
             },
             "appearance": {
                 "title": "外观",

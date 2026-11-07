@@ -1961,7 +1961,8 @@
                 "useDisplayName": "Meinen Anzeigenamen verwenden",
                 "saved": "Name gespeichert",
                 "reset": "Dein Anzeigename wird verwendet",
-                "failed": "Der Name konnte nicht gespeichert werden. Versuch es noch einmal."
+                "failed": "Der Name konnte nicht gespeichert werden. Versuch es noch einmal.",
+                "noneBody": "Sobald du einer beitrittst, kannst du dort den Namen wählen, unter dem du auftrittst."
             },
             "appearance": {
                 "title": "Darstellung",

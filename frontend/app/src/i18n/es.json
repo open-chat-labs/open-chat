@@ -1961,7 +1961,8 @@
                 "useDisplayName": "Usar mi nombre visible",
                 "saved": "Nombre guardado",
                 "reset": "Usando tu nombre visible",
-                "failed": "No se pudo guardar el nombre. Inténtalo de nuevo."
+                "failed": "No se pudo guardar el nombre. Inténtalo de nuevo.",
+                "noneBody": "Cuando te unas a una, podrás elegir el nombre que usarás allí."
             },
             "appearance": {
                 "title": "Apariencia",

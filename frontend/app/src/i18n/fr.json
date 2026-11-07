@@ -1961,7 +1961,8 @@
                 "useDisplayName": "Utiliser mon nom affiché",
                 "saved": "Nom enregistré",
                 "reset": "Votre nom affiché est utilisé",
-                "failed": "Impossible d'enregistrer le nom. Réessayez."
+                "failed": "Impossible d'enregistrer le nom. Réessayez.",
+                "noneBody": "Dès que tu en rejoins une, tu peux y choisir le nom sous lequel tu apparais."
             },
             "appearance": {
                 "title": "Apparence",

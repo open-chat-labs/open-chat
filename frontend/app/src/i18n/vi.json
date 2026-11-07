@@ -1961,7 +1961,8 @@
                 "useDisplayName": "Dùng tên hiển thị của tôi",
                 "saved": "Đã lưu tên",
                 "reset": "Đang dùng tên hiển thị của bạn",
-                "failed": "Không lưu được tên. Hãy thử lại."
+                "failed": "Không lưu được tên. Hãy thử lại.",
+                "noneBody": "Khi tham gia một cộng đồng, bạn có thể chọn tên mình dùng ở đó."
             },
             "appearance": {
                 "title": "Giao diện",

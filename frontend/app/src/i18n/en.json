@@ -1876,7 +1876,8 @@
                 "useDisplayName": "Use my display name",
                 "saved": "Name saved",
                 "reset": "Using your display name",
-                "failed": "Couldn't save the name. Try again."
+                "failed": "Couldn't save the name. Try again.",
+                "noneBody": "Once you join one, you can pick the name you go by there."
             },
             "appearance": {
                 "title": "Appearance",

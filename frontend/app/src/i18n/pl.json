@@ -1961,7 +1961,8 @@
                 "useDisplayName": "Użyj mojej wyświetlanej nazwy",
                 "saved": "Nazwa zapisana",
                 "reset": "Używana jest twoja wyświetlana nazwa",
-                "failed": "Nie udało się zapisać nazwy. Spróbuj ponownie."
+                "failed": "Nie udało się zapisać nazwy. Spróbuj ponownie.",
+                "noneBody": "Gdy dołączysz do jakiejś, wybierzesz imię, pod którym będziesz tam widoczny."
             },
             "appearance": {
                 "title": "Wygląd",

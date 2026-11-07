@@ -1961,7 +1961,8 @@
                 "useDisplayName": "Usa il mio nome visualizzato",
                 "saved": "Nome salvato",
                 "reset": "Ora usi il tuo nome visualizzato",
-                "failed": "Impossibile salvare il nome. Riprova."
+                "failed": "Impossibile salvare il nome. Riprova.",
+                "noneBody": "Quando ti unirai a una, potrai scegliere il nome con cui comparire lì."
             },
             "appearance": {
                 "title": "Aspetto",
