@@ -85,6 +85,12 @@ Last:
 |---|---|---|
 | [N15](https://github.com/open-chat-labs/open-chat/issues/10383) | Cutover: Tauri and mobile web switch to the native tree | all |
 
+After everything else (decided 2026-11-07):
+
+| What | Why it waits |
+|---|---|
+| The recovery phrase: Recover account (Welcome back's "Recover with phrase"), the Recovery phrase screen in You → Account, and the Getting started card's backup step | The backend has no recovery phrase yet (none is made at sign-up, nothing signs in with one). The native tree is finished and cut over without it; the design's screens wait for the backend (GAPS.md, "Native sign in and onboarding", "Native You tab") |
+
 ## Invariants
 
 1. Logic the native tree needs is never copied from a legacy component or from `src/web`. It's
