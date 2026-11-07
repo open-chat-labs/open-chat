@@ -72,6 +72,14 @@
     pointer-events: auto;
   }
 
+  /* an accent edge (1.5px, in place of the library's 1px line), so a toast doesn't read as a received message's
+     bubble; the library's shadow stays. Every toast here, with Undo or without, in both modes and every accent */
+  .slot :global(.toast) {
+    box-shadow:
+      inset 0 0 0 1.5px var(--accent),
+      0 14px 34px rgba(0, 0, 0, 0.45);
+  }
+
   @include reduced-motion {
     .slot :global(.toast) {
       animation: none;

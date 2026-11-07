@@ -720,3 +720,7 @@
 ## 2026-11-07 — native: a toast tracks its operation to the end (native N5b testing, #10369), by hand
 - `ToastQueue`: a toast waiting on an operation never times out; once the operation is done it shows its result with a fresh timer (5s with Undo, 2.6s without). `PendingToast.done({ message, undo })` changes the toast in place (the same `id`, so it doesn't play in again) to its result's words. Undo can run an operation of its own (`AsyncUndo`: `pending` words and `run`, resolving to the result's words, or nothing when it failed): the toast stays, waiting with the loader, then says how it went, or goes. A plain function Undo dismisses at once, as before. Spec'd (the timing rules).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-07 — native: toasts with an accent edge (native N5b testing, #10369), by hand
+- `Toasts` (native): every toast it shows (`UndoToast`, with Undo or without, waiting or not) has a 1.5px accent edge (`inset 0 0 0 1.5px var(--accent)`) in place of the library's 1px `--line-2` line, and keeps the library's shadow, so it doesn't read as a received message's bubble. Both modes, every accent. The library's `UndoToast` is unchanged for the web.
+- Not in the design export (the prototype's toast has the plain line): to go back to it (the app's `GAPS.md` lists it).

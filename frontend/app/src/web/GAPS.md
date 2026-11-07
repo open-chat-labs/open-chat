@@ -414,6 +414,9 @@ design export needs. Each entry says where it came up.
   - **A DM whose chat isn't in the list yet** (found testing: a deleted DM the other user had
     written to again, before the next sync brought it back) shows the header's back and avatar with
     no name, and the list's spinner, until the chat arrives.
+  - **Toasts** have a 1.5px accent edge (the native `Toasts`, by hand; EXPORT-LOG 2026-11-07),
+    decided after testing: with the design's plain line they read as received messages' bubbles.
+    TODO(design): take it back to the design export, or give the toast a look of its own.
   - **Toasts** sit above the composer in a conversation (the kit's `footer` placement). Mute,
     favourite and unblock say so at once, as the client shows the change at once (`localUpdates`),
     here and on Chats' rows; a refusal takes the toast's place. Block and unblock wait on the
