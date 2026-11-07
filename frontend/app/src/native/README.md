@@ -54,13 +54,20 @@ native/
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when
                      someone's signed out
+    you/             the You tab (N12): its root, Edit profile, Diamond, and the settings pages
+                     (SettingsScreen and settings/: Appearance, Notifications, Chats, Communities,
+                     Storage, Bots, Account, CHIT's), pushed locally but for Diamond (?diamond)
+                     and CHIT's (?profile=chit), the web's URLs
 ```
 
 Shared with the web tree rather than copied: the route table (`utils/routeTable.ts`), the route
 effects (`core/RouteEffects.svelte`), the library's i18n bridge (`i18n/openchatUi.ts`), the stored
 accent (`theme/accent.ts`), the native apps' setup (`utils/native/nativeApp.ts`, shared with
 `components_mobile`), sign-in and sign-up (`logic/auth`: the flow's decisions, the sign-up with
-its referrer, the sign-up form and the referrer picker, shared with `src/web` and the old UIs). The
+its referrer, the sign-up form and the referrer picker, shared with `src/web` and the old UIs), the
+profile and its settings (`logic/profile`: the form, the username check, appearance, notifications,
+community names, the photo and cover uploads; `logic/chit/dailyClaim`, shared with the web's
+profile and CHIT dialog), and the theme the web and Welcome's menu keep (`theme/themes.ts`). The
 marketing pages (Landing, Learn, the terms and privacy policy) aren't the app's: they open on the
 website in the default browser (`shell/onWeb.ts`), as the old native app's About and a deep link
 to one do.

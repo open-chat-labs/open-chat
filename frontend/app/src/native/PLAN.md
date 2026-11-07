@@ -39,7 +39,14 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
 - **Built:** N5a the Chats tab, its search and New chat
   ([#10368](https://github.com/open-chat-labs/open-chat/issues/10368)), and local pushes for
   screens without a URL. What it left is in GAPS.md ("Native Chats tab").
-- **Next:** the screens. N10a, N11, N12 and N13 need only N3; N5b (the conversation) needs N5a.
+- **Built:** N12 the You tab and its settings
+  ([#10380](https://github.com/open-chat-labs/open-chat/issues/10380)): the You tab with its CHIT
+  card and Sign out, Edit profile, Diamond (`?diamond`), and the settings pages (Appearance on the
+  same stored theme and accent as Welcome's menu, Notifications, Chats, Communities, Storage, Bots,
+  Account, CHIT's at `?profile=chit`), on `logic/profile` shared with the web's profile, and the
+  kit's new `NativeAlert`. What it left (buying Diamond, the apps' notifications switch, the
+  recovery phrase …) is in GAPS.md ("Native You tab").
+- **Next:** the screens. N10a, N11 and N13 need only N3; N5b (the conversation) needs N5a.
 
 ## Workstreams
 
