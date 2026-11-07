@@ -74,6 +74,14 @@
         if (modal) closeRightColumn(screen.rightColumn);
     }
 
+    // the conversation goes to the root; as a modal the column covers it, so the thread closes
+    // for the jump to be seen
+    function jump() {
+        if (chat === undefined) return;
+        screen.jumps.ask(chat.id, rootIndex);
+        if (modal) close();
+    }
+
     // Esc closes the docked thread, unless something over the page takes it: a menu or a picker
     // (which handle it first) or a dialog (the modal column is one: the shell closes it)
     function keydown(e: KeyboardEvent) {
@@ -96,7 +104,7 @@
                     replyCount={summary.replyCount}
                     {following}
                     onFollowChange={follow}
-                    onJump={() => screen.jumps.ask(chat.id, rootIndex)}
+                    onJump={jump}
                     asModal={modal}
                     onClose={close}
                     {list}
