@@ -7,8 +7,10 @@
      A message's `menu` says whether it has a menu and hover bar (by default all but a deleted one); the bar offers reactions only
      with onReact / onReactPicker, and Reply / Edit only with onReply / onEdit.
      Native (design notes §3.3): `mirror` puts a sent run at the inline end with mirrored corners, `avatarSize` 28, and
-     `swipeStyle="inset"` the native swipe (the hint in the freed space, armed at 60px). The host sets `--group-gap`
-     (the avatar's gap) and `--message-mark` (the marked row's tint) on it if it wants others. -->
+     `swipeStyle="inset"` the native swipe (the hint in the freed space, armed at 60px). The host may set
+     `--group-gap` (the avatar's gap), `--group-ring` (the avatar's ring), and the marked row's tint: `--message-mark`
+     (its colour), `--message-mark-start` / `--message-mark-end` (how far it reaches past the message) and
+     `--message-mark-radius`. -->
 <script lang="ts">
   import { useT } from '../i18n';
   import { onDestroy, type ComponentProps } from 'svelte';
@@ -621,7 +623,7 @@
     place-items: center;
     overflow: visible;
     border-radius: 50%;
-    box-shadow: 0 0 0 4px var(--surface-1);
+    box-shadow: 0 0 0 4px var(--group-ring, var(--surface-1));
   }
 
   .avatar-space {
@@ -672,10 +674,10 @@
     position: absolute;
     top: -5px;
     bottom: -5px;
-    inset-inline-start: -64px;
-    inset-inline-end: -24px;
+    inset-inline-start: var(--message-mark-start, -64px);
+    inset-inline-end: var(--message-mark-end, -24px);
     z-index: -1;
-    border-radius: 0;
+    border-radius: var(--message-mark-radius, 0);
     background: var(--message-mark, color-mix(in oklch, var(--ink) 2.5%, transparent));
     opacity: 0;
     transition: opacity 0.2s ease-out;
