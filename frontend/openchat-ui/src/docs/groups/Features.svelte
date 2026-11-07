@@ -44,6 +44,7 @@
   let navActive = $state(0);
   let tileTaps = $state(0);
 
+  // a thread with more people in it than its link shows ("+N")
   const donut = samples.StatsDonut as { slices: { label: string; count: number }[]; extras: { label: string; count: string }[] };
 
   // ── AppB ──
@@ -181,6 +182,8 @@
         <ChatBubble side="received" text="Moved the review to Thursday." time="09:07" edited />
         <ChatBubble side="received" text="" time="09:08" deleted />
         <ChatBubble side="received" text="Agreed, ship it." time="09:10" quoteName="Matt" quoteText="Can we ship the ramp today?" />
+        <ChatBubble {...S.threadBubbleReceived} />
+        <ChatBubble side="received" text="No faces given: the reply arrow" time="09:12" threadCount={1} threadLastAt="09:30" />
         <VoiceMessage side="received" elapsed="0:07" total="0:24" progress={0.3} time="09:12" playing={voicePlaying} onPlay={() => (voicePlaying = true)} onPause={() => (voicePlaying = false)} />
         <TypingIndicator names={['Danielle', 'Priya']} colors={['violet', 'teal']} />
       </div>
@@ -195,6 +198,7 @@
         <ChatBubble side="sent" text="Typo fixed" time="09:25" edited />
         <ChatBubble side="sent" text="" time="09:26" deleted />
         <ChatBubble side="sent" text="Yes — Thursday works for me" time="09:27" quoteName="Lucy" quoteText="Moved the review to Thursday." reactions={S.reactions} />
+        <ChatBubble {...S.threadBubbleSent} />
         <VoiceMessage side="sent" elapsed="0:00" total="0:41" time="09:30" />
       </div>
     </Frame>

@@ -113,7 +113,7 @@
     }
 
     function confirm() {
-        if (form.confirm({ chatId: dialog.chatId })) onClose();
+        if (form.confirm(dialog.context)) onClose();
     }
 </script>
 

@@ -591,7 +591,7 @@
   {
     "name": "ChatBubble",
     "source": "lib/ChatBubble.dc.html",
-    "hash": "1c51c112",
+    "hash": "c29c4968",
     "description": "count grapheme clusters so flags, skin tones and ZWJ families read as one emoji",
     "preview": {
       "width": 420,
@@ -835,7 +835,7 @@
         "section": null,
         "required": false,
         "componentDefault": "0",
-        "doc": ""
+        "doc": "Replies in the message's thread: the thread link under the reactions."
       },
       {
         "name": "threadLastAt",
@@ -847,6 +847,39 @@
         "required": false,
         "componentDefault": "''",
         "doc": ""
+      },
+      {
+        "name": "threadFaces",
+        "type": "string[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Up to three of those in the thread, as CSS backgrounds (colours or gradients); the reply arrow without them."
+      },
+      {
+        "name": "threadNew",
+        "type": "number",
+        "default": 0,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "Unread replies: \"· N new\" after the count."
+      },
+      {
+        "name": "threadActive",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Its thread is the one open: the link on the accent."
       },
       {
         "name": "onOpenThread",
@@ -890,7 +923,7 @@
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": "Right-aligned layouts (native sent bubbles): the bubble (and its reactions) at the inline end, its grouped / tail corners on that side."
+        "doc": "Right-aligned layouts (native sent bubbles): the bubble, its reactions and its thread link at the inline end, its grouped / tail corners on that side."
       }
     ],
     "group": "library"
@@ -928,7 +961,7 @@
         "doc": "Rows of chips before the rest fold into \"+N\"."
       },
       {
-        "name": "afterThread",
+        "name": "mirror",
         "type": "boolean",
         "default": false,
         "editor": "boolean",
@@ -936,7 +969,7 @@
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": "Under a thread summary rather than a bubble's edge: a gap instead of the overlap."
+        "doc": "Right-aligned layouts (native sent bubbles): the chips at the inline end, under the message."
       },
       {
         "name": "onToggle",
@@ -959,6 +992,102 @@
         "required": false,
         "componentDefault": null,
         "doc": "The \"+N\" chip clicked."
+      }
+    ],
+    "group": "library"
+  },
+  {
+    "name": "ThreadLink",
+    "source": "lib/ChatBubble.dc.html (its thread link, pass 8), by hand (4c)",
+    "hash": "",
+    "description": "A message's thread (design pass 8, ChatBubble's thread link): a bordered pill under the message and its reactions: up to three overlapping faces of those in the thread (or the reply arrow without them), \"N replies\", \"· N new\" and when the last reply came, opening the thread. On the accent while it's the thread open beside the conversation. Its own component, by hand, so MessageGroup shows the same link under every other kind of message.",
+    "preview": {
+      "width": 360,
+      "height": 48
+    },
+    "props": [
+      {
+        "name": "count",
+        "type": "number",
+        "default": 3,
+        "editor": "number",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Replies in the thread."
+      },
+      {
+        "name": "lastAt",
+        "type": "string",
+        "default": "2:14 pm",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "When the last reply came, e.g. \"2:14 pm\"; nothing shown without it."
+      },
+      {
+        "name": "faces",
+        "type": "string[]",
+        "default": [
+          "linear-gradient(140deg,#ff5f9e,#6a2bff)",
+          "linear-gradient(140deg,#2ee6a8,#1f8fbf)",
+          "linear-gradient(140deg,#ffb03d,#ff5f4d)",
+          "linear-gradient(140deg,#3d7bff,#7a3dff)",
+          "linear-gradient(140deg,#b04dff,#4d2dff)"
+        ],
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Those in the thread, as CSS backgrounds (colours or gradients): up to three show; the reply arrow without them."
+      },
+      {
+        "name": "newCount",
+        "type": "number",
+        "default": 0,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "Unread replies: \"· N new\" after the count."
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "It's the thread open (beside the conversation): the accent border on the soft accent."
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Right-aligned layouts (native sent bubbles): the link at the inline end, under the message."
+      },
+      {
+        "name": "onOpen",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
       }
     ],
     "group": "library"
@@ -3552,7 +3681,7 @@
   {
     "name": "MessageGroup",
     "source": "lib/MessageGroup.dc.html",
-    "hash": "39508894",
+    "hash": "55d8a945",
     "description": "Message actions. Pointer: hover bar (3 recent reactions, 🙂, Reply/Edit, ⋯) + right-click. Keyboard: Shift+F10 / Menu key.",
     "preview": {
       "width": 460,
@@ -3653,7 +3782,7 @@
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The run's messages (`GroupMessage`: `kind` picks the component). Each can carry its thread: `threadCount`, `threadLastAt`, `threadFaces`, `threadNew`, `threadActive` and `onOpenThread`, drawn under its reactions (a text bubble's own link; the same link under every other kind)."
       },
       {
         "name": "onMessageMenu",
@@ -17572,6 +17701,39 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "list",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's own list of the replies, in place of `replies` / `newReplies`; it scrolls itself."
+      },
+      {
+        "name": "composer",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's own composer, in place of the panel's (`onSend`, `onGif`, `onVoice` and `onAttach` are then unused)."
+      },
+      {
+        "name": "replyCount",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "How many replies there are, for \"N people · N replies\", when the host lists them (`list`)."
       }
     ],
     "group": "features"

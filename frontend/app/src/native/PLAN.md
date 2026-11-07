@@ -74,7 +74,7 @@ Screens:
 | [N5d](https://github.com/open-chat-labs/open-chat/issues/10371) | Message long-press menu, message info and forward | N5b |
 | [N6](https://github.com/open-chat-labs/open-chat/issues/10372) | DM and group details, members and roles; a DM's disappearing messages as a switch there (not in the conversation's menu) | N5b |
 | [N7](https://github.com/open-chat-labs/open-chat/issues/10373) | Group and community settings screens | N6 |
-| [N8a](https://github.com/open-chat-labs/open-chat/issues/10374) | Communities tab: switcher, channels and threads | N6 |
+| [N8a](https://github.com/open-chat-labs/open-chat/issues/10374) | Communities tab: switcher, channels and threads; a message's thread: the replies link under messages (hidden until then, `threads: false`) and the thread screen (replies, composer, follow) | N6, N5c |
 | [N8b](https://github.com/open-chat-labs/open-chat/issues/10375) | Explore, preview, join and create community | N8a, N7 |
 | [N9](https://github.com/open-chat-labs/open-chat/issues/10376) | Builders: poll, prize, send crypto, swap offer, meme fighter, file | N5c, N10b |
 | [N10a](https://github.com/open-chat-labs/open-chat/issues/10377) | Wallet root and token page | N3 |

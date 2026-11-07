@@ -1,5 +1,6 @@
 import type { EventWrapper, Message } from "@client";
 import { vi } from "vitest";
+import { rowMessageContext } from "@src/logic/conversation/threadTimeline";
 import { runMessageAction, type MessageMenuTarget } from "./messageMenu";
 
 const chatId = { kind: "group_chat" as const, groupId: "g" };
@@ -30,6 +31,7 @@ function fakeClient() {
         cancelMessageReminder: vi.fn(async () => true),
         deleteFailedMessage: vi.fn(async () => {}),
         deleteMessage: vi.fn(async () => true),
+        followThread: vi.fn(async () => true),
         getContentAsText: vi.fn(() => "hi"),
         pinMessage: vi.fn(async () => true),
         replyPrivately: vi.fn(async () => undefined),
@@ -49,7 +51,8 @@ function target(
 ): MessageMenuTarget {
     return {
         client,
-        chatId,
+        context: { chatId },
+        openThread: vi.fn(),
         evt,
         failed: false,
         me: "me",
@@ -66,7 +69,10 @@ describe("a message's actions in the conversation", () => {
     // invariant 5
     test("deleting a failed message only removes it locally, never calls deleteMessage", async () => {
         const client = fakeClient();
-        const dialog = await runMessageAction("delete", target(client, { failed: true, confirmDelete: true }));
+        const dialog = await runMessageAction(
+            "delete",
+            target(client, { failed: true, confirmDelete: true }),
+        );
         expect(dialog).toBeUndefined();
         expect(client.deleteFailedMessage).toHaveBeenCalledWith(chatId, 42n, undefined);
         expect(client.deleteMessage).not.toHaveBeenCalled();
@@ -115,6 +121,41 @@ describe("a message's actions in the conversation", () => {
         await runMessageAction("unpin", target(client));
         expect(client.pinMessage).toHaveBeenCalledWith(chatId, 2);
         expect(client.unpinMessage).toHaveBeenCalledWith(chatId, 2);
+    });
+
+    test("in a thread, a message is deleted, revealed and retried in the thread", async () => {
+        const client = fakeClient();
+        const context = { chatId, threadRootMessageIndex: 9 };
+        await runMessageAction("delete", target(client, { context }));
+        expect(client.deleteMessage).toHaveBeenCalledWith(chatId, 9, 42n);
+        await runMessageAction("delete", target(client, { context, failed: true }));
+        expect(client.deleteFailedMessage).toHaveBeenCalledWith(chatId, 42n, 9);
+        await runMessageAction("retry", target(client, { context, failed: true }));
+        expect(client.retrySendMessage).toHaveBeenCalledWith(context, evt);
+    });
+
+    test("in a thread, its root is deleted, undeleted and revealed in the chat", async () => {
+        const client = fakeClient();
+        // the root heads the thread's list, but it's the chat's message
+        const context = rowMessageContext(chatId, evt.event, evt.event);
+        const inThread = { context, threadRoot: evt.event };
+        await runMessageAction("delete", target(client, inThread));
+        expect(client.deleteMessage).toHaveBeenCalledWith(chatId, undefined, 42n);
+        await runMessageAction("undelete", target(client, inThread));
+        expect(client.undeleteMessage).toHaveBeenCalledWith(chatId, undefined, evt.event);
+        const deleted = { ...evt, event: { ...evt.event, deleted: true } };
+        await runMessageAction("reveal", target(client, { ...inThread, evt: deleted }));
+        expect(client.revealDeletedMessage).toHaveBeenCalledWith(chatId, 42n, undefined);
+    });
+
+    test("following from a thread's message follows the thread's root", async () => {
+        const client = fakeClient();
+        const root = { ...evt.event, messageId: 1n, messageIndex: 9 };
+        await runMessageAction(
+            "unfollow_thread",
+            target(client, { context: { chatId, threadRootMessageIndex: 9 }, threadRoot: root }),
+        );
+        expect(client.followThread).toHaveBeenCalledWith(chatId, root, false);
     });
 
     test("translating isn't asked of the client for someone without Diamond", async () => {

@@ -45,6 +45,7 @@ import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
 import { getProxyAdjustedBlobUrl } from "@src/utils/media";
 import { pickById } from "@src/utils/pickById";
 import { findUser } from "@src/utils/user";
+import { threadUnreadCount } from "@src/logic/threads/threadRead";
 
 // A conversation's messages to MessageGroup's messages, for every tree that shows them with the
 // library (src/web's conversation, src/native's; src/web/DATA.md, Conversation). The timeline's
@@ -88,6 +89,17 @@ export type ConversationContext = {
     text: (key: ResourceKey) => string;
     /** A ledger's token as transfers show it; undefined for one the registry doesn't carry. */
     token: (ledger: string) => TransferToken | undefined;
+    /** The root (message index) of the thread open beside the conversation (the route's); none in a thread. */
+    openThread: number | undefined;
+    /** A user's face as the conversation shows it (their avatar's colour, a CSS background). */
+    face: (userId: string) => string;
+    /**
+     * A thread's unread replies, by its root's index: as the list of threads counts them
+     * (`threadUnreadCount`), none for a thread the reader doesn't follow.
+     */
+    unreadInThread: (threadRootMessageIndex: number) => number;
+    /** Whether the view shows threads: without, a message has no thread link (no thread fields). */
+    threads: boolean;
 };
 
 export type TransferToken = {
@@ -257,7 +269,6 @@ export function messageRow(
     const mine = msg.sender === ctx.me;
     const reply = msg.repliesTo;
     const quoted = reply?.kind === "rehydrated_reply_context" ? reply : undefined;
-    const thread = msg.thread;
     const kind = kindMessage(msg, status, ctx, {
         id: String(msg.messageId),
         time: ctx.time(evt.timestamp),
@@ -267,6 +278,7 @@ export function messageRow(
             count: r.userIds.size,
             mine: r.userIds.has(ctx.me),
         })),
+        ...threadFields(msg, ctx),
     });
     if (kind !== undefined) {
         return {
@@ -303,14 +315,63 @@ export function messageRow(
                       ? ctx.you
                       : ctx.userName(quoted.senderId),
             quoteText: quoted === undefined ? undefined : messageText(quoted.content, ctx),
-            threadCount: thread?.numberOfReplies ?? 0,
-            threadLastAt: thread === undefined ? undefined : ctx.date(thread.latestEventTimestamp),
+            ...threadFields(msg, ctx),
             previews: msg.content.kind === "text_content" ? previewCards(msg.ogPreviews) : [],
         },
     };
 }
 
-type KindBase = { id: string; time: string; deleted: false; reactions: GroupMessage["reactions"] };
+type KindBase = {
+    id: string;
+    time: string;
+    deleted: false;
+    reactions: GroupMessage["reactions"];
+} & ThreadFields;
+
+/**
+ * A message's thread as its link under it (design pass 8), whatever its kind: on the thread's root
+ * message, the one that started it.
+ */
+export type ThreadFields = {
+    threadCount: number;
+    threadLastAt: string | undefined;
+    /** Up to three of those in the thread, in the colours their avatars have in the conversation (`face`). */
+    threadFaces: string[];
+    /** Its unread replies (`unreadInThread`): "· N new". */
+    threadNew: number;
+    /** It's the thread open beside the conversation. */
+    threadActive: boolean;
+};
+
+/** The most faces a thread link shows (pass 8). */
+const THREAD_FACES = 3;
+
+/** Whether the message's thread is the one open beside the conversation (`openThread`). */
+export function isOpenThread(msg: Message, openThread: number | undefined): boolean {
+    return msg.thread !== undefined && msg.messageIndex === openThread;
+}
+
+/**
+ * A message's thread: how many replies, when the last came, who's in it (up to three, each the
+ * colour of their avatar in the conversation, `face`), how many replies are unread and whether
+ * it's the one open. None without a thread, or in a view that shows no threads (`threads`).
+ */
+export function threadFields(
+    msg: Message,
+    ctx: Pick<ConversationContext, "date" | "openThread" | "face" | "unreadInThread" | "threads">,
+): ThreadFields {
+    const thread = ctx.threads ? msg.thread : undefined;
+    return {
+        threadCount: thread?.numberOfReplies ?? 0,
+        threadLastAt: thread === undefined ? undefined : ctx.date(thread.latestEventTimestamp),
+        threadFaces:
+            thread === undefined
+                ? []
+                : [...thread.participantIds].slice(0, THREAD_FACES).map(ctx.face),
+        threadNew: thread === undefined ? 0 : ctx.unreadInThread(msg.messageIndex),
+        threadActive: thread !== undefined && isOpenThread(msg, ctx.openThread),
+    };
+}
 
 /**
  * A message of a kind with its own bubble (media, voice, file); undefined for one shown as text.
@@ -615,6 +676,7 @@ export type ConversationContextInput = {
         | "toShortTimeString"
         | "formatMessageDate"
         | "isChatReadOnly"
+        | "unreadThreadMessageCount"
     >;
     chat: ChatSummary | undefined;
     me: string;
@@ -632,6 +694,12 @@ export type ConversationContextInput = {
     tokens: ReadonlyMap<string, CryptocurrencyDetails>;
     /** The exchange rates, read when a dollar value is worked out (they refresh every few minutes). */
     rates: () => ReadonlyMap<string, TokenExchangeRates>;
+    /** The thread open beside the conversation (its root's index), if any. */
+    openThread?: number;
+    /** A user's face as the view shows it (their avatar's colour). */
+    face: (userId: string) => string;
+    /** Whether the view shows threads (a message's thread link); the native tree has no thread screen yet. */
+    threads: boolean;
 };
 
 /** The ConversationContext a conversation's rows are made with. */
@@ -665,6 +733,13 @@ export function conversationContext(input: ConversationContextInput): Conversati
         now: Date.now(),
         claimant: input.claimant,
         text: (key) => interpolate(formatter, key),
+        openThread: input.openThread,
+        face: input.face,
+        threads: input.threads,
+        unreadInThread: (root) =>
+            threadUnreadCount(chat, root, (latest) =>
+                chat === undefined ? 0 : client.unreadThreadMessageCount(chat.id, root, latest),
+            ),
         token: (ledger) => {
             const token = input.tokens.get(ledger);
             if (token === undefined) return undefined;

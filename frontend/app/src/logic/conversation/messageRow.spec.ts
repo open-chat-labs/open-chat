@@ -1,5 +1,6 @@
-import type { EventWrapper, Message } from "@client";
+import type { ChatSummary, EventWrapper, Message } from "@client";
 import {
+    conversationContext,
     mediaHeld,
     messageRow,
     messageStatus,
@@ -28,6 +29,10 @@ const ctx: ConversationContext = {
         chitEarned: 0,
     },
     text: (key) => key.key,
+    openThread: undefined,
+    face: (userId) => `face:${userId}`,
+    unreadInThread: () => 0,
+    threads: true,
     token: (ledger) =>
         ledger === "icp"
             ? {
@@ -136,13 +141,112 @@ describe("a message row", () => {
         expect(messageRow(reply("me"), "sent", ctx).message).toMatchObject({ quoteName: "You" });
     });
 
-    test("has its thread's reply count and last reply", () => {
+    test("has its thread's reply count, last reply and the faces of those in it", () => {
         const threaded = message({
-            thread: { numberOfReplies: 4, latestEventTimestamp: 9n } as Message["thread"],
+            thread: {
+                numberOfReplies: 4,
+                latestEventTimestamp: 9n,
+                participantIds: new Set(["alice", "bob"]),
+            } as Message["thread"],
         });
         expect(messageRow(threaded, "sent", ctx).message).toMatchObject({
             threadCount: 4,
             threadLastAt: "d9",
+            threadFaces: ["face:alice", "face:bob"],
+            threadNew: 0,
+            threadActive: false,
+        });
+    });
+
+    test("has no thread without one", () => {
+        expect(messageRow(message(), "sent", ctx).message).toMatchObject({
+            threadCount: 0,
+            threadLastAt: undefined,
+            threadFaces: [],
+            threadActive: false,
+        });
+    });
+
+    test("has up to three faces, and its unread replies as the thread's root (pass 8)", () => {
+        const threaded = message({
+            messageIndex: 7,
+            thread: {
+                numberOfReplies: 9,
+                latestEventTimestamp: 9n,
+                participantIds: new Set(["a", "b", "c", "d"]),
+            } as Message["thread"],
+        });
+        const unreadInThread = (root: number) => (root === 7 ? 2 : 0);
+        expect(messageRow(threaded, "sent", { ...ctx, unreadInThread }).message).toMatchObject({
+            threadFaces: ["face:a", "face:b", "face:c"],
+            threadNew: 2,
+        });
+        // a message without a thread has nothing new, whatever its index
+        expect(
+            messageRow(message({ messageIndex: 7 }), "sent", { ...ctx, unreadInThread }).message,
+        ).toMatchObject({ threadNew: 0 });
+    });
+
+    test("has no thread link in a view without threads (the native tree, for now)", () => {
+        const threaded = message({
+            messageIndex: 2,
+            thread: {
+                numberOfReplies: 3,
+                latestEventTimestamp: 9n,
+                participantIds: new Set(["bob"]),
+            } as Message["thread"],
+        });
+        const off = { ...ctx, threads: false, openThread: 2, unreadInThread: () => 1 };
+        expect(messageRow(threaded, "sent", off).message).toMatchObject({
+            threadCount: 0,
+            threadLastAt: undefined,
+            threadFaces: [],
+            threadNew: 0,
+            threadActive: false,
+        });
+    });
+
+    test("marks its thread active while it's the one open beside the conversation", () => {
+        const threaded = message({
+            messageIndex: 2,
+            thread: {
+                numberOfReplies: 1,
+                latestEventTimestamp: 9n,
+                participantIds: new Set(["bob"]),
+            } as Message["thread"],
+        });
+        const active = (openThread: number | undefined) =>
+            messageRow(threaded, "sent", { ...ctx, openThread }).message.threadActive;
+        expect(active(2)).toBe(true);
+        expect(active(3)).toBe(false);
+        expect(active(undefined)).toBe(false);
+        // a message with no thread isn't, even at the open thread's index (a thread just started)
+        expect(messageRow(message(), "sent", { ...ctx, openThread: 2 }).message.threadActive).toBe(
+            false,
+        );
+    });
+
+    test('has its thread whatever its kind (4c: "N replies" under every kind)', () => {
+        const file = message({
+            content: {
+                kind: "file_content",
+                name: "a.pdf",
+                mimeType: "application/pdf",
+                fileSize: 10,
+                blobUrl: "u",
+            } as Message["content"],
+            thread: {
+                numberOfReplies: 2,
+                latestEventTimestamp: 5n,
+                participantIds: new Set(["bob"]),
+            } as Message["thread"],
+        });
+        expect(messageRow(file, "sent", { ...ctx, openThread: 2 }).message).toMatchObject({
+            kind: "file",
+            threadCount: 2,
+            threadLastAt: "d5",
+            threadFaces: ["face:bob"],
+            threadActive: true,
         });
     });
 
@@ -462,5 +566,53 @@ describe("composing a message with more fields", () => {
 
         expect(composed.menu).toBe(true);
         expect(message.menu).toBe(false);
+    });
+});
+
+describe("a conversation's context", () => {
+    test("counts a thread's unread replies as the list of threads does, none unfollowed (pass 8)", () => {
+        const chat = {
+            kind: "channel",
+            id: { kind: "channel", communityId: "c", channelId: 1 },
+            membership: { latestThreads: [{ threadRootMessageIndex: 4, latestMessageIndex: 6 }] },
+        } as unknown as ChatSummary;
+        const asked: [number, number][] = [];
+        const ctx = conversationContext({
+            client: {
+                displayName: () => "",
+                getContentAsText: () => "",
+                toShortTimeString: () => "",
+                formatMessageDate: () => "",
+                isChatReadOnly: () => false,
+                unreadThreadMessageCount: (_, root, latest) => {
+                    asked.push([root, latest]);
+                    return latest - 4;
+                },
+            },
+            chat,
+            me: "me",
+            formatter: (key) => String(key),
+            users: new Map(),
+            webhooks: new Map(),
+            webhookIds: new Set<string>(),
+            detailsLoaded: true,
+            lowBandwidth: false,
+            revealed: () => false,
+            claimant: {
+                previewingOrLapsed: false,
+                diamond: false,
+                lifetimeDiamond: false,
+                streak: 0,
+                chitEarned: 0,
+            },
+            tokens: new Map(),
+            rates: () => new Map(),
+            face: (userId) => userId,
+            threads: true,
+        });
+        expect(ctx.unreadInThread(4)).toBe(2);
+        expect(asked).toEqual([[4, 6]]);
+        // a thread the chat doesn't list as followed
+        expect(ctx.unreadInThread(5)).toBe(0);
     });
 });

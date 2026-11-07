@@ -58,7 +58,7 @@
         sending = true;
         failed = false;
         const outcome = await client.sendContent(
-            { chatId: dialog.chatId },
+            dialog.context,
             memeFighterContent(memeUrl, img.getBoundingClientRect()),
         );
         sending = false;

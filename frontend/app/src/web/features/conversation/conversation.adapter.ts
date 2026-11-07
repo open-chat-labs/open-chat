@@ -255,6 +255,9 @@ type MessageMenuEntry = { action: MessageMenuAction; label: string; icon: string
 // what acts on its sender or removes it
 const MESSAGE_MENU: MessageMenuEntry[] = [
     { action: "reply", label: "quoteReply", icon: "reply" },
+    { action: "start_thread", label: "thread.menu", icon: "threads" },
+    { action: "follow_thread", label: "followThread", icon: "bell" },
+    { action: "unfollow_thread", label: "unfollowThread", icon: "bell-off" },
     { action: "edit", label: "editMessage", icon: "edit" },
     { action: "forward", label: "forward", icon: "forward" },
     { action: "reply_privately", label: "replyPrivately", icon: "dm" },
@@ -281,7 +284,7 @@ const MESSAGE_MENU_DANGER: MessageMenuEntry[] = [
 
 /**
  * A message's menu (MessageActions' items) for what it offers (`messageMenu`). Only the actions
- * this screen carries out are listed (the thread's, a proposal's and the rest wait for theirs).
+ * this screen carries out are listed (a proposal's, tipping and the rest wait for theirs).
  */
 export function messageMenuItems(actions: ReadonlySet<MessageMenuAction>): MessageMenuItem[] {
     const item =
