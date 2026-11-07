@@ -964,6 +964,52 @@
     "group": "library"
   },
   {
+    "name": "ThreadLink",
+    "source": "lib/ChatBubble.dc.html (its thread line), by hand (4c)",
+    "hash": "",
+    "description": "A message's thread: \"N replies\" and when the last came, opening the thread. ChatBubble's thread line as its own component, so MessageGroup shows it under every kind of message.",
+    "preview": {
+      "width": 360,
+      "height": 48
+    },
+    "props": [
+      {
+        "name": "count",
+        "type": "number",
+        "default": 3,
+        "editor": "number",
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Replies in the thread."
+      },
+      {
+        "name": "lastAt",
+        "type": "string",
+        "default": "2:14 pm",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "When the last reply came, e.g. \"2:14 pm\"; nothing shown without it."
+      },
+      {
+        "name": "onOpen",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "library"
+  },
+  {
     "name": "ChatRow",
     "source": "lib/ChatRow.dc.html",
     "hash": "d9730629",
@@ -17572,6 +17618,39 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "list",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's own list of the replies, in place of `replies` / `newReplies`; it scrolls itself."
+      },
+      {
+        "name": "composer",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The host's own composer, in place of the panel's (`onSend`, `onGif`, `onVoice` and `onAttach` are then unused)."
+      },
+      {
+        "name": "replyCount",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "How many replies there are, for \"N people · N replies\", when the host lists them (`list`)."
       }
     ],
     "group": "features"

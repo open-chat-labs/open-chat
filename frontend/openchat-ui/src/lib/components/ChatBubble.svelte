@@ -8,6 +8,7 @@
   import type { ComponentProps, Snippet } from 'svelte';
   import LinkCard from './LinkCard.svelte';
   import ReactionChips, { type Reaction } from './ReactionChips.svelte';
+  import ThreadLink from './ThreadLink.svelte';
 
   // count grapheme clusters so flags, skin tones and ZWJ families read as one emoji
   const SEG = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
@@ -178,11 +179,7 @@
         </div>
       {/if}
       {#if threadCount > 0}
-        <div class="thread" onclick={onOpenThread} role="button" tabindex="0">
-          <span class="thread-icon" data-oc-flip></span>
-          <span class="thread-count">{t('ui.chatBubble.replies', { count: threadCount })}</span>
-          <span class="thread-meta">{threadLastAt ? t('ui.chatBubble.lastReply', { when: threadLastAt }) : ''}</span>
-        </div>
+        <ThreadLink count={threadCount} lastAt={threadLastAt} onOpen={onOpenThread} />
       {/if}
       <ReactionChips
         {reactions}
@@ -561,36 +558,4 @@
     cursor: pointer;
   }
 
-  .thread {
-    display: flex;
-    align-items: center;
-    gap: var(--space-6);
-    margin-top: var(--space-6);
-    min-height: var(--control-sm);
-    padding: var(--space-6) var(--space-10);
-    box-sizing: border-box;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    align-self: flex-start;
-
-    &:hover {
-      background: var(--overlay-1);
-    }
-  }
-
-  .thread-icon {
-    @include icon(reply, 14px, var(--accent));
-  }
-
-  .thread-count,
-  .thread-meta {
-    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--accent);
-    white-space: nowrap;
-  }
-
-  .thread-meta {
-    font-weight: var(--weight-regular);
-    color: var(--ink-3);
-  }
 </style>

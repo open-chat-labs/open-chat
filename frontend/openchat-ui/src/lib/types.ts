@@ -39,6 +39,10 @@ interface GroupMessageBase {
    *  group decides (own text: right edits, left replies; else right replies, left forwards). */
   swipeLeft?: 'edit' | 'reply' | 'forward';
   reactions?: { emoji: string; count: number; mine?: boolean }[];
+  /** Replies in the message's thread: "N replies" under it (when the last came, `threadLastAt`), opening it (`onOpenThread`). */
+  threadCount?: number;
+  threadLastAt?: string;
+  onOpenThread?: () => void;
 }
 
 /** Props a message kind takes from MessageGroup itself rather than from the message. */

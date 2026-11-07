@@ -24,6 +24,7 @@
   import PollMessage from './PollMessage.svelte';
   import PrizeMessage from './PrizeMessage.svelte';
   import SwapOffer from './SwapOffer.svelte';
+  import ThreadLink from './ThreadLink.svelte';
   import TransferMessage from './TransferMessage.svelte';
   import VoiceMessage from './VoiceMessage.svelte';
 
@@ -520,9 +521,12 @@
         {:else if !m.kind || m.kind === 'text'}
           <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} mirror={mirrored} onToggleReaction={(c) => onReact?.(i, c)} />
         {/if}
-        <!-- every other kind's reactions, under it as under a text bubble (ChatBubble draws its own) -->
+        <!-- every other kind's thread and reactions, under it as under a text bubble (ChatBubble draws its own) -->
+        {#if m.kind && m.kind !== 'text' && (m.threadCount ?? 0) > 0}
+          <ThreadLink count={m.threadCount ?? 0} lastAt={m.threadLastAt} onOpen={m.onOpenThread} />
+        {/if}
         {#if m.kind && m.kind !== 'text' && m.reactions?.length}
-          <ReactionChips reactions={m.reactions} onToggle={(c) => onReact?.(i, c)} />
+          <ReactionChips reactions={m.reactions} afterThread={(m.threadCount ?? 0) > 0} onToggle={(c) => onReact?.(i, c)} />
         {/if}
         {#if menuable(m) && hover === i && !touch && activeMenu !== i}
           <span class="bar" style:left={barLeft} data-msg-acts="" role="toolbar" aria-label={t('ui.messageGroup.actions')}>
