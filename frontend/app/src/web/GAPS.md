@@ -528,6 +528,9 @@ design export needs. Each entry says where it came up.
   where pass 8 draws it in `ChatBubble` only: so a poll, a swap or a file keeps its link, and no
   message shows two (EXPORT-LOG, pass 8). `modal.ts` exports `dialogOpen()` for a page's own Esc.
   `ThreadPanel`'s Follow waits for the host (`Waited`, a spinner) where it flipped at once.
+- **A group's sender name** (by hand, EXPORT-LOG 2026-11-07), to take back to the design export:
+  `MessageGroup`'s name above a run is as wide as the name (at the inline start, truncated past
+  the column), not stretched across it, so only the name opens the profile.
 - **Composer banner** (by hand, 8b): `ComposerBar` takes `onBannerAction`, passed to `Banner`'s
   `actionHandler` with `bannerAction` as its label (it had the label but no handler). Nothing in
   the app uses it yet.

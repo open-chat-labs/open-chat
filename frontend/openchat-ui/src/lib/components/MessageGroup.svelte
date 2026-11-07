@@ -654,6 +654,15 @@
   }
 
   .name {
+    /* only the name is its hit target (the column would stretch it across the chat): at the
+       inline start, as wide as it is, truncated past the column */
+    align-self: flex-start;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     padding: 0 var(--space-4);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
     color: var(--ink-3);
