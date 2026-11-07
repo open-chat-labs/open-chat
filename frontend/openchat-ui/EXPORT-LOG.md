@@ -712,3 +712,7 @@
 - `Toasts` (native): a pending toast shows the trash icon, as one with Undo does, and `UndoToast`'s loader.
 - `UndoToast`: `busy`, a 16px `Spinner` in place of the action and the dismiss. `meta.json` updated (and Toasts' description).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-07 — a reply's quote goes to its message (native N5b testing, #10369), by hand
+- `ChatBubble`: `onQuote`, the reply quote tapped (or Enter / Space on it): the quote is a button then, and the host goes to the quoted message. Without it the quote is only shown, as before. `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

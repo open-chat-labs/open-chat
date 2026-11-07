@@ -46,6 +46,8 @@
     /** Reply quote: who wrote the quoted message ("You" for your own). */
     quoteName?: string;
     quoteText?: string;
+    /** The quote tapped: the host goes to the quoted message. Without it the quote is only shown. */
+    onQuote?: () => void;
     reactions?: Reaction[];
     maxReactionRows?: number;
     onToggleReaction?: (emoji: string) => void;
@@ -76,6 +78,7 @@
     deletedText = 'ui.chatBubble.deleted',
     quoteName = '',
     quoteText = '',
+    onQuote,
     reactions = [],
     maxReactionRows = 1,
     onToggleReaction,
@@ -100,6 +103,14 @@
 
 </script>
 
+{#snippet quote()}
+  <span class="quote-bar"></span>
+  <div class="quote-body">
+    <div class="quote-name">{quoteName}</div>
+    <div class="quote-text">{quoteText}</div>
+  </div>
+{/snippet}
+
 {#snippet stamp()}{edited ? t('ui.chatBubble.edited') + ' · ' : ''}{time}{#if sent}<span class="tick" style:mask="var(--icon-{STATUS[status] ?? 'check-double'}) center/contain no-repeat"></span>{/if}{/snippet}
 
 <div class="wrap" class:mirror>
@@ -112,13 +123,27 @@
   {:else}
     <div class="column" class:sent class:mirror>
       <div class="bubble" class:last={lastInGroup} class:mirror class:carded data-oc-bubble>
-        {#if quoteName}
+        {#if quoteName && onQuote}
+          <div
+            class="quote link"
+            role="button"
+            tabindex="0"
+            onclick={(e) => {
+              e.stopPropagation();
+              onQuote();
+            }}
+            onkeydown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onQuote();
+              }
+            }}
+          >
+            {@render quote()}
+          </div>
+        {:else if quoteName}
           <div class="quote">
-            <span class="quote-bar"></span>
-            <div class="quote-body">
-              <div class="quote-name">{quoteName}</div>
-              <div class="quote-text">{quoteText}</div>
-            </div>
+            {@render quote()}
           </div>
         {/if}
         {#if forwarded}
@@ -296,6 +321,16 @@
       --quote-bar: var(--bubble-text-soft);
       --quote-name: var(--bubble-text);
       --quote-text: var(--bubble-text-soft);
+    }
+  }
+
+  .quote.link {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
   }
 

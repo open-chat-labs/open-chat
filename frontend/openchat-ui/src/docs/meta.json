@@ -772,6 +772,17 @@
         "doc": ""
       },
       {
+        "name": "onQuote",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The quote tapped: the host goes to the quoted message. Without it the quote is only shown."
+      },
+      {
         "name": "reactions",
         "type": "Reaction[]",
         "default": [],
