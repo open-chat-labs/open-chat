@@ -53,6 +53,22 @@ export class FirstUnread {
             this.#for = { key: this.#for.key, index: undefined };
         }
     }
+
+    /**
+     * Whether the divider (`firstUnread`, as `of` gave it) has been read through, so it can go
+     * (`seen`, once the screen has let it linger): there is one, the chat is the one selected, and
+     * no message is left unread (`unreadLeft`, asked only then). Never while the chat isn't
+     * selected though the screen still shows it (HeldWhileLeaving: going back, or another chat
+     * opened over it from a quote, a link or a notification): nothing was read then, and the
+     * divider stays for when it's back.
+     */
+    static readThrough(
+        firstUnread: number | undefined,
+        selected: boolean,
+        unreadLeft: () => number,
+    ): boolean {
+        return firstUnread !== undefined && selected && unreadLeft() === 0;
+    }
 }
 
 /**

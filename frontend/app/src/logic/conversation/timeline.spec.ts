@@ -69,6 +69,23 @@ describe("the unread divider, once everything after it is read", () => {
         first.of(group("b"), () => undefined);
         expect(first.of(group("a"), () => 12)).toBe(12);
     });
+
+    test("goes once the chat is selected and nothing is left unread", () => {
+        expect(FirstUnread.readThrough(5, true, () => 0)).toBe(true);
+        expect(FirstUnread.readThrough(5, true, () => 2)).toBe(false);
+    });
+
+    // the screen still shows the chat while it leaves, or while another chat is opened over it
+    // (a quote, a link, a notification): nothing was read then
+    test("stays while the chat isn't selected, without asking what's unread", () => {
+        const unreadLeft = vi.fn(() => 0);
+        expect(FirstUnread.readThrough(5, false, unreadLeft)).toBe(false);
+        expect(unreadLeft).not.toHaveBeenCalled();
+    });
+
+    test("has nothing to go when there's no divider", () => {
+        expect(FirstUnread.readThrough(undefined, true, () => 0)).toBe(false);
+    });
 });
 
 describe("a chat opened with unread messages", () => {

@@ -637,21 +637,24 @@
     const unreadLeft = $derived.by(() => {
         // follows the read state as messages are read
         void $messagesRead;
-        if (chat === undefined || !selected) return 0;
+        if (chat === undefined) return 0;
         return messagesRead.unreadMessageCount(chat.id, chat.latestMessage?.event.messageIndex);
     });
     $effect(() => {
         const current = chat;
-        if (current === undefined || firstUnread === undefined || unreadLeft > 0) return;
+        if (current === undefined) return;
+        if (!FirstUnread.readThrough(firstUnread, selected, () => unreadLeft)) return;
         const fade = setTimeout(() => (dividerFading = true), DIVIDER_LINGER_MS);
         const gone = setTimeout(() => {
             firstUnreadMarker.seen(current.id);
             dividerFading = false;
             dividerSeen += 1;
         }, DIVIDER_LINGER_MS + DIVIDER_FADE_MS);
+        // stopped part way (the chat deselected as it fades): back in full, to linger again
         return () => {
             clearTimeout(fade);
             clearTimeout(gone);
+            dividerFading = false;
         };
     });
 
