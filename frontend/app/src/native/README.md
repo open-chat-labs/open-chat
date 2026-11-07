@@ -58,8 +58,8 @@ native/
                      someone's signed out
     you/             the You tab (N12): its root, Edit profile, Diamond, and the settings pages
                      (SettingsScreen and settings/: Appearance, Notifications, Chats, Communities,
-                     Storage, Bots, Account, CHIT's), pushed locally but for Diamond (?diamond)
-                     and CHIT's (?profile=chit), the web's URLs
+                     Storage, Bots, Account, CHIT's) and Delete account's steps, pushed locally
+                     but for Diamond (?diamond) and CHIT's (?profile=chit), the web's URLs
 ```
 
 Shared with the web tree rather than copied: the route table (`utils/routeTable.ts`), the route
