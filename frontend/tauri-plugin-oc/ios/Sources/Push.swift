@@ -22,17 +22,24 @@ final class Push: NSObject, UNUserNotificationCenterDelegate {
     private var tokenWaiters: [(String?) -> Void] = []
     private var pendingPresentations: [Int: (UNNotificationPresentationOptions) -> Void] = [:]
     private var nextPresentationId = 1
-    private var installed = false
+    private var claimedCenter = false
+    private var hookedAppDelegate = false
 
     // Takes over as the notification delegate. tauri-plugin-notification set itself first and only
     // handles local notifications, so those still go to it.
+    //
+    // Called twice: Tauri sets up plugins before UIApplicationMain, when there is no app delegate
+    // yet, so the token callbacks can only be added on the second call, from the plugin's load.
     func install() {
-        guard !installed else { return }
-        installed = true
-        swizzleAppDelegate()
-        let center = UNUserNotificationCenter.current()
-        previousDelegate = center.delegate
-        center.delegate = self
+        if !claimedCenter {
+            claimedCenter = true
+            let center = UNUserNotificationCenter.current()
+            previousDelegate = center.delegate
+            center.delegate = self
+        }
+        if !hookedAppDelegate {
+            hookedAppDelegate = swizzleAppDelegate()
+        }
     }
 
     // MARK: - Token
@@ -79,10 +86,9 @@ final class Push: NSObject, UNUserNotificationCenterDelegate {
 
     // Tauri's app delegate is generated and has no hook for the device token, so the callbacks
     // are added to its class at runtime
-    private func swizzleAppDelegate() {
+    private func swizzleAppDelegate() -> Bool {
         guard let delegate = UIApplication.shared.delegate else {
-            NSLog("[Push] no app delegate, so no APNs token")
-            return
+            return false
         }
         let cls: AnyClass = type(of: delegate)
         let registered: @convention(block) (AnyObject, UIApplication, NSData) -> Void = { _, _, token in
@@ -110,6 +116,8 @@ final class Push: NSObject, UNUserNotificationCenterDelegate {
         let application = UIApplication.shared
         application.delegate = nil
         application.delegate = delegate
+        NSLog("[Push] APNs callbacks added to the app delegate")
+        return true
     }
 
     // MARK: - Foreground
