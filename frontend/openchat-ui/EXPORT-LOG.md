@@ -691,3 +691,6 @@
 - `LongPressMenu`: a tap outside (Esc as before) closes it only when the press started on the veil. The press that opened the menu started on the row, under where the veil now is, and its release could end in a click on the veil (Chrome's touch emulation sends one after a long hold), which closed the menu as it opened. A press on the veil that ends in no click (a drag, a `pointercancel`) is forgotten when the press is cancelled and whenever the menu opens again, so it can't close the next opening.
 - `ToastQueue.show` returns the toast's own dismiss: it takes that toast down early (its Undo can't work any more: the Chats screen sent the leave or delete as it went) and leaves a toast that has taken its place alone. Spec'd.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-07 — your own deleted message's corners on the web, by hand
+- `ChatBubble`: the deleted placeholder took the right-aligned corners for your own message (`sent`) whatever the layout, so on the web, where every bubble sits on the inline-start side, yours looked mirrored. It now has the bubble's shape (the small corner at the start) whoever sent it, and the mirrored one only with `mirror` (your own on the inline-end side: mobile, native), as the bubble does. The corners are logical, so RTL follows.

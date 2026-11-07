@@ -104,7 +104,7 @@
 
 <div class="wrap">
   {#if deleted}
-    <div class="deleted" class:sent class:mirror>
+    <div class="deleted" class:mirror>
       <span class="trash"></span>
       <span class="deleted-text">{t(deletedText)}</span>
       <span class="deleted-time">{time}</span>
@@ -187,16 +187,15 @@
     gap: var(--space-8);
     padding: var(--space-12) var(--space-14);
     box-sizing: border-box;
-    border-radius: var(--radius-xs) var(--radius-xl) var(--radius-xl) var(--radius-xl);
+    /* the bubble's shape whoever sent it, as every bubble on the web (all on the inline-start side) */
+    border-radius: var(--radius-xl);
+    border-start-start-radius: var(--radius-xs);
     box-shadow: inset 0 0 0 1px var(--line-2);
 
-    &.sent {
-      border-radius: var(--radius-xl) var(--radius-xs) var(--radius-xl) var(--radius-xl);
-    }
-
-    /* mirrored, like the bubble: the grouped corner on the inline-end side */
+    /* mirrored, like the bubble (your own on the inline-end side: mobile, native): the grouped
+       corner on the inline-end side */
     &.mirror {
-      border-radius: var(--radius-xl);
+      border-start-start-radius: var(--radius-xl);
       border-start-end-radius: var(--radius-xs);
     }
   }
