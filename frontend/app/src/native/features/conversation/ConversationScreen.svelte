@@ -684,6 +684,25 @@
         rows.clear();
     });
 
+    // the day of the messages at the top of the list, pinned there while it scrolls through that
+    // day (the list says which: VirtualChatList's sticky date), as the old app's; the day's own pill
+    // takes over as it passes under it
+    let stickyEl = $state<HTMLElement>();
+    let stickyTop = $state<number>();
+    let stickyDate = $state<bigint>();
+    $effect(() => {
+        const el = stickyEl;
+        const area = el?.parentElement;
+        if (el === undefined || area == null) return;
+        // where it is on the screen, again whenever what's above the list changes (the search bar,
+        // the live call's strip)
+        const measure = () => (stickyTop = el.getBoundingClientRect().top);
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(area);
+        return () => observer.disconnect();
+    });
+
     function dateLabel(timestamp: bigint): string {
         void day;
         return client.formatMessageDate(timestamp, $_("today"), $_("yesterday"));
@@ -904,6 +923,11 @@
         <div class="messages"><div class="waiting"><Spinner size={20} /></div></div>
     {:else}
         <div class="messages" style:--group-gap="8px">
+            <div class="sticky-date" class:shown={stickyDate !== undefined} bind:this={stickyEl}>
+                {#if stickyDate !== undefined}
+                    <span class="pill">{dateLabel(stickyDate)}</span>
+                {/if}
+            </div>
             {#if waiting}
                 <div class="waiting"><Spinner size={20} /></div>
             {/if}
@@ -918,6 +942,8 @@
                 maintainScroll
                 visible
                 bind:initialised
+                stickyDateElTop={stickyTop}
+                bind:stickyDateTimestamp={stickyDate}
                 viewportClass="native-conversation-list">
                 {#snippet row(item, args)}
                     {#if item.kind === "timeline_date"}
@@ -1258,6 +1284,31 @@
     .date {
         display: flex;
         justify-content: center;
+    }
+
+    // the day pinned at the top: where a day's own pill sits in its row (16px down), over the
+    // messages
+    .sticky-date {
+        position: absolute;
+        z-index: 2;
+        inset-block-start: var(--space-16);
+        inset-inline: 0;
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+
+        &.shown {
+            opacity: 1;
+        }
+
+        // the same look as a day's own pill, but opaque over the messages
+        .pill {
+            background:
+                linear-gradient(var(--overlay-1), var(--overlay-1)),
+                var(--surface-0);
+        }
     }
 
     .pill {
