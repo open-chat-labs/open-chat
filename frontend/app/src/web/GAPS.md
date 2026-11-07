@@ -982,8 +982,8 @@ design export needs. Each entry says where it came up.
   - no QR code, and invited-but-not-joined people aren't listed.
   - it opens for a private channel too (its Add tab) and for any member of a public chat (to
     share its link), as the old header menu did (`canOpenInvite`).
-  - a failed invite or add shows two toasts: the dialog's "That didn't go through" and the app's
-    reason.
+  - a failed invite or add shows two toasts, one above the other: the dialog's "That didn't go
+    through" and the app's reason.
   - the Add tab shows an empty "<community> members" heading until you search, because the app
     passes no members up front.
   - a public chat's link shows a switch locked on, and the warning that access gates are skipped
@@ -1439,7 +1439,10 @@ design export needs. Each entry says where it came up.
   only) opens `SuspendUserDialog` (see "Suspend and unsuspend").
 - **Toasts**: the app's toast (`toastStore`, e.g. "Failed to un-archive chat") shows as the
   library's `UndoToast` without its action (`shell/Toasts.svelte`). The design has no failure tone
-  for a toast, so a failure looks like any other message.
+  for a toast, so a failure looks like any other message. The library components' own toasts (a
+  wallet send's, an invite's, a sign-in method's) show in the same layer (`setToastHost`, App),
+  over every dialog and veil (design pass 7), above the app's when both show (a failed invite: the
+  dialog's "That didn't go through" and the app's reason).
 - **Chat list, first cut** (`features/chats`, phase 3a): not yet carried over from the old row:
   avatars (swatches stand in: Swatches), the typing line, online presence, unread mentions, the
   thread count, archive / delete in the row menu, and server-side search (users and groups outside

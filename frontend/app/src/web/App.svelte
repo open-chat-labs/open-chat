@@ -7,6 +7,7 @@
     import { installBehaviours } from "@openchat/ui/src/lib/behaviours";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import { setI18n } from "@openchat/ui/src/lib/i18n";
+    import { setToastHost, ToastLayer } from "@openchat/ui/src/lib/toasts.svelte";
     import { currentThemeMode } from "@theme/themes";
     import {
         boundaryErrorHandler,
@@ -39,6 +40,11 @@
             return $locale ?? "en";
         },
     });
+
+    // The library's toasts (a wallet send's, an invite's …) show in the app's toast layer, over
+    // every dialog and its veil (shell/Toasts)
+    const libraryToasts = new ToastLayer();
+    setToastHost(libraryToasts.show);
 
     // The theme goes on <html> rather than a wrapper so that anything mounted outside the
     // app's own tree (dialogs, menus, tooltips) is themed too. The accent is the one picked on
@@ -86,7 +92,7 @@
         <Router>
             <RouteScreen />
         </Router>
-        <Toasts />
+        <Toasts library={libraryToasts} />
     {/if}
 
     {#snippet failed(_error, reset)}
