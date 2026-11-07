@@ -3,8 +3,9 @@ import { SvelteSet } from "svelte/reactivity";
 // Leaving a group or deleting a chat from the list with Undo (native design notes §1: destructive
 // actions show Undo), when the backend can't undo it: the chat leaves the list at once, and the
 // leave or delete is only sent once the Undo has had its time. Undo puts the chat back and sends
-// nothing. Anything still waiting when the list goes away is sent then, and its Undo has to go
-// with it (`settled`).
+// nothing. Opening the chat while it waits takes it back too (the native shell holds one for the
+// app). Anything still waiting when the holder goes away is sent then, and its Undo has to go with
+// it (`settled`).
 
 export class PendingRemovals {
     #delay: number;

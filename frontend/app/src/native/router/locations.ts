@@ -167,6 +167,14 @@ export function showsTabBar(steps: readonly StackStep[]): boolean {
     return steps.length <= 1;
 }
 
+/** The chat a stack has open (its conversation, or a thread in it), if any. */
+export function openChat(location: TabsLocation): ChatIdentifier | undefined {
+    for (const s of location.steps) {
+        if (s.screen.kind === "conversation") return s.screen.route.chatId;
+    }
+    return undefined;
+}
+
 /**
  * A tab's root screen, as the tab opens on it (`tabRootUrl`'s step): for drawing a tab not opened
  * yet while a swipe drags it in.

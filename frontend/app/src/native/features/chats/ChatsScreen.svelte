@@ -42,7 +42,6 @@
     import LongPressMenu from "@openchat/ui/src/native/LongPressMenu.svelte";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
     import { longPress } from "@openchat/ui/src/native/longPress";
-    import { UNDO_TOAST_MS } from "@openchat/ui/src/native/toastQueue.svelte";
     import { chatWithRoute } from "@src/logic/appEvents/appEvents";
     import {
         chatRowActionLabel,
@@ -63,7 +62,6 @@
     } from "@src/logic/chats/chatSearch";
     import { muteChat } from "@src/logic/chats/muteChat";
     import { PeopleSearch } from "@src/logic/chats/peopleSearch.svelte";
-    import { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
     import { chitButton } from "@src/logic/chit/chitButton";
     import { chatListFilterStore, disableChit, hideChitIcon } from "@src/stores/settings";
     import { now500 } from "@src/stores/time";
@@ -93,10 +91,8 @@
     const scope = $derived(screen.scope);
 
     // Leaving a group or deleting a DM can't be undone by the backend, so it waits for the Undo
-    // (PendingRemovals); anything still waiting goes when the screen does, and its Undo toast with
-    // it
-    const removals = new PendingRemovals(UNDO_TOAST_MS);
-    onDestroy(() => removals.flush());
+    // (the shell's PendingRemovals, which outlast this screen; opening the chat takes it back)
+    const removals = untrack(() => context.removals);
 
     // ---- the list: the scope's chats, pinned first, then the latest (chatListOrder, as
     // chatSummariesListStore has them for the route's scope)
@@ -431,10 +427,8 @@
             closeSearch();
             open(chat);
         } else {
-            // someone whose DM is waiting to be deleted: picking them takes the delete back, or
-            // it would go while they're in the chat
+            // someone whose DM is waiting to be deleted: opening it takes the delete back (Shell)
             const chatId: DirectChatIdentifier = { kind: "direct_chat", userId: rowId };
-            removals.undo(chatIdentifierToString(chatId));
             closeSearch();
             navigate(chatWithRoute(chatId, chats, scope));
         }

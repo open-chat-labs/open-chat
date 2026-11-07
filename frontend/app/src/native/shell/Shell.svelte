@@ -28,10 +28,13 @@
         routeStore,
         sortedCommunitiesStore,
         unreadDirectAndGroupCountsStore,
+        chatIdentifierToString,
         type CommunityIdentifier,
     } from "@client";
+    import { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
+    import { UNDO_TOAST_MS } from "@openchat/ui/src/native/toastQueue.svelte";
     import type { PluginListener } from "@tauri-apps/api/core";
-    import { getContext, onMount, untrack } from "svelte";
+    import { getContext, onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { minimizeApp } from "tauri-plugin-oc-api";
     import ScreenHost from "../features/app/ScreenHost.svelte";
@@ -41,6 +44,7 @@
         showsTabBar,
         locationFor,
         NATIVE_TABS,
+        openChat,
         tabRootStep,
         tabRootUrl,
         type LocalScreen,
@@ -70,6 +74,10 @@
     const client = getContext<OpenChat>("client");
 
     const stacks = new TabStacks();
+    // leaves and deletes waiting out their Undo, for the whole app (ScreenContext.removals);
+    // anything still waiting is sent when the shell goes (a sign-out)
+    const removals = new PendingRemovals(UNDO_TOAST_MS);
+    onDestroy(() => removals.flush());
     const overlays = new Overlays();
     // the screens' own toasts (Undo), in place of the app's (Toasts)
     const toasts = new ToastQueue();
@@ -119,7 +127,14 @@
 
     $effect(() => {
         const at = location;
-        if (at.area === "tabs") untrack(() => stacks.arrive(at));
+        if (at.area === "tabs")
+            untrack(() => {
+                stacks.arrive(at);
+                // a chat opened while its leave or delete waits out the Undo: opening it takes
+                // that back, or it would go while they're in it (search, New chat, a link alike)
+                const chat = openChat(at);
+                if (chat !== undefined) removals.undo(chatIdentifierToString(chat));
+            });
     });
 
     // the marketing pages (Landing, Learn, the terms …) are the website's: one the app is sent to
@@ -412,7 +427,12 @@
         return toasts.show(message, undo);
     }
 
-    const shared = { overlays, push: (screen: LocalScreen) => stacks.push(screen), toast: showToast };
+    const shared = {
+        overlays,
+        push: (screen: LocalScreen) => stacks.push(screen),
+        toast: showToast,
+        removals,
+    };
     const rootContext: ScreenContext = { back: undefined, ...shared };
     const pushedContext: ScreenContext = { back, ...shared };
 

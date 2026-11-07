@@ -1,3 +1,4 @@
+import type { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
 import type { Component } from "svelte";
 import type { LocalScreen, NativeScreen } from "../../router/locations";
 import type { Overlays } from "../../shell/overlays.svelte";
@@ -23,6 +24,11 @@ export type ScreenContext = {
      * down early, as when its Undo can't work any more (and not a toast that has replaced it).
      */
     toast: (message: string, undo?: () => void) => () => void;
+    /**
+     * Leaves and deletes waiting out their Undo (the shell's, one for the app): opening the chat
+     * by any way (search, New chat, a link) takes its wait back, and it lasts across tabs.
+     */
+    removals: PendingRemovals;
 };
 
 export type ScreenProps<S> = { screen: S; context: ScreenContext };

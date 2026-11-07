@@ -4,6 +4,7 @@ import {
     showsTabBar,
     locationFor,
     NATIVE_TABS,
+    openChat,
     tabRootStep,
     tabRootUrl,
     type LocationContext,
@@ -242,5 +243,23 @@ describe("a tab's root before it's opened", () => {
             if (location.area !== "tabs") throw new Error(`${tab}'s root isn't in the tabs`);
             expect(tabRootStep(tab, inCommunity)).toEqual(location.steps[0]);
         }
+    });
+});
+
+describe("the chat a stack has open", () => {
+    const opened = (url: string) => {
+        const location = at(url);
+        if (location.area !== "tabs") throw new Error(`${url} isn't in the tabs`);
+        return openChat(location);
+    };
+
+    test("is its conversation's, a thread in it included", () => {
+        expect(opened("/chats/user/u1")).toEqual({ kind: "direct_chat", userId: "u1" });
+        expect(opened("/chats/group/g1/3?open=true")).toEqual({ kind: "group_chat", groupId: "g1" });
+    });
+
+    test("is none on a list", () => {
+        expect(opened("/chats")).toBeUndefined();
+        expect(opened("/wallet")).toBeUndefined();
     });
 });
