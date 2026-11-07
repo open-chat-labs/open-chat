@@ -1,7 +1,6 @@
 import {
     cryptoLookup,
     i18nKey,
-    localUpdates,
     messageReplyContext,
     publish,
     routeForChatIdentifier,
@@ -13,6 +12,7 @@ import {
     type OpenChat,
     type UserLookup,
 } from "@client";
+import { editMessage, replyToMessage } from "@src/logic/conversation/draftActions";
 import { translateMessage } from "@src/logic/conversation/translateMessage";
 import { toastStore } from "@src/stores/toast";
 import { copyMessageUrl, shareMessage } from "@src/utils/share";
@@ -80,13 +80,10 @@ export async function runMessageAction(
     const context = { chatId };
     switch (action) {
         case "reply":
-            localUpdates.draftMessages.setReplyingTo(
-                context,
-                messageReplyContext(evt, target.users.get(msg.sender), context),
-            );
+            replyToMessage(chatId, evt, target.users);
             return;
         case "edit":
-            localUpdates.draftMessages.setEditing(context, evt, target.users);
+            editMessage(chatId, evt, target.users);
             return;
         case "forward":
             return { kind: "forward", evt };

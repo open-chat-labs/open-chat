@@ -1,5 +1,5 @@
 import type { EventWrapper, Message } from "@client";
-import type { ConversationContext } from "./conversation.adapter";
+import type { ConversationContext } from "./messageRow";
 import { RowCache } from "./rowCache";
 
 const ctx: ConversationContext = {

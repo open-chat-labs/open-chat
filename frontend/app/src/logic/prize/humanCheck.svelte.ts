@@ -111,3 +111,23 @@ export class HumanCheck {
         this.#deadline = undefined;
     }
 }
+
+/** A conversation's prizes' checks, one per prize, made when it's first asked for. */
+export class HumanChecks {
+    #checks = new Map<bigint, HumanCheck>();
+
+    /** The prize's check (made now if it hasn't been yet). */
+    for(messageId: bigint): HumanCheck {
+        let check = this.#checks.get(messageId);
+        if (check === undefined) {
+            check = new HumanCheck();
+            this.#checks.set(messageId, check);
+        }
+        return check;
+    }
+
+    /** Whether the prize's check is running (one never made isn't). */
+    running(messageId: bigint): boolean {
+        return this.#checks.get(messageId)?.running ?? false;
+    }
+}

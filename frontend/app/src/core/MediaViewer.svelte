@@ -1,14 +1,18 @@
 <!-- A message's image, GIF or video full screen, as the mobile app shows it (ZoomedImage,
      ZoomedVideo): an image pans and zooms (core/zoom: pinch or wheel, double click to zoom in or
      out), a video plays with its controls (one at a time), a GIF loops. Esc, the close button or a
-     click outside the media closes it. TODO(design): the design has no media viewer. -->
+     click outside the media closes it. The web and native conversations both open it, until the
+     design's MediaViewer is ported to the library (src/web/GAPS.md, Design pass 6); its close button
+     keeps clear of a phone's status bar (--safe-top). -->
+<!-- TODO(design): the library's MediaViewer (sender, actions, swipe between items, chrome that fades) -->
+
 <script lang="ts">
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
     import { modal } from "@openchat/ui/src/lib/behaviours/modal";
     import { zoomImage, type ImageZoom } from "@src/core/zoom";
     import { getProxyAdjustedBlobUrl, setPlayingMedia } from "@src/utils/media";
     import { onMount } from "svelte";
-    import type { MediaContent } from "./conversation.adapter";
+    import type { MediaContent } from "@src/logic/conversation/messageRow";
 
     interface Props {
         content: MediaContent;
@@ -123,7 +127,7 @@
 
     .close {
         position: absolute;
-        top: var(--space-16);
+        top: calc(var(--safe-top) + var(--space-16));
         inset-inline-end: var(--space-16);
     }
 </style>
