@@ -1,6 +1,12 @@
 import type { PrizeContent } from "@shared";
 import { ErrorCode } from "@shared";
-import { claimPrizeFailureReason, isTrustedClick, prizeView, type PrizeReader } from "./prizes";
+import {
+    claimPrizeFailureReason,
+    isTrustedClick,
+    prizeView,
+    prizeWithYourClaim,
+    type PrizeReader,
+} from "./prizes";
 
 const prize: PrizeContent = {
     kind: "prize_content",
@@ -64,5 +70,30 @@ describe("claiming a prize", () => {
             canClaim: false,
             gates: [{ met: false }],
         });
+    });
+});
+
+describe("a prize once your claim has succeeded", () => {
+    test("counts you as a winner and takes one of the remaining prizes, keeping the total", () => {
+        expect(prizeWithYourClaim(prize)).toMatchObject({
+            userIsWinner: true,
+            winnerCount: 2,
+            prizesRemaining: 1,
+            prizesPending: 0,
+        });
+    });
+
+    test("takes it from the pending ones when some were pending", () => {
+        expect(prizeWithYourClaim({ ...prize, prizesPending: 1 })).toMatchObject({
+            userIsWinner: true,
+            winnerCount: 2,
+            prizesRemaining: 2,
+            prizesPending: 0,
+        });
+    });
+
+    test("is the message's own once that counts you as a winner", () => {
+        const won = { ...prize, userIsWinner: true, winnerCount: 2, prizesRemaining: 1 };
+        expect(prizeWithYourClaim(won)).toBe(won);
     });
 });

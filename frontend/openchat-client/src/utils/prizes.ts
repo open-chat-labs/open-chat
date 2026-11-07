@@ -97,6 +97,27 @@ export function claimPrizeFailureReason(response: ClaimPrizeResponse): ResourceK
         : i18nKey("prizes.claimFailed");
 }
 
+/**
+ * A prize as it is once the user's claim has succeeded, before the message itself says so: the
+ * claim pays out before it returns, so the user is a winner and one more prize is taken. That one
+ * came out of the pending count if any were pending (it may have been among them when the message
+ * was read), out of the remaining ones otherwise; the total stays the same. A prize that already
+ * counts the user as a winner is the message's own.
+ */
+export function prizeWithYourClaim(content: PrizeContent): PrizeContent {
+    if (content.userIsWinner) return content;
+    const pending = content.prizesPending > 0;
+    return {
+        ...content,
+        userIsWinner: true,
+        winnerCount: content.winnerCount + 1,
+        prizesPending: pending ? content.prizesPending - 1 : content.prizesPending,
+        prizesRemaining: pending
+            ? content.prizesRemaining
+            : Math.max(0, content.prizesRemaining - 1),
+    };
+}
+
 /** A click the user made: a script's synthetic click can't claim a prize (claimPrize). */
 export function isTrustedClick(e: MouseEvent): boolean {
     return e instanceof MouseEvent && e.isTrusted && e.type === "click";

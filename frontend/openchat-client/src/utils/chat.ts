@@ -116,6 +116,7 @@ import { formatTokens } from "./cryptoFormatter";
 import { hasOwnerRights, isPermitted } from "./permissions";
 import { messageFlagsRestricted, messageRestricted } from "./restrictedContent";
 import { routeForScope } from "./routes";
+import { prizeWithYourClaim } from "./prizes";
 import { swapStatusWithLocal } from "./swaps";
 import { compareUsername, nullUser, userAvatarUrl } from "./user";
 
@@ -1901,19 +1902,8 @@ function mergeLocalUpdates(
         message.deleted = true;
     }
 
-    if (localUpdates?.prizeClaimed) {
-        if (message.content.kind === "prize_content" && !message.content.userIsWinner) {
-            message.content = { ...message.content };
-            message.content.userIsWinner = true;
-            // We can't tell for sure if this user's claim was contained within the `prizesPending` count or not,
-            // but it doesn't actually matter, so if any were pending, then decrement `prizesPending`, else
-            // decrement `prizesRemaining`
-            if (message.content.prizesPending > 0) {
-                message.content.prizesPending -= 1;
-            } else {
-                message.content.prizesRemaining -= 1;
-            }
-        }
+    if (localUpdates?.prizeClaimed && message.content.kind === "prize_content") {
+        message.content = prizeWithYourClaim(message.content);
     }
 
     if (localUpdates?.blockLevelMarkdown !== undefined) {
