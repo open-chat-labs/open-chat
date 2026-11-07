@@ -24,6 +24,9 @@ final class Push: NSObject, UNUserNotificationCenterDelegate {
     private var nextPresentationId = 1
     private var claimedCenter = false
     private var hookedAppDelegate = false
+    // UIApplication holds its delegate weakly. UIApplicationMain kept the one it created alive, but
+    // setting the delegate again below drops that, so this keeps it alive instead
+    private var appDelegate: UIApplicationDelegate?
 
     // Takes over as the notification delegate. tauri-plugin-notification set itself first and only
     // handles local notifications, so those still go to it.
@@ -113,6 +116,7 @@ final class Push: NSObject, UNUserNotificationCenterDelegate {
         }
         // UIKit notes which callbacks the delegate answers when the delegate is set, so callbacks
         // added after that are never called until it is set again
+        appDelegate = delegate
         let application = UIApplication.shared
         application.delegate = nil
         application.delegate = delegate
