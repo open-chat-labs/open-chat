@@ -40,6 +40,10 @@
     import AreYouSure from "../../AreYouSure.svelte";
     import Loading from "@shared_components/Loading.svelte";
     import { TimelineFlattener } from "@src/core/flatChatItems";
+    import {
+        threadEventReadByMe,
+        threadTimelineEvents,
+    } from "@src/logic/conversation/threadTimeline";
     import ChatEvent from "../ChatEvent.svelte";
     import ChatEventList from "../ChatEventList.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
@@ -95,10 +99,8 @@
     let canSendAny = $derived(client.canSendMessage(chat.id, "thread"));
     let canReact = $derived(client.canReactToMessages(chat.id));
     let canTipMessages = $derived(client.canTipMessages(chat.id));
-    let atRoot = $derived($threadEventsStore.length === 0 || $threadEventsStore[0]?.index === 0);
-    let events = $derived(
-        atRoot && rootEvent !== undefined ? [rootEvent, ...$threadEventsStore] : $threadEventsStore,
-    );
+    // the replies, headed by the root once they're loaded back to the first
+    let events = $derived(threadTimelineEvents(rootEvent, $threadEventsStore));
     const grouper = new TimelineGrouper();
     const flattener = new TimelineFlattener<Message>();
     let timeline = $derived(
@@ -397,9 +399,12 @@
                         accepted={isAccepted($unconfirmedStore, evt)}
                         confirmed={isConfirmed($unconfirmedStore, evt)}
                         failed={isFailed($failedMessagesStore, evt)}
-                        readByMe={evt.event.messageId === rootEvent?.event.messageId ||
-                            !isFollowedByMe ||
-                            isReadByMe($messagesRead, evt)}
+                        readByMe={threadEventReadByMe(
+                            evt,
+                            rootEvent?.event.messageId,
+                            isFollowedByMe,
+                            isReadByMe($messagesRead, evt),
+                        )}
                         observer={messageObserver}
                         focused={evt.event.kind === "message" &&
                             focusIndex === evt.event.messageIndex}

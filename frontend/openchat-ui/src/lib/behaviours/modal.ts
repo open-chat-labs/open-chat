@@ -5,6 +5,11 @@ type Entry = { boxRef: { current: HTMLElement } };
 
 const stack = (): Entry[] => ((window as unknown as { __ocDialogs?: Entry[] }).__ocDialogs ??= []);
 
+/** Whether a dialog (DialogShell, use:modal) is open: an Esc is then the topmost dialog's, not the page's. */
+export function dialogOpen(): boolean {
+  return stack().length > 0;
+}
+
 export function modal(node: HTMLElement, onEscape: (() => void) | undefined) {
   let handler = onEscape;
   const self: Entry = { boxRef: { current: node } };

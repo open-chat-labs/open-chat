@@ -7,7 +7,8 @@ import {
 } from "@client";
 
 /**
- * A vote on a poll in a chat's timeline, if the poll can take it (`pollVoteChange`; 5a invariant
+ * A vote on a poll in a chat's timeline, or a thread's (`threadRootMessageIndex`), if the poll can
+ * take it (`pollVoteChange`; 5a invariant
  * 4): the vote shows at once, as in the old trees. "none" when there was nothing to send (a DM's
  * poll, or no change), "failed" when the vote didn't go through, for the view to say so.
  */
@@ -18,6 +19,7 @@ export async function votePoll(
     msg: Pick<Message, "sender" | "messageId" | "messageIndex">,
     content: PollContent,
     next: number[],
+    threadRootMessageIndex?: number,
 ): Promise<"voted" | "none" | "failed"> {
     if (chat.kind === "direct_chat") return "none";
     const change = pollVoteChange(
@@ -28,7 +30,7 @@ export async function votePoll(
     if (change === undefined) return "none";
     const voted = await client.registerPollVote(
         chat.id,
-        undefined,
+        threadRootMessageIndex,
         msg.messageId,
         msg.messageIndex,
         change.answerIndex,

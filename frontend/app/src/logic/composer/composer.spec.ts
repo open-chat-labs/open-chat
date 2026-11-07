@@ -1,7 +1,12 @@
 import {
     FIND_MEMBERS_DELAY_MS,
     ScreenWidth,
+    type AttachmentContent,
+    type ChatSummary,
+    type DirectBotMessageOutcome,
+    type MessageContext,
     type MessagePermission,
+    type SendMessageOutcome,
     type UserGroupDetails,
     type UserSummary,
 } from "@client";
@@ -19,6 +24,7 @@ import {
     focusEntryOnOpen,
     MemberFinder,
     pickableAttachments,
+    sendComposed,
     throttleCountdown,
     TypingNotifier,
     type ComposerBuilder,
@@ -404,6 +410,60 @@ describe("what the entry says above the text", () => {
         expect(entryNotice({ throttledSeconds: undefined, videoProgress: undefined })).toBe(
             undefined,
         );
+    });
+});
+
+describe("sending what the composer holds", () => {
+    const chat = { kind: "group_chat", id: { kind: "group_chat", groupId: "g1" } } as ChatSummary;
+    const thread: MessageContext = { chatId: chat.id, threadRootMessageIndex: 4 };
+
+    function client(outcome: SendMessageOutcome = { kind: "posted" }, bot?: string) {
+        return {
+            directChatWithBot: vi.fn(() => bot),
+            sendDirectBotMessage: vi.fn((): DirectBotMessageOutcome => ({ kind: "sent" })),
+            sendMessage: vi.fn(async () => outcome),
+        };
+    }
+    const none = { content: undefined, shown: false };
+
+    test("4c invariant 1: a thread's composer posts to the thread, never the chat", async () => {
+        const c = client();
+        expect(await sendComposed(c, chat, thread, "hi", none)).toEqual({ kind: "posted" });
+        expect(c.sendMessage).toHaveBeenCalledWith(thread, "hi", false, undefined);
+    });
+
+    test("is refused, keeping the draft, when the client doesn't post it", async () => {
+        const c = client({ kind: "throttled" });
+        expect(await sendComposed(c, chat, { chatId: chat.id }, "hi", none)).toEqual({
+            kind: "refused",
+            reason: "throttled",
+        });
+    });
+
+    test("captions the attachment shown, with no text for an empty caption", async () => {
+        const c = client();
+        const file = { kind: "file_content" } as AttachmentContent;
+        await sendComposed(c, chat, { chatId: chat.id }, "", { content: file, shown: true });
+        expect(c.sendMessage).toHaveBeenCalledWith({ chatId: chat.id }, undefined, false, file);
+    });
+
+    test("sends nothing for a payment the composer doesn't show", async () => {
+        const c = client();
+        const prize = { kind: "prize_content_initial" } as AttachmentContent;
+        const sent = await sendComposed(c, chat, { chatId: chat.id }, "x", {
+            content: prize,
+            shown: false,
+        });
+        expect(sent).toEqual({ kind: "refused", reason: "payment_not_shown" });
+        expect(c.sendMessage).not.toHaveBeenCalled();
+    });
+
+    test("in a direct chat with a bot, sends the bot its command, but not from a thread", async () => {
+        const c = client({ kind: "posted" }, "bot1");
+        await sendComposed(c, chat, { chatId: chat.id }, "/go", none);
+        expect(c.sendDirectBotMessage).toHaveBeenCalledWith({ chatId: chat.id }, "/go", false);
+        await sendComposed(c, chat, thread, "/go", none);
+        expect(c.sendMessage).toHaveBeenCalledWith(thread, "/go", false, undefined);
     });
 });
 

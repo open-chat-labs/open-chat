@@ -56,6 +56,7 @@
     import TipBuilder from "./TipBuilder.svelte";
     import TipThumbnail from "./TipThumbnail.svelte";
     import UnresolvedReply from "./UnresolvedReply.svelte";
+    import { threadRootIndexFor } from "@src/logic/conversation/threadTimeline";
 
     const client = getContext<OpenChat>("client");
 
@@ -401,11 +402,8 @@
     let chitEarned = $derived(author?.totalChitEarned ?? 0);
     let hasAchievedMaxStreak = $derived((author?.maxStreak ?? 0) >= 365);
     let inThread = $derived(threadRootMessage !== undefined);
-    let threadRootMessageIndex = $derived(
-        threadRootMessage?.messageId === msg.messageId
-            ? undefined
-            : threadRootMessage?.messageIndex,
-    );
+    // the root, shown at the head of its thread, is the chat's message
+    let threadRootMessageIndex = $derived(threadRootIndexFor(threadRootMessage, msg));
     let fill = $derived(client.fillMessage(msg));
     let showAvatar = $derived($screenWidth !== ScreenWidth.ExtraExtraSmall);
     let translated = $derived($translationsStore.has(msg.messageId));

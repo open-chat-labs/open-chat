@@ -1158,6 +1158,27 @@ export const threadReplies: MessageGroupItem[] = [
   { side: 'received', name: 'Ana Ferreira', color: 'violet', messages: [{ text: "Works for me. I'll draft the tokens", time: '11:24' }] },
 ];
 export const threadFaces = ['linear-gradient(140deg,#B48CFF,#6A5CFF)', 'linear-gradient(140deg,#FFC061,#FF8A3D)', 'linear-gradient(140deg,#2EE6A8,#1FB6FF)'];
+// design pass 8: a text bubble's thread link under its reactions, received with faces and new replies, sent with its thread open
+export const threadBubbleReceived = {
+  side: 'received' as const,
+  text: 'Which scale do we start from?',
+  time: '09:11',
+  reactions: [{ emoji: '👍', count: 3 }, { emoji: '👀', count: 1 }],
+  threadCount: 7,
+  threadLastAt: '12m ago',
+  threadFaces,
+  threadNew: 2,
+};
+export const threadBubbleSent = {
+  side: 'sent' as const,
+  text: 'Thread open beside the chat',
+  time: '09:28',
+  reactions: [{ emoji: '👍', count: 1, mine: true }],
+  threadCount: 2,
+  threadLastAt: '09:40',
+  threadFaces: threadFaces.slice(0, 2),
+  threadActive: true,
+};
 
 export const joinGate = {
   depositAddress,

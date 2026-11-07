@@ -54,6 +54,7 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import { saveMediaToDevice } from "tauri-plugin-oc-api";
     import { getProxyAdjustedBlobUrl } from "../../utils/media";
+    import { threadRootIndexFor } from "@src/logic/conversation/threadTimeline";
 
     const client = getContext<OpenChat>("client");
 
@@ -109,11 +110,8 @@
     }: Props = $props();
 
     let mediaUrl = $derived(urlForMediaContent(msg.content));
-    let threadRootMessageIndex = $derived(
-        msg.messageId === threadRootMessage?.messageId
-            ? undefined
-            : threadRootMessage?.messageIndex,
-    );
+    // the root, shown at the head of its thread, is the chat's message
+    let threadRootMessageIndex = $derived(threadRootIndexFor(threadRootMessage, msg));
 
     function blockUser() {
         if (!actions.has("block_user") || chatId.kind !== "group_chat") return;

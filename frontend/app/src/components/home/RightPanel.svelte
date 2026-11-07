@@ -3,7 +3,7 @@
     import { searchToInvite } from "@src/logic/members/memberManagement.svelte";
     import { navigate } from "@utils/navigation";
     import type { ChatIdentifier, MemberRole, MultiUserChat, OpenChat, UserSummary } from "@client";
-    import { allUsersStore, currentUserIdStore, eventsStore, fullWidth, lastRightPanelState, publish, rightPanelHistory, rightPanelView, routeStore, selectedChatBlockedUsersStore, selectedChatBotsStore, selectedChatIdStore, selectedChatInvitedUsersStore, selectedChatLapsedMembersStore, selectedChatMembersStore, selectedChatPinnedMessagesStore, selectedChatSummaryStore, selectedChatWebhooksStore, selectedCommunityBlockedUsersStore, selectedCommunityBotsStore, selectedCommunityInvitedUsersStore, selectedCommunityLapsedMembersStore, selectedCommunityMembersStore, selectedCommunitySummaryStore, setRightPanelHistory } from "@client";
+    import { allUsersStore, currentUserIdStore, eventsStore, fullWidth, lastRightPanelState, publish, rightPanelHistory, rightPanelView, selectedChatBlockedUsersStore, selectedChatBotsStore, selectedChatIdStore, selectedChatInvitedUsersStore, selectedChatLapsedMembersStore, selectedChatMembersStore, selectedChatPinnedMessagesStore, selectedChatSummaryStore, selectedChatWebhooksStore, selectedCommunityBlockedUsersStore, selectedCommunityBotsStore, selectedCommunityInvitedUsersStore, selectedCommunityLapsedMembersStore, selectedCommunityMembersStore, selectedCommunitySummaryStore, setRightPanelHistory, threadMessageIndexStore } from "@client";
     import {
         MemberManagement,
         type MemberActionOutcome,
@@ -14,7 +14,7 @@
     import { toastStore } from "../../stores/toast";
     import { activeVideoCall } from "../../stores/video";
     import { currentTheme } from "../../theme/themes";
-    import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
+    import { threadClosedPath } from "@src/logic/threads/threadUrl";
     import Resizable from "../Resizable.svelte";
     import ChannelOrCommunityInvite from "./ChannelOrCommunityInvite.svelte";
     import ChannelOrCommunityMembers from "./ChannelOrCommunityMembers.svelte";
@@ -146,20 +146,9 @@
         }
     }
 
-    function stripThreadFromUrl(path: string) {
-        if (
-            ($routeStore.kind === "global_chat_selected_route" ||
-                $routeStore.kind === "selected_channel_route") &&
-            $routeStore.threadMessageIndex !== undefined
-        ) {
-            return removeThreadMessageIndex($routeStore.threadMessageIndex, path);
-        }
-        return path;
-    }
-
     function closeThread(_id: ChatIdentifier) {
         client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
-        navigate(stripThreadFromUrl(removeQueryStringParam("open")));
+        navigate(threadClosedPath(location.pathname, location.search, $threadMessageIndexStore));
         activeVideoCall.threadOpen(false);
     }
 

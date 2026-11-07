@@ -59,6 +59,7 @@
     import MenuIcon from "../MenuIcon.svelte";
     import MenuItem from "../MenuItem.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import { threadRootIndexFor } from "@src/logic/conversation/threadTimeline";
 
     const client = getContext<OpenChat>("client");
 
@@ -113,11 +114,8 @@
     const quickReactionIconSize = "1.2rem";
     let showConfirmDelete = $state(false);
 
-    let threadRootMessageIndex = $derived(
-        msg.messageId === threadRootMessage?.messageId
-            ? undefined
-            : threadRootMessage?.messageIndex,
-    );
+    // the root, shown at the head of its thread, is the chat's message
+    let threadRootMessageIndex = $derived(threadRootIndexFor(threadRootMessage, msg));
 
     let emojiToDisplay = $derived($quickReactions.slice(0, 4));
 

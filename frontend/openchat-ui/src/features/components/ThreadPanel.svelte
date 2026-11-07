@@ -1,14 +1,18 @@
 <!-- An open thread: the root stays pinned as a compact card above the replies, with who's in it and a Follow toggle.
      Lives in the right side panel on wide windows (back arrow) and in a modal on narrow ones (asModal: close button).
      Scrolls to the newest reply on open, on a new threadKey and when replies arrive. Sends carry the threadKey; a send that
-     returns a promise keeps the draft until it resolves. Follow flips at once and rolls back if onFollowChange rejects. -->
+     returns a promise keeps the draft until it resolves. Follow shows a spinner (and takes no click) while onFollowChange
+     is in flight, then the new state; it stays as it was if that rejects.
+     A host with its own message list and composer passes them (`list`, `composer`) in place of the panel's own: the list
+     then scrolls itself, and `replyCount` says how many replies there are. -->
 <script lang="ts">
-  import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
-  import { untrack } from 'svelte';
+  import { Waited } from '../../lib/behaviours/waited.svelte';
+  import { untrack, type Snippet } from 'svelte';
   import type { MessageGroupItem } from '../../lib/types';
   import IconButton from '../../lib/components/IconButton.svelte';
   import MessageComposer from '../../lib/components/MessageComposer.svelte';
   import MessageGroup from '../../lib/components/MessageGroup.svelte';
+  import Spinner from '../../lib/components/Spinner.svelte';
   import UnreadDivider from '../../lib/components/UnreadDivider.svelte';
   import { useT } from '../../lib/i18n';
 
@@ -47,6 +51,12 @@
     onAttach?: (kind: 'media' | 'file' | 'poll' | 'prize' | 'crypto' | 'swap' | 'memeFighter') => void;
     asModal?: boolean;
     onClose?: () => void;
+    /** The host's own list of the replies, in place of `replies` / `newReplies`; it scrolls itself. */
+    list?: Snippet;
+    /** The host's own composer, in place of the panel's (`onSend`, `onGif`, `onVoice` and `onAttach` are then unused). */
+    composer?: Snippet;
+    /** How many replies there are, for "N people · N replies", when the host lists them (`list`). */
+    replyCount?: number;
   }
 
   let {
@@ -65,21 +75,25 @@
     onAttach,
     asModal = false,
     onClose,
+    list,
+    composer,
+    replyCount,
   }: Props = $props();
   const t = useT();
 
-  let list: HTMLDivElement;
+  let scroller: HTMLDivElement | undefined = $state();
   let rootOpen = $state(false);
-  // optimistic follow (lib/behaviours/optimistic.svelte.ts); a new thread starts from the host's value
-  let followState = $state.raw(new Optimistic(() => following));
+  // follow, waited for (lib/behaviours/waited.svelte.ts); a new thread starts from the host's value
+  let followState = $state.raw(new Waited(() => following));
   const on = $derived(followState.current);
+  const busy = $derived(followState.pending);
 
-  const total = $derived(replies.length + newReplies.length);
+  const total = $derived(replyCount ?? replies.length + newReplies.length);
   const firstName = $derived(root.author.split(' ')[0]);
 
   function toBottom() {
     requestAnimationFrame(() => {
-      if (list) list.scrollTop = list.scrollHeight;
+      if (scroller) scroller.scrollTop = scroller.scrollHeight;
     });
   }
 
@@ -91,15 +105,16 @@
       if (key !== lastKey) {
         lastKey = key;
         rootOpen = false;
-        followState = new Optimistic(() => following);
+        followState = new Waited(() => following);
       }
     });
   });
 
+  // (a host's own list scrolls itself)
   $effect(() => {
     void threadKey;
     void replies.length;
-    toBottom();
+    if (!list) toBottom();
   });
 
   async function send(text: string) {
@@ -115,6 +130,7 @@
   });
 
   function follow() {
+    if (busy) return;
     const next = !on;
     followState.set(next, () => onFollowChange?.(next));
   }
@@ -145,36 +161,48 @@
       <span
         class="follow"
         class:on
+        class:busy
         onclick={follow}
         role="button"
         tabindex="0"
-        aria-pressed={on}><span class="bell"></span>{t(on ? 'ui.threadPanel.following' : 'ui.threadPanel.follow')}</span
+        aria-pressed={on}
+        aria-disabled={busy || undefined}
+        aria-busy={busy || undefined}
+        >{#if busy}<span class="wait"><Spinner size={13} tone={on ? 'accent' : 'ink'} /></span>{:else}<span class="bell"></span>{/if}{t(on ? 'ui.threadPanel.following' : 'ui.threadPanel.follow')}</span
       >
     </div>
   </div>
-  <div class="replies" bind:this={list}>
-    {#if total === 0}
-      <span class="empty">{t('ui.threadPanel.empty')}</span>
-    {/if}
-    {#each replies as r}
-      <div class="cell"><MessageGroup side={r.side} senderName={r.name ?? ''} color={r.color} messages={r.messages} /></div>
-    {/each}
-    {#if newReplies.length > 0}
-      <div class="cell"><UnreadDivider label={t('ui.threadPanel.new')} tone="accent" /></div>
-      {#each newReplies as r}
+  {#if list}
+    <div class="replies hosted">{@render list()}</div>
+  {:else}
+    <div class="replies" bind:this={scroller}>
+      {#if total === 0}
+        <span class="empty">{t('ui.threadPanel.empty')}</span>
+      {/if}
+      {#each replies as r}
         <div class="cell"><MessageGroup side={r.side} senderName={r.name ?? ''} color={r.color} messages={r.messages} /></div>
       {/each}
-    {/if}
-  </div>
-  <div class="composer">
-    <MessageComposer
-      placeholder={t('ui.threadPanel.replyTo', { name: firstName })}
-      onSend={send}
-      onGif={onGif ? (query) => onGif({ threadKey, query }) : undefined}
-      onVoice={onVoice ? (r) => onVoice({ threadKey, ...r }) : undefined}
-      {onAttach}
-    />
-  </div>
+      {#if newReplies.length > 0}
+        <div class="cell"><UnreadDivider label={t('ui.threadPanel.new')} tone="accent" /></div>
+        {#each newReplies as r}
+          <div class="cell"><MessageGroup side={r.side} senderName={r.name ?? ''} color={r.color} messages={r.messages} /></div>
+        {/each}
+      {/if}
+    </div>
+  {/if}
+  {#if composer}
+    <div class="composer hosted">{@render composer()}</div>
+  {:else}
+    <div class="composer">
+      <MessageComposer
+        placeholder={t('ui.threadPanel.replyTo', { name: firstName })}
+        onSend={send}
+        onGif={onGif ? (query) => onGif({ threadKey, query }) : undefined}
+        onVoice={onVoice ? (r) => onVoice({ threadKey, ...r }) : undefined}
+        {onAttach}
+      />
+    </div>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -358,6 +386,16 @@
     background: var(--overlay-2);
   }
 
+  .follow.busy {
+    cursor: default;
+  }
+
+  .wait {
+    display: flex;
+    width: 13px;
+    height: 13px;
+  }
+
   .bell {
     width: 13px;
     height: 13px;
@@ -374,6 +412,14 @@
     flex-direction: column;
     gap: var(--space-14);
     padding: var(--space-16) var(--space-14);
+  }
+
+  /* a host's own list: it lays itself out and scrolls itself */
+  .replies.hosted {
+    position: relative;
+    overflow: hidden;
+    gap: 0;
+    padding: 0;
   }
 
   .empty {
@@ -394,5 +440,10 @@
     padding: 0 var(--space-14) var(--space-16);
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* a host's own composer brings its own spacing */
+  .composer.hosted {
+    padding: 0;
   }
 </style>

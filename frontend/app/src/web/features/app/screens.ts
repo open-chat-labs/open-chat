@@ -5,6 +5,7 @@ import type { LocalDialog } from "./dialogs";
 import { LazyModule } from "../../lazyModule.svelte";
 import type { Regions } from "../../router/regions";
 import type { RightColumnState } from "../../shell/rightColumn.svelte";
+import type { MessageJumps } from "./messageJumps.svelte";
 
 // Which screen shows in each region (router/regions.ts), by the region's kind. A screen is loaded
 // the first time it shows, so each is its own chunk.
@@ -29,6 +30,8 @@ export type ScreenContext = {
     dialogs: DialogStack<LocalDialog>;
     /** The right column's open state, for a screen's own toggle (a conversation header's). */
     rightColumn: RightColumnState;
+    /** A message the conversation is asked to go to from the right column (a thread's root). */
+    jumps: MessageJumps;
     /** Whether the shell shows one column at a time. */
     narrow: boolean;
     /** Where a narrow screen's Back goes from the middle: the list it came from. */
@@ -48,7 +51,7 @@ export const leftScreens: Screens<LeftRegion> = {
     chats: () => import("../chats/ChatsScreen.svelte"),
 
     // the threads followed (phase 4, 4c)
-    threads: undefined,
+    threads: () => import("../thread/ThreadListScreen.svelte"),
 
     // notifications (phase 3d, ROUTES.md decision 7)
     activity: () => import("../activity/ActivityScreen.svelte"),
@@ -109,7 +112,7 @@ export const rightScreens: Screens<RightRegion> = {
     user_profile: undefined,
 
     // the open thread (phase 4, 4c: ThreadPanel)
-    thread: undefined,
+    thread: () => import("../thread/ThreadScreen.svelte"),
 
     // a proposals group's filters (phase 4, 4a)
     proposal_filters: undefined,

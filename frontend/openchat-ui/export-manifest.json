@@ -1,7 +1,7 @@
 {
   "package": "@openchat/ui",
   "exportedAt": "2026-11-07",
-  "pass": 7,
+  "pass": 8,
   "scope": "library + app components + docs",
   "source": "OpenChat design prototype",
   "tokens": {
@@ -70,8 +70,8 @@
     },
     "ChatBubble": {
       "source": "lib/ChatBubble.dc.html",
-      "sourceHash": "98c2e988",
-      "exportedAt": "2026-10-27",
+      "sourceHash": "c29c4968",
+      "exportedAt": "2026-11-07",
       "group": "library",
       "files": [
         "src/lib/components/ChatBubble.svelte"
@@ -223,8 +223,8 @@
     },
     "MessageGroup": {
       "source": "lib/MessageGroup.dc.html",
-      "sourceHash": "39508894",
-      "exportedAt": "2026-10-13",
+      "sourceHash": "55d8a945",
+      "exportedAt": "2026-11-07",
       "group": "library",
       "files": [
         "src/lib/components/MessageGroup.svelte"

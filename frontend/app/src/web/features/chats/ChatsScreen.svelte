@@ -22,6 +22,7 @@
         favouritesStore,
         i18nKey,
         messagesRead,
+        numberOfThreadsStore,
         pinChatFailureMessage,
         pinnedChatsStore,
         routeForChatIdentifier,
@@ -243,6 +244,7 @@
         (() => screen.dialogs.open({ kind: "manage", target: community.id, section: "main" }))}
     searchable
     onSearch={(q) => (query = q)}
+    showThreads={$numberOfThreadsStore > 0}
     threadsAction={() => navigate(withQueryStringFlag("threads"), "overlay")}
     loading={!$chatsInitialisedStore}
 />

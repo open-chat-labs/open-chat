@@ -68,4 +68,66 @@ describe("the right column's open state", () => {
         setMode("modal");
         expect(state.open).toBe(false);
     });
+
+    describe("for a thread", () => {
+        test("docked and closed, it shows for the thread and closes again with it, unremembered", () => {
+            const state = create();
+            state.open = false;
+            state.showThread();
+            expect(state.open).toBe(true);
+            cleanup();
+            // a reload meanwhile finds the user's choice
+            expect(create().open).toBe(false);
+        });
+
+        test("docked and closed, it closes again with the thread", () => {
+            const state = create();
+            state.open = false;
+            state.showThread();
+            state.threadClosed();
+            expect(state.open).toBe(false);
+        });
+
+        test("docked and open, closing the thread leaves it open", () => {
+            const state = create();
+            state.showThread();
+            state.threadClosed();
+            expect(state.open).toBe(true);
+        });
+
+        test("as a modal, it opens for the thread and closes with it unless it was open", () => {
+            setMode("modal");
+            const state = create();
+            state.showThread();
+            expect(state.open).toBe(true);
+            state.threadClosed();
+            expect(state.open).toBe(false);
+            state.open = true;
+            state.showThread();
+            state.threadClosed();
+            expect(state.open).toBe(true);
+        });
+
+        test("the user closing it while a thread shows closes it, and that's their choice", () => {
+            const state = create();
+            state.open = false;
+            state.showThread();
+            state.toggle();
+            expect(state.open).toBe(false);
+            state.threadClosed();
+            expect(state.open).toBe(false);
+            cleanup();
+            expect(create().open).toBe(false);
+        });
+
+        test("it stays shown when the window crosses the docking width", () => {
+            const state = create();
+            state.open = false;
+            state.showThread();
+            setMode("modal");
+            expect(state.open).toBe(true);
+            setMode("dock");
+            expect(state.open).toBe(true);
+        });
+    });
 });

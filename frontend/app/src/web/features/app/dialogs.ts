@@ -8,6 +8,7 @@ import type {
     GroupChatIdentifier,
     LeaveOrDelete,
     Message,
+    MessageContext,
     MultiUserChatIdentifier,
     P2PSwapContentInitial,
     PriceSubject,
@@ -124,22 +125,23 @@ export type LocalDialog =
           eventIndex: number;
           threadRootMessageIndex?: number;
       }
-    // the composer's "+" builders (5d): a poll, published from the dialog
-    | { kind: "poll_builder"; chatId: ChatIdentifier }
-    // a transfer, attached to the chat's draft: `defaultReceiver` is who it goes to unless the user
-    // picks someone else (the one being replied to), `editing` the staged one to change
+    // the composer's "+" builders (5d), each for the chat or thread (4c) its composer is in
+    // (`context`): a poll, published from the dialog
+    | { kind: "poll_builder"; context: MessageContext }
+    // a transfer, attached to the draft: `defaultReceiver` is who it goes to unless the user picks
+    // someone else (the one being replied to), `editing` the staged one to change
     | {
           kind: "send_crypto";
-          chatId: ChatIdentifier;
+          context: MessageContext;
           defaultReceiver?: string;
           editing?: CryptocurrencyContent;
       }
-    // a prize, attached to the chat's draft; `editing` the staged one to change
-    | { kind: "prize_builder"; chatId: ChatIdentifier; editing?: PrizeContentInitial }
-    // a swap offer, confirmed and attached to the chat's draft; `editing` the staged one
-    | { kind: "swap_offer"; chatId: ChatIdentifier; editing?: P2PSwapContentInitial }
+    // a prize, attached to the draft; `editing` the staged one to change
+    | { kind: "prize_builder"; context: MessageContext; editing?: PrizeContentInitial }
+    // a swap offer, confirmed and attached to the draft; `editing` the staged one
+    | { kind: "swap_offer"; context: MessageContext; editing?: P2PSwapContentInitial }
     // a Meme Fighter meme, made in the maker's frame and sent from the dialog
-    | { kind: "meme_fighter"; chatId: ChatIdentifier };
+    | { kind: "meme_fighter"; context: MessageContext };
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";

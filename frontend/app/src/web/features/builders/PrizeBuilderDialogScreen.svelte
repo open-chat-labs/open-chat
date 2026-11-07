@@ -80,7 +80,7 @@
         if (ledger !== undefined && token !== undefined) {
             form.choose(prizeChoices(prize));
             const outcome = form.attachTyped(
-                { chatId: dialog.chatId },
+                dialog.context,
                 token,
                 $cryptoBalanceStore.get(ledger) ?? 0n,
                 prize.draft.amt,

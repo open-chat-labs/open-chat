@@ -84,6 +84,7 @@
     import RepliesTo from "./RepliesTo.svelte";
     import ReportMessage from "./ReportMessage.svelte";
     import TipBuilder from "./TipBuilder.svelte";
+    import { threadRootIndexFor } from "@src/logic/conversation/threadTimeline";
 
     const client = getContext<OpenChat>("client");
 
@@ -376,11 +377,8 @@
     let scrollingId = $derived(
         inThread ? "scrollable-list-thread-messages" : "scrollable-list-chat-messages",
     );
-    let threadRootMessageIndex = $derived(
-        threadRootMessage?.messageId === msg.messageId
-            ? undefined
-            : threadRootMessage?.messageIndex,
-    );
+    // the root, shown at the head of its thread, is the chat's message
+    let threadRootMessageIndex = $derived(threadRootIndexFor(threadRootMessage, msg));
     let fill = $derived(client.fillMessage(msg));
     let showAvatar = $derived(
         chatType !== "direct_chat" && !showAsMe && $screenWidth !== ScreenWidth.ExtraExtraSmall,

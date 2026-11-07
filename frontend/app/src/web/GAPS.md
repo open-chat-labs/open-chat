@@ -360,6 +360,10 @@ design export needs. Each entry says where it came up.
     A preview's join bar (a channel not joined, a community previewed) comes with N8b.
   - **The message long-press menu** (and with it reactions beyond the chips, Copy, Forward, Info,
     Delete…) is N5d's: a long-press does nothing yet. A message's reactions toggle from its chips.
+  - **A message's thread** is N8a's (native PLAN): the replies link under messages and the thread
+    screen (replies, composer, follow). Until then the link is hidden: the conversation's mapping
+    gets `threads: false` (`ConversationContext.threads`), so no message has thread fields, rather
+    than a link that opens nothing.
   - **The details** (the header's title, the menu's details item) push a placeholder, a local
     `chat_details` screen, until N6 builds it.
   - **Calls** are N14's: the header's video and voice buttons, a live call's Join (its item and the
@@ -512,9 +516,21 @@ design export needs. Each entry says where it came up.
   it has left is worked out when the row is made and doesn't count down. A prize still being sent
   (`prize_content_initial`) shows as the card it will be, with "Sending prize…" where Claim would
   go (a failed one stays a text bubble, which shows the failure); one in a ledger the registry
-  doesn't carry stays a text bubble. No
-  reactions, quote or thread yet.
-- **Thread replies**: `ThreadPanel` renders replies with no react / menu / reply / edit handlers.
+  doesn't carry stays a text bubble. No quote yet.
+- **Thread panel and "N replies", by hand (4c, EXPORT-LOG 2026-11-07)**, to take back to the design
+  export: `ThreadPanel` takes `list` and `composer` snippets (and `replyCount`): the app lists a
+  thread's replies with the conversation's own list and composer (`MessageArea`), which the
+  panel's `MessageGroup`s and `MessageComposer` couldn't be (no paging, read marking, menus,
+  attachments). The thread link under a message is design pass 8's (`ChatBubble`'s bordered pill
+  under the reactions: faces, "N replies", "· N new", the accent while open; `threadFaces`,
+  `threadNew`, `threadActive`), but as its own component, `ThreadLink`, which `ChatBubble` draws
+  and `MessageGroup` draws under every other kind of message (from the message's thread fields),
+  where pass 8 draws it in `ChatBubble` only: so a poll, a swap or a file keeps its link, and no
+  message shows two (EXPORT-LOG, pass 8). `modal.ts` exports `dialogOpen()` for a page's own Esc.
+  `ThreadPanel`'s Follow waits for the host (`Waited`, a spinner) where it flipped at once.
+- **A group's sender name** (by hand, EXPORT-LOG 2026-11-07), to take back to the design export:
+  `MessageGroup`'s name above a run is as wide as the name (at the inline start, truncated past
+  the column), not stretched across it, so only the name opens the profile.
 - **Composer banner** (by hand, 8b): `ComposerBar` takes `onBannerAction`, passed to `Banner`'s
   `actionHandler` with `bannerAction` as its label (it had the label but no handler). Nothing in
   the app uses it yet.
@@ -1463,7 +1479,7 @@ design export needs. Each entry says where it came up.
   old list's go-to-mention button and sticky date aren't carried over; it keeps go-to-latest.
   Own messages show no name (the design's "You" would be the lower-case app string).
 - **Media messages** (`features/conversation`, 5a): images, memes, GIFs and videos show as
-  `MediaMessage` tiles. They have no reactions, quote, thread or edited mark yet (`MediaMessage`
+  `MediaMessage` tiles. They have no quote or edited mark yet (`MediaMessage`
   takes none). In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
   first click, which loads it in the bubble; the old trees put a "load image" button on it, which
   `MediaMessage` hasn't got. Unlike the old trees, the reader's own image is held too while it's
@@ -1483,7 +1499,7 @@ design export needs. Each entry says where it came up.
   voice message's caption isn't shown and a failed one shows no failed state (`VoiceMessage` has
   neither). Neither shows a sent or delivered tick (`VoiceMessage` and `FileMessage` take no
   status). A file shows its name, size and type and downloads under its own name. Neither has
-  reactions, a quote, a thread or an edited mark yet.
+  a quote or an edited mark yet.
 - **Link previews** (`features/conversation`, 5a): a text message's previews show as cards under
   its text (`ChatBubble` takes `previews` by hand, a `LinkCard` each, the card the design's
   `LinkPreview` has). The design's `LinkPreview` is a message kind of its own, with plain text and
@@ -1504,8 +1520,8 @@ design export needs. Each entry says where it came up.
   signs it by the bubble's side, which shows a transfer between two other people in a group as the
   reader's own receipt. Outside a DM it says who got it ("to Bob") unless that's the reader. "View
   transaction" opens the ledger's explorer. The caption is plain text (no markdown), the card
-  shows no sent or delivered tick (`TransferMessage` takes no status), and it has no reactions,
-  quote or thread yet. A failed transfer, or one in a ledger the registry
+  shows no sent or delivered tick (`TransferMessage` takes no status), and it has no quote
+  yet. A failed transfer, or one in a ledger the registry
   doesn't carry, stays a text bubble. The dollar value is worked out when the row is made (and
   again once the exchange rates first load); it doesn't follow the rates' later refreshes.
 - **Polls** (`features/conversation`, 5a): a poll shows as `PollMessage` and votes through
@@ -1514,7 +1530,7 @@ design export needs. Each entry says where it came up.
   design locks a poll only once it's closed or voted, and shows results only after a vote. A
   public poll shows no voters' avatars and has no "View votes" list yet (the old mobile
   `PollPublicVotes`). How long it has left is worked out when the row is made (3d, 5h, 12m), and
-  doesn't count down. No tick, reactions, quote or thread yet, and polls in threads aren't wired.
+  doesn't count down. No tick or quote yet.
   The library's `PollBuilderDialog` still offers "lock votes" with multiple choice, which the
   backend ignores: the poll is sent with `allowsVoteChange` (`newPollContent`, 5d), as the old
   builders send it, so a multiple-choice poll's votes can always change whatever was picked.
@@ -1530,8 +1546,7 @@ design export needs. Each entry says where it came up.
   shows as plain text under the card (`SwapOffer` takes `caption` and `canAct` by hand: no action
   while previewing). An offer still being sent (`p2p_swap_content_initial`) shows as the card it
   will be, with "Sending offer…" where the action would go (`sending`, by hand; a failed one stays
-  a text bubble, which shows the failure). Time left is worked out when the row is made. No tick, reactions, quote or thread yet, and swaps in threads aren't
-  wired.
+  a text bubble, which shows the failure). Time left is worked out when the row is made. No tick or quote yet.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
   Discord shows as the bot's (`logic/conversation/messageRow.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked
@@ -1695,8 +1710,9 @@ design export needs. Each entry says where it came up.
     have (the maker has its own), and hands back an image to stage in the media tray, where a
     Meme Fighter meme is sent by its URL. The frame sits in a `DialogShell` (`TODO(design)`: the
     design has no frame for the maker).
-  - Not yet: paying from an external wallet (above); a thread's composer offers no builders
-    (threads aren't wired); the design's "Poll sent · Undo" toast.
+  - Each opens for the composer it's picked from, a chat's or a thread's (4c: the dialogs take
+    its `MessageContext`).
+  - Not yet: paying from an external wallet (above); the design's "Poll sent · Undo" toast.
 - **Replies and edits in the composer** (5b): the chat's draft holds the message replied to or
   edited (`setReplyingTo`, `setEditing`, as in the old trees), and the composer shows it above the
   text (`composerContext`): who wrote it and its text, an edit starting from the message's text
@@ -1735,8 +1751,8 @@ design export needs. Each entry says where it came up.
     the native apps, `disableTipsFeature`) has its logic in `logic/tip/TipForm`, but the design has
     no tip dialog, and the menu doesn't offer Tip yet (`messageMenu`'s `tipRecipient` is left
     out). The tips a message got (5a) aren't shown either;
-  - the thread's items (reply in thread, follow / unfollow) wait for the thread (4c), and a
-    proposal's collapse for proposals;
+  - a proposal's collapse waits for proposals (the thread's items, reply in thread and follow /
+    unfollow, are 4c's: done);
   - the mobile app's "download media" (native save) is left to the narrow pass;
   - the library's `EmojiPicker` has a fixed set of about 56 emoji: no search over all of them,
     no custom emoji (`@CE(code)`, which the old pickers offered) and no skin tones. A custom
@@ -1750,8 +1766,8 @@ design export needs. Each entry says where it came up.
   app keeps a draft per chat and tells the others someone is typing.
 - **Composer focus** (by hand): `MessageComposer` takes `autofocus`, so the composer's text box
   takes focus when a chat is opened, on screens 992px and wider that aren't touch-only
-  (`focusEntryOnOpen`, as the old entry), unless a dialog is open. When the thread lands (4c), its
-  composer should take focus as the thread opens too.
+  (`focusEntryOnOpen`, as the old entry), unless a dialog is open. A thread's composer (4c) takes
+  focus as the thread opens, the same way.
 
 - **Native apps**: this tree doesn't register the native event listeners or signal `svelteReady`,
   so native builds leave it out whatever `OC_WEB_LAYOUT` says (`webLayoutFlag` in
@@ -1761,12 +1777,57 @@ design export needs. Each entry says where it came up.
   (`calculateHeight`) for mobile browsers. Not needed until the narrow layouts come in.
 - **Platform operator / moderator console hooks** (`window.platformOperator`,
   `window.platformModerator`) are only installed by the existing App trees.
-- **Right column host** (`features/app/DetailsColumn.svelte`, S1): every panel is a placeholder
-  until 4a (details, members, pinned, invites, proposal filters) and 4c (the thread) fill
-  `rightScreens`; the user profile, explore's filters and the call participants entries wait on
+- **Right column host** (`features/app/DetailsColumn.svelte`, S1): the invites and proposal
+  filters entries are still placeholders; the user profile, explore's filters and the call participants entries wait on
   8c, 8a and 7b. With nothing in `rightPanelHistory` the column shows the selected chat's details
   (the old docked panel showed nothing), and a new panel opens a closed column. Not carried over:
   dragging the column wider (the old panel's `Resizable`; the design's widths are fixed) and the
-  halloween theme's cobweb. A thread's placeholder lists its whole root message.
+  halloween theme's cobweb.
+- **Threads** (4c: `features/thread`, the conversation's `MessageArea`): the open thread in the
+  right column (`ThreadPanel`) and the list of threads (`?threads`, `ThreadList`). Left, or not
+  as the old trees have it:
+  - **The root shows once, as the panel's card** (decided): the list of replies starts with the
+    first reply, under the card, as the design has it (`threadReplyEvents`, 4c invariant 3). The
+    old lists head the replies with the root once they're loaded back to the first one
+    (`threadTimelineEvents`, unchanged), where it can be reacted to, opened in the menu, voted in;
+    here those are done on the root in the conversation. Like the conversation, the list sits at
+    the bottom of the panel while it's shorter than the panel (the list's `column-reverse`).
+  - **Opening a thread shows the right column**, docked or as the modal, even when the user had
+    closed it; closing the thread puts the column back as the user had it (`columnChange`,
+    `RightColumnState.showThread`). The old desktop's thread replaced its right panel's history, so
+    its panel went with it. Clicking the open thread's "N replies" (or its row in the list) after
+    closing the column over it shows it again (`openThreadInColumn`).
+  - **Follow / Following** shows a spinner and takes no click while the call is in flight, then
+    the new state (`Waited`); a failure toasts and leaves it as it was. The old buttons flipped at
+    once.
+  - **A cold load of `/:mi?open=true` on a message with no thread yet** (a "Reply in thread" link
+    shared before anyone replied) shows an empty right column: the client opens a thread on a cold
+    load only for a message that has one (`ChatEventList`), as in the old trees, where the panel
+    stayed closed. Starting one from the menu works.
+  - **No root**: while the root is gone from the chat's events (the event window replaced) the
+    column shows nothing (`rightPanelView`), where the old desktop panel showed a spinner.
+  - **No "Mark all as read"** (decided, not built): a ⋯ menu in the list of threads' header with
+    one item, "Mark all as read". Opening a thread reads it, as now.
+  - **The list of threads has no per-thread actions**: `ThreadList`'s rows have no unfollow (the
+    old desktop card's eye) or mark-as-read (the mobile card's menu), and show no latest replies, so
+    a row never marks its thread read on sight (`threadReadOnSight`, which the old cards use, needs
+    the replies on screen, 4c invariant 6): opening the thread reads it. Unfollowing is in the
+    open thread (Following) and in a message's menu. The library needs both actions on a row.
+  - **No loading state in `ThreadList`**: the first load shows a spinner in place of the whole list
+    (`TODO(design)`); a reload keeps the list up (the old lists' `initialised` was a const false,
+    so theirs went to a spinner on every reload: fixed in `logic/threads/threadPreviews`).
+  - **No group avatars in the list**: a chat's mark and a root author's face are swatches
+    (`swatchFor`, see Swatches); `followOnly` (followed without replying) isn't known to the client.
+  - **The unread threads count** on the chat list's "Thread replies" is L1's (as the old mobile
+    list's subtitle counts them); the entry shows only where there are followed threads.
+  - **Typing**: who's typing in the thread shows over its composer (`ComposerBar`), as in the
+    conversation, not in the panel's header as the old header had it.
+  - **Mobile's "peek"**: the old mobile list opened a thread without changing the route; here it's
+    always the root's own URL with `?threads` kept (ROUTES.md, decision 2), as the old desktop.
+  - **Tipping in a thread** waits for the tip dialog (5b), and will go by the "tip messages"
+    permission as the conversation's does. Calls: closing a thread doesn't tell the call it's
+    closed yet (`TODO(phase 7)`, the old panel's `activeVideoCall.threadOpen(false)`).
+  - **Unfollowing the last followed thread** with the list open goes back to the chat list (no
+    threads left), as the old desktop list does.
 - **Bot builder**: no screen yet. When it's built, its owner picker offers `botOwnerCandidates`
   (you, then the users you have direct chats with), as both old `AutoBotBuilder`s do.

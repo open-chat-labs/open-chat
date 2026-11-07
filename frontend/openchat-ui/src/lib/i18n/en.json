@@ -487,9 +487,13 @@
       "forwarded": "Forwarded",
       "lastReply": "Last reply {when}",
       "notDelivered": "Not delivered",
+      "openThread": "Open thread, {replies}",
+      "openThreadNew": "Open thread, {replies}, {fresh} new",
+      "openThreadTitle": "Open thread",
       "removePreview": "Remove preview",
       "removeReaction": "Remove your {emoji} · {count}",
-      "replies": "{count, plural, one {# reply} other {# replies}}"
+      "replies": "{count, plural, one {# reply} other {# replies}}",
+      "threadNew": "· {count} new"
     },
     "chatListHeader": {
       "addEmbeddedChannel": "Add embedded channel",

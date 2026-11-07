@@ -24,6 +24,7 @@
   import PollMessage from './PollMessage.svelte';
   import PrizeMessage from './PrizeMessage.svelte';
   import SwapOffer from './SwapOffer.svelte';
+  import ThreadLink from './ThreadLink.svelte';
   import TransferMessage from './TransferMessage.svelte';
   import VoiceMessage from './VoiceMessage.svelte';
 
@@ -520,9 +521,20 @@
         {:else if !m.kind || m.kind === 'text'}
           <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} mirror={mirrored} onToggleReaction={(c) => onReact?.(i, c)} />
         {/if}
-        <!-- every other kind's reactions, under it as under a text bubble (ChatBubble draws its own) -->
+        <!-- every other kind's reactions and thread, under it as under a text bubble (ChatBubble draws its own) -->
         {#if m.kind && m.kind !== 'text' && m.reactions?.length}
-          <ReactionChips reactions={m.reactions} onToggle={(c) => onReact?.(i, c)} />
+          <ReactionChips reactions={m.reactions} mirror={mirrored} onToggle={(c) => onReact?.(i, c)} />
+        {/if}
+        {#if m.kind && m.kind !== 'text' && (m.threadCount ?? 0) > 0}
+          <ThreadLink
+            count={m.threadCount ?? 0}
+            lastAt={m.threadLastAt}
+            faces={m.threadFaces}
+            newCount={m.threadNew}
+            active={m.threadActive}
+            mirror={mirrored}
+            onOpen={m.onOpenThread}
+          />
         {/if}
         {#if menuable(m) && hover === i && !touch && activeMenu !== i}
           <span class="bar" style:left={barLeft} data-msg-acts="" role="toolbar" aria-label={t('ui.messageGroup.actions')}>
@@ -642,6 +654,15 @@
   }
 
   .name {
+    /* only the name is its hit target (the column would stretch it across the chat): at the
+       inline start, as wide as it is, truncated past the column */
+    align-self: flex-start;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     padding: 0 var(--space-4);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
     color: var(--ink-3);

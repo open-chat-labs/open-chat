@@ -4,7 +4,7 @@
     import { onPopstate, pushDummyHistoryState } from "@src/utils/history";
     import { communityJoin, groupJoin } from "@src/logic/join/joinFlow.svelte";
     import { showJoinStep } from "@src/utils/join";
-    import { removeQueryStringParam, stripThreadFromUrl } from "@src/utils/urls";
+    import { threadClosedPath } from "@src/logic/threads/threadUrl";
     import { pendingShareStore } from "@stores/pendingShare";
     import { navigate, parentRoute } from "@utils/navigation";
     import { Container, portalState } from "component-lib";
@@ -17,6 +17,7 @@
         routeStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
+        threadMessageIndexStore,
         subscribe,
         type ChannelIdentifier,
         type ChatIdentifier,
@@ -237,7 +238,13 @@
                 // Calling navigate() would re-trigger the modal-close cycle and cause a
                 // recursive history.back(). This is URL synchronisation, not navigation.
                 // TODO - this is also very fishy - we shouldn't have to do special hacks for closing threads.
-                page.replace(stripThreadFromUrl(removeQueryStringParam("open")));
+                page.replace(
+                    threadClosedPath(
+                        location.pathname,
+                        location.search,
+                        threadMessageIndexStore.value,
+                    ),
+                );
                 activeVideoCall.threadOpen(false);
             }
             modalStack.pop();

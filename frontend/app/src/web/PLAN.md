@@ -39,6 +39,8 @@ every workstream.
     [#10236](https://github.com/open-chat-labs/open-chat/issues/10236); GAPS.md ("CHIT dialog");
   - Diamond (8e): GAPS.md ("Diamond");
   - message actions (5b) but tipping: what's left is in GAPS.md ("Message actions");
+  - threads (4c): the thread panel, the list of threads and "N replies" under every message; what's
+    left is in GAPS.md ("Threads");
   - Landing's loose ends (9b): the featured communities and the Android links; GAPS.md
     ("Landing").
 - **Calls come last:** 7a (the call-object decision), 7b and 7c wait until the rest of the web
@@ -168,7 +170,7 @@ the same thing (S2 was built twice):
 |---|---|---|---|---|
 | [4a](https://github.com/open-chat-labs/open-chat/issues/10112) | **Details panels.** <ul><li>`GroupPanel` for groups, channels and communities: details, members with roles, pinned messages, rules, gates summary, the `?everyone` and `?usergroup=` members views.</li><li>`DmPanel` for a DM, and `UserDialog`.</li></ul> It owns the shared **gates adapter** (gate config ↔ `AccessGates`), which 4b and 8b reuse, and the shared **user adapter** (name, avatar, bio, badges), which 8c reuses. Also the suspend user dialog (`UserDialog`'s menu), and moving the mobile-only `membersState` / `communityState` to `app/src/logic`. | L | S1; S2 opens `UserDialog` (agree it with whoever is on S2) | `screens.ts` |
 | [4b](https://github.com/open-chat-labs/open-chat/issues/10113) | **Manage and the group dialogs.** <ul><li>`GroupSettingsDialog`: sections hidden or read-only by role, the About page for members.</li><li>`InviteDialog`, `UserGroupDialog`, the Leave / Delete / Convert / Import dialogs, `CreateGroupDialog`, `NewChannelDialog`, `BotDialog`, `WebhookDialog`.</li><li>Create and edit community, including create from Explore's `onCreate`.</li></ul> It also wires the conversation header's other menu items (block, delete, leave, invite), the chat-list row's archive / delete, and the community header's menu. | L | S2; reuses 4a's gates adapter | `ConversationScreen` header menu, `ChatsScreen` row menu (agree the hooks with whoever is on 5a–5c) |
-| [4c](https://github.com/open-chat-labs/open-chat/issues/10114) | **Threads.** <ul><li>`ThreadPanel` in the right column for an open thread (`/:mi?open=true`, `/:mi/:tmi`): its replies through the same list as the conversation, and its own composer.</li><li>`ThreadList` as the `threads` left screen (`?threads`), All / Unread; opening a thread keeps `?threads`.</li><li>The "N replies" link under a message.</li></ul> | M | S1 | `features/conversation`, `screens.ts` |
+| [4c](https://github.com/open-chat-labs/open-chat/issues/10114) | **Threads.** Done: GAPS.md ("Threads"). <ul><li>`ThreadPanel` in the right column for an open thread (`/:mi?open=true`, `/:mi/:tmi`): its replies through the same list as the conversation, and its own composer.</li><li>`ThreadList` as the `threads` left screen (`?threads`), All / Unread; opening a thread keeps `?threads`.</li><li>The "N replies" link under a message.</li></ul> | M | S1 | `features/conversation`, `screens.ts` |
 | [4d](https://github.com/open-chat-labs/open-chat/issues/10115) | **`ChatPicker`.** Share to a chat, for `/share` (`TODO` in `Router.svelte`), invite links, Receive's "Share to chat", forward (5b) and sharing the daily result (8d). | S | S2 | `Router` |
 
 ### Messages and the composer (phase 5)

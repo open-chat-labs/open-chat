@@ -1,6 +1,6 @@
 import type { RightPanelContent } from "@client";
 import { describe, expect, test } from "vitest";
-import { historyWith, rightColumnPanel } from "./rightPanel";
+import { columnChange, historyWith, rightColumnPanel } from "./rightPanel";
 
 const thread: RightPanelContent = {
     kind: "message_thread_panel",
@@ -26,5 +26,32 @@ describe("historyWith", () => {
             { kind: "show_group_members" },
             community,
         ]);
+    });
+});
+
+describe("columnChange", () => {
+    const details: RightPanelContent = { kind: "group_details" };
+    const none: RightPanelContent = { kind: "no_panel" };
+
+    test("what the column held when it started, or the same panel again, changes nothing", () => {
+        expect(columnChange(undefined, thread)).toBe("none");
+        expect(columnChange(undefined, details)).toBe("none");
+        expect(columnChange(thread, thread)).toBe("none");
+    });
+
+    test("a thread shows the column, from nothing, another panel or another thread", () => {
+        expect(columnChange(none, thread)).toBe("show_thread");
+        expect(columnChange(details, thread)).toBe("show_thread");
+        expect(columnChange(thread, { ...thread, threadRootMessageIndex: 4 })).toBe("show_thread");
+    });
+
+    test("the thread going leaves the column as the user had it", () => {
+        expect(columnChange(thread, none)).toBe("thread_closed");
+    });
+
+    test("any other panel asked for opens it, over a thread too; nothing left changes nothing", () => {
+        expect(columnChange(none, details)).toBe("open");
+        expect(columnChange(thread, { kind: "show_group_members" })).toBe("open");
+        expect(columnChange(details, none)).toBe("none");
     });
 });

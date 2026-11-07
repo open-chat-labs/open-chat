@@ -62,7 +62,7 @@
         type PollContent,
         type VideoCallContent,
     } from "@client";
-    import Avatar from "@openchat/ui/src/lib/components/Avatar.svelte";
+    import Avatar, { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import CallEvent from "@openchat/ui/src/lib/components/CallEvent.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
@@ -221,6 +221,9 @@
             claimant,
             tokens: $cryptoLookup,
             rates: () => exchangeRatesLookupStore.value,
+            face: (userId) => AVATAR_GRADIENTS[senderColor(userId)],
+            // no thread screen yet (PLAN, N8a): no replies link under a message until then
+            threads: false,
         });
         // the chat's webhooks and details go with the selection
         return heldCtx.of(selected, live) ?? live;
@@ -855,7 +858,7 @@
     }
 
     function react(evt: EventWrapper<Message>, emoji: string) {
-        if (chat !== undefined) void toggleReaction(client, chat.id, evt.event, emoji);
+        if (chat !== undefined) void toggleReaction(client, { chatId: chat.id }, evt.event, emoji);
     }
 
     // the message replied to or edited (the chat's draft, which the composer shows), marked
