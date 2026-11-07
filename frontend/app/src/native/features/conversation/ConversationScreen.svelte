@@ -1384,7 +1384,9 @@
     }
 
     // fades and folds away once it has been read past
+    // the whole list's width, centred: back out of the received row's room on the end side
     .unread {
+        margin-inline-end: -44px;
         display: grid;
         grid-template-rows: 1fr;
         transition:
