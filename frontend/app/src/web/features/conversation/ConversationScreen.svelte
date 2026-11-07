@@ -178,6 +178,8 @@
         type MessageHandlers,
     } from "@src/logic/conversation/messageHandlers";
     import { messageOffer } from "@src/logic/conversation/messageOffer";
+    import { toggleReaction } from "@src/logic/conversation/reaction";
+    import { observeRead } from "@src/core/observeRead";
     import { votePoll } from "@src/logic/conversation/pollVote";
     import { FirstUnread, MessageLink, othersTyping } from "@src/logic/conversation/timeline";
     import MediaViewer from "@src/core/MediaViewer.svelte";
@@ -1036,14 +1038,9 @@
         void deleteMessage(client, confirmed.chatId, confirmed.evt);
     }
 
-    // a reaction added or taken off. The library's picker keeps no favourites of its own (the old
-    // trees' picker counted its picks), so every reaction added counts towards the quick ones
-    async function react(chatId: ChatIdentifier, evt: EventWrapper<Message>, emoji: string) {
-        const toggled = await client.toggleReaction({ chatId }, evt.event, emoji);
-        if (toggled === "added") {
-            quickReactions.incrementFavourite(emoji);
-            quickReactions.reload();
-        }
+    // a reaction added or taken off (toggleReaction counts it towards the quick ones)
+    function react(chatId: ChatIdentifier, evt: EventWrapper<Message>, emoji: string) {
+        void toggleReaction(client, chatId, evt.event, emoji);
     }
 
     // double-click to edit your own message or reply to someone else's (the "double-click to reply"
@@ -1210,24 +1207,6 @@
         void chatKey;
         return () => voice.stop();
     });
-
-    // a row the reader hasn't read is watched until it has been on screen long enough (the list's
-    // observer reads data-index / data-id)
-    function observeRead(
-        node: HTMLElement,
-        args: { observer?: IntersectionObserver; read: boolean },
-    ) {
-        let observer = args.observer;
-        if (!args.read) observer?.observe(node);
-        return {
-            update(next: { observer?: IntersectionObserver; read: boolean }) {
-                if (next.read || next.observer !== observer) observer?.unobserve(node);
-                observer = next.observer;
-                if (!next.read) observer?.observe(node);
-            },
-            destroy: () => observer?.unobserve(node),
-        };
-    }
 
     function isMessage(evt: EventWrapper<ChatEvent>): evt is EventWrapper<Message> {
         return evt.event.kind === "message";
