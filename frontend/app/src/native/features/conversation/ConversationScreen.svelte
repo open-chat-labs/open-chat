@@ -78,7 +78,6 @@
     import MediaViewer from "@src/core/MediaViewer.svelte";
     import { observeRead } from "@src/core/observeRead";
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
-    import { muteChat } from "@src/logic/chats/muteChat";
     import { callLength, callMedia, callState, isLiveCall } from "@src/logic/conversation/callItem";
     import { ChatSearch } from "@src/logic/conversation/chatSearch.svelte";
     import { directChatStatus } from "@src/logic/conversation/chatStatus";
@@ -128,6 +127,7 @@
     import type { NativeScreen } from "../../router/locations";
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenProps } from "../app/screens";
+    import { blockWithToast, favouriteWithToast, muteWithToast } from "../chats/chatToasts";
     import { removeWithUndo } from "../chats/removeWithUndo";
     import {
         callEventProps,
@@ -377,15 +377,30 @@
                 openDetails();
                 break;
             case "mute":
-            case "unmute":
-                void mute(current, id === "mute");
+            case "unmute": {
+                const muting = id === "mute";
+                void muteWithToast(
+                    client,
+                    context,
+                    current.id,
+                    muting,
+                    $_(muting ? "native.chats.toast.muted" : "native.chats.toast.unmuted"),
+                    $_,
+                );
                 break;
+            }
             case "favourite":
-                void client.addToFavourites(current.id);
+            case "unfavourite": {
+                const adding = id === "favourite";
+                void favouriteWithToast(
+                    client,
+                    context,
+                    current.id,
+                    adding,
+                    $_(adding ? "native.chats.toast.favourited" : "native.chats.toast.unfavourited"),
+                );
                 break;
-            case "unfavourite":
-                void client.removeFromFavourites(current.id);
-                break;
+            }
             case "leave":
                 if (current.kind !== "direct_chat") {
                     leaveOrDelete(
@@ -407,35 +422,21 @@
             case "block":
             case "unblock":
                 if (current.kind === "direct_chat") {
-                    void block(current.them.userId, id === "block");
+                    const blocking = id === "block";
+                    void blockWithToast(
+                        client,
+                        context,
+                        current.them.userId,
+                        blocking,
+                        $_(
+                            blocking
+                                ? "native.conversation.toast.blocked"
+                                : "native.conversation.toast.unblocked",
+                            { values: { name: title } },
+                        ),
+                    );
                 }
                 break;
-        }
-    }
-
-    async function mute(current: ChatSummary, muting: boolean) {
-        const failed = await muteChat(client, current.id, muting, undefined, $_);
-        if (failed !== undefined) {
-            toastStore.showFailureToast(failed);
-        } else {
-            context.toast($_(muting ? "native.chats.toast.muted" : "native.chats.toast.unmuted"));
-        }
-    }
-
-    // blocking says so with Undo (notes §1); unblocking just says so
-    async function block(userId: string, blocking: boolean) {
-        const outcome = await client.setBlockedInDirectChat(userId, blocking);
-        if (outcome.kind !== "success") {
-            toastStore.showOutcome(outcome);
-            return;
-        }
-        const name = title;
-        if (blocking) {
-            context.toast($_("native.conversation.toast.blocked", { values: { name } }), () => {
-                void client.setBlockedInDirectChat(userId, false);
-            });
-        } else {
-            context.toast($_("native.conversation.toast.unblocked", { values: { name } }));
         }
     }
 

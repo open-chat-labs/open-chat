@@ -1725,7 +1725,10 @@
                 "unmuted": "Son réactivé",
                 "archived": "Discussion archivée",
                 "left": "Vous avez quitté {name}",
-                "deleted": "Discussion supprimée"
+                "deleted": "Discussion supprimée",
+                "favourited": "Ajouté aux favoris",
+                "unfavourited": "Retiré des favoris",
+                "favouriteFailed": "Impossible de modifier tes favoris"
             },
             "newChat": {
                 "placeholder": "Rechercher un nom ou un @nom d'utilisateur",

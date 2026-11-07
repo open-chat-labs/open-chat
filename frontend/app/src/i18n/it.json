@@ -1725,7 +1725,10 @@
                 "unmuted": "Audio riattivato",
                 "archived": "Chat archiviata",
                 "left": "Hai lasciato {name}",
-                "deleted": "Chat eliminata"
+                "deleted": "Chat eliminata",
+                "favourited": "Aggiunto ai preferiti",
+                "unfavourited": "Rimosso dai preferiti",
+                "favouriteFailed": "Impossibile modificare i tuoi preferiti"
             },
             "newChat": {
                 "placeholder": "Cerca nome o @nomeutente",

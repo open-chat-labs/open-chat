@@ -11,7 +11,7 @@ import {
  * to the message to show if it failed.
  */
 export async function muteChat(
-    client: OpenChat,
+    client: Pick<OpenChat, "toggleMuteNotifications">,
     chatId: ChatIdentifier,
     mute: boolean | undefined,
     muteAtEveryone: boolean | undefined,

@@ -41,6 +41,7 @@
     import { StartStack, startEntry, startStepFor } from "../features/start/startStack.svelte";
     import {
         showsTabBar,
+        toastsAbove,
         locationFor,
         NATIVE_TABS,
         openChat,
@@ -52,7 +53,7 @@
         type TabsLocation,
     } from "../router/locations";
     import { releaseVelocity, type DragSample } from "@openchat/ui/src/native/sheetDrag";
-    import { ToastQueue } from "@openchat/ui/src/native/toastQueue.svelte";
+    import { ToastQueue, type PendingToast } from "@openchat/ui/src/native/toastQueue.svelte";
     import { toastStore } from "@src/stores/toast";
     import { backAction } from "./back";
     import { listenForSystemBack } from "./systemBack";
@@ -484,10 +485,16 @@
         return toasts.show(message, undo);
     }
 
+    function showPendingToast(message: string): PendingToast {
+        toastStore.hideToast();
+        return toasts.showPending(message);
+    }
+
     const shared = {
         overlays,
         push: (screen: LocalScreen) => void push(screen),
         toast: showToast,
+        pendingToast: showPendingToast,
         removals,
     };
     const rootContext: ScreenContext = { back: undefined, ...shared };
@@ -606,7 +613,7 @@
             <TabBar {tabs} selected={stacks.tab} onSelect={selectTab} />
         </div>
 
-        <Toasts above={barShown ? "tabBar" : "none"} queue={toasts} />
+        <Toasts above={toastsAbove(stacks.steps)} queue={toasts} />
     </div>
 {:else if location.area === "signed_out"}
     <div class="outside">

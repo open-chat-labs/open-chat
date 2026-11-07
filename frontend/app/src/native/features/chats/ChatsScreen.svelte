@@ -60,7 +60,6 @@
         resultSection,
         searchTerm,
     } from "@src/logic/chats/chatSearch";
-    import { muteChat } from "@src/logic/chats/muteChat";
     import { PeopleSearch } from "@src/logic/chats/peopleSearch.svelte";
     import { chitButton } from "@src/logic/chit/chitButton";
     import { chatListFilterStore, disableChit, hideChitIcon } from "@src/stores/settings";
@@ -73,6 +72,7 @@
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenProps } from "../app/screens";
     import ChatSearch, { SEARCH_LEAVE_MS, type SearchSection } from "./ChatSearch.svelte";
+    import { favouriteWithToast, muteWithToast } from "./chatToasts";
     import { removeWithUndo as removeChatWithUndo } from "./removeWithUndo";
     import {
         chatResult,
@@ -259,22 +259,28 @@
                 break;
             }
             case "favourite":
-                await client.addToFavourites(chat.id);
+            case "unfavourite": {
+                const adding = action === "favourite";
+                await favouriteWithToast(
+                    client,
+                    context,
+                    chat.id,
+                    adding,
+                    $_(adding ? "native.chats.toast.favourited" : "native.chats.toast.unfavourited"),
+                );
                 break;
-            case "unfavourite":
-                await client.removeFromFavourites(chat.id);
-                break;
+            }
             case "mute":
             case "unmute": {
                 const mute = action === "mute";
-                const failed = await muteChat(client, chat.id, mute, undefined, $_);
-                if (failed !== undefined) {
-                    toastStore.showFailureToast(failed);
-                } else {
-                    context.toast(
-                        $_(mute ? "native.chats.toast.muted" : "native.chats.toast.unmuted"),
-                    );
-                }
+                await muteWithToast(
+                    client,
+                    context,
+                    chat.id,
+                    mute,
+                    $_(mute ? "native.chats.toast.muted" : "native.chats.toast.unmuted"),
+                    $_,
+                );
                 break;
             }
             case "mark_read":

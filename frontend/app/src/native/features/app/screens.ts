@@ -1,3 +1,4 @@
+import type { PendingToast } from "@openchat/ui/src/native/toastQueue.svelte";
 import type { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
 import type { Component } from "svelte";
 import type { LocalScreen, NativeScreen } from "../../router/locations";
@@ -26,6 +27,11 @@ export type ScreenContext = {
      * down early, as when its Undo can't work any more (and not a toast that has replaced it).
      */
     toast: (message: string, undo?: () => void) => () => void;
+    /**
+     * Shows a toast in place of the one showing for an action still on its way (a block), with a
+     * small loader in place of its buttons until it's settled: `done` (with Undo) or `failed`.
+     */
+    pendingToast: (message: string) => PendingToast;
     /**
      * Leaves and deletes waiting out their Undo (the shell's, one for the app): opening the chat
      * by any way (search, New chat, a link) takes its wait back, and it lasts across tabs.

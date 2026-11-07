@@ -398,6 +398,12 @@ design export needs. Each entry says where it came up.
     ChatEventList's `loadedRange`, which the conversation holds with them), as it does when
     another chat replaces it.
   - **Mute** is Mute / Unmute (no durations, as on Chats' rows).
+  - **Toasts** sit above the composer in a conversation (the kit's `footer` placement). Mute,
+    favourite and unblock say so at once, as the client shows the change at once (`localUpdates`),
+    here and on Chats' rows; a refusal takes the toast's place. A block's toast shows at once with
+    a small loader, which gives way to Undo and the close once the block is in (`showPending`,
+    ours: the design's toast has no waiting state). Leave and delete don't wait: nothing is sent
+    until their Undo has gone (`PendingRemovals`).
   - **Typing** couldn't be seen end to end here: typing reaches peers over WebRTC, which the browser
     check's environment didn't connect. The bubble and the strip were checked by setting the names.
     Their words are the library's (`ui.typingIndicator.typing`), English only.

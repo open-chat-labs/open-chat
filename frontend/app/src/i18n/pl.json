@@ -1725,7 +1725,10 @@
                 "unmuted": "Wyłączono wyciszenie",
                 "archived": "Czat zarchiwizowany",
                 "left": "Opuszczono {name}",
-                "deleted": "Czat usunięty"
+                "deleted": "Czat usunięty",
+                "favourited": "Dodano do ulubionych",
+                "unfavourited": "Usunięto z ulubionych",
+                "favouriteFailed": "Nie udało się zmienić ulubionych"
             },
             "newChat": {
                 "placeholder": "Szukaj imienia lub @nazwy użytkownika",

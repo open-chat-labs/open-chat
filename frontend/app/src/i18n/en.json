@@ -1640,7 +1640,10 @@
                 "unmuted": "Unmuted",
                 "archived": "Chat archived",
                 "left": "You left {name}",
-                "deleted": "Chat deleted"
+                "deleted": "Chat deleted",
+                "favourited": "Added to favourites",
+                "unfavourited": "Removed from favourites",
+                "favouriteFailed": "Couldn't change your favourites"
             },
             "newChat": {
                 "placeholder": "Search name or @username",

@@ -1725,7 +1725,10 @@
                 "unmuted": "Đã bật tiếng",
                 "archived": "Đã lưu trữ cuộc trò chuyện",
                 "left": "Bạn đã rời {name}",
-                "deleted": "Đã xóa cuộc trò chuyện"
+                "deleted": "Đã xóa cuộc trò chuyện",
+                "favourited": "Đã thêm vào mục yêu thích",
+                "unfavourited": "Đã xóa khỏi mục yêu thích",
+                "favouriteFailed": "Không thể thay đổi mục yêu thích của bạn"
             },
             "newChat": {
                 "placeholder": "Tìm tên hoặc @tên người dùng",

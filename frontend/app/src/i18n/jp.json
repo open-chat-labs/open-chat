@@ -1725,7 +1725,10 @@
                 "unmuted": "ミュートを解除しました",
                 "archived": "チャットをアーカイブしました",
                 "left": "{name} から退出しました",
-                "deleted": "チャットを削除しました"
+                "deleted": "チャットを削除しました",
+                "favourited": "お気に入りに追加しました",
+                "unfavourited": "お気に入りから削除しました",
+                "favouriteFailed": "お気に入りを変更できませんでした"
             },
             "newChat": {
                 "placeholder": "名前または @ユーザー名 で検索",

@@ -1725,7 +1725,10 @@
                 "unmuted": "ההשתקה בוטלה",
                 "archived": "הצ'אט הועבר לארכיון",
                 "left": "עזבת את {name}",
-                "deleted": "הצ'אט נמחק"
+                "deleted": "הצ'אט נמחק",
+                "favourited": "נוסף למועדפים",
+                "unfavourited": "הוסר מהמועדפים",
+                "favouriteFailed": "לא ניתן היה לשנות את המועדפים שלך"
             },
             "newChat": {
                 "placeholder": "חיפוש שם או @שם משתמש",

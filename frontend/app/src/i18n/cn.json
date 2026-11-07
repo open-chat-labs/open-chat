@@ -1725,7 +1725,10 @@
                 "unmuted": "已取消静音",
                 "archived": "聊天已归档",
                 "left": "你已退出 {name}",
-                "deleted": "聊天已删除"
+                "deleted": "聊天已删除",
+                "favourited": "已添加到收藏",
+                "unfavourited": "已从收藏中移除",
+                "favouriteFailed": "无法更改你的收藏"
             },
             "newChat": {
                 "placeholder": "搜索名字或 @用户名",

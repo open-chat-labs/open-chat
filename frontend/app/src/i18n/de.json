@@ -1725,7 +1725,10 @@
                 "unmuted": "Stummschaltung aufgehoben",
                 "archived": "Chat archiviert",
                 "left": "Du hast {name} verlassen",
-                "deleted": "Chat gelöscht"
+                "deleted": "Chat gelöscht",
+                "favourited": "Zu Favoriten hinzugefügt",
+                "unfavourited": "Aus Favoriten entfernt",
+                "favouriteFailed": "Deine Favoriten konnten nicht geändert werden"
             },
             "newChat": {
                 "placeholder": "Name oder @Benutzername suchen",

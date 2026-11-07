@@ -1,6 +1,6 @@
 <!-- The native toast, the kit's: the app's (toastStore: showFailureToast, showSuccessToast) and the
      screens' own (`queue`, ScreenContext.toast, which can offer Undo), above the tab bar on a tab's
-     root, above the safe area on a pushed screen. One at a time: whichever came last takes the
+     root, above a conversation's composer, above the safe area on another pushed screen. One at a time: whichever came last takes the
      other's place. The app's failure stays until it's closed, as in the other trees, and its success
      goes by itself (toastStore); a screen's goes by itself (ToastQueue: 2.6s, 5s with Undo). -->
 <script lang="ts">
@@ -12,7 +12,7 @@
     import { untrack } from "svelte";
     import { _ } from "svelte-i18n";
 
-    let { above, queue }: { above: "tabBar" | "none"; queue: ToastQueue } = $props();
+    let { above, queue }: { above: "tabBar" | "footer" | "none"; queue: ToastQueue } = $props();
 
     const toast = $derived($toastStore);
     // the key is a store of its own, which can change while the toast shows
@@ -40,7 +40,12 @@
             shownFor = toast;
             shownId--;
         }
-        return { id: shownId, message: interpolate($_, resourceKey), undoable: false };
+        return {
+            id: shownId,
+            message: interpolate($_, resourceKey),
+            undoable: false,
+            pending: false,
+        };
     });
 
     const shown = $derived(queue.current ?? fromApp);
