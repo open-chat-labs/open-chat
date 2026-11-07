@@ -14,6 +14,7 @@
     import { incomingVideoCall } from "@stores/video";
     import "@utils/markdown";
     import { followWindowInsets } from "@utils/native/notification_channels";
+    import { followThemeInSystemBars } from "@utils/native/systemBarsStyle";
     import { notifyCallJoined } from "@utils/native/call_bridge";
     import {
         clearChatShortcutsOnLogout,
@@ -111,6 +112,11 @@
             unsubKeyboard();
         };
     });
+
+    if (client.isNativeAndroid()) {
+        // the system bars' icons, dark over a light theme (for the app's lifetime)
+        followThemeInSystemBars();
+    }
 
     if (client.isNativeApp()) {
         // the current insets at once, signed in or not, then each change (followWindowInsets)

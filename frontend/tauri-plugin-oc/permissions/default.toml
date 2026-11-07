@@ -6,6 +6,7 @@ permissions = [
     "allow-sign-up",
     "allow-registerListener",
     "allow-removeListener",
+    "allow-remove-listener",
     "allow-get-fcm-token",
     "allow-get-apns-device",
     "allow-show-notification",
@@ -37,4 +38,5 @@ permissions = [
     "allow-get-store-update",
     "allow-haptic",
     "allow-get-window-insets",
+    "allow-set-system-bars-style",
 ]

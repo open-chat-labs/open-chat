@@ -676,3 +676,11 @@
 
 ## 2026-11-06 — the swap offer card's sending state (5d testing), by hand
 - `SwapOffer`: `sending` shows the card with "Sending offer…" and a spinner where Cancel offer / Accept swap would go (`ui.swapOffer.sending`), as `PrizeMessage` does. In meta.json.
+
+## 2026-11-06 — native: accent swatch tokens (native N4, #10367), by hand
+- tokens.css: `--swatch-pink`, `--swatch-orange`, `--swatch-blue`, `--swatch-green` on `:root`: each accent as itself whatever the root's accent is, for an accent picker's swatches (`SettingsSwatches`' `colour`). An element's `--accent` is the root's, so an app couldn't name the other accents without hard-coding them. The values are the accents' dark ones (each family's `--dark-accent`). The native start's Appearance sheet uses them, and so does the docs' native settings demo (`nativeAccents`, which had the hex values).
+- `BottomSheet`: the title's line height is 1.25 (was 1), as its one line is cut with overflow hidden, which clipped the descenders ("Language", "Appearance").
+
+## 2026-11-06 — native: the swatches in each mode's shade, and a menu's pop (native N4, #10367), by hand
+- tokens.css: the light mode's `--swatch-blue` and `--swatch-green` are the light accents (#3D8BFF, #16B583), so a swatch is the colour picking it gives; dark areas (`[data-always-dark]`) keep the dark ones. Pink and orange are the same in both.
+- global.css: `oc-menu-pop` (from opacity 0, 4px down, 98%), a menu opening from its anchor: the native start's Appearance menu.

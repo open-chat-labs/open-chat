@@ -46,6 +46,10 @@
   --status-online:#12A87B; --status-warning:#A2650B;
 }
 
+/* An accent picker's swatches: each accent as itself, whichever accent the root has, in the mode's own shade (SettingsSwatches' colours). */
+:root{--swatch-pink:#FF5672;--swatch-orange:#FF8A3D;--swatch-blue:#3D9BFF;--swatch-green:#2EE6A8}
+[data-mode="light"]{--swatch-blue:#3D8BFF;--swatch-green:#16B583}
+[data-always-dark]{--swatch-blue:#3D9BFF;--swatch-green:#2EE6A8}
 /* Accent families. Each defines the accent ramp plus the sent-bubble family. A [data-accent] element declares its
    dark family as --dark-*, and a dark root (or a [data-always-dark] element below) reads it from there, so an
    always-dark element takes the accent of its nearest [data-accent] root, or its own data-accent. */

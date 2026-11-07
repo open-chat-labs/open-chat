@@ -4,6 +4,7 @@ import {
     linkedPrincipalProvider,
     linkedSignInProviders,
     linkIdentitiesResult,
+    linkingCodeFailure,
     markCurrentSignIn,
     shortSignInPrincipal,
     signInLastUsed,
@@ -222,5 +223,55 @@ describe("a sign-in method's principal", () => {
 
     test("is left whole when it has no middle groups", () => {
         expect(shortSignInPrincipal("2vxsx-fae")).toBe("2vxsx-fae");
+    });
+});
+
+describe("a sign-in with a linking code that didn't go through", () => {
+    const reason = (key: string) => ({ kind: "failed", reason: { kind: "resource_key", key } });
+    const refused = (code: number) => ({ kind: "error", code, message: undefined });
+
+    test("says why the backend refused the code", () => {
+        expect(linkingCodeFailure(refused(ErrorCode.LinkingCodeNotFound))).toMatchObject(
+            reason("native.auth.errors.linkingCodeNotFound"),
+        );
+        expect(
+            linkingCodeFailure(refused(ErrorCode.MaxLinkedIdentitiesLimitReached)),
+        ).toMatchObject(reason("native.auth.errors.maxLinkedIdentitiesLimitReached"));
+        expect(linkingCodeFailure(refused(ErrorCode.AlreadyRegistered))).toMatchObject(
+            reason("native.auth.errors.alreadyRegistered"),
+        );
+        expect(linkingCodeFailure(refused(ErrorCode.C2CError))).toMatchObject(
+            reason("native.auth.errors.default"),
+        );
+    });
+
+    test("a dismissed passkey prompt is a cancel, in the app or the browser", () => {
+        expect(linkingCodeFailure({ code: "userCancelled" })).toEqual({ kind: "cancelled" });
+        expect(linkingCodeFailure(new DOMException("dismissed", "NotAllowedError"))).toEqual({
+            kind: "cancelled",
+        });
+    });
+
+    test("says why a passkey couldn't be made", () => {
+        expect(linkingCodeFailure({ code: "noProviders" })).toMatchObject(
+            reason("native.auth.errors.noProviders"),
+        );
+        expect(linkingCodeFailure({ code: "passkeyCreateFailed" })).toMatchObject(
+            reason("native.auth.errors.createPasskeyFail"),
+        );
+        expect(linkingCodeFailure(new DOMException("no", "InvalidStateError"))).toMatchObject(
+            reason("native.auth.errors.createPasskeyFail"),
+        );
+    });
+
+    test("anything else is the default failure", () => {
+        expect(linkingCodeFailure(new Error("network"))).toMatchObject(
+            reason("native.auth.errors.default"),
+        );
+        expect(linkingCodeFailure(undefined)).toMatchObject(reason("native.auth.errors.default"));
+        // a worker call's rejection: the error, parsed back from JSON
+        expect(linkingCodeFailure({ message: "offline" })).toMatchObject(
+            reason("native.auth.errors.default"),
+        );
     });
 });

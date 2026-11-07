@@ -7,86 +7,25 @@ import type {
     EmailLinkSent,
     SignupDetails,
 } from "@openchat/ui/src/features/components/AuthDialog.svelte";
-import { configKeys, type SignInOutcome, type UserSummary } from "@shared";
+import { configKeys, type SignInOutcome } from "@shared";
 import type { PageAuth } from "@openchat/ui/src/pages/pageAuth.svelte";
-import { emailLinkResult, person, PROVIDERS, WALLETS } from "./auth.adapter";
+import { onAuthClosed, type SignedIn } from "@src/logic/auth/authFlow";
 import {
-    afterAbandoned,
-    onAuthClosed,
-    referralCode,
-    type ReferralLookup,
-    type SignedIn,
-} from "./authFlow";
+    abandonSignIn,
+    Referral,
+    resolveReferrer,
+    resumeSignIn,
+    searchReferrers,
+    signUp,
+} from "@src/logic/auth/signUp";
+import { emailLinkResult, person, PROVIDERS, WALLETS } from "./auth.adapter";
 
 // AuthDialog's host callbacks, on the client's operations: a sign-in settles with client.signIn's
 // outcome, an emailed link with client.requestEmailSignIn's, a sign-up with client.signUp's
-// (DATA.md, Auth).
+// (DATA.md, Auth). The sign-up, the referrer and a sign-in walked away from are the shared ones
+// (logic/auth/signUp.ts), as the native tree's signed-out start has them too.
 
-// A sign-in someone walked away from (closed its dialog, or left its page). It's kept here rather
-// than in a host, so whichever host is mounted when it comes to something, it's handled the same:
-// an identity without an account it leaves behind is signed out, and until then the in-app dialog
-// doesn't open for it (signInAbandoned). A new sign-in, or a user, ends it (afterAbandoned).
-let stopAbandoned: (() => void) | undefined = undefined;
-// an account being made: walking away lets it finish (it can't be taken back), and signs out only
-// an identity it left without one
-let registration: Promise<unknown> | undefined = undefined;
-
-/** Whether a sign-in someone walked away from is still being seen through. */
-export function signInAbandoned(): boolean {
-    return stopAbandoned !== undefined;
-}
-
-function abandonSignIn(client: OpenChat): void {
-    stopAbandoned?.();
-    let done = false;
-    let unsubscribe: (() => void) | undefined = undefined;
-    const stop = () => {
-        done = true;
-        unsubscribe?.();
-        if (stopAbandoned === stop) stopAbandoned = undefined;
-    };
-    stopAbandoned = stop;
-    unsubscribe = identityStateStore.subscribe((state) => {
-        if (done) return;
-        const next = afterAbandoned(state);
-        if (next === "wait") return;
-        if (next === "end") return stop();
-        // still abandoned until signed out, so the in-app dialog doesn't open meanwhile
-        done = true;
-        unsubscribe?.();
-        signOutIfLeftWithoutAccount(client, registration, stop);
-    });
-    // the store calls back during subscribe, before `unsubscribe` was set
-    if (done) unsubscribe();
-}
-
-async function signOutIfLeftWithoutAccount(
-    client: OpenChat,
-    making: Promise<unknown> | undefined,
-    stop: () => void,
-): Promise<void> {
-    try {
-        await making;
-    } catch {
-        // a failed sign-up leaves the identity without an account, which the check below sees
-    }
-    // the account it was making may have made it
-    if (afterAbandoned(identityStateStore.value) !== "sign_out") return stop();
-    try {
-        await client.logout();
-    } finally {
-        stop();
-    }
-}
-
-/** Whether someone can be named as a referrer: a bot or a suspended user would have the sign-up refused. */
-export function canRefer(user: UserSummary): boolean {
-    return user.kind === "user" && !user.suspended;
-}
-
-function resumeSignIn(): void {
-    stopAbandoned?.();
-}
+export { signInAbandoned } from "@src/logic/auth/signUp";
 
 export type Auth = Required<
     Pick<
@@ -142,14 +81,15 @@ export const AUTH_WALLETS: NonNullable<PageAuth["wallets"]> = {
 
 /**
  * The client's sign-in method for one AuthDialog picked: a wallet signs the backend's sign-in
- * message here first; the rest is the client's.
+ * message here first; the rest is the client's. (AuthDialog has no linking code: that's the
+ * native tree's.)
  */
 export async function signInMethod(
     client: OpenChat,
     method: AuthMethod,
     wallet: string | undefined,
     signal: AbortSignal,
-): Promise<SignInMethod> {
+): Promise<Exclude<SignInMethod, { kind: "linking_code" }>> {
     switch (method) {
         case "passkey":
             return { kind: "passkey" };
@@ -184,10 +124,8 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
     let signup = new AbortController();
     // the sign-ins the dialog is waiting on; cancelling gives them up
     let attempts = new AbortController();
-    let referrer: Promise<AuthPerson | undefined> | undefined = undefined;
-    // what the referral link's lookup came to, and whether a sign-up here stored a code
-    let referralLookup: ReferralLookup = "pending";
-    let codeFromForm = false;
+    // the referral link's referrer, and what a sign-up does with the stored code
+    const referral = new Referral(client);
 
     const failure = (key: string): AuthFailure => ({ reason: translate(key) });
 
@@ -250,10 +188,10 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
 
         lastEmail: () => localStorage.getItem(configKeys.selectedAuthEmail) ?? "",
 
-        loadReferrer() {
+        async loadReferrer() {
             // without a referrer (none stored, or the lookup failed) sign-up offers none
-            referrer ??= lookUpReferrer();
-            return referrer;
+            const user = await referral.link();
+            return user === undefined ? undefined : person(user);
         },
 
         async onSignup({
@@ -262,24 +200,11 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
             referrerId,
             termsAccepted,
         }: SignupDetails) {
-            resumeSignIn();
             const { signal } = signup;
-            switch (referralCode(referrerId, referralLookup, codeFromForm)) {
-                case "set":
-                    client.setReferralCode(referrerId!);
-                    codeFromForm = true;
-                    break;
-                case "clear":
-                    client.clearReferralCode();
-                    break;
-            }
+            referral.apply(referrerId);
             // once the account is asked for it's made even if the dialog closes: a walk-away
             // waits for it
-            const signingUp = client.signUp(username, recoveryEmail, termsAccepted, signal);
-            registration = signingUp;
-            const outcome = await signingUp.finally(() => {
-                if (registration === signingUp) registration = undefined;
-            });
+            const outcome = await signUp(client, username, recoveryEmail, termsAccepted, signal);
             switch (outcome.kind) {
                 case "success":
                     return;
@@ -299,17 +224,13 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
         },
 
         async searchReferrers(query) {
-            return (await client.searchUsers(query, 20)).filter(canRefer).map(person);
+            return (await searchReferrers(client, query)).map(person);
         },
 
         // an invite link's `ref` is the referrer's user id, as the link this browser came in on
         async resolveReferrer(code) {
-            try {
-                const user = await client.getUser(code);
-                return user !== undefined && canRefer(user) ? person(user) : undefined;
-            } catch {
-                return undefined;
-            }
+            const user = await resolveReferrer(client, code);
+            return user === undefined ? undefined : person(user);
         },
 
         async onLinkCode(querystring, code) {
@@ -333,18 +254,6 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
 
         dispose: stopEmail,
     };
-
-    async function lookUpReferrer(): Promise<AuthPerson | undefined> {
-        let user: UserSummary | undefined;
-        try {
-            user = await client.getReferringUser();
-        } catch {
-            referralLookup = "failed";
-            return undefined;
-        }
-        referralLookup = user === undefined ? "none" : "found";
-        return user === undefined ? undefined : person(user);
-    }
 
     async function awaitEmailLink(
         signedIn: Promise<SignInOutcome>,

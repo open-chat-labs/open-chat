@@ -9,6 +9,7 @@ Default permissions for the plugin
 - `allow-sign-up`
 - `allow-registerListener`
 - `allow-removeListener`
+- `allow-remove-listener`
 - `allow-get-fcm-token`
 - `allow-get-apns-device`
 - `allow-show-notification`
@@ -40,6 +41,7 @@ Default permissions for the plugin
 - `allow-get-store-update`
 - `allow-haptic`
 - `allow-get-window-insets`
+- `allow-set-system-bars-style`
 
 ## Permission Table
 
@@ -703,6 +705,32 @@ Denies the removeListener command without any pre-configured scope.
 <tr>
 <td>
 
+`oc:allow-remove-listener`
+
+</td>
+<td>
+
+Enables the remove_listener command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-remove-listener`
+
+</td>
+<td>
+
+Denies the remove_listener command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
 `oc:allow-restart-app`
 
 </td>
@@ -852,6 +880,32 @@ Enables the set_call_speaker command without any pre-configured scope.
 <td>
 
 Denies the set_call_speaker command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-set-system-bars-style`
+
+</td>
+<td>
+
+Enables the set_system_bars_style command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-set-system-bars-style`
+
+</td>
+<td>
+
+Denies the set_system_bars_style command without any pre-configured scope.
 
 </td>
 </tr>

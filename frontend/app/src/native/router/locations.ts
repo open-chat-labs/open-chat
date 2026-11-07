@@ -58,13 +58,20 @@ export type TabsLocation = { area: "tabs"; tab: NativeTabId; steps: StackStep[] 
 
 export type NativeLocation =
     | TabsLocation
-    // the marketing pages, and "/" signed out: outside the tabs
+    // no one signed in: the signed-out start (Welcome, sign in, sign up: features/start), whatever
+    // the URL, which stays as it is for after sign-in (a link someone opened lands there then)
+    | { area: "signed_out" }
+    // the marketing pages (Landing, Learn, the terms …), signed in or out: the website's, opened
+    // in the browser (shell/onWeb), never shown in the app
     | { area: "marketing"; route: RouteParams }
     | { area: "not_found" };
 
 /** What a URL's place depends on besides the URL. */
 export type LocationContext = {
-    /** An anonymous user without an account: "/" is Landing, as on the web. */
+    /**
+     * No one is signed in with an account (or a sign-in is still on its way from the start:
+     * features/start's startEntry). There's no guest mode in the native design (notes §3.1).
+     */
     signedOut: boolean;
     /**
      * The community the Communities tab shows (the one it was left on, else the default): Explore
@@ -79,8 +86,11 @@ export function locationFor(
     url: string,
     context: LocationContext,
 ): NativeLocation {
-    if (isLandingPageRoute(route) || (route.kind === "home_route" && context.signedOut)) {
+    if (isLandingPageRoute(route)) {
         return { area: "marketing", route };
+    }
+    if (context.signedOut) {
+        return { area: "signed_out" };
     }
     if (route.kind === "not_found_route") {
         return { area: "not_found" };

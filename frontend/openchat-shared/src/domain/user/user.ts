@@ -185,7 +185,10 @@ export type SignInMethod =
     // Internet Identity or NFID, in the auth client's window
     | { kind: "auth_client"; provider: "ii" | "nfid" }
     // once the wallet has signed the message the backend prepared (siwePrepareLogin / siwsPrepareLogin)
-    | { kind: "wallet"; token: "eth" | "sol"; address: string; signature: string };
+    | { kind: "wallet"; token: "eth" | "sol"; address: string; signature: string }
+    // the six-character code a signed-in device shows (Profile → Link a device): a new passkey on
+    // this device (the native app's or the browser's) is linked to that account and signs in
+    | { kind: "linking_code"; code: string };
 
 /**
  * How a sign-in went, once the identity has loaded. `needs_account`: signed in with an identity
@@ -211,6 +214,12 @@ export type SignUpOutcome =
     | { kind: "failed"; reason: ResourceKey };
 
 /**
+ * A photo for the account a sign-up makes (the picked image, cropped to the avatar's size): its
+ * bytes to upload, and a URL to show it by until the upload is through.
+ */
+export type SignUpAvatar = { data: Uint8Array; url: string };
+
+/**
  * Asking for an emailed sign-in link. Sent: the code the email shows (so the person can tell it's
  * this request's link), and `signedIn`, which settles once the link is followed and this browser
  * has the identity, or `cancelled` when the request is given up. Given up while it was being sent,
@@ -226,9 +235,10 @@ export type EmailSignInRequest =
  * prize, deleting the account): a way to sign in, an identity signed in some other way (the old
  * UIs' wallet buttons sign with the wallet themselves), or the passkey this session signed in with
  * where no other will do (`session_passkey`: confirming a link; `passkey` is any the user picks).
+ * A linking code makes a new sign-in for the account, so it proves nothing.
  */
 export type ReAuthMethod =
-    | SignInMethod
+    | Exclude<SignInMethod, { kind: "linking_code" }>
     | { kind: "session_passkey" }
     | {
           kind: "identity";

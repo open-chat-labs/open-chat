@@ -12,6 +12,8 @@ body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--surfa
 @keyframes oc-typing{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
 @keyframes oc-toast-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes oc-toast-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(6px) scale(.98)}}
+/* a menu opening from its anchor (the native Appearance menu) */
+@keyframes oc-menu-pop{from{opacity:0;transform:translateY(4px) scale(.98)}}
 
 /* 2026-10-13 — pass 2: rules from new/changed component helmets */
 [data-oc-header]{container-type:inline-size}

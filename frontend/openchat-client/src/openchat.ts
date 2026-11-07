@@ -320,6 +320,7 @@ import {
     type ReactionToggled,
     type SendMessageOutcome,
     type SignInMethod,
+    type SignUpAvatar,
     type SignUpOutcome,
     type EmailSignInRequest,
     type SignInOutcome,
@@ -704,6 +705,7 @@ import {
     isOwnPrincipal,
     linkedPrincipalProvider,
     linkedSignInProviders,
+    linkingCodeFailure,
     markCurrentSignIn,
     signInOutcome,
     signInProvider,
@@ -1501,6 +1503,11 @@ export class OpenChat {
                     if (resp.kind !== "success") {
                         return { kind: "failed", reason: i18nKey("loginDialog.unexpectedError") };
                     }
+                    break;
+                }
+                case "linking_code": {
+                    const stopped = await this.#signInWithLinkingCode(method.code);
+                    if (stopped !== undefined) return stopped;
                     break;
                 }
             }
@@ -7574,12 +7581,15 @@ export class OpenChat {
      * referral code set (setReferralCode) goes with it, unless it was turned down before. No
      * account is made unless the person has agreed to the terms (`termsAccepted`).
      * `signal` gives the sign-up up before the account is asked for; once asked for, it's made.
+     * An `avatar` is uploaded once the account is made, without holding the sign-up up: an upload
+     * that fails leaves the account without a photo, and the sign-up still a success.
      */
     async signUp(
         username: string,
         email: string | undefined,
         termsAccepted: boolean,
         signal?: AbortSignal,
+        avatar?: SignUpAvatar,
     ): Promise<SignUpOutcome> {
         // the forms only offer sign-up once the terms are agreed to; this is the backstop
         if (!termsAccepted) return { kind: "failed", reason: i18nKey("unexpectedError") };
@@ -7621,6 +7631,7 @@ export class OpenChat {
         if (resp.kind === "success") {
             this.#passkeyMadeForSignUp = false;
             this.onRegisteredUser(createdUserFrom(username, resp));
+            if (avatar !== undefined) void this.#uploadSignUpAvatar(avatar);
             return { kind: "success" };
         }
         if (referralCodeRefused(resp.kind)) {
@@ -7630,6 +7641,16 @@ export class OpenChat {
             kind: "failed",
             reason: i18nKey(registerFailureKey(resp.kind) ?? "unexpectedError"),
         };
+    }
+
+    // the new account's photo: the person can set another later, so a failure is only logged
+    async #uploadSignUpAvatar(avatar: SignUpAvatar): Promise<void> {
+        try {
+            const blobId = await this.setUserAvatar(avatar.data, avatar.url);
+            if (blobId === undefined) console.warn("Unable to upload the new account's avatar");
+        } catch (err) {
+            console.warn("Unable to upload the new account's avatar", err);
+        }
     }
 
     registerUser(username: string, email: string | undefined): Promise<RegisterUserResponse> {
@@ -12089,64 +12110,72 @@ export class OpenChat {
         return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity);
     }
 
-    async linkAccountsWithAndroidWebAuthn(accountLinkingCode: string): Promise<void> {
+    /**
+     * Links a new passkey on this device (the native app's, else the browser's) to the account
+     * whose linking code this is, and signs in with it: the code is checked, the passkey made for
+     * the account's username, the link finalised, then the identity loads. Resolves undefined once
+     * it's signed in, or how it stopped (`linkingCodeFailure`): a dismissed passkey prompt is a
+     * cancel, and the backend unreachable (offline, the worker gone) fails with the default reason.
+     * A failure once the identity is loading is the caller's (#signIn) to report.
+     */
+    async #signInWithLinkingCode(code: string): Promise<SignInOutcome | undefined> {
+        let tempKey: ECDSAKeyIdentity;
+        let verified: VerifyAccountLinkingCodeResponse;
         try {
-            // Also used as session key
-            const tempKey = await ECDSAKeyIdentity.generate();
+            // also the session's key
+            tempKey = await ECDSAKeyIdentity.generate();
+            verified = await this.verifyAccountLinkingCode(code.toUpperCase(), tempKey);
+        } catch (err) {
+            console.warn("Couldn't check the linking code: ", err);
+            return linkingCodeFailure(err);
+        }
+        if (verified.kind === "error") return linkingCodeFailure(verified);
 
-            // Verify code
-            const verificationRes = await this.verifyAccountLinkingCode(
-                accountLinkingCode,
-                tempKey,
-            );
-
-            // Error should be of type AccountLinkingError
-            if ("error" === verificationRes.kind) {
-                return Promise.reject(verificationRes);
+        let webAuthnIdentity: WebAuthnIdentity;
+        let webAuthnKey: WebAuthnKeyFull | undefined;
+        const cacheKey = (key: WebAuthnKeyFull) => {
+            webAuthnKey = key;
+            return this.#storeWebAuthnKeyInCache(key);
+        };
+        try {
+            if (this.isNativeApp()) {
+                webAuthnIdentity = await createAndroidWebAuthnPasskeyIdentity(
+                    verified.username,
+                    cacheKey,
+                );
+            } else {
+                const webAuthnOrigin = this.config.webAuthnOrigin;
+                if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
+                webAuthnIdentity = await createWebAuthnIdentity(
+                    webAuthnOrigin,
+                    cacheKey,
+                    verified.username,
+                );
             }
+        } catch (err) {
+            console.warn("Couldn't make a passkey to link: ", err);
+            return linkingCodeFailure(err);
+        }
+        if (webAuthnKey === undefined) {
+            return linkingCodeFailure({ code: AndroidWebAuthnErrorCode.FailedToCacheWebAuthnKey });
+        }
 
-            // Create passkey
-            let cachedWebAuthnKey: WebAuthnKeyFull | undefined;
-            const webAuthnIdentity = await createAndroidWebAuthnPasskeyIdentity(
-                verificationRes.username,
-                (key) => {
-                    cachedWebAuthnKey = key;
-                    return this.#storeWebAuthnKeyInCache(key);
-                },
-            );
-
-            if (!cachedWebAuthnKey) {
-                return Promise.reject({
-                    code: AndroidWebAuthnErrorCode.FailedToCacheWebAuthnKey,
-                    msg: "failed to cache webauthn key",
-                });
-            }
-
-            // Finalise linking and get the delegated identity
-            await this.finaliseAccountLinkingWithCode(
+        let linked: FinaliseAccountLinkingResponse;
+        try {
+            linked = await this.finaliseAccountLinkingWithCode(
                 tempKey,
                 webAuthnIdentity.getPrincipal().toString(),
                 webAuthnIdentity.getPublicKey().toDer(),
-                cachedWebAuthnKey,
+                webAuthnKey,
             );
-
-            await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, true);
-
-            return Promise.resolve();
-        } catch (e) {
-            if (typeof e === "object") {
-                // Either android webauthn error, or account linking error
-                return Promise.reject(e);
-            }
-
-            // Unknown error!
-            console.error(e);
-            return Promise.reject({
-                kind: "error",
-                code: ErrorCode.Unknown,
-                msg: e ? e.toString() : undefined,
-            });
+        } catch (err) {
+            console.warn("Couldn't link the passkey: ", err);
+            return linkingCodeFailure(err);
         }
+        if (linked.kind === "error") return linkingCodeFailure(linked);
+
+        await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, true);
+        return undefined;
     }
 
     async signInWithWebAuthn() {

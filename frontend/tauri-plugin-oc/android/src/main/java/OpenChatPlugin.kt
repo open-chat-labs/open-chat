@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.util.Log
 import android.view.HapticFeedbackConstants
 import android.webkit.WebView
+import androidx.core.view.WindowCompat
 import app.tauri.annotation.Command
 import app.tauri.annotation.InvokeArg
 import app.tauri.annotation.TauriPlugin
@@ -93,6 +94,20 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     @Command
     fun getWindowInsets(invoke: Invoke) {
         invoke.resolve(OCPluginCompanion.lastWindowInsets ?: JSObject())
+    }
+
+    // The status and navigation bars' icons: dark over a light theme, light over a dark one. The
+    // app's theme can differ from the system's, which is all the activity knows (MainActivity), so
+    // the WebView says which. Not held back for svelteReady: the signed-out start follows it too.
+    @Command
+    fun setSystemBarsStyle(invoke: Invoke) {
+        val args = invoke.parseArgs(SetSystemBarsStyleArgs::class.java)
+        activity.runOnUiThread {
+            val controller = WindowCompat.getInsetsController(activity.window, activity.window.decorView)
+            controller.isAppearanceLightStatusBars = args.darkIcons
+            controller.isAppearanceLightNavigationBars = args.darkIcons
+        }
+        invoke.resolve()
     }
 
     // What Play offers this install, so a store build announces an update only
@@ -319,6 +334,11 @@ class CallActiveArgs {
 }
 
 @InvokeArg
+class SetSystemBarsStyleArgs {
+    var darkIcons: Boolean = false
+}
+
+@InvokeArg
 class SetCallSpeakerArgs {
     var speaker: Boolean = false
 }
@@ -443,6 +463,14 @@ object OCPluginCompanion {
     fun triggerWindowInsets(payload: JSObject) {
         lastWindowInsets = payload
         pluginRef?.trigger("window-inset-change", payload)
+    }
+
+    // The system back is a gesture for the screen showing, not an intent to keep: signed-out
+    // screens need it before svelteReady (which only comes once someone is signed in), and a press
+    // held back until then would replay on whatever shows after sign-in. So it skips the queue: sent
+    // at once to whoever listens, and dropped when no one does.
+    fun triggerBackPressed() {
+        pluginRef?.trigger("back-pressed", JSObject())
     }
 
     fun setTriggerRef(plugin: OpenChatPlugin) {

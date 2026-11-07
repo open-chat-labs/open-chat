@@ -5,6 +5,7 @@ export { getFcmToken } from "./commands/getFcmToken";
 export { getShellVersion } from "./commands/getShellVersion";
 export { haptic } from "./commands/haptic";
 export { getWindowInsets, type WindowInsets } from "./commands/getWindowInsets";
+export { setSystemBarsStyle } from "./commands/setSystemBarsStyle";
 export { minimizeApp } from "./commands/minimizeApp";
 export { openUrl } from "./commands/openUrl";
 export { releaseNotifications } from "./commands/releaseNotifications";

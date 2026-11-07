@@ -1,7 +1,7 @@
 import type { IdentityState } from "@client";
 
-// The sign-in flow's decisions, made from the client's identity state. Only src/web uses them, so
-// they live beside its screens until another tree needs them (then app/src/logic/auth).
+// The sign-in flow's decisions, made from the client's identity state, for every tree that signs
+// people in: src/web's AuthDialog hosts and the native tree's signed-out start.
 
 export type SignedIn = "logged_in" | "registering";
 
