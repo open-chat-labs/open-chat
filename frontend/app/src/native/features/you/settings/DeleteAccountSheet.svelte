@@ -3,7 +3,8 @@
      linked to the account this phone can use (a passkey, Internet Identity, Google via NFID, or an
      emailed link), then the account is deleted with that sign-in (logic/auth/deleteAccount) and the
      client signs out. A wallet's sign-in (Ethereum, Solana) isn't offered here (GAPS.md). The host
-     mounts it again each time it opens. -->
+     mounts it again each time it opens, and closes it for Android's back through `close`, which
+     stops waiting for an emailed link and refuses while deleting (`isDeleting`). -->
 <script lang="ts">
     import { AuthProvider, signInOptions, type OpenChat } from "@client";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
@@ -82,10 +83,16 @@
         failed = true;
     }
 
-    function close() {
+    /** Closes it, stopping an emailed link's sign-in; not while the account's being deleted. */
+    export function close() {
         if (deleting) return;
         reAuth.destroy();
         onClose();
+    }
+
+    /** Whether it can't close: the account's being deleted. */
+    export function isDeleting(): boolean {
+        return deleting;
     }
 </script>
 

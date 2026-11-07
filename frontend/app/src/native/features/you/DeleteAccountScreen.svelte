@@ -121,13 +121,17 @@
 
     // ---- moving through it
 
-    // the sheet that signs in again and deletes, mounted again each time it opens
+    // the sheet that signs in again and deletes, mounted again each time it opens. Android's back
+    // closes it as its own close does: that stops an emailed link's sign-in, and does nothing while
+    // the account's being deleted.
     let signingIn = $state(false);
     let sheetKey = $state(0);
+    let sheet: ReturnType<typeof DeleteAccountSheet> | undefined = $state();
     useOverlay(
         overlays,
         () => signingIn,
-        () => (signingIn = false),
+        () => (sheet !== undefined ? sheet.close() : (signingIn = false)),
+        () => sheet?.isDeleting() ?? false,
     );
     // Android's back goes a step back, as the header's does
     useOverlay(
@@ -247,7 +251,7 @@
 
 {#key sheetKey}
     {#if sheetKey > 0}
-        <DeleteAccountSheet open={signingIn} onClose={() => (signingIn = false)} />
+        <DeleteAccountSheet bind:this={sheet} open={signingIn} onClose={() => (signingIn = false)} />
     {/if}
 {/key}
 

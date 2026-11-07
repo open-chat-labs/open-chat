@@ -29,6 +29,26 @@ describe("what's open over the screens", () => {
         expect(closed).toEqual(["sheet"]);
     });
 
+    test("leaves one open while it's busy, and back is used up", () => {
+        const overlays = new Overlays();
+        const closed: string[] = [];
+        let busy = true;
+        overlays.add(() => closed.push("screen's sheet"));
+        overlays.add(
+            () => closed.push("deleting"),
+            () => busy,
+        );
+        expect(overlays.closeTop()).toBe(true);
+        expect(closed).toEqual([]);
+        expect(overlays.closeTop()).toBe(true);
+        expect(closed).toEqual([]);
+        busy = false;
+        expect(overlays.closeTop()).toBe(true);
+        expect(closed).toEqual(["deleting"]);
+        expect(overlays.closeTop()).toBe(true);
+        expect(closed).toEqual(["deleting", "screen's sheet"]);
+    });
+
     test("keeps a component's overlay registered while it's open", () => {
         const overlays = new Overlays();
         const sheet = $state({ open: false });
