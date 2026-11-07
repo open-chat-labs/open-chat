@@ -46,7 +46,12 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   Account, CHIT's at `?profile=chit`), on `logic/profile` shared with the web's profile, and the
   kit's new `NativeAlert`. What it left (buying Diamond, the apps' notifications switch, the
   recovery phrase …) is in GAPS.md ("Native You tab").
-- **Next:** the screens. N10a, N11 and N13 need only N3; N5b (the conversation) needs N5a.
+- **Built:** N5b the conversation
+  ([#10369](https://github.com/open-chat-labs/open-chat/issues/10369)): the header and its menu,
+  search in the chat, the messages (the web's mapping, moved to `logic/conversation`), the swipes,
+  typing, call items and the media viewer. What it left is in GAPS.md ("Native conversation").
+- **Next:** the screens. N10a, N11 and N13 need only N3; N5c (the composer), N5d (the message
+  menu) and N6 (details) need N5b.
 
 ## Workstreams
 
@@ -67,7 +72,7 @@ Screens:
 | [N5b](https://github.com/open-chat-labs/open-chat/issues/10369) | Conversation | N5a |
 | [N5c](https://github.com/open-chat-labs/open-chat/issues/10370) | Composer and keyboard-area panels | N5b |
 | [N5d](https://github.com/open-chat-labs/open-chat/issues/10371) | Message long-press menu, message info and forward | N5b |
-| [N6](https://github.com/open-chat-labs/open-chat/issues/10372) | DM and group details, members and roles | N5b |
+| [N6](https://github.com/open-chat-labs/open-chat/issues/10372) | DM and group details, members and roles; a DM's disappearing messages as a switch there (not in the conversation's menu) | N5b |
 | [N7](https://github.com/open-chat-labs/open-chat/issues/10373) | Group and community settings screens | N6 |
 | [N8a](https://github.com/open-chat-labs/open-chat/issues/10374) | Communities tab: switcher, channels and threads | N6 |
 | [N8b](https://github.com/open-chat-labs/open-chat/issues/10375) | Explore, preview, join and create community | N8a, N7 |

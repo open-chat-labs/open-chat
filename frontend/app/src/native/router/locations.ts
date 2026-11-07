@@ -70,6 +70,7 @@ export type LocalScreen =
     | { kind: "chit" }
     | { kind: "edit_profile" }
     | { kind: "settings"; page: SettingsPage }
+    | { kind: "chat_details"; chatId: ChatIdentifier }
     // You → Account's Delete account, its steps before it deletes
     | { kind: "delete_account" };
 
@@ -196,6 +197,16 @@ export function locationFor(
  */
 export function showsTabBar(steps: readonly StackStep[]): boolean {
     return steps.length <= 1;
+}
+
+/**
+ * What a toast sits above on this stack (native design notes §1: toasts sit above the tab bar):
+ * the tab bar on a tab's root, the composer on a conversation (its footer), and the safe area on
+ * any other pushed screen.
+ */
+export function toastsAbove(steps: readonly StackStep[]): "tabBar" | "footer" | "none" {
+    if (showsTabBar(steps)) return "tabBar";
+    return steps[steps.length - 1]?.screen.kind === "conversation" ? "footer" : "none";
 }
 
 /** The chat a stack has open (its conversation, or a thread in it), if any. */

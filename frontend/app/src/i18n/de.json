@@ -1725,7 +1725,10 @@
                 "unmuted": "Stummschaltung aufgehoben",
                 "archived": "Chat archiviert",
                 "left": "Du hast {name} verlassen",
-                "deleted": "Chat gelöscht"
+                "deleted": "Chat gelöscht",
+                "favourited": "Zu Favoriten hinzugefügt",
+                "unfavourited": "Aus Favoriten entfernt",
+                "favouriteFailed": "Deine Favoriten konnten nicht geändert werden"
             },
             "newChat": {
                 "placeholder": "Name oder @Benutzername suchen",
@@ -1734,6 +1737,48 @@
                 "noOne": "Niemand gefunden. Versuche es mit dem @Benutzernamen.",
                 "noContacts": "Noch keine Kontakte",
                 "noContactsBody": "Die Personen, mit denen du am meisten chattest, erscheinen hier. Suche nach Name oder @Benutzername, um eine Unterhaltung zu beginnen."
+            }
+        },
+        "conversation": {
+            "options": "Chat-Optionen",
+            "members": "{visibility} · {count, plural, one {# Mitglied} other {# Mitglieder}}",
+            "videoCall": "Videoanruf",
+            "voiceCall": "Sprachanruf",
+            "callsLater": "Anrufe sind in dieser Version noch nicht verfügbar.",
+            "menu": {
+                "search": "Im Chat suchen",
+                "contactDetails": "Kontaktdetails",
+                "groupDetails": "Gruppendetails",
+                "channelDetails": "Kanaldetails",
+                "mute": "Stummschalten",
+                "unmute": "Stummschaltung aufheben",
+                "favourite": "Zu Favoriten hinzufügen",
+                "unfavourite": "Aus Favoriten entfernen",
+                "leaveGroup": "Gruppe verlassen",
+                "leaveChannel": "Kanal verlassen",
+                "block": "{name} blockieren",
+                "unblock": "Blockierung aufheben",
+                "delete": "Chat löschen"
+            },
+            "toast": {
+                "blocked": "{name} blockiert",
+                "unblocked": "Blockierung von {name} aufgehoben",
+                "blocking": "{name} wird blockiert…",
+                "unblocking": "Blockierung von {name} wird aufgehoben…"
+            },
+            "search": {
+                "placeholder": "In diesem Chat suchen",
+                "close": "Suche schließen",
+                "older": "Älterer Treffer",
+                "newer": "Neuerer Treffer",
+                "count": "{current} von {total}",
+                "none": "Keine Ergebnisse"
+            },
+            "live": {
+                "video": "Videoanruf läuft",
+                "voice": "Sprachanruf läuft",
+                "sub": "{elapsed} · {count, plural, one {# Person} other {# Personen}}",
+                "tapToJoin": "Zum Beitreten tippen"
             }
         },
         "shareUnavailable": "Das Teilen aus anderen Apps in OpenChat ist in dieser Version noch nicht verfügbar.",

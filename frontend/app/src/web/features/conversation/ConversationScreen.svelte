@@ -6,20 +6,18 @@
     import { showInRightColumn } from "../app/rightPanel";
     import {
         allUsersStore,
-        isDeletedWebhook,
         selectedServerChatStore,
         webhookUserIdsStore,
-        formatClock,
         anonUserStore,
         audioRecordingMimeType,
         blockedUsersStore,
         botState,
         bridgedUsersStore,
-        buildTransactionUrl,
         byContext as typersByContext,
         chatIdentifiersEqual,
         chatIdentifierToString,
         chatsInitialisedStore,
+        chatListScopeStore,
         chitStateStore,
         communitiesStore,
         communityPreviewOriginStore,
@@ -32,12 +30,9 @@
         externalWalletPayment,
         failedMessagesStore,
         favouritesStore,
-        formatTokens,
-        getConvertedBalances,
         i18nKey,
         isDiamondStore,
         isLifetimeDiamondStore,
-        isOwnMessage,
         isPreviewingOrLapsed,
         isPrivateCommunityPreview,
         localUpdates,
@@ -47,9 +42,7 @@
         maxMediaSizes,
         messageIndexStore,
         messagePermissionsForSelectedChatStore,
-        messageMenu,
         messagesRead,
-        pollVoteChange,
         prizeClaimCustomData,
         publish,
         screenWidth,
@@ -140,16 +133,13 @@
         type Translate,
     } from "../builders/builders.adapter";
     import { messageSwipeLeft } from "@src/utils/messageSwipe";
-    import { canShareMessage } from "@src/utils/share";
     import { messageDoubleClickAction } from "@src/logic/conversation/messageDoubleClick";
-    import { getProxyAdjustedBlobUrl, microphoneDenied } from "@src/utils/media";
+    import { getProxyAdjustedBlobUrl, microphoneDenied, saveFile } from "@src/utils/media";
     import { now500 } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
-    import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { isTouchOnlyDevice } from "@src/utils/devices";
-    import { isSingleEmoji } from "@src/utils/emojis";
-    import { buildDisplayName, findUser } from "@src/utils/user";
+    import { buildDisplayName } from "@src/utils/user";
     import {
         aggregateEventText,
         isTextEvent,
@@ -167,27 +157,50 @@
         composerMention,
         composerStartText,
         headerMenuItems,
+        messageMenuItems,
+    } from "./conversation.adapter";
+    import {
+        conversationContext,
         isMedia,
         mediaHeld,
-        messageMenuItems,
         messageStatus,
+        readByThem,
         senderColor,
         untilNextDay,
         withFields,
         type ConversationContext,
         type MediaContent,
         type MessageRow,
-    } from "./conversation.adapter";
-    import MediaViewer from "./MediaViewer.svelte";
+    } from "@src/logic/conversation/messageRow";
+    import {
+        quoteFor,
+        quoteTarget,
+        retryFor,
+        textAsMarkdown,
+        withHandlers,
+        type MessageHandlers,
+        type QuoteTarget,
+    } from "@src/logic/conversation/messageHandlers";
+    import { messageOffer } from "@src/logic/conversation/messageOffer";
+    import { toggleReaction } from "@src/logic/conversation/reaction";
+    import { observeRead } from "@src/core/observeRead";
+    import { votePoll } from "@src/logic/conversation/pollVote";
+    import {
+        FirstUnread,
+        firstUnreadOnOpen,
+        MessageLink,
+        othersTyping,
+    } from "@src/logic/conversation/timeline";
+    import MediaViewer from "@src/core/MediaViewer.svelte";
     import ConfirmDialog from "./ConfirmDialog.svelte";
     import { deleteMessage, runMessageAction } from "./messageMenu";
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import HumanCheckFrame from "@src/core/HumanCheckFrame.svelte";
-    import { HumanCheck } from "@src/logic/prize/humanCheck.svelte";
+    import { HumanChecks } from "@src/logic/prize/humanCheck.svelte";
     import { claimPrizeWithHumanCheck } from "@src/logic/prize/prizeClaim";
     import { interpolate } from "@i18n/i18n";
-    import { VoicePlayer, type VoiceSpeed } from "./voicePlayer.svelte";
-    import { RowCache } from "./rowCache";
+    import { VoicePlayer } from "@src/logic/conversation/voicePlayer.svelte";
+    import { RowCache } from "@src/logic/conversation/rowCache";
     import { profileClickedEvent } from "@src/web-components/profileLink";
     import { navigate } from "@src/utils/navigation";
     import { isJoining, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
@@ -235,53 +248,21 @@
         void rowsVersion;
         void $cryptoLookup;
         void ratesLoaded;
-        const users = $allUsersStore;
-        const webhooks = $selectedChatWebhooksStore;
-        const webhookIds = $webhookUserIdsStore;
-        const detailsLoaded = $selectedServerChatStore !== undefined;
-        return {
+        return conversationContext({
+            client,
+            chat,
             me,
-            you: $_("you"),
-            // a webhook's messages are sent as it, named as the old timeline names them (findUser)
-            userName: (userId) =>
-                isDeletedWebhook(userId, webhooks, webhookIds, detailsLoaded)
-                    ? $_("webhook.deleted")
-                    : client.displayName(findUser(userId, users, webhooks)),
-            contentText: (content) => client.getContentAsText($_, content),
-            time: (timestamp) => client.toShortTimeString(new Date(Number(timestamp))),
-            date: (timestamp) =>
-                client.formatMessageDate(timestamp, $_("today"), $_("yesterday"), true, true),
-            media: {
-                lowBandwidth: $lowBandwidth,
-                revealed: (messageId) => revealed.has(messageId),
-                url: getProxyAdjustedBlobUrl,
-            },
-            direct: chat?.kind === "direct_chat",
-            readonly: chat !== undefined && client.isChatReadOnly(chat.id),
-            now: Date.now(),
+            formatter: $_,
+            users: $allUsersStore,
+            webhooks: $selectedChatWebhooksStore,
+            webhookIds: $webhookUserIdsStore,
+            detailsLoaded: $selectedServerChatStore !== undefined,
+            lowBandwidth: $lowBandwidth,
+            revealed: (messageId) => revealed.has(messageId),
             claimant,
-            text: (key) => interpolate($_, key),
-            token: (ledger) => {
-                const token = $cryptoLookup.get(ledger);
-                if (token === undefined) return undefined;
-                return {
-                    symbol: token.symbol,
-                    logo: token.logo,
-                    amount: (e8s) => formatTokens(e8s, token.decimals),
-                    usd: (e8s) => {
-                        const { dollarBalance } = getConvertedBalances(
-                            exchangeRatesLookupStore.value,
-                            e8s,
-                            token.decimals,
-                            ledger,
-                        );
-                        return dollarBalance === undefined
-                            ? ""
-                            : formatConvertedValue("usd", dollarBalance);
-                    },
-                };
-            },
-        };
+            tokens: $cryptoLookup,
+            rates: () => exchangeRatesLookupStore.value,
+        });
     });
 
     // ── media ──
@@ -433,9 +414,9 @@
     const typingNames = $derived(
         chat === undefined
             ? []
-            : [...($typersByContext.get({ chatId: chat.id }) ?? [])]
-                  .filter((userId) => userId !== me)
-                  .map((userId) => client.displayName($allUsersStore.get(userId))),
+            : othersTyping($typersByContext.get({ chatId: chat.id }), me, (userId) =>
+                  client.displayName($allUsersStore.get(userId)),
+              ),
     );
 
     // too many messages a minute: a countdown until sending resumes (the old ThrottleCountdown);
@@ -796,23 +777,17 @@
     // The first unread message when the chat was opened: the unread divider stays above it while
     // the chat is open, as messages are read. Worked out with the chat, so a new chat never shows
     // the last one's
-    let firstUnreadFor: { key: string; index: number | undefined } | undefined;
+    const firstUnreadMarker = new FirstUnread();
     const firstUnread = $derived.by(() => {
         const current = chat;
         if (current === undefined) return undefined;
-        const key = chatIdentifierToString(current.id);
-        if (firstUnreadFor?.key !== key) {
-            firstUnreadFor = {
-                key,
-                index: untrack(() =>
-                    messagesRead.getFirstUnreadMessageIndex(
-                        current.id,
-                        current.latestMessage?.event.messageIndex,
-                    ),
+        return firstUnreadMarker.of(current.id, () =>
+            untrack(() =>
+                firstUnreadOnOpen(current, (chatId, latest) =>
+                    messagesRead.getFirstUnreadMessageIndex(chatId, latest),
                 ),
-            };
-        }
-        return firstUnreadFor.index;
+            ),
+        );
     });
 
     // Go to the route's message (a deep link), as the old list does: when it changes, and when the
@@ -830,8 +805,7 @@
         initialisedFor = key;
         initialised = untrack(() => chat !== undefined && chat.latestEventIndex <= 0);
     });
-    let previousChatId: ChatIdentifier | undefined;
-    let previousMessageIndex: number | undefined;
+    const messageLink = new MessageLink();
     $effect(() => {
         void $threadOpenStore;
         const idx = $messageIndexStore;
@@ -839,28 +813,18 @@
         // until the list is there (the chat loading, a private preview), the link waits for it
         const current = list;
         if (current === undefined) return;
-        const sameChat = chatIdentifiersEqual(chatId, previousChatId);
-        if (
-            $chatsInitialisedStore &&
-            chatId !== undefined &&
-            idx !== undefined &&
-            (!sameChat || idx !== previousMessageIndex)
-        ) {
-            untrack(() => current.scrollToMessageIndex({ chatId }, idx, false));
+        const to = messageLink.next(chatId, idx, $chatsInitialisedStore);
+        if (chatId !== undefined && to !== undefined) {
+            untrack(() => current.scrollToMessageIndex({ chatId }, to, false));
         }
-        previousChatId = chatId;
-        previousMessageIndex = idx;
     });
 
     function status(evt: EventWrapper<Message>, args: ChatEventListArgs, failed: boolean) {
-        const msg = evt.event;
         return messageStatus({
             failed,
             accepted: args.isAccepted($unconfirmedStore, evt),
             readByThem:
-                chat?.kind === "direct_chat" &&
-                (client.messageIsReadByThem(chat.id, msg.messageIndex) ||
-                    $unconfirmedReadByThem.has(msg.messageId)),
+                chat !== undefined && readByThem(client, chat, evt.event, $unconfirmedReadByThem),
         });
     }
 
@@ -906,10 +870,15 @@
             : withActions(row, evt.event);
         // kept between renders, so composed without reading a voice message's live fields
         // (withFields): a spread would freeze its playback
+        const quoted =
+            chat === undefined
+                ? undefined
+                : quoteTarget(evt.event, chat.id, $chatListScopeStore.kind);
         const messages = [
             withFields(message, {
                 ...previewRemoval(evt),
                 ...retryFor(row.message, offers.retry),
+                ...quoteFor(row.message, quoted, goToQuote),
                 menu: offers.menu,
                 swipeLeft: offers.swipeLeft,
             }),
@@ -919,6 +888,16 @@
     }
 
     // ── message actions ──
+
+    // a reply's quote, clicked: its message in this chat, marked (loaded first if it's outside
+    // what's loaded), or the chat or thread it's quoted from
+    function goToQuote(target: QuoteTarget) {
+        if (target.kind === "elsewhere") {
+            navigate(target.url);
+        } else if (chat !== undefined) {
+            void list?.scrollToMessageIndex({ chatId: chat.id }, target.messageIndex, false);
+        }
+    }
 
     type MenuPos = Parameters<NonNullable<ComponentProps<typeof MessageGroup>["onMessageMenu"]>>[1];
 
@@ -937,41 +916,17 @@
         failed: boolean,
         confirmed: boolean,
     ): MessageMenu {
-        const msg = evt.event;
-        const chatId = current.id;
-        return messageMenu({
-            message: msg,
-            userId: me,
-            showAsMe: isOwnMessage(msg, me, $bridgedUsersStore),
-            chatKind: current.kind,
-            publicGroup: current.kind !== "direct_chat" && current.public,
-            confirmed,
+        return messageOffer(client, current, evt, {
+            me,
+            bridgedUsers: $bridgedUsersStore,
             failed,
-            collapsed: false,
+            confirmed,
             readonly,
-            ephemeral: localUpdates.isEphemeral({ chatId }, msg.messageId),
-            pinned: $selectedChatPinnedMessagesStore.has(msg.messageIndex),
-            translated: $translationsStore.has(msg.messageId),
-            undeleting: $undeletingMessagesStore.has(msg.messageId),
-            now: Date.now(),
-            // TODO(4c): the thread's own list
-            thread: undefined,
-            supportsEdit: true,
-            supportsReply: true,
-            shareable: canShareMessage(msg.content),
-            // TODO(phase 5, 5b): tipping
-            tipRecipient: undefined,
+            pinned: $selectedChatPinnedMessagesStore,
+            translated: $translationsStore,
+            undeleting: $undeletingMessagesStore,
+            blocked: $selectedChatBlockedUsersStore,
             tipsEnabled: !disableTipsFeature,
-            permissions: {
-                send: client.canSendMessage(chatId, "message"),
-                react: client.canReactToMessages(chatId),
-                pin: client.canPinMessages(chatId),
-                tip: client.canTipMessages(chatId),
-                deleteOthers: client.canDeleteOtherUsersMessages(chatId),
-                blockSender:
-                    client.canBlockUsers(chatId) && !$selectedChatBlockedUsersStore.has(msg.sender),
-                startThread: client.canSendMessage(chatId, "thread"),
-            },
         });
     }
 
@@ -986,24 +941,6 @@
             swipeLeft: messageSwipeLeft(evt.event.sender === me, offered.actions),
             retry: offered.actions.has("retry") ? () => run(chatId, "retry", evt, failed) : undefined,
         };
-    }
-
-    // a failed message's Retry, where its kind has one (a text bubble's line, a file or media
-    // tile's button)
-    function retryFor(message: GroupMessage, retry: (() => void) | undefined) {
-        if (retry === undefined) return {};
-        switch (message.kind) {
-            case undefined:
-            case "text":
-                return { retryAction: retry };
-            case "image":
-            case "video":
-            case "gif":
-            case "file":
-                return { onRetry: retry };
-            default:
-                return {};
-        }
     }
 
     // the message whose menu (or emoji picker) is open, and its chat: what's picked acts there,
@@ -1124,14 +1061,9 @@
         void deleteMessage(client, confirmed.chatId, confirmed.evt);
     }
 
-    // a reaction added or taken off. The library's picker keeps no favourites of its own (the old
-    // trees' picker counted its picks), so every reaction added counts towards the quick ones
-    async function react(chatId: ChatIdentifier, evt: EventWrapper<Message>, emoji: string) {
-        const toggled = await client.toggleReaction({ chatId }, evt.event, emoji);
-        if (toggled === "added") {
-            quickReactions.incrementFavourite(emoji);
-            quickReactions.reload();
-        }
+    // a reaction added or taken off (toggleReaction counts it towards the quick ones)
+    function react(chatId: ChatIdentifier, evt: EventWrapper<Message>, emoji: string) {
+        void toggleReaction(client, chatId, evt.event, emoji);
     }
 
     // double-click to edit your own message or reply to someone else's (the "double-click to reply"
@@ -1193,127 +1125,42 @@
         if (!removed) toastStore.showFailureToast(i18nKey("errorRemovingLinkPreview"));
     }
 
-    // a rich kind's handlers, and a voice message's playing state (read as it renders, so playing
-    // doesn't redo the row)
+    // a rich kind's controls (withHandlers), and a voice message's playing state (read as it
+    // renders, so playing doesn't redo the row)
+    const handlers: MessageHandlers = {
+        openMedia,
+        openUrl: (url) => window.open(url, "_blank", "noopener"),
+        swap: startSwap,
+        claim,
+        vote,
+        download,
+        get voice() {
+            return voice;
+        },
+    };
+
     function withActions(row: MessageRow, msg: Message): GroupMessage {
-        const content = msg.content;
-        if (isMedia(content)) {
-            return { ...row.message, onOpen: () => openMedia(msg) } as GroupMessage;
-        }
-        if (content.kind === "crypto_content") {
-            const url = buildTransactionUrl(content.transfer, $cryptoLookup);
-            return url === undefined
-                ? row.message
-                : ({
-                      ...row.message,
-                      onOpen: () => window.open(url, "_blank", "noopener"),
-                  } as GroupMessage);
-        }
-        if (content.kind === "p2p_swap_content") {
-            return {
-                ...row.message,
-                onAccept: () => startSwap(msg, content, "accept"),
-                onCancel: () => startSwap(msg, content, "cancel"),
-            } as GroupMessage;
-        }
-        if (content.kind === "prize_content") {
-            return {
-                ...row.message,
-                onClaim: (e: MouseEvent) => claim(msg, e),
-            } as GroupMessage;
-        }
-        if (content.kind === "poll_content") {
-            return {
-                ...row.message,
-                onVote: (next: number[]) => vote(msg, content, next),
-            } as GroupMessage;
-        }
-        if (content.kind === "file_content") {
-            return { ...row.message, onDownload: () => download(content) } as GroupMessage;
-        }
-        if (content.kind === "audio_content") {
-            const key = row.message.id ?? "";
-            const url = getProxyAdjustedBlobUrl(content.blobUrl);
-            const length = Number(content.durationMs) / 1000;
-            return {
-                ...row.message,
-                get playing() {
-                    return voice.playing(key);
-                },
-                get progress() {
-                    return length > 0 ? voice.time(key) / length : 0;
-                },
-                get elapsed() {
-                    return formatClock(voice.time(key));
-                },
-                get speed() {
-                    return voice.speed;
-                },
-                onPlay: () => voice.play(key, url),
-                onPause: () => voice.pause(key),
-                onSeek: (fraction: number) => voice.seek(key, url, fraction * length),
-                onSpeedChange: (speed: VoiceSpeed) => voice.setSpeed(speed),
-            } as GroupMessage;
-        }
-        return row.message;
+        return withHandlers(row, msg, handlers, $cryptoLookup);
     }
 
-    // a file is saved under its own name. The blob is on the canister's own origin, where a
-    // link's download attribute is ignored (the tab would go to the file), so it's fetched and
-    // saved from here; if that fails it opens in a new tab, as the old trees do
-    async function download(content: FileContent) {
+    // a file is saved under its own name (saveFile)
+    function download(content: FileContent) {
         const url = getProxyAdjustedBlobUrl(content.blobUrl);
-        if (url === undefined) return;
-        try {
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error(`status ${resp.status}`);
-            const local = URL.createObjectURL(await resp.blob());
-            const link = document.createElement("a");
-            link.href = local;
-            link.download = content.name;
-            link.click();
-            setTimeout(() => URL.revokeObjectURL(local), 60_000);
-        } catch (err) {
-            console.warn("Couldn't download a file, opening it instead", err);
-            window.open(url, "_blank", "noopener");
-        }
+        if (url !== undefined) void saveFile(url, content.name);
     }
 
-    // a poll vote, if the poll can take one (5a invariant 4, pollVoteChange); the vote shows at once,
-    // as in the old trees
+    // a poll vote, if the poll can take one (votePoll); the vote shows at once, as in the old trees
     async function vote(msg: Message, content: PollContent, next: number[]) {
-        if (chat === undefined || chat.kind === "direct_chat") return;
-        const change = pollVoteChange(
-            content,
-            {
-                me,
-                sender: msg.sender,
-                direct: false,
-                readonly: client.isChatReadOnly(chat.id),
-            },
-            next,
-        );
-        if (change === undefined) return;
-        const voted = await client.registerPollVote(
-            chat.id,
-            undefined,
-            msg.messageId,
-            msg.messageIndex,
-            change.answerIndex,
-            change.type,
-        );
-        if (!voted) toastStore.showFailureToast(i18nKey("poll.voteFailed"));
+        if (chat === undefined) return;
+        if ((await votePoll(client, chat, me, msg, content, next)) === "failed") {
+            toastStore.showFailureToast(i18nKey("poll.voteFailed"));
+        }
     }
 
     // each prize's human check, which a claim click starts (HumanCheckFrame, under its card)
-    const humanChecks = new Map<bigint, HumanCheck>();
-    function humanCheckFor(messageId: bigint): HumanCheck {
-        let check = humanChecks.get(messageId);
-        if (check === undefined) {
-            check = new HumanCheck();
-            humanChecks.set(messageId, check);
-        }
-        return check;
+    const humanChecks = new HumanChecks();
+    function humanCheckFor(messageId: bigint) {
+        return humanChecks.for(messageId);
     }
 
     // a prize claim, from the reader's own click (claimPrize refuses any other), with the token of
@@ -1383,30 +1230,6 @@
         void chatKey;
         return () => voice.stop();
     });
-
-    // a lone native emoji shows as the bubble's own, large; anything else (a custom emoji too)
-    // goes through the markdown
-    function withMarkdown(text: string): boolean {
-        return !isSingleEmoji(text) || /^!emoji\(/.test(text);
-    }
-
-    // a row the reader hasn't read is watched until it has been on screen long enough (the list's
-    // observer reads data-index / data-id)
-    function observeRead(
-        node: HTMLElement,
-        args: { observer?: IntersectionObserver; read: boolean },
-    ) {
-        let observer = args.observer;
-        if (!args.read) observer?.observe(node);
-        return {
-            update(next: { observer?: IntersectionObserver; read: boolean }) {
-                if (next.read || next.observer !== observer) observer?.unobserve(node);
-                observer = next.observer;
-                if (!next.read) observer?.observe(node);
-            },
-            destroy: () => observer?.unobserve(node),
-        };
-    }
 
     function isMessage(evt: EventWrapper<ChatEvent>): evt is EventWrapper<Message> {
         return evt.event.kind === "message";
@@ -1588,13 +1411,13 @@
                                             row,
                                             body,
                                             content.kind === "text_content" &&
-                                                withMarkdown(content.text),
+                                                textAsMarkdown(content.text),
                                             evt,
                                             offers,
                                         )}
                                     />
                                     <!-- kept while a claim's check runs, even if the prize runs out meanwhile -->
-                                    {#if row.message.kind === "prize" && (row.message.canClaim || humanChecks.get(msg.messageId)?.running)}
+                                    {#if row.message.kind === "prize" && (row.message.canClaim || humanChecks.running(msg.messageId))}
                                         <HumanCheckFrame
                                             check={humanCheckFor(msg.messageId)}
                                             customData={prizeClaimCustomData(me, msg.messageId)}

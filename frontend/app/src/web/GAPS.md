@@ -55,10 +55,14 @@ design export needs. Each entry says where it came up.
     Design Notes and the issue only said it hides inside a conversation): every pushed screen has
     the whole window (`showsTabBar`, `router/locations.ts`). A tab's stack is still kept, for a link
     from another tab or a deep link to land in.
-  - **A push slides over what's under it** (decided 2026-11-06; the Design Notes' §3.1 Transitions
-    have the screen under it slide out to the left and the bar go down): the pushed screen slides
-    in from the inline end over the tab's root and the tab bar, which both stay where they are, and
-    Back slides it off again (`Shell`, `motion.ts`). A screen pushed over another works the same.
+  - **A push moves what's under it a little, as iOS's** (decided 2026-11-07, in place of
+    2026-11-06's "nothing under it moves"; the Design Notes' §3.1 Transitions also had the bar go
+    down): the pushed screen slides in from the inline end over the screen under it, which moves
+    28% of the way out to the other side, a tab's root and its tab bar together as one (the bar
+    doesn't go down); Back slides the top one off as the one under it comes back. A push takes
+    .34s, Back .24s, both screens together on `--ease-out` (`Shell`, `motion.ts`). A screen pushed
+    over another works the same; the signed-out start's stack too. Mirrored in RTL; nothing moves
+    with reduced motion.
   - **Local pushes**: done (N5a). A screen without a URL on the web (New chat, New group, CHIT for
     now; details, settings pages and builders to come) is pushed with `context.push`
     (`TabStacks.push`, a `LocalScreen`): it shows at the URL of the screen under it, Back (the
@@ -342,6 +346,99 @@ design export needs. Each entry says where it came up.
     to itself): it pops the page.
   - **Strings**: the settings' help texts are new (`native.you.*`), translated; the library's
     `ui.profileDialog.*` copy is English only.
+
+- **Native conversation** (native N5b, #10369; `src/native/features/conversation`). Built: the
+  header (back, the avatar, the name and its line: last online, a suspended account, or "Public ·
+  5 members"; video and voice; the kebab), its menu (Search in chat, the details, Mute, Favourite,
+  Leave / Block / Unblock / Delete with Undo), search in the chat,
+  the messages on `core/ChatEventList` with the web's mapping (moved to `logic/conversation`,
+  which both trees now use), sent ones on the right, no avatars in DMs, the swipes, the typing
+  bubble and strip, call items and the media viewer. Left, or decided against the prototype:
+  - **The composer** is N5c's: a placeholder bar stands in its place ("Composer (N5c)",
+    development text), with the typing strip resting on it. A swipe sets the chat's draft (the
+    reply, or the edit), which the composer will show; until then the message is only marked.
+    A preview's join bar (a channel not joined, a community previewed) comes with N8b.
+  - **The message long-press menu** (and with it reactions beyond the chips, Copy, Forward, Info,
+    Delete…) is N5d's: a long-press does nothing yet. A message's reactions toggle from its chips.
+  - **The details** (the header's title, the menu's details item) push a placeholder, a local
+    `chat_details` screen, until N6 builds it.
+  - **Calls** are N14's: the header's video and voice buttons, a live call's Join (its item and the
+    header strip) and a missed call's Call back say so in a toast. A live call's strip says "Tap to
+    join" where the prototype names who's in it. Not checked in a browser: the local replica's
+    seeded chats have no calls.
+  - **A swap offer's Accept / Cancel**: confirmations are small alerts (notes §1), which the kit
+    doesn't have yet, so the card shows no button in the native tree (`withHandlers` without
+    `swap`).
+  - **A link preview's remove** (the X on the sender's own card) needs the same alert: not offered.
+  - **The media viewer** is the app's (`core/MediaViewer`, moved from `src/web` and kept clear of
+    the status bar), not the design's (sender, actions, swipe between items, chrome that fades);
+    that waits for the design's `MediaViewer` to be ported to the library (Design pass 6, above),
+    for both trees. A file's download is the web's (`saveFile`); the apps' save to Photos / Files
+    needs a native bridge.
+  - **Search in the chat** hides the composer while it's open (it has no use for it), and it's
+    back when the search closes. It scrolls the match into the middle of the list (ChatEventList's
+    `scrollToMessageIndex`, which isn't rewritten for it), not the upper third. It has no
+    @mention picker (the old headers' "@name" still searches for a sender); typing pauses 300ms
+    before it searches, as the old ones did; up and down stop at the ends (the old headers went
+    round). It takes the chat's own search (`searchChat`), up to 200 matches, the weak ones dropped.
+  - **Disappearing messages** aren't in the header's menu (decided 2026-11-07, against the design
+    notes' kebab and the prototype's submenu): a DM's are a switch on its details (N6, the design's
+    "This chat" card), as in the current app, which has them on a DM's details
+    (`DirectChatDetails`) and not in a menu; a group's or channel's are its settings (N6 / N7).
+  - **Clear history** (the prototype's menu): the backend has none, so it's dropped from the menu
+    (decided 2026-11-07); it comes back after cutover once the backend can (native PLAN, "After
+    everything else").
+  - **Opening a chat** shows its messages from the device's cache (CachePrimer keeps every chat's
+    latest events there) as the screen slides in, as the old UI does; the screen's chunk is
+    preloaded with the Chats tab's. The shell pushes a conversation once its first messages are
+    in (`messagesIn`, up to 600ms): mounted before them, a longer chat slid in empty and stalled
+    midway as its rows rendered (seen on the emulator with 37 messages). What still waits gets a small spinner at the top of the list,
+    after 400ms: the chat being selected (a link opening a channel while its community loads), or
+    its first messages coming from the backend when the cache has none. Older messages loading as
+    the list is scrolled up show none: ChatEventList doesn't say when it's loading them, and it
+    loads them well before the top is reached.
+  - **Unread messages**: a chat with unread messages opens on the first of them, in the middle of
+    the list, as the old app's (`OpenAtUnread`: the client loads them as it selects the chat,
+    before the pushed screen's list is there to hear it), under an "Unread messages" divider. The
+    divider goes once every message after it has been read: it lingers 3s, then fades and folds
+    away (`FirstUnread.seen`), and isn't back that visit. Ours: the old app has no divider, the
+    web's stays for the visit, and the design doesn't show one in a conversation.
+  - **Going back** keeps the messages showing until the screen is gone (`HeldWhileLeaving`, and
+    ChatEventList's `loadedRange`, which the conversation holds with them), as it does when
+    another chat replaces it.
+  - **Mute** is Mute / Unmute (no durations, as on Chats' rows).
+  - **A channel being previewed** (not joined) offers Search in chat, Mute and Favourite, as the
+    old app's menu does, but its search finds nothing ("No results": the backend searches for
+    members), and it opens at its latest messages with no unread divider (nothing has been read).
+    TODO(design): the preview's menu and search, with the join bar (N8b).
+  - **A DM whose chat isn't in the list yet** (found testing: a deleted DM the other user had
+    written to again, before the next sync brought it back) shows the header's back and avatar with
+    no name, and the list's spinner, until the chat arrives.
+  - **Toasts** sit above the composer in a conversation (the kit's `footer` placement). Mute,
+    favourite and unblock say so at once, as the client shows the change at once (`localUpdates`),
+    here and on Chats' rows; a refusal takes the toast's place. Block and unblock wait on the
+    backend, so their toast says so with a small loader ("Blocking @ann…"), then how it went
+    ("Blocked @ann", with Undo and the close); Undo unblocks in the same toast ("Unblocking
+    @ann…", then "Unblocked @ann"). A toast waiting on an operation never times out; its result
+    gets a full time of its own (`showPending`, `AsyncUndo`; ours: the design's toast has no
+    waiting state). Leave and delete don't wait: nothing is sent
+    until their Undo has gone (`PendingRemovals`).
+  - **Typing** couldn't be seen end to end here: typing reaches peers over WebRTC, which the browser
+    check's environment didn't connect. The bubble and the strip were checked by setting the names.
+    Their words are the library's (`ui.typingIndicator.typing`), English only.
+  - **Sender names** are the library's (`--ink-3`); the prototype colours each by its swatch with
+    hex values no token has.
+  - **Spacing**: received messages leave 44px on the end side and sent ones 60px on the start side,
+    as the prototype's; the avatar is 28px with an 8px gap (`MessageGroup`'s `avatarSize`,
+    `--group-gap`). A marked message (the search's match, the one replied to or edited) is tinted in
+    a rounded box 6px outside the row, the search's in the accent.
+  - **The swipe's hint**: the prototype's two bounces (`oc-swipe-arm`) aren't in the export, so
+    ours are (`MessageGroup`, EXPORT-LOG 2026-11-07). When iOS's edge swipe back is built (N3),
+    it will have to win over a reply swipe that starts at the screen's edge.
+  - **By hand in the library** (EXPORT-LOG 2026-11-07, to take back to the design export):
+    `MessageGroup`'s `mirror`, `avatarSize`, `swipeStyle="inset"` and its CSS hooks
+    (`--group-gap`, `--group-ring`, `--message-mark*`); `ChatBubble` and `VoiceMessage` put a
+    mirrored bubble at the inline end.
 - **Shell breakpoints vs layout tokens**: the shell's breakpoints and widths (Fix Brief - App
   Shell Layout: 768 / 1200 / 1476 / 1876 / 2476px, chat list `clamp(350px, 30cqw, 550px)`, right
   column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*` 1280–2500px,
@@ -885,8 +982,8 @@ design export needs. Each entry says where it came up.
   - no QR code, and invited-but-not-joined people aren't listed.
   - it opens for a private channel too (its Add tab) and for any member of a public chat (to
     share its link), as the old header menu did (`canOpenInvite`).
-  - a failed invite or add shows two toasts: the dialog's "That didn't go through" and the app's
-    reason.
+  - a failed invite or add shows two toasts, one above the other: the dialog's "That didn't go
+    through" and the app's reason.
   - the Add tab shows an empty "<community> members" heading until you search, because the app
     passes no members up front.
   - a public chat's link shows a switch locked on, and the warning that access gates are skipped
@@ -937,7 +1034,7 @@ design export needs. Each entry says where it came up.
   - `ChatPicker`'s multi-select (forward to several chats; the old trees forwarded to one, as 5b
     does), `ChatListPanel`'s grouped search
     (people and messages need search in the app), the design's `MediaViewer` (replacing
-    `features/conversation/MediaViewer.svelte`) and `PuzzleDialog`'s screen layout (native) are
+    `core/MediaViewer.svelte`, which the native conversation opens too) and `PuzzleDialog`'s screen layout (native) are
     separate pieces of work.
   - `AccessGates` no longer offers credential gates (retired by the design; one already set still
     shows) and has no NFT gate. The app doesn't pass `types` (`OFFERED_GATE_TYPES` is unused), so
@@ -1342,7 +1439,10 @@ design export needs. Each entry says where it came up.
   only) opens `SuspendUserDialog` (see "Suspend and unsuspend").
 - **Toasts**: the app's toast (`toastStore`, e.g. "Failed to un-archive chat") shows as the
   library's `UndoToast` without its action (`shell/Toasts.svelte`). The design has no failure tone
-  for a toast, so a failure looks like any other message.
+  for a toast, so a failure looks like any other message. The library components' own toasts (a
+  wallet send's, an invite's, a sign-in method's) show in the same layer (`setToastHost`, App),
+  over every dialog and veil (design pass 7), above the app's when both show (a failed invite: the
+  dialog's "That didn't go through" and the app's reason).
 - **Chat list, first cut** (`features/chats`, phase 3a): not yet carried over from the old row:
   avatars (swatches stand in: Swatches), the typing line, online presence, unread mentions, the
   thread count, archive / delete in the row menu, and server-side search (users and groups outside
@@ -1431,7 +1531,7 @@ design export needs. Each entry says where it came up.
   a text bubble, which shows the failure). Time left is worked out when the row is made. No tick, reactions, quote or thread yet, and swaps in threads aren't
   wired.
 - **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
-  Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
+  Discord shows as the bot's (`logic/conversation/messageRow.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked
   the account, with their name, avatar and badges (`linkedAuthor` in `@client`), or as the
   account's own profile if no one has; so do their reply quotes, which carry the quoted message's

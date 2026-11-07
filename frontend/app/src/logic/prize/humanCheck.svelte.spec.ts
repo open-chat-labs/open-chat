@@ -1,6 +1,26 @@
 import type { TurnstilePass } from "@client";
 import { describe, expect, test, vi } from "vitest";
-import { HUMAN_CHECK_WAIT_MS, HumanCheck, isHumanCheckMessage } from "./humanCheck.svelte";
+import {
+    HUMAN_CHECK_WAIT_MS,
+    HumanCheck,
+    HumanChecks,
+    isHumanCheckMessage,
+} from "./humanCheck.svelte";
+
+describe("a conversation's prizes' checks", () => {
+    test("one per prize, kept, and none running until a claim takes one", () => {
+        const checks = new HumanChecks();
+        expect(checks.running(1n)).toBe(false);
+        const one = checks.for(1n);
+        expect(checks.for(1n)).toBe(one);
+        expect(checks.for(2n)).not.toBe(one);
+        void one.take();
+        expect(checks.running(1n)).toBe(true);
+        expect(checks.running(2n)).toBe(false);
+        one.stop();
+        expect(checks.running(1n)).toBe(false);
+    });
+});
 
 describe("a prize's human check", () => {
     test("runs only once a claim asks for it, and gives that claim its token", async () => {

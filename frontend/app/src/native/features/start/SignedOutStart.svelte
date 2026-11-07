@@ -1,8 +1,9 @@
 <!-- The signed-out start (native design notes §3.1): Welcome, and the screens pushed from it (Pick a
      username, Welcome back, Link to your account), on their own small stack (startStack.svelte.ts),
      with the tabs' push motion: going deeper the new screen slides in from the inline end and the
-     one under it moves out to the other side (.34s), Back reverses it, and Welcome first shows
-     without motion. Android's system back goes through it too (shell/back.ts). -->
+     one under it moves out to the other side (.34s), Back reverses it, quicker (.24s: motion.ts's
+     PUSH_MS and POP_MS), and Welcome first shows without motion. Android's system back goes
+     through it too (shell/back.ts). -->
 <script lang="ts">
     import type { Overlays } from "../../shell/overlays.svelte";
     import { popOut, pushIn } from "../../shell/motion";
@@ -23,7 +24,7 @@
     const back = () => start.back();
 </script>
 
-<div class="start">
+<div class="start" class:popping={start.change === "pop"}>
     {#each start.steps as step, i (step)}
         {@const below = i < start.steps.length - 1}
         <section
@@ -68,6 +69,11 @@
 
         &:first-child {
             box-shadow: none;
+        }
+
+        // the one under coming back as Back slides the top one off, with it (motion.ts's POP_MS)
+        .popping & {
+            transition-duration: 0.24s;
         }
 
         &.below {

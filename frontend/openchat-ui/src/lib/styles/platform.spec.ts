@@ -233,3 +233,44 @@ describe('data-always-dark', () => {
     expect(resolve([root({ 'data-mode': 'light', 'data-accent': 'pink', 'data-platform': 'native' })]).has('--call-bg')).toBe(false);
   });
 });
+
+describe('toasts (design pass 7)', () => {
+  // inverted: light in dark mode and dark in light mode; the action is the other mode's bright accent
+  const INVERTED = {
+    dark: { '--toast-bg': '#E6E5EB', '--toast-ink': '#1A1720', '--toast-ink-2': '#5A5764', '--toast-success': '#0E8B62' },
+    light: { '--toast-bg': '#24212A', '--toast-ink': '#F2F1F5', '--toast-ink-2': '#B9B6C2', '--toast-success': '#2EE6A8' },
+  };
+  const ACTION = {
+    dark: { pink: '#C8244A', orange: '#A85413', blue: '#1B5FCC', green: '#0A7A57' },
+    light: { pink: '#FF8298', orange: '#FFA366', blue: '#7DBBFF', green: '#6BF0C4' },
+  };
+  const TOAST = ['--toast-bg', '--toast-ink', '--toast-ink-2', '--toast-hover', '--toast-shadow', '--toast-success', '--toast-success-soft', '--toast-action', '--toast-action-soft', '--toast-action-hover'];
+
+  test.each(MODES.flatMap((mode) => ACCENTS.map((accent) => [mode, accent] as const)))('%s · %s: inverted, with the other mode\'s accent on the action', (mode, accent) => {
+    for (const platform of [{}, { 'data-platform': 'native' }]) {
+      const tokens = resolve([root({ 'data-mode': mode, 'data-accent': accent, ...platform })]);
+      for (const [name, value] of Object.entries(INVERTED[mode])) expect([name, tokens.get(name)]).toEqual([name, value]);
+      expect(tokens.get('--toast-action')).toBe(ACTION[mode][accent]);
+      for (const name of TOAST) expect([name, tokens.get(name)?.includes('UNSET')]).toEqual([name, false]);
+    }
+  });
+
+  test('the action\'s soft and hover fills are its colour at 10/18% in dark mode and 14/24% in light', () => {
+    const dark = resolve([root({ 'data-mode': 'dark', 'data-accent': 'blue' })]);
+    const light = resolve([root({ 'data-mode': 'light', 'data-accent': 'blue' })]);
+    expect([dark.get('--toast-action-soft'), dark.get('--toast-action-hover')]).toEqual(['rgba(27,95,204,.10)', 'rgba(27,95,204,.18)']);
+    expect([light.get('--toast-action-soft'), light.get('--toast-action-hover')]).toEqual(['rgba(125,187,255,.14)', 'rgba(125,187,255,.24)']);
+  });
+
+  test('an always-dark area inside a light root has the dark toast, in its root\'s accent', () => {
+    const inside = resolve([root({ 'data-mode': 'light', 'data-accent': 'orange', 'data-platform': 'native' }), call]);
+    expect(inside.get('--toast-bg')).toBe('#E6E5EB');
+    expect(inside.get('--toast-action')).toBe('#A85413');
+  });
+
+  test('the default root (no attributes) has the dark · pink toast', () => {
+    const plain = resolve([root({})]);
+    expect(plain.get('--toast-bg')).toBe('#E6E5EB');
+    expect(plain.get('--toast-action')).toBe('#C8244A');
+  });
+});

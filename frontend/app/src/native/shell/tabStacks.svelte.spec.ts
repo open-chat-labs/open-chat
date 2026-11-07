@@ -247,6 +247,24 @@ describe("a screen with no URL", () => {
         expect(kinds(stacks)).toEqual(["chats", "new_chat"]);
     });
 
+    // the conversation's Back after its details have been and gone goes back to the list (it was
+    // reported to stay on the chat: a probe had tapped the header's last button, its menu)
+    test("over a conversation (its details), leaves the conversation's Back as it was", () => {
+        const stacks = new TabStacks();
+        stacks.arrive(at("/chats"));
+        stacks.arrive(at("/chats/user/u1"));
+        stacks.push({ kind: "chat_details", chatId: { kind: "direct_chat", userId: "u1" } });
+        expect(kinds(stacks)).toEqual(["chats", "conversation", "chat_details"]);
+        expect(stacks.backUrl()).toBe("/chats/user/u1");
+        expect(stacks.popLocal()).toBe(true);
+        expect(stacks.localTop).toBe(false);
+        expect(stacks.popLocal()).toBe(false);
+        expect(stacks.backUrl()).toBe("/chats");
+        stacks.arrive(at("/chats"));
+        expect(kinds(stacks)).toEqual(["chats"]);
+        expect(stacks.change).toBe("pop");
+    });
+
     test("pushed again, is popped back to; the tab tapped again takes them all off", () => {
         const stacks = new TabStacks();
         stacks.arrive(at("/chats"));

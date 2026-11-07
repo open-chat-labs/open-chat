@@ -2,6 +2,7 @@
     import { BodySmall, Container } from "component-lib";
     import type { ChatSummary, OpenChat } from "@client";
     import { allUsersStore } from "@client";
+    import { directChatStatus } from "@src/logic/conversation/chatStatus";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -19,10 +20,9 @@
     let { chat }: Props = $props();
 
     let userId = $derived(chat.kind === "direct_chat" ? chat.them.userId : "");
-    let isBot = $derived($allUsersStore.get(userId)?.kind === "bot");
-    let isSuspended = $derived($allUsersStore.get(userId)?.suspended ?? false);
-    let subtext = $derived(isSuspended ? $_("accountSuspended") : "");
-    let checkLastOnline = $derived(!isSuspended && !isBot && chat.kind === "direct_chat");
+    let status = $derived(directChatStatus($allUsersStore.get(userId)));
+    let subtext = $derived(status === "suspended" ? $_("accountSuspended") : "");
+    let checkLastOnline = $derived(status === "last_online" && chat.kind === "direct_chat");
 
     $effect(() => {
         if (checkLastOnline && chat.kind === "direct_chat") {

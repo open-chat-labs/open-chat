@@ -18,6 +18,7 @@
         selectedChatSummaryStore,
         type VideoCallContent,
     } from "@client";
+    import { callState } from "@src/logic/conversation/callItem";
     import { getContext, type Snippet } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { activeVideoCall } from "../../stores/video";
@@ -53,10 +54,7 @@
     );
     let endedDate = $derived(content.ended ? new Date(Number(content.ended)) : undefined);
     let finished = $derived(endedDate !== undefined);
-    let missed = $derived(
-        content.ended &&
-            content.participants.find((p) => p.userId === $currentUserIdStore) === undefined,
-    );
+    let missed = $derived(callState(content, $currentUserIdStore) === "missed");
 
     let duration = $derived.by(() => {
         if (timestamp === undefined) return;

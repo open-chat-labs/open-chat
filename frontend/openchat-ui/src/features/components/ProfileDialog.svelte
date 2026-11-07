@@ -208,6 +208,8 @@
   import { getI18n, segments, useT, type I18nParams } from '../../lib/i18n';
   import CopyButton from '../../lib/components/CopyButton.svelte';
   import Translate from '../../lib/components/Translate.svelte';
+  import UndoToast from '../../lib/components/UndoToast.svelte';
+  import { getToastHost, ToastLayer } from '../../lib/toasts.svelte';
 
   interface Props {
     handle: string;
@@ -640,8 +642,10 @@
   let siRemoved = $state<string[]>([]);
   let siAdded = $state<SigninMethod[]>([]);
   let siAdding = $state<Adding | null>(null);
-  let siToast = $state<{ text: string } | null>(null);
-  let siToastTimer: ReturnType<typeof setTimeout> | undefined;
+  // toasts go to the host's toast layer, above the dialog and its veil (design pass 7); with no host they show here
+  const toastHost = getToastHost();
+  const ownToasts = new ToastLayer();
+  onDestroy(() => ownToasts.dispose());
   let siRun = 0;
 
   // a method linked here is listed until the host's signinMethods includes it, then only once
@@ -654,9 +658,7 @@
   const canAdd = (type: SigninMethod['type']) => (type === 'email' ? !!onRequestEmailCode && !!onVerifyEmailCode : !!onLinkMethod);
 
   function toast(text: string) {
-    cancel(siToastTimer);
-    siToast = { text };
-    siToastTimer = later(() => (siToast = null), 5000);
+    (toastHost ?? ownToasts.show)({ message: text, icon: 'none', duration: 5000 });
   }
 
   function updateAdding(patch: Partial<Adding>) {
@@ -1433,7 +1435,7 @@
 
       {#if section === 'signin'}
         <div class="signin">
-          <div class="scroll gap-18 toast-room">
+          <div class="scroll gap-18" class:toast-room={!toastHost}>
             {#if siCurrent}
               <div class="current">
                 <span class="current-tile">{@render glyph(SI_TYPES[siCurrent.type].icon, 'current-glyph')}</span>
@@ -1526,9 +1528,10 @@
               </div>
             {/each}
           </div>
-          {#if siToast}
+          {#if ownToasts.current}
+            {@const shown = ownToasts.current}
             <div class="toast">
-              <span class="toast-text" role="status">{siToast.text}</span>
+              {#key shown.id}<UndoToast message={shown.message} icon={shown.icon} onClose={() => ownToasts.close()} />{/key}
             </div>
           {/if}
         </div>
@@ -3320,8 +3323,7 @@
     user-select: none;
   }
 
-  .adding-cancel:hover,
-  .toast-undo:hover {
+  .adding-cancel:hover {
     background: var(--btn-hover);
   }
 
@@ -3437,36 +3439,8 @@
     position: absolute;
     inset-inline: 26px;
     bottom: 18px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    height: 46px;
-    padding: 0 8px 0 16px;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    box-shadow:
-      inset 0 0 0 1px var(--line-2),
-      0 14px 36px rgba(0, 0, 0, 0.5);
-  }
-
-  .toast-text {
-    flex: 1;
-    min-width: 0;
-    font: var(--weight-medium) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .toast-undo {
-    flex: none;
-    padding: 9px 12px;
-    border-radius: var(--radius-sm);
-    font: var(--weight-bold) var(--text-md) / 1 var(--font-sans);
-    color: var(--accent);
-    cursor: pointer;
-    user-select: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   /* ---- appearance ---- */

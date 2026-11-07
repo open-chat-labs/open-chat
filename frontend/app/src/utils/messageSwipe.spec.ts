@@ -1,5 +1,28 @@
 import type { MessageMenuAction } from "@client";
-import { messageSwipeAction, messageSwipeLeft } from "./messageSwipe";
+import { messageSwipeAction, messageSwipeLeft, nativeMessageSwipes } from "./messageSwipe";
+
+describe("nativeMessageSwipes", () => {
+    const offers = (...actions: MessageMenuAction[]) => new Set<MessageMenuAction>(actions);
+
+    test("right replies to any message that offers a reply; left edits only your own", () => {
+        expect(nativeMessageSwipes(false, offers("reply", "forward"))).toEqual({
+            right: "reply",
+            left: undefined,
+        });
+        expect(nativeMessageSwipes(true, offers("reply", "edit"))).toEqual({
+            right: "reply",
+            left: "edit",
+        });
+    });
+
+    test("neither is taken where the message doesn't offer it", () => {
+        expect(nativeMessageSwipes(true, offers())).toEqual({ right: undefined, left: undefined });
+        expect(nativeMessageSwipes(false, offers("edit"))).toEqual({
+            right: undefined,
+            left: undefined,
+        });
+    });
+});
 
 describe("messageSwipeAction", () => {
     // Invariant: one swipe triggers exactly one of edit or reply. Swiping your own editable

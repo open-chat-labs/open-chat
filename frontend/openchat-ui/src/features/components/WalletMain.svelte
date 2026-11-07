@@ -61,6 +61,7 @@
   import TokenPicker from '../../lib/components/TokenPicker.svelte';
   import TransactionRow from '../../lib/components/TransactionRow.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
+  import { getToastHost, ToastLayer, type HostedToast } from '../../lib/toasts.svelte';
   import type { ComponentProps, Snippet } from 'svelte';
   import WalletReceive, { type ReceiveNetwork, type ShareChat } from './WalletReceive.svelte';
   import WalletRecipients, { type Recipient, type RecipientDraft } from './WalletRecipients.svelte';
@@ -262,11 +263,16 @@
   let pick = $state<{ view: 'send' | 'receive' | 'browse' } | null>(null);
   // sends the host confirmed (with an id) but its activity doesn't list yet
   let sent = $state<Entry[]>([]);
-  // `notice`: a plain message, with no action (a copied ledger ID or username)
-  let toast = $state<{ id: number; message: string; userId: string | null; notice?: boolean } | null>(null);
   let tokMenu = $state<{ left: number; right: number; top: number; bottom: number } | null>(null);
-  let toastTimer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => clearTimeout(toastTimer));
+  // toasts go to the host's toast layer, above its dialogs (design pass 7); with no host they show here
+  const toastHost = getToastHost();
+  const ownToasts = new ToastLayer();
+  let takeDownToast: (() => void) | undefined;
+  onDestroy(() => ownToasts.dispose());
+
+  function showToast(toast: HostedToast) {
+    takeDownToast = (toastHost ?? ownToasts.show)(toast);
+  }
 
   const isFlow = (v: View) => v === 'send' || v === 'swap' || v === 'receive';
 
@@ -436,16 +442,23 @@
     report();
     const message = t('ui.walletMain.sentToast', { amount: sentAmount(x), name: x.toLabel });
     if (openChat && x.userId && onMessage) {
-      toast = null;
+      takeDownToast?.();
       onMessage({ userId: x.userId, text: message });
       return;
     }
-    const tid = Date.now();
-    toast = { id: tid, message, userId: x.person ? (x.userId ?? null) : null };
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-      if (toast?.id === tid) toast = null;
-    }, 6000);
+    const userId = x.person ? (x.userId ?? null) : null;
+    showToast({
+      message,
+      tone: 'success',
+      size: 'lg',
+      icon: 'check',
+      actionLabel: t(userId && onMessage ? 'ui.walletMain.message' : 'ui.walletMain.view'),
+      onAction: () => {
+        go({ view: 'token' });
+        if (userId) onMessage?.({ userId, text: message });
+      },
+      duration: 6000,
+    });
   }
 
   // one place that knows ledger IDs: both kebabs (the list's and the token page's) copy through here
@@ -459,13 +472,9 @@
     if (handle && (await copyText(handle))) notify(t('ui.walletMain.usernameCopied'));
   }
 
+  // a plain message, with no action (a copied ledger ID or username)
   function notify(message: string) {
-    const tid = Date.now();
-    toast = { id: tid, message, userId: null, notice: true };
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-      if (toast?.id === tid) toast = null;
-    }, 4000);
+    showToast({ message, tone: 'success', size: 'lg', icon: 'check', duration: 4000 });
   }
 
   // `s` is a token's id, or the symbol of a receivable token not in `tokens`
@@ -885,23 +894,19 @@
       /></DialogShell
     >
   {/if}
-  {#if toast}
+  {#if ownToasts.current}
+    {@const toast = ownToasts.current}
     <div class="toast">
       <div class="toast-box">
         {#key toast.id}<UndoToast
-            shown={true}
-            tone="success"
-            size="lg"
-            icon="check"
             message={toast.message}
-            actionLabel={t(toast.userId && onMessage ? 'ui.walletMain.message' : 'ui.walletMain.view')}
-            onAction={toast.notice ? undefined : () => {
-              const done = toast;
-              toast = null;
-              go({ view: 'token' });
-              if (done?.userId) onMessage?.({ userId: done.userId, text: done.message });
-            }}
-            onClose={() => (toast = null)}
+            detail={toast.detail}
+            tone={toast.tone}
+            size={toast.size}
+            icon={toast.icon}
+            actionLabel={toast.actionLabel}
+            onAction={toast.onAction && (() => ownToasts.action())}
+            onClose={() => ownToasts.close()}
           />{/key}
       </div>
     </div>

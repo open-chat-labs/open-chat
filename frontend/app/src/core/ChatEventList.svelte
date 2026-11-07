@@ -67,6 +67,9 @@
         maintainScroll: boolean;
         visible: boolean;
         initialised: boolean;
+        // the ranges of events loaded, which the items are split into segments by: the selected
+        // chat's unless given (the native conversation holds its own as it slides away)
+        loadedRange?: typeof eventIndexesLoadedStore.value;
         messagesDiv?: HTMLDivElement;
         messagesDivHeight?: number;
         // platform-specific class applied to the scroll viewport — must size it
@@ -88,6 +91,7 @@
         maintainScroll,
         visible,
         initialised = $bindable(),
+        loadedRange: givenLoadedRange,
         messagesDiv = $bindable(undefined),
         messagesDivHeight = $bindable(0),
         viewportClass,
@@ -177,7 +181,7 @@
         if (threadRootEvent !== undefined || allItems.length === 0) return allItems;
         // Subranges are computed at most once per publish, and only if there
         // is at least one gap, rather than cloning the DRange per gap.
-        const loadedRange = $eventIndexesLoadedStore;
+        const loadedRange = givenLoadedRange ?? $eventIndexesLoadedStore;
         let loaded: { low: number; high: number }[] | undefined;
         // Segment boundaries: a split between adjacent event items whose gap
         // is not fully covered by the loaded ranges (expired/disappeared

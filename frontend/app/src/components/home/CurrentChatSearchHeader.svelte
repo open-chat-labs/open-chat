@@ -2,10 +2,10 @@
     import {
         iconSize,
         type ChatSummary,
-        type MessageMatch,
         type OpenChat,
         type UserOrUserGroup,
     } from "@client";
+    import { ChatSearch } from "@src/logic/conversation/chatSearch.svelte";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -27,132 +27,58 @@
     const client = getContext<OpenChat>("client");
     const mentionRegex = /@(\w*)$/;
 
-    let lastSearchTerm = "";
-    let matches: MessageMatch[] = $state([]);
-    let currentMatch = $state(0);
     let inputElement: HTMLInputElement | undefined = $state();
-    let searching = $state(false);
     let showMentionPicker = $state(false);
     let mentionPrefix: string | undefined = $state();
     let searchBoxHeight: number = $state(80);
     let rangeToReplace: [number, number] | undefined = undefined;
-    let timer: number | undefined;
 
-    let count = $derived(matches.length > 0 ? `${currentMatch + 1}/${matches.length}` : "");
     let isGroup = $derived(chat.kind === "group_chat" || chat.kind === "channel");
+
+    // the chat's matches, newest first, and the one shown (logic/conversation/chatSearch)
+    const search = new ChatSearch({
+        search: async (term, mentions) => {
+            const response = await client.searchChat(chat.id, term, mentions, 200);
+            return response.kind === "success" ? response.matches : undefined;
+        },
+        get group() {
+            return isGroup;
+        },
+        lookup: (name) => {
+            const userOrGroup = client.lookupUserForMention(name, true);
+            return userOrGroup === undefined
+                ? undefined
+                : (client.userOrUserGroupId(userOrGroup) ?? "");
+        },
+        onGoTo: (index) => onGoToMessageIndex({ index, preserveFocus: index >= 0 }),
+    });
+    let count = $derived(
+        search.matches.length > 0 ? `${search.current + 1}/${search.matches.length}` : "",
+    );
 
     onMount(() => {
         inputElement?.focus();
         if (searchTerm.length > 0) {
             performSearch();
         }
-        return () => clearMatches();
+        return () => search.dispose();
     });
 
+    // up is older, down newer: round past the ends
     function onNext() {
-        currentMatch++;
-        gotoMatch();
+        search.older(true);
     }
 
     function onPrevious() {
-        currentMatch--;
-        gotoMatch();
+        search.newer(true);
     }
 
-    function gotoMatch() {
-        if (matches.length === 0) return;
-
-        if (currentMatch < 0) {
-            currentMatch = matches.length - 1;
-        }
-
-        if (currentMatch >= matches.length) {
-            currentMatch = 0;
-        }
-
-        onGoToMessageIndex({
-            index: matches[currentMatch].messageIndex,
-            preserveFocus: true,
-        });
-    }
-
-    function clearMatches() {
-        matches = [];
-        onGoToMessageIndex({
-            index: -1,
-            preserveFocus: false,
-        });
-    }
-
-    async function performSearch() {
-        if (lastSearchTerm === searchTerm) {
-            return;
-        }
-
-        clearMatches();
-        const [term, mentions] = extractMentions(searchTerm);
-        if (term.length > 2 || mentions.length > 0) {
-            lastSearchTerm = searchTerm;
-            searching = true;
-            const lowercase = term.toLowerCase();
-            try {
-                const response = await client.searchChat(chat.id, lowercase, mentions, 200);
-                if (response.kind === "success") {
-                    matches = filterAndSortMatches(response.matches);
-                    if (matches.length > 0) {
-                        currentMatch = 0;
-                        gotoMatch();
-                    }
-                }
-            } catch {
-                // a failed search shows no matches
-            } finally {
-                searching = false;
-            }
-        }
-    }
-
-    function extractMentions(text: string): [string, string[]] {
-        if (!isGroup) {
-            return [text, []];
-        }
-
-        const mentionedSet = new Set<string>();
-        const expandedText = text.replace(/@(\w*)/g, (match, p1) => {
-            const userOrGroup = client.lookupUserForMention(p1, true);
-            if (userOrGroup !== undefined) {
-                mentionedSet.add(client.userOrUserGroupId(userOrGroup) ?? "");
-                return "";
-            } else {
-                return match;
-            }
-        });
-
-        return [expandedText, Array.from(mentionedSet)];
-    }
-
-    function filterAndSortMatches(matches: MessageMatch[]): MessageMatch[] {
-        if (matches.length === 0) return matches;
-        const topScore = matches[0].score;
-        const keepThreshold = topScore * 0.2;
-        console.log(
-            `all matches: ${matches.length}, topScore: ${topScore}, bottomScore: ${
-                matches[matches.length - 1].score
-            }`,
-        );
-        matches = matches
-            // Only show matches > than 20% of the top scoring match
-            .filter((m) => m.score >= keepThreshold)
-            // Sort matches in reverse chronological order
-            .sort((m1, m2) => m2.messageIndex - m1.messageIndex);
-        return matches;
+    function performSearch() {
+        void search.search(searchTerm);
     }
 
     function onKeyPress(e: KeyboardEvent) {
         if (e.key === "Enter") {
-            if (timer !== undefined) {
-                window.clearTimeout(timer);
-            }
             performSearch();
             e.preventDefault();
         }
@@ -163,15 +89,10 @@
     }
 
     function onInputKeyup() {
-        if (showMentionPicker || lastSearchTerm === searchTerm) {
+        if (showMentionPicker) {
             return;
         }
-        if (timer !== undefined) {
-            window.clearTimeout(timer);
-        }
-        timer = window.setTimeout(() => {
-            performSearch();
-        }, 300);
+        search.typed(searchTerm);
     }
 
     function triggerMentionLookup() {
@@ -200,7 +121,7 @@
             onPrevious();
         } else if (
             event.code === "ArrowUp" ||
-            (event.code === "Enter" && lastSearchTerm === searchTerm)
+            (event.code === "Enter" && search.searched(searchTerm))
         ) {
             onNext();
         } else if (event.code === "Escape") {
@@ -209,7 +130,7 @@
             return;
         }
 
-        if (matches.length > 0) {
+        if (search.matches.length > 0) {
             event.preventDefault();
         }
     }
@@ -272,7 +193,7 @@
             type="text"
             maxlength="30"
             placeholder={$_("search")} />
-        {#if searching}
+        {#if search.searching}
             <div class="searching"></div>
         {:else}
             <div class="count">{count}</div>

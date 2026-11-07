@@ -30,3 +30,18 @@ export function messageSwipeLeft(
     const action = messageSwipeAction("left", mine, actions.has("edit"));
     return actions.has(action) ? action : undefined;
 }
+
+/**
+ * A message's swipes in the native design (native design notes §3.3): right replies (any message
+ * its menu offers a reply on), left edits your own (where it offers that); nothing forwards. Each
+ * is undefined where the menu doesn't offer it, so that swipe isn't taken.
+ */
+export function nativeMessageSwipes(
+    mine: boolean,
+    actions: ReadonlySet<MessageMenuAction>,
+): { right: "reply" | undefined; left: "edit" | undefined } {
+    return {
+        right: actions.has("reply") ? "reply" : undefined,
+        left: mine && actions.has("edit") ? "edit" : undefined,
+    };
+}

@@ -1725,7 +1725,10 @@
                 "unmuted": "ミュートを解除しました",
                 "archived": "チャットをアーカイブしました",
                 "left": "{name} から退出しました",
-                "deleted": "チャットを削除しました"
+                "deleted": "チャットを削除しました",
+                "favourited": "お気に入りに追加しました",
+                "unfavourited": "お気に入りから削除しました",
+                "favouriteFailed": "お気に入りを変更できませんでした"
             },
             "newChat": {
                 "placeholder": "名前または @ユーザー名 で検索",
@@ -1734,6 +1737,48 @@
                 "noOne": "一致する人がいません。@ユーザー名 で試してください。",
                 "noContacts": "まだ連絡先がありません",
                 "noContactsBody": "よくチャットする相手がここに表示されます。名前または @ユーザー名 で検索して会話を始めましょう。"
+            }
+        },
+        "conversation": {
+            "options": "チャットのオプション",
+            "members": "{visibility} · メンバー {count} 人",
+            "videoCall": "ビデオ通話",
+            "voiceCall": "音声通話",
+            "callsLater": "このバージョンでは通話はまだ利用できません。",
+            "menu": {
+                "search": "チャット内を検索",
+                "contactDetails": "連絡先の詳細",
+                "groupDetails": "グループの詳細",
+                "channelDetails": "チャンネルの詳細",
+                "mute": "ミュート",
+                "unmute": "ミュート解除",
+                "favourite": "お気に入りに追加",
+                "unfavourite": "お気に入りから削除",
+                "leaveGroup": "グループを退出",
+                "leaveChannel": "チャンネルを退出",
+                "block": "{name}をブロック",
+                "unblock": "ブロック解除",
+                "delete": "チャットを削除"
+            },
+            "toast": {
+                "blocked": "{name} をブロックしました",
+                "unblocked": "{name} のブロックを解除しました",
+                "blocking": "{name} をブロックしています…",
+                "unblocking": "{name} のブロックを解除しています…"
+            },
+            "search": {
+                "placeholder": "このチャット内を検索",
+                "close": "検索を閉じる",
+                "older": "前の一致",
+                "newer": "次の一致",
+                "count": "{total}件中{current}件目",
+                "none": "結果なし"
+            },
+            "live": {
+                "video": "ビデオ通話中",
+                "voice": "音声通話中",
+                "sub": "{elapsed} · {count}人",
+                "tapToJoin": "タップして参加"
             }
         },
         "shareUnavailable": "他のアプリから OpenChat への共有は、このバージョンではまだご利用いただけません。",

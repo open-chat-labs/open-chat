@@ -1,9 +1,10 @@
 <!-- The native shell (native design notes §1 Structure): five tabs, each with its own push stack.
      The URL names the screen showing (router/locations.ts); each tab keeps its stack (TabStacks), so
      it comes back as it was left. The tab bar shows only on a tab's root; a pushed screen has the
-     whole window (showsTabBar). A pushed screen slides in from the inline end over everything under it, the tab
-     bar too, which stays where it is (.34s, motion.ts), and Back slides it off again. Android's system back closes an open
-     sheet or menu first, then pops (back.ts). On a tab's root, a sideways drag swipes to the
+     whole window (showsTabBar). A pushed screen slides in from the inline end over the screen under
+     it, which moves 28% of the way out the other side (a tab's root with its tab bar, as one), in
+     .34s, and Back slides it off again as the one under it comes back, in .24s (motion.ts). Android's
+     system back closes an open sheet or menu first, then pops (back.ts). On a tab's root, a sideways drag swipes to the
      neighbouring tab (tabSwipe.ts); switching tabs slides only the two screens, old and new.
      Signed out, it's the signed-out start instead (features/start), whatever the URL; the
      marketing pages are the web tree's, outside the tabs. -->
@@ -19,15 +20,18 @@
         communitiesStore,
         currentUserIdStore,
         defaultCommunity,
+        eventsStore,
         identityStateStore,
         lastSelectedCommunityIdStore,
         messageActivitySummaryStore,
         OpenChat,
         pathContextStore,
         routeStore,
+        selectedChatSummaryStore,
         sortedCommunitiesStore,
         unreadDirectAndGroupCountsStore,
         chatIdentifierToString,
+        type ChatIdentifier,
         type CommunityIdentifier,
     } from "@client";
     import { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
@@ -37,9 +41,11 @@
     import { minimizeApp } from "tauri-plugin-oc-api";
     import ScreenHost from "../features/app/ScreenHost.svelte";
     import { screenModules, type ScreenContext } from "../features/app/screens";
+    import { messagesIn, messagesShown } from "../features/conversation/messagesIn";
     import { StartStack, startEntry, startStepFor } from "../features/start/startStack.svelte";
     import {
         showsTabBar,
+        toastsAbove,
         locationFor,
         NATIVE_TABS,
         openChat,
@@ -51,12 +57,16 @@
         type TabsLocation,
     } from "../router/locations";
     import { releaseVelocity, type DragSample } from "@openchat/ui/src/native/sheetDrag";
-    import { ToastQueue } from "@openchat/ui/src/native/toastQueue.svelte";
+    import {
+        ToastQueue,
+        type PendingToast,
+        type ToastUndo,
+    } from "@openchat/ui/src/native/toastQueue.svelte";
     import { toastStore } from "@src/stores/toast";
     import { backAction } from "./back";
     import { listenForSystemBack } from "./systemBack";
     import { openOnWeb } from "./onWeb";
-    import { popOut, pushIn } from "./motion";
+    import { popOut, pushIn, underneathMs } from "./motion";
     import { Overlays } from "./overlays.svelte";
     import { tabBarTabs } from "./tabBar.adapter";
     import { TabStacks } from "./tabStacks.svelte";
@@ -127,7 +137,10 @@
 
     // The stacks go where the URL is once the screens it shows can show at once (their chunks in:
     // screenModules), so the screen before stays until then rather than a blank one or a spinner.
-    // The shell preloads every screen's chunk when it's idle, so that's almost always at once.
+    // The shell preloads every screen's chunk when it's idle, so that's almost always at once. A
+    // conversation pushed anew also waits for its first messages, from the device's cache, so it
+    // slides in with them (messagesIn), up to MESSAGES_WAIT_MS.
+    const MESSAGES_WAIT_MS = 600;
     let arrival = 0;
     $effect(() => {
         const here = location;
@@ -136,7 +149,12 @@
         untrack(() => {
             const mine = ++arrival;
             const kinds = at.steps.map((s) => s.screen.kind);
-            if (screenModules.ready(kinds)) {
+            const opening = newConversation(at);
+            if (
+                screenModules.ready(kinds) &&
+                (opening === undefined ||
+                    messagesShown(opening, selectedChatSummaryStore.value, eventsStore.value))
+            ) {
                 arriveAt(at);
                 return;
             }
@@ -149,11 +167,26 @@
                     // ScreenHost says it didn't load, with a retry
                     console.warn("Couldn't load a screen", err);
                 }
+                if (opening !== undefined) {
+                    await messagesIn(
+                        opening,
+                        { selected: selectedChatSummaryStore, events: eventsStore },
+                        MESSAGES_WAIT_MS,
+                    );
+                }
                 // unless the URL has moved on meanwhile
                 if (mine === arrival) arriveAt(at);
             }
         });
     });
+
+    // the chat of a conversation `at` pushes that its tab's stack doesn't have yet
+    function newConversation(at: TabsLocation): ChatIdentifier | undefined {
+        const top = at.steps[at.steps.length - 1];
+        if (top?.screen.kind !== "conversation") return undefined;
+        const current = stacks.stackOf(at.tab) ?? [];
+        return current.some((s) => s.key === top.key) ? undefined : top.screen.route.chatId;
+    }
 
     function arriveAt(at: TabsLocation) {
         stacks.arrive(at);
@@ -204,6 +237,10 @@
     const pushed = $derived(stacks.steps.slice(1));
     // the tab bar stays under pushed screens, but not inside a conversation
     const barShown = $derived(showsTabBar(stacks.steps));
+    // a tab's root and its bar, under a pushed screen, move out as one as it's pushed
+    const covered = $derived(pushed.length > 0);
+    // how long the screen under the top one takes to move, with the top one's slide
+    const underneath = $derived(`${underneathMs(stacks.change)}ms`);
 
     const labels: Record<NativeTabId, string> = $derived({
         chats: $_("native.tabs.chats"),
@@ -254,7 +291,10 @@
     }
 
     function ease(): string {
-        return getComputedStyle(document.documentElement).getPropertyValue("--ease-out").trim() || "ease-out";
+        return (
+            getComputedStyle(document.documentElement).getPropertyValue("--ease-out").trim() ||
+            "ease-out"
+        );
     }
 
     function slideTabs(from: NativeTabId, to: NativeTabId) {
@@ -312,12 +352,19 @@
     let swallowClick = false;
 
     function leftToContent(target: EventTarget | null, root: HTMLElement): boolean {
-        for (let el = target instanceof Element ? target : null; el && el !== root; el = el.parentElement) {
+        for (
+            let el = target instanceof Element ? target : null;
+            el && el !== root;
+            el = el.parentElement
+        ) {
             if (el instanceof HTMLElement) {
                 if (el.dataset.tabSwipe === "off" || el.isContentEditable) return true;
                 if (el.matches("input, textarea, select")) return true;
                 const overflow = getComputedStyle(el).overflowX;
-                if ((overflow === "auto" || overflow === "scroll") && el.scrollWidth > el.clientWidth) {
+                if (
+                    (overflow === "auto" || overflow === "scroll") &&
+                    el.scrollWidth > el.clientWidth
+                ) {
                     return true;
                 }
             }
@@ -402,7 +449,12 @@
         }
     }
 
-    function springBack(offset: number, neighbour: NativeTabId | undefined, width: number, dx: number) {
+    function springBack(
+        offset: number,
+        neighbour: NativeTabId | undefined,
+        width: number,
+        dx: number,
+    ) {
         if (offset === 0) return;
         const options = { duration: 240, easing: ease() };
         panes[stacks.tab]?.animate(
@@ -474,15 +526,21 @@
         if (url !== undefined) navigate(url, "dismiss");
     }
 
-    function showToast(message: string, undo?: () => void): () => void {
+    function showToast(message: string, undo?: ToastUndo): () => void {
         toastStore.hideToast();
         return toasts.show(message, undo);
+    }
+
+    function showPendingToast(message: string): PendingToast {
+        toastStore.hideToast();
+        return toasts.showPending(message);
     }
 
     const shared = {
         overlays,
         push: (screen: LocalScreen) => void push(screen),
         toast: showToast,
+        pendingToast: showPendingToast,
         removals,
     };
     const rootContext: ScreenContext = { back: undefined, ...shared };
@@ -544,23 +602,26 @@
         title={$_("unexpectedError")}
         body={$_("regionLoadFailed")}
         actionLabel="ui.common.retry"
-        actionHandler={() => window.location.reload()} />
+        actionHandler={() => window.location.reload()}
+    />
 {/snippet}
 
 {#if location.area === "tabs"}
-    <div class="shell">
+    <div class="shell" style:--underneath-ms={underneath}>
         <div class="stage">
             <!-- the swipe is a touch shortcut for the tab bar, which keyboards and screen readers use -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
                 class="root"
+                class:covered
                 inert={pushed.length > 0}
                 onpointerdown={onPointerDown}
                 onpointermove={onPointerMove}
                 onpointerup={onPointerUp}
                 onpointercancel={onPointerUp}
                 onclickcapture={onClickCapture}
-                bind:this={rootEl}>
+                bind:this={rootEl}
+            >
                 {#each tabIds as tab (tab)}
                     {@const root = stacks.root(tab)}
                     <section
@@ -569,13 +630,15 @@
                         class:neighbour={tab === drag?.neighbour}
                         inert={tab !== stacks.tab}
                         style:transform={paneTransform(tab)}
-                        bind:this={panes[tab]}>
+                        bind:this={panes[tab]}
+                    >
                         <!-- a tab's root is mounted the first time it shows, then kept -->
                         {#if root !== undefined}
                             <ScreenHost
                                 step={root}
                                 root={{ title: labels[tab] }}
-                                context={rootContext} />
+                                context={rootContext}
+                            />
                         {/if}
                     </section>
                 {/each}
@@ -589,18 +652,19 @@
                         class:below={i < pushed.length - 1}
                         inert={i < pushed.length - 1}
                         in:pushIn={{ play: () => stacks.change !== "pop" }}
-                        out:popOut={{ play: () => stacks.change === "pop" }}>
+                        out:popOut={{ play: () => stacks.change === "pop" }}
+                    >
                         <ScreenHost {step} root={undefined} context={pushedContext} />
                     </section>
                 {/each}
             {/key}
         </div>
 
-        <div class="bar" inert={!barShown}>
+        <div class="bar" class:covered inert={!barShown}>
             <TabBar {tabs} selected={stacks.tab} onSelect={selectTab} />
         </div>
 
-        <Toasts above={barShown ? "tabBar" : "none"} queue={toasts} />
+        <Toasts above={toastsAbove(stacks.steps)} queue={toasts} />
     </div>
 {:else if location.area === "signed_out"}
     <div class="outside">
@@ -625,7 +689,8 @@
             title="not_found"
             body={window.location.pathname}
             actionLabel="Chats"
-            actionHandler={() => navigate("/chats")} />
+            actionHandler={() => navigate("/chats")}
+        />
     </div>
 {/if}
 
@@ -654,15 +719,42 @@
         overflow: hidden;
     }
 
-    // stays put under a pushed screen, which covers it (and is inert meanwhile)
+    // The screen under the top one moves 28% of the way out to the start side as a screen is
+    // pushed over it, and back as that one goes, with it (motion.ts: --underneath-ms, on
+    // --ease-out as the top one's); a tab's root and its bar as one. Not at all with reduced motion
+    .root,
+    .bar,
+    .pushed {
+        transition: transform var(--underneath-ms) var(--ease-out);
+
+        @include reduced-motion {
+            transition: none;
+        }
+    }
+
+    .root.covered,
+    .bar.covered,
+    .pushed.below {
+        transform: translateX(-28%);
+
+        :global([dir="rtl"]) & {
+            transform: translateX(28%);
+        }
+
+        @include reduced-motion {
+            transform: none;
+        }
+    }
+
+    // under a pushed screen, which covers it (and is inert meanwhile)
     .bar {
         position: absolute;
         inset: auto 0 0;
         z-index: 1;
     }
 
-    // a tab's root, over the tab bar; it stays put under a pushed screen. Sideways drags are ours
-    // (the swipe between tabs), up-and-down ones the content's scroll
+    // a tab's root, over the tab bar. Sideways drags are ours (the swipe between tabs), up-and-down
+    // ones the content's scroll
     .root {
         position: absolute;
         inset: 0 0 var(--tab-bar-h);
@@ -693,10 +785,9 @@
         background: var(--surface-0);
         box-shadow: var(--shadow-push);
 
-        // one pushed over it stays put too
+        // one pushed over it, moved out under it
         &.below {
             box-shadow: none;
         }
     }
-
 </style>

@@ -1725,7 +1725,10 @@
                 "unmuted": "Son réactivé",
                 "archived": "Discussion archivée",
                 "left": "Vous avez quitté {name}",
-                "deleted": "Discussion supprimée"
+                "deleted": "Discussion supprimée",
+                "favourited": "Ajouté aux favoris",
+                "unfavourited": "Retiré des favoris",
+                "favouriteFailed": "Impossible de modifier tes favoris"
             },
             "newChat": {
                 "placeholder": "Rechercher un nom ou un @nom d'utilisateur",
@@ -1734,6 +1737,48 @@
                 "noOne": "Personne ne correspond. Essayez son @nom d'utilisateur.",
                 "noContacts": "Pas encore de contacts",
                 "noContactsBody": "Les personnes avec qui vous discutez le plus apparaîtront ici. Recherchez un nom ou un @nom d'utilisateur pour commencer une conversation."
+            }
+        },
+        "conversation": {
+            "options": "Options du chat",
+            "members": "{visibility} · {count, plural, one {# membre} other {# membres}}",
+            "videoCall": "Appel vidéo",
+            "voiceCall": "Appel vocal",
+            "callsLater": "Les appels ne sont pas encore disponibles dans cette version.",
+            "menu": {
+                "search": "Rechercher dans le chat",
+                "contactDetails": "Détails du contact",
+                "groupDetails": "Détails du groupe",
+                "channelDetails": "Détails du canal",
+                "mute": "Mettre en sourdine",
+                "unmute": "Réactiver le son",
+                "favourite": "Ajouter aux favoris",
+                "unfavourite": "Retirer des favoris",
+                "leaveGroup": "Quitter le groupe",
+                "leaveChannel": "Quitter le canal",
+                "block": "Bloquer {name}",
+                "unblock": "Débloquer",
+                "delete": "Supprimer le chat"
+            },
+            "toast": {
+                "blocked": "{name} bloqué",
+                "unblocked": "{name} débloqué",
+                "blocking": "Blocage de {name}…",
+                "unblocking": "Déblocage de {name}…"
+            },
+            "search": {
+                "placeholder": "Rechercher dans ce chat",
+                "close": "Fermer la recherche",
+                "older": "Résultat plus ancien",
+                "newer": "Résultat plus récent",
+                "count": "{current} sur {total}",
+                "none": "Aucun résultat"
+            },
+            "live": {
+                "video": "Appel vidéo en cours",
+                "voice": "Appel vocal en cours",
+                "sub": "{elapsed} · {count, plural, one {# personne} other {# personnes}}",
+                "tapToJoin": "Touchez pour rejoindre"
             }
         },
         "shareUnavailable": "Le partage vers OpenChat depuis d'autres applications n'est pas encore disponible dans cette version.",

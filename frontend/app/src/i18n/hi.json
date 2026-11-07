@@ -1725,7 +1725,10 @@
                 "unmuted": "अनम्यूट किया गया",
                 "archived": "चैट संग्रहीत की गई",
                 "left": "आपने {name} छोड़ दिया",
-                "deleted": "चैट हटाई गई"
+                "deleted": "चैट हटाई गई",
+                "favourited": "पसंदीदा में जोड़ा गया",
+                "unfavourited": "पसंदीदा से हटाया गया",
+                "favouriteFailed": "आपके पसंदीदा बदले नहीं जा सके"
             },
             "newChat": {
                 "placeholder": "नाम या @उपयोगकर्ता नाम खोजें",
@@ -1734,6 +1737,48 @@
                 "noOne": "कोई मेल नहीं खाता। उनका @उपयोगकर्ता नाम आज़माएँ।",
                 "noContacts": "अभी कोई संपर्क नहीं",
                 "noContactsBody": "जिन लोगों से आप सबसे ज़्यादा चैट करते हैं, वे यहाँ दिखेंगे। बातचीत शुरू करने के लिए नाम या @उपयोगकर्ता नाम से खोजें।"
+            }
+        },
+        "conversation": {
+            "options": "चैट विकल्प",
+            "members": "{visibility} · {count, plural, one {# सदस्य} other {# सदस्य}}",
+            "videoCall": "वीडियो कॉल",
+            "voiceCall": "वॉइस कॉल",
+            "callsLater": "इस संस्करण में कॉल अभी उपलब्ध नहीं हैं।",
+            "menu": {
+                "search": "चैट में खोजें",
+                "contactDetails": "संपर्क विवरण",
+                "groupDetails": "ग्रुप विवरण",
+                "channelDetails": "चैनल विवरण",
+                "mute": "म्यूट करें",
+                "unmute": "अनम्यूट करें",
+                "favourite": "पसंदीदा में जोड़ें",
+                "unfavourite": "पसंदीदा से हटाएँ",
+                "leaveGroup": "ग्रुप छोड़ें",
+                "leaveChannel": "चैनल छोड़ें",
+                "block": "{name} को ब्लॉक करें",
+                "unblock": "अनब्लॉक करें",
+                "delete": "चैट हटाएँ"
+            },
+            "toast": {
+                "blocked": "{name} को ब्लॉक किया गया",
+                "unblocked": "{name} को अनब्लॉक किया गया",
+                "blocking": "{name} को ब्लॉक किया जा रहा है…",
+                "unblocking": "{name} को अनब्लॉक किया जा रहा है…"
+            },
+            "search": {
+                "placeholder": "इस चैट में खोजें",
+                "close": "खोज बंद करें",
+                "older": "पुराना परिणाम",
+                "newer": "नया परिणाम",
+                "count": "{total} में से {current}",
+                "none": "कोई परिणाम नहीं"
+            },
+            "live": {
+                "video": "वीडियो कॉल चल रही है",
+                "voice": "वॉइस कॉल चल रही है",
+                "sub": "{elapsed} · {count, plural, one {# व्यक्ति} other {# लोग}}",
+                "tapToJoin": "जुड़ने के लिए टैप करें"
             }
         },
         "shareUnavailable": "दूसरे ऐप्स से OpenChat पर शेयर करना इस संस्करण में अभी उपलब्ध नहीं है।",

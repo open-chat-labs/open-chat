@@ -1725,7 +1725,10 @@
                 "unmuted": "Wyłączono wyciszenie",
                 "archived": "Czat zarchiwizowany",
                 "left": "Opuszczono {name}",
-                "deleted": "Czat usunięty"
+                "deleted": "Czat usunięty",
+                "favourited": "Dodano do ulubionych",
+                "unfavourited": "Usunięto z ulubionych",
+                "favouriteFailed": "Nie udało się zmienić ulubionych"
             },
             "newChat": {
                 "placeholder": "Szukaj imienia lub @nazwy użytkownika",
@@ -1734,6 +1737,48 @@
                 "noOne": "Nikt nie pasuje. Spróbuj @nazwy użytkownika.",
                 "noContacts": "Brak kontaktów",
                 "noContactsBody": "Tutaj pojawią się osoby, z którymi rozmawiasz najczęściej. Wyszukaj imię lub @nazwę użytkownika, aby zacząć rozmowę."
+            }
+        },
+        "conversation": {
+            "options": "Opcje czatu",
+            "members": "{visibility} · {count, plural, one {# członek} few {# członków} many {# członków} other {# członka}}",
+            "videoCall": "Rozmowa wideo",
+            "voiceCall": "Rozmowa głosowa",
+            "callsLater": "Połączenia nie są jeszcze dostępne w tej wersji.",
+            "menu": {
+                "search": "Szukaj w czacie",
+                "contactDetails": "Szczegóły kontaktu",
+                "groupDetails": "Szczegóły grupy",
+                "channelDetails": "Szczegóły kanału",
+                "mute": "Wycisz",
+                "unmute": "Wyłącz wyciszenie",
+                "favourite": "Dodaj do ulubionych",
+                "unfavourite": "Usuń z ulubionych",
+                "leaveGroup": "Opuść grupę",
+                "leaveChannel": "Opuść kanał",
+                "block": "Zablokuj {name}",
+                "unblock": "Odblokuj",
+                "delete": "Usuń czat"
+            },
+            "toast": {
+                "blocked": "Zablokowano {name}",
+                "unblocked": "Odblokowano {name}",
+                "blocking": "Blokowanie {name}…",
+                "unblocking": "Odblokowywanie {name}…"
+            },
+            "search": {
+                "placeholder": "Szukaj w tym czacie",
+                "close": "Zamknij wyszukiwanie",
+                "older": "Starszy wynik",
+                "newer": "Nowszy wynik",
+                "count": "{current} z {total}",
+                "none": "Brak wyników"
+            },
+            "live": {
+                "video": "Trwa rozmowa wideo",
+                "voice": "Trwa rozmowa głosowa",
+                "sub": "{elapsed} · {count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}",
+                "tapToJoin": "Dotknij, aby dołączyć"
             }
         },
         "shareUnavailable": "Udostępnianie do OpenChat z innych aplikacji nie jest jeszcze dostępne w tej wersji.",

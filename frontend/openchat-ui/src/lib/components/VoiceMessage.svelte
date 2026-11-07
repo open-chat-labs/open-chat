@@ -70,7 +70,7 @@
   }
 </script>
 
-<div class="row">
+<div class="row" class:mirror>
   <div class="bubble" class:sent class:mirror class:last={lastInGroup} style:border-end-start-radius={bottomLeft}>
     <div class="controls">
       <div class="play" class:playing={isPlaying} onclick={togglePlay} role="button" tabindex="0" aria-label={t(isPlaying ? 'ui.voiceMessage.pause' : 'ui.voiceMessage.play')}>
@@ -103,6 +103,11 @@
     width: 100%;
     display: flex;
     justify-content: flex-start;
+
+    /* a right-aligned layout: the bubble at the inline end */
+    &.mirror {
+      justify-content: flex-end;
+    }
   }
 
   .bubble {

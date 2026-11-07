@@ -1,3 +1,4 @@
+import type { PendingToast, ToastUndo } from "@openchat/ui/src/native/toastQueue.svelte";
 import type { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
 import type { Component } from "svelte";
 import type { LocalScreen, NativeScreen } from "../../router/locations";
@@ -22,10 +23,15 @@ export type ScreenContext = {
     push: (screen: LocalScreen) => void;
     /**
      * Shows a toast (text, translated) in place of the one showing; with `undo`, it offers Undo,
-     * which runs it (a destructive action, notes §1 Sheets, menus, toasts). Returns what takes it
+     * which runs it (an operation of its own keeps the toast, waiting, then saying how it went) (a destructive action, notes §1 Sheets, menus, toasts). Returns what takes it
      * down early, as when its Undo can't work any more (and not a toast that has replaced it).
      */
-    toast: (message: string, undo?: () => void) => () => void;
+    toast: (message: string, undo?: ToastUndo) => () => void;
+    /**
+     * Shows a toast in place of the one showing for an action still on its way (a block), with a
+     * small loader in place of its buttons until it's settled: `done` (with Undo) or `failed`.
+     */
+    pendingToast: (message: string) => PendingToast;
     /**
      * Leaves and deletes waiting out their Undo (the shell's, one for the app): opening the chat
      * by any way (search, New chat, a link) takes its wait back, and it lasts across tabs.
@@ -58,7 +64,7 @@ export const screens: Screens = {
     you: () => import("../you/YouScreen.svelte"),
 
     // a conversation (N5b)
-    conversation: undefined,
+    conversation: () => import("../conversation/ConversationScreen.svelte"),
 
     // a thread (N8a)
     thread: undefined,
@@ -101,14 +107,20 @@ export const screens: Screens = {
 
     // Delete account, from You → Account (N12)
     delete_account: () => import("../you/DeleteAccountScreen.svelte"),
+
+    // a DM's or group's details, from the conversation's header (N6)
+    chat_details: undefined,
 };
 
-/** The screens' chunks, loaded once and kept; the tabs' roots are preloaded first. */
+/**
+ * The screens' chunks, loaded once and kept. The Chats tab and a conversation are preloaded first
+ * (a chat is what's opened most), then the other tabs' roots, then the rest.
+ */
 export const screenModules = new ScreenModules<
     NativeScreen["kind"],
     Component<ScreenProps<NativeScreen>>
 >(
     // the entry for a kind takes that kind's screen
     screens as Partial<Record<NativeScreen["kind"], Loader<NativeScreen>>>,
-    ["chats", "you", "communities", "wallet", "activity"],
+    ["chats", "conversation", "you", "communities", "wallet", "activity"],
 );

@@ -4,7 +4,7 @@ import {
     type ConversationContext,
     type MessageRow,
     type MessageStatus,
-} from "./conversation.adapter";
+} from "./messageRow";
 
 /**
  * The conversation's rows, kept per event while nothing a row shows changes (the event, its

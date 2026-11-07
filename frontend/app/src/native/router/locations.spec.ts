@@ -2,6 +2,7 @@ import type { CommunityIdentifier } from "@client";
 import { resolve } from "@src/utils/routeTable.testing";
 import {
     showsTabBar,
+    toastsAbove,
     localKey,
     locationFor,
     NATIVE_TABS,
@@ -279,11 +280,47 @@ describe("the chat a stack has open", () => {
 
     test("is its conversation's, a thread in it included", () => {
         expect(opened("/chats/user/u1")).toEqual({ kind: "direct_chat", userId: "u1" });
-        expect(opened("/chats/group/g1/3?open=true")).toEqual({ kind: "group_chat", groupId: "g1" });
+        expect(opened("/chats/group/g1/3?open=true")).toEqual({
+            kind: "group_chat",
+            groupId: "g1",
+        });
     });
 
     test("is none on a list", () => {
         expect(opened("/chats")).toBeUndefined();
         expect(opened("/wallet")).toBeUndefined();
+    });
+});
+
+describe("a toast", () => {
+    const above = (url: string, local?: Parameters<typeof localKey>[0]) => {
+        const location = at(url);
+        if (location.area !== "tabs") return location.area;
+        const steps = [...location.steps];
+        if (local !== undefined) {
+            steps.push({ key: `local:${localKey(local)}`, screen: local, url, local: true });
+        }
+        return toastsAbove(steps);
+    };
+
+    test("sits above the tab bar on a tab's root", () => {
+        expect(above("/chats")).toBe("tabBar");
+        expect(above("/profile_summary")).toBe("tabBar");
+    });
+
+    // a mute's or a block's toast, not over the composer
+    test("sits above the composer in a conversation, a DM's or a channel's", () => {
+        expect(above("/chats/user/u1")).toBe("footer");
+        expect(above("/community/c2/channel/9")).toBe("footer");
+    });
+
+    test("sits above the safe area on any other pushed screen, a chat's details too", () => {
+        expect(above("/wallet/ledger1")).toBe("none");
+        expect(
+            above("/chats/user/u1", {
+                kind: "chat_details",
+                chatId: { kind: "direct_chat", userId: "u1" },
+            }),
+        ).toBe("none");
     });
 });

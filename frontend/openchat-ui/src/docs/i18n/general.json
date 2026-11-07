@@ -166,9 +166,12 @@
       },
       "toasts": {
         "archived": "Chat archived",
+        "confirmed": "Confirmed in 2s",
         "deleted": "Message deleted for everyone",
         "linkCopied": "Invite link copied",
-        "showAgain": "Show again"
+        "sent": "Sent 12.5 ICP to @lucy",
+        "showAgain": "Show again",
+        "view": "View"
       },
       "tooltip": {
         "above": "Placed above",
