@@ -54,6 +54,7 @@ final class Push: NSObject, UNUserNotificationCenterDelegate {
 
     private func didRegister(deviceToken: Data) {
         let token = ApnsEnvironment.tokenString(deviceToken: deviceToken, sandbox: Self.isSandbox)
+        NSLog("[Push] APNs token received")
         DispatchQueue.main.async {
             let refreshed = self.alertToken != nil && self.alertToken != token
             self.alertToken = token
@@ -104,6 +105,11 @@ final class Push: NSObject, UNUserNotificationCenterDelegate {
         for (selector, block) in methods {
             class_replaceMethod(cls, selector, imp_implementationWithBlock(block), "v@:@@")
         }
+        // UIKit notes which callbacks the delegate answers when the delegate is set, so callbacks
+        // added after that are never called until it is set again
+        let application = UIApplication.shared
+        application.delegate = nil
+        application.delegate = delegate
     }
 
     // MARK: - Foreground
