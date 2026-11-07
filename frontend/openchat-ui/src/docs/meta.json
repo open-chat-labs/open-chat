@@ -5627,6 +5627,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "Shows the dismiss button."
+      },
+      {
+        "name": "busy",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "What it says is still on its way: a small loader in place of the action and the dismiss."
       }
     ],
     "group": "library"
@@ -21493,7 +21504,7 @@
     "name": "Toasts",
     "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
     "hash": "",
-    "description": "Native toasts: the library's UndoToast 12px from the sides, above the tab bar (over the FAB), a footer, or the safe area; Undo on a destructive action's. ToastQueue keeps the timing (2.6s, 5s with Undo) for a host without its own.",
+    "description": "Native toasts: the library's UndoToast 12px from the sides, above the tab bar (over the FAB), a footer, or the safe area; Undo on a destructive action's, and a small loader in its place while the action is on its way (`pending`). ToastQueue keeps the timing (2.6s, 5s with Undo; a pending toast until its action settles) for a host without its own.",
     "preview": {
       "width": 402,
       "height": 480

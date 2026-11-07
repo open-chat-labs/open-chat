@@ -83,4 +83,55 @@ describe('ToastQueue', () => {
     dismissSecond();
     expect(toasts.current?.message).toBe('Pinned');
   });
+
+  test('a pending toast shows at once with no buttons, and stays until its action is done', () => {
+    const pending = toasts.showPending('Blocking Ann');
+    expect(toasts.current).toMatchObject({ message: 'Blocking Ann', pending: true, undoable: false });
+    vi.advanceTimersByTime(60_000);
+    expect(toasts.current?.pending).toBe(true);
+    toasts.undo();
+    expect(toasts.current).not.toBeNull();
+  });
+
+  test('done, it offers Undo in place of the loader and goes after 5s; Undo undoes', () => {
+    const undo = vi.fn();
+    const pending = toasts.showPending('Ann is blocked');
+    const id = toasts.current!.id;
+    pending.done(undo);
+    expect(toasts.current).toMatchObject({ id, pending: false, undoable: true });
+    vi.advanceTimersByTime(4999);
+    expect(toasts.current).not.toBeNull();
+    toasts.undo();
+    expect(undo).toHaveBeenCalledTimes(1);
+    expect(toasts.current).toBeNull();
+  });
+
+  test('done without an undo, it goes after 2.6s', () => {
+    toasts.showPending('Saving').done();
+    expect(toasts.current).toMatchObject({ pending: false, undoable: false });
+    vi.advanceTimersByTime(2600);
+    expect(toasts.current).toBeNull();
+  });
+
+  test('failed, it goes; and settling leaves a toast that has taken its place alone', () => {
+    toasts.showPending('Blocking Ann').failed();
+    expect(toasts.current).toBeNull();
+
+    const replaced = toasts.showPending('Blocking Ann');
+    toasts.show('Muted');
+    const undo = vi.fn();
+    replaced.done(undo)();
+    replaced.failed();
+    expect(toasts.current).toMatchObject({ message: 'Muted', pending: false });
+    toasts.undo();
+    expect(undo).not.toHaveBeenCalled();
+  });
+
+  test('a pending toast takes the place of one offering Undo, whose undo is gone', () => {
+    const undo = vi.fn();
+    toasts.show('Chat deleted', undo);
+    toasts.showPending('Blocking Ann').done();
+    toasts.undo();
+    expect(undo).not.toHaveBeenCalled();
+  });
 });

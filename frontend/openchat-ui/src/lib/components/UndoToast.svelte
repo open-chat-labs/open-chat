@@ -1,8 +1,10 @@
 <!-- Toast with an optional action (Undo) and dismiss ×. Animates in when shown and out when `shown` turns false.
-     tone="success" + size="lg": the prominent confirmation used after wallet sends. icon: undo | hide | trash | check | none. -->
+     tone="success" + size="lg": the prominent confirmation used after wallet sends. icon: undo | hide | trash | check | none.
+     busy: what it says is still on its way, so a small loader stands in place of the action and the dismiss. -->
 <script lang="ts">
   import { useT } from '../i18n';
   import { onDestroy, untrack } from 'svelte';
+  import Spinner from './Spinner.svelte';
 
   const ICONS = {
     undo: 'var(--icon-rotate-back) center/contain no-repeat',
@@ -25,9 +27,11 @@
     onAction?: () => void;
     /** Shows the dismiss button. */
     onClose?: () => void;
+    /** What it says is still on its way: a small loader in place of the action and the dismiss. */
+    busy?: boolean;
   }
 
-  let { message, tone = 'neutral', size = 'md', shown = true, actionLabel = 'ui.common.undo', icon = 'undo', onAction, onClose }: Props = $props();
+  let { message, tone = 'neutral', size = 'md', shown = true, actionLabel = 'ui.common.undo', icon = 'undo', onAction, onClose, busy = false }: Props = $props();
   const t = useT();
 
   // the toast outlives its own `shown` by one animation so it can leave gracefully
@@ -59,10 +63,12 @@
       <span class="badge"><span class="icon" style:mask={ICONS[icon]}></span></span>
     {/if}
     <span class="message">{t(message)}</span>
-    {#if onAction}
+    {#if busy}
+      <span class="busy"><Spinner size={16} /></span>
+    {:else if onAction}
       <span class="action" onclick={onAction} role="button" tabindex="0">{t(actionLabel)}</span>
     {/if}
-    {#if onClose}
+    {#if onClose && !busy}
       <span class="close" onclick={onClose} role="button" tabindex="0" aria-label={t('ui.common.dismiss')} title={t('ui.common.dismiss')}>
         <span class="close-icon"></span>
       </span>
@@ -194,6 +200,13 @@
         background: var(--overlay-3);
       }
     }
+  }
+
+  .busy {
+    flex: none;
+    @include flex-center;
+    width: 26px;
+    height: 26px;
   }
 
   .close {

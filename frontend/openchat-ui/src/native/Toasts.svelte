@@ -1,6 +1,7 @@
 <!-- Native toasts (native design notes §1 Sheets, menus, toasts): the library's UndoToast, 12px from the sides, above
      the tab bar (14px clear of it, over the FAB), above a pushed screen's composer or pinned footer, or just above the
-     safe area. A destructive action's toast offers Undo (with the trash icon). It plays out when `toast` turns null,
+     safe area. A destructive action's toast offers Undo (with the trash icon); one whose action is still on its way
+     shows a small loader in place of Undo and the close (`pending`). It plays out when `toast` turns null,
      and a replacement plays in again. ToastQueue keeps the timing for a host without its own. Reduced motion: no
      slide or fade. -->
 <script lang="ts">
@@ -35,8 +36,9 @@
         <UndoToast
           shown={toast?.id === last.id}
           message={last.message}
-          icon={last.undoable ? 'trash' : 'none'}
+          icon={last.undoable || last.pending ? 'trash' : 'none'}
           actionLabel="ui.common.undo"
+          busy={last.pending}
           onAction={last.undoable ? onUndo : undefined}
           onClose={onDismiss}
         />
