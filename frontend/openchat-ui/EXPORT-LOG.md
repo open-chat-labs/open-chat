@@ -716,3 +716,7 @@
 ## 2026-11-07 — a reply's quote goes to its message (native N5b testing, #10369), by hand
 - `ChatBubble`: `onQuote`, the reply quote tapped (or Enter / Space on it): the quote is a button then, and the host goes to the quoted message. Without it the quote is only shown, as before. `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-07 — native: a toast tracks its operation to the end (native N5b testing, #10369), by hand
+- `ToastQueue`: a toast waiting on an operation never times out; once the operation is done it shows its result with a fresh timer (5s with Undo, 2.6s without). `PendingToast.done({ message, undo })` changes the toast in place (the same `id`, so it doesn't play in again) to its result's words. Undo can run an operation of its own (`AsyncUndo`: `pending` words and `run`, resolving to the result's words, or nothing when it failed): the toast stays, waiting with the loader, then says how it went, or goes. A plain function Undo dismisses at once, as before. Spec'd (the timing rules).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

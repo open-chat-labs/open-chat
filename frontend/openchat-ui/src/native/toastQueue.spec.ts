@@ -95,9 +95,9 @@ describe('ToastQueue', () => {
 
   test('done, it offers Undo in place of the loader and goes after 5s; Undo undoes', () => {
     const undo = vi.fn();
-    const pending = toasts.showPending('Ann is blocked');
+    const pending = toasts.showPending('Blocking Ann…');
     const id = toasts.current!.id;
-    pending.done(undo);
+    pending.done({ undo });
     expect(toasts.current).toMatchObject({ id, pending: false, undoable: true });
     vi.advanceTimersByTime(4999);
     expect(toasts.current).not.toBeNull();
@@ -120,7 +120,7 @@ describe('ToastQueue', () => {
     const replaced = toasts.showPending('Blocking Ann');
     toasts.show('Muted');
     const undo = vi.fn();
-    replaced.done(undo)();
+    replaced.done({ undo })();
     replaced.failed();
     expect(toasts.current).toMatchObject({ message: 'Muted', pending: false });
     toasts.undo();
@@ -133,5 +133,76 @@ describe('ToastQueue', () => {
     toasts.showPending('Blocking Ann').done();
     toasts.undo();
     expect(undo).not.toHaveBeenCalled();
+  });
+
+  test('done, it says how it went, in place, with a full time counted from then', () => {
+    const pending = toasts.showPending('Blocking Ann…');
+    const id = toasts.current!.id;
+    vi.advanceTimersByTime(4000);
+    pending.done({ message: 'Blocked Ann', undo: () => {} });
+    expect(toasts.current).toMatchObject({ id, message: 'Blocked Ann', pending: false, undoable: true });
+    vi.advanceTimersByTime(4999);
+    expect(toasts.current).not.toBeNull();
+    vi.advanceTimersByTime(1);
+    expect(toasts.current).toBeNull();
+  });
+
+  describe('an Undo that runs an operation of its own', () => {
+    // the operation's promise settling, without moving the clock (vi.waitFor would)
+    async function settled() {
+      for (let i = 0; i < 5; i++) await Promise.resolve();
+    }
+
+    function deferred() {
+      let resolve!: (value: string | undefined) => void;
+      const promise = new Promise<string | undefined>((r) => (resolve = r));
+      return { promise, resolve };
+    }
+
+    test('keeps the toast, waiting with no timeout, then shows the result for a full time', async () => {
+      const unblock = deferred();
+      const run = vi.fn(() => unblock.promise);
+      toasts.show('Blocked Ann', { pending: 'Unblocking Ann…', run });
+      const id = toasts.current!.id;
+      vi.advanceTimersByTime(4900);
+      toasts.undo();
+      expect(run).toHaveBeenCalledTimes(1);
+      expect(toasts.current).toMatchObject({ id, message: 'Unblocking Ann…', pending: true, undoable: false });
+      // a toast waiting on its operation never times out, and can't be undone again
+      vi.advanceTimersByTime(30_000);
+      toasts.undo();
+      expect(run).toHaveBeenCalledTimes(1);
+      expect(toasts.current?.pending).toBe(true);
+      unblock.resolve('Unblocked Ann');
+      await settled();
+      expect(toasts.current?.message).toBe('Unblocked Ann');
+      expect(toasts.current).toMatchObject({ id, pending: false, undoable: false });
+      vi.advanceTimersByTime(2599);
+      expect(toasts.current).not.toBeNull();
+      vi.advanceTimersByTime(1);
+      expect(toasts.current).toBeNull();
+    });
+
+    test('goes when the operation fails (the host says why), or throws', async () => {
+      toasts.show('Blocked Ann', { pending: 'Unblocking Ann…', run: async () => undefined });
+      toasts.undo();
+      await settled();
+      expect(toasts.current).toBeNull();
+
+      toasts.show('Blocked Ann', { pending: 'Unblocking Ann…', run: () => Promise.reject(new Error('down')) });
+      toasts.undo();
+      await settled();
+      expect(toasts.current).toBeNull();
+    });
+
+    test("leaves a toast that has taken its place alone when it's done", async () => {
+      const unblock = deferred();
+      toasts.show('Blocked Ann', { pending: 'Unblocking Ann…', run: () => unblock.promise });
+      toasts.undo();
+      toasts.show('Muted');
+      unblock.resolve('Unblocked Ann');
+      await settled();
+      expect(toasts.current?.message).toBe('Muted');
+    });
   });
 });
