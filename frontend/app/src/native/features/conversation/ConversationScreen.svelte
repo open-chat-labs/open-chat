@@ -13,6 +13,7 @@
         blockedUsersStore,
         botState,
         bridgedUsersStore,
+        chatListScopeStore,
         byContext as typersByContext,
         chatIdentifiersEqual,
         chatIdentifierToString,
@@ -83,10 +84,13 @@
     import { directChatStatus } from "@src/logic/conversation/chatStatus";
     import { editMessage, replyToMessage } from "@src/logic/conversation/draftActions";
     import {
+        quoteFor,
+        quoteTarget,
         retryFor,
         textAsMarkdown,
         withHandlers,
         type MessageHandlers,
+        type QuoteTarget,
     } from "@src/logic/conversation/messageHandlers";
     import { messageOffer } from "@src/logic/conversation/messageOffer";
     import {
@@ -120,6 +124,7 @@
     import { toastStore } from "@src/stores/toast";
     import { disableTipsFeature } from "@src/utils/features";
     import { getProxyAdjustedBlobUrl, saveFile } from "@src/utils/media";
+    import { navigate } from "@src/utils/navigation";
     import { nativeMessageSwipes } from "@src/utils/messageSwipe";
     import { buildDisplayName } from "@src/utils/user";
     import { getContext, onDestroy, untrack } from "svelte";
@@ -731,9 +736,11 @@
             ? ({ ...row.message, body } as GroupMessage)
             : withHandlers(row, evt.event, handlers, $cryptoLookup);
         // kept between renders, so composed without reading a voice message's live fields
+        const quoted = chat === undefined ? undefined : quoteTarget(evt.event, chat.id, $chatListScopeStore.kind);
         const messages = [
             withFields(message, {
                 ...retryFor(row.message, offers.retry),
+                ...quoteFor(row.message, quoted, goToQuote),
                 // the long-press menu is N5d's
                 menu: true,
                 swipeLeft: offers.swipes.left,
@@ -744,6 +751,27 @@
     }
 
     // ---- what's done with a message
+
+    const QUOTED_MARK_MS = 1600;
+
+    // a reply's quote, tapped: its message in this chat (loaded first if it's outside what's
+    // loaded), tinted in the accent for a moment once it's there, or the chat or thread it's quoted
+    // from
+    let quotedIndex = $state<number>();
+    let quotedTimer: ReturnType<typeof setTimeout> | undefined;
+    onDestroy(() => clearTimeout(quotedTimer));
+
+    async function goToQuote(target: QuoteTarget) {
+        if (target.kind === "elsewhere") {
+            navigate(target.url);
+            return;
+        }
+        if (chat === undefined || list === undefined) return;
+        await list.scrollToMessageIndex({ chatId: chat.id }, target.messageIndex, false);
+        clearTimeout(quotedTimer);
+        quotedIndex = target.messageIndex;
+        quotedTimer = setTimeout(() => (quotedIndex = undefined), QUOTED_MARK_MS);
+    }
 
     function reply(evt: EventWrapper<Message>) {
         if (chat !== undefined) replyToMessage(chat.id, evt, $allUsersStore);
@@ -989,6 +1017,7 @@
                                 {@const received = row.side === "received"}
                                 {@const searchMatch =
                                     searchOpen && args.focusIndex === msg.messageIndex && !failed}
+                                {@const quoted = quotedIndex === msg.messageIndex && !failed}
                                 <!-- a text message's text as the old UI renders it: markdown, mentions,
                                      links, custom emoji (a lone emoji is the bubble's own, large) -->
                                 {#snippet body()}
@@ -1003,7 +1032,7 @@
                                     class:starts={item.first}
                                     class:received
                                     class:avatars={!direct}
-                                    class:search-match={searchMatch}
+                                    class:search-match={searchMatch || quoted}
                                     data-index={failed ? "" : msg.messageIndex}
                                     data-id={failed ? "" : msg.messageId}
                                     use:observeRead={{
@@ -1025,6 +1054,7 @@
                                         mirror
                                         swipeStyle="inset"
                                         marked={searchMatch ||
+                                        quoted ||
                                         (args.focusIndex === msg.messageIndex && !failed) ||
                                         composingId === msg.messageId
                                             ? 0
@@ -1228,7 +1258,7 @@
             --message-mark-start: -42px;
         }
 
-        // the search's current match, accent-tinted
+        // the search's current match, and a quote's message gone to, accent-tinted
         &.search-match {
             --message-mark: color-mix(in oklch, var(--accent) 16%, transparent);
         }

@@ -17,6 +17,7 @@
         chatIdentifiersEqual,
         chatIdentifierToString,
         chatsInitialisedStore,
+        chatListScopeStore,
         chitStateStore,
         communitiesStore,
         communityPreviewOriginStore,
@@ -172,10 +173,13 @@
         type MessageRow,
     } from "@src/logic/conversation/messageRow";
     import {
+        quoteFor,
+        quoteTarget,
         retryFor,
         textAsMarkdown,
         withHandlers,
         type MessageHandlers,
+        type QuoteTarget,
     } from "@src/logic/conversation/messageHandlers";
     import { messageOffer } from "@src/logic/conversation/messageOffer";
     import { toggleReaction } from "@src/logic/conversation/reaction";
@@ -862,10 +866,15 @@
             : withActions(row, evt.event);
         // kept between renders, so composed without reading a voice message's live fields
         // (withFields): a spread would freeze its playback
+        const quoted =
+            chat === undefined
+                ? undefined
+                : quoteTarget(evt.event, chat.id, $chatListScopeStore.kind);
         const messages = [
             withFields(message, {
                 ...previewRemoval(evt),
                 ...retryFor(row.message, offers.retry),
+                ...quoteFor(row.message, quoted, goToQuote),
                 menu: offers.menu,
                 swipeLeft: offers.swipeLeft,
             }),
@@ -875,6 +884,16 @@
     }
 
     // ── message actions ──
+
+    // a reply's quote, clicked: its message in this chat, marked (loaded first if it's outside
+    // what's loaded), or the chat or thread it's quoted from
+    function goToQuote(target: QuoteTarget) {
+        if (target.kind === "elsewhere") {
+            navigate(target.url);
+        } else if (chat !== undefined) {
+            void list?.scrollToMessageIndex({ chatId: chat.id }, target.messageIndex, false);
+        }
+    }
 
     type MenuPos = Parameters<NonNullable<ComponentProps<typeof MessageGroup>["onMessageMenu"]>>[1];
 

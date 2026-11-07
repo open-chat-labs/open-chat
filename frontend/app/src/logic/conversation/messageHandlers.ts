@@ -1,6 +1,10 @@
 import {
     buildTransactionUrl,
+    chatIdentifiersEqual,
     formatClock,
+    routeForMessage,
+    type ChatIdentifier,
+    type ChatListScope,
     type CryptocurrencyDetails,
     type FileContent,
     type Message,
@@ -135,4 +139,41 @@ export function retryFor(
         default:
             return {};
     }
+}
+
+/**
+ * Where a reply's quote takes the reader when it's tapped: its message in this chat (gone to in the
+ * list, loaded first if it's outside what's loaded), or, quoted from another chat (a private reply)
+ * or a thread, there.
+ */
+export type QuoteTarget =
+    | { kind: "here"; messageIndex: number }
+    | { kind: "elsewhere"; url: string };
+
+/** A message's quote's target, as the old trees' RepliesTo has it; none for one that isn't a reply. */
+export function quoteTarget(
+    msg: Message,
+    chatId: ChatIdentifier,
+    scope: ChatListScope["kind"],
+): QuoteTarget | undefined {
+    const reply = msg.repliesTo;
+    if (reply?.kind !== "rehydrated_reply_context") return undefined;
+    const source = reply.sourceContext;
+    if (chatIdentifiersEqual(source.chatId, chatId) && source.threadRootMessageIndex === undefined) {
+        return { kind: "here", messageIndex: reply.messageIndex };
+    }
+    return { kind: "elsewhere", url: routeForMessage(scope, source, reply.messageIndex) };
+}
+
+/**
+ * A text bubble's quote, tapped, goes to its target (`go`): ChatBubble's `onQuote`. Nothing for a
+ * message that isn't a reply, or of a kind that shows no quote.
+ */
+export function quoteFor(
+    message: GroupMessage,
+    target: QuoteTarget | undefined,
+    go: (target: QuoteTarget) => void,
+): { onQuote?: () => void } {
+    if (target === undefined || (message.kind !== undefined && message.kind !== "text")) return {};
+    return { onQuote: () => go(target) };
 }

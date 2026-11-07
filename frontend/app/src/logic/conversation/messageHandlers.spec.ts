@@ -1,7 +1,13 @@
-import type { Message, MessageContent } from "@client";
+import type { ChatIdentifier, Message, MessageContent, ReplyContext } from "@client";
 import type { GroupMessage } from "@openchat/ui/src/lib/types";
 import { describe, expect, test, vi } from "vitest";
-import { retryFor, withHandlers, type MessageHandlers } from "./messageHandlers";
+import {
+    quoteFor,
+    quoteTarget,
+    retryFor,
+    withHandlers,
+    type MessageHandlers,
+} from "./messageHandlers";
 import type { MessageRow } from "./messageRow";
 import type { VoicePlayer } from "./voicePlayer.svelte";
 
@@ -99,5 +105,58 @@ describe("a failed message's Retry", () => {
         expect(retryFor({ kind: "text", text: "", time: "" } as GroupMessage, undefined)).toEqual(
             {},
         );
+    });
+});
+
+describe("a reply's quote, tapped", () => {
+    const channel: ChatIdentifier = { kind: "channel", communityId: "c1", channelId: 9 };
+    const dm: ChatIdentifier = { kind: "direct_chat", userId: "u1" };
+
+    function reply(repliesTo: Partial<ReplyContext> & { kind: ReplyContext["kind"] }): Message {
+        return { ...msg({ kind: "text_content", text: "yes" } as MessageContent), repliesTo } as Message;
+    }
+
+    function quoting(chatId: ChatIdentifier, threadRootMessageIndex?: number, messageIndex = 41) {
+        return reply({
+            kind: "rehydrated_reply_context",
+            messageIndex,
+            sourceContext: { chatId, threadRootMessageIndex },
+        } as Partial<ReplyContext> & { kind: "rehydrated_reply_context" });
+    }
+
+    test("goes to the quoted message in the chat, a channel's as a DM's", () => {
+        expect(quoteTarget(quoting(channel), channel, "community")).toEqual({
+            kind: "here",
+            messageIndex: 41,
+        });
+        expect(quoteTarget(quoting(dm, undefined, 3), dm, "chats")).toEqual({
+            kind: "here",
+            messageIndex: 3,
+        });
+    });
+
+    test("opens the chat or thread it's quoted from when that's elsewhere", () => {
+        expect(quoteTarget(quoting(channel), dm, "chats")).toEqual({
+            kind: "elsewhere",
+            url: "/community/c1/channel/9/41",
+        });
+        expect(quoteTarget(quoting(channel, 7), channel, "community")).toEqual({
+            kind: "elsewhere",
+            url: "/community/c1/channel/9/7/41?open=true",
+        });
+    });
+
+    test("has nowhere to go for a message that isn't a reply, or whose quote isn't loaded", () => {
+        expect(quoteTarget(msg({ kind: "text_content", text: "hi" } as MessageContent), dm, "chats")).toBeUndefined();
+        expect(quoteTarget(reply({ kind: "raw_reply_context" }), dm, "chats")).toBeUndefined();
+    });
+
+    test("is the text bubble's onQuote, none for another kind or no target", () => {
+        const go = vi.fn();
+        const target = { kind: "here", messageIndex: 41 } as const;
+        quoteFor({ time: "", text: "yes" } as GroupMessage, target, go).onQuote?.();
+        expect(go).toHaveBeenCalledWith(target);
+        expect(quoteFor({ kind: "image", time: "", items: [] } as GroupMessage, target, go)).toEqual({});
+        expect(quoteFor({ time: "", text: "yes" } as GroupMessage, undefined, go)).toEqual({});
     });
 });
