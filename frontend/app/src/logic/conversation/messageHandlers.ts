@@ -31,6 +31,8 @@ export type MessageHandlers = {
     /** Accepting or cancelling a swap offer. None leaves the card without its button. */
     swap?: (msg: Message, content: P2PSwapContent, action: "accept" | "cancel") => void;
     claim: (msg: Message, e: MouseEvent) => void;
+    /** A prize's claim is on its way: the human check, then the claim (`claimsStore`). */
+    claiming: (messageId: bigint) => boolean;
     vote: (msg: Message, content: PollContent, next: number[]) => void;
     download: (content: FileContent) => void;
     /** The conversation's voice player: one voice message plays at a time. */
@@ -39,7 +41,8 @@ export type MessageHandlers = {
 
 /**
  * A row's message with its controls' handlers. A voice message's playing state is read from the
- * player as it renders (getters), so playing doesn't redo the row.
+ * player as it renders (getters), so playing doesn't redo the row; so is whether a prize's claim is
+ * on its way.
  */
 export function withHandlers(
     row: MessageRow,
@@ -71,6 +74,9 @@ export function withHandlers(
         case "prize_content":
             return {
                 ...row.message,
+                get claiming() {
+                    return handlers.claiming(msg.messageId);
+                },
                 onClaim: (e: MouseEvent) => handlers.claim(msg, e),
             } as GroupMessage;
         case "poll_content":

@@ -505,8 +505,10 @@ design export needs. Each entry says where it came up.
   gives no click, which `claimPrize` refuses. Claim shows only where `prizeView` (`@client`, shared
   with the old trees) offers it: not the sender's, not in a DM, not while previewing or lapsed, not
   once claimed, ended or all taken, not to a reader who misses a requirement. A prize carries no
-  amount, so a win says "You won". There's no spinner while a claim is on its way (the old trees'
-  `claimsStore`), and `PrizeMessage`'s confetti fires on the click, before the claim lands. How long
+  amount, so a win says "You won". While a claim is on its way (the human check, then the claim:
+  the old trees' `claimsStore`) the card shows "Claiming…" with a spinner in place of Claim
+  (`PrizeMessage`'s `claiming`, by hand), and its confetti fires once the claim has won, not on
+  the click (by hand: the design fired it on the click). How long
   it has left is worked out when the row is made and doesn't count down. A prize still being sent
   (`prize_content_initial`) shows as the card it will be, with "Sending prize…" where Claim would
   go (a failed one stays a text bubble, which shows the failure); one in a ledger the registry

@@ -15103,6 +15103,17 @@
         "doc": "Still being sent: no Claim, \"Sending prize…\" in its place."
       },
       {
+        "name": "claiming",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "A claim is on its way: no Claim, \"Claiming…\" with a spinner in its place."
+      },
+      {
         "name": "note",
         "type": "string",
         "default": "Celebrating 50k members, good luck!",

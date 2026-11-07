@@ -1,5 +1,6 @@
 import type { ClaimPrizeOutcome, OpenChat } from "@client";
 import { i18nKey } from "@src/i18n/i18n";
+import { claimsStore } from "@src/stores/claims";
 import { describe, expect, test, vi } from "vitest";
 import { HumanCheck } from "./humanCheck.svelte";
 import { claimPrizeWithHumanCheck } from "./prizeClaim";
@@ -81,6 +82,31 @@ describe("claiming a prize", () => {
         check.receive({ kind: "turnstile_token", token: "t2", salt: "s2" });
         await retry;
         expect(c.claimPrize).toHaveBeenCalledTimes(2);
+    });
+
+    test("the prize is being claimed from the click until the claim settles, either way", async () => {
+        for (const outcome of [
+            { kind: "success" },
+            { kind: "failed", message: i18nKey("prizes.claimFailed") },
+        ] as ClaimPrizeOutcome[]) {
+            let resolve: (o: ClaimPrizeOutcome) => void = () => undefined;
+            const c = {
+                claimPrize: vi.fn(() => new Promise<ClaimPrizeOutcome>((r) => (resolve = r))),
+            } as never as Pick<OpenChat, "claimPrize">;
+            const check = new HumanCheck();
+
+            const claim = claimPrizeWithHumanCheck(c, check, chatId, 1n, trustedClick());
+            // through the human check
+            expect(claimsStore.value.has(1n)).toBe(true);
+            check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
+            await vi.waitFor(() => expect(c.claimPrize).toHaveBeenCalled());
+            // and the claim itself
+            expect(claimsStore.value.has(1n)).toBe(true);
+
+            resolve(outcome);
+            await claim;
+            expect(claimsStore.value.has(1n)).toBe(false);
+        }
     });
 
     // 5a invariant 2: a prize claim is sent only from a trusted click
