@@ -104,7 +104,7 @@
 
 <div class="wrap">
   {#if deleted}
-    <div class="deleted" class:sent class:mirror>
+    <div class="deleted" class:mirror>
       <span class="trash"></span>
       <span class="deleted-text">{t(deletedText)}</span>
       <span class="deleted-time">{time}</span>
