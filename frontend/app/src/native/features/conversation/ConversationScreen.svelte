@@ -241,7 +241,9 @@
 
     // ---- the header
 
-    const them = $derived(chat?.kind === "direct_chat" ? $allUsersStore.get(chat.them.userId) : undefined);
+    const them = $derived(
+        chat?.kind === "direct_chat" ? $allUsersStore.get(chat.them.userId) : undefined,
+    );
     const title = $derived(
         chat === undefined
             ? ""
@@ -302,8 +304,16 @@
     const headerActions = $derived(
         canCall
             ? [
-                  { icon: "video", label: $_("native.conversation.videoCall"), onClick: callsLater },
-                  { icon: "phone", label: $_("native.conversation.voiceCall"), onClick: callsLater },
+                  {
+                      icon: "video",
+                      label: $_("native.conversation.videoCall"),
+                      onClick: callsLater,
+                  },
+                  {
+                      icon: "phone",
+                      label: $_("native.conversation.voiceCall"),
+                      onClick: callsLater,
+                  },
               ]
             : [],
     );
@@ -408,7 +418,11 @@
                     context,
                     current.id,
                     adding,
-                    $_(adding ? "native.chats.toast.favourited" : "native.chats.toast.unfavourited"),
+                    $_(
+                        adding
+                            ? "native.chats.toast.favourited"
+                            : "native.chats.toast.unfavourited",
+                    ),
                 );
                 break;
             }
@@ -434,29 +448,23 @@
             case "unblock":
                 if (current.kind === "direct_chat") {
                     const blocking = id === "block";
-                    void blockWithToast(
-                        client,
-                        context,
-                        current.them.userId,
-                        blocking,
-                        $_(
-                            blocking
-                                ? "native.conversation.toast.blocked"
-                                : "native.conversation.toast.unblocked",
-                            { values: { name: title } },
-                        ),
-                    );
+                    // the user as their @username, else the chat's name
+                    const name = them?.username ? `@${them.username}` : title;
+                    const words = (key: string) =>
+                        $_(`native.conversation.toast.${key}`, { values: { name } });
+                    void blockWithToast(client, context, current.them.userId, blocking, {
+                        blocking: words("blocking"),
+                        blocked: words("blocked"),
+                        unblocking: words("unblocking"),
+                        unblocked: words("unblocked"),
+                    });
                 }
                 break;
         }
     }
 
     // leaving or deleting goes back to the list, where the chat has gone, with Undo
-    function leaveOrDelete(
-        current: ChatSummary,
-        action: LeaveOrDelete,
-        message: string,
-    ) {
+    function leaveOrDelete(current: ChatSummary, action: LeaveOrDelete, message: string) {
         context.back?.();
         removeWithUndo(client, context, chatIdentifierToString(current.id), action, message);
     }
@@ -790,7 +798,10 @@
             ? ({ ...row.message, body } as GroupMessage)
             : withHandlers(row, evt.event, handlers, $cryptoLookup);
         // kept between renders, so composed without reading a voice message's live fields
-        const quoted = chat === undefined ? undefined : quoteTarget(evt.event, chat.id, $chatListScopeStore.kind);
+        const quoted =
+            chat === undefined
+                ? undefined
+                : quoteTarget(evt.event, chat.id, $chatListScopeStore.kind);
         const messages = [
             withFields(message, {
                 ...retryFor(row.message, offers.retry),
@@ -931,7 +942,8 @@
             onSubmit={() => void search.search(query)}
             onOlder={() => search.older(false)}
             onNewer={() => search.newer(false)}
-            onClose={closeSearch} />
+            onClose={closeSearch}
+        />
     {:else}
         <NativePageHeader
             {title}
@@ -942,12 +954,14 @@
             actions={headerActions}
             onMore={chat === undefined ? undefined : (anchor) => (menuAnchor = anchor)}
             moreLabel={$_("native.conversation.options")}
-            divider>
+            divider
+        >
             {#snippet avatar()}
                 <Avatar
                     size={36}
                     color={avatarColor}
-                    online={chat?.kind === "direct_chat" && online[1]} />
+                    online={chat?.kind === "direct_chat" && online[1]}
+                />
             {/snippet}
         </NativePageHeader>
     {/if}
@@ -975,7 +989,8 @@
                 preset="no-conversations"
                 title={$_("group.privateGroup", { values: { level: levelText } })}
                 body={$_("group.privateGroupInfo", { values: { level: levelText } })}
-                actionLabel="" />
+                actionLabel=""
+            />
         </div>
     {:else if chat === undefined}
         <div class="messages"><div class="waiting"><Spinner size={20} /></div></div>
@@ -1002,10 +1017,13 @@
                 bind:initialised
                 stickyDateElTop={stickyTop}
                 bind:stickyDateTimestamp={stickyDate}
-                viewportClass="native-conversation-list">
+                viewportClass="native-conversation-list"
+            >
                 {#snippet row(item, args)}
                     {#if item.kind === "timeline_date"}
-                        <div class="date"><span class="pill">{dateLabel(item.timestamp)}</span></div>
+                        <div class="date">
+                            <span class="pill">{dateLabel(item.timestamp)}</span>
+                        </div>
                     {:else if item.kind === "event"}
                         {@const evt = item.event}
                         {#if isMessage(evt)}
@@ -1021,14 +1039,16 @@
                                     use:observeRead={{
                                         observer: args.messageObserver,
                                         read: args.isReadByMe($messagesRead, evt),
-                                    }}>
+                                    }}
+                                >
                                     {#if call === "live" && isLiveCall(liveCall, msg.messageIndex)}
                                         <div class="live-pill" use:watchShown>
                                             <span
                                                 class="live-icon"
                                                 style:mask="var(--icon-{media === 'voice'
                                                     ? 'phone'
-                                                    : 'video'}) center/contain no-repeat"></span>
+                                                    : 'video'}) center/contain no-repeat"
+                                            ></span>
                                             <span class="live-text">
                                                 <span class="live-title">
                                                     {$_(
@@ -1052,18 +1072,27 @@
                                                 media,
                                                 msg.sender === me
                                                     ? { mine: true }
-                                                    : { mine: false, name: ctx.userName(msg.sender) },
+                                                    : {
+                                                          mine: false,
+                                                          name: ctx.userName(msg.sender),
+                                                      },
                                                 formatClock(
-                                                    (callLength(msg.content, evt.timestamp, 0) ?? 0) /
-                                                        1000,
+                                                    (callLength(msg.content, evt.timestamp, 0) ??
+                                                        0) / 1000,
                                                 ),
                                                 ctx.time(evt.timestamp),
                                             )}
-                                            onCallBack={callsLater} />
+                                            onCallBack={callsLater}
+                                        />
                                     {/if}
                                 </div>
                             {:else}
-                                {@const row = rows.row(item.key, evt, status(evt, args, failed), ctx)}
+                                {@const row = rows.row(
+                                    item.key,
+                                    evt,
+                                    status(evt, args, failed),
+                                    ctx,
+                                )}
                                 {@const content = msg.content}
                                 {@const confirmed = args.isConfirmed($unconfirmedStore, evt)}
                                 {@const offered = offeredFor(chat, evt, failed, confirmed)}
@@ -1078,7 +1107,8 @@
                                     {#if content.kind === "text_content"}
                                         <Markdown
                                             text={content.text}
-                                            inline={!msg.blockLevelMarkdown} />
+                                            inline={!msg.blockLevelMarkdown}
+                                        />
                                     {/if}
                                 {/snippet}
                                 <div
@@ -1092,7 +1122,8 @@
                                     use:observeRead={{
                                         observer: args.messageObserver,
                                         read: args.isReadByMe($messagesRead, evt),
-                                    }}>
+                                    }}
+                                >
                                     {#if firstUnread === msg.messageIndex && msg.sender !== me}
                                         <div class="unread" class:fading={dividerFading}>
                                             <div class="unread-inner">
@@ -1136,12 +1167,14 @@
                                             body,
                                             evt,
                                             offers,
-                                        )} />
+                                        )}
+                                    />
                                     <!-- kept while a claim's check runs, even if the prize runs out meanwhile -->
                                     {#if row.message.kind === "prize" && (row.message.canClaim || humanChecks.running(msg.messageId))}
                                         <HumanCheckFrame
                                             check={humanChecks.for(msg.messageId)}
-                                            customData={prizeClaimCustomData(me, msg.messageId)} />
+                                            customData={prizeClaimCustomData(me, msg.messageId)}
+                                        />
                                     {/if}
                                 </div>
                             {/if}
@@ -1157,7 +1190,8 @@
                                         read:
                                             deleted.length === 0 ||
                                             args.isReadByMe($messagesRead, evt),
-                                    }}>
+                                    }}
+                                >
                                     {#if text.joined !== undefined}
                                         <p class="event-line">
                                             <Markdown oneLine suppressLinks text={text.joined} />
@@ -1169,7 +1203,8 @@
                                                 type="button"
                                                 class="expand"
                                                 onclick={() =>
-                                                    client.expandDeletedMessages(new Set(deleted))}>
+                                                    client.expandDeletedMessages(new Set(deleted))}
+                                            >
                                                 {text.deleted}
                                             </button>
                                         </p>
@@ -1199,7 +1234,8 @@
                             <IconButton
                                 icon="arrow-down"
                                 label={$_("goToLatestMessage")}
-                                onClick={scrollToLast} />
+                                onClick={scrollToLast}
+                            />
                         </div>
                     {/if}
                 {/snippet}
@@ -1212,20 +1248,26 @@
             </div>
         {/if}
 
-        <footer class="composer">
-            {#if !direct}
-                <div
-                    class="typing-strip"
-                    class:shown={typingNames.length > 0}
-                    aria-live="polite"
-                    aria-hidden={typingNames.length === 0}>
-                    <span class="dots small"><span></span><span></span><span></span></span>
-                    <span class="typing-text">{typingText}</span>
-                </div>
-            {/if}
-            <!-- TODO(N5c): the composer and its keyboard-area panels. Development text only -->
-            <div class="composer-placeholder">Composer (N5c)</div>
-        </footer>
+        <!-- searching has no composer (the design's search mode): it's back when the search closes -->
+        {#if searchOpen}
+            <div class="search-end"></div>
+        {:else}
+            <footer class="composer">
+                {#if !direct}
+                    <div
+                        class="typing-strip"
+                        class:shown={typingNames.length > 0}
+                        aria-live="polite"
+                        aria-hidden={typingNames.length === 0}
+                    >
+                        <span class="dots small"><span></span><span></span><span></span></span>
+                        <span class="typing-text">{typingText}</span>
+                    </div>
+                {/if}
+                <!-- TODO(N5c): the composer and its keyboard-area panels. Development text only -->
+                <div class="composer-placeholder">Composer (N5c)</div>
+            </footer>
+        {/if}
     {/if}
 </div>
 
@@ -1234,7 +1276,8 @@
     items={menuItems}
     label={$_("native.conversation.options")}
     onSelect={onMenu}
-    onClose={() => (menuAnchor = null)} />
+    onClose={() => (menuAnchor = null)}
+/>
 
 {#if viewing !== undefined}
     <MediaViewer content={viewing} onClose={() => (viewing = undefined)} />
@@ -1392,9 +1435,7 @@
 
         // the same look as a day's own pill, but opaque over the messages
         .pill {
-            background:
-                linear-gradient(var(--overlay-1), var(--overlay-1)),
-                var(--surface-0);
+            background: linear-gradient(var(--overlay-1), var(--overlay-1)), var(--surface-0);
         }
     }
 
@@ -1562,6 +1603,12 @@
                 background: currentColor;
             }
         }
+    }
+
+    // the safe area under the list while the composer is away
+    .search-end {
+        flex: none;
+        height: var(--safe-bottom);
     }
 
     .composer {

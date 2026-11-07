@@ -375,7 +375,8 @@ design export needs. Each entry says where it came up.
     that waits for the design's `MediaViewer` to be ported to the library (Design pass 6, above),
     for both trees. A file's download is the web's (`saveFile`); the apps' save to Photos / Files
     needs a native bridge.
-  - **Search in the chat** scrolls the match into the middle of the list (ChatEventList's
+  - **Search in the chat** hides the composer while it's open (it has no use for it), and it's
+    back when the search closes. It scrolls the match into the middle of the list (ChatEventList's
     `scrollToMessageIndex`, which isn't rewritten for it), not the upper third. It has no
     @mention picker (the old headers' "@name" still searches for a sender); typing pauses 300ms
     before it searches, as the old ones did; up and down stop at the ends (the old headers went
@@ -415,9 +416,12 @@ design export needs. Each entry says where it came up.
     no name, and the list's spinner, until the chat arrives.
   - **Toasts** sit above the composer in a conversation (the kit's `footer` placement). Mute,
     favourite and unblock say so at once, as the client shows the change at once (`localUpdates`),
-    here and on Chats' rows; a refusal takes the toast's place. A block's toast shows at once with
-    a small loader, which gives way to Undo and the close once the block is in (`showPending`,
-    ours: the design's toast has no waiting state). Leave and delete don't wait: nothing is sent
+    here and on Chats' rows; a refusal takes the toast's place. Block and unblock wait on the
+    backend, so their toast says so with a small loader ("Blocking @ann…"), then how it went
+    ("Blocked @ann", with Undo and the close); Undo unblocks in the same toast ("Unblocking
+    @ann…", then "Unblocked @ann"). A toast waiting on an operation never times out; its result
+    gets a full time of its own (`showPending`, `AsyncUndo`; ours: the design's toast has no
+    waiting state). Leave and delete don't wait: nothing is sent
     until their Undo has gone (`PendingRemovals`).
   - **Typing** couldn't be seen end to end here: typing reaches peers over WebRTC, which the browser
     check's environment didn't connect. The bubble and the strip were checked by setting the names.
