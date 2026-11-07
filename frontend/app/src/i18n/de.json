@@ -1736,6 +1736,54 @@
                 "noContactsBody": "Die Personen, mit denen du am meisten chattest, erscheinen hier. Suche nach Name oder @Benutzername, um eine Unterhaltung zu beginnen."
             }
         },
+        "conversation": {
+            "options": "Chat-Optionen",
+            "members": "{visibility} · {count, plural, one {# Mitglied} other {# Mitglieder}}",
+            "videoCall": "Videoanruf",
+            "voiceCall": "Sprachanruf",
+            "callsLater": "Anrufe sind in dieser Version noch nicht verfügbar.",
+            "menu": {
+                "search": "Im Chat suchen",
+                "contactDetails": "Kontaktdetails",
+                "groupDetails": "Gruppendetails",
+                "channelDetails": "Kanaldetails",
+                "mute": "Stummschalten",
+                "unmute": "Stummschaltung aufheben",
+                "favourite": "Zu Favoriten hinzufügen",
+                "unfavourite": "Aus Favoriten entfernen",
+                "disappearing": "Selbstlöschende Nachrichten",
+                "off": "Aus",
+                "hour": "1 Stunde",
+                "day": "1 Tag",
+                "week": "1 Woche",
+                "leaveGroup": "Gruppe verlassen",
+                "leaveChannel": "Kanal verlassen",
+                "block": "{name} blockieren",
+                "unblock": "Blockierung aufheben",
+                "delete": "Chat löschen"
+            },
+            "toast": {
+                "disappearOn": "Selbstlöschende Nachrichten an",
+                "disappearOff": "Selbstlöschende Nachrichten aus",
+                "disappearFailed": "Selbstlöschende Nachrichten konnten nicht geändert werden",
+                "blocked": "{name} ist blockiert",
+                "unblocked": "{name} ist nicht mehr blockiert"
+            },
+            "search": {
+                "placeholder": "In diesem Chat suchen",
+                "close": "Suche schließen",
+                "older": "Älterer Treffer",
+                "newer": "Neuerer Treffer",
+                "count": "{current} von {total}",
+                "none": "Keine Ergebnisse"
+            },
+            "live": {
+                "video": "Videoanruf läuft",
+                "voice": "Sprachanruf läuft",
+                "sub": "{elapsed} · {count, plural, one {# Person} other {# Personen}}",
+                "tapToJoin": "Zum Beitreten tippen"
+            }
+        },
         "shareUnavailable": "Das Teilen aus anderen Apps in OpenChat ist in dieser Version noch nicht verfügbar.",
         "start": {
             "welcome": {

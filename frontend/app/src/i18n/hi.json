@@ -1736,6 +1736,54 @@
                 "noContactsBody": "जिन लोगों से आप सबसे ज़्यादा चैट करते हैं, वे यहाँ दिखेंगे। बातचीत शुरू करने के लिए नाम या @उपयोगकर्ता नाम से खोजें।"
             }
         },
+        "conversation": {
+            "options": "चैट विकल्प",
+            "members": "{visibility} · {count, plural, one {# सदस्य} other {# सदस्य}}",
+            "videoCall": "वीडियो कॉल",
+            "voiceCall": "वॉइस कॉल",
+            "callsLater": "इस संस्करण में कॉल अभी उपलब्ध नहीं हैं।",
+            "menu": {
+                "search": "चैट में खोजें",
+                "contactDetails": "संपर्क विवरण",
+                "groupDetails": "ग्रुप विवरण",
+                "channelDetails": "चैनल विवरण",
+                "mute": "म्यूट करें",
+                "unmute": "अनम्यूट करें",
+                "favourite": "पसंदीदा में जोड़ें",
+                "unfavourite": "पसंदीदा से हटाएँ",
+                "disappearing": "गायब होने वाले संदेश",
+                "off": "बंद",
+                "hour": "1 घंटा",
+                "day": "1 दिन",
+                "week": "1 सप्ताह",
+                "leaveGroup": "ग्रुप छोड़ें",
+                "leaveChannel": "चैनल छोड़ें",
+                "block": "{name} को ब्लॉक करें",
+                "unblock": "अनब्लॉक करें",
+                "delete": "चैट हटाएँ"
+            },
+            "toast": {
+                "disappearOn": "गायब होने वाले संदेश चालू",
+                "disappearOff": "गायब होने वाले संदेश बंद",
+                "disappearFailed": "गायब होने वाले संदेश बदले नहीं जा सके",
+                "blocked": "{name} ब्लॉक है",
+                "unblocked": "{name} अनब्लॉक है"
+            },
+            "search": {
+                "placeholder": "इस चैट में खोजें",
+                "close": "खोज बंद करें",
+                "older": "पुराना परिणाम",
+                "newer": "नया परिणाम",
+                "count": "{total} में से {current}",
+                "none": "कोई परिणाम नहीं"
+            },
+            "live": {
+                "video": "वीडियो कॉल चल रही है",
+                "voice": "वॉइस कॉल चल रही है",
+                "sub": "{elapsed} · {count, plural, one {# व्यक्ति} other {# लोग}}",
+                "tapToJoin": "जुड़ने के लिए टैप करें"
+            }
+        },
         "shareUnavailable": "दूसरे ऐप्स से OpenChat पर शेयर करना इस संस्करण में अभी उपलब्ध नहीं है।",
         "start": {
             "welcome": {

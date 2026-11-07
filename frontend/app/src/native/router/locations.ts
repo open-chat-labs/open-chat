@@ -70,6 +70,7 @@ export type LocalScreen =
     | { kind: "chit" }
     | { kind: "edit_profile" }
     | { kind: "settings"; page: SettingsPage }
+    | { kind: "chat_details"; chatId: ChatIdentifier }
     // You → Account's Delete account, its steps before it deletes
     | { kind: "delete_account" };
 

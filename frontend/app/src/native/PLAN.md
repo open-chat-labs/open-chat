@@ -46,7 +46,12 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   Account, CHIT's at `?profile=chit`), on `logic/profile` shared with the web's profile, and the
   kit's new `NativeAlert`. What it left (buying Diamond, the apps' notifications switch, the
   recovery phrase …) is in GAPS.md ("Native You tab").
-- **Next:** the screens. N10a, N11 and N13 need only N3; N5b (the conversation) needs N5a.
+- **Built:** N5b the conversation
+  ([#10369](https://github.com/open-chat-labs/open-chat/issues/10369)): the header and its menu,
+  search in the chat, the messages (the web's mapping, moved to `logic/conversation`), the swipes,
+  typing, call items and the media viewer. What it left is in GAPS.md ("Native conversation").
+- **Next:** the screens. N10a, N11 and N13 need only N3; N5c (the composer), N5d (the message
+  menu) and N6 (details) need N5b.
 
 ## Workstreams
 

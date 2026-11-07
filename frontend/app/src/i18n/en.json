@@ -1651,6 +1651,54 @@
                 "noContactsBody": "People you chat with most will show up here. Search by name or @username to start a conversation."
             }
         },
+        "conversation": {
+            "options": "Chat options",
+            "members": "{visibility} · {count, plural, one {# member} other {# members}}",
+            "videoCall": "Video call",
+            "voiceCall": "Voice call",
+            "callsLater": "Calls aren't available in this version yet.",
+            "menu": {
+                "search": "Search in chat",
+                "contactDetails": "Contact details",
+                "groupDetails": "Group details",
+                "channelDetails": "Channel details",
+                "mute": "Mute",
+                "unmute": "Unmute",
+                "favourite": "Add to favourites",
+                "unfavourite": "Remove from favourites",
+                "disappearing": "Disappearing messages",
+                "off": "Off",
+                "hour": "1 hour",
+                "day": "1 day",
+                "week": "1 week",
+                "leaveGroup": "Leave group",
+                "leaveChannel": "Leave channel",
+                "block": "Block {name}",
+                "unblock": "Unblock",
+                "delete": "Delete chat"
+            },
+            "toast": {
+                "disappearOn": "Disappearing messages on",
+                "disappearOff": "Disappearing messages off",
+                "disappearFailed": "Couldn't change disappearing messages",
+                "blocked": "{name} is blocked",
+                "unblocked": "{name} is unblocked"
+            },
+            "search": {
+                "placeholder": "Search in this chat",
+                "close": "Close search",
+                "older": "Older match",
+                "newer": "Newer match",
+                "count": "{current} of {total}",
+                "none": "No results"
+            },
+            "live": {
+                "video": "Video call in progress",
+                "voice": "Voice call in progress",
+                "sub": "{elapsed} · {count, plural, one {# person} other {# people}}",
+                "tapToJoin": "Tap to join"
+            }
+        },
         "shareUnavailable": "Sharing to OpenChat from other apps isn't available in this version yet.",
         "start": {
             "welcome": {

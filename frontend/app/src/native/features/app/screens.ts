@@ -58,7 +58,7 @@ export const screens: Screens = {
     you: () => import("../you/YouScreen.svelte"),
 
     // a conversation (N5b)
-    conversation: undefined,
+    conversation: () => import("../conversation/ConversationScreen.svelte"),
 
     // a thread (N8a)
     thread: undefined,
@@ -101,6 +101,9 @@ export const screens: Screens = {
 
     // Delete account, from You → Account (N12)
     delete_account: () => import("../you/DeleteAccountScreen.svelte"),
+
+    // a DM's or group's details, from the conversation's header (N6)
+    chat_details: undefined,
 };
 
 /** The screens' chunks, loaded once and kept; the tabs' roots are preloaded first. */

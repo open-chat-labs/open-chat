@@ -1736,6 +1736,54 @@
                 "noContactsBody": "افرادی که بیشتر با آن‌ها گفتگو می‌کنید اینجا نشان داده می‌شوند. برای شروع گفتگو، نام یا @نام کاربری را جستجو کنید."
             }
         },
+        "conversation": {
+            "options": "گزینه‌های گفتگو",
+            "members": "{visibility} · {count} عضو",
+            "videoCall": "تماس تصویری",
+            "voiceCall": "تماس صوتی",
+            "callsLater": "تماس‌ها هنوز در این نسخه در دسترس نیستند.",
+            "menu": {
+                "search": "جستجو در گفتگو",
+                "contactDetails": "جزئیات مخاطب",
+                "groupDetails": "جزئیات گروه",
+                "channelDetails": "جزئیات کانال",
+                "mute": "بی‌صدا",
+                "unmute": "باصدا کردن",
+                "favourite": "افزودن به برگزیده‌ها",
+                "unfavourite": "حذف از برگزیده‌ها",
+                "disappearing": "پیام‌های ناپدیدشونده",
+                "off": "خاموش",
+                "hour": "۱ ساعت",
+                "day": "۱ روز",
+                "week": "۱ هفته",
+                "leaveGroup": "ترک گروه",
+                "leaveChannel": "ترک کانال",
+                "block": "مسدود کردن {name}",
+                "unblock": "رفع مسدودی",
+                "delete": "حذف گفتگو"
+            },
+            "toast": {
+                "disappearOn": "پیام‌های ناپدیدشونده روشن شد",
+                "disappearOff": "پیام‌های ناپدیدشونده خاموش شد",
+                "disappearFailed": "تغییر پیام‌های ناپدیدشونده ممکن نشد",
+                "blocked": "{name} مسدود شد",
+                "unblocked": "{name} از مسدودی خارج شد"
+            },
+            "search": {
+                "placeholder": "جستجو در این گفتگو",
+                "close": "بستن جستجو",
+                "older": "نتیجه قدیمی‌تر",
+                "newer": "نتیجه جدیدتر",
+                "count": "{current} از {total}",
+                "none": "نتیجه‌ای نیست"
+            },
+            "live": {
+                "video": "تماس تصویری در جریان است",
+                "voice": "تماس صوتی در جریان است",
+                "sub": "{elapsed} · {count} نفر",
+                "tapToJoin": "برای پیوستن ضربه بزنید"
+            }
+        },
         "shareUnavailable": "اشتراک‌گذاری در OpenChat از برنامه‌های دیگر هنوز در این نسخه در دسترس نیست.",
         "start": {
             "welcome": {

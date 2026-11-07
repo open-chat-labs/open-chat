@@ -1736,6 +1736,54 @@
                 "noContactsBody": "Tutaj pojawią się osoby, z którymi rozmawiasz najczęściej. Wyszukaj imię lub @nazwę użytkownika, aby zacząć rozmowę."
             }
         },
+        "conversation": {
+            "options": "Opcje czatu",
+            "members": "{visibility} · {count, plural, one {# członek} few {# członków} many {# członków} other {# członka}}",
+            "videoCall": "Rozmowa wideo",
+            "voiceCall": "Rozmowa głosowa",
+            "callsLater": "Połączenia nie są jeszcze dostępne w tej wersji.",
+            "menu": {
+                "search": "Szukaj w czacie",
+                "contactDetails": "Szczegóły kontaktu",
+                "groupDetails": "Szczegóły grupy",
+                "channelDetails": "Szczegóły kanału",
+                "mute": "Wycisz",
+                "unmute": "Wyłącz wyciszenie",
+                "favourite": "Dodaj do ulubionych",
+                "unfavourite": "Usuń z ulubionych",
+                "disappearing": "Znikające wiadomości",
+                "off": "Wyłączone",
+                "hour": "1 godzina",
+                "day": "1 dzień",
+                "week": "1 tydzień",
+                "leaveGroup": "Opuść grupę",
+                "leaveChannel": "Opuść kanał",
+                "block": "Zablokuj {name}",
+                "unblock": "Odblokuj",
+                "delete": "Usuń czat"
+            },
+            "toast": {
+                "disappearOn": "Znikające wiadomości włączone",
+                "disappearOff": "Znikające wiadomości wyłączone",
+                "disappearFailed": "Nie udało się zmienić znikających wiadomości",
+                "blocked": "{name} jest zablokowany",
+                "unblocked": "{name} jest odblokowany"
+            },
+            "search": {
+                "placeholder": "Szukaj w tym czacie",
+                "close": "Zamknij wyszukiwanie",
+                "older": "Starszy wynik",
+                "newer": "Nowszy wynik",
+                "count": "{current} z {total}",
+                "none": "Brak wyników"
+            },
+            "live": {
+                "video": "Trwa rozmowa wideo",
+                "voice": "Trwa rozmowa głosowa",
+                "sub": "{elapsed} · {count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}",
+                "tapToJoin": "Dotknij, aby dołączyć"
+            }
+        },
         "shareUnavailable": "Udostępnianie do OpenChat z innych aplikacji nie jest jeszcze dostępne w tej wersji.",
         "start": {
             "welcome": {

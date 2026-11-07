@@ -1736,6 +1736,54 @@
                 "noContactsBody": "האנשים שאיתם הכי הרבה מדברים יופיעו כאן. חפשו לפי שם או @שם משתמש כדי להתחיל שיחה."
             }
         },
+        "conversation": {
+            "options": "אפשרויות צ'אט",
+            "members": "{visibility} · {count, plural, one {חבר אחד} other {# חברים}}",
+            "videoCall": "שיחת וידאו",
+            "voiceCall": "שיחה קולית",
+            "callsLater": "שיחות עדיין לא זמינות בגרסה זו.",
+            "menu": {
+                "search": "חיפוש בצ'אט",
+                "contactDetails": "פרטי איש קשר",
+                "groupDetails": "פרטי קבוצה",
+                "channelDetails": "פרטי ערוץ",
+                "mute": "השתקה",
+                "unmute": "ביטול השתקה",
+                "favourite": "הוספה למועדפים",
+                "unfavourite": "הסרה מהמועדפים",
+                "disappearing": "הודעות נעלמות",
+                "off": "כבוי",
+                "hour": "שעה",
+                "day": "יום",
+                "week": "שבוע",
+                "leaveGroup": "יציאה מהקבוצה",
+                "leaveChannel": "יציאה מהערוץ",
+                "block": "חסימת {name}",
+                "unblock": "ביטול חסימה",
+                "delete": "מחיקת הצ'אט"
+            },
+            "toast": {
+                "disappearOn": "הודעות נעלמות מופעלות",
+                "disappearOff": "הודעות נעלמות כבויות",
+                "disappearFailed": "לא ניתן היה לשנות את ההודעות הנעלמות",
+                "blocked": "{name} חסום",
+                "unblocked": "החסימה של {name} בוטלה"
+            },
+            "search": {
+                "placeholder": "חיפוש בצ'אט הזה",
+                "close": "סגירת החיפוש",
+                "older": "תוצאה ישנה יותר",
+                "newer": "תוצאה חדשה יותר",
+                "count": "{current} מתוך {total}",
+                "none": "אין תוצאות"
+            },
+            "live": {
+                "video": "שיחת וידאו מתקיימת",
+                "voice": "שיחה קולית מתקיימת",
+                "sub": "{elapsed} · {count, plural, one {אדם אחד} other {# אנשים}}",
+                "tapToJoin": "הקישו כדי להצטרף"
+            }
+        },
         "shareUnavailable": "שיתוף ל-OpenChat מאפליקציות אחרות עדיין אינו זמין בגרסה זו.",
         "start": {
             "welcome": {

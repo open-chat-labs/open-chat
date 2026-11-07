@@ -73,6 +73,7 @@
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenProps } from "../app/screens";
     import ChatSearch, { SEARCH_LEAVE_MS, type SearchSection } from "./ChatSearch.svelte";
+    import { removeWithUndo as removeChatWithUndo } from "./removeWithUndo";
     import {
         chatResult,
         HEADER_MENU_ACTIONS,
@@ -314,13 +315,7 @@
     }
 
     function removeWithUndo(key: string, action: LeaveOrDelete, message: string) {
-        const dismiss = context.toast(message, () => removals.undo(key));
-        removals.remove(
-            key,
-            async () => toastStore.showOutcome(await client.leaveOrDelete(action)),
-            // sent, or taken back: the toast's Undo has nothing left to undo
-            dismiss,
-        );
+        removeChatWithUndo(client, context, key, action, message);
     }
 
     async function unarchive(chat: ChatSummary) {

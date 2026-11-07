@@ -1736,6 +1736,54 @@
                 "noContactsBody": "سيظهر هنا الأشخاص الذين تتحدث معهم أكثر. ابحث بالاسم أو @اسم المستخدم لبدء محادثة."
             }
         },
+        "conversation": {
+            "options": "خيارات الدردشة",
+            "members": "{visibility} · {count, plural, one {عضو واحد} two {عضوان} few {# أعضاء} many {# عضوًا} other {# عضو}}",
+            "videoCall": "مكالمة فيديو",
+            "voiceCall": "مكالمة صوتية",
+            "callsLater": "المكالمات غير متاحة في هذا الإصدار بعد.",
+            "menu": {
+                "search": "البحث في الدردشة",
+                "contactDetails": "تفاصيل جهة الاتصال",
+                "groupDetails": "تفاصيل المجموعة",
+                "channelDetails": "تفاصيل القناة",
+                "mute": "كتم",
+                "unmute": "إلغاء الكتم",
+                "favourite": "إضافة إلى المفضلة",
+                "unfavourite": "إزالة من المفضلة",
+                "disappearing": "الرسائل المؤقتة",
+                "off": "إيقاف",
+                "hour": "ساعة واحدة",
+                "day": "يوم واحد",
+                "week": "أسبوع واحد",
+                "leaveGroup": "مغادرة المجموعة",
+                "leaveChannel": "مغادرة القناة",
+                "block": "حظر {name}",
+                "unblock": "إلغاء الحظر",
+                "delete": "حذف الدردشة"
+            },
+            "toast": {
+                "disappearOn": "تم تشغيل الرسائل المؤقتة",
+                "disappearOff": "تم إيقاف الرسائل المؤقتة",
+                "disappearFailed": "تعذّر تغيير الرسائل المؤقتة",
+                "blocked": "تم حظر {name}",
+                "unblocked": "تم إلغاء حظر {name}"
+            },
+            "search": {
+                "placeholder": "البحث في هذه الدردشة",
+                "close": "إغلاق البحث",
+                "older": "نتيجة أقدم",
+                "newer": "نتيجة أحدث",
+                "count": "{current} من {total}",
+                "none": "لا توجد نتائج"
+            },
+            "live": {
+                "video": "مكالمة فيديو جارية",
+                "voice": "مكالمة صوتية جارية",
+                "sub": "{elapsed} · {count, plural, one {شخص واحد} two {شخصان} few {# أشخاص} many {# شخصًا} other {# شخص}}",
+                "tapToJoin": "انقر للانضمام"
+            }
+        },
         "shareUnavailable": "المشاركة إلى OpenChat من التطبيقات الأخرى غير متاحة في هذا الإصدار بعد.",
         "start": {
             "welcome": {

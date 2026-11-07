@@ -1736,6 +1736,54 @@
                 "noContactsBody": "Những người bạn trò chuyện nhiều nhất sẽ hiện ở đây. Tìm theo tên hoặc @tên người dùng để bắt đầu trò chuyện."
             }
         },
+        "conversation": {
+            "options": "Tùy chọn cuộc trò chuyện",
+            "members": "{visibility} · {count} thành viên",
+            "videoCall": "Gọi video",
+            "voiceCall": "Gọi thoại",
+            "callsLater": "Phiên bản này chưa hỗ trợ cuộc gọi.",
+            "menu": {
+                "search": "Tìm trong cuộc trò chuyện",
+                "contactDetails": "Chi tiết liên hệ",
+                "groupDetails": "Chi tiết nhóm",
+                "channelDetails": "Chi tiết kênh",
+                "mute": "Tắt thông báo",
+                "unmute": "Bật thông báo",
+                "favourite": "Thêm vào yêu thích",
+                "unfavourite": "Xóa khỏi yêu thích",
+                "disappearing": "Tin nhắn tự hủy",
+                "off": "Tắt",
+                "hour": "1 giờ",
+                "day": "1 ngày",
+                "week": "1 tuần",
+                "leaveGroup": "Rời nhóm",
+                "leaveChannel": "Rời kênh",
+                "block": "Chặn {name}",
+                "unblock": "Bỏ chặn",
+                "delete": "Xóa cuộc trò chuyện"
+            },
+            "toast": {
+                "disappearOn": "Đã bật tin nhắn tự hủy",
+                "disappearOff": "Đã tắt tin nhắn tự hủy",
+                "disappearFailed": "Không thể thay đổi tin nhắn tự hủy",
+                "blocked": "Đã chặn {name}",
+                "unblocked": "Đã bỏ chặn {name}"
+            },
+            "search": {
+                "placeholder": "Tìm trong cuộc trò chuyện này",
+                "close": "Đóng tìm kiếm",
+                "older": "Kết quả cũ hơn",
+                "newer": "Kết quả mới hơn",
+                "count": "{current}/{total}",
+                "none": "Không có kết quả"
+            },
+            "live": {
+                "video": "Đang có cuộc gọi video",
+                "voice": "Đang có cuộc gọi thoại",
+                "sub": "{elapsed} · {count} người",
+                "tapToJoin": "Chạm để tham gia"
+            }
+        },
         "shareUnavailable": "Chia sẻ vào OpenChat từ ứng dụng khác chưa có trong phiên bản này.",
         "start": {
             "welcome": {

@@ -1736,6 +1736,54 @@
                 "noContactsBody": "你最常聊天的人会显示在这里。按名字或 @用户名搜索即可开始对话。"
             }
         },
+        "conversation": {
+            "options": "聊天选项",
+            "members": "{visibility} · {count} 位成员",
+            "videoCall": "视频通话",
+            "voiceCall": "语音通话",
+            "callsLater": "此版本暂不支持通话。",
+            "menu": {
+                "search": "在聊天中搜索",
+                "contactDetails": "联系人详情",
+                "groupDetails": "群组详情",
+                "channelDetails": "频道详情",
+                "mute": "静音",
+                "unmute": "取消静音",
+                "favourite": "添加到收藏",
+                "unfavourite": "从收藏中移除",
+                "disappearing": "阅后即焚消息",
+                "off": "关闭",
+                "hour": "1 小时",
+                "day": "1 天",
+                "week": "1 周",
+                "leaveGroup": "退出群组",
+                "leaveChannel": "退出频道",
+                "block": "屏蔽 {name}",
+                "unblock": "取消屏蔽",
+                "delete": "删除聊天"
+            },
+            "toast": {
+                "disappearOn": "阅后即焚消息已开启",
+                "disappearOff": "阅后即焚消息已关闭",
+                "disappearFailed": "无法更改阅后即焚消息",
+                "blocked": "已屏蔽 {name}",
+                "unblocked": "已取消屏蔽 {name}"
+            },
+            "search": {
+                "placeholder": "在此聊天中搜索",
+                "close": "关闭搜索",
+                "older": "更早的结果",
+                "newer": "更新的结果",
+                "count": "第 {current} 个，共 {total} 个",
+                "none": "无结果"
+            },
+            "live": {
+                "video": "视频通话进行中",
+                "voice": "语音通话进行中",
+                "sub": "{elapsed} · {count} 人",
+                "tapToJoin": "点按加入"
+            }
+        },
         "shareUnavailable": "此版本暂不支持从其他应用分享到 OpenChat。",
         "start": {
             "welcome": {

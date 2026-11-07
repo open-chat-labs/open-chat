@@ -52,6 +52,8 @@ native/
     app/screenModules.ts   the screens' chunks, loaded once and kept, preloaded while idle
     app/ScreenHost.svelte  shows it, or a placeholder until it's built
     chats/           the Chats tab: the list, its search, New chat
+    conversation/    a conversation (N5b): the header and its menu, search in the chat, the
+                     messages on core/ChatEventList, the swipes, typing, call items
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when
@@ -69,7 +71,10 @@ accent (`theme/accent.ts`), the native apps' setup (`utils/native/nativeApp.ts`,
 its referrer, the sign-up form and the referrer picker, shared with `src/web` and the old UIs), the
 profile and its settings (`logic/profile`: the form, the username check, appearance, notifications,
 community names, the photo and cover uploads; `logic/chit/dailyClaim`, shared with the web's
-profile and CHIT dialog), and the theme the web and Welcome's menu keep (`theme/themes.ts`). The
+profile and CHIT dialog), a conversation's messages (`logic/conversation`: the rows, what a message
+offers, its controls, the unread divider and the route's message, search in a chat, call items;
+`core/ChatEventList`, `core/MediaViewer`, `core/observeRead`, shared with `src/web` and, for search
+and calls, the old UIs), and the theme the web and Welcome's menu keep (`theme/themes.ts`). The
 marketing pages (Landing, Learn, the terms and privacy policy) aren't the app's: they open on the
 website in the default browser (`shell/onWeb.ts`), as the old native app's About and a deep link
 to one do.

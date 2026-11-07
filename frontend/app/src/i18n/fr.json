@@ -1736,6 +1736,54 @@
                 "noContactsBody": "Les personnes avec qui vous discutez le plus apparaîtront ici. Recherchez un nom ou un @nom d'utilisateur pour commencer une conversation."
             }
         },
+        "conversation": {
+            "options": "Options du chat",
+            "members": "{visibility} · {count, plural, one {# membre} other {# membres}}",
+            "videoCall": "Appel vidéo",
+            "voiceCall": "Appel vocal",
+            "callsLater": "Les appels ne sont pas encore disponibles dans cette version.",
+            "menu": {
+                "search": "Rechercher dans le chat",
+                "contactDetails": "Détails du contact",
+                "groupDetails": "Détails du groupe",
+                "channelDetails": "Détails du canal",
+                "mute": "Mettre en sourdine",
+                "unmute": "Réactiver le son",
+                "favourite": "Ajouter aux favoris",
+                "unfavourite": "Retirer des favoris",
+                "disappearing": "Messages éphémères",
+                "off": "Désactivés",
+                "hour": "1 heure",
+                "day": "1 jour",
+                "week": "1 semaine",
+                "leaveGroup": "Quitter le groupe",
+                "leaveChannel": "Quitter le canal",
+                "block": "Bloquer {name}",
+                "unblock": "Débloquer",
+                "delete": "Supprimer le chat"
+            },
+            "toast": {
+                "disappearOn": "Messages éphémères activés",
+                "disappearOff": "Messages éphémères désactivés",
+                "disappearFailed": "Impossible de modifier les messages éphémères",
+                "blocked": "{name} est bloqué",
+                "unblocked": "{name} est débloqué"
+            },
+            "search": {
+                "placeholder": "Rechercher dans ce chat",
+                "close": "Fermer la recherche",
+                "older": "Résultat plus ancien",
+                "newer": "Résultat plus récent",
+                "count": "{current} sur {total}",
+                "none": "Aucun résultat"
+            },
+            "live": {
+                "video": "Appel vidéo en cours",
+                "voice": "Appel vocal en cours",
+                "sub": "{elapsed} · {count, plural, one {# personne} other {# personnes}}",
+                "tapToJoin": "Touchez pour rejoindre"
+            }
+        },
         "shareUnavailable": "Le partage vers OpenChat depuis d'autres applications n'est pas encore disponible dans cette version.",
         "start": {
             "welcome": {
