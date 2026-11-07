@@ -565,7 +565,7 @@
                 {@render chunkFailed()}
             {/await}
         {/if}
-        <Toasts above="none" />
+        <Toasts above="none" queue={toasts} />
     </div>
 {:else if location.area === "marketing"}
     <!-- a marketing page, which has opened in the browser: nothing while the app steps back -->

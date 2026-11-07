@@ -72,6 +72,7 @@ describe("Android's system back", () => {
         const signedOut = (startBack: boolean, overlayOpen = false) =>
             backAction({
                 overlayOpen,
+                localTop: false,
                 location: at("/", true),
                 backUrl: undefined,
                 chatsUrl: "/chats",
