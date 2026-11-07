@@ -159,7 +159,10 @@ export function quoteTarget(
     const reply = msg.repliesTo;
     if (reply?.kind !== "rehydrated_reply_context") return undefined;
     const source = reply.sourceContext;
-    if (chatIdentifiersEqual(source.chatId, chatId) && source.threadRootMessageIndex === undefined) {
+    if (
+        chatIdentifiersEqual(source.chatId, chatId) &&
+        source.threadRootMessageIndex === undefined
+    ) {
         return { kind: "here", messageIndex: reply.messageIndex };
     }
     return { kind: "elsewhere", url: routeForMessage(scope, source, reply.messageIndex) };

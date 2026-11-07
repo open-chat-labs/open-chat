@@ -18,7 +18,10 @@ import {
  */
 export function firstUnreadOnOpen(
     chat: ChatSummary,
-    firstUnread: (chatId: ChatIdentifier, latestMessageIndex: number | undefined) => number | undefined,
+    firstUnread: (
+        chatId: ChatIdentifier,
+        latestMessageIndex: number | undefined,
+    ) => number | undefined,
 ): number | undefined {
     if (isPreviewing(chat)) return undefined;
     return firstUnread(chat.id, chat.latestMessage?.event.messageIndex);

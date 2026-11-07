@@ -113,7 +113,10 @@ describe("a reply's quote, tapped", () => {
     const dm: ChatIdentifier = { kind: "direct_chat", userId: "u1" };
 
     function reply(repliesTo: Partial<ReplyContext> & { kind: ReplyContext["kind"] }): Message {
-        return { ...msg({ kind: "text_content", text: "yes" } as MessageContent), repliesTo } as Message;
+        return {
+            ...msg({ kind: "text_content", text: "yes" } as MessageContent),
+            repliesTo,
+        } as Message;
     }
 
     function quoting(chatId: ChatIdentifier, threadRootMessageIndex?: number, messageIndex = 41) {
@@ -147,7 +150,9 @@ describe("a reply's quote, tapped", () => {
     });
 
     test("has nowhere to go for a message that isn't a reply, or whose quote isn't loaded", () => {
-        expect(quoteTarget(msg({ kind: "text_content", text: "hi" } as MessageContent), dm, "chats")).toBeUndefined();
+        expect(
+            quoteTarget(msg({ kind: "text_content", text: "hi" } as MessageContent), dm, "chats"),
+        ).toBeUndefined();
         expect(quoteTarget(reply({ kind: "raw_reply_context" }), dm, "chats")).toBeUndefined();
     });
 
@@ -156,7 +161,9 @@ describe("a reply's quote, tapped", () => {
         const target = { kind: "here", messageIndex: 41 } as const;
         quoteFor({ time: "", text: "yes" } as GroupMessage, target, go).onQuote?.();
         expect(go).toHaveBeenCalledWith(target);
-        expect(quoteFor({ kind: "image", time: "", items: [] } as GroupMessage, target, go)).toEqual({});
+        expect(
+            quoteFor({ kind: "image", time: "", items: [] } as GroupMessage, target, go),
+        ).toEqual({});
         expect(quoteFor({ time: "", text: "yes" } as GroupMessage, undefined, go)).toEqual({});
     });
 });

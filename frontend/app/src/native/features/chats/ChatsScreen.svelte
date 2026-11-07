@@ -43,11 +43,7 @@
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
     import { longPress } from "@openchat/ui/src/native/longPress";
     import { chatWithRoute } from "@src/logic/appEvents/appEvents";
-    import {
-        chatRowActionLabel,
-        chatRowMenu,
-        type ChatRowAction,
-    } from "@src/logic/chats/chatMenu";
+    import { chatRowActionLabel, chatRowMenu, type ChatRowAction } from "@src/logic/chats/chatMenu";
     import {
         CHAT_LIST_FILTERS,
         chatListFilterFrom,
@@ -266,7 +262,11 @@
                     context,
                     chat.id,
                     adding,
-                    $_(adding ? "native.chats.toast.favourited" : "native.chats.toast.unfavourited"),
+                    $_(
+                        adding
+                            ? "native.chats.toast.favourited"
+                            : "native.chats.toast.unfavourited",
+                    ),
                 );
                 break;
             }
@@ -457,16 +457,16 @@
         title={scope.kind === "favourite" ? $_("communities.favourites") : $_("native.tabs.chats")}
         size="lg"
         onMore={(anchor) => (menuAnchor = anchor)}
-        moreLabel={$_("native.chats.options")}>
+        moreLabel={$_("native.chats.options")}
+    >
         {#if chit.shown && !$anonUserStore}
             <button
                 type="button"
                 class="chit"
                 class:claimable={chit.claimable}
-                aria-label={$_(
-                    chit.claimable ? "native.chats.chitClaimable" : "native.chats.chit",
-                )}
-                onclick={() => context.push({ kind: "chit" })}>
+                aria-label={$_(chit.claimable ? "native.chats.chitClaimable" : "native.chats.chit")}
+                onclick={() => context.push({ kind: "chit" })}
+            >
                 <span class="chit-icon"></span>
             </button>
         {/if}
@@ -485,7 +485,8 @@
             labels={filterLabels}
             selectedIndex={CHAT_LIST_FILTERS.indexOf(filter)}
             dotIndexes={anyUnread ? [unreadIndex] : []}
-            onSelect={selectFilter} />
+            onSelect={selectFilter}
+        />
     </div>
 
     <div class="list" onscrollcapture={onListScroll}>
@@ -496,7 +497,8 @@
                 <EmptyState
                     preset="no-conversations"
                     body={$_("native.chats.empty")}
-                    actionLabel="" />
+                    actionLabel=""
+                />
             </div>
         {:else if shown.length === 0}
             <div class="state">
@@ -505,7 +507,8 @@
                     title={$_("native.chats.noneMatch")}
                     body=" "
                     actionLabel={$_("native.chats.showAllChats")}
-                    actionHandler={() => selectFilter(0)} />
+                    actionHandler={() => selectFilter(0)}
+                />
             </div>
         {:else}
             <VirtualList items={shown} keyFn={(item) => item.key}>
@@ -525,7 +528,8 @@
         aria-label={$_("newChat")}
         aria-hidden={fabShown ? undefined : "true"}
         tabindex={fabShown ? 0 : -1}
-        onclick={() => context.push({ kind: "new_chat" })}>
+        onclick={() => context.push({ kind: "new_chat" })}
+    >
         <span class="fab-icon"></span>
     </button>
 
@@ -538,7 +542,8 @@
         {onQuery}
         onCancel={closeSearch}
         onToggle={(id) => (expanded = { ...expanded, [id]: !(expanded[id] ?? false) })}
-        onSelect={onSearchSelect} />
+        onSelect={onSearchSelect}
+    />
 </div>
 
 <AnchoredMenu
@@ -546,7 +551,8 @@
     items={menuItems}
     label={$_("native.chats.options")}
     onSelect={onHeaderMenu}
-    onClose={() => (menuAnchor = null)} />
+    onClose={() => (menuAnchor = null)}
+/>
 
 <LongPressMenu
     open={rowMenuOpen}
@@ -554,7 +560,8 @@
     items={pressedItems}
     label={$_("native.chats.rowOptions", { values: { name: pressed?.listed.row.title ?? "" } })}
     onSelect={onRowMenu}
-    onClose={() => (rowMenuOpen = false)}>
+    onClose={() => (rowMenuOpen = false)}
+>
     {#snippet row()}
         {#if pressed !== null}
             <ChatRow {...rowProps(pressed.listed)} />

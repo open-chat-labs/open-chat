@@ -280,7 +280,10 @@ describe("the chat a stack has open", () => {
 
     test("is its conversation's, a thread in it included", () => {
         expect(opened("/chats/user/u1")).toEqual({ kind: "direct_chat", userId: "u1" });
-        expect(opened("/chats/group/g1/3?open=true")).toEqual({ kind: "group_chat", groupId: "g1" });
+        expect(opened("/chats/group/g1/3?open=true")).toEqual({
+            kind: "group_chat",
+            groupId: "g1",
+        });
     });
 
     test("is none on a list", () => {
