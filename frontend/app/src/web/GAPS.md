@@ -299,7 +299,8 @@ design export needs. Each entry says where it came up.
   - **Notifications**: in a phone's browser, the master switch is web push's, as on the web (on asks
     for the permission, off stops offering them; a browser that blocks them says so). The apps'
     notifications are the phone's (FCM / APNs, registered on every sign-in), so there the switch is
-    off and disabled with a note that the phone's settings turn them off. Turning them off in the
+    off and disabled with a note that the phone's settings turn them off, and the You tab's row
+    shows no value (Off only when web push is blocked or switched off). Turning them off in the
     app (unregistering the device, and not registering it again at sign-in) would change the shared
     native setup (`utils/native/push_device.ts`); not done. The backend has no per-kind choices
     (direct chats, groups, communities, mentions only) nor lock-screen options (preview, sound), so

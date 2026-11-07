@@ -71,7 +71,7 @@ export function youLists(inputs: YouListInputs, t: Translate): YouLists {
                 id: "notifications",
                 icon: "bell",
                 label: t("native.you.notifications.title"),
-                value: inputs.notifications.kind === "switch" && inputs.notifications.on ? "" : off,
+                value: notificationsOff(inputs.notifications) ? off : "",
             },
             {
                 id: "storage",
@@ -83,6 +83,21 @@ export function youLists(inputs: YouListInputs, t: Translate): YouLists {
             { id: "account", icon: "lock", label: t("native.you.account.title"), value: "" },
         ],
     };
+}
+
+/**
+ * Whether the Notifications row says Off: web push blocked or switched off. Without web push (the
+ * apps' WebViews, whose notifications are the phone's) it says nothing.
+ */
+function notificationsOff(notifications: NotificationSwitch): boolean {
+    switch (notifications.kind) {
+        case "unsupported":
+            return false;
+        case "blocked":
+            return true;
+        case "switch":
+            return !notifications.on;
+    }
 }
 
 /** The Diamond row's value: Lifetime, Active, or not a member. */

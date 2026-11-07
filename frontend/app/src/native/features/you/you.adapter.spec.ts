@@ -53,9 +53,19 @@ describe("the You tab's lists", () => {
         const on = youLists(inputs(), t);
         expect(value(on, "chit")).toBe("");
         expect(value(on, "notifications")).toBe("");
-        const off = youLists(inputs({ chitOn: false, notifications: { kind: "unsupported" } }), t);
+        const off = youLists(
+            inputs({ chitOn: false, notifications: { kind: "switch", on: false } }),
+            t,
+        );
         expect(value(off, "chit")).toBe("native.you.off");
         expect(value(off, "notifications")).toBe("native.you.off");
+        const blocked = youLists(inputs({ notifications: { kind: "blocked" } }), t);
+        expect(value(blocked, "notifications")).toBe("native.you.off");
+    });
+
+    test("say nothing about notifications without web push, as in the apps", () => {
+        const app = youLists(inputs({ notifications: { kind: "unsupported" } }), t);
+        expect(value(app, "notifications")).toBe("");
     });
 
     test("show the theme and accent, Diamond's kind, and the storage used", () => {
