@@ -379,7 +379,9 @@ design export needs. Each entry says where it came up.
   - **Disappearing messages** are in the menu for a DM only (Off, 1 hour, 1 day, 1 week, the
     prototype's): a group's or channel's are its settings (N6 / N7). The durations the web's DM
     settings offer (`DmChatSettings`) are more; one set there that isn't in the list shows no tick.
-  - **Clear history** (the prototype's menu): the backend has none, so it isn't offered.
+  - **Clear history** (the prototype's menu): the backend has none, so it's dropped from the menu
+    (decided 2026-11-07); it comes back after cutover once the backend can (native PLAN, "After
+    everything else").
   - **Mute** is Mute / Unmute (no durations, as on Chats' rows).
   - **Typing** couldn't be seen end to end here: typing reaches peers over WebRTC, which the browser
     check's environment didn't connect. The bubble and the strip were checked by setting the names.
