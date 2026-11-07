@@ -123,7 +123,7 @@
         followsThread,
         rowMessageContext,
         threadEventReadByMe,
-        threadTimelineEvents,
+        threadReplyEvents,
     } from "@src/logic/conversation/threadTimeline";
     import { openThreadInColumn } from "../app/rightPanel";
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
@@ -745,10 +745,9 @@
     // one grouper per list, so a cosmetic update doesn't regroup (memoised)
     const grouper = new TimelineGrouper();
     const flattener = new TimelineFlattener();
-    // a thread's: its replies, headed by its root once they're loaded back to the first (4c
-    // invariant 3)
+    // a thread's: its replies alone, under the panel's card of its root (4c invariant 3)
     const events = $derived(
-        thread === undefined ? $eventsStore : threadTimelineEvents(thread, $threadEventsStore),
+        thread === undefined ? $eventsStore : threadReplyEvents(thread, $threadEventsStore),
     );
     const items = $derived.by((): FlatChatItem[] => {
         const timeline = grouper.group(

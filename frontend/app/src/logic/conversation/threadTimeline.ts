@@ -1,7 +1,8 @@
 import type { ChatEvent, ChatIdentifier, EventWrapper, Message, MessageContext } from "@client";
 
-// A thread's list of events, as every tree shows it: its replies, headed by the root message once
-// they're loaded back to the first one, and which of them count as read.
+// A thread's list of events: its replies, headed by the root message once they're loaded back to
+// the first one (the old trees), or its replies alone (the web, whose thread panel shows the root
+// as a card above them), and which of them count as read.
 
 /**
  * The events a thread's list shows: the replies loaded (`threadEventsStore`), with the root
@@ -21,6 +22,21 @@ export function threadTimelineEvents(
         return replies;
     }
     return [root, ...replies];
+}
+
+/**
+ * The events the web's thread list shows: the replies loaded (`threadEventsStore`) alone, the root
+ * left out wherever it is, as the thread panel's card above the list shows it (4c invariant 3).
+ */
+export function threadReplyEvents(
+    root: EventWrapper<Message> | undefined,
+    replies: EventWrapper<ChatEvent>[],
+): EventWrapper<ChatEvent>[] {
+    if (root === undefined) return replies;
+    const rootId = root.event.messageId;
+    const isRoot = (evt: EventWrapper<ChatEvent>) =>
+        evt.event.kind === "message" && evt.event.messageId === rootId;
+    return replies.some(isRoot) ? replies.filter((evt) => !isRoot(evt)) : replies;
 }
 
 /**

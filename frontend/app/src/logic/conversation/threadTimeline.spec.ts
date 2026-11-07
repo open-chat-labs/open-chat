@@ -5,6 +5,7 @@ import {
     rowMessageContext,
     threadEventReadByMe,
     threadRootIndexFor,
+    threadReplyEvents,
     threadTimelineEvents,
 } from "./threadTimeline";
 
@@ -53,6 +54,24 @@ describe("threadTimelineEvents", () => {
     test("a root gone from the chat's events (the window replaced) leaves the replies", () => {
         const loaded = replies(0, 1);
         expect(threadTimelineEvents(undefined, loaded)).toBe(loaded);
+    });
+});
+
+describe("threadReplyEvents", () => {
+    test("4c invariant 3 (web): the replies alone, the root never at their head, loaded back to 0 or not", () => {
+        const loaded = replies(0, 1, 2);
+        expect(threadReplyEvents(root, loaded)).toBe(loaded);
+        expect(threadReplyEvents(root, replies(5, 6))).toEqual(replies(5, 6));
+        expect(threadReplyEvents(root, [])).toEqual([]);
+    });
+
+    test("a root already among the events is left out", () => {
+        expect(threadReplyEvents(root, [root, ...replies(0, 1)])).toEqual(replies(0, 1));
+    });
+
+    test("without a root, the replies", () => {
+        const loaded = replies(0, 1);
+        expect(threadReplyEvents(undefined, loaded)).toBe(loaded);
     });
 });
 
