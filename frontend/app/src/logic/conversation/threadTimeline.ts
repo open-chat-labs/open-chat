@@ -1,4 +1,4 @@
-import type { ChatEvent, EventWrapper, Message } from "@client";
+import type { ChatEvent, ChatIdentifier, EventWrapper, Message, MessageContext } from "@client";
 
 // A thread's list of events, as every tree shows it: its replies, headed by the root message once
 // they're loaded back to the first one, and which of them count as read.
@@ -49,4 +49,34 @@ export function threadEventReadByMe(
 ): boolean {
     if (evt.event.kind === "message" && evt.event.messageId === rootMessageId) return true;
     return !following || readByMe;
+}
+
+/**
+ * The thread a message in a thread's list is in: none for its root, which is the chat's message
+ * (it heads the list, but lives in the chat), else the thread's root index. Outside a thread
+ * (`root` undefined), none.
+ */
+export function threadRootIndexFor(
+    root: Pick<Message, "messageId" | "messageIndex"> | undefined,
+    message: Pick<Message, "messageId">,
+): number | undefined {
+    return root === undefined || root.messageId === message.messageId
+        ? undefined
+        : root.messageIndex;
+}
+
+/**
+ * Where a row's message is, which every action on it goes to (reactions, the menu's actions,
+ * delete, a poll vote, a swap, removing a link preview, reporting, a reminder, copying its link):
+ * a thread's reply is in the thread, its root in the chat (threadRootIndexFor).
+ */
+export function rowMessageContext(
+    chatId: ChatIdentifier,
+    root: Pick<Message, "messageId" | "messageIndex"> | undefined,
+    message: Pick<Message, "messageId">,
+): MessageContext {
+    const threadRootMessageIndex = threadRootIndexFor(root, message);
+    return threadRootMessageIndex === undefined
+        ? { chatId }
+        : { chatId, threadRootMessageIndex };
 }

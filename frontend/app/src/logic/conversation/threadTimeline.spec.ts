@@ -1,6 +1,12 @@
 import type { ChatEvent, EventWrapper, Message } from "@client";
 import { describe, expect, test } from "vitest";
-import { followsThread, threadEventReadByMe, threadTimelineEvents } from "./threadTimeline";
+import {
+    followsThread,
+    rowMessageContext,
+    threadEventReadByMe,
+    threadRootIndexFor,
+    threadTimelineEvents,
+} from "./threadTimeline";
 
 function message(index: number, messageId: bigint): EventWrapper<Message> {
     return {
@@ -89,5 +95,28 @@ describe("threadEventReadByMe", () => {
 
     test("without a root, an unread reply in a followed thread stays unread", () => {
         expect(threadEventReadByMe(reply, undefined, true, false)).toBe(false);
+    });
+});
+
+describe("where a row's message is (its actions' context)", () => {
+    const chatId = { kind: "group_chat" as const, groupId: "g" };
+    const reply = message(3, 3n);
+
+    test("in a thread, the root is the chat's message: its actions go to the chat", () => {
+        expect(threadRootIndexFor(root.event, root.event)).toBeUndefined();
+        expect(rowMessageContext(chatId, root.event, root.event)).toStrictEqual({ chatId });
+    });
+
+    test("in a thread, a reply's actions go to the thread", () => {
+        expect(threadRootIndexFor(root.event, reply.event)).toBe(40);
+        expect(rowMessageContext(chatId, root.event, reply.event)).toStrictEqual({
+            chatId,
+            threadRootMessageIndex: 40,
+        });
+    });
+
+    test("outside a thread, every message's actions go to the chat", () => {
+        expect(threadRootIndexFor(undefined, reply.event)).toBeUndefined();
+        expect(rowMessageContext(chatId, undefined, reply.event)).toStrictEqual({ chatId });
     });
 });

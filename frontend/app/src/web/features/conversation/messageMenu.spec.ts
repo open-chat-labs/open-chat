@@ -1,5 +1,6 @@
 import type { EventWrapper, Message } from "@client";
 import { vi } from "vitest";
+import { rowMessageContext } from "@src/logic/conversation/threadTimeline";
 import { runMessageAction, type MessageMenuTarget } from "./messageMenu";
 
 const chatId = { kind: "group_chat" as const, groupId: "g" };
@@ -128,6 +129,20 @@ describe("a message's actions in the conversation", () => {
         expect(client.deleteFailedMessage).toHaveBeenCalledWith(chatId, 42n, 9);
         await runMessageAction("retry", target(client, { context, failed: true }));
         expect(client.retrySendMessage).toHaveBeenCalledWith(context, evt);
+    });
+
+    test("in a thread, its root is deleted, undeleted and revealed in the chat", async () => {
+        const client = fakeClient();
+        // the root heads the thread's list, but it's the chat's message
+        const context = rowMessageContext(chatId, evt.event, evt.event);
+        const inThread = { context, threadRoot: evt.event };
+        await runMessageAction("delete", target(client, inThread));
+        expect(client.deleteMessage).toHaveBeenCalledWith(chatId, undefined, 42n);
+        await runMessageAction("undelete", target(client, inThread));
+        expect(client.undeleteMessage).toHaveBeenCalledWith(chatId, undefined, evt.event);
+        const deleted = { ...evt, event: { ...evt.event, deleted: true } };
+        await runMessageAction("reveal", target(client, { ...inThread, evt: deleted }));
+        expect(client.revealDeletedMessage).toHaveBeenCalledWith(chatId, 42n, undefined);
     });
 
     test("following from a thread's message follows the thread's root", async () => {

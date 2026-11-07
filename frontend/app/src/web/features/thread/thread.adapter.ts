@@ -11,7 +11,7 @@ import type ThreadList from "@openchat/ui/src/features/components/ThreadList.sve
 import type ThreadPanel from "@openchat/ui/src/features/components/ThreadPanel.svelte";
 import { swatchFor } from "@src/logic/chats/chatRow";
 import type { ComponentProps } from "svelte";
-import { senderColor, type ConversationContext } from "../conversation/conversation.adapter";
+import { senderColor, type ConversationContext } from "@src/logic/conversation/messageRow";
 
 // The thread panel's summary of the open thread, and the list of threads, as the library's
 // ThreadPanel and ThreadList take them.

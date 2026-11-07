@@ -6,11 +6,11 @@ import {
     type ChatSummary,
     type EventWrapper,
     type Message,
-    type MessageContext,
     type MessageMenu,
     type OpenChat,
 } from "@client";
 import { canShareMessage } from "@src/utils/share";
+import { rowMessageContext } from "./threadTimeline";
 
 // What a message in a chat's timeline or a thread's offers (`messageMenu`, as the old trees decide
 // it), for every conversation that shows its messages with the library (src/web's, src/native's):
@@ -67,10 +67,8 @@ export function messageOffer(
     const chatId = chat.id;
     const thread = state.thread;
     const isRoot = thread !== undefined && msg.messageId === thread.root.messageId;
-    const context: MessageContext =
-        thread === undefined
-            ? { chatId }
-            : { chatId, threadRootMessageIndex: thread.root.messageIndex };
+    // where the message is: in a thread, its root is the chat's
+    const context = rowMessageContext(chatId, thread?.root, msg);
     return messageMenu({
         message: msg,
         userId: state.me,

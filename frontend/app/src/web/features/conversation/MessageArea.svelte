@@ -120,6 +120,7 @@
     } from "@src/logic/composer/composer";
     import {
         followsThread,
+        rowMessageContext,
         threadEventReadByMe,
         threadTimelineEvents,
     } from "@src/logic/conversation/threadTimeline";
@@ -238,6 +239,10 @@
             ? { chatId: chat.id }
             : { chatId: chat.id, threadRootMessageIndex: rootIndex },
     );
+    // where a row's message is, which its actions go to: in a thread, the root is the chat's
+    function rowContext(evt: EventWrapper<Message>): MessageContext {
+        return rowMessageContext(chat.id, thread?.event, evt.event);
+    }
     const contextKey = $derived(
         `${chatIdentifierToString(chat.id)}${rootIndex === undefined ? "" : `/${rootIndex}`}`,
     );
@@ -871,15 +876,16 @@
         const key = `${offers.menu}|${offers.swipeLeft}|${offers.retry !== undefined}`;
         const kept = groupMessages.get(row);
         if (kept?.offers === key) return kept.messages;
+        const where = rowContext(evt);
         const message = withBody
             ? ({ ...row.message, body } as GroupMessage)
-            : withActions(row, evt.event);
+            : withActions(where, row, evt.event);
         // kept between renders, so composed without reading a voice message's live fields
         // (withFields): a spread would freeze its playback
         const quoted = quoteTarget(evt.event, chat.id, $chatListScopeStore.kind, rootIndex);
         const messages = [
             withFields(message, {
-                ...previewRemoval(evt),
+                ...previewRemoval(where, evt),
                 ...retryFor(row.message, offers.retry),
                 ...threadLink(evt),
                 ...quoteFor(row.message, quoted, goToQuote),
@@ -983,7 +989,7 @@
     ) {
         const offered = offeredFor(current, evt, failed, confirmed);
         if (pickerOnly ? !offered.react : !offered.menu) return;
-        menu = { context, evt, failed, offered, pos, pickerOnly };
+        menu = { context: rowContext(evt), evt, failed, offered, pos, pickerOnly };
     }
 
     $effect.pre(() => {
@@ -1129,11 +1135,10 @@
         url: string;
     }>();
 
-    function previewRemoval(evt: EventWrapper<Message>) {
+    function previewRemoval(where: MessageContext, evt: EventWrapper<Message>) {
         const msg = evt.event;
         if (msg.sender !== me || msg.content.kind !== "text_content" || msg.ogPreviews.length === 0)
             return {};
-        const where = context;
         return {
             onRemovePreview: (index: number) => {
                 const url = msg.ogPreviews[index]?.url;
@@ -1150,22 +1155,22 @@
         if (!removed) toastStore.showFailureToast(i18nKey("errorRemovingLinkPreview"));
     }
 
-    // a rich kind's controls (withHandlers), and a voice message's playing state (read as it
-    // renders, so playing doesn't redo the row)
-    const handlers: MessageHandlers = {
-        openMedia,
-        openUrl: (url) => window.open(url, "_blank", "noopener"),
-        swap: startSwap,
-        claim,
-        claiming: (messageId) => $claimsStore.has(messageId),
-        vote,
-        download,
-        get voice() {
-            return voice;
-        },
-    };
-
-    function withActions(row: MessageRow, msg: Message): GroupMessage {
+    // a rich kind's controls (withHandlers), acting where its message is (a swap's accept or
+    // cancel, a poll vote), and a voice message's playing state (read as it renders, so playing
+    // doesn't redo the row)
+    function withActions(where: MessageContext, row: MessageRow, msg: Message): GroupMessage {
+        const handlers: MessageHandlers = {
+            openMedia,
+            openUrl: (url) => window.open(url, "_blank", "noopener"),
+            swap: (m, content, action) => startSwap(where, m, content, action),
+            claim,
+            claiming: (messageId) => $claimsStore.has(messageId),
+            vote: (m, content, next) => vote(where, m, content, next),
+            download,
+            get voice() {
+                return voice;
+            },
+        };
         return withHandlers(row, msg, handlers, $cryptoLookup);
     }
 
@@ -1175,8 +1180,15 @@
         if (url !== undefined) void saveFile(url, content.name);
     }
 
-    // a poll vote, if the poll can take one (votePoll); the vote shows at once, as in the old trees
-    async function vote(msg: Message, content: PollContent, next: number[]) {
+    // a poll vote, if the poll can take one (votePoll), where the poll is; the vote shows at once,
+    // as in the old trees
+    async function vote(
+        context: MessageContext,
+        msg: Message,
+        content: PollContent,
+        next: number[],
+    ) {
+        const rootIndex = context.threadRootMessageIndex;
         if ((await votePoll(client, chat, me, msg, content, next, rootIndex)) === "failed") {
             toastStore.showFailureToast(i18nKey("poll.voteFailed"));
         }
@@ -1212,7 +1224,12 @@
         action: "accept" | "cancel";
     }>();
 
-    function startSwap(msg: Message, content: P2PSwapContent, action: "accept" | "cancel") {
+    function startSwap(
+        context: MessageContext,
+        msg: Message,
+        content: P2PSwapContent,
+        action: "accept" | "cancel",
+    ) {
         const { canAccept, canCancel } = swapActions(content, {
             mine: msg.sender === me,
             now: Date.now(),
@@ -1346,7 +1363,8 @@
             {@const confirmed = args.isConfirmed($unconfirmedStore, evt)}
             {@const offered = offeredFor(chat, evt, failed, confirmed)}
             {@const actions = offered.actions}
-            {@const offers = rowOffers(context, evt, failed, offered)}
+            {@const where = rowContext(evt)}
+            {@const offers = rowOffers(where, evt, failed, offered)}
             {@const swipeLeft = offers.swipeLeft}
             <!-- a text message's text as the old UI renders it: markdown, mentions, links, custom
                  emoji (a lone emoji is the bubble's own, large) -->
@@ -1359,7 +1377,7 @@
             <div
                 class="row"
                 class:starts={item.first}
-                ondblclick={(e) => doubleClick(context, e, evt, failed, offered)}
+                ondblclick={(e) => doubleClick(where, e, evt, failed, offered)}
                 data-index={failed ? "" : msg.messageIndex}
                 data-id={failed ? "" : msg.messageId}
                 use:observeRead={{
@@ -1391,17 +1409,17 @@
                     onMessageMenu={offered.menu
                         ? (_, pos) => openMenu(chat, evt, failed, confirmed, pos, false)
                         : undefined}
-                    onReact={offered.react ? (_, emoji) => react(context, evt, emoji) : undefined}
+                    onReact={offered.react ? (_, emoji) => react(where, evt, emoji) : undefined}
                     onReactPicker={offered.react && offered.menu
                         ? (_, pos) => openMenu(chat, evt, failed, confirmed, pos, true)
                         : undefined}
                     onReply={actions.has("reply")
-                        ? () => run(context, "reply", evt, failed)
+                        ? () => run(where, "reply", evt, failed)
                         : undefined}
-                    onEdit={actions.has("edit") ? () => run(context, "edit", evt, failed) : undefined}
+                    onEdit={actions.has("edit") ? () => run(where, "edit", evt, failed) : undefined}
                     onSwipeLeft={swipeLeft === undefined
                         ? undefined
-                        : () => run(context, swipeLeft, evt, failed)}
+                        : () => run(where, swipeLeft, evt, failed)}
                     messages={messagesFor(
                         row,
                         body,
