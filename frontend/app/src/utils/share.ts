@@ -7,6 +7,8 @@ import type {
     ReadonlyMap,
 } from "@client";
 import { buildCryptoTransferText, buildTransactionUrl, routeForMessage } from "@client";
+import { isTauriApp } from "@shared";
+import { share as shareSheet } from "tauri-plugin-oc-api";
 import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
 import { i18nKey } from "../i18n/i18n";
@@ -122,27 +124,37 @@ export function shareMessage(
     );
 }
 
-export function shareLink(url: string): void {
-    // The native Android app runs in the system WebView, which has no Web Share API. Copying
-    // the link is the nearest thing to sharing it there.
-    if (!canShare()) {
-        navigator.clipboard.writeText(url).then(
-            () => toastStore.showSuccessToast(i18nKey("linkCopiedToClipboard")),
-            () => toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard")),
-        );
+/**
+ * Shares a link: through the Web Share API where the browser has it, the system share sheet in the
+ * apps, whose WebViews have none (the Tauri plugin's `share`), and by copying it otherwise, or where
+ * the app's shell is older than the plugin's share sheet.
+ */
+export async function shareLink(url: string): Promise<void> {
+    if (canShare()) {
+        try {
+            await navigator.share({ url, files: [] });
+        } catch (e) {
+            if (!(e instanceof DOMException && e.name === "AbortError")) {
+                console.log(`Failed to share link ${url}: ${e}`);
+                toastStore.showFailureToast(i18nKey("failedToShareLink"));
+            }
+        }
         return;
     }
-    const share = {
-        url,
-        files: [],
-    };
-    navigator.share(share).catch((e: DOMException) => {
-        if (e.name !== "AbortError") {
-            const errorMessage = `Failed to share link ${url}`;
-            console.log(`${errorMessage}: ${e}`);
-            toastStore.showFailureToast(i18nKey("failedToShareLink"));
+    if (isTauriApp()) {
+        try {
+            await shareSheet(url);
+            return;
+        } catch (e) {
+            console.warn("The share sheet didn't open, so the link is copied instead", e);
         }
-    });
+    }
+    try {
+        await navigator.clipboard.writeText(url);
+        toastStore.showSuccessToast(i18nKey("linkCopiedToClipboard"));
+    } catch {
+        toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard"));
+    }
 }
 
 async function buildShareFromMessage(
