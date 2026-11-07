@@ -5533,10 +5533,10 @@
     "name": "UndoToast",
     "source": "lib/UndoToast.dc.html",
     "hash": "d1ec11e9",
-    "description": "",
+    "description": "An inverted snackbar (light in dark mode, dark in light mode): an optional action (Undo) and dismiss, a `detail` line, a `busy` loader. tone=\"success\" + size=\"lg\" is the prominent confirmation after a wallet send.",
     "preview": {
       "width": 320,
-      "height": 56
+      "height": 72
     },
     "props": [
       {
@@ -5549,6 +5549,17 @@
         "required": true,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "detail",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): a secondary line under the message."
       },
       {
         "name": "tone",

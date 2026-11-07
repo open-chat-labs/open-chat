@@ -19,7 +19,7 @@
 </script>
 
 <script lang="ts">
-  import { onDestroy, onMount } from 'svelte';
+  import { onDestroy, onMount, untrack } from 'svelte';
   import type { MenuItem, WalletToken, WalletTokenAction } from '../../lib/types';
   import BalanceCard from './BalanceCard.svelte';
   import ContextMenu from '../../lib/components/ContextMenu.svelte';
@@ -28,6 +28,7 @@
   import Skeleton from '../../lib/components/Skeleton.svelte';
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
+  import { getToastHost } from '../../lib/toasts.svelte';
   import { getI18n, useT } from '../../lib/i18n';
   import { parseAmount } from '../../lib/amount';
   const i18n = getI18n(); // number formatting follows the host locale
@@ -158,6 +159,17 @@
   const veiled = $derived(balanceHidden ?? localVeil);
   const manual = $derived(settings.autoConfig === false);
   const undoSymbol = $derived(undoProp || (undo ? undo.symbol : ''));
+
+  // the undo toast goes to the host's toast layer, above the panel and any dialog (design pass 7), for as long as the
+  // undo window is open (the panel's, or its host's: `undoSymbol`); with no host it shows in the panel
+  const toastHost = getToastHost();
+  $effect(() => {
+    const symbol = undoSymbol;
+    if (!toastHost || !symbol) return;
+    return untrack(() =>
+      toastHost({ message: t('ui.walletPanel.hidden', { symbol }), icon: 'hide', actionLabel: 'ui.common.undo', onAction: undoRemove, onClose: dismissUndo }),
+    );
+  });
   const dirTitle = $derived(
     t(sort === 'name' ? (dir === 'asc' ? 'ui.walletPanel.aToZ' : 'ui.walletPanel.zToA') : dir === 'asc' ? 'ui.walletPanel.smallestFirst' : 'ui.walletPanel.largestFirst'),
   );
@@ -559,7 +571,7 @@
   </div>
 
   <div class="undo">
-    <UndoToast icon="hide" shown={!!undoSymbol} message={undoSymbol ? t('ui.walletPanel.hidden', { symbol: undoSymbol }) : ''} onAction={undoRemove} onClose={dismissUndo} />
+    <UndoToast icon="hide" shown={!toastHost && !!undoSymbol} message={undoSymbol ? t('ui.walletPanel.hidden', { symbol: undoSymbol }) : ''} onAction={undoRemove} onClose={dismissUndo} />
   </div>
 
   <ContextMenu open={!!menu} items={menu?.items ?? []} point={menu?.point} anchor={menu?.anchor} align={menu?.align} onClose={() => (menu = null)} />

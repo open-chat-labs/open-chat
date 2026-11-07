@@ -47,6 +47,7 @@
   import ListSectionLabel from '../../lib/components/ListSectionLabel.svelte';
   import PageHeader from '../../lib/components/PageHeader.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
+  import { getToastHost, ToastLayer } from '../../lib/toasts.svelte';
 
   // label / short / time are resource keys; the addresses themselves always come from the host
   const NET: Record<NetworkId, { label: string; short: string; time: string }> = {
@@ -100,9 +101,11 @@
   });
   let handleCopied = $state(false);
   let sharing = $state(false);
-  let toast = $state<{ id: number; message: string; tone: 'success' | 'danger' } | null>(null);
-  let toastTimer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => clearTimeout(toastTimer));
+  // toasts go to the host's toast layer, above the share picker and any dialog (design pass 7); with no host they
+  // show here
+  const toastHost = getToastHost();
+  const ownToasts = new ToastLayer();
+  onDestroy(() => ownToasts.dispose());
 
   const narrow = $derived(width > 0 && width < 760);
   // the host's networks (any token), or the token's own `nets` with the library's names
@@ -159,12 +162,8 @@
   const canShare = $derived(!!onShare && chats.length > 0);
 
   function notify(message: string, tone: 'success' | 'danger') {
-    const tid = Date.now();
-    toast = { id: tid, message, tone };
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-      if (toast?.id === tid) toast = null;
-    }, 5000);
+    const ok = tone === 'success';
+    (toastHost ?? ownToasts.show)({ message, tone: ok ? 'success' : 'neutral', size: 'lg', icon: ok ? 'check' : 'none', duration: 5000 });
   }
 
   // the picker stays open until the host has posted it
@@ -283,11 +282,12 @@
         }}
       />
     {/if}
-    {#if toast}
+    {#if ownToasts.current}
+      {@const toast = ownToasts.current}
       <!-- above the chat picker while it's open, so a failed share is visible where the user is looking -->
       <div class="toast" class:over-picker={sharing}>
         <div class="toast-box">
-          {#key toast.id}<UndoToast shown={true} tone={toast.tone === 'success' ? 'success' : 'neutral'} size="lg" icon={toast.tone === 'success' ? 'check' : 'none'} message={toast.message} onClose={() => (toast = null)} />{/key}
+          {#key toast.id}<UndoToast tone={toast.tone} size={toast.size} icon={toast.icon} message={toast.message} onClose={() => ownToasts.close()} />{/key}
         </div>
       </div>
     {/if}

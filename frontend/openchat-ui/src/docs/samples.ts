@@ -757,6 +757,16 @@ export const samples: Record<string, Record<string, unknown>> = {
   MessageActions: { open: true, point: { x: 240, y: 240 } },
   // copy props whose meta.json demo value is English: pass keys so the docs language switch reaches them
   UpgradeBanner: { text: 'docs.features.upgradeBanner.publicGroups', actionLabel: 'ui.upgradeBanner.upgrade' },
+  // design pass 7: the prominent confirmation after a wallet send, with its detail line
+  UndoToast: {
+    tone: 'success',
+    size: 'lg',
+    icon: 'check',
+    message: 'docs.general.toasts.sent',
+    detail: 'docs.general.toasts.confirmed',
+    actionLabel: 'docs.general.toasts.view',
+    onAction: () => {},
+  },
   LeaveGroupDialog: { body: 'ui.leaveGroupDialog.body', onConfirm: () => wait(500) },
   PanelCover: { actions: ['close'], trailActions: ['favourite'] },
   TileButtons: { tiles: ['video', 'mute', 'search'] },

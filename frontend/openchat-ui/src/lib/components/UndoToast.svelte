@@ -1,5 +1,8 @@
 <!-- Toast with an optional action (Undo) and dismiss ×. Animates in when shown and out when `shown` turns false.
+     An inverted snackbar (design pass 7): the --toast-* tokens are light in dark mode and dark in light mode, so a
+     toast never reads as a received bubble; the accent only on the action, green only in the success icon.
      tone="success" + size="lg": the prominent confirmation used after wallet sends. icon: undo | hide | trash | check | none.
+     detail: a secondary line under the message.
      busy: what it says is still on its way, so a small loader stands in place of the action and the dismiss. -->
 <script lang="ts">
   import { useT } from '../i18n';
@@ -17,6 +20,8 @@
   interface Props {
     /** Resource key (or literal text). */
     message: string;
+    /** Resource key (or literal text): a secondary line under the message. */
+    detail?: string;
     tone?: 'neutral' | 'success';
     size?: 'md' | 'lg';
     shown?: boolean;
@@ -31,7 +36,7 @@
     busy?: boolean;
   }
 
-  let { message, tone = 'neutral', size = 'md', shown = true, actionLabel = 'ui.common.undo', icon = 'undo', onAction, onClose, busy = false }: Props = $props();
+  let { message, detail, tone = 'neutral', size = 'md', shown = true, actionLabel = 'ui.common.undo', icon = 'undo', onAction, onClose, busy = false }: Props = $props();
   const t = useT();
 
   // the toast outlives its own `shown` by one animation so it can leave gracefully
@@ -55,16 +60,23 @@
   onDestroy(() => clearTimeout(timer));
 
   const out = $derived(leaving && !shown);
+  // anything at the end (the action, the dismiss or the loader) brings the end padding in
+  const trailing = $derived(busy || !!onAction || !!onClose);
 </script>
 
 {#if shown || out}
-  <div class="toast {size}" class:success={tone === 'success'} class:out role="status" aria-live="polite" aria-atomic="true">
+  <div class="toast {size}" class:success={tone === 'success'} class:out class:trailing role="status" aria-live="polite" aria-atomic="true">
     {#if icon !== 'none' && ICONS[icon]}
       <span class="badge"><span class="icon" style:mask={ICONS[icon]}></span></span>
     {/if}
-    <span class="message">{t(message)}</span>
+    <span class="text">
+      <span class="message">{t(message)}</span>
+      {#if detail}
+        <span class="detail">{t(detail)}</span>
+      {/if}
+    </span>
     {#if busy}
-      <span class="busy"><Spinner size={16} /></span>
+      <span class="busy"><Spinner size={16} tone="ink" /></span>
     {:else if onAction}
       <span class="action" onclick={onAction} role="button" tabindex="0">{t(actionLabel)}</span>
     {/if}
@@ -83,15 +95,25 @@
     display: flex;
     align-items: center;
     gap: var(--space-10);
-    min-height: 0;
-    padding: var(--space-10) var(--space-12);
+    min-height: 48px;
+    padding-block: var(--space-8);
+    padding-inline: var(--space-14);
     box-sizing: border-box;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    box-shadow:
-      inset 0 0 0 1px var(--line-2),
-      0 14px 34px rgba(0, 0, 0, 0.45);
+    border-radius: 14px;
+    background: var(--toast-bg);
+    box-shadow: var(--toast-shadow);
     animation: oc-toast-in 160ms var(--ease-out) both;
+
+    &.trailing {
+      padding-inline-end: var(--space-8);
+    }
+
+    &.lg {
+      gap: var(--space-12);
+      min-height: 60px;
+      padding-block: var(--space-10);
+      padding-inline: var(--space-12) var(--space-10);
+    }
 
     &.out {
       pointer-events: none;
@@ -99,26 +121,18 @@
     }
   }
 
-  .lg {
-    gap: var(--space-12);
-    min-height: 60px;
-    padding: var(--space-10) var(--space-10) var(--space-10) var(--space-12);
-    border-radius: var(--radius-lg);
-  }
-
-  .success {
-    background:
-      linear-gradient(0deg, rgba(46, 230, 168, 0.1), rgba(46, 230, 168, 0.1)),
-      var(--surface-2);
-    box-shadow:
-      inset 0 0 0 1px rgba(46, 230, 168, 0.38),
-      0 18px 44px rgba(0, 0, 0, 0.5);
+  // the focus ring in the action's colour, which reads on the inverted background
+  .action,
+  .close {
+    &:focus-visible {
+      outline-color: var(--toast-action);
+    }
   }
 
   .badge {
     flex: none;
-    width: 15px;
-    height: 15px;
+    width: 18px;
+    height: 18px;
     border-radius: var(--radius-pill);
     @include flex-center;
     background: transparent;
@@ -127,20 +141,20 @@
   .icon {
     width: 15px;
     height: 15px;
-    background: var(--ink-4);
+    background: var(--toast-ink-2);
   }
 
   .success {
     .badge {
       width: 24px;
       height: 24px;
-      background: rgba(46, 230, 168, 0.16);
+      background: var(--toast-success-soft);
     }
 
     .icon {
       width: 13px;
       height: 13px;
-      background: var(--status-online);
+      background: var(--toast-success);
     }
 
     &.lg .badge {
@@ -154,66 +168,74 @@
     }
   }
 
-  .message {
+  .text {
     flex: 1;
     min-width: 0;
-    font: var(--weight-medium) var(--text-sm) / 1.35 var(--font-sans);
-    color: var(--ink-2);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .message {
+    font: var(--weight-semibold) text-size(13px) / 1.35 var(--font-sans);
+    color: var(--toast-ink);
     text-wrap: pretty;
+  }
 
-    .lg & {
-      font: var(--weight-semibold) var(--text-md) / 1.35 var(--font-sans);
-    }
-
-    .success &,
-    .lg & {
-      color: var(--ink);
-    }
+  .detail {
+    font: var(--weight-medium) text-size(12px) / 1.3 var(--font-sans);
+    color: var(--toast-ink-2);
+    text-wrap: pretty;
   }
 
   .action {
     flex: none;
     display: flex;
     align-items: center;
-    height: 26px;
-    padding: 0 var(--space-10);
+    height: 32px;
+    padding: 0 var(--space-12);
     box-sizing: border-box;
     border-radius: var(--radius-sm);
     background: transparent;
-    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--accent);
+    font: var(--weight-bold) text-size(13px) / 1 var(--font-sans);
+    color: var(--toast-action);
     cursor: pointer;
     user-select: none;
 
     &:hover {
-      background: var(--accent-soft);
+      background: var(--toast-action-soft);
     }
 
     .lg & {
       height: 36px;
-      padding: 0 var(--space-14);
-      background: var(--overlay-2);
-      font: var(--weight-bold) var(--text-md) / 1 var(--font-sans);
-      color: var(--ink);
+      background: var(--toast-action-soft);
 
       &:hover {
-        background: var(--overlay-3);
+        background: var(--toast-action-hover);
       }
     }
   }
 
+  // the loader in the toast's own ink, on a track of its hover fill, so it reads on the inverted background
   .busy {
     flex: none;
     @include flex-center;
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
+    --ink: var(--toast-ink);
+    --overlay-2: var(--toast-hover);
+
+    .lg & {
+      width: 32px;
+      height: 32px;
+    }
   }
 
   .close {
     flex: none;
     @include flex-center;
-    width: 22px;
-    height: 22px;
+    width: 28px;
+    height: 28px;
     border-radius: var(--radius-sm);
     cursor: pointer;
 
@@ -223,14 +245,14 @@
     }
 
     &:hover {
-      background: var(--overlay-2);
+      background: var(--toast-hover);
     }
   }
 
   .close-icon {
     width: 11px;
     height: 11px;
-    background: var(--ink-4);
+    background: var(--toast-ink-2);
     mask: var(--icon-close) center/contain no-repeat;
 
     .lg & {

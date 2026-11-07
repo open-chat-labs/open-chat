@@ -1,11 +1,13 @@
 {
   "package": "@openchat/ui",
-  "exportedAt": "2026-11-03",
-  "pass": 6,
+  "exportedAt": "2026-11-07",
+  "pass": 7,
   "scope": "library + app components + docs",
   "source": "OpenChat design prototype",
   "tokens": {
-    "source": "lib/tokens.css"
+    "source": "lib/tokens.css",
+    "sourceHash": "a7be4345",
+    "exportedAt": "2026-11-07"
   },
   "icons": {
     "source": "lib/icons.js",
@@ -419,8 +421,8 @@
     },
     "UndoToast": {
       "source": "lib/UndoToast.dc.html",
-      "sourceHash": "d1ec11e9",
-      "exportedAt": "2026-10-07",
+      "sourceHash": "38a11686",
+      "exportedAt": "2026-11-07",
       "files": [
         "src/lib/components/UndoToast.svelte"
       ],

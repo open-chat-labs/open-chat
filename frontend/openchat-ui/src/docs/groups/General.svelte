@@ -279,6 +279,7 @@
   <Frame label="UndoToast · tone · size" style="flex-direction: column; flex-wrap: nowrap">
     <UndoToast message="docs.general.toasts.archived" actionLabel="ui.common.undo" onAction={() => {}} onClose={() => {}} />
     <UndoToast message="docs.general.toasts.linkCopied" tone="success" icon="check" />
+    <UndoToast message="docs.general.toasts.sent" detail="docs.general.toasts.confirmed" tone="success" size="lg" icon="check" actionLabel="docs.general.toasts.view" onAction={() => {}} />
     <UndoToast message="docs.general.toasts.deleted" size="lg" shown={toastShown} actionLabel="ui.common.undo" onAction={() => (toastShown = false)} onClose={() => (toastShown = false)} />
     {#if !toastShown}<Button label="docs.general.toasts.showAgain" variant="ghost" onClick={() => (toastShown = true)} />{/if}
   </Frame>

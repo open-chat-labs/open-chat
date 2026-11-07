@@ -1,6 +1,6 @@
 # OpenChat UI — Svelte 5 export
 
-Last export ported **2026-11-03** (pass 6, by hand; see EXPORT-LOG). First export 2026-10-07 (pass 1: library).
+Last export ported **2026-11-07** (pass 7, inverted toasts, by hand; see EXPORT-LOG). First export 2026-10-07 (pass 1: library).
 Package name: `@openchat/ui` (change in package.json if needed).
 
 ## Run
@@ -17,6 +17,7 @@ npm run check    # svelte-check (types)
 - Every component is plain Svelte 5: typed `Props` via `$props()`, state in runes, scoped CSS. The export's `.logic.js` classes and the `useLogic` runtime are gone (see "Converted to plain Svelte 5").
 - `src/lib/types.ts` — shared prop types (menu items, messages, wallet tokens, prizes / transfers / swaps, group settings, composer attachments …), exported from `src/lib/index.ts`.
 - `src/lib/styles/tokens.css` (+ generated `icons.css`), `global.css` (keyframes and global rules collected from components).
+- `src/lib/toasts.svelte.ts` — where a component's toast shows: `setToastHost` (the host's toast layer, which shows `ToastLayer.current` as `UndoToast`), `getToastHost`, `ToastLayer` (one at a time, each gone after its own `duration`; spec'd). Feature components inside a dialog, panel or flow hand their toasts to the host, and show them themselves only when no host provides one.
 - Component styles are `<style lang="scss">` (`scss.spec.ts`): nesting, and the mixins in `src/lib/styles/_mixins.scss` (`truncate`, `line-clamp`, `flex-center` (`inline-flex` too), `icon` (`$flex: null` leaves `flex` unset), `focus-ring`, `message-shell`, `reduced-motion`; the function `text-size($px)`, a type size with no `--text-*` token, times `--text-scale`). A component that uses them imports them itself (`@use '../styles/mixins' as *;`, relative), so it compiles in any host with no extra configuration. Mixins output no CSS of their own (the spec compiles the file to check). Colours, spacing and type stay CSS custom properties.
 - `src/lib/icons.js` — canonical icon set; `Icon.svelte` or `mask: var(--icon-<name>)`.
 - `src/lib/behaviours/a11y.js` and `tooltip.js` — installed by `installBehaviours()`. Importing `src/lib/index.ts` calls it; hosts that deep-import component files call it once at startup (the docs do in `main.ts`). Without it, Enter/Space on `role="button"` spans, modal focus trapping and themed tooltips don't work.
@@ -59,6 +60,7 @@ the text. Copy that stays plain English in either mode is hard-coded and needs a
 ## Conventions (same as the prototype)
 - Theme on the app root only: `data-mode="dark|light"` + `data-accent="pink|orange|blue|green"`. Components take no theme props.
 - The native tree's root adds `data-platform="native"` (native light surfaces, hero tints, the shell kit's touch target, bar padding, veils and shadows) and `data-os="ios|android"` (44 / 48px touch targets, the back arrow, the kebab) and the app sets `--text-scale` on `<html>` (the `--text-*` sizes follow it, portals included); the call screen and minimised call put `data-always-dark` on their own root to stay dark in both themes, with the nearest root's accent. Safe areas (`--safe-*`) are on `:root` (tokens.css, Foundations › Native platform).
+- A toast always floats above sheets, dialogs and their veils, never inside them (design pass 7): the host's toast layer (`setToastHost`), or on native the shell's `Toasts`.
 - Colours only through tokens. Callbacks: `onClick` activate · `onSelect(value)` pick · `onChange(value)` primary value · `onInput` text · `onClose` dismiss.
 - Sizes `sm | md | lg`; numeric px only on Avatar, TokenAvatar, Icon, Spinner.
 
@@ -186,7 +188,7 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **TransactionRow** — from source hash `235ffaf2`.
 - **TransferMessage** — from source hash `06196d3d`.
 - **TypingIndicator** — from source hash `e4d33efe`.
-- **UndoToast** — from source hash `d1ec11e9`.
+- **UndoToast** — from source hash `38a11686` (pass 7, ported by hand).
 - **UnreadDivider** — from source hash `d4f40e6e`.
 - **UpgradeBanner** — from source hash `af894647`.
 - **UserChip** — from source hash `348ce6b7`.
@@ -216,7 +218,7 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - Pages: the logo is the inline-SVG `Logo` component (also in AuthDialog and ExploreCommunities), so there is no asset for the host to serve and it works on nested routes and under a base path. Learn's docs, blog, roadmap and FAQs are placeholder copy; the host passes real `content`.
 
 ## Keeping in sync with the prototype
-Every component was hand-converted after export, so **do not re-export**: regenerating a component would overwrite the conversion. Each file's source hash (in `export-manifest.json` and the tables below) records which prototype version it was converted from; when the prototype changes, compare against that hash and port the change by hand.
+Every component was hand-converted after export, so **do not re-export**: regenerating a component would overwrite the conversion. Each file's source hash (in `export-manifest.json` and the tables below) records which prototype version it was converted from; when the prototype changes, compare against that hash and port the change by hand. `tokens.css` has local additions (the native platform layer, swatches, the always-dark scope), so an export's tokens are merged, not copied: last merged from source hash `a7be4345` (pass 7, the `--toast-*` tokens).
 
 ## Library (74)
 | Component | Source | Source hash | Exported |
@@ -290,7 +292,7 @@ Every component was hand-converted after export, so **do not re-export**: regene
 | TransactionRow | `lib/TransactionRow.dc.html` | `235ffaf2` | 2026-10-13 |
 | TransferMessage | `lib/TransferMessage.dc.html` | `06196d3d` | 2026-10-13 |
 | TypingIndicator | `lib/TypingIndicator.dc.html` | `e4d33efe` | 2026-10-07 |
-| UndoToast | `lib/UndoToast.dc.html` | `d1ec11e9` | 2026-10-07 |
+| UndoToast | `lib/UndoToast.dc.html` | `38a11686` | 2026-11-07 |
 | UnreadDivider | `lib/UnreadDivider.dc.html` | `d4f40e6e` | 2026-10-07 |
 | UserChip | `lib/UserChip.dc.html` | `348ce6b7` | 2026-10-07 |
 | VoiceMessage | `lib/VoiceMessage.dc.html` | `e210f6a8` | 2026-10-13 |

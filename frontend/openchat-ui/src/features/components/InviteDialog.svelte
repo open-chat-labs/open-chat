@@ -31,6 +31,7 @@
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
+  import { getToastHost, ToastLayer } from '../../lib/toasts.svelte';
   import { modal } from '../../lib/behaviours/modal';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
@@ -150,10 +151,11 @@
   const flow = new DialogFlow({ exitMs: 0 });
   let action = $state<'add' | 'invite' | 'reset' | 'chat'>('add');
   const busy = $derived(flow.busy ? action : '');
-  let toast = $state<{ id: number; text: string; tone: 'success' | 'neutral' } | null>(null);
-  let toastTimer: ReturnType<typeof setTimeout> | undefined;
+  // toasts go to the host's toast layer, above the dialog and its veil (design pass 7); with no host they show here
+  const toastHost = getToastHost();
+  const ownToasts = new ToastLayer();
   onDestroy(() => {
-    clearTimeout(toastTimer);
+    ownToasts.dispose();
     flow.destroy();
   });
 
@@ -235,12 +237,7 @@
   }
 
   function showToast(text: string, tone: 'success' | 'neutral' = 'success') {
-    const id = Date.now();
-    toast = { id, text, tone };
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-      if (toast?.id === id) toast = null;
-    }, 4000);
+    (toastHost ?? ownToasts.show)({ message: text, tone, icon: tone === 'success' ? 'check' : 'none', duration: 4000 });
   }
 
   // runs one host call at a time; resolves true when it succeeded
@@ -528,10 +525,11 @@
   {#if pickerOpen}
     <ChatPicker title={t('ui.inviteDialog.shareInviteLink')} previewLabel={t('ui.inviteDialog.inviteLinkCaps')} item={{ title: t('ui.inviteDialog.inviteLink'), sub: linkShown, icon: 'link' }} {chats} filter={filterChats} z={95} onSend={sentToChat} onClose={() => (pickerOpen = false)} />
   {/if}
-  {#if toast}
+  {#if ownToasts.current}
+    {@const toast = ownToasts.current}
     <div class="toast-layer">
       <div class="toast">
-        {#key toast.id}<UndoToast shown={true} tone={toast.tone} icon={toast.tone === 'success' ? 'check' : 'none'} message={toast.text} actionLabel="" onClose={() => (toast = null)} />{/key}
+        {#key toast.id}<UndoToast tone={toast.tone} icon={toast.icon} message={toast.message} onClose={() => ownToasts.close()} />{/key}
       </div>
     </div>
   {/if}

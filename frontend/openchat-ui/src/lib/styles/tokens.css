@@ -24,6 +24,10 @@
   --bubble-wave-off:#4A4A56; --status-verified:#3D9BFF; --status-chit:#FF9F45; --status-chit-soft:rgba(255,159,69,.14);
   --status-danger:#F5493D; --status-danger-soft:var(--btn-danger-bg); --status-danger-line:var(--btn-danger-line);
   --status-online:#2EE6A8; --status-warning:#FFB03D;
+  /* Toasts are inverted: light in dark mode, dark in light mode, so one never reads as a received bubble. */
+  --toast-bg:#E6E5EB; --toast-ink:#1A1720; --toast-ink-2:#5A5764; --toast-hover:rgba(0,0,0,.06);
+  --toast-shadow:0 14px 36px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.3);
+  --toast-success:#0E8B62; --toast-success-soft:rgba(14,139,98,.14);
 }
 [data-mode="light"]{
   --skeleton-base:rgba(0,0,0,.06); --skeleton-sheen:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.7) 50%,transparent 100%);
@@ -44,25 +48,29 @@
   --bubble-wave-off:#CFCCD4; --status-verified:#1B72D8; --status-chit:#A85E1E; --status-chit-soft:rgba(196,98,26,.12);
   --status-danger:#C02A1C; --status-danger-soft:var(--btn-danger-bg); --status-danger-line:var(--btn-danger-line);
   --status-online:#12A87B; --status-warning:#A2650B;
+  --toast-bg:#24212A; --toast-ink:#F2F1F5; --toast-ink-2:#B9B6C2; --toast-hover:rgba(255,255,255,.08);
+  --toast-shadow:0 14px 34px rgba(36,31,42,.28),0 2px 6px rgba(36,31,42,.12);
+  --toast-success:#2EE6A8; --toast-success-soft:rgba(46,230,168,.16);
 }
 
 /* An accent picker's swatches: each accent as itself, whichever accent the root has, in the mode's own shade (SettingsSwatches' colours). */
 :root{--swatch-pink:#FF5672;--swatch-orange:#FF8A3D;--swatch-blue:#3D9BFF;--swatch-green:#2EE6A8}
 [data-mode="light"]{--swatch-blue:#3D8BFF;--swatch-green:#16B583}
 [data-always-dark]{--swatch-blue:#3D9BFF;--swatch-green:#2EE6A8}
-/* Accent families. Each defines the accent ramp plus the sent-bubble family. A [data-accent] element declares its
-   dark family as --dark-*, and a dark root (or a [data-always-dark] element below) reads it from there, so an
-   always-dark element takes the accent of its nearest [data-accent] root, or its own data-accent. */
-:where(:root),[data-accent="pink"]{--dark-accent:#FF5672;--dark-accent-hover:#ff6d85;--dark-accent-soft:rgba(255,86,114,.09);--dark-accent-mid:rgba(255,86,114,.6);--dark-accent-dim:rgba(255,86,114,.35);--dark-accent-bright:#FF8298;--dark-on-accent:#2E0512;--dark-bubble-send-bg:#B83E52;--dark-bubble-reply:#8C2A3D}
-[data-accent="orange"]{--dark-accent:#FF8A3D;--dark-accent-hover:#ffa15e;--dark-accent-soft:rgba(255,138,61,.09);--dark-accent-mid:rgba(255,138,61,.6);--dark-accent-dim:rgba(255,138,61,.35);--dark-accent-bright:#FFA366;--dark-on-accent:#331705;--dark-bubble-send-bg:#9E5624;--dark-bubble-reply:#7A4119}
-[data-accent="blue"]{--dark-accent:#3D9BFF;--dark-accent-hover:#5fb0ff;--dark-accent-soft:rgba(61,155,255,.1);--dark-accent-mid:rgba(61,155,255,.6);--dark-accent-dim:rgba(61,155,255,.35);--dark-accent-bright:#7DBBFF;--dark-on-accent:#06182F;--dark-bubble-send-bg:#2A5FA8;--dark-bubble-reply:#1F477E}
-[data-accent="green"]{--dark-accent:#2EE6A8;--dark-accent-hover:#5aeebc;--dark-accent-soft:rgba(46,230,168,.1);--dark-accent-mid:rgba(46,230,168,.6);--dark-accent-dim:rgba(46,230,168,.35);--dark-accent-bright:#6BF0C4;--dark-on-accent:#04241A;--dark-bubble-send-bg:#1B7A5B;--dark-bubble-reply:#145742}
-:where(:root),[data-mode="dark"][data-accent="pink"],[data-mode="dark"][data-accent="orange"],[data-mode="dark"][data-accent="blue"],[data-mode="dark"][data-accent="green"],[data-always-dark]{--accent:var(--dark-accent);--accent-hover:var(--dark-accent-hover);--accent-soft:var(--dark-accent-soft);--accent-mid:var(--dark-accent-mid);--accent-dim:var(--dark-accent-dim);--accent-bright:var(--dark-accent-bright);--on-accent:var(--dark-on-accent);--bubble-send-bg:var(--dark-bubble-send-bg);--bubble-reply:var(--dark-bubble-reply)}
+/* Accent families. Each defines the accent ramp, the sent-bubble family and the toast action (the other mode's
+   bright accent, readable on the inverted toast). A [data-accent] element declares its dark family as --dark-*, and
+   a dark root (or a [data-always-dark] element below) reads it from there, so an always-dark element takes the
+   accent of its nearest [data-accent] root, or its own data-accent. */
+:where(:root),[data-accent="pink"]{--dark-accent:#FF5672;--dark-accent-hover:#ff6d85;--dark-accent-soft:rgba(255,86,114,.09);--dark-accent-mid:rgba(255,86,114,.6);--dark-accent-dim:rgba(255,86,114,.35);--dark-accent-bright:#FF8298;--dark-on-accent:#2E0512;--dark-bubble-send-bg:#B83E52;--dark-bubble-reply:#8C2A3D;--dark-toast-action:#C8244A;--dark-toast-action-soft:rgba(200,36,74,.10);--dark-toast-action-hover:rgba(200,36,74,.18)}
+[data-accent="orange"]{--dark-accent:#FF8A3D;--dark-accent-hover:#ffa15e;--dark-accent-soft:rgba(255,138,61,.09);--dark-accent-mid:rgba(255,138,61,.6);--dark-accent-dim:rgba(255,138,61,.35);--dark-accent-bright:#FFA366;--dark-on-accent:#331705;--dark-bubble-send-bg:#9E5624;--dark-bubble-reply:#7A4119;--dark-toast-action:#A85413;--dark-toast-action-soft:rgba(168,84,19,.10);--dark-toast-action-hover:rgba(168,84,19,.18)}
+[data-accent="blue"]{--dark-accent:#3D9BFF;--dark-accent-hover:#5fb0ff;--dark-accent-soft:rgba(61,155,255,.1);--dark-accent-mid:rgba(61,155,255,.6);--dark-accent-dim:rgba(61,155,255,.35);--dark-accent-bright:#7DBBFF;--dark-on-accent:#06182F;--dark-bubble-send-bg:#2A5FA8;--dark-bubble-reply:#1F477E;--dark-toast-action:#1B5FCC;--dark-toast-action-soft:rgba(27,95,204,.10);--dark-toast-action-hover:rgba(27,95,204,.18)}
+[data-accent="green"]{--dark-accent:#2EE6A8;--dark-accent-hover:#5aeebc;--dark-accent-soft:rgba(46,230,168,.1);--dark-accent-mid:rgba(46,230,168,.6);--dark-accent-dim:rgba(46,230,168,.35);--dark-accent-bright:#6BF0C4;--dark-on-accent:#04241A;--dark-bubble-send-bg:#1B7A5B;--dark-bubble-reply:#145742;--dark-toast-action:#0A7A57;--dark-toast-action-soft:rgba(10,122,87,.10);--dark-toast-action-hover:rgba(10,122,87,.18)}
+:where(:root),[data-mode="dark"][data-accent="pink"],[data-mode="dark"][data-accent="orange"],[data-mode="dark"][data-accent="blue"],[data-mode="dark"][data-accent="green"],[data-always-dark]{--accent:var(--dark-accent);--accent-hover:var(--dark-accent-hover);--accent-soft:var(--dark-accent-soft);--accent-mid:var(--dark-accent-mid);--accent-dim:var(--dark-accent-dim);--accent-bright:var(--dark-accent-bright);--on-accent:var(--dark-on-accent);--bubble-send-bg:var(--dark-bubble-send-bg);--bubble-reply:var(--dark-bubble-reply);--toast-action:var(--dark-toast-action);--toast-action-soft:var(--dark-toast-action-soft);--toast-action-hover:var(--dark-toast-action-hover)}
 
-[data-mode="light"][data-accent="pink"]{--accent:#FF5672;--accent-hover:#ff6d85;--accent-soft:rgba(255,86,114,.1);--accent-mid:rgba(255,86,114,.6);--accent-dim:rgba(255,86,114,.35);--accent-bright:#C8244A;--on-accent:#FFFFFF;--bubble-send-bg:#FFE0E5;--bubble-reply:#FFC9D2;--bubble-text:#5C0F1E;--bubble-text-soft:rgba(92,15,30,.72);--bubble-tick:#B3335E}
-[data-mode="light"][data-accent="orange"]{--accent:#FF8A3D;--accent-hover:#ffa15e;--accent-soft:rgba(255,138,61,.12);--accent-mid:rgba(255,138,61,.6);--accent-dim:rgba(255,138,61,.4);--accent-bright:#A85413;--on-accent:#FFFFFF;--bubble-send-bg:#FFEBDD;--bubble-reply:#FFD8BE;--bubble-text:#5A2E0C;--bubble-text-soft:rgba(90,46,12,.72);--bubble-tick:#A85E1E}
-[data-mode="light"][data-accent="blue"]{--accent:#3D8BFF;--accent-hover:#5fa0ff;--accent-soft:rgba(61,139,255,.12);--accent-mid:rgba(61,139,255,.6);--accent-dim:rgba(61,139,255,.4);--accent-bright:#1B5FCC;--on-accent:#FFFFFF;--bubble-send-bg:#DEEAFF;--bubble-reply:#C4DAFF;--bubble-text:#123059;--bubble-text-soft:rgba(18,48,89,.72);--bubble-tick:#2C6BC8}
-[data-mode="light"][data-accent="green"]{--accent:#16B583;--accent-hover:#22c894;--accent-soft:rgba(22,181,131,.12);--accent-mid:rgba(22,181,131,.6);--accent-dim:rgba(22,181,131,.4);--accent-bright:#0A7A57;--on-accent:#FFFFFF;--bubble-send-bg:#D8F5EA;--bubble-reply:#BDEBDB;--bubble-text:#0B4433;--bubble-text-soft:rgba(11,68,51,.72);--bubble-tick:#0E8B62}
+[data-mode="light"][data-accent="pink"]{--accent:#FF5672;--accent-hover:#ff6d85;--accent-soft:rgba(255,86,114,.1);--accent-mid:rgba(255,86,114,.6);--accent-dim:rgba(255,86,114,.35);--accent-bright:#C8244A;--on-accent:#FFFFFF;--bubble-send-bg:#FFE0E5;--bubble-reply:#FFC9D2;--bubble-text:#5C0F1E;--bubble-text-soft:rgba(92,15,30,.72);--bubble-tick:#B3335E;--toast-action:#FF8298;--toast-action-soft:rgba(255,130,152,.14);--toast-action-hover:rgba(255,130,152,.24)}
+[data-mode="light"][data-accent="orange"]{--accent:#FF8A3D;--accent-hover:#ffa15e;--accent-soft:rgba(255,138,61,.12);--accent-mid:rgba(255,138,61,.6);--accent-dim:rgba(255,138,61,.4);--accent-bright:#A85413;--on-accent:#FFFFFF;--bubble-send-bg:#FFEBDD;--bubble-reply:#FFD8BE;--bubble-text:#5A2E0C;--bubble-text-soft:rgba(90,46,12,.72);--bubble-tick:#A85E1E;--toast-action:#FFA366;--toast-action-soft:rgba(255,163,102,.14);--toast-action-hover:rgba(255,163,102,.24)}
+[data-mode="light"][data-accent="blue"]{--accent:#3D8BFF;--accent-hover:#5fa0ff;--accent-soft:rgba(61,139,255,.12);--accent-mid:rgba(61,139,255,.6);--accent-dim:rgba(61,139,255,.4);--accent-bright:#1B5FCC;--on-accent:#FFFFFF;--bubble-send-bg:#DEEAFF;--bubble-reply:#C4DAFF;--bubble-text:#123059;--bubble-text-soft:rgba(18,48,89,.72);--bubble-tick:#2C6BC8;--toast-action:#7DBBFF;--toast-action-soft:rgba(125,187,255,.14);--toast-action-hover:rgba(125,187,255,.24)}
+[data-mode="light"][data-accent="green"]{--accent:#16B583;--accent-hover:#22c894;--accent-soft:rgba(22,181,131,.12);--accent-mid:rgba(22,181,131,.6);--accent-dim:rgba(22,181,131,.4);--accent-bright:#0A7A57;--on-accent:#FFFFFF;--bubble-send-bg:#D8F5EA;--bubble-reply:#BDEBDB;--bubble-text:#0B4433;--bubble-text-soft:rgba(11,68,51,.72);--bubble-tick:#0E8B62;--toast-action:#6BF0C4;--toast-action-soft:rgba(107,240,196,.14);--toast-action-hover:rgba(107,240,196,.24)}
 
 /* Non-colour tokens. Scale fitted to the values already in use. */
 :root{
