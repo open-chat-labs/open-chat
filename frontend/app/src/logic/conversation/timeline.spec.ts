@@ -1,6 +1,12 @@
-import type { ChatIdentifier } from "@client";
+import { ROLE_MEMBER, ROLE_NONE, type ChatIdentifier, type ChatSummary } from "@client";
 import { describe, expect, test, vi } from "vitest";
-import { FirstUnread, MessageLink, OpenAtUnread, othersTyping } from "./timeline";
+import {
+    FirstUnread,
+    firstUnreadOnOpen,
+    MessageLink,
+    OpenAtUnread,
+    othersTyping,
+} from "./timeline";
 
 const group = (groupId: string): ChatIdentifier => ({ kind: "group_chat", groupId });
 
@@ -18,6 +24,26 @@ describe("the first unread message", () => {
         first.of(group("a"), () => 5);
         expect(first.of(group("b"), () => undefined)).toBeUndefined();
         expect(first.of(group("a"), () => 7)).toBe(7);
+    });
+});
+
+describe("a chat's first unread message as it opens", () => {
+    const chat = (role: number) =>
+        ({
+            id: group("a"),
+            membership: { role },
+            latestMessage: { event: { messageIndex: 62 } },
+        }) as ChatSummary;
+
+    test("is the read state's, up to the latest message", () => {
+        const ask = vi.fn(() => 40);
+        expect(firstUnreadOnOpen(chat(ROLE_MEMBER), ask)).toBe(40);
+        expect(ask).toHaveBeenCalledWith(group("a"), 62);
+    });
+
+    // previewing a channel opened it at its very first message, under the divider
+    test("is none while previewing, where nothing has been read", () => {
+        expect(firstUnreadOnOpen(chat(ROLE_NONE), () => 0)).toBeUndefined();
     });
 });
 

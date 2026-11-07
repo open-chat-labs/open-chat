@@ -185,7 +185,12 @@
     import { toggleReaction } from "@src/logic/conversation/reaction";
     import { observeRead } from "@src/core/observeRead";
     import { votePoll } from "@src/logic/conversation/pollVote";
-    import { FirstUnread, MessageLink, othersTyping } from "@src/logic/conversation/timeline";
+    import {
+        FirstUnread,
+        firstUnreadOnOpen,
+        MessageLink,
+        othersTyping,
+    } from "@src/logic/conversation/timeline";
     import MediaViewer from "@src/core/MediaViewer.svelte";
     import ConfirmDialog from "./ConfirmDialog.svelte";
     import { deleteMessage, runMessageAction } from "./messageMenu";
@@ -778,9 +783,8 @@
         if (current === undefined) return undefined;
         return firstUnreadMarker.of(current.id, () =>
             untrack(() =>
-                messagesRead.getFirstUnreadMessageIndex(
-                    current.id,
-                    current.latestMessage?.event.messageIndex,
+                firstUnreadOnOpen(current, (chatId, latest) =>
+                    messagesRead.getFirstUnreadMessageIndex(chatId, latest),
                 ),
             ),
         );

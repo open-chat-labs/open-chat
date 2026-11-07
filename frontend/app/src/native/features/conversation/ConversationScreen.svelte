@@ -117,6 +117,7 @@
     } from "@src/logic/conversation/timelineEventText";
     import {
         FirstUnread,
+        firstUnreadOnOpen,
         MessageLink,
         OpenAtUnread,
         othersTyping,
@@ -618,9 +619,8 @@
         if (current === undefined) return undefined;
         return firstUnreadMarker.of(current.id, () =>
             untrack(() =>
-                messagesRead.getFirstUnreadMessageIndex(
-                    current.id,
-                    current.latestMessage?.event.messageIndex,
+                firstUnreadOnOpen(current, (chatId, latest) =>
+                    messagesRead.getFirstUnreadMessageIndex(chatId, latest),
                 ),
             ),
         );

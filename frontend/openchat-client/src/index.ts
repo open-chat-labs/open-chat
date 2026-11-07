@@ -33,6 +33,7 @@ export {
     eventsTTLUpdate,
     getMembersString,
     getMessageText,
+    isPreviewing,
     isPreviewingOrLapsed,
     subrangesCover,
     TimelineGrouper,

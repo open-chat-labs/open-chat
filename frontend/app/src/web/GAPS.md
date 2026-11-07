@@ -406,6 +406,13 @@ design export needs. Each entry says where it came up.
     ChatEventList's `loadedRange`, which the conversation holds with them), as it does when
     another chat replaces it.
   - **Mute** is Mute / Unmute (no durations, as on Chats' rows).
+  - **A channel being previewed** (not joined) offers Search in chat, Mute and Favourite, as the
+    old app's menu does, but its search finds nothing ("No results": the backend searches for
+    members), and it opens at its latest messages with no unread divider (nothing has been read).
+    TODO(design): the preview's menu and search, with the join bar (N8b).
+  - **A DM whose chat isn't in the list yet** (found testing: a deleted DM the other user had
+    written to again, before the next sync brought it back) shows the header's back and avatar with
+    no name, and the list's spinner, until the chat arrives.
   - **Toasts** sit above the composer in a conversation (the kit's `footer` placement). Mute,
     favourite and unblock say so at once, as the client shows the change at once (`localUpdates`),
     here and on Chats' rows; a refusal takes the toast's place. A block's toast shows at once with

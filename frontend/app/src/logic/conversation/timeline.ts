@@ -1,9 +1,28 @@
-import { chatIdentifiersEqual, chatIdentifierToString, type ChatIdentifier } from "@client";
+import {
+    chatIdentifiersEqual,
+    chatIdentifierToString,
+    isPreviewing,
+    type ChatIdentifier,
+    type ChatSummary,
+} from "@client";
 
 // What a conversation's timeline decides around its list (core/ChatEventList), for every tree that
 // shows one with the library (src/web's, src/native's): where the unread divider goes and when it
 // goes, where a chat with unread messages opens, when the route's message is gone to, and who is
 // shown typing.
+
+/**
+ * A chat's first unread message as it opens (`firstUnread`: the client's read state's), as the
+ * client works it out when it selects the chat: none for a chat being previewed, where nothing has
+ * been read, so every message would count as unread from the first.
+ */
+export function firstUnreadOnOpen(
+    chat: ChatSummary,
+    firstUnread: (chatId: ChatIdentifier, latestMessageIndex: number | undefined) => number | undefined,
+): number | undefined {
+    if (isPreviewing(chat)) return undefined;
+    return firstUnread(chat.id, chat.latestMessage?.event.messageIndex);
+}
 
 /**
  * The first unread message when a chat was opened: the unread divider stays above it while the
