@@ -23,6 +23,7 @@
     import { copyText } from "@openchat/ui/src/lib/clipboard";
     import Confetti from "@openchat/ui/src/lib/components/Confetti.svelte";
     import Pill from "@openchat/ui/src/lib/components/Pill.svelte";
+    import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { haptic } from "@openchat/ui/src/native/haptics";
     import NativeAlert from "@openchat/ui/src/native/NativeAlert.svelte";
     import SettingsAction from "@openchat/ui/src/native/SettingsAction.svelte";
@@ -86,7 +87,7 @@
                 theme: themePrefOf($themeType),
                 accent: $accentStore,
                 notifications: notificationSwitch($notificationStatus),
-                storageBytes: $storageStore.bytesUsed,
+                storage: $storageStore,
             },
             t,
         ),
@@ -144,6 +145,26 @@
             context.toast($_("dailyChit.failedToClaim"));
         } finally {
             claiming = false;
+        }
+    }
+
+    // ---- signing out asks first (a small alert); the shell goes to the signed-out start once it's done
+
+    let signingOut = $state<"none" | "confirm" | "signing_out">("none");
+    useOverlay(
+        overlays,
+        () => signingOut === "confirm",
+        () => (signingOut = "none"),
+    );
+
+    async function signOut() {
+        if (signingOut === "signing_out") return;
+        signingOut = "signing_out";
+        try {
+            await client.logout();
+        } catch (err) {
+            console.warn("Unable to sign out", err);
+            signingOut = "none";
         }
     }
 
@@ -224,6 +245,7 @@
                             class="chit-row"
                             class:claimable={claim.claimable}
                             aria-disabled={!claim.claimable || claiming}
+                            aria-busy={claiming}
                             onclick={claimToday}>
                             <span class="claim-icon"></span>
                             <span class="claim-text">
@@ -235,7 +257,12 @@
                                 </span>
                             </span>
                             <span class="claim-label">
-                                {claim.claimable ? $_("native.you.chit.claim") : $_("native.you.chit.claimed")}
+                                {#if claiming}
+                                    <!-- the claim on its way: no second one meanwhile -->
+                                    <span class="claiming"><Spinner size={16} /></span>
+                                {:else}
+                                    {claim.claimable ? $_("native.you.chit.claim") : $_("native.you.chit.claimed")}
+                                {/if}
                                 <span class="confetti" aria-hidden="true">
                                     <Confetti fire={burst} within="[data-confetti-within]" />
                                 </span>
@@ -296,11 +323,22 @@
                     icon="exit"
                     label={$_("logout")}
                     danger
-                    onClick={() => client.logout()} />
+                    onClick={() => (signingOut = "confirm")} />
             </SettingsGroup>
         </div>
     </div>
 </div>
+
+<NativeAlert
+    open={signingOut !== "none"}
+    title={$_("native.you.signOut.title")}
+    message={$_("native.you.signOut.message")}
+    confirmLabel={$_("logout")}
+    cancelLabel={$_("cancel")}
+    danger
+    busy={signingOut === "signing_out"}
+    onConfirm={signOut}
+    onClose={() => (signingOut = "none")} />
 
 <NativeAlert
     open={copyWarning}
@@ -552,6 +590,10 @@
         .claimable & {
             color: var(--accent-bright);
         }
+    }
+
+    .claiming {
+        display: flex;
     }
 
     // the burst comes from the label's middle
