@@ -156,13 +156,6 @@ export function changedChatSettings(
     );
 }
 
-export type ThemePref = "system" | "dark" | "light";
-
-/** The theme the appearance pane shows: themeType, which may hold a name the design doesn't have. */
-export function themePrefOf(stored: string): ThemePref {
-    return stored === "dark" || stored === "light" ? stored : "system";
-}
-
 /** The communities pane: the user's communities, and the name they go by in each that has one. */
 export function communitiesProps(
     communities: CommunitySummary[],
@@ -181,15 +174,6 @@ export function communitiesProps(
         })),
         communityNames: names,
     };
-}
-
-/**
- * The name to set in a community, without the spaces around it: clearing it (no name, or a blank
- * one) sends none, removing it.
- */
-export function memberDisplayNameOf(name: string | null): string | undefined {
-    const trimmed = name?.trim() ?? "";
-    return trimmed === "" ? undefined : trimmed;
 }
 
 /** The storage pane, in MB. A limit of 0 (no allowance without Diamond) stays 0. */

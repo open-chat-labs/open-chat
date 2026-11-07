@@ -1,10 +1,25 @@
 import { fontScaleFactor, type FontScale } from "@client";
 
-// The appearance settings the new profile dialog offers, onto the app's: four font sizes for the
-// five steps of fontScaleStore (0.75 to 1.25). The sizes are steps 1 to 4; a stored 0 shows as the
-// smallest and stays as it is until another size is picked, so no one's scale moves on its own.
+// The appearance settings the new trees offer (the web's profile, the native Welcome's menu and
+// You → Appearance), onto the app's stored ones, so each shows the same: the theme (themeType,
+// which may hold a theme name the design doesn't have), and four font sizes for the five steps of
+// fontScaleStore (0.75 to 1.25). The sizes are steps 1 to 4; a stored 0 shows as the smallest and
+// stays as it is until another size is picked, so no one's scale moves on its own.
+
+export type ThemePref = "light" | "dark" | "system";
+
+/** The theme choices, in the design's order. */
+export const THEME_PREFS: readonly ThemePref[] = ["light", "dark", "system"];
+
+/** The theme a stored themeType shows as: one the design doesn't have shows as the system's. */
+export function themePrefOf(stored: string): ThemePref {
+    return stored === "dark" || stored === "light" ? stored : "system";
+}
 
 export type FontSize = "small" | "default" | "large" | "larger";
+
+/** The font sizes, smallest first. */
+export const FONT_SIZES: readonly FontSize[] = ["small", "default", "large", "larger"];
 
 const SCALES: Record<FontSize, FontScale> = { small: 1, default: 2, large: 3, larger: 4 };
 

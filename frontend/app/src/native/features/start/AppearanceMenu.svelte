@@ -6,6 +6,7 @@
      trigger. ↑ ↓ move between the themes, ← → between the swatches, Tab between the two. -->
 <script lang="ts">
     import { PAGE_ACCENTS, type PageAccent } from "@openchat/ui/src/pages/types";
+    import { themePrefOf } from "@src/logic/profile/appearance";
     import { accentStore } from "@theme/accent";
     import { themeType } from "@theme/themes";
     import { onMount, tick } from "svelte";
@@ -25,7 +26,7 @@
     let menu = $state<HTMLDivElement>();
 
     // the selected item of each group is the one Tab reaches (a roving tab stop)
-    const theme = $derived(THEMES.find((t) => t.id === $themeType)?.id ?? "system");
+    const theme = $derived(themePrefOf($themeType));
 
     onMount(() => {
         void focusSelected("theme");

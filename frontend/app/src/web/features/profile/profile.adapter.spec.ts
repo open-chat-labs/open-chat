@@ -12,13 +12,11 @@ import {
     communitiesProps,
     linkCodeProps,
     signinMethodsProps,
-    memberDisplayNameOf,
     storageProps,
     chatSettingsProps,
     profileProps,
     ringtoneKeyOf,
     statsProps,
-    themePrefOf,
     type AppChatSettings,
 } from "./profile.adapter";
 
@@ -127,13 +125,6 @@ describe("the profile dialog's props", () => {
         expect(changedChatSettings(retired, shown)).toEqual(["ringtone"]);
     });
 
-    test("a theme the design doesn't have shows as the system's", () => {
-        expect(themePrefOf("dark")).toBe("dark");
-        expect(themePrefOf("light")).toBe("light");
-        expect(themePrefOf("system")).toBe("system");
-        expect(themePrefOf("signals")).toBe("system");
-    });
-
     test("the communities, and the name the user goes by in each that has one", () => {
         const community = (id: string, displayName?: string) =>
             ({
@@ -147,14 +138,6 @@ describe("the profile dialog's props", () => {
             { id: "b", name: "Community b", avatar: 'url("/c.png") center / cover no-repeat' },
         ]);
         expect(props.communityNames).toEqual({ a: "Jules" });
-    });
-
-    test("clearing a community name sends no name (removes it), not an empty string", () => {
-        expect(memberDisplayNameOf(null)).toBeUndefined();
-        expect(memberDisplayNameOf("")).toBeUndefined();
-        expect(memberDisplayNameOf("Jules")).toBe("Jules");
-        expect(memberDisplayNameOf("   ")).toBeUndefined();
-        expect(memberDisplayNameOf(" Jules ")).toBe("Jules");
     });
 
     test("storage in MB, with no allowance kept at 0", () => {

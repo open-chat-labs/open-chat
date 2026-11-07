@@ -6,6 +6,7 @@ import type ChitDialog from "@openchat/ui/src/features/components/ChitDialog.sve
 import type LeaderboardDialog from "@openchat/ui/src/features/components/LeaderboardDialog.svelte";
 import type NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
 import { chitButton, type ChitButtonInputs } from "@src/logic/chit/chitButton";
+import { dailyClaim } from "@src/logic/chit/dailyClaim";
 import type { ComponentProps } from "svelte";
 import {
     CHAT_E8S,
@@ -14,9 +15,6 @@ import {
     streakInsurancePrice,
     walletApprovalFee,
     CHIT_STREAK_MILESTONES,
-    currentStreak,
-    dailyChitAmount,
-    formatTimeRemaining,
     type Achievement,
     type AchievementEntry,
     type ChitLeaderboardResponse,
@@ -57,24 +55,20 @@ export type ChitRailProps = Pick<
  * due), which would offer a claim the user may have made.
  */
 export function chitDialogProps(
-    { chit, lastSync, disabled, now }: ChitInputs,
+    inputs: ChitInputs,
     insurance: StreakInsurance,
 ): ChitDialogProps | undefined {
-    if (lastSync === 0) return undefined;
-    const streak = currentStreak(chit, now);
-    const claimedToday = chit.nextDailyChitClaim > now;
+    // today's claim (logic/chit/dailyClaim, as the native You tab's CHIT card)
+    const claim = dailyClaim(inputs);
+    if (claim === undefined) return undefined;
     return {
-        streak,
-        balance: chit.chitBalance,
-        earned: chit.totalChitEarned,
-        // what today's claim pays, or paid
-        daily: dailyChitAmount(claimedToday ? Math.max(streak, 1) : streak + 1),
-        claimable: !disabled && !claimedToday,
+        streak: claim.streak,
+        balance: claim.balance,
+        earned: claim.earned,
+        daily: claim.daily,
+        claimable: claim.claimable,
         milestones: CHIT_STREAK_MILESTONES,
-        // until the next claim (none while one is due)
-        countdown: claimedToday
-            ? formatTimeRemaining(now, Number(chit.nextDailyChitClaim), true)
-            : "",
+        countdown: claim.countdown,
         insured: insurance.daysInsured,
         used: insurance.daysMissed,
     };

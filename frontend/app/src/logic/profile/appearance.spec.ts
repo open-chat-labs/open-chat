@@ -4,7 +4,17 @@ import {
     TEXT_SCALE_MAX,
     TEXT_SCALE_MIN,
     textScaleOf,
+    themePrefOf,
 } from "./appearance";
+
+describe("the theme", () => {
+    test("a theme the design doesn't have shows as the system's", () => {
+        expect(themePrefOf("dark")).toBe("dark");
+        expect(themePrefOf("light")).toBe("light");
+        expect(themePrefOf("system")).toBe("system");
+        expect(themePrefOf("signals")).toBe("system");
+    });
+});
 
 describe("the profile's font sizes", () => {
     test("are the font scale's steps 1 to 4", () => {
