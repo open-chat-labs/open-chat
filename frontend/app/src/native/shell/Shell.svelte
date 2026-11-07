@@ -2,7 +2,7 @@
      The URL names the screen showing (router/locations.ts); each tab keeps its stack (TabStacks), so
      it comes back as it was left. The tab bar shows only on a tab's root; a pushed screen has the
      whole window (showsTabBar). A pushed screen slides in from the inline end over everything under it, the tab
-     bar too, which stays where it is (.34s, motion.ts), and Back slides it off again. Android's system back closes an open
+     bar too, which stays where it is (.34s, motion.ts), and Back slides it off again (.24s). Android's system back closes an open
      sheet or menu first, then pops (back.ts). On a tab's root, a sideways drag swipes to the
      neighbouring tab (tabSwipe.ts); switching tabs slides only the two screens, old and new.
      Signed out, it's the signed-out start instead (features/start), whatever the URL; the
