@@ -51,13 +51,21 @@ export class ProfileImages {
         this.#crop = crop;
     }
 
-    /** Crops `area` of `source` (the picked image, a data URL) and saves it as the user's `target`. */
-    async save(target: ProfileImage, source: string, area: CropArea): Promise<ProfileImageOutcome> {
+    /**
+     * Crops `area` of `source` (the picked image, a data URL) and saves it as the user's `target`,
+     * at `size` (the native tree's cover is a banner, as components_mobile saves it).
+     */
+    async save(
+        target: ProfileImage,
+        source: string,
+        area: CropArea,
+        size: Dimensions = PROFILE_IMAGE_SIZES[target],
+    ): Promise<ProfileImageOutcome> {
         if (this.uploading[target]) return { kind: "busy" };
         this.uploading[target] = true;
         try {
             // a file that isn't an image after all (a corrupt one, HEIC named .jpg) fails here
-            const image = await this.#crop(source, area, PROFILE_IMAGE_SIZES[target]);
+            const image = await this.#crop(source, area, size);
             if (image === undefined) throw new Error("the cropped image couldn't be encoded");
             this.preview[target] = image.url;
             const blobId =

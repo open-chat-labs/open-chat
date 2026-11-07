@@ -16,7 +16,7 @@ import type {
     ProfileCommunity,
     SigninMethod,
 } from "@openchat/ui/src/features/components/ProfileDialog.svelte";
-import type { RingtoneKey } from "@src/stores/video";
+import { storedRingtoneKey, type RingtoneKey } from "@src/stores/ringtone.svelte";
 
 // ProfileDialog's props from the user's profile, metrics and settings.
 
@@ -97,13 +97,9 @@ export function ringtoneKeyOf(tone: ChatSettings["ringtone"]): RingtoneKey {
     return tone === "twostep" ? "garage" : tone;
 }
 
-function isRingtoneKey(name: string): name is RingtoneKey {
-    return Object.hasOwn(DESIGN_RINGTONES, name);
-}
-
 // a name the app no longer has shows as the app's default
 function designRingtoneOf(stored: string): ChatSettings["ringtone"] {
-    return isRingtoneKey(stored) ? DESIGN_RINGTONES[stored] : "boring";
+    return DESIGN_RINGTONES[storedRingtoneKey(stored)];
 }
 
 /** The settings the chats & calls pane shows, as the app keeps them. */

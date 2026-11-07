@@ -1,12 +1,12 @@
 <script lang="ts">
     import { Body, Tooltip } from "component-lib";
     import {
-        type ChatIdentifier,
         iconSize,
         localUpdates,
         routeForChatIdentifier,
     } from "@client";
     import { navigate } from "@utils/navigation";
+    import { BUG_REPORT_CHANNEL } from "@utils/support";
     import { _ } from "svelte-i18n";
     import Bug from "svelte-material-icons/Bug.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -27,11 +27,7 @@
         ) {
             const msg = interpolate($_, $reactiveResourceKey);
             const withDetail = `${msg} (${$toastStore.err})`;
-            const chatId = {
-                kind: "channel",
-                communityId: "dgegb-daaaa-aaaar-arlhq-cai",
-                channelId: 2235218862,
-            } as ChatIdentifier;
+            const chatId = BUG_REPORT_CHANNEL;
             navigate(routeForChatIdentifier("community", chatId));
             localUpdates.draftMessages.setTextContent({ chatId }, withDetail);
             toastStore.hideToast();

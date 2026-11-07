@@ -93,6 +93,17 @@ export class ReAuthentication {
         this.polling = false;
     }
 
+    /** Gives up on the emailed link: back to the ways to sign in. */
+    cancelEmail(): void {
+        this.destroy();
+        this.step = "choose_provider";
+    }
+
+    /** The address the last emailed link went to, to offer again. */
+    lastEmail(): string {
+        return localStorage.getItem(configKeys.selectedAuthEmail) ?? "";
+    }
+
     async #withEmail(email: string): Promise<ReAuthSuccess | undefined> {
         this.destroy();
         const link = new AbortController();

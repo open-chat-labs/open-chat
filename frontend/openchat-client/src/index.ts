@@ -267,5 +267,11 @@ export {
     type SwapOfferCosts,
     type SwapOfferStep,
 } from "./utils/swapOffer";
-export { toDateString, toDatetimeString, toDayString, toMonthString } from "./utils/date";
+export {
+    toDateString,
+    toDatetimeString,
+    toDayString,
+    toMonthString,
+    toMonthYearString,
+} from "./utils/date";
 export * from "./utils/url";
