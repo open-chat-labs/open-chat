@@ -1,5 +1,6 @@
-import type { EventWrapper, Message } from "@client";
+import type { ChatSummary, EventWrapper, Message } from "@client";
 import {
+    conversationContext,
     mediaHeld,
     messageRow,
     messageStatus,
@@ -30,6 +31,7 @@ const ctx: ConversationContext = {
     text: (key) => key.key,
     openThread: undefined,
     face: (userId) => `face:${userId}`,
+    unreadInThread: () => 0,
     token: (ledger) =>
         ledger === "icp"
             ? {
@@ -150,7 +152,8 @@ describe("a message row", () => {
             threadCount: 4,
             threadLastAt: "d9",
             threadFaces: ["face:alice", "face:bob"],
-            threadSelected: false,
+            threadNew: 0,
+            threadActive: false,
         });
     });
 
@@ -159,11 +162,31 @@ describe("a message row", () => {
             threadCount: 0,
             threadLastAt: undefined,
             threadFaces: [],
-            threadSelected: false,
+            threadActive: false,
         });
     });
 
-    test("marks its thread selected while it's the one open beside the conversation", () => {
+    test("has up to three faces, and its unread replies as the thread's root (pass 8)", () => {
+        const threaded = message({
+            messageIndex: 7,
+            thread: {
+                numberOfReplies: 9,
+                latestEventTimestamp: 9n,
+                participantIds: new Set(["a", "b", "c", "d"]),
+            } as Message["thread"],
+        });
+        const unreadInThread = (root: number) => (root === 7 ? 2 : 0);
+        expect(messageRow(threaded, "sent", { ...ctx, unreadInThread }).message).toMatchObject({
+            threadFaces: ["face:a", "face:b", "face:c"],
+            threadNew: 2,
+        });
+        // a message without a thread has nothing new, whatever its index
+        expect(
+            messageRow(message({ messageIndex: 7 }), "sent", { ...ctx, unreadInThread }).message,
+        ).toMatchObject({ threadNew: 0 });
+    });
+
+    test("marks its thread active while it's the one open beside the conversation", () => {
         const threaded = message({
             messageIndex: 2,
             thread: {
@@ -172,15 +195,15 @@ describe("a message row", () => {
                 participantIds: new Set(["bob"]),
             } as Message["thread"],
         });
-        const selected = (openThread: number | undefined) =>
-            messageRow(threaded, "sent", { ...ctx, openThread }).message.threadSelected;
-        expect(selected(2)).toBe(true);
-        expect(selected(3)).toBe(false);
-        expect(selected(undefined)).toBe(false);
+        const active = (openThread: number | undefined) =>
+            messageRow(threaded, "sent", { ...ctx, openThread }).message.threadActive;
+        expect(active(2)).toBe(true);
+        expect(active(3)).toBe(false);
+        expect(active(undefined)).toBe(false);
         // a message with no thread isn't, even at the open thread's index (a thread just started)
-        expect(
-            messageRow(message(), "sent", { ...ctx, openThread: 2 }).message.threadSelected,
-        ).toBe(false);
+        expect(messageRow(message(), "sent", { ...ctx, openThread: 2 }).message.threadActive).toBe(
+            false,
+        );
     });
 
     test('has its thread whatever its kind (4c: "N replies" under every kind)', () => {
@@ -203,7 +226,7 @@ describe("a message row", () => {
             threadCount: 2,
             threadLastAt: "d5",
             threadFaces: ["face:bob"],
-            threadSelected: true,
+            threadActive: true,
         });
     });
 
@@ -523,5 +546,52 @@ describe("composing a message with more fields", () => {
 
         expect(composed.menu).toBe(true);
         expect(message.menu).toBe(false);
+    });
+});
+
+describe("a conversation's context", () => {
+    test("counts a thread's unread replies as the list of threads does, none unfollowed (pass 8)", () => {
+        const chat = {
+            kind: "channel",
+            id: { kind: "channel", communityId: "c", channelId: 1 },
+            membership: { latestThreads: [{ threadRootMessageIndex: 4, latestMessageIndex: 6 }] },
+        } as unknown as ChatSummary;
+        const asked: [number, number][] = [];
+        const ctx = conversationContext({
+            client: {
+                displayName: () => "",
+                getContentAsText: () => "",
+                toShortTimeString: () => "",
+                formatMessageDate: () => "",
+                isChatReadOnly: () => false,
+                unreadThreadMessageCount: (_, root, latest) => {
+                    asked.push([root, latest]);
+                    return latest - 4;
+                },
+            },
+            chat,
+            me: "me",
+            formatter: (key) => String(key),
+            users: new Map(),
+            webhooks: new Map(),
+            webhookIds: new Set<string>(),
+            detailsLoaded: true,
+            lowBandwidth: false,
+            revealed: () => false,
+            claimant: {
+                previewingOrLapsed: false,
+                diamond: false,
+                lifetimeDiamond: false,
+                streak: 0,
+                chitEarned: 0,
+            },
+            tokens: new Map(),
+            rates: () => new Map(),
+            face: (userId) => userId,
+        });
+        expect(ctx.unreadInThread(4)).toBe(2);
+        expect(asked).toEqual([[4, 6]]);
+        // a thread the chat doesn't list as followed
+        expect(ctx.unreadInThread(5)).toBe(0);
     });
 });

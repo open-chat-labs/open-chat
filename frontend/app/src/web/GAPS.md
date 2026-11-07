@@ -517,12 +517,12 @@ design export needs. Each entry says where it came up.
   export: `ThreadPanel` takes `list` and `composer` snippets (and `replyCount`): the app lists a
   thread's replies with the conversation's own list and composer (`MessageArea`), which the
   panel's `MessageGroup`s and `MessageComposer` couldn't be (no paging, read marking, menus,
-  attachments). The thread line under a message is `ThreadLink`, under every kind of message
-  (`MessageGroup`, from the message's `threadCount` / `threadLastAt` / `onOpenThread`), where only
-  `ChatBubble` had it: a card as wide as what it says, with the faces of those in the thread
-  (`threadFaces`, `AvatarStack`) and an accent outline while its thread is the one open
-  (`threadSelected`), under the message's reactions (which overlap the message's edge as
-  without a thread); not in the design. `modal.ts` exports `dialogOpen()` for a page's own Esc.
+  attachments). The thread link under a message is design pass 8's (`ChatBubble`'s bordered pill
+  under the reactions: faces, "N replies", "· N new", the accent while open; `threadFaces`,
+  `threadNew`, `threadActive`), but as its own component, `ThreadLink`, which `ChatBubble` draws
+  and `MessageGroup` draws under every other kind of message (from the message's thread fields),
+  where pass 8 draws it in `ChatBubble` only: so a poll, a swap or a file keeps its link, and no
+  message shows two (EXPORT-LOG, pass 8). `modal.ts` exports `dialogOpen()` for a page's own Esc.
   `ThreadPanel`'s Follow waits for the host (`Waited`, a spinner) where it flipped at once.
 - **Composer banner** (by hand, 8b): `ComposerBar` takes `onBannerAction`, passed to `Banner`'s
   `actionHandler` with `bannerAction` as its label (it had the label but no handler). Nothing in

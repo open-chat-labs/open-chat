@@ -1,7 +1,7 @@
 <!-- Text message bubble: optional reply quote, forwarded tag, code block, text with an inline time/status stamp,
      link preview cards (LinkCard) under the text: with any, the bubble takes LinkPreview's shape (its 320px width,
      cards flush to a 4px inset, the stamp in a footer under them), and an X on each card for the sender with onRemovePreview,
-     failed + Retry line, thread link and reaction chips. Emoji-only messages of one or two emoji render large.
+     failed + Retry line, reaction chips and the thread link under them. Emoji-only messages of one or two emoji render large.
      Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
 <script lang="ts">
   import { useT } from '../i18n';
@@ -32,7 +32,7 @@
     time: string;
     side?: 'sent' | 'received';
     lastInGroup?: boolean;
-    /** Right-aligned layouts (native sent bubbles): the bubble (and its reactions) at the inline end, its grouped / tail corners on that side. */
+    /** Right-aligned layouts (native sent bubbles): the bubble, its reactions and its thread link at the inline end, its grouped / tail corners on that side. */
     mirror?: boolean;
     status?: 'sending' | 'sent' | 'delivered' | 'failed';
     /** Shown under a failed message; defaults by side. */
@@ -53,12 +53,15 @@
     maxReactionRows?: number;
     onToggleReaction?: (emoji: string) => void;
     onShowAllReactions?: () => void;
+    /** Replies in the message's thread: the thread link under the reactions. */
     threadCount?: number;
     threadLastAt?: string;
-    /** Those in the thread, as CSS backgrounds (ThreadLink's faces). */
+    /** Up to three of those in the thread, as CSS backgrounds (colours or gradients); the reply arrow without them. */
     threadFaces?: string[];
-    /** Its thread is the one open (ThreadLink's selected). */
-    threadSelected?: boolean;
+    /** Unread replies: "· N new" after the count. */
+    threadNew?: number;
+    /** Its thread is the one open: the link on the accent. */
+    threadActive?: boolean;
     onOpenThread?: () => void;
     /** Previews of the links in the text, a card each under it. */
     previews?: Omit<ComponentProps<typeof LinkCard>, 'side'>[];
@@ -91,7 +94,8 @@
     threadCount = 0,
     threadLastAt = '',
     threadFaces = [],
-    threadSelected = false,
+    threadNew = 0,
+    threadActive = false,
     onOpenThread,
     previews = [],
     onRemovePreview,
@@ -184,10 +188,18 @@
           <span class="retry" onclick={retryAction} role="button" tabindex="0">{t('ui.common.retry')}</span>
         </div>
       {/if}
-      <ReactionChips {reactions} maxRows={maxReactionRows} onToggle={onToggleReaction} onShowAll={onShowAllReactions} />
-      <!-- the thread under the reactions, which overlap the bubble's edge -->
+      <ReactionChips {reactions} maxRows={maxReactionRows} {mirror} onToggle={onToggleReaction} onShowAll={onShowAllReactions} />
+      <!-- the thread under the reactions, which overlap the bubble's edge (pass 8) -->
       {#if threadCount > 0}
-        <ThreadLink count={threadCount} lastAt={threadLastAt} faces={threadFaces} selected={threadSelected} onOpen={onOpenThread} />
+        <ThreadLink
+          count={threadCount}
+          lastAt={threadLastAt}
+          faces={threadFaces}
+          newCount={threadNew}
+          active={threadActive}
+          {mirror}
+          onOpen={onOpenThread}
+        />
       {/if}
     </div>
   {/if}

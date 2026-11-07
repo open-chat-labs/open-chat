@@ -591,7 +591,7 @@
   {
     "name": "ChatBubble",
     "source": "lib/ChatBubble.dc.html",
-    "hash": "1c51c112",
+    "hash": "c29c4968",
     "description": "count grapheme clusters so flags, skin tones and ZWJ families read as one emoji",
     "preview": {
       "width": 420,
@@ -835,7 +835,7 @@
         "section": null,
         "required": false,
         "componentDefault": "0",
-        "doc": ""
+        "doc": "Replies in the message's thread: the thread link under the reactions."
       },
       {
         "name": "threadLastAt",
@@ -857,10 +857,21 @@
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": "Those in the thread, as CSS backgrounds (ThreadLink's faces)."
+        "doc": "Up to three of those in the thread, as CSS backgrounds (colours or gradients); the reply arrow without them."
       },
       {
-        "name": "threadSelected",
+        "name": "threadNew",
+        "type": "number",
+        "default": 0,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "Unread replies: \"· N new\" after the count."
+      },
+      {
+        "name": "threadActive",
         "type": "boolean",
         "default": false,
         "editor": "boolean",
@@ -868,7 +879,7 @@
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": "Its thread is the one open (ThreadLink's selected)."
+        "doc": "Its thread is the one open: the link on the accent."
       },
       {
         "name": "onOpenThread",
@@ -912,7 +923,7 @@
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": "Right-aligned layouts (native sent bubbles): the bubble (and its reactions) at the inline end, its grouped / tail corners on that side."
+        "doc": "Right-aligned layouts (native sent bubbles): the bubble, its reactions and its thread link at the inline end, its grouped / tail corners on that side."
       }
     ],
     "group": "library"
@@ -950,6 +961,17 @@
         "doc": "Rows of chips before the rest fold into \"+N\"."
       },
       {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Right-aligned layouts (native sent bubbles): the chips at the inline end, under the message."
+      },
+      {
         "name": "onToggle",
         "type": "(emoji: string) => void",
         "default": null,
@@ -976,9 +998,9 @@
   },
   {
     "name": "ThreadLink",
-    "source": "lib/ChatBubble.dc.html (its thread line), by hand (4c)",
+    "source": "lib/ChatBubble.dc.html (its thread link, pass 8), by hand (4c)",
     "hash": "",
-    "description": "A message's thread: a compact card under the message and its reactions, as wide as what it says: who's in the thread (overlapping faces, \"+N\" past three), \"N replies\" and when the last came, opening the thread. Accent-outlined while it's the thread open beside the conversation. ChatBubble's thread line as its own component, so MessageGroup shows it under every kind of message.",
+    "description": "A message's thread (design pass 8, ChatBubble's thread link): a bordered pill under the message and its reactions: up to three overlapping faces of those in the thread (or the reply arrow without them), \"N replies\", \"· N new\" and when the last reply came, opening the thread. On the accent while it's the thread open beside the conversation. Its own component, by hand, so MessageGroup shows the same link under every other kind of message.",
     "preview": {
       "width": 360,
       "height": 48
@@ -1021,10 +1043,21 @@
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": "Those in the thread, as CSS backgrounds (AvatarStack's people); the reply icon shows without them."
+        "doc": "Those in the thread, as CSS backgrounds (colours or gradients): up to three show; the reply arrow without them."
       },
       {
-        "name": "selected",
+        "name": "newCount",
+        "type": "number",
+        "default": 0,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "Unread replies: \"· N new\" after the count."
+      },
+      {
+        "name": "active",
         "type": "boolean",
         "default": false,
         "editor": "boolean",
@@ -1032,7 +1065,18 @@
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": "It's the thread open (beside the conversation): accent outline and tint."
+        "doc": "It's the thread open (beside the conversation): the accent border on the soft accent."
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Right-aligned layouts (native sent bubbles): the link at the inline end, under the message."
       },
       {
         "name": "onOpen",
@@ -3637,7 +3681,7 @@
   {
     "name": "MessageGroup",
     "source": "lib/MessageGroup.dc.html",
-    "hash": "39508894",
+    "hash": "55d8a945",
     "description": "Message actions. Pointer: hover bar (3 recent reactions, 🙂, Reply/Edit, ⋯) + right-click. Keyboard: Shift+F10 / Menu key.",
     "preview": {
       "width": 460,
@@ -3738,7 +3782,7 @@
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The run's messages (`GroupMessage`: `kind` picks the component). Each can carry its thread: `threadCount`, `threadLastAt`, `threadFaces`, `threadNew`, `threadActive` and `onOpenThread`, drawn under its reactions (a text bubble's own link; the same link under every other kind)."
       },
       {
         "name": "onMessageMenu",

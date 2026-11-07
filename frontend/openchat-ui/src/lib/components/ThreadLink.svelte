@@ -1,25 +1,34 @@
-<!-- A message's thread: a compact card under the message and its reactions, as wide as what it says: who's in the
-     thread (overlapping faces, "+N" past three), "N replies" and when the last came, opening the thread. Accent-outlined
-     while it's the thread open beside the conversation. ChatBubble's thread line as its own component, so MessageGroup
-     shows it under every kind of message. -->
+<!-- A message's thread (design pass 8, ChatBubble's thread link): a bordered pill under the message and its reactions:
+     up to three overlapping faces of those in the thread (or the reply arrow without them), "N replies", "· N new" and
+     when the last reply came, opening the thread. On the accent while it's the thread open beside the conversation.
+     Its own component, by hand, so MessageGroup shows the same link under every other kind of message. -->
 <script lang="ts">
   import { useT } from '../i18n';
-  import AvatarStack from './AvatarStack.svelte';
 
   interface Props {
     /** Replies in the thread. */
     count: number;
     /** When the last reply came, e.g. "2:14 pm"; nothing shown without it. */
     lastAt?: string;
-    /** Those in the thread, as CSS backgrounds (AvatarStack's people); the reply icon shows without them. */
+    /** Those in the thread, as CSS backgrounds (colours or gradients): up to three show; the reply arrow without them. */
     faces?: string[];
-    /** It's the thread open (beside the conversation): accent outline and tint. */
-    selected?: boolean;
+    /** Unread replies: "· N new" after the count. */
+    newCount?: number;
+    /** It's the thread open (beside the conversation): the accent border on the soft accent. */
+    active?: boolean;
+    /** Right-aligned layouts (native sent bubbles): the link at the inline end, under the message. */
+    mirror?: boolean;
     onOpen?: () => void;
   }
 
-  let { count, lastAt = '', faces = [], selected = false, onOpen }: Props = $props();
+  let { count, lastAt = '', faces = [], newCount = 0, active = false, mirror = false, onOpen }: Props = $props();
   const t = useT();
+
+  const shown = $derived(faces.slice(0, 3));
+  const replies = $derived(t('ui.chatBubble.replies', { count }));
+  const label = $derived(
+    newCount > 0 ? t('ui.chatBubble.openThreadNew', { replies, fresh: newCount }) : t('ui.chatBubble.openThread', { replies }),
+  );
 
   function key(e: KeyboardEvent) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -28,13 +37,32 @@
   }
 </script>
 
-<div class="thread" class:selected onclick={onOpen} onkeydown={key} role="button" tabindex="0" aria-current={selected || undefined}>
-  {#if faces.length > 0}
-    <AvatarStack people={faces} max={4} size={20} ring="var(--thread-bg)" />
+<div
+  class="thread"
+  class:active
+  class:mirror
+  class:faced={shown.length > 0}
+  onclick={onOpen}
+  onkeydown={key}
+  role="button"
+  tabindex="0"
+  aria-label={label}
+  aria-current={active || undefined}
+  title={t('ui.chatBubble.openThreadTitle')}
+>
+  {#if shown.length > 0}
+    <span class="faces">
+      {#each shown as face}
+        <span class="face" style:background={face}></span>
+      {/each}
+    </span>
   {:else}
     <span class="thread-icon" data-oc-flip></span>
   {/if}
-  <span class="thread-count">{t('ui.chatBubble.replies', { count })}</span>
+  <span class="thread-count">{replies}</span>
+  {#if newCount > 0}
+    <span class="thread-new">{t('ui.chatBubble.threadNew', { count: newCount })}</span>
+  {/if}
   {#if lastAt}
     <span class="thread-meta">{t('ui.chatBubble.lastReply', { when: lastAt })}</span>
   {/if}
@@ -44,7 +72,6 @@
   @use '../styles/mixins' as *;
 
   .thread {
-    --thread-bg: var(--card);
     display: flex;
     align-items: center;
     gap: var(--space-8);
@@ -55,11 +82,11 @@
     max-width: 100%;
     min-width: 0;
     margin-top: var(--space-6);
-    min-height: var(--control-sm);
-    padding: var(--space-4) var(--space-12) var(--space-4) var(--space-6);
+    height: 34px;
+    padding: 0 var(--space-12) 0 var(--space-10);
     box-sizing: border-box;
-    border-radius: var(--radius-pill);
-    background: var(--thread-bg);
+    border-radius: var(--radius-md);
+    background: transparent;
     box-shadow: inset 0 0 0 1px var(--line-2);
     cursor: pointer;
     user-select: none;
@@ -67,12 +94,21 @@
       background 0.12s,
       box-shadow 0.12s;
 
-    &:hover {
-      --thread-bg: color-mix(in oklch, var(--ink) 5%, var(--card));
+    &.faced {
+      padding-inline-start: var(--space-6);
     }
 
-    &.selected {
-      --thread-bg: color-mix(in oklch, var(--accent) 12%, var(--card));
+    &.mirror {
+      justify-self: end;
+      align-self: flex-end;
+    }
+
+    &:hover {
+      background: var(--overlay-1);
+    }
+
+    &.active {
+      background: var(--accent-soft);
       box-shadow: inset 0 0 0 1px var(--accent);
     }
 
@@ -81,24 +117,46 @@
     }
   }
 
+  .faces {
+    display: flex;
+    flex: none;
+    margin-inline-end: var(--space-4);
+  }
+
+  .face {
+    width: 22px;
+    height: 22px;
+    margin-inline-end: -6px;
+    border-radius: var(--radius-pill);
+    box-shadow: 0 0 0 2px var(--surface-1);
+  }
+
   .thread-icon {
     flex: none;
-    margin-inline-start: var(--space-4);
-    @include icon(reply, 14px, var(--accent));
+    @include icon(reply, 14px, var(--accent-bright));
   }
 
   .thread-count,
+  .thread-new,
   .thread-meta {
-    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--accent);
     white-space: nowrap;
+  }
+
+  .thread-count {
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: var(--accent-bright);
+  }
+
+  .thread-new {
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-2);
   }
 
   .thread-meta {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-weight: var(--weight-regular);
-    color: var(--ink-3);
+    font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-4);
   }
 </style>

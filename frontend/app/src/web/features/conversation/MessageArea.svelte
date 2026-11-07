@@ -284,7 +284,9 @@
         void rowsVersion;
         void $cryptoLookup;
         void ratesLoaded;
-        // the thread open beside the chat (the route's), its "N replies" outlined; rows key on it
+        // a thread's unread replies ("· N new" on its link) follow what's read
+        void $messagesRead;
+        // the thread open beside the chat (the route's), its link on the accent; rows key on it
         // (RowCache), so opening another redoes only the two it concerns
         const openThread = thread === undefined && $threadOpenStore ? $messageIndexStore : undefined;
         return conversationContext({

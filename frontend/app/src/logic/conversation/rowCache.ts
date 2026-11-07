@@ -1,7 +1,7 @@
 import type { EventWrapper, Message } from "@client";
 import {
     messageRow,
-    threadSelected,
+    isOpenThread,
     type ConversationContext,
     type MessageRow,
     type MessageStatus,
@@ -9,9 +9,9 @@ import {
 
 /**
  * The conversation's rows, kept per event while nothing a row shows changes (the event, its
- * status, the names in it and whether its thread is the one open), so a row stays the same
- * object, and its bubble isn't redone, as users and other chat state update. The screen clears it
- * when the wording, the day or the chat changes.
+ * status, the names in it, and its thread link's state: whether it's the thread open and its unread
+ * replies), so a row stays the same object, and its bubble isn't redone, as users and other chat
+ * state update. The screen clears it when the wording, the day or the chat changes.
  */
 export class RowCache {
     #rows = new Map<
@@ -20,7 +20,7 @@ export class RowCache {
             evt: EventWrapper<Message>;
             status: MessageStatus;
             names: string;
-            open: boolean;
+            thread: string;
             row: MessageRow;
         }
     >();
@@ -35,19 +35,22 @@ export class RowCache {
         const reply = msg.repliesTo;
         const name = (userId: string) => (userId === ctx.me ? ctx.you : ctx.userName(userId));
         const names = `${name(msg.sender)}\n${reply?.kind === "rehydrated_reply_context" ? name(reply.senderId) : ""}`;
-        // another thread opening redoes only the rows it opens or closes
-        const open = threadSelected(msg, ctx.openThread);
+        // another thread opening, or a thread's replies being read, redoes only the rows it concerns
+        const thread =
+            msg.thread === undefined
+                ? ""
+                : `${isOpenThread(msg, ctx.openThread)}|${ctx.unreadInThread(msg.messageIndex)}`;
         const kept = this.#rows.get(key);
         if (
             kept?.evt === evt &&
             kept.status === status &&
             kept.names === names &&
-            kept.open === open
+            kept.thread === thread
         ) {
             return kept.row;
         }
         const row = messageRow(evt, status, ctx);
-        this.#rows.set(key, { evt, status, names, open, row });
+        this.#rows.set(key, { evt, status, names, thread, row });
         return row;
     }
 

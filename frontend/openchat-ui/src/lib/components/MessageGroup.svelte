@@ -523,10 +523,18 @@
         {/if}
         <!-- every other kind's reactions and thread, under it as under a text bubble (ChatBubble draws its own) -->
         {#if m.kind && m.kind !== 'text' && m.reactions?.length}
-          <ReactionChips reactions={m.reactions} onToggle={(c) => onReact?.(i, c)} />
+          <ReactionChips reactions={m.reactions} mirror={mirrored} onToggle={(c) => onReact?.(i, c)} />
         {/if}
         {#if m.kind && m.kind !== 'text' && (m.threadCount ?? 0) > 0}
-          <ThreadLink count={m.threadCount ?? 0} lastAt={m.threadLastAt} faces={m.threadFaces} selected={m.threadSelected} onOpen={m.onOpenThread} />
+          <ThreadLink
+            count={m.threadCount ?? 0}
+            lastAt={m.threadLastAt}
+            faces={m.threadFaces}
+            newCount={m.threadNew}
+            active={m.threadActive}
+            mirror={mirrored}
+            onOpen={m.onOpenThread}
+          />
         {/if}
         {#if menuable(m) && hover === i && !touch && activeMenu !== i}
           <span class="bar" style:left={barLeft} data-msg-acts="" role="toolbar" aria-label={t('ui.messageGroup.actions')}>

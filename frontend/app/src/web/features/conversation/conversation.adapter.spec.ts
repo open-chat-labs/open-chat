@@ -30,6 +30,7 @@ const ctx: ConversationContext = {
     text: (key) => key.key,
     openThread: undefined,
     face: (userId) => `face:${userId}`,
+    unreadInThread: () => 0,
     token: (ledger) =>
         ledger === "icp"
             ? {

@@ -45,6 +45,7 @@ import { formatConvertedValue } from "@src/logic/wallet/walletState.svelte";
 import { getProxyAdjustedBlobUrl } from "@src/utils/media";
 import { pickById } from "@src/utils/pickById";
 import { findUser } from "@src/utils/user";
+import { threadUnreadCount } from "@src/logic/threads/threadRead";
 
 // A conversation's messages to MessageGroup's messages, for every tree that shows them with the
 // library (src/web's conversation, src/native's; src/web/DATA.md, Conversation). The timeline's
@@ -92,6 +93,11 @@ export type ConversationContext = {
     openThread: number | undefined;
     /** A user's face as the conversation shows it (their avatar's colour, a CSS background). */
     face: (userId: string) => string;
+    /**
+     * A thread's unread replies, by its root's index: as the list of threads counts them
+     * (`threadUnreadCount`), none for a thread the reader doesn't follow.
+     */
+    unreadInThread: (threadRootMessageIndex: number) => number;
 };
 
 export type TransferToken = {
@@ -320,34 +326,48 @@ type KindBase = {
     reactions: GroupMessage["reactions"];
 } & ThreadFields;
 
-/** A message's thread as "N replies" under it, whatever its kind. */
+/**
+ * A message's thread as its link under it (design pass 8), whatever its kind: on the thread's root
+ * message, the one that started it.
+ */
 export type ThreadFields = {
     threadCount: number;
     threadLastAt: string | undefined;
-    /** Those in the thread, in the colours their avatars have in the conversation (`face`). */
+    /** Up to three of those in the thread, in the colours their avatars have in the conversation (`face`). */
     threadFaces: string[];
-    threadSelected: boolean;
+    /** Its unread replies (`unreadInThread`): "· N new". */
+    threadNew: number;
+    /** It's the thread open beside the conversation. */
+    threadActive: boolean;
 };
 
+/** The most faces a thread link shows (pass 8). */
+const THREAD_FACES = 3;
+
 /** Whether the message's thread is the one open beside the conversation (`openThread`). */
-export function threadSelected(msg: Message, openThread: number | undefined): boolean {
+export function isOpenThread(msg: Message, openThread: number | undefined): boolean {
     return msg.thread !== undefined && msg.messageIndex === openThread;
 }
 
 /**
- * A message's thread: how many replies, when the last came, who's in it (each the colour of their
- * avatar in the conversation, `face`) and whether it's the one open. None without a thread.
+ * A message's thread: how many replies, when the last came, who's in it (up to three, each the
+ * colour of their avatar in the conversation, `face`), how many replies are unread and whether
+ * it's the one open. None without a thread.
  */
 export function threadFields(
     msg: Message,
-    ctx: Pick<ConversationContext, "date" | "openThread" | "face">,
+    ctx: Pick<ConversationContext, "date" | "openThread" | "face" | "unreadInThread">,
 ): ThreadFields {
     const thread = msg.thread;
     return {
         threadCount: thread?.numberOfReplies ?? 0,
         threadLastAt: thread === undefined ? undefined : ctx.date(thread.latestEventTimestamp),
-        threadFaces: thread === undefined ? [] : [...thread.participantIds].map(ctx.face),
-        threadSelected: threadSelected(msg, ctx.openThread),
+        threadFaces:
+            thread === undefined
+                ? []
+                : [...thread.participantIds].slice(0, THREAD_FACES).map(ctx.face),
+        threadNew: thread === undefined ? 0 : ctx.unreadInThread(msg.messageIndex),
+        threadActive: isOpenThread(msg, ctx.openThread),
     };
 }
 
@@ -654,6 +674,7 @@ export type ConversationContextInput = {
         | "toShortTimeString"
         | "formatMessageDate"
         | "isChatReadOnly"
+        | "unreadThreadMessageCount"
     >;
     chat: ChatSummary | undefined;
     me: string;
@@ -710,6 +731,10 @@ export function conversationContext(input: ConversationContextInput): Conversati
         text: (key) => interpolate(formatter, key),
         openThread: input.openThread,
         face: input.face,
+        unreadInThread: (root) =>
+            threadUnreadCount(chat, root, (latest) =>
+                chat === undefined ? 0 : client.unreadThreadMessageCount(chat.id, root, latest),
+            ),
         token: (ledger) => {
             const token = input.tokens.get(ledger);
             if (token === undefined) return undefined;

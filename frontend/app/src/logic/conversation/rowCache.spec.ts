@@ -23,6 +23,7 @@ const ctx: ConversationContext = {
     text: (key) => key.key,
     openThread: undefined,
     face: (userId) => `face:${userId}`,
+    unreadInThread: () => 0,
     token: () => undefined,
 };
 
@@ -96,18 +97,39 @@ describe("the rows kept per event", () => {
         // a's thread opens: only a is made again
         const aOpen = shown(2);
         expect(aOpen[0]).not.toBe(none[0]);
-        expect(aOpen[0].message.threadSelected).toBe(true);
+        expect(aOpen[0].message.threadActive).toBe(true);
         expect(aOpen[1]).toBe(none[1]);
         expect(aOpen[2]).toBe(none[2]);
         // then b's: a and b are, c is kept
         const bOpen = shown(5);
-        expect(bOpen[0].message.threadSelected).toBe(false);
-        expect(bOpen[1].message.threadSelected).toBe(true);
+        expect(bOpen[0].message.threadActive).toBe(false);
+        expect(bOpen[1].message.threadActive).toBe(true);
         expect(bOpen[2]).toBe(none[2]);
         // a message without a thread at the open index is kept
         const plain = message();
         const kept = rows.row("p", plain, "sent", ctx);
         expect(rows.row("p", plain, "sent", { ...ctx, openThread: 2 })).toBe(kept);
+    });
+
+    test("are made again when a thread's unread replies change, only for its root (pass 8)", () => {
+        const rows = new RowCache();
+        const root = message();
+        root.event.messageIndex = 4;
+        root.event.thread = {
+            numberOfReplies: 3,
+            latestEventTimestamp: 1n,
+            participantIds: new Set(["bob"]),
+        } as Message["thread"];
+        const plain = message();
+        const at = (unread: number) => ({ ...ctx, unreadInThread: () => unread });
+        const before = rows.row("r", root, "sent", at(2));
+        const plainBefore = rows.row("p", plain, "sent", at(2));
+        expect(before.message.threadNew).toBe(2);
+        // read: the root's row is made again, "· N new" gone
+        const after = rows.row("r", root, "sent", at(0));
+        expect(after).not.toBe(before);
+        expect(after.message.threadNew).toBe(0);
+        expect(rows.row("p", plain, "sent", at(0))).toBe(plainBefore);
     });
 
     test("are made again once cleared", () => {

@@ -18,11 +18,13 @@
     reactions: Reaction[];
     /** Rows of chips before the rest fold into "+N". */
     maxRows?: number;
+    /** Right-aligned layouts (native sent bubbles): the chips at the inline end, under the message. */
+    mirror?: boolean;
     onToggle?: (emoji: string) => void;
     onShowAll?: () => void;
   }
 
-  let { reactions, maxRows = 1, onToggle, onShowAll }: Props = $props();
+  let { reactions, maxRows = 1, mirror = false, onToggle, onShowAll }: Props = $props();
   const t = useT();
 
   // fit === null renders every chip so their rows can be measured
@@ -65,7 +67,7 @@
 </script>
 
 {#if reactions.length > 0}
-  <div class="reactions" bind:this={chips}>
+  <div class="reactions" class:mirror bind:this={chips}>
     {#each shown as r}
       <span
         class="chip"
@@ -120,6 +122,11 @@
     margin-top: -9px;
     position: relative;
     z-index: 2;
+
+    &.mirror {
+      justify-content: flex-end;
+      padding-inline: 0 8px;
+    }
   }
 
   /* chips overlap the bubble's bottom edge, so their backgrounds are opaque */

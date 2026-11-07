@@ -1,6 +1,6 @@
 # OpenChat UI — Svelte 5 export
 
-Last export ported **2026-11-07** (pass 7, inverted toasts, by hand; see EXPORT-LOG). First export 2026-10-07 (pass 1: library).
+Last export ported **2026-11-07** (pass 8, the thread link under the reactions, by hand; see EXPORT-LOG). First export 2026-10-07 (pass 1: library).
 Package name: `@openchat/ui` (change in package.json if needed).
 
 ## Run
@@ -90,7 +90,7 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **Button** — from source hash `10a0cae1` (passes 4–6, ported by hand).
 - **CallEvent** — from source hash `229acee3`.
 - **CallPanel** — from source hash `956d6791`.
-- **ChatBubble** — from source hash `98c2e988` (passes 4–6, ported by hand).
+- **ChatBubble** — from source hash `c29c4968` (passes 4–6 and 8, ported by hand).
 - **ChatListHeader** — from source hash `aa5b1850`.
 - **ChatListPanel** — from source hash `1eb60abb`.
 - **ChatPicker** — from source hash `3d01a726`.
@@ -141,7 +141,7 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **MenuItem** — from source hash `81252d62`.
 - **MessageActions** — from source hash `b8b56d84`.
 - **MessageComposer** — from source hash `8fc1f20e` (passes 4–6, ported by hand).
-- **MessageGroup** — from source hash `39508894`.
+- **MessageGroup** — from source hash `55d8a945` (pass 8, ported by hand).
 - **MiniCall** — from source hash `e6c8db6f`.
 - **NavRail** — from source hash `0aa6890d` (passes 4–6, ported by hand).
 - **NewChannelDialog** — from source hash `01911d9c`.
