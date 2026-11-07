@@ -5,12 +5,14 @@ import {
 } from "@stores/androidInterfaceSizes";
 import { followWindowInsets } from "@utils/native/notification_channels";
 import { followThemeInSystemBars } from "@utils/native/systemBarsStyle";
+import { softKeyboard } from "./aboveKeyboard.svelte";
 
 // The safe areas in the Android app. Its edge-to-edge WebView doesn't report
 // env(safe-area-inset-*) reliably, so the shell reports the status and navigation bars' heights
 // itself (the window-inset event), which the app keeps in androidInterfaceSizes and writes to
 // --device-status-bar-height / --device-nav-height on <html>, as components_mobile does. The native
-// tree's --safe-top / --safe-bottom take the larger of the two readings.
+// tree's --safe-top / --safe-bottom take the larger of the two readings. The same event brings the
+// soft keyboard's height (softKeyboard, for aboveKeyboard).
 
 export const ANDROID_SAFE_TOP =
     "max(env(safe-area-inset-top, 0px), var(--device-status-bar-height, 0px))";
@@ -40,9 +42,10 @@ export function followAndroidSystemBars(root: HTMLElement): () => void {
 
     async function listen() {
         try {
-            const registered = await followWindowInsets((data) =>
-                updateAndroidInterfaceSizes(data.statusBarHeightDp, data.navHeightDp),
-            );
+            const registered = await followWindowInsets((data) => {
+                updateAndroidInterfaceSizes(data.statusBarHeightDp, data.navHeightDp);
+                softKeyboard.follow(data.isKeyboardOpen, data.keyboardHeightDp);
+            });
             if (following) listener = registered;
             else void registered.unregister();
         } catch (err) {

@@ -27,6 +27,7 @@
     import { getContext, onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { NativeScreen } from "../../router/locations";
+    import { aboveKeyboard } from "../../aboveKeyboard.svelte";
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenProps } from "../app/screens";
     import AvatarCropSheet from "../start/AvatarCropSheet.svelte";
@@ -162,7 +163,8 @@
 <div class="edit">
     <NativePageHeader title={$_("native.you.editProfile.title")} onBack={context.back} />
 
-    <div class="body">
+    <!-- the keyboard comes up over Save, and the field being typed in scrolls above it -->
+    <div class="body" {@attach aboveKeyboard()}>
         <div
             class="cover"
             class:image={coverUrl !== undefined}

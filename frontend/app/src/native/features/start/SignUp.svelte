@@ -22,6 +22,7 @@
     import { keyboard } from "@stores/keyboard.svelte";
     import { getContext, onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
+    import { aboveKeyboard } from "../../aboveKeyboard.svelte";
     import { useOverlay, type Overlays } from "../../shell/overlays.svelte";
     import AvatarCropSheet from "./AvatarCropSheet.svelte";
     import ReferrerSheet from "./ReferrerSheet.svelte";
@@ -53,8 +54,8 @@
     let photoMenu = $state<HTMLElement | null>(null);
 
     // the keyboard covers the bottom of the page (the referrer row, Continue) rather than the page
-    // shrinking above it and pushing them up; the referrer sheet, whose search it would hide,
-    // shrinks above it as usual
+    // shrinking above it and pushing them up (the field being typed in scrolls above it:
+    // aboveKeyboard); the referrer sheet, whose search it would hide, shrinks above it as usual
     $effect(() => {
         if (picking) keyboard.enableViewportResize();
         else keyboard.disableViewportResize();
@@ -180,7 +181,7 @@
 </script>
 
 <NativePageHeader title="" onBack={back} />
-<div class="body">
+<div class="body" {@attach aboveKeyboard({ holdViewport: false })}>
     <button
         type="button"
         class="avatar"
