@@ -389,7 +389,9 @@ design export needs. Each entry says where it came up.
     everything else").
   - **Opening a chat** shows its messages from the device's cache (CachePrimer keeps every chat's
     latest events there) as the screen slides in, as the old UI does; the screen's chunk is
-    preloaded with the Chats tab's. What still waits gets a small spinner at the top of the list,
+    preloaded with the Chats tab's. The shell pushes a conversation once its first messages are
+    in (`messagesIn`, up to 600ms): mounted before them, a longer chat slid in empty and stalled
+    midway as its rows rendered (seen on the emulator with 37 messages). What still waits gets a small spinner at the top of the list,
     after 400ms: the chat being selected (a link opening a channel while its community loads), or
     its first messages coming from the backend when the cache has none. Older messages loading as
     the list is scrolled up show none: ChatEventList doesn't say when it's loading them, and it

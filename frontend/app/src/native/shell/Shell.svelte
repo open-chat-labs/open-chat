@@ -20,15 +20,18 @@
         communitiesStore,
         currentUserIdStore,
         defaultCommunity,
+        eventsStore,
         identityStateStore,
         lastSelectedCommunityIdStore,
         messageActivitySummaryStore,
         OpenChat,
         pathContextStore,
         routeStore,
+        selectedChatSummaryStore,
         sortedCommunitiesStore,
         unreadDirectAndGroupCountsStore,
         chatIdentifierToString,
+        type ChatIdentifier,
         type CommunityIdentifier,
     } from "@client";
     import { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
@@ -38,6 +41,7 @@
     import { minimizeApp } from "tauri-plugin-oc-api";
     import ScreenHost from "../features/app/ScreenHost.svelte";
     import { screenModules, type ScreenContext } from "../features/app/screens";
+    import { messagesIn, messagesShown } from "../features/conversation/messagesIn";
     import { StartStack, startEntry, startStepFor } from "../features/start/startStack.svelte";
     import {
         showsTabBar,
@@ -129,7 +133,10 @@
 
     // The stacks go where the URL is once the screens it shows can show at once (their chunks in:
     // screenModules), so the screen before stays until then rather than a blank one or a spinner.
-    // The shell preloads every screen's chunk when it's idle, so that's almost always at once.
+    // The shell preloads every screen's chunk when it's idle, so that's almost always at once. A
+    // conversation pushed anew also waits for its first messages, from the device's cache, so it
+    // slides in with them (messagesIn), up to MESSAGES_WAIT_MS.
+    const MESSAGES_WAIT_MS = 600;
     let arrival = 0;
     $effect(() => {
         const here = location;
@@ -138,7 +145,12 @@
         untrack(() => {
             const mine = ++arrival;
             const kinds = at.steps.map((s) => s.screen.kind);
-            if (screenModules.ready(kinds)) {
+            const opening = newConversation(at);
+            if (
+                screenModules.ready(kinds) &&
+                (opening === undefined ||
+                    messagesShown(opening, selectedChatSummaryStore.value, eventsStore.value))
+            ) {
                 arriveAt(at);
                 return;
             }
@@ -151,11 +163,26 @@
                     // ScreenHost says it didn't load, with a retry
                     console.warn("Couldn't load a screen", err);
                 }
+                if (opening !== undefined) {
+                    await messagesIn(
+                        opening,
+                        { selected: selectedChatSummaryStore, events: eventsStore },
+                        MESSAGES_WAIT_MS,
+                    );
+                }
                 // unless the URL has moved on meanwhile
                 if (mine === arrival) arriveAt(at);
             }
         });
     });
+
+    // the chat of a conversation `at` pushes that its tab's stack doesn't have yet
+    function newConversation(at: TabsLocation): ChatIdentifier | undefined {
+        const top = at.steps[at.steps.length - 1];
+        if (top?.screen.kind !== "conversation") return undefined;
+        const current = stacks.stackOf(at.tab) ?? [];
+        return current.some((s) => s.key === top.key) ? undefined : top.screen.route.chatId;
+    }
 
     function arriveAt(at: TabsLocation) {
         stacks.arrive(at);
