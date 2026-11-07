@@ -13,7 +13,6 @@
     import TabBar from "@openchat/ui/src/native/TabBar.svelte";
     import { disableWalletFeature } from "@src/utils/features";
     import { navigate } from "@src/utils/navigation";
-    import { expectBackPress } from "@utils/native/notification_channels";
     import {
         allUsersStore,
         anonUserStore,
@@ -33,7 +32,6 @@
     } from "@client";
     import { PendingRemovals } from "@src/logic/chats/pendingRemovals.svelte";
     import { UNDO_TOAST_MS } from "@openchat/ui/src/native/toastQueue.svelte";
-    import type { PluginListener } from "@tauri-apps/api/core";
     import { getContext, onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { minimizeApp } from "tauri-plugin-oc-api";
@@ -55,6 +53,7 @@
     import { ToastQueue } from "@openchat/ui/src/native/toastQueue.svelte";
     import { toastStore } from "@src/stores/toast";
     import { backAction } from "./back";
+    import { listenForSystemBack } from "./systemBack";
     import { openOnWeb } from "./onWeb";
     import { popOut, pushIn } from "./motion";
     import { Overlays } from "./overlays.svelte";
@@ -465,25 +464,21 @@
     }
 
     onMount(() => {
-        // Android's system back reaches the app as the plugin's event (MainActivity takes every
-        // press); iOS has none. A browser's back is its history, which the stacks follow.
+        // Android's system back reaches the app as a plugin event (systemBack.ts); iOS has none. A
+        // browser's back is its history, which the stacks follow.
         if (!client.isNativeApp()) return;
-        let listener: PluginListener | undefined;
+        let stop: (() => void) | undefined;
         let mounted = true;
-        void listenForBack();
+        void listen();
         return () => {
             mounted = false;
-            listener?.unregister();
+            stop?.();
         };
 
-        async function listenForBack() {
-            try {
-                const registered = await expectBackPress(systemBack);
-                if (mounted) listener = registered;
-                else registered.unregister();
-            } catch (err) {
-                console.error("Couldn't listen for the system back", err);
-            }
+        async function listen() {
+            const unlisten = await listenForSystemBack(systemBack);
+            if (mounted) stop = unlisten;
+            else unlisten();
         }
     });
 </script>
