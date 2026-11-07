@@ -2,8 +2,11 @@ import {
     lastRightPanelState,
     rightPanelHistory,
     setRightPanelHistory,
+    threadMessageIndexStore,
     type RightPanelContent,
 } from "@client";
+import { threadClosedPath } from "@src/logic/threads/threadUrl";
+import { navigate } from "@src/utils/navigation";
 import type { RightColumnState } from "../../shell/rightColumn.svelte";
 
 /**
@@ -65,4 +68,17 @@ export function showInRightColumn(column: RightColumnState, panel: RightPanelCon
 export function closeRightColumn(column: RightColumnState): void {
     setRightPanelHistory([]);
     column.open = false;
+}
+
+/**
+ * Closes the open thread: it goes from the right column's history, and from the URL (`/:tmi` and
+ * `?open`, keeping the rest of the query: ROUTES.md, "Threads"), as the old right panel closed it.
+ * TODO(phase 7): the call's thread state (the old panel's `activeVideoCall.threadOpen(false)`).
+ */
+export function closeThread(): void {
+    // not setRightPanelHistory, which takes `?open` off the URL itself (a second navigation)
+    rightPanelHistory.update((history) =>
+        history.filter((panel) => panel.kind !== "message_thread_panel"),
+    );
+    navigate(threadClosedPath(location.pathname, location.search, threadMessageIndexStore.value));
 }

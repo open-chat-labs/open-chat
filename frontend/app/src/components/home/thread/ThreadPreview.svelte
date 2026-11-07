@@ -1,7 +1,10 @@
 <script lang="ts">
     import Spinner from "@src/components_shared/icons/Spinner.svelte";
     import Tooltip from "@src/components/tooltip/Tooltip.svelte";
-    import { threadReadOnSight } from "@src/logic/threads/threadRead";
+    import {
+        threadReadOnSight,
+        threadUnreadCount,
+    } from "@src/logic/threads/threadRead";
     import { toastStore } from "@src/stores/toast";
     import {
         allUsersStore,
@@ -45,34 +48,16 @@
     let chat = $derived($chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined);
     let canTipMessages = $derived(client.canTipMessages(thread.chatId));
     let muted = $derived(chat?.membership?.notificationsMuted || false);
-    let syncDetails = $derived(
-        chat?.membership?.latestThreads?.find(
-            (t) => t.threadRootMessageIndex === threadRootMessageIndex,
-        ),
-    );
-    let unreadCount = $derived(
-        syncDetails
-            ? client.unreadThreadMessageCount(
-                  thread.chatId,
-                  threadRootMessageIndex,
-                  syncDetails.latestMessageIndex,
-              )
-            : 0,
-    );
+    // follows messages being read
+    let unreadCount = $derived.by(() => {
+        void $messagesRead;
+        return threadUnreadCount(chat, threadRootMessageIndex, (latest) =>
+            client.unreadThreadMessageCount(thread.chatId, threadRootMessageIndex, latest),
+        );
+    });
     let chatData = $derived({
         name: chat?.name,
         avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
-    });
-
-    $effect(() => {
-        void $messagesRead;
-        if (syncDetails !== undefined) {
-            unreadCount = client.unreadThreadMessageCount(
-                thread.chatId,
-                threadRootMessageIndex,
-                syncDetails.latestMessageIndex,
-            );
-        }
     });
 
     let grouped = $derived(client.groupBySender(thread.latestReplies));

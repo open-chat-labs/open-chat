@@ -51,7 +51,7 @@ export const leftScreens: Screens<LeftRegion> = {
     chats: () => import("../chats/ChatsScreen.svelte"),
 
     // the threads followed (phase 4, 4c)
-    threads: undefined,
+    threads: () => import("../thread/ThreadListScreen.svelte"),
 
     // notifications (phase 3d, ROUTES.md decision 7)
     activity: () => import("../activity/ActivityScreen.svelte"),
@@ -112,7 +112,7 @@ export const rightScreens: Screens<RightRegion> = {
     user_profile: undefined,
 
     // the open thread (phase 4, 4c: ThreadPanel)
-    thread: undefined,
+    thread: () => import("../thread/ThreadScreen.svelte"),
 
     // a proposals group's filters (phase 4, 4a)
     proposal_filters: undefined,

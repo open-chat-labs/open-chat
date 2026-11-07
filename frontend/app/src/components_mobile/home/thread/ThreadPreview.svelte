@@ -1,5 +1,9 @@
 <script lang="ts">
-    import { threadReadOnSight } from "@src/logic/threads/threadRead";
+    import {
+        followedThread,
+        threadReadOnSight,
+        threadUnreadCount,
+    } from "@src/logic/threads/threadRead";
     import { toastStore } from "@src/stores/toast";
     import {
         Avatar,
@@ -45,20 +49,14 @@
     let threadRootMessageIndex = $derived(thread.rootMessage.event.messageIndex);
     let chat = $derived($chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined);
     let canTipMessages = $derived(client.canTipMessages(thread.chatId));
-    let syncDetails = $derived(
-        chat?.membership?.latestThreads?.find(
-            (t) => t.threadRootMessageIndex === threadRootMessageIndex,
-        ),
-    );
-    let unreadCount = $derived(
-        syncDetails
-            ? client.unreadThreadMessageCount(
-                  thread.chatId,
-                  threadRootMessageIndex,
-                  syncDetails.latestMessageIndex,
-              )
-            : 0,
-    );
+    let syncDetails = $derived(followedThread(chat, threadRootMessageIndex));
+    // follows messages being read
+    let unreadCount = $derived.by(() => {
+        void $messagesRead;
+        return threadUnreadCount(chat, threadRootMessageIndex, (latest) =>
+            client.unreadThreadMessageCount(thread.chatId, threadRootMessageIndex, latest),
+        );
+    });
     let chatData = $derived({
         name: chat?.name,
         avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
@@ -73,17 +71,6 @@
             messagesRead.markReadUpTo(context, syncDetails?.latestMessageIndex);
         }
     }
-
-    $effect(() => {
-        void $messagesRead;
-        if (syncDetails !== undefined) {
-            unreadCount = client.unreadThreadMessageCount(
-                thread.chatId,
-                threadRootMessageIndex,
-                syncDetails.latestMessageIndex,
-            );
-        }
-    });
 
     let grouped = $derived(client.groupBySender(thread.latestReplies));
 

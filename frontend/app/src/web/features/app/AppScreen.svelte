@@ -9,6 +9,7 @@
         dailyPuzzleStore,
         favouritesStore,
         identityStateStore,
+        lastRightPanelState,
         latestSuccessfulUpdatesLoop,
         OpenChat,
         postLoginCreateCommunity,
@@ -58,7 +59,7 @@
     import { playableDailyPuzzleRows } from "@src/core/dailyPuzzle/playable";
     import DetailsColumn from "./DetailsColumn.svelte";
     import RegionScreen from "./RegionScreen.svelte";
-    import { closeRightColumn, openOnNewPanel } from "./rightPanel";
+    import { closeRightColumn, closeThread, openOnNewPanel } from "./rightPanel";
     import { MessageJumps } from "./messageJumps.svelte";
     import { leftScreens, middleScreens, type ScreenContext } from "./screens";
 
@@ -197,6 +198,12 @@
     // the list a narrow screen goes back to from the middle
     const back = $derived(narrowBack(regions));
 
+    // the modal right column's backdrop and Esc close it, and the thread it shows with it (4c)
+    function closeRight() {
+        if ($lastRightPanelState.kind === "message_thread_panel") closeThread();
+        closeRightColumn(rightColumn);
+    }
+
     // built once, each field read as it's used: a crossing of the narrow breakpoint doesn't touch a
     // screen that only reads the right column
     const context: ScreenContext = {
@@ -228,7 +235,7 @@
     right={regions.rightColumn === false ? undefined : detailsColumn}
     narrowView={regions.narrowView}
     rightOpen={rightColumn.open}
-    onCloseRight={() => closeRightColumn(rightColumn)}
+    onCloseRight={closeRight}
     rightLabel="ui.panelCover.info"
 >
     {#snippet rail()}
