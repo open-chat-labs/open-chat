@@ -88,6 +88,10 @@ export type ConversationContext = {
     text: (key: ResourceKey) => string;
     /** A ledger's token as transfers show it; undefined for one the registry doesn't carry. */
     token: (ledger: string) => TransferToken | undefined;
+    /** The root (message index) of the thread open beside the conversation (the route's); none in a thread. */
+    openThread: number | undefined;
+    /** A user's face as the conversation shows it (their avatar's colour, a CSS background). */
+    face: (userId: string) => string;
 };
 
 export type TransferToken = {
@@ -257,7 +261,6 @@ export function messageRow(
     const mine = msg.sender === ctx.me;
     const reply = msg.repliesTo;
     const quoted = reply?.kind === "rehydrated_reply_context" ? reply : undefined;
-    const thread = msg.thread;
     const kind = kindMessage(msg, status, ctx, {
         id: String(msg.messageId),
         time: ctx.time(evt.timestamp),
@@ -267,8 +270,7 @@ export function messageRow(
             count: r.userIds.size,
             mine: r.userIds.has(ctx.me),
         })),
-        threadCount: thread?.numberOfReplies ?? 0,
-        threadLastAt: thread === undefined ? undefined : ctx.date(thread.latestEventTimestamp),
+        ...threadFields(msg, ctx),
     });
     if (kind !== undefined) {
         return {
@@ -305,8 +307,7 @@ export function messageRow(
                       ? ctx.you
                       : ctx.userName(quoted.senderId),
             quoteText: quoted === undefined ? undefined : messageText(quoted.content, ctx),
-            threadCount: thread?.numberOfReplies ?? 0,
-            threadLastAt: thread === undefined ? undefined : ctx.date(thread.latestEventTimestamp),
+            ...threadFields(msg, ctx),
             previews: msg.content.kind === "text_content" ? previewCards(msg.ogPreviews) : [],
         },
     };
@@ -317,10 +318,38 @@ type KindBase = {
     time: string;
     deleted: false;
     reactions: GroupMessage["reactions"];
-    // the message's thread: "N replies" under it, whatever its kind
+} & ThreadFields;
+
+/** A message's thread as "N replies" under it, whatever its kind. */
+export type ThreadFields = {
     threadCount: number;
     threadLastAt: string | undefined;
+    /** Those in the thread, in the colours their avatars have in the conversation (`face`). */
+    threadFaces: string[];
+    threadSelected: boolean;
 };
+
+/** Whether the message's thread is the one open beside the conversation (`openThread`). */
+export function threadSelected(msg: Message, openThread: number | undefined): boolean {
+    return msg.thread !== undefined && msg.messageIndex === openThread;
+}
+
+/**
+ * A message's thread: how many replies, when the last came, who's in it (each the colour of their
+ * avatar in the conversation, `face`) and whether it's the one open. None without a thread.
+ */
+export function threadFields(
+    msg: Message,
+    ctx: Pick<ConversationContext, "date" | "openThread" | "face">,
+): ThreadFields {
+    const thread = msg.thread;
+    return {
+        threadCount: thread?.numberOfReplies ?? 0,
+        threadLastAt: thread === undefined ? undefined : ctx.date(thread.latestEventTimestamp),
+        threadFaces: thread === undefined ? [] : [...thread.participantIds].map(ctx.face),
+        threadSelected: threadSelected(msg, ctx.openThread),
+    };
+}
 
 /**
  * A message of a kind with its own bubble (media, voice, file); undefined for one shown as text.
@@ -642,6 +671,10 @@ export type ConversationContextInput = {
     tokens: ReadonlyMap<string, CryptocurrencyDetails>;
     /** The exchange rates, read when a dollar value is worked out (they refresh every few minutes). */
     rates: () => ReadonlyMap<string, TokenExchangeRates>;
+    /** The thread open beside the conversation (its root's index), if any. */
+    openThread?: number;
+    /** A user's face as the view shows it (their avatar's colour). */
+    face: (userId: string) => string;
 };
 
 /** The ConversationContext a conversation's rows are made with. */
@@ -675,6 +708,8 @@ export function conversationContext(input: ConversationContextInput): Conversati
         now: Date.now(),
         claimant: input.claimant,
         text: (key) => interpolate(formatter, key),
+        openThread: input.openThread,
+        face: input.face,
         token: (ledger) => {
             const token = input.tokens.get(ledger);
             if (token === undefined) return undefined;

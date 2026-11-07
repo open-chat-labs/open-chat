@@ -21,6 +21,8 @@ const ctx: ConversationContext = {
         chitEarned: 0,
     },
     text: (key) => key.key,
+    openThread: undefined,
+    face: (userId) => `face:${userId}`,
     token: () => undefined,
 };
 
@@ -65,6 +67,47 @@ describe("the rows kept per event", () => {
         expect(rows.row("k", evt, "delivered", ctx)).not.toBe(second);
         const renamed = { ...ctx, userName: () => "Alicia" };
         expect(rows.row("k", evt, "delivered", renamed).senderName).toBe("Alicia");
+    });
+
+    test("are made again only where the open thread changes which row's thread is selected", () => {
+        const rows = new RowCache();
+        const threaded = (messageIndex: number) => {
+            const evt = message();
+            evt.event.messageIndex = messageIndex;
+            evt.event.thread = {
+                numberOfReplies: 1,
+                latestEventTimestamp: 1n,
+                participantIds: new Set(["bob"]),
+            } as Message["thread"];
+            return evt;
+        };
+        const a = threaded(2);
+        const b = threaded(5);
+        const c = threaded(8);
+        const shown = (open: number | undefined) => {
+            const at = { ...ctx, openThread: open };
+            return [
+                rows.row("a", a, "sent", at),
+                rows.row("b", b, "sent", at),
+                rows.row("c", c, "sent", at),
+            ];
+        };
+        const none = shown(undefined);
+        // a's thread opens: only a is made again
+        const aOpen = shown(2);
+        expect(aOpen[0]).not.toBe(none[0]);
+        expect(aOpen[0].message.threadSelected).toBe(true);
+        expect(aOpen[1]).toBe(none[1]);
+        expect(aOpen[2]).toBe(none[2]);
+        // then b's: a and b are, c is kept
+        const bOpen = shown(5);
+        expect(bOpen[0].message.threadSelected).toBe(false);
+        expect(bOpen[1].message.threadSelected).toBe(true);
+        expect(bOpen[2]).toBe(none[2]);
+        // a message without a thread at the open index is kept
+        const plain = message();
+        const kept = rows.row("p", plain, "sent", ctx);
+        expect(rows.row("p", plain, "sent", { ...ctx, openThread: 2 })).toBe(kept);
     });
 
     test("are made again once cleared", () => {

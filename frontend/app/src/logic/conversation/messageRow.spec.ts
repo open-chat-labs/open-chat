@@ -28,6 +28,8 @@ const ctx: ConversationContext = {
         chitEarned: 0,
     },
     text: (key) => key.key,
+    openThread: undefined,
+    face: (userId) => `face:${userId}`,
     token: (ledger) =>
         ledger === "icp"
             ? {
@@ -136,14 +138,49 @@ describe("a message row", () => {
         expect(messageRow(reply("me"), "sent", ctx).message).toMatchObject({ quoteName: "You" });
     });
 
-    test("has its thread's reply count and last reply", () => {
+    test("has its thread's reply count, last reply and the faces of those in it", () => {
         const threaded = message({
-            thread: { numberOfReplies: 4, latestEventTimestamp: 9n } as Message["thread"],
+            thread: {
+                numberOfReplies: 4,
+                latestEventTimestamp: 9n,
+                participantIds: new Set(["alice", "bob"]),
+            } as Message["thread"],
         });
         expect(messageRow(threaded, "sent", ctx).message).toMatchObject({
             threadCount: 4,
             threadLastAt: "d9",
+            threadFaces: ["face:alice", "face:bob"],
+            threadSelected: false,
         });
+    });
+
+    test("has no thread without one", () => {
+        expect(messageRow(message(), "sent", ctx).message).toMatchObject({
+            threadCount: 0,
+            threadLastAt: undefined,
+            threadFaces: [],
+            threadSelected: false,
+        });
+    });
+
+    test("marks its thread selected while it's the one open beside the conversation", () => {
+        const threaded = message({
+            messageIndex: 2,
+            thread: {
+                numberOfReplies: 1,
+                latestEventTimestamp: 9n,
+                participantIds: new Set(["bob"]),
+            } as Message["thread"],
+        });
+        const selected = (openThread: number | undefined) =>
+            messageRow(threaded, "sent", { ...ctx, openThread }).message.threadSelected;
+        expect(selected(2)).toBe(true);
+        expect(selected(3)).toBe(false);
+        expect(selected(undefined)).toBe(false);
+        // a message with no thread isn't, even at the open thread's index (a thread just started)
+        expect(
+            messageRow(message(), "sent", { ...ctx, openThread: 2 }).message.threadSelected,
+        ).toBe(false);
     });
 
     test('has its thread whatever its kind (4c: "N replies" under every kind)', () => {
@@ -155,12 +192,18 @@ describe("a message row", () => {
                 fileSize: 10,
                 blobUrl: "u",
             } as Message["content"],
-            thread: { numberOfReplies: 2, latestEventTimestamp: 5n } as Message["thread"],
+            thread: {
+                numberOfReplies: 2,
+                latestEventTimestamp: 5n,
+                participantIds: new Set(["bob"]),
+            } as Message["thread"],
         });
-        expect(messageRow(file, "sent", ctx).message).toMatchObject({
+        expect(messageRow(file, "sent", { ...ctx, openThread: 2 }).message).toMatchObject({
             kind: "file",
             threadCount: 2,
             threadLastAt: "d5",
+            threadFaces: ["face:bob"],
+            threadSelected: true,
         });
     });
 

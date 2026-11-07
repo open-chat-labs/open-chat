@@ -28,6 +28,8 @@ const ctx: ConversationContext = {
         chitEarned: 0,
     },
     text: (key) => key.key,
+    openThread: undefined,
+    face: (userId) => `face:${userId}`,
     token: (ledger) =>
         ledger === "icp"
             ? {

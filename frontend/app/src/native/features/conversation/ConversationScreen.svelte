@@ -62,7 +62,7 @@
         type PollContent,
         type VideoCallContent,
     } from "@client";
-    import Avatar from "@openchat/ui/src/lib/components/Avatar.svelte";
+    import Avatar, { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import CallEvent from "@openchat/ui/src/lib/components/CallEvent.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
@@ -221,6 +221,7 @@
             claimant,
             tokens: $cryptoLookup,
             rates: () => exchangeRatesLookupStore.value,
+            face: (userId) => AVATAR_GRADIENTS[senderColor(userId)],
         });
         // the chat's webhooks and details go with the selection
         return heldCtx.of(selected, live) ?? live;

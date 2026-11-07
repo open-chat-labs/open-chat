@@ -86,6 +86,7 @@
         type P2PSwapContent,
         type PollContent,
     } from "@client";
+    import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
     import MessageActions from "@openchat/ui/src/lib/components/MessageActions.svelte";
@@ -173,6 +174,7 @@
         mediaHeld,
         messageStatus,
         readByThem,
+        senderColor,
         untilNextDay,
         withFields,
         type ConversationContext,
@@ -282,10 +284,14 @@
         void rowsVersion;
         void $cryptoLookup;
         void ratesLoaded;
+        // the thread open beside the chat (the route's), its "N replies" outlined; rows key on it
+        // (RowCache), so opening another redoes only the two it concerns
+        const openThread = thread === undefined && $threadOpenStore ? $messageIndexStore : undefined;
         return conversationContext({
             client,
             chat,
             me,
+            openThread,
             formatter: $_,
             users: $allUsersStore,
             webhooks: $selectedChatWebhooksStore,
@@ -296,6 +302,7 @@
             claimant,
             tokens: $cryptoLookup,
             rates: () => exchangeRatesLookupStore.value,
+            face: (userId) => AVATAR_GRADIENTS[senderColor(userId)],
         });
     });
 
