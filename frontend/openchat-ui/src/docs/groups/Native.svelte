@@ -7,7 +7,7 @@
   import { nativeAccents, nativeChats, nativeCommunities, nativePeople, nativeTabs, nativeTabsNoPhoto } from '../samples';
   import { Avatar, Button, ChatRow, Field, SegmentedTabs, Toggle } from '../../lib/index';
   import {
-    AnchoredMenu, BottomSheet, CodeTiles, LongPressMenu, NativePageHeader, SettingsAction, SettingsCopy, SettingsGroup, SettingsLink, SettingsMeter,
+    AnchoredMenu, BottomSheet, CodeTiles, LongPressMenu, NativeAlert, NativePageHeader, SettingsAction, SettingsCopy, SettingsGroup, SettingsLink, SettingsMeter,
     SettingsSegmented, SettingsSwatches, SettingsSwitch, SettingsValue, TabBar, ToastQueue, Toasts, longPress, type NativeMenuItem,
   } from '../../native/index';
   import { onDestroy } from 'svelte';
@@ -102,6 +102,10 @@
   // settings rows: one screen with every kind
   const settings = $state({ mode: 1, accent: 'pink', size: 1, notify: true, preview: true, sound: 'chime', download: 'wifi', cleared: false });
   let settingsLog = $state('');
+
+  // alert
+  let alert = $state<'' | 'copy' | 'delete'>('');
+  let alertLog = $state('');
 
   // code tiles: K7Q2XM links; any other full code is refused
   const GOOD_CODE = 'K7Q2XM';
@@ -344,6 +348,20 @@
       </NativeFrame>
     </div>
     <p class="note">Last: <code>{settingsLog || '—'}</code></p>
+  </Section>
+
+  <Section {...sec(native, 'native-alert')}>
+    <div class="grid2">
+      <NativeFrame {os} {mode} {accent} label="A confirmation, and a destructive one" height={420}>
+        <div class="screen column">
+          <Button label="docs.native.alert.copy" variant="secondary" onClick={() => (alert = 'copy')} />
+          <Button label="docs.native.alert.delete" variant="danger" onClick={() => (alert = 'delete')} />
+        </div>
+        <NativeAlert open={alert === 'copy'} title="docs.native.alert.copyTitle" message="docs.native.alert.copyMessage" confirmLabel="docs.native.alert.copyConfirm" onConfirm={() => ((alertLog = 'copied'), (alert = ''))} onClose={() => ((alertLog = 'cancelled'), (alert = ''))} />
+        <NativeAlert open={alert === 'delete'} title="docs.native.alert.deleteTitle" message="docs.native.alert.deleteMessage" confirmLabel="docs.native.alert.deleteConfirm" danger onConfirm={() => ((alertLog = 'deleted'), (alert = ''))} onClose={() => ((alertLog = 'cancelled'), (alert = ''))} />
+      </NativeFrame>
+    </div>
+    <p class="note">Last: <code>{alertLog || '—'}</code>. Cancel, the veil and Esc dismiss it; focus starts on Cancel.</p>
   </Section>
 
   <Section {...sec(native, 'native-code-tiles')}>

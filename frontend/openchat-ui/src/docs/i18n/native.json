@@ -124,6 +124,16 @@
         "archived": "Chat archived",
         "count": "{count, plural, =0 {Nothing archived} one {# chat archived} other {# chats archived}}",
         "pinned": "Publish poll"
+      },
+      "alert": {
+        "copy": "Copy user ID",
+        "delete": "Delete account",
+        "copyTitle": "This is not a wallet address",
+        "copyMessage": "Don't send tokens to your user ID: they would be lost.",
+        "copyConfirm": "Copy",
+        "deleteTitle": "Delete your account?",
+        "deleteMessage": "Your chats, groups and CHIT go with it. This can't be undone.",
+        "deleteConfirm": "Delete"
       }
     }
   }

@@ -28,7 +28,7 @@ export const groups: { id: GroupId; label: string; title: string; intro: string 
     id: 'native',
     label: 'Native',
     title: 'Native shell kit',
-    intro: "The iOS and Android apps' own pieces (src/native): tab bar, page header, sheet, anchored and long-press menus, settings rows, code tiles and toasts. Each demo is a native root (data-platform=\"native\" with data-os), so it shows the native light surfaces, the platform's touch targets, back arrow and kebab. The switch at the bottom right picks the platform.",
+    intro: "The iOS and Android apps' own pieces (src/native): tab bar, page header, sheet, anchored and long-press menus, settings rows, alerts, code tiles and toasts. Each demo is a native root (data-platform=\"native\" with data-os), so it shows the native light surfaces, the platform's touch targets, back arrow and kebab. The switch at the bottom right picks the platform.",
   },
   {
     id: 'api',
@@ -131,6 +131,7 @@ export const native: SectionMeta[] = [
   { id: 'native-anchored-menu', title: 'Anchored menu', meta: 'AnchoredMenu · NativeMenu · menuPlacement.ts' },
   { id: 'native-long-press-menu', title: 'Long-press menu', meta: 'LongPressMenu · NativeMenu · longPress.ts · menuPlacement.ts' },
   { id: 'native-settings', title: 'Settings rows', meta: 'SettingsGroup · SettingsSwitch · SettingsValue · SettingsLink · SettingsCopy · SettingsSegmented · SettingsSwatches · SettingsMeter · SettingsAction' },
+  { id: 'native-alert', title: 'Alert', meta: 'NativeAlert' },
   { id: 'native-code-tiles', title: 'Code tiles', meta: 'CodeTiles · codeTiles.ts' },
   { id: 'native-toasts', title: 'Toasts', meta: 'Toasts · toastQueue.svelte.ts · UndoToast' },
 ];
