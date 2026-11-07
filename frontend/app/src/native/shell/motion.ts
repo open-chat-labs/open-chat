@@ -1,15 +1,37 @@
 import type { TransitionConfig } from "svelte/transition";
+import type { StackChange } from "./tabStacks.svelte";
 
-// The push stack's motion: going deeper, the new screen slides in from the right over the one
-// under it and the tab bar, which stay put (decided 2026-11-06: the design notes' §3.1 had the one
-// under it slide out to -28% and the bar go down), in .34s; going back slides it off again, quicker,
-// in .24s (decided 2026-11-07: Back is a quick exit). Both on tokens.css's --ease-out, so the screen
-// moves fastest at the start either way. Mirrored in RTL. None with reduced motion.
+// The push stack's motion, iOS's (decided 2026-11-07, in place of 2026-11-06's "nothing under it
+// moves"): going deeper, the new screen slides in from the inline end over the one under it, which
+// moves 28% of the way out to the other side as it's covered (a tab's root with its tab bar, as
+// one; the tab bar doesn't go down); going back, the top one slides off again and the one under it
+// comes back. A push takes .34s and Back .24s (decided 2026-11-07: Back is a quick exit), both
+// screens together on tokens.css's --ease-out, so they move fastest at the start either way. The
+// top screen's is a transition here (pushIn, popOut); the one under it's is CSS (Shell's
+// `.covered`, SignedOutStart's `.below`), timed by `underneathMs`. Mirrored in RTL. None with
+// reduced motion.
 
 /** A push: the screen coming in. */
 export const PUSH_MS = 340;
 /** A pop (Back): the screen sliding off. */
 export const POP_MS = 240;
+
+/**
+ * How long the screen under the top one takes to move out or back as the stack changes: with the
+ * top one's push or pop; at once when nothing slides (another tab's stack, or nothing that shows).
+ */
+export function underneathMs(change: StackChange): number {
+    switch (change) {
+        case "pop":
+            return POP_MS;
+        case "push":
+        case "replace":
+            return PUSH_MS;
+        case "same":
+        case "switch":
+            return 0;
+    }
+}
 
 /** CSS's cubic-bezier(x1, y1, x2, y2) as an easing function: progress (0–1) to how far along. */
 export function cubicBezier(x1: number, y1: number, x2: number, y2: number): (t: number) => number {

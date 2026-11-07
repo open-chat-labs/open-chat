@@ -43,7 +43,8 @@ native/
     overlays.svelte.ts   open sheets and menus, which Android's back closes first
     back.ts          what Android's system back does
     systemBack.ts    where it comes from (Tauri's back button and MainActivity's)
-    motion.ts        the push transitions: a push slides in in .34s, Back slides off in .24s
+    motion.ts        the push transitions, iOS's: a push slides in over the screen under it, which
+                     moves 28% out (.34s); Back slides it off as that one comes back (.24s)
     tabBar.adapter.ts    the tab bar's tabs
     tabSwipe.ts      the swipe between tabs, and a tab switch's two-screen slide
     Toasts.svelte    the app's toast as the kit's

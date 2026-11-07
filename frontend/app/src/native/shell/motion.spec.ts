@@ -1,4 +1,4 @@
-import { cubicBezier, easeOut } from "./motion";
+import { cubicBezier, easeOut, POP_MS, PUSH_MS, underneathMs } from "./motion";
 
 describe("a cubic-bezier easing", () => {
     test("starts at 0 and ends at 1", () => {
@@ -38,5 +38,22 @@ describe("a cubic-bezier easing", () => {
             const [x, y] = point(s);
             expect(ease(x)).toBeCloseTo(y, 5);
         }
+    });
+});
+
+describe("the screen under the top one", () => {
+    test("moves with a push, and with a replace, which slides the new screen in", () => {
+        expect(underneathMs("push")).toBe(PUSH_MS);
+        expect(underneathMs("replace")).toBe(PUSH_MS);
+    });
+
+    test("comes back with Back, as quickly as the top one goes", () => {
+        expect(underneathMs("pop")).toBe(POP_MS);
+        expect(POP_MS).toBeLessThan(PUSH_MS);
+    });
+
+    test("doesn't move when nothing slides", () => {
+        expect(underneathMs("switch")).toBe(0);
+        expect(underneathMs("same")).toBe(0);
     });
 });
