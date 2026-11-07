@@ -220,7 +220,8 @@
         align-items: center;
         gap: 10px;
         min-height: 60px;
-        padding: 8px 4px 8px 16px;
+        padding-block: 8px;
+        padding-inline: 16px 4px;
         box-sizing: border-box;
     }
 

@@ -623,7 +623,8 @@
         align-items: center;
         gap: 12px;
         min-height: 56px;
-        padding: 8px 8px 8px 16px;
+        padding-block: 8px;
+        padding-inline: 16px 8px;
         box-sizing: border-box;
     }
 
