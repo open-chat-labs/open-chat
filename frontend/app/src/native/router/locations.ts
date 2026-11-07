@@ -44,14 +44,37 @@ export type NativeScreen =
     | { kind: "wallet_flow"; view: WalletFlow["view"]; ledger?: string }
     | { kind: "recipients" }
     | { kind: "admin" }
-    // pushed without a URL of their own (LocalScreen)
+    // Diamond membership (the web's ?diamond dialog), over the You tab
+    | { kind: "diamond" }
+    // pushed without a URL of their own (LocalScreen), but for CHIT's settings (?profile=chit)
     | LocalScreen;
+
+/** The You tab's settings pages (native design notes §3.11). */
+export type SettingsPage =
+    | "appearance"
+    | "notifications"
+    | "chats"
+    | "communities"
+    | "storage"
+    | "bots"
+    | "account"
+    | "chit";
 
 /**
  * A screen with no URL on the web (New chat, a builder, a settings page): pushed over the screen
  * showing without changing the URL, as the web opens a local dialog (TabStacks.push).
  */
-export type LocalScreen = { kind: "new_chat" } | { kind: "new_group" } | { kind: "chit" };
+export type LocalScreen =
+    | { kind: "new_chat" }
+    | { kind: "new_group" }
+    | { kind: "chit" }
+    | { kind: "edit_profile" }
+    | { kind: "settings"; page: SettingsPage };
+
+/** A local screen's identity in its stack (StackStep.key, after "local:"). */
+export function localKey(screen: LocalScreen): string {
+    return screen.kind === "settings" ? `settings:${screen.page}` : screen.kind;
+}
 
 /**
  * A screen in a stack, with the URL it shows at, which Back goes to from the screen above it.
@@ -110,9 +133,15 @@ export function locationFor(
         return { area: "not_found" };
     }
     const query = queryOf(url);
-    // the web's profile dialog (?profile) is the You tab here
+    // the web's profile dialog (?profile) is the You tab here, on CHIT's settings for ?profile=chit
+    // (the CHIT dialog's settings link); its Diamond dialog (?diamond) is Diamond over it. Both
+    // over whatever page, as on the web (dialogs.ts' PARAM_ORDER: the profile first)
     if (query.has("profile")) {
-        return tabs("you", url, [youRoot()]);
+        const chit = query.get("profile") === "chit";
+        return tabs("you", url, [youRoot(), ...(chit ? [chitSettingsStep()] : [])]);
+    }
+    if (query.has("diamond")) {
+        return tabs("you", url, [youRoot(), step("diamond", { kind: "diamond" }, DIAMOND_URL)]);
     }
     switch (route.kind) {
         case "global_chat_selected_route":
@@ -255,6 +284,17 @@ function walletRoot(): StackStep {
 
 function youRoot(): StackStep {
     return step("you", { kind: "you" }, "/profile_summary");
+}
+
+/** Diamond membership, over the You tab's root. */
+export const DIAMOND_URL = "/profile_summary?diamond";
+
+/** CHIT's settings, over the You tab's root. */
+export const CHIT_SETTINGS_URL = "/profile_summary?profile=chit";
+
+// CHIT's settings page, at its URL (the others are pushed without one)
+function chitSettingsStep(): StackStep {
+    return step("settings:chit", { kind: "settings", page: "chit" }, CHIT_SETTINGS_URL);
 }
 
 // The followed threads list (?threads) over a chat list

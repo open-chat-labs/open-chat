@@ -53,7 +53,7 @@ export const screens: Screens = {
     activity: undefined,
 
     // the You tab (N12)
-    you: undefined,
+    you: () => import("../you/YouScreen.svelte"),
 
     // a conversation (N5b)
     conversation: undefined,
@@ -85,8 +85,17 @@ export const screens: Screens = {
     // New group, from the Chats tab's menu and New chat (N7)
     new_group: undefined,
 
-    // CHIT, from the Chats tab's header (N11)
+    // CHIT, from the Chats tab's header and the You tab's CHIT card (N11)
     chit: undefined,
+
+    // Diamond, from the You tab (N12; buying it waits for N10b's PIN sheet)
+    diamond: () => import("../you/DiamondScreen.svelte"),
+
+    // Edit profile, from the You tab (N12)
+    edit_profile: () => import("../you/EditProfileScreen.svelte"),
+
+    // the You tab's settings pages (N12)
+    settings: () => import("../you/SettingsScreen.svelte"),
 };
 
 /** The loader for a screen's kind, or none until it's built. */
