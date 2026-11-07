@@ -98,6 +98,9 @@ export const screens: Screens = {
 
     // the You tab's settings pages (N12)
     settings: () => import("../you/SettingsScreen.svelte"),
+
+    // Delete account, from You → Account (N12)
+    delete_account: () => import("../you/DeleteAccountScreen.svelte"),
 };
 
 /** The screens' chunks, loaded once and kept; the tabs' roots are preloaded first. */

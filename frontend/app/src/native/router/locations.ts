@@ -69,7 +69,9 @@ export type LocalScreen =
     | { kind: "new_group" }
     | { kind: "chit" }
     | { kind: "edit_profile" }
-    | { kind: "settings"; page: SettingsPage };
+    | { kind: "settings"; page: SettingsPage }
+    // You → Account's Delete account, its steps before it deletes
+    | { kind: "delete_account" };
 
 /** A local screen's identity in its stack (StackStep.key, after "local:"). */
 export function localKey(screen: LocalScreen): string {
@@ -208,7 +210,10 @@ export function openChat(location: TabsLocation): ChatIdentifier | undefined {
  * A tab's root screen, as the tab opens on it (`tabRootUrl`'s step): for drawing a tab not opened
  * yet while a swipe drags it in.
  */
-export function tabRootStep(tab: NativeTabId, community: CommunityIdentifier | undefined): StackStep {
+export function tabRootStep(
+    tab: NativeTabId,
+    community: CommunityIdentifier | undefined,
+): StackStep {
     // at the URL the tab opens on, as a location's top step is (`tabs`)
     return { ...rootScreen(tab, community), url: tabRootUrl(tab, community) };
 }
