@@ -1,6 +1,6 @@
 import type { ChatEvent, EventWrapper, Message } from "@client";
 import { describe, expect, test } from "vitest";
-import { threadEventReadByMe, threadTimelineEvents } from "./threadTimeline";
+import { followsThread, threadEventReadByMe, threadTimelineEvents } from "./threadTimeline";
 
 function message(index: number, messageId: bigint): EventWrapper<Message> {
     return {
@@ -47,6 +47,27 @@ describe("threadTimelineEvents", () => {
     test("a root gone from the chat's events (the window replaced) leaves the replies", () => {
         const loaded = replies(0, 1);
         expect(threadTimelineEvents(undefined, loaded)).toBe(loaded);
+    });
+});
+
+describe("followsThread", () => {
+    const summary = (followedByMe: boolean) =>
+        ({
+            participantIds: new Set<string>(),
+            followedByMe,
+            numberOfReplies: 1,
+            latestEventIndex: 0,
+            latestEventTimestamp: 1n,
+        }) satisfies Message["thread"];
+
+    test("goes by the root's thread summary, which a follow updates at once", () => {
+        expect(followsThread({ messageIndex: 4, thread: summary(false) }, new Set([4]))).toBe(false);
+        expect(followsThread({ messageIndex: 4, thread: summary(true) }, new Set<number>())).toBe(true);
+    });
+
+    test("without a summary yet, goes by the chat's followed threads", () => {
+        expect(followsThread({ messageIndex: 4, thread: undefined }, new Set([4]))).toBe(true);
+        expect(followsThread({ messageIndex: 4, thread: undefined }, undefined)).toBe(false);
     });
 });
 

@@ -267,6 +267,8 @@ export function messageRow(
             count: r.userIds.size,
             mine: r.userIds.has(ctx.me),
         })),
+        threadCount: thread?.numberOfReplies ?? 0,
+        threadLastAt: thread === undefined ? undefined : ctx.date(thread.latestEventTimestamp),
     });
     if (kind !== undefined) {
         return {
@@ -310,7 +312,15 @@ export function messageRow(
     };
 }
 
-type KindBase = { id: string; time: string; deleted: false; reactions: GroupMessage["reactions"] };
+type KindBase = {
+    id: string;
+    time: string;
+    deleted: false;
+    reactions: GroupMessage["reactions"];
+    // the message's thread: "N replies" under it, whatever its kind
+    threadCount: number;
+    threadLastAt: string | undefined;
+};
 
 /**
  * A message of a kind with its own bubble (media, voice, file); undefined for one shown as text.

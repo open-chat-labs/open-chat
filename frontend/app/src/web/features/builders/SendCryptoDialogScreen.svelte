@@ -43,7 +43,7 @@
     // the chat it was opened in (another chat being opened closes it)
     const chat = untrack(() => $selectedChatSummaryStore);
     const form = untrack(() =>
-        chat === undefined || !chatIdentifiersEqual(chat.id, dialog.chatId)
+        chat === undefined || !chatIdentifiersEqual(chat.id, dialog.context.chatId)
             ? undefined
             : new CryptoTransferForm(client, first, chat, dialog.defaultReceiver, 0n, {
                   refreshBalance: false,
@@ -106,7 +106,7 @@
             ledger === undefined
                 ? "invalid"
                 : form.attachTyped(
-                      { chatId: dialog.chatId },
+                      dialog.context,
                       ledger,
                       transfer.draft.amt,
                       transfer.recipient.id,

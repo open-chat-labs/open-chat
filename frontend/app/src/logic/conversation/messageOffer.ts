@@ -6,15 +6,16 @@ import {
     type ChatSummary,
     type EventWrapper,
     type Message,
+    type MessageContext,
     type MessageMenu,
     type OpenChat,
 } from "@client";
 import { canShareMessage } from "@src/utils/share";
 
-// What a message in a chat's own timeline offers (`messageMenu`, as the old trees decide it), for
-// every conversation that shows its messages with the library (src/web's, src/native's): its menu's
-// actions, which also say what its swipes and Retry do. Read as a row renders, so the row follows
-// the chat's permissions and the message's state.
+// What a message in a chat's timeline or a thread's offers (`messageMenu`, as the old trees decide
+// it), for every conversation that shows its messages with the library (src/web's, src/native's):
+// its menu's actions, which also say what its swipes and Retry do. Read as a row renders, so the
+// row follows the chat's permissions and the message's state.
 
 /** The client's permission checks a message's offer reads. */
 export type MessageOfferClient = Pick<
@@ -45,9 +46,17 @@ export type MessageOfferState = {
     blocked: { has(userId: string): boolean };
     /** Tipping is on in this build. */
     tipsEnabled: boolean;
+    /**
+     * In a thread's list: its root, which can't be edited or replied to there, and whether the
+     * reader follows the thread. None in the chat's own timeline.
+     */
+    thread?: { root: Pick<Message, "messageId" | "messageIndex">; following: boolean };
 };
 
-/** What a message in the chat's own timeline (not a thread) offers. */
+/**
+ * What a message in the chat's own timeline offers, or in a thread's (`state.thread`), where nothing
+ * is pinned and the thread's own send permission applies.
+ */
 export function messageOffer(
     client: MessageOfferClient,
     chat: ChatSummary,
@@ -56,6 +65,12 @@ export function messageOffer(
 ): MessageMenu {
     const msg = evt.event;
     const chatId = chat.id;
+    const thread = state.thread;
+    const isRoot = thread !== undefined && msg.messageId === thread.root.messageId;
+    const context: MessageContext =
+        thread === undefined
+            ? { chatId }
+            : { chatId, threadRootMessageIndex: thread.root.messageIndex };
     return messageMenu({
         message: msg,
         userId: state.me,
@@ -66,21 +81,20 @@ export function messageOffer(
         failed: state.failed,
         collapsed: false,
         readonly: state.readonly,
-        ephemeral: localUpdates.isEphemeral({ chatId }, msg.messageId),
-        pinned: state.pinned.has(msg.messageIndex),
+        ephemeral: localUpdates.isEphemeral(context, msg.messageId),
+        pinned: thread === undefined && state.pinned.has(msg.messageIndex),
         translated: state.translated.has(msg.messageId),
         undeleting: state.undeleting.has(msg.messageId),
         now: Date.now(),
-        // TODO(4c): the thread's own list
-        thread: undefined,
-        supportsEdit: true,
-        supportsReply: true,
+        thread: thread === undefined ? undefined : { following: thread.following },
+        supportsEdit: !isRoot,
+        supportsReply: !isRoot,
         shareable: canShareMessage(msg.content),
-        // TODO(phase 5, 5b): tipping
+        // TODO(phase 5, 5b): tipping (in a thread too, by the "tip messages" permission)
         tipRecipient: undefined,
         tipsEnabled: state.tipsEnabled,
         permissions: {
-            send: client.canSendMessage(chatId, "message"),
+            send: client.canSendMessage(chatId, thread === undefined ? "message" : "thread"),
             react: client.canReactToMessages(chatId),
             pin: client.canPinMessages(chatId),
             tip: client.canTipMessages(chatId),

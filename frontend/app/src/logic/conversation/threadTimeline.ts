@@ -24,6 +24,19 @@ export function threadTimelineEvents(
 }
 
 /**
+ * Whether the reader follows the thread: as its root's thread summary says, which a follow or an
+ * unfollow updates at once (`followThread`), else as the chat's followed threads say
+ * (`threadsFollowedByMeStore`, which only changes with the next sync) for a thread with no summary
+ * yet.
+ */
+export function followsThread(
+    root: Pick<Message, "messageIndex" | "thread">,
+    followedRoots: ReadonlySet<number> | undefined,
+): boolean {
+    return root.thread?.followedByMe ?? followedRoots?.has(root.messageIndex) ?? false;
+}
+
+/**
  * Whether an event in a thread's list counts as read: the root always does (it's the chat's
  * message, not the thread's), and so does every reply in a thread the reader doesn't follow,
  * which never shows as unread; otherwise it's whether the reader has read it (`readByMe`).

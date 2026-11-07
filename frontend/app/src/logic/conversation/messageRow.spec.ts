@@ -146,6 +146,24 @@ describe("a message row", () => {
         });
     });
 
+    test('has its thread whatever its kind (4c: "N replies" under every kind)', () => {
+        const file = message({
+            content: {
+                kind: "file_content",
+                name: "a.pdf",
+                mimeType: "application/pdf",
+                fileSize: 10,
+                blobUrl: "u",
+            } as Message["content"],
+            thread: { numberOfReplies: 2, latestEventTimestamp: 5n } as Message["thread"],
+        });
+        expect(messageRow(file, "sent", ctx).message).toMatchObject({
+            kind: "file",
+            threadCount: 2,
+            threadLastAt: "d5",
+        });
+    });
+
     test("isn't edited when a bot finalises its message", () => {
         const edited = (senderContext?: Message["senderContext"]) =>
             (

@@ -156,18 +156,23 @@ export type QuoteTarget =
     | { kind: "here"; messageIndex: number }
     | { kind: "elsewhere"; url: string };
 
-/** A message's quote's target, as the old trees' RepliesTo has it; none for one that isn't a reply. */
+/**
+ * A message's quote's target, as the old trees' RepliesTo has it; none for one that isn't a reply.
+ * The list is the chat's, or the thread's with that root (`threadRootMessageIndex`): a quote from
+ * the same list is "here".
+ */
 export function quoteTarget(
     msg: Message,
     chatId: ChatIdentifier,
     scope: ChatListScope["kind"],
+    threadRootMessageIndex?: number,
 ): QuoteTarget | undefined {
     const reply = msg.repliesTo;
     if (reply?.kind !== "rehydrated_reply_context") return undefined;
     const source = reply.sourceContext;
     if (
         chatIdentifiersEqual(source.chatId, chatId) &&
-        source.threadRootMessageIndex === undefined
+        source.threadRootMessageIndex === threadRootMessageIndex
     ) {
         return { kind: "here", messageIndex: reply.messageIndex };
     }

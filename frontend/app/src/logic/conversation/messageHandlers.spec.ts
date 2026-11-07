@@ -170,6 +170,21 @@ describe("a reply's quote, tapped", () => {
         });
     });
 
+    test("in a thread, goes to a quoted reply in it, and opens the chat for a chat's message (4c)", () => {
+        expect(quoteTarget(quoting(channel, 7), channel, "community", 7)).toEqual({
+            kind: "here",
+            messageIndex: 41,
+        });
+        expect(quoteTarget(quoting(channel), channel, "community", 7)).toEqual({
+            kind: "elsewhere",
+            url: "/community/c1/channel/9/41",
+        });
+        expect(quoteTarget(quoting(channel, 8), channel, "community", 7)).toEqual({
+            kind: "elsewhere",
+            url: "/community/c1/channel/9/8/41?open=true",
+        });
+    });
+
     test("has nowhere to go for a message that isn't a reply, or whose quote isn't loaded", () => {
         expect(
             quoteTarget(msg({ kind: "text_content", text: "hi" } as MessageContent), dm, "chats"),

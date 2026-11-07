@@ -59,6 +59,7 @@
     import DetailsColumn from "./DetailsColumn.svelte";
     import RegionScreen from "./RegionScreen.svelte";
     import { closeRightColumn, openOnNewPanel } from "./rightPanel";
+    import { MessageJumps } from "./messageJumps.svelte";
     import { leftScreens, middleScreens, type ScreenContext } from "./screens";
 
     let { regions }: { regions: Extract<Regions, { area: "app" }> } = $props();
@@ -201,6 +202,7 @@
     const context: ScreenContext = {
         dialogs: dialogStack,
         rightColumn,
+        jumps: new MessageJumps(),
         get narrow() {
             return narrow;
         },

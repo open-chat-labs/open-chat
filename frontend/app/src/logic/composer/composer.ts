@@ -1,4 +1,5 @@
 import {
+    externalWalletPayment,
     FIND_MEMBERS_DELAY_MS,
     isCaptionedContent,
     ScreenWidth,
@@ -6,14 +7,19 @@ import {
     userGroupMentionRegex,
     userIdMentionRegex,
     type AttachFileOutcome,
+    type AttachmentContent,
+    type ChatSummary,
     type MessageContent,
+    type MessageContext,
     type MessageFormatter,
     type MessagePermission,
+    type OpenChat,
     type ResourceKey,
     type UserGroupDetails,
     type UserLookup,
 } from "@client";
 import { i18nKey } from "@src/i18n/i18n";
+import { detectMarkdown } from "@src/utils/detectMarkdown";
 
 // The message entry's decisions, shared by every tree: why a message can't be sent, when the
 // others hear someone is typing, and when it takes focus, what it starts an edit from, what it
@@ -356,4 +362,51 @@ export function entryPlaceholder(state: {
     if (state.attached) return i18nKey("enterCaption");
     if (state.directBot) return i18nKey("bots.direct.placeholder");
     return i18nKey("enterMessage");
+}
+
+/**
+ * What became of a send from the composer: posted (it shows in the chat or thread), or refused
+ * before it was (`reason` says why, for the log), when the composer keeps the draft.
+ */
+export type ComposedSend = { kind: "posted" } | { kind: "refused"; reason: string };
+
+/**
+ * Sends what the composer holds to the chat or thread it's in (`context`): the text, with the
+ * draft's attachment it captions, as the client's send does it (mentions typed as @username, block
+ * markdown detected). In a direct chat with a bot the text goes to the bot as its direct-message
+ * command. Refused, nothing is sent: a payment the composer doesn't show, or one an external
+ * wallet would have to approve first (the web tree's builders pay from the OpenChat wallet only),
+ * which would otherwise be taken from the OpenChat wallet.
+ */
+export async function sendComposed(
+    client: Pick<OpenChat, "directChatWithBot" | "sendDirectBotMessage" | "sendMessage">,
+    chat: ChatSummary,
+    context: MessageContext,
+    text: string,
+    attachment: { content: AttachmentContent | undefined; shown: boolean },
+): Promise<ComposedSend> {
+    const markdown = detectMarkdown(text);
+    if (
+        context.threadRootMessageIndex === undefined &&
+        client.directChatWithBot(chat) !== undefined
+    ) {
+        const outcome = client.sendDirectBotMessage(context, text, markdown);
+        return outcome.kind === "sent"
+            ? { kind: "posted" }
+            : { kind: "refused", reason: outcome.kind };
+    }
+    const taken = attachmentToSend(attachment.content, attachment.shown);
+    if (taken.kind === "payment_not_shown") return { kind: "refused", reason: taken.kind };
+    if (externalWalletPayment(taken.attachment) !== undefined) {
+        return { kind: "refused", reason: "external_wallet" };
+    }
+    const outcome = await client.sendMessage(
+        context,
+        text === "" ? undefined : text,
+        markdown,
+        taken.attachment,
+    );
+    return outcome.kind === "posted"
+        ? { kind: "posted" }
+        : { kind: "refused", reason: outcome.kind };
 }

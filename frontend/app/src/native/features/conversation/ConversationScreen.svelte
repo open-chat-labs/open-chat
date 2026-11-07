@@ -855,7 +855,7 @@
     }
 
     function react(evt: EventWrapper<Message>, emoji: string) {
-        if (chat !== undefined) void toggleReaction(client, chat.id, evt.event, emoji);
+        if (chat !== undefined) void toggleReaction(client, { chatId: chat.id }, evt.event, emoji);
     }
 
     // the message replied to or edited (the chat's draft, which the composer shows), marked

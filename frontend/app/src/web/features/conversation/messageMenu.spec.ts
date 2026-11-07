@@ -30,6 +30,7 @@ function fakeClient() {
         cancelMessageReminder: vi.fn(async () => true),
         deleteFailedMessage: vi.fn(async () => {}),
         deleteMessage: vi.fn(async () => true),
+        followThread: vi.fn(async () => true),
         getContentAsText: vi.fn(() => "hi"),
         pinMessage: vi.fn(async () => true),
         replyPrivately: vi.fn(async () => undefined),
@@ -49,7 +50,8 @@ function target(
 ): MessageMenuTarget {
     return {
         client,
-        chatId,
+        context: { chatId },
+        scope: "chats",
         evt,
         failed: false,
         me: "me",
@@ -115,6 +117,27 @@ describe("a message's actions in the conversation", () => {
         await runMessageAction("unpin", target(client));
         expect(client.pinMessage).toHaveBeenCalledWith(chatId, 2);
         expect(client.unpinMessage).toHaveBeenCalledWith(chatId, 2);
+    });
+
+    test("in a thread, a message is deleted, revealed and retried in the thread", async () => {
+        const client = fakeClient();
+        const context = { chatId, threadRootMessageIndex: 9 };
+        await runMessageAction("delete", target(client, { context }));
+        expect(client.deleteMessage).toHaveBeenCalledWith(chatId, 9, 42n);
+        await runMessageAction("delete", target(client, { context, failed: true }));
+        expect(client.deleteFailedMessage).toHaveBeenCalledWith(chatId, 42n, 9);
+        await runMessageAction("retry", target(client, { context, failed: true }));
+        expect(client.retrySendMessage).toHaveBeenCalledWith(context, evt);
+    });
+
+    test("following from a thread's message follows the thread's root", async () => {
+        const client = fakeClient();
+        const root = { ...evt.event, messageId: 1n, messageIndex: 9 };
+        await runMessageAction(
+            "unfollow_thread",
+            target(client, { context: { chatId, threadRootMessageIndex: 9 }, threadRoot: root }),
+        );
+        expect(client.followThread).toHaveBeenCalledWith(chatId, root, false);
     });
 
     test("translating isn't asked of the client for someone without Diamond", async () => {

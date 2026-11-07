@@ -284,7 +284,19 @@ describe("a message's menu", () => {
     });
 
     test("leaves out what this screen doesn't carry out", () => {
-        expect(messageMenuItems(offers("start_thread", "collapse_proposal"))).toEqual([]);
+        expect(messageMenuItems(offers("tip", "collapse_proposal"))).toEqual([]);
+    });
+
+    test("offers a thread's items after Reply: start one, or follow or unfollow it", () => {
+        expect(
+            messageMenuItems(offers("copy", "start_thread", "reply")).map((i) => i.action),
+        ).toEqual(["reply", "start_thread", "copy"]);
+        expect(
+            messageMenuItems(offers("unfollow_thread", "copy")).map((i) => [i.action, i.label]),
+        ).toEqual([
+            ["unfollow_thread", "unfollowThread"],
+            ["copy", "copy"],
+        ]);
     });
 });
 

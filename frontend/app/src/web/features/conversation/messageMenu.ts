@@ -4,9 +4,10 @@ import {
     messageReplyContext,
     publish,
     routeForChatIdentifier,
-    type ChatIdentifier,
+    type ChatListScope,
     type EventWrapper,
     type Message,
+    type MessageContext,
     type MessageFormatter,
     type MessageMenuAction,
     type OpenChat,
@@ -14,14 +15,15 @@ import {
 } from "@client";
 import { editMessage, replyToMessage } from "@src/logic/conversation/draftActions";
 import { translateMessage } from "@src/logic/conversation/translateMessage";
+import { threadOpenPath } from "@src/logic/threads/threadUrl";
 import { toastStore } from "@src/stores/toast";
 import { copyMessageUrl, shareMessage } from "@src/utils/share";
 import { navigate } from "@src/utils/navigation";
 import { copyToClipboard } from "@src/utils/urls";
 
-// What each of a message's actions does in the conversation (MessageActions, the hover bar and
-// the swipes), as the old message menus did it. One that needs the user first comes back as the
-// dialog to show.
+// What each of a message's actions does in the conversation or a thread (MessageActions, the
+// hover bar and the swipes), as the old message menus did it. One that needs the user first comes
+// back as the dialog to show.
 
 /** The client calls a message's actions make. */
 export type MessageMenuClient = Pick<
@@ -30,6 +32,7 @@ export type MessageMenuClient = Pick<
     | "cancelMessageReminder"
     | "deleteFailedMessage"
     | "deleteMessage"
+    | "followThread"
     | "getContentAsText"
     | "pinMessage"
     | "replyPrivately"
@@ -44,7 +47,12 @@ export type MessageMenuClient = Pick<
 
 export type MessageMenuTarget = {
     client: MessageMenuClient;
-    chatId: ChatIdentifier;
+    /** Where the message is: the chat, or a thread in it. */
+    context: MessageContext;
+    /** In a thread, its root message (what following it follows). */
+    threadRoot?: Message;
+    /** The chat list the chat is open in, for the thread a message starts. */
+    scope: ChatListScope["kind"];
     evt: EventWrapper<Message>;
     failed: boolean;
     /** The signed-in user. */
@@ -75,9 +83,9 @@ export async function runMessageAction(
     action: MessageMenuAction,
     target: MessageMenuTarget,
 ): Promise<MessageMenuDialog | undefined> {
-    const { client, chatId, evt } = target;
+    const { client, context, evt } = target;
+    const { chatId, threadRootMessageIndex } = context;
     const msg = evt.event;
-    const context = { chatId };
     switch (action) {
         case "reply":
             replyToMessage(chatId, evt, target.users);
@@ -103,11 +111,25 @@ export async function runMessageAction(
             }
             return;
         }
+        case "start_thread":
+            // the message's thread, opened in the right column (a new one starts as it opens)
+            navigate(threadOpenPath(target.scope, chatId, msg.messageIndex, location.search));
+            return;
+        case "follow_thread":
+        case "unfollow_thread": {
+            const follow = action === "follow_thread";
+            if (!(await client.followThread(chatId, target.threadRoot ?? msg, follow))) {
+                toastStore.showFailureToast(
+                    i18nKey(follow ? "followThreadFailed" : "unfollowThreadFailed"),
+                );
+            }
+            return;
+        }
         case "copy":
             void copyToClipboard(client.getContentAsText(target.formatter, msg.content));
             return;
         case "copy_url":
-            copyMessageUrl(chatId, msg.messageIndex);
+            copyMessageUrl(chatId, msg.messageIndex, threadRootMessageIndex);
             return;
         case "share":
             shareMessage(
@@ -164,11 +186,11 @@ export async function runMessageAction(
             if (msg.content.kind === "blocked_content") {
                 client.revealBlockedMessage(msg.messageId);
             } else {
-                void client.revealDeletedMessage(chatId, msg.messageId, undefined);
+                void client.revealDeletedMessage(chatId, msg.messageId, threadRootMessageIndex);
             }
             return;
         case "undelete":
-            if (!(await client.undeleteMessage(chatId, undefined, msg))) {
+            if (!(await client.undeleteMessage(chatId, threadRootMessageIndex, msg))) {
                 toastStore.showFailureToast(i18nKey("undeleteMessageFailed"));
             }
             return;
@@ -186,11 +208,11 @@ export async function runMessageAction(
         case "delete_for_me":
             // a failed message was never sent: it goes from here only
             if (target.failed) {
-                void client.deleteFailedMessage(chatId, msg.messageId, undefined);
+                void client.deleteFailedMessage(chatId, msg.messageId, threadRootMessageIndex);
                 return;
             }
             if (target.confirmDelete) return { kind: "delete", evt };
-            await deleteMessage(client, chatId, evt);
+            await deleteMessage(client, context, evt);
             return;
         default:
             // not carried out here yet (see messageMenuItems)
@@ -201,8 +223,8 @@ export async function runMessageAction(
 /** Deletes a sent message (it shows as deleted at once, and comes back if that fails). */
 export async function deleteMessage(
     client: Pick<OpenChat, "deleteMessage">,
-    chatId: ChatIdentifier,
+    context: MessageContext,
     evt: EventWrapper<Message>,
 ): Promise<void> {
-    await client.deleteMessage(chatId, undefined, evt.event.messageId);
+    await client.deleteMessage(context.chatId, context.threadRootMessageIndex, evt.event.messageId);
 }

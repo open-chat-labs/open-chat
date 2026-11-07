@@ -17,7 +17,7 @@
 
     async function publish(draft: PollDraft) {
         const outcome = await client.sendContent(
-            { chatId: dialog.chatId },
+            dialog.context,
             newPollContent(newPoll(draft), Date.now()),
         );
         if (outcome.kind !== "posted") throw new Error(outcome.kind);
