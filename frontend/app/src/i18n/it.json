@@ -1908,7 +1908,9 @@
                 "gatedSub": "Scegli chi può entrare nei tuoi gruppi",
                 "inviteLink": "Il tuo link di invito",
                 "inviteNote": "Quando qualcuno che si è iscritto con il tuo link passa a Diamond, guadagni CHIT.",
-                "shareLink": "Condividi link di invito"
+                "shareLink": "Condividi link di invito",
+                "none": "Non membro",
+                "buySoon": "Il pagamento di Diamond qui arriverà con il PIN del portafoglio, in arrivo. Nel frattempo puoi ottenerlo su oc.app da un computer, con questo account."
             },
             "chit": {
                 "title": "CHIT",
@@ -2022,6 +2024,10 @@
                 "checkEmail": "Apri il link che abbiamo inviato a {email}. Controlla che il codice nell'email corrisponda:",
                 "noSignIn": "Nessuno dei tuoi metodi di accesso funziona su questo telefono. Elimina invece l'account dal sito web.",
                 "deleting": "Eliminazione dell'account…"
+            },
+            "signOut": {
+                "title": "Disconnettersi?",
+                "message": "Dovrai accedere di nuovo per usare OpenChat su questo telefono."
             }
         }
     },

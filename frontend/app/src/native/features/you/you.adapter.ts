@@ -31,15 +31,20 @@ export type YouListInputs = {
     theme: ThemePref;
     accent: PageAccent;
     notifications: NotificationSwitch;
-    /** What the user has stored on the backend (storageStore). */
-    storageBytes: number;
+    /** What the user has stored on the backend, and their allowance (storageStore). */
+    storage: { bytesUsed: number; byteLimit: number };
 };
 
 export function youLists(inputs: YouListInputs, t: Translate): YouLists {
     const off = t("native.you.off");
     return {
         account: [
-            { id: "edit_profile", icon: "user", label: t("native.you.editProfile.title"), value: "" },
+            {
+                id: "edit_profile",
+                icon: "user",
+                label: t("native.you.editProfile.title"),
+                value: "",
+            },
             {
                 id: "diamond",
                 icon: "diamond",
@@ -66,14 +71,13 @@ export function youLists(inputs: YouListInputs, t: Translate): YouLists {
                 id: "notifications",
                 icon: "bell",
                 label: t("native.you.notifications.title"),
-                value:
-                    inputs.notifications.kind === "switch" && inputs.notifications.on ? "" : off,
+                value: inputs.notifications.kind === "switch" && inputs.notifications.on ? "" : off,
             },
             {
                 id: "storage",
                 icon: "disk",
                 label: t("native.you.storage.title"),
-                value: inputs.storageBytes > 0 ? formatFileSize(inputs.storageBytes) : "",
+                value: storageValue(inputs.storage, t),
             },
             { id: "bots", icon: "bot", label: t("native.you.bots.title"), value: "" },
             { id: "account", icon: "lock", label: t("native.you.account.title"), value: "" },
@@ -81,7 +85,7 @@ export function youLists(inputs: YouListInputs, t: Translate): YouLists {
     };
 }
 
-/** The Diamond row's value: Lifetime, or until when; none without Diamond. */
+/** The Diamond row's value: Lifetime, Active, or not a member. */
 function diamondValue(status: DiamondMembershipStatus, t: Translate): string {
     switch (status.kind) {
         case "lifetime":
@@ -89,7 +93,34 @@ function diamondValue(status: DiamondMembershipStatus, t: Translate): string {
         case "active":
             return t("native.you.diamond.active");
         case "inactive":
-            return "";
+            return t("native.you.diamond.none");
+    }
+}
+
+/** The Storage row's value: what's used, of the allowance where there's one (Diamond's). */
+function storageValue(storage: { bytesUsed: number; byteLimit: number }, t: Translate): string {
+    const used = formatFileSize(storage.bytesUsed);
+    return storage.byteLimit > 0
+        ? t("native.you.storage.ofLimit", { used, limit: formatFileSize(storage.byteLimit) })
+        : used;
+}
+
+/**
+ * The Diamond screen's button: upgrading, or extending a membership that ends; none for a
+ * lifetime one, or where Diamond can't be paid for (an app store build).
+ */
+export function diamondAction(
+    status: DiamondMembershipStatus,
+    paymentsOff: boolean,
+): "upgrade" | "extend" | undefined {
+    if (paymentsOff) return undefined;
+    switch (status.kind) {
+        case "lifetime":
+            return undefined;
+        case "active":
+            return "extend";
+        case "inactive":
+            return "upgrade";
     }
 }
 
@@ -104,7 +135,11 @@ export const DIAMOND_PERKS: readonly { icon: string; label: string; sub: string 
     { icon: "image", label: "upgrade.mediaMessages", sub: "upgrade.diamondMediaMessages" },
     { icon: "chat", label: "upgrade.textMessages", sub: "upgrade.diamondTextMessages" },
     { icon: "users", label: "upgrade.publicGroups", sub: "upgrade.diamondPublicGroups" },
-    { icon: "community", label: "upgrade.createCommunities", sub: "native.you.diamond.communitiesSub" },
+    {
+        icon: "community",
+        label: "upgrade.createCommunities",
+        sub: "native.you.diamond.communitiesSub",
+    },
     { icon: "lock", label: "upgrade.gatedGroups", sub: "native.you.diamond.gatedSub" },
 ];
 

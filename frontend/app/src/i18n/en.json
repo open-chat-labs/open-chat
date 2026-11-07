@@ -1823,7 +1823,9 @@
                 "gatedSub": "Choose who can join your groups",
                 "inviteLink": "Your invite link",
                 "inviteNote": "When someone who joined with your link goes Diamond, you earn CHIT.",
-                "shareLink": "Share invite link"
+                "shareLink": "Share invite link",
+                "none": "Not a member",
+                "buySoon": "Paying for Diamond here comes with the wallet's PIN, which is on its way. Until then, you can get it at oc.app on a computer, signed in to this account."
             },
             "chit": {
                 "title": "CHIT",
@@ -1937,6 +1939,10 @@
                 "checkEmail": "Open the link we sent to {email}. Check the code in the email matches:",
                 "noSignIn": "None of the ways you sign in work on this phone. Delete your account on the website instead.",
                 "deleting": "Deleting your account…"
+            },
+            "signOut": {
+                "title": "Sign out?",
+                "message": "You'll need to sign in again to use OpenChat on this phone."
             }
         }
     },

@@ -1,6 +1,11 @@
-import { AuthProvider, type LinkedAuthenticationPrincipal } from "@client";
+import {
+    AuthProvider,
+    type DiamondMembershipStatus,
+    type LinkedAuthenticationPrincipal,
+} from "@client";
 import { describe, expect, test } from "vitest";
 import {
+    diamondAction,
     displayNameNote,
     isDiamond,
     profileUsernameNote,
@@ -19,7 +24,7 @@ function inputs(extra: Partial<YouListInputs> = {}): YouListInputs {
         theme: "system",
         accent: "pink",
         notifications: { kind: "switch", on: true },
-        storageBytes: 0,
+        storage: { bytesUsed: 0, byteLimit: 0 },
         ...extra,
     };
 }
@@ -48,10 +53,7 @@ describe("the You tab's lists", () => {
         const on = youLists(inputs(), t);
         expect(value(on, "chit")).toBe("");
         expect(value(on, "notifications")).toBe("");
-        const off = youLists(
-            inputs({ chitOn: false, notifications: { kind: "unsupported" } }),
-            t,
-        );
+        const off = youLists(inputs({ chitOn: false, notifications: { kind: "unsupported" } }), t);
         expect(value(off, "chit")).toBe("native.you.off");
         expect(value(off, "notifications")).toBe("native.you.off");
     });
@@ -62,7 +64,7 @@ describe("the You tab's lists", () => {
                 theme: "dark",
                 accent: "blue",
                 diamond: { kind: "lifetime" },
-                storageBytes: 1536,
+                storage: { bytesUsed: 1536, byteLimit: 0 },
             }),
             t,
         );
@@ -71,8 +73,37 @@ describe("the You tab's lists", () => {
         );
         expect(value(lists, "diamond")).toBe("native.you.diamond.lifetime");
         expect(value(lists, "storage")).toBe("1.5 KB");
-        expect(value(youLists(inputs(), t), "diamond")).toBe("");
-        expect(value(youLists(inputs(), t), "storage")).toBe("");
+    });
+
+    // the rows showed nothing without Diamond or anything stored
+    test("say there's no Diamond, and show the storage used, of the allowance when there's one", () => {
+        expect(value(youLists(inputs(), t), "diamond")).toBe("native.you.diamond.none");
+        expect(value(youLists(inputs(), t), "storage")).toBe("0 Bytes");
+        const allowance = youLists(
+            inputs({ storage: { bytesUsed: 3 * 1024 * 1024, byteLimit: 1024 * 1024 * 1024 } }),
+            (key, values) => `${key} ${JSON.stringify(values ?? {})}`,
+        );
+        expect(value(allowance, "storage")).toBe(
+            'native.you.storage.ofLimit {"used":"3.0 MB","limit":"1.0 GB"}',
+        );
+    });
+});
+
+describe("the Diamond screen's button", () => {
+    test("upgrades without Diamond, extends a membership that ends", () => {
+        expect(diamondAction({ kind: "inactive" }, false)).toBe("upgrade");
+        const active: DiamondMembershipStatus = {
+            kind: "active",
+            payInChat: false,
+            subscription: "disabled",
+            expiresAt: 1n,
+        };
+        expect(diamondAction(active, false)).toBe("extend");
+    });
+
+    test("isn't there for a lifetime member, or where Diamond can't be paid for", () => {
+        expect(diamondAction({ kind: "lifetime" }, false)).toBeUndefined();
+        expect(diamondAction({ kind: "inactive" }, true)).toBeUndefined();
     });
 });
 

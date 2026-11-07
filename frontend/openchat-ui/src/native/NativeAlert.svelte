@@ -1,6 +1,6 @@
 <!-- A confirmation (native design notes §1 Structure 4: "Confirmations stay small alerts"): a small card in the middle
      of the screen over the sheets' veil, with a title, an optional message and two buttons side by side, the dismiss
-     one first. The confirm button is the accent's, or in the danger colour for a destructive action. The veil, Esc and
+     one first; without an action (no `confirmLabel`), a notice with the dismiss button alone. The confirm button is the accent's, or in the danger colour for a destructive action. The veil, Esc and
      Cancel dismiss it; it scales and fades in and out (fades only with reduced motion). The host registers its close
      with Android's back while it's open. -->
 <script lang="ts">
@@ -17,15 +17,15 @@
     title: string;
     /** Resource key (or literal text): what happens. */
     message?: string;
-    /** Resource key (or literal text): the action. */
-    confirmLabel: string;
+    /** Resource key (or literal text): the action. None for a notice, with the dismiss button alone. */
+    confirmLabel?: string;
     /** Resource key (or literal text): the dismiss button; Cancel by default. */
     cancelLabel?: string;
     /** A destructive action (Delete, Sign out): the confirm button in the danger colour. */
     danger?: boolean;
     /** The action is under way: the buttons wait. */
     busy?: boolean;
-    onConfirm: () => void;
+    onConfirm?: () => void;
     /** Cancel, the veil or Esc. The alert plays its way out once `open` turns false. */
     onClose: () => void;
   }
@@ -76,7 +76,9 @@
       {#if message}<p class="message" id="native-alert-message">{t(message)}</p>{/if}
       <div class="buttons">
         <button type="button" class="button cancel" disabled={busy} onclick={dismiss}>{t(cancelLabel)}</button>
-        <button type="button" class="button confirm" class:danger disabled={busy} onclick={onConfirm}>{t(confirmLabel)}</button>
+        {#if confirmLabel !== undefined}
+          <button type="button" class="button confirm" class:danger disabled={busy} onclick={() => onConfirm?.()}>{t(confirmLabel)}</button>
+        {/if}
       </div>
     </div>
   </div>

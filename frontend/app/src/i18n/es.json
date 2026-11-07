@@ -1908,7 +1908,9 @@
                 "gatedSub": "Elige quién puede unirse a tus grupos",
                 "inviteLink": "Tu enlace de invitación",
                 "inviteNote": "Cuando alguien que se unió con tu enlace se hace Diamond, ganas CHIT.",
-                "shareLink": "Compartir enlace de invitación"
+                "shareLink": "Compartir enlace de invitación",
+                "none": "Sin membresía",
+                "buySoon": "Pagar Diamond aquí llegará con el PIN de la cartera, que está en camino. Mientras tanto, puedes conseguirlo en oc.app desde un ordenador, con esta cuenta iniciada."
             },
             "chit": {
                 "title": "CHIT",
@@ -2022,6 +2024,10 @@
                 "checkEmail": "Abre el enlace que enviamos a {email}. Comprueba que el código del correo coincide:",
                 "noSignIn": "Ninguna de tus formas de iniciar sesión funciona en este teléfono. Elimina tu cuenta desde la web.",
                 "deleting": "Eliminando tu cuenta…"
+            },
+            "signOut": {
+                "title": "¿Cerrar sesión?",
+                "message": "Tendrás que iniciar sesión de nuevo para usar OpenChat en este teléfono."
             }
         }
     },

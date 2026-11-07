@@ -1908,7 +1908,9 @@
                 "gatedSub": "Chọn ai có thể tham gia nhóm của bạn",
                 "inviteLink": "Liên kết mời của bạn",
                 "inviteNote": "Khi người tham gia qua liên kết của bạn nâng cấp lên Diamond, bạn sẽ nhận được CHIT.",
-                "shareLink": "Chia sẻ liên kết mời"
+                "shareLink": "Chia sẻ liên kết mời",
+                "none": "Chưa là hội viên",
+                "buySoon": "Thanh toán Diamond tại đây sẽ có cùng mã PIN của ví, sắp ra mắt. Trong lúc chờ, bạn có thể mua trên oc.app bằng máy tính, đăng nhập vào tài khoản này."
             },
             "chit": {
                 "title": "CHIT",
@@ -2022,6 +2024,10 @@
                 "checkEmail": "Mở liên kết chúng tôi đã gửi đến {email}. Kiểm tra xem mã trong email có khớp với mã này không:",
                 "noSignIn": "Không có cách đăng nhập nào của bạn dùng được trên điện thoại này. Hãy xóa tài khoản trên trang web.",
                 "deleting": "Đang xóa tài khoản của bạn…"
+            },
+            "signOut": {
+                "title": "Đăng xuất?",
+                "message": "Bạn sẽ cần đăng nhập lại để dùng OpenChat trên điện thoại này."
             }
         }
     },

@@ -1,8 +1,9 @@
 <!-- Diamond (native design notes §3.11; the web's ?diamond), pushed over the You tab: the
-     membership in an accent hero (Lifetime, until when, or none yet), what Diamond gives, and the
-     user's invite link to share. Buying or extending it isn't here yet: it's paid from the wallet
-     with the PIN (N10b's sheet), through the shared payment the web's Diamond dialog uses
-     (logic/diamond) (GAPS.md). -->
+     membership in an accent hero (Lifetime, until when, or none yet), what Diamond gives, the
+     user's invite link to share, and the pinned Upgrade to Diamond (Extend Diamond while one runs).
+     Paying isn't here yet: it's paid from the wallet with the PIN (N10b's sheet), through the
+     shared payment the web's Diamond dialog uses (logic/diamond), so the button says so in a small
+     alert meanwhile (GAPS.md). An app store build has no Diamond payments, and no button. -->
 <script lang="ts">
     import {
         currentUserIdStore,
@@ -11,14 +12,18 @@
         toDayString,
         type OpenChat,
     } from "@client";
+    import Button from "@openchat/ui/src/lib/components/Button.svelte";
+    import NativeAlert from "@openchat/ui/src/native/NativeAlert.svelte";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
     import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
+    import { disableDiamondPaymentFeature } from "@src/utils/features";
     import { shareLink } from "@src/utils/share";
-    import { getContext } from "svelte";
+    import { getContext, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
     import type { NativeScreen } from "../../router/locations";
+    import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenProps } from "../app/screens";
-    import { DIAMOND_PERKS } from "./you.adapter";
+    import { DIAMOND_PERKS, diamondAction } from "./you.adapter";
 
     let { context }: ScreenProps<Extract<NativeScreen, { kind: "diamond" }>> = $props();
 
@@ -42,6 +47,16 @@
               : $_("native.you.diamond.inactiveSub"),
     );
 
+    // upgrading or extending: paid with the wallet's PIN sheet, which isn't built yet (N10b)
+    const action = $derived(diamondAction(status, disableDiamondPaymentFeature));
+    const actionLabel = $derived(action === "extend" ? "upgrade.extend" : "upgrade.featuresTitle");
+    let buying = $state(false);
+    useOverlay(
+        untrack(() => context.overlays),
+        () => buying,
+        () => (buying = false),
+    );
+
     const link = $derived(referralLink(client.canonicalOrigin(), $currentUserIdStore));
     const shownLink = $derived(link.replace(/^https?:\/\//, ""));
 </script>
@@ -49,7 +64,7 @@
 <div class="diamond">
     <NativePageHeader title="Diamond" onBack={context.back} />
 
-    <div class="body">
+    <div class="body" class:above-footer={action !== undefined}>
         <section class="hero">
             <span class="tile"><span class="tile-icon"></span></span>
             <span class="title">{$_(title)}</span>
@@ -81,7 +96,20 @@
             </div>
         </SettingsGroup>
     </div>
+
+    {#if action !== undefined}
+        <div class="footer">
+            <Button label={$_(actionLabel)} size="lg" fullWidth onClick={() => (buying = true)} />
+        </div>
+    {/if}
 </div>
+
+<NativeAlert
+    open={buying}
+    title={$_(actionLabel)}
+    message={$_("native.you.diamond.buySoon")}
+    cancelLabel={$_("close")}
+    onClose={() => (buying = false)} />
 
 <style lang="scss">
     @use "@openchat/ui/src/lib/styles/mixins" as *;
@@ -102,6 +130,16 @@
         flex-direction: column;
         gap: 22px;
         padding: 8px var(--space-16) var(--scroll-end);
+
+        // the pinned button has the safe area
+        &.above-footer {
+            padding-bottom: var(--space-16);
+        }
+    }
+
+    .footer {
+        flex: none;
+        padding: 12px var(--space-16) var(--bar-end);
     }
 
     // an accent hero (native design notes §1 Surfaces)

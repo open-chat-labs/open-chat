@@ -1908,7 +1908,9 @@
                 "gatedSub": "选择谁可以加入你的群组",
                 "inviteLink": "你的邀请链接",
                 "inviteNote": "通过你的链接加入的人成为 Diamond 会员时，你会获得 CHIT。",
-                "shareLink": "分享邀请链接"
+                "shareLink": "分享邀请链接",
+                "none": "未开通",
+                "buySoon": "在这里支付 Diamond 将随钱包的 PIN 一同推出，即将上线。在此之前，你可以在电脑上登录此账户，前往 oc.app 开通。"
             },
             "chit": {
                 "title": "CHIT",
@@ -2022,6 +2024,10 @@
                 "checkEmail": "打开我们发送到 {email} 的链接。请确认邮件中的代码与下方一致：",
                 "noSignIn": "你的登录方式在这部手机上都无法使用。请改在网站上删除你的帐户。",
                 "deleting": "正在删除你的帐户…"
+            },
+            "signOut": {
+                "title": "要登出吗？",
+                "message": "要在这部手机上使用 OpenChat，你需要重新登录。"
             }
         }
     },

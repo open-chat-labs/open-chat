@@ -20523,7 +20523,7 @@
     "name": "NativeAlert",
     "source": "by hand (native N12, 2026-11-07): the design's \"Confirmations stay small alerts\" (Design Notes §1), which the prototype doesn't draw",
     "hash": "",
-    "description": "A confirmation: a small card in the middle of the screen over the sheets' veil, with a title, an optional message and two buttons side by side, the dismiss one first. The confirm button is the accent's, or in the danger colour for a destructive action. The veil, Esc and Cancel dismiss it; it scales and fades in and out (fades only with reduced motion).",
+    "description": "A confirmation: a small card in the middle of the screen over the sheets' veil, with a title, an optional message and two buttons side by side, the dismiss one first; without an action (no confirmLabel), a notice with the dismiss button alone. The confirm button is the accent's, or in the danger colour for a destructive action. The veil, Esc and Cancel dismiss it; it scales and fades in and out (fades only with reduced motion).",
     "preview": {
       "width": 370,
       "height": 260
@@ -20569,9 +20569,9 @@
         "editor": null,
         "options": null,
         "section": null,
-        "required": true,
+        "required": false,
         "componentDefault": null,
-        "doc": "Resource key (or literal text): the action."
+        "doc": "Resource key (or literal text): the action. None for a notice, with the dismiss button alone."
       },
       {
         "name": "cancelLabel",
@@ -20613,7 +20613,7 @@
         "editor": null,
         "options": null,
         "section": null,
-        "required": true,
+        "required": false,
         "componentDefault": null,
         "doc": ""
       },
