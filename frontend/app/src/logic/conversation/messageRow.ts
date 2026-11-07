@@ -98,6 +98,8 @@ export type ConversationContext = {
      * (`threadUnreadCount`), none for a thread the reader doesn't follow.
      */
     unreadInThread: (threadRootMessageIndex: number) => number;
+    /** Whether the view shows threads: without, a message has no thread link (no thread fields). */
+    threads: boolean;
 };
 
 export type TransferToken = {
@@ -352,13 +354,13 @@ export function isOpenThread(msg: Message, openThread: number | undefined): bool
 /**
  * A message's thread: how many replies, when the last came, who's in it (up to three, each the
  * colour of their avatar in the conversation, `face`), how many replies are unread and whether
- * it's the one open. None without a thread.
+ * it's the one open. None without a thread, or in a view that shows no threads (`threads`).
  */
 export function threadFields(
     msg: Message,
-    ctx: Pick<ConversationContext, "date" | "openThread" | "face" | "unreadInThread">,
+    ctx: Pick<ConversationContext, "date" | "openThread" | "face" | "unreadInThread" | "threads">,
 ): ThreadFields {
-    const thread = msg.thread;
+    const thread = ctx.threads ? msg.thread : undefined;
     return {
         threadCount: thread?.numberOfReplies ?? 0,
         threadLastAt: thread === undefined ? undefined : ctx.date(thread.latestEventTimestamp),
@@ -367,7 +369,7 @@ export function threadFields(
                 ? []
                 : [...thread.participantIds].slice(0, THREAD_FACES).map(ctx.face),
         threadNew: thread === undefined ? 0 : ctx.unreadInThread(msg.messageIndex),
-        threadActive: isOpenThread(msg, ctx.openThread),
+        threadActive: thread !== undefined && isOpenThread(msg, ctx.openThread),
     };
 }
 
@@ -696,6 +698,8 @@ export type ConversationContextInput = {
     openThread?: number;
     /** A user's face as the view shows it (their avatar's colour). */
     face: (userId: string) => string;
+    /** Whether the view shows threads (a message's thread link); the native tree has no thread screen yet. */
+    threads: boolean;
 };
 
 /** The ConversationContext a conversation's rows are made with. */
@@ -731,6 +735,7 @@ export function conversationContext(input: ConversationContextInput): Conversati
         text: (key) => interpolate(formatter, key),
         openThread: input.openThread,
         face: input.face,
+        threads: input.threads,
         unreadInThread: (root) =>
             threadUnreadCount(chat, root, (latest) =>
                 chat === undefined ? 0 : client.unreadThreadMessageCount(chat.id, root, latest),

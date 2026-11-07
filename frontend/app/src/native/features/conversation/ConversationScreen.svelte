@@ -222,6 +222,8 @@
             tokens: $cryptoLookup,
             rates: () => exchangeRatesLookupStore.value,
             face: (userId) => AVATAR_GRADIENTS[senderColor(userId)],
+            // no thread screen yet (PLAN, N8a): no replies link under a message until then
+            threads: false,
         });
         // the chat's webhooks and details go with the selection
         return heldCtx.of(selected, live) ?? live;

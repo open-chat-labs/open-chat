@@ -360,6 +360,10 @@ design export needs. Each entry says where it came up.
     A preview's join bar (a channel not joined, a community previewed) comes with N8b.
   - **The message long-press menu** (and with it reactions beyond the chips, Copy, Forward, Info,
     Delete…) is N5d's: a long-press does nothing yet. A message's reactions toggle from its chips.
+  - **A message's thread** is N8a's (native PLAN): the replies link under messages and the thread
+    screen (replies, composer, follow). Until then the link is hidden: the conversation's mapping
+    gets `threads: false` (`ConversationContext.threads`), so no message has thread fields, rather
+    than a link that opens nothing.
   - **The details** (the header's title, the menu's details item) push a placeholder, a local
     `chat_details` screen, until N6 builds it.
   - **Calls** are N14's: the header's video and voice buttons, a live call's Join (its item and the

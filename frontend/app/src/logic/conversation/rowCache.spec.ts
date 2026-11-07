@@ -24,6 +24,7 @@ const ctx: ConversationContext = {
     openThread: undefined,
     face: (userId) => `face:${userId}`,
     unreadInThread: () => 0,
+    threads: true,
     token: () => undefined,
 };
 

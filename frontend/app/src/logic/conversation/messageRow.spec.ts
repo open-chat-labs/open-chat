@@ -32,6 +32,7 @@ const ctx: ConversationContext = {
     openThread: undefined,
     face: (userId) => `face:${userId}`,
     unreadInThread: () => 0,
+    threads: true,
     token: (ledger) =>
         ledger === "icp"
             ? {
@@ -184,6 +185,25 @@ describe("a message row", () => {
         expect(
             messageRow(message({ messageIndex: 7 }), "sent", { ...ctx, unreadInThread }).message,
         ).toMatchObject({ threadNew: 0 });
+    });
+
+    test("has no thread link in a view without threads (the native tree, for now)", () => {
+        const threaded = message({
+            messageIndex: 2,
+            thread: {
+                numberOfReplies: 3,
+                latestEventTimestamp: 9n,
+                participantIds: new Set(["bob"]),
+            } as Message["thread"],
+        });
+        const off = { ...ctx, threads: false, openThread: 2, unreadInThread: () => 1 };
+        expect(messageRow(threaded, "sent", off).message).toMatchObject({
+            threadCount: 0,
+            threadLastAt: undefined,
+            threadFaces: [],
+            threadNew: 0,
+            threadActive: false,
+        });
     });
 
     test("marks its thread active while it's the one open beside the conversation", () => {
@@ -588,6 +608,7 @@ describe("a conversation's context", () => {
             tokens: new Map(),
             rates: () => new Map(),
             face: (userId) => userId,
+            threads: true,
         });
         expect(ctx.unreadInThread(4)).toBe(2);
         expect(asked).toEqual([[4, 6]]);

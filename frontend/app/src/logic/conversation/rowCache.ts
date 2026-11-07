@@ -37,7 +37,7 @@ export class RowCache {
         const names = `${name(msg.sender)}\n${reply?.kind === "rehydrated_reply_context" ? name(reply.senderId) : ""}`;
         // another thread opening, or a thread's replies being read, redoes only the rows it concerns
         const thread =
-            msg.thread === undefined
+            msg.thread === undefined || !ctx.threads
                 ? ""
                 : `${isOpenThread(msg, ctx.openThread)}|${ctx.unreadInThread(msg.messageIndex)}`;
         const kept = this.#rows.get(key);

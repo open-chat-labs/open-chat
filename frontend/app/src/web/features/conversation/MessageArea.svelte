@@ -305,6 +305,7 @@
             tokens: $cryptoLookup,
             rates: () => exchangeRatesLookupStore.value,
             face: (userId) => AVATAR_GRADIENTS[senderColor(userId)],
+            threads: true,
         });
     });
 

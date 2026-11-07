@@ -103,13 +103,14 @@
       align-self: flex-end;
     }
 
-    &:hover {
-      background: var(--overlay-1);
-    }
-
     &.active {
       background: var(--accent-soft);
       box-shadow: inset 0 0 0 1px var(--accent);
+    }
+
+    /* after .active: hovered, an open thread's link is --overlay-1 too, keeping its accent border (pass 8) */
+    &:hover {
+      background: var(--overlay-1);
     }
 
     &:focus-visible {
