@@ -202,8 +202,13 @@ Not a URL, wired as today:
   to a community, a migrated DM, and the not-found, no-access and restricted dialogs. Every tree
   handles those events through `app/src/logic/appEvents`; closing a dialog goes to the default
   scope.
-- **Threads.** Closing a thread strips `/:tmi` and `?open`. `/:mi/:tmi` opens the thread on a cold
-  load even without `?open`.
+- **Threads.** Closing a thread strips `/:tmi` and `?open` and keeps the rest of the query
+  (`?threads`: `threadClosedPath`, which the old desktop panel and mobile's Back now use too; the
+  old regex dropped the whole query with `/:tmi`); closing the modal right column while it shows a
+  thread does the same. Opening one from the list, a message's "N replies" or its menu's Reply in
+  thread goes to the root's `/…/:mi?open=true`, keeping `?threads` (`threadOpenPath`).
+  `/:mi/:tmi` opens the thread on a cold load even without `?open`. With no followed threads left,
+  `?threads` is dropped (the issue's open question; the old desktop list went back to the chats).
 - **Previews.** Navigating away from a previewed community drops the preview. The preview bar's
   Back (8b) cancels it through `cancelPreview`: back to Explore (or `/welcome`) when the preview was
   opened from there (`setCommunityPreviewOrigin`), else the default scope; a group or channel goes
