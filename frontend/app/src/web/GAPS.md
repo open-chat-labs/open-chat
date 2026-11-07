@@ -264,8 +264,9 @@ design export needs. Each entry says where it came up.
   - **Share** opens the system share sheet in the apps (the WebViews have no Web Share API, so it
     only copied the link): tauri-plugin-oc's new `share` command (Android's chooser, iOS's
     `UIActivityViewController`), through every tree's `shareLink`. It needs a shell built with the
-    command: an older one rejects it and the link is copied, as before (checked on the emulator's
-    current shell). The share sheet itself is untested until a shell is built.
+    command: an older one rejects it and the link is copied, as before (checked on an older shell).
+    The share sheet opens on the Android emulator (Android's chooser, "Sharing link"); iOS's isn't
+    checked yet.
   - **The CHIT card** shows the balance and the streak, and today's claim once the first sync is in
     (`dailyClaim`), with the confetti on a claim and a spinner in Claim's place while it's on its
     way; its head opens CHIT (N11's placeholder). The daily
