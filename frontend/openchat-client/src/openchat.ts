@@ -5790,6 +5790,52 @@ export class OpenChat {
         );
     }
 
+    /**
+     * Forwards a message to each of these chats without opening them (the native forward sheet's
+     * several picks): a copy marked forwarded, then the note, if any, as a message of its own once
+     * the copy is in. Each chat's draft is left as it was (the note doesn't reply to its reply).
+     * Settles once every chat has answered: whether every copy (and note) went. One that didn't
+     * shows as failed in its chat, to retry there (a chat whose rules the user hasn't accepted
+     * refuses it, and asks for them on the retry).
+     */
+    async forwardMessageToChats(
+        chatIds: ChatIdentifier[],
+        msg: Message,
+        note: string,
+    ): Promise<boolean> {
+        const text = note.trim();
+        const sent = (resp: SendMessageResponse) =>
+            resp.kind === "success" || resp.kind === "transfer_success";
+        const results = await Promise.all(
+            chatIds.map(async (chatId) => {
+                const context = { chatId };
+                const copied = await this.sendMessageWithContent(
+                    context,
+                    { ...msg.content },
+                    msg.blockLevelMarkdown,
+                    [],
+                    true,
+                    undefined,
+                    msg.ogPreviews.length > 0 ? Promise.resolve(msg.ogPreviews) : undefined,
+                );
+                if (!sent(copied) || text === "") return sent(copied);
+                const noted = await this.#sendWithContent(
+                    context,
+                    { kind: "text_content", text },
+                    false,
+                    [],
+                    false,
+                    undefined,
+                    fetchOgPreviews(extractEnabledLinks(text), import.meta.env.OC_PREVIEW_PROXY_URL),
+                    undefined,
+                    "keep",
+                );
+                return sent(noted);
+            }),
+        );
+        return results.every((ok) => ok);
+    }
+
     // `visit` is the selection the store writes are for. The other effects of the events (on
     // failed, unconfirmed and in-flight messages, unread counts and the chat summary) happen
     // whether or not it is still selected.
