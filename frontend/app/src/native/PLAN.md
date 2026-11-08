@@ -50,8 +50,14 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   ([#10369](https://github.com/open-chat-labs/open-chat/issues/10369)): the header and its menu,
   search in the chat, the messages (the web's mapping, moved to `logic/conversation`), the swipes,
   typing, call items and the media viewer. What it left is in GAPS.md ("Native conversation").
-- **Next:** the screens. N10a, N11 and N13 need only N3; N5c (the composer), N5d (the message
-  menu) and N6 (details) need N5b.
+- **Built:** N5c the composer and its keyboard-area panels
+  ([#10370](https://github.com/open-chat-labs/open-chat/issues/10370)): the library's composer as
+  the design's pill, in the platform's order, on the web composer's operations (moved to
+  `logic/composer` and `logic/conversation/draftActions`); the slot under it that the keyboard,
+  the emoji panel (every emoji by category, GIFs) and the attach panel share. What it left (the
+  gallery's recent photos, the builders, which are N9's …) is in GAPS.md ("Native composer").
+- **Next:** the screens. N10a, N11 and N13 need only N3; N5d (the message menu) and N6 (details)
+  need N5b; N9 (the builders) needs N10b too.
 
 ## Workstreams
 

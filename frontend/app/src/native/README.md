@@ -54,7 +54,9 @@ native/
     app/ScreenHost.svelte  shows it, or a placeholder until it's built
     chats/           the Chats tab: the list, its search, New chat
     conversation/    a conversation (N5b): the header and its menu, search in the chat, the
-                     messages on core/ChatEventList, the swipes, typing, call items
+                     messages on core/ChatEventList, the swipes, typing, call items; its composer
+                     (N5c: ConversationComposer) and the slot under it that the keyboard and the
+                     emoji and attach panels share (keyboardSlot)
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when
@@ -75,7 +77,11 @@ community names, the photo and cover uploads; `logic/chit/dailyClaim`, shared wi
 profile and CHIT dialog), a conversation's messages (`logic/conversation`: the rows, what a message
 offers, its controls, the unread divider and the route's message, search in a chat, call items;
 `core/ChatEventList`, `core/MediaViewer`, `core/observeRead`, shared with `src/web` and, for search
-and calls, the old UIs), and the theme the web and Welcome's menu keep (`theme/themes.ts`). The
+and calls, the old UIs), the composer (`logic/composer`: where it is, what it offers, sending,
+mentions, voice, the props it takes, GIFs; `logic/conversation/draftActions`: the reply or edit;
+shared with `src/web`, and the GIFs' content with the old UIs; the emoji by category in
+`utils/emojis`, the old pickers' data), and the theme the web and Welcome's menu keep
+(`theme/themes.ts`). The
 marketing pages (Landing, Learn, the terms and privacy policy) aren't the app's: they open on the
 website in the default browser (`shell/onWeb.ts`), as the old native app's About and a deep link
 to one do.
@@ -112,7 +118,11 @@ to one do.
 - **The keyboard** comes up over a screen with fields rather than the screen shrinking above it, so
   a pinned button stays down: the screen's scroller takes `aboveKeyboard` (`aboveKeyboard.svelte.ts`,
   `keyboard.ts`), which keeps the viewport resize off, makes room for the keyboard and scrolls the
-  focused field above it.
+  focused field above it. A conversation is the other way round: its composer rides on the
+  keyboard, in a slot under it that a keyboard-area panel (emoji, attach) takes at the keyboard's
+  height when the keyboard goes down (`KeyboardSlot`); where the keyboard's height is reported (the
+  Android app) the viewport resize is off and the slot takes it, elsewhere the platform lifts the
+  page.
 - **A screen leaving keeps what it shows** until it's gone. Back changes the URL as the pop starts,
   and whatever the URL selected (a chat, a community) is cleared then, in the client's stores: a
   screen that shows a selection holds what it last showed of it while it slides out (the
