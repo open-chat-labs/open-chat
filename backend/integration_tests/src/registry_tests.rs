@@ -1,7 +1,7 @@
 use crate::client::ledger;
 use crate::env::ENV;
-use crate::setup::install_icrc_ledger;
-use crate::utils::{now_millis, set_freezing_threshold, tick_many};
+use crate::setup::{install_icrc_ledger, install_icrc_ledger_wasm};
+use crate::utils::{now_millis, set_freezing_threshold, tick_many, tick_until};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::{Nat, Principal};
 use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE, HOUR_IN_MS};
@@ -9,7 +9,7 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_principal, random_string};
-use types::CanisterId;
+use types::{CanisterId, TimestampMillis};
 
 #[test]
 fn add_token_succeeds() {
@@ -171,7 +171,7 @@ fn update_token_succeeds() {
 // The IC uninstalls a canister once it runs out of cycles, after which calls to it are rejected as it
 // being out of cycles rather than as it having no Wasm module
 #[test]
-fn ledger_uninstalled_after_running_out_of_cycles_is_marked_uninstalled() {
+fn ledger_uninstalled_after_running_out_of_cycles_is_marked_uninstalled_until_installed_again() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -201,7 +201,7 @@ fn ledger_uninstalled_after_running_out_of_cycles_is_marked_uninstalled() {
     freeze(env, ledger_canister_id, *controller);
     env.advance_time(Duration::from_millis(11 * HOUR_IN_MS));
     tick_many(env, 20);
-    assert!(!is_marked_uninstalled(env, canister_ids.registry, ledger_canister_id));
+    assert!(!is_marked_uninstalled(env, canister_ids.registry, ledger_canister_id, None));
 
     // The management canister charges a frozen canister for calls about it too, so it can only be
     // uninstalled once topped up, after which it is frozen again
@@ -209,14 +209,36 @@ fn ledger_uninstalled_after_running_out_of_cycles_is_marked_uninstalled() {
     env.uninstall_canister(ledger_canister_id, Some(*controller)).unwrap();
     freeze(env, ledger_canister_id, *controller);
     env.advance_time(Duration::from_millis(11 * HOUR_IN_MS));
+    tick_until(env, |env| {
+        is_marked_uninstalled(env, canister_ids.registry, ledger_canister_id, None)
+    });
 
-    for _ in 0..20 {
-        env.tick();
-        if is_marked_uninstalled(env, canister_ids.registry, ledger_canister_id) {
-            return;
-        }
-    }
-    panic!("Ledger was not marked uninstalled");
+    // Checking the ledger again while it is still uninstalled doesn't count as an update to it
+    let marked_uninstalled = now_millis(env);
+    env.advance_time(Duration::from_millis(11 * HOUR_IN_MS));
+    tick_many(env, 20);
+    assert!(!is_marked_uninstalled(
+        env,
+        canister_ids.registry,
+        ledger_canister_id,
+        Some(marked_uninstalled)
+    ));
+
+    unfreeze(env, ledger_canister_id, *controller);
+    install_icrc_ledger_wasm(
+        env,
+        *controller,
+        ledger_canister_id,
+        "ABC Token".to_string(),
+        "ABC".to_string(),
+        10_000,
+        Vec::new(),
+    );
+    env.advance_time(Duration::from_millis(11 * HOUR_IN_MS));
+    // Clients which saw it marked uninstalled are sent it again
+    tick_until(env, |env| {
+        is_listed(env, canister_ids.registry, ledger_canister_id, Some(marked_uninstalled))
+    });
 }
 
 // Raises the freezing threshold above the balance. The memory allocation keeps the cycles the
@@ -239,17 +261,45 @@ fn freeze(env: &PocketIc, canister_id: CanisterId, controller: Principal) {
     set_freezing_threshold(env, canister_id, controller, freezing_threshold_secs.into());
 }
 
-fn is_marked_uninstalled(env: &PocketIc, registry: CanisterId, ledger_canister_id: CanisterId) -> bool {
-    match client::registry::updates(
-        env,
-        random_principal(),
-        registry,
-        &registry_canister::updates::Args { since: None },
-    ) {
-        registry_canister::updates::Response::Success(result) => result
-            .tokens_uninstalled
-            .is_some_and(|uninstalled| uninstalled.contains(&ledger_canister_id)),
-        response => panic!("'updates' error: {response:?}"),
+// Lowers the memory allocation and freezing threshold `freeze` raised, so the canister can run again
+fn unfreeze(env: &PocketIc, canister_id: CanisterId, controller: Principal) {
+    env.update_canister_settings(
+        canister_id,
+        Some(controller),
+        pocket_ic::CanisterSettings {
+            memory_allocation: Some(Nat::from(0u64)),
+            freezing_threshold: Some(Nat::from(30 * 24 * 60 * 60u64)),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+}
+
+fn is_marked_uninstalled(
+    env: &PocketIc,
+    registry: CanisterId,
+    ledger_canister_id: CanisterId,
+    since: Option<TimestampMillis>,
+) -> bool {
+    updates(env, registry, since)
+        .and_then(|result| result.tokens_uninstalled)
+        .is_some_and(|uninstalled| uninstalled.contains(&ledger_canister_id))
+}
+
+fn is_listed(env: &PocketIc, registry: CanisterId, ledger_canister_id: CanisterId, since: Option<TimestampMillis>) -> bool {
+    updates(env, registry, since)
+        .and_then(|result| result.token_details)
+        .is_some_and(|tokens| tokens.iter().any(|t| t.ledger_canister_id == ledger_canister_id))
+}
+
+fn updates(
+    env: &PocketIc,
+    registry: CanisterId,
+    since: Option<TimestampMillis>,
+) -> Option<registry_canister::updates::SuccessResult> {
+    match client::registry::updates(env, random_principal(), registry, &registry_canister::updates::Args { since }) {
+        registry_canister::updates::Response::Success(result) => Some(result),
+        registry_canister::updates::Response::SuccessNoUpdates => None,
     }
 }
 

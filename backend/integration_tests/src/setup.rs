@@ -578,6 +578,33 @@ pub fn install_icrc_ledger(
     canister_id: Option<&str>,
     initial_balances: Vec<(Account, u64)>,
 ) -> CanisterId {
+    let canister_id = if let Some(id) = canister_id {
+        create_canister_with_id(env, controller, id)
+    } else {
+        create_canister(env, controller)
+    };
+    install_icrc_ledger_wasm(
+        env,
+        controller,
+        canister_id,
+        token_name,
+        token_symbol,
+        transfer_fee,
+        initial_balances,
+    );
+
+    canister_id
+}
+
+pub fn install_icrc_ledger_wasm(
+    env: &mut PocketIc,
+    controller: Principal,
+    canister_id: CanisterId,
+    token_name: String,
+    token_symbol: String,
+    transfer_fee: u64,
+    initial_balances: Vec<(Account, u64)>,
+) {
     #[derive(CandidType)]
     pub struct InitArgs {
         pub minting_account: Account,
@@ -615,14 +642,7 @@ pub fn install_icrc_ledger(
         },
     });
 
-    let canister_id = if let Some(id) = canister_id {
-        create_canister_with_id(env, controller, id)
-    } else {
-        create_canister(env, controller)
-    };
     install_canister(env, controller, canister_id, wasms::ICRC_LEDGER.clone(), args);
-
-    canister_id
 }
 
 // Installs an SNS governance canister with a neuron for each of `neurons`, given as the principals

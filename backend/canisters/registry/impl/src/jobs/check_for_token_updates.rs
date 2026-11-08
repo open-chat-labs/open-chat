@@ -18,20 +18,36 @@ fn run() {
 }
 
 async fn run_async() {
-    let ledger_canister_ids: Vec<_> = read_state(|state| {
+    let tokens: Vec<_> = read_state(|state| {
         state
             .data
             .tokens
             .iter()
-            .filter(|t| !t.uninstalled)
-            .map(|t| t.ledger_canister_id)
+            .map(|t| (t.ledger_canister_id, t.uninstalled))
             .collect()
     });
 
-    futures::future::join_all(ledger_canister_ids.into_iter().map(check_for_token_updates)).await;
+    futures::future::join_all(
+        tokens
+            .into_iter()
+            .map(|(ledger_canister_id, uninstalled)| check_for_token_updates(ledger_canister_id, uninstalled)),
+    )
+    .await;
 }
 
-async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), C2CError> {
+async fn check_for_token_updates(ledger_canister_id: CanisterId, uninstalled: bool) -> Result<(), C2CError> {
+    // A ledger marked uninstalled is checked too, so that one which is installed again is picked up,
+    // but by asking the IC whether it has a Wasm module again rather than by calling it, which keeps
+    // the calls to the ones still uninstalled out of the error logs
+    if uninstalled
+        && canister_info(ledger_canister_id)
+            .await
+            .ok()
+            .is_none_or(|info| info.module_hash.is_none())
+    {
+        return Ok(());
+    }
+
     let metadata = get_metadata(ledger_canister_id).await?;
     let metadata_helper = match MetadataHelper::try_parse(metadata) {
         Ok(h) => h,
@@ -94,11 +110,16 @@ async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), C
 
 async fn get_metadata(ledger_canister_id: CanisterId) -> Result<Vec<(String, MetadataValue)>, C2CError> {
     match icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await {
-        Ok(metadata) => Ok(metadata),
+        Ok(metadata) => {
+            mutate_state(|state| {
+                state.data.tokens.set_uninstalled(ledger_canister_id, false, state.env.now());
+            });
+            Ok(metadata)
+        }
         Err(error) => {
             if is_ledger_uninstalled_or_deleted(ledger_canister_id, &error).await {
                 mutate_state(|state| {
-                    state.data.tokens.mark_uninstalled(ledger_canister_id, state.env.now());
+                    state.data.tokens.set_uninstalled(ledger_canister_id, true, state.env.now());
                 });
             }
             Err(error)
@@ -112,7 +133,9 @@ async fn is_ledger_uninstalled_or_deleted(ledger_canister_id: CanisterId, error:
     if is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message()) {
         true
     } else if is_out_of_cycles_error(error.reject_code(), error.message()) {
-        matches!(canister_info(ledger_canister_id).await, Ok(info) if info.module_hash.is_none())
+        canister_info(ledger_canister_id)
+            .await
+            .is_ok_and(|info| info.module_hash.is_none())
     } else {
         false
     }
