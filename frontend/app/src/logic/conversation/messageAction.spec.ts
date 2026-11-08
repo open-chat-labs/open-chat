@@ -1,7 +1,7 @@
-import type { EventWrapper, Message } from "@client";
+import { i18nKey, type DirectChatIdentifier, type EventWrapper, type Message } from "@client";
 import { vi } from "vitest";
-import { rowMessageContext } from "@src/logic/conversation/threadTimeline";
-import { runMessageAction, type MessageMenuTarget } from "./messageMenu";
+import { rowMessageContext } from "./threadTimeline";
+import { messageAction, undeleteMessage, type MessageActionTarget } from "./messageAction";
 
 const chatId = { kind: "group_chat" as const, groupId: "g" };
 
@@ -34,7 +34,7 @@ function fakeClient() {
         followThread: vi.fn(async () => true),
         getContentAsText: vi.fn(() => "hi"),
         pinMessage: vi.fn(async () => true),
-        replyPrivately: vi.fn(async () => undefined),
+        replyPrivately: vi.fn(async (): Promise<DirectChatIdentifier | undefined> => undefined),
         retrySendMessage: vi.fn(async () => ({ kind: "failure" as const })),
         revealBlockedMessage: vi.fn(),
         revealDeletedMessage: vi.fn(async () => true),
@@ -47,12 +47,11 @@ function fakeClient() {
 
 function target(
     client: ReturnType<typeof fakeClient>,
-    fields: Partial<MessageMenuTarget> = {},
-): MessageMenuTarget {
+    fields: Partial<MessageActionTarget> = {},
+): MessageActionTarget {
     return {
         client,
         context: { chatId },
-        openThread: vi.fn(),
         evt,
         failed: false,
         me: "me",
@@ -65,60 +64,63 @@ function target(
     };
 }
 
-describe("a message's actions in the conversation", () => {
+describe("a message's actions", () => {
     // invariant 5
     test("deleting a failed message only removes it locally, never calls deleteMessage", async () => {
         const client = fakeClient();
-        const dialog = await runMessageAction(
+        const outcome = await messageAction(
             "delete",
             target(client, { failed: true, confirmDelete: true }),
         );
-        expect(dialog).toBeUndefined();
+        expect(outcome).toEqual({ kind: "done" });
         expect(client.deleteFailedMessage).toHaveBeenCalledWith(chatId, 42n, undefined);
         expect(client.deleteMessage).not.toHaveBeenCalled();
     });
 
     test("deleting asks first while the setting says to, and deletes straight away otherwise", async () => {
         const asking = fakeClient();
-        expect(await runMessageAction("delete", target(asking, { confirmDelete: true }))).toEqual({
-            kind: "delete",
-            evt,
+        expect(await messageAction("delete", target(asking, { confirmDelete: true }))).toEqual({
+            kind: "ask",
+            dialog: { kind: "delete", evt },
         });
         expect(asking.deleteMessage).not.toHaveBeenCalled();
 
         const straight = fakeClient();
-        await runMessageAction("delete_for_me", target(straight));
+        expect(await messageAction("delete_for_me", target(straight))).toEqual({
+            kind: "deleted",
+            ok: true,
+        });
         expect(straight.deleteMessage).toHaveBeenCalledWith(chatId, undefined, 42n);
     });
 
     test("reporting and setting a reminder ask why and when first", async () => {
-        expect(await runMessageAction("report", target(fakeClient()))).toEqual({
-            kind: "report",
-            evt,
+        expect(await messageAction("report", target(fakeClient()))).toEqual({
+            kind: "ask",
+            dialog: { kind: "report", evt },
         });
-        expect(await runMessageAction("remind", target(fakeClient()))).toEqual({
-            kind: "remind",
-            evt,
+        expect(await messageAction("remind", target(fakeClient()))).toEqual({
+            kind: "ask",
+            dialog: { kind: "remind", evt },
         });
     });
 
     test("forwarding asks where to first", async () => {
-        expect(await runMessageAction("forward", target(fakeClient()))).toEqual({
-            kind: "forward",
-            evt,
+        expect(await messageAction("forward", target(fakeClient()))).toEqual({
+            kind: "ask",
+            dialog: { kind: "forward", evt },
         });
     });
 
     test("retrying resends the failed message itself", async () => {
         const client = fakeClient();
-        await runMessageAction("retry", target(client, { failed: true }));
+        await messageAction("retry", target(client, { failed: true }));
         expect(client.retrySendMessage).toHaveBeenCalledWith({ chatId }, evt);
     });
 
     test("pinning and unpinning go by the message's index", async () => {
         const client = fakeClient();
-        await runMessageAction("pin", target(client));
-        await runMessageAction("unpin", target(client));
+        await messageAction("pin", target(client));
+        await messageAction("unpin", target(client));
         expect(client.pinMessage).toHaveBeenCalledWith(chatId, 2);
         expect(client.unpinMessage).toHaveBeenCalledWith(chatId, 2);
     });
@@ -126,11 +128,11 @@ describe("a message's actions in the conversation", () => {
     test("in a thread, a message is deleted, revealed and retried in the thread", async () => {
         const client = fakeClient();
         const context = { chatId, threadRootMessageIndex: 9 };
-        await runMessageAction("delete", target(client, { context }));
+        await messageAction("delete", target(client, { context }));
         expect(client.deleteMessage).toHaveBeenCalledWith(chatId, 9, 42n);
-        await runMessageAction("delete", target(client, { context, failed: true }));
+        await messageAction("delete", target(client, { context, failed: true }));
         expect(client.deleteFailedMessage).toHaveBeenCalledWith(chatId, 42n, 9);
-        await runMessageAction("retry", target(client, { context, failed: true }));
+        await messageAction("retry", target(client, { context, failed: true }));
         expect(client.retrySendMessage).toHaveBeenCalledWith(context, evt);
     });
 
@@ -139,19 +141,19 @@ describe("a message's actions in the conversation", () => {
         // the root heads the thread's list, but it's the chat's message
         const context = rowMessageContext(chatId, evt.event, evt.event);
         const inThread = { context, threadRoot: evt.event };
-        await runMessageAction("delete", target(client, inThread));
+        await messageAction("delete", target(client, inThread));
         expect(client.deleteMessage).toHaveBeenCalledWith(chatId, undefined, 42n);
-        await runMessageAction("undelete", target(client, inThread));
+        await messageAction("undelete", target(client, inThread));
         expect(client.undeleteMessage).toHaveBeenCalledWith(chatId, undefined, evt.event);
         const deleted = { ...evt, event: { ...evt.event, deleted: true } };
-        await runMessageAction("reveal", target(client, { ...inThread, evt: deleted }));
+        await messageAction("reveal", target(client, { ...inThread, evt: deleted }));
         expect(client.revealDeletedMessage).toHaveBeenCalledWith(chatId, 42n, undefined);
     });
 
     test("following from a thread's message follows the thread's root", async () => {
         const client = fakeClient();
         const root = { ...evt.event, messageId: 1n, messageIndex: 9 };
-        await runMessageAction(
+        await messageAction(
             "unfollow_thread",
             target(client, { context: { chatId, threadRootMessageIndex: 9 }, threadRoot: root }),
         );
@@ -160,7 +162,48 @@ describe("a message's actions in the conversation", () => {
 
     test("translating isn't asked of the client for someone without Diamond", async () => {
         const client = fakeClient();
-        await runMessageAction("translate", target(client, { diamond: false }));
+        expect(await messageAction("translate", target(client, { diamond: false }))).toEqual({
+            kind: "upgrade",
+        });
         expect(client.translateMessage).not.toHaveBeenCalled();
+    });
+
+    test("a failure comes back with what to say, for the view to show", async () => {
+        const client = fakeClient();
+        client.pinMessage.mockResolvedValue(false);
+        expect(await messageAction("pin", target(client))).toEqual({
+            kind: "failed",
+            message: i18nKey("pinMessageFailed"),
+        });
+    });
+
+    test("a private reply opens the sender's DM, or says it couldn't be made", async () => {
+        const client = fakeClient();
+        expect(await messageAction("reply_privately", target(client))).toEqual({
+            kind: "not_found",
+        });
+        const dm = { kind: "direct_chat" as const, userId: "them" };
+        client.replyPrivately.mockResolvedValue(dm);
+        expect(await messageAction("reply_privately", target(client))).toEqual({
+            kind: "open_chat",
+            chatId: dm,
+        });
+    });
+
+    test("starting a thread opens the message's thread", async () => {
+        expect(await messageAction("start_thread", target(fakeClient()))).toEqual({
+            kind: "open_thread",
+            threadRootMessageIndex: 2,
+        });
+    });
+
+    test("a delete's Undo restores the message as deleted, wherever it is", async () => {
+        const client = fakeClient();
+        const context = { chatId, threadRootMessageIndex: 9 };
+        expect(await undeleteMessage(client, context, evt.event)).toBe(true);
+        expect(client.undeleteMessage).toHaveBeenCalledWith(chatId, 9, {
+            ...evt.event,
+            deleted: true,
+        });
     });
 });
