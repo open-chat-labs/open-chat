@@ -91,6 +91,7 @@
         type MessageHandlers,
         type QuoteTarget,
     } from "@src/logic/conversation/messageHandlers";
+    import { canRemovePreviews, previewLink } from "@src/logic/conversation/linkPreview";
     import { messageOffer } from "@src/logic/conversation/messageOffer";
     import {
         conversationContext,
@@ -885,6 +886,7 @@
                 : quoteTarget(evt.event, chat.id, $chatListScopeStore.kind);
         const messages = [
             withFields(message, {
+                ...previewRemoval(evt),
                 ...retryFor(row.message, offers.retry),
                 ...quoteFor(row.message, quoted, goToQuote),
                 menu: offers.menu,
@@ -899,6 +901,18 @@
 
     // its long-press menu (MessageActions), and what that opens
     let messageActions: MessageActions | undefined = $state();
+
+    // the sender takes a link's preview off their own text message, once they've confirmed it
+    function previewRemoval(evt: EventWrapper<Message>) {
+        const msg = evt.event;
+        if (!canRemovePreviews(msg, me)) return {};
+        return {
+            onRemovePreview: (index: number) => {
+                const url = previewLink(msg, index);
+                if (url !== undefined) messageActions?.removePreview(evt, url);
+            },
+        };
+    }
 
     const QUOTED_MARK_MS = 1600;
 

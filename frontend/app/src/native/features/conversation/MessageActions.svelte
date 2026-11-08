@@ -33,6 +33,7 @@
         type MessageActionOutcome,
         type MessageActionTarget,
     } from "@src/logic/conversation/messageAction";
+    import { removeLinkPreview } from "@src/logic/conversation/linkPreview";
     import { toggleReaction } from "@src/logic/conversation/reaction";
     import { quickReactions as recentReactions } from "@src/stores/quickReactions";
     import { toastStore } from "@src/stores/toast";
@@ -80,6 +81,8 @@
     let forwarding = $state<{ chatId: ChatIdentifier; message: Message }>();
     let reporting = $state<Pressed>();
     let upgrading = $state(false);
+    // a link's preview the sender asked to take off, waiting on their confirm
+    let removing = $state<{ chatId: ChatIdentifier; evt: EventWrapper<Message>; url: string }>();
 
     /** Opens the message's menu over it (`el`, its row), offering what `offered` says. */
     export function open(
@@ -101,6 +104,11 @@
         haptic("light");
     }
 
+    /** Asks the sender to confirm taking the link's preview off their message (notes §1: a small alert). */
+    export function removePreview(evt: EventWrapper<Message>, url: string): void {
+        if (chat !== undefined) removing = { chatId: chat.id, evt, url };
+    }
+
     // another chat takes this one's place: what was open on its messages closes
     $effect.pre(() => {
         void chat?.id;
@@ -108,6 +116,7 @@
             menuOpen = false;
             picking = undefined;
             reporting = undefined;
+            removing = undefined;
         });
     });
 
@@ -136,6 +145,19 @@
         () => upgrading,
         () => (upgrading = false),
     );
+    useOverlay(
+        overlays,
+        () => removing !== undefined,
+        () => (removing = undefined),
+    );
+
+    async function confirmRemovePreview() {
+        const at = removing;
+        removing = undefined;
+        if (at === undefined) return;
+        const failure = await removeLinkPreview(client, { chatId: at.chatId }, at.evt, at.url);
+        if (failure !== undefined) toastStore.showFailureToast(failure);
+    }
 
     const items = $derived(
         pressed === undefined
@@ -341,6 +363,14 @@
         const at = reporting;
         if (at !== undefined) void report(at, reason, deleteToo);
     }} />
+
+<NativeAlert
+    open={removing !== undefined}
+    title={$_("removePreviewQuestion")}
+    confirmLabel={$_("remove")}
+    danger
+    onConfirm={() => void confirmRemovePreview()}
+    onClose={() => (removing = undefined)} />
 
 <NativeAlert
     open={upgrading}

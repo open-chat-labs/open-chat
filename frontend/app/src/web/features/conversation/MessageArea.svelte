@@ -195,6 +195,11 @@
         type MessageHandlers,
         type QuoteTarget,
     } from "@src/logic/conversation/messageHandlers";
+    import {
+        canRemovePreviews,
+        previewLink,
+        removeLinkPreview,
+    } from "@src/logic/conversation/linkPreview";
     import { messageOffer } from "@src/logic/conversation/messageOffer";
     import { toggleReaction } from "@src/logic/conversation/reaction";
     import { observeRead } from "@src/core/observeRead";
@@ -1103,11 +1108,10 @@
 
     function previewRemoval(where: MessageContext, evt: EventWrapper<Message>) {
         const msg = evt.event;
-        if (msg.sender !== me || msg.content.kind !== "text_content" || msg.ogPreviews.length === 0)
-            return {};
+        if (!canRemovePreviews(msg, me)) return {};
         return {
             onRemovePreview: (index: number) => {
-                const url = msg.ogPreviews[index]?.url;
+                const url = previewLink(msg, index);
                 if (url !== undefined) removingPreview = { context: where, evt, url };
             },
         };
@@ -1117,8 +1121,13 @@
         const removing = removingPreview;
         removingPreview = undefined;
         if (removing === undefined) return;
-        const removed = await client.hideLinkPreview(removing.context, removing.evt, removing.url);
-        if (!removed) toastStore.showFailureToast(i18nKey("errorRemovingLinkPreview"));
+        const failure = await removeLinkPreview(
+            client,
+            removing.context,
+            removing.evt,
+            removing.url,
+        );
+        if (failure !== undefined) toastStore.showFailureToast(failure);
     }
 
     // a rich kind's controls (withHandlers), acting where its message is (a swap's accept or
