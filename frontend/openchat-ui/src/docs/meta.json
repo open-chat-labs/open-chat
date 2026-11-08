@@ -10586,6 +10586,17 @@
         "doc": ""
       },
       {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
+      },
+      {
         "name": "onDownload",
         "type": "() => void",
         "default": null,
@@ -13374,6 +13385,17 @@
         "required": false,
         "componentDefault": "true",
         "doc": ""
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
       }
     ],
     "group": "library"
@@ -13556,6 +13578,17 @@
         "required": false,
         "componentDefault": "true",
         "doc": ""
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
       },
       {
         "name": "onOpen",
@@ -14993,6 +15026,17 @@
         "doc": ""
       },
       {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
+      },
+      {
         "name": "onVote",
         "type": "(indexes: number[]) => void",
         "default": null,
@@ -15299,6 +15343,17 @@
         "required": false,
         "componentDefault": "true",
         "doc": ""
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
       },
       {
         "name": "onClaim",
@@ -17378,6 +17433,17 @@
         "doc": ""
       },
       {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
+      },
+      {
         "name": "onAccept",
         "type": "() => void",
         "default": null,
@@ -18055,6 +18121,17 @@
         "required": false,
         "componentDefault": "true",
         "doc": ""
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
       },
       {
         "name": "onOpen",

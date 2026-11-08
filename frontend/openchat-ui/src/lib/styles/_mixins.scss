@@ -56,6 +56,19 @@
   &.last {
     border-bottom-left-radius: 22px;
   }
+
+  // mirrored (your own at the inline end: native), as ChatBubble's: the grouped corners on the
+  // inline-end side, the last one's tail there too
+  &.mirror {
+    border-start-start-radius: 22px;
+    border-start-end-radius: var(--radius-xs);
+    border-end-end-radius: var(--radius-xs);
+    border-end-start-radius: 22px;
+
+    &.last {
+      border-end-end-radius: 22px;
+    }
+  }
 }
 
 /// A type size with no `--text-*` token of its own (the native prototype's 15px, 14.5px …), times `--text-scale` as the

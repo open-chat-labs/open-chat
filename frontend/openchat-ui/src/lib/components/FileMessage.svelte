@@ -24,6 +24,8 @@
     /** Resource key (or literal text). */
     failedText?: string;
     lastInGroup?: boolean;
+    /** Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`. */
+    mirror?: boolean;
     onDownload?: () => void;
     onCancel?: () => void;
     onRetry?: () => void;
@@ -38,6 +40,7 @@
     upload = null,
     failedText = 'ui.fileMessage.failed',
     lastInGroup = true,
+    mirror = false,
     onDownload,
     onCancel,
     onRetry,
@@ -64,8 +67,8 @@
   const ticked = $derived(side === 'sent' && !uploading && !failed);
 </script>
 
-<div class="file" class:sent={side === 'sent'}>
-  <div class="shell" class:last={lastInGroup}>
+<div class="file" class:sent={side === 'sent'} class:mirror>
+  <div class="shell" class:last={lastInGroup} class:mirror>
     <div class="row">
       {#if uploading}
         <span class="progress">
@@ -113,6 +116,10 @@
     gap: 6px;
     max-width: 100%;
 
+    &.mirror {
+      align-items: flex-end;
+    }
+
     &.sent {
       --msg-bg: var(--bubble-send-bg);
       --msg-ink: var(--bubble-text);
@@ -139,6 +146,12 @@
     gap: 12px;
     padding: 10px;
     border-radius: 2px 18px 6px 6px;
+
+    // mirrored with the shell
+    .mirror & {
+      border-start-start-radius: 18px;
+      border-start-end-radius: 2px;
+    }
     background: var(--msg-seg);
   }
 

@@ -30,6 +30,8 @@
     side?: 'received' | 'sent';
     time: string;
     lastInGroup?: boolean;
+    /** Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`. */
+    mirror?: boolean;
     onVote?: (indexes: number[]) => void;
     onViewVotes?: () => void;
   }
@@ -48,6 +50,7 @@
     side = 'received',
     time,
     lastInGroup = true,
+    mirror = false,
     onVote,
     onViewVotes,
   }: Props = $props();
@@ -79,7 +82,7 @@
   }
 </script>
 
-<div class="shell" class:sent class:last={lastInGroup}>
+<div class="shell" class:sent class:last={lastInGroup} class:mirror>
   <div class="stack">
     <div class="tile head">
       <span class="kicker"><span class="poll-icon"></span>{t('ui.pollMessage.poll')}</span>
@@ -164,6 +167,12 @@
     gap: 8px;
     padding: 14px;
     border-radius: 2px 18px 6px 6px;
+
+    // mirrored with the shell
+    .mirror & {
+      border-start-start-radius: 18px;
+      border-start-end-radius: 2px;
+    }
   }
 
   .kicker {

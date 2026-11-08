@@ -530,6 +530,11 @@ design export needs. Each entry says where it came up.
     states are N9's.
   - **Not checked**: the group typing strip in a browser (the local replica's typing goes over
     WebRTC, which the headless browser couldn't set up); the iOS app (no device).
+- **Mirrored message kinds and smaller GIFs** (by hand, native N5c, EXPORT-LOG 2026-11-08, to take
+  back to the design export): every kind of message (photo, album, video, GIF, file, link, transfer,
+  swap offer, poll, prize) takes `mirror` as text and voice bubbles do, so your own in the native
+  layout has its grouped and tail corners on the inline-end side; and a GIF message is capped at
+  180 × 315 (three quarters of the design's 240 × 420), on the web and native alike.
 - **Shell breakpoints vs layout tokens**: the shell's breakpoints and widths (Fix Brief - App
   Shell Layout: 768 / 1200 / 1476 / 1876 / 2476px, chat list `clamp(350px, 30cqw, 550px)`, right
   column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*` 1280–2500px,
