@@ -5,6 +5,7 @@
         type KlipyObject,
         type KlipySearchResponse,
     } from "@client";
+    import { gifContent } from "@src/logic/composer/gifs";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -145,24 +146,7 @@
     function send(e: Event) {
         e.preventDefault();
         if (selectedGif !== undefined) {
-            const content: GiphyContent = {
-                kind: "giphy_content",
-                title: selectedGif.title,
-                desktop: {
-                    height: Number(selectedGif.media_formats.mp4.dims[1]),
-                    width: Number(selectedGif.media_formats.mp4.dims[0]),
-                    url: selectedGif.media_formats.mp4.url,
-                    mimeType: "video/mp4",
-                },
-                mobile: {
-                    height: Number(selectedGif.media_formats.tinygif.dims[1]),
-                    width: Number(selectedGif.media_formats.tinygif.dims[0]),
-                    url: selectedGif.media_formats.tinygif.url,
-                    mimeType: "image/gif",
-                },
-                caption: message === "" ? undefined : message,
-            };
-            onSend(content);
+            onSend(gifContent(selectedGif, message));
             open = false;
         }
     }

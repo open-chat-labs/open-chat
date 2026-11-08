@@ -22,6 +22,9 @@ export const disableP2PSwapFeature = disableCryptoPaymentsFeature;
 
 export const disableSwapFeature = disableCryptoPaymentsFeature;
 
+/** The key to Klipy's GIFs (logic/composer/gifs); a build without one has no GIF picker. */
+export const klipyApiKey: string | undefined = import.meta.env.OC_KLIPY_APIKEY || undefined;
+
 /** The composer's "+" builders this build turns off (`composerBuilders`' `off`). */
 export const composerBuildersOff: ReadonlySet<"crypto" | "prize" | "swap"> = new Set(
     (

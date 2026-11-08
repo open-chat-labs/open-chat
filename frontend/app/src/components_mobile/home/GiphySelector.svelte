@@ -1,6 +1,7 @@
 <script lang="ts">
     import { ColourVars, Column, Container, Row, Search } from "component-lib";
     import { type GiphyContent, type KlipyObject, type KlipySearchResponse } from "@client";
+    import { gifContent } from "@src/logic/composer/gifs";
     import { onMount } from "svelte";
 
     type KeyedKlipyObject = KlipyObject & { key: string };
@@ -114,23 +115,7 @@
 
     function send(gif: KeyedKlipyObject) {
         if (gif !== undefined) {
-            const content: GiphyContent = {
-                kind: "giphy_content",
-                title: gif.title || gif.content_description,
-                desktop: {
-                    height: Number(gif.media_formats.mp4.dims[1]),
-                    width: Number(gif.media_formats.mp4.dims[0]),
-                    url: gif.media_formats.mp4.url,
-                    mimeType: "video/mp4",
-                },
-                mobile: {
-                    height: Number(gif.media_formats.tinygif.dims[1]),
-                    width: Number(gif.media_formats.tinygif.dims[0]),
-                    url: gif.media_formats.tinygif.url,
-                    mimeType: "image/gif",
-                },
-            };
-            onSend(content);
+            onSend(gifContent(gif));
         }
     }
 
