@@ -370,10 +370,7 @@ pub mod happy_path {
             env,
             sender,
             local_user_index,
-            &local_user_index_canister::claim_prize::Args {
-                chat_id,
-                message_id,
-            },
+            &local_user_index_canister::claim_prize::Args { chat_id, message_id },
         );
 
         match response {
