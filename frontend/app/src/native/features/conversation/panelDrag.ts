@@ -51,6 +51,15 @@ export function settle(
     return f > (from === "rest" ? OPEN_FROM_REST : STAY_OPEN) ? "open" : "rest";
 }
 
+/**
+ * A pull on a grown panel's scrolling content (Recents, the emoji or GIFs): the content scrolls
+ * until it's at its top; from there a finger moving down drags the panel instead, within the same
+ * gesture (and it keeps the panel till the finger's off). At rest the content only scrolls.
+ */
+export function pullTakesPanel(at: { open: boolean; scrollTop: number; dy: number }): boolean {
+    return at.open && at.scrollTop <= 0 && at.dy > 0;
+}
+
 /** The finger's speed over its last moves (px/ms, down positive), from the last 100ms of them. */
 export function flickVelocity(moves: readonly { t: number; y: number }[]): number {
     const last = moves.at(-1);

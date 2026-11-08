@@ -17,6 +17,7 @@
     import { klipyApiKey } from "@src/utils/features";
     import { onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
+    import { panelContentPull } from "./panelDragHandle";
     import type { KeyboardPanelState } from "./panelState.svelte";
 
     type Props = {
@@ -290,7 +291,12 @@
     </div>
 
     {#if tab === "emoji"}
-        <div class="scroll" bind:this={scroller} onscroll={followScroll}>
+        <div
+            class="scroll"
+            bind:this={scroller}
+            onscroll={followScroll}
+            {@attach panelContentPull(panel)}
+        >
             {#if matches !== undefined}
                 {#if matches.length === 0}
                     <p class="none">
@@ -342,7 +348,12 @@
             </button>
         </div>
     {:else if feed !== undefined}
-        <div class="scroll gifs" class:raised={searching} onscroll={more}>
+        <div
+            class="scroll gifs"
+            class:raised={searching}
+            onscroll={more}
+            {@attach panelContentPull(panel)}
+        >
             {#if feed.gifs.length === 0 && !feed.loading}
                 <p class="none">
                     {$_(feed.failed ? "native.composer.gif.unavailable" : "native.composer.gif.none")}
@@ -457,7 +468,8 @@
         flex: 1;
         min-height: 0;
         overflow-y: auto;
-        overscroll-behavior: contain;
+        // grown, a pull down at its top drags the panel (panelContentPull): no overscroll of its own
+        overscroll-behavior: none;
         padding: 2px var(--space-8) var(--space-8);
         scrollbar-width: none;
 

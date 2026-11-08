@@ -41,3 +41,45 @@ export function panelDragHandle(panel: KeyboardPanelState): Attachment<HTMLEleme
         };
     };
 }
+
+/**
+ * Makes a grown panel's scrolling content hand a pull over to the panel (KeyboardPanelState's
+ * pull*: once the content is at its top, a finger moving down drags the panel). Touch events, as
+ * the content's own scroll is the browser's: a move the panel has taken isn't the scroll's.
+ */
+export function panelContentPull(panel: KeyboardPanelState): Attachment<HTMLElement> {
+    return (el) => {
+        let finger: number | undefined;
+
+        function start(e: TouchEvent) {
+            if (finger !== undefined || e.touches.length !== 1) return;
+            finger = e.touches[0].identifier;
+            panel.pullStart(e.touches[0].clientY);
+        }
+
+        function move(e: TouchEvent) {
+            const touch = [...e.changedTouches].find((t) => t.identifier === finger);
+            if (touch === undefined) return;
+            if (panel.pullMove(touch.clientY, e.timeStamp, el.scrollTop) && e.cancelable) {
+                e.preventDefault();
+            }
+        }
+
+        function end(e: TouchEvent) {
+            if (![...e.changedTouches].some((t) => t.identifier === finger)) return;
+            finger = undefined;
+            panel.pullEnd(e.timeStamp);
+        }
+
+        el.addEventListener("touchstart", start, { passive: true });
+        el.addEventListener("touchmove", move, { passive: false });
+        el.addEventListener("touchend", end);
+        el.addEventListener("touchcancel", end);
+        return () => {
+            el.removeEventListener("touchstart", start);
+            el.removeEventListener("touchmove", move);
+            el.removeEventListener("touchend", end);
+            el.removeEventListener("touchcancel", end);
+        };
+    };
+}

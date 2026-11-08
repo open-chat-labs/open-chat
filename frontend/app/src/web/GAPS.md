@@ -453,7 +453,9 @@ design export needs. Each entry says where it came up.
   a voice message, the throttle and a video's progress over it, the old footer's words in its place
   where the reader can't send; the slot under it that the keyboard and the panels share, one at a
   time, the panel resting at the keyboard's height over a spacer and dragged by its handle (up it
-  grows to the status bar, down it closes: f and the release rules in `panelDrag`). On the web
+  grows to the status bar, down it closes: f and the release rules in `panelDrag`; grown, a pull
+  down on its content scrolls it to the top and then drags the panel, in the same gesture, as a
+  sheet does: not in the plan, asked for after it, `pullTakesPanel`). On the web
   composer's operations, moved to the shared layer for it (`logic/composer`: `chatEntryState`,
   `entryBlockBanner`, `entryNoticeText`, `mentionsFor`, `sendVoiceRecording`, `composerProps`;
   `logic/conversation/draftActions`: `cancelComposing`, `submitEdit`, `composingMessageIndex`),

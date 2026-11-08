@@ -30,7 +30,7 @@
     import { _ } from "svelte-i18n";
     import type { KeyboardPanelState } from "./panelState.svelte";
     import { panelLayers } from "./panelDrag";
-    import { panelDragHandle } from "./panelDragHandle";
+    import { panelContentPull, panelDragHandle } from "./panelDragHandle";
 
     type Props = {
         panel: KeyboardPanelState;
@@ -315,7 +315,7 @@
                         : $_("native.composer.attach.upTo", { values: { max: selection.max } })}
                 </span>
             </div>
-            <div class="grid-scroll">
+            <div class="grid-scroll" {@attach panelContentPull(panel)}>
                 <div class="grid">
                     {#each items as item (item.id)}
                         {@render tile(item, "grid")}
@@ -614,11 +614,12 @@
         color: var(--ink-3);
     }
 
+    // a pull down at its top drags the panel (panelContentPull): no overscroll of its own
     .grid-scroll {
         flex: 1;
         min-height: 0;
         overflow-y: auto;
-        overscroll-behavior: contain;
+        overscroll-behavior: none;
         scrollbar-width: none;
     }
 

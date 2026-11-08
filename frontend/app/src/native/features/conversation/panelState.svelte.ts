@@ -1,6 +1,7 @@
 import {
     dragPosition,
     flickVelocity,
+    pullTakesPanel,
     settle,
     type DragPosition,
     type PanelSpot,
@@ -21,6 +22,8 @@ export class KeyboardPanelState {
     #start: { y: number; grown: number; spot: PanelSpot } | undefined;
     #moves: { t: number; y: number }[] = [];
     #measure: (() => void) | undefined;
+    // a pull on the content: where the finger last was, and whether the panel has taken it
+    #pull: { y: number; taken: boolean } | undefined;
 
     /** It grows (not on mobile web's attach panel). */
     readonly expandable: boolean;
@@ -109,6 +112,41 @@ export class KeyboardPanelState {
         this.#moves.push({ t, y });
         if (this.#moves.length > 12) this.#moves.shift();
         this.#drag = dragPosition(start.grown, y - start.y, this.#maxGrow);
+    }
+
+    /** A finger went down on the panel's scrolling content. */
+    pullStart(y: number): void {
+        this.#pull = { y, taken: false };
+    }
+
+    /**
+     * The finger moved on the content, scrolled to `scrollTop`: true once the panel has the
+     * gesture (`pullTakesPanel`), and the content mustn't scroll. The panel follows from where the
+     * finger was as it took over, so it doesn't jump.
+     */
+    pullMove(y: number, t: number, scrollTop: number): boolean {
+        const pull = this.#pull;
+        if (pull === undefined || this.#closing) return false;
+        if (pull.taken) {
+            this.dragMove(y, t);
+            return true;
+        }
+        const dy = y - pull.y;
+        if (!pullTakesPanel({ open: this.open, scrollTop, dy })) {
+            pull.y = y;
+            return false;
+        }
+        pull.taken = true;
+        this.dragStart(pull.y, t);
+        this.dragMove(y, t);
+        return true;
+    }
+
+    /** The finger's off the content: where the panel settles, if it had the gesture. */
+    pullEnd(t: number): Settle | undefined {
+        const taken = this.#pull?.taken ?? false;
+        this.#pull = undefined;
+        return taken ? this.dragEnd(t) : undefined;
     }
 
     /** The finger's off: where the panel settles ("close": the host slides it out and closes it). */
