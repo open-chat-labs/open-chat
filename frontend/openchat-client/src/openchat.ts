@@ -284,6 +284,7 @@ import {
     type PaymentGateApprovals,
     type PendingCryptocurrencyTransfer,
     type PendingCryptocurrencyWithdrawal,
+    type PrepareAttachmentOutcome,
     type PreprocessedGate,
     type ProposalContent,
     type ProposalExecutionPayment,
@@ -5007,6 +5008,21 @@ export class OpenChat {
      * may send there is attached; one that can't be prepared fails with the reason.
      */
     async attachFile(file: File | LazyFile, context: MessageContext): Promise<AttachFileOutcome> {
+        const prepared = await this.prepareAttachment(file, context);
+        if (prepared.kind !== "prepared") return prepared;
+        localUpdates.draftMessages.setAttachment(context, prepared.content);
+        return { kind: "attached" };
+    }
+
+    /**
+     * Prepares a file the user picked to send in the chat or thread it was picked in (`context`),
+     * as `attachFile` does, without making it the draft's attachment: for photos and videos picked
+     * together, which go in messages of their own after the draft's.
+     */
+    async prepareAttachment(
+        file: File | LazyFile,
+        context: MessageContext,
+    ): Promise<PrepareAttachmentOutcome> {
         const mode = context.threadRootMessageIndex === undefined ? "message" : "thread";
         // refused from its type before it's prepared (a video's transcode takes a while)
         const needs = filePermission(file.type);
@@ -5025,8 +5041,7 @@ export class OpenChat {
         if (permission !== needs && !this.canSendMessage(context.chatId, mode, permission)) {
             return { kind: "not_permitted", permission };
         }
-        localUpdates.draftMessages.setAttachment(context, content);
-        return { kind: "attached" };
+        return { kind: "prepared", content };
     }
 
     formatFileSize = formatFileSize;
