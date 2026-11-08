@@ -1,6 +1,13 @@
 import type { OpenChat } from "@client";
 import { toastStore } from "../stores/toast";
-import { copyPageUrl, inEditor, withoutQueryStringParams, withQueryStringFlag } from "./urls";
+import {
+    copyPageUrl,
+    copySectionUrl,
+    inEditor,
+    sectionUrl,
+    withoutQueryStringParams,
+    withQueryStringFlag,
+} from "./urls";
 
 describe("query string helpers", () => {
     afterEach(() => history.replaceState(null, "", "/"));
@@ -82,6 +89,19 @@ describe("copying the page's link", () => {
         await copyPageUrl(native);
         expect(failed).toHaveBeenCalledWith(
             expect.objectContaining({ params: { url: "https://oc.app/chats" } }),
+        );
+    });
+
+    test("a section's link uses the site's origin, not the page's, and only its ?section=", async () => {
+        history.replaceState(null, "", "/terms?section=2&other=1#x");
+        const writeText = vi.fn(async () => {});
+        vi.stubGlobal("navigator", { clipboard: { writeText } });
+        const ok = vi.spyOn(toastStore, "showSuccessToast").mockImplementation(() => {});
+        await copySectionUrl(native, "10");
+        expect(writeText).toHaveBeenCalledWith("https://oc.app/terms?section=10");
+        expect(ok).toHaveBeenCalledOnce();
+        expect(sectionUrl("/guidelines", "3", "https://oc.app")).toBe(
+            "https://oc.app/guidelines?section=3",
         );
     });
 });

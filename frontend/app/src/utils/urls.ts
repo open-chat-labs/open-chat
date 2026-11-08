@@ -116,7 +116,25 @@ export function copyToClipboard(txt: string): Promise<boolean> {
  */
 export async function copyPageUrl(client: OpenChat): Promise<void> {
     const { pathname, search, hash } = window.location;
-    const url = new URL(`${pathname}${search}${hash}`, client.canonicalOrigin()).toString();
+    await copyUrl(new URL(`${pathname}${search}${hash}`, client.canonicalOrigin()).toString());
+}
+
+/**
+ * Copies a link to a section of the page (its `?section=`, as the legal pages and the whitepaper
+ * read it) on the site's own origin, as copyPageUrl does, and says whether it could.
+ */
+export async function copySectionUrl(client: OpenChat, section: string): Promise<void> {
+    await copyUrl(sectionUrl(window.location.pathname, section, client.canonicalOrigin()));
+}
+
+/** The address of a section of the page at `path`, on `origin`. */
+export function sectionUrl(path: string, section: string, origin: string): string {
+    const url = new URL(path, origin);
+    url.searchParams.set("section", section);
+    return url.toString();
+}
+
+async function copyUrl(url: string): Promise<void> {
     if (await copyToClipboard(url)) {
         toastStore.showSuccessToast(i18nKey("urlCopiedToClipboard"));
     } else {
