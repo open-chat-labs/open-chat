@@ -89,6 +89,8 @@ const ACCENTS = ['pink', 'orange', 'blue', 'green'] as const;
 const HERO = ['--hero-base', '--tint-row', '--tint-pill'];
 // the shell kit's (src/native): touch target, bar padding, tab bar height, veils, shadows
 const SHELL = ['--touch-target', '--bar-end', '--tab-bar-h', '--veil-sheet', '--veil-lift', '--shadow-sheet', '--shadow-menu', '--shadow-lift', '--shadow-push', '--shadow-fab'];
+// a conversation's attach panel (its actions' colours) and what sits over a photo or video
+const COMPOSER = ['--attach-media', '--attach-file', '--attach-poll', '--attach-crypto', '--attach-swap', '--attach-meme', '--on-media-chip', '--on-media-badge', '--on-media-ink'];
 const TEXT = ['--text-2xs', '--text-xs', '--text-sm', '--text-md', '--text-base', '--text-lg', '--text-xl', '--text-2xl', '--text-3xl'];
 const NATIVE_LIGHT_SURFACES = { '--surface-0': '#FFFFFF', '--surface-1': '#FFFFFF', '--surface-2': '#F4F3EF', '--field': '#F4F3EF' };
 const call: Element = { attrs: { 'data-always-dark': '' } };
@@ -131,7 +133,7 @@ describe('the web, without the attributes', () => {
     expect(web.get('--text-sm')).toBe('calc(11.5px * 1)');
     expect(web.get('--text-3xl')).toBe('calc(34px * 1)');
     for (const side of ['top', 'right', 'bottom', 'left']) expect(web.get(`--safe-${side}`)).toBe(`env(safe-area-inset-${side},0px)`);
-    for (const name of [...HERO, ...SHELL]) expect(web.has(name)).toBe(false);
+    for (const name of [...HERO, ...SHELL, ...COMPOSER]) expect(web.has(name)).toBe(false);
   });
 });
 
@@ -141,7 +143,7 @@ describe('data-platform="native"', () => {
     const native = resolve([root({ 'data-mode': mode, 'data-accent': accent, 'data-platform': 'native' })]);
     // light's --surface-1 is white on the web already; --bg and --card-2 read --surface-0 and --surface-2
     const surfaces = mode === 'light' ? ['--surface-0', '--surface-2', '--field', '--bg', '--card-2'] : [];
-    expect(changed(web, native)).toEqual([...HERO, ...SHELL, ...surfaces].sort());
+    expect(changed(web, native)).toEqual([...HERO, ...SHELL, ...COMPOSER, ...surfaces].sort());
   });
 
   test('touch targets are 44pt on iOS and 48dp on Android, and the tab bar follows', () => {

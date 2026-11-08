@@ -781,3 +781,7 @@
 - `MessageComposer`, native only (`[data-platform="native"]`): "Editing message" in `--accent-bright` (the Build Brief's late additions: "'Editing' is in accent"); the web keeps `--ink-2`.
 - **Toasts** (`src/native`): above a footer, at `--toasts-footer` + 12px when an ancestor sets it (the conversation puts its composer's height there, so a toast stays above it over the keyboard or a panel), else where it was (`--bar-end` + 64px).
 - `meta.json`: MessageComposer's `onEmoji` and Toasts' `above` docs say so. Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-08 — the native attach panel's colours and what sits over media (native N5c, plan 06/07), by hand
+- `tokens.css`, the native platform layer: `--attach-media`, `--attach-file`, `--attach-poll`, `--attach-crypto`, `--attach-swap`, `--attach-meme` (the attach panel's actions, each its glyph's colour and, at 16%, its circle's: the prototype's values as the native plan's 06 gives them, the same in both themes; Prize takes `--accent`), and `--on-media-chip`, `--on-media-badge`, `--on-media-ink` (a video's length over its thumbnail, the GIF badge over a GIF: a dark backing and white ink in both themes). The web doesn't get them. `platform.spec.ts` lists them with the native layer's tokens.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists the colours' light-mode question).

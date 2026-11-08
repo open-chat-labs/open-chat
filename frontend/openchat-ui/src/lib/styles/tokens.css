@@ -148,6 +148,13 @@
   --shadow-sheet:0 -12px 40px rgba(0,0,0,.45); --shadow-menu:0 12px 36px rgba(0,0,0,.55); --shadow-lift:0 14px 40px rgba(0,0,0,.55);
   --shadow-push:-12px 0 32px rgba(0,0,0,.35); --shadow-fab:0 8px 24px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.3);
 }
+/* A conversation's attach panel (native plan 06): each action in its own colour, its circle that colour at 16%; the
+   prototype's values, the same in both themes (Prize takes the accent). Over a photo or video (a video's duration, a GIF
+   badge): a dark backing and white ink, in both themes. */
+[data-platform="native"]{
+  --attach-media:#7FD1FF; --attach-file:#7FB2FF; --attach-poll:#FFB45E; --attach-crypto:#2EE6A8; --attach-swap:#B48CFF;
+  --attach-meme:#FFD36B; --on-media-chip:rgba(0,0,0,.55); --on-media-badge:rgba(0,0,0,.45); --on-media-ink:#FFFFFF;
+}
 [data-platform="native"][data-os="android"]{--touch-target:48px}
 /* A pushed screen comes in from the inline end, so its shadow falls on the start side. */
 [data-platform="native"][dir="rtl"]{--shadow-push:12px 0 32px rgba(0,0,0,.35)}
