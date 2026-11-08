@@ -19,6 +19,7 @@
     import { untrack, type ComponentProps } from "svelte";
     import { _ } from "svelte-i18n";
     import {
+        entryBlockBanner,
         TypingNotifier,
         type ComposerBuilder,
         type EntryBlock,
@@ -133,30 +134,9 @@
         onFile(file);
     }
 
-    const blocked = $derived(banner(block));
-
-    // what stands in for the composer, as a banner in the old footer's words
-    function banner(
-        block: EntryBlock | undefined,
-    ): { key: string; tone: "info" | "warning" } | undefined {
-        switch (block?.kind) {
-            case undefined:
-                return undefined;
-            case "suspended":
-                return { key: "accountSuspended", tone: "warning" };
-            case "frozen":
-                return { key: "chatFrozen", tone: "warning" };
-            case "blocked":
-                return { key: "userIsBlocked", tone: "info" };
-            // the preview's bar shows instead (below); this only while it isn't known
-            case "preview":
-                return { key: block.lapsed ? "access.lapsed.label" : "readOnlyChat", tone: "info" };
-            case "external":
-                return { key: "externalContent.disclaimer", tone: "warning" };
-            case "read_only":
-                return { key: block.key, tone: "info" };
-        }
-    }
+    // what stands in for the composer, as a banner in the old footer's words (a preview's bar
+    // shows instead, below, once it's known)
+    const blocked = $derived(block === undefined ? undefined : entryBlockBanner(block));
 
     // the chat's draft when the composer mounts (it's keyed by chat)
     const text = untrack(() => draft);

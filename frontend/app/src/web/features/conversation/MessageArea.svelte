@@ -36,8 +36,6 @@
         isPreviewingOrLapsed,
         isPrivateCommunityPreview,
         localUpdates,
-        MAX_MENTION_CANDIDATES_SHOWN,
-        mentionCandidates,
         messageContextsEqual,
         maxMediaSizes,
         messageIndexStore,
@@ -105,19 +103,34 @@
         attachRefusal,
         canAttachNow,
         canRecordVoice,
+        chatEntryState,
         composerBuilders,
         draftAttachment,
         editStartText,
         entryBlock,
         entryNotice,
+        entryNoticeText,
         entryPlaceholder,
         focusEntryOnOpen,
         MemberFinder,
+        mentionsFor,
         pickableAttachments,
         sendComposed,
+        sendVoiceRecording,
         throttleCountdown,
         type ComposerBuilder,
     } from "@src/logic/composer/composer";
+    import {
+        composerAttachment,
+        composerContext,
+        composerMention,
+        composerStartText,
+    } from "@src/logic/composer/composerProps";
+    import {
+        cancelComposing,
+        composingMessageIndex,
+        submitEdit,
+    } from "@src/logic/conversation/draftActions";
     import {
         followsThread,
         rowMessageContext,
@@ -146,7 +159,6 @@
     import { getProxyAdjustedBlobUrl, microphoneDenied, saveFile } from "@src/utils/media";
     import { now500 } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
-    import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { isTouchOnlyDevice } from "@src/utils/devices";
     import { buildDisplayName } from "@src/utils/user";
     import {
@@ -160,13 +172,7 @@
     import { _, locale } from "svelte-i18n";
     import type { ScreenContext } from "../app/screens";
     import Composer from "./Composer.svelte";
-    import {
-        composerAttachment,
-        composerContext,
-        composerMention,
-        composerStartText,
-        messageMenuItems,
-    } from "./conversation.adapter";
+    import { messageMenuItems } from "./conversation.adapter";
     import {
         conversationContext,
         isMedia,
@@ -356,23 +362,14 @@
     // why the reader can't send here; a thread's "can't send" says it's the thread that's read
     // only (entryBlock)
     const block = $derived(
-        entryBlock({
-            suspended: $suspendedUserStore,
-            frozen: client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore),
-            blocked: chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId),
-            previewing:
-                thread === undefined && chat.kind !== "direct_chat" && client.isPreviewing(chat.id),
-            lapsed: thread === undefined && client.isLapsed(chat.id),
-            direct: chat.kind === "direct_chat",
-            externalContent: chat.kind === "channel" && chat.externalUrl !== undefined,
-            anonymous: $anonUserStore,
-            canSend: client.canSendMessage(
-                chat.id,
-                thread === undefined ? "message" : "thread",
-                "text",
-            ),
-            thread: thread !== undefined,
-        }),
+        entryBlock(
+            chatEntryState(client, chat, thread !== undefined, {
+                suspended: $suspendedUserStore,
+                anonymous: $anonUserStore,
+                blockedUsers: $blockedUsersStore,
+                community: $selectedCommunitySummaryStore,
+            }),
+        ),
     );
 
     // a preview's bar in place of the composer (8b): the community's while the community is
@@ -460,20 +457,9 @@
                     ? progress.progress
                     : undefined,
         });
-        switch (shown?.kind) {
-            case undefined:
-                return undefined;
-            case "throttled":
-                return {
-                    text: $_("throttleMessage", { values: { time: shown.seconds } }),
-                    tone: "warning" as const,
-                };
-            case "video_processing":
-                return {
-                    text: $_("videoProcessingPercent", { values: { percent: shown.percent } }),
-                    tone: "info" as const,
-                };
-        }
+        if (shown === undefined) return undefined;
+        const words = entryNoticeText(shown);
+        return { text: interpolate($_, words.key), tone: words.tone };
     });
 
     // the draft's photo, video or file, or a builder's payment (5d), staged above the text (only
@@ -619,12 +605,8 @@
 
     // sent as a reply to the draft's reply, if any; refused, the take stays to send again
     async function sendVoice(context: MessageContext, recording: Blob, mimeType: string) {
-        const outcome = await client.sendVoiceMessage(
-            context,
-            await recording.arrayBuffer(),
-            mimeType,
-        );
-        if (outcome.kind !== "posted") throw new Error(outcome.kind);
+        const sent = await sendVoiceRecording(client, context, recording, mimeType);
+        if (sent.kind !== "posted") throw new Error(sent.reason);
     }
 
     // the @mention picker: for the "@word" being typed, who in this chat can be mentioned (never
@@ -643,15 +625,9 @@
         if (mentionQuery === undefined) return [];
         // what the lookup reads through `.value`: it changes as members not held are found
         void [$selectedChatMembersStore, $selectedCommunityMembersStore, $allUsersStore];
-        return mentionCandidates(Object.values(client.getUserLookupForMentions()), mentionQuery, {
-            me,
-            mentionSelf: false,
-            supportsUserGroups: true,
-            usersOnly: false,
-            keepUserOrder: false,
-        })
-            .slice(0, MAX_MENTION_CANDIDATES_SHOWN)
-            .map((candidate) => composerMention(candidate, (user) => client.userAvatarUrl(user)));
+        return mentionsFor(client, mentionQuery, me).map((candidate) =>
+            composerMention(candidate, (user) => client.userAvatarUrl(user)),
+        );
     });
 
     // a file picked, pasted or dropped goes to the chat or thread it was picked in, if it may be
@@ -689,31 +665,15 @@
         if (file !== undefined) void attachFile(context, file);
     }
 
-    // cancelling an edit puts back what was being written before it; a reply just goes
-    function cancelComposing(context: MessageContext) {
-        if (draft?.editingEvent !== undefined) {
-            localUpdates.draftMessages.endEditing(context);
-        } else {
-            localUpdates.draftMessages.setReplyingTo(context, undefined);
+    // the client puts the draft back as the edit goes out, and undoes the edit if it fails
+    async function saveEdit(context: MessageContext, text: string) {
+        if (!(await submitEdit(client, context, draft, text))) {
+            toastStore.showFailureToast(i18nKey("errorEditingMessage"));
         }
     }
 
-    // the client puts the draft back as the edit goes out, and undoes the edit if it fails
-    async function submitEdit(context: MessageContext, text: string) {
-        const editing = draft?.editingEvent;
-        if (editing === undefined) return;
-        const edited = await client.editMessage(context, text, detectMarkdown(text), editing);
-        if (!edited) toastStore.showFailureToast(i18nKey("errorEditingMessage"));
-    }
-
     // the message replied to or edited, if it's here (a private reply quotes another chat's)
-    const composingIndex = $derived.by(() => {
-        if (draft?.editingEvent !== undefined) return draft.editingEvent.event.messageIndex;
-        const reply = draft?.replyingTo;
-        return reply !== undefined && messageContextsEqual(reply.sourceContext, context)
-            ? reply.messageIndex
-            : undefined;
-    });
+    const composingIndex = $derived(composingMessageIndex(draft, context));
 
     function jumpToComposing(context: MessageContext, index: number) {
         list?.scrollToMessageIndex(context, index, false);
@@ -1499,8 +1459,8 @@
                 onStopTyping={() => client.stopTyping(chat.id, me, rootIndex)}
                 onSend={(text) => send(context, text)}
                 context={composing}
-                onCancelContext={() => cancelComposing(context)}
-                onSubmitEdit={(text) => submitEdit(context, text)}
+                onCancelContext={() => cancelComposing(context, draft)}
+                onSubmitEdit={(text) => saveEdit(context, text)}
                 onJumpContext={composingIndex === undefined
                     ? undefined
                     : () => jumpToComposing(context, composingIndex)}

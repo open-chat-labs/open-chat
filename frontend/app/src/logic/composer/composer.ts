@@ -2,6 +2,8 @@ import {
     externalWalletPayment,
     FIND_MEMBERS_DELAY_MS,
     isCaptionedContent,
+    MAX_MENTION_CANDIDATES_SHOWN,
+    mentionCandidates,
     ScreenWidth,
     stripLinkDisabledMarker,
     userGroupMentionRegex,
@@ -9,6 +11,7 @@ import {
     type AttachFileOutcome,
     type AttachmentContent,
     type ChatSummary,
+    type CommunitySummary,
     type MessageContent,
     type MessageContext,
     type MessageFormatter,
@@ -17,6 +20,7 @@ import {
     type ResourceKey,
     type UserGroupDetails,
     type UserLookup,
+    type UserOrUserGroup,
 } from "@client";
 import { i18nKey } from "@src/i18n/i18n";
 import { detectMarkdown } from "@src/utils/detectMarkdown";
@@ -76,6 +80,62 @@ export function entryBlock(state: EntryState): EntryBlock | undefined {
         return { kind: "read_only", key: state.thread ? "readOnlyThread" : "readOnlyChat" };
     }
     return undefined;
+}
+
+/**
+ * Where the entry is, for `entryBlock`: the chat's own state (frozen, previewed, lapsed, what the
+ * reader's role lets them send) from the client, the reader's (suspended, signed out, who they've
+ * blocked) from the stores. In a thread (`thread`), a preview and a lapse are the chat's, not the
+ * thread's, and what may be sent is the thread's.
+ */
+export function chatEntryState(
+    client: Pick<
+        OpenChat,
+        "isChatOrCommunityFrozen" | "isPreviewing" | "isLapsed" | "canSendMessage"
+    >,
+    chat: ChatSummary,
+    thread: boolean,
+    reader: {
+        suspended: boolean;
+        anonymous: boolean;
+        blockedUsers: Pick<ReadonlySet<string>, "has">;
+        /** The chat's community (the selected one), for whether it's frozen. */
+        community: CommunitySummary | undefined;
+    },
+): EntryState {
+    return {
+        suspended: reader.suspended,
+        frozen: client.isChatOrCommunityFrozen(chat, reader.community),
+        blocked: chat.kind === "direct_chat" && reader.blockedUsers.has(chat.them.userId),
+        previewing: !thread && chat.kind !== "direct_chat" && client.isPreviewing(chat.id),
+        lapsed: !thread && client.isLapsed(chat.id),
+        direct: chat.kind === "direct_chat",
+        externalContent: chat.kind === "channel" && chat.externalUrl !== undefined,
+        anonymous: reader.anonymous,
+        canSend: client.canSendMessage(chat.id, thread ? "thread" : "message", "text"),
+        thread,
+    };
+}
+
+/**
+ * What stands in for the entry where the reader can't send, in the old footers' words: a banner's
+ * text (a resource key) and tone. A preview's shows only while its bar (Join) isn't known.
+ */
+export function entryBlockBanner(block: EntryBlock): { key: string; tone: "info" | "warning" } {
+    switch (block.kind) {
+        case "suspended":
+            return { key: "accountSuspended", tone: "warning" };
+        case "frozen":
+            return { key: "chatFrozen", tone: "warning" };
+        case "blocked":
+            return { key: "userIsBlocked", tone: "info" };
+        case "preview":
+            return { key: block.lapsed ? "access.lapsed.label" : "readOnlyChat", tone: "info" };
+        case "external":
+            return { key: "externalContent.disclaimer", tone: "warning" };
+        case "read_only":
+            return { key: block.key, tone: "info" };
+    }
 }
 
 // as the old composer: say "typing" at most once a second, and "stopped" after 5s without input
@@ -266,6 +326,25 @@ export class MemberFinder {
 }
 
 /**
+ * Who the entry offers to mention for the "@word" being typed (`query`, without the "@"): those
+ * the chat can mention (its members as the client holds them, its user groups and @everyone),
+ * never the reader, @everyone first, as many as a list shows. Every mention picker uses it.
+ */
+export function mentionsFor(
+    client: Pick<OpenChat, "getUserLookupForMentions">,
+    query: string,
+    me: string,
+): UserOrUserGroup[] {
+    return mentionCandidates(Object.values(client.getUserLookupForMentions()), query, {
+        me,
+        mentionSelf: false,
+        supportsUserGroups: true,
+        usersOnly: false,
+        keepUserOrder: false,
+    }).slice(0, MAX_MENTION_CANDIDATES_SHOWN);
+}
+
+/**
  * Whether the entry offers to record a voice message (as the old entries' mic): where audio may
  * be sent, the browser can record in a format every device plays, the user hasn't turned the
  * microphone down, and not to a bot (which takes text). The entry itself hides it while there's
@@ -350,6 +429,22 @@ export function entryNotice(state: {
     return undefined;
 }
 
+/** The entry's notice in words, with its tone: a warning for the throttle. */
+export function entryNoticeText(notice: EntryNotice): {
+    key: ResourceKey;
+    tone: "info" | "warning";
+} {
+    switch (notice.kind) {
+        case "throttled":
+            return { key: i18nKey("throttleMessage", { time: notice.seconds }), tone: "warning" };
+        case "video_processing":
+            return {
+                key: i18nKey("videoProcessingPercent", { percent: notice.percent }),
+                tone: "info",
+            };
+    }
+}
+
 /** The entry's placeholder: what the user can write there. */
 export function entryPlaceholder(state: {
     /** Text can be sent here, or there's an attachment or an edit to write a caption or text for. */
@@ -406,6 +501,22 @@ export async function sendComposed(
         markdown,
         taken.attachment,
     );
+    return outcome.kind === "posted"
+        ? { kind: "posted" }
+        : { kind: "refused", reason: outcome.kind };
+}
+
+/**
+ * Sends a voice message recorded in the entry to the chat or thread it's in (`context`), as a
+ * reply to the draft's reply, if any. Refused, nothing is sent, and the take stays to send again.
+ */
+export async function sendVoiceRecording(
+    client: Pick<OpenChat, "sendVoiceMessage">,
+    context: MessageContext,
+    recording: Blob,
+    mimeType: string,
+): Promise<ComposedSend> {
+    const outcome = await client.sendVoiceMessage(context, await recording.arrayBuffer(), mimeType);
     return outcome.kind === "posted"
         ? { kind: "posted" }
         : { kind: "refused", reason: outcome.kind };
