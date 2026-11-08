@@ -453,9 +453,9 @@ design export needs. Each entry says where it came up.
   a voice message, the throttle and a video's progress over it, the old footer's words in its place
   where the reader can't send; the slot under it that the keyboard and the panels share, one at a
   time, the panel resting at the keyboard's height over a spacer and dragged by its handle (up it
-  grows to the status bar, down it closes: f and the release rules in `panelDrag`; grown, a pull
-  down on its content scrolls it to the top and then drags the panel, in the same gesture, as a
-  sheet does: not in the plan, asked for after it, `pullTakesPanel`). On the web
+  grows, down it closes: f and the release rules in `panelDrag`; grown, a pull down on its content
+  scrolls it to the top and then drags the panel, in the same gesture, as a sheet does,
+  `pullTakesPanel`). On the web
   composer's operations, moved to the shared layer for it (`logic/composer`: `chatEntryState`,
   `entryBlockBanner`, `entryNoticeText`, `mentionsFor`, `sendVoiceRecording`, `composerProps`;
   `logic/conversation/draftActions`: `cancelComposing`, `submitEdit`, `composingMessageIndex`),
@@ -466,7 +466,12 @@ design export needs. Each entry says where it came up.
     slot takes the keyboard's height from the window insets, so the composer sits right on the
     keyboard, and a panel rests at the keyboard's last height (the keyboard on its way back is
     held for up to 1s): checked on the emulator, the composer doesn't move between the keyboard
-    and a panel. In the iOS app the native tree doesn't follow the keyboard's reports (the shell
+    and a panel. Android reports a keyboard coming up at one height and then, ~200ms on, at its
+    own (370px, then 336px), and a "down" from the last move can arrive after a quick switch back:
+    the slot takes a height once it has stayed 250ms and ignores a "down" while the keyboard is on
+    its way (`keyboardReport`), so toggling the emoji and keyboard glyphs every 80, 150 or 300ms
+    leaves the composer where it is (measured per frame on the emulator: its top at 526px
+    throughout). In the iOS app the native tree doesn't follow the keyboard's reports (the shell
     sends them; only Android's are followed, `systemBars.ts`), so the WebView shrinks above the
     keyboard as on every screen without `aboveKeyboard`, and a panel rests at the keyboard's
     height only where one was seen on the device (stored by the old UI), else at the design's
@@ -492,7 +497,11 @@ design export needs. Each entry says where it came up.
     the same in both themes: on white the yellow and green glyphs are pale (the plan gives no
     light values).
   - **The builders** (Poll, Prize, Send crypto, Swap, Meme fighter) are N9's: each pushes a
-    placeholder (a local `builder` screen). Until then a payment in the draft (one staged on
+    placeholder (a local `builder` screen), over the chat with the attach panel left open under it
+    as it was (the user's change; 06 closes the panel on anything that leaves the chat), for when
+    the builder's left; Android's back then pops the builder, not the panel. The system's pickers
+    (Camera, File, All photos with nothing listed) still close it: what they pick comes back to the
+    composer. Until then a payment in the draft (one staged on
     another device) has no chip, and isn't sent with the text (`sendComposed` refuses it).
   - **The emoji panel's sections**: the plan's are the prototype's sample (Recent, Smileys,
     Gestures, Hearts, Celebrate, Food, Things); here Recent comes first (the plan's eight to start,
@@ -503,11 +512,17 @@ design export needs. Each entry says where it came up.
     set (no skin tone picker; the plan says to ask before adding one); no custom emoji (the premium
     packs, as the web's picker). The category bar shows each section's emoji (🕘 for Recent).
     Backspace deletes a character per tap (no repeat while held).
-  - **The emoji search** grows the panel to full height before the field takes the focus (a press
-    on the field grows it, and the focus follows once it has, 340ms), so the keyboard never covers
-    the results; the category bar stays above it. With the panel grown it covers the composer, so
-    the search is left with Android's back (the keyboard goes, then the panel) or by dragging the
-    panel down, not by tapping the message field.
+  - **The emoji search** doesn't grow the panel (the user's change; 07 grows it to full height):
+    while the field has the keyboard the panel is a strip on top of it, the field across it (no
+    Emoji / GIF switch) and the emoji found in one line under it, scrolled sideways (Recent before
+    anything's typed), with the composer above it (`SEARCH_STRIP`, 122px); a tap types the emoji
+    at the composer's caret and the field keeps the keyboard. Started from the grown panel, the
+    panel goes back to rest first; it doesn't grow while the strip shows. The GIF search grows the
+    panel before the field takes the focus (a press on the field grows it, and the focus follows
+    once it has, 340ms), so the keyboard never covers the results; a press on the field with the
+    focus already in it changes nothing. Either search ending (the keyboard put down, the grown
+    GIFs dragged back to rest, the panel closed) puts the field's keyboard away (07 says leaving
+    the search is tapping the message field, which a grown panel covers).
   - **GIFs** are Klipy's, as in the old UIs (`logic/composer/gifs`, now also behind their pickers'
     sends): trending, or searched, two columns of 3:2 tiles; a tap sends one
     (`sendMessageWithContent`) and closes the panel, a reply if the draft has one, which also
@@ -523,13 +538,27 @@ design export needs. Each entry says where it came up.
   - **Mentions** use the library's list over the composer (the design has none, as on the web).
     Enter follows the app's enter-sends setting (off on touch devices).
   - **Toasts** sit above the composer however tall it is (`--toasts-footer`, which the
-    conversation sets from its footer's height); over a grown panel they sit at that height, over
-    the panel.
+    conversation sets from its footer's height); while Recents shows, just above its "Attach N"
+    (the user's change; the panel reports its footer, `onToastFloor`).
   - **The keyboard on other screens** (§5 Open): Pick a username, Edit profile and Delete account
     keep their pinned button down (`aboveKeyboard`); the search screens (Chats' search, New chat,
     the conversation's search) and Link to your account let the WebView shrink above the keyboard,
     so their results stay in view and Link's button rides up on it. The builders' keyboard-up
     states are N9's.
+  - **Grown panels** take 80% of the height under the status bar (the user's change; 06 and 07 grow
+    them to just under it): Recents, the emoji panel dragged up, the GIF search (`maxGrowFor`).
+  - **A tap on the messages** leaves the keyboard and a panel as they are (the user's change;
+    before, it closed them): Android's back, the panel's own controls and the composer's field do.
+  - **The attach panel's picks**: "Attach N" sits at the bottom of the resting panel, the line
+    over it ("2 photos", Clear) inset 8px more than the plan's 12px.
+  - **Open questions** (for the plan; decided here meanwhile as above): photos and videos attached
+    together going a message each (one attachment a message), first with the caption; the emoji
+    sections (the real categories, not the plan's curated seven) and the category icons; the GIF
+    search's "suggestions built from the query" (not built); light-mode colours for the attach
+    actions; what the strip and Recents show without photos access or photos (the system's
+    picker); mobile web's attach panel (a drag handle that only closes it, 264px against the emoji
+    panel's 282px); the label of Recents' back chevron ("Back"); what the emoji strip shows before
+    anything's typed (Recent).
   - **Not checked**: the group typing strip in a browser (the local replica's typing goes over
     WebRTC, which the headless browser couldn't set up); the iOS app (no device).
 - **Mirrored message kinds and smaller GIFs** (by hand, native N5c, EXPORT-LOG 2026-11-08, to take
