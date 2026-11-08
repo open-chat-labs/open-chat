@@ -43,6 +43,9 @@ every workstream.
     left is in GAPS.md ("Threads");
   - Landing's loose ends (9b): the featured communities and the Android links; GAPS.md
     ("Landing").
+  - the legal pages and `/diamond` (9a): Learn's doc pages outside its tabs, the legal texts as
+    Learn content that every tree renders, the moderators' NCA checklist; GAPS.md ("Legal pages
+    and `/diamond`").
 - **Calls come last:** 7a (the call-object decision), 7b and 7c wait until the rest of the web
   work (5a–5d, 4c, 9a/9b, 10a/10b, L1–L7) is done, as native's calls (N14) wait in its epic.
 - **Still to check on a real environment** (the local replica can't show them): live incoming
@@ -231,7 +234,7 @@ ROUTES decision 5.
 
 | Id | Workstream | Size | Needs | Touches |
 |---|---|---|---|---|
-| [9a](https://github.com/open-chat-labs/open-chat/issues/10132) | **The legal pages and `/diamond`.** Learn's extra doc pages (the library change, which 9a makes first), `/terms`, `/privacy`, `/guidelines`, and `/csea-reporting` with the moderators' NCA reporting checklist. `/diamond` from `DiamondContent`. | M | 8e, for `/diamond` only | `features/marketing` |
+| [9a](https://github.com/open-chat-labs/open-chat/issues/10132) | **Done:** what's left is in GAPS.md ("Legal pages and `/diamond`"). **The legal pages and `/diamond`.** Learn's extra doc pages (the library change, which 9a makes first), `/terms`, `/privacy`, `/guidelines`, and `/csea-reporting` with the moderators' NCA reporting checklist. `/diamond` from `DiamondContent`. | M | 8e, for `/diamond` only | `features/marketing` |
 | [9b](https://github.com/open-chat-labs/open-chat/issues/10133) | **Landing's loose ends.** Featured communities (from Explore's hot list), the Android APK link (GitHub releases, as the old landing page). | S | 8a | `features/marketing` |
 
 ### Guest and narrow passes (phase 10)

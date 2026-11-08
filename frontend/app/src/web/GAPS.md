@@ -603,7 +603,7 @@ design export needs. Each entry says where it came up.
   FAQ group has no heading, and questions can carry an `id`. A doc's sections can be nested
   (`depth`), numbered 01, 2.1, 3.4.1, with a contents list whose sub-sections open as the reader
   reaches them, or by hand, and which scrolls on its own. `section` and `question` deep link
-  into a doc and the FAQs, and `architecture` puts the host's own content on that tab, filling the screen between the header and the footer (the canister map, full width and height). Landing's section links scroll smoothly.
+  into a doc and the FAQs, and `architecture` puts the host's own content on that tab, filling the screen between the header and the footer (the canister map, full width and height). Landing's section links scroll smoothly. Also (9a): `doc`, a doc page outside the tabs (the legal pages, `/diamond`), with no tab current, one column without the contents list when it has no sections; `belowDoc`, the host's own content after its sections; a section's `blocks` (numbered clauses that nest, terms and their meanings, bullets); a doc's `intro`, with `lede` and `foot` optional; `onCopySection`, a copy-link button beside every doc heading; and Terms and Privacy in the footer.
 - **`ActivityPanel` back button** (by hand, phase 3d): opened over a chat or a wallet page
   (`?panel=activity`, ROUTES.md decision 7), the panel has a back button beside its title
   (`onBack`) that returns the left column to the middle's own panel. The design has none. Its
@@ -1161,8 +1161,8 @@ design export needs. Each entry says where it came up.
   - the old form's prompt when a referral code is turned down ("proceed" without it, or cancel
     and sign out): the form says why, and signing up again goes ahead without the code (the
     client won't send it again); closing signs out;
-  - the guidelines shown in a popup at sign-up (`AuthDialog` links to `/terms`, a placeholder
-    until the legal pages exist);
+  - the terms shown in a popup at sign-up (`AuthDialog` links to `/terms` instead, which opens
+    the terms page in a new tab);
   - the onboarding dialog's language picker and Logout link (closing sign-up logs out instead);
   - the Solana adapters' own icons (Phantom has none here).
 - **Learn content** (`features/marketing/learn`): converted from the existing pages, verbatim
@@ -1371,6 +1371,34 @@ design export needs. Each entry says where it came up.
   steps are gone from it too: its Play Store choice links the listing. Neither card says the app
   is in beta any more ("out now, in two builds", "Available"; the library's `ui.landing.apps.sub`
   and `ui.landing.apps.available` by hand).
+- **Legal pages and `/diamond`** (9a #10132, `features/marketing`): Learn's doc pages outside its
+  tabs (ROUTES.md, decision 5), from the library's `doc` (by hand: "Learn, added by hand" above).
+  The terms, privacy notice and guidelines are Learn content (`learn/legal`), converted word for
+  word from the old pages, which now render it (desktop's Terms, Privacy and Guidelines content,
+  both sign-ups' terms), so a legal edit lands once; the old pages' rendered text is unchanged. As
+  the old pages, the legal texts are in English only. Not kept, or different:
+  - italics are plain, in the old pages too now (two places: the terms' "no" in an already bold
+    note, and the guidelines' "change the system"), as in Learn's other converted content: Learn's
+    markdown subset has no italics;
+  - the guidelines are open sections, not the old collapsible cards; `?section=` scrolls to one
+    rather than opening it;
+  - the old desktop copy links used the page's origin; every tree now copies on the site's own
+    (`copySectionUrl`), with the toast. The whitepaper's headings copy their links too;
+  - a clause's number is the doc's own text ("1.2)", "A1") rather than a CSS counter.
+  - `/csea-reporting`: the checklist's words are in two places, the old desktop page and
+    `CseaChecklistScreen` (in English, as the old page), until the desktop tree goes: a change to
+    them goes in both. Its state is shared (`logic/moderation/cseaChecklist`). The time in the UK
+    follows the app's 5s clock (`stores/time`'s `now`) rather than the old page's own minute.
+  - `/diamond` shows the comparison (or the member's membership) but not the plans or payment:
+    paying needs the PIN prompt and the wallet, which only the app has, so Upgrade opens the app's
+    Diamond dialog (after signing in, signed out) rather than paying on the page as the dialog
+    does. TODO(design): the page's head ("Diamond", "Benefits of Diamond") and the card under it
+    have no design; the old page showed the feature table alone.
+  - Narrow screens: a phone browser gets the old UI until the narrow pass (10b): the old desktop
+    pages (from the same content) in a web build (`OC_MOBILE_LAYOUT=v1`), and "not found" where the
+    old mobile tree is mounted (`v2`), which has no legal routes of its own. The web's doc pages are
+    checked down to 390px in a narrowed window; `/diamond`'s `DiamondContent` is cramped there (its
+    own 32px padding and a feature column that wraps), as the dialog is: for the narrow pass.
 - **Diamond** (`?diamond`, `features/diamond`, 8e #10131): paid through the shared payment
   (`logic/diamond`, which both legacy `Payment.svelte`s use too), in CHAT or ICP at the backend's
   own prices (CHAT in production, ICP elsewhere, by default), auto-renew on, a timed member opening
@@ -1379,7 +1407,8 @@ design export needs. Each entry says where it came up.
   approval fee (`approvalFees`, counted in what a token can afford and shown on confirm), a top-up
   address per token (`depositAddresses`), `onUpgrade` resolving `false` (nothing bought, nothing to
   say: the PIN prompt dismissed, or a PIN failure, which is toasted with its own message), and Back
-  handing off to the dialog it came from. Not yet:
+  handing off to the dialog it came from, and for the page (9a): no ×, Maybe later or Done without
+  `onClose`, and `onStartUpgrade`, Upgrade and Extend handed to the host. Not yet:
   - paying from an external wallet (the old source wallet selector and its approval popup): only
     the OpenChat wallet pays (`DiamondPayment.pay` takes a `fromAccount` for when it can);
   - the limits and the feature table are the library's own (`DEFAULT_LIMITS`), as the old

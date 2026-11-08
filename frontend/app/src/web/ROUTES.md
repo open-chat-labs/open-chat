@@ -161,8 +161,8 @@ until there's a setting (`GAPS.md`). Signed-in users on `/` go to the app as tod
 | `/` (signed out), `/home` | `Landing` | `?auth&m=…` (an emailed sign-in link) asks for the link's code (existing). `?ref=` is captured (existing). |
 | `/features` | `Landing`, scrolled to `#landing-features` | The old `#hash` redirect (`?section=`) keeps working. |
 | `/roadmap` · `/whitepaper` · `/architecture` · `/blog` · `/blog/:slug` · `/faq` | `Learn`, host-routed (`page`, `post`, `learnPageHref`) | `?q=` opens that FAQ question; `?section=` scrolls to that doc section, except on `/architecture`, which frames the canister map and where it names the canister to open. Content: `GAPS.md` (Learn content). |
-| `/terms` · `/privacy` · `/guidelines` · `/csea-reporting` | `Learn` doc pages, not tabs (decision 5) | `?section=` scrolls to a section; `/csea-reporting` keeps `?report=` / `?urgent=`. |
-| `/diamond` | Learn-style page with `DiamondContent` (decision 5) | Upgrading while signed out opens `AuthDialog` first. |
+| `/terms` · `/privacy` · `/guidelines` · `/csea-reporting` | `Learn` doc pages, not tabs (`doc`, decision 5) | `?section=` scrolls to a section (`/guidelines?section=3` is the platform rules); `/csea-reporting` keeps `?report=` / `?urgent=`, its checklist under the doc (`belowDoc`) for platform moderators and operators only. |
+| `/diamond` | `Learn` doc page with `DiamondContent` under it (decision 5) | Upgrade (Extend) opens the app's Diamond dialog (`<default chat list>?diamond`), where it's paid for; signed out, `AuthDialog` first. |
 
 `AuthDialog` (via `PageAuthState`) is wired to the existing sign-in flow (`DATA.md` §Auth).
 
@@ -241,6 +241,15 @@ and `/whitepaper?section=` scrolls to that section; `/architecture` frames the c
 (`CanisterMapFrame`), which keeps `?section=` itself. What the conversion couldn't keep is in
 `GAPS.md` (Learn content).
 
+**Legal pages and `/diamond` (9a).** `/terms`, `/privacy`, `/guidelines`, `/csea-reporting` and
+`/diamond` are Learn doc pages outside its tabs (`doc`, decision 5), signed in or out, so the
+native apps can open them on the website (`openOnWeb`). The terms, privacy notice and guidelines
+are Learn content (`features/marketing/learn/legal`), the one copy of the text, which the old
+trees' pages and sign-ups render too; `?section=` keeps scrolling to the old pages' sections, and
+each heading copies its link. `/csea-reporting` tells everyone where to report material and gives
+platform moderators and operators the NCA checklist under it. `/diamond` is `DiamondContent`;
+paying is the app's (its Diamond dialog), so Upgrade goes there, signing in first if need be.
+
 **Chat list (phase 3a).** The left column's chat list is real (`features/chats`): DMs and groups,
 favourites or a community's channels, as the route's scope says, with the latest message, time,
 unread count, pinned, muted and live call, and a row menu (favourite, pin, mute, mark read).
@@ -267,8 +276,6 @@ middle it's `/notifications`. Opening an item goes to its message with the feed 
 
 Still to come:
 
-- **Legal pages and `/diamond`**: placeholders until Learn's doc pages and `DiamondContent` exist
-  (decision 5).
 - **Guests**: guest-only behaviour comes in the guest pass (phase 10). That covers the "sign in"
   routes in the Guest column and the composer's sign-in prompt. A guest on `/favourite` already
   gets the sign-in, then `/chats`.
@@ -284,6 +291,5 @@ Still to come:
 
 - The legacy `/:chatId` route catches unregistered 1–3 segment paths and treats them as a group id
   (`/hotgroups`, `/welcome` on desktop, `/faq` on mobile).
-- `landingPagePaths` (`utils/urls.ts`) is missing `privacy` and `csea-reporting`.
 - `explore_groups_route` is a route kind no path produces. `favourites_route` is used (`navigation.ts`
   and the mobile router label `/favourite` with it); only its parser, `favouritesRoute`, is unused.
