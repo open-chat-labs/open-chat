@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the Cloudflare Turnstile config for prize claims ([#10442](https://github.com/open-chat-labs/open-chat/pull/10442))
+
 ## [[2.0.2213](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2213-user_index)] - 2026-11-06
 
 ### Changed
