@@ -110,7 +110,9 @@ design export needs. Each entry says where it came up.
     components_mobile; a share for no chat in particular needs the chat picker
     (components_mobile's goes through `pendingShareStore` to its SlidingModals), which the native
     tree doesn't have yet, so it says so in a toast (`native.shareUnavailable`) and drops the share;
-    a `/share` link shows the Chats root. The picker comes with N5d (forward's chat picker).
+    a `/share` link shows the Chats root. N5d's forward sheet picks several chats and doesn't
+    open them, so it isn't that picker; its rows (`forward.adapter`, on the shared
+    `chatsToShareTo` and `shareTargetsInSections`) are what a share sheet would list.
   - **The Android app's system bars**: done. Its WebView doesn't report `env(safe-area-inset-*)`
     reliably, so the native root follows the shell's window-inset event into `--safe-top` /
     `--safe-bottom` (`native/systemBars.ts`, through components_mobile's `androidInterfaceSizes`).
@@ -358,8 +360,47 @@ design export needs. Each entry says where it came up.
     swipe sets the chat's draft (the reply, or the edit), which the composer shows, and the
     message is marked. A preview's join bar (a channel not joined, a community previewed) comes
     with N8b: until then a preview shows the old footer's words in the composer's place.
-  - **The message long-press menu** (and with it reactions beyond the chips, Copy, Forward, Info,
-    Delete…) is N5d's: a long-press does nothing yet. A message's reactions toggle from its chips.
+  - **A message's long-press menu** (native N5d, #10371): built (`MessageActions`, the kit's
+    `MessageLongPressMenu`). Left, or decided where the docs don't say (the prototype wasn't
+    available):
+    - **Its items**: the design's Reply, Forward, Copy, Info, Edit, Delete, Report, and between
+      them the rest of what `messageMenu` offers that the native tree carries out: Reply
+      privately, Translate / Untranslate, Pin / Unpin, Copy link, Share, Cancel reminder, Retry,
+      Reveal, Undelete, and Block (a group's) after the divider. Not offered yet: starting or
+      following a thread (N8a), a reminder (no native sheet for its time yet: the web has
+      `ReminderDialogScreen`), tipping (the web hasn't it either). Info isn't offered on what
+      can't be acted on (deleted, blocked). The card is 240px with 48px rows: a long menu on a
+      message low on the screen scrolls (`messageMenuPlacement`'s `scroll`), and with no room at
+      all the reactions sit at the top of the screen and the card at its bottom, over the message
+      (ours: the notes give four placements, all round the message).
+    - **Reactions**: six quick ones, the user's most used first (the shared `quickReactions`
+      store), then +, which opens the library's `EmojiPicker` in a bottom sheet (notes §1:
+      pickers are sheets; the design doesn't show where the + goes). The library picker's set is
+      small (its own sample list), not the app's full emoji set.
+    - **Delete** doesn't ask first, whatever the web's "ask before deleting" setting says: it shows
+      at once and its toast (waiting for the backend, then "Message deleted") offers Undo, which
+      undeletes it (notes §1: destructive actions show Undo). A failed message's Delete just
+      removes it.
+    - **Words**: toasts for Copy ("Copied"), Pin, Unpin, Undelete, a delete and its Undo, a
+      forward ("Forwarding to 2 chats…", then "Forwarded to 2 chats") and a report; the web says
+      nothing for Copy or Pin. Translating without Diamond offers it in a `NativeAlert` (Get
+      Diamond opens `?diamond` on the You tab) rather than the web's upgrade dialog. A private
+      reply that can't make the DM says so in a toast (the web publishes `notFound`).
+    - **Message info** (a local `message_info` screen): the message as the chat draws it, Sent,
+      a DM's own message's Status (Sending, Sent, Read, Not sent), Forwarded, Edited, and who
+      reacted with what. Groups' "Read by" / "Delivered to" and an edit history aren't kept by the
+      backend, so they aren't shown; "Edited" says only that it was.
+    - **Forward**: several chats at once, without opening them (the client's
+      `forwardMessageToChats`), the note sent after the copy as a message of its own; the web
+      opens the one chat picked and leaves the note in its draft. A chat whose rules the user
+      hasn't accepted refuses the copy (it shows failed there, and the retry asks for the rules),
+      as the client only knows the open chat's rules. The open chat isn't offered, as in every
+      picker. DMs show their @username, not when they were last online (the web's picker loads it).
+    - **Report** is a bottom sheet with the web dialog's words (the design has no report screen).
+    - **Not checked in a browser**: removing a link's preview (the local replica's previews don't
+      load) and the menu in RTL (spec'd only).
+    - The menu's haptic is the kit's `haptic('light')` on top of `MessageGroup`'s own
+      `navigator.vibrate(8)`, which Android's WebView may also play.
   - **A message's thread** is N8a's (native PLAN): the replies link under messages and the thread
     screen (replies, composer, follow). Until then the link is hidden: the conversation's mapping
     gets `threads: false` (`ConversationContext.threads`), so no message has thread fields, rather
@@ -370,10 +411,12 @@ design export needs. Each entry says where it came up.
     header strip) and a missed call's Call back say so in a toast. A live call's strip says "Tap to
     join" where the prototype names who's in it. Not checked in a browser: the local replica's
     seeded chats have no calls.
-  - **A swap offer's Accept / Cancel**: confirmations are small alerts (notes §1), which the kit
-    doesn't have yet, so the card shows no button in the native tree (`withHandlers` without
-    `swap`).
-  - **A link preview's remove** (the X on the sender's own card) needs the same alert: not offered.
+  - **A swap offer's Accept / Cancel**: still no button in the native tree (`withHandlers`
+    without `swap`). The kit has its alert now, but accepting asks for the wallet's PIN, whose
+    sheet is N10b's: with a PIN set, the client's prompt would wait for a sheet that isn't there.
+    It comes with N9 / N10b, on the web's start and settle (to move to `logic` then).
+  - **A link preview's remove** (the X on the sender's own card): done in N5d, after a
+    `NativeAlert` ("Remove preview?"), on the shared `logic/conversation/linkPreview`.
   - **The media viewer** is the app's (`core/MediaViewer`, moved from `src/web` and kept clear of
     the status bar), not the design's (sender, actions, swipe between items, chrome that fades);
     that waits for the design's `MediaViewer` to be ported to the library (Design pass 6, above),
@@ -442,7 +485,9 @@ design export needs. Each entry says where it came up.
   - **By hand in the library** (EXPORT-LOG 2026-11-07, to take back to the design export):
     `MessageGroup`'s `mirror`, `avatarSize`, `swipeStyle="inset"` and its CSS hooks
     (`--group-gap`, `--group-ring`, `--message-mark*`); `ChatBubble` and `VoiceMessage` put a
-    mirrored bubble at the inline end.
+    mirrored bubble at the inline end. And (EXPORT-LOG 2026-11-08, N5d) the kit's
+    `MessageLongPressMenu` with `messageMenuPlacement` (the prototype's inline message menu, as a
+    component), and `MessageGroup`'s `hoverBar`.
 
 - **Native composer** (native N5c, #10370; the native plan's 05 composer, 06 attach panel and 07
   emoji and GIF panel, as of 2026-11-09 (b); `src/native/features/conversation`:

@@ -60,8 +60,15 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   the actions) share, each a sheet (06 "Sheet behaviour": 90% grown, the backdrop, the handle's and
   the content's drags). What it left (photos sent a message each, the builders, which are N9's …) is in GAPS.md
   ("Native composer").
-- **Next:** the screens. N10a, N11 and N13 need only N3; N5d (the message menu) and N6 (details)
-  need N5b; N9 (the builders) needs N10b too.
+- **Built:** N5d a message's long-press menu
+  ([#10371](https://github.com/open-chat-labs/open-chat/issues/10371)): the kit's
+  `MessageLongPressMenu` (quick reactions and the emoji sheet, Reply, Forward, Copy, Info, Edit,
+  Delete with Undo, Report …, on the shared `logic/conversation/messageAction`, which the web's
+  menu now runs too), Message info (a pushed screen), the forward sheet (several chats at once,
+  with a note: the client's `forwardMessageToChats`), the report sheet, and removing a link's
+  preview after a native confirm. What it left is in GAPS.md ("Native conversation").
+- **Next:** the screens. N10a, N11 and N13 need only N3; N6 (details) needs N5b; N9 (the
+  builders) needs N10b too.
 
 ## Workstreams
 

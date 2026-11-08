@@ -58,7 +58,9 @@ native/
                      messages on core/ChatEventList, the swipes, typing, call items; its composer
                      (N5c: ConversationComposer) and the slot under it that the keyboard and the
                      emoji and attach panels share (keyboardSlot), a panel's surface and its drag
-                     (KeyboardPanel, panelState, panelDrag)
+                     (KeyboardPanel, panelState, panelDrag); a message's long-press menu and
+                     what it opens (N5d: MessageActions, the emoji, forward and report sheets,
+                     MessageInfoScreen, pushed locally)
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when
@@ -77,7 +79,9 @@ its referrer, the sign-up form and the referrer picker, shared with `src/web` an
 profile and its settings (`logic/profile`: the form, the username check, appearance, notifications,
 community names, the photo and cover uploads; `logic/chit/dailyClaim`, shared with the web's
 profile and CHIT dialog), a conversation's messages (`logic/conversation`: the rows, what a message
-offers, its controls, the unread divider and the route's message, search in a chat, call items;
+offers and what each of its actions does (`messageAction`, which the web's menu runs too), its
+controls, removing a link's preview, the unread divider and the route's message, search in a chat,
+call items;
 `core/ChatEventList`, `core/MediaViewer`, `core/observeRead`, shared with `src/web` and, for search
 and calls, the old UIs), the composer (`logic/composer`: where it is, what it offers, sending,
 mentions, voice, the props it takes, GIFs; `logic/conversation/draftActions`: the reply or edit;
