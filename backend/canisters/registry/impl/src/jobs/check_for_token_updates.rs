@@ -17,14 +17,32 @@ fn run() {
     ic_cdk::futures::spawn_migratory(run_async());
 }
 
-// Ledgers marked uninstalled are checked too, so that one which is installed again is picked up
 async fn run_async() {
-    let ledger_canister_ids: Vec<_> = read_state(|state| state.data.tokens.iter().map(|t| t.ledger_canister_id).collect());
+    let tokens: Vec<_> = read_state(|state| {
+        state
+            .data
+            .tokens
+            .iter()
+            .map(|t| (t.ledger_canister_id, t.uninstalled))
+            .collect()
+    });
 
-    futures::future::join_all(ledger_canister_ids.into_iter().map(check_for_token_updates)).await;
+    futures::future::join_all(
+        tokens
+            .into_iter()
+            .map(|(ledger_canister_id, uninstalled)| check_for_token_updates(ledger_canister_id, uninstalled)),
+    )
+    .await;
 }
 
-async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), C2CError> {
+async fn check_for_token_updates(ledger_canister_id: CanisterId, uninstalled: bool) -> Result<(), C2CError> {
+    // A ledger marked uninstalled is checked too, so that one which is installed again is picked up,
+    // but by asking the IC whether it has a Wasm module again rather than by calling it, which keeps
+    // the calls to the ones still uninstalled out of the error logs
+    if uninstalled && !matches!(canister_info(ledger_canister_id).await, Ok(info) if info.module_hash.is_some()) {
+        return Ok(());
+    }
+
     let metadata = get_metadata(ledger_canister_id).await?;
     let metadata_helper = match MetadataHelper::try_parse(metadata) {
         Ok(h) => h,

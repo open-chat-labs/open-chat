@@ -1,7 +1,7 @@
 use crate::client::ledger;
 use crate::env::ENV;
 use crate::setup::{install_icrc_ledger, install_icrc_ledger_wasm};
-use crate::utils::{now_millis, set_freezing_threshold, tick_many};
+use crate::utils::{now_millis, set_freezing_threshold, tick_many, tick_until};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::{Nat, Principal};
 use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE, HOUR_IN_MS};
@@ -209,7 +209,7 @@ fn ledger_uninstalled_after_running_out_of_cycles_is_marked_uninstalled_until_in
     env.uninstall_canister(ledger_canister_id, Some(*controller)).unwrap();
     freeze(env, ledger_canister_id, *controller);
     env.advance_time(Duration::from_millis(11 * HOUR_IN_MS));
-    tick_until(env, "Ledger was not marked uninstalled", |env| {
+    tick_until(env, |env| {
         is_marked_uninstalled(env, canister_ids.registry, ledger_canister_id, None)
     });
 
@@ -235,19 +235,10 @@ fn ledger_uninstalled_after_running_out_of_cycles_is_marked_uninstalled_until_in
         Vec::new(),
     );
     env.advance_time(Duration::from_millis(11 * HOUR_IN_MS));
-    tick_until(env, "Ledger was not marked installed again", |env| {
-        is_listed(env, canister_ids.registry, ledger_canister_id)
+    // Clients which saw it marked uninstalled are sent it again
+    tick_until(env, |env| {
+        is_listed(env, canister_ids.registry, ledger_canister_id, Some(marked_uninstalled))
     });
-}
-
-fn tick_until(env: &PocketIc, failure_message: &str, condition: impl Fn(&PocketIc) -> bool) {
-    for _ in 0..20 {
-        env.tick();
-        if condition(env) {
-            return;
-        }
-    }
-    panic!("{failure_message}");
 }
 
 // Raises the freezing threshold above the balance. The memory allocation keeps the cycles the
@@ -295,8 +286,8 @@ fn is_marked_uninstalled(
         .is_some_and(|uninstalled| uninstalled.contains(&ledger_canister_id))
 }
 
-fn is_listed(env: &PocketIc, registry: CanisterId, ledger_canister_id: CanisterId) -> bool {
-    updates(env, registry, None)
+fn is_listed(env: &PocketIc, registry: CanisterId, ledger_canister_id: CanisterId, since: Option<TimestampMillis>) -> bool {
+    updates(env, registry, since)
         .and_then(|result| result.token_details)
         .is_some_and(|tokens| tokens.iter().any(|t| t.ledger_canister_id == ledger_canister_id))
 }
