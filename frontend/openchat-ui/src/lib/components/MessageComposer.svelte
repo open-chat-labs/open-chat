@@ -196,6 +196,7 @@
   // + and emoji: the composer's own menu / picker, or the host's surface
   const plusOn = $derived(onPlus ? plusActive : menu === 'plus');
   const hostEmojiOn = $derived(!!onEmoji && emojiActive);
+  const hostPanelOn = $derived(hostEmojiOn || (!!onPlus && plusActive));
   const emojiOn = $derived(onEmoji ? emojiActive : menu === 'picker');
   const showPlus = $derived(!editing && ((!!onAttach && attachKinds?.length !== 0) || !!onPlus || demo !== 'interactive'));
 
@@ -371,7 +372,13 @@
     } else draft = '';
     await tick();
     grow();
-    input?.focus();
+    // not into the text box while the host's panel shows in the keyboard's place: focus would raise the keyboard
+    if (!hostPanelOn) input?.focus();
+  }
+
+  /** Focuses the text box (a native host's keyboard glyph, bringing the keyboard back in place of its panel). */
+  export function focus() {
+    input?.focus({ preventScroll: true });
   }
 
   function startTicking() {
@@ -1426,6 +1433,11 @@
 
     &.editing {
       color: var(--ink-2);
+    }
+
+    /* native's edit composer: "Editing" in the accent (Build Brief, late additions) */
+    :global([data-platform='native']) &.editing {
+      color: var(--accent-bright);
     }
   }
 

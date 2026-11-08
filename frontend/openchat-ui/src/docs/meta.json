@@ -14195,7 +14195,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "The host owns the emoji / GIF surface: the emoji button calls this instead of opening the picker."
+        "doc": "The host owns the emoji / GIF surface: the emoji button calls this instead of opening the picker. While the host's panel shows (emojiActive, or plusActive with onPlus), a send leaves the focus alone, so no keyboard comes up; the component's `focus()` brings it back."
       },
       {
         "name": "emojiActive",
@@ -21740,7 +21740,7 @@
         "section": null,
         "required": false,
         "componentDefault": "'tabBar'",
-        "doc": "What it sits above: the tab bar (a tab's root), a footer (a conversation's composer, a pinned button), or nothing but the safe area."
+        "doc": "What it sits above: the tab bar (a tab's root), a footer (a conversation's composer, a pinned button), or nothing but the safe area. A footer that grows (a composer over the keyboard or a panel) puts its height in `--toasts-footer` on an ancestor; without it, a resting composer's."
       },
       {
         "name": "onUndo",

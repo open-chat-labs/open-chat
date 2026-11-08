@@ -775,3 +775,9 @@
 - `navigation`: a value the host changes with each of its navigations (the app's router count); a new one follows `section` (and `question`) again though they're unchanged, so a link to the section the page opened on goes there after the reader chose another (the host's `section` still names the one it navigated to).
 - Docs: `meta.json` (Learn's `onSection`, `navigation`).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-08 — the native composer's keyboard-area panels (native N5c, #10370), by hand
+- `MessageComposer`: `focus()`, exported, puts the focus in the text box (without scrolling): the native host's keyboard glyph (the emoji button while its panel shows) brings the keyboard back in the panel's place. While the host's panel shows (`emojiActive`, or `plusActive` with `onPlus`), a send no longer puts the focus back in the text box, which raised the keyboard over the panel; with no panel, as before.
+- `MessageComposer`, native only (`[data-platform="native"]`): "Editing message" in `--accent-bright` (the Build Brief's late additions: "'Editing' is in accent"); the web keeps `--ink-2`.
+- **Toasts** (`src/native`): above a footer, at `--toasts-footer` + 12px when an ancestor sets it (the conversation puts its composer's height there, so a toast stays above it over the keyboard or a panel), else where it was (`--bar-end` + 64px).
+- `meta.json`: MessageComposer's `onEmoji` and Toasts' `above` docs say so. Not in the design export: to go back to it (the app's `GAPS.md` lists it).

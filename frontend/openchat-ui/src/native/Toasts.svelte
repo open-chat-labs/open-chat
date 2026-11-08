@@ -59,8 +59,9 @@
     grid-template-columns: minmax(0, 1fr);
     pointer-events: none;
 
+    /* a footer that grows (a composer over the keyboard or a panel) says how tall it is: --toasts-footer */
     &.footer {
-      bottom: calc(var(--bar-end) + 64px);
+      bottom: calc(var(--toasts-footer, calc(var(--bar-end) + 52px)) + 12px);
     }
 
     &.none {
