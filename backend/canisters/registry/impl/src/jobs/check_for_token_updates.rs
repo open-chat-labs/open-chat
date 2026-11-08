@@ -17,16 +17,9 @@ fn run() {
     ic_cdk::futures::spawn_migratory(run_async());
 }
 
+// Ledgers marked uninstalled are checked too, so that one which is installed again is picked up
 async fn run_async() {
-    let ledger_canister_ids: Vec<_> = read_state(|state| {
-        state
-            .data
-            .tokens
-            .iter()
-            .filter(|t| !t.uninstalled)
-            .map(|t| t.ledger_canister_id)
-            .collect()
-    });
+    let ledger_canister_ids: Vec<_> = read_state(|state| state.data.tokens.iter().map(|t| t.ledger_canister_id).collect());
 
     futures::future::join_all(ledger_canister_ids.into_iter().map(check_for_token_updates)).await;
 }
@@ -94,11 +87,16 @@ async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), C
 
 async fn get_metadata(ledger_canister_id: CanisterId) -> Result<Vec<(String, MetadataValue)>, C2CError> {
     match icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await {
-        Ok(metadata) => Ok(metadata),
+        Ok(metadata) => {
+            mutate_state(|state| {
+                state.data.tokens.set_uninstalled(ledger_canister_id, false, state.env.now());
+            });
+            Ok(metadata)
+        }
         Err(error) => {
             if is_ledger_uninstalled_or_deleted(ledger_canister_id, &error).await {
                 mutate_state(|state| {
-                    state.data.tokens.mark_uninstalled(ledger_canister_id, state.env.now());
+                    state.data.tokens.set_uninstalled(ledger_canister_id, true, state.env.now());
                 });
             }
             Err(error)

@@ -171,13 +171,21 @@ impl Tokens {
         );
     }
 
-    pub fn mark_uninstalled(&mut self, ledger_canister_id: CanisterId, now: TimestampMillis) {
+    pub fn set_uninstalled(&mut self, ledger_canister_id: CanisterId, uninstalled: bool, now: TimestampMillis) {
         self.apply_update(
             ledger_canister_id,
             |t| {
-                t.uninstalled = true;
-                info!(%ledger_canister_id, "Marked token uninstalled");
-                true
+                if t.uninstalled != uninstalled {
+                    t.uninstalled = uninstalled;
+                    if uninstalled {
+                        info!(%ledger_canister_id, "Marked token uninstalled");
+                    } else {
+                        info!(%ledger_canister_id, "Marked token installed again");
+                    }
+                    true
+                } else {
+                    false
+                }
             },
             now,
         );
