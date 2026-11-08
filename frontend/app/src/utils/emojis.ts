@@ -240,16 +240,6 @@ export async function emojiInCategory(group: number): Promise<PickerEmoji[]> {
     return pickerEmoji(emoji, getEmojiSupportLevel(), tone);
 }
 
-/** The emoji the user picks most, as the old pickers' "frequently used". */
-export async function frequentEmoji(limit: number): Promise<PickerEmoji[]> {
-    const db = getEmojiDatabase();
-    const [top, tone] = await Promise.all([
-        db.getTopFavoriteEmoji(limit),
-        db.getPreferredSkinTone(),
-    ]);
-    return pickerEmoji(top, getEmojiSupportLevel(), tone);
-}
-
 /** The emoji whose names or keywords match what's typed, as a picker shows them. */
 export async function emojiMatching(query: string): Promise<PickerEmoji[]> {
     const db = getEmojiDatabase();
