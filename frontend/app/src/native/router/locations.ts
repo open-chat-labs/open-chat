@@ -72,6 +72,8 @@ export type LocalScreen =
     | { kind: "edit_profile" }
     | { kind: "settings"; page: SettingsPage }
     | { kind: "chat_details"; chatId: ChatIdentifier }
+    // a message's info, from its long-press menu (N5d)
+    | { kind: "message_info"; chatId: ChatIdentifier; messageId: bigint }
     // You → Account's Delete account, its steps before it deletes
     | { kind: "delete_account" }
     // a builder from a conversation's attach panel (a poll, a prize …), for that chat

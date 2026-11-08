@@ -1752,6 +1752,54 @@
                 "voice": "Voice call in progress",
                 "sub": "{elapsed} · {count, plural, one {# person} other {# people}}",
                 "tapToJoin": "Tap to join"
+            },
+            "message": {
+                "info": "Info",
+                "options": "Message options",
+                "react": "Add a reaction",
+                "copied": "Copied",
+                "copyFailed": "Couldn't copy the message",
+                "privateReplyFailed": "Couldn't open a chat with them",
+                "pinned": "Message pinned",
+                "unpinned": "Message unpinned",
+                "deleting": "Deleting message…",
+                "deleted": "Message deleted",
+                "deleteFailed": "Couldn't delete the message",
+                "restoring": "Restoring message…",
+                "restored": "Message restored",
+                "translateTitle": "Translate messages",
+                "translateDiamond": "Translating messages is for Diamond members.",
+                "getDiamond": "Get Diamond",
+                "copyLink": "Copy link"
+            },
+            "forward": {
+                "title": "Forward",
+                "search": "Search chats",
+                "noChats": "No chats to forward to",
+                "noMatches": "No chats match “{query}”",
+                "note": "Add a note (optional)",
+                "pick": "Pick chats to forward to",
+                "send": "{count, plural, one {Forward to # chat} other {Forward to # chats}}",
+                "forwarding": "{count, plural, one {Forwarding to # chat…} other {Forwarding to # chats…}}",
+                "forwarded": "{count, plural, one {Forwarded to # chat} other {Forwarded to # chats}}",
+                "failed": "Couldn't forward to every chat"
+            },
+            "report": {
+                "reporting": "Reporting message…",
+                "reported": "Message reported"
+            },
+            "info": {
+                "title": "Message info",
+                "sentAt": "Sent",
+                "status": "Status",
+                "forwarded": "Forwarded",
+                "edited": "Edited",
+                "reactions": "Reactions",
+                "sending": "Sending",
+                "sent": "Sent",
+                "read": "Read",
+                "failed": "Not sent",
+                "you": "You"
             }
         },
         "shareUnavailable": "Sharing to OpenChat from other apps isn't available in this version yet.",

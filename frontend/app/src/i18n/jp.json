@@ -1837,6 +1837,54 @@
                 "voice": "音声通話中",
                 "sub": "{elapsed} · {count}人",
                 "tapToJoin": "タップして参加"
+            },
+            "message": {
+                "info": "情報",
+                "options": "メッセージのオプション",
+                "react": "リアクションを追加",
+                "copied": "コピーしました",
+                "copyFailed": "メッセージをコピーできませんでした",
+                "privateReplyFailed": "この相手とのチャットを開けませんでした",
+                "pinned": "メッセージを固定しました",
+                "unpinned": "メッセージの固定を解除しました",
+                "deleting": "メッセージを削除しています…",
+                "deleted": "メッセージを削除しました",
+                "deleteFailed": "メッセージを削除できませんでした",
+                "restoring": "メッセージを復元しています…",
+                "restored": "メッセージを復元しました",
+                "translateTitle": "メッセージの翻訳",
+                "translateDiamond": "メッセージの翻訳は Diamond メンバー向けの機能です。",
+                "getDiamond": "Diamond を入手",
+                "copyLink": "リンクをコピー"
+            },
+            "forward": {
+                "title": "転送",
+                "search": "チャットを検索",
+                "noChats": "転送先のチャットがありません",
+                "noMatches": "「{query}」に一致するチャットはありません",
+                "note": "メモを追加（任意）",
+                "pick": "転送先のチャットを選択",
+                "send": "{count} 件のチャットに転送",
+                "forwarding": "{count} 件のチャットに転送しています…",
+                "forwarded": "{count} 件のチャットに転送しました",
+                "failed": "一部のチャットに転送できませんでした"
+            },
+            "report": {
+                "reporting": "メッセージを報告しています…",
+                "reported": "メッセージを報告しました"
+            },
+            "info": {
+                "title": "メッセージ情報",
+                "sentAt": "送信日時",
+                "status": "ステータス",
+                "forwarded": "転送済み",
+                "edited": "編集済み",
+                "reactions": "リアクション",
+                "sending": "送信中",
+                "sent": "送信済み",
+                "read": "既読",
+                "failed": "未送信",
+                "you": "あなた"
             }
         },
         "shareUnavailable": "他のアプリから OpenChat への共有は、このバージョンではまだご利用いただけません。",

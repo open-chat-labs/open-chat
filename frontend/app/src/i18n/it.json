@@ -1837,6 +1837,54 @@
                 "voice": "Chiamata vocale in corso",
                 "sub": "{elapsed} · {count, plural, one {# persona} other {# persone}}",
                 "tapToJoin": "Tocca per partecipare"
+            },
+            "message": {
+                "info": "Info",
+                "options": "Opzioni del messaggio",
+                "react": "Aggiungi una reazione",
+                "copied": "Copiato",
+                "copyFailed": "Impossibile copiare il messaggio",
+                "privateReplyFailed": "Impossibile aprire una chat con questa persona",
+                "pinned": "Messaggio fissato",
+                "unpinned": "Messaggio non più fissato",
+                "deleting": "Eliminazione del messaggio…",
+                "deleted": "Messaggio eliminato",
+                "deleteFailed": "Impossibile eliminare il messaggio",
+                "restoring": "Ripristino del messaggio…",
+                "restored": "Messaggio ripristinato",
+                "translateTitle": "Traduci i messaggi",
+                "translateDiamond": "La traduzione dei messaggi è per i membri Diamond.",
+                "getDiamond": "Ottieni Diamond",
+                "copyLink": "Copia link"
+            },
+            "forward": {
+                "title": "Inoltra",
+                "search": "Cerca chat",
+                "noChats": "Nessuna chat a cui inoltrare",
+                "noMatches": "Nessuna chat corrisponde a «{query}»",
+                "note": "Aggiungi una nota (facoltativa)",
+                "pick": "Scegli le chat a cui inoltrare",
+                "send": "{count, plural, one {Inoltra a # chat} other {Inoltra a # chat}}",
+                "forwarding": "{count, plural, one {Inoltro a # chat…} other {Inoltro a # chat…}}",
+                "forwarded": "{count, plural, one {Inoltrato a # chat} other {Inoltrato a # chat}}",
+                "failed": "Impossibile inoltrare a tutte le chat"
+            },
+            "report": {
+                "reporting": "Segnalazione del messaggio…",
+                "reported": "Messaggio segnalato"
+            },
+            "info": {
+                "title": "Info messaggio",
+                "sentAt": "Inviato",
+                "status": "Stato",
+                "forwarded": "Inoltrato",
+                "edited": "Modificato",
+                "reactions": "Reazioni",
+                "sending": "Invio in corso",
+                "sent": "Inviato",
+                "read": "Letto",
+                "failed": "Non inviato",
+                "you": "Tu"
             }
         },
         "shareUnavailable": "La condivisione su OpenChat da altre app non è ancora disponibile in questa versione.",
