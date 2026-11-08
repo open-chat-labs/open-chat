@@ -25,11 +25,26 @@ export class KeyboardPanelState {
     // a pull on the content: where the finger last was, and whether the panel has taken it
     #pull: { y: number; taken: boolean } | undefined;
 
-    /** It grows (not on mobile web's attach panel). */
-    readonly expandable: boolean;
+    #expandable = $state(false);
 
     constructor(expandable: boolean) {
-        this.expandable = expandable;
+        this.#expandable = expandable;
+    }
+
+    /** It grows (not on mobile web's attach panel, nor while the emoji search's strip shows). */
+    get expandable(): boolean {
+        return this.#expandable;
+    }
+
+    /** It grows, or (back at rest) doesn't, from now. */
+    setExpandable(expandable: boolean): void {
+        this.#expandable = expandable;
+        if (!expandable) {
+            this.#spot = "rest";
+            this.#maxGrow = 0;
+        } else {
+            this.measure();
+        }
     }
 
     /** How far it has grown above its resting height, in CSS pixels. */
@@ -64,7 +79,7 @@ export class KeyboardPanelState {
     }
 
     setMaxGrow(px: number): void {
-        const max = this.expandable ? Math.max(0, Math.round(px)) : 0;
+        const max = this.#expandable ? Math.max(0, Math.round(px)) : 0;
         if (max !== this.#maxGrow) this.#maxGrow = max;
     }
 

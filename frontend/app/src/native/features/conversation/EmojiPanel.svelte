@@ -2,9 +2,12 @@
      GIF switch and a search field, then the emoji by section (Recent first, then every emoji the
      phone draws, by category) in eight columns, with the category bar and backspace pinned at the
      bottom; or the GIFs in two columns. A tap types the emoji at the caret without the keyboard
-     (the panel stays); backspace deletes the character before it. Focusing the search grows the
-     panel to full height first, so the keyboard that comes up for it never covers the results
-     (the host's slot says how much it covers: `covered`). A GIF sends as it's tapped. -->
+     (the panel stays); backspace deletes the character before it. Searching emoji, the panel is a
+     strip over the keyboard (the user's, over the plan's full height): the field across it and the
+     emoji found in one line under it, the composer above. Searching GIFs, the panel grows (to 80%)
+     before the keyboard comes up for the field, so it never covers the results. Either search
+     ending (the panel back at rest, or the keyboard down) puts the field's keyboard away. A GIF
+     sends as it's tapped. -->
 <script lang="ts">
     import type { GiphyContent, KlipyObject } from "@client";
     import SegmentedTabs from "@openchat/ui/src/lib/components/SegmentedTabs.svelte";
@@ -18,6 +21,7 @@
     import { onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { panelContentPull } from "./panelDragHandle";
+    import type { Search } from "./keyboardSlot";
     import type { KeyboardPanelState } from "./panelState.svelte";
 
     type Props = {
@@ -26,16 +30,18 @@
         userId: string;
         /** GIFs may be sent here. */
         gifs: boolean;
-        /** The search field has the keyboard (the panel's bottom is under it). */
-        searching: boolean;
+        /** The search field has the keyboard, and how the panel shows it (the slot's). */
+        search: Search;
         /** Types into the draft at the caret ("\b" deletes). */
         onInsert: (text: string) => void;
         onGif: (content: GiphyContent) => void;
-        /** The search field took the keyboard, or gave it up. */
-        onSearch: (searching: boolean) => void;
+        /** The search field took the keyboard (as the emoji strip, or the grown GIFs), or gave it up. */
+        onSearch: (search: Search) => void;
     };
 
-    let { panel, userId, gifs, searching, onInsert, onGif, onSearch }: Props = $props();
+    let { panel, userId, gifs, search: searchMode, onInsert, onGif, onSearch }: Props = $props();
+    const searching = $derived(searchMode !== "none");
+    const strip = $derived(searchMode === "strip");
 
     const SEARCH_DELAY_MS = 250;
 
@@ -146,16 +152,17 @@
         field?.focus();
     }
 
-    // the panel grows to full height before the keyboard comes up for the field (07 "Search"): a
+    // searching GIFs, the panel grows before the keyboard comes up for the field (07 "Search"): a
     // press on the field while it's at rest grows it, and the field takes the focus once it's grown
-    // (the press itself doesn't: the field moves up under the finger)
+    // (the press itself doesn't: the field moves up under the finger). Pressed with the focus in it
+    // already, nothing changes.
     const GROW_MS = 340;
     let focusTimer: ReturnType<typeof setTimeout> | undefined;
     onDestroy(() => clearTimeout(focusTimer));
 
     function growFirst(el: HTMLInputElement) {
         function pressed(e: Event) {
-            if (panel.open || document.activeElement === el) return;
+            if (tab !== "gif" || panel.open || document.activeElement === el) return;
             e.preventDefault();
             panel.expand();
             clearTimeout(focusTimer);
@@ -176,7 +183,38 @@
         matches = undefined;
         clearTimeout(searchTimer);
         if (next === "gif") void feed?.search("");
+        // the field keeps the keyboard: the other search's way of showing it
+        if (document.activeElement === field) searchStarted();
     }
+
+    // the field has the keyboard: emoji, the strip over it (a grown panel back at rest first, and
+    // not growing meanwhile); GIFs, the panel grown
+    function searchStarted() {
+        if (tab === "gif") {
+            panel.setExpandable(true);
+            panel.expand();
+            onSearch("grown");
+        } else {
+            panel.setExpandable(false);
+            onSearch("strip");
+        }
+    }
+
+    function searchEnded() {
+        panel.setExpandable(true);
+        onSearch("none");
+    }
+
+    // the search over (the keyboard went down, or the grown GIFs went back to rest): its keyboard
+    // goes too
+    $effect(() => {
+        const over =
+            searchMode === "none" || (searchMode === "grown" && !panel.open && !panel.dragging);
+        if (over && document.activeElement === field) untrack(() => field?.blur());
+    });
+    onDestroy(() => {
+        if (document.activeElement === field) field?.blur();
+    });
 
     // ---- GIFs
 
@@ -243,7 +281,7 @@
 
 <div class="emoji" role="group" aria-label={$_("ui.messageComposer.emojiAndGifs")}>
     <div class="top">
-        {#if offersGifs}
+        {#if offersGifs && !strip}
             <div class="switch">
                 <SegmentedTabs
                     size="sm"
@@ -270,11 +308,8 @@
                 enterkeyhint="search"
                 {@attach growFirst}
                 oninput={(e) => typed(e.currentTarget.value)}
-                onfocus={() => {
-                    panel.expand();
-                    onSearch(true);
-                }}
-                onblur={() => onSearch(false)}
+                onfocus={searchStarted}
+                onblur={searchEnded}
             />
             {#if query !== ""}
                 <button
@@ -290,7 +325,20 @@
         </label>
     </div>
 
-    {#if tab === "emoji"}
+    {#if strip}
+        <!-- the emoji found in one line (Recent before anything's typed); a tap keeps the field's
+             keyboard -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div class="line" onmousedown={(e) => e.preventDefault()}>
+            {#if matches !== undefined && matches.length === 0}
+                <p class="none line-none">
+                    {$_("native.composer.emoji.noMatch", { values: { query: query.trim() } })}
+                </p>
+            {:else}
+                {@render grid(matches ?? sections[0].emoji)}
+            {/if}
+        </div>
+    {:else if tab === "emoji"}
         <div
             class="scroll"
             bind:this={scroller}
@@ -476,6 +524,35 @@
         &::-webkit-scrollbar {
             display: none;
         }
+    }
+
+    // the emoji search's strip: one line, scrolled sideways
+    .line {
+        flex: none;
+        height: 52px;
+        box-sizing: border-box;
+        padding: 0 var(--space-8) var(--space-8);
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+
+        .grid {
+            display: flex;
+        }
+
+        .cell {
+            flex: none;
+            width: 44px;
+        }
+    }
+
+    .line-none {
+        padding: var(--space-12) var(--space-8);
+        text-align: start;
     }
 
     .section + .section {

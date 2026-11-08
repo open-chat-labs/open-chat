@@ -1,14 +1,14 @@
 <!-- A keyboard-area panel's surface (native plan 06 "Layout and size", 07 "What it is"): in the slot
      under the composer, at the bottom of the screen, resting at the slot's height over the spacer
      the slot keeps (so the chat and the composer move up by it). Its handle drags it: up it grows
-     over the chat towards the status bar, following the finger; down from rest it slides out and
+     over the chat to 80% of the height under the status bar, following the finger; down from rest it slides out and
      closes (KeyboardPanelState, panelDrag.ts). It rises in as it opens; the emoji and attach panels
      swap inside it without that. Where the keyboard covers its bottom (the emoji search), what it
      shows sits above it. -->
 <script lang="ts">
     import { onDestroy, type Snippet } from "svelte";
     import type { KeyboardPanelState } from "./panelState.svelte";
-    import { panelLayers } from "./panelDrag";
+    import { maxGrowFor, panelLayers } from "./panelDrag";
     import { panelDragHandle } from "./panelDragHandle";
 
     type Props = {
@@ -26,6 +26,9 @@
 
     let { panel, rest, covered, handleLabel, onClose, children }: Props = $props();
 
+    // the handle's area, over what it shows
+    const HANDLE = 22;
+
     // the duration of the slide out (06: ≈220ms)
     const CLOSE_MS = 220;
 
@@ -34,12 +37,12 @@
 
     const layers = $derived(panelLayers(panel.f));
 
-    // how far it can grow: up to just under the status bar
+    // how far it can grow: to 80% of the height under the status bar
     function measure() {
         const slot = el?.parentElement;
         if (slot === null || slot === undefined) return;
         const bottom = slot.getBoundingClientRect().bottom;
-        panel.setMaxGrow(bottom - (safeTop?.offsetHeight ?? 0) - rest);
+        panel.setMaxGrow(maxGrowFor(bottom - (safeTop?.offsetHeight ?? 0), rest));
     }
 
     $effect(() => {
@@ -89,6 +92,7 @@
           ? `translateY(${panel.pulled}px)`
           : undefined}
     style:--panel-shadow={layers.shadow / 0.45}
+    style:--panel-rest-content="{rest - HANDLE}px"
 >
     <span class="safe-top" bind:this={safeTop} aria-hidden="true"></span>
     <div

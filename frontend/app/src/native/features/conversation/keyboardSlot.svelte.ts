@@ -1,14 +1,19 @@
 import { keyboard } from "@stores/keyboard.svelte";
-import { softKeyboard } from "../../aboveKeyboard.svelte";
 import {
     CLOSED,
     inputFocused,
+    keyboardMissed,
     keyboardMoved,
+    keyboardReport,
     restingHeight,
+    SEARCH_STRIP,
+    searchChanged,
+    SETTLE_MS,
     slotHeight,
     togglePanel,
     type InputMove,
     type Panel,
+    type Search,
     type Slot,
 } from "./keyboardSlot";
 
@@ -22,14 +27,22 @@ const EXPECT_FOR_MS = 1000;
  * Where the keyboard's height is reported (the Android app), the WebView's viewport resize is off
  * while the conversation shows, as components_mobile's composer has it: the keyboard comes up over
  * the window, and the slot takes its height, so the composer sits right on it, and a panel takes
- * the same height when it goes down. Elsewhere (the iOS app, whose WebView shrinks above the
- * keyboard, and phones' browsers, which bring the field into view themselves) the platform places
- * the composer above the keyboard, and a panel takes the keyboard's last height where it's been
- * seen, else the design's (`restingHeight`).
+ * the same height when it goes down. The heights reported are taken once they've settled, and a
+ * "down" from the keyboard's last move while it's coming again is ignored (`keyboardReport`), so
+ * switching quickly between a panel and the keyboard doesn't move the composer. Elsewhere (the iOS
+ * app, whose WebView shrinks above the keyboard, and phones' browsers, which bring the field into
+ * view themselves) the platform places the composer above the keyboard, and a panel takes the
+ * keyboard's last height where it's been seen, else the design's (`restingHeight`).
  */
 export class KeyboardSlot {
     #slot = $state<Slot>(CLOSED);
+    // the keyboard's height as the slot takes it (settled), and what it holds while it comes
+    #up = $state(0);
+    #held = $state(0);
+    // the keyboard's last settled height where it's been seen (a panel rests at it), else undefined
+    #last = $state<number | undefined>(keyboard.seen ? keyboard.height : undefined);
     #expectTimer: ReturnType<typeof setTimeout> | undefined;
+    #settleTimer: ReturnType<typeof setTimeout> | undefined;
     readonly #reported: boolean;
     readonly #gallery: boolean;
     #safeBottom = $state(0);
@@ -50,9 +63,9 @@ export class KeyboardSlot {
         return this.#slot.panel;
     }
 
-    /** The emoji panel's search has the keyboard. */
-    get searching(): boolean {
-        return this.#slot.searching;
+    /** The emoji panel's search, and how it shows. */
+    get search(): Search {
+        return this.#slot.search;
     }
 
     /** How tall the open panel rests, in CSS pixels (0 with none open). */
@@ -60,7 +73,7 @@ export class KeyboardSlot {
         const panel = this.#slot.panel;
         if (panel === undefined) return 0;
         return restingHeight(panel, {
-            keyboard: keyboard.seen ? keyboard.height : undefined,
+            keyboard: this.#last,
             safeBottom: this.#safeBottom,
             gallery: this.#gallery,
         });
@@ -69,16 +82,27 @@ export class KeyboardSlot {
     /** How tall the slot is, in CSS pixels. */
     get height(): number {
         return slotHeight(this.#slot, {
-            up: this.#reported ? softKeyboard.height : 0,
-            expected: this.#reported ? softKeyboard.expected : 0,
+            up: this.#up,
+            known: this.#reported ? (this.#slot.expecting ? this.#held : (this.#last ?? 0)) : 0,
             panel: this.resting,
         });
     }
 
-    /** How much of the window's bottom the keyboard covers (the grown emoji panel shows above it). */
+    /** The panel's own resting height: the strip over the keyboard while searching emoji. */
+    get panelRest(): number {
+        return this.#slot.search === "strip" ? this.height : this.resting;
+    }
+
+    /** How much of the panel's bottom the keyboard covers (what it shows sits above it). */
     get covered(): number {
-        if (!this.#slot.searching) return 0;
-        return this.#reported ? softKeyboard.height : this.#viewportCovered;
+        switch (this.#slot.search) {
+            case "strip":
+                return this.#reported ? this.height - SEARCH_STRIP : this.#viewportCovered;
+            case "grown":
+                return this.#reported ? this.#up : this.#viewportCovered;
+            default:
+                return 0;
+        }
     }
 
     /** The safe area under the slot, in CSS pixels (measured by the host). */
@@ -95,15 +119,28 @@ export class KeyboardSlot {
         keyboard.disableViewportResize();
         return () => {
             clearTimeout(this.#expectTimer);
+            clearTimeout(this.#settleTimer);
             keyboard.enableViewportResize();
         };
     }
 
-    /** The keyboard's height changed (reported): up, or down. */
-    keyboardMoved(up: boolean): void {
-        const next = keyboardMoved(this.#slot, up);
-        if (next !== this.#slot) this.#slot = next;
-        if (!this.#slot.expecting) clearTimeout(this.#expectTimer);
+    /** The keyboard reported its height (0: down). */
+    keyboardReported(height: number): void {
+        if (!this.#reported) return;
+        switch (keyboardReport(this.#slot, this.#up, height)) {
+            case "ignore":
+                // a stale "down", or the height it has: a settling one is off
+                if (height === this.#up) clearTimeout(this.#settleTimer);
+                return;
+            case "apply":
+                clearTimeout(this.#settleTimer);
+                this.#take(height);
+                return;
+            case "settle":
+                clearTimeout(this.#settleTimer);
+                this.#settleTimer = setTimeout(() => this.#take(height), SETTLE_MS);
+                return;
+        }
     }
 
     /** The + or emoji button: what the composer's text box should do. */
@@ -117,18 +154,25 @@ export class KeyboardSlot {
     inputFocused(): void {
         // a screen over this one may have put the viewport resize back on (aboveKeyboard's)
         if (this.#reported && keyboard.viewportResizeEnabled) keyboard.disableViewportResize();
-        this.#set(inputFocused(this.#reported, softKeyboard.height > 0));
+        this.#set(inputFocused(this.#reported, this.#up > 0));
     }
 
-    /** The emoji panel's search field took focus, or lost it. */
-    search(searching: boolean): void {
-        if (this.#slot.panel !== "emoji" || this.#slot.searching === searching) return;
-        this.#slot = { ...this.#slot, searching };
+    /** The emoji panel's search field took the keyboard (as `search`), or gave it up ("none"). */
+    searchChanged(search: Search): void {
+        this.#set(searchChanged(this.#slot, search, this.#reported, this.#up > 0));
     }
 
-    /** Closes the panel (Android's back, a tap on the messages, the search opening). */
+    /** Closes the panel (Android's back, a builder's done). */
     close(): void {
         if (this.#slot.panel !== undefined) this.#set(CLOSED);
+    }
+
+    #take(height: number) {
+        this.#up = height;
+        if (height > 0) this.#last = height;
+        const next = keyboardMoved(this.#slot, height > 0);
+        if (next !== this.#slot) this.#slot = next;
+        if (!this.#slot.expecting) clearTimeout(this.#expectTimer);
     }
 
     // a phone's browser keeps the page's height as its keyboard comes up, shrinking only what's
@@ -148,10 +192,16 @@ export class KeyboardSlot {
     }
 
     #set(slot: Slot) {
+        const wasExpecting = this.#slot.expecting;
         this.#slot = slot;
         clearTimeout(this.#expectTimer);
         if (slot.expecting) {
-            this.#expectTimer = setTimeout(() => this.keyboardMoved(false), EXPECT_FOR_MS);
+            // what to hold for the keyboard: its last height, fixed as it's asked for
+            if (!wasExpecting) this.#held = this.#last ?? keyboard.height;
+            this.#expectTimer = setTimeout(() => {
+                const next = keyboardMissed(this.#slot, this.#up > 0);
+                if (next !== this.#slot) this.#slot = next;
+            }, EXPECT_FOR_MS);
         }
     }
 }

@@ -2,6 +2,7 @@ import {
     CLOSE_PULL,
     dragPosition,
     flickVelocity,
+    maxGrowFor,
     panelLayers,
     settle,
     type DragPosition,
@@ -86,5 +87,13 @@ describe("what shows as a panel grows", () => {
     test("the shadow follows f, up to .45", () => {
         expect(panelLayers(0).shadow).toBe(0);
         expect(panelLayers(1).shadow).toBeCloseTo(0.45);
+    });
+});
+
+describe("how far a panel grows", () => {
+    test("to 80% of the height under the status bar", () => {
+        expect(maxGrowFor(1000, 300)).toBe(500);
+        // resting above that already: not at all
+        expect(maxGrowFor(300, 280)).toBe(0);
     });
 });

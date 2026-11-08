@@ -75,3 +75,18 @@ describe("a pull on a grown panel's content", () => {
         expect(panel.dragging).toBe(false);
     });
 });
+
+describe("a panel that stops growing (the emoji search's strip)", () => {
+    test("goes back to rest and doesn't grow till it may again", () => {
+        const panel = grownPanel();
+        panel.setExpandable(false);
+        expect(panel.open).toBe(false);
+        expect(panel.grown).toBe(0);
+        panel.expand();
+        expect(panel.open).toBe(false);
+        panel.setExpandable(true);
+        panel.setMaxGrow(MAX);
+        panel.expand();
+        expect(panel.grown).toBe(MAX);
+    });
+});

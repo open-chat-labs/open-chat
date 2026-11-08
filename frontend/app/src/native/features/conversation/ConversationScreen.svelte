@@ -599,32 +599,59 @@
     const slot = new KeyboardSlot(isAndroidTauriApp(), isTauriApp());
     $effect(() => slot.hold());
     $effect(() => {
-        const up = softKeyboard.height > 0;
-        untrack(() => slot.keyboardMoved(up));
+        const height = softKeyboard.height;
+        untrack(() => slot.keyboardReported(height));
     });
-    // Android's back closes a panel before it leaves the chat
+    // Android's back closes a panel before it leaves the chat, while the chat is on top (a builder
+    // pushed over it leaves the panel open under it, as it was, for when it's back)
+    let covered = $state(false);
     useOverlay(
         overlays,
-        () => slot.panel !== undefined,
+        () => slot.panel !== undefined && !covered,
         () => slot.close(),
     );
+
+    // whether a screen is pushed over this one: the shell makes the one under it inert
+    function followCovered(el: HTMLElement) {
+        const section = el.closest("section");
+        if (section === null) return;
+        const update = () => (covered = section.inert);
+        update();
+        const observer = new MutationObserver(update);
+        observer.observe(section, { attributes: true, attributeFilter: ["inert"] });
+        return () => observer.disconnect();
+    }
+
+    // a tap on the messages leaves the keyboard (and a panel) as it is: the composer's field, or
+    // the emoji search, keeps the focus
+    function keepFocus(e: MouseEvent) {
+        const focused = document.activeElement;
+        if (focused instanceof HTMLElement && footer?.contains(focused)) e.preventDefault();
+    }
     const os = document.documentElement.dataset.os === "android" ? "android" : "ios";
 
-    // a toast sits above the composer however tall it is (a reply, a panel, the keyboard)
+    // a toast sits above the composer however tall it is (a reply, a panel, the keyboard), or,
+    // while a panel shows its own footer at the bottom (Recents' "Attach N"), above that
     let footer = $state<HTMLElement>();
+    let footerHeight = $state<number>();
+    let toastFloor = $state<number>();
     $effect(() => {
         const el = footer;
         if (el === undefined) return;
-        const root = document.documentElement;
-        const observer = new ResizeObserver(() =>
-            root.style.setProperty("--toasts-footer", `${el.offsetHeight}px`),
-        );
+        const observer = new ResizeObserver(() => (footerHeight = el.offsetHeight));
         observer.observe(el);
         return () => {
             observer.disconnect();
-            root.style.removeProperty("--toasts-footer");
+            footerHeight = undefined;
         };
     });
+    $effect(() => {
+        const floor = toastFloor ?? footerHeight;
+        const root = document.documentElement;
+        if (floor === undefined) root.style.removeProperty("--toasts-footer");
+        else root.style.setProperty("--toasts-footer", `${floor}px`);
+    });
+    $effect(() => () => document.documentElement.style.removeProperty("--toasts-footer"));
 
     function jumpTo(index: number) {
         if (chat !== undefined) void list?.scrollToMessageIndex({ chatId: chat.id }, index, false);
@@ -968,7 +995,7 @@
     }
 </script>
 
-<div class="conversation">
+<div class="conversation" {@attach followCovered}>
     {#if searchOpen}
         <SearchBar
             {query}
@@ -1040,9 +1067,9 @@
     {:else if chat === undefined}
         <div class="messages"><div class="waiting"><Spinner size={20} /></div></div>
     {:else}
-        <!-- a tap on the messages puts a panel away, as the keyboard's put away -->
-        <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-        <div class="messages" style:--group-gap="8px" onclick={() => slot.close()}>
+        <!-- a tap on the messages leaves the keyboard or a panel as it is -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div class="messages" style:--group-gap="8px" onmousedown={keepFocus}>
             <div class="sticky-date" class:shown={stickyDate !== undefined} bind:this={stickyEl}>
                 {#if stickyDate !== undefined}
                     <span class="pill">{dateLabel(stickyDate)}</span>
@@ -1315,6 +1342,7 @@
                         toast={(message) => context.toast(message)}
                         onBuild={build}
                         onJump={jumpTo}
+                        onToastFloor={(px) => (toastFloor = px)}
                     />
                 {/key}
             </footer>

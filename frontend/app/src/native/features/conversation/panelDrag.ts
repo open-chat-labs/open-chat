@@ -14,6 +14,17 @@ export const FLICK = 0.5;
 export const OPEN_FROM_REST = 0.3;
 export const STAY_OPEN = 0.7;
 
+/** Grown, a panel takes this much of the height under the status bar (the user's, over the plan's all). */
+export const EXPANDED_SHARE = 0.8;
+
+/**
+ * How far a panel resting at `rest` can grow, `available` being the height from the status bar
+ * to the window's bottom: up to `EXPANDED_SHARE` of it.
+ */
+export function maxGrowFor(available: number, rest: number): number {
+    return Math.max(0, Math.round(available * EXPANDED_SHARE - rest));
+}
+
 /** Where a panel settles: at its resting height, open (grown all the way) or gone. */
 export type PanelSpot = "rest" | "open";
 export type Settle = PanelSpot | "close";

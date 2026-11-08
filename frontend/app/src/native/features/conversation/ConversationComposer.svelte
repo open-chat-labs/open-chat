@@ -112,9 +112,14 @@
         onBuild: (builder: ComposerBuilder) => void;
         /** Goes to a message in the list (the one replied to or edited). */
         onJump: (index: number) => void;
+        /**
+         * Where toasts sit while a panel has its own footer at the bottom (Recents' "Attach N"),
+         * in CSS pixels from the window's bottom; undefined, above the composer.
+         */
+        onToastFloor: (px: number | undefined) => void;
     };
 
-    let { chat, ctx, slot, os, gallery, toast, onBuild, onJump }: Props = $props();
+    let { chat, ctx, slot, os, gallery, toast, onBuild, onJump, onToastFloor }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -385,8 +390,8 @@
         void client.sendMessageWithContent(context, content, false);
     }
 
-    // the attach panel's pickers: photos and videos (several), the camera, any file; leaving the
-    // chat for one closes the panel (06)
+    // the attach panel's pickers: photos and videos (several), the camera, any file; the system's
+    // picker closes the panel (what's picked comes back to the composer)
     let mediaInput = $state<HTMLInputElement>();
     let cameraInput = $state<HTMLInputElement>();
     let fileInput = $state<HTMLInputElement>();
@@ -398,8 +403,8 @@
         else fileInput?.click();
     }
 
+    // a builder is pushed over the chat; the panel stays as it is under it, for when it's back
     function build(builder: ComposerBuilder) {
-        slot.close();
         onBuild(builder);
     }
 
@@ -518,7 +523,7 @@
     {#if panel !== undefined}
         <KeyboardPanel
             {panel}
-            rest={slot.resting}
+            rest={slot.panelRest}
             covered={slot.covered}
             {handleLabel}
             onClose={() => slot.close()}
@@ -528,10 +533,10 @@
                     {panel}
                     userId={me}
                     {gifs}
-                    searching={slot.searching}
+                    search={slot.search}
                     onInsert={insert}
                     onGif={sendGif}
-                    onSearch={(searching) => slot.search(searching)}
+                    onSearch={(search) => slot.searchChanged(search)}
                 />
             {:else}
                 <AttachPanel
@@ -547,6 +552,7 @@
                     onBuild={build}
                     onAttach={attachPicked}
                     onFull={() => toast($_("native.composer.attach.max"))}
+                    {onToastFloor}
                 />
             {/if}
         </KeyboardPanel>

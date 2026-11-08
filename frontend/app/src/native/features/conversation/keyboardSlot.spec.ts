@@ -2,29 +2,34 @@ import {
     CLOSED,
     composerPlacement,
     inputFocused,
+    keyboardMissed,
     keyboardMoved,
+    keyboardReport,
     PANEL_REST,
     PANEL_REST_WEB_ATTACH,
     restingHeight,
+    SEARCH_STRIP,
+    searchChanged,
     slotHeight,
     togglePanel,
     type Slot,
 } from "./keyboardSlot";
 
-const down = { up: 0, expected: 300, panel: 300 };
-const up = { up: 320, expected: 320, panel: 320 };
+const down = { up: 0, known: 300, panel: 300 };
+const up = { up: 320, known: 320, panel: 320 };
 // mobile web: the keyboard's height isn't reported, a panel takes the design's
-const unreported = { up: 0, expected: 0, panel: 282 };
+const unreported = { up: 0, known: 0, panel: 282 };
+const emoji: Slot = { ...CLOSED, panel: "emoji" };
 
 describe("the slot under the composer", () => {
-    test("is the keyboard while it's up, whatever else", () => {
+    test("is the keyboard while it's up, with no panel", () => {
         expect(slotHeight(CLOSED, up)).toBe(320);
-        expect(slotHeight({ ...CLOSED, panel: "attach" }, up)).toBe(320);
     });
 
-    test("is a panel at the keyboard's height while the keyboard's down", () => {
-        expect(slotHeight({ ...CLOSED, panel: "emoji" }, down)).toBe(300);
+    test("is a panel's resting height, a keyboard reported meanwhile being one that's leaving", () => {
+        expect(slotHeight(emoji, down)).toBe(300);
         expect(slotHeight({ ...CLOSED, panel: "attach" }, unreported)).toBe(282);
+        expect(slotHeight({ ...CLOSED, panel: "attach" }, { ...up, panel: 300 })).toBe(300);
     });
 
     test("keeps the keyboard's height while it's on its way, so the composer doesn't jump", () => {
@@ -37,10 +42,18 @@ describe("the slot under the composer", () => {
         expect(slotHeight(CLOSED, down)).toBe(0);
     });
 
-    test("searching emoji, is the keyboard under the grown panel, else the panel's rest", () => {
-        const searching: Slot = { panel: "emoji", expecting: false, searching: true };
-        expect(slotHeight(searching, up)).toBe(320);
-        expect(slotHeight(searching, unreported)).toBe(282);
+    test("searching emoji, is the keyboard (or the one coming) and the strip over it", () => {
+        const strip: Slot = { ...emoji, search: "strip" };
+        expect(slotHeight(strip, up)).toBe(320 + SEARCH_STRIP);
+        expect(slotHeight({ ...strip, expecting: true }, down)).toBe(300 + SEARCH_STRIP);
+        // unreported, the platform lifts the page: the strip alone
+        expect(slotHeight(strip, unreported)).toBe(SEARCH_STRIP);
+    });
+
+    test("searching GIFs, is the keyboard under the grown panel, else the panel's rest", () => {
+        const grown: Slot = { ...emoji, search: "grown" };
+        expect(slotHeight(grown, up)).toBe(320);
+        expect(slotHeight(grown, unreported)).toBe(282);
     });
 });
 
@@ -66,22 +79,17 @@ describe("a panel's resting height", () => {
 
 describe("a panel's button", () => {
     test("opens its panel in the keyboard's place, the keyboard going down", () => {
-        expect(togglePanel(CLOSED, "emoji", true)).toEqual({
-            slot: { panel: "emoji", expecting: false, searching: false },
-            input: "blur",
-        });
+        expect(togglePanel(CLOSED, "emoji", true)).toEqual({ slot: emoji, input: "blur" });
         // one panel in place of the other
-        expect(togglePanel({ ...CLOSED, panel: "emoji" }, "attach", true).slot.panel).toBe(
-            "attach",
-        );
+        expect(togglePanel(emoji, "attach", true).slot.panel).toBe("attach");
     });
 
     test("emoji's keyboard glyph brings the keyboard back, held for where it's reported", () => {
-        expect(togglePanel({ ...CLOSED, panel: "emoji" }, "emoji", true)).toEqual({
+        expect(togglePanel(emoji, "emoji", true)).toEqual({
             slot: { ...CLOSED, expecting: true },
             input: "focus",
         });
-        expect(togglePanel({ ...CLOSED, panel: "emoji" }, "emoji", false).slot).toEqual(CLOSED);
+        expect(togglePanel(emoji, "emoji", false).slot).toEqual(CLOSED);
     });
 
     test("+'s × just closes its panel", () => {
@@ -89,6 +97,43 @@ describe("a panel's button", () => {
             slot: CLOSED,
             input: "none",
         });
+    });
+});
+
+describe("the emoji panel's search", () => {
+    test("takes the keyboard as a strip (emoji) or grown (GIFs), the keyboard expected", () => {
+        expect(searchChanged(emoji, "strip", true, false)).toEqual({
+            ...emoji,
+            search: "strip",
+            expecting: true,
+        });
+        expect(searchChanged(emoji, "grown", true, true)).toEqual({ ...emoji, search: "grown" });
+        expect(searchChanged({ ...emoji, search: "strip" }, "none", true, true)).toEqual(emoji);
+    });
+
+    test("is the emoji panel's only", () => {
+        const attach: Slot = { ...CLOSED, panel: "attach" };
+        expect(searchChanged(attach, "strip", true, false)).toBe(attach);
+    });
+});
+
+describe("a keyboard report", () => {
+    test("the height the slot has: nothing to do", () => {
+        expect(keyboardReport(CLOSED, 336, 336)).toBe("ignore");
+    });
+
+    test("down: at once, unless the keyboard's on its way again (the last move's down)", () => {
+        expect(keyboardReport(CLOSED, 336, 0)).toBe("apply");
+        expect(keyboardReport({ ...CLOSED, expecting: true }, 336, 0)).toBe("ignore");
+    });
+
+    test("up from nothing held: at once", () => {
+        expect(keyboardReport(CLOSED, 0, 336)).toBe("apply");
+    });
+
+    test("up while held, or another height: once it has settled", () => {
+        expect(keyboardReport({ ...CLOSED, expecting: true }, 0, 370)).toBe("settle");
+        expect(keyboardReport(CLOSED, 336, 370)).toBe("settle");
     });
 });
 
@@ -101,15 +146,20 @@ describe("the keyboard", () => {
 
     test("up, is no longer expected", () => {
         expect(keyboardMoved({ ...CLOSED, expecting: true }, true)).toEqual(CLOSED);
-        const panel: Slot = { ...CLOSED, panel: "emoji" };
-        expect(keyboardMoved(panel, true)).toBe(panel);
+        expect(keyboardMoved(emoji, true)).toBe(emoji);
     });
 
     test("down, ends a search, the emoji panel staying", () => {
-        expect(keyboardMoved({ panel: "emoji", expecting: false, searching: true }, false)).toEqual(
-            { ...CLOSED, panel: "emoji" },
+        expect(keyboardMoved({ ...emoji, search: "strip" }, false)).toEqual(emoji);
+        expect(keyboardMoved(emoji, false)).toBe(emoji);
+    });
+
+    test("not coming after all, the search it was for is over", () => {
+        expect(keyboardMissed({ ...emoji, search: "strip", expecting: true }, false)).toEqual(
+            emoji,
         );
-        expect(keyboardMoved({ ...CLOSED, expecting: true }, false)).toEqual(CLOSED);
+        expect(keyboardMissed({ ...CLOSED, expecting: true }, true)).toEqual(CLOSED);
+        expect(keyboardMissed(emoji, false)).toBe(emoji);
     });
 });
 

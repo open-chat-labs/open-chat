@@ -53,6 +53,8 @@
         onAttach: (picked: readonly RecentItem[]) => void;
         /** A pick past the most. */
         onFull: () => void;
+        /** Where toasts sit while Recents shows (above its "Attach N"), or undefined. */
+        onToastFloor: (px: number | undefined) => void;
     };
 
     let {
@@ -68,6 +70,7 @@
         onBuild,
         onAttach,
         onFull,
+        onToastFloor,
     }: Props = $props();
 
     // what's picked from the strip and Recents: one selection for both
@@ -123,6 +126,16 @@
     onDestroy(() => probes.forEach((p) => p.removeAttribute("src")));
 
     const layers = $derived(panelLayers(panel.f));
+
+    // while Recents shows, a toast ("Up to 10 …") sits just above its "Attach N", not above the
+    // composer it covers: the pinned bar less its top padding
+    const PINNED_TOP = 12;
+    let pinnedHeight = $state(0);
+    const recentsShown = $derived(layers.expanded > 0.5);
+    $effect(() => {
+        onToastFloor(recentsShown ? pinnedHeight - PINNED_TOP : undefined);
+    });
+    $effect(() => () => onToastFloor(undefined));
 
     function toggle(item: RecentItem) {
         if (selection.toggle(item) === "full") onFull();
@@ -322,7 +335,11 @@
                     {/each}
                 </div>
             </div>
-            <div class="pinned" class:shown={selection.count > 0}>
+            <div
+                class="pinned"
+                class:shown={selection.count > 0}
+                bind:offsetHeight={pinnedHeight}
+            >
                 <Button label={attachLabel} icon="plus" size="lg" fullWidth onClick={attach} />
             </div>
         </div>
@@ -349,6 +366,7 @@
     // mobile web, which doesn't grow, all of it: the actions are centred in it)
     .rest {
         bottom: auto;
+        height: var(--panel-rest-content);
 
         .web & {
             bottom: 0;
@@ -541,12 +559,15 @@
     }
 
     // what's picked, in the actions' place (06: the line, then "Attach N", 12px apart)
+    // the line under the strip, "Attach N" at the bottom
     .picked {
-        flex: none;
+        flex: 1;
+        min-height: 0;
         display: flex;
         flex-direction: column;
+        justify-content: space-between;
         gap: var(--space-12);
-        padding: 0 var(--space-12) var(--safe-bottom);
+        padding: 0 var(--space-12) max(var(--safe-bottom), var(--space-12));
     }
 
     .picked-line {
@@ -554,6 +575,7 @@
         align-items: center;
         justify-content: space-between;
         gap: var(--space-12);
+        padding-inline: var(--space-8);
     }
 
     .picked-summary {
