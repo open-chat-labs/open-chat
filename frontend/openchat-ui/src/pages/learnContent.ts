@@ -1,4 +1,5 @@
-// Learn page content: the docs (whitepaper, architecture), blog posts, roadmap and FAQs. This is placeholder copy carried
+// Learn page content: the docs (whitepaper, architecture), blog posts, roadmap and FAQs, and the shape of a doc page
+// outside the tabs (`LearnDoc`, for Learn's `doc`). This is placeholder copy carried
 // over from the prototype. The host is expected to load the real content (markdown for docs and posts, JSON for the
 // roadmap and FAQs) and pass it to <Learn content={…}>; the shapes below are that contract. Content is data, not UI
 // copy, so it isn't translated through the i18n keys. Its text may use the markdown subset in inlineMarkdown.ts.
@@ -15,27 +16,50 @@ export interface LearnDocSection {
   /** 1 (the default) for a top-level section; a deeper one belongs to the nearest shallower section before it. */
   depth?: number;
   title: string;
-  paras: string[];
+  paras?: string[];
   list?: string[];
   /** A code sample shown after the paragraphs. */
   code?: string;
   /** A figure drawn from the doc's data after the paragraphs. */
   figure?: 'allocation' | 'canisters';
+  /** The section's body as blocks, after everything above: for a doc with more structure than paragraphs and a list,
+   *  such as a legal doc's numbered clauses. */
+  blocks?: LearnBlock[];
 }
 
+/** A block of a doc section's body: a paragraph, a bulleted list, numbered clauses, or terms and what they mean. */
+export type LearnBlock =
+  | { kind: 'para'; text: string }
+  | { kind: 'bullets'; items: string[] }
+  | { kind: 'clauses'; items: LearnClause[] }
+  | { kind: 'definitions'; items: { term: string; meaning: string }[] };
+
+/** A numbered clause (a legal doc's "A1", "1.2)", "1.2.1)"): its number as the doc writes it, an optional title, and
+ *  its body, which can hold clauses of its own. */
+export interface LearnClause {
+  number: string;
+  title?: string;
+  body: LearnBlock[];
+}
+
+/** A doc: a sub-page's (the whitepaper, the architecture), or a doc page outside the tabs (Learn's `doc`: the host's
+ *  legal pages …). */
 export interface LearnDoc {
   kicker: string;
   title: string;
-  lede: string;
+  lede?: string;
+  /** Paragraphs before the sections, in body text (a legal doc's preamble). */
+  intro?: string[];
   /** Headline numbers shown above the sections. */
   stats?: { value: string; label: string }[];
   /** Token allocation for the 'allocation' figure; shares are percentages. */
   allocation?: { label: string; share: number }[];
   /** Canisters for the 'canisters' figure; `core` ones are highlighted. */
   canisters?: { name: string; role: string; core?: boolean }[];
+  /** Can be empty: a doc page that is only its head and the host's own content (Learn's `belowDoc`). */
   sections: LearnDocSection[];
   /** Closing note, followed by a link to the full source. */
-  foot: string;
+  foot?: string;
   source?: { href: string; label: string };
 }
 

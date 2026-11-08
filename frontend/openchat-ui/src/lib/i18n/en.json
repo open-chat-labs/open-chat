@@ -1976,6 +1976,8 @@
       "onThisPage": "On this page",
       "showSections": "Show the sections in {title}",
       "hideSections": "Hide the sections in {title}",
+      "copyLink": "Copy link",
+      "copySectionLink": "Copy a link to {title}",
       "blog": {
         "kicker": "Blog",
         "title": "News from the DAO",

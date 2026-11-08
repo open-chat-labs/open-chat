@@ -9,7 +9,10 @@
      Sign in / Create account open AuthDialog with the host's `auth` callbacks, as on Landing.
      Content text may use a small markdown subset (inlineMarkdown.ts): links, bold and code inline, and a post paragraph
      that is only an image. `section` and `question` are deep links into a doc and the FAQs; `architecture` puts the
-     host's own content (an interactive canister map …) on the Architecture tab in place of a doc. -->
+     host's own content (an interactive canister map …) on the Architecture tab in place of a doc.
+     A doc page outside the tabs (`doc`: the host's legal pages, /diamond …) shows in the same doc layout, on the host's
+     own path, with no tab current; its sections can hold numbered clauses (`blocks`), and the host's own content can
+     follow them (`belowDoc`). `onCopySection` gives every doc heading a copy-link button. -->
 <script lang="ts">
   import { tick, untrack, type Snippet } from 'svelte';
   import { useT } from '../lib/i18n';
@@ -29,7 +32,9 @@
     placeholderLearnContent,
     readingSection,
     sameLocation,
+    type LearnBlock,
     type LearnContent,
+    type LearnDoc,
     type LearnPage,
     type OutlineEntry,
     type RoadmapItem,
@@ -62,12 +67,20 @@
     /** The Architecture tab's content, in place of the architecture doc (the tab shows whenever this is given). It fills
      *  the screen between the header and the footer, inset only for its rounded corners: an interactive map and the like. */
     architecture?: Snippet;
+    /** The footer's Terms and Privacy links, as Landing's. */
+    termsHref?: string;
+    privacyHref?: string;
+    /** A doc heading's copy-link button calls it with the section's `id` (the host copies its own link to the section,
+     *  as `section` reads it). Without it the headings have none. */
+    onCopySection?: (id: string) => void;
   }
 
   /** The URL hash picks the sub-page; links are learnHref + '#page' ('#blog/<slug>'). */
   interface HashRouted {
     page?: undefined;
     post?: undefined;
+    doc?: undefined;
+    belowDoc?: undefined;
     /** Ignored: hash links work without the host's routes. */
     learnPageHref?: (page: LearnPage, post?: string) => string;
   }
@@ -78,11 +91,25 @@
     page: LearnPage;
     /** With page 'blog': the open post's slug. */
     post?: string;
+    doc?: undefined;
+    belowDoc?: undefined;
     /** The host's path for a sub-page (or a blog post). Required: a hash link would land on a route that ignores the hash. */
     learnPageHref: (page: LearnPage, post?: string) => string;
   }
 
-  type Routing = HashRouted | HostRouted;
+  /** A doc page outside the tabs, on the host's own path (its legal pages …): the doc layout, with no tab current. */
+  interface DocRouted {
+    page?: undefined;
+    post?: undefined;
+    /** The doc to show. Without sections it's its head alone, a column without the contents list. */
+    doc: LearnDoc;
+    /** The host's own content after the doc's sections (an interactive checklist, a plan picker …), in its column. */
+    belowDoc?: Snippet;
+    /** The host's path for a sub-page (or a blog post), for the tabs. */
+    learnPageHref: (page: LearnPage, post?: string) => string;
+  }
+
+  type Routing = HashRouted | HostRouted | DocRouted;
   type Props = CommonProps & Routing;
 
   let {
@@ -94,6 +121,8 @@
     learnHref = '/learn',
     page,
     post,
+    doc: docPage,
+    belowDoc,
     learnPageHref,
     onNavigate,
     content = placeholderLearnContent,
@@ -103,6 +132,9 @@
     section,
     question,
     architecture,
+    termsHref = '/terms',
+    privacyHref = '/privacy',
+    onCopySection,
   }: Props = $props();
   const t = useT();
 
@@ -113,8 +145,12 @@
   type LearnRoute = { page: LearnPage; post?: string };
   let fromHash = $state<LearnRoute>({ page: 'roadmap' });
   const tabs = $derived(learnPagesOf(content, architecture ? ['architecture'] : []));
-  // a doc the content doesn't have (a deep link, or a stale link from Landing) falls back to the roadmap
-  const current = $derived.by(() => {
+  // the host routes its own paths: for a sub-page (`page`), or a doc page outside the tabs (`doc`)
+  const hostRouted = $derived(page !== undefined || docPage !== undefined);
+  // a doc the content doesn't have (a deep link, or a stale link from Landing) falls back to the roadmap; a doc page
+  // outside the tabs is none of them
+  const current = $derived.by((): LearnPage | undefined => {
+    if (docPage) return undefined;
     const p = page ?? fromHash.page;
     return tabs.includes(p) ? p : 'roadmap';
   });
@@ -127,7 +163,7 @@
 
   const authState = new PageAuthState(() => ({ auth, onEnterApp, appHref }));
 
-  const doc = $derived(current === 'whitepaper' || (current === 'architecture' && !architecture) ? content.docs[current] : undefined);
+  const doc = $derived(docPage ?? (current === 'whitepaper' || (current === 'architecture' && !architecture) ? content.docs[current] : undefined));
   // the host's Architecture content takes the whole screen between the header and the footer
   const fullBleed = $derived(current === 'architecture' && !!architecture);
   const openPost = $derived(current === 'blog' && openSlug ? (content.posts.find((p) => p.slug === openSlug) ?? null) : undefined);
@@ -165,12 +201,12 @@
   );
 
   // in hash mode the links are hash links, so a click and an opened-in-new-tab link land on the same sub-page
-  const linkFor = (p: LearnPage, slug?: string) => (page !== undefined && learnPageHref ? learnPageHref(p, slug) : learnHashHref(learnHref, p, slug));
+  const linkFor = (p: LearnPage, slug?: string) => (hostRouted && learnPageHref ? learnPageHref(p, slug) : learnHashHref(learnHref, p, slug));
 
   function go(e: MouseEvent, p: LearnPage, slug?: string) {
     // a modified or non-primary click (new tab, new window …) is the browser's, on the link's own href
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    if (page !== undefined) {
+    if (hostRouted) {
       // host-routed: the host navigates (and scrolls, as its router does) when it takes the click, otherwise the link does
       if (!onNavigate) return;
       e.preventDefault();
@@ -282,8 +318,8 @@
     if (target) tick().then(() => followDeepLink(target));
   }
 
-  // the hash routes only while the host doesn't set `page`, which it may start or stop doing after mount
-  const hashRouted = $derived(page === undefined);
+  // the hash routes only while the host doesn't set `page` (or `doc`), which it may start or stop doing after mount
+  const hashRouted = $derived(!hostRouted);
   $effect(() => {
     if (!hashRouted) return;
     // no hash (back to the entry the page opened on) is the roadmap; an unknown one leaves the sub-page as it is.
@@ -348,6 +384,36 @@
   {/each}
 {/snippet}
 
+<!-- a section's body as blocks: paragraphs, bullets, terms and their meanings, and numbered clauses, which hold blocks
+     of their own. A clause's title is a heading a level below the one it sits under (`level`) -->
+{#snippet blockList(blocks: LearnBlock[], level: number)}
+  {#each blocks as b, i (i)}
+    {#if b.kind === 'para'}
+      <p class="para">{@render rich(b.text)}</p>
+    {:else if b.kind === 'bullets'}
+      <ul class="bullets">
+        {#each b.items as li}<li><span class="bullet"></span><span>{@render rich(li)}</span></li>{/each}
+      </ul>
+    {:else if b.kind === 'definitions'}
+      <dl class="defs">
+        {#each b.items as d}<dt class="def-term">{@render rich(d.term)}</dt><dd class="def-meaning">{@render rich(d.meaning)}</dd>{/each}
+      </dl>
+    {:else}
+      <ol class="clauses">
+        {#each b.items as c}
+          <li class="clause" class:titled={!!c.title}>
+            <span class="clause-num">{c.number}</span>
+            <div class="clause-body">
+              {#if c.title}<svelte:element this={`h${Math.min(6, level + 1)}`} class="clause-title">{c.title}</svelte:element>{/if}
+              {@render blockList(c.body, level + 1)}
+            </div>
+          </li>
+        {/each}
+      </ol>
+    {/if}
+  {/each}
+{/snippet}
+
 <div class="page" class:full-bleed={fullBleed} data-oc-page="learn" data-mode={mode} data-accent={accent}>
   <header class="top">
     <div class="top-inner">
@@ -372,16 +438,19 @@
     {#if current === 'architecture' && architecture}
       <div class="hosted">{@render architecture()}</div>
     {:else if doc}
-      <div class="doc">
-        <aside class="toc">
-          <span class="toc-heading">{t('ui.learn.onThisPage')}</span>
-          {@render tocEntries(outline)}
-        </aside>
+      <div class="doc" class:single={!outline.length}>
+        {#if outline.length}
+          <aside class="toc">
+            <span class="toc-heading">{t('ui.learn.onThisPage')}</span>
+            {@render tocEntries(outline)}
+          </aside>
+        {/if}
         <article class="doc-body">
           <div class="doc-head">
             <span class="kicker">{doc.kicker}</span>
             <h1 class="h1">{doc.title}</h1>
-            <p class="doc-lede">{@render rich(doc.lede)}</p>
+            {#if doc.lede}<p class="doc-lede">{@render rich(doc.lede)}</p>{/if}
+            {#each doc.intro ?? [] as p}<p class="para">{@render rich(p)}</p>{/each}
           </div>
           {#if doc.stats?.length}
             <div class="stats">
@@ -392,11 +461,17 @@
           {/if}
           {#each doc.sections as sec, i}
             {@const entry = numbers[i]}
+            {@const sub = !!entry && entry.depth > 1}
             <section class="doc-section" id="learn-{sec.id}" bind:this={sectionEls[i]}>
-              <svelte:element this={entry && entry.depth > 1 ? 'h3' : 'h2'} class="h2" class:sub={entry && entry.depth > 1}
-                ><span class="h2-num">{entry?.number}</span>{sec.title}</svelte:element
-              >
-              {#each sec.paras as p}<p class="para">{@render rich(p)}</p>{/each}
+              <div class="section-head">
+                <svelte:element this={sub ? 'h3' : 'h2'} class="h2" class:sub><span class="h2-num">{entry?.number}</span>{sec.title}</svelte:element>
+                {#if onCopySection}
+                  <button class="copy-link" aria-label={t('ui.learn.copySectionLink', { title: sec.title })} title={t('ui.learn.copyLink')} onclick={() => onCopySection(sec.id)}
+                    ><Icon icon="link" size={16} /></button
+                  >
+                {/if}
+              </div>
+              {#each sec.paras ?? [] as p}<p class="para">{@render rich(p)}</p>{/each}
               {#if sec.figure === 'allocation' && doc.allocation?.length}
                 <figure class="figure" aria-label={t('ui.learn.allocation')}>
                   <div class="share-bar">
@@ -427,9 +502,13 @@
                 </ul>
               {/if}
               {#if sec.code}<pre class="code">{sec.code}</pre>{/if}
+              {#if sec.blocks?.length}{@render blockList(sec.blocks, sub ? 3 : 2)}{/if}
             </section>
           {/each}
-          <div class="doc-foot">{doc.foot}{#if doc.source}<a class="link" href={doc.source.href}>{doc.source.label}</a>{/if}</div>
+          {#if docPage && belowDoc}<div class="below-doc">{@render belowDoc()}</div>{/if}
+          {#if doc.foot || doc.source}
+            <div class="doc-foot">{doc.foot ?? ''}{#if doc.source}<a class="link" href={doc.source.href}>{doc.source.label}</a>{/if}</div>
+          {/if}
         </article>
       </div>
     {:else if current === 'blog' && openPost !== undefined}
@@ -571,6 +650,8 @@
       <span class="footer-links">
         <a class="link" href={exploreHref}>{t('ui.learn.footer.explore')}</a>
         <a class="link" href={homeHref}>{t('ui.learn.footer.home')}</a>
+        <a class="footer-legal" href={termsHref}>{t('ui.landing.footer.terms')}</a>
+        <a class="footer-legal" href={privacyHref}>{t('ui.landing.footer.privacy')}</a>
       </span>
     </div>
   </footer>
@@ -1150,6 +1231,124 @@
     color: var(--ink-3);
   }
 
+  /* a doc page without sections: its head and the host's content, one column */
+  .doc.single {
+    max-width: 760px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .below-doc {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* a heading and its copy-link button, which shows while the heading is hovered or the button has focus (and always
+     where nothing hovers) */
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+  }
+
+  .copy-link {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--ink-4);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--duration-base) var(--ease-out);
+  }
+
+  .section-head:hover .copy-link,
+  .copy-link:focus-visible {
+    opacity: 1;
+  }
+
+  .copy-link:hover {
+    background: var(--overlay-1);
+    color: var(--ink);
+  }
+
+  @media (hover: none) {
+    .copy-link {
+      opacity: 1;
+    }
+  }
+
+  /* numbered clauses: the numbers in a column of their own, as wide as the list's widest, the clauses' text (and their
+     own clauses) beside it */
+  .clauses {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: var(--space-14) var(--space-16);
+  }
+
+  .clause {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    align-items: baseline;
+  }
+
+  .clause-num {
+    font: var(--weight-medium) var(--text-sm) / 1.75 var(--font-mono);
+    color: var(--ink-3);
+  }
+
+  .clause.titled > .clause-num {
+    font-weight: var(--weight-semibold);
+    color: var(--accent);
+  }
+
+  .clause-body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+  }
+
+  .clause-title {
+    margin: 0;
+    font: var(--weight-semibold) var(--text-lg) / 1.4 var(--font-sans);
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  /* terms and what they mean, side by side */
+  .defs {
+    margin: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: var(--space-12) var(--space-24);
+    padding: var(--space-18) 20px;
+    border-radius: var(--radius-lg);
+    background: var(--surface-1);
+    box-shadow: inset 0 0 0 1px var(--line-1);
+  }
+
+  .def-term {
+    font: var(--weight-semibold) var(--text-base) / 1.6 var(--font-sans);
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+
+  .def-meaning {
+    margin: 0;
+    font: var(--weight-regular) var(--text-base) / 1.6 var(--font-sans);
+    color: var(--ink-2);
+    text-wrap: pretty;
+  }
+
   /* ── blog ── */
   .wide {
     width: 100%;
@@ -1623,7 +1822,12 @@
   }
 
   .footer-links {
-    gap: var(--space-18);
+    flex-wrap: wrap;
+    gap: var(--space-8) var(--space-18);
+  }
+
+  .footer-legal:hover {
+    color: var(--ink);
   }
 
   @media (max-width: 860px) {
@@ -1688,6 +1892,21 @@
 
     .item-detail {
       padding-inline-start: var(--space-8);
+    }
+
+    /* nested clauses keep room for their text */
+    .clauses {
+      column-gap: var(--space-8);
+    }
+
+    .defs {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-2);
+      padding: var(--space-14) var(--space-16);
+    }
+
+    .def-meaning:not(:last-child) {
+      margin-bottom: var(--space-10);
     }
   }
 </style>
