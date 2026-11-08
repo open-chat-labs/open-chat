@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Show a token again once its uninstalled ledger is installed again ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
+- Show a token again once its uninstalled ledger is installed again ([#10441](https://github.com/open-chat-labs/open-chat/pull/10441))
 
 ## [[2.0.2164](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2164-registry)] - 2026-10-20
 
