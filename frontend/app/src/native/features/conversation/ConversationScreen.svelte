@@ -5,8 +5,9 @@
      screen; the messages (core/ChatEventList: paging, deep links, read marking, keeping the scroll),
      received ones with their sender's avatar on a run's first in groups and none in DMs, sent ones
      on the right; swipe right to reply, left to edit your own; call items; who is typing (a bubble
-     in DMs, a strip resting on the composer in groups); and the media viewer. The composer is N5c's,
-     the message long-press menu N5d's, the details N6's. -->
+     in DMs, a strip resting on the composer in groups); the media viewer; and the composer with the
+     keyboard and its panels under it (ConversationComposer, KeyboardSlot). The message long-press
+     menu is N5d's, the details N6's. -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -146,6 +147,11 @@
     } from "./conversation.adapter";
     import { HeldWhileLeaving } from "./heldWhileLeaving";
     import SearchBar from "./SearchBar.svelte";
+    import ConversationComposer from "./ConversationComposer.svelte";
+    import { KeyboardSlot } from "./keyboardSlot.svelte";
+    import { softKeyboard } from "../../aboveKeyboard.svelte";
+    import { isAndroidTauriApp, isTauriApp } from "@client";
+    import type { ComposerBuilder } from "@src/logic/composer/composer";
 
     let { screen, context }: ScreenProps<Extract<NativeScreen, { kind: "conversation" }>> =
         $props();
@@ -509,6 +515,7 @@
     function openSearch() {
         query = "";
         searchOpen = true;
+        slot.close();
     }
 
     function closeSearch() {
@@ -585,6 +592,48 @@
                   },
               }),
     );
+
+    // ---- the composer (ConversationComposer) and the slot under it that the keyboard and its
+    // panels share (KeyboardSlot): the keyboard's height is followed where it's reported (Android)
+
+    const slot = new KeyboardSlot(isAndroidTauriApp());
+    $effect(() => slot.hold());
+    $effect(() => {
+        const up = softKeyboard.height > 0;
+        untrack(() => slot.keyboardMoved(up));
+    });
+    // Android's back closes a panel before it leaves the chat
+    useOverlay(
+        overlays,
+        () => slot.panel !== undefined,
+        () => slot.close(),
+    );
+    const os = document.documentElement.dataset.os === "android" ? "android" : "ios";
+
+    // a toast sits above the composer however tall it is (a reply, a panel, the keyboard)
+    let footer = $state<HTMLElement>();
+    $effect(() => {
+        const el = footer;
+        if (el === undefined) return;
+        const root = document.documentElement;
+        const observer = new ResizeObserver(() =>
+            root.style.setProperty("--toasts-footer", `${el.offsetHeight}px`),
+        );
+        observer.observe(el);
+        return () => {
+            observer.disconnect();
+            root.style.removeProperty("--toasts-footer");
+        };
+    });
+
+    function jumpTo(index: number) {
+        if (chat !== undefined) void list?.scrollToMessageIndex({ chatId: chat.id }, index, false);
+    }
+
+    // a builder (N9's screens) is pushed over the chat
+    function build(builder: ComposerBuilder) {
+        if (chat !== undefined) context.push({ kind: "builder", builder, chatId: chat.id });
+    }
 
     // ---- the timeline
 
@@ -991,7 +1040,9 @@
     {:else if chat === undefined}
         <div class="messages"><div class="waiting"><Spinner size={20} /></div></div>
     {:else}
-        <div class="messages" style:--group-gap="8px">
+        <!-- a tap on the messages puts a panel away, as the keyboard's put away -->
+        <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+        <div class="messages" style:--group-gap="8px" onclick={() => slot.close()}>
             <div class="sticky-date" class:shown={stickyDate !== undefined} bind:this={stickyEl}>
                 {#if stickyDate !== undefined}
                     <span class="pill">{dateLabel(stickyDate)}</span>
@@ -1241,7 +1292,7 @@
         {#if searchOpen}
             <div class="search-end"></div>
         {:else}
-            <footer class="composer">
+            <footer class="composer" bind:this={footer}>
                 {#if !direct}
                     <div
                         class="typing-strip"
@@ -1253,8 +1304,19 @@
                         <span class="typing-text">{typingText}</span>
                     </div>
                 {/if}
-                <!-- TODO(N5c): the composer and its keyboard-area panels. Development text only -->
-                <div class="composer-placeholder">Composer (N5c)</div>
+                <!-- one per chat: it starts from that chat's draft -->
+                {#key chatKey}
+                    <ConversationComposer
+                        {chat}
+                        {ctx}
+                        {slot}
+                        {os}
+                        gallery={isTauriApp()}
+                        toast={(message) => context.toast(message)}
+                        onBuild={build}
+                        onJump={jumpTo}
+                    />
+                {/key}
             </footer>
         {/if}
     {/if}
@@ -1602,10 +1664,13 @@
         height: var(--safe-bottom);
     }
 
+    // the composer, then the safe area or the keyboard's slot under it (ConversationComposer's)
     .composer {
         position: relative;
         flex: none;
-        padding: var(--space-8) 10px max(var(--safe-bottom), var(--space-12));
+        display: flex;
+        flex-direction: column;
+        padding-block-start: var(--space-8);
     }
 
     // who is typing in a group: a 24px strip resting on the composer (over its top padding by 6px),
@@ -1640,17 +1705,6 @@
     .typing-text {
         min-width: 0;
         @include truncate;
-    }
-
-    .composer-placeholder {
-        display: flex;
-        align-items: center;
-        min-height: 52px;
-        padding: 0 var(--space-16);
-        border-radius: 30px;
-        background: var(--overlay-1);
-        color: var(--ink-4);
-        font: var(--weight-medium) text-size(14px) / 1 var(--font-sans);
     }
 
     @keyframes typing-in {

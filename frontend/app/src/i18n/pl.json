@@ -1739,6 +1739,39 @@
                 "noContactsBody": "Tutaj pojawią się osoby, z którymi rozmawiasz najczęściej. Wyszukaj imię lub @nazwę użytkownika, aby zacząć rozmowę."
             }
         },
+        "composer": {
+            "attach": {
+                "label": "Załącz",
+                "photos": "Zdjęcia",
+                "camera": "Aparat",
+                "allPhotos": "Wszystkie zdjęcia",
+                "file": "Plik",
+                "poll": "Ankieta",
+                "prize": "Nagroda",
+                "sendCrypto": "Wyślij krypto",
+                "swap": "Wymiana",
+                "memeFighter": "Meme fighter"
+            },
+            "emoji": {
+                "frequent": "Często używane",
+                "smileys": "Buźki i emocje",
+                "people": "Ludzie i ciało",
+                "animals": "Zwierzęta i natura",
+                "food": "Jedzenie i picie",
+                "travel": "Podróże i miejsca",
+                "activities": "Aktywności",
+                "objects": "Przedmioty",
+                "symbols": "Symbole",
+                "flags": "Flagi",
+                "categories": "Kategorie emoji",
+                "backspace": "Usuń",
+                "unavailable": "Nie udało się wczytać emoji. Sprawdź połączenie."
+            },
+            "gif": {
+                "none": "Nie znaleziono GIF-ów",
+                "unavailable": "Nie udało się wczytać GIF-ów. Sprawdź połączenie."
+            }
+        },
         "conversation": {
             "options": "Opcje czatu",
             "members": "{visibility} · {count, plural, one {# członek} few {# członków} many {# członków} other {# członka}}",

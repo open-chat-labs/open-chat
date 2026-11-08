@@ -1654,6 +1654,39 @@
                 "noContactsBody": "People you chat with most will show up here. Search by name or @username to start a conversation."
             }
         },
+        "composer": {
+            "attach": {
+                "label": "Attach",
+                "photos": "Photos",
+                "camera": "Camera",
+                "allPhotos": "All photos",
+                "file": "File",
+                "poll": "Poll",
+                "prize": "Prize",
+                "sendCrypto": "Send crypto",
+                "swap": "Swap",
+                "memeFighter": "Meme fighter"
+            },
+            "emoji": {
+                "frequent": "Frequently used",
+                "smileys": "Smileys & emotion",
+                "people": "People & body",
+                "animals": "Animals & nature",
+                "food": "Food & drink",
+                "travel": "Travel & places",
+                "activities": "Activities",
+                "objects": "Objects",
+                "symbols": "Symbols",
+                "flags": "Flags",
+                "categories": "Emoji categories",
+                "backspace": "Delete",
+                "unavailable": "Emoji couldn't load. Check your connection."
+            },
+            "gif": {
+                "none": "No GIFs found",
+                "unavailable": "GIFs couldn't load. Check your connection."
+            }
+        },
         "conversation": {
             "options": "Chat options",
             "members": "{visibility} · {count, plural, one {# member} other {# members}}",

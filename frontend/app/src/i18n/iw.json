@@ -1739,6 +1739,39 @@
                 "noContactsBody": "האנשים שאיתם הכי הרבה מדברים יופיעו כאן. חפשו לפי שם או @שם משתמש כדי להתחיל שיחה."
             }
         },
+        "composer": {
+            "attach": {
+                "label": "צירוף",
+                "photos": "תמונות",
+                "camera": "מצלמה",
+                "allPhotos": "כל התמונות",
+                "file": "קובץ",
+                "poll": "סקר",
+                "prize": "פרס",
+                "sendCrypto": "שליחת קריפטו",
+                "swap": "החלפה",
+                "memeFighter": "Meme fighter"
+            },
+            "emoji": {
+                "frequent": "בשימוש תכוף",
+                "smileys": "סמיילים ורגשות",
+                "people": "אנשים וגוף",
+                "animals": "בעלי חיים וטבע",
+                "food": "אוכל ושתייה",
+                "travel": "טיולים ומקומות",
+                "activities": "פעילויות",
+                "objects": "חפצים",
+                "symbols": "סמלים",
+                "flags": "דגלים",
+                "categories": "קטגוריות אמוג'י",
+                "backspace": "מחיקה",
+                "unavailable": "לא ניתן היה לטעון את האמוג'י. כדאי לבדוק את החיבור."
+            },
+            "gif": {
+                "none": "לא נמצאו קובצי GIF",
+                "unavailable": "לא ניתן היה לטעון קובצי GIF. כדאי לבדוק את החיבור."
+            }
+        },
         "conversation": {
             "options": "אפשרויות צ'אט",
             "members": "{visibility} · {count, plural, one {חבר אחד} other {# חברים}}",

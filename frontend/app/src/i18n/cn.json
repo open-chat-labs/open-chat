@@ -1739,6 +1739,39 @@
                 "noContactsBody": "你最常聊天的人会显示在这里。按名字或 @用户名搜索即可开始对话。"
             }
         },
+        "composer": {
+            "attach": {
+                "label": "附件",
+                "photos": "照片",
+                "camera": "相机",
+                "allPhotos": "所有照片",
+                "file": "文件",
+                "poll": "投票",
+                "prize": "奖品",
+                "sendCrypto": "发送加密货币",
+                "swap": "兑换",
+                "memeFighter": "Meme fighter"
+            },
+            "emoji": {
+                "frequent": "常用",
+                "smileys": "笑脸与情感",
+                "people": "人物与身体",
+                "animals": "动物与自然",
+                "food": "食物与饮料",
+                "travel": "旅行与地点",
+                "activities": "活动",
+                "objects": "物品",
+                "symbols": "符号",
+                "flags": "旗帜",
+                "categories": "表情类别",
+                "backspace": "删除",
+                "unavailable": "无法加载表情。请检查网络连接。"
+            },
+            "gif": {
+                "none": "未找到 GIF",
+                "unavailable": "无法加载 GIF。请检查网络连接。"
+            }
+        },
         "conversation": {
             "options": "聊天选项",
             "members": "{visibility} · {count} 位成员",

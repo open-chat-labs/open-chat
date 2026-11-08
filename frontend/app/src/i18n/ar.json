@@ -1739,6 +1739,39 @@
                 "noContactsBody": "سيظهر هنا الأشخاص الذين تتحدث معهم أكثر. ابحث بالاسم أو @اسم المستخدم لبدء محادثة."
             }
         },
+        "composer": {
+            "attach": {
+                "label": "إرفاق",
+                "photos": "الصور",
+                "camera": "الكاميرا",
+                "allPhotos": "كل الصور",
+                "file": "ملف",
+                "poll": "استطلاع",
+                "prize": "جائزة",
+                "sendCrypto": "إرسال عملات مشفرة",
+                "swap": "مبادلة",
+                "memeFighter": "Meme fighter"
+            },
+            "emoji": {
+                "frequent": "الأكثر استخدامًا",
+                "smileys": "الوجوه والمشاعر",
+                "people": "الأشخاص والجسم",
+                "animals": "الحيوانات والطبيعة",
+                "food": "الطعام والشراب",
+                "travel": "السفر والأماكن",
+                "activities": "الأنشطة",
+                "objects": "الأشياء",
+                "symbols": "الرموز",
+                "flags": "الأعلام",
+                "categories": "فئات الرموز التعبيرية",
+                "backspace": "حذف",
+                "unavailable": "تعذّر تحميل الرموز التعبيرية. تحقّق من اتصالك."
+            },
+            "gif": {
+                "none": "لم يتم العثور على صور GIF",
+                "unavailable": "تعذّر تحميل صور GIF. تحقّق من اتصالك."
+            }
+        },
         "conversation": {
             "options": "خيارات الدردشة",
             "members": "{visibility} · {count, plural, one {عضو واحد} two {عضوان} few {# أعضاء} many {# عضوًا} other {# عضو}}",

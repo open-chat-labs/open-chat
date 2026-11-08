@@ -110,6 +110,10 @@ export const screens: Screens = {
 
     // a DM's or group's details, from the conversation's header (N6)
     chat_details: undefined,
+
+    // a builder from the conversation's attach panel: poll, prize, send crypto, swap offer, meme
+    // fighter (N9)
+    builder: undefined,
 };
 
 /**

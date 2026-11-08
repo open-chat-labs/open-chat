@@ -1739,6 +1739,39 @@
                 "noContactsBody": "Những người bạn trò chuyện nhiều nhất sẽ hiện ở đây. Tìm theo tên hoặc @tên người dùng để bắt đầu trò chuyện."
             }
         },
+        "composer": {
+            "attach": {
+                "label": "Đính kèm",
+                "photos": "Ảnh",
+                "camera": "Máy ảnh",
+                "allPhotos": "Tất cả ảnh",
+                "file": "Tệp",
+                "poll": "Thăm dò",
+                "prize": "Giải thưởng",
+                "sendCrypto": "Gửi tiền mã hóa",
+                "swap": "Hoán đổi",
+                "memeFighter": "Meme fighter"
+            },
+            "emoji": {
+                "frequent": "Thường dùng",
+                "smileys": "Mặt cười & cảm xúc",
+                "people": "Con người & cơ thể",
+                "animals": "Động vật & thiên nhiên",
+                "food": "Đồ ăn & thức uống",
+                "travel": "Du lịch & địa điểm",
+                "activities": "Hoạt động",
+                "objects": "Đồ vật",
+                "symbols": "Ký hiệu",
+                "flags": "Cờ",
+                "categories": "Danh mục emoji",
+                "backspace": "Xóa",
+                "unavailable": "Không tải được emoji. Hãy kiểm tra kết nối."
+            },
+            "gif": {
+                "none": "Không tìm thấy GIF",
+                "unavailable": "Không tải được GIF. Hãy kiểm tra kết nối."
+            }
+        },
         "conversation": {
             "options": "Tùy chọn cuộc trò chuyện",
             "members": "{visibility} · {count} thành viên",

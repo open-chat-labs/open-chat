@@ -1739,6 +1739,39 @@
                 "noContactsBody": "Les personnes avec qui vous discutez le plus apparaîtront ici. Recherchez un nom ou un @nom d'utilisateur pour commencer une conversation."
             }
         },
+        "composer": {
+            "attach": {
+                "label": "Joindre",
+                "photos": "Photos",
+                "camera": "Appareil photo",
+                "allPhotos": "Toutes les photos",
+                "file": "Fichier",
+                "poll": "Sondage",
+                "prize": "Prix",
+                "sendCrypto": "Envoyer des cryptos",
+                "swap": "Échanger",
+                "memeFighter": "Meme fighter"
+            },
+            "emoji": {
+                "frequent": "Fréquemment utilisés",
+                "smileys": "Smileys et émotions",
+                "people": "Personnes et corps",
+                "animals": "Animaux et nature",
+                "food": "Nourriture et boissons",
+                "travel": "Voyages et lieux",
+                "activities": "Activités",
+                "objects": "Objets",
+                "symbols": "Symboles",
+                "flags": "Drapeaux",
+                "categories": "Catégories d'emoji",
+                "backspace": "Supprimer",
+                "unavailable": "Impossible de charger les emoji. Vérifiez votre connexion."
+            },
+            "gif": {
+                "none": "Aucun GIF trouvé",
+                "unavailable": "Impossible de charger les GIF. Vérifiez votre connexion."
+            }
+        },
         "conversation": {
             "options": "Options du chat",
             "members": "{visibility} · {count, plural, one {# membre} other {# membres}}",

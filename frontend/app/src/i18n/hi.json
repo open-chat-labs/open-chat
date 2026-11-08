@@ -1739,6 +1739,39 @@
                 "noContactsBody": "जिन लोगों से आप सबसे ज़्यादा चैट करते हैं, वे यहाँ दिखेंगे। बातचीत शुरू करने के लिए नाम या @उपयोगकर्ता नाम से खोजें।"
             }
         },
+        "composer": {
+            "attach": {
+                "label": "संलग्न करें",
+                "photos": "फ़ोटो",
+                "camera": "कैमरा",
+                "allPhotos": "सभी फ़ोटो",
+                "file": "फ़ाइल",
+                "poll": "पोल",
+                "prize": "इनाम",
+                "sendCrypto": "क्रिप्टो भेजें",
+                "swap": "स्वैप",
+                "memeFighter": "Meme fighter"
+            },
+            "emoji": {
+                "frequent": "अक्सर उपयोग किए गए",
+                "smileys": "स्माइली और भावनाएँ",
+                "people": "लोग और शरीर",
+                "animals": "जानवर और प्रकृति",
+                "food": "खाना और पेय",
+                "travel": "यात्रा और स्थान",
+                "activities": "गतिविधियाँ",
+                "objects": "वस्तुएँ",
+                "symbols": "प्रतीक",
+                "flags": "झंडे",
+                "categories": "इमोजी श्रेणियाँ",
+                "backspace": "हटाएँ",
+                "unavailable": "इमोजी लोड नहीं हो सके। अपना कनेक्शन जाँचें।"
+            },
+            "gif": {
+                "none": "कोई GIF नहीं मिला",
+                "unavailable": "GIF लोड नहीं हो सके। अपना कनेक्शन जाँचें।"
+            }
+        },
         "conversation": {
             "options": "चैट विकल्प",
             "members": "{visibility} · {count, plural, one {# सदस्य} other {# सदस्य}}",

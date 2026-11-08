@@ -1739,6 +1739,39 @@
                 "noContactsBody": "افرادی که بیشتر با آن‌ها گفتگو می‌کنید اینجا نشان داده می‌شوند. برای شروع گفتگو، نام یا @نام کاربری را جستجو کنید."
             }
         },
+        "composer": {
+            "attach": {
+                "label": "پیوست",
+                "photos": "عکس‌ها",
+                "camera": "دوربین",
+                "allPhotos": "همه عکس‌ها",
+                "file": "فایل",
+                "poll": "نظرسنجی",
+                "prize": "جایزه",
+                "sendCrypto": "ارسال رمزارز",
+                "swap": "مبادله",
+                "memeFighter": "Meme fighter"
+            },
+            "emoji": {
+                "frequent": "پرکاربرد",
+                "smileys": "شکلک‌ها و احساسات",
+                "people": "افراد و بدن",
+                "animals": "حیوانات و طبیعت",
+                "food": "غذا و نوشیدنی",
+                "travel": "سفر و مکان‌ها",
+                "activities": "فعالیت‌ها",
+                "objects": "اشیا",
+                "symbols": "نمادها",
+                "flags": "پرچم‌ها",
+                "categories": "دسته‌های ایموجی",
+                "backspace": "حذف",
+                "unavailable": "ایموجی‌ها بارگیری نشدند. اتصال خود را بررسی کنید."
+            },
+            "gif": {
+                "none": "هیچ GIF پیدا نشد",
+                "unavailable": "GIFها بارگیری نشدند. اتصال خود را بررسی کنید."
+            }
+        },
         "conversation": {
             "options": "گزینه‌های گفتگو",
             "members": "{visibility} · {count} عضو",
