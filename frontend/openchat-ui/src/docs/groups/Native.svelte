@@ -5,9 +5,9 @@
   import NativeFrame from '../NativeFrame.svelte';
   import { native, sec } from '../sections';
   import { nativeAccents, nativeChats, nativeCommunities, nativePeople, nativeTabs, nativeTabsNoPhoto } from '../samples';
-  import { Avatar, Button, ChatRow, Field, SegmentedTabs, Toggle } from '../../lib/index';
+  import { Avatar, Button, ChatRow, Field, MessageGroup, SegmentedTabs, Toggle } from '../../lib/index';
   import {
-    AnchoredMenu, BottomSheet, CodeTiles, LongPressMenu, NativeAlert, NativePageHeader, SettingsAction, SettingsCopy, SettingsGroup, SettingsLink, SettingsMeter,
+    AnchoredMenu, BottomSheet, CodeTiles, LongPressMenu, MessageLongPressMenu, NativeAlert, NativePageHeader, SettingsAction, SettingsCopy, SettingsGroup, SettingsLink, SettingsMeter,
     SettingsSegmented, SettingsSwatches, SettingsSwitch, SettingsValue, TabBar, ToastQueue, Toasts, longPress, type NativeMenuItem,
   } from '../../native/index';
   import { onDestroy } from 'svelte';
@@ -98,6 +98,35 @@
     { id: 'leave', label: 'docs.native.menu.leaveCommunity', icon: 'exit', separator: true, danger: true },
   ];
   let pressLog = $state('');
+
+  // a message's long-press menu: the message stays put, reactions and actions round it
+  type DemoMessage = { id: string; side: 'received' | 'sent'; text: string; time: string; reactions: { emoji: string; count: number; mine: boolean }[] };
+  const demoMessages = $state<DemoMessage[]>([
+    { id: 'm1', side: 'received', text: 'Are you coming to the book club on Thursday?', time: '09:00', reactions: [] },
+    { id: 'm2', side: 'sent', text: 'Yes! I’ll bring cake 🎂', time: '09:02', reactions: [] },
+    { id: 'm3', side: 'received', text: 'Perfect. I finished Effi Briest last night, so I have opinions.', time: '09:03', reactions: [] },
+    { id: 'm4', side: 'sent', text: 'Short one', time: '09:04', reactions: [] },
+  ]);
+  let messageMenu = $state<{ open: boolean; el: HTMLElement | null; message: DemoMessage }>({ open: false, el: null, message: demoMessages[0] });
+  let messageLog = $state('');
+  const messageItems = $derived<NativeMenuItem[]>([
+    { id: 'reply', label: 'ui.common.reply', icon: 'reply' },
+    { id: 'forward', label: 'Forward', icon: 'forward' },
+    { id: 'copy', label: 'Copy', icon: 'copy' },
+    { id: 'info', label: 'Info', icon: 'info' },
+    ...(messageMenu.message.side === 'sent' ? [{ id: 'edit', label: 'ui.common.edit', icon: 'edit' }] : []),
+    { id: 'delete', label: 'Delete', icon: 'trash', danger: true, separator: true },
+    ...(messageMenu.message.side === 'received' ? [{ id: 'report', label: 'Report', icon: 'flag', danger: true }] : []),
+  ]);
+  function demoReact(emoji: string) {
+    const m = demoMessages.find((x) => x.id === messageMenu.message.id);
+    if (!m) return;
+    const r = m.reactions.find((x) => x.emoji === emoji);
+    if (r?.mine) m.reactions = m.reactions.filter((x) => x !== r);
+    else if (r) r.mine = true;
+    else m.reactions = [...m.reactions, { emoji, count: 1, mine: true }];
+    messageLog = 'react ' + emoji;
+  }
 
   // settings rows: one screen with every kind
   const settings = $state({ mode: 1, accent: 'pink', size: 1, notify: true, preview: true, sound: 'chime', download: 'wifi', cleared: false });
@@ -306,6 +335,42 @@
     <p class="note">Last: <code>{pressLog || '—'}</code>. A tap still opens the row; the click that ends a long-press doesn't.</p>
   </Section>
 
+  <Section {...sec(native, 'native-message-menu')}>
+    <div class="grid2">
+      <NativeFrame {os} {mode} {accent} label="Hold a message (or right-click it)" height={640}>
+        <div class="message-rows">
+          {#each demoMessages as m (m.id)}
+            <MessageGroup
+              side={m.side}
+              senderName="Lucy"
+              showAvatar={false}
+              showName={false}
+              mirror
+              swipeStyle="inset"
+              hoverBar={false}
+              messages={[{ id: m.id, text: m.text, time: m.time, reactions: m.reactions }]}
+              onMessageMenu={(_, pos) => (messageMenu = { open: true, el: pos.el ?? null, message: m })}
+            />
+          {/each}
+        </div>
+        <MessageLongPressMenu
+          open={messageMenu.open}
+          target={messageMenu.el}
+          side={messageMenu.message.side}
+          items={messageItems}
+          label="Message options"
+          reactions={['👍', '❤️', '😂', '😮', '😢', '🙏']}
+          selected={messageMenu.message.reactions.filter((r) => r.mine).map((r) => r.emoji)}
+          onReact={demoReact}
+          onMoreReactions={() => (messageLog = 'more reactions')}
+          onSelect={(id) => (messageLog = id + ' · ' + messageMenu.message.id)}
+          onClose={() => (messageMenu.open = false)}
+        />
+      </NativeFrame>
+    </div>
+    <p class="note">Last: <code>{messageLog || '—'}</code>. Reactions above and the card below, else the card above and the reactions below, else both above, else both below (messageMenuPlacement).</p>
+  </Section>
+
   <Section {...sec(native, 'native-settings')}>
     <div class="grid2">
       <NativeFrame {os} {mode} {accent} label="Segmented · swatches · switches · value" height={720}>
@@ -430,6 +495,7 @@
   .value-row span { flex: 1; font: 500 15px/1.2 var(--font-sans); }
   .value-row b { font: 500 13px/1.2 var(--font-sans); color: var(--ink-2); }
   .value-row i { @include icon(chevron-down, 14px, var(--ink-4)); }
+  .message-rows { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; padding: 12px; }
   .press-rows { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 8px 6px; }
   .strip { display: flex; gap: 12px; padding: 16px 18px; }
   .strip-avatar { width: 42px; height: 42px; border: 0; border-radius: 12px; cursor: pointer; }

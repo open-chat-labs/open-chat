@@ -3929,6 +3929,17 @@
         "required": false,
         "componentDefault": "'gutter'",
         "doc": "How a swipe looks: gutter (web) or inset (native: the hint in the freed space, armed at 60px, stopping at 90px)."
+      },
+      {
+        "name": "hoverBar",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "The hover bar for a pointer that hovers (web). Off on native (design notes §3.3): a long-press or a right click opens the message's menu there."
       }
     ],
     "group": "library"
@@ -20900,6 +20911,140 @@
         "required": false,
         "componentDefault": null,
         "doc": "The lifted copy (the same row component, not interactive); without it, a clone of the target."
+      }
+    ],
+    "group": "native"
+  },
+  {
+    "name": "MessageLongPressMenu",
+    "source": "native/NativeApp.svelte, by hand (native N5d, 2026-11-08)",
+    "hash": "",
+    "description": "A message's long-press menu (native design notes §3.3): the message stays put and a copy of it sits over it above the dimmed, blurred chat; the quick reactions bar (with + for more) and the action card line up with its bubble's start (received) or end (sent) edge, placed by `messageMenuPlacement`: reactions above and the card below, else the card above and the reactions below, else both above, else both below.",
+    "preview": {
+      "width": 402,
+      "height": 640
+    },
+    "props": [
+      {
+        "name": "open",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "target",
+        "type": "HTMLElement | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The pressed message's row (MessageGroup's `pos.el`): where the copy sits, hidden while the menu is open."
+      },
+      {
+        "name": "side",
+        "type": "'received' | 'sent'",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "The bubble's side: the reactions and the card line up with its start edge (received) or end edge (sent)."
+      },
+      {
+        "name": "items",
+        "type": "NativeMenuItem[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): the menu's accessible name."
+      },
+      {
+        "name": "reactions",
+        "type": "string[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "The quick reactions; none (or no `onReact`): no reactions bar."
+      },
+      {
+        "name": "selected",
+        "type": "string[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "The reader's own reactions on the message, shown picked."
+      },
+      {
+        "name": "onReact",
+        "type": "(emoji: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A quick reaction was picked; the menu has asked to close just before."
+      },
+      {
+        "name": "onMoreReactions",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The bar's +: more reactions (the host's picker). None: no +."
+      },
+      {
+        "name": "onSelect",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "A row was picked; the menu has asked to close (onClose) just before."
+      },
+      {
+        "name": "onClose",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "A tap outside, Esc, or a pick. The menu fades out once `open` turns false."
       }
     ],
     "group": "native"

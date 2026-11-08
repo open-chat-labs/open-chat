@@ -1,6 +1,7 @@
 // Where the native menus open (native design notes §1 Sheets, menus): the anchored menu under (or, near the bottom,
-// over) the button or row that opened it, from its corner; the long-press menu under (or over) the lifted row. Pure:
-// AnchoredMenu and LongPressMenu measure, this decides. Positions are px inside the layer the menus are drawn in (the
+// over) the button or row that opened it, from its corner; the long-press menu under (or over) the lifted row; a
+// message's long-press menu (§3.3) its reactions bar and action card round the message. Pure: AnchoredMenu,
+// LongPressMenu and MessageLongPressMenu measure, this decides. Positions are px inside the layer the menus are drawn in (the
 // native root), with the safe areas already taken off the frame. Horizontal offsets are along the reading direction
 // (inset-inline-start / -end), so RTL mirrors them.
 import type { NativeMenuItem } from './types';
@@ -84,6 +85,96 @@ export function liftPlacement(row: Rect, frame: Rect, height: number, rtl: boole
     side: below ? 'below' : 'above',
     origin: `${below ? 'top' : 'bottom'} ${corner}`,
   };
+}
+
+/** Between a message and its reactions bar or action card, and between the two. */
+export const MESSAGE_MENU_GAP = 8;
+/** The fewest of the action card's rows worth showing beside the message: with less room than this (and than the
+ *  whole card) it goes to the bottom of the screen, over the message, rather than scroll in a sliver. */
+export const MESSAGE_MENU_MIN = 3 * MENU_ROW + 2 * MENU_PAD;
+
+export type MessageMenuOrder =
+  /** The reactions above the message and the card below it: the first choice. */
+  | 'bar-above'
+  /** The card above and the reactions below. */
+  | 'menu-above'
+  /** Both above, the reactions on top. */
+  | 'above'
+  /** Both below, the reactions first. */
+  | 'below'
+  /** None of those fits (a tall message, a long card): the card scrolls on the roomier side. */
+  | 'scroll'
+  /** Not even that: the reactions at the top of the screen and the card at its bottom, over the message. */
+  | 'over';
+
+export type MessageMenuPlacement = {
+  order: MessageMenuOrder;
+  /** The reactions bar; none without one. */
+  bar: { top: number; inlineStart: number; origin: string } | null;
+  /** The action card, which scrolls past maxHeight. */
+  menu: { top: number; inlineStart: number; maxHeight: number; origin: string };
+};
+
+/**
+ * A message's long-press menu (native design notes §3.3): the message stays where it is, and its reactions bar and
+ * action card line up with its bubble's start edge (received) or end edge (sent), kept 12px inside the screen's
+ * edges. They go the first of these ways that fits: reactions above and the card below, the card above and the
+ * reactions below, both above, both below. When none does, the card takes the roomier side and scrolls, with the
+ * reactions on the other side if they fit there (else between it and the message); with too little room even for
+ * that, the reactions sit at the top of the screen and the card at its bottom, over the message. `message` is the
+ * message's box: its row's top and height, its bubble's left and width.
+ */
+export function messageMenuPlacement(
+  message: Rect,
+  frame: Rect,
+  bar: { width: number; height: number } | null,
+  menu: { width: number; height: number },
+  side: 'received' | 'sent',
+  rtl: boolean,
+): MessageMenuPlacement {
+  const gap = MESSAGE_MENU_GAP;
+  const start = rtl ? frame.left + frame.width - (message.left + message.width) : message.left - frame.left;
+  const inline = (width: number) => clamp(side === 'received' ? start : start + message.width - width, EDGE, frame.width - width - EDGE);
+  // the corner nearest the message's edge they line up with
+  const corner = (side === 'received') !== rtl ? 'left' : 'right';
+
+  const top = message.top - frame.top;
+  const bottom = top + message.height;
+  const above = top - EDGE;
+  const below = frame.height - EDGE - bottom;
+  const barNeed = bar ? bar.height + gap : 0;
+  const menuNeed = menu.height + gap;
+
+  const place = (order: MessageMenuOrder, barTop: number, barUp: boolean, menuTop: number, menuUp: boolean, maxHeight: number): MessageMenuPlacement => ({
+    order,
+    bar: bar ? { top: barTop, inlineStart: inline(bar.width), origin: `${barUp ? 'bottom' : 'top'} ${corner}` } : null,
+    menu: { top: menuTop, inlineStart: inline(menu.width), maxHeight: Math.max(0, maxHeight), origin: `${menuUp ? 'bottom' : 'top'} ${corner}` },
+  });
+
+  if (barNeed <= above && menuNeed <= below) return place('bar-above', top - barNeed, true, bottom + gap, false, menu.height);
+  if (menuNeed <= above && barNeed <= below) return place('menu-above', bottom + gap, false, top - menuNeed, true, menu.height);
+  if (barNeed + menuNeed <= above) return place('above', top - menuNeed - barNeed, true, top - menuNeed, true, menu.height);
+  if (barNeed + menuNeed <= below) return place('below', bottom + gap, false, bottom + gap + barNeed, false, menu.height);
+
+  // the card on the roomier side, scrolling; the reactions on the other side if they fit there, else next to the message
+  const down = below >= above;
+  const barAcross = barNeed <= (down ? above : below);
+  const room = (down ? below : above) - gap - (barAcross ? 0 : barNeed);
+  if (room >= Math.min(MESSAGE_MENU_MIN, menu.height)) {
+    const height = Math.min(menu.height, room);
+    if (down) {
+      return barAcross
+        ? place('scroll', top - barNeed, true, bottom + gap, false, room)
+        : place('scroll', bottom + gap, false, bottom + gap + barNeed, false, room);
+    }
+    return barAcross
+      ? place('scroll', bottom + gap, false, top - gap - height, true, room)
+      : place('scroll', top - barNeed, true, top - barNeed - gap - height, true, room);
+  }
+
+  // over the message: the reactions at the top of the screen, the card at the bottom
+  const avail = frame.height - 2 * EDGE - barNeed;
+  return place('over', EDGE, false, frame.height - EDGE - Math.min(menu.height, avail), true, avail);
 }
 
 function clamp(x: number, min: number, max: number): number {

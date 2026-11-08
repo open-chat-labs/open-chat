@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { anchoredPlacement, liftPlacement, menuHeight } from './menuPlacement';
+import { anchoredPlacement, liftPlacement, menuHeight, messageMenuPlacement } from './menuPlacement';
 
 const frame = { left: 0, top: 0, width: 400, height: 800 };
 
@@ -97,5 +97,86 @@ describe('liftPlacement', () => {
   test('in RTL it measures from the right and opens from the right corner', () => {
     const rtlRow = { left: 20, top: 200, width: 300, height: 72 };
     expect(liftPlacement(rtlRow, frame, 300, true)).toMatchObject({ card: { inlineStart: 80, width: 300 }, menu: { inlineStart: 88 }, origin: 'top right' });
+  });
+});
+
+describe('messageMenuPlacement', () => {
+  // a 390 × 800 screen; the bar 300 × 52, the card 240 × 300
+  const screen = { left: 0, top: 0, width: 390, height: 800 };
+  const bar = { width: 300, height: 52 };
+  const card = { width: 240, height: 300 };
+  // a received bubble from 12px, a sent one ending 12px from the right
+  const received = { left: 12, top: 300, width: 200, height: 60 };
+  const sent = { left: 178, top: 300, width: 200, height: 60 };
+
+  test('first choice: the reactions above and the card below, lined up with the bubble start (received)', () => {
+    expect(messageMenuPlacement(received, screen, bar, card, 'received', false)).toEqual({
+      order: 'bar-above',
+      bar: { top: 240, inlineStart: 12, origin: 'bottom left' },
+      menu: { top: 368, inlineStart: 12, maxHeight: 300, origin: 'top left' },
+    });
+  });
+
+  test("a sent message's line up with its bubble's end edge", () => {
+    expect(messageMenuPlacement(sent, screen, bar, card, 'sent', false)).toMatchObject({
+      bar: { inlineStart: 378 - 300, origin: 'bottom right' },
+      menu: { inlineStart: 378 - 240, origin: 'top right' },
+    });
+  });
+
+  test('kept 12px inside the screen', () => {
+    const narrow = { ...sent, left: 330, width: 50 };
+    expect(messageMenuPlacement(narrow, screen, bar, card, 'received', false).bar?.inlineStart).toBe(390 - 300 - 12);
+    expect(messageMenuPlacement({ ...received, left: 2 }, screen, bar, card, 'sent', false).menu.inlineStart).toBe(12);
+  });
+
+  test('low on the screen: the card above and the reactions below', () => {
+    const low = { ...received, top: 660 };
+    expect(messageMenuPlacement(low, screen, bar, card, 'received', false)).toMatchObject({
+      order: 'menu-above',
+      bar: { top: 728, origin: 'top left' },
+      menu: { top: 352, origin: 'bottom left' },
+    });
+  });
+
+  test('then both above, the reactions on top; then both below, the reactions first', () => {
+    const lowest = { ...received, top: 700, height: 88 };
+    expect(messageMenuPlacement(lowest, screen, bar, card, 'received', false)).toMatchObject({ order: 'above', bar: { top: 332 }, menu: { top: 392 } });
+    const highest = { ...received, top: 20, height: 60 };
+    expect(messageMenuPlacement(highest, screen, bar, card, 'received', false)).toMatchObject({ order: 'below', bar: { top: 88 }, menu: { top: 148 } });
+  });
+
+  test('a long card that fits nowhere scrolls on the roomier side, the reactions across the message', () => {
+    const long = { width: 240, height: 700 };
+    expect(messageMenuPlacement(received, screen, bar, long, 'received', false)).toMatchObject({
+      order: 'scroll',
+      bar: { top: 240 },
+      menu: { top: 368, maxHeight: 800 - 12 - 360 - 8 },
+    });
+    const lowMessage = { ...received, top: 500 };
+    const up = messageMenuPlacement(lowMessage, screen, bar, long, 'received', false);
+    expect(up).toMatchObject({ order: 'scroll', bar: { top: 568 }, menu: { maxHeight: 500 - 12 - 8 } });
+    expect(up.menu.top).toBe(12);
+  });
+
+  test('a message filling the screen: the reactions at its top, the card at its bottom, over the message', () => {
+    const tall = { ...received, top: 40, height: 700 };
+    expect(messageMenuPlacement(tall, screen, bar, card, 'received', false)).toEqual({
+      order: 'over',
+      bar: { top: 12, inlineStart: 12, origin: 'top left' },
+      menu: { top: 800 - 12 - 300, inlineStart: 12, maxHeight: 800 - 24 - 60, origin: 'bottom left' },
+    });
+  });
+
+  test('without reactions only the card is placed', () => {
+    expect(messageMenuPlacement(received, screen, null, card, 'received', false)).toMatchObject({ order: 'bar-above', bar: null, menu: { top: 368 } });
+  });
+
+  test('in RTL a received bubble starts on the right', () => {
+    const rtlReceived = { left: 178, top: 300, width: 200, height: 60 };
+    expect(messageMenuPlacement(rtlReceived, screen, bar, card, 'received', true)).toMatchObject({
+      bar: { inlineStart: 12, origin: 'bottom right' },
+      menu: { inlineStart: 12, origin: 'top right' },
+    });
   });
 });
