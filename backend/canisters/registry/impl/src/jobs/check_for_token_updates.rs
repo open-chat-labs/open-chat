@@ -39,7 +39,7 @@ async fn check_for_token_updates(ledger_canister_id: CanisterId, uninstalled: bo
     // A ledger marked uninstalled is checked too, so that one which is installed again is picked up,
     // but by asking the IC whether it has a Wasm module again rather than by calling it, which keeps
     // the calls to the ones still uninstalled out of the error logs
-    if uninstalled && !matches!(canister_info(ledger_canister_id).await, Ok(info) if info.module_hash.is_some()) {
+    if uninstalled && !has_wasm_module(ledger_canister_id).await {
         return Ok(());
     }
 
@@ -128,8 +128,14 @@ async fn is_ledger_uninstalled_or_deleted(ledger_canister_id: CanisterId, error:
     if is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message()) {
         true
     } else if is_out_of_cycles_error(error.reject_code(), error.message()) {
-        matches!(canister_info(ledger_canister_id).await, Ok(info) if info.module_hash.is_none())
+        canister_info(ledger_canister_id)
+            .await
+            .is_ok_and(|info| info.module_hash.is_none())
     } else {
         false
     }
+}
+
+async fn has_wasm_module(canister_id: CanisterId) -> bool {
+    canister_info(canister_id).await.is_ok_and(|info| info.module_hash.is_some())
 }
