@@ -1742,7 +1742,7 @@
         "composer": {
             "attach": {
                 "label": "संलग्न करें",
-                "photos": "फ़ोटो",
+                "photos": "{count, plural, one {# फ़ोटो} other {# फ़ोटो}}",
                 "camera": "कैमरा",
                 "allPhotos": "सभी फ़ोटो",
                 "file": "फ़ाइल",
@@ -1750,10 +1750,27 @@
                 "prize": "इनाम",
                 "sendCrypto": "क्रिप्टो भेजें",
                 "swap": "स्वैप",
-                "memeFighter": "Meme fighter"
+                "memeFighter": "Meme fighter",
+                "photosAndVideos": "फ़ोटो और वीडियो",
+                "videos": "{count, plural, one {# वीडियो} other {# वीडियो}}",
+                "photo": "फ़ोटो",
+                "video": "वीडियो",
+                "videoLength": "वीडियो {duration}",
+                "selected": "{name}, चुना गया {n}",
+                "clear": "साफ़ करें",
+                "attachCount": "{count} संलग्न करें",
+                "max": "अधिकतम 10 फ़ोटो या वीडियो",
+                "recents": "हाल के",
+                "ofMax": "{max} में से {count}",
+                "upTo": "अधिकतम {max}",
+                "collapse": "वापस",
+                "drag": "सभी फ़ोटो के लिए ऊपर खींचें, बंद करने के लिए नीचे",
+                "dragBack": "वापस जाने के लिए नीचे खींचें",
+                "dragToClose": "बंद करने के लिए नीचे खींचें",
+                "notAllSent": "कुछ फ़ोटो या वीडियो नहीं भेजे गए। वे अभी भी संलग्न हैं।"
             },
             "emoji": {
-                "frequent": "अक्सर उपयोग किए गए",
+                "recent": "हाल के",
                 "smileys": "स्माइली और भावनाएँ",
                 "people": "लोग और शरीर",
                 "animals": "जानवर और प्रकृति",
@@ -1765,7 +1782,12 @@
                 "flags": "झंडे",
                 "categories": "इमोजी श्रेणियाँ",
                 "backspace": "हटाएँ",
-                "unavailable": "इमोजी लोड नहीं हो सके। अपना कनेक्शन जाँचें।"
+                "unavailable": "इमोजी लोड नहीं हो सके। अपना कनेक्शन जाँचें।",
+                "results": "परिणाम",
+                "noMatch": "“{query}” के लिए कोई इमोजी नहीं",
+                "clearSearch": "खोज साफ़ करें",
+                "expand": "बड़ा करने के लिए ऊपर खींचें",
+                "shrink": "छोटा करने के लिए नीचे खींचें"
             },
             "gif": {
                 "none": "कोई GIF नहीं मिला",

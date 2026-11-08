@@ -4,6 +4,7 @@ import {
     CLOSED,
     inputFocused,
     keyboardMoved,
+    restingHeight,
     slotHeight,
     togglePanel,
     type InputMove,
@@ -23,15 +24,25 @@ const EXPECT_FOR_MS = 1000;
  * the window, and the slot takes its height, so the composer sits right on it, and a panel takes
  * the same height when it goes down. Elsewhere (the iOS app, whose WebView shrinks above the
  * keyboard, and phones' browsers, which bring the field into view themselves) the platform places
- * the composer above the keyboard, and a panel takes the keyboard's last height (or a guess).
+ * the composer above the keyboard, and a panel takes the keyboard's last height where it's been
+ * seen, else the design's (`restingHeight`).
  */
 export class KeyboardSlot {
     #slot = $state<Slot>(CLOSED);
     #expectTimer: ReturnType<typeof setTimeout> | undefined;
     readonly #reported: boolean;
+    readonly #gallery: boolean;
+    #safeBottom = $state(0);
+    // where the keyboard isn't reported, how much of the window a phone browser's keyboard covers
+    #viewportCovered = $state(0);
 
-    constructor(reported: boolean) {
+    /**
+     * `reported`: the keyboard's height is reported (the Android app). `gallery`: the attach panel
+     * has its gallery strip (the apps), so it rests at the emoji panel's height.
+     */
+    constructor(reported: boolean, gallery: boolean) {
         this.#reported = reported;
+        this.#gallery = gallery;
     }
 
     /** The panel showing in the keyboard's place. */
@@ -44,19 +55,35 @@ export class KeyboardSlot {
         return this.#slot.searching;
     }
 
+    /** How tall the open panel rests, in CSS pixels (0 with none open). */
+    get resting(): number {
+        const panel = this.#slot.panel;
+        if (panel === undefined) return 0;
+        return restingHeight(panel, {
+            keyboard: keyboard.seen ? keyboard.height : undefined,
+            safeBottom: this.#safeBottom,
+            gallery: this.#gallery,
+        });
+    }
+
     /** How tall the slot is, in CSS pixels. */
     get height(): number {
         return slotHeight(this.#slot, {
             up: this.#reported ? softKeyboard.height : 0,
             expected: this.#reported ? softKeyboard.expected : 0,
-            panel: keyboard.height,
+            panel: this.resting,
         });
     }
 
-    /** How much of the slot the keyboard covers (a panel searching shows above it). */
+    /** How much of the window's bottom the keyboard covers (the grown emoji panel shows above it). */
     get covered(): number {
         if (!this.#slot.searching) return 0;
-        return this.#reported && softKeyboard.height > 0 ? softKeyboard.height : keyboard.height;
+        return this.#reported ? softKeyboard.height : this.#viewportCovered;
+    }
+
+    /** The safe area under the slot, in CSS pixels (measured by the host). */
+    set safeBottom(px: number) {
+        this.#safeBottom = px;
     }
 
     /**
@@ -64,7 +91,7 @@ export class KeyboardSlot {
      * back on when it goes. Returns the teardown.
      */
     hold(): () => void {
-        if (!this.#reported) return () => {};
+        if (!this.#reported) return this.#followViewport();
         keyboard.disableViewportResize();
         return () => {
             clearTimeout(this.#expectTimer);
@@ -102,6 +129,22 @@ export class KeyboardSlot {
     /** Closes the panel (Android's back, a tap on the messages, the search opening). */
     close(): void {
         if (this.#slot.panel !== undefined) this.#set(CLOSED);
+    }
+
+    // a phone's browser keeps the page's height as its keyboard comes up, shrinking only what's
+    // seen of it: the part under the keyboard is what's covered
+    #followViewport(): () => void {
+        const viewport = window.visualViewport;
+        if (viewport === null) return () => {};
+        const follow = () => {
+            const covered = window.innerHeight - viewport.height - viewport.offsetTop;
+            this.#viewportCovered = Math.max(0, Math.round(covered));
+        };
+        viewport.addEventListener("resize", follow);
+        return () => {
+            clearTimeout(this.#expectTimer);
+            viewport.removeEventListener("resize", follow);
+        };
     }
 
     #set(slot: Slot) {

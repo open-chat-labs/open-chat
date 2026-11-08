@@ -1742,7 +1742,7 @@
         "composer": {
             "attach": {
                 "label": "پیوست",
-                "photos": "عکس‌ها",
+                "photos": "{count, plural, one {# عکس} other {# عکس}}",
                 "camera": "دوربین",
                 "allPhotos": "همه عکس‌ها",
                 "file": "فایل",
@@ -1750,10 +1750,27 @@
                 "prize": "جایزه",
                 "sendCrypto": "ارسال رمزارز",
                 "swap": "مبادله",
-                "memeFighter": "Meme fighter"
+                "memeFighter": "Meme fighter",
+                "photosAndVideos": "عکس‌ها و ویدیوها",
+                "videos": "{count, plural, one {# ویدیو} other {# ویدیو}}",
+                "photo": "عکس",
+                "video": "ویدیو",
+                "videoLength": "ویدیو {duration}",
+                "selected": "{name}، انتخاب‌شده {n}",
+                "clear": "پاک کردن",
+                "attachCount": "پیوست {count}",
+                "max": "حداکثر ۱۰ عکس یا ویدیو",
+                "recents": "اخیر",
+                "ofMax": "{count} از {max}",
+                "upTo": "حداکثر {max}",
+                "collapse": "بازگشت",
+                "drag": "برای همه عکس‌ها به بالا بکشید، برای بستن به پایین",
+                "dragBack": "برای بازگشت به پایین بکشید",
+                "dragToClose": "برای بستن به پایین بکشید",
+                "notAllSent": "برخی عکس‌ها یا ویدیوها ارسال نشدند. هنوز پیوست هستند."
             },
             "emoji": {
-                "frequent": "پرکاربرد",
+                "recent": "اخیر",
                 "smileys": "شکلک‌ها و احساسات",
                 "people": "افراد و بدن",
                 "animals": "حیوانات و طبیعت",
@@ -1765,7 +1782,12 @@
                 "flags": "پرچم‌ها",
                 "categories": "دسته‌های ایموجی",
                 "backspace": "حذف",
-                "unavailable": "ایموجی‌ها بارگیری نشدند. اتصال خود را بررسی کنید."
+                "unavailable": "ایموجی‌ها بارگیری نشدند. اتصال خود را بررسی کنید.",
+                "results": "نتایج",
+                "noMatch": "ایموجی‌ای برای «{query}» نیست",
+                "clearSearch": "پاک کردن جستجو",
+                "expand": "برای بزرگ کردن به بالا بکشید",
+                "shrink": "برای کوچک کردن به پایین بکشید"
             },
             "gif": {
                 "none": "هیچ GIF پیدا نشد",

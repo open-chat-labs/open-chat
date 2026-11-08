@@ -1742,7 +1742,7 @@
         "composer": {
             "attach": {
                 "label": "Joindre",
-                "photos": "Photos",
+                "photos": "{count, plural, one {# photo} other {# photos}}",
                 "camera": "Appareil photo",
                 "allPhotos": "Toutes les photos",
                 "file": "Fichier",
@@ -1750,10 +1750,27 @@
                 "prize": "Prix",
                 "sendCrypto": "Envoyer des cryptos",
                 "swap": "Échanger",
-                "memeFighter": "Meme fighter"
+                "memeFighter": "Meme fighter",
+                "photosAndVideos": "Photos et vidéos",
+                "videos": "{count, plural, one {# vidéo} other {# vidéos}}",
+                "photo": "Photo",
+                "video": "Vidéo",
+                "videoLength": "Vidéo {duration}",
+                "selected": "{name}, sélection {n}",
+                "clear": "Effacer",
+                "attachCount": "Joindre {count}",
+                "max": "Jusqu'à 10 photos ou vidéos",
+                "recents": "Récents",
+                "ofMax": "{count} sur {max}",
+                "upTo": "Jusqu'à {max}",
+                "collapse": "Retour",
+                "drag": "Faites glisser vers le haut pour toutes les photos, vers le bas pour fermer",
+                "dragBack": "Faites glisser vers le bas pour revenir",
+                "dragToClose": "Faites glisser vers le bas pour fermer",
+                "notAllSent": "Certaines photos ou vidéos n'ont pas été envoyées. Elles sont toujours jointes."
             },
             "emoji": {
-                "frequent": "Fréquemment utilisés",
+                "recent": "Récents",
                 "smileys": "Smileys et émotions",
                 "people": "Personnes et corps",
                 "animals": "Animaux et nature",
@@ -1765,7 +1782,12 @@
                 "flags": "Drapeaux",
                 "categories": "Catégories d'emoji",
                 "backspace": "Supprimer",
-                "unavailable": "Impossible de charger les emoji. Vérifiez votre connexion."
+                "unavailable": "Impossible de charger les emoji. Vérifiez votre connexion.",
+                "results": "Résultats",
+                "noMatch": "Aucun emoji pour « {query} »",
+                "clearSearch": "Effacer la recherche",
+                "expand": "Faites glisser vers le haut pour agrandir",
+                "shrink": "Faites glisser vers le bas pour réduire"
             },
             "gif": {
                 "none": "Aucun GIF trouvé",

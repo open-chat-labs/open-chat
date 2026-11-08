@@ -1742,7 +1742,7 @@
         "composer": {
             "attach": {
                 "label": "Đính kèm",
-                "photos": "Ảnh",
+                "photos": "{count, plural, other {# ảnh}}",
                 "camera": "Máy ảnh",
                 "allPhotos": "Tất cả ảnh",
                 "file": "Tệp",
@@ -1750,10 +1750,27 @@
                 "prize": "Giải thưởng",
                 "sendCrypto": "Gửi tiền mã hóa",
                 "swap": "Hoán đổi",
-                "memeFighter": "Meme fighter"
+                "memeFighter": "Meme fighter",
+                "photosAndVideos": "Ảnh & video",
+                "videos": "{count, plural, other {# video}}",
+                "photo": "Ảnh",
+                "video": "Video",
+                "videoLength": "Video {duration}",
+                "selected": "{name}, đã chọn {n}",
+                "clear": "Xóa",
+                "attachCount": "Đính kèm {count}",
+                "max": "Tối đa 10 ảnh hoặc video",
+                "recents": "Gần đây",
+                "ofMax": "{count}/{max}",
+                "upTo": "Tối đa {max}",
+                "collapse": "Quay lại",
+                "drag": "Kéo lên để xem tất cả ảnh, kéo xuống để đóng",
+                "dragBack": "Kéo xuống để quay lại",
+                "dragToClose": "Kéo xuống để đóng",
+                "notAllSent": "Một số ảnh hoặc video chưa được gửi. Chúng vẫn được đính kèm."
             },
             "emoji": {
-                "frequent": "Thường dùng",
+                "recent": "Gần đây",
                 "smileys": "Mặt cười & cảm xúc",
                 "people": "Con người & cơ thể",
                 "animals": "Động vật & thiên nhiên",
@@ -1765,7 +1782,12 @@
                 "flags": "Cờ",
                 "categories": "Danh mục emoji",
                 "backspace": "Xóa",
-                "unavailable": "Không tải được emoji. Hãy kiểm tra kết nối."
+                "unavailable": "Không tải được emoji. Hãy kiểm tra kết nối.",
+                "results": "Kết quả",
+                "noMatch": "Không có emoji cho “{query}”",
+                "clearSearch": "Xóa tìm kiếm",
+                "expand": "Kéo lên để mở rộng",
+                "shrink": "Kéo xuống để thu nhỏ"
             },
             "gif": {
                 "none": "Không tìm thấy GIF",

@@ -1742,7 +1742,7 @@
         "composer": {
             "attach": {
                 "label": "Adjuntar",
-                "photos": "Fotos",
+                "photos": "{count, plural, one {# foto} other {# fotos}}",
                 "camera": "Cámara",
                 "allPhotos": "Todas las fotos",
                 "file": "Archivo",
@@ -1750,10 +1750,27 @@
                 "prize": "Premio",
                 "sendCrypto": "Enviar cripto",
                 "swap": "Intercambiar",
-                "memeFighter": "Meme fighter"
+                "memeFighter": "Meme fighter",
+                "photosAndVideos": "Fotos y vídeos",
+                "videos": "{count, plural, one {# vídeo} other {# vídeos}}",
+                "photo": "Foto",
+                "video": "Vídeo",
+                "videoLength": "Vídeo {duration}",
+                "selected": "{name}, seleccionado {n}",
+                "clear": "Borrar",
+                "attachCount": "Adjuntar {count}",
+                "max": "Hasta 10 fotos o vídeos",
+                "recents": "Recientes",
+                "ofMax": "{count} de {max}",
+                "upTo": "Hasta {max}",
+                "collapse": "Atrás",
+                "drag": "Arrastra hacia arriba para ver todas las fotos, hacia abajo para cerrar",
+                "dragBack": "Arrastra hacia abajo para volver",
+                "dragToClose": "Arrastra hacia abajo para cerrar",
+                "notAllSent": "Algunas fotos o vídeos no se enviaron. Siguen adjuntos."
             },
             "emoji": {
-                "frequent": "Usados con frecuencia",
+                "recent": "Recientes",
                 "smileys": "Caras y emociones",
                 "people": "Personas y cuerpo",
                 "animals": "Animales y naturaleza",
@@ -1765,7 +1782,12 @@
                 "flags": "Banderas",
                 "categories": "Categorías de emoji",
                 "backspace": "Borrar",
-                "unavailable": "No se pudieron cargar los emojis. Comprueba tu conexión."
+                "unavailable": "No se pudieron cargar los emojis. Comprueba tu conexión.",
+                "results": "Resultados",
+                "noMatch": "No hay emojis para «{query}»",
+                "clearSearch": "Borrar búsqueda",
+                "expand": "Arrastra hacia arriba para ampliar",
+                "shrink": "Arrastra hacia abajo para reducir"
             },
             "gif": {
                 "none": "No se encontraron GIFs",

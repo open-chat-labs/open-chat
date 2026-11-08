@@ -1,68 +1,73 @@
-<!-- The emoji panel, in the keyboard's place under the composer (native design notes §3.3): the
-     Emoji / GIF switch and a search field, then every emoji the phone draws in an 8-column grid by
-     category (the ones picked most first), the category bar with backspace at the bottom. A tap
-     types the emoji into the draft without the keyboard; backspace deletes the character before
-     the caret. Searching, the panel grows above the keyboard so the results stay in sight (the
-     host's slot, `covered` being what the keyboard hides). GIFs (Klipy's) send as they're tapped. -->
+<!-- The emoji and GIF panel (native plan 07), in the keyboard-area slot (KeyboardPanel): the Emoji /
+     GIF switch and a search field, then the emoji by section (Recent first, then every emoji the
+     phone draws, by category) in eight columns, with the category bar and backspace pinned at the
+     bottom; or the GIFs in two columns. A tap types the emoji at the caret without the keyboard
+     (the panel stays); backspace deletes the character before it. Focusing the search grows the
+     panel to full height first, so the keyboard that comes up for it never covers the results
+     (the host's slot says how much it covers: `covered`). A GIF sends as it's tapped. -->
 <script lang="ts">
     import type { GiphyContent, KlipyObject } from "@client";
     import SegmentedTabs from "@openchat/ui/src/lib/components/SegmentedTabs.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { GifFeed } from "@src/logic/composer/gifFeed.svelte";
     import { gifContent } from "@src/logic/composer/gifs";
+    import { pickedRecently, storedRecent, storeRecent } from "@src/logic/composer/recentEmoji";
     import { EMOJI_CATEGORIES, type PickerEmoji } from "@src/utils/emojiCategories";
-    import {
-        countEmojiPicked,
-        emojiInCategory,
-        emojiMatching,
-        frequentEmoji,
-    } from "@src/utils/emojis";
+    import { countEmojiPicked, emojiInCategory, emojiMatching } from "@src/utils/emojis";
     import { klipyApiKey } from "@src/utils/features";
-    import { onDestroy, onMount } from "svelte";
+    import { onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
+    import type { KeyboardPanelState } from "./panelState.svelte";
 
     type Props = {
+        panel: KeyboardPanelState;
+        /** Whose Recent it is. */
+        userId: string;
         /** GIFs may be sent here. */
         gifs: boolean;
-        /** How much of the panel's bottom the keyboard covers (while searching). */
-        covered: number;
-        /** The search field has the keyboard. */
+        /** The search field has the keyboard (the panel's bottom is under it). */
         searching: boolean;
-        /** Types into the draft ("\b" deletes). */
+        /** Types into the draft at the caret ("\b" deletes). */
         onInsert: (text: string) => void;
         onGif: (content: GiphyContent) => void;
         /** The search field took the keyboard, or gave it up. */
         onSearch: (searching: boolean) => void;
     };
 
-    let { gifs, covered, searching, onInsert, onGif, onSearch }: Props = $props();
+    let { panel, userId, gifs, searching, onInsert, onGif, onSearch }: Props = $props();
 
-    // as the old pickers' "frequently used"
-    const FREQUENT = 16;
     const SEARCH_DELAY_MS = 250;
 
     const apiKey = klipyApiKey;
     const offersGifs = $derived(gifs && apiKey !== undefined);
     let tab = $state<"emoji" | "gif">("emoji");
     let query = $state("");
+    let field = $state<HTMLInputElement>();
 
     // ---- emoji
 
     type Section = { id: string; label: string; icon: string; emoji: PickerEmoji[] };
 
-    let frequent = $state.raw<PickerEmoji[]>([]);
+    // Recent: as kept on the device for this user (07: "persist per user")
+    const storage = (() => {
+        try {
+            return window.localStorage;
+        } catch {
+            return undefined;
+        }
+    })();
+    // read as the panel opens (it's made again each time)
+    let recent = $state.raw<string[]>(
+        storage === undefined ? [] : storedRecent(storage, untrack(() => userId)),
+    );
+
     let categories = $state.raw<(PickerEmoji[] | undefined)[]>(EMOJI_CATEGORIES.map(() => undefined));
     let matches = $state.raw<PickerEmoji[] | undefined>();
     let failed = $state(false);
 
     onMount(async () => {
         try {
-            const [top, ...all] = await Promise.all([
-                frequentEmoji(FREQUENT),
-                ...EMOJI_CATEGORIES.map((c) => emojiInCategory(c.group)),
-            ]);
-            frequent = top;
-            categories = all;
+            categories = await Promise.all(EMOJI_CATEGORIES.map((c) => emojiInCategory(c.group)));
         } catch (err) {
             // the emoji data comes from a CDN the first time: offline, there's none
             console.warn("Couldn't load the emoji", err);
@@ -70,31 +75,27 @@
         }
     });
 
-    const sections = $derived.by((): Section[] => {
-        const list: Section[] = [];
-        if (frequent.length > 0) {
-            list.push({
-                id: "frequent",
-                label: $_("native.composer.emoji.frequent"),
-                icon: "🕘",
-                emoji: frequent,
-            });
-        }
-        EMOJI_CATEGORIES.forEach((category, i) => {
-            list.push({
-                id: category.name,
-                label: $_(`native.composer.emoji.${category.name}`),
-                icon: category.icon,
-                emoji: categories[i] ?? [],
-            });
-        });
-        return list;
-    });
+    const sections = $derived.by((): Section[] => [
+        {
+            id: "recent",
+            label: $_("native.composer.emoji.recent"),
+            icon: "🕘",
+            emoji: recent.map((char) => ({ char, base: char, name: char })),
+        },
+        ...EMOJI_CATEGORIES.map((category, i) => ({
+            id: category.name,
+            label: $_(`native.composer.emoji.${category.name}`),
+            icon: category.icon,
+            emoji: categories[i] ?? [],
+        })),
+    ]);
 
     const loading = $derived(categories.every((c) => c === undefined) && !failed);
 
     function pick(emoji: PickerEmoji) {
         onInsert(emoji.char);
+        recent = pickedRecently(recent, emoji.char);
+        if (storage !== undefined) storeRecent(storage, userId, recent);
         countEmojiPicked(emoji.base);
     }
 
@@ -105,7 +106,7 @@
         if (found !== undefined) pick(found);
     }
 
-    // ---- search: the emoji matching, or the GIFs
+    // ---- search: the emoji matching (names and keywords), or the GIFs
 
     let searchTimer: ReturnType<typeof setTimeout> | undefined;
     let searchRun = 0;
@@ -135,6 +136,38 @@
         }
     }
 
+    function clearSearch() {
+        clearTimeout(searchTimer);
+        searchRun += 1;
+        query = "";
+        matches = undefined;
+        if (tab === "gif") void feed?.search("");
+        field?.focus();
+    }
+
+    // the panel grows to full height before the keyboard comes up for the field (07 "Search"): a
+    // press on the field while it's at rest grows it, and the field takes the focus once it's grown
+    // (the press itself doesn't: the field moves up under the finger)
+    const GROW_MS = 340;
+    let focusTimer: ReturnType<typeof setTimeout> | undefined;
+    onDestroy(() => clearTimeout(focusTimer));
+
+    function growFirst(el: HTMLInputElement) {
+        function pressed(e: Event) {
+            if (panel.open || document.activeElement === el) return;
+            e.preventDefault();
+            panel.expand();
+            clearTimeout(focusTimer);
+            focusTimer = setTimeout(() => el.focus(), GROW_MS);
+        }
+        el.addEventListener("touchstart", pressed, { passive: false });
+        el.addEventListener("mousedown", pressed);
+        return () => {
+            el.removeEventListener("touchstart", pressed);
+            el.removeEventListener("mousedown", pressed);
+        };
+    }
+
     function switchTo(next: "emoji" | "gif") {
         if (next === tab) return;
         tab = next;
@@ -153,25 +186,14 @@
         if (el.scrollHeight - el.scrollTop - el.clientHeight < 400) void feed?.more();
     }
 
-    // two columns, each GIF going to the shorter one (by its height for the column's width)
-    const columns = $derived.by(() => {
-        const cols: { gifs: KlipyObject[]; height: number }[] = [
-            { gifs: [], height: 0 },
-            { gifs: [], height: 0 },
-        ];
-        for (const gif of feed?.gifs ?? []) {
-            const [w, h] = gif.media_formats.tinygif.dims;
-            const col = cols[0].height <= cols[1].height ? cols[0] : cols[1];
-            col.gifs.push(gif);
-            col.height += w > 0 ? h / w : 1;
-        }
-        return cols;
-    });
+    function gifTitle(gif: KlipyObject): string {
+        return gif.title || gif.content_description;
+    }
 
     // ---- the category bar: the one in view, and going to one
 
     let scroller = $state<HTMLElement>();
-    let shown = $state("frequent");
+    let shown = $state("recent");
     let frame = 0;
     onDestroy(() => cancelAnimationFrame(frame));
 
@@ -191,20 +213,34 @@
     }
 
     function goTo(id: string) {
-        const el = scroller;
-        const section = el?.querySelector<HTMLElement>(`[data-section="${id}"]`);
-        if (el === undefined || section === null || section === undefined) return;
-        el.scrollTo({ top: section.offsetTop - el.offsetTop });
+        // out of the results, to the section
+        if (matches !== undefined || query !== "") {
+            clearTimeout(searchTimer);
+            searchRun += 1;
+            query = "";
+            matches = undefined;
+        }
+        requestAnimationFrame(() => {
+            const el = scroller;
+            const section = el?.querySelector<HTMLElement>(`[data-section="${id}"]`);
+            if (el === undefined || section === null || section === undefined) return;
+            const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            el.scrollTo({ top: section.offsetTop - el.offsetTop, behavior: smooth ? "smooth" : "auto" });
+        });
         shown = id;
     }
 </script>
 
-<div
-    class="panel"
-    style:padding-block-end="{covered}px"
-    role="group"
-    aria-label={$_("ui.messageComposer.emojiAndGifs")}
->
+{#snippet grid(emoji: PickerEmoji[])}
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+    <div class="grid" role="group" onclick={(e) => picked(e, emoji)}>
+        {#each emoji as e, i}
+            <span class="cell" data-i={i} role="button" tabindex="0" aria-label={e.name}>{e.char}</span>
+        {/each}
+    </div>
+{/snippet}
+
+<div class="emoji" role="group" aria-label={$_("ui.messageComposer.emojiAndGifs")}>
     <div class="top">
         {#if offersGifs}
             <div class="switch">
@@ -220,6 +256,7 @@
         <label class="search">
             <span class="search-icon" aria-hidden="true"></span>
             <input
+                bind:this={field}
                 type="search"
                 value={query}
                 placeholder={$_(
@@ -230,10 +267,25 @@
                 )}
                 autocomplete="off"
                 enterkeyhint="search"
+                {@attach growFirst}
                 oninput={(e) => typed(e.currentTarget.value)}
-                onfocus={() => onSearch(true)}
+                onfocus={() => {
+                    panel.expand();
+                    onSearch(true);
+                }}
                 onblur={() => onSearch(false)}
             />
+            {#if query !== ""}
+                <button
+                    type="button"
+                    class="clear"
+                    aria-label={$_("native.composer.emoji.clearSearch")}
+                    onpointerdown={(e) => e.preventDefault()}
+                    onclick={clearSearch}
+                >
+                    <span class="clear-icon"></span>
+                </button>
+            {/if}
         </label>
     </div>
 
@@ -241,87 +293,72 @@
         <div class="scroll" bind:this={scroller} onscroll={followScroll}>
             {#if matches !== undefined}
                 {#if matches.length === 0}
-                    <p class="none">{$_("ui.emojiPicker.noMatch", { values: { query } })}</p>
+                    <p class="none">
+                        {$_("native.composer.emoji.noMatch", { values: { query: query.trim() } })}
+                    </p>
                 {:else}
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <div class="grid" role="group" onclick={(e) => picked(e, matches ?? [])}>
-                        {#each matches as emoji, i}
-                            <span class="cell" data-i={i} role="button" tabindex="0" aria-label={emoji.name}
-                                >{emoji.char}</span
-                            >
-                        {/each}
-                    </div>
+                    <section class="section">
+                        <h3 class="label">{$_("native.composer.emoji.results")}</h3>
+                        {@render grid(matches)}
+                    </section>
                 {/if}
-            {:else if failed}
-                <p class="none">{$_("native.composer.emoji.unavailable")}</p>
-            {:else if loading}
-                <div class="loading"><Spinner size={20} /></div>
             {:else}
                 {#each sections as section (section.id)}
-                    <section class="section" data-section={section.id}>
+                    <section class="section" class:lazy={section.id !== "recent"} data-section={section.id}>
                         <h3 class="label">{section.label}</h3>
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <div class="grid" role="group" onclick={(e) => picked(e, section.emoji)}>
-                            {#each section.emoji as emoji, i}
-                                <span
-                                    class="cell"
-                                    data-i={i}
-                                    role="button"
-                                    tabindex="0"
-                                    aria-label={emoji.name}>{emoji.char}</span
-                                >
-                            {/each}
-                        </div>
+                        {#if section.id === "recent" || section.emoji.length > 0}
+                            {@render grid(section.emoji)}
+                        {:else if failed}
+                            <p class="none">{$_("native.composer.emoji.unavailable")}</p>
+                        {:else if loading}
+                            <div class="loading"><Spinner size={20} /></div>
+                        {/if}
                     </section>
                 {/each}
             {/if}
         </div>
-        {#if !searching}
-            <div class="bar" role="toolbar" aria-label={$_("native.composer.emoji.categories")}>
-                <div class="categories">
-                    {#each sections as section (section.id)}
-                        <button
-                            type="button"
-                            class="category"
-                            class:on={shown === section.id && matches === undefined}
-                            aria-label={section.label}
-                            onclick={() => goTo(section.id)}>{section.icon}</button
-                        >
-                    {/each}
-                </div>
+        <div
+            class="bar"
+            class:raised={searching}
+            role="toolbar"
+            aria-label={$_("native.composer.emoji.categories")}
+        >
+            {#each sections as section (section.id)}
                 <button
                     type="button"
-                    class="backspace"
-                    aria-label={$_("native.composer.emoji.backspace")}
-                    onclick={() => onInsert("\b")}
+                    class="category"
+                    class:on={shown === section.id && matches === undefined}
+                    aria-label={section.label}
+                    onclick={() => goTo(section.id)}>{section.icon}</button
                 >
-                    <span class="backspace-icon"></span>
-                </button>
-            </div>
-        {/if}
+            {/each}
+            <button
+                type="button"
+                class="backspace"
+                aria-label={$_("native.composer.emoji.backspace")}
+                onclick={() => onInsert("\b")}
+            >
+                <span class="backspace-icon"></span>
+            </button>
+        </div>
     {:else if feed !== undefined}
-        <div class="scroll gifs" onscroll={more}>
+        <div class="scroll gifs" class:raised={searching} onscroll={more}>
             {#if feed.gifs.length === 0 && !feed.loading}
                 <p class="none">
                     {$_(feed.failed ? "native.composer.gif.unavailable" : "native.composer.gif.none")}
                 </p>
             {:else}
-                <div class="columns">
-                    {#each columns as column, c (c)}
-                        <div class="column">
-                            {#each column.gifs as gif (gif.id)}
-                                {@const [w, h] = gif.media_formats.tinygif.dims}
-                                <button
-                                    type="button"
-                                    class="gif"
-                                    style:aspect-ratio="{w} / {h}"
-                                    aria-label={gif.title || gif.content_description}
-                                    onclick={() => onGif(gifContent(gif))}
-                                >
-                                    <img src={gif.media_formats.tinygif.url} alt="" loading="lazy" />
-                                </button>
-                            {/each}
-                        </div>
+                <div class="gif-grid">
+                    {#each feed.gifs as gif (gif.id)}
+                        <button
+                            type="button"
+                            class="gif"
+                            aria-label={gifTitle(gif)}
+                            onclick={() => onGif(gifContent(gif))}
+                        >
+                            <img src={gif.media_formats.tinygif.url} alt="" loading="lazy" />
+                            <span class="gif-badge" aria-hidden="true">GIF</span>
+                        </button>
                     {/each}
                 </div>
             {/if}
@@ -335,47 +372,42 @@
 <style lang="scss">
     @use "@openchat/ui/src/lib/styles/mixins" as *;
 
-    .panel {
-        box-sizing: border-box;
-        height: 100%;
+    .emoji {
+        flex: 1;
+        min-height: 0;
         display: flex;
         flex-direction: column;
-        background: var(--surface-0);
-        box-shadow: inset 0 1px 0 var(--line-1);
-        animation: oc-veil-in 0.18s ease-out;
-
-        @include reduced-motion {
-            animation: none;
-        }
     }
 
+    // 07: the switch (136px, compact) and the search field filling the rest
     .top {
         flex: none;
         display: flex;
         align-items: center;
         gap: var(--space-8);
-        padding: var(--space-10) var(--space-12) var(--space-6);
+        padding: 0 var(--space-12) var(--space-8);
     }
 
     .switch {
         flex: none;
-        width: 128px;
+        width: 136px;
     }
 
     .search {
         flex: 1;
         min-width: 0;
+        box-sizing: border-box;
         display: flex;
         align-items: center;
         gap: var(--space-8);
         height: 40px;
-        padding: 0 var(--space-12);
-        border-radius: var(--radius-pill);
+        padding: 0 var(--space-6) 0 var(--space-12);
+        border-radius: var(--radius-md);
         background: var(--overlay-1);
     }
 
     .search-icon {
-        @include icon(search, 15px, var(--ink-4));
+        @include icon(search, 16px, var(--ink-4));
     }
 
     input {
@@ -386,14 +418,39 @@
         border: 0;
         outline: none;
         background: transparent;
-        // 16px, so iOS doesn't zoom into it
-        font: var(--weight-regular) 16px / 1 var(--font-sans);
+        font: var(--weight-medium) text-size(14.5px) / 1 var(--font-sans);
         color: var(--ink);
         appearance: none;
+
+        &::placeholder {
+            color: var(--ink-4);
+        }
 
         &::-webkit-search-cancel-button {
             display: none;
         }
+    }
+
+    .clear {
+        flex: none;
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        padding: 0;
+        border: 0;
+        border-radius: var(--radius-circle);
+        background: none;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+
+        &:active {
+            background: var(--overlay-2);
+        }
+    }
+
+    .clear-icon {
+        @include icon(close, 14px, var(--ink-3), $flex: null);
     }
 
     .scroll {
@@ -401,35 +458,46 @@
         min-height: 0;
         overflow-y: auto;
         overscroll-behavior: contain;
-        padding: 0 var(--space-8) var(--space-8);
+        padding: 2px var(--space-8) var(--space-8);
         scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
     }
 
-    .section {
-        // a category off screen isn't laid out, so thousands of emoji scroll smoothly
+    .section + .section {
+        margin-block-start: var(--space-10);
+    }
+
+    // a category off screen isn't laid out, so thousands of emoji scroll smoothly
+    .section.lazy {
         content-visibility: auto;
         contain-intrinsic-size: auto 400px;
     }
 
+    // 07: mono 600 11px, uppercase, .08em
     .label {
         margin: 0;
-        padding: var(--space-10) var(--space-6) var(--space-4);
-        font: var(--weight-semibold) text-size(12px) / 1 var(--font-sans);
+        padding: var(--space-6) var(--space-6) var(--space-4);
+        font: var(--weight-semibold) text-size(11px) / 1.2 var(--font-mono);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
         color: var(--ink-4);
     }
 
-    // 8 columns (notes §3.3)
+    // 07: eight columns of 44px cells, 10px corners, the glyph at 27px
     .grid {
         display: grid;
         grid-template-columns: repeat(8, minmax(0, 1fr));
     }
 
     .cell {
-        aspect-ratio: 1;
+        height: 44px;
         display: grid;
         place-items: center;
-        border-radius: var(--radius-sm);
-        font-size: 28px;
+        border-radius: 10px;
+        font-size: 27px;
         line-height: 1;
         cursor: pointer;
         user-select: none;
@@ -444,7 +512,7 @@
         margin: 0;
         padding: var(--space-24) var(--space-16);
         text-align: center;
-        font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+        font: var(--weight-regular) text-size(14px) / 1.4 var(--font-sans);
         color: var(--ink-4);
     }
 
@@ -454,83 +522,79 @@
         padding: var(--space-16);
     }
 
-    // the categories and backspace, over the safe area
+    // 07: the categories and backspace pinned at the bottom, over the safe area (above the
+    // keyboard while searching)
     .bar {
         flex: none;
         display: flex;
         align-items: center;
-        gap: var(--space-4);
-        padding: var(--space-4) var(--space-8) max(var(--safe-bottom), var(--space-6));
+        padding: var(--space-4) var(--space-8) calc(var(--space-4) + var(--safe-bottom));
         box-shadow: inset 0 1px 0 var(--line-1);
-    }
 
-    .categories {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        justify-content: space-between;
+        &.raised {
+            padding-block-end: var(--space-4);
+        }
     }
 
     .category,
     .backspace {
-        flex: none;
-        width: 34px;
-        height: 34px;
+        height: 40px;
         display: grid;
         place-items: center;
         padding: 0;
         border: 0;
-        border-radius: var(--radius-circle);
+        border-radius: var(--radius-md);
         background: none;
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
     }
 
     .category {
+        flex: 1;
+        min-width: 0;
         font-size: 18px;
         line-height: 1;
-        filter: grayscale(1);
         opacity: 0.55;
+        filter: grayscale(0.6);
 
         &.on {
-            background: var(--overlay-2);
-            filter: none;
             opacity: 1;
+            filter: none;
         }
     }
 
     .backspace {
-        width: var(--touch-target);
-        height: var(--touch-target);
+        flex: none;
+        width: 44px;
+
+        &:active {
+            background: var(--overlay-2);
+        }
     }
 
     .backspace-icon {
         @include icon(backspace, 22px, var(--ink-2), $flex: null);
     }
 
-    // GIFs: no bar under them, so clear of the safe area
+    // 07: two columns of 3:2 tiles, 6px apart; no bar under them, so clear of the safe area
     .gifs {
-        padding-block-end: max(var(--safe-bottom), var(--space-8));
+        padding: 2px var(--space-10) calc(var(--space-8) + var(--safe-bottom));
+
+        &.raised {
+            padding-block-end: var(--space-8);
+        }
     }
 
-    // two columns, the shorter one taking the next
-    .columns {
-        display: flex;
-        gap: var(--space-6);
-        padding-block-start: var(--space-4);
-    }
-
-    .column {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
+    .gif-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: var(--space-6);
     }
 
     .gif {
+        position: relative;
         display: block;
-        width: 100%;
+        aspect-ratio: 3 / 2;
         padding: 0;
         border: 0;
         border-radius: var(--radius-md);
@@ -544,5 +608,20 @@
             height: 100%;
             object-fit: cover;
         }
+    }
+
+    // 07: a small "GIF" in the top corner
+    .gif-badge {
+        position: absolute;
+        top: var(--space-6);
+        right: var(--space-6);
+        height: 16px;
+        padding: 0 var(--space-4);
+        display: grid;
+        place-items: center;
+        border-radius: 5px;
+        background: var(--on-media-badge);
+        font: var(--weight-bold) text-size(9px) / 1 var(--font-mono);
+        color: var(--on-media-ink);
     }
 </style>

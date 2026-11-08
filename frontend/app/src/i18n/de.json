@@ -1742,7 +1742,7 @@
         "composer": {
             "attach": {
                 "label": "Anhängen",
-                "photos": "Fotos",
+                "photos": "{count, plural, one {# Foto} other {# Fotos}}",
                 "camera": "Kamera",
                 "allPhotos": "Alle Fotos",
                 "file": "Datei",
@@ -1750,10 +1750,27 @@
                 "prize": "Preis",
                 "sendCrypto": "Krypto senden",
                 "swap": "Tauschen",
-                "memeFighter": "Meme Fighter"
+                "memeFighter": "Meme Fighter",
+                "photosAndVideos": "Fotos & Videos",
+                "videos": "{count, plural, one {# Video} other {# Videos}}",
+                "photo": "Foto",
+                "video": "Video",
+                "videoLength": "Video {duration}",
+                "selected": "{name}, ausgewählt {n}",
+                "clear": "Leeren",
+                "attachCount": "{count} anhängen",
+                "max": "Bis zu 10 Fotos oder Videos",
+                "recents": "Neueste",
+                "ofMax": "{count} von {max}",
+                "upTo": "Bis zu {max}",
+                "collapse": "Zurück",
+                "drag": "Nach oben ziehen für alle Fotos, nach unten zum Schließen",
+                "dragBack": "Nach unten ziehen, um zurückzugehen",
+                "dragToClose": "Nach unten ziehen zum Schließen",
+                "notAllSent": "Einige Fotos oder Videos wurden nicht gesendet. Sie sind noch angehängt."
             },
             "emoji": {
-                "frequent": "Häufig verwendet",
+                "recent": "Zuletzt",
                 "smileys": "Smileys & Emotionen",
                 "people": "Menschen & Körper",
                 "animals": "Tiere & Natur",
@@ -1765,7 +1782,12 @@
                 "flags": "Flaggen",
                 "categories": "Emoji-Kategorien",
                 "backspace": "Löschen",
-                "unavailable": "Emojis konnten nicht geladen werden. Prüfe deine Verbindung."
+                "unavailable": "Emojis konnten nicht geladen werden. Prüfe deine Verbindung.",
+                "results": "Ergebnisse",
+                "noMatch": "Keine Emojis für „{query}“",
+                "clearSearch": "Suche leeren",
+                "expand": "Nach oben ziehen zum Vergrößern",
+                "shrink": "Nach unten ziehen zum Verkleinern"
             },
             "gif": {
                 "none": "Keine GIFs gefunden",

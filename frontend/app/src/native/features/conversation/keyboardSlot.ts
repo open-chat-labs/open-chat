@@ -15,17 +15,33 @@ export type Slot = {
      * dropping the composer and lifting it again.
      */
     expecting: boolean;
-    /** The emoji panel's search field has the keyboard: the panel shows its results above it. */
+    /** The emoji panel's search field has the keyboard: the panel is at full height, its results above it. */
     searching: boolean;
 };
 
 export const CLOSED: Slot = { panel: undefined, expecting: false, searching: false };
 
 /**
- * The room above the keyboard while the emoji panel's search is typed into: the field and a few
- * rows of results (notes: "searching expands it so the keyboard never covers results").
+ * A panel's resting height where the keyboard's isn't known (06 "Layout and size", the prototype's
+ * value), above the safe area.
  */
-export const SEARCH_ROOM = 196;
+export const PANEL_REST = 282;
+
+/** The attach panel's on mobile web, which has no gallery strip (06 "Mobile web variant"). */
+export const PANEL_REST_WEB_ATTACH = 264;
+
+/**
+ * How tall a panel rests, in CSS pixels: the keyboard's last height where it's been seen, so the
+ * composer doesn't move between the keyboard and the panel; else the design's height above the
+ * safe area (on mobile web, the attach panel's own, shorter one).
+ */
+export function restingHeight(
+    panel: Panel,
+    known: { keyboard: number | undefined; safeBottom: number; gallery: boolean },
+): number {
+    if (panel === "attach" && !known.gallery) return PANEL_REST_WEB_ATTACH + known.safeBottom;
+    return known.keyboard ?? PANEL_REST + known.safeBottom;
+}
 
 /** What the slot's height is worked out from, in CSS pixels from the window's bottom. */
 export type KeyboardHeights = {
@@ -33,20 +49,16 @@ export type KeyboardHeights = {
     up: number;
     /** The keyboard about to come up, where it's reported; else 0. */
     expected: number;
-    /** A panel's: the keyboard's last height (or a guess before it's been seen). */
+    /** The panel's resting height (`restingHeight`). */
     panel: number;
 };
 
 /**
- * How tall the slot is: the keyboard while it's up; a panel at the keyboard's height while it's
- * down; the keyboard expected while it's on its way; nothing otherwise. Searching the emoji panel,
- * the keyboard (or, where it isn't reported, the panel it covers) plus room for the results.
+ * How tall the slot is: the keyboard while it's up (the emoji panel's search included: the panel
+ * grows over the screen above it); a panel's resting height while the keyboard's down; the
+ * keyboard expected while it's on its way; nothing otherwise.
  */
 export function slotHeight(slot: Slot, keyboard: KeyboardHeights): number {
-    if (slot.panel === "emoji" && slot.searching) {
-        const under = keyboard.up > 0 ? keyboard.up : keyboard.panel;
-        return under + SEARCH_ROOM;
-    }
     if (keyboard.up > 0) return keyboard.up;
     if (slot.panel !== undefined) return keyboard.panel;
     if (slot.expecting) return keyboard.expected;

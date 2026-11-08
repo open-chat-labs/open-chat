@@ -3,7 +3,9 @@ import {
     composerPlacement,
     inputFocused,
     keyboardMoved,
-    SEARCH_ROOM,
+    PANEL_REST,
+    PANEL_REST_WEB_ATTACH,
+    restingHeight,
     slotHeight,
     togglePanel,
     type Slot,
@@ -11,8 +13,8 @@ import {
 
 const down = { up: 0, expected: 300, panel: 300 };
 const up = { up: 320, expected: 320, panel: 320 };
-// mobile web: the keyboard's height isn't reported, a panel takes a guess at it
-const unreported = { up: 0, expected: 0, panel: 280 };
+// mobile web: the keyboard's height isn't reported, a panel takes the design's
+const unreported = { up: 0, expected: 0, panel: 282 };
 
 describe("the slot under the composer", () => {
     test("is the keyboard while it's up, whatever else", () => {
@@ -22,7 +24,7 @@ describe("the slot under the composer", () => {
 
     test("is a panel at the keyboard's height while the keyboard's down", () => {
         expect(slotHeight({ ...CLOSED, panel: "emoji" }, down)).toBe(300);
-        expect(slotHeight({ ...CLOSED, panel: "attach" }, unreported)).toBe(280);
+        expect(slotHeight({ ...CLOSED, panel: "attach" }, unreported)).toBe(282);
     });
 
     test("keeps the keyboard's height while it's on its way, so the composer doesn't jump", () => {
@@ -35,11 +37,30 @@ describe("the slot under the composer", () => {
         expect(slotHeight(CLOSED, down)).toBe(0);
     });
 
-    test("searching emoji, leaves room for the results above the keyboard", () => {
+    test("searching emoji, is the keyboard under the grown panel, else the panel's rest", () => {
         const searching: Slot = { panel: "emoji", expecting: false, searching: true };
-        expect(slotHeight(searching, up)).toBe(320 + SEARCH_ROOM);
-        // unreported, above the panel the keyboard comes up over
-        expect(slotHeight(searching, unreported)).toBe(280 + SEARCH_ROOM);
+        expect(slotHeight(searching, up)).toBe(320);
+        expect(slotHeight(searching, unreported)).toBe(282);
+    });
+});
+
+describe("a panel's resting height", () => {
+    test("is the keyboard's last height, where it's been seen", () => {
+        const known = { keyboard: 310, safeBottom: 24, gallery: true };
+        expect(restingHeight("emoji", known)).toBe(310);
+        expect(restingHeight("attach", known)).toBe(310);
+    });
+
+    test("else is the design's, over the safe area", () => {
+        const known = { keyboard: undefined, safeBottom: 24, gallery: true };
+        expect(restingHeight("emoji", known)).toBe(PANEL_REST + 24);
+        expect(restingHeight("attach", known)).toBe(PANEL_REST + 24);
+    });
+
+    test("on mobile web, is the attach panel's own, without a gallery strip", () => {
+        const known = { keyboard: undefined, safeBottom: 0, gallery: false };
+        expect(restingHeight("attach", known)).toBe(PANEL_REST_WEB_ATTACH);
+        expect(restingHeight("emoji", known)).toBe(PANEL_REST);
     });
 });
 

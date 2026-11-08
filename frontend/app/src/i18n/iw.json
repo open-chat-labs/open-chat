@@ -1742,7 +1742,7 @@
         "composer": {
             "attach": {
                 "label": "צירוף",
-                "photos": "תמונות",
+                "photos": "{count, plural, one {תמונה אחת} other {# תמונות}}",
                 "camera": "מצלמה",
                 "allPhotos": "כל התמונות",
                 "file": "קובץ",
@@ -1750,10 +1750,27 @@
                 "prize": "פרס",
                 "sendCrypto": "שליחת קריפטו",
                 "swap": "החלפה",
-                "memeFighter": "Meme fighter"
+                "memeFighter": "Meme fighter",
+                "photosAndVideos": "תמונות וסרטונים",
+                "videos": "{count, plural, one {סרטון אחד} other {# סרטונים}}",
+                "photo": "תמונה",
+                "video": "סרטון",
+                "videoLength": "סרטון {duration}",
+                "selected": "{name}, נבחר {n}",
+                "clear": "ניקוי",
+                "attachCount": "צירוף {count}",
+                "max": "עד 10 תמונות או סרטונים",
+                "recents": "אחרונים",
+                "ofMax": "{count} מתוך {max}",
+                "upTo": "עד {max}",
+                "collapse": "חזרה",
+                "drag": "גוררים למעלה לכל התמונות, למטה לסגירה",
+                "dragBack": "גוררים למטה כדי לחזור",
+                "dragToClose": "גוררים למטה כדי לסגור",
+                "notAllSent": "חלק מהתמונות או הסרטונים לא נשלחו. הם עדיין מצורפים."
             },
             "emoji": {
-                "frequent": "בשימוש תכוף",
+                "recent": "אחרונים",
                 "smileys": "סמיילים ורגשות",
                 "people": "אנשים וגוף",
                 "animals": "בעלי חיים וטבע",
@@ -1765,7 +1782,12 @@
                 "flags": "דגלים",
                 "categories": "קטגוריות אמוג'י",
                 "backspace": "מחיקה",
-                "unavailable": "לא ניתן היה לטעון את האמוג'י. כדאי לבדוק את החיבור."
+                "unavailable": "לא ניתן היה לטעון את האמוג'י. כדאי לבדוק את החיבור.",
+                "results": "תוצאות",
+                "noMatch": "אין אמוג'י עבור „{query}”",
+                "clearSearch": "ניקוי החיפוש",
+                "expand": "גוררים למעלה כדי להרחיב",
+                "shrink": "גוררים למטה כדי לכווץ"
             },
             "gif": {
                 "none": "לא נמצאו קובצי GIF",

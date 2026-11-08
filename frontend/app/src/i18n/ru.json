@@ -1742,7 +1742,7 @@
         "composer": {
             "attach": {
                 "label": "Прикрепить",
-                "photos": "Фото",
+                "photos": "{count, plural, one {# фото} few {# фото} many {# фото} other {# фото}}",
                 "camera": "Камера",
                 "allPhotos": "Все фото",
                 "file": "Файл",
@@ -1750,10 +1750,27 @@
                 "prize": "Приз",
                 "sendCrypto": "Отправить крипто",
                 "swap": "Обмен",
-                "memeFighter": "Meme fighter"
+                "memeFighter": "Meme fighter",
+                "photosAndVideos": "Фото и видео",
+                "videos": "{count, plural, one {# видео} few {# видео} many {# видео} other {# видео}}",
+                "photo": "Фото",
+                "video": "Видео",
+                "videoLength": "Видео {duration}",
+                "selected": "{name}, выбрано {n}",
+                "clear": "Очистить",
+                "attachCount": "Прикрепить {count}",
+                "max": "Не более 10 фото или видео",
+                "recents": "Недавние",
+                "ofMax": "{count} из {max}",
+                "upTo": "Не более {max}",
+                "collapse": "Назад",
+                "drag": "Потяните вверх, чтобы увидеть все фото, вниз — чтобы закрыть",
+                "dragBack": "Потяните вниз, чтобы вернуться",
+                "dragToClose": "Потяните вниз, чтобы закрыть",
+                "notAllSent": "Некоторые фото или видео не отправлены. Они всё ещё прикреплены."
             },
             "emoji": {
-                "frequent": "Часто используемые",
+                "recent": "Недавние",
                 "smileys": "Смайлики и эмоции",
                 "people": "Люди и тело",
                 "animals": "Животные и природа",
@@ -1765,7 +1782,12 @@
                 "flags": "Флаги",
                 "categories": "Категории эмодзи",
                 "backspace": "Удалить",
-                "unavailable": "Не удалось загрузить эмодзи. Проверьте подключение."
+                "unavailable": "Не удалось загрузить эмодзи. Проверьте подключение.",
+                "results": "Результаты",
+                "noMatch": "Нет эмодзи для «{query}»",
+                "clearSearch": "Очистить поиск",
+                "expand": "Потяните вверх, чтобы развернуть",
+                "shrink": "Потяните вниз, чтобы свернуть"
             },
             "gif": {
                 "none": "GIF не найдены",

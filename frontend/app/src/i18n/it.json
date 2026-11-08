@@ -1742,7 +1742,7 @@
         "composer": {
             "attach": {
                 "label": "Allega",
-                "photos": "Foto",
+                "photos": "{count, plural, one {# foto} other {# foto}}",
                 "camera": "Fotocamera",
                 "allPhotos": "Tutte le foto",
                 "file": "File",
@@ -1750,10 +1750,27 @@
                 "prize": "Premio",
                 "sendCrypto": "Invia cripto",
                 "swap": "Scambia",
-                "memeFighter": "Meme fighter"
+                "memeFighter": "Meme fighter",
+                "photosAndVideos": "Foto e video",
+                "videos": "{count, plural, one {# video} other {# video}}",
+                "photo": "Foto",
+                "video": "Video",
+                "videoLength": "Video {duration}",
+                "selected": "{name}, selezionata {n}",
+                "clear": "Cancella",
+                "attachCount": "Allega {count}",
+                "max": "Fino a 10 foto o video",
+                "recents": "Recenti",
+                "ofMax": "{count} di {max}",
+                "upTo": "Fino a {max}",
+                "collapse": "Indietro",
+                "drag": "Trascina su per tutte le foto, giù per chiudere",
+                "dragBack": "Trascina giù per tornare indietro",
+                "dragToClose": "Trascina giù per chiudere",
+                "notAllSent": "Alcune foto o video non sono stati inviati. Sono ancora allegati."
             },
             "emoji": {
-                "frequent": "Usati di frequente",
+                "recent": "Recenti",
                 "smileys": "Faccine ed emozioni",
                 "people": "Persone e corpo",
                 "animals": "Animali e natura",
@@ -1765,7 +1782,12 @@
                 "flags": "Bandiere",
                 "categories": "Categorie di emoji",
                 "backspace": "Elimina",
-                "unavailable": "Impossibile caricare le emoji. Controlla la connessione."
+                "unavailable": "Impossibile caricare le emoji. Controlla la connessione.",
+                "results": "Risultati",
+                "noMatch": "Nessuna emoji per “{query}”",
+                "clearSearch": "Cancella ricerca",
+                "expand": "Trascina su per espandere",
+                "shrink": "Trascina giù per ridurre"
             },
             "gif": {
                 "none": "Nessuna GIF trovata",

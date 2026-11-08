@@ -1742,7 +1742,7 @@
         "composer": {
             "attach": {
                 "label": "Załącz",
-                "photos": "Zdjęcia",
+                "photos": "{count, plural, one {# zdjęcie} few {# zdjęcia} many {# zdjęć} other {# zdjęcia}}",
                 "camera": "Aparat",
                 "allPhotos": "Wszystkie zdjęcia",
                 "file": "Plik",
@@ -1750,10 +1750,27 @@
                 "prize": "Nagroda",
                 "sendCrypto": "Wyślij krypto",
                 "swap": "Wymiana",
-                "memeFighter": "Meme fighter"
+                "memeFighter": "Meme fighter",
+                "photosAndVideos": "Zdjęcia i filmy",
+                "videos": "{count, plural, one {# film} few {# filmy} many {# filmów} other {# filmu}}",
+                "photo": "Zdjęcie",
+                "video": "Film",
+                "videoLength": "Film {duration}",
+                "selected": "{name}, wybrane {n}",
+                "clear": "Wyczyść",
+                "attachCount": "Załącz {count}",
+                "max": "Maksymalnie 10 zdjęć lub filmów",
+                "recents": "Ostatnie",
+                "ofMax": "{count} z {max}",
+                "upTo": "Maksymalnie {max}",
+                "collapse": "Wstecz",
+                "drag": "Przeciągnij w górę, aby zobaczyć wszystkie zdjęcia, w dół, aby zamknąć",
+                "dragBack": "Przeciągnij w dół, aby wrócić",
+                "dragToClose": "Przeciągnij w dół, aby zamknąć",
+                "notAllSent": "Niektóre zdjęcia lub filmy nie zostały wysłane. Nadal są załączone."
             },
             "emoji": {
-                "frequent": "Często używane",
+                "recent": "Ostatnie",
                 "smileys": "Buźki i emocje",
                 "people": "Ludzie i ciało",
                 "animals": "Zwierzęta i natura",
@@ -1765,7 +1782,12 @@
                 "flags": "Flagi",
                 "categories": "Kategorie emoji",
                 "backspace": "Usuń",
-                "unavailable": "Nie udało się wczytać emoji. Sprawdź połączenie."
+                "unavailable": "Nie udało się wczytać emoji. Sprawdź połączenie.",
+                "results": "Wyniki",
+                "noMatch": "Brak emoji dla „{query}”",
+                "clearSearch": "Wyczyść wyszukiwanie",
+                "expand": "Przeciągnij w górę, aby rozwinąć",
+                "shrink": "Przeciągnij w dół, aby zwinąć"
             },
             "gif": {
                 "none": "Nie znaleziono GIF-ów",

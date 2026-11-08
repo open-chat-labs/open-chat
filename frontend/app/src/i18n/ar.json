@@ -1742,7 +1742,7 @@
         "composer": {
             "attach": {
                 "label": "إرفاق",
-                "photos": "الصور",
+                "photos": "{count, plural, zero {لا صور} one {صورة واحدة} two {صورتان} few {# صور} many {# صورة} other {# صورة}}",
                 "camera": "الكاميرا",
                 "allPhotos": "كل الصور",
                 "file": "ملف",
@@ -1750,10 +1750,27 @@
                 "prize": "جائزة",
                 "sendCrypto": "إرسال عملات مشفرة",
                 "swap": "مبادلة",
-                "memeFighter": "Meme fighter"
+                "memeFighter": "Meme fighter",
+                "photosAndVideos": "الصور والفيديوهات",
+                "videos": "{count, plural, zero {لا فيديوهات} one {فيديو واحد} two {فيديوهان} few {# فيديوهات} many {# فيديو} other {# فيديو}}",
+                "photo": "صورة",
+                "video": "فيديو",
+                "videoLength": "فيديو {duration}",
+                "selected": "{name}، المحدد {n}",
+                "clear": "مسح",
+                "attachCount": "إرفاق {count}",
+                "max": "حتى 10 صور أو فيديوهات",
+                "recents": "الأحدث",
+                "ofMax": "{count} من {max}",
+                "upTo": "حتى {max}",
+                "collapse": "رجوع",
+                "drag": "اسحب لأعلى لكل الصور، ولأسفل للإغلاق",
+                "dragBack": "اسحب لأسفل للرجوع",
+                "dragToClose": "اسحب لأسفل للإغلاق",
+                "notAllSent": "لم يتم إرسال بعض الصور أو الفيديوهات. ما زالت مرفقة."
             },
             "emoji": {
-                "frequent": "الأكثر استخدامًا",
+                "recent": "الأخيرة",
                 "smileys": "الوجوه والمشاعر",
                 "people": "الأشخاص والجسم",
                 "animals": "الحيوانات والطبيعة",
@@ -1765,7 +1782,12 @@
                 "flags": "الأعلام",
                 "categories": "فئات الرموز التعبيرية",
                 "backspace": "حذف",
-                "unavailable": "تعذّر تحميل الرموز التعبيرية. تحقّق من اتصالك."
+                "unavailable": "تعذّر تحميل الرموز التعبيرية. تحقّق من اتصالك.",
+                "results": "النتائج",
+                "noMatch": "لا رموز تعبيرية لـ «{query}»",
+                "clearSearch": "مسح البحث",
+                "expand": "اسحب لأعلى للتوسيع",
+                "shrink": "اسحب لأسفل للتصغير"
             },
             "gif": {
                 "none": "لم يتم العثور على صور GIF",

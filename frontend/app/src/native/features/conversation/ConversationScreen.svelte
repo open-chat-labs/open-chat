@@ -596,7 +596,7 @@
     // ---- the composer (ConversationComposer) and the slot under it that the keyboard and its
     // panels share (KeyboardSlot): the keyboard's height is followed where it's reported (Android)
 
-    const slot = new KeyboardSlot(isAndroidTauriApp());
+    const slot = new KeyboardSlot(isAndroidTauriApp(), isTauriApp());
     $effect(() => slot.hold());
     $effect(() => {
         const up = softKeyboard.height > 0;

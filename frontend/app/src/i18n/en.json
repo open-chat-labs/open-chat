@@ -1657,7 +1657,7 @@
         "composer": {
             "attach": {
                 "label": "Attach",
-                "photos": "Photos",
+                "photos": "{count, plural, one {# photo} other {# photos}}",
                 "camera": "Camera",
                 "allPhotos": "All photos",
                 "file": "File",
@@ -1665,10 +1665,27 @@
                 "prize": "Prize",
                 "sendCrypto": "Send crypto",
                 "swap": "Swap",
-                "memeFighter": "Meme fighter"
+                "memeFighter": "Meme fighter",
+                "photosAndVideos": "Photos & videos",
+                "videos": "{count, plural, one {# video} other {# videos}}",
+                "photo": "Photo",
+                "video": "Video",
+                "videoLength": "Video {duration}",
+                "selected": "{name}, selected {n}",
+                "clear": "Clear",
+                "attachCount": "Attach {count}",
+                "max": "Up to 10 photos or videos",
+                "recents": "Recents",
+                "ofMax": "{count} of {max}",
+                "upTo": "Up to {max}",
+                "collapse": "Back",
+                "drag": "Drag up for all photos, down to close",
+                "dragBack": "Drag down to go back",
+                "dragToClose": "Drag down to close",
+                "notAllSent": "Some photos or videos weren't sent. They're still attached."
             },
             "emoji": {
-                "frequent": "Frequently used",
+                "recent": "Recent",
                 "smileys": "Smileys & emotion",
                 "people": "People & body",
                 "animals": "Animals & nature",
@@ -1680,7 +1697,12 @@
                 "flags": "Flags",
                 "categories": "Emoji categories",
                 "backspace": "Delete",
-                "unavailable": "Emoji couldn't load. Check your connection."
+                "unavailable": "Emoji couldn't load. Check your connection.",
+                "results": "Results",
+                "noMatch": "No emoji for “{query}”",
+                "clearSearch": "Clear search",
+                "expand": "Drag up to expand",
+                "shrink": "Drag down to shrink"
             },
             "gif": {
                 "none": "No GIFs found",

@@ -1,7 +1,8 @@
-<!-- A conversation's composer (native design notes §3.3): the library's MessageComposer as a pill, its
-     + and emoji buttons in the platform's order (§2), opening the attach and emoji panels in the
-     keyboard's place (the slot under it, KeyboardSlot), with the chat's draft (its text, the reply
-     or edit a swipe set, a photo, video or file attached), @mentions, a voice message, and the
+<!-- A conversation's composer (native plan 05): the library's MessageComposer as a pill, its + and
+     emoji buttons in the platform's order, opening the attach and emoji panels (06, 07) in the
+     keyboard's place (the slot under it, KeyboardSlot, the panel's surface KeyboardPanel), with the
+     chat's draft (its text, the reply or edit a swipe set, photos and videos or a file attached:
+     the first in the draft, those after it here, stagedMedia), @mentions, a voice message, and the
      notice over it (the throttle, a video being prepared); where the reader can't send, the old
      footer's reason instead. Its operations are the shared ones the web's composer uses
      (logic/composer, logic/conversation/draftActions, the client's sends). A part of the
@@ -27,8 +28,10 @@
         suspendedUserStore,
         throttleDeadline,
         videoProcessingProgress,
+        type AttachmentContent,
         type ChatSummary,
         type GiphyContent,
+        type LazyFile,
         type MessageContext,
         type OpenChat,
     } from "@client";
@@ -58,11 +61,20 @@
         type ComposerBuilder,
     } from "@src/logic/composer/composer";
     import {
-        composerAttachment,
         composerContext,
         composerMention,
         composerStartText,
+        stagedAttachment,
     } from "@src/logic/composer/composerProps";
+    import { MAX_MEDIA } from "@src/logic/composer/mediaSelection.svelte";
+    import {
+        isMedia,
+        mediaCount,
+        sendMoreMedia,
+        stageMedia,
+        unstage,
+        type Staged,
+    } from "@src/logic/composer/stagedMedia";
     import {
         cancelComposing,
         composingMessageIndex,
@@ -74,11 +86,14 @@
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
     import { composerBuildersOff } from "@src/utils/features";
     import { microphoneDenied } from "@src/utils/media";
+    import { recentMediaFile } from "@src/utils/native/recentMedia";
     import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { NativeOs } from "../../platform";
-    import AttachPanel from "./AttachPanel.svelte";
+    import AttachPanel, { type RecentItem } from "./AttachPanel.svelte";
     import EmojiPanel from "./EmojiPanel.svelte";
+    import KeyboardPanel from "./KeyboardPanel.svelte";
+    import { KeyboardPanelState } from "./panelState.svelte";
     import { composerPlacement, type Panel } from "./keyboardSlot";
     import type { KeyboardSlot } from "./keyboardSlot.svelte";
 
@@ -89,7 +104,7 @@
         ctx: ConversationContext;
         slot: KeyboardSlot;
         os: NativeOs;
-        /** In the apps, the attach panel's gallery strip (Camera, All photos); not on mobile web. */
+        /** In the apps, the attach panel's gallery strip and Recents; not on mobile web. */
         gallery: boolean;
         /** Says something went wrong (the native toast). */
         toast: (message: string) => void;
@@ -161,7 +176,12 @@
                   ),
         ),
     );
-    const staged = $derived(composerAttachment(draftAttachment(draft), ctx));
+    // what's attached: the draft's (one), and the photos and videos picked with it after it, which
+    // go in messages of their own after the draft's; none of those without media first
+    const first = $derived(draftAttachment(draft));
+    let more = $state.raw<AttachmentContent[]>([]);
+    const attached = $derived<Staged>({ first, more: isMedia(first) ? more : [] });
+    const staged = $derived(stagedAttachment(attached.first, attached.more, ctx));
     const composingIndex = $derived(composingMessageIndex(draft, context));
 
     // a direct chat with a bot takes text only (its direct-message command)
@@ -249,11 +269,24 @@
     // done once the message shows; refused, it rejects and the composer keeps the draft
     async function send(text: string): Promise<void> {
         typing.stopped();
+        const after = attached.more;
         const sent = await sendComposed(client, chat, context, text, {
             content: draftAttachment(draft),
             shown: staged !== null,
         });
         if (sent.kind !== "posted") throw new Error(sent.reason);
+        if (after.length > 0) {
+            more = [];
+            void sendAfter(after);
+        }
+    }
+
+    // the photos and videos after the draft's, a message each; refused, those left stay attached
+    async function sendAfter(after: readonly AttachmentContent[]) {
+        const sent = await sendMoreMedia(client, context, after);
+        if (sent.kind === "posted") return;
+        restage(stageMedia({ first: undefined, more: [] }, sent.left));
+        toast($_("native.composer.attach.notAllSent"));
     }
 
     async function saveEdit(text: string) {
@@ -262,10 +295,57 @@
         }
     }
 
-    // a file picked, pasted or taken goes to the draft, if it may be sent here
+    // a file picked or pasted goes to the draft, in place of what's attached, if it may be sent here
     async function attachFile(file: File) {
         const outcome = await client.attachFile(file, context);
         if (outcome.kind !== "attached") toast(interpolate($_, attachRefusal(outcome, $_)));
+        else more = [];
+    }
+
+    // what's attached now: the draft's first (in the chat it was picked for), the rest here
+    function restage(next: Staged, to: MessageContext = context) {
+        if (next.first !== first) localUpdates.draftMessages.setAttachment(to, next.first);
+        more = [...next.more];
+    }
+
+    // how many more photos and videos may be attached
+    const room = $derived(MAX_MEDIA - mediaCount(attached));
+
+    // photos and videos picked (the panel's, the camera's, the browser's), after those attached,
+    // up to ten in all, each prepared as it would be alone; those that may not be sent are said
+    async function attachMedia(files: (File | LazyFile)[]) {
+        const to = context;
+        if (files.length > room) toast($_("native.composer.attach.max"));
+        const added: AttachmentContent[] = [];
+        for (const file of files.slice(0, room)) {
+            const prepared = await client.prepareAttachment(file, to);
+            if (prepared.kind === "prepared") added.push(prepared.content);
+            else toast(interpolate($_, attachRefusal(prepared, $_)));
+        }
+        restage(stageMedia(attached, added), to);
+    }
+
+    async function attachPicked(picked: readonly RecentItem[]) {
+        slot.close();
+        const files: LazyFile[] = [];
+        for (const item of picked) {
+            try {
+                files.push(await recentMediaFile(item.media));
+            } catch (err) {
+                console.warn("Couldn't read a photo or video picked", err);
+                toast($_("attachFileFailed"));
+            }
+        }
+        await attachMedia(files);
+    }
+
+    function removeMedia(index: number) {
+        restage(unstage(attached, index));
+    }
+
+    function removeAttachment() {
+        localUpdates.draftMessages.setAttachment(context, undefined);
+        more = [];
     }
 
     function paste(e: ClipboardEvent) {
@@ -281,8 +361,8 @@
     let composer: MessageComposer | undefined = $state();
     const placement = $derived(composerPlacement(os));
 
-    function toggle(panel: Panel) {
-        switch (slot.toggle(panel)) {
+    function toggle(which: Panel) {
+        switch (slot.toggle(which)) {
             case "blur":
                 // the keyboard goes down as the panel takes its place
                 if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
@@ -299,12 +379,14 @@
         inserted = { key: (inserted?.key ?? 0) + 1, text };
     }
 
-    // a GIF is sent as it's tapped, as a reply to the draft's reply
+    // a GIF is sent as it's tapped, as a reply to the draft's reply, and the panel goes (07)
     function sendGif(content: GiphyContent) {
+        slot.close();
         void client.sendMessageWithContent(context, content, false);
     }
 
-    // the attach panel's pickers: photos and videos, the camera, any file
+    // the attach panel's pickers: photos and videos (several), the camera, any file; leaving the
+    // chat for one closes the panel (06)
     let mediaInput = $state<HTMLInputElement>();
     let cameraInput = $state<HTMLInputElement>();
     let fileInput = $state<HTMLInputElement>();
@@ -327,6 +409,36 @@
         e.currentTarget.value = "";
         if (file !== undefined) void attachFile(file);
     }
+
+    function pickedMedia(e: { currentTarget: HTMLInputElement }) {
+        const files = [...(e.currentTarget.files ?? [])];
+        e.currentTarget.value = "";
+        if (files.length > 0) void attachMedia(files);
+    }
+
+    // the panel in the slot: dragged, grown, shrunk; made again as it opens or the other takes
+    // its place (so that one starts at rest); attach grows to Recents in the apps only
+    const panelKind = $derived(slot.panel);
+    const panel = $derived(
+        panelKind === undefined
+            ? undefined
+            : new KeyboardPanelState(panelKind === "emoji" || gallery),
+    );
+
+    const handleLabel = $derived.by(() => {
+        const grown = (panel?.f ?? 0) > 0.5;
+        if (slot.panel === "emoji") {
+            return $_(grown ? "native.composer.emoji.shrink" : "native.composer.emoji.expand");
+        }
+        if (!gallery) return $_("native.composer.attach.dragToClose");
+        return $_(grown ? "native.composer.attach.dragBack" : "native.composer.attach.drag");
+    });
+
+    // the safe area under the slot, for a panel's resting height
+    let safeBottom = $state(0);
+    $effect(() => {
+        slot.safeBottom = safeBottom;
+    });
 </script>
 
 {#if blocked !== undefined}
@@ -353,8 +465,13 @@
             onSubmitEdit={saveEdit}
             onJumpContext={composingIndex === undefined ? undefined : () => onJump(composingIndex)}
             attachment={staged}
-            onRemoveAttachment={() => localUpdates.draftMessages.setAttachment(context, undefined)}
-            onRemoveMediaItem={() => localUpdates.draftMessages.setAttachment(context, undefined)}
+            onRemoveAttachment={removeAttachment}
+            onRemoveMediaItem={removeMedia}
+            onAddMedia={attachable && room > 0 && isMedia(first)
+                ? () => {
+                      if (slot.panel !== "attach") toggle("attach");
+                  }
+                : undefined}
             onVoice={canRecord && voiceMimeType !== undefined
                 ? ({ blob }) => sendVoice(blob, voiceMimeType)
                 : undefined}
@@ -379,7 +496,8 @@
             hidden
             type="file"
             accept="image/*,video/*"
-            onchange={picked}
+            multiple
+            onchange={pickedMedia}
         />
         <input
             bind:this={cameraInput}
@@ -387,7 +505,7 @@
             type="file"
             accept="image/*"
             capture="environment"
-            onchange={picked}
+            onchange={pickedMedia}
         />
         <input bind:this={fileInput} hidden type="file" onchange={picked} />
     {/if}
@@ -395,25 +513,43 @@
 
 <!-- under the composer: the safe area, or the keyboard or a panel in its place -->
 <div class="end" class:raised={slot.height > 0} class:voice={voiceActive}></div>
+<span class="safe-bottom" bind:clientHeight={safeBottom} aria-hidden="true"></span>
 <div class="slot" style:height="{slot.height}px">
-    {#if slot.panel === "emoji"}
-        <EmojiPanel
-            {gifs}
+    {#if panel !== undefined}
+        <KeyboardPanel
+            {panel}
+            rest={slot.resting}
             covered={slot.covered}
-            searching={slot.searching}
-            onInsert={insert}
-            onGif={sendGif}
-            onSearch={(searching) => slot.search(searching)}
-        />
-    {:else if slot.panel === "attach"}
-        <AttachPanel
-            {gallery}
-            media={pickable.includes("media")}
-            file={pickable.includes("file")}
-            {builders}
-            onPick={pick}
-            onBuild={build}
-        />
+            {handleLabel}
+            onClose={() => slot.close()}
+        >
+            {#if slot.panel === "emoji"}
+                <EmojiPanel
+                    {panel}
+                    userId={me}
+                    {gifs}
+                    searching={slot.searching}
+                    onInsert={insert}
+                    onGif={sendGif}
+                    onSearch={(searching) => slot.search(searching)}
+                />
+            {:else}
+                <AttachPanel
+                    {panel}
+                    {gallery}
+                    media={pickable.includes("media")}
+                    file={pickable.includes("file")}
+                    {builders}
+                    {room}
+                    onCamera={() => pick("camera")}
+                    onPickMedia={() => pick("media")}
+                    onPickFile={() => pick("file")}
+                    onBuild={build}
+                    onAttach={attachPicked}
+                    onFull={() => toast($_("native.composer.attach.max"))}
+                />
+            {/if}
+        </KeyboardPanel>
     {/if}
 </div>
 
@@ -455,11 +591,17 @@
         }
     }
 
+    // the spacer a panel rests over (06), the panel itself at the bottom of the screen
     .slot {
         position: relative;
         flex: none;
-        overflow: hidden;
         transition: height 0.25s var(--ease-out);
+    }
+
+    .safe-bottom {
+        position: absolute;
+        visibility: hidden;
+        height: var(--safe-bottom);
     }
 
     @include reduced-motion {
