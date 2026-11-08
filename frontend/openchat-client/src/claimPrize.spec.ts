@@ -61,9 +61,9 @@ describe("claiming a prize", () => {
 
     // 5a invariant 2: a prize claim is sent only from a trusted click
     test("a script's click claims nothing", async () => {
-        expect(
-            await client.claimPrize(chatId, 1n, new MouseEvent("click"), undefined),
-        ).toMatchObject({ kind: "failed" });
+        expect(await client.claimPrize(chatId, 1n, new MouseEvent("click"))).toMatchObject({
+            kind: "failed",
+        });
         expect(sent.filter((r) => r.kind === "claimPrize")).toEqual([]);
     });
 });

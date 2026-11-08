@@ -18,7 +18,6 @@ export OC_WALLET_CONNECT_PROJECT_ID=b9aafebed2abfaf8341afd9428c947d5
 export OC_PREVIEW_PROXY_URL=https://dy7sqxe9if6te.cloudfront.net
 export OC_TRANSLATE_PROXY_URL=https://5rabdwftr36yvlgf5xmr34swb40nxsgs.lambda-url.eu-west-2.on.aws
 export OC_PRICE_SERVICE_URL=https://d2r0806cxz8193.cloudfront.net
-export OC_TURNSTILE_SITE_KEY=0x4AAAAAAFzhBz1MORIsaPx7
 # Not deployed yet, so games in messages show only the cards stored in their chats
 export OC_MINI_APP_SERVICE_URL=
 export OC_BITCOIN_MAINNET_ENABLED=false

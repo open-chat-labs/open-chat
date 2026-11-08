@@ -749,8 +749,7 @@ const handlers: Handlers = {
         agent
             .deleteFailedMessage(payload.chatId, payload.messageId, payload.threadRootMessageIndex)
             .then(() => undefined),
-    claimPrize: (payload, agent) =>
-        agent.claimPrize(payload.chatId, payload.messageId, payload.turnstile),
+    claimPrize: (payload, agent) => agent.claimPrize(payload.chatId, payload.messageId),
     payForDiamondMembership: (payload, agent) =>
         agent.payForDiamondMembership(
             payload.userId,
@@ -1187,7 +1186,6 @@ const handlers: Handlers = {
     setMiniAppServicePrincipal: (payload, agent) =>
         agent.setMiniAppServicePrincipal(payload.principal),
     setAlchemyApiKey: (payload, agent) => agent.setAlchemyApiKey(payload.apiKey),
-    setTurnstileConfig: (payload, agent) => agent.setTurnstileConfig(payload.secretKey),
     setBridgeBot: (payload, agent) => agent.setBridgeBot(payload.platform, payload.botId),
     getBridgedUsers: (payload, agent) => agent.getBridgedUsers(payload.ids),
     startBridgedUserLink: (payload, agent) => agent.startBridgedUserLink(payload.platform),

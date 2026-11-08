@@ -19,13 +19,11 @@
         chitStateStore,
         communitiesStore,
         cryptoLookup,
-        currentUserIdStore,
         enhancedCryptoLookup,
         isDiamondStore,
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
         isTrustedClick,
-        prizeClaimCustomData,
         prizeView,
         type ChatIdentifier,
         type DiamondMembershipStatus,
@@ -52,9 +50,7 @@
     import Streak from "./profile/Streak.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
     import { TokenState } from "@src/logic/wallet/walletState.svelte";
-    import HumanCheckFrame from "@src/core/HumanCheckFrame.svelte";
-    import { HumanCheck } from "@src/logic/prize/humanCheck.svelte";
-    import { claimPrizeWithHumanCheck } from "@src/logic/prize/prizeClaim";
+    import { claimPrizeFromClick } from "@src/logic/prize/prizeClaim";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import TextContent from "./TextContent.svelte";
 
@@ -92,7 +88,6 @@
 
     let progressWidth = $state(0);
     let showRestrictionDetails = $state(false);
-    const humanCheck = new HumanCheck();
     let normalisedTextContent = $derived.by<TextContentType | undefined>(() => {
         if (content.caption && content.caption.length > 0) {
             return {
@@ -103,12 +98,11 @@
     });
     let hasTextContent = $derived(normalisedTextContent !== undefined);
 
-    // Claims with the token of the prize's human check, which the click starts
     async function claim(e: MouseEvent) {
         if (!chatId || !messageId) return;
         if (!isTrustedClick(e) || chatId.kind === "direct_chat" || !view?.canClaim) return;
 
-        const failure = await claimPrizeWithHumanCheck(client, humanCheck, chatId, messageId, e);
+        const failure = await claimPrizeFromClick(client, chatId, messageId, e);
         if (failure !== undefined) toastStore.showFailureToast(failure);
     }
 
@@ -352,12 +346,6 @@
                                 )} />
                         </Body>
                     </SecureButton>
-                    <!-- Kept while a claim's check runs, even if the prize runs out meanwhile -->
-                    {#if view?.canClaim || humanCheck.running}
-                        <HumanCheckFrame
-                            check={humanCheck}
-                            customData={prizeClaimCustomData($currentUserIdStore, messageId)} />
-                    {/if}
                 {/if}
             </Column>
         </Column>

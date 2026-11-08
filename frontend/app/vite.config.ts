@@ -100,35 +100,6 @@ function ocCanisterMapPlugin(): Plugin {
     };
 }
 
-// The pages in public/ served beside the app (turnstile.html, the prize claim's human check, which
-// every tree frames). A "pre" plugin listed before vite-plugin-html, as the canister map's is: that
-// plugin's history fallback answers a frame's HTML request with the app itself, so the frame ran
-// the app instead of the check, and each claim waited out the check's 30 seconds without a token.
-function ocPublicPagesPlugin(): Plugin {
-    const publicDir = path.resolve(__dirname, "public");
-    return {
-        name: "oc-public-pages",
-        enforce: "pre",
-        configureServer(server) {
-            server.middlewares.use((req, res, next) => {
-                const pathname = (req.url ?? "").split(/[?#]/)[0];
-                const fileName = path.posix.basename(pathname);
-                const filePath = path.join(publicDir, fileName);
-                if (
-                    pathname === `/${fileName}` &&
-                    fileName.endsWith(".html") &&
-                    fs.existsSync(filePath)
-                ) {
-                    res.setHeader("Content-Type", "text/html; charset=utf-8");
-                    fs.createReadStream(filePath).pipe(res);
-                    return;
-                }
-                next();
-            });
-        },
-    };
-}
-
 // Builds the workers from TypeScript source — reusing the sub-package
 // aliases so they pull agent/shared from source too — and serves them at
 // /worker.js etc, rebuilding and triggering a full reload when worker/agent/shared
@@ -270,7 +241,6 @@ export default defineConfig({
         }) as PluginOption,
         ocWorkerPlugin(),
         ocCanisterMapPlugin(),
-        ocPublicPagesPlugin(),
         createHtmlPlugin({
             minify: true,
             entry: "./src/main.ts",

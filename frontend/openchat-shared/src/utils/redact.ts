@@ -13,12 +13,6 @@ export const SECRET_KEYS: readonly string[] = [
     // The setPinNumber worker request
     "newPin",
     "signInProofJwt",
-    // claim_prize's and the claimPrize worker request's passed Turnstile check: its token, and its
-    // salt, which isn't a secret but with the claim gives the custom data Cloudflare saw
-    "turnstile",
-    // The Turnstile secret key, in set_turnstile_config and the setTurnstileConfig worker request
-    "secret_key",
-    "secretKey",
 ];
 
 const secretKeys = new Set(SECRET_KEYS);

@@ -5,31 +5,10 @@ use ts_export::ts_export;
 use types::{CompletedCryptoTransaction, FailedCryptoTransaction, MessageId, MultiUserChat};
 
 #[ts_export(local_user_index, claim_prize)]
-#[derive(CandidType, Serialize, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub chat_id: MultiUserChat,
     pub message_id: MessageId,
-    pub turnstile: Option<TurnstilePass>,
-}
-
-// A passed Cloudflare Turnstile check, issued for this user and message (see turnstile.rs)
-#[ts_export(local_user_index, claim_prize)]
-#[derive(CandidType, Serialize, Deserialize)]
-pub struct TurnstilePass {
-    pub token: String,
-    // The random salt hashed with this user and message into the token's custom data
-    pub salt: String,
-}
-
-// Written by hand so that `#[trace]` doesn't record the token
-impl std::fmt::Debug for Args {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Args")
-            .field("chat_id", &self.chat_id)
-            .field("message_id", &self.message_id)
-            .field("turnstile_set", &self.turnstile.is_some())
-            .finish()
-    }
 }
 
 #[ts_export(local_user_index, claim_prize)]

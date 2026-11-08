@@ -43,7 +43,6 @@
         messageIndexStore,
         messagePermissionsForSelectedChatStore,
         messagesRead,
-        prizeClaimCustomData,
         publish,
         screenWidth,
         selectedChatBlockedUsersStore,
@@ -205,9 +204,7 @@
     import { deleteMessage, runMessageAction } from "./messageMenu";
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import { claimsStore } from "@src/stores/claims";
-    import HumanCheckFrame from "@src/core/HumanCheckFrame.svelte";
-    import { HumanChecks } from "@src/logic/prize/humanCheck.svelte";
-    import { claimPrizeWithHumanCheck } from "@src/logic/prize/prizeClaim";
+    import { claimPrizeFromClick } from "@src/logic/prize/prizeClaim";
     import { interpolate } from "@i18n/i18n";
     import { VoicePlayer } from "@src/logic/conversation/voicePlayer.svelte";
     import { RowCache } from "@src/logic/conversation/rowCache";
@@ -1203,23 +1200,10 @@
         }
     }
 
-    // each prize's human check, which a claim click starts (HumanCheckFrame, under its card)
-    const humanChecks = new HumanChecks();
-    function humanCheckFor(messageId: bigint) {
-        return humanChecks.for(messageId);
-    }
-
-    // a prize claim, from the reader's own click (claimPrize refuses any other), with the token of
-    // the prize's human check
+    // a prize claim, from the reader's own click (claimPrize refuses any other)
     async function claim(msg: Message, e: MouseEvent) {
         if (chat.kind === "direct_chat") return;
-        const failure = await claimPrizeWithHumanCheck(
-            client,
-            humanCheckFor(msg.messageId),
-            chat.id,
-            msg.messageId,
-            e,
-        );
+        const failure = await claimPrizeFromClick(client, chat.id, msg.messageId, e);
         if (failure !== undefined) toastStore.showFailureToast(failure);
     }
 
@@ -1437,13 +1421,6 @@
                         offers,
                     )}
                 />
-                <!-- kept while a claim's check runs, even if the prize runs out meanwhile -->
-                {#if row.message.kind === "prize" && (row.message.canClaim || humanChecks.running(msg.messageId))}
-                    <HumanCheckFrame
-                        check={humanCheckFor(msg.messageId)}
-                        customData={prizeClaimCustomData(me, msg.messageId)}
-                    />
-                {/if}
             </div>
         {:else if evt.event.kind === "aggregate_common_events"}
             {@const text = aggregateEventText(evt.event, eventCtx)}

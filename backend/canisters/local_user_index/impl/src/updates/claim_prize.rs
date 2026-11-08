@@ -1,10 +1,9 @@
 use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
-use crate::{guards::caller_is_openchat_user, read_state, turnstile};
+use crate::{guards::caller_is_openchat_user, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::LIFETIME_DIAMOND_TIMESTAMP;
 use local_user_index_canister::{GlobalUser, claim_prize::*};
-use oc_error_codes::OCErrorCode;
 use types::{
     CanisterId, DiamondMembershipStatus, MultiUserChat,
     PrizeClaimResponse::{self, *},
@@ -21,20 +20,8 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
             unique_person_proof,
             ..
         },
-        turnstile_config,
         now,
-    ) = read_state(|state| (state.calling_user(), state.data.turnstile_config.clone(), state.env.now()));
-
-    // With a secret key, every claim must pass Turnstile. Without one, tokens are ignored.
-    if let Some(secret_key) = turnstile_config.secret_key {
-        let Some(pass) = args.turnstile else {
-            return Error(OCErrorCode::HumanVerificationFailed.with_message("Turnstile token required"));
-        };
-        let custom_data = turnstile::custom_data(user_id, args.message_id, &pass.salt);
-        if let Err(error) = turnstile::verify(&secret_key, &pass.token, &custom_data).await {
-            return Error(error);
-        }
-    }
+    ) = read_state(|state| (state.calling_user(), state.env.now()));
 
     let is_unique_person = unique_person_proof.is_some();
     let diamond_status = match diamond_membership_expires_at {

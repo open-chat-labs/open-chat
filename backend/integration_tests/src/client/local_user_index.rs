@@ -373,7 +373,6 @@ pub mod happy_path {
             &local_user_index_canister::claim_prize::Args {
                 chat_id,
                 message_id,
-                turnstile: None,
             },
         );
 

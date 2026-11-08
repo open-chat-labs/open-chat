@@ -2,8 +2,7 @@ import type { ClaimPrizeOutcome, OpenChat } from "@client";
 import { i18nKey } from "@src/i18n/i18n";
 import { claimsStore } from "@src/stores/claims";
 import { describe, expect, test, vi } from "vitest";
-import { HumanCheck } from "./humanCheck.svelte";
-import { claimPrizeWithHumanCheck } from "./prizeClaim";
+import { claimPrizeFromClick } from "./prizeClaim";
 
 const chatId = { kind: "group_chat" as const, groupId: "rrkah-fqaaa-aaaaa-aaaaq-cai" };
 
@@ -23,64 +22,32 @@ function client(outcome: ClaimPrizeOutcome) {
 }
 
 describe("claiming a prize", () => {
-    test("runs the prize's human check, and claims with its token", async () => {
+    test("claims the prize from the click", async () => {
         const c = client({ kind: "success" });
-        const check = new HumanCheck();
         const e = trustedClick();
 
-        const claim = claimPrizeWithHumanCheck(c, check, chatId, 1n, e);
-        expect(check.running).toBe(true);
-        check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
-
-        await expect(claim).resolves.toBeUndefined();
-        expect(c.claimPrize).toHaveBeenCalledWith(chatId, 1n, e, { token: "t1", salt: "s1" });
-    });
-
-    test("a check that fails still claims, without a token, for the backend to decide", async () => {
-        vi.spyOn(console, "warn").mockImplementation(() => undefined);
-        const c = client({ kind: "success" });
-        const check = new HumanCheck();
-
-        const claim = claimPrizeWithHumanCheck(c, check, chatId, 1n, trustedClick());
-        check.receive({ kind: "turnstile_error", code: "600010" });
-        await claim;
-        expect(c.claimPrize).toHaveBeenCalledWith(chatId, 1n, expect.anything(), undefined);
+        await expect(claimPrizeFromClick(c, chatId, 1n, e)).resolves.toBeUndefined();
+        expect(c.claimPrize).toHaveBeenCalledWith(chatId, 1n, e);
     });
 
     test("says why a claim failed", async () => {
-        const message = i18nKey("prizes.humanCheckFailed");
-        const check = new HumanCheck();
+        const message = i18nKey("prizes.claimFailed");
 
-        const claim = claimPrizeWithHumanCheck(
-            client({ kind: "failed", message }),
-            check,
-            chatId,
-            1n,
-            trustedClick(),
-        );
-        check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
-        await expect(claim).resolves.toEqual(message);
+        await expect(
+            claimPrizeFromClick(client({ kind: "failed", message }), chatId, 1n, trustedClick()),
+        ).resolves.toEqual(message);
     });
 
     test("a click while the prize's claim is in flight claims nothing", async () => {
         const c = client({ kind: "success" });
-        const check = new HumanCheck();
 
-        const claim = claimPrizeWithHumanCheck(c, check, chatId, 1n, trustedClick());
-        await expect(
-            claimPrizeWithHumanCheck(c, check, chatId, 1n, trustedClick()),
-        ).resolves.toBeUndefined();
-        expect(check.run).toBe(1);
-
-        check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
+        const claim = claimPrizeFromClick(c, chatId, 1n, trustedClick());
+        await expect(claimPrizeFromClick(c, chatId, 1n, trustedClick())).resolves.toBeUndefined();
         await claim;
         expect(c.claimPrize).toHaveBeenCalledTimes(1);
 
         // Once it's settled, the reader can claim again
-        const retry = claimPrizeWithHumanCheck(c, check, chatId, 1n, trustedClick());
-        expect(check.run).toBe(2);
-        check.receive({ kind: "turnstile_token", token: "t2", salt: "s2" });
-        await retry;
+        await claimPrizeFromClick(c, chatId, 1n, trustedClick());
         expect(c.claimPrize).toHaveBeenCalledTimes(2);
     });
 
@@ -93,14 +60,8 @@ describe("claiming a prize", () => {
             const c = {
                 claimPrize: vi.fn(() => new Promise<ClaimPrizeOutcome>((r) => (resolve = r))),
             } as never as Pick<OpenChat, "claimPrize">;
-            const check = new HumanCheck();
 
-            const claim = claimPrizeWithHumanCheck(c, check, chatId, 1n, trustedClick());
-            // through the human check
-            expect(claimsStore.value.has(1n)).toBe(true);
-            check.receive({ kind: "turnstile_token", token: "t1", salt: "s1" });
-            await vi.waitFor(() => expect(c.claimPrize).toHaveBeenCalled());
-            // and the claim itself
+            const claim = claimPrizeFromClick(c, chatId, 1n, trustedClick());
             expect(claimsStore.value.has(1n)).toBe(true);
 
             resolve(outcome);
@@ -110,15 +71,12 @@ describe("claiming a prize", () => {
     });
 
     // 5a invariant 2: a prize claim is sent only from a trusted click
-    test("a script's click claims nothing, and doesn't start the check", async () => {
+    test("a script's click claims nothing", async () => {
         const c = client({ kind: "success" });
-        const check = new HumanCheck();
 
         await expect(
-            claimPrizeWithHumanCheck(c, check, chatId, 1n, new MouseEvent("click")),
+            claimPrizeFromClick(c, chatId, 1n, new MouseEvent("click")),
         ).resolves.toBeUndefined();
         expect(c.claimPrize).not.toHaveBeenCalled();
-        expect(check.running).toBe(false);
-        expect(check.run).toBe(0);
     });
 });

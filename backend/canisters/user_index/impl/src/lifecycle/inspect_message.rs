@@ -40,11 +40,7 @@ fn accept_if_valid(state: &RuntimeState) {
         // Service path (authority reporter) or operator reconciliation
         "record_authority_report_attempt" => state.is_caller_authority_reporter(),
         "clear_authority_report_attempt" => state.is_caller_authority_reporter() || state.is_caller_platform_operator(),
-        "set_alchemy_api_key"
-        | "set_bridge_bot"
-        | "set_call_push_enabled"
-        | "set_mini_app_service_principal"
-        | "set_turnstile_config" => {
+        "set_alchemy_api_key" | "set_bridge_bot" | "set_call_push_enabled" | "set_mini_app_service_principal" => {
             state.is_caller_platform_operator()
         }
         // The dual-authorized actions (destroy_vault_evidence, set_vault_reviewers,
