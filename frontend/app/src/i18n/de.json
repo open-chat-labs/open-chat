@@ -1742,7 +1742,6 @@
         "composer": {
             "attach": {
                 "label": "Anhängen",
-                "photos": "{count, plural, one {# Foto} other {# Fotos}}",
                 "camera": "Kamera",
                 "allPhotos": "Alle Fotos",
                 "file": "Datei",
@@ -1752,13 +1751,11 @@
                 "swap": "Tauschen",
                 "memeFighter": "Meme Fighter",
                 "photosAndVideos": "Fotos & Videos",
-                "videos": "{count, plural, one {# Video} other {# Videos}}",
                 "photo": "Foto",
                 "video": "Video",
                 "videoLength": "Video {duration}",
                 "selected": "{name}, ausgewählt {n}",
                 "clear": "Leeren",
-                "attachCount": "{count} anhängen",
                 "max": "Bis zu 10 Fotos oder Videos",
                 "recents": "Neueste",
                 "ofMax": "{count} von {max}",
@@ -1767,7 +1764,8 @@
                 "drag": "Nach oben ziehen für alle Fotos, nach unten zum Schließen",
                 "dragBack": "Nach unten ziehen, um zurückzugehen",
                 "dragToClose": "Nach unten ziehen zum Schließen",
-                "notAllSent": "Einige Fotos oder Videos wurden nicht gesendet. Sie sind noch angehängt."
+                "notAllSent": "Einige Fotos oder Videos wurden nicht gesendet. Sie sind noch angehängt.",
+                "done": "Fertig"
             },
             "emoji": {
                 "recent": "Zuletzt",
@@ -1787,11 +1785,13 @@
                 "noMatch": "Keine Emojis für „{query}“",
                 "clearSearch": "Suche leeren",
                 "expand": "Nach oben ziehen zum Vergrößern",
-                "shrink": "Nach unten ziehen zum Verkleinern"
+                "shrink": "Nach unten ziehen zum Verkleinern",
+                "searchHandle": "Nach oben ziehen zum Vergrößern, nach unten, um die Suche zu schließen"
             },
             "gif": {
                 "none": "Keine GIFs gefunden",
-                "unavailable": "GIFs konnten nicht geladen werden. Prüfe deine Verbindung."
+                "unavailable": "GIFs konnten nicht geladen werden. Prüfe deine Verbindung.",
+                "searchHandle": "Nach unten ziehen, um die Tastatur auszublenden"
             }
         },
         "conversation": {

@@ -1742,7 +1742,6 @@
         "composer": {
             "attach": {
                 "label": "Allega",
-                "photos": "{count, plural, one {# foto} other {# foto}}",
                 "camera": "Fotocamera",
                 "allPhotos": "Tutte le foto",
                 "file": "File",
@@ -1752,13 +1751,11 @@
                 "swap": "Scambia",
                 "memeFighter": "Meme fighter",
                 "photosAndVideos": "Foto e video",
-                "videos": "{count, plural, one {# video} other {# video}}",
                 "photo": "Foto",
                 "video": "Video",
                 "videoLength": "Video {duration}",
                 "selected": "{name}, selezionata {n}",
                 "clear": "Cancella",
-                "attachCount": "Allega {count}",
                 "max": "Fino a 10 foto o video",
                 "recents": "Recenti",
                 "ofMax": "{count} di {max}",
@@ -1767,7 +1764,8 @@
                 "drag": "Trascina su per tutte le foto, giù per chiudere",
                 "dragBack": "Trascina giù per tornare indietro",
                 "dragToClose": "Trascina giù per chiudere",
-                "notAllSent": "Alcune foto o video non sono stati inviati. Sono ancora allegati."
+                "notAllSent": "Alcune foto o video non sono stati inviati. Sono ancora allegati.",
+                "done": "Fine"
             },
             "emoji": {
                 "recent": "Recenti",
@@ -1787,11 +1785,13 @@
                 "noMatch": "Nessuna emoji per “{query}”",
                 "clearSearch": "Cancella ricerca",
                 "expand": "Trascina su per espandere",
-                "shrink": "Trascina giù per ridurre"
+                "shrink": "Trascina giù per ridurre",
+                "searchHandle": "Trascina su per espandere, giù per chiudere la ricerca"
             },
             "gif": {
                 "none": "Nessuna GIF trovata",
-                "unavailable": "Impossibile caricare le GIF. Controlla la connessione."
+                "unavailable": "Impossibile caricare le GIF. Controlla la connessione.",
+                "searchHandle": "Trascina giù per nascondere la tastiera"
             }
         },
         "conversation": {

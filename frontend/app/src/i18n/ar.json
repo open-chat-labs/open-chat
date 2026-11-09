@@ -1742,7 +1742,6 @@
         "composer": {
             "attach": {
                 "label": "إرفاق",
-                "photos": "{count, plural, zero {لا صور} one {صورة واحدة} two {صورتان} few {# صور} many {# صورة} other {# صورة}}",
                 "camera": "الكاميرا",
                 "allPhotos": "كل الصور",
                 "file": "ملف",
@@ -1752,13 +1751,11 @@
                 "swap": "مبادلة",
                 "memeFighter": "Meme fighter",
                 "photosAndVideos": "الصور والفيديوهات",
-                "videos": "{count, plural, zero {لا فيديوهات} one {فيديو واحد} two {فيديوهان} few {# فيديوهات} many {# فيديو} other {# فيديو}}",
                 "photo": "صورة",
                 "video": "فيديو",
                 "videoLength": "فيديو {duration}",
                 "selected": "{name}، المحدد {n}",
                 "clear": "مسح",
-                "attachCount": "إرفاق {count}",
                 "max": "حتى 10 صور أو فيديوهات",
                 "recents": "الأحدث",
                 "ofMax": "{count} من {max}",
@@ -1767,7 +1764,8 @@
                 "drag": "اسحب لأعلى لكل الصور، ولأسفل للإغلاق",
                 "dragBack": "اسحب لأسفل للرجوع",
                 "dragToClose": "اسحب لأسفل للإغلاق",
-                "notAllSent": "لم يتم إرسال بعض الصور أو الفيديوهات. ما زالت مرفقة."
+                "notAllSent": "لم يتم إرسال بعض الصور أو الفيديوهات. ما زالت مرفقة.",
+                "done": "تم"
             },
             "emoji": {
                 "recent": "الأخيرة",
@@ -1787,11 +1785,13 @@
                 "noMatch": "لا رموز تعبيرية لـ «{query}»",
                 "clearSearch": "مسح البحث",
                 "expand": "اسحب لأعلى للتوسيع",
-                "shrink": "اسحب لأسفل للتصغير"
+                "shrink": "اسحب لأسفل للتصغير",
+                "searchHandle": "اسحب لأعلى للتوسيع، ولأسفل لإغلاق البحث"
             },
             "gif": {
                 "none": "لم يتم العثور على صور GIF",
-                "unavailable": "تعذّر تحميل صور GIF. تحقّق من اتصالك."
+                "unavailable": "تعذّر تحميل صور GIF. تحقّق من اتصالك.",
+                "searchHandle": "اسحب لأسفل لإخفاء لوحة المفاتيح"
             }
         },
         "conversation": {

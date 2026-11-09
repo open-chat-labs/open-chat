@@ -7,8 +7,8 @@
 export type Panel = "emoji" | "attach";
 
 /**
- * The emoji panel's search: none; the emoji search, a strip above the keyboard (the field and a
- * line of the emoji found, the composer above it); or the GIF search, the panel grown over the
+ * The emoji panel's search (07): none; the emoji search, a strip on top of the keyboard (the field
+ * and a line of the emoji found) over the composer; or the GIF search, the panel grown over the
  * chat with the keyboard under it.
  */
 export type Search = "none" | "strip" | "grown";
@@ -32,7 +32,7 @@ export const CLOSED: Slot = { panel: undefined, expecting: false, search: "none"
  * A panel's resting height where the keyboard's isn't known (06 "Layout and size", the prototype's
  * value), above the safe area.
  */
-export const PANEL_REST = 282;
+export const PANEL_REST = 304;
 
 /** The attach panel's on mobile web, which has no gallery strip (06 "Mobile web variant"). */
 export const PANEL_REST_WEB_ATTACH = 264;
@@ -76,15 +76,15 @@ export type KeyboardHeights = {
 };
 
 /**
- * How tall the slot is. With a panel: its resting height (a keyboard reported meanwhile is one
- * leaving, or coming for a search); searching emoji, the keyboard and the strip above it;
- * searching GIFs, the keyboard under the grown panel. With none: the keyboard, or the height it's
- * coming up to; nothing otherwise.
+ * How tall the slot is: the spacer under the composer. With a panel: its resting height; searching,
+ * the keyboard (or the height it's coming up to), the sheet over it (06 "Sizes": the spacer is the
+ * rest height, which is the keyboard's). With none: the keyboard, or the height it's coming up to;
+ * nothing otherwise.
  */
 export function slotHeight(slot: Slot, keyboard: KeyboardHeights): number {
     const coming = keyboard.up > 0 ? keyboard.up : keyboard.known;
     if (slot.panel !== undefined) {
-        if (slot.search === "strip") return coming + SEARCH_STRIP;
+        if (slot.search === "strip") return coming;
         if (slot.search === "grown") return keyboard.up > 0 ? keyboard.up : keyboard.panel;
         return keyboard.panel;
     }
@@ -157,12 +157,12 @@ export function keyboardMoved(slot: Slot, up: boolean): Slot {
     return { ...slot, search: "none", expecting: false };
 }
 
-/** The keyboard didn't come after all (a hardware keyboard, a focus without one). */
-export function keyboardMissed(slot: Slot, keyboardUp: boolean): Slot {
-    if (!slot.expecting) return slot;
-    return keyboardUp
-        ? { ...slot, expecting: false }
-        : { ...slot, expecting: false, search: "none" };
+/**
+ * The keyboard hasn't come after all (a hardware keyboard, a focus without one, or a slow
+ * report): no longer held for. A search goes on while its field has the focus.
+ */
+export function keyboardMissed(slot: Slot): Slot {
+    return slot.expecting ? { ...slot, expecting: false } : slot;
 }
 
 /** Which way the composer's buttons go (notes §2): + · text · emoji on iOS, the other way on Android. */

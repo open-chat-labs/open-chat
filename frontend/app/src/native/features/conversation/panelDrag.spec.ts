@@ -5,6 +5,9 @@ import {
     maxGrowFor,
     panelLayers,
     panelVeil,
+    pullTakesPanel,
+    searchPullEnd,
+    searchPullOffset,
     settle,
     type DragPosition,
 } from "./panelDrag";
@@ -85,24 +88,59 @@ describe("what shows as a panel grows", () => {
         expect(panelLayers(0.8)).toMatchObject({ expanded: 1, expandedLive: true });
     });
 
-    test("the shadow follows f, up to .45", () => {
+    test("the shadow is .45 × min(1, 3f)", () => {
         expect(panelLayers(0).shadow).toBe(0);
-        expect(panelLayers(1).shadow).toBeCloseTo(0.45);
+        expect(panelLayers(0.1).shadow).toBeCloseTo(0.135);
+        expect(panelLayers(0.5).shadow).toBeCloseTo(0.45);
     });
 });
 
 describe("how far a panel grows", () => {
-    test("to 90% of the height under the status bar", () => {
+    test("to 90% of the screen, from its bottom", () => {
         expect(maxGrowFor(1000, 300)).toBe(600);
         // resting above that already: not at all
         expect(maxGrowFor(300, 280)).toBe(0);
     });
 });
 
-describe("the veil over the chat", () => {
-    test("is none at rest, full grown, following f between", () => {
-        expect(panelVeil(0)).toEqual({ opacity: 0, tappable: false });
-        expect(panelVeil(0.5)).toEqual({ opacity: 0.5, tappable: true });
-        expect(panelVeil(1)).toEqual({ opacity: 1, tappable: true });
+describe("the backdrop", () => {
+    test("is min(1, 1.4f), taking taps from f 0.02", () => {
+        expect(panelVeil(0, false)).toEqual({ opacity: 0, tappable: false });
+        expect(panelVeil(0.02, false).tappable).toBe(false);
+        expect(panelVeil(0.03, false).tappable).toBe(true);
+        expect(panelVeil(0.5, false).opacity).toBeCloseTo(0.7);
+        expect(panelVeil(0.8, false)).toEqual({ opacity: 1, tappable: true });
+    });
+
+    test("is fully on in a search, at rest too", () => {
+        expect(panelVeil(0, true)).toEqual({ opacity: 1, tappable: true });
+    });
+});
+
+describe("a pull on the content", () => {
+    test("takes the panel at the content's top, past 6px down", () => {
+        expect(pullTakesPanel({ firstUp: false, scrollTop: 0, fromTop: 7 })).toBe(true);
+        expect(pullTakesPanel({ firstUp: false, scrollTop: 0, fromTop: 6 })).toBe(false);
+        expect(pullTakesPanel({ firstUp: false, scrollTop: 30, fromTop: 40 })).toBe(false);
+    });
+
+    test("only scrolls when its first move is up", () => {
+        expect(pullTakesPanel({ firstUp: true, scrollTop: 0, fromTop: 40 })).toBe(false);
+    });
+});
+
+describe("the emoji search's handle", () => {
+    test("moves the strip down at 0.6x and up at 0.3x, 24px at most", () => {
+        expect(searchPullOffset(50)).toBeCloseTo(30);
+        expect(searchPullOffset(-40)).toBeCloseTo(-12);
+        expect(searchPullOffset(-200)).toBe(-24);
+    });
+
+    test("pulled up past 40px or flicked up, grows; down, closes the search; else stays", () => {
+        expect(searchPullEnd(-41, 0)).toBe("expand");
+        expect(searchPullEnd(-10, -0.6)).toBe("expand");
+        expect(searchPullEnd(41, 0)).toBe("close");
+        expect(searchPullEnd(10, 0.6)).toBe("close");
+        expect(searchPullEnd(30, 0.1)).toBe("stay");
     });
 });

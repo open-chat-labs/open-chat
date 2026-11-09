@@ -1657,7 +1657,6 @@
         "composer": {
             "attach": {
                 "label": "Attach",
-                "photos": "{count, plural, one {# photo} other {# photos}}",
                 "camera": "Camera",
                 "allPhotos": "All photos",
                 "file": "File",
@@ -1667,13 +1666,11 @@
                 "swap": "Swap",
                 "memeFighter": "Meme fighter",
                 "photosAndVideos": "Photos & videos",
-                "videos": "{count, plural, one {# video} other {# videos}}",
                 "photo": "Photo",
                 "video": "Video",
                 "videoLength": "Video {duration}",
                 "selected": "{name}, selected {n}",
                 "clear": "Clear",
-                "attachCount": "Attach {count}",
                 "max": "Up to 10 photos or videos",
                 "recents": "Recents",
                 "ofMax": "{count} of {max}",
@@ -1682,7 +1679,8 @@
                 "drag": "Drag up for all photos, down to close",
                 "dragBack": "Drag down to go back",
                 "dragToClose": "Drag down to close",
-                "notAllSent": "Some photos or videos weren't sent. They're still attached."
+                "notAllSent": "Some photos or videos weren't sent. They're still attached.",
+                "done": "Done"
             },
             "emoji": {
                 "recent": "Recent",
@@ -1702,11 +1700,13 @@
                 "noMatch": "No emoji for “{query}”",
                 "clearSearch": "Clear search",
                 "expand": "Drag up to expand",
-                "shrink": "Drag down to shrink"
+                "shrink": "Drag down to shrink",
+                "searchHandle": "Drag up to expand, down to close search"
             },
             "gif": {
                 "none": "No GIFs found",
-                "unavailable": "GIFs couldn't load. Check your connection."
+                "unavailable": "GIFs couldn't load. Check your connection.",
+                "searchHandle": "Drag down to hide the keyboard"
             }
         },
         "conversation": {

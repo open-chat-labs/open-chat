@@ -1,15 +1,17 @@
-<!-- A keyboard-area panel's surface (native plan 06 "Layout and size", 07 "What it is"): in the slot
-     under the composer, at the bottom of the screen, resting at the slot's height over the spacer
-     the slot keeps (so the chat and the composer move up by it). Its handle drags it: up it grows
-     over the chat to 90% of the height under the status bar, following the finger; down from rest it slides out and
-     closes (KeyboardPanelState, panelDrag.ts). It rises in as it opens; the emoji and attach panels
-     swap inside it without that. Where the keyboard covers its bottom (the emoji search), what it
-     shows sits above it. -->
+<!-- A keyboard-area panel's sheet (native plan 06 "Sheet behaviour", shared with 07): in the slot
+     under the composer, at the bottom of the screen, resting at the keyboard's height over the
+     spacer the slot keeps (so the chat and the composer move up by it). Its handle drags it: up it
+     grows over the chat to 90% of the screen, following the finger; down from rest it slides out
+     and closes (KeyboardPanelState, panelDrag.ts). The backdrop (--scrim) over everything above it
+     fades in as it grows (on in a search); a tap on it, or anywhere outside the sheet, takes it
+     back to rest. It rises in as it opens; the emoji and attach panels swap inside it without that.
+     Where the keyboard covers its bottom (the searches), what it shows sits above it. A tap that
+     ends a drag isn't one. -->
 <script lang="ts">
     import { onDestroy, type Snippet } from "svelte";
     import type { KeyboardPanelState } from "./panelState.svelte";
+    import PanelHandle from "./PanelHandle.svelte";
     import { maxGrowFor, panelLayers } from "./panelDrag";
-    import { panelDragHandle } from "./panelDragHandle";
 
     type Props = {
         panel: KeyboardPanelState;
@@ -19,12 +21,14 @@
         covered: number;
         /** The handle's accessible name (what dragging it does). */
         handleLabel: string;
+        /** Its handle row (the emoji panel's, mobile web's attach panel); else the panel has its own. */
+        handle: boolean;
         /** It slid out (dragged down): the slot closes. */
         onClose: () => void;
         children: Snippet;
     };
 
-    let { panel, rest, covered, handleLabel, onClose, children }: Props = $props();
+    let { panel, rest, covered, handleLabel, handle, onClose, children }: Props = $props();
 
     // the handle's area, over what it shows
     const HANDLE = 22;
@@ -33,16 +37,14 @@
     const CLOSE_MS = 220;
 
     let el = $state<HTMLElement>();
-    let safeTop = $state<HTMLElement>();
 
     const layers = $derived(panelLayers(panel.f));
 
-    // how far it can grow: to 90% of the height under the status bar
+    // how far it can grow: to 90% of the screen, from its bottom
     function measure() {
         const slot = el?.parentElement;
         if (slot === null || slot === undefined) return;
-        const bottom = slot.getBoundingClientRect().bottom;
-        panel.setMaxGrow(maxGrowFor(bottom - (safeTop?.offsetHeight ?? 0), rest));
+        panel.setMaxGrow(maxGrowFor(slot.getBoundingClientRect().bottom, rest));
     }
 
     $effect(() => {
@@ -71,16 +73,15 @@
     });
     onDestroy(() => clearTimeout(closeTimer));
 
-    function key(e: KeyboardEvent) {
-        if (e.key !== "Enter" && e.key !== " ") return;
+    // a tap that ends a drag (over a tile or an emoji) isn't one
+    function guardClick(e: MouseEvent) {
+        if (!panel.clickGuarded(e.timeStamp)) return;
         e.preventDefault();
-        if (!panel.expandable) onClose();
-        else if (panel.open) panel.rest();
-        else panel.expand();
+        e.stopPropagation();
     }
 </script>
 
-<!-- the veil over the chat while the panel's grown (none at rest: the chat stays as it is) -->
+<!-- the backdrop over everything above the sheet (none at rest: the chat stays as it is) -->
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div
     class="veil"
@@ -97,24 +98,19 @@
     class:closing={panel.closing}
     style:height="{rest + panel.grown}px"
     style:transform={panel.closing
-        ? "translateY(100%)"
+        ? "translateY(400px)"
         : panel.pulled > 0
           ? `translateY(${panel.pulled}px)`
-          : undefined}
+          : panel.searchOffset !== 0
+            ? `translateY(${panel.searchOffset}px)`
+            : undefined}
     style:--panel-shadow={layers.shadow / 0.45}
-    style:--panel-rest-content="{rest - HANDLE}px"
+    style:--panel-rest-content="{rest - (handle ? HANDLE : 0)}px"
+    onclickcapture={guardClick}
 >
-    <span class="safe-top" bind:this={safeTop} aria-hidden="true"></span>
-    <div
-        class="handle-area"
-        role="button"
-        tabindex="0"
-        aria-label={handleLabel}
-        onkeydown={key}
-        {@attach panelDragHandle(panel)}
-    >
-        <span class="handle"></span>
-    </div>
+    {#if handle}
+        <PanelHandle {panel} label={handleLabel} {onClose} />
+    {/if}
     <div class="content" style:padding-block-end="{covered}px">
         {@render children()}
     </div>
@@ -172,12 +168,13 @@
         }
     }
 
-    // the sheet's veil (BottomSheet's), over the chat and the composer, under the panel
+    // the backdrop (06: --scrim) over the chat, the composer, the header and the status bar, under
+    // the sheet
     .veil {
         position: fixed;
         inset: 0;
         z-index: 4;
-        background: var(--veil-sheet);
+        background: var(--scrim);
 
         &.settling {
             transition: opacity 0.34s var(--ease-out);
@@ -201,32 +198,6 @@
         from {
             opacity: 0;
         }
-    }
-
-    .safe-top {
-        position: absolute;
-        visibility: hidden;
-        height: var(--safe-top);
-    }
-
-    // 06: a 48 × 4px handle in a 22px area, 8px from the top
-    .handle-area {
-        flex: none;
-        box-sizing: border-box;
-        height: 22px;
-        padding-block-start: var(--space-8);
-        display: flex;
-        justify-content: center;
-        touch-action: none;
-        cursor: grab;
-        -webkit-tap-highlight-color: transparent;
-    }
-
-    .handle {
-        width: 48px;
-        height: 4px;
-        border-radius: 2px;
-        background: var(--overlay-3);
     }
 
     .content {

@@ -1742,7 +1742,6 @@
         "composer": {
             "attach": {
                 "label": "附件",
-                "photos": "{count, plural, other {# 张照片}}",
                 "camera": "相机",
                 "allPhotos": "所有照片",
                 "file": "文件",
@@ -1752,13 +1751,11 @@
                 "swap": "兑换",
                 "memeFighter": "Meme fighter",
                 "photosAndVideos": "照片和视频",
-                "videos": "{count, plural, other {# 个视频}}",
                 "photo": "照片",
                 "video": "视频",
                 "videoLength": "视频 {duration}",
                 "selected": "{name}，已选第 {n} 个",
                 "clear": "清除",
-                "attachCount": "附加 {count} 个",
                 "max": "最多 10 张照片或视频",
                 "recents": "最近项目",
                 "ofMax": "{count}/{max}",
@@ -1767,7 +1764,8 @@
                 "drag": "向上拖动查看所有照片，向下拖动关闭",
                 "dragBack": "向下拖动返回",
                 "dragToClose": "向下拖动关闭",
-                "notAllSent": "部分照片或视频未发送，它们仍在附件中。"
+                "notAllSent": "部分照片或视频未发送，它们仍在附件中。",
+                "done": "完成"
             },
             "emoji": {
                 "recent": "最近",
@@ -1787,11 +1785,13 @@
                 "noMatch": "没有与“{query}”匹配的表情",
                 "clearSearch": "清除搜索",
                 "expand": "向上拖动展开",
-                "shrink": "向下拖动收起"
+                "shrink": "向下拖动收起",
+                "searchHandle": "向上拖动展开，向下拖动关闭搜索"
             },
             "gif": {
                 "none": "未找到 GIF",
-                "unavailable": "无法加载 GIF。请检查网络连接。"
+                "unavailable": "无法加载 GIF。请检查网络连接。",
+                "searchHandle": "向下拖动隐藏键盘"
             }
         },
         "conversation": {

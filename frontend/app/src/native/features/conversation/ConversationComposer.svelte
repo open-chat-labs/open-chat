@@ -1,8 +1,9 @@
 <!-- A conversation's composer (native plan 05): the library's MessageComposer as a pill, its + and
      emoji buttons in the platform's order, opening the attach and emoji panels (06, 07) in the
      keyboard's place (the slot under it, KeyboardSlot, the panel's surface KeyboardPanel), with the
-     chat's draft (its text, the reply or edit a swipe set, photos and videos or a file attached:
-     the first in the draft, those after it here, stagedMedia), @mentions, a voice message, and the
+     chat's draft (its text, the reply or edit a swipe set, a file attached), the photos and videos
+     picked (MediaPicks: the attach panel's selection, live in the composer), @mentions, a voice
+     message, and the
      notice over it (the throttle, a video being prepared); where the reader can't send, the old
      footer's reason instead. Its operations are the shared ones the web's composer uses
      (logic/composer, logic/conversation/draftActions, the client's sends). A part of the
@@ -61,20 +62,17 @@
         type ComposerBuilder,
     } from "@src/logic/composer/composer";
     import {
+        composerAttachment,
         composerContext,
         composerMention,
         composerStartText,
-        stagedAttachment,
     } from "@src/logic/composer/composerProps";
-    import { MAX_MEDIA } from "@src/logic/composer/mediaSelection.svelte";
     import {
-        isMedia,
-        mediaCount,
+        MediaPicks,
+        picksTray,
         sendMoreMedia,
-        stageMedia,
-        unstage,
-        type Staged,
-    } from "@src/logic/composer/stagedMedia";
+        type PickSource,
+    } from "@src/logic/composer/mediaPicks.svelte";
     import {
         cancelComposing,
         composingMessageIndex,
@@ -181,12 +179,16 @@
                   ),
         ),
     );
-    // what's attached: the draft's (one), and the photos and videos picked with it after it, which
-    // go in messages of their own after the draft's; none of those without media first
+    // what's attached: the photos and videos picked (the attach panel's selection, 06 "live in the
+    // composer"), each in as it's picked and prepared meanwhile; else the draft's attachment (a
+    // file, or a photo pasted or attached on another device). They don't mix: a pick takes the
+    // draft's attachment's place, and a file the picks'.
+    const picks = new MediaPicks();
     const first = $derived(draftAttachment(draft));
-    let more = $state.raw<AttachmentContent[]>([]);
-    const attached = $derived<Staged>({ first, more: isMedia(first) ? more : [] });
-    const staged = $derived(stagedAttachment(attached.first, attached.more, ctx));
+    const staged = $derived(picks.count > 0 ? picksTray(picks.picks) : composerAttachment(first, ctx));
+    // the picks being prepared
+    const preparing = new Map<string, Promise<void>>();
+    let nextFile = 0;
     const composingIndex = $derived(composingMessageIndex(draft, context));
 
     // a direct chat with a bot takes text only (its direct-message command)
@@ -271,26 +273,47 @@
         typing.input(text);
     }
 
-    // done once the message shows; refused, it rejects and the composer keeps the draft
+    // done once the message shows; refused, it rejects and the composer keeps the draft. With
+    // photos and videos picked: once they're prepared, the first with the caption, the others a
+    // message each after it, and the panel goes (06)
     async function send(text: string): Promise<void> {
         typing.stopped();
-        const after = attached.more;
+        if (picks.count > 0) {
+            await Promise.all(preparing.values());
+            const contents = picks.contents();
+            if (contents.length === 0) throw new Error("nothing prepared");
+            const sent = await sendComposed(client, chat, context, text, {
+                content: contents[0],
+                shown: true,
+            });
+            if (sent.kind !== "posted") throw new Error(sent.reason);
+            picks.clear();
+            slot.close();
+            if (contents.length > 1) void sendAfter(contents.slice(1));
+            return;
+        }
         const sent = await sendComposed(client, chat, context, text, {
             content: draftAttachment(draft),
             shown: staged !== null,
         });
         if (sent.kind !== "posted") throw new Error(sent.reason);
-        if (after.length > 0) {
-            more = [];
-            void sendAfter(after);
-        }
     }
 
-    // the photos and videos after the draft's, a message each; refused, those left stay attached
+    // the photos and videos after the first, a message each; refused, those left are picked again
     async function sendAfter(after: readonly AttachmentContent[]) {
         const sent = await sendMoreMedia(client, context, after);
         if (sent.kind === "posted") return;
-        restage(stageMedia({ first: undefined, more: [] }, sent.left));
+        for (const content of sent.left) {
+            const id = `left:${nextFile++}`;
+            const video = content.kind === "video_content";
+            const thumb =
+                content.kind === "image_content"
+                    ? (content.blobUrl ?? content.thumbnailData)
+                    : content.kind === "video_content"
+                      ? content.thumbnailData
+                      : undefined;
+            if (picks.add({ id, video, thumb }) === "picked") picks.prepared(id, content);
+        }
         toast($_("native.composer.attach.notAllSent"));
     }
 
@@ -304,53 +327,73 @@
     async function attachFile(file: File) {
         const outcome = await client.attachFile(file, context);
         if (outcome.kind !== "attached") toast(interpolate($_, attachRefusal(outcome, $_)));
-        else more = [];
+        else picks.clear();
     }
 
-    // what's attached now: the draft's first (in the chat it was picked for), the rest here
-    function restage(next: Staged, to: MessageContext = context) {
-        if (next.first !== first) localUpdates.draftMessages.setAttachment(to, next.first);
-        more = [...next.more];
-    }
-
-    // how many more photos and videos may be attached
-    const room = $derived(MAX_MEDIA - mediaCount(attached));
-
-    // photos and videos picked (the panel's, the camera's, the browser's), after those attached,
-    // up to ten in all, each prepared as it would be alone; those that may not be sent are said
-    async function attachMedia(files: (File | LazyFile)[]) {
-        const to = context;
-        if (files.length > room) toast($_("native.composer.attach.max"));
-        const added: AttachmentContent[] = [];
-        for (const file of files.slice(0, room)) {
-            const prepared = await client.prepareAttachment(file, to);
-            if (prepared.kind === "prepared") added.push(prepared.content);
-            else toast(interpolate($_, attachRefusal(prepared, $_)));
+    // one picked: into the composer at once, prepared meanwhile (in the chat it was picked in);
+    // one that can't be is put back, and said
+    function pickMedia(source: PickSource, file: () => Promise<File | LazyFile>): boolean {
+        const outcome = picks.add(source);
+        if (outcome === "full") {
+            toast($_("native.composer.attach.max"));
+            return false;
         }
-        restage(stageMedia(attached, added), to);
-    }
-
-    async function attachPicked(picked: readonly RecentItem[]) {
-        slot.close();
-        const files: LazyFile[] = [];
-        for (const item of picked) {
+        // they don't mix: a photo takes a file's place
+        if (first !== undefined) localUpdates.draftMessages.setAttachment(context, undefined);
+        const to = context;
+        const job = (async () => {
             try {
-                files.push(await recentMediaFile(item.media));
+                const prepared = await client.prepareAttachment(await file(), to);
+                if (prepared.kind === "prepared") {
+                    picks.prepared(source.id, prepared.content);
+                    return;
+                }
+                picks.remove(source.id);
+                toast(interpolate($_, attachRefusal(prepared, $_)));
             } catch (err) {
                 console.warn("Couldn't read a photo or video picked", err);
+                picks.remove(source.id);
                 toast($_("attachFileFailed"));
+            } finally {
+                preparing.delete(source.id);
             }
+        })();
+        preparing.set(source.id, job);
+        return true;
+    }
+
+    // a tile tapped in the attach panel: picked, or put back
+    function toggleRecent(item: RecentItem, duration: string | undefined) {
+        if (picks.numberOf(item.id) !== undefined) {
+            picks.remove(item.id);
+            return;
         }
-        await attachMedia(files);
+        pickMedia({ id: item.id, video: item.video, thumb: item.thumb, duration }, () =>
+            recentMediaFile(item.media),
+        );
+    }
+
+    // photos and videos from the camera or the browser's picker
+    function attachMedia(files: File[]) {
+        for (const file of files) {
+            const video = file.type.startsWith("video/");
+            const source = {
+                id: `file:${nextFile++}`,
+                video,
+                thumb: video ? undefined : URL.createObjectURL(file),
+            };
+            if (!pickMedia(source, async () => file)) break;
+        }
     }
 
     function removeMedia(index: number) {
-        restage(unstage(attached, index));
+        if (picks.count > 0) picks.removeAt(index);
+        else localUpdates.draftMessages.setAttachment(context, undefined);
     }
 
     function removeAttachment() {
+        picks.clear();
         localUpdates.draftMessages.setAttachment(context, undefined);
-        more = [];
     }
 
     function paste(e: ClipboardEvent) {
@@ -430,8 +473,28 @@
             : new KeyboardPanelState(panelKind === "emoji" || gallery),
     );
 
+    // the keyboard asked for (the emoji panel's keyboard glyph) hasn't come: Android drops a focus's
+    // keyboard while the last is still going down, so the field is focused afresh, once
+    $effect(() => {
+        slot.onMissed = () => {
+            const field = document.activeElement;
+            if (!(field instanceof HTMLTextAreaElement) || composer === undefined) return false;
+            field.blur();
+            composer.focus();
+            return true;
+        };
+        return () => (slot.onMissed = undefined);
+    });
+
+    // the sheet knows the emoji panel's search (its backdrop, its handle's rules)
+    $effect(() => {
+        panel?.setSearch(slot.search);
+    });
+
     const handleLabel = $derived.by(() => {
         const grown = (panel?.f ?? 0) > 0.5;
+        if (slot.search === "strip") return $_("native.composer.emoji.searchHandle");
+        if (slot.search === "grown") return $_("native.composer.gif.searchHandle");
         if (slot.panel === "emoji") {
             return $_(grown ? "native.composer.emoji.shrink" : "native.composer.emoji.expand");
         }
@@ -472,7 +535,7 @@
             attachment={staged}
             onRemoveAttachment={removeAttachment}
             onRemoveMediaItem={removeMedia}
-            onAddMedia={attachable && room > 0 && isMedia(first)
+            onAddMedia={attachable && picks.count > 0 && picks.room > 0
                 ? () => {
                       if (slot.panel !== "attach") toggle("attach");
                   }
@@ -526,6 +589,7 @@
             rest={slot.panelRest}
             covered={slot.covered}
             {handleLabel}
+            handle={slot.panel === "emoji" || !gallery}
             onClose={() => slot.close()}
         >
             {#if slot.panel === "emoji"}
@@ -545,13 +609,14 @@
                     media={pickable.includes("media")}
                     file={pickable.includes("file")}
                     {builders}
-                    {room}
+                    {picks}
+                    onToggle={toggleRecent}
+                    {handleLabel}
+                    onClose={() => slot.close()}
                     onCamera={() => pick("camera")}
                     onPickMedia={() => pick("media")}
                     onPickFile={() => pick("file")}
                     onBuild={build}
-                    onAttach={attachPicked}
-                    onFull={() => toast($_("native.composer.attach.max"))}
                     {onToastFloor}
                 />
             {/if}

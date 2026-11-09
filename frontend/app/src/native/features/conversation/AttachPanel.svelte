@@ -1,11 +1,12 @@
-<!-- The attach panel (native plan 06), in the keyboard-area slot (KeyboardPanel). In the apps, at
-     rest: the gallery strip (Camera, the phone's last 100 photos and videos, All photos) over the
-     actions (File, Poll, Prize, Send crypto, Swap, Meme fighter, 3 × 2); photos and videos tapped
-     are picked, numbered, up to the most, and while any are the actions give way to what's picked,
-     Clear and "Attach N". Grown (dragged up, or All photos), the Recents grid in its place, picked
-     the same, with "Attach N" pinned at the bottom. On mobile web: no strip and no Recents, the
-     browser's picker (Photos & videos) first among the actions, in four centred columns. Only what
-     the chat lets the reader send is offered. -->
+<!-- The attach panel (native plan 06), in the keyboard-area sheet (KeyboardPanel). In the apps, at
+     rest: the top row ("N of 10", the handle, Clear), the gallery strip (Camera, the phone's last
+     100 photos and videos, All photos) and the actions (File, Poll, Prize, Send crypto, Swap, Meme
+     fighter, 3 × 2), always. Photos and videos tapped go straight into the composer, numbered, up
+     to ten: the composer's media are the selection (MediaPicks), so removing one there puts its
+     tile back. Grown (dragged up, or All photos), the Recents grid in its place, picked the same,
+     with Done pinned at the bottom (back to rest, where the picks show in the composer). On mobile
+     web: no strip and no Recents, the browser's picker (Photos & videos) first among the actions,
+     in four centred columns. Only what the chat lets the reader send is offered. -->
 <script module lang="ts">
     import type { RecentMedia, RecentMediaList } from "@src/utils/native/recentMedia";
 
@@ -20,17 +21,18 @@
     import { formatClock } from "@client";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import type { ComposerBuilder } from "@src/logic/composer/composer";
-    import { MediaSelection } from "@src/logic/composer/mediaSelection.svelte";
+    import { MAX_MEDIA, type MediaPicks } from "@src/logic/composer/mediaPicks.svelte";
     import {
         recentMedia,
         recentMediaThumbnail,
         recentMediaUrl,
     } from "@src/utils/native/recentMedia";
-    import { onDestroy, onMount, untrack } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import type { KeyboardPanelState } from "./panelState.svelte";
     import { panelLayers } from "./panelDrag";
     import { panelContentPull, panelDragHandle } from "./panelDragHandle";
+    import PanelHandle from "./PanelHandle.svelte";
 
     type Props = {
         panel: KeyboardPanelState;
@@ -42,18 +44,19 @@
         file: boolean;
         /** The builders offered (logic/composer's composerBuilders). */
         builders: ComposerBuilder[];
-        /** How many photos and videos may still be attached (ten, less those attached). */
-        room: number;
+        /** The photos and videos picked: the composer's (the selection). */
+        picks: MediaPicks;
+        /** A photo or video tapped: picked, or put back (the composer prepares it). */
+        onToggle: (item: RecentItem, duration: string | undefined) => void;
+        /** The handle's accessible name. */
+        handleLabel: string;
+        onClose: () => void;
         onCamera: () => void;
         /** The system's photo picker (mobile web's Photos & videos; All photos where none are listed). */
         onPickMedia: () => void;
         onPickFile: () => void;
         onBuild: (builder: ComposerBuilder) => void;
-        /** "Attach N": what's picked goes to the composer. */
-        onAttach: (picked: readonly RecentItem[]) => void;
-        /** A pick past the most. */
-        onFull: () => void;
-        /** Where toasts sit while Recents shows (above its "Attach N"), or undefined. */
+        /** Where toasts sit while Recents shows (above its Done), or undefined. */
         onToastFloor: (px: number | undefined) => void;
     };
 
@@ -63,21 +66,16 @@
         media,
         file,
         builders,
-        room,
+        picks,
+        onToggle,
+        handleLabel,
+        onClose,
         onCamera,
         onPickMedia,
         onPickFile,
         onBuild,
-        onAttach,
-        onFull,
         onToastFloor,
     }: Props = $props();
-
-    // what's picked from the strip and Recents: one selection for both
-    const selection = new MediaSelection<RecentItem>(untrack(() => room));
-    $effect(() => {
-        selection.max = room;
-    });
 
     // the phone's last 100 (06): listed as the panel opens, the last list meanwhile
     const RECENT = 100;
@@ -127,7 +125,7 @@
 
     const layers = $derived(panelLayers(panel.f));
 
-    // while Recents shows, a toast ("Up to 10 …") sits just above its "Attach N", not above the
+    // while Recents shows, a toast ("Up to 10 …") sits just above its Done, not above the
     // composer it covers: the pinned bar less its top padding
     const PINNED_TOP = 12;
     let pinnedHeight = $state(0);
@@ -138,7 +136,7 @@
     $effect(() => () => onToastFloor(undefined));
 
     function toggle(item: RecentItem) {
-        if (selection.toggle(item) === "full") onFull();
+        onToggle(item, durations[item.id]);
     }
 
     function allPhotos() {
@@ -154,27 +152,15 @@
                 ? $_("native.composer.attach.video")
                 : $_("native.composer.attach.videoLength", { values: { duration } })
             : $_("native.composer.attach.photo");
-        const n = selection.numberOf(item.id);
+        const n = picks.numberOf(item.id);
         return n === undefined
             ? name
             : $_("native.composer.attach.selected", { values: { name, n } });
     }
 
-    const summary = $derived.by(() => {
-        const { photos, videos } = selection.counts;
-        const parts: string[] = [];
-        if (photos > 0) parts.push($_("native.composer.attach.photos", { values: { count: photos } }));
-        if (videos > 0) parts.push($_("native.composer.attach.videos", { values: { count: videos } }));
-        return parts.join(" · ");
-    });
-
-    const attachLabel = $derived(
-        $_("native.composer.attach.attachCount", { values: { count: selection.count } }),
+    const ofMax = $derived(
+        $_("native.composer.attach.ofMax", { values: { count: picks.count, max: MAX_MEDIA } }),
     );
-
-    function attach() {
-        onAttach(selection.picked);
-    }
 
     // the actions, each in its colour (06): in the apps File and the builders; on mobile web the
     // browser's picker first
@@ -225,7 +211,7 @@
 </script>
 
 {#snippet tile(item: RecentItem, size: "strip" | "grid")}
-    {@const n = selection.numberOf(item.id)}
+    {@const n = picks.numberOf(item.id)}
     <button
         type="button"
         class="photo {size}"
@@ -248,7 +234,7 @@
 {/snippet}
 
 <div class="attach" class:web={!gallery} role="group" aria-label={$_("native.composer.attach.label")}>
-    <!-- at rest: the strip, then the actions or what's picked -->
+    <!-- at rest: the top row, the strip, the actions -->
     <div
         class="layer rest"
         style:opacity={layers.rest}
@@ -256,6 +242,22 @@
         aria-hidden={!layers.restLive}
     >
         {#if strip}
+            <div class="top-row">
+                <span class="count" class:shown={picks.count > 0} aria-live="polite">
+                    {picks.count > 0 ? ofMax : ""}
+                </span>
+                <PanelHandle {panel} label={handleLabel} zone="centre" {onClose} />
+                <button
+                    type="button"
+                    class="clear"
+                    class:shown={picks.count > 0}
+                    tabindex={picks.count > 0 ? 0 : -1}
+                    aria-hidden={picks.count === 0}
+                    onclick={() => picks.clear()}
+                >
+                    {$_("native.composer.attach.clear")}
+                </button>
+            </div>
             <div class="strip" data-tab-swipe="off">
                 <button type="button" class="tile" onclick={onCamera}>
                     <span class="tile-icon camera"></span>
@@ -270,18 +272,7 @@
                 </button>
             </div>
         {/if}
-        {#if selection.count > 0}
-            <div class="picked">
-                <div class="picked-line">
-                    <span class="picked-summary">{summary}</span>
-                    <button type="button" class="clear" onclick={() => selection.clear()}>
-                        {$_("native.composer.attach.clear")}
-                    </button>
-                </div>
-                <Button label={attachLabel} icon="plus" size="lg" fullWidth onClick={attach} />
-            </div>
-        {:else}
-            <div class="actions">
+        <div class="actions">
                 {#each actions as action (action.id)}
                     <button
                         type="button"
@@ -298,8 +289,7 @@
                         <span class="action-label">{action.label}</span>
                     </button>
                 {/each}
-            </div>
-        {/if}
+        </div>
     </div>
 
     <!-- grown: Recents, picked the same -->
@@ -310,6 +300,7 @@
             style:pointer-events={layers.expandedLive ? undefined : "none"}
             aria-hidden={!layers.expandedLive}
         >
+            <PanelHandle {panel} label={$_("native.composer.attach.dragBack")} {onClose} />
             <div class="recents-header" {@attach panelDragHandle(panel)}>
                 <button
                     type="button"
@@ -321,11 +312,9 @@
                 </button>
                 <span class="recents-title">{$_("native.composer.attach.recents")}</span>
                 <span class="recents-count">
-                    {selection.count > 0
-                        ? $_("native.composer.attach.ofMax", {
-                              values: { count: selection.count, max: selection.max },
-                          })
-                        : $_("native.composer.attach.upTo", { values: { max: selection.max } })}
+                    {picks.count > 0
+                        ? ofMax
+                        : $_("native.composer.attach.upTo", { values: { max: MAX_MEDIA } })}
                 </span>
             </div>
             <div class="grid-scroll" {@attach panelContentPull(panel)}>
@@ -335,12 +324,14 @@
                     {/each}
                 </div>
             </div>
-            <div
-                class="pinned"
-                class:shown={selection.count > 0}
-                bind:offsetHeight={pinnedHeight}
-            >
-                <Button label={attachLabel} icon="plus" size="lg" fullWidth onClick={attach} />
+            <div class="pinned" class:shown={picks.count > 0} bind:offsetHeight={pinnedHeight}>
+                <Button
+                    label={$_("native.composer.attach.done")}
+                    icon="check"
+                    size="lg"
+                    fullWidth
+                    onClick={() => panel.rest()}
+                />
             </div>
         </div>
     {/if}
@@ -558,38 +549,54 @@
         @include line-clamp(2);
     }
 
-    // what's picked, in the actions' place (06: the line, then "Attach N", 12px apart)
-    // the line under the strip, "Attach N" at the bottom
-    .picked {
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        gap: var(--space-12);
-        padding: 0 var(--space-12) max(var(--safe-bottom), var(--space-12));
-    }
-
-    .picked-line {
-        display: flex;
+    // 06: the top row, 44px: "N of 10", the handle's zone, Clear (a 44px tap area)
+    .top-row {
+        flex: none;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
         align-items: center;
-        justify-content: space-between;
-        gap: var(--space-12);
-        padding-inline: var(--space-8);
+        height: 44px;
+        padding: 0 var(--space-14);
     }
 
-    .picked-summary {
-        font: var(--weight-semibold) text-size(14px) / 1.3 var(--font-sans);
-        color: var(--ink-2);
+    .count {
+        justify-self: start;
+        font: var(--weight-medium) text-size(12px) / 1 var(--font-mono);
+        color: var(--ink-3);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+
+        &.shown {
+            opacity: 1;
+        }
     }
 
     .clear {
-        padding: 0;
+        justify-self: end;
+        height: 44px;
+        margin-inline-end: calc(var(--space-14) * -1);
+        padding: 0 var(--space-14);
         border: 0;
         background: none;
-        font: var(--weight-semibold) text-size(14px) / 1.3 var(--font-sans);
-        color: var(--accent);
+        font: var(--weight-semibold) text-size(13.5px) / 1 var(--font-sans);
+        color: var(--accent-bright);
         cursor: pointer;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+
+        &.shown {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    }
+
+    @include reduced-motion {
+        .count,
+        .clear {
+            transition: none;
+        }
     }
 
     // ---- Recents
@@ -641,11 +648,11 @@
         flex: 1;
         min-height: 0;
         overflow-y: auto;
-        overscroll-behavior: none;
+        overscroll-behavior: contain;
         scrollbar-width: none;
     }
 
-    // 06: three columns, 4px apart, 6px at the sides; the last row clears "Attach N"
+    // 06: three columns, 4px apart, 6px at the sides; the last row clears Done
     .grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -670,7 +677,7 @@
         }
     }
 
-    // "Attach N" over the grid's end, coming up as something's picked
+    // Done over the grid's end, coming up as something's picked
     .pinned {
         position: absolute;
         inset-inline: 0;

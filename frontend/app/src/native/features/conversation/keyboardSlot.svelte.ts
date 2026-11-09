@@ -19,7 +19,7 @@ import {
 
 // How long the slot holds the keyboard's height for a keyboard that doesn't come (a hardware
 // keyboard, a focus the platform shows none for).
-const EXPECT_FOR_MS = 1000;
+const EXPECT_FOR_MS = 2000;
 
 /**
  * The slot under a conversation's composer (keyboardSlot.ts): the keyboard, or a panel in its place.
@@ -88,16 +88,17 @@ export class KeyboardSlot {
         });
     }
 
-    /** The panel's own resting height: the strip over the keyboard while searching emoji. */
+    /** The panel's own resting height: searching emoji, the strip on top of the keyboard. */
     get panelRest(): number {
-        return this.#slot.search === "strip" ? this.height : this.resting;
+        if (this.#slot.search !== "strip") return this.resting;
+        return (this.#reported ? this.height : this.#viewportCovered) + SEARCH_STRIP;
     }
 
     /** How much of the panel's bottom the keyboard covers (what it shows sits above it). */
     get covered(): number {
         switch (this.#slot.search) {
             case "strip":
-                return this.#reported ? this.height - SEARCH_STRIP : this.#viewportCovered;
+                return this.#reported ? this.height : this.#viewportCovered;
             case "grown":
                 return this.#reported ? this.#up : this.#viewportCovered;
             default:
@@ -169,7 +170,10 @@ export class KeyboardSlot {
 
     #take(height: number) {
         this.#up = height;
-        if (height > 0) this.#last = height;
+        if (height > 0) {
+            this.#last = height;
+            this.#retried = false;
+        }
         const next = keyboardMoved(this.#slot, height > 0);
         if (next !== this.#slot) this.#slot = next;
         if (!this.#slot.expecting) clearTimeout(this.#expectTimer);
@@ -191,6 +195,27 @@ export class KeyboardSlot {
         };
     }
 
+    /**
+     * Asks the keyboard to come again (the field focused afresh) when it hasn't: Android doesn't
+     * always show one for a focus while the last is still going down. True if it asked.
+     */
+    onMissed: (() => boolean) | undefined;
+
+    // asked for the keyboard again since it last came
+    #retried = false;
+
+    // the keyboard hasn't come: asked again once (focusing the field holds the slot again), then
+    // no longer held for
+    #missed() {
+        if (!this.#slot.expecting) return;
+        if (!this.#retried && this.#up === 0) {
+            this.#retried = true;
+            if (this.onMissed?.() === true) return;
+        }
+        const next = keyboardMissed(this.#slot);
+        if (next !== this.#slot) this.#slot = next;
+    }
+
     #set(slot: Slot) {
         const wasExpecting = this.#slot.expecting;
         this.#slot = slot;
@@ -198,10 +223,7 @@ export class KeyboardSlot {
         if (slot.expecting) {
             // what to hold for the keyboard: its last height, fixed as it's asked for
             if (!wasExpecting) this.#held = this.#last ?? keyboard.height;
-            this.#expectTimer = setTimeout(() => {
-                const next = keyboardMissed(this.#slot, this.#up > 0);
-                if (next !== this.#slot) this.#slot = next;
-            }, EXPECT_FOR_MS);
+            this.#expectTimer = setTimeout(() => this.#missed(), EXPECT_FOR_MS);
         }
     }
 }

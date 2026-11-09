@@ -1742,7 +1742,6 @@
         "composer": {
             "attach": {
                 "label": "צירוף",
-                "photos": "{count, plural, one {תמונה אחת} other {# תמונות}}",
                 "camera": "מצלמה",
                 "allPhotos": "כל התמונות",
                 "file": "קובץ",
@@ -1752,13 +1751,11 @@
                 "swap": "החלפה",
                 "memeFighter": "Meme fighter",
                 "photosAndVideos": "תמונות וסרטונים",
-                "videos": "{count, plural, one {סרטון אחד} other {# סרטונים}}",
                 "photo": "תמונה",
                 "video": "סרטון",
                 "videoLength": "סרטון {duration}",
                 "selected": "{name}, נבחר {n}",
                 "clear": "ניקוי",
-                "attachCount": "צירוף {count}",
                 "max": "עד 10 תמונות או סרטונים",
                 "recents": "אחרונים",
                 "ofMax": "{count} מתוך {max}",
@@ -1767,7 +1764,8 @@
                 "drag": "גוררים למעלה לכל התמונות, למטה לסגירה",
                 "dragBack": "גוררים למטה כדי לחזור",
                 "dragToClose": "גוררים למטה כדי לסגור",
-                "notAllSent": "חלק מהתמונות או הסרטונים לא נשלחו. הם עדיין מצורפים."
+                "notAllSent": "חלק מהתמונות או הסרטונים לא נשלחו. הם עדיין מצורפים.",
+                "done": "סיום"
             },
             "emoji": {
                 "recent": "אחרונים",
@@ -1787,11 +1785,13 @@
                 "noMatch": "אין אמוג'י עבור „{query}”",
                 "clearSearch": "ניקוי החיפוש",
                 "expand": "גוררים למעלה כדי להרחיב",
-                "shrink": "גוררים למטה כדי לכווץ"
+                "shrink": "גוררים למטה כדי לכווץ",
+                "searchHandle": "גוררים למעלה כדי להרחיב, למטה כדי לסגור את החיפוש"
             },
             "gif": {
                 "none": "לא נמצאו קובצי GIF",
-                "unavailable": "לא ניתן היה לטעון קובצי GIF. כדאי לבדוק את החיבור."
+                "unavailable": "לא ניתן היה לטעון קובצי GIF. כדאי לבדוק את החיבור.",
+                "searchHandle": "גוררים למטה כדי להסתיר את המקלדת"
             }
         },
         "conversation": {

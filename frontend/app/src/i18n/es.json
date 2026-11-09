@@ -1742,7 +1742,6 @@
         "composer": {
             "attach": {
                 "label": "Adjuntar",
-                "photos": "{count, plural, one {# foto} other {# fotos}}",
                 "camera": "Cámara",
                 "allPhotos": "Todas las fotos",
                 "file": "Archivo",
@@ -1752,13 +1751,11 @@
                 "swap": "Intercambiar",
                 "memeFighter": "Meme fighter",
                 "photosAndVideos": "Fotos y vídeos",
-                "videos": "{count, plural, one {# vídeo} other {# vídeos}}",
                 "photo": "Foto",
                 "video": "Vídeo",
                 "videoLength": "Vídeo {duration}",
                 "selected": "{name}, seleccionado {n}",
                 "clear": "Borrar",
-                "attachCount": "Adjuntar {count}",
                 "max": "Hasta 10 fotos o vídeos",
                 "recents": "Recientes",
                 "ofMax": "{count} de {max}",
@@ -1767,7 +1764,8 @@
                 "drag": "Arrastra hacia arriba para ver todas las fotos, hacia abajo para cerrar",
                 "dragBack": "Arrastra hacia abajo para volver",
                 "dragToClose": "Arrastra hacia abajo para cerrar",
-                "notAllSent": "Algunas fotos o vídeos no se enviaron. Siguen adjuntos."
+                "notAllSent": "Algunas fotos o vídeos no se enviaron. Siguen adjuntos.",
+                "done": "Listo"
             },
             "emoji": {
                 "recent": "Recientes",
@@ -1787,11 +1785,13 @@
                 "noMatch": "No hay emojis para «{query}»",
                 "clearSearch": "Borrar búsqueda",
                 "expand": "Arrastra hacia arriba para ampliar",
-                "shrink": "Arrastra hacia abajo para reducir"
+                "shrink": "Arrastra hacia abajo para reducir",
+                "searchHandle": "Arrastra hacia arriba para ampliar, hacia abajo para cerrar la búsqueda"
             },
             "gif": {
                 "none": "No se encontraron GIFs",
-                "unavailable": "No se pudieron cargar los GIFs. Comprueba tu conexión."
+                "unavailable": "No se pudieron cargar los GIFs. Comprueba tu conexión.",
+                "searchHandle": "Arrastra hacia abajo para ocultar el teclado"
             }
         },
         "conversation": {

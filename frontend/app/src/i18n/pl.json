@@ -1742,7 +1742,6 @@
         "composer": {
             "attach": {
                 "label": "Załącz",
-                "photos": "{count, plural, one {# zdjęcie} few {# zdjęcia} many {# zdjęć} other {# zdjęcia}}",
                 "camera": "Aparat",
                 "allPhotos": "Wszystkie zdjęcia",
                 "file": "Plik",
@@ -1752,13 +1751,11 @@
                 "swap": "Wymiana",
                 "memeFighter": "Meme fighter",
                 "photosAndVideos": "Zdjęcia i filmy",
-                "videos": "{count, plural, one {# film} few {# filmy} many {# filmów} other {# filmu}}",
                 "photo": "Zdjęcie",
                 "video": "Film",
                 "videoLength": "Film {duration}",
                 "selected": "{name}, wybrane {n}",
                 "clear": "Wyczyść",
-                "attachCount": "Załącz {count}",
                 "max": "Maksymalnie 10 zdjęć lub filmów",
                 "recents": "Ostatnie",
                 "ofMax": "{count} z {max}",
@@ -1767,7 +1764,8 @@
                 "drag": "Przeciągnij w górę, aby zobaczyć wszystkie zdjęcia, w dół, aby zamknąć",
                 "dragBack": "Przeciągnij w dół, aby wrócić",
                 "dragToClose": "Przeciągnij w dół, aby zamknąć",
-                "notAllSent": "Niektóre zdjęcia lub filmy nie zostały wysłane. Nadal są załączone."
+                "notAllSent": "Niektóre zdjęcia lub filmy nie zostały wysłane. Nadal są załączone.",
+                "done": "Gotowe"
             },
             "emoji": {
                 "recent": "Ostatnie",
@@ -1787,11 +1785,13 @@
                 "noMatch": "Brak emoji dla „{query}”",
                 "clearSearch": "Wyczyść wyszukiwanie",
                 "expand": "Przeciągnij w górę, aby rozwinąć",
-                "shrink": "Przeciągnij w dół, aby zwinąć"
+                "shrink": "Przeciągnij w dół, aby zwinąć",
+                "searchHandle": "Przeciągnij w górę, aby rozwinąć, w dół, aby zamknąć wyszukiwanie"
             },
             "gif": {
                 "none": "Nie znaleziono GIF-ów",
-                "unavailable": "Nie udało się wczytać GIF-ów. Sprawdź połączenie."
+                "unavailable": "Nie udało się wczytać GIF-ów. Sprawdź połączenie.",
+                "searchHandle": "Przeciągnij w dół, aby ukryć klawiaturę"
             }
         },
         "conversation": {

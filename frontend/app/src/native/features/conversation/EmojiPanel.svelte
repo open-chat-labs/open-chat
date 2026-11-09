@@ -22,7 +22,8 @@
     import { _ } from "svelte-i18n";
     import { panelContentPull } from "./panelDragHandle";
     import type { Search } from "./keyboardSlot";
-    import type { KeyboardPanelState } from "./panelState.svelte";
+    import { GIF_PULL_HIDES_KEYBOARD } from "./panelDrag";
+    import type { KeyboardPanelState, SearchLeave } from "./panelState.svelte";
 
     type Props = {
         panel: KeyboardPanelState;
@@ -176,43 +177,101 @@
         };
     }
 
+    // switching tabs blurs the field, clears the query and leaves any search, the sheet keeping
+    // its size (07 "Top row")
     function switchTo(next: "emoji" | "gif") {
         if (next === tab) return;
+        if (document.activeElement === field) leaveSearch("keep");
         tab = next;
         query = "";
         matches = undefined;
         clearTimeout(searchTimer);
         if (next === "gif") void feed?.search("");
-        // the field keeps the keyboard: the other search's way of showing it
-        if (document.activeElement === field) searchStarted();
     }
 
-    // the field has the keyboard: emoji, the strip over it (a grown panel back at rest first, and
-    // not growing meanwhile); GIFs, the panel grown
+    // the size the sheet had as the emoji search started, for when it's over
+    let beforeSearch: "rest" | "open" = "rest";
+    // the emoji search's strip is up (the slot's search may already have ended with the keyboard)
+    let inStrip = false;
+    // how the search is being left (set before the field's blurred), else by the keyboard going
+    type Leave = SearchLeave | "keep" | "keyboard";
+    let leaving: Leave | undefined;
+
+    // the field has the keyboard: emoji, the compact strip on top of it (from rest or grown, the
+    // sheet not growing meanwhile); GIFs, the sheet grown to 90%
     function searchStarted() {
         if (tab === "gif") {
             panel.setExpandable(true);
             panel.expand();
             onSearch("grown");
         } else {
+            beforeSearch = panel.open ? "open" : "rest";
+            inStrip = true;
             panel.setExpandable(false);
             onSearch("strip");
         }
     }
 
-    function searchEnded() {
-        panel.setExpandable(true);
-        onSearch("none");
+    /** Leaves the search: hides its keyboard, the sheet going where `how` says. */
+    function leaveSearch(how: Leave) {
+        leaving = how;
+        if (how === "close") {
+            clearTimeout(searchTimer);
+            searchRun += 1;
+            query = "";
+            matches = undefined;
+        }
+        if (document.activeElement === field) field?.blur();
+        else searchEnded();
     }
 
-    // the search over (the keyboard went down, or the grown GIFs went back to rest): its keyboard
-    // goes too
+    // the field's keyboard gone: the sheet as the way out says (07 "Leave"): the backdrop, to
+    // rest; pulled up, grown; the emoji search closed or its keyboard hidden, the size it had
+    // before; the GIF search's keyboard hidden, as it is (90%)
+    function searchEnded() {
+        if (gone) return;
+        const how = leaving ?? "keyboard";
+        leaving = undefined;
+        const strip = inStrip;
+        inStrip = false;
+        panel.setExpandable(true);
+        onSearch("none");
+        if (how === "rest") panel.rest();
+        else if (how === "expand") panel.expand();
+        else if (strip && (how === "close" || how === "keyboard")) {
+            if (beforeSearch === "open") panel.expand();
+            else panel.rest();
+        }
+    }
+
+    // a search left from the sheet (the backdrop, the strip's handle pulled)
     $effect(() => {
-        const over =
-            searchMode === "none" || (searchMode === "grown" && !panel.open && !panel.dragging);
-        if (over && document.activeElement === field) untrack(() => field?.blur());
+        const sheet = panel;
+        sheet.onLeaveSearch = (how) => leaveSearch(how);
+        return () => (sheet.onLeaveSearch = undefined);
     });
+
+    // the keyboard put away (its hide key): the field lets go of the focus, the search is over
+    $effect(() => {
+        if (searchMode === "none" && document.activeElement === field) {
+            untrack(() => field?.blur());
+        }
+    });
+
+    // the grown GIF search pulled down (the handle, or the grid at its top): past 12px the
+    // keyboard goes, and the pull goes on as the sheet's drag
+    $effect(() => {
+        if (searchMode === "grown" && panel.dragging && panel.dragDown > GIF_PULL_HIDES_KEYBOARD) {
+            untrack(() => {
+                if (document.activeElement === field) field?.blur();
+            });
+        }
+    });
+
+    // going (the panel closed): the field's keyboard goes with it, and nothing else is left to do
+    let gone = false;
     onDestroy(() => {
+        gone = true;
         if (document.activeElement === field) field?.blur();
     });
 
@@ -309,7 +368,7 @@
                 {@attach growFirst}
                 oninput={(e) => typed(e.currentTarget.value)}
                 onfocus={searchStarted}
-                onblur={searchEnded}
+                onblur={() => searchEnded()}
             />
             {#if query !== ""}
                 <button
@@ -516,8 +575,8 @@
         flex: 1;
         min-height: 0;
         overflow-y: auto;
-        // grown, a pull down at its top drags the panel (panelContentPull): no overscroll of its own
-        overscroll-behavior: none;
+        // a pull down at its top drags the panel (panelContentPull, 06)
+        overscroll-behavior: contain;
         padding: 2px var(--space-8) var(--space-8);
         scrollbar-width: none;
 
@@ -542,6 +601,7 @@
 
         .grid {
             display: flex;
+            gap: 2px;
         }
 
         .cell {
@@ -669,8 +729,9 @@
     .gifs {
         padding: 2px var(--space-10) calc(var(--space-8) + var(--safe-bottom));
 
+        // the keyboard over the grid's bottom (the panel's padding): the last row 10px above it
         &.raised {
-            padding-block-end: var(--space-8);
+            padding-block-end: var(--space-10);
         }
     }
 

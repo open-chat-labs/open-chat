@@ -8,7 +8,6 @@ import {
     PANEL_REST,
     PANEL_REST_WEB_ATTACH,
     restingHeight,
-    SEARCH_STRIP,
     searchChanged,
     slotHeight,
     togglePanel,
@@ -18,7 +17,7 @@ import {
 const down = { up: 0, known: 300, panel: 300 };
 const up = { up: 320, known: 320, panel: 320 };
 // mobile web: the keyboard's height isn't reported, a panel takes the design's
-const unreported = { up: 0, known: 0, panel: 282 };
+const unreported = { up: 0, known: 0, panel: 304 };
 const emoji: Slot = { ...CLOSED, panel: "emoji" };
 
 describe("the slot under the composer", () => {
@@ -28,7 +27,7 @@ describe("the slot under the composer", () => {
 
     test("is a panel's resting height, a keyboard reported meanwhile being one that's leaving", () => {
         expect(slotHeight(emoji, down)).toBe(300);
-        expect(slotHeight({ ...CLOSED, panel: "attach" }, unreported)).toBe(282);
+        expect(slotHeight({ ...CLOSED, panel: "attach" }, unreported)).toBe(304);
         expect(slotHeight({ ...CLOSED, panel: "attach" }, { ...up, panel: 300 })).toBe(300);
     });
 
@@ -42,18 +41,18 @@ describe("the slot under the composer", () => {
         expect(slotHeight(CLOSED, down)).toBe(0);
     });
 
-    test("searching emoji, is the keyboard (or the one coming) and the strip over it", () => {
+    test("searching emoji, is the keyboard (or the one coming): the strip sits over the composer", () => {
         const strip: Slot = { ...emoji, search: "strip" };
-        expect(slotHeight(strip, up)).toBe(320 + SEARCH_STRIP);
-        expect(slotHeight({ ...strip, expecting: true }, down)).toBe(300 + SEARCH_STRIP);
-        // unreported, the platform lifts the page: the strip alone
-        expect(slotHeight(strip, unreported)).toBe(SEARCH_STRIP);
+        expect(slotHeight(strip, up)).toBe(320);
+        expect(slotHeight({ ...strip, expecting: true }, down)).toBe(300);
+        // unreported, the platform lifts the page
+        expect(slotHeight(strip, unreported)).toBe(0);
     });
 
     test("searching GIFs, is the keyboard under the grown panel, else the panel's rest", () => {
         const grown: Slot = { ...emoji, search: "grown" };
         expect(slotHeight(grown, up)).toBe(320);
-        expect(slotHeight(grown, unreported)).toBe(282);
+        expect(slotHeight(grown, unreported)).toBe(304);
     });
 });
 
@@ -154,12 +153,12 @@ describe("the keyboard", () => {
         expect(keyboardMoved(emoji, false)).toBe(emoji);
     });
 
-    test("not coming after all, the search it was for is over", () => {
-        expect(keyboardMissed({ ...emoji, search: "strip", expecting: true }, false)).toEqual(
-            emoji,
-        );
-        expect(keyboardMissed({ ...CLOSED, expecting: true }, true)).toEqual(CLOSED);
-        expect(keyboardMissed(emoji, false)).toBe(emoji);
+    test("not coming after all, isn't held for; a search goes on", () => {
+        expect(keyboardMissed({ ...emoji, search: "strip", expecting: true })).toEqual({
+            ...emoji,
+            search: "strip",
+        });
+        expect(keyboardMissed(emoji)).toBe(emoji);
     });
 });
 

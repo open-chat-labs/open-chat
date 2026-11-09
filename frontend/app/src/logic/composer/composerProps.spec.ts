@@ -1,11 +1,10 @@
-import type { AttachmentContent, EventWrapper, Message } from "@client";
+import type { EventWrapper, Message } from "@client";
 import type { ConversationContext } from "@src/logic/conversation/messageRow";
 import {
     composerAttachment,
     composerContext,
     composerMention,
     composerStartText,
-    stagedAttachment,
 } from "./composerProps";
 
 
@@ -251,35 +250,6 @@ describe("the composer's staged attachment", () => {
                 ctx,
             ),
         ).toBeNull();
-    });
-});
-
-describe("photos and videos attached together", () => {
-    const image = (src: string): AttachmentContent => ({
-        kind: "image_content",
-        blobUrl: src,
-        height: 1,
-        width: 1,
-        thumbnailData: "THUMB",
-        mimeType: "image/jpeg",
-    });
-
-    test("are one tray, the draft's first", () => {
-        expect(stagedAttachment(image("blob:1"), [image("blob:2"), image("blob:3")], ctx)).toEqual({
-            type: "media",
-            items: [
-                { kind: "image", src: "blob:1" },
-                { kind: "image", src: "blob:2" },
-                { kind: "image", src: "blob:3" },
-            ],
-        });
-    });
-
-    test("with none after it, are the draft's attachment as it is", () => {
-        expect(stagedAttachment(image("blob:1"), [], ctx)).toEqual(
-            composerAttachment(image("blob:1"), ctx),
-        );
-        expect(stagedAttachment(undefined, [], ctx)).toBeNull();
     });
 });
 

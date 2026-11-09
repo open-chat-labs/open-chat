@@ -1,7 +1,7 @@
-// Dragging a keyboard-area panel by its handle (native plan 06 "Opening, closing, switching" and
-// "Expanded", 07 "Opening, closing, switching"): up, it grows over the chat towards the status
-// bar, following the finger; down from its resting height, it's pulled out and closes. One factor,
-// f = grown height ÷ the most it can grow (0 at rest, 1 open), drives what shows.
+// A keyboard-area panel as a sheet (native plan 06 "Sheet behaviour", shared with 07): resting in
+// the keyboard's place, it grows over the chat to 90% of the screen; its handle, or its content
+// pulled down at the top, drags it, following the finger; down from rest it slides out and closes.
+// One factor, f = grown height ÷ the most it can grow (0 at rest, 1 grown), drives what shows.
 // `KeyboardPanelState` (panelState.svelte.ts) keeps it for a panel.
 
 /** Pulled down further than this from its resting height, a panel closes when let go. */
@@ -14,15 +14,21 @@ export const FLICK = 0.5;
 export const OPEN_FROM_REST = 0.3;
 export const STAY_OPEN = 0.7;
 
-/** Grown, a panel takes this much of the height under the status bar (the user's, over the plan's all). */
+/** Grown, a panel is this much of the screen's height, from its bottom. */
 export const EXPANDED_SHARE = 0.9;
 
+/** A pull on the content at its top takes the panel once it's gone this far down. */
+export const PULL_SLOP = 6;
+
+/** How long after a drag a tap isn't one (a drag ending over a tile or an emoji). */
+export const CLICK_GUARD_MS = 300;
+
 /**
- * How far a panel resting at `rest` can grow, `available` being the height from the status bar
- * to the window's bottom: up to `EXPANDED_SHARE` of it.
+ * How far a panel resting at `rest` can grow, `screen` being the screen's height down to the
+ * panel's bottom: to `EXPANDED_SHARE` of it.
  */
-export function maxGrowFor(available: number, rest: number): number {
-    return Math.max(0, Math.round(available * EXPANDED_SHARE - rest));
+export function maxGrowFor(screen: number, rest: number): number {
+    return Math.max(0, Math.round(screen * EXPANDED_SHARE - rest));
 }
 
 /** Where a panel settles: at its resting height, open (grown all the way) or gone. */
@@ -63,23 +69,49 @@ export function settle(
 }
 
 /**
- * A pull on a grown panel's scrolling content (Recents, the emoji or GIFs): the content scrolls
- * until it's at its top; from there a finger moving down drags the panel instead, within the same
- * gesture (and it keeps the panel till the finger's off). At rest the content only scrolls.
+ * A pull on the panel's scrolling content (Recents, the emoji or GIFs): the content scrolls; once
+ * it's at its top and the finger has gone `PULL_SLOP` further down, the panel takes the pull
+ * (grown, back towards rest; at rest, out). A pull whose first move is up only scrolls.
+ * `fromTop`: how far down the finger has gone since the content was at its top.
  */
-export function pullTakesPanel(at: { open: boolean; scrollTop: number; dy: number }): boolean {
-    return at.open && at.scrollTop <= 0 && at.dy > 0;
+export function pullTakesPanel(at: {
+    firstUp: boolean;
+    scrollTop: number;
+    fromTop: number;
+}): boolean {
+    return !at.firstUp && at.scrollTop <= 0 && at.fromTop > PULL_SLOP;
 }
 
 /**
- * The veil a grown panel dims the chat with (the sheet's, `--veil-sheet`): none at rest (a resting
- * panel stands in for the keyboard, and the chat stays as it is), full grown, following f between;
- * a tap on it takes the panel back to rest while there is one.
+ * The backdrop (`--scrim`) over everything above a panel: min(1, 1.4f), taking taps from f 0.02;
+ * in a search (the emoji strip on the keyboard, the GIFs grown) fully on and taking them.
  */
-export function panelVeil(f: number): { opacity: number; tappable: boolean } {
-    const opacity = Math.min(1, Math.max(0, f));
-    return { opacity, tappable: opacity > 0 };
+export function panelVeil(f: number, searching: boolean): { opacity: number; tappable: boolean } {
+    if (searching) return { opacity: 1, tappable: true };
+    const opacity = Math.min(1, Math.max(0, f * 1.4));
+    return { opacity, tappable: f > 0.02 };
 }
+
+/** The emoji search's handle pulled (07): far or fast enough up, grown; down, the search closed. */
+export type SearchPull = "expand" | "close" | "stay";
+
+/** How far the emoji search's handle has to go, or a flick, to leave the search. */
+export const SEARCH_PULL = 40;
+
+/** Where the emoji search's strip is under the finger: down at 0.6×, up at 0.3×, 24px at most. */
+export function searchPullOffset(dy: number): number {
+    return dy >= 0 ? dy * 0.6 : Math.max(-24, dy * 0.3);
+}
+
+/** The emoji search's handle let go after `dy` at `velocity` (px/ms, down positive). */
+export function searchPullEnd(dy: number, velocity: number): SearchPull {
+    if (dy < -SEARCH_PULL || velocity < -FLICK) return "expand";
+    if (dy > SEARCH_PULL || velocity > FLICK) return "close";
+    return "stay";
+}
+
+/** A pull on the grown GIF search past this hides the keyboard, and goes on as the panel's drag. */
+export const GIF_PULL_HIDES_KEYBOARD = 12;
 
 /** The finger's speed over its last moves (px/ms, down positive), from the last 100ms of them. */
 export function flickVelocity(moves: readonly { t: number; y: number }[]): number {
@@ -91,9 +123,9 @@ export function flickVelocity(moves: readonly { t: number; y: number }[]): numbe
 }
 
 /**
- * What shows at f (06 "Expanded"): the resting content fades out by f 0.4 and takes no touches
- * past 0.05; the expanded content fades in from 0.4 to 0.8 and takes touches from 0.8; the shadow
- * over the chat strengthens with f.
+ * What shows at f (06): the resting content fades out by f 0.4 and takes no touches past 0.05; the
+ * expanded content fades in from 0.4 to 0.8 and takes touches from 0.8; the shadow over the chat
+ * is .45 × min(1, 3f).
  */
 export function panelLayers(f: number): {
     rest: number;
@@ -108,6 +140,6 @@ export function panelLayers(f: number): {
         restLive: f <= 0.05,
         expanded: clamp((f - 0.4) / 0.4),
         expandedLive: f >= 0.8,
-        shadow: 0.45 * clamp(f),
+        shadow: 0.45 * clamp(3 * f),
     };
 }

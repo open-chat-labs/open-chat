@@ -107,24 +107,6 @@ export function composerAttachment(
 }
 
 /**
- * The draft's attachment with the photos and videos attached after it (stagedMedia.ts), as the
- * composer's media tray shows them, in order.
- */
-export function stagedAttachment(
-    first: AttachmentContent | undefined,
-    more: readonly AttachmentContent[],
-    ctx: Pick<ConversationContext, "contentText">,
-): ComposerAttachment | null {
-    const shown = composerAttachment(first, ctx);
-    if (shown?.type !== "media" || more.length === 0) return shown;
-    const after = more.flatMap((content) => {
-        const tray = composerAttachment(content, ctx);
-        return tray?.type === "media" ? tray.items : [];
-    });
-    return { type: "media", items: [...shown.items, ...after] };
-}
-
-/**
  * Someone (or a group, or everyone) the composer offers to mention: `mentionCandidates`' order,
  * picked as `@` and the name typed to mention them (`mentionName`), shown by their display name.
  */

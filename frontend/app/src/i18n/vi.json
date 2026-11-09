@@ -1742,7 +1742,6 @@
         "composer": {
             "attach": {
                 "label": "Đính kèm",
-                "photos": "{count, plural, other {# ảnh}}",
                 "camera": "Máy ảnh",
                 "allPhotos": "Tất cả ảnh",
                 "file": "Tệp",
@@ -1752,13 +1751,11 @@
                 "swap": "Hoán đổi",
                 "memeFighter": "Meme fighter",
                 "photosAndVideos": "Ảnh & video",
-                "videos": "{count, plural, other {# video}}",
                 "photo": "Ảnh",
                 "video": "Video",
                 "videoLength": "Video {duration}",
                 "selected": "{name}, đã chọn {n}",
                 "clear": "Xóa",
-                "attachCount": "Đính kèm {count}",
                 "max": "Tối đa 10 ảnh hoặc video",
                 "recents": "Gần đây",
                 "ofMax": "{count}/{max}",
@@ -1767,7 +1764,8 @@
                 "drag": "Kéo lên để xem tất cả ảnh, kéo xuống để đóng",
                 "dragBack": "Kéo xuống để quay lại",
                 "dragToClose": "Kéo xuống để đóng",
-                "notAllSent": "Một số ảnh hoặc video chưa được gửi. Chúng vẫn được đính kèm."
+                "notAllSent": "Một số ảnh hoặc video chưa được gửi. Chúng vẫn được đính kèm.",
+                "done": "Xong"
             },
             "emoji": {
                 "recent": "Gần đây",
@@ -1787,11 +1785,13 @@
                 "noMatch": "Không có emoji cho “{query}”",
                 "clearSearch": "Xóa tìm kiếm",
                 "expand": "Kéo lên để mở rộng",
-                "shrink": "Kéo xuống để thu nhỏ"
+                "shrink": "Kéo xuống để thu nhỏ",
+                "searchHandle": "Kéo lên để mở rộng, kéo xuống để đóng tìm kiếm"
             },
             "gif": {
                 "none": "Không tìm thấy GIF",
-                "unavailable": "Không tải được GIF. Hãy kiểm tra kết nối."
+                "unavailable": "Không tải được GIF. Hãy kiểm tra kết nối.",
+                "searchHandle": "Kéo xuống để ẩn bàn phím"
             }
         },
         "conversation": {

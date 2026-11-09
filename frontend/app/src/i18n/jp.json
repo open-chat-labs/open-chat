@@ -1742,7 +1742,6 @@
         "composer": {
             "attach": {
                 "label": "添付",
-                "photos": "{count, plural, other {写真 # 枚}}",
                 "camera": "カメラ",
                 "allPhotos": "すべての写真",
                 "file": "ファイル",
@@ -1752,13 +1751,11 @@
                 "swap": "スワップ",
                 "memeFighter": "Meme fighter",
                 "photosAndVideos": "写真と動画",
-                "videos": "{count, plural, other {動画 # 本}}",
                 "photo": "写真",
                 "video": "動画",
                 "videoLength": "動画 {duration}",
                 "selected": "{name}、{n} 番目に選択",
                 "clear": "クリア",
-                "attachCount": "{count} 件を添付",
                 "max": "写真または動画は最大 10 件までです",
                 "recents": "最近の項目",
                 "ofMax": "{count} / {max}",
@@ -1767,7 +1764,8 @@
                 "drag": "上にドラッグですべての写真、下にドラッグで閉じる",
                 "dragBack": "下にドラッグして戻る",
                 "dragToClose": "下にドラッグして閉じる",
-                "notAllSent": "一部の写真または動画が送信されませんでした。添付されたままです。"
+                "notAllSent": "一部の写真または動画が送信されませんでした。添付されたままです。",
+                "done": "完了"
             },
             "emoji": {
                 "recent": "最近",
@@ -1787,11 +1785,13 @@
                 "noMatch": "「{query}」の絵文字はありません",
                 "clearSearch": "検索をクリア",
                 "expand": "上にドラッグして広げる",
-                "shrink": "下にドラッグして縮める"
+                "shrink": "下にドラッグして縮める",
+                "searchHandle": "上にドラッグで広げる、下にドラッグで検索を閉じる"
             },
             "gif": {
                 "none": "GIF が見つかりません",
-                "unavailable": "GIF を読み込めませんでした。接続を確認してください。"
+                "unavailable": "GIF を読み込めませんでした。接続を確認してください。",
+                "searchHandle": "下にドラッグしてキーボードを隠す"
             }
         },
         "conversation": {
