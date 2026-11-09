@@ -359,18 +359,22 @@
     const pane = root;
     if (!pane) return;
     const room = () => Math.floor(pane.getBoundingClientRect().bottom - menu.getBoundingClientRect().top - MENU_MARGIN);
+    // how far the pane's content alone scrolls: the menu, absolute in the pane, adds to its overflow, so it's measured
+    // out of the layout. The pane's scroll is kept within that, in one step, before the menu is capped: past it, the
+    // capped menu would hold the overflow open and each cap then clamp the pane back a step per scroll event
+    const contentScroll = () => {
+      menu.style.display = 'none';
+      const most = pane.scrollHeight - pane.clientHeight;
+      menu.style.display = '';
+      return Math.max(0, most);
+    };
     const fit = () => {
+      const most = contentScroll();
+      if (pane.scrollTop > most) pane.scrollTop = most;
       menu.style.maxHeight = `${Math.max(0, room())}px`;
     };
-    // scrolled only as far as the pane's content alone allows: the menu's own height hanging below the foot would let
-    // it scroll further, and capping the menu then would clamp the pane back a step per scroll event
     const short = MENU_MIN - room();
-    if (short > 0) {
-      menu.style.display = 'none';
-      const scrollable = pane.scrollHeight - pane.clientHeight - pane.scrollTop;
-      menu.style.display = '';
-      if (scrollable > 0) pane.scrollBy({ top: Math.min(short, scrollable), behavior: 'instant' });
-    }
+    if (short > 0) pane.scrollTop = Math.min(pane.scrollTop + short, contentScroll());
     fit();
     window.addEventListener('resize', fit);
     pane.addEventListener('scroll', fit, { passive: true });
