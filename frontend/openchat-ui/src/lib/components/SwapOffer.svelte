@@ -54,7 +54,7 @@
   ]);
 </script>
 
-<div class="shell" class:sent class:last={lastInGroup} class:mirror class:expired={state === 'expired' || state === 'cancelled'}>
+<div class="shell" class:sent class:last={lastInGroup} class:mirror data-bubble-sent={sent ? '' : undefined} class:expired={state === 'expired' || state === 'cancelled'}>
   <div class="stack">
     <div class="head"><span class="label"><span class="swap-icon"></span><span class="grow">{t('ui.swapOffer.title')}</span><span class="when">{when}</span></span></div>
     <div class="legs">

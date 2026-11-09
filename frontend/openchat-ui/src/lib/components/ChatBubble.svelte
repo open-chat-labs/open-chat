@@ -133,7 +133,7 @@
     </div>
   {:else}
     <div class="column" class:sent class:mirror>
-      <div class="bubble" class:last={lastInGroup} class:mirror class:carded data-oc-bubble>
+      <div class="bubble" class:last={lastInGroup} class:mirror class:carded data-oc-bubble data-bubble-sent={side === 'sent' ? '' : undefined}>
         {#if quoteName && onQuote}
           <div
             class="quote link"

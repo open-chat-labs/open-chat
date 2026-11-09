@@ -47,7 +47,7 @@
   const sign = $derived(way === 'in' ? '+' : way === 'out' ? '−' : '');
 </script>
 
-<div class="shell" class:sent class:last={lastInGroup} class:mirror>
+<div class="shell" class:sent class:last={lastInGroup} class:mirror data-bubble-sent={sent ? '' : undefined}>
   <div class="card">
     <div class="head">
       <TokenAvatar {symbol} {mark} {gradient} badge={way === 'in' ? 'receive' : 'send'} size={40} />

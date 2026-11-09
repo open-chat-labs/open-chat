@@ -49,7 +49,7 @@
   );
 </script>
 
-<div class="shell" class:sent={side === 'sent'} class:last={lastInGroup} class:mirror>
+<div class="shell" class:sent={side === 'sent'} class:last={lastInGroup} class:mirror data-bubble-sent={side === 'sent' ? '' : undefined}>
   <p class="text">{#each parts as part}{#if part.href}<a class="inline" href={part.href} target="_blank" rel="noopener">{part.text}</a>{:else}{part.text}{/if}{/each}</p>
   <LinkCard {url} {domain} {title} {description} {image} {imageBg} {size} {side} />
   <div class="meta">{time}<span class="tick"></span></div>

@@ -82,7 +82,7 @@
   }
 </script>
 
-<div class="shell" class:sent class:last={lastInGroup} class:mirror>
+<div class="shell" class:sent class:last={lastInGroup} class:mirror data-bubble-sent={sent ? '' : undefined}>
   <div class="stack">
     <div class="tile head">
       <span class="kicker"><span class="poll-icon"></span>{t('ui.pollMessage.poll')}</span>

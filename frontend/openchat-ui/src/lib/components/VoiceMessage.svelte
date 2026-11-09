@@ -71,7 +71,7 @@
 </script>
 
 <div class="row" class:mirror>
-  <div class="bubble" class:sent class:mirror class:last={lastInGroup} style:border-end-start-radius={bottomLeft}>
+  <div class="bubble" class:sent class:mirror data-bubble-sent={sent ? '' : undefined} class:last={lastInGroup} style:border-end-start-radius={bottomLeft}>
     <div class="controls">
       <div class="play" class:playing={isPlaying} onclick={togglePlay} role="button" tabindex="0" aria-label={t(isPlaying ? 'ui.voiceMessage.pause' : 'ui.voiceMessage.play')}>
         <span class="play-icon"></span>

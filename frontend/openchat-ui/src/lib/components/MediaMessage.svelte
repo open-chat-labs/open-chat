@@ -79,7 +79,7 @@
 {#snippet stamp()}{time}{#if side === 'sent' && tick}<span class="tick" class:double={tick === 'read' || tick === 'delivered'}></span>{/if}{/snippet}
 
 <div class="media-message" class:sent={side === 'sent'} class:mirror>
-  <div class="shell" class:last={lastInGroup} class:mirror class:failed style:width={box.width}>
+  <div class="shell" class:last={lastInGroup} class:mirror class:failed data-bubble-sent={side === 'sent' ? '' : undefined} style:width={box.width}>
     <div
       class="media"
       class:captioned={!!caption}

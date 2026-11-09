@@ -83,7 +83,7 @@
   }
 </script>
 
-<div class="shell" class:sent={side === 'sent'} class:last={lastInGroup} class:mirror class:ended>
+<div class="shell" class:sent={side === 'sent'} class:last={lastInGroup} class:mirror data-bubble-sent={side === 'sent' ? '' : undefined} class:ended>
   <div class="stack">
     <div class="hero">
       <span class="coin">

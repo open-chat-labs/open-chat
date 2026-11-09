@@ -68,7 +68,7 @@
 </script>
 
 <div class="file" class:sent={side === 'sent'} class:mirror>
-  <div class="shell" class:last={lastInGroup} class:mirror>
+  <div class="shell" class:last={lastInGroup} class:mirror data-bubble-sent={side === 'sent' ? '' : undefined}>
     <div class="row">
       {#if uploading}
         <span class="progress">

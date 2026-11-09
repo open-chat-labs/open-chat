@@ -294,12 +294,14 @@ describe('toasts (design pass 7)', () => {
 
 describe('the conversation screen (data-chat-surface)', () => {
   const chat: Element = { attrs: { 'data-chat-surface': '' } };
-  const SHADOW = '0 2px 2px rgba(36,31,42,.08),0 3px 5px rgba(36,31,42,.07)';
+  const sent: Element = { attrs: { 'data-bubble-sent': '' } };
+  const SHADOW = '0 0 1px rgba(36,31,42,.15),0 1px 4px rgba(36,31,42,.15)';
+  const lightRoot = (accent: string) => root({ 'data-mode': 'light', 'data-accent': accent, 'data-platform': 'native' });
 
-  test('in native light: the off-white chat, a white pill and received bubbles, no ring, a shadow on every bubble', () => {
-    const inside = resolve([root({ 'data-mode': 'light', 'data-accent': 'pink', 'data-platform': 'native' }), chat]);
-    expect(inside.get('--chat-bg')).toBe('#F2F1ED');
-    expect(inside.get('--surface-0')).toBe('#F2F1ED');
+  test('in native light: the off-white chat, a white pill and received bubbles, no ring, a received shadow', () => {
+    const inside = resolve([lightRoot('pink'), chat]);
+    expect(inside.get('--chat-bg')).toBe('#F8F7F4');
+    expect(inside.get('--surface-0')).toBe('#F8F7F4');
     expect(inside.get('--surface-1')).toBe('#FFFFFF');
     expect(inside.get('--field')).toBe('#FFFFFF');
     expect(inside.get('--bubble-recv-bg')).toBe('#FFFFFF');
@@ -307,15 +309,40 @@ describe('the conversation screen (data-chat-surface)', () => {
     expect(inside.get('--bubble-shadow')).toBe(SHADOW);
   });
 
-  test('in native dark, and on the web, as anywhere else: the ring, no shadow', () => {
+  test.each([
+    ['pink', '#D83862', '#B01E3E', '#FFD0D9'],
+    ['orange', '#EB7C0A', '#963F06', '#FFD9BF'],
+    ['blue', '#2B71D8', '#1855B5', '#D4E5FF'],
+    ['green', '#00875A', '#076447', '#C8F5E3'],
+  ])('in native light (%s): sent bubbles solid accent, white text, no shadow, dark content inside', (accent, bg, reply, link) => {
+    const inside = resolve([lightRoot(accent), chat, sent]);
+    expect([inside.get('--bubble-send-bg'), inside.get('--bubble-reply'), inside.get('--accent-bright')]).toEqual([bg, reply, link]);
+    expect(inside.get('--bubble-link')).toBe(link);
+    expect([inside.get('--bubble-text'), inside.get('--bubble-text-soft'), inside.get('--bubble-tick')]).toEqual(['#FFFFFF', 'rgba(255,255,255,.82)', 'rgba(255,255,255,.9)']);
+    expect(inside.get('--bubble-shadow')).toBe('0 0 transparent');
+    const dark = resolve([root({ 'data-mode': 'dark', 'data-accent': accent, 'data-platform': 'native' })]);
+    for (const name of ['--ink', '--ink-2', '--ink-3', '--ink-4', '--overlay-1', '--overlay-2', '--overlay-3', '--line-1', '--line-2', '--line-3']) {
+      expect([name, inside.get(name)]).toEqual([name, dark.get(name)]);
+    }
+    expect(inside.get('--bubble-wave-off')).toBe('rgba(255,255,255,.35)');
+    // the received side's accent link colour stays the light one
+    expect(resolve([lightRoot(accent), chat]).get('--accent-bright')).toBe(resolve([lightRoot(accent)]).get('--accent-bright'));
+  });
+
+  test('only orange sent bubbles carry a text shadow', () => {
+    expect(resolve([lightRoot('orange'), chat, sent]).get('--bubble-text-shadow')).toBe('0 1px 1px rgba(110,38,0,.45)');
+    for (const accent of ['pink', 'blue', 'green']) expect(resolve([lightRoot(accent), chat, sent]).has('--bubble-text-shadow')).toBe(false);
+  });
+
+  test('in native dark, and on the web, as anywhere else: the ring, no shadow, the theme\'s own sent colours', () => {
     for (const attrs of [
       { 'data-mode': 'dark', 'data-accent': 'pink', 'data-platform': 'native' },
       { 'data-mode': 'light', 'data-accent': 'pink' },
       { 'data-mode': 'dark', 'data-accent': 'pink' },
     ]) {
       const outside = resolve([root(attrs)]);
-      const inside = resolve([root(attrs), chat]);
-      for (const name of ['--surface-0', '--field', '--bubble-recv-bg', '--bubble-ring', '--bubble-shadow']) {
+      const inside = resolve([root(attrs), chat, sent]);
+      for (const name of ['--surface-0', '--field', '--bubble-recv-bg', '--bubble-ring', '--bubble-shadow', '--bubble-send-bg', '--bubble-text', '--ink', '--accent-bright']) {
         expect([name, inside.get(name)]).toEqual([name, outside.get(name)]);
       }
       expect(inside.get('--bubble-ring')).toBe(`inset 0 0 0 1px ${outside.get('--line-1')}`);
