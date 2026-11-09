@@ -53,6 +53,13 @@
   --toast-success:#2EE6A8; --toast-success-soft:rgba(46,230,168,.16);
 }
 
+/* A message's edge: a received bubble's 1px ring, and every bubble's shadow (none), in each mode's line colour.
+   Declared on every themed element, so the ring takes the line colour of the mode it sits in. The native light
+   conversation (below) takes the ring off and gives every bubble a soft shadow. */
+:root,[data-mode],[data-always-dark]{
+  --bubble-ring:inset 0 0 0 1px var(--line-1); --bubble-shadow:0 0 transparent;
+}
+
 /* An accent picker's swatches: each accent as itself, whichever accent the root has, in the mode's own shade (SettingsSwatches' colours). */
 :root{--swatch-pink:#FF5672;--swatch-orange:#FF8A3D;--swatch-blue:#3D9BFF;--swatch-green:#2EE6A8}
 [data-mode="light"]{--swatch-blue:#3D8BFF;--swatch-green:#16B583}
@@ -143,6 +150,9 @@
   --action-media:#7FD1FF; --action-file:#7FB2FF; --action-poll:#FFB45E; --action-crypto:#2EE6A8; --action-swap:#B48CFF;
   --action-meme:#FFD36B;
 }
+/* A keyboard-area sheet's top edge line (native plan 06): --line-1 in dark, --line-2 in light (as the composer's
+   border). */
+[data-platform="native"],[data-always-dark]{--sheet-edge:var(--line-1)}
 /* The native shell kit (src/native, native notes §1 and §2). The root also carries data-os="ios" or "android": touch
    targets are 44pt on iOS and 48dp on Android. Bars at the bottom (the tab bar, a pinned footer) pad by the safe
    area, at least 12px (the prototype's Android gesture bar); --tab-bar-h is the tab bar's height, which toasts and
@@ -168,6 +178,14 @@
   --hero-base:#FFFFFF; --tint-row:rgba(0,0,0,.05); --tint-pill:rgba(0,0,0,.08);
   --action-media:#0A84C6; --action-file:#2F6FE0; --action-poll:#C46A0A; --action-crypto:#0A8A61; --action-swap:#7C4DDB;
   --action-meme:#A87B00;
+  --chat-bg:#F2F1ED; --sheet-edge:var(--line-2);
+}
+/* The native light conversation (native plan 04, 00): content lighter than the chat, as in dark. The screen's root
+   carries data-chat-surface: the off-white chat behind it all (header, list, composer area), a white composer pill
+   and white received bubbles, no ring on them, and a soft shadow under every bubble. Other screens stay white. */
+[data-platform="native"][data-mode="light"] [data-chat-surface]{
+  --surface-0:var(--chat-bg); --field:#FFFFFF; --bubble-recv-bg:#FFFFFF; --bubble-ring:0 0 transparent;
+  --bubble-shadow:0 2px 2px rgba(36,31,42,.08),0 3px 5px rgba(36,31,42,.07);
 }
 /* Always dark: calls (the call screen and the minimised call) stay dark in both themes (native notes §1, §3.5).
    data-always-dark on an element gives it and its children the dark tokens (the selectors above list it beside

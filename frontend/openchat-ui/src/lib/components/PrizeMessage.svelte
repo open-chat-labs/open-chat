@@ -160,7 +160,7 @@
       --msg-track: rgba(0, 0, 0, 0.25);
       --msg-fill: #fff;
       --msg-glow: rgba(255, 255, 255, 0.16);
-      box-shadow: none;
+      box-shadow: var(--bubble-shadow);
     }
 
     &.ended {

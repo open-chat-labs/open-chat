@@ -96,7 +96,7 @@
       --msg-ink: var(--bubble-text);
       --msg-soft: var(--bubble-text-soft);
       --msg-seg: rgba(0, 0, 0, 0.18);
-      box-shadow: none;
+      box-shadow: var(--bubble-shadow);
     }
 
     &.expired {

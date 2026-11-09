@@ -14284,6 +14284,39 @@
         "required": false,
         "componentDefault": "0",
         "doc": "A count on Send (how many photos and videos go), shown when it's 1 or more."
+      },
+      {
+        "name": "mediaLabel",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "undefined",
+        "doc": "Literal text over the media tray (e.g. \"3 of 10\"); with it, a 24px header row above the thumbnails."
+      },
+      {
+        "name": "onClearMedia",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "undefined",
+        "doc": "The media header's Clear (a 44px tap area): removes the whole media attachment."
+      },
+      {
+        "name": "clearMediaLabel",
+        "type": "string",
+        "default": "ui.messageComposer.clearMedia",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.messageComposer.clearMedia'",
+        "doc": "Resource key (or literal text): the media header's Clear label."
       }
     ],
     "group": "library"

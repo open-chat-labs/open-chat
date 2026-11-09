@@ -110,6 +110,12 @@
     attachedPlaceholder?: string;
     /** A count on Send (how many photos and videos go), shown when it's 1 or more. */
     sendCount?: number;
+    /** Literal text over the media tray (e.g. "3 of 10"); with it, a header row above the thumbnails. */
+    mediaLabel?: string;
+    /** The header row's Clear: removes the whole media attachment. */
+    onClearMedia?: () => void;
+    /** Resource key (or literal text): Clear's label. */
+    clearMediaLabel?: string;
   }
 
   let {
@@ -148,6 +154,9 @@
     insert: hostInsert,
     attachedPlaceholder = 'ui.messageComposer.addCaption',
     sendCount = 0,
+    mediaLabel,
+    onClearMedia,
+    clearMediaLabel = 'ui.messageComposer.clearMedia',
   }: Props = $props();
   const t = useT();
 
@@ -923,6 +932,12 @@
   {/snippet}
 
   <div class="bar" class:focused={(focused || !!menu) && !editing} class:recording={voice === 'recording'}>
+    {#if att?.type === 'media' && mediaLabel}
+      <div class="media-header">
+        <span class="media-count" aria-live="polite">{mediaLabel}</span>
+        {#if onClearMedia}<span class="media-clear" onclick={onClearMedia} role="button" tabindex="0">{t(clearMediaLabel)}</span>{/if}
+      </div>
+    {/if}
     {#if att?.type === 'media'}
       <div class="tray">
         {#each att.items as item, i}
@@ -1302,6 +1317,34 @@
     flex-wrap: wrap;
     gap: var(--space-8);
     padding: 6px 6px 0;
+  }
+
+  // the media's header (a host's count, and Clear): a 24px row over the thumbnails
+  .media-header {
+    flex: 1 0 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 24px;
+    padding: 4px 0 0 10px;
+  }
+
+  .media-count {
+    font: var(--weight-medium) text-size(12px) / 1 var(--font-mono);
+    color: var(--ink-3);
+  }
+
+  // 44px tall to tap, the row staying 24px
+  .media-clear {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    margin: -10px 0;
+    padding: 0 10px;
+    font: var(--weight-semibold) text-size(13.5px) / 1 var(--font-sans);
+    color: var(--accent-bright);
+    cursor: pointer;
   }
 
   .thumb {

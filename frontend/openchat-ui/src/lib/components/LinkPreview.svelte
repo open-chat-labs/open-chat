@@ -70,7 +70,7 @@
       --msg-soft: var(--bubble-text-soft);
       --msg-link: var(--bubble-text);
       background: var(--bubble-send-bg);
-      box-shadow: none;
+      box-shadow: var(--bubble-shadow);
     }
   }
 

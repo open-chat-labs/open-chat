@@ -136,7 +136,7 @@
     @include message-shell;
 
     .sent & {
-      box-shadow: none;
+      box-shadow: var(--bubble-shadow);
     }
   }
 

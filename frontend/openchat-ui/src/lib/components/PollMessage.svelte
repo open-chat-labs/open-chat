@@ -146,7 +146,7 @@
       --msg-fill: #fff;
       --msg-idle: rgba(255, 255, 255, 0.45);
       --msg-ring: rgba(255, 255, 255, 0.6);
-      box-shadow: none;
+      box-shadow: var(--bubble-shadow);
     }
   }
 

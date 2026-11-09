@@ -91,7 +91,7 @@ const HERO = ['--hero-base', '--tint-row', '--tint-pill'];
 const SHELL = ['--touch-target', '--bar-end', '--tab-bar-h', '--veil-sheet', '--veil-lift', '--shadow-sheet', '--shadow-menu', '--shadow-lift', '--shadow-push', '--shadow-fab'];
 // a conversation's attach panel (its actions' colours) and what sits over a photo or video
 const ACTIONS = ['--action-media', '--action-file', '--action-poll', '--action-crypto', '--action-swap', '--action-meme'];
-const COMPOSER = [...ACTIONS, '--on-media-chip', '--on-media-badge', '--on-media-ink'];
+const COMPOSER = [...ACTIONS, '--on-media-chip', '--on-media-badge', '--on-media-ink', '--sheet-edge'];
 const TEXT = ['--text-2xs', '--text-xs', '--text-sm', '--text-md', '--text-base', '--text-lg', '--text-xl', '--text-2xl', '--text-3xl'];
 const NATIVE_LIGHT_SURFACES = { '--surface-0': '#FFFFFF', '--surface-1': '#FFFFFF', '--surface-2': '#F4F3EF', '--field': '#F4F3EF' };
 const call: Element = { attrs: { 'data-always-dark': '' } };
@@ -143,7 +143,7 @@ describe('data-platform="native"', () => {
     const web = resolve([root({ 'data-mode': mode, 'data-accent': accent })]);
     const native = resolve([root({ 'data-mode': mode, 'data-accent': accent, 'data-platform': 'native' })]);
     // light's --surface-1 is white on the web already; --bg and --card-2 read --surface-0 and --surface-2
-    const surfaces = mode === 'light' ? ['--surface-0', '--surface-2', '--field', '--bg', '--card-2'] : [];
+    const surfaces = mode === 'light' ? ['--surface-0', '--surface-2', '--field', '--bg', '--card-2', '--chat-bg'] : [];
     expect(changed(web, native)).toEqual([...HERO, ...SHELL, ...COMPOSER, ...surfaces].sort());
   });
 
@@ -169,6 +169,13 @@ describe('data-platform="native"', () => {
     const dark = resolve([root({ 'data-mode': 'dark', 'data-accent': 'pink', 'data-platform': 'native' })]);
     expect(ACTIONS.map((name) => dark.get(name))).toEqual(['#7FD1FF', '#7FB2FF', '#FFB45E', '#2EE6A8', '#B48CFF', '#FFD36B']);
     expect(ACTIONS.map((name) => light.get(name))).toEqual(['#0A84C6', '#2F6FE0', '#C46A0A', '#0A8A61', '#7C4DDB', '#A87B00']);
+  });
+
+  test('a sheet\'s top edge is --line-1 in dark and --line-2 in light', () => {
+    const light = resolve([root({ 'data-mode': 'light', 'data-accent': 'pink', 'data-platform': 'native' })]);
+    const dark = resolve([root({ 'data-mode': 'dark', 'data-accent': 'pink', 'data-platform': 'native' })]);
+    expect(dark.get('--sheet-edge')).toBe(dark.get('--line-1'));
+    expect(light.get('--sheet-edge')).toBe(light.get('--line-2'));
   });
 
   test('native light has white pages and a white hero base; dark keeps the dark ones', () => {
@@ -282,5 +289,37 @@ describe('toasts (design pass 7)', () => {
     const plain = resolve([root({})]);
     expect(plain.get('--toast-bg')).toBe('#E6E5EB');
     expect(plain.get('--toast-action')).toBe('#C8244A');
+  });
+});
+
+describe('the conversation screen (data-chat-surface)', () => {
+  const chat: Element = { attrs: { 'data-chat-surface': '' } };
+  const SHADOW = '0 2px 2px rgba(36,31,42,.08),0 3px 5px rgba(36,31,42,.07)';
+
+  test('in native light: the off-white chat, a white pill and received bubbles, no ring, a shadow on every bubble', () => {
+    const inside = resolve([root({ 'data-mode': 'light', 'data-accent': 'pink', 'data-platform': 'native' }), chat]);
+    expect(inside.get('--chat-bg')).toBe('#F2F1ED');
+    expect(inside.get('--surface-0')).toBe('#F2F1ED');
+    expect(inside.get('--surface-1')).toBe('#FFFFFF');
+    expect(inside.get('--field')).toBe('#FFFFFF');
+    expect(inside.get('--bubble-recv-bg')).toBe('#FFFFFF');
+    expect(inside.get('--bubble-ring')).toBe('0 0 transparent');
+    expect(inside.get('--bubble-shadow')).toBe(SHADOW);
+  });
+
+  test('in native dark, and on the web, as anywhere else: the ring, no shadow', () => {
+    for (const attrs of [
+      { 'data-mode': 'dark', 'data-accent': 'pink', 'data-platform': 'native' },
+      { 'data-mode': 'light', 'data-accent': 'pink' },
+      { 'data-mode': 'dark', 'data-accent': 'pink' },
+    ]) {
+      const outside = resolve([root(attrs)]);
+      const inside = resolve([root(attrs), chat]);
+      for (const name of ['--surface-0', '--field', '--bubble-recv-bg', '--bubble-ring', '--bubble-shadow']) {
+        expect([name, inside.get(name)]).toEqual([name, outside.get(name)]);
+      }
+      expect(inside.get('--bubble-ring')).toBe(`inset 0 0 0 1px ${outside.get('--line-1')}`);
+      expect(inside.get('--bubble-shadow')).toBe('0 0 transparent');
+    }
   });
 });

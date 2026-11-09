@@ -81,7 +81,7 @@
       --msg-soft: var(--bubble-text-soft);
       --msg-line: rgba(255, 255, 255, 0.14);
       background: var(--bubble-send-bg);
-      box-shadow: none;
+      box-shadow: var(--bubble-shadow);
     }
   }
 
