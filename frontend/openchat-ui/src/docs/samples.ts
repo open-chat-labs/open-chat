@@ -2,6 +2,7 @@ import { createRawSnippet } from 'svelte';
 // Demo-only data for the docs page (components carry no sample data of their own).
 import type { GroupMessage, MenuItem, MessageGroupItem, TokenOption } from '../lib/types';
 import type { NativeTab } from '../native/types';
+import type { LearnDoc } from '../pages/learnContent';
 
 const icon = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
 
@@ -1336,6 +1337,74 @@ Object.assign(samples, {
   },
   Learn: { ...pageLinks, auth: samples.AuthDialog, onEnterApp: () => {} },
 });
+
+// A doc page outside Learn's tabs (its `doc`), as the app's legal pages are: a preamble, numbered clauses with titles
+// and clauses of their own, terms and their meanings, bullets
+export const learnDocPage: LearnDoc = {
+  kicker: 'Legal',
+  title: 'Terms and Conditions',
+  intro: ['IT IS IMPORTANT YOU READ THESE TERMS CAREFULLY BEFORE USING THE PLATFORM.'],
+  sections: [
+    {
+      id: '1',
+      title: 'Section A: General terms',
+      blocks: [
+        {
+          kind: 'clauses',
+          items: [
+            {
+              number: 'A1',
+              title: 'Introduction',
+              body: [
+                {
+                  kind: 'clauses',
+                  items: [
+                    { number: '1.1)', body: [{ kind: 'para', text: 'We operate the **Platform**, which enables you to use our Services.' }] },
+                    {
+                      number: '1.2)',
+                      body: [
+                        { kind: 'para', text: 'These Terms apply as follows:' },
+                        {
+                          kind: 'clauses',
+                          items: [
+                            { number: '1.2.1)', body: [{ kind: 'para', text: 'Section A: General terms applicable to all Services' }] },
+                            { number: '1.2.2)', body: [{ kind: 'para', text: 'Schedule 1: Content Standards' }] },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      number: '1.3)',
+                      title: 'Interpretation',
+                      body: [
+                        { kind: 'para', text: 'In these Terms, the following words have the following meanings:' },
+                        {
+                          kind: 'definitions',
+                          items: [
+                            { term: '"Channel"', meaning: 'refers to chats within Communities;' },
+                            { term: '"Platform"', meaning: 'refers to the platform we provide, available at [https://oc.app](https://oc.app/);' },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: '2',
+      title: 'Schedule 1: Content Standards',
+      blocks: [
+        { kind: 'para', text: 'You may not:' },
+        { kind: 'bullets', items: ['threaten to harm another person', 'persistently send spam messages'] },
+      ],
+    },
+  ],
+};
 
 // ── Native shell kit (groups/Native.svelte) ──
 

@@ -19,6 +19,43 @@ export function learnPageFor(route: RouteParams): { page: LearnPage; post?: stri
     return route.kind === "blog_route" && route.slug ? { page, post: route.slug } : { page };
 }
 
+/** The pages with no design of their own: Learn's doc pages outside its tabs (ROUTES.md, decision 5). */
+export type DocPage = "terms" | "privacy" | "guidelines" | "csea" | "diamond";
+
+/** The legal docs among them, which are Learn content (`learn/legal`). */
+export type LegalDoc = Extract<DocPage, "terms" | "privacy" | "guidelines">;
+
+const DOC_ROUTES: Partial<Record<RouteParams["kind"], DocPage>> = {
+    terms_route: "terms",
+    privacy_route: "privacy",
+    guidelines_route: "guidelines",
+    csea_reporting_route: "csea",
+    diamond_route: "diamond",
+};
+
+/** The doc page a route shows, if it's one of them. */
+export function docPageFor(route: RouteParams): DocPage | undefined {
+    return DOC_ROUTES[route.kind];
+}
+
+const DOC_PATHS: Record<DocPage, string> = {
+    terms: "/terms",
+    privacy: "/privacy",
+    guidelines: "/guidelines",
+    csea: "/csea-reporting",
+    diamond: "/diamond",
+};
+
+/** A doc page's path (utils/routeTable), as a link to one of its sections names it. */
+export function docPagePath(page: DocPage): string {
+    return DOC_PATHS[page];
+}
+
+/** Whether a doc page is a legal doc, loaded from Learn's content. */
+export function isLegalDoc(page: DocPage | undefined): page is LegalDoc {
+    return page === "terms" || page === "privacy" || page === "guidelines";
+}
+
 /**
  * Whether the URL is the page an email sign-in link opens (?auth&m=…&s1=…&s2=…). `?auth` on its
  * own only narrows the sign-in options.

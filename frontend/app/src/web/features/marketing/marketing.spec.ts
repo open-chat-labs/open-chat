@@ -1,11 +1,16 @@
 import type { CommunitySummary, RouteParams } from "@client";
 import { vi } from "vitest";
+import { resolve } from "@src/utils/routeTable.testing";
 import {
+    docPageFor,
+    docPagePath,
     isEmailLinkPage,
+    isLegalDoc,
     landingCommunities,
     learnPageFor,
     learnPath,
     pinnedLandingCommunity,
+    type DocPage,
 } from "./marketing";
 
 const route = (r: object) => ({ scope: { kind: "none" }, ...r }) as RouteParams;
@@ -31,6 +36,34 @@ describe("Learn on the marketing paths", () => {
         expect(learnPath("blog")).toBe("/blog");
         expect(learnPath("blog", "a/b")).toBe("/blog/a%2Fb");
         expect(learnPageFor(route({ kind: "blog_route", slug: "a/b" }))?.post).toBe("a/b");
+    });
+});
+
+describe("the doc pages outside Learn's tabs", () => {
+    test("each legal page, the moderators' checklist and /diamond are one", () => {
+        expect(docPageFor(route({ kind: "terms_route" }))).toBe("terms");
+        expect(docPageFor(route({ kind: "privacy_route" }))).toBe("privacy");
+        expect(docPageFor(route({ kind: "guidelines_route" }))).toBe("guidelines");
+        expect(docPageFor(route({ kind: "csea_reporting_route" }))).toBe("csea");
+        expect(docPageFor(route({ kind: "diamond_route" }))).toBe("diamond");
+    });
+
+    test("Learn's own pages and Landing aren't", () => {
+        expect(docPageFor(route({ kind: "whitepaper_route" }))).toBeUndefined();
+        expect(docPageFor(route({ kind: "home_landing_route" }))).toBeUndefined();
+    });
+
+    test("each one's path is its own route's", () => {
+        const pages: DocPage[] = ["terms", "privacy", "guidelines", "csea", "diamond"];
+        for (const p of pages) expect(docPageFor(resolve(docPagePath(p)))).toBe(p);
+        expect(docPagePath("csea")).toBe("/csea-reporting");
+    });
+
+    test("only the legal ones are Learn content", () => {
+        expect(["terms", "privacy", "guidelines"].every((p) => isLegalDoc(p as DocPage))).toBe(true);
+        expect(isLegalDoc("csea")).toBe(false);
+        expect(isLegalDoc("diamond")).toBe(false);
+        expect(isLegalDoc(undefined)).toBe(false);
     });
 });
 

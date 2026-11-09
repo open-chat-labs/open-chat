@@ -36,6 +36,8 @@
   // Learn shows how a host routes it: the sub-page lives here, as it would in the app's router
   let learnPage = $state<LearnPage>('roadmap');
   let learnPost = $state<string | undefined>();
+  // DiamondContent on a page: how often its Upgrade handed over to the host
+  let diamondStarts = $state(0);
 
   let selectedRow = $state(2);
   let picked = $state<string[]>(['🔥']);
@@ -554,6 +556,11 @@
 
 <Section {...sec(features, 'features-wallet-dialogs')}>
   {@render openers(['WalletSettingsDialog', 'SendCryptoDialog', 'SwapOfferDialog', 'DiamondDialog', 'PrizeBuilderDialog'])}
+  <Frame label={`DiamondContent · on a page: no onClose (no ×, Maybe later or Done), Upgrade calls onStartUpgrade${diamondStarts ? ` (called ${diamondStarts}×)` : ''}`} align="center">
+    <div class="diamond-page">
+      <F.DiamondContent {...demoProps('DiamondDialog')} onUpgrade={undefined} onStartUpgrade={() => (diamondStarts += 1)} />
+    </div>
+  </Frame>
 </Section>
 
 <Section {...sec(features, 'features-activity')}>
@@ -638,6 +645,17 @@
       </svelte:boundary>
     </div>
   </Frame>
+  <Frame label="Learn · a doc page outside the tabs (doc, belowDoc, onCopySection: hover a heading)" style="justify-content: center">
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+    <div class="screen page-frame" onclick={keepLinksInFrame}>
+      <svelte:boundary>
+        <Learn {...demoProps('Learn')} {mode} {accent} doc={S.learnDocPage} learnPageHref={() => '#'} onCopySection={() => {}}>
+          {#snippet belowDoc()}<p class="cap">THE HOST'S OWN CONTENT (belowDoc)</p>{/snippet}
+        </Learn>
+        {#snippet failed(e)}<pre class="demo-error">{String((e as Error)?.message ?? e)}</pre>{/snippet}
+      </svelte:boundary>
+    </div>
+  </Frame>
 </Section>
 
 {#if openDialog}
@@ -650,6 +668,7 @@
 
 <style lang="scss">
   .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .diamond-page { width: 100%; max-width: 580px; display: flex; flex-direction: column; border-radius: var(--radius-xl); background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--line-2); overflow: hidden; }
   .stack { display: flex; flex-direction: column; gap: 6px; width: 100%; min-width: 0; }
   .fill { width: 100%; min-width: 0; }
   .cap { margin-top: 6px; font: 500 10px/1 var(--font-mono); letter-spacing: 0.09em; color: var(--ink-4); }

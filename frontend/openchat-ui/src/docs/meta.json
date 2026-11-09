@@ -9664,7 +9664,18 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Closes it: the header's ×, Maybe later and Done. A page without it has none of them."
+      },
+      {
+        "name": "onStartUpgrade",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Upgrade (and a timed member's Extend) hand over to the host instead of going on to the plans, and show without onUpgrade: a page that can't take the payment itself (/diamond) sends the person to sign in, or to the app's Diamond dialog."
       },
       {
         "name": "onRefreshBalance",
@@ -22002,7 +22013,7 @@
     "name": "Learn",
     "source": "OpenChat Learn.dc.html",
     "hash": "15db4213",
-    "description": "Learn page (roadmap, whitepaper, architecture, blog, FAQs), mounted directly on its route (outside the app shell).",
+    "description": "Learn page (roadmap, whitepaper, architecture, blog, FAQs), mounted directly on its route (outside the app shell). Also a doc page outside the tabs (`doc`: the host's legal pages …).",
     "preview": null,
     "props": [
       {
@@ -22088,7 +22099,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "The sub-page to show, when the host routes its own paths (learnPageHref is then required). Without it the URL hash picks the sub-page."
+        "doc": "The sub-page to show, when the host routes its own paths (learnPageHref is then required). Without it (or `doc`) the URL hash picks the sub-page."
       },
       {
         "name": "post",
@@ -22100,6 +22111,28 @@
         "required": false,
         "componentDefault": null,
         "doc": "With page 'blog': the open post's slug."
+      },
+      {
+        "name": "doc",
+        "type": "LearnDoc",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A doc page outside the tabs, on the host's own path (its legal pages …): shown in the doc layout with no tab current; learnPageHref is then required, for the tabs. Its sections can hold numbered clauses, terms and their meanings and bullets (`blocks`); `section` deep links into it. A doc without sections is its head alone, one column without the contents list."
+      },
+      {
+        "name": "belowDoc",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "With `doc`: the host's own content after the doc's sections, in its column (an interactive checklist, a plan picker …)."
       },
       {
         "name": "learnPageHref",
@@ -22190,6 +22223,17 @@
         "doc": "An FAQ question to open and scroll to (its `id`), e.g. from the host's `?q=`."
       },
       {
+        "name": "navigation",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Changes with each of the host's navigations (its router's count of them): `section` and `question` are followed again on a new value though they're unchanged, as a link to the section the page opened on, after the reader chose another in the contents list (`onSection`), or after reading on."
+      },
+      {
         "name": "architecture",
         "type": "Snippet",
         "default": null,
@@ -22199,6 +22243,50 @@
         "required": false,
         "componentDefault": null,
         "doc": "The Architecture tab's content, in place of the architecture doc (the tab shows whenever this is given). It fills the screen between the header and the footer, inset only for its rounded corners: an interactive map and the like."
+      },
+      {
+        "name": "termsHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'/terms'",
+        "doc": "The footer's Terms link, as Landing's."
+      },
+      {
+        "name": "privacyHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'/privacy'",
+        "doc": "The footer's Privacy link, as Landing's."
+      },
+      {
+        "name": "onCopySection",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A doc heading's copy-link button (shown while the heading is hovered, or always where nothing hovers) calls it with the section's `id`, for the host to copy its own link to the section. Without it the headings have none."
+      },
+      {
+        "name": "onSection",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A section chosen in a doc's contents list, by its `id`: the host rewrites its address in place (as `section` reads it), so the address links to the section being shown. Not passed back as `section`, which jumps there; a host whose `section` stays at the one it navigated to passes `navigation`, so navigating there again follows it."
       }
     ],
     "group": "pages"

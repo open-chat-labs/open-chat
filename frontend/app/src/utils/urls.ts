@@ -5,6 +5,7 @@ import { isStandalonePagePath } from "@shared";
 import { openUrl } from "tauri-plugin-oc-api";
 import { i18nKey } from "../i18n/i18n";
 import { toastStore } from "../stores/toast";
+import { syncCurrentHistoryState } from "./history";
 
 const regex = new RegExp("^(?:[a-z]+:)?//", "i");
 
@@ -54,6 +55,39 @@ export function withQueryStringFlag(name: string): string {
     qs.delete(name);
     const rest = qs.toString();
     return `${path}?${rest === "" ? "" : `${rest}&`}${encodeURIComponent(name)}`;
+}
+
+// The current URL with a param set to a value, keeping the others
+export function withQueryStringParam(name: string, value: string): string {
+    const qs = new URLSearchParams(window.location.search);
+    qs.set(name, value);
+    return `${window.location.pathname}?${qs}`;
+}
+
+// A param set in the current URL in place (a doc's ?section= as the reader picks a section, the
+// canister the architecture map shows, so the address can be shared). Not through the router, which
+// would scroll the page to the top and count a page view.
+export function setQueryStringParamInPlace(name: string, value: string): void {
+    replaceUrlInPlace(withQueryStringParam(name, value));
+}
+
+// A param taken out of the current URL in place, as setQueryStringParamInPlace sets one
+export function removeQueryStringParamInPlace(name: string): void {
+    replaceUrlInPlace(removeQueryStringParam(name));
+}
+
+// The entry's history state is kept (the app's own keys, as `action`: utils/history.ts), with its
+// `path` changed to the new URL: page.js shows the entry's `path` when it's gone back or forward to,
+// so the one the router last pushed would undo the rewrite then. A state without one (none, or
+// another's) is left as it is: page.js shows the entry's own URL for it.
+function replaceUrlInPlace(url: string): void {
+    const state: unknown = history.state;
+    const next =
+        state !== null && typeof state === "object" && "path" in state
+            ? { ...state, path: url }
+            : state;
+    history.replaceState(next, "", url);
+    syncCurrentHistoryState(next);
 }
 
 const nomenuRoutes: RouteType[] = [];
@@ -116,7 +150,30 @@ export function copyToClipboard(txt: string): Promise<boolean> {
  */
 export async function copyPageUrl(client: OpenChat): Promise<void> {
     const { pathname, search, hash } = window.location;
-    const url = new URL(`${pathname}${search}${hash}`, client.canonicalOrigin()).toString();
+    await copyUrl(new URL(`${pathname}${search}${hash}`, client.canonicalOrigin()).toString());
+}
+
+/**
+ * Copies a link to a section of the page at `path` (its `?section=`, as the legal pages and the
+ * whitepaper read it) on the site's own origin, as copyPageUrl does, and says whether it could.
+ * The doc's own path, not the address's: a doc is shown on other pages too (the terms at sign-up).
+ */
+export async function copySectionUrl(
+    client: OpenChat,
+    path: string,
+    section: string,
+): Promise<void> {
+    await copyUrl(sectionUrl(path, section, client.canonicalOrigin()));
+}
+
+/** The address of a section of the page at `path`, on `origin`. */
+export function sectionUrl(path: string, section: string, origin: string): string {
+    const url = new URL(path, origin);
+    url.searchParams.set("section", section);
+    return url.toString();
+}
+
+async function copyUrl(url: string): Promise<void> {
     if (await copyToClipboard(url)) {
         toastStore.showSuccessToast(i18nKey("urlCopiedToClipboard"));
     } else {

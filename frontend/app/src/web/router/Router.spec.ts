@@ -4,6 +4,7 @@ import {
     pathContextStore,
     rightPanelHistory,
     routeStore,
+    routerNavigationStore,
     type OpenChat,
     type RouteParams,
 } from "@client";
@@ -16,6 +17,7 @@ function fakeClient() {
         setRouteParams: (ctx: PageJS.Context, route: RouteParams) => {
             routeStore.set(route);
             pathContextStore.set(ctx);
+            routerNavigationStore.update((n) => n + 1);
             notFoundStore.set(false);
         },
         captureReferralCode: () => false,

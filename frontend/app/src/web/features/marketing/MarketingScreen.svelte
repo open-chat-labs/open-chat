@@ -1,11 +1,17 @@
 <!-- The marketing pages, outside the shell (ROUTES.md, Marketing routes): Landing on "/" signed out,
-     /home and /features; Learn on its sub-pages' paths; and the page an email sign-in link opens
-     (/home?auth&m=…), which asks for the link's code over Landing. -->
+     /home and /features; Learn on its sub-pages' paths; Learn's doc pages outside its tabs on the
+     pages with no design of their own (/terms, /privacy, /guidelines, /csea-reporting, /diamond:
+     ROUTES.md, decision 5); and the page an email sign-in link opens (/home?auth&m=…), which asks
+     for the link's code over Landing. -->
 <script lang="ts">
     import {
         chatsInitialisedStore,
         identityStateStore,
+        platformModeratorStore,
+        platformOperatorStore,
         querystringStore,
+        routeForScope,
+        routerNavigationStore,
         selectedAuthProviderStore,
         type OpenChat,
         type RouteParams,
@@ -14,24 +20,36 @@
     import Landing from "@openchat/ui/src/pages/Landing.svelte";
     import Learn from "@openchat/ui/src/pages/Learn.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
-    import type { LearnPage } from "@openchat/ui/src/pages/learnContent";
+    import type { LearnDoc, LearnPage } from "@openchat/ui/src/pages/learnContent";
+    import { PageAuthState } from "@openchat/ui/src/pages/pageAuth.svelte";
     import CanisterMapFrame from "@src/core/CanisterMapFrame.svelte";
     import type { PageMode } from "@openchat/ui/src/pages/types";
+    import { showsCseaChecklist } from "@src/logic/moderation/cseaChecklist.svelte";
     import { currentThemeMode, themeType } from "@theme/themes";
     import { supportedLanguagesByCode } from "@i18n/i18n";
     import { navigate } from "@src/utils/navigation";
-    import { ANDROID_APK_URL, ANDROID_PLAY_STORE_URL } from "@src/utils/urls";
+    import {
+        ANDROID_APK_URL,
+        ANDROID_PLAY_STORE_URL,
+        copySectionUrl,
+        setQueryStringParamInPlace,
+    } from "@src/utils/urls";
     import { getContext, onDestroy, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import Placeholder from "../app/Placeholder.svelte";
     import { AuthDialogProps, pageSignIns } from "../auth/authDialog.svelte";
     import { createAuth } from "../auth/signIn";
     import { accentStore } from "@theme/accent";
     import { LazyModule } from "../../lazyModule.svelte";
+    import DiamondPageScreen from "../diamond/DiamondPageScreen.svelte";
     import { exploreCommunities } from "../explore/explore.adapter";
+    import CseaChecklistScreen from "./CseaChecklistScreen.svelte";
+    import { cseaDoc } from "./csea";
     import { FeaturedCommunities } from "./featuredCommunities.svelte";
     import {
+        docPageFor,
+        docPagePath,
         isEmailLinkPage,
+        isLegalDoc,
         landingCommunities,
         learnPageFor,
         learnPath,
@@ -46,12 +64,23 @@
     // the app's home: "/" goes on to the default chat list, as the router does for anyone signed in
     const enterApp = () => navigate("/");
 
-    // an emailed link followed elsewhere signs this page in too, so it enters the app
+    // /diamond's Upgrade asked to sign in first: its dialog's emailed link goes on to the Diamond
+    // dialog too, as its other sign-ins do (startDiamondUpgrade). Closing that dialog stops the link,
+    // and the page's own Sign in is a sign-in for the app.
+    let diamondUpgradePending = false;
+
+    // an emailed link followed elsewhere signs this page in too, so it enters the app (or goes on
+    // to the Diamond dialog)
     const auth = createAuth(client, {
         translate: (key) => $_(key),
         onEmailSignedIn: () => {
             pageSignIns.emailDone();
-            enterApp();
+            if (diamondUpgradePending) {
+                diamondUpgradePending = false;
+                openDiamondDialog();
+            } else {
+                enterApp();
+            }
         },
     });
     const dialog = new AuthDialogProps(auth);
@@ -74,10 +103,12 @@
     // closing gives up what the dialog had going, and signs out an identity without an account it
     // leaves behind (a sign-up that failed)
     const onClose = () => {
+        diamondUpgradePending = false;
         pageSignIns.closed();
         auth.cancel();
     };
     const onOpen = () => {
+        diamondUpgradePending = false;
         last = selectedAuthProviderStore.value;
         dialog.opening();
     };
@@ -104,14 +135,107 @@
     const setMode = (next: PageMode) => themeType.set(next);
 
     const learn = $derived(learnPageFor(route));
+    const docPage = $derived(docPageFor(route));
 
-    // Learn's content is loaded the first time a Learn page shows, so Landing doesn't carry it; a
-    // failed load says so, with a retry that reloads the page (a failed import stays failed)
+    // Learn's content is loaded the first time a Learn page (or a doc page, whose tabs are Learn's)
+    // shows, so Landing doesn't carry it; a failed load says so, with a retry that reloads the page
+    // (a failed import stays failed)
     const learnLoader = new LazyModule(() => import("./learn"));
     $effect(() => {
-        if (learn !== undefined) untrack(() => learnLoader.want());
+        if (learn !== undefined || docPage !== undefined) untrack(() => learnLoader.want());
     });
     const learnContent = $derived(learnLoader.module?.learnContent((key) => $_(key)));
+
+    // the legal docs, each loaded the first time its page shows (the terms are long)
+    const legalLoaders = {
+        terms: new LazyModule(async () => (await import("./learn/legal/terms")).terms),
+        privacy: new LazyModule(async () => (await import("./learn/legal/privacy")).privacy),
+        guidelines: new LazyModule(
+            async () => (await import("./learn/legal/guidelines")).guidelines,
+        ),
+    };
+    const legalLoader = $derived(isLegalDoc(docPage) ? legalLoaders[docPage] : undefined);
+    $effect(() => {
+        const loader = legalLoader;
+        if (loader !== undefined) untrack(() => loader.want());
+    });
+
+    // /csea-reporting is the checklist for platform moderators and operators, and where to report
+    // material for anyone else
+    const cseaChecklist = $derived(showsCseaChecklist($platformModeratorStore, $platformOperatorStore));
+
+    // the doc a doc page shows, once it's there. Each is made again only when what it shows
+    // changes (the moderator flag, /diamond's two strings), as a new doc is a new page to Learn
+    // (its contents list's state, the jump to ?section=)
+    const cseaPageDoc = $derived(cseaDoc(cseaChecklist));
+    const diamondKicker = $derived($_("upgrade.diamond"));
+    const diamondTitle = $derived($_("upgrade.benefits"));
+    const diamondPageDoc = $derived<LearnDoc>({
+        kicker: diamondKicker,
+        title: diamondTitle,
+        sections: [],
+    });
+    const doc = $derived.by((): LearnDoc | undefined => {
+        if (isLegalDoc(docPage)) return legalLoader?.module;
+        if (docPage === "csea") return cseaPageDoc;
+        if (docPage === "diamond") return diamondPageDoc;
+        return undefined;
+    });
+    const loadFailed = $derived(learnLoader.failed || !!legalLoader?.failed);
+
+    // the page's own path, which a link to one of its sections names
+    const pagePath = $derived(
+        docPage !== undefined
+            ? docPagePath(docPage)
+            : learn !== undefined
+              ? learnPath(learn.page, learn.post)
+              : window.location.pathname,
+    );
+
+    // what every Learn page takes, a sub-page or a doc page: the theme, the routes, the auth, and
+    // a doc's ?section= (the section chosen in its contents list, in place, so the address can be
+    // shared; the router's count of navigations follows a link to the one it last showed again,
+    // as ?section= is then unchanged) and its copy links (on the site's own origin)
+    const learnFrame = $derived({
+        mode,
+        accent: $accentStore,
+        homeHref: "/home",
+        appHref: "/",
+        exploreHref: "/communities",
+        termsHref: "/terms",
+        privacyHref: "/privacy",
+        learnPageHref: learnPath,
+        onNavigate: (page: LearnPage, post?: string) => navigate(learnPath(page, post)),
+        section: $querystringStore.get("section") ?? undefined,
+        navigation: $routerNavigationStore,
+        onCopySection: (id: string) => void copySectionUrl(client, pagePath, id),
+        onSection: (id: string) => setQueryStringParamInPlace("section", id),
+        auth: pageAuth,
+        onEnterApp: enterApp,
+        signedIn,
+    });
+
+    // /diamond's Upgrade: the app's Diamond dialog, where it can be paid for (the PIN, the wallet),
+    // after signing in when signed out (ROUTES.md, decision 5). It opens over the default chat list,
+    // as /profile_summary's ?profile does: "/" goes on to it without the query
+    const openDiamondDialog = () =>
+        navigate(`${routeForScope(client.getDefaultScope())}?diamond`);
+    // its sign-in is the page's (pageAuth), going on to the Diamond dialog, an emailed link's too
+    const diamondSignIn = new PageAuthState(() => ({
+        auth: {
+            ...pageAuth,
+            onOpen: () => {
+                onOpen();
+                diamondUpgradePending = true;
+            },
+        },
+        onEnterApp: openDiamondDialog,
+        appHref: "/",
+    }));
+    function startDiamondUpgrade() {
+        if (signedIn) openDiamondDialog();
+        else diamondSignIn.open("login");
+    }
     const landing = $derived(
         route.kind === "home_route" ||
             route.kind === "home_landing_route" ||
@@ -198,27 +322,25 @@
     {/if}
 {:else if learn !== undefined && learnContent !== undefined}
     <Learn
-        {mode}
-        accent={$accentStore}
-        homeHref="/home"
-        appHref="/"
-        exploreHref="/communities"
+        {...learnFrame}
+        content={learnContent}
         page={learn.page}
         post={learn.post}
-        learnPageHref={learnPath}
-        onNavigate={(page, post) => navigate(learnPath(page, post))}
-        content={learnContent}
-        section={$querystringStore.get("section") ?? undefined}
-        question={$querystringStore.get("q") ?? undefined}
-        auth={pageAuth}
-        onEnterApp={enterApp}
-        {signedIn}>
+        question={$querystringStore.get("q") ?? undefined}>
         {#snippet architecture()}
             <!-- the interactive canister map, which keeps ?section= as the canister it shows -->
             <CanisterMapFrame syncUrl />
         {/snippet}
     </Learn>
-{:else if learn !== undefined && learnLoader.failed}
+{:else if docPage !== undefined && learnContent !== undefined && doc !== undefined}
+    <Learn
+        {...learnFrame}
+        content={learnContent}
+        {doc}
+        belowDoc={docPage === "diamond" || (docPage === "csea" && cseaChecklist) ? belowDoc : undefined}
+        architecture={tabsArchitecture} />
+    {#if diamondSignIn.kind}<AuthDialog {...diamondSignIn.dialog} />{/if}
+{:else if (learn !== undefined || docPage !== undefined) && loadFailed}
     <div class="page">
         <EmptyState
             preset="error"
@@ -227,15 +349,22 @@
             actionLabel="ui.common.retry"
             actionHandler={() => location.reload()} />
     </div>
-{:else if learn !== undefined}
-    <!-- Learn's content is loading -->
-    <div class="page"></div>
 {:else}
-    <!-- TODO(Learn doc pages): the legal pages and /diamond in Learn's page design (ROUTES.md, decision 5) -->
-    <div class="page">
-        <Placeholder title="Marketing page" detail={route.kind} />
-    </div>
+    <!-- Learn's content (or a doc page's) is loading -->
+    <div class="page"></div>
 {/if}
+
+<!-- a doc page's own content, after its doc -->
+{#snippet belowDoc()}
+    {#if docPage === "diamond"}
+        <DiamondPageScreen onStartUpgrade={startDiamondUpgrade} />
+    {:else if docPage === "csea"}
+        <CseaChecklistScreen />
+    {/if}
+{/snippet}
+
+<!-- only for the tabs on a doc page: the Architecture tab shows when Learn has content for it -->
+{#snippet tabsArchitecture()}{/snippet}
 
 <style lang="scss">
     .page {

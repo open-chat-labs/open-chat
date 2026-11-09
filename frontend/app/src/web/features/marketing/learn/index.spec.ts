@@ -7,7 +7,7 @@ const content = learnContent((key) => key);
 
 // every piece of text Learn renders with the markdown subset
 const texts = [
-    ...(content.docs.whitepaper?.sections.flatMap((s) => [...s.paras, ...(s.list ?? [])]) ?? []),
+    ...(content.docs.whitepaper?.sections.flatMap((s) => [...(s.paras ?? []), ...(s.list ?? [])]) ?? []),
     ...content.posts.flatMap((p) => p.body.filter((b) => imageOf(b) === null)),
     ...content.roadmap.flatMap((r) => [
         ...(r.detail?.paras ?? []),

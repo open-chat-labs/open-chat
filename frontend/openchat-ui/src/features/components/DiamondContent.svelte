@@ -129,7 +129,12 @@
     onBack?: () => void;
     /** Resource key (or literal text). */
     backLabel?: string;
+    /** Closes it: the header's ×, Maybe later and Done. A page without it has none of them. */
     onClose?: () => void;
+    /** Upgrade (and a timed member's Extend) hand over to the host instead of going on to the plans, and show without
+     *  `onUpgrade`: a page that can't take the payment itself (/diamond) sends the person to sign in, or to the app's
+     *  Diamond dialog. */
+    onStartUpgrade?: () => void;
     /** Charge and activate. Resolve with the membership end the backend set (or nothing to keep `until`); reject to
      *  stay on the confirm step with an error; resolve `false` when nothing was bought and there's nothing to say here
      *  (the user backed out, or the host said why), staying on confirm. Without it the upgrade buttons are hidden. */
@@ -174,6 +179,7 @@
     onBack,
     backLabel = 'ui.common.back',
     onClose,
+    onStartUpgrade,
     onUpgrade,
     onRefreshBalance,
     tokenPrices,
@@ -265,7 +271,9 @@
   const plan = $derived(PLANS.find((x) => x.key === planKey) ?? PLANS[0]);
   const cheapest = $derived(PLANS.length ? Math.min(...PLANS.map(total)) : 0);
   // offered while the prices load (or failed to), the plans step saying so
-  const canUpgrade = $derived(!!onUpgrade && (PLANS.length > 0 || pricing !== undefined));
+  const canUpgrade = $derived(!!onStartUpgrade || (!!onUpgrade && (PLANS.length > 0 || pricing !== undefined)));
+  // Upgrade / Extend: on to the plans, or the host's own way there
+  const startUpgrade = () => (onStartUpgrade ? onStartUpgrade() : (step = 'plans'));
 
   const groups = $derived(
     groupsFor(limits).map((g) => ({ label: g.label, rows: g.rows.filter((r) => !onlyDiff || r[2] !== r[3]) })).filter((g) => g.rows.length),
@@ -391,7 +399,9 @@
       <span class="header-title">{t('ui.diamondDialog.title')}</span>
       <span class="header-sub">{subtitle}</span>
     </div>
-    <span class="square" onclick={() => close(onClose)} role="button" tabindex="0">{@render icon('close', 'close-icon')}</span>
+    {#if onClose}
+      <span class="square" onclick={() => close(onClose)} role="button" tabindex="0">{@render icon('close', 'close-icon')}</span>
+    {/if}
   </div>
 
   {#if step === 'compare'}
@@ -579,13 +589,17 @@
     {#if step === 'compare' && member}
       <span class="member-line"><span class="member-badge">{@render icon('check', 'member-check')}</span>{lifetime ? t('ui.diamondDialog.lifetimeMember') : t('ui.diamondDialog.memberUntil', { date: fmtDate(expiry) })}</span>
       {#if extend && canUpgrade}
-        <span class="text-button accent" onclick={() => (step = 'plans')} role="button" tabindex="0">{t('ui.diamondDialog.extend')}</span>
+        <span class="text-button accent" onclick={startUpgrade} role="button" tabindex="0">{t('ui.diamondDialog.extend')}</span>
       {/if}
-      <span class="solid-button" onclick={() => close(onClose)} role="button" tabindex="0">{t('ui.common.done')}</span>
+      {#if onClose}
+        <span class="solid-button" onclick={() => close(onClose)} role="button" tabindex="0">{t('ui.common.done')}</span>
+      {/if}
     {:else if step === 'compare'}
-      <span class="text-button" onclick={() => close(onClose)} role="button" tabindex="0">{t('ui.diamondDialog.maybeLater')}</span>
+      {#if onClose}
+        <span class="text-button" onclick={() => close(onClose)} role="button" tabindex="0">{t('ui.diamondDialog.maybeLater')}</span>
+      {/if}
       {#if canUpgrade}
-        <span class="cta" onclick={() => (step = 'plans')} role="button" tabindex="0">{@render icon('gem', 'cta-icon')}{t('ui.diamondDialog.upgrade')}</span>
+        <span class="cta" onclick={startUpgrade} role="button" tabindex="0">{@render icon('gem', 'cta-icon')}{t('ui.diamondDialog.upgrade')}</span>
       {/if}
     {:else if step === 'plans'}
       <span class="footer-note">{t('ui.diamondDialog.footerNote')}</span>

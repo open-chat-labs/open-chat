@@ -1,92 +1,39 @@
 <script lang="ts">
     import { platformModeratorStore, platformOperatorStore, querystringStore } from "@client";
-    import { onMount } from "svelte";
+    import {
+        CseaChecklist,
+        showsCseaChecklist,
+        ukTime as ukTimeAt,
+    } from "@src/logic/moderation/cseaChecklist.svelte";
+    import { now } from "../../stores/time";
     import CseaChecklistItem from "./CseaChecklistItem.svelte";
     import Headline from "./Headline.svelte";
 
-    type Origin = "hash" | "manual";
-    type Priority = 1 | 2 | 3;
-
     let report = $derived($querystringStore.get("report") ?? undefined);
     let urgentHint = $derived($querystringStore.get("urgent") === "true");
-    let storageKey = $derived(`csea_checklist_${report ?? "adhoc"}`);
 
-    let origin = $state<Origin | undefined>(undefined);
-    let priority = $state<Priority | undefined>(undefined);
-    let ticks = $state<Record<string, boolean>>({});
-    let loaded = $state(false);
+    // the report's checklist, restored from what this browser kept for it (logic/moderation)
+    let checklist = $derived(new CseaChecklist(report));
+    let origin = $derived(checklist.origin);
+    let priority = $derived(checklist.priority);
+    let ticks = $derived(checklist.ticks);
+    let tickedCount = $derived(checklist.tickedCount);
 
-    // The current hour in the UK drives the "call after submitting" rule, which applies to
+    // The current time in the UK drives the "call after submitting" rule, which applies to
     // P1/P2 reports submitted outside 07:00-17:00 UK time
-    let ukHour = $state(currentUkHour());
-    let ukTime = $state(currentUkTime());
+    let at = $derived(new Date($now));
+    let ukTime = $derived(ukTimeAt(at));
+    let callRequired = $derived(checklist.callRequired(at));
 
-    function currentUkHour(): number {
-        return Number(
-            new Intl.DateTimeFormat("en-GB", {
-                timeZone: "Europe/London",
-                hour: "numeric",
-                hour12: false,
-            }).format(new Date()),
-        );
-    }
-
-    function currentUkTime(): string {
-        return new Intl.DateTimeFormat("en-GB", {
-            timeZone: "Europe/London",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        }).format(new Date());
-    }
-
-    onMount(() => {
-        const interval = window.setInterval(() => {
-            ukHour = currentUkHour();
-            ukTime = currentUkTime();
-        }, 60_000);
-        return () => window.clearInterval(interval);
-    });
-
-    let outsideHours = $derived(ukHour < 7 || ukHour >= 17);
-    let callRequired = $derived((priority === 1 || priority === 2) && outsideHours);
-
-    let authorized = $derived($platformModeratorStore || $platformOperatorStore);
-
-    // Load any saved state for this report once, then persist every change
-    $effect(() => {
-        const saved = localStorage.getItem(storageKey);
-        if (saved !== null) {
-            try {
-                const parsed = JSON.parse(saved);
-                origin = parsed.origin;
-                priority = parsed.priority;
-                ticks = parsed.ticks ?? {};
-            } catch {
-                // ignore corrupt state
-            }
-        }
-        loaded = true;
-    });
-
-    $effect(() => {
-        const state = JSON.stringify({ origin, priority, ticks });
-        if (loaded) {
-            localStorage.setItem(storageKey, state);
-        }
-    });
+    let authorized = $derived(showsCseaChecklist($platformModeratorStore, $platformOperatorStore));
 
     function toggle(id: string) {
-        ticks[id] = ticks[id] !== true;
+        checklist.toggle(id);
     }
 
     function reset() {
-        origin = undefined;
-        priority = undefined;
-        ticks = {};
+        checklist.reset();
     }
-
-    let tickedCount = $derived(Object.values(ticks).filter((v) => v).length);
 </script>
 
 <div class="csea">
@@ -149,7 +96,7 @@
                 same.
             </p>
             <div class="choice">
-                <button class:selected={origin === "hash"} onclick={() => (origin = "hash")}>
+                <button class:selected={origin === "hash"} onclick={() => checklist.setOrigin("hash")}>
                     <strong>Hash match</strong>
                     <span>
                         PhotoDNA match or a blocked re-upload of denylisted material. The report
@@ -157,7 +104,7 @@
                         side, so nobody needs to view or handle the material.
                     </span>
                 </button>
-                <button class:selected={origin === "manual"} onclick={() => (origin = "manual")}>
+                <button class:selected={origin === "manual"} onclick={() => checklist.setOrigin("manual")}>
                     <strong>Manual assertion</strong>
                     <span>
                         A user report, a third-party report, or moderator discovery. The portal
@@ -177,7 +124,7 @@
                 </p>
             {/if}
             <div class="choice vertical">
-                <button class:selected={priority === 1} onclick={() => (priority = 1)}>
+                <button class:selected={priority === 1} onclick={() => checklist.setPriority(1)}>
                     <strong>Priority 1 — current or immediate risk to an individual</strong>
                     <span>
                         A real and immediate threat to life or of serious harm or injury, including
@@ -185,7 +132,7 @@
                         because abuse is taking place now or is imminent.
                     </span>
                 </button>
-                <button class:selected={priority === 2} onclick={() => (priority = 2)}>
+                <button class:selected={priority === 2} onclick={() => checklist.setPriority(2)}>
                     <strong>Priority 2 — possible risk in the near future, or time-sensitive</strong
                     >
                     <span>
@@ -196,7 +143,7 @@
                         non-hash-matched material belong here.
                     </span>
                 </button>
-                <button class:selected={priority === 3} onclick={() => (priority = 3)}>
+                <button class:selected={priority === 3} onclick={() => checklist.setPriority(3)}>
                     <strong>Priority 3 — other</strong>
                     <span>
                         No impending danger to a child: hash-list matches, problematic chat with no
