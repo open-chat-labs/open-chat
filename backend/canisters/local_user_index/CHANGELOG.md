@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Refuse prize claims from users who have claimed 10 in the last 24 hours ([#10443](https://github.com/open-chat-labs/open-chat/pull/10443))
 
+### Removed
+
+- Stop checking prize claims with Cloudflare Turnstile ([#10442](https://github.com/open-chat-labs/open-chat/pull/10442))
+
+## [[2.0.2216](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2216-local_user_index)] - 2026-11-06
+
 ### Changed
 
 - Expect a salted hash of the prize claim as Turnstile's custom data, rather than the user's id ([#10417](https://github.com/open-chat-labs/open-chat/pull/10417))
@@ -17,7 +23,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Stop taking a sign-in proof with prize claims, as prizes can no longer require one ([#10425](https://github.com/open-chat-labs/open-chat/pull/10425))
-- Stop checking prize claims with Cloudflare Turnstile ([#10442](https://github.com/open-chat-labs/open-chat/pull/10442))
 
 ## [[2.0.2211](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2211-local_user_index)] - 2026-11-05
 
