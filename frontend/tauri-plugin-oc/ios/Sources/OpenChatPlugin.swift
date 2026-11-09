@@ -66,6 +66,10 @@ class ReleaseNotificationsArgs: Decodable {
     let threadIndex: String?
 }
 
+class CallRingHandledArgs: Decodable {
+    let messageId: String
+}
+
 class OpenChatPlugin: Plugin {
     private let passkeyAuth = PasskeyAuth()
     private let recentMedia = RecentMedia()
@@ -206,7 +210,10 @@ class OpenChatPlugin: Plugin {
     // none, e.g. without a network connection.
     @objc func getApnsDevice(_ invoke: Invoke) {
         Push.shared.requestAlertToken { token in
-            invoke.resolve(["alertToken": token ?? NSNull()])
+            invoke.resolve([
+                "alertToken": token ?? NSNull(),
+                "voipToken": CallRinger.shared.voipToken ?? NSNull(),
+            ])
         }
     }
 
@@ -224,6 +231,17 @@ class OpenChatPlugin: Plugin {
         }
     }
 
+    @objc func getPendingCallAction(_ invoke: Invoke) {
+        invoke.resolve(["payload": NativeCallBridge.shared.takePendingAction() ?? NSNull()])
+    }
+
+    @objc func callRingHandled(_ invoke: Invoke) {
+        if let args = try? invoke.parseArgs(CallRingHandledArgs.self) {
+            CallRinger.shared.joinedInApp(messageId: args.messageId)
+        }
+        invoke.resolve()
+    }
+
     @objc func nativeCallLeave(_ invoke: Invoke) {
         NativeCallBridge.shared.leave()
         invoke.resolve()
@@ -231,7 +249,7 @@ class OpenChatPlugin: Plugin {
 
     @objc func setCallConfig(_ invoke: Invoke) {
         if let args = try? invoke.parseArgs(CallConfigArgs.self) {
-            NativeCallBridge.shared.setConfig(videoBridgeUrl: args.videoBridgeUrl)
+            NativeCallBridge.shared.setConfig(videoBridgeUrl: args.videoBridgeUrl, username: args.username)
         }
         invoke.resolve()
     }

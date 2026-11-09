@@ -1,8 +1,11 @@
-use crate::apns::alert_payload;
+use crate::apns::{alert_payload, now_millis, voip_payload};
 use crate::bot_notifications::delivery_tracker::DeliveryTracker;
 use crate::ic_agent::IcAgent;
 use crate::metrics::write_metrics;
-use crate::{ApnsNotification, BotNotification, FcmNotification, NotificationMetadata, PushNotification, UserNotification};
+use crate::{
+    ApnsNotification, ApnsNotificationKind, BotNotification, FcmNotification, NotificationMetadata, PushNotification,
+    UserNotification,
+};
 use async_channel::Sender;
 use ct_codecs::{Base64NoPadding, Encoder};
 use index_store::IndexStore;
@@ -201,6 +204,27 @@ impl<I: IndexStore> Reader<I> {
                                         }))
                                     }
                                     types::NotificationSubscription::ApnsPush(device) => {
+                                        // A ring goes only to the VoIP token. Each ring has its own
+                                        // envelope, so nothing is shared here.
+                                        if notification.fcm_data.as_ref().is_some_and(|d| d.call.is_some()) {
+                                            let voip =
+                                                notification.fcm_data.as_ref().and_then(|d| voip_payload(d, now_millis()));
+                                            let (Some(token), Some((payload, expires_at_secs))) = (device.voip_token, voip)
+                                            else {
+                                                continue;
+                                            };
+                                            self.user_notification_sender
+                                                .send(PushNotification::ApnsNotification(Box::new(ApnsNotification {
+                                                    token,
+                                                    payload: Arc::new(payload),
+                                                    kind: ApnsNotificationKind::Voip { expires_at_secs },
+                                                    metadata,
+                                                })))
+                                                .await
+                                                .unwrap();
+                                            continue;
+                                        }
+
                                         let (apns_payload, collapse_id) = apns.get_or_insert_with(|| {
                                             (
                                                 // None when the notification has no APNs alert form,
@@ -220,7 +244,9 @@ impl<I: IndexStore> Reader<I> {
                                         PushNotification::ApnsNotification(Box::new(ApnsNotification {
                                             token,
                                             payload,
-                                            collapse_id: collapse_id.clone(),
+                                            kind: ApnsNotificationKind::Alert {
+                                                collapse_id: collapse_id.clone(),
+                                            },
                                             metadata,
                                         }))
                                     }

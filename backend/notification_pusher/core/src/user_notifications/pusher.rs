@@ -1,7 +1,7 @@
 use crate::apns::{ApnsClient, SendOutcome};
 use crate::metrics::write_metrics;
 use crate::user_notifications::token_remover::DeadToken;
-use crate::{ApnsNotification, FcmNotification, NotificationToPush, UserNotificationToPush, timestamp};
+use crate::{ApnsNotification, ApnsNotificationKind, FcmNotification, NotificationToPush, UserNotificationToPush, timestamp};
 use async_channel::{Receiver, Sender};
 use fcm_service::{AndroidConfig, FcmMessage, FcmService, Target};
 use std::collections::{BinaryHeap, HashMap};
@@ -175,11 +175,20 @@ impl Pusher {
         let ApnsNotification {
             token,
             payload,
-            collapse_id,
+            kind,
             metadata,
         } = notification;
 
-        match apns_client.send_alert(&token, payload.to_string(), &collapse_id).await {
+        let outcome = match kind {
+            ApnsNotificationKind::Alert { collapse_id } => {
+                apns_client.send_alert(&token, payload.to_string(), &collapse_id).await
+            }
+            ApnsNotificationKind::Voip { expires_at_secs } => {
+                apns_client.send_voip(&token, payload.to_string(), expires_at_secs).await
+            }
+        };
+
+        match outcome {
             SendOutcome::Delivered => true,
             SendOutcome::RemoveToken => {
                 info!(user_id = %metadata.recipient, "APNs token no longer valid, queued to be removed");

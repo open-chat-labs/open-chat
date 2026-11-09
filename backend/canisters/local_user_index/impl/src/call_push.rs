@@ -8,7 +8,7 @@ use types::{CallFacts, Chat, Milliseconds, UserNotificationPayload, VideoCallTyp
 pub const MAX_RINGING_GROUP_SIZE: u32 = 8;
 
 // How long a phone rings, and how long its decline token is good for (#9534).
-pub const RING_WINDOW_MS: Milliseconds = 40 * 1000;
+pub const RING_WINDOW_MS: Milliseconds = types::CALL_RING_WINDOW_MS;
 
 /// Whether a call in this chat should ring the recipient's phone. A direct call rings. A call
 /// in a small private group rings. Nothing else does, and a broadcast never does.

@@ -16,7 +16,7 @@ import {
     reportCallEnded,
     type NativeCallControl,
 } from "../utils/native/call_bridge";
-import { isAndroidTauriApp } from "@shared";
+import { isAndroidTauriApp, isIosTauriApp } from "@shared";
 import {
     chatIdentifiersEqual,
     type ChatIdentifier,
@@ -128,9 +128,9 @@ export const incomingVideoCall = {
         if (call === undefined) {
             incomingStore.set(undefined);
         } else {
-            // The Android shell rings natively for every call; the in-app sheet and its
-            // ringtone never show there (native calls M2, #9510).
-            if (isAndroidTauriApp()) return;
+            // The native shells ring for every call themselves; the in-app sheet and its
+            // ringtone never show there (native calls M2, #9510; #10398 invariant 16).
+            if (isAndroidTauriApp() || isIosTauriApp()) return;
             // only register an incoming call if we have not already done so. This prevents us ringing twice via a different mechanism for the same call.
             if (!previousCalls.has(call.messageId)) {
                 incomingStore.set(call);

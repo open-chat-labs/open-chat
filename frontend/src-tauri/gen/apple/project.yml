@@ -84,8 +84,8 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         # Lets the Notification Service Extension make communication notifications
         NSUserActivityTypes: [INSendMessageIntent]
-        # A native call keeps going with the app in the background
-        UIBackgroundModes: [audio]
+        # A native call keeps going with the app in the background, and PushKit rings it
+        UIBackgroundModes: [audio, voip]
         # Dev only: the app loads the vite dev server and talks to a local dfx
         # replica over plain http on the LAN. The iOS release workflow deletes
         # this key before building, so store builds keep ATS on.

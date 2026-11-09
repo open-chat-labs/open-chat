@@ -81,7 +81,7 @@ final class Push: NSObject, UNUserNotificationCenterDelegate {
         waiters.forEach { $0(token) }
     }
 
-    private static let isSandbox: Bool = {
+    static let isSandbox: Bool = {
         let profile = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision")
             .flatMap { try? Data(contentsOf: $0) }
         return ApnsEnvironment.isSandbox(profile: profile)
@@ -131,6 +131,10 @@ final class Push: NSObject, UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        if notification.request.identifier.hasPrefix(Self.missedCallPrefix) {
+            completionHandler([.banner, .list, .sound])
+            return
+        }
         guard notification.request.trigger is UNPushNotificationTrigger else {
             forwardWillPresent(center, notification, completionHandler)
             return
@@ -158,6 +162,10 @@ final class Push: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
+    // Local notifications the shell posts itself. The notification plugin force-unwraps its own
+    // record of every local notification it's handed, so these must never reach it.
+    static let missedCallPrefix = "missed-call-"
+
     private func forwardWillPresent(
         _ center: UNUserNotificationCenter, _ notification: UNNotification,
         _ completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
@@ -179,7 +187,9 @@ final class Push: NSObject, UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        guard response.notification.request.trigger is UNPushNotificationTrigger else {
+        guard response.notification.request.trigger is UNPushNotificationTrigger
+            || response.notification.request.identifier.hasPrefix(Self.missedCallPrefix)
+        else {
             if let previousDelegate,
                 previousDelegate.responds(
                     to: #selector(UNUserNotificationCenterDelegate.userNotificationCenter(_:didReceive:withCompletionHandler:)))

@@ -59,6 +59,11 @@ impl ApnsDeviceStore {
         !self.get_for_user(user_id).is_empty()
     }
 
+    /// Whether any of the user's devices can be rung through PushKit
+    pub fn has_voip(&self, user_id: &UserId) -> bool {
+        self.get_for_user(user_id).iter().any(|d| d.voip_token.is_some())
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = (&UserId, &ApnsDevice)> {
         self.devices
             .iter()

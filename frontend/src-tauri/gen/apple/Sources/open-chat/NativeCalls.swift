@@ -31,14 +31,31 @@ final class NativeCalls: NSObject {
         center.addObserver(forName: .init("ocNativeCallLeave"), object: nil, queue: .main) { _ in
             Task { @MainActor in self.call?.leave() }
         }
+        center.addObserver(forName: .init("ocNativeCallHangUp"), object: nil, queue: .main) { _ in
+            Task { @MainActor in self.call?.hangUp() }
+        }
+        center.addObserver(forName: .init("ocNativeCallMute"), object: nil, queue: .main) { note in
+            let muted = note.userInfo?["muted"] as? Bool ?? false
+            Task { @MainActor in self.call?.setMuted(muted) }
+        }
+        center.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
+            Task { @MainActor in self.call?.applicationBecameActive() }
+        }
     }
 
     private func join(_ info: [AnyHashable: Any]) {
         guard let reply = info["reply"] as? ([String: Any]) -> Void else { return }
-        guard call == nil, let url = (info["url"] as? String).flatMap(URL.init(string:)),
-            let token = info["token"] as? String
-        else {
-            reply(["error": "A call is already running or its room is invalid"])
+        guard let url = (info["url"] as? String).flatMap(URL.init(string:)), let token = info["token"] as? String else {
+            reply(["error": "The call's room is invalid"])
+            return
+        }
+        // A ring the shell answered, which the web layer has now caught up with
+        if let call, call.settings.url == url {
+            call.whenJoined(reply)
+            return
+        }
+        guard call == nil else {
+            reply(["error": "A call is already running"])
             return
         }
 
@@ -50,6 +67,7 @@ final class NativeCalls: NSObject {
             video: info["video"] as? Bool ?? false,
             cameraOn: info["cameraOn"] as? Bool ?? false,
             micOn: info["micOn"] as? Bool ?? true,
+            cameraWhenActive: info["cameraWhenActive"] as? Bool ?? false,
             broadcast: info["broadcast"] as? Bool ?? false
         )
         let call = NativeCallController(settings: settings) { event in
@@ -102,6 +120,8 @@ struct NativeCallSettings {
     let video: Bool
     let cameraOn: Bool
     let micOn: Bool
+    // A video call answered on a locked phone, where iOS won't give it the camera yet
+    let cameraWhenActive: Bool
     let broadcast: Bool
 }
 
@@ -128,12 +148,17 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
     private let client = CallClient()
     private let send: ([String: Any]) -> Void
     private var finished = false
+    private var joinResult: Result<[String: Any], Error>?
+    private var joinWaiters: [([String: Any]) -> Void] = []
+    private var cameraWanted: Bool
+    private var leaveRequested = false
 
     init(settings: NativeCallSettings, send: @escaping ([String: Any]) -> Void) {
         self.settings = settings
         self.send = send
         micOn = settings.micOn && !settings.broadcast
         cameraOn = settings.cameraOn && !settings.broadcast
+        cameraWanted = settings.cameraWhenActive
         // Voice calls are held to the ear, video calls are watched
         speakerOn = settings.video
         super.init()
@@ -144,6 +169,11 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
         if !settings.broadcast {
             await requestPermissions()
         }
+        // Left while waiting for permission: nothing to join or to leave
+        guard !leaveRequested else {
+            finishIfLeft()
+            throw CancellationError()
+        }
         var update = ClientSettingsUpdate()
         update.inputs = .set(
             InputSettingsUpdate(
@@ -152,9 +182,43 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
             ))
         _ = try await client.join(url: settings.url, token: MeetingToken(stringValue: settings.token), settings: update)
         joined = true
+        guard !leaveRequested else {
+            leave()
+            return currentState()
+        }
         try? await client.setPreferredAudioDevice(speakerOn ? .speakerphone : .earpiece)
         refreshTiles()
-        return ["local": payload(client.participants.local), "present": client.participantCounts.present]
+        let state = currentState()
+        joinResult = .success(state)
+        joinWaiters.forEach { $0(state) }
+        joinWaiters = []
+        applicationBecameActive()
+        return state
+    }
+
+    private func currentState() -> [String: Any] {
+        ["local": payload(client.participants.local), "present": client.participantCounts.present]
+    }
+
+    // The web layer catching up with a call the shell joined on its own
+    func whenJoined(_ reply: @escaping ([String: Any]) -> Void) {
+        if joined {
+            reply(currentState())
+        } else {
+            joinWaiters.append(reply)
+        }
+    }
+
+    func applicationBecameActive() {
+        guard joined, cameraWanted, UIApplication.shared.applicationState == .active else { return }
+        cameraWanted = false
+        guard !cameraOn, !cameraDenied else { return }
+        toggleCamera()
+    }
+
+    func setMuted(_ muted: Bool) {
+        guard micOn == muted else { return }
+        toggleMic()
     }
 
     private func requestPermissions() async {
@@ -162,7 +226,7 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
             micOn = false
             micDenied = true
         }
-        if settings.video, !(await AVCaptureDevice.requestAccess(for: .video)) {
+        if settings.video, cameraOn || cameraWanted, !(await AVCaptureDevice.requestAccess(for: .video)) {
             cameraOn = false
             cameraDenied = true
         }
@@ -201,6 +265,11 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
     }
 
     func leave() {
+        // Not started yet, so join() has to act on this when it gets there
+        if client.callState == .initialized {
+            leaveRequested = true
+            return
+        }
         guard client.callState == .joined || client.callState == .joining else {
             finishIfLeft()
             return
@@ -211,6 +280,8 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
     private func finishIfLeft() {
         guard !finished else { return }
         finished = true
+        joinWaiters.forEach { $0(["error": "The call ended"]) }
+        joinWaiters = []
         send(["kind": "left"])
         onFinished?()
     }

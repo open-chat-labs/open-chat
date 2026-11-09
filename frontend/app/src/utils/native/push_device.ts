@@ -15,7 +15,7 @@ export function registerPushDevice(client: OpenChat) {
     if (isIosTauriApp()) {
         getApnsDevice()
             .then((device) => {
-                if (!device.alertToken) {
+                if (!device.alertToken && !device.voipToken) {
                     console.error("No APNs token received");
                     return;
                 }
@@ -39,10 +39,15 @@ export function registerPushDevice(client: OpenChat) {
 // Registers the new token when the OS replaces this device's token
 export function expectPushDeviceRefresh(client: OpenChat): Promise<PluginListener> {
     if (isIosTauriApp()) {
-        return addPluginListener("oc", NEW_APNS_TOKEN_EVENT, (data: { alertToken?: string }) => {
-            if (data?.alertToken) {
-                client.addApnsDevice({ alertToken: data.alertToken }).catch(console.error);
-            }
+        // A device is registered whole, so a new token goes with the other one the shell holds
+        return addPluginListener("oc", NEW_APNS_TOKEN_EVENT, () => {
+            getApnsDevice()
+                .then((device) => {
+                    if (device.alertToken || device.voipToken) {
+                        return client.addApnsDevice(device);
+                    }
+                })
+                .catch(console.error);
         });
     }
     return expectNewFcmToken((token) => addFcmToken(client, token));
@@ -53,8 +58,10 @@ export function expectPushDeviceRefresh(client: OpenChat): Promise<PluginListene
 // next login mints and registers a fresh one.
 export async function unregisterPushDevice(client: OpenChat): Promise<void> {
     if (isIosTauriApp()) {
-        const device = await getApnsDevice().catch(() => ({}) as { alertToken?: string });
-        if (device.alertToken) {
+        const device = await getApnsDevice().catch(
+            () => ({}) as { alertToken?: string; voipToken?: string },
+        );
+        if (device.alertToken || device.voipToken) {
             await client.removeApnsDevice(device).catch(console.error);
         }
         return;

@@ -12,9 +12,11 @@ const bridge = {
 };
 const stopRefresh = vi.fn();
 vi.mock("../utils/native/call_bridge", () => bridge);
+const platform = vi.hoisted(() => ({ android: true, ios: false }));
 vi.mock("@shared", async (importOriginal) => ({
     ...(await importOriginal<object>()),
-    isAndroidTauriApp: () => true,
+    isAndroidTauriApp: () => platform.android,
+    isIosTauriApp: () => platform.ios,
 }));
 
 // #9559 invariants 2 and 7, the store half: what the active call reports to the shell and
@@ -73,5 +75,28 @@ describe("the active call and the shell (#9559)", () => {
         activeVideoCall.applyNativeControl({ kind: "hangup", messageId: 7n });
         expect(call.leave).toHaveBeenCalledTimes(1);
         activeVideoCall.endCall();
+    });
+
+    test("invariant 16 (#10398) the iOS shell never shows the in-app ring sheet", async () => {
+        const { incomingVideoCall } = await import("./video");
+        const { get } = await import("svelte/store");
+        const ring = (messageId: bigint) => ({
+            chatId: direct,
+            userId: "u",
+            messageId,
+            callType: "default" as const,
+        });
+
+        platform.android = false;
+        platform.ios = true;
+        incomingVideoCall.set(ring(1n));
+        expect(get(incomingVideoCall)).toBeUndefined();
+
+        platform.ios = false;
+        incomingVideoCall.set(ring(2n));
+        expect(get(incomingVideoCall)?.messageId).toBe(2n);
+
+        incomingVideoCall.set(undefined);
+        platform.android = true;
     });
 });

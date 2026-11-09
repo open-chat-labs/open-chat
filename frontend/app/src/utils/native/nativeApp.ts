@@ -1,9 +1,15 @@
-import type { OpenChat } from "@client";
+import { currentUserStore, type OpenChat } from "@client";
 import { clearChatShortcuts, startChatShortcutPusher } from "@stores/chatShortcuts";
 import { activeVideoCall } from "@stores/video";
 import { invoke } from "@tauri-apps/api/core";
 import { clearAllNotifications, svelteReady } from "tauri-plugin-oc-api";
-import { expectCallActions, expectCallControls, runCallAction, setCallConfig } from "./call_bridge";
+import {
+    expectCallActions,
+    expectCallControls,
+    rememberCallIdentity,
+    runCallAction,
+    setCallConfig,
+} from "./call_bridge";
 import {
     expectDeepLinks,
     expectNotificationTap,
@@ -41,6 +47,8 @@ export function setupNativeApp(
     // APNs on iOS). Registration is last-login-wins on the backend, so this
     // also reclaims a token still bound to a previous account on this device.
     registerPushDevice(client);
+
+    rememberCallIdentity(videoBridgeUrl, currentUserStore.value.username);
 
     // Everything below registers session-scoped handlers and must run once.
     if (nativeSetupDone) {
