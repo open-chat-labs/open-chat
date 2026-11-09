@@ -177,7 +177,7 @@ describe("native call bridge", () => {
         });
     });
 
-    test("invariant 16 (#9534) the call config is sent only from the Android shell and a shell without it is a no-op", async () => {
+    test("invariant 16 (#9534) the call config is sent only from a native shell and a shell without it is a no-op", async () => {
         tauri.invoke.mockRejectedValue(new Error("plugin:oc|set_call_config not found"));
         const { setCallConfig } = await import("./call_bridge");
         await expect(setCallConfig("https://bridge")).resolves.toBeUndefined();
@@ -190,7 +190,27 @@ describe("native call bridge", () => {
         expect(tauri.invoke).not.toHaveBeenCalled();
     });
 
-    test("invariant 12 (#9559) every in-call report and command is a no-op off Android and in a shell without it", async () => {
+    test("invariant 23 (#10398) on iOS the shell holds the bridge URL and the active call's teardown token", async () => {
+        const { setCallConfig, setCallTeardownToken } = await import("./call_bridge");
+        shared.isAndroidTauriApp.mockReturnValue(false);
+        shared.isIosTauriApp.mockReturnValue(true);
+        tauri.invoke.mockResolvedValue(undefined);
+
+        await setCallConfig("https://bridge");
+        await setCallTeardownToken({ kind: "direct_chat", userId: "u" }, 7n, "t", "end", "s");
+
+        expect(tauri.invoke).toHaveBeenCalledWith("plugin:oc|set_call_config", {
+            videoBridgeUrl: "https://bridge",
+        });
+        expect(tauri.invoke).toHaveBeenCalledWith(
+            "plugin:oc|set_call_end_token",
+            expect.objectContaining({ token: "t", kind: "end", sessionId: "s" }),
+        );
+        shared.isAndroidTauriApp.mockReturnValue(true);
+        shared.isIosTauriApp.mockReturnValue(false);
+    });
+
+    test("invariant 12 (#9559) every in-call report and command is a no-op on the web and in a shell without it", async () => {
         const {
             reportCallActive,
             reportCallEnded,

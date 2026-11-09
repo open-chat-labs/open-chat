@@ -103,6 +103,8 @@ export function createNativeCall(start: NativeCallStart, onHangup: () => void): 
                 local = joined.local;
                 present = joined.present;
                 emit("joined-meeting", { participants: { local: toDaily(joined.local) } });
+                // the state the frame's first update would give, such as having presence
+                emit("participant-updated", { participant: toDaily(joined.local) });
             } catch (e) {
                 stopListening();
                 throw e;

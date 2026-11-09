@@ -46,13 +46,13 @@ vi.mock("@daily-co/daily-js", () => ({
 }));
 
 const makeFrame = vi.hoisted(() => () => ({
-            on: () => {},
-            join: async () => {},
-            leave: frame.leave,
-            destroy: async () => {},
-            setTheme: () => {},
-            participants: () => ({ local: { session_id: "me" } }),
-            participantCounts: () => ({ present: frame.present }),
+    on: () => {},
+    join: async () => {},
+    leave: frame.leave,
+    destroy: async () => {},
+    setTheme: () => {},
+    participants: () => ({ local: { session_id: "me" } }),
+    participantCounts: () => ({ present: frame.present }),
 }));
 
 const direct: ChatIdentifier = { kind: "direct_chat", userId: "them" };
@@ -229,7 +229,11 @@ describe("a call", () => {
 
         test("invariant 19: a call runs natively and never creates the Daily frame", async () => {
             frame.created.mockClear();
-            await session.startOrJoin(container, { chatId: direct, callType: "audio", join: false });
+            await session.startOrJoin(container, {
+                chatId: direct,
+                callType: "audio",
+                join: false,
+            });
 
             expect(frame.created).not.toHaveBeenCalled();
             expect(shell.invoke).toHaveBeenCalledWith(
@@ -238,9 +242,37 @@ describe("a call", () => {
             );
         });
 
+        test("invariant 20: the last one hanging up on the native screen ends the call", async () => {
+            vi.mocked(client.endVideoCall).mockClear();
+            await session.startOrJoin(container, {
+                chatId: group,
+                callType: "default",
+                join: false,
+            });
+
+            shell.onEvent?.({
+                json: JSON.stringify({
+                    kind: "participant-left",
+                    participant: { ...me, sessionId: "them", local: false },
+                    present: 1,
+                }),
+            });
+            expect(client.endVideoCall).not.toHaveBeenCalled();
+
+            shell.onEvent?.({ json: JSON.stringify({ kind: "hangup" }) });
+            expect(client.endVideoCall).toHaveBeenCalledWith(group, 7n);
+
+            shell.onEvent?.({ json: JSON.stringify({ kind: "left" }) });
+            expect(activeVideoCall.current()).toBeUndefined();
+        });
+
         test("invariant 20: the other party leaving a direct call ends it", async () => {
             vi.mocked(client.endVideoCall).mockClear();
-            await session.startOrJoin(container, { chatId: direct, callType: "default", join: false });
+            await session.startOrJoin(container, {
+                chatId: direct,
+                callType: "default",
+                join: false,
+            });
 
             shell.onEvent?.({
                 json: JSON.stringify({
