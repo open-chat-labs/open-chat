@@ -827,3 +827,8 @@
 ## 2026-11-09 — the long-press menus' lifted copy stays until the veil has faded (native), by hand
 - `MessageLongPressMenu` and `LongPressMenu`: on closing, the copy of the pressed message (or row) no longer fades with the veil, the reactions and the card. It stays as it is over the hidden original until the layer is gone (170ms), and only then is the original shown again: fading the copy let the dimmed screen show through where the message is, and the message then blinked back in. `LongPressMenu`'s copy loses its lift shadow as it settles; a small target's card (bigger than the target, and moved) still fades with the rest.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-09 — NativeAlert's checkbox, for "Don't ask again" (native N5d), by hand
+- `NativeAlert`: `checkLabel` puts a checkbox above the buttons (its label, `checked` and `onCheck`, controlled by the host, which reads it on confirm): the message long-press menu's delete confirm uses it for the web dialog's "Don't show me this again".
+- Docs: `meta.json` (NativeAlert's `checkLabel`, `checked`, `onCheck`).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

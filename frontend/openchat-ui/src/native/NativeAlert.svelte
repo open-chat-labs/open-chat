@@ -1,6 +1,7 @@
 <!-- A confirmation (native design notes §1 Structure 4: "Confirmations stay small alerts"): a small card in the middle
      of the screen over the sheets' veil, with a title, an optional message and two buttons side by side, the dismiss
-     one first; without an action (no `confirmLabel`), a notice with the dismiss button alone. The confirm button is the accent's, or in the danger colour for a destructive action. The veil, Esc and
+     one first; without an action (no `confirmLabel`), a notice with the dismiss button alone. A checkbox can sit
+     above the buttons (`checkLabel`: "Don't ask again" and the like), which the host reads on confirm. The confirm button is the accent's, or in the danger colour for a destructive action. The veil, Esc and
      Cancel dismiss it; it scales and fades in and out (fades only with reduced motion). The host registers its close
      with Android's back while it's open. -->
 <script lang="ts">
@@ -25,13 +26,30 @@
     danger?: boolean;
     /** The action is under way: the buttons wait. */
     busy?: boolean;
+    /** Resource key (or literal text): a checkbox above the buttons ("Don't ask again"). None without it. */
+    checkLabel?: string;
+    /** The checkbox's state (the host's, as it reads it on confirm). */
+    checked?: boolean;
+    onCheck?: (checked: boolean) => void;
     onConfirm?: () => void;
     /** Cancel, the veil or Esc. The alert plays its way out once `open` turns false. */
     onClose: () => void;
   }
 
-  let { open, title, message = '', confirmLabel, cancelLabel = 'ui.common.cancel', danger = false, busy = false, onConfirm, onClose }: Props =
-    $props();
+  let {
+    open,
+    title,
+    message = '',
+    confirmLabel,
+    cancelLabel = 'ui.common.cancel',
+    danger = false,
+    busy = false,
+    checkLabel,
+    checked = false,
+    onCheck,
+    onConfirm,
+    onClose,
+  }: Props = $props();
   const t = useT();
 
   const presence = new Presence(LEAVE_MS);
@@ -74,6 +92,12 @@
     >
       <h2 class="title" id="native-alert-title">{t(title)}</h2>
       {#if message}<p class="message" id="native-alert-message">{t(message)}</p>{/if}
+      {#if checkLabel !== undefined}
+        <label class="check">
+          <input type="checkbox" {checked} disabled={busy} onchange={(e) => onCheck?.(e.currentTarget.checked)} />
+          <span>{t(checkLabel)}</span>
+        </label>
+      {/if}
       <div class="buttons">
         <button type="button" class="button cancel" disabled={busy} onclick={dismiss}>{t(cancelLabel)}</button>
         {#if confirmLabel !== undefined}
@@ -146,6 +170,31 @@
     font: var(--weight-regular) text-size(14px) / 1.5 var(--font-sans);
     color: var(--ink-3);
     text-wrap: pretty;
+  }
+
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--touch-target);
+    margin-top: 4px;
+    font: var(--weight-regular) text-size(14px) / 1.4 var(--font-sans);
+    color: var(--ink-2);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    input {
+      flex: none;
+      width: 20px;
+      height: 20px;
+      margin: 0;
+      accent-color: var(--accent);
+      cursor: pointer;
+
+      &:focus-visible {
+        @include focus-ring;
+      }
+    }
   }
 
   .buttons {

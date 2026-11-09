@@ -88,6 +88,8 @@
     let upgrading = $state(false);
     // a sent message's delete, waiting on the sender's confirm ("ask before deleting")
     let deleting = $state<{ at: Pressed; action: DeleteAction }>();
+    // its "Don't ask again", kept once the delete is confirmed (the web's toggle, the same setting)
+    let dontAskAgain = $state(false);
     // a link's preview the sender asked to take off, waiting on their confirm
     let removing = $state<{ chatId: ChatIdentifier; evt: EventWrapper<Message>; url: string }>();
 
@@ -239,6 +241,7 @@
                     reporting = at;
                 } else if (outcome.dialog.kind === "delete" && isDelete(action)) {
                     deleting = { at, action };
+                    dontAskAgain = false;
                 }
                 return;
             case "succeeded":
@@ -392,9 +395,13 @@
     title={$_("deleteMessageConfirm")}
     confirmLabel={$_("deleteMessage")}
     danger
+    checkLabel={$_("install.dontShow")}
+    checked={dontAskAgain}
+    onCheck={(on) => (dontAskAgain = on)}
     onConfirm={() => {
         const confirmed = deleting;
         deleting = undefined;
+        if (dontAskAgain) confirmMessageDeletion.set(false);
         if (confirmed !== undefined) void deleteWithUndo(confirmed.at, confirmed.action);
     }}
     onClose={() => (deleting = undefined)} />

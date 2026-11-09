@@ -383,9 +383,11 @@ design export needs. Each entry says where it came up.
       ("Do you really want to delete this message?", Delete), the shared `messageAction`'s "ask".
       Then, or at once with the setting off, it shows deleted and its toast (waiting for the
       backend, then "Message deleted") offers Undo, which undeletes it (notes §1: destructive
-      actions show Undo). The alert has no "Don't show me this again" (the web dialog's toggle) and
-      the native tree has no setting for it yet, and the setting is kept in the app's own local
-      storage, so in the apps it stays on for now. A failed message's Delete just removes it.
+      actions show Undo). The alert has the web dialog's "Don't show me this again", as a checkbox
+      (`NativeAlert`'s `checkLabel`), which turns the setting off once the delete is confirmed
+      (the web's toggle turns it off at once, Cancel or not). The native tree has no setting
+      screen for it, so once off it stays off on that device. A failed message's Delete just
+      removes it.
     - **Words**: toasts for Copy ("Copied"), Pin, Unpin, Undelete, a delete and its Undo, a
       forward ("Forwarding to 2 chats…", then "Forwarded to 2 chats") and a report; the web says
       nothing for Copy or Pin. Translating without Diamond offers it in a `NativeAlert` (Get

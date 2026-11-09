@@ -21148,6 +21148,39 @@
         "doc": "The action is under way: the buttons wait."
       },
       {
+        "name": "checkLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text): a checkbox above the buttons (\"Don't ask again\"). None without it."
+      },
+      {
+        "name": "checked",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The checkbox's state (the host's, as it reads it on confirm)."
+      },
+      {
+        "name": "onCheck",
+        "type": "(checked: boolean) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
         "name": "onConfirm",
         "type": "() => void",
         "default": null,
