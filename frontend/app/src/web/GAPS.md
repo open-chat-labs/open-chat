@@ -527,11 +527,15 @@ design export needs. Each entry says where it came up.
   - **The keyboard on other screens** (§5 Open): Pick a username, Edit profile and Delete account
     keep their pinned button down (`aboveKeyboard`); the search screens and Link to your account
     let the WebView shrink above the keyboard. The builders' keyboard-up states are N9's.
-  - **The light conversation** (04, 00): the screen's root carries `data-chat-surface`, and
-    `tokens.css` turns it off-white (`--chat-bg`) with a white pill and white received bubbles
-    without their ring, and a soft `--bubble-shadow` under every message, photos and videos
-    included (the user's decision on 04's open question); the sheets' top line is `--sheet-edge`
-    (`--line-2` in light). Not done: 04's recommendation to bring the received ring back when the
+  - **The light conversation** (04 (c), 00 (b)): the screen's root carries `data-chat-surface`,
+    and `tokens.css` scopes the light colours to it: the off-white chat (`--chat-bg` #F8F7F4), a
+    white pill, white received bubbles without their ring and with a soft shadow (every kind,
+    photos and videos included), and sent bubbles in a solid accent per `[data-accent]` with white
+    text, no shadow and the dark theme's content tokens inside (`[data-bubble-sent]`; orange's text
+    with a shadow, an accepted contrast exception); links in sent bubbles take the scoped
+    `--accent-bright` (`--bubble-link`). The list's end padding grows from 10 to 30px while a
+    group's typing strip shows; the composer sits 4px under the list (05 (b)). The sheets' top line
+    is `--sheet-edge` (`--line-2` in light). Not done: 04's recommendation to bring the received ring back when the
     OS's "Increase contrast" is on. Still open (06): the panels' rest height stays 304px over the
     safe area (or the keyboard's), which 06 says may go back to 282px.
   - **Decided by the user** (2026-11-09, where the plan was silent): the emoji sections are the

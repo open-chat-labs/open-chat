@@ -1070,7 +1070,12 @@
     {:else}
         <!-- a tap on the messages leaves the keyboard or a panel as it is -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="messages" style:--group-gap="8px" onmousedown={keepFocus}>
+        <div
+            class="messages"
+            class:typing={!direct && typingNames.length > 0}
+            style:--group-gap="8px"
+            onmousedown={keepFocus}
+        >
             <div class="sticky-date" class:shown={stickyDate !== undefined} bind:this={stickyEl}>
                 {#if stickyDate !== undefined}
                     <span class="pill">{dateLabel(stickyDate)}</span>
@@ -1406,9 +1411,12 @@
         }
     }
 
+    // 12px 12px 10px (04); while a group's typing strip shows, 30px at the end, so it never covers
+    // the last message (the list is bottom-anchored: the content slides up)
     :global(.vcl-viewport.native-conversation-list) {
         flex: auto;
-        padding: 0 var(--space-12) var(--space-10);
+        padding: var(--space-12) var(--space-12) var(--space-10);
+        transition: padding-bottom 0.2s ease-out;
         overflow-x: hidden;
         overscroll-behavior-y: contain;
         scrollbar-width: none;
@@ -1694,21 +1702,44 @@
         height: var(--safe-bottom);
     }
 
-    // the composer, then the safe area or the keyboard's slot under it (ConversationComposer's)
+    .messages.typing :global(.vcl-viewport.native-conversation-list) {
+        padding-bottom: 30px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        :global(.vcl-viewport.native-conversation-list) {
+            transition: none;
+        }
+    }
+
+    // a sent bubble's text in the light chat: orange's white needs a shadow to read (04;
+    // --bubble-text-shadow is set for orange only)
+    .conversation :global([data-bubble-sent]) {
+        text-shadow: var(--bubble-text-shadow);
+    }
+
+    // links in a sent bubble of the light chat: its accent-bright (--bubble-link, set only there,
+    // 04); in dark, as before
+    :global([data-mode="light"]) .conversation :global([data-bubble-sent] a) {
+        color: var(--bubble-link);
+    }
+
+    // the composer, 4px under the messages (05), then the safe area or the keyboard's slot under it
+    // (ConversationComposer's)
     .composer {
         position: relative;
         flex: none;
         display: flex;
         flex-direction: column;
-        padding-block-start: var(--space-8);
+        padding-block-start: var(--space-4);
     }
 
-    // who is typing in a group: a 24px strip resting on the composer (over its top padding by 6px),
+    // who is typing in a group: a 24px strip resting on the composer (over its 4px top padding),
     // over the messages, taking no row; it fades and rises 8px in, and goes the same way
     .typing-strip {
         position: absolute;
         inset-inline: 0;
-        bottom: calc(100% - 6px);
+        bottom: calc(100% - 4px);
         z-index: 3;
         box-sizing: border-box;
         display: flex;
