@@ -4,6 +4,7 @@ import {
     flickVelocity,
     maxGrowFor,
     panelLayers,
+    panelVeil,
     settle,
     type DragPosition,
 } from "./panelDrag";
@@ -95,5 +96,13 @@ describe("how far a panel grows", () => {
         expect(maxGrowFor(1000, 300)).toBe(600);
         // resting above that already: not at all
         expect(maxGrowFor(300, 280)).toBe(0);
+    });
+});
+
+describe("the veil over the chat", () => {
+    test("is none at rest, full grown, following f between", () => {
+        expect(panelVeil(0)).toEqual({ opacity: 0, tappable: false });
+        expect(panelVeil(0.5)).toEqual({ opacity: 0.5, tappable: true });
+        expect(panelVeil(1)).toEqual({ opacity: 1, tappable: true });
     });
 });

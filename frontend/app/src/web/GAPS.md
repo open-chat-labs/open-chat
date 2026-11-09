@@ -547,6 +547,10 @@ design export needs. Each entry says where it came up.
     states are N9's.
   - **Grown panels** take 90% of the height under the status bar (the user's change; 06 and 07 grow
     them to just under it): Recents, the emoji panel dragged up, the GIF search (`maxGrowFor`).
+  - **A veil** (the sheet's, `--veil-sheet`) dims the chat over a grown panel, its opacity
+    following f: none at rest (the resting panel stands in for the keyboard) nor under the emoji
+    search's strip, full grown, between while dragged; a tap on it takes the panel back to rest,
+    not closed (the user's change; 06 and 07 have no veil, `panelVeil`).
   - **A tap on the messages** leaves the keyboard and a panel as they are (the user's change;
     before, it closed them): Android's back, the panel's own controls and the composer's field do.
   - **The attach panel's picks**: "Attach N" sits at the bottom of the resting panel, the line

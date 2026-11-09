@@ -1,6 +1,7 @@
 import {
     dragPosition,
     flickVelocity,
+    panelVeil,
     pullTakesPanel,
     settle,
     type DragPosition,
@@ -98,6 +99,16 @@ export class KeyboardPanelState {
         if (!this.expandable) return;
         this.measure();
         this.#spot = "open";
+    }
+
+    /** The veil over the chat while it's grown (`panelVeil`). */
+    get veil(): { opacity: number; tappable: boolean } {
+        return panelVeil(this.f);
+    }
+
+    /** A tap on the veil: back to rest, grown; nothing otherwise (there's no veil at rest). */
+    veilTapped(): void {
+        if (this.veil.tappable && !this.dragging) this.rest();
     }
 
     /** Back to its resting height (Recents' chevron). */

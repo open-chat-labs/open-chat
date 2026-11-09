@@ -90,3 +90,24 @@ describe("a panel that stops growing (the emoji search's strip)", () => {
         expect(panel.grown).toBe(MAX);
     });
 });
+
+describe("a tap on the veil", () => {
+    test("takes a grown panel back to rest, not closed", () => {
+        const panel = grownPanel();
+        expect(panel.veil.opacity).toBe(1);
+        panel.veilTapped();
+        expect(panel.open).toBe(false);
+        expect(panel.closing).toBe(false);
+        expect(panel.veil).toEqual({ opacity: 0, tappable: false });
+    });
+
+    test("does nothing at rest, or for the emoji search's strip", () => {
+        const panel = new KeyboardPanelState(true);
+        panel.setMaxGrow(MAX);
+        panel.veilTapped();
+        expect(panel.open).toBe(false);
+        const strip = grownPanel();
+        strip.setExpandable(false);
+        expect(strip.veil.tappable).toBe(false);
+    });
+});

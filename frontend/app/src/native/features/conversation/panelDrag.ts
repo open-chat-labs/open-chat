@@ -71,6 +71,16 @@ export function pullTakesPanel(at: { open: boolean; scrollTop: number; dy: numbe
     return at.open && at.scrollTop <= 0 && at.dy > 0;
 }
 
+/**
+ * The veil a grown panel dims the chat with (the sheet's, `--veil-sheet`): none at rest (a resting
+ * panel stands in for the keyboard, and the chat stays as it is), full grown, following f between;
+ * a tap on it takes the panel back to rest while there is one.
+ */
+export function panelVeil(f: number): { opacity: number; tappable: boolean } {
+    const opacity = Math.min(1, Math.max(0, f));
+    return { opacity, tappable: opacity > 0 };
+}
+
 /** The finger's speed over its last moves (px/ms, down positive), from the last 100ms of them. */
 export function flickVelocity(moves: readonly { t: number; y: number }[]): number {
     const last = moves.at(-1);

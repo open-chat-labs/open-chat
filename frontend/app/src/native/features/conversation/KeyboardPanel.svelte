@@ -80,6 +80,16 @@
     }
 </script>
 
+<!-- the veil over the chat while the panel's grown (none at rest: the chat stays as it is) -->
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+<div
+    class="veil"
+    class:settling={!panel.dragging}
+    style:opacity={panel.veil.opacity}
+    style:pointer-events={panel.veil.tappable ? undefined : "none"}
+    aria-hidden="true"
+    onclick={() => panel.veilTapped()}
+></div>
 <div
     bind:this={el}
     class="panel"
@@ -157,6 +167,24 @@
 
             &.settling,
             &.closing {
+                transition: none;
+            }
+        }
+    }
+
+    // the sheet's veil (BottomSheet's), over the chat and the composer, under the panel
+    .veil {
+        position: fixed;
+        inset: 0;
+        z-index: 4;
+        background: var(--veil-sheet);
+
+        &.settling {
+            transition: opacity 0.34s var(--ease-out);
+        }
+
+        @include reduced-motion {
+            &.settling {
                 transition: none;
             }
         }
