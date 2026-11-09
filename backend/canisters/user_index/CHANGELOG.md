@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Count each user's prize claims, limiting them to 10 in 24 hours ([#10443](https://github.com/open-chat-labs/open-chat/pull/10443))
+
 ### Removed
 
 - Remove the Cloudflare Turnstile config for prize claims ([#10442](https://github.com/open-chat-labs/open-chat/pull/10442))

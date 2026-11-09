@@ -2465,6 +2465,8 @@
         "claimed": "Success!",
         "claimFailed": "Sorry, your claim was unsuccessful! Better luck next time.",
         "claimIneligible": "Sorry you don't meet the requirements to claim this prize.",
+        "claimInProgress": "Your last prize claim is still going through. Try this one again in a moment.",
+        "claimLimitReached": "You've reached the daily limit on prize claims. You can claim again from {time}.",
         "click": "Click the button below for a chance to win a prize.",
         "creatingPrizeMessageFailed": "Failed to create your prize message",
         "creatingYourPrizeMessage": "Please wait while we create your prize message",

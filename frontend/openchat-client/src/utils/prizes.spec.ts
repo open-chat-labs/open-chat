@@ -1,5 +1,11 @@
-import type { PrizeContent } from "@shared";
-import { isTrustedClick, prizeView, prizeWithYourClaim, type PrizeReader } from "./prizes";
+import { ErrorCode, type PrizeContent } from "@shared";
+import {
+    claimPrizeFailedMessage,
+    isTrustedClick,
+    prizeView,
+    prizeWithYourClaim,
+    type PrizeReader,
+} from "./prizes";
 
 const prize: PrizeContent = {
     kind: "prize_content",
@@ -45,6 +51,44 @@ describe("claiming a prize", () => {
             canClaim: false,
             gates: [{ met: false }],
         });
+    });
+});
+
+describe("a claim which didn't succeed", () => {
+    const formatTime = (date: Date) => date.toISOString();
+
+    test("says when you can claim again once you've reached the daily limit", () => {
+        expect(
+            claimPrizeFailedMessage(
+                { kind: "error", code: ErrorCode.LimitReached, message: "1700000000000" },
+                formatTime,
+            ),
+        ).toMatchObject({
+            key: "prizes.claimLimitReached",
+            params: { time: "2023-11-14T22:13:20.000Z" },
+        });
+    });
+
+    test("says to try again in a moment while another of your claims is going through", () => {
+        expect(
+            claimPrizeFailedMessage(
+                { kind: "error", code: ErrorCode.AlreadyInProgress, message: undefined },
+                formatTime,
+            ),
+        ).toMatchObject({ key: "prizes.claimInProgress" });
+    });
+
+    test("says it was unsuccessful for any other reason", () => {
+        for (const resp of [
+            { kind: "failure" } as const,
+            { kind: "offline" } as const,
+            { kind: "error", code: ErrorCode.PrizeEnded, message: undefined } as const,
+            { kind: "error", code: ErrorCode.LimitReached, message: undefined } as const,
+        ]) {
+            expect(claimPrizeFailedMessage(resp, formatTime)).toMatchObject({
+                key: "prizes.claimFailed",
+            });
+        }
     });
 });
 

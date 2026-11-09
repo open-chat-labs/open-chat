@@ -341,6 +341,12 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.data.mini_app_service = Some(principal);
             info!(%principal, "MiniApp service principal set");
         }
+        UserIndexEvent::PrizeClaimLimitReached(user_id, blocked_until) => {
+            let now = **now;
+            let blocked = &mut state.data.prize_claims_blocked_until;
+            blocked.retain(|_, until| *until > now);
+            blocked.insert(user_id, blocked_until);
+        }
         UserIndexEvent::SetBridgeBot(ev) => {
             if let Some(bot_id) = ev.bot_id {
                 state.data.bridge_bots.insert(ev.platform, bot_id);
