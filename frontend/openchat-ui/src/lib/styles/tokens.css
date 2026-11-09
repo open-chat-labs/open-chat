@@ -137,6 +137,12 @@
 [data-platform="native"],[data-always-dark]{
   --hero-base:#14141a; --tint-row:rgba(0,0,0,.22); --tint-pill:rgba(0,0,0,.28);
 }
+/* A conversation's attach panel actions (native plan 06): each its icon's colour and, at 16%, its circle's; one value
+   per mode (light deepened for white; Prize takes the accent). */
+[data-platform="native"],[data-always-dark]{
+  --action-media:#7FD1FF; --action-file:#7FB2FF; --action-poll:#FFB45E; --action-crypto:#2EE6A8; --action-swap:#B48CFF;
+  --action-meme:#FFD36B;
+}
 /* The native shell kit (src/native, native notes §1 and §2). The root also carries data-os="ios" or "android": touch
    targets are 44pt on iOS and 48dp on Android. Bars at the bottom (the tab bar, a pinned footer) pad by the safe
    area, at least 12px (the prototype's Android gesture bar); --tab-bar-h is the tab bar's height, which toasts and
@@ -148,12 +154,10 @@
   --shadow-sheet:0 -12px 40px rgba(0,0,0,.45); --shadow-menu:0 12px 36px rgba(0,0,0,.55); --shadow-lift:0 14px 40px rgba(0,0,0,.55);
   --shadow-push:-12px 0 32px rgba(0,0,0,.35); --shadow-fab:0 8px 24px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.3);
 }
-/* A conversation's attach panel (native plan 06): each action in its own colour, its circle that colour at 16%; the
-   prototype's values, the same in both themes (Prize takes the accent). Over a photo or video (a video's duration, a GIF
-   badge): a dark backing and white ink, in both themes. */
+/* Over a photo or video in a conversation's attach panel (a video's duration, a GIF badge): a dark backing and white
+   ink, in both themes. */
 [data-platform="native"]{
-  --attach-media:#7FD1FF; --attach-file:#7FB2FF; --attach-poll:#FFB45E; --attach-crypto:#2EE6A8; --attach-swap:#B48CFF;
-  --attach-meme:#FFD36B; --on-media-chip:rgba(0,0,0,.55); --on-media-badge:rgba(0,0,0,.45); --on-media-ink:#FFFFFF;
+  --on-media-chip:rgba(0,0,0,.55); --on-media-badge:rgba(0,0,0,.45); --on-media-ink:#FFFFFF;
 }
 [data-platform="native"][data-os="android"]{--touch-target:48px}
 /* A pushed screen comes in from the inline end, so its shadow falls on the start side. */
@@ -162,6 +166,8 @@
 [data-platform="native"][data-mode="light"]{
   --surface-0:#FFFFFF; --surface-1:#FFFFFF; --surface-2:#F4F3EF; --field:#F4F3EF;
   --hero-base:#FFFFFF; --tint-row:rgba(0,0,0,.05); --tint-pill:rgba(0,0,0,.08);
+  --action-media:#0A84C6; --action-file:#2F6FE0; --action-poll:#C46A0A; --action-crypto:#0A8A61; --action-swap:#7C4DDB;
+  --action-meme:#A87B00;
 }
 /* Always dark: calls (the call screen and the minimised call) stay dark in both themes (native notes §1, §3.5).
    data-always-dark on an element gives it and its children the dark tokens (the selectors above list it beside

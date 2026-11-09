@@ -90,7 +90,8 @@ const HERO = ['--hero-base', '--tint-row', '--tint-pill'];
 // the shell kit's (src/native): touch target, bar padding, tab bar height, veils, shadows
 const SHELL = ['--touch-target', '--bar-end', '--tab-bar-h', '--veil-sheet', '--veil-lift', '--shadow-sheet', '--shadow-menu', '--shadow-lift', '--shadow-push', '--shadow-fab'];
 // a conversation's attach panel (its actions' colours) and what sits over a photo or video
-const COMPOSER = ['--attach-media', '--attach-file', '--attach-poll', '--attach-crypto', '--attach-swap', '--attach-meme', '--on-media-chip', '--on-media-badge', '--on-media-ink'];
+const ACTIONS = ['--action-media', '--action-file', '--action-poll', '--action-crypto', '--action-swap', '--action-meme'];
+const COMPOSER = [...ACTIONS, '--on-media-chip', '--on-media-badge', '--on-media-ink'];
 const TEXT = ['--text-2xs', '--text-xs', '--text-sm', '--text-md', '--text-base', '--text-lg', '--text-xl', '--text-2xl', '--text-3xl'];
 const NATIVE_LIGHT_SURFACES = { '--surface-0': '#FFFFFF', '--surface-1': '#FFFFFF', '--surface-2': '#F4F3EF', '--field': '#F4F3EF' };
 const call: Element = { attrs: { 'data-always-dark': '' } };
@@ -161,6 +162,13 @@ describe('data-platform="native"', () => {
     const rtl = resolve([root({ 'data-mode': 'dark', 'data-platform': 'native', dir: 'rtl' })]);
     expect(ltr.get('--shadow-push')).toBe('-12px 0 32px rgba(0,0,0,.35)');
     expect(rtl.get('--shadow-push')).toBe('12px 0 32px rgba(0,0,0,.35)');
+  });
+
+  test('the attach panel\'s action colours have a value per mode, deepened for white in light', () => {
+    const light = resolve([root({ 'data-mode': 'light', 'data-accent': 'pink', 'data-platform': 'native' })]);
+    const dark = resolve([root({ 'data-mode': 'dark', 'data-accent': 'pink', 'data-platform': 'native' })]);
+    expect(ACTIONS.map((name) => dark.get(name))).toEqual(['#7FD1FF', '#7FB2FF', '#FFB45E', '#2EE6A8', '#B48CFF', '#FFD36B']);
+    expect(ACTIONS.map((name) => light.get(name))).toEqual(['#0A84C6', '#2F6FE0', '#C46A0A', '#0A8A61', '#7C4DDB', '#A87B00']);
   });
 
   test('native light has white pages and a white hero base; dark keeps the dark ones', () => {

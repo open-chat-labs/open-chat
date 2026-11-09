@@ -794,3 +794,7 @@
 ## 2026-11-09 — the composer's caption placeholder and a count on Send (native N5c), by hand
 - `MessageComposer`: `attachedPlaceholder`, the text box's placeholder while something's attached (`ui.messageComposer.addCaption`, "Add a caption", by default, as before); the native composer passes "Add a caption…" with photos and videos picked (the native plan's 06). `sendCount`: a count on Send's corner (how many photos and videos go), shown from 1; 0 by default, so nothing shows. The web passes neither and is unchanged. `meta.json`: both props.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-09 — the attach panel's action colours as tokens per mode (native N5c, plan 06 (c)), by hand
+- `tokens.css`: the attach panel's action colours are `--action-media`, `--action-file`, `--action-poll`, `--action-crypto`, `--action-swap`, `--action-meme` (they were `--attach-*`, one value for both themes): the dark values on `[data-platform="native"],[data-always-dark]`, the light ones (deepened for white, the native plan's 06 table) on `[data-platform="native"][data-mode="light"]`. `--on-media-*` unchanged. `platform.spec.ts` checks both modes' values.
+- Not in the design export: to go back to it.
