@@ -106,6 +106,10 @@
     /** Typing from the host (its emoji panel): each new `key` puts `text` in at the caret without focusing the field,
      *  so no keyboard opens. "\b" deletes the selection, or the character before the caret. */
     insert?: { key: string | number; text: string };
+    /** Resource key (or literal text): the text box's placeholder while something's attached (a caption). */
+    attachedPlaceholder?: string;
+    /** A count on Send (how many photos and videos go), shown when it's 1 or more. */
+    sendCount?: number;
   }
 
   let {
@@ -142,6 +146,8 @@
     emojiActive = false,
     onInputFocus,
     insert: hostInsert,
+    attachedPlaceholder = 'ui.messageComposer.addCaption',
+    sendCount = 0,
   }: Props = $props();
   const t = useT();
 
@@ -1003,15 +1009,16 @@
           aria-autocomplete={onMentionQuery ? 'list' : undefined}
           aria-controls={mentionOpen ? mentionListId : undefined}
           aria-activedescendant={mentionOpen ? `${mentionListId}-${activeMention}` : undefined}
-          placeholder={t(att ? 'ui.messageComposer.addCaption' : placeholder)}
-          aria-label={t(att ? 'ui.messageComposer.addCaption' : placeholder)}
+          placeholder={t(att ? attachedPlaceholder : placeholder)}
+          aria-label={t(att ? attachedPlaceholder : placeholder)}
         ></textarea>
       </div>
       {#if emojiPlacement === 'end'}{@render emojiTool()}{/if}
       {#if showPlus && plusPlacement === 'end'}{@render plusTool()}{/if}
       {#if hasContent || editing || !canRecord}
         <span class="action send" onclick={send} role="button" tabindex="0" aria-disabled={editing ? !draft.trim() : !hasContent || sending} aria-label={t(editing ? 'ui.messageComposer.saveEdit' : 'ui.messageComposer.sendMessage')} title={t(editing ? 'ui.messageComposer.saveHint' : 'ui.messageComposer.sendHint')}
-          ><span class="send-icon" style:mask="var(--icon-{editing ? 'check' : 'send'}) center/contain no-repeat"></span></span
+          ><span class="send-icon" style:mask="var(--icon-{editing ? 'check' : 'send'}) center/contain no-repeat"></span
+          >{#if sendCount > 0 && !editing}<span class="send-count" aria-hidden="true">{sendCount}</span>{/if}</span
         >
       {:else}
         <span class="action mic" onclick={startRecording} role="button" tabindex="0" aria-label={t('ui.messageComposer.recordVoice')} title={t('ui.messageComposer.recordVoice')}><span class="mic-icon"></span></span>
@@ -1607,6 +1614,7 @@
     cursor: pointer;
 
     &.send {
+      position: relative;
       background: var(--accent);
 
       &:hover {
@@ -1812,6 +1820,23 @@
   .action.delete[aria-disabled='true'] {
     opacity: 0.4;
     cursor: default;
+  }
+
+  // how many photos and videos go (sendCount), on the button's corner
+  .send-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    box-sizing: border-box;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    @include flex-center;
+    border-radius: var(--radius-pill);
+    background: var(--ink);
+    box-shadow: 0 0 0 2px var(--surface-0);
+    font: var(--weight-bold) var(--text-2xs) / 1 var(--font-sans);
+    color: var(--surface-0);
   }
 
   .action.send[aria-disabled='true'] {

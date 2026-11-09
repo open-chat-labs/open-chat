@@ -14262,6 +14262,28 @@
         "required": false,
         "componentDefault": null,
         "doc": "Typing from the host (its emoji panel): each new `key` puts `text` in at the caret without focusing the field. \"\\b\" deletes the selection, or the character before the caret."
+      },
+      {
+        "name": "attachedPlaceholder",
+        "type": "string",
+        "default": "ui.messageComposer.addCaption",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.messageComposer.addCaption'",
+        "doc": "Resource key (or literal text): the text box's placeholder while something's attached (a caption)."
+      },
+      {
+        "name": "sendCount",
+        "type": "number",
+        "default": 0,
+        "editor": "number",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "A count on Send (how many photos and videos go), shown when it's 1 or more."
       }
     ],
     "group": "library"
