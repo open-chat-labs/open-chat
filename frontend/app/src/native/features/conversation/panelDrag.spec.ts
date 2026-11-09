@@ -91,8 +91,8 @@ describe("what shows as a panel grows", () => {
 });
 
 describe("how far a panel grows", () => {
-    test("to 80% of the height under the status bar", () => {
-        expect(maxGrowFor(1000, 300)).toBe(500);
+    test("to 90% of the height under the status bar", () => {
+        expect(maxGrowFor(1000, 300)).toBe(600);
         // resting above that already: not at all
         expect(maxGrowFor(300, 280)).toBe(0);
     });

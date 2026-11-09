@@ -1,7 +1,7 @@
 <!-- A keyboard-area panel's surface (native plan 06 "Layout and size", 07 "What it is"): in the slot
      under the composer, at the bottom of the screen, resting at the slot's height over the spacer
      the slot keeps (so the chat and the composer move up by it). Its handle drags it: up it grows
-     over the chat to 80% of the height under the status bar, following the finger; down from rest it slides out and
+     over the chat to 90% of the height under the status bar, following the finger; down from rest it slides out and
      closes (KeyboardPanelState, panelDrag.ts). It rises in as it opens; the emoji and attach panels
      swap inside it without that. Where the keyboard covers its bottom (the emoji search), what it
      shows sits above it. -->
@@ -37,7 +37,7 @@
 
     const layers = $derived(panelLayers(panel.f));
 
-    // how far it can grow: to 80% of the height under the status bar
+    // how far it can grow: to 90% of the height under the status bar
     function measure() {
         const slot = el?.parentElement;
         if (slot === null || slot === undefined) return;

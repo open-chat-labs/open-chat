@@ -545,7 +545,7 @@ design export needs. Each entry says where it came up.
     the conversation's search) and Link to your account let the WebView shrink above the keyboard,
     so their results stay in view and Link's button rides up on it. The builders' keyboard-up
     states are N9's.
-  - **Grown panels** take 80% of the height under the status bar (the user's change; 06 and 07 grow
+  - **Grown panels** take 90% of the height under the status bar (the user's change; 06 and 07 grow
     them to just under it): Recents, the emoji panel dragged up, the GIF search (`maxGrowFor`).
   - **A tap on the messages** leaves the keyboard and a panel as they are (the user's change;
     before, it closed them): Android's back, the panel's own controls and the composer's field do.

@@ -15,7 +15,7 @@ export const OPEN_FROM_REST = 0.3;
 export const STAY_OPEN = 0.7;
 
 /** Grown, a panel takes this much of the height under the status bar (the user's, over the plan's all). */
-export const EXPANDED_SHARE = 0.8;
+export const EXPANDED_SHARE = 0.9;
 
 /**
  * How far a panel resting at `rest` can grow, `available` being the height from the status bar

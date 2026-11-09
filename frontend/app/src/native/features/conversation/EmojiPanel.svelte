@@ -4,7 +4,7 @@
      bottom; or the GIFs in two columns. A tap types the emoji at the caret without the keyboard
      (the panel stays); backspace deletes the character before it. Searching emoji, the panel is a
      strip over the keyboard (the user's, over the plan's full height): the field across it and the
-     emoji found in one line under it, the composer above. Searching GIFs, the panel grows (to 80%)
+     emoji found in one line under it, the composer above. Searching GIFs, the panel grows (to 90%)
      before the keyboard comes up for the field, so it never covers the results. Either search
      ending (the panel back at rest, or the keyboard down) puts the field's keyboard away. A GIF
      sends as it's tapped. -->
