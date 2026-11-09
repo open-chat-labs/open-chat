@@ -650,17 +650,10 @@ impl RuntimeState {
         sign_and_encode_token(self.data.oc_key_pair.secret_key_der(), claims, self.env.rng()).ok()
     }
 
-    // The video bridge says this user declined or answered the call: stop the ring on their
-    // other devices. Nothing is stored and nobody else hears of it (#9534). Same rules as every
+    // The video bridge says this user declined the call: stop the ring on their other
+    // devices. Nothing is stored and nobody else hears of it (#9534). Same rules as every
     // dismissal: only with the switch on, only to phones.
-    pub fn push_call_dismissed(
-        &mut self,
-        user_id: UserId,
-        chat_id: Chat,
-        message_id: MessageId,
-        kind: CallDismissalKind,
-        now: TimestampMillis,
-    ) {
+    pub fn push_call_declined(&mut self, user_id: UserId, chat_id: Chat, message_id: MessageId, now: TimestampMillis) {
         if !self.data.call_push_enabled || self.data.fcm_token_store.get_for_user(&user_id).is_empty() {
             return;
         }
@@ -668,19 +661,19 @@ impl RuntimeState {
             Chat::Direct(them) => UserNotificationPayload::DirectCallDismissed(DirectCallDismissedNotification {
                 them: them.into(),
                 message_id,
-                kind,
+                kind: CallDismissalKind::DeclinedElsewhere,
             }),
             Chat::Group(chat_id) => UserNotificationPayload::GroupCallDismissed(GroupCallDismissedNotification {
                 chat_id,
                 message_id,
-                kind,
+                kind: CallDismissalKind::DeclinedElsewhere,
                 is_public: false,
                 member_count: 1,
             }),
             // A channel never rings, so there is nothing to stop
             Chat::Channel(..) => return,
         };
-        let fcm_data = FcmData::call_dismissal(chat_id, message_id, kind);
+        let fcm_data = FcmData::call_dismissal(chat_id, message_id, CallDismissalKind::DeclinedElsewhere);
         let notification_bytes = ByteBuf::from(msgpack::serialize_then_unwrap(&payload));
         self.add_user_notification(vec![user_id], notification_bytes, fcm_data, now);
     }

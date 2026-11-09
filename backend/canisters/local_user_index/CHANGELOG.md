@@ -9,7 +9,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Ring an iPhone with a VoIP token as a phone, with its own decline token ([#10447](https://github.com/open-chat-labs/open-chat/pull/10447))
-- `video_call_answered`, for the video bridge to stop a ring on a user's other phones when an iPhone answers it ([#10447](https://github.com/open-chat-labs/open-chat/pull/10447))
 - Refuse prize claims from users who have claimed 10 in the last 24 hours ([#10443](https://github.com/open-chat-labs/open-chat/pull/10443))
 
 ### Removed
