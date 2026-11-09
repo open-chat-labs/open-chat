@@ -1760,7 +1760,7 @@
                 "recents": "Recientes",
                 "ofMax": "{count} de {max}",
                 "upTo": "Hasta {max}",
-                "collapse": "Atrás",
+                "collapse": "Contraer",
                 "drag": "Arrastra hacia arriba para ver todas las fotos, hacia abajo para cerrar",
                 "dragBack": "Arrastra hacia abajo para volver",
                 "dragToClose": "Arrastra hacia abajo para cerrar",
@@ -1792,7 +1792,8 @@
             "gif": {
                 "none": "No se encontraron GIFs",
                 "unavailable": "No se pudieron cargar los GIFs. Comprueba tu conexión.",
-                "searchHandle": "Arrastra hacia abajo para ocultar el teclado"
+                "searchHandle": "Arrastra hacia abajo para ocultar el teclado",
+                "noMatch": "No hay GIFs para «{query}»"
             }
         },
         "conversation": {

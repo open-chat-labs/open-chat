@@ -1,6 +1,6 @@
 <!-- The attach panel (native plan 06), in the keyboard-area sheet (KeyboardPanel). In the apps, at
-     rest: the top row ("N of 10", the handle, Clear), the gallery strip (Camera, the phone's last
-     100 photos and videos, All photos) and the actions (File, Poll, Prize, Send crypto, Swap, Meme
+     rest: the top row ("N of 10", the handle, Clear), the gallery strip (Camera, All photos, the
+     phone's last 100 photos and videos) and the actions (File, Poll, Prize, Send crypto, Swap, Meme
      fighter, 3 × 2), always. Photos and videos tapped go straight into the composer, numbered, up
      to ten: the composer's media are the selection (MediaPicks), so removing one there puts its
      tile back. Grown (dragged up, or All photos), the Recents grid in its place, picked the same,
@@ -149,23 +149,24 @@
         $_("native.composer.attach.ofMax", { values: { count: picks.count, max: MAX_MEDIA } }),
     );
 
-    // the actions, each in its colour (06): in the apps File and the builders; on mobile web the
+    // the actions, each in its colour (06: the --action-* tokens, a value per mode): in the apps
+    // File and the builders; on mobile web the
     // browser's picker first
     type Action = { id: string; label: string; icon: string; colour: string; onClick: () => void };
 
     const BUILDERS: Record<ComposerBuilder, { label: string; icon: string; colour: string }> = {
-        poll: { label: "native.composer.attach.poll", icon: "poll", colour: "var(--attach-poll)" },
+        poll: { label: "native.composer.attach.poll", icon: "poll", colour: "var(--action-poll)" },
         prize: { label: "native.composer.attach.prize", icon: "gift", colour: "var(--accent)" },
         crypto: {
             label: "native.composer.attach.sendCrypto",
             icon: "send",
-            colour: "var(--attach-crypto)",
+            colour: "var(--action-crypto)",
         },
-        swap: { label: "native.composer.attach.swap", icon: "swap", colour: "var(--attach-swap)" },
+        swap: { label: "native.composer.attach.swap", icon: "swap", colour: "var(--action-swap)" },
         memeFighter: {
             label: "native.composer.attach.memeFighter",
             icon: "image",
-            colour: "var(--attach-meme)",
+            colour: "var(--action-meme)",
         },
     };
 
@@ -176,7 +177,7 @@
                 id: "media",
                 label: $_("native.composer.attach.photosAndVideos"),
                 icon: "image",
-                colour: "var(--attach-media)",
+                colour: "var(--action-media)",
                 onClick: onPickMedia,
             });
         }
@@ -185,7 +186,7 @@
                 id: "file",
                 label: $_("native.composer.attach.file"),
                 icon: "file",
-                colour: "var(--attach-file)",
+                colour: "var(--action-file)",
                 onClick: onPickFile,
             });
         }
@@ -250,13 +251,14 @@
                     <span class="tile-icon camera"></span>
                     <span class="tile-label">{$_("native.composer.attach.camera")}</span>
                 </button>
-                {#each items as item (item.id)}
-                    {@render tile(item, "strip")}
-                {/each}
+                <!-- next to Camera, always in sight (06, 2026-11-09 (d)) -->
                 <button type="button" class="tile" onclick={allPhotos}>
                     <span class="tile-icon all"></span>
                     <span class="tile-label">{$_("native.composer.attach.allPhotos")}</span>
                 </button>
+                {#each items as item (item.id)}
+                    {@render tile(item, "strip")}
+                {/each}
             </div>
         {/if}
         <div class="actions">
@@ -400,6 +402,8 @@
         }
 
         &.all {
+            width: 20px;
+            height: 20px;
             mask: var(--icon-image) center/contain no-repeat;
         }
     }

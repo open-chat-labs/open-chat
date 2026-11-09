@@ -1760,7 +1760,7 @@
                 "recents": "最近项目",
                 "ofMax": "{count}/{max}",
                 "upTo": "最多 {max} 个",
-                "collapse": "返回",
+                "collapse": "收起",
                 "drag": "向上拖动查看所有照片，向下拖动关闭",
                 "dragBack": "向下拖动返回",
                 "dragToClose": "向下拖动关闭",
@@ -1792,7 +1792,8 @@
             "gif": {
                 "none": "未找到 GIF",
                 "unavailable": "无法加载 GIF。请检查网络连接。",
-                "searchHandle": "向下拖动隐藏键盘"
+                "searchHandle": "向下拖动隐藏键盘",
+                "noMatch": "没有与“{query}”相关的 GIF"
             }
         },
         "conversation": {

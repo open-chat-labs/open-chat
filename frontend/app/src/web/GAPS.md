@@ -486,12 +486,12 @@ design export needs. Each entry says where it came up.
     decision).
   - **The gallery strip and Recents** list the phone's last 100 photos and videos through the
     apps' plugin (`loadRecentMedia`; `utils/native/recentMedia`, shared with the old native UI's
-    strip). It asks for the photos permission as the panel first opens (Android); with it refused,
-    or nothing listed, the strip has Camera and All photos only, and All photos opens the system's
-    picker in place of Recents. The plugin doesn't list a video's length: it's read from the file
+    strip), All photos next to Camera (06 (d)). It asks for the photos permission as the panel
+    first opens (Android); with it refused, or nothing listed, the strip has Camera and All photos
+    only, and All photos opens the system's picker in place of Recents. The plugin doesn't list a video's length: it's read from the file
     where it has a path (Android); on iOS a video shows the play glyph without a time.
   - **The attach actions** are those the chat permits (no Poll or Prize in a DM, no payments in an
-    app-store build), in the prototype's colours (`--attach-*`), the same in both themes.
+    app-store build), in 06's `--action-*` colours, a value per mode.
   - **The builders** (Poll, Prize, Send crypto, Swap, Meme fighter) are N9's: each pushes a
     placeholder (a local `builder` screen), over the chat with the attach panel left open under it
     as it was (the user's decision; the plan is being updated to say so); Android's back pops the
@@ -502,11 +502,14 @@ design export needs. Each entry says where it came up.
     sixteen kept, per user on the device, `recentEmoji`), then every emoji the phone draws by the
     emoji database's categories (Smileys & emotion … Flags; from a CDN the first time), not 07's
     curated seven; in the skin tone the old pickers set (no skin tone picker: 07 says ask first);
-    no custom emoji. The category bar shows each section's emoji (🕘 for Recent). Backspace deletes
-    a character per tap (no repeat while held).
+    no custom emoji. The category bar shows each section's emoji, greyed until it's the one showing
+    (🕘 for Recent): the user's decision. Backspace deletes a character per tap (no repeat while
+    held).
   - **GIFs** are Klipy's, as in the old UIs (`logic/composer/gifs`): trending, or searched; a tap
-    sends one and closes the panel, a reply if the draft has one. A search with no match says so:
-    07's "suggestions built from the query" aren't built. A build without a Klipy key has no GIF tab.
+    sends one and closes the panel, a reply if the draft has one. A search with no match says "No
+    GIFs for …" with Klipy's related search terms (`search_suggestions`) as chips to search for,
+    or, with none (or none to be had), the trending GIFs under it (the user's decision;
+    `gifsNotFound`, `GifFeed`). A build without a Klipy key has no GIF tab.
   - **A send** doesn't put the keyboard up while a panel shows (`MessageComposer`, EXPORT-LOG
     2026-11-08): the emoji panel stays to pick more.
   - **The edit composer**: "Editing message" in the accent (native only).
@@ -522,11 +525,11 @@ design export needs. Each entry says where it came up.
   - **The keyboard on other screens** (§5 Open): Pick a username, Edit profile and Delete account
     keep their pinned button down (`aboveKeyboard`); the search screens and Link to your account
     let the WebView shrink above the keyboard. The builders' keyboard-up states are N9's.
-  - **Open questions** (for the plan; decided here meanwhile as above): the emoji sections (the
-    real categories, not 07's curated seven) and the category icons; the GIF search's
-    "suggestions built from the query" (not built); light-mode colours for the attach actions; what
-    the strip and Recents show without photos access or photos (All photos opens the system's
-    picker); the accessible label of Recents' back chevron ("Back").
+  - **Decided by the user** (2026-11-09, where the plan was silent): the emoji sections are the
+    real categories, not 07's curated seven, with their emoji as the category bar's icons; Recents'
+    chevron is "Collapse"; GIF searches with no match as above. Kept as built (06 places All
+    photos next to Camera but doesn't say more): without photos access or photos, All photos opens
+    the system's picker.
   - **Not checked**: the group typing strip in a browser (the local replica's typing goes over
     WebRTC, which the headless browser couldn't set up); the iOS app (no device).
 - **Composer caption placeholder and a count on Send** (by hand, native N5c, EXPORT-LOG

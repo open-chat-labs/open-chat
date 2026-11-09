@@ -1760,7 +1760,7 @@
                 "recents": "الأحدث",
                 "ofMax": "{count} من {max}",
                 "upTo": "حتى {max}",
-                "collapse": "رجوع",
+                "collapse": "طي",
                 "drag": "اسحب لأعلى لكل الصور، ولأسفل للإغلاق",
                 "dragBack": "اسحب لأسفل للرجوع",
                 "dragToClose": "اسحب لأسفل للإغلاق",
@@ -1792,7 +1792,8 @@
             "gif": {
                 "none": "لم يتم العثور على صور GIF",
                 "unavailable": "تعذّر تحميل صور GIF. تحقّق من اتصالك.",
-                "searchHandle": "اسحب لأسفل لإخفاء لوحة المفاتيح"
+                "searchHandle": "اسحب لأسفل لإخفاء لوحة المفاتيح",
+                "noMatch": "لا صور GIF لـ «{query}»"
             }
         },
         "conversation": {

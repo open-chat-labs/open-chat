@@ -1760,7 +1760,7 @@
                 "recents": "最近の項目",
                 "ofMax": "{count} / {max}",
                 "upTo": "最大 {max} 件",
-                "collapse": "戻る",
+                "collapse": "折りたたむ",
                 "drag": "上にドラッグですべての写真、下にドラッグで閉じる",
                 "dragBack": "下にドラッグして戻る",
                 "dragToClose": "下にドラッグして閉じる",
@@ -1792,7 +1792,8 @@
             "gif": {
                 "none": "GIF が見つかりません",
                 "unavailable": "GIF を読み込めませんでした。接続を確認してください。",
-                "searchHandle": "下にドラッグしてキーボードを隠す"
+                "searchHandle": "下にドラッグしてキーボードを隠す",
+                "noMatch": "「{query}」の GIF はありません"
             }
         },
         "conversation": {

@@ -1760,7 +1760,7 @@
                 "recents": "Neueste",
                 "ofMax": "{count} von {max}",
                 "upTo": "Bis zu {max}",
-                "collapse": "Zurück",
+                "collapse": "Einklappen",
                 "drag": "Nach oben ziehen für alle Fotos, nach unten zum Schließen",
                 "dragBack": "Nach unten ziehen, um zurückzugehen",
                 "dragToClose": "Nach unten ziehen zum Schließen",
@@ -1792,7 +1792,8 @@
             "gif": {
                 "none": "Keine GIFs gefunden",
                 "unavailable": "GIFs konnten nicht geladen werden. Prüfe deine Verbindung.",
-                "searchHandle": "Nach unten ziehen, um die Tastatur auszublenden"
+                "searchHandle": "Nach unten ziehen, um die Tastatur auszublenden",
+                "noMatch": "Keine GIFs für „{query}“"
             }
         },
         "conversation": {

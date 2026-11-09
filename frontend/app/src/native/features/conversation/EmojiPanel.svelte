@@ -284,6 +284,13 @@
         if (el.scrollHeight - el.scrollTop - el.clientHeight < 400) void feed?.more();
     }
 
+    // a related term tapped: its search, in the field
+    function searchTerm(term: string) {
+        clearTimeout(searchTimer);
+        query = term;
+        void feed?.search(term);
+    }
+
     function gifTitle(gif: KlipyObject): string {
         return gif.title || gif.content_description;
     }
@@ -461,11 +468,26 @@
             onscroll={more}
             {@attach panelContentPull(panel)}
         >
-            {#if feed.gifs.length === 0 && !feed.loading}
+            {#if feed.notFound !== undefined}
+                <!-- none found: related terms to search for, else the trending GIFs under it -->
+                <p class="none gif-none">
+                    {$_("native.composer.gif.noMatch", { values: { query: feed.notFound.query } })}
+                </p>
+                {#if feed.notFound.kind === "suggestions"}
+                    <div class="terms">
+                        {#each feed.notFound.terms as term (term)}
+                            <button type="button" class="term" onclick={() => searchTerm(term)}>
+                                {term}
+                            </button>
+                        {/each}
+                    </div>
+                {/if}
+            {/if}
+            {#if feed.gifs.length === 0 && !feed.loading && feed.notFound === undefined}
                 <p class="none">
                     {$_(feed.failed ? "native.composer.gif.unavailable" : "native.composer.gif.none")}
                 </p>
-            {:else}
+            {:else if feed.gifs.length > 0}
                 <div class="gif-grid">
                     {#each feed.gifs as gif (gif.id)}
                         <button
@@ -732,6 +754,35 @@
         // the keyboard over the grid's bottom (the panel's padding): the last row 10px above it
         &.raised {
             padding-block-end: var(--space-10);
+        }
+    }
+
+    .gif-none {
+        padding: var(--space-16) var(--space-16) var(--space-12);
+    }
+
+    // the related terms, as chips
+    .terms {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: var(--space-8);
+        padding: 0 var(--space-8) var(--space-16);
+    }
+
+    .term {
+        height: 32px;
+        padding: 0 var(--space-12);
+        border: 0;
+        border-radius: var(--radius-pill);
+        background: var(--overlay-1);
+        font: var(--weight-semibold) text-size(13px) / 1 var(--font-sans);
+        color: var(--ink-2);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+
+        &:active {
+            background: var(--overlay-2);
         }
     }
 

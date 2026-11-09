@@ -1675,7 +1675,7 @@
                 "recents": "Recents",
                 "ofMax": "{count} of {max}",
                 "upTo": "Up to {max}",
-                "collapse": "Back",
+                "collapse": "Collapse",
                 "drag": "Drag up for all photos, down to close",
                 "dragBack": "Drag down to go back",
                 "dragToClose": "Drag down to close",
@@ -1707,7 +1707,8 @@
             "gif": {
                 "none": "No GIFs found",
                 "unavailable": "GIFs couldn't load. Check your connection.",
-                "searchHandle": "Drag down to hide the keyboard"
+                "searchHandle": "Drag down to hide the keyboard",
+                "noMatch": "No GIFs for “{query}”"
             }
         },
         "conversation": {

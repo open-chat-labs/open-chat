@@ -1760,7 +1760,7 @@
                 "recents": "Gần đây",
                 "ofMax": "{count}/{max}",
                 "upTo": "Tối đa {max}",
-                "collapse": "Quay lại",
+                "collapse": "Thu gọn",
                 "drag": "Kéo lên để xem tất cả ảnh, kéo xuống để đóng",
                 "dragBack": "Kéo xuống để quay lại",
                 "dragToClose": "Kéo xuống để đóng",
@@ -1792,7 +1792,8 @@
             "gif": {
                 "none": "Không tìm thấy GIF",
                 "unavailable": "Không tải được GIF. Hãy kiểm tra kết nối.",
-                "searchHandle": "Kéo xuống để ẩn bàn phím"
+                "searchHandle": "Kéo xuống để ẩn bàn phím",
+                "noMatch": "Không có GIF cho “{query}”"
             }
         },
         "conversation": {

@@ -1760,7 +1760,7 @@
                 "recents": "Récents",
                 "ofMax": "{count} sur {max}",
                 "upTo": "Jusqu'à {max}",
-                "collapse": "Retour",
+                "collapse": "Réduire",
                 "drag": "Faites glisser vers le haut pour toutes les photos, vers le bas pour fermer",
                 "dragBack": "Faites glisser vers le bas pour revenir",
                 "dragToClose": "Faites glisser vers le bas pour fermer",
@@ -1792,7 +1792,8 @@
             "gif": {
                 "none": "Aucun GIF trouvé",
                 "unavailable": "Impossible de charger les GIF. Vérifiez votre connexion.",
-                "searchHandle": "Faites glisser vers le bas pour masquer le clavier"
+                "searchHandle": "Faites glisser vers le bas pour masquer le clavier",
+                "noMatch": "Aucun GIF pour « {query} »"
             }
         },
         "conversation": {
