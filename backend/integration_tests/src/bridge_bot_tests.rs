@@ -985,9 +985,14 @@ fn user_index_refreshes_the_registrys_tokens_daily() {
     } = wrapper.env();
     let (user_index, registry) = (canister_ids.user_index, canister_ids.registry);
 
-    // Brings the UserIndex up to date first. In a new env it knows a token the Registry doesn't list,
-    // ICP, as it took the tokens before the Registry found that the ICP ledger, which is installed
-    // after it, had no code.
+    // A new env installs the ICP ledger after the Registry, so the Registry marks ICP uninstalled, and
+    // lists it again only once its 11 hourly check finds that the ledger has code. That check takes
+    // longer than the UserIndex's daily refresh, which would otherwise take the tokens before ICP is
+    // listed again. So this waits for ICP first, then brings the UserIndex up to date.
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    wait_until(env, "the Registry to list ICP", |env| {
+        registry_ledgers_listed(env, registry).contains(&canister_ids.icp_ledger)
+    });
     env.advance_time(Duration::from_millis(DAY_IN_MS));
     wait_until(env, "the tokens to be refreshed", |env| {
         registry_tokens_known(env, user_index) == Some(registry_tokens_listed(env, registry))
@@ -1033,13 +1038,23 @@ fn registry_tokens_known(env: &PocketIc, user_index: CanisterId) -> Option<u64> 
 
 // How many tokens the Registry lists which it hasn't marked uninstalled, which are those it gives the UserIndex
 fn registry_tokens_listed(env: &PocketIc, registry: CanisterId) -> u64 {
+    registry_ledgers_listed(env, registry).len() as u64
+}
+
+// The ledgers of the tokens the Registry lists which it hasn't marked uninstalled
+fn registry_ledgers_listed(env: &PocketIc, registry: CanisterId) -> Vec<CanisterId> {
     match client::registry::updates(
         env,
         Principal::anonymous(),
         registry,
         &registry_canister::updates::Args { since: None },
     ) {
-        registry_canister::updates::Response::Success(result) => result.token_details.map_or(0, |tokens| tokens.len() as u64),
+        registry_canister::updates::Response::Success(result) => result
+            .token_details
+            .unwrap_or_default()
+            .into_iter()
+            .map(|token| token.ledger_canister_id)
+            .collect(),
         response => panic!("{response:?}"),
     }
 }
