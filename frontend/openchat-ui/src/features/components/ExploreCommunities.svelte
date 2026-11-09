@@ -362,8 +362,15 @@
     const fit = () => {
       menu.style.maxHeight = `${Math.max(0, room())}px`;
     };
+    // scrolled only as far as the pane's content alone allows: the menu's own height hanging below the foot would let
+    // it scroll further, and capping the menu then would clamp the pane back a step per scroll event
     const short = MENU_MIN - room();
-    if (short > 0) pane.scrollBy({ top: short, behavior: 'instant' });
+    if (short > 0) {
+      menu.style.display = 'none';
+      const scrollable = pane.scrollHeight - pane.clientHeight - pane.scrollTop;
+      menu.style.display = '';
+      if (scrollable > 0) pane.scrollBy({ top: Math.min(short, scrollable), behavior: 'instant' });
+    }
     fit();
     window.addEventListener('resize', fit);
     pane.addEventListener('scroll', fit, { passive: true });
