@@ -2,19 +2,21 @@
      it above the dimmed, blurred chat (the message itself hides meanwhile); the quick reactions bar (with + for more)
      and the action card line up with its bubble's start edge (received) or end edge (sent), 12px inside the screen,
      placed by messageMenuPlacement (reactions above and the card below, else the card above and the reactions below,
-     else both above, else both below). The copy keeps its ancestors' classes and custom properties (but none of their
-     layout), so it looks as the message does. A tap outside, Esc or a pick closes it: the veil, the reactions and
-     the card fade out in 170ms while the copy stays as it is, over the hidden message, until they're gone (fading it
-     too would show the dimmed chat through it, and the message blink back in at the end); the press that opened it
-     ends without closing it. It's a fixed layer over the native root. Reduced motion:
-     no scale or fade. -->
+     else both above, else both below, else the whole card over the message at the screen's bottom; it scrolls only
+     when it can't be whole anywhere). What's under the veil (the header, the composer) is room: only 12px from the
+     screen's top and bottom isn't, the safe areas counting towards it. The card is measured as it lays out, before
+     it's placed, so it's never cut short. The copy keeps its ancestors' classes and custom properties (but none of
+     their layout), so it looks as the message does. A tap outside, Esc or a pick closes it: the veil, the reactions
+     and the card fade out in 170ms while the copy stays as it is, over the hidden message, until they're gone (fading
+     it too would show the dimmed chat through it, and the message blink back in at the end); the press that opened it
+     ends without closing it. It's a fixed layer over the native root. Reduced motion: no scale or fade. -->
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte';
   import { useT } from '../lib/i18n';
   import { modal } from '../lib/behaviours/modal';
   import NativeMenu from './NativeMenu.svelte';
   import { Presence } from './presence.svelte';
-  import { LIFT_MENU_WIDTH, menuHeight, messageMenuPlacement, type MessageMenuPlacement, type Rect } from './menuPlacement';
+  import { EDGE, LIFT_MENU_WIDTH, messageMenuPlacement, type MessageMenuPlacement, type Rect } from './menuPlacement';
   import type { NativeMenuItem } from './types';
 
   const LEAVE_MS = 170;
@@ -85,6 +87,7 @@
 
   let frame = $state<HTMLElement>();
   let bar = $state<HTMLElement>();
+  let pop = $state<HTMLElement>();
   let placement = $state<MessageMenuPlacement | null>(null);
   let frameBox = $state<Rect>({ left: 0, top: 0, width: 0, height: 0 });
 
@@ -95,15 +98,22 @@
     }
     const box = frame;
     const el = lifted;
-    const rows = items;
+    const card = pop;
+    void items;
     const barEl = withBar ? bar : undefined;
-    if (withBar && !barEl) return;
+    if ((withBar && !barEl) || !card) return;
     untrack(() => {
       const f = box.getBoundingClientRect();
       frameBox = { left: f.left, top: f.top, width: f.width, height: f.height };
       const rtl = getComputedStyle(box).direction === 'rtl';
       const size = barEl ? { width: barEl.offsetWidth, height: barEl.offsetHeight } : null;
-      placement = messageMenuPlacement(messageBox(el, row!), frameBox, size, { width: LIFT_MENU_WIDTH, height: menuHeight(rows) }, side, rtl);
+      // the card as it lays out, unconstrained and unscaled (its computed height: it may be measured again as it
+      // scales in), rounded up so its max-height never cuts it short
+      const was = card.style.maxHeight;
+      card.style.maxHeight = 'none';
+      const height = Math.ceil(parseFloat(getComputedStyle(card).height));
+      card.style.maxHeight = was;
+      placement = messageMenuPlacement(messageBox(el, row!), frameBox, size, { width: LIFT_MENU_WIDTH, height }, side, rtl, edges(box, f));
     });
   });
 
@@ -117,6 +127,13 @@
       el.style.visibility = was;
     };
   });
+
+  // what the menu keeps from the screen's top and bottom: 12px, of which the safe areas (the frame's insets) already keep
+  // their share; anything else (the header, the composer) is under the veil, so room
+  function edges(box: HTMLElement, f: DOMRect): { top: number; bottom: number } {
+    const layer = box.parentElement?.getBoundingClientRect() ?? f;
+    return { top: Math.max(0, EDGE - (f.top - layer.top)), bottom: Math.max(0, EDGE - (layer.bottom - f.bottom)) };
+  }
 
   // the message's box: its row's height, and the width its bubble (and what's under it) takes in the row
   function messageBox(el: HTMLElement, r: Rect): Rect {
@@ -132,15 +149,27 @@
     return Number.isFinite(left) ? { left, top: r.top, width: right - left, height: r.height } : r;
   }
 
-  // an element as it shows: the first one down from it narrower than the row (a bubble inside a full-width wrapper)
+  // an element as it shows: the first one down from it that's narrower than the row (a bubble inside a full-width
+  // wrapper) or draws a box of its own (a bubble as wide as the row, its text wrapped), not what's inside that box
   function visualBox(el: Element, rowWidth: number): DOMRect {
     let node: Element | null = el;
     for (let n = 0; node && n < 8; n++) {
       const b = node.getBoundingClientRect();
-      if (b.width > 0 && b.width < rowWidth - 1) return b;
+      if (b.width > 0 && (b.width < rowWidth - 1 || drawsBox(node))) return b;
       node = node.firstElementChild;
     }
     return el.getBoundingClientRect();
+  }
+
+  function drawsBox(el: Element): boolean {
+    if (el.hasAttribute('data-oc-bubble')) return true;
+    const s = getComputedStyle(el);
+    return (
+      (s.backgroundColor !== 'rgba(0, 0, 0, 0)' && s.backgroundColor !== 'transparent') ||
+      s.backgroundImage !== 'none' ||
+      parseFloat(s.borderTopWidth) > 0 ||
+      s.boxShadow !== 'none'
+    );
   }
 
   // the copy: the row itself, inside shells of its ancestors that keep their classes and custom properties (the styles
@@ -251,17 +280,18 @@
           {/if}
         </div>
       {/if}
-      {#if placement}
-        <div
-          class="pop"
-          style:top="{placement.menu.top}px"
-          style:inset-inline-start="{placement.menu.inlineStart}px"
-          style:max-height="{placement.menu.maxHeight}px"
-          style:transform-origin={placement.menu.origin}
-        >
-          <NativeMenu {items} {label} onSelect={pick} />
-        </div>
-      {/if}
+      <!-- measured as it lays out (hidden until it's placed), then placed -->
+      <div
+        class="pop"
+        class:placed={!!placement}
+        bind:this={pop}
+        style:top="{placement?.menu.top ?? 0}px"
+        style:inset-inline-start="{placement?.menu.inlineStart ?? 0}px"
+        style:max-height={placement ? `${placement.menu.maxHeight}px` : undefined}
+        style:transform-origin={placement?.menu.origin}
+      >
+        <NativeMenu {items} {label} onSelect={pick} />
+      </div>
     </div>
   </div>
 {/if}
@@ -294,8 +324,8 @@
     pointer-events: none;
   }
 
-  // the message's copy, exactly over it
-  // a stand-in for the message: nothing in it is selected, nor offers the iOS callout
+  // the message's copy, exactly over it: a stand-in for the message, so nothing in it is selected, nor offers the
+  // iOS callout
   .copy {
     position: absolute;
     pointer-events: none;
@@ -371,7 +401,12 @@
     display: flex;
     flex-direction: column;
     pointer-events: auto;
-    animation: menu-in 0.2s var(--ease-out) 0.04s backwards;
+    visibility: hidden;
+
+    &.placed {
+      visibility: visible;
+      animation: menu-in 0.2s var(--ease-out) 0.04s backwards;
+    }
   }
 
   // the copy doesn't fade: it stays over the hidden message until the layer is gone, so nothing blinks
@@ -403,7 +438,8 @@
     .copy,
     .bar,
     .bar.placed,
-    .pop {
+    .pop,
+    .pop.placed {
       transition: none;
       animation: none;
     }

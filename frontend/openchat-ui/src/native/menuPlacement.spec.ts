@@ -146,8 +146,9 @@ describe('messageMenuPlacement', () => {
     expect(messageMenuPlacement(highest, screen, bar, card, 'received', false)).toMatchObject({ order: 'below', bar: { top: 88 }, menu: { top: 148 } });
   });
 
-  test('a long card that fits nowhere scrolls on the roomier side, the reactions across the message', () => {
-    const long = { width: 240, height: 700 };
+  test('a card too long to be whole anywhere scrolls on the roomier side, the reactions across the message', () => {
+    // with the reactions, more than the screen less its edges (800 - 24)
+    const long = { width: 240, height: 720 };
     expect(messageMenuPlacement(received, screen, bar, long, 'received', false)).toMatchObject({
       order: 'scroll',
       bar: { top: 240 },
@@ -159,12 +160,63 @@ describe('messageMenuPlacement', () => {
     expect(up.menu.top).toBe(12);
   });
 
-  test('a message filling the screen: the reactions at its top, the card at its bottom, over the message', () => {
+  test('a card that fits nowhere beside the message but fits the screen goes whole over it rather than scroll', () => {
+    const long = { width: 240, height: 700 };
+    expect(messageMenuPlacement(received, screen, bar, long, 'received', false)).toEqual({
+      order: 'over',
+      bar: { top: 12, inlineStart: 12, origin: 'top left' },
+      menu: { top: 800 - 12 - 700, inlineStart: 12, maxHeight: 700, origin: 'bottom left' },
+    });
+    // a tall message with room for the reactions above it: they stay next to it, the card at the screen's bottom
+    const tall = { ...received, top: 100, height: 650 };
+    expect(messageMenuPlacement(tall, screen, bar, card, 'received', false)).toMatchObject({
+      order: 'over',
+      bar: { top: 100 - 60, origin: 'bottom left' },
+      menu: { top: 800 - 12 - 300, maxHeight: 300 },
+    });
+  });
+
+  test('a message filling the screen: the reactions at its top, the whole card at its bottom, over the message', () => {
     const tall = { ...received, top: 40, height: 700 };
     expect(messageMenuPlacement(tall, screen, bar, card, 'received', false)).toEqual({
       order: 'over',
       bar: { top: 12, inlineStart: 12, origin: 'top left' },
-      menu: { top: 800 - 12 - 300, inlineStart: 12, maxHeight: 800 - 24 - 60, origin: 'bottom left' },
+      menu: { top: 800 - 12 - 300, inlineStart: 12, maxHeight: 300, origin: 'bottom left' },
+    });
+  });
+
+  test('a card taller than the screen scrolls at its bottom, under the reactions', () => {
+    const tall = { ...received, top: 40, height: 700 };
+    const huge = { width: 240, height: 900 };
+    expect(messageMenuPlacement(tall, screen, bar, huge, 'received', false)).toMatchObject({
+      order: 'over',
+      bar: { top: 12 },
+      menu: { top: 12 + 60, maxHeight: 800 - 24 - 60 },
+    });
+  });
+
+  test("just above the composer (under the veil, so room): the card above, the reactions below, over it", () => {
+    // the Android app's: a 866px frame inside 24px safe areas, which keep the edge themselves; the bar 356 × 56
+    const phone = { left: 0, top: 24, width: 411, height: 866 };
+    const androidBar = { width: 356, height: 56 };
+    const sevenRows = { width: 240, height: 7 * 48 + 11 + 12 };
+    const lastMessage = { left: 72, top: 479.6, width: 319.4, height: 344.6 };
+    const edges = { top: 0, bottom: 0 };
+    expect(messageMenuPlacement(lastMessage, phone, androidBar, sevenRows, 'sent', false, edges)).toMatchObject({
+      order: 'menu-above',
+      bar: { top: 479.6 - 24 + 344.6 + 8 },
+      menu: { top: 479.6 - 24 - 359 - 8 },
+    });
+    // with 12px kept at the bottom besides, the reactions wouldn't fit under it
+    expect(messageMenuPlacement(lastMessage, phone, androidBar, sevenRows, 'sent', false).order).toBe('above');
+  });
+
+  test('a card that fits exactly is whole, not a pixel short', () => {
+    const exact = { ...received, top: 100 };
+    const fits = { width: 240, height: 800 - 12 - 160 - 8 };
+    expect(messageMenuPlacement(exact, screen, bar, fits, 'received', false)).toMatchObject({
+      order: 'bar-above',
+      menu: { top: 168, maxHeight: fits.height },
     });
   });
 

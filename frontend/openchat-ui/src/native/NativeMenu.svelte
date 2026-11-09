@@ -89,6 +89,7 @@
     min-height: 0;
     max-height: 100%;
     overflow-y: auto;
+    // a card too long for the screen scrolls, without a scrollbar (Android's WebView ignores scrollbar-width)
     scrollbar-width: none;
     display: flex;
     flex-direction: column;
@@ -100,6 +101,10 @@
       var(--shadow-menu),
       inset 0 0 0 1px var(--line-1);
     outline: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   .row {

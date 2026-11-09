@@ -102,10 +102,12 @@ export type MessageMenuOrder =
   | 'above'
   /** Both below, the reactions first. */
   | 'below'
-  /** None of those fits (a tall message, a long card): the card scrolls on the roomier side. */
-  | 'scroll'
-  /** Not even that: the reactions at the top of the screen and the card at its bottom, over the message. */
-  | 'over';
+  /** None of those fits (a tall message, a long card): the whole card at the bottom of the screen, over the message,
+   *  the reactions above the message (or at the top of the screen); and when even that can't hold the whole card, the
+   *  card there scrolls. */
+  | 'over'
+  /** The card can't be whole anywhere: it scrolls on the roomier side. */
+  | 'scroll';
 
 export type MessageMenuPlacement = {
   order: MessageMenuOrder;
@@ -115,14 +117,20 @@ export type MessageMenuPlacement = {
   menu: { top: number; inlineStart: number; maxHeight: number; origin: string };
 };
 
+/** What a message's long-press menu keeps from the frame's top and bottom edges. */
+export type MenuEdges = { top: number; bottom: number };
+
 /**
  * A message's long-press menu (native design notes §3.3): the message stays where it is, and its reactions bar and
  * action card line up with its bubble's start edge (received) or end edge (sent), kept 12px inside the screen's
- * edges. They go the first of these ways that fits: reactions above and the card below, the card above and the
- * reactions below, both above, both below. When none does, the card takes the roomier side and scrolls, with the
- * reactions on the other side if they fit there (else between it and the message); with too little room even for
- * that, the reactions sit at the top of the screen and the card at its bottom, over the message. `message` is the
- * message's box: its row's top and height, its bubble's left and width.
+ * sides, and `edges` inside its top and bottom (the host's: 12px, less what the safe area already keeps; whatever is
+ * under the veil, the composer too, is room). They go the first of these ways that fits: reactions above and the card
+ * below, the card above and the reactions below, both above, both below. When none does, the whole card goes over the
+ * message, at the bottom of the screen, the reactions above the message where they fit (else at the top of the
+ * screen): the card scrolls only when it can't be whole anywhere, on the roomier side, with the reactions on the
+ * other side if they fit there (else between it and the message); with too little room even for that, the reactions
+ * sit at the top of the screen and the card, scrolling, at its bottom. `message` is the message's box: its row's top
+ * and height, its bubble's left and width; `menu`, the card as it measures (rounded up, so it's never cut short).
  */
 export function messageMenuPlacement(
   message: Rect,
@@ -131,6 +139,7 @@ export function messageMenuPlacement(
   menu: { width: number; height: number },
   side: 'received' | 'sent',
   rtl: boolean,
+  edges: MenuEdges = { top: EDGE, bottom: EDGE },
 ): MessageMenuPlacement {
   const gap = MESSAGE_MENU_GAP;
   const start = rtl ? frame.left + frame.width - (message.left + message.width) : message.left - frame.left;
@@ -140,8 +149,8 @@ export function messageMenuPlacement(
 
   const top = message.top - frame.top;
   const bottom = top + message.height;
-  const above = top - EDGE;
-  const below = frame.height - EDGE - bottom;
+  const above = top - edges.top;
+  const below = frame.height - edges.bottom - bottom;
   const barNeed = bar ? bar.height + gap : 0;
   const menuNeed = menu.height + gap;
 
@@ -156,25 +165,36 @@ export function messageMenuPlacement(
   if (barNeed + menuNeed <= above) return place('above', top - menuNeed - barNeed, true, top - menuNeed, true, menu.height);
   if (barNeed + menuNeed <= below) return place('below', bottom + gap, false, bottom + gap + barNeed, false, menu.height);
 
-  // the card on the roomier side, scrolling; the reactions on the other side if they fit there, else next to the message
-  const down = below >= above;
-  const barAcross = barNeed <= (down ? above : below);
-  const room = (down ? below : above) - gap - (barAcross ? 0 : barNeed);
-  if (room >= Math.min(MESSAGE_MENU_MIN, menu.height)) {
-    const height = Math.min(menu.height, room);
-    if (down) {
-      return barAcross
-        ? place('scroll', top - barNeed, true, bottom + gap, false, room)
-        : place('scroll', bottom + gap, false, bottom + gap + barNeed, false, room);
-    }
-    return barAcross
-      ? place('scroll', bottom + gap, false, top - gap - height, true, room)
-      : place('scroll', top - barNeed, true, top - barNeed - gap - height, true, room);
+  // the whole card over the message, at the bottom of the screen; the reactions above the message when they fit there
+  // clear of the card, else at the top of the screen
+  const room = frame.height - edges.top - edges.bottom;
+  const overTop = frame.height - edges.bottom - menu.height;
+  if (barNeed + menu.height <= room) {
+    return barNeed <= above && top <= overTop
+      ? place('over', top - barNeed, true, overTop, true, menu.height)
+      : place('over', edges.top, false, overTop, true, menu.height);
   }
 
-  // over the message: the reactions at the top of the screen, the card at the bottom
-  const avail = frame.height - 2 * EDGE - barNeed;
-  return place('over', EDGE, false, frame.height - EDGE - Math.min(menu.height, avail), true, avail);
+  // the card can't be whole: on the roomier side, scrolling; the reactions on the other side if they fit there, else
+  // next to the message
+  const down = below >= above;
+  const barAcross = barNeed <= (down ? above : below);
+  const beside = (down ? below : above) - gap - (barAcross ? 0 : barNeed);
+  if (beside >= Math.min(MESSAGE_MENU_MIN, menu.height)) {
+    const height = Math.min(menu.height, beside);
+    if (down) {
+      return barAcross
+        ? place('scroll', top - barNeed, true, bottom + gap, false, beside)
+        : place('scroll', bottom + gap, false, bottom + gap + barNeed, false, beside);
+    }
+    return barAcross
+      ? place('scroll', bottom + gap, false, top - gap - height, true, beside)
+      : place('scroll', top - barNeed, true, top - barNeed - gap - height, true, beside);
+  }
+
+  // over the message: the reactions at the top of the screen, the card, scrolling, at the bottom
+  const avail = room - barNeed;
+  return place('over', edges.top, false, frame.height - edges.bottom - Math.min(menu.height, avail), true, avail);
 }
 
 function clamp(x: number, min: number, max: number): number {
