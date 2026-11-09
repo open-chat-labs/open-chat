@@ -1,7 +1,6 @@
-use crate::activity_notifications::handle_activity_notification;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_stable_memory_map_small_entries_memory, get_upgrades_memory};
-use crate::{Data, mutate_state, read_state};
+use crate::{Data, read_state};
 use canister_api_macros::post_upgrade;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -32,16 +31,6 @@ fn post_upgrade(args: Args) {
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
-
-    // One-off: give an owner to a group left with none when its last owner deleted their account
-    mutate_state(|state| {
-        let now = state.env.now();
-        if let Some(new_owner) = state.data.assign_owner_if_none(now) {
-            info!(%new_owner, "Assigned an owner to the group, which had none");
-            // So that members' clients pick up the change. This only queues the event.
-            handle_activity_notification(state);
-        }
-    });
 
     read_state(|state| {
         let now = state.env.now();
