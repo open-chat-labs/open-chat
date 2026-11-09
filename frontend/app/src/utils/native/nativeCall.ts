@@ -61,6 +61,7 @@ export function createNativeCall(start: NativeCallStart, onHangup: () => void): 
     let listener: PluginListener | undefined;
     let local: NativeParticipant | undefined;
     let present = 0;
+    let finished = false;
 
     const emit = (name: string, ev?: unknown) => handlers.get(name)?.forEach((h) => h(ev));
     const leave = () => invoke<void>("plugin:oc|native_call_leave").catch(() => undefined);
@@ -75,6 +76,9 @@ export function createNativeCall(start: NativeCallStart, onHangup: () => void): 
                 onHangup();
                 break;
             case "left":
+                // The shell holds one call at a time, so anything said after this concerns the next
+                finished = true;
+                stopListening();
                 emit("left-meeting");
                 break;
             case "error":
@@ -111,9 +115,10 @@ export function createNativeCall(start: NativeCallStart, onHangup: () => void): 
             }
         },
         leave,
+        // #10398 invariant 25: a finished call must not end the one that replaced it
         async destroy() {
             stopListening();
-            await leave();
+            if (!finished) await leave();
         },
         participants: () => ({ local: local ? toDaily(local) : undefined }),
         participantCounts: () => ({ present, hidden: 0 }),

@@ -266,6 +266,20 @@ describe("a call", () => {
             expect(activeVideoCall.current()).toBeUndefined();
         });
 
+        test("invariant 25: tearing down a finished call never touches the call after it", async () => {
+            await session.startOrJoin(container, { chatId: direct, callType: "audio", join: true });
+            shell.onEvent?.({ json: JSON.stringify({ kind: "left" }) });
+            shell.invoke.mockClear();
+
+            await session.startOrJoin(container, { chatId: direct, callType: "audio", join: true });
+
+            expect(shell.invoke).toHaveBeenCalledWith(
+                "plugin:oc|native_call_join",
+                expect.anything(),
+            );
+            expect(shell.invoke).not.toHaveBeenCalledWith("plugin:oc|native_call_leave");
+        });
+
         test("invariant 20: the other party leaving a direct call ends it", async () => {
             vi.mocked(client.endVideoCall).mockClear();
             await session.startOrJoin(container, {

@@ -151,6 +151,7 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
     private var joinResult: Result<[String: Any], Error>?
     private var joinWaiters: [([String: Any]) -> Void] = []
     private var cameraWanted: Bool
+    private var leaveRequested = false
 
     init(settings: NativeCallSettings, send: @escaping ([String: Any]) -> Void) {
         self.settings = settings
@@ -168,6 +169,11 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
         if !settings.broadcast {
             await requestPermissions()
         }
+        // Left while waiting for permission: nothing to join or to leave
+        guard !leaveRequested else {
+            finishIfLeft()
+            throw CancellationError()
+        }
         var update = ClientSettingsUpdate()
         update.inputs = .set(
             InputSettingsUpdate(
@@ -176,6 +182,10 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
             ))
         _ = try await client.join(url: settings.url, token: MeetingToken(stringValue: settings.token), settings: update)
         joined = true
+        guard !leaveRequested else {
+            leave()
+            return currentState()
+        }
         try? await client.setPreferredAudioDevice(speakerOn ? .speakerphone : .earpiece)
         refreshTiles()
         let state = currentState()
@@ -255,6 +265,11 @@ final class NativeCallController: NSObject, ObservableObject, CallClientDelegate
     }
 
     func leave() {
+        // Not started yet, so join() has to act on this when it gets there
+        if client.callState == .initialized {
+            leaveRequested = true
+            return
+        }
         guard client.callState == .joined || client.callState == .joining else {
             finishIfLeft()
             return

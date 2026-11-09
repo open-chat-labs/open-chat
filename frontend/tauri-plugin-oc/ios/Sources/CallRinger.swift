@@ -144,7 +144,7 @@ final class CallRinger: NSObject, PKPushRegistryDelegate, CXProviderDelegate {
         case .group(let groupId): content.userInfo = ["type": "group", "groupId": groupId]
         }
         UNUserNotificationCenter.current().add(
-            UNNotificationRequest(identifier: "missed-call-\(call.messageId)", content: content, trigger: nil))
+            UNNotificationRequest(identifier: "\(Push.missedCallPrefix)\(call.messageId)", content: content, trigger: nil))
     }
 
     // The web layer joined this call from the chat while it was ringing
