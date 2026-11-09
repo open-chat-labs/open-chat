@@ -354,10 +354,10 @@ design export needs. Each entry says where it came up.
   the messages on `core/ChatEventList` with the web's mapping (moved to `logic/conversation`,
   which both trees now use), sent ones on the right, no avatars in DMs, the swipes, the typing
   bubble and strip, call items and the media viewer. Left, or decided against the prototype:
-  - **The composer** is N5c's: a placeholder bar stands in its place ("Composer (N5c)",
-    development text), with the typing strip resting on it. A swipe sets the chat's draft (the
-    reply, or the edit), which the composer will show; until then the message is only marked.
-    A preview's join bar (a channel not joined, a community previewed) comes with N8b.
+  - **The composer** is N5c's ("Native composer", below), with the typing strip resting on it. A
+    swipe sets the chat's draft (the reply, or the edit), which the composer shows, and the
+    message is marked. A preview's join bar (a channel not joined, a community previewed) comes
+    with N8b: until then a preview shows the old footer's words in the composer's place.
   - **The message long-press menu** (and with it reactions beyond the chips, Copy, Forward, Info,
     Delete…) is N5d's: a long-press does nothing yet. A message's reactions toggle from its chips.
   - **A message's thread** is N8a's (native PLAN): the replies link under messages and the thread
@@ -443,6 +443,118 @@ design export needs. Each entry says where it came up.
     `MessageGroup`'s `mirror`, `avatarSize`, `swipeStyle="inset"` and its CSS hooks
     (`--group-gap`, `--group-ring`, `--message-mark*`); `ChatBubble` and `VoiceMessage` put a
     mirrored bubble at the inline end.
+
+- **Native composer** (native N5c, #10370; the native plan's 05 composer, 06 attach panel and 07
+  emoji and GIF panel, as of 2026-11-09 (b); `src/native/features/conversation`:
+  `ConversationComposer`, `keyboardSlot`, `KeyboardPanel` and `PanelHandle` with `panelState` /
+  `panelDrag`, `EmojiPanel`, `AttachPanel`). Built: the library's `MessageComposer` as the
+  design's pill, + · text · emoji on iOS and emoji · text · + on Android, mic ↔ send; the chat's
+  draft, the reply or edit strip a swipe sets, a file or up to ten photos and videos attached,
+  @mentions, a voice message, the throttle and a video's progress over it, the old footer's words
+  in its place where the reader can't send; the slot under it that the keyboard and the panels
+  share, and the panels as 06's sheet (rest at the keyboard's height over a spacer, 90% of the
+  screen grown, the `--scrim` backdrop, the handle's and the content's drags, the emoji search's
+  strip, the GIF search). On the web composer's operations, moved to the shared layer for it
+  (`logic/composer`: `chatEntryState`, `entryBlockBanner`, `entryNoticeText`, `mentionsFor`,
+  `sendVoiceRecording`, `composerProps`; `logic/conversation/draftActions`), which the web's
+  conversation uses too; the panels' own in `logic/composer` (`mediaPicks`, `recentEmoji`) and
+  the client (`prepareAttachment`). Left, or decided where the plan is silent:
+  - **The keyboard**: in the Android app the conversation keeps the viewport resize off and the
+    slot takes the keyboard's height from the window insets, so the composer sits right on the
+    keyboard, and a panel rests at the keyboard's last height. Android reports a keyboard coming
+    up at one height and then, ~200ms on, at its own (370px, then 336px), sometimes over a second
+    late, and a "down" from the last move can arrive after a quick switch back: the slot takes a
+    height once it has stayed 250ms, holds the keyboard's height for up to 2s while it's on its
+    way and ignores a "down" meanwhile (`keyboardReport`), and when the keyboard asked for by the
+    keyboard glyph doesn't come (Android drops a focus's keyboard while the last is still going
+    down) the field is focused afresh once. Measured per frame on the emulator, toggling the emoji
+    and keyboard glyphs every 80, 150 or 300ms leaves the composer's top at 526px throughout. In
+    the iOS app the native tree doesn't follow the keyboard's reports (only Android's are followed,
+    `systemBars.ts`), so the WebView shrinks above the keyboard, and a panel rests at the keyboard's
+    height only where one was seen on the device, else at 304px over the safe area: switching may
+    jump. Following iOS's reports waits for a device to check on. The emoji and attach panels rest
+    at the same height (the user's decision): the keyboard's where it's known, else 304px in the
+    apps and 264px on phones' browsers (06's mobile web attach panel, the emoji panel too).
+  - **Photos and videos picked** go straight into the composer (06 "live in the composer"), held
+    by the composer (`mediaPicks`), not the chat's draft: they're lost when the chat is left (the
+    draft keeps a file, or a photo pasted). Each is prepared as it's picked (a video's transcode
+    takes a while); a send waits for them. Over the thumbnails the composer's media header says
+    "N of 10" and Clear empties the attachment (every tile with it; `mediaLabel`, `onClearMedia`,
+    05). The attach panel has only the standard handle (06 (e)). The composer's placeholder is
+    "Add a caption…" and Send shows how many go (`MessageComposer`'s `attachedPlaceholder` and `sendCount`, by hand,
+    EXPORT-LOG 2026-11-09). **Backend dependency**: a message holds one attachment, so the first
+    goes with the caption and the others follow it, a message each, in the order picked (refused,
+    those not sent are picked again), until the backend takes several in one message (the user's
+    decision).
+  - **The gallery strip and Recents** list the phone's last 100 photos and videos through the
+    apps' plugin (`loadRecentMedia`; `utils/native/recentMedia`, shared with the old native UI's
+    strip), All photos next to Camera (06 (d)). It asks for the photos permission as the panel
+    first opens (Android); with it refused, or nothing listed, the strip has Camera and All photos
+    only, and All photos opens the system's picker in place of Recents. The plugin doesn't list a video's length: it's read from the file
+    where it has a path (Android); on iOS a video shows the play glyph without a time.
+  - **The attach actions** are those the chat permits (no Poll or Prize in a DM, no payments in an
+    app-store build), in 06's `--action-*` colours, a value per mode.
+  - **The builders** (Poll, Prize, Send crypto, Swap, Meme fighter) are N9's: each pushes a
+    placeholder (a local `builder` screen), over the chat with the attach panel left open under it
+    as it was (the user's decision; the plan is being updated to say so); Android's back pops the
+    builder first. The system's pickers (Camera, File, All photos with
+    nothing listed) close it. A payment in the draft (one staged on another device) has no chip,
+    and isn't sent with the text (`sendComposed` refuses it).
+  - **The emoji panel's sections**: Recent first (07's eight to start, each pick to the front,
+    sixteen kept, per user on the device, `recentEmoji`), then every emoji the phone draws by the
+    emoji database's categories (Smileys & emotion … Flags; from a CDN the first time), not 07's
+    curated seven; in the skin tone the old pickers set (no skin tone picker: 07 says ask first);
+    no custom emoji. The category bar shows each section's emoji, greyed until it's the one showing
+    (🕘 for Recent): the user's decision. Backspace deletes a character per tap (no repeat while
+    held).
+  - **GIFs** are Klipy's, as in the old UIs (`logic/composer/gifs`): trending, or searched; a tap
+    sends one and closes the panel, a reply if the draft has one. A search with no match says "No
+    GIFs for …" with Klipy's related search terms (`search_suggestions`) as chips to search for,
+    or, with none (or none to be had), the trending GIFs under it (the user's decision;
+    `gifsNotFound`, `GifFeed`). A build without a Klipy key has no GIF tab.
+  - **A send** doesn't put the keyboard up while a panel shows (`MessageComposer`, EXPORT-LOG
+    2026-11-08): the emoji panel stays to pick more.
+  - **The edit composer**: "Editing message" in the accent (native only).
+  - **Voice**: the line under a take is the web's, Esc included.
+  - **Mentions** use the library's list over the composer. Enter follows the app's enter-sends
+    setting (off on touch devices).
+  - **Toasts** sit above the composer however tall it is (`--toasts-footer`); while the attach
+    panel shows (at rest and in Recents), at its bottom, over it (the user's decision; 06 is
+    silent; `onToastFloor`).
+  - **A tap on the messages** leaves the keyboard and a resting panel as they are (the backdrop
+    takes taps only from f 0.02, 06); grown or searching, it's the backdrop's, which collapses the
+    sheet to rest.
+  - **The keyboard on other screens** (§5 Open): Pick a username, Edit profile and Delete account
+    keep their pinned button down (`aboveKeyboard`); the search screens and Link to your account
+    let the WebView shrink above the keyboard. The builders' keyboard-up states are N9's.
+  - **The light conversation** (04 (c), 00 (b)): the screen's root carries `data-chat-surface`,
+    and `tokens.css` scopes the light colours to it: the off-white chat (`--chat-bg` #F8F7F4), a
+    white pill, white received bubbles without their ring and with a soft shadow (every kind,
+    photos and videos included), and sent bubbles in a solid accent per `[data-accent]` with white
+    text, no shadow and the dark theme's content tokens inside (`[data-bubble-sent]`; orange's text
+    with a shadow, an accepted contrast exception); links in sent bubbles take the scoped
+    `--accent-bright` (`--bubble-link`). The list's end padding grows from 10 to 30px while a
+    group's typing strip shows; the composer sits 4px under the list (05 (b)). The sheets' top line
+    is `--sheet-edge` (`--line-2` in light). Not done: 04's recommendation to bring the received ring back when the
+    OS's "Increase contrast" is on. Still open (06): the panels' rest height stays 304px over the
+    safe area (or the keyboard's), which 06 says may go back to 282px.
+  - **Decided by the user** (2026-11-09, where the plan was silent): the emoji sections are the
+    real categories, not 07's curated seven, with their emoji as the category bar's icons; Recents'
+    chevron is "Collapse"; GIF searches with no match as above. Kept as built (06 places All
+    photos next to Camera but doesn't say more): without photos access or photos, All photos opens
+    the system's picker.
+  - **Not checked**: the group typing strip in a browser (the local replica's typing goes over
+    WebRTC, which the headless browser couldn't set up); the iOS app (no device).
+- **Composer caption placeholder and a count on Send** (by hand, native N5c, EXPORT-LOG
+  2026-11-09, to take back to the design export): `MessageComposer` takes `attachedPlaceholder`
+  (the text box's placeholder while something's attached; "Add a caption" by default) and
+  `sendCount` (a count on Send's corner, from 1). The native composer passes "Add a caption…" and
+  the number of photos and videos picked; the web passes neither.
+- **Mirrored message kinds and smaller GIFs** (by hand, native N5c, EXPORT-LOG 2026-11-08, to take
+  back to the design export): every kind of message (photo, album, video, GIF, file, link, transfer,
+  swap offer, poll, prize) takes `mirror` as text and voice bubbles do, so your own in the native
+  layout has its grouped and tail corners on the inline-end side; and a GIF message is capped at
+  180 × 315 (three quarters of the design's 240 × 420), on the web and native alike.
 - **Shell breakpoints vs layout tokens**: the shell's breakpoints and widths (Fix Brief - App
   Shell Layout: 768 / 1200 / 1476 / 1876 / 2476px, chat list `clamp(350px, 30cqw, 550px)`, right
   column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*` 1280–2500px,

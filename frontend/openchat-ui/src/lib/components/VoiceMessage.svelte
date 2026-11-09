@@ -71,7 +71,7 @@
 </script>
 
 <div class="row" class:mirror>
-  <div class="bubble" class:sent class:mirror class:last={lastInGroup} style:border-end-start-radius={bottomLeft}>
+  <div class="bubble" class:sent class:mirror data-bubble-sent={sent ? '' : undefined} class:last={lastInGroup} style:border-end-start-radius={bottomLeft}>
     <div class="controls">
       <div class="play" class:playing={isPlaying} onclick={togglePlay} role="button" tabindex="0" aria-label={t(isPlaying ? 'ui.voiceMessage.pause' : 'ui.voiceMessage.play')}>
         <span class="play-icon"></span>
@@ -120,7 +120,7 @@
     flex-direction: column;
     gap: var(--space-12);
     background: var(--bubble-recv-bg);
-    box-shadow: inset 0 0 0 1px var(--line-1);
+    box-shadow: var(--bubble-ring), var(--bubble-shadow);
     border-start-start-radius: var(--radius-xs);
     border-start-end-radius: var(--radius-xl);
     border-end-end-radius: var(--radius-xl);
@@ -128,7 +128,7 @@
 
     &.sent {
       background: var(--bubble-send-bg);
-      box-shadow: none;
+      box-shadow: var(--bubble-shadow);
     }
 
     &.mirror {

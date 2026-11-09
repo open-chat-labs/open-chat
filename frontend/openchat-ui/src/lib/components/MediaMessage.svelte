@@ -1,5 +1,6 @@
 <!-- Image, album, video and GIF messages. Media is inset 4px in the bubble; caption + time below, or time floats on media when there's no caption.
-     Natural ratio capped at 360×420 (single), fixed grids for albums (2, 3, 4, 5+ → "+N"). Clicking a tile calls onOpen(index) → fullscreen viewer.
+     Natural ratio capped at 360×420 (single; a GIF at 180×315), fixed grids for albums (2, 3, 4, 5+ → "+N"). Clicking a tile calls onOpen(index) → fullscreen viewer.
+     `mirror` (native, your own at the inline end) mirrors the corners as ChatBubble's does.
      items: [{ src?, bg?, w?, h? }] — src is an image URL; bg a CSS background fallback (placeholders). -->
 <script lang="ts">
   import { useT } from '../i18n';
@@ -21,6 +22,8 @@
     /** Resource key (or literal text). */
     failedText?: string;
     lastInGroup?: boolean;
+    /** Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`. */
+    mirror?: boolean;
     onOpen?: (index: number) => void;
     onRetry?: () => void;
     onCancel?: () => void;
@@ -39,6 +42,7 @@
     upload = null,
     failedText = 'ui.mediaMessage.couldNotSend',
     lastInGroup = true,
+    mirror = false,
     onOpen,
     onRetry,
     onCancel,
@@ -46,6 +50,8 @@
   }: Props = $props();
   const t = useT();
 
+  // a GIF's caps: three quarters of what they were (240 × 420)
+  const GIF_MAX_W = 180, GIF_MAX_H = 315;
   const ALBUM: Record<number, [string, string, number]> = { 1: ['1fr', '1fr', 220], 2: ['1fr 1fr', '1fr', 200], 3: ['1fr 1fr', '1fr 1fr', 260], 4: ['1fr 1fr', '1fr 1fr', 280] };
 
   const list = $derived(items.length ? items : [{}]);
@@ -60,7 +66,7 @@
       const [cols, rows, height] = ALBUM[shown];
       return { width: '300px', height, cols, rows };
     }
-    const it = list[0], w = it.w || 4, h = it.h || 3, maxW = kind === 'gif' ? 240 : 360, maxH = 420;
+    const it = list[0], w = it.w || 4, h = it.h || 3, maxW = kind === 'gif' ? GIF_MAX_W : 360, maxH = kind === 'gif' ? GIF_MAX_H : 420;
     const sc = Math.min(maxW / w, maxH / h);
     const W = Math.round(Math.max(160, Math.min(maxW, w * sc)));
     return { width: `${W + 8}px`, height: Math.round(Math.min(maxH, (W * h) / w)), cols: '1fr', rows: '1fr' };
@@ -72,8 +78,8 @@
 
 {#snippet stamp()}{time}{#if side === 'sent' && tick}<span class="tick" class:double={tick === 'read' || tick === 'delivered'}></span>{/if}{/snippet}
 
-<div class="media-message" class:sent={side === 'sent'}>
-  <div class="shell" class:last={lastInGroup} class:failed style:width={box.width}>
+<div class="media-message" class:sent={side === 'sent'} class:mirror>
+  <div class="shell" class:last={lastInGroup} class:mirror class:failed data-bubble-sent={side === 'sent' ? '' : undefined} style:width={box.width}>
     <div
       class="media"
       class:captioned={!!caption}
@@ -139,13 +145,17 @@
       --msg-soft: var(--bubble-text-soft);
       --msg-tick: var(--bubble-tick);
     }
+
+    &.mirror {
+      align-items: flex-end;
+    }
   }
 
   .shell {
     @include message-shell;
 
     .sent & {
-      box-shadow: none;
+      box-shadow: var(--bubble-shadow);
     }
 
     &.failed {
@@ -166,6 +176,23 @@
 
     &.captioned {
       border-radius: 2px 18px 6px 6px;
+    }
+
+    // mirrored with the shell
+    .mirror & {
+      border-start-start-radius: 18px;
+      border-start-end-radius: 2px;
+      border-end-end-radius: 2px;
+      border-end-start-radius: 18px;
+    }
+
+    .mirror .last & {
+      border-end-end-radius: 18px;
+    }
+
+    .mirror &.captioned {
+      border-end-end-radius: 6px;
+      border-end-start-radius: 6px;
     }
   }
 

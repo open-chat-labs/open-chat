@@ -133,7 +133,7 @@
     </div>
   {:else}
     <div class="column" class:sent class:mirror>
-      <div class="bubble" class:last={lastInGroup} class:mirror class:carded data-oc-bubble>
+      <div class="bubble" class:last={lastInGroup} class:mirror class:carded data-oc-bubble data-bubble-sent={side === 'sent' ? '' : undefined}>
         {#if quoteName && onQuote}
           <div
             class="quote link"
@@ -285,7 +285,7 @@
     max-width: 100%;
     text-align: start;
     background: var(--bubble-recv-bg);
-    box-shadow: inset 0 0 0 1px var(--line-1);
+    box-shadow: var(--bubble-ring), var(--bubble-shadow);
     border-start-start-radius: var(--radius-xs);
     border-start-end-radius: var(--radius-xl);
     border-end-end-radius: var(--radius-xl);
@@ -309,7 +309,7 @@
 
     .sent & {
       background: var(--bubble-send-bg);
-      box-shadow: none;
+      box-shadow: var(--bubble-shadow);
     }
   }
 

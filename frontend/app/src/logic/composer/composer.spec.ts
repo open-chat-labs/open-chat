@@ -8,23 +8,29 @@ import {
     type MessagePermission,
     type SendMessageOutcome,
     type UserGroupDetails,
+    type UserOrUserGroup,
     type UserSummary,
 } from "@client";
 import {
     attachRefusal,
     canAttachNow,
     canRecordVoice,
+    chatEntryState,
     composerBuilders,
     attachmentToSend,
     draftAttachment,
     editStartText,
     entryBlock,
+    entryBlockBanner,
     entryNotice,
+    entryNoticeText,
     entryPlaceholder,
     focusEntryOnOpen,
     MemberFinder,
+    mentionsFor,
     pickableAttachments,
     sendComposed,
+    sendVoiceRecording,
     throttleCountdown,
     TypingNotifier,
     type ComposerBuilder,
@@ -476,5 +482,148 @@ describe("the entry's placeholder", () => {
         expect(placeholder(true, true, true)).toBe("enterCaption");
         expect(placeholder(true, false, true)).toBe("bots.direct.placeholder");
         expect(placeholder(true, false, false)).toBe("enterMessage");
+    });
+});
+
+describe("where the entry is", () => {
+    const group = {
+        kind: "group_chat",
+        id: { kind: "group_chat", groupId: "g1" },
+        frozen: false,
+    } as ChatSummary;
+    const dm = {
+        kind: "direct_chat",
+        id: { kind: "direct_chat", userId: "them" },
+        them: { userId: "them" },
+    } as ChatSummary;
+    const reader = {
+        suspended: false,
+        anonymous: false,
+        blockedUsers: new Set<string>(),
+        community: undefined,
+    };
+
+    function client(previewing = false) {
+        return {
+            isChatOrCommunityFrozen: vi.fn(() => false),
+            isPreviewing: vi.fn(() => previewing),
+            isLapsed: vi.fn(() => previewing),
+            canSendMessage: vi.fn(() => true),
+        };
+    }
+
+    test("asks what may be sent in the chat, or in a thread there", () => {
+        const c = client();
+        expect(chatEntryState(c, group, false, reader).canSend).toBe(true);
+        expect(c.canSendMessage).toHaveBeenCalledWith(group.id, "message", "text");
+        chatEntryState(c, group, true, reader);
+        expect(c.canSendMessage).toHaveBeenCalledWith(group.id, "thread", "text");
+    });
+
+    test("a preview or a lapse is the chat's, never a thread's", () => {
+        expect(chatEntryState(client(true), group, false, reader)).toMatchObject({
+            previewing: true,
+            lapsed: true,
+        });
+        expect(chatEntryState(client(true), group, true, reader)).toMatchObject({
+            previewing: false,
+            lapsed: false,
+            thread: true,
+        });
+    });
+
+    test("a DM with someone the reader blocked is blocked", () => {
+        const blocked = { ...reader, blockedUsers: new Set(["them"]) };
+        expect(chatEntryState(client(), dm, false, blocked)).toMatchObject({
+            blocked: true,
+            direct: true,
+            previewing: false,
+        });
+        expect(chatEntryState(client(), group, false, blocked).blocked).toBe(false);
+    });
+});
+
+describe("what stands in for the entry", () => {
+    test("is the old footer's words, a warning where the chat can't be used", () => {
+        expect(entryBlockBanner({ kind: "suspended" })).toEqual({
+            key: "accountSuspended",
+            tone: "warning",
+        });
+        expect(entryBlockBanner({ kind: "blocked" })).toEqual({
+            key: "userIsBlocked",
+            tone: "info",
+        });
+        expect(entryBlockBanner({ kind: "preview", lapsed: true }).key).toBe(
+            "access.lapsed.label",
+        );
+        expect(entryBlockBanner({ kind: "read_only", key: "readOnlyThread" })).toEqual({
+            key: "readOnlyThread",
+            tone: "info",
+        });
+    });
+});
+
+describe("the entry's notice in words", () => {
+    test("is the throttle's countdown as a warning, a video's progress as information", () => {
+        expect(entryNoticeText({ kind: "throttled", seconds: 9 })).toMatchObject({
+            key: { key: "throttleMessage", params: { time: 9 } },
+            tone: "warning",
+        });
+        expect(entryNoticeText({ kind: "video_processing", percent: 40 })).toMatchObject({
+            key: { key: "videoProcessingPercent", params: { percent: 40 } },
+            tone: "info",
+        });
+    });
+});
+
+describe("who the entry offers to mention", () => {
+    const user = (userId: string, username: string): UserSummary =>
+        ({ kind: "user", userId, username, displayName: undefined }) as UserSummary;
+    const lookup: Record<string, UserOrUserGroup> = {
+        me: user("me", "alice"),
+        a: user("a", "alfie"),
+        b: user("b", "bob"),
+        everyone: { kind: "everyone" },
+    };
+    const client = { getUserLookupForMentions: () => lookup };
+    const ids = (found: UserOrUserGroup[]) =>
+        found.map((m) => (m.kind === "user" ? m.userId : m.kind));
+
+    test("is the chat's members matching the word, never the reader, @everyone first", () => {
+        expect(ids(mentionsFor(client, "al", "me"))).toEqual(["a"]);
+        const all = ids(mentionsFor(client, "", "me"));
+        expect(all[0]).toBe("everyone");
+        expect([...all].sort()).toEqual(["a", "b", "everyone"]);
+    });
+});
+
+describe("sending a voice message", () => {
+    const context: MessageContext = { chatId: { kind: "group_chat", groupId: "g1" } };
+    // jsdom's Blob has no arrayBuffer()
+    const recording = { arrayBuffer: async () => new ArrayBuffer(3) } as Blob;
+
+    function client(outcome: SendMessageOutcome) {
+        return {
+            sendVoiceMessage: vi.fn(
+                async (_ctx: MessageContext, _data: ArrayBuffer, _mime: string) => outcome,
+            ),
+        };
+    }
+
+    test("sends the recording's audio to the chat or thread", async () => {
+        const c = client({ kind: "posted" });
+        expect(await sendVoiceRecording(c, context, recording, "audio/mp4")).toEqual({
+            kind: "posted",
+        });
+        const [to, data, mime] = c.sendVoiceMessage.mock.calls[0];
+        expect(to).toBe(context);
+        expect(data.byteLength).toBe(3);
+        expect(mime).toBe("audio/mp4");
+    });
+
+    test("is refused, keeping the take, when it isn't posted", async () => {
+        expect(
+            await sendVoiceRecording(client({ kind: "throttled" }), context, recording, "a"),
+        ).toEqual({ kind: "refused", reason: "throttled" });
     });
 });

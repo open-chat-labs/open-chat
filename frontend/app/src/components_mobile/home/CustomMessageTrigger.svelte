@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { IconComponent } from "@src/utils/iconComponent";
     import { getContext } from "svelte";
-    import { convertFileSrc } from "@tauri-apps/api/core";
     import {
         disableCreatePrizeFeature,
         disableP2PSwapFeature,
@@ -11,17 +10,17 @@
     import {
         i18nKey,
         publish,
-        LazyFile,
+        type LazyFile,
         type MessageContext,
         type MessagePermission,
         type OpenChat,
     } from "@client";
+    import { loadRecentMedia, type MediaPermissionStatus } from "tauri-plugin-oc-api";
     import {
-        exportMedia,
-        loadRecentMedia,
-        type MediaPermissionStatus,
+        recentMediaFile,
+        recentMediaThumbnail,
         type RecentMedia,
-    } from "tauri-plugin-oc-api";
+    } from "@src/utils/native/recentMedia";
     import ChartBoxOutline from "svelte-material-icons/ChartBoxOutline.svelte";
     import FileOutline from "svelte-material-icons/FileOutline.svelte";
     import GiftOutline from "svelte-material-icons/GiftOutline.svelte";
@@ -82,17 +81,11 @@
     // Construct dummy file object, and provide blobUrl that will allow Tauri to
     // access the binary data associated with the file.
     async function onMediaSelected(media: RecentMedia) {
-        console.log(media);
-        const { filename, mimeType, size } = media;
         // Captured now: preparing a video can take a while and the chat may change under it
         const context = messageContext;
         let lazyFile: LazyFile;
         try {
-            // iOS photo-library items have no file path until the asset is
-            // exported to a temp file (media.uri is the PHAsset identifier).
-            const filePath = media.filePath || (await exportMedia(media.uri));
-            const assetUrl = convertFileSrc(filePath);
-            lazyFile = LazyFile.fromUrl(assetUrl, filename, mimeType, size);
+            lazyFile = await recentMediaFile(media);
         } catch (err) {
             console.warn("Unable to export the picked media", err);
             toastStore.showFailureToast(i18nKey("attachFileFailed"));
@@ -157,9 +150,7 @@
                     {#each media as m}
                         <button
                             class="media-preview"
-                            style:background-image={`url(${
-                                m.thumbnail ?? convertFileSrc(m.filePath)
-                            })`}
+                            style:background-image={`url(${recentMediaThumbnail(m)})`}
                             title={m.filename}
                             onclick={() => onMediaSelected(m)}>
                             <div class="media-type">

@@ -2865,6 +2865,14 @@ export type AttachFileOutcome =
     | { kind: "failed"; message: ResourceKey };
 
 /**
+ * How preparing a file the user picked to send went: `prepared`, as `content`, which is the
+ * caller's to send; or refused as `AttachFileOutcome` says.
+ */
+export type PrepareAttachmentOutcome =
+    | { kind: "prepared"; content: AttachmentContent }
+    | Exclude<AttachFileOutcome, { kind: "attached" }>;
+
+/**
  * What toggling a reaction on a message did: added it, took the user's own off again, or neither
  * (it was undone).
  */

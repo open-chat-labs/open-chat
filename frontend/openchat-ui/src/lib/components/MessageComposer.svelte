@@ -106,6 +106,16 @@
     /** Typing from the host (its emoji panel): each new `key` puts `text` in at the caret without focusing the field,
      *  so no keyboard opens. "\b" deletes the selection, or the character before the caret. */
     insert?: { key: string | number; text: string };
+    /** Resource key (or literal text): the text box's placeholder while something's attached (a caption). */
+    attachedPlaceholder?: string;
+    /** A count on Send (how many photos and videos go), shown when it's 1 or more. */
+    sendCount?: number;
+    /** Literal text over the media tray (e.g. "3 of 10"); with it, a header row above the thumbnails. */
+    mediaLabel?: string;
+    /** The header row's Clear: removes the whole media attachment. */
+    onClearMedia?: () => void;
+    /** Resource key (or literal text): Clear's label. */
+    clearMediaLabel?: string;
   }
 
   let {
@@ -142,6 +152,11 @@
     emojiActive = false,
     onInputFocus,
     insert: hostInsert,
+    attachedPlaceholder = 'ui.messageComposer.addCaption',
+    sendCount = 0,
+    mediaLabel,
+    onClearMedia,
+    clearMediaLabel = 'ui.messageComposer.clearMedia',
   }: Props = $props();
   const t = useT();
 
@@ -196,6 +211,7 @@
   // + and emoji: the composer's own menu / picker, or the host's surface
   const plusOn = $derived(onPlus ? plusActive : menu === 'plus');
   const hostEmojiOn = $derived(!!onEmoji && emojiActive);
+  const hostPanelOn = $derived(hostEmojiOn || (!!onPlus && plusActive));
   const emojiOn = $derived(onEmoji ? emojiActive : menu === 'picker');
   const showPlus = $derived(!editing && ((!!onAttach && attachKinds?.length !== 0) || !!onPlus || demo !== 'interactive'));
 
@@ -371,7 +387,13 @@
     } else draft = '';
     await tick();
     grow();
-    input?.focus();
+    // not into the text box while the host's panel shows in the keyboard's place: focus would raise the keyboard
+    if (!hostPanelOn) input?.focus();
+  }
+
+  /** Focuses the text box (a native host's keyboard glyph, bringing the keyboard back in place of its panel). */
+  export function focus() {
+    input?.focus({ preventScroll: true });
   }
 
   function startTicking() {
@@ -910,6 +932,12 @@
   {/snippet}
 
   <div class="bar" class:focused={(focused || !!menu) && !editing} class:recording={voice === 'recording'}>
+    {#if att?.type === 'media' && mediaLabel}
+      <div class="media-header">
+        <span class="media-count" aria-live="polite">{mediaLabel}</span>
+        {#if onClearMedia}<span class="media-clear" onclick={onClearMedia} role="button" tabindex="0">{t(clearMediaLabel)}</span>{/if}
+      </div>
+    {/if}
     {#if att?.type === 'media'}
       <div class="tray">
         {#each att.items as item, i}
@@ -996,15 +1024,16 @@
           aria-autocomplete={onMentionQuery ? 'list' : undefined}
           aria-controls={mentionOpen ? mentionListId : undefined}
           aria-activedescendant={mentionOpen ? `${mentionListId}-${activeMention}` : undefined}
-          placeholder={t(att ? 'ui.messageComposer.addCaption' : placeholder)}
-          aria-label={t(att ? 'ui.messageComposer.addCaption' : placeholder)}
+          placeholder={t(att ? attachedPlaceholder : placeholder)}
+          aria-label={t(att ? attachedPlaceholder : placeholder)}
         ></textarea>
       </div>
       {#if emojiPlacement === 'end'}{@render emojiTool()}{/if}
       {#if showPlus && plusPlacement === 'end'}{@render plusTool()}{/if}
       {#if hasContent || editing || !canRecord}
         <span class="action send" onclick={send} role="button" tabindex="0" aria-disabled={editing ? !draft.trim() : !hasContent || sending} aria-label={t(editing ? 'ui.messageComposer.saveEdit' : 'ui.messageComposer.sendMessage')} title={t(editing ? 'ui.messageComposer.saveHint' : 'ui.messageComposer.sendHint')}
-          ><span class="send-icon" style:mask="var(--icon-{editing ? 'check' : 'send'}) center/contain no-repeat"></span></span
+          ><span class="send-icon" style:mask="var(--icon-{editing ? 'check' : 'send'}) center/contain no-repeat"></span
+          >{#if sendCount > 0 && !editing}<span class="send-count" aria-hidden="true">{sendCount}</span>{/if}</span
         >
       {:else}
         <span class="action mic" onclick={startRecording} role="button" tabindex="0" aria-label={t('ui.messageComposer.recordVoice')} title={t('ui.messageComposer.recordVoice')}><span class="mic-icon"></span></span>
@@ -1290,6 +1319,34 @@
     padding: 6px 6px 0;
   }
 
+  // the media's header (a host's count, and Clear): a 24px row over the thumbnails
+  .media-header {
+    flex: 1 0 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 24px;
+    padding: 4px 0 0 10px;
+  }
+
+  .media-count {
+    font: var(--weight-medium) text-size(12px) / 1 var(--font-mono);
+    color: var(--ink-3);
+  }
+
+  // 44px tall to tap, the row staying 24px
+  .media-clear {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    margin: -10px 0;
+    padding: 0 10px;
+    font: var(--weight-semibold) text-size(13.5px) / 1 var(--font-sans);
+    color: var(--accent-bright);
+    cursor: pointer;
+  }
+
   .thumb {
     position: relative;
     flex: none;
@@ -1426,6 +1483,11 @@
 
     &.editing {
       color: var(--ink-2);
+    }
+
+    /* native's edit composer: "Editing" in the accent (Build Brief, late additions) */
+    :global([data-platform='native']) &.editing {
+      color: var(--accent-bright);
     }
   }
 
@@ -1595,6 +1657,7 @@
     cursor: pointer;
 
     &.send {
+      position: relative;
       background: var(--accent);
 
       &:hover {
@@ -1800,6 +1863,23 @@
   .action.delete[aria-disabled='true'] {
     opacity: 0.4;
     cursor: default;
+  }
+
+  // how many photos and videos go (sendCount), on the button's corner
+  .send-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    box-sizing: border-box;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    @include flex-center;
+    border-radius: var(--radius-pill);
+    background: var(--ink);
+    box-shadow: 0 0 0 2px var(--surface-0);
+    font: var(--weight-bold) var(--text-2xs) / 1 var(--font-sans);
+    color: var(--surface-0);
   }
 
   .action.send[aria-disabled='true'] {

@@ -5,8 +5,9 @@
      screen; the messages (core/ChatEventList: paging, deep links, read marking, keeping the scroll),
      received ones with their sender's avatar on a run's first in groups and none in DMs, sent ones
      on the right; swipe right to reply, left to edit your own; call items; who is typing (a bubble
-     in DMs, a strip resting on the composer in groups); and the media viewer. The composer is N5c's,
-     the message long-press menu N5d's, the details N6's. -->
+     in DMs, a strip resting on the composer in groups); the media viewer; and the composer with the
+     keyboard and its panels under it (ConversationComposer, KeyboardSlot). The message long-press
+     menu is N5d's, the details N6's. -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -146,6 +147,11 @@
     } from "./conversation.adapter";
     import { HeldWhileLeaving } from "./heldWhileLeaving";
     import SearchBar from "./SearchBar.svelte";
+    import ConversationComposer from "./ConversationComposer.svelte";
+    import { KeyboardSlot } from "./keyboardSlot.svelte";
+    import { softKeyboard } from "../../aboveKeyboard.svelte";
+    import { isAndroidTauriApp, isTauriApp } from "@client";
+    import type { ComposerBuilder } from "@src/logic/composer/composer";
 
     let { screen, context }: ScreenProps<Extract<NativeScreen, { kind: "conversation" }>> =
         $props();
@@ -509,6 +515,7 @@
     function openSearch() {
         query = "";
         searchOpen = true;
+        slot.close();
     }
 
     function closeSearch() {
@@ -585,6 +592,73 @@
                   },
               }),
     );
+
+    // ---- the composer (ConversationComposer) and the slot under it that the keyboard and its
+    // panels share (KeyboardSlot): the keyboard's height is followed where it's reported (Android)
+
+    const slot = new KeyboardSlot(isAndroidTauriApp(), isTauriApp());
+    $effect(() => slot.hold());
+    $effect(() => {
+        const height = softKeyboard.height;
+        untrack(() => slot.keyboardReported(height));
+    });
+    // Android's back closes a panel before it leaves the chat, while the chat is on top (a builder
+    // pushed over it leaves the panel open under it, as it was, for when it's back)
+    let covered = $state(false);
+    useOverlay(
+        overlays,
+        () => slot.panel !== undefined && !covered,
+        () => slot.close(),
+    );
+
+    // whether a screen is pushed over this one: the shell makes the one under it inert
+    function followCovered(el: HTMLElement) {
+        const section = el.closest("section");
+        if (section === null) return;
+        const update = () => (covered = section.inert);
+        update();
+        const observer = new MutationObserver(update);
+        observer.observe(section, { attributes: true, attributeFilter: ["inert"] });
+        return () => observer.disconnect();
+    }
+
+    // a tap on the messages leaves the keyboard (and a panel) as it is: the composer's field, or
+    // the emoji search, keeps the focus
+    function keepFocus(e: MouseEvent) {
+        const focused = document.activeElement;
+        if (focused instanceof HTMLElement && footer?.contains(focused)) e.preventDefault();
+    }
+    const os = document.documentElement.dataset.os === "android" ? "android" : "ios";
+
+    // a toast sits above the composer however tall it is (a reply, a panel, the keyboard), or,
+    // while a panel shows its own footer at the bottom (Recents' "Attach N"), above that
+    let footer = $state<HTMLElement>();
+    let footerHeight = $state<number>();
+    let toastFloor = $state<number>();
+    $effect(() => {
+        const el = footer;
+        if (el === undefined) return;
+        const observer = new ResizeObserver(() => (footerHeight = el.offsetHeight));
+        observer.observe(el);
+        return () => {
+            observer.disconnect();
+            footerHeight = undefined;
+        };
+    });
+    // the shell takes it while this screen is on top (ScreenContext.toastFloor)
+    $effect(() => {
+        context.toastFloor(toastFloor ?? footerHeight);
+    });
+    $effect(() => () => context.toastFloor(undefined));
+
+    function jumpTo(index: number) {
+        if (chat !== undefined) void list?.scrollToMessageIndex({ chatId: chat.id }, index, false);
+    }
+
+    // a builder (N9's screens) is pushed over the chat
+    function build(builder: ComposerBuilder) {
+        if (chat !== undefined) context.push({ kind: "builder", builder, chatId: chat.id });
+    }
 
     // ---- the timeline
 
@@ -919,7 +993,8 @@
     }
 </script>
 
-<div class="conversation">
+<!-- data-chat-surface: in native light, the off-white chat with white bubbles (tokens.css) -->
+<div class="conversation" data-chat-surface {@attach followCovered}>
     {#if searchOpen}
         <SearchBar
             {query}
@@ -991,7 +1066,14 @@
     {:else if chat === undefined}
         <div class="messages"><div class="waiting"><Spinner size={20} /></div></div>
     {:else}
-        <div class="messages" style:--group-gap="8px">
+        <!-- a tap on the messages leaves the keyboard or a panel as it is -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+            class="messages"
+            class:typing={!direct && typingNames.length > 0}
+            style:--group-gap="8px"
+            onmousedown={keepFocus}
+        >
             <div class="sticky-date" class:shown={stickyDate !== undefined} bind:this={stickyEl}>
                 {#if stickyDate !== undefined}
                     <span class="pill">{dateLabel(stickyDate)}</span>
@@ -1241,7 +1323,7 @@
         {#if searchOpen}
             <div class="search-end"></div>
         {:else}
-            <footer class="composer">
+            <footer class="composer" bind:this={footer}>
                 {#if !direct}
                     <div
                         class="typing-strip"
@@ -1253,8 +1335,20 @@
                         <span class="typing-text">{typingText}</span>
                     </div>
                 {/if}
-                <!-- TODO(N5c): the composer and its keyboard-area panels. Development text only -->
-                <div class="composer-placeholder">Composer (N5c)</div>
+                <!-- one per chat: it starts from that chat's draft -->
+                {#key chatKey}
+                    <ConversationComposer
+                        {chat}
+                        {ctx}
+                        {slot}
+                        {os}
+                        gallery={isTauriApp()}
+                        toast={(message) => context.toast(message)}
+                        onBuild={build}
+                        onJump={jumpTo}
+                        onToastFloor={(px) => (toastFloor = px)}
+                    />
+                {/key}
             </footer>
         {/if}
     {/if}
@@ -1281,6 +1375,7 @@
         flex-direction: column;
         height: 100%;
         min-height: 0;
+        background: var(--surface-0);
     }
 
     .state {
@@ -1314,9 +1409,12 @@
         }
     }
 
+    // 12px 12px 10px (04); while a group's typing strip shows, 30px at the end, so it never covers
+    // the last message (the list is bottom-anchored: the content slides up)
     :global(.vcl-viewport.native-conversation-list) {
         flex: auto;
-        padding: 0 var(--space-12) var(--space-10);
+        padding: var(--space-12) var(--space-12) var(--space-10);
+        transition: padding-bottom 0.2s ease-out;
         overflow-x: hidden;
         overscroll-behavior-y: contain;
         scrollbar-width: none;
@@ -1555,7 +1653,7 @@
         padding: 0 13px;
         border-radius: 5px 16px 16px 16px;
         background: var(--bubble-recv-bg);
-        box-shadow: inset 0 0 0 1px var(--line-1);
+        box-shadow: var(--bubble-ring), var(--bubble-shadow);
 
         &:dir(rtl) {
             border-radius: 16px 5px 16px 16px;
@@ -1602,18 +1700,44 @@
         height: var(--safe-bottom);
     }
 
+    .messages.typing :global(.vcl-viewport.native-conversation-list) {
+        padding-bottom: 30px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        :global(.vcl-viewport.native-conversation-list) {
+            transition: none;
+        }
+    }
+
+    // a sent bubble's text in the light chat: orange's white needs a shadow to read (04;
+    // --bubble-text-shadow is set for orange only)
+    .conversation :global([data-bubble-sent]) {
+        text-shadow: var(--bubble-text-shadow);
+    }
+
+    // links in a sent bubble of the light chat: its accent-bright (--bubble-link, set only there,
+    // 04); in dark, as before
+    :global([data-mode="light"]) .conversation :global([data-bubble-sent] a) {
+        color: var(--bubble-link);
+    }
+
+    // the composer, 4px under the messages (05), then the safe area or the keyboard's slot under it
+    // (ConversationComposer's)
     .composer {
         position: relative;
         flex: none;
-        padding: var(--space-8) 10px max(var(--safe-bottom), var(--space-12));
+        display: flex;
+        flex-direction: column;
+        padding-block-start: var(--space-4);
     }
 
-    // who is typing in a group: a 24px strip resting on the composer (over its top padding by 6px),
+    // who is typing in a group: a 24px strip resting on the composer (over its 4px top padding),
     // over the messages, taking no row; it fades and rises 8px in, and goes the same way
     .typing-strip {
         position: absolute;
         inset-inline: 0;
-        bottom: calc(100% - 6px);
+        bottom: calc(100% - 4px);
         z-index: 3;
         box-sizing: border-box;
         display: flex;
@@ -1640,17 +1764,6 @@
     .typing-text {
         min-width: 0;
         @include truncate;
-    }
-
-    .composer-placeholder {
-        display: flex;
-        align-items: center;
-        min-height: 52px;
-        padding: 0 var(--space-16);
-        border-radius: 30px;
-        background: var(--overlay-1);
-        color: var(--ink-4);
-        font: var(--weight-medium) text-size(14px) / 1 var(--font-sans);
     }
 
     @keyframes typing-in {

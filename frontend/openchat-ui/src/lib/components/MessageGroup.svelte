@@ -505,19 +505,19 @@
         {#if m.kind === 'voice'}
           <VoiceMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if m.kind === 'image' || m.kind === 'album' || m.kind === 'video' || m.kind === 'gif'}
-          <MediaMessage {...m} {side} lastInGroup={last} />
+          <MediaMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if m.kind === 'file'}
-          <FileMessage {...m} {side} lastInGroup={last} />
+          <FileMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if m.kind === 'link'}
-          <LinkPreview {...m} {side} lastInGroup={last} />
+          <LinkPreview {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if m.kind === 'transfer'}
-          <TransferMessage {...m} {side} lastInGroup={last} />
+          <TransferMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if m.kind === 'swap'}
-          <SwapOffer {...m} {side} lastInGroup={last} />
+          <SwapOffer {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if m.kind === 'poll'}
-          <PollMessage {...m} {side} lastInGroup={last} />
+          <PollMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if m.kind === 'prize'}
-          <PrizeMessage {...m} {side} lastInGroup={last} />
+          <PrizeMessage {...m} {side} lastInGroup={last} mirror={mirrored} />
         {:else if !m.kind || m.kind === 'text'}
           <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} mirror={mirrored} onToggleReaction={(c) => onReact?.(i, c)} />
         {/if}

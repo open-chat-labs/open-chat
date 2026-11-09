@@ -7,6 +7,7 @@ import {
     type RouteParams,
     type WalletRoute,
 } from "@client";
+import type { ComposerBuilder } from "@src/logic/composer/composer";
 import { isLandingPageRoute } from "@src/utils/urls";
 
 // Where each URL is in the native tree (native design notes §1 Structure): which of the five tabs,
@@ -72,7 +73,9 @@ export type LocalScreen =
     | { kind: "settings"; page: SettingsPage }
     | { kind: "chat_details"; chatId: ChatIdentifier }
     // You → Account's Delete account, its steps before it deletes
-    | { kind: "delete_account" };
+    | { kind: "delete_account" }
+    // a builder from a conversation's attach panel (a poll, a prize …), for that chat
+    | { kind: "builder"; builder: ComposerBuilder; chatId: ChatIdentifier };
 
 /** A local screen's identity in its stack (StackStep.key, after "local:"). */
 export function localKey(screen: LocalScreen): string {

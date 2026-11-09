@@ -35,6 +35,8 @@
     side?: 'received' | 'sent';
     time: string;
     lastInGroup?: boolean;
+    /** Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`. */
+    mirror?: boolean;
     onClaim?: (e: MouseEvent) => void;
   }
 
@@ -54,6 +56,7 @@
     side = 'received',
     time,
     lastInGroup = true,
+    mirror = false,
     onClaim,
   }: Props = $props();
   const t = useT();
@@ -80,7 +83,7 @@
   }
 </script>
 
-<div class="shell" class:sent={side === 'sent'} class:last={lastInGroup} class:ended>
+<div class="shell" class:sent={side === 'sent'} class:last={lastInGroup} class:mirror data-bubble-sent={side === 'sent' ? '' : undefined} class:ended>
   <div class="stack">
     <div class="hero">
       <span class="coin">
@@ -157,7 +160,7 @@
       --msg-track: rgba(0, 0, 0, 0.25);
       --msg-fill: #fff;
       --msg-glow: rgba(255, 255, 255, 0.16);
-      box-shadow: none;
+      box-shadow: var(--bubble-shadow);
     }
 
     &.ended {
@@ -178,6 +181,12 @@
     gap: 6px;
     padding: 22px 16px 18px;
     border-radius: 2px 18px 6px 6px;
+
+    // mirrored with the shell
+    .mirror & {
+      border-start-start-radius: 18px;
+      border-start-end-radius: 2px;
+    }
     background:
       radial-gradient(120% 120% at 50% 0%, var(--msg-glow), transparent 65%),
       var(--msg-seg);

@@ -48,13 +48,17 @@ native/
     tabBar.adapter.ts    the tab bar's tabs
     tabSwipe.ts      the swipe between tabs, and a tab switch's two-screen slide
     Toasts.svelte    the app's toast as the kit's
+    toastFloors.svelte.ts  where toasts sit over a footer that grows: the top screen's say
   features/      one folder per screen/feature, as in src/web:
     app/screens.ts   which screen shows for each kind; a new screen sets its entry there
     app/screenModules.ts   the screens' chunks, loaded once and kept, preloaded while idle
     app/ScreenHost.svelte  shows it, or a placeholder until it's built
     chats/           the Chats tab: the list, its search, New chat
     conversation/    a conversation (N5b): the header and its menu, search in the chat, the
-                     messages on core/ChatEventList, the swipes, typing, call items
+                     messages on core/ChatEventList, the swipes, typing, call items; its composer
+                     (N5c: ConversationComposer) and the slot under it that the keyboard and the
+                     emoji and attach panels share (keyboardSlot), a panel's surface and its drag
+                     (KeyboardPanel, panelState, panelDrag)
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when
@@ -75,7 +79,13 @@ community names, the photo and cover uploads; `logic/chit/dailyClaim`, shared wi
 profile and CHIT dialog), a conversation's messages (`logic/conversation`: the rows, what a message
 offers, its controls, the unread divider and the route's message, search in a chat, call items;
 `core/ChatEventList`, `core/MediaViewer`, `core/observeRead`, shared with `src/web` and, for search
-and calls, the old UIs), and the theme the web and Welcome's menu keep (`theme/themes.ts`). The
+and calls, the old UIs), the composer (`logic/composer`: where it is, what it offers, sending,
+mentions, voice, the props it takes, GIFs; `logic/conversation/draftActions`: the reply or edit;
+shared with `src/web`, and the GIFs' content with the old UIs; the emoji by category in
+`utils/emojis`, the old pickers' data; the phone's recent photos in `utils/native/recentMedia`,
+shared with the old native UI's strip; the photos and videos picked (the composer's media and the
+attach panel's selection) and the recent emoji in `logic/composer`), and the theme the web and Welcome's menu keep
+(`theme/themes.ts`). The
 marketing pages (Landing, Learn, the terms and privacy policy) aren't the app's: they open on the
 website in the default browser (`shell/onWeb.ts`), as the old native app's About and a deep link
 to one do.
@@ -95,7 +105,8 @@ to one do.
 - **Screens.** A screen is plugged in by setting its entry in `features/app/screens.ts`; it gets
   `{ screen, context }`, `context.back` being a pushed screen's Back, `context.push` a local push,
   and `context.toast` the native toast (with Undo for a destructive action), which takes the
-  place of the app's (`toastStore`). Only screens touch the client and the stores, as in
+  place of the app's (`toastStore`); `context.toastFloor` is where toasts sit over a footer that
+  grows (a conversation's composer), taken from the top screen only (`ToastFloors`). Only screens touch the client and the stores, as in
   `src/web`.
 - **Signed out** there are no tabs: every URL but a marketing page is the signed-out start
   (`features/start`), with no guest mode, and the URL stays as it is for after sign-in. Its
@@ -112,7 +123,11 @@ to one do.
 - **The keyboard** comes up over a screen with fields rather than the screen shrinking above it, so
   a pinned button stays down: the screen's scroller takes `aboveKeyboard` (`aboveKeyboard.svelte.ts`,
   `keyboard.ts`), which keeps the viewport resize off, makes room for the keyboard and scrolls the
-  focused field above it.
+  focused field above it. A conversation is the other way round: its composer rides on the
+  keyboard, in a slot under it that a keyboard-area panel (emoji, attach) takes at the keyboard's
+  height when the keyboard goes down (`KeyboardSlot`; the design's 304px where the keyboard hasn't
+  been seen); where the keyboard's height is reported (the Android app) the viewport resize is off
+  and the slot takes it, elsewhere the platform lifts the page.
 - **A screen leaving keeps what it shows** until it's gone. Back changes the URL as the pop starts,
   and whatever the URL selected (a chat, a community) is cleared then, in the client's stores: a
   screen that shows a selection holds what it last showed of it while it slides out (the

@@ -36,11 +36,13 @@
     sending?: boolean;
     time: string;
     lastInGroup?: boolean;
+    /** Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`. */
+    mirror?: boolean;
     onAccept?: () => void;
     onCancel?: () => void;
   }
 
-  let { side = 'received', state = 'open', give, get, expiresIn = '', doneText = 'ui.swapOffer.swapped', caption = '', canAct = true, sending = false, time, lastInGroup = true, onAccept, onCancel }: Props = $props();
+  let { side = 'received', state = 'open', give, get, expiresIn = '', doneText = 'ui.swapOffer.swapped', caption = '', canAct = true, sending = false, time, lastInGroup = true, mirror = false, onAccept, onCancel }: Props = $props();
   const t = useT();
 
   const sent = $derived(side === 'sent');
@@ -52,7 +54,7 @@
   ]);
 </script>
 
-<div class="shell" class:sent class:last={lastInGroup} class:expired={state === 'expired' || state === 'cancelled'}>
+<div class="shell" class:sent class:last={lastInGroup} class:mirror data-bubble-sent={sent ? '' : undefined} class:expired={state === 'expired' || state === 'cancelled'}>
   <div class="stack">
     <div class="head"><span class="label"><span class="swap-icon"></span><span class="grow">{t('ui.swapOffer.title')}</span><span class="when">{when}</span></span></div>
     <div class="legs">
@@ -94,7 +96,7 @@
       --msg-ink: var(--bubble-text);
       --msg-soft: var(--bubble-text-soft);
       --msg-seg: rgba(0, 0, 0, 0.18);
-      box-shadow: none;
+      box-shadow: var(--bubble-shadow);
     }
 
     &.expired {

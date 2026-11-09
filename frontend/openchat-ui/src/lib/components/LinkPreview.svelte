@@ -18,6 +18,8 @@
     side?: 'received' | 'sent';
     time: string;
     lastInGroup?: boolean;
+    /** Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`. */
+    mirror?: boolean;
   }
 
   let {
@@ -32,6 +34,7 @@
     side = 'received',
     time,
     lastInGroup = true,
+    mirror = false,
   }: Props = $props();
 
   const URL_RE = /((?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?)/i;
@@ -46,7 +49,7 @@
   );
 </script>
 
-<div class="shell" class:sent={side === 'sent'} class:last={lastInGroup}>
+<div class="shell" class:sent={side === 'sent'} class:last={lastInGroup} class:mirror data-bubble-sent={side === 'sent' ? '' : undefined}>
   <p class="text">{#each parts as part}{#if part.href}<a class="inline" href={part.href} target="_blank" rel="noopener">{part.text}</a>{:else}{part.text}{/if}{/each}</p>
   <LinkCard {url} {domain} {title} {description} {image} {imageBg} {size} {side} />
   <div class="meta">{time}<span class="tick"></span></div>
@@ -67,7 +70,7 @@
       --msg-soft: var(--bubble-text-soft);
       --msg-link: var(--bubble-text);
       background: var(--bubble-send-bg);
-      box-shadow: none;
+      box-shadow: var(--bubble-shadow);
     }
   }
 

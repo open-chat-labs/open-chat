@@ -20,6 +20,8 @@
     caption?: string;
     time: string;
     lastInGroup?: boolean;
+    /** Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`. */
+    mirror?: boolean;
     onOpen?: () => void;
   }
 
@@ -35,6 +37,7 @@
     caption = '',
     time,
     lastInGroup = true,
+    mirror = false,
     onOpen,
   }: Props = $props();
   const t = useT();
@@ -44,7 +47,7 @@
   const sign = $derived(way === 'in' ? '+' : way === 'out' ? '−' : '');
 </script>
 
-<div class="shell" class:sent class:last={lastInGroup}>
+<div class="shell" class:sent class:last={lastInGroup} class:mirror data-bubble-sent={sent ? '' : undefined}>
   <div class="card">
     <div class="head">
       <TokenAvatar {symbol} {mark} {gradient} badge={way === 'in' ? 'receive' : 'send'} size={40} />
@@ -78,7 +81,7 @@
       --msg-soft: var(--bubble-text-soft);
       --msg-line: rgba(255, 255, 255, 0.14);
       background: var(--bubble-send-bg);
-      box-shadow: none;
+      box-shadow: var(--bubble-shadow);
     }
   }
 
@@ -86,6 +89,12 @@
     display: flex;
     flex-direction: column;
     border-radius: 2px 18px 6px 6px;
+
+    // mirrored with the shell
+    .mirror & {
+      border-start-start-radius: 18px;
+      border-start-end-radius: 2px;
+    }
     background: var(--overlay-1);
     overflow: hidden;
 

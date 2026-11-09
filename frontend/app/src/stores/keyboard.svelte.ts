@@ -17,6 +17,8 @@ const estHeight = Math.min(Math.max(window.innerHeight * 0.38, 260), 380);
 const storedHeight = localStorage.getItem(STORAGE_KEY);
 
 let height = $state(storedHeight ? parseInt(storedHeight, 10) : estHeight);
+// whether `height` is one the keyboard has had (on this device, now or before), not the guess
+let seen = $state(storedHeight !== null);
 
 function isInput(el: HTMLElement) {
     return el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable;
@@ -131,6 +133,11 @@ export const keyboard = {
         return height;
     },
 
+    /** Whether `height` is the keyboard's own (seen on this device), rather than a guess. */
+    get seen() {
+        return seen;
+    },
+
     set visible(value: boolean) {
         visible = value;
         // Only runs if there is an input focused.
@@ -152,6 +159,7 @@ export const keyboard = {
             height = value;
             localStorage.setItem(STORAGE_KEY, height.toString());
         }
+        if (value > 0) seen = true;
     },
 
     dismiss() {

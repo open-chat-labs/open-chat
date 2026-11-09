@@ -130,4 +130,15 @@ describe("attaching a file", () => {
         expect(outcome).toMatchObject({ kind: "failed", message: { key: "maxVideoSize" } });
         expect(localUpdates.draftMessages.value.get(picked)?.attachment).toBeUndefined();
     });
+
+    test("prepared on its own, is the caller's, the draft left as it was", async () => {
+        vi.spyOn(client, "messageContentFromFile").mockResolvedValue(video);
+        vi.spyOn(client, "canSendMessage").mockReturnValue(true);
+
+        expect(await client.prepareAttachment(file, picked)).toEqual({
+            kind: "prepared",
+            content: video,
+        });
+        expect(localUpdates.draftMessages.value.get(picked)?.attachment).toBeUndefined();
+    });
 });

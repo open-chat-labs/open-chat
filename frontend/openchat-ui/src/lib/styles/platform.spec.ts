@@ -89,6 +89,9 @@ const ACCENTS = ['pink', 'orange', 'blue', 'green'] as const;
 const HERO = ['--hero-base', '--tint-row', '--tint-pill'];
 // the shell kit's (src/native): touch target, bar padding, tab bar height, veils, shadows
 const SHELL = ['--touch-target', '--bar-end', '--tab-bar-h', '--veil-sheet', '--veil-lift', '--shadow-sheet', '--shadow-menu', '--shadow-lift', '--shadow-push', '--shadow-fab'];
+// a conversation's attach panel (its actions' colours) and what sits over a photo or video
+const ACTIONS = ['--action-media', '--action-file', '--action-poll', '--action-crypto', '--action-swap', '--action-meme'];
+const COMPOSER = [...ACTIONS, '--on-media-chip', '--on-media-badge', '--on-media-ink', '--sheet-edge'];
 const TEXT = ['--text-2xs', '--text-xs', '--text-sm', '--text-md', '--text-base', '--text-lg', '--text-xl', '--text-2xl', '--text-3xl'];
 const NATIVE_LIGHT_SURFACES = { '--surface-0': '#FFFFFF', '--surface-1': '#FFFFFF', '--surface-2': '#F4F3EF', '--field': '#F4F3EF' };
 const call: Element = { attrs: { 'data-always-dark': '' } };
@@ -131,7 +134,7 @@ describe('the web, without the attributes', () => {
     expect(web.get('--text-sm')).toBe('calc(11.5px * 1)');
     expect(web.get('--text-3xl')).toBe('calc(34px * 1)');
     for (const side of ['top', 'right', 'bottom', 'left']) expect(web.get(`--safe-${side}`)).toBe(`env(safe-area-inset-${side},0px)`);
-    for (const name of [...HERO, ...SHELL]) expect(web.has(name)).toBe(false);
+    for (const name of [...HERO, ...SHELL, ...COMPOSER]) expect(web.has(name)).toBe(false);
   });
 });
 
@@ -140,8 +143,8 @@ describe('data-platform="native"', () => {
     const web = resolve([root({ 'data-mode': mode, 'data-accent': accent })]);
     const native = resolve([root({ 'data-mode': mode, 'data-accent': accent, 'data-platform': 'native' })]);
     // light's --surface-1 is white on the web already; --bg and --card-2 read --surface-0 and --surface-2
-    const surfaces = mode === 'light' ? ['--surface-0', '--surface-2', '--field', '--bg', '--card-2'] : [];
-    expect(changed(web, native)).toEqual([...HERO, ...SHELL, ...surfaces].sort());
+    const surfaces = mode === 'light' ? ['--surface-0', '--surface-2', '--field', '--bg', '--card-2', '--chat-bg'] : [];
+    expect(changed(web, native)).toEqual([...HERO, ...SHELL, ...COMPOSER, ...surfaces].sort());
   });
 
   test('touch targets are 44pt on iOS and 48dp on Android, and the tab bar follows', () => {
@@ -159,6 +162,20 @@ describe('data-platform="native"', () => {
     const rtl = resolve([root({ 'data-mode': 'dark', 'data-platform': 'native', dir: 'rtl' })]);
     expect(ltr.get('--shadow-push')).toBe('-12px 0 32px rgba(0,0,0,.35)');
     expect(rtl.get('--shadow-push')).toBe('12px 0 32px rgba(0,0,0,.35)');
+  });
+
+  test('the attach panel\'s action colours have a value per mode, deepened for white in light', () => {
+    const light = resolve([root({ 'data-mode': 'light', 'data-accent': 'pink', 'data-platform': 'native' })]);
+    const dark = resolve([root({ 'data-mode': 'dark', 'data-accent': 'pink', 'data-platform': 'native' })]);
+    expect(ACTIONS.map((name) => dark.get(name))).toEqual(['#7FD1FF', '#7FB2FF', '#FFB45E', '#2EE6A8', '#B48CFF', '#FFD36B']);
+    expect(ACTIONS.map((name) => light.get(name))).toEqual(['#0A84C6', '#2F6FE0', '#C46A0A', '#0A8A61', '#7C4DDB', '#A87B00']);
+  });
+
+  test('a sheet\'s top edge is --line-1 in dark and --line-2 in light', () => {
+    const light = resolve([root({ 'data-mode': 'light', 'data-accent': 'pink', 'data-platform': 'native' })]);
+    const dark = resolve([root({ 'data-mode': 'dark', 'data-accent': 'pink', 'data-platform': 'native' })]);
+    expect(dark.get('--sheet-edge')).toBe(dark.get('--line-1'));
+    expect(light.get('--sheet-edge')).toBe(light.get('--line-2'));
   });
 
   test('native light has white pages and a white hero base; dark keeps the dark ones', () => {
@@ -272,5 +289,64 @@ describe('toasts (design pass 7)', () => {
     const plain = resolve([root({})]);
     expect(plain.get('--toast-bg')).toBe('#E6E5EB');
     expect(plain.get('--toast-action')).toBe('#C8244A');
+  });
+});
+
+describe('the conversation screen (data-chat-surface)', () => {
+  const chat: Element = { attrs: { 'data-chat-surface': '' } };
+  const sent: Element = { attrs: { 'data-bubble-sent': '' } };
+  const SHADOW = '0 0 1px rgba(36,31,42,.15),0 1px 4px rgba(36,31,42,.15)';
+  const lightRoot = (accent: string) => root({ 'data-mode': 'light', 'data-accent': accent, 'data-platform': 'native' });
+
+  test('in native light: the off-white chat, a white pill and received bubbles, no ring, a received shadow', () => {
+    const inside = resolve([lightRoot('pink'), chat]);
+    expect(inside.get('--chat-bg')).toBe('#F8F7F4');
+    expect(inside.get('--surface-0')).toBe('#F8F7F4');
+    expect(inside.get('--surface-1')).toBe('#FFFFFF');
+    expect(inside.get('--field')).toBe('#FFFFFF');
+    expect(inside.get('--bubble-recv-bg')).toBe('#FFFFFF');
+    expect(inside.get('--bubble-ring')).toBe('0 0 transparent');
+    expect(inside.get('--bubble-shadow')).toBe(SHADOW);
+  });
+
+  test.each([
+    ['pink', '#D83862', '#B01E3E', '#FFD0D9'],
+    ['orange', '#EB7C0A', '#963F06', '#FFD9BF'],
+    ['blue', '#2B71D8', '#1855B5', '#D4E5FF'],
+    ['green', '#00875A', '#076447', '#C8F5E3'],
+  ])('in native light (%s): sent bubbles solid accent, white text, no shadow, dark content inside', (accent, bg, reply, link) => {
+    const inside = resolve([lightRoot(accent), chat, sent]);
+    expect([inside.get('--bubble-send-bg'), inside.get('--bubble-reply'), inside.get('--accent-bright')]).toEqual([bg, reply, link]);
+    expect(inside.get('--bubble-link')).toBe(link);
+    expect([inside.get('--bubble-text'), inside.get('--bubble-text-soft'), inside.get('--bubble-tick')]).toEqual(['#FFFFFF', 'rgba(255,255,255,.82)', 'rgba(255,255,255,.9)']);
+    expect(inside.get('--bubble-shadow')).toBe('0 0 transparent');
+    const dark = resolve([root({ 'data-mode': 'dark', 'data-accent': accent, 'data-platform': 'native' })]);
+    for (const name of ['--ink', '--ink-2', '--ink-3', '--ink-4', '--overlay-1', '--overlay-2', '--overlay-3', '--line-1', '--line-2', '--line-3']) {
+      expect([name, inside.get(name)]).toEqual([name, dark.get(name)]);
+    }
+    expect(inside.get('--bubble-wave-off')).toBe('rgba(255,255,255,.35)');
+    // the received side's accent link colour stays the light one
+    expect(resolve([lightRoot(accent), chat]).get('--accent-bright')).toBe(resolve([lightRoot(accent)]).get('--accent-bright'));
+  });
+
+  test('only orange sent bubbles carry a text shadow', () => {
+    expect(resolve([lightRoot('orange'), chat, sent]).get('--bubble-text-shadow')).toBe('0 1px 1px rgba(110,38,0,.45)');
+    for (const accent of ['pink', 'blue', 'green']) expect(resolve([lightRoot(accent), chat, sent]).has('--bubble-text-shadow')).toBe(false);
+  });
+
+  test('in native dark, and on the web, as anywhere else: the ring, no shadow, the theme\'s own sent colours', () => {
+    for (const attrs of [
+      { 'data-mode': 'dark', 'data-accent': 'pink', 'data-platform': 'native' },
+      { 'data-mode': 'light', 'data-accent': 'pink' },
+      { 'data-mode': 'dark', 'data-accent': 'pink' },
+    ]) {
+      const outside = resolve([root(attrs)]);
+      const inside = resolve([root(attrs), chat, sent]);
+      for (const name of ['--surface-0', '--field', '--bubble-recv-bg', '--bubble-ring', '--bubble-shadow', '--bubble-send-bg', '--bubble-text', '--ink', '--accent-bright']) {
+        expect([name, inside.get(name)]).toEqual([name, outside.get(name)]);
+      }
+      expect(inside.get('--bubble-ring')).toBe(`inset 0 0 0 1px ${outside.get('--line-1')}`);
+      expect(inside.get('--bubble-shadow')).toBe('0 0 transparent');
+    }
   });
 });

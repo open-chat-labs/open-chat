@@ -8,6 +8,7 @@ import {
     customEmojis as allCustomEmojis,
     premiumItemsStore,
 } from "@client";
+import { pickerEmoji, type PickerEmoji } from "./emojiCategories";
 
 const emojiSet = new Set<string>();
 const emojiRegex = /^\p{Extended_Pictographic}$/u;
@@ -230,4 +231,28 @@ function getAllNativeEmojis(): Promise<NativeEmoji[]> {
                 };
             }),
     );
+}
+
+/** A picker's category (emojiCategories' group): its emoji the device draws, in the user's tone. */
+export async function emojiInCategory(group: number): Promise<PickerEmoji[]> {
+    const db = getEmojiDatabase();
+    const [emoji, tone] = await Promise.all([db.getEmojiByGroup(group), db.getPreferredSkinTone()]);
+    return pickerEmoji(emoji, getEmojiSupportLevel(), tone);
+}
+
+/** The emoji whose names or keywords match what's typed, as a picker shows them. */
+export async function emojiMatching(query: string): Promise<PickerEmoji[]> {
+    const db = getEmojiDatabase();
+    const [found, tone] = await Promise.all([
+        db.getEmojiBySearchQuery(query),
+        db.getPreferredSkinTone(),
+    ]);
+    return pickerEmoji(found, getEmojiSupportLevel(), tone);
+}
+
+/** Counts an emoji picked (by its base, without a skin tone) towards the frequently used. */
+export function countEmojiPicked(base: string): void {
+    getEmojiDatabase()
+        .incrementFavoriteEmojiCount(base)
+        .catch((err) => console.warn("Couldn't count the emoji picked", err));
 }

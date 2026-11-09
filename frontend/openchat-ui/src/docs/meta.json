@@ -10586,6 +10586,17 @@
         "doc": ""
       },
       {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
+      },
+      {
         "name": "onDownload",
         "type": "() => void",
         "default": null,
@@ -13374,6 +13385,17 @@
         "required": false,
         "componentDefault": "true",
         "doc": ""
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
       }
     ],
     "group": "library"
@@ -13556,6 +13578,17 @@
         "required": false,
         "componentDefault": "true",
         "doc": ""
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
       },
       {
         "name": "onOpen",
@@ -14195,7 +14228,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "The host owns the emoji / GIF surface: the emoji button calls this instead of opening the picker."
+        "doc": "The host owns the emoji / GIF surface: the emoji button calls this instead of opening the picker. While the host's panel shows (emojiActive, or plusActive with onPlus), a send leaves the focus alone, so no keyboard comes up; the component's `focus()` brings it back."
       },
       {
         "name": "emojiActive",
@@ -14229,6 +14262,61 @@
         "required": false,
         "componentDefault": null,
         "doc": "Typing from the host (its emoji panel): each new `key` puts `text` in at the caret without focusing the field. \"\\b\" deletes the selection, or the character before the caret."
+      },
+      {
+        "name": "attachedPlaceholder",
+        "type": "string",
+        "default": "ui.messageComposer.addCaption",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.messageComposer.addCaption'",
+        "doc": "Resource key (or literal text): the text box's placeholder while something's attached (a caption)."
+      },
+      {
+        "name": "sendCount",
+        "type": "number",
+        "default": 0,
+        "editor": "number",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "A count on Send (how many photos and videos go), shown when it's 1 or more."
+      },
+      {
+        "name": "mediaLabel",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "undefined",
+        "doc": "Literal text over the media tray (e.g. \"3 of 10\"); with it, a 24px header row above the thumbnails."
+      },
+      {
+        "name": "onClearMedia",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "undefined",
+        "doc": "The media header's Clear (a 44px tap area): removes the whole media attachment."
+      },
+      {
+        "name": "clearMediaLabel",
+        "type": "string",
+        "default": "ui.messageComposer.clearMedia",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'ui.messageComposer.clearMedia'",
+        "doc": "Resource key (or literal text): the media header's Clear label."
       }
     ],
     "group": "library"
@@ -14993,6 +15081,17 @@
         "doc": ""
       },
       {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
+      },
+      {
         "name": "onVote",
         "type": "(indexes: number[]) => void",
         "default": null,
@@ -15299,6 +15398,17 @@
         "required": false,
         "componentDefault": "true",
         "doc": ""
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
       },
       {
         "name": "onClaim",
@@ -17378,6 +17488,17 @@
         "doc": ""
       },
       {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
+      },
+      {
         "name": "onAccept",
         "type": "() => void",
         "default": null,
@@ -18055,6 +18176,17 @@
         "required": false,
         "componentDefault": "true",
         "doc": ""
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Your own at the inline end (native): the corners mirrored, as ChatBubble's `mirror`, the grouped / tail corners on that side."
       },
       {
         "name": "onOpen",
@@ -21740,7 +21872,7 @@
         "section": null,
         "required": false,
         "componentDefault": "'tabBar'",
-        "doc": "What it sits above: the tab bar (a tab's root), a footer (a conversation's composer, a pinned button), or nothing but the safe area."
+        "doc": "What it sits above: the tab bar (a tab's root), a footer (a conversation's composer, a pinned button), or nothing but the safe area. A footer that grows (a composer over the keyboard or a panel) puts its height in `--toasts-footer` on an ancestor; without it, a resting composer's."
       },
       {
         "name": "onUndo",
