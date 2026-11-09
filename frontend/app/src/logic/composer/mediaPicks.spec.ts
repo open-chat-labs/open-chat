@@ -51,16 +51,20 @@ describe("the photos and videos picked for a message", () => {
         expect(picks.toggle(photo("eleventh"))).toBe("picked");
     });
 
+    // the key of the pick with this id now (-1: none)
+    const keyOf = (picks: MediaPicks, id: string) => picks.keyOf(id) ?? -1;
+
     test("take their content once it's prepared, unless put back meanwhile", async () => {
         const picks = new MediaPicks();
         picks.toggle(photo("a"));
         picks.toggle(photo("b"));
-        picks.prepared("b", image(2));
+        picks.prepared(keyOf(picks, "b"), image(2));
         expect((await picks.take(["a", "b"])).contents).toEqual([image(2)]);
-        picks.prepared("a", image(1));
+        const a = keyOf(picks, "a");
+        picks.prepared(a, image(1));
         expect((await picks.take(["a", "b"])).contents).toEqual([image(1), image(2)]);
         picks.remove("a");
-        picks.prepared("a", image(1));
+        picks.prepared(a, image(1));
         expect((await picks.take(["a", "b"])).contents).toEqual([image(2)]);
     });
 
@@ -68,15 +72,16 @@ describe("the photos and videos picked for a message", () => {
         const picks = new MediaPicks();
         picks.toggle(photo("a"));
         picks.toggle(video("b"));
-        picks.prepared("a", image(1));
+        picks.prepared(keyOf(picks, "a"), image(1));
         let prepareB: () => void = () => {};
-        picks.preparing("b", new Promise<void>((resolve) => (prepareB = resolve)));
+        const b = keyOf(picks, "b");
+        picks.preparing(b, new Promise<void>((resolve) => (prepareB = resolve)));
         const ids = picks.ids();
         const sending = picks.take(ids);
         // picked after Send, while the video's still being prepared
         picks.toggle(photo("c"));
-        picks.preparing("c", new Promise<void>(() => {}));
-        picks.prepared("b", image(2));
+        picks.preparing(keyOf(picks, "c"), new Promise<void>(() => {}));
+        picks.prepared(b, image(2));
         prepareB();
         const taken = await sending;
         expect(taken.contents).toEqual([image(1), image(2)]);
@@ -88,26 +93,45 @@ describe("the photos and videos picked for a message", () => {
         const picks = new MediaPicks();
         picks.toggle(photo("a"));
         let prepareFirst: () => void = () => {};
-        picks.preparing("a", new Promise<void>((resolve) => (prepareFirst = resolve)));
+        picks.preparing(keyOf(picks, "a"), new Promise<void>((resolve) => (prepareFirst = resolve)));
         const sending = picks.take(picks.ids());
-        // a Recents tile tapped off and on again: a new job for the same id
+        // a Recents tile tapped off and on again: a new pick for the same id, with its own job
         picks.toggle(photo("a"));
         picks.toggle(photo("a"));
+        const again = keyOf(picks, "a");
         let prepareAgain: () => void = () => {};
-        picks.preparing("a", new Promise<void>((resolve) => (prepareAgain = resolve)));
+        picks.preparing(again, new Promise<void>((resolve) => (prepareAgain = resolve)));
         prepareFirst();
         // the first job long settled, the send still waits for the second
         await new Promise((resolve) => setTimeout(resolve, 0));
-        picks.prepared("a", image(1));
+        picks.prepared(again, image(1));
         prepareAgain();
         expect((await sending).contents).toEqual([image(1)]);
+    });
+
+    test("a job for an earlier pick of the same id leaves the one picked again alone", async () => {
+        const picks = new MediaPicks();
+        picks.toggle(photo("a"));
+        const first = keyOf(picks, "a");
+        picks.toggle(photo("a"));
+        picks.toggle(photo("a"));
+        const again = keyOf(picks, "a");
+        expect(again).not.toBe(first);
+        picks.prepared(again, image(2));
+        const taken = await picks.take(picks.ids());
+        // the earlier pick's slow job ends while the message posts
+        picks.prepared(first, image(1));
+        expect(picks.unprepared(first)).toBe(false);
+        picks.removeSent(taken.picks);
+        expect(taken.contents).toEqual([image(2)]);
+        expect(picks.count).toBe(0);
     });
 
     test("a send takes out only the picks it sent", async () => {
         const picks = new MediaPicks();
         picks.toggle(photo("a"));
         picks.toggle(photo("b"));
-        picks.prepared("a", image(1));
+        picks.prepared(keyOf(picks, "a"), image(1));
         const taken = await picks.take(picks.ids());
         expect(taken.contents).toEqual([image(1)]);
         picks.removeSent(taken.picks);
@@ -117,23 +141,24 @@ describe("the photos and videos picked for a message", () => {
     test("one put back and picked again while the send posts stays, not sent", async () => {
         const picks = new MediaPicks();
         picks.toggle(photo("a"));
-        picks.prepared("a", image(1));
+        picks.prepared(keyOf(picks, "a"), image(1));
         const taken = await picks.take(picks.ids());
         // the Recents tile tapped off and on again while the message posts: the same id, a new pick
         picks.toggle(photo("a"));
         picks.toggle(photo("a"));
         picks.removeSent(taken.picks);
         expect(picks.ids()).toEqual(["a"]);
-        picks.prepared("a", image(2));
+        picks.prepared(keyOf(picks, "a"), image(2));
         expect((await picks.take(picks.ids())).contents).toEqual([image(2)]);
     });
 
     test("a send whose picks all failed to be prepared has nothing to send", async () => {
         const picks = new MediaPicks();
         picks.toggle(photo("a"));
+        const a = keyOf(picks, "a");
         picks.preparing(
-            "a",
-            Promise.reject(new Error("unreadable")).finally(() => picks.remove("a")),
+            a,
+            Promise.reject(new Error("unreadable")).finally(() => picks.unprepared(a)),
         );
         expect(await picks.take(picks.ids())).toEqual({ picks: [], contents: [] });
         expect(picks.count).toBe(0);

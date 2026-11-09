@@ -347,22 +347,23 @@
         // they don't mix: a photo takes a file's place
         if (first !== undefined) localUpdates.draftMessages.setAttachment(context, undefined);
         const to = context;
+        // this pick's own: the same tile put back and picked again is a new pick, with its own job
+        const key = picks.keyOf(source.id);
+        if (key === undefined) return true;
         const job = (async () => {
             try {
                 const prepared = await client.prepareAttachment(await file(), to);
                 if (prepared.kind === "prepared") {
-                    picks.prepared(source.id, prepared.content);
+                    picks.prepared(key, prepared.content);
                     return;
                 }
-                picks.remove(source.id);
-                toast(interpolate($_, attachRefusal(prepared, $_)));
+                if (picks.unprepared(key)) toast(interpolate($_, attachRefusal(prepared, $_)));
             } catch (err) {
                 console.warn("Couldn't read a photo or video picked", err);
-                picks.remove(source.id);
-                toast($_("attachFileFailed"));
+                if (picks.unprepared(key)) toast($_("attachFileFailed"));
             }
         })();
-        picks.preparing(source.id, job);
+        picks.preparing(key, job);
         return true;
     }
 

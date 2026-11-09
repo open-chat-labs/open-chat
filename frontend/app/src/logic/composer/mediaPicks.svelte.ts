@@ -13,8 +13,12 @@ export const MAX_MEDIA = 10;
 /** A photo or video to pick: its id (unique among those offered), kind and thumbnail. */
 export type PickSource = { id: string; video: boolean; thumb?: string; duration?: string };
 
-/** One picked: its content once it's prepared. */
-export type PickedMedia = PickSource & { content: AttachmentContent | undefined };
+/**
+ * One picked: its content once it's prepared. `key` is this pick's own: one put back and picked
+ * again keeps its id (a Recents tile's) but is a new pick, with a new key, and a job preparing the
+ * earlier one no longer touches it.
+ */
+export type PickedMedia = PickSource & { key: number; content: AttachmentContent | undefined };
 
 /** What a tap on one did: picked it, put it back, or nothing, ten being picked already. */
 export type PickOutcome = "picked" | "unpicked" | "full";
@@ -26,8 +30,8 @@ export type PickOutcome = "picked" | "unpicked" | "full";
 export type LeftMedia = { id: string; video: boolean; thumb?: string; content: AttachmentContent };
 
 /**
- * What a send takes: the contents prepared, in the order picked, and the picks they're from (these
- * picks themselves: one put back and picked again while the send posts is a new one, and stays).
+ * What a send takes: the contents prepared, in the order picked, and the picks they're from (by
+ * key: one put back and picked again while the send posts is a new pick, and stays).
  */
 export type TakenMedia = { picks: readonly PickedMedia[]; contents: AttachmentContent[] };
 
@@ -35,8 +39,9 @@ export class MediaPicks {
     #picks = $state.raw<PickedMedia[]>([]);
     // the thumbnails made for picks (a file's object URL), let go of as each goes
     #made = new Map<string, string>();
-    // those being prepared, each settling once it's prepared or dropped
-    #jobs = new Map<string, Promise<void>>();
+    // those being prepared, by key, each settling once it's prepared or dropped
+    #jobs = new Map<number, Promise<void>>();
+    #nextKey = 0;
     readonly #revoke: (thumb: string) => void;
 
     /** `revoke` lets go of a thumbnail `add` made (URL.revokeObjectURL). */
@@ -56,6 +61,11 @@ export class MediaPicks {
     /** How many more may be picked. */
     get room(): number {
         return MAX_MEDIA - this.#picks.length;
+    }
+
+    /** The key of the pick with this id, or undefined, not picked. */
+    keyOf(id: string): number | undefined {
+        return this.#picks.find((p) => p.id === id)?.key;
     }
 
     /** Its number in the selection (1 for the first picked), or undefined, not picked. */
@@ -85,7 +95,7 @@ export class MediaPicks {
             this.#made.set(source.id, made);
             picked = { ...source, thumb: made };
         }
-        this.#picks = [...this.#picks, { ...picked, content: undefined }];
+        this.#picks = [...this.#picks, { ...picked, key: this.#nextKey++, content: undefined }];
         return "picked";
     }
 
@@ -98,6 +108,7 @@ export class MediaPicks {
             id,
             video,
             thumb,
+            key: this.#nextKey++,
             content,
         }));
         if (back.length > 0) this.#picks = [...back, ...this.#picks];
@@ -115,8 +126,8 @@ export class MediaPicks {
 
     /** Those a send took (`take`), once sent: those picked since, or picked again, stay. */
     removeSent(taken: readonly PickedMedia[]): void {
-        const sent = new Set(taken);
-        this.#drop((p) => sent.has(p));
+        const sent = new Set(taken.map((p) => p.key));
+        this.#drop((p) => sent.has(p.key));
     }
 
     clear(): void {
@@ -129,20 +140,28 @@ export class MediaPicks {
         this.#made.clear();
     }
 
-    /** Its content is on its way: `job` settles once it's prepared (or it's dropped). */
-    preparing(id: string, job: Promise<void>): void {
-        const tracked: Promise<void> = job
-            .catch(() => {})
-            .finally(() => {
-                if (this.#jobs.get(id) === tracked) this.#jobs.delete(id);
-            });
-        this.#jobs.set(id, tracked);
+    /** The pick `key`'s content is on its way: `job` settles once it's prepared (or dropped). */
+    preparing(key: number, job: Promise<void>): void {
+        this.#jobs.set(
+            key,
+            job.catch(() => {}).finally(() => this.#jobs.delete(key)),
+        );
     }
 
-    /** Its content is prepared (unless it's been put back meanwhile). */
-    prepared(id: string, content: AttachmentContent): void {
-        if (this.numberOf(id) === undefined) return;
-        this.#picks = this.#picks.map((p) => (p.id === id ? { ...p, content } : p));
+    /** The pick `key`'s content is prepared (nothing, if it's been put back meanwhile). */
+    prepared(key: number, content: AttachmentContent): void {
+        if (!this.#picks.some((p) => p.key === key)) return;
+        this.#picks = this.#picks.map((p) => (p.key === key ? { ...p, content } : p));
+    }
+
+    /**
+     * The pick `key` couldn't be prepared: it's put back. False if it had been already (nothing to
+     * say about it then).
+     */
+    unprepared(key: number): boolean {
+        const picked = this.#picks.some((p) => p.key === key);
+        this.#drop((p) => p.key === key);
+        return picked;
     }
 
     /** Those picked now, by id: what a send takes (those picked while it waits aren't). */
@@ -154,15 +173,13 @@ export class MediaPicks {
      * What a send of those picked (`ids`) takes, once none of them is still being prepared (one
      * put back and picked again meanwhile is prepared afresh, and waited for too): the contents
      * prepared, in the order picked, and the picks they're from, the ones to take out once sent
-     * (`removeSent`). One that couldn't be prepared, or is put back, is left out of both.
+     * (`removeSent`, by key). One that couldn't be prepared, or is put back, is left out of both.
      */
     async take(ids: readonly string[]): Promise<TakenMedia> {
-        let jobs = ids.flatMap((id) => this.#jobs.get(id) ?? []);
-        while (jobs.length > 0) {
-            await Promise.all(jobs);
-            jobs = ids.flatMap((id) => this.#jobs.get(id) ?? []);
-        }
         const wanted = new Set(ids);
+        const jobs = () =>
+            this.#picks.flatMap((p) => (wanted.has(p.id) ? (this.#jobs.get(p.key) ?? []) : []));
+        for (let waiting = jobs(); waiting.length > 0; waiting = jobs()) await Promise.all(waiting);
         const taken = this.#picks.filter((p) => wanted.has(p.id) && p.content !== undefined);
         return {
             picks: taken,
