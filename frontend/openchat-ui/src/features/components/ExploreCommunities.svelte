@@ -347,6 +347,22 @@
     shown = PAGE;
     langs = langs.includes(l) ? langs.filter((k) => k !== l) : [...langs, l];
   }
+
+  // the open language menu takes the room from its top to the pane's foot (over the guest banner, see .menu-open) and
+  // scrolls past that: a long list on a short pane would otherwise run off the pane, out of reach under the sticky
+  // search bar. Never less than a few options: a hero scrolled near the foot scrolls the pane to the rest
+  const MENU_MARGIN = 12;
+  const MENU_MIN = 120;
+  function fitToPane(menu: HTMLElement) {
+    const fit = () => {
+      if (!root) return;
+      const room = root.getBoundingClientRect().bottom - menu.getBoundingClientRect().top - MENU_MARGIN;
+      menu.style.maxHeight = `${Math.max(MENU_MIN, Math.floor(room))}px`;
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }
 </script>
 
 {#snippet icon(name: string, size: number, ink: string)}<span class="glyph" style:width="{size}px" style:height="{size}px" style:background={ink} style:mask="var(--icon-{name}) center/contain no-repeat"
@@ -359,7 +375,7 @@
     >
     {#if langOpen}
       <div class="lang-scrim" onclick={() => (langOpen = false)} role="presentation"></div>
-      <div class="lang-menu" class:centered>
+      <div class="lang-menu" class:centered {@attach fitToPane}>
         {#each languages as l}
           {@const on = langs.includes(l.value)}
           <div class="lang-option" onclick={() => toggleLang(l.value)} tabindex="0" role="option" aria-selected={on}>
@@ -441,7 +457,7 @@
 
 <div class="explore" data-screen-label="Explore communities" bind:this={root} onscroll={() => root && onScroll?.(root.scrollTop)}>
   {#if searchShown}
-    <div class="search-bar">
+    <div class="search-bar" class:menu-open={langOpen}>
       <div class="search-row">
         <span
           class="back"
@@ -544,7 +560,7 @@
       </div>
     </div>
   {:else}
-    <div class="hero">
+    <div class="hero" class:menu-open={langOpen}>
       <div class="hero-text">
         <span class="hero-title">{t('ui.exploreCommunities.heroTitle')}</span>
         <span class="hero-sub"
@@ -951,6 +967,9 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    /* max-height: the room to the pane's foot (fitToPane) */
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: var(--space-6);
     box-sizing: border-box;
     border-radius: var(--radius-lg);
@@ -967,6 +986,7 @@
   }
 
   .lang-option {
+    flex: none;
     display: flex;
     align-items: center;
     gap: var(--space-10);
@@ -1707,6 +1727,13 @@
     justify-content: center;
     padding: var(--space-16) var(--space-16) var(--space-18);
     pointer-events: none;
+  }
+
+  /* the bar or hero with the language menu open goes over the banner (z-index 6), so the menu's last options aren't
+     under it (a press on them would hit Sign in); its scrim covers the banner too, so a press there only closes it */
+  .search-bar.menu-open,
+  .hero.menu-open {
+    z-index: 7;
   }
 
   .guest {
