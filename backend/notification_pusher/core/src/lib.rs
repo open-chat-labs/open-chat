@@ -79,10 +79,16 @@ pub enum PushNotification {
 #[derive(Debug)]
 pub struct ApnsNotification {
     token: ApnsToken,
-    // Built once per notification and shared by every recipient's device
+    // An alert's is built once per notification and shared by every recipient's device
     payload: Arc<String>,
-    collapse_id: Arc<String>,
+    kind: ApnsNotificationKind,
     metadata: NotificationMetadata,
+}
+
+#[derive(Debug)]
+pub enum ApnsNotificationKind {
+    Alert { collapse_id: Arc<String> },
+    Voip { expires_at_secs: u64 },
 }
 
 #[derive(Debug)]

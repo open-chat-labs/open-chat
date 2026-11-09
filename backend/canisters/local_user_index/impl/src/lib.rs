@@ -579,12 +579,13 @@ impl RuntimeState {
                 let notification_bytes = ByteBuf::from(msgpack::serialize_then_unwrap(&payload));
 
                 // A ring push carries a decline token signed for its one recipient (#9534), so
-                // each phone gets its own envelope. Recipients without a phone share one
-                // envelope with no token; the token never travels in a web push.
+                // each phone, Android or an iPhone that PushKit can ring, gets its own envelope.
+                // Recipients without a phone share one envelope with no token; the token never
+                // travels in a web push.
                 if let Some(call) = fcm_data.call.as_ref() {
-                    let (phones, others): (Vec<_>, Vec<_>) = filtered_recipients
-                        .into_iter()
-                        .partition(|u| !self.data.fcm_token_store.get_for_user(u).is_empty());
+                    let (phones, others): (Vec<_>, Vec<_>) = filtered_recipients.into_iter().partition(|u| {
+                        !self.data.fcm_token_store.get_for_user(u).is_empty() || self.data.apns_device_store.has_voip(u)
+                    });
                     let expiry = call.started + call_push::RING_WINDOW_MS;
                     let message_id = call.message_id;
                     for user_id in phones {
@@ -1339,6 +1340,93 @@ mod tests {
         );
         assert_eq!(result.notifications.len(), 1);
         assert_eq!(result.subscriptions[&bob], vec![NotificationSubscription::ApnsPush(device)]);
+    }
+
+    fn call_to_voip_iphone(call_push_enabled: bool) -> Vec<(Vec<UserId>, FcmData)> {
+        use crate::queries::notifications::notifications_impl;
+        use local_user_index_canister::notifications::{Args, Response};
+        use p256_key_pair::P256KeyPair;
+        use types::{
+            ApnsDevice, ApnsToken, CallFacts, DirectMessageNotification, NotificationEnvelope, UserNotification, VideoCallType,
+        };
+
+        stable_memory_map::init(crate::memory::get_stable_memory_map_memory());
+        let mut state = setup_runtime_state();
+        let key = P256KeyPair::new(state.env.rng());
+        state.data.oc_key_pair = key;
+        state.data.call_push_enabled = call_push_enabled;
+        let alice: UserId = Principal::from_slice(&[20]).into();
+        let iphone: UserId = Principal::from_slice(&[21]).into();
+        state.data.apns_device_store.register(
+            iphone,
+            ApnsDevice {
+                alert_token: Some(ApnsToken("alert".to_string())),
+                voip_token: Some(ApnsToken("voip".to_string())),
+            },
+        );
+
+        state.handle_notification(
+            Notification::User(UserNotification {
+                sender: Some(alice),
+                recipients: vec![iphone],
+                notification: UserNotificationPayload::DirectMessage(DirectMessageNotification {
+                    sender: alice,
+                    thread_root_message_index: None,
+                    message_index: 0.into(),
+                    event_index: 0.into(),
+                    sender_name: "alice".to_string(),
+                    sender_display_name: None,
+                    message_type: "VideoCall".to_string(),
+                    message_text: None,
+                    image_url: None,
+                    file_name: None,
+                    sender_avatar_id: None,
+                    crypto_transfer: None,
+                    call: Some(CallFacts {
+                        message_id: 1u64.into(),
+                        call_type: VideoCallType::Default,
+                        audio_only: false,
+                        started: 0,
+                        is_public: false,
+                        member_count: 2,
+                    }),
+                }),
+            }),
+            Principal::from_slice(&[1]),
+            0,
+        );
+
+        let Response::Success(result) = notifications_impl(
+            Args {
+                from_notification_index: 0,
+            },
+            &state,
+        );
+        result
+            .notifications
+            .into_iter()
+            .filter_map(|n| match n.value {
+                NotificationEnvelope::User(u) => Some((u.recipients, u.fcm_data.unwrap())),
+                _ => None,
+            })
+            .collect()
+    }
+
+    // #10398 invariant 9
+    #[test]
+    fn invariant_9_an_iphone_with_a_voip_token_gets_its_own_envelope_with_a_decline_token() {
+        let envelopes = call_to_voip_iphone(true);
+        assert_eq!(envelopes.len(), 1);
+        assert_eq!(envelopes[0].0.len(), 1);
+        assert!(envelopes[0].1.call.as_ref().unwrap().decline_token.is_some());
+    }
+
+    // #10398 invariant 10: without call fields the pusher has nothing to send to a VoIP token
+    #[test]
+    fn invariant_10_with_call_push_off_a_call_carries_no_ring() {
+        let envelopes = call_to_voip_iphone(false);
+        assert_eq!(envelopes.len(), 1);
+        assert!(envelopes[0].1.call.is_none());
     }
 
     // #10398 invariant 8: state saved by a wasm from before APNs devices has no device store

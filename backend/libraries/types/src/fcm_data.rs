@@ -1,6 +1,6 @@
 use crate::{
-    CallDismissalKind, CallFacts, ChannelId, Chat, ChatId, CommunityId, MessageId, MessageIndex, TimestampMillis, UserId,
-    UserNotificationPayload, VideoCallType,
+    CallDismissalKind, CallFacts, ChannelId, Chat, ChatId, CommunityId, MessageId, MessageIndex, Milliseconds, TimestampMillis,
+    UserId, UserNotificationPayload, VideoCallType,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -62,6 +62,9 @@ pub struct FcmData {
     #[serde(rename = "cd", default)]
     pub call_dismissal: Option<FcmCallDismissal>,
 }
+
+// How long a phone rings for a call, and how long its decline token is good for
+pub const CALL_RING_WINDOW_MS: Milliseconds = 40 * 1000;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FcmCallData {

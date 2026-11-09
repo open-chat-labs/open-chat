@@ -5,11 +5,12 @@ use ct_codecs::{Base64UrlSafeNoPadding, Encoder};
 use p256::ecdsa::signature::Signer;
 use p256::ecdsa::{Signature, SigningKey};
 use p256::pkcs8::DecodePrivateKey;
+use reqwest::RequestBuilder;
 use serde::Deserialize;
 use serde_json::{Map, Value, json};
 use std::sync::RwLock;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use types::{ApnsToken, BodyType, Chat, Error, FcmData};
+use types::{ApnsToken, BodyType, CALL_RING_WINDOW_MS, Chat, Error, FcmData, TimestampMillis};
 
 const PRODUCTION_HOST: &str = "https://api.push.apple.com";
 const SANDBOX_HOST: &str = "https://api.sandbox.push.apple.com";
@@ -68,21 +69,39 @@ impl ApnsClient {
     }
 
     pub async fn send_alert(&self, token: &ApnsToken, payload: String, collapse_id: &str) -> SendOutcome {
-        let url = device_url(token);
-        let now = now_secs();
+        let request = self
+            .request(token, self.topic.clone(), "alert", now_secs() + EXPIRATION_SECS, payload)
+            .header("apns-collapse-id", collapse_id);
+        self.send(request).await
+    }
 
-        let response = self
-            .http
-            .post(url)
-            .bearer_auth(self.provider_token(now))
-            .header("apns-topic", &self.topic)
-            .header("apns-push-type", "alert")
+    // A ring. PushKit pushes go to the app's `.voip` topic, and Apple drops one that can't be
+    // delivered before the ring window ends.
+    pub async fn send_voip(&self, token: &ApnsToken, payload: String, expires_at_secs: u64) -> SendOutcome {
+        let request = self.request(token, format!("{}.voip", self.topic), "voip", expires_at_secs, payload);
+        self.send(request).await
+    }
+
+    fn request(
+        &self,
+        token: &ApnsToken,
+        topic: String,
+        push_type: &str,
+        expires_at_secs: u64,
+        payload: String,
+    ) -> RequestBuilder {
+        self.http
+            .post(device_url(token))
+            .bearer_auth(self.provider_token(now_secs()))
+            .header("apns-topic", topic)
+            .header("apns-push-type", push_type)
             .header("apns-priority", "10")
-            .header("apns-expiration", (now + EXPIRATION_SECS).to_string())
-            .header("apns-collapse-id", collapse_id)
+            .header("apns-expiration", expires_at_secs.to_string())
             .body(payload)
-            .send()
-            .await;
+    }
+
+    async fn send(&self, request: RequestBuilder) -> SendOutcome {
+        let response = request.send().await;
 
         match response {
             Ok(response) => {
@@ -150,6 +169,10 @@ fn base64url(bytes: &[u8]) -> String {
     Base64UrlSafeNoPadding::encode_to_string(bytes).unwrap()
 }
 
+pub fn now_millis() -> TimestampMillis {
+    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as TimestampMillis
+}
+
 fn now_secs() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
 }
@@ -181,6 +204,23 @@ pub fn alert_payload(data: &FcmData) -> Option<String> {
         }),
     );
     Some(Value::Object(payload).to_string())
+}
+
+/// The PushKit payload for a ring and when Apple should give up on it, in seconds. None for
+/// anything else, as iOS makes the app report every VoIP push to CallKit (#10398 invariant 3).
+pub fn voip_payload(data: &FcmData, now: TimestampMillis) -> Option<(String, u64)> {
+    let call = data.call.as_ref()?;
+    let ring_ends = call.started + CALL_RING_WINDOW_MS;
+    if data.is_call_dismissal() || now >= ring_ends {
+        return None;
+    }
+    let map: Map<String, Value> = data
+        .clone()
+        .as_data()
+        .into_iter()
+        .map(|(k, v)| (k, Value::String(v)))
+        .collect();
+    Some((Value::Object(map).to_string(), ring_ends / 1000))
 }
 
 // Notifications are grouped per chat
@@ -273,6 +313,41 @@ mod tests {
 
     fn parse(payload: Option<String>) -> Value {
         serde_json::from_str(&payload.expect("an alert")).unwrap()
+    }
+
+    fn ring(started: u64) -> FcmData {
+        message().set_call(&CallFacts {
+            message_id: MessageId::from(1u64),
+            call_type: VideoCallType::Default,
+            audio_only: false,
+            started,
+            is_public: false,
+            member_count: 2,
+        })
+    }
+
+    // #10398 invariant 3
+    #[test]
+    fn invariant_3_a_voip_push_is_only_for_a_ring_inside_its_window() {
+        let started = 1_000_000;
+        assert!(voip_payload(&ring(started), started).is_some());
+        assert!(voip_payload(&ring(started), started + CALL_RING_WINDOW_MS - 1).is_some());
+        assert_eq!(voip_payload(&ring(started), started + CALL_RING_WINDOW_MS), None);
+        assert_eq!(voip_payload(&message(), started), None);
+
+        let dismissal = FcmData::call_dismissal(Chat::Group(group()), MessageId::from(1u64), CallDismissalKind::Ended);
+        assert_eq!(voip_payload(&dismissal, started), None);
+    }
+
+    #[test]
+    fn a_voip_push_carries_the_decline_token_and_expires_with_the_ring() {
+        let started = 1_000_000;
+        let (payload, expires_at) = voip_payload(&ring(started).with_decline_token("jwt".to_string()), started).unwrap();
+        let payload: Value = serde_json::from_str(&payload).unwrap();
+
+        assert_eq!(payload["callDeclineToken"], "jwt");
+        assert_eq!(payload["callMessageId"], "1");
+        assert_eq!(expires_at, (started + CALL_RING_WINDOW_MS) / 1000);
     }
 
     // #10398 invariant 2
