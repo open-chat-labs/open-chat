@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Refuse prize claims from users who have claimed 10 in the last 24 hours ([#10443](https://github.com/open-chat-labs/open-chat/pull/10443))
+
 ### Changed
 
 - Expect a salted hash of the prize claim as Turnstile's custom data, rather than the user's id ([#10417](https://github.com/open-chat-labs/open-chat/pull/10417))
