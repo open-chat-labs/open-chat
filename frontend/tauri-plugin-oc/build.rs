@@ -34,6 +34,8 @@ const COMMANDS: &[&str] = &[
     "set_call_speaker",
     "set_call_ringback",
     "set_call_end_token",
+    "native_call_join",
+    "native_call_leave",
     "get_store_update",
     "haptic",
     "share",

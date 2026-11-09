@@ -13,11 +13,39 @@ import { CallSession, type CallFrameOptions } from "./callSession.svelte";
 const frame = vi.hoisted(() => ({
     present: 1,
     leave: vi.fn(),
+    created: vi.fn(),
+}));
+
+// The iOS shell, for the calls that run natively
+const shell = vi.hoisted(() => ({
+    ios: false,
+    onEvent: undefined as ((raw: unknown) => void) | undefined,
+    invoke: vi.fn(),
+}));
+
+vi.mock("@shared", async (original) => ({
+    ...(await original<typeof import("@shared")>()),
+    isIosTauriApp: () => shell.ios,
+}));
+
+vi.mock("@tauri-apps/api/core", () => ({
+    invoke: shell.invoke,
+    addPluginListener: async (_plugin: string, _event: string, cb: (raw: unknown) => void) => {
+        shell.onEvent = cb;
+        return { unregister: () => {} };
+    },
 }));
 
 vi.mock("@daily-co/daily-js", () => ({
     default: {
-        createFrame: () => ({
+        createFrame: () => {
+            frame.created();
+            return makeFrame();
+        },
+    },
+}));
+
+const makeFrame = vi.hoisted(() => () => ({
             on: () => {},
             join: async () => {},
             leave: frame.leave,
@@ -25,8 +53,6 @@ vi.mock("@daily-co/daily-js", () => ({
             setTheme: () => {},
             participants: () => ({ local: { session_id: "me" } }),
             participantCounts: () => ({ present: frame.present }),
-        }),
-    },
 }));
 
 const direct: ChatIdentifier = { kind: "direct_chat", userId: "them" };
@@ -174,5 +200,58 @@ describe("a call", () => {
         session.hangup();
         expect(client.endVideoCall).toHaveBeenCalledWith(group, 7n);
         expect(frame.leave).toHaveBeenCalledTimes(3);
+    });
+
+    describe("on iOS", () => {
+        const me = {
+            sessionId: "me",
+            userName: "me",
+            local: true,
+            owner: false,
+            audio: true,
+            video: false,
+            hasPresence: true,
+        };
+
+        beforeEach(() => {
+            shell.ios = true;
+            shell.invoke.mockImplementation(async (command: string) =>
+                command === "plugin:oc|native_call_join"
+                    ? { json: JSON.stringify({ local: me, present: 2 }) }
+                    : undefined,
+            );
+        });
+
+        afterEach(() => {
+            shell.ios = false;
+            shell.invoke.mockImplementation(async () => undefined);
+        });
+
+        test("invariant 19: a call runs natively and never creates the Daily frame", async () => {
+            frame.created.mockClear();
+            await session.startOrJoin(container, { chatId: direct, callType: "audio", join: false });
+
+            expect(frame.created).not.toHaveBeenCalled();
+            expect(shell.invoke).toHaveBeenCalledWith(
+                "plugin:oc|native_call_join",
+                expect.objectContaining({ url: "https://openchat.daily.co/r", video: false }),
+            );
+        });
+
+        test("invariant 20: the other party leaving a direct call ends it", async () => {
+            vi.mocked(client.endVideoCall).mockClear();
+            await session.startOrJoin(container, { chatId: direct, callType: "default", join: false });
+
+            shell.onEvent?.({
+                json: JSON.stringify({
+                    kind: "participant-left",
+                    participant: { ...me, sessionId: "them", local: false },
+                    present: 1,
+                }),
+            });
+
+            expect(client.endVideoCall).toHaveBeenCalledWith(direct, 7n);
+            expect(shell.invoke).toHaveBeenCalledWith("plugin:oc|native_call_leave");
+        });
     });
 });

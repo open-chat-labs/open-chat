@@ -1,3 +1,4 @@
+import CallCore
 import SwiftRs
 import Tauri
 import UIKit
@@ -77,6 +78,7 @@ class OpenChatPlugin: Plugin {
         self.webview = webview
         OCCompanion.shared.plugin = self
         Push.shared.install()
+        NativeCallBridge.shared.install()
 
         hideKeyboardAccessoryBar(webview)
 
@@ -206,6 +208,40 @@ class OpenChatPlugin: Plugin {
         Push.shared.requestAlertToken { token in
             invoke.resolve(["alertToken": token ?? NSNull()])
         }
+    }
+
+    @objc func nativeCallJoin(_ invoke: Invoke) {
+        guard let args = try? invoke.parseArgs(NativeCallJoinArgs.self) else {
+            invoke.reject("Invalid native call arguments")
+            return
+        }
+        NativeCallBridge.shared.join(args) { result in
+            if let error = result["error"] as? String {
+                invoke.reject(error)
+            } else {
+                invoke.resolve(NativeCallBridge.flatten(result))
+            }
+        }
+    }
+
+    @objc func nativeCallLeave(_ invoke: Invoke) {
+        NativeCallBridge.shared.leave()
+        invoke.resolve()
+    }
+
+    @objc func setCallConfig(_ invoke: Invoke) {
+        if let args = try? invoke.parseArgs(CallConfigArgs.self) {
+            NativeCallBridge.shared.setConfig(videoBridgeUrl: args.videoBridgeUrl)
+        }
+        invoke.resolve()
+    }
+
+    @objc func setCallEndToken(_ invoke: Invoke) {
+        if let args = try? invoke.parseArgs(CallEndTokenArgs.self) {
+            NativeCallBridge.shared.setTeardown(
+                CallTeardown(token: args.token, kind: args.kind, sessionId: args.sessionId))
+        }
+        invoke.resolve()
     }
 
     // The web layer found a foreground push's chat isn't on screen, so it is shown

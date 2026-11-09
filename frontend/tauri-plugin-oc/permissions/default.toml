@@ -35,6 +35,8 @@ permissions = [
     "allow-set-call-speaker",
     "allow-set-call-ringback",
     "allow-set-call-end-token",
+    "allow-native-call-join",
+    "allow-native-call-leave",
     "allow-get-store-update",
     "allow-haptic",
     "allow-get-window-insets",

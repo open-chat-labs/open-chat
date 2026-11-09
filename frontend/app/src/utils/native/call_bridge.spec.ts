@@ -19,6 +19,7 @@ vi.mock("@utils/navigation", () => nav);
 const shared = vi.hoisted(() => ({
     publish: vi.fn(),
     isAndroidTauriApp: vi.fn(() => true),
+    isIosTauriApp: vi.fn(() => false),
 }));
 vi.mock("@shared", async (importOriginal) => ({
     ...(await importOriginal<object>()),
