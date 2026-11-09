@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Send a call's ring to an iPhone's VoIP token through PushKit, only inside the ring window ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Send a call's ring to an iPhone's VoIP token through PushKit, only inside the ring window ([#10447](https://github.com/open-chat-labs/open-chat/pull/10447))
 
 ## [[2.0.2210](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2210-notification_pusher)] - 2026-11-05
 
