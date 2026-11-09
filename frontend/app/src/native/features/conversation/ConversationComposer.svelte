@@ -284,14 +284,14 @@
         typing.stopped();
         const ids = picks.ids();
         if (ids.length > 0) {
-            const contents = await picks.contentsOf(ids);
+            const { ids: taken, contents } = await picks.take(ids);
             if (contents.length > 0) {
                 const sent = await sendComposed(client, chat, context, text, {
                     content: contents[0],
                     shown: true,
                 });
                 if (sent.kind !== "posted") throw new Error(sent.reason);
-                picks.removeAll(ids);
+                picks.removeAll(taken);
                 slot.close();
                 if (contents.length > 1) void sendAfter(contents.slice(1));
                 return;

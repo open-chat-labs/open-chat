@@ -56,12 +56,12 @@ describe("the photos and videos picked for a message", () => {
         picks.toggle(photo("a"));
         picks.toggle(photo("b"));
         picks.prepared("b", image(2));
-        expect(await picks.contentsOf(["a", "b"])).toEqual([image(2)]);
+        expect((await picks.take(["a", "b"])).contents).toEqual([image(2)]);
         picks.prepared("a", image(1));
-        expect(await picks.contentsOf(["a", "b"])).toEqual([image(1), image(2)]);
+        expect(await picks.take(["a", "b"])).toEqual({ ids: ["a", "b"], contents: [image(1), image(2)] });
         picks.remove("a");
         picks.prepared("a", image(1));
-        expect(await picks.contentsOf(["a", "b"])).toEqual([image(2)]);
+        expect((await picks.take(["a", "b"])).contents).toEqual([image(2)]);
     });
 
     test("a send waits for those it took to be prepared, not those picked meanwhile", async () => {
@@ -72,15 +72,45 @@ describe("the photos and videos picked for a message", () => {
         let prepareB: () => void = () => {};
         picks.preparing("b", new Promise<void>((resolve) => (prepareB = resolve)));
         const ids = picks.ids();
-        const sending = picks.contentsOf(ids);
+        const sending = picks.take(ids);
         // picked after Send, while the video's still being prepared
         picks.toggle(photo("c"));
         picks.preparing("c", new Promise<void>(() => {}));
         picks.prepared("b", image(2));
         prepareB();
-        expect(await sending).toEqual([image(1), image(2)]);
+        expect(await sending).toEqual({ ids: ["a", "b"], contents: [image(1), image(2)] });
         picks.removeAll(ids);
         expect(picks.ids()).toEqual(["c"]);
+    });
+
+    test("a send waits for one put back and picked again while it waits, prepared afresh", async () => {
+        const picks = new MediaPicks();
+        picks.toggle(photo("a"));
+        let prepareFirst: () => void = () => {};
+        picks.preparing("a", new Promise<void>((resolve) => (prepareFirst = resolve)));
+        const sending = picks.take(picks.ids());
+        // a Recents tile tapped off and on again: a new job for the same id
+        picks.toggle(photo("a"));
+        picks.toggle(photo("a"));
+        let prepareAgain: () => void = () => {};
+        picks.preparing("a", new Promise<void>((resolve) => (prepareAgain = resolve)));
+        prepareFirst();
+        // the first job long settled, the send still waits for the second
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        picks.prepared("a", image(1));
+        prepareAgain();
+        expect(await sending).toEqual({ ids: ["a"], contents: [image(1)] });
+    });
+
+    test("a send takes out only the picks it sent", async () => {
+        const picks = new MediaPicks();
+        picks.toggle(photo("a"));
+        picks.toggle(photo("b"));
+        picks.prepared("a", image(1));
+        const taken = await picks.take(picks.ids());
+        expect(taken).toEqual({ ids: ["a"], contents: [image(1)] });
+        picks.removeAll(taken.ids);
+        expect(picks.ids()).toEqual(["b"]);
     });
 
     test("a send whose picks all failed to be prepared has nothing to send", async () => {
@@ -90,7 +120,7 @@ describe("the photos and videos picked for a message", () => {
             "a",
             Promise.reject(new Error("unreadable")).finally(() => picks.remove("a")),
         );
-        expect(await picks.contentsOf(picks.ids())).toEqual([]);
+        expect(await picks.take(picks.ids())).toEqual({ ids: [], contents: [] });
         expect(picks.count).toBe(0);
     });
 
@@ -167,7 +197,7 @@ describe("the photos and videos a send left", () => {
         picks.toggle(photo("new"));
         expect(picks.restore([leftMedia("l1", image(2)), leftMedia("l2", image(3))])).toBe(0);
         expect(picks.ids()).toEqual(["l1", "l2", "new"]);
-        expect(await picks.contentsOf(["l1", "l2"])).toEqual([image(2), image(3)]);
+        expect((await picks.take(["l1", "l2"])).contents).toEqual([image(2), image(3)]);
     });
 
     test("as many as there's room for, saying how many there wasn't", () => {

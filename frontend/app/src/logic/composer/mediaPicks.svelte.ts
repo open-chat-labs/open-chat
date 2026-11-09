@@ -25,6 +25,9 @@ export type PickOutcome = "picked" | "unpicked" | "full";
  */
 export type LeftMedia = { id: string; video: boolean; thumb?: string; content: AttachmentContent };
 
+/** What a send takes: the contents prepared, in the order picked, and the picks they're from. */
+export type TakenMedia = { ids: string[]; contents: AttachmentContent[] };
+
 export class MediaPicks {
     #picks = $state.raw<PickedMedia[]>([]);
     // the thumbnails made for picks (a file's object URL), let go of as each goes
@@ -145,16 +148,23 @@ export class MediaPicks {
     }
 
     /**
-     * The contents of those picked (`ids`), once each has been prepared or dropped (one that
-     * couldn't be, or put back meanwhile, is left out), in the order picked.
+     * What a send of those picked (`ids`) takes, once none of them is still being prepared (one
+     * put back and picked again meanwhile is prepared afresh, and waited for too): the contents
+     * prepared, in the order picked, and their ids, the ones to take out once sent. One that
+     * couldn't be prepared, or is put back, is left out of both.
      */
-    async contentsOf(ids: readonly string[]): Promise<AttachmentContent[]> {
-        const jobs = ids.flatMap((id) => this.#jobs.get(id) ?? []);
-        await Promise.all(jobs);
+    async take(ids: readonly string[]): Promise<TakenMedia> {
+        let jobs = ids.flatMap((id) => this.#jobs.get(id) ?? []);
+        while (jobs.length > 0) {
+            await Promise.all(jobs);
+            jobs = ids.flatMap((id) => this.#jobs.get(id) ?? []);
+        }
         const wanted = new Set(ids);
-        return this.#picks.flatMap((p) =>
-            wanted.has(p.id) && p.content !== undefined ? [p.content] : [],
-        );
+        const taken = this.#picks.filter((p) => wanted.has(p.id) && p.content !== undefined);
+        return {
+            ids: taken.map((p) => p.id),
+            contents: taken.flatMap((p) => (p.content === undefined ? [] : [p.content])),
+        };
     }
 
     // takes those out, letting go of the thumbnails made for them
