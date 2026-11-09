@@ -603,7 +603,7 @@ design export needs. Each entry says where it came up.
   FAQ group has no heading, and questions can carry an `id`. A doc's sections can be nested
   (`depth`), numbered 01, 2.1, 3.4.1, with a contents list whose sub-sections open as the reader
   reaches them, or by hand, and which scrolls on its own. `section` and `question` deep link
-  into a doc and the FAQs, and `architecture` puts the host's own content on that tab, filling the screen between the header and the footer (the canister map, full width and height). Landing's section links scroll smoothly. Also (9a): `doc`, a doc page outside the tabs (the legal pages, `/diamond`), with no tab current, one column without the contents list when it has no sections; `belowDoc`, the host's own content after its sections; a section's `blocks` (numbered clauses that nest, terms and their meanings, bullets); a doc's `intro`, with `lede` and `foot` optional; `onCopySection`, a copy-link button beside every doc heading; `onSection`, a section chosen in the contents list for the host's address (the app sets `?section=` in place); on a phone (one column, 860px and below) the contents list as a bar under the header naming the section being read, which opens to the whole list over the doc; and Terms and Privacy in the footer.
+  into a doc and the FAQs, and `architecture` puts the host's own content on that tab, filling the screen between the header and the footer (the canister map, full width and height). Landing's section links scroll smoothly. Also (9a): `doc`, a doc page outside the tabs (the legal pages, `/diamond`), with no tab current, one column without the contents list when it has no sections; `belowDoc`, the host's own content after its sections; a section's `blocks` (numbered clauses that nest, terms and their meanings, bullets); a doc's `intro`, with `lede` and `foot` optional; `onCopySection`, a copy-link button beside every doc heading; `onSection`, a section chosen in the contents list for the host's address (the app sets `?section=` in place), and `navigation`, the host's count of its navigations, so a link to the section it navigated to is followed again after another was chosen; on a phone (one column, 860px and below) the contents list as a bar under the header naming the section being read, which opens to the whole list over the doc; and Terms and Privacy in the footer.
 - **`ActivityPanel` back button** (by hand, phase 3d): opened over a chat or a wallet page
   (`?panel=activity`, ROUTES.md decision 7), the panel has a back button beside its title
   (`onBack`) that returns the left column to the middle's own panel. The design has none. Its
@@ -1383,7 +1383,10 @@ design export needs. Each entry says where it came up.
   - the guidelines are open sections, not the old collapsible cards; `?section=` scrolls to one
     rather than opening it;
   - the old desktop copy links used the page's origin; every tree now copies on the site's own
-    (`copySectionUrl`), with the toast. The whitepaper's headings copy their links too;
+    (`copySectionUrl`), with the toast, and the doc's own path (the terms at sign-up link to
+    `/terms`, not the sign-up's page). The whitepaper's headings copy their links too. Both old
+    trees render the legal docs with one component (`components/landingpages/LegalDocContent`,
+    which has no colours; the mobile sign-up passes its own heading and stacks the definitions);
   - a clause's number is the doc's own text ("1.2)", "A1") rather than a CSS counter.
   - `/csea-reporting`: the checklist's words are in two places, the old desktop page and
     `CseaChecklistScreen` (in English, as the old page), until the desktop tree goes: a change to
@@ -1391,8 +1394,8 @@ design export needs. Each entry says where it came up.
     follows the app's 5s clock (`stores/time`'s `now`) rather than the old page's own minute.
   - `/diamond` shows the comparison (or the member's membership) but not the plans or payment:
     paying needs the PIN prompt and the wallet, which only the app has, so Upgrade opens the app's
-    Diamond dialog (after signing in, signed out) rather than paying on the page as the dialog
-    does. TODO(design): the page's head ("Diamond", "Benefits of Diamond") and the card under it
+    Diamond dialog (after signing in, signed out: an emailed sign-in link too, while this page
+    is open) rather than paying on the page as the dialog does. TODO(design): the page's head ("Diamond", "Benefits of Diamond") and the card under it
     have no design; the old page showed the feature table alone.
   - Narrow screens: a phone browser gets the old UI until the narrow pass (10b): the old desktop
     pages (from the same content) in a web build (`OC_MOBILE_LAYOUT=v1`), and "not found" where the

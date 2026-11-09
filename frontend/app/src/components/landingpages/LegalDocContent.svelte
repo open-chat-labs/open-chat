@@ -1,53 +1,65 @@
 <!-- A legal doc (the terms, the privacy notice) as the old pages showed it, from Learn's content
      (web/features/marketing/learn/legal), the one copy of the text, which the web's pages show too:
      its preamble, then each section's heading (a ?section= target with a copy link) and its numbered
-     clauses. A clause's number is the doc's own; a lettered one (A1, B2) heads its section's list. -->
+     clauses. A clause's number is the doc's own; a lettered one (A1, B2) heads its section's list.
+     Both old trees render it (the mobile tree's sign-up shows the terms): it has no colours of its
+     own, and takes the tree's heading with its copy link (`linkTarget`), and how its terms and
+     meanings sit (`stacked`). -->
 <script lang="ts">
     import type { OpenChat } from "@client";
-    import { inlineMarkdown } from "@openchat/ui/src/pages/inlineMarkdown";
     import type { LearnBlock, LearnClause, LearnDoc } from "@openchat/ui/src/pages/learnContent";
-    import { getContext } from "svelte";
+    import { getContext, type Component, type Snippet } from "svelte";
     import { copySectionUrl } from "../../utils/urls";
     import HashLinkTarget from "./HashLinkTarget.svelte";
+    import LegalText from "./LegalText.svelte";
 
     interface Props {
         doc: LearnDoc;
+        /** The doc's own page (/terms …), for a heading's copy link wherever the doc shows (sign-up too). */
+        path: string;
         /** The headings show their section's number ("1. Who is responsible …"), as the privacy notice's did. */
         numberedHeadings?: boolean;
+        /** A heading with its copy link: the tree's own HashLinkTarget (the desktop one by default). */
+        linkTarget?: Component<{
+            id: string;
+            children?: Snippet;
+            onCopyUrl: (e: Event, id: string) => void;
+        }>;
+        /** Terms and their meanings one under the other at every width, not side by side on a wide screen. */
+        stacked?: boolean;
     }
 
-    let { doc, numberedHeadings = false }: Props = $props();
+    let {
+        doc,
+        path,
+        numberedHeadings = false,
+        linkTarget: LinkTarget = HashLinkTarget,
+        stacked = false,
+    }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
     function onCopyUrl(e: Event, section: string): void {
         e.stopPropagation();
-        void copySectionUrl(client, section);
+        void copySectionUrl(client, path, section);
     }
 
     const lettered = (items: LearnClause[]) => items.every((c) => /^[A-Z]\d+$/.test(c.number));
-    const external = (href: string) => /^https?:/i.test(href);
 </script>
-
-{#snippet rich(text: string)}{#each inlineMarkdown(text) as part}{#if part.kind === "link"}<a
-                href={part.href}
-                target={external(part.href) ? "_blank" : undefined}
-                rel={external(part.href) ? "noreferrer noopener" : undefined}>{part.text}</a
-            >{:else if part.kind === "bold"}<strong>{part.text}</strong>{:else}{part.text}{/if}{/each}{/snippet}
 
 {#snippet blocks(list: LearnBlock[])}
     {#each list as b}
         {#if b.kind === "para"}
-            <p>{@render rich(b.text)}</p>
+            <p><LegalText text={b.text} /></p>
         {:else if b.kind === "bullets"}
             <ul class="custom_list">
-                {#each b.items as item}<li>{@render rich(item)}</li>{/each}
+                {#each b.items as item}<li><LegalText text={item} /></li>{/each}
             </ul>
         {:else if b.kind === "definitions"}
-            <div class="interpretation">
+            <div class="interpretation" class:stacked>
                 {#each b.items as d}
-                    <div>{@render rich(d.term)}</div>
-                    <div>{@render rich(d.meaning)}</div>
+                    <div><LegalText text={d.term} /></div>
+                    <div><LegalText text={d.meaning} /></div>
                 {/each}
             </div>
         {:else}
@@ -66,15 +78,15 @@
 
 {#if doc.intro?.length}
     <div class="preamble">
-        {#each doc.intro as p}<p>{@render rich(p)}</p>{/each}
+        {#each doc.intro as p}<p><LegalText text={p} /></p>{/each}
     </div>
 {/if}
 
 <div class="section">
     {#each doc.sections as s}
-        <HashLinkTarget {onCopyUrl} id={s.id}>
+        <LinkTarget {onCopyUrl} id={s.id}>
             <h2>{numberedHeadings ? `${s.id}. ` : ""}{s.title}</h2>
-        </HashLinkTarget>
+        </LinkTarget>
         {@render blocks(s.blocks ?? [])}
     {/each}
 </div>
@@ -146,7 +158,14 @@
             gap: $sp3;
         }
 
-        :nth-child(2n-1) {
+        &.stacked {
+            grid-template-columns: 1fr;
+            gap: $sp3;
+        }
+
+        // every element in it at an odd place: the terms, and (as the old pages had it) a link
+        // first in its meaning, which LegalText renders, so it isn't this component's to scope
+        :global(:nth-child(2n-1)) {
             font-weight: bold;
         }
     }

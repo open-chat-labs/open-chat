@@ -5,4 +5,4 @@
     import LegalDocContent from "./LegalDocContent.svelte";
 </script>
 
-<LegalDocContent doc={privacy} numberedHeadings />
+<LegalDocContent doc={privacy} path="/privacy" numberedHeadings />

@@ -13,7 +13,8 @@
      A doc page outside the tabs (`doc`: the host's legal pages, /diamond …) shows in the same doc layout, on the host's
      own path, with no tab current; its sections can hold numbered clauses (`blocks`), and the host's own content can
      follow them (`belowDoc`). `onCopySection` gives every doc heading a copy-link button, and `onSection` hears a
-     section chosen in the contents list, for the host's address. Where the doc is one column (phones), the contents
+     section chosen in the contents list, for the host's address; `navigation` has a deep link followed again when the
+     host navigates to the same one. Where the doc is one column (phones), the contents
      list is a bar under the header naming the section being read, which opens to the whole list. -->
 <script lang="ts">
   import { tick, untrack, type Snippet } from 'svelte';
@@ -66,6 +67,10 @@
     section?: string;
     /** An FAQ question to open and scroll to (its `id`), e.g. from the host's `?q=`. */
     question?: string;
+    /** Changes with each of the host's navigations (its router's count of them): `section` and `question` are followed
+     *  again on a new value though they're unchanged, as a link to the section the page opened on, after the reader
+     *  chose another in the contents list (`onSection`), or after reading on. */
+    navigation?: number;
     /** The Architecture tab's content, in place of the architecture doc (the tab shows whenever this is given). It fills
      *  the screen between the header and the footer, inset only for its rounded corners: an interactive map and the like. */
     architecture?: Snippet;
@@ -76,7 +81,8 @@
      *  as `section` reads it). Without it the headings have none. */
     onCopySection?: (id: string) => void;
     /** A section chosen in a doc's contents list, by its `id`: the host rewrites its address in place (as `section`
-     *  reads it), so the address links to the section being shown. Not passed back as `section`, which jumps there. */
+     *  reads it), so the address links to the section being shown. Not passed back as `section`, which jumps there; a
+     *  host whose `section` stays at the one it navigated to passes `navigation`, so navigating there again follows it. */
     onSection?: (id: string) => void;
   }
 
@@ -136,6 +142,7 @@
     signedIn = false,
     section,
     question,
+    navigation,
     architecture,
     termsHref = '/terms',
     privacyHref = '/privacy',
@@ -318,7 +325,7 @@
   });
 
   // a deep link into a doc section or an FAQ question: scrolled to (the question opened) once it shows, and again when
-  // the host passes a new one
+  // the host passes a new one, or navigates to it again (`navigation`)
   const deepLink = () => (current === 'faq' ? question : doc ? section : undefined);
   function followDeepLink(target: string) {
     if (current === 'faq') {
@@ -334,6 +341,7 @@
   }
   $effect(() => {
     const target = deepLink();
+    void navigation;
     untrack(() => {
       chosenSection = undefined;
       if (target) followDeepLink(target);

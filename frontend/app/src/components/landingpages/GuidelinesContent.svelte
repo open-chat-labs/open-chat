@@ -3,12 +3,12 @@
      (?section=) open. -->
 <script lang="ts">
     import { mobileWidth, type OpenChat } from "@client";
-    import { inlineMarkdown } from "@openchat/ui/src/pages/inlineMarkdown";
     import { guidelines } from "@src/web/features/marketing/learn/legal/guidelines";
     import { getContext } from "svelte";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
     import { copySectionUrl } from "../../utils/urls";
     import CollapsibleCard from "../CollapsibleCard.svelte";
+    import LegalText from "./LegalText.svelte";
 
     interface Props {
         linked?: number | undefined;
@@ -21,20 +21,12 @@
 
     function copyUrl(e: Event, section: string): void {
         e.stopPropagation();
-        void copySectionUrl(client, section);
+        void copySectionUrl(client, "/guidelines", section);
     }
-
-    const external = (href: string) => /^https?:/i.test(href);
 
     let copySize = $derived($mobileWidth ? "14px" : "16px");
     let color = $derived(modal ? "var(--txt)" : "var(--landing-txt)");
 </script>
-
-{#snippet rich(text: string)}{#each inlineMarkdown(text) as part}{#if part.kind === "link"}<a
-                href={part.href}
-                target={external(part.href) ? "_blank" : undefined}
-                rel={external(part.href) ? "noreferrer noopener" : undefined}>{part.text}</a
-            >{:else if part.kind === "bold"}<strong>{part.text}</strong>{:else}{part.text}{/if}{/each}{/snippet}
 
 {#each guidelines.sections as section, i}
     <CollapsibleCard transition={false} first={i === 0} open={linked === Number(section.id)}>
@@ -52,10 +44,10 @@
         <div class:modal class="body">
             {#each section.blocks ?? [] as block}
                 {#if block.kind === "para"}
-                    <p>{@render rich(block.text)}</p>
+                    <p><LegalText text={block.text} /></p>
                 {:else if block.kind === "bullets"}
                     <ul class="list">
-                        {#each block.items as item}<li>{@render rich(item)}</li>{/each}
+                        {#each block.items as item}<li><LegalText text={item} /></li>{/each}
                     </ul>
                 {/if}
             {/each}

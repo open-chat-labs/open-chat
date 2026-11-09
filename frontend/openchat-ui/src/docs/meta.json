@@ -22223,6 +22223,17 @@
         "doc": "An FAQ question to open and scroll to (its `id`), e.g. from the host's `?q=`."
       },
       {
+        "name": "navigation",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Changes with each of the host's navigations (its router's count of them): `section` and `question` are followed again on a new value though they're unchanged, as a link to the section the page opened on, after the reader chose another in the contents list (`onSection`), or after reading on."
+      },
+      {
         "name": "architecture",
         "type": "Snippet",
         "default": null,
@@ -22275,7 +22286,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "A section chosen in a doc's contents list, by its `id`: the host rewrites its address in place (as `section` reads it), so the address links to the section being shown. Not passed back as `section`, which jumps there."
+        "doc": "A section chosen in a doc's contents list, by its `id`: the host rewrites its address in place (as `section` reads it), so the address links to the section being shown. Not passed back as `section`, which jumps there; a host whose `section` stays at the one it navigated to passes `navigation`, so navigating there again follows it."
       }
     ],
     "group": "pages"

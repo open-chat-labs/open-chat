@@ -38,6 +38,19 @@ export function docPageFor(route: RouteParams): DocPage | undefined {
     return DOC_ROUTES[route.kind];
 }
 
+const DOC_PATHS: Record<DocPage, string> = {
+    terms: "/terms",
+    privacy: "/privacy",
+    guidelines: "/guidelines",
+    csea: "/csea-reporting",
+    diamond: "/diamond",
+};
+
+/** A doc page's path (utils/routeTable), as a link to one of its sections names it. */
+export function docPagePath(page: DocPage): string {
+    return DOC_PATHS[page];
+}
+
 /** Whether a doc page is a legal doc, loaded from Learn's content. */
 export function isLegalDoc(page: DocPage | undefined): page is LegalDoc {
     return page === "terms" || page === "privacy" || page === "guidelines";

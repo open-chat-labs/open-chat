@@ -4,6 +4,7 @@ import {
     copyPageUrl,
     copySectionUrl,
     inEditor,
+    removeQueryStringParamInPlace,
     sectionUrl,
     setQueryStringParamInPlace,
     withoutQueryStringParams,
@@ -33,12 +34,47 @@ describe("query string helpers", () => {
         expect(withQueryStringParam("section", "3")).toBe("/guidelines?section=3");
     });
 
-    test("set a param in place, keeping the entry's state", () => {
-        history.replaceState({ key: 1 }, "", "/terms?ref=abc");
+    test("set a param in place: no new entry, and the router's path follows", () => {
+        // page.js's state, with an app key (utils/history) on it
+        history.replaceState(
+            { path: "/terms?ref=abc&section=3", action: "sliding_modal" },
+            "",
+            "/terms?ref=abc&section=3",
+        );
         const entries = history.length;
         setQueryStringParamInPlace("section", "10");
         expect(window.location.pathname + window.location.search).toBe("/terms?ref=abc&section=10");
+        // Back / Forward to the entry shows its `path` (page.js), so it's the rewritten URL now
+        expect(history.state).toEqual({
+            path: "/terms?ref=abc&section=10",
+            action: "sliding_modal",
+        });
+        expect(history.length).toBe(entries);
+    });
+
+    test("a state without the router's path is left as it is", () => {
+        history.replaceState(null, "", "/terms");
+        setQueryStringParamInPlace("section", "2");
+        expect(history.state).toBeNull();
+        history.replaceState({ key: 1 }, "", "/terms");
+        setQueryStringParamInPlace("section", "3");
         expect(history.state).toEqual({ key: 1 });
+        expect(window.location.search).toBe("?section=3");
+    });
+
+    test("remove a param in place, keeping the others, and the router's path follows", () => {
+        history.replaceState(
+            { path: "/architecture?ref=a&section=x" },
+            "",
+            "/architecture?ref=a&section=x",
+        );
+        const entries = history.length;
+        removeQueryStringParamInPlace("section");
+        expect(window.location.pathname + window.location.search).toBe("/architecture?ref=a");
+        expect(history.state).toEqual({ path: "/architecture?ref=a" });
+        removeQueryStringParamInPlace("ref");
+        expect(window.location.pathname + window.location.search).toBe("/architecture");
+        expect(history.state).toEqual({ path: "/architecture" });
         expect(history.length).toBe(entries);
     });
 
@@ -115,9 +151,13 @@ describe("copying the page's link", () => {
         const writeText = vi.fn(async () => {});
         vi.stubGlobal("navigator", { clipboard: { writeText } });
         const ok = vi.spyOn(toastStore, "showSuccessToast").mockImplementation(() => {});
-        await copySectionUrl(native, "10");
+        await copySectionUrl(native, "/terms", "10");
         expect(writeText).toHaveBeenCalledWith("https://oc.app/terms?section=10");
-        expect(ok).toHaveBeenCalledOnce();
+        // the doc's own path, wherever it's shown (the terms at sign-up, on /home)
+        history.replaceState(null, "", "/home?section=1");
+        await copySectionUrl(native, "/terms", "3");
+        expect(writeText).toHaveBeenLastCalledWith("https://oc.app/terms?section=3");
+        expect(ok).toHaveBeenCalledTimes(2);
         expect(sectionUrl("/guidelines", "3", "https://oc.app")).toBe(
             "https://oc.app/guidelines?section=3",
         );

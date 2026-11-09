@@ -485,6 +485,7 @@ import {
     oneSecAddress,
     solanaAddress,
     pathContextStore,
+    routerNavigationStore,
     pinNumberFailureStore,
     pinNumberRequiredStore,
     pinNumberResolverStore,
@@ -14982,6 +14983,7 @@ export class OpenChat {
         withPausedStores(() => {
             routeStore.set(p);
             pathContextStore.set(ctx);
+            routerNavigationStore.update((n) => n + 1);
             notFoundStore.set(false);
         });
     }

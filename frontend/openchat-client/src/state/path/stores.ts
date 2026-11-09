@@ -22,6 +22,13 @@ function hasMessageIndex(route: RouteParams): route is MessageIndexRoute {
 export const notFoundStore = writable<boolean>(false);
 export const pathContextStore = writable<PageJS.Context | undefined>(undefined, undefined, dequal);
 export const routerReadyStore = writable<boolean>(false);
+/**
+ * Counts the router's navigations: one for each route it shows, a link to the URL it last showed
+ * included, which pathContextStore and routeStore (compared by value) don't report. For a page
+ * that follows every navigation to it, as a doc page's `?section=` once the address has been
+ * rewritten in place (utils/urls in the app).
+ */
+export const routerNavigationStore = writable<number>(0);
 export const locationStore = derived(pathContextStore, (pathContext) =>
     pathContext ? pathContext.routePath : "",
 );

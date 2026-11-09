@@ -772,5 +772,6 @@
 ## 2026-11-09 — Learn: the contents list as a bar on a phone, and the chosen section for the host's address (9a, #10132), by hand
 - `Learn`: where a doc is one column (860px and below) its contents list is no longer above the doc but a bar under the header, as wide as the page, naming the section being read (its number and title; "On this page" before the first one). Tapping it opens the whole list over the doc, with a scrim; choosing a section, the scrim, the bar again or Escape closes it. The sections are read from (and jumped to) below the header and the bar. The list's sub-sections now open as the reader comes to them at every width.
 - `onSection`: a section chosen in the contents list is handed to the host by its `id`, for its address (the app sets `?section=` in place), so the address bar links to it.
-- Docs: `meta.json` (Learn's `onSection`).
+- `navigation`: a value the host changes with each of its navigations (the app's router count); a new one follows `section` (and `question`) again though they're unchanged, so a link to the section the page opened on goes there after the reader chose another (the host's `section` still names the one it navigated to).
+- Docs: `meta.json` (Learn's `onSection`, `navigation`).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).

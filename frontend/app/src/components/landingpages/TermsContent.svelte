@@ -5,4 +5,4 @@
     import LegalDocContent from "./LegalDocContent.svelte";
 </script>
 
-<LegalDocContent doc={terms} />
+<LegalDocContent doc={terms} path="/terms" />

@@ -5,6 +5,7 @@ import { isStandalonePagePath } from "@shared";
 import { openUrl } from "tauri-plugin-oc-api";
 import { i18nKey } from "../i18n/i18n";
 import { toastStore } from "../stores/toast";
+import { syncCurrentHistoryState } from "./history";
 
 const regex = new RegExp("^(?:[a-z]+:)?//", "i");
 
@@ -63,11 +64,30 @@ export function withQueryStringParam(name: string, value: string): string {
     return `${window.location.pathname}?${qs}`;
 }
 
-// A param set in the current URL in place (a doc's ?section= as the reader picks a section, so
-// the address can be shared), keeping the entry's history state. Not through the router, which
+// A param set in the current URL in place (a doc's ?section= as the reader picks a section, the
+// canister the architecture map shows, so the address can be shared). Not through the router, which
 // would scroll the page to the top and count a page view.
 export function setQueryStringParamInPlace(name: string, value: string): void {
-    history.replaceState(history.state, "", withQueryStringParam(name, value));
+    replaceUrlInPlace(withQueryStringParam(name, value));
+}
+
+// A param taken out of the current URL in place, as setQueryStringParamInPlace sets one
+export function removeQueryStringParamInPlace(name: string): void {
+    replaceUrlInPlace(removeQueryStringParam(name));
+}
+
+// The entry's history state is kept (the app's own keys, as `action`: utils/history.ts), with its
+// `path` changed to the new URL: page.js shows the entry's `path` when it's gone back or forward to,
+// so the one the router last pushed would undo the rewrite then. A state without one (none, or
+// another's) is left as it is: page.js shows the entry's own URL for it.
+function replaceUrlInPlace(url: string): void {
+    const state: unknown = history.state;
+    const next =
+        state !== null && typeof state === "object" && "path" in state
+            ? { ...state, path: url }
+            : state;
+    history.replaceState(next, "", url);
+    syncCurrentHistoryState(next);
 }
 
 const nomenuRoutes: RouteType[] = [];
@@ -134,11 +154,16 @@ export async function copyPageUrl(client: OpenChat): Promise<void> {
 }
 
 /**
- * Copies a link to a section of the page (its `?section=`, as the legal pages and the whitepaper
- * read it) on the site's own origin, as copyPageUrl does, and says whether it could.
+ * Copies a link to a section of the page at `path` (its `?section=`, as the legal pages and the
+ * whitepaper read it) on the site's own origin, as copyPageUrl does, and says whether it could.
+ * The doc's own path, not the address's: a doc is shown on other pages too (the terms at sign-up).
  */
-export async function copySectionUrl(client: OpenChat, section: string): Promise<void> {
-    await copyUrl(sectionUrl(window.location.pathname, section, client.canonicalOrigin()));
+export async function copySectionUrl(
+    client: OpenChat,
+    path: string,
+    section: string,
+): Promise<void> {
+    await copyUrl(sectionUrl(path, section, client.canonicalOrigin()));
 }
 
 /** The address of a section of the page at `path`, on `origin`. */

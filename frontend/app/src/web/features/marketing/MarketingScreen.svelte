@@ -11,6 +11,7 @@
         platformOperatorStore,
         querystringStore,
         routeForScope,
+        routerNavigationStore,
         selectedAuthProviderStore,
         type OpenChat,
         type RouteParams,
@@ -46,6 +47,7 @@
     import { FeaturedCommunities } from "./featuredCommunities.svelte";
     import {
         docPageFor,
+        docPagePath,
         isEmailLinkPage,
         isLegalDoc,
         landingCommunities,
@@ -62,12 +64,23 @@
     // the app's home: "/" goes on to the default chat list, as the router does for anyone signed in
     const enterApp = () => navigate("/");
 
-    // an emailed link followed elsewhere signs this page in too, so it enters the app
+    // /diamond's Upgrade asked to sign in first: its dialog's emailed link goes on to the Diamond
+    // dialog too, as its other sign-ins do (startDiamondUpgrade). Closing that dialog stops the link,
+    // and the page's own Sign in is a sign-in for the app.
+    let diamondUpgradePending = false;
+
+    // an emailed link followed elsewhere signs this page in too, so it enters the app (or goes on
+    // to the Diamond dialog)
     const auth = createAuth(client, {
         translate: (key) => $_(key),
         onEmailSignedIn: () => {
             pageSignIns.emailDone();
-            enterApp();
+            if (diamondUpgradePending) {
+                diamondUpgradePending = false;
+                openDiamondDialog();
+            } else {
+                enterApp();
+            }
         },
     });
     const dialog = new AuthDialogProps(auth);
@@ -90,10 +103,12 @@
     // closing gives up what the dialog had going, and signs out an identity without an account it
     // leaves behind (a sign-up that failed)
     const onClose = () => {
+        diamondUpgradePending = false;
         pageSignIns.closed();
         auth.cancel();
     };
     const onOpen = () => {
+        diamondUpgradePending = false;
         last = selectedAuthProviderStore.value;
         dialog.opening();
     };
@@ -149,20 +164,38 @@
     // material for anyone else
     const cseaChecklist = $derived(showsCseaChecklist($platformModeratorStore, $platformOperatorStore));
 
-    // the doc a doc page shows, once it's there
+    // the doc a doc page shows, once it's there. Each is made again only when what it shows
+    // changes (the moderator flag, /diamond's two strings), as a new doc is a new page to Learn
+    // (its contents list's state, the jump to ?section=)
+    const cseaPageDoc = $derived(cseaDoc(cseaChecklist));
+    const diamondKicker = $derived($_("upgrade.diamond"));
+    const diamondTitle = $derived($_("upgrade.benefits"));
+    const diamondPageDoc = $derived<LearnDoc>({
+        kicker: diamondKicker,
+        title: diamondTitle,
+        sections: [],
+    });
     const doc = $derived.by((): LearnDoc | undefined => {
         if (isLegalDoc(docPage)) return legalLoader?.module;
-        if (docPage === "csea") return cseaDoc(cseaChecklist);
-        if (docPage === "diamond") {
-            return { kicker: $_("upgrade.diamond"), title: $_("upgrade.benefits"), sections: [] };
-        }
+        if (docPage === "csea") return cseaPageDoc;
+        if (docPage === "diamond") return diamondPageDoc;
         return undefined;
     });
     const loadFailed = $derived(learnLoader.failed || !!legalLoader?.failed);
 
+    // the page's own path, which a link to one of its sections names
+    const pagePath = $derived(
+        docPage !== undefined
+            ? docPagePath(docPage)
+            : learn !== undefined
+              ? learnPath(learn.page, learn.post)
+              : window.location.pathname,
+    );
+
     // what every Learn page takes, a sub-page or a doc page: the theme, the routes, the auth, and
     // a doc's ?section= (the section chosen in its contents list, in place, so the address can be
-    // shared) and its copy links (on the site's own origin)
+    // shared; the router's count of navigations follows a link to the one it last showed again,
+    // as ?section= is then unchanged) and its copy links (on the site's own origin)
     const learnFrame = $derived({
         mode,
         accent: $accentStore,
@@ -174,7 +207,8 @@
         learnPageHref: learnPath,
         onNavigate: (page: LearnPage, post?: string) => navigate(learnPath(page, post)),
         section: $querystringStore.get("section") ?? undefined,
-        onCopySection: (id: string) => void copySectionUrl(client, id),
+        navigation: $routerNavigationStore,
+        onCopySection: (id: string) => void copySectionUrl(client, pagePath, id),
         onSection: (id: string) => setQueryStringParamInPlace("section", id),
         auth: pageAuth,
         onEnterApp: enterApp,
@@ -186,8 +220,15 @@
     // as /profile_summary's ?profile does: "/" goes on to it without the query
     const openDiamondDialog = () =>
         navigate(`${routeForScope(client.getDefaultScope())}?diamond`);
+    // its sign-in is the page's (pageAuth), going on to the Diamond dialog, an emailed link's too
     const diamondSignIn = new PageAuthState(() => ({
-        auth: pageAuth,
+        auth: {
+            ...pageAuth,
+            onOpen: () => {
+                onOpen();
+                diamondUpgradePending = true;
+            },
+        },
         onEnterApp: openDiamondDialog,
         appHref: "/",
     }));

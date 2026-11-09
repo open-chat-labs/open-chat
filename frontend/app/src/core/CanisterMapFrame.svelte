@@ -3,7 +3,12 @@
     import { Body, Column, CommonButton } from "component-lib";
     import { getContext, onMount } from "svelte";
     import { currentThemeMode } from "@src/theme/themes";
-    import { openChatFriendlyUrl, openExternalUrl } from "@src/utils/urls";
+    import {
+        openChatFriendlyUrl,
+        openExternalUrl,
+        removeQueryStringParamInPlace,
+        setQueryStringParamInPlace,
+    } from "@src/utils/urls";
 
     // The interactive canister map (architecture/canister_map) is a page of its own which the
     // website build writes under a name carrying the website version (rollup.config.mjs, which
@@ -56,15 +61,8 @@
                 shownSection = ev.data.hash.replace("#", "") || null;
                 // Rewritten in place, keeping any other parameters (?ref= and the like): a
                 // navigation through the router would log a page view per canister
-                const params = new URLSearchParams(window.location.search);
-                if (shownSection) params.set("section", shownSection);
-                else params.delete("section");
-                const query = params.toString();
-                history.replaceState(
-                    null,
-                    "",
-                    window.location.pathname + (query ? `?${query}` : ""),
-                );
+                if (shownSection) setQueryStringParamInPlace("section", shownSection);
+                else removeQueryStringParamInPlace("section");
             }
         }
         window.addEventListener("message", onMessage);

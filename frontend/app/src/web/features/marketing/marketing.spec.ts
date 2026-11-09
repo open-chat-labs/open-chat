@@ -1,7 +1,9 @@
 import type { CommunitySummary, RouteParams } from "@client";
 import { vi } from "vitest";
+import { resolve } from "@src/utils/routeTable.testing";
 import {
     docPageFor,
+    docPagePath,
     isEmailLinkPage,
     isLegalDoc,
     landingCommunities,
@@ -49,6 +51,12 @@ describe("the doc pages outside Learn's tabs", () => {
     test("Learn's own pages and Landing aren't", () => {
         expect(docPageFor(route({ kind: "whitepaper_route" }))).toBeUndefined();
         expect(docPageFor(route({ kind: "home_landing_route" }))).toBeUndefined();
+    });
+
+    test("each one's path is its own route's", () => {
+        const pages: DocPage[] = ["terms", "privacy", "guidelines", "csea", "diamond"];
+        for (const p of pages) expect(docPageFor(resolve(docPagePath(p)))).toBe(p);
+        expect(docPagePath("csea")).toBe("/csea-reporting");
     });
 
     test("only the legal ones are Learn content", () => {
