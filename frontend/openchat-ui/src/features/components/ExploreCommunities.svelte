@@ -347,6 +347,45 @@
     shown = PAGE;
     langs = langs.includes(l) ? langs.filter((k) => k !== l) : [...langs, l];
   }
+
+  // the open language menu takes the room from its top to the pane's foot (over the guest banner, see .menu-open) and
+  // scrolls past that: a long list on a short pane would otherwise run off the pane, out of reach under the sticky
+  // search bar. Opened with less than a few options' room (a hero near the foot), the pane first scrolls it up to have
+  // them, as far as it can: the scrim keeps the pane from scrolling while the menu is open. Kept to the room as the menu
+  // moves with it open: the pane resizing, or its content shrinking under a language just picked (its scroll clamped)
+  const MENU_MARGIN = 12;
+  const MENU_MIN = 120;
+  function fitToPane(menu: HTMLElement) {
+    const pane = root;
+    if (!pane) return;
+    const room = () => Math.floor(pane.getBoundingClientRect().bottom - menu.getBoundingClientRect().top - MENU_MARGIN);
+    // how far the pane's content alone scrolls: the menu, absolute in the pane, adds to its overflow, so it's measured
+    // out of the layout. The pane's scroll is kept within that, in one step, before the menu is capped: past it, the
+    // capped menu would hold the overflow open and each cap then clamp the pane back a step per scroll event
+    const contentScroll = () => {
+      menu.style.display = 'none';
+      const most = pane.scrollHeight - pane.clientHeight;
+      menu.style.display = '';
+      return Math.max(0, most);
+    };
+    const fit = () => {
+      const most = contentScroll();
+      if (pane.scrollTop > most) pane.scrollTop = most;
+      menu.style.maxHeight = `${Math.max(0, room())}px`;
+    };
+    const short = MENU_MIN - room();
+    if (short > 0) pane.scrollTop = Math.min(pane.scrollTop + short, contentScroll());
+    fit();
+    window.addEventListener('resize', fit);
+    pane.addEventListener('scroll', fit, { passive: true });
+    const resized = typeof ResizeObserver === 'function' ? new ResizeObserver(fit) : undefined;
+    resized?.observe(pane);
+    return () => {
+      window.removeEventListener('resize', fit);
+      pane.removeEventListener('scroll', fit);
+      resized?.disconnect();
+    };
+  }
 </script>
 
 {#snippet icon(name: string, size: number, ink: string)}<span class="glyph" style:width="{size}px" style:height="{size}px" style:background={ink} style:mask="var(--icon-{name}) center/contain no-repeat"
@@ -359,7 +398,7 @@
     >
     {#if langOpen}
       <div class="lang-scrim" onclick={() => (langOpen = false)} role="presentation"></div>
-      <div class="lang-menu" class:centered>
+      <div class="lang-menu" class:centered {@attach fitToPane}>
         {#each languages as l}
           {@const on = langs.includes(l.value)}
           <div class="lang-option" onclick={() => toggleLang(l.value)} tabindex="0" role="option" aria-selected={on}>
@@ -441,7 +480,7 @@
 
 <div class="explore" data-screen-label="Explore communities" bind:this={root} onscroll={() => root && onScroll?.(root.scrollTop)}>
   {#if searchShown}
-    <div class="search-bar">
+    <div class="search-bar" class:menu-open={langOpen}>
       <div class="search-row">
         <span
           class="back"
@@ -544,7 +583,7 @@
       </div>
     </div>
   {:else}
-    <div class="hero">
+    <div class="hero" class:menu-open={langOpen}>
       <div class="hero-text">
         <span class="hero-title">{t('ui.exploreCommunities.heroTitle')}</span>
         <span class="hero-sub"
@@ -756,6 +795,14 @@
     box-sizing: border-box;
     overflow-y: auto;
     overflow-x: hidden;
+    /* a column, so the guest banner takes the space under content shorter than the pane
+       (margin-block-start: auto) and sits at its foot in every view, not straight after the content */
+    display: flex;
+    flex-direction: column;
+  }
+
+  .explore > * {
+    flex-shrink: 0;
   }
 
   .glyph {
@@ -943,6 +990,9 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    /* max-height: the room to the pane's foot (fitToPane) */
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: var(--space-6);
     box-sizing: border-box;
     border-radius: var(--radius-lg);
@@ -959,6 +1009,7 @@
   }
 
   .lang-option {
+    flex: none;
     display: flex;
     align-items: center;
     gap: var(--space-10);
@@ -1693,11 +1744,19 @@
   .guest-wrap {
     position: sticky;
     bottom: 0;
+    margin-block-start: auto;
     z-index: 6;
     display: flex;
     justify-content: center;
     padding: var(--space-16) var(--space-16) var(--space-18);
     pointer-events: none;
+  }
+
+  /* the bar or hero with the language menu open goes over the banner (z-index 6), so the menu's last options aren't
+     under it (a press on them would hit Sign in); its scrim covers the banner too, so a press there only closes it */
+  .search-bar.menu-open,
+  .hero.menu-open {
+    z-index: 7;
   }
 
   .guest {
