@@ -1765,7 +1765,8 @@
                 "dragBack": "Faites glisser vers le bas pour revenir",
                 "dragToClose": "Faites glisser vers le bas pour fermer",
                 "notAllSent": "Certaines photos ou vidéos n'ont pas été envoyées. Elles sont toujours jointes.",
-                "done": "OK"
+                "done": "OK",
+                "caption": "Ajouter une légende…"
             },
             "emoji": {
                 "recent": "Récents",

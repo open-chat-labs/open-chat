@@ -1765,7 +1765,8 @@
                 "dragBack": "Trascina giù per tornare indietro",
                 "dragToClose": "Trascina giù per chiudere",
                 "notAllSent": "Alcune foto o video non sono stati inviati. Sono ancora allegati.",
-                "done": "Fine"
+                "done": "Fine",
+                "caption": "Aggiungi una didascalia…"
             },
             "emoji": {
                 "recent": "Recenti",

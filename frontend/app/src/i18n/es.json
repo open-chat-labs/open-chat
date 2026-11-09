@@ -1765,7 +1765,8 @@
                 "dragBack": "Arrastra hacia abajo para volver",
                 "dragToClose": "Arrastra hacia abajo para cerrar",
                 "notAllSent": "Algunas fotos o vídeos no se enviaron. Siguen adjuntos.",
-                "done": "Listo"
+                "done": "Listo",
+                "caption": "Añade un pie de foto…"
             },
             "emoji": {
                 "recent": "Recientes",

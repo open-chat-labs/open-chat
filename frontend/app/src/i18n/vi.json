@@ -1765,7 +1765,8 @@
                 "dragBack": "Kéo xuống để quay lại",
                 "dragToClose": "Kéo xuống để đóng",
                 "notAllSent": "Một số ảnh hoặc video chưa được gửi. Chúng vẫn được đính kèm.",
-                "done": "Xong"
+                "done": "Xong",
+                "caption": "Thêm chú thích…"
             },
             "emoji": {
                 "recent": "Gần đây",

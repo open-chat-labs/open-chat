@@ -1765,7 +1765,8 @@
                 "dragBack": "Nach unten ziehen, um zurückzugehen",
                 "dragToClose": "Nach unten ziehen zum Schließen",
                 "notAllSent": "Einige Fotos oder Videos wurden nicht gesendet. Sie sind noch angehängt.",
-                "done": "Fertig"
+                "done": "Fertig",
+                "caption": "Bildunterschrift hinzufügen…"
             },
             "emoji": {
                 "recent": "Zuletzt",

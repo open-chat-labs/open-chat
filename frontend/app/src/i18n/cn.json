@@ -1765,7 +1765,8 @@
                 "dragBack": "向下拖动返回",
                 "dragToClose": "向下拖动关闭",
                 "notAllSent": "部分照片或视频未发送，它们仍在附件中。",
-                "done": "完成"
+                "done": "完成",
+                "caption": "添加说明…"
             },
             "emoji": {
                 "recent": "最近",

@@ -1765,7 +1765,8 @@
                 "dragBack": "Przeciągnij w dół, aby wrócić",
                 "dragToClose": "Przeciągnij w dół, aby zamknąć",
                 "notAllSent": "Niektóre zdjęcia lub filmy nie zostały wysłane. Nadal są załączone.",
-                "done": "Gotowe"
+                "done": "Gotowe",
+                "caption": "Dodaj podpis…"
             },
             "emoji": {
                 "recent": "Ostatnie",

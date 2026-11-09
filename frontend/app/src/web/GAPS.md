@@ -472,17 +472,18 @@ design export needs. Each entry says where it came up.
     the iOS app the native tree doesn't follow the keyboard's reports (only Android's are followed,
     `systemBars.ts`), so the WebView shrinks above the keyboard, and a panel rests at the keyboard's
     height only where one was seen on the device, else at 304px over the safe area: switching may
-    jump. Following iOS's reports waits for a device to check on. Phones' browsers: 304px (the emoji
-    panel) and 264px (the attach panel, 06's mobile web variant), so the composer moves by 40px
-    between the two.
+    jump. Following iOS's reports waits for a device to check on. The emoji and attach panels rest
+    at the same height (the user's decision): the keyboard's where it's known, else 304px in the
+    apps and 264px on phones' browsers (06's mobile web attach panel, the emoji panel too).
   - **Photos and videos picked** go straight into the composer (06 "live in the composer"), held
     by the composer (`mediaPicks`), not the chat's draft: they're lost when the chat is left (the
     draft keeps a file, or a photo pasted). Each is prepared as it's picked (a video's transcode
-    takes a while); a send waits for them. A message holds one attachment, so the first goes with
-    the caption and the others follow it, a message each, in the order picked; refused, those not
-    sent are picked again. The backend has no message with several. The composer's placeholder is
-    the library's "Add a caption" (the plan's "Add a caption…"); Send has no count badge (the
-    plan's nice-to-have, which needs a `MessageComposer` change).
+    takes a while); a send waits for them. The composer's placeholder is "Add a caption…" and Send
+    shows how many go (`MessageComposer`'s `attachedPlaceholder` and `sendCount`, by hand,
+    EXPORT-LOG 2026-11-09). **Backend dependency**: a message holds one attachment, so the first
+    goes with the caption and the others follow it, a message each, in the order picked (refused,
+    those not sent are picked again), until the backend takes several in one message (the user's
+    decision).
   - **The gallery strip and Recents** list the phone's last 100 photos and videos through the
     apps' plugin (`loadRecentMedia`; `utils/native/recentMedia`, shared with the old native UI's
     strip). It asks for the photos permission as the panel first opens (Android); with it refused,
@@ -493,8 +494,8 @@ design export needs. Each entry says where it came up.
     app-store build), in the prototype's colours (`--attach-*`), the same in both themes.
   - **The builders** (Poll, Prize, Send crypto, Swap, Meme fighter) are N9's: each pushes a
     placeholder (a local `builder` screen), over the chat with the attach panel left open under it
-    as it was (the user's request, 2026-11-08; 06 still says anything that leaves the chat closes
-    it); Android's back pops the builder first. The system's pickers (Camera, File, All photos with
+    as it was (the user's decision; the plan is being updated to say so); Android's back pops the
+    builder first. The system's pickers (Camera, File, All photos with
     nothing listed) close it. A payment in the draft (one staged on another device) has no chip,
     and isn't sent with the text (`sendComposed` refuses it).
   - **The emoji panel's sections**: Recent first (07's eight to start, each pick to the front,
@@ -512,24 +513,27 @@ design export needs. Each entry says where it came up.
   - **Voice**: the line under a take is the web's, Esc included.
   - **Mentions** use the library's list over the composer. Enter follows the app's enter-sends
     setting (off on touch devices).
-  - **Toasts** sit above the composer however tall it is (`--toasts-footer`); while Recents shows,
-    just above its Done (the user's request; 06 is silent; `onToastFloor`).
+  - **Toasts** sit above the composer however tall it is (`--toasts-footer`); while the attach
+    panel shows (at rest and in Recents), at its bottom, over it (the user's decision; 06 is
+    silent; `onToastFloor`).
   - **A tap on the messages** leaves the keyboard and a resting panel as they are (the backdrop
     takes taps only from f 0.02, 06); grown or searching, it's the backdrop's, which collapses the
     sheet to rest.
   - **The keyboard on other screens** (§5 Open): Pick a username, Edit profile and Delete account
     keep their pinned button down (`aboveKeyboard`); the search screens and Link to your account
     let the WebView shrink above the keyboard. The builders' keyboard-up states are N9's.
-  - **Open questions** (for the plan; decided here meanwhile as above): several photos going a
-    message each, the first with the caption (one attachment a message), and picks not kept with
-    the chat's draft; the emoji sections (the real categories, not 07's curated seven) and the
-    category icons; the GIF search's "suggestions built from the query" (not built); light-mode
-    colours for the attach actions; what the strip and Recents show without photos access or
-    photos (the system's picker); mobile web's attach panel (a drag handle that only closes it,
-    264px against the emoji panel's 304px); the label of Recents' back chevron ("Back"); a builder
-    leaving the attach panel open (the user's request) against 06's "closes the panel".
+  - **Open questions** (for the plan; decided here meanwhile as above): the emoji sections (the
+    real categories, not 07's curated seven) and the category icons; the GIF search's
+    "suggestions built from the query" (not built); light-mode colours for the attach actions; what
+    the strip and Recents show without photos access or photos (All photos opens the system's
+    picker); the accessible label of Recents' back chevron ("Back").
   - **Not checked**: the group typing strip in a browser (the local replica's typing goes over
     WebRTC, which the headless browser couldn't set up); the iOS app (no device).
+- **Composer caption placeholder and a count on Send** (by hand, native N5c, EXPORT-LOG
+  2026-11-09, to take back to the design export): `MessageComposer` takes `attachedPlaceholder`
+  (the text box's placeholder while something's attached; "Add a caption" by default) and
+  `sendCount` (a count on Send's corner, from 1). The native composer passes "Add a caption…" and
+  the number of photos and videos picked; the web passes neither.
 - **Mirrored message kinds and smaller GIFs** (by hand, native N5c, EXPORT-LOG 2026-11-08, to take
   back to the design export): every kind of message (photo, album, video, GIF, file, link, transfer,
   swap offer, poll, prize) takes `mirror` as text and voice bubbles do, so your own in the native

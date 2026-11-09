@@ -1680,7 +1680,8 @@
                 "dragBack": "Drag down to go back",
                 "dragToClose": "Drag down to close",
                 "notAllSent": "Some photos or videos weren't sent. They're still attached.",
-                "done": "Done"
+                "done": "Done",
+                "caption": "Add a caption…"
             },
             "emoji": {
                 "recent": "Recent",

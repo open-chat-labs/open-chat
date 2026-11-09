@@ -72,7 +72,7 @@ export class KeyboardSlot {
     get resting(): number {
         const panel = this.#slot.panel;
         if (panel === undefined) return 0;
-        return restingHeight(panel, {
+        return restingHeight({
             keyboard: this.#last,
             safeBottom: this.#safeBottom,
             gallery: this.#gallery,

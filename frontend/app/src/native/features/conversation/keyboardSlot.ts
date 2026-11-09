@@ -34,8 +34,8 @@ export const CLOSED: Slot = { panel: undefined, expecting: false, search: "none"
  */
 export const PANEL_REST = 304;
 
-/** The attach panel's on mobile web, which has no gallery strip (06 "Mobile web variant"). */
-export const PANEL_REST_WEB_ATTACH = 264;
+/** On mobile web, which has no gallery strip (06 "Mobile web variant"; both panels). */
+export const PANEL_REST_WEB = 264;
 
 /**
  * The emoji search's strip above the keyboard: the handle (22), the field's row (40 and 8 under
@@ -52,14 +52,15 @@ export const SETTLE_MS = 250;
 /**
  * How tall a panel rests, in CSS pixels: the keyboard's last height where it's been seen, so the
  * composer doesn't move between the keyboard and the panel; else the design's height above the
- * safe area (on mobile web, the attach panel's own, shorter one).
+ * safe area: 304px in the apps, 264px on mobile web (06's). The emoji and attach panels rest at the
+ * same height, so switching between them doesn't move the composer either.
  */
-export function restingHeight(
-    panel: Panel,
-    known: { keyboard: number | undefined; safeBottom: number; gallery: boolean },
-): number {
-    if (panel === "attach" && !known.gallery) return PANEL_REST_WEB_ATTACH + known.safeBottom;
-    return known.keyboard ?? PANEL_REST + known.safeBottom;
+export function restingHeight(known: {
+    keyboard: number | undefined;
+    safeBottom: number;
+    gallery: boolean;
+}): number {
+    return known.keyboard ?? (known.gallery ? PANEL_REST : PANEL_REST_WEB) + known.safeBottom;
 }
 
 /** What the slot's height is worked out from, in CSS pixels from the window's bottom. */

@@ -6,7 +6,7 @@ import {
     keyboardMoved,
     keyboardReport,
     PANEL_REST,
-    PANEL_REST_WEB_ATTACH,
+    PANEL_REST_WEB,
     restingHeight,
     searchChanged,
     slotHeight,
@@ -58,21 +58,18 @@ describe("the slot under the composer", () => {
 
 describe("a panel's resting height", () => {
     test("is the keyboard's last height, where it's been seen", () => {
-        const known = { keyboard: 310, safeBottom: 24, gallery: true };
-        expect(restingHeight("emoji", known)).toBe(310);
-        expect(restingHeight("attach", known)).toBe(310);
+        expect(restingHeight({ keyboard: 310, safeBottom: 24, gallery: true })).toBe(310);
+        expect(restingHeight({ keyboard: 310, safeBottom: 24, gallery: false })).toBe(310);
     });
 
-    test("else is the design's, over the safe area", () => {
-        const known = { keyboard: undefined, safeBottom: 24, gallery: true };
-        expect(restingHeight("emoji", known)).toBe(PANEL_REST + 24);
-        expect(restingHeight("attach", known)).toBe(PANEL_REST + 24);
-    });
-
-    test("on mobile web, is the attach panel's own, without a gallery strip", () => {
-        const known = { keyboard: undefined, safeBottom: 0, gallery: false };
-        expect(restingHeight("attach", known)).toBe(PANEL_REST_WEB_ATTACH);
-        expect(restingHeight("emoji", known)).toBe(PANEL_REST);
+    test("else is the design's over the safe area, the same for both panels", () => {
+        expect(restingHeight({ keyboard: undefined, safeBottom: 24, gallery: true })).toBe(
+            PANEL_REST + 24,
+        );
+        // mobile web, without the gallery strip
+        expect(restingHeight({ keyboard: undefined, safeBottom: 0, gallery: false })).toBe(
+            PANEL_REST_WEB,
+        );
     });
 });
 

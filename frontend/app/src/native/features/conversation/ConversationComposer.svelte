@@ -111,8 +111,8 @@
         /** Goes to a message in the list (the one replied to or edited). */
         onJump: (index: number) => void;
         /**
-         * Where toasts sit while a panel has its own footer at the bottom (Recents' "Attach N"),
-         * in CSS pixels from the window's bottom; undefined, above the composer.
+         * Where toasts sit while the attach panel shows (at its bottom), in CSS pixels from the
+         * window's bottom; undefined, above the composer.
          */
         onToastFloor: (px: number | undefined) => void;
     };
@@ -507,6 +507,12 @@
     $effect(() => {
         slot.safeBottom = safeBottom;
     });
+
+    // while the attach panel shows, toasts ("Up to 10 photos or videos") pop up at its bottom
+    $effect(() => {
+        onToastFloor(slot.panel === "attach" ? safeBottom : undefined);
+    });
+    $effect(() => () => onToastFloor(undefined));
 </script>
 
 {#if blocked !== undefined}
@@ -533,6 +539,10 @@
             onSubmitEdit={saveEdit}
             onJumpContext={composingIndex === undefined ? undefined : () => onJump(composingIndex)}
             attachment={staged}
+            attachedPlaceholder={picks.count > 0
+                ? $_("native.composer.attach.caption")
+                : undefined}
+            sendCount={picks.count}
             onRemoveAttachment={removeAttachment}
             onRemoveMediaItem={removeMedia}
             onAddMedia={attachable && picks.count > 0 && picks.room > 0
@@ -617,7 +627,6 @@
                     onPickMedia={() => pick("media")}
                     onPickFile={() => pick("file")}
                     onBuild={build}
-                    {onToastFloor}
                 />
             {/if}
         </KeyboardPanel>

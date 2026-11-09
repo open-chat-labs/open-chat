@@ -56,8 +56,6 @@
         onPickMedia: () => void;
         onPickFile: () => void;
         onBuild: (builder: ComposerBuilder) => void;
-        /** Where toasts sit while Recents shows (above its Done), or undefined. */
-        onToastFloor: (px: number | undefined) => void;
     };
 
     let {
@@ -74,7 +72,6 @@
         onPickMedia,
         onPickFile,
         onBuild,
-        onToastFloor,
     }: Props = $props();
 
     // the phone's last 100 (06): listed as the panel opens, the last list meanwhile
@@ -124,16 +121,6 @@
     onDestroy(() => probes.forEach((p) => p.removeAttribute("src")));
 
     const layers = $derived(panelLayers(panel.f));
-
-    // while Recents shows, a toast ("Up to 10 …") sits just above its Done, not above the
-    // composer it covers: the pinned bar less its top padding
-    const PINNED_TOP = 12;
-    let pinnedHeight = $state(0);
-    const recentsShown = $derived(layers.expanded > 0.5);
-    $effect(() => {
-        onToastFloor(recentsShown ? pinnedHeight - PINNED_TOP : undefined);
-    });
-    $effect(() => () => onToastFloor(undefined));
 
     function toggle(item: RecentItem) {
         onToggle(item, durations[item.id]);
@@ -324,7 +311,7 @@
                     {/each}
                 </div>
             </div>
-            <div class="pinned" class:shown={picks.count > 0} bind:offsetHeight={pinnedHeight}>
+            <div class="pinned" class:shown={picks.count > 0}>
                 <Button
                     label={$_("native.composer.attach.done")}
                     icon="check"
