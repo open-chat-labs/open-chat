@@ -1,6 +1,6 @@
 <!-- The native toast, the kit's: the app's (toastStore: showFailureToast, showSuccessToast) and the
      screens' own (`queue`, ScreenContext.toast, which can offer Undo), above the tab bar on a tab's
-     root, above a conversation's composer, above the safe area on another pushed screen. One at a time: whichever came last takes the
+     root, above a conversation's composer (at the floor it says: `floor`), above the safe area on another pushed screen. One at a time: whichever came last takes the
      other's place. The app's failure stays until it's closed, as in the other trees, and its success
      goes by itself (toastStore); a screen's goes by itself (ToastQueue: 2.6s, 5s with Undo). -->
 <script lang="ts">
@@ -12,7 +12,14 @@
     import { untrack } from "svelte";
     import { _ } from "svelte-i18n";
 
-    let { above, queue }: { above: "tabBar" | "footer" | "none"; queue: ToastQueue } = $props();
+    type Props = {
+        above: "tabBar" | "footer" | "none";
+        /** Over a footer that grows, where they sit, in CSS pixels from the window's bottom. */
+        floor?: number;
+        queue: ToastQueue;
+    };
+
+    let { above, floor, queue }: Props = $props();
 
     const toast = $derived($toastStore);
     // the key is a store of its own, which can change while the toast shows
@@ -56,4 +63,13 @@
     }
 </script>
 
-<NativeToasts toast={shown} {above} onUndo={() => queue.undo()} onDismiss={dismiss} />
+<!-- lays nothing out: only there to hand the kit's toasts their floor (--toasts-footer) -->
+<div class="floor" style:--toasts-footer={floor === undefined ? undefined : `${floor}px`}>
+    <NativeToasts toast={shown} {above} onUndo={() => queue.undo()} onDismiss={dismiss} />
+</div>
+
+<style lang="scss">
+    .floor {
+        display: contents;
+    }
+</style>

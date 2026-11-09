@@ -1765,6 +1765,7 @@
                 "dragBack": "Przeciągnij w dół, aby wrócić",
                 "dragToClose": "Przeciągnij w dół, aby zamknąć",
                 "notAllSent": "Niektóre zdjęcia lub filmy nie zostały wysłane. Nadal są załączone.",
+                "notAllKept": "Niektóre zdjęcia lub filmy nie zostały wysłane, a {count} nie mogło pozostać załączonych (maksymalnie 10).",
                 "done": "Gotowe",
                 "caption": "Dodaj podpis…"
             },

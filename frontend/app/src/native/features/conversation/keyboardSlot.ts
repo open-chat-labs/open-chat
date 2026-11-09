@@ -137,12 +137,13 @@ export function searchChanged(
 export type KeyboardReport = "apply" | "settle" | "ignore";
 
 /**
- * A keyboard report: the same height, nothing; down while the keyboard is on its way, the last
- * move's (stale), nothing; down otherwise, at once; up from nothing held, at once; any other
- * height once it has stayed for `SETTLE_MS`, the slot holding what it has meanwhile.
+ * A keyboard report: the same height, nothing, unless the keyboard's on its way (it's come, at
+ * the height it had: taken, so it's no longer expected); down while the keyboard is on its way,
+ * the last move's (stale), nothing; down otherwise, at once; up from nothing held, at once; any
+ * other height once it has stayed for `SETTLE_MS`, the slot holding what it has meanwhile.
  */
 export function keyboardReport(slot: Slot, settled: number, reported: number): KeyboardReport {
-    if (reported === settled) return "ignore";
+    if (reported === settled) return reported > 0 && slot.expecting ? "apply" : "ignore";
     if (reported === 0) return slot.expecting ? "ignore" : "apply";
     if (settled === 0 && !slot.expecting) return "apply";
     return "settle";
@@ -164,6 +165,28 @@ export function keyboardMoved(slot: Slot, up: boolean): Slot {
  */
 export function keyboardMissed(slot: Slot): Slot {
     return slot.expecting ? { ...slot, expecting: false } : slot;
+}
+
+/**
+ * The slot moved on from `before` to `after`: once the keyboard's no longer expected, the height
+ * it last reported (`latest`), if the slot doesn't have it (`settled`), is taken as a report now:
+ * a "down" ignored while it was on its way is then the keyboard going down. Else undefined.
+ */
+export function reportToReplay(
+    before: Slot,
+    after: Slot,
+    settled: number,
+    latest: number,
+): number | undefined {
+    return before.expecting && !after.expecting && latest !== settled ? latest : undefined;
+}
+
+/**
+ * Whether the keyboard's up, for a focus: the slot has its height (`settled`), and it hasn't been
+ * reported down since (`latest`, a "down" ignored while it was on its way).
+ */
+export function keyboardIsUp(settled: number, latest: number): boolean {
+    return settled > 0 && latest > 0;
 }
 
 /** Which way the composer's buttons go (notes §2): + · text · emoji on iOS, the other way on Android. */

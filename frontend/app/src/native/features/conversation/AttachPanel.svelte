@@ -9,12 +9,16 @@
      in four centred columns. Only what the chat lets the reader send is offered. -->
 <script module lang="ts">
     import type { RecentMedia, RecentMediaList } from "@src/utils/native/recentMedia";
+    import { SvelteMap } from "svelte/reactivity";
 
     /** A photo or video from the phone, as the strip and Recents show it. */
     export type RecentItem = { id: string; video: boolean; media: RecentMedia; thumb?: string };
 
     // what the phone listed last, shown again at once the next time the panel opens
     let lastListed: RecentItem[] = [];
+
+    // the videos' lengths read, kept across the panel's openings
+    const knownDurations = new SvelteMap<string, number>();
 </script>
 
 <script lang="ts">
@@ -27,11 +31,12 @@
         recentMediaThumbnail,
         recentMediaUrl,
     } from "@src/utils/native/recentMedia";
-    import { onDestroy, onMount } from "svelte";
+    import { onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { KeyboardPanelState } from "./panelState.svelte";
     import { panelLayers } from "./panelDrag";
     import { panelContentPull, panelDragHandle } from "./panelDragHandle";
+    import { readVideoDuration, VideoDurations } from "./videoDurations.svelte";
 
     type Props = {
         panel: KeyboardPanelState;
@@ -92,32 +97,27 @@
         listed = true;
     });
 
-    // a video's length, read from the file where it can be (the plugin doesn't list it)
-    let durations = $state<Record<string, string>>({});
-    const probes = new Map<string, HTMLVideoElement>();
+    // a video's length, read from the file where it can be (the plugin doesn't list it), a few at
+    // a time (VideoDurations)
+    const videoDurations = new VideoDurations(readVideoDuration, knownDurations);
     $effect(() => {
-        for (const item of items) {
+        const videos = items.flatMap((item) => {
             const url = item.video ? recentMediaUrl(item.media) : undefined;
-            if (url === undefined || probes.has(item.id)) continue;
-            const probe = document.createElement("video");
-            probe.preload = "metadata";
-            probe.muted = true;
-            probe.onloadedmetadata = () => {
-                if (Number.isFinite(probe.duration)) {
-                    durations = { ...durations, [item.id]: formatClock(probe.duration) };
-                }
-                probe.removeAttribute("src");
-            };
-            probe.src = url;
-            probes.set(item.id, probe);
-        }
+            return url === undefined ? [] : [{ id: item.id, url }];
+        });
+        untrack(() => videoDurations.want(videos));
     });
-    onDestroy(() => probes.forEach((p) => p.removeAttribute("src")));
+    onDestroy(() => videoDurations.stop());
+
+    function durationOf(item: RecentItem): string | undefined {
+        const seconds = videoDurations.of(item.id);
+        return seconds === undefined ? undefined : formatClock(seconds);
+    }
 
     const layers = $derived(panelLayers(panel.f));
 
     function toggle(item: RecentItem) {
-        onToggle(item, durations[item.id]);
+        onToggle(item, durationOf(item));
     }
 
     function allPhotos() {
@@ -127,7 +127,7 @@
     }
 
     function tileLabel(item: RecentItem): string {
-        const duration = durations[item.id];
+        const duration = durationOf(item);
         const name = item.video
             ? duration === undefined
                 ? $_("native.composer.attach.video")
@@ -206,7 +206,7 @@
     >
         {#if item.video}
             <span class="duration">
-                <span class="play"></span>{durations[item.id] ?? ""}
+                <span class="play"></span>{durationOf(item) ?? ""}
             </span>
         {/if}
         {#if n !== undefined}

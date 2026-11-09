@@ -79,6 +79,7 @@
         tabSlide,
         type SwipeAxis,
     } from "./tabSwipe";
+    import { ToastFloors } from "./toastFloors.svelte";
     import Toasts from "./Toasts.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -543,8 +544,11 @@
         pendingToast: showPendingToast,
         removals,
     };
-    const rootContext: ScreenContext = { back: undefined, ...shared };
-    const pushedContext: ScreenContext = { back, ...shared };
+    const rootContext: Omit<ScreenContext, "toastFloor"> = { back: undefined, ...shared };
+    const pushedContext: Omit<ScreenContext, "toastFloor"> = { back, ...shared };
+    // where toasts sit over a footer that grows: the top screen's say (ScreenContext.toastFloor)
+    const floors = new ToastFloors();
+    const toastFloor = $derived(floors.of(stacks.steps[stacks.steps.length - 1]?.key));
 
     function systemBack() {
         const action = backAction({
@@ -638,6 +642,7 @@
                                 step={root}
                                 root={{ title: labels[tab] }}
                                 context={rootContext}
+                                {floors}
                             />
                         {/if}
                     </section>
@@ -654,7 +659,7 @@
                         in:pushIn={{ play: () => stacks.change !== "pop" }}
                         out:popOut={{ play: () => stacks.change === "pop" }}
                     >
-                        <ScreenHost {step} root={undefined} context={pushedContext} />
+                        <ScreenHost {step} root={undefined} context={pushedContext} {floors} />
                     </section>
                 {/each}
             {/key}
@@ -664,7 +669,7 @@
             <TabBar {tabs} selected={stacks.tab} onSelect={selectTab} />
         </div>
 
-        <Toasts above={toastsAbove(stacks.steps)} queue={toasts} />
+        <Toasts above={toastsAbove(stacks.steps)} floor={toastFloor} queue={toasts} />
     </div>
 {:else if location.area === "signed_out"}
     <div class="outside">

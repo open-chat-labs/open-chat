@@ -1,7 +1,8 @@
 <script lang="ts">
     import { ColourVars, Column, Container, Row, Search } from "component-lib";
     import { type GiphyContent, type KlipyObject, type KlipySearchResponse } from "@client";
-    import { gifContent } from "@src/logic/composer/gifs";
+    import { gifContent, klipyUrl, nextPosition } from "@src/logic/composer/gifs";
+    import { klipyApiKey } from "@src/utils/features";
     import { onMount } from "svelte";
 
     type KeyedKlipyObject = KlipyObject & { key: string };
@@ -27,13 +28,6 @@
     let imgWidth = $state(0);
     let pos = "";
     let exhausted = false;
-
-    const TRENDING_API_URL = `https://api.klipy.com/v2/featured?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${
-        import.meta.env.OC_KLIPY_APIKEY
-    }&limit=${pageSize}`;
-    const SEARCH_API_URL = `https://api.klipy.com/v2/search?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${
-        import.meta.env.OC_KLIPY_APIKEY
-    }&limit=${pageSize}&q=`;
 
     function sumOfHeightsForColumn(
         cache: Record<
@@ -86,16 +80,14 @@
 
     function getMoreGifs() {
         refreshing = true;
-        const url =
-            searchTerm === undefined || searchTerm === ""
-                ? `${TRENDING_API_URL}&pos=${pos}`
-                : `${SEARCH_API_URL}${searchTerm}&pos=${pos}`;
+        const url = klipyUrl(klipyApiKey ?? "", searchTerm ?? "", pos, pageSize);
         return fetch(url)
             .then((res) => res.json())
             .then((res: KlipySearchResponse) => {
                 if (!res) return [];
-                pos = `${res.next}`;
-                exhausted = pos === "";
+                const next = nextPosition(res);
+                pos = next ?? "";
+                exhausted = next === undefined;
                 return res.results;
             })
             .then((res) => {

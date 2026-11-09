@@ -1765,6 +1765,7 @@
                 "dragBack": "Kéo xuống để quay lại",
                 "dragToClose": "Kéo xuống để đóng",
                 "notAllSent": "Một số ảnh hoặc video chưa được gửi. Chúng vẫn được đính kèm.",
+                "notAllKept": "Một số ảnh hoặc video chưa được gửi, và {count} mục không thể giữ đính kèm (tối đa 10).",
                 "done": "Xong",
                 "caption": "Thêm chú thích…"
             },

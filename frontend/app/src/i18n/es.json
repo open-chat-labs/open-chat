@@ -1765,6 +1765,7 @@
                 "dragBack": "Arrastra hacia abajo para volver",
                 "dragToClose": "Arrastra hacia abajo para cerrar",
                 "notAllSent": "Algunas fotos o vídeos no se enviaron. Siguen adjuntos.",
+                "notAllKept": "Algunas fotos o vídeos no se enviaron y {count} no pudieron seguir adjuntos (hasta 10).",
                 "done": "Listo",
                 "caption": "Añade un pie de foto…"
             },

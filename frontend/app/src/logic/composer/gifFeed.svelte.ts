@@ -9,6 +9,9 @@ import {
 
 const PAGE = 24;
 const SUGGESTIONS = 8;
+// how many pages of GIFs already shown are skipped for one with a new one, before waiting for the
+// next scroll
+const REPEATS_SKIPPED = 3;
 
 /**
  * The GIFs a picker shows (logic/composer/gifs): the trending ones, or those matching what's typed,
@@ -66,20 +69,28 @@ export class GifFeed {
         return this.more();
     }
 
-    /** The next page, unless there are no more or one is on its way. */
+    /**
+     * The next page, unless there are no more or one is on its way. A page of GIFs already shown
+     * adds nothing for the list to grow by, so the page after it is fetched (a few at most).
+     */
     async more(): Promise<void> {
         if (this.#loading || this.#exhausted) return;
         const run = this.#run;
         this.#loading = true;
         this.#failed = false;
         try {
-            const page = await this.fetchPage(klipyUrl(this.apiKey, this.#query, this.#pos, PAGE));
-            if (run !== this.#run) return;
-            const next = nextPosition(page);
-            this.#pos = next ?? "";
-            this.#exhausted = next === undefined;
-            const seen = new Set(this.#gifs.map((g) => g.id));
-            this.#gifs = [...this.#gifs, ...(page.results ?? []).filter((g) => !seen.has(g.id))];
+            for (let skipped = 0; ; skipped++) {
+                const url = klipyUrl(this.apiKey, this.#query, this.#pos, PAGE);
+                const page = await this.fetchPage(url);
+                if (run !== this.#run) return;
+                const next = nextPosition(page);
+                this.#pos = next ?? "";
+                this.#exhausted = next === undefined;
+                const seen = new Set(this.#gifs.map((g) => g.id));
+                const fresh = (page.results ?? []).filter((g) => !seen.has(g.id));
+                this.#gifs = [...this.#gifs, ...fresh];
+                if (fresh.length > 0 || this.#exhausted || skipped >= REPEATS_SKIPPED) break;
+            }
             if (this.#gifs.length === 0 && this.#query !== "" && this.#exhausted) {
                 await this.#nothingFound(this.#query, run);
             }

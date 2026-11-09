@@ -70,6 +70,26 @@ describe("the GIFs a picker shows", () => {
         expect(fetchPage.mock.calls[1][0]).toContain("pos=2");
     });
 
+    test("skip a page of GIFs already shown for the next, so the list still grows", async () => {
+        const fetchPage = pages([gif("a"), gif("b")], [gif("a")], [gif("b")], [gif("c")]);
+        const feed = new GifFeed("k", fetchPage);
+        await feed.search("");
+        await feed.more();
+        expect(feed.gifs.map((g) => g.id)).toEqual(["a", "b", "c"]);
+        expect(fetchPage).toHaveBeenCalledTimes(4);
+    });
+
+    test("skip only a few pages of repeats at a time", async () => {
+        const repeats = Array.from({ length: 10 }, () => [gif("a")]);
+        const fetchPage = pages([gif("a")], ...repeats);
+        const feed = new GifFeed("k", fetchPage);
+        await feed.search("");
+        await feed.more();
+        expect(feed.gifs.map((g) => g.id)).toEqual(["a"]);
+        expect(fetchPage).toHaveBeenCalledTimes(5);
+        expect(feed.loading).toBe(false);
+    });
+
     test("start again for a search, a page still on its way dropped", async () => {
         let resolveFirst: (page: KlipySearchResponse) => void = () => {};
         const fetchPage = vi.fn(

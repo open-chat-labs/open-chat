@@ -48,6 +48,7 @@ native/
     tabBar.adapter.ts    the tab bar's tabs
     tabSwipe.ts      the swipe between tabs, and a tab switch's two-screen slide
     Toasts.svelte    the app's toast as the kit's
+    toastFloors.svelte.ts  where toasts sit over a footer that grows: the top screen's say
   features/      one folder per screen/feature, as in src/web:
     app/screens.ts   which screen shows for each kind; a new screen sets its entry there
     app/screenModules.ts   the screens' chunks, loaded once and kept, preloaded while idle
@@ -104,7 +105,8 @@ to one do.
 - **Screens.** A screen is plugged in by setting its entry in `features/app/screens.ts`; it gets
   `{ screen, context }`, `context.back` being a pushed screen's Back, `context.push` a local push,
   and `context.toast` the native toast (with Undo for a destructive action), which takes the
-  place of the app's (`toastStore`). Only screens touch the client and the stores, as in
+  place of the app's (`toastStore`); `context.toastFloor` is where toasts sit over a footer that
+  grows (a conversation's composer), taken from the top screen only (`ToastFloors`). Only screens touch the client and the stores, as in
   `src/web`.
 - **Signed out** there are no tabs: every URL but a marketing page is the signed-out start
   (`features/start`), with no guest mode, and the URL stays as it is for after sign-in. Its

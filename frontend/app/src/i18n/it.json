@@ -1765,6 +1765,7 @@
                 "dragBack": "Trascina giù per tornare indietro",
                 "dragToClose": "Trascina giù per chiudere",
                 "notAllSent": "Alcune foto o video non sono stati inviati. Sono ancora allegati.",
+                "notAllKept": "Alcune foto o video non sono stati inviati e {count} non sono potuti restare allegati (fino a 10).",
                 "done": "Fine",
                 "caption": "Aggiungi una didascalia…"
             },

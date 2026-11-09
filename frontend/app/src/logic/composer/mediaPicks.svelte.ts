@@ -19,8 +19,24 @@ export type PickedMedia = PickSource & { content: AttachmentContent | undefined 
 /** What a tap on one did: picked it, put it back, or nothing, ten being picked already. */
 export type PickOutcome = "picked" | "unpicked" | "full";
 
+/**
+ * A photo or video not sent (a send refused part way), to pick again with its content: `thumb`
+ * is the content's own, not one the picks made.
+ */
+export type LeftMedia = { id: string; video: boolean; thumb?: string; content: AttachmentContent };
+
 export class MediaPicks {
     #picks = $state.raw<PickedMedia[]>([]);
+    // the thumbnails made for picks (a file's object URL), let go of as each goes
+    #made = new Map<string, string>();
+    // those being prepared, each settling once it's prepared or dropped
+    #jobs = new Map<string, Promise<void>>();
+    readonly #revoke: (thumb: string) => void;
+
+    /** `revoke` lets go of a thumbnail `add` made (URL.revokeObjectURL). */
+    constructor(revoke: (thumb: string) => void = () => {}) {
+        this.#revoke = revoke;
+    }
 
     /** Those picked, in the order they were. */
     get picks(): readonly PickedMedia[] {
@@ -51,24 +67,70 @@ export class MediaPicks {
         return this.add(source);
     }
 
-    /** Picks it (one from the camera or a picker, never picked before), unless ten are. */
-    add(source: PickSource): PickOutcome {
+    /**
+     * Picks it (one from the camera or a picker, never picked before), unless ten are. `thumb`
+     * makes its thumbnail once it's in (an object URL, let go of as it goes).
+     */
+    add(source: PickSource, thumb?: () => string): PickOutcome {
         if (this.#picks.length >= MAX_MEDIA) return "full";
-        this.#picks = [...this.#picks, { ...source, content: undefined }];
+        let picked: PickSource = source;
+        if (thumb !== undefined) {
+            const made = thumb();
+            this.#made.set(source.id, made);
+            picked = { ...source, thumb: made };
+        }
+        this.#picks = [...this.#picks, { ...picked, content: undefined }];
         return "picked";
     }
 
+    /**
+     * Picks again, ahead of those picked since, those a send left (in their order), as many as
+     * there's room for. Returns how many there wasn't room for.
+     */
+    restore(left: readonly LeftMedia[]): number {
+        const back = left.slice(0, this.room).map(({ id, video, thumb, content }) => ({
+            id,
+            video,
+            thumb,
+            content,
+        }));
+        if (back.length > 0) this.#picks = [...back, ...this.#picks];
+        return left.length - back.length;
+    }
+
     remove(id: string): void {
-        this.#picks = this.#picks.filter((p) => p.id !== id);
+        this.#drop((p) => p.id === id);
     }
 
     /** The composer's thumbnail at `index` removed. */
     removeAt(index: number): void {
-        this.#picks = this.#picks.filter((_, i) => i !== index);
+        this.#drop((_, i) => i === index);
+    }
+
+    /** Those sent (`ids`), those picked since staying. */
+    removeAll(ids: readonly string[]): void {
+        const sent = new Set(ids);
+        this.#drop((p) => sent.has(p.id));
     }
 
     clear(): void {
-        if (this.#picks.length > 0) this.#picks = [];
+        this.#drop(() => true);
+    }
+
+    /** The component holding them goes: their thumbnails are let go of. */
+    dispose(): void {
+        this.#made.forEach((thumb) => this.#revoke(thumb));
+        this.#made.clear();
+    }
+
+    /** Its content is on its way: `job` settles once it's prepared (or it's dropped). */
+    preparing(id: string, job: Promise<void>): void {
+        const tracked: Promise<void> = job
+            .catch(() => {})
+            .finally(() => {
+                if (this.#jobs.get(id) === tracked) this.#jobs.delete(id);
+            });
+        this.#jobs.set(id, tracked);
     }
 
     /** Its content is prepared (unless it's been put back meanwhile). */
@@ -77,9 +139,39 @@ export class MediaPicks {
         this.#picks = this.#picks.map((p) => (p.id === id ? { ...p, content } : p));
     }
 
-    /** The contents prepared, in the order picked. */
-    contents(): AttachmentContent[] {
-        return this.#picks.flatMap((p) => (p.content === undefined ? [] : [p.content]));
+    /** Those picked now, by id: what a send takes (those picked while it waits aren't). */
+    ids(): string[] {
+        return this.#picks.map((p) => p.id);
+    }
+
+    /**
+     * The contents of those picked (`ids`), once each has been prepared or dropped (one that
+     * couldn't be, or put back meanwhile, is left out), in the order picked.
+     */
+    async contentsOf(ids: readonly string[]): Promise<AttachmentContent[]> {
+        const jobs = ids.flatMap((id) => this.#jobs.get(id) ?? []);
+        await Promise.all(jobs);
+        const wanted = new Set(ids);
+        return this.#picks.flatMap((p) =>
+            wanted.has(p.id) && p.content !== undefined ? [p.content] : [],
+        );
+    }
+
+    // takes those out, letting go of the thumbnails made for them
+    #drop(out: (pick: PickedMedia, index: number) => boolean) {
+        const kept: PickedMedia[] = [];
+        this.#picks.forEach((p, i) => {
+            if (!out(p, i)) {
+                kept.push(p);
+                return;
+            }
+            const made = this.#made.get(p.id);
+            if (made !== undefined) {
+                this.#made.delete(p.id);
+                this.#revoke(made);
+            }
+        });
+        if (kept.length !== this.#picks.length) this.#picks = kept;
     }
 }
 
@@ -100,6 +192,18 @@ export function picksTray(picks: readonly PickedMedia[]): MediaAttachment {
                 : { kind: "image", src: p.thumb },
         ),
     };
+}
+
+/** One a send left, to pick again: a photo shows as itself, a video as its thumbnail. */
+export function leftMedia(id: string, content: AttachmentContent): LeftMedia {
+    switch (content.kind) {
+        case "image_content":
+            return { id, video: false, thumb: content.blobUrl ?? content.thumbnailData, content };
+        case "video_content":
+            return { id, video: true, thumb: content.thumbnailData, content };
+        default:
+            return { id, video: false, content };
+    }
 }
 
 /** How sending the photos and videos after the first went: all posted, or the rest left. */

@@ -2,11 +2,13 @@ import {
     CLOSED,
     composerPlacement,
     inputFocused,
+    keyboardIsUp,
     keyboardMissed,
     keyboardMoved,
     keyboardReport,
     PANEL_REST,
     PANEL_REST_WEB,
+    reportToReplay,
     restingHeight,
     searchChanged,
     slotHeight,
@@ -116,6 +118,13 @@ describe("the emoji panel's search", () => {
 describe("a keyboard report", () => {
     test("the height the slot has: nothing to do", () => {
         expect(keyboardReport(CLOSED, 336, 336)).toBe("ignore");
+        expect(keyboardReport({ ...CLOSED, expecting: true }, 0, 0)).toBe("ignore");
+    });
+
+    test("the height the slot has while the keyboard's on its way: it's come, taken", () => {
+        // the emoji search's keyboard up, the keyboard glyph tapped: the composer's comes the same
+        expect(keyboardReport({ ...CLOSED, expecting: true }, 336, 336)).toBe("apply");
+        expect(keyboardMoved({ ...CLOSED, expecting: true }, true)).toEqual(CLOSED);
     });
 
     test("down: at once, unless the keyboard's on its way again (the last move's down)", () => {
@@ -156,6 +165,42 @@ describe("the keyboard", () => {
             search: "strip",
         });
         expect(keyboardMissed(emoji)).toBe(emoji);
+    });
+});
+
+describe("a report the slot didn't take while the keyboard was on its way", () => {
+    const expecting: Slot = { ...CLOSED, expecting: true };
+
+    test("is taken once it's no longer expected: a down ignored is the keyboard going down", () => {
+        expect(reportToReplay(expecting, CLOSED, 336, 0)).toBe(0);
+        // not coming after all (a search goes on)
+        const strip: Slot = { ...emoji, search: "strip" };
+        expect(
+            reportToReplay(
+                { ...strip, expecting: true },
+                keyboardMissed({ ...strip, expecting: true }),
+                336,
+                0,
+            ),
+        ).toBe(0);
+        // taken as a report then: down, at once
+        expect(keyboardReport(CLOSED, 336, 0)).toBe("apply");
+    });
+
+    test("isn't, while it's still expected, or when the slot has it", () => {
+        expect(reportToReplay(expecting, expecting, 336, 0)).toBeUndefined();
+        expect(reportToReplay(expecting, CLOSED, 336, 336)).toBeUndefined();
+        expect(reportToReplay(CLOSED, CLOSED, 336, 0)).toBeUndefined();
+    });
+});
+
+describe("whether the keyboard's up, for a focus", () => {
+    test("is the slot having its height, not reported down since", () => {
+        expect(keyboardIsUp(336, 336)).toBe(true);
+        // a down ignored while it was on its way
+        expect(keyboardIsUp(336, 0)).toBe(false);
+        // one coming up, not settled yet
+        expect(keyboardIsUp(0, 370)).toBe(false);
     });
 });
 

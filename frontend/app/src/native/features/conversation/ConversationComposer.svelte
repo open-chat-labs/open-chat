@@ -68,10 +68,12 @@
         composerStartText,
     } from "@src/logic/composer/composerProps";
     import {
+        leftMedia,
         MAX_MEDIA,
         MediaPicks,
         picksTray,
         sendMoreMedia,
+        type PickOutcome,
         type PickSource,
     } from "@src/logic/composer/mediaPicks.svelte";
     import {
@@ -183,12 +185,12 @@
     // what's attached: the photos and videos picked (the attach panel's selection, 06 "live in the
     // composer"), each in as it's picked and prepared meanwhile; else the draft's attachment (a
     // file, or a photo pasted or attached on another device). They don't mix: a pick takes the
-    // draft's attachment's place, and a file the picks'.
-    const picks = new MediaPicks();
+    // draft's attachment's place, and a file the picks'. A file's thumbnail is an object URL, let
+    // go of as the pick goes.
+    const picks = new MediaPicks((thumb) => URL.revokeObjectURL(thumb));
+    $effect(() => () => picks.dispose());
     const first = $derived(draftAttachment(draft));
     const staged = $derived(picks.count > 0 ? picksTray(picks.picks) : composerAttachment(first, ctx));
-    // the picks being prepared
-    const preparing = new Map<string, Promise<void>>();
     let nextFile = 0;
     const composingIndex = $derived(composingMessageIndex(draft, context));
 
@@ -275,23 +277,26 @@
     }
 
     // done once the message shows; refused, it rejects and the composer keeps the draft. With
-    // photos and videos picked: once they're prepared, the first with the caption, the others a
-    // message each after it, and the panel goes (06)
+    // photos and videos picked: those picked as it's sent, once they're prepared, the first with
+    // the caption, the others a message each after it, and the panel goes (06); any picked
+    // meanwhile stay for the next. None could be prepared (each has said so): the caption alone.
     async function send(text: string): Promise<void> {
         typing.stopped();
-        if (picks.count > 0) {
-            await Promise.all(preparing.values());
-            const contents = picks.contents();
-            if (contents.length === 0) throw new Error("nothing prepared");
-            const sent = await sendComposed(client, chat, context, text, {
-                content: contents[0],
-                shown: true,
-            });
-            if (sent.kind !== "posted") throw new Error(sent.reason);
-            picks.clear();
-            slot.close();
-            if (contents.length > 1) void sendAfter(contents.slice(1));
-            return;
+        const ids = picks.ids();
+        if (ids.length > 0) {
+            const contents = await picks.contentsOf(ids);
+            if (contents.length > 0) {
+                const sent = await sendComposed(client, chat, context, text, {
+                    content: contents[0],
+                    shown: true,
+                });
+                if (sent.kind !== "posted") throw new Error(sent.reason);
+                picks.removeAll(ids);
+                slot.close();
+                if (contents.length > 1) void sendAfter(contents.slice(1));
+                return;
+            }
+            if (text.trim() === "") throw new Error("nothing prepared");
         }
         const sent = await sendComposed(client, chat, context, text, {
             content: draftAttachment(draft),
@@ -300,22 +305,17 @@
         if (sent.kind !== "posted") throw new Error(sent.reason);
     }
 
-    // the photos and videos after the first, a message each; refused, those left are picked again
+    // the photos and videos after the first, a message each; refused, those left are picked again,
+    // ahead of any picked since, as many as there's room for (those there isn't are said)
     async function sendAfter(after: readonly AttachmentContent[]) {
         const sent = await sendMoreMedia(client, context, after);
         if (sent.kind === "posted") return;
-        for (const content of sent.left) {
-            const id = `left:${nextFile++}`;
-            const video = content.kind === "video_content";
-            const thumb =
-                content.kind === "image_content"
-                    ? (content.blobUrl ?? content.thumbnailData)
-                    : content.kind === "video_content"
-                      ? content.thumbnailData
-                      : undefined;
-            if (picks.add({ id, video, thumb }) === "picked") picks.prepared(id, content);
-        }
-        toast($_("native.composer.attach.notAllSent"));
+        const dropped = picks.restore(sent.left.map((c) => leftMedia(`left:${nextFile++}`, c)));
+        toast(
+            dropped === 0
+                ? $_("native.composer.attach.notAllSent")
+                : $_("native.composer.attach.notAllKept", { values: { count: dropped } }),
+        );
     }
 
     async function saveEdit(text: string) {
@@ -332,13 +332,17 @@
     }
 
     // one picked: into the composer at once, prepared meanwhile (in the chat it was picked in);
-    // one that can't be is put back, and said
-    function pickMedia(source: PickSource, file: () => Promise<File | LazyFile>): boolean {
-        const outcome = picks.add(source);
+    // one that can't be is put back, and said. False when ten are picked already
+    function mediaPicked(
+        outcome: PickOutcome,
+        source: PickSource,
+        file: () => Promise<File | LazyFile>,
+    ): boolean {
         if (outcome === "full") {
             toast($_("native.composer.attach.max"));
             return false;
         }
+        if (outcome === "unpicked") return true;
         // they don't mix: a photo takes a file's place
         if (first !== undefined) localUpdates.draftMessages.setAttachment(context, undefined);
         const to = context;
@@ -355,35 +359,26 @@
                 console.warn("Couldn't read a photo or video picked", err);
                 picks.remove(source.id);
                 toast($_("attachFileFailed"));
-            } finally {
-                preparing.delete(source.id);
             }
         })();
-        preparing.set(source.id, job);
+        picks.preparing(source.id, job);
         return true;
     }
 
     // a tile tapped in the attach panel: picked, or put back
     function toggleRecent(item: RecentItem, duration: string | undefined) {
-        if (picks.numberOf(item.id) !== undefined) {
-            picks.remove(item.id);
-            return;
-        }
-        pickMedia({ id: item.id, video: item.video, thumb: item.thumb, duration }, () =>
-            recentMediaFile(item.media),
-        );
+        const source = { id: item.id, video: item.video, thumb: item.thumb, duration };
+        mediaPicked(picks.toggle(source), source, () => recentMediaFile(item.media));
     }
 
-    // photos and videos from the camera or the browser's picker
+    // photos and videos from the camera or the browser's picker (a photo's thumbnail made once
+    // it's in)
     function attachMedia(files: File[]) {
         for (const file of files) {
             const video = file.type.startsWith("video/");
-            const source = {
-                id: `file:${nextFile++}`,
-                video,
-                thumb: video ? undefined : URL.createObjectURL(file),
-            };
-            if (!pickMedia(source, async () => file)) break;
+            const source = { id: `file:${nextFile++}`, video };
+            const outcome = picks.add(source, video ? undefined : () => URL.createObjectURL(file));
+            if (!mediaPicked(outcome, source, async () => file)) break;
         }
     }
 

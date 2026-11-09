@@ -1765,6 +1765,7 @@
                 "dragBack": "Faites glisser vers le bas pour revenir",
                 "dragToClose": "Faites glisser vers le bas pour fermer",
                 "notAllSent": "Certaines photos ou vidéos n'ont pas été envoyées. Elles sont toujours jointes.",
+                "notAllKept": "Certaines photos ou vidéos n'ont pas été envoyées, et {count} n'ont pas pu rester jointes (10 au maximum).",
                 "done": "OK",
                 "caption": "Ajouter une légende…"
             },

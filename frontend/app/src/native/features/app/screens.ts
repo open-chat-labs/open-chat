@@ -33,6 +33,13 @@ export type ScreenContext = {
      */
     pendingToast: (message: string) => PendingToast;
     /**
+     * Where toasts sit while this screen is on top, in CSS pixels from the window's bottom (a
+     * footer that grows: a conversation's composer over the keyboard or a panel); undefined, where
+     * they sit for its kind (`toastsAbove`). Its own, so a screen under the top one doesn't move
+     * them (ToastFloors).
+     */
+    toastFloor: (px: number | undefined) => void;
+    /**
      * Leaves and deletes waiting out their Undo (the shell's, one for the app): opening the chat
      * by any way (search, New chat, a link) takes its wait back, and it lasts across tabs.
      */

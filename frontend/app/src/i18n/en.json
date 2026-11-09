@@ -1680,6 +1680,7 @@
                 "dragBack": "Drag down to go back",
                 "dragToClose": "Drag down to close",
                 "notAllSent": "Some photos or videos weren't sent. They're still attached.",
+                "notAllKept": "Some photos or videos weren't sent, and {count} couldn't stay attached (up to 10).",
                 "done": "Done",
                 "caption": "Add a caption…"
             },

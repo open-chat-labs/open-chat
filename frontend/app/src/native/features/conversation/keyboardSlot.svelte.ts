@@ -2,9 +2,11 @@ import { keyboard } from "@stores/keyboard.svelte";
 import {
     CLOSED,
     inputFocused,
+    keyboardIsUp,
     keyboardMissed,
     keyboardMoved,
     keyboardReport,
+    reportToReplay,
     restingHeight,
     SEARCH_STRIP,
     searchChanged,
@@ -29,7 +31,8 @@ const EXPECT_FOR_MS = 2000;
  * the window, and the slot takes its height, so the composer sits right on it, and a panel takes
  * the same height when it goes down. The heights reported are taken once they've settled, and a
  * "down" from the keyboard's last move while it's coming again is ignored (`keyboardReport`), so
- * switching quickly between a panel and the keyboard doesn't move the composer. Elsewhere (the iOS
+ * switching quickly between a panel and the keyboard doesn't move the composer; the last report is
+ * taken once the keyboard's no longer expected (`reportToReplay`). Elsewhere (the iOS
  * app, whose WebView shrinks above the keyboard, and phones' browsers, which bring the field into
  * view themselves) the platform places the composer above the keyboard, and a panel takes the
  * keyboard's last height where it's been seen, else the design's (`restingHeight`).
@@ -39,6 +42,8 @@ export class KeyboardSlot {
     // the keyboard's height as the slot takes it (settled), and what it holds while it comes
     #up = $state(0);
     #held = $state(0);
+    // the height the keyboard last reported, taken or not (`reportToReplay`)
+    #latest = 0;
     // the keyboard's last settled height where it's been seen (a panel rests at it), else undefined
     #last = $state<number | undefined>(keyboard.seen ? keyboard.height : undefined);
     #expectTimer: ReturnType<typeof setTimeout> | undefined;
@@ -128,6 +133,7 @@ export class KeyboardSlot {
     /** The keyboard reported its height (0: down). */
     keyboardReported(height: number): void {
         if (!this.#reported) return;
+        this.#latest = height;
         switch (keyboardReport(this.#slot, this.#up, height)) {
             case "ignore":
                 // a stale "down", or the height it has: a settling one is off
@@ -155,12 +161,14 @@ export class KeyboardSlot {
     inputFocused(): void {
         // a screen over this one may have put the viewport resize back on (aboveKeyboard's)
         if (this.#reported && keyboard.viewportResizeEnabled) keyboard.disableViewportResize();
-        this.#set(inputFocused(this.#reported, this.#up > 0));
+        this.#set(inputFocused(this.#reported, keyboardIsUp(this.#up, this.#latest)));
     }
 
     /** The emoji panel's search field took the keyboard (as `search`), or gave it up ("none"). */
     searchChanged(search: Search): void {
-        this.#set(searchChanged(this.#slot, search, this.#reported, this.#up > 0));
+        this.#set(
+            searchChanged(this.#slot, search, this.#reported, keyboardIsUp(this.#up, this.#latest)),
+        );
     }
 
     /** Closes the panel (Android's back, a builder's done). */
@@ -174,9 +182,17 @@ export class KeyboardSlot {
             this.#last = height;
             this.#retried = false;
         }
-        const next = keyboardMoved(this.#slot, height > 0);
-        if (next !== this.#slot) this.#slot = next;
+        const before = this.#slot;
+        const next = keyboardMoved(before, height > 0);
+        if (next !== before) this.#slot = next;
         if (!this.#slot.expecting) clearTimeout(this.#expectTimer);
+        this.#replay(before);
+    }
+
+    // no longer expecting the keyboard: what it last reported, if the slot hasn't taken it
+    #replay(before: Slot) {
+        const latest = reportToReplay(before, this.#slot, this.#up, this.#latest);
+        if (latest !== undefined) this.keyboardReported(latest);
     }
 
     // a phone's browser keeps the page's height as its keyboard comes up, shrinking only what's
@@ -212,18 +228,21 @@ export class KeyboardSlot {
             this.#retried = true;
             if (this.onMissed?.() === true) return;
         }
-        const next = keyboardMissed(this.#slot);
-        if (next !== this.#slot) this.#slot = next;
+        const before = this.#slot;
+        const next = keyboardMissed(before);
+        if (next !== before) this.#slot = next;
+        this.#replay(before);
     }
 
     #set(slot: Slot) {
-        const wasExpecting = this.#slot.expecting;
+        const before = this.#slot;
         this.#slot = slot;
         clearTimeout(this.#expectTimer);
         if (slot.expecting) {
             // what to hold for the keyboard: its last height, fixed as it's asked for
-            if (!wasExpecting) this.#held = this.#last ?? keyboard.height;
+            if (!before.expecting) this.#held = this.#last ?? keyboard.height;
             this.#expectTimer = setTimeout(() => this.#missed(), EXPECT_FOR_MS);
         }
+        this.#replay(before);
     }
 }

@@ -645,13 +645,11 @@
             footerHeight = undefined;
         };
     });
+    // the shell takes it while this screen is on top (ScreenContext.toastFloor)
     $effect(() => {
-        const floor = toastFloor ?? footerHeight;
-        const root = document.documentElement;
-        if (floor === undefined) root.style.removeProperty("--toasts-footer");
-        else root.style.setProperty("--toasts-footer", `${floor}px`);
+        context.toastFloor(toastFloor ?? footerHeight);
     });
-    $effect(() => () => document.documentElement.style.removeProperty("--toasts-footer"));
+    $effect(() => () => context.toastFloor(undefined));
 
     function jumpTo(index: number) {
         if (chat !== undefined) void list?.scrollToMessageIndex({ chatId: chat.id }, index, false);

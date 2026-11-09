@@ -1765,6 +1765,7 @@
                 "dragBack": "向下拖动返回",
                 "dragToClose": "向下拖动关闭",
                 "notAllSent": "部分照片或视频未发送，它们仍在附件中。",
+                "notAllKept": "部分照片或视频未发送，其中 {count} 个无法保留在附件中（最多 10 个）。",
                 "done": "完成",
                 "caption": "添加说明…"
             },

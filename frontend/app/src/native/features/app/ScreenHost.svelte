@@ -15,16 +15,23 @@
     import { _ } from "svelte-i18n";
     import type { NativeScreen, StackStep } from "../../router/locations";
     import Placeholder from "./Placeholder.svelte";
+    import type { ToastFloors } from "../../shell/toastFloors.svelte";
     import { screenModules, type ScreenContext } from "./screens";
 
     type Props = {
         step: StackStep;
         /** A tab's root, with its translated title. */
         root: { title: string } | undefined;
-        context: ScreenContext;
+        /** The shell's, but for the screen's own toast floor (`floors`). */
+        context: Omit<ScreenContext, "toastFloor">;
+        floors: ToastFloors;
     };
 
-    let { step, root, context }: Props = $props();
+    let { step, root, context, floors }: Props = $props();
+
+    // the screen's own context: its toast floor is its step's
+    const key = $derived(step.key);
+    const screenContext = $derived<ScreenContext>({ ...context, toastFloor: floors.for(key) });
 
     const built = $derived(screenModules.has(step.screen.kind));
     // its chunk, when it's in by the time the screen shows
@@ -82,13 +89,13 @@
      state and scroll included, before the new step reaches it -->
 {#key step.key}
     {#if Ready !== undefined}
-        <Ready screen={step.screen} {context} />
+        <Ready screen={step.screen} context={screenContext} />
     {:else if built}
         {#await screenModules.load(step.screen.kind)}
             <div class="state waiting"><Spinner /></div>
         {:then Screen}
             {#if Screen !== undefined}
-                <Screen screen={step.screen} {context} />
+                <Screen screen={step.screen} context={screenContext} />
             {/if}
         {:catch}
             <!-- the chunk didn't load (a flaky network, or a deploy since the page loaded). The
