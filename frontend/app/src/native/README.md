@@ -82,8 +82,8 @@ and calls, the old UIs), the composer (`logic/composer`: where it is, what it of
 mentions, voice, the props it takes, GIFs; `logic/conversation/draftActions`: the reply or edit;
 shared with `src/web`, and the GIFs' content with the old UIs; the emoji by category in
 `utils/emojis`, the old pickers' data; the phone's recent photos in `utils/native/recentMedia`,
-shared with the old native UI's strip; the attach panel's picks, the photos attached together and
-the recent emoji in `logic/composer`), and the theme the web and Welcome's menu keep
+shared with the old native UI's strip; the photos and videos picked (the composer's media and the
+attach panel's selection) and the recent emoji in `logic/composer`), and the theme the web and Welcome's menu keep
 (`theme/themes.ts`). The
 marketing pages (Landing, Learn, the terms and privacy policy) aren't the app's: they open on the
 website in the default browser (`shell/onWeb.ts`), as the old native app's About and a deep link
@@ -123,7 +123,7 @@ to one do.
   `keyboard.ts`), which keeps the viewport resize off, makes room for the keyboard and scrolls the
   focused field above it. A conversation is the other way round: its composer rides on the
   keyboard, in a slot under it that a keyboard-area panel (emoji, attach) takes at the keyboard's
-  height when the keyboard goes down (`KeyboardSlot`; the design's 282px where the keyboard hasn't
+  height when the keyboard goes down (`KeyboardSlot`; the design's 304px where the keyboard hasn't
   been seen); where the keyboard's height is reported (the Android app) the viewport resize is off
   and the slot takes it, elsewhere the platform lifts the page.
 - **A screen leaving keeps what it shows** until it's gone. Back changes the URL as the pop starts,

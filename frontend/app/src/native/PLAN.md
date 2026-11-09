@@ -54,10 +54,11 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   ([#10370](https://github.com/open-chat-labs/open-chat/issues/10370)), to the plan's 05, 06 and
   07: the library's composer as the design's pill, in the platform's order, on the web composer's
   operations (moved to `logic/composer` and `logic/conversation/draftActions`); the slot under it
-  that the keyboard, the emoji and GIF panel (Recent, every emoji by category, search grown to full
-  height, GIFs sent as tapped) and the attach panel (the phone's recent photos and videos, picked
-  and numbered up to ten, the Recents grid dragged up, the actions) share, each dragged by its
-  handle. What it left (photos sent a message each, the builders, which are N9's …) is in GAPS.md
+  that the keyboard, the emoji and GIF panel (Recent, every emoji by category, the emoji search's
+  strip on the keyboard, the GIF search grown, GIFs sent as tapped) and the attach panel (the
+  phone's recent photos and videos picked straight into the composer, up to ten, the Recents grid,
+  the actions) share, each a sheet (06 "Sheet behaviour": 90% grown, the backdrop, the handle's and
+  the content's drags). What it left (photos sent a message each, the builders, which are N9's …) is in GAPS.md
   ("Native composer").
 - **Next:** the screens. N10a, N11 and N13 need only N3; N5d (the message menu) and N6 (details)
   need N5b; N9 (the builders) needs N10b too.
