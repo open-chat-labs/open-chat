@@ -17,11 +17,20 @@ describe('haptic', () => {
     expect(vibrate).not.toHaveBeenCalled();
   });
 
-  test('falls back to a short vibration without them', () => {
+  test('passes the style to them', () => {
+    const host = vi.fn();
+    setHaptics(host);
+    haptic('medium');
+    expect(host).toHaveBeenCalledWith('medium');
+  });
+
+  test('falls back to a short vibration without them, a longer one for medium', () => {
     const vibrate = vi.fn();
     vi.stubGlobal('navigator', { vibrate });
     haptic('light');
-    expect(vibrate).toHaveBeenCalledWith(10);
+    expect(vibrate).toHaveBeenLastCalledWith(10);
+    haptic('medium');
+    expect(vibrate).toHaveBeenLastCalledWith(20);
   });
 
   test('does nothing where there is neither, and never throws', () => {

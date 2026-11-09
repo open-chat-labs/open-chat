@@ -3,7 +3,9 @@
      divider, Delete, Report), the emoji sheet behind the reactions' +, the forward sheet, the report
      sheet, and the alert offering Diamond for a translation. What each action does is the shared
      `messageAction` (logic/conversation, the web's too); here is how it's shown: toasts (a delete
-     with Undo, which restores it), the sheets, Info pushed over the conversation. Reply and Edit set
+     with Undo, which restores it, after a native confirm while "ask before deleting" is on), the
+     sheets, Info pushed over the conversation. Opening the menu plays the one haptic a long-press
+     gives (medium; the chat's MessageGroup plays none of its own). Reply and Edit set
      the chat's draft, which the composer shows. The conversation opens it with `open`. -->
 <script lang="ts">
     import {
@@ -36,6 +38,7 @@
     import { removeLinkPreview } from "@src/logic/conversation/linkPreview";
     import { toggleReaction } from "@src/logic/conversation/reaction";
     import { quickReactions as recentReactions } from "@src/stores/quickReactions";
+    import { confirmMessageDeletion } from "@src/stores/settings";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { getContext, untrack } from "svelte";
@@ -65,6 +68,8 @@
     const overlays = untrack(() => context.overlays);
     const me = $derived($currentUserIdStore);
 
+    type DeleteAction = "delete" | "delete_for_me";
+
     // the message whose menu is open (or was, while it fades), and what it offers
     type Pressed = {
         chatId: ChatIdentifier;
@@ -81,6 +86,8 @@
     let forwarding = $state<{ chatId: ChatIdentifier; message: Message }>();
     let reporting = $state<Pressed>();
     let upgrading = $state(false);
+    // a sent message's delete, waiting on the sender's confirm ("ask before deleting")
+    let deleting = $state<{ at: Pressed; action: DeleteAction }>();
     // a link's preview the sender asked to take off, waiting on their confirm
     let removing = $state<{ chatId: ChatIdentifier; evt: EventWrapper<Message>; url: string }>();
 
@@ -92,6 +99,9 @@
         failed: boolean,
     ): void {
         if (chat === undefined || el === undefined || !offered.menu) return;
+        // the long-press's one haptic (the chat's MessageGroup plays none); once, should a press
+        // open the menu twice (Android's own long-press, then the group's)
+        if (!menuOpen) haptic("medium");
         pressed = {
             chatId: chat.id,
             evt,
@@ -101,7 +111,6 @@
             side: evt.event.sender === me ? "sent" : "received",
         };
         menuOpen = true;
-        haptic("light");
     }
 
     /** Asks the sender to confirm taking the link's preview off their message (notes §1: a small alert). */
@@ -116,6 +125,7 @@
             menuOpen = false;
             picking = undefined;
             reporting = undefined;
+            deleting = undefined;
             removing = undefined;
         });
     });
@@ -147,6 +157,11 @@
     );
     useOverlay(
         overlays,
+        () => deleting !== undefined,
+        () => (deleting = undefined),
+    );
+    useOverlay(
+        overlays,
         () => removing !== undefined,
         () => (removing = undefined),
     );
@@ -173,7 +188,7 @@
         void toggleReaction(client, { chatId: at.chatId }, at.evt.event, emoji);
     }
 
-    function target(at: Pressed): MessageActionTarget {
+    function target(at: Pressed, confirmDelete: boolean): MessageActionTarget {
         return {
             client,
             context: { chatId: at.chatId },
@@ -184,8 +199,7 @@
             formatter: $_,
             locale: $locale,
             diamond: $isDiamondStore,
-            // a delete offers Undo rather than asking first (notes §1)
-            confirmDelete: false,
+            confirmDelete,
         };
     }
 
@@ -201,11 +215,18 @@
             });
             return;
         }
-        if ((action === "delete" || action === "delete_for_me") && !at.failed) {
+        // a sent message's delete puts its toast up before the backend has it (deleteWithUndo),
+        // unless it asks first: then messageAction says so and show() asks
+        const confirmDelete = $confirmMessageDeletion;
+        if (isDelete(action) && !at.failed && !confirmDelete) {
             await deleteWithUndo(at, action);
             return;
         }
-        show(at, action, await messageAction(action, target(at)));
+        show(at, action, await messageAction(action, target(at, confirmDelete)));
+    }
+
+    function isDelete(action: MessageMenuAction): action is DeleteAction {
+        return action === "delete" || action === "delete_for_me";
     }
 
     // what came of an action, shown
@@ -216,6 +237,8 @@
                     forwarding = { chatId: at.chatId, message: outcome.dialog.evt.event };
                 } else if (outcome.dialog.kind === "report") {
                     reporting = at;
+                } else if (outcome.dialog.kind === "delete" && isDelete(action)) {
+                    deleting = { at, action };
                 }
                 return;
             case "succeeded":
@@ -254,10 +277,10 @@
     }
 
     // a delete shows at once; its toast waits for the backend, then offers Undo, which restores it
-    // (notes §1: destructive actions show Undo, rather than asking first)
-    async function deleteWithUndo(at: Pressed, action: "delete" | "delete_for_me") {
+    // (notes §1: destructive actions show Undo). With "ask before deleting" on, only once confirmed.
+    async function deleteWithUndo(at: Pressed, action: DeleteAction) {
         const pending = context.pendingToast($_("native.conversation.message.deleting"));
-        const outcome = await messageAction(action, target(at));
+        const outcome = await messageAction(action, target(at, false));
         if (outcome.kind !== "deleted" || !outcome.ok) {
             pending.failed();
             toastStore.showFailureToast(i18nKey("native.conversation.message.deleteFailed"));
@@ -363,6 +386,18 @@
         const at = reporting;
         if (at !== undefined) void report(at, reason, deleteToo);
     }} />
+
+<NativeAlert
+    open={deleting !== undefined}
+    title={$_("deleteMessageConfirm")}
+    confirmLabel={$_("deleteMessage")}
+    danger
+    onConfirm={() => {
+        const confirmed = deleting;
+        deleting = undefined;
+        if (confirmed !== undefined) void deleteWithUndo(confirmed.at, confirmed.action);
+    }}
+    onClose={() => (deleting = undefined)} />
 
 <NativeAlert
     open={removing !== undefined}

@@ -7,7 +7,8 @@
      A message's `menu` says whether it has a menu and hover bar (by default all but a deleted one); the bar offers reactions only
      with onReact / onReactPicker, and Reply / Edit only with onReply / onEdit.
      Native (design notes §3.3): `mirror` puts a sent run at the inline end with mirrored corners, `avatarSize` 28, and
-     `swipeStyle="inset"` the native swipe (the hint in the freed space, armed at 60px), `hoverBar={false}` no hover bar. The host may set
+     `swipeStyle="inset"` the native swipe (the hint in the freed space, armed at 60px), `hoverBar={false}` no hover bar,
+     `pressVibration={false}` no vibration of its own on a long-press (the host plays its haptic as the menu opens). The host may set
      `--group-gap` (the avatar's gap), `--group-ring` (the avatar's ring), and the marked row's tint: `--message-mark`
      (its colour), `--message-mark-start` / `--message-mark-end` (how far it reaches past the message) and
      `--message-mark-radius`. -->
@@ -81,6 +82,9 @@
     /** The hover bar for a pointer that hovers (web). Off on native (design notes §3.3): a long-press or a right click
      *  opens the message's menu there. */
     hoverBar?: boolean;
+    /** A short vibration as a touch long-press opens the message's menu (web). Off where the host plays its own haptic
+     *  as it opens the menu (native), so a long-press gives one. */
+    pressVibration?: boolean;
   }
 
   let {
@@ -106,6 +110,7 @@
     avatarSize = 34,
     swipeStyle = 'gutter',
     hoverBar = true,
+    pressVibration = true,
   }: Props = $props();
   const t = useT();
 
@@ -394,7 +399,7 @@
       pressTimer = setTimeout(() => {
         if (!gesture || gesture.swiping) return;
         pressFired = true;
-        navigator.vibrate?.(8);
+        if (pressVibration) navigator.vibrate?.(8);
         openMenu(i, { touch: true });
         gesture = null;
       }, 500);

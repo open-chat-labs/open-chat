@@ -3940,6 +3940,17 @@
         "required": false,
         "componentDefault": "true",
         "doc": "The hover bar for a pointer that hovers (web). Off on native (design notes §3.3): a long-press or a right click opens the message's menu there."
+      },
+      {
+        "name": "pressVibration",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "A short vibration as a touch long-press opens the message's menu (web). Off where the host plays its own haptic as it opens the menu (native), so a long-press gives one."
       }
     ],
     "group": "library"

@@ -147,7 +147,9 @@ to one do.
   `data-tab-swipe="off"`.
 - **Platform differences** are only the Design Notes' §2 ones, through `data-os` on `<html>` (the
   kit's back arrow, kebab and touch targets read it). Don't add others.
-- **Haptics** go through the kit's `haptic()`; the root installs the device's (`setHaptics`), and
-  mobile web has none.
+- **Haptics** go through the kit's `haptic()` (`'light'`, a tap; `'medium'`, a message's
+  long-press menu opening); the root installs the device's (`setHaptics`: the Tauri plugin's
+  `haptic`, with the style), and mobile web has none. One gesture plays one: a host that plays its
+  own turns the library's off (the chat's `MessageGroup` gets `pressVibration={false}`).
 - Styles, tokens and specs as in `src/web` (`scss.spec.ts` checks the styles here too). No specs
   that mount a component.

@@ -56,8 +56,8 @@ export type MessageActionTarget = {
     locale: string | null | undefined;
     diamond: boolean;
     /**
-     * Ask before deleting (the web's "don't show again" setting, `confirmMessageDeletion`). The
-     * native tree never asks: a delete there offers Undo instead.
+     * Ask before deleting (the "don't show again" setting, `confirmMessageDeletion`). The native
+     * tree asks with an alert, then offers Undo as well.
      */
     confirmDelete: boolean;
 };

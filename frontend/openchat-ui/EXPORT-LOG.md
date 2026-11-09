@@ -818,3 +818,8 @@
 - `messageMenuPlacement` (`menuPlacement.ts`, spec'd): where they go, in the notes' order: reactions above and the card below, else the card above and the reactions below, else both above (the reactions on top), else both below (the reactions first). Ours, past the notes: when none fits (a tall message, a long card) the card scrolls on the roomier side, with the reactions across the message if they fit there; with too little room even for that (under three rows), the reactions sit at the top of the screen and the card at its bottom, over the message.
 - `MessageGroup`: `hoverBar` (true by default); off, a pointer that hovers gets no hover bar (notes §3.3: "No hover bar on native"), and a long-press or a right click opens the message's menu. `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-09 — one medium haptic as a message's long-press menu opens (native N5d), by hand
+- `haptics.ts`: `HapticStyle` is `'light' | 'medium'`; the browser fallback vibrates 10ms for light (as before), 20ms for medium. The host's haptics get the style (the app's: the Tauri plugin's light tap, or Android's long-press feedback / iOS's medium impact). Spec'd.
+- `MessageGroup`: `pressVibration` (true by default: the web's 8ms vibration on a touch long-press, as before); off, a long-press opens the menu without it, so the native host's own haptic as the menu opens is the only one. `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

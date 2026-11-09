@@ -1240,6 +1240,7 @@
                                         mirror
                                         swipeStyle="inset"
                                         hoverBar={false}
+                                        pressVibration={false}
                                         marked={searchMatch ||
                                         quoted ||
                                         (args.focusIndex === msg.messageIndex && !failed) ||

@@ -8,9 +8,13 @@ describe("the native root's haptics", () => {
         vi.mocked(haptic).mockClear();
     });
 
-    test("are the plugin's light tap in the apps", () => {
-        hostHaptics(true)("light");
-        expect(haptic).toHaveBeenCalledTimes(1);
+    test("are the plugin's in the apps, in the style asked for", () => {
+        const haptics = hostHaptics(true);
+        haptics("light");
+        expect(haptic).toHaveBeenLastCalledWith("light");
+        haptics("medium");
+        expect(haptic).toHaveBeenLastCalledWith("medium");
+        expect(haptic).toHaveBeenCalledTimes(2);
     });
 
     test("are none on mobile web", () => {

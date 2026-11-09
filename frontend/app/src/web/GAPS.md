@@ -39,7 +39,8 @@ design export needs. Each entry says where it came up.
   (#10366) put `data-os` on the native root (the app's platform, else the user agent's) and built
   the shell on it (`src/native/README.md`). Left:
   - Haptics: done. The native root installs the Tauri plugin's new `haptic` command (Android's
-    keyboard-tap feedback, iOS's light impact) in the apps, and nothing on mobile web
+    keyboard-tap feedback, iOS's light impact; with `style: "medium"`, N5d's message menu,
+    Android's long-press feedback and iOS's medium impact) in the apps, and nothing on mobile web
     (`native/haptics.ts`). A shell built before the command rejects it, which means no haptics,
     so a bundle taken over the air still runs on it: no major version bump needed for this alone.
     Check the feel on both platforms.
@@ -377,10 +378,14 @@ design export needs. Each entry says where it came up.
       store), then +, which opens the library's `EmojiPicker` in a bottom sheet (notes §1:
       pickers are sheets; the design doesn't show where the + goes). The library picker's set is
       small (its own sample list), not the app's full emoji set.
-    - **Delete** doesn't ask first, whatever the web's "ask before deleting" setting says: it shows
-      at once and its toast (waiting for the backend, then "Message deleted") offers Undo, which
-      undeletes it (notes §1: destructive actions show Undo). A failed message's Delete just
-      removes it.
+    - **Delete** (and "delete for me") asks first while the "ask before deleting" setting
+      (`confirmMessageDeletion`, on by default) is on: a `NativeAlert` with the web dialog's words
+      ("Do you really want to delete this message?", Delete), the shared `messageAction`'s "ask".
+      Then, or at once with the setting off, it shows deleted and its toast (waiting for the
+      backend, then "Message deleted") offers Undo, which undeletes it (notes §1: destructive
+      actions show Undo). The alert has no "Don't show me this again" (the web dialog's toggle) and
+      the native tree has no setting for it yet, and the setting is kept in the app's own local
+      storage, so in the apps it stays on for now. A failed message's Delete just removes it.
     - **Words**: toasts for Copy ("Copied"), Pin, Unpin, Undelete, a delete and its Undo, a
       forward ("Forwarding to 2 chats…", then "Forwarded to 2 chats") and a report; the web says
       nothing for Copy or Pin. Translating without Diamond offers it in a `NativeAlert` (Get
@@ -399,8 +404,13 @@ design export needs. Each entry says where it came up.
     - **Report** is a bottom sheet with the web dialog's words (the design has no report screen).
     - **Not checked in a browser**: removing a link's preview (the local replica's previews don't
       load) and the menu in RTL (spec'd only).
-    - The menu's haptic is the kit's `haptic('light')` on top of `MessageGroup`'s own
-      `navigator.vibrate(8)`, which Android's WebView may also play.
+    - **One haptic**, medium, as the menu opens: `MessageActions` plays the kit's
+      `haptic('medium')` (the plugin's `haptic` with `style: "medium"`: Android's `LONG_PRESS`
+      feedback, iOS's `UIImpactFeedbackGenerator(style: .medium)`), once even if a press opens the
+      menu twice (Android's own long-press, then the group's timer), and the chat's `MessageGroup`
+      plays no vibration of its own (`pressVibration={false}`). A shell built before the style
+      plays its light tap. Not checked on a device. The swipe's armed haptic is still
+      `MessageGroup`'s `navigator.vibrate(10)`.
   - **A message's thread** is N8a's (native PLAN): the replies link under messages and the thread
     screen (replies, composer, follow). Until then the link is hidden: the conversation's mapping
     gets `threads: false` (`ConversationContext.threads`), so no message has thread fields, rather

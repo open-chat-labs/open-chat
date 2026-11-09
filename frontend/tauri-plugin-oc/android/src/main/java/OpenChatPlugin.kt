@@ -79,12 +79,23 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         invoke.resolve(JSObject().put("fcmToken", OCPluginCompanion.fcmToken))
     }
 
-    // A light tap where the native design asks for one (a tab tap, a long-press menu opening). It
-    // follows the system's own touch feedback setting.
+    // A haptic where the native design asks for one: a light tap (a tab tap) by default, the
+    // long-press feedback for `style: "medium"` (a message's long-press menu opening). It follows
+    // the system's own touch feedback setting.
     @Command
     fun haptic(invoke: Invoke) {
+        val style = try {
+            invoke.parseArgs(HapticArgs::class.java).style
+        } catch (e: Exception) {
+            null
+        }
+        val feedback = if (style == "medium") {
+            HapticFeedbackConstants.LONG_PRESS
+        } else {
+            HapticFeedbackConstants.KEYBOARD_TAP
+        }
         activity.runOnUiThread {
-            activity.window.decorView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            activity.window.decorView.performHapticFeedback(feedback)
         }
         invoke.resolve()
     }
@@ -363,6 +374,11 @@ class CallActiveArgs {
     var messageId: String? = null
     var video: Boolean = false
     var title: String? = null
+}
+
+@InvokeArg
+class HapticArgs {
+    var style: String? = null
 }
 
 @InvokeArg
