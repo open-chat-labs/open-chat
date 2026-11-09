@@ -823,3 +823,7 @@
 - `haptics.ts`: `HapticStyle` is `'light' | 'medium'`; the browser fallback vibrates 10ms for light (as before), 20ms for medium. The host's haptics get the style (the app's: the Tauri plugin's light tap, or Android's long-press feedback / iOS's medium impact). Spec'd.
 - `MessageGroup`: `pressVibration` (true by default: the web's 8ms vibration on a touch long-press, as before); off, a long-press opens the menu without it, so the native host's own haptic as the menu opens is the only one. `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-09 — the long-press menus' lifted copy stays until the veil has faded (native), by hand
+- `MessageLongPressMenu` and `LongPressMenu`: on closing, the copy of the pressed message (or row) no longer fades with the veil, the reactions and the card. It stays as it is over the hidden original until the layer is gone (170ms), and only then is the original shown again: fading the copy let the dimmed screen show through where the message is, and the message then blinked back in. `LongPressMenu`'s copy loses its lift shadow as it settles; a small target's card (bigger than the target, and moved) still fades with the rest.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

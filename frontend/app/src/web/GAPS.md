@@ -497,7 +497,8 @@ design export needs. Each entry says where it came up.
     (`--group-gap`, `--group-ring`, `--message-mark*`); `ChatBubble` and `VoiceMessage` put a
     mirrored bubble at the inline end. And (EXPORT-LOG 2026-11-08, N5d) the kit's
     `MessageLongPressMenu` with `messageMenuPlacement` (the prototype's inline message menu, as a
-    component), and `MessageGroup`'s `hoverBar`.
+    component), and `MessageGroup`'s `hoverBar`. Both long-press menus (EXPORT-LOG 2026-11-09) keep
+    the lifted copy as it is until the veil has faded, so the message or row doesn't blink back in.
 
 - **Native composer** (native N5c, #10370; the native plan's 05 composer, 06 attach panel and 07
   emoji and GIF panel, as of 2026-11-09 (b); `src/native/features/conversation`:

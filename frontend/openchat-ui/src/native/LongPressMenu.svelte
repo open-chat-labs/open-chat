@@ -2,7 +2,8 @@
      dims and blurs, a copy of the pressed row lifts in place (the row itself hides), and the menu opens 8px under it,
      or over it near the bottom (menuPlacement.ts); a small target (a strip avatar) lifts as a 240px card. The copy is
      the `row` snippet, or a clone of the row. Rows open it with `use:longPress` (held 450ms, or a context menu, with a
-     light haptic). A tap outside or Esc closes it, everything fading out together in 170ms. It's a fixed layer over
+     light haptic). A tap outside or Esc closes it, fading out in 170ms; a copy over its row stays (its shadow going)
+     until the rest is gone, so the row doesn't blink back in. It's a fixed layer over
      the native root. The press that opened it ends without closing it. Reduced motion: no scale or fade. -->
 <script lang="ts">
   import { onDestroy, untrack, type Snippet } from 'svelte';
@@ -55,6 +56,8 @@
 
   let frame = $state<HTMLElement>();
   let placement = $state<LiftPlacement | null>(null);
+  // the copy sits exactly over the row (not a small target's card, which is bigger and moved)
+  let inPlace = $state(false);
 
   $effect(() => {
     if (!presence.mounted || !lifted || !frame) {
@@ -65,7 +68,11 @@
     const el = lifted;
     const rows = items;
     const rtl = getComputedStyle(box).direction === 'rtl';
-    untrack(() => (placement = liftPlacement(el.getBoundingClientRect(), box.getBoundingClientRect(), menuHeight(rows), rtl)));
+    untrack(() => {
+      const at = el.getBoundingClientRect();
+      placement = liftPlacement(at, box.getBoundingClientRect(), menuHeight(rows), rtl);
+      inPlace = placement.card.width === at.width;
+    });
   });
 
   // the row hides while its copy is lifted, until the menu is gone
@@ -126,7 +133,7 @@
     <div class="veil" onpointerdown={() => (pressedVeil = true)} onpointercancel={() => (pressedVeil = false)} onclick={veilClick}></div>
     <div class="frame" bind:this={frame}>
       {#if placement}
-        <div class="card" style:top="{placement.card.top}px" style:inset-inline-start="{placement.card.inlineStart}px" style:width="{placement.card.width}px" aria-hidden="true" inert>
+        <div class="card" class:in-place={inPlace} style:top="{placement.card.top}px" style:inset-inline-start="{placement.card.inlineStart}px" style:width="{placement.card.width}px" aria-hidden="true" inert>
           {#if row}{@render row()}{:else}<div class="clone" use:clone={lifted}></div>{/if}
         </div>
         <div
@@ -197,6 +204,18 @@
 
     .closing & {
       opacity: 0;
+    }
+  }
+
+  // a copy over its row doesn't fade: it settles back (its shadow going) over the hidden row, which shows again only
+  // once the layer is gone, so the row doesn't blink back in under the fading veil. A small target's card, bigger
+  // and moved, fades with the rest
+  .card.in-place {
+    transition: box-shadow 0.18s;
+
+    .closing & {
+      opacity: 1;
+      box-shadow: none;
     }
   }
 

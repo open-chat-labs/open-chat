@@ -3,8 +3,10 @@
      and the action card line up with its bubble's start edge (received) or end edge (sent), 12px inside the screen,
      placed by messageMenuPlacement (reactions above and the card below, else the card above and the reactions below,
      else both above, else both below). The copy keeps its ancestors' classes and custom properties (but none of their
-     layout), so it looks as the message does. A tap outside, Esc or a pick closes it, everything fading together in
-     170ms; the press that opened it ends without closing it. It's a fixed layer over the native root. Reduced motion:
+     layout), so it looks as the message does. A tap outside, Esc or a pick closes it: the veil, the reactions and
+     the card fade out in 170ms while the copy stays as it is, over the hidden message, until they're gone (fading it
+     too would show the dimmed chat through it, and the message blink back in at the end); the press that opened it
+     ends without closing it. It's a fixed layer over the native root. Reduced motion:
      no scale or fade. -->
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte';
@@ -368,8 +370,8 @@
     animation: menu-in 0.2s var(--ease-out) 0.04s backwards;
   }
 
+  // the copy doesn't fade: it stays over the hidden message until the layer is gone, so nothing blinks
   .veil,
-  .copy,
   .bar,
   .pop {
     transition: opacity 0.18s;
