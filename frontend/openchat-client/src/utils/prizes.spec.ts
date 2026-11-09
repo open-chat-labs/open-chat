@@ -69,6 +69,15 @@ describe("a claim which didn't succeed", () => {
         });
     });
 
+    test("says to try again in a moment while another of your claims is going through", () => {
+        expect(
+            claimPrizeFailedMessage(
+                { kind: "error", code: ErrorCode.AlreadyInProgress, message: undefined },
+                formatTime,
+            ),
+        ).toMatchObject({ key: "prizes.claimInProgress" });
+    });
+
     test("says it was unsuccessful for any other reason", () => {
         for (const resp of [
             { kind: "failure" } as const,

@@ -2404,6 +2404,7 @@
         "claimed": "Erfolg!",
         "claimFailed": "Entschuldigung, Ihre Reklamation war erfolglos! Mehr Glück beim nächsten Mal.",
         "claimIneligible": "Es tut uns leid, Sie erfüllen die Voraussetzungen zum Erhalt dieses Preises nicht.",
+        "claimInProgress": "Ihr letzter Preisanspruch wird noch bearbeitet. Bitte versuchen Sie es gleich noch einmal.",
         "claimLimitReached": "Sie haben das tägliche Limit für Preisansprüche erreicht. Ab {time} können Sie wieder Preise beanspruchen.",
         "click": "Klicken Sie auf die Schaltfläche unten, um einen Preis zu gewinnen.",
         "creatingPrizeMessageFailed": "Ihre Gewinnbenachrichtigung konnte nicht erstellt werden",

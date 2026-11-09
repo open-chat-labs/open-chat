@@ -560,7 +560,7 @@ impl RuntimeState {
             vault_reviewers: self.data.vault_reviewers.len() as u32,
             openai_api_key_set: self.data.openai_api_key.is_some(),
             alchemy_api_key_set: self.data.alchemy_api_key.is_some(),
-            prize_claims_last_day: self.data.prize_claims.count(),
+            prize_claims_last_day: self.data.prize_claims.count(now),
             internal_moderation_channel_set: self.data.internal_moderation_channel.is_some(),
             // Presence and size only: the metrics endpoint is public and the per-category
             // thresholds must not be readable by people tuning content to sit under them.

@@ -5,11 +5,18 @@ use canister_tracing_macros::trace;
 use constants::LIFETIME_DIAMOND_TIMESTAMP;
 use local_user_index_canister::{GlobalUser, claim_prize::*};
 use oc_error_codes::OCErrorCode;
+use std::cell::RefCell;
+use std::collections::HashSet;
 use types::{
     CanisterId, DiamondMembershipStatus, MultiUserChat,
     PrizeClaimResponse::{self, *},
+    UserId,
 };
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
+
+thread_local! {
+    static CLAIMS_IN_PROGRESS: RefCell<HashSet<UserId>> = RefCell::default();
+}
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -34,6 +41,12 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
     if let Some(blocked_until) = blocked_until.filter(|ts| *ts > now) {
         return Error(OCErrorCode::LimitReached.with_message(blocked_until));
     }
+
+    // One claim at a time for each user, so that a burst of claims can't all be paid out before any
+    // of them counts towards the limit
+    let Some(_guard) = ClaimInProgressGuard::new(user_id) else {
+        return Error(OCErrorCode::AlreadyInProgress.into());
+    };
 
     let is_unique_person = unique_person_proof.is_some();
     let diamond_status = match diamond_membership_expires_at {
@@ -94,4 +107,22 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
     }
 
     response
+}
+
+// Removes the user from `CLAIMS_IN_PROGRESS` when dropped, which also happens if the callback
+// following the claim traps
+struct ClaimInProgressGuard(UserId);
+
+impl ClaimInProgressGuard {
+    fn new(user_id: UserId) -> Option<ClaimInProgressGuard> {
+        CLAIMS_IN_PROGRESS
+            .with_borrow_mut(|c| c.insert(user_id))
+            .then_some(ClaimInProgressGuard(user_id))
+    }
+}
+
+impl Drop for ClaimInProgressGuard {
+    fn drop(&mut self) {
+        CLAIMS_IN_PROGRESS.with_borrow_mut(|c| c.remove(&self.0));
+    }
 }

@@ -106,12 +106,16 @@ export function isTrustedClick(e: MouseEvent): boolean {
     return e instanceof MouseEvent && e.isTrusted && e.type === "click";
 }
 
-/** What to tell the reader when their claim didn't succeed. Once they've claimed as many prizes as
- * they can in a day, the error's message is when they can claim again. */
+/** What to tell the reader when their claim didn't succeed. A user's claims are made one at a time,
+ * and once they've claimed as many prizes as they can in a day, the error's message is when they can
+ * claim again. */
 export function claimPrizeFailedMessage(
     resp: ClaimPrizeResponse,
     formatTime: (date: Date) => string,
 ): ResourceKey {
+    if (resp.kind === "error" && resp.code === ErrorCode.AlreadyInProgress) {
+        return i18nKey("prizes.claimInProgress");
+    }
     if (resp.kind === "error" && resp.code === ErrorCode.LimitReached) {
         const claimableFrom = Number(resp.message);
         if (Number.isFinite(claimableFrom)) {
