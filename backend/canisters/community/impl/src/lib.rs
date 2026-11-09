@@ -1324,9 +1324,8 @@ impl Data {
     }
 
     // Makes the member next in line owner of the community, and of each of its channels, where there
-    // is no owner. Returns how many were given one.
-    pub fn assign_owners_if_none(&mut self, now: TimestampMillis) -> usize {
-        let mut assigned = 0;
+    // is no owner
+    fn assign_owners_if_none(&mut self, now: TimestampMillis) {
         if let Some((new_owner, prev_role)) = self.members.assign_owner_if_none(now) {
             // Owners can't lapse
             self.expiring_members.remove_member(new_owner, None);
@@ -1339,15 +1338,12 @@ impl Data {
                 })),
                 now,
             );
-            assigned += 1;
         }
         for channel in self.channels.iter_mut() {
             if let Some(new_owner) = channel.chat.assign_owner_if_none(now) {
                 self.expiring_members.remove_member(new_owner, Some(channel.id));
-                assigned += 1;
             }
         }
-        assigned
     }
 
     // Removes a user found to have deleted their account, unless they're a bot, returning whether they
