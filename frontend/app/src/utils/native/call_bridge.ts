@@ -133,6 +133,16 @@ export function setCallConfig(videoBridgeUrl: string, username?: string): Promis
     }).catch(() => undefined);
 }
 
+// A ring can start the iOS app with no web layer running, so the shell keeps who to join as
+// (#10398 invariant 22).
+export function rememberCallIdentity(
+    videoBridgeUrl: string | undefined,
+    username: string,
+): Promise<void> {
+    if (!isIosTauriApp() || videoBridgeUrl === undefined) return Promise.resolve();
+    return setCallConfig(videoBridgeUrl, username);
+}
+
 // In-call (#9559). The shell needs to know when a call is active so it can keep the
 // process alive, own the audio route and show the ongoing-call notification, and when
 // it ended so it can let go. Both are no-ops in a shell without them.

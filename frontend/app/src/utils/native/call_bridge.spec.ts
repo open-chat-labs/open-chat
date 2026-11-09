@@ -190,6 +190,22 @@ describe("native call bridge", () => {
         expect(tauri.invoke).not.toHaveBeenCalled();
     });
 
+    test("invariant 22 (#10398) the iOS shell is told who to answer a ring as", async () => {
+        const { rememberCallIdentity } = await import("./call_bridge");
+        shared.isAndroidTauriApp.mockReturnValue(false);
+        shared.isIosTauriApp.mockReturnValue(true);
+        tauri.invoke.mockResolvedValue(undefined);
+
+        await rememberCallIdentity("https://bridge", "bob");
+
+        expect(tauri.invoke).toHaveBeenCalledWith("plugin:oc|set_call_config", {
+            videoBridgeUrl: "https://bridge",
+            username: "bob",
+        });
+        shared.isAndroidTauriApp.mockReturnValue(true);
+        shared.isIosTauriApp.mockReturnValue(false);
+    });
+
     test("invariant 23 (#10398) on iOS the shell holds the bridge URL and the active call's teardown token", async () => {
         const { setCallConfig, setCallTeardownToken } = await import("./call_bridge");
         shared.isAndroidTauriApp.mockReturnValue(false);

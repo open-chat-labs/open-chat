@@ -15,6 +15,12 @@ fn video_call_declined(args: Args) -> Response {
 
 fn video_call_declined_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
-    state.push_call_dismissed(args.user_id, args.chat_id, args.message_id, CallDismissalKind::DeclinedElsewhere, now);
+    state.push_call_dismissed(
+        args.user_id,
+        args.chat_id,
+        args.message_id,
+        CallDismissalKind::DeclinedElsewhere,
+        now,
+    );
     Response::Success
 }

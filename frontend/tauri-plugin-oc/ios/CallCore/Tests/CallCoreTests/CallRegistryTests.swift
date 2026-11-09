@@ -74,6 +74,41 @@ final class RingBridgeTests: XCTestCase {
         XCTAssertEqual(try JSONDecoder().decode([String: String].self, from: body), ["username": "bob"])
     }
 
+    private func call(audioOnly: Bool, token: String? = "jwt") -> IncomingCall {
+        var payload: [String: String] = [
+            "type": "direct", "senderId": "alice", "senderName": "Alice", "callMessageId": "1",
+            "callStarted": "1", "callAudioOnly": audioOnly ? "true" : "false",
+        ]
+        payload["callDeclineToken"] = token
+        return IncomingCall(payload: payload)!
+    }
+
+    private let bridge = RingBridge(videoBridgeUrl: "https://bridge.example") { _ in
+        Data(#"{"token":"daily","roomName":"room"}"#.utf8)
+    }
+
+    func testInvariant22ARingJoinsFromThePushAndTheStoredUsernameAlone() async throws {
+        let join = try await bridge.join(call(audioOnly: false), username: "bob")
+        XCTAssertEqual(
+            join,
+            RingJoin(
+                url: "https://openchat.daily.co/room", token: "daily", userName: "bob", title: "Alice",
+                cameraWhenActive: true, video: true))
+
+        let voice = try await bridge.join(call(audioOnly: true), username: "bob")
+        XCTAssertFalse(voice.video)
+        XCTAssertFalse(voice.cameraWhenActive)
+    }
+
+    func testARingWithNoTokenOrUsernameCannotJoin() async {
+        for (ring, username) in [(call(audioOnly: true, token: nil), "bob"), (call(audioOnly: true), nil)] as [(IncomingCall, String?)] {
+            do {
+                _ = try await bridge.join(ring, username: username)
+                XCTFail("joined")
+            } catch {}
+        }
+    }
+
     func testRingStatusIsRead() async throws {
         let bridge = RingBridge(videoBridgeUrl: "https://bridge.example") { _ in
             Data(#"{"status":"answered"}"#.utf8)

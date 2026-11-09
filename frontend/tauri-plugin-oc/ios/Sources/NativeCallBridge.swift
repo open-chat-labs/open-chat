@@ -86,14 +86,14 @@ final class NativeCallBridge {
 
     // Answers a ring with no help from the web layer, which may not be running
     func answer(_ call: IncomingCall, completion: @escaping (Bool) -> Void) {
-        guard let bridge = ringBridge, let token = call.declineToken, let username else {
+        guard let bridge = ringBridge else {
             completion(false)
             return
         }
-        let video = !call.audioOnly
         tellWebAboutAnswer(call)
+        let username = self.username
         Task { @MainActor in
-            guard let room = try? await bridge.answer(token: token, username: username) else {
+            guard let join = try? await bridge.join(call, username: username) else {
                 completion(false)
                 return
             }
@@ -101,9 +101,9 @@ final class NativeCallBridge {
             NotificationCenter.default.post(
                 name: .init("ocNativeCallJoin"), object: nil,
                 userInfo: [
-                    "url": room.url, "token": room.token, "userName": username, "title": call.callerName,
-                    "video": video, "cameraOn": false, "cameraWhenActive": video, "micOn": true,
-                    "broadcast": false, "reply": reply,
+                    "url": join.url, "token": join.token, "userName": join.userName, "title": join.title,
+                    "video": join.video, "cameraOn": false, "cameraWhenActive": join.cameraWhenActive,
+                    "micOn": true, "broadcast": false, "reply": reply,
                 ])
         }
     }
