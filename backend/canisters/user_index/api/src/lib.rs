@@ -42,6 +42,8 @@ pub enum LocalUserIndexEvent {
     // The profile a bridge bot relayed a message with, for the registry of bridged accounts
     BridgedUserUpdated(Box<BridgedUser>),
     BridgedUserDeposit(Box<BridgedUserDeposit>),
+    // A user claimed a prize, counted towards their limit of claims per day
+    PrizeClaimed(UserId),
 }
 
 // Funds sent to an account on another platform which no one had linked, eg. a tip on a message

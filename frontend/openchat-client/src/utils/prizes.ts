@@ -1,4 +1,10 @@
-import { i18nKey, type PrizeContent, type ResourceKey } from "@shared";
+import {
+    ErrorCode,
+    i18nKey,
+    type ClaimPrizeResponse,
+    type PrizeContent,
+    type ResourceKey,
+} from "@shared";
 
 /** Who is looking at a prize, and what they hold that its requirements ask about. */
 export type PrizeReader = {
@@ -98,4 +104,21 @@ export function prizeWithYourClaim(content: PrizeContent): PrizeContent {
 /** A click the user made: a script's synthetic click can't claim a prize (claimPrize). */
 export function isTrustedClick(e: MouseEvent): boolean {
     return e instanceof MouseEvent && e.isTrusted && e.type === "click";
+}
+
+/** What to tell the reader when their claim didn't succeed. Once they've claimed as many prizes as
+ * they can in a day, the error's message is when they can claim again. */
+export function claimPrizeFailedMessage(
+    resp: ClaimPrizeResponse,
+    formatTime: (date: Date) => string,
+): ResourceKey {
+    if (resp.kind === "error" && resp.code === ErrorCode.LimitReached) {
+        const claimableFrom = Number(resp.message);
+        if (Number.isFinite(claimableFrom)) {
+            return i18nKey("prizes.claimLimitReached", {
+                time: formatTime(new Date(claimableFrom)),
+            });
+        }
+    }
+    return i18nKey("prizes.claimFailed");
 }

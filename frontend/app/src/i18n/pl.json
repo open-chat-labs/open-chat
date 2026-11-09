@@ -2404,6 +2404,7 @@
         "claimed": "Odebrano",
         "claimFailed": "Przykro nam, że Twoja reklamacja zakończyła się niepowodzeniem! Więcej szczęścia następnym razem. ",
         "claimIneligible": "Przykro nam, że nie spełniasz wymagań, aby odebrać tę nagrodę.",
+        "claimLimitReached": "Osiągnięto dzienny limit odbierania nagród. Możesz ponownie odebrać nagrodę od {time}.",
         "click": "Kliknij poniższy przycisk, aby mieć szansę na wygranie nagrody.",
         "creatingPrizeMessageFailed": "Nie udało się utworzyć wiadomości o nagrodzie",
         "creatingYourPrizeMessage": "Poczekaj, aż utworzymy wiadomość z nagrodą",

@@ -2404,6 +2404,7 @@
         "claimed": "Succès!",
         "claimFailed": "Désolé, votre réclamation n'a pas abouti ! Plus de chance la prochaine fois.",
         "claimIneligible": "Désolé, vous ne remplissez pas les conditions pour réclamer ce prix.",
+        "claimLimitReached": "Vous avez atteint la limite quotidienne de réclamations de prix. Vous pourrez réclamer à nouveau à partir de {time}.",
         "click": "Cliquez sur le bouton ci-dessous pour courir la chance de gagner un prix.",
         "creatingPrizeMessageFailed": "Impossible de créer votre message de prix",
         "creatingYourPrizeMessage": "Veuillez patienter pendant que nous créons votre message de récompense",

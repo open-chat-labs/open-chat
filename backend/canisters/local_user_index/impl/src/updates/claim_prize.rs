@@ -1,13 +1,15 @@
 use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
-use crate::{guards::caller_is_openchat_user, read_state};
+use crate::{guards::caller_is_openchat_user, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::LIFETIME_DIAMOND_TIMESTAMP;
 use local_user_index_canister::{GlobalUser, claim_prize::*};
+use oc_error_codes::OCErrorCode;
 use types::{
     CanisterId, DiamondMembershipStatus, MultiUserChat,
     PrizeClaimResponse::{self, *},
 };
+use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -21,7 +23,17 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
             ..
         },
         now,
-    ) = read_state(|state| (state.calling_user(), state.env.now()));
+        blocked_until,
+    ) = read_state(|state| {
+        let user = state.calling_user();
+        let blocked_until = state.data.prize_claims_blocked_until.get(&user.user_id).copied();
+        (user, state.env.now(), blocked_until)
+    });
+
+    // The user has claimed as many prizes as they can in a day. The message is when they can claim again.
+    if let Some(blocked_until) = blocked_until.filter(|ts| *ts > now) {
+        return Error(OCErrorCode::LimitReached.with_message(blocked_until));
+    }
 
     let is_unique_person = unique_person_proof.is_some();
     let diamond_status = match diamond_membership_expires_at {
@@ -68,8 +80,18 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
         }
     };
 
-    match response {
+    let response = match response {
         Ok(response) => response,
         Err(error) => Error(error.into()),
+    };
+
+    // Each prize paid out counts towards the user's limit, which the UserIndex keeps
+    if matches!(response, Success | FailedAfterTransfer(..)) {
+        mutate_state(|state| {
+            let now = state.env.now();
+            state.push_event_to_user_index(UserIndexEvent::PrizeClaimed(user_id), now);
+        });
     }
+
+    response
 }
