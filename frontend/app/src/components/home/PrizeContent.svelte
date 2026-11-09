@@ -5,13 +5,11 @@
         chitStateStore,
         communitiesStore,
         cryptoLookup,
-        currentUserIdStore,
         isDiamondStore,
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
         isTrustedClick,
         mobileWidth,
-        prizeClaimCustomData,
         prizeView,
         publish,
         type ChatIdentifier,
@@ -29,9 +27,7 @@
     import { now500 } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import HumanCheckFrame from "@src/core/HumanCheckFrame.svelte";
-    import { HumanCheck } from "@src/logic/prize/humanCheck.svelte";
-    import { claimPrizeWithHumanCheck } from "@src/logic/prize/prizeClaim";
+    import { claimPrizeFromClick } from "@src/logic/prize/prizeClaim";
     import Diamond from "../icons/Diamond.svelte";
     import SpinningToken from "@shared_components/icons/SpinningToken.svelte";
     import SecureButton from "../SecureButton.svelte";
@@ -53,13 +49,11 @@
     let { content, chatId, messageId, me, intersecting }: Props = $props();
 
     let progressWidth = $state(0);
-    const humanCheck = new HumanCheck();
 
-    // Claims with the token of the prize's human check, which the click starts
     async function claim(e: MouseEvent) {
         if (!isTrustedClick(e) || chatId.kind === "direct_chat" || !view.canClaim) return;
 
-        const failure = await claimPrizeWithHumanCheck(client, humanCheck, chatId, messageId, e);
+        const failure = await claimPrizeFromClick(client, chatId, messageId, e);
         if (failure !== undefined) toastStore.showFailureToast(failure);
     }
 
@@ -241,12 +235,6 @@
                                         : "prizes.claim",
                             )} /></SecureButton>
                 </ButtonGroup>
-                <!-- Kept while a claim's check runs, even if the prize runs out meanwhile -->
-                {#if view.canClaim || humanCheck.running}
-                    <HumanCheckFrame
-                        check={humanCheck}
-                        customData={prizeClaimCustomData($currentUserIdStore, messageId)} />
-                {/if}
             {/if}
         </div>
     </div>

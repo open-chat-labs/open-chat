@@ -373,9 +373,6 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
                 );
             }
         }
-        UserIndexEvent::SetTurnstileConfig(config) => {
-            state.data.turnstile_config = config;
-        }
     }
 }
 

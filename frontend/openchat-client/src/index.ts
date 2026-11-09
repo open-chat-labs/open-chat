@@ -211,14 +211,7 @@ export {
     type PollReader,
     type PollView,
 } from "./utils/polls";
-export {
-    claimPrizeFailureReason,
-    isTrustedClick,
-    prizeClaimCustomData,
-    prizeView,
-    type PrizeReader,
-    type PrizeView,
-} from "./utils/prizes";
+export { isTrustedClick, prizeView, type PrizeReader, type PrizeView } from "./utils/prizes";
 export {
     emojiReaction,
     messageMenu,

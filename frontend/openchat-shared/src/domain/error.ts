@@ -312,7 +312,6 @@ export enum ErrorCode {
     InsufficientAllowance = 350,
     LimitReached = 354,
     UserMovedToNewSubnet = 355,
-    HumanVerificationFailed = 356,
 
     // InternalError
     C2CError = 500,

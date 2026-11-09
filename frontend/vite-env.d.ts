@@ -39,7 +39,6 @@ interface ImportMetaEnv {
     readonly OC_OTA_UPDATES: "none" | "major" | "minor" | "patch";
     readonly OC_PREVIEW_PROXY_URL: string;
     readonly OC_PRICE_SERVICE_URL: string;
-    readonly OC_TURNSTILE_SITE_KEY: string;
     readonly OC_MINI_APP_SERVICE_URL: string;
     readonly OC_PROPOSALS_BOT_CANISTER: string;
     readonly OC_TRANSLATE_PROXY_URL: string;

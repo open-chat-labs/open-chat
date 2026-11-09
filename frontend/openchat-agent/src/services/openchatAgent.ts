@@ -196,7 +196,6 @@ import type {
     TokenPrices,
     TokenSwapPool,
     TopUpNeuronResponse,
-    TurnstilePass,
     UnblockUserResponse,
     UndeleteMessageResponse,
     UnfinishedTokenSwap,
@@ -4317,7 +4316,6 @@ export class OpenChatAgent extends EventTarget {
     async claimPrize(
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
-        turnstile: TurnstilePass | undefined,
     ): Promise<ClaimPrizeResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -4325,7 +4323,7 @@ export class OpenChatAgent extends EventTarget {
             ? this._groupClient.localUserIndex(chatId.groupId)
             : this._communityClient.localUserIndex(chatId.communityId));
 
-        return this._localUserIndexClient.claimPrize(localUserIndex, chatId, messageId, turnstile);
+        return this._localUserIndexClient.claimPrize(localUserIndex, chatId, messageId);
     }
 
     async payForDiamondMembership(
@@ -6094,10 +6092,6 @@ export class OpenChatAgent extends EventTarget {
 
     setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
         return this._userIndexClient.setAlchemyApiKey(apiKey);
-    }
-
-    setTurnstileConfig(secretKey: string | undefined): Promise<Success | OCError> {
-        return this._userIndexClient.setTurnstileConfig(secretKey);
     }
 
     setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {

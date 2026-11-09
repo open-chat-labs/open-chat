@@ -356,7 +356,6 @@ import {
     type TipOutcome,
     type TokenInfo,
     type TransferSuccess,
-    type TurnstilePass,
     type GroupChangeConfirmation,
     type UpdateCommunityOutcome,
     type UpdateCommunityResponse,
@@ -424,7 +423,7 @@ import type { OpenChatConfig } from "./config";
 import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
 import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import { blockOutcome, type BlockContext, type BlockOutcome } from "./utils/profileBlock";
-import { claimPrizeFailureReason, isTrustedClick } from "./utils/prizes";
+import { isTrustedClick } from "./utils/prizes";
 import { isCsamReport, type ReportReason } from "./utils/report";
 import { savedAccountName, withoutAccountsNamed, withSavedAccount } from "./utils/namedAccounts";
 import {
@@ -10010,33 +10009,24 @@ export class OpenChat {
         }
     }
 
-    // `turnstile` is the prize's human check's (Cloudflare Turnstile) token, issued for this user's
-    // claim of this prize (prizeClaimCustomData), with its salt. A claim without one is for the
-    // backend to refuse, once it requires one.
     async claimPrize(
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
         e: MouseEvent,
-        turnstile: TurnstilePass | undefined,
     ): Promise<ClaimPrizeOutcome> {
-        if (!isTrustedClick(e)) {
-            return { kind: "failed", message: i18nKey("prizes.claimFailed") };
-        }
+        const failed: ClaimPrizeOutcome = {
+            kind: "failed",
+            message: i18nKey("prizes.claimFailed"),
+        };
+        if (!isTrustedClick(e)) return failed;
 
         try {
-            const resp = await this.#worker.send({
-                kind: "claimPrize",
-                chatId,
-                messageId,
-                turnstile,
-            });
-            if (resp.kind !== "success") {
-                return { kind: "failed", message: claimPrizeFailureReason(resp) };
-            }
+            const resp = await this.#worker.send({ kind: "claimPrize", chatId, messageId });
+            if (resp.kind !== "success") return failed;
             localUpdates.markPrizeClaimed(messageId);
             return { kind: "success" };
         } catch {
-            return { kind: "failed", message: i18nKey("prizes.claimFailed") };
+            return failed;
         }
     }
 
@@ -14430,10 +14420,6 @@ export class OpenChat {
 
     setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "setAlchemyApiKey", apiKey });
-    }
-
-    setTurnstileConfig(secretKey: string | undefined): Promise<Success | OCError> {
-        return this.#worker.send({ kind: "setTurnstileConfig", secretKey });
     }
 
     setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {

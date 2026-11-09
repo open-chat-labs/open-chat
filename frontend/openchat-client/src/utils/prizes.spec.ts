@@ -1,12 +1,5 @@
 import type { PrizeContent } from "@shared";
-import { ErrorCode } from "@shared";
-import {
-    claimPrizeFailureReason,
-    isTrustedClick,
-    prizeView,
-    prizeWithYourClaim,
-    type PrizeReader,
-} from "./prizes";
+import { isTrustedClick, prizeView, prizeWithYourClaim, type PrizeReader } from "./prizes";
 
 const prize: PrizeContent = {
     kind: "prize_content",
@@ -36,24 +29,6 @@ const reader: PrizeReader = {
 };
 
 describe("claiming a prize", () => {
-    test("a human check the backend refused says to try again, any other failure that it failed", () => {
-        expect(
-            claimPrizeFailureReason({
-                kind: "error",
-                code: ErrorCode.HumanVerificationFailed,
-                message: "Token rejected",
-            }).key,
-        ).toBe("prizes.humanCheckFailed");
-        expect(
-            claimPrizeFailureReason({
-                kind: "error",
-                code: ErrorCode.PrizeEnded,
-                message: undefined,
-            }).key,
-        ).toBe("prizes.claimFailed");
-        expect(claimPrizeFailureReason({ kind: "failure" }).key).toBe("prizes.claimFailed");
-    });
-
     // 5a invariant 2
     test("a prize claim is sent only from a trusted click", () => {
         // a script's click is never trusted

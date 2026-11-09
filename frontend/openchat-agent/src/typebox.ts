@@ -2548,11 +2548,6 @@ export const UserIndexSetAuthorityReporterArgs = /* @__PURE__ */ Type.Object({
     principal: Type.Optional(TSPrincipal),
 });
 
-export type UserIndexSetTurnstileConfigArgs = Static<typeof UserIndexSetTurnstileConfigArgs>;
-export const UserIndexSetTurnstileConfigArgs = /* @__PURE__ */ Type.Object({
-    secret_key: Type.Optional(Type.String()),
-});
-
 export type UserIndexClearAuthorityReportAttemptAuthorityReportFailure = Static<
     typeof UserIndexClearAuthorityReportAttemptAuthorityReportFailure
 >;
@@ -2836,14 +2831,6 @@ export const LocalUserIndexDailyPuzzleSubmitArgs = /* @__PURE__ */ Type.Object({
     game_id: Type.String(),
     number: Type.Number(),
     grid: TSBytes,
-});
-
-export type LocalUserIndexClaimPrizeTurnstilePass = Static<
-    typeof LocalUserIndexClaimPrizeTurnstilePass
->;
-export const LocalUserIndexClaimPrizeTurnstilePass = /* @__PURE__ */ Type.Object({
-    token: Type.String(),
-    salt: Type.String(),
 });
 
 export type LocalUserIndexDailyPuzzleHintArgs = Static<typeof LocalUserIndexDailyPuzzleHintArgs>;
@@ -7144,7 +7131,6 @@ export type LocalUserIndexClaimPrizeArgs = Static<typeof LocalUserIndexClaimPriz
 export const LocalUserIndexClaimPrizeArgs = /* @__PURE__ */ Type.Object({
     chat_id: MultiUserChat,
     message_id: MessageId,
-    turnstile: Type.Optional(LocalUserIndexClaimPrizeTurnstilePass),
 });
 
 export type LocalUserIndexInstallBotArgs = Static<typeof LocalUserIndexInstallBotArgs>;

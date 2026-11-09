@@ -226,10 +226,6 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                 api_key: state.data.alchemy_api_key.clone(),
             }),
         );
-        pusher.push(
-            canister_id,
-            UserIndexEvent::SetTurnstileConfig(state.data.turnstile_config.clone()),
-        );
         // And with all the existing bots. The UserIndex is named as the canister to notify each bot
         // of its registration, since the bots were notified when they registered.
         for (bot_id, bot) in state.data.users.iter_bots() {

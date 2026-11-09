@@ -31,7 +31,7 @@ export type MessageHandlers = {
     /** Accepting or cancelling a swap offer. None leaves the card without its button. */
     swap?: (msg: Message, content: P2PSwapContent, action: "accept" | "cancel") => void;
     claim: (msg: Message, e: MouseEvent) => void;
-    /** A prize's claim is on its way: the human check, then the claim (`claimsStore`). */
+    /** A prize's claim is on its way (`claimsStore`). */
     claiming: (messageId: bigint) => boolean;
     vote: (msg: Message, content: PollContent, next: number[]) => void;
     download: (content: FileContent) => void;

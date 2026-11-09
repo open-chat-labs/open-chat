@@ -47,7 +47,6 @@ pub mod set_moderation_flags;
 pub mod set_moderation_referral_config;
 pub mod set_openai_api_key;
 pub mod set_premium_item_cost;
-pub mod set_turnstile_config;
 pub mod set_username;
 pub mod set_vault_legal_hold;
 pub mod set_vault_reviewers;
