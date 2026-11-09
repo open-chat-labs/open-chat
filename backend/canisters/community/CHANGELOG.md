@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the one-off which gave ownerless communities and channels an owner, now that it has run ([#10444](https://github.com/open-chat-labs/open-chat/pull/10444))
+
 ## [[2.0.2215](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2215-community)] - 2026-11-06
 
 ### Changed
