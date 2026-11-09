@@ -1219,8 +1219,9 @@ design export needs. Each entry says where it came up.
   before it, or Retry on Load more, with the component left as it was; no design for it); the
   guest banner sits at the foot of the pane in every view (EXPORT-LOG 2026-11-09: it sat straight
   under content shorter than the pane, near the top in search), and the open language menu goes
-  over it and is capped to the room left in the pane, scrolling in it (its last options ran under
-  the banner, or past the pane's foot under the sticky search bar).
+  over it and is capped to the room left in the pane, scrolling in it, kept to it as the pane
+  scrolls or resizes, the pane scrolling it up first when it opens near the foot (its last
+  options ran under the banner, or past the pane's foot under the sticky search bar).
   Not asked for (no design yet):
   - the sorts (Most members / Most active / Newest) are hidden (`showSort={false}`): there's one
     ranking (see Explore under the data the backend doesn't have). #10405 adds a sort to

@@ -350,18 +350,30 @@
 
   // the open language menu takes the room from its top to the pane's foot (over the guest banner, see .menu-open) and
   // scrolls past that: a long list on a short pane would otherwise run off the pane, out of reach under the sticky
-  // search bar. Never less than a few options: a hero scrolled near the foot scrolls the pane to the rest
+  // search bar. Opened with less than a few options' room (a hero near the foot), the pane first scrolls it up to have
+  // them, as far as it can: the scrim keeps the pane from scrolling while the menu is open. Kept to the room as the menu
+  // moves with it open: the pane resizing, or its content shrinking under a language just picked (its scroll clamped)
   const MENU_MARGIN = 12;
   const MENU_MIN = 120;
   function fitToPane(menu: HTMLElement) {
+    const pane = root;
+    if (!pane) return;
+    const room = () => Math.floor(pane.getBoundingClientRect().bottom - menu.getBoundingClientRect().top - MENU_MARGIN);
     const fit = () => {
-      if (!root) return;
-      const room = root.getBoundingClientRect().bottom - menu.getBoundingClientRect().top - MENU_MARGIN;
-      menu.style.maxHeight = `${Math.max(MENU_MIN, Math.floor(room))}px`;
+      menu.style.maxHeight = `${Math.max(0, room())}px`;
     };
+    const short = MENU_MIN - room();
+    if (short > 0) pane.scrollBy({ top: short, behavior: 'instant' });
     fit();
     window.addEventListener('resize', fit);
-    return () => window.removeEventListener('resize', fit);
+    pane.addEventListener('scroll', fit, { passive: true });
+    const resized = typeof ResizeObserver === 'function' ? new ResizeObserver(fit) : undefined;
+    resized?.observe(pane);
+    return () => {
+      window.removeEventListener('resize', fit);
+      pane.removeEventListener('scroll', fit);
+      resized?.disconnect();
+    };
   }
 </script>
 
