@@ -8,6 +8,10 @@ packages:
   # Push logic the app's plugin and the Notification Service Extension share
   PushCore:
     path: ../../../tauri-plugin-oc/ios/PushCore
+  # Native call media (#10445)
+  Daily:
+    url: https://github.com/daily-co/daily-client-ios
+    exactVersion: 0.41.0
 configs:
   debug: debug
   release: release
@@ -80,6 +84,8 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         # Lets the Notification Service Extension make communication notifications
         NSUserActivityTypes: [INSendMessageIntent]
+        # A native call keeps going with the app in the background
+        UIBackgroundModes: [audio]
         # Dev only: the app loads the vite dev server and talks to a local dfx
         # replica over plain http on the LAN. The iOS release workflow deletes
         # this key before building, so store builds keep ATS on.
@@ -120,6 +126,10 @@ targets:
     dependencies:
       - target: OpenChatNotificationService
         embed: true
+      # Xcode embeds the package's binary framework itself. Embedding it here as well fails the build.
+      - package: Daily
+        product: Daily
+        embed: false
       - framework: libapp.a
         embed: false
       - sdk: CoreGraphics.framework

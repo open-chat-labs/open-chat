@@ -1,6 +1,7 @@
 import { addPluginListener, invoke, type PluginListener } from "@tauri-apps/api/core";
 import {
     isAndroidTauriApp,
+    isIosTauriApp,
     publish,
     routeForChatIdentifier,
     type ChatIdentifier,
@@ -125,7 +126,7 @@ export function runCallAction(action: NativeCallAction): void {
 // when the user declines from the ring. Sent on every start so a changed URL is picked
 // up. Never rejects: a shell without the command is a no-op.
 export function setCallConfig(videoBridgeUrl: string): Promise<void> {
-    if (!isAndroidTauriApp()) return Promise.resolve();
+    if (!endsCallsNatively()) return Promise.resolve();
     return invoke<void>("plugin:oc|set_call_config", { videoBridgeUrl }).catch(() => undefined);
 }
 
@@ -174,6 +175,11 @@ function chatArgs(chatId: ChatIdentifier): {
     }
 }
 
+// The shells that tell the bridge about a call themselves when the web layer can't
+function endsCallsNatively(): boolean {
+    return isAndroidTauriApp() || isIosTauriApp();
+}
+
 // What the shell does with the token when the app is killed mid-call: a direct call is
 // ended for both sides; a group or channel call is only left, since ending a room ends
 // it for everyone.
@@ -189,7 +195,7 @@ export function setCallTeardownToken(
     kind: "end" | "leave",
     sessionId: string | undefined,
 ): Promise<void> {
-    if (!isAndroidTauriApp()) return Promise.resolve();
+    if (!endsCallsNatively()) return Promise.resolve();
     return invoke<void>("plugin:oc|set_call_end_token", {
         ...chatArgs(chatId),
         messageId: messageId.toString(),
@@ -211,7 +217,7 @@ export function keepCallTeardownTokenFresh(
     sessionId: string | undefined,
     intervalMs = TEARDOWN_TOKEN_REFRESH_MS,
 ): () => void {
-    if (!isAndroidTauriApp()) return () => undefined;
+    if (!endsCallsNatively()) return () => undefined;
     const kind = teardownKind(chatId);
     const refresh = () =>
         fetchToken(kind)

@@ -8,11 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		24C1D01D42F7C40FE2C3AED2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 334E76AC4421AF3AF2C426ED /* PrivacyInfo.xcprivacy */; };
+		28BAC41DBC7E12FC25DD780B /* NativeCalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8AB4FFBEA5597A029FDCC3D /* NativeCalls.swift */; };
 		2C2AE878C73D710C6B28B451 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 24DEDD57D1B3A43C924DDC93 /* MetalKit.framework */; };
 		38E4F6C109C0052E8864402E /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C587610A2DF92B55D48C524 /* WebKit.framework */; };
 		3B922DD4B66E7C6B8FDA7617 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1AE857753D46B3772C2BF7CF /* UIKit.framework */; };
 		4036922C4AE61287744AFBF4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1CCCA00313E7D4E302B2E8BE /* LaunchScreen.storyboard */; };
 		420EEDDE4D7B1AD1575A8B62 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5CED8921299308465DD42F19 /* libapp.a */; };
+		4A31C5977ABF9C43067645CE /* Daily in Frameworks */ = {isa = PBXBuildFile; productRef = F6EDDEA97A0629F705B41CC2 /* Daily */; };
+		5E38202CCEDA3FA4A8C55530 /* NativeCallScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CC6804F32CF2011C984E2AB /* NativeCallScreen.swift */; };
 		66B26C12906CAD814B1028D2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E0090ED5309880BBBE55B08B /* PrivacyInfo.xcprivacy */; };
 		6712A73BF80908BC5B6103A5 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62D4FBF6929DC4DBE2564C09 /* Security.framework */; };
 		6C68F46ADB8840E2F4853638 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72A37ADB07A0BB20592A4855 /* Metal.framework */; };
@@ -51,6 +54,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0CC6804F32CF2011C984E2AB /* NativeCallScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeCallScreen.swift; sourceTree = "<group>"; };
 		160E4D624C0A31D73CA143E7 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
 		1AE857753D46B3772C2BF7CF /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		1BF1C077855D8A113A972974 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -74,6 +78,7 @@
 		C481738E47826B0400924994 /* OpenChat.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenChat.entitlements; sourceTree = "<group>"; };
 		CEBEF42C76BC4563962C64E7 /* navigation.rs */ = {isa = PBXFileReference; path = navigation.rs; sourceTree = "<group>"; };
 		D23C0E057AF1F8158C05DFB6 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		D8AB4FFBEA5597A029FDCC3D /* NativeCalls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeCalls.swift; sourceTree = "<group>"; };
 		E0090ED5309880BBBE55B08B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		E9305D0D0E5E8936FF1D7CC5 /* open-chat_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "open-chat_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		EEDA857DE077CD7CFD222D3E /* OpenChatNotificationService.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = OpenChatNotificationService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -93,6 +98,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4A31C5977ABF9C43067645CE /* Daily in Frameworks */,
 				420EEDDE4D7B1AD1575A8B62 /* libapp.a in Frameworks */,
 				B6D4D3E52790D5E4158C3F18 /* CoreGraphics.framework in Frameworks */,
 				6C68F46ADB8840E2F4853638 /* Metal.framework in Frameworks */,
@@ -231,6 +237,8 @@
 			isa = PBXGroup;
 			children = (
 				D23C0E057AF1F8158C05DFB6 /* main.mm */,
+				D8AB4FFBEA5597A029FDCC3D /* NativeCalls.swift */,
+				0CC6804F32CF2011C984E2AB /* NativeCallScreen.swift */,
 				66F605227182E16F3C3D14D7 /* bindings */,
 			);
 			path = "open-chat";
@@ -288,6 +296,7 @@
 			);
 			name = "open-chat_iOS";
 			packageProductDependencies = (
+				F6EDDEA97A0629F705B41CC2 /* Daily */,
 			);
 			productName = "open-chat_iOS";
 			productReference = E9305D0D0E5E8936FF1D7CC5 /* open-chat_iOS.app */;
@@ -322,6 +331,7 @@
 			mainGroup = 8F50D6D7B1D9C1E8F62C915C;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				0B03C5FECE4E9B418F89A494 /* XCRemoteSwiftPackageReference "daily-client-ios" */,
 				86453D4C76B76EBF5BF47305 /* XCLocalSwiftPackageReference "../../../tauri-plugin-oc/ios/PushCore" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -446,6 +456,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5E38202CCEDA3FA4A8C55530 /* NativeCallScreen.swift in Sources */,
+				28BAC41DBC7E12FC25DD780B /* NativeCalls.swift in Sources */,
 				F55BBA8690CB685EEF187273 /* main.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -735,10 +747,26 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		0B03C5FECE4E9B418F89A494 /* XCRemoteSwiftPackageReference "daily-client-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/daily-co/daily-client-ios";
+			requirement = {
+				kind = exactVersion;
+				version = 0.41.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		BC2AF3EBF9E211DA709E9F4F /* PushCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = PushCore;
+		};
+		F6EDDEA97A0629F705B41CC2 /* Daily */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0B03C5FECE4E9B418F89A494 /* XCRemoteSwiftPackageReference "daily-client-ios" */;
+			productName = Daily;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

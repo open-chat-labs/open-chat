@@ -13,6 +13,8 @@ import {
     type VideoCallType,
 } from "@client";
 import { setCallRingback } from "@utils/native/call_bridge";
+import { createNativeCall } from "@utils/native/nativeCall";
+import { isIosTauriApp } from "@shared";
 import {
     activeVideoCall,
     camera,
@@ -157,6 +159,52 @@ export class CallSession {
         }
     }
 
+    // #10398 invariant 19: iOS never creates the Daily frame
+    async #createCall(
+        container: HTMLElement,
+        room: VideoCallRoom,
+        options: CallFrameOptions,
+    ): Promise<DailyCall> {
+        const { callType } = room;
+        const url = `https://openchat.daily.co/${room.roomName}`;
+        const videoOff = startVideoOff(callType, options.cameraOn);
+
+        if (isIosTauriApp()) {
+            return createNativeCall(
+                {
+                    url,
+                    token: room.token,
+                    userName: options.username,
+                    title: options.title,
+                    video: callType !== "audio",
+                    cameraOn: !videoOff,
+                    micOn: options.micOn,
+                    broadcast: callType === "broadcast",
+                },
+                () => this.hangup(),
+            );
+        }
+
+        // daily-js is only loaded when a call actually starts so it stays out of the initial bundle
+        const { default: daily } = await import("@daily-co/daily-js");
+
+        return daily.createFrame(container, {
+            token: room.token,
+            activeSpeakerMode: callType === "broadcast" ? true : options.speakerView,
+            showLeaveButton: false,
+            showFullscreenButton: false,
+            startVideoOff: videoOff,
+            startAudioOff: !options.micOn,
+            iframeStyle: {
+                width: "100%",
+                height: "100%",
+            },
+            url,
+            userName: options.username,
+            theme: options.theme,
+        });
+    }
+
     async #enterRoom(container: HTMLElement, chatId: ChatIdentifier, room: VideoCallRoom) {
         const { callType, messageId } = room;
         const options = this.#frameOptions(chatId);
@@ -166,24 +214,7 @@ export class CallSession {
             this.#call = undefined;
         }
 
-        // daily-js is only loaded when a call actually starts so it stays out of the initial bundle
-        const { default: daily } = await import("@daily-co/daily-js");
-
-        const call = daily.createFrame(container, {
-            token: room.token,
-            activeSpeakerMode: callType === "broadcast" ? true : options.speakerView,
-            showLeaveButton: false,
-            showFullscreenButton: false,
-            startVideoOff: startVideoOff(callType, options.cameraOn),
-            startAudioOff: !options.micOn,
-            iframeStyle: {
-                width: "100%",
-                height: "100%",
-            },
-            url: `https://openchat.daily.co/${room.roomName}`,
-            userName: options.username,
-            theme: options.theme,
-        });
+        const call = await this.#createCall(container, room, options);
         this.#call = call;
 
         call.on("app-message", (ev: InterCallMessage | undefined) => {

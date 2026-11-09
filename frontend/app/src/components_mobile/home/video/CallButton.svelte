@@ -1,6 +1,7 @@
 <script lang="ts">
     import { IconButton, MenuItem, MenuTrigger, type Padding } from "component-lib";
     import { publish, type ChatIdentifier, type VideoCallType } from "@client";
+    import { isIosTauriApp } from "@shared";
     import Phone from "svelte-material-icons/PhoneOutline.svelte";
     import Video from "svelte-material-icons/VideoOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -29,6 +30,9 @@
 
     // a new call that is not a broadcast is offered as an audio call or a video call
     let canChooseCallType = $derived(!inCall && !videoCallInProgress && !isPublic);
+
+    // iOS can watch a broadcast but not start one yet (#10445)
+    let canStart = $derived(inCall || videoCallInProgress || !isPublic || !isIosTauriApp());
 
     function start(callType: VideoCallType) {
         if (inCall) {
@@ -65,6 +69,6 @@
             </MenuItem>
         {/snippet}
     </MenuTrigger>
-{:else}
+{:else if canStart}
     {@render button(() => start(isPublic ? "broadcast" : "default"))}
 {/if}

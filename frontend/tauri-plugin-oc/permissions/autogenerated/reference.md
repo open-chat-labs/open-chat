@@ -38,6 +38,8 @@ Default permissions for the plugin
 - `allow-set-call-speaker`
 - `allow-set-call-ringback`
 - `allow-set-call-end-token`
+- `allow-native-call-join`
+- `allow-native-call-leave`
 - `allow-get-store-update`
 - `allow-haptic`
 - `allow-get-window-insets`
@@ -595,6 +597,58 @@ Enables the minimize_app command without any pre-configured scope.
 <td>
 
 Denies the minimize_app command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-native-call-join`
+
+</td>
+<td>
+
+Enables the native_call_join command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-native-call-join`
+
+</td>
+<td>
+
+Denies the native_call_join command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-native-call-leave`
+
+</td>
+<td>
+
+Enables the native_call_leave command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-native-call-leave`
+
+</td>
+<td>
+
+Denies the native_call_leave command without any pre-configured scope.
 
 </td>
 </tr>
