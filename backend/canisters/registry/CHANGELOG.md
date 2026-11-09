@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2218](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2218-registry)] - 2026-11-09
+
 ### Removed
 
 - Remove the old names of the endpoints which the event endpoints replaced, as nothing calls them any more ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))

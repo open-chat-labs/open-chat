@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2219](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2219-user_index)] - 2026-11-09
+
 ### Added
 
 - Count each user's prize claims, limiting them to 10 in 24 hours ([#10443](https://github.com/open-chat-labs/open-chat/pull/10443))
