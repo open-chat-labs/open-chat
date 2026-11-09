@@ -16,6 +16,7 @@ class NativeCallJoinArgs: Decodable {
 
 class CallConfigArgs: Decodable {
     let videoBridgeUrl: String
+    let username: String?
 }
 
 class CallEndTokenArgs: Decodable {
@@ -29,11 +30,38 @@ class CallEndTokenArgs: Decodable {
 final class NativeCallBridge {
     static let shared = NativeCallBridge()
 
-    private var videoBridgeUrl: String?
+    private static let videoBridgeUrlKey = "oc.call.videoBridgeUrl"
+    private static let usernameKey = "oc.call.username"
+
     private var teardown: CallTeardown?
+    // A call answered from a ring that the web layer hasn't heard about yet
+    private var pendingAction: String?
+
+    // Kept across launches, as a ring can start the app with no web layer to ask
+    private var videoBridgeUrl: String? {
+        get { UserDefaults.standard.string(forKey: Self.videoBridgeUrlKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.videoBridgeUrlKey) }
+    }
+    private var username: String? {
+        get { UserDefaults.standard.string(forKey: Self.usernameKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.usernameKey) }
+    }
+
+    var ringBridge: RingBridge? {
+        videoBridgeUrl.map { url in
+            RingBridge(videoBridgeUrl: url) { request in
+                let (data, response) = try await URLSession.shared.data(for: request)
+                guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                    throw URLError(.badServerResponse)
+                }
+                return data
+            }
+        }
+    }
 
     func install() {
         (NSClassFromString("OCNativeCalls") as? NSObject.Type)?.perform(NSSelectorFromString("start"))
+        CallRinger.shared.install()
 
         let center = NotificationCenter.default
         center.addObserver(forName: .init("ocNativeCallEvent"), object: nil, queue: .main) { [weak self] note in
@@ -46,8 +74,74 @@ final class NativeCallBridge {
         }
     }
 
-    func setConfig(videoBridgeUrl: String) {
+    func setConfig(videoBridgeUrl: String, username: String?) {
         self.videoBridgeUrl = videoBridgeUrl
+        if let username { self.username = username }
+    }
+
+    func takePendingAction() -> String? {
+        defer { pendingAction = nil }
+        return pendingAction
+    }
+
+    // Answers a ring with no help from the web layer, which may not be running
+    func answer(_ call: IncomingCall, completion: @escaping (Bool) -> Void) {
+        guard let bridge = ringBridge, let token = call.declineToken, let username else {
+            completion(false)
+            return
+        }
+        let video = !call.audioOnly
+        tellWebAboutAnswer(call)
+        Task { @MainActor in
+            guard let room = try? await bridge.answer(token: token, username: username) else {
+                completion(false)
+                return
+            }
+            let reply: ([String: Any]) -> Void = { result in completion(result["error"] == nil) }
+            NotificationCenter.default.post(
+                name: .init("ocNativeCallJoin"), object: nil,
+                userInfo: [
+                    "url": room.url, "token": room.token, "userName": username, "title": call.callerName,
+                    "video": video, "cameraOn": false, "cameraWhenActive": video, "micOn": true,
+                    "broadcast": false, "reply": reply,
+                ])
+        }
+    }
+
+    // Warm as an event, cold parked until the web layer asks, like Android. The web layer then
+    // joins this same room, and the shell hands it the call that is already running.
+    private func tellWebAboutAnswer(_ call: IncomingCall) {
+        var action: [String: String] = [
+            "kind": "accept", "messageId": call.messageId, "callType": call.audioOnly ? "audio" : "default",
+        ]
+        switch call.chat {
+        case .direct(let userId):
+            action["chatType"] = "direct"
+            action["chatId"] = userId
+        case .group(let groupId):
+            action["chatType"] = "group"
+            action["chatId"] = groupId
+        }
+        if OCCompanion.shared.svelteReady {
+            OCCompanion.shared.trigger("call-action", action.mapValues { $0 as JSValue })
+        } else if let data = try? JSONSerialization.data(withJSONObject: action) {
+            pendingAction = String(decoding: data, as: UTF8.self)
+        }
+    }
+
+    // Ended from the system call screen. With the app on screen the web layer runs the hang-up,
+    // as it knows whether this was the last person there. Otherwise it can't be relied on.
+    func hangUp() {
+        if UIApplication.shared.applicationState == .active {
+            NotificationCenter.default.post(name: .init("ocNativeCallHangUp"), object: nil)
+        } else {
+            sendTeardown(waiting: false)
+            leave()
+        }
+    }
+
+    func setMuted(_ muted: Bool) {
+        NotificationCenter.default.post(name: .init("ocNativeCallMute"), object: nil, userInfo: ["muted": muted])
     }
 
     func setTeardown(_ teardown: CallTeardown) {
@@ -79,6 +173,7 @@ final class NativeCallBridge {
         }
         if kind == "left" {
             teardown = nil
+            CallRinger.shared.nativeCallFinished()
         }
         OCCompanion.shared.trigger("native-call-event", Self.flatten(event))
     }

@@ -81,7 +81,7 @@ final class Push: NSObject, UNUserNotificationCenterDelegate {
         waiters.forEach { $0(token) }
     }
 
-    private static let isSandbox: Bool = {
+    static let isSandbox: Bool = {
         let profile = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision")
             .flatMap { try? Data(contentsOf: $0) }
         return ApnsEnvironment.isSandbox(profile: profile)

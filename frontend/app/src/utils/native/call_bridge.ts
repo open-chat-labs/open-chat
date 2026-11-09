@@ -125,9 +125,12 @@ export function runCallAction(action: NativeCallAction): void {
 // What the shell needs to act on a call with the app not running: the bridge to tell
 // when the user declines from the ring. Sent on every start so a changed URL is picked
 // up. Never rejects: a shell without the command is a no-op.
-export function setCallConfig(videoBridgeUrl: string): Promise<void> {
+export function setCallConfig(videoBridgeUrl: string, username?: string): Promise<void> {
     if (!endsCallsNatively()) return Promise.resolve();
-    return invoke<void>("plugin:oc|set_call_config", { videoBridgeUrl }).catch(() => undefined);
+    return invoke<void>("plugin:oc|set_call_config", {
+        videoBridgeUrl,
+        ...(username === undefined ? {} : { username }),
+    }).catch(() => undefined);
 }
 
 // In-call (#9559). The shell needs to know when a call is active so it can keep the
@@ -291,7 +294,7 @@ export async function expectCallControls(
 // while the shell may still be ringing for it: the shell ends its ring as answered
 // here. Never rejects: a shell without the command is a no-op.
 export function notifyCallJoined(messageId: bigint): Promise<void> {
-    if (!isAndroidTauriApp()) return Promise.resolve();
+    if (!endsCallsNatively()) return Promise.resolve();
     return invoke<void>("plugin:oc|call_ring_handled", { messageId: messageId.toString() }).catch(
         () => undefined,
     );

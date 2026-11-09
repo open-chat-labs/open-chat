@@ -1,4 +1,5 @@
-import type { OpenChat } from "@client";
+import { currentUserStore, type OpenChat } from "@client";
+import { isIosTauriApp } from "@shared";
 import { clearChatShortcuts, startChatShortcutPusher } from "@stores/chatShortcuts";
 import { activeVideoCall } from "@stores/video";
 import { invoke } from "@tauri-apps/api/core";
@@ -41,6 +42,11 @@ export function setupNativeApp(
     // APNs on iOS). Registration is last-login-wins on the backend, so this
     // also reclaims a token still bound to a previous account on this device.
     registerPushDevice(client);
+
+    // A ring can start the iOS app with no web layer running, so the shell keeps who to join as
+    if (isIosTauriApp() && videoBridgeUrl) {
+        setCallConfig(videoBridgeUrl, currentUserStore.value.username);
+    }
 
     // Everything below registers session-scoped handlers and must run once.
     if (nativeSetupDone) {

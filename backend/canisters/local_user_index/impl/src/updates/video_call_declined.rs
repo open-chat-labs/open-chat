@@ -3,6 +3,7 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::video_call_declined::*;
+use types::CallDismissalKind;
 
 // A decline, relayed by the video bridge (#9534). The only effect is a `declined_elsewhere`
 // dismissal to the named user's phones; nobody else learns of it.
@@ -14,6 +15,6 @@ fn video_call_declined(args: Args) -> Response {
 
 fn video_call_declined_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
-    state.push_call_declined(args.user_id, args.chat_id, args.message_id, now);
+    state.push_call_dismissed(args.user_id, args.chat_id, args.message_id, CallDismissalKind::DeclinedElsewhere, now);
     Response::Success
 }
