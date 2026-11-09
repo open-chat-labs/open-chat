@@ -1,6 +1,6 @@
 <!-- The attach panel (native plan 06), in the keyboard-area sheet (KeyboardPanel). In the apps, at
-     rest: the top row ("N of 10", the handle, Clear), the gallery strip (Camera, All photos, the
-     phone's last 100 photos and videos) and the actions (File, Poll, Prize, Send crypto, Swap, Meme
+     rest: the standard handle (the sheet's), the gallery strip (Camera, All photos, the phone's
+     last 100 photos and videos) and the actions (File, Poll, Prize, Send crypto, Swap, Meme
      fighter, 3 × 2), always. Photos and videos tapped go straight into the composer, numbered, up
      to ten: the composer's media are the selection (MediaPicks), so removing one there puts its
      tile back. Grown (dragged up, or All photos), the Recents grid in its place, picked the same,
@@ -32,7 +32,6 @@
     import type { KeyboardPanelState } from "./panelState.svelte";
     import { panelLayers } from "./panelDrag";
     import { panelContentPull, panelDragHandle } from "./panelDragHandle";
-    import PanelHandle from "./PanelHandle.svelte";
 
     type Props = {
         panel: KeyboardPanelState;
@@ -48,9 +47,6 @@
         picks: MediaPicks;
         /** A photo or video tapped: picked, or put back (the composer prepares it). */
         onToggle: (item: RecentItem, duration: string | undefined) => void;
-        /** The handle's accessible name. */
-        handleLabel: string;
-        onClose: () => void;
         onCamera: () => void;
         /** The system's photo picker (mobile web's Photos & videos; All photos where none are listed). */
         onPickMedia: () => void;
@@ -66,8 +62,6 @@
         builders,
         picks,
         onToggle,
-        handleLabel,
-        onClose,
         onCamera,
         onPickMedia,
         onPickFile,
@@ -230,22 +224,6 @@
         aria-hidden={!layers.restLive}
     >
         {#if strip}
-            <div class="top-row">
-                <span class="count" class:shown={picks.count > 0} aria-live="polite">
-                    {picks.count > 0 ? ofMax : ""}
-                </span>
-                <PanelHandle {panel} label={handleLabel} zone="centre" {onClose} />
-                <button
-                    type="button"
-                    class="clear"
-                    class:shown={picks.count > 0}
-                    tabindex={picks.count > 0 ? 0 : -1}
-                    aria-hidden={picks.count === 0}
-                    onclick={() => picks.clear()}
-                >
-                    {$_("native.composer.attach.clear")}
-                </button>
-            </div>
             <div class="strip" data-tab-swipe="off">
                 <button type="button" class="tile" onclick={onCamera}>
                     <span class="tile-icon camera"></span>
@@ -289,7 +267,6 @@
             style:pointer-events={layers.expandedLive ? undefined : "none"}
             aria-hidden={!layers.expandedLive}
         >
-            <PanelHandle {panel} label={$_("native.composer.attach.dragBack")} {onClose} />
             <div class="recents-header" {@attach panelDragHandle(panel)}>
                 <button
                     type="button"
@@ -538,56 +515,6 @@
         text-align: center;
         overflow-wrap: anywhere;
         @include line-clamp(2);
-    }
-
-    // 06: the top row, 44px: "N of 10", the handle's zone, Clear (a 44px tap area)
-    .top-row {
-        flex: none;
-        display: grid;
-        grid-template-columns: 1fr auto 1fr;
-        align-items: center;
-        height: 44px;
-        padding: 0 var(--space-14);
-    }
-
-    .count {
-        justify-self: start;
-        font: var(--weight-medium) text-size(12px) / 1 var(--font-mono);
-        color: var(--ink-3);
-        opacity: 0;
-        transition: opacity 0.2s ease;
-
-        &.shown {
-            opacity: 1;
-        }
-    }
-
-    .clear {
-        justify-self: end;
-        height: 44px;
-        margin-inline-end: calc(var(--space-14) * -1);
-        padding: 0 var(--space-14);
-        border: 0;
-        background: none;
-        font: var(--weight-semibold) text-size(13.5px) / 1 var(--font-sans);
-        color: var(--accent-bright);
-        cursor: pointer;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s ease;
-        -webkit-tap-highlight-color: transparent;
-
-        &.shown {
-            opacity: 1;
-            pointer-events: auto;
-        }
-    }
-
-    @include reduced-motion {
-        .count,
-        .clear {
-            transition: none;
-        }
     }
 
     // ---- Recents

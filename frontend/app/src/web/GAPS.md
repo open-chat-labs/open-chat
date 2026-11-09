@@ -478,8 +478,10 @@ design export needs. Each entry says where it came up.
   - **Photos and videos picked** go straight into the composer (06 "live in the composer"), held
     by the composer (`mediaPicks`), not the chat's draft: they're lost when the chat is left (the
     draft keeps a file, or a photo pasted). Each is prepared as it's picked (a video's transcode
-    takes a while); a send waits for them. The composer's placeholder is "Add a caption…" and Send
-    shows how many go (`MessageComposer`'s `attachedPlaceholder` and `sendCount`, by hand,
+    takes a while); a send waits for them. Over the thumbnails the composer's media header says
+    "N of 10" and Clear empties the attachment (every tile with it; `mediaLabel`, `onClearMedia`,
+    05). The attach panel has only the standard handle (06 (e)). The composer's placeholder is
+    "Add a caption…" and Send shows how many go (`MessageComposer`'s `attachedPlaceholder` and `sendCount`, by hand,
     EXPORT-LOG 2026-11-09). **Backend dependency**: a message holds one attachment, so the first
     goes with the caption and the others follow it, a message each, in the order picked (refused,
     those not sent are picked again), until the backend takes several in one message (the user's
@@ -525,6 +527,13 @@ design export needs. Each entry says where it came up.
   - **The keyboard on other screens** (§5 Open): Pick a username, Edit profile and Delete account
     keep their pinned button down (`aboveKeyboard`); the search screens and Link to your account
     let the WebView shrink above the keyboard. The builders' keyboard-up states are N9's.
+  - **The light conversation** (04, 00): the screen's root carries `data-chat-surface`, and
+    `tokens.css` turns it off-white (`--chat-bg`) with a white pill and white received bubbles
+    without their ring, and a soft `--bubble-shadow` under every message, photos and videos
+    included (the user's decision on 04's open question); the sheets' top line is `--sheet-edge`
+    (`--line-2` in light). Not done: 04's recommendation to bring the received ring back when the
+    OS's "Increase contrast" is on. Still open (06): the panels' rest height stays 304px over the
+    safe area (or the keyboard's), which 06 says may go back to 282px.
   - **Decided by the user** (2026-11-09, where the plan was silent): the emoji sections are the
     real categories, not 07's curated seven, with their emoji as the category bar's icons; Recents'
     chevron is "Collapse"; GIF searches with no match as above. Kept as built (06 places All

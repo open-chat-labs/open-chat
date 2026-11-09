@@ -995,7 +995,8 @@
     }
 </script>
 
-<div class="conversation" {@attach followCovered}>
+<!-- data-chat-surface: in native light, the off-white chat with white bubbles (tokens.css) -->
+<div class="conversation" data-chat-surface {@attach followCovered}>
     {#if searchOpen}
         <SearchBar
             {query}
@@ -1371,6 +1372,7 @@
         flex-direction: column;
         height: 100%;
         min-height: 0;
+        background: var(--surface-0);
     }
 
     .state {
@@ -1645,7 +1647,7 @@
         padding: 0 13px;
         border-radius: 5px 16px 16px 16px;
         background: var(--bubble-recv-bg);
-        box-shadow: inset 0 0 0 1px var(--line-1);
+        box-shadow: var(--bubble-ring), var(--bubble-shadow);
 
         &:dir(rtl) {
             border-radius: 16px 5px 16px 16px;

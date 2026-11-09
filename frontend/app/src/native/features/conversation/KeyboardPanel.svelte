@@ -119,7 +119,8 @@
 <style lang="scss">
     @use "@openchat/ui/src/lib/styles/mixins" as *;
 
-    // 06: --surface-1, 18px top corners, a 1px line along the top, a shadow over the chat that
+    // 06: --surface-1, 18px top corners, a 1px line along the top (--sheet-edge: --line-1 in dark,
+    // --line-2 in light), a shadow over the chat that
     // strengthens as it grows; rising 40px and fading in as it opens
     .panel {
         position: absolute;
@@ -131,7 +132,7 @@
         flex-direction: column;
         border-radius: var(--radius-xl) var(--radius-xl) 0 0;
         background: var(--surface-1);
-        box-shadow: inset 0 1px 0 var(--line-1);
+        box-shadow: inset 0 1px 0 var(--sheet-edge);
         animation: rise 0.24s var(--ease-out);
 
         // the shadow, at f's strength

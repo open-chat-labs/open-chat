@@ -68,6 +68,7 @@
         composerStartText,
     } from "@src/logic/composer/composerProps";
     import {
+        MAX_MEDIA,
         MediaPicks,
         picksTray,
         sendMoreMedia,
@@ -543,6 +544,13 @@
                 ? $_("native.composer.attach.caption")
                 : undefined}
             sendCount={picks.count}
+            mediaLabel={staged?.type === "media"
+                ? $_("native.composer.attach.ofMax", {
+                      values: { count: Math.max(picks.count, 1), max: MAX_MEDIA },
+                  })
+                : undefined}
+            onClearMedia={removeAttachment}
+            clearMediaLabel={$_("native.composer.attach.clear")}
             onRemoveAttachment={removeAttachment}
             onRemoveMediaItem={removeMedia}
             onAddMedia={attachable && picks.count > 0 && picks.room > 0
@@ -599,7 +607,7 @@
             rest={slot.panelRest}
             covered={slot.covered}
             {handleLabel}
-            handle={slot.panel === "emoji" || !gallery}
+            handle
             onClose={() => slot.close()}
         >
             {#if slot.panel === "emoji"}
@@ -621,8 +629,6 @@
                     {builders}
                     {picks}
                     onToggle={toggleRecent}
-                    {handleLabel}
-                    onClose={() => slot.close()}
                     onCamera={() => pick("camera")}
                     onPickMedia={() => pick("media")}
                     onPickFile={() => pick("file")}
