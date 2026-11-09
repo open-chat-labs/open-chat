@@ -836,3 +836,10 @@
 ## 2026-11-09 — the long-press menu's copy of a message can't be selected (native N5d), by hand
 - `MessageLongPressMenu`: the copy of the pressed message has `user-select: none` and no iOS callout (`-webkit-touch-callout: none`): it's a stand-in for the message, whose text the native conversation doesn't let be selected either (a long-press is the menu, which has Copy). No props changed.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-09 — the message long-press menu's placement, the native menus' scrollbar, a sheet on the keyboard (native N5d), by hand
+- `messageMenuPlacement` (spec'd): an optional `edges` (`MenuEdges`: what's kept from the frame's top and bottom, 12px by default). Past the notes' four placements, the whole card now goes over the message at the screen's bottom (the reactions above the message where they fit clear of it, else at the screen's top) before it would scroll; it scrolls only when it can't be whole anywhere (`order` `'over'` then covers both, `'scroll'` only the latter).
+- `MessageLongPressMenu`: the card is rendered hidden and measured as it lays out (its computed height, rounded up, so its max-height never cuts it short, even measured again while it scales in) rather than worked out from its rows; the edges it passes are 12px less the safe areas (the frame's insets), so what's under the veil (the composer) is room; the message's box is its bubble's (`data-oc-bubble`, else the first element down that draws a box of its own), not its text's, when a wrapped bubble is as wide as its row. No props changed.
+- `NativeMenu`: `::-webkit-scrollbar { display: none }` beside `scrollbar-width: none`, which Android's WebView doesn't support: a card that does scroll shows no scrollbar (the anchored and row long-press menus too).
+- `BottomSheet`: `keyboard` (px the soft keyboard covers, where the window doesn't shrink for it): while a field in the sheet has the focus, the sheet sits on the keyboard, as tall as it can be under the screen's top. `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

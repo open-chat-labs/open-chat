@@ -1,8 +1,8 @@
 <!-- The emoji sheet behind the long-press menu's reactions + (MessageActions): the composer's emoji
      panel's emoji (EmojiGrid: Recent, every emoji by category, the category bar) under a search
      field in the panel's style (EmojiSearchField). It's a bottom sheet's, not the keyboard slot's,
-     so the search is a plain one: the field takes the keyboard and the results show under it, in
-     the grid. No GIFs (a reaction is an emoji) and no backspace. A reaction the user has on the
+     so the search is a plain one: the field takes the keyboard, the sheet sits on it (the host's
+     BottomSheet `keyboard`), and the results show under the field, in the grid. No GIFs (a reaction is an emoji) and no backspace. A reaction the user has on the
      message is marked, and picking it takes it off; one added goes to the front of Recent, the
      composer's too. -->
 <script lang="ts">

@@ -370,18 +370,23 @@ design export needs. Each entry says where it came up.
       Reveal, Undelete, and Block (a group's) after the divider. Not offered yet: starting or
       following a thread (N8a), a reminder (no native sheet for its time yet: the web has
       `ReminderDialogScreen`), tipping (the web hasn't it either). Info isn't offered on what
-      can't be acted on (deleted, blocked). The card is 240px with 48px rows: a long menu on a
-      message low on the screen scrolls (`messageMenuPlacement`'s `scroll`), and with no room at
-      all the reactions sit at the top of the screen and the card at its bottom, over the message
-      (ours: the notes give four placements, all round the message).
+      can't be acted on (deleted, blocked). The card is 240px with 48px rows, measured as it lays
+      out. Past the notes' four placements round the message (ours): the whole card at the
+      screen's bottom, over the message, the reactions above it (or at the screen's top); it
+      scrolls (without a scrollbar) only when it can't be whole anywhere. What's under the veil
+      (the composer, the header) is room: only 12px from the screen's top and bottom isn't, the
+      safe areas counting towards it, so a message just above the composer gets the card above it
+      and the reactions below it, over the composer. The reactions and the card line up with the
+      bubble's own box (`data-oc-bubble`, else the first element that draws a box), not its text,
+      when a wrapped bubble is as wide as its row.
     - **Reactions**: six quick ones, the user's most used first (the shared `quickReactions`
       store), then +, which opens a bottom sheet (notes §1: pickers are sheets; the design doesn't
       show where the + goes; 72% high, the kit's `BottomSheet`) with the composer's emoji panel's
       emoji (`ReactionPicker` on the panel's `EmojiGrid` and `EmojiSections`): Recent, every emoji
       by category with the category bar, and a search. Ours: no GIF tab or backspace, and the
-      search is a plain field in the panel's style (`EmojiSearchField`) whose keyboard comes up
-      over the sheet, the results under the field (07's search strip is the keyboard slot's, not a
-      sheet's). The reactions the user has are marked, and picking one takes it off. A reaction
+      search is a plain field in the panel's style (`EmojiSearchField`): with its keyboard up the
+      sheet sits on the keyboard, the results under the field (07's search strip is the keyboard
+      slot's, not a sheet's). The reactions the user has are marked, and picking one takes it off. A reaction
       added goes to the front of Recent (the composer's: the same per-user list) and counts
       towards the quick ones (`toggleReaction`, as the bar's do); one taken off counts for
       neither.
@@ -413,6 +418,9 @@ design export needs. Each entry says where it came up.
       hasn't accepted refuses the copy (it shows failed there, and the retry asks for the rules),
       as the client only knows the open chat's rules. The open chat isn't offered, as in every
       picker. DMs show their @username, not when they were last online (the web's picker loads it).
+      While its search or note field has the keyboard, the sheet sits on it (the kit's
+      `BottomSheet`'s `keyboard`, fed `softKeyboard.covering`: the conversation keeps the Android
+      app's viewport resize off), as the reaction sheet does.
     - **Report** is a bottom sheet with the web dialog's words (the design has no report screen).
     - **Not checked in a browser**: removing a link's preview (the local replica's previews don't
       load) and the menu in RTL (spec'd only).

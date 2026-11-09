@@ -24,6 +24,7 @@
     import { getContext } from "svelte";
     import { SvelteMap } from "svelte/reactivity";
     import { _ } from "svelte-i18n";
+    import { softKeyboard } from "../../aboveKeyboard.svelte";
     import { forwardRows } from "./forward.adapter";
 
     type Props = {
@@ -102,7 +103,8 @@
     open={message !== undefined}
     {onClose}
     title={$_("native.conversation.forward.title")}
-    height="86%">
+    height="86%"
+    keyboard={softKeyboard.covering}>
     <div class="top">
         <div class="item">
             <span class="item-icon"></span>

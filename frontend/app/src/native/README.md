@@ -133,7 +133,9 @@ to one do.
   keyboard, in a slot under it that a keyboard-area panel (emoji, attach) takes at the keyboard's
   height when the keyboard goes down (`KeyboardSlot`; the design's 304px where the keyboard hasn't
   been seen); where the keyboard's height is reported (the Android app) the viewport resize is off
-  and the slot takes it, elsewhere the platform lifts the page.
+  and the slot takes it, elsewhere the platform lifts the page. A sheet with a field over it takes
+  `keyboard={softKeyboard.covering}` (the kit's `BottomSheet`), so it sits on the keyboard while
+  its field has it.
 - **A screen leaving keeps what it shows** until it's gone. Back changes the URL as the pop starts,
   and whatever the URL selected (a chat, a community) is cleared then, in the client's stores: a
   screen that shows a selection holds what it last showed of it while it slides out (the

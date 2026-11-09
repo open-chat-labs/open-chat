@@ -20744,6 +20744,17 @@
         "doc": "More of the drag area, under the title (a step's heading)."
       },
       {
+        "name": "keyboard",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "How much of the window the soft keyboard covers (px; 0 where the window shrinks for it, or it's down): while a field in the sheet has the focus, the sheet rises above it."
+      },
+      {
         "name": "children",
         "type": "Snippet",
         "default": null,

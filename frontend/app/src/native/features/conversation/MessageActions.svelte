@@ -43,6 +43,7 @@
     import { navigate } from "@src/utils/navigation";
     import { getContext, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
+    import { softKeyboard } from "../../aboveKeyboard.svelte";
     import { DIAMOND_URL } from "../../router/locations";
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenContext } from "../app/screens";
@@ -368,7 +369,8 @@
     open={picking !== undefined}
     onClose={() => (picking = undefined)}
     label={$_("native.conversation.message.react")}
-    height="72%">
+    height="72%"
+    keyboard={softKeyboard.covering}>
     <ReactionPicker
         userId={me}
         selected={picking === undefined ? [] : myReactions(picking.evt.event.reactions, me)}
