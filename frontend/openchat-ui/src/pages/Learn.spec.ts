@@ -4,6 +4,13 @@ import Learn from './Learn.svelte';
 import { LEARN_PAGES, placeholderLearnContent, type LearnContent } from './learnContent';
 import { reactiveProps } from '../lib/testing/reactiveProps.svelte';
 
+// the header's and the contents bar's heights are bound (jsdom has no ResizeObserver)
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+} as unknown as typeof ResizeObserver;
+
 describe('Learn', () => {
   let target: HTMLElement;
   let app: object | null;

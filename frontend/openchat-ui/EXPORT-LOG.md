@@ -768,3 +768,9 @@
 ## 2026-11-08 — DiamondContent on a page (9a, #10132), by hand
 - `DiamondContent`: without `onClose` there's no ×, Maybe later or Done (a page has nothing to close). `onStartUpgrade`: Upgrade, and a timed member's Extend, hand over to the host instead of going on to the plans, and show without `onUpgrade`. The app's `/diamond` page can't take the payment itself (no PIN prompt outside the app), so it sends the person to sign in, or to the app's Diamond dialog. `meta.json` updated; Features › Wallet dialogs has a frame with it on a page.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-09 — Learn: the contents list as a bar on a phone, and the chosen section for the host's address (9a, #10132), by hand
+- `Learn`: where a doc is one column (860px and below) its contents list is no longer above the doc but a bar under the header, as wide as the page, naming the section being read (its number and title; "On this page" before the first one). Tapping it opens the whole list over the doc, with a scrim; choosing a section, the scrim, the bar again or Escape closes it. The sections are read from (and jumped to) below the header and the bar. The list's sub-sections now open as the reader comes to them at every width.
+- `onSection`: a section chosen in the contents list is handed to the host by its `id`, for its address (the app sets `?section=` in place), so the address bar links to it.
+- Docs: `meta.json` (Learn's `onSection`).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

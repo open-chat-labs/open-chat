@@ -56,6 +56,20 @@ export function withQueryStringFlag(name: string): string {
     return `${path}?${rest === "" ? "" : `${rest}&`}${encodeURIComponent(name)}`;
 }
 
+// The current URL with a param set to a value, keeping the others
+export function withQueryStringParam(name: string, value: string): string {
+    const qs = new URLSearchParams(window.location.search);
+    qs.set(name, value);
+    return `${window.location.pathname}?${qs}`;
+}
+
+// A param set in the current URL in place (a doc's ?section= as the reader picks a section, so
+// the address can be shared), keeping the entry's history state. Not through the router, which
+// would scroll the page to the top and count a page view.
+export function setQueryStringParamInPlace(name: string, value: string): void {
+    history.replaceState(history.state, "", withQueryStringParam(name, value));
+}
+
 const nomenuRoutes: RouteType[] = [];
 const scrollingRoutes: RouteType[] = [
     "features_route",

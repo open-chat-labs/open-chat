@@ -22265,6 +22265,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "A doc heading's copy-link button (shown while the heading is hovered, or always where nothing hovers) calls it with the section's `id`, for the host to copy its own link to the section. Without it the headings have none."
+      },
+      {
+        "name": "onSection",
+        "type": "(id: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A section chosen in a doc's contents list, by its `id`: the host rewrites its address in place (as `section` reads it), so the address links to the section being shown. Not passed back as `section`, which jumps there."
       }
     ],
     "group": "pages"

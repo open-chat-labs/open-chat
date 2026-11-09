@@ -5,8 +5,10 @@ import {
     copySectionUrl,
     inEditor,
     sectionUrl,
+    setQueryStringParamInPlace,
     withoutQueryStringParams,
     withQueryStringFlag,
+    withQueryStringParam,
 } from "./urls";
 
 describe("query string helpers", () => {
@@ -22,6 +24,22 @@ describe("query string helpers", () => {
     test("don't add a param twice", () => {
         history.replaceState(null, "", "/chats?profile");
         expect(withQueryStringFlag("profile")).toBe("/chats?profile");
+    });
+
+    test("set a param, keeping the others", () => {
+        history.replaceState(null, "", "/terms?ref=abc&section=2");
+        expect(withQueryStringParam("section", "10")).toBe("/terms?ref=abc&section=10");
+        history.replaceState(null, "", "/guidelines");
+        expect(withQueryStringParam("section", "3")).toBe("/guidelines?section=3");
+    });
+
+    test("set a param in place, keeping the entry's state", () => {
+        history.replaceState({ key: 1 }, "", "/terms?ref=abc");
+        const entries = history.length;
+        setQueryStringParamInPlace("section", "10");
+        expect(window.location.pathname + window.location.search).toBe("/terms?ref=abc&section=10");
+        expect(history.state).toEqual({ key: 1 });
+        expect(history.length).toBe(entries);
     });
 
     test("drop several params at once", () => {

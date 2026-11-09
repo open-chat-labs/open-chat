@@ -27,7 +27,12 @@
     import { currentThemeMode, themeType } from "@theme/themes";
     import { supportedLanguagesByCode } from "@i18n/i18n";
     import { navigate } from "@src/utils/navigation";
-    import { ANDROID_APK_URL, ANDROID_PLAY_STORE_URL, copySectionUrl } from "@src/utils/urls";
+    import {
+        ANDROID_APK_URL,
+        ANDROID_PLAY_STORE_URL,
+        copySectionUrl,
+        setQueryStringParamInPlace,
+    } from "@src/utils/urls";
     import { getContext, onDestroy, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { AuthDialogProps, pageSignIns } from "../auth/authDialog.svelte";
@@ -156,7 +161,8 @@
     const loadFailed = $derived(learnLoader.failed || !!legalLoader?.failed);
 
     // what every Learn page takes, a sub-page or a doc page: the theme, the routes, the auth, and
-    // a doc's ?section= and its copy links (on the site's own origin)
+    // a doc's ?section= (the section chosen in its contents list, in place, so the address can be
+    // shared) and its copy links (on the site's own origin)
     const learnFrame = $derived({
         mode,
         accent: $accentStore,
@@ -169,6 +175,7 @@
         onNavigate: (page: LearnPage, post?: string) => navigate(learnPath(page, post)),
         section: $querystringStore.get("section") ?? undefined,
         onCopySection: (id: string) => void copySectionUrl(client, id),
+        onSection: (id: string) => setQueryStringParamInPlace("section", id),
         auth: pageAuth,
         onEnterApp: enterApp,
         signedIn,

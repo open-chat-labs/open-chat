@@ -12,7 +12,9 @@
      host's own content (an interactive canister map …) on the Architecture tab in place of a doc.
      A doc page outside the tabs (`doc`: the host's legal pages, /diamond …) shows in the same doc layout, on the host's
      own path, with no tab current; its sections can hold numbered clauses (`blocks`), and the host's own content can
-     follow them (`belowDoc`). `onCopySection` gives every doc heading a copy-link button. -->
+     follow them (`belowDoc`). `onCopySection` gives every doc heading a copy-link button, and `onSection` hears a
+     section chosen in the contents list, for the host's address. Where the doc is one column (phones), the contents
+     list is a bar under the header naming the section being read, which opens to the whole list. -->
 <script lang="ts">
   import { tick, untrack, type Snippet } from 'svelte';
   import { useT } from '../lib/i18n';
@@ -73,6 +75,9 @@
     /** A doc heading's copy-link button calls it with the section's `id` (the host copies its own link to the section,
      *  as `section` reads it). Without it the headings have none. */
     onCopySection?: (id: string) => void;
+    /** A section chosen in a doc's contents list, by its `id`: the host rewrites its address in place (as `section`
+     *  reads it), so the address links to the section being shown. Not passed back as `section`, which jumps there. */
+    onSection?: (id: string) => void;
   }
 
   /** The URL hash picks the sub-page; links are learnHref + '#page' ('#blog/<slug>'). */
@@ -135,6 +140,7 @@
     termsHref = '/terms',
     privacyHref = '/privacy',
     onCopySection,
+    onSection,
   }: Props = $props();
   const t = useT();
 
@@ -236,6 +242,18 @@
     sectionEls[i]?.scrollIntoView?.({ behavior, block: 'start' });
   }
 
+  // a section chosen in the contents list: scrolled to, and told to the host for its address, which then names it
+  // rather than `section` (until the host passes a new one)
+  let chosenSection: string | undefined;
+  function choose(i: number) {
+    jumpTo(i);
+    tocShown = false;
+    const id = doc?.sections[i]?.id;
+    if (!id || !onSection) return;
+    chosenSection = id;
+    onSection(id);
+  }
+
   // the contents list is the doc's outline: sub-sections sit under their section, shown while it's open (TocOpen)
   const outline = $derived(doc ? docOutline(doc.sections) : []);
   const numbers = $derived.by(() => {
@@ -254,14 +272,24 @@
     return new TocOpen();
   });
   let reading = $state(0);
-  // below this the contents list sits above the doc rather than beside it (the CSS below); hosts without matchMedia
-  // (and tests) are wide
+  // the reader has come to the first section (before it, the bar above a one-column doc names none)
+  let readingStarted = $state(false);
+  // below this the doc is one column, and the contents list a bar under the header that opens to the whole list (the
+  // CSS below); hosts without matchMedia (and tests) are wide
   const narrowQuery = typeof matchMedia === 'function' ? matchMedia('(max-width: 860px)') : undefined;
   let narrowDoc = $state(narrowQuery?.matches ?? false);
   $effect(() => {
     const follow = () => (narrowDoc = narrowQuery?.matches ?? false);
     narrowQuery?.addEventListener?.('change', follow);
     return () => narrowQuery?.removeEventListener?.('change', follow);
+  });
+  // the one-column doc's contents list is open; the bar's and the header's heights put the line a section is read from
+  // (and jumped to) below both
+  let tocShown = $state(false);
+  let topHeight = $state(0);
+  let tocBarHeight = $state(0);
+  $effect(() => {
+    if (!narrowDoc) tocShown = false;
   });
 
   // the section being read follows the scroll: the one whose heading has passed below the sticky header (where a jump
@@ -270,15 +298,15 @@
     if (!doc) return;
     const shown = outline;
     const open = toc;
-    // above the doc, the list opening and closing would move the page under the reader: there only the reader opens it
-    const following = !narrowDoc;
     let frame = 0;
     const follow = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const tops = sectionEls.map((el) => el?.getBoundingClientRect().top ?? Infinity);
-        reading = readingSection(tops, 120);
-        open.reading(following ? outlinePath(shown, reading).map((e) => e.index) : []);
+        const line = narrowDoc ? topHeight + tocBarHeight + 24 : 120;
+        reading = readingSection(tops, line);
+        readingStarted = (tops[0] ?? Infinity) <= line;
+        open.reading(outlinePath(shown, reading).map((e) => e.index));
       });
     };
     untrack(follow);
@@ -306,7 +334,10 @@
   }
   $effect(() => {
     const target = deepLink();
-    if (target) untrack(() => followDeepLink(target));
+    untrack(() => {
+      chosenSection = undefined;
+      if (target) followDeepLink(target);
+    });
   });
 
   // a link in the content to the page as it shows (the same section or question again, after reading on) changes
@@ -314,7 +345,7 @@
   function onContentLink(e: MouseEvent, href: string) {
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !sameLocation(href, location.href)) return;
     e.preventDefault();
-    const target = deepLink();
+    const target = (doc && chosenSection) || deepLink();
     if (target) tick().then(() => followDeepLink(target));
   }
 
@@ -362,7 +393,7 @@
     {@const title = doc?.sections[e.index]?.title ?? ''}
     {@const open = e.children.length > 0 && toc.isOpen(e.index)}
     <div class="toc-entry" style:--toc-indent="{(e.depth - 1) * 14}px">
-      <button class="toc-item" class:reading={reading === e.index} aria-current={reading === e.index ? 'location' : undefined} onclick={() => jumpTo(e.index)}
+      <button class="toc-item" class:reading={reading === e.index} aria-current={reading === e.index ? 'location' : undefined} onclick={() => choose(e.index)}
         ><span class="num">{e.number}</span>{title}</button
       >
       {#if e.children.length}
@@ -414,8 +445,10 @@
   {/each}
 {/snippet}
 
-<div class="page" class:full-bleed={fullBleed} data-oc-page="learn" data-mode={mode} data-accent={accent}>
-  <header class="top">
+<svelte:window onkeydown={(e) => tocShown && e.key === 'Escape' && (tocShown = false)} />
+
+<div class="page" class:full-bleed={fullBleed} data-oc-page="learn" data-mode={mode} data-accent={accent} style:--top-height="{topHeight}px">
+  <header class="top" bind:offsetHeight={topHeight}>
     <div class="top-inner">
       <a class="brand" href={homeHref}><Logo size={30} /><span class="brand-name">OpenChat</span></a>
       <nav class="tabs" aria-label={t('ui.learn.navLabel')}>
@@ -439,7 +472,23 @@
       <div class="hosted">{@render architecture()}</div>
     {:else if doc}
       <div class="doc" class:single={!outline.length}>
-        {#if outline.length}
+        {#if outline.length && narrowDoc}
+          <!-- one column: a bar under the header naming the section being read, which opens to the whole list over the doc -->
+          {#if tocShown}<div class="toc-scrim" onclick={() => (tocShown = false)} role="presentation"></div>{/if}
+          <div class="toc-bar" class:open={tocShown} style:top="{topHeight}px" bind:offsetHeight={tocBarHeight}>
+            <button class="toc-current" aria-expanded={tocShown} aria-controls="learn-toc" onclick={() => (tocShown = !tocShown)}>
+              {#if readingStarted}
+                <span class="num">{numbers[reading]?.number}</span><span class="toc-current-title">{doc.sections[reading]?.title}</span>
+              {:else}
+                <span class="toc-current-title none">{t('ui.learn.onThisPage')}</span>
+              {/if}
+              <span class="toc-current-chevron" class:open={tocShown}><Icon icon="chevron-down" size={18} /></span>
+            </button>
+            <div class="toc-drop" class:open={tocShown}>
+              <nav class="toc-drop-inner" id="learn-toc" aria-label={t('ui.learn.onThisPage')}>{@render tocEntries(outline)}</nav>
+            </div>
+          </div>
+        {:else if outline.length}
           <aside class="toc">
             <span class="toc-heading">{t('ui.learn.onThisPage')}</span>
             {@render tocEntries(outline)}
@@ -928,7 +977,10 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .item-chev {
+    .item-chev,
+    .toc-current-chevron,
+    .toc-drop,
+    .toc-drop.open {
       transition: none;
     }
   }
@@ -1023,6 +1075,107 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+  }
+
+  /* ── a one-column doc's contents list: a bar under the header, as wide as the page, that opens over the doc ── */
+  .toc-bar {
+    position: sticky;
+    z-index: calc(var(--z-sticky) + 1);
+    /* flush with the header, out over the page's own padding */
+    margin: -56px calc(-1 * var(--space-24)) 0;
+    background: color-mix(in srgb, var(--surface-0) 85%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line-1);
+  }
+
+  /* open, it's the top of the list, over the scrim */
+  .toc-bar.open {
+    background: var(--surface-1);
+  }
+
+  .toc-current {
+    width: 100%;
+    min-height: 48px;
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-10);
+    padding: var(--space-14) var(--space-24);
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: start;
+    font: var(--weight-semibold) var(--text-md) / 1.35 var(--font-sans);
+    color: var(--ink);
+  }
+
+  .toc-current-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* before the first section: the list's own heading */
+  .toc-current-title.none {
+    font: var(--weight-semibold) var(--text-xs) / 1.35 var(--font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+  }
+
+  .toc-current-chevron {
+    flex: none;
+    align-self: center;
+    display: grid;
+    color: var(--ink-4);
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  .toc-current-chevron.open {
+    transform: rotate(180deg);
+  }
+
+  /* the whole list, growing open below the bar; hidden once closed, so it leaves the tab order */
+  .toc-drop {
+    position: absolute;
+    inset-inline: 0;
+    top: 100%;
+    display: grid;
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    background: var(--surface-1);
+    box-shadow: var(--shadow-panel);
+    transition:
+      grid-template-rows var(--duration-base) var(--ease-out),
+      visibility 0s linear var(--duration-base);
+  }
+
+  .toc-drop.open {
+    grid-template-rows: 1fr;
+    visibility: visible;
+    transition:
+      grid-template-rows var(--duration-base) var(--ease-out),
+      visibility 0s;
+  }
+
+  /* a long list scrolls on its own, down to just above the bottom of the screen */
+  .toc-drop-inner {
+    min-height: 0;
+    max-height: calc(100dvh - var(--top-height) - 48px - var(--space-24));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    padding: 0 var(--space-14) var(--space-14);
+    border-bottom: 1px solid var(--line-1);
+  }
+
+  .toc-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-sticky);
+    background: var(--scrim);
   }
 
   .toc-heading {
@@ -1831,16 +1984,18 @@
   }
 
   @media (max-width: 860px) {
+    /* one column, a flex one so that the contents bar sticks all the way down the doc (in a grid it would stick only
+       within its own row) */
     .doc {
-      grid-template-columns: minmax(0, 1fr);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 40px;
     }
 
-    /* above the doc it's part of the page: no scroll box of its own to trap a touch scroll */
-    .toc {
-      position: static;
-      max-height: none;
-      overflow: visible;
-      overscroll-behavior: auto;
+    /* read from (and jumped to) below the header and the contents bar */
+    .doc-section {
+      scroll-margin-top: calc(var(--top-height) + 64px);
     }
   }
 
@@ -1880,6 +2035,14 @@
 
     .main {
       padding-top: 40px;
+    }
+
+    .toc-bar {
+      margin: -40px calc(-1 * var(--space-16)) 0;
+    }
+
+    .toc-current {
+      padding-inline: var(--space-16);
     }
 
     .year {
