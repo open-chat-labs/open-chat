@@ -17,6 +17,26 @@ export function klipyUrl(apiKey: string, query: string, pos: string, limit: numb
         : `${KLIPY}/search?${params}&q=${encodeURIComponent(typed)}`;
 }
 
+/** Search terms related to `query` (Klipy's search suggestions), for a search that found none. */
+export function klipySuggestionsUrl(apiKey: string, query: string, limit: number): string {
+    return `${KLIPY}/search_suggestions?key=${apiKey}&limit=${limit}&q=${encodeURIComponent(query.trim())}`;
+}
+
+/**
+ * What a GIF search that found nothing shows under "No GIFs for …": the related search terms to
+ * tap, or, with none (or none to be had), the trending GIFs.
+ */
+export type GifsNotFound =
+    | { kind: "suggestions"; query: string; terms: string[] }
+    | { kind: "trending"; query: string };
+
+export function gifsNotFound(query: string, terms: readonly string[] | undefined): GifsNotFound {
+    const offered = (terms ?? []).filter((t) => t.trim() !== "" && t.trim() !== query.trim());
+    return offered.length > 0
+        ? { kind: "suggestions", query, terms: offered }
+        : { kind: "trending", query };
+}
+
 /** Where the next page starts, or none once there are no more. */
 export function nextPosition(response: Pick<KlipySearchResponse, "next">): string | undefined {
     const next = response.next === undefined || response.next === null ? "" : `${response.next}`;

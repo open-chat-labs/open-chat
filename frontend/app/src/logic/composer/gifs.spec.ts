@@ -1,6 +1,6 @@
 import type { KlipyObject, KlipySearchResponse } from "@client";
 import { GifFeed } from "./gifFeed.svelte";
-import { gifContent, klipyUrl, nextPosition } from "./gifs";
+import { gifContent, gifsNotFound, klipySuggestionsUrl, klipyUrl, nextPosition } from "./gifs";
 
 function gif(id: string): KlipyObject {
     return {
@@ -95,5 +95,62 @@ describe("the GIFs a picker shows", () => {
         await feed.search("");
         expect(feed.failed).toBe(true);
         expect(feed.loading).toBe(false);
+    });
+});
+
+describe("a GIF search that finds none", () => {
+    test("offers related search terms (not the one searched), else the trending GIFs", () => {
+        expect(gifsNotFound("cats", ["cat", "kitten", "cats"])).toEqual({
+            kind: "suggestions",
+            query: "cats",
+            terms: ["cat", "kitten"],
+        });
+        expect(gifsNotFound("zzqq", [])).toEqual({ kind: "trending", query: "zzqq" });
+        expect(gifsNotFound("zzqq", undefined)).toEqual({ kind: "trending", query: "zzqq" });
+    });
+
+    test("asks Klipy for the related terms", () => {
+        expect(klipySuggestionsUrl("k", " happy birthday ", 8)).toBe(
+            "https://api.klipy.com/v2/search_suggestions?key=k&limit=8&q=happy%20birthday",
+        );
+    });
+
+    const none = async (url: string): Promise<KlipySearchResponse> =>
+        url.includes("featured")
+            ? { locale: "en", next: 0, results: [gif("trending")] }
+            : { locale: "en", next: 0, results: [] };
+
+    test("with related terms, shows them, no GIFs", async () => {
+        const feed = new GifFeed("k", none, async () => ({ results: ["cat", "kitten"] }));
+        await feed.search("catz");
+        expect(feed.notFound).toEqual({
+            kind: "suggestions",
+            query: "catz",
+            terms: ["cat", "kitten"],
+        });
+        expect(feed.gifs).toEqual([]);
+    });
+
+    test("without (or when they can't be had), the trending GIFs under the message", async () => {
+        let feed = new GifFeed("k", none, async () => ({ results: [] }));
+        await feed.search("zzqq");
+        expect(feed.notFound).toEqual({ kind: "trending", query: "zzqq" });
+        expect(feed.gifs.map((g) => g.id)).toEqual(["trending"]);
+
+        vi.spyOn(console, "warn").mockImplementation(() => {});
+        feed = new GifFeed("k", none, async () => {
+            throw new Error("offline");
+        });
+        await feed.search("zzqq");
+        expect(feed.notFound?.kind).toBe("trending");
+        expect(feed.gifs.map((g) => g.id)).toEqual(["trending"]);
+    });
+
+    test("a new search starts over", async () => {
+        const feed = new GifFeed("k", none, async () => ({ results: ["cat"] }));
+        await feed.search("catz");
+        await feed.search("");
+        expect(feed.notFound).toBeUndefined();
+        expect(feed.gifs.map((g) => g.id)).toEqual(["trending"]);
     });
 });
