@@ -7,19 +7,22 @@
      emoji found in one line under it, the composer above. Searching GIFs, the panel grows (to 90%)
      before the keyboard comes up for the field, so it never covers the results. Either search
      ending (the panel back at rest, or the keyboard down) puts the field's keyboard away. A GIF
-     sends as it's tapped. -->
+     sends as it's tapped. The emoji are EmojiGrid's (the reaction sheet's too), the field
+     EmojiSearchField. -->
 <script lang="ts">
     import type { GiphyContent, KlipyObject } from "@client";
     import SegmentedTabs from "@openchat/ui/src/lib/components/SegmentedTabs.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { GifFeed } from "@src/logic/composer/gifFeed.svelte";
     import { gifContent } from "@src/logic/composer/gifs";
-    import { pickedRecently, storedRecent, storeRecent } from "@src/logic/composer/recentEmoji";
-    import { EMOJI_CATEGORIES, type PickerEmoji } from "@src/utils/emojiCategories";
-    import { countEmojiPicked, emojiInCategory, emojiMatching } from "@src/utils/emojis";
+    import type { PickerEmoji } from "@src/utils/emojiCategories";
+    import { countEmojiPicked } from "@src/utils/emojis";
     import { klipyApiKey } from "@src/utils/features";
     import { onDestroy, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
+    import EmojiGrid from "./EmojiGrid.svelte";
+    import { EMOJI_SEARCH_DELAY_MS, EmojiSections } from "./emojiSections.svelte";
+    import EmojiSearchField from "./EmojiSearchField.svelte";
     import { panelContentPull } from "./panelDragHandle";
     import type { Search } from "./keyboardSlot";
     import { GIF_PULL_HIDES_KEYBOARD } from "./panelDrag";
@@ -44,19 +47,15 @@
     const searching = $derived(searchMode !== "none");
     const strip = $derived(searchMode === "strip");
 
-    const SEARCH_DELAY_MS = 250;
-
     const apiKey = klipyApiKey;
     const offersGifs = $derived(gifs && apiKey !== undefined);
     let tab = $state<"emoji" | "gif">("emoji");
     let query = $state("");
     let field = $state<HTMLInputElement>();
 
-    // ---- emoji
+    // ---- emoji: Recent as kept on the device for this user (07: "persist per user"), read as the
+    // panel opens (it's made again each time)
 
-    type Section = { id: string; label: string; icon: string; emoji: PickerEmoji[] };
-
-    // Recent: as kept on the device for this user (07: "persist per user")
     const storage = (() => {
         try {
             return window.localStorage;
@@ -64,91 +63,35 @@
             return undefined;
         }
     })();
-    // read as the panel opens (it's made again each time)
-    let recent = $state.raw<string[]>(
-        storage === undefined ? [] : storedRecent(storage, untrack(() => userId)),
-    );
+    const emoji = new EmojiSections(untrack(() => userId), storage);
+    onMount(() => void emoji.load());
+    onDestroy(() => emoji.dispose());
 
-    let categories = $state.raw<(PickerEmoji[] | undefined)[]>(EMOJI_CATEGORIES.map(() => undefined));
-    let matches = $state.raw<PickerEmoji[] | undefined>();
-    let failed = $state(false);
-
-    onMount(async () => {
-        try {
-            categories = await Promise.all(EMOJI_CATEGORIES.map((c) => emojiInCategory(c.group)));
-        } catch (err) {
-            // the emoji data comes from a CDN the first time: offline, there's none
-            console.warn("Couldn't load the emoji", err);
-            failed = true;
-        }
-    });
-
-    const sections = $derived.by((): Section[] => [
-        {
-            id: "recent",
-            label: $_("native.composer.emoji.recent"),
-            icon: "🕘",
-            emoji: recent.map((char) => ({ char, base: char, name: char })),
-        },
-        ...EMOJI_CATEGORIES.map((category, i) => ({
-            id: category.name,
-            label: $_(`native.composer.emoji.${category.name}`),
-            icon: category.icon,
-            emoji: categories[i] ?? [],
-        })),
-    ]);
-
-    const loading = $derived(categories.every((c) => c === undefined) && !failed);
-
-    function pick(emoji: PickerEmoji) {
-        onInsert(emoji.char);
-        recent = pickedRecently(recent, emoji.char);
-        if (storage !== undefined) storeRecent(storage, userId, recent);
-        countEmojiPicked(emoji.base);
+    function pick(picked: PickerEmoji) {
+        onInsert(picked.char);
+        emoji.picked(picked.char);
+        countEmojiPicked(picked.base);
     }
 
-    // one listener for the grid's thousands of cells
-    function picked(e: MouseEvent, emoji: PickerEmoji[]) {
-        const cell = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-i]");
-        const found = cell === null || cell === undefined ? undefined : emoji[Number(cell.dataset.i)];
-        if (found !== undefined) pick(found);
-    }
-
-    // ---- search: the emoji matching (names and keywords), or the GIFs
+    // ---- search: the emoji matching (names and keywords; EmojiSections'), or the GIFs
 
     let searchTimer: ReturnType<typeof setTimeout> | undefined;
-    let searchRun = 0;
     onDestroy(() => clearTimeout(searchTimer));
 
     function typed(next: string) {
         query = next;
         clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => void search(next), SEARCH_DELAY_MS);
-    }
-
-    async function search(next: string) {
-        const run = ++searchRun;
         if (tab === "gif") {
-            void feed?.search(next);
-            return;
-        }
-        if (next.trim() === "") {
-            matches = undefined;
-            return;
-        }
-        try {
-            const found = await emojiMatching(next.trim());
-            if (run === searchRun) matches = found;
-        } catch (err) {
-            console.warn("Couldn't search the emoji", err);
+            searchTimer = setTimeout(() => void feed?.search(next), EMOJI_SEARCH_DELAY_MS);
+        } else {
+            emoji.search(next);
         }
     }
 
     function clearSearch() {
         clearTimeout(searchTimer);
-        searchRun += 1;
+        emoji.clearSearch();
         query = "";
-        matches = undefined;
         if (tab === "gif") void feed?.search("");
         field?.focus();
     }
@@ -184,7 +127,7 @@
         if (document.activeElement === field) leaveSearch("keep");
         tab = next;
         query = "";
-        matches = undefined;
+        emoji.clearSearch();
         clearTimeout(searchTimer);
         if (next === "gif") void feed?.search("");
     }
@@ -217,9 +160,8 @@
         leaving = how;
         if (how === "close") {
             clearTimeout(searchTimer);
-            searchRun += 1;
+            emoji.clearSearch();
             query = "";
-            matches = undefined;
         }
         if (document.activeElement === field) field?.blur();
         else searchEnded();
@@ -294,56 +236,7 @@
     function gifTitle(gif: KlipyObject): string {
         return gif.title || gif.content_description;
     }
-
-    // ---- the category bar: the one in view, and going to one
-
-    let scroller = $state<HTMLElement>();
-    let shown = $state("recent");
-    let frame = 0;
-    onDestroy(() => cancelAnimationFrame(frame));
-
-    function followScroll() {
-        cancelAnimationFrame(frame);
-        frame = requestAnimationFrame(() => {
-            const el = scroller;
-            if (el === undefined) return;
-            let current = sections[0]?.id ?? "";
-            for (const section of el.querySelectorAll<HTMLElement>("[data-section]")) {
-                if (section.offsetTop - el.offsetTop <= el.scrollTop + 8) {
-                    current = section.dataset.section ?? current;
-                }
-            }
-            shown = current;
-        });
-    }
-
-    function goTo(id: string) {
-        // out of the results, to the section
-        if (matches !== undefined || query !== "") {
-            clearTimeout(searchTimer);
-            searchRun += 1;
-            query = "";
-            matches = undefined;
-        }
-        requestAnimationFrame(() => {
-            const el = scroller;
-            const section = el?.querySelector<HTMLElement>(`[data-section="${id}"]`);
-            if (el === undefined || section === null || section === undefined) return;
-            const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-            el.scrollTo({ top: section.offsetTop - el.offsetTop, behavior: smooth ? "smooth" : "auto" });
-        });
-        shown = id;
-    }
 </script>
-
-{#snippet grid(emoji: PickerEmoji[])}
-    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-    <div class="grid" role="group" onclick={(e) => picked(e, emoji)}>
-        {#each emoji as e, i}
-            <span class="cell" data-i={i} role="button" tabindex="0" aria-label={e.name}>{e.char}</span>
-        {/each}
-    </div>
-{/snippet}
 
 <div class="emoji" role="group" aria-label={$_("ui.messageComposer.emojiAndGifs")}>
     <div class="top">
@@ -358,109 +251,39 @@
                 />
             </div>
         {/if}
-        <label class="search">
-            <span class="search-icon" aria-hidden="true"></span>
-            <input
-                bind:this={field}
-                type="search"
-                value={query}
-                placeholder={$_(
-                    tab === "gif" ? "ui.messageComposer.searchGifs" : "ui.emojiPicker.search",
-                )}
-                aria-label={$_(
-                    tab === "gif" ? "ui.messageComposer.searchGifs" : "ui.emojiPicker.search",
-                )}
-                autocomplete="off"
-                enterkeyhint="search"
-                {@attach growFirst}
-                oninput={(e) => typed(e.currentTarget.value)}
-                onfocus={searchStarted}
-                onblur={() => searchEnded()}
-            />
-            {#if query !== ""}
-                <button
-                    type="button"
-                    class="clear"
-                    aria-label={$_("native.composer.emoji.clearSearch")}
-                    onpointerdown={(e) => e.preventDefault()}
-                    onclick={clearSearch}
-                >
-                    <span class="clear-icon"></span>
-                </button>
-            {/if}
-        </label>
+        <EmojiSearchField
+            bind:field
+            value={query}
+            placeholder={$_(tab === "gif" ? "ui.messageComposer.searchGifs" : "ui.emojiPicker.search")}
+            aria-label={$_(tab === "gif" ? "ui.messageComposer.searchGifs" : "ui.emojiPicker.search")}
+            onInput={typed}
+            onClear={clearSearch}
+            onfocus={searchStarted}
+            onblur={() => searchEnded()}
+            {@attach growFirst}
+        />
     </div>
 
-    {#if strip}
-        <!-- the emoji found in one line (Recent before anything's typed); a tap keeps the field's
-             keyboard -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="line" onmousedown={(e) => e.preventDefault()}>
-            {#if matches !== undefined && matches.length === 0}
-                <p class="none line-none">
-                    {$_("native.composer.emoji.noMatch", { values: { query: query.trim() } })}
-                </p>
-            {:else}
-                {@render grid(matches ?? sections[0].emoji)}
-            {/if}
-        </div>
-    {:else if tab === "emoji"}
-        <div
-            class="scroll"
-            bind:this={scroller}
-            onscroll={followScroll}
-            {@attach panelContentPull(panel)}
+    {#if tab === "emoji"}
+        <EmojiGrid
+            {emoji}
+            bind:query
+            {strip}
+            overSafeArea={!searching}
+            scrollAttach={panelContentPull(panel)}
+            onPick={pick}
         >
-            {#if matches !== undefined}
-                {#if matches.length === 0}
-                    <p class="none">
-                        {$_("native.composer.emoji.noMatch", { values: { query: query.trim() } })}
-                    </p>
-                {:else}
-                    <section class="section">
-                        <h3 class="label">{$_("native.composer.emoji.results")}</h3>
-                        {@render grid(matches)}
-                    </section>
-                {/if}
-            {:else}
-                {#each sections as section (section.id)}
-                    <section class="section" class:lazy={section.id !== "recent"} data-section={section.id}>
-                        <h3 class="label">{section.label}</h3>
-                        {#if section.id === "recent" || section.emoji.length > 0}
-                            {@render grid(section.emoji)}
-                        {:else if failed}
-                            <p class="none">{$_("native.composer.emoji.unavailable")}</p>
-                        {:else if loading}
-                            <div class="loading"><Spinner size={20} /></div>
-                        {/if}
-                    </section>
-                {/each}
-            {/if}
-        </div>
-        <div
-            class="bar"
-            class:raised={searching}
-            role="toolbar"
-            aria-label={$_("native.composer.emoji.categories")}
-        >
-            {#each sections as section (section.id)}
+            {#snippet barEnd()}
                 <button
                     type="button"
-                    class="category"
-                    class:on={shown === section.id && matches === undefined}
-                    aria-label={section.label}
-                    onclick={() => goTo(section.id)}>{section.icon}</button
+                    class="backspace"
+                    aria-label={$_("native.composer.emoji.backspace")}
+                    onclick={() => onInsert("\b")}
                 >
-            {/each}
-            <button
-                type="button"
-                class="backspace"
-                aria-label={$_("native.composer.emoji.backspace")}
-                onclick={() => onInsert("\b")}
-            >
-                <span class="backspace-icon"></span>
-            </button>
-        </div>
+                    <span class="backspace-icon"></span>
+                </button>
+            {/snippet}
+        </EmojiGrid>
     {:else if feed !== undefined}
         <div
             class="scroll gifs"
@@ -533,66 +356,6 @@
         width: 136px;
     }
 
-    .search {
-        flex: 1;
-        min-width: 0;
-        box-sizing: border-box;
-        display: flex;
-        align-items: center;
-        gap: var(--space-8);
-        height: 40px;
-        padding: 0 var(--space-6) 0 var(--space-12);
-        border-radius: var(--radius-md);
-        background: var(--overlay-1);
-    }
-
-    .search-icon {
-        @include icon(search, 16px, var(--ink-4));
-    }
-
-    input {
-        flex: 1;
-        min-width: 0;
-        height: 100%;
-        padding: 0;
-        border: 0;
-        outline: none;
-        background: transparent;
-        font: var(--weight-medium) text-size(14.5px) / 1 var(--font-sans);
-        color: var(--ink);
-        appearance: none;
-
-        &::placeholder {
-            color: var(--ink-4);
-        }
-
-        &::-webkit-search-cancel-button {
-            display: none;
-        }
-    }
-
-    .clear {
-        flex: none;
-        width: 28px;
-        height: 28px;
-        display: grid;
-        place-items: center;
-        padding: 0;
-        border: 0;
-        border-radius: var(--radius-circle);
-        background: none;
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-
-        &:active {
-            background: var(--overlay-2);
-        }
-    }
-
-    .clear-icon {
-        @include icon(close, 14px, var(--ink-3), $flex: null);
-    }
-
     .scroll {
         flex: 1;
         min-height: 0;
@@ -604,78 +367,6 @@
 
         &::-webkit-scrollbar {
             display: none;
-        }
-    }
-
-    // the emoji search's strip: one line, scrolled sideways
-    .line {
-        flex: none;
-        height: 52px;
-        box-sizing: border-box;
-        padding: 0 var(--space-8) var(--space-8);
-        overflow-x: auto;
-        overflow-y: hidden;
-        scrollbar-width: none;
-
-        &::-webkit-scrollbar {
-            display: none;
-        }
-
-        .grid {
-            display: flex;
-            gap: 2px;
-        }
-
-        .cell {
-            flex: none;
-            width: 44px;
-        }
-    }
-
-    .line-none {
-        padding: var(--space-12) var(--space-8);
-        text-align: start;
-    }
-
-    .section + .section {
-        margin-block-start: var(--space-10);
-    }
-
-    // a category off screen isn't laid out, so thousands of emoji scroll smoothly
-    .section.lazy {
-        content-visibility: auto;
-        contain-intrinsic-size: auto 400px;
-    }
-
-    // 07: mono 600 11px, uppercase, .08em
-    .label {
-        margin: 0;
-        padding: var(--space-6) var(--space-6) var(--space-4);
-        font: var(--weight-semibold) text-size(11px) / 1.2 var(--font-mono);
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--ink-4);
-    }
-
-    // 07: eight columns of 44px cells, 10px corners, the glyph at 27px
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(8, minmax(0, 1fr));
-    }
-
-    .cell {
-        height: 44px;
-        display: grid;
-        place-items: center;
-        border-radius: 10px;
-        font-size: 27px;
-        line-height: 1;
-        cursor: pointer;
-        user-select: none;
-        -webkit-tap-highlight-color: transparent;
-
-        &:active {
-            background: var(--overlay-2);
         }
     }
 
@@ -693,22 +384,10 @@
         padding: var(--space-16);
     }
 
-    // 07: the categories and backspace pinned at the bottom, over the safe area (above the
-    // keyboard while searching)
-    .bar {
-        flex: none;
-        display: flex;
-        align-items: center;
-        padding: var(--space-4) var(--space-8) calc(var(--space-4) + var(--safe-bottom));
-        box-shadow: inset 0 1px 0 var(--line-1);
-
-        &.raised {
-            padding-block-end: var(--space-4);
-        }
-    }
-
-    .category,
+    // the bar's end (EmojiGrid's): backspace, 44px wide
     .backspace {
+        flex: none;
+        width: 44px;
         height: 40px;
         display: grid;
         place-items: center;
@@ -718,25 +397,6 @@
         background: none;
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
-    }
-
-    .category {
-        flex: 1;
-        min-width: 0;
-        font-size: 18px;
-        line-height: 1;
-        opacity: 0.55;
-        filter: grayscale(0.6);
-
-        &.on {
-            opacity: 1;
-            filter: none;
-        }
-    }
-
-    .backspace {
-        flex: none;
-        width: 44px;
 
         &:active {
             background: var(--overlay-2);

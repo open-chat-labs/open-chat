@@ -375,9 +375,19 @@ design export needs. Each entry says where it came up.
       all the reactions sit at the top of the screen and the card at its bottom, over the message
       (ours: the notes give four placements, all round the message).
     - **Reactions**: six quick ones, the user's most used first (the shared `quickReactions`
-      store), then +, which opens the library's `EmojiPicker` in a bottom sheet (notes §1:
-      pickers are sheets; the design doesn't show where the + goes). The library picker's set is
-      small (its own sample list), not the app's full emoji set.
+      store), then +, which opens a bottom sheet (notes §1: pickers are sheets; the design doesn't
+      show where the + goes; 72% high, the kit's `BottomSheet`) with the composer's emoji panel's
+      emoji (`ReactionPicker` on the panel's `EmojiGrid` and `EmojiSections`): Recent, every emoji
+      by category with the category bar, and a search. Ours: no GIF tab or backspace, and the
+      search is a plain field in the panel's style (`EmojiSearchField`) whose keyboard comes up
+      over the sheet, the results under the field (07's search strip is the keyboard slot's, not a
+      sheet's). The reactions the user has are marked, and picking one takes it off. A reaction
+      added goes to the front of Recent (the composer's: the same per-user list) and counts
+      towards the quick ones (`toggleReaction`, as the bar's do); one taken off counts for
+      neither.
+    - **Text**: a message's text can't be selected, in the chat, the menu's copy of it or Message
+      info (a long-press is the menu, which has Copy); should a selection have started in the
+      message pressed anyway, it's cleared as the menu opens. The web's messages stay selectable.
     - **Delete** (and "delete for me") asks first while the "ask before deleting" setting
       (`confirmMessageDeletion`, on by default) is on: a `NativeAlert` with the web dialog's words
       ("Do you really want to delete this message?", Delete), the shared `messageAction`'s "ask".

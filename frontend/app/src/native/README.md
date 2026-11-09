@@ -58,8 +58,10 @@ native/
                      messages on core/ChatEventList, the swipes, typing, call items; its composer
                      (N5c: ConversationComposer) and the slot under it that the keyboard and the
                      emoji and attach panels share (keyboardSlot), a panel's surface and its drag
-                     (KeyboardPanel, panelState, panelDrag); a message's long-press menu and
-                     what it opens (N5d: MessageActions, the emoji, forward and report sheets,
+                     (KeyboardPanel, panelState, panelDrag); the emoji the emoji panel and the
+                     reaction sheet both offer (EmojiGrid, EmojiSections, EmojiSearchField); a
+                     message's long-press menu and what it opens (N5d: MessageActions, the
+                     reaction sheet (ReactionPicker), the forward and report sheets,
                      MessageInfoScreen, pushed locally)
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer

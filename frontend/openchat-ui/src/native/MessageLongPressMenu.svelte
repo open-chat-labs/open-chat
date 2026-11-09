@@ -295,9 +295,13 @@
   }
 
   // the message's copy, exactly over it
+  // a stand-in for the message: nothing in it is selected, nor offers the iOS callout
   .copy {
     position: absolute;
     pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
 
   // the quick reactions: a pill of 44px (48px on Android) emoji, then +

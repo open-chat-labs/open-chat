@@ -832,3 +832,7 @@
 - `NativeAlert`: `checkLabel` puts a checkbox above the buttons (its label, `checked` and `onCheck`, controlled by the host, which reads it on confirm): the message long-press menu's delete confirm uses it for the web dialog's "Don't show me this again".
 - Docs: `meta.json` (NativeAlert's `checkLabel`, `checked`, `onCheck`).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-09 — the long-press menu's copy of a message can't be selected (native N5d), by hand
+- `MessageLongPressMenu`: the copy of the pressed message has `user-select: none` and no iOS callout (`-webkit-touch-callout: none`): it's a stand-in for the message, whose text the native conversation doesn't let be selected either (a long-press is the menu, which has Copy). No props changed.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

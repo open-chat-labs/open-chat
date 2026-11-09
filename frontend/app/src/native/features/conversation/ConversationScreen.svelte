@@ -1409,12 +1409,22 @@
         padding: var(--space-24) var(--space-16);
     }
 
+    // the messages' text can't be selected, nor does a long-press offer iOS's callout: a
+    // long-press is the message's menu, which has Copy (a field in a message still can be)
     .messages {
         position: relative;
         flex: 1;
         min-height: 0;
         display: flex;
         flex-direction: column;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+
+        :global(:is(input, textarea, [contenteditable="true"])) {
+            user-select: text;
+            -webkit-user-select: text;
+        }
     }
 
     // over the top of the list, after a moment: a load from the cache is in before it shows

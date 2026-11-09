@@ -1,12 +1,13 @@
 <!-- A message's long-press menu and what it opens (native design notes §3.3): the kit's
      MessageLongPressMenu (the quick reactions, then Reply, Forward, Copy, Info, Edit … and, after the
-     divider, Delete, Report), the emoji sheet behind the reactions' +, the forward sheet, the report
-     sheet, and the alert offering Diamond for a translation. What each action does is the shared
-     `messageAction` (logic/conversation, the web's too); here is how it's shown: toasts (a delete
-     with Undo, which restores it, after a native confirm while "ask before deleting" is on), the
-     sheets, Info pushed over the conversation. Opening the menu plays the one haptic a long-press
-     gives (medium; the chat's MessageGroup plays none of its own). Reply and Edit set
-     the chat's draft, which the composer shows. The conversation opens it with `open`. -->
+     divider, Delete, Report), the emoji sheet behind the reactions' + (ReactionPicker: the
+     composer's emoji panel's emoji), the forward sheet, the report sheet, and the alert offering
+     Diamond for a translation. What each action does is the shared `messageAction`
+     (logic/conversation, the web's too); here is how it's shown: toasts (a delete with Undo, which
+     restores it, after a native confirm while "ask before deleting" is on), the sheets, Info pushed
+     over the conversation. Opening the menu plays the one haptic a long-press gives (medium; the
+     chat's MessageGroup plays none of its own). Reply and Edit set the chat's draft, which the
+     composer shows. The conversation opens it with `open`. -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -23,7 +24,6 @@
         type OpenChat,
         type ReportReason,
     } from "@client";
-    import EmojiPicker from "@openchat/ui/src/lib/components/EmojiPicker.svelte";
     import BottomSheet from "@openchat/ui/src/native/BottomSheet.svelte";
     import { haptic } from "@openchat/ui/src/native/haptics";
     import MessageLongPressMenu from "@openchat/ui/src/native/MessageLongPressMenu.svelte";
@@ -53,6 +53,7 @@
         nativeMessageAction,
         quickReactions,
     } from "./messageMenu.adapter";
+    import ReactionPicker from "./ReactionPicker.svelte";
     import ReportSheet from "./ReportSheet.svelte";
 
     type Props = {
@@ -104,6 +105,7 @@
         // the long-press's one haptic (the chat's MessageGroup plays none); once, should a press
         // open the menu twice (Android's own long-press, then the group's)
         if (!menuOpen) haptic("medium");
+        clearSelectionIn(el);
         pressed = {
             chatId: chat.id,
             evt,
@@ -113,6 +115,15 @@
             side: evt.event.sender === me ? "sent" : "received",
         };
         menuOpen = true;
+    }
+
+    // the messages can't be selected (ConversationScreen's styles), but should a selection have
+    // started in this one anyway (the platform's long-press), it goes: the menu has Copy
+    function clearSelectionIn(el: HTMLElement) {
+        const selection = window.getSelection();
+        if (selection !== null && !selection.isCollapsed && selection.containsNode(el, true)) {
+            selection.removeAllRanges();
+        }
     }
 
     /** Asks the sender to confirm taking the link's preview off their message (notes §1: a small alert). */
@@ -358,18 +369,14 @@
     onClose={() => (picking = undefined)}
     label={$_("native.conversation.message.react")}
     height="72%">
-    <div class="picker">
-        <EmojiPicker
-            recent={$recentReactions}
-            selected={picking === undefined ? [] : myReactions(picking.evt.event.reactions, me)}
-            autoFocus={false}
-            onPick={(emoji) => {
-                const at = picking;
-                picking = undefined;
-                if (at !== undefined) react(at, emoji);
-            }}
-            onClose={() => (picking = undefined)} />
-    </div>
+    <ReactionPicker
+        userId={me}
+        selected={picking === undefined ? [] : myReactions(picking.evt.event.reactions, me)}
+        onPick={(emoji) => {
+            const at = picking;
+            picking = undefined;
+            if (at !== undefined) react(at, emoji);
+        }} />
 </BottomSheet>
 
 <ForwardSheet
@@ -424,19 +431,3 @@
         navigate(DIAMOND_URL);
     }}
     onClose={() => (upgrading = false)} />
-
-<style lang="scss">
-    // the picker fills the sheet, its grid scrolling under its search
-    .picker {
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        padding: 0 var(--space-8);
-
-        > :global(*) {
-            flex: 1;
-            min-height: 0;
-        }
-    }
-</style>

@@ -254,13 +254,16 @@
         padding: 8px var(--space-16) var(--scroll-end);
     }
 
-    // the message on a panel of its own, as the chat shows it
+    // the message on a panel of its own, as the chat shows it, and as unselectable
     .panel {
         flex: none;
         padding: var(--space-16) var(--space-12);
         border-radius: 16px;
         background: var(--overlay-1);
         --group-gap: 8px;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
     }
 
     .line {
