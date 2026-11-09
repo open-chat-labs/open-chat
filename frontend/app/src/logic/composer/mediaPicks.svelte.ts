@@ -25,8 +25,11 @@ export type PickOutcome = "picked" | "unpicked" | "full";
  */
 export type LeftMedia = { id: string; video: boolean; thumb?: string; content: AttachmentContent };
 
-/** What a send takes: the contents prepared, in the order picked, and the picks they're from. */
-export type TakenMedia = { ids: string[]; contents: AttachmentContent[] };
+/**
+ * What a send takes: the contents prepared, in the order picked, and the picks they're from (these
+ * picks themselves: one put back and picked again while the send posts is a new one, and stays).
+ */
+export type TakenMedia = { picks: readonly PickedMedia[]; contents: AttachmentContent[] };
 
 export class MediaPicks {
     #picks = $state.raw<PickedMedia[]>([]);
@@ -110,10 +113,10 @@ export class MediaPicks {
         this.#drop((_, i) => i === index);
     }
 
-    /** Those sent (`ids`), those picked since staying. */
-    removeAll(ids: readonly string[]): void {
-        const sent = new Set(ids);
-        this.#drop((p) => sent.has(p.id));
+    /** Those a send took (`take`), once sent: those picked since, or picked again, stay. */
+    removeSent(taken: readonly PickedMedia[]): void {
+        const sent = new Set(taken);
+        this.#drop((p) => sent.has(p));
     }
 
     clear(): void {
@@ -150,8 +153,8 @@ export class MediaPicks {
     /**
      * What a send of those picked (`ids`) takes, once none of them is still being prepared (one
      * put back and picked again meanwhile is prepared afresh, and waited for too): the contents
-     * prepared, in the order picked, and their ids, the ones to take out once sent. One that
-     * couldn't be prepared, or is put back, is left out of both.
+     * prepared, in the order picked, and the picks they're from, the ones to take out once sent
+     * (`removeSent`). One that couldn't be prepared, or is put back, is left out of both.
      */
     async take(ids: readonly string[]): Promise<TakenMedia> {
         let jobs = ids.flatMap((id) => this.#jobs.get(id) ?? []);
@@ -162,7 +165,7 @@ export class MediaPicks {
         const wanted = new Set(ids);
         const taken = this.#picks.filter((p) => wanted.has(p.id) && p.content !== undefined);
         return {
-            ids: taken.map((p) => p.id),
+            picks: taken,
             contents: taken.flatMap((p) => (p.content === undefined ? [] : [p.content])),
         };
     }

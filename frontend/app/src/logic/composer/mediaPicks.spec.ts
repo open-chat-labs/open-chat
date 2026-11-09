@@ -58,7 +58,7 @@ describe("the photos and videos picked for a message", () => {
         picks.prepared("b", image(2));
         expect((await picks.take(["a", "b"])).contents).toEqual([image(2)]);
         picks.prepared("a", image(1));
-        expect(await picks.take(["a", "b"])).toEqual({ ids: ["a", "b"], contents: [image(1), image(2)] });
+        expect((await picks.take(["a", "b"])).contents).toEqual([image(1), image(2)]);
         picks.remove("a");
         picks.prepared("a", image(1));
         expect((await picks.take(["a", "b"])).contents).toEqual([image(2)]);
@@ -78,8 +78,9 @@ describe("the photos and videos picked for a message", () => {
         picks.preparing("c", new Promise<void>(() => {}));
         picks.prepared("b", image(2));
         prepareB();
-        expect(await sending).toEqual({ ids: ["a", "b"], contents: [image(1), image(2)] });
-        picks.removeAll(ids);
+        const taken = await sending;
+        expect(taken.contents).toEqual([image(1), image(2)]);
+        picks.removeSent(taken.picks);
         expect(picks.ids()).toEqual(["c"]);
     });
 
@@ -99,7 +100,7 @@ describe("the photos and videos picked for a message", () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
         picks.prepared("a", image(1));
         prepareAgain();
-        expect(await sending).toEqual({ ids: ["a"], contents: [image(1)] });
+        expect((await sending).contents).toEqual([image(1)]);
     });
 
     test("a send takes out only the picks it sent", async () => {
@@ -108,9 +109,23 @@ describe("the photos and videos picked for a message", () => {
         picks.toggle(photo("b"));
         picks.prepared("a", image(1));
         const taken = await picks.take(picks.ids());
-        expect(taken).toEqual({ ids: ["a"], contents: [image(1)] });
-        picks.removeAll(taken.ids);
+        expect(taken.contents).toEqual([image(1)]);
+        picks.removeSent(taken.picks);
         expect(picks.ids()).toEqual(["b"]);
+    });
+
+    test("one put back and picked again while the send posts stays, not sent", async () => {
+        const picks = new MediaPicks();
+        picks.toggle(photo("a"));
+        picks.prepared("a", image(1));
+        const taken = await picks.take(picks.ids());
+        // the Recents tile tapped off and on again while the message posts: the same id, a new pick
+        picks.toggle(photo("a"));
+        picks.toggle(photo("a"));
+        picks.removeSent(taken.picks);
+        expect(picks.ids()).toEqual(["a"]);
+        picks.prepared("a", image(2));
+        expect((await picks.take(picks.ids())).contents).toEqual([image(2)]);
     });
 
     test("a send whose picks all failed to be prepared has nothing to send", async () => {
@@ -120,7 +135,7 @@ describe("the photos and videos picked for a message", () => {
             "a",
             Promise.reject(new Error("unreadable")).finally(() => picks.remove("a")),
         );
-        expect(await picks.take(picks.ids())).toEqual({ ids: [], contents: [] });
+        expect(await picks.take(picks.ids())).toEqual({ picks: [], contents: [] });
         expect(picks.count).toBe(0);
     });
 
