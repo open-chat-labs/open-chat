@@ -66,6 +66,8 @@ pub enum UserIndexEvent {
     SetAlchemyApiKey(SetAlchemyApiKey),
     BridgedUserLinked(BridgedUserLinked),
     SetMiniAppServicePrincipal(Principal),
+    // A user has claimed as many prizes as they can in a day, so can't claim another until the timestamp
+    PrizeClaimLimitReached(UserId, TimestampMillis),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

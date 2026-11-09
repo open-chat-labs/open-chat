@@ -8,6 +8,7 @@ use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::online_users_event_batch::OnlineUsersEventBatch;
 use crate::model::premium_items::{PremiumItemMetrics, PremiumItems};
+use crate::model::prize_claims::PrizeClaims;
 use crate::model::protected_actions::{ProtectedActionMetrics, ProtectedActions};
 use crate::model::registry_tokens::RegistryTokens;
 use crate::model::storage_index_event_batch::StorageIndexEventBatch;
@@ -559,6 +560,7 @@ impl RuntimeState {
             vault_reviewers: self.data.vault_reviewers.len() as u32,
             openai_api_key_set: self.data.openai_api_key.is_some(),
             alchemy_api_key_set: self.data.alchemy_api_key.is_some(),
+            prize_claims_last_day: self.data.prize_claims.count(now),
             internal_moderation_channel_set: self.data.internal_moderation_channel.is_some(),
             // Presence and size only: the metrics endpoint is public and the per-category
             // thresholds must not be readable by people tuning content to sit under them.
@@ -756,6 +758,9 @@ struct Data {
     // MultiUser canisters
     #[serde(default)]
     pub alchemy_api_key: Option<String>,
+    // The prizes each user has claimed in the last 24 hours, which limit how many more they can claim
+    #[serde(default)]
+    pub prize_claims: PrizeClaims,
 }
 
 impl Data {
@@ -867,6 +872,7 @@ impl Data {
             registry_tokens: RegistryTokens::default(),
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
+            prize_claims: PrizeClaims::default(),
         };
 
         // Register the ProposalsBot
@@ -986,6 +992,7 @@ impl Default for Data {
             registry_tokens: RegistryTokens::default(),
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
+            prize_claims: PrizeClaims::default(),
         }
     }
 }
@@ -1036,6 +1043,7 @@ pub struct Metrics {
     pub protected_action_metrics: ProtectedActionMetrics,
     pub openai_api_key_set: bool,
     pub alchemy_api_key_set: bool,
+    pub prize_claims_last_day: usize,
     pub internal_moderation_channel_set: bool,
     pub moderation_referral_config_set: bool,
     pub moderation_referral_categories: u32,

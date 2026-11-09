@@ -2404,6 +2404,8 @@
         "claimed": "Successo!",
         "claimFailed": "Ci dispiace che il tuo reclamo non abbia avuto successo! La prossima volta sarai più fortunato.",
         "claimIneligible": "Ci dispiace che tu non soddisfi i requisiti per richiedere questo premio.",
+        "claimInProgress": "La tua ultima richiesta di premio è ancora in corso. Riprova tra un momento.",
+        "claimLimitReached": "Hai raggiunto il limite giornaliero di richieste di premi. Potrai richiederne di nuovo a partire da {time}.",
         "click": "Fai clic sul pulsante in basso per avere la possibilità di vincere un premio.",
         "creatingPrizeMessageFailed": "Impossibile creare il messaggio del premio",
         "creatingYourPrizeMessage": "Ti preghiamo di attendere mentre creiamo il messaggio del tuo premio",

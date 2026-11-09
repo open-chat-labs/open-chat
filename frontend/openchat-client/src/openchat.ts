@@ -423,7 +423,7 @@ import type { OpenChatConfig } from "./config";
 import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
 import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import { blockOutcome, type BlockContext, type BlockOutcome } from "./utils/profileBlock";
-import { isTrustedClick } from "./utils/prizes";
+import { claimPrizeFailedMessage, isTrustedClick } from "./utils/prizes";
 import { isCsamReport, type ReportReason } from "./utils/report";
 import { savedAccountName, withoutAccountsNamed, withSavedAccount } from "./utils/namedAccounts";
 import {
@@ -10022,7 +10022,12 @@ export class OpenChat {
 
         try {
             const resp = await this.#worker.send({ kind: "claimPrize", chatId, messageId });
-            if (resp.kind !== "success") return failed;
+            if (resp.kind !== "success") {
+                return {
+                    kind: "failed",
+                    message: claimPrizeFailedMessage(resp, (date) => this.toDatetimeString(date)),
+                };
+            }
             localUpdates.markPrizeClaimed(messageId);
             return { kind: "success" };
         } catch {
