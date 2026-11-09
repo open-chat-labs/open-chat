@@ -774,6 +774,9 @@
 - `onSection`: a section chosen in the contents list is handed to the host by its `id`, for its address (the app sets `?section=` in place), so the address bar links to it.
 - `navigation`: a value the host changes with each of its navigations (the app's router count); a new one follows `section` (and `question`) again though they're unchanged, so a link to the section the page opened on goes there after the reader chose another (the host's `section` still names the one it navigated to).
 - Docs: `meta.json` (Learn's `onSection`, `navigation`).
+
+## 2026-11-09 — Explore's guest banner stays at the foot of the pane, by hand
+- `ExploreCommunities`: the guest banner (`guest`) was `position: sticky; bottom: 0` in the flow after the content, so it only sat at the foot of the pane while the content was taller than it. With less (search with no text, "Searching…", a few results, none) it sat straight under the content, near the top. The scroller (`.explore`) is a flex column now (its children keep their height, `flex-shrink: 0`) and the banner's wrapper takes the space left over (`margin-block-start: auto`), so it sits at the foot of the pane in every view, browse and search alike, and stays sticky over content taller than the pane, which still scrolls clear of it at the end.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
 ## 2026-11-08 — the native composer's keyboard-area panels (native N5c, #10370), by hand

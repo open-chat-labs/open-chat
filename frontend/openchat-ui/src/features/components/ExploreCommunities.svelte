@@ -756,6 +756,14 @@
     box-sizing: border-box;
     overflow-y: auto;
     overflow-x: hidden;
+    /* a column, so the guest banner takes the space under content shorter than the pane
+       (margin-block-start: auto) and sits at its foot in every view, not straight after the content */
+    display: flex;
+    flex-direction: column;
+  }
+
+  .explore > * {
+    flex-shrink: 0;
   }
 
   .glyph {
@@ -1693,6 +1701,7 @@
   .guest-wrap {
     position: sticky;
     bottom: 0;
+    margin-block-start: auto;
     z-index: 6;
     display: flex;
     justify-content: center;
