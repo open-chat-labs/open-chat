@@ -5,10 +5,12 @@
      disappearing messages, as the design's DM profile. -->
 <script lang="ts">
     import {
+        anonUserStore,
         buildUserAvatarUrl,
         buildUserBackgroundUrl,
         lastOnlineStatus,
         currentUserIdStore,
+        routeForChatIdentifier,
         favouritesStore,
         OpenChat,
         selectedChatSummaryStore,
@@ -22,6 +24,7 @@
     import UserDialog from "@openchat/ui/src/features/components/UserDialog.svelte";
     import Markdown from "@src/core/Markdown.svelte";
     import { profileCardChat } from "@src/logic/profile/profileCard";
+    import { askToSignIn } from "@src/logic/auth/guestPass";
     import { ProfileCardBlock, ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
     import { disableChit } from "@src/stores/settings";
     import { toastStore } from "@src/stores/toast";
@@ -103,9 +106,16 @@
         }
     }
 
+    // a guest is asked to sign in, staying where they are, and the DM opens once they have
+    // (logic/auth/guestPass)
     function chat() {
         onClose();
-        publish("chatWith", profileCardChat(dialog));
+        const chatId = profileCardChat(dialog);
+        if ($anonUserStore) {
+            askToSignIn(client, routeForChatIdentifier("chats", chatId));
+        } else {
+            publish("chatWith", chatId);
+        }
     }
 
     async function unsuspend() {

@@ -5,6 +5,7 @@ import {
     type WalletPage,
     type WalletRoute,
 } from "@client";
+import { guestRouteAccess } from "@src/logic/auth/guestPass";
 import { isLandingPageRoute } from "@src/utils/urls";
 
 // What a route shows (ROUTES.md). The screens behind each region come in later phases; until then
@@ -34,19 +35,30 @@ export type Regions =
 
 /**
  * The regions a route shows. `signedOut`: an anonymous user without an account, who gets Landing
- * on "/" (as today). The URL's query can change the left column only, over whatever the middle
- * shows (ROUTES.md): `?panel=activity` (decision 7) puts the activity feed over a chat list's or
- * the wallet's page, and `?threads` a chat list's threads in place of the list.
+ * on "/" (as today). `guest`: anonymous in the app, who gets Explore in place of a page that needs
+ * an account (guestRouteAccess) while they're asked to sign in, until the URL is Explore's too. The
+ * URL's query can change the left column only, over whatever the middle shows (ROUTES.md):
+ * `?panel=activity` (decision 7) puts the activity feed over a chat list's or the wallet's page,
+ * and `?threads` a chat list's threads in place of the list.
  */
 export function regionsFor(
     route: RouteParams,
     signedOut: boolean,
     query: URLSearchParams = new URLSearchParams(),
+    guest = false,
 ): Regions {
-    const regions = routeRegions(route, signedOut);
+    const regions =
+        guest && guestRouteAccess(route) === "sign_in"
+            ? EXPLORE
+            : routeRegions(route, signedOut);
     if (regions.area !== "app") return regions;
     const left = regions.left;
-    if (query.get("panel") === "activity" && (left?.kind === "chats" || left?.kind === "wallet")) {
+    // a guest has no activity: the page shows as it is
+    if (
+        !guest &&
+        query.get("panel") === "activity" &&
+        (left?.kind === "chats" || left?.kind === "wallet")
+    ) {
         return { ...regions, left: { kind: "activity", over: true }, narrowView: "left" };
     }
     if (query.has("threads") && left?.kind === "chats") {
@@ -59,6 +71,14 @@ export function regionsFor(
     }
     return regions;
 }
+
+// Explore: full width, without the details column (joining is a dialog)
+const EXPLORE: Regions = {
+    area: "app",
+    middle: { kind: "explore" },
+    narrowView: "middle",
+    rightColumn: false,
+};
 
 function walletPage(route: WalletRoute): WalletPage {
     switch (route.view) {
@@ -96,13 +116,7 @@ function routeRegions(route: RouteParams, signedOut: boolean): Regions {
             };
         case "communities_route":
         case "welcome_route":
-            // full width, without the details column (joining is a dialog)
-            return {
-                area: "app",
-                middle: { kind: "explore" },
-                narrowView: "middle",
-                rightColumn: false,
-            };
+            return EXPLORE;
         case "wallet_route":
             return {
                 area: "app",

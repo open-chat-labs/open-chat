@@ -155,6 +155,28 @@ describe("what a route shows", () => {
             area: "not_found",
         });
     });
+
+    test("a guest gets Explore in place of a page that needs an account, and the rest as anyone", () => {
+        const explore = regionsFor(route({ kind: "communities_route", scope: none }), false);
+        const query = new URLSearchParams();
+        for (const r of [
+            route({ kind: "wallet_route", scope: none, view: "all" }),
+            route({ kind: "notifications_route", scope: none }),
+            route({ kind: "chat_list_route", scope: { kind: "favourite" } }),
+            route({ ...groupChat, chatId: { kind: "direct_chat", userId: "u1" }, chatType: "direct_chat" }),
+        ]) {
+            expect(regionsFor(r, false, query, true)).toEqual(explore);
+            expect(regionsFor(r, false, query, false)).not.toEqual(explore);
+        }
+        expect(regionsFor(groupChat, false, query, true)).toEqual(regionsFor(groupChat, false));
+        // a guest has no activity feed to put over a page
+        expect(
+            regionsFor(groupChat, false, new URLSearchParams("panel=activity"), true),
+        ).toEqual(regionsFor(groupChat, false));
+        expect(regionsFor(route({ kind: "faq_route", scope: none }), false, query, true).area).toBe(
+            "marketing",
+        );
+    });
 });
 
 describe("the rail's selection", () => {

@@ -47,6 +47,7 @@
     } from "@src/logic/members/memberManagement.svelte";
     import { PinnedMessages } from "@src/logic/pinned/pinnedMessages.svelte";
     import { muteChat } from "@src/logic/chats/muteChat";
+    import { signInFirst } from "@src/logic/auth/guestPass";
     import {
         chatDetailsPermissions,
         chatRulesText,
@@ -295,8 +296,13 @@
 
     // A chat mutes without a duration: the panel's spans all mute until unmuted (GAPS.md). A
     // community mutes all its channels, which can't be undone from here (as in the old menus)
+    // a guest is asked to sign in instead (logic/auth/guestPass), for the favourite too: the panel
+    // rolls the mute back, saying nothing (a change given up: { cancelled: true })
+    const signInInstead = { cancelled: true };
+
     async function mute(key: string | null) {
         if (collection === undefined) return;
+        if (signInFirst(client, $anonUserStore)) throw signInInstead;
         if (collection.kind === "community") {
             if (key === null || !(await client.muteAllChannels(collection.id, false))) {
                 throw new Error("can't unmute every channel");
@@ -309,6 +315,7 @@
 
     async function muteEveryone(on: boolean) {
         if (collection === undefined) return;
+        if (signInFirst(client, $anonUserStore)) throw signInInstead;
         if (collection.kind === "community") {
             if (!on || !(await client.muteAllChannels(collection.id, true))) {
                 throw new Error("can't unmute @everyone in every channel");
@@ -413,6 +420,7 @@
 
     function toggleFavourite() {
         if (collection === undefined || collection.kind === "community") return;
+        if (signInFirst(client, $anonUserStore)) return;
         if ($favouritesStore.has(collection.id)) {
             client.removeFromFavourites(collection.id);
         } else {

@@ -202,6 +202,7 @@
     } from "@src/logic/conversation/linkPreview";
     import { messageOffer } from "@src/logic/conversation/messageOffer";
     import { toggleReaction } from "@src/logic/conversation/reaction";
+    import { askToSignIn } from "@src/logic/auth/guestPass";
     import { observeRead } from "@src/core/observeRead";
     import { votePoll } from "@src/logic/conversation/pollVote";
     import {
@@ -1446,6 +1447,7 @@
         {#key contextKey}
             <Composer
                 {block}
+                onSignIn={() => askToSignIn(client)}
                 preview={preview === undefined
                     ? undefined
                     : {

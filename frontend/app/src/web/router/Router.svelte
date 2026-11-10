@@ -34,6 +34,7 @@
     import { leftToBrowser } from "./links";
     import { shareQuery } from "../features/app/dialogs";
     import RouteEffects from "@src/core/RouteEffects.svelte";
+    import { askToSignIn, GUEST_HOME } from "@src/logic/auth/guestPass";
 
     let { children }: { children: Snippet } = $props();
 
@@ -140,6 +141,14 @@
         }
     }
 
+    // A guest who went to a page that needs an account (ROUTES.md, the Guest column) is asked to
+    // sign in over Explore, in its place in history, and goes on to the page once signed in
+    // (AppScreen). Closing the sign-in leaves them on Explore.
+    function onGuestSignIn() {
+        askToSignIn(client, `${location.pathname}${location.search}`);
+        navigate(GUEST_HOME, "auto");
+    }
+
     // The query params that open something (ROUTES.md), handled once the chats are in, each on its
     // own as Home.svelte does, then the URL is tidied with a single navigation
     $effect(() => {
@@ -175,6 +184,6 @@
     });
 </script>
 
-<RouteEffects onPreviewWithoutChat={selectDefaultChat} {onRoute} />
+<RouteEffects onPreviewWithoutChat={selectDefaultChat} {onRoute} {onGuestSignIn} />
 
 {@render children()}

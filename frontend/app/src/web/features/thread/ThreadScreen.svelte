@@ -7,6 +7,7 @@
 <script lang="ts">
     import {
         allUsersStore,
+        anonUserStore,
         i18nKey,
         selectedChatSummaryStore,
         selectedChatWebhooksStore,
@@ -16,6 +17,7 @@
     import ThreadPanel from "@openchat/ui/src/features/components/ThreadPanel.svelte";
     import { dialogOpen } from "@openchat/ui/src/lib/behaviours/modal";
     import { followsThread } from "@src/logic/conversation/threadTimeline";
+    import { signInFirst } from "@src/logic/auth/guestPass";
     import { toastStore } from "@src/stores/toast";
     import { findUser } from "@src/utils/user";
     import { getContext } from "svelte";
@@ -59,8 +61,10 @@
         chat !== undefined && followsThread(root.event, $threadsFollowedByMeStore.get(chat.id)),
     );
 
-    // the panel's Follow shows a spinner until this settles, and stays as it was when it rejects
+    // the panel's Follow shows a spinner until this settles, and stays as it was when it rejects;
+    // a guest is asked to sign in instead (logic/auth/guestPass)
     async function follow(on: boolean) {
+        if (signInFirst(client, $anonUserStore)) throw { cancelled: true };
         if (chat === undefined) return;
         if (!(await client.followThread(chat.id, root.event, on))) {
             toastStore.showFailureToast(i18nKey(on ? "followThreadFailed" : "unfollowThreadFailed"));

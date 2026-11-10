@@ -38,6 +38,7 @@
     import { getContext, onDestroy, untrack } from "svelte";
     import { openCommunityCreation } from "../app/createCommunity";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
+    import { askToSignIn } from "@src/logic/auth/guestPass";
     import {
         exploreCommunities,
         exploreLanguageOptions,
@@ -258,7 +259,7 @@
                 onPreview={openCommunity}
                 onCreate={createCommunity}
                 guest={$anonUserStore}
-                onSignIn={() => client.updateIdentityState({ kind: "logging_in" })}
+                onSignIn={() => askToSignIn(client)}
             />
         {/key}
     {/if}

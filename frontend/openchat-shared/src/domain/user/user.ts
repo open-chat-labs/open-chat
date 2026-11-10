@@ -148,7 +148,8 @@ export type PostLoginOperation =
     | RegisterBot
     | CreateGroup
     | JoinCommunity
-    | JoinGroup;
+    | JoinGroup
+    | ContinueTo;
 
 export type CreateCommunity = {
     kind: "create_community";
@@ -170,6 +171,13 @@ export type JoinCommunity = {
 export type JoinGroup = {
     kind: "join_group";
     group: MultiUserChat;
+};
+
+/** A page a guest was going to that needs an account: the app goes on to it once they've signed in. */
+export type ContinueTo = {
+    kind: "continue_to";
+    /** The page's path, with its query. */
+    path: string;
 };
 
 export type IdentityState =

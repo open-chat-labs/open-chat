@@ -1,9 +1,20 @@
 import { AuthProvider, identityStateStore } from "@client";
+import type { AuthOption } from "@openchat/ui/src/features/components/AuthDialog.svelte";
 import { flushSync } from "svelte";
-import { AuthDialogProps, pageSignIns } from "./authDialog.svelte";
-import type { Auth } from "./signIn";
+import { AuthDialogProps, pageSignIns, type AuthDialogHost } from "./authDialog.svelte";
 
 let lastEmail = "me@example.com";
+
+// the methods as AuthDialog names them (the web's auth.adapter)
+const OPTIONS: Record<AuthProvider, AuthOption> = {
+    [AuthProvider.PASSKEY]: "passkey",
+    [AuthProvider.EMAIL]: "email",
+    [AuthProvider.II]: "ii",
+    [AuthProvider.ETH]: "eth",
+    [AuthProvider.SOL]: "sol",
+    [AuthProvider.NFID]: "nfid",
+};
+const option = (provider: AuthProvider) => OPTIONS[provider];
 
 function fakeAuth(referrer: Promise<{ userId: string; name: string }>) {
     return {
@@ -11,7 +22,7 @@ function fakeAuth(referrer: Promise<{ userId: string; name: string }>) {
         termsUrl: "/terms",
         lastEmail: () => lastEmail,
         loadReferrer: () => referrer,
-    } as unknown as Auth;
+    } as unknown as AuthDialogHost;
 }
 
 describe("the dialog's props", () => {
@@ -21,7 +32,7 @@ describe("the dialog's props", () => {
         const dialog = new AuthDialogProps({
             ...fakeAuth(referrer),
             loadReferrer,
-        } as unknown as Auth);
+        } as unknown as AuthDialogHost, option);
         expect(loadReferrer).not.toHaveBeenCalled();
         dialog.opening();
         expect(dialog.props([], AuthProvider.PASSKEY).referrer).toBeUndefined();
@@ -34,7 +45,7 @@ describe("the dialog's props", () => {
 
     test("put the method the host says was last used first", () => {
         vi.stubGlobal("PublicKeyCredential", class {});
-        const dialog = new AuthDialogProps(fakeAuth(new Promise(() => {})));
+        const dialog = new AuthDialogProps(fakeAuth(new Promise(() => {})), option);
         expect(dialog.props(["II", "ETH"], AuthProvider.ETH).methods).toEqual(["eth", "ii"]);
         // without a passkey on offer, Create account (a passkey) isn't either
         expect(dialog.props(["II", "ETH"], AuthProvider.ETH).passkeySignup).toBe(false);
@@ -45,7 +56,7 @@ describe("the dialog's props", () => {
 
 describe("the prefilled email", () => {
     test("is the last address a link went to, read again when the dialog opens", () => {
-        const dialog = new AuthDialogProps(fakeAuth(new Promise(() => {})));
+        const dialog = new AuthDialogProps(fakeAuth(new Promise(() => {})), option);
         lastEmail = "first@example.com";
         dialog.opening();
         lastEmail = "second@example.com";
@@ -158,6 +169,28 @@ describe("a marketing page's own sign-ins", () => {
         await pageSignIns.trackEmail(Promise.resolve());
         pageSignIns.closed();
         expect(pageSignIns.signingIn).toBe(false);
+    });
+
+    test("go on to the app's home once signed in, or where the page asked to", () => {
+        pageSignIns.opened();
+        expect(pageSignIns.destination()).toBe("/");
+        // /diamond's Upgrade: on to the Diamond dialog, once, over the list the signed-in user
+        // starts on
+        let scope = "/chats";
+        pageSignIns.opened(() => `${scope}?diamond`);
+        scope = "/favourite";
+        expect(pageSignIns.destination()).toBe("/favourite?diamond");
+        expect(pageSignIns.destination()).toBe("/");
+        // the page's own Sign in, opened after, is a sign-in for the app
+        pageSignIns.opened(() => "/chats?diamond");
+        pageSignIns.opened();
+        expect(pageSignIns.destination()).toBe("/");
+    });
+
+    test("go on nowhere once the dialog has closed", () => {
+        pageSignIns.opened(() => "/chats?diamond");
+        pageSignIns.closed();
+        expect(pageSignIns.destination()).toBe("/");
     });
 
     test("keep waiting on the link before a resend that fails, and not on none", async () => {

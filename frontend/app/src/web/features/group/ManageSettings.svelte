@@ -6,6 +6,7 @@
      verified group, changing who can see it) asks first; declining keeps the edits to change. -->
 <script lang="ts">
     import {
+        anonUserStore,
         candidateGroupFromChat,
         chatSummariesListStore,
         cryptoLookup,
@@ -32,6 +33,7 @@
     import type { GroupSettings } from "@openchat/ui/src/lib/types";
     import { i18nKey, interpolate } from "@i18n/i18n";
     import { muteChat } from "@src/logic/chats/muteChat";
+    import { signInFirst } from "@src/logic/auth/guestPass";
     import {
         MAX_NAME_LENGTH as MAX_COMMUNITY_NAME,
         MIN_NAME_LENGTH as MIN_COMMUNITY_NAME,
@@ -233,7 +235,12 @@
     );
 
     // a community mutes all its channels, which can't be undone from here (as in the old menus)
+    // a guest is asked to sign in instead (logic/auth/guestPass): the About page rolls the change
+    // back, saying nothing (a change given up: { cancelled: true })
+    const signInInstead = { cancelled: true };
+
     async function mute(mute: "forever" | null) {
+        if (signInFirst(client, $anonUserStore)) throw signInInstead;
         if (target.kind === "community") {
             if (mute === null || !(await client.muteAllChannels(target.id, false))) {
                 throw new Error("can't unmute every channel");
@@ -246,6 +253,7 @@
 
     async function favourite(on: boolean) {
         if (target.kind === "community") return;
+        if (signInFirst(client, $anonUserStore)) throw signInInstead;
         const done = await (on
             ? client.addToFavourites(target.id)
             : client.removeFromFavourites(target.id));

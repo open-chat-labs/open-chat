@@ -4,7 +4,8 @@
      can send, and does the sending (with mentions and markdown, as the old UI's MessageEntry did)
      and the attaching; the composer tells it while the reader types, and hands it the files picked
      or pasted and the voice recorded. Where the reader can't send, the old footer's reason shows
-     instead, and for a preview its bar (CommunityPreviewBar: Join, Back; 8b); a notice (the
+     instead (with Sign in for a guest), and for a preview its bar (CommunityPreviewBar: Join, or
+     Sign in to join for a guest, and Back; 8b); a notice (the
      throttle countdown, a video being prepared) shows over it. Mount it once per chat (keyed). -->
 <script lang="ts">
     import CommunityPreviewBar from "@openchat/ui/src/features/components/CommunityPreviewBar.svelte";
@@ -55,9 +56,12 @@
         onMentionQuery,
         mentions,
         onVoiceActive,
+        onSignIn,
     }: {
         // what stands in for the composer where the reader can't send
         block: EntryBlock | undefined;
+        // a guest's Sign in, where that's why they can't send
+        onSignIn: () => void;
         // a preview's bar (Join, Back), shown for a "preview" block (8b)
         preview: ComponentProps<typeof CommunityPreviewBar> | undefined;
         // the chat's draft, read once when the composer mounts
@@ -170,7 +174,12 @@
     </div>
 {:else if blocked !== undefined}
     <div class="blocked">
-        <Banner tone={blocked.tone} text={$_(blocked.key)} />
+        <!-- a guest's offers to sign in (the design's "Composer → Sign in prompt") -->
+        <Banner
+            tone={blocked.tone}
+            text={$_(blocked.key)}
+            actionLabel={blocked.signIn ? $_("login") : ""}
+            actionHandler={blocked.signIn ? onSignIn : undefined} />
     </div>
 {:else}
     <!-- TODO(phase 5, 5c): GIFs and bot commands -->

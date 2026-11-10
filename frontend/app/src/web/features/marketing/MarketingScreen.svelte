@@ -36,7 +36,8 @@
     } from "@src/utils/urls";
     import { getContext, onDestroy, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { AuthDialogProps, pageSignIns } from "../auth/authDialog.svelte";
+    import { AuthDialogProps, pageSignIns } from "@src/logic/auth/authDialog.svelte";
+    import { OPTIONS } from "../auth/auth.adapter";
     import { createAuth } from "../auth/signIn";
     import { accentStore } from "@theme/accent";
     import { LazyModule } from "../../lazyModule.svelte";
@@ -64,26 +65,18 @@
     // the app's home: "/" goes on to the default chat list, as the router does for anyone signed in
     const enterApp = () => navigate("/");
 
-    // /diamond's Upgrade asked to sign in first: its dialog's emailed link goes on to the Diamond
-    // dialog too, as its other sign-ins do (startDiamondUpgrade). Closing that dialog stops the link,
-    // and the page's own Sign in is a sign-in for the app.
-    let diamondUpgradePending = false;
-
-    // an emailed link followed elsewhere signs this page in too, so it enters the app (or goes on
-    // to the Diamond dialog)
+    // an emailed link followed elsewhere signs this page in too, so it goes on where the page's
+    // dialog was to go: the app, or the Diamond dialog for /diamond's Upgrade, which asked to sign in
+    // first (startDiamondUpgrade; pageSignIns.destination). Closing that dialog stops the link, and
+    // the page's own Sign in is a sign-in for the app.
     const auth = createAuth(client, {
         translate: (key) => $_(key),
         onEmailSignedIn: () => {
             pageSignIns.emailDone();
-            if (diamondUpgradePending) {
-                diamondUpgradePending = false;
-                openDiamondDialog();
-            } else {
-                enterApp();
-            }
+            navigate(pageSignIns.destination());
         },
     });
-    const dialog = new AuthDialogProps(auth);
+    const dialog = new AuthDialogProps(auth, (provider) => OPTIONS[provider]);
     // the method last used, read as the dialog opens rather than live: starting one doesn't move
     // the tiles
     let last = $state(selectedAuthProviderStore.value);
@@ -103,15 +96,16 @@
     // closing gives up what the dialog had going, and signs out an identity without an account it
     // leaves behind (a sign-up that failed)
     const onClose = () => {
-        diamondUpgradePending = false;
         pageSignIns.closed();
         auth.cancel();
     };
-    const onOpen = () => {
-        diamondUpgradePending = false;
+    // `continueTo`: where its sign-in goes on to, other than the app (/diamond's Upgrade)
+    const opening = (continueTo?: () => string) => {
+        pageSignIns.opened(continueTo);
         last = selectedAuthProviderStore.value;
         dialog.opening();
     };
+    const onOpen = () => opening();
     const pageAuth = $derived({
         ...dialog.props($querystringStore.getAll("auth"), last),
         onOpen,
@@ -218,16 +212,13 @@
     // /diamond's Upgrade: the app's Diamond dialog, where it can be paid for (the PIN, the wallet),
     // after signing in when signed out (ROUTES.md, decision 5). It opens over the default chat list,
     // as /profile_summary's ?profile does: "/" goes on to it without the query
-    const openDiamondDialog = () =>
-        navigate(`${routeForScope(client.getDefaultScope())}?diamond`);
+    const diamondDialogPath = () => `${routeForScope(client.getDefaultScope())}?diamond`;
+    const openDiamondDialog = () => navigate(diamondDialogPath());
     // its sign-in is the page's (pageAuth), going on to the Diamond dialog, an emailed link's too
     const diamondSignIn = new PageAuthState(() => ({
         auth: {
             ...pageAuth,
-            onOpen: () => {
-                onOpen();
-                diamondUpgradePending = true;
-            },
+            onOpen: () => opening(diamondDialogPath),
         },
         onEnterApp: openDiamondDialog,
         appHref: "/",

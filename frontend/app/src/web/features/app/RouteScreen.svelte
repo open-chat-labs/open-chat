@@ -14,7 +14,7 @@
     import { regionsFor } from "../../router/regions";
     import { showsSignedOut, withoutAccount } from "@src/logic/auth/authFlow";
     import AuthScreen from "../auth/AuthScreen.svelte";
-    import { pageSignIns } from "../auth/authDialog.svelte";
+    import { pageSignIns } from "@src/logic/auth/authDialog.svelte";
     import MarketingScreen from "../marketing/MarketingScreen.svelte";
     import AppScreen from "./AppScreen.svelte";
 
@@ -26,7 +26,10 @@
             pageSignIns.signupFailed,
         ),
     );
-    const regions = $derived(regionsFor($routeStore, signedOut, $querystringStore));
+    // a guest on a page that needs an account sees Explore while they're asked to sign in
+    const regions = $derived(
+        regionsFor($routeStore, signedOut, $querystringStore, $anonUserStore),
+    );
 
     const registering = $derived(withoutAccount($identityStateStore));
     const loading = $derived(

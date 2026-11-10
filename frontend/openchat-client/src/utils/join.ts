@@ -60,3 +60,14 @@ export function postLoginCreateCommunity(identityState: IdentityState): boolean 
         identityState.kind === "logged_in" && identityState.postLogin?.kind === "create_community"
     );
 }
+
+/**
+ * The page a guest was going to when they were asked to sign in (one that needs an account), once
+ * they have logged in. The caller clears the post-login state before going there, so it's gone to
+ * once.
+ */
+export function postLoginPath(identityState: IdentityState): string | undefined {
+    return identityState.kind === "logged_in" && identityState.postLogin?.kind === "continue_to"
+        ? identityState.postLogin.path
+        : undefined;
+}

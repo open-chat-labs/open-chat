@@ -119,9 +119,14 @@ export function chatEntryState(
 
 /**
  * What stands in for the entry where the reader can't send, in the old footers' words: a banner's
- * text (a resource key) and tone. A preview's shows only while its bar (Join) isn't known.
+ * text (a resource key) and tone. A preview's shows only while its bar (Join) isn't known. A
+ * guest's offers to sign in (`signIn`): the composer's Sign in prompt.
  */
-export function entryBlockBanner(block: EntryBlock): { key: string; tone: "info" | "warning" } {
+export function entryBlockBanner(block: EntryBlock): {
+    key: string;
+    tone: "info" | "warning";
+    signIn?: true;
+} {
     switch (block.kind) {
         case "suspended":
             return { key: "accountSuspended", tone: "warning" };
@@ -134,7 +139,9 @@ export function entryBlockBanner(block: EntryBlock): { key: string; tone: "info"
         case "external":
             return { key: "externalContent.disclaimer", tone: "warning" };
         case "read_only":
-            return { key: block.key, tone: "info" };
+            return block.key === "sendMessageDisabledAnon"
+                ? { key: block.key, tone: "info", signIn: true }
+                : { key: block.key, tone: "info" };
     }
 }
 

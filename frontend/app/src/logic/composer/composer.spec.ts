@@ -561,6 +561,16 @@ describe("what stands in for the entry", () => {
             tone: "info",
         });
     });
+
+    test("offers a guest to sign in, and nobody else", () => {
+        expect(entryBlockBanner({ kind: "read_only", key: "sendMessageDisabledAnon" })).toEqual({
+            key: "sendMessageDisabledAnon",
+            tone: "info",
+            signIn: true,
+        });
+        expect(entryBlockBanner({ kind: "read_only", key: "readOnlyChat" }).signIn).toBeUndefined();
+        expect(entryBlockBanner({ kind: "suspended" }).signIn).toBeUndefined();
+    });
 });
 
 describe("the entry's notice in words", () => {

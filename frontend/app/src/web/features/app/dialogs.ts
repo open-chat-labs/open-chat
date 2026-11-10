@@ -373,6 +373,15 @@ export function shownLinkedDialog(
     return chit && chitOff ? undefined : dialog;
 }
 
+/**
+ * Whether a linked dialog is for someone with an account: all but the leaderboard, which anyone
+ * can read. A guest who opens one (a link to ?profile, ?diamond, ?chit …) is asked to sign in
+ * instead, and it opens once they have (ROUTES.md, the Guest column).
+ */
+export function linkedDialogNeedsAccount(dialog: LinkedDialog): boolean {
+    return dialog.kind !== "leaderboard";
+}
+
 /** The query param that opens a linked dialog, which closing it drops. */
 export function linkedDialogParam(dialog: LinkedDialog): string {
     return PARAMS[dialog.kind];

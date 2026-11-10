@@ -3,8 +3,9 @@
      (components/Router.svelte) and Home.svelte's route handling; the legacy trees keep their own
      copies until they go. Renders nothing.
      What a tree does on top: `onPreviewWithoutChat` when a previewed community opens with no channel
-     selected (the web selects its default chat), and `onRoute` for each route once the chats are in
-     and the shared handling hasn't redirected it (the web's ?profile and ?share). -->
+     selected (the web selects its default chat), `onRoute` for each route once the chats are in
+     and the shared handling hasn't redirected it (the web's ?profile and ?share), and
+     `onGuestSignIn` when a guest goes to a page that needs an account (the web's guest pass). -->
 <script lang="ts">
     import {
         anonUserStore,
@@ -23,6 +24,7 @@
         type CommunityIdentifier,
         type RouteParams,
     } from "@client";
+    import { guestRouteAccess } from "@src/logic/auth/guestPass";
     import { navigate } from "@src/utils/navigation";
     import { removeQueryStringParam } from "@src/utils/urls";
     import { getContext, untrack } from "svelte";
@@ -30,9 +32,12 @@
     let {
         onPreviewWithoutChat,
         onRoute,
+        onGuestSignIn,
     }: {
         onPreviewWithoutChat?: () => void;
         onRoute?: (route: RouteParams) => void;
+        // a guest went to a page that needs an account (guestRouteAccess); the URL is still its
+        onGuestSignIn?: () => void;
     } = $props();
 
     const client = getContext<OpenChat>("client");
@@ -129,7 +134,15 @@
         untrack(() => {
             if (!initialised) return;
             client.filterRightPanelHistory((panel) => panel.kind !== "community_filters");
-            if (
+            // a guest going to a page that needs an account (the favourites, a DM, the wallet …):
+            // the tree's own guest pass where it has one (logic/auth/guestPass), else the old
+            // trees' sign-in over /chats, for the favourites only
+            if ($anonUserStore && onGuestSignIn !== undefined) {
+                if (guestRouteAccess(route) === "sign_in") {
+                    onGuestSignIn();
+                    return;
+                }
+            } else if (
                 $anonUserStore &&
                 client.isChatListRoute(route) &&
                 route.scope.kind === "favourite"

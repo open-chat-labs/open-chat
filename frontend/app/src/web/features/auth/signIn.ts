@@ -2,13 +2,13 @@ import { AuthProvider, identityStateStore, type OpenChat, type SignInMethod } fr
 import type {
     AuthFailure,
     AuthMethod,
-    AuthPerson,
     EmailLinkResult,
     EmailLinkSent,
     SignupDetails,
 } from "@openchat/ui/src/features/components/AuthDialog.svelte";
 import { configKeys, type SignInOutcome } from "@shared";
 import type { PageAuth } from "@openchat/ui/src/pages/pageAuth.svelte";
+import type { AuthDialogHost } from "@src/logic/auth/authDialog.svelte";
 import { onAuthClosed, type SignedIn } from "@src/logic/auth/authFlow";
 import {
     abandonSignIn,
@@ -27,30 +27,12 @@ import { emailLinkResult, person, PROVIDERS, WALLETS } from "./auth.adapter";
 
 export { signInAbandoned } from "@src/logic/auth/signUp";
 
-export type Auth = Required<
-    Pick<
-        PageAuth,
-        | "onMethod"
-        | "onSignup"
-        | "onRequestEmailLink"
-        | "onCancelEmailLink"
-        | "checkUsername"
-        | "searchReferrers"
-        | "resolveReferrer"
-    >
-> & {
-    wallets: NonNullable<PageAuth["wallets"]>;
-    termsUrl: string;
-    /** Whether this is the native app (its passkeys don't need the browser's WebAuthn). */
-    native: boolean;
+/** AuthDialog's host callbacks (what its props are made from), and the hosts' own steps. */
+export type Auth = AuthDialogHost & {
     /** The email link page's code: completes the sign-in the link belongs to. */
     onLinkCode: (querystring: string, code: string) => Promise<EmailLinkResult>;
     /** Stops waiting for an emailed link to be followed. */
     stopEmail: () => void;
-    /** The address a sign-in link was last sent to, to prefill the field with. */
-    lastEmail: () => string;
-    /** Whoever the referral link this browser came in on names, if anyone (looked up once). */
-    loadReferrer: () => Promise<AuthPerson | undefined>;
     /**
      * The dialog was closed: gives up the sign-ins it was waiting on (back to anonymous, for one
      * the client is still logging in), stops a sign-up in flight from going on to make the
