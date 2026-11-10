@@ -12,7 +12,7 @@ import {
     type ResourceKey,
     type UserLookup,
 } from "@client";
-import { copyMessageUrl, shareMessage } from "@src/utils/share";
+import { buildMessageUrl, shareMessageOrFail } from "@src/utils/share";
 import { copyToClipboard } from "@src/utils/urls";
 import { editMessage, replyToMessage } from "./draftActions";
 import { translateMessage } from "./translateMessage";
@@ -83,6 +83,10 @@ export type MessageActionOutcome =
     | { kind: "failed"; message: ResourceKey }
     /** The message's text, copied (or not: the clipboard refused). */
     | { kind: "copied"; ok: boolean }
+    /** A link to the message, copied (or not: the clipboard refused). */
+    | { kind: "link_copied"; ok: boolean; url: string }
+    /** The message, shared (or dismissed); `ok` false: it couldn't be shared. */
+    | { kind: "shared"; ok: boolean }
     /** A sent message deleted (or not: it shows again, as the client puts it back). */
     | { kind: "deleted"; ok: boolean }
     /** A private reply: the sender's DM, made if there was none, with the reply set. */
@@ -140,18 +144,21 @@ export async function messageAction(
                 kind: "copied",
                 ok: await copyToClipboard(client.getContentAsText(target.formatter, msg.content)),
             };
-        case "copy_url":
-            copyMessageUrl(chatId, msg.messageIndex, threadRootMessageIndex);
-            return DONE;
+        case "copy_url": {
+            const url = buildMessageUrl(chatId, msg.messageIndex, threadRootMessageIndex);
+            return { kind: "link_copied", ok: await copyToClipboard(url), url };
+        }
         case "share":
-            shareMessage(
-                target.formatter,
-                target.me,
-                msg.sender === target.me,
-                msg,
-                cryptoLookup.value,
-            );
-            return DONE;
+            return {
+                kind: "shared",
+                ok: await shareMessageOrFail(
+                    target.formatter,
+                    target.me,
+                    msg.sender === target.me,
+                    msg,
+                    cryptoLookup.value,
+                ),
+            };
         case "translate": {
             const outcome = await translateMessage(client, msg, {
                 diamond: target.diamond,

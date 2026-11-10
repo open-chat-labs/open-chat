@@ -1782,7 +1782,8 @@
                 "send": "{count, plural, one {Forward to # chat} other {Forward to # chats}}",
                 "forwarding": "{count, plural, one {Forwarding to # chat…} other {Forwarding to # chats…}}",
                 "forwarded": "{count, plural, one {Forwarded to # chat} other {Forwarded to # chats}}",
-                "failed": "Couldn't forward to every chat"
+                "failed": "Couldn't forward to every chat",
+                "throttled": "That's more messages than can be sent in a minute: forward to fewer chats, or wait a moment"
             },
             "report": {
                 "reporting": "Reporting message…",

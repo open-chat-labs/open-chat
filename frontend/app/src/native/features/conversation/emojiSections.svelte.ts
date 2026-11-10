@@ -18,6 +18,18 @@ export type EmojiSource = {
 
 const SHARED: EmojiSource = { inCategory: emojiInCategory, matching: emojiMatching };
 
+/** Where Recent is kept. */
+export type RecentStorage = Pick<Storage, "getItem" | "setItem">;
+
+/** The device's storage, or none where it can't be had (it's blocked, or there's no window). */
+function deviceStorage(): RecentStorage | undefined {
+    try {
+        return window.localStorage;
+    } catch {
+        return undefined;
+    }
+}
+
 export class EmojiSections {
     /** Recent, newest first. */
     recent = $state.raw<string[]>([]);
@@ -29,15 +41,16 @@ export class EmojiSections {
     matches = $state.raw<PickerEmoji[] | undefined>();
 
     readonly #userId: string;
-    readonly #storage: Pick<Storage, "getItem" | "setItem"> | undefined;
+    readonly #storage: RecentStorage | undefined;
     readonly #source: EmojiSource;
     #timer: ReturnType<typeof setTimeout> | undefined;
     // the search running: one started later, or the search cleared, drops what an earlier one finds
     #run = 0;
 
+    /** Recent is kept in `storage`: the device's, unless another is given. */
     constructor(
         userId: string,
-        storage: Pick<Storage, "getItem" | "setItem"> | undefined,
+        storage: RecentStorage | undefined = deviceStorage(),
         source: EmojiSource = SHARED,
     ) {
         this.#userId = userId;

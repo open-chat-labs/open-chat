@@ -21,11 +21,11 @@
     import BottomSheet from "@openchat/ui/src/native/BottomSheet.svelte";
     import { interpolate } from "@src/i18n/i18n";
     import { chatsToShareTo } from "@src/logic/share/chatsToShareTo";
-    import { getContext } from "svelte";
-    import { SvelteMap } from "svelte/reactivity";
+    import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { softKeyboard } from "../../aboveKeyboard.svelte";
     import { forwardRows } from "./forward.adapter";
+    import { ForwardPicks } from "./forwardPicks.svelte";
 
     type Props = {
         /** The message to forward; none: the sheet is closed. */
@@ -41,18 +41,11 @@
 
     const client = getContext<OpenChat>("client");
 
-    let query = $state("");
-    let note = $state("");
-    // what's picked, in the order it was picked, kept while a search hides it
-    const picked = new SvelteMap<string, ChatIdentifier>();
-    // the message whose sheet this is: a new one starts afresh
-    let shown: Message | undefined;
+    // the search, what's picked and the note: each time the sheet opens, afresh
+    const picks = new ForwardPicks<Message>();
     $effect.pre(() => {
-        if (message === undefined || message === shown) return;
-        shown = message;
-        query = "";
-        note = "";
-        picked.clear();
+        const shown = message;
+        untrack(() => picks.show(shown));
     });
 
     const preview = $derived(
@@ -71,7 +64,7 @@
                     users: $allUsersStore,
                 },
                 from,
-                query,
+                picks.query,
             ),
             {
                 favourites: $_("communities.favourites"),
@@ -85,16 +78,10 @@
         ),
     );
 
-    function toggle(id: string, chatId: ChatIdentifier) {
-        if (picked.has(id)) picked.delete(id);
-        else picked.set(id, chatId);
-    }
-
     function forward() {
-        if (picked.size === 0) return;
-        const chatIds = [...picked.values()];
-        const text = note.trim();
-        onForward(chatIds, text);
+        const picked = picks.picked();
+        if (picked === undefined) return;
+        onForward(picked.chatIds, picked.note);
         onClose();
     }
 </script>
@@ -112,9 +99,9 @@
         </div>
         <Field
             placeholder={$_("native.conversation.forward.search")}
-            value={query}
-            onInput={(e) => (query = e.currentTarget.value)}
-            onClear={() => (query = "")}
+            value={picks.query}
+            onInput={(e) => (picks.query = e.currentTarget.value)}
+            onClear={() => (picks.query = "")}
             showShortcut={false} />
     </div>
     <div class="list" role="listbox" aria-multiselectable="true">
@@ -122,14 +109,14 @@
             {#if row.section !== rows[i - 1]?.section}
                 <span class="section">{row.section}</span>
             {/if}
-            {@const on = picked.has(row.id)}
+            {@const on = picks.isPicked(row.id)}
             <button
                 type="button"
                 class="row"
                 class:on
                 role="option"
                 aria-selected={on}
-                onclick={() => toggle(row.id, row.chatId)}>
+                onclick={() => picks.toggle(row.id, row.chatId)}>
                 <Avatar size={40} color={row.color} shape={row.round ? "circle" : "squircle"} />
                 <span class="text">
                     <span class="name">{row.name}</span>
@@ -139,9 +126,11 @@
             </button>
         {:else}
             <p class="none">
-                {query.trim() === ""
+                {picks.query.trim() === ""
                     ? $_("native.conversation.forward.noChats")
-                    : $_("native.conversation.forward.noMatches", { values: { query } })}
+                    : $_("native.conversation.forward.noMatches", {
+                          values: { query: picks.query },
+                      })}
             </p>
         {/each}
     </div>
@@ -149,17 +138,17 @@
         <input
             class="note"
             type="text"
-            value={note}
-            oninput={(e) => (note = e.currentTarget.value)}
+            value={picks.note}
+            oninput={(e) => (picks.note = e.currentTarget.value)}
             placeholder={$_("native.conversation.forward.note")}
             aria-label={$_("native.conversation.forward.note")} />
         <Button
-            label={picked.size === 0
+            label={picks.count === 0
                 ? $_("native.conversation.forward.pick")
-                : $_("native.conversation.forward.send", { values: { count: picked.size } })}
+                : $_("native.conversation.forward.send", { values: { count: picks.count } })}
             size="lg"
             fullWidth
-            disabled={picked.size === 0}
+            disabled={picks.count === 0}
             onClick={forward} />
     </div>
 </BottomSheet>

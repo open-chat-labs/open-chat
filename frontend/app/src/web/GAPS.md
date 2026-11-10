@@ -403,9 +403,11 @@ design export needs. Each entry says where it came up.
       (the web's toggle turns it off at once, Cancel or not). The native tree has no setting
       screen for it, so once off it stays off on that device. A failed message's Delete just
       removes it.
-    - **Words**: toasts for Copy ("Copied"), Pin, Unpin, Undelete, a delete and its Undo, a
-      forward ("Forwarding to 2 chats…", then "Forwarded to 2 chats") and a report; the web says
-      nothing for Copy or Pin. Translating without Diamond offers it in a `NativeAlert` (Get
+    - **Words**: toasts for Copy ("Copied"), Copy link ("Link copied to clipboard"), Pin, Unpin,
+      Undelete, a delete and its Undo, a forward ("Forwarding to 2 chats…", then "Forwarded to 2
+      chats") and a report; the web says nothing for Copy or Pin. Copy link and Share, like every
+      action, come back from the shared `messageAction` as an outcome each tree shows its own way
+      (the web's toasts are as they were). Translating without Diamond offers it in a `NativeAlert` (Get
       Diamond opens `?diamond` on the You tab) rather than the web's upgrade dialog. A private
       reply that can't make the DM says so in a toast (the web publishes `notFound`).
     - **Message info** (a local `message_info` screen): the message as the chat draws it, Sent,
@@ -416,7 +418,13 @@ design export needs. Each entry says where it came up.
       `forwardMessageToChats`), the note sent after the copy as a message of its own; the web
       opens the one chat picked and leaves the note in its draft. A chat whose rules the user
       hasn't accepted refuses the copy (it shows failed there, and the retry asks for the rules),
-      as the client only knows the open chat's rules. The open chat isn't offered, as in every
+      as the client only knows the open chat's rules. @usernames typed in the note are mentioned
+      where they're members of the chat it goes to (each is looked up there); a community's user
+      groups and @everyone aren't known outside the open chat, so stay as typed. A forward that
+      would take more sends than the send throttle allows in the minute (the copy, and the note,
+      per chat: 10 a minute, 20 with Diamond) sends nothing and says so ("forward to fewer chats,
+      or wait a moment"), rather than some chats getting it and the rest nothing. The sheet starts
+      afresh each time it opens. The open chat isn't offered, as in every
       picker. DMs show their @username, not when they were last online (the web's picker loads it).
       While its search or note field has the keyboard, the sheet sits on it (the kit's
       `BottomSheet`'s `keyboard`, fed `softKeyboard.covering`: the conversation keeps the Android

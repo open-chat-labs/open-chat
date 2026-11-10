@@ -1867,7 +1867,8 @@
                 "send": "{count, plural, one {Przekaż do # czatu} few {Przekaż do # czatów} many {Przekaż do # czatów} other {Przekaż do # czatu}}",
                 "forwarding": "{count, plural, one {Przekazywanie do # czatu…} few {Przekazywanie do # czatów…} many {Przekazywanie do # czatów…} other {Przekazywanie do # czatu…}}",
                 "forwarded": "{count, plural, one {Przekazano do # czatu} few {Przekazano do # czatów} many {Przekazano do # czatów} other {Przekazano do # czatu}}",
-                "failed": "Nie udało się przekazać do wszystkich czatów"
+                "failed": "Nie udało się przekazać do wszystkich czatów",
+                "throttled": "To więcej wiadomości, niż można wysłać w ciągu minuty: przekaż do mniejszej liczby czatów albo chwilę poczekaj"
             },
             "report": {
                 "reporting": "Zgłaszanie wiadomości…",

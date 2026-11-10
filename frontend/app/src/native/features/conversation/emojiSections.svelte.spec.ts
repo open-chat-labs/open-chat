@@ -43,14 +43,37 @@ describe("the emoji a picker offers", () => {
         expect(new EmojiSections("me", storage, source()).recent).toEqual(["🎉", "🦊"]);
     });
 
+    describe("given no storage of their own", () => {
+        afterEach(() => {
+            vi.restoreAllMocks();
+            window.localStorage.removeItem(KEY);
+        });
+
+        test("keep Recent on the device", () => {
+            new EmojiSections("me", undefined, source()).picked("🦊");
+            expect(new EmojiSections("me", undefined, source()).recent[0]).toBe("🦊");
+            expect(JSON.parse(window.localStorage.getItem(KEY) ?? "[]")[0]).toBe("🦊");
+        });
+
+        test("keep none where the device's storage can't be had", () => {
+            vi.spyOn(window, "localStorage", "get").mockImplementation(() => {
+                throw new DOMException("blocked", "SecurityError");
+            });
+            const sections = new EmojiSections("me", undefined, source());
+            expect(sections.recent).toEqual([]);
+            sections.picked("🦊");
+            expect(sections.recent).toEqual(["🦊"]);
+        });
+    });
+
     test("are loading until the categories are in, or have failed", async () => {
-        const sections = new EmojiSections("me", undefined, source());
+        const sections = new EmojiSections("me", memory(), source());
         expect(sections.loading).toBe(true);
         await sections.load();
         expect(sections.loading).toBe(false);
         expect(sections.categories[0]).toEqual([emoji("g0")]);
 
-        const failing = new EmojiSections("me", undefined, {
+        const failing = new EmojiSections("me", memory(), {
             ...source(),
             inCategory: () => Promise.reject(new Error("offline")),
         });
@@ -62,7 +85,7 @@ describe("the emoji a picker offers", () => {
 
     test("search once typing pauses, for what's typed last", async () => {
         const from = source({ fox: [emoji("🦊")] });
-        const sections = new EmojiSections("me", undefined, from);
+        const sections = new EmojiSections("me", memory(), from);
         sections.search("fo");
         sections.search("fox ");
         await vi.advanceTimersByTimeAsync(EMOJI_SEARCH_DELAY_MS);
@@ -77,7 +100,7 @@ describe("the emoji a picker offers", () => {
 
     test("drop a search on its way once it's cleared", async () => {
         let settle: (found: PickerEmoji[]) => void = () => {};
-        const sections = new EmojiSections("me", undefined, {
+        const sections = new EmojiSections("me", memory(), {
             ...source(),
             matching: () => new Promise((resolve) => (settle = resolve)),
         });

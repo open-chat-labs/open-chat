@@ -1,6 +1,8 @@
 import { i18nKey, type DirectChatIdentifier, type EventWrapper, type Message } from "@client";
 import { vi } from "vitest";
 import { rowMessageContext } from "./threadTimeline";
+import { toastStore } from "@src/stores/toast";
+import { buildMessageUrl } from "@src/utils/share";
 import { messageAction, undeleteMessage, type MessageActionTarget } from "./messageAction";
 
 const chatId = { kind: "group_chat" as const, groupId: "g" };
@@ -204,6 +206,58 @@ describe("a message's actions", () => {
         expect(client.undeleteMessage).toHaveBeenCalledWith(chatId, 9, {
             ...evt.event,
             deleted: true,
+        });
+    });
+
+    describe("a link copied and a message shared", () => {
+        // the browser's clipboard and share sheet, as each test has them
+        function browser(fields: Partial<Pick<Navigator, "clipboard" | "share">>) {
+            for (const [key, value] of Object.entries(fields)) {
+                Object.defineProperty(navigator, key, { value, configurable: true });
+            }
+        }
+
+        afterEach(() => {
+            browser({ clipboard: undefined, share: undefined });
+            vi.restoreAllMocks();
+        });
+
+        test("copying a link says whether the clipboard took it, for the view to show", async () => {
+            const toasts = vi.spyOn(toastStore, "showSuccessToast");
+            const url = buildMessageUrl(chatId, 2, undefined);
+            const writeText = vi.fn(async () => {});
+            browser({ clipboard: { writeText } as unknown as Clipboard });
+            expect(await messageAction("copy_url", target(fakeClient()))).toEqual({
+                kind: "link_copied",
+                ok: true,
+                url,
+            });
+            expect(writeText).toHaveBeenCalledWith(url);
+
+            writeText.mockRejectedValue(new Error("denied"));
+            expect(await messageAction("copy_url", target(fakeClient()))).toEqual({
+                kind: "link_copied",
+                ok: false,
+                url,
+            });
+            expect(toasts).not.toHaveBeenCalled();
+        });
+
+        test("sharing says whether it could; the share sheet dismissed isn't a failure", async () => {
+            const toasts = vi.spyOn(toastStore, "showFailureToast");
+            vi.spyOn(console, "log").mockImplementation(() => {});
+            const share = vi.fn(async () => {});
+            browser({ share });
+            const shared = () => messageAction("share", target(fakeClient()));
+            expect(await shared()).toEqual({ kind: "shared", ok: true });
+            expect(share).toHaveBeenCalledWith(expect.objectContaining({ text: "hi" }));
+
+            share.mockRejectedValue(new DOMException("dismissed", "AbortError"));
+            expect(await shared()).toEqual({ kind: "shared", ok: true });
+
+            share.mockRejectedValue(new DOMException("denied", "NotAllowedError"));
+            expect(await shared()).toEqual({ kind: "shared", ok: false });
+            expect(toasts).not.toHaveBeenCalled();
         });
     });
 });

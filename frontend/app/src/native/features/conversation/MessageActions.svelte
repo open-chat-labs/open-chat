@@ -11,6 +11,7 @@
 <script lang="ts">
     import {
         allUsersStore,
+        chatIdentifierToString,
         currentUserIdStore,
         i18nKey,
         isDiamondStore,
@@ -132,9 +133,12 @@
         if (chat !== undefined) removing = { chatId: chat.id, evt, url };
     }
 
-    // another chat takes this one's place: what was open on its messages closes
+    // another chat takes this one's place: what was open on its messages closes. Keyed on the
+    // chat's id as a string: the summary is a new object on every update to it (a message in, an
+    // unread count), which isn't another chat
+    const chatKey = $derived(chat && chatIdentifierToString(chat.id));
     $effect.pre(() => {
-        void chat?.id;
+        void chatKey;
         untrack(() => {
             menuOpen = false;
             picking = undefined;
@@ -266,6 +270,17 @@
                 if (outcome.ok) context.toast($_("native.conversation.message.copied"));
                 else toastStore.showFailureToast(i18nKey("native.conversation.message.copyFailed"));
                 return;
+            case "link_copied":
+                if (outcome.ok) context.toast($_("linkCopiedToClipboard"));
+                else {
+                    toastStore.showFailureToast(
+                        i18nKey("failedToCopyUrlToClipboard", { url: outcome.url }),
+                    );
+                }
+                return;
+            case "shared":
+                if (!outcome.ok) toastStore.showFailureToast(i18nKey("failedToShareMessage"));
+                return;
             case "open_chat":
                 navigate(routeForChatIdentifier("chats", outcome.chatId));
                 return;
@@ -324,13 +339,21 @@
         const pending = context.pendingToast(
             $_("native.conversation.forward.forwarding", { values: { count } }),
         );
-        if (await client.forwardMessageToChats(chatIds, message, note)) {
-            pending.done({
-                message: $_("native.conversation.forward.forwarded", { values: { count } }),
-            });
-        } else {
-            pending.failed();
-            toastStore.showFailureToast(i18nKey("native.conversation.forward.failed"));
+        const outcome = await client.forwardMessageToChats(chatIds, message, note);
+        switch (outcome.kind) {
+            case "forwarded":
+                pending.done({
+                    message: $_("native.conversation.forward.forwarded", { values: { count } }),
+                });
+                return;
+            case "throttled":
+                pending.failed();
+                toastStore.showFailureToast(i18nKey("native.conversation.forward.throttled"));
+                return;
+            case "failed":
+                pending.failed();
+                toastStore.showFailureToast(i18nKey("native.conversation.forward.failed"));
+                return;
         }
     }
 

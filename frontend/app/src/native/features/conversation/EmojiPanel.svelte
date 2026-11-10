@@ -56,14 +56,7 @@
     // ---- emoji: Recent as kept on the device for this user (07: "persist per user"), read as the
     // panel opens (it's made again each time)
 
-    const storage = (() => {
-        try {
-            return window.localStorage;
-        } catch {
-            return undefined;
-        }
-    })();
-    const emoji = new EmojiSections(untrack(() => userId), storage);
+    const emoji = new EmojiSections(untrack(() => userId));
     onMount(() => void emoji.load());
     onDestroy(() => emoji.dispose());
 

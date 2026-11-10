@@ -2848,6 +2848,16 @@ export type SendMessageOutcome =
     | { kind: "failed" };
 
 /**
+ * How forwarding a message to several chats at once went. `forwarded`: every chat has it (and the
+ * note). `throttled`: it would take more sends than the send throttle allows in the next minute, so
+ * nothing was sent. `failed`: some chat didn't get it.
+ */
+export type ForwardMessageOutcome =
+    | { kind: "forwarded" }
+    | { kind: "throttled" }
+    | { kind: "failed" };
+
+/**
  * How sending what the user typed in a direct chat with a bot went. `sent`: it shows in the chat
  * and went to the bot as its direct-message command. `no_direct_command`: the bot takes no direct
  * messages (or isn't known yet), so nothing was sent and the draft is the user's to keep.

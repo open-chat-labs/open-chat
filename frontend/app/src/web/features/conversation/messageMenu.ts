@@ -1,4 +1,4 @@
-import { publish, routeForChatIdentifier, type MessageMenuAction } from "@client";
+import { i18nKey, publish, routeForChatIdentifier, type MessageMenuAction } from "@client";
 import {
     messageAction,
     type MessageActionTarget,
@@ -47,6 +47,17 @@ export async function runMessageAction(
             return;
         case "open_thread":
             target.openThread(outcome.threadRootMessageIndex);
+            return;
+        case "link_copied":
+            if (outcome.ok) toastStore.showSuccessToast(i18nKey("messageUrlCopiedToClipboard"));
+            else {
+                toastStore.showFailureToast(
+                    i18nKey("failedToCopyUrlToClipboard", { url: outcome.url }),
+                );
+            }
+            return;
+        case "shared":
+            if (!outcome.ok) toastStore.showFailureToast(i18nKey("failedToShareMessage"));
             return;
         // copying says nothing, and a delete shows at once (and comes back if it fails)
         case "copied":

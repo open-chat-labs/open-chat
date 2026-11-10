@@ -1867,7 +1867,8 @@
                 "send": "Chuyển tiếp đến {count} cuộc trò chuyện",
                 "forwarding": "Đang chuyển tiếp đến {count} cuộc trò chuyện…",
                 "forwarded": "Đã chuyển tiếp đến {count} cuộc trò chuyện",
-                "failed": "Không thể chuyển tiếp đến mọi cuộc trò chuyện"
+                "failed": "Không thể chuyển tiếp đến mọi cuộc trò chuyện",
+                "throttled": "Số tin nhắn vượt quá giới hạn có thể gửi trong một phút: hãy chuyển tiếp tới ít cuộc trò chuyện hơn, hoặc đợi một chút"
             },
             "report": {
                 "reporting": "Đang báo cáo tin nhắn…",

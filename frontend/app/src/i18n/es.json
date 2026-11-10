@@ -1867,7 +1867,8 @@
                 "send": "{count, plural, one {Reenviar a # chat} other {Reenviar a # chats}}",
                 "forwarding": "{count, plural, one {Reenviando a # chat…} other {Reenviando a # chats…}}",
                 "forwarded": "{count, plural, one {Reenviado a # chat} other {Reenviado a # chats}}",
-                "failed": "No se pudo reenviar a todos los chats"
+                "failed": "No se pudo reenviar a todos los chats",
+                "throttled": "Son más mensajes de los que se pueden enviar en un minuto: reenvía a menos chats o espera un momento"
             },
             "report": {
                 "reporting": "Denunciando mensaje…",

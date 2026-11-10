@@ -1867,7 +1867,8 @@
                 "send": "{count, plural, one {An # Chat weiterleiten} other {An # Chats weiterleiten}}",
                 "forwarding": "{count, plural, one {Wird an # Chat weitergeleitet…} other {Wird an # Chats weitergeleitet…}}",
                 "forwarded": "{count, plural, one {An # Chat weitergeleitet} other {An # Chats weitergeleitet}}",
-                "failed": "Konnte nicht an alle Chats weitergeleitet werden"
+                "failed": "Konnte nicht an alle Chats weitergeleitet werden",
+                "throttled": "Das sind mehr Nachrichten, als in einer Minute gesendet werden können: Leite an weniger Chats weiter oder warte einen Moment"
             },
             "report": {
                 "reporting": "Nachricht wird gemeldet…",

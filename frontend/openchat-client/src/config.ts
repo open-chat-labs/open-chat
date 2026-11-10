@@ -19,6 +19,8 @@ export type OpenChatConfig = {
     userGeekApiKey: string;
     videoBridgeUrl: string;
     translateProxyUrl: string;
+    // The proxy a message's link previews are fetched through
+    previewProxyUrl: string;
     meteredApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;

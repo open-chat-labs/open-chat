@@ -4,7 +4,8 @@
      so the search is a plain one: the field takes the keyboard, the sheet sits on it (the host's
      BottomSheet `keyboard`), and the results show under the field, in the grid. No GIFs (a reaction is an emoji) and no backspace. A reaction the user has on the
      message is marked, and picking it takes it off; one added goes to the front of Recent, the
-     composer's too. -->
+     composer's too. It counts towards the quick reactions as every reaction added does
+     (`toggleReaction`), so isn't counted here as the composer's picks are. -->
 <script lang="ts">
     import type { PickerEmoji } from "@src/utils/emojiCategories";
     import { onDestroy, onMount, untrack } from "svelte";
@@ -23,15 +24,8 @@
 
     let { userId, selected, onPick }: Props = $props();
 
-    const storage = (() => {
-        try {
-            return window.localStorage;
-        } catch {
-            return undefined;
-        }
-    })();
     // made as the sheet opens, so it has the Recent the composer left
-    const emoji = new EmojiSections(untrack(() => userId), storage);
+    const emoji = new EmojiSections(untrack(() => userId));
     onMount(() => void emoji.load());
     onDestroy(() => emoji.dispose());
 

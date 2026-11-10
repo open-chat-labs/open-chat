@@ -1867,7 +1867,8 @@
                 "send": "{count, plural, one {Inoltra a # chat} other {Inoltra a # chat}}",
                 "forwarding": "{count, plural, one {Inoltro a # chat…} other {Inoltro a # chat…}}",
                 "forwarded": "{count, plural, one {Inoltrato a # chat} other {Inoltrato a # chat}}",
-                "failed": "Impossibile inoltrare a tutte le chat"
+                "failed": "Impossibile inoltrare a tutte le chat",
+                "throttled": "Sono più messaggi di quanti se ne possano inviare in un minuto: inoltra a meno chat o attendi un momento"
             },
             "report": {
                 "reporting": "Segnalazione del messaggio…",

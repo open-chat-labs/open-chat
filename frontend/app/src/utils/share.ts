@@ -13,6 +13,7 @@ import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
 import { i18nKey } from "../i18n/i18n";
 import { toastStore } from "../stores/toast";
+import { copyToClipboard } from "./urls";
 
 export type Share = {
     title: string | undefined;
@@ -49,21 +50,17 @@ const permittedMimeTypes: Record<string, string> = {
     "video/webm": "webm",
 };
 
-export function copyMessageUrl(
+export async function copyMessageUrl(
     chatId: ChatIdentifier,
     messageIndex: number,
     threadRootMessageIndex?: number,
-): void {
+): Promise<void> {
     const url = buildMessageUrl(chatId, messageIndex, threadRootMessageIndex);
-
-    navigator.clipboard.writeText(url).then(
-        () => {
-            toastStore.showSuccessToast(i18nKey("messageUrlCopiedToClipboard"));
-        },
-        () => {
-            toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard", { url }));
-        },
-    );
+    if (await copyToClipboard(url)) {
+        toastStore.showSuccessToast(i18nKey("messageUrlCopiedToClipboard"));
+    } else {
+        toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard", { url }));
+    }
 }
 
 export function canShare(): boolean {
@@ -104,24 +101,43 @@ export function canShareMessage(content: MessageContent): boolean {
     return true;
 }
 
-export function shareMessage(
+export async function shareMessage(
     formatter: MessageFormatter,
     userId: string,
     me: boolean,
     msg: Message,
     cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
-): void {
-    buildShareFromMessage(formatter, userId, me, msg, cryptoLookup).then(
-        (share) =>
-            navigator.share(share).catch((e: DOMException) => {
-                if (e.name !== "AbortError") {
-                    const errorMessage = "Failed to share message";
-                    console.log(`${errorMessage}: ${e}`);
-                    toastStore.showFailureToast(i18nKey("failedToShareMessage"));
-                }
-            }),
-        () => toastStore.showFailureToast(i18nKey("failedToShareMessage")),
-    );
+): Promise<void> {
+    if (!(await shareMessageOrFail(formatter, userId, me, msg, cryptoLookup))) {
+        toastStore.showFailureToast(i18nKey("failedToShareMessage"));
+    }
+}
+
+/**
+ * Shares a message through the Web Share API, and says whether it could: false if it couldn't be
+ * shared, true once it's shared or the user dismissed the share sheet.
+ */
+export async function shareMessageOrFail(
+    formatter: MessageFormatter,
+    userId: string,
+    me: boolean,
+    msg: Message,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
+): Promise<boolean> {
+    let share: Share;
+    try {
+        share = await buildShareFromMessage(formatter, userId, me, msg, cryptoLookup);
+    } catch {
+        return false;
+    }
+    try {
+        await navigator.share(share);
+        return true;
+    } catch (e) {
+        if (e instanceof DOMException && e.name === "AbortError") return true;
+        console.log(`Failed to share message: ${e}`);
+        return false;
+    }
 }
 
 /**
