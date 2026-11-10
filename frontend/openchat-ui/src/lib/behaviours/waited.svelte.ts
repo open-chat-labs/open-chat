@@ -1,8 +1,11 @@
+import { isCancelled } from './optimistic.svelte';
+
 // One host-owned value changed by a call the UI waits for (a Follow toggle), where Optimistic would show the new
 // value at once:
 // - set() calls the host and keeps showing the value from before while it's in flight (`pending`: a spinner, no
 //   second change meanwhile; a set() then is ignored and resolves false);
-// - when the call resolves, the new value shows; when it rejects, the value from before stays and `failed` is set;
+// - when the call resolves, the new value shows; when it rejects, the value from before stays and `failed` is set,
+//   unless it rejects with CANCELLED (optimistic.svelte.ts: the host gave the change up, so there's nothing to say);
 // - otherwise the host's own value shows, and sync() (call it when the host's value changes) drops a settled value
 //   once nothing is in flight, so the host is followed again. A host that updates its own value as the call starts
 //   (an optimistic store) doesn't show through until the call settles.
@@ -34,8 +37,8 @@ export class Waited<T> {
       await call(value);
       this.#settled = { value };
       return true;
-    } catch {
-      this.failed = true;
+    } catch (e) {
+      this.failed = !isCancelled(e);
       return false;
     } finally {
       this.#pending = null;

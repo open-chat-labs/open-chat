@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { Optimistic } from './optimistic.svelte';
+import { CANCELLED, isCancelled, Optimistic } from './optimistic.svelte';
 
 const deferred = () => {
   let resolve!: () => void, reject!: (e: unknown) => void;
@@ -34,11 +34,19 @@ describe('Optimistic', () => {
     expect(value.failed).toBe(true);
   });
 
-  test('a call the host gave up ({ cancelled: true }) falls back without failing', async () => {
+  test('a call the host gave up (CANCELLED) falls back without failing', async () => {
     const { value } = setup('off');
-    expect(await value.set('on', () => Promise.reject({ cancelled: true }))).toBe(false);
+    expect(await value.set('on', () => Promise.reject(CANCELLED))).toBe(false);
     expect(value.current).toBe('off');
     expect(value.failed).toBe(false);
+  });
+
+  test('a step given up is CANCELLED, or its shape; nothing else is', () => {
+    expect(isCancelled(CANCELLED)).toBe(true);
+    expect(isCancelled({ cancelled: true })).toBe(true);
+    [undefined, null, 'cancelled', new Error('x'), { cancelled: 'yes' }, { reason: 'k' }].forEach((e) =>
+      expect(isCancelled(e)).toBe(false),
+    );
   });
 
   test('an older rejection after a newer request is ignored', async () => {
