@@ -2218,12 +2218,15 @@
             "chitEarned": "Zdobyte CHIT",
             "thisChat": "Ten czat",
             "disappearing": "Znikające wiadomości",
-            "disappearingHelp": "Wiadomości w tym czacie znikają u was obojga po wybranym czasie.",
-            "disappearingGroupHelp": "Wiadomości w tym czacie znikają dla wszystkich po wybranym czasie.",
-            "disappearAfterLabel": "Znikają po",
+            "disappearAfter": {
+                "minute": "{count, plural, other {Po # min}}",
+                "hour": "{count, plural, other {Po # godz.}}",
+                "day": "{count, plural, one {Po # dniu} few {Po # dniach} many {Po # dniach} other {Po # dnia}}",
+                "week": "{count, plural, one {Po # tygodniu} few {Po # tygodniach} many {Po # tygodniach} other {Po # tygodnia}}"
+            },
             "duration": {
-                "minute": "{count, plural, one {# minuta} few {# minuty} many {# minut} other {# minuty}}",
-                "hour": "{count, plural, one {# godzina} few {# godziny} many {# godzin} other {# godziny}}",
+                "minute": "{count, plural, other {# min}}",
+                "hour": "{count, plural, other {# godz.}}",
                 "day": "{count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}}",
                 "week": "{count, plural, one {# tydzień} few {# tygodnie} many {# tygodni} other {# tygodnia}}"
             },

@@ -2218,9 +2218,12 @@
             "chitEarned": "獲得した CHIT",
             "thisChat": "このチャット",
             "disappearing": "消えるメッセージ",
-            "disappearingHelp": "このチャットのメッセージは、選んだ時間が経つとお互いの画面から消えます。",
-            "disappearingGroupHelp": "このチャットのメッセージは、選んだ時間が過ぎると全員の画面から消えます。",
-            "disappearAfterLabel": "消えるまでの時間",
+            "disappearAfter": {
+                "minute": "{count, plural, other {# 分後}}",
+                "hour": "{count, plural, other {# 時間後}}",
+                "day": "{count, plural, other {# 日後}}",
+                "week": "{count, plural, other {# 週間後}}"
+            },
             "duration": {
                 "minute": "{count, plural, other {# 分}}",
                 "hour": "{count, plural, other {# 時間}}",

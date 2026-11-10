@@ -90,7 +90,7 @@ export type ManageRow = { page: GroupSettingsPage; icon: string; label: string }
 /** Manage's rows, in the design's order: Access gates, Rules, Permissions, Bots and webhooks, Stats. */
 export function manageRows(t: Translate): ManageRow[] {
     return [
-        { page: "gates", icon: "gate", label: t("native.details.manage.gates") },
+        { page: "gates", icon: "lock", label: t("native.details.manage.gates") },
         { page: "rules", icon: "rules", label: t("native.details.manage.rules") },
         { page: "permissions", icon: "shield", label: t("native.details.manage.permissions") },
         { page: "bots", icon: "bot", label: t("native.details.manage.bots") },
@@ -104,6 +104,19 @@ export function durationLabel(id: string, t: Translate): string {
     return parts === undefined
         ? id
         : t(`native.details.duration.${parts.unit}`, { count: parts.count });
+}
+
+/**
+ * The disappearing row's subtitle while on ("After 8 hours") in the app's language: a phrase of
+ * its own for each unit, not "After {value}" around `durationLabel`'s words, since the
+ * preposition sets the length's case in some languages ("Nach 30 Tagen", "Po 1 dniu", "Через 1
+ * неделю").
+ */
+export function disappearAfterLabel(id: string, t: Translate): string {
+    const parts = durationParts(id);
+    return parts === undefined
+        ? id
+        : t(`native.details.disappearAfter.${parts.unit}`, { count: parts.count });
 }
 
 /** A group's disappearing messages as a value: Off, or how long they last. */

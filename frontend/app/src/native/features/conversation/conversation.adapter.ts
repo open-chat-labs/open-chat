@@ -1,5 +1,7 @@
 import type { NativeMenuItem } from "@openchat/ui/src/native/types";
+import type { DisappearingSetting } from "@src/logic/chats/chatDisappearing.svelte";
 import type { ChatMenuAction } from "@src/logic/chats/chatMenu";
+import { disappearingChoicesWith } from "@src/logic/chats/disappearingMessages";
 import type { CallState } from "@src/logic/conversation/callItem";
 
 // The native conversation's own props (native design notes §3.3): its header's menu and its call
@@ -14,6 +16,7 @@ export type HeaderMenuAction =
     | "unmute"
     | "favourite"
     | "unfavourite"
+    | "disappearing"
     | ChatMenuAction;
 
 export type HeaderMenuState = {
@@ -24,7 +27,18 @@ export type HeaderMenuState = {
     isBot: boolean;
     /** Leave, delete, block and unblock, as logic/chats/chatMenu offers them. */
     actions: ChatMenuAction[];
+    /**
+     * The chat's disappearing messages, for someone who may set them (`canSetDisappearing`): a
+     * submenu of Off and the lengths. Without it, no item.
+     */
+    disappearing?: DisappearingSetting;
 };
+
+/** The disappearing submenu's words: Off, and a length ("8 hours") in the app's language. */
+export type DisappearingWords = { off: string; duration: (id: string) => string };
+
+// the disappearing submenu's rows: "disappearing:off", "disappearing:8 hours" …
+const DISAPPEARING_ITEM = "disappearing:";
 
 const ICONS: Record<HeaderMenuAction, string> = {
     search: "search",
@@ -33,6 +47,7 @@ const ICONS: Record<HeaderMenuAction, string> = {
     unmute: "bell",
     favourite: "heart",
     unfavourite: "heart",
+    disappearing: "clock",
     leave: "exit",
     delete: "trash",
     block: "ban",
@@ -46,13 +61,15 @@ const DANGER: ReadonlySet<HeaderMenuAction> = new Set<HeaderMenuAction>([
 ]);
 
 /**
- * The header's kebab menu (notes §3.3): Search in chat, the details, Mute (or Unmute), the
- * favourite, then, after a divider, leave, block or unblock, and delete, as the app allows them.
- * A DM's disappearing messages are a switch on its details (N6), as in the current app, not here.
+ * The header's kebab menu (native plan 04): Search in chat, the details, Mute (or Unmute), the
+ * favourite, Disappearing messages (a submenu of Off and the lengths the details offer: one
+ * setting with the details' switch), then, after a divider, leave, block or unblock, and delete,
+ * as the app allows them.
  */
 export function headerMenuItems(
     state: HeaderMenuState,
     label: (action: HeaderMenuAction) => string,
+    words?: DisappearingWords,
 ): NativeMenuItem[] {
     const item = (id: HeaderMenuAction): NativeMenuItem => ({
         id,
@@ -63,10 +80,60 @@ export function headerMenuItems(
     const items: NativeMenuItem[] = [item("search"), item("details")];
     if (!state.isBot) items.push(item(state.muted ? "unmute" : "mute"));
     items.push(item(state.favourite ? "unfavourite" : "favourite"));
+    if (state.disappearing !== undefined && words !== undefined) {
+        items.push({
+            ...item("disappearing"),
+            submenu: disappearingSubmenu(state.disappearing, label("disappearing"), words),
+        });
+    }
     state.actions.forEach((action, i) => {
         items.push({ ...item(action), separator: i === 0 || undefined });
     });
     return items;
+}
+
+/**
+ * The disappearing submenu: Off, then the lengths (the usual ones, and the chat's own where it's
+ * another), the current one ticked. `disappearingPick` reads its rows' ids back.
+ */
+export function disappearingSubmenu(
+    setting: DisappearingSetting,
+    title: string,
+    words: DisappearingWords,
+): { title: string; items: NativeMenuItem[] } {
+    const lengths = disappearingChoicesWith(setting.on ? setting.after : "");
+    return {
+        title,
+        items: [
+            { id: `${DISAPPEARING_ITEM}off`, label: words.off, selected: !setting.on },
+            ...lengths.map((id) => ({
+                id: `${DISAPPEARING_ITEM}${id}`,
+                label: words.duration(id),
+                selected: setting.on && setting.after === id,
+            })),
+        ],
+    };
+}
+
+/** Whether a menu item is one of the disappearing submenu's rows (Off or a length). */
+export function isDisappearingItem(id: string): boolean {
+    return id.startsWith(DISAPPEARING_ITEM);
+}
+
+/**
+ * What a pick from the disappearing submenu sets: a length switches them on for it; Off switches
+ * them off. None for another item, or for the setting they already have.
+ */
+export function disappearingPick(
+    id: string,
+    current: DisappearingSetting,
+): DisappearingSetting | undefined {
+    if (!isDisappearingItem(id)) return undefined;
+    const picked = id.slice(DISAPPEARING_ITEM.length);
+    const next: DisappearingSetting =
+        picked === "off" ? { on: false, after: current.after } : { on: true, after: picked };
+    const same = next.on === current.on && (!next.on || next.after === current.after);
+    return same ? undefined : next;
 }
 
 /** CallEvent's props for an ended or missed call. */

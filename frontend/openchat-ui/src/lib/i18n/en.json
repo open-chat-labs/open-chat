@@ -1132,7 +1132,7 @@
     "duration": {
       "days": "{count, plural, one {# day} other {# days}}",
       "hours": "{count, plural, one {# hour} other {# hours}}",
-      "minutes": "{count, plural, one {# minute} other {# minutes}}",
+      "minutes": "{count, plural, other {# min}}",
       "months": "{count, plural, one {# month} other {# months}}",
       "weeks": "{count, plural, one {# week} other {# weeks}}",
       "years": "{count, plural, one {# year} other {# years}}"

@@ -220,7 +220,11 @@ design export needs. Each entry says where it came up.
   - **Archive with Undo**: archived at once; Undo un-archives. Archived chats aren't in the list
     (the design has no archive view); search finds them.
   - **Pin, Mute, Mark all as read** confirm with a toast, as the prototype does.
-  - **New group** and **CHIT** push placeholders until N7 and N11 build them. CHIT is a local push
+  - **New group** and **CHIT** push placeholders until N7 and N11 build them. When N7 builds
+    Create group, its Settings card's Disappearing messages is a `TimedToggle` row (clock icon,
+    switch, the same 8 lengths as the details; native plan 11 of 2026-11-10), not a dropdown row:
+    the details' `DisappearingRow` words (`valueLabel`, `subtitle`) and `ChatDisappearing`'s start
+    at a day apply there too. CHIT is a local push
     (as the prototype's); N11 decides whether `?chit` (the web's) maps onto it.
   - **The Getting started card** (notes §3.1, top of Chats for new accounts) isn't built (N4's
     onboarding).
@@ -473,11 +477,20 @@ design export needs. Each entry says where it came up.
     @mention picker (the old headers' "@name" still searches for a sender); typing pauses 300ms
     before it searches, as the old ones did; up and down stop at the ends (the old headers went
     round). It takes the chat's own search (`searchChat`), up to 200 matches, the weak ones dropped.
-  - **Disappearing messages** aren't in the header's menu (decided 2026-11-07, against the design
-    notes' kebab and the prototype's submenu): a DM's are a switch on its details (N6, the design's
-    "This chat" card), as in the current app, which has them on a DM's details
-    (`DirectChatDetails`) and not in a menu; a group's or channel's are its settings (N7), and
-    its details show them (N6, "Native details", below).
+  - **Disappearing messages** are in the header's menu since the native plan's 04 and 10 of
+    2026-11-10 (the decision of 2026-11-07 to leave them out is gone): Disappearing messages,
+    after Favourite, opens a submenu of Off and the details' lengths (5 min … 30 days, and the
+    chat's own where it's another), the current one ticked. It's one setting with the details'
+    TimedToggle (N6, "Native details", below): both are a `logic/chats/chatDisappearing`
+    `ChatDisappearing`, and it's offered to the same people (`canSetDisappearing`: either side of
+    a DM, but not with a bot, a deleted user or someone blocked, `dmDisappearingAllowed`, as Mute
+    isn't for a bot; in a group or channel, owners only, `canChangeDisappearing`). Picking the
+    setting it already has sends nothing; a pick shows at once (the library's `Optimistic`), and
+    goes back with a toast if it's refused ("Couldn't save that"). No toast when it's saved, and no Undo (the plan has neither):
+    the timeline's "you set the disappearing message time" item says it. Off and on again go back
+    to the length the chat last had, from here or the details (the review of 2026-11-10; below).
+    Only a length in the submenu's ids (`disappearing:…`, `isDisappearingItem`) reaches the
+    setting; any other id goes through the menu's own cases.
   - **Clear history** (the prototype's menu): the backend has none, so it's dropped from the menu
     (decided 2026-11-07); it comes back after cutover once the backend can (native PLAN, "After
     everything else").
@@ -673,13 +686,35 @@ design export needs. Each entry says where it came up.
     Member since, CHIT earned (not with CHIT off).
   - **Read receipts** (the plan's This chat): not a setting the app has, so not there (the web's
     panel hides it too).
-  - **Disappearing messages** (a DM's): a switch with help, and while it's on a "Disappear after"
-    value row (the kit's anchored menu) with the web picker's lengths (1 hour … 30 days, plus the
-    chat's own where it's another, set from another app); switching on starts at a week, as the
-    old UIs (#10112). Shown at once (the library's `Optimistic`), back as it was with a toast if
-    it's refused. The plan doesn't draw the length's control: a design brief for the length's
-    picker will follow as its own PR (the user, 2026-11-10); the anchored menu stays until then,
-    for a group's too.
+  - **Disappearing messages** (a DM's, though not with a bot, a deleted user or someone blocked,
+    where This chat isn't shown; and a group's for its owners): the library's `TimedToggle`,
+    as the web's (the plan's 10 of 2026-11-10; `DisappearingRow`): the switch, and "After 1 day ⌄"
+    in `--accent-bright` while on, "Off" while off; switching on opens the 8 lengths (5 min,
+    15 min, 1 hour, 8 hours, 12 hours, 1 day, 1 week, 30 days; 4 × 2), picking one closes them,
+    tapping the row opens them again. It starts at a day; switched off it goes back to the length
+    the chat's TTL last had this session, whether set here, from the menu or another device
+    (`logic/chats/chatDisappearing`'s `ChatDisappearing`, on the client's
+    `disappearingLengthsStore`, so it outlives the screen and is the menu's too; since the review
+    of 2026-11-10, before which it lasted only while the row was mounted). It's read from the TTL,
+    not from a save as it finishes, so one finishing after a newer one can't change it. The app
+    restarting forgets it (back to a day): the backend keeps no length while they're off. A
+    chat's own length set from another app shows among them, picked. Shown at once (the
+    library's `Optimistic`), back as it was with a toast if it's refused. One setting with the
+    conversation menu's submenu ("Native conversation", above). The lengths and "After …" are the
+    app's words, translated (TimedToggle's `valueLabel`, and `subtitle`, ours, EXPORT-LOG
+    2026-11-10: "After 30 days" is a phrase per unit, `disappearAfterLabel`, since the preposition
+    sets the length's case: "Nach 30 Tagen", "Po 1 dniu", "Через 1 неделю"; the library's are
+    English only); minutes read "5 min", and German, French and Polish hours "12 Std." / "12 h" /
+    "12 godz.", so the widest fits a 360px phone's chip (50px for the text with the grid's indent
+    under the label: "12 hours" is 44px, "12 Stunden" was 61px). No help line under it any more
+    (the plan's row has only its subtitle). The old row's switch with help and its "Disappear
+    after" value row (the anchored menu) are gone, and the brief for the length's picker is this
+    one. The web's DM panel starts at a day too (`DISAPPEARING_START`, the one default, since the
+    review of 2026-11-10; it was the old panels' week); the web's group settings dialog still
+    starts at 12 hours (`features/group/settings.adapter`).
+    TODO(design): the TimedToggle is the library's as it is ("same as web"), so its label
+    (12.5px semibold) is smaller than the native settings rows' (15px medium), as in a group's
+    This chat card, over Mute @everyone; the plan doesn't say to change it.
   - **Group**: the cover has back, favourite and a kebab (the user's answer, 2026-11-10): Edit
     group (Edit channel), for those whose role meets "Update group", pushes N7's page (the
     `group_settings` placeholder, `edit`); Copy invite link, for a member who may share it (a
@@ -700,15 +735,17 @@ design export needs. Each entry says where it came up.
     for a full list), to the Members screen.
   - **This chat** (a group's; the plan names the card, not its rows): the disappearing messages
     first, then mute @everyone (a switch, the web panel's), in the design's order. The owners
-    switch the disappearing messages on and off and pick how long, as a DM's (shown at once, back
-    with a toast if refused); everyone else sees them read only (Off, or how long). Owners only,
+    switch the disappearing messages on and off and pick how long, as a DM's (the TimedToggle,
+    above); everyone else sees them read only (Off, or how long), as a fact row: the plan doesn't
+    draw a read-only TimedToggle, so its `readOnly` status pill isn't used. Owners only,
     as the current apps and the web's settings have it (`chatManageAccess` marks them read-only
     for the rest), though the backend lets anyone whose role meets "Update group" change them.
     Not shown to someone previewing.
   - **Rules** show read only to everyone who can send (the web panel's `chatRulesText`, with the
     community's for a channel); owners and admins edit them from Manage (N7).
   - **Manage** (owners and admins, not in a frozen chat): Access gates, Rules, Permissions, Bots
-    and webhooks, Stats, each pushing N7's page (a local `group_settings` screen, the placeholder
+    and webhooks, Stats (Access gates with a lock, ours: the gate icon is the same shield as
+    Permissions'), each pushing N7's page (a local `group_settings` screen, the placeholder
     until N7 builds it). The tiles' **Invite** pushes the same placeholder (`invite`): neither plan
     10 nor 11 draws a group's invite page (12 has a community's Invite and share); a design brief
     for it will follow as its own PR (the user, 2026-11-10). It's offered to a member whose role
@@ -1157,12 +1194,25 @@ design export needs. Each entry says where it came up.
     no accessible label (`ConversationHeader` takes none).
 
 - **DM panel** (4a, `features/dm`): `DmPanel` in the right column for a DM. Changes apply at once
-  (the old desktop panel had a Save button); turning disappearing messages on starts at a week.
+  (the old desktop panel had a Save button); turning disappearing messages on starts at a day,
+  as the native details do (`logic/chats/disappearingMessages`' `DISAPPEARING_START`, the native
+  plan's 10; since the review of 2026-11-10, before which it was the old panels' week, the
+  client's `DEFAULT_EVENTS_TTL`, which the legacy trees keep).
   By hand: `chit` is optional (left out when the viewer turned CHIT off), `aboutContent` renders
   the bio as Markdown, and `DmChatSettings` hides read receipts without a handler, since OpenChat
   has no read receipts setting. Not wired yet: the panel's ⋯ menu (no items), calls (7b), and the
-  old panel's durations other than the six `DmChatSettings` offers (a TTL set elsewhere shows as
+  old panel's durations other than the eight `DmChatSettings` offers (a TTL set elsewhere shows as
   its own length, "2 hours", and saves unchanged).
+  - **TimedToggle's 8 lengths** (web plan 08 of 2026-11-10, by hand, EXPORT-LOG 2026-11-10): 5 min,
+    15 min, 1 hour, 8 hours, 12 hours, 1 day, 1 week, 30 days (`lib/durations`), in 4 columns when
+    the count divides by 4, else 3 (`durationColumns`; a `columns` prop overrides). Checked in a
+    browser at the docked panel's narrowest (375px, a 1500px window; seedcommunity1's DM with
+    seedcommunity2): each chip 65.5px, 54px for its text; the widest, "12 hours", is 44.4px, so
+    the grid keeps its indent under the label (the plan's fallback, dropping it in 4-column mode,
+    isn't needed). ProfileDialog's This chat tab (600px, a 1476px window) has 121.8px chips. Not
+    measured: the group settings dialog's, whose grid has no icon and no indent. The library's minutes read "5 min" (`ui.duration.minutes`), as the
+    plan's chips; its words are English only, as before. Its row and chips no longer tint on
+    hover on a touch screen (`@media (hover: hover)`), where `:hover` stuck to the tapped row.
 
 - **Leave, delete, archive and block** (4b part 1): the conversation header, the chat-list rows,
   the community header and GroupPanel open `LeaveGroupDialog` / `DeleteGroupDialog` through the

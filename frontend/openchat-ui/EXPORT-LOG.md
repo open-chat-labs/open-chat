@@ -870,3 +870,18 @@
 - New `lib/durations.ts` (spec'd): `DISAPPEARING_DURATIONS` (the lengths, 1 hour … 30 days) and `durationMs` (a duration id in milliseconds, 0 for one that isn't). `TimedToggle`'s default list is `DISAPPEARING_DURATIONS`, where it was its own copy; `DmChatSettings` and `InfoPanel` use `durationMs` (`DmChatSettings` no longer exports one), and `GroupSettingsDialog`'s and `CreateGroupDialog`'s `durationMs` (null for one that isn't) wrap it rather than parsing again. The app's native details read both from here, so they offer what the web's picker does. Nothing on screen changes; no props changed.
 - `MessageComposer`: `onSend`'s and `onVoice`'s docs are one block each (the N6 entry above had left the old line before the new one, which didn't reach the prop). `meta.json` (both props' docs).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-10 — TimedToggle's 8 lengths and its columns (web 08, native 10), by hand
+- `lib/durations.ts`: `DISAPPEARING_DURATIONS` (TimedToggle's own list without `options`) is now the plan's 8: 5 minutes, 15 minutes, 1 hour, 8 hours, 12 hours, 1 day, 1 week, 30 days. New `durationColumns(count, columns?)`: the host's `columns` when it's a positive whole number, else 4 when the count divides by 4, else 3. `durations.spec.ts` checks both.
+- `TimedToggle`: the choices' grid takes its columns from `durationColumns` (4 × 2 for the 8 lengths; the access gates' 6 intervals stay 3 × 2); new `columns` overrides it. New `valueLabel`: how a value reads (the choices, the subtitle, the read-only status) in the host's own words, in place of `durationText`'s, so the native details show the lengths translated. The grid keeps its indent under the label in 4-column mode: "12 hours" fits the docked DM panel at its narrowest (375px: 44.4px of text in a 54px chip) and a 360px phone (50px), so the plan's fallback (drop the indent) isn't needed.
+- `TimedToggle`: the row's and the choices' hover backgrounds only where a pointer hovers (`@media (hover: hover)`): a touch screen kept `:hover` on the row after a tap, so the native details' row stayed tinted once switched on.
+- `TimedToggle`: its choices grow open and shrink closed under the row (grid rows 0fr → 1fr with a fade, `--duration-base`, `--ease-out`; none under reduced motion) instead of appearing and vanishing at once. They stay in the DOM, `inert` and hidden while closed, so the close can play.
+- `ui.duration.minutes` reads "5 min" (was "5 minutes"), the plan's chip, where a disappearing length is shown (TimedToggle, InfoPanel's hint, the group settings' fact).
+- Docs: `meta.json` (TimedToggle's `columns`, `valueLabel`, `options`' doc); General's TimedToggle demo shows the default lengths.
+- The lengths and the column rule are the design's change of 2026-11-10 (the plan's web 08 changelog), ported by hand; `valueLabel` and "5 min" are ours, to go back to the design export (the app's `GAPS.md` lists them).
+
+## 2026-11-10 — TimedToggle's subtitle, by hand (the review of #10458)
+- `TimedToggle`: new `subtitle`, the host's own words for the whole subtitle while on, in place of `prefix` and the value: "After {value}" around a length in its own case doesn't work where the preposition sets the case ("Nach 30 Tagen", "Po 1 dniu"), so the native details give each unit its phrase. Without it, nothing changes.
+- `TimedToggle`: the choices' grid lost its `four` class, which no rule styled (the columns come from `--cols`).
+- Docs: `meta.json` (TimedToggle's `subtitle`).
+- `subtitle` is ours, to go back to the design export (the app's `GAPS.md` lists it).

@@ -1,6 +1,7 @@
 <!-- A conversation (native design notes §3.3): pushed over the Chats (or a community's) root, with the
      whole window. The header (back, the avatar, name and status, video and voice, the kebab: Search
-     in chat, details, Mute, Favourite, Leave group / Block / Delete),
+     in chat, details, Mute, Favourite, Disappearing messages (a submenu, for those who may set
+     them, one setting with the details' switch), Leave group / Block / Delete),
      which turns into the in-chat search bar; the live call strip while the live call's item is off
      screen; the messages (core/ChatEventList: paging, deep links, read marking, keeping the scroll),
      received ones with their sender's avatar on a run's first in groups and none in DMs, sent ones
@@ -13,6 +14,7 @@
 <script lang="ts">
     import {
         allUsersStore,
+        anonUserStore,
         blockedUsersStore,
         botState,
         bridgedUsersStore,
@@ -79,6 +81,11 @@
     import Markdown from "@src/core/Markdown.svelte";
     import MediaViewer from "@src/core/MediaViewer.svelte";
     import { observeRead } from "@src/core/observeRead";
+    import {
+        canSetDisappearing,
+        ChatDisappearing,
+        setChatDisappearing,
+    } from "@src/logic/chats/chatDisappearing.svelte";
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
     import { callLength, callMedia, callState, isLiveCall } from "@src/logic/conversation/callItem";
     import { ChatSearch } from "@src/logic/conversation/chatSearch.svelte";
@@ -144,10 +151,13 @@
     import { removeWithUndo } from "../chats/removeWithUndo";
     import {
         callEventProps,
+        disappearingPick,
         headerMenuItems,
+        isDisappearingItem,
         listWaiting,
         type HeaderMenuAction,
     } from "./conversation.adapter";
+    import { durationLabel } from "../details/details.adapter";
     import { HeldWhileLeaving } from "./heldWhileLeaving";
     import MessageActions from "./MessageActions.svelte";
     import RulesSheet from "./RulesSheet.svelte";
@@ -355,6 +365,38 @@
               }),
     );
 
+    // the chat's disappearing messages, one setting with the details' switch (native plan 04, 10):
+    // both a ChatDisappearing, going back to the same length when switched on again; for those who
+    // may set them (not in a DM with a bot, a deleted user or someone blocked)
+    const disappear = new ChatDisappearing(
+        untrack(() => screen.route.chatId),
+        () => chat?.eventsTTL,
+        (setting) =>
+            chat === undefined
+                ? Promise.reject(new Error("no chat"))
+                : setChatDisappearing(client, chat, setting),
+    );
+    $effect.pre(() => {
+        void chat?.eventsTTL;
+        untrack(() => disappear.sync());
+    });
+    const disappearing = $derived(
+        chat !== undefined &&
+            canSetDisappearing(
+                client,
+                chat,
+                chat.kind === "channel" ? $selectedCommunitySummaryStore : undefined,
+                $anonUserStore,
+                {
+                    user: them,
+                    blocked:
+                        chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId),
+                },
+            )
+            ? disappear.current
+            : undefined,
+    );
+
     const menuItems = $derived(
         chat === undefined
             ? []
@@ -370,10 +412,24 @@
                       favourite,
                       isBot,
                       actions: menuActions,
+                      disappearing,
                   },
                   menuLabel,
+                  {
+                      off: $_("native.you.off"),
+                      duration: (id) => durationLabel(id, (key, values) => $_(key, { values })),
+                  },
               ),
     );
+
+    // a pick from the disappearing submenu: Off or a length
+    async function setDisappearing(id: string) {
+        const setting = disappearing === undefined ? undefined : disappearingPick(id, disappearing);
+        if (setting === undefined) return;
+        if (!(await disappear.set(setting.on, setting.after))) {
+            context.toast($_("native.details.saveFailed"));
+        }
+    }
 
     function menuLabel(id: HeaderMenuAction): string {
         switch (id) {
@@ -395,6 +451,8 @@
                 return $_("native.conversation.menu.block", {
                     values: { name: title },
                 });
+            case "disappearing":
+                return $_("native.details.disappearing");
             default:
                 return $_(`native.conversation.menu.${id}`);
         }
@@ -403,6 +461,10 @@
     function onMenu(id: string) {
         const current = chat;
         if (current === undefined) return;
+        if (isDisappearingItem(id)) {
+            void setDisappearing(id);
+            return;
+        }
         switch (id) {
             case "search":
                 openSearch();
