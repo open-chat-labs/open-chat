@@ -738,7 +738,13 @@ design export needs. Each entry says where it came up.
   the column), not stretched across it, so only the name opens the profile.
 - **Composer banner** (by hand, 8b): `ComposerBar` takes `onBannerAction`, passed to `Banner`'s
   `actionHandler` with `bannerAction` as its label (it had the label but no handler). Nothing in
-  the app uses it yet.
+  the app uses it yet: a guest's Sign in (10a) is on the `Banner` that stands in for the composer
+  where the reader can't send, which had an action already.
+- **A change given up** (by hand, 10a, EXPORT-LOG 2026-11-10), to take back to the design export:
+  `Optimistic` rolls back a call that rejects with `{ cancelled: true }` without setting `failed`,
+  so `GroupPanel`'s mute and @everyone pills and `GroupSettingsDialog`'s About page Mute and
+  Favourite say nothing when the app asks a guest to sign in instead (they said "That didn't go
+  through. Try again.").
 - **Composer "+" menu and media tray** (by hand, 5c, to take back to the design export):
   `MessageComposer` (and `ComposerBar`) take `attachKinds`, what the "+" menu offers (all by
   default, no "+" with none): the app offers "Photo or video", "File" and the builders it has
@@ -1560,6 +1566,56 @@ design export needs. Each entry says where it came up.
     fee) can keep the wrong amount, as which approval the ledger applied last isn't known. Fix
     when parallel joins become possible: remember neither when two overlap, so the next try
     approves again. Not reachable from the UI yet.
+- **Guest pass** (10a #10134, `logic/auth/guestPass`, `logic/auth/authDialog`): someone signed out
+  in the app (a guest, `anonUserStore`) reads Explore and public groups, communities and channels,
+  each a read-only preview (8a, 8b), with the guest rail (Explore and the previewed community, Sign
+  in for the profile: `NavRail`'s `guest`), Explore's guest banner and the preview bar's "Sign in
+  to join". Built here:
+  - **Pages that need an account** (`guestRouteAccess`, ROUTES.md's Guest column): a DM,
+    `/favourite`, `/notifications`, `/wallet/…`, `/profile_summary`, `/share` and `/admin`. A guest
+    who goes to one gets Explore in its place in history (`GUEST_HOME`; `regionsFor` shows Explore
+    for it meanwhile, so the page never mounts for a guest) with the sign-in dialog over it
+    (`onGuestSignIn`, the router's, through `core/RouteEffects`), and the page opens once they're
+    signed in: the client's post-login state carries it (`{ kind: "continue_to", path }`,
+    `postLoginPath`; AppScreen goes there once, replacing Explore). Every way of signing in
+    carries on, sign-up and an emailed link included (the identity changes in place, so the state
+    is still there). `?panel=activity` over a page does nothing for a guest.
+  - **Linked dialogs that need an account** (`linkedDialogNeedsAccount`): `?profile`, `?diamond`,
+    `?chit` and its views, `?share`. A guest's opens the sign-in instead, over the page, and the
+    dialog once signed in (DialogHost). `?hof` (the leaderboard) opens for anyone.
+  - **Actions that need an account** ask a guest to sign in and leave them where they are
+    (`signInFirst`): the details panel's Mute, @everyone and Favourite (the pills roll back saying
+    nothing: "A change given up" above), Manage's About page Mute and Favourite, the panel's and
+    header's chat menu items but the details and Copy link, the community menu's Mark all as read,
+    the chat list's Create group, a thread's Follow, and a profile card's Message (the DM opens once
+    they've signed in). Joining and creating a community already did (8b, 8a).
+  - **The composer's Sign in prompt**: where a guest can't send and no preview bar shows (a chat
+    the guest isn't previewing), the old footer's "Please sign-in to send a message" banner has a
+    Sign in action (`entryBlockBanner`'s `signIn`). In practice a guest's chat is a preview, whose
+    bar's "Sign in to join" is the prompt.
+  - **The sign-in dialog's state** is `logic/auth/authDialog.svelte.ts` (from `features/auth`,
+    F2's deferred item): `AuthDialogProps` (its `.then` chain gone, L7) and `pageSignIns`, which now
+    also holds where a page's sign-in goes on to (`opened`, `destination`): /diamond's Upgrade's
+    Diamond dialog, an emailed link's too, in place of MarketingScreen's own flag.
+  - Decided (no design: the spec's guest notes are the rail, Explore, the preview and "Composer →
+    Sign in prompt"; 99-not-designed has the rest of the guest pass as not designed):
+    - under the sign-in for a page that needs an account, Explore (the guest rail's one
+      destination), not the old desktop's `/chats` (which it did for `/favourite` only). The
+      native tree, whose signed-out start keeps the URL, keeps the old route effect.
+    - a DM asks to sign in, then opens (ROUTES.md had "no"); `/admin` asks to sign in, then shows
+      what it shows the signed-in user (ROUTES.md had "blocked").
+    - a preview's messages stay read-only for a guest, as for anyone previewing (the old trees,
+      and the design's preview mode): no hover bar, menu or reactions to press, rather than each
+      asking to sign in. The chat list's row menus are off for a guest (the design's preview mode:
+      "channel row menus off"); for a signed-in previewer they're as before.
+    - closing the in-app sign-in forgets what it was to go on to (a page, a join, creating a
+      community), so a later sign-in from the rail doesn't pick it up (the old trees kept a join
+      and replayed it then).
+  - Left:
+    - a guest who follows an in-app link to a page that needs an account (a `/wallet` link in a
+      message) leaves the preview for Explore under the sign-in; Back returns to it.
+    - the chat list's empty state's "New message" has no handler (for anyone).
+    - narrow screens (10b): a phone browser gets the old UI, whose guest handling is its own.
 - **Landing** (9b #10133, `features/marketing`): the Communities section shows four: the OpenChat
   community first (`getOpenChatCommunity`, as mobile's welcome page has it; production only, so
   elsewhere there's none), then the top of Explore's ranking without it (`pinFirst`). The ranking

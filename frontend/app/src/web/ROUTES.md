@@ -123,9 +123,9 @@ it from showing: a desktop window shrunk after load scrolls the shell sideways i
 |---|---|---|---|---|---|---|
 | `/` (signed in) | `home_route` | – | – | – | – | redirects to `/favourite` if the user has favourites, else `/chats` |
 | `/chats` | `chat_list_route` (chats) | `ChatListPanel` | selects the chat last opened in this list, else its first (decision 7); `EmptyState` without one | – | list | yes |
-| `/chats/user/:id/:mi?/:tmi?` · `/user/:id/…` | `global_chat_selected_route` direct (chats) | `ChatListPanel` | conversation (DM) | `DmPanel` docked, `UserDialog` "This chat" tab (`dmTabs`) below 1476px; thread → `ThreadPanel` | conversation | no |
+| `/chats/user/:id/:mi?/:tmi?` · `/user/:id/…` | `global_chat_selected_route` direct (chats) | `ChatListPanel` | conversation (DM) | `DmPanel` docked, `UserDialog` "This chat" tab (`dmTabs`) below 1476px; thread → `ThreadPanel` | conversation | sign in, then the DM |
 | `/chats/group/:id/…` · `/group/:id/…` · legacy `/:id/…` | `global_chat_selected_route` group (chats) | `ChatListPanel` | conversation (group) | `GroupPanel` on demand; thread → `ThreadPanel` | conversation | preview (read-only) |
-| `/favourite` | `chat_list_route` (favourite) | `ChatListPanel` favourites | selects the favourite last opened, else the first (decision 7); `EmptyState` without one | – | list | sign in, then `/chats` |
+| `/favourite` | `chat_list_route` (favourite) | `ChatListPanel` favourites | selects the favourite last opened, else the first (decision 7); `EmptyState` without one | – | list | sign in, then the page |
 | `/favourite/user/:id/…` · `/favourite/group/:id/…` · `/favourite/community/:cid/channel/:chid/…` | as above, favourite scope | `ChatListPanel` favourites | conversation | as above | conversation | – (redirects to the non-favourite URL if not a favourite) |
 | `/community/:cid` | `selected_community_route` | `ChatListPanel` community mode (channels) | selects the channel last opened there, else its first (decision 7) | `GroupPanel` (community) on demand | list | preview |
 | `/community/:cid/channel/:chid/…` | `selected_channel_route` (community) | channel list | conversation (channel) | `GroupPanel` (channel) on demand; thread → `ThreadPanel` | conversation | preview |
@@ -138,8 +138,15 @@ it from showing: a desktop window shrunk after load scrolls the shell sideways i
 | `/wallet/send` · `/receive` · `/swap` (`?token=`) **(new)** | `wallet_route` {view} | `WalletPanel` | Send and Receive in place (6b); Swap in place (6c) | – | main | sign in |
 | `/wallet/recipients` **(new)** | `wallet_route` {view: recipients} | `WalletPanel` | `WalletRecipients` (6d) | – | main | sign in |
 | `/share?title&text&url` | `share_route` | as the default scope | as the default scope | `ChatPicker` on `?share` (redirect, then pick a chat) | picker | sign in |
-| `/admin` | `admin_route` | – | `TODO(design)`: platform operator console, operators only (existing check) | – | full | blocked |
+| `/admin` | `admin_route` | – | `TODO(design)`: platform operator console, operators only (existing check) | – | full | sign in, then the page |
 | `*` | `not_found_route` | – | `EmptyState` (not found) | – | full | yes |
+
+**Guest** is someone signed out in the app (10a, `logic/auth/guestPass`). "Yes" and "preview" open
+as they are, a group, community or channel read-only with "Sign in to join". "Sign in, then the
+page": Explore takes the page's place in history, with the sign-in dialog over it, and the page
+opens once they've signed in (or signed up, an emailed link included). Closing the dialog leaves
+them on Explore. A chat on a `/favourite` URL isn't a guest's favourite, so it goes on to its own
+URL as for anyone. The linked dialogs but `?hof` work the same way (Query params, below).
 
 Not in the URL (brief §4): open menus, the hover toolbar, drafts, swipe state, the minimised call
 position, and whether the right sidebar is open (persisted in localStorage).
@@ -186,6 +193,10 @@ until there's a setting (`GAPS.md`). Signed-in users on `/` go to the app as tod
 | `?usergroup=N` | that user group's members in the right column |
 | `?wallet` | redirects to `/wallet` |
 | `?auth=II&auth=EMAIL…` | limits the sign-in methods `AuthDialog` offers |
+
+A guest (10a) who opens `?profile`, `?diamond`, `?chit` (any of its views) or `?share` gets the
+sign-in dialog instead, over the page, with the param out of the URL; the dialog opens once they've
+signed in. `?hof` opens for anyone. `?panel=activity` does nothing for a guest.
 
 Not a URL, wired as today:
 - the `profile-clicked` event from `<profile-link>` (→ `UserDialog`);
@@ -274,11 +285,18 @@ chat or a wallet page it opens as `?panel=activity` on that page's path, from th
 the middle as it is, with Back to the middle's own panel (decision 7); with nothing in the
 middle it's `/notifications`. Opening an item goes to its message with the feed still open.
 
+**Guest pass (10a).** Signed out, the app is Explore and the public chats, read-only (the Guest
+column above). A page that needs an account (`guestRouteAccess`) is Explore under the sign-in
+dialog, in the page's place in history (the router's `onGuestSignIn`, through
+`core/RouteEffects`, whose old `/favourite` → `/chats` stays the native tree's), and opens once
+they've signed in: the client's post-login state carries the path (`continue_to`,
+`postLoginPath`), which AppScreen goes to once, replacing Explore. The linked dialogs that need an
+account do the same (DialogHost). Signing in anywhere else in the app leaves them where they were,
+and closing the dialog forgets where it was to go. What else asks a guest to sign in is in GAPS.md
+("Guest pass").
+
 Still to come:
 
-- **Guests**: guest-only behaviour comes in the guest pass (phase 10). That covers the "sign in"
-  routes in the Guest column and the composer's sign-in prompt. A guest on `/favourite` already
-  gets the sign-in, then `/chats`.
 - **Dialog params**: `?profile`, `?diamond`, `?chit` and `?hof` open their dialogs over the page
   (`features/app/dialogs.ts`, shown by `DialogHost`), each a placeholder until it's built (phase 8).
   `?profile` is `ProfileDialog` with the sections built so far (8c).
