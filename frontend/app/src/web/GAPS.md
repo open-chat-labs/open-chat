@@ -450,8 +450,8 @@ design export needs. Each entry says where it came up.
     screen (replies, composer, follow). Until then the link is hidden: the conversation's mapping
     gets `threads: false` (`ConversationContext.threads`), so no message has thread fields, rather
     than a link that opens nothing.
-  - **The details** (the header's title, the menu's details item) push a placeholder, a local
-    `chat_details` screen, until N6 builds it.
+  - **The details** (the header's title, the menu's details item): done (N6), the local
+    `chat_details` screen ("Native details", below).
   - **Calls** are N14's: the header's video and voice buttons, a live call's Join (its item and the
     header strip) and a missed call's Call back say so in a toast. A live call's strip says "Tap to
     join" where the prototype names who's in it. Not checked in a browser: the local replica's
@@ -476,7 +476,8 @@ design export needs. Each entry says where it came up.
   - **Disappearing messages** aren't in the header's menu (decided 2026-11-07, against the design
     notes' kebab and the prototype's submenu): a DM's are a switch on its details (N6, the design's
     "This chat" card), as in the current app, which has them on a DM's details
-    (`DirectChatDetails`) and not in a menu; a group's or channel's are its settings (N6 / N7).
+    (`DirectChatDetails`) and not in a menu; a group's or channel's are its settings (N7), and
+    its details show them (N6, "Native details", below).
   - **Clear history** (the prototype's menu): the backend has none, so it's dropped from the menu
     (decided 2026-11-07); it comes back after cutover once the backend can (native PLAN, "After
     everything else").
@@ -638,6 +639,79 @@ design export needs. Each entry says where it came up.
     the system's picker.
   - **Not checked**: the group typing strip in a browser (the local replica's typing goes over
     WebRTC, which the headless browser couldn't set up); the iOS app (no device).
+
+- **Native details** (native N6, #10372; the native plan's 10 of 2026-11-08;
+  `src/native/features/details`). Built: a DM's details and a group's or channel's, pushed from
+  the conversation's title and its menu's details item (the local `chat_details` screen), the
+  Members screen (`chat_members`) and a member's profile sheet. On the web panel's logic
+  (`logic/members`' MemberManagement, `logic/groupOrCommunity/detailsPermissions`,
+  `logic/profile`'s ProfileCardData), the web's DM settings, moved to `logic/chats/dmSettings`,
+  and new shared logic: the members' role sections and ⋯ (`logic/members/memberMenu`) and the
+  disappearing lengths (`logic/chats/disappearingMessages`). No library changes. Left, or decided
+  where the plan is silent (the prototype export wasn't available to check against):
+  - **DM**: the cover's kebab holds Delete chat (with Undo, as the conversation's menu), the one
+    thing the conversation's menu has that the screen doesn't already (the plan names the kebab,
+    not what's in it); without it (the OpenChat bot's DM) there's no kebab. Call says calls come
+    later (N14), as the header's buttons; Call isn't there where calls can't start, nor Mute for a
+    bot (a bot DM can't be muted). About shows once their profile is in (none for a bot): the bio,
+    Member since, CHIT earned (not with CHIT off).
+  - **Read receipts** (the plan's This chat): not a setting the app has, so not there (the web's
+    panel hides it too).
+  - **Disappearing messages** (a DM's): a switch with help, and while it's on a "Disappear after"
+    value row (the kit's anchored menu) with the web picker's lengths (1 hour … 30 days, plus the
+    chat's own where it's another, set from another app); switching on starts at a week, as the
+    old UIs (#10112). Shown at once (the library's `Optimistic`), back as it was with a toast if
+    it's refused. The plan doesn't draw the length's control; confirm with design.
+  - **Group**: the cover has back and favourite (the plan says "Cover" only; a DM's has a kebab,
+    but nothing is left for a group's: Leave and Delete are rows at the end). A channel's cover is
+    its community's banner; a group has none, so it's the accent's gradient, as the You tab's. The
+    avatar is the photo where there is one, else the chat's swatch (the conversation header's).
+  - **About**: "Created" is "Created by @owner", as the web's panel's byline: a group's summary has
+    no date it was made. History says whether new members see the messages from before.
+  - **Members row**: up to five faces and "View all · 48" (notes §1: "View all" is the only label
+    for a full list), to the Members screen.
+  - **This chat** (a group's; the plan names the card, not its rows): mute @everyone (a switch,
+    the web panel's) and the disappearing messages as a value (Off, or how long), which the
+    group's settings change (owners, N7). Not shown to someone previewing.
+  - **Rules** show read only to everyone who can send (the web panel's `chatRulesText`, with the
+    community's for a channel); owners and admins edit them from Manage (N7).
+  - **Manage** (owners and admins, not in a frozen chat): Access gates, Rules, Permissions, Bots
+    and webhooks, Stats, each pushing N7's page (a local `group_settings` screen, the placeholder
+    until N7 builds it). The tiles' **Invite** pushes the same placeholder (`invite`): neither plan
+    10 nor 11 draws a group's invite page (12 has a community's Invite and share); it's offered to
+    a member who can invite, add or share the link (`canOpenInvite`). Question for design.
+  - **Leave** goes to the list with Undo, as the conversation's menu (the plan's "Undo toast for
+    leave"). **Delete** asks first in the kit's `NativeAlert` (the plan names Undo for leave only,
+    and the backend can't undo a delete), then deletes; the client goes to the list as it does.
+    TODO(design): the alert's words.
+  - **Search** goes back to the conversation and opens its search (`searchRequests`).
+  - **Members screen**: the plan's role sections (Owners, Admins, Moderators, Members, empty ones
+    left out; you first, then by name), each a picker row (photo or swatch, name, You, @username).
+    A search over them (not in the plan: the web's panel has one, and a large group holds only its
+    first page of members, so the others are looked for as you type, `findMembers`). A Blocked
+    section for someone who can unblock, its ⋯ offering Unblock (the web's panel lists them).
+    Lapsed members aren't shown (the web's panel has them). Confirm with design.
+  - **The ⋯** shows only on members below you (the plan): its role items up to your own role
+    (several owners allowed) where your role may change roles, then Remove and Block where it may
+    remove / block members (the plan names Remove; Block is the web panel's, under the same
+    permission); with neither, a toast says your role can't. Note the client lets anyone whose role
+    meets "Change member roles" give any role but owner, so the cap at your own role is the plan's
+    and the native screen's (`memberMenu`); the web panel offers what the client allows.
+  - **Removing** waits out its Undo before it's sent (the shell's PendingRemovals, as leaving), the
+    member gone from the list meanwhile. **Blocking** shows the toast's loader while it's sent, then
+    Undo (unblock), as a DM's block. A role change says so in a toast ("Ann is now an admin"); a
+    refusal says why.
+  - **Profile sheet** (tapping a member, the plan's "profile sheet", not drawn): a bottom sheet with
+    their avatar, name and @username, About (bio, member since, CHIT earned) as their profile
+    loads, and Message (not on your own), which opens your DM with them. The web's user card has
+    Block too; here it's the ⋯'s.
+  - **Not built**: a link to the members (`?everyone`, the @everyone mention's; `?usergroup=`)
+    still opens the conversation only; the native router could push the Members screen for it.
+    Pinned messages (the web's panel lists them) aren't in the plan. A community's details are
+    N8a's / N7's; a channel's details are the group's, with its community's banner and rules. The
+    plan's thread list and thread screen (10 "Threads") are N8a's.
+  - **Not checked** on a device or in a browser here (no dev server for this change): the layout,
+    the cover under the status bar, the sheet and menus, both themes.
 - **Composer caption placeholder and a count on Send** (by hand, native N5c, EXPORT-LOG
   2026-11-09, to take back to the design export): `MessageComposer` takes `attachedPlaceholder`
   (the text box's placeholder while something's attached; "Add a caption" by default) and

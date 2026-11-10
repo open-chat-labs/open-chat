@@ -81,7 +81,6 @@ export type LocalScreen =
     | { kind: "chat_details"; chatId: ChatIdentifier }
     // a message's info, from its long-press menu (N5d)
     | { kind: "message_info"; chatId: ChatIdentifier; messageId: bigint }
-
     // a group's or channel's members, from its details (N6)
     | { kind: "chat_members"; chatId: MultiUserChatIdentifier }
     // a group's or channel's settings page, from its details (N7's)
