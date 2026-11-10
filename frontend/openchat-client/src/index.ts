@@ -286,6 +286,7 @@ export {
     toDateString,
     toDatetimeString,
     toDayString,
+    toLongDatetimeString,
     toMonthString,
     toMonthYearString,
 } from "./utils/date";

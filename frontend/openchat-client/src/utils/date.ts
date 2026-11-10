@@ -137,6 +137,14 @@ export function toLongDateString(date: Date, locale: string): string {
     return `${weekday} ${dayOfMonth}${ordinal} ${month} ${year}`;
 }
 
+/**
+ * "Tuesday 10th Nov 2026 @ 14:05": when a timeline event (a member joined, the group renamed…)
+ * happened, under its line in every tree.
+ */
+export function toLongDatetimeString(date: Date, locale: string): string {
+    return `${toLongDateString(date, locale)} @ ${toShortTimeString(date, locale)}`;
+}
+
 export function toShortTimeString(date: Date, locale: string): string {
     return memoisedFormatter(shortTimeFormatters, locale, {
         hour: "2-digit",

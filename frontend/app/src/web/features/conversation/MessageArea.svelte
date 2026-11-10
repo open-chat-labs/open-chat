@@ -66,6 +66,7 @@
         threadsFollowedByMeStore,
         throttleDeadline,
         TimelineGrouper,
+        toLongDatetimeString,
         translationsStore,
         unconfirmedReadByThem,
         unconfirmedStore,
@@ -1451,9 +1452,14 @@
         {:else if isTextEvent(evt.event)}
             {@const text = timelineEventText(evt.event, eventCtx)}
             {#if text !== undefined}
+                <!-- TODO(design): no event line in the design; the old UI's, with its date and
+                     time under it -->
                 <div class="event">
                     <p class="event-line">
                         <Markdown suppressLinks {text} />
+                    </p>
+                    <p class="event-time">
+                        {toLongDatetimeString(new Date(Number(evt.timestamp)), $locale ?? "en")}
                     </p>
                 </div>
             {/if}
@@ -1691,6 +1697,14 @@
         margin: 0;
         text-align: center;
         font: var(--weight-regular) var(--text-sm) / 1.5 var(--font-sans);
+        color: var(--ink-3);
+    }
+
+    /* when it happened, smaller under it (the old UI's NonMessageEvent) */
+    .event-time {
+        margin: 0;
+        text-align: center;
+        font: var(--weight-regular) var(--text-xs) / 1.5 var(--font-sans);
         color: var(--ink-3);
     }
 
