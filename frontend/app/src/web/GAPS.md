@@ -765,7 +765,9 @@ design export needs. Each entry says where it came up.
     (`@client`'s `memberTabs`, `hasAccessGates`: a lone unique-person gate is none, as it's
     suspended). Lapsed shows a count while anyone has lapsed. It always opens on Members; switching tabs clears the search (the
     library's `Field`, with its clear ×, as Invite people's), whose
-    placeholder follows the tab. Members: the search (as before: a large group holds only its first
+    placeholder follows the tab. A tab that goes while it's open (the gates taken away, a role
+    lost) goes back to Members, the search cleared, and stays there if the tab comes back
+    (`members.adapter`'s `keptTab`; the review of 2026-11-10). Members: the search (as before: a large group holds only its first
     page of members, so the others are looked for as you type, `findMembers`), the Invite people
     row (not on the other tabs, and only for someone it would open for: the plan doesn't say who),
     then the plan's role sections (Owners, Admins, Moderators, Members, empty ones left out; you
@@ -797,7 +799,8 @@ design export needs. Each entry says where it came up.
     tab can't bring them back, and its toast says so ("Unblocked Ann. They can join again"); it
     waits out its Undo too (the plan's "Unblock (Undo)"), as does removing a lapsed member. A role
     change says so in a toast ("Ann is now an admin"); a refusal says why. The profile sheet's
-    Unblock is sent at once, with a toast that says when it's done (`unblockWithToast`).
+    Unblock is the ⋯'s: it waits out its Undo, them gone from Blocked meanwhile (the review of
+    2026-11-10; it was sent at once).
   - **Invite people** (the plan's 2026-11-10 changelog; `InvitePeopleScreen`, the local
     `invite_people` screen), pushed from the Invite tile and the Members tab's row: "Invite
     people" over the chat's name, then People | Invite link, each only for someone it's for
@@ -813,8 +816,12 @@ design export needs. Each entry says where it came up.
     over it and the plan's 14px under it read cramped), then with nothing searched Pending · N (Cancel, where you may
     uninvite, waits out its Undo) and Suggested (the people you have DMs with who'd join, the latest
     DM first, up to 30 (`invitePeopleLists`), as the old invite pages offered: not those in the
-    chat, lapsed members included, nor the invited; for a channel, its community's members, looked
-    up first, and others only where you may invite to the community). With no one pending and
+    chat, lapsed members included, nor the invited; for a channel, its community's members, and
+    others only where you may invite to the community). A large group or channel (or a channel's
+    community) holds only its first page of members, so the DM partners are looked up among them
+    first (the client's `lookupDirectChatUsersAmongMembers`, a group's too since the review of
+    2026-11-10), Suggested waiting meanwhile (a spinner by its label), so a member it doesn't hold
+    isn't offered to invite. With no one pending and
     every DM partner already in the chat or invited, nothing shows under the divider (found testing
     on an account whose DM partners are all in its groups; the plan draws no empty line there);
     with a search, Results: those found,
@@ -825,8 +832,14 @@ design export needs. Each entry says where it came up.
     pinned button (with the send glyph): "Send invites" (disabled) / "Send invite" / "Send 3
     invites", or "Add 2 people" when everyone picked is added; it waits for the backend (disabled
     meanwhile), then stays on the screen (the user, 2026-11-10) with "Invite sent to Sofia" / "3
-    invites sent" / "Added Sofia", the search cleared and the picks sent (a refusal says why and
-    keeps the picks). With nothing pending and no one to suggest, a hint to search ("Search for
+    invites sent" / "Added Sofia", the search cleared and the picks sent. Each pick goes as it
+    would join at that moment (`MemberManagement.sendPicked`): one who's joined or been invited
+    since being picked isn't sent (the backend would refuse the whole invite) and leaves the
+    picks. The adds and the invites go separately: those sent leave the picks and the rest stay
+    picked (a partial add's not added among them), the toast saying who went and then why the
+    rest didn't ("Added Sofia · There was an error inviting users"); with none sent, the failure
+    says why. A search that fails finds nobody ("No one matches"), not a spinner for good
+    (`searchToInvite`). With nothing pending and no one to suggest, a hint to search ("Search for
     people to invite", ours: the plan has none). The invited show in Pending at once: the client's invite
     puts them among the chat's invited users before the backend answers (and takes them out if it
     refuses), which the screen's Pending follows (`inviteUsers.spec`, MemberManagement's spec).
@@ -842,7 +855,11 @@ design export needs. Each entry says where it came up.
     tile, `core/QRCode`), the link in mono, Copy link and Share (`utils/share`'s `shareLink`: the
     apps' share sheet), then Reset link (danger) with the plan's line under it in its own card (the
     library's `SettingsAction` with `help`; it was the card's note, the user's call of 2026-11-10),
-    and the footnote. Reset's Undo: a reset link can't be brought back, so the reset waits out its toast
+    and the footnote that access gates are skipped, for a private chat's link only: its invite
+    code skips them, while a public chat's link is a plain one whose joiners still pass them. A
+    link that couldn't load says so in the card, with Try again (no spinner for good), and the
+    link loads when the tab comes if it wasn't there as the screen opened (`invite.adapter`'s
+    `linkTabView`, `MemberManagement.inviteLinkLoad`; the review of 2026-11-10). Reset's Undo: a reset link can't be brought back, so the reset waits out its toast
     (the shell's PendingRemovals, as a removal), the link dimmed and Copy and Share off meanwhile;
     then a spinner in the card until the new link and QR are in (the plan has the new link at
     once, with Undo). Switching the link is shown at once and goes back with a toast if refused.
