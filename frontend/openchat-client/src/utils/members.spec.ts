@@ -5,9 +5,11 @@ import {
     ROLE_NONE,
     ROLE_OWNER,
     type AccessGateConfig,
+    type GroupChatSummary,
     type MemberRole,
 } from "@shared";
 import { describe, expect, test } from "vitest";
+import { canBlockUsers, canRemoveMembers } from "./chat";
 import {
     hasAccessGates,
     listedUserMenu,
@@ -234,6 +236,61 @@ describe("memberMenu", () => {
         ).toEqual({
             kind: "not_allowed",
         });
+    });
+});
+
+// Blocking in a group is a public group's: the backend refuses it in a private one (ChatNotPublic),
+// so the client's canBlockUsers, which the ⋯'s `block` comes from (MemberManagement.actionsFor, as
+// the web's panel), allows it only in a public group, to roles meeting "Remove / block members"
+describe("Block in a group's ⋯", () => {
+    const group = (role: MemberRole, isPublic: boolean, frozen = false) =>
+        ({
+            kind: "group_chat",
+            public: isPublic,
+            frozen,
+            membership: { role },
+            permissions: { removeMembers: ROLE_MODERATOR, changeRoles: ROLE_ADMIN },
+        }) as unknown as GroupChatSummary;
+    const blockers: MemberRole[] = [ROLE_OWNER, ROLE_ADMIN, ROLE_MODERATOR];
+    const menuFor = (myRole: MemberRole, chat: GroupChatSummary) =>
+        memberMenu(
+            myRole,
+            { role: ROLE_MEMBER, isMe: false },
+            memberActions(ROLE_MEMBER, false, {
+                promote: () => false,
+                demote: () => false,
+                remove: canRemoveMembers(chat),
+                block: canBlockUsers(chat),
+            }),
+        );
+
+    test("an owner, admin or moderator of a public group can block a member", () => {
+        for (const role of blockers) {
+            expect(menuFor(role, group(role, true))).toMatchObject({
+                kind: "actions",
+                remove: true,
+                block: true,
+            });
+        }
+    });
+
+    test("no one blocks in a private group, its owner included: they can still remove", () => {
+        for (const role of blockers) {
+            expect(menuFor(role, group(role, false))).toMatchObject({
+                kind: "actions",
+                remove: true,
+                block: false,
+            });
+        }
+    });
+
+    test("no one blocks in a frozen group, nor a role below Remove / block members", () => {
+        expect(canBlockUsers(group(ROLE_OWNER, true, true))).toBe(false);
+        const strict = {
+            ...group(ROLE_MODERATOR, true),
+            permissions: { removeMembers: ROLE_ADMIN },
+        } as unknown as GroupChatSummary;
+        expect(canBlockUsers(strict)).toBe(false);
     });
 });
 

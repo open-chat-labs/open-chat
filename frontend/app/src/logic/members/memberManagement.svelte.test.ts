@@ -1,4 +1,8 @@
 import {
+    emptyRules,
+    localUpdates,
+    routeStore,
+    selectedChatIdStore,
     selectedChatBlockedUsersStore,
     selectedChatBotsStore,
     selectedChatInvitedUsersStore,
@@ -13,6 +17,8 @@ import {
     type OpenChat,
     type UserSummary,
 } from "@client";
+import { ChatDetailsState } from "@client/state/chat/serverDetails";
+import { currentChatVisit, startChatVisit } from "@client/state/selectedChat";
 import { flushSync, tick } from "svelte";
 import { afterEach, expect, test, vi } from "vitest";
 import { MemberManagement } from "./memberManagement.svelte";
@@ -228,4 +234,66 @@ test("sending the picks adds those it names and invites the rest, keeping those 
         message: { key: "group.inviteUsersFailed" },
     });
     expect(failing.usersToAddOrInvite.map((u) => u.userId)).toEqual(["b"]);
+});
+
+// The Invite people screen's Pending is `invited`: the people sent show there as soon as they're
+// sent (the client's own invite puts them among the selected chat's invited users at once, as
+// openchat-client's inviteUsers.spec checks), without waiting for the chat's details to reload
+test("the people sent are among the invited at once, for the page that shows them", async () => {
+    const groupId = { kind: "group_chat", groupId: "ggggg-gg" } as const;
+    routeStore.set({
+        kind: "global_chat_selected_route",
+        chatId: groupId,
+        chatType: "group_chat",
+        open: false,
+        scope: { kind: "chats" },
+    });
+    startChatVisit(selectedChatIdStore.value);
+    currentChatVisit()?.setDetails(
+        new ChatDetailsState(
+            groupId,
+            0n,
+            new Map(),
+            new Set(),
+            new Set(),
+            new Set(["a"]),
+            new Set(),
+            new Map(),
+            new Map(),
+            emptyRules(),
+        ),
+    );
+    let answer: (ok: boolean) => void = () => {};
+    const client = {
+        // as the client's: invited here at once, then the backend asked
+        inviteUsers: (id: typeof groupId, userIds: string[]) => {
+            localUpdates.inviteChatUsers(id, userIds);
+            return new Promise<boolean>((resolve) => (answer = resolve));
+        },
+    } as never;
+    const group = { kind: "group_chat", id: groupId, level: "group", public: false };
+    const members = new MemberManagement(client, group as MultiUserChat);
+    members.togglePicked({ userId: "b", username: "b" } as UserSummary);
+
+    let pending: string[] = [];
+    const stop = $effect.root(() => {
+        $effect(() => {
+            pending = [...members.invited].sort();
+        });
+    });
+    flushSync();
+    expect(pending).toEqual(["a"]);
+
+    const sent = members.sendPicked(() => false);
+    flushSync();
+    expect(pending).toEqual(["a", "b"]);
+
+    answer(true);
+    expect(await sent).toMatchObject({ kind: "success", invited: [{ userId: "b" }] });
+    flushSync();
+    expect(pending).toEqual(["a", "b"]);
+    expect(members.usersToAddOrInvite).toEqual([]);
+
+    stop();
+    localUpdates.clearAll();
 });
