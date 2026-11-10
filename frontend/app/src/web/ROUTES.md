@@ -138,7 +138,7 @@ it from showing: a desktop window shrunk after load scrolls the shell sideways i
 | `/wallet/send` · `/receive` · `/swap` (`?token=`) **(new)** | `wallet_route` {view} | `WalletPanel` | Send and Receive in place (6b); Swap in place (6c) | – | main | sign in |
 | `/wallet/recipients` **(new)** | `wallet_route` {view: recipients} | `WalletPanel` | `WalletRecipients` (6d) | – | main | sign in |
 | `/share?title&text&url` | `share_route` | as the default scope | as the default scope | `ChatPicker` on `?share` (redirect, then pick a chat) | picker | sign in |
-| `/admin` | `admin_route` | – | `TODO(design)`: platform operator console, operators only (existing check) | – | full | sign in, then the page |
+| `/admin` | `admin_route` | – | `TODO(design)`: platform operator console, operators only (existing check) | – | full | sign in, then the page (hiding it from guests, as not found, was considered and dropped: the code is public, and the backend enforces operator access) |
 | `*` | `not_found_route` | – | `EmptyState` (not found) | – | full | yes |
 
 **Guest** is someone signed out in the app (10a, `logic/auth/guestPass`). "Yes" and "preview" open

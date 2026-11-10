@@ -1612,9 +1612,15 @@ design export needs. Each entry says where it came up.
     Sign in prompt"; 99-not-designed has the rest of the guest pass as not designed):
     - under the sign-in for a page that needs an account, Explore (the guest rail's one
       destination), not the old desktop's `/chats` (which it did for `/favourite` only). The
-      native tree, whose signed-out start keeps the URL, keeps the old route effect.
+      native tree, whose signed-out start keeps the URL, keeps the old route effect. The user's
+      answer (2): fine for now.
     - a DM asks to sign in, then opens (ROUTES.md had "no"); `/admin` asks to sign in, then shows
-      what it shows the signed-in user (ROUTES.md had "blocked").
+      what it shows the signed-in user (ROUTES.md had "blocked"). The user's answer (3) keeps
+      that: showing a guest the not-found page in its place was considered and dropped, as the
+      code is public (hiding the route gains nothing) and the backend enforces operator access.
+      Signed in, anyone gets the console's placeholder for now (it isn't built, `TODO(design)`;
+      the old trees' Admin told a non-operator "Only platform operators can access the admin
+      area").
     - a preview's messages ask a guest to sign in (the user's answer): they have the hover bar,
       the menu and reactions a member would have (`messageOffer`'s `guest`: what anyone with an
       account could do, nothing a role gives, no tips), and what needs an account asks them to
@@ -1625,9 +1631,16 @@ design export needs. Each entry says where it came up.
       signed out. A guest's double-click does nothing (it's for selecting a word, not a reply that
       asks to sign in). A signed-in previewer's messages stay read only, as in the old trees
       (signing in wouldn't let them act: joining would).
+    - a preview's row in the chat list has no "…" menu, a guest's or anyone's (the user's answer
+      (6), the design's preview mode: "channel row menus off"; `chatRowHasMenu`): a group or
+      channel the user isn't a member of. A member's row keeps it, a lapsed member's too (still a
+      member, who may want to leave, mute or archive it). So the row menu's Remove no longer
+      shows on the web (it only did for a preview, `canRemoveFromList`); the preview bar's Back
+      takes a preview off the list. The native tree's long-press sheet is as it was.
     - closing the in-app sign-in forgets what it was to go on to (a page, a join, creating a
       community), so a later sign-in from the rail doesn't pick it up (the old trees kept a join
-      and replayed it then).
+      and replayed it then). The user's answer (1): yes, keep.
+    - `?hof` (the leaderboard) opens for a guest. The user's answer (5): keep, an easter egg.
   - Left:
     - a guest who follows an in-app link to a page that needs an account (a `/wallet` link in a
       message) leaves the preview for Explore under the sign-in; Back returns to it.
