@@ -70,12 +70,18 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
 - **Built:** N6 DM and group details, members and roles
   ([#10372](https://github.com/open-chat-labs/open-chat/issues/10372)), to the plan's 10: a DM's
   details (Call / Search / Mute, About, disappearing messages as a switch, Block) and a group's or
-  channel's (Mute / Search / Invite, About, Members, This chat, the rules, Manage for owners and
-  admins, Leave and Delete), pushed from the conversation's header; the Members screen with role
-  sections, the ⋯'s role changes, Remove and Block as your role allows, and a member's profile
-  sheet. On the web panel's logic (`logic/members`, `logic/groupOrCommunity/detailsPermissions`,
-  `logic/profile`'s profile card) and the DM settings moved to `logic/chats`. Manage's pages and
-  Invite are N7's, pushed as placeholders. What it left is in GAPS.md ("Native details").
+  channel's (a kebab with Edit group and Copy invite link, Mute / Search / Invite, About with when
+  it was created, Members, This chat with the disappearing messages for owners to change, the
+  rules, Manage for owners and admins, Leave and Delete with Undo), pushed from the conversation's
+  header; the Members screen with role sections, the ⋯'s role changes, Remove and Block (each
+  with an Undo that sends nothing) as your role allows, and a member's profile sheet with the
+  web's user card's actions; the rules sheet when sending needs a chat's rules accepted. On the
+  web panel's logic (`logic/members`, `logic/groupOrCommunity/detailsPermissions`,
+  `logic/profile`'s profile card), the DM settings moved to `logic/chats`, and the send prompts
+  moved to `logic/composer/sendPrompts`. Manage's pages, Edit group and Invite are N7's, pushed as
+  placeholders. Design briefs to come, each its own PR: the Invite screen, the disappearing
+  length's picker, pinned messages and the Members screen. What it left is in GAPS.md ("Native
+  details").
 - **Next:** the screens. N10a, N11 and N13 need only N3; N7 (group settings) and N8a
   (communities) can start now that N6 is in; N9 (the builders) needs N10b too.
 
