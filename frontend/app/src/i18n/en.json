@@ -2136,6 +2136,7 @@
             },
             "search": "Search name or @username",
             "noneSelected": "No one selected yet",
+            "noneLeft": "No one left to invite: they've joined or been invited already",
             "pending": "Pending · {count}",
             "pendingSub": "Invited · not accepted yet",
             "cancel": "Cancel",

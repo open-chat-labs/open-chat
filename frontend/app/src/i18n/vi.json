@@ -2221,6 +2221,7 @@
             },
             "search": "Tìm tên hoặc @username",
             "noneSelected": "Chưa chọn ai",
+            "noneLeft": "Không còn ai để mời: họ đã tham gia hoặc đã được mời",
             "pending": "Đang chờ · {count}",
             "pendingSub": "Đã mời · chưa chấp nhận",
             "cancel": "Hủy",

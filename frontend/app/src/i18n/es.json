@@ -2221,6 +2221,7 @@
             },
             "search": "Buscar nombre o @usuario",
             "noneSelected": "Aún no has elegido a nadie",
+            "noneLeft": "No queda nadie a quien invitar: ya se han unido o han sido invitados",
             "pending": "Pendientes · {count}",
             "pendingSub": "Invitado · aún sin aceptar",
             "cancel": "Cancelar",

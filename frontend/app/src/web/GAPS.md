@@ -835,7 +835,8 @@ design export needs. Each entry says where it came up.
     invites sent" / "Added Sofia", the search cleared and the picks sent. Each pick goes as it
     would join at that moment (`MemberManagement.sendPicked`): one who's joined or been invited
     since being picked isn't sent (the backend would refuse the whole invite) and leaves the
-    picks. The adds and the invites go separately: those sent leave the picks and the rest stay
+    picks; with no one left at all, nothing is sent and a toast says so ("No one left to invite:
+    they've joined or been invited already"). The adds and the invites go separately: those sent leave the picks and the rest stay
     picked (a partial add's not added among them), the toast saying who went and then why the
     rest didn't ("Added Sofia · There was an error inviting users"); with none sent, the failure
     says why. A search that fails finds nobody ("No one matches"), not a spinner for good

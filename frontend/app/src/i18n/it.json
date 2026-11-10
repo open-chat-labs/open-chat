@@ -2221,6 +2221,7 @@
             },
             "search": "Cerca nome o @username",
             "noneSelected": "Nessuno selezionato",
+            "noneLeft": "Nessuno da invitare: si sono già uniti o sono già stati invitati",
             "pending": "In attesa · {count}",
             "pendingSub": "Invitato · non ancora accettato",
             "cancel": "Annulla",

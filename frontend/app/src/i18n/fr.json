@@ -2221,6 +2221,7 @@
             },
             "search": "Rechercher un nom ou @pseudo",
             "noneSelected": "Personne n'est sélectionné",
+            "noneLeft": "Plus personne à inviter : ils ont déjà rejoint ou été invités",
             "pending": "En attente · {count}",
             "pendingSub": "Invité · pas encore accepté",
             "cancel": "Annuler",

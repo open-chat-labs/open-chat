@@ -228,6 +228,10 @@
             toastStore.showOutcome(outcome);
             return;
         }
+        if (outcome.kind === "none_left") {
+            context.toast($_("native.invite.noneLeft"));
+            return;
+        }
         // stays on the screen: those sent leave the picks and those invited show under Pending;
         // any not sent stay picked, and the toast says why after saying who went
         onInput("");

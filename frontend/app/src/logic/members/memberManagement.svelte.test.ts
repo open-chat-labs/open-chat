@@ -214,6 +214,17 @@ describe("sending the picks", () => {
         return members;
     }
 
+    test("with no one left to send, nothing goes and it says so", async () => {
+        const inviteUsers = vi.fn(async () => true);
+        const addMembersToChannel = vi.fn(async () => ({ kind: "success" }));
+        const members = picking({ inviteUsers, addMembersToChannel }, "x");
+
+        expect(await members.sendPicked(way)).toEqual({ kind: "none_left" });
+        expect(inviteUsers).not.toHaveBeenCalled();
+        expect(addMembersToChannel).not.toHaveBeenCalled();
+        expect(picked(members)).toEqual([]);
+    });
+
     test("adds those it names and invites the rest", async () => {
         const inviteUsers = vi.fn(async () => true);
         const addMembersToChannel = vi.fn(async () => ({ kind: "success" }));

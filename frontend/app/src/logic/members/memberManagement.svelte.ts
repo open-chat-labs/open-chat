@@ -61,7 +61,9 @@ const ids = (u: UserSummary): string => u.userId;
 export type SendPicksOutcome =
     | { kind: "sent"; added: UserSummary[]; invited: UserSummary[] }
     | { kind: "partly_sent"; added: UserSummary[]; invited: UserSummary[]; message: ResourceKey }
-    | { kind: "failed"; message: ResourceKey };
+    | { kind: "failed"; message: ResourceKey }
+    /** Everyone picked had joined, been invited or become uninvitable since: nothing was sent. */
+    | { kind: "none_left" };
 
 /** Loading the invite link: not asked for yet, on its way, failed, or in (`inviteLink`). */
 export type InviteLinkLoad =
@@ -401,7 +403,8 @@ export class MemberManagement {
      * (they've joined or been invited since, or the viewer may no longer invite them) isn't sent,
      * since the backend would refuse the whole batch for them, and leaves the picks. The adds and
      * the invites go separately: those sent leave the picks, the others stay picked, and the
-     * outcome says who went and why the rest didn't.
+     * outcome says who went and why the rest didn't. With no one left to send, nothing goes
+     * (`none_left`).
      */
     async sendPicked(wayOf: (userId: string) => InviteWay): Promise<SendPicksOutcome> {
         const picks = [...this.#usersToAddOrInvite];
@@ -409,6 +412,7 @@ export class MemberManagement {
         const adding = picks.filter((u) => ways.get(u.userId) === "add");
         const inviting = picks.filter((u) => ways.get(u.userId) === "invite");
         this.#dropPicked(picks.filter((u) => !pickable(ways.get(u.userId) ?? "none")).map(ids));
+        if (adding.length + inviting.length === 0) return { kind: "none_left" };
 
         this.#inviting = true;
         try {

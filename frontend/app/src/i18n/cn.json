@@ -2221,6 +2221,7 @@
             },
             "search": "搜索名称或 @用户名",
             "noneSelected": "尚未选择任何人",
+            "noneLeft": "没有可邀请的人了：他们已加入或已被邀请",
             "pending": "待接受 · {count}",
             "pendingSub": "已邀请 · 尚未接受",
             "cancel": "取消",
