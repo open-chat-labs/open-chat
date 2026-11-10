@@ -64,9 +64,16 @@ export type SettingsPage =
 
 /**
  * A group's or channel's settings page, from its details (native plan 10's Manage, the tiles'
- * Invite): N7's screens (plan 11), placeholders until then.
+ * Invite, the cover's Edit group): N7's screens (plan 11), placeholders until then.
  */
-export type GroupSettingsPage = "invite" | "gates" | "rules" | "permissions" | "bots" | "stats";
+export type GroupSettingsPage =
+    | "edit"
+    | "invite"
+    | "gates"
+    | "rules"
+    | "permissions"
+    | "bots"
+    | "stats";
 
 /**
  * A screen with no URL on the web (New chat, a builder, a settings page): pushed over the screen

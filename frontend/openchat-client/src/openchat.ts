@@ -227,6 +227,7 @@ import {
     type GroupChatDetailsResponse,
     type GroupChatIdentifier,
     type GroupChatSummary,
+    type GroupCreation,
     type GroupInvite,
     type GroupMoved,
     type GroupSearchResponse,
@@ -575,6 +576,7 @@ import { dailyPuzzleResultsCache } from "./stores/dailyPuzzleResults";
 import { minutesOnlineStore } from "./stores/minutesOnline";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { captureRulesAcceptanceStore } from "./stores/rules";
+import { groupCreation } from "./utils/groupCreation";
 import {
     initialiseMostRecentSentMessageTimes,
     sendsLeftNow,
@@ -3618,6 +3620,31 @@ export class OpenChat {
         publish("loadedMessageWindow", { context, messageIndex, initialLoad });
 
         return messageIndex;
+    }
+
+    /**
+     * When a group or channel was created and by whom, from its first event (`group_chat_created`),
+     * which the worker caches. Undefined where it can't be read: a reader who joined with the
+     * history before them hidden, or it didn't load.
+     */
+    async groupCreated(chat: MultiUserChat): Promise<GroupCreation | undefined> {
+        if (chat.minVisibleEventIndex > 0) return undefined;
+        try {
+            const resp: EventsResponse<ChatEvent> = await this.#worker
+                .stream({
+                    kind: "chatEventsByEventIndex",
+                    chatId: chat.id,
+                    eventIndexes: [0],
+                    threadRootMessageIndex: undefined,
+                    latestKnownUpdate: chat.lastUpdated,
+                })
+                .aggregate(mergeEventStreamResponses, emptyEventsResponse())
+                .toPromise();
+            return isSuccessfulEventsResponse(resp) ? groupCreation(resp.events) : undefined;
+        } catch (err) {
+            console.warn("Couldn't load when the group was created", err);
+            return undefined;
+        }
     }
 
     async loadEventWindow(

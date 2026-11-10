@@ -2219,6 +2219,7 @@
             "thisChat": "הצ'אט הזה",
             "disappearing": "הודעות נעלמות",
             "disappearingHelp": "ההודעות בצ'אט הזה נעלמות אצל שניכם אחרי הזמן שבחרתם.",
+            "disappearingGroupHelp": "ההודעות בצ'אט הזה נעלמות לכולם אחרי הזמן שתבחרו.",
             "disappearAfterLabel": "נעלמות אחרי",
             "duration": {
                 "minute": "{count, plural, one {דקה אחת} two {שתי דקות} other {# דקות}}",
@@ -2236,6 +2237,7 @@
                 "invite": "הזמנה"
             },
             "createdBy": "נוצר על ידי",
+            "created": "נוצר",
             "history": "היסטוריה",
             "historyVisible": "גלויה לחברים חדשים",
             "historyHidden": "מוסתרת מחברים חדשים",
@@ -2253,18 +2255,20 @@
             },
             "deleteGroup": "מחיקת הקבוצה",
             "deleteChannel": "מחיקת הערוץ",
-            "deleteTitle": "למחוק את {name}?",
-            "deleteGroupMessage": "הקבוצה וכל ההודעות בה יימחקו לכולם. אי אפשר לבטל את זה.",
-            "deleteChannelMessage": "הערוץ וכל ההודעות בו יימחקו לכולם. אי אפשר לבטל את זה.",
-            "delete": "מחיקה",
+            "deleted": "{name} נמחק",
+            "menu": {
+                "editGroup": "עריכת הקבוצה",
+                "editChannel": "עריכת הערוץ",
+                "copyInviteLink": "העתקת קישור ההזמנה"
+            },
             "members": {
                 "you": "את/ה",
                 "search": "חיפוש חברים",
-                "owners": "בעלים · {count}",
-                "admins": "מנהלים · {count}",
-                "moderators": "מנחים · {count}",
-                "members": "חברים · {count}",
-                "blocked": "חסומים · {count}",
+                "owners": "{count, plural, =1 {בעלים} other {בעלים · #}}",
+                "admins": "{count, plural, =1 {מנהלים} other {מנהלים · #}}",
+                "moderators": "{count, plural, =1 {מנחים} other {מנחים · #}}",
+                "members": "{count, plural, =1 {חברים} other {חברים · #}}",
+                "blocked": "{count, plural, =1 {חסומים} other {חסומים · #}}",
                 "options": "אפשרויות חבר",
                 "make": {
                     "owner": "הפיכה לבעלים",
@@ -2276,6 +2280,7 @@
                 "block": "חסימה",
                 "unblock": "ביטול חסימה",
                 "removed": "{name} הוסר/ה",
+                "unblockedRejoin": "החסימה של {name} הוסרה. אפשר להצטרף שוב",
                 "now": {
                     "owner": "{name} עכשיו בעלים",
                     "admin": "{name} עכשיו מנהל/ת",

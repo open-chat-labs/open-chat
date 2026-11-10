@@ -1,6 +1,6 @@
 <!-- The top of a chat's details (native plan 10, Design Notes §3.6): the cover, under the status bar,
      with back, favourite and the kebab as solid round buttons (the kebab only with something in
-     it); the 88px avatar with its 4px cut-out ring, overlapping the cover; the name and the line
+     it; Search before favourite where it's the only tile, a bot's DM); the 88px avatar with its 4px cut-out ring, overlapping the cover; the name and the line
      under it. The cover is their profile's background where they have one, else the accent's
      gradient (as the You tab's); the avatar their photo, else the chat's swatch (the header's). -->
 <script lang="ts">
@@ -20,6 +20,8 @@
         square: boolean;
         favourite: boolean;
         onBack: (() => void) | undefined;
+        /** A Search button before favourite, where Search is the only tile (a bot's DM). */
+        onSearch?: () => void;
         /** No favourite button without it. */
         onFavourite: (() => void) | undefined;
         /** No kebab without it; gets the button, to anchor its menu to. */
@@ -35,6 +37,7 @@
         square,
         favourite,
         onBack,
+        onSearch,
         onFavourite,
         onMore,
     }: Props = $props();
@@ -54,6 +57,15 @@
         </button>
     {/if}
     <span class="end">
+        {#if onSearch}
+            <button
+                type="button"
+                class="cover-button"
+                aria-label={$_("native.details.tiles.search")}
+                onclick={onSearch}>
+                <span class="search-icon"></span>
+            </button>
+        {/if}
         {#if onFavourite}
             <button
                 type="button"
@@ -179,6 +191,10 @@
         .on & {
             mask: var(--icon-heart-filled) center/contain no-repeat;
         }
+    }
+
+    .search-icon {
+        @include icon(search, 19px);
     }
 
     // the kebab: horizontal dots on iOS, vertical on Android

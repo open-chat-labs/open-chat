@@ -2134,6 +2134,7 @@
             "thisChat": "This chat",
             "disappearing": "Disappearing messages",
             "disappearingHelp": "Messages in this chat disappear for both of you after the time you pick.",
+            "disappearingGroupHelp": "Messages in this chat disappear for everyone after the time you pick.",
             "disappearAfterLabel": "Disappear after",
             "duration": {
                 "minute": "{count, plural, one {# minute} other {# minutes}}",
@@ -2151,6 +2152,7 @@
                 "invite": "Invite"
             },
             "createdBy": "Created by",
+            "created": "Created",
             "history": "History",
             "historyVisible": "Visible to new members",
             "historyHidden": "Hidden from new members",
@@ -2168,18 +2170,20 @@
             },
             "deleteGroup": "Delete group",
             "deleteChannel": "Delete channel",
-            "deleteTitle": "Delete {name}?",
-            "deleteGroupMessage": "The group and all its messages are deleted for everyone. This can't be undone.",
-            "deleteChannelMessage": "The channel and all its messages are deleted for everyone. This can't be undone.",
-            "delete": "Delete",
+            "deleted": "Deleted {name}",
+            "menu": {
+                "editGroup": "Edit group",
+                "editChannel": "Edit channel",
+                "copyInviteLink": "Copy invite link"
+            },
             "members": {
                 "you": "You",
                 "search": "Search members",
-                "owners": "Owners · {count}",
-                "admins": "Admins · {count}",
-                "moderators": "Moderators · {count}",
-                "members": "Members · {count}",
-                "blocked": "Blocked · {count}",
+                "owners": "{count, plural, =1 {Owners} other {Owners · #}}",
+                "admins": "{count, plural, =1 {Admins} other {Admins · #}}",
+                "moderators": "{count, plural, =1 {Moderators} other {Moderators · #}}",
+                "members": "{count, plural, =1 {Members} other {Members · #}}",
+                "blocked": "{count, plural, =1 {Blocked} other {Blocked · #}}",
                 "options": "Member options",
                 "make": {
                     "owner": "Make owner",
@@ -2191,6 +2195,7 @@
                 "block": "Block",
                 "unblock": "Unblock",
                 "removed": "Removed {name}",
+                "unblockedRejoin": "Unblocked {name}. They can join again",
                 "now": {
                     "owner": "{name} is now an owner",
                     "admin": "{name} is now an admin",

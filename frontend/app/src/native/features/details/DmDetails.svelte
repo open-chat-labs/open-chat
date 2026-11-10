@@ -1,6 +1,7 @@
 <!-- A DM's details (native plan 10, Design Notes §3.6): the cover with back, favourite and the kebab
      (Delete chat, the one thing the conversation's menu has that isn't here already); the other
-     person's avatar, name and @username; the tiles Call / Search / Mute; About (their bio, member
+     person's avatar, name and @username; the tiles Call / Search / Mute (a bot's only tile, Search,
+     goes on the cover); About (their bio, member
      since, the CHIT they've earned); This chat (disappearing messages: a switch and, while it's on,
      how long; the plan's read receipts aren't a setting the app has); Block. Their profile is
      loaded as it opens (logic/profile's ProfileCardData, the web's user card's); About shows once
@@ -48,7 +49,7 @@
     import DetailTiles from "./DetailTiles.svelte";
     import FactRow from "./FactRow.svelte";
     import TextRow from "./TextRow.svelte";
-    import { dmTiles, durationLabel, type DetailTileId } from "./details.adapter";
+    import { dmTiles, durationLabel, searchOnCover, type DetailTileId } from "./details.adapter";
 
     let { chat, context }: { chat: DirectChatSummary; context: ScreenContext } = $props();
 
@@ -83,6 +84,7 @@
             t,
         ),
     );
+    const coverSearch = $derived(searchOnCover(tiles));
 
     // ---- About
 
@@ -215,11 +217,14 @@
         square={false}
         {favourite}
         onBack={context.back}
+        onSearch={coverSearch ? () => onTile("search") : undefined}
         onFavourite={toggleFavourite}
         onMore={canDelete ? (anchor) => (menuAnchor = anchor) : undefined} />
 
     <div class="content">
-        <DetailTiles {tiles} {onTile} />
+        {#if !coverSearch}
+            <DetailTiles {tiles} {onTile} />
+        {/if}
 
         {#if card.profile !== undefined}
             <SettingsGroup label={$_("native.you.about")}>

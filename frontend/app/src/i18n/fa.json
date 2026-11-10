@@ -2219,6 +2219,7 @@
             "thisChat": "این گفتگو",
             "disappearing": "پیام‌های ناپدیدشونده",
             "disappearingHelp": "پیام‌های این گفتگو پس از مدتی که انتخاب می‌کنید برای هر دوی شما ناپدید می‌شوند.",
+            "disappearingGroupHelp": "پیام‌های این گفتگو پس از مدتی که انتخاب می‌کنید برای همه ناپدید می‌شوند.",
             "disappearAfterLabel": "ناپدید شدن پس از",
             "duration": {
                 "minute": "{count, plural, one {# دقیقه} other {# دقیقه}}",
@@ -2236,6 +2237,7 @@
                 "invite": "دعوت"
             },
             "createdBy": "سازنده",
+            "created": "تاریخ ایجاد",
             "history": "تاریخچه",
             "historyVisible": "برای اعضای جدید قابل مشاهده",
             "historyHidden": "پنهان از اعضای جدید",
@@ -2253,18 +2255,20 @@
             },
             "deleteGroup": "حذف گروه",
             "deleteChannel": "حذف کانال",
-            "deleteTitle": "{name} حذف شود؟",
-            "deleteGroupMessage": "گروه و همه پیام‌هایش برای همه حذف می‌شود. این کار بازگشت‌پذیر نیست.",
-            "deleteChannelMessage": "کانال و همه پیام‌هایش برای همه حذف می‌شود. این کار بازگشت‌پذیر نیست.",
-            "delete": "حذف",
+            "deleted": "{name} حذف شد",
+            "menu": {
+                "editGroup": "ویرایش گروه",
+                "editChannel": "ویرایش کانال",
+                "copyInviteLink": "کپی پیوند دعوت"
+            },
             "members": {
                 "you": "شما",
                 "search": "جستجوی اعضا",
-                "owners": "مالکان · {count}",
-                "admins": "مدیران · {count}",
-                "moderators": "ناظران · {count}",
-                "members": "اعضا · {count}",
-                "blocked": "مسدودشده‌ها · {count}",
+                "owners": "{count, plural, =1 {مالکان} other {مالکان · #}}",
+                "admins": "{count, plural, =1 {مدیران} other {مدیران · #}}",
+                "moderators": "{count, plural, =1 {ناظران} other {ناظران · #}}",
+                "members": "{count, plural, =1 {اعضا} other {اعضا · #}}",
+                "blocked": "{count, plural, =1 {مسدودشده‌ها} other {مسدودشده‌ها · #}}",
                 "options": "گزینه‌های عضو",
                 "make": {
                     "owner": "تعیین به‌عنوان مالک",
@@ -2276,6 +2280,7 @@
                 "block": "مسدود کردن",
                 "unblock": "رفع مسدودیت",
                 "removed": "{name} حذف شد",
+                "unblockedRejoin": "{name} از مسدودی خارج شد. می‌تواند دوباره بپیوندد",
                 "now": {
                     "owner": "{name} اکنون مالک است",
                     "admin": "{name} اکنون مدیر است",

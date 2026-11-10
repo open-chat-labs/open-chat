@@ -10,6 +10,7 @@ import {
     memberMenuItems,
     menuItemRole,
     roleWord,
+    searchOnCover,
     showsManage,
 } from "./details.adapter";
 
@@ -27,6 +28,14 @@ describe("the tiles", () => {
         expect(dmTiles({ canCall: false, muted: false, isBot: true }, t).map((x) => x.id)).toEqual([
             "search",
         ]);
+    });
+
+    test("put a lone Search on the cover (a bot's DM), not in a row of one", () => {
+        expect(searchOnCover(dmTiles({ canCall: false, muted: false, isBot: true }, t))).toBe(true);
+        expect(searchOnCover(dmTiles({ canCall: false, muted: false, isBot: false }, t))).toBe(
+            false,
+        );
+        expect(searchOnCover(groupTiles({ canInvite: false, muted: false }, t))).toBe(false);
     });
 
     test("show a muted chat's Mute as on, offering Unmute", () => {

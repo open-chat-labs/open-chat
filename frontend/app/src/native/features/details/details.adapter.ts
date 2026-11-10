@@ -52,6 +52,14 @@ export function dmTiles(
     ];
 }
 
+/**
+ * Whether the tiles hold only Search (a bot's DM: no Call, no Mute): a row of one looks odd, so
+ * Search goes on the cover, by Favourite, and there's no row.
+ */
+export function searchOnCover(tiles: DetailTile[]): boolean {
+    return tiles.length === 1 && tiles[0].id === "search";
+}
+
 /** A group's or channel's tiles: Mute / Search / Invite, Invite only for someone who can invite. */
 export function groupTiles(state: { canInvite: boolean; muted: boolean }, t: Translate): DetailTile[] {
     return [

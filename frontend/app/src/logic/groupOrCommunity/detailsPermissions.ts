@@ -116,6 +116,22 @@ export function chatManageAccess(
 }
 
 /**
+ * Whether the viewer may switch the chat's disappearing messages on and off and set how long they
+ * last (the native details' This chat): what its settings let them change (`chatManageAccess`),
+ * so the details and the settings agree. Owners only, as the old UIs and the web's settings have
+ * it, though the backend lets anyone whose role meets "Update group" change them.
+ */
+export function canChangeDisappearing(
+    client: OpenChat,
+    chat: MultiUserChat,
+    community: CommunitySummary | undefined,
+    anon: boolean,
+): boolean {
+    const access = chatManageAccess(client, chat, community, anon);
+    return access.kind === "edit" && !access.readOnly.includes("disappearing");
+}
+
+/**
  * The same for a community: its permissions and who can see it are the owner's
  * (`canChangeCommunityPermissions`, and owner rights for visibility). A community has no history or
  * disappearing messages to lock.

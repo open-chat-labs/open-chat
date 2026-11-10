@@ -2219,6 +2219,7 @@
             "thisChat": "यह चैट",
             "disappearing": "गायब होने वाले संदेश",
             "disappearingHelp": "इस चैट के संदेश आपके चुने हुए समय के बाद आप दोनों के लिए गायब हो जाते हैं।",
+            "disappearingGroupHelp": "इस चैट के संदेश आपके चुने गए समय के बाद सभी के लिए गायब हो जाते हैं।",
             "disappearAfterLabel": "इतने समय बाद गायब",
             "duration": {
                 "minute": "{count, plural, one {# मिनट} other {# मिनट}}",
@@ -2236,6 +2237,7 @@
                 "invite": "आमंत्रित करें"
             },
             "createdBy": "बनाने वाले",
+            "created": "बनाया गया",
             "history": "इतिहास",
             "historyVisible": "नए सदस्यों को दिखता है",
             "historyHidden": "नए सदस्यों से छिपा है",
@@ -2253,18 +2255,20 @@
             },
             "deleteGroup": "ग्रुप हटाएँ",
             "deleteChannel": "चैनल हटाएँ",
-            "deleteTitle": "{name} हटाएँ?",
-            "deleteGroupMessage": "ग्रुप और उसके सभी संदेश सबके लिए हट जाते हैं। इसे वापस नहीं लिया जा सकता।",
-            "deleteChannelMessage": "चैनल और उसके सभी संदेश सबके लिए हट जाते हैं। इसे वापस नहीं लिया जा सकता।",
-            "delete": "हटाएँ",
+            "deleted": "{name} हटाया गया",
+            "menu": {
+                "editGroup": "ग्रुप संपादित करें",
+                "editChannel": "चैनल संपादित करें",
+                "copyInviteLink": "आमंत्रण लिंक कॉपी करें"
+            },
             "members": {
                 "you": "आप",
                 "search": "सदस्य खोजें",
-                "owners": "मालिक · {count}",
-                "admins": "एडमिन · {count}",
-                "moderators": "मॉडरेटर · {count}",
-                "members": "सदस्य · {count}",
-                "blocked": "ब्लॉक किए गए · {count}",
+                "owners": "{count, plural, =1 {मालिक} other {मालिक · #}}",
+                "admins": "{count, plural, =1 {एडमिन} other {एडमिन · #}}",
+                "moderators": "{count, plural, =1 {मॉडरेटर} other {मॉडरेटर · #}}",
+                "members": "{count, plural, =1 {सदस्य} other {सदस्य · #}}",
+                "blocked": "{count, plural, =1 {ब्लॉक किए गए} other {ब्लॉक किए गए · #}}",
                 "options": "सदस्य विकल्प",
                 "make": {
                     "owner": "मालिक बनाएँ",
@@ -2276,6 +2280,7 @@
                 "block": "ब्लॉक करें",
                 "unblock": "अनब्लॉक करें",
                 "removed": "{name} को हटाया गया",
+                "unblockedRejoin": "{name} को अनब्लॉक किया गया। वे फिर से जुड़ सकते हैं",
                 "now": {
                     "owner": "{name} अब मालिक हैं",
                     "admin": "{name} अब एडमिन हैं",

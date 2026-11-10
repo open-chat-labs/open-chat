@@ -2219,6 +2219,7 @@
             "thisChat": "Cuộc trò chuyện này",
             "disappearing": "Tin nhắn tự xóa",
             "disappearingHelp": "Tin nhắn trong cuộc trò chuyện này sẽ biến mất với cả hai sau khoảng thời gian bạn chọn.",
+            "disappearingGroupHelp": "Tin nhắn trong cuộc trò chuyện này sẽ biến mất với mọi người sau khoảng thời gian bạn chọn.",
             "disappearAfterLabel": "Biến mất sau",
             "duration": {
                 "minute": "{count, plural, other {# phút}}",
@@ -2236,6 +2237,7 @@
                 "invite": "Mời"
             },
             "createdBy": "Người tạo",
+            "created": "Ngày tạo",
             "history": "Lịch sử",
             "historyVisible": "Thành viên mới xem được",
             "historyHidden": "Ẩn với thành viên mới",
@@ -2253,18 +2255,20 @@
             },
             "deleteGroup": "Xóa nhóm",
             "deleteChannel": "Xóa kênh",
-            "deleteTitle": "Xóa {name}?",
-            "deleteGroupMessage": "Nhóm và mọi tin nhắn trong đó sẽ bị xóa với tất cả mọi người. Không thể hoàn tác.",
-            "deleteChannelMessage": "Kênh và mọi tin nhắn trong đó sẽ bị xóa với tất cả mọi người. Không thể hoàn tác.",
-            "delete": "Xóa",
+            "deleted": "Đã xóa {name}",
+            "menu": {
+                "editGroup": "Chỉnh sửa nhóm",
+                "editChannel": "Chỉnh sửa kênh",
+                "copyInviteLink": "Sao chép liên kết mời"
+            },
             "members": {
                 "you": "Bạn",
                 "search": "Tìm thành viên",
-                "owners": "Chủ sở hữu · {count}",
-                "admins": "Quản trị viên · {count}",
-                "moderators": "Điều hành viên · {count}",
-                "members": "Thành viên · {count}",
-                "blocked": "Đã chặn · {count}",
+                "owners": "{count, plural, =1 {Chủ sở hữu} other {Chủ sở hữu · #}}",
+                "admins": "{count, plural, =1 {Quản trị viên} other {Quản trị viên · #}}",
+                "moderators": "{count, plural, =1 {Điều hành viên} other {Điều hành viên · #}}",
+                "members": "{count, plural, =1 {Thành viên} other {Thành viên · #}}",
+                "blocked": "{count, plural, =1 {Đã chặn} other {Đã chặn · #}}",
                 "options": "Tùy chọn thành viên",
                 "make": {
                     "owner": "Đặt làm chủ sở hữu",
@@ -2276,6 +2280,7 @@
                 "block": "Chặn",
                 "unblock": "Bỏ chặn",
                 "removed": "Đã xóa {name}",
+                "unblockedRejoin": "Đã bỏ chặn {name}. Họ có thể tham gia lại",
                 "now": {
                     "owner": "{name} giờ là chủ sở hữu",
                     "admin": "{name} giờ là quản trị viên",

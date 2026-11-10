@@ -1462,6 +1462,12 @@ export type GroupChatCreated = {
     created_by: string;
 };
 
+/** When a group or channel was created, and by whom: its first event's (`GroupChatCreated`). */
+export type GroupCreation = {
+    timestamp: bigint;
+    createdBy: string;
+};
+
 export type DirectChatCreated = {
     kind: "direct_chat_created";
 };

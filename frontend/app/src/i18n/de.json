@@ -2219,6 +2219,7 @@
             "thisChat": "Dieser Chat",
             "disappearing": "Selbstlöschende Nachrichten",
             "disappearingHelp": "Nachrichten in diesem Chat verschwinden für euch beide nach der gewählten Zeit.",
+            "disappearingGroupHelp": "Nachrichten in diesem Chat verschwinden nach der gewählten Zeit für alle.",
             "disappearAfterLabel": "Verschwinden nach",
             "duration": {
                 "minute": "{count, plural, one {# Minute} other {# Minuten}}",
@@ -2236,6 +2237,7 @@
                 "invite": "Einladen"
             },
             "createdBy": "Erstellt von",
+            "created": "Erstellt",
             "history": "Verlauf",
             "historyVisible": "Für neue Mitglieder sichtbar",
             "historyHidden": "Für neue Mitglieder verborgen",
@@ -2253,18 +2255,20 @@
             },
             "deleteGroup": "Gruppe löschen",
             "deleteChannel": "Kanal löschen",
-            "deleteTitle": "{name} löschen?",
-            "deleteGroupMessage": "Die Gruppe und alle ihre Nachrichten werden für alle gelöscht. Das lässt sich nicht rückgängig machen.",
-            "deleteChannelMessage": "Der Kanal und alle seine Nachrichten werden für alle gelöscht. Das lässt sich nicht rückgängig machen.",
-            "delete": "Löschen",
+            "deleted": "{name} gelöscht",
+            "menu": {
+                "editGroup": "Gruppe bearbeiten",
+                "editChannel": "Kanal bearbeiten",
+                "copyInviteLink": "Einladungslink kopieren"
+            },
             "members": {
                 "you": "Du",
                 "search": "Mitglieder suchen",
-                "owners": "Inhaber · {count}",
-                "admins": "Admins · {count}",
-                "moderators": "Moderatoren · {count}",
-                "members": "Mitglieder · {count}",
-                "blocked": "Blockiert · {count}",
+                "owners": "{count, plural, =1 {Inhaber} other {Inhaber · #}}",
+                "admins": "{count, plural, =1 {Admins} other {Admins · #}}",
+                "moderators": "{count, plural, =1 {Moderatoren} other {Moderatoren · #}}",
+                "members": "{count, plural, =1 {Mitglieder} other {Mitglieder · #}}",
+                "blocked": "{count, plural, =1 {Blockiert} other {Blockiert · #}}",
                 "options": "Mitgliedsoptionen",
                 "make": {
                     "owner": "Zum Inhaber machen",
@@ -2276,6 +2280,7 @@
                 "block": "Blockieren",
                 "unblock": "Entsperren",
                 "removed": "{name} entfernt",
+                "unblockedRejoin": "{name} entsperrt. Die Person kann wieder beitreten",
                 "now": {
                     "owner": "{name} ist jetzt Inhaber",
                     "admin": "{name} ist jetzt Admin",

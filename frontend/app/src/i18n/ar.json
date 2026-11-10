@@ -2219,6 +2219,7 @@
             "thisChat": "هذه المحادثة",
             "disappearing": "الرسائل المؤقتة",
             "disappearingHelp": "تختفي الرسائل في هذه المحادثة لديكما بعد المدة التي تختارها.",
+            "disappearingGroupHelp": "تختفي الرسائل في هذه الدردشة لدى الجميع بعد المدة التي تختارها.",
             "disappearAfterLabel": "تختفي بعد",
             "duration": {
                 "minute": "{count, plural, zero {# دقيقة} one {دقيقة واحدة} two {دقيقتان} few {# دقائق} many {# دقيقة} other {# دقيقة}}",
@@ -2236,6 +2237,7 @@
                 "invite": "دعوة"
             },
             "createdBy": "أنشأها",
+            "created": "تاريخ الإنشاء",
             "history": "السجل",
             "historyVisible": "مرئي للأعضاء الجدد",
             "historyHidden": "مخفي عن الأعضاء الجدد",
@@ -2253,18 +2255,20 @@
             },
             "deleteGroup": "حذف المجموعة",
             "deleteChannel": "حذف القناة",
-            "deleteTitle": "حذف {name}؟",
-            "deleteGroupMessage": "تُحذف المجموعة وجميع رسائلها لدى الجميع. لا يمكن التراجع عن ذلك.",
-            "deleteChannelMessage": "تُحذف القناة وجميع رسائلها لدى الجميع. لا يمكن التراجع عن ذلك.",
-            "delete": "حذف",
+            "deleted": "تم حذف {name}",
+            "menu": {
+                "editGroup": "تعديل المجموعة",
+                "editChannel": "تعديل القناة",
+                "copyInviteLink": "نسخ رابط الدعوة"
+            },
             "members": {
                 "you": "أنت",
                 "search": "البحث في الأعضاء",
-                "owners": "المالكون · {count}",
-                "admins": "المشرفون · {count}",
-                "moderators": "المراقبون · {count}",
-                "members": "الأعضاء · {count}",
-                "blocked": "المحظورون · {count}",
+                "owners": "{count, plural, =1 {المالكون} other {المالكون · #}}",
+                "admins": "{count, plural, =1 {المشرفون} other {المشرفون · #}}",
+                "moderators": "{count, plural, =1 {المراقبون} other {المراقبون · #}}",
+                "members": "{count, plural, =1 {الأعضاء} other {الأعضاء · #}}",
+                "blocked": "{count, plural, =1 {المحظورون} other {المحظورون · #}}",
                 "options": "خيارات العضو",
                 "make": {
                     "owner": "تعيين مالكًا",
@@ -2276,6 +2280,7 @@
                 "block": "حظر",
                 "unblock": "إلغاء الحظر",
                 "removed": "تمت إزالة {name}",
+                "unblockedRejoin": "تم إلغاء حظر {name}. يمكنه الانضمام مجددًا",
                 "now": {
                     "owner": "{name} مالك الآن",
                     "admin": "{name} مشرف الآن",

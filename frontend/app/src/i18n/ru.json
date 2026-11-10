@@ -2219,6 +2219,7 @@
             "thisChat": "Этот чат",
             "disappearing": "Исчезающие сообщения",
             "disappearingHelp": "Сообщения в этом чате исчезают у вас обоих через выбранное время.",
+            "disappearingGroupHelp": "Сообщения в этом чате исчезают у всех через выбранное время.",
             "disappearAfterLabel": "Исчезают через",
             "duration": {
                 "minute": "{count, plural, one {# минута} few {# минуты} many {# минут} other {# минуты}}",
@@ -2236,6 +2237,7 @@
                 "invite": "Пригласить"
             },
             "createdBy": "Создатель",
+            "created": "Создано",
             "history": "История",
             "historyVisible": "Видна новым участникам",
             "historyHidden": "Скрыта от новых участников",
@@ -2253,18 +2255,20 @@
             },
             "deleteGroup": "Удалить группу",
             "deleteChannel": "Удалить канал",
-            "deleteTitle": "Удалить {name}?",
-            "deleteGroupMessage": "Группа и все её сообщения будут удалены для всех. Это нельзя отменить.",
-            "deleteChannelMessage": "Канал и все его сообщения будут удалены для всех. Это нельзя отменить.",
-            "delete": "Удалить",
+            "deleted": "Удалено: {name}",
+            "menu": {
+                "editGroup": "Изменить группу",
+                "editChannel": "Изменить канал",
+                "copyInviteLink": "Скопировать ссылку-приглашение"
+            },
             "members": {
                 "you": "Вы",
                 "search": "Поиск участников",
-                "owners": "Владельцы · {count}",
-                "admins": "Администраторы · {count}",
-                "moderators": "Модераторы · {count}",
-                "members": "Участники · {count}",
-                "blocked": "Заблокированные · {count}",
+                "owners": "{count, plural, =1 {Владельцы} other {Владельцы · #}}",
+                "admins": "{count, plural, =1 {Администраторы} other {Администраторы · #}}",
+                "moderators": "{count, plural, =1 {Модераторы} other {Модераторы · #}}",
+                "members": "{count, plural, =1 {Участники} other {Участники · #}}",
+                "blocked": "{count, plural, =1 {Заблокированные} other {Заблокированные · #}}",
                 "options": "Действия с участником",
                 "make": {
                     "owner": "Сделать владельцем",
@@ -2276,6 +2280,7 @@
                 "block": "Заблокировать",
                 "unblock": "Разблокировать",
                 "removed": "Удалено: {name}",
+                "unblockedRejoin": "{name} разблокирован(а). Может снова вступить",
                 "now": {
                     "owner": "{name} теперь владелец",
                     "admin": "{name} теперь администратор",
