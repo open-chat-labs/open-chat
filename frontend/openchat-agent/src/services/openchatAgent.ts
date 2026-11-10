@@ -3574,8 +3574,9 @@ export class OpenChatAgent extends EventTarget {
         return this._dataClient.storageStatus();
     }
 
-    refreshAccountBalance(ledger: string, userId: string): Promise<bigint> {
-        if (offline()) return Promise.resolve(0n);
+    // Undefined while offline: the ledger wasn't asked, so nothing is known of the balance
+    refreshAccountBalance(ledger: string, userId: string): Promise<bigint | undefined> {
+        if (offline()) return Promise.resolve(undefined);
 
         return this._ledgerClient.accountBalance(ledger, this.walletAccount(userId));
     }

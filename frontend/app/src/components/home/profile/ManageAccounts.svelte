@@ -5,6 +5,7 @@
         defaultWalletLedgers,
         OpenChat,
         walletConfigStore,
+        walletTokensUnavailable,
     } from "@client";
     import type { EnhancedTokenDetails } from "@client";
     import { WalletSettingsForm } from "@src/logic/wallet/walletSettingsForm.svelte";
@@ -70,18 +71,28 @@
     }
 
     let searchTermLower = $derived(searchTerm.toLowerCase());
-    let filteredTokens = $derived(
-        $accountsSorted.filter(
-            (token) =>
-                searchTermLower === "" ||
-                token.name.toLowerCase().includes(searchTermLower) ||
-                token.symbol.toLowerCase().includes(searchTermLower),
-        ),
-    );
+    function matchesSearch(token: EnhancedTokenDetails): boolean {
+        return (
+            searchTermLower === "" ||
+            token.name.toLowerCase().includes(searchTermLower) ||
+            token.symbol.toLowerCase().includes(searchTermLower)
+        );
+    }
+    let filteredTokens = $derived($accountsSorted.filter(matchesSearch));
     // the tokens whose ledger didn't answer (eg. it is out of cycles) go in a group of their own
-    // under the rest: their balances aren't known, so they can't be ordered or judged by them
+    // under the rest: their balances aren't known, so they can't be ordered or judged by them.
+    // With them goes a token the wallet has picked which the list leaves out, a disabled one it
+    // has never read a balance of, so that it can be seen and unpicked
     let availableTokens = $derived(filteredTokens.filter((token) => !token.balanceUnavailable));
-    let unavailableTokens = $derived(filteredTokens.filter((token) => token.balanceUnavailable));
+    let unavailableTokens = $derived.by(() => {
+        const listed = new Set($accountsSorted.map((token) => token.ledger));
+        return [
+            ...filteredTokens.filter((token) => token.balanceUnavailable),
+            ...$walletTokensUnavailable.filter(
+                (token) => !listed.has(token.ledger) && matchesSearch(token),
+            ),
+        ];
+    });
 </script>
 
 {#snippet tokenRow(token: EnhancedTokenDetails, tokens: Set<string>)}

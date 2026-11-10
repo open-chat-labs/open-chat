@@ -88,6 +88,20 @@ describe("refreshing an account balance", () => {
         expect(cryptoBalanceStore.value.get(LEDGER_CANISTER_ICP)).toBe(700n);
     });
 
+    // Invariant 4: offline, the worker doesn't ask the ledger and answers undefined. That says
+    // nothing about the balance: a 0 mustn't replace the one held, nor a mark be set or cleared
+    test("a refresh which wasn't made, being offline, changes nothing", async () => {
+        cryptoBalanceStore.setBalance(LEDGER_CANISTER_ICP, 500n);
+        cryptoBalanceStore.setUnavailable(LEDGER_CANISTER_ICP);
+        vi.spyOn(WorkerAgent.prototype, "send").mockResolvedValue(undefined);
+
+        await expect(client.refreshAccountBalance(LEDGER_CANISTER_ICP)).resolves.toBeUndefined();
+        await client.refreshAccountBalance(LEDGER_CANISTER_CHAT);
+
+        expect(cryptoBalanceStore.value.get(LEDGER_CANISTER_ICP)).toBe(500n);
+        expect([...balanceUnavailableStore.value]).toEqual([LEDGER_CANISTER_ICP]);
+    });
+
     // Invariant 3: a lookup which failed for a passing reason doesn't leave its ledger marked for
     // the session: the wallet asks again for the marked ones as it opens
     test("asking again for the marked ledgers clears those which now answer", async () => {

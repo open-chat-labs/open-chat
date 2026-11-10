@@ -8370,9 +8370,10 @@ export class OpenChat {
         }
     }
 
-    // Resolves with the balance, or undefined if it couldn't be refreshed (eg. the ledger is out of
-    // cycles). Never rejects, and a failure leaves the cached balance as it was, marking the ledger
-    // in `balanceUnavailableStore` until a balance is next read from it.
+    // Resolves with the balance, or undefined if it couldn't be refreshed. Never rejects, and the
+    // cached balance is left as it was. A ledger which didn't answer (eg. it is out of cycles) is
+    // marked in `balanceUnavailableStore` until a balance is next read from it; one which wasn't
+    // asked, being offline, is left as it was.
     refreshAccountBalance(
         ledger: string,
         allowCached: boolean = false,
@@ -8412,10 +8413,14 @@ export class OpenChat {
                                 principal: user.userId,
                             })
                             .then((val) => {
-                                cryptoBalanceStore.setBalance(ledger, val);
+                                // Undefined: the worker is offline, so didn't ask the ledger.
+                                // Nothing was learnt, so the balance and any mark stay as they are
+                                if (val !== undefined) {
+                                    cryptoBalanceStore.setBalance(ledger, val);
+                                }
                                 return val;
                             }),
-                        new Promise<bigint>((_, reject) =>
+                        new Promise<undefined>((_, reject) =>
                             window.setTimeout(
                                 () => reject(new Error("refreshAccountBalance timed out")),
                                 20_000,
@@ -8546,6 +8551,7 @@ export class OpenChat {
                 ledger: LEDGER_CANISTER_CHAT,
                 principal: this.config.translationsCanister,
             })
+            .then((balance) => balance ?? 0n)
             .catch(() => 0n);
     }
 
