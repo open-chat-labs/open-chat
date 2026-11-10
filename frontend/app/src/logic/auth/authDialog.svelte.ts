@@ -35,12 +35,14 @@ export type AuthDialogHost = Required<
     lastEmail: () => string;
     /** Whoever the referral link this browser came in on names, if anyone (looked up once). */
     loadReferrer: () => Promise<AuthPerson | undefined>;
+    /** Each way to sign in as AuthDialog names it. */
+    options: Record<AuthProvider, AuthOption>;
 };
 
 /**
  * AuthDialog's props for one host, all but `kind` and `onClose`: the same for the app's
  * AuthScreen and for Landing and Learn (their PageAuth), so the two can't drift apart. Hosts
- * call `opening` as the dialog opens. `option` names a sign-in method as AuthDialog does.
+ * call `opening` as the dialog opens.
  */
 export class AuthDialogProps {
     #referrer = $state<AuthPerson | undefined>(undefined);
@@ -48,10 +50,7 @@ export class AuthDialogProps {
     // AuthDialog only reads it as it mounts, so it's read as the dialog opens
     #email = $state("");
 
-    constructor(
-        private readonly auth: AuthDialogHost,
-        private readonly option: (provider: AuthProvider) => AuthOption,
-    ) {}
+    constructor(private readonly auth: AuthDialogHost) {}
 
     /**
      * The dialog is opening: reads the address a link last went to, and looks up the referral
@@ -79,7 +78,7 @@ export class AuthDialogProps {
             restrictTo,
             { webAuthn: "PublicKeyCredential" in window, native: auth.native },
             last,
-        ).map(this.option);
+        ).map((provider) => auth.options[provider]);
         return {
             methods,
             // sign-up's form makes a passkey: without one on offer, a new person signs in another

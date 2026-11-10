@@ -1,5 +1,4 @@
 import {
-    anonUserStore,
     type ChatSummary,
     type CommunitySummary,
     type MessageFormatter,
@@ -78,7 +77,7 @@ export function runChatMenuItem(
         if (failed !== undefined) toastStore.showFailureToast(failed);
     };
     // a guest can look at the details and copy the link; the rest asks them to sign in
-    if (!GUEST_ITEMS.has(id) && signInFirst(client, anonUserStore.value)) return;
+    if (!GUEST_ITEMS.has(id) && signInFirst(client)) return;
     switch (id) {
         case "manage":
             if (chat.kind !== "direct_chat") {

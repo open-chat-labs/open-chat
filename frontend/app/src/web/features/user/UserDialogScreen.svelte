@@ -9,8 +9,9 @@
         buildUserAvatarUrl,
         buildUserBackgroundUrl,
         lastOnlineStatus,
+        chatListScopeStore,
+        chatSummariesListStore,
         currentUserIdStore,
-        routeForChatIdentifier,
         favouritesStore,
         OpenChat,
         selectedChatSummaryStore,
@@ -25,6 +26,7 @@
     import Markdown from "@src/core/Markdown.svelte";
     import { profileCardChat } from "@src/logic/profile/profileCard";
     import { askToSignIn } from "@src/logic/auth/guestPass";
+    import { chatWithRoute } from "@src/logic/appEvents/appEvents";
     import { ProfileCardBlock, ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
     import { disableChit } from "@src/stores/settings";
     import { toastStore } from "@src/stores/toast";
@@ -112,7 +114,10 @@
         onClose();
         const chatId = profileCardChat(dialog);
         if ($anonUserStore) {
-            askToSignIn(client, routeForChatIdentifier("chats", chatId));
+            askToSignIn(
+                client,
+                chatWithRoute(chatId, chatSummariesListStore.value, chatListScopeStore.value),
+            );
         } else {
             publish("chatWith", chatId);
         }

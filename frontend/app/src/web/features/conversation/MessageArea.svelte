@@ -962,7 +962,7 @@
         const offered = offeredFor(current, evt, failed, confirmed);
         if (pickerOnly ? !offered.react : !offered.menu) return;
         // a guest's reaction asks them to sign in, before they pick one
-        if (pickerOnly && signInFirst(client, $anonUserStore)) return;
+        if (pickerOnly && signInFirst(client)) return;
         menu = { context: rowContext(evt), evt, failed, offered, pos, pickerOnly };
     }
 
@@ -1074,7 +1074,7 @@
     // a reaction added or taken off (toggleReaction counts it towards the quick ones); a guest
     // (a chip, the hover bar's or the menu's) is asked to sign in
     function react(context: MessageContext, evt: EventWrapper<Message>, emoji: string) {
-        if (signInFirst(client, $anonUserStore)) return;
+        if (signInFirst(client)) return;
         void toggleReaction(client, context, evt.event, emoji);
     }
 

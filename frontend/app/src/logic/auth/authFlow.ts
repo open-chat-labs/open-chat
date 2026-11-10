@@ -52,6 +52,20 @@ export function nextAuthKind(
 }
 
 /**
+ * Whether an identity change ended the open in-app AuthDialog's sign-in with nobody signed in: back
+ * to anonymous without the dialog being closed (an II or NFID window closed, an identity that
+ * didn't load), which hides it (`nextAuthKind`). That walks away from the sign-in as closing does,
+ * so what it was to go on to (a page, a join, creating a community) is dropped: a later sign-in
+ * mustn't pick it up.
+ */
+export function signInEndedSignedOut(
+    current: AuthDialogKind | null,
+    state: IdentityState,
+): boolean {
+    return current !== null && state.kind === "anon";
+}
+
+/**
  * What closing an AuthDialog, or leaving the app with its dialog open, does to the identity: a
  * sign-in the client is still logging in is given up, so "/" shows Landing. (An identity without
  * an account the dialog leaves behind is signed out by `Auth.cancel`.)

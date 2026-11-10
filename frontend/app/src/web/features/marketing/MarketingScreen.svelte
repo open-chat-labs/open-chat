@@ -37,7 +37,6 @@
     import { getContext, onDestroy, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { AuthDialogProps, pageSignIns } from "@src/logic/auth/authDialog.svelte";
-    import { OPTIONS } from "../auth/auth.adapter";
     import { createAuth } from "../auth/signIn";
     import { accentStore } from "@theme/accent";
     import { LazyModule } from "../../lazyModule.svelte";
@@ -76,7 +75,7 @@
             navigate(pageSignIns.destination());
         },
     });
-    const dialog = new AuthDialogProps(auth, (provider) => OPTIONS[provider]);
+    const dialog = new AuthDialogProps(auth);
     // the method last used, read as the dialog opens rather than live: starting one doesn't move
     // the tiles
     let last = $state(selectedAuthProviderStore.value);

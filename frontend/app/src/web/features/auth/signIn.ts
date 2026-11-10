@@ -18,7 +18,7 @@ import {
     searchReferrers,
     signUp,
 } from "@src/logic/auth/signUp";
-import { emailLinkResult, person, PROVIDERS, WALLETS } from "./auth.adapter";
+import { emailLinkResult, OPTIONS, person, PROVIDERS, WALLETS } from "./auth.adapter";
 
 // AuthDialog's host callbacks, on the client's operations: a sign-in settles with client.signIn's
 // outcome, an emailed link with client.requestEmailSignIn's, a sign-up with client.signUp's
@@ -134,6 +134,7 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
     return {
         wallets: AUTH_WALLETS,
         termsUrl: "/terms",
+        options: OPTIONS,
         native: client.isNativeApp(),
 
         // sign-up is the form (onSignup); every method signs in, and an identity without an

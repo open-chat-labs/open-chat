@@ -34,7 +34,7 @@
     import { leftToBrowser, movesToFragment, pageOf } from "./links";
     import { shareQuery } from "../features/app/dialogs";
     import RouteEffects from "@src/core/RouteEffects.svelte";
-    import { askToSignIn, GUEST_HOME } from "@src/logic/auth/guestPass";
+    import { askToSignInForThisPage, GUEST_HOME } from "@src/logic/auth/guestPass";
 
     let { children }: { children: Snippet } = $props();
 
@@ -152,7 +152,7 @@
     // sign in over Explore, in its place in history, and goes on to the page once signed in
     // (AppScreen). Closing the sign-in leaves them on Explore.
     function onGuestSignIn() {
-        askToSignIn(client, `${location.pathname}${location.search}`);
+        askToSignInForThisPage(client);
         navigate(GUEST_HOME, "auto");
     }
 

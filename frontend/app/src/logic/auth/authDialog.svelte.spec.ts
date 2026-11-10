@@ -1,20 +1,9 @@
 import { AuthProvider, identityStateStore } from "@client";
-import type { AuthOption } from "@openchat/ui/src/features/components/AuthDialog.svelte";
+import { OPTIONS } from "@src/web/features/auth/auth.adapter";
 import { flushSync } from "svelte";
 import { AuthDialogProps, pageSignIns, type AuthDialogHost } from "./authDialog.svelte";
 
 let lastEmail = "me@example.com";
-
-// the methods as AuthDialog names them (the web's auth.adapter)
-const OPTIONS: Record<AuthProvider, AuthOption> = {
-    [AuthProvider.PASSKEY]: "passkey",
-    [AuthProvider.EMAIL]: "email",
-    [AuthProvider.II]: "ii",
-    [AuthProvider.ETH]: "eth",
-    [AuthProvider.SOL]: "sol",
-    [AuthProvider.NFID]: "nfid",
-};
-const option = (provider: AuthProvider) => OPTIONS[provider];
 
 function fakeAuth(referrer: Promise<{ userId: string; name: string }>) {
     return {
@@ -22,6 +11,8 @@ function fakeAuth(referrer: Promise<{ userId: string; name: string }>) {
         termsUrl: "/terms",
         lastEmail: () => lastEmail,
         loadReferrer: () => referrer,
+        // the methods as AuthDialog names them: the web's own table, which createAuth gives
+        options: OPTIONS,
     } as unknown as AuthDialogHost;
 }
 
@@ -32,7 +23,7 @@ describe("the dialog's props", () => {
         const dialog = new AuthDialogProps({
             ...fakeAuth(referrer),
             loadReferrer,
-        } as unknown as AuthDialogHost, option);
+        } as unknown as AuthDialogHost);
         expect(loadReferrer).not.toHaveBeenCalled();
         dialog.opening();
         expect(dialog.props([], AuthProvider.PASSKEY).referrer).toBeUndefined();
@@ -45,7 +36,7 @@ describe("the dialog's props", () => {
 
     test("put the method the host says was last used first", () => {
         vi.stubGlobal("PublicKeyCredential", class {});
-        const dialog = new AuthDialogProps(fakeAuth(new Promise(() => {})), option);
+        const dialog = new AuthDialogProps(fakeAuth(new Promise(() => {})));
         expect(dialog.props(["II", "ETH"], AuthProvider.ETH).methods).toEqual(["eth", "ii"]);
         // without a passkey on offer, Create account (a passkey) isn't either
         expect(dialog.props(["II", "ETH"], AuthProvider.ETH).passkeySignup).toBe(false);
@@ -56,7 +47,7 @@ describe("the dialog's props", () => {
 
 describe("the prefilled email", () => {
     test("is the last address a link went to, read again when the dialog opens", () => {
-        const dialog = new AuthDialogProps(fakeAuth(new Promise(() => {})), option);
+        const dialog = new AuthDialogProps(fakeAuth(new Promise(() => {})));
         lastEmail = "first@example.com";
         dialog.opening();
         lastEmail = "second@example.com";

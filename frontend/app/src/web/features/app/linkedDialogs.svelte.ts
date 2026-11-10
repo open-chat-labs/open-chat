@@ -1,5 +1,12 @@
+import { anonUserStore } from "@client";
 import { navigate } from "@src/utils/navigation";
-import { linkedDialog, openLinkedDialog, shownLinkedDialog, type LinkedDialog } from "./dialogs";
+import {
+    linkedDialog,
+    linkedDialogNeedsAccount,
+    openLinkedDialog,
+    shownLinkedDialog,
+    type LinkedDialog,
+} from "./dialogs";
 
 // Linked dialogs opened one from another (the CHIT dialog's leaderboard, the profile on its CHIT
 // section from the CHIT dialog …) make a chain. Each takes the last one's place over the same
@@ -74,17 +81,35 @@ export function urlChanged(url: string): void {
 }
 
 /**
- * Opens a linked dialog from outside the dialogs (the rail, a toast, a link in a message): over the
- * page in a history entry of its own, which Back closes, or in place of a dialog showing, in its
- * entry. Nothing to go back to from it. From the URL as it is: the query store's values are
- * decoded, so they can't be written back.
+ * How a linked dialog opened from outside the dialogs goes into history: over the page in an entry
+ * of its own (`overlay`), which Back closes; in place of a dialog showing, in its entry (`auto`);
+ * and in place of the page's entry (`auto`) for one a guest is asked to sign in for, which never
+ * shows: DialogHost asks, and drops it from the URL again with a replace, so no entry is left over
+ * that Back would seem to do nothing on.
+ */
+export function openLinkedIntent(
+    query: URLSearchParams,
+    dialog: LinkedDialog,
+    guest: boolean,
+): "auto" | "overlay" {
+    const showing = linkedDialog(query) !== undefined;
+    return showing || (guest && linkedDialogNeedsAccount(dialog)) ? "auto" : "overlay";
+}
+
+/**
+ * Opens a linked dialog from outside the dialogs (the rail, a toast, a link in a message), as
+ * `openLinkedIntent` says. Nothing to go back to from it. From the URL as it is: the query store's
+ * values are decoded, so they can't be written back.
  */
 export function openLinked(dialog: LinkedDialog): void {
-    const query = openLinkedDialog(new URLSearchParams(window.location.search), dialog);
+    const current = new URLSearchParams(window.location.search);
+    const query = openLinkedDialog(current, dialog);
     if (query === undefined) return;
-    const showing = linkedDialog(new URLSearchParams(window.location.search)) !== undefined;
     state.chain = undefined;
-    navigate(`${window.location.pathname}${query}`, showing ? "auto" : "overlay");
+    navigate(
+        `${window.location.pathname}${query}`,
+        openLinkedIntent(current, dialog, anonUserStore.value),
+    );
 }
 
 /**

@@ -188,7 +188,7 @@
 
     // a guest is asked to sign in first
     function createGroup() {
-        if (signInFirst(client, $anonUserStore)) return;
+        if (signInFirst(client)) return;
         screen.dialogs.open({ kind: "create_group", level: "group" });
     }
 
@@ -196,7 +196,7 @@
     function onHeaderMenu(item: string) {
         if (item === "markAllRead") {
             // a guest has read nothing: they're asked to sign in (logic/auth/guestPass)
-            if (signInFirst(client, $anonUserStore)) return;
+            if (signInFirst(client)) return;
             client.markAllReadForCurrentScope();
             return;
         }

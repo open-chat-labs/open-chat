@@ -27,7 +27,7 @@
     import type { CashtagClickedEvent } from "@webcomponents/cashTag";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import { getContext, untrack } from "svelte";
-    import { askToSignIn } from "@src/logic/auth/guestPass";
+    import { askToSignInForThisPage } from "@src/logic/auth/guestPass";
     import { closeOnNavigation, type DialogStack } from "../../shell/dialogStack.svelte";
     import RulesDialog from "../conversation/RulesDialog.svelte";
     import PinPromptHost from "../pin/PinPromptHost.svelte";
@@ -75,7 +75,7 @@
         if (!asksSignIn || requested === undefined) return;
         const param = linkedDialogParam(requested);
         untrack(() => {
-            askToSignIn(client, `${window.location.pathname}${window.location.search}`);
+            askToSignInForThisPage(client);
             navigate(removeQueryStringParam(param), "auto");
         });
     });

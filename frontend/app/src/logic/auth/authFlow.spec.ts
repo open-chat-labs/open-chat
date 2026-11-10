@@ -4,6 +4,7 @@ import {
     nextAuthKind,
     onAuthClosed,
     showsSignedOut,
+    signInEndedSignedOut,
     withoutAccount,
 } from "./authFlow";
 
@@ -50,6 +51,24 @@ describe("the in-app dialog's kind", () => {
 
     test("keeps sign-up while the client asks for sign-in again", () => {
         expect(nextAuthKind("signup", { kind: "logging_in" })).toBe("signup");
+    });
+});
+
+describe("a sign-in that ends signed out without the dialog closing", () => {
+    test("is walked away from: an II window closed with the dialog open", () => {
+        expect(signInEndedSignedOut("login", { kind: "anon" })).toBe(true);
+        expect(signInEndedSignedOut("signup", { kind: "anon" })).toBe(true);
+    });
+
+    test("isn't while it goes on, nor once someone signs in, nor with no dialog open", () => {
+        expect(signInEndedSignedOut("login", { kind: "logging_in" })).toBe(false);
+        expect(signInEndedSignedOut("login", { kind: "loading_user", registering: false })).toBe(
+            false,
+        );
+        expect(signInEndedSignedOut("signup", { kind: "registering" })).toBe(false);
+        expect(signInEndedSignedOut("login", { kind: "logged_in" })).toBe(false);
+        // closed by hand first (AuthScreen's close drops what it was to go on to itself)
+        expect(signInEndedSignedOut(null, { kind: "anon" })).toBe(false);
     });
 });
 

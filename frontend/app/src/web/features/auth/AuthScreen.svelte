@@ -17,11 +17,11 @@
         afterAbandoned,
         nextAuthKind,
         onAuthClosed,
+        signInEndedSignedOut,
         withoutAccount,
         type AuthDialogKind,
     } from "@src/logic/auth/authFlow";
     import { AuthDialogProps } from "@src/logic/auth/authDialog.svelte";
-    import { OPTIONS } from "./auth.adapter";
     import { createAuth, signInAbandoned, type Auth } from "./signIn";
 
     const client = getContext<OpenChat>("client");
@@ -38,6 +38,8 @@
             // again: only the client asking for a sign-in does (afterAbandoned)
             if (signInAbandoned() && afterAbandoned(state) !== "end") return;
             const opening = kind === null;
+            // ended without signing in, not by closing (the II window closed): walked away from too
+            if (signInEndedSignedOut(kind, state)) client.clearPostLoginState();
             kind = nextAuthKind(kind, state);
             if (opening && kind !== null) open();
         });
@@ -48,7 +50,7 @@
 
     function open() {
         auth ??= createAuth(client, { translate: (key) => $_(key) });
-        dialog ??= new AuthDialogProps(auth, (provider) => OPTIONS[provider]);
+        dialog ??= new AuthDialogProps(auth);
         dialog.opening();
         last = selectedAuthProviderStore.value;
     }
@@ -56,7 +58,9 @@
     const dialogProps = $derived(dialog?.props($querystringStore.getAll("auth"), last));
 
     // walking away from the sign-in drops what it was to go on to (a page that needs an account, a
-    // join, creating a community): a later sign-in, from the rail say, doesn't pick it up
+    // join, creating a community): a later sign-in, from the rail say, doesn't pick it up. So does
+    // a sign-in that ends signed out without the dialog closing (above), and asking for a sign-in
+    // that goes nowhere in particular replaces it (askToSignIn)
     function close() {
         kind = null;
         auth?.cancel();

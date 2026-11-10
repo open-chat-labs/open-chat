@@ -93,6 +93,8 @@
     import { saveCommunityName } from "@src/logic/profile/communityName";
     import { setNotifications } from "@src/logic/profile/notifications";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
+    // what the dialog's sign-in steps reject with to cancel quietly
+    import { CANCELLED } from "@openchat/ui/src/lib/behaviours/optimistic.svelte";
     import { deleteAccount } from "@src/logic/auth/deleteAccount";
     import { clearCacheAndRestart } from "@src/utils/clearCache";
     import SignInAgainDialog from "../auth/SignInAgainDialog.svelte";
@@ -468,9 +470,6 @@
         unlisted.set(id, initiator);
         return { type, id, title: $_(`ui.profileDialog.signin.${type}`) };
     }
-
-    // what the dialog's sign-in steps reject with to cancel quietly
-    const CANCELLED = { cancelled: true };
 
     // the new method's sign-in, undefined when it didn't go through
     async function newSignIn(type: "passkey" | "ii"): Promise<LinkingIdentity | undefined> {

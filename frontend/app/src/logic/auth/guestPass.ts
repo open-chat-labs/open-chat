@@ -1,4 +1,5 @@
-import type { OpenChat, RouteParams } from "@client";
+import { anonUserStore, type OpenChat, type RouteParams } from "@client";
+import { CANCELLED } from "@openchat/ui/src/lib/behaviours/optimistic.svelte";
 
 // A guest (signed out, in the app) reads Explore and public groups, communities and channels, each
 // a read-only preview. What needs an account asks them to sign in, and then carries on: a page
@@ -42,12 +43,15 @@ export function guestRouteAccess(route: RouteParams): GuestAccess {
 /**
  * Asks a guest to sign in: the app's sign-in dialog opens (the identity goes to "logging_in"), and
  * once they've signed in the app goes on to `continueTo` (a path with its query), or stays where
- * it is without one.
+ * it is without one. Either way it replaces what an earlier sign-in was to go on to: the client
+ * keeps a post-login state it isn't given a new one for, and one that ended without the dialog's
+ * close (an II window closed) mustn't send this one somewhere else.
  */
 export function askToSignIn(
-    client: Pick<OpenChat, "updateIdentityState">,
+    client: Pick<OpenChat, "updateIdentityState" | "clearPostLoginState">,
     continueTo?: string,
 ): void {
+    if (continueTo === undefined) client.clearPostLoginState();
     client.updateIdentityState({
         kind: "logging_in",
         postLogin: continueTo === undefined ? undefined : { kind: "continue_to", path: continueTo },
@@ -55,15 +59,36 @@ export function askToSignIn(
 }
 
 /**
+ * Asks a guest to sign in, going on to the page showing now (its path and query) once they have:
+ * one that needs an account (the router, which shows Explore for it meanwhile), or a linked dialog
+ * over it (DialogHost).
+ */
+export function askToSignInForThisPage(
+    client: Pick<OpenChat, "updateIdentityState" | "clearPostLoginState">,
+): void {
+    askToSignIn(client, `${window.location.pathname}${window.location.search}`);
+}
+
+/**
  * For something only someone with an account can do (follow a thread, mute or favourite a chat …):
- * a guest is asked to sign in instead, staying where they are. Whether they were, so the caller
- * goes no further.
+ * a guest (`anonUserStore`) is asked to sign in instead, staying where they are. Whether they
+ * were, so the caller goes no further.
  */
 export function signInFirst(
-    client: Pick<OpenChat, "updateIdentityState">,
-    guest: boolean,
+    client: Pick<OpenChat, "updateIdentityState" | "clearPostLoginState">,
 ): boolean {
-    if (!guest) return false;
+    if (!anonUserStore.value) return false;
     askToSignIn(client);
     return true;
+}
+
+/**
+ * `signInFirst` for a change the UI shows before it's made (`Optimistic`, `Waited`): a guest is
+ * asked to sign in and the change is given up, rejecting with `CANCELLED`, so it rolls back saying
+ * nothing.
+ */
+export function signInFirstOrCancel(
+    client: Pick<OpenChat, "updateIdentityState" | "clearPostLoginState">,
+): void {
+    if (signInFirst(client)) throw CANCELLED;
 }
