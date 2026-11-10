@@ -90,7 +90,7 @@ export type ManageRow = { page: GroupSettingsPage; icon: string; label: string }
 /** Manage's rows, in the design's order: Access gates, Rules, Permissions, Bots and webhooks, Stats. */
 export function manageRows(t: Translate): ManageRow[] {
     return [
-        { page: "gates", icon: "gate", label: t("native.details.manage.gates") },
+        { page: "gates", icon: "lock", label: t("native.details.manage.gates") },
         { page: "rules", icon: "rules", label: t("native.details.manage.rules") },
         { page: "permissions", icon: "shield", label: t("native.details.manage.permissions") },
         { page: "bots", icon: "bot", label: t("native.details.manage.bots") },

@@ -732,7 +732,8 @@ design export needs. Each entry says where it came up.
   - **Rules** show read only to everyone who can send (the web panel's `chatRulesText`, with the
     community's for a channel); owners and admins edit them from Manage (N7).
   - **Manage** (owners and admins, not in a frozen chat): Access gates, Rules, Permissions, Bots
-    and webhooks, Stats, each pushing N7's page (a local `group_settings` screen, the placeholder
+    and webhooks, Stats (Access gates with a lock, ours: the gate icon is the same shield as
+    Permissions'), each pushing N7's page (a local `group_settings` screen, the placeholder
     until N7 builds it). The tiles' **Invite** pushes the same placeholder (`invite`): neither plan
     10 nor 11 draws a group's invite page (12 has a community's Invite and share); a design brief
     for it will follow as its own PR (the user, 2026-11-10). It's offered to a member whose role
