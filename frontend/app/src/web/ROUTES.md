@@ -292,7 +292,8 @@ dialog, in the page's place in history (the router's `onGuestSignIn`, through
 they've signed in: the client's post-login state carries the path (`continue_to`,
 `postLoginPath`), which AppScreen goes to once, replacing Explore. The linked dialogs that need an
 account do the same (DialogHost). Signing in anywhere else in the app leaves them where they were,
-and closing the dialog forgets where it was to go. What else asks a guest to sign in is in GAPS.md
+and closing the dialog (or the sign-in ending signed out, an II window closed) forgets where it
+was to go. What else asks a guest to sign in is in GAPS.md
 ("Guest pass").
 
 Still to come:
