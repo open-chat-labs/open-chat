@@ -5075,6 +5075,17 @@
         "doc": "Subtitle before the value: \"After 12 hours\"."
       },
       {
+        "name": "subtitle",
+        "type": "(value: string) => string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Subtitle while on, the host's own words for the whole of it, in place of `prefix` and the value: for a language whose words around the value change its case (\"Nach 30 Tagen\", not \"Nach 30 Tage\")."
+      },
+      {
         "name": "offHint",
         "type": "string",
         "default": "Off",

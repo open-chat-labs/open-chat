@@ -879,3 +879,9 @@
 - `ui.duration.minutes` reads "5 min" (was "5 minutes"), the plan's chip, where a disappearing length is shown (TimedToggle, InfoPanel's hint, the group settings' fact).
 - Docs: `meta.json` (TimedToggle's `columns`, `valueLabel`, `options`' doc); General's TimedToggle demo shows the default lengths.
 - The lengths and the column rule are the design's change of 2026-11-10 (the plan's web 08 changelog), ported by hand; `valueLabel` and "5 min" are ours, to go back to the design export (the app's `GAPS.md` lists them).
+
+## 2026-11-10 — TimedToggle's subtitle, by hand (the review of #10458)
+- `TimedToggle`: new `subtitle`, the host's own words for the whole subtitle while on, in place of `prefix` and the value: "After {value}" around a length in its own case doesn't work where the preposition sets the case ("Nach 30 Tagen", "Po 1 dniu"), so the native details give each unit its phrase. Without it, nothing changes.
+- `TimedToggle`: the choices' grid lost its `four` class, which no rule styled (the columns come from `--cols`).
+- Docs: `meta.json` (TimedToggle's `subtitle`).
+- `subtitle` is ours, to go back to the design export (the app's `GAPS.md` lists it).

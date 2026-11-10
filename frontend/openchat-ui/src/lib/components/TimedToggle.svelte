@@ -24,6 +24,9 @@
     /** Subtitle while on: resource key with a {value} placeholder ("After {value}"); text without one is followed by
         the value. */
     prefix?: string;
+    /** Subtitle while on, the host's own words for the whole of it, in place of `prefix` and the value: for a
+        language whose words around the value change its case ("Nach 30 Tagen", not "Nach 30 Tage"). */
+    subtitle?: (value: string) => string;
     /** Subtitle while off: resource key (or literal text). */
     offHint?: string;
     /** Defaults to clock, except for density "regular" (none). */
@@ -48,6 +51,7 @@
     columns,
     valueLabel,
     prefix = 'ui.timedToggle.after',
+    subtitle,
     offHint = 'ui.timedToggle.off',
     icon,
     density = 'compact',
@@ -78,6 +82,7 @@
     const takesValue = segments(t, prefix, ['value']).some((part) => 'slot' in part);
     return takesValue ? t(prefix, { value: shown }) : `${t(prefix)} ${shown}`;
   };
+  const onText = (v: string) => (subtitle ? subtitle(v) : withPrefix(v));
 
   function setOn(next: boolean) {
     enabled = next;
@@ -115,7 +120,7 @@
     <span class="text">
       <span class="label">{t(label)}</span>
       <span class="sub" class:on={enabled}
-        >{enabled ? withPrefix(current) : t(offHint)}{#if enabled && !readOnly}<span class="caret" class:open></span>{/if}</span
+        >{enabled ? onText(current) : t(offHint)}{#if enabled && !readOnly}<span class="caret" class:open></span>{/if}</span
       >
     </span>
     {#if readOnly}
@@ -139,7 +144,7 @@
   {#if !readOnly}
     <div class="reveal" class:open inert={!open} aria-hidden={!open}>
       <div class="reveal-inner">
-        <div class="choices" class:four={cols === 4} style:--cols={cols} role="radiogroup" aria-label={t(label)}>
+        <div class="choices" style:--cols={cols} role="radiogroup" aria-label={t(label)}>
           {#each list as choice}
             <span class="choice" class:selected={choice === current} onclick={() => pick(choice)} tabindex="0" role="radio" aria-checked={choice === current}>{duration(choice)}</span>
           {/each}
