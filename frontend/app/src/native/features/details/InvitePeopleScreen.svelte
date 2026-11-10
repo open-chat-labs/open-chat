@@ -2,15 +2,16 @@
      its Members screen. "Invite people" over the chat's name, then People | Invite link (the web's
      InviteDialog's tabs), each only for someone it's for (logic/members/invitePeople); one alone
      shows without the tab bar.
-     People: a search by name or @username, the people picked as chips, then with nothing searched
+     People: a search by name or @username (the library's Field, with its clear ×), the people
+     picked as chips ("No one selected yet" until there are), then with nothing searched
      Pending (invited, not accepted yet; Cancel, with Undo) and Suggested (people the user has DMs
      with who aren't in it), and with a search its Results: everyone found, members and those
      already invited dimmed and marked. The pinned button sends them: a private community's members
      are added to its channel, everyone else invited (MemberManagement.sendPicked); then back, with a
      toast. Invite link: the switch ("Share via link"), and while it's on the QR code, the link,
-     Copy link and Share (the system's share sheet), and Reset link, whose Undo works by waiting: the
-     link is reset once its toast has gone. The link's switch and reset are for those who may
-     invite to a private chat; a public chat's link is always on. -->
+     Copy link and Share (the system's share sheet), and Reset link (a row saying what it does),
+     whose Undo works by waiting: the link is reset once its toast has gone. The link's switch and
+     reset are for those who may invite to a private chat; a public chat's link is always on. -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -33,6 +34,7 @@
     import { Optimistic } from "@openchat/ui/src/lib/behaviours/optimistic.svelte";
     import { copyText } from "@openchat/ui/src/lib/clipboard";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
+    import Field from "@openchat/ui/src/lib/components/Field.svelte";
     import SegmentedTabs from "@openchat/ui/src/lib/components/SegmentedTabs.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import UserChip from "@openchat/ui/src/lib/components/UserChip.svelte";
@@ -74,9 +76,6 @@
     const t = (key: string, values?: Record<string, string | number>) => $_(key, { values });
     // a key that names the chat's kind ("this group", "this channel")
     const tl = (key: string) => interpolate($_, i18nKey(key, undefined, chat?.level, true));
-
-    // as many people as the old invite pages suggested
-    const SUGGESTED = 30;
 
     // the chat is the selected one (the details'), held while the screen slides out
     const selected = $derived(
@@ -122,6 +121,7 @@
     const wayContext = $derived<InviteWayContext>({
         me,
         members: management?.members ?? new Map(),
+        lapsed: management?.lapsed ?? new Set(),
         invited: management?.invited ?? new Set(),
         communityMembers: chat?.kind === "channel" ? $selectedCommunityMembersStore : undefined,
         invite: access.kind === "allowed" && access.invite,
@@ -183,7 +183,6 @@
             wayContext,
         ),
     );
-    const suggested = $derived(lists.suggested.slice(0, SUGGESTED));
     const searching = $derived(term !== "" && people.results.kind === "searching");
 
     const picks = $derived(management?.usersToAddOrInvite ?? []);
@@ -302,13 +301,12 @@
 
     {#if tab === "people" && tabs.includes("people")}
         <div class="field">
-            <input
-                value={query}
-                oninput={(e) => onInput(e.currentTarget.value)}
+            <Field
                 placeholder={$_("native.invite.search")}
-                aria-label={$_("native.invite.search")}
-                enterkeyhint="search"
-                autocomplete="off" />
+                value={query}
+                onInput={(e) => onInput(e.currentTarget.value)}
+                onClear={() => onInput("")}
+                showShortcut={false} />
         </div>
 
         <div class="chips" class:empty={picks.length === 0}>
@@ -319,7 +317,10 @@
                     color={senderColor(user.userId)}
                     onRemove={() => management?.togglePicked(user)} />
             {:else}
-                <span class="placeholder">{$_("native.invite.noneSelected")}</span>
+                <span class="placeholder">
+                    <span class="placeholder-icon" aria-hidden="true"></span>
+                    {$_("native.invite.noneSelected")}
+                </span>
             {/each}
         </div>
 
@@ -342,9 +343,9 @@
                                 : { kind: "mark", label: $_("native.invite.invited") }} />
                     {/each}
                 {/if}
-                {#if suggested.length > 0}
+                {#if lists.suggested.length > 0}
                     <span class="label">{$_("native.invite.suggested")}</span>
-                    {#each suggested as user (user.userId)}
+                    {#each lists.suggested as user (user.userId)}
                         <InviteRow
                             name={displayName(user)}
                             sub={`@${user.username}`}
@@ -393,6 +394,7 @@
         <div class="footer">
             <Button
                 label={sendLabel(picked, t)}
+                icon="send"
                 size="lg"
                 fullWidth
                 disabled={picks.length === 0 || (management?.inviting ?? false)}
@@ -440,9 +442,10 @@
                 </div>
 
                 {#if access.kind === "allowed" && access.manageLink && link.kind === "enabled"}
-                    <SettingsGroup note={$_("native.invite.resetHelp")}>
+                    <SettingsGroup>
                         <SettingsAction
                             label={$_("native.invite.resetLink")}
+                            help={$_("native.invite.resetHelp")}
                             icon="refresh"
                             danger
                             onClick={resetLink} />
@@ -476,33 +479,14 @@
         padding: var(--space-6) var(--space-16) var(--space-4);
     }
 
+    // the library's search field (with its clear ×)
     .field {
         flex: none;
         padding: var(--space-6) var(--space-16) var(--space-10);
     }
 
-    input {
-        box-sizing: border-box;
-        width: 100%;
-        height: 48px;
-        padding: 0 var(--space-16);
-        border: 0;
-        outline: 0;
-        border-radius: 14px;
-        background: var(--overlay-1);
-        color: var(--ink);
-        font: var(--weight-medium) text-size(15px) / 1 var(--font-sans);
-
-        &::placeholder {
-            color: var(--ink-4);
-        }
-
-        &:focus-visible {
-            @include focus-ring;
-        }
-    }
-
-    // the people picked, over a divider, 14px above the list
+    // the people picked, over a divider with room either side (the user's call, 2026-11-10: 12px
+    // over it and the plan's 14px under it read cramped)
     .chips {
         flex: none;
         display: flex;
@@ -510,15 +494,22 @@
         gap: var(--space-8);
         max-height: 104px;
         overflow-y: auto;
-        margin: 0 var(--space-16) 14px;
-        padding: var(--space-4) 0 var(--space-12);
+        margin: 0 var(--space-16) var(--space-22);
+        padding: var(--space-4) 0 var(--space-18);
         box-shadow: inset 0 -1px 0 var(--line-1);
     }
 
     .placeholder {
+        display: flex;
+        align-items: center;
+        gap: var(--space-8);
         padding: 7px 0;
         font: var(--weight-medium) text-size(14px) / 1.2 var(--font-sans);
         color: var(--ink-4);
+    }
+
+    .placeholder-icon {
+        @include icon(users, 16px, var(--ink-4));
     }
 
     // picker rows, 6px apart (notes §1 Spacing)

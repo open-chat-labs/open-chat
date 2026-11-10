@@ -1,10 +1,21 @@
-import { ROLE_ADMIN, ROLE_MEMBER, ROLE_MODERATOR, ROLE_NONE, ROLE_OWNER } from "@client";
+import {
+    ChatMap,
+    directChatUsers,
+    ROLE_ADMIN,
+    ROLE_MEMBER,
+    ROLE_MODERATOR,
+    ROLE_NONE,
+    ROLE_OWNER,
+    type DirectChatSummary,
+    type UserSummary,
+} from "@client";
 import { describe, expect, test } from "vitest";
 import {
     inviteAccess,
     invitePeopleLists,
     inviteRole,
     inviteWay,
+    SUGGESTED_LIMIT,
     type InviteAccessState,
     type InviteWayContext,
 } from "./invitePeople";
@@ -74,6 +85,7 @@ describe("inviteRole", () => {
 const ctx = (over: Partial<InviteWayContext>): InviteWayContext => ({
     me: "me",
     members: new Set(["m"]),
+    lapsed: new Set(["l"]),
     invited: new Set(["i"]),
     communityMembers: undefined,
     invite: true,
@@ -83,9 +95,11 @@ const ctx = (over: Partial<InviteWayContext>): InviteWayContext => ({
 });
 
 describe("inviteWay", () => {
-    test("members (you too) and the invited are marked; anyone else in a group is invited", () => {
+    test("members (you too, and the lapsed) and the invited are marked; anyone else in a group is invited", () => {
         expect(inviteWay("me", ctx({}))).toBe("member");
         expect(inviteWay("m", ctx({}))).toBe("member");
+        // no longer meeting the gates, but still a member: the backend won't invite them
+        expect(inviteWay("l", ctx({}))).toBe("member");
         expect(inviteWay("i", ctx({}))).toBe("invited");
         expect(inviteWay("x", ctx({}))).toBe("invite");
         expect(inviteWay("x", ctx({ invite: false }))).toBe("none");
@@ -123,6 +137,57 @@ describe("invitePeopleLists", () => {
             { userId: "y", way: "invite" },
         ]);
         expect(lists.results).toEqual([]);
+    });
+
+    // what the screen shows as it opens: the people the user has DMs with, most recent first, less
+    // those already in the chat (lapsed too) or invited, and only once the user is loaded
+    describe("Suggested, from the user's DMs", () => {
+        const user = (userId: string) =>
+            ({ kind: "user", userId, username: userId }) as UserSummary;
+        const dm = (userId: string, at: number) =>
+            ({
+                kind: "direct_chat",
+                id: { kind: "direct_chat", userId },
+                them: { kind: "direct_chat", userId },
+                dateCreated: BigInt(at),
+                eventsTtlLastUpdated: BigInt(0),
+                latestMessage: undefined,
+            }) as DirectChatSummary;
+        const suggest = (ids: string[], over: Partial<InviteWayContext> = {}) => {
+            const chats = ChatMap.fromList(ids.map((id, i) => dm(id, i)));
+            const users = new Map(
+                ids.filter((id) => id !== "unloaded").map((id) => [id, user(id)]),
+            );
+            return invitePeopleLists(
+                {
+                    searching: false,
+                    invited: [],
+                    suggested: directChatUsers(chats, users),
+                    matches: [],
+                },
+                ctx(over),
+            ).suggested.map((s) => s.userId);
+        };
+
+        test("the DM partners not in the chat nor invited, the latest DM first", () => {
+            expect(suggest(["a", "m", "i", "l", "b", "unloaded"])).toEqual(["b", "a"]);
+        });
+
+        test("none where every DM partner is already in the chat or invited", () => {
+            expect(suggest(["m", "i", "l"])).toEqual([]);
+        });
+
+        test("only the community's members for someone who may only add them to its channel", () => {
+            const channel = { communityMembers: new Set(["c"]), invite: false, add: true };
+            expect(suggest(["a", "c"], channel)).toEqual(["c"]);
+        });
+
+        test("at most SUGGESTED_LIMIT", () => {
+            const many = Array.from({ length: SUGGESTED_LIMIT + 5 }, (_, i) => `u${i}`);
+            const suggested = suggest(many);
+            expect(suggested).toHaveLength(SUGGESTED_LIMIT);
+            expect(suggested[0]).toBe(`u${SUGGESTED_LIMIT + 4}`);
+        });
     });
 
     test("with a search: every match once, members and the invited marked, those who can't join left out", () => {

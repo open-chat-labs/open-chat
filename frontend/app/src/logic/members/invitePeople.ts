@@ -122,6 +122,8 @@ export type InviteWay = "member" | "invited" | "add" | "invite" | "none";
 export type InviteWayContext = {
     me: string;
     members: { has(userId: string): boolean };
+    /** Members who no longer meet the access gates: still members, whom the backend won't invite. */
+    lapsed: { has(userId: string): boolean };
     invited: { has(userId: string): boolean };
     /** A channel's community's members held; undefined for a group or a community. */
     communityMembers: { has(userId: string): boolean } | undefined;
@@ -132,7 +134,7 @@ export type InviteWayContext = {
 };
 
 export function inviteWay(userId: string, ctx: InviteWayContext): InviteWay {
-    if (userId === ctx.me || ctx.members.has(userId)) return "member";
+    if (userId === ctx.me || ctx.members.has(userId) || ctx.lapsed.has(userId)) return "member";
     if (ctx.invited.has(userId)) return "invited";
     if (ctx.communityMembers === undefined) return ctx.invite ? "invite" : "none";
     if (ctx.communityMembers.has(userId)) {
@@ -146,10 +148,15 @@ export function pickable(way: InviteWay): way is "add" | "invite" {
     return way === "add" || way === "invite";
 }
 
+/** As many people as Suggested lists: as many as the old invite pages suggested. */
+export const SUGGESTED_LIMIT = 30;
+
 /**
  * The People tab's lists, from the people it knows of: with nothing searched, Pending (the
- * invited) and Suggested (those `suggested` who can be picked); with a search, Results: every
- * match, members and the invited marked, those who can't join here left out.
+ * invited) and Suggested (the first `SUGGESTED_LIMIT` of those `suggested` who can be picked: the
+ * screen passes the people the user has DMs with, most recent first, `directChatUsers`, so those
+ * already in the chat or invited aren't among them); with a search, Results: every match, members
+ * and the invited marked, those who can't join here left out.
  */
 export function invitePeopleLists<U extends { userId: string }>(
     input: {
@@ -175,7 +182,9 @@ export function invitePeopleLists<U extends { userId: string }>(
     }
     return {
         pending: input.invited,
-        suggested: withWay(input.suggested).filter((u) => pickable(u.way)),
+        suggested: withWay(input.suggested)
+            .filter((u) => pickable(u.way))
+            .slice(0, SUGGESTED_LIMIT),
         results: [],
     };
 }

@@ -1,13 +1,15 @@
 <!-- A group's or channel's members (native plan 10, Design Notes §3.6), pushed from its details.
      Owners, admins and moderators get tabs (@client's memberTabs): Members | Lapsed | Blocked where
      the group or its community has access gates, Members | Blocked where it hasn't; a regular member
-     sees the members only. It always opens on Members, and switching tabs clears the search, whose
-     placeholder follows the tab. Members: the search (a large group holds only its first page of
-     members, so it finds the others as the web's panel does), Invite people for someone who may
-     invite, then the members in role sections (Owners, Admins, Moderators, Members). The ⋯ on a
-     member below you offers the roles up to your own where your role meets "Change member roles",
-     and Remove and Block where it meets "Remove / block members" (@client's memberMenu); with
-     neither, it says so in a toast. Lapsed: their ⋯ removes them from the group; Blocked: theirs
+     sees the members only. It always opens on Members, and switching tabs clears the search (the
+     library's Field, with its clear ×, as Invite people's), whose placeholder follows the tab.
+     Members: the search (a large group holds only its first page of members, so it finds the others
+     as the web's panel does), Invite people for someone who may invite, then the members in role
+     sections (Owners, Admins, Moderators, Members). The ⋯ on a member below you offers the roles up
+     to your own where your role meets "Change member roles", and Remove and Block where it meets
+     "Remove / block members" (@client's memberMenu); Block only in a public group, as the backend
+     blocks in no other (a channel's blocking is its community's); with neither, it says so in a
+     toast. Lapsed: their ⋯ removes them from the group; Blocked: theirs
      unblocks them; both under "Remove / block members" (listedUserMenu). Removing, blocking and
      unblocking wait out their Undo before they're sent (a block takes them out of the group, which
      unblocking can't undo); unblocking says they can join again. Tapping someone opens their
@@ -41,6 +43,7 @@
         type OpenChat,
         type UserSummary,
     } from "@client";
+    import Field from "@openchat/ui/src/lib/components/Field.svelte";
     import SegmentedTabs from "@openchat/ui/src/lib/components/SegmentedTabs.svelte";
     import AnchoredMenu from "@openchat/ui/src/native/AnchoredMenu.svelte";
     import NativePageHeader from "@openchat/ui/src/native/NativePageHeader.svelte";
@@ -383,13 +386,12 @@
     {/if}
 
     <div class="field">
-        <input
-            value={query}
-            oninput={(e) => onInput(e.currentTarget.value)}
+        <Field
             placeholder={$_(MEMBER_TAB_SEARCH[tab])}
-            aria-label={$_(MEMBER_TAB_SEARCH[tab])}
-            enterkeyhint="search"
-            autocomplete="off" />
+            value={query}
+            onInput={(e) => onInput(e.currentTarget.value)}
+            onClear={() => onInput("")}
+            showShortcut={false} />
     </div>
 
     <div class="list">
@@ -555,27 +557,6 @@
 
     .invite-label {
         font: var(--weight-semibold) text-size(15px) / 1.2 var(--font-sans);
-    }
-
-    input {
-        box-sizing: border-box;
-        width: 100%;
-        height: 48px;
-        padding: 0 var(--space-16);
-        border: 0;
-        outline: 0;
-        border-radius: 14px;
-        background: var(--overlay-1);
-        color: var(--ink);
-        font: var(--weight-medium) text-size(15px) / 1 var(--font-sans);
-
-        &::placeholder {
-            color: var(--ink-4);
-        }
-
-        &:focus-visible {
-            @include focus-ring;
-        }
     }
 
     // picker rows, 6px apart (notes §1 Spacing), clear of the home indicator at the end
