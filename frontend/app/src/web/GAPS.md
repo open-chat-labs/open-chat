@@ -2084,12 +2084,23 @@ design export needs. Each entry says where it came up.
   link previews, translations and tips (phase 5) aren't wired; the message menu, reactions and
   swipes are 5b's ("Message actions"). Events other than messages show as a centred line in the old UI's words, names in bold
   (`logic/conversation/timelineEventText`, shared with the old trees; no design for them:
-  `TODO(design)`), and "N messages deleted" expands them. The old lines' date and time under each
-  event isn't shown yet (it's duplicated in both old `NonMessageEvent`s, to extract). The header has no back button (`ConversationHeader` has
-  none; narrow layouts don't show the shell yet), no last-seen line for a DM, and its menu does
-  favourite, mute and copy link only: the rest open dialogs (phase 4), and calls are phase 7. The
-  old list's go-to-mention button and sticky date aren't carried over; it keeps go-to-latest.
-  Own messages show no name (the design's "You" would be the lower-case app string).
+  `TODO(design)`), and "N messages deleted" expands them. Each event's line has its date and time
+  under it, as in the old trees (`toLongDatetimeString` in `@client`, which both old
+  `NonMessageEvent`s use too; L2), smaller in `--ink-3`; the aggregated joins, deletions and role
+  changes have none, as in the old trees. The header has no back button (`ConversationHeader` has
+  none; narrow layouts don't show the shell yet), and its menu does favourite, mute and copy link
+  only: the rest open dialogs (phase 4), and calls are phase 7. A DM's header has the old last-seen
+  line (L2: `directChatSubtitle` in `@client`, shared with the old `ChatSubtext`s and the native
+  header) in the header's presence line, with its online dot under two minutes. Own messages show
+  no name (the design's "You" would be the lower-case app string).
+- **Sticky date and go to first mention** (`features/conversation`, L2; no design for either:
+  `TODO(design)`). The list (a thread's too) pins the day of the messages at its top, as both old
+  lists do, in the inline dates' pill (`UnreadDivider` neutral), over the messages (as native's);
+  none while the day's own pill is at that spot. An @ button over go-to-latest goes to
+  the chat's first unread mention (`IconButton` "at", as go-to-latest is drawn; the old ones were
+  round fabs with a bold "@"), and goes once that mention is read; none in a thread or a read-only
+  chat, as in the old trees. Not carried over: the old lists' unread count on go-to-latest (shown
+  even when at the bottom), and the old threads' go-to-top button.
 - **Media messages** (`features/conversation`, 5a): images, memes, GIFs and videos show as
   `MediaMessage` tiles. They have no quote or edited mark yet (`MediaMessage`
   takes none). In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
