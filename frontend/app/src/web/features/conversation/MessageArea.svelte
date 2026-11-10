@@ -1323,8 +1323,8 @@
                     {@render eventRow(item, args)}
                 {/snippet}
                 {#snippet fabs({ showGoToBottom, scrollToLast, scrollToMention })}
-                    <!-- TODO(design): no go-to-mention button in the design; the old lists', as
-                         go-to-latest -->
+                    <!-- TODO(design): no go-to-mention button in the design or web/05; the old
+                         lists', as go-to-latest -->
                     <div class="fabs">
                         {#if firstUnreadMention !== undefined}
                             <IconButton
@@ -1467,8 +1467,8 @@
         {:else if isTextEvent(evt.event)}
             {@const text = timelineEventText(evt.event, eventCtx)}
             {#if text !== undefined}
-                <!-- TODO(design): no event line in the design; the old UI's, with its date and
-                     time under it -->
+                <!-- TODO(design): no event line in the design or web/05; the old UI's, with its
+                     date and time under it -->
                 <div class="event">
                     <p class="event-line">
                         <Markdown suppressLinks {text} />

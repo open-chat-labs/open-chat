@@ -48,7 +48,8 @@
 
     // a DM's line under the name: when the other person was last online, following the app clock
     // ("Online now", "Last online 5 minutes ago"), or that their account is suspended; nothing for
-    // a bot (directChatSubtitle, as the old trees' ChatSubtext)
+    // a bot (directChatSubtitle, as the old trees' ChatSubtext). TODO(design): web/05 doesn't say
+    // what the presence line says; the old words
     const them = $derived(
         chat?.kind === "direct_chat" ? $allUsersStore.get(chat.them.userId) : undefined,
     );
