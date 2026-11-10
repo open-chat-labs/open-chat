@@ -945,10 +945,13 @@ design export needs. Each entry says where it came up.
   has a menu (by default all but a deleted one; the app gives one to a deleted message it can
   reveal or undelete, and none in a read-only chat). The hover bar shows the quick reactions and
   the 🙂 only with `onReact` / `onReactPicker`, and Reply / Edit only with `onReply` / `onEdit`
-  (they did nothing without). `GroupMessage.swipeLeft` puts the app's say on a left swipe (the
-  mobile app's `messageSwipeAction`: right replies, left edits your own or forwards someone
-  else's), where the design's own text messages swiped right to edit. The bar's position still
-  assumes its full width (`BAR_W`).
+  (they did nothing without). `GroupMessage.swipeLeft` puts the app's say on a left swipe; the
+  web no longer sets it (L2): it keeps the group's own mapping, as web/05 says (others' messages:
+  right replies, left forwards; your own text: right edits, left replies), and hands
+  `onSwipeLeft` only a forward, where the message can be forwarded (`webMessageSwipeLeft`). The
+  old mobile tree keeps its rule (`messageSwipeAction`: right replies, left edits your own or
+  forwards someone else's), and native sets `swipeLeft` for its own (left edits your own). The
+  bar's position still assumes its full width (`BAR_W`).
 - **Message text** (by hand, phase 3b): `ChatBubble` shows its `text` as plain text, so markdown,
   links, mentions, custom emoji and spoilers were lost. It now takes a `body` snippet shown in its
   place; the app renders the old UI's `Markdown` there. A lone emoji stays the bubble's own (large).

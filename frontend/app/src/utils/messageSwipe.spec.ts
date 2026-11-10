@@ -1,5 +1,5 @@
 import type { MessageMenuAction } from "@client";
-import { messageSwipeAction, messageSwipeLeft, nativeMessageSwipes } from "./messageSwipe";
+import { messageSwipeAction, nativeMessageSwipes, webMessageSwipeLeft } from "./messageSwipe";
 
 describe("nativeMessageSwipes", () => {
     const offers = (...actions: MessageMenuAction[]) => new Set<MessageMenuAction>(actions);
@@ -45,18 +45,19 @@ describe("messageSwipeAction", () => {
     });
 });
 
-describe("messageSwipeLeft", () => {
+describe("webMessageSwipeLeft", () => {
     const offers = (...actions: MessageMenuAction[]) => new Set<MessageMenuAction>(actions);
 
-    // invariant 3 (#10117)
-    test("swiping your own editable message edits it and never also sets a reply; swiping another person's message forwards it if forwardable", () => {
-        expect(messageSwipeLeft(true, offers("edit", "reply"))).toBe("edit");
-        expect(messageSwipeLeft(false, offers("forward", "reply"))).toBe("forward");
-        expect(messageSwipeLeft(false, offers("reply"))).toBeUndefined();
+    // web/05: the group's own mapping, where a left swipe the host acts on only ever forwards
+    // (your own text's left swipe replies, through the group's onReply)
+    test("forwards a message whose menu offers a forward, mine or not", () => {
+        expect(webMessageSwipeLeft(offers("forward", "reply"))).toBe("forward");
+        expect(webMessageSwipeLeft(offers("forward", "edit", "reply"))).toBe("forward");
     });
 
-    test("isn't taken where the message doesn't offer what it would do", () => {
-        expect(messageSwipeLeft(true, offers("reply"))).toBe("reply");
-        expect(messageSwipeLeft(true, offers())).toBeUndefined();
+    test("isn't taken where the message can't be forwarded, even if it can be edited", () => {
+        expect(webMessageSwipeLeft(offers("reply"))).toBeUndefined();
+        expect(webMessageSwipeLeft(offers("edit", "reply"))).toBeUndefined();
+        expect(webMessageSwipeLeft(offers())).toBeUndefined();
     });
 });

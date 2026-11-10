@@ -157,7 +157,7 @@
         composerTransfer,
         type Translate,
     } from "../builders/builders.adapter";
-    import { messageSwipeLeft } from "@src/utils/messageSwipe";
+    import { webMessageSwipeLeft } from "@src/utils/messageSwipe";
     import { messageDoubleClickAction } from "@src/logic/conversation/messageDoubleClick";
     import { getProxyAdjustedBlobUrl, microphoneDenied, saveFile } from "@src/utils/media";
     import { now500 } from "@src/stores/time";
@@ -863,7 +863,7 @@
         evt: EventWrapper<Message>,
         offers: RowOffers,
     ): GroupMessage[] {
-        const key = `${offers.menu}|${offers.swipeLeft}|${offers.retry !== undefined}`;
+        const key = `${offers.menu}|${offers.retry !== undefined}`;
         const kept = groupMessages.get(row);
         if (kept?.offers === key) return kept.messages;
         const where = rowContext(evt);
@@ -880,7 +880,6 @@
                 ...threadLink(evt),
                 ...quoteFor(row.message, quoted, goToQuote),
                 menu: offers.menu,
-                swipeLeft: offers.swipeLeft,
             }),
         ];
         groupMessages.set(row, { offers: key, messages });
@@ -913,10 +912,9 @@
 
     type MenuPos = Parameters<NonNullable<ComponentProps<typeof MessageGroup>["onMessageMenu"]>>[1];
 
-    // what a row's message offers that's part of how it shows (its menu, its swipe, Retry)
+    // what a row's message offers that's part of how it shows (its menu, Retry)
     type RowOffers = {
         menu: boolean;
-        swipeLeft: "edit" | "reply" | "forward" | undefined;
         retry: (() => void) | undefined;
     };
 
@@ -953,7 +951,6 @@
     ): RowOffers {
         return {
             menu: offered.menu,
-            swipeLeft: messageSwipeLeft(evt.event.sender === me, offered.actions),
             retry: offered.actions.has("retry") ? () => run(context, "retry", evt, failed) : undefined,
         };
     }
@@ -1367,7 +1364,7 @@
             {@const actions = offered.actions}
             {@const where = rowContext(evt)}
             {@const offers = rowOffers(where, evt, failed, offered)}
-            {@const swipeLeft = offers.swipeLeft}
+            {@const swipeLeft = webMessageSwipeLeft(actions)}
             <!-- a text message's text as the old UI renders it: markdown, mentions, links, custom
                  emoji (a lone emoji is the bubble's own, large) -->
             {#snippet body()}
