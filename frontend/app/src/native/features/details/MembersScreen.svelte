@@ -53,19 +53,18 @@
     import { senderColor } from "@src/logic/conversation/messageRow";
     import { chatInviteAccess } from "@src/logic/members/invitePeople";
     import { MemberManagement } from "@src/logic/members/memberManagement.svelte";
-    import { toastStore } from "@src/stores/toast";
+    import { toastStore, type ToastOutcome } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { getContext, onDestroy, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { NativeScreen } from "../../router/locations";
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenProps } from "../app/screens";
-    import { unblockWithToast } from "../chats/chatToasts";
     import { sendAfterUndo } from "../chats/removeWithUndo";
     import { HeldWhileLeaving } from "../conversation/heldWhileLeaving";
     import { memberMenuItems, menuItemRole, roleWord } from "./details.adapter";
     import MemberListRow from "./MemberListRow.svelte";
-    import { MEMBER_TAB_LABELS, MEMBER_TAB_SEARCH, memberTabCounts } from "./members.adapter";
+    import { keptTab, MEMBER_TAB_LABELS, MEMBER_TAB_SEARCH, memberTabCounts } from "./members.adapter";
     import { openInvite } from "./openInvite";
     import ProfileSheet, { type ProfilePerson } from "./ProfileSheet.svelte";
 
@@ -109,7 +108,7 @@
 
     // ---- the tabs: Members, then Lapsed (with gates) and Blocked, for owners, admins and
     // moderators; it opens on Members, and a tab that goes (the gates taken away, a role lost)
-    // goes back to it
+    // goes back to it, for good: it doesn't come back by itself if the tab does (keptTab)
 
     const lapsedAll = $derived(
         management === undefined ? [] : shown(usersFromIds($allUsersStore, management.lapsed)),
@@ -123,11 +122,19 @@
             : memberTabs(myRole, hasAccessGates(chat.gateConfig, community?.gateConfig)),
     );
     let chosen = $state<MemberTab>("members");
-    const tab = $derived<MemberTab>(tabs.includes(chosen) ? chosen : "members");
+    const tab = $derived<MemberTab>(keptTab(chosen, tabs));
+    // the chosen tab gone: back on Members, with the search cleared, as choosing it would
+    $effect.pre(() => {
+        if (tab !== chosen) untrack(() => showTab(tab));
+    });
 
     function selectTab(index: number) {
         const next = tabs[index];
         if (next === undefined || next === tab) return;
+        showTab(next);
+    }
+
+    function showTab(next: MemberTab) {
         chosen = next;
         onInput("");
     }
@@ -287,16 +294,7 @@
                 if (outcome.kind === "failed") toastStore.showOutcome(outcome);
             });
         } else if (id === "unblock") {
-            // with Undo, as a removal: sent once the toast has gone, and Undo sends nothing
-            sendAfterUndo(
-                context,
-                removalKey(who.userId),
-                t("native.details.members.unblockedRejoin", { name: who.name }),
-                async () => {
-                    const outcome = await members.unblockUser(who.userId);
-                    if (outcome.kind === "failed") toastStore.showOutcome(outcome);
-                },
-            );
+            unblockLater(who.userId, who.name, () => members.unblockUser(who.userId));
         }
     }
 
@@ -313,15 +311,18 @@
         );
     }
 
-    function unblock(
-        userId: string,
-        name: string,
-        setUnblocked: Parameters<typeof unblockWithToast>[0],
-    ) {
-        void unblockWithToast(setUnblocked, context, userId, {
-            unblocking: t("native.conversation.toast.unblocking", { name }),
-            unblocked: t("native.details.members.unblockedRejoin", { name }),
-        });
+    // An unblock (the Blocked tab's ⋯ or the profile sheet's), with Undo, as a removal: they're
+    // gone from Blocked meanwhile, it's sent once the toast has gone, and Undo sends nothing
+    function unblockLater(userId: string, name: string, unblock: () => Promise<ToastOutcome>) {
+        sendAfterUndo(
+            context,
+            removalKey(userId),
+            t("native.details.members.unblockedRejoin", { name }),
+            async () => {
+                const outcome = await unblock();
+                if (outcome.kind === "failed") toastStore.showOutcome(outcome);
+            },
+        );
     }
 
     async function changeRole(members: MemberManagement, who: Target, role: MemberRole) {
@@ -363,8 +364,8 @@
                 if (result.kind === "failed") toastStore.showOutcome(result);
             });
         } else {
-            unblock(person.userId, person.name, (userId) =>
-                outcome(client.unblockUserInContext(where, userId)),
+            unblockLater(person.userId, person.name, () =>
+                outcome(client.unblockUserInContext(where, person.userId)),
             );
         }
     }

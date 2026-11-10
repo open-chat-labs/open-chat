@@ -21,3 +21,12 @@ export const MEMBER_TAB_SEARCH: Record<MemberTab, string> = {
 export function memberTabCounts(tabs: MemberTab[], lapsed: number): (number | null)[] {
     return tabs.map((tab) => (tab === "lapsed" && lapsed > 0 ? lapsed : null));
 }
+
+/**
+ * The tab shown for the one `chosen`: it while it's among `tabs`, else Members. The screen then
+ * makes Members the one chosen, so a tab that goes (the gates taken away, a role lost) doesn't come
+ * back by itself if it returns.
+ */
+export function keptTab(chosen: MemberTab, tabs: MemberTab[]): MemberTab {
+    return tabs.includes(chosen) ? chosen : "members";
+}
