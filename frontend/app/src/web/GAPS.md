@@ -1600,6 +1600,10 @@ design export needs. Each entry says where it came up.
     the guest isn't previewing), the old footer's "Please sign-in to send a message" banner has a
     Sign in action (`entryBlockBanner`'s `signIn`). In practice a guest's chat is a preview, whose
     bar's "Sign in to join" is the prompt.
+  - **A thread without a composer** (a preview's, a guest's included, or a read-only chat's: no
+    composer and no preview bar there, as in the old trees) keeps the room under its last reply
+    the composer leaves above it (`MessageArea`'s `no-composer`, ComposerBar's 12px), where the
+    reply sat on the panel's bottom edge.
   - **The sign-in dialog's state** is `logic/auth/authDialog.svelte.ts` (from `features/auth`,
     F2's deferred item): `AuthDialogProps` (its `.then` chain gone, L7) and `pageSignIns`, which now
     also holds where a page's sign-in goes on to (`opened`, `destination`): /diamond's Upgrade's

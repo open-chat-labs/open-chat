@@ -1492,6 +1492,10 @@
                 {mentions}
             />
         {/key}
+    {:else}
+        <!-- a thread with no composer (a preview, a guest's included, or read only): the room
+             under its last reply that the composer leaves above it (ComposerBar's padding) -->
+        <div class="no-composer"></div>
     {/if}
 {/snippet}
 
@@ -1622,6 +1626,11 @@
         min-height: 0;
         display: flex;
         flex-direction: column;
+    }
+
+    .no-composer {
+        flex: none;
+        height: var(--space-12);
     }
 
     :global(.vcl-viewport.message-list) {
