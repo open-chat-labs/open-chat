@@ -1615,10 +1615,16 @@ design export needs. Each entry says where it came up.
       native tree, whose signed-out start keeps the URL, keeps the old route effect.
     - a DM asks to sign in, then opens (ROUTES.md had "no"); `/admin` asks to sign in, then shows
       what it shows the signed-in user (ROUTES.md had "blocked").
-    - a preview's messages stay read-only for a guest, as for anyone previewing (the old trees,
-      and the design's preview mode): no hover bar, menu or reactions to press, rather than each
-      asking to sign in. The chat list's row menus are off for a guest (the design's preview mode:
-      "channel row menus off"); for a signed-in previewer they're as before.
+    - a preview's messages ask a guest to sign in (the user's answer): they have the hover bar,
+      the menu and reactions a member would have (`messageOffer`'s `guest`: what anyone with an
+      account could do, nothing a role gives, no tips), and what needs an account asks them to
+      sign in, staying on the chat (`guestMessageAction`): a reaction (a chip, the hover bar's,
+      More reactions, before the picker opens), Reply (the hover bar's, the menu's, a swipe),
+      Reply in thread, Forward, Reply privately, Remind me, Report, Follow in a thread and
+      Translate (for Diamond members). Copy, Copy message url, Share and folding a proposal work
+      signed out. A guest's double-click does nothing (it's for selecting a word, not a reply that
+      asks to sign in). A signed-in previewer's messages stay read only, as in the old trees
+      (signing in wouldn't let them act: joining would).
     - closing the in-app sign-in forgets what it was to go on to (a page, a join, creating a
       community), so a later sign-in from the rail doesn't pick it up (the old trees kept a join
       and replayed it then).

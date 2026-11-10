@@ -7,6 +7,8 @@ import {
     type EventWrapper,
     type Message,
     type MessageMenu,
+    type MessageMenuAction,
+    type MessageMenuInput,
     type OpenChat,
 } from "@client";
 import { canShareMessage } from "@src/utils/share";
@@ -37,6 +39,11 @@ export type MessageOfferState = {
     confirmed: boolean;
     /** The chat can only be read (`isChatReadOnly`). */
     readonly: boolean;
+    /**
+     * The reader is a guest (signed out, reading a preview): the message offers what someone with
+     * an account could do with it (`guestMessageAction` says what asks them to sign in).
+     */
+    guest: boolean;
     /** The chat's pinned messages, by index. */
     pinned: { has(messageIndex: number): boolean };
     /** The messages shown translated, and those being undeleted, by id. */
@@ -53,9 +60,42 @@ export type MessageOfferState = {
     thread?: { root: Pick<Message, "messageId" | "messageIndex">; following: boolean };
 };
 
+// A guest reads a preview, which is read only, but the message offers them what anyone with an
+// account could do with it, as a member who can send, react and reply in a thread: nothing a
+// role gives (pinning, deleting others' messages, blocking), and no tips (a guest has no wallet).
+const GUEST_PERMISSIONS: MessageMenuInput["permissions"] = {
+    send: true,
+    react: true,
+    pin: false,
+    tip: false,
+    deleteOthers: false,
+    blockSender: false,
+    startThread: true,
+};
+
+// What a guest can do with a message signed out: copy its text or its link, share it (the
+// device's share sheet), and fold a proposal away
+const SIGNED_OUT_ACTIONS: ReadonlySet<MessageMenuAction> = new Set<MessageMenuAction>([
+    "copy",
+    "copy_url",
+    "share",
+    "collapse_proposal",
+]);
+
+/**
+ * What a guest's press on one of a message's actions does: `run`, it works signed out; `sign_in`,
+ * it needs an account (a reply, a thread, forwarding, a reminder, a report, following a thread, a
+ * translation, which is for Diamond members), so they're asked to sign in and stay on the chat.
+ * A reaction always asks.
+ */
+export function guestMessageAction(action: MessageMenuAction): "run" | "sign_in" {
+    return SIGNED_OUT_ACTIONS.has(action) ? "run" : "sign_in";
+}
+
 /**
  * What a message in the chat's own timeline offers, or in a thread's (`state.thread`), where nothing
- * is pinned and the thread's own send permission applies.
+ * is pinned and the thread's own send permission applies. A guest's (`state.guest`) offers what
+ * anyone with an account could do.
  */
 export function messageOffer(
     client: MessageOfferClient,
@@ -78,7 +118,7 @@ export function messageOffer(
         confirmed: state.confirmed,
         failed: state.failed,
         collapsed: false,
-        readonly: state.readonly,
+        readonly: state.readonly && !state.guest,
         ephemeral: localUpdates.isEphemeral(context, msg.messageId),
         pinned: thread === undefined && state.pinned.has(msg.messageIndex),
         translated: state.translated.has(msg.messageId),
@@ -91,14 +131,16 @@ export function messageOffer(
         // TODO(phase 5, 5b): tipping (in a thread too, by the "tip messages" permission)
         tipRecipient: undefined,
         tipsEnabled: state.tipsEnabled,
-        permissions: {
-            send: client.canSendMessage(chatId, thread === undefined ? "message" : "thread"),
-            react: client.canReactToMessages(chatId),
-            pin: client.canPinMessages(chatId),
-            tip: client.canTipMessages(chatId),
-            deleteOthers: client.canDeleteOtherUsersMessages(chatId),
-            blockSender: client.canBlockUsers(chatId) && !state.blocked.has(msg.sender),
-            startThread: client.canSendMessage(chatId, "thread"),
-        },
+        permissions: state.guest
+            ? GUEST_PERMISSIONS
+            : {
+                  send: client.canSendMessage(chatId, thread === undefined ? "message" : "thread"),
+                  react: client.canReactToMessages(chatId),
+                  pin: client.canPinMessages(chatId),
+                  tip: client.canTipMessages(chatId),
+                  deleteOthers: client.canDeleteOtherUsersMessages(chatId),
+                  blockSender: client.canBlockUsers(chatId) && !state.blocked.has(msg.sender),
+                  startThread: client.canSendMessage(chatId, "thread"),
+              },
     });
 }
