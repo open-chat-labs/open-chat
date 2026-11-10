@@ -5039,7 +5039,29 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The choices, as values (duration ids); the disappearing-messages lengths (5 minutes … 30 days) without."
+      },
+      {
+        "name": "columns",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The choices' grid columns; without, 4 when their count divides by 4, else 3 (`durationColumns`)."
+      },
+      {
+        "name": "valueLabel",
+        "type": "(value: string) => string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "How a value reads (the choices, the subtitle, the read-only status): the host's own words, in place of the library's duration words (`durationText`)."
       },
       {
         "name": "prefix",

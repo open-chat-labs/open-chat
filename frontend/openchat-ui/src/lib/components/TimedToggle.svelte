@@ -3,7 +3,7 @@
      density: compact (64px row, clock icon) | regular (taller text, no icon) | flush (no padding or hover, for nesting). -->
 <script lang="ts">
   import { durationText, segments, useT } from '../i18n';
-  import { DISAPPEARING_DURATIONS } from '../durations';
+  import { DISAPPEARING_DURATIONS, durationColumns } from '../durations';
   const ICONS = { clock: 'var(--icon-clock) center/contain no-repeat', refresh: 'var(--icon-refresh) center/contain no-repeat' };
   // values stay stable English ids (what onDurationChange reports) and are shown through durationText;
   // 'Always' (no expiry) is the one value that isn't a duration
@@ -14,7 +14,13 @@
     label: string;
     on?: boolean;
     value: string;
+    /** The choices, as values (duration ids); the disappearing-messages lengths (5 minutes … 30 days) without. */
     options?: string[];
+    /** The choices' grid columns; without, 4 when their count divides by 4, else 3 (`durationColumns`). */
+    columns?: number;
+    /** How a value reads (the choices, the subtitle, the read-only status): the host's own words, in place of the
+        library's duration words (`durationText`). */
+    valueLabel?: (value: string) => string;
     /** Subtitle while on: resource key with a {value} placeholder ("After {value}"); text without one is followed by
         the value. */
     prefix?: string;
@@ -39,6 +45,8 @@
     on = false,
     value,
     options,
+    columns,
+    valueLabel,
     prefix = 'ui.timedToggle.after',
     offHint = 'ui.timedToggle.off',
     icon,
@@ -61,8 +69,9 @@
   const open = $derived(!readOnly && enabled && (openState ?? defaultOpen));
   const shownIcon = $derived(icon === undefined ? (density === 'compact' ? 'clock' : null) : icon);
   const list = $derived(options?.length ? options : DISAPPEARING_DURATIONS);
+  const cols = $derived(durationColumns(list.length, columns));
 
-  const duration = (v: string) => (SPECIAL[v] ? t(SPECIAL[v]) : durationText(t, v));
+  const duration = (v: string) => (valueLabel ? valueLabel(v) : SPECIAL[v] ? t(SPECIAL[v]) : durationText(t, v));
   // a prefix with a {value} placeholder takes the value in place; literal text ("Every") is followed by it
   const withPrefix = (v: string) => {
     const shown = duration(v);
@@ -127,7 +136,7 @@
     {/if}
   </div>
   {#if open}
-    <div class="choices" role="radiogroup" aria-label={t(label)}>
+    <div class="choices" class:four={cols === 4} style:--cols={cols} role="radiogroup" aria-label={t(label)}>
       {#each list as choice}
         <span class="choice" class:selected={choice === current} onclick={() => pick(choice)} tabindex="0" role="radio" aria-checked={choice === current}>{duration(choice)}</span>
       {/each}
@@ -172,17 +181,20 @@
       padding: 0px;
     }
 
-    &:hover {
-      background: var(--overlay-1);
+    // only where there's a pointer that hovers: a touch screen keeps :hover on what was tapped
+    @media (hover: hover) {
+      &:hover {
+        background: var(--overlay-1);
+      }
+
+      &.readonly:hover,
+      .flush &:hover {
+        background: transparent;
+      }
     }
 
     &.readonly {
       cursor: default;
-    }
-
-    &.readonly:hover,
-    .flush &:hover {
-      background: transparent;
     }
   }
 
@@ -281,7 +293,7 @@
 
   .choices {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
     gap: var(--space-6);
     margin-top: var(--space-12);
     padding: var(--space-16) var(--pad-x) var(--space-18) var(--pad-x);
@@ -310,8 +322,10 @@
       color: var(--accent-bright);
     }
 
-    &:hover {
-      background: var(--overlay-2);
+    @media (hover: hover) {
+      &:hover {
+        background: var(--overlay-2);
+      }
     }
   }
 </style>

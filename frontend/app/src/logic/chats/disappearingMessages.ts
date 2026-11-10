@@ -18,9 +18,15 @@ const UNITS: [DurationUnit, number][] = [
  * where it's another (set from another app), in order of length, so it shows and stays picked.
  */
 export function disappearingChoices(ttl: bigint | undefined): string[] {
-    const current = ttlDurationId(ttl);
-    if (DISAPPEARING_DURATIONS.includes(current)) return [...DISAPPEARING_DURATIONS];
-    return [...DISAPPEARING_DURATIONS, current].sort((a, b) => durationMs(a) - durationMs(b));
+    return disappearingChoicesWith(ttlDurationId(ttl));
+}
+
+/** The lengths to offer when `after` is the one picked: the usual ones, with it among them by length. */
+export function disappearingChoicesWith(after: string): string[] {
+    if (DISAPPEARING_DURATIONS.includes(after) || durationMs(after) === 0) {
+        return [...DISAPPEARING_DURATIONS];
+    }
+    return [...DISAPPEARING_DURATIONS, after].sort((a, b) => durationMs(a) - durationMs(b));
 }
 
 /** A duration id's unit and count ("8 hours" → hour, 8), for words in the app's language. */
