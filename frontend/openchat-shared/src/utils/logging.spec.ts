@@ -4,6 +4,7 @@ import {
     inititaliseLogger,
     normaliseSourceMapUrls,
     thrownByDocumentScript,
+    thrownByUserScript,
     uncaughtReason,
 } from "./logging";
 
@@ -148,6 +149,31 @@ describe("thrownByDocumentScript", () => {
         expect(thrownByDocumentScript(payload(undefined))).toBe(false);
         expect(thrownByDocumentScript(payload())).toBe(false);
         expect(thrownByDocumentScript(undefined)).toBe(false);
+    });
+});
+
+// Invariant: a throw from a Safari user script is not reported; one that passes through our code
+// still is (Rollbar #32169).
+describe("thrownByUserScript", () => {
+    function payload(...filenames: unknown[]) {
+        return { body: { trace: { frames: filenames.map((filename) => ({ filename })) } } };
+    }
+
+    test("matches a stack of user-script frames with none of ours (#32169)", () => {
+        expect(
+            thrownByUserScript(
+                payload("(unknown)", "user-script:17", "[native code]", "user-script:17"),
+            ),
+        ).toBe(true);
+    });
+
+    test("leaves a stack that runs through our scripts alone", () => {
+        expect(
+            thrownByUserScript(payload("user-script:17", "http://dynamichost/main-abc.js")),
+        ).toBe(false);
+        expect(thrownByUserScript(payload("https://oc.app/main-abc.js"))).toBe(false);
+        expect(thrownByUserScript(payload("(unknown)"))).toBe(false);
+        expect(thrownByUserScript(undefined)).toBe(false);
     });
 });
 
