@@ -431,6 +431,13 @@ design export needs. Each entry says where it came up.
       plays no vibration of its own (`pressVibration={false}`). A shell built before the style
       plays its light tap. Not checked on a device. The swipe's armed haptic is still
       `MessageGroup`'s `navigator.vibrate(10)`.
+    - **No press feedback yet** (to do): holding a message shows nothing until the menu opens.
+      The current mobile app scales the bubble while it's held (component-lib's `longpress`
+      action, `animation: "scale"`, as `ChatMessage` uses it): halfway through the hold (300ms of
+      600) the bubble scales down to 0.95 over a quarter of it (150ms, ease-out), and as the menu
+      opens it scales back up to 1, a small bounce that says the press is taking. The native
+      conversation should do the same on its bubbles over `MessageGroup`'s 500ms hold (a release
+      or a move before then puts it back), with none under reduced motion.
   - **A message's thread** is N8a's (native PLAN): the replies link under messages and the thread
     screen (replies, composer, follow). Until then the link is hidden: the conversation's mapping
     gets `threads: false` (`ConversationContext.threads`), so no message has thread fields, rather
