@@ -28,3 +28,21 @@ export function leftToBrowser(href: string, inEditor: boolean, current: { href: 
     return !inEditor && samePageFragment(href, current);
 }
 
+/** The parts of a route's URL (page.js's context) that say which page and fragment it is. */
+export type RouteUrl = { pathname: string; querystring: string; hash: string };
+
+/** A route's page: its path and query, without the fragment. */
+export function pageOf(url: RouteUrl): string {
+    return url.querystring === "" ? url.pathname : `${url.pathname}?${url.querystring}`;
+}
+
+/**
+ * Whether a route only moves to a fragment of the page already showing (`previous`, `pageOf` the
+ * last route), so it isn't a new route. The browser's fragment navigation (Landing's nav) makes
+ * page.js run the routes again, on its popstate; doing so would scroll to the top (and /features to
+ * its section), which stops the browser's scroll to the fragment: Safari scrolls before the
+ * popstate, so its smooth scroll ends where it started.
+ */
+export function movesToFragment(previous: string | undefined, url: RouteUrl): boolean {
+    return url.hash !== "" && previous === pageOf(url);
+}

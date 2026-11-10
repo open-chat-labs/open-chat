@@ -31,7 +31,7 @@
     import { currentShellLayout } from "../shell/viewport.svelte";
     import { defaultChatRoute, defaultChatUrl } from "./defaultChat";
     import { redirectTable, routeTable } from "@src/utils/routeTable";
-    import { leftToBrowser } from "./links";
+    import { leftToBrowser, movesToFragment, pageOf } from "./links";
     import { shareQuery } from "../features/app/dialogs";
     import RouteEffects from "@src/core/RouteEffects.svelte";
     import { askToSignIn, GUEST_HOME } from "@src/logic/auth/guestPass";
@@ -40,8 +40,15 @@
 
     const client = getContext<OpenChat>("client");
 
+    // the page (path and query) the last route showed, so a move to a fragment of it is told apart
+    let shownPage: string | undefined;
+
     function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
         return (ctx: PageJS.Context, next: () => void) => {
+            // a move to a fragment of the page showing (Landing's nav) isn't a new route: the
+            // browser scrolls there, and the page stays as it is (movesToFragment)
+            if (movesToFragment(shownPage, ctx)) return;
+            shownPage = pageOf(ctx);
             client.setRouteParams(ctx, fn(ctx));
             // instant: "auto" would follow a page's own smooth scrolling (Landing's)
             window.scrollTo({ behavior: "instant", top: 0 });
