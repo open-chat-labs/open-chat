@@ -1,6 +1,6 @@
 import { OPENCHAT_BOT_USER_ID, ROLE_MEMBER, ROLE_NONE, type ChatSummary } from "@client";
 import { describe, expect, test } from "vitest";
-import { chatMenuActions, chatRowActionLabel, chatRowMenu } from "./chatMenu";
+import { chatMenuActions, chatRowActionLabel, chatRowHasMenu, chatRowMenu } from "./chatMenu";
 
 function dm(userId: string): ChatSummary {
     return { kind: "direct_chat", id: { kind: "direct_chat", userId } } as ChatSummary;
@@ -93,6 +93,34 @@ describe("chatRowMenu", () => {
         expect(actions).not.toContain("archive");
         expect(actions).not.toContain("leave");
         expect(actions).toContain("remove");
+    });
+});
+
+describe("chatRowHasMenu", () => {
+    const membership = { notificationsMuted: false, archived: false, lapsed: false };
+    const group = (role: number, lapsed = false) =>
+        ({
+            kind: "group_chat",
+            id: { kind: "group_chat", groupId: "g" },
+            membership: { ...membership, role, lapsed },
+        }) as ChatSummary;
+    const channel = (role: number) =>
+        ({
+            kind: "channel",
+            id: { kind: "channel", communityId: "c", channelId: 1 },
+            membership: { ...membership, role },
+        }) as ChatSummary;
+
+    test("a preview's row has none, a group's or a channel's (a guest's are all previews)", () => {
+        expect(chatRowHasMenu(group(ROLE_NONE))).toBe(false);
+        expect(chatRowHasMenu(channel(ROLE_NONE))).toBe(false);
+    });
+
+    test("a member's row has one, a lapsed member's too, and a DM's", () => {
+        expect(chatRowHasMenu(group(ROLE_MEMBER))).toBe(true);
+        expect(chatRowHasMenu(channel(ROLE_MEMBER))).toBe(true);
+        expect(chatRowHasMenu(group(ROLE_MEMBER, true))).toBe(true);
+        expect(chatRowHasMenu({ ...dm("them"), membership } as ChatSummary)).toBe(true);
     });
 });
 

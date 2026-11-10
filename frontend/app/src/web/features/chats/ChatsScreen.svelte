@@ -4,6 +4,7 @@
     import {
         chatRowActionLabel,
         chatRowMenu,
+        chatRowHasMenu,
         type ChatRowAction,
     } from "@src/logic/chats/chatMenu";
     import { muteChat } from "@src/logic/chats/muteChat";
@@ -98,10 +99,10 @@
         if (failed !== undefined) toastStore.showFailureToast(failed);
     }
 
-    // the row menu, in the app's words (chatRowMenu); a guest's rows are previews, which have none
-    // (the design's preview mode: "channel row menus off")
+    // the row menu, in the app's words (chatRowMenu); a preview's row has none, a guest's or
+    // anyone's (chatRowHasMenu)
     function menuFor(chat: ChatSummary, row: ChatListRow): MenuItem[] {
-        if ($anonUserStore) return [];
+        if (!chatRowHasMenu(chat)) return [];
         const actions = chatRowMenu(chat, {
             pinned: row.pinned,
             favourite: $favouritesStore.has(chat.id),
