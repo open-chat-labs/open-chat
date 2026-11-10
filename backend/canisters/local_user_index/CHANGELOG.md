@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2222](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2222-local_user_index)] - 2026-11-10
+
 ### Added
 
 - Ring an iPhone with a VoIP token as a phone, with its own decline token ([#10447](https://github.com/open-chat-labs/open-chat/pull/10447))
