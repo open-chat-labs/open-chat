@@ -2212,6 +2212,80 @@
                 "reauthenticate": "Увійти знову й видалити",
                 "step4Stay": "Ні, жартую, залишаюся"
             }
+        },
+        "details": {
+            "back": "Назад",
+            "chitEarned": "Зароблено CHIT",
+            "thisChat": "Цей чат",
+            "disappearing": "Зникаючі повідомлення",
+            "disappearingHelp": "Повідомлення в цьому чаті зникають у вас обох через вибраний час.",
+            "disappearAfterLabel": "Зникають через",
+            "duration": {
+                "minute": "{count, plural, one {# хвилина} few {# хвилини} many {# хвилин} other {# хвилини}}",
+                "hour": "{count, plural, one {# година} few {# години} many {# годин} other {# години}}",
+                "day": "{count, plural, one {# день} few {# дні} many {# днів} other {# дня}}",
+                "week": "{count, plural, one {# тиждень} few {# тижні} many {# тижнів} other {# тижня}}"
+            },
+            "saveFailed": "Не вдалося зберегти. Спробуйте ще раз.",
+            "unblock": "Розблокувати {name}",
+            "tiles": {
+                "call": "Подзвонити",
+                "search": "Пошук",
+                "mute": "Без звуку",
+                "unmute": "Увімкнути звук",
+                "invite": "Запросити"
+            },
+            "createdBy": "Автор",
+            "history": "Історія",
+            "historyVisible": "Видима новим учасникам",
+            "historyHidden": "Прихована від нових учасників",
+            "viewAll": "Показати всіх · {count}",
+            "muteEveryone": "Вимкнути звук для @everyone",
+            "muteEveryoneHelp": "Повідомлення зі згадкою @everyone не надсилають сповіщень.",
+            "rules": "Правила",
+            "manage": {
+                "title": "Керування",
+                "gates": "Умови доступу",
+                "rules": "Правила",
+                "permissions": "Дозволи",
+                "bots": "Боти й вебхуки",
+                "stats": "Статистика"
+            },
+            "deleteGroup": "Видалити групу",
+            "deleteChannel": "Видалити канал",
+            "deleteTitle": "Видалити {name}?",
+            "deleteGroupMessage": "Групу та всі її повідомлення буде видалено для всіх. Це не можна скасувати.",
+            "deleteChannelMessage": "Канал і всі його повідомлення буде видалено для всіх. Це не можна скасувати.",
+            "delete": "Видалити",
+            "members": {
+                "you": "Ви",
+                "search": "Пошук учасників",
+                "owners": "Власники · {count}",
+                "admins": "Адміністратори · {count}",
+                "moderators": "Модератори · {count}",
+                "members": "Учасники · {count}",
+                "blocked": "Заблоковані · {count}",
+                "options": "Дії з учасником",
+                "make": {
+                    "owner": "Зробити власником",
+                    "admin": "Зробити адміністратором",
+                    "moderator": "Зробити модератором",
+                    "member": "Зробити учасником"
+                },
+                "remove": "Видалити",
+                "block": "Заблокувати",
+                "unblock": "Розблокувати",
+                "removed": "Видалено: {name}",
+                "now": {
+                    "owner": "{name} тепер власник",
+                    "admin": "{name} тепер адміністратор",
+                    "moderator": "{name} тепер модератор",
+                    "member": "{name} тепер учасник"
+                },
+                "notAllowed": "Ваша роль не дозволяє тут змінювати ролі чи видаляти учасників.",
+                "noMatch": "Немає відповідних учасників",
+                "message": "Написати"
+            }
         }
     },
     "new": "новий",

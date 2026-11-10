@@ -4,6 +4,7 @@ import {
     type ChatIdentifier,
     type ChatListScope,
     type CommunityIdentifier,
+    type MultiUserChatIdentifier,
     type RouteParams,
     type WalletRoute,
 } from "@client";
@@ -62,6 +63,12 @@ export type SettingsPage =
     | "chit";
 
 /**
+ * A group's or channel's settings page, from its details (native plan 10's Manage, the tiles'
+ * Invite): N7's screens (plan 11), placeholders until then.
+ */
+export type GroupSettingsPage = "invite" | "gates" | "rules" | "permissions" | "bots" | "stats";
+
+/**
  * A screen with no URL on the web (New chat, a builder, a settings page): pushed over the screen
  * showing without changing the URL, as the web opens a local dialog (TabStacks.push).
  */
@@ -74,6 +81,11 @@ export type LocalScreen =
     | { kind: "chat_details"; chatId: ChatIdentifier }
     // a message's info, from its long-press menu (N5d)
     | { kind: "message_info"; chatId: ChatIdentifier; messageId: bigint }
+
+    // a group's or channel's members, from its details (N6)
+    | { kind: "chat_members"; chatId: MultiUserChatIdentifier }
+    // a group's or channel's settings page, from its details (N7's)
+    | { kind: "group_settings"; chatId: MultiUserChatIdentifier; page: GroupSettingsPage }
     // You → Account's Delete account, its steps before it deletes
     | { kind: "delete_account" }
     // a builder from a conversation's attach panel (a poll, a prize …), for that chat
@@ -81,7 +93,13 @@ export type LocalScreen =
 
 /** A local screen's identity in its stack (StackStep.key, after "local:"). */
 export function localKey(screen: LocalScreen): string {
-    return screen.kind === "settings" ? `settings:${screen.page}` : screen.kind;
+    switch (screen.kind) {
+        case "settings":
+        case "group_settings":
+            return `${screen.kind}:${screen.page}`;
+        default:
+            return screen.kind;
+    }
 }
 
 /**

@@ -116,7 +116,14 @@ export const screens: Screens = {
     delete_account: () => import("../you/DeleteAccountScreen.svelte"),
 
     // a DM's or group's details, from the conversation's header (N6)
-    chat_details: undefined,
+    chat_details: () => import("../details/ChatDetailsScreen.svelte"),
+
+    // a group's or channel's members, from its details (N6)
+    chat_members: () => import("../details/MembersScreen.svelte"),
+
+    // a group's or channel's settings pages (invite, gates, rules, permissions, bots, stats), from
+    // its details (N7)
+    group_settings: undefined,
 
     // a builder from the conversation's attach panel: poll, prize, send crypto, swap offer, meme
     // fighter (N9)

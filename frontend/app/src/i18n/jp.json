@@ -2212,6 +2212,80 @@
                 "reauthenticate": "再サインインして削除",
                 "step4Stay": "冗談だよ、残る"
             }
+        },
+        "details": {
+            "back": "戻る",
+            "chitEarned": "獲得した CHIT",
+            "thisChat": "このチャット",
+            "disappearing": "消えるメッセージ",
+            "disappearingHelp": "このチャットのメッセージは、選んだ時間が経つとお互いの画面から消えます。",
+            "disappearAfterLabel": "消えるまでの時間",
+            "duration": {
+                "minute": "{count, plural, other {# 分}}",
+                "hour": "{count, plural, other {# 時間}}",
+                "day": "{count, plural, other {# 日}}",
+                "week": "{count, plural, other {# 週間}}"
+            },
+            "saveFailed": "保存できませんでした。もう一度お試しください。",
+            "unblock": "{name} のブロックを解除",
+            "tiles": {
+                "call": "通話",
+                "search": "検索",
+                "mute": "ミュート",
+                "unmute": "ミュート解除",
+                "invite": "招待"
+            },
+            "createdBy": "作成者",
+            "history": "履歴",
+            "historyVisible": "新しいメンバーに表示",
+            "historyHidden": "新しいメンバーには非表示",
+            "viewAll": "すべて表示 · {count}",
+            "muteEveryone": "@everyone をミュート",
+            "muteEveryoneHelp": "@everyone へのメンションで通知されなくなります。",
+            "rules": "ルール",
+            "manage": {
+                "title": "管理",
+                "gates": "参加条件",
+                "rules": "ルール",
+                "permissions": "権限",
+                "bots": "ボットと Webhook",
+                "stats": "統計"
+            },
+            "deleteGroup": "グループを削除",
+            "deleteChannel": "チャンネルを削除",
+            "deleteTitle": "{name} を削除しますか?",
+            "deleteGroupMessage": "グループとすべてのメッセージが全員から削除されます。元に戻せません。",
+            "deleteChannelMessage": "チャンネルとすべてのメッセージが全員から削除されます。元に戻せません。",
+            "delete": "削除",
+            "members": {
+                "you": "あなた",
+                "search": "メンバーを検索",
+                "owners": "オーナー · {count}",
+                "admins": "管理者 · {count}",
+                "moderators": "モデレーター · {count}",
+                "members": "メンバー · {count}",
+                "blocked": "ブロック中 · {count}",
+                "options": "メンバーのオプション",
+                "make": {
+                    "owner": "オーナーにする",
+                    "admin": "管理者にする",
+                    "moderator": "モデレーターにする",
+                    "member": "メンバーにする"
+                },
+                "remove": "削除",
+                "block": "ブロック",
+                "unblock": "ブロック解除",
+                "removed": "{name} を削除しました",
+                "now": {
+                    "owner": "{name} がオーナーになりました",
+                    "admin": "{name} が管理者になりました",
+                    "moderator": "{name} がモデレーターになりました",
+                    "member": "{name} がメンバーになりました"
+                },
+                "notAllowed": "あなたの役割では、ここでの役割の変更やメンバーの削除はできません。",
+                "noMatch": "一致するメンバーはいません",
+                "message": "メッセージ"
+            }
         }
     },
     "new": "new",

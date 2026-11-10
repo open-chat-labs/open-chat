@@ -146,6 +146,11 @@ describe("where a URL is in the native tree", () => {
         expect(localKey({ kind: "edit_profile" })).toBe("edit_profile");
         expect(localKey({ kind: "settings", page: "appearance" })).toBe("settings:appearance");
         expect(localKey({ kind: "settings", page: "storage" })).toBe("settings:storage");
+        const chatId = { kind: "group_chat", groupId: "g1" } as const;
+        expect(localKey({ kind: "chat_members", chatId })).toBe("chat_members");
+        expect(localKey({ kind: "group_settings", chatId, page: "rules" })).toBe(
+            "group_settings:rules",
+        );
     });
 
     test("a share, and / signed in, are the Chats tab", () => {

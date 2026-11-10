@@ -2212,6 +2212,80 @@
                 "reauthenticate": "Zaloguj się ponownie i usuń",
                 "step4Stay": "Nie, żartowałem, zostaję"
             }
+        },
+        "details": {
+            "back": "Wstecz",
+            "chitEarned": "Zdobyte CHIT",
+            "thisChat": "Ten czat",
+            "disappearing": "Znikające wiadomości",
+            "disappearingHelp": "Wiadomości w tym czacie znikają u was obojga po wybranym czasie.",
+            "disappearAfterLabel": "Znikają po",
+            "duration": {
+                "minute": "{count, plural, one {# minuta} few {# minuty} many {# minut} other {# minuty}}",
+                "hour": "{count, plural, one {# godzina} few {# godziny} many {# godzin} other {# godziny}}",
+                "day": "{count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}}",
+                "week": "{count, plural, one {# tydzień} few {# tygodnie} many {# tygodni} other {# tygodnia}}"
+            },
+            "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
+            "unblock": "Odblokuj {name}",
+            "tiles": {
+                "call": "Zadzwoń",
+                "search": "Szukaj",
+                "mute": "Wycisz",
+                "unmute": "Wyłącz wyciszenie",
+                "invite": "Zaproś"
+            },
+            "createdBy": "Utworzona przez",
+            "history": "Historia",
+            "historyVisible": "Widoczna dla nowych członków",
+            "historyHidden": "Ukryta przed nowymi członkami",
+            "viewAll": "Pokaż wszystko · {count}",
+            "muteEveryone": "Wycisz @everyone",
+            "muteEveryoneHelp": "Wiadomości ze wzmianką @everyone nie wysyłają ci powiadomień.",
+            "rules": "Zasady",
+            "manage": {
+                "title": "Zarządzaj",
+                "gates": "Warunki dostępu",
+                "rules": "Zasady",
+                "permissions": "Uprawnienia",
+                "bots": "Boty i webhooki",
+                "stats": "Statystyki"
+            },
+            "deleteGroup": "Usuń grupę",
+            "deleteChannel": "Usuń kanał",
+            "deleteTitle": "Usunąć {name}?",
+            "deleteGroupMessage": "Grupa i wszystkie jej wiadomości zostaną usunięte dla wszystkich. Tego nie można cofnąć.",
+            "deleteChannelMessage": "Kanał i wszystkie jego wiadomości zostaną usunięte dla wszystkich. Tego nie można cofnąć.",
+            "delete": "Usuń",
+            "members": {
+                "you": "Ty",
+                "search": "Szukaj członków",
+                "owners": "Właściciele · {count}",
+                "admins": "Administratorzy · {count}",
+                "moderators": "Moderatorzy · {count}",
+                "members": "Członkowie · {count}",
+                "blocked": "Zablokowani · {count}",
+                "options": "Opcje członka",
+                "make": {
+                    "owner": "Ustaw jako właściciela",
+                    "admin": "Ustaw jako administratora",
+                    "moderator": "Ustaw jako moderatora",
+                    "member": "Ustaw jako członka"
+                },
+                "remove": "Usuń",
+                "block": "Zablokuj",
+                "unblock": "Odblokuj",
+                "removed": "Usunięto: {name}",
+                "now": {
+                    "owner": "{name} jest teraz właścicielem",
+                    "admin": "{name} jest teraz administratorem",
+                    "moderator": "{name} jest teraz moderatorem",
+                    "member": "{name} jest teraz członkiem"
+                },
+                "notAllowed": "Twoja rola nie pozwala tu zmieniać ról ani usuwać członków.",
+                "noMatch": "Brak pasujących członków",
+                "message": "Wiadomość"
+            }
         }
     },
     "new": "nowy",

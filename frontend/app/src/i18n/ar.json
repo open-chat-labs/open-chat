@@ -2212,6 +2212,80 @@
                 "reauthenticate": "سجّل الدخول مجددًا واحذف",
                 "step4Stay": "لا، أمزح، سأبقى"
             }
+        },
+        "details": {
+            "back": "رجوع",
+            "chitEarned": "CHIT المكتسبة",
+            "thisChat": "هذه المحادثة",
+            "disappearing": "الرسائل المؤقتة",
+            "disappearingHelp": "تختفي الرسائل في هذه المحادثة لديكما بعد المدة التي تختارها.",
+            "disappearAfterLabel": "تختفي بعد",
+            "duration": {
+                "minute": "{count, plural, zero {# دقيقة} one {دقيقة واحدة} two {دقيقتان} few {# دقائق} many {# دقيقة} other {# دقيقة}}",
+                "hour": "{count, plural, zero {# ساعة} one {ساعة واحدة} two {ساعتان} few {# ساعات} many {# ساعة} other {# ساعة}}",
+                "day": "{count, plural, zero {# يوم} one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يوم}}",
+                "week": "{count, plural, zero {# أسبوع} one {أسبوع واحد} two {أسبوعان} few {# أسابيع} many {# أسبوعًا} other {# أسبوع}}"
+            },
+            "saveFailed": "تعذّر الحفظ. حاول مرة أخرى.",
+            "unblock": "إلغاء حظر {name}",
+            "tiles": {
+                "call": "اتصال",
+                "search": "بحث",
+                "mute": "كتم",
+                "unmute": "إلغاء الكتم",
+                "invite": "دعوة"
+            },
+            "createdBy": "أنشأها",
+            "history": "السجل",
+            "historyVisible": "مرئي للأعضاء الجدد",
+            "historyHidden": "مخفي عن الأعضاء الجدد",
+            "viewAll": "عرض الكل · {count}",
+            "muteEveryone": "كتم @everyone",
+            "muteEveryoneHelp": "الرسائل التي تذكر @everyone لا ترسل إليك إشعارات.",
+            "rules": "القواعد",
+            "manage": {
+                "title": "الإدارة",
+                "gates": "شروط الانضمام",
+                "rules": "القواعد",
+                "permissions": "الأذونات",
+                "bots": "البوتات وخطافات الويب",
+                "stats": "الإحصاءات"
+            },
+            "deleteGroup": "حذف المجموعة",
+            "deleteChannel": "حذف القناة",
+            "deleteTitle": "حذف {name}؟",
+            "deleteGroupMessage": "تُحذف المجموعة وجميع رسائلها لدى الجميع. لا يمكن التراجع عن ذلك.",
+            "deleteChannelMessage": "تُحذف القناة وجميع رسائلها لدى الجميع. لا يمكن التراجع عن ذلك.",
+            "delete": "حذف",
+            "members": {
+                "you": "أنت",
+                "search": "البحث في الأعضاء",
+                "owners": "المالكون · {count}",
+                "admins": "المشرفون · {count}",
+                "moderators": "المراقبون · {count}",
+                "members": "الأعضاء · {count}",
+                "blocked": "المحظورون · {count}",
+                "options": "خيارات العضو",
+                "make": {
+                    "owner": "تعيين مالكًا",
+                    "admin": "تعيين مشرفًا",
+                    "moderator": "تعيين مراقبًا",
+                    "member": "تعيين عضوًا"
+                },
+                "remove": "إزالة",
+                "block": "حظر",
+                "unblock": "إلغاء الحظر",
+                "removed": "تمت إزالة {name}",
+                "now": {
+                    "owner": "{name} مالك الآن",
+                    "admin": "{name} مشرف الآن",
+                    "moderator": "{name} مراقب الآن",
+                    "member": "{name} عضو الآن"
+                },
+                "notAllowed": "لا يسمح لك دورك بتغيير الأدوار أو إزالة الأعضاء هنا.",
+                "noMatch": "لا يوجد أعضاء مطابقون",
+                "message": "مراسلة"
+            }
         }
     },
     "new": "جديد",

@@ -2127,6 +2127,80 @@
                 "reauthenticate": "Sign in again & delete",
                 "step4Stay": "Nah, I'm kidding, I'll stay"
             }
+        },
+        "details": {
+            "back": "Back",
+            "chitEarned": "CHIT earned",
+            "thisChat": "This chat",
+            "disappearing": "Disappearing messages",
+            "disappearingHelp": "Messages in this chat disappear for both of you after the time you pick.",
+            "disappearAfterLabel": "Disappear after",
+            "duration": {
+                "minute": "{count, plural, one {# minute} other {# minutes}}",
+                "hour": "{count, plural, one {# hour} other {# hours}}",
+                "day": "{count, plural, one {# day} other {# days}}",
+                "week": "{count, plural, one {# week} other {# weeks}}"
+            },
+            "saveFailed": "Couldn't save that. Try again.",
+            "unblock": "Unblock {name}",
+            "tiles": {
+                "call": "Call",
+                "search": "Search",
+                "mute": "Mute",
+                "unmute": "Unmute",
+                "invite": "Invite"
+            },
+            "createdBy": "Created by",
+            "history": "History",
+            "historyVisible": "Visible to new members",
+            "historyHidden": "Hidden from new members",
+            "viewAll": "View all · {count}",
+            "muteEveryone": "Mute @everyone",
+            "muteEveryoneHelp": "Messages that mention @everyone don't notify you.",
+            "rules": "Rules",
+            "manage": {
+                "title": "Manage",
+                "gates": "Access gates",
+                "rules": "Rules",
+                "permissions": "Permissions",
+                "bots": "Bots and webhooks",
+                "stats": "Stats"
+            },
+            "deleteGroup": "Delete group",
+            "deleteChannel": "Delete channel",
+            "deleteTitle": "Delete {name}?",
+            "deleteGroupMessage": "The group and all its messages are deleted for everyone. This can't be undone.",
+            "deleteChannelMessage": "The channel and all its messages are deleted for everyone. This can't be undone.",
+            "delete": "Delete",
+            "members": {
+                "you": "You",
+                "search": "Search members",
+                "owners": "Owners · {count}",
+                "admins": "Admins · {count}",
+                "moderators": "Moderators · {count}",
+                "members": "Members · {count}",
+                "blocked": "Blocked · {count}",
+                "options": "Member options",
+                "make": {
+                    "owner": "Make owner",
+                    "admin": "Make admin",
+                    "moderator": "Make moderator",
+                    "member": "Make member"
+                },
+                "remove": "Remove",
+                "block": "Block",
+                "unblock": "Unblock",
+                "removed": "Removed {name}",
+                "now": {
+                    "owner": "{name} is now an owner",
+                    "admin": "{name} is now an admin",
+                    "moderator": "{name} is now a moderator",
+                    "member": "{name} is now a member"
+                },
+                "notAllowed": "Your role doesn't let you change roles or remove members here.",
+                "noMatch": "No members match",
+                "message": "Message"
+            }
         }
     },
     "new": "new",

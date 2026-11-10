@@ -2212,6 +2212,80 @@
                 "reauthenticate": "重新登录并删除",
                 "step4Stay": "开玩笑的，我留下"
             }
+        },
+        "details": {
+            "back": "返回",
+            "chitEarned": "已赚取 CHIT",
+            "thisChat": "此聊天",
+            "disappearing": "限时消息",
+            "disappearingHelp": "此聊天中的消息会在你选择的时间后对双方消失。",
+            "disappearAfterLabel": "消失时间",
+            "duration": {
+                "minute": "{count, plural, other {# 分钟}}",
+                "hour": "{count, plural, other {# 小时}}",
+                "day": "{count, plural, other {# 天}}",
+                "week": "{count, plural, other {# 周}}"
+            },
+            "saveFailed": "无法保存，请重试。",
+            "unblock": "解除屏蔽 {name}",
+            "tiles": {
+                "call": "通话",
+                "search": "搜索",
+                "mute": "静音",
+                "unmute": "取消静音",
+                "invite": "邀请"
+            },
+            "createdBy": "创建者",
+            "history": "历史记录",
+            "historyVisible": "新成员可见",
+            "historyHidden": "新成员不可见",
+            "viewAll": "查看全部 · {count}",
+            "muteEveryone": "静音 @everyone",
+            "muteEveryoneHelp": "提及 @everyone 的消息不会通知你。",
+            "rules": "规则",
+            "manage": {
+                "title": "管理",
+                "gates": "加入条件",
+                "rules": "规则",
+                "permissions": "权限",
+                "bots": "机器人和 Webhook",
+                "stats": "统计"
+            },
+            "deleteGroup": "删除群组",
+            "deleteChannel": "删除频道",
+            "deleteTitle": "删除 {name}？",
+            "deleteGroupMessage": "群组及其所有消息将对所有人删除，且无法撤销。",
+            "deleteChannelMessage": "频道及其所有消息将对所有人删除，且无法撤销。",
+            "delete": "删除",
+            "members": {
+                "you": "你",
+                "search": "搜索成员",
+                "owners": "所有者 · {count}",
+                "admins": "管理员 · {count}",
+                "moderators": "版主 · {count}",
+                "members": "成员 · {count}",
+                "blocked": "已屏蔽 · {count}",
+                "options": "成员选项",
+                "make": {
+                    "owner": "设为所有者",
+                    "admin": "设为管理员",
+                    "moderator": "设为版主",
+                    "member": "设为成员"
+                },
+                "remove": "移除",
+                "block": "屏蔽",
+                "unblock": "解除屏蔽",
+                "removed": "已移除 {name}",
+                "now": {
+                    "owner": "{name} 现在是所有者",
+                    "admin": "{name} 现在是管理员",
+                    "moderator": "{name} 现在是版主",
+                    "member": "{name} 现在是成员"
+                },
+                "notAllowed": "你的角色无权在这里更改角色或移除成员。",
+                "noMatch": "没有匹配的成员",
+                "message": "发消息"
+            }
         }
     },
     "new": "新的",
