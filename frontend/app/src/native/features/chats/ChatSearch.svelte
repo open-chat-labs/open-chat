@@ -22,6 +22,7 @@
 
 <script lang="ts">
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
+    import { SEARCH_INPUT_ATTRIBUTES } from "@openchat/ui/src/lib/searchInput";
     import { Presence } from "@openchat/ui/src/native/presence.svelte";
     import { onDestroy, tick, untrack } from "svelte";
     import ResultRowView from "./ResultRow.svelte";
@@ -101,14 +102,14 @@
         <div class="bar">
             <label class="field">
                 <span class="search-icon"></span>
+                <!-- a search, not a sign-in field: password managers leave it alone -->
                 <input
                     bind:this={input}
+                    {...SEARCH_INPUT_ATTRIBUTES}
                     value={query}
                     oninput={(e) => onQuery(e.currentTarget.value)}
                     placeholder={text.placeholder}
-                    aria-label={text.placeholder}
-                    enterkeyhint="search"
-                    autocomplete="off" />
+                    aria-label={text.placeholder} />
                 {#if query !== ""}
                     <button type="button" class="clear" aria-label={text.clear} onclick={clear}>
                         <span class="clear-icon"></span>
@@ -237,9 +238,16 @@
         background: transparent;
         color: var(--ink);
         font: var(--weight-medium) text-size(15px) / 1 var(--font-sans);
+        appearance: none;
 
         &::placeholder {
             color: var(--ink-4);
+        }
+
+        // type="search"'s own clear button: the field draws its own
+        &::-webkit-search-cancel-button,
+        &::-webkit-search-decoration {
+            display: none;
         }
     }
 
