@@ -663,10 +663,11 @@ design export needs. Each entry says where it came up.
     has no rules sheet; ours, with the old words ("Chat rules", Accept). The PIN a transfer asks
     for still has no native sheet (N10b).
 
-- **Native details** (native N6, #10372; the native plan's 10 of 2026-11-08;
-  `src/native/features/details`). Built: a DM's details and a group's or channel's, pushed from
-  the conversation's title and its menu's details item (the local `chat_details` screen), the
-  Members screen (`chat_members`) and a member's profile sheet. On the web panel's logic
+- **Native details** (native N6, #10372; the native plan's 10 of 2026-11-08, and the Invite
+  people and Members parts of its 2026-11-10 changelog; `src/native/features/details`). Built: a
+  DM's details and a group's or channel's, pushed from the conversation's title and its menu's
+  details item (the local `chat_details` screen), the Members screen (`chat_members`) with its
+  tabs, Invite people (`invite_people`) and a member's profile sheet. On the web panel's logic
   (`logic/members`' MemberManagement, `logic/groupOrCommunity/detailsPermissions`,
   `logic/profile`'s ProfileCardData), the web's DM settings, moved to `logic/chats/dmSettings`,
   and new shared logic: the members' role sections and ⋯ (`@client`'s `memberSections` and
@@ -746,12 +747,10 @@ design export needs. Each entry says where it came up.
   - **Manage** (owners and admins, not in a frozen chat): Access gates, Rules, Permissions, Bots
     and webhooks, Stats (Access gates with a lock, ours: the gate icon is the same shield as
     Permissions'), each pushing N7's page (a local `group_settings` screen, the placeholder
-    until N7 builds it). The tiles' **Invite** pushes the same placeholder (`invite`): neither plan
-    10 nor 11 draws a group's invite page (12 has a community's Invite and share); a design brief
-    for it will follow as its own PR (the user, 2026-11-10). It's offered to a member whose role
-    meets "Invite users" (or "Add members", a private channel's): N6 Readers Circle (public,
-    "Invite users" at admins) showed it to a plain member because a public group's link may be
-    shared by anyone (the web's `canOpenInvite`); sharing the link is the kebab's now.
+    until N7 builds it). The tiles' **Invite** is every member's (not in a frozen chat, nor for
+    someone previewing): it pushes Invite people (below) where it has something to offer, and
+    otherwise says who can ("Only admins can invite to this group", naming the lowest role "Invite
+    users" allows; `logic/members/invitePeople`'s `chatInviteAccess`, `inviteRole`).
   - **Leave** goes to the list with Undo, as the conversation's menu (the plan's "Undo toast for
     leave"). **Delete** too (the user's answer, 2026-11-10, rather than a confirm): to the list
     with "Deleted N6 Book Club" and Undo; the delete is sent once the toast has gone (the shell's
@@ -760,15 +759,25 @@ design export needs. Each entry says where it came up.
     testing N6: opening the search (from here or the header's menu) took the app down to "Couldn't
     load messages" since N5c, the composer's resize observer running again on the composer gone;
     fixed.
-  - **Members screen**: the plan's role sections (Owners, Admins, Moderators, Members, empty ones
-    left out; you first, then by name), each a picker row (photo or swatch, name, You, @username).
-    A search over them (not in the plan: the web's panel has one, and a large group holds only its
-    first page of members, so the others are looked for as you type, `findMembers`). A Blocked
-    section for someone who can unblock, its ⋯ offering Unblock (the web's panel lists them).
-    Lapsed members aren't shown (the web's panel has them). The search and the Blocked section
-    stay (the user's answer, 2026-11-10); an updated design brief for the Members screen will
-    follow as its own PR. A section's label shows its count only past one ("Owners", "Admins ·
-    2").
+  - **Members screen** (with the plan's 2026-11-10 changelog): owners, admins and moderators get
+    the compact tabs, Members | Lapsed | Blocked where the group (or a channel's community) has
+    access gates, Members | Blocked where it hasn't; regular members get no tabs, the members only
+    (`@client`'s `memberTabs`, `hasAccessGates`: a lone unique-person gate is none, as it's
+    suspended). Lapsed shows a count while anyone has lapsed. It always opens on Members; switching tabs clears the search, whose
+    placeholder follows the tab. Members: the search (as before: a large group holds only its first
+    page of members, so the others are looked for as you type, `findMembers`), the Invite people
+    row (not on the other tabs, and only for someone it would open for: the plan doesn't say who),
+    then the plan's role sections (Owners, Admins, Moderators, Members, empty ones left out; you
+    first, then by name), each a picker row (photo or swatch, name, You, @username); a section's
+    label shows its count only past one ("Owners", "Admins · 2"). Lapsed and Blocked have the
+    plan's note over their rows and its empty line. A lapsed member's ⋯ offers Remove from group
+    (the plan; the old mobile page also offered Block there), a blocked user's Unblock, both with
+    "Remove / block members" (`listedUserMenu`), else a toast says your role can't. Lapsed members
+    keep the access they have today (nothing about it changed). The plan's second Blocked item,
+    "Remove (removes them from the blocked list, as on web)", isn't there: the backend's only way
+    off the blocked list is unblocking, and the web's panel doesn't offer a Remove either
+    (GroupPanelView passes no `onRemoveBlocked`), so it would be Unblock twice. A private group's
+    Blocked tab is always empty (blocking is a public group's), but shows as the plan has it.
   - **The ⋯** shows only on members below you (the plan): its role items up to your own role
     (several owners allowed) where your role may change roles, then Remove and Block where it may
     remove / block members (the plan names Remove; Block is the web panel's, under the same
@@ -780,8 +789,42 @@ design export needs. Each entry says where it came up.
     they're as they were. Found testing N6: a block was sent at once and its Undo unblocked, but a
     block in a group takes them out of it and unblocking only lifts the ban (the backend has no
     add for a group: they join again themselves), so they were gone. Unblocking from the Blocked
-    section still can't bring them back, and its toast says so ("Unblocked Ann. They can join
-    again"). A role change says so in a toast ("Ann is now an admin"); a refusal says why.
+    tab can't bring them back, and its toast says so ("Unblocked Ann. They can join again"); it
+    waits out its Undo too (the plan's "Unblock (Undo)"), as does removing a lapsed member. A role
+    change says so in a toast ("Ann is now an admin"); a refusal says why. The profile sheet's
+    Unblock is sent at once, with a toast that says when it's done (`unblockWithToast`).
+  - **Invite people** (the plan's 2026-11-10 changelog; `InvitePeopleScreen`, the local
+    `invite_people` screen), pushed from the Invite tile and the Members tab's row: "Invite
+    people" over the chat's name, then People | Invite link, each only for someone it's for
+    (`chatInviteAccess`, on the details' permissions: People with "Invite users", or "Add members"
+    in a private community's channel; Invite link in a public chat, or with "Invite users" in a
+    private one); one alone shows without the tab bar (a public group's plain member gets the
+    link only: the plan doesn't say what they get). On MemberManagement, as the web's InviteDialog
+    (`initialiseSharing`, `sharingLink`, `toggleInviteLink`, `cancelInvite`, the picks, and its new
+    `sendPicked`), and the invite pages' search (`searchToInvite`).
+    People: the search, the picks as the library's `UserChip`s (their photo, first name, ×; "No one
+    selected yet"), a divider, then with nothing searched Pending · N (Cancel, where you may
+    uninvite, waits out its Undo) and Suggested (the people you have DMs with who'd join, up to
+    30, as the old invite pages offered: for a channel, its community's members, looked up first,
+    and others only where you may invite to the community); with a search, Results: those found,
+    then the invited and the members held who match, dimmed (.45) and marked Invited / Member (the
+    search leaves members out, so a large group's member it doesn't hold isn't listed). How each
+    would join is `inviteWay`: a private community's members are added to its channel where you
+    may add them (the web's Add tab; the plan has one People list), everyone else invited. The
+    pinned button: "Send invites" (disabled) / "Send invite" / "Send 3 invites", or "Add 2 people"
+    when everyone picked is added; it waits for the backend (disabled meanwhile), then goes back
+    with "Invite sent to Sofia" / "3 invites sent" / "Added Sofia" (a refusal says why and keeps the
+    picks). The invited show in Pending at once (the client's local invite).
+    Invite link: the plan's card with its switch ("Share via link", read only for a public chat's
+    link, which is always on, and for someone who can't manage it), the QR code (184px on a white
+    tile, `core/QRCode`), the link in mono, Copy link and Share (`utils/share`'s `shareLink`: the
+    apps' share sheet), then Reset link (danger) with the plan's line as the card's note, and the
+    footnote. Reset's Undo: a reset link can't be brought back, so the reset waits out its toast
+    (the shell's PendingRemovals, as a removal), the link dimmed and Copy and Share off meanwhile;
+    then a spinner in the card until the new link and QR are in (the plan has the new link at
+    once, with Undo). Switching the link is shown at once and goes back with a toast if refused.
+    Not built: a community's Invite people (the screen takes a group or channel; communities are
+    N8a's, and `inviteAccess` takes any).
   - **Profile sheet** (tapping a member, the plan's "profile sheet", not drawn): a bottom sheet with
     their avatar, name and @username, About (bio, member since, CHIT earned) as their profile
     loads, and the web's user card's actions (the user's answer, 2026-11-10): Message (not on your
@@ -801,6 +844,9 @@ design export needs. Each entry says where it came up.
     sheet, the kebab's Copy and Edit, search from both places, and the rules sheet's Cancel and
     Accept. Not checked: unblocking from the Blocked section (nobody blocked to try it on), iOS,
     the light theme.
+- **A person's photo on `UserChip`** (by hand, native N6, EXPORT-LOG 2026-11-10, to take back to
+  the design export): `UserChip` takes `photoUrl`, shown over its swatch, for the native Invite
+  people screen's picks (the plan's "chips with avatar").
 - **The disappearing lengths' one home** (by hand, native N6, EXPORT-LOG 2026-11-10, to take back
   to the design export): the library's `lib/durations.ts` holds the lengths `TimedToggle` offers
   and `durationMs`, which its dialogs and the app's native details use, in place of a copy in
