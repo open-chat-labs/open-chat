@@ -2213,6 +2213,46 @@
                 "step4Stay": "No, scherzavo, resto"
             }
         },
+        "invite": {
+            "title": "Invita persone",
+            "tabs": {
+                "people": "Persone",
+                "link": "Link di invito"
+            },
+            "search": "Cerca nome o @username",
+            "noneSelected": "Nessuno selezionato",
+            "pending": "In attesa · {count}",
+            "pendingSub": "Invitato · non ancora accettato",
+            "cancel": "Annulla",
+            "cancelled": "Invito a {name} annullato",
+            "suggested": "Suggeriti",
+            "results": "Risultati",
+            "member": "Membro",
+            "invited": "Invitato",
+            "noMatch": "Nessun risultato",
+            "send": "{count, plural, =0 {Invia inviti} one {Invia invito} other {Invia # inviti}}",
+            "add": "{count, plural, one {Aggiungi # persona} other {Aggiungi # persone}}",
+            "sent": "{count, plural, one {# invito inviato} other {# inviti inviati}}",
+            "sentOne": "Invito inviato a {name}",
+            "added": "{count, plural, one {# persona aggiunta} other {# persone aggiunte}}",
+            "addedOne": "{name} aggiunto",
+            "sentBoth": "{added} aggiunti · {invited} invitati",
+            "shareViaLink": "Condividi tramite link",
+            "shareViaLinkHelp": "Chiunque abbia il link può entrare.",
+            "linkOff": "La condivisione tramite link è disattivata. Può entrare solo chi inviti.",
+            "copyLink": "Copia link",
+            "share": "Condividi",
+            "resetLink": "Reimposta link",
+            "resetHelp": "Il link attuale smette di funzionare. Chi è già entrato resta.",
+            "linkReset": "Link reimpostato",
+            "gatesIgnored": "I requisiti di accesso non valgono per chi entra tramite link.",
+            "notAllowed": {
+                "owner": "Solo i proprietari possono invitare qui",
+                "admin": "Solo gli admin possono invitare qui",
+                "moderator": "Solo i moderatori possono invitare qui",
+                "member": "Solo i membri possono invitare qui"
+            }
+        },
         "details": {
             "back": "Indietro",
             "chitEarned": "CHIT guadagnati",
@@ -2271,7 +2311,6 @@
                 "admins": "{count, plural, =1 {Amministratori} other {Amministratori · #}}",
                 "moderators": "{count, plural, =1 {Moderatori} other {Moderatori · #}}",
                 "members": "{count, plural, =1 {Membri} other {Membri · #}}",
-                "blocked": "{count, plural, =1 {Bloccati} other {Bloccati · #}}",
                 "options": "Opzioni membro",
                 "make": {
                     "owner": "Rendi proprietario",
@@ -2292,7 +2331,22 @@
                 },
                 "notAllowed": "Il tuo ruolo non ti consente di cambiare i ruoli o rimuovere membri qui.",
                 "noMatch": "Nessun membro corrisponde",
-                "message": "Messaggio"
+                "message": "Messaggio",
+                "tabs": {
+                    "members": "Membri",
+                    "lapsed": "Decaduti",
+                    "blocked": "Bloccati"
+                },
+                "searchLapsed": "Cerca decaduti",
+                "searchBlocked": "Cerca bloccati",
+                "lapsedNote": "Membri che non soddisfano più i requisiti di accesso. I requisiti vengono ricontrollati con la frequenza impostata in Requisiti di accesso.",
+                "blockedNote": "Persone bloccate qui. Sblocca qualcuno per permettergli di rientrare.",
+                "lapsedEmpty": "Nessun membro decaduto. Tutti soddisfano i requisiti.",
+                "blockedEmpty": "Nessuno è bloccato.",
+                "noOneMatches": "Nessun risultato",
+                "removeFrom": "Rimuovi ({level})",
+                "lapsedNotAllowed": "Il tuo ruolo non ti permette di rimuovere membri qui.",
+                "blockedNotAllowed": "Il tuo ruolo non ti permette di sbloccare persone qui."
             }
         }
     },

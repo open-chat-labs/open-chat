@@ -5957,6 +5957,17 @@
         "doc": ""
       },
       {
+        "name": "photoUrl",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Their photo, shown over the swatch."
+      },
+      {
         "name": "tag",
         "type": "string",
         "default": "",

@@ -2213,6 +2213,46 @@
                 "step4Stay": "נו, סתם, אני נשאר/ת"
             }
         },
+        "invite": {
+            "title": "הזמנת אנשים",
+            "tabs": {
+                "people": "אנשים",
+                "link": "קישור הזמנה"
+            },
+            "search": "חיפוש שם או @שם משתמש",
+            "noneSelected": "עדיין לא נבחר אף אחד",
+            "pending": "ממתינים · {count}",
+            "pendingSub": "הוזמנו · עוד לא אישרו",
+            "cancel": "ביטול",
+            "cancelled": "ההזמנה של {name} בוטלה",
+            "suggested": "הצעות",
+            "results": "תוצאות",
+            "member": "חבר/ה",
+            "invited": "הוזמן/ה",
+            "noMatch": "אין התאמות",
+            "send": "{count, plural, =0 {שליחת הזמנות} one {שליחת הזמנה} other {שליחת # הזמנות}}",
+            "add": "{count, plural, one {הוספת אדם אחד} other {הוספת # אנשים}}",
+            "sent": "{count, plural, one {נשלחה הזמנה אחת} other {נשלחו # הזמנות}}",
+            "sentOne": "נשלחה הזמנה אל {name}",
+            "added": "{count, plural, one {נוסף אדם אחד} other {נוספו # אנשים}}",
+            "addedOne": "{name} נוסף/ה",
+            "sentBoth": "{added} נוספו · {invited} הוזמנו",
+            "shareViaLink": "שיתוף בקישור",
+            "shareViaLinkHelp": "כל מי שיש לו את הקישור יכול להצטרף.",
+            "linkOff": "השיתוף בקישור כבוי. רק מי שתזמינו יכול להצטרף.",
+            "copyLink": "העתקת קישור",
+            "share": "שיתוף",
+            "resetLink": "איפוס הקישור",
+            "resetHelp": "הקישור הנוכחי יפסיק לעבוד. מי שכבר הצטרף נשאר.",
+            "linkReset": "הקישור אופס",
+            "gatesIgnored": "תנאי הגישה לא חלים על מי שמצטרף בקישור.",
+            "notAllowed": {
+                "owner": "רק בעלים יכולים להזמין לכאן",
+                "admin": "רק מנהלים יכולים להזמין לכאן",
+                "moderator": "רק מנחים יכולים להזמין לכאן",
+                "member": "רק חברים יכולים להזמין לכאן"
+            }
+        },
         "details": {
             "back": "חזרה",
             "chitEarned": "CHIT שנצברו",
@@ -2271,7 +2311,6 @@
                 "admins": "{count, plural, =1 {מנהלים} other {מנהלים · #}}",
                 "moderators": "{count, plural, =1 {מנחים} other {מנחים · #}}",
                 "members": "{count, plural, =1 {חברים} other {חברים · #}}",
-                "blocked": "{count, plural, =1 {חסומים} other {חסומים · #}}",
                 "options": "אפשרויות חבר",
                 "make": {
                     "owner": "הפיכה לבעלים",
@@ -2292,7 +2331,22 @@
                 },
                 "notAllowed": "התפקיד שלכם לא מאפשר לשנות תפקידים או להסיר חברים כאן.",
                 "noMatch": "אין חברים תואמים",
-                "message": "הודעה"
+                "message": "הודעה",
+                "tabs": {
+                    "members": "חברים",
+                    "lapsed": "שפג תוקפם",
+                    "blocked": "חסומים"
+                },
+                "searchLapsed": "חיפוש מי שפג תוקפם",
+                "searchBlocked": "חיפוש חסומים",
+                "lapsedNote": "חברים שכבר לא עומדים בתנאי הגישה. התנאים נבדקים מחדש לפי התזמון שנקבע בתנאי הגישה.",
+                "blockedNote": "אנשים שנחסמו כאן. ביטול חסימה יאפשר להם להצטרף שוב.",
+                "lapsedEmpty": "אין חברים שפג תוקפם. כולם עומדים בתנאים.",
+                "blockedEmpty": "אף אחד לא חסום.",
+                "noOneMatches": "אין התאמות",
+                "removeFrom": "הסרה מה{level}",
+                "lapsedNotAllowed": "התפקיד שלכם לא מאפשר להסיר חברים כאן.",
+                "blockedNotAllowed": "התפקיד שלכם לא מאפשר לבטל חסימות כאן."
             }
         }
     },

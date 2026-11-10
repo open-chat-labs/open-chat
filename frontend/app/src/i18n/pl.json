@@ -2213,6 +2213,46 @@
                 "step4Stay": "Nie, żartowałem, zostaję"
             }
         },
+        "invite": {
+            "title": "Zaproś osoby",
+            "tabs": {
+                "people": "Osoby",
+                "link": "Link zaproszenia"
+            },
+            "search": "Szukaj nazwy lub @użytkownika",
+            "noneSelected": "Nikt nie jest jeszcze wybrany",
+            "pending": "Oczekujące · {count}",
+            "pendingSub": "Zaproszony · jeszcze nie przyjął",
+            "cancel": "Anuluj",
+            "cancelled": "Anulowano zaproszenie dla {name}",
+            "suggested": "Sugerowane",
+            "results": "Wyniki",
+            "member": "Członek",
+            "invited": "Zaproszony",
+            "noMatch": "Brak wyników",
+            "send": "{count, plural, =0 {Wyślij zaproszenia} one {Wyślij zaproszenie} few {Wyślij # zaproszenia} many {Wyślij # zaproszeń} other {Wyślij # zaproszenia}}",
+            "add": "{count, plural, one {Dodaj # osobę} few {Dodaj # osoby} many {Dodaj # osób} other {Dodaj # osoby}}",
+            "sent": "{count, plural, one {Wysłano # zaproszenie} few {Wysłano # zaproszenia} many {Wysłano # zaproszeń} other {Wysłano # zaproszenia}}",
+            "sentOne": "Wysłano zaproszenie do {name}",
+            "added": "{count, plural, one {Dodano # osobę} few {Dodano # osoby} many {Dodano # osób} other {Dodano # osoby}}",
+            "addedOne": "Dodano {name}",
+            "sentBoth": "Dodano: {added} · zaproszono: {invited}",
+            "shareViaLink": "Udostępnij przez link",
+            "shareViaLinkHelp": "Każdy, kto ma link, może dołączyć.",
+            "linkOff": "Udostępnianie przez link jest wyłączone. Dołączyć mogą tylko zaproszone osoby.",
+            "copyLink": "Kopiuj link",
+            "share": "Udostępnij",
+            "resetLink": "Zresetuj link",
+            "resetHelp": "Obecny link przestanie działać. Ci, którzy już dołączyli, zostają.",
+            "linkReset": "Link zresetowany",
+            "gatesIgnored": "Warunki dostępu nie dotyczą osób dołączających przez link.",
+            "notAllowed": {
+                "owner": "Tylko właściciele mogą tu zapraszać",
+                "admin": "Tylko administratorzy mogą tu zapraszać",
+                "moderator": "Tylko moderatorzy mogą tu zapraszać",
+                "member": "Tylko członkowie mogą tu zapraszać"
+            }
+        },
         "details": {
             "back": "Wstecz",
             "chitEarned": "Zdobyte CHIT",
@@ -2271,7 +2311,6 @@
                 "admins": "{count, plural, =1 {Administratorzy} other {Administratorzy · #}}",
                 "moderators": "{count, plural, =1 {Moderatorzy} other {Moderatorzy · #}}",
                 "members": "{count, plural, =1 {Członkowie} other {Członkowie · #}}",
-                "blocked": "{count, plural, =1 {Zablokowani} other {Zablokowani · #}}",
                 "options": "Opcje członka",
                 "make": {
                     "owner": "Ustaw jako właściciela",
@@ -2292,7 +2331,22 @@
                 },
                 "notAllowed": "Twoja rola nie pozwala tu zmieniać ról ani usuwać członków.",
                 "noMatch": "Brak pasujących członków",
-                "message": "Wiadomość"
+                "message": "Wiadomość",
+                "tabs": {
+                    "members": "Członkowie",
+                    "lapsed": "Wygaśli",
+                    "blocked": "Zablokowani"
+                },
+                "searchLapsed": "Szukaj wygasłych",
+                "searchBlocked": "Szukaj zablokowanych",
+                "lapsedNote": "Członkowie, którzy nie spełniają już warunków dostępu. Warunki są sprawdzane ponownie zgodnie z harmonogramem w Warunkach dostępu.",
+                "blockedNote": "Osoby zablokowane tutaj. Odblokuj kogoś, aby mógł znów dołączyć.",
+                "lapsedEmpty": "Brak wygasłych członków. Wszyscy spełniają warunki.",
+                "blockedEmpty": "Nikt nie jest zablokowany.",
+                "noOneMatches": "Brak wyników",
+                "removeFrom": "Usuń ({level})",
+                "lapsedNotAllowed": "Twoja rola nie pozwala tu usuwać członków.",
+                "blockedNotAllowed": "Twoja rola nie pozwala tu nikogo odblokować."
             }
         }
     },

@@ -2213,6 +2213,46 @@
                 "step4Stay": "冗談だよ、残る"
             }
         },
+        "invite": {
+            "title": "メンバーを招待",
+            "tabs": {
+                "people": "ユーザー",
+                "link": "招待リンク"
+            },
+            "search": "名前または @ユーザー名で検索",
+            "noneSelected": "まだ誰も選択されていません",
+            "pending": "保留中 · {count}",
+            "pendingSub": "招待済み · 未承諾",
+            "cancel": "取り消す",
+            "cancelled": "{name} への招待を取り消しました",
+            "suggested": "おすすめ",
+            "results": "結果",
+            "member": "メンバー",
+            "invited": "招待済み",
+            "noMatch": "該当する人はいません",
+            "send": "{count, plural, =0 {招待を送信} other {# 件の招待を送信}}",
+            "add": "{count, plural, other {# 人を追加}}",
+            "sent": "{count, plural, other {# 件の招待を送信しました}}",
+            "sentOne": "{name} に招待を送信しました",
+            "added": "{count, plural, other {# 人を追加しました}}",
+            "addedOne": "{name} を追加しました",
+            "sentBoth": "{added} 人を追加 · {invited} 人を招待",
+            "shareViaLink": "リンクで共有",
+            "shareViaLinkHelp": "リンクを知っている人は誰でもこの{level}に参加できます。",
+            "linkOff": "リンク共有はオフです。招待した人だけが参加できます。",
+            "copyLink": "リンクをコピー",
+            "share": "共有",
+            "resetLink": "リンクをリセット",
+            "resetHelp": "現在のリンクは使えなくなります。すでに参加した人はそのままです。",
+            "linkReset": "リンクをリセットしました",
+            "gatesIgnored": "リンクから参加する人にはアクセス条件が適用されません。",
+            "notAllowed": {
+                "owner": "この{level}に招待できるのはオーナーだけです",
+                "admin": "この{level}に招待できるのは管理者だけです",
+                "moderator": "この{level}に招待できるのはモデレーターだけです",
+                "member": "この{level}に招待できるのはメンバーだけです"
+            }
+        },
         "details": {
             "back": "戻る",
             "chitEarned": "獲得した CHIT",
@@ -2271,7 +2311,6 @@
                 "admins": "{count, plural, =1 {管理者} other {管理者 · #}}",
                 "moderators": "{count, plural, =1 {モデレーター} other {モデレーター · #}}",
                 "members": "{count, plural, =1 {メンバー} other {メンバー · #}}",
-                "blocked": "{count, plural, =1 {ブロック中} other {ブロック中 · #}}",
                 "options": "メンバーのオプション",
                 "make": {
                     "owner": "オーナーにする",
@@ -2292,7 +2331,22 @@
                 },
                 "notAllowed": "あなたの役割では、ここでの役割の変更やメンバーの削除はできません。",
                 "noMatch": "一致するメンバーはいません",
-                "message": "メッセージ"
+                "message": "メッセージ",
+                "tabs": {
+                    "members": "メンバー",
+                    "lapsed": "失効",
+                    "blocked": "ブロック中"
+                },
+                "searchLapsed": "失効メンバーを検索",
+                "searchBlocked": "ブロック中の人を検索",
+                "lapsedNote": "この{level}のアクセス条件を満たさなくなったメンバーです。条件は「アクセス条件」で設定した間隔で再確認されます。",
+                "blockedNote": "この{level}からブロックされた人です。ブロックを解除すると再び参加できます。",
+                "lapsedEmpty": "失効したメンバーはいません。全員が条件を満たしています。",
+                "blockedEmpty": "ブロック中の人はいません。",
+                "noOneMatches": "該当する人はいません",
+                "removeFrom": "{level}から削除",
+                "lapsedNotAllowed": "あなたの役割では、ここでメンバーを削除できません。",
+                "blockedNotAllowed": "あなたの役割では、ここでブロックを解除できません。"
             }
         }
     },

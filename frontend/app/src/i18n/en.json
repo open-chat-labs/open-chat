@@ -2128,6 +2128,46 @@
                 "step4Stay": "Nah, I'm kidding, I'll stay"
             }
         },
+        "invite": {
+            "title": "Invite people",
+            "tabs": {
+                "people": "People",
+                "link": "Invite link"
+            },
+            "search": "Search name or @username",
+            "noneSelected": "No one selected yet",
+            "pending": "Pending · {count}",
+            "pendingSub": "Invited · not accepted yet",
+            "cancel": "Cancel",
+            "cancelled": "Invite to {name} cancelled",
+            "suggested": "Suggested",
+            "results": "Results",
+            "member": "Member",
+            "invited": "Invited",
+            "noMatch": "No one matches",
+            "send": "{count, plural, =0 {Send invites} one {Send invite} other {Send # invites}}",
+            "add": "{count, plural, one {Add # person} other {Add # people}}",
+            "sent": "{count, plural, one {# invite sent} other {# invites sent}}",
+            "sentOne": "Invite sent to {name}",
+            "added": "{count, plural, one {# person added} other {# people added}}",
+            "addedOne": "Added {name}",
+            "sentBoth": "{added} added · {invited} invited",
+            "shareViaLink": "Share via link",
+            "shareViaLinkHelp": "Anyone with the link can join this {level}.",
+            "linkOff": "Link sharing is off. Only people you invite can join.",
+            "copyLink": "Copy link",
+            "share": "Share",
+            "resetLink": "Reset link",
+            "resetHelp": "The current link stops working. Anyone who already joined stays.",
+            "linkReset": "Link reset",
+            "gatesIgnored": "Access gates are ignored for people who join by link.",
+            "notAllowed": {
+                "owner": "Only owners can invite to this {level}",
+                "admin": "Only admins can invite to this {level}",
+                "moderator": "Only moderators can invite to this {level}",
+                "member": "Only members can invite to this {level}"
+            }
+        },
         "details": {
             "back": "Back",
             "chitEarned": "CHIT earned",
@@ -2186,7 +2226,6 @@
                 "admins": "{count, plural, =1 {Admins} other {Admins · #}}",
                 "moderators": "{count, plural, =1 {Moderators} other {Moderators · #}}",
                 "members": "{count, plural, =1 {Members} other {Members · #}}",
-                "blocked": "{count, plural, =1 {Blocked} other {Blocked · #}}",
                 "options": "Member options",
                 "make": {
                     "owner": "Make owner",
@@ -2207,7 +2246,22 @@
                 },
                 "notAllowed": "Your role doesn't let you change roles or remove members here.",
                 "noMatch": "No members match",
-                "message": "Message"
+                "message": "Message",
+                "tabs": {
+                    "members": "Members",
+                    "lapsed": "Lapsed",
+                    "blocked": "Blocked"
+                },
+                "searchLapsed": "Search lapsed",
+                "searchBlocked": "Search blocked",
+                "lapsedNote": "Members who no longer meet this {level}'s access gates. Gates are re-checked on the schedule set in Access gates.",
+                "blockedNote": "People blocked from this {level}. Unblock someone to let them join again.",
+                "lapsedEmpty": "No lapsed members. Everyone meets the gates.",
+                "blockedEmpty": "No one is blocked.",
+                "noOneMatches": "No one matches",
+                "removeFrom": "Remove from {level}",
+                "lapsedNotAllowed": "Your role doesn't let you remove members here.",
+                "blockedNotAllowed": "Your role doesn't let you unblock people here."
             }
         }
     },

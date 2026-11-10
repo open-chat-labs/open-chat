@@ -885,3 +885,7 @@
 - `TimedToggle`: the choices' grid lost its `four` class, which no rule styled (the columns come from `--cols`).
 - Docs: `meta.json` (TimedToggle's `subtitle`).
 - `subtitle` is ours, to go back to the design export (the app's `GAPS.md` lists it).
+
+## 2026-11-10 — a person's photo on UserChip (native N6, Invite people), by hand
+- `UserChip`: `photoUrl`, their photo, shown over the swatch (cropped to the avatar's circle, at each size). Without it, the swatch as before. The native Invite people screen's picks use it (the plan's "chips with avatar, first name, ×"). `meta.json` (the prop).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

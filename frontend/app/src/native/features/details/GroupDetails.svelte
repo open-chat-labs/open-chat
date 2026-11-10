@@ -60,6 +60,7 @@
     import DisappearingRow from "./DisappearingRow.svelte";
     import FactRow from "./FactRow.svelte";
     import TextRow from "./TextRow.svelte";
+    import { openInvite } from "./openInvite";
     import {
         createdFacts,
         disappearingValue,
@@ -98,17 +99,9 @@
         }),
     );
 
-    // inviting is for members whose role meets "Invite users" (or "Add members", a private
-    // channel's); anyone in a public group may share its link, which is the kebab's
-    const tiles = $derived(
-        groupTiles(
-            {
-                canInvite: member && (permissions.canInvite || client.canAddMembers(chat.id)),
-                muted,
-            },
-            t,
-        ),
-    );
+    // Invite is every member's (not in a frozen chat): it opens Invite people for those who may
+    // invite or add, and in a public group; it says who can otherwise (logic/members/invitePeople)
+    const tiles = $derived(groupTiles({ canInvite: member && !frozen, muted }, t));
 
     // ---- About, and the Members row: the members held (a large group's first page), highest
     // role first, as the web's panel lists them
@@ -247,8 +240,7 @@
                 requestSearch(chatIdentifierToString(chat.id));
                 return;
             case "invite":
-                // inviting is a settings page (N7's)
-                context.push({ kind: "group_settings", chatId: chat.id, page: "invite" });
+                openInvite(client, chat, community, $anonUserStore, context, $_);
                 return;
         }
     }

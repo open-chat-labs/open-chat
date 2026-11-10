@@ -63,12 +63,11 @@ export type SettingsPage =
     | "chit";
 
 /**
- * A group's or channel's settings page, from its details (native plan 10's Manage, the tiles'
- * Invite, the cover's Edit group): N7's screens (plan 11), placeholders until then.
+ * A group's or channel's settings page, from its details (native plan 10's Manage, the cover's Edit
+ * group): N7's screens (plan 11), placeholders until then.
  */
 export type GroupSettingsPage =
     | "edit"
-    | "invite"
     | "gates"
     | "rules"
     | "permissions"
@@ -90,6 +89,8 @@ export type LocalScreen =
     | { kind: "message_info"; chatId: ChatIdentifier; messageId: bigint }
     // a group's or channel's members, from its details (N6)
     | { kind: "chat_members"; chatId: MultiUserChatIdentifier }
+    // Invite people (plan 10), from a group's or channel's details and its Members screen
+    | { kind: "invite_people"; chatId: MultiUserChatIdentifier }
     // a group's or channel's settings page, from its details (N7's)
     | { kind: "group_settings"; chatId: MultiUserChatIdentifier; page: GroupSettingsPage }
     // You → Account's Delete account, its steps before it deletes
