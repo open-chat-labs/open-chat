@@ -8369,8 +8369,9 @@ export class OpenChat {
         }
     }
 
-    // Resolves with the balance, or undefined if it couldn't be refreshed (eg. offline). Never rejects,
-    // and a failure leaves the cached balance as it was.
+    // Resolves with the balance, or undefined if it couldn't be refreshed (eg. the ledger is out of
+    // cycles). Never rejects, and a failure leaves the cached balance as it was, marking the ledger
+    // in `balanceUnavailableStore` until a balance is next read from it.
     refreshAccountBalance(
         ledger: string,
         allowCached: boolean = false,
@@ -8422,6 +8423,7 @@ export class OpenChat {
                     ])
                         .catch((err) => {
                             console.warn(`Couldn't refresh the balance of ${ledger}`, err);
+                            cryptoBalanceStore.setUnavailable(ledger);
                             return undefined;
                         })
                         .finally(() => this.#inflightBalanceRefreshPromises.delete(ledger));

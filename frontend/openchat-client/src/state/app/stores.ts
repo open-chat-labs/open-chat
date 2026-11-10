@@ -182,6 +182,20 @@ function createCryptoBalanceStore() {
                 store.update((s) => s.set(ledger, balance));
             }
             cryptoBalancesLastUpdated.set(ledger, Date.now());
+            if (balanceUnavailableStore.value.has(ledger)) {
+                balanceUnavailableStore.update((s) => {
+                    const ledgers = new Set(s);
+                    ledgers.delete(ledger);
+                    return ledgers;
+                });
+            }
+        },
+        // The balance couldn't be read: the one held, if any, is kept, and the ledger is marked
+        // until a balance is next read from it
+        setUnavailable(ledger: string) {
+            if (!balanceUnavailableStore.value.has(ledger)) {
+                balanceUnavailableStore.update((s) => new Set(s).add(ledger));
+            }
         },
         valueIfUpdatedRecently(ledger: string): bigint | undefined {
             const lastUpdated = cryptoBalancesLastUpdated.get(ledger);
@@ -193,6 +207,13 @@ function createCryptoBalanceStore() {
     };
 }
 
+// The ledgers which didn't answer the last time the user's balance was asked for, eg. because they
+// have too few cycles left to serve queries. Kept by `cryptoBalanceStore`
+export const balanceUnavailableStore = writable<ReadonlySet<LedgerCanister>>(
+    new Set(),
+    undefined,
+    notEq,
+);
 export const cryptoBalanceStore = createCryptoBalanceStore();
 const cryptoBalancesLastUpdated = new Map<string, number>();
 
@@ -259,8 +280,8 @@ export function getConvertedBalances(
 }
 
 export const enhancedCryptoLookup = derived(
-    [cryptoLookup, cryptoBalanceStore, exchangeRatesLookupStore],
-    ([$lookup, $balance, $exchangeRatesLookup]) => {
+    [cryptoLookup, cryptoBalanceStore, exchangeRatesLookupStore, balanceUnavailableStore],
+    ([$lookup, $balance, $exchangeRatesLookup, $balanceUnavailable]) => {
         return [...$lookup.entries()].reduce((result, [key, t]) => {
             const balance = $balance.get(t.ledger) ?? BigInt(0);
             const balances = getConvertedBalances(
@@ -274,6 +295,7 @@ export const enhancedCryptoLookup = derived(
             result.set(key, {
                 ...t,
                 balance,
+                balanceUnavailable: $balanceUnavailable.has(t.ledger),
                 ...balances,
                 zero,
                 urlFormat: t.transactionUrlFormat,
@@ -340,6 +362,19 @@ export const walletTokensSorted = derived(
             (t) =>
                 meetsAutoWalletCriteria(walletConfig, t) ||
                 meetsManualWalletCriteria(walletConfig, t),
+        );
+    },
+);
+
+// The tokens whose balance the wallet asked for and couldn't get: those it lists and, in an
+// automatic wallet, any other, since which of those it should list can't be known without them
+export const walletTokensUnavailable = derived(
+    [cryptoTokensSorted, walletConfigStore],
+    ([$tokens, walletConfig]) => {
+        return $tokens.filter(
+            (t) =>
+                t.balanceUnavailable &&
+                (walletConfig.kind === "auto_wallet" || walletConfig.tokens.has(t.ledger)),
         );
     },
 );

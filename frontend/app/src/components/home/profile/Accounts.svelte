@@ -5,10 +5,12 @@
         type OpenChat,
         swappableTokensStore,
         walletConfigStore,
+        walletTokensUnavailable,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
     import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
+    import AlertOutline from "svelte-material-icons/AlertOutline.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import HeartRemoveOutline from "svelte-material-icons/HeartRemoveOutline.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
@@ -19,8 +21,11 @@
         tokenActions,
         tokenActionsContext,
     } from "@src/logic/wallet/tokenActions";
-    import { formatWalletTotal, walletTotal } from "@src/logic/wallet/walletState.svelte";
-    import ErrorMessage from "../../ErrorMessage.svelte";
+    import {
+        formatWalletTotal,
+        unavailableTokensLabel,
+        walletTotal,
+    } from "@src/logic/wallet/walletState.svelte";
     import Menu from "../../Menu.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
     import MenuItem from "../../MenuItem.svelte";
@@ -48,21 +53,12 @@
         hideTokenBalances = false,
     }: Props = $props();
 
-    let balanceError: string | undefined = $state();
     let actionMode: "none" | "send" | "receive" | "swap" | "transactions" | "restricted" =
         $state("none");
     let selectedLedger: string | undefined = $state(undefined);
     let transactionsFormat: string = $state("");
 
     onMount(() => client.refreshSwappableTokens());
-
-    function onBalanceRefreshed() {
-        balanceError = undefined;
-    }
-
-    function onBalanceRefreshError(err: string) {
-        balanceError = err;
-    }
 
     function hideManageModal() {
         actionMode = "none";
@@ -161,9 +157,7 @@
                     value={token.balance}
                     conversion={selectedConversion}
                     hideBalance={hideTokenBalances}
-                    allowCached={true}
-                    onRefreshed={onBalanceRefreshed}
-                    onError={onBalanceRefreshError} />
+                    allowCached={true} />
             </td>
             <td class="manage-col">
                 <div class="manage">
@@ -279,8 +273,19 @@
     {/if}
 </table>
 
-{#if balanceError !== undefined}
-    <ErrorMessage>{balanceError}</ErrorMessage>
+<!-- the balances the wallet asked for and couldn't get (a ledger out of cycles answers nothing):
+     the listed ones are marked in their rows, and an automatic wallet can't tell whether to list
+     the others, so they are named here -->
+{#if $walletTokensUnavailable.length > 0}
+    <div class="unavailable">
+        <div class="alert">
+            <AlertOutline size={"1.2em"} color={"var(--warn)"} />
+        </div>
+        <Translatable
+            resourceKey={i18nKey("cryptoAccount.balancesUnavailable", {
+                tokens: unavailableTokensLabel($walletTokensUnavailable),
+            })} />
+    </div>
 {/if}
 
 <style lang="scss">
@@ -294,6 +299,19 @@
 
     .wallet-menu {
         cursor: pointer;
+    }
+
+    .unavailable {
+        display: flex;
+        gap: $sp3;
+        margin-top: $sp3;
+        @include font(light, normal, fs-70);
+        color: var(--txt-light);
+
+        .alert {
+            flex: none;
+            display: flex;
+        }
     }
 
     table {

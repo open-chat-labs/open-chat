@@ -56,8 +56,13 @@ import { suspendedUsersStore } from "../users/stores";
 import { addToWritableMap } from "../utils";
 import {
     allChatsStore,
+    balanceUnavailableStore,
     cryptoBalanceStore,
     cryptoLookup,
+    enhancedCryptoLookup,
+    serverWalletConfigStore,
+    walletTokensSorted,
+    walletTokensUnavailable,
     allServerChatsStore,
     chatListScopeStore,
     chatSummariesListStore,
@@ -1087,6 +1092,92 @@ describe("walletTokenBySymbol", () => {
         registry(token(TENDY_LEDGER, true));
 
         expect(walletTokenBySymbol("tendy")?.ledger).toBe(TENDY_LEDGER);
+    });
+});
+
+describe("balances which couldn't be read", () => {
+    const LEDGER = "kylwo-viaaa-aaaaq-aae7a-cai";
+    const OTHER_LEDGER = "iozql-7iaaa-aaaah-advvq-cai";
+
+    function token(ledger: string, symbol: string): CryptocurrencyDetails {
+        return {
+            name: symbol,
+            symbol,
+            ledger,
+            index: undefined,
+            decimals: 8,
+            transferFee: 10_000n,
+            logo: "",
+            infoUrl: "",
+            transactionUrlFormat: "",
+            supportedStandards: [],
+            added: 0n,
+            enabled: true,
+            oneSecEnabled: false,
+            evmContractAddresses: [],
+            lastUpdated: 0n,
+        };
+    }
+
+    beforeEach(() => {
+        cryptoLookup.set(
+            new Map([
+                [LEDGER, token(LEDGER, "LOW")],
+                [OTHER_LEDGER, token(OTHER_LEDGER, "FINE")],
+            ]),
+        );
+    });
+
+    afterEach(() => {
+        cryptoLookup.set(new Map());
+        cryptoBalanceStore.setBalance(LEDGER, 0n);
+        cryptoBalanceStore.setBalance(OTHER_LEDGER, 0n);
+        serverWalletConfigStore.set({ kind: "auto_wallet", minDollarValue: 0 });
+    });
+
+    test("a ledger which didn't answer is marked, and keeps the balance last read", () => {
+        cryptoBalanceStore.setBalance(LEDGER, 500n);
+        cryptoBalanceStore.setUnavailable(LEDGER);
+
+        const low = enhancedCryptoLookup.value.get(LEDGER);
+        expect(low?.balanceUnavailable).toBe(true);
+        expect(low?.balance).toBe(500n);
+        expect(enhancedCryptoLookup.value.get(OTHER_LEDGER)?.balanceUnavailable).toBe(false);
+    });
+
+    test("reading a balance from the ledger again clears the mark", () => {
+        cryptoBalanceStore.setUnavailable(LEDGER);
+        cryptoBalanceStore.setBalance(LEDGER, 0n);
+
+        expect(balanceUnavailableStore.value.has(LEDGER)).toBe(false);
+        expect(enhancedCryptoLookup.value.get(LEDGER)?.balanceUnavailable).toBe(false);
+    });
+
+    test("marking a ledger again doesn't publish", () => {
+        cryptoBalanceStore.setUnavailable(LEDGER);
+        let publishes = 0;
+        const unsub = balanceUnavailableStore.subscribe(() => publishes++);
+        publishes = 0;
+        cryptoBalanceStore.setUnavailable(LEDGER);
+        expect(publishes).toBe(0);
+        unsub();
+    });
+
+    // An automatic wallet lists a token by its balance, so one whose balance is unknown is named
+    // even though it isn't listed
+    test("an automatic wallet names every token it couldn't read", () => {
+        cryptoBalanceStore.setUnavailable(LEDGER);
+
+        expect(walletTokensSorted.value.map((t) => t.ledger)).not.toContain(LEDGER);
+        expect(walletTokensUnavailable.value.map((t) => t.ledger)).toEqual([LEDGER]);
+    });
+
+    test("a hand-picked wallet names only the tokens it lists", () => {
+        cryptoBalanceStore.setUnavailable(LEDGER);
+        cryptoBalanceStore.setUnavailable(OTHER_LEDGER);
+        serverWalletConfigStore.set({ kind: "manual_wallet", tokens: new Set([OTHER_LEDGER]) });
+
+        expect(walletTokensUnavailable.value.map((t) => t.ledger)).toEqual([OTHER_LEDGER]);
     });
 });
 

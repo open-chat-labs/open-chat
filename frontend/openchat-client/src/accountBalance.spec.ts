@@ -25,7 +25,7 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
 import { LEDGER_CANISTER_ICP, anonymousUser } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
-import { cryptoBalanceStore, currentUserStore } from "./state";
+import { balanceUnavailableStore, cryptoBalanceStore, currentUserStore } from "./state";
 import { WorkerAgent } from "./workerAgent";
 
 class FakeWorker {
@@ -67,5 +67,21 @@ describe("refreshing an account balance", () => {
 
         await expect(client.refreshAccountBalance(LEDGER_CANISTER_ICP)).resolves.toBeUndefined();
         expect(cryptoBalanceStore.value.get(LEDGER_CANISTER_ICP)).toBe(500n);
+    });
+
+    // Invariant 2: the wallet can say which balances it couldn't read, eg. from a ledger which is
+    // out of cycles, until one is read from that ledger again
+    test("a failed refresh marks the ledger until a refresh succeeds", async () => {
+        const send = vi
+            .spyOn(WorkerAgent.prototype, "send")
+            .mockRejectedValue(new Error("Canister is out of cycles"));
+
+        await client.refreshAccountBalance(LEDGER_CANISTER_ICP);
+        expect(balanceUnavailableStore.value.has(LEDGER_CANISTER_ICP)).toBe(true);
+
+        send.mockResolvedValue(700n);
+        await client.refreshAccountBalance(LEDGER_CANISTER_ICP);
+        expect(balanceUnavailableStore.value.has(LEDGER_CANISTER_ICP)).toBe(false);
+        expect(cryptoBalanceStore.value.get(LEDGER_CANISTER_ICP)).toBe(700n);
     });
 });

@@ -1,4 +1,5 @@
 import {
+    balanceUnavailableStore,
     conversionLedgers,
     cryptoBalanceStore,
     exchangeRatesLookupStore,
@@ -113,7 +114,24 @@ export function formatWalletTotal(c: ConversionToken, total: number): string {
     }
 }
 
+/**
+ * The tokens whose balance couldn't be read, as the wallet's note names them: the first few
+ * symbols, then how many more there are (invariant: the same note in every tree).
+ */
+export function unavailableTokensLabel(
+    tokens: Pick<EnhancedTokenDetails, "symbol">[],
+    max: number = 5,
+): string {
+    const symbols = tokens
+        .slice(0, max)
+        .map((t) => t.symbol)
+        .join(", ");
+    const more = tokens.length - max;
+    return more > 0 ? `${symbols} +${more}` : symbols;
+}
+
 const balances = reactiveValue(cryptoBalanceStore);
+const unavailable = reactiveValue(balanceUnavailableStore);
 const rates = reactiveValue(exchangeRatesLookupStore);
 
 const nullToken: EnhancedTokenDetails = {
@@ -133,6 +151,7 @@ const nullToken: EnhancedTokenDetails = {
     evmContractAddresses: [],
     lastUpdated: 0n,
     balance: 0n,
+    balanceUnavailable: false,
     dollarBalance: undefined,
     icpBalance: undefined,
     btcBalance: undefined,
@@ -155,6 +174,7 @@ export class TokenState {
     #draftAmount = $state(this.#minAmount);
     #symbol = $derived(this.#token.symbol);
     #cryptoBalance = $derived(balances().get(this.#ledger) ?? 0n);
+    #balanceUnavailable = $derived(unavailable().has(this.#ledger));
     #transferFee = $derived(this.#token.transferFee);
     // What the draft costs in fees. One transfer's fee unless the flow sets otherwise, eg. to add
     // the approval the wallet makes before a payment is pulled from it (see `walletApprovalFee`)
@@ -268,6 +288,12 @@ export class TokenState {
 
     get cryptoBalance() {
         return this.#cryptoBalance;
+    }
+
+    // The ledger didn't answer the last time the balance was asked for, so `cryptoBalance` is the
+    // last one read, or 0 if none has been
+    get balanceUnavailable(): boolean {
+        return this.#balanceUnavailable;
     }
 
     get ledger() {

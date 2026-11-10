@@ -41,6 +41,7 @@ function token(over: Partial<EnhancedTokenDetails> = {}): EnhancedTokenDetails {
         btcBalance: undefined,
         ethBalance: undefined,
         zero: false,
+        balanceUnavailable: false,
         urlFormat: "",
         ...over,
     };

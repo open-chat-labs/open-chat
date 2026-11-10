@@ -1,4 +1,5 @@
 import {
+    balanceUnavailableStore,
     cryptoBalanceStore,
     exchangeRatesLookupStore,
     LEDGER_CANISTER_CKBTC,
@@ -8,7 +9,12 @@ import {
 } from "@client";
 import { flushSync } from "svelte";
 import { afterEach, describe, expect, test } from "vitest";
-import { formatWalletTotal, TokenState, walletTotal } from "./walletState.svelte";
+import {
+    formatWalletTotal,
+    TokenState,
+    unavailableTokensLabel,
+    walletTotal,
+} from "./walletState.svelte";
 
 const icp: EnhancedTokenDetails = {
     name: "Internet Computer",
@@ -32,6 +38,7 @@ const icp: EnhancedTokenDetails = {
     btcBalance: undefined,
     ethBalance: undefined,
     zero: false,
+    balanceUnavailable: false,
     urlFormat: "",
 };
 
@@ -182,5 +189,37 @@ describe("the wallet's total", () => {
         expect(formatWalletTotal("usd", 11.75)).toBe("11.75");
         expect(formatWalletTotal("icp", 2.25)).toBe("2.250");
         expect(formatWalletTotal("eth", 0)).toBe("0.000000");
+    });
+});
+
+describe("balances which couldn't be read", () => {
+    afterEach(() => cryptoBalanceStore.setBalance(icp.ledger, 0n));
+
+    // a ledger which is out of cycles answers nothing: the token says so, and follows the ledger
+    // answering again
+    test("a token follows whether its ledger answered", () => {
+        const state = new TokenState(icp);
+        const stop = $effect.root(() => {
+            $effect(() => void state.balanceUnavailable);
+        });
+        flushSync();
+        expect(state.balanceUnavailable).toBe(false);
+
+        cryptoBalanceStore.setUnavailable(icp.ledger);
+        flushSync();
+        expect(state.balanceUnavailable).toBe(true);
+        expect(balanceUnavailableStore.value.has(icp.ledger)).toBe(true);
+
+        cryptoBalanceStore.setBalance(icp.ledger, 5n);
+        flushSync();
+        expect(state.balanceUnavailable).toBe(false);
+        stop();
+    });
+
+    test("the note names the first few tokens, then counts the rest", () => {
+        const tokens = ["A", "B", "C", "D", "E", "F", "G"].map((symbol) => ({ symbol }));
+        expect(unavailableTokensLabel(tokens.slice(0, 2))).toBe("A, B");
+        expect(unavailableTokensLabel(tokens.slice(0, 5))).toBe("A, B, C, D, E");
+        expect(unavailableTokensLabel(tokens)).toBe("A, B, C, D, E +2");
     });
 });
