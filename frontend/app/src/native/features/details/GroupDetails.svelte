@@ -230,6 +230,7 @@
     <DetailsHead
         title={chat.name}
         {sub}
+        locked={!chat.public}
         coverUrl={community?.banner.blobUrl}
         photoUrl={chat.blobUrl}
         color={senderColor(chatIdentifierToString(chat.id))}

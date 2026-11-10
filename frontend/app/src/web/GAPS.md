@@ -716,7 +716,8 @@ design export needs. Each entry says where it came up.
     TODO(design): the TimedToggle is the library's as it is ("same as web"), so its label
     (12.5px semibold) is smaller than the native settings rows' (15px medium), as in a group's
     This chat card, over Mute @everyone; the plan doesn't say to change it.
-  - **Group**: the cover has back, favourite and Edit (the user, 2026-11-10: a kebab with one
+  - **Group**: under the name, "Private · N members" has a lock before it for a private group or
+    channel (the user, 2026-11-10). The cover has back, favourite and Edit (the user, 2026-11-10: a kebab with one
     item is just a button): a pencil for those whose role meets "Update group", pushing N7's page
     (the `group_settings` placeholder, `edit`). Copying or sharing the link is Invite people's
     (the Invite tile), so the cover has no Copy invite link, and nothing else on the screen is

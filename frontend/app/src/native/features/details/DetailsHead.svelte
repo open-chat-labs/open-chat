@@ -13,6 +13,8 @@
         title: string;
         /** The line under the name: an @username, "Private · 48 members". */
         sub: string;
+        /** A lock before the line (a private group's or channel's). */
+        locked?: boolean;
         coverUrl: string | undefined;
         /** Their photo, else the swatch. */
         photoUrl: string | undefined;
@@ -36,6 +38,7 @@
     let {
         title,
         sub,
+        locked = false,
         coverUrl,
         photoUrl,
         color,
@@ -115,7 +118,7 @@
         {/if}
     </span>
     <span class="name">{title}</span>
-    {#if sub}<span class="sub">{sub}</span>{/if}
+    {#if sub}<span class="sub">{#if locked}<span class="lock" aria-hidden="true"></span>{/if}{sub}</span>{/if}
 </div>
 
 <style lang="scss">
@@ -262,5 +265,13 @@
         font: var(--weight-medium) text-size(13.5px) / 1.3 var(--font-sans);
         color: var(--ink-4);
         overflow-wrap: anywhere;
+    }
+
+    // a private chat's lock, before "Private"
+    .lock {
+        @include icon(lock, 13px, currentColor);
+        display: inline-block;
+        margin-inline-end: 4px;
+        vertical-align: -1px;
     }
 </style>
