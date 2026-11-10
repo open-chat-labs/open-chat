@@ -31,7 +31,7 @@
     import { closeOnNavigation, type DialogStack } from "../../shell/dialogStack.svelte";
     import RulesDialog from "../conversation/RulesDialog.svelte";
     import PinPromptHost from "../pin/PinPromptHost.svelte";
-    import { declineOnChatChange, declinePrompt, waitingPrompt } from "../pin/pinPrompt";
+    import { declineOnChatChange, declinePrompt, waitingPrompt } from "@src/logic/composer/sendPrompts";
     import SuspendUserDialog from "../user/SuspendUserDialog.svelte";
     import AppEventDialogs from "./AppEventDialogs.svelte";
     import DialogScreen from "./DialogScreen.svelte";
@@ -116,7 +116,7 @@
     // what the client is waiting on to send: the rules, then the PIN
     const prompt = $derived(waitingPrompt($captureRulesAcceptanceStore, $pinNumberResolverStore));
 
-    // a navigation doesn't close them, but another chat declines them (pinPrompt.ts)
+    // a navigation doesn't close them, but another chat declines them (logic/composer/sendPrompts)
     $effect(() => {
         const waiting = prompt;
         if (waiting.kind === "none") return;

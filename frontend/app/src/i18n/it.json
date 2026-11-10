@@ -2212,6 +2212,85 @@
                 "reauthenticate": "Accedi di nuovo ed elimina",
                 "step4Stay": "No, scherzavo, resto"
             }
+        },
+        "details": {
+            "back": "Indietro",
+            "chitEarned": "CHIT guadagnati",
+            "thisChat": "Questa chat",
+            "disappearing": "Messaggi a scomparsa",
+            "disappearingHelp": "I messaggi di questa chat scompaiono per entrambi dopo il tempo che scegli.",
+            "disappearingGroupHelp": "I messaggi in questa chat scompaiono per tutti dopo il tempo che scegli.",
+            "disappearAfterLabel": "Scompaiono dopo",
+            "duration": {
+                "minute": "{count, plural, one {# minuto} other {# minuti}}",
+                "hour": "{count, plural, one {# ora} other {# ore}}",
+                "day": "{count, plural, one {# giorno} other {# giorni}}",
+                "week": "{count, plural, one {# settimana} other {# settimane}}"
+            },
+            "saveFailed": "Impossibile salvare. Riprova.",
+            "unblock": "Sblocca {name}",
+            "tiles": {
+                "call": "Chiama",
+                "search": "Cerca",
+                "mute": "Silenzia",
+                "unmute": "Riattiva",
+                "invite": "Invita"
+            },
+            "createdBy": "Creato da",
+            "created": "Creato",
+            "history": "Cronologia",
+            "historyVisible": "Visibile ai nuovi membri",
+            "historyHidden": "Nascosta ai nuovi membri",
+            "viewAll": "Vedi tutti · {count}",
+            "muteEveryone": "Silenzia @everyone",
+            "muteEveryoneHelp": "I messaggi che menzionano @everyone non ti inviano notifiche.",
+            "rules": "Regole",
+            "manage": {
+                "title": "Gestisci",
+                "gates": "Requisiti di accesso",
+                "rules": "Regole",
+                "permissions": "Autorizzazioni",
+                "bots": "Bot e webhook",
+                "stats": "Statistiche"
+            },
+            "deleteGroup": "Elimina gruppo",
+            "deleteChannel": "Elimina canale",
+            "deleted": "{name} eliminato",
+            "menu": {
+                "editGroup": "Modifica gruppo",
+                "editChannel": "Modifica canale",
+                "copyInviteLink": "Copia link d'invito"
+            },
+            "members": {
+                "you": "Tu",
+                "search": "Cerca membri",
+                "owners": "{count, plural, =1 {Proprietari} other {Proprietari · #}}",
+                "admins": "{count, plural, =1 {Amministratori} other {Amministratori · #}}",
+                "moderators": "{count, plural, =1 {Moderatori} other {Moderatori · #}}",
+                "members": "{count, plural, =1 {Membri} other {Membri · #}}",
+                "blocked": "{count, plural, =1 {Bloccati} other {Bloccati · #}}",
+                "options": "Opzioni membro",
+                "make": {
+                    "owner": "Rendi proprietario",
+                    "admin": "Rendi amministratore",
+                    "moderator": "Rendi moderatore",
+                    "member": "Rendi membro"
+                },
+                "remove": "Rimuovi",
+                "block": "Blocca",
+                "unblock": "Sblocca",
+                "removed": "{name} rimosso",
+                "unblockedRejoin": "{name} sbloccato. Può unirsi di nuovo",
+                "now": {
+                    "owner": "{name} ora è proprietario",
+                    "admin": "{name} ora è amministratore",
+                    "moderator": "{name} ora è moderatore",
+                    "member": "{name} ora è membro"
+                },
+                "notAllowed": "Il tuo ruolo non ti consente di cambiare i ruoli o rimuovere membri qui.",
+                "noMatch": "Nessun membro corrisponde",
+                "message": "Messaggio"
+            }
         }
     },
     "new": "nuovo",

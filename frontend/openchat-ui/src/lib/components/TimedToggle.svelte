@@ -3,8 +3,8 @@
      density: compact (64px row, clock icon) | regular (taller text, no icon) | flush (no padding or hover, for nesting). -->
 <script lang="ts">
   import { durationText, segments, useT } from '../i18n';
+  import { DISAPPEARING_DURATIONS } from '../durations';
   const ICONS = { clock: 'var(--icon-clock) center/contain no-repeat', refresh: 'var(--icon-refresh) center/contain no-repeat' };
-  const DURATIONS = ['1 hour', '8 hours', '12 hours', '1 day', '1 week', '30 days'];
   // values stay stable English ids (what onDurationChange reports) and are shown through durationText;
   // 'Always' (no expiry) is the one value that isn't a duration
   const SPECIAL: Record<string, string> = { Always: 'ui.timedToggle.always' };
@@ -60,7 +60,7 @@
 
   const open = $derived(!readOnly && enabled && (openState ?? defaultOpen));
   const shownIcon = $derived(icon === undefined ? (density === 'compact' ? 'clock' : null) : icon);
-  const list = $derived(options?.length ? options : DURATIONS);
+  const list = $derived(options?.length ? options : DISAPPEARING_DURATIONS);
 
   const duration = (v: string) => (SPECIAL[v] ? t(SPECIAL[v]) : durationText(t, v));
   // a prefix with a {value} placeholder takes the value in place; literal text ("Every") is followed by it

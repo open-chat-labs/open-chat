@@ -7,6 +7,8 @@
      Closing (cancel or success) animates out, then calls onCancel so the host unmounts it; it stays hidden meanwhile
      (no reappearing, off the modal stack, no invisible layer catching clicks). -->
 <script lang="ts" module>
+  import { durationMs as idMs } from '../../lib/durations';
+
   export interface CreateGroupPerson {
     /** Stable id; picked people reach the host as these. */
     userId: string;
@@ -18,11 +20,9 @@
 
   export type NameCheck = 'ok' | 'taken' | 'invalid';
 
-  /** Disappearing-message durations as TimedToggle labels ("12 hours") → milliseconds. */
-  const UNIT_MS: Record<string, number> = { minute: 6e4, hour: 36e5, day: 864e5, week: 6048e5, month: 2592e6, year: 31536e6 };
+  /** A disappearing-messages length (a TimedToggle id, "12 hours") in milliseconds; null for one that isn't. */
   export function durationMs(label: string): number | null {
-    const m = label.match(/^(\d+) (minute|hour|day|week|month|year)s?$/);
-    return m ? Number(m[1]) * UNIT_MS[m[2]] : null;
+    return idMs(label) || null;
   }
 </script>
 

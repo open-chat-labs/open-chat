@@ -2,6 +2,7 @@ import type { CommunitySummary, MultiUserChat, OpenChat } from "@client";
 import { describe, expect, test } from "vitest";
 import { ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER } from "@client";
 import {
+    canChangeDisappearing,
     chatDetailsPermissions,
     chatManageAccess,
     communityManageAccess,
@@ -209,6 +210,17 @@ describe("chatManageAccess", () => {
                 false,
             ),
         ).toEqual({ kind: "edit", readOnly: ["permissions", "disappearing", "visibility"] });
+    });
+
+    test("only someone whose settings let them change disappearing messages can switch them", () => {
+        const owner = viewer({ edit: true, owner: true });
+        const admin = viewer({ edit: true, owner: false });
+        const member = viewer({ edit: false, owner: false });
+        expect(canChangeDisappearing(owner, group(ROLE_OWNER), undefined, false)).toBe(true);
+        expect(canChangeDisappearing(admin, group(ROLE_ADMIN), undefined, false)).toBe(false);
+        expect(canChangeDisappearing(member, group(ROLE_MEMBER), undefined, false)).toBe(false);
+        // nor a guest
+        expect(canChangeDisappearing(owner, group(ROLE_OWNER), undefined, true)).toBe(false);
     });
 
     test("the owner edits everything", () => {

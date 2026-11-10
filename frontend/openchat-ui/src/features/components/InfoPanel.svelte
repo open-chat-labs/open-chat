@@ -13,7 +13,8 @@
   import TileButtons from '../../lib/components/TileButtons.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import { durationText, useT } from '../../lib/i18n';
-  import { durationMs, type DisappearSetting } from './DmChatSettings.svelte';
+  import { type DisappearSetting } from './DmChatSettings.svelte';
+  import { durationMs } from '../../lib/durations';
 
   const GRADIENTS = {
     violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',

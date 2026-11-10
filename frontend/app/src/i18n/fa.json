@@ -2212,6 +2212,85 @@
                 "reauthenticate": "ورود دوباره و حذف",
                 "step4Stay": "نه، شوخی کردم، می‌مانم"
             }
+        },
+        "details": {
+            "back": "بازگشت",
+            "chitEarned": "CHIT به‌دست‌آمده",
+            "thisChat": "این گفتگو",
+            "disappearing": "پیام‌های ناپدیدشونده",
+            "disappearingHelp": "پیام‌های این گفتگو پس از مدتی که انتخاب می‌کنید برای هر دوی شما ناپدید می‌شوند.",
+            "disappearingGroupHelp": "پیام‌های این گفتگو پس از مدتی که انتخاب می‌کنید برای همه ناپدید می‌شوند.",
+            "disappearAfterLabel": "ناپدید شدن پس از",
+            "duration": {
+                "minute": "{count, plural, one {# دقیقه} other {# دقیقه}}",
+                "hour": "{count, plural, one {# ساعت} other {# ساعت}}",
+                "day": "{count, plural, one {# روز} other {# روز}}",
+                "week": "{count, plural, one {# هفته} other {# هفته}}"
+            },
+            "saveFailed": "ذخیره نشد. دوباره تلاش کنید.",
+            "unblock": "رفع مسدودیت {name}",
+            "tiles": {
+                "call": "تماس",
+                "search": "جستجو",
+                "mute": "بی‌صدا",
+                "unmute": "باصدا",
+                "invite": "دعوت"
+            },
+            "createdBy": "سازنده",
+            "created": "تاریخ ایجاد",
+            "history": "تاریخچه",
+            "historyVisible": "برای اعضای جدید قابل مشاهده",
+            "historyHidden": "پنهان از اعضای جدید",
+            "viewAll": "مشاهده همه · {count}",
+            "muteEveryone": "بی‌صدا کردن @everyone",
+            "muteEveryoneHelp": "پیام‌هایی که @everyone را نام می‌برند برای شما اعلان نمی‌فرستند.",
+            "rules": "قوانین",
+            "manage": {
+                "title": "مدیریت",
+                "gates": "شرایط ورود",
+                "rules": "قوانین",
+                "permissions": "مجوزها",
+                "bots": "ربات‌ها و وب‌هوک‌ها",
+                "stats": "آمار"
+            },
+            "deleteGroup": "حذف گروه",
+            "deleteChannel": "حذف کانال",
+            "deleted": "{name} حذف شد",
+            "menu": {
+                "editGroup": "ویرایش گروه",
+                "editChannel": "ویرایش کانال",
+                "copyInviteLink": "کپی پیوند دعوت"
+            },
+            "members": {
+                "you": "شما",
+                "search": "جستجوی اعضا",
+                "owners": "{count, plural, =1 {مالکان} other {مالکان · #}}",
+                "admins": "{count, plural, =1 {مدیران} other {مدیران · #}}",
+                "moderators": "{count, plural, =1 {ناظران} other {ناظران · #}}",
+                "members": "{count, plural, =1 {اعضا} other {اعضا · #}}",
+                "blocked": "{count, plural, =1 {مسدودشده‌ها} other {مسدودشده‌ها · #}}",
+                "options": "گزینه‌های عضو",
+                "make": {
+                    "owner": "تعیین به‌عنوان مالک",
+                    "admin": "تعیین به‌عنوان مدیر",
+                    "moderator": "تعیین به‌عنوان ناظر",
+                    "member": "تعیین به‌عنوان عضو"
+                },
+                "remove": "حذف",
+                "block": "مسدود کردن",
+                "unblock": "رفع مسدودیت",
+                "removed": "{name} حذف شد",
+                "unblockedRejoin": "{name} از مسدودی خارج شد. می‌تواند دوباره بپیوندد",
+                "now": {
+                    "owner": "{name} اکنون مالک است",
+                    "admin": "{name} اکنون مدیر است",
+                    "moderator": "{name} اکنون ناظر است",
+                    "member": "{name} اکنون عضو است"
+                },
+                "notAllowed": "نقش شما اجازه تغییر نقش‌ها یا حذف اعضا را در اینجا نمی‌دهد.",
+                "noMatch": "هیچ عضوی مطابقت ندارد",
+                "message": "پیام"
+            }
         }
     },
     "new": "جدید",

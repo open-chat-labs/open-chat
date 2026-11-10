@@ -6,7 +6,8 @@ import {
 } from "@shared";
 
 // The prompts the client waits on while it sends: a chat's rules to accept, then the user's PIN
-// (pinNumberResolverStore), as the old UIs' Home answered them.
+// (pinNumberResolverStore), as the old UIs' Home answered them; the web's DialogHost and the native
+// conversation's rules sheet answer them now.
 
 export const PIN_LENGTH = 6;
 

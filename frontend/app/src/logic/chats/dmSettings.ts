@@ -4,12 +4,11 @@ import {
     type MessageFormatter,
     type OpenChat,
 } from "@client";
-import type { DisappearSetting } from "@openchat/ui/src/features/components/DmChatSettings.svelte";
 import { muteChat } from "@src/logic/chats/muteChat";
 
-// A DM's own settings, which DmPanel and the user card's "This chat" tab both change: mute,
-// favourite and disappearing messages. Each rejects when the change fails, so the component rolls
-// the field back and shows its own error.
+// A DM's own settings, which the web's DmPanel and the user card's "This chat" tab change (mute,
+// favourite and disappearing messages), and the native DM details its disappearing messages. Each
+// rejects when the change fails, so the component rolls the field back and shows its own error.
 
 function succeeded(success: boolean) {
     if (!success) throw new Error("not saved");
@@ -33,7 +32,8 @@ export async function favouriteDm(client: OpenChat, chat: DirectChatSummary, fav
 export async function setDmDisappearing(
     client: OpenChat,
     chat: DirectChatSummary,
-    setting: DisappearSetting,
+    // on or off, and how long they last (DmChatSettings' DisappearSetting, or the native switch's)
+    setting: { on: boolean; afterMs: number },
 ) {
     succeeded(
         await client.updateDirectChatSettings(

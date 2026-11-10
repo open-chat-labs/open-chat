@@ -2212,6 +2212,85 @@
                 "reauthenticate": "Увійти знову й видалити",
                 "step4Stay": "Ні, жартую, залишаюся"
             }
+        },
+        "details": {
+            "back": "Назад",
+            "chitEarned": "Зароблено CHIT",
+            "thisChat": "Цей чат",
+            "disappearing": "Зникаючі повідомлення",
+            "disappearingHelp": "Повідомлення в цьому чаті зникають у вас обох через вибраний час.",
+            "disappearingGroupHelp": "Повідомлення в цьому чаті зникають для всіх через вибраний час.",
+            "disappearAfterLabel": "Зникають через",
+            "duration": {
+                "minute": "{count, plural, one {# хвилина} few {# хвилини} many {# хвилин} other {# хвилини}}",
+                "hour": "{count, plural, one {# година} few {# години} many {# годин} other {# години}}",
+                "day": "{count, plural, one {# день} few {# дні} many {# днів} other {# дня}}",
+                "week": "{count, plural, one {# тиждень} few {# тижні} many {# тижнів} other {# тижня}}"
+            },
+            "saveFailed": "Не вдалося зберегти. Спробуйте ще раз.",
+            "unblock": "Розблокувати {name}",
+            "tiles": {
+                "call": "Подзвонити",
+                "search": "Пошук",
+                "mute": "Без звуку",
+                "unmute": "Увімкнути звук",
+                "invite": "Запросити"
+            },
+            "createdBy": "Автор",
+            "created": "Створено",
+            "history": "Історія",
+            "historyVisible": "Видима новим учасникам",
+            "historyHidden": "Прихована від нових учасників",
+            "viewAll": "Показати всіх · {count}",
+            "muteEveryone": "Вимкнути звук для @everyone",
+            "muteEveryoneHelp": "Повідомлення зі згадкою @everyone не надсилають сповіщень.",
+            "rules": "Правила",
+            "manage": {
+                "title": "Керування",
+                "gates": "Умови доступу",
+                "rules": "Правила",
+                "permissions": "Дозволи",
+                "bots": "Боти й вебхуки",
+                "stats": "Статистика"
+            },
+            "deleteGroup": "Видалити групу",
+            "deleteChannel": "Видалити канал",
+            "deleted": "Видалено: {name}",
+            "menu": {
+                "editGroup": "Редагувати групу",
+                "editChannel": "Редагувати канал",
+                "copyInviteLink": "Скопіювати посилання-запрошення"
+            },
+            "members": {
+                "you": "Ви",
+                "search": "Пошук учасників",
+                "owners": "{count, plural, =1 {Власники} other {Власники · #}}",
+                "admins": "{count, plural, =1 {Адміністратори} other {Адміністратори · #}}",
+                "moderators": "{count, plural, =1 {Модератори} other {Модератори · #}}",
+                "members": "{count, plural, =1 {Учасники} other {Учасники · #}}",
+                "blocked": "{count, plural, =1 {Заблоковані} other {Заблоковані · #}}",
+                "options": "Дії з учасником",
+                "make": {
+                    "owner": "Зробити власником",
+                    "admin": "Зробити адміністратором",
+                    "moderator": "Зробити модератором",
+                    "member": "Зробити учасником"
+                },
+                "remove": "Видалити",
+                "block": "Заблокувати",
+                "unblock": "Розблокувати",
+                "removed": "Видалено: {name}",
+                "unblockedRejoin": "{name} розблоковано. Може знову приєднатися",
+                "now": {
+                    "owner": "{name} тепер власник",
+                    "admin": "{name} тепер адміністратор",
+                    "moderator": "{name} тепер модератор",
+                    "member": "{name} тепер учасник"
+                },
+                "notAllowed": "Ваша роль не дозволяє тут змінювати ролі чи видаляти учасників.",
+                "noMatch": "Немає відповідних учасників",
+                "message": "Написати"
+            }
         }
     },
     "new": "новий",

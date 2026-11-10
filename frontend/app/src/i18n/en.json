@@ -2127,6 +2127,85 @@
                 "reauthenticate": "Sign in again & delete",
                 "step4Stay": "Nah, I'm kidding, I'll stay"
             }
+        },
+        "details": {
+            "back": "Back",
+            "chitEarned": "CHIT earned",
+            "thisChat": "This chat",
+            "disappearing": "Disappearing messages",
+            "disappearingHelp": "Messages in this chat disappear for both of you after the time you pick.",
+            "disappearingGroupHelp": "Messages in this chat disappear for everyone after the time you pick.",
+            "disappearAfterLabel": "Disappear after",
+            "duration": {
+                "minute": "{count, plural, one {# minute} other {# minutes}}",
+                "hour": "{count, plural, one {# hour} other {# hours}}",
+                "day": "{count, plural, one {# day} other {# days}}",
+                "week": "{count, plural, one {# week} other {# weeks}}"
+            },
+            "saveFailed": "Couldn't save that. Try again.",
+            "unblock": "Unblock {name}",
+            "tiles": {
+                "call": "Call",
+                "search": "Search",
+                "mute": "Mute",
+                "unmute": "Unmute",
+                "invite": "Invite"
+            },
+            "createdBy": "Created by",
+            "created": "Created",
+            "history": "History",
+            "historyVisible": "Visible to new members",
+            "historyHidden": "Hidden from new members",
+            "viewAll": "View all · {count}",
+            "muteEveryone": "Mute @everyone",
+            "muteEveryoneHelp": "Messages that mention @everyone don't notify you.",
+            "rules": "Rules",
+            "manage": {
+                "title": "Manage",
+                "gates": "Access gates",
+                "rules": "Rules",
+                "permissions": "Permissions",
+                "bots": "Bots and webhooks",
+                "stats": "Stats"
+            },
+            "deleteGroup": "Delete group",
+            "deleteChannel": "Delete channel",
+            "deleted": "Deleted {name}",
+            "menu": {
+                "editGroup": "Edit group",
+                "editChannel": "Edit channel",
+                "copyInviteLink": "Copy invite link"
+            },
+            "members": {
+                "you": "You",
+                "search": "Search members",
+                "owners": "{count, plural, =1 {Owners} other {Owners · #}}",
+                "admins": "{count, plural, =1 {Admins} other {Admins · #}}",
+                "moderators": "{count, plural, =1 {Moderators} other {Moderators · #}}",
+                "members": "{count, plural, =1 {Members} other {Members · #}}",
+                "blocked": "{count, plural, =1 {Blocked} other {Blocked · #}}",
+                "options": "Member options",
+                "make": {
+                    "owner": "Make owner",
+                    "admin": "Make admin",
+                    "moderator": "Make moderator",
+                    "member": "Make member"
+                },
+                "remove": "Remove",
+                "block": "Block",
+                "unblock": "Unblock",
+                "removed": "Removed {name}",
+                "unblockedRejoin": "Unblocked {name}. They can join again",
+                "now": {
+                    "owner": "{name} is now an owner",
+                    "admin": "{name} is now an admin",
+                    "moderator": "{name} is now a moderator",
+                    "member": "{name} is now a member"
+                },
+                "notAllowed": "Your role doesn't let you change roles or remove members here.",
+                "noMatch": "No members match",
+                "message": "Message"
+            }
         }
     },
     "new": "new",

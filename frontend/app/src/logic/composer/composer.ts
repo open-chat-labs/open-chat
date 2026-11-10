@@ -18,6 +18,7 @@ import {
     type MessagePermission,
     type OpenChat,
     type ResourceKey,
+    type SendMessageOutcome,
     type UserGroupDetails,
     type UserLookup,
     type UserOrUserGroup,
@@ -469,10 +470,37 @@ export function entryPlaceholder(state: {
 }
 
 /**
- * What became of a send from the composer: posted (it shows in the chat or thread), or refused
- * before it was (`reason` says why, for the log), when the composer keeps the draft.
+ * What became of a send from the composer: posted (it shows in the chat or thread); declined, the
+ * user having turned down the prompt it waited on (the chat's rules to accept, the PIN), when the
+ * composer keeps the draft and says nothing; or refused before it was (`reason` says why, for the
+ * log), when the composer keeps the draft and says it couldn't send.
  */
-export type ComposedSend = { kind: "posted" } | { kind: "refused"; reason: string };
+export type ComposedSend =
+    | { kind: "posted" }
+    | { kind: "declined" }
+    | { kind: "refused"; reason: string };
+
+function composedSend(outcome: SendMessageOutcome): ComposedSend {
+    switch (outcome.kind) {
+        case "posted":
+            return { kind: "posted" };
+        case "rules_declined":
+        case "pin_cancelled":
+            return { kind: "declined" };
+        default:
+            return { kind: "refused", reason: outcome.kind };
+    }
+}
+
+/**
+ * What the library's composer is told of a send (its `onSend` / `onVoice`): nothing once it's
+ * posted, `false` when the user declined (the draft stays, with no error), and a refusal throws
+ * (the draft stays, and the composer says it couldn't send).
+ */
+export function composerAnswer(sent: ComposedSend): false | undefined {
+    if (sent.kind === "refused") throw new Error(sent.reason);
+    return sent.kind === "declined" ? false : undefined;
+}
 
 /**
  * Sends what the composer holds to the chat or thread it's in (`context`): the text, with the
@@ -510,9 +538,7 @@ export async function sendComposed(
         markdown,
         taken.attachment,
     );
-    return outcome.kind === "posted"
-        ? { kind: "posted" }
-        : { kind: "refused", reason: outcome.kind };
+    return composedSend(outcome);
 }
 
 /**
@@ -526,7 +552,5 @@ export async function sendVoiceRecording(
     mimeType: string,
 ): Promise<ComposedSend> {
     const outcome = await client.sendVoiceMessage(context, await recording.arrayBuffer(), mimeType);
-    return outcome.kind === "posted"
-        ? { kind: "posted" }
-        : { kind: "refused", reason: outcome.kind };
+    return composedSend(outcome);
 }

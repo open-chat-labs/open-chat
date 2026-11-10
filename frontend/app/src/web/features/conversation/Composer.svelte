@@ -79,8 +79,9 @@
         onStartTyping: () => void;
         onStopTyping: () => void;
         // settles once the message shows in the chat; rejects if it was refused, and the composer
-        // keeps the draft and says it couldn't send
-        onSend: (text: string) => Promise<void>;
+        // keeps the draft and says it couldn't send; false (the rules or the PIN turned down) keeps
+        // it without a word (logic/composer's composerAnswer)
+        onSend: (text: string) => Promise<false | undefined>;
         // the message being replied to or edited (the draft's), shown above the text
         context: ComposerContext | null;
         onCancelContext: () => void;
@@ -99,8 +100,9 @@
         onEditAttachment: () => void;
         onRemoveAttachment: () => void;
         // sends a voice message recorded here; none where the reader can't record one (no mic
-        // then); rejects if it wasn't sent, and the take stays to send again
-        onVoice: ((recording: Blob) => Promise<void>) | undefined;
+        // then); rejects if it wasn't sent, and the take stays to send again (without a word for
+        // false, the rules turned down)
+        onVoice: ((recording: Blob) => Promise<false | undefined>) | undefined;
         // what a recording is made in, and the most it may hold
         voiceMimeType: string | undefined;
         voiceMaxBytes: number;
@@ -161,7 +163,7 @@
         typing.input(text);
     }
 
-    function send(text: string): Promise<void> {
+    function send(text: string): Promise<false | undefined> {
         typing.stopped();
         return onSend(text);
     }

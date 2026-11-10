@@ -1,6 +1,6 @@
 <!-- One masked field for a six-digit PIN: anything but digits is dropped as it's typed. -->
 <script lang="ts">
-    import { PIN_LENGTH } from "./pinPrompt";
+    import { PIN_LENGTH } from "@src/logic/composer/sendPrompts";
 
     interface Props {
         label: string;

@@ -2212,6 +2212,85 @@
                 "reauthenticate": "Iniciar sesión de nuevo y eliminar",
                 "step4Stay": "Nah, era broma, me quedo"
             }
+        },
+        "details": {
+            "back": "Atrás",
+            "chitEarned": "CHIT ganados",
+            "thisChat": "Este chat",
+            "disappearing": "Mensajes temporales",
+            "disappearingHelp": "Los mensajes de este chat desaparecen para los dos pasado el tiempo que elijas.",
+            "disappearingGroupHelp": "Los mensajes de este chat desaparecen para todos tras el tiempo que elijas.",
+            "disappearAfterLabel": "Desaparecen tras",
+            "duration": {
+                "minute": "{count, plural, one {# minuto} other {# minutos}}",
+                "hour": "{count, plural, one {# hora} other {# horas}}",
+                "day": "{count, plural, one {# día} other {# días}}",
+                "week": "{count, plural, one {# semana} other {# semanas}}"
+            },
+            "saveFailed": "No se pudo guardar. Inténtalo de nuevo.",
+            "unblock": "Desbloquear a {name}",
+            "tiles": {
+                "call": "Llamar",
+                "search": "Buscar",
+                "mute": "Silenciar",
+                "unmute": "Activar sonido",
+                "invite": "Invitar"
+            },
+            "createdBy": "Creado por",
+            "created": "Creado",
+            "history": "Historial",
+            "historyVisible": "Visible para los nuevos miembros",
+            "historyHidden": "Oculto para los nuevos miembros",
+            "viewAll": "Ver todo · {count}",
+            "muteEveryone": "Silenciar @everyone",
+            "muteEveryoneHelp": "Los mensajes que mencionan a @everyone no te notifican.",
+            "rules": "Normas",
+            "manage": {
+                "title": "Gestionar",
+                "gates": "Requisitos de acceso",
+                "rules": "Normas",
+                "permissions": "Permisos",
+                "bots": "Bots y webhooks",
+                "stats": "Estadísticas"
+            },
+            "deleteGroup": "Eliminar grupo",
+            "deleteChannel": "Eliminar canal",
+            "deleted": "{name} eliminado",
+            "menu": {
+                "editGroup": "Editar grupo",
+                "editChannel": "Editar canal",
+                "copyInviteLink": "Copiar enlace de invitación"
+            },
+            "members": {
+                "you": "Tú",
+                "search": "Buscar miembros",
+                "owners": "{count, plural, =1 {Propietarios} other {Propietarios · #}}",
+                "admins": "{count, plural, =1 {Administradores} other {Administradores · #}}",
+                "moderators": "{count, plural, =1 {Moderadores} other {Moderadores · #}}",
+                "members": "{count, plural, =1 {Miembros} other {Miembros · #}}",
+                "blocked": "{count, plural, =1 {Bloqueados} other {Bloqueados · #}}",
+                "options": "Opciones del miembro",
+                "make": {
+                    "owner": "Hacer propietario",
+                    "admin": "Hacer administrador",
+                    "moderator": "Hacer moderador",
+                    "member": "Hacer miembro"
+                },
+                "remove": "Eliminar",
+                "block": "Bloquear",
+                "unblock": "Desbloquear",
+                "removed": "Has eliminado a {name}",
+                "unblockedRejoin": "{name} desbloqueado. Puede volver a unirse",
+                "now": {
+                    "owner": "{name} ahora es propietario",
+                    "admin": "{name} ahora es administrador",
+                    "moderator": "{name} ahora es moderador",
+                    "member": "{name} ahora es miembro"
+                },
+                "notAllowed": "Tu rol no te permite cambiar roles ni eliminar miembros aquí.",
+                "noMatch": "Ningún miembro coincide",
+                "message": "Mensaje"
+            }
         }
     },
     "new": "nuevo",

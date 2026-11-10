@@ -75,6 +75,22 @@ export class ProfileCardData {
 }
 
 /**
+ * A `ProfileCardData`'s `onGone` for `userId`, for a sheet that shows one person after another and
+ * whose `close` closes it whoever it's showing: it closes only while it's still showing them
+ * (`showing`, read when it's called). A late answer about someone it showed before (their profile
+ * slow, then not found) then can't close it on someone else, nor reopen anything.
+ */
+export function closeIfShowing(
+    userId: string,
+    showing: () => string | undefined,
+    close: () => void,
+): () => void {
+    return () => {
+        if (showing() === userId) close();
+    };
+}
+
+/**
  * What a profile card offers to block or unblock (`profileBlock`), from the selected chat and
  * community and their blocked lists, following them as they change.
  */

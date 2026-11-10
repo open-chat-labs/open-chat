@@ -2212,6 +2212,85 @@
                 "reauthenticate": "Erneut anmelden & löschen",
                 "step4Stay": "Nee, war nur Spaß, ich bleibe"
             }
+        },
+        "details": {
+            "back": "Zurück",
+            "chitEarned": "Verdiente CHIT",
+            "thisChat": "Dieser Chat",
+            "disappearing": "Selbstlöschende Nachrichten",
+            "disappearingHelp": "Nachrichten in diesem Chat verschwinden für euch beide nach der gewählten Zeit.",
+            "disappearingGroupHelp": "Nachrichten in diesem Chat verschwinden nach der gewählten Zeit für alle.",
+            "disappearAfterLabel": "Verschwinden nach",
+            "duration": {
+                "minute": "{count, plural, one {# Minute} other {# Minuten}}",
+                "hour": "{count, plural, one {# Stunde} other {# Stunden}}",
+                "day": "{count, plural, one {# Tag} other {# Tage}}",
+                "week": "{count, plural, one {# Woche} other {# Wochen}}"
+            },
+            "saveFailed": "Das konnte nicht gespeichert werden. Versuch es noch einmal.",
+            "unblock": "{name} entsperren",
+            "tiles": {
+                "call": "Anrufen",
+                "search": "Suchen",
+                "mute": "Stumm",
+                "unmute": "Ton an",
+                "invite": "Einladen"
+            },
+            "createdBy": "Erstellt von",
+            "created": "Erstellt",
+            "history": "Verlauf",
+            "historyVisible": "Für neue Mitglieder sichtbar",
+            "historyHidden": "Für neue Mitglieder verborgen",
+            "viewAll": "Alle anzeigen · {count}",
+            "muteEveryone": "@everyone stummschalten",
+            "muteEveryoneHelp": "Nachrichten, die @everyone erwähnen, benachrichtigen dich nicht.",
+            "rules": "Regeln",
+            "manage": {
+                "title": "Verwalten",
+                "gates": "Zugangsbedingungen",
+                "rules": "Regeln",
+                "permissions": "Berechtigungen",
+                "bots": "Bots und Webhooks",
+                "stats": "Statistiken"
+            },
+            "deleteGroup": "Gruppe löschen",
+            "deleteChannel": "Kanal löschen",
+            "deleted": "{name} gelöscht",
+            "menu": {
+                "editGroup": "Gruppe bearbeiten",
+                "editChannel": "Kanal bearbeiten",
+                "copyInviteLink": "Einladungslink kopieren"
+            },
+            "members": {
+                "you": "Du",
+                "search": "Mitglieder suchen",
+                "owners": "{count, plural, =1 {Inhaber} other {Inhaber · #}}",
+                "admins": "{count, plural, =1 {Admins} other {Admins · #}}",
+                "moderators": "{count, plural, =1 {Moderatoren} other {Moderatoren · #}}",
+                "members": "{count, plural, =1 {Mitglieder} other {Mitglieder · #}}",
+                "blocked": "{count, plural, =1 {Blockiert} other {Blockiert · #}}",
+                "options": "Mitgliedsoptionen",
+                "make": {
+                    "owner": "Zum Inhaber machen",
+                    "admin": "Zum Admin machen",
+                    "moderator": "Zum Moderator machen",
+                    "member": "Zum Mitglied machen"
+                },
+                "remove": "Entfernen",
+                "block": "Blockieren",
+                "unblock": "Entsperren",
+                "removed": "{name} entfernt",
+                "unblockedRejoin": "{name} entsperrt. Die Person kann wieder beitreten",
+                "now": {
+                    "owner": "{name} ist jetzt Inhaber",
+                    "admin": "{name} ist jetzt Admin",
+                    "moderator": "{name} ist jetzt Moderator",
+                    "member": "{name} ist jetzt Mitglied"
+                },
+                "notAllowed": "Deine Rolle erlaubt es hier nicht, Rollen zu ändern oder Mitglieder zu entfernen.",
+                "noMatch": "Keine passenden Mitglieder",
+                "message": "Nachricht"
+            }
         }
     },
     "new": "Neu",

@@ -2212,6 +2212,85 @@
                 "reauthenticate": "Войти снова и удалить",
                 "step4Stay": "Не, шучу, остаюсь"
             }
+        },
+        "details": {
+            "back": "Назад",
+            "chitEarned": "Заработано CHIT",
+            "thisChat": "Этот чат",
+            "disappearing": "Исчезающие сообщения",
+            "disappearingHelp": "Сообщения в этом чате исчезают у вас обоих через выбранное время.",
+            "disappearingGroupHelp": "Сообщения в этом чате исчезают у всех через выбранное время.",
+            "disappearAfterLabel": "Исчезают через",
+            "duration": {
+                "minute": "{count, plural, one {# минута} few {# минуты} many {# минут} other {# минуты}}",
+                "hour": "{count, plural, one {# час} few {# часа} many {# часов} other {# часа}}",
+                "day": "{count, plural, one {# день} few {# дня} many {# дней} other {# дня}}",
+                "week": "{count, plural, one {# неделя} few {# недели} many {# недель} other {# недели}}"
+            },
+            "saveFailed": "Не удалось сохранить. Попробуйте ещё раз.",
+            "unblock": "Разблокировать {name}",
+            "tiles": {
+                "call": "Позвонить",
+                "search": "Поиск",
+                "mute": "Без звука",
+                "unmute": "Включить звук",
+                "invite": "Пригласить"
+            },
+            "createdBy": "Создатель",
+            "created": "Создано",
+            "history": "История",
+            "historyVisible": "Видна новым участникам",
+            "historyHidden": "Скрыта от новых участников",
+            "viewAll": "Показать всех · {count}",
+            "muteEveryone": "Без звука для @everyone",
+            "muteEveryoneHelp": "Сообщения с упоминанием @everyone не присылают уведомлений.",
+            "rules": "Правила",
+            "manage": {
+                "title": "Управление",
+                "gates": "Условия доступа",
+                "rules": "Правила",
+                "permissions": "Разрешения",
+                "bots": "Боты и вебхуки",
+                "stats": "Статистика"
+            },
+            "deleteGroup": "Удалить группу",
+            "deleteChannel": "Удалить канал",
+            "deleted": "Удалено: {name}",
+            "menu": {
+                "editGroup": "Изменить группу",
+                "editChannel": "Изменить канал",
+                "copyInviteLink": "Скопировать ссылку-приглашение"
+            },
+            "members": {
+                "you": "Вы",
+                "search": "Поиск участников",
+                "owners": "{count, plural, =1 {Владельцы} other {Владельцы · #}}",
+                "admins": "{count, plural, =1 {Администраторы} other {Администраторы · #}}",
+                "moderators": "{count, plural, =1 {Модераторы} other {Модераторы · #}}",
+                "members": "{count, plural, =1 {Участники} other {Участники · #}}",
+                "blocked": "{count, plural, =1 {Заблокированные} other {Заблокированные · #}}",
+                "options": "Действия с участником",
+                "make": {
+                    "owner": "Сделать владельцем",
+                    "admin": "Сделать администратором",
+                    "moderator": "Сделать модератором",
+                    "member": "Сделать участником"
+                },
+                "remove": "Удалить",
+                "block": "Заблокировать",
+                "unblock": "Разблокировать",
+                "removed": "Удалено: {name}",
+                "unblockedRejoin": "{name} разблокирован(а). Может снова вступить",
+                "now": {
+                    "owner": "{name} теперь владелец",
+                    "admin": "{name} теперь администратор",
+                    "moderator": "{name} теперь модератор",
+                    "member": "{name} теперь участник"
+                },
+                "notAllowed": "Ваша роль не позволяет здесь менять роли или удалять участников.",
+                "noMatch": "Нет подходящих участников",
+                "message": "Написать"
+            }
         }
     },
     "new": "новое",

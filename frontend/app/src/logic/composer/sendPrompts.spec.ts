@@ -6,7 +6,7 @@ import {
     declinesPrompt,
     PinAnswer,
     waitingPrompt,
-} from "./pinPrompt";
+} from "./sendPrompts";
 
 function pinRequest() {
     const resolve = vi.fn<(pin: string) => void>();

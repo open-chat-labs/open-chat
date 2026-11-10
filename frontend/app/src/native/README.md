@@ -62,7 +62,14 @@ native/
                      reaction sheet both offer (EmojiGrid, EmojiSections, EmojiSearchField); a
                      message's long-press menu and what it opens (N5d: MessageActions, the
                      reaction sheet (ReactionPicker), the forward and report sheets,
-                     MessageInfoScreen, pushed locally)
+                     MessageInfoScreen, pushed locally); the rules sheet when sending needs the
+                     chat's rules accepted (RulesSheet, on logic/composer/sendPrompts)
+    details/         a chat's details (N6), pushed from the conversation without a URL: a DM's
+                     (DmDetails) or a group's or channel's (GroupDetails) on ChatDetailsScreen,
+                     the Members screen (MembersScreen, chat_members) and a member's profile sheet;
+                     the Search tile goes back to the conversation and opens its search
+                     (conversation/searchRequests); Manage's pages, Edit group and Invite are
+                     N7's (group_settings, placeholders)
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when
@@ -86,11 +93,17 @@ controls, removing a link's preview, the unread divider and the route's message,
 call items;
 `core/ChatEventList`, `core/MediaViewer`, `core/observeRead`, shared with `src/web` and, for search
 and calls, the old UIs), the composer (`logic/composer`: where it is, what it offers, sending,
-mentions, voice, the props it takes, GIFs; `logic/conversation/draftActions`: the reply or edit;
-shared with `src/web`, and the GIFs' content with the old UIs; the emoji by category in
+mentions, voice, the props it takes, GIFs, the prompts a send waits on (`sendPrompts`: the rules
+to accept, the PIN); `logic/conversation/draftActions`: the reply or edit; shared with `src/web`,
+and the GIFs' content with the old UIs; the emoji by category in
 `utils/emojis`, the old pickers' data; the phone's recent photos in `utils/native/recentMedia`,
 shared with the old native UI's strip; the photos and videos picked (the composer's media and the
-attach panel's selection) and the recent emoji in `logic/composer`), and the theme the web and Welcome's menu keep
+attach panel's selection) and the recent emoji in `logic/composer`), a chat's details (the web
+panel's: `logic/members`' MemberManagement, and the members' role sections and ⋯ in `@client`'s
+`memberSections` and `memberMenu`, `logic/groupOrCommunity/detailsPermissions`, `logic/profile`'s ProfileCardData, a
+DM's settings in `logic/chats/dmSettings`, a group's disappearing messages in
+`logic/chats/groupDisappearing` and the disappearing lengths in
+`logic/chats/disappearingMessages`), and the theme the web and Welcome's menu keep
 (`theme/themes.ts`). The
 marketing pages (Landing, Learn, the terms and privacy policy) aren't the app's: they open on the
 website in the default browser (`shell/onWeb.ts`), as the old native app's About and a deep link

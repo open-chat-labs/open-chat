@@ -2212,6 +2212,85 @@
                 "reauthenticate": "फिर से साइन इन करें और हटाएँ",
                 "step4Stay": "अरे, मज़ाक था, मैं रुकता हूँ"
             }
+        },
+        "details": {
+            "back": "वापस",
+            "chitEarned": "कमाए गए CHIT",
+            "thisChat": "यह चैट",
+            "disappearing": "गायब होने वाले संदेश",
+            "disappearingHelp": "इस चैट के संदेश आपके चुने हुए समय के बाद आप दोनों के लिए गायब हो जाते हैं।",
+            "disappearingGroupHelp": "इस चैट के संदेश आपके चुने गए समय के बाद सभी के लिए गायब हो जाते हैं।",
+            "disappearAfterLabel": "इतने समय बाद गायब",
+            "duration": {
+                "minute": "{count, plural, one {# मिनट} other {# मिनट}}",
+                "hour": "{count, plural, one {# घंटा} other {# घंटे}}",
+                "day": "{count, plural, one {# दिन} other {# दिन}}",
+                "week": "{count, plural, one {# सप्ताह} other {# सप्ताह}}"
+            },
+            "saveFailed": "सहेजा नहीं जा सका। फिर से कोशिश करें।",
+            "unblock": "{name} को अनब्लॉक करें",
+            "tiles": {
+                "call": "कॉल",
+                "search": "खोजें",
+                "mute": "म्यूट",
+                "unmute": "अनम्यूट",
+                "invite": "आमंत्रित करें"
+            },
+            "createdBy": "बनाने वाले",
+            "created": "बनाया गया",
+            "history": "इतिहास",
+            "historyVisible": "नए सदस्यों को दिखता है",
+            "historyHidden": "नए सदस्यों से छिपा है",
+            "viewAll": "सभी देखें · {count}",
+            "muteEveryone": "@everyone म्यूट करें",
+            "muteEveryoneHelp": "@everyone का ज़िक्र करने वाले संदेश आपको सूचना नहीं भेजते।",
+            "rules": "नियम",
+            "manage": {
+                "title": "प्रबंधन",
+                "gates": "प्रवेश शर्तें",
+                "rules": "नियम",
+                "permissions": "अनुमतियाँ",
+                "bots": "बॉट और वेबहुक",
+                "stats": "आँकड़े"
+            },
+            "deleteGroup": "ग्रुप हटाएँ",
+            "deleteChannel": "चैनल हटाएँ",
+            "deleted": "{name} हटाया गया",
+            "menu": {
+                "editGroup": "ग्रुप संपादित करें",
+                "editChannel": "चैनल संपादित करें",
+                "copyInviteLink": "आमंत्रण लिंक कॉपी करें"
+            },
+            "members": {
+                "you": "आप",
+                "search": "सदस्य खोजें",
+                "owners": "{count, plural, =1 {मालिक} other {मालिक · #}}",
+                "admins": "{count, plural, =1 {एडमिन} other {एडमिन · #}}",
+                "moderators": "{count, plural, =1 {मॉडरेटर} other {मॉडरेटर · #}}",
+                "members": "{count, plural, =1 {सदस्य} other {सदस्य · #}}",
+                "blocked": "{count, plural, =1 {ब्लॉक किए गए} other {ब्लॉक किए गए · #}}",
+                "options": "सदस्य विकल्प",
+                "make": {
+                    "owner": "मालिक बनाएँ",
+                    "admin": "एडमिन बनाएँ",
+                    "moderator": "मॉडरेटर बनाएँ",
+                    "member": "सदस्य बनाएँ"
+                },
+                "remove": "हटाएँ",
+                "block": "ब्लॉक करें",
+                "unblock": "अनब्लॉक करें",
+                "removed": "{name} को हटाया गया",
+                "unblockedRejoin": "{name} को अनब्लॉक किया गया। वे फिर से जुड़ सकते हैं",
+                "now": {
+                    "owner": "{name} अब मालिक हैं",
+                    "admin": "{name} अब एडमिन हैं",
+                    "moderator": "{name} अब मॉडरेटर हैं",
+                    "member": "{name} अब सदस्य हैं"
+                },
+                "notAllowed": "आपकी भूमिका यहाँ भूमिकाएँ बदलने या सदस्यों को हटाने की अनुमति नहीं देती।",
+                "noMatch": "कोई सदस्य मेल नहीं खाता",
+                "message": "संदेश भेजें"
+            }
         }
     },
     "new": "नया",
