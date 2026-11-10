@@ -654,8 +654,9 @@
     let footerHeight = $state<number>();
     let toastFloor = $state<number>();
     $effect(() => {
+        // null once the composer has gone (bind:this), while the search is open
         const el = footer;
-        if (el === undefined) return;
+        if (el == null) return;
         const observer = new ResizeObserver(() => (footerHeight = el.offsetHeight));
         observer.observe(el);
         return () => {
