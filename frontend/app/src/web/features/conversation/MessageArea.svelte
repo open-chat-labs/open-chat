@@ -206,6 +206,7 @@
     import { toggleReaction } from "@src/logic/conversation/reaction";
     import { askToSignIn, signInFirst } from "@src/logic/auth/guestPass";
     import { observeRead } from "@src/core/observeRead";
+    import { stickyDateTop } from "@src/core/stickyDateTop";
     import { votePoll } from "@src/logic/conversation/pollVote";
     import {
         FirstUnread,
@@ -847,6 +848,21 @@
         return client.formatMessageDate(timestamp, $_("today"), $_("yesterday"));
     }
 
+    // the day of the messages at the top of the list, pinned there while it scrolls through that
+    // day (the list says which: VirtualChatList's sticky date), as in the old lists; the day's own
+    // pill takes over as it passes under it. Where it sits is core/stickyDateTop's, as native's
+    let stickyTop = $state<number>();
+    let stickyDate = $state<bigint>();
+
+    // the chat's first mention of the reader they haven't read, which the list goes to, as the old
+    // CurrentChat works it out: again as messages are read, so it goes once that one is. None in
+    // a thread or where the chat is read only, as in the old trees
+    const firstUnreadMention = $derived.by(() => {
+        if (thread !== undefined || readonly) return undefined;
+        void $messagesRead;
+        return client.getFirstUnreadMention(chat);
+    });
+
     function messagesFor(
         row: MessageRow,
         body: Snippet,
@@ -1301,6 +1317,17 @@
         <div class="state"><Spinner /></div>
     {:else}
         <div class="messages">
+            <!-- TODO(design): no sticky date in the design; the old lists', in the inline dates'
+                 pill -->
+            <div
+                class="sticky-date"
+                class:shown={stickyDate !== undefined}
+                use:stickyDateTop={(top) => (stickyTop = top)}
+            >
+                {#if stickyDate !== undefined}
+                    <UnreadDivider tone="neutral" label={dateLabel(stickyDate)} />
+                {/if}
+            </div>
             <ChatEventList
                 bind:this={list}
                 rootSelector={thread === undefined ? "conversation" : "thread"}
@@ -1311,21 +1338,32 @@
                 maintainScroll={thread === undefined}
                 visible
                 bind:initialised
+                stickyDateElTop={stickyTop}
+                bind:stickyDateTimestamp={stickyDate}
                 viewportClass="message-list"
             >
                 {#snippet row(item, args)}
                     {@render eventRow(item, args)}
                 {/snippet}
-                {#snippet fabs({ showGoToBottom, scrollToLast })}
-                    {#if showGoToBottom}
-                        <div class="to-bottom">
+                {#snippet fabs({ showGoToBottom, scrollToLast, scrollToMention })}
+                    <!-- TODO(design): no go-to-mention button in the design; the old lists', as
+                         go-to-latest -->
+                    <div class="fabs">
+                        {#if firstUnreadMention !== undefined}
+                            <IconButton
+                                icon="at"
+                                label={$_("goToFirstMention")}
+                                onClick={() => scrollToMention(firstUnreadMention)}
+                            />
+                        {/if}
+                        {#if showGoToBottom}
                             <IconButton
                                 icon="arrow-down"
                                 label={$_("goToLatestMessage")}
                                 onClick={scrollToLast}
                             />
-                        </div>
-                    {/if}
+                        {/if}
+                    </div>
                 {/snippet}
             </ChatEventList>
         </div>
@@ -1718,9 +1756,30 @@
         text-decoration: underline;
     }
 
-    .to-bottom {
+    /* go to the first unread mention, over go to the latest message */
+    .fabs {
         position: absolute;
         inset-block-end: var(--space-16);
         inset-inline-end: var(--message-list-gutter, var(--space-24));
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-8);
+    }
+
+    /* the day of the messages at the top of the list, over them; none while the day's own pill is
+       there (the list hands over to it), so a date never shows twice */
+    .sticky-date {
+        position: absolute;
+        z-index: 1;
+        inset-block-start: var(--space-16);
+        inset-inline: 0;
+        padding-inline: var(--message-list-gutter, var(--space-24));
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+
+        &.shown {
+            opacity: 1;
+        }
     }
 </style>
