@@ -1099,7 +1099,7 @@ describe("balances which couldn't be read", () => {
     const LEDGER = "kylwo-viaaa-aaaaq-aae7a-cai";
     const OTHER_LEDGER = "iozql-7iaaa-aaaah-advvq-cai";
 
-    function token(ledger: string, symbol: string): CryptocurrencyDetails {
+    function token(ledger: string, symbol: string, enabled = true): CryptocurrencyDetails {
         return {
             name: symbol,
             symbol,
@@ -1112,7 +1112,7 @@ describe("balances which couldn't be read", () => {
             transactionUrlFormat: "",
             supportedStandards: [],
             added: 0n,
-            enabled: true,
+            enabled,
             oneSecEnabled: false,
             evmContractAddresses: [],
             lastUpdated: 0n,
@@ -1178,6 +1178,24 @@ describe("balances which couldn't be read", () => {
         serverWalletConfigStore.set({ kind: "manual_wallet", tokens: new Set([OTHER_LEDGER]) });
 
         expect(walletTokensUnavailable.value.map((t) => t.ledger)).toEqual([OTHER_LEDGER]);
+    });
+
+    // The wallet lists a disabled token only while it's known to hold some, so a picked one whose
+    // ledger has never answered is named rather than silently missing
+    test("a hand-picked wallet names a picked token the Registry has since disabled", () => {
+        cryptoLookup.set(new Map([[LEDGER, token(LEDGER, "LOW", false)]]));
+        cryptoBalanceStore.setUnavailable(LEDGER);
+        serverWalletConfigStore.set({ kind: "manual_wallet", tokens: new Set([LEDGER]) });
+
+        expect(walletTokensSorted.value).toEqual([]);
+        expect(walletTokensUnavailable.value.map((t) => t.ledger)).toEqual([LEDGER]);
+    });
+
+    test("an automatic wallet doesn't name a disabled token it has never read a balance of", () => {
+        cryptoLookup.set(new Map([[LEDGER, token(LEDGER, "LOW", false)]]));
+        cryptoBalanceStore.setUnavailable(LEDGER);
+
+        expect(walletTokensUnavailable.value).toEqual([]);
     });
 });
 

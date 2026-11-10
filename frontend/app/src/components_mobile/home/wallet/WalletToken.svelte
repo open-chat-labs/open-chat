@@ -49,7 +49,6 @@
         client.refreshAccountBalance(token.ledger, true);
         return ts;
     });
-    let unknown = $derived(tokenState.balanceUnavailable && tokenState.cryptoBalance === 0n);
     // what the token's menu offers: the same rules in every tree (tokenActions); this menu has
     // Refresh and Remove, the token page the rest
     let actions = $derived(
@@ -72,7 +71,7 @@
                 >{tokenState.formattedUnitValue}</BodySmall>
         </Container>
         <!-- the ledger didn't answer (eg. it is out of cycles): the balance last read is marked,
-             and with none read a 0 would be a guess -->
+             and with none ever read a 0 would be a guess -->
         {#if tokenState.balanceUnavailable}
             <AlertOutline size="1.25rem" color={ColourVars.validationWarning} />
         {/if}
@@ -81,7 +80,7 @@
             align={"end"}
             width={{ size: "6rem" }}
             fontWeight={"bold"}>
-            {unknown ? "???" : tokenState.formattedTokenBalance}
+            {tokenState.balanceUnknown ? "???" : tokenState.formattedTokenBalance}
         </Subtitle>
         <Subtitle
             blur={$hideTokenBalances}
@@ -89,7 +88,7 @@
             width={{ size: "6rem" }}
             colour={"primary"}
             fontWeight={"bold"}>
-            {unknown ? "???" : tokenState.formattedConvertedValue}
+            {tokenState.balanceUnknown ? "???" : tokenState.formattedConvertedValue}
         </Subtitle>
         {#if withMenu}
             {#if tokenState.refreshingBalance}

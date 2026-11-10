@@ -58,7 +58,11 @@
     let selectedLedger: string | undefined = $state(undefined);
     let transactionsFormat: string = $state("");
 
-    onMount(() => client.refreshSwappableTokens());
+    onMount(() => {
+        client.refreshSwappableTokens();
+        // a ledger which didn't answer earlier may now, and only the listed tokens ask again
+        void client.refreshUnavailableBalances();
+    });
 
     function hideManageModal() {
         actionMode = "none";

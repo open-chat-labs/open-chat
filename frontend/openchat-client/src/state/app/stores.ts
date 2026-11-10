@@ -366,16 +366,22 @@ export const walletTokensSorted = derived(
     },
 );
 
-// The tokens whose balance the wallet asked for and couldn't get: those it lists and, in an
-// automatic wallet, any other, since which of those it should list can't be known without them
+// The tokens whose balance the wallet asked for and couldn't get. In an automatic wallet that is any
+// token it could list, since which of those it should list can't be known without their balances.
+// In a hand-picked wallet it is the picked ones, including one the Registry has since disabled,
+// which the wallet lists only while it is known to hold some
 export const walletTokensUnavailable = derived(
-    [cryptoTokensSorted, walletConfigStore],
-    ([$tokens, walletConfig]) => {
-        return $tokens.filter(
-            (t) =>
-                t.balanceUnavailable &&
-                (walletConfig.kind === "auto_wallet" || walletConfig.tokens.has(t.ledger)),
-        );
+    [enhancedCryptoLookup, walletConfigStore],
+    ([$lookup, walletConfig]) => {
+        return [...$lookup.values()]
+            .filter(
+                (t) =>
+                    t.balanceUnavailable &&
+                    (walletConfig.kind === "auto_wallet"
+                        ? t.enabled || !t.zero
+                        : walletConfig.tokens.has(t.ledger)),
+            )
+            .sort(compareTokens);
     },
 );
 

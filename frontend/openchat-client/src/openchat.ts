@@ -447,6 +447,7 @@ import {
     communitiesStore,
     communityFiltersStore,
     confirmedThreadEventIndexesLoadedStore,
+    balanceUnavailableStore,
     cryptoBalanceStore,
     cryptoLookup,
     currentUserIdStore,
@@ -8434,6 +8435,15 @@ export class OpenChat {
         this.#inflightBalanceRefreshPromises.set(ledger, promise);
 
         return promise;
+    }
+
+    // Asks again for each balance which couldn't be read, as the wallet does when it opens: a
+    // lookup which failed for a passing reason (a timeout, a moment offline) would otherwise leave
+    // its ledger marked until something else asked for that balance
+    async refreshUnavailableBalances(): Promise<void> {
+        await Promise.all(
+            [...balanceUnavailableStore.value].map((ledger) => this.refreshAccountBalance(ledger)),
+        );
     }
 
     // The balances left behind in the wallets of the canisters the user had before being migrated to

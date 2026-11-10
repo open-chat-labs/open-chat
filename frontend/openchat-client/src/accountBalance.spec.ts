@@ -22,7 +22,7 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
     AuthClient: { create: () => new Promise(() => {}) },
 }));
 
-import { LEDGER_CANISTER_ICP, anonymousUser } from "@shared";
+import { LEDGER_CANISTER_CHAT, LEDGER_CANISTER_ICP, anonymousUser } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import { balanceUnavailableStore, cryptoBalanceStore, currentUserStore } from "./state";
@@ -54,6 +54,9 @@ describe("refreshing an account balance", () => {
     });
 
     afterEach(() => {
+        // reading a balance clears a ledger's mark
+        cryptoBalanceStore.setBalance(LEDGER_CANISTER_ICP, 0n);
+        cryptoBalanceStore.setBalance(LEDGER_CANISTER_CHAT, 0n);
         vi.unstubAllGlobals();
         vi.restoreAllMocks();
         currentUserStore.set(anonymousUser());
@@ -82,6 +85,24 @@ describe("refreshing an account balance", () => {
         send.mockResolvedValue(700n);
         await client.refreshAccountBalance(LEDGER_CANISTER_ICP);
         expect(balanceUnavailableStore.value.has(LEDGER_CANISTER_ICP)).toBe(false);
+        expect(cryptoBalanceStore.value.get(LEDGER_CANISTER_ICP)).toBe(700n);
+    });
+
+    // Invariant 3: a lookup which failed for a passing reason doesn't leave its ledger marked for
+    // the session: the wallet asks again for the marked ones as it opens
+    test("asking again for the marked ledgers clears those which now answer", async () => {
+        const send = vi.spyOn(WorkerAgent.prototype, "send").mockRejectedValue(new Error("timeout"));
+        await client.refreshAccountBalance(LEDGER_CANISTER_ICP);
+        await client.refreshAccountBalance(LEDGER_CANISTER_CHAT);
+
+        send.mockImplementation((req) =>
+            "ledger" in req && req.ledger === LEDGER_CANISTER_ICP
+                ? Promise.resolve(700n)
+                : Promise.reject(new Error("Canister is out of cycles")),
+        );
+        await client.refreshUnavailableBalances();
+
+        expect([...balanceUnavailableStore.value]).toEqual([LEDGER_CANISTER_CHAT]);
         expect(cryptoBalanceStore.value.get(LEDGER_CANISTER_ICP)).toBe(700n);
     });
 });

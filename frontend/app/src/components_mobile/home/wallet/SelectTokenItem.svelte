@@ -40,13 +40,12 @@
         width={{ size: "6rem" }}
         fontWeight={"bold"}
         colour={"textSecondary"}>
-        <!-- a 0 from a ledger which didn't answer (eg. it is out of cycles) isn't known to be 0 -->
-        {@const renderValue =
-            tokenState.cryptoBalance === 0n
-                ? tokenState.balanceUnavailable
-                    ? "???"
-                    : "-"
-                : tokenState.formattedTokenBalance}
+        <!-- a ledger which has never answered (eg. it is out of cycles) hasn't said 0 -->
+        {@const renderValue = tokenState.balanceUnknown
+            ? "???"
+            : tokenState.cryptoBalance === 0n
+              ? "-"
+              : tokenState.formattedTokenBalance}
         {renderValue}
     </Body>
 </Container>

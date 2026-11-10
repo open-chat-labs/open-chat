@@ -175,6 +175,7 @@ export class TokenState {
     #symbol = $derived(this.#token.symbol);
     #cryptoBalance = $derived(balances().get(this.#ledger) ?? 0n);
     #balanceUnavailable = $derived(unavailable().has(this.#ledger));
+    #balanceUnknown = $derived(this.#balanceUnavailable && !balances().has(this.#ledger));
     #transferFee = $derived(this.#token.transferFee);
     // What the draft costs in fees. One transfer's fee unless the flow sets otherwise, eg. to add
     // the approval the wallet makes before a payment is pulled from it (see `walletApprovalFee`)
@@ -294,6 +295,12 @@ export class TokenState {
     // last one read, or 0 if none has been
     get balanceUnavailable(): boolean {
         return this.#balanceUnavailable;
+    }
+
+    // The ledger has never answered, so there is no balance to show: `cryptoBalance` is 0 only for
+    // want of one. A 0 the ledger did give is a balance, however old
+    get balanceUnknown(): boolean {
+        return this.#balanceUnknown;
     }
 
     get ledger() {

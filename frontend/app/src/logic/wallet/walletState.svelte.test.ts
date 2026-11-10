@@ -216,6 +216,24 @@ describe("balances which couldn't be read", () => {
         stop();
     });
 
+    // "???" is for a ledger which has never answered: a 0 it did give is still a balance
+    test("a balance is unknown only until the ledger has answered once", () => {
+        const never = new TokenState({ ...icp, ledger: "never-answered" });
+        const zero = new TokenState({ ...icp, ledger: "answered-zero" });
+        const stop = $effect.root(() => {
+            $effect(() => void [never.balanceUnknown, zero.balanceUnknown]);
+        });
+        cryptoBalanceStore.setBalance("answered-zero", 0n);
+        cryptoBalanceStore.setUnavailable("never-answered");
+        cryptoBalanceStore.setUnavailable("answered-zero");
+        flushSync();
+
+        expect(never.balanceUnknown).toBe(true);
+        expect(zero.balanceUnavailable).toBe(true);
+        expect(zero.balanceUnknown).toBe(false);
+        stop();
+    });
+
     test("the note names the first few tokens, then counts the rest", () => {
         const tokens = ["A", "B", "C", "D", "E", "F", "G"].map((symbol) => ({ symbol }));
         expect(unavailableTokensLabel(tokens.slice(0, 2))).toBe("A, B");
