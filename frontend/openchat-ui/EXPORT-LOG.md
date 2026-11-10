@@ -843,3 +843,7 @@
 - `NativeMenu`: `::-webkit-scrollbar { display: none }` beside `scrollbar-width: none`, which Android's WebView doesn't support: a card that does scroll shows no scrollbar (the anchored and row long-press menus too).
 - `BottomSheet`: `keyboard` (px the soft keyboard covers, where the window doesn't shrink for it): while a field in the sheet has the focus, the sheet sits on the keyboard, as tall as it can be under the screen's top. `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-09 — no scrollbars in the native tree (native N5d), by hand
+- `global.css`: under `[data-platform="native"]` (the native root on `<html>`), no element shows a scrollbar: `scrollbar-width: none` and `::-webkit-scrollbar { display: none }`. Android's WebView reads only the `::-webkit-scrollbar` rules, so the global 8px scrollbar showed on the native tree's scrollers (the conversation, the chat list, settings…) whatever their own `scrollbar-width: none` said. Scrolling is unchanged.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

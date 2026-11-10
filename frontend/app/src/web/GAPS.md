@@ -519,6 +519,8 @@ design export needs. Each entry says where it came up.
     `MessageLongPressMenu` with `messageMenuPlacement` (the prototype's inline message menu, as a
     component), and `MessageGroup`'s `hoverBar`. Both long-press menus (EXPORT-LOG 2026-11-09) keep
     the lifted copy as it is until the veil has faded, so the message or row doesn't blink back in.
+    And `global.css` shows no scrollbars under the native root (`[data-platform="native"]`), as
+    Android's WebView drew the global 8px one whatever a scroller's `scrollbar-width` said.
 
 - **Native composer** (native N5c, #10370; the native plan's 05 composer, 06 attach panel and 07
   emoji and GIF panel, as of 2026-11-09 (b); `src/native/features/conversation`:

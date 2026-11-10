@@ -7,6 +7,10 @@ body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--surfa
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{border-radius:99px;background:rgba(128,128,140,.35)}
+/* the native tree (the apps and phones' browsers, on <html data-platform="native">): no scrollbars, as on a phone.
+   Android's WebView reads only the ::-webkit-scrollbar rules, so scrollbar-width alone leaves the 8px bar above */
+[data-platform="native"],[data-platform="native"] *{scrollbar-width:none}
+[data-platform="native"]::-webkit-scrollbar,[data-platform="native"] ::-webkit-scrollbar{display:none}
 @keyframes ocTypingDot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-2px)}}
 @keyframes oc-spin{to{transform:rotate(360deg)}}
 @keyframes oc-typing{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
