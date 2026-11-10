@@ -763,7 +763,8 @@ design export needs. Each entry says where it came up.
     the compact tabs, Members | Lapsed | Blocked where the group (or a channel's community) has
     access gates, Members | Blocked where it hasn't; regular members get no tabs, the members only
     (`@client`'s `memberTabs`, `hasAccessGates`: a lone unique-person gate is none, as it's
-    suspended). Lapsed shows a count while anyone has lapsed. It always opens on Members; switching tabs clears the search, whose
+    suspended). Lapsed shows a count while anyone has lapsed. It always opens on Members; switching tabs clears the search (the
+    library's `Field`, with its clear ×, as Invite people's), whose
     placeholder follows the tab. Members: the search (as before: a large group holds only its first
     page of members, so the others are looked for as you type, `findMembers`), the Invite people
     row (not on the other tabs, and only for someone it would open for: the plan doesn't say who),
@@ -781,7 +782,11 @@ design export needs. Each entry says where it came up.
   - **The ⋯** shows only on members below you (the plan): its role items up to your own role
     (several owners allowed) where your role may change roles, then Remove and Block where it may
     remove / block members (the plan names Remove; Block is the web panel's, under the same
-    permission, and stays next to Remove: the user's answer, 2026-11-10); with neither, a toast says your role can't. Note the client lets anyone whose role
+    permission, and stays next to Remove: the user's answer, 2026-11-10), Block only in a public
+    group: the backend refuses a block in a private one (`ChatNotPublic`), so the client's
+    `canBlockUsers` and the web's panel offer it in a public group only, and a private group's
+    owner rightly has none (a channel's blocking is its community's, from the profile sheet;
+    `members.spec`'s "Block in a group's ⋯"); with neither, a toast says your role can't. Note the client lets anyone whose role
     meets "Change member roles" give any role but owner, so the cap at your own role is the plan's
     and the native screen's (`memberMenu`); the web panel offers what the client allows.
   - **Removing** and **blocking** wait out their Undo before they're sent (the shell's
@@ -802,24 +807,40 @@ design export needs. Each entry says where it came up.
     link only: the plan doesn't say what they get). On MemberManagement, as the web's InviteDialog
     (`initialiseSharing`, `sharingLink`, `toggleInviteLink`, `cancelInvite`, the picks, and its new
     `sendPicked`), and the invite pages' search (`searchToInvite`).
-    People: the search, the picks as the library's `UserChip`s (their photo, first name, ×; "No one
-    selected yet"), a divider, then with nothing searched Pending · N (Cancel, where you may
-    uninvite, waits out its Undo) and Suggested (the people you have DMs with who'd join, up to
-    30, as the old invite pages offered: for a channel, its community's members, looked up first,
-    and others only where you may invite to the community); with a search, Results: those found,
+    People: the search (the library's `Field`, with its clear ×, which keeps the keyboard up), the
+    picks as the library's `UserChip`s (their photo, first name, ×; "No one selected yet" after a
+    people icon), a divider (18px over it and 22px under it, the user's call of 2026-11-10: 12px
+    over it and the plan's 14px under it read cramped), then with nothing searched Pending · N (Cancel, where you may
+    uninvite, waits out its Undo) and Suggested (the people you have DMs with who'd join, the latest
+    DM first, up to 30 (`invitePeopleLists`), as the old invite pages offered: not those in the
+    chat, lapsed members included, nor the invited; for a channel, its community's members, looked
+    up first, and others only where you may invite to the community). With no one pending and
+    every DM partner already in the chat or invited, nothing shows under the divider (found testing
+    on an account whose DM partners are all in its groups; the plan draws no empty line there);
+    with a search, Results: those found,
     then the invited and the members held who match, dimmed (.45) and marked Invited / Member (the
     search leaves members out, so a large group's member it doesn't hold isn't listed). How each
     would join is `inviteWay`: a private community's members are added to its channel where you
     may add them (the web's Add tab; the plan has one People list), everyone else invited. The
-    pinned button: "Send invites" (disabled) / "Send invite" / "Send 3 invites", or "Add 2 people"
-    when everyone picked is added; it waits for the backend (disabled meanwhile), then goes back
-    with "Invite sent to Sofia" / "3 invites sent" / "Added Sofia" (a refusal says why and keeps the
-    picks). The invited show in Pending at once (the client's local invite).
+    pinned button (with the send glyph): "Send invites" (disabled) / "Send invite" / "Send 3
+    invites", or "Add 2 people" when everyone picked is added; it waits for the backend (disabled
+    meanwhile), then goes back with "Invite sent to Sofia" / "3 invites sent" / "Added Sofia" (a
+    refusal says why and keeps the picks). The invited show in Pending at once: the client's invite
+    puts them among the chat's invited users before the backend answers (and takes them out if it
+    refuses), which the screen's Pending follows (`inviteUsers.spec`, MemberManagement's spec).
+    The search fields of the native screens (Invite people, Members, New chat, the chat list's, the
+    conversation's, the forward sheet's, the emoji panel's) read as searches, not sign-in fields
+    (the library's `SEARCH_INPUT_ATTRIBUTES`: a search type and input mode, autocomplete off and
+    the password managers' own opt-outs), as Android's autofill offered a password manager's menu
+    on Invite people's ("Search name or @username"). If one still shows on a device, the remaining
+    switch is the Android app's: the WebView's `importantForAutofill` (MainActivity), which would
+    turn autofill off for every field, sign-in ones included; not done.
     Invite link: the plan's card with its switch ("Share via link", read only for a public chat's
     link, which is always on, and for someone who can't manage it), the QR code (184px on a white
     tile, `core/QRCode`), the link in mono, Copy link and Share (`utils/share`'s `shareLink`: the
-    apps' share sheet), then Reset link (danger) with the plan's line as the card's note, and the
-    footnote. Reset's Undo: a reset link can't be brought back, so the reset waits out its toast
+    apps' share sheet), then Reset link (danger) with the plan's line under it in its own card (the
+    library's `SettingsAction` with `help`; it was the card's note, the user's call of 2026-11-10),
+    and the footnote. Reset's Undo: a reset link can't be brought back, so the reset waits out its toast
     (the shell's PendingRemovals, as a removal), the link dimmed and Copy and Share off meanwhile;
     then a spinner in the card until the new link and QR are in (the plan has the new link at
     once, with Undo). Switching the link is shown at once and goes back with a toast if refused.
@@ -844,6 +865,11 @@ design export needs. Each entry says where it came up.
     sheet, the kebab's Copy and Edit, search from both places, and the rules sheet's Cancel and
     Accept. Not checked: unblocking from the Blocked section (nobody blocked to try it on), iOS,
     the light theme.
+- **A search field password managers leave alone; a settings action with a line under it** (by
+  hand, native N6, EXPORT-LOG 2026-11-10, to take back to the design export): the library's
+  `lib/searchInput.ts` (`SEARCH_INPUT_ATTRIBUTES`), which `Field`'s live input carries, with a
+  clear × that keeps the input's focus; `SettingsAction` takes `help`, a line under its label (the
+  native Reset link's).
 - **A person's photo on `UserChip`** (by hand, native N6, EXPORT-LOG 2026-11-10, to take back to
   the design export): `UserChip` takes `photoUrl`, shown over its swatch, for the native Invite
   people screen's picks (the plan's "chips with avatar").
