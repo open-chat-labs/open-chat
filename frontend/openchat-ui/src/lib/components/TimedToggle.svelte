@@ -135,11 +135,16 @@
       >
     {/if}
   </div>
-  {#if open}
-    <div class="choices" class:four={cols === 4} style:--cols={cols} role="radiogroup" aria-label={t(label)}>
-      {#each list as choice}
-        <span class="choice" class:selected={choice === current} onclick={() => pick(choice)} tabindex="0" role="radio" aria-checked={choice === current}>{duration(choice)}</span>
-      {/each}
+  <!-- the choices grow open and shrink closed under the row; out of reach (inert, hidden) while closed -->
+  {#if !readOnly}
+    <div class="reveal" class:open inert={!open} aria-hidden={!open}>
+      <div class="reveal-inner">
+        <div class="choices" class:four={cols === 4} style:--cols={cols} role="radiogroup" aria-label={t(label)}>
+          {#each list as choice}
+            <span class="choice" class:selected={choice === current} onclick={() => pick(choice)} tabindex="0" role="radio" aria-checked={choice === current}>{duration(choice)}</span>
+          {/each}
+        </div>
+      </div>
     </div>
   {/if}
 </div>
@@ -289,6 +294,40 @@
     background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-sans);
     color: var(--ink-3);
+  }
+
+  // opening grows the row's height from 0 (grid rows 0fr → 1fr) as the choices fade in; closing plays it back
+  .reveal {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      grid-template-rows var(--duration-base) var(--ease-out),
+      opacity var(--duration-base) var(--ease-out),
+      visibility 0s linear var(--duration-base);
+
+    &.open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      visibility: visible;
+      transition:
+        grid-template-rows var(--duration-base) var(--ease-out),
+        opacity var(--duration-base) var(--ease-out),
+        visibility 0s;
+    }
+  }
+
+  .reveal-inner {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  @include reduced-motion {
+    .reveal,
+    .reveal.open {
+      transition: none;
+    }
   }
 
   .choices {
