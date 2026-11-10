@@ -2301,8 +2301,7 @@
             "deleted": "{name} eliminado",
             "menu": {
                 "editGroup": "Editar grupo",
-                "editChannel": "Editar canal",
-                "copyInviteLink": "Copiar enlace de invitación"
+                "editChannel": "Editar canal"
             },
             "members": {
                 "you": "Tú",

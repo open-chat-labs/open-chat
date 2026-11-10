@@ -2301,8 +2301,7 @@
             "deleted": "{name} हटाया गया",
             "menu": {
                 "editGroup": "ग्रुप संपादित करें",
-                "editChannel": "चैनल संपादित करें",
-                "copyInviteLink": "आमंत्रण लिंक कॉपी करें"
+                "editChannel": "चैनल संपादित करें"
             },
             "members": {
                 "you": "आप",

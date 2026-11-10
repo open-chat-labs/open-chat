@@ -716,12 +716,11 @@ design export needs. Each entry says where it came up.
     TODO(design): the TimedToggle is the library's as it is ("same as web"), so its label
     (12.5px semibold) is smaller than the native settings rows' (15px medium), as in a group's
     This chat card, over Mute @everyone; the plan doesn't say to change it.
-  - **Group**: the cover has back, favourite and a kebab (the user's answer, 2026-11-10): Edit
-    group (Edit channel), for those whose role meets "Update group", pushes N7's page (the
-    `group_settings` placeholder, `edit`); Copy invite link, for a member who may share it (a
-    public group's link, anyone; a private group's, those who may invite, while its link is on:
-    the invite dialog's `MemberManagement.sharingLink`), copies it with "Link copied to
-    clipboard". No Export chat. With neither, no kebab. A channel's cover is its community's
+  - **Group**: the cover has back, favourite and Edit (the user, 2026-11-10: a kebab with one
+    item is just a button): a pencil for those whose role meets "Update group", pushing N7's page
+    (the `group_settings` placeholder, `edit`). Copying or sharing the link is Invite people's
+    (the Invite tile), so the cover has no Copy invite link, and nothing else on the screen is
+    repeated in a menu. No Export chat. A channel's cover is its community's
     banner; a group has none, so it's the accent's gradient, as the You tab's. The avatar is the
     photo where there is one, else the chat's swatch (the conversation header's).
   - **About**: "Created" is the day it was made ("Nov 10, 2026"): a group's summary and details

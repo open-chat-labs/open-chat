@@ -2301,8 +2301,7 @@
             "deleted": "已删除 {name}",
             "menu": {
                 "editGroup": "编辑群组",
-                "editChannel": "编辑频道",
-                "copyInviteLink": "复制邀请链接"
+                "editChannel": "编辑频道"
             },
             "members": {
                 "you": "你",

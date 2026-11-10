@@ -1,6 +1,7 @@
 <!-- The top of a chat's details (native plan 10, Design Notes §3.6): the cover, under the status bar,
-     with back, favourite and the kebab as solid round buttons (the kebab only with something in
-     it; Search before favourite where it's the only tile, a bot's DM); the 88px avatar with its 4px cut-out ring, overlapping the cover; the name and the line
+     with back, favourite and the kebab (a DM's) or Edit (a group's, for those who may edit it) as
+     solid round buttons (the kebab only with something in it; Search before favourite where it's
+     the only tile, a bot's DM); the 88px avatar with its 4px cut-out ring, overlapping the cover; the name and the line
      under it. The cover is their profile's background where they have one, else the accent's
      gradient (as the You tab's); the avatar their photo, else the chat's swatch (the header's). -->
 <script lang="ts">
@@ -26,6 +27,10 @@
         onFavourite: (() => void) | undefined;
         /** No kebab without it; gets the button, to anchor its menu to. */
         onMore: ((anchor: HTMLElement) => void) | undefined;
+        /** A pencil after favourite (a group's Edit, for those who may edit it); none without it. */
+        onEdit?: () => void;
+        /** The pencil's label. */
+        editLabel?: string;
     };
 
     let {
@@ -40,6 +45,8 @@
         onSearch,
         onFavourite,
         onMore,
+        onEdit,
+        editLabel = "",
     }: Props = $props();
 </script>
 
@@ -79,6 +86,11 @@
                 aria-pressed={favourite}
                 onclick={onFavourite}>
                 <span class="heart-icon"></span>
+            </button>
+        {/if}
+        {#if onEdit}
+            <button type="button" class="cover-button" aria-label={editLabel} onclick={onEdit}>
+                <span class="edit-icon"></span>
             </button>
         {/if}
         {#if onMore}
@@ -195,6 +207,10 @@
 
     .search-icon {
         @include icon(search, 19px);
+    }
+
+    .edit-icon {
+        @include icon(edit, 19px);
     }
 
     // the kebab: horizontal dots on iOS, vertical on Android

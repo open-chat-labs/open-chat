@@ -2301,8 +2301,7 @@
             "deleted": "{name} を削除しました",
             "menu": {
                 "editGroup": "グループを編集",
-                "editChannel": "チャンネルを編集",
-                "copyInviteLink": "招待リンクをコピー"
+                "editChannel": "チャンネルを編集"
             },
             "members": {
                 "you": "あなた",

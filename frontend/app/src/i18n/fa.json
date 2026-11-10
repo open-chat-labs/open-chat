@@ -2301,8 +2301,7 @@
             "deleted": "{name} حذف شد",
             "menu": {
                 "editGroup": "ویرایش گروه",
-                "editChannel": "ویرایش کانال",
-                "copyInviteLink": "کپی پیوند دعوت"
+                "editChannel": "ویرایش کانال"
             },
             "members": {
                 "you": "شما",

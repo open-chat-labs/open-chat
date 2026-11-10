@@ -2301,8 +2301,7 @@
             "deleted": "Đã xóa {name}",
             "menu": {
                 "editGroup": "Chỉnh sửa nhóm",
-                "editChannel": "Chỉnh sửa kênh",
-                "copyInviteLink": "Sao chép liên kết mời"
+                "editChannel": "Chỉnh sửa kênh"
             },
             "members": {
                 "you": "Bạn",

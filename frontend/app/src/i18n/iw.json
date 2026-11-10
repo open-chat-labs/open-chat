@@ -2301,8 +2301,7 @@
             "deleted": "{name} נמחק",
             "menu": {
                 "editGroup": "עריכת הקבוצה",
-                "editChannel": "עריכת הערוץ",
-                "copyInviteLink": "העתקת קישור ההזמנה"
+                "editChannel": "עריכת הערוץ"
             },
             "members": {
                 "you": "את/ה",

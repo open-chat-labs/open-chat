@@ -2216,8 +2216,7 @@
             "deleted": "Deleted {name}",
             "menu": {
                 "editGroup": "Edit group",
-                "editChannel": "Edit channel",
-                "copyInviteLink": "Copy invite link"
+                "editChannel": "Edit channel"
             },
             "members": {
                 "you": "You",
