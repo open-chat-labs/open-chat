@@ -23,7 +23,7 @@
     import { closeRightColumn } from "../app/rightPanel";
     import type { RightRegion, ScreenProps } from "../app/screens";
     import { dmPanelProps } from "./dm.adapter";
-    import { favouriteDm, muteDm, setDmDisappearing } from "./dmSettings";
+    import { favouriteDm, muteDm, setDmDisappearing } from "@src/logic/chats/dmSettings";
 
     let { region, context }: ScreenProps<Extract<RightRegion, { kind: "direct_chat_details" }>> =
         $props();

@@ -35,7 +35,7 @@
     import { _ } from "svelte-i18n";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
     import { ttlDurationId } from "@src/logic/chats/disappearingMessages";
-    import { favouriteDm, muteDm, setDmDisappearing } from "../dm/dmSettings";
+    import { favouriteDm, muteDm, setDmDisappearing } from "@src/logic/chats/dmSettings";
     import { userDialogProps } from "./user.adapter";
 
     let { dialog, onClose }: DialogProps<Extract<LocalDialog, { kind: "user" }>> = $props();
