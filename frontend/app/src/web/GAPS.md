@@ -2087,20 +2087,26 @@ design export needs. Each entry says where it came up.
   `TODO(design)`), and "N messages deleted" expands them. Each event's line has its date and time
   under it, as in the old trees (`toLongDatetimeString` in `@client`, which both old
   `NonMessageEvent`s use too; L2), smaller in `--ink-3`; the aggregated joins, deletions and role
-  changes have none, as in the old trees. The header has no back button (`ConversationHeader` has
-  none; narrow layouts don't show the shell yet), and its menu does favourite, mute and copy link
-  only: the rest open dialogs (phase 4), and calls are phase 7. A DM's header has the old last-seen
-  line (L2: `directChatSubtitle` in `@client`, shared with the old `ChatSubtext`s and the native
-  header) in the header's presence line, with its online dot under two minutes. Own messages show
-  no name (the design's "You" would be the lower-case app string).
-- **Sticky date and go to first mention** (`features/conversation`, L2; no design for either:
-  `TODO(design)`). The list (a thread's too) pins the day of the messages at its top, as both old
-  lists do, in the inline dates' pill (`UnreadDivider` neutral), over the messages (as native's);
-  none while the day's own pill is at that spot. An @ button over go-to-latest goes to
-  the chat's first unread mention (`IconButton` "at", as go-to-latest is drawn; the old ones were
-  round fabs with a bold "@"), and goes once that mention is read; none in a thread or a read-only
-  chat, as in the old trees. Not carried over: the old lists' unread count on go-to-latest (shown
-  even when at the bottom), and the old threads' go-to-top button.
+  changes have none, as in the old trees. The web plan's conversation (`web/05-conversation.md`)
+  doesn't cover these lines, so they stay the old UI's (`TODO(design)`). The header has no back
+  button (`ConversationHeader` has none; narrow layouts don't show the shell yet), and its menu does
+  favourite, mute and copy link only: the rest open dialogs (phase 4), and calls are phase 7. A
+  DM's header has the old last-seen line (L2: `directChatSubtitle` in `@client`, shared with the
+  old `ChatSubtext`s and the native header) in the header's presence line, with its online dot
+  under two minutes; web/05's header doesn't say what that line says, so it's the old words
+  (`TODO(design)`). Own messages show no name (the design's "You" would be the lower-case app
+  string).
+- **No sticky date** (`features/conversation`): the web follows web/05 ("Date pills don't stick;
+  one 'Today' pill. The Unread divider doesn't stick."), so the list's dates are only the inline
+  pills between days, and nothing pins the day at the top as the old lists do (L2 had built one,
+  then took it out). Native's conversation keeps its own sticky date: the native plan's 04 doesn't
+  rule it out.
+- **Go to first mention** (`features/conversation`, L2; web/05 doesn't cover it: `TODO(design)`).
+  An @ button over go-to-latest goes to the chat's first unread mention (`IconButton` "at", as
+  go-to-latest is drawn; the old ones were round fabs with a bold "@"), and goes once that mention
+  is read; none in a thread or a read-only chat, as in the old trees. Not carried over: the old
+  lists' unread count on go-to-latest (shown even when at the bottom), and the old threads'
+  go-to-top button.
 - **Media messages** (`features/conversation`, 5a): images, memes, GIFs and videos show as
   `MediaMessage` tiles. They have no quote or edited mark yet (`MediaMessage`
   takes none). In low bandwidth an image shows its thumbnail and a GIF an empty tile until the
