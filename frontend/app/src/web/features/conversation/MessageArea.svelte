@@ -37,6 +37,7 @@
         isPrivateCommunityPreview,
         localUpdates,
         messageContextsEqual,
+        messageReadByThem,
         maxMediaSizes,
         messageIndexStore,
         messagePermissionsForSelectedChatStore,
@@ -179,7 +180,6 @@
         isMedia,
         mediaHeld,
         messageStatus,
-        readByThem,
         senderColor,
         untilNextDay,
         withFields,
@@ -806,7 +806,7 @@
         return messageStatus({
             failed,
             accepted: args.isAccepted($unconfirmedStore, evt),
-            readByThem: readByThem(client, chat, evt.event, $unconfirmedReadByThem),
+            readByThem: messageReadByThem(chat, evt.event, $unconfirmedReadByThem),
         });
     }
 

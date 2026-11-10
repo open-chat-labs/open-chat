@@ -288,9 +288,55 @@ export function getMinVisibleMessageIndex(chat: ChatSummary): number {
     return chat.minVisibleMessageIndex;
 }
 
-export function messageIsReadByThem(chat: ChatSummary, messageIndex: number): boolean {
-    if (chat.kind !== "direct_chat") return true;
-    return chat.readByThemUpTo !== undefined && chat.readByThemUpTo >= messageIndex;
+/** What a message's read-by-them check reads from its chat: a DM's `readByThemUpTo`. */
+export type ReadByThemChat = { kind: ChatSummary["kind"]; readByThemUpTo?: number };
+
+function confirmedReadByThem(chat: ReadByThemChat, messageIndex: number): boolean {
+    return (
+        chat.kind === "direct_chat" &&
+        chat.readByThemUpTo !== undefined &&
+        chat.readByThemUpTo >= messageIndex
+    );
+}
+
+/**
+ * Whether the other person in a DM has read one of its messages, for its ticks in every tree: as
+ * the chat says (`readByThemUpTo` covers it), or as a read receipt from them over WebRTC says, not
+ * yet confirmed (`unconfirmedReadByThem`). Never in a group or channel.
+ */
+export function messageReadByThem(
+    chat: ReadByThemChat,
+    msg: Pick<Message, "messageIndex" | "messageId">,
+    unconfirmedReadByThem: ReadonlySet<bigint>,
+): boolean {
+    return (
+        chat.kind === "direct_chat" &&
+        (confirmedReadByThem(chat, msg.messageIndex) || unconfirmedReadByThem.has(msg.messageId))
+    );
+}
+
+/**
+ * The read receipts not yet confirmed that a DM now confirms: the ids in `unconfirmedReadByThem`
+ * of the messages in `events` its `readByThemUpTo` covers, which the client drops as it applies the
+ * chat's update.
+ */
+export function readByThemNowConfirmed(
+    chat: ReadByThemChat,
+    events: readonly EventWrapper<ChatEvent>[],
+    unconfirmedReadByThem: ReadonlySet<bigint>,
+): bigint[] {
+    if (unconfirmedReadByThem.size === 0) return [];
+    const confirmed: bigint[] = [];
+    for (const { event } of events) {
+        if (
+            event.kind === "message" &&
+            unconfirmedReadByThem.has(event.messageId) &&
+            confirmedReadByThem(chat, event.messageIndex)
+        ) {
+            confirmed.push(event.messageId);
+        }
+    }
+    return confirmed;
 }
 
 export function getMembersString(

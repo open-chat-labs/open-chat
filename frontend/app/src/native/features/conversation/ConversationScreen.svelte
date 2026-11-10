@@ -40,6 +40,7 @@
         isPrivateCommunityPreview,
         lastOnlineStatus,
         messageIndexStore,
+        messageReadByThem,
         messagesRead,
         selectedChatBlockedUsersStore,
         selectedChatDraftMessageStore,
@@ -108,7 +109,6 @@
         isMedia,
         mediaHeld,
         messageStatus,
-        readByThem,
         senderColor,
         untilNextDay,
         withFields,
@@ -871,7 +871,8 @@
             failed,
             accepted: args.isAccepted($unconfirmedStore, evt),
             readByThem:
-                chat !== undefined && readByThem(client, chat, evt.event, $unconfirmedReadByThem),
+                chat !== undefined &&
+                messageReadByThem(chat, evt.event, $unconfirmedReadByThem),
         });
     }
 

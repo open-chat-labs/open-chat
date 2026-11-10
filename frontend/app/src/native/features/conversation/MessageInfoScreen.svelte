@@ -21,6 +21,7 @@
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
         localUpdates,
+        messageReadByThem,
         selectedChatSummaryStore,
         selectedChatWebhooksStore,
         selectedServerChatStore,
@@ -43,7 +44,6 @@
         conversationContext,
         messageRow,
         messageStatus,
-        readByThem,
         senderColor,
     } from "@src/logic/conversation/messageRow";
     import { lowBandwidth } from "@src/stores/settings";
@@ -124,7 +124,7 @@
     const theirsRead = $derived(
         evt !== undefined &&
             chat !== undefined &&
-            readByThem(client, chat, evt.event, $unconfirmedReadByThem),
+            messageReadByThem(chat, evt.event, $unconfirmedReadByThem),
     );
     const status = $derived(messageStatus({ failed, accepted, readByThem: theirsRead }));
     const row = $derived(evt === undefined ? undefined : messageRow(evt, status, ctx));

@@ -43,7 +43,9 @@ import {
     isPreviewingOrLapsed,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
+    messageReadByThem,
     navigationAfterArchivingOpenChat,
+    readByThemNowConfirmed,
     sameUser,
     sortByTimestampThenEventIndex,
     startTyping,
@@ -867,5 +869,65 @@ describe("what can be sent in a direct chat", () => {
             expect(canSendDirectMessage(bot, "message", "proposals-bot", permission)).toBe(false);
         }
         expect(canSendDirectMessage(bot, "message", "proposals-bot", "text")).toBe(true);
+    });
+});
+
+describe("a message read by them", () => {
+    const dm = (readByThemUpTo: number | undefined) => ({
+        kind: "direct_chat" as const,
+        readByThemUpTo,
+    });
+    const msg = (messageIndex: number) => ({ messageIndex, messageId: BigInt(100 + messageIndex) });
+    const none = new Set<bigint>();
+
+    test("invariant 1: a DM message is read by them when readByThemUpTo covers it or a read receipt for it isn't confirmed yet", () => {
+        expect(messageReadByThem(dm(5), msg(5), none)).toBe(true);
+        expect(messageReadByThem(dm(5), msg(4), none)).toBe(true);
+        expect(messageReadByThem(dm(5), msg(6), none)).toBe(false);
+        expect(messageReadByThem(dm(undefined), msg(0), none)).toBe(false);
+        // a peer's WebRTC read receipt, before the server says so
+        expect(messageReadByThem(dm(5), msg(6), new Set([106n]))).toBe(true);
+        expect(messageReadByThem(dm(undefined), msg(0), new Set([100n]))).toBe(true);
+    });
+
+    test("invariant 1: never in a group or channel", () => {
+        for (const kind of ["group_chat", "channel"] as const) {
+            expect(messageReadByThem({ kind }, msg(0), none)).toBe(false);
+            expect(messageReadByThem({ kind }, msg(0), new Set([100n]))).toBe(false);
+        }
+    });
+
+    function message(messageIndex: number): EventWrapper<ChatEvent> {
+        return {
+            index: messageIndex,
+            timestamp: 0n,
+            expiresAt: undefined,
+            event: {
+                kind: "message",
+                messageId: BigInt(100 + messageIndex),
+                messageIndex,
+                content: { kind: "text_content", text: "hi" },
+                sender: "me",
+                reactions: [],
+                deleted: false,
+                edited: false,
+                forwarded: false,
+                blockLevelMarkdown: false,
+                tips: {},
+                ogPreviews: [],
+                messagePreviews: [],
+            },
+        };
+    }
+
+    test("invariant 2: the read receipts readByThemUpTo now covers are the ones to drop", () => {
+        const events = [message(3), message(4), message(5)];
+        const unconfirmed = new Set([103n, 105n, 999n]);
+        expect(readByThemNowConfirmed(dm(4), events, unconfirmed)).toEqual([103n]);
+        expect(readByThemNowConfirmed(dm(5), events, unconfirmed)).toEqual([103n, 105n]);
+        // nothing confirmed yet, nothing waiting, or not a DM
+        expect(readByThemNowConfirmed(dm(undefined), events, unconfirmed)).toEqual([]);
+        expect(readByThemNowConfirmed(dm(5), events, none)).toEqual([]);
+        expect(readByThemNowConfirmed({ kind: "group_chat" }, events, unconfirmed)).toEqual([]);
     });
 });

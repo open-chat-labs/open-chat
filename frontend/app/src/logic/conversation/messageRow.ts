@@ -763,20 +763,3 @@ export function conversationContext(input: ConversationContextInput): Conversati
         },
     };
 }
-
-/**
- * Whether the other person in a DM has read one of the user's messages: as the chat says, or as
- * a read receipt not yet confirmed says. Never outside a DM.
- */
-export function readByThem(
-    client: Pick<OpenChat, "messageIsReadByThem">,
-    chat: ChatSummary,
-    msg: Pick<Message, "messageIndex" | "messageId">,
-    unconfirmedReadByThem: { has(messageId: bigint): boolean },
-): boolean {
-    return (
-        chat.kind === "direct_chat" &&
-        (client.messageIsReadByThem(chat.id, msg.messageIndex) ||
-            unconfirmedReadByThem.has(msg.messageId))
-    );
-}

@@ -35,6 +35,7 @@ export {
     getMessageText,
     isPreviewing,
     isPreviewingOrLapsed,
+    messageReadByThem,
     subrangesCover,
     TimelineGrouper,
     userCanDeleteMessage,

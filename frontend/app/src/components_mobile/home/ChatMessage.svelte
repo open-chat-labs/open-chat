@@ -1,7 +1,6 @@
 <script lang="ts">
     import { navigate } from "@utils/navigation";
     import { confirmMessageDeletion } from "@src/stores/settings";
-    import { trackedEffect } from "@src/utils/effects.svelte";
     import { keyboard } from "@stores/keyboard.svelte";
     import { popHistoryStateWithAction, pushDummyHistoryState } from "@utils/history";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
@@ -17,6 +16,7 @@
         type ChatIdentifier,
         chatIdentifiersEqual,
         chatListScopeStore,
+        chatSummariesStore,
         type ChatType,
         currentUserIdStore,
         allUsersStore,
@@ -32,6 +32,7 @@
         type Member,
         type Message,
         messageMenu,
+        messageReadByThem,
         messageReplyContext,
         type MessageReminderCreatedContent,
         OpenChat,
@@ -189,15 +190,12 @@
     let tipping: string | undefined = $state(undefined);
     let percentageExpired = $state(100);
     let botProfile: BotProfileProps | undefined = $state(undefined);
-    let confirmedReadByThem = $derived(client.messageIsReadByThem(chatId, msg.messageIndex));
-    let readByThem = $derived(confirmedReadByThem || $unconfirmedReadByThem.has(msg.messageId));
-    let contentWidth = $state<number>();
-
-    trackedEffect("read-by-them", () => {
-        if (confirmedReadByThem && $unconfirmedReadByThem.has(msg.messageId)) {
-            unconfirmedReadByThem.delete(msg.messageId);
-        }
+    // the chat as the client has it now (read, not followed, as the client's own check did)
+    let readByThem = $derived.by(() => {
+        const chat = chatSummariesStore.value.get(chatId);
+        return chat !== undefined && messageReadByThem(chat, msg, $unconfirmedReadByThem);
     });
+    let contentWidth = $state<number>();
 
     onMount(() => {
         if (!readByMe) {

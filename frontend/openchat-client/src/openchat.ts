@@ -675,11 +675,11 @@ import {
     makeRtcConnections,
     mergeSendMessageResponse,
     mergeServerEvents,
-    messageIsReadByThem,
     metricsEqual,
     newDefaultChannel,
     permittedMessagesInDirectChat,
     permittedMessagesInGroup,
+    readByThemNowConfirmed,
     rtcMessageRecipients,
     sameUser,
     serialiseMessageForRtc,
@@ -5804,11 +5804,6 @@ export class OpenChat {
         return undefined;
     }
 
-    messageIsReadByThem(chatId: ChatIdentifier, messageIndex: number): boolean {
-        const chat = chatSummariesStore.value.get(chatId);
-        return chat !== undefined && messageIsReadByThem(chat, messageIndex);
-    }
-
     unpinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<boolean> {
         const undo = localUpdates.unpinMessage(chatId, messageIndex);
         return this.#worker
@@ -9883,6 +9878,21 @@ export class OpenChat {
                 }
                 return map;
             });
+            // the read receipts the open DM now confirms are no longer needed (read receipts are
+            // only taken for the selected chat, whose messages are the events)
+            const selectedChatId = selectedChatIdStore.value;
+            const selected = directChatsAddedUpdated.find((chat) =>
+                chatIdentifiersEqual(chat.id, selectedChatId),
+            );
+            if (selected !== undefined) {
+                unconfirmedReadByThem.deleteMany(
+                    readByThemNowConfirmed(
+                        selected,
+                        eventsStore.value,
+                        unconfirmedReadByThem.value,
+                    ),
+                );
+            }
         }
         if (groupsAddedUpdated.length > 0 || groupsRemoved.length > 0) {
             serverGroupChatsStore.update((map) => {
