@@ -207,12 +207,28 @@ function errorMessage(error: unknown): string {
     return typeof error.message === "string" ? error.message : "";
 }
 
-// The throw site is browser-extension code (wallet inpage scripts, injected wasm hitting our
-// CSP, ...): not ours to fix. Rollbar's checkIgnore does the same from the payload frames for
-// uncaught errors that bypass the logger; this covers the ones the window error handler routes
-// through the logger, where only the Error (and its stack string) is available.
+// True for a script URL that is the HTML document itself rather than a script file: in-app
+// browsers and extensions inject scripts inline, and their frames carry the page URL, whichever
+// route was open. Every script of ours has a file extension; a route path has none. The one
+// inline snippet in index.html is a two-line global shim that runs before anything else.
+export function isDocumentUrl(url: string): boolean {
+    if (!/^https?:\/\//i.test(url)) return false;
+    try {
+        return !/\.[a-z0-9]+$/i.test(new URL(url).pathname);
+    } catch {
+        return false;
+    }
+}
+
+// The throw site is injected code: browser-extension scripts (wallet inpage scripts, injected
+// wasm hitting our CSP, ...), or a script an extension inlined into the page, such as a
+// fingerprint spoofer's Intl.DateTimeFormat wrapper (#32168). Not ours to fix. Rollbar's
+// checkIgnore does the same from the payload frames for uncaught errors that bypass the logger;
+// this covers the ones routed through the logger (the error boundary, say), where only the Error
+// (and its stack string) is available.
 const EXTENSION_FRAME_PATTERN = /^\s*(at .*|.*@)(chrome|moz|safari-web)-extension:\/\//;
-function thrownByExtension(error: unknown): boolean {
+const FRAME_URL_PATTERN = /(https?:\/\/[^\s()]+?)(:\d+){1,2}\)?\s*$/i;
+function thrownByInjectedCode(error: unknown): boolean {
     if (error == null || typeof error !== "object" || !("stack" in error)) return false;
     if (typeof error.stack !== "string") return false;
     // V8 puts "Name: message" on the first line and frames below ("    at fn (url)"); JSC and
@@ -222,7 +238,10 @@ function thrownByExtension(error: unknown): boolean {
     const frame = error.stack
         .split("\n")
         .find((line) => /^\s*at |@/.test(line) && /[a-z-]+:\/\//i.test(line));
-    return frame !== undefined && EXTENSION_FRAME_PATTERN.test(frame);
+    if (frame === undefined) return false;
+    if (EXTENSION_FRAME_PATTERN.test(frame)) return true;
+    const url = frame.match(FRAME_URL_PATTERN)?.[1];
+    return url !== undefined && isDocumentUrl(url);
 }
 
 function isEnvironmentNoise(error: unknown): boolean {
@@ -265,7 +284,7 @@ export function shouldReportError(error: unknown): boolean {
         isTransientNetworkError(error) ||
         isEnvironmentNoise(error) ||
         isExpectedAccessError(error) ||
-        thrownByExtension(error)
+        thrownByInjectedCode(error)
     );
 }
 

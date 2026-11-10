@@ -8,7 +8,7 @@ import Rollbar, { type LogArgument } from "rollbar";
 import { offline } from "./network";
 import { NOOP } from "../constants";
 import type { LogLevel } from "../domain/logging";
-import { shouldReportError, shouldReportMessage } from "./error";
+import { isDocumentUrl, shouldReportError, shouldReportMessage } from "./error";
 import { SECRET_KEYS } from "./redact";
 
 let rollbar: Rollbar | undefined;
@@ -81,19 +81,30 @@ function documentHasNoBody(): boolean {
 
 // True when the throw site is the HTML document itself rather than a script file: in-app browsers
 // (Google Search App above all) inject scripts inline, and their stack overflows and minified
-// `Error: La` throws carry the page URL as the filename, whichever route was open. Every script
-// of ours has a file extension; a route path has none. The one inline snippet in index.html is a
-// two-line global shim that runs before anything else.
+// `Error: La` throws carry the page URL as the filename, whichever route was open.
 // Exported for testing.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function thrownByDocumentScript(payload: any): boolean {
     const filename = throwSiteFilename(payload);
-    if (filename === undefined || !/^https?:\/\//i.test(filename)) return false;
-    try {
-        return !/\.[a-z0-9]+$/i.test(new URL(filename).pathname);
-    } catch {
-        return false;
-    }
+    return filename !== undefined && isDocumentUrl(filename);
+}
+
+// True when a Safari user script (the Userscripts extension and the like) threw: WebKit files its
+// frames as `user-script:N`, and no script of ours is anywhere on the stack (#32169). A frame of
+// ours means the user script called into our code, and that still reports.
+// Exported for testing.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function thrownByUserScript(payload: any): boolean {
+    const body = payload?.body;
+    const frames = (body?.trace_chain?.[0] ?? body?.trace)?.frames;
+    if (!Array.isArray(frames)) return false;
+    const filenames: string[] = frames.map((f) =>
+        typeof f?.filename === "string" ? f.filename : "",
+    );
+    return (
+        filenames.some((f) => f.startsWith("user-script:")) &&
+        !filenames.some((f) => /^(https?|tauri):\/\//i.test(f))
+    );
 }
 
 // True for our CSP refusing an eval in code with no script URL anywhere on its stack: content
@@ -182,6 +193,7 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
                 if (
                     thrownByExtension(payload) ||
                     thrownByDocumentScript(payload) ||
+                    thrownByUserScript(payload) ||
                     evalRefusedInInjectedCode(payload)
                 )
                     return true;

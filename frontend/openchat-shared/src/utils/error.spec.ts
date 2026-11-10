@@ -210,6 +210,28 @@ describe("shouldReportError", () => {
         expect(shouldReportError(oursViaBuiltin)).toBe(true);
     });
 
+    test("silences a throw from a script injected inline into the page (#32168)", () => {
+        // a fingerprint spoofer's Intl.DateTimeFormat wrapper, reported through the error boundary
+        const gecko = new TypeError('can\'t access property "timeZone", args[1] is undefined');
+        gecko.stack =
+            "inject/spoofContext.Intl.DateTimeFormat@https://oc.app/communities:1198:23\n" +
+            "memoisedFormatter@https://oc.app/main-abc.js:1:2";
+        const v8 = new TypeError("boom");
+        v8.stack =
+            "TypeError: boom\n" +
+            "    at Intl.DateTimeFormat (https://oc.app/community/abc-cai:1198:23)\n" +
+            "    at memoisedFormatter (https://oc.app/main-abc.js:1:2)";
+        // our own script file at the throw site still reports, wherever the document is
+        const ours = new TypeError('can\'t access property "timeZone", args[1] is undefined');
+        ours.stack =
+            "memoisedFormatter@https://oc.app/main-abc.js:1:2\n" +
+            "inject@https://oc.app/communities:1198:23";
+
+        expect(shouldReportError(gecko)).toBe(false);
+        expect(shouldReportError(v8)).toBe(false);
+        expect(shouldReportError(ours)).toBe(true);
+    });
+
     test("silences the agent's own wrapper around a fetch that threw", () => {
         expect(
             shouldReportError(
