@@ -181,7 +181,6 @@
         height: 100%;
         overflow-x: hidden;
         overflow-y: auto;
-        scrollbar-width: thin;
     }
 
     /* expanded, the rail is a surface of its own at the page's colour, rounded on its outer side */

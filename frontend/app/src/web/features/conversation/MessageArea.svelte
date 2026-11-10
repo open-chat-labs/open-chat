@@ -1629,7 +1629,6 @@
         padding: 0 var(--message-list-gutter, var(--space-24));
         overflow-x: hidden;
         overscroll-behavior-y: contain;
-        scrollbar-width: thin;
     }
 
     /* a message continuing its sender's run sits close under the one before it; a new run, a

@@ -745,6 +745,13 @@ design export needs. Each entry says where it came up.
   so `GroupPanel`'s mute and @everyone pills and `GroupSettingsDialog`'s About page Mute and
   Favourite say nothing when the app asks a guest to sign in instead (they said "That didn't go
   through. Try again.").
+- **Scrollbars in Safari** (by hand, 10a, EXPORT-LOG 2026-11-10), to take back to the design
+  export: `global.css` gives `scrollbar-width: thin` (and `scrollbar-color`) only where
+  `scrollbar-color` is supported. Safari has `scrollbar-width` but not `scrollbar-color`, and
+  with `scrollbar-width` set it drops the `::-webkit-scrollbar` rules, so it drew its own bar (the
+  chat list's, the rail's, the conversation's) rather than the thin grey thumb on no track. The
+  scrollers that set `thin` themselves (`MessageComposer`, `Learn`'s contents, the shell's rail,
+  the conversation's list) no longer do. Not a regression: the same since Safari 18.2.
 - **Composer "+" menu and media tray** (by hand, 5c, to take back to the design export):
   `MessageComposer` (and `ComposerBar`) take `attachKinds`, what the "+" menu offers (all by
   default, no "+" with none): the app offers "Photo or video", "File" and the builders it has
