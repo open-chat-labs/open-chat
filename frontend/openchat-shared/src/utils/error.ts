@@ -209,8 +209,9 @@ function errorMessage(error: unknown): string {
 
 // True for a script URL that is the HTML document itself rather than a script file: in-app
 // browsers and extensions inject scripts inline, and their frames carry the page URL, whichever
-// route was open. Every script of ours has a file extension; a route path has none. The one
-// inline snippet in index.html is a two-line global shim that runs before anything else.
+// route was open. Every script of ours has a file extension; a route path has none. Our own
+// inline scripts (the startup preloader and a no-op gtag) run before the app and never sit under
+// a logged error.
 export function isDocumentUrl(url: string): boolean {
     if (!/^https?:\/\//i.test(url)) return false;
     try {
@@ -227,7 +228,8 @@ export function isDocumentUrl(url: string): boolean {
 // this covers the ones routed through the logger (the error boundary, say), where only the Error
 // (and its stack string) is available.
 const EXTENSION_FRAME_PATTERN = /^\s*(at .*|.*@)(chrome|moz|safari-web)-extension:\/\//;
-const FRAME_URL_PATTERN = /(https?:\/\/[^\s()]+?)(:\d+){1,2}\)?\s*$/i;
+// Anchored on the frame's own delimiter so a blob: script's inner https URL doesn't match
+const FRAME_URL_PATTERN = /(?:^|[@(\s])(https?:\/\/[^\s()]+?)(:\d+){1,2}\)?\s*$/i;
 function thrownByInjectedCode(error: unknown): boolean {
     if (error == null || typeof error !== "object" || !("stack" in error)) return false;
     if (typeof error.stack !== "string") return false;

@@ -230,6 +230,10 @@ describe("shouldReportError", () => {
         expect(shouldReportError(gecko)).toBe(false);
         expect(shouldReportError(v8)).toBe(false);
         expect(shouldReportError(ours)).toBe(true);
+        // a blob: script is not the document, though it wraps an https URL
+        const blob = new TypeError("boom");
+        blob.stack = "run@blob:https://oc.app/1b2c-3d4e:1:2";
+        expect(shouldReportError(blob)).toBe(true);
     });
 
     test("silences the agent's own wrapper around a fetch that threw", () => {
