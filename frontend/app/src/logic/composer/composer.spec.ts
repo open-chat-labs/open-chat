@@ -78,10 +78,9 @@ describe("why a message can't be sent", () => {
         ).toBe("external");
     });
 
-    test("signed out, or not allowed, is read only, a thread's in a thread", () => {
+    test("signed out is its own block; not allowed is read only, a thread's in a thread", () => {
         expect(entryBlock({ ...can, anonymous: true, canSend: false })).toEqual({
-            kind: "read_only",
-            key: "sendMessageDisabledAnon",
+            kind: "anonymous",
         });
         expect(entryBlock({ ...can, canSend: false })).toEqual({
             kind: "read_only",
@@ -563,12 +562,13 @@ describe("what stands in for the entry", () => {
     });
 
     test("offers a guest to sign in, and nobody else", () => {
-        expect(entryBlockBanner({ kind: "read_only", key: "sendMessageDisabledAnon" })).toEqual({
+        expect(entryBlockBanner({ kind: "anonymous" })).toEqual({
             key: "sendMessageDisabledAnon",
             tone: "info",
             signIn: true,
         });
         expect(entryBlockBanner({ kind: "read_only", key: "readOnlyChat" }).signIn).toBeUndefined();
+        expect(entryBlockBanner({ kind: "read_only", key: "readOnlyThread" }).signIn).toBeUndefined();
         expect(entryBlockBanner({ kind: "suspended" }).signIn).toBeUndefined();
     });
 });
