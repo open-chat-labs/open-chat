@@ -62,16 +62,15 @@
     enterSends?: boolean;
     /** Whether the text box takes focus when the composer mounts, unless a dialog is open (key the composer to focus it again). */
     autofocus?: boolean;
-    /** Send the text. Return a promise to keep the draft until it resolves (kept with an error if it rejects). */
-    /** A promise keeps the draft until it resolves; rejected, it stays with an error; resolved `false`, it stays
-     *  without one (the user backed out of the send). */
+    /** Send the text. A promise keeps the draft until it resolves; rejected, it stays with an error; resolved `false`,
+     *  it stays without one (the user backed out of the send). */
     onSend?: (text: string) => Promise<unknown> | void;
     onAttach?: (kind: AttachKind) => void;
     /** What the + menu offers (all by default); with none, there's no + button. */
     attachKinds?: AttachKind[];
     onGif?: (query: string) => void;
-    /** A recorded voice message (duration in seconds). The mic is hidden without it. Reject to keep the take. */
-    /** Rejected, the take stays in review with an error; resolved `false`, it stays without one (the user backed out). */
+    /** A recorded voice message (duration in seconds). The mic is hidden without it. Rejected, the take stays in review
+     *  with an error; resolved `false`, it stays without one (the user backed out). */
     onVoice?: (r: { blob: Blob; duration: number; mimeType: string }) => Promise<unknown> | void;
     /** The mime type to record voice in, where the browser can (else its own). */
     voiceMimeType?: string;

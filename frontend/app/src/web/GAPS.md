@@ -656,8 +656,9 @@ design export needs. Each entry says where it came up.
   Members screen (`chat_members`) and a member's profile sheet. On the web panel's logic
   (`logic/members`' MemberManagement, `logic/groupOrCommunity/detailsPermissions`,
   `logic/profile`'s ProfileCardData), the web's DM settings, moved to `logic/chats/dmSettings`,
-  and new shared logic: the members' role sections and ⋯ (`logic/members/memberMenu`) and the
-  disappearing lengths (`logic/chats/disappearingMessages`); a group's disappearing messages
+  and new shared logic: the members' role sections and ⋯ (`@client`'s `memberSections` and
+  `memberMenu`) and the disappearing lengths (`logic/chats/disappearingMessages`, on the library's
+  `lib/durations`, the web picker's); a group's disappearing messages
   (`logic/chats/groupDisappearing`, on the client's updateGroup) and who may change them
   (`canChangeDisappearing`, on `chatManageAccess`); when a group was created (the client's
   `groupCreated`). The user's answers of 2026-11-10 to the open questions are in below. Left, or
@@ -690,9 +691,11 @@ design export needs. Each entry says where it came up.
   - **About**: "Created" is the day it was made ("Nov 10, 2026"): a group's summary and details
     have no date (the canister keeps `date_created`, but only its metrics show it), so the client
     reads the chat's first event, `group_chat_created`, and its timestamp (`groupCreated`, one
-    request the worker caches). Where that can't be read (the history before the reader joined is
-    hidden) it's "Created by @owner", as the web's panel's byline. History says whether new
-    members see the messages from before.
+    request the worker caches), with "Created by @ann", who made it (the event's, their name
+    loaded if they've left). Nothing shows until it's read, nor where it can't be (the history
+    before the reader joined is hidden): not the owner in their place, as it was before the review
+    of 2026-11-10, since ownership can move and there can be several owners. History says whether
+    new members see the messages from before.
   - **Members row**: up to five faces and "View all · 48" (notes §1: "View all" is the only label
     for a full list), to the Members screen.
   - **This chat** (a group's; the plan names the card, not its rows): the disappearing messages
@@ -761,6 +764,10 @@ design export needs. Each entry says where it came up.
     sheet, the kebab's Copy and Edit, search from both places, and the rules sheet's Cancel and
     Accept. Not checked: unblocking from the Blocked section (nobody blocked to try it on), iOS,
     the light theme.
+- **The disappearing lengths' one home** (by hand, native N6, EXPORT-LOG 2026-11-10, to take back
+  to the design export): the library's `lib/durations.ts` holds the lengths `TimedToggle` offers
+  and `durationMs`, which its dialogs and the app's native details use, in place of a copy in
+  each. Nothing on screen changes.
 - **Composer caption placeholder and a count on Send** (by hand, native N5c, EXPORT-LOG
   2026-11-09, to take back to the design export): `MessageComposer` takes `attachedPlaceholder`
   (the text box's placeholder while something's attached; "Add a caption" by default) and

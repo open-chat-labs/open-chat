@@ -19,13 +19,11 @@
         groupDescription,
         knownMembers,
         ROLE_NONE,
-        ROLE_OWNER,
         routeForScope,
         selectedChatMembersStore,
         selectedChatRulesStore,
         selectedCommunityRulesStore,
         selectedCommunitySummaryStore,
-        toDayString,
         type GroupCreation,
         type MultiUserChat,
         type OpenChat,
@@ -44,7 +42,7 @@
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
     import {
         disappearingChoices,
-        durationIdMs,
+        durationMs,
         ttlDurationId,
     } from "@src/logic/chats/disappearingMessages";
     import { setGroupDisappearing } from "@src/logic/chats/groupDisappearing";
@@ -70,6 +68,7 @@
     import FactRow from "./FactRow.svelte";
     import TextRow from "./TextRow.svelte";
     import {
+        createdFacts,
         disappearingValue,
         durationLabel,
         groupTiles,
@@ -126,19 +125,27 @@
     const members = $derived(
         knownMembers($allUsersStore, $selectedChatMembersStore.values()).sort(compareMembers),
     );
-    const owner = $derived(members.find((m) => m.role === ROLE_OWNER));
 
-    // when it was created: its first event, read once as the screen opens (the screen is this
-    // chat's for its life); unknown where the history before the reader joined is hidden, when
-    // the byline names its owner instead
+    // when it was created and by whom: its first event, read once as the screen opens (the screen
+    // is this chat's for its life), and its creator's name, loaded if it isn't held (they may have
+    // left). Nothing shows until then, nor where it can't be read (the history before the reader
+    // joined is hidden)
     let created = $state<GroupCreation>();
     onMount(async () => {
         created = await client.groupCreated(untrack(() => chat));
+        if (created !== undefined && allUsersStore.value.get(created.createdBy) === undefined) {
+            client
+                .getUser(created.createdBy, true)
+                .catch((e) => console.warn("Couldn't load the group's creator", e));
+        }
     });
-    const createdOn = $derived(
-        created === undefined
-            ? undefined
-            : toDayString(new Date(Number(created.timestamp)), $locale ?? "en"),
+    const createdRows = $derived(
+        createdFacts(
+            created,
+            created === undefined ? undefined : $allUsersStore.get(created.createdBy)?.username,
+            $locale ?? "en",
+            t,
+        ),
     );
     const faces = $derived(
         members.slice(0, 5).map((m) => ({
@@ -289,7 +296,7 @@
 
     async function setDisappearing(on: boolean, after: string) {
         const saved = await disappear.set({ on, after }, () =>
-            setGroupDisappearing(client, chat, { on, afterMs: durationIdMs(after) }),
+            setGroupDisappearing(client, chat, { on, afterMs: durationMs(after) }),
         );
         if (!saved) context.toast($_("native.details.saveFailed"));
     }
@@ -315,11 +322,9 @@
             {#if description !== ""}
                 <TextRow text={description} />
             {/if}
-            {#if createdOn !== undefined}
-                <FactRow label={$_("native.details.created")} value={createdOn} />
-            {:else if owner !== undefined}
-                <FactRow label={$_("native.details.createdBy")} value={`@${owner.username}`} />
-            {/if}
+            {#each createdRows as fact (fact.label)}
+                <FactRow label={fact.label} value={fact.value} />
+            {/each}
             <FactRow label={$_("native.details.history")} value={historyValue(chat.historyVisible, t)} />
         </SettingsGroup>
 

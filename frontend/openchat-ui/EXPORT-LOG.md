@@ -865,3 +865,8 @@
 ## 2026-11-10 — the composer keeps a draft quietly when the user backs out of a send (native N6), by hand
 - `MessageComposer`: `onSend` (and `onVoice`) resolving `false` keeps the draft (or the voice take in review) without the "Couldn't send" error a rejection shows: the user backed out of the send, as when they cancel the prompt to accept a chat's rules. Anything else it resolves to clears the draft as before. `meta.json` (both props' docs).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-10 — one home for the disappearing-message lengths; the composer's send docs (native N6 review), by hand
+- New `lib/durations.ts` (spec'd): `DISAPPEARING_DURATIONS` (the lengths, 1 hour … 30 days) and `durationMs` (a duration id in milliseconds, 0 for one that isn't). `TimedToggle`'s default list is `DISAPPEARING_DURATIONS`, where it was its own copy; `DmChatSettings` and `InfoPanel` use `durationMs` (`DmChatSettings` no longer exports one), and `GroupSettingsDialog`'s and `CreateGroupDialog`'s `durationMs` (null for one that isn't) wrap it rather than parsing again. The app's native details read both from here, so they offer what the web's picker does. Nothing on screen changes; no props changed.
+- `MessageComposer`: `onSend`'s and `onVoice`'s docs are one block each (the N6 entry above had left the old line before the new one, which didn't reach the prop). `meta.json` (both props' docs).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

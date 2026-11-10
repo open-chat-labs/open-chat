@@ -23,7 +23,11 @@
     import SettingsAction from "@openchat/ui/src/native/SettingsAction.svelte";
     import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
     import { senderColor } from "@src/logic/conversation/messageRow";
-    import { ProfileCardBlock, ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
+    import {
+        closeIfShowing,
+        ProfileCardBlock,
+        ProfileCardData,
+    } from "@src/logic/profile/profileCardData.svelte";
     import { disableChit } from "@src/stores/settings";
     import { getContext, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
@@ -51,10 +55,15 @@
     });
     const shownId = $derived(shown?.userId);
 
-    // loaded once per person shown, the sheet closing if it can't be
+    // loaded once per person shown, the sheet closing if it can't be, as long as it's still theirs
+    // (an answer about someone shown before comes too late to close it on another)
     const card = $derived.by(() => {
         const id = shownId;
-        return id === undefined ? undefined : untrack(() => new ProfileCardData(client, id, onClose));
+        return id === undefined
+            ? undefined
+            : untrack(
+                  () => new ProfileCardData(client, id, closeIfShowing(id, () => person?.userId, onClose)),
+              );
     });
 
     // what it offers to block or unblock, in the chat it's opened in (the web card's)

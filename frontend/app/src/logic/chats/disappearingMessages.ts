@@ -1,24 +1,16 @@
 import { DEFAULT_EVENTS_TTL } from "@client";
+import { DISAPPEARING_DURATIONS, durationMs } from "@openchat/ui/src/lib/durations";
+
+// The lengths and their milliseconds are the library's (the web's picker's, TimedToggle), so the
+// native details offer what the web does and read it the same way.
+export { DISAPPEARING_DURATIONS, durationMs };
 
 // the duration's units, largest first: a TTL reads in the largest one that divides it
-const UNITS: [string, number][] = [
+const UNITS: [DurationUnit, number][] = [
     ["week", 7 * 24 * 60 * 60 * 1000],
     ["day", 24 * 60 * 60 * 1000],
     ["hour", 60 * 60 * 1000],
     ["minute", 60 * 1000],
-];
-
-/**
- * The lengths a chat's disappearing messages can be set to, as duration ids: the web's picker's
- * (the library's TimedToggle), which the native DM details offer too.
- */
-export const DISAPPEARING_DURATIONS: readonly string[] = [
-    "1 hour",
-    "8 hours",
-    "12 hours",
-    "1 day",
-    "1 week",
-    "30 days",
 ];
 
 /**
@@ -28,7 +20,7 @@ export const DISAPPEARING_DURATIONS: readonly string[] = [
 export function disappearingChoices(ttl: bigint | undefined): string[] {
     const current = ttlDurationId(ttl);
     if (DISAPPEARING_DURATIONS.includes(current)) return [...DISAPPEARING_DURATIONS];
-    return [...DISAPPEARING_DURATIONS, current].sort((a, b) => durationIdMs(a) - durationIdMs(b));
+    return [...DISAPPEARING_DURATIONS, current].sort((a, b) => durationMs(a) - durationMs(b));
 }
 
 /** A duration id's unit and count ("8 hours" → hour, 8), for words in the app's language. */
@@ -38,14 +30,6 @@ export function durationParts(id: string): { unit: DurationUnit; count: number }
 }
 
 export type DurationUnit = "minute" | "hour" | "day" | "week";
-
-/** A duration id's length in milliseconds (0 for one that isn't). */
-export function durationIdMs(id: string): number {
-    const parts = durationParts(id);
-    if (parts === undefined) return 0;
-    const size = UNITS.find(([unit]) => unit === parts.unit)?.[1] ?? 0;
-    return parts.count * size;
-}
 
 /**
  * A disappearing-message TTL as a duration id ("1 week", "8 hours", "30 days"): the length a

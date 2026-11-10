@@ -1,5 +1,5 @@
 import type { OpenChat, PublicProfile, UserSummary } from "@client";
-import { ProfileCardData } from "./profileCardData.svelte";
+import { closeIfShowing, ProfileCardData } from "./profileCardData.svelte";
 
 const profile = { username: "alice", bio: "", created: 0n } as PublicProfile;
 
@@ -46,5 +46,49 @@ describe("a profile card's data", () => {
         expect(card.profile).toEqual(profile);
         expect(c.getPublicProfile).toHaveBeenCalledWith("u");
         expect(gone).not.toHaveBeenCalled();
+    });
+});
+
+describe("a profile sheet's card for one person after another", () => {
+    // a card whose public profile answers when the test says
+    function slowClient() {
+        let answer: (p: PublicProfile | undefined) => void = () => undefined;
+        const c = {
+            getUser: vi.fn(async () => ({ userId: "a" }) as UserSummary),
+            getPublicProfile: vi.fn(() => ({
+                subscribe: ({ onResult }: { onResult: (p: PublicProfile | undefined) => void }) =>
+                    (answer = onResult),
+            })),
+            getLastOnlineDate: vi.fn(async () => undefined),
+            logError: vi.fn(),
+        } as never as OpenChat;
+        return { c, answer: (p: PublicProfile | undefined) => answer(p) };
+    }
+
+    // A's profile was slow and isn't found, after the sheet has moved on to B: B's stays open
+    test("an answer about someone shown before doesn't close it on someone else", async () => {
+        let showing: string | undefined = "a";
+        const close = vi.fn();
+        const { c, answer } = slowClient();
+        new ProfileCardData(
+            c,
+            "a",
+            closeIfShowing("a", () => showing, close),
+        );
+        await settle();
+        showing = "b";
+        answer(undefined);
+        expect(close).not.toHaveBeenCalled();
+    });
+
+    test("closes it when it's still showing them, and not once it's closed", () => {
+        let showing: string | undefined = "a";
+        const close = vi.fn();
+        const gone = closeIfShowing("a", () => showing, close);
+        gone();
+        expect(close).toHaveBeenCalledOnce();
+        showing = undefined;
+        gone();
+        expect(close).toHaveBeenCalledOnce();
     });
 });

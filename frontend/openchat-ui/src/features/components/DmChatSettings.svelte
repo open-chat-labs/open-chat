@@ -2,13 +2,6 @@
      Changes show at once; when the latest one is rejected the field falls back to the host's last accepted value with an
      error. New prop values are followed once nothing is in flight. -->
 <script lang="ts" module>
-  // the duration ids TimedToggle uses ('12 hours', '1 week' …) in milliseconds; months count as 30 days
-  const UNIT_MS: Record<string, number> = { minute: 6e4, hour: 36e5, day: 864e5, week: 6048e5, month: 2592e6, year: 31536e6 };
-  export const durationMs = (id: string) => {
-    const m = id.match(/^(\d+) (minute|hour|day|week|month|year)s?$/);
-    return m ? Number(m[1]) * UNIT_MS[m[2]] : 0;
-  };
-
   export interface DisappearSetting {
     on: boolean;
     /** Duration id, e.g. "12 hours". */
@@ -21,6 +14,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
+  import { durationMs } from '../../lib/durations';
   import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { useT } from '../../lib/i18n';
 

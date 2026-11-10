@@ -1904,7 +1904,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "A promise keeps the draft until it resolves; rejected, it stays with an error; resolved `false`, it stays without one, the user having backed out (by hand)."
+        "doc": "Send the text. A promise keeps the draft until it resolves; rejected, it stays with an error; resolved `false`, it stays without one, the user having backed out (by hand)."
       },
       {
         "name": "onAttach",
@@ -1948,7 +1948,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Rejected, the take stays in review with an error; resolved `false`, it stays without one, the user having backed out (by hand)."
+        "doc": "A recorded voice message (real MediaRecorder audio, duration in seconds). The mic is hidden without it. Rejected, the take stays in review with an error; resolved `false`, it stays without one, the user having backed out (by hand)."
       },
       {
         "name": "voiceMimeType",

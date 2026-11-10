@@ -8,16 +8,16 @@
      Save awaits onSave and can't be dismissed while pending. While the form is clean, a new `value` from the host
      re-seeds it (another admin's change, a late load); once edited, the user's draft wins until saved or discarded. -->
 <script lang="ts" module>
+  import { durationMs as idMs } from '../../lib/durations';
+
   export type NameCheck = 'ok' | 'taken' | 'invalid';
 
   /** A part of the settings a host can make read-only (`readOnlySections`). */
   export type ReadOnlySection = 'gates' | 'rules' | 'permissions' | 'disappearing' | 'history' | 'visibility';
 
-  /** Disappearing-message durations as TimedToggle labels ("12 hours") → milliseconds. */
-  const UNIT_MS: Record<string, number> = { minute: 6e4, hour: 36e5, day: 864e5, week: 6048e5, month: 2592e6, year: 31536e6 };
+  /** A disappearing-messages length (a TimedToggle id, "12 hours") in milliseconds; null for one that isn't. */
   export function durationMs(label: string): number | null {
-    const m = label.match(/^(\d+) (minute|hour|day|week|month|year)s?$/);
-    return m ? Number(m[1]) * UNIT_MS[m[2]] : null;
+    return idMs(label) || null;
   }
 </script>
 

@@ -64,11 +64,7 @@ export async function blockWithToast(
     words: BlockWords,
 ): Promise<void> {
     if (!blocking) {
-        const pending = toasts.pendingToast(words.unblocking);
-        const done = await unblock();
-        if (done === undefined) pending.failed();
-        else pending.done({ message: done });
-        return;
+        return unblockWithToast((id) => setBlocked(id, false), toasts, userId, words);
     }
     const pending = toasts.pendingToast(words.blocking);
     const outcome = await setBlocked(userId, true);
@@ -85,5 +81,29 @@ export async function blockWithToast(
         if (outcome.kind === "success") return words.unblocked;
         toastStore.showOutcome(outcome);
         return undefined;
+    }
+}
+
+/** What an unblock's toast says at each step, translated. */
+export type UnblockWords = Pick<BlockWords, "unblocking" | "unblocked">;
+
+/**
+ * Unblocks someone through `unblock`, which only ever unblocks (a member from a group's Blocked
+ * list, or from their profile sheet): its toast shows at once with a loader ("Unblocking @ann…"),
+ * then how it went ("Unblocked @ann"). A refusal takes the toast's place with the failure.
+ */
+export async function unblockWithToast(
+    unblock: (userId: string) => Promise<ToastOutcome>,
+    toasts: Toasts,
+    userId: string,
+    words: UnblockWords,
+): Promise<void> {
+    const pending = toasts.pendingToast(words.unblocking);
+    const outcome = await unblock(userId);
+    if (outcome.kind === "success") {
+        pending.done({ message: words.unblocked });
+    } else {
+        pending.failed();
+        toastStore.showOutcome(outcome);
     }
 }

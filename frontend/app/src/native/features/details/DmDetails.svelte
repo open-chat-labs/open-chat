@@ -29,7 +29,7 @@
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
     import {
         disappearingChoices,
-        durationIdMs,
+        durationMs,
         ttlDurationId,
     } from "@src/logic/chats/disappearingMessages";
     import { setDmDisappearing } from "@src/logic/chats/dmSettings";
@@ -183,7 +183,7 @@
 
     async function setDisappearing(on: boolean, after: string) {
         const saved = await disappear.set({ on, after }, () =>
-            setDmDisappearing(client, chat, { on, afterMs: durationIdMs(after) }),
+            setDmDisappearing(client, chat, { on, afterMs: durationMs(after) }),
         );
         if (!saved) context.toast($_("native.details.saveFailed"));
     }

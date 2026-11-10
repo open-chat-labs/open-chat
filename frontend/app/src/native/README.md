@@ -99,8 +99,8 @@ and the GIFs' content with the old UIs; the emoji by category in
 `utils/emojis`, the old pickers' data; the phone's recent photos in `utils/native/recentMedia`,
 shared with the old native UI's strip; the photos and videos picked (the composer's media and the
 attach panel's selection) and the recent emoji in `logic/composer`), a chat's details (the web
-panel's: `logic/members` (MemberManagement, and the members' role sections and ⋯ in
-`memberMenu`), `logic/groupOrCommunity/detailsPermissions`, `logic/profile`'s ProfileCardData, a
+panel's: `logic/members`' MemberManagement, and the members' role sections and ⋯ in `@client`'s
+`memberSections` and `memberMenu`, `logic/groupOrCommunity/detailsPermissions`, `logic/profile`'s ProfileCardData, a
 DM's settings in `logic/chats/dmSettings`, a group's disappearing messages in
 `logic/chats/groupDisappearing` and the disappearing lengths in
 `logic/chats/disappearingMessages`), and the theme the web and Welcome's menu keep

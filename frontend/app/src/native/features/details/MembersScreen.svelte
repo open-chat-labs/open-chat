@@ -3,7 +3,7 @@
      panel does), then the members in role sections (Owners, Admins, Moderators, Members), and, for
      someone who can unblock, the blocked. The ⋯ on a member below you offers the roles up to your
      own where your role meets "Change member roles", and Remove and Block where it meets "Remove /
-     block members" (logic/members/memberMenu); with neither, it says so in a toast. Removing and
+     block members" (@client's memberMenu); with neither, it says so in a toast. Removing and
      blocking wait out their Undo before they're sent (a block takes them out of the group, which
      unblocking can't undo); unblocking says they can join again. Tapping a member opens their
      profile sheet. The operations are the web panel's (logic/members/MemberManagement). -->
@@ -16,7 +16,10 @@
         chatSummariesListStore,
         currentUserIdStore,
         knownMembers,
+        memberHasMenu,
         memberMatchesSearch,
+        memberMenu,
+        memberSections,
         ROLE_NONE,
         selectedChatSummaryStore,
         usersFromIds,
@@ -31,16 +34,15 @@
     import type { NativeMenuItem } from "@openchat/ui/src/native/types";
     import { chatWithRoute } from "@src/logic/appEvents/appEvents";
     import { senderColor } from "@src/logic/conversation/messageRow";
-    import { memberMenu, memberSections } from "@src/logic/members/memberMenu";
     import { MemberManagement } from "@src/logic/members/memberManagement.svelte";
-    import { toastStore, type ToastOutcome } from "@src/stores/toast";
+    import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { getContext, onDestroy, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { NativeScreen } from "../../router/locations";
     import { useOverlay } from "../../shell/overlays.svelte";
     import type { ScreenProps } from "../app/screens";
-    import { blockWithToast } from "../chats/chatToasts";
+    import { unblockWithToast } from "../chats/chatToasts";
     import { sendAfterUndo } from "../chats/removeWithUndo";
     import { HeldWhileLeaving } from "../conversation/heldWhileLeaving";
     import { memberMenuItems, menuItemRole, roleWord } from "./details.adapter";
@@ -134,7 +136,8 @@
         members: "native.details.members.members",
     } as const;
 
-    // ---- a member's ⋯
+    // ---- a member's ⋯: a row shows one from the roles alone (memberHasMenu), and what it offers,
+    // from the permissions, is worked out as it opens, not for every row on every render
 
     type Target = { userId: string; name: string; role: MemberRole };
 
@@ -212,11 +215,9 @@
     function unblock(
         userId: string,
         name: string,
-        setUnblocked: (userId: string) => Promise<ToastOutcome>,
+        setUnblocked: Parameters<typeof unblockWithToast>[0],
     ) {
-        void blockWithToast((id) => setUnblocked(id), context, userId, false, {
-            blocking: "",
-            blocked: "",
+        void unblockWithToast(setUnblocked, context, userId, {
             unblocking: t("native.conversation.toast.unblocking", { name }),
             unblocked: t("native.details.members.unblockedRejoin", { name }),
         });
@@ -287,14 +288,6 @@
                 {t(SECTION_LABELS[section.id], { count: section.members.length })}
             </span>
             {#each section.members as row (row.userId)}
-                {@const menu =
-                    management === undefined
-                        ? undefined
-                        : memberMenu(
-                              myRole,
-                              { role: row.role, isMe: row.isMe },
-                              management.actionsFor(row.role, row.isMe),
-                          )}
                 <MemberListRow
                     name={row.name}
                     username={row.username}
@@ -302,7 +295,7 @@
                     color={senderColor(row.userId)}
                     isMe={row.isMe}
                     onOpen={() => (profile = { userId: row.userId, name: row.name, isMe: row.isMe })}
-                    onMore={menu === undefined || menu.kind === "none"
+                    onMore={management === undefined || !memberHasMenu(myRole, row)
                         ? undefined
                         : (anchor) => openMenu(row, anchor)}
                     moreLabel={t("native.chats.rowOptions", { name: row.name })} />

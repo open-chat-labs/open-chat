@@ -1,7 +1,16 @@
-import { compareRoles, ROLE_ADMIN, ROLE_MEMBER, ROLE_MODERATOR, ROLE_OWNER, type MemberRole } from "@client";
+import {
+    compareRoles,
+    ROLE_ADMIN,
+    ROLE_MEMBER,
+    ROLE_MODERATOR,
+    ROLE_OWNER,
+    toDayString,
+    type GroupCreation,
+    type MemberMenu,
+    type MemberRole,
+} from "@client";
 import type { NativeMenuItem } from "@openchat/ui/src/native/types";
 import { durationParts, ttlDurationId } from "@src/logic/chats/disappearingMessages";
-import type { MemberMenu } from "@src/logic/members/memberMenu";
 import type { GroupSettingsPage } from "../../router/locations";
 
 // A chat's details as the native screens show them (native plan 10, Design Notes §3.6): the tiles
@@ -105,6 +114,33 @@ export function disappearingValue(ttl: bigint | undefined, t: Translate): string
 /** Whether new members see the messages from before they joined. */
 export function historyValue(visible: boolean, t: Translate): string {
     return t(visible ? "native.details.historyVisible" : "native.details.historyHidden");
+}
+
+/** A fact row's label and value. */
+export type Fact = { label: string; value: string };
+
+/**
+ * About's facts on a group's creation: the day it was made, and who made it (`creator`, their
+ * username, once it's known). None until it's been read, nor where it can't be (the history before
+ * the reader joined is hidden): not its owner instead, who may not be who made it (ownership moves,
+ * and there can be several).
+ */
+export function createdFacts(
+    created: GroupCreation | undefined,
+    creator: string | undefined,
+    locale: string,
+    t: Translate,
+): Fact[] {
+    if (created === undefined) return [];
+    return [
+        {
+            label: t("native.details.created"),
+            value: toDayString(new Date(Number(created.timestamp)), locale),
+        },
+        ...(creator === undefined
+            ? []
+            : [{ label: t("native.details.createdBy"), value: `@${creator}` }]),
+    ];
 }
 
 const ROLE_WORDS: [MemberRole, string][] = [

@@ -1,6 +1,7 @@
 import { ROLE_ADMIN, ROLE_MEMBER, ROLE_MODERATOR, ROLE_NONE, ROLE_OWNER } from "@client";
 import { describe, expect, test } from "vitest";
 import {
+    createdFacts,
     disappearingValue,
     dmTiles,
     durationLabel,
@@ -97,6 +98,25 @@ describe("values", () => {
     test("say whether new members see the history", () => {
         expect(historyValue(true, t)).toBe("native.details.historyVisible");
         expect(historyValue(false, t)).toBe("native.details.historyHidden");
+    });
+});
+
+describe("when a group was created", () => {
+    const created = { timestamp: BigInt(Date.UTC(2026, 10, 10, 12)), createdBy: "u1" };
+
+    test("says nothing until it's read, nor where it can't be", () => {
+        expect(createdFacts(undefined, undefined, "en", t)).toEqual([]);
+        expect(createdFacts(undefined, "owner", "en", t)).toEqual([]);
+    });
+
+    test("is the day it was made, and who made it once their name is in", () => {
+        expect(createdFacts(created, undefined, "en", t)).toEqual([
+            { label: "native.details.created", value: "Nov 10, 2026" },
+        ]);
+        expect(createdFacts(created, "ann", "en", t)).toEqual([
+            { label: "native.details.created", value: "Nov 10, 2026" },
+            { label: "native.details.createdBy", value: "@ann" },
+        ]);
     });
 });
 

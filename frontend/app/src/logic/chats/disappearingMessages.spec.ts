@@ -1,9 +1,8 @@
-import { durationMs } from "@openchat/ui/src/features/components/DmChatSettings.svelte";
 import { describe, expect, test } from "vitest";
 import {
     DISAPPEARING_DURATIONS,
     disappearingChoices,
-    durationIdMs,
+    durationMs,
     durationParts,
     ttlDurationId,
 } from "./disappearingMessages";
@@ -61,9 +60,10 @@ describe("durationParts", () => {
         expect(durationParts("Always")).toBeUndefined();
     });
 
-    test("gives the same length the settings panel converts it to", () => {
+    // what's offered reads as words: every length has a unit the app has words for
+    test("reads every length offered", () => {
         for (const id of DISAPPEARING_DURATIONS) {
-            expect(durationIdMs(id)).toBe(durationMs(id));
+            expect(durationParts(id)).toBeDefined();
         }
     });
 });
