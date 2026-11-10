@@ -39,7 +39,8 @@ design export needs. Each entry says where it came up.
   (#10366) put `data-os` on the native root (the app's platform, else the user agent's) and built
   the shell on it (`src/native/README.md`). Left:
   - Haptics: done. The native root installs the Tauri plugin's new `haptic` command (Android's
-    keyboard-tap feedback, iOS's light impact) in the apps, and nothing on mobile web
+    keyboard-tap feedback, iOS's light impact; with `style: "medium"`, N5d's message menu,
+    Android's long-press feedback and iOS's medium impact) in the apps, and nothing on mobile web
     (`native/haptics.ts`). A shell built before the command rejects it, which means no haptics,
     so a bundle taken over the air still runs on it: no major version bump needed for this alone.
     Check the feel on both platforms.
@@ -110,7 +111,9 @@ design export needs. Each entry says where it came up.
     components_mobile; a share for no chat in particular needs the chat picker
     (components_mobile's goes through `pendingShareStore` to its SlidingModals), which the native
     tree doesn't have yet, so it says so in a toast (`native.shareUnavailable`) and drops the share;
-    a `/share` link shows the Chats root. The picker comes with N5d (forward's chat picker).
+    a `/share` link shows the Chats root. N5d's forward sheet picks several chats and doesn't
+    open them, so it isn't that picker; its rows (`forward.adapter`, on the shared
+    `chatsToShareTo` and `shareTargetsInSections`) are what a share sheet would list.
   - **The Android app's system bars**: done. Its WebView doesn't report `env(safe-area-inset-*)`
     reliably, so the native root follows the shell's window-inset event into `--safe-top` /
     `--safe-bottom` (`native/systemBars.ts`, through components_mobile's `androidInterfaceSizes`).
@@ -358,8 +361,91 @@ design export needs. Each entry says where it came up.
     swipe sets the chat's draft (the reply, or the edit), which the composer shows, and the
     message is marked. A preview's join bar (a channel not joined, a community previewed) comes
     with N8b: until then a preview shows the old footer's words in the composer's place.
-  - **The message long-press menu** (and with it reactions beyond the chips, Copy, Forward, Info,
-    Delete…) is N5d's: a long-press does nothing yet. A message's reactions toggle from its chips.
+  - **A message's long-press menu** (native N5d, #10371): built (`MessageActions`, the kit's
+    `MessageLongPressMenu`). Left, or decided where the docs don't say (the prototype wasn't
+    available):
+    - **Its items**: the design's Reply, Forward, Copy, Info, Edit, Delete, Report, and between
+      them the rest of what `messageMenu` offers that the native tree carries out: Reply
+      privately, Translate / Untranslate, Pin / Unpin, Copy link, Share, Cancel reminder, Retry,
+      Reveal, Undelete, and Block (a group's) after the divider. Not offered yet: starting or
+      following a thread (N8a), a reminder (no native sheet for its time yet: the web has
+      `ReminderDialogScreen`), tipping (the web hasn't it either). Info isn't offered on what
+      can't be acted on (deleted, blocked). The card is 240px with 48px rows, measured as it lays
+      out. Past the notes' four placements round the message (ours): the whole card at the
+      screen's bottom, over the message, the reactions above it (or at the screen's top); it
+      scrolls (without a scrollbar) only when it can't be whole anywhere. What's under the veil
+      (the composer, the header) is room: only 12px from the screen's top and bottom isn't, the
+      safe areas counting towards it, so a message just above the composer gets the card above it
+      and the reactions below it, over the composer. The reactions and the card line up with the
+      bubble's own box (`data-oc-bubble`, else the first element that draws a box), not its text,
+      when a wrapped bubble is as wide as its row.
+    - **Reactions**: six quick ones, the user's most used first (the shared `quickReactions`
+      store), then +, which opens a bottom sheet (notes §1: pickers are sheets; the design doesn't
+      show where the + goes; 72% high, the kit's `BottomSheet`) with the composer's emoji panel's
+      emoji (`ReactionPicker` on the panel's `EmojiGrid` and `EmojiSections`): Recent, every emoji
+      by category with the category bar, and a search. Ours: no GIF tab or backspace, and the
+      search is a plain field in the panel's style (`EmojiSearchField`): with its keyboard up the
+      sheet sits on the keyboard, the results under the field (07's search strip is the keyboard
+      slot's, not a sheet's). The reactions the user has are marked, and picking one takes it off. A reaction
+      added goes to the front of Recent (the composer's: the same per-user list) and counts
+      towards the quick ones (`toggleReaction`, as the bar's do); one taken off counts for
+      neither.
+    - **Text**: a message's text can't be selected, in the chat, the menu's copy of it or Message
+      info (a long-press is the menu, which has Copy); should a selection have started in the
+      message pressed anyway, it's cleared as the menu opens. The web's messages stay selectable.
+    - **Delete** (and "delete for me") asks first while the "ask before deleting" setting
+      (`confirmMessageDeletion`, on by default) is on: a `NativeAlert` with the web dialog's words
+      ("Do you really want to delete this message?", Delete), the shared `messageAction`'s "ask".
+      Then, or at once with the setting off, it shows deleted and its toast (waiting for the
+      backend, then "Message deleted") offers Undo, which undeletes it (notes §1: destructive
+      actions show Undo). The alert has the web dialog's "Don't show me this again", as a checkbox
+      (`NativeAlert`'s `checkLabel`), which turns the setting off once the delete is confirmed
+      (the web's toggle turns it off at once, Cancel or not). The native tree has no setting
+      screen for it, so once off it stays off on that device. A failed message's Delete just
+      removes it.
+    - **Words**: toasts for Copy ("Copied"), Copy link ("Link copied to clipboard"), Pin, Unpin,
+      Undelete, a delete and its Undo, a forward ("Forwarding to 2 chats…", then "Forwarded to 2
+      chats") and a report; the web says nothing for Copy or Pin. Copy link and Share, like every
+      action, come back from the shared `messageAction` as an outcome each tree shows its own way
+      (the web's toasts are as they were). Translating without Diamond offers it in a `NativeAlert` (Get
+      Diamond opens `?diamond` on the You tab) rather than the web's upgrade dialog. A private
+      reply that can't make the DM says so in a toast (the web publishes `notFound`).
+    - **Message info** (a local `message_info` screen): the message as the chat draws it, Sent,
+      a DM's own message's Status (Sending, Sent, Read, Not sent), Forwarded, Edited, and who
+      reacted with what. Groups' "Read by" / "Delivered to" and an edit history aren't kept by the
+      backend, so they aren't shown; "Edited" says only that it was.
+    - **Forward**: several chats at once, without opening them (the client's
+      `forwardMessageToChats`), the note sent after the copy as a message of its own; the web
+      opens the one chat picked and leaves the note in its draft. A chat whose rules the user
+      hasn't accepted refuses the copy (it shows failed there, and the retry asks for the rules),
+      as the client only knows the open chat's rules. @usernames typed in the note are mentioned
+      where they're members of the chat it goes to (each is looked up there); a community's user
+      groups and @everyone aren't known outside the open chat, so stay as typed. A forward that
+      would take more sends than the send throttle allows in the minute (the copy, and the note,
+      per chat: 10 a minute, 20 with Diamond) sends nothing and says so ("forward to fewer chats,
+      or wait a moment"), rather than some chats getting it and the rest nothing. The sheet starts
+      afresh each time it opens. The open chat isn't offered, as in every
+      picker. DMs show their @username, not when they were last online (the web's picker loads it).
+      While its search or note field has the keyboard, the sheet sits on it (the kit's
+      `BottomSheet`'s `keyboard`, fed `softKeyboard.covering`: the conversation keeps the Android
+      app's viewport resize off), as the reaction sheet does.
+    - **Report** is a bottom sheet with the web dialog's words (the design has no report screen).
+    - **Not checked in a browser**: removing a link's preview (the local replica's previews don't
+      load) and the menu in RTL (spec'd only).
+    - **One haptic**, medium, as the menu opens: `MessageActions` plays the kit's
+      `haptic('medium')` (the plugin's `haptic` with `style: "medium"`: Android's `LONG_PRESS`
+      feedback, iOS's `UIImpactFeedbackGenerator(style: .medium)`), once even if a press opens the
+      menu twice (Android's own long-press, then the group's timer), and the chat's `MessageGroup`
+      plays no vibration of its own (`pressVibration={false}`). A shell built before the style
+      plays its light tap. Not checked on a device. The swipe's armed haptic is still
+      `MessageGroup`'s `navigator.vibrate(10)`.
+    - **No press feedback yet** (to do): holding a message shows nothing until the menu opens.
+      The current mobile app scales the bubble while it's held (component-lib's `longpress`
+      action, `animation: "scale"`, as `ChatMessage` uses it): halfway through the hold (300ms of
+      600) the bubble scales down to 0.95 over a quarter of it (150ms, ease-out), and as the menu
+      opens it scales back up to 1, a small bounce that says the press is taking. The native
+      conversation should do the same on its bubbles over `MessageGroup`'s 500ms hold (a release
+      or a move before then puts it back), with none under reduced motion.
   - **A message's thread** is N8a's (native PLAN): the replies link under messages and the thread
     screen (replies, composer, follow). Until then the link is hidden: the conversation's mapping
     gets `threads: false` (`ConversationContext.threads`), so no message has thread fields, rather
@@ -370,10 +456,12 @@ design export needs. Each entry says where it came up.
     header strip) and a missed call's Call back say so in a toast. A live call's strip says "Tap to
     join" where the prototype names who's in it. Not checked in a browser: the local replica's
     seeded chats have no calls.
-  - **A swap offer's Accept / Cancel**: confirmations are small alerts (notes §1), which the kit
-    doesn't have yet, so the card shows no button in the native tree (`withHandlers` without
-    `swap`).
-  - **A link preview's remove** (the X on the sender's own card) needs the same alert: not offered.
+  - **A swap offer's Accept / Cancel**: still no button in the native tree (`withHandlers`
+    without `swap`). The kit has its alert now, but accepting asks for the wallet's PIN, whose
+    sheet is N10b's: with a PIN set, the client's prompt would wait for a sheet that isn't there.
+    It comes with N9 / N10b, on the web's start and settle (to move to `logic` then).
+  - **A link preview's remove** (the X on the sender's own card): done in N5d, after a
+    `NativeAlert` ("Remove preview?"), on the shared `logic/conversation/linkPreview`.
   - **The media viewer** is the app's (`core/MediaViewer`, moved from `src/web` and kept clear of
     the status bar), not the design's (sender, actions, swipe between items, chrome that fades);
     that waits for the design's `MediaViewer` to be ported to the library (Design pass 6, above),
@@ -442,7 +530,12 @@ design export needs. Each entry says where it came up.
   - **By hand in the library** (EXPORT-LOG 2026-11-07, to take back to the design export):
     `MessageGroup`'s `mirror`, `avatarSize`, `swipeStyle="inset"` and its CSS hooks
     (`--group-gap`, `--group-ring`, `--message-mark*`); `ChatBubble` and `VoiceMessage` put a
-    mirrored bubble at the inline end.
+    mirrored bubble at the inline end. And (EXPORT-LOG 2026-11-08, N5d) the kit's
+    `MessageLongPressMenu` with `messageMenuPlacement` (the prototype's inline message menu, as a
+    component), and `MessageGroup`'s `hoverBar`. Both long-press menus (EXPORT-LOG 2026-11-09) keep
+    the lifted copy as it is until the veil has faded, so the message or row doesn't blink back in.
+    And `global.css` shows no scrollbars under the native root (`[data-platform="native"]`), as
+    Android's WebView drew the global 8px one whatever a scroller's `scrollbar-width` said.
 
 - **Native composer** (native N5c, #10370; the native plan's 05 composer, 06 attach panel and 07
   emoji and GIF panel, as of 2026-11-09 (b); `src/native/features/conversation`:

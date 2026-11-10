@@ -1837,6 +1837,55 @@
                 "voice": "Appel vocal en cours",
                 "sub": "{elapsed} · {count, plural, one {# personne} other {# personnes}}",
                 "tapToJoin": "Touchez pour rejoindre"
+            },
+            "message": {
+                "info": "Infos",
+                "options": "Options du message",
+                "react": "Ajouter une réaction",
+                "copied": "Copié",
+                "copyFailed": "Impossible de copier le message",
+                "privateReplyFailed": "Impossible d’ouvrir une discussion avec cette personne",
+                "pinned": "Message épinglé",
+                "unpinned": "Message désépinglé",
+                "deleting": "Suppression du message…",
+                "deleted": "Message supprimé",
+                "deleteFailed": "Impossible de supprimer le message",
+                "restoring": "Restauration du message…",
+                "restored": "Message restauré",
+                "translateTitle": "Traduire les messages",
+                "translateDiamond": "La traduction des messages est réservée aux membres Diamond.",
+                "getDiamond": "Obtenir Diamond",
+                "copyLink": "Copier le lien"
+            },
+            "forward": {
+                "title": "Transférer",
+                "search": "Rechercher des discussions",
+                "noChats": "Aucune discussion vers laquelle transférer",
+                "noMatches": "Aucune discussion ne correspond à « {query} »",
+                "note": "Ajouter une note (facultatif)",
+                "pick": "Choisissez où transférer",
+                "send": "{count, plural, one {Transférer à # discussion} other {Transférer à # discussions}}",
+                "forwarding": "{count, plural, one {Transfert vers # discussion…} other {Transfert vers # discussions…}}",
+                "forwarded": "{count, plural, one {Transféré à # discussion} other {Transféré à # discussions}}",
+                "failed": "Le transfert n’a pas pu se faire vers toutes les discussions",
+                "throttled": "Cela fait plus de messages que l’on peut en envoyer en une minute : transférez à moins de discussions, ou patientez un instant"
+            },
+            "report": {
+                "reporting": "Signalement du message…",
+                "reported": "Message signalé"
+            },
+            "info": {
+                "title": "Infos du message",
+                "sentAt": "Envoyé",
+                "status": "Statut",
+                "forwarded": "Transféré",
+                "edited": "Modifié",
+                "reactions": "Réactions",
+                "sending": "Envoi en cours",
+                "sent": "Envoyé",
+                "read": "Lu",
+                "failed": "Non envoyé",
+                "you": "Vous"
             }
         },
         "shareUnavailable": "Le partage vers OpenChat depuis d'autres applications n'est pas encore disponible dans cette version.",

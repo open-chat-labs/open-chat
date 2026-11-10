@@ -53,6 +53,10 @@ class ShowNotificationArgs: Decodable {
     let notificationId: Int?
 }
 
+class HapticArgs: Decodable {
+    let style: String?
+}
+
 class ShareArgs: Decodable {
     let text: String
     let title: String?
@@ -299,11 +303,14 @@ class OpenChatPlugin: Plugin {
         invoke.resolve()
     }
 
-    // A light tap where the native design asks for one (a tab tap, a
-    // long-press menu opening): UIKit's light impact.
+    // A haptic where the native design asks for one: UIKit's light impact
+    // (a tab tap) by default, its medium one for `style: "medium"` (a
+    // message's long-press menu opening).
     @objc func haptic(_ invoke: Invoke) {
+        let style = (try? invoke.parseArgs(HapticArgs.self))?.style
+        let impact: UIImpactFeedbackGenerator.FeedbackStyle = style == "medium" ? .medium : .light
         DispatchQueue.main.async {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            UIImpactFeedbackGenerator(style: impact).impactOccurred()
         }
         invoke.resolve()
     }

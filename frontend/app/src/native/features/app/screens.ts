@@ -121,6 +121,9 @@ export const screens: Screens = {
     // a builder from the conversation's attach panel: poll, prize, send crypto, swap offer, meme
     // fighter (N9)
     builder: undefined,
+
+    // a message's info, from its long-press menu (N5d)
+    message_info: () => import("../conversation/MessageInfoScreen.svelte"),
 };
 
 /**

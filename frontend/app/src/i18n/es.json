@@ -1837,6 +1837,55 @@
                 "voice": "Llamada de voz en curso",
                 "sub": "{elapsed} · {count, plural, one {# persona} other {# personas}}",
                 "tapToJoin": "Toca para unirte"
+            },
+            "message": {
+                "info": "Información",
+                "options": "Opciones del mensaje",
+                "react": "Añadir una reacción",
+                "copied": "Copiado",
+                "copyFailed": "No se pudo copiar el mensaje",
+                "privateReplyFailed": "No se pudo abrir un chat con esa persona",
+                "pinned": "Mensaje fijado",
+                "unpinned": "Mensaje desfijado",
+                "deleting": "Eliminando mensaje…",
+                "deleted": "Mensaje eliminado",
+                "deleteFailed": "No se pudo eliminar el mensaje",
+                "restoring": "Restaurando mensaje…",
+                "restored": "Mensaje restaurado",
+                "translateTitle": "Traducir mensajes",
+                "translateDiamond": "Traducir mensajes es para miembros Diamond.",
+                "getDiamond": "Obtener Diamond",
+                "copyLink": "Copiar enlace"
+            },
+            "forward": {
+                "title": "Reenviar",
+                "search": "Buscar chats",
+                "noChats": "No hay chats a los que reenviar",
+                "noMatches": "Ningún chat coincide con «{query}»",
+                "note": "Añadir una nota (opcional)",
+                "pick": "Elige chats a los que reenviar",
+                "send": "{count, plural, one {Reenviar a # chat} other {Reenviar a # chats}}",
+                "forwarding": "{count, plural, one {Reenviando a # chat…} other {Reenviando a # chats…}}",
+                "forwarded": "{count, plural, one {Reenviado a # chat} other {Reenviado a # chats}}",
+                "failed": "No se pudo reenviar a todos los chats",
+                "throttled": "Son más mensajes de los que se pueden enviar en un minuto: reenvía a menos chats o espera un momento"
+            },
+            "report": {
+                "reporting": "Denunciando mensaje…",
+                "reported": "Mensaje denunciado"
+            },
+            "info": {
+                "title": "Info. del mensaje",
+                "sentAt": "Enviado",
+                "status": "Estado",
+                "forwarded": "Reenviado",
+                "edited": "Editado",
+                "reactions": "Reacciones",
+                "sending": "Enviando",
+                "sent": "Enviado",
+                "read": "Leído",
+                "failed": "No enviado",
+                "you": "Tú"
             }
         },
         "shareUnavailable": "Compartir en OpenChat desde otras aplicaciones aún no está disponible en esta versión.",

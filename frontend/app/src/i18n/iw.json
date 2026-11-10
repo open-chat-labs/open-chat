@@ -1837,6 +1837,55 @@
                 "voice": "שיחה קולית מתקיימת",
                 "sub": "{elapsed} · {count, plural, one {אדם אחד} other {# אנשים}}",
                 "tapToJoin": "הקישו כדי להצטרף"
+            },
+            "message": {
+                "info": "מידע",
+                "options": "אפשרויות ההודעה",
+                "react": "הוספת תגובה",
+                "copied": "הועתק",
+                "copyFailed": "לא ניתן היה להעתיק את ההודעה",
+                "privateReplyFailed": "לא ניתן היה לפתוח איתו צ'אט",
+                "pinned": "ההודעה הוצמדה",
+                "unpinned": "ההודעה בוטלה מהצמדה",
+                "deleting": "מוחק את ההודעה…",
+                "deleted": "ההודעה נמחקה",
+                "deleteFailed": "לא ניתן היה למחוק את ההודעה",
+                "restoring": "משחזר את ההודעה…",
+                "restored": "ההודעה שוחזרה",
+                "translateTitle": "תרגום הודעות",
+                "translateDiamond": "תרגום הודעות מיועד לחברי Diamond.",
+                "getDiamond": "קבלת Diamond",
+                "copyLink": "העתקת קישור"
+            },
+            "forward": {
+                "title": "העברה",
+                "search": "חיפוש צ'אטים",
+                "noChats": "אין צ'אטים להעברה אליהם",
+                "noMatches": "אין צ'אטים שתואמים ל־„{query}”",
+                "note": "הוספת הערה (לא חובה)",
+                "pick": "בחירת צ'אטים להעברה",
+                "send": "{count, plural, one {העברה לצ'אט אחד} other {העברה ל־# צ'אטים}}",
+                "forwarding": "{count, plural, one {מעביר לצ'אט אחד…} other {מעביר ל־# צ'אטים…}}",
+                "forwarded": "{count, plural, one {הועבר לצ'אט אחד} other {הועבר ל־# צ'אטים}}",
+                "failed": "לא ניתן היה להעביר לכל הצ'אטים",
+                "throttled": "זה יותר הודעות ממה שניתן לשלוח בדקה: העבירו לפחות צ'אטים, או המתינו רגע"
+            },
+            "report": {
+                "reporting": "מדווח על ההודעה…",
+                "reported": "דווח על ההודעה"
+            },
+            "info": {
+                "title": "מידע על ההודעה",
+                "sentAt": "נשלחה",
+                "status": "מצב",
+                "forwarded": "הועברה",
+                "edited": "נערכה",
+                "reactions": "תגובות",
+                "sending": "נשלחת",
+                "sent": "נשלחה",
+                "read": "נקראה",
+                "failed": "לא נשלחה",
+                "you": "אתה"
             }
         },
         "shareUnavailable": "שיתוף ל-OpenChat מאפליקציות אחרות עדיין אינו זמין בגרסה זו.",

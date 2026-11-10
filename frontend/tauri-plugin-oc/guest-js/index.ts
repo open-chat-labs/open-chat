@@ -3,7 +3,7 @@ export { deleteFcmToken } from "./commands/deleteFcmToken";
 export { getApnsDevice } from "./commands/getApnsDevice";
 export { getFcmToken } from "./commands/getFcmToken";
 export { getShellVersion } from "./commands/getShellVersion";
-export { haptic } from "./commands/haptic";
+export { haptic, type HapticStyle } from "./commands/haptic";
 export { getWindowInsets, type WindowInsets } from "./commands/getWindowInsets";
 export { setSystemBarsStyle } from "./commands/setSystemBarsStyle";
 export { share } from "./commands/share";

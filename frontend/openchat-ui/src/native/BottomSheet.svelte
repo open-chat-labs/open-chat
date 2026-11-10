@@ -3,7 +3,9 @@
      past 30% of its height or a downward flick closes it, otherwise it springs back; pulled up it rubber-bands 24px
      (sheetDrag.ts). A sheet whose content changes (search → results → confirm) gets one fixed `height`. Tapping the
      veil or Esc closes it. It's a fixed layer over the native root (the window in the app). Android's system back
-     closing it first is the host's. Reduced motion: no slides, fades or spring. -->
+     closing it first is the host's. Where the soft keyboard covers the window rather than shrinking it (the host knows:
+     `keyboard`), the sheet sits on the keyboard while a field in it has the focus, as tall as it can be under the
+     screen's top. Reduced motion: no slides, fades or spring. -->
 <script lang="ts">
   import { onDestroy, untrack, type Snippet } from 'svelte';
   import { useT } from '../lib/i18n';
@@ -28,16 +30,28 @@
     height?: string;
     /** More of the drag area, under the title (a step's heading). */
     header?: Snippet;
+    /** How much of the window the soft keyboard covers (px; 0 where the window shrinks for it, or it's down): while a
+     *  field in the sheet has the focus, the sheet rises above it. */
+    keyboard?: number;
     children: Snippet;
   }
 
-  let { open, onClose, title = '', label = '', actionLabel = '', onAction, height, header, children }: Props = $props();
+  let { open, onClose, title = '', label = '', actionLabel = '', onAction, height, header, keyboard = 0, children }: Props = $props();
   const t = useT();
 
   let sheet = $state<HTMLElement>();
   let offset = $state(0);
   let dragging = $state(false);
   let drag: { y0: number; height: number; samples: DragSample[] } | null = null;
+
+  // a field in the sheet has the focus (and so the keyboard, when there's one)
+  let typing = $state(false);
+  const lift = $derived(typing ? keyboard : 0);
+  const TYPES = /^(text|search|email|url|tel|password|number)$/;
+  function takesTyping(el: EventTarget | null): boolean {
+    if (!(el instanceof HTMLElement)) return false;
+    return el.isContentEditable || el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && TYPES.test(el.type));
+  }
 
   const presence = new Presence(LEAVE_MS);
   $effect.pre(() => {
@@ -101,7 +115,12 @@
     <div
       class="sheet"
       class:dragging
+      class:lifted={lift > 0}
       style:height
+      style:bottom={lift > 0 ? `${lift}px` : undefined}
+      style:max-height={lift > 0 ? `calc(100% - ${lift}px - var(--safe-top) - 8px)` : undefined}
+      onfocusin={(e) => (typing = takesTyping(e.target))}
+      onfocusout={(e) => (typing = takesTyping(e.relatedTarget) && !!sheet?.contains(e.relatedTarget as Node))}
       style:transform={presence.leaving ? 'translateY(100%)' : offset || dragging ? `translateY(${offset}px)` : undefined}
       role="dialog"
       aria-modal="true"
@@ -172,6 +191,11 @@
 
     &.dragging {
       transition: none;
+    }
+
+    // on the keyboard, which covers the safe area under it
+    &.lifted {
+      padding-bottom: 0;
     }
   }
 

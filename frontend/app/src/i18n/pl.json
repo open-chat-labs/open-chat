@@ -1837,6 +1837,55 @@
                 "voice": "Trwa rozmowa głosowa",
                 "sub": "{elapsed} · {count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}",
                 "tapToJoin": "Dotknij, aby dołączyć"
+            },
+            "message": {
+                "info": "Informacje",
+                "options": "Opcje wiadomości",
+                "react": "Dodaj reakcję",
+                "copied": "Skopiowano",
+                "copyFailed": "Nie udało się skopiować wiadomości",
+                "privateReplyFailed": "Nie udało się otworzyć czatu z tą osobą",
+                "pinned": "Przypięto wiadomość",
+                "unpinned": "Odpięto wiadomość",
+                "deleting": "Usuwanie wiadomości…",
+                "deleted": "Usunięto wiadomość",
+                "deleteFailed": "Nie udało się usunąć wiadomości",
+                "restoring": "Przywracanie wiadomości…",
+                "restored": "Przywrócono wiadomość",
+                "translateTitle": "Tłumaczenie wiadomości",
+                "translateDiamond": "Tłumaczenie wiadomości jest dla członków Diamond.",
+                "getDiamond": "Zdobądź Diamond",
+                "copyLink": "Kopiuj link"
+            },
+            "forward": {
+                "title": "Przekaż dalej",
+                "search": "Szukaj czatów",
+                "noChats": "Brak czatów, do których można przekazać",
+                "noMatches": "Żaden czat nie pasuje do „{query}”",
+                "note": "Dodaj notatkę (opcjonalnie)",
+                "pick": "Wybierz czaty, do których przekazać",
+                "send": "{count, plural, one {Przekaż do # czatu} few {Przekaż do # czatów} many {Przekaż do # czatów} other {Przekaż do # czatu}}",
+                "forwarding": "{count, plural, one {Przekazywanie do # czatu…} few {Przekazywanie do # czatów…} many {Przekazywanie do # czatów…} other {Przekazywanie do # czatu…}}",
+                "forwarded": "{count, plural, one {Przekazano do # czatu} few {Przekazano do # czatów} many {Przekazano do # czatów} other {Przekazano do # czatu}}",
+                "failed": "Nie udało się przekazać do wszystkich czatów",
+                "throttled": "To więcej wiadomości, niż można wysłać w ciągu minuty: przekaż do mniejszej liczby czatów albo chwilę poczekaj"
+            },
+            "report": {
+                "reporting": "Zgłaszanie wiadomości…",
+                "reported": "Zgłoszono wiadomość"
+            },
+            "info": {
+                "title": "Informacje o wiadomości",
+                "sentAt": "Wysłano",
+                "status": "Status",
+                "forwarded": "Przekazana dalej",
+                "edited": "Edytowana",
+                "reactions": "Reakcje",
+                "sending": "Wysyłanie",
+                "sent": "Wysłana",
+                "read": "Przeczytana",
+                "failed": "Niewysłana",
+                "you": "Ty"
             }
         },
         "shareUnavailable": "Udostępnianie do OpenChat z innych aplikacji nie jest jeszcze dostępne w tej wersji.",

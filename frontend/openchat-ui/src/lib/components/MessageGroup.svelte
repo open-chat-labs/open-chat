@@ -7,7 +7,8 @@
      A message's `menu` says whether it has a menu and hover bar (by default all but a deleted one); the bar offers reactions only
      with onReact / onReactPicker, and Reply / Edit only with onReply / onEdit.
      Native (design notes §3.3): `mirror` puts a sent run at the inline end with mirrored corners, `avatarSize` 28, and
-     `swipeStyle="inset"` the native swipe (the hint in the freed space, armed at 60px). The host may set
+     `swipeStyle="inset"` the native swipe (the hint in the freed space, armed at 60px), `hoverBar={false}` no hover bar,
+     `pressVibration={false}` no vibration of its own on a long-press (the host plays its haptic as the menu opens). The host may set
      `--group-gap` (the avatar's gap), `--group-ring` (the avatar's ring), and the marked row's tint: `--message-mark`
      (its colour), `--message-mark-start` / `--message-mark-end` (how far it reaches past the message) and
      `--message-mark-radius`. -->
@@ -78,6 +79,12 @@
      * growing in as it's pulled; armed at 60px (accent, two bounces, a haptic), and it stops at 90px.
      */
     swipeStyle?: 'gutter' | 'inset';
+    /** The hover bar for a pointer that hovers (web). Off on native (design notes §3.3): a long-press or a right click
+     *  opens the message's menu there. */
+    hoverBar?: boolean;
+    /** A short vibration as a touch long-press opens the message's menu (web). Off where the host plays its own haptic
+     *  as it opens the menu (native), so a long-press gives one. */
+    pressVibration?: boolean;
   }
 
   let {
@@ -102,6 +109,8 @@
     mirror = false,
     avatarSize = 34,
     swipeStyle = 'gutter',
+    hoverBar = true,
+    pressVibration = true,
   }: Props = $props();
   const t = useT();
 
@@ -143,6 +152,7 @@
   const quickReactions = $derived((recentReactions.length ? recentReactions : ['👍', '❤️', '😂']).slice(0, 3));
   const isText = (m: GroupMessage) => !m.kind || m.kind === 'text';
   const menuable = (m: GroupMessage) => !!onMessageMenu && (m.menu ?? !m.deleted);
+  const barred = (m: GroupMessage) => hoverBar && menuable(m);
 
   function senderKey(e: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -323,7 +333,7 @@
 
   // the bar belongs to the bubble: show it only while the cursor is over the bubble (or the bar itself)
   function mouseMove(e: MouseEvent, i: number, m: GroupMessage) {
-    if (!menuable(m) || touch) return;
+    if (!barred(m) || touch) return;
     const target = e.target as Element;
     let over = !!target.closest?.('[data-msg-acts]');
     if (!over) {
@@ -389,7 +399,7 @@
       pressTimer = setTimeout(() => {
         if (!gesture || gesture.swiping) return;
         pressFired = true;
-        navigator.vibrate?.(8);
+        if (pressVibration) navigator.vibrate?.(8);
         openMenu(i, { touch: true });
         gesture = null;
       }, 500);
@@ -485,7 +495,7 @@
         data-msg={m.id ?? ''}
         onmousemove={(e) => mouseMove(e, i, m)}
         onmouseleave={() => leave(i)}
-        onfocusin={() => menuable(m) && !touch && hover !== i && showBar(i)}
+        onfocusin={() => barred(m) && !touch && hover !== i && showBar(i)}
         onfocusout={(e) => !rows[i]?.contains(e.relatedTarget as Node | null) && hover === i && (hover = -1)}
         oncontextmenu={(e) => contextMenu(e, i, m)}
         onkeydown={(e) => keyDown(e, i, m)}
@@ -536,7 +546,7 @@
             onOpen={m.onOpenThread}
           />
         {/if}
-        {#if menuable(m) && hover === i && !touch && activeMenu !== i}
+        {#if barred(m) && hover === i && !touch && activeMenu !== i}
           <span class="bar" style:left={barLeft} data-msg-acts="" role="toolbar" aria-label={t('ui.messageGroup.actions')}>
             {#each onReact ? quickReactions : [] as c}
               {@const on = mine.includes(c)}

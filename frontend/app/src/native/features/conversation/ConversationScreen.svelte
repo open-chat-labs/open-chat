@@ -5,9 +5,9 @@
      screen; the messages (core/ChatEventList: paging, deep links, read marking, keeping the scroll),
      received ones with their sender's avatar on a run's first in groups and none in DMs, sent ones
      on the right; swipe right to reply, left to edit your own; call items; who is typing (a bubble
-     in DMs, a strip resting on the composer in groups); the media viewer; and the composer with the
-     keyboard and its panels under it (ConversationComposer, KeyboardSlot). The message long-press
-     menu is N5d's, the details N6's. -->
+     in DMs, a strip resting on the composer in groups); the media viewer; a message's long-press menu
+     (MessageActions: reactions, Reply, Forward, Copy, Info …); and the composer with the keyboard and
+     its panels under it (ConversationComposer, KeyboardSlot). The details are N6's. -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -91,6 +91,7 @@
         type MessageHandlers,
         type QuoteTarget,
     } from "@src/logic/conversation/messageHandlers";
+    import { canRemovePreviews, previewLink } from "@src/logic/conversation/linkPreview";
     import { messageOffer } from "@src/logic/conversation/messageOffer";
     import {
         conversationContext,
@@ -146,6 +147,7 @@
         type HeaderMenuAction,
     } from "./conversation.adapter";
     import { HeldWhileLeaving } from "./heldWhileLeaving";
+    import MessageActions from "./MessageActions.svelte";
     import SearchBar from "./SearchBar.svelte";
     import ConversationComposer from "./ConversationComposer.svelte";
     import { KeyboardSlot } from "./keyboardSlot.svelte";
@@ -851,12 +853,14 @@
     }
 
     type RowOffers = {
+        menu: boolean;
         swipes: ReturnType<typeof nativeMessageSwipes>;
         retry: (() => void) | undefined;
     };
 
     function rowOffers(evt: EventWrapper<Message>, offered: MessageMenu): RowOffers {
         return {
+            menu: offered.menu,
             swipes: nativeMessageSwipes(evt.event.sender === me, offered.actions),
             retry: offered.actions.has("retry") ? () => retry(evt) : undefined,
         };
@@ -869,7 +873,7 @@
         evt: EventWrapper<Message>,
         offers: RowOffers,
     ): GroupMessage[] {
-        const key = `${offers.swipes.left}|${offers.retry !== undefined}`;
+        const key = `${offers.menu}|${offers.swipes.left}|${offers.retry !== undefined}`;
         const kept = groupMessages.get(row);
         if (kept?.offers === key) return kept.messages;
         const message = withBody
@@ -882,10 +886,10 @@
                 : quoteTarget(evt.event, chat.id, $chatListScopeStore.kind);
         const messages = [
             withFields(message, {
+                ...previewRemoval(evt),
                 ...retryFor(row.message, offers.retry),
                 ...quoteFor(row.message, quoted, goToQuote),
-                // the long-press menu is N5d's
-                menu: true,
+                menu: offers.menu,
                 swipeLeft: offers.swipes.left,
             }),
         ];
@@ -894,6 +898,21 @@
     }
 
     // ---- what's done with a message
+
+    // its long-press menu (MessageActions), and what that opens
+    let messageActions: MessageActions | undefined = $state();
+
+    // the sender takes a link's preview off their own text message, once they've confirmed it
+    function previewRemoval(evt: EventWrapper<Message>) {
+        const msg = evt.event;
+        if (!canRemovePreviews(msg, me)) return {};
+        return {
+            onRemovePreview: (index: number) => {
+                const url = previewLink(msg, index);
+                if (url !== undefined) messageActions?.removePreview(evt, url);
+            },
+        };
+    }
 
     const QUOTED_MARK_MS = 1600;
 
@@ -1220,15 +1239,18 @@
                                         endsRun={item.last}
                                         mirror
                                         swipeStyle="inset"
+                                        hoverBar={false}
+                                        pressVibration={false}
                                         marked={searchMatch ||
                                         quoted ||
                                         (args.focusIndex === msg.messageIndex && !failed) ||
                                         composingId === msg.messageId
                                             ? 0
                                             : -1}
-                                        onMessageMenu={() => {
-                                            // TODO(N5d): the message's long-press menu
-                                        }}
+                                        onMessageMenu={offered.menu
+                                            ? (_, pos) =>
+                                                  messageActions?.open(evt, pos.el, offered, failed)
+                                            : undefined}
                                         onReact={offered.react
                                             ? (_, emoji) => react(evt, emoji)
                                             : undefined}
@@ -1362,6 +1384,8 @@
     onClose={() => (menuAnchor = null)}
 />
 
+<MessageActions bind:this={messageActions} {chat} {context} />
+
 {#if viewing !== undefined}
     <MediaViewer content={viewing} onClose={() => (viewing = undefined)} />
 {/if}
@@ -1385,12 +1409,22 @@
         padding: var(--space-24) var(--space-16);
     }
 
+    // the messages' text can't be selected, nor does a long-press offer iOS's callout: a
+    // long-press is the message's menu, which has Copy (a field in a message still can be)
     .messages {
         position: relative;
         flex: 1;
         min-height: 0;
         display: flex;
         flex-direction: column;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+
+        :global(:is(input, textarea, [contenteditable="true"])) {
+            user-select: text;
+            -webkit-user-select: text;
+        }
     }
 
     // over the top of the list, after a moment: a load from the cache is in before it shows

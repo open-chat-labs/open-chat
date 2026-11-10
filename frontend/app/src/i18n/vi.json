@@ -1837,6 +1837,55 @@
                 "voice": "Đang có cuộc gọi thoại",
                 "sub": "{elapsed} · {count} người",
                 "tapToJoin": "Chạm để tham gia"
+            },
+            "message": {
+                "info": "Thông tin",
+                "options": "Tùy chọn tin nhắn",
+                "react": "Thêm cảm xúc",
+                "copied": "Đã sao chép",
+                "copyFailed": "Không thể sao chép tin nhắn",
+                "privateReplyFailed": "Không thể mở cuộc trò chuyện với người này",
+                "pinned": "Đã ghim tin nhắn",
+                "unpinned": "Đã bỏ ghim tin nhắn",
+                "deleting": "Đang xóa tin nhắn…",
+                "deleted": "Đã xóa tin nhắn",
+                "deleteFailed": "Không thể xóa tin nhắn",
+                "restoring": "Đang khôi phục tin nhắn…",
+                "restored": "Đã khôi phục tin nhắn",
+                "translateTitle": "Dịch tin nhắn",
+                "translateDiamond": "Dịch tin nhắn dành cho thành viên Diamond.",
+                "getDiamond": "Nhận Diamond",
+                "copyLink": "Sao chép liên kết"
+            },
+            "forward": {
+                "title": "Chuyển tiếp",
+                "search": "Tìm cuộc trò chuyện",
+                "noChats": "Không có cuộc trò chuyện nào để chuyển tiếp",
+                "noMatches": "Không có cuộc trò chuyện nào khớp với “{query}”",
+                "note": "Thêm ghi chú (không bắt buộc)",
+                "pick": "Chọn cuộc trò chuyện để chuyển tiếp",
+                "send": "Chuyển tiếp đến {count} cuộc trò chuyện",
+                "forwarding": "Đang chuyển tiếp đến {count} cuộc trò chuyện…",
+                "forwarded": "Đã chuyển tiếp đến {count} cuộc trò chuyện",
+                "failed": "Không thể chuyển tiếp đến mọi cuộc trò chuyện",
+                "throttled": "Số tin nhắn vượt quá giới hạn có thể gửi trong một phút: hãy chuyển tiếp tới ít cuộc trò chuyện hơn, hoặc đợi một chút"
+            },
+            "report": {
+                "reporting": "Đang báo cáo tin nhắn…",
+                "reported": "Đã báo cáo tin nhắn"
+            },
+            "info": {
+                "title": "Thông tin tin nhắn",
+                "sentAt": "Đã gửi",
+                "status": "Trạng thái",
+                "forwarded": "Đã chuyển tiếp",
+                "edited": "Đã sửa",
+                "reactions": "Cảm xúc",
+                "sending": "Đang gửi",
+                "sent": "Đã gửi",
+                "read": "Đã đọc",
+                "failed": "Chưa gửi",
+                "you": "Bạn"
             }
         },
         "shareUnavailable": "Chia sẻ vào OpenChat từ ứng dụng khác chưa có trong phiên bản này.",

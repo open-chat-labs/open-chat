@@ -1837,6 +1837,55 @@
                 "voice": "语音通话进行中",
                 "sub": "{elapsed} · {count} 人",
                 "tapToJoin": "点按加入"
+            },
+            "message": {
+                "info": "信息",
+                "options": "消息选项",
+                "react": "添加回应",
+                "copied": "已复制",
+                "copyFailed": "无法复制消息",
+                "privateReplyFailed": "无法打开与对方的聊天",
+                "pinned": "消息已置顶",
+                "unpinned": "已取消置顶",
+                "deleting": "正在删除消息…",
+                "deleted": "消息已删除",
+                "deleteFailed": "无法删除消息",
+                "restoring": "正在恢复消息…",
+                "restored": "消息已恢复",
+                "translateTitle": "翻译消息",
+                "translateDiamond": "翻译消息是 Diamond 会员的功能。",
+                "getDiamond": "获取 Diamond",
+                "copyLink": "复制链接"
+            },
+            "forward": {
+                "title": "转发",
+                "search": "搜索聊天",
+                "noChats": "没有可转发的聊天",
+                "noMatches": "没有与“{query}”匹配的聊天",
+                "note": "添加备注（可选）",
+                "pick": "选择要转发到的聊天",
+                "send": "转发到 {count} 个聊天",
+                "forwarding": "正在转发到 {count} 个聊天…",
+                "forwarded": "已转发到 {count} 个聊天",
+                "failed": "无法转发到所有聊天",
+                "throttled": "这超出了一分钟内可发送的消息数量：请转发到更少的聊天，或稍等片刻"
+            },
+            "report": {
+                "reporting": "正在举报消息…",
+                "reported": "已举报消息"
+            },
+            "info": {
+                "title": "消息信息",
+                "sentAt": "发送时间",
+                "status": "状态",
+                "forwarded": "已转发",
+                "edited": "已编辑",
+                "reactions": "回应",
+                "sending": "发送中",
+                "sent": "已发送",
+                "read": "已读",
+                "failed": "未发送",
+                "you": "你"
             }
         },
         "shareUnavailable": "此版本暂不支持从其他应用分享到 OpenChat。",

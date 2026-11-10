@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 
 const localStorageKey = "openchat_most_recent_sent_message_times";
 
@@ -26,6 +26,21 @@ export function initialiseMostRecentSentMessageTimes(diamond: boolean) {
     const now = Date.now();
     const [withinLastMinute] = checkTimes(now, diamond, times);
     mostRecentStore.set(withinLastMinute);
+}
+
+/**
+ * How many more messages can be sent now without being throttled: what the limit allows in a
+ * minute, less those sent in the last minute (`times`, as `mostRecentStore` holds them).
+ */
+export function sendsLeft(now: number, diamond: boolean, times: readonly number[]): number {
+    const oneMinuteAgo = now - 60000;
+    const sent = times.filter((t) => t >= oneMinuteAgo).length;
+    return Math.max(0, getMaxMessagesPerMinute(diamond) - sent);
+}
+
+/** How many more messages can be sent now without being throttled. */
+export function sendsLeftNow(diamond: boolean): number {
+    return sendsLeft(Date.now(), diamond, get(mostRecentStore));
 }
 
 export function getMaxMessagesPerMinute(diamond: boolean): number {

@@ -130,6 +130,7 @@ export const native: SectionMeta[] = [
   { id: 'native-bottom-sheet', title: 'Bottom sheet', meta: 'BottomSheet · sheetDrag.ts · presence.svelte.ts' },
   { id: 'native-anchored-menu', title: 'Anchored menu', meta: 'AnchoredMenu · NativeMenu · menuPlacement.ts' },
   { id: 'native-long-press-menu', title: 'Long-press menu', meta: 'LongPressMenu · NativeMenu · longPress.ts · menuPlacement.ts' },
+  { id: 'native-message-menu', title: 'Message long-press menu', meta: 'MessageLongPressMenu · MessageGroup · menuPlacement.ts' },
   { id: 'native-settings', title: 'Settings rows', meta: 'SettingsGroup · SettingsSwitch · SettingsValue · SettingsLink · SettingsCopy · SettingsSegmented · SettingsSwatches · SettingsMeter · SettingsAction' },
   { id: 'native-alert', title: 'Alert', meta: 'NativeAlert' },
   { id: 'native-code-tiles', title: 'Code tiles', meta: 'CodeTiles · codeTiles.ts' },

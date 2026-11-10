@@ -58,7 +58,11 @@ native/
                      messages on core/ChatEventList, the swipes, typing, call items; its composer
                      (N5c: ConversationComposer) and the slot under it that the keyboard and the
                      emoji and attach panels share (keyboardSlot), a panel's surface and its drag
-                     (KeyboardPanel, panelState, panelDrag)
+                     (KeyboardPanel, panelState, panelDrag); the emoji the emoji panel and the
+                     reaction sheet both offer (EmojiGrid, EmojiSections, EmojiSearchField); a
+                     message's long-press menu and what it opens (N5d: MessageActions, the
+                     reaction sheet (ReactionPicker), the forward and report sheets,
+                     MessageInfoScreen, pushed locally)
     start/           the signed-out start (sign in and onboarding, N4): Welcome, Welcome back,
                      Link to your account, Pick a username (its photo's crop sheet, the referrer
                      sheet), on a stack of their own (startStack.svelte.ts), loaded when
@@ -77,7 +81,9 @@ its referrer, the sign-up form and the referrer picker, shared with `src/web` an
 profile and its settings (`logic/profile`: the form, the username check, appearance, notifications,
 community names, the photo and cover uploads; `logic/chit/dailyClaim`, shared with the web's
 profile and CHIT dialog), a conversation's messages (`logic/conversation`: the rows, what a message
-offers, its controls, the unread divider and the route's message, search in a chat, call items;
+offers and what each of its actions does (`messageAction`, which the web's menu runs too), its
+controls, removing a link's preview, the unread divider and the route's message, search in a chat,
+call items;
 `core/ChatEventList`, `core/MediaViewer`, `core/observeRead`, shared with `src/web` and, for search
 and calls, the old UIs), the composer (`logic/composer`: where it is, what it offers, sending,
 mentions, voice, the props it takes, GIFs; `logic/conversation/draftActions`: the reply or edit;
@@ -127,7 +133,9 @@ to one do.
   keyboard, in a slot under it that a keyboard-area panel (emoji, attach) takes at the keyboard's
   height when the keyboard goes down (`KeyboardSlot`; the design's 304px where the keyboard hasn't
   been seen); where the keyboard's height is reported (the Android app) the viewport resize is off
-  and the slot takes it, elsewhere the platform lifts the page.
+  and the slot takes it, elsewhere the platform lifts the page. A sheet with a field over it takes
+  `keyboard={softKeyboard.covering}` (the kit's `BottomSheet`), so it sits on the keyboard while
+  its field has it.
 - **A screen leaving keeps what it shows** until it's gone. Back changes the URL as the pop starts,
   and whatever the URL selected (a chat, a community) is cleared then, in the client's stores: a
   screen that shows a selection holds what it last showed of it while it slides out (the
@@ -143,7 +151,9 @@ to one do.
   `data-tab-swipe="off"`.
 - **Platform differences** are only the Design Notes' §2 ones, through `data-os` on `<html>` (the
   kit's back arrow, kebab and touch targets read it). Don't add others.
-- **Haptics** go through the kit's `haptic()`; the root installs the device's (`setHaptics`), and
-  mobile web has none.
+- **Haptics** go through the kit's `haptic()` (`'light'`, a tap; `'medium'`, a message's
+  long-press menu opening); the root installs the device's (`setHaptics`: the Tauri plugin's
+  `haptic`, with the style), and mobile web has none. One gesture plays one: a host that plays its
+  own turns the library's off (the chat's `MessageGroup` gets `pressVibration={false}`).
 - Styles, tokens and specs as in `src/web` (`scss.spec.ts` checks the styles here too). No specs
   that mount a component.

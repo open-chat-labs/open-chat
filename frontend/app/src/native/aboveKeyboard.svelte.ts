@@ -24,6 +24,15 @@ class SoftKeyboard {
         return this.#reported ? keyboard.height : 0;
     }
 
+    /**
+     * How much of the window the keyboard covers: its height where the WebView's viewport doesn't
+     * shrink for it (a conversation in the Android app), else none. What a sheet with a field
+     * rises by while the field has it (the kit's BottomSheet's `keyboard`).
+     */
+    get covering(): number {
+        return keyboard.viewportResizeEnabled ? 0 : this.#height;
+    }
+
     follow(open: boolean, heightDp: number): void {
         this.#reported = true;
         const height = open ? heightDp : 0;

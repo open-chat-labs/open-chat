@@ -8,6 +8,7 @@ import {
     type ShareTargets,
 } from "@client";
 import { swatchFor } from "@src/logic/chats/chatRow";
+import { shareTargetsInSections, type ShareSectionNames } from "@src/logic/share/chatsToShareTo";
 
 // The chat picker's list (ChatPicker) from the chats something can be shared to (@client
 // shareTargets): sections, each chat's line and its avatar.
@@ -24,16 +25,15 @@ export type PickerChat = {
 
 export type PickerChatText<C extends ShareableChat> = {
     /** The sections' headers, translated (the picker shows text outside its own keys as given). */
-    sections: { favourites: string; directChats: string; groupChats: string };
+    sections: ShareSectionNames;
     /** A chat's line under its name: a DM's last seen, a group's description or size. */
     sub: (chat: C) => string;
 };
 
 /**
- * The picker's list, in sections as the old pickers show them: favourites, direct chats, groups,
- * then each community's channels under its name (a favourite is listed in its own section too).
- * Each chat's id is its identifier as a string (pickerIds maps it back), and its face the
- * swatch the chat list gives it (swatchFor: the list shows no uploaded avatars either).
+ * The picker's list, in sections as every picker shows them (`shareTargetsInSections`). Each
+ * chat's id is its identifier as a string (pickerIds maps it back), and its face the swatch the
+ * chat list gives it (swatchFor: the list shows no uploaded avatars either).
  */
 export function pickerChats<C extends ShareableChat, M extends ShareableCommunity<C>>(
     targets: ShareTargets<C, M>,
@@ -47,12 +47,9 @@ export function pickerChats<C extends ShareableChat, M extends ShareableCommunit
         grad: AVATAR_GRADIENTS[swatchFor(chatIdentifierToString(t.chat.id))],
         radius: t.chat.kind === "direct_chat" ? "50%" : "10px",
     });
-    return [
-        ...targets.favourites.map((t) => chat(t, text.sections.favourites)),
-        ...targets.directChats.map((t) => chat(t, text.sections.directChats)),
-        ...targets.groupChats.map((t) => chat(t, text.sections.groupChats)),
-        ...targets.communities.flatMap((c) => c.channels.map((t) => chat(t, c.community.name))),
-    ];
+    return shareTargetsInSections(targets, text.sections).map(({ target, section }) =>
+        chat(target, section),
+    );
 }
 
 /** Each listed chat's id as the picker passes it back, to its identifier. */

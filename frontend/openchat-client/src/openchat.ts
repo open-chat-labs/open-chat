@@ -320,6 +320,7 @@ import {
     type EnhancedReplyContext,
     type ReactionToggled,
     type SendMessageOutcome,
+    type ForwardMessageOutcome,
     type SignInMethod,
     type SignUpAvatar,
     type SignUpOutcome,
@@ -574,7 +575,11 @@ import { dailyPuzzleResultsCache } from "./stores/dailyPuzzleResults";
 import { minutesOnlineStore } from "./stores/minutesOnline";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { captureRulesAcceptanceStore } from "./stores/rules";
-import { initialiseMostRecentSentMessageTimes, shouldThrottle } from "./stores/throttling";
+import {
+    initialiseMostRecentSentMessageTimes,
+    sendsLeftNow,
+    shouldThrottle,
+} from "./stores/throttling";
 import { isTyping, typing } from "./stores/typing";
 import { unconfirmedReadByThem } from "./stores/unconfirmed";
 import { proposalVotesStore } from "./stores/proposalVotes";
@@ -4238,10 +4243,65 @@ export class OpenChat {
         };
     }
 
-    // The members of the selected chat with this id who haven't lapsed, out of the users with these
-    // usernames (in lower case), by username. Those found are held from then on.
+    // A message's text, for a chat which may not be the selected one, as `#expandTypedMentions`
+    // has it for the selected chat. Another chat's members aren't held, so each @username typed is
+    // looked up, and mentioned if they're a member of that chat who hasn't lapsed (in a direct chat,
+    // the other user). Its user groups and @everyone aren't known, so are left as typed. Never
+    // rejects: if the lookups fail, those usernames are left as typed.
+    async #expandTypedMentionsIn(
+        messageContext: MessageContext,
+        text: string,
+    ): Promise<{ text: string; mentioned: User[] }> {
+        const chatId = messageContext.chatId;
+        if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
+            const expanded = await this.#expandTypedMentions(messageContext, text, []);
+            return { text: expanded.text ?? text, mentioned: expanded.mentioned };
+        }
+        const myUsername = currentUserStore.value.username.toLowerCase();
+        const usernames = [...new Set(typedMentions(text).map((u) => u.toLowerCase()))].filter(
+            (u) => u !== myUsername,
+        );
+        let found = new Map<string, UserSummary>();
+        if (usernames.length > 0) {
+            try {
+                found = await this.#findMembersByUsername(
+                    chatId,
+                    usernames.slice(0, MAX_USERNAMES_MENTIONED_LOOKED_UP),
+                );
+            } catch (err) {
+                console.warn("Unable to look up the members mentioned in a message", err);
+            }
+        }
+        return expandTypedMentions(text, (username) => found.get(username.toLowerCase()));
+    }
+
+    // Of the users, those who are members of the chat with this id, other than lapsed members: of
+    // the selected chat, as `#membersAmong` finds them; of another group or channel, looked up as of
+    // now (and not held, since nothing is held for it); of a direct chat, the other user.
+    async #chatMembersAmong(chatId: ChatIdentifier, userIds: string[]): Promise<Set<string>> {
+        if (chatId.kind === "direct_chat") {
+            return new Set(userIds.filter((u) => u === chatId.userId));
+        }
+        if (this.#selectedMembers(chatId) !== undefined) {
+            return this.#membersAmong(chatId, userIds);
+        }
+        if (userIds.length === 0) {
+            return new Set();
+        }
+        // No update in particular is waited for, and nothing found is added to cached details
+        const resp = await this.#worker
+            .send({ kind: "lookupMembers", id: chatId, userIds, latestKnownUpdate: 0n })
+            .catch(CommonResponses.failure);
+        return resp.kind === "success"
+            ? new Set(resp.members.filter((m) => !m.lapsed).map((m) => m.userId))
+            : new Set();
+    }
+
+    // The members of the chat with this id who haven't lapsed, out of the users with these
+    // usernames (in lower case), by username. Those found in the selected chat are held from then
+    // on.
     async #findMembersByUsername(
-        chatId: MultiUserChatIdentifier,
+        chatId: ChatIdentifier,
         usernames: string[],
     ): Promise<Map<string, UserSummary>> {
         const lookedUp = await Promise.all(
@@ -4260,7 +4320,7 @@ export class OpenChat {
             }
         }
         const [members] = await Promise.all([
-            this.#membersAmong(chatId, [...userIds.keys()]),
+            this.#chatMembersAmong(chatId, [...userIds.keys()]),
             this.getMissingUsers(userIds.keys()),
         ]);
         // By the username typed, which a user held from before they changed it doesn't have
@@ -5779,7 +5839,13 @@ export class OpenChat {
     sameUser = sameUser;
 
     forwardMessage(messageContext: MessageContext, msg: Message): void {
-        this.sendMessageWithContent(
+        void this.#sendForwardedCopy(messageContext, msg);
+    }
+
+    // A copy of the message, marked forwarded, sent where the context says. The chat's draft is
+    // left as it was.
+    #sendForwardedCopy(messageContext: MessageContext, msg: Message): Promise<SendMessageResponse> {
+        return this.sendMessageWithContent(
             messageContext,
             { ...msg.content },
             msg.blockLevelMarkdown,
@@ -5788,6 +5854,60 @@ export class OpenChat {
             undefined,
             msg.ogPreviews.length > 0 ? Promise.resolve(msg.ogPreviews) : undefined,
         );
+    }
+
+    /**
+     * Forwards a message to each of these chats without opening them (the native forward sheet's
+     * several picks): a copy marked forwarded, then the note, if any, as a message of its own once
+     * the copy is in, mentioning those typed in it as @username who are members of that chat. Each
+     * chat's draft is left as it was (the note doesn't reply to its reply). If that's more sends
+     * than the send throttle allows now, nothing is sent (`throttled`). Otherwise it settles once
+     * every chat has answered, and never rejects: `forwarded` if every copy (and note) went. One
+     * that didn't shows as failed in its chat, to retry there (a chat whose rules the user hasn't
+     * accepted refuses it, and asks for them on the retry).
+     */
+    async forwardMessageToChats(
+        chatIds: ChatIdentifier[],
+        msg: Message,
+        note: string,
+    ): Promise<ForwardMessageOutcome> {
+        const text = note.trim();
+        const sends = chatIds.length * (text === "" ? 1 : 2);
+        if (sends > sendsLeftNow(isDiamondStore.value)) return { kind: "throttled" };
+        const sent = (resp: SendMessageResponse) =>
+            resp.kind === "success" || resp.kind === "transfer_success";
+        const results = await Promise.all(
+            chatIds.map(async (chatId) => {
+                const context = { chatId };
+                try {
+                    const copied = await this.#sendForwardedCopy(context, msg);
+                    if (!sent(copied) || text === "") return sent(copied);
+                    const expanded = await this.#expandTypedMentionsIn(context, text);
+                    const noted = await this.#sendWithContent(
+                        context,
+                        { kind: "text_content", text: expanded.text },
+                        false,
+                        expanded.mentioned,
+                        false,
+                        undefined,
+                        this.#fetchOgPreviews(expanded.text),
+                        undefined,
+                        "keep",
+                    );
+                    return sent(noted);
+                } catch (err) {
+                    // a prompt the send needed (a PIN) dismissed, or the send itself failing
+                    if (err !== "cancelled") this.logError("Unable to forward a message", err);
+                    return false;
+                }
+            }),
+        );
+        return results.every((ok) => ok) ? { kind: "forwarded" } : { kind: "failed" };
+    }
+
+    // The link previews of the links in a message's text, fetched through the preview proxy
+    #fetchOgPreviews(text: string | undefined): Promise<OgPreview[]> {
+        return fetchOgPreviews(extractEnabledLinks(text), this.config.previewProxyUrl);
     }
 
     // `visit` is the selection the store writes are for. The other effects of the events (on
@@ -6578,10 +6698,7 @@ export class OpenChat {
                 expanded.mentioned,
                 false,
                 undefined,
-                fetchOgPreviews(
-                    extractEnabledLinks(expanded.text),
-                    import.meta.env.OC_PREVIEW_PROXY_URL,
-                ),
+                this.#fetchOgPreviews(expanded.text),
                 hooks,
             );
         });
@@ -6687,7 +6804,7 @@ export class OpenChat {
             mentioned,
             false,
             undefined,
-            fetchOgPreviews(extractEnabledLinks(textContent), import.meta.env.OC_PREVIEW_PROXY_URL),
+            this.#fetchOgPreviews(textContent),
         );
     }
 
@@ -6869,10 +6986,7 @@ export class OpenChat {
             const newAchievement = !achievementsStore.value.has("edited_message");
 
             // Fetch og previews in the background; content change is already visible in the UI.
-            const ogPreviews = await fetchOgPreviews(
-                extractEnabledLinks(textContent),
-                import.meta.env.OC_PREVIEW_PROXY_URL,
-            );
+            const ogPreviews = await this.#fetchOgPreviews(textContent);
             msg.ogPreviews = ogPreviews;
             const undoOgPreviews = localUpdates.setEditedOgPreviews(msg.messageId, ogPreviews);
 

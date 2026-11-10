@@ -21,6 +21,7 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
     AuthClient: { create: () => new Promise(() => {}) },
 }));
 
+import { Principal } from "@icp-sdk/core/principal";
 import {
     ChatMap,
     ROLE_ADMIN,
@@ -31,9 +32,13 @@ import {
     type DirectChatIdentifier,
     type EnhancedReplyContext,
     type EventWrapper,
+    type GroupChatIdentifier,
     type GroupChatSummary,
+    type Member,
     type Message,
+    type MessageContent,
     type SendMessageResponse,
+    type UserSummary,
     type WorkerRequest,
 } from "@shared";
 import type { OpenChatConfig } from "./config";
@@ -41,14 +46,17 @@ import { OpenChat } from "./openchat";
 import {
     currentUserStore,
     localUpdates,
+    pinNumberRequiredStore,
+    pinNumberResolverStore,
     routeStore,
     serverGroupChatsStore,
 } from "./state";
 import { userStore } from "./state/users/state";
+import { mostRecentStore } from "./stores/throttling";
 import { WorkerAgent } from "./workerAgent";
 
 // What the message menu's actions call on the client (#10117): toggling a reaction, retrying a
-// failed message and replying privately.
+// failed message, replying privately and forwarding to several chats.
 
 class FakeWorker {
     onmessage: ((ev: MessageEvent) => void) | undefined;
@@ -161,6 +169,7 @@ function config(): OpenChatConfig {
         userGeekApiKey: "",
         videoBridgeUrl: "",
         translateProxyUrl: "",
+        previewProxyUrl: "",
         meteredApiKey: "",
         blobUrlPattern: "",
         bridgeAvatarsUrl: "",
@@ -344,5 +353,168 @@ describe("the message menu's calls on the client", () => {
         // the DM it made is found the next time
         expect(await client.replyPrivately(replyingTo)).toEqual(dm);
         localUpdates.draftMessages.delete({ chatId: dm });
+    });
+});
+
+describe("forwarding a message to several chats", () => {
+    let client: OpenChat;
+    // the messages sent, in order
+    let sends: Extract<WorkerRequest, { kind: "sendMessage" }>[];
+    // what was asked of the worker besides sending
+    let requests: WorkerRequest[];
+
+    const userId = (n: number) => Principal.fromUint8Array(new Uint8Array([n])).toText();
+    // alice is a member of the chat forwarded to, zed a user who isn't
+    const [alice, zed] = [2, 3].map(userId);
+    const userIds: Record<string, string> = { alice, zed };
+    // a group other than the one selected (`chatId`), which is what a forward goes to
+    const other: GroupChatIdentifier = {
+        kind: "group_chat",
+        groupId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+    };
+
+    const user = (userId: string, username: string): UserSummary => ({
+        kind: "user",
+        userId,
+        username,
+        displayName: undefined,
+        updated: 0n,
+        suspended: false,
+        diamondStatus: "inactive",
+        chitBalance: 0,
+        totalChitEarned: 0,
+        streak: 0,
+        maxStreak: 0,
+        isUniquePerson: false,
+        hideOnlineStatus: false,
+    });
+
+    const member = (userId: string): Member => ({
+        userId,
+        role: ROLE_MEMBER,
+        displayName: undefined,
+        lapsed: false,
+    });
+
+    beforeEach(() => {
+        vi.stubGlobal("Worker", FakeWorker);
+        vi.spyOn(console, "debug").mockImplementation(() => {});
+        currentUserStore.set({ ...anonymousUser(), userId: "me", username: "me" });
+        routeStore.set({
+            kind: "global_chat_selected_route",
+            scope: { kind: "chats" },
+            chatId,
+            chatType: "group_chat",
+            open: false,
+        });
+        const chats = new ChatMap<GroupChatSummary>();
+        chats.set(chatId, groupChat());
+        chats.set(other, { ...groupChat(), id: other });
+        serverGroupChatsStore.set(chats);
+        userStore.addMany([user(alice, "alice"), user(zed, "zed")]);
+        sends = [];
+        requests = [];
+        vi.spyOn(WorkerAgent.prototype, "send").mockImplementation((async (req: WorkerRequest) => {
+            requests.push(req);
+            switch (req.kind) {
+                case "getUserIdByUsername":
+                    return userIds[req.username];
+                case "lookupMembers":
+                    return {
+                        kind: "success",
+                        members: req.userIds.filter((u) => u === alice).map(member),
+                    };
+                case "getUsers":
+                    return { users: [], deletedUserIds: new Set() };
+                default:
+                    return new Promise(() => {});
+            }
+        }) as never);
+        // every message sent goes
+        let messageIndex = 0;
+        vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(((req: WorkerRequest) => {
+            if (req.kind === "sendMessage") sends.push(req);
+            return {
+                subscribe: ({ onResult }: { onResult: (r: unknown) => void }) =>
+                    req.kind === "sendMessage"
+                        ? queueMicrotask(() =>
+                              onResult([
+                                  {
+                                      kind: "success",
+                                      timestamp: 1n,
+                                      messageIndex: messageIndex++,
+                                      eventIndex: messageIndex,
+                                  },
+                                  req.event.event,
+                              ]),
+                          )
+                        : undefined,
+            };
+        }) as never);
+        client = new OpenChat(config());
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+        currentUserStore.set(anonymousUser());
+        serverGroupChatsStore.set(new ChatMap());
+        mostRecentStore.set([]);
+        pinNumberRequiredStore.set(undefined);
+        pinNumberResolverStore.set(undefined);
+    });
+
+    // the text a send carries
+    const text = (req: (typeof sends)[number]) =>
+        req.event.event.content.kind === "text_content" ? req.event.event.content.text : undefined;
+
+    test("sends the copy, then the note, mentioning those typed in it who are members there", async () => {
+        const outcome = await client.forwardMessageToChats(
+            [other],
+            message().event,
+            " for @alice and @zed ",
+        );
+        expect(outcome).toEqual({ kind: "forwarded" });
+        expect(sends).toHaveLength(2);
+        expect(sends[0].event.event.forwarded).toBe(true);
+        expect(text(sends[0])).toBe("hello");
+        expect(text(sends[1])).toBe(`for @UserId(${alice}) and @zed`);
+        expect(sends[1].mentioned.map((u) => u.userId)).toEqual([alice]);
+        // membership of the chat forwarded to, as it is now
+        expect(requests.find((r) => r.kind === "lookupMembers")).toMatchObject({
+            id: other,
+            latestKnownUpdate: 0n,
+        });
+    });
+
+    test("sends nothing when that's more than the send throttle allows now", async () => {
+        // one send left this minute: the copy and its note would take two
+        mostRecentStore.set(Array.from({ length: 9 }, () => Date.now()));
+        expect(await client.forwardMessageToChats([other], message().event, "note")).toEqual({
+            kind: "throttled",
+        });
+        expect(sends).toHaveLength(0);
+        // the copy alone fits
+        expect(await client.forwardMessageToChats([other], message().event, "")).toEqual({
+            kind: "forwarded",
+        });
+        expect(sends).toHaveLength(1);
+    });
+
+    test("is a failure, never a rejection, when a send rejects (the PIN prompt dismissed)", async () => {
+        const transfer = {
+            kind: "crypto_content",
+            transfer: { kind: "pending", ledger: "ryjl3-tyaaa-aaaaa-aaaba-cai", amountE8s: 1n },
+        } as unknown as MessageContent;
+        pinNumberRequiredStore.set(true);
+        const outcome = client.forwardMessageToChats(
+            [other],
+            message({ content: transfer }).event,
+            "",
+        );
+        await vi.waitFor(() => expect(pinNumberResolverStore.value).toBeDefined());
+        pinNumberResolverStore.value?.reject();
+        expect(await outcome).toEqual({ kind: "failed" });
+        expect(sends).toHaveLength(0);
     });
 });

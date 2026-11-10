@@ -1837,6 +1837,55 @@
                 "voice": "Sprachanruf läuft",
                 "sub": "{elapsed} · {count, plural, one {# Person} other {# Personen}}",
                 "tapToJoin": "Zum Beitreten tippen"
+            },
+            "message": {
+                "info": "Info",
+                "options": "Nachrichtenoptionen",
+                "react": "Reaktion hinzufügen",
+                "copied": "Kopiert",
+                "copyFailed": "Die Nachricht konnte nicht kopiert werden",
+                "privateReplyFailed": "Der Chat mit dieser Person konnte nicht geöffnet werden",
+                "pinned": "Nachricht angeheftet",
+                "unpinned": "Nachricht losgelöst",
+                "deleting": "Nachricht wird gelöscht…",
+                "deleted": "Nachricht gelöscht",
+                "deleteFailed": "Die Nachricht konnte nicht gelöscht werden",
+                "restoring": "Nachricht wird wiederhergestellt…",
+                "restored": "Nachricht wiederhergestellt",
+                "translateTitle": "Nachrichten übersetzen",
+                "translateDiamond": "Das Übersetzen von Nachrichten ist für Diamond-Mitglieder.",
+                "getDiamond": "Diamond holen",
+                "copyLink": "Link kopieren"
+            },
+            "forward": {
+                "title": "Weiterleiten",
+                "search": "Chats durchsuchen",
+                "noChats": "Keine Chats zum Weiterleiten",
+                "noMatches": "Keine Chats passen zu „{query}“",
+                "note": "Notiz hinzufügen (optional)",
+                "pick": "Chats zum Weiterleiten auswählen",
+                "send": "{count, plural, one {An # Chat weiterleiten} other {An # Chats weiterleiten}}",
+                "forwarding": "{count, plural, one {Wird an # Chat weitergeleitet…} other {Wird an # Chats weitergeleitet…}}",
+                "forwarded": "{count, plural, one {An # Chat weitergeleitet} other {An # Chats weitergeleitet}}",
+                "failed": "Konnte nicht an alle Chats weitergeleitet werden",
+                "throttled": "Das sind mehr Nachrichten, als in einer Minute gesendet werden können: Leite an weniger Chats weiter oder warte einen Moment"
+            },
+            "report": {
+                "reporting": "Nachricht wird gemeldet…",
+                "reported": "Nachricht gemeldet"
+            },
+            "info": {
+                "title": "Nachrichteninfo",
+                "sentAt": "Gesendet",
+                "status": "Status",
+                "forwarded": "Weitergeleitet",
+                "edited": "Bearbeitet",
+                "reactions": "Reaktionen",
+                "sending": "Wird gesendet",
+                "sent": "Gesendet",
+                "read": "Gelesen",
+                "failed": "Nicht gesendet",
+                "you": "Du"
             }
         },
         "shareUnavailable": "Das Teilen aus anderen Apps in OpenChat ist in dieser Version noch nicht verfügbar.",

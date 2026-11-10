@@ -34,6 +34,7 @@ export function createOpenChatClient(
         userGeekApiKey: import.meta.env.OC_USERGEEK_APIKEY!,
         videoBridgeUrl: import.meta.env.OC_VIDEO_BRIDGE_URL!,
         translateProxyUrl: import.meta.env.OC_TRANSLATE_PROXY_URL!,
+        previewProxyUrl: import.meta.env.OC_PREVIEW_PROXY_URL,
         meteredApiKey: import.meta.env.OC_METERED_APIKEY!,
         blobUrlPattern,
         bridgeAvatarsUrl: import.meta.env.OC_BRIDGE_AVATARS_URL ?? "",
