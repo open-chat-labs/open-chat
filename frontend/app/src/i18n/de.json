@@ -2213,6 +2213,50 @@
                 "step4Stay": "Nee, war nur Spaß, ich bleibe"
             }
         },
+        "invite": {
+            "title": "Leute einladen",
+            "tabs": {
+                "people": "Personen",
+                "link": "Einladungslink"
+            },
+            "search": "Name oder @Benutzername suchen",
+            "noneSelected": "Noch niemand ausgewählt",
+            "noneLeft": "Niemand mehr einzuladen: Sie sind bereits beigetreten oder eingeladen",
+            "pending": "Ausstehend · {count}",
+            "pendingSub": "Eingeladen · noch nicht angenommen",
+            "cancel": "Zurückziehen",
+            "cancelled": "Einladung an {name} zurückgezogen",
+            "suggested": "Vorschläge",
+            "searchHint": "Suche nach Personen, die du einladen möchtest",
+            "results": "Ergebnisse",
+            "member": "Mitglied",
+            "invited": "Eingeladen",
+            "noMatch": "Keine Treffer",
+            "send": "{count, plural, =0 {Einladungen senden} one {Einladung senden} other {# Einladungen senden}}",
+            "add": "{count, plural, one {# Person hinzufügen} other {# Personen hinzufügen}}",
+            "sent": "{count, plural, one {# Einladung gesendet} other {# Einladungen gesendet}}",
+            "sentOne": "Einladung an {name} gesendet",
+            "added": "{count, plural, one {# Person hinzugefügt} other {# Personen hinzugefügt}}",
+            "addedOne": "{name} hinzugefügt",
+            "sentBoth": "{added} hinzugefügt · {invited} eingeladen",
+            "shareViaLink": "Per Link teilen",
+            "shareViaLinkHelp": "Jeder mit dem Link kann beitreten.",
+            "linkOff": "Teilen per Link ist aus. Nur eingeladene Personen können beitreten.",
+            "copyLink": "Link kopieren",
+            "share": "Teilen",
+            "resetLink": "Link zurücksetzen",
+            "resetHelp": "Der aktuelle Link funktioniert nicht mehr. Wer schon beigetreten ist, bleibt.",
+            "linkReset": "Link zurückgesetzt",
+            "gatesIgnored": "Für Personen, die per Link beitreten, gelten die Zugangsschranken nicht.",
+            "linkFailed": "Der Einladungslink konnte nicht geladen werden.",
+            "retry": "Erneut versuchen",
+            "notAllowed": {
+                "owner": "Nur Inhaber können hier einladen",
+                "admin": "Nur Admins können hier einladen",
+                "moderator": "Nur Moderatoren können hier einladen",
+                "member": "Nur Mitglieder können hier einladen"
+            }
+        },
         "details": {
             "back": "Zurück",
             "chitEarned": "Verdiente CHIT",
@@ -2261,8 +2305,7 @@
             "deleted": "{name} gelöscht",
             "menu": {
                 "editGroup": "Gruppe bearbeiten",
-                "editChannel": "Kanal bearbeiten",
-                "copyInviteLink": "Einladungslink kopieren"
+                "editChannel": "Kanal bearbeiten"
             },
             "members": {
                 "you": "Du",
@@ -2271,7 +2314,6 @@
                 "admins": "{count, plural, =1 {Admins} other {Admins · #}}",
                 "moderators": "{count, plural, =1 {Moderatoren} other {Moderatoren · #}}",
                 "members": "{count, plural, =1 {Mitglieder} other {Mitglieder · #}}",
-                "blocked": "{count, plural, =1 {Blockiert} other {Blockiert · #}}",
                 "options": "Mitgliedsoptionen",
                 "make": {
                     "owner": "Zum Inhaber machen",
@@ -2292,7 +2334,22 @@
                 },
                 "notAllowed": "Deine Rolle erlaubt es hier nicht, Rollen zu ändern oder Mitglieder zu entfernen.",
                 "noMatch": "Keine passenden Mitglieder",
-                "message": "Nachricht"
+                "message": "Nachricht",
+                "tabs": {
+                    "members": "Mitglieder",
+                    "lapsed": "Abgelaufen",
+                    "blocked": "Blockiert"
+                },
+                "searchLapsed": "Abgelaufene suchen",
+                "searchBlocked": "Blockierte suchen",
+                "lapsedNote": "Mitglieder, die die Zugangsschranken nicht mehr erfüllen. Die Schranken werden nach dem Zeitplan in „Zugangsschranken“ erneut geprüft.",
+                "blockedNote": "Hier blockierte Personen. Hebe eine Blockierung auf, damit die Person wieder beitreten kann.",
+                "lapsedEmpty": "Keine abgelaufenen Mitglieder. Alle erfüllen die Schranken.",
+                "blockedEmpty": "Niemand ist blockiert.",
+                "noOneMatches": "Keine Treffer",
+                "removeFrom": "Entfernen ({level})",
+                "lapsedNotAllowed": "Deine Rolle erlaubt es hier nicht, Mitglieder zu entfernen.",
+                "blockedNotAllowed": "Deine Rolle erlaubt es hier nicht, Blockierungen aufzuheben."
             }
         }
     },

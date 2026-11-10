@@ -1,7 +1,10 @@
 <!-- Search field. With onInput it is a live text input (plus a clear button once there is text and onClear is set);
-     without, it stays the static placeholder chip used in the library. Optional help line aligns with the text. -->
+     without, it stays the static placeholder chip used in the library. Optional help line aligns with the text.
+     The live input reads as a search, so password managers and the platform's autofill leave it alone
+     (SEARCH_INPUT_ATTRIBUTES), and clearing it keeps its focus (and a phone's keyboard). -->
 <script lang="ts">
   import { useT } from '../i18n';
+  import { SEARCH_INPUT_ATTRIBUTES } from '../searchInput';
   interface Props {
     /** Resource key (or literal text). */
     placeholder: string;
@@ -21,6 +24,19 @@
 
   const live = $derived(typeof onInput === 'function');
   const showClear = $derived(live && value.length > 0 && typeof onClear === 'function');
+
+  let input = $state<HTMLInputElement>();
+
+  function clear() {
+    onClear?.();
+    input?.focus();
+  }
+
+  function clearKey(e: KeyboardEvent) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    clear();
+  }
 </script>
 
 <div class="field">
@@ -29,12 +45,13 @@
       <span class="search-icon"></span>
     {/if}
     {#if live}
-      <input {value} oninput={onInput} placeholder={t(placeholder)} />
+      <input bind:this={input} {...SEARCH_INPUT_ATTRIBUTES} {value} oninput={onInput} placeholder={t(placeholder)} aria-label={t(placeholder)} />
     {:else}
       <span class="placeholder">{t(placeholder)}</span>
     {/if}
     {#if showClear}
-      <span class="clear" onclick={onClear} role="button" tabindex="0" aria-label={t('ui.field.clear')}>
+      <!-- a tap mustn't take the focus from the input (a phone's keyboard would close) -->
+      <span class="clear" onpointerdown={(e) => e.preventDefault()} onclick={clear} onkeydown={clearKey} role="button" tabindex="0" aria-label={t('ui.field.clear')}>
         <span class="clear-icon"></span>
       </span>
     {/if}
@@ -91,6 +108,13 @@
     outline: none;
     font: var(--weight-regular) var(--text-base) / 1.3 var(--font-sans);
     color: var(--ink);
+    appearance: none;
+
+    // a search input's own clear button: the field draws its own
+    &::-webkit-search-cancel-button,
+    &::-webkit-search-decoration {
+      display: none;
+    }
   }
 
   .clear {

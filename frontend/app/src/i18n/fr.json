@@ -2213,6 +2213,50 @@
                 "step4Stay": "Non, je plaisante, je reste"
             }
         },
+        "invite": {
+            "title": "Inviter des personnes",
+            "tabs": {
+                "people": "Personnes",
+                "link": "Lien d'invitation"
+            },
+            "search": "Rechercher un nom ou @pseudo",
+            "noneSelected": "Personne n'est sélectionné",
+            "noneLeft": "Plus personne à inviter : ils ont déjà rejoint ou été invités",
+            "pending": "En attente · {count}",
+            "pendingSub": "Invité · pas encore accepté",
+            "cancel": "Annuler",
+            "cancelled": "Invitation de {name} annulée",
+            "suggested": "Suggestions",
+            "searchHint": "Recherchez des personnes à inviter",
+            "results": "Résultats",
+            "member": "Membre",
+            "invited": "Invité",
+            "noMatch": "Aucun résultat",
+            "send": "{count, plural, =0 {Envoyer les invitations} one {Envoyer l'invitation} other {Envoyer # invitations}}",
+            "add": "{count, plural, one {Ajouter # personne} other {Ajouter # personnes}}",
+            "sent": "{count, plural, one {# invitation envoyée} other {# invitations envoyées}}",
+            "sentOne": "Invitation envoyée à {name}",
+            "added": "{count, plural, one {# personne ajoutée} other {# personnes ajoutées}}",
+            "addedOne": "{name} ajouté",
+            "sentBoth": "{added} ajoutés · {invited} invités",
+            "shareViaLink": "Partager par lien",
+            "shareViaLinkHelp": "Toute personne ayant le lien peut rejoindre.",
+            "linkOff": "Le partage par lien est désactivé. Seules les personnes invitées peuvent rejoindre.",
+            "copyLink": "Copier le lien",
+            "share": "Partager",
+            "resetLink": "Réinitialiser le lien",
+            "resetHelp": "Le lien actuel cesse de fonctionner. Ceux qui ont déjà rejoint restent.",
+            "linkReset": "Lien réinitialisé",
+            "gatesIgnored": "Les conditions d'accès ne s'appliquent pas à ceux qui rejoignent par lien.",
+            "linkFailed": "Impossible de charger le lien d'invitation.",
+            "retry": "Réessayer",
+            "notAllowed": {
+                "owner": "Seuls les propriétaires peuvent inviter ici",
+                "admin": "Seuls les admins peuvent inviter ici",
+                "moderator": "Seuls les modérateurs peuvent inviter ici",
+                "member": "Seuls les membres peuvent inviter ici"
+            }
+        },
         "details": {
             "back": "Retour",
             "chitEarned": "CHIT gagnés",
@@ -2261,8 +2305,7 @@
             "deleted": "{name} supprimé",
             "menu": {
                 "editGroup": "Modifier le groupe",
-                "editChannel": "Modifier le canal",
-                "copyInviteLink": "Copier le lien d'invitation"
+                "editChannel": "Modifier le canal"
             },
             "members": {
                 "you": "Vous",
@@ -2271,7 +2314,6 @@
                 "admins": "{count, plural, =1 {Admins} other {Admins · #}}",
                 "moderators": "{count, plural, =1 {Modérateurs} other {Modérateurs · #}}",
                 "members": "{count, plural, =1 {Membres} other {Membres · #}}",
-                "blocked": "{count, plural, =1 {Bloqués} other {Bloqués · #}}",
                 "options": "Options du membre",
                 "make": {
                     "owner": "Nommer propriétaire",
@@ -2292,7 +2334,22 @@
                 },
                 "notAllowed": "Votre rôle ne vous permet pas de changer les rôles ni de retirer des membres ici.",
                 "noMatch": "Aucun membre ne correspond",
-                "message": "Message"
+                "message": "Message",
+                "tabs": {
+                    "members": "Membres",
+                    "lapsed": "Expirés",
+                    "blocked": "Bloqués"
+                },
+                "searchLapsed": "Rechercher les expirés",
+                "searchBlocked": "Rechercher les bloqués",
+                "lapsedNote": "Membres qui ne remplissent plus les conditions d'accès. Elles sont revérifiées selon le rythme choisi dans Conditions d'accès.",
+                "blockedNote": "Personnes bloquées ici. Débloquez quelqu'un pour qu'il puisse revenir.",
+                "lapsedEmpty": "Aucun membre expiré. Tout le monde remplit les conditions.",
+                "blockedEmpty": "Personne n'est bloqué.",
+                "noOneMatches": "Aucun résultat",
+                "removeFrom": "Retirer ({level})",
+                "lapsedNotAllowed": "Votre rôle ne vous permet pas de retirer des membres ici.",
+                "blockedNotAllowed": "Votre rôle ne vous permet pas de débloquer quelqu'un ici."
             }
         }
     },

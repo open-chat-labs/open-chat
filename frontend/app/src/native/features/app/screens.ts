@@ -121,8 +121,11 @@ export const screens: Screens = {
     // a group's or channel's members, from its details (N6)
     chat_members: () => import("../details/MembersScreen.svelte"),
 
-    // a group's or channel's settings pages (edit, invite, gates, rules, permissions, bots,
-    // stats), from its details (N7)
+    // Invite people, from a group's or channel's details and its Members screen (N6)
+    invite_people: () => import("../details/InvitePeopleScreen.svelte"),
+
+    // a group's or channel's settings pages (edit, gates, rules, permissions, bots, stats), from
+    // its details (N7)
     group_settings: undefined,
 
     // a builder from the conversation's attach panel: poll, prize, send crypto, swap offer, meme

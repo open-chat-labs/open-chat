@@ -1,4 +1,4 @@
-<!-- Person pill: gradient avatar (optional online dot), name, optional tag, and a remove ×. onClick makes the whole chip pressable.
+<!-- Person pill: gradient avatar (or their photo; optional online dot), name, optional tag, and a remove ×. onClick makes the whole chip pressable.
      variant: neutral | accent | danger. size: sm | md | lg. -->
 <script lang="ts">
   import { useT } from '../i18n';
@@ -17,6 +17,8 @@
     size?: 'sm' | 'md' | 'lg';
     variant?: 'neutral' | 'accent' | 'danger';
     color?: keyof typeof GRADIENTS;
+    /** Their photo, shown over the swatch. */
+    photoUrl?: string;
     /** Resource key (or literal text), e.g. a role. */
     tag?: string;
     showAvatar?: boolean;
@@ -26,13 +28,16 @@
     onClick?: () => void;
   }
 
-  let { label, size = 'md', variant = 'neutral', color = 'violet', tag = '', showAvatar = true, showRemove = true, online = false, onRemove, onClick }: Props = $props();
+  let { label, size = 'md', variant = 'neutral', color = 'violet', photoUrl, tag = '', showAvatar = true, showRemove = true, online = false, onRemove, onClick }: Props = $props();
   const t = useT();
 </script>
 
 <div class="chip {size} {variant}" class:pressable={!!onClick} class:bare={!showAvatar} onclick={onClick} role="button" tabindex="0">
   {#if showAvatar}
     <span class="avatar" style:background={GRADIENTS[color] ?? GRADIENTS.violet}>
+      {#if photoUrl}
+        <img class="photo" src={photoUrl} alt="" />
+      {/if}
       {#if online}
         <span class="dot"></span>
       {/if}
@@ -114,6 +119,15 @@
       width: 32px;
       height: 32px;
     }
+  }
+
+  // their photo over the swatch, where the host has one
+  .photo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
   }
 
   .dot {

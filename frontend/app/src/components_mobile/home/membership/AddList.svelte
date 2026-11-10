@@ -27,7 +27,7 @@
     onMount(() => {
         // The community or channel may hold only some of its members, and so not say whether
         // those you have direct chats with, who are offered below, are members
-        client.lookupDirectChatUsersAmongChannelMembers();
+        client.lookupDirectChatUsersAmongMembers();
     });
 
     function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {

@@ -2213,6 +2213,50 @@
                 "step4Stay": "Nah, era broma, me quedo"
             }
         },
+        "invite": {
+            "title": "Invitar personas",
+            "tabs": {
+                "people": "Personas",
+                "link": "Enlace de invitación"
+            },
+            "search": "Buscar nombre o @usuario",
+            "noneSelected": "Aún no has elegido a nadie",
+            "noneLeft": "No queda nadie a quien invitar: ya se han unido o han sido invitados",
+            "pending": "Pendientes · {count}",
+            "pendingSub": "Invitado · aún sin aceptar",
+            "cancel": "Cancelar",
+            "cancelled": "Invitación a {name} cancelada",
+            "suggested": "Sugerencias",
+            "searchHint": "Busca a personas para invitar",
+            "results": "Resultados",
+            "member": "Miembro",
+            "invited": "Invitado",
+            "noMatch": "Nadie coincide",
+            "send": "{count, plural, =0 {Enviar invitaciones} one {Enviar invitación} other {Enviar # invitaciones}}",
+            "add": "{count, plural, one {Añadir # persona} other {Añadir # personas}}",
+            "sent": "{count, plural, one {# invitación enviada} other {# invitaciones enviadas}}",
+            "sentOne": "Invitación enviada a {name}",
+            "added": "{count, plural, one {# persona añadida} other {# personas añadidas}}",
+            "addedOne": "{name} añadido",
+            "sentBoth": "{added} añadidos · {invited} invitados",
+            "shareViaLink": "Compartir con enlace",
+            "shareViaLinkHelp": "Cualquiera con el enlace puede unirse.",
+            "linkOff": "Compartir con enlace está desactivado. Solo pueden unirse las personas que invites.",
+            "copyLink": "Copiar enlace",
+            "share": "Compartir",
+            "resetLink": "Restablecer enlace",
+            "resetHelp": "El enlace actual deja de funcionar. Quien ya se unió se queda.",
+            "linkReset": "Enlace restablecido",
+            "gatesIgnored": "Las puertas de acceso no se aplican a quien se une con el enlace.",
+            "linkFailed": "No se pudo cargar el enlace de invitación.",
+            "retry": "Reintentar",
+            "notAllowed": {
+                "owner": "Solo los propietarios pueden invitar aquí",
+                "admin": "Solo los administradores pueden invitar aquí",
+                "moderator": "Solo los moderadores pueden invitar aquí",
+                "member": "Solo los miembros pueden invitar aquí"
+            }
+        },
         "details": {
             "back": "Atrás",
             "chitEarned": "CHIT ganados",
@@ -2261,8 +2305,7 @@
             "deleted": "{name} eliminado",
             "menu": {
                 "editGroup": "Editar grupo",
-                "editChannel": "Editar canal",
-                "copyInviteLink": "Copiar enlace de invitación"
+                "editChannel": "Editar canal"
             },
             "members": {
                 "you": "Tú",
@@ -2271,7 +2314,6 @@
                 "admins": "{count, plural, =1 {Administradores} other {Administradores · #}}",
                 "moderators": "{count, plural, =1 {Moderadores} other {Moderadores · #}}",
                 "members": "{count, plural, =1 {Miembros} other {Miembros · #}}",
-                "blocked": "{count, plural, =1 {Bloqueados} other {Bloqueados · #}}",
                 "options": "Opciones del miembro",
                 "make": {
                     "owner": "Hacer propietario",
@@ -2292,7 +2334,22 @@
                 },
                 "notAllowed": "Tu rol no te permite cambiar roles ni eliminar miembros aquí.",
                 "noMatch": "Ningún miembro coincide",
-                "message": "Mensaje"
+                "message": "Mensaje",
+                "tabs": {
+                    "members": "Miembros",
+                    "lapsed": "Caducados",
+                    "blocked": "Bloqueados"
+                },
+                "searchLapsed": "Buscar caducados",
+                "searchBlocked": "Buscar bloqueados",
+                "lapsedNote": "Miembros que ya no cumplen las puertas de acceso. Las puertas se vuelven a comprobar según la frecuencia fijada en Puertas de acceso.",
+                "blockedNote": "Personas bloqueadas aquí. Desbloquea a alguien para que pueda volver a unirse.",
+                "lapsedEmpty": "No hay miembros caducados. Todos cumplen las puertas.",
+                "blockedEmpty": "No hay nadie bloqueado.",
+                "noOneMatches": "Nadie coincide",
+                "removeFrom": "Quitar del {level}",
+                "lapsedNotAllowed": "Tu rol no te permite quitar miembros aquí.",
+                "blockedNotAllowed": "Tu rol no te permite desbloquear a nadie aquí."
             }
         }
     },

@@ -2213,6 +2213,50 @@
                 "step4Stay": "Đùa thôi, mình ở lại"
             }
         },
+        "invite": {
+            "title": "Mời mọi người",
+            "tabs": {
+                "people": "Mọi người",
+                "link": "Liên kết mời"
+            },
+            "search": "Tìm tên hoặc @username",
+            "noneSelected": "Chưa chọn ai",
+            "noneLeft": "Không còn ai để mời: họ đã tham gia hoặc đã được mời",
+            "pending": "Đang chờ · {count}",
+            "pendingSub": "Đã mời · chưa chấp nhận",
+            "cancel": "Hủy",
+            "cancelled": "Đã hủy lời mời cho {name}",
+            "suggested": "Gợi ý",
+            "searchHint": "Tìm người để mời",
+            "results": "Kết quả",
+            "member": "Thành viên",
+            "invited": "Đã mời",
+            "noMatch": "Không có kết quả",
+            "send": "{count, plural, =0 {Gửi lời mời} other {Gửi # lời mời}}",
+            "add": "{count, plural, other {Thêm # người}}",
+            "sent": "{count, plural, other {Đã gửi # lời mời}}",
+            "sentOne": "Đã gửi lời mời đến {name}",
+            "added": "{count, plural, other {Đã thêm # người}}",
+            "addedOne": "Đã thêm {name}",
+            "sentBoth": "Đã thêm {added} · đã mời {invited}",
+            "shareViaLink": "Chia sẻ qua liên kết",
+            "shareViaLinkHelp": "Bất kỳ ai có liên kết đều có thể tham gia {level} này.",
+            "linkOff": "Chia sẻ qua liên kết đang tắt. Chỉ những người bạn mời mới tham gia được.",
+            "copyLink": "Sao chép liên kết",
+            "share": "Chia sẻ",
+            "resetLink": "Đặt lại liên kết",
+            "resetHelp": "Liên kết hiện tại sẽ ngừng hoạt động. Người đã tham gia vẫn ở lại.",
+            "linkReset": "Đã đặt lại liên kết",
+            "gatesIgnored": "Điều kiện truy cập không áp dụng cho người tham gia qua liên kết.",
+            "linkFailed": "Không thể tải liên kết mời.",
+            "retry": "Thử lại",
+            "notAllowed": {
+                "owner": "Chỉ chủ sở hữu mới có thể mời vào {level} này",
+                "admin": "Chỉ quản trị viên mới có thể mời vào {level} này",
+                "moderator": "Chỉ người kiểm duyệt mới có thể mời vào {level} này",
+                "member": "Chỉ thành viên mới có thể mời vào {level} này"
+            }
+        },
         "details": {
             "back": "Quay lại",
             "chitEarned": "CHIT đã kiếm",
@@ -2261,8 +2305,7 @@
             "deleted": "Đã xóa {name}",
             "menu": {
                 "editGroup": "Chỉnh sửa nhóm",
-                "editChannel": "Chỉnh sửa kênh",
-                "copyInviteLink": "Sao chép liên kết mời"
+                "editChannel": "Chỉnh sửa kênh"
             },
             "members": {
                 "you": "Bạn",
@@ -2271,7 +2314,6 @@
                 "admins": "{count, plural, =1 {Quản trị viên} other {Quản trị viên · #}}",
                 "moderators": "{count, plural, =1 {Điều hành viên} other {Điều hành viên · #}}",
                 "members": "{count, plural, =1 {Thành viên} other {Thành viên · #}}",
-                "blocked": "{count, plural, =1 {Đã chặn} other {Đã chặn · #}}",
                 "options": "Tùy chọn thành viên",
                 "make": {
                     "owner": "Đặt làm chủ sở hữu",
@@ -2292,7 +2334,22 @@
                 },
                 "notAllowed": "Vai trò của bạn không cho phép đổi vai trò hay xóa thành viên ở đây.",
                 "noMatch": "Không có thành viên phù hợp",
-                "message": "Nhắn tin"
+                "message": "Nhắn tin",
+                "tabs": {
+                    "members": "Thành viên",
+                    "lapsed": "Hết hạn",
+                    "blocked": "Đã chặn"
+                },
+                "searchLapsed": "Tìm thành viên hết hạn",
+                "searchBlocked": "Tìm người bị chặn",
+                "lapsedNote": "Thành viên không còn đáp ứng điều kiện truy cập của {level} này. Điều kiện được kiểm tra lại theo lịch đặt trong Điều kiện truy cập.",
+                "blockedNote": "Những người bị chặn khỏi {level} này. Bỏ chặn để họ có thể tham gia lại.",
+                "lapsedEmpty": "Không có thành viên hết hạn. Mọi người đều đáp ứng điều kiện.",
+                "blockedEmpty": "Không ai bị chặn.",
+                "noOneMatches": "Không có kết quả",
+                "removeFrom": "Xóa khỏi {level}",
+                "lapsedNotAllowed": "Vai trò của bạn không cho phép xóa thành viên ở đây.",
+                "blockedNotAllowed": "Vai trò của bạn không cho phép bỏ chặn ở đây."
             }
         }
     },

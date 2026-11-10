@@ -78,12 +78,17 @@ issue under it, linked from its id. It replaces `components_mobile` at cutover (
   web's user card's actions; the rules sheet when sending needs a chat's rules accepted. On the
   web panel's logic (`logic/members`, `logic/groupOrCommunity/detailsPermissions`,
   `logic/profile`'s profile card), the DM settings moved to `logic/chats`, and the send prompts
-  moved to `logic/composer/sendPrompts`. Manage's pages, Edit group and Invite are N7's, pushed as
-  placeholders. Design briefs to come, each its own PR: the Invite screen, pinned messages and
-  the Members screen. The disappearing messages' brief (the plan's 10 and 04 of 2026-11-10) is in:
-  the library's TimedToggle in This chat (8 lengths, 4 × 2, starting at a day), one setting with a
-  Disappearing messages submenu in the conversation's menu (`logic/chats/chatDisappearing`). What
-  it left is in GAPS.md ("Native details").
+  moved to `logic/composer/sendPrompts`. Manage's pages and Edit group are N7's, pushed as
+  placeholders. A design brief to come, as its own PR: pinned messages. The disappearing messages'
+  brief (the plan's 10 and 04 of 2026-11-10) is in: the library's TimedToggle in This chat (8
+  lengths, 4 × 2, starting at a day), one setting with a Disappearing messages submenu in the
+  conversation's menu (`logic/chats/chatDisappearing`). What it left is in GAPS.md ("Native details").
+- **Built:** N6's Members tabs and Invite people (the plan's 10, changelog of 2026-11-10): the
+  Members screen's Members | Lapsed | Blocked tabs for owners, admins and moderators (Lapsed only
+  with access gates; `@client`'s `memberTabs`), Remove for the lapsed and Unblock for the blocked,
+  each with Undo; Invite people (People | Invite link), from the Invite tile and the Members tab,
+  on MemberManagement and the web's invite search (`logic/members/invitePeople` decides who gets
+  which tab and how each person joins). What it left is in GAPS.md ("Native details").
 - **Next:** the screens. N10a, N11 and N13 need only N3; N7 (group settings) and N8a
   (communities) can start now that N6 is in; N9 (the builders) needs N10b too.
 

@@ -1,6 +1,7 @@
 <!-- The top of a chat's details (native plan 10, Design Notes §3.6): the cover, under the status bar,
-     with back, favourite and the kebab as solid round buttons (the kebab only with something in
-     it; Search before favourite where it's the only tile, a bot's DM); the 88px avatar with its 4px cut-out ring, overlapping the cover; the name and the line
+     with back, favourite and the kebab (a DM's) or Edit (a group's, for those who may edit it) as
+     solid round buttons (the kebab only with something in it; Search before favourite where it's
+     the only tile, a bot's DM); the 88px avatar with its 4px cut-out ring, overlapping the cover; the name and the line
      under it. The cover is their profile's background where they have one, else the accent's
      gradient (as the You tab's); the avatar their photo, else the chat's swatch (the header's). -->
 <script lang="ts">
@@ -12,6 +13,8 @@
         title: string;
         /** The line under the name: an @username, "Private · 48 members". */
         sub: string;
+        /** A lock before the line (a private group's or channel's). */
+        locked?: boolean;
         coverUrl: string | undefined;
         /** Their photo, else the swatch. */
         photoUrl: string | undefined;
@@ -26,11 +29,16 @@
         onFavourite: (() => void) | undefined;
         /** No kebab without it; gets the button, to anchor its menu to. */
         onMore: ((anchor: HTMLElement) => void) | undefined;
+        /** A pencil after favourite (a group's Edit, for those who may edit it); none without it. */
+        onEdit?: () => void;
+        /** The pencil's label. */
+        editLabel?: string;
     };
 
     let {
         title,
         sub,
+        locked = false,
         coverUrl,
         photoUrl,
         color,
@@ -40,6 +48,8 @@
         onSearch,
         onFavourite,
         onMore,
+        onEdit,
+        editLabel = "",
     }: Props = $props();
 </script>
 
@@ -81,6 +91,11 @@
                 <span class="heart-icon"></span>
             </button>
         {/if}
+        {#if onEdit}
+            <button type="button" class="cover-button" aria-label={editLabel} onclick={onEdit}>
+                <span class="edit-icon"></span>
+            </button>
+        {/if}
         {#if onMore}
             <button
                 type="button"
@@ -103,7 +118,7 @@
         {/if}
     </span>
     <span class="name">{title}</span>
-    {#if sub}<span class="sub">{sub}</span>{/if}
+    {#if sub}<span class="sub">{#if locked}<span class="lock" aria-hidden="true"></span>{/if}{sub}</span>{/if}
 </div>
 
 <style lang="scss">
@@ -197,6 +212,10 @@
         @include icon(search, 19px);
     }
 
+    .edit-icon {
+        @include icon(edit, 19px);
+    }
+
     // the kebab: horizontal dots on iOS, vertical on Android
     .more-icon {
         @include icon(more, 19px);
@@ -246,5 +265,13 @@
         font: var(--weight-medium) text-size(13.5px) / 1.3 var(--font-sans);
         color: var(--ink-4);
         overflow-wrap: anywhere;
+    }
+
+    // a private chat's lock, before "Private"
+    .lock {
+        @include icon(lock, 13px, currentColor);
+        display: inline-block;
+        margin-inline-end: 4px;
+        vertical-align: -1px;
     }
 </style>
