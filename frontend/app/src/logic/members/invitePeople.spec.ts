@@ -190,6 +190,29 @@ describe("invitePeopleLists", () => {
         });
     });
 
+    // a large group holds only its first page of members, so its DM partners are looked up among
+    // them first: one who's a member it doesn't hold isn't offered meanwhile
+    test("Suggested waits while the DM partners are looked up, and only then hints to search", () => {
+        const lists = (
+            suggested: { userId: string }[] | "loading",
+            invited = [] as { userId: string }[],
+        ) => invitePeopleLists({ searching: false, invited, suggested, matches: [] }, ctx({}));
+
+        expect(lists("loading")).toMatchObject({
+            suggested: [],
+            suggestedLoading: true,
+            hint: false,
+        });
+        expect(lists("loading", [u("i")])).toMatchObject({ pending: [u("i")], hint: false });
+        expect(lists([u("x")])).toMatchObject({
+            suggested: [{ userId: "x", way: "invite" }],
+            suggestedLoading: false,
+            hint: false,
+        });
+        // nothing pending and no one to suggest
+        expect(lists([u("m")])).toMatchObject({ suggested: [], hint: true });
+    });
+
     test("with a search: every match once, members and the invited marked, those who can't join left out", () => {
         const lists = invitePeopleLists(
             {

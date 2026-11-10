@@ -2247,6 +2247,8 @@
             "resetHelp": "当前链接将失效。已加入的人不受影响。",
             "linkReset": "链接已重置",
             "gatesIgnored": "通过链接加入的人不受访问门槛限制。",
+            "linkFailed": "无法加载邀请链接。",
+            "retry": "重试",
             "notAllowed": {
                 "owner": "只有所有者可以邀请加入此{level}",
                 "admin": "只有管理员可以邀请加入此{level}",

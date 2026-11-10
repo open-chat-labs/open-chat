@@ -2162,6 +2162,8 @@
             "resetHelp": "The current link stops working. Anyone who already joined stays.",
             "linkReset": "Link reset",
             "gatesIgnored": "Access gates are ignored for people who join by link.",
+            "linkFailed": "Couldn't load the invite link.",
+            "retry": "Try again",
             "notAllowed": {
                 "owner": "Only owners can invite to this {level}",
                 "admin": "Only admins can invite to this {level}",

@@ -157,17 +157,27 @@ export const SUGGESTED_LIMIT = 30;
  * screen passes the people the user has DMs with, most recent first, `directChatUsers`, so those
  * already in the chat or invited aren't among them); with a search, Results: every match, members
  * and the invited marked, those who can't join here left out.
+ * Suggested waits (`suggestedLoading`) while `suggested` is "loading": the DM partners being looked
+ * up among the members, as a large group or channel holds only its first page of them, so one who's
+ * a member it doesn't hold isn't offered to invite meanwhile. `hint` (to search) is for when there's
+ * nothing to show under the divider once it's in.
  */
 export function invitePeopleLists<U extends { userId: string }>(
     input: {
         searching: boolean;
         invited: U[];
-        suggested: U[];
+        suggested: U[] | "loading";
         /** The search's matches: those found, then members and the invited who match. */
         matches: U[];
     },
     ctx: InviteWayContext,
-): { pending: U[]; suggested: (U & { way: InviteWay })[]; results: (U & { way: InviteWay })[] } {
+): {
+    pending: U[];
+    suggested: (U & { way: InviteWay })[];
+    suggestedLoading: boolean;
+    hint: boolean;
+    results: (U & { way: InviteWay })[];
+} {
     const withWay = (users: U[]) => {
         const seen = new Set<string>();
         return users.flatMap((u) => {
@@ -178,13 +188,26 @@ export function invitePeopleLists<U extends { userId: string }>(
         });
     };
     if (input.searching) {
-        return { pending: [], suggested: [], results: withWay(input.matches) };
+        return {
+            pending: [],
+            suggested: [],
+            suggestedLoading: false,
+            hint: false,
+            results: withWay(input.matches),
+        };
     }
+    const suggestedLoading = input.suggested === "loading";
+    const suggested =
+        input.suggested === "loading"
+            ? []
+            : withWay(input.suggested)
+                  .filter((u) => pickable(u.way))
+                  .slice(0, SUGGESTED_LIMIT);
     return {
         pending: input.invited,
-        suggested: withWay(input.suggested)
-            .filter((u) => pickable(u.way))
-            .slice(0, SUGGESTED_LIMIT),
+        suggested,
+        suggestedLoading,
+        hint: !suggestedLoading && input.invited.length === 0 && suggested.length === 0,
         results: [],
     };
 }

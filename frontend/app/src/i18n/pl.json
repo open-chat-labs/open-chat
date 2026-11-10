@@ -2247,6 +2247,8 @@
             "resetHelp": "Obecny link przestanie działać. Ci, którzy już dołączyli, zostają.",
             "linkReset": "Link zresetowany",
             "gatesIgnored": "Warunki dostępu nie dotyczą osób dołączających przez link.",
+            "linkFailed": "Nie udało się wczytać linku z zaproszeniem.",
+            "retry": "Spróbuj ponownie",
             "notAllowed": {
                 "owner": "Tylko właściciele mogą tu zapraszać",
                 "admin": "Tylko administratorzy mogą tu zapraszać",

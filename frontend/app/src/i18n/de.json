@@ -2247,6 +2247,8 @@
             "resetHelp": "Der aktuelle Link funktioniert nicht mehr. Wer schon beigetreten ist, bleibt.",
             "linkReset": "Link zurückgesetzt",
             "gatesIgnored": "Für Personen, die per Link beitreten, gelten die Zugangsschranken nicht.",
+            "linkFailed": "Der Einladungslink konnte nicht geladen werden.",
+            "retry": "Erneut versuchen",
             "notAllowed": {
                 "owner": "Nur Inhaber können hier einladen",
                 "admin": "Nur Admins können hier einladen",

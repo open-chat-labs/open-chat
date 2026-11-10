@@ -2247,6 +2247,8 @@
             "resetHelp": "Le lien actuel cesse de fonctionner. Ceux qui ont déjà rejoint restent.",
             "linkReset": "Lien réinitialisé",
             "gatesIgnored": "Les conditions d'accès ne s'appliquent pas à ceux qui rejoignent par lien.",
+            "linkFailed": "Impossible de charger le lien d'invitation.",
+            "retry": "Réessayer",
             "notAllowed": {
                 "owner": "Seuls les propriétaires peuvent inviter ici",
                 "admin": "Seuls les admins peuvent inviter ici",

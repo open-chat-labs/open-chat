@@ -2247,6 +2247,8 @@
             "resetHelp": "Il link attuale smette di funzionare. Chi è già entrato resta.",
             "linkReset": "Link reimpostato",
             "gatesIgnored": "I requisiti di accesso non valgono per chi entra tramite link.",
+            "linkFailed": "Impossibile caricare il link d'invito.",
+            "retry": "Riprova",
             "notAllowed": {
                 "owner": "Solo i proprietari possono invitare qui",
                 "admin": "Solo gli admin possono invitare qui",

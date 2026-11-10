@@ -1149,6 +1149,29 @@ describe("finding members when not all are held", () => {
 
         expect(toInvite.map((u) => u.userId)).toEqual([z]);
     });
+
+    // Invite people's Suggested: a DM partner who's a member the group doesn't hold isn't offered
+    test("those you have direct chats with are looked up among a group's members", async () => {
+        await select(someHeld());
+        const chats = new ChatMap<DirectChatSummary>();
+        for (const userId of [a, x, z]) {
+            chats.set({ kind: "direct_chat", userId }, {
+                kind: "direct_chat",
+                id: { kind: "direct_chat", userId },
+                them: { userId },
+            } as unknown as DirectChatSummary);
+        }
+        serverDirectChatsStore.set(chats);
+        lookupResponses.push([member(x)]);
+
+        await client.lookupDirectChatUsersAmongMembers();
+
+        // `a` is held already
+        expect(lookups.map((l) => l.userIds)).toEqual([[x, z]]);
+        expect(selectedChatMembersStore.value.has(x)).toBe(true);
+        expect(selectedChatMembersStore.value.has(z)).toBe(false);
+        serverDirectChatsStore.set(new ChatMap<DirectChatSummary>());
+    });
 });
 
 describe("finding users to add to a channel when not all members are held", () => {
@@ -1386,7 +1409,7 @@ describe("finding users to add to a channel when not all members are held", () =
         }
         serverDirectChatsStore.set(chats);
 
-        await client.lookupDirectChatUsersAmongChannelMembers();
+        await client.lookupDirectChatUsersAmongMembers();
 
         // So that `x` is offered, being a member of the community, and `y` isn't, being a member
         // of the channel already

@@ -2247,6 +2247,8 @@
             "resetHelp": "El enlace actual deja de funcionar. Quien ya se unió se queda.",
             "linkReset": "Enlace restablecido",
             "gatesIgnored": "Las puertas de acceso no se aplican a quien se une con el enlace.",
+            "linkFailed": "No se pudo cargar el enlace de invitación.",
+            "retry": "Reintentar",
             "notAllowed": {
                 "owner": "Solo los propietarios pueden invitar aquí",
                 "admin": "Solo los administradores pueden invitar aquí",

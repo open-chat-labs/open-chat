@@ -66,7 +66,7 @@
     import type { ScreenProps } from "../app/screens";
     import { sendAfterUndo } from "../chats/removeWithUndo";
     import { HeldWhileLeaving } from "../conversation/heldWhileLeaving";
-    import { chipName, sendLabel, sentToast } from "./invite.adapter";
+    import { chipName, linkTabView, sendLabel, sentToast } from "./invite.adapter";
     import InviteRow from "./InviteRow.svelte";
 
     let { screen, context }: ScreenProps<Extract<NativeScreen, { kind: "invite_people" }>> =
@@ -110,11 +110,18 @@
     let chosen = $state<InviteTab>("people");
     const tab = $derived<InviteTab>(tabs.includes(chosen) ? chosen : (tabs[0] ?? "people"));
 
-    onMount(() => {
-        // a channel's suggestions are the DM users among its community's members, who may not
-        // all be held (the old Add page's lookup)
-        if (chat?.kind === "channel") void client.lookupDirectChatUsersAmongChannelMembers();
-        void loadLink();
+    // Suggested waits for the DM partners to be looked up among the members (a large group or
+    // channel, or a channel's community, holds only its first page of them: the old Add page's
+    // lookup), so a member it doesn't hold isn't offered to invite
+    let suggestionsLoaded = $state(false);
+    onMount(async () => {
+        try {
+            await client.lookupDirectChatUsersAmongMembers();
+        } catch (err) {
+            console.warn("Unable to look up the DM partners among the members", err);
+        } finally {
+            suggestionsLoaded = true;
+        }
     });
 
     // ---- People: how each person would join
@@ -165,7 +172,9 @@
             {
                 searching: term !== "",
                 invited,
-                suggested: directChatUsers($serverDirectChatsStore, $allUsersStore),
+                suggested: suggestionsLoaded
+                    ? directChatUsers($serverDirectChatsStore, $allUsersStore)
+                    : "loading",
                 // those found, then the invited and the members held who match (the search
                 // leaves members out)
                 matches:
@@ -212,31 +221,38 @@
     async function send() {
         const members = management;
         if (members === undefined || picks.length === 0 || members.inviting) return;
+        // how each would join now: anyone who's joined or been invited since isn't sent
         const ctx = wayContext;
-        const outcome = await members.sendPicked((userId) => inviteWay(userId, ctx) === "add");
+        const outcome = await members.sendPicked((userId) => inviteWay(userId, ctx));
         if (outcome.kind === "failed") {
             toastStore.showOutcome(outcome);
             return;
         }
-        // stays on the screen: the picks are sent (cleared), and those invited show under Pending
+        // stays on the screen: those sent leave the picks and those invited show under Pending;
+        // any not sent stay picked, and the toast says why after saying who went
         onInput("");
+        if (outcome.added.length === 0 && outcome.invited.length === 0) return;
         context.toast(
-            outcome.message !== undefined
-                ? interpolate($_, outcome.message)
-                : sentToast(outcome.added.map(displayName), outcome.invited.map(displayName), t),
+            sentToast(
+                outcome.added.map(displayName),
+                outcome.invited.map(displayName),
+                t,
+                outcome.kind === "partly_sent" ? interpolate($_, outcome.message) : undefined,
+            ),
         );
     }
 
-    // ---- Invite link: loaded as the screen opens, for someone the tab's for
+    // ---- Invite link: loaded as the screen opens, or as the tab comes (the chat's access
+    // changing), for someone the tab's for; one that couldn't load says so, with Try again
 
     const link = $derived(management?.inviteLink);
     const url = $derived(management?.sharingLink);
 
-    async function loadLink() {
-        if (management === undefined || !untrack(() => tabs.includes("link"))) return;
-        const outcome = await management.initialiseSharing();
-        if (outcome.kind === "failed") toastStore.showOutcome(outcome);
-    }
+    $effect(() => {
+        if (tabs.includes("link") && management?.inviteLinkLoad.kind === "idle") {
+            untrack(() => void management.initialiseSharing());
+        }
+    });
 
     // the switch: shown at once, back with a toast if it's refused (a public chat's is always on)
     const sharing = new Optimistic(() => link?.kind === "enabled" || link?.kind === "public");
@@ -244,6 +260,9 @@
         void link;
         untrack(() => sharing.sync());
     });
+    const linkView = $derived(
+        linkTabView(management?.inviteLinkLoad ?? { kind: "idle" }, sharing.current, url),
+    );
     const switchable = $derived(
         access.kind === "allowed" &&
             access.manageLink &&
@@ -345,13 +364,18 @@
                                 : { kind: "mark", label: $_("native.invite.invited") }} />
                     {/each}
                 {/if}
-                {#if lists.pending.length === 0 && lists.suggested.length === 0}
+                {#if lists.hint}
                     <span class="hint">
                         <span class="hint-icon" aria-hidden="true"></span>
                         {$_("native.invite.searchHint")}
                     </span>
                 {/if}
-                {#if lists.suggested.length > 0}
+                {#if lists.suggestedLoading}
+                    <span class="label">
+                        {$_("native.invite.suggested")}
+                        <Spinner size={12} />
+                    </span>
+                {:else if lists.suggested.length > 0}
                     <span class="label">{$_("native.invite.suggested")}</span>
                     {#each lists.suggested as user (user.userId)}
                         <InviteRow
@@ -419,19 +443,29 @@
                     onChange={(on) => void toggleSharing(on)} />
             </SettingsGroup>
 
-            {#if link === undefined || (sharing.current && url === undefined)}
+            {#if linkView.kind === "loading"}
                 <!-- the link loading, or switched on and its code on its way -->
                 <div class="card loading"><Spinner size={20} /></div>
-            {:else if sharing.current && url !== undefined}
+            {:else if linkView.kind === "failed"}
+                <div class="card failed">
+                    <span class="failed-text">{$_("native.invite.linkFailed")}</span>
+                    <Button
+                        label={$_("native.invite.retry")}
+                        variant="secondary"
+                        icon="refresh"
+                        onClick={() => void management?.initialiseSharing()} />
+                </div>
+            {:else if linkView.kind === "link"}
+                {@const linkUrl = linkView.url}
                 <div class="card" class:waiting={resetWaiting}>
                     <div class="qr">
                         {#if resetting}
                             <Spinner size={24} />
                         {:else}
-                            <QRCode text={url} />
+                            <QRCode text={linkUrl} />
                         {/if}
                     </div>
-                    <span class="url">{url.replace(/^https?:\/\//, "")}</span>
+                    <span class="url">{linkUrl.replace(/^https?:\/\//, "")}</span>
                     <div class="buttons">
                         <Button
                             label={$_("native.invite.copyLink")}
@@ -445,11 +479,11 @@
                             icon="share"
                             fullWidth
                             disabled={linkBusy}
-                            onClick={() => void shareLink(url)} />
+                            onClick={() => void shareLink(linkUrl)} />
                     </div>
                 </div>
 
-                {#if access.kind === "allowed" && access.manageLink && link.kind === "enabled"}
+                {#if access.kind === "allowed" && access.manageLink && link?.kind === "enabled"}
                     <SettingsGroup>
                         <SettingsAction
                             label={$_("native.invite.resetLink")}
@@ -460,10 +494,12 @@
                     </SettingsGroup>
                 {/if}
 
-                <p class="footnote">
-                    <span class="shield" aria-hidden="true"></span>
-                    {$_("native.invite.gatesIgnored")}
-                </p>
+                {#if linkView.gatesIgnored}
+                    <p class="footnote">
+                        <span class="shield" aria-hidden="true"></span>
+                        {$_("native.invite.gatesIgnored")}
+                    </p>
+                {/if}
             {:else}
                 <p class="off">{$_("native.invite.linkOff")}</p>
             {/if}
@@ -565,7 +601,8 @@
     }
 
     .none,
-    .off {
+    .off,
+    .failed-text {
         margin: 0;
         padding: var(--space-24) var(--space-12);
         text-align: center;
@@ -598,6 +635,11 @@
 
         &.loading {
             padding: var(--space-24);
+        }
+
+        // the link couldn't load: a line, and Try again
+        &.failed {
+            gap: var(--space-4);
         }
 
         // reset, waiting out its Undo: the old link, not to be shared now

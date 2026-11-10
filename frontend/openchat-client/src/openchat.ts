@@ -4189,22 +4189,30 @@ export class OpenChat {
         }
     }
 
-    // Looks up the users you have direct chats with among the members of the selected community and
-    // channel, where either holds only some of its members, so that the members held say which of
-    // them are members of each. Those who are members of the community, but not the channel, are
-    // offered to add to the channel.
-    async lookupDirectChatUsersAmongChannelMembers(): Promise<void> {
-        const communityId = selectedCommunityIdStore.value;
-        const channelId = selectedChatIdStore.value;
-        if (communityId === undefined || channelId?.kind !== "channel") {
+    // Looks up the users you have direct chats with among the members of the selected group, or of
+    // the selected channel and its community, where it holds only some of its members, so that the
+    // members held say which of them are members. Then those who are members already aren't offered
+    // to invite (a group's or channel's members held being only its first page), and those who are
+    // members of the community, but not the channel, are offered to add to the channel.
+    async lookupDirectChatUsersAmongMembers(): Promise<void> {
+        const chatId = selectedChatIdStore.value;
+        if (chatId === undefined || chatId.kind === "direct_chat") {
             return;
         }
         const userIds = [...serverDirectChatsStore.value.values()]
             .map((c) => c.them.userId)
             .filter((u) => userStore.get(u)?.kind !== "bot");
+        if (chatId.kind === "group_chat") {
+            await this.#membersAmong(chatId, userIds);
+            return;
+        }
+        const communityId = selectedCommunityIdStore.value;
+        if (communityId === undefined) {
+            return;
+        }
         // Only members of the community can be members of the channel
         const inCommunity = await this.#membersAmong(communityId, userIds);
-        await this.#membersAmong(channelId, [...inCommunity]);
+        await this.#membersAmong(chatId, [...inCommunity]);
     }
 
     // Finds members of the selected chat to offer as mentions for what has been typed, if it may not

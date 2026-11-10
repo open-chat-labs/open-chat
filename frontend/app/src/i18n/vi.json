@@ -2247,6 +2247,8 @@
             "resetHelp": "Liên kết hiện tại sẽ ngừng hoạt động. Người đã tham gia vẫn ở lại.",
             "linkReset": "Đã đặt lại liên kết",
             "gatesIgnored": "Điều kiện truy cập không áp dụng cho người tham gia qua liên kết.",
+            "linkFailed": "Không thể tải liên kết mời.",
+            "retry": "Thử lại",
             "notAllowed": {
                 "owner": "Chỉ chủ sở hữu mới có thể mời vào {level} này",
                 "admin": "Chỉ quản trị viên mới có thể mời vào {level} này",
