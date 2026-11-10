@@ -51,6 +51,11 @@ export type MemberActionOutcome =
 
 const succeeded: MemberActionOutcome = { kind: "success" };
 
+/** What sending the picks did (`sendPicked`): who was added and who invited, or why it failed. */
+export type SendPicksOutcome =
+    | { kind: "success"; added: UserSummary[]; invited: UserSummary[]; message?: ResourceKey }
+    | { kind: "failed"; message: ResourceKey };
+
 function outcome(success: boolean, succeededKey: string, failedKey: string): MemberActionOutcome {
     return success
         ? { kind: "success", message: i18nKey(succeededKey) }
@@ -191,6 +196,16 @@ export class MemberManagement {
         }
     }
 
+    isPicked(userId: string): boolean {
+        return this.#usersToAddOrInvite.some((u) => u.userId === userId);
+    }
+
+    /** Picks someone to add or invite, or lets them go if they're picked. */
+    togglePicked(user: UserSummary): void {
+        if (this.isPicked(user.userId)) this.#dropPicked([user.userId]);
+        else this.#usersToAddOrInvite.push(user);
+    }
+
     async confirmResetLinkResponse(yes: boolean): Promise<MemberActionOutcome> {
         try {
             return yes
@@ -319,7 +334,8 @@ export class MemberManagement {
         try {
             const resp = await this.client.inviteUsers(this.collection.id, userIds);
             if (!resp) return failed;
-            this.#usersToAddOrInvite = [];
+            // those sent; anyone picked while it was on its way stays picked
+            this.#dropPicked(userIds);
             return this.collection.public
                 ? { kind: "success", message: i18nKey("group.usersInvited") }
                 : succeeded;
@@ -328,6 +344,37 @@ export class MemberManagement {
         } finally {
             this.#inviting = false;
         }
+    }
+
+    /**
+     * Sends the people picked here (`usersToAddOrInvite`), as the native Invite people screen
+     * sends them in one go: those `toAdd` names are added to the channel (a private community's
+     * members), the others invited. Those sent leave the picks; a failure leaves the ones not sent
+     * picked, and says why. A partial add's message comes back with the success.
+     */
+    async sendPicked(toAdd: (userId: string) => boolean): Promise<SendPicksOutcome> {
+        const picks = [...this.#usersToAddOrInvite];
+        const adding = picks.filter((u) => toAdd(u.userId));
+        const inviting = picks.filter((u) => !toAdd(u.userId));
+        let message: ResourceKey | undefined;
+        if (adding.length > 0) {
+            const ids = adding.map((u) => u.userId);
+            const added = await this.addUsers(ids);
+            if (added.kind === "failed") return added;
+            message = added.message;
+            this.#dropPicked(ids);
+        }
+        if (inviting.length > 0) {
+            const invited = await this.inviteUsers(inviting.map((u) => u.userId));
+            if (invited.kind === "failed") return invited;
+        }
+        return { kind: "success", added: adding, invited: inviting, message };
+    }
+
+    #dropPicked(userIds: string[]): void {
+        this.#usersToAddOrInvite = this.#usersToAddOrInvite.filter(
+            (u) => !userIds.includes(u.userId),
+        );
     }
 
     canUninvite() {
@@ -392,7 +439,9 @@ export class MemberManagement {
         if (on === (link.kind === "enabled")) return succeeded;
         this.#togglingSharingLink = true;
         try {
-            return this.#applyInviteLink(await this.client.setInviteLinkEnabled(this.collection, on));
+            return this.#applyInviteLink(
+                await this.client.setInviteLinkEnabled(this.collection, on),
+            );
         } finally {
             this.#togglingSharingLink = false;
         }

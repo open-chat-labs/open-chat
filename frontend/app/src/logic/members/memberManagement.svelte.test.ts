@@ -11,6 +11,7 @@ import {
     type MemberRole,
     type MultiUserChat,
     type OpenChat,
+    type UserSummary,
 } from "@client";
 import { flushSync, tick } from "svelte";
 import { afterEach, expect, test, vi } from "vitest";
@@ -180,4 +181,51 @@ test("an invite or add sends the users it's given", async () => {
 
     expect(inviteUsers).toHaveBeenCalledWith(channel.id, ["u"]);
     expect(addMembersToChannel).toHaveBeenCalledWith(channel.id, ["u", "v"]);
+});
+
+// the native Invite people screen sends its picks in one go: a private community's members added to
+// the channel, the others invited; a failure keeps those not sent picked
+test("sending the picks adds those it names and invites the rest, keeping those not sent", async () => {
+    const channel = {
+        kind: "channel",
+        id: { kind: "channel", communityId: "ccccc-cc", channelId: 1 },
+        level: "channel",
+        public: false,
+    } as MultiUserChat;
+    const user = (userId: string) => ({ userId, username: userId }) as UserSummary;
+    const inviteUsers = vi.fn(async () => true);
+    const addMembersToChannel = vi.fn(async () => ({ kind: "success" }));
+    const members = new MemberManagement({ inviteUsers, addMembersToChannel } as never, channel);
+    members.togglePicked(user("a"));
+    members.togglePicked(user("b"));
+    members.togglePicked(user("x"));
+    members.togglePicked(user("c"));
+    // picked again: let go
+    members.togglePicked(user("x"));
+    expect(members.isPicked("x")).toBe(false);
+    expect(members.isPicked("b")).toBe(true);
+
+    const outcome = await members.sendPicked((id) => id === "a");
+
+    expect(addMembersToChannel).toHaveBeenCalledWith(channel.id, ["a"]);
+    expect(inviteUsers).toHaveBeenCalledWith(channel.id, ["b", "c"]);
+    expect(outcome).toMatchObject({
+        kind: "success",
+        added: [{ userId: "a" }],
+        invited: [{ userId: "b" }, { userId: "c" }],
+    });
+    expect(members.usersToAddOrInvite).toEqual([]);
+
+    // the add went, the invite didn't: the added leave the picks, the others stay
+    const failing = new MemberManagement(
+        { inviteUsers: async () => false, addMembersToChannel } as never,
+        channel,
+    );
+    failing.addInvited(user("a"));
+    failing.addInvited(user("b"));
+    expect(await failing.sendPicked((id) => id === "a")).toMatchObject({
+        kind: "failed",
+        message: { key: "group.inviteUsersFailed" },
+    });
+    expect(failing.usersToAddOrInvite.map((u) => u.userId)).toEqual(["b"]);
 });

@@ -121,20 +121,25 @@ export {
 } from "./utils/accessGates";
 export {
     compareMembers,
+    hasAccessGates,
     knownMembers,
+    listedUserMenu,
     memberActions,
     memberHasMenu,
     memberMatchesSearch,
     memberMenu,
     memberRoleChoices,
     memberSections,
+    memberTabs,
     roleChangeFailureMessage,
     usersFromIds,
+    type ListedUserMenu,
     type MemberActions,
     type MemberMenu,
     type MemberPermissions,
     type MemberSection,
     type MemberSectionId,
+    type MemberTab,
     type SectionMember,
 } from "./utils/members";
 export {

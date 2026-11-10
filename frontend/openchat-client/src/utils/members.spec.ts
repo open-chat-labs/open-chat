@@ -4,15 +4,19 @@ import {
     ROLE_MODERATOR,
     ROLE_NONE,
     ROLE_OWNER,
+    type AccessGateConfig,
     type MemberRole,
 } from "@shared";
 import { describe, expect, test } from "vitest";
 import {
+    hasAccessGates,
+    listedUserMenu,
     memberActions,
     memberHasMenu,
     memberMenu,
     memberRoleChoices,
     memberSections,
+    memberTabs,
     roleChangeFailureMessage,
     type MemberActions,
     type MemberPermissions,
@@ -255,5 +259,74 @@ describe("memberHasMenu", () => {
                 }
             }
         }
+    });
+});
+
+describe("the Members screen's tabs", () => {
+    const noGate: AccessGateConfig = { gate: { kind: "no_gate" }, expiry: undefined };
+    const chitGate: AccessGateConfig = {
+        gate: { kind: "chit_earned_gate", minEarned: 1000 },
+        expiry: undefined,
+    };
+    const uniquePerson: AccessGateConfig = {
+        gate: { kind: "unique_person_gate" },
+        expiry: undefined,
+    };
+
+    test("a group or community has gates of its own, or a channel its community's", () => {
+        expect(hasAccessGates(noGate)).toBe(false);
+        expect(hasAccessGates(chitGate)).toBe(true);
+        expect(hasAccessGates(noGate, noGate)).toBe(false);
+        expect(hasAccessGates(noGate, chitGate)).toBe(true);
+        expect(hasAccessGates(chitGate, noGate)).toBe(true);
+    });
+
+    test("a lone unique-person gate is no gate: it's suspended, so no one lapses from it", () => {
+        expect(hasAccessGates(uniquePerson)).toBe(false);
+        expect(hasAccessGates(noGate, uniquePerson)).toBe(false);
+        expect(
+            hasAccessGates({
+                gate: {
+                    kind: "composite_gate",
+                    operator: "and",
+                    gates: [
+                        { kind: "unique_person_gate" },
+                        { kind: "chit_earned_gate", minEarned: 5 },
+                    ],
+                },
+                expiry: undefined,
+            }),
+        ).toBe(true);
+    });
+
+    test("regular members see no tabs, whatever the gates", () => {
+        for (const role of [ROLE_NONE, ROLE_MEMBER] as MemberRole[]) {
+            expect(memberTabs(role, true)).toEqual([]);
+            expect(memberTabs(role, false)).toEqual([]);
+        }
+    });
+
+    test("owners, admins and moderators see Lapsed only where there are gates", () => {
+        for (const role of [ROLE_MODERATOR, ROLE_ADMIN, ROLE_OWNER] as MemberRole[]) {
+            expect(memberTabs(role, true)).toEqual(["members", "lapsed", "blocked"]);
+            expect(memberTabs(role, false)).toEqual(["members", "blocked"]);
+        }
+    });
+
+    test("a lapsed member's ⋯ removes and a blocked user's unblocks, only with Remove / block members", () => {
+        const can = { canRemove: true, canUnblock: true };
+        const cannot = { canRemove: false, canUnblock: false };
+        expect(listedUserMenu("lapsed", can)).toEqual({ kind: "action", action: "remove" });
+        expect(listedUserMenu("blocked", can)).toEqual({ kind: "action", action: "unblock" });
+        expect(listedUserMenu("lapsed", cannot)).toEqual({ kind: "not_allowed" });
+        expect(listedUserMenu("blocked", cannot)).toEqual({ kind: "not_allowed" });
+        // unblocking is for a public chat's (canUnblockUsers), which removing isn't
+        expect(listedUserMenu("blocked", { canRemove: true, canUnblock: false })).toEqual({
+            kind: "not_allowed",
+        });
+        expect(listedUserMenu("lapsed", { canRemove: true, canUnblock: false })).toEqual({
+            kind: "action",
+            action: "remove",
+        });
     });
 });
