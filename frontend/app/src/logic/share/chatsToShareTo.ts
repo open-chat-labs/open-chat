@@ -40,7 +40,8 @@ export function chatsToShareTo(
         communities: [...sources.communities],
         isFavourite: (id) => sources.favourites.has(id),
         directChatName: (userId) => ({
-            name: buildDisplayName(sources.users, userId, "user"),
+            // plain text: every picker shows (and sorts and searches) it as it is
+            name: buildDisplayName(sources.users, userId, "user", false),
             username: sources.users.get(userId)?.username,
         }),
         canSendText: (id) => client.canSendMessage(id, "message", "text"),
