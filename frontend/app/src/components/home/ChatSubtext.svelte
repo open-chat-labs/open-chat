@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { ChatSummary, OpenChat } from "@client";
-    import { allUsersStore } from "@client";
-    import { directChatStatus } from "@src/logic/conversation/chatStatus";
+    import { allUsersStore, directChatStatus, directChatSubtitle } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -21,18 +20,17 @@
     let { chat, clickableMembers = false, onMembersClick }: Props = $props();
 
     let userId = $derived(chat.kind === "direct_chat" ? chat.them.userId : "");
-    let status = $derived(directChatStatus($allUsersStore.get(userId)));
-    let subtext = $derived(status === "suspended" ? $_("accountSuspended") : "");
-    let checkLastOnline = $derived(status === "last_online" && chat.kind === "direct_chat");
+    let them = $derived($allUsersStore.get(userId));
+    let checkLastOnline = $derived(
+        directChatStatus(them) === "last_online" && chat.kind === "direct_chat",
+    );
+    let lastOnline = $state<number>();
+    let subtext = $derived(directChatSubtitle($_, them, $now, lastOnline).text);
 
     $effect(() => {
         if (checkLastOnline && chat.kind === "direct_chat") {
-            client.getLastOnlineDate(chat.them.userId, $now).then((lastOnline) => {
-                if (lastOnline !== undefined && lastOnline !== 0) {
-                    [subtext] = client.formatLastOnlineDate($_, $now, lastOnline);
-                } else {
-                    subtext = "";
-                }
+            client.getLastOnlineDate(chat.them.userId, $now).then((at) => {
+                lastOnline = at;
             });
         }
     });

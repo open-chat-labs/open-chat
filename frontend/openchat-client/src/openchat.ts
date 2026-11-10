@@ -829,7 +829,6 @@ import { addQueryStringParam } from "./utils/url";
 import {
     buildReducedProfileDataList,
     buildUsernameList,
-    formatLastOnlineDate,
     isDeletedWebhook,
     missingUserIds,
     shouldRestartForNewUserId,
@@ -4581,7 +4580,6 @@ export class OpenChat {
     nullUser = nullUser;
     toTitleCase = toTitleCase;
     formatTimeRemaining = formatTimeRemaining;
-    formatLastOnlineDate = formatLastOnlineDate;
     buildUserAvatarUrl = buildUserAvatarUrl;
     buildUserBackgroundUrl = buildUserBackgroundUrl;
     buildUsernameList = buildUsernameList;

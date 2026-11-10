@@ -56,7 +56,10 @@ export {
 export {
     botOwnerCandidates,
     compareIsNotYouThenUsername,
+    directChatStatus,
+    directChatSubtitle,
     directChatUsers,
+    formatLastOnlineDate,
     isDeletedWebhook,
     lastOnlineStatus,
     userBadges,

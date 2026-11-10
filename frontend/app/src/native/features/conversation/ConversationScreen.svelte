@@ -28,6 +28,8 @@
         communitiesStore,
         cryptoLookup,
         currentUserIdStore,
+        directChatStatus,
+        directChatSubtitle,
         eventIndexesLoadedStore,
         eventsStore,
         exchangeRatesLookupStore,
@@ -38,7 +40,6 @@
         isLifetimeDiamondStore,
         isPreviewingOrLapsed,
         isPrivateCommunityPreview,
-        lastOnlineStatus,
         messageIndexStore,
         messageReadByThem,
         messagesRead,
@@ -91,7 +92,6 @@
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
     import { callLength, callMedia, callState, isLiveCall } from "@src/logic/conversation/callItem";
     import { ChatSearch } from "@src/logic/conversation/chatSearch.svelte";
-    import { directChatStatus } from "@src/logic/conversation/chatStatus";
     import { editMessage, replyToMessage } from "@src/logic/conversation/draftActions";
     import {
         quoteFor,
@@ -295,7 +295,7 @@
             current = false;
         };
     });
-    const online = $derived(lastOnlineStatus($_, $now, lastOnline));
+    const dmLine = $derived(directChatSubtitle($_, them, $now, lastOnline));
 
     const sub = $derived.by(() => {
         if (chat === undefined) return "";
@@ -307,8 +307,7 @@
                 },
             });
         }
-        if (dmStatus === "suspended") return $_("accountSuspended");
-        return dmStatus === "last_online" ? online[0] : "";
+        return dmLine.text;
     });
 
     const avatarColor = $derived(
@@ -1136,7 +1135,7 @@
                 <Avatar
                     size={36}
                     color={avatarColor}
-                    online={chat?.kind === "direct_chat" && online[1]}
+                    online={chat?.kind === "direct_chat" && dmLine.online}
                 />
             {/snippet}
         </NativePageHeader>
