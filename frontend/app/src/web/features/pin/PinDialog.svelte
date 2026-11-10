@@ -6,7 +6,7 @@
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import { _ } from "svelte-i18n";
     import PinField from "./PinField.svelte";
-    import { PIN_LENGTH } from "./pinPrompt";
+    import { PIN_LENGTH } from "@src/logic/composer/sendPrompts";
 
     interface Props {
         onEnter: (pin: string) => void;

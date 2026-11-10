@@ -115,6 +115,7 @@
         MemberFinder,
         mentionsFor,
         pickableAttachments,
+        composerAnswer,
         sendComposed,
         sendVoiceRecording,
         throttleCountdown,
@@ -609,10 +610,14 @@
     // a Diamond member's voice messages may be longer
     const voiceMaxBytes = $derived(maxMediaSizes($isDiamondStore).audio);
 
-    // sent as a reply to the draft's reply, if any; refused, the take stays to send again
-    async function sendVoice(context: MessageContext, recording: Blob, mimeType: string) {
-        const sent = await sendVoiceRecording(client, context, recording, mimeType);
-        if (sent.kind !== "posted") throw new Error(sent.reason);
+    // sent as a reply to the draft's reply, if any; refused, the take stays to send again (quietly
+    // when the rules were turned down)
+    async function sendVoice(
+        context: MessageContext,
+        recording: Blob,
+        mimeType: string,
+    ): Promise<false | undefined> {
+        return composerAnswer(await sendVoiceRecording(client, context, recording, mimeType));
     }
 
     // the @mention picker: for the "@word" being typed, who in this chat can be mentioned (never
@@ -685,15 +690,17 @@
         list?.scrollToMessageIndex(context, index, false);
     }
 
-    // done once the message shows here; refused (throttled, the rules or the PIN turned down, a
-    // send already on its way, a bot that takes no direct messages), it rejects and the composer
-    // keeps the draft (logic/composer's sendComposed, which a thread sends to the thread with)
-    async function send(context: MessageContext, text: string): Promise<void> {
-        const sent = await sendComposed(client, chat, context, text, {
-            content: draftAttachment(draft),
-            shown: staged !== null,
-        });
-        if (sent.kind !== "posted") throw new Error(sent.reason);
+    // done once the message shows here; the rules or the PIN turned down, the composer keeps the
+    // draft quietly (false); refused (throttled, a send already on its way, a bot that takes no
+    // direct messages), it rejects and the composer keeps the draft and says so (logic/composer's
+    // sendComposed, which a thread sends to the thread with)
+    async function send(context: MessageContext, text: string): Promise<false | undefined> {
+        return composerAnswer(
+            await sendComposed(client, chat, context, text, {
+                content: draftAttachment(draft),
+                shown: staged !== null,
+            }),
+        );
     }
 
     // ── what can be shown ──

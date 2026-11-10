@@ -1904,7 +1904,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "A promise keeps the draft until it resolves; rejected, it stays with an error; resolved `false`, it stays without one, the user having backed out (by hand)."
       },
       {
         "name": "onAttach",
@@ -1948,7 +1948,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Rejected, the take stays in review with an error; resolved `false`, it stays without one, the user having backed out (by hand)."
       },
       {
         "name": "voiceMimeType",

@@ -16,6 +16,7 @@ import {
     canAttachNow,
     canRecordVoice,
     chatEntryState,
+    composerAnswer,
     composerBuilders,
     attachmentToSend,
     draftAttachment,
@@ -445,6 +446,20 @@ describe("sending what the composer holds", () => {
         });
     });
 
+    test("is declined, keeping the draft quietly, when the rules or the PIN are turned down", async () => {
+        for (const kind of ["rules_declined", "pin_cancelled"] as const) {
+            expect(await sendComposed(client({ kind }), chat, { chatId: chat.id }, "hi", none)).toEqual(
+                { kind: "declined" },
+            );
+        }
+    });
+
+    test("tells the library's composer: nothing once posted, false when declined, a throw when refused", () => {
+        expect(composerAnswer({ kind: "posted" })).toBeUndefined();
+        expect(composerAnswer({ kind: "declined" })).toBe(false);
+        expect(() => composerAnswer({ kind: "refused", reason: "throttled" })).toThrow("throttled");
+    });
+
     test("captions the attachment shown, with no text for an empty caption", async () => {
         const c = client();
         const file = { kind: "file_content" } as AttachmentContent;
@@ -629,6 +644,12 @@ describe("sending a voice message", () => {
         expect(to).toBe(context);
         expect(data.byteLength).toBe(3);
         expect(mime).toBe("audio/mp4");
+    });
+
+    test("is declined, keeping the take quietly, when the rules are turned down", async () => {
+        expect(
+            await sendVoiceRecording(client({ kind: "rules_declined" }), context, recording, "a"),
+        ).toEqual({ kind: "declined" });
     });
 
     test("is refused, keeping the take, when it isn't posted", async () => {

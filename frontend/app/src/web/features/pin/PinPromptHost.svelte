@@ -14,7 +14,7 @@
     import { ForgotPin } from "./forgotPin.svelte";
     import NewPinDialog from "./NewPinDialog.svelte";
     import PinDialog from "./PinDialog.svelte";
-    import { PinAnswer } from "./pinPrompt";
+    import { PinAnswer } from "@src/logic/composer/sendPrompts";
 
     let { request }: { request: PinNumberResolver } = $props();
 

@@ -55,6 +55,7 @@
         MemberFinder,
         mentionsFor,
         pickableAttachments,
+        composerAnswer,
         sendComposed,
         sendVoiceRecording,
         throttleCountdown,
@@ -236,9 +237,9 @@
     );
     const voiceMaxBytes = $derived(maxMediaSizes($isDiamondStore).audio);
 
-    async function sendVoice(recording: Blob, mimeType: string) {
-        const sent = await sendVoiceRecording(client, context, recording, mimeType);
-        if (sent.kind !== "posted") throw new Error(sent.reason);
+    // the rules turned down, the take stays quietly; refused, with an error
+    async function sendVoice(recording: Blob, mimeType: string): Promise<false | undefined> {
+        return composerAnswer(await sendVoiceRecording(client, context, recording, mimeType));
     }
 
     // @mentions: who in this chat is offered for the "@word" being typed, and those it doesn't
@@ -276,11 +277,12 @@
         typing.input(text);
     }
 
-    // done once the message shows; refused, it rejects and the composer keeps the draft. With
+    // done once the message shows; the rules (or the PIN) turned down, the composer keeps the draft
+    // quietly (false); refused, it rejects and the composer keeps the draft and says so. With
     // photos and videos picked: those picked as it's sent, once they're prepared, the first with
     // the caption, the others a message each after it, and the panel goes (06); any picked
     // meanwhile stay for the next. None could be prepared (each has said so): the caption alone.
-    async function send(text: string): Promise<void> {
+    async function send(text: string): Promise<false | undefined> {
         typing.stopped();
         const ids = picks.ids();
         if (ids.length > 0) {
@@ -291,19 +293,20 @@
                     content: contents[0],
                     shown: true,
                 });
-                if (sent.kind !== "posted") throw new Error(sent.reason);
+                if (sent.kind !== "posted") return composerAnswer(sent);
                 picks.removeSent(taken.picks);
                 slot.close();
                 if (contents.length > 1) void sendAfter(contents.slice(1));
-                return;
+                return undefined;
             }
             if (text.trim() === "") throw new Error("nothing prepared");
         }
-        const sent = await sendComposed(client, chat, context, text, {
-            content: draftAttachment(draft),
-            shown: staged !== null,
-        });
-        if (sent.kind !== "posted") throw new Error(sent.reason);
+        return composerAnswer(
+            await sendComposed(client, chat, context, text, {
+                content: draftAttachment(draft),
+                shown: staged !== null,
+            }),
+        );
     }
 
     // the photos and videos after the first, a message each; refused, those left are picked again,

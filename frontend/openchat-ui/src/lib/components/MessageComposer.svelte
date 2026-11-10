@@ -2,7 +2,8 @@
      mic ↔ send swap, and a voice flow: recording (live waveform + timer) → review (play back, seek) → send or delete.
      Optional reply / edit strip (context) and a staged attachment (chip or media tray). Esc closes menus, cancels the
      reply/edit, or deletes a recording. `demo` forces a state for docs/screenshots; otherwise fully interactive.
-     Sending: when onSend returns a promise the draft stays until it resolves (and stays, with an error, if it rejects).
+     Sending: when onSend returns a promise the draft stays until it resolves (and stays, with an error, if it rejects;
+     resolving `false` keeps it without one: the user backed out, as of a prompt to accept a chat's rules).
      Voice is real: the mic records with MediaRecorder (live levels from the microphone) and onVoice gets the audio Blob;
      the mic only shows with onVoice and a browser that can record. Forced demo states are visual only and never send.
      Native hosts: the + and emoji buttons can sit after the text (plusPlacement / emojiPlacement), the host can own the
@@ -62,12 +63,15 @@
     /** Whether the text box takes focus when the composer mounts, unless a dialog is open (key the composer to focus it again). */
     autofocus?: boolean;
     /** Send the text. Return a promise to keep the draft until it resolves (kept with an error if it rejects). */
+    /** A promise keeps the draft until it resolves; rejected, it stays with an error; resolved `false`, it stays
+     *  without one (the user backed out of the send). */
     onSend?: (text: string) => Promise<unknown> | void;
     onAttach?: (kind: AttachKind) => void;
     /** What the + menu offers (all by default); with none, there's no + button. */
     attachKinds?: AttachKind[];
     onGif?: (query: string) => void;
     /** A recorded voice message (duration in seconds). The mic is hidden without it. Reject to keep the take. */
+    /** Rejected, the take stays in review with an error; resolved `false`, it stays without one (the user backed out). */
     onVoice?: (r: { blob: Blob; duration: number; mimeType: string }) => Promise<unknown> | void;
     /** The mime type to record voice in, where the browser can (else its own). */
     voiceMimeType?: string;
@@ -376,9 +380,10 @@
     if (result && typeof (result as Promise<unknown>).then === 'function') {
       sending = true;
       try {
-        await result;
+        // false: the user backed out (the host kept it), so the draft stays without an error
+        const sent = await result;
         // anything typed while it was sending stays
-        if (draft.trim() === text) draft = '';
+        if (sent !== false && draft.trim() === text) draft = '';
       } catch {
         failure = 'send';
       } finally {
@@ -579,8 +584,9 @@
     failure = null;
     sending = true;
     try {
-      await onVoice({ blob: clip.blob, duration: Math.round(clip.duration * 10) / 10, mimeType: clip.blob.type });
-      resetVoice();
+      const sent = await onVoice({ blob: clip.blob, duration: Math.round(clip.duration * 10) / 10, mimeType: clip.blob.type });
+      // false: the user backed out, and the take stays in review without an error
+      if (sent !== false) resetVoice();
     } catch {
       // the take stays in review so it can be sent again
       failure = 'voice';

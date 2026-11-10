@@ -861,3 +861,7 @@
 - `lib/behaviours/optimistic.svelte.ts` exports `CANCELLED` (`{ cancelled: true }`, frozen) and `isCancelled`, so the shape the host rejects with to give something up has one owner: the app throws `CANCELLED` (its `signInFirstOrCancel`, ProfileDialogScreen's sign-in steps) rather than writing the object again, and the library checks it with `isCancelled`. `Optimistic` uses it in place of its own check (no change in what it does); `ProfileDialog`'s sign-in "add" steps too (`siStep`, the same: back to the form with nothing said).
 - `Waited` (`lib/behaviours/waited.svelte.ts`) now treats a `CANCELLED` rejection as `Optimistic` does: the value from before stays and `failed` isn't set. `ThreadPanel`, its one user, doesn't show `failed`, so nothing on screen changes; the app's guest Follow rejects with it. No props changed. `optimistic.spec.ts` and `waited.spec.ts` check it.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it, "A change given up").
+
+## 2026-11-10 — the composer keeps a draft quietly when the user backs out of a send (native N6), by hand
+- `MessageComposer`: `onSend` (and `onVoice`) resolving `false` keeps the draft (or the voice take in review) without the "Couldn't send" error a rejection shows: the user backed out of the send, as when they cancel the prompt to accept a chat's rules. Anything else it resolves to clears the draft as before. `meta.json` (both props' docs).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

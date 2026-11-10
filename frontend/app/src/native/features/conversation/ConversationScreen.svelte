@@ -7,8 +7,9 @@
      on the right; swipe right to reply, left to edit your own; call items; who is typing (a bubble
      in DMs, a strip resting on the composer in groups); the media viewer; a message's long-press menu
      (MessageActions: reactions, Reply, Forward, Copy, Info …); and the composer with the keyboard and
-     its panels under it (ConversationComposer, KeyboardSlot). The details (features/details) are
-     pushed over it. -->
+     its panels under it (ConversationComposer, KeyboardSlot), and the rules sheet when sending
+     needs the chat's rules accepted (RulesSheet). The details (features/details) are pushed over
+     it. -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -149,6 +150,7 @@
     } from "./conversation.adapter";
     import { HeldWhileLeaving } from "./heldWhileLeaving";
     import MessageActions from "./MessageActions.svelte";
+    import RulesSheet from "./RulesSheet.svelte";
     import SearchBar from "./SearchBar.svelte";
     import { onSearchRequest } from "./searchRequests";
     import ConversationComposer from "./ConversationComposer.svelte";
@@ -1404,6 +1406,9 @@
 />
 
 <MessageActions bind:this={messageActions} {chat} {context} />
+
+<!-- sending here needs the chat's rules accepted first: the client waits for the answer -->
+<RulesSheet shown={selected} {overlays} />
 
 {#if viewing !== undefined}
     <MediaViewer content={viewing} onClose={() => (viewing = undefined)} />
