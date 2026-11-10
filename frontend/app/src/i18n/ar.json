@@ -2218,7 +2218,12 @@
             "chitEarned": "CHIT المكتسبة",
             "thisChat": "هذه المحادثة",
             "disappearing": "الرسائل المؤقتة",
-            "disappearAfter": "بعد {value}",
+            "disappearAfter": {
+                "minute": "{count, plural, zero {بعد # دقيقة} one {بعد دقيقة واحدة} two {بعد دقيقتين} few {بعد # دقائق} many {بعد # دقيقة} other {بعد # دقيقة}}",
+                "hour": "{count, plural, zero {بعد # ساعة} one {بعد ساعة واحدة} two {بعد ساعتين} few {بعد # ساعات} many {بعد # ساعة} other {بعد # ساعة}}",
+                "day": "{count, plural, zero {بعد # يوم} one {بعد يوم واحد} two {بعد يومين} few {بعد # أيام} many {بعد # يومًا} other {بعد # يوم}}",
+                "week": "{count, plural, zero {بعد # أسبوع} one {بعد أسبوع واحد} two {بعد أسبوعين} few {بعد # أسابيع} many {بعد # أسبوعًا} other {بعد # أسبوع}}"
+            },
             "duration": {
                 "minute": "{count, plural, zero {# دقيقة} one {دقيقة واحدة} two {دقيقتان} few {# دقائق} many {# دقيقة} other {# دقيقة}}",
                 "hour": "{count, plural, zero {# ساعة} one {ساعة واحدة} two {ساعتان} few {# ساعات} many {# ساعة} other {# ساعة}}",

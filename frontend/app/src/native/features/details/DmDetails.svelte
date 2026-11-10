@@ -3,7 +3,8 @@
      person's avatar, name and @username; the tiles Call / Search / Mute (a bot's only tile, Search,
      goes on the cover); About (their bio, member
      since, the CHIT they've earned); This chat (disappearing messages, the library's TimedToggle:
-     DisappearingRow; the plan's read receipts aren't a setting the app has); Block. Their profile is
+     DisappearingRow; not with a bot, a deleted user or someone blocked, as the conversation's menu:
+     `dmDisappearingAllowed`; the plan's read receipts aren't a setting the app has); Block. Their profile is
      loaded as it opens (logic/profile's ProfileCardData, the web's user card's); About shows once
      it's in. -->
 <script lang="ts">
@@ -23,6 +24,7 @@
     import AnchoredMenu from "@openchat/ui/src/native/AnchoredMenu.svelte";
     import SettingsAction from "@openchat/ui/src/native/SettingsAction.svelte";
     import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
+    import { dmDisappearingAllowed } from "@src/logic/chats/chatDisappearing.svelte";
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
     import { senderColor } from "@src/logic/conversation/messageRow";
     import { ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
@@ -65,6 +67,7 @@
     const favourite = $derived($favouritesStore.has(chat.id));
     const muted = $derived(chat.membership.notificationsMuted);
     const blocked = $derived($blockedUsersStore.has(userId));
+    const disappearing = $derived(dmDisappearingAllowed({ user: them, blocked }));
 
     const tiles = $derived(
         dmTiles(
@@ -214,9 +217,11 @@
             </SettingsGroup>
         {/if}
 
-        <SettingsGroup label={$_("native.details.thisChat")}>
-            <DisappearingRow {chat} {context} />
-        </SettingsGroup>
+        {#if disappearing}
+            <SettingsGroup label={$_("native.details.thisChat")}>
+                <DisappearingRow {chat} {context} />
+            </SettingsGroup>
+        {/if}
 
         {#if !isBot}
             <SettingsGroup>

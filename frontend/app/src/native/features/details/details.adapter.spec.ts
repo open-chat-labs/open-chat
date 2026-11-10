@@ -1,7 +1,25 @@
 import { ROLE_ADMIN, ROLE_MEMBER, ROLE_MODERATOR, ROLE_NONE, ROLE_OWNER } from "@client";
+import { DISAPPEARING_DURATIONS } from "@src/logic/chats/disappearingMessages";
+import { IntlMessageFormat } from "intl-messageformat";
 import { describe, expect, test } from "vitest";
+import ar from "../../../i18n/ar.json";
+import cn from "../../../i18n/cn.json";
+import de from "../../../i18n/de.json";
+import en from "../../../i18n/en.json";
+import es from "../../../i18n/es.json";
+import fa from "../../../i18n/fa.json";
+import fr from "../../../i18n/fr.json";
+import hi from "../../../i18n/hi.json";
+import it from "../../../i18n/it.json";
+import iw from "../../../i18n/iw.json";
+import jp from "../../../i18n/jp.json";
+import pl from "../../../i18n/pl.json";
+import ru from "../../../i18n/ru.json";
+import uk from "../../../i18n/uk.json";
+import vi from "../../../i18n/vi.json";
 import {
     createdFacts,
+    disappearAfterLabel,
     disappearingValue,
     dmTiles,
     durationLabel,
@@ -90,6 +108,12 @@ describe("values", () => {
         expect(durationLabel("1 week", t)).toBe("native.details.duration.week(1)");
     });
 
+    test("say how long disappearing messages last, in a phrase of the unit's own", () => {
+        expect(disappearAfterLabel("8 hours", t)).toBe("native.details.disappearAfter.hour(8)");
+        expect(disappearAfterLabel("30 days", t)).toBe("native.details.disappearAfter.day(30)");
+        expect(disappearAfterLabel("forever", t)).toBe("forever");
+    });
+
     test("say a group's disappearing messages are off, or how long they last", () => {
         expect(disappearingValue(undefined, t)).toBe("native.you.off");
         expect(disappearingValue(BigInt(86_400_000), t)).toBe("native.details.duration.day(1)");
@@ -153,5 +177,43 @@ describe("a member's ⋯", () => {
     test("names a role by its word", () => {
         expect(roleWord(ROLE_MODERATOR)).toBe("moderator");
         expect(roleWord(ROLE_NONE)).toBe("member");
+    });
+});
+
+// the review of 2026-11-10: "After {value}" around a length in its own case read "Nach 30 Tage"
+// and "Po 1 dzień"; the preposition sets the case, so each unit has its own phrase
+describe("the disappearing row's subtitle in each language", () => {
+    const locales = { ar, cn, de, en, es, fa, fr, hi, it, iw, jp, pl, ru, uk, vi };
+    type Locale = (typeof locales)[keyof typeof locales];
+    const translate =
+        (lang: string, locale: Locale) =>
+        (key: string, values?: Record<string, string | number>): string => {
+            const units: Record<string, string> = locale.native.details.disappearAfter;
+            const message = units[key.replace("native.details.disappearAfter.", "")];
+            if (message === undefined) throw new Error(`${lang}: no ${key}`);
+            return String(new IntlMessageFormat(message, lang).format(values));
+        };
+    const say = (lang: keyof typeof locales, id: string) =>
+        disappearAfterLabel(id, translate(lang, locales[lang]));
+
+    test("every language says every length", () => {
+        for (const [lang, locale] of Object.entries(locales)) {
+            for (const id of [...DISAPPEARING_DURATIONS, "2 days", "2 weeks", "1 minute"]) {
+                expect(disappearAfterLabel(id, translate(lang, locale))).toMatch(/\d|\p{L}/u);
+            }
+        }
+    });
+
+    test("the length takes the case its preposition asks for", () => {
+        expect(say("en", "8 hours")).toBe("After 8 hours");
+        expect(say("de", "30 days")).toBe("Nach 30 Tagen");
+        expect(say("de", "1 day")).toBe("Nach 1 Tag");
+        expect(say("pl", "1 day")).toBe("Po 1 dniu");
+        expect(say("pl", "1 week")).toBe("Po 1 tygodniu");
+        expect(say("pl", "30 days")).toBe("Po 30 dniach");
+        expect(say("ru", "1 week")).toBe("Через 1 неделю");
+        expect(say("uk", "1 hour")).toBe("Через 1 годину");
+        expect(say("hi", "1 hour")).toBe("1 घंटे बाद");
+        expect(say("ar", "2 days")).toBe("بعد يومين");
     });
 });

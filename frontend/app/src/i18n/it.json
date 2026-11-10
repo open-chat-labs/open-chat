@@ -2218,7 +2218,12 @@
             "chitEarned": "CHIT guadagnati",
             "thisChat": "Questa chat",
             "disappearing": "Messaggi a scomparsa",
-            "disappearAfter": "Dopo {value}",
+            "disappearAfter": {
+                "minute": "{count, plural, other {Dopo # min}}",
+                "hour": "{count, plural, one {Dopo # ora} other {Dopo # ore}}",
+                "day": "{count, plural, one {Dopo # giorno} other {Dopo # giorni}}",
+                "week": "{count, plural, one {Dopo # settimana} other {Dopo # settimane}}"
+            },
             "duration": {
                 "minute": "{count, plural, other {# min}}",
                 "hour": "{count, plural, one {# ora} other {# ore}}",

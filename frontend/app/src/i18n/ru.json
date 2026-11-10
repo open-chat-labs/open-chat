@@ -2218,7 +2218,12 @@
             "chitEarned": "Заработано CHIT",
             "thisChat": "Этот чат",
             "disappearing": "Исчезающие сообщения",
-            "disappearAfter": "Через {value}",
+            "disappearAfter": {
+                "minute": "{count, plural, other {Через # мин}}",
+                "hour": "{count, plural, one {Через # час} few {Через # часа} many {Через # часов} other {Через # часа}}",
+                "day": "{count, plural, one {Через # день} few {Через # дня} many {Через # дней} other {Через # дня}}",
+                "week": "{count, plural, one {Через # неделю} few {Через # недели} many {Через # недель} other {Через # недели}}"
+            },
             "duration": {
                 "minute": "{count, plural, other {# мин}}",
                 "hour": "{count, plural, one {# час} few {# часа} many {# часов} other {# часа}}",

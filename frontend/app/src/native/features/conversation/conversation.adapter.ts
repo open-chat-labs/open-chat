@@ -115,6 +115,11 @@ export function disappearingSubmenu(
     };
 }
 
+/** Whether a menu item is one of the disappearing submenu's rows (Off or a length). */
+export function isDisappearingItem(id: string): boolean {
+    return id.startsWith(DISAPPEARING_ITEM);
+}
+
 /**
  * What a pick from the disappearing submenu sets: a length switches them on for it; Off switches
  * them off. None for another item, or for the setting they already have.
@@ -123,7 +128,7 @@ export function disappearingPick(
     id: string,
     current: DisappearingSetting,
 ): DisappearingSetting | undefined {
-    if (!id.startsWith(DISAPPEARING_ITEM)) return undefined;
+    if (!isDisappearingItem(id)) return undefined;
     const picked = id.slice(DISAPPEARING_ITEM.length);
     const next: DisappearingSetting =
         picked === "off" ? { on: false, after: current.after } : { on: true, after: picked };

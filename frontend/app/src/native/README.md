@@ -106,7 +106,8 @@ DM's settings in `logic/chats/dmSettings`, a group's disappearing messages in
 `logic/chats/groupDisappearing`, the disappearing lengths in
 `logic/chats/disappearingMessages` (on the library's `lib/durations`, TimedToggle's), and the one
 setting the details' switch and the conversation menu's submenu both read and save in
-`logic/chats/chatDisappearing`), and the theme the web and Welcome's menu keep
+`logic/chats/chatDisappearing`, with the length switching it on goes back to in the client's
+`disappearingLengthsStore`), and the theme the web and Welcome's menu keep
 (`theme/themes.ts`). The
 marketing pages (Landing, Learn, the terms and privacy policy) aren't the app's: they open on the
 website in the default browser (`shell/onWeb.ts`), as the old native app's About and a deep link

@@ -2218,7 +2218,12 @@
             "chitEarned": "Zdobyte CHIT",
             "thisChat": "Ten czat",
             "disappearing": "Znikające wiadomości",
-            "disappearAfter": "Po {value}",
+            "disappearAfter": {
+                "minute": "{count, plural, other {Po # min}}",
+                "hour": "{count, plural, other {Po # godz.}}",
+                "day": "{count, plural, one {Po # dniu} few {Po # dniach} many {Po # dniach} other {Po # dnia}}",
+                "week": "{count, plural, one {Po # tygodniu} few {Po # tygodniach} many {Po # tygodniach} other {Po # tygodnia}}"
+            },
             "duration": {
                 "minute": "{count, plural, other {# min}}",
                 "hour": "{count, plural, other {# godz.}}",

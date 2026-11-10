@@ -2218,7 +2218,12 @@
             "chitEarned": "CHIT ganados",
             "thisChat": "Este chat",
             "disappearing": "Mensajes temporales",
-            "disappearAfter": "Tras {value}",
+            "disappearAfter": {
+                "minute": "{count, plural, other {Tras # min}}",
+                "hour": "{count, plural, one {Tras # hora} other {Tras # horas}}",
+                "day": "{count, plural, one {Tras # día} other {Tras # días}}",
+                "week": "{count, plural, one {Tras # semana} other {Tras # semanas}}"
+            },
             "duration": {
                 "minute": "{count, plural, other {# min}}",
                 "hour": "{count, plural, one {# hora} other {# horas}}",

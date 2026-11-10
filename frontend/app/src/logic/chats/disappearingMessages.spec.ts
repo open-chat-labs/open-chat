@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
     DISAPPEARING_DURATIONS,
+    DISAPPEARING_START,
     disappearingChoices,
     disappearingChoicesWith,
     durationMs,
@@ -23,9 +24,12 @@ describe("ttlDurationId", () => {
         }
     });
 
-    // #10112: turned on, disappearing messages start at a week
-    test("off reads as a week, the length they start at", () => {
-        expect(ttlDurationId(undefined)).toBe("1 week");
+    // native plan 10: "Default when first enabled: 1 day", the one default every screen on this
+    // module starts at (the web's DM panel too, which started at the client's week, #10112)
+    test("off reads as a day, the length they start at", () => {
+        expect(DISAPPEARING_START).toBe("1 day");
+        expect(ttlDurationId(undefined)).toBe(DISAPPEARING_START);
+        expect(ttlDurationId(0n)).toBe(DISAPPEARING_START);
     });
 });
 

@@ -2218,7 +2218,12 @@
             "chitEarned": "कमाए गए CHIT",
             "thisChat": "यह चैट",
             "disappearing": "गायब होने वाले संदेश",
-            "disappearAfter": "{value} बाद",
+            "disappearAfter": {
+                "minute": "{count, plural, other {# मिनट बाद}}",
+                "hour": "{count, plural, other {# घंटे बाद}}",
+                "day": "{count, plural, other {# दिन बाद}}",
+                "week": "{count, plural, other {# सप्ताह बाद}}"
+            },
             "duration": {
                 "minute": "{count, plural, one {# मिनट} other {# मिनट}}",
                 "hour": "{count, plural, one {# घंटा} other {# घंटे}}",

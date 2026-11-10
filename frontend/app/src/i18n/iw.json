@@ -2218,7 +2218,12 @@
             "chitEarned": "CHIT שנצברו",
             "thisChat": "הצ'אט הזה",
             "disappearing": "הודעות נעלמות",
-            "disappearAfter": "אחרי {value}",
+            "disappearAfter": {
+                "minute": "{count, plural, other {אחרי # דק׳}}",
+                "hour": "{count, plural, one {אחרי שעה אחת} two {אחרי שעתיים} other {אחרי # שעות}}",
+                "day": "{count, plural, one {אחרי יום אחד} two {אחרי יומיים} other {אחרי # ימים}}",
+                "week": "{count, plural, one {אחרי שבוע אחד} two {אחרי שבועיים} other {אחרי # שבועות}}"
+            },
             "duration": {
                 "minute": "{count, plural, other {# דק׳}}",
                 "hour": "{count, plural, one {שעה אחת} two {שעתיים} other {# שעות}}",

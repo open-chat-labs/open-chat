@@ -4,6 +4,7 @@ import {
     disappearingPick,
     disappearingSubmenu,
     headerMenuItems,
+    isDisappearingItem,
     listWaiting,
     type HeaderMenuState,
 } from "./conversation.adapter";
@@ -105,6 +106,16 @@ describe("the menu's disappearing messages", () => {
         const other = disappearingSubmenu({ on: true, after: "2 days" }, "t", words);
         expect(other.items).toHaveLength(10);
         expect(other.items.find((i) => i.selected)?.id).toBe("disappearing:2 days");
+    });
+
+    // the conversation's onMenu sends only these to the disappearing setting; any other id,
+    // one added later included, isn't swallowed by it
+    test("tells the submenu's rows from the menu's other items", () => {
+        const items = disappearingSubmenu({ on: true, after: "1 day" }, "t", words).items;
+        expect(items.every((i) => isDisappearingItem(i.id))).toBe(true);
+        for (const id of ["disappearing", "mute", "details", "delete", "block", "leave"]) {
+            expect(isDisappearingItem(id)).toBe(false);
+        }
     });
 
     test("a pick sets a length or Off; the setting they already have sets nothing", () => {

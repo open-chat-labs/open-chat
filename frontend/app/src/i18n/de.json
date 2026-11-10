@@ -2218,7 +2218,12 @@
             "chitEarned": "Verdiente CHIT",
             "thisChat": "Dieser Chat",
             "disappearing": "Selbstlöschende Nachrichten",
-            "disappearAfter": "Nach {value}",
+            "disappearAfter": {
+                "minute": "{count, plural, other {Nach # Min.}}",
+                "hour": "{count, plural, other {Nach # Std.}}",
+                "day": "{count, plural, one {Nach # Tag} other {Nach # Tagen}}",
+                "week": "{count, plural, one {Nach # Woche} other {Nach # Wochen}}"
+            },
             "duration": {
                 "minute": "{count, plural, other {# Min.}}",
                 "hour": "{count, plural, other {# Std.}}",

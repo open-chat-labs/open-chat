@@ -106,6 +106,19 @@ export function durationLabel(id: string, t: Translate): string {
         : t(`native.details.duration.${parts.unit}`, { count: parts.count });
 }
 
+/**
+ * The disappearing row's subtitle while on ("After 8 hours") in the app's language: a phrase of
+ * its own for each unit, not "After {value}" around `durationLabel`'s words, since the
+ * preposition sets the length's case in some languages ("Nach 30 Tagen", "Po 1 dniu", "Через 1
+ * неделю").
+ */
+export function disappearAfterLabel(id: string, t: Translate): string {
+    const parts = durationParts(id);
+    return parts === undefined
+        ? id
+        : t(`native.details.disappearAfter.${parts.unit}`, { count: parts.count });
+}
+
 /** A group's disappearing messages as a value: Off, or how long they last. */
 export function disappearingValue(ttl: bigint | undefined, t: Translate): string {
     return ttl === undefined ? t("native.you.off") : durationLabel(ttlDurationId(ttl), t);

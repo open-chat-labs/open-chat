@@ -83,8 +83,7 @@
     import { observeRead } from "@src/core/observeRead";
     import {
         canSetDisappearing,
-        DISAPPEARING_START,
-        disappearingSetting,
+        ChatDisappearing,
         setChatDisappearing,
     } from "@src/logic/chats/chatDisappearing.svelte";
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
@@ -154,6 +153,7 @@
         callEventProps,
         disappearingPick,
         headerMenuItems,
+        isDisappearingItem,
         listWaiting,
         type HeaderMenuAction,
     } from "./conversation.adapter";
@@ -365,8 +365,21 @@
               }),
     );
 
-    // the chat's disappearing messages, one setting with the details' switch (native plan 04, 10),
-    // for those who may set them
+    // the chat's disappearing messages, one setting with the details' switch (native plan 04, 10):
+    // both a ChatDisappearing, going back to the same length when switched on again; for those who
+    // may set them (not in a DM with a bot, a deleted user or someone blocked)
+    const disappear = new ChatDisappearing(
+        untrack(() => screen.route.chatId),
+        () => chat?.eventsTTL,
+        (setting) =>
+            chat === undefined
+                ? Promise.reject(new Error("no chat"))
+                : setChatDisappearing(client, chat, setting),
+    );
+    $effect.pre(() => {
+        void chat?.eventsTTL;
+        untrack(() => disappear.sync());
+    });
     const disappearing = $derived(
         chat !== undefined &&
             canSetDisappearing(
@@ -374,8 +387,13 @@
                 chat,
                 chat.kind === "channel" ? $selectedCommunitySummaryStore : undefined,
                 $anonUserStore,
+                {
+                    user: them,
+                    blocked:
+                        chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId),
+                },
             )
-            ? disappearingSetting(chat.eventsTTL, DISAPPEARING_START)
+            ? disappear.current
             : undefined,
     );
 
@@ -404,12 +422,11 @@
               ),
     );
 
-    async function setDisappearing(current: ChatSummary, id: string) {
+    // a pick from the disappearing submenu: Off or a length
+    async function setDisappearing(id: string) {
         const setting = disappearing === undefined ? undefined : disappearingPick(id, disappearing);
         if (setting === undefined) return;
-        try {
-            await setChatDisappearing(client, current, setting);
-        } catch {
+        if (!(await disappear.set(setting.on, setting.after))) {
             context.toast($_("native.details.saveFailed"));
         }
     }
@@ -444,6 +461,10 @@
     function onMenu(id: string) {
         const current = chat;
         if (current === undefined) return;
+        if (isDisappearingItem(id)) {
+            void setDisappearing(id);
+            return;
+        }
         switch (id) {
             case "search":
                 openSearch();
@@ -519,9 +540,6 @@
                     });
                 }
                 break;
-            default:
-                // the disappearing submenu's Off and lengths
-                void setDisappearing(current, id);
         }
     }
 

@@ -2218,7 +2218,12 @@
             "chitEarned": "CHIT đã kiếm",
             "thisChat": "Cuộc trò chuyện này",
             "disappearing": "Tin nhắn tự xóa",
-            "disappearAfter": "Sau {value}",
+            "disappearAfter": {
+                "minute": "{count, plural, other {Sau # phút}}",
+                "hour": "{count, plural, other {Sau # giờ}}",
+                "day": "{count, plural, other {Sau # ngày}}",
+                "week": "{count, plural, other {Sau # tuần}}"
+            },
             "duration": {
                 "minute": "{count, plural, other {# phút}}",
                 "hour": "{count, plural, other {# giờ}}",

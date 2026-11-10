@@ -2218,7 +2218,12 @@
             "chitEarned": "已赚取 CHIT",
             "thisChat": "此聊天",
             "disappearing": "限时消息",
-            "disappearAfter": "{value}后",
+            "disappearAfter": {
+                "minute": "{count, plural, other {# 分钟后}}",
+                "hour": "{count, plural, other {# 小时后}}",
+                "day": "{count, plural, other {# 天后}}",
+                "week": "{count, plural, other {# 周后}}"
+            },
             "duration": {
                 "minute": "{count, plural, other {# 分钟}}",
                 "hour": "{count, plural, other {# 小时}}",

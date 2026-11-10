@@ -2218,7 +2218,12 @@
             "chitEarned": "CHIT gagnés",
             "thisChat": "Cette discussion",
             "disappearing": "Messages éphémères",
-            "disappearAfter": "Après {value}",
+            "disappearAfter": {
+                "minute": "{count, plural, other {Après # min}}",
+                "hour": "{count, plural, other {Après # h}}",
+                "day": "{count, plural, one {Après # jour} other {Après # jours}}",
+                "week": "{count, plural, one {Après # semaine} other {Après # semaines}}"
+            },
             "duration": {
                 "minute": "{count, plural, other {# min}}",
                 "hour": "{count, plural, other {# h}}",
