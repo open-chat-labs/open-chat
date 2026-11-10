@@ -116,7 +116,7 @@ describe("blocking from a conversation's menu", () => {
     test("says it's blocking at once, with the loader, then Blocked with Undo once it's in", async () => {
         const answer = deferred<BlockOutcome>();
         const client = { setBlockedInDirectChat: vi.fn(() => answer.promise) };
-        const running = blockWithToast(client, toasts, "u1", true, words);
+        const running = blockWithToast(client.setBlockedInDirectChat, toasts, "u1", true, words);
         expect(events).toEqual(["pending:Blocking @ann…"]);
         expect(done).not.toHaveBeenCalled();
         answer.resolve(ok);
@@ -127,7 +127,7 @@ describe("blocking from a conversation's menu", () => {
 
     test("its Undo unblocks in the same toast: Unblocking…, then Unblocked", async () => {
         const client = { setBlockedInDirectChat: vi.fn(async (): Promise<BlockOutcome> => ok) };
-        await blockWithToast(client, toasts, "u1", true, words);
+        await blockWithToast(client.setBlockedInDirectChat, toasts, "u1", true, words);
         const undo = givenUndo();
         if (undo === undefined || typeof undo === "function") throw new Error("no async undo");
         expect(undo.pending).toBe("Unblocking @ann…");
@@ -137,7 +137,7 @@ describe("blocking from a conversation's menu", () => {
 
     test("an Undo the backend refuses ends the toast for the failure", async () => {
         const client = { setBlockedInDirectChat: vi.fn(async (): Promise<BlockOutcome> => ok) };
-        await blockWithToast(client, toasts, "u1", true, words);
+        await blockWithToast(client.setBlockedInDirectChat, toasts, "u1", true, words);
         client.setBlockedInDirectChat.mockImplementation(async () => refused);
         const undo = givenUndo();
         if (undo === undefined || typeof undo === "function") throw new Error("no async undo");
@@ -154,7 +154,7 @@ describe("blocking from a conversation's menu", () => {
                 }),
             ),
         };
-        await blockWithToast(client, toasts, "u1", true, words);
+        await blockWithToast(client.setBlockedInDirectChat, toasts, "u1", true, words);
         expect(failed).toHaveBeenCalledTimes(1);
         expect(done).not.toHaveBeenCalled();
         expect(appToast?.kind).toBe("failure");
@@ -163,7 +163,7 @@ describe("blocking from a conversation's menu", () => {
     test("unblocking from the menu says so as it goes, then Unblocked", async () => {
         const answer = deferred<BlockOutcome>();
         const client = { setBlockedInDirectChat: vi.fn(() => answer.promise) };
-        const running = blockWithToast(client, toasts, "u1", false, words);
+        const running = blockWithToast(client.setBlockedInDirectChat, toasts, "u1", false, words);
         expect(events).toEqual(["pending:Unblocking @ann…"]);
         answer.resolve(ok);
         await running;

@@ -1,6 +1,6 @@
 import { i18nKey, type ChatIdentifier, type MessageFormatter, type OpenChat } from "@client";
 import { muteChat } from "@src/logic/chats/muteChat";
-import { toastStore } from "@src/stores/toast";
+import { toastStore, type ToastOutcome } from "@src/stores/toast";
 import type { ScreenContext } from "../app/screens";
 
 // A chat's toggles from its menus (the Chats tab's rows, a conversation's header), each saying so
@@ -50,13 +50,14 @@ export type BlockWords = {
 };
 
 /**
- * Blocks or unblocks the other user in a DM. Its toast shows at once with a loader, saying it's
- * on its way ("Blocking @ann…"), then how it went ("Blocked @ann"). A block's offers Undo, which
- * unblocks in the same toast ("Unblocking @ann…", then "Unblocked @ann"). A refusal takes the
- * toast's place with the failure.
+ * Blocks or unblocks someone through `setBlocked`: the other user in a DM
+ * (`setBlockedInDirectChat`), or a member of a group (the details' members). Its toast shows at
+ * once with a loader, saying it's on its way ("Blocking @ann…"), then how it went ("Blocked
+ * @ann"). A block's offers Undo, which unblocks in the same toast ("Unblocking @ann…", then
+ * "Unblocked @ann"). A refusal takes the toast's place with the failure.
  */
 export async function blockWithToast(
-    client: Pick<OpenChat, "setBlockedInDirectChat">,
+    setBlocked: (userId: string, blocked: boolean) => Promise<ToastOutcome>,
     toasts: Toasts,
     userId: string,
     blocking: boolean,
@@ -70,7 +71,7 @@ export async function blockWithToast(
         return;
     }
     const pending = toasts.pendingToast(words.blocking);
-    const outcome = await client.setBlockedInDirectChat(userId, true);
+    const outcome = await setBlocked(userId, true);
     if (outcome.kind !== "success") {
         pending.failed();
         toastStore.showOutcome(outcome);
@@ -80,7 +81,7 @@ export async function blockWithToast(
 
     // what the toast says once it's unblocked; none if it couldn't (the failure says why)
     async function unblock(): Promise<string | undefined> {
-        const outcome = await client.setBlockedInDirectChat(userId, false);
+        const outcome = await setBlocked(userId, false);
         if (outcome.kind === "success") return words.unblocked;
         toastStore.showOutcome(outcome);
         return undefined;

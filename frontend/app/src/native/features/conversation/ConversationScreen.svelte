@@ -7,7 +7,8 @@
      on the right; swipe right to reply, left to edit your own; call items; who is typing (a bubble
      in DMs, a strip resting on the composer in groups); the media viewer; a message's long-press menu
      (MessageActions: reactions, Reply, Forward, Copy, Info …); and the composer with the keyboard and
-     its panels under it (ConversationComposer, KeyboardSlot). The details are N6's. -->
+     its panels under it (ConversationComposer, KeyboardSlot). The details (features/details) are
+     pushed over it. -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -149,6 +150,7 @@
     import { HeldWhileLeaving } from "./heldWhileLeaving";
     import MessageActions from "./MessageActions.svelte";
     import SearchBar from "./SearchBar.svelte";
+    import { onSearchRequest } from "./searchRequests";
     import ConversationComposer from "./ConversationComposer.svelte";
     import { KeyboardSlot } from "./keyboardSlot.svelte";
     import { softKeyboard } from "../../aboveKeyboard.svelte";
@@ -461,7 +463,12 @@
                     const name = them?.username ? `@${them.username}` : title;
                     const words = (key: string) =>
                         $_(`native.conversation.toast.${key}`, { values: { name } });
-                    void blockWithToast(client, context, current.them.userId, blocking, {
+                    void blockWithToast(
+                        (userId, blocked) => client.setBlockedInDirectChat(userId, blocked),
+                        context,
+                        current.them.userId,
+                        blocking,
+                        {
                         blocking: words("blocking"),
                         blocked: words("blocked"),
                         unblocking: words("unblocking"),
@@ -519,6 +526,15 @@
         searchOpen = true;
         slot.close();
     }
+
+    // the details' Search tile goes back to here and opens it (N6). The route's chat is the
+    // screen's for its life: another chat is another screen
+    onDestroy(
+        onSearchRequest(
+            untrack(() => chatIdentifierToString(screen.route.chatId)),
+            openSearch,
+        ),
+    );
 
     function closeSearch() {
         searchOpen = false;
