@@ -34,6 +34,13 @@ describe('Optimistic', () => {
     expect(value.failed).toBe(true);
   });
 
+  test('a call the host gave up ({ cancelled: true }) falls back without failing', async () => {
+    const { value } = setup('off');
+    expect(await value.set('on', () => Promise.reject({ cancelled: true }))).toBe(false);
+    expect(value.current).toBe('off');
+    expect(value.failed).toBe(false);
+  });
+
   test('an older rejection after a newer request is ignored', async () => {
     const { value } = setup('none');
     const a = deferred(), b = deferred();

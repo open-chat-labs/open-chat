@@ -847,3 +847,7 @@
 ## 2026-11-09 — no scrollbars in the native tree (native N5d), by hand
 - `global.css`: under `[data-platform="native"]` (the native root on `<html>`), no element shows a scrollbar: `scrollbar-width: none` and `::-webkit-scrollbar { display: none }`. Android's WebView reads only the `::-webkit-scrollbar` rules, so the global 8px scrollbar showed on the native tree's scrollers (the conversation, the chat list, settings…) whatever their own `scrollbar-width: none` said. Scrolling is unchanged.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-10 — a change the host gives up rolls back without an error (web 10a), by hand
+- `Optimistic` (`lib/behaviours/optimistic.svelte.ts`): a call that rejects with `{ cancelled: true }` rolls the value back as any rejection does, but doesn't set `failed`: the host gave the change up (the app asks a guest to sign in instead), so nothing went wrong and there's nothing to say. Any other rejection is as before. `optimistic.spec.ts` checks it. The components on it follow: `GroupPanel`'s mute and @everyone pills then say nothing (they said "That didn't go through. Try again."), and so do `GroupSettingsDialog`'s About page Mute and Favourite. `GroupPanel`'s `onMuteChange` docs and `meta.json` (`onMuteChange`, `onMuteEveryoneChange`) say so.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
