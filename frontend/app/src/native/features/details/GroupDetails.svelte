@@ -91,7 +91,10 @@
         }),
     );
 
-    const tiles = $derived(groupTiles({ canInvite: permissions.canOpenInvite, muted }, t));
+    // inviting is for members (a public group's preview could otherwise share its link)
+    const tiles = $derived(
+        groupTiles({ canInvite: member && permissions.canOpenInvite, muted }, t),
+    );
 
     // ---- About, and the Members row: the members held (a large group's first page), highest
     // role first, as the web's panel lists them
@@ -199,7 +202,7 @@
         square
         {favourite}
         onBack={context.back}
-        onFavourite={member ? toggleFavourite : undefined}
+        onFavourite={toggleFavourite}
         onMore={undefined} />
 
     <div class="content">
