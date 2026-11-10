@@ -11399,7 +11399,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Rolls the mute back with an error on rejection (when the host does not control mutedUntil)."
+        "doc": "Rolls the mute back with an error on rejection (when the host does not control mutedUntil); without one when it rejects with { cancelled: true } (the host gave the change up)."
       },
       {
         "name": "onMuteEveryoneChange",
@@ -11410,7 +11410,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Rolls back with an error on rejection (when the host does not control muteEveryone)."
+        "doc": "Rolls back with an error on rejection (when the host does not control muteEveryone); without one when it rejects with { cancelled: true } (the host gave the change up)."
       },
       {
         "name": "onClose",

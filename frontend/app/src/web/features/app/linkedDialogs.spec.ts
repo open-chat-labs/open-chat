@@ -2,6 +2,7 @@ import {
     chainAt,
     chainBack,
     chainOpened,
+    openLinkedIntent,
     sameUrl,
     shows,
     type Chain,
@@ -80,5 +81,27 @@ describe("the dialog a back arrow returns to", () => {
         expect(shows("/chats?chit=earn", true)).toBe(false);
         expect(shows(PROFILE, true)).toBe(true);
         expect(shows("/chats", false)).toBe(false);
+    });
+});
+
+describe("a linked dialog opened from outside the dialogs", () => {
+    const page = new URLSearchParams("threads");
+    const overDialog = new URLSearchParams("chit");
+
+    test("gets an entry of its own over the page, which Back closes", () => {
+        expect(openLinkedIntent(page, { kind: "chit" }, false)).toBe("overlay");
+        expect(openLinkedIntent(page, { kind: "leaderboard" }, true)).toBe("overlay");
+    });
+
+    test("takes the entry of a dialog showing", () => {
+        expect(openLinkedIntent(overDialog, { kind: "profile" }, false)).toBe("auto");
+    });
+
+    test("leaves no entry behind for a guest asked to sign in for it", () => {
+        // DialogHost asks and takes it off the URL with a replace: a push here would leave the
+        // page twice in history, and the guest's first Back would seem to do nothing
+        expect(openLinkedIntent(page, { kind: "chit" }, true)).toBe("auto");
+        expect(openLinkedIntent(page, { kind: "diamond" }, true)).toBe("auto");
+        expect(openLinkedIntent(page, { kind: "profile" }, true)).toBe("auto");
     });
 });

@@ -5,10 +5,12 @@
      the one open (none for a bot), a cashtag (`<cash-tag>`) its token's or coin's price card in
      place of the one open, and the `profile` and `upgrade` events open the profile and
      Diamond. And it shows the chat's rules when sending needs them accepted first, and what the
-     client's app events ask to show (not found, no access …). -->
+     client's app events ask to show (not found, no access …). A guest is asked to sign in for a
+     linked dialog that needs an account, which opens once they have. -->
 <script lang="ts">
     import {
         allUsersStore,
+        anonUserStore,
         captureRulesAcceptanceStore,
         OpenChat,
         pinNumberResolverStore,
@@ -24,7 +26,8 @@
     import { removeQueryStringParam } from "@src/utils/urls";
     import type { CashtagClickedEvent } from "@webcomponents/cashTag";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { getContext } from "svelte";
+    import { getContext, untrack } from "svelte";
+    import { askToSignInForThisPage } from "@src/logic/auth/guestPass";
     import { closeOnNavigation, type DialogStack } from "../../shell/dialogStack.svelte";
     import RulesDialog from "../conversation/RulesDialog.svelte";
     import PinPromptHost from "../pin/PinPromptHost.svelte";
@@ -38,6 +41,7 @@
     import {
         builtDialogScreens,
         linkedDialog,
+        linkedDialogNeedsAccount,
         linkedDialogParam,
         shownLinkedDialog,
         type LinkedDialog,
@@ -56,7 +60,25 @@
     const client = getContext<OpenChat>("client");
 
     // not the CHIT dialog while CHIT is off: it doesn't open, and closes if CHIT is turned off
-    const linked = $derived(shownLinkedDialog(linkedDialog($querystringStore), $disableChit));
+    const requested = $derived(
+        shownLinkedDialog(linkedDialog($querystringStore), $disableChit),
+    );
+    // nor one for someone with an account while signed out
+    const asksSignIn = $derived(
+        requested !== undefined && $anonUserStore && linkedDialogNeedsAccount(requested),
+    );
+    const linked = $derived(asksSignIn ? undefined : requested);
+
+    // a guest who opens one is asked to sign in, over the page, and it opens once they have
+    // (AppScreen); its param leaves the URL meanwhile
+    $effect(() => {
+        if (!asksSignIn || requested === undefined) return;
+        const param = linkedDialogParam(requested);
+        untrack(() => {
+            askToSignInForThisPage(client);
+            navigate(removeQueryStringParam(param), "auto");
+        });
+    });
 
     // a linked dialog replaced by another kind while it's still showing hands its backdrop over,
     // so only the next dialog animates in: Diamond from the profile (openLinked, which plays no

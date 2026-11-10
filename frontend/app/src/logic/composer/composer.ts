@@ -61,7 +61,9 @@ export type EntryBlock =
     // the preview's Join (or, lapsed, re-join) footer
     | { kind: "preview"; lapsed: boolean }
     | { kind: "external" }
-    | { kind: "read_only"; key: "sendMessageDisabledAnon" | "readOnlyThread" | "readOnlyChat" };
+    // signed out: the old footers' "Please sign-in to send a message", with a Sign in action
+    | { kind: "anonymous" }
+    | { kind: "read_only"; key: "readOnlyThread" | "readOnlyChat" };
 
 /**
  * Why the reader can't send here, in the order the old footers checked; none when they can. Every
@@ -75,7 +77,7 @@ export function entryBlock(state: EntryState): EntryBlock | undefined {
         return { kind: "preview", lapsed: state.lapsed };
     }
     if (state.externalContent) return { kind: "external" };
-    if (state.anonymous) return { kind: "read_only", key: "sendMessageDisabledAnon" };
+    if (state.anonymous) return { kind: "anonymous" };
     if (!state.canSend) {
         return { kind: "read_only", key: state.thread ? "readOnlyThread" : "readOnlyChat" };
     }
@@ -119,9 +121,14 @@ export function chatEntryState(
 
 /**
  * What stands in for the entry where the reader can't send, in the old footers' words: a banner's
- * text (a resource key) and tone. A preview's shows only while its bar (Join) isn't known.
+ * text (a resource key) and tone. A preview's shows only while its bar (Join) isn't known. A
+ * guest's offers to sign in (`signIn`): the composer's Sign in prompt.
  */
-export function entryBlockBanner(block: EntryBlock): { key: string; tone: "info" | "warning" } {
+export function entryBlockBanner(block: EntryBlock): {
+    key: string;
+    tone: "info" | "warning";
+    signIn?: true;
+} {
     switch (block.kind) {
         case "suspended":
             return { key: "accountSuspended", tone: "warning" };
@@ -133,6 +140,8 @@ export function entryBlockBanner(block: EntryBlock): { key: string; tone: "info"
             return { key: block.lapsed ? "access.lapsed.label" : "readOnlyChat", tone: "info" };
         case "external":
             return { key: "externalContent.disclaimer", tone: "warning" };
+        case "anonymous":
+            return { key: "sendMessageDisabledAnon", tone: "info", signIn: true };
         case "read_only":
             return { key: block.key, tone: "info" };
     }

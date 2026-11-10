@@ -1,7 +1,7 @@
 import { AuthProvider, identityStateStore } from "@client";
+import { OPTIONS } from "@src/web/features/auth/auth.adapter";
 import { flushSync } from "svelte";
-import { AuthDialogProps, pageSignIns } from "./authDialog.svelte";
-import type { Auth } from "./signIn";
+import { AuthDialogProps, pageSignIns, type AuthDialogHost } from "./authDialog.svelte";
 
 let lastEmail = "me@example.com";
 
@@ -11,7 +11,9 @@ function fakeAuth(referrer: Promise<{ userId: string; name: string }>) {
         termsUrl: "/terms",
         lastEmail: () => lastEmail,
         loadReferrer: () => referrer,
-    } as unknown as Auth;
+        // the methods as AuthDialog names them: the web's own table, which createAuth gives
+        options: OPTIONS,
+    } as unknown as AuthDialogHost;
 }
 
 describe("the dialog's props", () => {
@@ -21,7 +23,7 @@ describe("the dialog's props", () => {
         const dialog = new AuthDialogProps({
             ...fakeAuth(referrer),
             loadReferrer,
-        } as unknown as Auth);
+        } as unknown as AuthDialogHost);
         expect(loadReferrer).not.toHaveBeenCalled();
         dialog.opening();
         expect(dialog.props([], AuthProvider.PASSKEY).referrer).toBeUndefined();
@@ -158,6 +160,28 @@ describe("a marketing page's own sign-ins", () => {
         await pageSignIns.trackEmail(Promise.resolve());
         pageSignIns.closed();
         expect(pageSignIns.signingIn).toBe(false);
+    });
+
+    test("go on to the app's home once signed in, or where the page asked to", () => {
+        pageSignIns.opened();
+        expect(pageSignIns.destination()).toBe("/");
+        // /diamond's Upgrade: on to the Diamond dialog, once, over the list the signed-in user
+        // starts on
+        let scope = "/chats";
+        pageSignIns.opened(() => `${scope}?diamond`);
+        scope = "/favourite";
+        expect(pageSignIns.destination()).toBe("/favourite?diamond");
+        expect(pageSignIns.destination()).toBe("/");
+        // the page's own Sign in, opened after, is a sign-in for the app
+        pageSignIns.opened(() => "/chats?diamond");
+        pageSignIns.opened();
+        expect(pageSignIns.destination()).toBe("/");
+    });
+
+    test("go on nowhere once the dialog has closed", () => {
+        pageSignIns.opened(() => "/chats?diamond");
+        pageSignIns.closed();
+        expect(pageSignIns.destination()).toBe("/");
     });
 
     test("keep waiting on the link before a resend that fails, and not on none", async () => {

@@ -844,6 +844,8 @@
             failed,
             confirmed,
             readonly,
+            // the native tree has no guest pass yet (10a is the web's)
+            guest: false,
             pinned: $selectedChatPinnedMessagesStore,
             translated: $translationsStore,
             undeleting: $undeletingMessagesStore,

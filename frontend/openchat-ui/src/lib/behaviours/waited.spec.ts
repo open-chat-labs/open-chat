@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { CANCELLED } from './optimistic.svelte';
 import { Waited } from './waited.svelte';
 
 const deferred = () => {
@@ -33,6 +34,13 @@ describe('Waited', () => {
     expect(value.current).toBe(false);
     expect(value.failed).toBe(true);
     expect(value.pending).toBe(false);
+  });
+
+  test('a call the host gave up (CANCELLED) leaves the value from before without failing', async () => {
+    const { value } = setup(false);
+    expect(await value.set(true, () => Promise.reject(CANCELLED))).toBe(false);
+    expect(value.current).toBe(false);
+    expect(value.failed).toBe(false);
   });
 
   test('a change while one is in flight is ignored', async () => {

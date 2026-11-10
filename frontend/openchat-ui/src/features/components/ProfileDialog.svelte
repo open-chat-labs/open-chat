@@ -200,7 +200,7 @@
 
 <script lang="ts">
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
-  import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
+  import { isCancelled, Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { modal } from '../../lib/behaviours/modal';
   import { onDestroy, onMount, untrack, type Snippet } from 'svelte';
   import Badge from '../../lib/components/Badge.svelte';
@@ -680,10 +680,10 @@
       value = await call();
     } catch (e) {
       // a host can say why, as AuthDialog's AuthFailure: { reason } (resource key or literal text), or that the user
-      // gave the step up: { cancelled: true }, back to the form with nothing said
-      const given = e as { reason?: unknown; cancelled?: unknown } | null;
+      // gave the step up: CANCELLED (lib/behaviours/optimistic), back to the form with nothing said
+      const given = e as { reason?: unknown } | null;
       const reason = typeof given?.reason === 'string' && given.reason ? given.reason : failKey;
-      if (mine === siRun) updateAdding({ waiting: false, error: given?.cancelled === true ? undefined : reason });
+      if (mine === siRun) updateAdding({ waiting: false, error: isCancelled(e) ? undefined : reason });
       return;
     }
     if (mine !== siRun) return;

@@ -1,4 +1,4 @@
-import { leftToBrowser, samePageFragment } from "./links";
+import { leftToBrowser, movesToFragment, pageOf, samePageFragment } from "./links";
 
 describe("a link to a fragment of the same page", () => {
     const here = { href: "https://oc.app/home?ref=abc" };
@@ -29,3 +29,27 @@ describe("a click the browser takes rather than the router", () => {
     });
 });
 
+describe("a route that only moves to a fragment of the page showing", () => {
+    const url = (pathname: string, querystring: string, hash: string) => ({
+        pathname,
+        querystring,
+        hash,
+    });
+
+    test("is one to the same path and query, with a fragment", () => {
+        expect(movesToFragment("/home", url("/home", "", "landing-features"))).toBe(true);
+        expect(movesToFragment("/home?ref=abc", url("/home", "ref=abc", "x"))).toBe(true);
+    });
+
+    test("isn't one to another page or query, the first route, or one without a fragment", () => {
+        expect(movesToFragment("/home", url("/features", "", "landing-features"))).toBe(false);
+        expect(movesToFragment("/home", url("/home", "ref=abc", "x"))).toBe(false);
+        expect(movesToFragment(undefined, url("/home", "", "landing-features"))).toBe(false);
+        expect(movesToFragment("/home", url("/home", "", ""))).toBe(false);
+    });
+
+    test("a page is its path and query", () => {
+        expect(pageOf(url("/home", "", "x"))).toBe("/home");
+        expect(pageOf(url("/home", "ref=abc", "x"))).toBe("/home?ref=abc");
+    });
+});

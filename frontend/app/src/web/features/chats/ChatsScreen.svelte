@@ -4,9 +4,11 @@
     import {
         chatRowActionLabel,
         chatRowMenu,
+        chatRowHasMenu,
         type ChatRowAction,
     } from "@src/logic/chats/chatMenu";
     import { muteChat } from "@src/logic/chats/muteChat";
+    import { signInFirst } from "@src/logic/auth/guestPass";
     import {
         communityDetailsPermissions,
         communityMenuPermissions,
@@ -97,8 +99,10 @@
         if (failed !== undefined) toastStore.showFailureToast(failed);
     }
 
-    // the row menu, in the app's words (chatRowMenu)
+    // the row menu, in the app's words (chatRowMenu); a preview's row has none, a guest's or
+    // anyone's (chatRowHasMenu)
     function menuFor(chat: ChatSummary, row: ChatListRow): MenuItem[] {
+        if (!chatRowHasMenu(chat)) return [];
         const actions = chatRowMenu(chat, {
             pinned: row.pinned,
             favourite: $favouritesStore.has(chat.id),
@@ -182,9 +186,17 @@
               }),
     );
 
+    // a guest is asked to sign in first
+    function createGroup() {
+        if (signInFirst(client)) return;
+        screen.dialogs.open({ kind: "create_group", level: "group" });
+    }
+
     // TODO: the thread count (L1). TODO(4b): the community's stats and bot items
     function onHeaderMenu(item: string) {
         if (item === "markAllRead") {
+            // a guest has read nothing: they're asked to sign in (logic/auth/guestPass)
+            if (signInFirst(client)) return;
             client.markAllReadForCurrentScope();
             return;
         }
@@ -239,7 +251,7 @@
     headerMembers={community?.memberCount ?? 0}
     {headerMenuItems}
     {onHeaderMenu}
-    onCreateGroup={() => screen.dialogs.open({ kind: "create_group", level: "group" })}
+    onCreateGroup={createGroup}
     onHeaderDetails={community &&
         (() => screen.dialogs.open({ kind: "manage", target: community.id, section: "main" }))}
     searchable

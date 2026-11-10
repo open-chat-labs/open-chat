@@ -1015,7 +1015,6 @@
     /* a chevron turning as its section opens or closes is briefly wider than its box */
     overflow-x: hidden;
     overscroll-behavior: contain;
-    scrollbar-width: thin;
   }
 
   /* the space between entries is each entry's own, so a closed (empty) sub-list adds none */

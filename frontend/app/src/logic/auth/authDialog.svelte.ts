@@ -1,9 +1,43 @@
 import { identityStateStore, signInOptions, type AuthProvider } from "@client";
-import type { AuthPerson } from "@openchat/ui/src/features/components/AuthDialog.svelte";
 import type { PageAuth } from "@openchat/ui/src/pages/pageAuth.svelte";
-import { OPTIONS } from "./auth.adapter";
-import { withoutAccount } from "@src/logic/auth/authFlow";
-import type { Auth } from "./signIn";
+import { withoutAccount } from "./authFlow";
+
+// The sign-in dialog's state, for every host of AuthDialog in src/web: the app's (AuthScreen, which
+// opens when the client asks for a sign-in: the rail's Sign in, a guest's action, a page that needs
+// an account) and the marketing pages' own (Landing, Learn, /diamond's Upgrade).
+
+/** A way to sign in as AuthDialog names it. */
+type AuthOption = NonNullable<PageAuth["methods"]>[number];
+/** Someone AuthDialog shows (a referrer). */
+type AuthPerson = NonNullable<PageAuth["referrer"]>;
+
+/**
+ * What AuthDialog's props are made from: its host callbacks, on the client's operations (src/web's
+ * `createAuth`), and what the dialog shows.
+ */
+export type AuthDialogHost = Required<
+    Pick<
+        PageAuth,
+        | "onMethod"
+        | "onSignup"
+        | "onRequestEmailLink"
+        | "onCancelEmailLink"
+        | "checkUsername"
+        | "searchReferrers"
+        | "resolveReferrer"
+    >
+> & {
+    wallets: NonNullable<PageAuth["wallets"]>;
+    termsUrl: string;
+    /** Whether this is the native app (its passkeys don't need the browser's WebAuthn). */
+    native: boolean;
+    /** The address a sign-in link was last sent to, to prefill the field with. */
+    lastEmail: () => string;
+    /** Whoever the referral link this browser came in on names, if anyone (looked up once). */
+    loadReferrer: () => Promise<AuthPerson | undefined>;
+    /** Each way to sign in as AuthDialog names it. */
+    options: Record<AuthProvider, AuthOption>;
+};
 
 /**
  * AuthDialog's props for one host, all but `kind` and `onClose`: the same for the app's
@@ -16,7 +50,7 @@ export class AuthDialogProps {
     // AuthDialog only reads it as it mounts, so it's read as the dialog opens
     #email = $state("");
 
-    constructor(private readonly auth: Auth) {}
+    constructor(private readonly auth: AuthDialogHost) {}
 
     /**
      * The dialog is opening: reads the address a link last went to, and looks up the referral
@@ -26,7 +60,11 @@ export class AuthDialogProps {
         this.#email = this.auth.lastEmail();
         if (this.#referrerAsked) return;
         this.#referrerAsked = true;
-        this.auth.loadReferrer().then((person) => (this.#referrer = person));
+        void this.#lookUpReferrer();
+    }
+
+    async #lookUpReferrer(): Promise<void> {
+        this.#referrer = await this.auth.loadReferrer();
     }
 
     /**
@@ -40,7 +78,7 @@ export class AuthDialogProps {
             restrictTo,
             { webAuthn: "PublicKeyCredential" in window, native: auth.native },
             last,
-        ).map((o) => OPTIONS[o]);
+        ).map((provider) => auth.options[provider]);
         return {
             methods,
             // sign-up's form makes a passkey: without one on offer, a new person signs in another
@@ -66,6 +104,9 @@ export class AuthDialogProps {
  * showing Landing (RouteScreen), so that dialog sees it through: otherwise the identity leaving
  * "anon" would swap the page for the app mid-flow. So does a sign-up that failed there leaving an
  * identity without an account, whose dialog says why (showsSignedOut).
+ * It also holds where the page's sign-in goes on to once it's through (`destination`): the app's
+ * home, unless the page asked for somewhere else (/diamond's Upgrade: the Diamond dialog). An
+ * emailed link signs in from elsewhere, so that's the only way the page knows where to go then.
  */
 class PageSignIns {
     pending = $state(0);
@@ -75,20 +116,24 @@ class PageSignIns {
     awaitingEmail = $state(false);
     // closing the dialog moves it on: what an attempt from before then comes to isn't a failure
     #dialog = 0;
+    // where a sign-in from the open dialog goes on to, other than the app's home
+    #continueTo: (() => string) | undefined = undefined;
 
-    track<T>(call: Promise<T>, { signup = false } = {}): Promise<T> {
+    async track<T>(call: Promise<T>, { signup = false } = {}): Promise<T> {
         const dialog = this.#dialog;
         this.pending++;
         this.started();
-        return call
-            .catch((err) => {
-                // a sign-up that failed before its passkey left nothing behind to keep Landing for
-                if (dialog === this.#dialog) {
-                    this.signupFailed = signup && withoutAccount(identityStateStore.value);
-                }
-                throw err;
-            })
-            .finally(() => this.pending--);
+        try {
+            return await call;
+        } catch (err) {
+            // a sign-up that failed before its passkey left nothing behind to keep Landing for
+            if (dialog === this.#dialog) {
+                this.signupFailed = signup && withoutAccount(identityStateStore.value);
+            }
+            throw err;
+        } finally {
+            this.pending--;
+        }
     }
 
     /** Whether the page is seeing a sign-in through: one it waits on, or an email link. */
@@ -102,19 +147,37 @@ class PageSignIns {
     }
 
     /**
+     * The dialog is opening: a sign-in from it goes on to the path `continueTo` gives once it's
+     * through (asked then: where it is can depend on who signed in), or to the app's home without
+     * one.
+     */
+    opened(continueTo?: () => string): void {
+        this.#continueTo = continueTo;
+    }
+
+    /** Where a sign-in from the dialog goes on to now that it's through: once, then the app's home. */
+    destination(): string {
+        const path = this.#continueTo?.() ?? "/";
+        this.#continueTo = undefined;
+        return path;
+    }
+
+    /**
      * An email link asked for: a new attempt, which the page waits on from the request (an
      * identity left by a failed sign-up mustn't swap Landing for the app meanwhile). A request
      * that fails leaves the page waiting on the link before it, if there was one.
      */
-    trackEmail<T>(request: Promise<T>): Promise<T> {
+    async trackEmail<T>(request: Promise<T>): Promise<T> {
         const dialog = this.#dialog;
         const before = this.awaitingEmail;
         this.started();
         this.awaitingEmail = true;
-        return request.catch((err) => {
+        try {
+            return await request;
+        } catch (err) {
             if (dialog === this.#dialog) this.awaitingEmail = before;
             throw err;
-        });
+        }
     }
 
     /** The email link signed in, or was given up: the page no longer waits on it. */
@@ -123,13 +186,15 @@ class PageSignIns {
     }
 
     /**
-     * The dialog was closed: what its attempts come to from now on isn't a failure of the page's.
-     * A failed sign-up whose identity has no account still keeps Landing up: closing signs it out
-     * (and the page reloads), and until then "/" mustn't show the app for it.
+     * The dialog was closed: what its attempts come to from now on isn't a failure of the page's,
+     * and nothing goes on anywhere. A failed sign-up whose identity has no account still keeps
+     * Landing up: closing signs it out (and the page reloads), and until then "/" mustn't show the
+     * app for it.
      */
     closed(): void {
         this.#dialog++;
         this.awaitingEmail = false;
+        this.#continueTo = undefined;
         if (!withoutAccount(identityStateStore.value)) this.signupFailed = false;
     }
 

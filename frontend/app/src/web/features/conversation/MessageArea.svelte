@@ -200,8 +200,9 @@
         previewLink,
         removeLinkPreview,
     } from "@src/logic/conversation/linkPreview";
-    import { messageOffer } from "@src/logic/conversation/messageOffer";
+    import { guestMessageAction, messageOffer } from "@src/logic/conversation/messageOffer";
     import { toggleReaction } from "@src/logic/conversation/reaction";
+    import { askToSignIn, signInFirst } from "@src/logic/auth/guestPass";
     import { observeRead } from "@src/core/observeRead";
     import { votePoll } from "@src/logic/conversation/pollVote";
     import {
@@ -916,6 +917,7 @@
             failed,
             confirmed,
             readonly,
+            guest: $anonUserStore,
             pinned: $selectedChatPinnedMessagesStore,
             translated: $translationsStore,
             undeleting: $undeletingMessagesStore,
@@ -959,6 +961,8 @@
     ) {
         const offered = offeredFor(current, evt, failed, confirmed);
         if (pickerOnly ? !offered.react : !offered.menu) return;
+        // a guest's reaction asks them to sign in, before they pick one
+        if (pickerOnly && signInFirst(client)) return;
         menu = { context: rowContext(evt), evt, failed, offered, pos, pickerOnly };
     }
 
@@ -996,12 +1000,17 @@
     let deleting = $state<{ context: MessageContext; evt: EventWrapper<Message> }>();
 
     // an action on a message, where it is
+    // a guest is asked to sign in for what needs an account, and stays here (guestMessageAction)
     async function run(
         context: MessageContext,
         action: MessageMenuAction,
         evt: EventWrapper<Message>,
         failed: boolean,
     ) {
+        if ($anonUserStore && guestMessageAction(action) === "sign_in") {
+            askToSignIn(client);
+            return;
+        }
         const { chatId, threadRootMessageIndex } = context;
         const dialog = await runMessageAction(action, {
             client,
@@ -1062,8 +1071,10 @@
         void deleteMessage(client, confirmed.context, confirmed.evt);
     }
 
-    // a reaction added or taken off (toggleReaction counts it towards the quick ones)
+    // a reaction added or taken off (toggleReaction counts it towards the quick ones); a guest
+    // (a chip, the hover bar's or the menu's) is asked to sign in
     function react(context: MessageContext, evt: EventWrapper<Message>, emoji: string) {
+        if (signInFirst(client)) return;
         void toggleReaction(client, context, evt.event, emoji);
     }
 
@@ -1077,6 +1088,8 @@
         offered: MessageMenu,
     ) {
         const target = e.target;
+        // a guest's double-click is theirs (selecting a word), not a reply that asks to sign in
+        if ($anonUserStore) return;
         if (
             target instanceof Element &&
             target.closest("[data-msg-acts],a,button,input,textarea,[role=button]") !== null
@@ -1446,6 +1459,7 @@
         {#key contextKey}
             <Composer
                 {block}
+                onSignIn={() => askToSignIn(client)}
                 preview={preview === undefined
                     ? undefined
                     : {
@@ -1490,6 +1504,10 @@
                 {mentions}
             />
         {/key}
+    {:else}
+        <!-- a thread with no composer (a preview, a guest's included, or read only): the room
+             under its last reply that the composer leaves above it (ComposerBar's padding) -->
+        <div class="no-composer"></div>
     {/if}
 {/snippet}
 
@@ -1622,12 +1640,16 @@
         flex-direction: column;
     }
 
+    .no-composer {
+        flex: none;
+        height: var(--space-12);
+    }
+
     :global(.vcl-viewport.message-list) {
         flex: auto;
         padding: 0 var(--message-list-gutter, var(--space-24));
         overflow-x: hidden;
         overscroll-behavior-y: contain;
-        scrollbar-width: thin;
     }
 
     /* a message continuing its sender's run sits close under the one before it; a new run, a

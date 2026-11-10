@@ -319,7 +319,8 @@
     onManage?: (view: View) => void;
     onViewChange?: (view: View) => void;
     onToggleFavourite?: () => void;
-    /** Reject to roll the mute back (when the host doesn't control mutedUntil / muteEveryone). */
+    /** Reject to roll the mute back (when the host doesn't control mutedUntil / muteEveryone), with an error, or
+     *  without one when rejecting with { cancelled: true } (the host gave the change up). */
     onMuteChange?: (key: MuteKey | null) => Promise<unknown> | void;
     onMuteEveryoneChange?: (on: boolean) => Promise<unknown> | void;
     onClose?: () => void;

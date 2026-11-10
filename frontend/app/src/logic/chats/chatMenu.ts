@@ -50,6 +50,15 @@ export type ChatRowMenuState = {
 };
 
 /**
+ * Whether a chat list row has a menu (the web's "…") at all: not on a preview, a group or channel
+ * the user isn't a member of, guest or signed in (the design's preview mode: "channel row menus
+ * off"). A lapsed member is still a member: their row keeps its menu (leave, mute, archive …).
+ */
+export function chatRowHasMenu(chat: ChatSummary): boolean {
+    return chat.kind === "direct_chat" || chat.membership.role !== ROLE_NONE;
+}
+
+/**
  * A chat list row's menu, in the native design's order (notes §3.2), on the web too: pin,
  * favourite, mute, mark as read while there's something unread, archive (or un-archive) a DM or a
  * chat the user is in, leave a group or delete a DM (`chatMenuActions`; no block on a row), and

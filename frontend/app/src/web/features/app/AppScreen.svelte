@@ -13,6 +13,7 @@
         latestSuccessfulUpdatesLoop,
         OpenChat,
         postLoginCreateCommunity,
+        postLoginPath,
         publish,
         routeStore,
         sortedCommunitiesStore,
@@ -25,7 +26,7 @@
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { addQueryStringParam, withQueryStringFlag } from "@src/utils/urls";
-    import { getContext, tick } from "svelte";
+    import { getContext, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import {
         activityOverPage,
@@ -49,6 +50,7 @@
         type AppEventDialog,
     } from "@src/logic/appEvents/appEvents";
     import { postLoginTarget, type JoinTarget } from "@src/logic/join/joinFlow.svelte";
+    import { askToSignIn } from "@src/logic/auth/guestPass";
     import { join } from "../join/join";
     import { pinsFor } from "../rail/rail.adapter";
     import { chitRailProps } from "../chit/chit.adapter";
@@ -95,6 +97,19 @@
         await tick();
         createCommunity();
     }
+
+    // a guest sent to sign in on their way to a page that needs an account (the router's
+    // onGuestSignIn, a linked dialog: logic/auth/guestPass) goes on to it once signed in, in Explore's
+    // place in history; the post-login state is cleared first, so it's gone to once
+    $effect(() => {
+        const path = postLoginPath($identityStateStore);
+        if (path !== undefined) {
+            untrack(() => {
+                client.clearPostLoginState();
+                navigate(path, "auto");
+            });
+        }
+    });
 
     // a guest who chose to join a group, channel or community joins it once signed in and their
     // chats have loaded; the client hands the join out once (8b)
@@ -264,7 +279,7 @@
                 (playableDailyPuzzleRows($dailyPuzzleStore) ?? []).some((r) => r.status === "play")}
             onChit={() => openLinked({ kind: "chit" })}
             onCreateCommunity={createCommunity}
-            onSignIn={() => client.updateIdentityState({ kind: "logging_in" })}
+            onSignIn={() => askToSignIn(client)}
         />
     {/snippet}
     {#snippet middle()}

@@ -1,10 +1,11 @@
-import type {
-    ChatSummary,
-    CommunitySummary,
-    MessageFormatter,
-    OpenChat,
-    UserLookup,
+import {
+    type ChatSummary,
+    type CommunitySummary,
+    type MessageFormatter,
+    type OpenChat,
+    type UserLookup,
 } from "@client";
+import { signInFirst } from "@src/logic/auth/guestPass";
 import { chatMenuActions } from "@src/logic/chats/chatMenu";
 import { muteChat } from "@src/logic/chats/muteChat";
 import { chatDetailsPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
@@ -63,6 +64,9 @@ export type ChatMenuContext = {
     formatter: MessageFormatter;
 };
 
+// the items that don't need an account
+const GUEST_ITEMS = new Set(["manage", "copyUrl"]);
+
 /** Does what the chat menu's item with this id says. */
 export function runChatMenuItem(
     id: string,
@@ -72,6 +76,8 @@ export function runChatMenuItem(
         const failed = await muteChat(client, chat.id, mute, atEveryone, formatter);
         if (failed !== undefined) toastStore.showFailureToast(failed);
     };
+    // a guest can look at the details and copy the link; the rest asks them to sign in
+    if (!GUEST_ITEMS.has(id) && signInFirst(client)) return;
     switch (id) {
         case "manage":
             if (chat.kind !== "direct_chat") {

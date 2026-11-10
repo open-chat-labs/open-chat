@@ -2,11 +2,24 @@
 // - set() shows the new value at once and calls the host;
 // - only the latest call decides: an older rejection after a newer request is ignored;
 // - when the latest call rejects, the value falls back to the one the host last accepted (or the host's own value
-//   if it accepted none in this session) — never to an earlier optimistic guess — and `failed` is set;
+//   if it accepted none in this session) — never to an earlier optimistic guess — and `failed` is set, unless it
+//   rejects with CANCELLED (the host gave the change up, e.g. to ask the user something first: nothing went wrong,
+//   so there's nothing to say);
 // - an older call that succeeds after every newer one failed still lands;
 // - sync() (call it when the host's value changes) drops local state once nothing is in flight, so the host is
 //   followed again.
 // Read the value through .current (it may legitimately be null/undefined); don't write `opt?.current ?? host`.
+
+/** What a host's call rejects with to give a step or a change up: rolled back, or back to the form, with nothing
+ *  said. Throw this one rather than writing the shape again. */
+export type Cancelled = { readonly cancelled: true };
+export const CANCELLED: Cancelled = Object.freeze({ cancelled: true });
+
+/** Whether a host's call rejected with CANCELLED (or the same shape). */
+export function isCancelled(e: unknown): e is Cancelled {
+  return typeof e === 'object' && e !== null && 'cancelled' in e && e.cancelled === true;
+}
+
 export class Optimistic<T> {
   failed = $state(false);
   #override = $state<{ value: T } | null>(null);
@@ -44,11 +57,11 @@ export class Optimistic<T> {
         if (this.#lost === this.#seq) this.#override = { value };
       }
       return true;
-    } catch {
+    } catch (e) {
       if (seq === this.#seq) {
         this.#lost = seq;
         this.#override = this.#accepted ? { value: this.#accepted.value } : null;
-        this.failed = true;
+        this.failed = !isCancelled(e);
       }
       return false;
     } finally {

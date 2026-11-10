@@ -1642,7 +1642,6 @@
     outline: none;
     resize: none;
     overflow-y: hidden;
-    scrollbar-width: thin;
     background: transparent;
     font: var(--weight-regular) var(--text-base) / 22px var(--font-sans);
     color: var(--ink);

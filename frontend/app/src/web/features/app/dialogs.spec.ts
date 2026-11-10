@@ -2,11 +2,22 @@ import {
     builtDialogScreens,
     dialogs,
     linkedDialog,
+    linkedDialogNeedsAccount,
     linkedDialogParam,
     openLinkedDialog,
     shareQuery,
     shownLinkedDialog,
 } from "./dialogs";
+
+describe("the linked dialogs a guest is asked to sign in for", () => {
+    test("are all but the leaderboard, which anyone can read", () => {
+        for (const query of ["profile", "profile=chit", "diamond", "chit", "chit=earn", "chit=puzzle", "share={}"]) {
+            const dialog = linkedDialog(new URLSearchParams(query));
+            expect(dialog && linkedDialogNeedsAccount(dialog)).toBe(true);
+        }
+        expect(linkedDialogNeedsAccount({ kind: "leaderboard" })).toBe(false);
+    });
+});
 
 describe("the dialog a URL's query opens", () => {
     test("is the one its param names", () => {

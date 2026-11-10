@@ -38,6 +38,7 @@
     import {
         editStartText,
         entryBlock,
+        entryBlockBanner,
         entryPlaceholder,
         focusEntryOnOpen,
         TypingNotifier,
@@ -456,9 +457,9 @@
             <Alert size={$iconSize} color={"var(--warn"} />
             <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
         </div>
-    {:else if block?.kind === "read_only"}
+    {:else if block?.kind === "anonymous" || block?.kind === "read_only"}
         <div class="disabled">
-            <Translatable resourceKey={i18nKey(block.key)} />
+            <Translatable resourceKey={i18nKey(entryBlockBanner(block).key)} />
         </div>
     {:else if $throttleDeadline > 0}
         <ThrottleCountdown deadline={$throttleDeadline} />
