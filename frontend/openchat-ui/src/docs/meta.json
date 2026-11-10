@@ -21480,7 +21480,7 @@
     "name": "SettingsAction",
     "source": "native/NativeApp.svelte (source hash db4b562b), by hand (N2, 2026-11-05)",
     "hash": "",
-    "description": "A settings row that does something at once: an icon and a label in the accent, or in the danger colour for a destructive one (the host offers Undo in a toast). At least 52px.",
+    "description": "A settings row that does something at once: an icon and a label in the accent, or in the danger colour for a destructive one (the host offers Undo in a toast), with an optional line under the label that says what it does. At least 52px.",
     "preview": {
       "width": 370,
       "height": 52
@@ -21507,6 +21507,17 @@
         "required": true,
         "componentDefault": null,
         "doc": "An icons.js name."
+      },
+      {
+        "name": "help",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Resource key (or literal text): a line under the label, saying what it does."
       },
       {
         "name": "danger",

@@ -889,3 +889,9 @@
 ## 2026-11-10 — a person's photo on UserChip (native N6, Invite people), by hand
 - `UserChip`: `photoUrl`, their photo, shown over the swatch (cropped to the avatar's circle, at each size). Without it, the swatch as before. The native Invite people screen's picks use it (the plan's "chips with avatar, first name, ×"). `meta.json` (the prop).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-11-10 — a search field password managers leave alone; a settings action with a line under it (native N6, Invite people), by hand
+- New `lib/searchInput.ts`: `SEARCH_INPUT_ATTRIBUTES`, what a search box's input carries so that it reads as a search, not a sign-in field (`type`, `inputmode` and `enterkeyhint` search, `autocomplete` off, and 1Password's, LastPass's, Bitwarden's and Dashlane's opt-outs). Android's autofill took the native Invite people search ("Search name or @username") for a login and popped a password manager's menu on focus.
+- `Field`: its live input carries `SEARCH_INPUT_ATTRIBUTES` (the browser's own clear button for a search input is hidden: the field draws its own) and is named by its placeholder (`aria-label`); its clear × no longer takes the focus from the input (so a phone's keyboard stays up), puts the focus back once it has cleared, and clears from the keyboard too (Enter or Space). No props changed. The native Invite people and Members screens use it for their search (the forward sheet already did); the app's other native search inputs spread `SEARCH_INPUT_ATTRIBUTES` themselves.
+- `SettingsAction`: `help`, a line under the label saying what it does (in the settings rows' help style; the icon stays by the label's line). The native Invite link tab's Reset link uses it for "The current link stops working…", which was the card's note under it. `meta.json` (the prop, the description).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
