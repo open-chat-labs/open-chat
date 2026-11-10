@@ -3,8 +3,8 @@
      for someone who may share it); the avatar, the name and "Private · 48 members"; the tiles Mute
      / Search / Invite; About (the description, when it was created, whether new members see the
      history); Members, a few faces and View all, to the Members screen; This chat (the
-     disappearing messages, a switch and a length for those its settings let change them, then
-     muting @everyone); the rules, read only; Manage for owners and admins (Access gates, Rules,
+     disappearing messages, the library's TimedToggle for those its settings let change them
+     (DisappearingRow), read only for the rest, then muting @everyone); the rules, read only; Manage for owners and admins (Access gates, Rules,
      Permissions, Bots and webhooks, Stats: N7's screens); Leave and Delete, each with Undo. What
      the viewer may do is the web panel's (logic/groupOrCommunity/detailsPermissions). -->
 <script lang="ts">
@@ -29,7 +29,6 @@
         type OpenChat,
     } from "@client";
     import { copyText } from "@openchat/ui/src/lib/clipboard";
-    import { Optimistic } from "@openchat/ui/src/lib/behaviours/optimistic.svelte";
     import AnchoredMenu from "@openchat/ui/src/native/AnchoredMenu.svelte";
     import AvatarStack from "@openchat/ui/src/lib/components/AvatarStack.svelte";
     import { AVATAR_GRADIENTS } from "@openchat/ui/src/lib/components/Avatar.svelte";
@@ -37,15 +36,8 @@
     import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
     import SettingsLink from "@openchat/ui/src/native/SettingsLink.svelte";
     import SettingsSwitch from "@openchat/ui/src/native/SettingsSwitch.svelte";
-    import SettingsValue from "@openchat/ui/src/native/SettingsValue.svelte";
     import type { NativeMenuItem } from "@openchat/ui/src/native/types";
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
-    import {
-        disappearingChoices,
-        durationMs,
-        ttlDurationId,
-    } from "@src/logic/chats/disappearingMessages";
-    import { setGroupDisappearing } from "@src/logic/chats/groupDisappearing";
     import { muteChat } from "@src/logic/chats/muteChat";
     import { senderColor } from "@src/logic/conversation/messageRow";
     import {
@@ -65,12 +57,12 @@
     import { requestSearch } from "../conversation/searchRequests";
     import DetailsHead from "./DetailsHead.svelte";
     import DetailTiles from "./DetailTiles.svelte";
+    import DisappearingRow from "./DisappearingRow.svelte";
     import FactRow from "./FactRow.svelte";
     import TextRow from "./TextRow.svelte";
     import {
         createdFacts,
         disappearingValue,
-        durationLabel,
         groupTiles,
         historyValue,
         manageRows,
@@ -276,30 +268,12 @@
         if (failed !== undefined) toastStore.showFailureToast(failed);
     }
 
-    // ---- disappearing messages: switched and set by those its settings let change them, shown
-    // at once and back as they were (with a toast) if it's refused, as a DM's; read only otherwise
+    // ---- disappearing messages: switched and set by those its settings let change them (as the
+    // conversation's menu offers them), read only otherwise
 
     const canSetDisappearing = $derived(
         canChangeDisappearing(client, chat, community, $anonUserStore),
     );
-    const disappear = new Optimistic(() => ({
-        on: chat.eventsTTL !== undefined,
-        after: ttlDurationId(chat.eventsTTL),
-    }));
-    $effect.pre(() => {
-        void chat.eventsTTL;
-        untrack(() => disappear.sync());
-    });
-    const durations = $derived(
-        disappearingChoices(chat.eventsTTL).map((id) => ({ id, label: durationLabel(id, t) })),
-    );
-
-    async function setDisappearing(on: boolean, after: string) {
-        const saved = await disappear.set({ on, after }, () =>
-            setGroupDisappearing(client, chat, { on, afterMs: durationMs(after) }),
-        );
-        if (!saved) context.toast($_("native.details.saveFailed"));
-    }
 </script>
 
 <div class="scroll">
@@ -344,18 +318,7 @@
         {#if member}
             <SettingsGroup label={$_("native.details.thisChat")}>
                 {#if canSetDisappearing}
-                    <SettingsSwitch
-                        label={$_("native.details.disappearing")}
-                        help={$_("native.details.disappearingGroupHelp")}
-                        on={disappear.current.on}
-                        onChange={(on) => setDisappearing(on, disappear.current.after)} />
-                    {#if disappear.current.on}
-                        <SettingsValue
-                            label={$_("native.details.disappearAfterLabel")}
-                            options={durations}
-                            value={disappear.current.after}
-                            onChange={(after) => setDisappearing(true, after)} />
-                    {/if}
+                    <DisappearingRow {chat} {context} />
                 {:else}
                     <FactRow
                         label={$_("native.details.disappearing")}

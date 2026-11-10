@@ -2218,11 +2218,9 @@
             "chitEarned": "Зароблено CHIT",
             "thisChat": "Цей чат",
             "disappearing": "Зникаючі повідомлення",
-            "disappearingHelp": "Повідомлення в цьому чаті зникають у вас обох через вибраний час.",
-            "disappearingGroupHelp": "Повідомлення в цьому чаті зникають для всіх через вибраний час.",
-            "disappearAfterLabel": "Зникають через",
+            "disappearAfter": "Через {value}",
             "duration": {
-                "minute": "{count, plural, one {# хвилина} few {# хвилини} many {# хвилин} other {# хвилини}}",
+                "minute": "{count, plural, other {# хв}}",
                 "hour": "{count, plural, one {# година} few {# години} many {# годин} other {# години}}",
                 "day": "{count, plural, one {# день} few {# дні} many {# днів} other {# дня}}",
                 "week": "{count, plural, one {# тиждень} few {# тижні} many {# тижнів} other {# тижня}}"

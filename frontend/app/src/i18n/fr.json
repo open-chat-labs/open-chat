@@ -2218,12 +2218,10 @@
             "chitEarned": "CHIT gagnés",
             "thisChat": "Cette discussion",
             "disappearing": "Messages éphémères",
-            "disappearingHelp": "Les messages de cette discussion disparaissent pour vous deux après la durée choisie.",
-            "disappearingGroupHelp": "Les messages de ce chat disparaissent pour tout le monde après la durée choisie.",
-            "disappearAfterLabel": "Disparaissent après",
+            "disappearAfter": "Après {value}",
             "duration": {
-                "minute": "{count, plural, one {# minute} other {# minutes}}",
-                "hour": "{count, plural, one {# heure} other {# heures}}",
+                "minute": "{count, plural, other {# min}}",
+                "hour": "{count, plural, other {# h}}",
                 "day": "{count, plural, one {# jour} other {# jours}}",
                 "week": "{count, plural, one {# semaine} other {# semaines}}"
             },

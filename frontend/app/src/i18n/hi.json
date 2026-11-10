@@ -2218,9 +2218,7 @@
             "chitEarned": "कमाए गए CHIT",
             "thisChat": "यह चैट",
             "disappearing": "गायब होने वाले संदेश",
-            "disappearingHelp": "इस चैट के संदेश आपके चुने हुए समय के बाद आप दोनों के लिए गायब हो जाते हैं।",
-            "disappearingGroupHelp": "इस चैट के संदेश आपके चुने गए समय के बाद सभी के लिए गायब हो जाते हैं।",
-            "disappearAfterLabel": "इतने समय बाद गायब",
+            "disappearAfter": "{value} बाद",
             "duration": {
                 "minute": "{count, plural, one {# मिनट} other {# मिनट}}",
                 "hour": "{count, plural, one {# घंटा} other {# घंटे}}",

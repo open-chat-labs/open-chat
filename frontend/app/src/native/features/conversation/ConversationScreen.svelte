@@ -1,6 +1,7 @@
 <!-- A conversation (native design notes §3.3): pushed over the Chats (or a community's) root, with the
      whole window. The header (back, the avatar, name and status, video and voice, the kebab: Search
-     in chat, details, Mute, Favourite, Leave group / Block / Delete),
+     in chat, details, Mute, Favourite, Disappearing messages (a submenu, for those who may set
+     them, one setting with the details' switch), Leave group / Block / Delete),
      which turns into the in-chat search bar; the live call strip while the live call's item is off
      screen; the messages (core/ChatEventList: paging, deep links, read marking, keeping the scroll),
      received ones with their sender's avatar on a run's first in groups and none in DMs, sent ones
@@ -13,6 +14,7 @@
 <script lang="ts">
     import {
         allUsersStore,
+        anonUserStore,
         blockedUsersStore,
         botState,
         bridgedUsersStore,
@@ -79,6 +81,12 @@
     import Markdown from "@src/core/Markdown.svelte";
     import MediaViewer from "@src/core/MediaViewer.svelte";
     import { observeRead } from "@src/core/observeRead";
+    import {
+        canSetDisappearing,
+        DISAPPEARING_START,
+        disappearingSetting,
+        setChatDisappearing,
+    } from "@src/logic/chats/chatDisappearing.svelte";
     import { chatMenuActions } from "@src/logic/chats/chatMenu";
     import { callLength, callMedia, callState, isLiveCall } from "@src/logic/conversation/callItem";
     import { ChatSearch } from "@src/logic/conversation/chatSearch.svelte";
@@ -144,10 +152,12 @@
     import { removeWithUndo } from "../chats/removeWithUndo";
     import {
         callEventProps,
+        disappearingPick,
         headerMenuItems,
         listWaiting,
         type HeaderMenuAction,
     } from "./conversation.adapter";
+    import { durationLabel } from "../details/details.adapter";
     import { HeldWhileLeaving } from "./heldWhileLeaving";
     import MessageActions from "./MessageActions.svelte";
     import RulesSheet from "./RulesSheet.svelte";
@@ -355,6 +365,20 @@
               }),
     );
 
+    // the chat's disappearing messages, one setting with the details' switch (native plan 04, 10),
+    // for those who may set them
+    const disappearing = $derived(
+        chat !== undefined &&
+            canSetDisappearing(
+                client,
+                chat,
+                chat.kind === "channel" ? $selectedCommunitySummaryStore : undefined,
+                $anonUserStore,
+            )
+            ? disappearingSetting(chat.eventsTTL, DISAPPEARING_START)
+            : undefined,
+    );
+
     const menuItems = $derived(
         chat === undefined
             ? []
@@ -370,10 +394,25 @@
                       favourite,
                       isBot,
                       actions: menuActions,
+                      disappearing,
                   },
                   menuLabel,
+                  {
+                      off: $_("native.you.off"),
+                      duration: (id) => durationLabel(id, (key, values) => $_(key, { values })),
+                  },
               ),
     );
+
+    async function setDisappearing(current: ChatSummary, id: string) {
+        const setting = disappearing === undefined ? undefined : disappearingPick(id, disappearing);
+        if (setting === undefined) return;
+        try {
+            await setChatDisappearing(client, current, setting);
+        } catch {
+            context.toast($_("native.details.saveFailed"));
+        }
+    }
 
     function menuLabel(id: HeaderMenuAction): string {
         switch (id) {
@@ -395,6 +434,8 @@
                 return $_("native.conversation.menu.block", {
                     values: { name: title },
                 });
+            case "disappearing":
+                return $_("native.details.disappearing");
             default:
                 return $_(`native.conversation.menu.${id}`);
         }
@@ -478,6 +519,9 @@
                     });
                 }
                 break;
+            default:
+                // the disappearing submenu's Off and lengths
+                void setDisappearing(current, id);
         }
     }
 

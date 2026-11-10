@@ -2218,11 +2218,9 @@
             "chitEarned": "CHIT guadagnati",
             "thisChat": "Questa chat",
             "disappearing": "Messaggi a scomparsa",
-            "disappearingHelp": "I messaggi di questa chat scompaiono per entrambi dopo il tempo che scegli.",
-            "disappearingGroupHelp": "I messaggi in questa chat scompaiono per tutti dopo il tempo che scegli.",
-            "disappearAfterLabel": "Scompaiono dopo",
+            "disappearAfter": "Dopo {value}",
             "duration": {
-                "minute": "{count, plural, one {# minuto} other {# minuti}}",
+                "minute": "{count, plural, other {# min}}",
                 "hour": "{count, plural, one {# ora} other {# ore}}",
                 "day": "{count, plural, one {# giorno} other {# giorni}}",
                 "week": "{count, plural, one {# settimana} other {# settimane}}"

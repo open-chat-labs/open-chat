@@ -2218,9 +2218,7 @@
             "chitEarned": "CHIT المكتسبة",
             "thisChat": "هذه المحادثة",
             "disappearing": "الرسائل المؤقتة",
-            "disappearingHelp": "تختفي الرسائل في هذه المحادثة لديكما بعد المدة التي تختارها.",
-            "disappearingGroupHelp": "تختفي الرسائل في هذه الدردشة لدى الجميع بعد المدة التي تختارها.",
-            "disappearAfterLabel": "تختفي بعد",
+            "disappearAfter": "بعد {value}",
             "duration": {
                 "minute": "{count, plural, zero {# دقيقة} one {دقيقة واحدة} two {دقيقتان} few {# دقائق} many {# دقيقة} other {# دقيقة}}",
                 "hour": "{count, plural, zero {# ساعة} one {ساعة واحدة} two {ساعتان} few {# ساعات} many {# ساعة} other {# ساعة}}",

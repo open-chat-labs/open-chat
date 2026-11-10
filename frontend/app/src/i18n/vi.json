@@ -2218,9 +2218,7 @@
             "chitEarned": "CHIT đã kiếm",
             "thisChat": "Cuộc trò chuyện này",
             "disappearing": "Tin nhắn tự xóa",
-            "disappearingHelp": "Tin nhắn trong cuộc trò chuyện này sẽ biến mất với cả hai sau khoảng thời gian bạn chọn.",
-            "disappearingGroupHelp": "Tin nhắn trong cuộc trò chuyện này sẽ biến mất với mọi người sau khoảng thời gian bạn chọn.",
-            "disappearAfterLabel": "Biến mất sau",
+            "disappearAfter": "Sau {value}",
             "duration": {
                 "minute": "{count, plural, other {# phút}}",
                 "hour": "{count, plural, other {# giờ}}",

@@ -2218,11 +2218,9 @@
             "chitEarned": "CHIT שנצברו",
             "thisChat": "הצ'אט הזה",
             "disappearing": "הודעות נעלמות",
-            "disappearingHelp": "ההודעות בצ'אט הזה נעלמות אצל שניכם אחרי הזמן שבחרתם.",
-            "disappearingGroupHelp": "ההודעות בצ'אט הזה נעלמות לכולם אחרי הזמן שתבחרו.",
-            "disappearAfterLabel": "נעלמות אחרי",
+            "disappearAfter": "אחרי {value}",
             "duration": {
-                "minute": "{count, plural, one {דקה אחת} two {שתי דקות} other {# דקות}}",
+                "minute": "{count, plural, other {# דק׳}}",
                 "hour": "{count, plural, one {שעה אחת} two {שעתיים} other {# שעות}}",
                 "day": "{count, plural, one {יום אחד} two {יומיים} other {# ימים}}",
                 "week": "{count, plural, one {שבוע אחד} two {שבועיים} other {# שבועות}}"

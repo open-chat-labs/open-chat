@@ -2218,9 +2218,7 @@
             "chitEarned": "已赚取 CHIT",
             "thisChat": "此聊天",
             "disappearing": "限时消息",
-            "disappearingHelp": "此聊天中的消息会在你选择的时间后对双方消失。",
-            "disappearingGroupHelp": "此聊天中的消息会在你选择的时间后对所有人消失。",
-            "disappearAfterLabel": "消失时间",
+            "disappearAfter": "{value}后",
             "duration": {
                 "minute": "{count, plural, other {# 分钟}}",
                 "hour": "{count, plural, other {# 小时}}",

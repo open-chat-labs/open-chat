@@ -2133,11 +2133,9 @@
             "chitEarned": "CHIT earned",
             "thisChat": "This chat",
             "disappearing": "Disappearing messages",
-            "disappearingHelp": "Messages in this chat disappear for both of you after the time you pick.",
-            "disappearingGroupHelp": "Messages in this chat disappear for everyone after the time you pick.",
-            "disappearAfterLabel": "Disappear after",
+            "disappearAfter": "After {value}",
             "duration": {
-                "minute": "{count, plural, one {# minute} other {# minutes}}",
+                "minute": "{count, plural, other {# min}}",
                 "hour": "{count, plural, one {# hour} other {# hours}}",
                 "day": "{count, plural, one {# day} other {# days}}",
                 "week": "{count, plural, one {# week} other {# weeks}}"

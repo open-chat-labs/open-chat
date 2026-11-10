@@ -2218,9 +2218,7 @@
             "chitEarned": "CHIT به‌دست‌آمده",
             "thisChat": "این گفتگو",
             "disappearing": "پیام‌های ناپدیدشونده",
-            "disappearingHelp": "پیام‌های این گفتگو پس از مدتی که انتخاب می‌کنید برای هر دوی شما ناپدید می‌شوند.",
-            "disappearingGroupHelp": "پیام‌های این گفتگو پس از مدتی که انتخاب می‌کنید برای همه ناپدید می‌شوند.",
-            "disappearAfterLabel": "ناپدید شدن پس از",
+            "disappearAfter": "پس از {value}",
             "duration": {
                 "minute": "{count, plural, one {# دقیقه} other {# دقیقه}}",
                 "hour": "{count, plural, one {# ساعت} other {# ساعت}}",
