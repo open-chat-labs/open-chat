@@ -3,8 +3,9 @@
      panel does), then the members in role sections (Owners, Admins, Moderators, Members), and, for
      someone who can unblock, the blocked. The ⋯ on a member below you offers the roles up to your
      own where your role meets "Change member roles", and Remove and Block where it meets "Remove /
-     block members" (logic/members/memberMenu); with neither, it says so in a toast. Removing waits
-     out its Undo before it's sent; a block offers Undo once it's in. Tapping a member opens their
+     block members" (logic/members/memberMenu); with neither, it says so in a toast. Removing and
+     blocking wait out their Undo before they're sent (a block takes them out of the group, which
+     unblocking can't undo); unblocking says they can join again. Tapping a member opens their
      profile sheet. The operations are the web panel's (logic/members/MemberManagement). -->
 <script lang="ts">
     import {
@@ -19,6 +20,8 @@
         ROLE_NONE,
         selectedChatSummaryStore,
         usersFromIds,
+        blockOutcome,
+        type BlockContext,
         type MemberRole,
         type MultiUserChat,
         type OpenChat,
@@ -30,7 +33,7 @@
     import { senderColor } from "@src/logic/conversation/messageRow";
     import { memberMenu, memberSections } from "@src/logic/members/memberMenu";
     import { MemberManagement } from "@src/logic/members/memberManagement.svelte";
-    import { toastStore } from "@src/stores/toast";
+    import { toastStore, type ToastOutcome } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { getContext, onDestroy, untrack } from "svelte";
     import { _ } from "svelte-i18n";
@@ -87,7 +90,7 @@
         cancelFind = management?.findMembers(value.trim());
     }
 
-    // ---- the members, by role; one being removed is gone while its Undo shows
+    // ---- the members, by role; one being removed or blocked is gone while its Undo shows
 
     const removalKey = (userId: string) => `member:${chatKey}:${userId}`;
 
@@ -182,22 +185,41 @@
                 t("native.details.members.removed", { name: who.name }),
                 async () => toastStore.showOutcome(await members.removeMember(who.userId)),
             );
-        } else if (id === "block" || id === "unblock") {
-            const words = (key: string) =>
-                t(`native.conversation.toast.${key}`, { name: who.name });
-            void blockWithToast(
-                (userId, block) => (block ? members.blockUser(userId) : members.unblockUser(userId)),
-                context,
-                who.userId,
-                id === "block",
-                {
-                    blocking: words("blocking"),
-                    blocked: words("blocked"),
-                    unblocking: words("unblocking"),
-                    unblocked: words("unblocked"),
-                },
-            );
+        } else if (id === "block") {
+            // a refusal says so; it's done, the Undo toast has said so already
+            blockLater(who.userId, who.name, async () => {
+                const outcome = await members.blockUser(who.userId);
+                if (outcome.kind === "failed") toastStore.showOutcome(outcome);
+            });
+        } else if (id === "unblock") {
+            unblock(who.userId, who.name, (userId) => members.unblockUser(userId));
         }
+    }
+
+    // A block takes them out of the group, and unblocking only lifts the ban (the backend can't
+    // add them back: they join again themselves), so it isn't sent until its Undo has gone (the
+    // shell's PendingRemovals, as a removal), and Undo leaves them as they were. Meanwhile they're
+    // gone from the list; once it's in, they're under Blocked.
+    function blockLater(userId: string, name: string, commit: () => Promise<void>) {
+        sendAfterUndo(
+            context,
+            removalKey(userId),
+            t("native.conversation.toast.blocked", { name }),
+            commit,
+        );
+    }
+
+    function unblock(
+        userId: string,
+        name: string,
+        setUnblocked: (userId: string) => Promise<ToastOutcome>,
+    ) {
+        void blockWithToast((id) => setUnblocked(id), context, userId, false, {
+            blocking: "",
+            blocked: "",
+            unblocking: t("native.conversation.toast.unblocking", { name }),
+            unblocked: t("native.details.members.unblockedRejoin", { name }),
+        });
     }
 
     async function changeRole(members: MemberManagement, who: Target, role: MemberRole) {
@@ -226,6 +248,23 @@
         navigate(
             chatWithRoute({ kind: "direct_chat", userId }, $chatSummariesListStore, $chatListScopeStore),
         );
+    }
+
+    // the sheet's Block and Unblock, where it was opened (the group, or a channel's community), as
+    // the ⋯'s
+    function blockFromSheet(person: ProfilePerson, blocking: boolean, where: BlockContext) {
+        profile = undefined;
+        const outcome = async (done: Promise<boolean>) => blockOutcome(blocking, await done);
+        if (blocking) {
+            blockLater(person.userId, person.name, async () => {
+                const result = await outcome(client.blockUserInContext(where, person.userId));
+                if (result.kind === "failed") toastStore.showOutcome(result);
+            });
+        } else {
+            unblock(person.userId, person.name, (userId) =>
+                outcome(client.unblockUserInContext(where, userId)),
+            );
+        }
     }
 </script>
 
@@ -301,7 +340,11 @@
     onSelect={onPick}
     onClose={() => (menuAnchor = null)} />
 
-<ProfileSheet person={profile} onMessage={message} onClose={() => (profile = undefined)} />
+<ProfileSheet
+    person={profile}
+    onMessage={message}
+    onBlock={blockFromSheet}
+    onClose={() => (profile = undefined)} />
 
 <style lang="scss">
     @use "@openchat/ui/src/lib/styles/mixins" as *;

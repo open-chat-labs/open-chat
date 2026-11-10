@@ -1,20 +1,29 @@
 <!-- Someone's profile, from a member's row (native plan 10: "tapping a member opens their profile
      sheet"): a bottom sheet with their avatar, name and @username, About (bio, member since, CHIT
      earned: the web's user card's facts, filled in as their profile loads, logic/profile's
-     ProfileCardData), and Message, which opens your DM with them (not on your own). -->
+     ProfileCardData), and the web's user card's actions: Message, which opens your DM with them
+     (not on your own), and Block or Unblock where the card offers it here (ProfileCardBlock: in the
+     group, for a role that may block; in a channel, its community's). -->
 <script lang="ts" module>
     /** Whose profile: their name where it was opened, and whether it's yours. */
     export type ProfilePerson = { userId: string; name: string; isMe: boolean };
 </script>
 
 <script lang="ts">
-    import { allUsersStore, toMonthYearString, userBadges, type OpenChat } from "@client";
+    import {
+        allUsersStore,
+        toMonthYearString,
+        userBadges,
+        type BlockContext,
+        type OpenChat,
+    } from "@client";
     import Avatar from "@openchat/ui/src/lib/components/Avatar.svelte";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import BottomSheet from "@openchat/ui/src/native/BottomSheet.svelte";
+    import SettingsAction from "@openchat/ui/src/native/SettingsAction.svelte";
     import SettingsGroup from "@openchat/ui/src/native/SettingsGroup.svelte";
     import { senderColor } from "@src/logic/conversation/messageRow";
-    import { ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
+    import { ProfileCardBlock, ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
     import { disableChit } from "@src/stores/settings";
     import { getContext, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
@@ -25,10 +34,12 @@
         /** None keeps the sheet closed. */
         person: ProfilePerson | undefined;
         onMessage: (userId: string) => void;
+        /** Blocks or unblocks them where the sheet was opened; the sheet closes first. */
+        onBlock: (person: ProfilePerson, blocking: boolean, context: BlockContext) => void;
         onClose: () => void;
     };
 
-    let { person, onMessage, onClose }: Props = $props();
+    let { person, onMessage, onBlock, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -45,6 +56,13 @@
         const id = shownId;
         return id === undefined ? undefined : untrack(() => new ProfileCardData(client, id, onClose));
     });
+
+    // what it offers to block or unblock, in the chat it's opened in (the web card's)
+    const cardBlock = $derived.by(() => {
+        const id = shownId;
+        return id === undefined ? undefined : untrack(() => new ProfileCardBlock(client, id, false));
+    });
+    const block = $derived(cardBlock?.current);
 
     const user = $derived(shownId === undefined ? undefined : $allUsersStore.get(shownId));
     const isBot = $derived(user?.kind === "bot");
@@ -107,6 +125,21 @@
                     fullWidth
                     onClick={() => shownId !== undefined && onMessage(shownId)} />
             {/if}
+
+            {#if block !== undefined && block.kind !== "none" && !isBot}
+                {@const context = block.context}
+                {@const blocking = block.kind === "block"}
+                <SettingsGroup>
+                    <SettingsAction
+                        icon="ban"
+                        label={$_(
+                            blocking ? "native.conversation.menu.block" : "native.details.unblock",
+                            { values: { name: shown.name } },
+                        )}
+                        danger={blocking}
+                        onClick={() => onBlock(shown, blocking, context)} />
+                </SettingsGroup>
+            {/if}
         </div>
     {/if}
 </BottomSheet>
@@ -118,7 +151,8 @@
         display: flex;
         flex-direction: column;
         gap: 20px;
-        padding: 4px var(--space-16) calc(var(--safe-bottom) + 16px);
+        // clear of the sheet's handle above the avatar
+        padding: var(--space-18) var(--space-16) calc(var(--safe-bottom) + 16px);
     }
 
     .identity {

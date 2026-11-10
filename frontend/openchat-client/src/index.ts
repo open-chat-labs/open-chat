@@ -131,6 +131,7 @@ export {
     type MemberPermissions,
 } from "./utils/members";
 export {
+    blockOutcome,
     profileBlock,
     type BlockOutcome,
     type BlockContext,
