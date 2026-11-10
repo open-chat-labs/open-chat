@@ -53,9 +53,8 @@
       color: var(--status-danger);
     }
 
-    // with a line under the label: the icon stays by its first line (the label's line is the icon's 19px)
+    // with a line under the label: the icon stays centred on the two lines
     &.with-help {
-      align-items: flex-start;
       padding: 12px 16px;
     }
 
