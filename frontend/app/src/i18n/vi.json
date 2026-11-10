@@ -2226,6 +2226,7 @@
             "cancel": "Hủy",
             "cancelled": "Đã hủy lời mời cho {name}",
             "suggested": "Gợi ý",
+            "searchHint": "Tìm người để mời",
             "results": "Kết quả",
             "member": "Thành viên",
             "invited": "Đã mời",

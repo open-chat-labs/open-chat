@@ -2141,6 +2141,7 @@
             "cancel": "Cancel",
             "cancelled": "Invite to {name} cancelled",
             "suggested": "Suggested",
+            "searchHint": "Search for people to invite",
             "results": "Results",
             "member": "Member",
             "invited": "Invited",

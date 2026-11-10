@@ -2226,6 +2226,7 @@
             "cancel": "Zurückziehen",
             "cancelled": "Einladung an {name} zurückgezogen",
             "suggested": "Vorschläge",
+            "searchHint": "Suche nach Personen, die du einladen möchtest",
             "results": "Ergebnisse",
             "member": "Mitglied",
             "invited": "Eingeladen",

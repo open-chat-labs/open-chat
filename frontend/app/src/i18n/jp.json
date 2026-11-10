@@ -2226,6 +2226,7 @@
             "cancel": "取り消す",
             "cancelled": "{name} への招待を取り消しました",
             "suggested": "おすすめ",
+            "searchHint": "招待する人を検索",
             "results": "結果",
             "member": "メンバー",
             "invited": "招待済み",

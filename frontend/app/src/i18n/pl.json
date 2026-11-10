@@ -2226,6 +2226,7 @@
             "cancel": "Anuluj",
             "cancelled": "Anulowano zaproszenie dla {name}",
             "suggested": "Sugerowane",
+            "searchHint": "Wyszukaj osoby do zaproszenia",
             "results": "Wyniki",
             "member": "Członek",
             "invited": "Zaproszony",

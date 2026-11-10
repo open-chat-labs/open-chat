@@ -7,8 +7,9 @@
      Pending (invited, not accepted yet; Cancel, with Undo) and Suggested (people the user has DMs
      with who aren't in it), and with a search its Results: everyone found, members and those
      already invited dimmed and marked. The pinned button sends them: a private community's members
-     are added to its channel, everyone else invited (MemberManagement.sendPicked); then back, with a
-     toast. Invite link: the switch ("Share via link"), and while it's on the QR code, the link,
+     are added to its channel, everyone else invited (MemberManagement.sendPicked); the screen stays,
+     with a toast, the search cleared and those invited under Pending. With nothing pending or to
+     suggest, a hint to search. Invite link: the switch ("Share via link"), and while it's on the QR code, the link,
      Copy link and Share (the system's share sheet), and Reset link (a row saying what it does),
      whose Undo works by waiting: the link is reset once its toast has gone. The link's switch and
      reset are for those who may invite to a private chat; a public chat's link is always on. -->
@@ -217,7 +218,8 @@
             toastStore.showOutcome(outcome);
             return;
         }
-        context.back?.();
+        // stays on the screen: the picks are sent (cleared), and those invited show under Pending
+        onInput("");
         context.toast(
             outcome.message !== undefined
                 ? interpolate($_, outcome.message)
@@ -342,6 +344,12 @@
                                   }
                                 : { kind: "mark", label: $_("native.invite.invited") }} />
                     {/each}
+                {/if}
+                {#if lists.pending.length === 0 && lists.suggested.length === 0}
+                    <span class="hint">
+                        <span class="hint-icon" aria-hidden="true"></span>
+                        {$_("native.invite.searchHint")}
+                    </span>
                 {/if}
                 {#if lists.suggested.length > 0}
                     <span class="label">{$_("native.invite.suggested")}</span>
@@ -522,6 +530,23 @@
         flex-direction: column;
         gap: var(--space-6);
         padding: 0 var(--space-8) var(--space-16);
+    }
+
+    // nothing pending or to suggest: where to start
+    .hint {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-10);
+        padding: 48px var(--space-24) 0;
+        text-align: center;
+        font: var(--weight-medium) text-size(14px) / 1.4 var(--font-sans);
+        color: var(--ink-4);
+    }
+
+    .hint-icon {
+        @include icon(search, 28px, currentColor);
+        opacity: 0.7;
     }
 
     .label {

@@ -2226,6 +2226,7 @@
             "cancel": "إلغاء",
             "cancelled": "أُلغيت دعوة {name}",
             "suggested": "مقترحون",
+            "searchHint": "ابحث عن أشخاص لدعوتهم",
             "results": "النتائج",
             "member": "عضو",
             "invited": "مدعو",

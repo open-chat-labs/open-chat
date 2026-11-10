@@ -824,8 +824,10 @@ design export needs. Each entry says where it came up.
     may add them (the web's Add tab; the plan has one People list), everyone else invited. The
     pinned button (with the send glyph): "Send invites" (disabled) / "Send invite" / "Send 3
     invites", or "Add 2 people" when everyone picked is added; it waits for the backend (disabled
-    meanwhile), then goes back with "Invite sent to Sofia" / "3 invites sent" / "Added Sofia" (a
-    refusal says why and keeps the picks). The invited show in Pending at once: the client's invite
+    meanwhile), then stays on the screen (the user, 2026-11-10) with "Invite sent to Sofia" / "3
+    invites sent" / "Added Sofia", the search cleared and the picks sent (a refusal says why and
+    keeps the picks). With nothing pending and no one to suggest, a hint to search ("Search for
+    people to invite", ours: the plan has none). The invited show in Pending at once: the client's invite
     puts them among the chat's invited users before the backend answers (and takes them out if it
     refuses), which the screen's Pending follows (`inviteUsers.spec`, MemberManagement's spec).
     The search fields of the native screens (Invite people, Members, New chat, the chat list's, the
