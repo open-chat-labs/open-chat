@@ -29,15 +29,41 @@ import { chatsInitialisedStore, identityStateStore } from "./state";
 import { createdUser } from "./utils/signUp";
 
 // What the client asks the worker for, by kind
-const posted: { kind: string; initialLoad?: boolean }[] = [];
+type Request = { kind: string; correlationId: number; initialLoad?: boolean };
+const posted: Request[] = [];
+
+// The anonymous session's chats as the worker sends them: a snapshot every pass, which seeds the
+// sync cursor for that session. The fold stops at once at a suspension change, so the spec needn't
+// answer what a full fold asks the worker for.
+const anonymousSnapshot = {
+    userId: "anon",
+    version: 0,
+    updates: { suspensionChanged: false },
+};
 
 class FakeWorker {
     onmessage: ((ev: MessageEvent) => void) | undefined;
-    postMessage(msg: { kind: string; initialLoad?: boolean }) {
+    postMessage(msg: Request) {
         posted.push(msg);
+        // the anonymous identity, set (nothing to say about it), and its chats
+        if (msg.kind === "setAuthIdentity") this.#answer(msg, undefined);
+        if (msg.kind === "getUpdates" && answering) this.#answer(msg, anonymousSnapshot);
+    }
+    #answer(msg: Request, response: unknown) {
+        const data = {
+            kind: "worker_response",
+            requestKind: msg.kind,
+            correlationId: msg.correlationId,
+            response,
+            final: true,
+        };
+        void Promise.resolve().then(() => this.onmessage?.({ data } as MessageEvent));
     }
     addEventListener() {}
 }
+
+// whether the worker answers getUpdates: only the anonymous session's
+let answering = true;
 
 function config(): OpenChatConfig {
     return {
@@ -55,14 +81,22 @@ describe("a new account", () => {
     let client: OpenChat;
 
     beforeEach(async () => {
+        // The client starts pollers (chats, bots, users, balances …) on real timers otherwise,
+        // which would keep firing after the spec
+        vi.useFakeTimers();
         vi.stubGlobal("Worker", FakeWorker);
         vi.spyOn(IdentityStorage.prototype, "getKeyAndChain").mockResolvedValue(undefined);
+        answering = true;
         client = new OpenChat(config());
-        await new Promise((r) => setTimeout(r, 0));
+        // the anonymous session's first pass, folded
+        await vi.advanceTimersByTimeAsync(0);
+        expect(updates().length).toBeGreaterThan(0);
         posted.length = 0;
     });
 
     afterEach(() => {
+        vi.clearAllTimers();
+        vi.useRealTimers();
         vi.unstubAllGlobals();
         vi.restoreAllMocks();
         identityStateStore.set({ kind: "anon" });
@@ -71,17 +105,25 @@ describe("a new account", () => {
 
     /** An identity without an account runs as the anonymous user, whose chats loaded as such.
      * The account's own chats (the OpenChat Bot's welcome DM) need an initial load of their own,
-     * or they only show after a reload. */
-    test("loads its chats afresh, not as a later load of the anonymous session's", async () => {
-        identityStateStore.set({ kind: "registering" });
+     * or they only show after a reload. They keep counting as loaded meanwhile: the trees put up
+     * their loader otherwise, which takes down the sign-up still finishing under it. */
+    test("loads its chats afresh, without counting them as unloaded meanwhile", async () => {
+        // as the anonymous session leaves them: its chats in, the account being made
         chatsInitialisedStore.set(true);
+        identityStateStore.set({ kind: "registering" });
+        answering = false;
+        const unloaded = vi.fn();
+        const unsubscribe = chatsInitialisedStore.subscribe((loaded) => {
+            if (!loaded) unloaded();
+        });
 
         client.onRegisteredUser(
             createdUser("newperson", { kind: "success", userId: "u1", icpAccount: "acc" }),
         );
-        await new Promise((r) => setTimeout(r, 0));
+        await vi.advanceTimersByTimeAsync(0);
+        unsubscribe();
 
-        expect(chatsInitialisedStore.value).toBe(false);
+        expect(unloaded).not.toHaveBeenCalled();
         expect(identityStateStore.value.kind).toBe("logged_in");
         expect(updates().length).toBeGreaterThan(0);
         expect(updates().every((m) => m.initialLoad === true)).toBe(true);

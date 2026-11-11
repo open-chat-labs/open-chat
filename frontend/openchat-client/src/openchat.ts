@@ -1253,8 +1253,7 @@ export class OpenChat {
         this.#dailyPuzzlePoller?.stop();
         if (typeof window !== "undefined") window.clearTimeout(this.#dailyPuzzleRolloverTimer);
         currentUserStore.set(anonymousUser());
-        chatsInitialisedStore.set(false);
-        this.#syncPuller.clear();
+        this.#resetChatsSession(true);
         const authPrincipal = identity.getPrincipal().toString();
         this.#authPrincipal = anon ? undefined : authPrincipal;
         this.#ocIdentityPrincipal = undefined;
@@ -1662,10 +1661,10 @@ export class OpenChat {
         // one), and its chats loaded as such. The new account's start afresh, as after a sign-in:
         // an initial load, and a sync session of its own. Otherwise its first load counts as a
         // later one (no snapshot), and the puller, still on the anonymous user, ignores its heads,
-        // so its chats (the OpenChat Bot's welcome DM) never reach the UI until a reload.
-        this.#chatsPoller?.stop();
-        chatsInitialisedStore.set(false);
-        this.#syncPuller.clear();
+        // so its chats (the OpenChat Bot's welcome DM) never reach the UI until a reload. The
+        // chats count as loaded meanwhile: the trees' loader would take down the sign-up still
+        // finishing under it (the old trees' Home), and the new chats fold in when they come.
+        this.#resetChatsSession(false);
         this.onCreatedUser(user);
         userStore.addUser({
             kind: user.isBot ? "bot" : "user",
@@ -1686,6 +1685,18 @@ export class OpenChat {
             hideOnlineStatus: user.hideOnlineStatus,
         });
         this.#loadCurrentUserProfile(user.userId);
+    }
+
+    /**
+     * Starts the chats afresh for whoever the session is now: the next pass is an initial load
+     * (`#loadChats`), with a sync session of its own, and whatever the session before still has
+     * in flight (a snapshot, a pull) is dropped. `unloaded`: the chats no longer count as loaded
+     * (`chatsInitialisedStore`) until the initial load is in, which puts up the trees' loader, as
+     * for another identity; a new account carries on from its anonymous session without it.
+     */
+    #resetChatsSession(unloaded: boolean): void {
+        if (unloaded) chatsInitialisedStore.set(false);
+        this.#syncPuller.clear();
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -10054,7 +10065,9 @@ export class OpenChat {
     // with a snapshot of its cache which seeds the sync cursor; everything after that reaches
     // the UI by pulling (see SyncPuller), so the pass itself resolves nothing.
     async #loadChats() {
-        const initialLoad = !chatsInitialisedStore.value;
+        // Without a cursor (a new session, or one `#resetChatsSession` started) the puller ignores
+        // every head, so only an initial load's snapshot can bring the chats in
+        const initialLoad = !chatsInitialisedStore.value || this.#syncPuller.cursor === undefined;
 
         const updateRegistryTask = initialLoad ? this.#updateRegistry() : undefined;
         // Taken before the load starts: if the identity changes while it is in flight, the

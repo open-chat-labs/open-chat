@@ -26,7 +26,6 @@
         unreadFavouriteCountsStore,
     } from "@client";
     import NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
-    import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
     import { i18nKey } from "@i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
@@ -69,6 +68,7 @@
     import RegionScreen from "./RegionScreen.svelte";
     import { closeRightColumn, closeThread, openOnNewPanel } from "./rightPanel";
     import { MessageJumps } from "./messageJumps.svelte";
+    import MiddleToolbar from "./MiddleToolbar.svelte";
     import { leftScreens, middleScreens, type ScreenContext } from "./screens";
 
     let { regions }: { regions: Extract<Regions, { area: "app" }> } = $props();
@@ -241,6 +241,9 @@
     const context: ScreenContext = {
         dialogs: dialogStack,
         rightColumn,
+        get hasRightColumn() {
+            return regions.rightColumn !== false;
+        },
         jumps: new MessageJumps(),
         get narrow() {
             return narrow;
@@ -315,43 +318,9 @@
 <!-- over a middle placeholder, or a screen still loading or that failed to: the back and panel
      buttons its screen will have (ConversationHeader's) -->
 {#snippet middleToolbar()}
-    <div class="toolbar">
-        {#if narrow && back !== undefined}
-            <IconButton
-                icon="back"
-                variant="ghost"
-                label="ui.common.back"
-                onClick={() => navigate(back)}
-            />
-        {/if}
-        <span class="gap"></span>
-        {#if regions.rightColumn !== false}
-            <IconButton
-                icon="panel"
-                variant="ghost"
-                pressed={rightColumn.open}
-                label={rightColumn.open
-                    ? "ui.conversationHeader.hidePanel"
-                    : "ui.conversationHeader.showPanel"}
-                onClick={() => rightColumn.toggle()}
-            />
-        {/if}
-    </div>
+    <MiddleToolbar {context} />
 {/snippet}
 
 <!-- the dialogs: those the URL opens (?profile …), those the app opened itself, and the rules -->
 <DialogHost stack={dialogStack} {appDialog} onCloseAppDialog={closeAppDialog} />
 <AchievementToastHost />
-
-<style lang="scss">
-    .toolbar {
-        position: absolute;
-        inset-block-start: var(--space-12);
-        inset-inline: var(--space-12);
-        display: flex;
-    }
-
-    .gap {
-        flex: 1;
-    }
-</style>

@@ -12,6 +12,7 @@
         chatIdentifiersEqual,
         chatsInitialisedStore,
         communityIdentifiersEqual,
+        currentUserIdStore,
         messageIndexStore,
         OpenChat,
         routeKindStore,
@@ -127,10 +128,13 @@
         }
     });
 
-    // Home.svelte's route change handling
+    // Home.svelte's route change handling, again for a new account: its chats count as loaded
+    // all along (the anonymous session's carry on until its own come in), and "/" goes on to its
+    // default list now that there's a user
     $effect(() => {
         const initialised = $chatsInitialisedStore;
         const route = $routeStore;
+        void $currentUserIdStore;
         untrack(() => {
             if (!initialised) return;
             client.filterRightPanelHistory((panel) => panel.kind !== "community_filters");

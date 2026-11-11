@@ -17,3 +17,16 @@ export function noChatSelectedText(scope: ChatListScope["kind"]): NoChatSelected
             return { title: i18nKey("noChatSelected"), body: i18nKey("selectAChat") };
     }
 }
+
+/**
+ * What the middle says with nothing selected in it: the chat list's words while that list has
+ * chats to pick from. Nothing beside an empty list, which says so itself ("No conversations yet"),
+ * nor beside anything other than a chat list (the activity feed, the threads), which `chatList`
+ * then isn't.
+ */
+export function middleWithoutChatText(
+    chatList: ChatListScope | undefined,
+    listHasChats: boolean,
+): NoChatSelectedText | undefined {
+    return chatList !== undefined && listHasChats ? noChatSelectedText(chatList.kind) : undefined;
+}

@@ -26,7 +26,6 @@
     import { chatAvatarUrl, groupAvatarLookups } from "@src/logic/chats/chatRow";
     import { headerMenuItems } from "./conversation.adapter";
     import MessageArea from "./MessageArea.svelte";
-    import { chatHasRightColumn } from "../../router/regions";
 
     let { context: screen }: ScreenProps<Extract<MiddleRegion, { kind: "conversation" }>> =
         $props();
@@ -141,7 +140,7 @@
                 isFavourite={favourite}
                 showMenu={!readonly}
                 showCall={false}
-                actions={$selectedChatPinnedMessagesStore.size > 0
+                actions={screen.hasRightColumn && $selectedChatPinnedMessagesStore.size > 0
                     ? [
                           {
                               icon: "pin",
@@ -160,7 +159,7 @@
                     : menuState?.canEdit
                       ? `ui.conversationHeader.menu.manage${chat.kind === "channel" ? "Channel" : "Group"}`
                       : `ui.conversationHeader.menu.${chat.kind === "channel" ? "channel" : "group"}Details`}
-                onTogglePanel={chatHasRightColumn(chat.id)
+                onTogglePanel={screen.hasRightColumn
                     ? () => screen.rightColumn.toggle()
                     : undefined}
                 panelOpen={screen.rightColumn.open}

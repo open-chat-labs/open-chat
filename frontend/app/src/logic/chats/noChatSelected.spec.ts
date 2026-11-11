@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { noChatSelectedText } from "./noChatSelected";
+import { middleWithoutChatText, noChatSelectedText } from "./noChatSelected";
 
 describe("the words for a chat list with nothing selected", () => {
     test("a community's channels ask for a channel", () => {
@@ -20,5 +20,21 @@ describe("the words for a chat list with nothing selected", () => {
             expect(text.title.key).toBe("noChatSelected");
             expect(text.body.key).toBe("selectAChat");
         }
+    });
+});
+
+describe("the middle with nothing selected", () => {
+    test("says the chat list's words while the list has chats", () => {
+        expect(middleWithoutChatText({ kind: "favourite" }, true)?.body.key).toBe(
+            "selectAFavourite",
+        );
+    });
+
+    test("says nothing beside an empty list, which says so itself", () => {
+        expect(middleWithoutChatText({ kind: "chats" }, false)).toBeUndefined();
+    });
+
+    test("says nothing beside anything else (the activity feed, the threads)", () => {
+        expect(middleWithoutChatText(undefined, true)).toBeUndefined();
     });
 });

@@ -30,6 +30,11 @@ export type ScreenContext = {
     dialogs: DialogStack<LocalDialog>;
     /** The right column's open state, for a screen's own toggle (a conversation header's). */
     rightColumn: RightColumnState;
+    /**
+     * Whether the route has the right column at all (`Regions.rightColumn`): without it a screen
+     * shows no panel toggle and opens nothing there.
+     */
+    hasRightColumn: boolean;
     /** A message the conversation is asked to go to from the right column (a thread's root). */
     jumps: MessageJumps;
     /** Whether the shell shows one column at a time. */

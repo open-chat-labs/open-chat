@@ -40,8 +40,23 @@ describe("what a route shows", () => {
     test("a chat list on its own starts on the list", () => {
         expect(regionsFor(route({ kind: "chat_list_route", scope: chats }), false)).toMatchObject({
             left: { kind: "chats", scope: chats },
-            middle: { kind: "empty" },
+            middle: { kind: "empty", chatList: chats },
             narrowView: "left",
+        });
+    });
+
+    test("the middle with nothing selected knows the chat list beside it, and only that", () => {
+        const middle = (r: RouteParams, query?: string) => {
+            const regions = regionsFor(r, false, new URLSearchParams(query));
+            return regions.area === "app" ? regions.middle : undefined;
+        };
+        const favourites = route({ kind: "chat_list_route", scope: { kind: "favourite" } });
+        expect(middle(favourites)).toEqual({ kind: "empty", chatList: { kind: "favourite" } });
+        // the activity feed over the list, the list's threads, and /notifications
+        expect(middle(favourites, "panel=activity")).toEqual({ kind: "empty" });
+        expect(middle(favourites, "threads")).toEqual({ kind: "empty" });
+        expect(middle(route({ kind: "notifications_route", scope: none }))).toEqual({
+            kind: "empty",
         });
     });
 
