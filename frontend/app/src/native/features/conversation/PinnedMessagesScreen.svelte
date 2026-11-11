@@ -111,6 +111,8 @@
     $effect(() => {
         if (shared === undefined && selected) void pinned.sync();
     });
+    // the conversation's load failed: opening the screen tries again, as its own load would
+    if (shared?.messages.kind === "error") void shared.sync();
 
     const hidden = (messageIndex: number) => context.removals.has(unpinKey(chatKey, messageIndex));
     const heldDays = new HeldWhileLeaving<EventWrapper<Message>[][]>([]);

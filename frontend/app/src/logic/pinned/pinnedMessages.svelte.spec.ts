@@ -7,7 +7,7 @@ import type {
 } from "@client";
 import { flushSync } from "svelte";
 import { describe, expect, test, vi } from "vitest";
-import { PinnedMessages } from "./pinnedMessages.svelte";
+import { PinnedMessages, pinnedKey } from "./pinnedMessages.svelte";
 
 const chatId: MultiUserChatIdentifier = { kind: "group_chat", groupId: "g1" };
 
@@ -130,5 +130,41 @@ describe("PinnedMessages", () => {
         flushSync();
         expect(sync).toHaveBeenCalledTimes(3);
         stop();
+    });
+
+    test("doesn't fetch the same pins again as the details update, but does after a failure", async () => {
+        let failLoad: (err: Error) => void = () => {};
+        const failing$ = new Promise<EventsResponse<Message>>((_, reject) => (failLoad = reject));
+        const ok = deferred();
+        const c = client([Promise.resolve(response([1, 2])), failing$, ok.promise]);
+        let pinned = new Set([1, 2]) as ReadonlySet<number>;
+        const loader = new PinnedMessages(c, () => chatId, () => undefined, {
+            pinned: () => pinned,
+            detailsLoaded: () => true,
+        });
+
+        expect(await loader.sync()).toBe(true);
+        // the store emits a new set with the same pins on every update to the chat's details
+        pinned = new Set([2, 1]);
+        expect(await loader.sync()).toBe(false);
+        expect(c.getMessagesByMessageIndex).toHaveBeenCalledTimes(1);
+
+        pinned = new Set([1, 2, 3]);
+        const failing = loader.sync();
+        failLoad(new Error("offline"));
+        await failing;
+        expect(loader.messages.kind).toBe("error");
+        const retry = loader.sync();
+        ok.resolve(response([1, 2, 3]));
+        expect(await retry).toBe(true);
+        expect(c.getMessagesByMessageIndex).toHaveBeenCalledTimes(3);
+        expect(indexes(loader)).toEqual([1, 2, 3]);
+    });
+
+    test("keys a chat's pins whatever their order", () => {
+        expect(pinnedKey(chatId, new Set([3, 1]))).toBe(pinnedKey(chatId, new Set([1, 3])));
+        expect(pinnedKey(chatId, new Set([1]))).not.toBe(
+            pinnedKey({ kind: "group_chat", groupId: "g2" }, new Set([1])),
+        );
     });
 });
